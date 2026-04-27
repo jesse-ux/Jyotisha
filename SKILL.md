@@ -1,6 +1,6 @@
 ---
 name: jyotish-vedic-astrology
-version: 4.0.0
+version: 4.2.0
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。覆盖行星配置、Yoga格局、Nakshatra解读、宫位分析、现代生活场景映射、现代措辞解读、案例对比分析、自动出生时间矫正、常见误判纠错、Dasha+Transit推运、精确预测、PDF星盘读取、Swiss Ephemeris计算引擎、星盘计算、分盘计算、名人案例查询、Shadbala六重力量、Ashtakavarga八分法（BPHS完整表SAV=337）、Hermes记忆系统、事件预测、R1-R10数学验证（含R2b BAV列→SAV列校验）、P1-P12行星审计（含P3仓库耦合+P8年龄状态+冲突仲裁3条规则）、验前事、MD→HTML报告生成（羊皮纸主题）、BPHS十六分盘精确计算（D2-D60）、度数精确相位系统（Drishti）、Jaimini完整系统（Chara Karaka 7/8+Chara Dasha+Karakamsha）、高级Nakshatra分析（Tara Bala+Sub-Lord KP系统）、Argala门闩系统（Virodha反干预）、Tajika年运盘（Muntha+YearLord+Mudda Dasha+Tri-Pataka三旗）、合盘分析（Ashta Koota 36分制+Mangal Dosha+Papasamya+Dasha兼容性）、配偶多层综合分析（DK+7宫主+金星+木星+昼夜区分+Rahu辅助六层交叉确认）、行星度数精确旺衰判定（精确度数+渐变效应+Moolatrikona区间+行星生命阶段+Sandhi交界点）、燃烧阈值、落陷取消Neecha Bhanga、Sect昼夜区分法、Pushkara Navamsha、Vargottama、Yogi/Ava Yogi行星系统（财富业力+宝石激活+四大影响因子）、Tithi Lord关系模式（8行星×水龙头理论）、Rashi Tulya Navamsa根源冲动（7行星深层动机）、Bhrigu Pada Dasha婚姻推进法、婚姻计数法（7宫主D1→D9距离）、Pancha Pakshi五鸟择时术、Nakshatra三计数体系（Ashwinādi/Krittikādi/Ardrādi）、Savya/Apasavya顺逆星宿、精准解盘方法论（PACDARES框架+九层复合方法+L3矛盾检查+验证驱动分析+三级置信度）、Badhaka障碍星系统、B.V. Raman宫位判断方法论、Marc Boney婚姻六步法、V.P. Goel Jaimini Dasha系统十种、Shasti Hayani条件Dasha、Karaka系统自动识别（7/8-Karaka强制检测）、来源标签三级体系（古典/传统/现代演绎）、统一精度边界声明（MD±1-3月/PD±2-3天/SSD±6-12小时）、预测强制[A/B/C]标注+未经验证声明、Mangal Dosha两派观点注释。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga、出生时间矫正、PDF星盘、读取PDF、分析PDF星盘、矫正出生时间、生时矫正、现代解读、现代措辞、误判纠错、错题本、Varga分盘、综合分析、过境分析、Double Transit、Sade Sati、合盘、婚姻匹配、关系分析、Koota、Mangal Dosha、年运盘、Varshaphala、太阳返照、Tajika、星宿速查、综合解盘工作流、应期预测、推运应期、事件时机、什么时候结婚、什么时候升职、Argala、门闩、行星干预、Dasa收敛、Yogini大运、Chara Dasha、AI解盘、算星盘、排盘、计算星盘、查名人、Shadbala、六重力量、Ashtakavarga、八分法、行星力量、记忆系统、事件预测、验证、校验、审计、验前事、R1-R10、P1-P12、仓库耦合、冲突仲裁、报告生成、HTML报告、精确相位、Drishti、Jaimini、Chara Karaka、Atmakaraka、Darakaraka、Karakamsha、Tara Bala、Sub-Lord、KP系统、Navamsa、D9、D60、十六分盘、门闩分析、Muntha、年主星、三旗系统、合盘评分、Nadi Koota、Gana、Yoni、Papasamya、配偶分析、配偶星、配偶征象、婚姻分析、配偶画像、DK配偶星、多层配偶、旺衰度数、行星燃烧、落陷取消、Neecha Bhanga、Pushkara、Vargottama、行星尊严、Moolatrikona、Avastha、深度解盘、全面分析、星盘深度阅读、频率分析、收敛验证、婚姻深层分析、综合深度分析、Prashna问事占星、问事占星、时卦、卜卦占星、问卜、Horary、提问占星、Arudha Lagna、映像上升、Trisphuta、三重合点、Sphuta、Gulika、古利卡、Saham、敏感点、失物查询、寻物、Chor Graha、盗贼星、Kunda验证、十步断卦、BCP、Bhrigu Chakra Paddhati、自然周期、小限法、高地位配偶、Upachaya、DK画像、DK财富、Yogi、Ava Yogi、Tithi Lord、月亮历日、关系模式、水龙头、根源冲动、Root Impulse、Rashi Tulya Navamsa、Bhrigu Pada Dasha、婚姻计数、婚姻数量、Pancha Pakshi、五鸟择时、Nakshatra计数体系、行星推进法、Badhaka、障碍星、Badhakesh、宫位判断、Raman、Yogakaraka、每上升吉凶星、Shasti Hayani、60年周期 Marc Boney、婚姻六步法、三视角、V.P. Goel、10种Dasha、Mandook、Narayan、Maraka、死亡指示、生命宫、跨系统验证、多系统整合、精准解盘、验证驱动、PACDARES、倒推验证、复合方法、教条纠错、案例验证、置信度分级、矛盾检查、先验后推、单事件问事、一楠星盘、单事件查询、Karaka识别、DK身份、8-Karaka、7-Karaka、来源标签、来源透明、精度边界、SSD误差、未经验证标注。
 ---
 
@@ -29,6 +29,24 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 6. **阶段五**：应期输出（五层验证法→精确时间窗口→**Actionable Output行动模块+案例检索强制步骤**）⭐ v4.1.0 升级
 7. **阶段六**：补救措施（可选）
 8. **阶段七**：现代措辞包装
+
+**⭐⭐⭐⭐⭐ v4.2.0 强制外部验证门控（MEVG）**
+
+> **与"不跳步"原则同级的硬性规则——所有解读结论必须经过外部权威来源验证，禁止仅凭 AI 训练记忆输出。**
+
+**门控嵌入点**（→ 完整协议见 `references/mandatory-verification-gate-protocol.md`）：
+
+| 阶段 | 门控步骤 | 职责 |
+|------|---------|------|
+| 阶段三（静态） | **Step 3.11 MEVG-静态门控** | 验证所有 Yoga 识别/行星尊严/Shadbala 解读/SAV 判断 |
+| 阶段四（动态） | **Step 4.10 MEVG-动态门控** | 验证所有 Transit 效应/Dasha 解读/特殊天文现象 |
+| 阶段五（预测） | **Step 5.5 MEVG-预测门控** | 确认每条预测有来源支撑+置信度标注一致 |
+
+**强制执行纪律**：
+- ❌ 输出的解读章节缺少验证状态表 → **判定为未完成**
+- ❌ 主要解读声明无来源引用 → **判定为无效声明，必须降级**
+- ❌ 整个分析过程无 web_search 调用 → **判定为严重违反流程，分析无效**
+- ✅ 唯一豁免：纯数值计算（引擎输出、SAV 点数、Dasha 时间线）
 
 ---
 
@@ -563,6 +581,44 @@ $PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute 
 2. **大运激活**：Dasha系统激活相关宫位
 3. **过境触发**：Transit系统触发具体事件（⚠️ 必须多参考点检查）
 
+### ⚠️ 强制外部验证门控 MEVG（v4.2.0 新增）⭐⭐⭐⭐⭐
+
+**所有解读结论必须经过外部权威来源验证，禁止仅凭 AI 训练记忆输出。**
+
+**为什么需要这个门控**：
+- AI 训练数据中的占星知识存在流派偏差、断章取义、缺乏具体性
+- 不同上升星座的同一 Yoga 效应完全不同，通用描述无法覆盖
+- 仅凭记忆输出的解读缺少"可追溯的来源"，无法让用户自行验证
+
+**三步验证法（强制）**：
+
+| 步骤 | 动作 | 最低要求 |
+|------|------|---------|
+| **V1 构建查询** | 为每个主要解读点生成英文检索词 | Yoga/行星组合/Transit 三类全覆盖 |
+| **V2 执行检索** | web_search 搜索权威来源 | L2≥4次搜索≥3个独立来源；L3≥8次搜索≥5个来源 |
+| **V3 交叉验证** | 对比来源一致性，仲裁分歧 | 所有来源一致→✅；分歧→⚠️标注；无来源→❌降级 |
+
+**权威来源优先级**：经典文本（BPHS/Raman）> 知名占星师（Rao/Rath/Boney）> 专业网站（AstroVed/AstroSage）> 综合博客
+
+**强制输出格式**（每个分析章节末尾）：
+```markdown
+### 📋 MEVG 验证状态
+| 检索项 | 查询关键词 | 来源数 | 状态 | 关键来源 |
+|--------|-----------|--------|------|---------|
+| [Yoga/Transit名] | [查询词] | [N] | ✅/⚠️/❌ | [来源1, 来源2] |
+**总检索次数**：[N] 次 | **验证通过率**：[X]%
+```
+
+**禁止行为**：
+- ❌ 仅凭 AI 记忆说"Venus 在 Taurus 10 宫是 Malavya Yoga"
+- ❌ 跳过 MEVG 直接输出解读
+- ❌ 用模糊表述回避验证（"传统认为..."）
+- ✅ 先搜索确认形成条件，引用来源："根据 MyJyotish 确认..."
+
+**详细协议**：→ `references/mandatory-verification-gate-protocol.md` ⭐ v4.2.0 新建
+
+---
+
 ### ⚠️ Transit Actionable Output 规范（v4.1.0 新增）⭐⭐⭐⭐⭐
 
 **三类Transit分析必须强制输出行动模块，禁止停留在"数据陈述"层。**
@@ -716,12 +772,14 @@ $PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute 
 ---
 
 ### 预测清单
+- [ ] **MEVG-静态门控（⭐ v4.2.0 强制）：所有静态解读声明（Yoga/行星尊严/Shadbala/SAV/Ketu）必须经过 web_search 外部来源验证，输出验证状态表，未通过者降级为[C]。禁止仅凭 AI 训练记忆输出解读**
 - [ ] 静态星盘分析（行星配置、Yoga格局、Nakshatra、宫位）
 - [ ] Argala检查（⚠️ 目标宫的2/4/5/8/11宫干预+Virodha对冲）⭐ v3.2 新增
 - [ ] 逆行/燃烧/行星战争检查（⚠️ 每颗行星必须检查三重叠加条件）
 - [ ] Shadbala评估（⚠️ 六种力量完整评估：Sthana+Dig+Kala+Chesta+Naisargika+Drik）
 - [ ] Ashtakavarga评估（⚠️ BAV完整分配+SAV聚合校验337点）
 - [ ] Ketu双重属性检查（⚠️ 每次涉及Ketu时必须同时评估"放手"和"突破"）
+- [ ] **MEVG-动态门控（⭐ v4.2.0 强制）：所有 Transit 效应/Dasha 解读/特殊天文现象必须经过 web_search 外部来源验证，输出验证状态表**
 - [ ] Dasha推运（当前大运、小运、Pratyantar微运精确到月/周）
 - [ ] Dasa Convergence轻量三系统法（⚠️ Vimsottari+Yogini+Chara交叉验证，见dasa-convergence-methodology.md §七）⭐ v3.2 新增
 - [ ] Jaimini系统分析（AK/AmK/BK/MK/PK/GK/DK + Chara Dasha）
@@ -735,6 +793,7 @@ $PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute 
 - [ ] 综合报告生成（Jaimini+KP+Parashara三系统协同解读）
 - [ ] 预测边界检查（⚠️ 标注预测深度Level+置信度，禁止绝对断言→ `references/prediction-boundary-protocol.md`、`references/prediction-output-protocol.md`）⭐ v3.2 新增
 - [ ] **案例检索（⭐ v4.1.0 强制）：动态预测（被发现/合作/应期/事件型）必须执行三步——①检索同类行星配置真实案例 ②对比D10/D9信号 ③整合后输出带案例参照的结论；参考命令：`celebrity --config ...`、`web_search`；禁用：未经案例支撑的理论推断**
+- [ ] **MEVG-预测门控（⭐ v4.2.0 强制）：确认每条预测有来源支撑+置信度标注与验证结果一致+精度声明完整。100%预测必须通过此门控，缺一即阻止输出**
 
 ## 能力水平
 
@@ -917,6 +976,9 @@ $PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute 
 ### 精准解盘方法论（1个）⭐ v3.12.1 新增
 96. **precision-reading-methodology.md**：精准解盘与推运方法论（六大共识原则+PACDARES本命盘分析框架+九层复合方法L1-L9+L3矛盾检查协议+验证驱动分析流程+三级置信度系统+10条常见教条失误纠正+经典文献审慎使用BPHS考证+实战五步法）⭐⭐⭐⭐⭐ v3.12.1 新增 【核心方法论·多师共识：K.N. Rao+V.K. Choudhry+Marc Boney+Hart de Fouw+Sanjay Rath+Shyamasundara Dasa】
 
+### 强制外部验证门控（1个）⭐ v4.2.0 新增
+97. **mandatory-verification-gate-protocol.md**：强制外部验证门控协议（MEVG）完整规范（核心问题诊断+三步验证法V1/V2/V3+门控触发条件表+权威来源优先级+强制输出格式+门控位置与执行时机+通过/失败标准+每阶段必检索关键词模板+历史违反记录+执行纪律）⭐⭐⭐⭐⭐ v4.2.0 新增 【核心方法论·强制验证·与"不跳步"同级】
+
 ## 模板文件
 
 本Skill包含以下模板文件（存储在assets/目录）：
@@ -944,6 +1006,6 @@ $PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute 
 
 ---
 
-**版本**：4.1.0
+**版本**：4.2.0
 **创建日期**：2026-04-20
-**最后更新**：2026-04-27（v4.1.0 Transit Actionable Output强制升级：①新增Transit Actionable Output规范（强制输出时间段+行动类型+置信度+未验证声明）②Phase5应期输出强制嵌入案例检索三步法③预测清单新增2条强制项（Transit Actionable Output+案例检索）④阶段四/五标注v4.1.0强制执行标记；v4.0.0 质量保障四大升级：①Karaka自动识别②来源标签三级体系③精度边界统一声明表④[A/B/C]置信度标注；v3.13.1-v3.7 历代功能升级）
+**最后更新**：2026-04-27（v4.2.0 强制外部验证门控升级：①新增MEVG协议（mandatory-verification-gate-protocol.md）三步验证法（V1构建查询→V2执行检索→V3交叉验证）②SKILL.md新增MEVG主章节③工作流新增3个门控嵌入点（Step 3.11/4.10/5.5）④预测清单新增3条MEVG强制项⑤AI核心原则新增"不凭记忆"⑥与"不跳步"原则同级强制执行；v4.1.0 Transit Actionable Output强制升级；v4.0.0 质量保障四大升级）

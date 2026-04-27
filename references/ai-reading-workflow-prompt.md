@@ -1,12 +1,13 @@
 # AI解盘工作流Prompt工程（AI Reading Workflow）
 
 > **适用场景**：AI收到出生信息、PDF星盘或文字星盘后，如何一步步执行完整的解盘+推运分析
-> **版本**：v4.0.0 | **更新日期**：2026-04-27
+> **版本**：v5.0.0 | **更新日期**：2026-04-27
 > **来源标签**: 【工具/模板】 — AI解盘执行引擎工作流
 > **优先级**：⭐⭐⭐⭐⭐（AI解盘质量的决定性文件）
 > **定位**：本文件是AI解盘的**执行引擎**，将Skill中所有参考资料串联成可执行的工作流
 > **v3.0重大变更**：三条入口路径明确分流，引擎全自动计算无需用户逐模块触发
 > **v4.0重大变更**：Step 0.5 Karaka系统自动识别（解决DK摇摆问题）、预测输出强制[A/B/C]标注、统一精度边界声明、来源标签体系引用
+> **v5.0重大变更**：强制外部验证门控（MEVG）——新增核心原则"不凭记忆"、三个门控步骤（Step 3.11/4.10/5.5）嵌入工作流、与"不跳步"同级强制
 
 ---
 
@@ -18,6 +19,10 @@
 4. **必标注**：每个结论标注来源系统、置信度、精度边界
 5. **全自动优先**：引擎有能力自动完成的计算，绝不要求用户手动触发
 6. **尊重用户数据**：用户提供的PDF/文字星盘数据即为事实来源，优先使用而非重新计算
+7. **🔴🔴🔴 不凭记忆（v5.0 新增，与"不跳步"同级）**：所有解读结论必须经过外部权威来源（web_search）验证，禁止仅凭 AI 训练记忆输出。违反此原则的解读判定为无效。纯数值计算（引擎输出、SAV 点数、Dasha 时间线）可豁免。
+   - ❌ 仅凭记忆说"Venus 在 Taurus 10 宫是 Malavya Yoga"
+   - ✅ 先 web_search 确认形成条件 + 引用来源
+   - → 完整协议：`references/mandatory-verification-gate-protocol.md`
 
 ---
 
@@ -517,6 +522,14 @@ Step 3.9  Ketu双属性检查
 Step 3.10 分盘确认
           → references/varga-system-quick-reference.md
           → D9（关系）+ D10（事业）+ 对应领域分盘
+
+Step 3.11 ⭐ MEVG-静态门控（v5.0 强制）
+          → references/mandatory-verification-gate-protocol.md
+          → 对所有静态解读声明执行 web_search 外部验证
+          → 验证范围：Yoga 识别/行星尊严判断/Shadbala 异常/SAV 关键阈值/Ketu 双属性
+          → 最低要求：L2≥4次搜索≥3来源，L3≥8次搜索≥5来源
+          → 输出：验证状态表（检索项/查询词/来源数/状态/关键来源）
+          → ❌ 未通过 → 降级置信度为[C] + 标注"验证不足"
 ```
 
 ### 3.2 静态分析输出模板
@@ -661,6 +674,44 @@ web_search: "astrologer content creator discovered by mentor collaboration 2024 
 **案例参照**：Starcross App（0广告月入6万，内容获客+情感变现）；Neda Farr（TikTok 22万粉丝→工具创始人）
 **未验证声明**：以上预测基于星盘信号与案例类比推断，未经个人历史事件验证，置信度[B]。
 ```
+
+### Step 4.10 ⭐ MEVG-动态门控（v5.0 强制）
+
+> **目的**：所有 Transit 效应、Dasha 解读、特殊天文现象（Ashtama Shani/Sade Sati/Jupiter 换座等）必须经过外部来源验证。
+
+**触发条件**：阶段四 Step 4.1-4.9 完成后，自动执行。
+
+**执行步骤**：
+
+```
+1. 提取所有动态解读声明（Dasha 效应、Transit 效应、Double Transit 判断等）
+2. 为每个声明构建英文检索查询：
+   - "[Planet] transit [Sign] [Year] Vedic astrology effects"
+   - "[Planet1]/[Planet2] Dasha period effects Vedic"
+   - "Ashtama Shani [Moon sign] [Year]" (如适用)
+   - "Jupiter transit Cancer [Year] all ascendants" (如适用)
+3. 执行 web_search（最低≥4次，Level 3≥8次）
+4. 交叉验证：对比来源一致性
+5. 输出验证状态表
+
+通过标准：≥80% 动态解读有≥2个独立来源
+失败处理：未验证解读全部标注"未经验证" + 置信度降级
+```
+
+**输出格式**：
+
+```markdown
+### 📋 MEVG 验证状态（动态分析）
+
+| 检索项 | 查询关键词 | 来源数 | 状态 | 关键来源 |
+|--------|-----------|--------|------|---------|
+| [Dasha/Transit] | [查询词] | [N] | ✅/⚠️/❌ | [来源1, 来源2] |
+
+**总检索次数**：[N] 次 | **验证通过率**：[X]%
+**降级声明**：[列出]
+```
+
+→ references/mandatory-verification-gate-protocol.md
 
 ### 4.2 动态分析输出模板
 
@@ -880,6 +931,27 @@ web_search: "astrologer content creator discovered by mentor collaboration 2024 
 - ❌ 禁止：确定日期、"一定会"、指定具体人物/项目
 ```
 
+### 5.5 ⭐ MEVG-预测门控（v5.0 强制）
+
+> **目的**：确保每条预测输出都有来源支撑、置信度标注与验证结果一致、精度声明完整。
+
+**触发条件**：阶段五 Step 5.0-5.4 完成后，自动执行。
+
+**检查项（100% 必须通过）**：
+
+| # | 检查项 | 通过标准 | 失败处理 |
+|---|--------|---------|---------|
+| 1 | 每条预测有置信度标注 | [A]/[B]/[C] 标记存在 | 补全 |
+| 2 | 置信度与验证结果一致 | [B]需≥3独立维度、[A]需历史验证 | 不一致则降级 |
+| 3 | 精度边界声明完整 | 精度等级+范围+强制附注文案 | 补全 |
+| 4 | 未验证声明存在 | [B]/[C] 预测有未验证声明文案 | 补全 |
+| 5 | MEVG 验证状态表存在 | 静态+动态验证状态表均已输出 | 补全 |
+
+**通过标准**：5/5 项全部通过
+**失败处理**：缺少任何一项即阻止输出，补全后重新检查
+
+→ references/mandatory-verification-gate-protocol.md
+
 ---
 
 ## 阶段六：补救措施（如用户需要）
@@ -927,7 +999,7 @@ web_search: "astrologer content creator discovered by mentor collaboration 2024 
   │     └─→ 用户问什么 → 目标宫位 → 对应承诺模板
   │         （无明确意图 → 综合解盘Level 2）
   │
-  ├─→ 阶段三：静态分析（10步）
+  ├─→ 阶段三：静态分析（10步 + 1个门控）
   │     ├─→ 宫位-行星基础
   │     ├─→ 承诺评估
   │     ├─→ Yoga识别
@@ -937,19 +1009,27 @@ web_search: "astrologer content creator discovered by mentor collaboration 2024 
   │     ├─→ Shadbala
   │     ├─→ Ashtakavarga
   │     ├─→ Ketu双属性
-  │     └─→ 分盘确认
+  │     ├─→ 分盘确认
+  │     └─→ ⭐ Step 3.11: MEVG-静态门控（web_search验证所有静态声明）
   │
-  ├─→ 阶段四：动态推运（7步）
+  ├─→ 阶段四：动态推运（7步 + 1个门控）
   │     ├─→ Dasha激活
   │     ├─→ Dasa Convergence三系统法
   │     ├─→ Transit四参考点
   │     ├─→ Double Transit
   │     ├─→ Jaimini确认
   │     ├─→ KP确认
-  │     └─→ Varshaphala确认
+  │     ├─→ Varshaphala确认
+  │     ├─→ Transit Actionable Output
+  │     ├─→ 案例检索与对比
+  │     └─→ ⭐ Step 4.10: MEVG-动态门控（web_search验证所有动态声明）
   │
-  ├─→ 阶段五：应期输出
-  │     └─→ 严格遵循prediction-output-protocol.md
+  ├─→ 阶段五：应期输出（+1个门控）
+  │     ├─→ 置信度分级与验证状态标注
+  │     ├─→ 统一精度边界声明
+  │     ├─→ Transit Actionable Output 强制标注
+  │     ├─→ 应期输出模板
+  │     └─→ ⭐ Step 5.5: MEVG-预测门控（确认100%预测通过验证）
   │
   ├─→ 阶段六：补救措施（可选）
   │
@@ -958,6 +1038,6 @@ web_search: "astrologer content creator discovered by mentor collaboration 2024 
 
 ---
 
-**版本**：4.0.0
+**版本**：5.0.0
 **更新日期**：2026-04-27
-**配套文件**：`pdf-chart-reading-guide.md`（PDF提取）、`birth-time-rectification-advanced.md`（出生时间矫正）、`timing-prediction-template.md`（应期模板）、`prediction-output-protocol.md`（输出规范）、`comprehensive-reading-workflow.md`（综合流程）、`promise-assessment-templates.md`（承诺模板）、`argala-complete-guide.md`（Argala检查）、`dasa-convergence-methodology.md`（Dasa Convergence）、`precision-reading-methodology.md`（精准解盘方法论+置信度分级+倒推验证协议）
+**配套文件**：`pdf-chart-reading-guide.md`（PDF提取）、`birth-time-rectification-advanced.md`（出生时间矫正）、`timing-prediction-template.md`（应期模板）、`prediction-output-protocol.md`（输出规范）、`comprehensive-reading-workflow.md`（综合流程）、`promise-assessment-templates.md`（承诺模板）、`argala-complete-guide.md`（Argala检查）、`dasa-convergence-methodology.md`（Dasa Convergence）、`precision-reading-methodology.md`（精准解盘方法论+置信度分级+倒推验证协议）、`mandatory-verification-gate-protocol.md`（⭐ v5.0 强制外部验证门控协议）
