@@ -3,7 +3,7 @@
 > **版本**: v1.0 | **来源**: B.V. Raman《How to Judge a Horoscope》Vol 1 & Vol 2
 > **优先级**: ⭐⭐⭐⭐⭐（最权威的宫位判断方法论）
 > **创建日期**: 2026-04-25
-> **来源标签**: 【古典·B.V. Raman】
+> **来源标签**: 【传统·现代大师】 — B.V. Raman宫位判断+12上升吉凶星表+Mangal Dosha规则
 
 ---
 
@@ -115,6 +115,24 @@
 - **从Lagna和从Chandra Lagna都要检查**
 - Mars在上述位置 → 对配偶健康和婚姻和谐有害
 - **例外**: Mars如果庙旺或作为Yogakaraka，其Dosha效果减轻
+
+> **⚠️ 学派争议注释**：
+> 关于Yogakaraka Mars的Mangal Dosha豁免程度，印度占星界存在两派观点：
+>
+> | 学派 | 观点 | 来源 |
+> |------|------|------|
+> | **传统派（B.V. Raman）** | Yogakaraka Mars → Dosha**减轻**，但不完全消除 | B.V. Raman, *Astrological Magazine* |
+> | **另一派观点** | Yogakaraka Mars → Dosha**完全不存在/取消** | 部分南印度传统导师 |
+>
+> **对Leo上升/Cancer上升的Mars**：
+> - 按传统派（Raman）：Mars作为Yogakaraka（4+9主/5+10主），Dosha效果**显著减轻**，但建议仍检查Mars是否在2/4/7/8/12宫
+> - 按另一派：Mars作为Yogakaraka → **完全豁免**，即使落在Dosha宫位也不形成Mangal Dosha
+> - **Skill默认**：采用Raman传统派"减轻"说，同时在分析中标注另一派"完全豁免"观点，让用户了解争议
+>
+> **Leo上升Mars实例**（如一楠星盘）：
+> - Mars@Cancer 12宫（落陷+Neecha Bhanga） → 按Raman：12宫是Dosha宫位，但Yogakaraka身份减轻
+> - Mars落陷度数极浅（1°19'，距深陷点27°） + Neecha Bhanga成立 → 落陷影响本身已被大幅化解
+> - **综合判定**：Mangal Dosha影响极弱，不应成为婚姻焦虑的主要依据
 
 ---
 

@@ -4,6 +4,7 @@
 >
 > **使用方式**：CTRL+F 搜索本文件，或直接复制对应场景的执行模板。
 
+> **来源标签**: 【现代演绎·Skill整合】 — 快速参考指南
 ---
 
 ## 场景一：用户说"帮我看盘"或"分析我的星盘"
@@ -101,6 +102,7 @@
 | 用户意图 | 主参考文件 | 引擎命令 |
 |---------|-----------|---------|
 | 事业时机 | references/yoga-phala-timing-guide.md | `dasha` + `transit` |
+| **→ Actionable Output** | references/transit-actionable-output-guide.md ⭐v4.1.0 | 必须输出时间段+行动+置信度 |
 | 财运来源 | references/darakaraka-complete-guide.md（DK财富5模式）| `chart` + `yoga` |
 | 学业考试 | references/planetary-dignity-complete-reference.md（D24分析） | `varga -d 24` |
 | 健康预后 | references/advanced-techniques.md（8宫+6宫） | `chart` + `shadbala` |
@@ -257,6 +259,15 @@
 
 4. 年度运势（Varshaphala）：
    references/varshaphala-annual-chart-guide.md
+
+5. ⭐ Transit Actionable Output（v4.1.0 强制）：
+   references/transit-actionable-output-guide.md
+   → 每条 Transit 预测必须输出：时间段 + 具体行动类型 + 置信度 [A/B/C]
+   → 动态预测必须先检索案例再给结论
+
+6. ⭐ 案例检索（v4.1.0 强制）：
+   `celebrity --config ...` 或 `web_search`
+   → 被发现/合作/应期/事件型预测必须三步法：检索→对比D10/D9→整合
 ```
 
 ---
@@ -340,5 +351,38 @@ references/deep-analysis-complete-workflow.md（质量检查清单）：
 
 ---
 
-*本文件为 v3.13.1 新增，配合 SKILL.md 主文档使用。*
-*最后更新：2026-04-26*
+---
+
+## 场景十一：Transit Actionable Output（⭐ v4.1.0 新增）
+
+> **所有涉及 Transit 推运分析的场景（场景三/八/九）都必须执行此步骤。**
+
+**核心文件**：references/transit-actionable-output-guide.md
+
+**三要素输出（强制）**：
+
+| 要素 | 要求 | 禁止 |
+|------|------|------|
+| 时间段 | 精确到日/周/月 | ❌ "今年内" / "下半年" |
+| 具体行动类型 | 发布/跟进/保持在线/推进谈判 | ❌ "保持开放心态" |
+| 置信度 | [A]=已验证 / [B]=高概率 / [C]=推断 | ❌ 无标注的绝对断言 |
+
+**案例检索触发词**（自动执行）：
+"被发现"、"合作"、"应期"、"时机"、"破圈"、"升职"、"搬迁"
+
+**输出模板**：
+```
+## [B] 时间段：事件描述
+**置信度**：⭐ [B]（依据：维度1+维度2+维度3）
+**Actionable Output**：
+- 时间段：精确日期
+- 行动：具体做什么
+- 类型：发现型/主动型/等待型
+**案例参照**：真实案例名称+关键特征
+**未验证声明**：未经个人历史事件验证，置信度[X]。
+```
+
+---
+
+*本文件为 v3.13.1 新增，配合 SKILL.md 主文档使用。v4.1.0 新增场景十一（Transit Actionable Output）。*
+*最后更新：2026-04-27*

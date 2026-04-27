@@ -2,6 +2,7 @@
 
 > **版本**: v1.0 | **来源**: Kimi Agent训练手册Ch11 + dim07提炼 | **用途**: Ashtottari/Yogini/Kalachakra/Prashna四大替代推运系统+推运系统选择决策
 
+> **来源标签**: 【混合·古典+传统+现代】 — Ashtottari/Yogini/Kalachakra/Prashna四系统（古典+Kimi训练手册整理）
 ---
 
 ## 1. 推运系统全景对比

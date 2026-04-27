@@ -3,7 +3,7 @@
 > **版本**: v1.0 | **来源**: V.P. Goel《Predicting Through Shasti Hayani Dasha》+ AstroNidan + VedicBooks
 > **优先级**: ⭐⭐⭐⭐（全新的条件Dasha系统，Skill未覆盖）
 > **创建日期**: 2026-04-25
-> **来源标签**: 【古典·BPHS条件Dasha】
+> **来源标签**: 【传统·现代大师】 — Shasti Hayani条件Dasha（60年周期+太阳1宫条件）
 
 ---
 

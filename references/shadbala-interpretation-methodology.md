@@ -4,6 +4,7 @@
 > **定位**：Shadbala从"计算数字"到"实战解读"的桥梁
 > **前置**：`shadbala-complete-methodology.md`（计算方法论）、`planetary-dignity-complete-reference.md`（行星尊严）
 
+> **来源标签**: 【混合·古典+传统+现代】 — Shadbala实战解读+六力量组合模式[现代演绎]
 ---
 
 ## 一、核心理念：六力量不是六个独立数字

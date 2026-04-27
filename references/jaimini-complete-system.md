@@ -3,6 +3,7 @@
 **创建日期**：2026-04-22
 **来源**：Bavishyavani.in、Vedicmarga.com
 
+> **来源标签**: 【传统·现代大师】 — Jaimini完整系统（Chara Karaka+Chara Dasha+Karakamsha）
 ---
 
 ## 一、Jaimini vs Parashari 核心区别

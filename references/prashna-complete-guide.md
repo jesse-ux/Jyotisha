@@ -4,6 +4,7 @@
 > **来源经典**: Prasna Marga (Harihara), Tajika Neelakanthi, BPHS, Phaladeepika
 > **互补文件**: KP Prashna 见 `kp-astrology-complete-system.md`；Tajika Yoga 见 `tajika-yoga-complete-guide.md`
 
+> **来源标签**: 【混合·古典+传统+现代】 — 古典Prashna体系 + Arudha Lagna/Gulika等传统技法 + 现代整合
 ---
 
 ## 目录

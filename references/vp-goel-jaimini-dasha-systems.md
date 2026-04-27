@@ -3,7 +3,7 @@
 > **版本**: v1.0 | **来源**: V.P. Goel《Predicting through Jaimini Astrology》(232页)
 > **优先级**: ⭐⭐⭐⭐（10种Jaimini Dasha系统，Skill目前只有Chara Dasha深度覆盖）
 > **创建日期**: 2026-04-25
-> **来源标签**: 【现代·V.P. Goel研究】
+> **来源标签**: 【传统·现代大师】 — V.P. Goel《Predicting through Jaimini Astrology》10种Dasha系统
 
 ---
 

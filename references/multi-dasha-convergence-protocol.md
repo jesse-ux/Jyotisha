@@ -1,5 +1,6 @@
 # 多Dasha收敛协议——六系统交叉验证方法论
 
+> **来源标签**: 【现代演绎·Skill整合】 — 六系统Dasha收敛协议（Skill原创量化框架）
 > **版本**：v1.0（2026-04-25）
 > **定位**：从3系统Convergence升级为6系统全量收敛验证
 > **前置**：`dasa-convergence-methodology.md`（基础收敛方法论）、`alternative-dasha-systems.md`（替代推运系统）

@@ -1266,6 +1266,88 @@ def cmd_synastry(args):
 # ============================================================================
 # 22. 全自动综合解盘 full-reading（v3.7.1新增）
 # ============================================================================
+
+
+def _calc_actionable_context(planets, asc_idx):
+    """⭐ v4.1.0: 计算Transit Actionable Output所需的上下文数据
+    输出：宫位激活映射 + 关键行星宫位关系 → 供AI生成Actionable Output时直接引用
+    """
+    # 宫位主星映射（哪个行星掌管哪个宫）
+    house_lord_map = {}
+    for h in range(1, 13):
+        sign_idx = (asc_idx + h - 1) % 12
+        sname = SIGNS[sign_idx]
+        lord = SIGN_LORDS.get(sname, 'Unknown')
+        house_lord_map[h] = {'sign': sname, 'lord': lord}
+
+    # 行星落宫映射（哪个行星落在哪个宫）
+    planet_house_map = {}
+    for pn, pd in planets.items():
+        if isinstance(pd, dict):
+            planet_house_map[pn] = {
+                'sign': pd.get('sign', 'Unknown'),
+                'house': pd.get('house', 0),
+                'degree_in_sign': pd.get('degree_in_sign', 0),
+            }
+
+    # 双宫掌管检测（仓库耦合）
+    lord_to_houses = {}
+    for h, info in house_lord_map.items():
+        lord = info['lord']
+        if lord not in lord_to_houses:
+            lord_to_houses[lord] = []
+        lord_to_houses[lord].append(h)
+    warehouse_coupling = {l: hs for l, hs in lord_to_houses.items() if len(hs) > 1}
+
+    # 关键宫位激活条件（Transit激活该宫需要哪些行星过境相关星座）
+    KEY_HOUSES = {
+        2: '财富/家庭/语言',
+        3: '沟通/技能/短途/内容创作',
+        5: '创造力/子女/投机/恋爱',
+        7: '婚姻/合作/公开对手',
+        9: '长途旅行/高等教育/宗教/出版',
+        10: '事业/社会地位/权威',
+        11: '收入/愿望/社交网络/贵人',
+        12: '海外/灵性/损失/解脱',
+    }
+
+    activation_map = {}
+    for h, meaning in KEY_HOUSES.items():
+        sign_idx = (asc_idx + h - 1) % 12
+        sname = SIGNS[sign_idx]
+        lord = SIGN_LORDS.get(sname, 'Unknown')
+        lord_house = planet_house_map.get(lord, {}).get('house', 0)
+        activation_map[h] = {
+            'house_meaning': meaning,
+            'sign': sname,
+            'lord': lord,
+            'lord_house': lord_house,
+            'transit_triggers': f'{lord}过境{h}宫({sname})或{lord}本身过境相关宫位',
+            'double_transit_hint': f'需要Saturn和Jupiter同时激活{h}宫或{h}宫主所在宫',
+        }
+
+    # 内容创作相关信号（3宫/5宫/9宫/10宫交叉）
+    content_signals = {}
+    for h in [3, 5, 9, 10]:
+        if h in activation_map:
+            content_signals[f'house_{h}'] = activation_map[h]
+
+    # 贵人相关信号（7宫/9宫/11宫）
+    mentor_signals = {}
+    for h in [7, 9, 11]:
+        if h in activation_map:
+            mentor_signals[f'house_{h}'] = activation_map[h]
+
+    return {
+        'house_lord_map': house_lord_map,
+        'planet_house_map': planet_house_map,
+        'warehouse_coupling': warehouse_coupling,
+        'key_house_activations': activation_map,
+        'content_creation_context': content_signals,
+        'mentor_discovery_context': mentor_signals,
+        'actionable_hint': 'AI应基于此上下文生成Transit Actionable Output：每条Transit预测必须包含时间段+行动类型+置信度。详见SKILL.md Transit Actionable Output规范。',
+    }
+
 def cmd_full_reading(args):
     """
     用户只需提供出生信息，引擎自动串起全链路分析：
@@ -1277,7 +1359,7 @@ def cmd_full_reading(args):
     t0 = time.time()
 
     report = {
-        'version': '3.7.1-full-reading',
+        'version': '4.1.0-full-reading',
         'birth_info': {
             'date': f"{args.year}-{args.month:02d}-{args.day:02d}",
             'time': f"{args.hour:02d}:{args.minute:02d}",
@@ -1459,6 +1541,13 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"audit: {e}")
 
+    # ── Step 14: ⭐ Transit Actionable Context (v4.1.0) ──
+    try:
+        actionable_ctx = _calc_actionable_context(planets, asc_idx)
+        report['modules']['actionable_context'] = actionable_ctx
+    except Exception as e:
+        report['errors'].append(f"actionable-context: {e}")
+
     # ── 汇总 ──
     elapsed = round(time.time() - t0, 2)
     module_count = len(report['modules'])
@@ -1468,7 +1557,7 @@ def cmd_full_reading(args):
         'modules_computed': module_count,
         'errors': error_count,
         'status': 'complete' if error_count == 0 else f'{error_count} errors',
-        'next_step': 'AI可直接基于此数据执行阶段二（意图路由）→阶段三（静态分析）→阶段四（动态推运）→阶段五（应期输出）',
+        'next_step': 'AI可直接基于此数据执行阶段二→三→四→五。⭐ v4.1.0: modules.actionable_context 已就绪，Transit分析时必须输出Actionable Output（时间段+行动类型+置信度），动态预测必须先检索案例。',
     }
 
     return report

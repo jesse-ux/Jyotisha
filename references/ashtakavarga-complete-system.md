@@ -3,6 +3,7 @@
 **创建日期**：2026-04-22
 **来源**：RoxyAPI、ZODIAQ
 
+> **来源标签**: 【混合·古典+传统+现代】 — BPHS Ashtakavarga古典表 + RoxyAPI/ZODIAQ现代计算
 ---
 
 ## 一、核心概念

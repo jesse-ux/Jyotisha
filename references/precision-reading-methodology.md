@@ -4,6 +4,7 @@
 > **创建日期**：2026-04-26
 > **核心来源**：K.N. Rao访谈（Journal of Astrology 2010）、V.K. Choudhry Systems' Approach、Shyamasundara Dasa文献考证、Marc Boney案例研究法、Hart de Fouw整体判断法、Sanjay Rath传统传承法
 
+> **来源标签**: 【混合·古典+传统+现代】 — PACDARES框架+九层复合方法+倒推验证+置信度分级（K.N. Rao+多大师整合）
 ---
 
 ## 一、核心原则：六大共识

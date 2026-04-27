@@ -1,5 +1,7 @@
 # Vimshottari Dasha + Transit 推运方法论
 
+> **来源标签**: 【混合·古典+传统+现代】 — Vimshottari Dasha+Transit三层验证法（BPHS+K.N. Rao+现代整合）
+
 ## 三层验证法
 
 ### 核心原理

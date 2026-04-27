@@ -5,6 +5,7 @@
 > **优先级**：⭐⭐⭐⭐⭐（推运应期最大缺口补齐）
 > **v2.0更新**：新增JH PDF数据源对照表 + 轻量Convergence三系统法 + Yogini手工推算表
 
+> **来源标签**: 【混合·古典+传统+现代】 — Dasa Convergence多系统收敛法（Vimshottari+Yogini+Chara+条件Dasha）
 ---
 
 ## 〇、JH PDF数据源对照表（实操必读）

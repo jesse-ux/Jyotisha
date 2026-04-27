@@ -5,6 +5,7 @@
 > **优先级**：⭐⭐⭐⭐⭐（K.N. Rao PAC-DARES方法论核心组件）
 > **来源**：K.N. Rao PAC-DARES体系 + B.V. Raman《Three Hundred Important Combinations》 + Sanjay Rath《Jaimini Sutras》
 
+> **来源标签**: 【混合·古典+传统+现代】 — BPHS Argala古典定义 + K.N. Rao PACDARES方法论整合
 ---
 
 ## 一、核心概念

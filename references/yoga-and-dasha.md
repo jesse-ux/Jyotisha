@@ -4,6 +4,7 @@ BV Raman《How to Judge a Horoscope》、KN Rao《Learn Successful Predictive Te
 Marc Boney《Predicting Major Life Events》、James Braha《Ancient Hindu Astrology》、
 BPHS读书笔记
 
+> **来源标签**: 【传统·现代大师】 — B.V. Raman+K.N. Rao+Marc Boney+BPHS混合Yoga激活指南
 ---
 
 ## 一、Yoga 识别总表

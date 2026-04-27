@@ -203,6 +203,7 @@ For Afflicted Yogas:
 - **Mangal Dosha**: Mars remedies, wedding rituals, partner compatibility check
 - **Daridra Yoga**: Lakshmi worship, charity on Fridays, strengthen 2nd/11th lords
 
+> **来源标签**: 【古典·千年传承】 — BPHS Yoga列表英文原版（Raja/Dhana/Arishta等分类）
 ---
 
 **Remember**: Every yoga must be evaluated in context of the entire chart. No single yoga determines destiny. The chart is a synthesis of many yogas, aspects, dignities, and planetary strengths.

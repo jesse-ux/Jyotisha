@@ -4,6 +4,7 @@
 **版本**：v2.0.0
 **优先级**：⭐⭐⭐⭐⭐ Varshaphala年运盘核心技法
 
+> **来源标签**: 【混合·古典+传统+现代】 — Tajika年运盘Yoga体系（Tajika古典+Muntha/YearLord现代应用）
 ---
 
 ## 一、Tajika Yoga体系概述

@@ -3,6 +3,7 @@
 James Braha《Ancient Hindu Astrology》、BV Raman《How to Judge a Horoscope》、
 BPHS读书笔记、查悦占星教程、印度占星读书摘要（晴空月明）
 
+> **来源标签**: 【古典·千年传承】 — 星座与宫位传统体系（BPHS+经典体系）
 ---
 
 ## 一、十二星座（Rashi）

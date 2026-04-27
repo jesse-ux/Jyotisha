@@ -4,6 +4,7 @@
 > **定位**：Navamsa婚姻专项的完整分析框架——超越基础D9解读
 > **前置**：`navamsa-d9-interpretation-template.md`（基础D9模板）、`spouse-multi-layer-methodology.md`（配偶多层分析）、`planetary-dignity-complete-reference.md`（行星尊严含D9婚姻8步旗标算法）
 
+> **来源标签**: 【混合·古典+传统+现代】 — Navamsa婚姻深度分析（D9婚姻8步旗标算法+传统解读）
 ---
 
 ## 一、核心理念

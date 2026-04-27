@@ -3,7 +3,7 @@
 > **版本**: v1.0 | **来源**: BPHS + Vedic-Astrology.in + LunarAstro + 多源交叉验证
 > **优先级**: ⭐⭐⭐⭐（Kimi审计指出的Skill缺失模块）
 > **创建日期**: 2026-04-25
-> **来源标签**: 【古典·BPHS】
+> **来源标签**: 【混合·古典+传统+现代】 — BPHS古典Badhaka + Vedic-Astrology.in/LunarAstro现代阐释 + 12上升完整表
 
 ---
 

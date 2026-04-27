@@ -488,6 +488,7 @@ Animals represent the temperament and nature of the Nakshatra:
 - Ashwini, Bharani, Rohini, Mrigashira, Ashlesha, Pushya, Magha, Purva Phalguni, Uttara Phalguni, Anuradha, Uttara Ashadha, Uttara Bhadrapada, Revati
 - Remedies: Earth-related offerings, gardening, grounding practices
 
+> **来源标签**: 【古典·千年传承】 — 27星宿神祇传统描述
 ---
 
 **Remember**: Nakshatras are the lunar mansions, representing the emotional and psychological dimension of Vedic astrology. They provide deep insight into the soul's journey, karmic patterns, and spiritual evolution of an individual.

@@ -3,6 +3,7 @@
 > **版本**：v1.0 | **日期**：2026-04-24
 > **来源**：Astrokarak, MuchNeededAstro, Astrosutras, VedicPlanet, InsightAstro
 
+> **来源标签**: 【现代演绎·Skill整合】 — 预测边界协议（诚实标注框架）
 ---
 
 ## 核心原则

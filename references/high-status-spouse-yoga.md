@@ -3,6 +3,7 @@
 > 版本：v1.0 | 日期：2026-04-25 | 来源：用户提供的公众号文章整理
 > 关联文件：spouse-multi-layer-methodology.md, navamsa-marriage-deep-analysis.md, darakaraka-complete-guide.md
 
+> **来源标签**: 【混合·古典+传统+现代】 — 高地位配偶Yoga（古典定义+7宫起算Upachaya现代验证）
 ---
 
 ## 一、核心判定规则（3条）

@@ -3,6 +3,7 @@
 James Braha《Ancient Hindu Astrology》、William Levacy《Beneath a Vedic Sky》、
 BV Raman《How to Judge a Horoscope》、BPHS读书笔记（晴空月明译）
 
+> **来源标签**: 【古典·千年传承】 — 九大星曜传统描述（BPHS+经典注释）
 ---
 
 ## 一、行星基本属性总表

@@ -4,6 +4,7 @@
 > **来源**：Astrokarak "Chart Promise vs Daśā Activation" + Astrosutras "Static Promises and Dynamic Framework"
 > **核心原则**：星盘必须先承诺，大运才能交付。大运是钥匙，承诺是锁。
 
+> **来源标签**: 【现代演绎·Skill整合】 — 承诺评估模板
 ---
 
 ## 使用方法

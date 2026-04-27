@@ -3,6 +3,7 @@
 > **版本**：v1.0 | **日期**：2026-04-24
 > **来源**：全球顶级Jyotish占星师方法论研究（Astrokarak, MuchNeededAstro, VedicPlanet, Astrosutras, DKScore, StarMeet）
 
+> **来源标签**: 【现代演绎·Skill整合】 — 预测输出协议（标准化格式规范）
 ---
 
 ## 一、四等级预测深度标注

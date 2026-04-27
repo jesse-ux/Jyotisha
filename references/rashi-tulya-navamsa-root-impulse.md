@@ -3,6 +3,7 @@
 > 来源：公众号文章「2印度占星」和「3印度占星」，整合 Rashi Tulya Navamsa 投射技法 + Navamsa Root Impulse 深层动机分析。
 > 版本：v1.0 | 2026-04-25
 
+> **来源标签**: 【混合·古典+传统+现代】 — Rashi Tulya Navamsa根源冲动7行星深层动机（公众号整合）
 ---
 
 ## 第一部分：Rashi Tulya Navamsa（星座等位 Navamsa）

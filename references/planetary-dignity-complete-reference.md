@@ -4,6 +4,7 @@
 > 来源：PocketPandit, Celesian, Parasara Jyotish, StarMeet, Vedicmarga, omai.app, Jothishi
 > 整理日期：2026-04-25
 
+> **来源标签**: 【混合·古典+传统+现代】 — 行星尊严与度数完整参考（精确旺衰度数+Moolatrikona+燃烧阈值+DK协议）
 ---
 
 ## 一、行星精确旺衰度数表
