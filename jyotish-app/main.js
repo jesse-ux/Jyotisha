@@ -15,6 +15,7 @@ import { renderSouthIndianChart, renderNorthIndianChart, setChartStyle, getChart
 import {
   HOUSE_MEANINGS, PLANET_IN_HOUSE, NAKSHATRA_DATA,
   YOGA_DEFINITIONS, ASPECT_DESC, HOUSE_GROUPS, TRANSIT_EFFECTS,
+  DASHA_THEMES, ASCENDANT_TABLE, PLANET_DIGNITY, NEECHA_BHANGA_RULES,
 } from './interpretation.js';
 import { YOGA_EXTENDED_A } from './yoga-extended.js';
 import { YOGA_EXTENDED_B } from './yoga-extended-b.js';

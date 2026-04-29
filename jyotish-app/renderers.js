@@ -6,6 +6,7 @@ import { SIGNS, SIGNS_CN, PLANET_CN, PLANET_SYMBOLS } from './jyotish-engine.js'
 import { VARGA_DEFS } from './jyotish-advanced.js';
 import { renderSouthIndianChart } from './chart-renderer.js';
 import { t, signName, planetName, statusName, houseLabel, yearsLabel } from './i18n.js';
+import { DASHA_THEMES, NAKSHATRA_DATA, PLANET_DIGNITY, ASCENDANT_TABLE } from './interpretation.js';
 const $ = id => document.getElementById(id);
 
 // ========== Varga 分盘星座计算（与 jyotish-advanced.js 同逻辑） ==========
@@ -238,11 +239,14 @@ export function renderDasha3Level(data) {
     const cd = data.current_dasha;
     const curSub = cd.antardasha?.find(a => a.is_current);
     const curPraty = curSub?.pratyantardasha?.find(p => p.is_current);
+    const theme = DASHA_THEMES[cd.lord];
+    const themeHtml = theme ? `<div class="dasha-theme">${theme.theme}</div><div class="dasha-detail"><span class="dasha-pos">✦ ${theme.positive}</span><span class="dasha-neg">⚠ ${theme.negative}</span></div>` : '';
     currentEl.innerHTML = `
       <div><div class="dasha-current-label">${t('dasha.maha')}</div><div class="dasha-current-planet">${planetName(cd.lord)}</div></div>
       <div><div class="dasha-current-label">${t('dasha.antar')}</div><div class="dasha-current-sub">${curSub ? planetName(curSub.lord) : '-'}</div></div>
       <div><div class="dasha-current-label">${t('dasha.praty')}</div><div class="dasha-current-sub">${curPraty ? planetName(curPraty.lord) : '-'}</div></div>
       <div class="dasha-current-date">${cd.start} ~ ${cd.end}</div>
+      ${themeHtml}
     `;
   }
 

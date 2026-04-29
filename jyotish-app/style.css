@@ -461,6 +461,10 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
 .dasha-current-planet { font-size: 22px; font-weight: 700; color: var(--text-heading); }
 .dasha-current-sub { font-size: 14px; color: var(--purple); }
 .dasha-current-date { font-size: 12px; color: var(--text-secondary); margin-left: auto; }
+.dasha-theme { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 6px; padding: 4px 8px; background: var(--card-bg); border-radius: 6px; }
+.dasha-detail { font-size: 11px; margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+.dasha-pos { color: #2d8f4e; }
+.dasha-neg { color: #c0392b; }
 
 .dasha-timeline { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 20px; }
 .dasha-bar {
