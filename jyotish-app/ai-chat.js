@@ -1,0 +1,426 @@
+/**
+ * AI Chat Module — 星盘咨询 · AI 对话
+ * 浮动按钮 + 星盘库(LocalStorage) + AI 对话面板
+ */
+import { SIGNS_CN, PLANET_CN, SIGNS } from './jyotish-engine.js';
+import { t, getLang, signName, planetName } from './i18n.js';
+
+const STORAGE_KEY = 'jyotish_chart_library';
+const CHAT_CTX_KEY = 'jyotish_chat_context';
+
+let _currentChartData = null;
+let _selectedChartId = null;
+let _panelEl = null;
+let _fabEl = null;
+let _authToken = null;
+let _authUser = null;
+
+// ============================================================================
+// 初始化
+// ============================================================================
+export function initAIChat() {
+  createFAB();
+  createPanel();
+}
+
+// ============================================================================
+// 设置当前 chartData（排盘后调用）
+// ============================================================================
+export function aiChatSetChartData(cd) {
+  _currentChartData = cd;
+  if (cd) {
+    _selectedChartId = buildChartId(cd);
+    refreshChartSelect();
+  }
+}
+
+// ============================================================================
+// 认证状态同步（由 auth.js 调用）
+// ============================================================================
+export function aiChatSetAuth(token, user) {
+  _authToken = token;
+  _authUser = user;
+}
+
+// ============================================================================
+// 浮动按钮
+// ============================================================================
+function createFAB() {
+  _fabEl = document.createElement('button');
+  _fabEl.className = 'ai-fab';
+  _fabEl.innerHTML = `<span class="ai-fab-icon">✦</span><span class="ai-fab-text">${t('ai.fab.text')}</span>`;
+  _fabEl.title = t('ai.fab.title');
+  _fabEl.addEventListener('click', togglePanel);
+  document.body.appendChild(_fabEl);
+
+  // 首次使用：脉冲动画 + 引导气泡
+  if (!localStorage.getItem('jyotish_fab_seen')) {
+    _fabEl.classList.add('ai-fab-pulse');
+    const tip = document.createElement('div');
+    tip.className = 'ai-fab-tip';
+    tip.textContent = t('ai.fab.tip');
+    document.body.appendChild(tip);
+    // 点击后消失
+    const dismiss = () => {
+      localStorage.setItem('jyotish_fab_seen', '1');
+      _fabEl.classList.remove('ai-fab-pulse');
+      tip.style.opacity = '0';
+      setTimeout(() => tip.remove(), 300);
+    };
+    _fabEl.addEventListener('click', dismiss, {once: true});
+    // 8秒后自动消失
+    setTimeout(dismiss, 8000);
+  }
+}
+
+// ============================================================================
+// 聊天面板
+// ============================================================================
+function createPanel() {
+  _panelEl = document.createElement('div');
+  _panelEl.className = 'ai-panel';
+  _panelEl.innerHTML = `
+    <div class="ai-panel-header">
+      <div class="ai-panel-title">${t('ai.panel.title')}</div>
+      <button class="ai-panel-close">&times;</button>
+    </div>
+    <div class="ai-chart-select">
+      <label>${t('ai.select.chart')}</label>
+      <select id="ai-chart-selector"></select>
+      <div class="ai-chart-actions">
+        <button class="ai-chart-btn" id="ai-save-chart">${t('ai.save.chart')}</button>
+        <button class="ai-chart-btn" id="ai-del-chart">${t('ai.delete')}</button>
+      </div>
+    </div>
+    <div class="ai-messages" id="ai-messages">
+      <div class="ai-msg system">${t('ai.welcome')}</div>
+    </div>
+    <div class="ai-input-area">
+      <input class="ai-input" id="ai-input" placeholder="${t('ai.placeholder')}" />
+      <button class="ai-send" id="ai-send">${t('ai.send')}</button>
+    </div>
+  `;
+  document.body.appendChild(_panelEl);
+
+  // 事件
+  _panelEl.querySelector('.ai-panel-close').addEventListener('click', closePanel);
+  _panelEl.querySelector('#ai-save-chart').addEventListener('click', saveCurrentChart);
+  _panelEl.querySelector('#ai-del-chart').addEventListener('click', deleteSelectedChart);
+  _panelEl.querySelector('#ai-send').addEventListener('click', sendMessage);
+  _panelEl.querySelector('#ai-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  _panelEl.querySelector('#ai-chart-selector').addEventListener('change', e => {
+    _selectedChartId = e.target.value;
+  });
+
+  refreshChartSelect();
+}
+
+function togglePanel() {
+  _panelEl.classList.toggle('open');
+}
+function closePanel() {
+  _panelEl.classList.remove('open');
+}
+
+// ============================================================================
+// 星盘库管理（LocalStorage）
+// ============================================================================
+function getLibrary() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveLibrary(lib) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(lib));
+}
+
+function buildChartId(cd) {
+  if (!cd?.birth_info) return 'unknown';
+  const bi = cd.birth_info;
+  return `${bi.date}_${bi.lat}_${bi.lon}_${bi.tz}`;
+}
+
+function chartLabel(cd) {
+  if (!cd?.birth_info) return t('ai.unknown.chart');
+  const bi = cd.birth_info;
+  const asc = cd.ascendant;
+  return `${bi.date} ${asc ? signName(asc.sign) : ''} ↑ (${bi.lat}°,${bi.lon}°)`;
+}
+
+function refreshChartSelect() {
+  const sel = _panelEl?.querySelector('#ai-chart-selector');
+  if (!sel) return;
+  const lib = getLibrary();
+  sel.innerHTML = `<option value="">-- ${t('ai.select.saved')} --</option>`;
+  for (const entry of lib) {
+    const opt = document.createElement('option');
+    opt.value = entry.id;
+    opt.textContent = entry.label;
+    if (entry.id === _selectedChartId) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  // 如果有当前星盘但未保存，添加临时选项
+  if (_currentChartData && !lib.find(e => e.id === _selectedChartId)) {
+    const opt = document.createElement('option');
+    opt.value = _selectedChartId || 'current';
+    opt.textContent = chartLabel(_currentChartData) + ` ${t('ai.current')}`;
+    opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function saveCurrentChart() {
+  if (!_currentChartData) { addSystemMsg(t('ai.no.chart.gen')); return; }
+  const id = buildChartId(_currentChartData);
+  const lib = getLibrary();
+  if (lib.find(e => e.id === id)) { addSystemMsg(t('ai.chart.exists')); return; }
+  lib.push({
+    id,
+    label: chartLabel(_currentChartData),
+    data: _currentChartData,
+    savedAt: new Date().toISOString(),
+  });
+  saveLibrary(lib);
+  refreshChartSelect();
+  addSystemMsg(t('ai.chart.saved'));
+}
+
+function deleteSelectedChart() {
+  const sel = _panelEl?.querySelector('#ai-chart-selector');
+  if (!sel || !sel.value) { addSystemMsg(t('ai.select.first')); return; }
+  let lib = getLibrary();
+  lib = lib.filter(e => e.id !== sel.value);
+  saveLibrary(lib);
+  refreshChartSelect();
+  addSystemMsg(t('ai.chart.deleted'));
+}
+
+function getSelectedChartData() {
+  const sel = _panelEl?.querySelector('#ai-chart-selector');
+  if (!sel || !sel.value) return _currentChartData;
+  // 如果选的是当前星盘
+  if (_currentChartData && buildChartId(_currentChartData) === sel.value) return _currentChartData;
+  // 从库中查找
+  const lib = getLibrary();
+  const entry = lib.find(e => e.id === sel.value);
+  return entry?.data || _currentChartData;
+}
+
+// ============================================================================
+// 对话系统
+// ============================================================================
+function addSystemMsg(text) {
+  const box = _panelEl?.querySelector('#ai-messages');
+  if (!box) return;
+  const div = document.createElement('div');
+  div.className = 'ai-msg system';
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function addUserMsg(text) {
+  const box = _panelEl?.querySelector('#ai-messages');
+  if (!box) return;
+  const div = document.createElement('div');
+  div.className = 'ai-msg user';
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function addAssistantMsg(text) {
+  const box = _panelEl?.querySelector('#ai-messages');
+  if (!box) return;
+  const div = document.createElement('div');
+  div.className = 'ai-msg assistant';
+  div.innerHTML = formatMsg(text);
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function formatMsg(text) {
+  // 简单 markdown: **bold**, \n -> <br>
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+async function sendMessage() {
+  const input = _panelEl?.querySelector('#ai-input');
+  const sendBtn = _panelEl?.querySelector('#ai-send');
+  if (!input || !sendBtn) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  addUserMsg(text);
+  input.value = '';
+  sendBtn.disabled = true;
+
+  const cd = getSelectedChartData();
+  if (!cd) {
+    addAssistantMsg(t('ai.no.chart.or.saved'));
+    sendBtn.disabled = false;
+    return;
+  }
+
+  // 构建星盘摘要上下文
+  const context = buildChartContext(cd);
+
+  // 调用 AI 对话
+  try {
+    const reply = await callAI(text, context);
+    addAssistantMsg(reply);
+  } catch (err) {
+    addAssistantMsg(t('ai.error.prefix') + err.message);
+  }
+  sendBtn.disabled = false;
+}
+
+function buildChartContext(cd) {
+  if (!cd?.planets || !cd?.ascendant) return t('ai.no.data');
+  const asc = cd.ascendant;
+  const bi = cd.birth_info;
+  let ctx = `【${t('ai.no.data').replace(t('ai.no.data'), 'Chart Info')}】\n${t('label.date')}: ${bi?.date || '?'}\nAscendant: ${signName(asc.sign)} (${asc.sign}) ${asc.degree?.toFixed(2) || ''}°\n\n[Planets]\n`;
+  const order = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn','Rahu','Ketu'];
+  for (const pn of order) {
+    const p = cd.planets[pn];
+    if (!p || p.error) continue;
+    ctx += `${planetName(pn)}: ${signName(p.sign)} ${p.degree_in_sign?.toFixed(2) || ''}° H${p.house} ${p.status || ''} ${p.retrograde ? 'R' : ''} ${p.nakshatra || ''}\n`;
+  }
+  return ctx;
+}
+
+// ============================================================================
+// AI API 调用（对接后端 Jyotish Server）
+// ============================================================================
+function getApiBase() {
+  if (window.Capacitor?.isNativePlatform?.()) {
+    return localStorage.getItem('jyotish_api_base') || 'https://your-server.com';
+  }
+  return '';  // 同域部署
+}
+
+async function callAI(userMessage, chartContext) {
+  const apiBase = getApiBase();
+
+  // 优先使用后端 API（需要登录）
+  if (_authToken && apiBase !== undefined) {
+    try {
+      const cd = getSelectedChartData();
+      const resp = await fetch(`${apiBase}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${_authToken}`,
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          chart_context: chartContext,
+          chart_data: cd,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        // 401 = token 过期
+        if (resp.status === 401) {
+          return '**登录已过期，请重新登录后继续对话。**\n\n点击页面右上角头像，退出后重新登录即可。';
+        }
+        // 429 = 超出限额
+        if (resp.status === 429) {
+          const todayUsage = data.todayUsage ?? '?';
+          const limit = data.limit ?? 3;
+          return `**今日对话次数已用完 (${todayUsage}/${limit})**\n\n免费用户每日 3 次 AI 对话。升级高级会员可享无限对话。\n\n点击右上角头像 → 升级高级会员。`;
+        }
+        throw new Error(data.error || `服务器错误 (${resp.status})`);
+      }
+      // 更新用量显示
+      if (data.todayUsage !== undefined && _authUser) {
+        _authUser.subscription = _authUser.subscription || {};
+        _authUser.subscription.todayUsage = data.todayUsage;
+        _authUser.subscription.limit = data.limit;
+        // 通知 auth 刷新 UI
+        localStorage.setItem('jyotish_auth_user', JSON.stringify(_authUser));
+        document.querySelectorAll('[data-auth-header]').forEach(el => {
+          // 触发 auth UI 更新（通过自定义事件）
+          el.dispatchEvent(new CustomEvent('jyotish:usage-update'));
+        });
+      }
+      return data.reply || data.message || data.content || t('ai.no.reply');
+    } catch (err) {
+      if (err.message.includes('登录已过期') || err.message.includes('次数已用完') || err.message.includes('expired') || err.message.includes('limit')) {
+        return err.message;
+      }
+      console.warn('[AI Chat] Backend API failed, falling back:', err);
+    }
+  }
+
+  // 检查旧版自定义 endpoint
+  const customEndpoint = localStorage.getItem('jyotish_ai_endpoint');
+  if (customEndpoint) {
+    try {
+      const resp = await fetch(customEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          chart_context: chartContext,
+          chart_data: getSelectedChartData(),
+        }),
+      });
+      if (!resp.ok) throw new Error(`API 返回错误: ${resp.status}`);
+      const data = await resp.json();
+      return data.reply || data.message || data.content || 'AI 未返回内容';
+    } catch (err) {
+      console.warn('[AI Chat] Custom endpoint failed:', err);
+    }
+  }
+
+  // 未登录提示
+  if (!_authToken) {
+    return '**请先登录以使用 AI 占星师对话**\n\n登录后每日可免费对话 3 次。\n\n点击页面右上角「登录」按钮即可注册/登录。\n\n💡 支持邮箱注册和 Apple 登录。';
+  }
+
+  // 兜底：本地回复
+  return generateLocalReply(userMessage, chartContext);
+}
+
+function generateLocalReply(message, ctx) {
+  const cd = getSelectedChartData();
+  const asc = cd?.ascendant;
+  const lower = message.toLowerCase();
+  const lang = getLang();
+
+  if (lower.includes('事业') || lower.includes('工作') || lower.includes('职业') || lower.includes('career') || lower.includes('job')) {
+    const h10 = cd?.planets ? Object.entries(cd.planets).filter(([,p]) => p.house === 10).map(([pn]) => planetName(pn)) : [];
+    return lang === 'en'
+      ? `**Career Analysis (D1 Rasi)**\n\nAscendant ${signName(asc?.sign)} — 10th House:\n${h10.length > 0 ? '- Planets in H10: ' + h10.join(', ') : '- No planets in H10'}\n\n⚠️ Full career analysis requires D10, Dasha cycles, and Transit.\n\n💡 Configure AI backend for deeper insights.`
+      : `**事业分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)} 的第10宫：\n${h10.length > 0 ? '- 10宫内行星: ' + h10.join('、') : '- 10宫无行星落入'}\n\n⚠️ 完整职业分析需 D10、Dasha 大运、Transit 等。\n\n💡 建议配置 AI 后端获取更深入的分析。`;
+  }
+
+  if (lower.includes('婚姻') || lower.includes('感情') || lower.includes('配偶') || lower.includes('恋爱') || lower.includes('marriage') || lower.includes('love') || lower.includes('spouse')) {
+    const h7 = cd?.planets ? Object.entries(cd.planets).filter(([,p]) => p.house === 7).map(([pn]) => planetName(pn)) : [];
+    return lang === 'en'
+      ? `**Marriage & Relationship (D1 Rasi)**\n\nAscendant ${signName(asc?.sign)} — 7th House:\n${h7.length > 0 ? '- Planets in H7: ' + h7.join(', ') : '- No planets in H7'}\n\n⚠️ Full analysis needs DK, D9, Vimshottari Venus periods.\n\n💡 Configure AI backend for complete reading.`
+      : `**婚姻感情分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)} 的第7宫：\n${h7.length > 0 ? '- 7宫内行星: ' + h7.join('、') : '- 7宫无行星落入'}\n\n⚠️ 完整婚姻分析需 DK、D9、Dasha 等。\n\n💡 配置 AI 后端获取完整解读。`;
+  }
+
+  if (lower.includes('财运') || lower.includes('财富') || lower.includes('收入') || lower.includes('wealth') || lower.includes('money') || lower.includes('finance')) {
+    return lang === 'en'
+      ? `**Wealth Analysis (D1 Rasi)**\n\nAscendant ${signName(asc?.sign)}:\n- H2 (earned income) and H11 (gains) are key houses\n- Jupiter and Venus status directly affects wealth potential\n\n⚠️ Full analysis needs D2, Dasha, and Transit.\n\n💡 Configure AI backend for deeper wealth reading.`
+      : `**财运分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)}:\n- 第2宫(正财)和第11宫(收入)是关键宫位\n- Jupiter 和 Venus 的状态直接影响财富潜力\n\n⚠️ 完整分析需 D2、Dasha 和 Transit。\n\n💡 配置 AI 后端获取深度财运解读。`;
+  }
+
+  if (lower.includes('健康') || lower.includes('身体') || lower.includes('health')) {
+    return lang === 'en'
+      ? `**Health Analysis (D1 Rasi)**\n\nAscendant ${signName(asc?.sign)}:\n- H1 represents body and vitality\n- H6 represents disease\n- H8 represents chronic health issues\n\n⚠️ Full analysis requires D6 (Shashtamsa).\n\n💡 Configure AI backend for deeper health reading.`
+      : `**健康分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)}:\n- 第1宫代表身体和生命力\n- 第6宫代表疾病\n- 第8宫代表慢性健康问题\n\n⚠️ 完整分析需 D6。\n\n💡 配置 AI 后端获取深度健康解读。`;
+  }
+
+  // 默认回复
+  return lang === 'en'
+    ? `**Chart Overview**\n\nAscendant: ${signName(asc?.sign)} ${asc?.degree?.toFixed(2) || ''}°\n\nYou can ask about:\n- Career\n- Marriage & relationships\n- Wealth\n- Health\n- Dasha analysis\n- Transit impacts\n\n💡 **Configure AI backend for full AI reading**\nIn browser console:\n\`localStorage.setItem('jyotish_ai_endpoint', 'YOUR_API_URL')\``
+    : `**星盘概览**\n\n上升: ${signName(asc?.sign)} ${asc?.degree?.toFixed(2) || ''}°\n\n你可以询问以下话题：\n- 事业运 / 工作方向\n- 婚姻感情\n- 财运分析\n- 健康运势\n- Dasha 大运分析\n- Transit 过境影响\n\n💡 **配置 AI 后端可获得完整 AI 解读**\n在浏览器控制台输入:\n\`localStorage.setItem('jyotish_ai_endpoint', '你的API地址')\`\n即可连接你的 Jyotish AI Skill。`;
+}
