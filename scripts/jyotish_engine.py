@@ -712,8 +712,21 @@ def cmd_double_transit_pac(args):
         'event_house': event_house,
         'd1': {'jupiter': {}, 'saturn': {}},
         'd9': {'jupiter': {}, 'saturn': {}},
+        'cl': {'jupiter': {}, 'saturn': {}},
         'double_transit': [],
         'summary': '',
+    }
+
+    # Chandra Lagna 层敏感点
+    moon_lon = natal.get('Moon', {}).get('degree', 0)
+    moon_idx = int((moon_lon % 360) / 30)
+    cl_event_sign = SIGNS[(moon_idx + event_house - 1) % 12]
+    cl_event_lord = SIGN_LORDS[cl_event_sign]
+    cl_event_house_lon = ((moon_idx + event_house - 1) % 12) * 30 + 15
+    cl_event_lord_lon = natal.get(cl_event_lord, {}).get('degree', 0)
+    cl_targets = {
+        f'CL_{event_house}宫({cl_event_sign})': cl_event_house_lon,
+        f'CL_{cl_event_lord}(宫主)': cl_event_lord_lon,
     }
 
     for tp_name in ['Jupiter', 'Saturn']:
@@ -733,11 +746,18 @@ def cmd_double_transit_pac(args):
             if pac:
                 results['d9'][layer][t_name] = pac
 
+        for t_name, t_lon in cl_targets.items():
+            pac = _check_pac(tp_name, tp_lon, t_lon, moon_idx)
+            if pac:
+                results['cl'][layer][t_name] = pac
+
     # 6. Double Transit 判定
     jup_d1 = set(results['d1']['jupiter'].keys())
     sat_d1 = set(results['d1']['saturn'].keys())
     jup_d9 = set(results['d9']['jupiter'].keys())
     sat_d9 = set(results['d9']['saturn'].keys())
+    jup_cl = set(results['cl']['jupiter'].keys())
+    sat_cl = set(results['cl']['saturn'].keys())
 
     # D1 层 overlap
     d1_overlap = jup_d1 & sat_d1
@@ -756,6 +776,16 @@ def cmd_double_transit_pac(args):
             'layer': 'D9', 'target': t,
             'jupiter_pac': results['d9']['jupiter'][t],
             'saturn_pac': results['d9']['saturn'][t],
+            'strength': 'strong',
+        })
+
+    # Chandra Lagna 层 overlap
+    cl_overlap = jup_cl & sat_cl
+    for t in cl_overlap:
+        results['double_transit'].append({
+            'layer': 'CL', 'target': t,
+            'jupiter_pac': results['cl']['jupiter'][t],
+            'saturn_pac': results['cl']['saturn'][t],
             'strength': 'strong',
         })
 
@@ -786,14 +816,22 @@ def cmd_double_transit_pac(args):
     # Summary
     d1_active = len(d1_overlap) > 0
     d9_active = len(d9_overlap) > 0
+    cl_active = len(cl_overlap) > 0
     cross_active = any(d['layer'] == 'D1+D9' for d in results['double_transit'])
 
-    if d1_active and d9_active:
-        results['summary'] = f'✅ Double Transit PAC 确认: D1+D9 双层激活{event_house}宫主题'
+    active_layers = []
+    if d1_active: active_layers.append('D1')
+    if d9_active: active_layers.append('D9')
+    if cl_active: active_layers.append('CL')
+
+    if len(active_layers) >= 2:
+        results['summary'] = f'✅ Double Transit PAC 确认: {"+".join(active_layers)} 多层激活{event_house}宫主题'
     elif d1_active:
-        results['summary'] = f'⚠️ D1 层 Double Transit 激活，D9 层未确认'
+        results['summary'] = f'⚠️ D1 层 Double Transit 激活，D9/CL 层未确认'
     elif d9_active:
-        results['summary'] = f'⚠️ D9 层 Double Transit 激活，D1 层未确认'
+        results['summary'] = f'⚠️ D9 层 Double Transit 激活，D1/CL 层未确认'
+    elif cl_active:
+        results['summary'] = f'⚠️ Chandra Lagna 层 Double Transit 激活，D1/D9 未确认'
     elif cross_active:
         results['summary'] = f'⚠️ 跨层间接 Double Transit (D1+D9)，需结合 Dasha 确认'
     else:
@@ -804,10 +842,14 @@ def cmd_double_transit_pac(args):
         'd1_saturn_targets': sorted(sat_d1),
         'd9_jupiter_targets': sorted(jup_d9),
         'd9_saturn_targets': sorted(sat_d9),
+        'cl_jupiter_targets': sorted(jup_cl),
+        'cl_saturn_targets': sorted(sat_cl),
         'd1_overlap': sorted(d1_overlap),
         'd9_overlap': sorted(d9_overlap),
+        'cl_overlap': sorted(cl_overlap),
         'd9_ascendant': d9_asc_sign,
         'event_lord_d9_sign': event_lord_d9_sign,
+        'chandra_lagna': SIGNS[moon_idx],
     }
 
     return results

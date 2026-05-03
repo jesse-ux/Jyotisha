@@ -410,7 +410,22 @@ export function computeDoubleTransitPAC(transitPlanets, natalPlanets, natalAscSi
     [`${llName}_D9(${llD9Sign})`]: llD9SignIdx * 30 + 15,
   };
 
+  // --- 计算 Chandra Lagna 层敏感点（强制规范 v1.9.0） ---
+  const moonLon = natalPlanets.Moon?.degree ?? 0;
+  const moonSignIdx = Math.floor((moonLon % 360) / 30);
+  const moonEventSignIdx = (moonSignIdx + eventHouse - 1) % 12;
+  const moonEventSign = SIGNS[moonEventSignIdx];
+  const moonEventLord = SIGN_LORDS[moonEventSign];
+  const moonEventHouseLon = (moonSignIdx * 30 + eventHouse - 1) * 30 + 15;
+  const moonEventLordLon = natalPlanets[moonEventLord]?.degree ?? 0;
+
+  const clTargets = {
+    [`CL_${eventHouse}宫(${moonEventSign})`]: moonEventHouseLon,
+    [`CL_${moonEventLord}(宫主)`]: moonEventLordLon,
+  };
+
   // --- 检查 Jupiter 和 Saturn 的 PAC ---
+  results.cl = { jupiter: {}, saturn: {} }; // Chandra Lagna 层
   for (const transitPlanet of ['Jupiter', 'Saturn']) {
     const tp = transitPlanets[transitPlanet];
     if (!tp) continue;
@@ -432,6 +447,14 @@ export function computeDoubleTransitPAC(transitPlanets, natalPlanets, natalAscSi
         results.d9[layer][tName] = pac;
       }
     }
+
+    // Chandra Lagna 层 PAC 检查（强制规范：必须从月亮看过境）
+    for (const [tName, tLon] of Object.entries(clTargets)) {
+      const pac = checkPAC(transitPlanet, tpLon, tLon, moonSignIdx);
+      if (pac.length > 0) {
+        results.cl[layer][tName] = pac;
+      }
+    }
   }
 
   // --- Double Transit 判定 ---
@@ -439,6 +462,8 @@ export function computeDoubleTransitPAC(transitPlanets, natalPlanets, natalAscSi
   const satD1Targets = new Set(Object.keys(results.d1.saturn));
   const jupD9Targets = new Set(Object.keys(results.d9.jupiter));
   const satD9Targets = new Set(Object.keys(results.d9.saturn));
+  const jupCLTargets = new Set(Object.keys(results.cl.jupiter));
+  const satCLTargets = new Set(Object.keys(results.cl.saturn));
 
   // D1 层 Double Transit
   const d1Overlap = [...jupD1Targets].filter(t => satD1Targets.has(t));
@@ -458,6 +483,17 @@ export function computeDoubleTransitPAC(transitPlanets, natalPlanets, natalAscSi
       layer: 'D9', target: t,
       jupiter_pac: results.d9.jupiter[t],
       saturn_pac: results.d9.saturn[t],
+      strength: 'strong',
+    });
+  }
+
+  // Chandra Lagna 层 Double Transit
+  const clOverlap = [...jupCLTargets].filter(t => satCLTargets.has(t));
+  for (const t of clOverlap) {
+    results.double_transit.push({
+      layer: 'CL', target: t,
+      jupiter_pac: results.cl.jupiter[t],
+      saturn_pac: results.cl.saturn[t],
       strength: 'strong',
     });
   }
@@ -494,14 +530,18 @@ export function computeDoubleTransitPAC(transitPlanets, natalPlanets, natalAscSi
   // --- Summary ---
   const d1Active = d1Overlap.length > 0;
   const d9Active = d9Overlap.length > 0;
+  const clActive = clOverlap.length > 0;
   const crossActive = results.double_transit.filter(d => d.layer === 'D1+D9').length > 0;
 
-  if (d1Active && d9Active) {
-    results.summary = `✅ Double Transit PAC 确认: D1+D9 双层激活${eventHouse}宫主题`;
+  const activeLayers = [d1Active && 'D1', d9Active && 'D9', clActive && 'CL'].filter(Boolean);
+  if (activeLayers.length >= 2) {
+    results.summary = `✅ Double Transit PAC 确认: ${activeLayers.join('+')} 多层激活${eventHouse}宫主题`;
   } else if (d1Active) {
-    results.summary = `⚠️ D1 层 Double Transit 激活，D9 层未确认`;
+    results.summary = `⚠️ D1 层 Double Transit 激活，D9/CL 层未确认`;
   } else if (d9Active) {
-    results.summary = `⚠️ D9 层 Double Transit 激活，D1 层未确认`;
+    results.summary = `⚠️ D9 层 Double Transit 激活，D1/CL 层未确认`;
+  } else if (clActive) {
+    results.summary = `⚠️ Chandra Lagna 层 Double Transit 激活，D1/D9 未确认`;
   } else if (crossActive) {
     results.summary = `⚠️ 跨层间接 Double Transit (D1+D9)，需结合 Dasha 确认`;
   } else {
@@ -513,8 +553,12 @@ export function computeDoubleTransitPAC(transitPlanets, natalPlanets, natalAscSi
     d1_saturn_targets: [...satD1Targets],
     d9_jupiter_targets: [...jupD9Targets],
     d9_saturn_targets: [...satD9Targets],
+    cl_jupiter_targets: [...jupCLTargets],
+    cl_saturn_targets: [...satCLTargets],
     d1_overlap: d1Overlap,
     d9_overlap: d9Overlap,
+    cl_overlap: clOverlap,
+    chandra_lagna: SIGNS[moonSignIdx],
   };
 
   return results;
