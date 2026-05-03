@@ -296,6 +296,231 @@ export function computeTransitAVScore(transitPlanets, natalAscSign, avData) {
 }
 
 // ============================================================================
+// Navamsa (D9) 星座计算工具
+// ============================================================================
+function navamsaSignIdx(lon) {
+  const l = ((lon % 360) + 360) % 360;
+  const si = Math.floor(l / 30);
+  const d = l - si * 30;
+  const ni = Math.floor(d / (30 / 9));
+  const elStarts = [0, 9, 6, 3]; // Aries/Fire=0, Taurus/Earth=9, Gemini/Air=6, Cancer/Water=3
+  return (elStarts[si % 4] + ni) % 12;
+}
+
+// ============================================================================
+// PAC 检查: Position(同宫) / Aspect(相位) / Conjunction(合相≤10°)
+// KN Rao Double Transit 核心: Saturn/Jupiter 通过 PAC 关联目标
+// ============================================================================
+function checkPAC(planetName, planetLon, targetLon, ascSignIdx) {
+  const results = [];
+  const pSignIdx = Math.floor((((planetLon % 360) + 360) % 360) / 30);
+  const tSignIdx = Math.floor((((targetLon % 360) + 360) % 360) / 30);
+  const pHouse = ((pSignIdx - ascSignIdx + 12) % 12) + 1;
+  const tHouse = ((tSignIdx - ascSignIdx + 12) % 12) + 1;
+
+  // P: Position — 同宫
+  if (pHouse === tHouse) {
+    results.push({ type: 'Position', desc: `同宫(${tHouse}宫)` });
+  }
+
+  // C: Conjunction — 合相 ≤10°
+  let diff = Math.abs(planetLon - targetLon) % 360;
+  if (diff > 180) diff = 360 - diff;
+  if (diff <= 10) {
+    results.push({ type: 'Conjunction', desc: `合相(${diff.toFixed(2)}°)` });
+  }
+
+  // A: Aspect — Graha Drishti
+  const aspects = PLANET_ASPECTS[planetName] || [7];
+  for (const offset of aspects) {
+    if (((tHouse - pHouse + 12) % 12) === offset) {
+      results.push({ type: 'Aspect', offset, desc: `${offset}宫相位` });
+    }
+  }
+
+  return results;
+}
+
+// ============================================================================
+// Double Transit PAC + D9 层（KN Rao 完整实现）
+// 
+// 核心逻辑:
+// 1. D1 层: Saturn/Jupiter 通过 PAC 关联事件宫/宫主/LL/7L
+// 2. D9 层: Saturn/Jupiter 通过 PAC 关联 D9 宫主/D9 Asc
+// 3. 两者必须同时激活同一目标 → Double Transit 确认
+//
+// 精度: KN Rao 体系 110-115 星盘测试 97% 准确率（使用 D9 Navamsa）
+// ============================================================================
+export function computeDoubleTransitPAC(transitPlanets, natalPlanets, natalAscSign, natalAscDegree, eventHouse = 7) {
+  const ai = SIGNS.indexOf(natalAscSign);
+  const results = {
+    event_house: eventHouse,
+    d1: { jupiter: {}, saturn: {} },
+    d9: { jupiter: {}, saturn: {} },
+    double_transit: [],
+    summary: '',
+  };
+
+  // --- 计算 D1 层敏感点 ---
+  const eventSignIdx = (ai + eventHouse - 1) % 12;
+  const eventSign = SIGNS[eventSignIdx];
+  const eventLord = SIGN_LORDS[eventSign];
+  const llName = SIGN_LORDS[natalAscSign]; // Lagna Lord
+  const eventLordReverseIdx = (ai + 6) % 12; // 对宫 = (7宫-1)
+  const oppositeLord = SIGN_LORDS[SIGNS[eventLordReverseIdx]]; // 7L (for marriage, eventHouse=7 → 7L)
+
+  // 事件宫经度中点
+  const eventHouseLon = (ai * 30 + eventHouse - 1) * 30 + 15;
+  // LL 经度
+  const llLon = natalPlanets[llName]?.degree ?? natalPlanets[llName]?.lon ?? 0;
+  // 事件宫主经度
+  const eventLordLon = natalPlanets[eventLord]?.degree ?? natalPlanets[eventLord]?.lon ?? 0;
+  // 对宫主经度 (7L for marriage)
+  const oppLordLon = natalPlanets[oppositeLord]?.degree ?? natalPlanets[oppositeLord]?.lon ?? 0;
+
+  const d1Targets = {
+    [`${eventHouse}宫`]: eventHouseLon,
+    [`${eventLord}(宫主)`]: eventLordLon,
+    [`${llName}(LL)`]: llLon,
+    [`${oppositeLord}(对宫主)`]: oppLordLon,
+  };
+
+  // --- 计算 D9 层敏感点 ---
+  const d9AscSignIdx = navamsaSignIdx(natalAscDegree);
+  const d9AscSign = SIGNS[d9AscSignIdx];
+  // D9 事件宫主: D9盘的 eventHouse 宫的星座主星
+  const d9EventSignIdx = (d9AscSignIdx + eventHouse - 1) % 12;
+  const d9EventSign = SIGNS[d9EventSignIdx];
+  const d9EventLord = SIGN_LORDS[d9EventSign];
+  // 宫主的 D9 星座（KN Rao 关键: 宫主 D9 星座是第三个目标）
+  const eventLordD9SignIdx = navamsaSignIdx(eventLordLon);
+  const eventLordD9Sign = SIGNS[eventLordD9SignIdx];
+  // LL 的 D9 星座
+  const llD9SignIdx = navamsaSignIdx(llLon);
+  const llD9Sign = SIGNS[llD9SignIdx];
+
+  // D9 层用 D9 Asc 作为参考点
+  const d9EventHouseLon = (d9AscSignIdx * 30 + eventHouse - 1) * 30 + 15;
+  const d9EventLordLon = natalPlanets[d9EventLord]?.degree ?? natalPlanets[d9EventLord]?.lon ?? 0;
+
+  const d9Targets = {
+    [`D9_${eventHouse}宫`]: d9EventHouseLon,
+    [`D9_${eventLord}(宫主)`]: d9EventLordLon,
+    [`${eventLord}_D9(${eventLordD9Sign})`]: eventLordD9SignIdx * 30 + 15,
+    [`${llName}_D9(${llD9Sign})`]: llD9SignIdx * 30 + 15,
+  };
+
+  // --- 检查 Jupiter 和 Saturn 的 PAC ---
+  for (const transitPlanet of ['Jupiter', 'Saturn']) {
+    const tp = transitPlanets[transitPlanet];
+    if (!tp) continue;
+    const tpLon = tp.degree;
+    const layer = transitPlanet === 'Jupiter' ? 'jupiter' : 'saturn';
+
+    // D1 层 PAC 检查
+    for (const [tName, tLon] of Object.entries(d1Targets)) {
+      const pac = checkPAC(transitPlanet, tpLon, tLon, ai);
+      if (pac.length > 0) {
+        results.d1[layer][tName] = pac;
+      }
+    }
+
+    // D9 层 PAC 检查 (用 D9 Asc 作为参考点)
+    for (const [tName, tLon] of Object.entries(d9Targets)) {
+      const pac = checkPAC(transitPlanet, tpLon, tLon, d9AscSignIdx);
+      if (pac.length > 0) {
+        results.d9[layer][tName] = pac;
+      }
+    }
+  }
+
+  // --- Double Transit 判定 ---
+  const jupD1Targets = new Set(Object.keys(results.d1.jupiter));
+  const satD1Targets = new Set(Object.keys(results.d1.saturn));
+  const jupD9Targets = new Set(Object.keys(results.d9.jupiter));
+  const satD9Targets = new Set(Object.keys(results.d9.saturn));
+
+  // D1 层 Double Transit
+  const d1Overlap = [...jupD1Targets].filter(t => satD1Targets.has(t));
+  for (const t of d1Overlap) {
+    results.double_transit.push({
+      layer: 'D1', target: t,
+      jupiter_pac: results.d1.jupiter[t],
+      saturn_pac: results.d1.saturn[t],
+      strength: 'strong',
+    });
+  }
+
+  // D9 层 Double Transit
+  const d9Overlap = [...jupD9Targets].filter(t => satD9Targets.has(t));
+  for (const t of d9Overlap) {
+    results.double_transit.push({
+      layer: 'D9', target: t,
+      jupiter_pac: results.d9.jupiter[t],
+      saturn_pac: results.d9.saturn[t],
+      strength: 'strong',
+    });
+  }
+
+  // 跨层 Double Transit (Jupiter D1 + Saturn D9 或反之，激活同一主题)
+  // 例如 Jupiter PAC D1 7宫 + Saturn PAC D9 7宫 = 间接 Double Transit
+  for (const d1t of jupD1Targets) {
+    for (const d9t of satD9Targets) {
+      if (d1t.replace(/[^\d]/g, '') === d9t.replace(/[^\d]/g, '') || 
+          d1t.includes(eventLord) && d9t.includes(eventLord)) {
+        results.double_transit.push({
+          layer: 'D1+D9', target: `Jupiter(D1)${d1t} + Saturn(D9)${d9t}`,
+          jupiter_pac: results.d1.jupiter[d1t],
+          saturn_pac: results.d9.saturn[d9t],
+          strength: 'moderate',
+        });
+      }
+    }
+  }
+  for (const d1t of satD1Targets) {
+    for (const d9t of jupD9Targets) {
+      if (d1t.replace(/[^\d]/g, '') === d9t.replace(/[^\d]/g, '') || 
+          d1t.includes(eventLord) && d9t.includes(eventLord)) {
+        results.double_transit.push({
+          layer: 'D1+D9', target: `Saturn(D1)${d1t} + Jupiter(D9)${d9t}`,
+          jupiter_pac: results.d9.jupiter[d9t],
+          saturn_pac: results.d1.saturn[d1t],
+          strength: 'moderate',
+        });
+      }
+    }
+  }
+
+  // --- Summary ---
+  const d1Active = d1Overlap.length > 0;
+  const d9Active = d9Overlap.length > 0;
+  const crossActive = results.double_transit.filter(d => d.layer === 'D1+D9').length > 0;
+
+  if (d1Active && d9Active) {
+    results.summary = `✅ Double Transit PAC 确认: D1+D9 双层激活${eventHouse}宫主题`;
+  } else if (d1Active) {
+    results.summary = `⚠️ D1 层 Double Transit 激活，D9 层未确认`;
+  } else if (d9Active) {
+    results.summary = `⚠️ D9 层 Double Transit 激活，D1 层未确认`;
+  } else if (crossActive) {
+    results.summary = `⚠️ 跨层间接 Double Transit (D1+D9)，需结合 Dasha 确认`;
+  } else {
+    results.summary = `❌ 无 Double Transit PAC 激活`;
+  }
+
+  results.stats = {
+    d1_jupiter_targets: [...jupD1Targets],
+    d1_saturn_targets: [...satD1Targets],
+    d9_jupiter_targets: [...jupD9Targets],
+    d9_saturn_targets: [...satD9Targets],
+    d1_overlap: d1Overlap,
+    d9_overlap: d9Overlap,
+  };
+
+  return results;
+}
+
+// ============================================================================
 // Transit 行星对宫位影响摘要
 // ============================================================================
 export function computeTransitHouseImpact(transitPlanets, natalAscSign) {
@@ -334,4 +559,226 @@ export function computeTransitHouseImpact(transitPlanets, natalAscSign) {
   }
 
   return houseImpacts;
+}
+
+// ============================================================================
+// Transit LL/7L 连接 + 互换（Parivartana）
+//
+// P5: Transit LL PAC natal 7L / Transit 7L PAC natal LL (98%命中率)
+// P8: Transit LL 过 7H 或 Transit 7L 过 Lagna (59%命中率)
+// + Parivartana 互换检测: Transit LL 在 7L 星座 且 Transit 7L 在 LL 星座
+// ============================================================================
+export function computeTransitLL7L(transitPlanets, natalPlanets, natalAscSign) {
+  const ai = SIGNS.indexOf(natalAscSign);
+  const llName = SIGN_LORDS[natalAscSign]; // Lagna Lord
+  const sevenSign = SIGNS[(ai + 6) % 12]; // 7宫星座
+  const sevenLord = SIGN_LORDS[sevenSign]; // 7L
+
+  const result = {
+    lagna_lord: llName,
+    seventh_lord: sevenLord,
+    p5: { hit: false, details: [] },
+    p8: { hit: false, details: [] },
+    parivartana: { hit: false, details: [] },
+  };
+
+  // Transit LL/7L 位置
+  const tLL = transitPlanets[llName];
+  const t7L = transitPlanets[sevenLord];
+  if (!tLL || !t7L) return result;
+
+  const nLLLon = natalPlanets[llName]?.degree ?? 0;
+  const n7LLon = natalPlanets[sevenLord]?.degree ?? 0;
+
+  // --- P5: Transit LL PAC natal 7L / Transit 7L PAC natal LL ---
+  const pac1 = checkPAC(llName, tLL.degree, n7LLon, ai);
+  if (pac1.length > 0) {
+    result.p5.hit = true;
+    result.p5.details.push({
+      direction: `Transit ${llName} → natal ${sevenLord}`,
+      connections: pac1,
+    });
+  }
+
+  const pac2 = checkPAC(sevenLord, t7L.degree, nLLLon, ai);
+  if (pac2.length > 0) {
+    result.p5.hit = true;
+    result.p5.details.push({
+      direction: `Transit ${sevenLord} → natal ${llName}`,
+      connections: pac2,
+    });
+  }
+
+  // --- P8: Transit LL 过 7H 或 Transit 7L 过 Lagna ---
+  const tLLHouse = ((SIGNS.indexOf(tLL.sign) - ai + 12) % 12) + 1;
+  const t7LHouse = ((SIGNS.indexOf(t7L.sign) - ai + 12) % 12) + 1;
+
+  if (tLLHouse === 7) {
+    result.p8.hit = true;
+    result.p8.details.push(`Transit ${llName}(${tLL.sign})在7H`);
+  }
+  if (t7LHouse === 1) {
+    result.p8.hit = true;
+    result.p8.details.push(`Transit ${sevenLord}(${t7L.sign})在Lagna`);
+  }
+
+  // --- Parivartana 互换: Transit LL 在 natal 7L 星座 且 Transit 7L 在 natal LL 星座 ---
+  const nLLSign = SIGNS[Math.floor((nLLLon % 360) / 30)];
+  const n7LSign = SIGNS[Math.floor((n7LLon % 360) / 30)];
+  const tLLIn7LSign = tLL.sign === n7LSign;
+  const t7LInLLSign = t7L.sign === nLLSign;
+
+  if (tLLIn7LSign && t7LInLLSign) {
+    result.parivartana.hit = true;
+    result.parivartana.details.push(
+      `完整互换: Transit ${llName}在${n7LSign}(natal ${sevenLord}) + Transit ${sevenLord}在${nLLSign}(natal ${llName})`
+    );
+  } else if (tLLIn7LSign) {
+    result.parivartana.details.push(`部分: Transit ${llName}在${n7LSign}(natal ${sevenLord}座)`);
+  } else if (t7LInLLSign) {
+    result.parivartana.details.push(`部分: Transit ${sevenLord}在${nLLSign}(natal ${llName}座)`);
+  }
+
+  return result;
+}
+
+// ============================================================================
+// 行星聚集检测（Lagna/7H 聚集 + Transit 聚集）
+//
+// P7: 本命盘行星聚集 Lagna/7H (70%命中率)
+// + Transit 时行星聚集事件宫 (扩展)
+// ============================================================================
+export function computePlanetaryCongregation(natalPlanets, natalAscSign, transitPlanets = null, eventHouse = 7) {
+  const ai = SIGNS.indexOf(natalAscSign);
+  const result = {
+    natal: { lagna: [], house_7: [], [`${eventHouse}宫`]: [] },
+    transit: null,
+    summary: '',
+  };
+
+  // --- 本命盘聚集 ---
+  for (const [pname, pdata] of Object.entries(natalPlanets)) {
+    if (pdata.error || pdata.sign === undefined) continue;
+    const pSignIdx = SIGNS.indexOf(pdata.sign);
+    const house = ((pSignIdx - ai + 12) % 12) + 1;
+    if (house === 1) result.natal.lagna.push(pname);
+    if (house === 7) result.natal.house_7.push(pname);
+    if (house === eventHouse) result.natal[`${eventHouse}宫`].push(pname);
+  }
+
+  // --- Transit 聚集 ---
+  if (transitPlanets) {
+    result.transit = {};
+    for (let h = 1; h <= 12; h++) result.transit[h] = [];
+    for (const pname of ALL_PLANETS) {
+      const tp = transitPlanets[pname];
+      if (!tp) continue;
+      const tSignIdx = SIGNS.indexOf(tp.sign);
+      const house = ((tSignIdx - ai + 12) % 12) + 1;
+      result.transit[house].push(pname);
+    }
+  }
+
+  // --- 判定 ---
+  const lagnaCount = result.natal.lagna.length;
+  const h7Count = result.natal.house_7.length;
+  const eventCount = result.natal[`${eventHouse}宫`].length;
+
+  const flags = [];
+  // Sun 在 Lagna 或 ≥3 颗行星在 Lagna
+  if (result.natal.lagna.includes('Sun') || lagnaCount >= 3) {
+    flags.push(`Lagna聚集: ${result.natal.lagna.join(',')}(${lagnaCount})`);
+  }
+  // Sun 在 7H 或 ≥3 颗行星在 7H
+  if (result.natal.house_7.includes('Sun') || h7Count >= 3) {
+    flags.push(`7H聚集: ${result.natal.house_7.join(',')}(${h7Count})`);
+  }
+  // Transit 聚集事件宫 ≥2 颗慢行星
+  if (result.transit) {
+    const tEventPlanets = result.transit[eventHouse] || [];
+    const tSlowInEvent = tEventPlanets.filter(p => SLOW_PLANETS.includes(p));
+    if (tSlowInEvent.length >= 2) {
+      flags.push(`Transit ${eventHouse}宫慢行星聚集: ${tSlowInEvent.join(',')}`);
+    }
+  }
+
+  result.summary = flags.length > 0 ? flags.join(' | ') : '无显著聚集';
+  result.flags = flags;
+  result.hit = flags.length > 0;
+
+  return result;
+}
+
+// ============================================================================
+// Vivah Saham 计算 + Transit 激活检测
+//
+// Vivah Saham = norm(Venus - Saturn + Asc) — 度数级精确计算
+// Transit 激活: Jupiter/Saturn PAC 到 Vivah Saham 经度
+// ============================================================================
+export function computeVivahSaham(natalPlanets, natalAscDegree, transitPlanets = null) {
+  const venusLon = natalPlanets.Venus?.degree ?? 0;
+  const saturnLon = natalPlanets.Saturn?.degree ?? 0;
+  const ascLon = natalAscDegree;
+
+  // Vivah Saham = norm(Venus - Saturn + Asc)
+  let sahamsLon = ((venusLon - saturnLon + ascLon) % 360 + 360) % 360;
+  const sahamsSignIdx = Math.floor(sahamsLon / 30);
+  const sahamsSign = SIGNS[sahamsSignIdx];
+  const sahamsDegInSign = sahamsLon - sahamsSignIdx * 30;
+  const sahamsNakIdx = Math.floor(sahamsLon / NAKSPAN);
+  const sahamsPada = Math.floor((sahamsLon % NAKSPAN) / (NAKSPAN / 4)) + 1;
+
+  const result = {
+    vivah_saham: {
+      longitude: Math.round(sahamsLon * 10000) / 10000,
+      sign: sahamsSign,
+      sign_cn: SIGNS_CN[sahamsSign],
+      degree_in_sign: Math.round(sahamsDegInSign * 10000) / 10000,
+      nakshatra: NAKSHATRA_LIST[sahamsNakIdx % 27]?.name,
+      pada: sahamsPada,
+    },
+    formula: `norm(${venusLon.toFixed(2)}° Venus - ${saturnLon.toFixed(2)}° Saturn + ${ascLon.toFixed(2)}° Asc)`,
+    transit_activation: null,
+  };
+
+  // --- Transit 激活检测 ---
+  if (transitPlanets) {
+    const ascSignIdx = Math.floor((ascLon % 360) / 30);
+    result.transit_activation = {
+      jupiter: [],
+      saturn: [],
+      double_activation: false,
+    };
+
+    // Jupiter PAC 到 Vivah Saham
+    if (transitPlanets.Jupiter) {
+      const jupPAC = checkPAC('Jupiter', transitPlanets.Jupiter.degree, sahamsLon, ascSignIdx);
+      if (jupPAC.length > 0) {
+        result.transit_activation.jupiter = jupPAC;
+      }
+    }
+
+    // Saturn PAC 到 Vivah Saham
+    if (transitPlanets.Saturn) {
+      const satPAC = checkPAC('Saturn', transitPlanets.Saturn.degree, sahamsLon, ascSignIdx);
+      if (satPAC.length > 0) {
+        result.transit_activation.saturn = satPAC;
+      }
+    }
+
+    // 双星激活
+    if (result.transit_activation.jupiter.length > 0 && result.transit_activation.saturn.length > 0) {
+      result.transit_activation.double_activation = true;
+    }
+
+    // Venus transit 过 Saham 星座（辅助信号）
+    if (transitPlanets.Venus) {
+      const tVenusSign = transitPlanets.Venus.sign;
+      if (tVenusSign === sahamsSign) {
+        result.transit_activation.venus_in_saham_sign = true;
+      }
+    }
+  }
+
+  return result;
 }

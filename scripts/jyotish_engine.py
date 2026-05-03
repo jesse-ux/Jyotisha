@@ -577,6 +577,489 @@ def cmd_transit(args):
 
 
 # ============================================================================
+# 8b. Double Transit PAC + D9 层（KN Rao 完整实现 v3.9新增）
+#
+# 核心逻辑:
+# 1. D1 层: Saturn/Jupiter 通过 PAC 关联事件宫/宫主/LL/对宫主
+# 2. D9 层: Saturn/Jupiter 通过 PAC 关联 D9 宫主/D9 Asc/宫主D9星座/LL D9星座
+# 3. 两者必须同时激活同一目标 -> Double Transit 确认
+#
+# 精度: KN Rao 体系 110-115 星盘测试 97% 准确率（使用 D9 Navamsa）
+# ============================================================================
+def _navamsa_idx(lon):
+    """Navamsa 星座索引"""
+    lon = lon % 360
+    si = int(lon / 30)
+    d = lon - si * 30
+    ni = int(d / (30 / 9))
+    el_starts = [0, 9, 6, 3]  # Aries/Fire=0, Taurus/Earth=9, Gemini/Air=6, Cancer/Water=3
+    return (el_starts[si % 4] + ni) % 12
+
+
+def _check_pac(planet_name, planet_lon, target_lon, asc_idx):
+    """PAC检查: Position(同宫)/Aspect(相位)/Conjunction(合相<=10度)"""
+    results = []
+    p_si = int((planet_lon % 360) / 30)
+    t_si = int((target_lon % 360) / 30)
+    p_house = ((p_si - asc_idx) % 12) + 1
+    t_house = ((t_si - asc_idx) % 12) + 1
+
+    # P: Position - 同宫
+    if p_house == t_house:
+        results.append({'type': 'Position', 'desc': f'同宫({t_house}宫)'})
+
+    # C: Conjunction - 合相 <=10度
+    diff = abs(planet_lon - target_lon) % 360
+    if diff > 180:
+        diff = 360 - diff
+    if diff <= 10:
+        results.append({'type': 'Conjunction', 'desc': f'合相({diff:.2f}\u00b0)'})
+
+    # A: Aspect - Graha Drishti
+    planet_aspects = {
+        'Sun': [7], 'Moon': [7], 'Mars': [4, 7, 8], 'Mercury': [7],
+        'Jupiter': [5, 7, 9], 'Venus': [7], 'Saturn': [3, 7, 10],
+        'Rahu': [5, 7, 9], 'Ketu': [5, 7, 9],
+    }
+    aspects = planet_aspects.get(planet_name, [7])
+    for offset in aspects:
+        if ((t_house - p_house + 12) % 12) == offset:
+            results.append({'type': 'Aspect', 'offset': offset, 'desc': f'{offset}宫相位'})
+
+    return results
+
+
+def cmd_double_transit_pac(args):
+    """Double Transit PAC + D9 层计算"""
+    # 1. 计算本命星盘
+    chart, asc_idx, jd, ayanamsa = compute_chart_data(
+        args.year, args.month, args.day, args.hour, args.minute,
+        args.lat, args.lon, args.tz)
+    if chart is None:
+        return {"error": "swisseph未安装"}
+
+    natal = chart.get('planets', {})
+    asc_sign = chart.get('ascendant', {}).get('sign', 'Aries')
+    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+    event_house = args.house or 7
+
+    # 2. 计算过境行星位置
+    if not HAS_SWE:
+        return {"error": "swisseph未安装"}
+
+    transit_year, transit_month, transit_day = map(int, args.date.split('-'))
+    transit_hour = 12.0 - args.tz  # 正午 UT
+    transit_jd = swe.julday(transit_year, transit_month, transit_day, transit_hour)
+    transit_ayanamsa = swe.get_ayanamsa(transit_jd)
+
+    transit_planets = {}
+    for pname, pid in PLANETS_SWE.items():
+        try:
+            pos, _ = swe.calc_ut(transit_jd, pid)
+            lon_p = (pos[0] - transit_ayanamsa) % 360
+            transit_planets[pname] = {'lon': lon_p, 'sign': SIGNS[int(lon_p / 30)]}
+            if pname == 'Rahu':
+                klon = (lon_p + 180) % 360
+                transit_planets['Ketu'] = {'lon': klon, 'sign': SIGNS[int(klon / 30)]}
+        except Exception as e:
+            transit_planets[pname] = {'error': str(e)}
+
+    # 3. D1 层敏感点
+    event_si = (asc_idx + event_house - 1) % 12
+    event_sign = SIGNS[event_si]
+    event_lord = SIGN_LORDS[event_sign]
+    ll_name = SIGN_LORDS[asc_sign]
+    opposite_si = (asc_idx + 6) % 12
+    opposite_lord = SIGN_LORDS[SIGNS[opposite_si]]
+
+    event_house_lon = (event_si * 30) + 15  # 宫位中点
+    ll_lon = natal.get(ll_name, {}).get('degree', 0)
+    event_lord_lon = natal.get(event_lord, {}).get('degree', 0)
+    opp_lord_lon = natal.get(opposite_lord, {}).get('degree', 0)
+
+    d1_targets = {
+        f'{event_house}宫({event_sign})': event_house_lon,
+        f'{event_lord}(宫主)': event_lord_lon,
+        f'{ll_name}(LL)': ll_lon,
+        f'{opposite_lord}(对宫主)': opp_lord_lon,
+    }
+
+    # 4. D9 层敏感点
+    d9_asc_idx = _navamsa_idx(asc_deg)
+    d9_asc_sign = SIGNS[d9_asc_idx]
+    d9_event_si = (d9_asc_idx + event_house - 1) % 12
+    d9_event_sign = SIGNS[d9_event_si]
+    d9_event_lord = SIGN_LORDS[d9_event_sign]
+    # 宫主的 D9 星座（KN Rao 关键）
+    event_lord_d9_si = _navamsa_idx(event_lord_lon)
+    event_lord_d9_sign = SIGNS[event_lord_d9_si]
+    ll_d9_si = _navamsa_idx(ll_lon)
+    ll_d9_sign = SIGNS[ll_d9_si]
+
+    d9_event_house_lon = (d9_asc_idx * 30) + 15
+    d9_event_lord_lon = natal.get(d9_event_lord, {}).get('degree', 0)
+
+    d9_targets = {
+        f'D9_{event_house}宫({d9_event_sign})': d9_event_house_lon,
+        f'D9_{d9_event_lord}(宫主)': d9_event_lord_lon,
+        f'{event_lord}_D9({event_lord_d9_sign})': event_lord_d9_si * 30 + 15,
+        f'{ll_name}_D9({ll_d9_sign})': ll_d9_si * 30 + 15,
+    }
+
+    # 5. PAC 检查
+    results = {
+        'transit_date': args.date,
+        'event_house': event_house,
+        'd1': {'jupiter': {}, 'saturn': {}},
+        'd9': {'jupiter': {}, 'saturn': {}},
+        'double_transit': [],
+        'summary': '',
+    }
+
+    for tp_name in ['Jupiter', 'Saturn']:
+        tp = transit_planets.get(tp_name, {})
+        if 'error' in tp:
+            continue
+        tp_lon = tp['lon']
+        layer = tp_name.lower()
+
+        for t_name, t_lon in d1_targets.items():
+            pac = _check_pac(tp_name, tp_lon, t_lon, asc_idx)
+            if pac:
+                results['d1'][layer][t_name] = pac
+
+        for t_name, t_lon in d9_targets.items():
+            pac = _check_pac(tp_name, tp_lon, t_lon, d9_asc_idx)
+            if pac:
+                results['d9'][layer][t_name] = pac
+
+    # 6. Double Transit 判定
+    jup_d1 = set(results['d1']['jupiter'].keys())
+    sat_d1 = set(results['d1']['saturn'].keys())
+    jup_d9 = set(results['d9']['jupiter'].keys())
+    sat_d9 = set(results['d9']['saturn'].keys())
+
+    # D1 层 overlap
+    d1_overlap = jup_d1 & sat_d1
+    for t in d1_overlap:
+        results['double_transit'].append({
+            'layer': 'D1', 'target': t,
+            'jupiter_pac': results['d1']['jupiter'][t],
+            'saturn_pac': results['d1']['saturn'][t],
+            'strength': 'strong',
+        })
+
+    # D9 层 overlap
+    d9_overlap = jup_d9 & sat_d9
+    for t in d9_overlap:
+        results['double_transit'].append({
+            'layer': 'D9', 'target': t,
+            'jupiter_pac': results['d9']['jupiter'][t],
+            'saturn_pac': results['d9']['saturn'][t],
+            'strength': 'strong',
+        })
+
+    # 跨层 Double Transit
+    for d1t in jup_d1:
+        for d9t in sat_d9:
+            d1_nums = ''.join(c for c in d1t if c.isdigit())
+            d9_nums = ''.join(c for c in d9t if c.isdigit())
+            if d1_nums == d9_nums or (event_lord in d1t and event_lord in d9t):
+                results['double_transit'].append({
+                    'layer': 'D1+D9', 'target': f'Jupiter(D1){d1t} + Saturn(D9){d9t}',
+                    'jupiter_pac': results['d1']['jupiter'][d1t],
+                    'saturn_pac': results['d9']['saturn'][d9t],
+                    'strength': 'moderate',
+                })
+    for d1t in sat_d1:
+        for d9t in jup_d9:
+            d1_nums = ''.join(c for c in d1t if c.isdigit())
+            d9_nums = ''.join(c for c in d9t if c.isdigit())
+            if d1_nums == d9_nums or (event_lord in d1t and event_lord in d9t):
+                results['double_transit'].append({
+                    'layer': 'D1+D9', 'target': f'Saturn(D1){d1t} + Jupiter(D9){d9t}',
+                    'jupiter_pac': results['d9']['jupiter'][d9t],
+                    'saturn_pac': results['d1']['saturn'][d1t],
+                    'strength': 'moderate',
+                })
+
+    # Summary
+    d1_active = len(d1_overlap) > 0
+    d9_active = len(d9_overlap) > 0
+    cross_active = any(d['layer'] == 'D1+D9' for d in results['double_transit'])
+
+    if d1_active and d9_active:
+        results['summary'] = f'✅ Double Transit PAC 确认: D1+D9 双层激活{event_house}宫主题'
+    elif d1_active:
+        results['summary'] = f'⚠️ D1 层 Double Transit 激活，D9 层未确认'
+    elif d9_active:
+        results['summary'] = f'⚠️ D9 层 Double Transit 激活，D1 层未确认'
+    elif cross_active:
+        results['summary'] = f'⚠️ 跨层间接 Double Transit (D1+D9)，需结合 Dasha 确认'
+    else:
+        results['summary'] = f'❌ 无 Double Transit PAC 激活'
+
+    results['stats'] = {
+        'd1_jupiter_targets': sorted(jup_d1),
+        'd1_saturn_targets': sorted(sat_d1),
+        'd9_jupiter_targets': sorted(jup_d9),
+        'd9_saturn_targets': sorted(sat_d9),
+        'd1_overlap': sorted(d1_overlap),
+        'd9_overlap': sorted(d9_overlap),
+        'd9_ascendant': d9_asc_sign,
+        'event_lord_d9_sign': event_lord_d9_sign,
+    }
+
+    return results
+
+
+# ============================================================================
+# 8c. Transit LL/7L 连接 + 互换（Parivartana）（v3.9新增）
+#
+# P5: Transit LL PAC natal 7L / Transit 7L PAC natal LL (98%命中率)
+# P8: Transit LL 过 7H 或 Transit 7L 过 Lagna (59%命中率)
+# + Parivartana 互换检测
+# ============================================================================
+def _calc_transit_lon(jd, planet_name):
+    """计算指定 Julian Day 的行星恒星黄经"""
+    pid_map = {'Sun': swe.SUN, 'Moon': swe.MOON, 'Mars': swe.MARS, 'Mercury': swe.MERCURY,
+               'Jupiter': swe.JUPITER, 'Venus': swe.VENUS, 'Saturn': swe.SATURN, 'Rahu': swe.MEAN_NODE}
+    pid = pid_map.get(planet_name)
+    if pid is None:
+        return None
+    pos, _ = swe.calc_ut(jd, pid)
+    aya = swe.get_ayanamsa_ut(jd)
+    return (pos[0] - aya) % 360
+
+
+def cmd_transit_ll7l(args):
+    """Transit LL/7L 连接 + 互换检测"""
+    chart, asc_idx, jd, ayanamsa = compute_chart_data(
+        args.year, args.month, args.day, args.hour, args.minute,
+        args.lat, args.lon, args.tz)
+    if chart is None:
+        return {"error": "swisseph未安装"}
+
+    natal = chart.get('planets', {})
+    asc_sign = chart.get('ascendant', {}).get('sign', 'Aries')
+    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+
+    ll_name = SIGN_LORDS[asc_sign]
+    seven_sign = SIGNS[(SIGNS.index(asc_sign) + 6) % 12]
+    seven_lord = SIGN_LORDS[seven_sign]
+
+    # Transit 日期
+    t_year, t_month, t_day = map(int, args.date.split('-'))
+    transit_jd = swe.julday(t_year, t_month, t_day, 12.0 - args.tz)
+
+    # Transit LL/7L 位置
+    t_ll_lon = _calc_transit_lon(transit_jd, ll_name)
+    t_7l_lon = _calc_transit_lon(transit_jd, seven_lord)
+    if t_ll_lon is None or t_7l_lon is None:
+        return {"error": f"无法计算 Transit 位置: LL={ll_name}, 7L={seven_lord}"}
+
+    n_ll_lon = natal.get(ll_name, {}).get('degree', 0)
+    n_7l_lon = natal.get(seven_lord, {}).get('degree', 0)
+    asc_lon = asc_deg
+
+    result = {
+        'transit_date': args.date,
+        'lagna_lord': ll_name,
+        'seventh_lord': seven_lord,
+        'p5': {'hit': False, 'details': []},
+        'p8': {'hit': False, 'details': []},
+        'parivartana': {'hit': False, 'details': []},
+    }
+
+    # P5: Transit LL PAC natal 7L / Transit 7L PAC natal LL
+    pac1 = _check_pac(ll_name, t_ll_lon, n_7l_lon, asc_idx)
+    if pac1:
+        result['p5']['hit'] = True
+        result['p5']['details'].append({
+            'direction': f'Transit {ll_name} → natal {seven_lord}',
+            'connections': pac1,
+        })
+    pac2 = _check_pac(seven_lord, t_7l_lon, n_ll_lon, asc_idx)
+    if pac2:
+        result['p5']['hit'] = True
+        result['p5']['details'].append({
+            'direction': f'Transit {seven_lord} → natal {ll_name}',
+            'connections': pac2,
+        })
+
+    # P8: Transit LL 过 7H 或 Transit 7L 过 Lagna
+    t_ll_house = ((int((t_ll_lon % 360) / 30) - asc_idx) % 12) + 1
+    t_7l_house = ((int((t_7l_lon % 360) / 30) - asc_idx) % 12) + 1
+    if t_ll_house == 7:
+        result['p8']['hit'] = True
+        result['p8']['details'].append(f'Transit {ll_name}({SIGNS[int(t_ll_lon/30)]})在7H')
+    if t_7l_house == 1:
+        result['p8']['hit'] = True
+        result['p8']['details'].append(f'Transit {seven_lord}({SIGNS[int(t_7l_lon/30)]})在Lagna')
+
+    # Parivartana 互换
+    n_ll_sign = SIGNS[int((n_ll_lon % 360) / 30)]
+    n_7l_sign = SIGNS[int((n_7l_lon % 360) / 30)]
+    t_ll_in_7l = SIGNS[int((t_ll_lon % 360) / 30)] == n_7l_sign
+    t_7l_in_ll = SIGNS[int((t_7l_lon % 360) / 30)] == n_ll_sign
+    if t_ll_in_7l and t_7l_in_ll:
+        result['parivartana']['hit'] = True
+        result['parivartana']['details'].append(
+            f'完整互换: Transit {ll_name}在{n_7l_sign}(natal {seven_lord}) + Transit {seven_lord}在{n_ll_sign}(natal {ll_name})')
+    elif t_ll_in_7l:
+        result['parivartana']['details'].append(f'部分: Transit {ll_name}在{n_7l_sign}')
+    elif t_7l_in_ll:
+        result['parivartana']['details'].append(f'部分: Transit {seven_lord}在{n_ll_sign}')
+
+    return result
+
+
+# ============================================================================
+# 8d. 行星聚集检测（Lagna/7H + Transit 聚集）（v3.9新增）
+# ============================================================================
+def cmd_planetary_congregation(args):
+    """行星聚集检测"""
+    chart, asc_idx, jd, ayanamsa = compute_chart_data(
+        args.year, args.month, args.day, args.hour, args.minute,
+        args.lat, args.lon, args.tz)
+    if chart is None:
+        return {"error": "swisseph未安装"}
+
+    natal = chart.get('planets', {})
+    asc_sign = chart.get('ascendant', {}).get('sign', 'Aries')
+    event_house = args.house or 7
+
+    result = {
+        'natal': {'lagna': [], 'house_7': [], f'house_{event_house}': []},
+        'transit': None,
+        'summary': '',
+    }
+
+    # 本命盘聚集
+    for pname, pdata in natal.items():
+        if 'error' in pdata or 'sign' not in pdata:
+            continue
+        p_si = SIGNS.index(pdata['sign'])
+        house = ((p_si - asc_idx) % 12) + 1
+        if house == 1:
+            result['natal']['lagna'].append(pname)
+        if house == 7:
+            result['natal']['house_7'].append(pname)
+        if house == event_house:
+            result['natal'][f'house_{event_house}'].append(pname)
+
+    # Transit 聚集
+    if args.transit_date:
+        t_year, t_month, t_day = map(int, args.transit_date.split('-'))
+        transit_jd = swe.julday(t_year, t_month, t_day, 12.0 - args.tz)
+        transit_aya = swe.get_ayanamsa(transit_jd)
+        result['transit'] = {str(h): [] for h in range(1, 13)}
+        for pname, pid in PLANETS_SWE.items():
+            try:
+                pos, _ = swe.calc_ut(transit_jd, pid)
+                lon_p = (pos[0] - transit_aya) % 360
+                si = int(lon_p / 30)
+                house = ((si - asc_idx) % 12) + 1
+                result['transit'][str(house)].append(pname)
+                if pname == 'Rahu':
+                    klon = (lon_p + 180) % 360
+                    ksi = int(klon / 30)
+                    khouse = ((ksi - asc_idx) % 12) + 1
+                    result['transit'][str(khouse)].append('Ketu')
+            except Exception:
+                pass
+
+    # 判定
+    flags = []
+    lagna_count = len(result['natal']['lagna'])
+    h7_count = len(result['natal']['house_7'])
+    if 'Sun' in result['natal']['lagna'] or lagna_count >= 3:
+        flags.append(f"Lagna聚集: {','.join(result['natal']['lagna'])}({lagna_count})")
+    if 'Sun' in result['natal']['house_7'] or h7_count >= 3:
+        flags.append(f"7H聚集: {','.join(result['natal']['house_7'])}({h7_count})")
+
+    if result['transit']:
+        slow = {'Saturn', 'Jupiter', 'Rahu', 'Ketu'}
+        t_event = result['transit'].get(str(event_house), [])
+        t_slow = [p for p in t_event if p in slow]
+        if len(t_slow) >= 2:
+            flags.append(f"Transit {event_house}宫慢行星聚集: {','.join(t_slow)}")
+
+    result['flags'] = flags
+    result['hit'] = len(flags) > 0
+    result['summary'] = ' | '.join(flags) if flags else '无显著聚集'
+    return result
+
+
+# ============================================================================
+# 8e. Vivah Saham + 婚姻计时管线（v3.9新增）
+#
+# Vivah Saham = norm(Venus - Saturn + Asc) — 度数级精确计算
+# Transit 激活: Jupiter/Saturn PAC 到 Vivah Saham
+# ============================================================================
+def cmd_vivah_saham(args):
+    """Vivah Saham 计算 + Transit 激活"""
+    chart, asc_idx, jd, ayanamsa = compute_chart_data(
+        args.year, args.month, args.day, args.hour, args.minute,
+        args.lat, args.lon, args.tz)
+    if chart is None:
+        return {"error": "swisseph未安装"}
+
+    natal = chart.get('planets', {})
+    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+    venus_lon = natal.get('Venus', {}).get('degree', 0)
+    saturn_lon = natal.get('Saturn', {}).get('degree', 0)
+
+    # Vivah Saham = norm(Venus - Saturn + Asc)
+    sahams_lon = (venus_lon - saturn_lon + asc_deg) % 360
+    sahams_si = int(sahams_lon / 30)
+    sahams_sign = SIGNS[sahams_si]
+    sahams_deg = sahams_lon - sahams_si * 30
+
+    result = {
+        'vivah_saham': {
+            'longitude': round(sahams_lon, 4),
+            'sign': sahams_sign,
+            'sign_cn': SIGNS_CN[sahams_sign],
+            'degree_in_sign': round(sahams_deg, 4),
+        },
+        'formula': f'norm({venus_lon:.2f} Venus - {saturn_lon:.2f} Saturn + {asc_deg:.2f} Asc)',
+        'transit_activation': None,
+    }
+
+    # Transit 激活
+    if args.transit_date:
+        t_year, t_month, t_day = map(int, args.transit_date.split('-'))
+        transit_jd = swe.julday(t_year, t_month, t_day, 12.0 - args.tz)
+
+        result['transit_activation'] = {'jupiter': [], 'saturn': [], 'double_activation': False}
+
+        jup_lon = _calc_transit_lon(transit_jd, 'Jupiter')
+        sat_lon = _calc_transit_lon(transit_jd, 'Saturn')
+
+        if jup_lon is not None:
+            jup_pac = _check_pac('Jupiter', jup_lon, sahams_lon, asc_idx)
+            if jup_pac:
+                result['transit_activation']['jupiter'] = jup_pac
+
+        if sat_lon is not None:
+            sat_pac = _check_pac('Saturn', sat_lon, sahams_lon, asc_idx)
+            if sat_pac:
+                result['transit_activation']['saturn'] = sat_pac
+
+        if result['transit_activation']['jupiter'] and result['transit_activation']['saturn']:
+            result['transit_activation']['double_activation'] = True
+
+        # Venus transit 过 Saham 星座
+        venus_t = _calc_transit_lon(transit_jd, 'Venus')
+        if venus_t is not None:
+            if SIGNS[int(venus_t / 30)] == sahams_sign:
+                result['transit_activation']['venus_in_saham_sign'] = True
+
+    return result
+
+
+# ============================================================================
 # 9. Shadbala 六重力量（v3.4新增）
 # ============================================================================
 def cmd_shadbala(args):
@@ -1107,7 +1590,7 @@ def cmd_jaimini(args):
         return {"error": "swisseph未安装"}
     try:
         sys.path.insert(0, SCRIPT_DIR)
-        from jaimini import calc_chara_karaka_7, calc_chara_karaka_8, calc_chara_dasha, calc_karakamsha
+        from jaimini import calc_chara_karaka_7, calc_chara_karaka_8, calc_chara_dasha, calc_karakamsha, calc_chara_dasha_with_antardasha
         from varga import calc_varga
     except ImportError as e:
         return {"error": f"jaimini模块导入失败: {e}"}
@@ -1127,7 +1610,11 @@ def cmd_jaimini(args):
         result['chara_karaka_7'] = calc_chara_karaka_7(planet_degs)
         result['chara_karaka_8'] = calc_chara_karaka_8(planet_degs)
     if mode in ('all', 'dasha'):
-        result['chara_dasha'] = calc_chara_dasha(asc_idx, planet_lons, args.year, args.month)
+        use_antardasha = getattr(args, 'antardasha', False)
+        if use_antardasha:
+            result['chara_dasha'] = calc_chara_dasha_with_antardasha(asc_idx, planet_lons, args.year, args.month)
+        else:
+            result['chara_dasha'] = calc_chara_dasha(asc_idx, planet_lons, args.year, args.month)
     if mode in ('all', 'karakamsha'):
         # AK（灵魂星）的D9位置 — Karakamsha定义是AK在Navamsa中的星座
         # ⚠️ 2026-05-03修正：此前错误使用DK，现已修正为AK
@@ -1717,6 +2204,7 @@ def main():
     p = sub.add_parser('jaimini', help='Jaimini系统（Chara Karaka/Dasha/Karakamsha）')
     _add_chart_args(p)
     p.add_argument('--mode', default='all', choices=['all','karaka','dasha','karakamsha'], help='分析模式')
+    p.add_argument('--antardasha', action='store_true', help='Chara Dasha含Antardasha子周期')
 
     # 18. nakshatra-adv (v3.7新增)
     p = sub.add_parser('nakshatra-adv', help='高级Nakshatra分析')
@@ -1756,6 +2244,28 @@ def main():
     p.add_argument('--lon', type=float, required=True, help='经度')
     p.add_argument('--mode', default='chart', choices=['chart','arudha','sphutas','sahams','lost-item','life','kunda'], help='分析模式')
 
+    # 24. double-transit-pac (v3.9新增)
+    p = sub.add_parser('double-transit-pac', help='Double Transit PAC + D9层（KN Rao完整实现）')
+    _add_chart_args(p)
+    p.add_argument('--date', required=True, help='过境日期 YYYY-MM-DD')
+    p.add_argument('--house', type=int, default=7, help='目标宫位（默认7=婚姻）')
+
+    # 25. transit-ll7l (v3.9新增)
+    p = sub.add_parser('transit-ll7l', help='Transit LL/7L连接+互换检测')
+    _add_chart_args(p)
+    p.add_argument('--date', required=True, help='过境日期 YYYY-MM-DD')
+
+    # 26. planetary-congregation (v3.9新增)
+    p = sub.add_parser('planetary-congregation', help='行星聚集检测（Lagna/7H+Transit）')
+    _add_chart_args(p)
+    p.add_argument('--house', type=int, default=7, help='目标宫位')
+    p.add_argument('--transit-date', default=None, help='过境日期 YYYY-MM-DD（可选）')
+
+    # 27. vivah-saham (v3.9新增)
+    p = sub.add_parser('vivah-saham', help='Vivah Saham计算+Transit激活')
+    _add_chart_args(p)
+    p.add_argument('--transit-date', default=None, help='过境日期 YYYY-MM-DD（可选）')
+
     args = parser.parse_args()
     if not args.command:
         parser.print_help(); sys.exit(1)
@@ -1766,7 +2276,10 @@ def main():
             'validate': cmd_validate, 'audit': cmd_audit, 'report': cmd_report,
             'varga-full': cmd_varga_full, 'aspects': cmd_aspects, 'jaimini': cmd_jaimini,
             'nakshatra-adv': cmd_nakshatra_adv, 'argala': cmd_argala, 'tajika': cmd_tajika,
-            'synastry': cmd_synastry, 'full-reading': cmd_full_reading, 'prashna': cmd_prashna}
+            'synastry': cmd_synastry, 'full-reading': cmd_full_reading, 'prashna': cmd_prashna,
+            'double-transit-pac': cmd_double_transit_pac,
+            'transit-ll7l': cmd_transit_ll7l, 'planetary-congregation': cmd_planetary_congregation,
+            'vivah-saham': cmd_vivah_saham}
     result = cmds[args.command](args)
     output_json(result)
 

@@ -199,6 +199,73 @@ def calc_chara_dasha(asc_sign_idx: int,
     }
 
 
+def calc_chara_dasha_with_antardasha(asc_sign_idx: int,
+                                      planet_longitudes: Dict[str, float],
+                                      birth_year: int, birth_month: int) -> Dict:
+    """
+    Chara Dasha 计算含 Antardasha 子周期
+
+    Antardasha 规则:
+      - 在每个 Mahadasha 内，Antardasha 从 Mahadasha 星座开始
+      - 方向与 Mahadasha 方向相同
+      - 每个 Antardasha 时长 = (该子星座大运年数 / 总大运年数) * Mahadasha 年数
+      - 生成 12 个 Antardasha
+    """
+    # 先算 Mahadasha
+    base = calc_chara_dasha(asc_sign_idx, planet_longitudes, birth_year, birth_month)
+    is_odd = asc_sign_idx % 2 == 0
+    direction = 1 if is_odd else -1
+    base_total = sum(_chara_dasha_duration((asc_sign_idx + direction * i) % 12, planet_longitudes) for i in range(12))
+
+    # 为每个 Mahadasha 计算 Antardasha
+    for md in base['dasha_sequence']:
+        md_sign_idx = md['sign_idx']
+        md_duration = md['duration_years']
+        antardasha_list = []
+
+        # Antardasha 也从该 Mahadasha 星座开始，同方向
+        for j in range(12):
+            ad_sign_idx = (md_sign_idx + direction * j) % 12
+            ad_sign = SIGNS[ad_sign_idx]
+            ad_lord = SIGN_LORDS[ad_sign]
+
+            # 子周期时长 = (该星座独立年数 / 总年数) * Mahadasha 年数
+            ad_independent_duration = _chara_dasha_duration(ad_sign_idx, planet_longitudes)
+            ad_duration = round((ad_independent_duration / base_total) * md_duration, 2)
+            if ad_duration < 0.01:
+                ad_duration = 0.01  # 最小约4天
+
+            antardasha_list.append({
+                'sign': ad_sign,
+                'sign_idx': ad_sign_idx,
+                'lord': ad_lord,
+                'duration_years': ad_duration,
+                'order': j + 1,
+            })
+
+        # 计算 Antardasha 日期
+        start_year, start_month = map(int, md['start_date'].split('-'))
+        for ad in antardasha_list:
+            ad['start_date'] = f"{start_year}-{start_month:02d}"
+            total_months = round(ad['duration_years'] * 12)
+            end_month = start_month + total_months
+            end_year = start_year + (end_month - 1) // 12
+            end_month = ((end_month - 1) % 12) + 1
+            ad['end_date'] = f"{end_year}-{end_month:02d}"
+            # 下一个 Antardasha 的开始
+            if end_month < 12:
+                start_year = end_year
+                start_month = end_month + 1
+            else:
+                start_year = end_year + 1
+                start_month = 1
+
+        md['antardashas'] = antardasha_list
+
+    base['has_antardasha'] = True
+    return base
+
+
 def _chara_dasha_duration(sign_idx, planet_lons):
     """计算Chara Dasha单个大运的年数"""
     # 标准方法：12 - 落入该星座的行星数量（最少1年，最多12年）
