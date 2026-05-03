@@ -30,6 +30,7 @@ const PLANET_HOUSE_DETAIL = { ...PIH_PART1, ...PIH_PART2, ...PIH_PART3 };
 import {
   computeTransit, computeTransitOverlay, computeDoubleTransit, checkSadeSati,
   computeTransitAVScore, computeTransitHouseImpact,
+  computeDoubleTransitPAC, computeTransitLL7L, computePlanetaryCongregation, computeVivahSaham,
 } from './transit.js';
 import {
   renderTithiInfo, renderArudhaQuick, renderKaraka, renderVargas, renderArudha,
@@ -332,7 +333,7 @@ function renderAll() {
   if (dashaData) renderDasha3Level(dashaData);
 
   // Transit Tab（异步）
-  renderTransit(planets, ascendant.sign, av);
+  renderTransit(planets, ascendant.sign, av, ascendant.degree);
 
   // 深度分析 Tab
   const pacdares = computePACDARES(planets, ascendant.sign);
@@ -579,7 +580,7 @@ function renderYogas(planets, ascSign) {
 // ============================================================================
 let _lastTransitData = null;
 
-async function renderTransit(natalPlanets, ascSign, avData) {
+async function renderTransit(natalPlanets, ascSign, avData, ascDegree = 0) {
   $('transit-date').textContent = t('transit.computing');
   try {
     // 读取用户选择的日期（如果有）
@@ -668,6 +669,91 @@ async function renderTransit(natalPlanets, ascSign, avData) {
         <div class="sade-sati-info">${t('ss.moon')}: ${signName(ss.natal_moon_sign)} · ${t('ss.saturn')}: ${signName(ss.saturn_sign)} ${ss.saturn_degree_in_sign.toFixed(2)}° ${ss.saturn_retrograde ? t('ss.retro') : ''}</div>`;
     }
 
+    // ── 新功能: Double Transit PAC + D9 ──
+    const dtpac = computeDoubleTransitPAC(transit.planets, natalPlanets, ascSign, ascDegree, 7);
+    const dtpacSection = $('double-transit-pac-section');
+    if (dtpacSection) {
+      dtpacSection.innerHTML = '';
+      const summaryIcon = dtpac.summary.startsWith('✅') ? '✅' : dtpac.summary.startsWith('⚠️') ? '⚠️' : '❌';
+      let html = `<h4 class="sub-title">KN Rao Double Transit PAC + D9</h4>`;
+      html += `<div class="dt-pac-summary">${summaryIcon} ${dtpac.summary.replace(/[✅⚠️❌]/g, '')}</div>`;
+      // D1 层
+      const d1j = Object.keys(dtpac.d1.jupiter);
+      const d1s = Object.keys(dtpac.d1.saturn);
+      if (d1j.length || d1s.length) {
+        html += `<div class="dt-pac-layer"><b>D1层</b> | Jupiter→[${d1j.join(', ')}] Saturn→[${d1s.join(', ')}]</div>`;
+      }
+      // D9 层
+      const d9j = Object.keys(dtpac.d9.jupiter);
+      const d9s = Object.keys(dtpac.d9.saturn);
+      if (d9j.length || d9s.length) {
+        html += `<div class="dt-pac-layer"><b>D9层</b> | Jupiter→[${d9j.join(', ')}] Saturn→[${d9s.join(', ')}]</div>`;
+      }
+      // Double Transit 命中
+      if (dtpac.double_transit.length > 0) {
+        html += '<div class="dt-pac-hits">';
+        for (const dt of dtpac.double_transit) {
+          html += `<div class="dt-pac-hit">[${dt.layer}] ${dt.target} (${dt.strength})</div>`;
+        }
+        html += '</div>';
+      }
+      dtpacSection.innerHTML = html;
+    }
+
+    // ── 新功能: Transit LL/7L ──
+    const ll7l = computeTransitLL7L(transit.planets, natalPlanets, ascSign);
+    const ll7lSection = $('transit-ll7l-section');
+    if (ll7lSection) {
+      ll7lSection.innerHTML = '';
+      let html = `<h4 class="sub-title">Transit LL/7L 连接</h4>`;
+      html += `<div class="ll7l-info">LL: ${planetName(ll7l.lagna_lord)} | 7L: ${planetName(ll7l.seventh_lord)}</div>`;
+      if (ll7l.p5.hit) {
+        html += `<div class="ll7l-badge badge-hit">P5(98%): ${ll7l.p5.details.map(d => `${d.direction} → ${d.connections.map(c => c.type).join('+')}`).join(' | ')}</div>`;
+      } else {
+        html += `<div class="ll7l-badge badge-miss">P5(98%): 未触发</div>`;
+      }
+      if (ll7l.p8.hit) {
+        html += `<div class="ll7l-badge badge-hit">P8: ${ll7l.p8.details.join(' | ')}</div>`;
+      }
+      if (ll7l.parivartana.hit) {
+        html += `<div class="ll7l-badge badge-hit">互换: ${ll7l.parivartana.details.join(' | ')}</div>`;
+      }
+      ll7lSection.innerHTML = html;
+    }
+
+    // ── 新功能: 行星聚集 ──
+    const cong = computePlanetaryCongregation(natalPlanets, ascSign, transit.planets, 7);
+    const congSection = $('planetary-congregation-section');
+    if (congSection) {
+      congSection.innerHTML = '';
+      let html = `<h4 class="sub-title">行星聚集检测</h4>`;
+      html += `<div class="cong-natal">本命 Lagna: [${cong.natal.lagna.map(planetName).join(', ')}] (${cong.natal.lagna.length}) | 7H: [${cong.natal.house_7.map(planetName).join(', ')}] (${cong.natal.house_7.length})</div>`;
+      if (cong.transit) {
+        const t7 = cong.transit[7] || [];
+        html += `<div class="cong-transit">Transit 7H: [${t7.map(planetName).join(', ')}] (${t7.length})</div>`;
+      }
+      html += `<div class="cong-summary">${cong.summary}</div>`;
+      congSection.innerHTML = html;
+    }
+
+    // ── 新功能: Vivah Saham ──
+    const vs = computeVivahSaham(natalPlanets, ascDegree, transit.planets);
+    const vsSection = $('vivah-saham-section');
+    if (vsSection) {
+      vsSection.innerHTML = '';
+      let html = `<h4 class="sub-title">Vivah Saham 婚姻敏感点</h4>`;
+      html += `<div class="vs-position">${vs.vivah_saham.sign_cn} ${vs.vivah_saham.degree_in_sign.toFixed(2)}°`;
+      if (vs.vivah_saham.nakshatra) html += ` | ${vs.vivah_saham.nakshatra} P${vs.vivah_saham.pada}`;
+      html += '</div>';
+      if (vs.transit_activation) {
+        const ta = vs.transit_activation;
+        html += `<div class="vs-activation">Jupiter PAC: [${ta.jupiter.map(c => c.type).join(', ') || '-'}] | Saturn PAC: [${ta.saturn.map(c => c.type).join(', ') || '-'}]</div>`;
+        html += `<div class="vs-double ${ta.double_activation ? 'badge-hit' : 'badge-miss'}">双星激活: ${ta.double_activation ? '✅ 是' : '❌ 否'}</div>`;
+        if (ta.venus_in_saham_sign) html += `<div class="vs-venus">Venus 在 Saham 星座 ✅</div>`;
+      }
+      vsSection.innerHTML = html;
+    }
+
     // Ashtakavarga Transit 评分
     if (avData) {
       const avScores = computeTransitAVScore(transit.planets, ascSign, avData);
@@ -753,7 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const { planets, ascendant, birth_info } = chartData;
       const allV = computeAllVargas(planets);
       const av = computeAshtakavarga(planets, ascendant.sign);
-      await renderTransit(planets, ascendant.sign, av);
+      await renderTransit(planets, ascendant.sign, av, ascendant.degree);
     });
   }
   // 导出功能

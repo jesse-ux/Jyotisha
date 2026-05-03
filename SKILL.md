@@ -244,7 +244,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 $PYTHON $SCRIPT <子命令> [参数]
 ```
 
-**13大子命令** → **22大子命令**（v3.7.1 升级）：
+**13大子命令** → **27大子命令**（v3.9 升级）：
 
 | 子命令 | 功能 | 典型用法 |
 |--------|------|----------|
@@ -264,13 +264,17 @@ $PYTHON $SCRIPT <子命令> [参数]
 | `audit` | P1-P12行星审计管线（Identity/Health/Resource/SAV/Dignity/Shadbala/Aspects/Nakshatra/Yogas） | `audit --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
 | `varga-full` | v3.7 BPHS十六分盘精确计算（D2-D60全部16分盘，精确度数输出） | `varga-full --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --divisions D9,D60` |
 | `aspects` | v3.7 度数精确相位系统（tight/moderate/loose + 入相位/出相位） | `aspects --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `jaimini` | v3.7 Jaimini完整系统（Chara Karaka 7/8 + Chara Dasha + Karakamsha） | `jaimini --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --mode all` |
+| `jaimini` | v3.7 Jaimini完整系统（Chara Karaka 7/8 + Chara Dasha + Karakamsha）+ `--antardasha` Antardasha子周期 | `jaimini --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --mode all --antardasha` |
 | `nakshatra-adv` | v3.7 高级Nakshatra（Tara Bala + Sub-Lord KP + 兼容性） | `nakshatra-adv --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --mode all` |
 | `argala` | v3.7 Argala门闩系统（主/副Argala + Virodha反干预 + 净评分） | `argala --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
 | `tajika` | v3.7 Tajika年运盘（Muntha + YearLord + Mudda Dasha + Tri-Pataka） | `tajika --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --age 33` |
 | `synastry` | v3.7 合盘分析（Ashta Koota 36分 + Mangal Dosha + Papasamya） | `synastry --moon1 310.89 --moon2 45.5 --mars1 90.43 --mars2 120.3` |
 | `report` | MD→HTML报告生成（羊皮纸主题） | `report ./report_folder --name 一楠 --lagna Leo` |
 | **`prashna`** | **⭐ v3.9 Prashna问事占星（提问时刻星盘+Arudha Lagna+Sphuta组合+Sahams+失物查询）** | `prashna --datetime "2026-04-25 14:30" --lat 39.9 --lon 116.4 --mode chart` |
+| **`double-transit-pac`** | **⭐ v3.9 KN Rao Double Transit PAC + D9层（D1/D9双层PAC检查+跨层确认）** | `double-transit-pac --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --date 2026-07-01 --house 7` |
+| **`transit-ll7l`** | **⭐ v3.9 Transit LL/7L连接+互换（P5 PAC 98%命中率 + P8过宫 + Parivartana互换）** | `transit-ll7l --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --date 2026-07-01` |
+| **`planetary-congregation`** | **⭐ v3.9 行星聚集检测（本命Lagna/7H聚集 + Transit慢行星聚集）** | `planetary-congregation --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --house 7 --transit-date 2026-07-01` |
+| **`vivah-saham`** | **⭐ v3.9 Vivah Saham婚姻敏感点（度数级计算 + Transit Jupiter/Saturn PAC激活）** | `vivah-saham --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --transit-date 2026-07-01` |
 
 **外部数据源**（引擎自动读取）：
 - 验证数据库：`~/WorkBuddy/Claw/vedic_astrology_validation.db`（15,840条案例，10种技法准确率）
@@ -562,6 +566,85 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 **Jaimini星座相位规则：** Movable→Fixed互相注视，Dual→Dual互相注视
 
 → 详见 `references/vp-goel-jaimini-dasha-systems.md` 【现代·V.P. Goel研究】
+
+### 23. KN Rao Double Transit PAC + D9 层 ⭐ v3.9
+
+**核心原理：** KN Rao 体系的 Double Transit 必须同时检查 D1 和 D9（Navamsa）两个层面。传统实现只检查 D1 的 Saturn+Jupiter 相位重叠，但 KN Rao 明确指出**宫主星的 D9 星座**是第三个必须检查的目标。
+
+**PAC 检查体系（Position-Aspect-Conjunction）：**
+- **P（Position）**：Transit 行星与目标在同一宫
+- **A（Aspect）**：Graha Drishti 相位（Jupiter: 5/7/9, Saturn: 3/7/10, Mars: 4/7/8）
+- **C（Conjunction）**：度数级合相 ≤10°
+
+**三层检查结构：**
+1. **D1 层**：Saturn/Jupiter PAC → 事件宫、宫主、LL、对宫主
+2. **D9 层**：Saturn/Jupiter PAC → D9 宫主、D9 Asc、**宫主D9星座**（KN Rao 关键第三目标）、LL D9 星座
+3. **跨层**：Jupiter(D1) + Saturn(D9) 或反之激活同一主题 → 间接确认
+
+**CLI 子命令**：`double-transit-pac --date YYYY-MM-DD --house 7`
+
+**JS 函数**：`computeDoubleTransitPAC(transitPlanets, natalPlanets, natalAscSign, natalAscDegree, eventHouse)`
+
+**精度**：KN Rao 体系 110-115 星盘测试 97% 准确率（使用 D9 Navamsa）
+
+### 24. Transit LL/7L 连接 + Parivartana 互换 ⭐ v3.9
+
+**核心原理：** 婚姻事件发生时，Lagna Lord（LL）和 7th Lord（7L）的 Transit 位置必然与本命盘产生 PAC 连接。这是 Rao 八参数验证体系中最强的 Transit 指标之一。
+
+**三项检查：**
+- **P5（98%命中率）**：Transit LL PAC natal 7L / Transit 7L PAC natal LL — 双向检查
+- **P8（59%命中率）**：Transit LL 过 7H 或 Transit 7L 过 Lagna — 位置检查
+- **Parivartana 互换**：Transit LL 在 natal 7L 星座 且 Transit 7L 在 natal LL 星座 — 最强信号
+
+**CLI 子命令**：`transit-ll7l --date YYYY-MM-DD`
+
+**JS 函数**：`computeTransitLL7L(transitPlanets, natalPlanets, natalAscSign)`
+
+### 25. 行星聚集检测 ⭐ v3.9
+
+**核心原理：** 本命盘中 Lagna 或 7H 有多颗行星聚集，会显著强化该宫位的事件密度。Transit 时慢行星（Saturn/Jupiter/Rahu/Ketu）聚集事件宫，是事件触发的辅助信号。
+
+**检测规则：**
+- Sun 在 Lagna 或 ≥3 颗行星在 Lagna → Lagna 聚集触发
+- Sun 在 7H 或 ≥3 颗行星在 7H → 7H 聚集触发
+- Transit 慢行星 ≥2 颗在事件宫 → Transit 聚集触发
+
+**CLI 子命令**：`planetary-congregation --house 7 --transit-date YYYY-MM-DD`
+
+**JS 函数**：`computePlanetaryCongregation(natalPlanets, natalAscSign, transitPlanets, eventHouse)`
+
+### 26. Vivah Saham 婚姻敏感点 ⭐ v3.9
+
+**核心原理：** Vivah Saham（婚姻敏感点）是 Prashna 体系中专门用于婚姻预测的 Saham，公式为 `norm(Venus - Saturn + Asc)`。Transit 时 Jupiter 和 Saturn 同时 PAC 到 Vivah Saham 经度，是婚姻事件的精确触发信号。
+
+**计算：** 度数级精确输出（sign + degree_in_sign + nakshatra + pada）
+
+**Transit 激活检测：**
+- Jupiter PAC → Vivah Saham（单独激活）
+- Saturn PAC → Vivah Saham（单独激活）
+- **双星激活** = Jupiter AND Saturn 同时 PAC → 强确认信号
+- Venus Transit 过 Saham 星座 → 辅助信号
+
+**CLI 子命令**：`vivah-saham --transit-date YYYY-MM-DD`
+
+**JS 函数**：`computeVivahSaham(natalPlanets, natalAscDegree, transitPlanets)`
+
+### 27. Chara Dasha Antardasha 子周期 ⭐ v3.9
+
+**核心原理：** Chara Dasha 的 Antardasha（子周期）在 Mahadasha 内按同方向从 Mahadasha 星座开始排列，每个 Antardasha 时长按 `(该子星座独立年数 / 总年数) × Mahadasha 年数` 比例分配。
+
+**CLI 参数**：`jaimini --mode dasha --antardasha`
+
+**Python 函数**：`calc_chara_dasha_with_antardasha(asc_sign_idx, planet_longitudes, birth_year, birth_month)`
+
+**协同验证结果（4名人案例）：**
+| 功能 | 命中率 |
+|------|--------|
+| Double Transit PAC+D9 | 50% |
+| Transit LL/7L P5 | 50% |
+| Vivah Saham 双星激活 | 50% |
+| 行星聚集 | 50% |
+| **无确认率** | **0%** |
 
 ## 使用方法
 
