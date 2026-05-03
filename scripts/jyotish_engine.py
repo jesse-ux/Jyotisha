@@ -596,6 +596,116 @@ def _navamsa_idx(lon):
     return (el_starts[si % 4] + ni) % 12
 
 
+def _calc_planetary_congregation(planets: Dict, asc_idx: int) -> Dict:
+    """
+    本命盘行星聚集检测（供 cmd_full_reading 调用）
+    检测 3+ 行星同宫的聚集效应，返回聚集宫位、行星列表、影响领域
+    """
+    houses = {}
+    for pn, pd in planets.items():
+        if not isinstance(pd, dict) or 'sign' not in pd:
+            continue
+        if pn in ['Rahu', 'Ketu']:
+            continue  # Rahu/Ketu 不计入聚集
+        si = SIGNS.index(pd['sign']) if pd['sign'] in SIGNS else 0
+        h = ((si - asc_idx) % 12) + 1
+        houses.setdefault(h, []).append(pn)
+
+    congregations = []
+    for h, plist in houses.items():
+        if len(plist) >= 3:
+            h_sign = SIGNS[(asc_idx + h - 1) % 12]
+            # 判断影响领域
+            impact = _house_theme(h)
+            # 判断聚集力量（有无吉星/凶星）
+            benefics = [p for p in plist if p in ['Jupiter', 'Venus', 'Mercury', 'Moon']]
+            malefics = [p for p in plist if p in ['Saturn', 'Mars', 'Sun', 'Rahu']]
+            strength = 'strong' if len(benefics) > len(malefics) else 'mixed'
+            if len(malefics) >= 3:
+                strength = 'malefic_heavy'
+            congregations.append({
+                'house': h,
+                'sign': h_sign,
+                'planets': plist,
+                'count': len(plist),
+                'benefics': benefics,
+                'malefics': malefics,
+                'strength': strength,
+                'impact': impact,
+                'description': f'{",".join(plist)} 聚集于{h}宫({h_sign})',
+            })
+
+    return {
+        'congregations': congregations,
+        'total': len(congregations),
+        'note': '3+ 行星同宫为显著聚集，影响该宫主题领域',
+    }
+
+
+def _house_theme(house: int) -> List[str]:
+    """返回宫位影响领域"""
+    themes = {
+        1: ['自我', '健康', '性格'],
+        2: ['财富', '家庭', '言语'],
+        3: ['沟通', '旅行', '兄弟'],
+        4: ['母亲', '房产', '情感'],
+        5: ['子女', '投资', '创意'],
+        6: ['疾病', '敌人', '债务'],
+        7: ['婚姻', '合作', '伴侣'],
+        8: ['转型', '意外', '遗产'],
+        9: ['命运', '父亲', '灵性'],
+        10: ['事业', '声望', '成就'],
+        11: ['收益', '社交', '愿望'],
+        12: ['损失', '外迁', '解脱'],
+    }
+    return themes.get(house, ['未知'])
+
+
+def _calc_vivah_saham(planets: Dict, asc_deg: float) -> Dict:
+    """
+    计算本命 Vivah Saham 婚姻敏感点（供 cmd_full_reading 调用）
+    公式: Saham = (Venus_lon - Saturn_lon + Asc_deg) % 360
+    """
+    venus_lon = planets.get('Venus', {}).get('degree', 0)
+    saturn_lon = planets.get('Saturn', {}).get('degree', 0)
+    if venus_lon == 0 or saturn_lon == 0:
+        return {'error': '缺少金星或土星数据', 'saham': None}
+
+    sahams_lon = (venus_lon - saturn_lon + asc_deg) % 360
+    sahams_sign = SIGNS[int(sahams_lon / 30) % 12]
+    sahams_deg_in_sign = sahams_lon % 30
+    sahams_si = int(sahams_lon / 30) % 12
+
+    # 检查哪些本命行星与 Saham 同宫/合相
+    conjuncts = []
+    for pn, pd in planets.items():
+        if pn in ['Rahu', 'Ketu']:
+            continue
+        if not isinstance(pd, dict) or 'degree' not in pd:
+            continue
+        p_lon = pd['degree']
+        diff = abs(p_lon - sahams_lon) % 360
+        if diff > 180:
+            diff = 360 - diff
+        if diff <= 5:
+            conjuncts.append({'planet': pn, 'diff_deg': round(diff, 2)})
+
+    # 从 Saham 位置反推婚姻相关宫位
+    asc_si = int(asc_deg / 30) % 12
+    sahams_house = ((sahams_si - asc_si) % 12) + 1
+
+    return {
+        'saham_lon': round(sahams_lon, 4),
+        'saham_sign': sahams_sign,
+        'saham_deg_in_sign': round(sahams_deg_in_sign, 2),
+        'saham_house': sahams_house,
+        'formula': f'Venus({venus_lon:.2f}°) - Saturn({saturn_lon:.2f}°) + Asc({asc_deg:.2f}°)',
+        'natal_conjuncts': conjuncts,
+        'marriage_relevance': 'high' if sahams_house in [7, 1, 5, 9] else 'moderate',
+        'note': 'Vivah Saham 是度数级婚姻敏感点，Transit 木星/土星过境此点时触发婚姻事件窗',
+    }
+
+
 def _check_pac(planet_name, planet_lon, target_lon, asc_idx):
     """PAC检查: Position(同宫)/Aspect(相位)/Conjunction(合相<=10度)"""
     results = []
@@ -1971,13 +2081,15 @@ def cmd_full_reading(args):
 
     # ── Step 6: Jaimini系统 ──
     try:
-        from jaimini import calc_chara_karaka_7, calc_chara_karaka_8, calc_chara_dasha, calc_karakamsha
+        from jaimini import calc_chara_karaka_7, calc_chara_karaka_8, calc_chara_dasha, calc_karakamsha, calc_chara_dasha_with_antardasha
         from varga import calc_varga
 
         jaimini_result = {}
         jaimini_result['chara_karaka_7'] = calc_chara_karaka_7(planet_degs)
         jaimini_result['chara_karaka_8'] = calc_chara_karaka_8(planet_degs)
-        jaimini_result['chara_dasha'] = calc_chara_dasha(asc_idx, planet_lons, args.year, args.month)
+        # 使用带 Antardasha 子周期的 Chara Dasha（v4.3.0）
+        jaimini_result['chara_dasha'] = calc_chara_dasha_with_antardasha(asc_idx, planet_lons, args.year, args.month)
+        jaimini_result['has_antardasha'] = True
 
         # Karakamsha（用AK灵魂星，非DK配偶星）
         # ⚠️ 2026-05-03修正：此前错误使用DK，现已修正为AK
@@ -2079,6 +2191,20 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"actionable-context: {e}")
 
+    # ── Step 15: Planetary Congregation 行星聚集 (v4.3.0) ──
+    try:
+        congregation = _calc_planetary_congregation(planets, asc_idx)
+        report['modules']['congregation'] = congregation
+    except Exception as e:
+        report['errors'].append(f"congregation: {e}")
+
+    # ── Step 16: Vivah Saham 婚姻敏感点 (v4.3.0) ──
+    try:
+        sahams = _calc_vivah_saham(planets, asc_deg)
+        report['modules']['vivah_saham'] = sahams
+    except Exception as e:
+        report['errors'].append(f"vivah-saham: {e}")
+
     # ── 汇总 ──
     elapsed = round(time.time() - t0, 2)
     module_count = len(report['modules'])
@@ -2088,7 +2214,7 @@ def cmd_full_reading(args):
         'modules_computed': module_count,
         'errors': error_count,
         'status': 'complete' if error_count == 0 else f'{error_count} errors',
-        'next_step': 'AI可直接基于此数据执行阶段二→三→四→五。⭐ v4.1.0: modules.actionable_context 已就绪，Transit分析时必须输出Actionable Output（时间段+行动类型+置信度），动态预测必须先检索案例。',
+        'next_step': 'AI可直接基于此数据执行阶段二→三→四→五。⭐ v4.3.0: modules.congregation + modules.vivah_saham + antardasha已就绪，全链路分析包含行星聚集、婚姻敏感点、Chara子周期。Transit分析时必须输出Actionable Output（时间段+行动类型+置信度），动态预测必须先检索案例。',
     }
 
     return report
