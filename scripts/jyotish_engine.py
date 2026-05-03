@@ -1129,12 +1129,13 @@ def cmd_jaimini(args):
     if mode in ('all', 'dasha'):
         result['chara_dasha'] = calc_chara_dasha(asc_idx, planet_lons, args.year, args.month)
     if mode in ('all', 'karakamsha'):
-        # DK的D9位置（用planet_degs计算Karaka，用planet_lons计算Navamsa）
+        # AK（灵魂星）的D9位置 — Karakamsha定义是AK在Navamsa中的星座
+        # ⚠️ 2026-05-03修正：此前错误使用DK，现已修正为AK
         ck7 = calc_chara_karaka_7(planet_degs)
-        dk_name = ck7['karaka_table']['Darakaraka']['planet']
-        dk_lon = planet_lons.get(dk_name, 0)
-        dk_d9 = calc_varga(dk_lon, 9)
-        result['karakamsha'] = calc_karakamsha(dk_d9.get('sign', 'Aries'), dk_d9.get('degree_in_sign', 0))
+        ak_name = ck7['karaka_table']['Atmakaraka']['planet']
+        ak_lon = planet_lons.get(ak_name, 0)
+        ak_d9 = calc_varga(ak_lon, 9)
+        result['karakamsha'] = calc_karakamsha(ak_d9.get('sign', 'Aries'), ak_d9.get('degree_in_sign', 0))
     return result
 
 
@@ -1449,13 +1450,14 @@ def cmd_full_reading(args):
         jaimini_result['chara_karaka_8'] = calc_chara_karaka_8(planet_degs)
         jaimini_result['chara_dasha'] = calc_chara_dasha(asc_idx, planet_lons, args.year, args.month)
 
-        # Karakamsha（用planet_degs计算Karaka，用planet_lons计算Navamsa）
+        # Karakamsha（用AK灵魂星，非DK配偶星）
+        # ⚠️ 2026-05-03修正：此前错误使用DK，现已修正为AK
         ck7 = jaimini_result['chara_karaka_7']
-        dk_name = ck7['karaka_table']['Darakaraka']['planet']
-        dk_lon = planet_lons.get(dk_name, 0)
-        dk_d9 = calc_varga(dk_lon, 9)
+        ak_name = ck7['karaka_table']['Atmakaraka']['planet']
+        ak_lon = planet_lons.get(ak_name, 0)
+        ak_d9 = calc_varga(ak_lon, 9)
         jaimini_result['karakamsha'] = calc_karakamsha(
-            dk_d9.get('sign', 'Aries'), dk_d9.get('degree_in_sign', 0))
+            ak_d9.get('sign', 'Aries'), ak_d9.get('degree_in_sign', 0))
         report['modules']['jaimini'] = jaimini_result
     except Exception as e:
         report['errors'].append(f"jaimini: {e}")

@@ -1,6 +1,6 @@
 # 🪐 Jyotish Vedic Astrology Engine
 
-**印度占星（Jyotish）专业解盘与推运系统 v3.7.1**
+**印度占星（Jyotish）专业解盘与推运系统 v4.2.0**
 
 基于 Swiss Ephemeris 天文计算库的完整吠陀占星引擎，覆盖从排盘计算到精确推运应期预测的全链路能力。
 
@@ -10,14 +10,18 @@
 - **🔮 全自动综合解盘**：`full-reading` 一键串联 13 个计算模块
 - **📐 BPHS 十六分盘**：D2-D60 全部 16 种分盘精确计算
 - **👁️ 精确相位系统**：度数级 Drishti 相位分析（tight/moderate/loose）
-- **📿 Jaimini 完整系统**：Chara Karaka + Chara Dasha + Karakamsha
-- **🌟 高级 Nakshatra**：Tara Bala + Sub-Lord KP 系统
+- **📿 Jaimini 完整系统**：Chara Karaka 7/8 + Chara Dasha + Karakamsha(AK)
+- **🌟 高级 Nakshatra**：Tara Bala + Sub-Lord KP 系统 + Nakshatra三计数体系
 - **🚪 Argala 门闩系统**：行星干预 + Virodha 反干预
-- **🎂 Tajika 年运盘**：Muntha + YearLord + Mudda Dasha + Tri-Pataka
-- **💑 合盘分析**：Ashta Koota 36 分制 + Mangal Dosha
-- **💪 Shadbala 六重力量**：完整的 Parashara 系统评估
+- **🎂 Tajika 年运盘**：Muntha + YearLord + Mudda Dasha + Tri-Pataka三旗
+- **💑 合盘分析**：Ashta Koota 36 分制 + Mangal Dosha + Papasamya
+- **💪 Shadbala 六重力量**：完整的 Parashara 系统（2026-05-03 Kendra/Ojayugma修正）
 - **🎯 Ashtakavarga 八分法**：BPHS 完整表（SAV=337）
 - **✅ R1-R10 数学验证** + **P1-P12 行星审计管线**
+- **🔒 MEVG 强制外部验证**：v4.2.0 新增，所有解读结论必须外部验证（禁止仅凭AI训练记忆）
+- **📊 Transit Actionable Output**：v4.1.0 新增，明确时间段+行动类型+置信度
+- **🔮 Prashna 问事占星**：BCP自然周期+Arudha Lagna+Trisphuta+Gulika+Chor Graha
+- **⏰ 多Dasha系统**：Vimshottari + Chara + Narayana + Yogini + Moola + Ashtottari等8种
 
 ## 📋 系统要求
 

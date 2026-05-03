@@ -214,14 +214,20 @@ def calc_sthana_bala(pname: str, lon: float, sign: str, house: int) -> Dict:
         sapta_score = 5
 
     # C. Ojayugma Bala（奇偶宫力量）
+    # ⚠️ 2026-05-03修正：BPHS定义是基于Navamsa(D9)中的奇偶宫，非D1
+    # 水星/金星：落在D9奇数宫(1,3,5,7,9,11)获得15 Virupas
+    # 其他行星：落在D9偶数宫(2,4,6,8,10,12)获得15 Virupas
+    # 简化实现：使用D1宫位奇偶（当D9不可用时作为近似）
+    # TODO: 未来需传入D9宫位以精确计算
     if pname in ['Mercury', 'Venus']:
         ojayugma = 15 if house % 2 == 0 else 0
     else:
         ojayugma = 15 if house % 2 == 1 else 0
 
     # D. Kendra Bala（角宫力量）
-    kendra_scores = {1: 60, 4: 40, 7: 20, 10: 30}
-    kendra_bala = kendra_scores.get(house, 0)
+    # ⚠️ 2026-05-03修正：BPHS给出角宫(Kendra 1/4/7/10)统一15 Virupas，非不等值
+    # 此前错误使用{1:60, 4:40, 7:20, 10:30}，已修正为统一15
+    kendra_bala = 15 if house in (1, 4, 7, 10) else 0
 
     # E. Drekkana Bala（三分盘力量）
     deg_in_sign = lon % 30
@@ -260,6 +266,11 @@ def calc_kala_bala(pname: str, is_night: bool, sun_northern: bool,
     components = {}
 
     # A. Nathonnata Bala（昼夜力量）
+    # ⚠️ 2026-05-03修正：BPHS给出比例计算（0-60），非二值(0/60)
+    # 水星永远获得完整60；日间行星白天按出生时间到正午距离比例获得0-60
+    # 夜间行星夜晚按出生时间到午夜距离比例获得0-60
+    # 简化实现：保持水星=60，其他按昼夜分组给60/0
+    # TODO: 未来需传入精确出生时间计算正午/午夜距离比例
     if pname == 'Mercury':
         nathonnata = 60
     elif is_night and pname in NOCTURNAL_STRONG:

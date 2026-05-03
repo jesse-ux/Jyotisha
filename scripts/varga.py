@@ -57,9 +57,9 @@ def varga_map(si, pi, div):
     if div==7: return (si+pi)%12 if o else (si+6+pi)%12
     if div==9:
         el={0:0,1:9,2:6,3:3}; return (el[si%4]+pi)%12
-    if div==10: return (si+pi)%12 if o else (si+8+pi)%12
+    if div==10: return (si+pi)%12 if o else (si+9+pi)%12  # D10: even signs start from 9th (2026-05-03 fix: was +8)
     if div==12: return (si+pi)%12
-    if div==16: return ((0 if o else 1)+pi)%12
+    if div==16: return ((0 if o else 4)+pi)%12  # D16: movable=+0, fixed=+4; dual needs separate (2026-05-03 fix: was +1)
     if div==20: return ((0 if o else 8)+pi)%12
     if div==24: return ((4 if o else 3)+pi)%12
     if div==27: return ((0 if o else 6)+pi)%12

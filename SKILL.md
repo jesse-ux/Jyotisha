@@ -83,7 +83,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 ### 2.1 Jaimini系统
 - **Chara Karakas**：七大可变象征星（Atmakaraka、Amatyakaraka、Bhratrukaraka、Matrukaraka、Putrakaraka、Gnatikaraka、Darakaraka）
 - **Chara Dasha**：星座大运系统（基于太阳和地球，反映实际事件）
-- **Karakamsha**：灵魂上升点（Navamsha盘中的AK位置）
+- **Karakamsha**：灵魂上升点（Atmakaraka所在Navamsha的星座，即AK的D9星座）
 - **Jaimini Drishti**：星座相位系统
 - **应用场景**：婚姻时机预测、事业突破预测、灵魂课题解读
 - → 详见 `references/jaimini-complete-system.md`
@@ -224,276 +224,22 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 - → 详见 `references/common-misconceptions.md`
 - **高级技法与全球方法论**：→ 详见 `references/advanced-techniques.md`、`references/global-astrologer-practical-methodology.md`、`references/global-astrologer-reflections.md`、`references/qin_ruisheng_system.md`
 
-### 12.5 深度分析方法论 ⭐ v3.8.0 新增
+### 13. 深度分析方法论 ⭐ v3.8.0 新增
 - **Shadbala实战解读**：五力量组合模式库（全面型/位置依赖型/关系依赖型/时间敏感型/运动受限型）+Avastha联合诊断矩阵（外强内壮/外强内伤/外弱内壮/外弱内伤）+Bhava Bala实战解读+Vimsopaka解读+行星力量综合排名法 → 详见 `references/shadbala-interpretation-methodology.md`
 - **多Dasha六系统收敛**：Vimshottari+Ashtottari+Yogini+Moola+Narayana+Kalachakra六系统交叉验证（Level 0-4量化）+收敛冲突三种场景处理+PDF数据源提取指南+实战输出模板 → 详见 `references/multi-dasha-convergence-protocol.md`
 - **Navamsa婚姻深度分析**：D9婚姻五维分析法（上升/DK/Venus/7宫/合相）+Vargottama婚姻意义+19分盘频率分析+Pushkara Navamsa婚姻解读+D9婚姻8步旗标算法实操版+D1与D9矛盾处理原则 → 详见 `references/navamsa-marriage-deep-analysis.md`
 - **分盘深度阅读**：19分盘系统化三级方法论（Level 1-3）+行星频率分析核心技法（≥40%=核心主题）+Vargottama检测矩阵+分盘组合阅读模式（三角/生命线/财富链/关系链）+Swiss Ephemeris交叉验证 → 详见 `references/divisional-chart-deep-reading.md`
 - **综合深度分析工作流**：12模块完整工作流（D1→特殊Lagna→Karaka→Shadbala→Avastha→Bhava Bala→Vimsopaka→19分盘→AV→Dasha收敛→D9婚姻→综合结论）+PDF 11页提取最佳实践+引擎调用流程+报告生成+质量检查清单 → 详见 `references/deep-analysis-complete-workflow.md`
 
-### 14. Prashna 问事占星系统 ⭐ v3.9.0
-
-**核心原理：** 基于提问时刻铸造即时星盘，通过共时性原则（Synchronicity）回答具体问题。不需要出生数据。
-
-**十大核心计算模块：**
-
-| 模块 | 功能 | 说明 |
-|------|------|------|
-| Prashna星盘 | 基于提问时间/地点铸造 | Swiss Ephemeris精确计算 |
-| Arudha Lagna | 映像上升点（真实vs表象） | BPHS经典法+1/7宫例外规则 |
-| Trisphuta | 三重合点（日+月+Gulika） | Prasna Marga Ch.5 |
-| Catusphuta/Pancasphuta | 四重/五重组合 | 递进式综合判断 |
-| Gulika | 古利卡（土星暗影子星） | 八等分法计算 |
-| Prana/Deha/Mrityu | 生命三维度Sphuta | 寿命/危险判断 |
-| 35 Sahams | 敏感点体系 | B.V. Raman公式+30°修正 |
-| Kunda验证 | 上升点正确性验证 | 81常数法 |
-| Chor Graha | 失物/窃贼分析 | 方向+窃贼+恢复概率 |
-| Mrityu Chakra | 死亡轮（重病专用） | Navamsa+Mrityu Rashi |
-
-**十步断卦框架：**
-1. 评估星盘活力（上升+月亮）
-2. 对比 Lagna vs Arudha Lagna
-3. 检验相关宫位
-4. 比较征象星力量
-5. 检查 Tajika Yoga（Ithasala等）
-6. 计算 Sphuta 组合
-7. 排查阻碍因素
-8. 权衡吉凶证词
-9. 时间判断
-10. 大运/过境辅助验证
-
-**引擎命令：**
-```bash
-python3 scripts/prashna.py chart --datetime "2026-04-25 14:30" --lat 39.9 --lon 116.4
-python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39.9 --lon 116.4 --mode chart
-# --mode: chart|arudha|sphutas|sahams|lost-item|life|kunda
-```
-
-**⭐ 单事件问事协议（v3.13.0 新增）：** 当用户提出一个具体问题（不提供出生数据）时，使用 `single-event-inquiry-protocol.md` 执行Prashna标准化流程——十步断卦模板+问题类型路由表+征象星力量对比+Tajika Yoga检查+Sphuta组合+阻碍排查+时间判断→综合结论。
-
-**⭐ 婚姻应期技法交叉验证体系（v3.13.0 新增）：** 当分析婚姻/感情应期时，使用 `marriage-timing-validation-methodology.md` 执行四技法交叉验证（Double Transit + DK木星激活 + UL激活 + Dasha支持）——基于10个名人案例的双轨统计（7星系统命中率≥2/4=100%，8星系统≥2/4=90%）。推荐配合 `marriage-timing-comprehensive-techniques.md` 的KP/Rao/Dasha三层确认法。
-
-**参考资料：** `references/prashna-complete-guide.md`（完整方法论）+ `references/single-event-inquiry-protocol.md`（⭐单事件问事协议模板）+ `references/kp-astrology-complete-system.md`（KP 1-249法）+ `references/tajika-yoga-complete-guide.md`（Tajika Yoga）+ `references/marriage-timing-comprehensive-techniques.md`（婚姻应期综合技法）+ `references/marriage-timing-validation-methodology.md`（⭐婚姻四技法验证方法论）+ `references/shatabhisha-complete.md`（一楠Shatabhisha星宿深度剖析）
-
-**适用场景：** 是非判断、时机选择、失物寻人、婚姻结果、事业方向、健康预后、旅行安全、诉讼胜负、财务投资、单个具体问题快判
-
-### 15. BCP自然周期法 ⭐ v3.10.0
-
-**核心原理：** Bhrigu Chakra Paddhati (BCP) 是Nadi体系下的生命自然周期系统，将人生按月亮起始分为9个固定12年周期，每个周期由不同行星统治。
-
-**9大自然周期：**
-
-| 周期 | 统治星 | 年龄段 | 核心主题 |
-|------|--------|--------|----------|
-| 月亮周期 | Moon | 0-12 | 童年/母亲/情绪基底 |
-| 水星周期 | Mercury | 13-24 | 教育/学习/技能积累 |
-| 金星周期 | Venus | 25-36 | 爱情/婚姻/物质享受 |
-| 太阳周期 | Sun | 37-48 | 权威/事业/社会地位 |
-| 火星周期 | Mars | 49-60 | 行动/冲突/遗产处理 |
-| 木星周期 | Jupiter | 61-72 | 智慧/灵性/传承 |
-| 土星周期 | Saturn | 73-84 | 责任/收成/人生总结 |
-| Rahu周期 | Rahu | 85-96 | 非传统/异域/超常经历 |
-| Ketu周期 | Ketu | 97-108 | 解脱/超脱/灵性圆满 |
-
-**双轨激活法：**
-- **A轨（从上升起算）**：当前年龄对应的宫位（从1宫起），反映客观事件层面
-- **B轨（从周期统治星位置起算）**：反映该周期特有的内在驱动力
-- 双轨交汇的宫位/行星为该年最强激活点
-
-**三要素解读法（缩窄事件范围）：**
-1. **宫位** → 事件领域
-2. **宫主星** → 具体表现方式
-3. **Karaka** → 天然征象确认
-三者联动才能精准定位事件类型
-
-**应用场景：** 年度运势速判、人生阶段主题分析、Dasha系统交叉验证
-→ 详见 `references/bhrigu-chakra-paddhati.md`
-
-### 16. 多元技法系统 ⭐ v3.11.0
-
-#### 16.1 Yogi / Ava Yogi 行星系统
-
-**核心原理：** 基于上升点计算的三个特殊行星指派——Yogi（最吉祥，财富核心来源）、Duplicate Yogi（次吉祥）、Ava Yogi（最凶，障碍来源）。同一颗行星对不同人角色完全不同。
-
-**四大影响因子：**
-1. **财富/好运领域**（Yogi 行星的宫位主宰+落入宫位）
-2. **与神灵的距离**（Yogi 行星决定接近灵性的方式）
-3. **社交圈类型**（Sambandha 分析→吸引什么样的人）
-4. **支持者类型**（与 Yogi 有联系的行星=支持来源；与 Ava Yogi 联系=阻碍来源）
-
-**关键规则：**
-- 上升点与 Yogi 点同 Nakshatra = 天生富裕业力
-- Dasha 激活 Yogi = 财富机遇期；Dasha 激活 Ava Yogi = 障碍期
-- Yogi 宝石→推荐佩戴；Ava Yogi 宝石→严禁佩戴
-- Yogi 与 Tithi Lord 同一行星 → 关系运与财富运同步
-
-→ 详见 `references/yogi-avayogi-system.md`
-
-#### 16.2 Tithi Lord 关系影响系统
-
-**核心原理：** 出生时所在 Tithi（月亮历日）的统治行星（排除 Ketu，8 颗行星循环），Sanjay Rath 命名为"水龙头"（Faucet），控制 Jala（水元素）即情感流动和关系模式。
-
-**八种关系模式：**
-| Tithi Lord | 模式 | 核心特征 |
-|-----------|------|---------|
-| Sun | 家庭支配型 | 掌控主导权，伴侣受家庭/父亲影响 |
-| Moon | 善变敏感型 | 情感需求多变，需持续滋养 |
-| Mars | 热情独居矛盾型 | 全有或全无，渴望亲密又怕束缚 |
-| Mercury | 青春智力型 | 追求智力刺激，心态年轻 |
-| Jupiter | 道德家庭型 | 重视道德传统，伴侣是导师角色 |
-| Venus | 欲望美感型 | 感官需求强，爱情是生命核心 |
-| Saturn | 延迟成熟型 | 关系来得晚但极持久 |
-| Rahu | 非传统突破型 | 跨文化/跨阶层/非婚关系 |
-
-→ 详见 `references/tithi-lord-relationship-system.md`
-
-#### 16.3 Rashi Tulya Navamsa + 根源冲动
-
-**核心原理：** 将 D1 行星位置投射到 D9 坐标系（保持星座位置不变），揭示每颗行星的深层动机——Navamsa 主星给行星一个"root impulse"（根源冲动）。
-
-**行星根源冲动速查：**
-- **太阳的 Navamsa** → 自尊激励方式（白羊=开拓型自尊，金牛=物质型自尊...）
-- **月亮的 Navamsa** → 心理快乐来源
-- **火星的 Navamsa** → 愤怒触发点（天蝎 Navamsa = 背叛时爆发，最危险）
-- **金星在火星 Navamsa** → 无法满足的性欲/婚外情倾向（经典组合）
-- **金星在土星 Navamsa** → 缺乏资源/孤独/同性关系倾向
-
-**Navamsa 分类规则：** 火象 Navamsa（白羊/狮子/射手）→ 支持教育/孩子/名声；水象 Navamsa（巨蟹/天蝎/双鱼）→ 不利健康/财富/名声。
-
-→ 详见 `references/rashi-tulya-navamsa-root-impulse.md`
-
-#### 16.4 Bhrigu Pada Dasha + 婚姻计数法
-
-**Bhrigu Pada Dasha：** Bhrigu 体系下的行星推进法（Progression），不同于 BCP（固定周期），专用于婚姻时机预测。基于命盘动态计算，可在 D9 上应用。与 Narayana Dasha D9 变体交叉验证。
-
-**婚姻计数法（Sanjay Rath 秘传）：**
-1. 确定 D1 第 7 宫主
-2. 记录 7 宫主在 D1 中的星座（A）和 D9 中的星座（B）
-3. 从 A 数到 B = 婚姻/认真关系数量（>1年的关系）
-4. **Parivartana（交换）需重新计算**——最常见的错误
-
-→ 详见 `references/bhrigu-pada-dasha-marriage-counting.md`
-
-#### 16.5 Pancha Pakshi + Nakshatra 三体系 + Savya/Apasavya
-
-**Pancha Pakshi（五鸟择时术）：** 基于出生月亮 Nakshatra 分配五种鸟，一天五个时段各有高/低振动频率，影响日常活动成功率。Sri K N Rao 推荐。
-
-**Nakshatra 三种计数体系：**
-| 体系 | 起点 | 功能 | 对应神 |
-|------|------|------|-------|
-| Ashwinādi | Ashwini | 创造（Srishti） | Brahma |
-| Krittikādi | Krittika | 维持（Sthiti）| Vishnu ← Vimshottari |
-| Ardrādi | Ardra | 毁灭（Samhāra）| Shiva |
-
-**Savya/Apasavya：** 27 Nakshatra 每 3 个一组交替顺行/逆行。Savya→创造/扩展/外向；Apasavya→收束/内省/内向。
-
-→ 详见 `references/pancha-pakshi-nakshatra-systems.md`
-
-### 17. Badhaka障碍星系统 ⭐ v3.12.0
-
-**核心原理：** Badhaka（障碍星）是BPHS记载的特殊障碍机制——某些宫位及其主宰行星会对上升产生结构性障碍。分为三类上升：
-
-| 上升类型 | Badhaka Sthana（障碍宫） | Leo上升示例 |
-|----------|------------------------|------------|
-| Movable（启动） | 11宫 | — |
-| Fixed（固定） | 9宫 | Badhakesh=Mars（9宫Aries主） |
-| Dual（双体） | 7宫 | — |
-
-**Badhakesh分析五步法：**
-1. 确定上升类型 → 找到Badhaka Sthana → Badhakesh
-2. 分析Badhakesh的落宫、相位、合相
-3. 检查Badhaka Sthana内有无行星
-4. 评估Badhakesh与Lagna/Lagnesha的关系
-5. 提供针对性补救措施
-
-**应用场景：** 障碍诊断（事业/婚姻/健康受阻）、Badhakesh激活期的风险预警
-→ 详见 `references/badhaka-obstacle-planet-guide.md`
-
-### 18. B.V. Raman宫位判断方法论 ⭐ v3.12.0
-
-**核心原理：** B.V. Raman体系下完整的12上升吉凶星/Yogakaraka分类表+六步宫位判断法+Maraka死亡指示系统。
-
-**每上升完整Benefic/Malefic/Yogakaraka表：**
-- Leo上升：Benefic=Jupiter+Venus+Moon+Mars(Yogakaraka), Malefic=Sun+Mercury+Saturn+Rahu+Ketu
-- Mars是Leo上升Yogakaraka（同时掌管4宫Kendra+9宫Trikona）
-- **关键规则**：天然吉星拥有Kendra → 变凶；天然凶星拥有Kendra → 变吉；Trikona主星效应优先于Kendra
-
-**Maraka系统（死亡指示）：**
-- 主要Maraka=2宫主+7宫主；次级=Saturn；"生命宫"=3宫+8宫
-
-**第七宫婚姻分析六维度（B.V. Raman Vol 2）：**
-1. 7宫本身的力量与相位
-2. 7宫主的落宫与尊严
-3. Venus的状态（天然婚姻征象星）
-4. 月亮/Mars对7宫的影响
-5. D9 Navamsa的7宫确认
-6. Dasha激活时机
-
-→ 详见 `references/raman-house-judgment-methodology.md` 【古典·B.V. Raman】
-
-### 19. Shasti Hayani条件Dasha ⭐ v3.12.0
-
-**核心原理：** Shasti Hayani Dasha是条件性Nakshatra Dasha系统，60年周期，**仅当太阳在1宫时适用**。8行星固定顺序，每行星10年（排除Ketu）。
-
-**固定行星顺序**：Jupiter(10)→Sun(10)→Mars(10)→Moon(10)→Mercury(10)→Venus(10)→Saturn(10)→Rahu(10) = 80年
-
-**三级Antar结构**：Antar（行星分配按Nakshatra）→ Pratyantar → Sookshma
-
-**与其他条件Dasha对比**：Shodashottari（116年）、Dwisaptati Sama（72年）、Shastihayani（60年）各有适用条件
-
-→ 详见 `references/shasti-hayani-dasha-guide.md`
-
-### 20. Marc Boney婚姻六步法 ⭐ v3.12.0
-
-**核心原理：** Marc Boney（K.N. Rao学派嫡传）提出的婚姻/关系评估六步法，核心创新是"三视角"7宫分析。
-
-**六步法：**
-1. **评估Venus在D1+D9** — 天然关系征象星的整体状态
-2. **三视角7宫评估** — 从Lagna、从Moon、从Venus三个上升点分别看7宫
-3. **Navamsa确认** — D9婚姻旗标验证
-4. **Vimshottari Dasha支持** — Venus/7宫主/DK相关Dasha激活
-5. **Jaimini Chara Dasha DK激活** — DK相关星座大运
-6. **Double Transit** — Saturn+Jupiter过境同时触发7宫或7宫主
-
-**关键创新**：三视角7宫评估——D1 Lagna的7宫看实际婚姻，Chandra Lagna的7宫看心理需求，Venus Lagna的7宫看关系品质。
-
-**跨系统验证立场**：Marc Boney整本书 dedicate to K.N. Rao，明确使用Parashari+Jaimini+Transit多系统整合，验证了Skill的跨系统方法论的合理性。
-
-→ 详见 `references/marc-boney-marriage-six-step.md` 【现代创新·K.N. Rao学派】
-
-### 21. V.P. Goel Jaimini Dasha系统 ⭐ v3.12.0
-
-**核心原理：** V.P. Goel在《Predicting through Jaimini Astrology》中记载的10种Jaimini Dasha系统。Skill此前仅有Chara Dasha深度覆盖，本次扩展至全部系统概览。
-
-**10种Jaimini Dasha系统概览：**
-| 系统 | 基础 | 用途 | 实现优先级 |
-|------|------|------|-----------|
-| Chara Dasha | 星座序列 | 通用事件 | P0（已实现） |
-| Mandook Dasha | 三分组跳跃 | 事业突破 | P1 |
-| Sthira & Brahma Dasha | 固定模式 | 健康寿命 | P2 |
-| Narayan Dasha | 宫位链 | 财富/事业 | P1 |
-| Navamsha Dasha | D9序列 | 婚姻/关系 | P1 |
-| Narayan Shoola Dasha (NSD) | 三刺模式 | 健康/手术 | P2 |
-| Trikon Dasha | 三角序列 | 特殊领域 | P3 |
-| Atmanadi Dasha | 灵魂序列 | 灵性发展 | P3 |
-
-**Argala四分之一度阻碍规则（BPHS原典）：**
-- 星座内度数位置（0-7°30' / 7°30'-15° / 15°-22°30' / 22°30'-30°）决定Virodha是否有效
-- 跨越四分之一边界时Argala效果显著变化
-
-**Jaimini星座相位规则：** Movable→Fixed互相注视，Dual→Dual互相注视
-
-→ 详见 `references/vp-goel-jaimini-dasha-systems.md` 【现代·V.P. Goel研究】
-
-### 13. 计算引擎集成（Swiss Ephemeris + 数据库）⭐ v3.4.0
+### 14. 计算引擎集成（Swiss Ephemeris + 数据库）⭐ v3.4.0
 
 **统一引擎入口**：`scripts/jyotish_engine.py` v3.7.1（基于 Swiss Ephemeris 天文计算库）
 
 **调用方式**：AI 通过 `execute_command` 调用以下子命令（所有输出为 JSON）：
 
 ```bash
-# 使用系统 Python 3.11
-PYTHON=/Library/Frameworks/Python.framework/Versions/3.11/bin/python3
+# 使用 Python 3.11+（请替换为您系统中的 Python 3.11+ 路径）
+PYTHON=python3
 SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 $PYTHON $SCRIPT <子命令> [参数]
 ```
@@ -561,6 +307,261 @@ $PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute 
 14. `celebrity` 查找相似案例做对比验证
 15. 合盘场景：`synastry --moon1 ... --moon2 ...` 计算Ashta Koota 36分制 ⭐ v3.7
 16. `memory --action store` 保存分析结论供后续引用 ⭐ v3.4
+
+
+### 15. Prashna 问事占星系统 ⭐ v3.9.0
+
+**核心原理：** 基于提问时刻铸造即时星盘，通过共时性原则（Synchronicity）回答具体问题。不需要出生数据。
+
+**十大核心计算模块：**
+
+| 模块 | 功能 | 说明 |
+|------|------|------|
+| Prashna星盘 | 基于提问时间/地点铸造 | Swiss Ephemeris精确计算 |
+| Arudha Lagna | 映像上升点（真实vs表象） | BPHS经典法+1/7宫例外规则 |
+| Trisphuta | 三重合点（日+月+Gulika） | Prasna Marga Ch.5 |
+| Catusphuta/Pancasphuta | 四重/五重组合 | 递进式综合判断 |
+| Gulika | 古利卡（土星暗影子星） | 八等分法计算 |
+| Prana/Deha/Mrityu | 生命三维度Sphuta | 寿命/危险判断 |
+| 35 Sahams | 敏感点体系 | B.V. Raman公式+30°修正 |
+| Kunda验证 | 上升点正确性验证 | 81常数法 |
+| Chor Graha | 失物/窃贼分析 | 方向+窃贼+恢复概率 |
+| Mrityu Chakra | 死亡轮（重病专用） | Navamsa+Mrityu Rashi |
+
+**十步断卦框架：**
+1. 评估星盘活力（上升+月亮）
+2. 对比 Lagna vs Arudha Lagna
+3. 检验相关宫位
+4. 比较征象星力量
+5. 检查 Tajika Yoga（Ithasala等）
+6. 计算 Sphuta 组合
+7. 排查阻碍因素
+8. 权衡吉凶证词
+9. 时间判断
+10. 大运/过境辅助验证
+
+**引擎命令：**
+```bash
+python3 scripts/prashna.py chart --datetime "2026-04-25 14:30" --lat 39.9 --lon 116.4
+python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39.9 --lon 116.4 --mode chart
+# --mode: chart|arudha|sphutas|sahams|lost-item|life|kunda
+```
+
+**⭐ 单事件问事协议（v3.13.0 新增）：** 当用户提出一个具体问题（不提供出生数据）时，使用 `single-event-inquiry-protocol.md` 执行Prashna标准化流程——十步断卦模板+问题类型路由表+征象星力量对比+Tajika Yoga检查+Sphuta组合+阻碍排查+时间判断→综合结论。
+
+**⭐ 婚姻应期技法交叉验证体系（v3.13.0 新增）：** 当分析婚姻/感情应期时，使用 `marriage-timing-validation-methodology.md` 执行四技法交叉验证（Double Transit + DK木星激活 + UL激活 + Dasha支持）——基于10个名人案例的双轨统计（7星系统命中率≥2/4=100%，8星系统≥2/4=90%）。推荐配合 `marriage-timing-comprehensive-techniques.md` 的KP/Rao/Dasha三层确认法。
+
+**参考资料：** `references/prashna-complete-guide.md`（完整方法论）+ `references/single-event-inquiry-protocol.md`（⭐单事件问事协议模板）+ `references/kp-astrology-complete-system.md`（KP 1-249法）+ `references/tajika-yoga-complete-guide.md`（Tajika Yoga）+ `references/marriage-timing-comprehensive-techniques.md`（婚姻应期综合技法）+ `references/marriage-timing-validation-methodology.md`（⭐婚姻四技法验证方法论）+ `references/shatabhisha-complete.md`（一楠Shatabhisha星宿深度剖析）
+
+**适用场景：** 是非判断、时机选择、失物寻人、婚姻结果、事业方向、健康预后、旅行安全、诉讼胜负、财务投资、单个具体问题快判
+
+### 16. BCP自然周期法 ⭐ v3.10.0
+
+**核心原理：** Bhrigu Chakra Paddhati (BCP) 是Nadi体系下的生命自然周期系统，将人生按月亮起始分为9个固定12年周期，每个周期由不同行星统治。
+
+**9大自然周期：**
+
+| 周期 | 统治星 | 年龄段 | 核心主题 |
+|------|--------|--------|----------|
+| 月亮周期 | Moon | 0-12 | 童年/母亲/情绪基底 |
+| 水星周期 | Mercury | 13-24 | 教育/学习/技能积累 |
+| 金星周期 | Venus | 25-36 | 爱情/婚姻/物质享受 |
+| 太阳周期 | Sun | 37-48 | 权威/事业/社会地位 |
+| 火星周期 | Mars | 49-60 | 行动/冲突/遗产处理 |
+| 木星周期 | Jupiter | 61-72 | 智慧/灵性/传承 |
+| 土星周期 | Saturn | 73-84 | 责任/收成/人生总结 |
+| Rahu周期 | Rahu | 85-96 | 非传统/异域/超常经历 |
+| Ketu周期 | Ketu | 97-108 | 解脱/超脱/灵性圆满 |
+
+**双轨激活法：**
+- **A轨（从上升起算）**：当前年龄对应的宫位（从1宫起），反映客观事件层面
+- **B轨（从周期统治星位置起算）**：反映该周期特有的内在驱动力
+- 双轨交汇的宫位/行星为该年最强激活点
+
+**三要素解读法（缩窄事件范围）：**
+1. **宫位** → 事件领域
+2. **宫主星** → 具体表现方式
+3. **Karaka** → 天然征象确认
+三者联动才能精准定位事件类型
+
+**应用场景：** 年度运势速判、人生阶段主题分析、Dasha系统交叉验证
+→ 详见 `references/bhrigu-chakra-paddhati.md`
+
+### 17. 多元技法系统 ⭐ v3.11.0
+
+#### 17.1 Yogi / Ava Yogi 行星系统
+
+**核心原理：** 基于上升点计算的三个特殊行星指派——Yogi（最吉祥，财富核心来源）、Duplicate Yogi（次吉祥）、Ava Yogi（最凶，障碍来源）。同一颗行星对不同人角色完全不同。
+
+**四大影响因子：**
+1. **财富/好运领域**（Yogi 行星的宫位主宰+落入宫位）
+2. **与神灵的距离**（Yogi 行星决定接近灵性的方式）
+3. **社交圈类型**（Sambandha 分析→吸引什么样的人）
+4. **支持者类型**（与 Yogi 有联系的行星=支持来源；与 Ava Yogi 联系=阻碍来源）
+
+**关键规则：**
+- 上升点与 Yogi 点同 Nakshatra = 天生富裕业力
+- Dasha 激活 Yogi = 财富机遇期；Dasha 激活 Ava Yogi = 障碍期
+- Yogi 宝石→推荐佩戴；Ava Yogi 宝石→严禁佩戴
+- Yogi 与 Tithi Lord 同一行星 → 关系运与财富运同步
+
+→ 详见 `references/yogi-avayogi-system.md`
+
+#### 17.2 Tithi Lord 关系影响系统
+
+**核心原理：** 出生时所在 Tithi（月亮历日）的统治行星（排除 Ketu，8 颗行星循环），Sanjay Rath 命名为"水龙头"（Faucet），控制 Jala（水元素）即情感流动和关系模式。
+
+**八种关系模式：**
+| Tithi Lord | 模式 | 核心特征 |
+|-----------|------|---------|
+| Sun | 家庭支配型 | 掌控主导权，伴侣受家庭/父亲影响 |
+| Moon | 善变敏感型 | 情感需求多变，需持续滋养 |
+| Mars | 热情独居矛盾型 | 全有或全无，渴望亲密又怕束缚 |
+| Mercury | 青春智力型 | 追求智力刺激，心态年轻 |
+| Jupiter | 道德家庭型 | 重视道德传统，伴侣是导师角色 |
+| Venus | 欲望美感型 | 感官需求强，爱情是生命核心 |
+| Saturn | 延迟成熟型 | 关系来得晚但极持久 |
+| Rahu | 非传统突破型 | 跨文化/跨阶层/非婚关系 |
+
+→ 详见 `references/tithi-lord-relationship-system.md`
+
+#### 17.3 Rashi Tulya Navamsa + 根源冲动
+
+**核心原理：** 将 D1 行星位置投射到 D9 坐标系（保持星座位置不变），揭示每颗行星的深层动机——Navamsa 主星给行星一个"root impulse"（根源冲动）。
+
+**行星根源冲动速查：**
+- **太阳的 Navamsa** → 自尊激励方式（白羊=开拓型自尊，金牛=物质型自尊...）
+- **月亮的 Navamsa** → 心理快乐来源
+- **火星的 Navamsa** → 愤怒触发点（天蝎 Navamsa = 背叛时爆发，最危险）
+- **金星在火星 Navamsa** → 无法满足的性欲/婚外情倾向（经典组合）
+- **金星在土星 Navamsa** → 缺乏资源/孤独/同性关系倾向
+
+**Navamsa 分类规则：** 火象 Navamsa（白羊/狮子/射手）→ 支持教育/孩子/名声；水象 Navamsa（巨蟹/天蝎/双鱼）→ 不利健康/财富/名声。
+
+→ 详见 `references/rashi-tulya-navamsa-root-impulse.md`
+
+#### 17.4 Bhrigu Pada Dasha + 婚姻计数法
+
+**Bhrigu Pada Dasha：** Bhrigu 体系下的行星推进法（Progression），不同于 BCP（固定周期），专用于婚姻时机预测。基于命盘动态计算，可在 D9 上应用。与 Narayana Dasha D9 变体交叉验证。
+
+**婚姻计数法（Sanjay Rath 秘传）：**
+1. 确定 D1 第 7 宫主
+2. 记录 7 宫主在 D1 中的星座（A）和 D9 中的星座（B）
+3. 从 A 数到 B = 婚姻/认真关系数量（>1年的关系）
+4. **Parivartana（交换）需重新计算**——最常见的错误
+
+→ 详见 `references/bhrigu-pada-dasha-marriage-counting.md`
+
+#### 17.5 Pancha Pakshi + Nakshatra 三体系 + Savya/Apasavya
+
+**Pancha Pakshi（五鸟择时术）：** 基于出生月亮 Nakshatra 分配五种鸟，一天五个时段各有高/低振动频率，影响日常活动成功率。Sri K N Rao 推荐。
+
+**Nakshatra 三种计数体系：**
+| 体系 | 起点 | 功能 | 对应神 |
+|------|------|------|-------|
+| Ashwinādi | Ashwini | 创造（Srishti） | Brahma |
+| Krittikādi | Krittika | 维持（Sthiti）| Vishnu ← Vimshottari |
+| Ardrādi | Ardra | 毁灭（Samhāra）| Shiva |
+
+**Savya/Apasavya：** 27 Nakshatra 每 3 个一组交替顺行/逆行。Savya→创造/扩展/外向；Apasavya→收束/内省/内向。
+
+→ 详见 `references/pancha-pakshi-nakshatra-systems.md`
+
+### 18. Badhaka障碍星系统 ⭐ v3.12.0
+
+**核心原理：** Badhaka（障碍星）是BPHS记载的特殊障碍机制——某些宫位及其主宰行星会对上升产生结构性障碍。分为三类上升：
+
+| 上升类型 | Badhaka Sthana（障碍宫） | Leo上升示例 |
+|----------|------------------------|------------|
+| Movable（启动） | 11宫 | — |
+| Fixed（固定） | 9宫 | Badhakesh=Mars（9宫Aries主） |
+| Dual（双体） | 7宫 | — |
+
+**Badhakesh分析五步法：**
+1. 确定上升类型 → 找到Badhaka Sthana → Badhakesh
+2. 分析Badhakesh的落宫、相位、合相
+3. 检查Badhaka Sthana内有无行星
+4. 评估Badhakesh与Lagna/Lagnesha的关系
+5. 提供针对性补救措施
+
+**应用场景：** 障碍诊断（事业/婚姻/健康受阻）、Badhakesh激活期的风险预警
+→ 详见 `references/badhaka-obstacle-planet-guide.md`
+
+### 19. B.V. Raman宫位判断方法论 ⭐ v3.12.0
+
+**核心原理：** B.V. Raman体系下完整的12上升吉凶星/Yogakaraka分类表+六步宫位判断法+Maraka死亡指示系统。
+
+**每上升完整Benefic/Malefic/Yogakaraka表：**
+- Leo上升：Benefic=Jupiter+Venus+Moon+Mars(Yogakaraka), Malefic=Sun+Mercury+Saturn+Rahu+Ketu
+- Mars是Leo上升Yogakaraka（同时掌管4宫Kendra+9宫Trikona）
+- **关键规则**：天然吉星拥有Kendra → 变凶；天然凶星拥有Kendra → 变吉；Trikona主星效应优先于Kendra
+
+**Maraka系统（死亡指示）：**
+- 主要Maraka=2宫主+7宫主；次级=Saturn；"生命宫"=3宫+8宫
+
+**第七宫婚姻分析六维度（B.V. Raman Vol 2）：**
+1. 7宫本身的力量与相位
+2. 7宫主的落宫与尊严
+3. Venus的状态（天然婚姻征象星）
+4. 月亮/Mars对7宫的影响
+5. D9 Navamsa的7宫确认
+6. Dasha激活时机
+
+→ 详见 `references/raman-house-judgment-methodology.md` 【古典·B.V. Raman】
+
+### 20. Shasti Hayani条件Dasha ⭐ v3.12.0
+
+**核心原理：** Shasti Hayani Dasha是条件性Nakshatra Dasha系统，60年周期，**仅当太阳在1宫时适用**。8行星固定顺序，每行星10年（排除Ketu）。
+
+**固定行星顺序**：Jupiter(10)→Sun(10)→Mars(10)→Moon(10)→Mercury(10)→Venus(10)→Saturn(10)→Rahu(10) = 80年
+
+**三级Antar结构**：Antar（行星分配按Nakshatra）→ Pratyantar → Sookshma
+
+**与其他条件Dasha对比**：Shodashottari（116年）、Dwisaptati Sama（72年）、Shastihayani（60年）各有适用条件
+
+→ 详见 `references/shasti-hayani-dasha-guide.md`
+
+### 21. Marc Boney婚姻六步法 ⭐ v3.12.0
+
+**核心原理：** Marc Boney（K.N. Rao学派嫡传）提出的婚姻/关系评估六步法，核心创新是"三视角"7宫分析。
+
+**六步法：**
+1. **评估Venus在D1+D9** — 天然关系征象星的整体状态
+2. **三视角7宫评估** — 从Lagna、从Moon、从Venus三个上升点分别看7宫
+3. **Navamsa确认** — D9婚姻旗标验证
+4. **Vimshottari Dasha支持** — Venus/7宫主/DK相关Dasha激活
+5. **Jaimini Chara Dasha DK激活** — DK相关星座大运
+6. **Double Transit** — Saturn+Jupiter过境同时触发7宫或7宫主
+
+**关键创新**：三视角7宫评估——D1 Lagna的7宫看实际婚姻，Chandra Lagna的7宫看心理需求，Venus Lagna的7宫看关系品质。
+
+**跨系统验证立场**：Marc Boney整本书 dedicate to K.N. Rao，明确使用Parashari+Jaimini+Transit多系统整合，验证了Skill的跨系统方法论的合理性。
+
+→ 详见 `references/marc-boney-marriage-six-step.md` 【现代创新·K.N. Rao学派】
+
+### 22. V.P. Goel Jaimini Dasha系统 ⭐ v3.12.0
+
+**核心原理：** V.P. Goel在《Predicting through Jaimini Astrology》中记载的10种Jaimini Dasha系统。Skill此前仅有Chara Dasha深度覆盖，本次扩展至全部系统概览。
+
+**10种Jaimini Dasha系统概览：**
+| 系统 | 基础 | 用途 | 实现优先级 |
+|------|------|------|-----------|
+| Chara Dasha | 星座序列 | 通用事件 | P0（已实现） |
+| Mandook Dasha | 三分组跳跃 | 事业突破 | P1 |
+| Sthira & Brahma Dasha | 固定模式 | 健康寿命 | P2 |
+| Narayan Dasha | 宫位链 | 财富/事业 | P1 |
+| Navamsha Dasha | D9序列 | 婚姻/关系 | P1 |
+| Narayan Shoola Dasha (NSD) | 三刺模式 | 健康/手术 | P2 |
+| Trikon Dasha | 三角序列 | 特殊领域 | P3 |
+| Atmanadi Dasha | 灵魂序列 | 灵性发展 | P3 |
+
+**Argala四分之一度阻碍规则（BPHS原典）：**
+- 星座内度数位置（0-7°30' / 7°30'-15° / 15°-22°30' / 22°30'-30°）决定Virodha是否有效
+- 跨越四分之一边界时Argala效果显著变化
+
+**Jaimini星座相位规则：** Movable→Fixed互相注视，Dual→Dual互相注视
+
+→ 详见 `references/vp-goel-jaimini-dasha-systems.md` 【现代·V.P. Goel研究】
 
 ## 使用方法
 
@@ -797,7 +798,7 @@ $PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute 
 
 ## 能力水平
 
-当前能力水平：**顶级专业占星师水平（6.0/5）**
+当前能力水平：**顶级（5.0/5）**
 
 ### 核心优势（按能力域分组）
 
@@ -829,11 +830,11 @@ $PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute 
 
 ## 更新记录
 
-详见 `CHANGELOG.md`。当前版本：v3.12.1。
+详见 `CHANGELOG.md`。当前版本：v4.2.0。
 
 ## 参考资料
 
-本Skill包含以下参考资料（存储在references/目录），共100个文件：
+本Skill包含以下参考资料（存储在references/目录），共102个文件：
 
 ### AI解盘工作流（2个）⭐ v3.2 新增
 0. **ai-reading-workflow-prompt.md**：AI解盘工作流Prompt工程（7阶段完整执行引擎：PDF提取→意图路由→静态分析10步→动态推运7步→应期输出→补救→现代措辞包装）⭐⭐⭐⭐⭐
@@ -969,15 +970,15 @@ $PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute 
 ### 10本PDF书籍集成（5个）⭐ v3.12.0 新增
 94. **badhaka-obstacle-planet-guide.md**：Badhaka障碍星系统完整指南（12上升Badhaka Sthana+Badhakesh对照表+三种上升类型规则+Leo上升Badhakesh=Mars分析+五步分析协议+补救措施）⭐⭐⭐⭐⭐ v3.12.0 新增 【古典·BPHS】
 95. **raman-house-judgment-methodology.md**：B.V. Raman宫位判断方法论（12上升完整Benefic/Malefic/Yogakaraka表+六步宫位判断法+第七宫婚姻分析六维度+Maraka死亡指示系统+Mangal Dosha完整规则）⭐⭐⭐⭐⭐ v3.12.0 新增 【古典·B.V. Raman】
-93. **shasti-hayani-dasha-guide.md**：Shasti Hayani条件Dasha指南（60年周期+太阳1宫条件+8行星固定顺序Jupiter→Rahu+三级Antar结构+与其他条件Dasha对比）⭐⭐⭐⭐ v3.12.0 新增
-94. **marc-boney-marriage-six-step.md**：Marc Boney婚姻六步法（三视角7宫评估法+同居vs正式婚姻区分+Dasha/DK/Double Transit整合+K.N. Rao学派跨系统验证立场+V.P. Goel+K.N. Rao书证支持多系统整合）⭐⭐⭐⭐⭐ v3.12.0 新增 【现代创新·K.N. Rao学派】
-95. **vp-goel-jaimini-dasha-systems.md**：V.P. Goel Jaimini Dasha系统概览（10种Jaimini Dasha：Chara/Mandook/Sthira/Narayan/Navamsha/NSD/Trikon/Atmanadi等+实现优先级P0-P3+Argala四分之一度阻碍规则完整表+Jaimini星座相位规则）⭐⭐⭐⭐ v3.12.0 新增 【现代·V.P. Goel研究】
+96. **shasti-hayani-dasha-guide.md**：Shasti Hayani条件Dasha指南（60年周期+太阳1宫条件+8行星固定顺序Jupiter→Rahu+三级Antar结构+与其他条件Dasha对比）⭐⭐⭐⭐ v3.12.0 新增
+97. **marc-boney-marriage-six-step.md**：Marc Boney婚姻六步法（三视角7宫评估法+同居vs正式婚姻区分+Dasha/DK/Double Transit整合+K.N. Rao学派跨系统验证立场+V.P. Goel+K.N. Rao书证支持多系统整合）⭐⭐⭐⭐⭐ v3.12.0 新增 【现代创新·K.N. Rao学派】
+98. **vp-goel-jaimini-dasha-systems.md**：V.P. Goel Jaimini Dasha系统概览（10种Jaimini Dasha：Chara/Mandook/Sthira/Narayan/Navamsha/NSD/Trikon/Atmanadi等+实现优先级P0-P3+Argala四分之一度阻碍规则完整表+Jaimini星座相位规则）⭐⭐⭐⭐ v3.12.0 新增 【现代·V.P. Goel研究】
 
 ### 精准解盘方法论（1个）⭐ v3.12.1 新增
-96. **precision-reading-methodology.md**：精准解盘与推运方法论（六大共识原则+PACDARES本命盘分析框架+九层复合方法L1-L9+L3矛盾检查协议+验证驱动分析流程+三级置信度系统+10条常见教条失误纠正+经典文献审慎使用BPHS考证+实战五步法）⭐⭐⭐⭐⭐ v3.12.1 新增 【核心方法论·多师共识：K.N. Rao+V.K. Choudhry+Marc Boney+Hart de Fouw+Sanjay Rath+Shyamasundara Dasa】
+99. **precision-reading-methodology.md**：精准解盘与推运方法论（六大共识原则+PACDARES本命盘分析框架+九层复合方法L1-L9+L3矛盾检查协议+验证驱动分析流程+三级置信度系统+10条常见教条失误纠正+经典文献审慎使用BPHS考证+实战五步法）⭐⭐⭐⭐⭐ v3.12.1 新增 【核心方法论·多师共识：K.N. Rao+V.K. Choudhry+Marc Boney+Hart de Fouw+Sanjay Rath+Shyamasundara Dasa】
 
 ### 强制外部验证门控（1个）⭐ v4.2.0 新增
-97. **mandatory-verification-gate-protocol.md**：强制外部验证门控协议（MEVG）完整规范（核心问题诊断+三步验证法V1/V2/V3+门控触发条件表+权威来源优先级+强制输出格式+门控位置与执行时机+通过/失败标准+每阶段必检索关键词模板+历史违反记录+执行纪律）⭐⭐⭐⭐⭐ v4.2.0 新增 【核心方法论·强制验证·与"不跳步"同级】
+100. **mandatory-verification-gate-protocol.md**：强制外部验证门控协议（MEVG）完整规范（核心问题诊断+三步验证法V1/V2/V3+门控触发条件表+权威来源优先级+强制输出格式+门控位置与执行时机+通过/失败标准+每阶段必检索关键词模板+历史违反记录+执行纪律）⭐⭐⭐⭐⭐ v4.2.0 新增 【核心方法论·强制验证·与"不跳步"同级】
 
 ## 模板文件
 

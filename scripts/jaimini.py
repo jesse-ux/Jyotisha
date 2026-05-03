@@ -7,7 +7,7 @@ Parashara传承中的Jaimini子系统
 支持:
   - Chara Karaka: 7/8个功能指示星（按度数排序）
   - Chara Dasha: 基于星座的大运系统
-  - Karakamsha: DK在Navamsa中的上升（灵魂方向）
+  - Karakamsha: AK在Navamsa中的上升（灵魂方向）
   - Jaimini Sutras关键规则
 """
 from typing import Dict, List, Tuple, Optional
@@ -212,25 +212,30 @@ def _chara_dasha_duration(sign_idx, planet_lons):
     return max(1, 12 - count)
 
 
-def calc_karakamsha(dk_sign_in_d9: str, dk_degree_in_d9: float) -> Dict:
+def calc_karakamsha(ak_sign_in_d9: str, ak_degree_in_d9: float) -> Dict:
     """
-    Karakamsha分析：DK在D9中的位置作为"灵魂上升"
+    Karakamsha分析：AK（Atmakaraka，灵魂星）在D9中的位置作为"灵魂上升"
     这是Jaimini体系中判断人生终极方向的关键技法
     
-    参数:
-        dk_sign_in_d9: DK在D9中的星座
-        dk_degree_in_d9: DK在D9中的度数
-    """
-    sign_idx = SIGNS.index(dk_sign_in_d9) if dk_sign_in_d9 in SIGNS else 0
-    lord = SIGN_LORDS.get(dk_sign_in_d9, '')
+    经典定义：Karakamsha = Atmakaraka在Navamsa(D9)中落入的星座
+    从这个星座看12宫的布局，分析灵魂方向
     
-    # Karakamsha Lagna = DK在D9中的位置
+    ⚠️ 2026-05-03修正：此前版本错误使用DK（配偶星），现已修正为AK（灵魂星）
+    
+    参数:
+        ak_sign_in_d9: AK（灵魂星）在D9中的星座
+        ak_degree_in_d9: AK在D9中的度数
+    """
+    sign_idx = SIGNS.index(ak_sign_in_d9) if ak_sign_in_d9 in SIGNS else 0
+    lord = SIGN_LORDS.get(ak_sign_in_d9, '')
+    
+    # Karakamsha Lagna = AK（灵魂星）在D9中的位置
     # 从这个位置看12宫的布局，分析灵魂方向
-    interpretations = _karakamsha_interpretations(dk_sign_in_d9, lord)
+    interpretations = _karakamsha_interpretations(ak_sign_in_d9, lord)
     
     return {
-        'karakamsha_sign': dk_sign_in_d9,
-        'karakamsha_degree': dk_degree_in_d9,
+        'karakamsha_sign': ak_sign_in_d9,
+        'karakamsha_degree': ak_degree_in_d9,
         'karakamsha_lord': lord,
         'soul_direction': interpretations,
     }
