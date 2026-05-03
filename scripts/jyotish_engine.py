@@ -43,7 +43,7 @@ import csv
 import math
 import sqlite3
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, List
 
 # ============================================================================
 # 路径常量
@@ -219,7 +219,7 @@ def cmd_dasha(args):
     for i in range(9):
         lord = DASHA_ORDER[(si + i) % 9]; years = DASHA_YEARS[lord]
         end_dt = dt + timedelta(days=years * 365.25)
-        timeline.append({"lord": lord, "lord_cn": PLANET_CN[lord], "start": dt.strftime("%Y-%m-%d"), "end": end_dt.strftime("%Y-%m-%d"), "years": years})
+        timeline.append({"lord": lord, "lord_cn": PLANET_CN[lord], "start": dt.strftime("%Y-%m-%d"), "end": end_dt.strftime("%Y-%m-%d"), "years": years, "is_current": False})
         dt = end_dt
 
     today = datetime.strptime(args.today, "%Y-%m-%d") if args.today else datetime.now()
@@ -227,6 +227,7 @@ def cmd_dasha(args):
     for d in timeline:
         ds = datetime.strptime(d["start"], "%Y-%m-%d"); de = datetime.strptime(d["end"], "%Y-%m-%d")
         if ds <= today < de:
+            d["is_current"] = True
             total_days = (de - ds).days; li = DASHA_ORDER.index(d["lord"])
             sub = []; sdt = ds
             for j in range(9):
@@ -313,16 +314,21 @@ def cmd_predict(args):
     try:
         sys.path.insert(0, SCRIPT_DIR)
         from event_prediction_model import EventPredictionModel
-        asc_sign = chart.get("ascendant", {}).get("sign", "Unknown")
-        planets = chart.get("planets", {})
-        # 构建模型需要的行星简化数据
-        planet_positions = {}
-        for pn, pd in planets.items():
-            if isinstance(pd, dict) and 'house' in pd:
-                planet_positions[pn] = {'sign': pd.get('sign', ''), 'house': pd.get('house', 0)}
-        model = EventPredictionModel(chart_data={"ascendant": asc_sign, "planets": planet_positions})
+        # 直接传完整chart数据给EventPredictionModel（v5.0需要ascendant dict和planets dict）
+        # 同时从 full-reading 输出中提取所有模块数据传入（v5.1修复：之前丢失dasha/congregation等）
+        modules = chart.get("modules", {})
+        model = EventPredictionModel(
+            chart_data={
+                "ascendant": chart.get("ascendant", {}),
+                "planets": chart.get("planets", {}),
+            },
+            dasha_data=modules.get("dasha"),
+            congregation_data=modules.get("congregation"),
+            vivah_saham_data=modules.get("vivah_saham"),
+            chara_dasha_data=modules.get("jaimini", {}).get("chara_dasha"),
+        )
         raw_preds = model.predict_all_events()
-        # 将 Prediction dataclass 转为可序列化 dict
+        # 将 Prediction dataclass 转为可序列化 dict（v5.1补充缺失字段）
         predictions = []
         for p in raw_preds:
             predictions.append({
@@ -330,9 +336,13 @@ def cmd_predict(args):
                 "description": p.description,
                 "probability": p.probability,
                 "risk_level": str(p.risk_level.value) if hasattr(p.risk_level, 'value') else str(p.risk_level),
+                "confidence": str(p.confidence.value) if hasattr(p.confidence, 'value') else str(p.confidence),
                 "timing": p.timing,
                 "key_factors": p.key_factors,
                 "recommendations": p.recommendations,
+                "dasha_signals": p.dasha_signals,
+                "transit_signals": p.transit_signals,
+                "timing_windows": p.timing_windows,
             })
         return {
             "method": "三层验证法（EventPredictionModel规则引擎）",

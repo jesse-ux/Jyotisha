@@ -252,11 +252,13 @@ class EventPredictionModel:
                 if ph == h and pn in target_karakas:
                     pd = self.chart.get('planets', {}).get(pn, {})
                     status = pd.get('status', '')
-                    if status == 'exalted':
+                    # 支持"擢升(Exalted)"、"落陷(Debilitated)"、"入庙(Own Sign)"等中英混合格式
+                    status_lower = status.lower() if status else ''
+                    if 'exalted' in status_lower or '擢升' in status:
                         result['signals'].append(f'Karaka {pn}在{h}宫擢升')
-                    elif status == 'own_sign':
+                    elif 'own' in status_lower or '入庙' in status:
                         result['signals'].append(f'Karaka {pn}在{h}宫入庙')
-                    elif status == 'debilitated':
+                    elif 'debilitated' in status_lower or '落陷' in status:
                         result['signals'].append(f'Karaka {pn}在{h}宫落陷(负面)')
 
         # 2. 行星聚集分析（使用 congregation_data）
@@ -309,8 +311,24 @@ class EventPredictionModel:
 
         # ── 2a. Vimshottari Dasha ──
         if self.dasha:
-            # 当前 Mahadasha
-            md_lord = self.dasha.get('current_mahadasha', {}).get('lord', '')
+            # 适配 full-reading 输出格式：current_dasha.lord + current_dasha.antardasha[]
+            md_lord = ''
+            ad_lord = ''
+
+            # 方式1：current_dasha 格式（full-reading输出）
+            current_md = self.dasha.get('current_dasha')
+            if current_md and isinstance(current_md, dict):
+                md_lord = current_md.get('lord', '')
+                # 从 antardasha 列表中找 is_current=True 的
+                for ad in current_md.get('antardasha', []):
+                    if ad.get('is_current'):
+                        ad_lord = ad.get('lord', '')
+                        break
+            else:
+                # 方式2：current_mahadasha / current_antardasha 格式
+                md_lord = self.dasha.get('current_mahadasha', {}).get('lord', '')
+                ad_lord = self.dasha.get('current_antardasha', {}).get('lord', '')
+
             if md_lord:
                 md_house = self.planet_houses.get(md_lord, 0)
                 # MD 主星是否关联目标宫位
@@ -326,8 +344,6 @@ class EventPredictionModel:
                     if self.house_lords.get(h) == md_lord:
                         signals.append(f'当前MD {md_lord}是{h}宫主(目标宫)')
 
-            # 当前 Antardasha
-            ad_lord = self.dasha.get('current_antardasha', {}).get('lord', '')
             if ad_lord:
                 ad_house = self.planet_houses.get(ad_lord, 0)
                 if ad_house in target_houses:
@@ -339,28 +355,30 @@ class EventPredictionModel:
 
                 # MD+AD 组合信号（高权重）
                 if md_lord and ad_lord:
-                    if ad_house in target_houses and md_house in target_houses:
+                    md_house2 = self.planet_houses.get(md_lord, 0)
+                    if ad_house in target_houses and md_house2 in target_houses:
                         signals.append(f'★ MD+AD双激活目标宫位({md_lord}+{ad_lord})')
 
         # ── 2b. Chara Dasha (Jaimini) ──
         if self.chara_dasha:
-            cd_list = self.chara_dasha.get('dasha_list', [])
+            # 适配实际格式：dasha_sequence[] 或 dasha_list[]
+            cd_list = self.chara_dasha.get('dasha_sequence') or self.chara_dasha.get('dasha_list', [])
             if cd_list:
-                # 当前 Chara Mahadasha
+                # 当前 Chara Mahadasha（第一个条目）
                 current_cd = cd_list[0] if cd_list else {}
                 cd_sign = current_cd.get('sign', '')
-                cd_lord = SIGN_LORDS.get(cd_sign, '')
+                cd_lord = current_cd.get('lord', '') or SIGN_LORDS.get(cd_sign, '')
                 cd_house = self.planet_houses.get(cd_lord, 0)
 
                 if cd_house in target_houses:
                     signals.append(f'当前Chara Dasha {cd_sign}({cd_lord})在{cd_house}宫(目标宫)')
 
                 # Chara Antardasha
-                antardashas = current_cd.get('antardashas', [])
+                antardashas = current_cd.get('antardashas') or current_cd.get('antardasha', [])
                 if antardashas:
                     current_ad = antardashas[0] if antardashas else {}
                     ad_sign = current_ad.get('sign', '')
-                    ad_lord_name = SIGN_LORDS.get(ad_sign, '')
+                    ad_lord_name = current_ad.get('lord', '') or SIGN_LORDS.get(ad_sign, '')
                     ad_h = self.planet_houses.get(ad_lord_name, 0)
                     if ad_h in target_houses:
                         signals.append(f'Chara AD {ad_sign}({ad_lord_name})在{ad_h}宫(目标宫)')
