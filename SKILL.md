@@ -83,7 +83,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 ### 2.1 Jaimini系统
 - **Chara Karakas**：七大可变象征星（Atmakaraka、Amatyakaraka、Bhratrukaraka、Matrukaraka、Putrakaraka、Gnatikaraka、Darakaraka）
 - **Chara Dasha**：星座大运系统（基于太阳和地球，反映实际事件）
-- **Karakamsha**：灵魂上升点（Atmakaraka所在Navamsha的星座，即AK的D9星座）
+- **Karakamsha**：灵魂上升点（Navamsha盘中的AK位置）
 - **Jaimini Drishti**：星座相位系统
 - **应用场景**：婚姻时机预测、事业突破预测、灵魂课题解读
 - → 详见 `references/jaimini-complete-system.md`
@@ -224,96 +224,14 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 - → 详见 `references/common-misconceptions.md`
 - **高级技法与全球方法论**：→ 详见 `references/advanced-techniques.md`、`references/global-astrologer-practical-methodology.md`、`references/global-astrologer-reflections.md`、`references/qin_ruisheng_system.md`
 
-### 13. 深度分析方法论 ⭐ v3.8.0 新增
+### 12.5 深度分析方法论 ⭐ v3.8.0 新增
 - **Shadbala实战解读**：五力量组合模式库（全面型/位置依赖型/关系依赖型/时间敏感型/运动受限型）+Avastha联合诊断矩阵（外强内壮/外强内伤/外弱内壮/外弱内伤）+Bhava Bala实战解读+Vimsopaka解读+行星力量综合排名法 → 详见 `references/shadbala-interpretation-methodology.md`
 - **多Dasha六系统收敛**：Vimshottari+Ashtottari+Yogini+Moola+Narayana+Kalachakra六系统交叉验证（Level 0-4量化）+收敛冲突三种场景处理+PDF数据源提取指南+实战输出模板 → 详见 `references/multi-dasha-convergence-protocol.md`
 - **Navamsa婚姻深度分析**：D9婚姻五维分析法（上升/DK/Venus/7宫/合相）+Vargottama婚姻意义+19分盘频率分析+Pushkara Navamsa婚姻解读+D9婚姻8步旗标算法实操版+D1与D9矛盾处理原则 → 详见 `references/navamsa-marriage-deep-analysis.md`
 - **分盘深度阅读**：19分盘系统化三级方法论（Level 1-3）+行星频率分析核心技法（≥40%=核心主题）+Vargottama检测矩阵+分盘组合阅读模式（三角/生命线/财富链/关系链）+Swiss Ephemeris交叉验证 → 详见 `references/divisional-chart-deep-reading.md`
 - **综合深度分析工作流**：12模块完整工作流（D1→特殊Lagna→Karaka→Shadbala→Avastha→Bhava Bala→Vimsopaka→19分盘→AV→Dasha收敛→D9婚姻→综合结论）+PDF 11页提取最佳实践+引擎调用流程+报告生成+质量检查清单 → 详见 `references/deep-analysis-complete-workflow.md`
 
-### 14. 计算引擎集成（Swiss Ephemeris + 数据库）⭐ v3.4.0
-
-**统一引擎入口**：`scripts/jyotish_engine.py` v3.7.1（基于 Swiss Ephemeris 天文计算库）
-
-**调用方式**：AI 通过 `execute_command` 调用以下子命令（所有输出为 JSON）：
-
-```bash
-# 使用 Python 3.11+（请替换为您系统中的 Python 3.11+ 路径）
-PYTHON=python3
-SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
-$PYTHON $SCRIPT <子命令> [参数]
-```
-
-**13大子命令** → **27大子命令**（v3.9 升级）：
-
-| 子命令 | 功能 | 典型用法 |
-|--------|------|----------|
-| **`full-reading`** | **⭐ v3.7.1 全自动综合解盘（一条命令串起13个模块）** | `full-reading --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `chart` | 完整星盘计算（含Ayanamsa修正）+ `--validate` 附加R1-R10验证 | `chart --validate --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `dasha` | Vimshottari大运时间线+小运展开 | `dasha --moon-lon 326.5 --birthdate REDACTED_DATE --today 2026-04-24` |
-| `yoga` | Yoga格局识别（5种Yoga） | `yoga --ascendant Leo --planets 'Sun:Aries:9,Moon:Aquarius:7,...'` |
-| `predict` | 三层验证法事件预测（EventPredictionModel规则引擎）+ `--past-verify` 验前事模式 | `predict --chart '<JSON>' --event-type marriage` |
-| `varga` | 分盘计算（D9 Navamsa/D10 Dasamsa） | `varga --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --d9 --d10` |
-| `celebrity` | 名人案例查询（SQLite + 15,807条CSV） | `celebrity --name Einstein` |
-| `db-stats` | 验证数据库统计（15,840条+10种技法） | `db-stats` |
-| `transit` | 行星过境查询（2026-2028） | `transit --year 2026 --month 7` |
-| `shadbala` | 六重力量计算（Sthana/Dig/Kala/Chesta/Naisargika/Drik Bala） | `shadbala --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `ashtakavarga` | 八分法计算（BPHS完整8×8矩阵，SAV=337） | `ashtakavarga --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `memory` | Hermes记忆系统（store/search/context/stats） | `memory --action store --content "..." --tags "chart" --importance 8` |
-| `validate` | R1-R10数学验证（SAV/BAV/延伸角/Rahu-Ketu/逆行/Dasha/完整性/度数/宫位） | `validate --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `audit` | P1-P12行星审计管线（Identity/Health/Resource/SAV/Dignity/Shadbala/Aspects/Nakshatra/Yogas） | `audit --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `varga-full` | v3.7 BPHS十六分盘精确计算（D2-D60全部16分盘，精确度数输出） | `varga-full --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --divisions D9,D60` |
-| `aspects` | v3.7 度数精确相位系统（tight/moderate/loose + 入相位/出相位） | `aspects --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `jaimini` | v3.7 Jaimini完整系统（Chara Karaka 7/8 + Chara Dasha + Karakamsha）+ `--antardasha` Antardasha子周期 | `jaimini --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --mode all --antardasha` |
-| `nakshatra-adv` | v3.7 高级Nakshatra（Tara Bala + Sub-Lord KP + 兼容性） | `nakshatra-adv --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --mode all` |
-| `argala` | v3.7 Argala门闩系统（主/副Argala + Virodha反干预 + 净评分） | `argala --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `tajika` | v3.7 Tajika年运盘（Muntha + YearLord + Mudda Dasha + Tri-Pataka） | `tajika --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --age 33` |
-| `synastry` | v3.7 合盘分析（Ashta Koota 36分 + Mangal Dosha + Papasamya） | `synastry --moon1 310.89 --moon2 45.5 --mars1 90.43 --mars2 120.3` |
-| `report` | MD→HTML报告生成（羊皮纸主题） | `report ./report_folder --name 一楠 --lagna Leo` |
-| **`prashna`** | **⭐ v3.9 Prashna问事占星（提问时刻星盘+Arudha Lagna+Sphuta组合+Sahams+失物查询）** | `prashna --datetime "2026-04-25 14:30" --lat 39.9 --lon 116.4 --mode chart` |
-| **`double-transit-pac`** | **⭐ v3.9 KN Rao Double Transit PAC + D9层（D1/D9双层PAC检查+跨层确认）** | `double-transit-pac --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --date 2026-07-01 --house 7` |
-| **`transit-ll7l`** | **⭐ v3.9 Transit LL/7L连接+互换（P5 PAC 98%命中率 + P8过宫 + Parivartana互换）** | `transit-ll7l --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --date 2026-07-01` |
-| **`planetary-congregation`** | **⭐ v3.9 行星聚集检测（本命Lagna/7H聚集 + Transit慢行星聚集）** | `planetary-congregation --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --house 7 --transit-date 2026-07-01` |
-| **`vivah-saham`** | **⭐ v3.9 Vivah Saham婚姻敏感点（度数级计算 + Transit Jupiter/Saturn PAC激活）** | `vivah-saham --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --transit-date 2026-07-01` |
-
-**外部数据源**（引擎自动读取）：
-- 验证数据库：`~/WorkBuddy/Claw/vedic_astrology_validation.db`（15,840条案例，10种技法准确率）
-- 名人CSV：`~/WorkBuddy/Claw/vedastro_data/PersonList-15k.csv`（15,807条AA级数据）
-- 过境配置：`~/WorkBuddy/Claw/月运过境配置-2026-2028.json`（36个月行星位置）
-
-**典型工作流**（v3.7.1 升级）：
-
-### 🟢 路径A：精准出生信息（推荐，一条命令搞定）
-```bash
-# 一键全链路计算（13模块自动串行）
-$PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute MM --lat XX.XX --lon XX.XX --tz X
-# 输出：chart + dasha + yoga + varga_full + aspects + jaimini + nakshatra_adv + argala + tajika + shadbala + ashtakavarga + validation + audit
-# 完成后直接进入阶段二（意图识别）
-```
-
-### 📄 路径B：PDF/文字星盘（用文档数据直接推算）
-1. 提取PDF/文字中的所有星象数据（行星落宫、度数、Dasha、Shadbala等）
-2. 数据完整性门 → Pass/Limited/Fail
-3. 如有出生时间+地点，额外调用 `full-reading` 补充计算v3.7新增模块
-4. 进入阶段二（意图识别）
-
-### 🔧 路径C：时间不明确（互动式矫正）
-1. 收集外表体质+生活事件（3-5轮互动）
-2. 多候选时间对比验证（Dasha吻合率+Transit吻合率）
-3. D9/D10精确校正
-4. 矫正完成后走路径A
-8. `jaimini --mode all` 计算Chara Karaka + Dasha + Karakamsha ⭐ v3.7
-9. `nakshatra-adv --mode all` 计算Tara Bala + Sub-Lord ⭐ v3.7
-10. `argala` 计算门闩干预分析 ⭐ v3.7
-11. `transit` 查询当月过境 → 配合 dasha 做推运分析
-12. `tajika --age 33` 计算年运盘（Muntha+Tri-Pataka） ⭐ v3.7
-13. `predict` 事件预测（EventPredictionModel规则引擎） ⭐ v3.4
-14. `celebrity` 查找相似案例做对比验证
-15. 合盘场景：`synastry --moon1 ... --moon2 ...` 计算Ashta Koota 36分制 ⭐ v3.7
-16. `memory --action store` 保存分析结论供后续引用 ⭐ v3.4
-
-
-### 15. Prashna 问事占星系统 ⭐ v3.9.0
+### 14. Prashna 问事占星系统 ⭐ v3.9.0
 
 **核心原理：** 基于提问时刻铸造即时星盘，通过共时性原则（Synchronicity）回答具体问题。不需要出生数据。
 
@@ -359,7 +277,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 **适用场景：** 是非判断、时机选择、失物寻人、婚姻结果、事业方向、健康预后、旅行安全、诉讼胜负、财务投资、单个具体问题快判
 
-### 16. BCP自然周期法 ⭐ v3.10.0
+### 15. BCP自然周期法 ⭐ v3.10.0
 
 **核心原理：** Bhrigu Chakra Paddhati (BCP) 是Nadi体系下的生命自然周期系统，将人生按月亮起始分为9个固定12年周期，每个周期由不同行星统治。
 
@@ -391,9 +309,9 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 **应用场景：** 年度运势速判、人生阶段主题分析、Dasha系统交叉验证
 → 详见 `references/bhrigu-chakra-paddhati.md`
 
-### 17. 多元技法系统 ⭐ v3.11.0
+### 16. 多元技法系统 ⭐ v3.11.0
 
-#### 17.1 Yogi / Ava Yogi 行星系统
+#### 16.1 Yogi / Ava Yogi 行星系统
 
 **核心原理：** 基于上升点计算的三个特殊行星指派——Yogi（最吉祥，财富核心来源）、Duplicate Yogi（次吉祥）、Ava Yogi（最凶，障碍来源）。同一颗行星对不同人角色完全不同。
 
@@ -411,7 +329,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 → 详见 `references/yogi-avayogi-system.md`
 
-#### 17.2 Tithi Lord 关系影响系统
+#### 16.2 Tithi Lord 关系影响系统
 
 **核心原理：** 出生时所在 Tithi（月亮历日）的统治行星（排除 Ketu，8 颗行星循环），Sanjay Rath 命名为"水龙头"（Faucet），控制 Jala（水元素）即情感流动和关系模式。
 
@@ -429,7 +347,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 → 详见 `references/tithi-lord-relationship-system.md`
 
-#### 17.3 Rashi Tulya Navamsa + 根源冲动
+#### 16.3 Rashi Tulya Navamsa + 根源冲动
 
 **核心原理：** 将 D1 行星位置投射到 D9 坐标系（保持星座位置不变），揭示每颗行星的深层动机——Navamsa 主星给行星一个"root impulse"（根源冲动）。
 
@@ -444,7 +362,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 → 详见 `references/rashi-tulya-navamsa-root-impulse.md`
 
-#### 17.4 Bhrigu Pada Dasha + 婚姻计数法
+#### 16.4 Bhrigu Pada Dasha + 婚姻计数法
 
 **Bhrigu Pada Dasha：** Bhrigu 体系下的行星推进法（Progression），不同于 BCP（固定周期），专用于婚姻时机预测。基于命盘动态计算，可在 D9 上应用。与 Narayana Dasha D9 变体交叉验证。
 
@@ -456,7 +374,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 → 详见 `references/bhrigu-pada-dasha-marriage-counting.md`
 
-#### 17.5 Pancha Pakshi + Nakshatra 三体系 + Savya/Apasavya
+#### 16.5 Pancha Pakshi + Nakshatra 三体系 + Savya/Apasavya
 
 **Pancha Pakshi（五鸟择时术）：** 基于出生月亮 Nakshatra 分配五种鸟，一天五个时段各有高/低振动频率，影响日常活动成功率。Sri K N Rao 推荐。
 
@@ -471,7 +389,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 → 详见 `references/pancha-pakshi-nakshatra-systems.md`
 
-### 18. Badhaka障碍星系统 ⭐ v3.12.0
+### 17. Badhaka障碍星系统 ⭐ v3.12.0
 
 **核心原理：** Badhaka（障碍星）是BPHS记载的特殊障碍机制——某些宫位及其主宰行星会对上升产生结构性障碍。分为三类上升：
 
@@ -491,7 +409,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 **应用场景：** 障碍诊断（事业/婚姻/健康受阻）、Badhakesh激活期的风险预警
 → 详见 `references/badhaka-obstacle-planet-guide.md`
 
-### 19. B.V. Raman宫位判断方法论 ⭐ v3.12.0
+### 18. B.V. Raman宫位判断方法论 ⭐ v3.12.0
 
 **核心原理：** B.V. Raman体系下完整的12上升吉凶星/Yogakaraka分类表+六步宫位判断法+Maraka死亡指示系统。
 
@@ -513,7 +431,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 → 详见 `references/raman-house-judgment-methodology.md` 【古典·B.V. Raman】
 
-### 20. Shasti Hayani条件Dasha ⭐ v3.12.0
+### 19. Shasti Hayani条件Dasha ⭐ v3.12.0
 
 **核心原理：** Shasti Hayani Dasha是条件性Nakshatra Dasha系统，60年周期，**仅当太阳在1宫时适用**。8行星固定顺序，每行星10年（排除Ketu）。
 
@@ -525,7 +443,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 → 详见 `references/shasti-hayani-dasha-guide.md`
 
-### 21. Marc Boney婚姻六步法 ⭐ v3.12.0
+### 20. Marc Boney婚姻六步法 ⭐ v3.12.0
 
 **核心原理：** Marc Boney（K.N. Rao学派嫡传）提出的婚姻/关系评估六步法，核心创新是"三视角"7宫分析。
 
@@ -543,7 +461,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 → 详见 `references/marc-boney-marriage-six-step.md` 【现代创新·K.N. Rao学派】
 
-### 22. V.P. Goel Jaimini Dasha系统 ⭐ v3.12.0
+### 21. V.P. Goel Jaimini Dasha系统 ⭐ v3.12.0
 
 **核心原理：** V.P. Goel在《Predicting through Jaimini Astrology》中记载的10种Jaimini Dasha系统。Skill此前仅有Chara Dasha深度覆盖，本次扩展至全部系统概览。
 
@@ -567,84 +485,82 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 → 详见 `references/vp-goel-jaimini-dasha-systems.md` 【现代·V.P. Goel研究】
 
-### 23. KN Rao Double Transit PAC + D9 层 ⭐ v3.9
+### 13. 计算引擎集成（Swiss Ephemeris + 数据库）⭐ v3.4.0
 
-**核心原理：** KN Rao 体系的 Double Transit 必须同时检查 D1 和 D9（Navamsa）两个层面。传统实现只检查 D1 的 Saturn+Jupiter 相位重叠，但 KN Rao 明确指出**宫主星的 D9 星座**是第三个必须检查的目标。
+**统一引擎入口**：`scripts/jyotish_engine.py` v3.7.1（基于 Swiss Ephemeris 天文计算库）
 
-**PAC 检查体系（Position-Aspect-Conjunction）：**
-- **P（Position）**：Transit 行星与目标在同一宫
-- **A（Aspect）**：Graha Drishti 相位（Jupiter: 5/7/9, Saturn: 3/7/10, Mars: 4/7/8）
-- **C（Conjunction）**：度数级合相 ≤10°
+**调用方式**：AI 通过 `execute_command` 调用以下子命令（所有输出为 JSON）：
 
-**三层检查结构：**
-1. **D1 层**：Saturn/Jupiter PAC → 事件宫、宫主、LL、对宫主
-2. **D9 层**：Saturn/Jupiter PAC → D9 宫主、D9 Asc、**宫主D9星座**（KN Rao 关键第三目标）、LL D9 星座
-3. **跨层**：Jupiter(D1) + Saturn(D9) 或反之激活同一主题 → 间接确认
+```bash
+# 使用系统 Python 3.11
+PYTHON=/Library/Frameworks/Python.framework/Versions/3.11/bin/python3
+SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
+$PYTHON $SCRIPT <子命令> [参数]
+```
 
-**CLI 子命令**：`double-transit-pac --date YYYY-MM-DD --house 7`
+**13大子命令** → **22大子命令**（v3.7.1 升级）：
 
-**JS 函数**：`computeDoubleTransitPAC(transitPlanets, natalPlanets, natalAscSign, natalAscDegree, eventHouse)`
+| 子命令 | 功能 | 典型用法 |
+|--------|------|----------|
+| **`full-reading`** | **⭐ v3.7.1 全自动综合解盘（一条命令串起13个模块）** | `full-reading --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
+| `chart` | 完整星盘计算（含Ayanamsa修正）+ `--validate` 附加R1-R10验证 | `chart --validate --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
+| `dasha` | Vimshottari大运时间线+小运展开 | `dasha --moon-lon 326.5 --birthdate REDACTED_DATE --today 2026-04-24` |
+| `yoga` | Yoga格局识别（5种Yoga） | `yoga --ascendant Leo --planets 'Sun:Aries:9,Moon:Aquarius:7,...'` |
+| `predict` | 三层验证法事件预测（EventPredictionModel规则引擎）+ `--past-verify` 验前事模式 | `predict --chart '<JSON>' --event-type marriage` |
+| `varga` | 分盘计算（D9 Navamsa/D10 Dasamsa） | `varga --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --d9 --d10` |
+| `celebrity` | 名人案例查询（SQLite + 15,807条CSV） | `celebrity --name Einstein` |
+| `db-stats` | 验证数据库统计（15,840条+10种技法） | `db-stats` |
+| `transit` | 行星过境查询（2026-2028） | `transit --year 2026 --month 7` |
+| `shadbala` | 六重力量计算（Sthana/Dig/Kala/Chesta/Naisargika/Drik Bala） | `shadbala --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
+| `ashtakavarga` | 八分法计算（BPHS完整8×8矩阵，SAV=337） | `ashtakavarga --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
+| `memory` | Hermes记忆系统（store/search/context/stats） | `memory --action store --content "..." --tags "chart" --importance 8` |
+| `validate` | R1-R10数学验证（SAV/BAV/延伸角/Rahu-Ketu/逆行/Dasha/完整性/度数/宫位） | `validate --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
+| `audit` | P1-P12行星审计管线（Identity/Health/Resource/SAV/Dignity/Shadbala/Aspects/Nakshatra/Yogas） | `audit --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
+| `varga-full` | v3.7 BPHS十六分盘精确计算（D2-D60全部16分盘，精确度数输出） | `varga-full --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --divisions D9,D60` |
+| `aspects` | v3.7 度数精确相位系统（tight/moderate/loose + 入相位/出相位） | `aspects --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
+| `jaimini` | v3.7 Jaimini完整系统（Chara Karaka 7/8 + Chara Dasha + Karakamsha） | `jaimini --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --mode all` |
+| `nakshatra-adv` | v3.7 高级Nakshatra（Tara Bala + Sub-Lord KP + 兼容性） | `nakshatra-adv --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --mode all` |
+| `argala` | v3.7 Argala门闩系统（主/副Argala + Virodha反干预 + 净评分） | `argala --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
+| `tajika` | v3.7 Tajika年运盘（Muntha + YearLord + Mudda Dasha + Tri-Pataka） | `tajika --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --age 33` |
+| `synastry` | v3.7 合盘分析（Ashta Koota 36分 + Mangal Dosha + Papasamya） | `synastry --moon1 310.89 --moon2 45.5 --mars1 90.43 --mars2 120.3` |
+| `report` | MD→HTML报告生成（羊皮纸主题） | `report ./report_folder --name 一楠 --lagna Leo` |
+| **`prashna`** | **⭐ v3.9 Prashna问事占星（提问时刻星盘+Arudha Lagna+Sphuta组合+Sahams+失物查询）** | `prashna --datetime "2026-04-25 14:30" --lat 39.9 --lon 116.4 --mode chart` |
 
-**精度**：KN Rao 体系 110-115 星盘测试 97% 准确率（使用 D9 Navamsa）
+**外部数据源**（引擎自动读取）：
+- 验证数据库：`~/WorkBuddy/Claw/vedic_astrology_validation.db`（15,840条案例，10种技法准确率）
+- 名人CSV：`~/WorkBuddy/Claw/vedastro_data/PersonList-15k.csv`（15,807条AA级数据）
+- 过境配置：`~/WorkBuddy/Claw/月运过境配置-2026-2028.json`（36个月行星位置）
 
-### 24. Transit LL/7L 连接 + Parivartana 互换 ⭐ v3.9
+**典型工作流**（v3.7.1 升级）：
 
-**核心原理：** 婚姻事件发生时，Lagna Lord（LL）和 7th Lord（7L）的 Transit 位置必然与本命盘产生 PAC 连接。这是 Rao 八参数验证体系中最强的 Transit 指标之一。
+### 🟢 路径A：精准出生信息（推荐，一条命令搞定）
+```bash
+# 一键全链路计算（13模块自动串行）
+$PYTHON $SCRIPT full-reading --year YYYY --month MM --day DD --hour HH --minute MM --lat XX.XX --lon XX.XX --tz X
+# 输出：chart + dasha + yoga + varga_full + aspects + jaimini + nakshatra_adv + argala + tajika + shadbala + ashtakavarga + validation + audit
+# 完成后直接进入阶段二（意图识别）
+```
 
-**三项检查：**
-- **P5（98%命中率）**：Transit LL PAC natal 7L / Transit 7L PAC natal LL — 双向检查
-- **P8（59%命中率）**：Transit LL 过 7H 或 Transit 7L 过 Lagna — 位置检查
-- **Parivartana 互换**：Transit LL 在 natal 7L 星座 且 Transit 7L 在 natal LL 星座 — 最强信号
+### 📄 路径B：PDF/文字星盘（用文档数据直接推算）
+1. 提取PDF/文字中的所有星象数据（行星落宫、度数、Dasha、Shadbala等）
+2. 数据完整性门 → Pass/Limited/Fail
+3. 如有出生时间+地点，额外调用 `full-reading` 补充计算v3.7新增模块
+4. 进入阶段二（意图识别）
 
-**CLI 子命令**：`transit-ll7l --date YYYY-MM-DD`
-
-**JS 函数**：`computeTransitLL7L(transitPlanets, natalPlanets, natalAscSign)`
-
-### 25. 行星聚集检测 ⭐ v3.9
-
-**核心原理：** 本命盘中 Lagna 或 7H 有多颗行星聚集，会显著强化该宫位的事件密度。Transit 时慢行星（Saturn/Jupiter/Rahu/Ketu）聚集事件宫，是事件触发的辅助信号。
-
-**检测规则：**
-- Sun 在 Lagna 或 ≥3 颗行星在 Lagna → Lagna 聚集触发
-- Sun 在 7H 或 ≥3 颗行星在 7H → 7H 聚集触发
-- Transit 慢行星 ≥2 颗在事件宫 → Transit 聚集触发
-
-**CLI 子命令**：`planetary-congregation --house 7 --transit-date YYYY-MM-DD`
-
-**JS 函数**：`computePlanetaryCongregation(natalPlanets, natalAscSign, transitPlanets, eventHouse)`
-
-### 26. Vivah Saham 婚姻敏感点 ⭐ v3.9
-
-**核心原理：** Vivah Saham（婚姻敏感点）是 Prashna 体系中专门用于婚姻预测的 Saham，公式为 `norm(Venus - Saturn + Asc)`。Transit 时 Jupiter 和 Saturn 同时 PAC 到 Vivah Saham 经度，是婚姻事件的精确触发信号。
-
-**计算：** 度数级精确输出（sign + degree_in_sign + nakshatra + pada）
-
-**Transit 激活检测：**
-- Jupiter PAC → Vivah Saham（单独激活）
-- Saturn PAC → Vivah Saham（单独激活）
-- **双星激活** = Jupiter AND Saturn 同时 PAC → 强确认信号
-- Venus Transit 过 Saham 星座 → 辅助信号
-
-**CLI 子命令**：`vivah-saham --transit-date YYYY-MM-DD`
-
-**JS 函数**：`computeVivahSaham(natalPlanets, natalAscDegree, transitPlanets)`
-
-### 27. Chara Dasha Antardasha 子周期 ⭐ v3.9
-
-**核心原理：** Chara Dasha 的 Antardasha（子周期）在 Mahadasha 内按同方向从 Mahadasha 星座开始排列，每个 Antardasha 时长按 `(该子星座独立年数 / 总年数) × Mahadasha 年数` 比例分配。
-
-**CLI 参数**：`jaimini --mode dasha --antardasha`
-
-**Python 函数**：`calc_chara_dasha_with_antardasha(asc_sign_idx, planet_longitudes, birth_year, birth_month)`
-
-**协同验证结果（4名人案例）：**
-| 功能 | 命中率 |
-|------|--------|
-| Double Transit PAC+D9 | 50% |
-| Transit LL/7L P5 | 50% |
-| Vivah Saham 双星激活 | 50% |
-| 行星聚集 | 50% |
-| **无确认率** | **0%** |
+### 🔧 路径C：时间不明确（互动式矫正）
+1. 收集外表体质+生活事件（3-5轮互动）
+2. 多候选时间对比验证（Dasha吻合率+Transit吻合率）
+3. D9/D10精确校正
+4. 矫正完成后走路径A
+8. `jaimini --mode all` 计算Chara Karaka + Dasha + Karakamsha ⭐ v3.7
+9. `nakshatra-adv --mode all` 计算Tara Bala + Sub-Lord ⭐ v3.7
+10. `argala` 计算门闩干预分析 ⭐ v3.7
+11. `transit` 查询当月过境 → 配合 dasha 做推运分析
+12. `tajika --age 33` 计算年运盘（Muntha+Tri-Pataka） ⭐ v3.7
+13. `predict` 事件预测（EventPredictionModel规则引擎） ⭐ v3.4
+14. `celebrity` 查找相似案例做对比验证
+15. 合盘场景：`synastry --moon1 ... --moon2 ...` 计算Ashta Koota 36分制 ⭐ v3.7
+16. `memory --action store` 保存分析结论供后续引用 ⭐ v3.4
 
 ## 使用方法
 
@@ -881,7 +797,7 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 ## 能力水平
 
-当前能力水平：**顶级（5.0/5）**
+当前能力水平：**顶级专业占星师水平（6.0/5）**
 
 ### 核心优势（按能力域分组）
 
@@ -913,11 +829,11 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 
 ## 更新记录
 
-详见 `CHANGELOG.md`。当前版本：v4.2.0。
+详见 `CHANGELOG.md`。当前版本：v3.12.1。
 
 ## 参考资料
 
-本Skill包含以下参考资料（存储在references/目录），共102个文件：
+本Skill包含以下参考资料（存储在references/目录），共100个文件：
 
 ### AI解盘工作流（2个）⭐ v3.2 新增
 0. **ai-reading-workflow-prompt.md**：AI解盘工作流Prompt工程（7阶段完整执行引擎：PDF提取→意图路由→静态分析10步→动态推运7步→应期输出→补救→现代措辞包装）⭐⭐⭐⭐⭐
@@ -1053,15 +969,15 @@ python3 scripts/jyotish_engine.py prashna --datetime "2026-04-25 14:30" --lat 39
 ### 10本PDF书籍集成（5个）⭐ v3.12.0 新增
 94. **badhaka-obstacle-planet-guide.md**：Badhaka障碍星系统完整指南（12上升Badhaka Sthana+Badhakesh对照表+三种上升类型规则+Leo上升Badhakesh=Mars分析+五步分析协议+补救措施）⭐⭐⭐⭐⭐ v3.12.0 新增 【古典·BPHS】
 95. **raman-house-judgment-methodology.md**：B.V. Raman宫位判断方法论（12上升完整Benefic/Malefic/Yogakaraka表+六步宫位判断法+第七宫婚姻分析六维度+Maraka死亡指示系统+Mangal Dosha完整规则）⭐⭐⭐⭐⭐ v3.12.0 新增 【古典·B.V. Raman】
-96. **shasti-hayani-dasha-guide.md**：Shasti Hayani条件Dasha指南（60年周期+太阳1宫条件+8行星固定顺序Jupiter→Rahu+三级Antar结构+与其他条件Dasha对比）⭐⭐⭐⭐ v3.12.0 新增
-97. **marc-boney-marriage-six-step.md**：Marc Boney婚姻六步法（三视角7宫评估法+同居vs正式婚姻区分+Dasha/DK/Double Transit整合+K.N. Rao学派跨系统验证立场+V.P. Goel+K.N. Rao书证支持多系统整合）⭐⭐⭐⭐⭐ v3.12.0 新增 【现代创新·K.N. Rao学派】
-98. **vp-goel-jaimini-dasha-systems.md**：V.P. Goel Jaimini Dasha系统概览（10种Jaimini Dasha：Chara/Mandook/Sthira/Narayan/Navamsha/NSD/Trikon/Atmanadi等+实现优先级P0-P3+Argala四分之一度阻碍规则完整表+Jaimini星座相位规则）⭐⭐⭐⭐ v3.12.0 新增 【现代·V.P. Goel研究】
+93. **shasti-hayani-dasha-guide.md**：Shasti Hayani条件Dasha指南（60年周期+太阳1宫条件+8行星固定顺序Jupiter→Rahu+三级Antar结构+与其他条件Dasha对比）⭐⭐⭐⭐ v3.12.0 新增
+94. **marc-boney-marriage-six-step.md**：Marc Boney婚姻六步法（三视角7宫评估法+同居vs正式婚姻区分+Dasha/DK/Double Transit整合+K.N. Rao学派跨系统验证立场+V.P. Goel+K.N. Rao书证支持多系统整合）⭐⭐⭐⭐⭐ v3.12.0 新增 【现代创新·K.N. Rao学派】
+95. **vp-goel-jaimini-dasha-systems.md**：V.P. Goel Jaimini Dasha系统概览（10种Jaimini Dasha：Chara/Mandook/Sthira/Narayan/Navamsha/NSD/Trikon/Atmanadi等+实现优先级P0-P3+Argala四分之一度阻碍规则完整表+Jaimini星座相位规则）⭐⭐⭐⭐ v3.12.0 新增 【现代·V.P. Goel研究】
 
 ### 精准解盘方法论（1个）⭐ v3.12.1 新增
-99. **precision-reading-methodology.md**：精准解盘与推运方法论（六大共识原则+PACDARES本命盘分析框架+九层复合方法L1-L9+L3矛盾检查协议+验证驱动分析流程+三级置信度系统+10条常见教条失误纠正+经典文献审慎使用BPHS考证+实战五步法）⭐⭐⭐⭐⭐ v3.12.1 新增 【核心方法论·多师共识：K.N. Rao+V.K. Choudhry+Marc Boney+Hart de Fouw+Sanjay Rath+Shyamasundara Dasa】
+96. **precision-reading-methodology.md**：精准解盘与推运方法论（六大共识原则+PACDARES本命盘分析框架+九层复合方法L1-L9+L3矛盾检查协议+验证驱动分析流程+三级置信度系统+10条常见教条失误纠正+经典文献审慎使用BPHS考证+实战五步法）⭐⭐⭐⭐⭐ v3.12.1 新增 【核心方法论·多师共识：K.N. Rao+V.K. Choudhry+Marc Boney+Hart de Fouw+Sanjay Rath+Shyamasundara Dasa】
 
 ### 强制外部验证门控（1个）⭐ v4.2.0 新增
-100. **mandatory-verification-gate-protocol.md**：强制外部验证门控协议（MEVG）完整规范（核心问题诊断+三步验证法V1/V2/V3+门控触发条件表+权威来源优先级+强制输出格式+门控位置与执行时机+通过/失败标准+每阶段必检索关键词模板+历史违反记录+执行纪律）⭐⭐⭐⭐⭐ v4.2.0 新增 【核心方法论·强制验证·与"不跳步"同级】
+97. **mandatory-verification-gate-protocol.md**：强制外部验证门控协议（MEVG）完整规范（核心问题诊断+三步验证法V1/V2/V3+门控触发条件表+权威来源优先级+强制输出格式+门控位置与执行时机+通过/失败标准+每阶段必检索关键词模板+历史违反记录+执行纪律）⭐⭐⭐⭐⭐ v4.2.0 新增 【核心方法论·强制验证·与"不跳步"同级】
 
 ## 模板文件
 
