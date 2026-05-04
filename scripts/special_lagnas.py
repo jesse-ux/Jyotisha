@@ -193,7 +193,10 @@ class SpecialLagnasCalculator:
             distance = 12
         
         # 从1宫主星再数相同的宫位数
-        al_sign = (lord_sign + distance - 1) % 12
+        # 注意：distance 为 0-indexed 差值，标准 Jaimini 用 1-based count = distance + 1（含两端）
+        # 从 lord 数 count 宫（含 lord）= lord_sign + count - 1 = lord_sign + distance
+        count = distance + 1
+        al_sign = (lord_sign + count - 1) % 12
         
         # 应用1/7宫例外规则
         if al_sign == asc_sign or al_sign == (asc_sign + 6) % 12:
@@ -238,7 +241,8 @@ class SpecialLagnasCalculator:
             distance = 12
         
         # 从12宫主星再数相同的宫位数
-        ul_sign = (lord_sign + distance - 1) % 12
+        count = distance + 1
+        ul_sign = (lord_sign + count - 1) % 12
         
         # 应用12/6宫例外规则
         if ul_sign == twelfth_house_sign or ul_sign == (twelfth_house_sign + 6) % 12:

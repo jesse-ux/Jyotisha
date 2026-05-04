@@ -340,6 +340,34 @@ def cmd_yoga(args):
     if wc >= 2:
         yogas.append({"name": "Dhana Yoga", "name_cn": "财富格局", "combination": f"{wc}个财富宫主星落入财富宫", "effects": ["财富积累", "物质成功", "投资收益"], "strength": "中强" if wc >= 3 else "中"})
 
+    # Solar Yogas (Veshi/Voshi/Ubhayachari)
+    if 'Sun' in planets:
+        sun_h = planets['Sun']['house']
+        h2_from_sun = ((sun_h - 1 + 1) % 12) + 1  # 2nd from Sun
+        h12_from_sun = ((sun_h - 1 + 11) % 12) + 1  # 12th from Sun
+        planets_in_h2 = [p for p, info in planets.items() if info['house'] == h2_from_sun]
+        planets_in_h12 = [p for p, info in planets.items() if info['house'] == h12_from_sun]
+        if planets_in_h12 and not planets_in_h2:
+            yogas.append({"name": "Voshi Yoga", "name_cn": "太阳前瑜伽", "combination": f"{'+'.join(planets_in_h12)}在太阳第12宫", "effects": ["口才出众", "善于表达", "受人尊敬"], "strength": "中"})
+        if planets_in_h2 and not planets_in_h12:
+            yogas.append({"name": "Veshi Yoga", "name_cn": "太阳后瑜伽", "combination": f"{'+'.join(planets_in_h2)}在太阳第2宫", "effects": ["财富充裕", "生活舒适", "性情愉快"], "strength": "中"})
+        if planets_in_h2 and planets_in_h12:
+            yogas.append({"name": "Ubhayachari Yoga", "name_cn": "太阳双夹瑜伽", "combination": f"太阳两侧均有行星", "effects": ["性格坚毅", "口才与财富兼备", "受人爱戴"], "strength": "强"})
+
+    # Lunar Yogas (Sunapha/Anapha/Durudhura/Kemadruma)
+    if 'Moon' in planets:
+        moon_h = planets['Moon']['house']
+        h2_from_moon = ((moon_h - 1 + 1) % 12) + 1
+        h12_from_moon = ((moon_h - 1 + 11) % 12) + 1
+        p_in_h2_moon = [p for p, info in planets.items() if p != 'Moon' and info['house'] == h2_from_moon]
+        p_in_h12_moon = [p for p, info in planets.items() if p != 'Moon' and info['house'] == h12_from_moon]
+        if p_in_h12_moon and not p_in_h2_moon:
+            yogas.append({"name": "Anapha Yoga", "name_cn": "月后瑜伽", "combination": f"{'+'.join(p_in_h12_moon)}在月亮第12宫", "effects": ["体格健壮", "名声良好", "品德高尚"], "strength": "中"})
+        if p_in_h2_moon and not p_in_h12_moon:
+            yogas.append({"name": "Sunapha Yoga", "name_cn": "月前瑜伽", "combination": f"{'+'.join(p_in_h2_moon)}在月亮第2宫", "effects": ["自力更生", "财富充裕", "受人尊敬"], "strength": "中"})
+        if p_in_h2_moon and p_in_h12_moon:
+            yogas.append({"name": "Durudhura Yoga", "name_cn": "月双夹瑜伽", "combination": f"月亮两侧均有行星", "effects": ["享受丰富", "善于辞令", "性格坚定"], "strength": "强"})
+
     return {"ascendant": asc, "planets_analyzed": len(planets), "kendra_lords": kl, "trikona_lords": tl, "yogas_detected": len(yogas), "yogas": yogas}
 
 
@@ -2175,23 +2203,46 @@ def cmd_full_reading(args):
             'NEUTRAL': DignityLevel.NEUTRAL, 'ENEMY': DignityLevel.ENEMY,
             'DEBILITATED': DignityLevel.DEBILITATED,
         }
+        # 建立 VargaType → varga_result key 的映射（修复：每个分盘独立计算尊贵）
+        _vt_div = {VimsVargaType.D1:1, VimsVargaType.D2:2, VimsVargaType.D3:3,
+                   VimsVargaType.D4:4, VimsVargaType.D7:7, VimsVargaType.D9:9,
+                   VimsVargaType.D10:10, VimsVargaType.D12:12, VimsVargaType.D16:16,
+                   VimsVargaType.D20:20, VimsVargaType.D24:24, VimsVargaType.D27:27,
+                   VimsVargaType.D30:30, VimsVargaType.D40:40, VimsVargaType.D45:45,
+                   VimsVargaType.D60:60}
+        _div_meta = {2:'Hora',3:'Drekkana',4:'Turyamsa',7:'Saptamsa',9:'Navamsa',
+                     10:'Dasamsa',12:'Dwadashamsa',16:'Shodasamsa',20:'Vimsamsa',
+                     24:'Siddhamsa',27:'Bhamsa',30:'Trimsamsa',40:'Khavedamsa',
+                     45:'Akshavedamsa',60:'Shashtiamsa'}
         planet_vargas_input = {}
         for pn in planet_lons:
             planet_vargas_input[pn] = {}
             for vt in VimsVargaType:
-                # 尝试从 varga_result 中获取该行星在该分盘的 sign
-                varga_sign = None
-                varga_deg = None
-                if varga_result:
-                    for vname, vdata in varga_result.items():
-                        if isinstance(vdata, dict):
-                            pinfo = vdata.get(pn, {})
-                            if isinstance(pinfo, dict) and 'sign' in pinfo:
-                                varga_sign = pinfo['sign']
-                                varga_deg = pinfo.get('degree_in_sign', pinfo.get('degree', 0) % 30)
-                                break
-                if varga_sign:
-                    dl_key = _get_dignity_level(pn, varga_sign, varga_deg)
+                div = _vt_div.get(vt)
+                if div and varga_result:
+                    # 构造对应的 key，如 D9_Navamsa
+                    vkey = f"D{div}_{_div_meta.get(div, f'D{div}')}"
+                    vdata = varga_result.get(vkey, {})
+                    # 使用 _get_dignity_level 计算完整5-fold尊贵（含Friend/Enemy）
+                    # 不使用 _dignity 字典（只有 Exalted/Debilitated/Own Sign）
+                    pinfo = vdata.get(pn, {})
+                    if isinstance(pinfo, dict) and 'sign' in pinfo:
+                        dl_key = _get_dignity_level(pn, pinfo['sign'],
+                                      pinfo.get('degree_in_sign', pinfo.get('degree', 0) % 30))
+                        planet_vargas_input[pn][vt] = dignity_map.get(dl_key, DignityLevel.NEUTRAL)
+                    elif div == 1:
+                        # D1 直接用本命盘数据
+                        p_sign = SIGNS[int(planet_lons.get(pn, 0) / 30) % 12]
+                        d_in_s = planet_lons.get(pn, 0) % 30
+                        dl_key = _get_dignity_level(pn, p_sign, d_in_s)
+                        planet_vargas_input[pn][vt] = dignity_map.get(dl_key, DignityLevel.NEUTRAL)
+                    else:
+                        planet_vargas_input[pn][vt] = DignityLevel.NEUTRAL
+                elif div == 1 and not varga_result:
+                    # fallback: D1 从 planet_lons 计算
+                    p_sign = SIGNS[int(planet_lons.get(pn, 0) / 30) % 12]
+                    d_in_s = planet_lons.get(pn, 0) % 30
+                    dl_key = _get_dignity_level(pn, p_sign, d_in_s)
                     planet_vargas_input[pn][vt] = dignity_map.get(dl_key, DignityLevel.NEUTRAL)
                 else:
                     planet_vargas_input[pn][vt] = DignityLevel.NEUTRAL
@@ -2372,7 +2423,19 @@ def cmd_full_reading(args):
     # ── Step 16: Vivah Saham 婚姻敏感点 (v4.3.0) ──
     try:
         sahams = _calc_vivah_saham(planets, asc_deg)
-        report['modules']['vivah_saham'] = sahams
+        # 包装为标准结构，与 standalone vivah-saham 子命令一致
+        if 'error' not in sahams:
+            report['modules']['vivah_saham'] = {
+                'vivah_saham': {
+                    'longitude': sahams['saham_lon'],
+                    'sign': sahams['saham_sign'],
+                    'degree_in_sign': sahams['saham_deg_in_sign'],
+                    'house': sahams['saham_house'],
+                },
+                **sahams
+            }
+        else:
+            report['modules']['vivah_saham'] = sahams
     except Exception as e:
         report['errors'].append(f"vivah-saham: {e}")
 

@@ -108,8 +108,8 @@ def calc_chara_karaka_8(planet_degrees: Dict[str, float]) -> Dict:
         if pname == 'Ketu':
             continue
         if pname == 'Rahu':
-            # Rahu逆行：用反向度数（30 - 度数），不取模以保留30.0边界值
-            planets[pname] = 30.0 - deg
+            # Rahu直接使用星座内度数（与其它行星相同），不做取反
+            planets[pname] = deg
         else:
             planets[pname] = deg
     
