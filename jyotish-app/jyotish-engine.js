@@ -468,6 +468,8 @@ export function computeDasha(moonLon, birthDate, referenceDate) {
   const startDt = new Date(birthDt.getTime() - elapsed * 365.25 * 24 * 3600000);
   const startIdx = DASHA_ORDER.indexOf(nak.lord);
 
+  const remaining = nak.years - elapsed;
+
   const timeline = [];
   let dt = new Date(startDt.getTime());
 
@@ -475,7 +477,17 @@ export function computeDasha(moonLon, birthDate, referenceDate) {
     const lord = DASHA_ORDER[(startIdx + i) % 9];
     const years = DASHA_YEARS[lord];
     const endDt = new Date(dt.getTime() + years * 365.25 * 24 * 3600000);
-    timeline.push({ lord, lord_cn: PLANET_CN[lord], start: fmtDate(dt), end: fmtDate(endDt), years, antardasha: null });
+    const isBalance = i === 0;
+    timeline.push({
+      lord, lord_cn: PLANET_CN[lord],
+      start: fmtDate(dt), end: fmtDate(endDt),
+      years: isBalance ? Math.round(remaining * 100) / 100 : years,
+      full_years: years,
+      is_balance: isBalance,
+      balance_years: isBalance ? Math.round(remaining * 100) / 100 : null,
+      elapsed_at_birth: isBalance ? Math.round(elapsed * 100) / 100 : null,
+      antardasha: null
+    });
     dt = endDt;
   }
 
