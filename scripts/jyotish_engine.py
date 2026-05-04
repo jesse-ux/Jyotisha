@@ -83,6 +83,53 @@ SIGNS_CN = {'Aries': '白羊座', 'Taurus': '金牛座', 'Gemini': '双子座', 
 SIGN_LORDS = {'Aries': 'Mars', 'Taurus': 'Venus', 'Gemini': 'Mercury', 'Cancer': 'Moon', 'Leo': 'Sun', 'Virgo': 'Mercury', 'Libra': 'Venus', 'Scorpio': 'Mars', 'Sagittarius': 'Jupiter', 'Capricorn': 'Saturn', 'Aquarius': 'Saturn', 'Pisces': 'Jupiter'}
 EXALTATION = {'Sun': 'Aries', 'Moon': 'Taurus', 'Mars': 'Capricorn', 'Mercury': 'Virgo', 'Jupiter': 'Cancer', 'Venus': 'Pisces', 'Saturn': 'Libra'}
 DEBILITATION = {'Sun': 'Libra', 'Moon': 'Scorpio', 'Mars': 'Cancer', 'Mercury': 'Pisces', 'Jupiter': 'Capricorn', 'Venus': 'Virgo', 'Saturn': 'Aries'}
+# Moolatrikona（三方本宫）: 行星 → (星座, 度数范围起始)
+MOOLATRIKONA = {'Sun': ('Leo', 0, 20), 'Moon': ('Taurus', 0, 3), 'Mars': ('Aries', 0, 12), 'Mercury': ('Virgo', 16, 20), 'Jupiter': ('Sagittarius', 0, 10), 'Venus': ('Libra', 0, 15), 'Saturn': ('Aquarius', 0, 20)}
+# BPHS 永久友好关系表 (Naisargika Mitra)
+PERMANENT_FRIENDS = {
+    'Sun': ['Moon', 'Mars', 'Jupiter'],
+    'Moon': ['Sun', 'Mercury'],
+    'Mars': ['Sun', 'Moon', 'Jupiter'],
+    'Mercury': ['Sun', 'Venus'],
+    'Jupiter': ['Sun', 'Moon', 'Mars'],
+    'Venus': ['Mercury', 'Saturn'],
+    'Saturn': ['Mercury', 'Venus'],
+    'Rahu': ['Venus', 'Saturn'],
+    'Ketu': ['Mars', 'Saturn'],
+}
+PERMANENT_ENEMIES = {
+    'Sun': ['Saturn', 'Venus'],
+    'Moon': [],
+    'Mars': ['Mercury'],
+    'Mercury': ['Moon'],
+    'Jupiter': ['Mercury', 'Venus'],
+    'Venus': ['Sun', 'Moon'],
+    'Saturn': ['Sun', 'Moon', 'Mars'],
+    'Rahu': ['Sun', 'Moon', 'Jupiter'],
+    'Ketu': ['Sun', 'Moon'],
+}
+
+
+def _get_dignity_level(planet, sign, deg_in_sign=None):
+    """判断行星在某星座的尊严等级 (用于 Vimsopaka 映射)"""
+    if EXALTATION.get(planet) == sign:
+        return 'EXALTED'
+    # Moolatrikona: 需要检查度数范围
+    mt = MOOLATRIKONA.get(planet)
+    if mt and mt[0] == sign:
+        if deg_in_sign is not None and mt[1] <= deg_in_sign < mt[2]:
+            return 'MOOLATRIKONA'
+    if SIGN_LORDS.get(sign) == planet:
+        return 'OWN_SIGN'
+    if DEBILITATION.get(planet) == sign:
+        return 'DEBILITATED'
+    # 友好/敌对
+    sign_lord = SIGN_LORDS.get(sign, '')
+    if planet in PERMANENT_FRIENDS.get(sign_lord, []):
+        return 'FRIEND'
+    if planet in PERMANENT_ENEMIES.get(sign_lord, []):
+        return 'ENEMY'
+    return 'NEUTRAL'
 PLANET_CN = {"Ketu": "南交点Ketu", "Venus": "金星Venus", "Sun": "太阳Sun", "Moon": "月亮Moon", "Mars": "火星Mars", "Rahu": "北交点Rahu", "Jupiter": "木星Jupiter", "Saturn": "土星Saturn", "Mercury": "水星Mercury"}
 PLANETS_SWE = {'Sun': swe.SUN, 'Moon': swe.MOON, 'Mars': swe.MARS, 'Mercury': swe.MERCURY, 'Jupiter': swe.JUPITER, 'Venus': swe.VENUS, 'Saturn': swe.SATURN, 'Rahu': swe.MEAN_NODE} if HAS_SWE else {}
 
@@ -218,10 +265,10 @@ def cmd_dasha(args):
     timeline = []
     for i in range(9):
         lord = DASHA_ORDER[(si + i) % 9]; years = DASHA_YEARS[lord]
-        # 第一个 MD 只取 balance（剩余年数），日期已经是 birth - elapsed
-        actual_years = round(remaining, 2) if i == 0 else years
-        end_dt = dt + timedelta(days=actual_years * 365.25)
-        timeline.append({"lord": lord, "lord_cn": PLANET_CN[lord], "start": dt.strftime("%Y-%m-%d"), "end": end_dt.strftime("%Y-%m-%d"), "years": actual_years, "is_current": False, "is_balance": i == 0})
+        end_dt = dt + timedelta(days=years * 365.25)
+        # 第一个 MD 的展示 years 用 balance，实际日期计算用完整年数（数学等价）
+        display_years = round(remaining, 2) if i == 0 else years
+        timeline.append({"lord": lord, "lord_cn": PLANET_CN[lord], "start": dt.strftime("%Y-%m-%d"), "end": end_dt.strftime("%Y-%m-%d"), "years": display_years, "full_years": years, "is_current": False, "is_balance": i == 0, "balance_years": round(remaining, 2) if i == 0 else None, "elapsed_at_birth": round(elapsed, 2) if i == 0 else None})
         dt = end_dt
 
     today = datetime.strptime(args.today, "%Y-%m-%d") if args.today else datetime.now()
@@ -2120,16 +2167,34 @@ def cmd_full_reading(args):
         from vimsopaka_calculator import VimsopakaBalaCalculator, VargaType as VimsVargaType, DignityLevel
         vims_calc = VimsopakaBalaCalculator(mode="shodasavarga")
         # 将 varga_result 转换为 Vimsopaka 所需的 planet_vargas 格式
-        # varga_result 结构: {planet: {varga_name: {sign, sign_index, degree, ...}}}
+        # varga_result 结构: {varga_name: {planet: {sign, degree, ...}}}
+        # 需要转为: {planet: {VargaType: DignityLevel}}
+        dignity_map = {
+            'EXALTED': DignityLevel.EXALTED, 'MOOLATRIKONA': DignityLevel.MOOLATRIKONA,
+            'OWN_SIGN': DignityLevel.OWN_SIGN, 'FRIEND': DignityLevel.FRIEND,
+            'NEUTRAL': DignityLevel.NEUTRAL, 'ENEMY': DignityLevel.ENEMY,
+            'DEBILITATED': DignityLevel.DEBILITATED,
+        }
         planet_vargas_input = {}
-        if varga_result:
-            for pn in planet_lons:
-                planet_vargas_input[pn] = {}
-                for vt in VimsVargaType:
-                    try:
-                        planet_vargas_input[pn][vt] = DignityLevel.NEUTRAL  # 默认
-                    except: pass
-        # 简化实现：如果 varga_result 可用，尝试映射尊严等级
+        for pn in planet_lons:
+            planet_vargas_input[pn] = {}
+            for vt in VimsVargaType:
+                # 尝试从 varga_result 中获取该行星在该分盘的 sign
+                varga_sign = None
+                varga_deg = None
+                if varga_result:
+                    for vname, vdata in varga_result.items():
+                        if isinstance(vdata, dict):
+                            pinfo = vdata.get(pn, {})
+                            if isinstance(pinfo, dict) and 'sign' in pinfo:
+                                varga_sign = pinfo['sign']
+                                varga_deg = pinfo.get('degree_in_sign', pinfo.get('degree', 0) % 30)
+                                break
+                if varga_sign:
+                    dl_key = _get_dignity_level(pn, varga_sign, varga_deg)
+                    planet_vargas_input[pn][vt] = dignity_map.get(dl_key, DignityLevel.NEUTRAL)
+                else:
+                    planet_vargas_input[pn][vt] = DignityLevel.NEUTRAL
         vimsopaka_result = vims_calc.calculate_vimsopaka_bala(planet_vargas_input)
         report['modules']['vimsopaka'] = vimsopaka_result
     except Exception as e:
