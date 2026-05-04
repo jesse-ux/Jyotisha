@@ -138,12 +138,14 @@ python3 scripts/karaka_calculator.py --mode bphs --planets "Sun:45.5,Moon:120.3,
 在 `jyotish_engine.py` 中导入这些模块：
 
 ```python
-from scripts.karaka_calculator import KarakaCalculator, KarakaMode
-from scripts.special_lagnas import SpecialLagnasCalculator
-from scripts.vimsopaka_calculator import VimsopakaCalculator
-from scripts.avastha_calculator import AvasthaCalculator
-from scripts.divisional_charts_extended import DivisionalChartsExtended
+from karaka_calculator import KarakaCalculator, KarakaMode
+from special_lagnas import SpecialLagnasCalculator
+from vimsopaka_calculator import VimsopakaBalaCalculator
+from avastha_calculator import AvasthaCalculator
+from divisional_charts_extended import DivisionalChartsCalculator
 ```
+
+> **注意**：这 5 个模块已整合到主仓库的 `scripts/` 目录中，与引擎一起维护。本 Skill 的 `scripts/` 副本仅作为独立分发包。
 
 ## 验证测试
 
