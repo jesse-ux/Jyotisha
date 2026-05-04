@@ -286,6 +286,21 @@ def cmd_dasha(args):
                 sdt = se
             d["antardasha"] = sub; current = d; break
 
+    # 规范化 current_dasha 结构：添加 mahadasha 字段，提取当前 antardasha
+    if current is not None:
+        current["mahadasha"] = current.get("lord", "")
+        current["mahadasha_cn"] = current.get("lord_cn", "")
+        # 从 antardasha 列表中提取当前正在运行的 antardasha
+        ad_list = current.get("antardasha", [])
+        current_ad = None
+        for ad in ad_list:
+            if ad.get("is_current"):
+                current_ad = ad
+                break
+        # 保留完整 antardasha 列表（key: antardasha_timeline），同时提供当前 antardasha
+        current["antardasha_timeline"] = ad_list
+        current["antardasha"] = current_ad or (ad_list[0] if ad_list else None)
+
     return {"moon_nakshatra": nak_name, "birth_date": args.birthdate, "reference_date": today.strftime("%Y-%m-%d"), "timeline": timeline, "current_dasha": current}
 
 
@@ -367,6 +382,9 @@ def cmd_yoga(args):
             yogas.append({"name": "Sunapha Yoga", "name_cn": "月前瑜伽", "combination": f"{'+'.join(p_in_h2_moon)}在月亮第2宫", "effects": ["自力更生", "财富充裕", "受人尊敬"], "strength": "中"})
         if p_in_h2_moon and p_in_h12_moon:
             yogas.append({"name": "Durudhura Yoga", "name_cn": "月双夹瑜伽", "combination": f"月亮两侧均有行星", "effects": ["享受丰富", "善于辞令", "性格坚定"], "strength": "强"})
+        # Kemadruma Yoga: Moon两侧（2宫和12宫）均无行星
+        if not p_in_h2_moon and not p_in_h12_moon:
+            yogas.append({"name": "Kemadruma Yoga", "name_cn": "空劫瑜伽", "combination": f"月亮两侧均无行星（2宫/12宫空）", "effects": ["人生艰辛", "需自力更生", "精神挑战"], "strength": "凶"})
 
     return {"ascendant": asc, "planets_analyzed": len(planets), "kendra_lords": kl, "trikona_lords": tl, "yogas_detected": len(yogas), "yogas": yogas}
 
@@ -2186,6 +2204,20 @@ def cmd_full_reading(args):
         sys.path.insert(0, SCRIPT_DIR)
         from varga import calc_all_vargas
         varga_result = calc_all_vargas(planet_lons, asc_deg, None)  # None = 全部分盘
+        # 补充 D1_Rashi 到 varga_full（使用 chart 中的行星位置）
+        d1_data = {}
+        for pn, pd in planets.items():
+            if isinstance(pd, dict) and 'sign' in pd:
+                d1_data[pn] = {
+                    "sign": pd["sign"],
+                    "degree": pd.get("degree", 0),
+                    "degree_in_sign": pd.get("degree_in_sign", pd.get("degree", 0) % 30),
+                    "house": pd.get("house"),
+                    "nakshatra": pd.get("nakshatra"),
+                    "nakshatra_pada": pd.get("nakshatra_pada"),
+                }
+        if d1_data:
+            varga_result["D1_Rashi"] = d1_data
         report['modules']['varga_full'] = varga_result
     except Exception as e:
         report['errors'].append(f"varga-full: {e}")
@@ -2247,6 +2279,17 @@ def cmd_full_reading(args):
                 else:
                     planet_vargas_input[pn][vt] = DignityLevel.NEUTRAL
         vimsopaka_result = vims_calc.calculate_vimsopaka_bala(planet_vargas_input)
+        # 添加顶层汇总
+        if isinstance(vimsopaka_result, dict):
+            total_scores = []
+            for pn, pdata in vimsopaka_result.items():
+                if isinstance(pdata, dict) and 'total_score' in pdata:
+                    total_scores.append(pdata['total_score'])
+            if total_scores:
+                avg_score = round(sum(total_scores) / len(total_scores), 2)
+                vimsopaka_result['total_score'] = avg_score
+                vimsopaka_result['total_score_max'] = 20.0
+                vimsopaka_result['status'] = '优秀' if avg_score >= 15 else '良好' if avg_score >= 10 else '一般' if avg_score >= 7 else '偏弱'
         report['modules']['vimsopaka'] = vimsopaka_result
     except Exception as e:
         report['errors'].append(f"vimsopaka: {e}")
@@ -2359,7 +2402,25 @@ def cmd_full_reading(args):
         birth_hour = args.hour + args.minute / 60.0
         sun_lon = planet_lons.get('Sun', 0)
         moon_lon = planet_lons.get('Moon', 0)
-        report['modules']['shadbala'] = calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon)
+        shadbala_result = calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon)
+        # 添加顶层汇总
+        if isinstance(shadbala_result, dict):
+            sb_planets = shadbala_result.get('planets', {})
+            total_rupas = 0
+            min_req_total = 0
+            strong_count = 0
+            for pn, pdata in sb_planets.items():
+                if isinstance(pdata, dict):
+                    total_rupas += pdata.get('total_rupas', 0)
+                    min_req_total += pdata.get('min_required', 0)
+                    if pdata.get('total_rupas', 0) >= pdata.get('min_required', 0):
+                        strong_count += 1
+            shadbala_result['total_shadbala'] = round(total_rupas, 2)
+            shadbala_result['total_min_required'] = round(min_req_total, 2)
+            shadbala_result['strong_planets'] = strong_count
+            shadbala_result['weak_planets'] = len(sb_planets) - strong_count
+            shadbala_result['status'] = '优秀' if strong_count >= 5 else '良好' if strong_count >= 3 else '一般'
+        report['modules']['shadbala'] = shadbala_result
     except Exception as e:
         report['errors'].append(f"shadbala: {e}")
 

@@ -90,6 +90,7 @@ class SpecialLagnasCalculator:
             "degree": round(bhava_lagna, 4),
             "sign": self.SIGNS[sign_index],
             "sign_degree": round(sign_degree, 4),
+            "house": ((sign_index - int(asc_degree // 30)) % 12) + 1,
             "formula": "Asc + (Sun - Moon)",
             "meaning": "物质层面的实际状况，真实的生活环境"
         }
@@ -124,6 +125,7 @@ class SpecialLagnasCalculator:
             "degree": round(hora_lagna, 4),
             "sign": self.SIGNS[sign_index],
             "sign_degree": round(sign_degree, 4),
+            "house": ((sign_index - int(asc_degree // 30)) % 12) + 1,
             "hours_from_sunrise": round(hours_from_sunrise, 2),
             "formula": "Asc + (Hora数 × 15°)",
             "meaning": "财富和物质收益的指示器"
@@ -164,6 +166,7 @@ class SpecialLagnasCalculator:
             "degree": round(ghati_lagna, 4),
             "sign": self.SIGNS[sign_index],
             "sign_degree": round(sign_degree, 4),
+            "house": ((sign_index - int(asc_degree // 30)) % 12) + 1,
             "ghati_count": round(ghati_count, 2),
             "formula": "Asc + (Ghati数 × 6°)",
             "meaning": "基于Ghati单位的精确上升点，用于精确预测"
@@ -209,6 +212,7 @@ class SpecialLagnasCalculator:
             "degree": round(al_degree, 4),
             "sign": self.SIGNS[al_sign],
             "sign_degree": round(al_degree % 30, 4),
+            "house": ((al_sign - int(asc_degree // 30)) % 12) + 1,
             "distance_from_asc": distance,
             "formula": "从1宫主星数相同宫位数（1/7宫例外）",
             "meaning": "公众形象和社会地位，他人如何看待你"
@@ -255,6 +259,7 @@ class SpecialLagnasCalculator:
             "degree": round(ul_degree, 4),
             "sign": self.SIGNS[ul_sign],
             "sign_degree": round(ul_degree % 30, 4),
+            "house": ((ul_sign - int(asc_degree // 30)) % 12) + 1,
             "distance_from_12th": distance,
             "formula": "从12宫主星数相同宫位数（12/6宫例外）",
             "meaning": "配偶的公众形象和婚姻的社会表现"
