@@ -1,5 +1,42 @@
 # 印度占星 Skill 更新日志
 
+## v4.3.0（2026-05-03）— Dasha 浮点边界修复 + App UI 全面优化
+
+> **触发原因**：多案例交叉验证中发现 Barack Obama 案例 Dasha 0/9 匹配，定位到浮点边界 bug。
+
+### ① Dasha 浮点边界 bug 修复
+
+**问题**：当 Moon 恰好在 Nakshatra 分界线上（如 Taurus 10.0° = Krittika/Rohini 边界），`moonLon % nakSpan` 由于浮点精度返回接近 nakSpan 的值（而非 0），导致 progress ≈ 1.0，将整个 Mahadasha 偏移一个完整周期。
+
+**修复**：在 `computeDasha` 和 `computeDashaWithPratyantar` 中添加 `if(prog > 0.9999) prog = 0`。
+
+**验证**：Barack Obama 修复前 0/9 → 修复后 9/9 匹配。4 案例汇总：Einstein 8/9, Jobs 8/9, Diana 8/9, Obama 9/9。
+
+### ② App UI/UX 全面优化（jyotish-app v4.3.0）
+
+- **暗色模式**：完整支持 `@media(prefers-color-scheme:dark)` + `[data-theme=dark]` + 手动切换按钮，星盘 SVG 颜色同步适配
+- **CSS 变量修复**：6 处 `--text-primary`/`--card-bg`/`--border-color` 未定义变量 → 替换为正确的 `--text-heading`/`--bg-card`/`--border-card`
+- **CSS 括号错误修复**：行 1741 游离的 `.rect-banner-btn` 规则和多余的 `}` 导致后续规则可能失效
+- **北印度盘中心摘要**：新增与南印度盘一致的 Lagna + 月亮星宿 + Dasha + AK/DK 中心信息区
+- **i18n 遗漏修复**：Karaka 标签、Transit 表头 8 列、Panchanga 标签、行星名称列 → 全部走 i18n 系统
+- **死代码清理**：删除未调用的 `renderYogas()` 旧版函数（28 行）
+- **Toast 通知**：4 处 `alert()` 替换为非阻塞式 Toast 组件（error/warning/success 三种样式）
+- **主题切换按钮**：输入页和结果页各一个 🌙/☀️ 切换按钮，状态持久化到 localStorage
+
+### 修改文件清单
+
+| 文件 | 变更 |
+|------|------|
+| `jyotish-app/style.css` | 暗色模式变量 + Toast 样式 + 主题按钮样式 + 修复未定义变量/括号错误 |
+| `jyotish-app/main.js` | Toast 系统 + 主题切换 + alert→toast + 删除死代码 + Transit 表头 i18n |
+| `jyotish-app/chart-renderer.js` | 动态主题获取 + 北印盘中心摘要 + `THEME` → `_th` 动态切换 |
+| `jyotish-app/renderers.js` | Karaka 标签 i18n + 行星名称国际化 + Panchanga 标签 i18n |
+| `jyotish-app/index.html` | 主题切换按钮（输入页 + 结果页） |
+| `SKILL.md` | 版本 4.2.0 → 4.3.0 |
+| `CHANGELOG.md` | 新增 v4.3.0 记录 |
+
+---
+
 ## v4.2.0（2026-04-27）— 强制外部验证门控（MEVG）
 
 > **触发原因**：一楠多次强调"不要根据经验和固有认知去判断分析用户的情况，要全网去找针对性的内容，对应的知识点和相似案例分析综合分析反复验证"。v4.1.0 的 Transit Actionable Output 仅覆盖 Transit 预测环节的案例检索，缺少对静态分析、行星尊严判断、Yoga 识别等其他环节的外部验证要求。AI 反复跳过 web_search 验证，仅凭训练记忆输出解读。

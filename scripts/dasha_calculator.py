@@ -99,6 +99,8 @@ def calculate_bhukti(mahadasha_planet, years_into_mahadasha):
     """
     Calculate current Bhukti (sub-period) within Mahadasha
 
+    Correct formula: Antar_Years = Mahadasha_Years × Antar_Planet_Years / 120
+
     Args:
         mahadasha_planet: Current Mahadasha lord
         years_into_mahadasha: Years elapsed in current Mahadasha
@@ -111,16 +113,18 @@ def calculate_bhukti(mahadasha_planet, years_into_mahadasha):
 
     years_remaining = years_into_mahadasha
 
-    for planet, years in sequence:
-        if years_remaining <= years:
+    for planet, planet_full_years in sequence:
+        # Scale Antar period to Mahadasha duration
+        bhukti_years = mahadasha_total * planet_full_years / 120.0
+        if years_remaining <= bhukti_years:
             return {
                 'bhukti_lord': planet,
-                'bhukti_years': years,
+                'bhukti_years': bhukti_years,
                 'years_into_bhukti': years_remaining,
-                'years_remaining': years - years_remaining,
-                'bhukti_percentage': (years_remaining / years) * 100
+                'years_remaining': bhukti_years - years_remaining,
+                'bhukti_percentage': (years_remaining / bhukti_years) * 100
             }
-        years_remaining -= years
+        years_remaining -= bhukti_years
 
     return None
 
@@ -129,20 +133,17 @@ def calculate_pratyantar_dasha(mahadasha_planet, bhukti_planet, years_into_bhukt
     """
     Calculate Pratyantar Dasha (sub-sub-period)
 
-    This is a more detailed calculation based on the ratio of the
-    Mahadasha and Bhukti periods.
+    Correct formula: PA_Years = Antar_Years × PA_Planet_Years / 120
+    where Antar_Years = Maha_Years × Antar_Planet_Years / 120
     """
     mahadasha_years = VIMSHOTTARI_PERIODS[mahadasha_planet]
-    bhukti_years = VIMSHOTTARI_PERIODS[bhukti_planet]
-
-    # Pratyantar Dasha proportion = (Bhukti years / 120) * Mahadasha years
-    pratyantar_proportion = (bhukti_years / 120) * mahadasha_years
+    bhukti_years = mahadasha_years * VIMSHOTTARI_PERIODS[bhukti_planet] / 120.0
 
     sequence = get_mahadasha_sequence(mahadasha_planet)
 
     pratyantar_sequence = []
     for planet, _ in sequence:
-        pratyantar_years = (VIMSHOTTARI_PERIODS[planet] / 120) * pratyantar_proportion
+        pratyantar_years = bhukti_years * VIMSHOTTARI_PERIODS[planet] / 120.0
         pratyantar_sequence.append((planet, pratyantar_years))
 
     return pratyantar_sequence
