@@ -67,16 +67,18 @@ Vimshottari Dasha 的顺序是固定的,从 Ketu 开始,以 Mercury 结束:
 | 8, 17, 26 | Pushya, Anuradha, Uttara Bhadrapada | Saturn (土星) |
 | 9, 18, 27 | Ashlesha, Jyeshtha, Revati | Mercury (水星) |
 
-**快速记忆法**: 星宿序号除以 9,余数对应行星
-- 余 1 或 0 → Ketu
-- 余 2 → Venus
-- 余 3 → Sun
-- 余 4 → Moon
-- 余 5 → Mars
-- 余 6 → Rahu
-- 余 7 → Jupiter
-- 余 8 → Saturn
-- 余 9 → Mercury
+**快速记忆法**: 星宿序号除以 9 的余数对应行星
+- 余 1 → Ketu（星宿 1, 10, 19）
+- 余 2 → Venus（星宿 2, 11, 20）
+- 余 3 → Sun（星宿 3, 12, 21）
+- 余 4 → Moon（星宿 4, 13, 22）
+- 余 5 → Mars（星宿 5, 14, 23）
+- 余 6 → Rahu（星宿 6, 15, 24）
+- 余 7 → Jupiter（星宿 7, 16, 25）
+- 余 8 → Saturn（星宿 8, 17, 26）
+- 余 0（整除）→ Mercury（星宿 9, 18, 27）
+
+> ⚠️ 注意：余数0对应Mercury，不是Ketu。计算方法：`星宿序号 % 9`，若结果为0则对应Mercury。
 
 ### 2.3 计算第一个 Mahadasha 的剩余年数
 
