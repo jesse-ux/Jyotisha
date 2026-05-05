@@ -1,8 +1,8 @@
 # 🪐 Jyotish Vedic Astrology Engine
 
-**印度占星（Jyotish）专业解盘与推运系统 v4.2.0**
+**印度占星（Jyotish）专业解盘与推运系统 v6.0.0**
 
-基于 Swiss Ephemeris 天文计算库的完整吠陀占星引擎，覆盖从排盘计算到精确推运应期预测的全链路能力。
+基于 Swiss Ephemeris 天文计算库的完整吠陀占星引擎，覆盖从排盘计算到精确推运应期预测的全链路能力。可作为 [WorkBuddy](https://www.codebuddy.cn/) Skill 安装，也可以作为独立 Python CLI 工具使用。
 
 ## ✨ 核心特性
 
@@ -34,6 +34,11 @@
 ### 1. 克隆仓库
 
 ```bash
+# HTTPS（推荐，无需配置 SSH key）
+git clone https://github.com/732642856/yinduzhanxing.git
+cd yinduzhanxing
+
+# 或 SSH
 git clone git@github.com:732642856/yinduzhanxing.git
 cd yinduzhanxing
 ```
@@ -236,19 +241,32 @@ yinduzhanxing/
 
 ## 🔧 作为 WorkBuddy Skill 使用
 
-本项目是一个标准的 WorkBuddy Skill，可以直接安装到 WorkBuddy 中：
+本项目是一个标准的 WorkBuddy Skill，安装后在 WorkBuddy 对话中用自然语言即可触发，无需手动输入 CLI 命令。
 
-### 方法 1：手动安装
+### 方法 1：手动安装（推荐）
 
 ```bash
-# 将仓库克隆到 WorkBuddy skills 目录
+# HTTPS（推荐，无需配置 SSH key）
+git clone https://github.com/732642856/yinduzhanxing.git \
+  ~/.workbuddy/skills/jyotish-vedic-astrology
+
+# 或 SSH
 git clone git@github.com:732642856/yinduzhanxing.git \
   ~/.workbuddy/skills/jyotish-vedic-astrology
 ```
 
 安装后，在 WorkBuddy 对话中提到任何印度占星相关关键词（如"印度占星"、"Jyotish"、"解盘"、"推运"等），Skill 即自动激活。
 
-### 方法 2：Skill 市场安装（即将支持）
+### 方法 2：下载 ZIP（无需 git）
+
+如果电脑没有 git，可以直接下载：
+
+1. 打开 https://github.com/732642856/yinduzhanxing
+2. 点击绿色 **Code** 按钮 → **Download ZIP**
+3. 解压到 `~/.workbuddy/skills/jyotish-vedic-astrology/` 目录
+4. 确保目录下有 `SKILL.md` 文件
+
+### 方法 3：Skill 市场安装（即将支持）
 
 通过 WorkBuddy 的 Skill 市场搜索 `jyotish-vedic-astrology` 一键安装。
 
@@ -315,6 +333,9 @@ python3 scripts/jyotish_engine.py full-reading \
 
 详见 [CHANGELOG.md](./CHANGELOG.md)。
 
+- **v6.0.0** (2026-05-05)：反教条主义实战经验整合 + 全球占星师误区总结 + 中文技法论文洞察
+- **v5.0.0** (2026-05-04)：27 子命令 + full-reading 19 模块 + 深度数据审计（修复5个P0级Bug）
+- **v4.2.0** (2026-04-28)：MEVG 强制外部验证 + Transit Actionable Output
 - **v3.7.1** (2026-04-25)：`full-reading` 全自动综合解盘 + 三条入口路径路由
 - **v3.7.0** (2026-04-25)：7 大新模块（分盘/相位/Jaimini/Nakshatra/Argala/Tajika/合盘）
 - **v3.6.0** (2026-04-24)：报告生成器 + R2b 校验 + P3/P8/冲突仲裁
