@@ -266,9 +266,25 @@ git clone git@github.com:732642856/yinduzhanxing.git \
 3. 解压到 `~/.workbuddy/skills/jyotish-vedic-astrology/` 目录
 4. 确保目录下有 `SKILL.md` 文件
 
-### 方法 3：Skill 市场安装（即将支持）
+### 方法 3：Skill 市场一键安装
 
-通过 WorkBuddy 的 Skill 市场搜索 `jyotish-vedic-astrology` 一键安装。
+> **状态**：待上架。欢迎 WorkBuddy 团队审核后收录到官方市场（`codebuddy-plugins-official`）。
+>
+> 上架后，用户可在 WorkBuddy 技能市场搜索 `jyotish-vedic-astrology` 一键安装。
+
+**WorkBuddy 团队上架参考**：
+
+| 项目 | 说明 |
+|------|------|
+| Skill 名称 | `jyotish-vedic-astrology` |
+| 仓库 | https://github.com/732642856/yinduzhanxing |
+| 入口文件 | `SKILL.md`（根目录） |
+| 计算引擎 | `scripts/jyotish_engine.py`（Python 3.11+，依赖 `pyswisseph`） |
+| 知识库 | `references/`（100+ Markdown 文件） |
+| 系统要求 | macOS / Linux / Windows，Python 3.11+，`pip install -r requirements.txt` |
+| 自动安装依赖 | 引擎首次运行时检测 `pyswisseph`，缺失则提示安装 |
+| 语言 | 中文为主，技术术语英文 |
+| 授权 | 学习与研究用途 |
 
 ### Skill 触发词
 
