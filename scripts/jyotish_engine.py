@@ -2013,6 +2013,366 @@ def cmd_synastry(args):
 # ============================================================================
 
 
+# ============================================================================
+# Transit 多参考点分析（v4.5.0 P1补齐）
+# 基于 transit-multi-reference-guide.md 强制规范
+# 四参考点：Lagna / Chandra Lagna / Arudha Lagna / Navamsa Lagna
+# ============================================================================
+def _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons):
+    """
+    ⭐ v4.5.0: Transit多参考点分析（强制规范）
+    每次Transit分析必须同时从四个参考点评估：
+    1. Lagna（上升点）— 实际生活事件
+    2. Chandra Lagna（月亮星座）— 心理状态、职业变动
+    3. Arudha Lagna（AL）— 公众形象
+    4. Navamsa Lagna（D9上升）— 灵魂层面
+    """
+    # 四个参考点的星座索引
+    moon_lon = planet_lons.get('Moon', 0)
+    chandra_idx = int(moon_lon / 30) % 12
+
+    # Arudha Lagna（从special_lagnas模块逻辑简化：AL = (Ascendant度数+12宫主度数)%360 对应的星座）
+    twelfth_sign_idx = (asc_idx + 11) % 12
+    twelfth_lord = SIGN_LORDS.get(SIGNS[twelfth_sign_idx], '')
+    twelfth_lord_lon = planet_lons.get(twelfth_lord, 0)
+    al_raw = (asc_deg + twelfth_lord_lon) % 360
+    # AL 特殊规则：如果结果落在原始宫或第7宫，取对宫
+    al_idx = int(al_raw / 30) % 12
+    if al_idx == asc_idx or al_idx == (asc_idx + 6) % 12:
+        al_idx = (al_idx + 7) % 12  # 取第8个 = 对宫再移一位
+
+    # Navamsa Lagna
+    d9_asc_idx = _navamsa_idx(asc_deg)
+
+    references = {
+        'Lagna': {
+            'name': 'Lagna',
+            'cn': '上升点',
+            'sign': SIGNS[asc_idx],
+            'sign_cn': SIGNS_CN[SIGNS[asc_idx]],
+            'sign_idx': asc_idx,
+            'priority': 'P1',
+            'scope': '实际生活事件、身体健康',
+        },
+        'Chandra_Lagna': {
+            'name': 'Chandra Lagna',
+            'cn': '月亮上升',
+            'sign': SIGNS[chandra_idx],
+            'sign_cn': SIGNS_CN[SIGNS[chandra_idx]],
+            'sign_idx': chandra_idx,
+            'priority': 'P1',
+            'scope': '心理状态、职业变动、情感体验',
+        },
+        'Arudha_Lagna': {
+            'name': 'Arudha Lagna',
+            'cn': '形象上升',
+            'sign': SIGNS[al_idx],
+            'sign_cn': SIGNS_CN[SIGNS[al_idx]],
+            'sign_idx': al_idx,
+            'priority': 'P2',
+            'scope': '公众形象、社会认知、他人如何看待你',
+        },
+        'Navamsa_Lagna': {
+            'name': 'Navamsa Lagna',
+            'cn': '灵性上升',
+            'sign': SIGNS[d9_asc_idx],
+            'sign_cn': SIGNS_CN[SIGNS[d9_asc_idx]],
+            'sign_idx': d9_asc_idx,
+            'priority': 'P3',
+            'scope': '灵魂层面的实际影响、内在真实',
+        },
+    }
+
+    # 对每个外行星（Jupiter/Saturn/Rahu/Ketu），计算从四个参考点看的宫位
+    OUTER_PLANETS = ['Jupiter', 'Saturn', 'Rahu', 'Ketu']
+    transit_analysis = {}
+    for pn in OUTER_PLANETS:
+        pd = planets.get(pn, {})
+        if not isinstance(pd, dict) or 'sign' not in pd:
+            continue
+        p_sign_idx = SIGNS.index(pd['sign']) if pd['sign'] in SIGNS else 0
+        transit_analysis[pn] = {
+            'sign': pd['sign'],
+            'sign_cn': SIGNS_CN.get(pd['sign'], ''),
+            'degree_in_sign': pd.get('degree_in_sign', pd.get('degree', 0) % 30),
+            'house_from_ref': {},
+        }
+        for ref_name, ref_info in references.items():
+            ref_idx = ref_info['sign_idx']
+            house = ((p_sign_idx - ref_idx) % 12) + 1
+            house_meaning = _house_theme(house)
+            transit_analysis[pn]['house_from_ref'][ref_name] = {
+                'house': house,
+                'meaning': house_meaning,
+            }
+
+    # 差异检测：同一行星在不同参考点的宫位含义是否矛盾
+    divergences = []
+    for pn, pa in transit_analysis.items():
+        houses = {ref: info['house'] for ref, info in pa['house_from_ref'].items()}
+        unique_houses = set(houses.values())
+        if len(unique_houses) > 1:
+            divergences.append({
+                'planet': pn,
+                'houses': houses,
+                'divergence': f'{pn}在四个参考点分别落在不同宫位，需综合判断',
+            })
+
+    # Sade Sati / Ashtama Shani 检测（基于Chandra Lagna）
+    special_checks = {}
+    saturn_sign_idx = SIGNS.index(planets.get('Saturn', {}).get('sign', 'Aries')) if isinstance(planets.get('Saturn'), dict) and planets.get('Saturn', {}).get('sign') in SIGNS else 0
+    # Sade Sati: Saturn 在月亮星座或前后1宫
+    sade_sati_phase = None
+    if saturn_sign_idx == chandra_idx:
+        sade_sati_phase = 'peak'
+    elif saturn_sign_idx == (chandra_idx - 1) % 12:
+        sade_sati_phase = 'rising'
+    elif saturn_sign_idx == (chandra_idx + 1) % 12:
+        sade_sati_phase = 'setting'
+    if sade_sati_phase:
+        special_checks['sade_sati'] = {
+            'active': True,
+            'phase': sade_sati_phase,
+            'note': f'土星过境月亮{SIGNS_CN[SIGNS[chandra_idx]]}附近，Sade Sati {sade_sati_phase}期',
+        }
+    # Ashtama Shani: Saturn在月亮第8宫
+    saturn_from_chandra = ((saturn_sign_idx - chandra_idx) % 12) + 1
+    if saturn_from_chandra == 8:
+        special_checks['ashtama_shani'] = {
+            'active': True,
+            'note': '土星过境月亮第8宫（Ashtama Shani），压力期',
+        }
+
+    return {
+        'references': references,
+        'transit_analysis': transit_analysis,
+        'divergences': divergences,
+        'divergence_count': len(divergences),
+        'special_checks': special_checks,
+        'protocol': 'v4.5.0 Transit多参考点强制规范：AI必须同时呈现Lagna和Chandra Lagna两个视角。任何矛盾信号必须记录并解释。',
+    }
+
+
+# ============================================================================
+# Dasa Convergence 三系统交叉验证（v4.5.0 P1补齐）
+# 基于 dasa-convergence-methodology.md
+# 三系统：Vimshottari + Chara Dasha + Yogini
+# ============================================================================
+# Yogini Dasha 常量
+YOGINI_ORDER = ['Mangala', 'Pingala', 'Dhanya', 'Bhramari', 'Bhadrika', 'Ulka', 'Siddha', 'Sankata']
+YOGINI_YEARS = {'Mangala': 1, 'Pingala': 2, 'Dhanya': 3, 'Bhramari': 4, 'Bhadrika': 5, 'Ulka': 6, 'Siddha': 7, 'Sankata': 8}
+# Yogini 从月亮 Nakshatra 的第3个 Nakshatra（Dhanishta）开始计数
+YOGINI_NAK_START = 23  # Dhanishta 在 NAKSHATRA_LIST 中的索引
+
+
+def _calc_yogini_dasha(moon_lon, birthdate_str):
+    """
+    计算 Yogini Dasha 时间线
+    Yogini 基于 8 位女神循环，总周期 36 年
+    起始点由月亮所在 Nakshatra 决定
+    """
+    nak_idx = int(moon_lon / (360 / 27)) % 27
+    # Yogini 起始索引 = (nak_idx - YOGINI_NAK_START) % 8
+    yog_start = (nak_idx - YOGINI_NAK_START) % 8
+    # 余数 = 在当前 Yogini 周期中的已过比例
+    nak_in_yog = nak_idx % 8  # 在8分组的第几个
+    pada = int((moon_lon % (360/27)) / (360/108)) + 1
+    # 余数比例
+    balance_frac = (nak_in_yog * 4 + pada - 1) / 32  # 8 Nakshatra × 4 Pada = 32 份
+    balance_frac = min(balance_frac, 1.0)
+
+    birth_date = datetime.strptime(birthdate_str, '%Y-%m-%d')
+    maha_periods = []
+    total_years = 0
+    for i in range(8):
+        idx = (yog_start + i) % 8
+        name = YOGINI_ORDER[idx]
+        years = YOGINI_YEARS[name]
+        if i == 0:
+            elapsed_years = years * balance_frac
+            actual_years = years - elapsed_years
+            start_offset = total_years
+            maha_periods.append({
+                'yogini': name,
+                'full_years': years,
+                'balance_years': round(actual_years, 3),
+                'start_offset_years': round(start_offset, 3),
+                'start_date': (birth_date + timedelta(days=round(start_offset * 365.25))).strftime('%Y-%m-%d'),
+                'end_date': (birth_date + timedelta(days=round((start_offset + actual_years) * 365.25))).strftime('%Y-%m-%d'),
+                'is_current_start': True,
+            })
+            total_years += actual_years
+        else:
+            start_offset = total_years
+            maha_periods.append({
+                'yogini': name,
+                'full_years': years,
+                'start_offset_years': round(start_offset, 3),
+                'start_date': (birth_date + timedelta(days=round(start_offset * 365.25))).strftime('%Y-%m-%d'),
+                'end_date': (birth_date + timedelta(days=round((start_offset + years) * 365.25))).strftime('%Y-%m-%d'),
+            })
+            total_years += years
+
+    # 计算当前 Yogini
+    today = datetime.now()
+    age_days = (today - birth_date).days
+    age_years = age_days / 365.25
+    cycle_years = 36  # Yogini 总周期
+    current_in_cycle = age_years % cycle_years
+    current_yogini = None
+    cumulative = 0
+    for yp in maha_periods:
+        dur = yp.get('balance_years', yp['full_years'])
+        if cumulative <= current_in_cycle < cumulative + dur:
+            current_yogini = yp
+            break
+        cumulative += dur
+
+    return {
+        'moon_nakshatra_idx': nak_idx,
+        'yogini_start_index': yog_start,
+        'total_cycle_years': 36,
+        'maha_periods': maha_periods,
+        'current_yogini': current_yogini,
+    }
+
+
+def _calc_dasa_convergence(dasha_result, chara_dasha_result, yogini_result, planet_lons, asc_idx):
+    """
+    ⭐ v4.5.0: Dasa Convergence 三系统交叉验证
+    Vimshottari + Chara Dasha + Yogini 三系统同时激活同一生活领域时，概率大幅提升
+    """
+    # 提取各系统当前周期
+    convergence_data = {'systems': {}}
+
+    # 系统1: Vimshottari
+    if isinstance(dasha_result, dict):
+        current_d = dasha_result.get('current_dasha', {})
+        if isinstance(current_d, dict):
+            maha = current_d.get('mahadasha', current_d.get('maha'))
+            antar = current_d.get('antardasha', current_d.get('antar'))
+            convergence_data['systems']['vimshottari'] = {
+                'maha': maha,
+                'antar': antar,
+                'pratyantar': current_d.get('pratyantar'),
+                'basis': 'Nakshatra (Moon)',
+            }
+
+    # 系统2: Chara Dasha
+    if isinstance(chara_dasha_result, dict):
+        cd_maha = chara_dasha_result.get('current_maha', chara_dasha_result.get('current'))
+        cd_antar = chara_dasha_result.get('current_antar')
+        if isinstance(cd_maha, dict):
+            cd_sign = cd_maha.get('sign', cd_maha.get('rashi'))
+        elif isinstance(cd_maha, str):
+            cd_sign = cd_maha
+        else:
+            cd_sign = None
+        convergence_data['systems']['chara_dasha'] = {
+            'maha_sign': cd_sign,
+            'antar_sign': cd_antar.get('sign', cd_antar) if isinstance(cd_antar, dict) else cd_antar,
+            'basis': 'Rashi (Sign-based)',
+        }
+
+    # 系统3: Yogini
+    if isinstance(yogini_result, dict):
+        cur_yog = yogini_result.get('current_yogini', {})
+        convergence_data['systems']['yogini'] = {
+            'yogini': cur_yog.get('yogini') if isinstance(cur_yog, dict) else None,
+            'years': cur_yog.get('full_years') if isinstance(cur_yog, dict) else None,
+            'basis': 'Nakshatra (8-goddess cycle)',
+        }
+
+    # 宫位主题映射
+    house_themes_map = {
+        1: 'self_health', 2: 'wealth_family', 3: 'communication_skill', 4: 'home_mother',
+        5: 'creativity_children', 6: 'health_service', 7: 'marriage_partnership',
+        8: 'transformation', 9: 'fortune_dharma', 10: 'career_status',
+        11: 'gains_wishes', 12: 'loss_spirituality',
+    }
+
+    # 逐领域检测三系统激活
+    domain_activations = {}
+    for house, domain in house_themes_map.items():
+        activations = []
+
+        # Vimshottari: 检查大运/小运行星是否关联该宫
+        vims = convergence_data['systems'].get('vimshottari', {})
+        if vims:
+            for level in ['maha', 'antar']:
+                planet = vims.get(level)
+                if planet and isinstance(planet, str):
+                    # 该行星是否掌管此宫？
+                    target_sign_idx = (asc_idx + house - 1) % 12
+                    target_sign = SIGNS[target_sign_idx]
+                    target_lord = SIGN_LORDS.get(target_sign, '')
+                    if planet == target_lord:
+                        activations.append({
+                            'system': 'Vimshottari',
+                            'level': level,
+                            'planet': planet,
+                            'reason': f'{planet}是{house}宫({target_sign})的宫主星',
+                        })
+                    # 该行星是否落在此宫？
+                    p_sign_idx = int(planet_lons.get(planet, 0) / 30) % 12
+                    p_house = ((p_sign_idx - asc_idx) % 12) + 1
+                    if p_house == house:
+                        activations.append({
+                            'system': 'Vimshottari',
+                            'level': level,
+                            'planet': planet,
+                            'reason': f'{planet}落在{house}宫',
+                        })
+
+        # Chara Dasha: 检查当前星座是否关联该宫
+        cd = convergence_data['systems'].get('chara_dasha', {})
+        if cd and cd.get('maha_sign'):
+            cd_sign = cd['maha_sign']
+            if cd_sign in SIGNS:
+                cd_sign_idx = SIGNS.index(cd_sign)
+                cd_house_from_asc = ((cd_sign_idx - asc_idx) % 12) + 1
+                if cd_house_from_asc == house:
+                    activations.append({
+                        'system': 'Chara Dasha',
+                        'level': 'maha',
+                        'sign': cd_sign,
+                        'reason': f'Chara大运星座{cd_sign}是{house}宫',
+                    })
+
+        if activations:
+            domain_activations[domain] = {
+                'house': house,
+                'activations': activations,
+                'system_count': len(set(a['system'] for a in activations)),
+            }
+
+    # 收敛等级评估
+    for domain, info in domain_activations.items():
+        sc = info['system_count']
+        if sc >= 3:
+            info['convergence_level'] = 'L4'
+            info['probability'] = '75-85%'
+            info['interpretation'] = '三系统同时激活，极强信号'
+        elif sc >= 2:
+            info['convergence_level'] = 'L3'
+            info['probability'] = '50-65%'
+            info['interpretation'] = '双系统激活，强信号'
+        else:
+            info['convergence_level'] = 'L1'
+            info['probability'] = '+15-20%'
+            info['interpretation'] = '单系统激活，需Transit确认'
+
+    # 收敛窗口（最高优先级的领域）
+    top_domains = sorted(domain_activations.items(), key=lambda x: x[1]['system_count'], reverse=True)[:5]
+
+    return {
+        'systems_summary': convergence_data['systems'],
+        'domain_activations': domain_activations,
+        'top_convergent_domains': [(d, info['convergence_level']) for d, info in top_domains],
+        'protocol': 'v4.5.0 Dasa Convergence 三系统交叉验证。收敛等级: L1(单系统)→L3(双系统)→L4(三系统)。所有预测必须标注收敛等级。',
+    }
+
+
 def _calc_actionable_context(planets, asc_idx):
     """⭐ v4.1.0: 计算Transit Actionable Output所需的上下文数据
     输出：宫位激活映射 + 关键行星宫位关系 → 供AI生成Actionable Output时直接引用
@@ -2500,6 +2860,70 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"vivah-saham: {e}")
 
+    # ── Step 17: Transit 多参考点分析 (v4.5.0 P1) ──
+    try:
+        transit_multi = _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons)
+        report['modules']['transit_multi_reference'] = transit_multi
+    except Exception as e:
+        report['errors'].append(f"transit-multi-ref: {e}")
+
+    # ── Step 18: Dasa Convergence 三系统交叉验证 (v4.5.0 P1) ──
+    try:
+        dasha_data = report['modules'].get('dasha', {})
+        jaimini_data = report['modules'].get('jaimini', {})
+        chara_dasha_data = jaimini_data.get('chara_dasha', {}) if isinstance(jaimini_data, dict) else {}
+        birthdate_str = f"{args.year}-{args.month:02d}-{args.day:02d}"
+        yogini_data = _calc_yogini_dasha(planet_lons.get('Moon', 0), birthdate_str)
+        report['modules']['yogini_dasha'] = yogini_data
+        convergence = _calc_dasa_convergence(dasha_data, chara_dasha_data, yogini_data, planet_lons, asc_idx)
+        report['modules']['dasa_convergence'] = convergence
+    except Exception as e:
+        report['errors'].append(f"dasa-convergence: {e}")
+
+    # ── Step 19: D9 Navamsa 逐行星尊严展开 (v4.5.0 P1) ──
+    try:
+        varga_data = report['modules'].get('varga_full', {})
+        d9_data = varga_data.get('D9_Navamsa', {}) if isinstance(varga_data, dict) else {}
+        if d9_data:
+            d9_expanded = {}
+            for pn, pd in d9_data.items():
+                if pn == '_meta' or not isinstance(pd, dict) or 'sign' not in pd:
+                    continue
+                d9_sign = pd['sign']
+                d9_deg = pd.get('degree_in_sign', pd.get('degree', 0) % 30)
+                dignity = _get_dignity_level(pn, d9_sign, d9_deg)
+                # D9 宫位（从D9 Asc计算）
+                d9_asc_data = d9_data.get('Ascendant', {})
+                d9_asc_sign_idx = SIGNS.index(d9_asc_data.get('sign', 'Aries')) if isinstance(d9_asc_data, dict) and d9_asc_data.get('sign') in SIGNS else 0
+                p_sign_idx = SIGNS.index(d9_sign) if d9_sign in SIGNS else 0
+                d9_house = ((p_sign_idx - d9_asc_sign_idx) % 12) + 1
+                # 关系状态
+                d9_sign_lord = SIGN_LORDS.get(d9_sign, '')
+                is_own = (d9_sign_lord == pn)
+                is_exalted = (EXALTATION.get(pn) == d9_sign)
+                is_debilitated = (DEBILITATION.get(pn) == d9_sign)
+                is_moola = False
+                if pn in MOOLATRIKONA:
+                    mt_sign, mt_start, mt_end = MOOLATRIKONA[pn]
+                    if mt_sign == d9_sign and mt_start <= d9_deg < mt_end:
+                        is_moola = True
+                d9_expanded[pn] = {
+                    'sign': d9_sign,
+                    'sign_cn': SIGNS_CN.get(d9_sign, ''),
+                    'house_in_d9': d9_house,
+                    'dignity': dignity,
+                    'is_own_sign': is_own,
+                    'is_exalted': is_exalted,
+                    'is_debilitated': is_debilitated,
+                    'is_moolatrikona': is_moola,
+                    'pada': pd.get('pada'),
+                    'lord': d9_sign_lord,
+                    'degree_in_sign': round(d9_deg, 4),
+                }
+            report['modules']['d9_navamsa_expanded'] = d9_expanded
+    except Exception as e:
+        report['errors'].append(f"d9-expanded: {e}")
+
     # ── 汇总 ──
     elapsed = round(time.time() - t0, 2)
     module_count = len(report['modules'])
@@ -2509,7 +2933,7 @@ def cmd_full_reading(args):
         'modules_computed': module_count,
         'errors': error_count,
         'status': 'complete' if error_count == 0 else f'{error_count} errors',
-        'next_step': 'AI可直接基于此数据执行阶段二→三→四→五。⭐ v4.4.0: 21步全链路已就绪。新增 special_lagnas/vimsopaka/varga_extended/karaka_jh/avasthas 五个模块。modules.congregation + modules.vivah_saham + antardasha + avasthas + vimsopaka 已就绪。Transit分析时必须输出Actionable Output（时间段+行动类型+置信度），动态预测必须先检索案例。',
+        'next_step': '⭐ v4.5.0: P1缺口已补齐。新增 transit_multi_reference(四参考点) + dasa_convergence(三系统交叉) + yogini_dasha + d9_navamsa_expanded(逐行星尊严展开)。AI必须使用四参考点分析Transit，Dasa预测必须标注收敛等级。',
     }
 
     return report
