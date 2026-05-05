@@ -254,7 +254,7 @@ def calc_sthana_bala(pname: str, lon: float, sign: str, house: int) -> Dict:
     exalt_sign = SIGNS[int(EXALTATION_DEG.get(pname, 0) / 30) % 12]
     debilit_sign = SIGNS[int(DEBILITATION_DEG.get(pname, 0) / 30) % 12]
     if sign == exalt_sign:
-        d1_score = max(d1_score, 45.0)  # Exalted = Own Sign level or higher
+        d1_score = 50.0  # Exalted 高于 Own Sign（BPHS 标准）
     elif sign == debilit_sign:
         d1_score = 5.0  # Debilitated
 
@@ -408,14 +408,16 @@ def calc_kala_bala(pname: str, is_night: bool, sun_northern: bool,
         nathonnata = 0
     components['nathonnata'] = nathonnata
 
-    # B. Paksha Bala（月相力量，简化）
+    # B. Paksha Bala（月相力量，max 30 Virupas）
     moon_sun_diff = (moon_lon - sun_lon + 360) % 360
+    # 归一化到 0-180（月相亮度是对称的）
+    phase_angle = moon_sun_diff if moon_sun_diff <= 180 else 360 - moon_sun_diff
     if pname in ['Jupiter', 'Venus', 'Moon']:
-        # 望月（180°）最强
-        paksha = moon_sun_diff / 180 * 30
+        # 望月（phase_angle=180）最强 = 30，朔月（0）= 0
+        paksha = phase_angle / 180 * 30
     else:
-        # 朔月（0°）最强
-        paksha = (180 - moon_sun_diff) / 180 * 30 if moon_sun_diff <= 180 else (moon_sun_diff - 180) / 180 * 30
+        # 朔月（phase_angle=0）最强 = 30，望月（180）= 0
+        paksha = (180 - phase_angle) / 180 * 30
     components['paksha'] = round(paksha, 2)
 
     # C. Tribhaga Bala（三段力量）
@@ -452,7 +454,11 @@ def calc_chesta_bala(pname: str, retro: bool, speed: float,
 
     if pname == 'Moon':
         # 月亮根据月相：望月=60，朔月=0
+        # BPHS: Chesta Bala 与月相亮面比例成正比
+        # diff 取 0-180 范围（>180 时用 360-diff，因为月相是对称的）
         moon_sun_diff = (moon_lon - sun_lon + 360) % 360
+        if moon_sun_diff > 180:
+            moon_sun_diff = 360 - moon_sun_diff
         return moon_sun_diff / 180 * 60
 
     # 其他行星

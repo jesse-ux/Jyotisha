@@ -275,31 +275,28 @@ def cmd_dasha(args):
     current = None
     for d in timeline:
         ds = datetime.strptime(d["start"], "%Y-%m-%d"); de = datetime.strptime(d["end"], "%Y-%m-%d")
+        total_days = (de - ds).days; li = DASHA_ORDER.index(d["lord"])
+        # v3.7.2: 为所有 Mahadasha 计算 Antardasha（不仅当前大运）
+        sub = []; sdt = ds
+        for j in range(9):
+            sl = DASHA_ORDER[(li + j) % 9]; sd = total_days * DASHA_YEARS[sl] / 120
+            se = sdt + timedelta(days=sd)
+            is_cur = sdt <= today < se
+            sub.append({"lord": sl, "lord_cn": PLANET_CN[sl], "start": sdt.strftime("%Y-%m-%d"), "end": se.strftime("%Y-%m-%d"), "is_current": is_cur})
+            sdt = se
+        d["antardasha_timeline"] = sub
         if ds <= today < de:
             d["is_current"] = True
-            total_days = (de - ds).days; li = DASHA_ORDER.index(d["lord"])
-            sub = []; sdt = ds
-            for j in range(9):
-                sl = DASHA_ORDER[(li + j) % 9]; sd = total_days * DASHA_YEARS[sl] / 120
-                se = sdt + timedelta(days=sd)
-                sub.append({"lord": sl, "lord_cn": PLANET_CN[sl], "start": sdt.strftime("%Y-%m-%d"), "end": se.strftime("%Y-%m-%d"), "is_current": sdt <= today < se})
-                sdt = se
-            d["antardasha"] = sub; current = d; break
-
-    # 规范化 current_dasha 结构：添加 mahadasha 字段，提取当前 antardasha
-    if current is not None:
-        current["mahadasha"] = current.get("lord", "")
-        current["mahadasha_cn"] = current.get("lord_cn", "")
-        # 从 antardasha 列表中提取当前正在运行的 antardasha
-        ad_list = current.get("antardasha", [])
-        current_ad = None
-        for ad in ad_list:
-            if ad.get("is_current"):
-                current_ad = ad
-                break
-        # 保留完整 antardasha 列表（key: antardasha_timeline），同时提供当前 antardasha
-        current["antardasha_timeline"] = ad_list
-        current["antardasha"] = current_ad or (ad_list[0] if ad_list else None)
+            # 从 antardasha 列表中提取当前正在运行的 antardasha
+            current_ad = None
+            for ad in sub:
+                if ad.get("is_current"):
+                    current_ad = ad
+                    break
+            d["mahadasha"] = d.get("lord", "")
+            d["mahadasha_cn"] = d.get("lord_cn", "")
+            d["antardasha"] = current_ad or (sub[0] if sub else None)
+            current = d
 
     return {"moon_nakshatra": nak_name, "birth_date": args.birthdate, "reference_date": today.strftime("%Y-%m-%d"), "timeline": timeline, "current_dasha": current}
 
@@ -385,6 +382,370 @@ def cmd_yoga(args):
         # Kemadruma Yoga: Moon两侧（2宫和12宫）均无行星
         if not p_in_h2_moon and not p_in_h12_moon:
             yogas.append({"name": "Kemadruma Yoga", "name_cn": "空劫瑜伽", "combination": f"月亮两侧均无行星（2宫/12宫空）", "effects": ["人生艰辛", "需自力更生", "精神挑战"], "strength": "凶"})
+
+    # ========================================================================
+    # 扩展组合型 Yoga（v3.7.2 新增，共 25 条）
+    # ========================================================================
+
+    # --- 辅助函数 ---
+    def _house_of(planet_name):
+        """获取行星所在宫位，不存在返回 None"""
+        return planets[planet_name]["house"] if planet_name in planets else None
+
+    def _sign_of(planet_name):
+        """获取行星所在星座，不存在返回 None"""
+        return planets[planet_name]["sign"] if planet_name in planets else None
+
+    def _is_exalted(planet_name):
+        """行星是否入旺"""
+        s = _sign_of(planet_name)
+        return s is not None and EXALTATION.get(planet_name) == s
+
+    def _is_own_sign(planet_name):
+        """行星是否入庙"""
+        s = _sign_of(planet_name)
+        return s is not None and SIGN_LORDS.get(s) == planet_name
+
+    def _is_debilitated(planet_name):
+        """行星是否落陷"""
+        s = _sign_of(planet_name)
+        return s is not None and DEBILITATION.get(planet_name) == s
+
+    def _is_kendra(house_num):
+        return house_num in [1, 4, 7, 10]
+
+    def _is_trikona(house_num):
+        return house_num in [1, 5, 9]
+
+    def _is_dusthana(house_num):
+        return house_num in [6, 8, 12]
+
+    def _is_upachaya(house_num):
+        return house_num in [3, 6, 10, 11]
+
+    def _planets_in_house(h):
+        """获取落入第 h 宫的所有行星列表"""
+        return [p for p, info in planets.items() if info["house"] == h]
+
+    def _lord_of_house(h):
+        """获取第 h 宫的宫主星"""
+        return SIGN_LORDS[SIGNS[(ai + h - 1) % 12]]
+
+    def _planet_in_kendra_or_trikona(planet_name):
+        """行星是否在角宫或三方宫"""
+        h = _house_of(planet_name)
+        return h is not None and (_is_kendra(h) or _is_trikona(h))
+
+    # ========================================================================
+    # 1. Vipreet Raja Yoga（逆行王者格局）—— Harsha / Sarala / Vimala
+    # 来源：Phaladeepika。6/8/12 宫主星落入 6/8/12 宫（凶宫互落）→ 因祸得福
+    # ========================================================================
+    for dh_h, yoga_sub, yoga_cn in [(6, "Harsha", "喜悦逆行"), (8, "Sarala", "锐利逆行"), (12, "Vimala", "纯净逆行")]:
+        lord_dh = _lord_of_house(dh_h)
+        if lord_dh in planets:
+            lh = _house_of(lord_dh)
+            if lh in [6, 8, 12] and lh != dh_h:
+                yogas.append({"name": f"{yoga_sub} Vipreet Raja Yoga", "name_cn": f"{yoga_cn}格局", "combination": f"第{dh_h}宫主星{lord_dh}落入第{lh}宫（凶宫互落）", "effects": ["因祸得福", "逆境崛起", "困境中成长"], "strength": "中强"})
+
+    # ========================================================================
+    # 2. Amala Yoga（无瑕格局）
+    # 来源：BPHS。10 宫（天顶）及其前方（从10宫算2宫即11宫）有吉星
+    # 简化版：10 宫或 11 宫有木星/金星/明亮水星
+    # ========================================================================
+    benefics_10_11 = [p for p in ['Jupiter', 'Venus', 'Mercury'] if p in planets and _house_of(p) in [10, 11] and not _is_debilitated(p)]
+    if benefics_10_11:
+        yogas.append({"name": "Amala Yoga", "name_cn": "无瑕格局", "combination": f"{'、'.join(benefics_10_11)}在10宫或11宫", "effects": ["名声清白", "受人敬仰", "事业有成"], "strength": "中强"})
+
+    # ========================================================================
+    # 3. Parvata Yoga（山岳格局）
+    # 来源：BPHS。角宫主星有力 + 6/8 宫主星落入对应凶宫
+    # 简化版：至少两个角宫主星在角宫或三方宫 + 6/8宫主不在1宫
+    # ========================================================================
+    kendra_lords_strong = sum(1 for k in kl if k in planets and _planet_in_kendra_or_trikona(k))
+    if kendra_lords_strong >= 2:
+        lord_6 = _lord_of_house(6)
+        lord_8 = _lord_of_house(8)
+        lord_6_ok = lord_6 in planets and _house_of(lord_6) != 1
+        lord_8_ok = lord_8 in planets and _house_of(lord_8) != 1
+        if lord_6_ok or lord_8_ok:
+            yogas.append({"name": "Parvata Yoga", "name_cn": "山岳格局", "combination": f"角宫主星有力+凶宫主星不落入1宫", "effects": ["智慧卓越", "富有口才", "品格高尚"], "strength": "中"})
+
+    # ========================================================================
+    # 4. Kahala Yoga（勇气格局）
+    # 来源：BPHS。3 宫主与 10 宫主有连接（同宫/互换/相位），且落入角宫
+    # 简化版：3 宫主与 10 宫主同在一宫
+    # ========================================================================
+    lord_3 = _lord_of_house(3)
+    lord_10 = _lord_of_house(10)
+    if lord_3 in planets and lord_10 in planets:
+        if _house_of(lord_3) == _house_of(lord_10):
+            yogas.append({"name": "Kahala Yoga", "name_cn": "勇气格局", "combination": f"3宫主{lord_3}与10宫主{lord_10}同在第{_house_of(lord_3)}宫", "effects": ["意志坚定", "领导才能", "充满活力"], "strength": "中"})
+
+    # ========================================================================
+    # 5. Sankha Yoga（海螺格局）
+    # 来源：BPHS。5 宫主 + 6 宫主落入角宫/三方宫，且上升主星有力
+    # 简化版：5宫主和6宫主均在角宫或三方宫
+    # ========================================================================
+    lord_5 = _lord_of_house(5)
+    lord_6 = _lord_of_house(6)
+    if lord_5 in planets and lord_6 in planets:
+        l5h = _house_of(lord_5)
+        l6h = _house_of(lord_6)
+        if (_is_kendra(l5h) or _is_trikona(l5h)) and (_is_kendra(l6h) or _is_trikona(l6h)):
+            yogas.append({"name": "Sankha Yoga", "name_cn": "海螺格局", "combination": f"5宫主{lord_5}在第{l5h}宫+6宫主{lord_6}在第{l6h}宫（均有力）", "effects": ["学识渊博", "品德高尚", "物质充裕"], "strength": "中强"})
+
+    # ========================================================================
+    # 6. Bheri Yoga（旗帜格局）
+    # 来源：BPHS。9 宫主落入 2 宫 + 木星/金星在角宫/三方宫 + 上升主与 9 宫主有关联
+    # 简化版：9 宫主在 2 宫 + 木星或金星在角宫
+    # ========================================================================
+    lord_9 = _lord_of_house(9)
+    if lord_9 in planets and _house_of(lord_9) == 2:
+        jv_in_kendra = [p for p in ['Jupiter', 'Venus'] if p in planets and _is_kendra(_house_of(p))]
+        if jv_in_kendra:
+            yogas.append({"name": "Bheri Yoga", "name_cn": "旗帜格局", "combination": f"9宫主{lord_9}在2宫+{'、'.join(jv_in_kendra)}在角宫", "effects": ["品德高尚", "长寿幸福", "受人敬仰"], "strength": "中"})
+
+    # ========================================================================
+    # 7. Mridanga Yoga（鼓格局）
+    # 来源：BPHS。上升主星在入旺/入庙 + 其他行星在自身入旺/入庙星座
+    # 简化版：上升主星入旺或入庙
+    # ========================================================================
+    asc_lord = SIGN_LORDS.get(asc, '')
+    if asc_lord in planets and (_is_exalted(asc_lord) or _is_own_sign(asc_lord)):
+        other_strong = [p for p in planets if p != asc_lord and p not in ['Rahu', 'Ketu'] and (_is_exalted(p) or _is_own_sign(p))]
+        if other_strong:
+            st = "入旺" if _is_exalted(asc_lord) else "入庙"
+            yogas.append({"name": "Mridanga Yoga", "name_cn": "鼓格局", "combination": f"上升主星{asc_lord}{st}+{'、'.join(other_strong)}有力", "effects": ["权力权威", "个人魅力", "领导气质"], "strength": "强"})
+
+    # ========================================================================
+    # 8. Sreenatha Yoga（幸运之主格局）
+    # 来源：BPHS。7 宫主星落入 10 宫且 10 宫主落入 1 宫
+    # ========================================================================
+    lord_7 = _lord_of_house(7)
+    if lord_7 in planets and lord_10 in planets:
+        if _house_of(lord_7) == 10 and _house_of(lord_10) == 1:
+            yogas.append({"name": "Sreenatha Yoga", "name_cn": "幸运之主格局", "combination": f"7宫主{lord_7}在10宫+10宫主{lord_10}在1宫", "effects": ["事业辉煌", "婚姻美满", "贵人相助"], "strength": "强"})
+
+    # ========================================================================
+    # 9. Matsya Yoga（鱼格局）
+    # 来源：BPHS。1/5/9 宫中有吉星 + 6/8 宫有凶星 + 上升与木星/金星有连接
+    # 简化版：三方宫(5/9)有吉星 + 6/8宫有凶星
+    # ========================================================================
+    benefics = ['Jupiter', 'Venus', 'Mercury']
+    malefics = ['Mars', 'Saturn', 'Sun', 'Rahu', 'Ketu']
+    ben_in_trikona = [p for p in benefics if p in planets and _house_of(p) in [5, 9]]
+    mal_in_dusthana = [p for p in malefics if p in planets and _house_of(p) in [6, 8]]
+    if ben_in_trikona and mal_in_dusthana:
+        yogas.append({"name": "Matsya Yoga", "name_cn": "鱼格局", "combination": f"{'、'.join(ben_in_trikona)}在三方宫+{'、'.join(mal_in_dusthana)}在凶宫", "effects": ["聪慧过人", "直觉敏锐", "灵性成长"], "strength": "中"})
+
+    # ========================================================================
+    # 10. Koorma Yoga（龟格局）
+    # 来源：BPHS。5/9 宫主落入三方宫 + 1 宫有吉星
+    # 简化版：5宫主或9宫主在1宫，且1宫有吉星
+    # ========================================================================
+    ben_in_1 = [p for p in benefics if p in planets and _house_of(p) == 1]
+    lord_5_or_9_in_1 = False
+    for lp in [lord_5, lord_9]:
+        if lp in planets and _house_of(lp) == 1:
+            lord_5_or_9_in_1 = True
+    if ben_in_1 and lord_5_or_9_in_1:
+        yogas.append({"name": "Koorma Yoga", "name_cn": "龟格局", "combination": f"吉星在1宫+5/9宫主在1宫", "effects": ["智慧深厚", "耐心坚韧", "精神修养"], "strength": "中"})
+
+    # ========================================================================
+    # 11. Khadga Yoga（剑格局）
+    # 来源：BPHS。2 宫主落入 2 宫且不被凶星占据 + 9 宫主有力
+    # 简化版：2 宫主在 2 宫且 2 宫无凶星
+    # ========================================================================
+    lord_2 = _lord_of_house(2)
+    if lord_2 in planets and _house_of(lord_2) == 2:
+        mal_in_2 = [p for p in malefics if p in planets and _house_of(p) == 2]
+        if not mal_in_2:
+            yogas.append({"name": "Khadga Yoga", "name_cn": "剑格局", "combination": f"2宫主{lord_2}在2宫且2宫无凶星", "effects": ["财富充裕", "口才出众", "品格坚定"], "strength": "中"})
+
+    # ========================================================================
+    # 12. Kusuma Yoga（花格局）
+    # 来源：BPHS。木星在 10 宫 + 月亮在 1 宫 + 太阳在 2 宫 + 金星在 9 宫
+    # ========================================================================
+    jup_10 = 'Jupiter' in planets and _house_of('Jupiter') == 10
+    moon_1 = 'Moon' in planets and _house_of('Moon') == 1
+    sun_2 = 'Sun' in planets and _house_of('Sun') == 2
+    ven_9 = 'Venus' in planets and _house_of('Venus') == 9
+    checks_kusuma = [jup_10, moon_1, sun_2, ven_9]
+    met_kusuma = sum(checks_kusuma)
+    if met_kusuma >= 3:
+        parts = []
+        if jup_10: parts.append("木星在10宫")
+        if moon_1: parts.append("月亮在1宫")
+        if sun_2: parts.append("太阳在2宫")
+        if ven_9: parts.append("金星在9宫")
+        yogas.append({"name": "Kusuma Yoga", "name_cn": "花格局", "combination": "+".join(parts), "effects": ["才貌双全", "受人爱戴", "幸福美满"], "strength": "强" if met_kusuma == 4 else "中强"})
+
+    # ========================================================================
+    # 13. Chandra-Mangala Yoga（日月-火星格局）
+    # 来源：BPHS。火星与月亮同宫或在 2/12 宫关系
+    # ========================================================================
+    if 'Moon' in planets and 'Mars' in planets:
+        mh = _house_of('Moon')
+        marsh = _house_of('Mars')
+        if mh == marsh:
+            yogas.append({"name": "Chandra-Mangala Yoga", "name_cn": "日月火星同宫格局", "combination": f"火星与月亮同在第{mh}宫", "effects": ["财富积累", "行动力强", "情绪驱动成功"], "strength": "强" if _is_exalted('Mars') or _is_own_sign('Mars') else "中"})
+        elif abs(mh - marsh) in [1, 11]:
+            yogas.append({"name": "Chandra-Mangala Yoga", "name_cn": "日月火星关联格局", "combination": f"火星在第{marsh}宫，月亮在第{mh}宫（2/12宫关系）", "effects": ["财运亨通", "精力充沛", "商业头脑"], "strength": "中"})
+
+    # ========================================================================
+    # 14. Dwi-Gurupada Yoga / Guru-Mangala Yoga（木火格局）
+    # 来源：木星与火星同宫或互换星座
+    # ========================================================================
+    if 'Jupiter' in planets and 'Mars' in planets:
+        jup_s = _sign_of('Jupiter')
+        mars_s = _sign_of('Mars')
+        jup_h = _house_of('Jupiter')
+        mars_h = _house_of('Mars')
+        if jup_h == mars_h:
+            yogas.append({"name": "Guru-Mangala Yoga", "name_cn": "木火同宫格局", "combination": f"木星与火星同在第{jup_h}宫", "effects": ["智慧与行动力兼备", "正义感强", "领导能力"], "strength": "中强"})
+        elif SIGN_LORDS.get(jup_s) == 'Mars' and SIGN_LORDS.get(mars_s) == 'Jupiter':
+            yogas.append({"name": "Guru-Mangala Yoga", "name_cn": "木火互容格局", "combination": f"木星在{jup_s}(火星守护)+火星在{mars_s}(木星守护)", "effects": ["智慧与行动力兼备", "正义感强", "领导能力"], "strength": "强"})
+
+    # ========================================================================
+    # 15. Budhaditya Yoga（水日格局）
+    # 来源：BPHS。水星与太阳同宫
+    # ========================================================================
+    if 'Mercury' in planets and 'Sun' in planets:
+        if _house_of('Mercury') == _house_of('Sun'):
+            yogas.append({"name": "Budhaditya Yoga", "name_cn": "水日同宫格局", "combination": f"水星与太阳同在第{_house_of('Sun')}宫", "effects": ["智力超群", "口才出众", "学识渊博"], "strength": "中强" if not _is_debilitated('Mercury') else "弱"})
+
+    # ========================================================================
+    # 16. Lakshmi Yoga（拉克什米格局/财富女神格局）
+    # 来源：BPHS。9 宫主在入旺/入庙星座且落入 1 宫
+    # ========================================================================
+    if lord_9 in planets:
+        l9h = _house_of(lord_9)
+        if l9h == 1 and (_is_exalted(lord_9) or _is_own_sign(lord_9)):
+            st = "入旺" if _is_exalted(lord_9) else "入庙"
+            yogas.append({"name": "Lakshmi Yoga", "name_cn": "财富女神格局", "combination": f"9宫主{lord_9}{st}在1宫", "effects": ["财富充裕", "生活幸福", "品德高尚"], "strength": "强"})
+
+    # ========================================================================
+    # 17. Vasumati Yoga（大地格局）
+    # 来源：BPHS。所有吉星（木星/金星/水星/月亮）在上升盘的 3/6/10/11 宫（成长宫）
+    # ========================================================================
+    upachaya_benefics = [p for p in ['Jupiter', 'Venus', 'Mercury', 'Moon'] if p in planets and _is_upachaya(_house_of(p))]
+    if len(upachaya_benefics) >= 3:
+        yogas.append({"name": "Vasumati Yoga", "name_cn": "大地格局", "combination": f"{len(upachaya_benefics)}颗吉星在成长宫(3/6/10/11)", "effects": ["财富丰厚", "生活富足", "物质成功"], "strength": "中强" if len(upachaya_benefics) >= 4 else "中"})
+
+    # ========================================================================
+    # 18. Vanchana Kalusha Yoga / Papakartari Yoga（凶星夹宫格局）
+    # 来源：Brihat Jataka。某宫被两侧凶星夹击（前一宫和后一宫均有凶星）
+    # ========================================================================
+    for target_house in [1, 4, 7, 10, 5, 9]:
+        prev_h = ((target_house - 2) % 12) + 1
+        next_h = (target_house % 12) + 1
+        mal_before = [p for p in malefics if p in planets and _house_of(p) == prev_h]
+        mal_after = [p for p in malefics if p in planets and _house_of(p) == next_h]
+        if mal_before and mal_after:
+            house_names = {1: "命宫", 4: "田宅宫", 7: "夫妻宫", 10: "事业宫", 5: "子女宫", 9: "迁移宫"}
+            yogas.append({"name": "Papakartari Yoga", "name_cn": f"凶星夹{house_names.get(target_house, f'第{target_house}宫')}格局", "combination": f"第{target_house}宫被{'、'.join(mal_before)}和{'、'.join(mal_after)}前后夹击", "effects": [f"{house_names.get(target_house, f'第{target_house}宫')}领域受限", "需要额外努力", "阻碍与挑战"], "strength": "凶"})
+            break  # 只报告一次
+
+    # ========================================================================
+    # 19. Subhakartari Yoga（吉星夹宫格局）
+    # 来源：Brihat Jataka。与 Papakartari 相反——某宫被两侧吉星包围
+    # ========================================================================
+    for target_house in [1, 4, 7, 10, 5, 9]:
+        prev_h = ((target_house - 2) % 12) + 1
+        next_h = (target_house % 12) + 1
+        ben_before = [p for p in benefics if p in planets and _house_of(p) == prev_h]
+        ben_after = [p for p in benefics if p in planets and _house_of(p) == next_h]
+        if ben_before and ben_after:
+            house_names = {1: "命宫", 4: "田宅宫", 7: "夫妻宫", 10: "事业宫", 5: "子女宫", 9: "迁移宫"}
+            yogas.append({"name": "Subhakartari Yoga", "name_cn": f"吉星护{house_names.get(target_house, f'第{target_house}宫')}格局", "combination": f"第{target_house}宫被{'、'.join(ben_before)}和{'、'.join(ben_after)}吉星守护", "effects": [f"{house_names.get(target_house, f'第{target_house}宫')}领域受保护", "顺利发展", "贵人助力"], "strength": "吉"})
+            break
+
+    # ========================================================================
+    # 20. Saraswati Yoga（辩才天女格局）
+    # 来源：BPHS。木星/金星/水星在 2/4/7/9/10 宫，且木星在自身友好星座
+    # ========================================================================
+    saraswati_houses = [2, 4, 7, 9, 10]
+    saraswati_planets = [p for p in ['Jupiter', 'Venus', 'Mercury'] if p in planets and _house_of(p) in saraswati_houses]
+    if len(saraswati_planets) >= 3 or (len(saraswati_planets) >= 2 and 'Jupiter' in saraswati_planets):
+        jup_dignity = _get_dignity_level('Jupiter', _sign_of('Jupiter')) if 'Jupiter' in planets else ''
+        if jup_dignity in ['EXALTED', 'OWN_SIGN', 'MOOLATRIKONA', 'FRIEND']:
+            yogas.append({"name": "Saraswati Yoga", "name_cn": "辩才天女格局", "combination": f"{'、'.join(saraswati_planets)}在吉宫(2/4/7/9/10)+木星有力", "effects": ["学问渊博", "艺术才华", "表达卓越"], "strength": "强" if jup_dignity in ['EXALTED', 'OWN_SIGN'] else "中强"})
+
+    # ========================================================================
+    # 21. Hamsa Yoga（天鹅格局）—— 增强版 Mahapurusha
+    # 来源：BPHS。木星入旺/入庙在角宫(1/4/7/10)
+    # （注：基本版已包含在 Mahapurusha Yoga 中，这里增加三方宫扩展检测）
+    # ========================================================================
+    if 'Jupiter' in planets:
+        jup_h = _house_of('Jupiter')
+        if _is_trikona(jup_h) and (_is_exalted('Jupiter') or _is_own_sign('Jupiter')):
+            st = "入旺" if _is_exalted('Jupiter') else "入庙"
+            already_hamsa = any(y.get("name") == "Hamsa Yoga" for y in yogas)
+            if not already_hamsa:
+                yogas.append({"name": "Hamsa Yoga (Trikona)", "name_cn": f"木星{st}三方宫格局", "combination": f"木星{st}在{_sign_of('Jupiter')}(第{jup_h}宫，三方宫)", "effects": ["智慧卓越", "精神导师", "品德高尚"], "strength": "强"})
+
+    # ========================================================================
+    # 22. Chamara Yoga（拂尘格局）
+    # 来源：BPHS。上升主星在入旺/入庙 + 两个或以上吉星在角宫/三方宫
+    # ========================================================================
+    if asc_lord in planets and (_is_exalted(asc_lord) or _is_own_sign(asc_lord)):
+        ben_kt = [p for p in benefics if p in planets and _planet_in_kendra_or_trikona(p)]
+        if len(ben_kt) >= 2:
+            st = "入旺" if _is_exalted(asc_lord) else "入庙"
+            yogas.append({"name": "Chamara Yoga", "name_cn": "拂尘格局", "combination": f"上升主星{asc_lord}{st}+{'、'.join(ben_kt)}在角宫/三方宫", "effects": ["长寿健康", "受人尊敬", "智慧通达"], "strength": "强"})
+
+    # ========================================================================
+    # 23. Akhanda Samrajya Yoga（永恒帝王格局）
+    # 来源：BPHS。木星在 2/5/9/11 宫 + 2 宫主不在 6/8/12 宫 + 11 宫主在 11 宫
+    # 简化版：木星在 2/5/9/11 + 11 宫主在 11 宫或角宫
+    # ========================================================================
+    if 'Jupiter' in planets and _house_of('Jupiter') in [2, 5, 9, 11]:
+        lord_11 = _lord_of_house(11)
+        if lord_11 in planets:
+            l11h = _house_of(lord_11)
+            if l11h == 11 or _is_kendra(l11h):
+                yogas.append({"name": "Akhanda Samrajya Yoga", "name_cn": "永恒帝王格局", "combination": f"木星在{_house_of('Jupiter')}宫+11宫主{lord_11}在{l11h}宫", "effects": ["权力持久", "事业辉煌", "影响力广泛"], "strength": "强"})
+
+    # ========================================================================
+    # 24. Gurumauli Yoga / Maha Bhagya Yoga（大运格局）
+    # 来源：经典文献。木星在 9 宫或与 9 宫主同宫
+    # ========================================================================
+    if 'Jupiter' in planets:
+        jup_h = _house_of('Jupiter')
+        if jup_h == 9:
+            yogas.append({"name": "Gurumauli Yoga", "name_cn": "至上师格局", "combination": f"木星在9宫（命运宫）", "effects": ["命运眷顾", "精神导师指引", "福德深厚"], "strength": "强"})
+        elif lord_9 in planets and jup_h == _house_of(lord_9):
+            yogas.append({"name": "Gurumauli Yoga", "name_cn": "至上师关联格局", "combination": f"木星与9宫主{lord_9}同在第{jup_h}宫", "effects": ["命运眷顾", "贵人运强", "智慧通达"], "strength": "中强"})
+
+    # ========================================================================
+    # 25. Shakata Yoga（车格局——凶）
+    # 来源：BPHS。木星在 6/8/12 宫（从月亮算起），且月亮与木星不在 1/4/7/10 宫关系
+    # 简化版（从上升算）：木星落入 6/8/12 宫
+    # ========================================================================
+    if 'Jupiter' in planets and _house_of('Jupiter') in [6, 8, 12]:
+        yogas.append({"name": "Shakata Yoga", "name_cn": "车格局（凶）", "combination": f"木星落入第{_house_of('Jupiter')}宫（凶宫）", "effects": ["财富不稳", "健康需注意", "精神起伏"], "strength": "凶"})
+
+    # ========================================================================
+    # 26. Amarishta Yoga / Daridra Yoga（贫困格局——凶）
+    # 来源：BPHS。11 宫主落入 6/8/12 宫，或 2 宫主落陷且在凶宫
+    # ========================================================================
+    lord_11 = _lord_of_house(11)
+    if lord_11 in planets and _house_of(lord_11) in [6, 8, 12]:
+        yogas.append({"name": "Daridra Yoga", "name_cn": "贫困格局（凶）", "combination": f"11宫主{lord_11}落入第{_house_of(lord_11)}宫（凶宫）", "effects": ["财务困难", "需努力积累", "谨慎理财"], "strength": "凶"})
+    if lord_2 in planets and _is_debilitated(lord_2) and _is_dusthana(_house_of(lord_2)):
+        yogas.append({"name": "Daridra Yoga (variant)", "name_cn": "贫困格局变体（凶）", "combination": f"2宫主{lord_2}落陷在凶宫第{_house_of(lord_2)}宫", "effects": ["财务压力", "家庭纠纷", "需节俭持家"], "strength": "凶"})
+
+    # ========================================================================
+    # 27. Dhan Yoga 增强版 —— Grahi Dhan Yoga
+    # 来源：Phaladeepika。1 宫主 + 2 宫主 + 11 宫主同在 2/11 宫
+    # ========================================================================
+    lords_wealth = {1: SIGN_LORDS[SIGNS[(ai + 0) % 12]], 2: lord_2, 11: _lord_of_house(11)}
+    for wh in [2, 11]:
+        count = sum(1 for h_num, lp in lords_wealth.items() if lp in planets and _house_of(lp) == wh)
+        if count >= 2:
+            in_house = [f"{h_num}宫主{lp}" for h_num, lp in lords_wealth.items() if lp in planets and _house_of(lp) == wh]
+            yogas.append({"name": "Grahi Dhana Yoga", "name_cn": "星聚财富格局", "combination": f"{'、'.join(in_house)}同在第{wh}宫", "effects": ["财运亨通", "投资有利", "收入丰厚"], "strength": "强"})
+            break
 
     return {"ascendant": asc, "planets_analyzed": len(planets), "kendra_lords": kl, "trikona_lords": tl, "yogas_detected": len(yogas), "yogas": yogas}
 
@@ -661,23 +1022,134 @@ def cmd_db_stats(args):
 # 8. 过境查询
 # ============================================================================
 def cmd_transit(args):
-    result = {"year": args.year, "month": args.month, "transits": {}}
-    if os.path.exists(TRANSIT_JSON):
-        try:
-            with open(TRANSIT_JSON, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            if isinstance(data, list):
-                for entry in data:
-                    if isinstance(entry, dict) and entry.get("year") == args.year and entry.get("month") == args.month:
-                        result["transits"] = entry; break
-            if not result["transits"]:
-                avail = [(e.get("year"), e.get("month")) for e in data if isinstance(e, dict)]
-                result["note"] = f"未找到{args.year}年{args.month}月的过境数据"
-                result["available_months"] = [f"{y}-{m:02d}" for y, m in avail]
-        except Exception as e:
-            result["error"] = str(e)
-    else:
-        result["error"] = f"过境配置文件不存在: {TRANSIT_JSON}"
+    """
+    实时 Transit 行星过境计算（v3.7.2 改用 Swiss Ephemeris）
+    不再依赖静态 JSON，直接用 swe 计算任意日期的行星位置。
+    支持指定日期范围（--year/--month）和目标行星（--planet）。
+    """
+    if not HAS_SWE:
+        return {"error": "swisseph未安装，无法计算实时Transit"}
+
+    swe.set_ephe_path('')
+
+    # --- 参数解析 ---
+    t_year = args.year
+    t_month = args.month
+    # 可选：指定某日（默认取月中15号做代表）
+    t_day = getattr(args, 'day', 15) or 15
+    # 可选：指定目标行星（默认全部七曜+Rahu/Ketu）
+    target_planets_str = getattr(args, 'planet', None)
+    target_planets = [p.strip() for p in target_planets_str.split(',')] if target_planets_str else None
+
+    # --- 计算该月月中行星位置 ---
+    try:
+        hd = 12.0 - (getattr(args, 'tz', 8) or 8)  # 默认UTC+8中午
+        jd_mid = swe.julday(t_year, t_month, t_day, hd)
+    except Exception as e:
+        return {"error": f"日期计算失败: {e}"}
+
+    ayanamsa = swe.get_ayanamsa(jd_mid)
+
+    # --- 计算行星位置 ---
+    planet_map = {
+        'Sun': swe.SUN, 'Moon': swe.MOON, 'Mars': swe.MARS,
+        'Mercury': swe.MERCURY, 'Jupiter': swe.JUPITER,
+        'Venus': swe.VENUS, 'Saturn': swe.SATURN, 'Rahu': swe.MEAN_NODE
+    }
+
+    transit_data = {}
+    for pname, pid in planet_map.items():
+        if target_planets and pname not in target_planets:
+            continue
+        pos, ret = swe.calc_ut(jd_mid, pid)
+        if ret < 0:
+            continue
+        lon_sid = (pos[0] - ayanamsa) % 360
+        speed = pos[3]
+        retrograde = speed < 0
+        sign_idx = int(lon_sid / 30) % 12
+        deg_in_sign = lon_sid % 30
+        sign_name = SIGNS[sign_idx]
+        sign_cn = SIGNS_CN[sign_name]
+
+        transit_data[pname] = {
+            'sign': sign_name,
+            'sign_cn': sign_cn,
+            'degree': round(lon_sid, 4),
+            'degree_in_sign': round(deg_in_sign, 2),
+            'speed': round(speed, 4),
+            'retrograde': retrograde,
+        }
+
+    # Rahu 存在时补算 Ketu
+    if 'Rahu' in transit_data:
+        rahu_lon = transit_data['Rahu']['degree']
+        ketu_lon = (rahu_lon + 180) % 360
+        ketu_si = int(ketu_lon / 30) % 12
+        transit_data['Ketu'] = {
+            'sign': SIGNS[ketu_si],
+            'sign_cn': SIGNS_CN[SIGNS[ketu_si]],
+            'degree': round(ketu_lon, 4),
+            'degree_in_sign': round(ketu_lon % 30, 2),
+            'speed': 0,
+            'retrograde': True,
+        }
+
+    # --- 计算行星间相位（互相在对方星座的宫位关系）---
+    aspects_found = []
+    planet_names = list(transit_data.keys())
+    for i, p1 in enumerate(planet_names):
+        for p2 in planet_names[i+1:]:
+            if p1 == 'Ketu' or p2 == 'Ketu':
+                continue
+            d1 = transit_data[p1]['degree']
+            d2 = transit_data[p2]['degree']
+            diff = abs(d1 - d2) % 360
+            if diff > 180:
+                diff = 360 - diff
+            # 合相（≤10°）
+            if diff <= 10:
+                aspects_found.append({
+                    'type': 'conjunction',
+                    'planets': [p1, p2],
+                    'degree_diff': round(diff, 2),
+                    'description': f'{p1}与{p2}合相（{diff:.1f}°）'
+                })
+            # 对冲（180°±8°）
+            elif 172 <= diff <= 188:
+                aspects_found.append({
+                    'type': 'opposition',
+                    'planets': [p1, p2],
+                    'degree_diff': round(diff, 2),
+                    'description': f'{p1}与{p2}对冲（{diff:.1f}°）'
+                })
+            # 三方（120°±6°）
+            elif 114 <= diff <= 126:
+                aspects_found.append({
+                    'type': 'trine',
+                    'planets': [p1, p2],
+                    'degree_diff': round(diff, 2),
+                    'description': f'{p1}与{p2}三方相位（{diff:.1f}°）'
+                })
+            # 四分（90°±6°）
+            elif 84 <= diff <= 96:
+                aspects_found.append({
+                    'type': 'square',
+                    'planets': [p1, p2],
+                    'degree_diff': round(diff, 2),
+                    'description': f'{p1}与{p2}四分相位（{diff:.1f}°）'
+                })
+
+    # --- 构建结果 ---
+    result = {
+        'method': 'Swiss Ephemeris 实时计算（v3.7.2）',
+        'target_date': f'{t_year}-{t_month:02d}-{t_day:02d}',
+        'ayanamsa': round(ayanamsa, 4),
+        'planets': transit_data,
+        'aspects': aspects_found,
+        'note': f'使用Swiss Ephemeris实时计算{t_year}年{t_month}月行星过境位置，不再依赖静态JSON'
+    }
+
     return result
 
 
@@ -3040,8 +3512,11 @@ def main():
     sub.add_parser('db-stats', help='验证数据库统计')
 
     # 8. transit
-    p = sub.add_parser('transit', help='行星过境查询')
+    p = sub.add_parser('transit', help='行星过境查询（Swiss Ephemeris实时计算）')
     p.add_argument('--year', type=int, required=True); p.add_argument('--month', type=int, required=True)
+    p.add_argument('--day', type=int, default=15, help='指定日期（默认15日取月中代表）')
+    p.add_argument('--planet', default=None, help='目标行星，逗号分隔（默认全部，如：Jupiter,Saturn）')
+    p.add_argument('--tz', type=float, default=8, help='时区（默认UTC+8）')
 
     # 9. shadbala (v3.4新增)
     p = sub.add_parser('shadbala', help='Shadbala六重力量计算')
