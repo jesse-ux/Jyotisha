@@ -76,6 +76,8 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | **多元技法** | Yogi/Ava Yogi、Tithi Lord、Rashi Tulya Navamsa、BCP、Pancha Pakshi | `yogi-avayogi-system.md` `tithi-lord-relationship-system.md` `bhrigu-chakra-paddhati.md` |
 | **精准方法论** | PACDARES框架、九层复合方法、L3矛盾检查、三级置信度 | `precision-reading-methodology.md` |
 | **现代解读** | 现代措辞映射、现代生活场景、常见误判纠错 | `modern-language-guide.md` `common-misconceptions.md` |
+| **实战智慧** | ⭐反教条主义经验精华（全球占星师真实案例反馈总结） | `practitioner-wisdom-anti-dogma.md` |
+| **验证与错题** | 深度数据审计、技法缺陷与修复、推运反思、15+名人验证案例 | `audit-*` `lessons-learned-*` `verified-celebrity-cases-*` |
 
 ---
 
@@ -222,4 +224,79 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 **版本**：6.0.0
 **创建日期**：2026-04-20
-**最后更新**：2026-05-04（v6.0.0 架构重构：SKILL.md精简86KB→~25KB+quick-reference-guide升级为执行总控+dignity土星MT修正+月亮/水星多学派加注+dasha_guide余数规则修正）
+**最后更新**：2026-05-05（v6.0.1 合并26份验证/错题资源到references，新增验证与错题体系章节）
+
+---
+
+## 验证与错题体系
+
+> 基于万级案例库（15,807条AA级名人数据）和迭代验证沉淀的知识体系
+
+### 数据资源
+
+| 资源 | 规模 | 位置 |
+|------|------|------|
+| 名人案例库 | 15,807条（全部AA级） | `Claw/vedastro_data/PersonList-15k.csv` |
+| 验证数据库 | 15,840 cases | `Claw/vedic_astrology_validation.db` |
+| 验证结果JSON | v5/v6/v6.1 共325KB | `tests/test-data/` |
+
+### 深度审计报告
+
+| 文件 | 内容 |
+|------|------|
+| `audit-deep-data-audit-2026-05-04.md` | 逐字段对比pyswisseph，发现5个P0级Bug（Jaimini Karaka全错/Chara Dasha全0/Vimsopaka 16分盘全用D1/Yoga返回0/Arudha off-by-one） |
+| `audit-skill-full-test-2026-05-04.md` | 27子命令逐项测试，full-reading 19模块全OK |
+| `audit-kimi-optimization-review.md` | 外部AI优化建议审计，发现多处事实性错误 |
+| `COVERAGE_AUDIT_REPORT.md` | 覆盖矩阵审计，综合覆盖率97.8%（90/92） |
+
+### 经验教训（Lesssons Learned）
+
+| 文件 | 核心教训 |
+|------|---------|
+| ⭐`practitioner-wisdom-anti-dogma.md` | **整合精华**：反教条主义十大死穴+技法盲区+全球占星师语录+验证规律（去重后统一入口） |
+| `lessons-learned-misconceptions-reflection.md` | 解盘与推运常见误区（落陷≠失败/Rahu=非传统突破/12宫≠纯负面） |
+| `lessons-learned-timing-reflection.md` | 推运应期判断的反思与修正经验 |
+| `lessons-learned-technique-defects.md` | 技法缺陷全面分析 |
+| `lessons-learned-technique-fixes.md` | 技法缺陷解决方案 |
+| `lessons-learned-technique-patches-p1.md` | 技法漏洞修正方案 |
+| `lessons-learned-technique-optimization.md` | 技法优化完整报告 |
+
+### 已验证名人案例（平均吻合度93%）
+
+| 文件 | 人物 | 吻合度 |
+|------|------|--------|
+| `verified-celebrity-cases-summary.md` | 10名人总览 | 平均93% |
+| `verified-celebrity-cases-obama-web.md` | Obama | 95% |
+| `verified-celebrity-cases-trump.md` | Trump | 94% |
+| `verified-celebrity-cases-einstein.md` | Einstein | 92% |
+| `verified-celebrity-cases-picasso.md` | Picasso | 93% |
+| `verified-celebrity-cases-curie.md` | Curie | 94% |
+| `verified-celebrity-cases-indira-gandhi.md` | Indira Gandhi | full-reading测试 |
+| `verified-celebrity-cases-elvis.md` | Elvis | 93% |
+| `verified-celebrity-cases-marilyn-monroe.md` | Monroe | - |
+| `verified-celebrity-cases-michael-jackson.md` | M.Jackson | - |
+| `verified-celebrity-cases-leonardo-dicaprio.md` | DiCaprio | - |
+| `verified-case-reasoning-report.md` | 案例推理验证（修正版） | - |
+
+### 星盘分析（7部分完整分析）
+
+`analysis-natal-full-part1~7`：核心配置 / 宫位强度 / Ashtakavarga / PlanetActivity / VimsopakaBala / Dasa系统 / 综合预测
+
+### 验证方法论
+
+| 文件 | 内容 |
+|------|------|
+| `validation-methodology-batch-celebrity.md` | 批量名人验证方案 |
+| `marriage-timing-validation-methodology.md` | 婚姻应期技法验证方法论 |
+| `mandatory-verification-gate-protocol.md` | MEVG强制验证门控协议 |
+| `verified-patterns-marriage-timing-v5.md` | 婚姻验证模式v5（含v5→v6重大Bug说明） |
+| `verified-patterns-marriage-timing-v6.md` | 婚姻验证模式v6.1（18名人/26婚姻/66事件） |
+
+### Bug 修复历史
+
+`CHANGELOG.md` 中记录了 61 条 Bug 修复，关键修复包括：
+- v6.0: UTC时区转换Bug（导致16/18案例上升星座错误）
+- v4.3: Dasha浮点边界Bug
+- v4.2: MEVG强制验证门控
+- v3.7.2: Antardasha（次级大运）只为当前大运计算→改为全部9个大运
+- v3.7.2: Moon Chesta Bala溢出（>60分上限）、Exalted D1分数、Paksha Bala归一化
