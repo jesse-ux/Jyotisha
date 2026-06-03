@@ -337,3 +337,222 @@ def _karakamsha_interpretations(sign, lord):
         'sign_direction': directions.get(sign, ''),
         'lord_method': lord_meanings.get(lord, ''),
     }
+
+
+# ============================================================================
+# Darakaraka (DK) 计算 —— v6.0.14 新增
+# ============================================================================
+
+def calc_darakaraka(planet_degrees: Dict[str, float],
+                    use_8karaka: bool = False) -> Dict:
+    """
+    计算 Darakaraka (DK) —— Jaimini 体系中代表配偶/伴侣的行星。
+
+    规则（7星制）：
+      - 排除 Rahu/Ketu，剩余7颗行星按度数升序排列
+      - 度数最低的行星 = Darakaraka (DK) —— 配偶特质星
+      - 度数最高的行星 = Atmakaraka (AK) —— 灵魂星
+
+    规则（8星制）：
+      - 含 Rahu，8颗行星按度数升序排列
+      - 度数最低的 = DK，度数最高的 = AK
+
+    参数：
+        planet_degrees: {行星名: 星座内度数(0-30)}
+        use_8karaka: 是否使用8星制（含Rahu）
+
+    返回：
+        {
+            'DK': {'planet': str, 'degree': float, 'rank': 7(7星制)或8(8星制)},
+            'AK': {'planet': str, 'degree': float, 'rank': 1},
+            'all_karaka': {rank: {'planet','degree','name'}},
+            'dk_interpretation': str,
+            'marriage_significator': str,
+        }
+    """
+    if use_8karaka:
+        planets = {k: v for k, v in planet_degrees.items() if k != 'Ketu'}
+        karaka_def = KARAKA_8
+        total = 8
+    else:
+        planets = {k: v for k, v in planet_degrees.items()
+                   if k not in ('Rahu', 'Ketu')}
+        karaka_def = KARAKA_7
+        total = 7
+
+    # 按度数升序排列（度数最低=DK）
+    sorted_p = sorted(planets.items(), key=lambda x: x[1])
+
+    all_karaka = {}
+    dk_info = None
+    ak_info = None
+
+    for rank, (pname, deg) in enumerate(sorted_p[:total], 1):
+        karaka_name = karaka_def[rank]
+        entry = {
+            'planet': pname,
+            'degree_in_sign': round(deg, 4),
+            'rank': rank,
+            'name': karaka_name,
+            'cn_name': KARAKA_CN.get(karaka_name, karaka_name),
+            'domain': KARAKA_DOMAINS.get(karaka_name, ''),
+        }
+        all_karaka[rank] = entry
+        if karaka_name == 'Darakaraka':
+            dk_info = entry
+        if karaka_name == 'Atmakaraka':
+            ak_info = entry
+
+    # 解读 DK
+    dk_planet = dk_info['planet'] if dk_info else '?'
+    dk_interp = _dk_interpretation(dk_planet)
+    marriage_sig = _marriage_significator(dk_planet, ak_info['planet'] if ak_info else '?')
+
+    return {
+        'DK': dk_info,
+        'AK': ak_info,
+        'all_karaka': all_karaka,
+        'dk_planet': dk_planet,
+        'dk_degree': dk_info['degree_in_sign'] if dk_info else None,
+        'dk_interpretation': dk_interp,
+        'marriage_significator': marriage_sig,
+        'use_8karaka': use_8karaka,
+    }
+
+
+def _dk_interpretation(dk_planet: str) -> str:
+    """Darakaraka 行星的配偶特质解读"""
+    interpretations = {
+        'Sun': '配偶有权威感、领导力强，可能比命主年长或地位高；关系中需要尊重和认可',
+        'Moon': '配偶情感丰富、重视家庭，情绪敏感；关系以情感连接为核心',
+        'Mars': '配偶行动力强、有魄力，可能性格急躁；关系中需要空间和尊重',
+        'Mercury': '配偶聪明、善于沟通，可能从事文书/教育/商业；关系以交流为基础',
+        'Jupiter': '配偶有智慧、教导型人格，可能从事教育/法律/宗教；关系有成长导向',
+        'Venus': '配偶有魅力、重视美学和享受，浪漫且物质条件好；关系充满爱和美好',
+        'Saturn': '配偶成熟稳重、有责任感，可能年龄差距较大；关系需要时间和承诺',
+        'Rahu': '配偶背景复杂、有野心，可能来自不同文化/阶层；关系有非常规色彩',
+        'Ketu': '配偶有灵性倾向、可能疏离，关系有超脱/宿命感',
+    }
+    return interpretations.get(dk_planet, f'DK={dk_planet}，需结合全盘分析')
+
+
+def _marriage_significator(dk: str, ak: str) -> str:
+    """AK-DK 关系对婚姻的综合指示"""
+    # AK=灵魂，DK=配偶，两者关系反映灵魂与伴侣的互动模式
+    relations = {
+        ('Sun', 'Moon'): '灵魂（Sun）与情感（Moon）结合，婚姻中有父性保护色彩',
+        ('Moon', 'Sun'): '情感（Moon）与权威（Sun）结合，配偶可能是引导者/权威人物',
+        ('Venus', 'Jupiter'): '爱（Venus）与智慧（Jupiter）结合，婚姻有成长和教育意义',
+        ('Jupiter', 'Venus'): '智慧（Jupiter）与爱（Venus）结合，配偶带来美感和快乐',
+    }
+    key = (ak, dk)
+    return relations.get(key, f'AK={ak}与DK={dk}的组合，需结合两者星座/宫位深入分析')
+
+
+def calc_dk_marriage_analysis(dk_planet: str,
+                              dk_sign: str,
+                              dk_house: int,
+                              ak_sign: str,
+                              ak_house: int,
+                              venus_sign: str,
+                              venus_house: int,
+                              seventh_lord: str,
+                              seventh_lord_sign: str) -> Dict:
+    """
+    综合 DK 信息进行婚姻分析（v6.0.14 新增）
+
+    参数：
+        dk_planet: DK行星名
+        dk_sign: DK所在星座
+        dk_house: DK所在宫位（1-12）
+        ak_sign: AK所在星座
+        ak_house: AK所在宫位
+        venus_sign: Venus所在星座
+        venus_house: Venus所在宫位
+        seventh_lord: 第七宫宫主星
+        seventh_lord_sign: 第七宫宫主星所在星座
+
+    返回：婚姻分析字典
+    """
+    # DK 在宫位的解读
+    dk_house_meaning = _dk_house_meaning(dk_house)
+
+    # Venus 与 DK 的关系
+    venus_dk_relation = _venus_dk_relation(venus_sign, dk_sign, venus_house, dk_house)
+
+    # 第七宫分析
+    seventh_analysis = _seventh_house_analysis(seventh_lord, seventh_lord_sign)
+
+    # 综合婚姻时机指示
+    marriage_timing = _marriage_timing_indication(dk_planet, venus_sign, seventh_lord)
+
+    return {
+        'dk_planet': dk_planet,
+        'dk_sign': dk_sign,
+        'dk_house': dk_house,
+        'dk_house_meaning': dk_house_meaning,
+        'venus_dk_relation': venus_dk_relation,
+        'seventh_analysis': seventh_analysis,
+        'marriage_timing': marriage_timing,
+        'summary': f"配偶星DK={dk_planet}在{dk_sign}第{dk_house}宫；{dk_house_meaning}",
+    }
+
+
+def _dk_house_meaning(house: int) -> str:
+    """DK所在宫位对婚姻的意义"""
+    meanings = {
+        1: '配偶与命主高度相似，自我认同与伴侣融合',
+        2: '配偶带来财富/家庭资源，可能通过婚姻改善经济状况',
+        3: '配偶是命主的勇气来源，可能有兄弟姐妹牵线',
+        4: '配偶带来情感安全感，家庭和谐，可能有房产',
+        5: '配偶与子女/创造力有关，浪漫关系，可能有年龄差',
+        6: '配偶可能是工作伙伴/竞争对手，关系中需注意健康/债务',
+        7: '配偶是命主的直接伙伴，婚姻关系最直接',
+        8: '配偶带来深层转化，可能涉及神秘事务/遗产/危机',
+        9: '配偶有灵性/哲学导向，可能来自不同文化背景',
+        10: '配偶与事业/社会地位有关，可能因工作相识',
+        11: '配偶带来收益/社交网络，朋友变伴侣',
+        12: '配偶涉及潜意识/海外/隐秘事务，可能是异地/外籍',
+    }
+    return meanings.get(house, '')
+
+
+def _venus_dk_relation(venus_sign: str, dk_sign: str,
+                        venus_house: int, dk_house: int) -> str:
+    """Venus与DK的关系分析"""
+    # 简化：看两者是否同一星座或相邻宫位
+    venus_idx = SIGNS.index(venus_sign) if venus_sign in SIGNS else -1
+    dk_idx = SIGNS.index(dk_sign) if dk_sign in SIGNS else -1
+
+    if venus_idx >= 0 and dk_idx >= 0:
+        diff = abs(venus_idx - dk_idx)
+        if diff <= 1 or diff >= 11:
+            return 'Venus与DK能量融合，爱与婚姻高度一致'
+        elif diff <= 3:
+            return 'Venus与DK有一定张力，爱情与婚姻选择可能有分歧'
+        else:
+            return 'Venus与DK度数较远，爱情观与婚姻现实有差距'
+
+    return 'Venus/DK关系需结合全盘确定'
+
+
+def _seventh_house_analysis(seventh_lord: str, seventh_lord_sign: str) -> str:
+    """第七宫宫主星分析"""
+    lord_meanings = {
+        'Sun': '配偶有领导力，可能从事管理/政府工作',
+        'Moon': '配偶情感丰富，可能从事护理/餐饮/海洋相关',
+        'Mars': '配偶有行动力，可能从事技术/军事/体育',
+        'Mercury': '配偶聪明善辩，可能从事教育/写作/商业',
+        'Jupiter': '配偶有智慧，可能从事教育/法律/宗教',
+        'Venus': '配偶有魅力，可能从事艺术/娱乐/美容',
+        'Saturn': '配偶成熟稳重，可能从事结构/建筑/长期项目',
+    }
+    return lord_meanings.get(seventh_lord, f'第七宫主星={seventh_lord}，需结合全盘')
+
+
+def _marriage_timing_indication(dk_planet: str, venus_sign: str,
+                                seventh_lord: str) -> str:
+    """婚姻时机的简化指示（需结合Dasha/Transit使用）"""
+    return (f"婚姻窗口与DK={dk_planet}、Venus在{venus_sign}、"
+            f"第七宫主星={seventh_lord}的Dasha/Transit高度相关；"
+            f"具体应期需结合Vimshottari Dasha和Gochara（过境）确定")

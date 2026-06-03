@@ -175,6 +175,17 @@ Every Level 2+ output must include this table near the end.
 | Inter-chart Linkage | Used / not used | ... | ... |
 | Tajika Yogas | Used / partial / not used | Ithasala/Easarapha/Nakta etc. | Cap annual timing confidence |
 | Sahams | Used / partial / not used | Punya/Karya/Vivah etc. | Cap event timing confidence |
+| Darakaraka (DK) | Used / not used | Marriage/partner analysis | Cap marriage timing without DK |
+| Raj Yoga | Used / partial / not used | Power/status yogas | Cap high-status event confidence |
+| Dhana Yoga | Used / partial / not used | Wealth/money yogas | Cap wealth timing confidence |
+| Pancha Mahapurusha | Used / partial / not used | 5 Mahapurusha yogas | Cap personality strength assessment |
+| Neecha Bhanga Raj | Used / partial / not used | Debilitation recovery | Cap comeback/recovery timing |
+| Mangal Dosha | Used / not used | Mars in bad houses | Cap marriage difficulty assessment |
+| Kaal Sarp Dosha | Used / not used | All planets Rahu-Ketu side | Cap obstacle analysis |
+| Pitra Dosha | Used / not used | Sun-Rahu or Sun afflicted | Cap ancestor karma analysis |
+| Sade Sati | Used / partial / not used | Saturn 7.5-year period | Cap Saturn pressure timing |
+| Arudha Lagna (AL) | Used / not used | Mirror Lagna (perception) | Cap public image analysis |
+| Upapada Lagna (UL) | Used / not used | Marriage partner indicator | Cap marriage quality analysis |
 | Argala | Used / not used | ... | ... |
 | KP / Sub-lord | Used / not required / unavailable | ... | ... |
 | Historical verification | Used / not provided | ... | ... |

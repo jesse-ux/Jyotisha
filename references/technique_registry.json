@@ -1,5 +1,5 @@
 {
-  "version": "v6.0.11-shadbala-capability-downgrade",
+  "version": "v6.0.14-yogas-doshas-dk",
   "source_inspiration": [
     {
       "name": "jyotishyamitra",
@@ -436,6 +436,205 @@
       ],
       "audit_label": "Sahams",
       "missing_impact": "Saham point calculation incomplete; annual/event timing layer missing."
+    },
+    "darakaraka": {
+      "name": "Darakaraka (DK) / 配偶星",
+      "domains": [
+        "jaimini",
+        "marriage",
+        "relationship",
+        "karaka"
+      ],
+      "status": "covered",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.jaimini.darakaraka"
+      ],
+      "audit_label": "Darakaraka (DK)",
+      "missing_impact": "Marriage/partner analysis incomplete without DK."
+    },
+    "raj_yoga": {
+      "name": "Raj Yoga / 王者瑜伽",
+      "domains": [
+        "yoga",
+        "power",
+        "status"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.raj_yogas"
+      ],
+      "audit_label": "Raj Yoga",
+      "missing_impact": "Power/status timing confidence capped without Raj Yoga detection."
+    },
+    "dhana_yoga": {
+      "name": "Dhana Yoga / 财富瑜伽",
+      "domains": [
+        "yoga",
+        "wealth",
+        "money"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.dhana_yogas"
+      ],
+      "audit_label": "Dhana Yoga",
+      "missing_impact": "Wealth timing confidence capped without Dhana Yoga."
+    },
+    "pancha_mahapurusha": {
+      "name": "Pancha Mahapurusha Yoga / 五王瑜伽",
+      "domains": [
+        "yoga",
+        "power",
+        "personality"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.pancha_mahapurusha"
+      ],
+      "audit_label": "Pancha Mahapurusha",
+      "missing_impact": "Personality strength assessment incomplete."
+    },
+    "nicha_bhanga_raj": {
+      "name": "Neecha Bhanga Raj Yoga / 落陷解除王者瑜伽",
+      "domains": [
+        "yoga",
+        "debilitation",
+        "recovery"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.nicha_bhanga_raj"
+      ],
+      "audit_label": "Neecha Bhanga",
+      "missing_impact": "Debilitation recovery analysis incomplete."
+    },
+    "mangal_dosha": {
+      "name": "Mangal Dosha / 火星煞",
+      "domains": [
+        "dosha",
+        "marriage",
+        "mars"
+      ],
+      "status": "covered",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.mangal_dosha"
+      ],
+      "audit_label": "Mangal Dosha",
+      "missing_impact": "Marriage difficulty assessment incomplete without Mangal Dosha."
+    },
+    "kaal_sarp_dosha": {
+      "name": "Kaal Sarp Dosha / 时间蛇煞",
+      "domains": [
+        "dosha",
+        "rahu",
+        "obstacle"
+      ],
+      "status": "covered",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.kaal_sarp_dosha"
+      ],
+      "audit_label": "Kaal Sarp Dosha",
+      "missing_impact": "Obstacle analysis incomplete without Kaal Sarp."
+    },
+    "pitra_dosha": {
+      "name": "Pitra Dosha / 父辈煞",
+      "domains": [
+        "dosha",
+        "sun",
+        "ancestor"
+      ],
+      "status": "covered",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.pitra_dosha"
+      ],
+      "audit_label": "Pitra Dosha",
+      "missing_impact": "Ancestor karma analysis incomplete."
+    },
+    "sade_sati": {
+      "name": "Sade Sati / 土星七年",
+      "domains": [
+        "transit",
+        "saturn",
+        "pressure"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.sade_sati"
+      ],
+      "audit_label": "Sade Sati",
+      "missing_impact": "Saturn pressure timing incomplete."
+    },
+    "arudha_lagna": {
+      "name": "Arudha Lagna (AL) / 镜像上升",
+      "domains": [
+        "lagna",
+        "perception",
+        "image"
+      ],
+      "status": "covered",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.arudha_lagna"
+      ],
+      "audit_label": "Arudha Lagna",
+      "missing_impact": "Public image analysis incomplete without AL."
+    },
+    "upapada_lagna": {
+      "name": "Upapada Lagna (UL) / 配偶镜像上升",
+      "domains": [
+        "lagna",
+        "marriage",
+        "partner"
+      ],
+      "status": "covered",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.upapada_lagna"
+      ],
+      "audit_label": "Upapada Lagna",
+      "missing_impact": "Marriage quality analysis incomplete without UL."
     }
   },
   "routes": {
@@ -465,7 +664,18 @@
         "dispositor_chain",
         "inter_chart_linkage",
         "tajika_yogas",
-        "sahams"
+        "sahams",
+        "darakaraka",
+        "raj_yoga",
+        "dhana_yoga",
+        "pancha_mahapurusha",
+        "nicha_bhanga_raj",
+        "mangal_dosha",
+        "kaal_sarp_dosha",
+        "pitra_dosha",
+        "sade_sati",
+        "arudha_lagna",
+        "upapada_lagna"
       ],
       "optional_techniques": [
         "bhava_chalit",
@@ -491,7 +701,18 @@
         "dispositor_chain",
         "inter_chart_linkage",
         "tajika_yogas",
-        "sahams"
+        "sahams",
+        "darakaraka",
+        "raj_yoga",
+        "dhana_yoga",
+        "pancha_mahapurusha",
+        "nicha_bhanga_raj",
+        "mangal_dosha",
+        "kaal_sarp_dosha",
+        "pitra_dosha",
+        "sade_sati",
+        "arudha_lagna",
+        "upapada_lagna"
       ],
       "optional_techniques": [
         "d9_navamsa",
@@ -523,7 +744,18 @@
         "dispositor_chain",
         "inter_chart_linkage",
         "tajika_yogas",
-        "sahams"
+        "sahams",
+        "darakaraka",
+        "raj_yoga",
+        "dhana_yoga",
+        "pancha_mahapurusha",
+        "nicha_bhanga_raj",
+        "mangal_dosha",
+        "kaal_sarp_dosha",
+        "pitra_dosha",
+        "sade_sati",
+        "arudha_lagna",
+        "upapada_lagna"
       ],
       "optional_techniques": [
         "bhava_chalit",

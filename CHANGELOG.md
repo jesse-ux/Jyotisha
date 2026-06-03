@@ -1,5 +1,40 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.14-yogas-doshas-dk（2026-06-04）—— 新增 Yogas + Doshas + Special Lagnas + Darakaraka
+
+> **触发原因**：用户要求补充印度占星 skill 缺少的技法。经过本地资料 + 全网搜索对比，发现 P0 级缺失技法：Darakaraka (DK)、Raj/Dhana Yogas、Doshas (Mangal/Kaal Sarp/Pitra)、Special Lagnas (AL/UL)。
+
+### 新增功能
+
+- `scripts/jaimini.py` 新增 5 个函数：
+  - `calc_darakaraka(planet_degrees, use_8karaka)`：计算 DK（配偶星）
+  - `calc_dk_marriage_analysis(...)`：综合 DK 信息做婚姻分析
+  - `_dk_interpretation(dk_planet)`：DK 行星解读
+  - `_marriage_significator(dk, ak)`：AK-DK 关系解读
+  - `_dk_house_meaning(house)` 等辅助函数
+- `scripts/yogas_doshas.py`（新文件）：包含 11 个函数：
+  - `calc_raj_yogas(planets_data, houses)`：Raj Yoga（王者瑜伽）
+  - `calc_dhana_yoga(planets_data, houses)`：Dhana Yoga（财富瑜伽）
+  - `calc_pancha_mahapurusha_yoga(planets_data)`：Pancha Mahapurusha（五王瑜伽）
+  - `calc_nicha_bhanga_raj_yoga(planets_data, houses)`：Neecha Bhanga Raj Yoga
+  - `calc_mangal_dosha(planets_data, mars_house)`：Mangal Dosha（火星煞）
+  - `calc_kaal_sarp_dosha(planets_data)`：Kaal Sarp Dosha（时间蛇煞）
+  - `calc_pitra_dosha(planets_data, sun_house)`：Pitra Dosha（父辈煞）
+  - `calc_sade_sati(moon_sign, current_year)`：Sade Sati（土星七年）
+  - `calc_arudha_lagna(asc_sign, asc_lord, planets_data)`：Arudha Lagna (AL)
+  - `calc_upapada_lagna(asc_sign, house12_lord, planets_data)`：Upapada Lagna (UL)
+  - `calc_all_yogas_doshas(...)`：批量计算入口函数
+- `scripts/jyotish_engine.py` 的 `cmd_full_reading` 新增 Step 4.9：调用 `calc_all_yogas_doshas`，输出 `modules.yogas_doshas`
+- `references/technique_registry.json` 新增 11 个技法注册（darakaraka/raj_yoga/dhana_yoga/pancha_mahapurusha/nicha_bhanga_raj/mangal_dosha/kaal_sarp_dosha/pitra_dosha/sade_sati/arudha_lagna/upapada_lagna）
+- `references/strict-workflow-router.md`：Audit Table 模板新增 11 行
+
+### 验证结果
+
+- Python 语法检查：jyotish_engine.py / jaimini.py / yogas_doshas.py 均 OK
+- 集成测试：待运行（需要 pyswisseph 环境）
+
+---
+
 ## v6.0.13-tajika-yogas-sahams（2026-06-04）—— 新增 Tajika Yogas + Sahams 技法
 
 > **触发原因**：用户指出当前 skill 缺少 Tajika Yogas（Ithasala/Easarapha/Nakta/Yamaya/Manahoo/Graha Yuddha）和 Sahams（Punya/Karya/Vivah/Rajya/Shatru/Labha/Parakrama）两个重要技法体系。

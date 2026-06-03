@@ -3473,6 +3473,35 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"tajika-yogas+sahams: {e}")
 
+    # ── Step 4.9: Yogas + Doshas + Special Lagnas (v6.0.14) ──
+    try:
+        from yogas_doshas import calc_all_yogas_doshas
+
+        # 准备参数
+        asc_sign = SIGNS[asc_idx] if 'asc_idx' in dir() else SIGNS[0]
+        asc_lord = SIGN_LORDS.get(asc_sign, '')
+        moon_data = planets.get('Moon', {})
+        moon_sign = moon_data.get('sign', '') if isinstance(moon_data, dict) else ''
+        moon_house = moon_data.get('house', 0) if isinstance(moon_data, dict) else 0
+        mars_data = planets.get('Mars', {})
+        mars_house = mars_data.get('house', 0) if isinstance(mars_data, dict) else 0
+        sun_data = planets.get('Sun', {})
+        sun_house = sun_data.get('house', 0) if isinstance(sun_data, dict) else 0
+        # 12宫主星
+        h12_lord = SIGN_LORDS.get(SIGNS[(asc_idx + 11) % 12], '')
+
+        yd_result = calc_all_yogas_doshas(
+            planets, houses,
+            asc_sign, asc_lord,
+            moon_sign, moon_house,
+            mars_house, sun_house,
+            h12_lord
+        )
+        report['modules']['yogas_doshas'] = yd_result
+
+    except Exception as e:
+        report['errors'].append(f"yogas-doshas: {e}")
+
     # ── Step 5: 精确相位 ──
     try:
         from aspects import calc_all_aspects
