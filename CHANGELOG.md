@@ -1,5 +1,29 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.12-dispositor-chain-inter-chart-linkage（2026-06-04）—— 新增 Dispositor Chain + Inter-chart Linkage 技法
+
+> **触发原因**：用户指出当前 skill 缺少"定位星链"和"分盘间飞星落宫"两个高级技法，导致事业/婚恋/财务等解盘无法完整分析行星能量流向和分盘间验证。
+
+### 新增功能
+
+- `scripts/jyotish_engine.py` 新增 4 个函数：
+  - `calc_dispositor_chain(planet_name, planets_data)`：计算单个行星的定位星链
+  - `calc_inter_chart_linkage(...)`：计算单行星在 D1/D9/D10/D12 的分盘间飞星落宫
+  - `calc_all_dispositor_chains(planets_data)`：批量计算所有行星定位星链
+  - `calc_all_inter_chart_linkages(...)`：批量计算所有行星分盘间飞星
+- `cmd_full_reading` 新增 Step 4.7：调用上述函数，输出 `modules.dispositor_chains`、`modules.inter_chart_linkage`、`modules.final_dispositors`
+- `references/technique_registry.json` 新增 2 个技法注册：`dispositor_chain`、`inter_chart_linkage`，状态均为 `covered`
+- `references/strict-workflow-router.md` 同步更新：3 个路由（`career-timing-strict`、`event-verification-strict`、`full-reading-strict`）的 `required_techniques` 新增 `dispositor_chain` 和 `inter_chart_linkage`；Technique Audit Table 模板新增对应行
+
+### 验证结果
+
+- Python 语法检查通过
+- `full-reading` 测试运行：`errors: []`，新增 3 个模块均输出正确
+- Venus 定位星链：Venus→Jupiter→Mercury（循环），最终定位星 Mercury ✓
+- Venus 分盘间飞星：D1 Pisces/8H、D9 Libra/4H、D10 Aquarius/3H ✓
+
+---
+
 ## v6.0.11-shadbala-capability-downgrade（2026-06-04）— Shadbala 能力标注降级
 
 > **触发原因**：第九轮 Shadbala benchmark 证明当前实现内部一致，但源码仍包含多处简化公式，尚未完成 JHora/公开书例级别的外部绝对值校准，不应继续标记为完整 `covered`。

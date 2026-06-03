@@ -17,188 +17,474 @@
       "lesson": "Validate registry-like configuration against a schema before using it. This project keeps a stdlib validator to avoid new dependencies."
     }
   ],
-  "status_vocabulary": ["covered", "partial", "knowledge-only", "workflow-only", "not-integrated", "missing"],
+  "status_vocabulary": [
+    "covered",
+    "partial",
+    "knowledge-only",
+    "workflow-only",
+    "not-integrated",
+    "missing"
+  ],
   "techniques": {
     "d1_rashi": {
       "name": "D1 / Rashi",
-      "domains": ["core", "static"],
+      "domains": [
+        "core",
+        "static"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/signs-and-houses.md"],
-      "commands": ["chart", "full-reading"],
-      "output_paths": ["modules.chart"],
+      "knowledge_refs": [
+        "references/signs-and-houses.md"
+      ],
+      "commands": [
+        "chart",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.chart"
+      ],
       "audit_label": "D1/Rashi",
       "missing_impact": "No reliable static chart basis."
     },
     "d9_navamsa": {
       "name": "D9 / Navamsa",
-      "domains": ["varga", "strength", "relationship", "dharma"],
+      "domains": [
+        "varga",
+        "strength",
+        "relationship",
+        "dharma"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/navamsa-d9-interpretation-template.md", "references/varga-system-quick-reference.md"],
-      "commands": ["varga-full", "full-reading"],
-      "output_paths": ["modules.varga_full.D9_Navamsa", "modules.d9_navamsa_expanded"],
+      "knowledge_refs": [
+        "references/navamsa-d9-interpretation-template.md",
+        "references/varga-system-quick-reference.md"
+      ],
+      "commands": [
+        "varga-full",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.varga_full.D9_Navamsa",
+        "modules.d9_navamsa_expanded"
+      ],
       "audit_label": "D9/Navamsa",
       "missing_impact": "Inner strength and marriage/dharma layer incomplete."
     },
     "d10_dasamsa": {
       "name": "D10 / Dasamsa",
-      "domains": ["career", "varga"],
+      "domains": [
+        "career",
+        "varga"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/varga-system-quick-reference.md", "references/divisional-chart-deep-reading.md"],
-      "commands": ["varga-full", "full-reading"],
-      "output_paths": ["modules.varga_full.D10_Dasamsa"],
+      "knowledge_refs": [
+        "references/varga-system-quick-reference.md",
+        "references/divisional-chart-deep-reading.md"
+      ],
+      "commands": [
+        "varga-full",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.varga_full.D10_Dasamsa"
+      ],
       "audit_label": "D10/Dasamsa",
       "missing_impact": "Career-specific varga layer missing; career timing confidence must be capped."
     },
     "vimshottari_dasha": {
       "name": "Vimshottari Dasha",
-      "domains": ["timing", "event"],
+      "domains": [
+        "timing",
+        "event"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/dasha-calculation-tool.md"],
-      "commands": ["dasha", "full-reading"],
-      "output_paths": ["modules.dasha"],
+      "knowledge_refs": [
+        "references/dasha-calculation-tool.md"
+      ],
+      "commands": [
+        "dasha",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.dasha"
+      ],
       "audit_label": "Vimshottari",
       "missing_impact": "Primary timing layer unavailable."
     },
     "dasha_sandhi": {
       "name": "Dasha Sandhi",
-      "domains": ["timing", "transition"],
+      "domains": [
+        "timing",
+        "transition"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/strict-workflow-router.md"],
-      "commands": ["full-reading"],
-      "output_paths": ["modules.dasha_sandhi"],
+      "knowledge_refs": [
+        "references/strict-workflow-router.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.dasha_sandhi"
+      ],
       "audit_label": "Dasha Sandhi",
       "missing_impact": "Transition windows may be overstated or understated."
     },
     "jaimini_chara_dasha": {
       "name": "Jaimini / Chara Dasha",
-      "domains": ["timing", "career", "relationship"],
+      "domains": [
+        "timing",
+        "career",
+        "relationship"
+      ],
       "status": "partial",
-      "knowledge_refs": ["references/jaimini-complete-system.md"],
-      "commands": ["jaimini", "full-reading"],
-      "output_paths": ["modules.jaimini"],
+      "knowledge_refs": [
+        "references/jaimini-complete-system.md"
+      ],
+      "commands": [
+        "jaimini",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.jaimini"
+      ],
       "audit_label": "Jaimini/Chara",
       "missing_impact": "Rashi-based timing confirmation is partial; timing confidence must be capped unless corroborated by Vimshottari, Dasha Sandhi, transit, D10/A10 and Ashtakavarga.",
       "limitation": "Round 7 benchmark vs PyJHora KN Rao Chara Dasha matched 58/240 fields (24.17%). Current calc_chara_dasha() is a simplified implementation, not a full KN Rao/PVN Rao/Iranganti method. Karaka/Karakamsha remain usable; Chara Dasha timing is partial."
     },
     "karakamsha_ak_amk": {
       "name": "Karakamsha / AK / AmK",
-      "domains": ["career", "soul", "dharma"],
+      "domains": [
+        "career",
+        "soul",
+        "dharma"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/jaimini-complete-system.md"],
-      "commands": ["jaimini", "full-reading"],
-      "output_paths": ["modules.jaimini.karakas", "modules.jaimini.karakamsha"],
+      "knowledge_refs": [
+        "references/jaimini-complete-system.md"
+      ],
+      "commands": [
+        "jaimini",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.jaimini.karakas",
+        "modules.jaimini.karakamsha"
+      ],
       "audit_label": "AK/AmK/Karakamsha",
       "missing_impact": "Jaimini career/soul indicator layer incomplete."
     },
     "a10_karma_pada": {
       "name": "A10 / Karma Pada / Rajya Pada",
-      "domains": ["career", "public_image"],
+      "domains": [
+        "career",
+        "public_image"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/technique-capability-matrix.md"],
-      "commands": ["full-reading", "scripts/special_lagnas.py --tenth-lord"],
-      "output_paths": ["modules.special_lagnas.A10_Karma_Pada"],
+      "knowledge_refs": [
+        "references/technique-capability-matrix.md"
+      ],
+      "commands": [
+        "full-reading",
+        "scripts/special_lagnas.py --tenth-lord"
+      ],
+      "output_paths": [
+        "modules.special_lagnas.A10_Karma_Pada"
+      ],
       "audit_label": "A10/Karma Pada",
       "missing_impact": "Career public-image layer incomplete."
     },
     "argala": {
       "name": "Argala",
-      "domains": ["static", "intervention", "event"],
+      "domains": [
+        "static",
+        "intervention",
+        "event"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/argala-complete-guide.md"],
-      "commands": ["argala", "full-reading"],
-      "output_paths": ["modules.argala"],
+      "knowledge_refs": [
+        "references/argala-complete-guide.md"
+      ],
+      "commands": [
+        "argala",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.argala"
+      ],
       "audit_label": "Argala",
       "missing_impact": "Intervention/blocking layer missing."
     },
     "shadbala": {
       "name": "Shadbala",
-      "domains": ["strength", "static"],
+      "domains": [
+        "strength",
+        "static"
+      ],
       "status": "partial",
-      "knowledge_refs": ["references/shadbala-complete-methodology.md"],
-      "commands": ["shadbala", "full-reading"],
-      "output_paths": ["modules.shadbala"],
+      "knowledge_refs": [
+        "references/shadbala-complete-methodology.md"
+      ],
+      "commands": [
+        "shadbala",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.shadbala"
+      ],
       "audit_label": "Shadbala",
       "missing_impact": "Planetary strength claims are quantitatively anchored only as an internally consistent reference, not as externally calibrated absolute Parashara Shadbala.",
       "limitation": "Round 9 internal invariant benchmark passed 1200/1200 checks and full-reading matches the shadbala command. However scripts/shadbala.py still uses simplified Nathonnata Bala, approximate Saptavargaja sub-vargas, Chesta speed buckets and simplified Drik aspect weights. Use for relative strength ranking with confidence cap until an external full Shadbala table benchmark is frozen."
     },
     "ashtakavarga": {
       "name": "Ashtakavarga",
-      "domains": ["transit", "strength", "timing"],
+      "domains": [
+        "transit",
+        "strength",
+        "timing"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/ashtakavarga-complete-system.md"],
-      "commands": ["ashtakavarga", "full-reading"],
-      "output_paths": ["modules.ashtakavarga"],
+      "knowledge_refs": [
+        "references/ashtakavarga-complete-system.md"
+      ],
+      "commands": [
+        "ashtakavarga",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.ashtakavarga"
+      ],
       "audit_label": "Ashtakavarga",
       "missing_impact": "Transit strength filter missing."
     },
     "avastha": {
       "name": "Avastha",
-      "domains": ["strength", "state"],
+      "domains": [
+        "strength",
+        "state"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/technique-capability-matrix.md"],
-      "commands": ["full-reading"],
-      "output_paths": ["modules.avasthas"],
+      "knowledge_refs": [
+        "references/technique-capability-matrix.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.avasthas"
+      ],
       "audit_label": "Avastha",
       "missing_impact": "Planet condition/state layer missing."
     },
     "vargottama": {
       "name": "Vargottama",
-      "domains": ["varga", "strength"],
+      "domains": [
+        "varga",
+        "strength"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/varga-system-quick-reference.md"],
-      "commands": ["full-reading"],
-      "output_paths": ["modules.vargottama"],
+      "knowledge_refs": [
+        "references/varga-system-quick-reference.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.vargottama"
+      ],
       "audit_label": "Vargottama",
       "missing_impact": "D1-D9 consistency strength may be undercounted."
     },
     "pushkara": {
       "name": "Pushkara Navamsa / Pushkara Bhaga",
-      "domains": ["varga", "dignity", "grace"],
+      "domains": [
+        "varga",
+        "dignity",
+        "grace"
+      ],
       "status": "covered",
-      "knowledge_refs": ["references/planetary-dignity-complete-reference.md", "references/navamsa-marriage-deep-analysis.md"],
-      "commands": ["full-reading"],
-      "output_paths": ["modules.pushkara"],
+      "knowledge_refs": [
+        "references/planetary-dignity-complete-reference.md",
+        "references/navamsa-marriage-deep-analysis.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.pushkara"
+      ],
       "audit_label": "Pushkara",
       "missing_impact": "D9 grace/support layer may be undercounted."
     },
     "bhava_chalit": {
       "name": "Bhava Chalit",
-      "domains": ["house_cusp", "event"],
+      "domains": [
+        "house_cusp",
+        "event"
+      ],
       "status": "partial",
-      "knowledge_refs": ["references/kp-astrology-complete-system.md"],
-      "commands": ["chart", "full-reading"],
-      "output_paths": ["modules.chart.houses"],
+      "knowledge_refs": [
+        "references/kp-astrology-complete-system.md"
+      ],
+      "commands": [
+        "chart",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.chart.houses"
+      ],
       "audit_label": "Bhava Chalit",
       "missing_impact": "Planet reassignment near cusps is not fully recalibrated.",
       "limitation": "House cusps exist, but full Chalit Chart planet reassignment is not implemented."
     },
     "sudarshana_chakra": {
       "name": "Sudarshana Chakra",
-      "domains": ["multi_chart", "confirmation"],
+      "domains": [
+        "multi_chart",
+        "confirmation"
+      ],
       "status": "partial",
-      "knowledge_refs": ["references/varga-system-quick-reference.md"],
-      "commands": ["full-reading"],
-      "output_paths": ["modules.varga_full", "modules.d9_navamsa_expanded"],
+      "knowledge_refs": [
+        "references/varga-system-quick-reference.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.varga_full",
+        "modules.d9_navamsa_expanded"
+      ],
       "audit_label": "Sudarshana Chakra",
       "missing_impact": "Traditional triple-lagna confirmation is partial only.",
       "limitation": "D1-D9-D10 triangle verification exists as a substitute; traditional Sudarshana module is absent."
+    },
+    "dispositor_chain": {
+      "name": "Dispositor Chain / 定位星链",
+      "domains": [
+        "strength",
+        "flow",
+        "dignity"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/technique-capability-matrix.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.dispositor_chains",
+        "modules.final_dispositors"
+      ],
+      "audit_label": "Dispositor Chain",
+      "missing_impact": "Planet energy flow / final dispositor analysis incomplete."
+    },
+    "inter_chart_linkage": {
+      "name": "Inter-chart Linkage / 分盘间飞星",
+      "domains": [
+        "varga",
+        "confirmation",
+        "multi_chart"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/varga-system-quick-reference.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.inter_chart_linkage"
+      ],
+      "audit_label": "Inter-chart Linkage",
+      "missing_impact": "Cross-chart planet linkage (D1->D9->D10) analysis incomplete."
     }
   },
   "routes": {
     "career_timing_strict": {
-      "trigger_keywords": ["事业", "职业", "工作机会", "项目落地", "名声", "社会身份"],
-      "required_techniques": ["d1_rashi", "d9_navamsa", "d10_dasamsa", "vimshottari_dasha", "dasha_sandhi", "jaimini_chara_dasha", "karakamsha_ak_amk", "a10_karma_pada", "argala", "shadbala", "ashtakavarga", "vargottama", "pushkara"],
-      "optional_techniques": ["bhava_chalit", "sudarshana_chakra"]
+      "trigger_keywords": [
+        "事业",
+        "职业",
+        "工作机会",
+        "项目落地",
+        "名声",
+        "社会身份"
+      ],
+      "required_techniques": [
+        "d1_rashi",
+        "d9_navamsa",
+        "d10_dasamsa",
+        "vimshottari_dasha",
+        "dasha_sandhi",
+        "jaimini_chara_dasha",
+        "karakamsha_ak_amk",
+        "a10_karma_pada",
+        "argala",
+        "shadbala",
+        "ashtakavarga",
+        "vargottama",
+        "pushkara",
+        "dispositor_chain",
+        "inter_chart_linkage"
+      ],
+      "optional_techniques": [
+        "bhava_chalit",
+        "sudarshana_chakra"
+      ]
     },
     "event_verification_strict": {
-      "trigger_keywords": ["验证", "回测", "历史事件", "可靠性", "是不是遗漏"],
-      "required_techniques": ["d1_rashi", "vimshottari_dasha", "dasha_sandhi", "jaimini_chara_dasha", "argala", "shadbala", "ashtakavarga"],
-      "optional_techniques": ["d9_navamsa", "d10_dasamsa", "a10_karma_pada", "bhava_chalit", "sudarshana_chakra"]
+      "trigger_keywords": [
+        "验证",
+        "回测",
+        "历史事件",
+        "可靠性",
+        "是不是遗漏"
+      ],
+      "required_techniques": [
+        "d1_rashi",
+        "vimshottari_dasha",
+        "dasha_sandhi",
+        "jaimini_chara_dasha",
+        "argala",
+        "shadbala",
+        "ashtakavarga",
+        "dispositor_chain",
+        "inter_chart_linkage"
+      ],
+      "optional_techniques": [
+        "d9_navamsa",
+        "d10_dasamsa",
+        "a10_karma_pada",
+        "bhava_chalit",
+        "sudarshana_chakra"
+      ]
     },
     "full_reading_strict": {
-      "trigger_keywords": ["综合解盘", "完整解盘", "full-reading"],
-      "required_techniques": ["d1_rashi", "d9_navamsa", "d10_dasamsa", "vimshottari_dasha", "dasha_sandhi", "jaimini_chara_dasha", "argala", "shadbala", "ashtakavarga", "avastha", "vargottama", "pushkara"],
-      "optional_techniques": ["bhava_chalit", "sudarshana_chakra"]
+      "trigger_keywords": [
+        "综合解盘",
+        "完整解盘",
+        "full-reading"
+      ],
+      "required_techniques": [
+        "d1_rashi",
+        "d9_navamsa",
+        "d10_dasamsa",
+        "vimshottari_dasha",
+        "dasha_sandhi",
+        "jaimini_chara_dasha",
+        "argala",
+        "shadbala",
+        "ashtakavarga",
+        "avastha",
+        "vargottama",
+        "pushkara",
+        "dispositor_chain",
+        "inter_chart_linkage"
+      ],
+      "optional_techniques": [
+        "bhava_chalit",
+        "sudarshana_chakra"
+      ]
     }
   }
 }

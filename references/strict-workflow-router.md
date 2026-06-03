@@ -62,6 +62,8 @@ Use when the user asks about career, profession, job, project, public recognitio
 | Arudha | AL and A10/Karma Pada if available | special lagna / manual if needed |
 | Strength | Shadbala for Dasha lord, 10L, AmK, Saturn, Jupiter | `shadbala` |
 | Transit strength | SAV/BAV for key transit signs and houses | `ashtakavarga` |
+| Dispositor Chain | Final dispositor / energy flow for 10L, AmK, Saturn | `full-reading` |
+| Inter-chart Linkage | D1->D9->D10 planet linkage for 10L, 2L, 11L | `full-reading` |
 | Argala | Argala/Virodha on 10H, 10L, D10 10H, AmK | `argala` |
 | KP / sub-lord | Use for yes/no or project landing questions | `nakshatra-adv`, KP references |
 | Historical reliability | If user gives events, back-test same technique | `predict --past-verify` if applicable |
@@ -138,6 +140,7 @@ Use when the user provides past events and asks whether the technique is reliabl
 1. Extract the exact event date or window.
 2. Identify which prediction rule would have implied it.
 3. Apply the same rule to the past event without changing interpretation after seeing the result.
+3.5. Check Dispositor Chain and Inter-chart Linkage for consistency across D1/D9/D10.
 4. Score match quality:
    - A: same theme + same timing + multiple systems support.
    - B: same theme + approximate timing or delayed manifestation.
@@ -168,6 +171,8 @@ Every Level 2+ output must include this table near the end.
 | AL / A10 | Used / partial / unavailable | ... | ... |
 | Shadbala | Used / partial / not used | Internally consistent relative strength; external absolute calibration pending | Cap precise strength claims |
 | Ashtakavarga | Used / not used | ... | ... |
+| Dispositor Chain | Used / not used | ... | ... |
+| Inter-chart Linkage | Used / not used | ... | ... |
 | Argala | Used / not used | ... | ... |
 | KP / Sub-lord | Used / not required / unavailable | ... | ... |
 | Historical verification | Used / not provided | ... | ... |

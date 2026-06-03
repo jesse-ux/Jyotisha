@@ -221,6 +221,102 @@ def _calc_dasha_sandhi(dasha_result, reference_date=None, orb_days=90):
     return {'reference_date': ref.strftime('%Y-%m-%d'), 'orb_days': orb_days, 'sandhi_windows': sandhi}
 
 
+
+# ============================================================================
+# 新增：Dispositor Chain + Inter-chart Linkage (v6.0.12)
+# ============================================================================
+
+def calc_dispositor_chain(planet_name, planets_data, max_depth=12):
+    """
+    计算行星的定位星链（dispositor chain）。
+    返回列表：[{planet, sign, dispositor, dispositor_sign}, ...]
+    直到循环或达到 max_depth。
+    """
+    chain = []
+    current_planet = planet_name
+    visited = set()
+    for _ in range(max_depth):
+        if current_planet in visited:
+            break
+        visited.add(current_planet)
+        pdata = planets_data.get(current_planet, {})
+        if not isinstance(pdata, dict) or 'sign' not in pdata:
+            break
+        sign = pdata['sign']
+        dispositor = SIGN_LORDS.get(sign, '')
+        chain.append({
+            'planet': current_planet,
+            'sign': sign,
+            'sign_cn': SIGNS_CN.get(sign, ''),
+            'dispositor': dispositor,
+            'dispositor_sign': sign,  # 定位星所在的星座（即当前行星所在星座）
+        })
+        if not dispositor:
+            break
+        current_planet = dispositor
+    return chain
+
+
+def calc_inter_chart_linkage(planet_name, d1_data, d9_data, d10_data, d12_data=None, d1_asc_idx=None, d9_asc_idx=None, d10_asc_idx=None):
+    """
+    计算行星在 D1/D9/D10 分盘之间的飞星落宫。
+    返回 {chart_type: {sign, house_in_chart, lord_of_sign_in_chart}}
+    """
+    result = {}
+    charts = [
+        ('D1', d1_data, d1_asc_idx),
+        ('D9', d9_data, d9_asc_idx),
+        ('D10', d10_data, d10_asc_idx),
+    ]
+    if d12_data:
+        charts.append(('D12', d12_data, None))
+
+    for chart_name, chart_data, asc_idx in charts:
+        if not isinstance(chart_data, dict):
+            continue
+        pdata = chart_data.get(planet_name, {})
+        if not isinstance(pdata, dict) or 'sign' not in pdata:
+            continue
+        sign = pdata['sign']
+        sign_idx = SIGNS.index(sign) if sign in SIGNS else 0
+        house = None
+        if asc_idx is not None:
+            house = ((sign_idx - asc_idx) % 12) + 1
+        lord = SIGN_LORDS.get(sign, '')
+        result[chart_name] = {
+            'planet': planet_name,
+            'sign': sign,
+            'sign_cn': SIGNS_CN.get(sign, ''),
+            'house': house,
+            'lord': lord,
+        }
+    return result
+
+
+def calc_all_dispositor_chains(planets_data):
+    """为所有行星计算定位星链"""
+    result = {}
+    for pname in ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']:
+        if pname in planets_data:
+            result[pname] = calc_dispositor_chain(pname, planets_data)
+    return result
+
+
+def calc_all_inter_chart_linkages(d1_data, d9_data, d10_data, d12_data=None, d1_asc_idx=None, d9_asc_idx=None, d10_asc_idx=None):
+    """
+    为所有行星计算 D1/D9/D10 分盘间飞星。
+    需要各分盘的 asc_idx 来正确计算落宫。
+    """
+    result = {}
+    for pname in ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']:
+        result[pname] = calc_inter_chart_linkage(
+            pname, d1_data, d9_data, d10_data, d12_data,
+            d1_asc_idx, d9_asc_idx, d10_asc_idx
+        )
+    return result
+
+
+
 def _get_dignity_level(planet, sign, deg_in_sign=None):
     """判断行星在某星座的尊严等级 (用于 Vimsopaka 映射)"""
     if EXALTATION.get(planet) == sign:
@@ -3296,6 +3392,67 @@ def cmd_full_reading(args):
         report['modules']['varga_extended'] = ext_filtered
     except Exception as e:
         report['errors'].append(f"varga-extended: {e}")
+
+
+    # ── Step 4.7: Dispositor Chains + Inter-chart Linkage (v6.0.12) ──
+    try:
+        # 准备分盘数据：从 varga_full 提取 D1/D9/D10/D12
+        vf = report['modules'].get('varga_full', {})
+        d1_for_dc = vf.get('D1_Rashi', {})
+        d9_for_ic = vf.get('D9_Navamsa', {}) if isinstance(vf.get('D9_Navamsa'), dict) else {}
+        d10_for_ic = vf.get('D10_Dasamsa', {}) if isinstance(vf.get('D10_Dasamsa'), dict) else {}
+        d12_for_ic = vf.get('D12_Dwadashamsa', {}) if isinstance(vf.get('D12_Dwadashamsa'), dict) else None
+
+        # Dispositor Chains：基于 D1 行星数据
+        dc_result = calc_all_dispositor_chains(planets)
+        report['modules']['dispositor_chains'] = dc_result
+
+        # Inter-chart Linkage：需要各分盘的 asc_idx
+        # D1 asc_idx 已知；D9/D10/D12 的 asc_idx 需要从各自分盘数据提取
+        d9_asc_idx = None
+        d10_asc_idx = None
+        d12_asc_idx = None
+        if isinstance(d9_for_ic, dict):
+            d9_asc = d9_for_ic.get('Ascendant', {})
+            if isinstance(d9_asc, dict) and 'sign' in d9_asc:
+                d9_asc_idx = SIGNS.index(d9_asc['sign']) if d9_asc['sign'] in SIGNS else None
+        if isinstance(d10_for_ic, dict):
+            d10_asc = d10_for_ic.get('Ascendant', {})
+            if isinstance(d10_asc, dict) and 'sign' in d10_asc:
+                d10_asc_idx = SIGNS.index(d10_asc['sign']) if d10_asc['sign'] in SIGNS else None
+        if d12_for_ic and isinstance(d12_for_ic, dict):
+            d12_asc = d12_for_ic.get('Ascendant', {})
+            if isinstance(d12_asc, dict) and 'sign' in d12_asc:
+                d12_asc_idx = SIGNS.index(d12_asc['sign']) if d12_asc['sign'] in SIGNS else None
+
+        ic_result = calc_all_inter_chart_linkages(
+            d1_for_dc, d9_for_ic, d10_for_ic, d12_for_ic,
+            asc_idx, d9_asc_idx, d10_asc_idx
+        )
+        report['modules']['inter_chart_linkage'] = ic_result
+
+        # 补充：每个行星的"最终定位星"（Dispositor Chain 的最后一个非循环元素）
+        final_dispositors = {}
+        for pname, chain in dc_result.items():
+            if chain:
+                # 找到最后一个不重复的元素
+                seen = set()
+                last_valid = None
+                for item in chain:
+                    if item['dispositor'] in seen:
+                        break
+                    seen.add(item['dispositor'])
+                    last_valid = item
+                if last_valid:
+                    final_dispositors[pname] = last_valid['dispositor']
+                else:
+                    final_dispositors[pname] = chain[-1]['dispositor'] if chain else None
+            else:
+                final_dispositors[pname] = None
+        report['modules']['final_dispositors'] = final_dispositors
+
+    except Exception as e:
+        report['errors'].append(f"dispositor-chain+inter-chart: {e}")
 
     # ── Step 5: 精确相位 ──
     try:
