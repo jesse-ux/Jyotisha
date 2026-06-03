@@ -120,7 +120,7 @@ Use when the user asks for concrete timing, yes/no, project approval, launch, mo
 1. Define the event house and event significators.
 2. Check natal promise in D1 and relevant Varga.
 3. Check Vimshottari MD/AD/PD.
-4. Cross-check Chara Dasha if event is major.
+4. Cross-check Jaimini static indicators if event is major; Chara Dasha timing is partial and must be treated as low-weight corroboration only.
 5. Check Saturn/Jupiter/Rahu-Ketu transit to event houses/lords.
 6. Check Double Transit where applicable.
 7. Use KP/Sub-lord if the question is binary or landing-specific.
@@ -163,10 +163,10 @@ Every Level 2+ output must include this table near the end.
 | D9 | Used / not used | ... | ... |
 | D10 / relevant Varga | Used / not used | ... | ... |
 | Vimshottari | Used / not used | ... | ... |
-| Jaimini / Chara Dasha | Used / not used | ... | ... |
+| Jaimini / Chara Dasha | Used / partial / not used | Karaka/Karakamsha reliable; Chara Dasha timing partial if used | Cap timing confidence unless independently corroborated |
 | AmK / Karakamsha | Used / not used | ... | ... |
 | AL / A10 | Used / partial / unavailable | ... | ... |
-| Shadbala | Used / not used | ... | ... |
+| Shadbala | Used / partial / not used | Internally consistent relative strength; external absolute calibration pending | Cap precise strength claims |
 | Ashtakavarga | Used / not used | ... | ... |
 | Argala | Used / not used | ... | ... |
 | KP / Sub-lord | Used / not required / unavailable | ... | ... |

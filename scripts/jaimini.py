@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Jaimini占星体系模块 v1.0
+Jaimini占星体系模块 v1.1
 Parashara传承中的Jaimini子系统
 
 支持:
   - Chara Karaka: 7/8个功能指示星（按度数排序）
-  - Chara Dasha: 基于星座的大运系统
   - Karakamsha: AK在Navamsa中的上升（灵魂方向）
+  - Chara Dasha: 当前为简化 timing 实现，v6.0.9 后标注为 partial，不得单独作为高置信度应期依据
   - Jaimini Sutras关键规则
 """
 from typing import Dict, List, Tuple, Optional
@@ -135,14 +135,14 @@ def calc_chara_dasha(asc_sign_idx: int,
                      planet_longitudes: Dict[str, float],
                      birth_year: int, birth_month: int) -> Dict:
     """
-    Chara Dasha计算（基于星座的大运系统）
+    Chara Dasha计算（简化实现；v6.0.9 后能力状态为 partial）
     
     规则:
       - 从上升星座开始
       - 奇数星座（Aries, Gemini...）：正向顺序
       - 偶数星座（Taurus, Cancer...）：反向顺序
       - 每个大运长度 = 12 - 该星座内的行星数量（用特定规则）
-      - 标准版：每个大运固定1-12年
+      - 注意：该实现不是 KN Rao / PVN Rao / Iranganti 完整传统算法；只能作低权重辅助
     """
     # 确定顺序方向
     is_odd = asc_sign_idx % 2 == 0
@@ -152,7 +152,7 @@ def calc_chara_dasha(asc_sign_idx: int,
     dasha_sequence = []
     current = asc_sign_idx
     
-    # 标准Chara Dasha: 每个星座1年，按正/反向排列
+    # 简化 Chara Dasha: 按上升星座顺/逆排列；不等同于 KN Rao/PVN Rao/Iranganti 完整传统算法
     for i in range(12):
         sign_idx = (current + direction * i) % 12
         sign_name = SIGNS[sign_idx]
@@ -203,7 +203,7 @@ def calc_chara_dasha_with_antardasha(asc_sign_idx: int,
                                       planet_longitudes: Dict[str, float],
                                       birth_year: int, birth_month: int) -> Dict:
     """
-    Chara Dasha 计算含 Antardasha 子周期
+    Chara Dasha 计算含 Antardasha 子周期（简化 timing 实现，能力状态 partial）
 
     Antardasha 规则:
       - 在每个 Mahadasha 内，Antardasha 从 Mahadasha 星座开始

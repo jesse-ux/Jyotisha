@@ -1,5 +1,5 @@
 {
-  "version": "v6.0.3-engineering-foundation",
+  "version": "v6.0.11-shadbala-capability-downgrade",
   "source_inspiration": [
     {
       "name": "jyotishyamitra",
@@ -72,12 +72,13 @@
     "jaimini_chara_dasha": {
       "name": "Jaimini / Chara Dasha",
       "domains": ["timing", "career", "relationship"],
-      "status": "covered",
+      "status": "partial",
       "knowledge_refs": ["references/jaimini-complete-system.md"],
       "commands": ["jaimini", "full-reading"],
       "output_paths": ["modules.jaimini"],
       "audit_label": "Jaimini/Chara",
-      "missing_impact": "Rashi-based timing confirmation missing."
+      "missing_impact": "Rashi-based timing confirmation is partial; timing confidence must be capped unless corroborated by Vimshottari, Dasha Sandhi, transit, D10/A10 and Ashtakavarga.",
+      "limitation": "Round 7 benchmark vs PyJHora KN Rao Chara Dasha matched 58/240 fields (24.17%). Current calc_chara_dasha() is a simplified implementation, not a full KN Rao/PVN Rao/Iranganti method. Karaka/Karakamsha remain usable; Chara Dasha timing is partial."
     },
     "karakamsha_ak_amk": {
       "name": "Karakamsha / AK / AmK",
@@ -112,12 +113,13 @@
     "shadbala": {
       "name": "Shadbala",
       "domains": ["strength", "static"],
-      "status": "covered",
+      "status": "partial",
       "knowledge_refs": ["references/shadbala-complete-methodology.md"],
       "commands": ["shadbala", "full-reading"],
       "output_paths": ["modules.shadbala"],
       "audit_label": "Shadbala",
-      "missing_impact": "Planetary strength claims are not quantitatively anchored."
+      "missing_impact": "Planetary strength claims are quantitatively anchored only as an internally consistent reference, not as externally calibrated absolute Parashara Shadbala.",
+      "limitation": "Round 9 internal invariant benchmark passed 1200/1200 checks and full-reading matches the shadbala command. However scripts/shadbala.py still uses simplified Nathonnata Bala, approximate Saptavargaja sub-vargas, Chesta speed buckets and simplified Drik aspect weights. Use for relative strength ranking with confidence cap until an external full Shadbala table benchmark is frozen."
     },
     "ashtakavarga": {
       "name": "Ashtakavarga",

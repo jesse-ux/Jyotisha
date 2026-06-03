@@ -12,7 +12,7 @@
   varga        分盘计算（D9/D10）
   varga-full   BPHS十六分盘完整计算（D2-D60）（v3.7新增）
   aspects      度数精确相位系统（v3.7新增）
-  jaimini      Jaimini系统（Chara Karaka/Chara Dasha/Karakamsha）（v3.7新增）
+  jaimini      Jaimini系统（Chara Karaka/Karakamsha；Chara Dasha timing partial）（v3.7新增）
   nakshatra-adv 高级Nakshatra分析（Tara Bala/Sub-Lord/兼容性）（v3.7新增）
   argala       Argala门闩系统（v3.7新增）
   tajika       Tajika/Varshaphala年运盘（v3.7新增）
@@ -21,7 +21,7 @@
   celebrity    名人案例查询（15,807条数据+SQLite验证库）
   db-stats     验证数据库统计
   transit      行星过境查询
-  shadbala     六重力量计算（v3.4新增）
+  shadbala     六重力量计算（内部一致；外部绝对值校准前partial）（v3.4新增）
   ashtakavarga 八分法计算（v3.5升级BPHS完整表，SAV=337）
   memory       Hermes记忆系统（v3.4新增）
   validate     R1-R10数学验证（v3.5新增，含R2b BAV列→SAV校验）
@@ -246,6 +246,60 @@ BASE_PLANETS_SWE = {'Sun': swe.SUN, 'Moon': swe.MOON, 'Mars': swe.MARS, 'Mercury
 PLANETS_SWE = {**BASE_PLANETS_SWE, 'Rahu': swe.MEAN_NODE} if HAS_SWE else {}
 
 
+def _node_pid(node_mode='mean'):
+    """返回 Rahu/Ketu 节点计算口径对应的 Swiss Ephemeris id。"""
+    if not HAS_SWE:
+        return None
+    return swe.TRUE_NODE if (node_mode or 'mean').lower() == 'true' else swe.MEAN_NODE
+
+
+def _planet_map_for_node_mode(node_mode='mean'):
+    """返回七曜+Rahu 的行星映射，Rahu 口径由 node_mode 决定。"""
+    if not HAS_SWE:
+        return {}
+    return {**BASE_PLANETS_SWE, 'Rahu': _node_pid(node_mode)}
+
+
+def _calc_sidereal_planets_for_jd(jd, node_mode='mean', include_ketu=True):
+    """使用 Swiss Ephemeris 计算指定 Julian Day 的恒星黄道行星位置。"""
+    if not HAS_SWE:
+        return {}, None
+    ayanamsa = swe.get_ayanamsa(jd)
+    data = {}
+    for pname, pid in _planet_map_for_node_mode(node_mode).items():
+        pos, ret = swe.calc_ut(jd, pid)
+        if ret < 0:
+            continue
+        lon = (pos[0] - ayanamsa) % 360
+        sign_idx = int(lon / 30) % 12
+        speed = pos[3] if len(pos) > 3 else 0
+        data[pname] = {
+            'sign': SIGNS[sign_idx],
+            'sign_cn': SIGNS_CN[SIGNS[sign_idx]],
+            'degree': round(lon, 4),
+            'degree_raw': lon,
+            'degree_in_sign': round(lon % 30, 2),
+            'degree_in_sign_raw': lon % 30,
+            'speed': round(speed, 4),
+            'retrograde': speed < 0,
+        }
+    if include_ketu and 'Rahu' in data:
+        rahu_lon = data['Rahu']['degree_raw']
+        ketu_lon = (rahu_lon + 180) % 360
+        ketu_idx = int(ketu_lon / 30) % 12
+        data['Ketu'] = {
+            'sign': SIGNS[ketu_idx],
+            'sign_cn': SIGNS_CN[SIGNS[ketu_idx]],
+            'degree': round(ketu_lon, 4),
+            'degree_raw': ketu_lon,
+            'degree_in_sign': round(ketu_lon % 30, 2),
+            'degree_in_sign_raw': ketu_lon % 30,
+            'speed': data['Rahu'].get('speed', 0),
+            'retrograde': data['Rahu'].get('retrograde', True),
+        }
+    return data, ayanamsa
+
+
 def output_json(data):
     """统一JSON输出"""
     print(json.dumps(data, ensure_ascii=False, indent=2, default=str))
@@ -279,7 +333,7 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz, node_mode='
     node_mode = (node_mode or 'mean').lower()
     if node_mode not in ('mean', 'true'):
         node_mode = 'mean'
-    node_pid = swe.TRUE_NODE if node_mode == 'true' else swe.MEAN_NODE
+    node_pid = _node_pid(node_mode)
     result = {"birth_info": {
         "date": f"{year}-{month:02d}-{day:02d}", "time": f"{hour:02d}:{minute:02d}",
         "tz": f"UTC{'+' if tz >= 0 else ''}{tz}", "lat": lat, "lon": lon,
@@ -1173,49 +1227,11 @@ def cmd_transit(args):
     ayanamsa = swe.get_ayanamsa(jd_mid)
 
     # --- 计算行星位置 ---
-    planet_map = {
-        'Sun': swe.SUN, 'Moon': swe.MOON, 'Mars': swe.MARS,
-        'Mercury': swe.MERCURY, 'Jupiter': swe.JUPITER,
-        'Venus': swe.VENUS, 'Saturn': swe.SATURN, 'Rahu': swe.MEAN_NODE
-    }
-
-    transit_data = {}
-    for pname, pid in planet_map.items():
-        if target_planets and pname not in target_planets:
-            continue
-        pos, ret = swe.calc_ut(jd_mid, pid)
-        if ret < 0:
-            continue
-        lon_sid = (pos[0] - ayanamsa) % 360
-        speed = pos[3]
-        retrograde = speed < 0
-        sign_idx = int(lon_sid / 30) % 12
-        deg_in_sign = lon_sid % 30
-        sign_name = SIGNS[sign_idx]
-        sign_cn = SIGNS_CN[sign_name]
-
-        transit_data[pname] = {
-            'sign': sign_name,
-            'sign_cn': sign_cn,
-            'degree': round(lon_sid, 4),
-            'degree_in_sign': round(deg_in_sign, 2),
-            'speed': round(speed, 4),
-            'retrograde': retrograde,
-        }
-
-    # Rahu 存在时补算 Ketu
-    if 'Rahu' in transit_data:
-        rahu_lon = transit_data['Rahu']['degree']
-        ketu_lon = (rahu_lon + 180) % 360
-        ketu_si = int(ketu_lon / 30) % 12
-        transit_data['Ketu'] = {
-            'sign': SIGNS[ketu_si],
-            'sign_cn': SIGNS_CN[SIGNS[ketu_si]],
-            'degree': round(ketu_lon, 4),
-            'degree_in_sign': round(ketu_lon % 30, 2),
-            'speed': 0,
-            'retrograde': True,
-        }
+    node_mode = getattr(args, 'node_mode', 'mean')
+    transit_data, ayanamsa = _calc_sidereal_planets_for_jd(jd_mid, node_mode=node_mode, include_ketu=True)
+    if target_planets:
+        target_set = set(target_planets)
+        transit_data = {p: d for p, d in transit_data.items() if p in target_set}
 
     # --- 计算行星间相位（互相在对方星座的宫位关系）---
     aspects_found = []
@@ -1267,6 +1283,8 @@ def cmd_transit(args):
         'method': 'Swiss Ephemeris 实时计算（v3.7.2）',
         'target_date': f'{t_year}-{t_month:02d}-{t_day:02d}',
         'ayanamsa': round(ayanamsa, 4),
+        'node_mode': node_mode,
+        'data_layer': 'true_transit_positions',
         'planets': transit_data,
         'aspects': aspects_found,
         'note': f'使用Swiss Ephemeris实时计算{t_year}年{t_month}月行星过境位置，不再依赖静态JSON'
@@ -2612,7 +2630,7 @@ def cmd_synastry(args):
 # 基于 transit-multi-reference-guide.md 强制规范
 # 四参考点：Lagna / Chandra Lagna / Arudha Lagna / Navamsa Lagna
 # ============================================================================
-def _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons):
+def _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons, transit_planets=None, transit_date=None, node_mode='mean'):
     """
     ⭐ v4.5.0: Transit多参考点分析（强制规范）
     每次Transit分析必须同时从四个参考点评估：
@@ -2621,6 +2639,8 @@ def _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons):
     3. Arudha Lagna（AL）— 公众形象
     4. Navamsa Lagna（D9上升）— 灵魂层面
     """
+    data_layer = 'true_transit_positions' if transit_planets else 'natal_positions_fallback'
+    analysis_planets = transit_planets if transit_planets else planets
     # 四个参考点的星座索引
     moon_lon = planet_lons.get('Moon', 0)
     chandra_idx = int(moon_lon / 30) % 12
@@ -2681,7 +2701,7 @@ def _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons):
     OUTER_PLANETS = ['Jupiter', 'Saturn', 'Rahu', 'Ketu']
     transit_analysis = {}
     for pn in OUTER_PLANETS:
-        pd = planets.get(pn, {})
+        pd = analysis_planets.get(pn, {})
         if not isinstance(pd, dict) or 'sign' not in pd:
             continue
         p_sign_idx = SIGNS.index(pd['sign']) if pd['sign'] in SIGNS else 0
@@ -2714,7 +2734,7 @@ def _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons):
 
     # Sade Sati / Ashtama Shani 检测（基于Chandra Lagna）
     special_checks = {}
-    saturn_sign_idx = SIGNS.index(planets.get('Saturn', {}).get('sign', 'Aries')) if isinstance(planets.get('Saturn'), dict) and planets.get('Saturn', {}).get('sign') in SIGNS else 0
+    saturn_sign_idx = SIGNS.index(analysis_planets.get('Saturn', {}).get('sign', 'Aries')) if isinstance(analysis_planets.get('Saturn'), dict) and analysis_planets.get('Saturn', {}).get('sign') in SIGNS else 0
     # Sade Sati: Saturn 在月亮星座或前后1宫
     sade_sati_phase = None
     if saturn_sign_idx == chandra_idx:
@@ -2739,11 +2759,14 @@ def _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons):
 
     return {
         'references': references,
+        'target_date': transit_date,
+        'node_mode': node_mode,
+        'data_layer': data_layer,
         'transit_analysis': transit_analysis,
         'divergences': divergences,
         'divergence_count': len(divergences),
         'special_checks': special_checks,
-        'protocol': 'v4.5.0 Transit多参考点强制规范：AI必须同时呈现Lagna和Chandra Lagna两个视角。任何矛盾信号必须记录并解释。',
+        'protocol': 'v6.0.10 Transit多参考点强制规范：AI必须用真实过境行星位置，并同时呈现Lagna和Chandra Lagna两个视角。任何矛盾信号必须记录并解释。',
     }
 
 
@@ -3299,9 +3322,14 @@ def cmd_full_reading(args):
         except Exception as e:
             jaimini_result['chara_karaka_jh'] = {"error": str(e)}
 
-        # 使用带 Antardasha 子周期的 Chara Dasha（v4.3.0）
+        # 使用带 Antardasha 子周期的 Chara Dasha（v4.3.0；v6.0.9后标注为partial）
         jaimini_result['chara_dasha'] = calc_chara_dasha_with_antardasha(asc_idx, planet_lons, args.year, args.month)
         jaimini_result['has_antardasha'] = True
+        jaimini_result['chara_dasha_capability'] = {
+            'status': 'partial',
+            'reason': 'Round 7 vs PyJHora KN Rao matched 58/240 fields; current implementation is simplified, not full KN Rao/PVN Rao/Iranganti.',
+            'usage_rule': 'Use Chara Karaka/Karakamsha normally; use Chara Dasha timing only as low-weight corroboration.'
+        }
 
         # Karakamsha（用AK灵魂星，非DK配偶星）
         # ⚠️ 2026-05-03修正：此前错误使用DK，现已修正为AK
@@ -3467,9 +3495,21 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"vivah-saham: {e}")
 
-    # ── Step 17: Transit 多参考点分析 (v4.5.0 P1) ──
+    # ── Step 17: Transit 多参考点分析 (v6.0.10 true transit) ──
     try:
-        transit_multi = _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons)
+        transit_reference_date = getattr(args, 'transit_date', None) or getattr(args, 'today', None) or datetime.now().strftime('%Y-%m-%d')
+        ty, tm, td = map(int, transit_reference_date.split('-'))
+        transit_jd = swe.julday(ty, tm, td, 12.0 - args.tz)
+        transit_planets, transit_ayanamsa = _calc_sidereal_planets_for_jd(transit_jd, node_mode=getattr(args, 'node_mode', 'mean'), include_ketu=True)
+        report['modules']['transit_positions'] = {
+            'method': 'Swiss Ephemeris true transit positions',
+            'target_date': transit_reference_date,
+            'ayanamsa': round(transit_ayanamsa, 4) if transit_ayanamsa is not None else None,
+            'node_mode': getattr(args, 'node_mode', 'mean'),
+            'data_layer': 'true_transit_positions',
+            'planets': transit_planets,
+        }
+        transit_multi = _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons, transit_planets=transit_planets, transit_date=transit_reference_date, node_mode=getattr(args, 'node_mode', 'mean'))
         report['modules']['transit_multi_reference'] = transit_multi
     except Exception as e:
         report['errors'].append(f"transit-multi-ref: {e}")
@@ -3652,9 +3692,10 @@ def main():
     p.add_argument('--day', type=int, default=15, help='指定日期（默认15日取月中代表）')
     p.add_argument('--planet', default=None, help='目标行星，逗号分隔（默认全部，如：Jupiter,Saturn）')
     p.add_argument('--tz', type=float, default=8, help='时区（默认UTC+8）')
+    p.add_argument('--node-mode', default='mean', choices=['mean', 'true'], help='Rahu/Ketu节点口径：mean=Mean Node（默认），true=True Node')
 
     # 9. shadbala (v3.4新增)
-    p = sub.add_parser('shadbala', help='Shadbala六重力量计算')
+    p = sub.add_parser('shadbala', help='Shadbala六重力量计算（内部一致；外部绝对值校准前partial）')
     _add_chart_args(p)
 
     # 10. ashtakavarga (v3.4新增)
@@ -3701,7 +3742,7 @@ def main():
     p = sub.add_parser('jaimini', help='Jaimini系统（Chara Karaka/Dasha/Karakamsha）')
     _add_chart_args(p)
     p.add_argument('--mode', default='all', choices=['all','karaka','dasha','karakamsha'], help='分析模式')
-    p.add_argument('--antardasha', action='store_true', help='Chara Dasha含Antardasha子周期')
+    p.add_argument('--antardasha', action='store_true', help='Chara Dasha含Antardasha子周期（当前timing实现为partial）')
 
     # 18. nakshatra-adv (v3.7新增)
     p = sub.add_parser('nakshatra-adv', help='高级Nakshatra分析')
@@ -3734,6 +3775,7 @@ def main():
     _add_chart_args(p)
     p.add_argument('--age', type=int, default=None, help='当前年龄（不提供则自动计算）')
     p.add_argument('--today', default=None, help='Dasha/Sandhi参考日期 YYYY-MM-DD（默认今天）')
+    p.add_argument('--transit-date', default=None, help='Transit真实过境参考日期 YYYY-MM-DD（默认跟随--today或今天）')
 
     # 23. prashna (v3.9新增)
     p = sub.add_parser('prashna', help='Prashna问事占星（提问时刻星盘+Arudha+Sphuta+Sahams）')

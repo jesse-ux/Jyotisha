@@ -359,7 +359,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 | 子命令 | 功能 | 典型用法 |
 |--------|------|---------|
 | `aspects` | 度数精确相位系统（tight/moderate/loose + 入相位/出相位） | `aspects --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
-| `jaimini` | Jaimini完整系统（Chara Karaka 7/8 + Chara Dasha + Karakamsha）+ `--antardasha` | `jaimini --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all --antardasha` |
+| `jaimini` | Jaimini Karaka/Karakamsha；Chara Dasha timing 当前为 partial，需 KN Rao/PVN Rao 回归验证 | `jaimini --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all --antardasha` |
 | `nakshatra-adv` | 高级Nakshatra（Tara Bala + Sub-Lord KP + 兼容性） | `nakshatra-adv --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all` |
 | `argala` | Argala门闩系统（主/副Argala + Virodha反干预 + 净评分） | `argala --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
 | `tajika` | Tajika年运盘（Muntha + YearLord + Mudda Dasha + Tri-Pataka） | `tajika --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --age 33` |
@@ -369,7 +369,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 
 | 子命令 | 功能 | 典型用法 |
 |--------|------|---------|
-| `shadbala` | 六重力量计算（Sthana/Dig/Kala/Chesta/Naisargika/Drik Bala） | `shadbala --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
+| `shadbala` | 六重力量计算（内部一致；外部绝对值校准前为 partial） | `shadbala --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
 | `ashtakavarga` | 八分法计算（BPHS完整8×8矩阵，SAV=337） | `ashtakavarga --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
 | `validate` | R1-R10数学验证（SAV/BAV/延伸角/Rahu-Ketu/逆行/Dasha/完整性/度数/宫位） | `validate --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
 | `audit` | P1-P12行星审计管线（Identity/Health/Resource/SAV/Dignity/Shadbala/Aspects/Nakshatra/Yogas） | `audit --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
@@ -444,7 +444,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 
 ### 分盘与力量评估（7个）
 30. **ashtakavarga-complete-system.md**：Ashtakavarga完整体系（SAV=337）
-31. **shadbala-complete-methodology.md**：Shadbala完整计算方法论
+31. **shadbala-complete-methodology.md**：Shadbala计算方法论（当前计算层 partial，内部一致但外部绝对值校准待完成）
 32. **planetary-strength-quick-ref.md**：行星力量速查表
 33. **varga-system-quick-reference.md**：综合九层分盘体系对照手册
 34. **varga-divisional-charts-quick-reference.md**：分盘快速参考

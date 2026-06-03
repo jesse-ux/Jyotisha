@@ -1,15 +1,17 @@
-# Shadbala完整计算方法论
+# Shadbala计算方法论
 
 **创建日期**：2026-04-23
-**版本**：v2.0.0
+**版本**：v2.1.0-capability-partial
 **优先级**：⭐⭐⭐⭐⭐ 行星力量量化基础
 
-> **来源标签**: 【混合·古典+传统+现代】 — Shadbala六重力量完整体系（BPHS计算+现代解读）
+> **来源标签**: 【混合·古典+传统+现代】 — Shadbala六重力量知识体系；当前 `scripts/shadbala.py` 为内部一致的近似计算层，外部绝对值校准前状态为 `partial`。
 ---
 
 ## 一、Shadbala概述
 
-**Shad** = 六，**Bala** = 力量。Shadbala是Parashara系统中量化行星力量的完整方法，由六种力量组成。
+**Shad** = 六，**Bala** = 力量。Shadbala是Parashara系统中量化行星力量的方法，由六种力量组成。
+
+> **v6.0.11 工程状态提醒**：第九轮内部不变量 benchmark 已通过 1200/1200，证明当前输出结构、总分聚合、Rupa/Virupa 换算、排名和 full-reading 一致性可靠；但源码仍有 Nathonnata、Saptavargaja、Chesta、Drik 等简化项。因此当前分数只能作为内部一致的相对强弱参考，不得声称已经完成 JHora/公开书例级别的传统绝对值校准。
 
 ### 综合评分体系
 

@@ -1,5 +1,80 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.11-shadbala-capability-downgrade（2026-06-04）— Shadbala 能力标注降级
+
+> **触发原因**：第九轮 Shadbala benchmark 证明当前实现内部一致，但源码仍包含多处简化公式，尚未完成 JHora/公开书例级别的外部绝对值校准，不应继续标记为完整 `covered`。
+
+### 验证结果
+
+- 新增 benchmark 脚本 `jyotish_benchmark/scripts/run_shadbala_invariants.py`。
+- 使用 10 个公开/虚构 smoke case 验证 `shadbala` 子命令与 `full-reading.modules.shadbala`。
+- 第九轮结果：1200/1200 内部不变量通过，0 mismatch。
+- 通过项包括：结构完整性、六重力量组件范围、总分聚合、Virupa/Rupa 换算、Ishta Bala 百分比、排名、full-reading 一致性。
+
+### 能力标注调整
+
+- `references/technique-capability-matrix.md` 中 Shadbala：`covered` → `partial`。
+- `references/technique_registry.json` 中 `shadbala.status`：`covered` → `partial`，并新增 limitation。
+- `SKILL.md`、`README.md`、`references/quick-reference-guide.md` 降低措辞：Shadbala 可作为内部一致的相对强弱参考，但外部绝对值校准前必须加置信度上限。
+
+### 当前限制
+
+- `scripts/shadbala.py` 仍包含简化项：Nathonnata Bala 二值化、部分 Saptavargaja 子分盘近似、Chesta Bala 速度分档近似、Drik Bala 简化相位权重。
+- 后续若接入 JHora/公开书例完整 Shadbala 表并通过对标，才可恢复 `covered`。
+
+---
+
+## v6.0.10-true-transit-full-reading（2026-06-03）— full-reading 真实 Transit 链路修复
+
+> **触发原因**：可信度审计发现 `full-reading.modules.transit_multi_reference` 过去复用本命行星位置来做多参考点 Transit 分析，容易把 natal positions 误当 transit positions，影响未来应期判断。
+
+### 修复内容
+
+- `scripts/jyotish_engine.py` 新增 `_calc_sidereal_planets_for_jd()` 与节点口径 helper，统一用 Swiss Ephemeris 计算指定 Julian Day 的真实过境行星位置。
+- `full-reading` 新增 `--transit-date YYYY-MM-DD` 参数；若未提供，则跟随 `--today`，再否则使用当前日期。
+- `full-reading.modules.transit_positions` 新增真实过境输出：`data_layer: true_transit_positions`、`target_date`、`node_mode`、`planets`。
+- `full-reading.modules.transit_multi_reference` 改为读取真实 `transit_positions.planets`，并输出 `data_layer: true_transit_positions`，不再静默复用本命行星位置。
+- `transit` 子命令补充 `--node-mode mean|true`，与出生盘节点口径冻结保持一致。
+
+### 验证
+
+- 新增 benchmark 脚本 `jyotish_benchmark/scripts/run_transit_true_compare.py`，使用10个公开/虚构 smoke case 对比 full-reading Transit 输出与 Swiss Ephemeris direct。
+- 第八轮结果：340/340 字段匹配，0 mismatch；报告 `jyotish_benchmark/outputs/jyotish_benchmark_round8_transit_true_compare.md`。
+
+---
+
+## v6.0.9-chara-dasha-capability-downgrade（2026-06-03）— Chara Dasha 能力标注降级
+
+> **触发原因**：第七轮 Chara Dasha benchmark 对齐 PyJHora KN Rao method 后，发现当前 `calc_chara_dasha()` 与传统 KN Rao 路径差异巨大，不应继续标记为 `covered` 的强计算模块。
+
+### 修正内容
+
+- `references/technique-capability-matrix.md` 将 Chara Dasha / Jaimini 从 `covered` 降级为 `partial`。
+- `references/technique_registry.json` 将 `jaimini_chara_dasha.status` 改为 `partial`，并新增 benchmark limitation。
+- `SKILL.md` 与 `references/quick-reference-guide.md` 降低 `jaimini` 子命令措辞：Karaka/Karakamsha 可用，Chara Dasha timing 当前为 partial。
+- 第七轮 benchmark 结论冻结：sequence sign 50/120（41.67%），duration 8/120（6.67%），总体 58/240（24.17%）。
+
+### 使用约束
+
+- Chara Karaka、AK/AmK、Karakamsha 仍可用于静态象征层和职业/灵魂方向判断。
+- Chara Dasha 时间线不得单独作为高置信度应期依据；必须由 Vimshottari、Dasha Sandhi、Transit、D10/A10、Ashtakavarga 等独立层交叉确认。
+- 若未来实装 KN Rao / PVN Rao / Iranganti method 并通过回归，才可恢复 `covered`。
+
+---
+
+## v6.0.8-ashtakavarga-pvr-calibration（2026-06-03）— Ashtakavarga 贡献表书例校准
+
+> **触发原因**：第六轮 Ashtakavarga benchmark 发现当前 skill 与 PyJHora 的 BAV/SAV 输出存在系统性差异；进一步使用 PyJHora `pvr_tests.py` 中公开 PVR 书例 expected arrays 仲裁后，确认当前 Moon/Venus 的 7 个贡献表项需要校准。
+
+### 修复内容
+
+- `scripts/ashtakavarga.py` 升级到 v2.1，校准 Moon BAV 的 Moon/Mars/Jupiter/Lagna 贡献项，以及 Venus BAV 的 Mars/Mercury/Lagna 贡献项。
+- 保持 Ashtakavarga 固定不变量：7行星 SAV=337，含 Lagna full SAV=386。
+- `SKILL.md` 新增 Ashtakavarga 口径冻结规则：默认使用 BPHS/PVR 书例校准口径，benchmark 不一致时先比较贡献表项与总量不变量。
+- 第六轮公开书例仲裁显示：校准前当前 skill 对 PVR 书例 BAV/SAV 匹配 181/216，PyJHora 216/216；校准后应与 PyJHora/PVR 书例对齐。
+
+---
+
 ## v6.0.7-node-mode-arbitration（2026-06-03）— Rahu/Ketu 节点口径仲裁与参数冻结
 
 > **触发原因**：可信度 benchmark 第四轮确认第三轮 PyJHora 中 Rahu/Ketu 的剩余差异主要来自 Mean Node / True Node 口径差异，而非 D9/D10 计算 bug。
@@ -1150,7 +1225,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
 
 ## v3.4.0（2026-04-24）— 高级计算引擎 + Hermes集成 + EventPredictionModel
 - **新增 `scripts/shadbala.py`**：Shadbala六重力量计算模块
-  - 完整实现Parashara系统六种Bala：Sthana（位置）、Dig（方向）、Kala（时间）、Chesta（运动）、Naisargika（天然）、Drik（相位）
+  - v6.0.11复核：当前为内部一致的六力近似实现，含 Sthana（位置）、Dig（方向）、Kala（时间）、Chesta（运动）、Naisargika（天然）、Drik（相位）；外部绝对值校准前不再称为完整 Parashara 实现
   - 输出每颗行星的六维得分、总Virupas/Rupas、Ishta Bala百分比、强度等级（极强/强/充足/略弱/弱/极弱）
   - 行星力量排名
 - 私有验证案例/用户反馈细节已移除（隐私保护）。

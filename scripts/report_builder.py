@@ -317,7 +317,7 @@ def build_cover(name, lagna, gender, status, pkg, desc, lang="cn"):
     <div><dt>{L[4]}</dt><dd>Parashari Jyotish | KN Rao School</dd></div>
     <div><dt>{L[5]}</dt><dd>Swiss Ephemeris | Lahiri Ayanamsha</dd></div>
     <div><dt>{L[6]}</dt><dd>Vimsottari (Mahadasha + Antardasha)</dd></div>
-    <div><dt>{L[7]}</dt><dd>Shadbala, Ashtakavarga (SAV/BAV), D9 Navamsha</dd></div>
+    <div><dt>{L[7]}</dt><dd>Shadbala (relative/partial), Ashtakavarga v2.1 (SAV/BAV), D9 Navamsha</dd></div>
   </div></div>
 </div>"""
 

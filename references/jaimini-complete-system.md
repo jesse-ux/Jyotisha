@@ -3,7 +3,7 @@
 **创建日期**：2026-04-22
 **来源**：Bavishyavani.in、Vedicmarga.com
 
-> **来源标签**: 【传统·现代大师】 — Jaimini完整系统（Chara Karaka+Chara Dasha+Karakamsha）
+> **来源标签**: 【传统·现代大师】 — Jaimini知识层完整；当前计算层 Karaka/Karakamsha 可用，Chara Dasha timing 为 partial，需 KN Rao/PVN Rao/Iranganti 回归验证。
 ---
 
 ## 一、Jaimini vs Parashari 核心区别

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Ashtakavarga 计算模块 v2.0（八分法）
-基于 Brihat Parashara Hora Shastra (BPHS) 完整标准表
+Ashtakavarga 计算模块 v2.1（八分法）
+基于 Brihat Parashara Hora Shastra (BPHS) 完整标准表，并经 PVR/PyJHora 书例校准
 
 核心修正（v2.0 vs v1.0）：
 - v1.0: BAV_BASE 只有自贡献 + 少量跨源贡献 → SAV=94 ❌
@@ -14,9 +14,9 @@ Ashtakavarga 计算模块 v2.0（八分法）
 - SAV = 7 颗行星 BAV 之和（Lagna 自身 BAV 单独展示，不计入 SAV）
 - SAV 总和 = 337（宇宙常数）
 
-BPHS 校正：
-- 月亮 BAV → 木星贡献：1,4,7,8,10,11（6宫，不含12）→ 总49
-- 金星 BAV → 水星贡献：3,5,6,9,11,12（6宫，含12）→ 总52
+PVR/PyJHora 书例校准（v2.1）：
+- 第六轮 benchmark 使用 PyJHora `pvr_tests.py` 中公开书例仲裁，修正 Moon/Venus 7 个贡献表项。
+- 固定不变量保持：7行星 SAV=337，含 Lagna full SAV=386。
 """
 
 from typing import Dict, List, Tuple
@@ -44,17 +44,17 @@ _SUN_BAV = {
 }
 
 # --- 月亮 BAV（总49） ---
-# 来源: Sun(6) + Moon(6) + Mars(7) + Mercury(8) + Jupiter(6) + Venus(7) + Saturn(4) + Lagna(5) = 49
-# BPHS校正：木星贡献为 1,4,7,8,10,11（6宫），非 1,4,7,8,10,11,12（7宫）
+# 来源: Sun(6) + Moon(7) + Mars(6) + Mercury(8) + Jupiter(7) + Venus(7) + Saturn(4) + Lagna(4) = 49
+# v2.1: PVR/PyJHora 书例校准 Moon/Mars/Jupiter/Lagna 贡献项。
 _MOON_BAV = {
     'Sun':     [3, 6, 7, 8, 10, 11],
-    'Moon':    [1, 3, 6, 7, 10, 11],
-    'Mars':    [2, 3, 5, 6, 9, 10, 11],
+    'Moon':    [1, 3, 6, 7, 9, 10, 11],
+    'Mars':    [2, 3, 5, 6, 10, 11],
     'Mercury': [1, 3, 4, 5, 7, 8, 10, 11],
-    'Jupiter': [1, 4, 7, 8, 10, 11],       # BPHS校正：不含12
+    'Jupiter': [1, 2, 4, 7, 8, 10, 11],
     'Venus':   [3, 4, 5, 7, 9, 10, 11],
     'Saturn':  [3, 5, 6, 11],
-    'Lagna':   [3, 6, 10, 11, 12],
+    'Lagna':   [3, 6, 10, 11],
 }
 
 # --- 火星 BAV（总39） ---
@@ -97,17 +97,17 @@ _JUPITER_BAV = {
 }
 
 # --- 金星 BAV（总52） ---
-# 来源: Sun(3) + Moon(9) + Mars(6) + Mercury(6) + Jupiter(5) + Venus(9) + Saturn(7) + Lagna(7) = 52
-# BPHS校正：水星贡献为 3,5,6,9,11,12（6宫，含12），非 3,5,6,9,11（5宫）
+# 来源: Sun(3) + Moon(9) + Mars(6) + Mercury(5) + Jupiter(5) + Venus(9) + Saturn(7) + Lagna(8) = 52
+# v2.1: PVR/PyJHora 书例校准 Mars/Mercury/Lagna 贡献项。
 _VENUS_BAV = {
     'Sun':     [8, 11, 12],
     'Moon':    [1, 2, 3, 4, 5, 8, 9, 11, 12],
-    'Mars':    [3, 5, 6, 9, 11, 12],
-    'Mercury': [3, 5, 6, 9, 11, 12],       # BPHS校正：含12
+    'Mars':    [3, 4, 6, 9, 11, 12],
+    'Mercury': [3, 5, 6, 9, 11],
     'Jupiter': [5, 8, 9, 10, 11],
     'Venus':   [1, 2, 3, 4, 5, 8, 9, 10, 11],
     'Saturn':  [3, 4, 5, 8, 9, 10, 11],
-    'Lagna':   [1, 2, 3, 4, 5, 8, 9],
+    'Lagna':   [1, 2, 3, 4, 5, 8, 9, 11],
 }
 
 # --- 土星 BAV（总39） ---
@@ -295,8 +295,8 @@ def calc_ashtakavarga(planets: Dict, asc_sign_idx: int) -> Dict:
         })
 
     return {
-        'method': 'Ashtakavarga八分法（BPHS标准v2.0）',
-        'version': '2.0',
+        'method': 'Ashtakavarga八分法（BPHS/PVR书例校准v2.1）',
+        'version': '2.1',
         'bav': bav_results,
         'sav': {
             'scores': {SIGNS[i]: sav[i] for i in range(12)},

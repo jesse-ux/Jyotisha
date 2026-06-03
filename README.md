@@ -1,6 +1,6 @@
 # 🪐 Jyotish Vedic Astrology Engine
 
-**印度占星（Jyotish）专业解盘与推运系统 v6.0.0**
+**印度占星（Jyotish）专业解盘与推运系统 v6.0.11**
 
 基于 Swiss Ephemeris 天文计算库的完整吠陀占星引擎，覆盖从排盘计算到精确推运应期预测的全链路能力。可作为 [WorkBuddy](https://www.codebuddy.cn/) Skill 安装，也可以作为独立 Python CLI 工具使用。
 
@@ -10,12 +10,12 @@
 - **🔮 全自动综合解盘**：`full-reading` 一键串联 13 个计算模块
 - **📐 BPHS 十六分盘**：D2-D60 全部 16 种分盘精确计算
 - **👁️ 精确相位系统**：度数级 Drishti 相位分析（tight/moderate/loose）
-- **📿 Jaimini 完整系统**：Chara Karaka 7/8 + Chara Dasha + Karakamsha(AK)
+- **📿 Jaimini 系统**：Chara Karaka 7/8 + Karakamsha(AK)；Chara Dasha timing 当前为 partial
 - **🌟 高级 Nakshatra**：Tara Bala + Sub-Lord KP 系统 + Nakshatra三计数体系
 - **🚪 Argala 门闩系统**：行星干预 + Virodha 反干预
 - **🎂 Tajika 年运盘**：Muntha + YearLord + Mudda Dasha + Tri-Pataka三旗
 - **💑 合盘分析**：Ashta Koota 36 分制 + Mangal Dosha + Papasamya
-- **💪 Shadbala 六重力量**：完整的 Parashara 系统（2026-05-03 Kendra/Ojayugma修正）
+- **💪 Shadbala 六重力量**：内部一致的六力参考（外部绝对值校准前为 partial；2026-06-04 第九轮不变量 1200/1200 通过）
 - **🎯 Ashtakavarga 八分法**：BPHS 完整表（SAV=337）
 - **✅ R1-R10 数学验证** + **P1-P12 行星审计管线**
 - **🔒 MEVG 强制外部验证**：v4.2.0 新增，所有解读结论必须外部验证（禁止仅凭AI训练记忆）
@@ -107,7 +107,7 @@ python3 scripts/jyotish_engine.py aspects \
   --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
   --lat 39.9 --lon 116.4 --tz 8
 
-# Jaimini 系统（Chara Karaka + Chara Dasha + Karakamsha）
+# Jaimini 系统（Chara Karaka + Karakamsha；Chara Dasha timing 当前 partial）
 python3 scripts/jyotish_engine.py jaimini \
   --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
   --lat 39.9 --lon 116.4 --tz 8 --mode all
@@ -178,12 +178,12 @@ python3 scripts/jyotish_engine.py report ./report_folder \
 | `varga` | 分盘计算（D9/D10） | `--year/month/day/hour/minute/lat/lon/tz` |
 | `varga-full` | BPHS 十六分盘（D2-D60） | `--divisions D9,D60` |
 | `aspects` | 度数精确相位（Drishti） | 出生信息 |
-| `jaimini` | Jaimini 完整系统 | `--mode all` |
+| `jaimini` | Jaimini Karaka/Karakamsha；Chara Dasha timing partial | `--mode all` |
 | `nakshatra-adv` | 高级 Nakshatra 分析 | `--mode all` |
 | `argala` | Argala 门闩系统 | 出生信息 |
 | `tajika` | Tajika 年运盘 | `--age 33` |
 | `synastry` | 合盘分析 | `--moon1/2 --mars1/2` |
-| `shadbala` | 六重力量计算 | 出生信息 |
+| `shadbala` | 六重力量计算（内部一致；外部绝对值校准前 partial） | 出生信息 |
 | `ashtakavarga` | 八分法（SAV=337） | 出生信息 |
 | `validate` | R1-R10 数学验证 | 出生信息 |
 | `audit` | P1-P12 行星审计 | 出生信息 |

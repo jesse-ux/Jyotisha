@@ -1,6 +1,6 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.0.7
+version: 6.0.11
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga、出生时间矫正、PDF星盘、读取PDF、分析PDF星盘、现代解读、误判纠错、Varga分盘、综合分析、过境分析、合盘、婚姻匹配、年运盘、Prashna、Argala、Jaimini、KP系统、Shadbala、Ashtakavarga、HTML报告、深度解盘。
 ---
 
@@ -10,7 +10,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.7-node-mode-arbitration | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.0.11-shadbala-capability-downgrade | **详细变更**：`CHANGELOG.md`
 
 ---
 
@@ -97,6 +97,41 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 - PyJHora 4.8.6 的 `rasi_chart()` 默认使用 True Node；第三轮 benchmark 的 Rahu/Ketu 差异已由第四轮仲裁确认为 Mean/True Node 口径差异，不应再误判为 D9/D10 计算 bug。
 - 输出 `birth_info.node_mode` 与 `node_mode_note` 必须保留，作为参数冻结证据。
 
+### Ashtakavarga 口径冻结（v6.0.8-av-calibration）
+
+**Ashtakavarga 默认使用 BPHS/PVR 书例校准口径，必须保留 SAV=337 与 full SAV=386 不变量。**
+
+- `scripts/ashtakavarga.py` 当前为 v2.1：经第六轮 PyJHora/PVR 公开书例仲裁，校准 Moon/Venus 的 7 个贡献表项。
+- 输出 `method` 应显示 `Ashtakavarga八分法（BPHS/PVR书例校准v2.1）`。
+- benchmark 若与其他软件不一致，先比较贡献表项和 SAV 总量，不得直接把口径差异判为运行 bug。
+
+### Chara Dasha 能力降级（v6.0.9-chara-dasha）
+
+**当前 Chara Dasha 不得作为高置信度应期模块单独使用。**
+
+- 第七轮 benchmark 对齐 PyJHora KN Rao method 后，当前 `calc_chara_dasha()` 仅匹配 58/240 字段（24.17%）。
+- 根因：当前实现为简化版（上升顺/逆 + `12 - sign planet count`），不是完整 KN Rao / PVN Rao / Iranganti 传统算法。
+- `jaimini` 输出中的 Chara Karaka、AK/AmK、Karakamsha 可继续作为 Jaimini 静态/象征层使用；Chara Dasha 时间线必须标注为 `partial`。
+- 涉及事业/婚恋/事件应期时，若使用 Chara Dasha，只能作为低权重辅助，并必须由 Vimshottari、Dasha Sandhi、Transit、D10/A10、Ashtakavarga 等独立层交叉确认。
+
+### Transit 真实过境冻结（v6.0.10-true-transit）
+
+**full-reading 中的 Transit 多参考点分析必须使用真实过境行星位置，不得复用本命行星位置。**
+
+- `modules.transit_positions` 必须输出 `data_layer: true_transit_positions`、`target_date`、`node_mode` 和 Swiss Ephemeris 计算的过境行星位置。
+- `modules.transit_multi_reference` 必须读取 `transit_positions.planets`，并输出同样的 `data_layer: true_transit_positions`。
+- `--transit-date YYYY-MM-DD` 可显式指定过境日期；若未提供，则跟随 `--today`，再否则使用当前日期。
+- 第八轮 benchmark 已用 10 个公开/虚构 smoke case 对齐 Swiss Ephemeris：340/340 字段匹配，0 mismatch。
+
+### Shadbala 能力降级（v6.0.11-shadbala）
+
+**当前 Shadbala 可作为内部一致的相对强弱参考，不得声称已完成外部绝对值校准。**
+
+- 第九轮 benchmark 使用 10 个公开/虚构 smoke case 验证 `shadbala` 子命令与 `full-reading.modules.shadbala`：1200/1200 内部不变量通过。
+- 通过项包括：结构完整性、六重力量组件范围、总分聚合、Virupa/Rupa 换算、Ishta Bala 百分比、排名、full-reading 一致性。
+- 但 `scripts/shadbala.py` 仍存在简化项：Nathonnata Bala 二值化、部分 Saptavargaja 子分盘近似、Chesta Bala 速度分档近似、Drik Bala 简化相位权重。
+- 因此 `technique_registry.json` 中 Shadbala 状态为 `partial`：可用于相对强弱排序和内部校验；涉及精确力量断语时必须加置信度上限，直到接入 JHora/公开书例等完整外部绝对值对标。
+
 ---
 
 ## 核心能力速查
@@ -143,13 +178,13 @@ $PYTHON $SCRIPT <子命令> [参数]
 | `celebrity` | 名人案例查询 |
 | `db-stats` | 验证数据库统计 |
 | `transit` | 行星过境查询 |
-| `shadbala` | 六重力量计算 |
+| `shadbala` | 六重力量计算（内部一致；外部绝对值校准前为 partial） |
 | `ashtakavarga` | 八分法计算（SAV=337） |
 | `memory` | Hermes记忆系统 |
 | `validate` | R1-R10数学验证 |
 | `audit` | P1-P12行星审计管线 |
 | `aspects` | 度数精确相位系统 |
-| `jaimini` | Jaimini完整系统+`--antardasha` |
+| `jaimini` | Jaimini Karaka/Karakamsha；Chara Dasha 当前为 partial，需 KN Rao/PVN Rao 回归 |
 | `nakshatra-adv` | 高级Nakshatra（Tara Bala+Sub-Lord） |
 | `argala` | Argala门闩系统 |
 | `tajika` | Tajika年运盘（Muntha+YearLord+Mudda Dasha） |
@@ -195,7 +230,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 | Transit Actionable | v4.1.0 | 预测必须输出时间段+行动+置信度 | `transit-actionable-output-guide.md` |
 | 过境多参考点 | v1.9.0 | Lagna+Chandra Lagna双参考点(强制) | `transit-multi-reference-guide.md` |
 | Ketu双属性 | v2.0.0 | 必须同时评估"放手"和"突破" | `ketu-dual-nature-guide.md` |
-| Shadbala完整 | v2.0.0 | 六种力量全部评估 | `shadbala-complete-methodology.md` |
+| Shadbala评估 | v6.0.11 | 六种力量内部一致评估；外部绝对值校准前为 partial | `shadbala-complete-methodology.md` |
 | Yoga Phala Timing | v2.1.0 | 识别Yoga后必须预测何时发生 | `yoga-phala-timing-guide.md` |
 | 逆行/燃烧/战争 | v2.1.0 | 每颗行星检查三重叠加 | `retrograde-combustion-war-guide.md` |
 | 精准方法论 | v3.12.1 | PACDARES+九层+L3矛盾检查 | `precision-reading-methodology.md` |
@@ -210,13 +245,13 @@ $PYTHON $SCRIPT <子命令> [参数]
 - [ ] 静态星盘分析（行星配置、Yoga、Nakshatra、宫位）
 - [ ] Argala检查（2/4/5/8/11宫干预+Virodha）
 - [ ] 逆行/燃烧/行星战争检查（三重叠加）
-- [ ] Shadbala评估（六种力量完整评估）
+- [ ] Shadbala评估（六种力量内部一致评估；外部绝对值校准前 partial）
 - [ ] Ashtakavarga评估（BAV+SAV聚合校验337点）
 - [ ] Ketu双重属性检查
 - [ ] **MEVG-动态门控**：Transit/Dasha/天文现象必须验证
 - [ ] Dasha推运（大运+小运+Pratyantar）
 - [ ] Dasa Convergence三系统交叉验证
-- [ ] Jaimini分析（Karaka+Chara Dasha）
+- [ ] Jaimini分析（Karaka/Karakamsha；Chara Dasha 当前 partial，须交叉确认）
 - [ ] KP系统分析（Significator+Sub-Lord）
 - [ ] Transit分析（多参考点强制）
 - [ ] **Transit Actionable Output**（时间段+行动+置信度+案例检索）
@@ -264,9 +299,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.0.7-node-mode-arbitration
+**版本**：v6.0.11-shadbala-capability-downgrade
 **创建日期**：2026-04-20
-**最后更新**：2026-06-03（v6.0.7 新增 Rahu/Ketu Mean/True Node 口径冻结与 `--node-mode` 参数）
+**最后更新**：2026-06-04（v6.0.11 将 Shadbala 降级为 partial：内部一致通过，外部绝对值校准待完成）
 
 ---
 

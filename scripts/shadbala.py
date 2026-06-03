@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Shadbala 计算模块（六重力量）
-基于 Parashara 系统，量化行星力量
+内部一致的 Parashara-inspired 相对强弱参考；外部绝对值校准前状态为 partial
 
 六种力量：
 1. Sthana Bala（位置力量）
@@ -90,7 +90,7 @@ VIRUPAS_PER_RUPA = 60.0
 def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
                   sun_lon: float, moon_lon: float) -> Dict:
     """
-    计算完整 Shadbala
+    计算 Shadbala 相对强弱参考（内部一致；外部绝对值校准前 partial）
 
     Args:
         planets: 行星数据 dict，每颗行星需要 {sign, degree, house, retrograde, speed}
@@ -100,7 +100,7 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
         moon_lon: 月亮恒星黄道经度
 
     Returns:
-        完整的 Shadbala 计算结果
+        Shadbala 计算结果（内部一致的相对强弱参考）
     """
     results = {}
     is_night = birth_hour < 6.0 or birth_hour >= 18.0
@@ -174,7 +174,7 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
         results[name]['rank'] = i + 1
 
     return {
-        'method': 'Shadbala六重力量（Parashara系统）',
+        'method': 'Shadbala六重力量（内部一致相对强弱；外部绝对值校准前partial）',
         'is_night_birth': is_night,
         'sun_uttarayana': sun_northern,
         'planets': results,
