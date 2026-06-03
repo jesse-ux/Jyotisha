@@ -1,6 +1,6 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.0.6
+version: 6.0.7
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga、出生时间矫正、PDF星盘、读取PDF、分析PDF星盘、现代解读、误判纠错、Varga分盘、综合分析、过境分析、合盘、婚姻匹配、年运盘、Prashna、Argala、Jaimini、KP系统、Shadbala、Ashtakavarga、HTML报告、深度解盘。
 ---
 
@@ -10,7 +10,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.6-d10-benchmark-fix | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.0.7-node-mode-arbitration | **详细变更**：`CHANGELOG.md`
 
 ---
 
@@ -87,6 +87,15 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 3. **置信度** [A]=已验证 / [B]=高概率(3+维度) / [C]=推断(单一维度)
 
 → 完整规范：`references/transit-actionable-output-guide.md`
+
+### Rahu/Ketu 节点口径冻结（v6.0.7-node-mode）
+
+**所有 benchmark 与解盘输出必须显式声明 Rahu/Ketu 使用 Mean Node 还是 True Node。**
+
+- 当前 skill 默认：`--node-mode mean`（Swiss Ephemeris Mean Node）。
+- 可选：`--node-mode true`（Swiss Ephemeris True Node，用于对齐 PyJHora 默认口径）。
+- PyJHora 4.8.6 的 `rasi_chart()` 默认使用 True Node；第三轮 benchmark 的 Rahu/Ketu 差异已由第四轮仲裁确认为 Mean/True Node 口径差异，不应再误判为 D9/D10 计算 bug。
+- 输出 `birth_info.node_mode` 与 `node_mode_note` 必须保留，作为参数冻结证据。
 
 ---
 
@@ -255,9 +264,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.0.6-d10-benchmark-fix
+**版本**：v6.0.7-node-mode-arbitration
 **创建日期**：2026-04-20
-**最后更新**：2026-06-03（v6.0.6 修正 D10 偶数星座起算与非D9分盘度数缩放口径）
+**最后更新**：2026-06-03（v6.0.7 新增 Rahu/Ketu Mean/True Node 口径冻结与 `--node-mode` 参数）
 
 ---
 

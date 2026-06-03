@@ -1,5 +1,18 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.7-node-mode-arbitration（2026-06-03）— Rahu/Ketu 节点口径仲裁与参数冻结
+
+> **触发原因**：可信度 benchmark 第四轮确认第三轮 PyJHora 中 Rahu/Ketu 的剩余差异主要来自 Mean Node / True Node 口径差异，而非 D9/D10 计算 bug。
+
+### 修复内容
+
+- `scripts/jyotish_engine.py` 的出生数据类子命令新增 `--node-mode mean|true` 参数，默认 `mean`，可选 `true` 用于对齐 PyJHora 默认口径。
+- `compute_chart_data()` 输出 `birth_info.node_mode` 与 `node_mode_note`，把 Rahu/Ketu 节点模式纳入参数冻结证据。
+- `SKILL.md` 新增“Rahu/Ketu 节点口径冻结”强制规则，要求 benchmark 与解盘输出显式声明 Mean/True Node。
+- 第四轮报告确认：当前 skill vs Swiss Mean Node 80/80 匹配；vs Swiss True Node 与 PyJHora 默认均为 54/80，差异模式完全一致。
+
+---
+
 ## v6.0.6-d10-benchmark-fix（2026-06-03）— PyJHora benchmark 暴露的 D10 口径修复
 
 > **触发原因**：可信度 benchmark 第三轮接入 PyJHora 后，D10 出现系统性错配；交叉查证 D10 规则为“奇数星座从本宫起算，偶数星座从第九宫起算（含本宫计数）”。

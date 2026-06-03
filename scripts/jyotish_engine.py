@@ -242,7 +242,8 @@ def _get_dignity_level(planet, sign, deg_in_sign=None):
         return 'ENEMY'
     return 'NEUTRAL'
 PLANET_CN = {"Ketu": "南交点Ketu", "Venus": "金星Venus", "Sun": "太阳Sun", "Moon": "月亮Moon", "Mars": "火星Mars", "Rahu": "北交点Rahu", "Jupiter": "木星Jupiter", "Saturn": "土星Saturn", "Mercury": "水星Mercury"}
-PLANETS_SWE = {'Sun': swe.SUN, 'Moon': swe.MOON, 'Mars': swe.MARS, 'Mercury': swe.MERCURY, 'Jupiter': swe.JUPITER, 'Venus': swe.VENUS, 'Saturn': swe.SATURN, 'Rahu': swe.MEAN_NODE} if HAS_SWE else {}
+BASE_PLANETS_SWE = {'Sun': swe.SUN, 'Moon': swe.MOON, 'Mars': swe.MARS, 'Mercury': swe.MERCURY, 'Jupiter': swe.JUPITER, 'Venus': swe.VENUS, 'Saturn': swe.SATURN} if HAS_SWE else {}
+PLANETS_SWE = {**BASE_PLANETS_SWE, 'Rahu': swe.MEAN_NODE} if HAS_SWE else {}
 
 
 def output_json(data):
@@ -260,13 +261,14 @@ def _add_chart_args(p):
     p.add_argument('--lat', type=float, required=True)
     p.add_argument('--lon', type=float, required=True)
     p.add_argument('--tz', type=float, default=0)
+    p.add_argument('--node-mode', default='mean', choices=['mean', 'true'], help='Rahu/Ketu节点口径：mean=Mean Node（默认，JHora常用/Swiss direct baseline），true=True Node（PyJHora默认）')
 
 
 # ============================================================================
 # 公共星盘计算（供 chart/shadbala/ashtakavarga 共用，v3.4提取）
 # ============================================================================
-def compute_chart_data(year, month, day, hour, minute, lat, lon, tz):
-    """计算星盘核心数据，返回 (result_dict, asc_idx, jd, ayanamsa)"""
+def compute_chart_data(year, month, day, hour, minute, lat, lon, tz, node_mode='mean'):
+    """计算星盘核心数据，返回 (result_dict, asc_idx, jd, ayanamsa)。node_mode: mean|true。"""
     if not HAS_SWE:
         return None, None, None, None
     swe.set_ephe_path('')
@@ -274,10 +276,15 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz):
     jd = swe.julday(year, month, day, hour_decimal)
     ayanamsa = swe.get_ayanamsa(jd)
 
+    node_mode = (node_mode or 'mean').lower()
+    if node_mode not in ('mean', 'true'):
+        node_mode = 'mean'
+    node_pid = swe.TRUE_NODE if node_mode == 'true' else swe.MEAN_NODE
     result = {"birth_info": {
         "date": f"{year}-{month:02d}-{day:02d}", "time": f"{hour:02d}:{minute:02d}",
         "tz": f"UTC{'+' if tz >= 0 else ''}{tz}", "lat": lat, "lon": lon,
-        "julian_day": round(jd, 6), "ayanamsa": round(ayanamsa, 4)
+        "julian_day": round(jd, 6), "ayanamsa": round(ayanamsa, 4),
+        "node_mode": node_mode, "node_mode_note": "mean=Mean Node; true=True Node. PyJHora默认true，本skill默认mean。"
     }, "ascendant": None, "planets": {}, "houses": {}}
 
     asc_lon, _ = swe.houses(jd, lat, lon, b'A')
@@ -296,7 +303,8 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz):
             "lord": SIGN_LORDS[SIGNS[si]]}
 
     nak_span = 360.0 / 27
-    for pname, pid in PLANETS_SWE.items():
+    planets_swe = {**BASE_PLANETS_SWE, 'Rahu': node_pid}
+    for pname, pid in planets_swe.items():
         try:
             pos, _ = swe.calc_ut(jd, pid)
             lon_p = (pos[0] - ayanamsa) % 360; lat_p = pos[1]; spd = pos[3]
@@ -336,7 +344,7 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz):
 # 1. 星盘计算
 # ============================================================================
 def cmd_chart(args):
-    result, asc_idx, jd, ayanamsa = compute_chart_data(args.year, args.month, args.day, args.hour, args.minute, args.lat, args.lon, args.tz)
+    result, asc_idx, jd, ayanamsa = compute_chart_data(args.year, args.month, args.day, args.hour, args.minute, args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if result is None:
         return {"error": "swisseph未安装"}
     # v3.5: --validate 触发 R1-R10 校验
@@ -872,7 +880,7 @@ def cmd_predict(args):
     if getattr(args, 'past_verify', False) and args.year:
         chart, asc_idx, jd, ayanamsa = compute_chart_data(
             args.year, args.month, args.day, args.hour, args.minute,
-            args.lat, args.lon, args.tz)
+            args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
         if chart is None:
             return {"error": "swisseph未安装"}
         return _past_event_verify(chart, asc_idx, args)
@@ -1435,7 +1443,7 @@ def cmd_double_transit_pac(args):
     # 1. 计算本命星盘
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -1679,7 +1687,7 @@ def cmd_transit_ll7l(args):
     """Transit LL/7L 连接 + 互换检测"""
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -1764,7 +1772,7 @@ def cmd_planetary_congregation(args):
     """行星聚集检测"""
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -1844,7 +1852,7 @@ def cmd_vivah_saham(args):
     """Vivah Saham 计算 + Transit 激活"""
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -1908,7 +1916,7 @@ def cmd_vivah_saham(args):
 def cmd_shadbala(args):
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -1930,7 +1938,7 @@ def cmd_shadbala(args):
 def cmd_ashtakavarga(args):
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -1990,7 +1998,7 @@ def cmd_memory(args):
 def cmd_validate(args):
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -2119,7 +2127,7 @@ def cmd_audit(args):
     """P1-P12 行星审计：调用 chart→shadbala→ashtakavarga→yoga，输出统一审计报告"""
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -2384,7 +2392,7 @@ def cmd_report(args):
 def cmd_varga_full(args):
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -2405,7 +2413,7 @@ def cmd_varga_full(args):
 def cmd_aspects(args):
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -2428,7 +2436,7 @@ def cmd_aspects(args):
 def cmd_jaimini(args):
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -2475,7 +2483,7 @@ def cmd_jaimini(args):
 def cmd_nakshatra_adv(args):
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -2513,7 +2521,7 @@ def cmd_nakshatra_adv(args):
 def cmd_argala(args):
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -2537,7 +2545,7 @@ def cmd_argala(args):
 def cmd_tajika(args):
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -3065,7 +3073,7 @@ def cmd_full_reading(args):
     # ── Step 1: 核心星盘 ──
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz)
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装，无法计算星盘"}
 
