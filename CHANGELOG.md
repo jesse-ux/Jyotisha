@@ -1,5 +1,36 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.17-bhrigu-pada-dasha-muntha-prashna-update（2026-06-04）—— bhrigu_pada_dasha 接入 + muntha/prashna placeholder 修正
+
+> **触发原因**：用户要求继续补充印度占星 skill 缺少的技法。v6.0.16 审计发现 bhrigu_pada_dasha 未入 registry，muntha/prashna placeholder 文字不准确。
+
+### 变更内容
+
+- `scripts/bhrigu_pada_dasha.py`（新文件 v6.0.17）：Bhrigu Pada Dasha 通用近似版
+  - `calc_pada_dasha_basic(birth_moon_lon, birth_date_jd, target_date_jd, ...)`：通用近似推进计算（1°/年）
+  - `calc_pada_dasha_marriage_timing(...)`：婚姻时机分析框架
+  - `bhrigu_pada_dasha_full_report(...)`：完整报告（含样本年龄推进）
+  - **限制**：精确公式因 Bhrigu 子流派而异，本实现为通用近似，实战需与 Vimshottari/Chara Dasha 交叉验证
+- `scripts/jyotish_engine.py` Step 4.11 更新：
+  - 新增 `bhrigu_pada_dasha` 调用（sample ages 分析）
+  - `muntha` placeholder 文字修正（说明需要 Varshaphala 盘数据，建议用 cmd_prashna）
+  - `prashna` placeholder 文字修正（说明需要问卜时间，建议用 cmd_prashna 独立命令）
+- `references/technique_registry.json` 新增 `bhrigu_pada_dasha`（partial）
+
+### 技法状态变更
+
+| 技法 | 原状态 | 新状态 | 说明 |
+|------|--------|--------|------|
+| bhrigu_pada_dasha | 未入 registry | partial | 通用近似版已实现，精确公式待各流派补充 |
+| muntha | missing (placeholder) | missing | 仍为 placeholder（需 Varshaphala 数据） |
+| prashna_integration | partial (placeholder) | partial | 仍为 placeholder（需问卜时间） |
+
+### 已知限制
+
+- `bhrigu_pada_dasha` 精确公式因流派而异，当前为通用近似（1°/年推进）
+- `muntha` 完整分析需要 Varshaphala（太阳返照）排盘数据 → 建议用 `cmd_prashna` 独立命令
+- `prashna` full-reading 接入需要问卜时间 → 建议用 `cmd_prashna` 独立命令
+
 ## v6.0.16-marriage-counting-d30-muntha-prashna（2026-06-04）—— 新增 Marriage Counting + D30 + Muntha(占位) + Prashna(占位)
 
 > **触发原因**：用户要求继续补充印度占星 skill 缺少的技法。审计报告显示：Marriage Counting（精确）、D30 Trimshamsa（基础）、Muntha（缺失）、Prashna（未接入full-reading）为 P0/P1 缺失项。

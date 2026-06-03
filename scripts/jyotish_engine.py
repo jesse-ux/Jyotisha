@@ -3567,10 +3567,27 @@ def cmd_full_reading(args):
         report['errors'].append(f"marriage-counting: {e}")
 
     try:
-        # Muntha (Tajika Varshaphala) - needs Varshaphala chart data
-        # For now, only calculate if Varshaphala data is available
-        # Placeholder: will be filled when Varshaphala casting is implemented
-        report['modules']['muntha'] = {'note': 'Muntha calculation requires Varshaphala chart data (solar return). Placeholder for v6.0.17.'}
+        # Bhrigu Pada Dasha（通用近似版，精确公式因流派而异）
+        from bhrigu_pada_dasha import bhrigu_pada_dasha_full_report
+        moon_lon = planet_lons.get('Moon', 0)
+        birth_jd = report.get('metadata', {}).get('birth_jd', 0) or 0
+        if moon_lon and birth_jd:
+            bpd_result = bhrigu_pada_dasha_full_report(
+                moon_lon, birth_jd,
+                d9_7lord_sign=None  # 将在 D9 数据可用时补充
+            )
+            report['modules']['bhrigu_pada_dasha'] = bpd_result
+    except Exception as e:
+        report['errors'].append(f"bhrigu-pada-dasha: {e}")
+
+    try:
+        # Muntha (Tajika Varshaphala) — 需要 Varshaphala 盘数据
+        # Varshaphala 盘需另外排盘（太阳返照时刻），full-reading 中暂不可用
+        # 如需 Varshaphala 分析，请使用 cmd_prashna（独立命令支持 Varshaphala 排盘）
+        report['modules']['muntha'] = {
+            'note': 'Muntha 需要 Varshaphala（太阳返照）盘数据。请使用 cmd_prashna 独立命令获取 Varshaphala 分析。',
+            'varshaphala_available': False
+        }
     except Exception as e:
         report['errors'].append(f"muntha: {e}")
 
@@ -3583,9 +3600,15 @@ def cmd_full_reading(args):
         report['errors'].append(f"trimshamsa-d30: {e}")
 
     try:
-        # Prashna integration (limited - only if prashna data is available)
-        # Prashna is mainly a standalone command; full integration in v6.0.17
-        report['modules']['prashna'] = {'note': 'Prashna is available via cmd_prashna standalone command. Full integration pending v6.0.17.'}
+        # Prashna（问事占星）—— full-reading 中暂不接入
+        # 原因：Prashna 需要问卜时刻（用户提问时间）排盘，full-reading 只有出生数据
+        # 如需 Prashna 分析：使用 cmd_prashna 独立命令
+        # 该命令接受问卜时间 + 地点，排 Prashna 盘并做分析
+        report['modules']['prashna'] = {
+            'note': 'Prashna 需要问卜时间排盘，请使用 cmd_prashna 独立命令。',
+            'cmd': 'cmd_prashna',
+            'available': True
+        }
     except Exception as e:
         report['errors'].append(f"prashna: {e}")
 
