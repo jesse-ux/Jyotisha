@@ -1,5 +1,45 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.16-marriage-counting-d30-muntha-prashna（2026-06-04）—— 新增 Marriage Counting + D30 + Muntha(占位) + Prashna(占位)
+
+> **触发原因**：用户要求继续补充印度占星 skill 缺少的技法。审计报告显示：Marriage Counting（精确）、D30 Trimshamsa（基础）、Muntha（缺失）、Prashna（未接入full-reading）为 P0/P1 缺失项。
+
+### 新增功能
+
+- `scripts/marriage_counting.py`（新文件）：Bhrigu 婚姻计数法
+  - `marriage_counting_method(d1_7lord, d1_lons, d9_lons, ...)`：精确婚姻计数算法（D1 7宫主星座距离法）
+  - `marriage_counting_full_analysis(...)`：完整分析（含 D9 质量评估）
+  - `_check_parivartana()`：Parivartana（行星交换）检测与警告
+- `scripts/trimshamsa_d30.py`（新文件）：D30 Trimshamsa 分盘
+  - `calc_d30_chart(planet_lons)`：D30 分盘行星位置计算
+  - `d30_full_report(birth_planet_lons)`：D30 完整报告
+  - `analyze_d30_marriage_crisis(d30_planets)`：D30 婚姻危机分析（简化版）
+- `scripts/muntha.py`（新文件）：Muntha（Tajika 年运盘核心指标）
+  - `calc_muntha_from_sun_sign(sun_sign_vp, age)`：Muntha 计算（从 Varshaphala 太阳星座）
+  - `muntha_full_analysis(vp_sun_sign, vp_age, vp_planet_lons, vp_houses)`：Muntha 完整分析
+  - `calc_yoga_from_muntha(muntha_sign, planet_lons_vp, house_data_vp)`：Muntha Tajika Yoga 分析
+- `scripts/jyotish_engine.py` 的 `cmd_full_reading` 新增 Step 4.11：
+  - 调用 `marriage_counting_full_analysis` → `modules.marriage_counting`
+  - 调用 `d30_full_report` → `modules.trimshamsa_d30`
+  - Muntha：占位符（需 Varshaphala 数据，v6.0.17 实现）
+  - Prashna：占位符（独立命令可用，full-reading 接入 v6.0.17）
+- `references/technique_registry.json` 新增 4 个技法注册
+
+### 技法状态变更
+
+| 技法 | 原状态 | 新状态 | 说明 |
+|------|--------|--------|------|
+| marriage_counting | missing | partial | 精确算法已实现，Dasha 集成待完善 |
+| trimshamsa_d30 | missing | partial | 基础 D30 计算已实现，宫位数据待补充 |
+| muntha | missing | missing | 仅占位符，Varshaphala 数据依赖未解决 |
+| prashna_integration | missing | partial | 独立命令可用，full-reading 接入待完成 |
+
+### 已知限制
+
+- Muntha 完整计算需要 Varshaphala（太阳返照）排盘数据 → v6.0.17
+- Prashna full-reading 接入需要 Prashna 盘数据 → v6.0.17
+- D30 宫位计算需要 D30 上升度 → 依赖专业天文软件
+
 ## v6.0.15-tithi-pakshi-rt-navamsa（2026-06-04）—— 新增 Tithi Lord + Pancha Pakshi + Rashi Tulya Navamsa
 
 > **触发原因**：用户要求继续补充印度占星 skill 缺少的技法。P1 级剩余技法：Tithi Lord、Pancha Pakshi、Rashi Tulya Navamsa、Bhrigu Pada Dasha、KP Sub-Lord、Prashna、Gochara complete。本轮实现前 3 项。

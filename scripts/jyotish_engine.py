@@ -3550,6 +3550,45 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"rashi-tulya-navamsa: {e}")
 
+    # ── Step 4.11: Marriage Counting + Muntha + D30 + Prashna (v6.0.16) ──
+    try:
+        # Marriage Counting Method (Bhrigu)
+        from marriage_counting import marriage_counting_full_analysis
+        d1_house7_lord = houses.get('7', {}).get('lord', '') if isinstance(houses.get('7'), dict) else ''
+        if d1_house7_lord and 'varga_full' in report['modules']:
+            d9_data = report['modules']['varga_full'].get('D9_Navamsa', {})
+            if d9_data.get('planets'):
+                mc_result = marriage_counting_full_analysis(
+                    d1_house7_lord, planet_lons, d9_data['planets'],
+                    houses, d9_data.get('houses')
+                )
+                report['modules']['marriage_counting'] = mc_result
+    except Exception as e:
+        report['errors'].append(f"marriage-counting: {e}")
+
+    try:
+        # Muntha (Tajika Varshaphala) - needs Varshaphala chart data
+        # For now, only calculate if Varshaphala data is available
+        # Placeholder: will be filled when Varshaphala casting is implemented
+        report['modules']['muntha'] = {'note': 'Muntha calculation requires Varshaphala chart data (solar return). Placeholder for v6.0.17.'}
+    except Exception as e:
+        report['errors'].append(f"muntha: {e}")
+
+    try:
+        # D30 Trimshamsa analysis
+        from trimshamsa_d30 import d30_full_report
+        d30_result = d30_full_report(planet_lons)
+        report['modules']['trimshamsa_d30'] = d30_result
+    except Exception as e:
+        report['errors'].append(f"trimshamsa-d30: {e}")
+
+    try:
+        # Prashna integration (limited - only if prashna data is available)
+        # Prashna is mainly a standalone command; full integration in v6.0.17
+        report['modules']['prashna'] = {'note': 'Prashna is available via cmd_prashna standalone command. Full integration pending v6.0.17.'}
+    except Exception as e:
+        report['errors'].append(f"prashna: {e}")
+
     # ── Step 5: 精确相位 ──
     try:
         from aspects import calc_all_aspects

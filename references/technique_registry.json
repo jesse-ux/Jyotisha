@@ -1,5 +1,5 @@
 {
-  "version": "v6.0.15-tithi-pakshi-rt-navamsa",
+  "version": "v6.0.16-marriage-counting-d30-muntha-prashna",
   "source_inspiration": [
     {
       "name": "jyotishyamitra",
@@ -692,6 +692,88 @@
       ],
       "audit_label": "Rashi Tulya Navamsa",
       "missing_impact": "D1-D9 同宫对比分析不完整，婚姻/内在潜力判断受限。"
+    },
+    "marriage_counting": {
+      "name": "Marriage Counting Method / 婚姻计数法",
+      "domains": [
+        "marriage",
+        "bhrigu",
+        "counting",
+        "d1_d9"
+      ],
+      "status": "partial",
+      "knowledge_refs": [
+        "bhrigu-pada-dasha-marriage-counting.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.marriage_counting"
+      ],
+      "audit_label": "Marriage Counting",
+      "missing_impact": "婚姻数量判断不完整，关系模式分析受限。"
+    },
+    "trimshamsa_d30": {
+      "name": "Trimshamsa D30 / 三十分盘",
+      "domains": [
+        "varga",
+        "d30",
+        "crisis",
+        "disaster"
+      ],
+      "status": "partial",
+      "knowledge_refs": [
+        "varga-system-quick-reference.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.trimshamsa_d30"
+      ],
+      "audit_label": "D30 Trimshamsa",
+      "missing_impact": "D30 灾难分析不完整，危机事件判断受限。"
+    },
+    "muntha": {
+      "name": "Muntha / 年运之主 (Tajika)",
+      "domains": [
+        "tajika",
+        "varsha_phal",
+        "muntha",
+        "annual"
+      ],
+      "status": "missing",
+      "knowledge_refs": [
+        "tajika-yoga-complete-guide.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.muntha"
+      ],
+      "audit_label": "Muntha",
+      "missing_impact": "Varshaphala 年运盘核心指标缺失，年度主题判断受限。"
+    },
+    "prashna_integration": {
+      "name": "Prashna Integration / 问事占星接入",
+      "domains": [
+        "prashna",
+        "standalone",
+        "full_reading_integration"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading",
+        "prashna"
+      ],
+      "output_paths": [
+        "modules.prashna"
+      ],
+      "audit_label": "Prashna Integration",
+      "missing_impact": "Prashna 未接入 full-reading，问事分析不完整。"
     }
   },
   "routes": {
@@ -735,7 +817,11 @@
         "upapada_lagna",
         "tithi_lord",
         "pancha_pakshi",
-        "rashi_tulya_navamsa"
+        "rashi_tulya_navamsa",
+        "marriage_counting",
+        "trimshamsa_d30",
+        "muntha",
+        "prashna_integration"
       ],
       "optional_techniques": [
         "bhava_chalit",
@@ -775,7 +861,11 @@
         "upapada_lagna",
         "tithi_lord",
         "pancha_pakshi",
-        "rashi_tulya_navamsa"
+        "rashi_tulya_navamsa",
+        "marriage_counting",
+        "trimshamsa_d30",
+        "muntha",
+        "prashna_integration"
       ],
       "optional_techniques": [
         "d9_navamsa",
@@ -821,7 +911,11 @@
         "upapada_lagna",
         "tithi_lord",
         "pancha_pakshi",
-        "rashi_tulya_navamsa"
+        "rashi_tulya_navamsa",
+        "marriage_counting",
+        "trimshamsa_d30",
+        "muntha",
+        "prashna_integration"
       ],
       "optional_techniques": [
         "bhava_chalit",
