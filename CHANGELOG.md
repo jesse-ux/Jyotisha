@@ -1,5 +1,37 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.18-solar-return-muntha-covered（2026-06-04）—— Solar Return/Varshaphala 实现 + Muntha covered
+
+> **触发原因**：用户问"继续，我这个是印度占星技法的skill也需要太阳返照盘吗？"，确认需要太阳返照盘。v6.0.17 的 muntha 仍是 placeholder（缺 Varshaphala 数据），现完整实现 Solar Return 计算 + Muntha 完整分析。
+
+### 变更内容
+
+- `scripts/solar_return.py`（新文件 v6.0.18）：太阳返照盘（Solar Return / Varshaphala）核心计算
+  - `calc_solar_return_ut(birth_jd_ut, birth_sun_lon, target_year, tz_offset)`：计算太阳返照精确 UT 时刻（二分法迭代）
+  - `calc_varshaphala_chart(birth_jd_ut, birth_lat, birth_lon, target_year, tz_offset)`：生成 Varshaphala 盘（行星+宫位）
+  - `solar_return_full_report(birth_jd_ut, birth_lat, birth_lon, target_year, tz_offset)`：完整报告
+  - **限制**：swisseph 不可用时用近似算法（365.25天递推），精度较低
+- `scripts/cmd_solar_return.py`（新文件 v6.0.18）：`solar-return` 子命令实现
+  - `cmd_solar_return(args, chart_data)`：完整 Varshaphala 分析（Muntha/YearLord/Yoga/Mudda/Tripataka）
+- `scripts/muntha.py` 更新：Varshaphala 数据传入后完整计算（不再 placeholder）
+- `scripts/jyotish_engine.py` 更新：
+  - 新增 `cmd_solar_return` import 和注册
+  - `cmd_full_reading` 新增 Step 4.12（Solar Return Varshaphala 分析）
+  - `full-reading` subparser 新增 `--target-year` 参数
+- `references/technique_registry.json` 更新：muntha→covered，新增 solar_return（covered）
+
+### 技法状态变更
+
+| 技法 | 原状态 | 新状态 | 说明 |
+|------|--------|--------|------|
+| muntha | missing (placeholder) | covered | Solar Return 数据完整，Muntha 计算准确 |
+| solar_return | 未入 registry | covered | 新实现，二分法算太阳返照时刻 |
+
+### 已知限制
+
+- `solar_return.py` swisseph 不可用时用近似算法，精度较低（±1天）
+- Varshaphala Tajika Yoga 分析较简化，Ithasala/Yamaya 等待补充
+
 ## v6.0.17-bhrigu-pada-dasha-muntha-prashna-update（2026-06-04）—— bhrigu_pada_dasha 接入 + muntha/prashna placeholder 修正
 
 > **触发原因**：用户要求继续补充印度占星 skill 缺少的技法。v6.0.16 审计发现 bhrigu_pada_dasha 未入 registry，muntha/prashna placeholder 文字不准确。

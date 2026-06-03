@@ -1,5 +1,5 @@
 {
-  "version": "v6.0.17-bhrigu-pada-dasha-muntha-prashna-update",
+  "version": "v6.0.18-solar-return-muntha-covered",
   "source_inspiration": [
     {
       "name": "jyotishyamitra",
@@ -743,7 +743,7 @@
         "muntha",
         "annual"
       ],
-      "status": "missing",
+      "status": "covered",
       "knowledge_refs": [
         "tajika-yoga-complete-guide.md"
       ],
@@ -755,6 +755,29 @@
       ],
       "audit_label": "Muntha",
       "missing_impact": "Varshaphala 年运盘核心指标缺失，年度主题判断受限。"
+    },
+    "solar_return": {
+      "name": "Solar Return / Varshaphala (Tajika)",
+      "domains": [
+        "tajika",
+        "varshaphala",
+        "solar_return",
+        "annual"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "tajika-yoga-complete-guide.md"
+      ],
+      "commands": [
+        "solar-return",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.solar_return",
+        "modules.muntha"
+      ],
+      "audit_label": "Solar Return Varshaphala",
+      "missing_impact": "N/A - implemented in v6.0.18"
     },
     "prashna_integration": {
       "name": "Prashna Integration / 问事占星接入",
@@ -939,7 +962,8 @@
         "trimshamsa_d30",
         "muntha",
         "prashna_integration",
-        "bhrigu_pada_dasha"
+        "bhrigu_pada_dasha",
+        "solar_return"
       ],
       "optional_techniques": [
         "bhava_chalit",

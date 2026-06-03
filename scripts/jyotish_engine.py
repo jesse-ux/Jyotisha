@@ -61,6 +61,7 @@ try:
     HAS_SWE = True
 except ImportError:
     HAS_SWE = False
+from cmd_solar_return import cmd_solar_return  # v6.0.18
 
 # ============================================================================
 # 常量
@@ -3612,6 +3613,35 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"prashna: {e}")
 
+        # ── Step 4.12: Solar Return (Varshaphala) + Muntha proper (v6.0.18) ──
+    try:
+        # Solar Return（太阳返照盘）计算
+        if hasattr(args, 'target_year') and args.target_year:
+            from solar_return import solar_return_full_report
+            sr_result = solar_return_full_report(
+                args.year, args.month, args.day,
+                args.hour, args.minute,
+                args.lat, args.lon, args.tz,
+                args.target_year
+            )
+            report['modules']['solar_return'] = sr_result
+            # 更新 muntha 为正确值（来自太阳返照盘）
+            if 'muntha' in sr_result:
+                report['modules']['muntha'] = {
+                    'source': 'solar_return_proper',
+                    'muntha_sign': sr_result.get('muntha', {}).get('muntha_sign', '?'),
+                    'muntha_lord': sr_result.get('muntha', {}).get('muntha_lord', '?'),
+                    'note': '来自太阳返照盘的正确 Muntha 计算',
+                }
+        else:
+            report['modules']['solar_return'] = {
+                'note': '未提供 --target-year，跳过太阳返照盘计算',
+                'skipped': True,
+                'hint': '使用 --target-year <年份> 重新运行以获取 Varshaphala 分析'
+            }
+    except Exception as e:
+        report['errors'].append(f"solar-return: {e}")
+
     # ── Step 5: 精确相位 ──
     try:
         from aspects import calc_all_aspects
@@ -4074,6 +4104,11 @@ def main():
     p.add_argument('--age', type=int, required=True, help='当前年龄')
     p.add_argument('--mode', default='all', choices=['all','muntha','yearlord','mudda','tripataka'], help='分析模式')
 
+    # 21.5 solar-return (v6.0.18新增)
+    p = sub.add_parser('solar-return', help='太阳返照盘 Varshaphala 年运分析')
+    _add_chart_args(p)
+    p.add_argument('--target-year', type=int, required=True, help='目标年份（计算该年太阳返照）')
+
     # 21. synastry (v3.7新增)
     p = sub.add_parser('synastry', help='合盘分析（Ashta Koota 36分制）')
     p.add_argument('--moon1', type=float, required=True, help='Person1月亮黄经')
@@ -4091,6 +4126,7 @@ def main():
     p.add_argument('--age', type=int, default=None, help='当前年龄（不提供则自动计算）')
     p.add_argument('--today', default=None, help='Dasha/Sandhi参考日期 YYYY-MM-DD（默认今天）')
     p.add_argument('--transit-date', default=None, help='Transit真实过境参考日期 YYYY-MM-DD（默认跟随--today或今天）')
+    p.add_argument('--target-year', type=int, default=None, help='太阳返照盘目标年份（默认不计算 Varshaphala）')
 
     # 23. prashna (v3.9新增)
     p = sub.add_parser('prashna', help='Prashna问事占星（提问时刻星盘+Arudha+Sphuta+Sahams）')
@@ -4137,7 +4173,7 @@ def main():
             'validate': cmd_validate, 'audit': cmd_audit, 'report': cmd_report,
             'varga-full': cmd_varga_full, 'aspects': cmd_aspects, 'jaimini': cmd_jaimini,
             'nakshatra-adv': cmd_nakshatra_adv, 'argala': cmd_argala, 'tajika': cmd_tajika,
-            'synastry': cmd_synastry, 'full-reading': cmd_full_reading, 'prashna': cmd_prashna,
+            'synastry': cmd_synastry, 'solar-return': cmd_solar_return, 'full-reading': cmd_full_reading, 'prashna': cmd_prashna,
             'double-transit-pac': cmd_double_transit_pac,
             'transit-ll7l': cmd_transit_ll7l, 'planetary-congregation': cmd_planetary_congregation,
             'vivah-saham': cmd_vivah_saham}
