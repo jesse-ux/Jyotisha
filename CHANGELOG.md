@@ -1,5 +1,29 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.6-d10-benchmark-fix（2026-06-03）— PyJHora benchmark 暴露的 D10 口径修复
+
+> **触发原因**：可信度 benchmark 第三轮接入 PyJHora 后，D10 出现系统性错配；交叉查证 D10 规则为“奇数星座从本宫起算，偶数星座从第九宫起算（含本宫计数）”。
+
+### 修复内容
+
+- 修正 `scripts/varga.py` 中 D10 偶数星座起算偏移：第九宫含本宫计数，代码应使用 `+8` 而非 `+9`。
+- 修正非 D9 分盘 `degree_in_sign` 输出：从原先的“分段内余度 0-part_size”改为标准“分盘星座内度数 0-30°”。
+- 保持 D9 harmonic 输出口径不变，避免破坏既有 JHora-style Navamsa 结果。
+
+---
+
+## v6.0.5-precision-benchmark-fix（2026-06-03）— benchmark 暴露的黄经精度修复
+
+> **触发原因**：可信度 benchmark 第二轮发现 Dasha 日期与 D10 边界样本存在小偏差，根因是 `full-reading` 在下游 Dasha/分盘模块复用已四舍五入到4位小数的行星黄经。
+
+### 修复内容
+
+- `compute_chart_data()` 为行星新增 `degree_raw` 与 `degree_in_sign_raw`，保留未四舍五入黄经。
+- `full-reading` 的 Vimshottari Dasha、Varga、Jaimini 等下游汇总优先使用 raw 度数，展示字段继续保留四舍五入格式。
+- 第二轮 benchmark 重跑后：Ascendant、D9、Dasha 100% 匹配；D10 仅保留 Rahu/Ketu 位于切分边界附近的 4 个 boundary-sensitive 字段，归因后可接受率 100%。
+
+---
+
 ## v6.0.4-privacy-sanitized（2026-06-03）— 移除个人化资料 + 隐私隔离规则
 
 > **触发原因**：用户明确要求“关于我个人的信息不可以暴露在印度占星skill里”。本版执行隐私清理：移除或匿名化 skill 中的真实个人星盘、出生资料、人生事件、项目背景、个案解读与回测痕迹，并新增隐私隔离规则。

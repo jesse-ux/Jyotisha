@@ -311,7 +311,9 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz):
             nak_n, nak_l, _ = NAKSHATRA_LIST[ni % 27]
             result["planets"][pname] = {
                 "sign": sign, "sign_cn": SIGNS_CN[sign], "degree": round(lon_p, 4),
-                "degree_in_sign": round(d_in_s, 4), "house": house, "status": status,
+                "degree_raw": lon_p,
+                "degree_in_sign": round(d_in_s, 4), "degree_in_sign_raw": d_in_s,
+                "house": house, "status": status,
                 "retrograde": retro, "speed": round(spd, 6),
                 "nakshatra": nak_n, "nakshatra_pada": pada, "nakshatra_lord": nak_l}
             if pname == 'Rahu':
@@ -320,7 +322,8 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz):
                 kn, kl, _ = NAKSHATRA_LIST[kni % 27]
                 result["planets"]["Ketu"] = {
                     "sign": SIGNS[ksi], "sign_cn": SIGNS_CN[SIGNS[ksi]],
-                    "degree": round(klon, 4), "degree_in_sign": round(kd, 4),
+                    "degree": round(klon, 4), "degree_raw": klon,
+                    "degree_in_sign": round(kd, 4), "degree_in_sign_raw": kd,
                     "house": ((ksi - asc_idx) % 12) + 1, "status": "中性",
                     "retrograde": True, "speed": round(spd, 6),
                     "nakshatra": kn, "nakshatra_pada": kp, "nakshatra_lord": kl}
@@ -2390,7 +2393,7 @@ def cmd_varga_full(args):
     except ImportError as e:
         return {"error": f"varga模块导入失败: {e}"}
     planets = chart.get('planets', {})
-    planet_lons = {pn: pd['degree'] for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
+    planet_lons = {pn: pd.get('degree_raw', pd['degree']) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
     asc_deg = chart.get('ascendant', {}).get('degree', 0)
     divisions = [int(d.strip().replace('D','')) for d in args.divisions.split(',')] if args.divisions else None
     return calc_all_vargas(planet_lons, asc_deg, divisions)
@@ -3071,8 +3074,8 @@ def cmd_full_reading(args):
     planets = chart.get('planets', {})
     asc_deg = chart.get('ascendant', {}).get('degree', 0)
     asc_sign = chart.get('ascendant', {}).get('sign', 'Unknown')
-    planet_lons = {pn: pd['degree'] for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
-    planet_degs = {pn: pd.get('degree_in_sign', pd['degree'] % 30) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
+    planet_lons = {pn: pd.get('degree_raw', pd['degree']) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
+    planet_degs = {pn: pd.get('degree_in_sign_raw', pd.get('degree_in_sign', pd['degree'] % 30)) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
     planet_sign_indices = {}
     for pn, pd in planets.items():
         if isinstance(pd, dict) and 'sign' in pd:
@@ -3122,7 +3125,7 @@ def cmd_full_reading(args):
     # ── Step 2: Vimshottari Dasha ──
     try:
         moon_data = planets.get('Moon', {})
-        moon_lon = moon_data.get('degree', 0)
+        moon_lon = moon_data.get('degree_raw', moon_data.get('degree', 0))
         nak_idx = int(moon_lon / (360 / 27)) % 27
         nak_name = NAKSHATRA_LIST[nak_idx][0]
         nak_lord = NAKSHATRA_LIST[nak_idx][1]

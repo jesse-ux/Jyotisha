@@ -57,7 +57,7 @@ def varga_map(si, pi, div):
     if div==7: return (si+pi)%12 if o else (si+6+pi)%12
     if div==9:
         el={0:0,1:9,2:6,3:3}; return (el[si%4]+pi)%12
-    if div==10: return (si+pi)%12 if o else (si+9+pi)%12  # D10: even signs start from 9th (2026-05-03 fix: was +8)
+    if div==10: return (si+pi)%12 if o else (si+8+pi)%12  # D10: even signs count from 9th inclusively => +8 offset
     if div==12: return (si+pi)%12
     if div==16: return ((0 if o else 4)+pi)%12  # D16: movable=+0, fixed=+4; dual needs separate (2026-05-03 fix: was +1)
     if div==20: return ((0 if o else 8)+pi)%12
@@ -71,19 +71,19 @@ def varga_map(si, pi, div):
 
 def calc_varga(lon, div):
     """计算行星在指定分盘的位置（星座+精确度数+尊贵状态）"""
-    # 2026-05-03修正：D9 Navamsa使用Harmonic(×9)法而非BPHS映射法
-    # 原因：Harmonic法与主流Jyotish软件(Jagannatha Hora等)结果一致
-    # 且在Einstein等名人案例中与人生事件吻合度更高
-    # BPHS映射法(el={0:0,1:9,2:6,3:3})仍保留在varga_map中作为备选
+    si=_si(lon); d=lon-si*30; ps=30.0/div; pi=int(d/ps)
     if div == 9:
+        # D9 Navamsa: retain harmonic longitude output to match existing skill/JHora-style readings.
         nav_lon = (lon * 9) % 360
         vsi = int(nav_lon / 30) % 12
         dp = nav_lon - vsi * 30
-        pi = int(dp / (30.0/9))  # approximate pada from harmonic degree
+        pi = int(d / ps)
         r = {'sign': _sn(vsi), 'sign_idx': vsi, 'degree_in_sign': round(dp, 4),
              'part_index': pi, 'lord': SIGN_LORDS.get(_sn(vsi), ''), 'pada': pi + 1}
         return r
-    si=_si(lon); d=lon-si*30; ps=30.0/div; pi=int(d/ps); dp=d-pi*ps
+    # For non-D9 vargas, degree within divisional sign is scaled to 0-30 degrees.
+    # Previous code returned only the within-part remainder (0-part_size), which made D10 degree output non-standard.
+    dp=(d-pi*ps)*div
     vsi=varga_map(si,pi,div)
     r={'sign':_sn(vsi),'sign_idx':vsi,'degree_in_sign':round(dp,4),
        'part_index':pi,'lord':SIGN_LORDS.get(_sn(vsi),'')}
