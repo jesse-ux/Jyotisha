@@ -8,7 +8,8 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 
 > **执行总控**：`references/quick-reference-guide.md`（⭐推荐优先阅读）
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
-> **版本**：v6.0.1-orchestration | **详细变更**：`CHANGELOG.md`
+> **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
+> **版本**：v6.0.2-capability-patch | **详细变更**：`CHANGELOG.md`
 
 ---
 
@@ -47,7 +48,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 1. 先判断问题类型，再自动选择 `career-timing-strict` / `relationship-timing-strict` / `wealth-timing-strict` / `event-timing-strict` / `event-verification-strict`。
 2. 用户不需要知道 Chara Dasha、A10、Argala、Shadbala、Ashtakavarga 等技法名称；AI 必须按问题类型自动调用。
 3. 输出末尾必须给出 Technique Audit Table，说明每项高级技法是否调用、结果是什么、缺失会如何降低置信度。
-4. 不得把未实现或未调用的技法静默省略；A10、完整 Bhava Chalit、Pushkara 自动化、Sudarshana Chakra、Dasha Sandhi 等若未能计算，必须显式标注为 partial/unavailable。
+4. 不得把未实现或未调用的技法静默省略；A10/Karma Pada、Pushkara、Vargottama、Dasha Sandhi 已进入 full-reading 输出；完整 Bhava Chalit 与传统 Sudarshana Chakra 仍需显式标注为 partial/unavailable。
 
 ### MEVG 强制外部验证门控（v4.2.0+）
 
@@ -198,7 +199,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 - [ ] 预测边界检查（置信度标注，禁止绝对断言）
 - [ ] **案例检索**：动态预测必须先检索真实案例
 - [ ] **MEVG-预测门控**：确认每条预测有来源+置信度一致
-- [ ] **缺口声明**：若 A10/完整Bhava Chalit/Pushkara/Sudarshana/Dasha Sandhi 等未计算，已说明原因与影响
+- [ ] **缺口声明**：A10/Karma Pada、Pushkara、Vargottama、Dasha Sandhi 应从 full-reading 读取；若完整Bhava Chalit/传统Sudarshana等未计算，已说明原因与影响
 
 ---
 
@@ -238,9 +239,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：6.0.0
+**版本**：v6.0.2-capability-patch
 **创建日期**：2026-04-20
-**最后更新**：2026-05-05（v6.0.1 合并26份验证/错题资源到references，新增验证与错题体系章节）
+**最后更新**：2026-06-03（v6.0.2 补齐 A10/Karma Pada、Pushkara、Vargottama、Dasha Sandhi 的 full-reading 输出，并修正技法覆盖声明）
 
 ---
 

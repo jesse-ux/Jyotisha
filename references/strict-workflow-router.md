@@ -178,15 +178,16 @@ Never omit unavailable techniques silently. Mark them as unavailable or not inte
 
 ## 9. Known product gaps
 
-The current skill has strong coverage, but these areas must be treated as incomplete unless a future module is added:
+The current skill has strong coverage. Do not describe a technique as simply “missing”; classify it by capability layer. See `references/technique-capability-matrix.md`.
 
-| Gap | Current handling | Impact |
+| Gap / partial area | Current handling | Impact |
 |---|---|---|
-| A10 / 10th Arudha / Karma Pada | Calculate manually if possible; otherwise mark unavailable | Career public-image layer incomplete |
+| A10 / 10th Arudha / Karma Pada | Covered from v6.0.2 via `full-reading.modules.special_lagnas.A10_Karma_Pada` | If `full-reading` is not run, mark not called rather than missing |
 | Full Bhava Chalit | Use cusp/KP data if present; otherwise mark partial | House placement near cusps may need recalibration |
-| Pushkara Navamsa / Pushkara Bhaga automation | Check manually from references if necessary | D9 strength may be undercounted |
-| Sudarshana Chakra | Manually synthesize D1+D9+D10 | Three-chart simultaneous confirmation incomplete |
-| Dasha Sandhi | Estimate manually around Dasha transitions | Transition periods may be over/understated |
+| Pushkara Navamsa / Pushkara Bhaga automation | Covered from v6.0.2 via `full-reading.modules.pushkara` for D1 planet flags | If exact degrees are absent, mark manual/unavailable |
+| Vargottama | Covered from v6.0.2 via `full-reading.modules.vargottama` | If D9 is absent, mark unavailable |
+| Sudarshana Chakra | D1×D9×D10 triangle verification exists as partial substitute | Traditional Sudarshana module still absent |
+| Dasha Sandhi | Covered from v6.0.2 via `full-reading.modules.dasha_sandhi` | Only detects MD/AD boundaries within the configured orb |
 | Strict output orchestration | This file provides the workflow | Must be followed explicitly |
 
 ---

@@ -108,6 +108,117 @@ PERMANENT_ENEMIES = {
     'Rahu': ['Sun', 'Moon', 'Jupiter'],
     'Ketu': ['Sun', 'Moon'],
 }
+PUSHKARA_NAVAMSA_RANGES = {
+    'fire': [(6 + 40/60, 10), (23 + 20/60, 26 + 40/60)],
+    'earth': [(3 + 20/60, 6 + 40/60), (16 + 40/60, 20)],
+    'air': [(13 + 20/60, 16 + 40/60), (26 + 40/60, 30)],
+    'water': [(0, 3 + 20/60), (10, 13 + 20/60)],
+}
+PUSHKARA_BHAGA_DEGREES = {'fire': 21, 'earth': 14, 'air': 24, 'water': 7}
+SIGN_ELEMENTS = {
+    'Aries': 'fire', 'Leo': 'fire', 'Sagittarius': 'fire',
+    'Taurus': 'earth', 'Virgo': 'earth', 'Capricorn': 'earth',
+    'Gemini': 'air', 'Libra': 'air', 'Aquarius': 'air',
+    'Cancer': 'water', 'Scorpio': 'water', 'Pisces': 'water',
+}
+
+
+def _element_key(sign):
+    return SIGN_ELEMENTS.get(sign)
+
+
+def _is_pushkara_navamsa(sign, deg_in_sign):
+    element = _element_key(sign)
+    if element is None or deg_in_sign is None:
+        return False, None
+    for start, end in PUSHKARA_NAVAMSA_RANGES[element]:
+        if start <= deg_in_sign < end:
+            return True, {"element": element, "range": [round(start, 4), round(end, 4)]}
+    return False, None
+
+
+def _is_pushkara_bhaga(sign, deg_in_sign, orb=1.0):
+    element = _element_key(sign)
+    if element is None or deg_in_sign is None:
+        return False, None
+    target = PUSHKARA_BHAGA_DEGREES[element]
+    delta = abs(deg_in_sign - target)
+    return delta <= orb, {"element": element, "target_degree": target, "orb": orb, "delta": round(delta, 4)}
+
+
+def _calc_vargottama(planets, varga_full):
+    d9 = varga_full.get('D9_Navamsa', {}) if isinstance(varga_full, dict) else {}
+    result = {}
+    for pn, pd in planets.items():
+        if not isinstance(pd, dict) or 'sign' not in pd:
+            continue
+        d9_pd = d9.get(pn, {}) if isinstance(d9, dict) else {}
+        d9_sign = d9_pd.get('sign') if isinstance(d9_pd, dict) else None
+        result[pn] = {
+            'd1_sign': pd.get('sign'),
+            'd9_sign': d9_sign,
+            'is_vargottama': bool(d9_sign and pd.get('sign') == d9_sign),
+        }
+    return result
+
+
+def _calc_pushkara_flags(planets):
+    result = {}
+    for pn, pd in planets.items():
+        if not isinstance(pd, dict) or 'sign' not in pd:
+            continue
+        sign = pd.get('sign')
+        deg = pd.get('degree_in_sign', pd.get('degree', 0) % 30)
+        in_pna, pna_meta = _is_pushkara_navamsa(sign, deg)
+        in_pb, pb_meta = _is_pushkara_bhaga(sign, deg)
+        result[pn] = {
+            'sign': sign,
+            'sign_cn': SIGNS_CN.get(sign, ''),
+            'degree_in_sign': round(deg, 4),
+            'pushkara_navamsa': in_pna,
+            'pushkara_navamsa_meta': pna_meta,
+            'pushkara_bhaga': in_pb,
+            'pushkara_bhaga_meta': pb_meta,
+        }
+    return result
+
+
+def _calc_dasha_sandhi(dasha_result, reference_date=None, orb_days=90):
+    ref = datetime.strptime(reference_date, "%Y-%m-%d") if reference_date else datetime.now()
+    sandhi = []
+    timeline = dasha_result.get('timeline', []) if isinstance(dasha_result, dict) else []
+    for md in timeline:
+        for boundary_key in ['start', 'end']:
+            if boundary_key not in md:
+                continue
+            bdt = datetime.strptime(md[boundary_key], "%Y-%m-%d")
+            delta = (bdt - ref).days
+            if abs(delta) <= orb_days:
+                sandhi.append({
+                    'level': 'mahadasha',
+                    'lord': md.get('lord'),
+                    'boundary': boundary_key,
+                    'date': md.get(boundary_key),
+                    'days_from_reference': delta,
+                    'within_orb': True,
+                })
+        for ad in md.get('antardasha_timeline', []):
+            for boundary_key in ['start', 'end']:
+                if boundary_key not in ad:
+                    continue
+                bdt = datetime.strptime(ad[boundary_key], "%Y-%m-%d")
+                delta = (bdt - ref).days
+                if abs(delta) <= orb_days:
+                    sandhi.append({
+                        'level': 'antardasha',
+                        'mahadasha_lord': md.get('lord'),
+                        'lord': ad.get('lord'),
+                        'boundary': boundary_key,
+                        'date': ad.get(boundary_key),
+                        'days_from_reference': delta,
+                        'within_orb': True,
+                    })
+    return {'reference_date': ref.strftime('%Y-%m-%d'), 'orb_days': orb_days, 'sandhi_windows': sandhi}
 
 
 def _get_dignity_level(planet, sign, deg_in_sign=None):
@@ -2981,19 +3092,28 @@ def cmd_full_reading(args):
             birth_time=birth_dt,
             sunrise_time=sunrise_dt
         )
-        # 补充 Arudha Lagna 和 Upapada Lagna
+        # 补充 Arudha Lagna、A10/Karma Pada 和 Upapada Lagna
         try:
             first_house_sign_idx = asc_idx
             first_lord = SIGN_LORDS.get(SIGNS[first_house_sign_idx], '')
             first_lord_deg = planet_lons.get(first_lord, 0)
             sl_result['Arudha_Lagna'] = sl_calc.calculate_arudha_lagna(asc_deg, first_lord_deg)
-        except: pass
+        except Exception as e:
+            sl_result['Arudha_Lagna'] = {"error": str(e)}
+        try:
+            tenth_house_sign_idx = (asc_idx + 9) % 12
+            tenth_lord = SIGN_LORDS.get(SIGNS[tenth_house_sign_idx], '')
+            tenth_lord_deg = planet_lons.get(tenth_lord, 0)
+            sl_result['A10_Karma_Pada'] = sl_calc.calculate_a10(asc_deg, tenth_lord_deg)
+        except Exception as e:
+            sl_result['A10_Karma_Pada'] = {"error": str(e)}
         try:
             twelfth_house_sign_idx = (asc_idx + 11) % 12
             twelfth_lord = SIGN_LORDS.get(SIGNS[twelfth_house_sign_idx], '')
             twelfth_lord_deg = planet_lons.get(twelfth_lord, 0)
             sl_result['Upapada_Lagna'] = sl_calc.calculate_upapada_lagna(asc_deg, twelfth_lord_deg)
-        except: pass
+        except Exception as e:
+            sl_result['Upapada_Lagna'] = {"error": str(e)}
         report['modules']['special_lagnas'] = sl_result
     except Exception as e:
         report['errors'].append(f"special-lagnas: {e}")
@@ -3008,12 +3128,13 @@ def cmd_full_reading(args):
         pada = int((moon_lon % (360/27)) / (360/108)) + 1
 
         birthdate = f"{args.year}-{args.month:02d}-{args.day:02d}"
-        today_str = datetime.now().strftime('%Y-%m-%d')
+        today_str = getattr(args, 'today', None) or datetime.now().strftime('%Y-%m-%d')
         dasha_result = cmd_dasha(type('Args', (), {
             'nakshatra': nak_name, 'pada': pada,
             'moon_lon': moon_lon, 'birthdate': birthdate, 'today': today_str
         })())
         report['modules']['dasha'] = dasha_result
+        report['modules']['dasha_sandhi'] = _calc_dasha_sandhi(dasha_result, today_str)
     except Exception as e:
         report['errors'].append(f"dasha: {e}")
 
@@ -3051,6 +3172,8 @@ def cmd_full_reading(args):
         if d1_data:
             varga_result["D1_Rashi"] = d1_data
         report['modules']['varga_full'] = varga_result
+        report['modules']['vargottama'] = _calc_vargottama(planets, varga_result)
+        report['modules']['pushkara'] = _calc_pushkara_flags(planets)
     except Exception as e:
         report['errors'].append(f"varga-full: {e}")
 
@@ -3598,6 +3721,7 @@ def main():
     p = sub.add_parser('full-reading', help='全自动综合解盘（出生信息→全链路→完整报告）')
     _add_chart_args(p)
     p.add_argument('--age', type=int, default=None, help='当前年龄（不提供则自动计算）')
+    p.add_argument('--today', default=None, help='Dasha/Sandhi参考日期 YYYY-MM-DD（默认今天）')
 
     # 23. prashna (v3.9新增)
     p = sub.add_parser('prashna', help='Prashna问事占星（提问时刻星盘+Arudha+Sphuta+Sahams）')

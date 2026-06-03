@@ -218,6 +218,60 @@ class SpecialLagnasCalculator:
             "meaning": "公众形象和社会地位，他人如何看待你"
         }
     
+    def calculate_arudha_pada(self, asc_degree: float, source_house: int, source_lord_degree: float,
+                              label: str = "Arudha_Pada") -> Dict:
+        """
+        计算任意宫位的 Arudha Pada（A1-A12）。
+
+        Args:
+            asc_degree: 上升点度数（0-360）
+            source_house: 源宫位（1-12）；例如 10 = A10 / Karma Pada / Rajya Pada
+            source_lord_degree: 源宫主星度数（0-360）
+            label: 输出标签
+
+        Formula:
+            1. 找到源宫位星座。
+            2. 计算源宫主星距离源宫位的星座数。
+            3. 从源宫主星再数同样距离得到 Pada。
+            4. 若 Pada 落回源宫或源宫第7宫，按 Jaimini 例外规则改取该位置第10宫。
+        """
+        if source_house < 1 or source_house > 12:
+            raise ValueError("source_house must be between 1 and 12")
+
+        asc_sign = int(asc_degree // 30)
+        source_sign = (asc_sign + source_house - 1) % 12
+        lord_sign = int(source_lord_degree // 30)
+
+        distance = (lord_sign - source_sign) % 12
+        pada_sign = (lord_sign + distance) % 12
+
+        exception_applied = False
+        if pada_sign == source_sign or pada_sign == (source_sign + 6) % 12:
+            pada_sign = (pada_sign + 9) % 12
+            exception_applied = True
+
+        pada_degree = (pada_sign * 30 + (source_lord_degree % 30)) % 360
+        return {
+            "label": label,
+            "source_house": source_house,
+            "degree": round(pada_degree, 4),
+            "sign": self.SIGNS[pada_sign],
+            "sign_degree": round(pada_degree % 30, 4),
+            "house": ((pada_sign - asc_sign) % 12) + 1,
+            "source_sign": self.SIGNS[source_sign],
+            "source_lord_sign": self.SIGNS[lord_sign],
+            "distance_from_source": distance if distance != 0 else 12,
+            "exception_applied": exception_applied,
+            "formula": f"A{source_house}: from house lord count the same distance from source house; apply 1/7 exception",
+            "meaning": "Arudha Pada：该宫位主题在外界/社会层面的显化"
+        }
+
+    def calculate_a10(self, asc_degree: float, tenth_lord_degree: float) -> Dict:
+        """计算 A10 / Karma Pada / Rajya Pada：事业名声、职业可见度、社会身份。"""
+        result = self.calculate_arudha_pada(asc_degree, 10, tenth_lord_degree, "A10_Karma_Pada")
+        result["meaning"] = "A10/Karma Pada/Rajya Pada：事业名声、职业可见度、社会身份与公众层面的职业结果"
+        return result
+
     def calculate_upapada_lagna(self, asc_degree: float, twelfth_lord_degree: float) -> Dict:
         """
         计算Upapada Lagna（配偶映像上升/UL）
@@ -295,6 +349,7 @@ def main():
     parser.add_argument("--birth-time", type=str, help="Birth time (YYYY-MM-DD HH:MM:SS)")
     parser.add_argument("--sunrise-time", type=str, help="Sunrise time (YYYY-MM-DD HH:MM:SS)")
     parser.add_argument("--first-lord", type=float, help="1st house lord degree (for AL)")
+    parser.add_argument("--tenth-lord", type=float, help="10th house lord degree (for A10/Karma Pada)")
     parser.add_argument("--twelfth-lord", type=float, help="12th house lord degree (for UL)")
     
     args = parser.parse_args()
@@ -311,6 +366,10 @@ def main():
     # 如果提供了1宫主星位置，计算AL
     if args.first_lord is not None:
         lagnas["Arudha_Lagna"] = calc.calculate_arudha_lagna(args.asc, args.first_lord)
+
+    # 如果提供了10宫主星位置，计算A10/Karma Pada
+    if args.tenth_lord is not None:
+        lagnas["A10_Karma_Pada"] = calc.calculate_a10(args.asc, args.tenth_lord)
     
     # 如果提供了12宫主星位置，计算UL
     if args.twelfth_lord is not None:

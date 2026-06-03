@@ -1,5 +1,29 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.2-capability-patch（2026-06-03）— 技法覆盖审计 + 可低风险缺口补齐
+
+> **触发原因**：用户质疑此前将 A10、Pushkara、Vargottama、Avastha、Sudarshana、Dasha Sandhi 等统称为“缺失”可能是审计遗漏。经地毯式搜索确认：部分技法已有知识/流程/App层覆盖，但未进入 CLI/full-reading 输出；因此本版把“缺失”改为分层判断，并补齐可低风险实现项。
+
+### ① 审计结论修正
+
+- Avastha：已有 `scripts/avastha_calculator.py`，且 `full-reading` 已集成，非缺失。
+- Vargottama：App 层已有检测/渲染，本版补入 `full-reading` 输出。
+- Pushkara：参考文档已有精确度数与 checklist，本版补入 `full-reading` 自动标记。
+- A10/Karma Pada：AL/UL 已有 `special_lagnas.py`，但 A10 未集成；本版新增任意宫 Arudha Pada 与 A10。
+- Dasha Sandhi：此前只有缺口声明，本版新增基于 Dasha 边界的 sandhi window 输出。
+- Bhava Chalit：有 house cusp/KP cusp 资料，但仍无完整 Chalit Chart 重算，继续标记 partial。
+- Sudarshana Chakra：有 D1×D9×D10 三角验证思想，但无传统 Sudarshana 模块，继续标记 partial。
+
+### ② 代码补丁
+
+| 文件 | 变更 |
+|---|---|
+| `scripts/special_lagnas.py` | 新增 `calculate_arudha_pada()` 与 `calculate_a10()`；CLI 新增 `--tenth-lord` |
+| `scripts/jyotish_engine.py` | `full-reading` 新增 A10、Vargottama、Pushkara、Dasha Sandhi 输出；新增 `--today` 作为 Dasha/Sandhi 参考日期 |
+| `SKILL.md` | 版本统一为 v6.0.2，并修正“缺口声明”表述 |
+
+---
+
 ## v6.0.1-orchestration（2026-06-03）— Strict Workflow Router + Technique Audit 防遗漏编排
 
 > **触发原因**：实际解读中发现 skill 已覆盖大量高级技法（Jaimini、Chara Dasha、Karakamsha、Argala、Shadbala、Ashtakavarga、Yogini、Avastha 等），但 AI 未必会自动调用。用户必须懂技法名才能逼迫调用，导致 D10、Jaimini、A10、Bhava Chalit、Sudarshana、Dasha Sandhi 等关键层容易遗漏。
