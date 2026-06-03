@@ -247,8 +247,8 @@ class TestYogaDetection(unittest.TestCase):
 
     def test_no_yoga_false_positive(self):
         """测试不满足条件时不产生 Yoga"""
-        # 行星分散，不满足任何 Yoga
-        args = self._make_yoga_args('Aries', 'Sun:Taurus:2,Moon:Gemini:3')
+        # 行星分散，且避免落入 Sun/Moon 两侧或扩展型简化 Yoga 条件
+        args = self._make_yoga_args('Aries', 'Sun:Taurus:2,Mars:Leo:5')
         result = cmd_yoga(args)
         yogas = result.get('yogas', [])
         self.assertEqual(len(yogas), 0, "Should not detect any Yoga with scattered planets")

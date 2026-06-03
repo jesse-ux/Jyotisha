@@ -1,0 +1,35 @@
+{
+  "version": "v1",
+  "cases": [
+    {
+      "id": "smoke_full_reading_beijing_1990",
+      "description": "A deterministic smoke case that ensures full-reading exposes the engineering-critical modules added in v6.0.2.",
+      "input": {
+        "year": 1990,
+        "month": 1,
+        "day": 1,
+        "hour": 12,
+        "minute": 0,
+        "lat": 39.9,
+        "lon": 116.4,
+        "tz": 8,
+        "today": "2026-06-03"
+      },
+      "expected_output_paths": [
+        "modules.chart",
+        "modules.dasha",
+        "modules.special_lagnas.Arudha_Lagna",
+        "modules.special_lagnas.A10_Karma_Pada",
+        "modules.special_lagnas.Upapada_Lagna",
+        "modules.varga_full.D9_Navamsa",
+        "modules.vargottama",
+        "modules.pushkara",
+        "modules.dasha_sandhi",
+        "modules.shadbala",
+        "modules.ashtakavarga",
+        "modules.validation"
+      ],
+      "max_errors": 0
+    }
+  ]
+}

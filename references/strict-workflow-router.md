@@ -178,7 +178,7 @@ Never omit unavailable techniques silently. Mark them as unavailable or not inte
 
 ## 9. Known product gaps
 
-The current skill has strong coverage. Do not describe a technique as simply “missing”; classify it by capability layer. See `references/technique-capability-matrix.md`.
+The current skill has strong coverage. Do not describe a technique as simply “missing”; classify it by capability layer. See `references/technique-capability-matrix.md` and the machine-readable `references/technique_registry.json`. For automated checks, run `python scripts/jyotish_engine.py audit-capabilities --mode validate` or `--mode table --route <route_id>`.
 
 | Gap / partial area | Current handling | Impact |
 |---|---|---|

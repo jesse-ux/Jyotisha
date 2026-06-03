@@ -1,6 +1,6 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.0.0
+version: 6.0.3
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga、出生时间矫正、PDF星盘、读取PDF、分析PDF星盘、现代解读、误判纠错、Varga分盘、综合分析、过境分析、合盘、婚姻匹配、年运盘、Prashna、Argala、Jaimini、KP系统、Shadbala、Ashtakavarga、HTML报告、深度解盘。
 ---
 
@@ -9,7 +9,8 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **执行总控**：`references/quick-reference-guide.md`（⭐推荐优先阅读）
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
-> **版本**：v6.0.2-capability-patch | **详细变更**：`CHANGELOG.md`
+> **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
+> **版本**：v6.0.3-engineering-foundation | **详细变更**：`CHANGELOG.md`
 
 ---
 
@@ -136,6 +137,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 | `transit-ll7l` | Transit LL/7L连接+互换 |
 | `planetary-congregation` | 行星聚集检测 |
 | `vivah-saham` | Vivah Saham婚姻敏感点 |
+| `audit-capabilities` | technique registry 校验 + route 审计表输出 |
 
 → 完整参数和示例 → `references/quick-reference-guide.md`
 
@@ -239,9 +241,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.0.2-capability-patch
+**版本**：v6.0.3-engineering-foundation
 **创建日期**：2026-04-20
-**最后更新**：2026-06-03（v6.0.2 补齐 A10/Karma Pada、Pushkara、Vargottama、Dasha Sandhi 的 full-reading 输出，并修正技法覆盖声明）
+**最后更新**：2026-06-03（v6.0.3 新增 technique registry、能力审计脚本、golden cases 回归测试和 GitHub Actions CI 门禁）
 
 ---
 

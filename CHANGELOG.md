@@ -1,5 +1,33 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.3-engineering-foundation（2026-06-03）— 能力平台化第一阶段
+
+> **触发原因**：用户要求从顶级软件工程师角度“智慧地下载使用全网帮助优化工作的开源项目”，快速把 skill 的效率和可靠性继续提高。调研 `jyotishyamitra`、`jyotisham/jyotisha`、`Yamale` 后，采用其工程启发：结构化 JSON 输出、计算层与解释层分离、注册表 schema 校验；但为避免新依赖，当前实现保持 Python stdlib。
+
+### ① 新增机器可读能力注册表
+
+- 新增 `references/technique_registry.json`：把技法、领域、状态、命令、输出路径、置信度影响、route required/optional 技法做成机器可读配置。
+- 目的：以后判断 covered/partial/missing 不再靠 AI 印象，而由注册表驱动。
+
+### ② 新增能力审计脚本与 CLI 子命令
+
+- 新增 `scripts/audit_capabilities.py`：校验注册表字段、状态枚举、引用文件、route 指向，并可输出 route 审计表。
+- `scripts/jyotish_engine.py` 新增 `audit-capabilities` 子命令：
+  - `audit-capabilities --mode validate`
+  - `audit-capabilities --mode table --route career_timing_strict`
+
+### ③ 新增 golden cases 回归框架
+
+- 新增 `tests/golden/golden_cases.json`：定义 full-reading 输出契约的 golden smoke case。
+- 新增 `tests/run_golden_cases.py`：运行 full-reading 并断言关键输出路径存在，包括 A10、Vargottama、Pushkara、Dasha Sandhi、Shadbala、Ashtakavarga、validation。
+
+### ④ 新增 GitHub Actions CI 门禁
+
+- 新增 `.github/workflows/ci.yml`：自动运行依赖安装、Python 编译、registry 校验、单元测试、golden cases。
+- 目的：防止后续修改导致技法输出路径消失、注册表腐化或核心测试退化。
+
+---
+
 ## v6.0.2-capability-patch（2026-06-03）— 技法覆盖审计 + 可低风险缺口补齐
 
 > **触发原因**：用户质疑此前将 A10、Pushkara、Vargottama、Avastha、Sudarshana、Dasha Sandhi 等统称为“缺失”可能是审计遗漏。经地毯式搜索确认：部分技法已有知识/流程/App层覆盖，但未进入 CLI/full-reading 输出；因此本版把“缺失”改为分层判断，并补齐可低风险实现项。

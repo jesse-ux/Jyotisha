@@ -3067,6 +3067,7 @@ def cmd_full_reading(args):
         return {"error": "swisseph未安装，无法计算星盘"}
 
     report['chart'] = chart
+    report['modules']['chart'] = chart
     planets = chart.get('planets', {})
     asc_deg = chart.get('ascendant', {}).get('degree', 0)
     asc_sign = chart.get('ascendant', {}).get('sign', 'Unknown')
@@ -3752,6 +3753,12 @@ def main():
     _add_chart_args(p)
     p.add_argument('--transit-date', default=None, help='过境日期 YYYY-MM-DD（可选）')
 
+    # 28. audit-capabilities (v6.0.3新增)
+    p = sub.add_parser('audit-capabilities', help='校验 technique registry 并输出能力覆盖审计')
+    p.add_argument('--registry', default=None, help='technique_registry.json 路径（默认 references/technique_registry.json）')
+    p.add_argument('--mode', default='validate', choices=['validate', 'table'], help='validate=校验注册表；table=输出路由审计表')
+    p.add_argument('--route', default=None, help='table模式下的 route id，如 career_timing_strict')
+
     args = parser.parse_args()
     if not args.command:
         parser.print_help(); sys.exit(1)
@@ -3766,6 +3773,12 @@ def main():
             'double-transit-pac': cmd_double_transit_pac,
             'transit-ll7l': cmd_transit_ll7l, 'planetary-congregation': cmd_planetary_congregation,
             'vivah-saham': cmd_vivah_saham}
+    if args.command == 'audit-capabilities':
+        from audit_capabilities import build_audit_table, load_registry, validate_registry
+        registry = load_registry(args.registry) if args.registry else load_registry()
+        result = validate_registry(registry) if args.mode == 'validate' else build_audit_table(registry, args.route)
+        output_json(result)
+        sys.exit(0 if result.get('valid', True) else 1)
     result = cmds[args.command](args)
     output_json(result)
 

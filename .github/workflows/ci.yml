@@ -1,0 +1,34 @@
+name: Jyotish Skill CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Compile Python files
+        run: python -m py_compile scripts/jyotish_engine.py scripts/special_lagnas.py scripts/audit_capabilities.py tests/run_golden_cases.py
+
+      - name: Validate technique registry
+        run: python scripts/audit_capabilities.py --mode validate
+
+      - name: Run unit tests
+        run: python -m unittest discover tests
+
+      - name: Run golden cases
+        run: python tests/run_golden_cases.py --python python
