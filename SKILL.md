@@ -7,7 +7,8 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 # 印度占星专业解盘与推运系统
 
 > **执行总控**：`references/quick-reference-guide.md`（⭐推荐优先阅读）
-> **版本**：v6.0.0 | **详细变更**：`CHANGELOG.md`
+> **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
+> **版本**：v6.0.1-orchestration | **详细变更**：`CHANGELOG.md`
 
 ---
 
@@ -23,6 +24,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 
 **强制工作流**（完整规范 → `references/ai-reading-workflow-prompt.md` v3.0）：
 
+0. **阶段负一**：问题类型路由（事业/婚恋/财务/应期/历史验证/综合解盘）→ 必须先读 `references/strict-workflow-router.md`，按对应 strict checklist 执行；用户不需要主动点名高级技法。
 1. **阶段零**：入口路由（A/B/C自动判断）
 2. **阶段一**（仅B）：PDF/图片提取 + Quality Gate
 3. **阶段二**：意图识别 → 路由目标宫位（无明确意图→Level 2综合解盘）
@@ -31,10 +33,21 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 6. **阶段五**：应期输出（五层验证→时间窗口→Actionable Output+案例检索）
 7. **阶段六**：补救措施（可选）
 8. **阶段七**：现代措辞包装
+9. **阶段八**：输出 Technique Audit Table，逐项声明已调用/未调用/部分可用/缺失模块及其对置信度的影响。
 
 ---
 
 ## ⚠️ 强制规则（与"不跳步"同级）
+
+### Strict Workflow Router（v6.0.1-orchestration）
+
+**凡是用户询问事业、婚恋、财务、事件应期、历史回测或技法可靠性，必须先读取 `references/strict-workflow-router.md`。**
+
+核心要求：
+1. 先判断问题类型，再自动选择 `career-timing-strict` / `relationship-timing-strict` / `wealth-timing-strict` / `event-timing-strict` / `event-verification-strict`。
+2. 用户不需要知道 Chara Dasha、A10、Argala、Shadbala、Ashtakavarga 等技法名称；AI 必须按问题类型自动调用。
+3. 输出末尾必须给出 Technique Audit Table，说明每项高级技法是否调用、结果是什么、缺失会如何降低置信度。
+4. 不得把未实现或未调用的技法静默省略；A10、完整 Bhava Chalit、Pushkara 自动化、Sudarshana Chakra、Dasha Sandhi 等若未能计算，必须显式标注为 partial/unavailable。
 
 ### MEVG 强制外部验证门控（v4.2.0+）
 
@@ -165,6 +178,8 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ## 预测清单
 
+- [ ] **Strict Router**：已读取 `references/strict-workflow-router.md`，并声明本轮使用的 strict route
+- [ ] **Technique Audit Table**：输出末尾已列出已调用/未调用/partial/unavailable 技法及置信度影响
 - [ ] **MEVG-静态门控**：所有静态解读声明必须web_search验证
 - [ ] 静态星盘分析（行星配置、Yoga、Nakshatra、宫位）
 - [ ] Argala检查（2/4/5/8/11宫干预+Virodha）
@@ -183,6 +198,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 - [ ] 预测边界检查（置信度标注，禁止绝对断言）
 - [ ] **案例检索**：动态预测必须先检索真实案例
 - [ ] **MEVG-预测门控**：确认每条预测有来源+置信度一致
+- [ ] **缺口声明**：若 A10/完整Bhava Chalit/Pushkara/Sudarshana/Dasha Sandhi 等未计算，已说明原因与影响
 
 ---
 

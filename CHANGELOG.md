@@ -1,5 +1,48 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.1-orchestration（2026-06-03）— Strict Workflow Router + Technique Audit 防遗漏编排
+
+> **触发原因**：实际解读中发现 skill 已覆盖大量高级技法（Jaimini、Chara Dasha、Karakamsha、Argala、Shadbala、Ashtakavarga、Yogini、Avastha 等），但 AI 未必会自动调用。用户必须懂技法名才能逼迫调用，导致 D10、Jaimini、A10、Bhava Chalit、Sudarshana、Dasha Sandhi 等关键层容易遗漏。
+
+### ① 新增 Strict Workflow Router
+
+新增 `references/strict-workflow-router.md`，作为问题类型驱动的强制路由文件。核心目标：
+
+- 不让用户负责点名高级技法；
+- 由 skill 根据问题类型自动选择 mandatory checklist；
+- 每次输出必须暴露已调用/未调用/partial/unavailable 模块；
+- 防止只看 D1、只看 Dasha、只看单一 Transit 的偷懒式解读。
+
+### ② 新增六类 strict route
+
+| Route | 触发场景 | 强制深度 |
+|---|---|---|
+| `career-timing-strict` | 事业机会、职业方向、项目落地、公开身份 | Level 3 |
+| `relationship-timing-strict` | 婚恋、婚姻、伴侣、复合、关系结果 | Level 3 |
+| `wealth-timing-strict` | 财运、收入、到账、资产、收益 | Level 2/3 |
+| `event-timing-strict` | 具体事件是否发生、应期、项目审批 | Level 3 |
+| `event-verification-strict` | 历史事件回测、技法可靠性验证 | Level 3 |
+| `full-reading-strict` | 综合命盘解读 | Level 2 |
+
+### ③ 强制 Technique Audit Table
+
+每次 Level 2+ 解读末尾必须输出技法审计表，标注：`called` / `partial` / `unavailable` / `not called`，并说明未调用项对结论置信度的影响。
+
+### ④ 显式缺口声明
+
+A10/10th Arudha、完整 Bhava Chalit、Pushkara 自动化、Sudarshana Chakra、Dasha Sandhi 等若无法计算，不得静默省略，必须声明缺失原因和影响。
+
+### ⑤ 修改文件
+
+| 文件 | 变更 |
+|---|---|
+| `SKILL.md` | 增加严格路由入口、阶段负一、阶段八 Technique Audit、预测清单缺口声明 |
+| `references/strict-workflow-router.md` | 新增问题类型路由、mandatory checklist、审计模板、缺口声明规则 |
+| `references/quick-reference-guide.md` | 专项分析强制接入 strict route |
+| `references/ai-reading-workflow-prompt.md` | 阶段二新增 Strict Workflow Router |
+
+---
+
 ## v4.3.0（2026-05-03）— Dasha 浮点边界修复 + App UI 全面优化
 
 > **触发原因**：多案例交叉验证中发现 Barack Obama 案例 Dasha 0/9 匹配，定位到浮点边界 bug。

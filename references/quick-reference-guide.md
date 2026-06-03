@@ -99,16 +99,18 @@
 
 **判断类型**：专项事件分析
 
+**强制入口**：先读取 `references/strict-workflow-router.md`。如果问题是事业机会/职业方向/项目落地，必须走 `career-timing-strict`；如果是财运/收入/到账，必须走 `wealth-timing-strict`；如果是具体事件能否发生，必须走 `event-timing-strict`。
+
 **参考路由**：
 
 | 用户意图 | 主参考文件 | 引擎命令 |
 |---------|-----------|---------|
-| 事业时机 | references/yoga-phala-timing-guide.md | `dasha` + `transit` |
+| 事业时机 | references/strict-workflow-router.md + references/yoga-phala-timing-guide.md | `full-reading` + `varga-full` + `dasha` + `jaimini` + `shadbala` + `ashtakavarga` + `argala` + `transit` |
 | **→ Actionable Output** | references/transit-actionable-output-guide.md ⭐v4.1.0 | 必须输出时间段+行动+置信度 |
-| 财运来源 | references/darakaraka-complete-guide.md（DK财富5模式）| `chart` + `yoga` |
+| 财运来源 | references/strict-workflow-router.md + references/darakaraka-complete-guide.md（DK财富5模式）| `chart` + `varga-full` + `dasha` + `shadbala` + `ashtakavarga` + `argala` |
 | 学业考试 | references/planetary-dignity-complete-reference.md（D24分析） | `varga -d 24` |
 | 健康预后 | references/advanced-techniques.md（8宫+6宫） | `chart` + `shadbala` |
-| 职业方向 | references/d10-varga-guide.md（D10事业盘） | `varga -d 10` |
+| 职业方向 | references/strict-workflow-router.md + references/d10-varga-guide.md（D10事业盘） | `varga-full` + `jaimini` + `shadbala` + `ashtakavarga` |
 
 ---
 

@@ -449,20 +449,32 @@ AI不应该凭空假设一个时间，而应该通过结构化互动帮助用户
 
 ## 阶段二：用户意图识别与路由
 
+### 2.0 Strict Workflow Router（v6.0.1-orchestration）
+
+在使用下方意图路由表之前，先读取 `strict-workflow-router.md`。凡涉及事业、婚恋、财务、事件应期、历史回测、技法可靠性或高级分析，必须选择对应 strict route，并在最终输出附 Technique Audit Table。
+
+| 用户意图 | Strict route | 必须额外完成 |
+|----------|-------------|-------------|
+| 事业机会/职业方向/项目落地 | `career-timing-strict` | D1+D9+D10+Vimshottari+Jaimini+AmK/Karakamsha+AL/A10+Shadbala+AV+Argala |
+| 婚恋/婚姻/伴侣/关系结果 | `relationship-timing-strict` | 性别/昼夜确认+D1+D9+DK+UL+Double Transit+KP |
+| 财运/收入/到账/资产 | `wealth-timing-strict` | 2H/11H+D2/D10+Shadbala+AV+Argala+KP |
+| 具体事件是否发生/何时发生 | `event-timing-strict` | 事件宫位定义+Dasha+Transit+KP+Moon trigger |
+| 历史事件验证/技法可靠性 | `event-verification-strict` | 同一技法回测+命中/失败评分+个人化规则 |
+
 ### 2.1 意图路由表
 
 | 用户意图 | 目标宫位 | 核心参考文件 | 承诺模板 |
 |----------|---------|-------------|---------|
-| 婚姻/恋爱/关系 | 7宫 | `relationship-astrology-guide.md` | §1 |
-| 事业/职业/工作 | 10宫 | `house-modern-mapping.md` | §2 |
-| 财富/收入/投资 | 2宫+11宫 | `house-domain-planet-mapping.md` | §3 |
+| 婚姻/恋爱/关系 | 7宫 | `strict-workflow-router.md` + `relationship-astrology-guide.md` | §1 |
+| 事业/职业/工作 | 10宫 | `strict-workflow-router.md` + `house-modern-mapping.md` | §2 |
+| 财富/收入/投资 | 2宫+11宫 | `strict-workflow-router.md` + `house-domain-planet-mapping.md` | §3 |
 | 子女/创作 | 5宫 | `modern-life-scenarios-complete.md` | §4 |
 | 健康/体质 | 1宫+6宫+8宫 | — | §5 |
 | 教育/学业 | 4宫+9宫 | — | §6 |
 | 出国/迁移 | 9宫+12宫 | — | §7 |
 | 灵性/修行 | 9宫+12宫 | — | §8 |
-| 合盘/关系匹配 | 7宫 | `synastry` + `relationship-astrology-guide.md` | §1 |
-| 综合解盘（全盘） | 全部 | `comprehensive-reading-workflow.md` | 全部 |
+| 合盘/关系匹配 | 7宫 | `strict-workflow-router.md` + `synastry` + `relationship-astrology-guide.md` | §1 |
+| 综合解盘（全盘） | 全部 | `strict-workflow-router.md` + `comprehensive-reading-workflow.md` | 全部 |
 
 **（承诺模板→ `promise-assessment-templates.md`）**
 

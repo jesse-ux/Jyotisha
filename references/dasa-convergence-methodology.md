@@ -119,24 +119,26 @@ Dasa Convergence给出"哪个时间段"，Transit给出"精确触发点"。
 
 ---
 
-## 四、实战案例：一楠命盘的Dasa Convergence
+## 四、实战案例：关系领域的Dasa Convergence匿名模板
+
+> 注意：本节仅示范Convergence方法，不代表任何特定个案。实际使用时必须替换为当事人的真实7宫、7宫主、DK、当前Dasha与可用条件Dasha数据。
 
 ### 目标：关系/婚姻启动时机
 
-**Step 1 结果**：7宫=Aquarius，7宫主=Saturn，7宫内行星=Saturn+Moon，DK=Mars
+**Step 1 示例**：先定位7宫、7宫主、7宫内行星、DK、UL及D9相关指标。
 
-**Step 2-3 结果**（2027年3月）：
+**Step 2-3 示例**：检查同一时间段是否有多个独立Dasha系统共同激活关系领域。
 
-| Dasha系统 | 当前周期 | 关系激活？ | 证据 |
+| Dasha系统 | 当前周期 | 关系激活？ | 证据示例 |
 |-----------|---------|-----------|------|
-| Vimsottari | Saturn Maha + **Venus Bhukti** | ✅ | Venus是8宫内行星（入庙）且是女命恋爱征象星 |
-| Yogini | Saturn周期 | ✅ | Saturn是7宫主=关系结构激活 |
-| Sudasa | Leo→Aquarius重叠期 | ✅ | Aquarius=7宫=关系宫 |
-| Kalachakra | 待精确计算 | ⚠️ | 需外部计算 |
+| Vimsottari | Maha + Bhukti | ✅/❌ | Maha/Bhukti主星是否为7宫主、7宫内行星、DK、UL主或关系Karaka |
+| Yogini | 当前Yogini | ✅/❌ | 当前Yogini主星是否连接7宫、D9或关系Karaka |
+| Chara/Sudasa | 当前星座周期 | ✅/❌ | 当前星座是否包含DK、照7宫/UL，或与D9关系轴形成连接 |
+| Kalachakra/其他 | 待精确计算 | ⚠️ | 需外部计算，不能伪造 |
 
-**Convergence等级**：**Level 2（3系统同时激活）**
+**Convergence等级**：按同时激活系统数量评估，2个为弱收敛，3个为中收敛，4个以上为强收敛。
 
-**结论**：2027年3月前后，3个独立Dasha系统同时指向关系领域激活 → 关系启动概率从基础60%提升至80-85%
+**结论模板**：当多个独立Dasha系统同时指向关系领域，再叠加Transit触发时，关系事件概率上调；但Convergence不等于确定事件，仍需本命承诺、分盘与过境共同确认。
 
 ---
 
