@@ -1,6 +1,29 @@
 # 印度占星 Skill 更新日志
 
-## v6.0.12-dispositor-chain-inter-chart-linkage（2026-06-04）—— 新增 Dispositor Chain + Inter-chart Linkage 技法
+## v6.0.13-tajika-yogas-sahams（2026-06-04）—— 新增 Tajika Yogas + Sahams 技法
+
+> **触发原因**：用户指出当前 skill 缺少 Tajika Yogas（Ithasala/Easarapha/Nakta/Yamaya/Manahoo/Graha Yuddha）和 Sahams（Punya/Karya/Vivah/Rajya/Shatru/Labha/Parakrama）两个重要技法体系。
+
+### 新增功能
+
+- `scripts/tajika.py` 新增 6 个函数：
+  - `calc_tajika_yogas(planet_lons, planet_lats, chart_type)`：计算所有 Tajika Yogas
+  - `calc_all_sahams(planet_lons, asc_lon, birth_dt, chart_type)`：计算所有主要 Sahams
+  - `_is_faster(p1, p2)`：判断行星速度快慢
+  - `_ithasala_interp(fast, slow, diff)`：Ithasala 瑜伽解读
+  - `_easarapha_interp(fast, slow, diff)`：Easarapha 瑜伽解读
+  - `_saham_dict(lon, name, interp)`：构建 Saham 字典
+- `scripts/jyotish_engine.py` 的 `cmd_full_reading` 新增 Step 4.8：调用 `calc_tajika_yogas` 和 `calc_all_sahams`，输出 `modules.tajika_yogas` 和 `modules.sahams`
+- `references/technique_registry.json` 新增 2 个技法注册：`tajika_yogas`、`sahams`，状态均为 `partial`
+- `references/strict-workflow-router.md` 同步更新：Technique Audit Table 模板新增 `Tajika Yogas` 和 `Sahams` 两行
+
+### 验证结果
+
+- Python 语法检查通过
+- tajika.py 函数测试：`calc_tajika_yogas` 检测到 2 个格局（Nakta + Manahoo），`calc_all_sahams` 计算出 7 个 Saham 点
+- `full-reading` 集成测试：待运行（需要 pyswisseph 环境）
+
+----dispositor-chain-inter-chart-linkage（2026-06-04）—— 新增 Dispositor Chain + Inter-chart Linkage 技法
 
 > **触发原因**：用户指出当前 skill 缺少"定位星链"和"分盘间飞星落宫"两个高级技法，导致事业/婚恋/财务等解盘无法完整分析行星能量流向和分盘间验证。
 

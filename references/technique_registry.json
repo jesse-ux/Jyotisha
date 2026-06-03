@@ -398,6 +398,44 @@
       ],
       "audit_label": "Inter-chart Linkage",
       "missing_impact": "Cross-chart planet linkage (D1->D9->D10) analysis incomplete."
+    },
+    "tajika_yogas": {
+      "name": "Tajika Yogas / 年运盘格局",
+      "domains": [
+        "tajika",
+        "timing",
+        "event",
+        "yoga"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.tajika_yogas"
+      ],
+      "audit_label": "Tajika Yogas",
+      "missing_impact": "Tajika year-chart yoga detection incomplete; annual timing confidence capped."
+    },
+    "sahams": {
+      "name": "Sahams / 特殊点",
+      "domains": [
+        "saham",
+        "timing",
+        "event",
+        "tajika"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.sahams"
+      ],
+      "audit_label": "Sahams",
+      "missing_impact": "Saham point calculation incomplete; annual/event timing layer missing."
     }
   },
   "routes": {
@@ -425,7 +463,9 @@
         "vargottama",
         "pushkara",
         "dispositor_chain",
-        "inter_chart_linkage"
+        "inter_chart_linkage",
+        "tajika_yogas",
+        "sahams"
       ],
       "optional_techniques": [
         "bhava_chalit",
@@ -449,7 +489,9 @@
         "shadbala",
         "ashtakavarga",
         "dispositor_chain",
-        "inter_chart_linkage"
+        "inter_chart_linkage",
+        "tajika_yogas",
+        "sahams"
       ],
       "optional_techniques": [
         "d9_navamsa",
@@ -479,7 +521,9 @@
         "vargottama",
         "pushkara",
         "dispositor_chain",
-        "inter_chart_linkage"
+        "inter_chart_linkage",
+        "tajika_yogas",
+        "sahams"
       ],
       "optional_techniques": [
         "bhava_chalit",

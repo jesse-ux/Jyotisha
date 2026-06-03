@@ -3454,6 +3454,25 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"dispositor-chain+inter-chart: {e}")
 
+    # ── Step 4.8: Tajika Yogas + Sahams (v6.0.13) ──
+    try:
+        from tajika import calc_tajika_yogas, calc_all_sahams
+
+        # Tajika Yogas（用本命盘行星经度）
+        tc_yogas = calc_tajika_yogas(planet_lons)
+        report['modules']['tajika_yogas'] = tc_yogas
+
+        # Sahams（特殊点）—— 需要出生时间
+        birth_dt = getattr(args, 'birth_datetime', None)
+        if birth_dt and planet_lons:
+            sahams_result = calc_all_sahams(planet_lons, asc_deg, birth_dt)
+            report['modules']['sahams'] = sahams_result
+        else:
+            report['modules']['sahams'] = {'warning': 'birth_datetime or planet_lons missing, skip saham calc'}
+
+    except Exception as e:
+        report['errors'].append(f"tajika-yogas+sahams: {e}")
+
     # ── Step 5: 精确相位 ──
     try:
         from aspects import calc_all_aspects

@@ -173,6 +173,8 @@ Every Level 2+ output must include this table near the end.
 | Ashtakavarga | Used / not used | ... | ... |
 | Dispositor Chain | Used / not used | ... | ... |
 | Inter-chart Linkage | Used / not used | ... | ... |
+| Tajika Yogas | Used / partial / not used | Ithasala/Easarapha/Nakta etc. | Cap annual timing confidence |
+| Sahams | Used / partial / not used | Punya/Karya/Vivah etc. | Cap event timing confidence |
 | Argala | Used / not used | ... | ... |
 | KP / Sub-lord | Used / not required / unavailable | ... | ... |
 | Historical verification | Used / not provided | ... | ... |
