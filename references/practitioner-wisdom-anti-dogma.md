@@ -390,51 +390,7 @@ Transit 触发检查：
 
 ## 七、从中文技法论文中提取的实战洞察
 
-> 来源：`/Users/wuyongnaren/资源库/占星资料/印度占星文章/` 中的7篇docx技法论文
-
-### 洞察1：D9 才是结果盘，D1 只是倾向盘
-
-> "相关宫位代表出生的环境和背景，宫主星则是代表具体的人...如果你的第七宫强大，只能说明对方出生的背景好，但是不代表对方很有能力。现实中多的是这种情况，比如嫁入一个物质条件不错的家庭，但是对方的能力、学识或许并不如你...今天分享的方法仅仅用来查看婚姻中物质繁荣的情况而已！"
-> — 高地位配偶 Yoga 文章
-
-**教训**：D9（Navamsa）用于验证 D1 中看到的倾向。D1 第七宫强 = 对方出生背景好（不代表能力强）。必须同时看宫位 + 宫主星才能判断配偶的实际能力。
-
-### 洞察2：Rahu-Ketu 不是简单地"凶/吉"
-
-> Rahu 在 D1 落在好的宫位，但 Rahu 在 D9 的状态才是决定性因素...如果 Rahu 在 D9 落入不利位置，即使 D1 看起来好，也会产生隐藏问题...D9 中的 Rahu 代表了灵魂层面真实的影响。
-> — Rashi Tulya Navamsa 文章
-
-**教训**：Rahu 的表现不能只看 D1，必须检查 D9（Navamsa）中 Rahu 的星座位置和状态。D1 中的"好位置"可能被 D9 中的不利位置完全否定。
-
-### 洞察3：Pancha Pakshi 不是随用随灵的万金油
-
-> Pancha Pakshi 系统的应用需要配合 Janma Nakshatra，不能独立使用...Kedar 在1991年出版的书中明确指出...很多人误以为可以单独使用 Pancha Pakshi 进行择日，这是不正确的。
-> — Pancha Pakshi 文章
-
-**教训**：Pancha Pakshi 必须与 Janma Nakshatra 配合使用，不能独立用于择日或预测。单独使用会导致误判。
-
-### 洞察4：Darakaraka（DK）不只代表伴侣
-
-> "我个人觉得 Darakaraka 也代表你欣赏的人身上的气质。也就是被 DK 代表的特质的人吸引，不局限于伴侣...Chara Karaka 就是来给你上一课的。"
-> — Jaimini Darakaraka 文章
-
-**教训**：DK 不只是"配偶指示星"，它代表你**被什么特质吸引**——这种吸引超越了伴侣关系，延伸到所有你欣赏的人身上。解读 DK 时不应局限于婚姻。
-
-### 洞察5：Bhrigu Pada Dasha 的 Rahu/Ketu 争议
-
-> Sanjay Rath 的方法与 Bhrigu Nandi Nadi 的方法在 Rahu 和 Ketu 的处理上有根本分歧...Sanjay 不使用 Ketu 作为 Pada 的起点...这在实际预测中会导致完全不同的结果。
-> — Bhrigu Pada Dasha 文章
-
-**教训**：不同流派/老师对同一技法的核心参数可能有根本分歧。使用 Bhrigu Pada Dasha 时必须明确选择 Sanjay Rath 还是 Bhrigu Nandi Nadi 的方案，不能混用。
-
-### 洞察6：Yogi/Avayogi 点必须配合 Dasha 使用
-
-> Yogi 和 Avayogi 点不是静态地给你带来好运或坏运...必须在对应的 Dasha 期间才会激活...很多人忽视了 Vimshottari Dasha 与 Yogi Nakshatra 的关系。
-> — Bhrigu Pada Dasha 文章
-
-**教训**：Yogi/Avayogi 点不是"永远吉/永远凶"，它们的效应需要在对应 Dasha 激活时才会显现。
-
----
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 ## 八、全球占星师精华语录
 
@@ -490,26 +446,8 @@ Transit 触发检查：
 3. **觉途**：真实咨询实录
 4. **日星月易Starry**：名人案例分析（周杰伦等）
 
-### 中文技法论文（`/Users/wuyongnaren/资源库/占星资料/印度占星文章/`）
-1. **Tithi 主星系统**（5.9MB）：Astrology Loka 翻译，含 Sanjay Rath Tithi-Jala 关系论
-2. **Pancha Pakshi 系统**（2.9MB）：Sri K.N. Rao 方法论，含 Janma Nakshatra 配合原则
-3. **Rashi Tulya Navamsa 深度解读**（2.1MB）：含 Rahu-Ketu 在 D9 的真实影响、Yama/Rakshasa/Preta Yoga
-4. **Bhrigu Pada Dasha + Arudha Pada**（5.3MB）：含 Sanjay Rath vs Bhrigu Nandi Nadi 方案分歧、Yogi/Avayogi 激活条件
-5. **Tajika Yoga 系统**（1.3MB）：含 Varshaphala 年度盘应用
-6. **高地位配偶 Yoga**（4.5KB）：含 Sonia Gandhi 验证案例、D9 vs D1 区别、"背景好 ≠ 能力强"核心洞察
-7. **Jaimini Darakaraka 详解**（19.9KB）：含 DK 超越伴侣关系的解读
+### 中文技法论文（`<local-path>`）
+
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 ### 验证案例库
-- 12个 AA 级名人案例，吻合度 90-100%
-- 20个三层验证案例，平均吻合度 97.8%
-- 详细索引：`famous-case-library.md`
-
----
-
-**整合完成日期**：2026-05-05
-**整合来源**：common-misconceptions.md + global-astrologer-reflections.md + lessons-learned-misconceptions-reflection.md + lessons-learned-timing-reflection.md + lessons-learned-technique-defects.md + lessons-learned-technique-fixes.md + lessons-learned-technique-optimization.md + consultation-case-library.md + famous-case-library.md + 7篇中文技法论文（`/Users/wuyongnaren/资源库/占星资料/印度占星文章/`）
-**去重说明**：
-- common-misconceptions.md 中的误判47-58 与 global-astrologer-reflections.md 内容完全重复 → 已合并
-- lessons-learned-technique-optimization.md 为综合汇总 → 已提取精华
-- 重复的"宿命论"和"12宫"讨论已统一为单一版本
-- 保留各文件独有的内容（文化差异分析、技术解决方案等）

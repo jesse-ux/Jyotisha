@@ -278,16 +278,16 @@ PYTHON=/Library/Frameworks/Python.framework/Versions/3.11/bin/python3
 SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 
 # 一键全链路（模块1-9 + 验证 + 审计）
-$PYTHON $SCRIPT full-reading --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8
+$PYTHON $SCRIPT full-reading --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8
 
 # 补充：16分盘精确计算（模块8）
-$PYTHON $SCRIPT varga-full --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --divisions D2,D3,D4,D7,D9,D10,D12,D16,D20,D24,D27,D30,D40,D45,D60
+$PYTHON $SCRIPT varga-full --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --divisions D2,D3,D4,D7,D9,D10,D12,D16,D20,D24,D27,D30,D40,D45,D60
 
 # 补充：6维力量（模块4）
-$PYTHON $SCRIPT shadbala --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8
+$PYTHON $SCRIPT shadbala --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8
 
 # 补充：BAV/SAV（模块9）
-$PYTHON $SCRIPT ashtakavarga --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8
+$PYTHON $SCRIPT ashtakavarga --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8
 ```
 
 ### 最小调用（路径B：PDF数据可用时）
@@ -353,11 +353,4 @@ $PYTHON $SCRIPT report ./report_folder --name "姓名" --lagna "上升星座"
 
 ### 解读质量检查
 
-- [ ] 没有使用绝对断言（"一定会..."→"大概率会..."）
-- [ ] 标注了预测置信度
-- [ ] 矛盾信号已标注（D1弱但D9强等）
-- [ ] 使用现代措辞（传统术语→现代映射）
-
----
-
-*来源：2026-04-25 一楠11页PDF完整深度分析实战（12模块全链路系统化方法论提炼）*
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。

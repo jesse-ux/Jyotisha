@@ -49,35 +49,9 @@
 - **DK（Darakaraka）在Navatara-2** → 关系是人生发展的核心动力
 - **多数凶星在Navatara-1** → 早年挑战多，但后期释放
 
-## 四、实战案例：一楠命盘
+## 四、实战案例：示例案例命盘
 
-**出生月宿**：Shatabhisha（序号24）
-
-**Navatara分组**（从Shatabhisha起数）：
-- Navatara-1：Shatabhisha(24) → P.Bhadra(25) → U.Bhadra(26) → Ashwini(27) → Bharani(1) → Krittika(2) → Rohini(3) → Mrigashira(4) → Ardra(5)
-- Navatara-2：Punarvasu(6) → Pushya(7) → Ashlesha(8) → Magha(9) → P.Phalguni(10) → U.Phalguni(11) → Hasta(12) → Chitra(13) → Swati(14)
-- Navatara-3：Vishakha(15) → Anuradha(16) → Jyeshtha(17) → Mula(18) → P.Ashadha(19) → U.Ashadha(20) → Shravana(21) → Dhanishta(22) → Shatabhisha(23)
-
-**行星分布**（根据一楠D1数据）：
-
-| 行星 | Nakshatra | Navatara组 | 解读 |
-|------|-----------|-----------|------|
-| Lagna | Magha(9) | Navatara-2 | 自我通过成就/发展表达 |
-| Sun | Ashwini(27)→Bharani(1)边界 | Navatara-1 | 父亲/权威在起点组 |
-| Moon | Shatabhisha(24) | Navatara-1 | 情感是人生起点的基础 |
-| Mars | Pushya(8)→Ashlesha(7)边界 | Navatara-1/2 | 行动力横跨两组 |
-| Mercury | U.Bhadra(27) | Navatara-1 | 沟通是早期天赋 |
-| Jupiter | Hasta(13) | Navatara-2 | 智慧通过中段发展实现 |
-| Venus | U.Bhadra(27)→Revati边界 | Navatara-1 | 美学/关系是基础 |
-| Saturn | Dhanishta(23) | Navatara-3 | **纪律/结构在终极转化组** |
-
-**核心发现**：
-- 多数行星集中在Navatara-1和Navatara-2 → 前中期发力的人生
-- **Saturn是唯一在Navatara-3的主要行星** → 结构化纪律是一楠灵性转化的终极工具
-- DK(Mars)在Navatara-1/2边界 → 伴侣关系是早期到中期的发展动力
-- 这与主报告"Saturn大运是结构化建设期"的结论完全一致
-
----
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 # 第二部分：Kantaka Shani（刺土星）
 
@@ -132,37 +106,8 @@
 | 土星与Jupiter形成相位 | 吉星保护 |
 | Ashtakavarga该宫SAV分高（>30） | 该领域抗压力强 |
 
-## 五、实战案例：一楠命盘
+## 五、实战案例：示例案例命盘
 
-**Lagna = Leo，Chandra Lagna = Aquarius**
-
-### 当前/近期Kantaka Shani检查
-
-| 时间 | Transit土星位置 | 从Lagna(Leo)看 | 从Chandra(Aquarius)看 | Kantaka？ |
-|------|----------------|---------------|---------------------|-----------|
-| 2023-2025 | Aquarius | 7宫 | **1宫** | ✅ **Chandra Kantaka**（1宫） |
-| 2025-2027 | Pisces | 8宫 | 2宫 | ✅ **Lagna Kantaka**（8宫） |
-| 2027-2029 | Aries | 9宫 | 3宫 | ❌ 无Kantaka |
-| 2029-2032 | Taurus | 10宫 | 4宫 | ✅ **双Kantaka！**（Lagna 10宫+Chandra 4宫） |
-
-**关键发现**：
-
-1. **2025-2027（Pisces过境）**：土星在8宫=Lagna Kantaka → 转化/深层变化期的压力。但Saturn本命入庙+SAV Pisces可评估 → 压力可控
-2. **2029-2032（Taurus过境）**：**双Kantaka** → 事业(Lagna 10宫)和家/内心(Chandra 4宫)同时承压。这是一楠需要提前准备的时期
-3. **缓解因素**：Saturn本命入庙Aquarius(Shadbala 157.54%) → Kantaka的"刺痛"会转化为"磨练"而非"打击"
-
----
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 ## 六、注意事项
-
-1. **Kantaka≠灾难**：是"不适"级别，不是"毁灭"级别
-2. **入庙Saturn的Kantaka**：更像"高强度训练"而非"惩罚"
-3. **必须结合Sade Sati**：如果Kantaka和Sade Sati重叠，压力叠加
-4. **双视角必须检查**：Lagna和Chandra Lagna两个视角缺一不可
-
----
-
-**参考来源**：
-- B.V. Raman《Muhurta and Kantaka Shani》
-- K.N. Rao《Astrology and Kantaka》
-- 一楠案例实战应用（2025-2032 Kantaka分析）

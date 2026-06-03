@@ -4,7 +4,7 @@
 测试: Double Transit PAC+D9, Transit LL/7L, 行星聚集, Vivah Saham, Chara Dasha
 """
 import sys, json, os
-sys.path.insert(0, '/Users/wuyongnaren/WorkBuddy/yinduzhanxing/scripts')
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 import swisseph as swe
 swe.set_ephe_path('')
 
@@ -204,7 +204,7 @@ def run():
     print(f"  ≥2信号覆盖率: {at_least_2}/{total} ({at_least_2/total*100:.0f}%)")
     
     # 保存
-    out = '/Users/wuyongnaren/WorkBuddy/2026-05-03-task-3/verify-large-scale-results.json'
+    out = os.path.join(os.path.dirname(__file__), 'test-data', 'verify-large-scale-results.json')
     with open(out, 'w', encoding='utf-8') as f:
         json.dump({'results': results, 'stats': stats, 'total': total}, f, ensure_ascii=False, indent=2)
     print(f"\n结果已保存: {out}")

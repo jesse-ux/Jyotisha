@@ -346,33 +346,33 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 
 | 子命令 | 功能 | 典型用法 |
 |--------|------|---------|
-| **`full-reading`** | ⭐全自动综合解盘（13模块一键出） | `full-reading --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `chart` | 完整星盘计算（含Ayanamsa修正）+ `--validate` 附加R1-R10验证 | `chart --validate --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `dasha` | Vimshottari大运时间线+小运展开 | `dasha --moon-lon 326.5 --birthdate REDACTED_DATE --today 2026-04-24` |
+| **`full-reading`** | ⭐全自动综合解盘（13模块一键出） | `full-reading --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
+| `chart` | 完整星盘计算（含Ayanamsa修正）+ `--validate` 附加R1-R10验证 | `chart --validate --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
+| `dasha` | Vimshottari大运时间线+小运展开 | `dasha --moon-lon 326.5 --birthdate 1990-01-01 --today 2026-04-24` |
 | `yoga` | Yoga格局识别（5种Yoga） | `yoga --ascendant Leo --planets 'Sun:Aries:9,Moon:Aquarius:7,...'` |
 | `predict` | 三层验证法事件预测+ `--past-verify` 验前事模式 | `predict --chart '<JSON>' --event-type marriage` |
-| `varga` | 分盘计算（D9 Navamsa/D10 Dasamsa） | `varga --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --d9 --d10` |
-| `varga-full` | BPHS十六分盘精确计算（D2-D60全部16分盘，精确度数输出） | `varga-full --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --divisions D9,D60` |
+| `varga` | 分盘计算（D9 Navamsa/D10 Dasamsa） | `varga --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --d9 --d10` |
+| `varga-full` | BPHS十六分盘精确计算（D2-D60全部16分盘，精确度数输出） | `varga-full --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --divisions D9,D60` |
 
 ### 高级分析命令
 
 | 子命令 | 功能 | 典型用法 |
 |--------|------|---------|
-| `aspects` | 度数精确相位系统（tight/moderate/loose + 入相位/出相位） | `aspects --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `jaimini` | Jaimini完整系统（Chara Karaka 7/8 + Chara Dasha + Karakamsha）+ `--antardasha` | `jaimini --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --mode all --antardasha` |
-| `nakshatra-adv` | 高级Nakshatra（Tara Bala + Sub-Lord KP + 兼容性） | `nakshatra-adv --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --mode all` |
-| `argala` | Argala门闩系统（主/副Argala + Virodha反干预 + 净评分） | `argala --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `tajika` | Tajika年运盘（Muntha + YearLord + Mudda Dasha + Tri-Pataka） | `tajika --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --age 33` |
+| `aspects` | 度数精确相位系统（tight/moderate/loose + 入相位/出相位） | `aspects --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
+| `jaimini` | Jaimini完整系统（Chara Karaka 7/8 + Chara Dasha + Karakamsha）+ `--antardasha` | `jaimini --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all --antardasha` |
+| `nakshatra-adv` | 高级Nakshatra（Tara Bala + Sub-Lord KP + 兼容性） | `nakshatra-adv --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all` |
+| `argala` | Argala门闩系统（主/副Argala + Virodha反干预 + 净评分） | `argala --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
+| `tajika` | Tajika年运盘（Muntha + YearLord + Mudda Dasha + Tri-Pataka） | `tajika --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --age 33` |
 | `synastry` | 合盘分析（Ashta Koota 36分 + Mangal Dosha + Papasamya） | `synastry --moon1 310.89 --moon2 45.5 --mars1 90.43 --mars2 120.3` |
 
 ### 评估与验证命令
 
 | 子命令 | 功能 | 典型用法 |
 |--------|------|---------|
-| `shadbala` | 六重力量计算（Sthana/Dig/Kala/Chesta/Naisargika/Drik Bala） | `shadbala --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `ashtakavarga` | 八分法计算（BPHS完整8×8矩阵，SAV=337） | `ashtakavarga --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `validate` | R1-R10数学验证（SAV/BAV/延伸角/Rahu-Ketu/逆行/Dasha/完整性/度数/宫位） | `validate --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
-| `audit` | P1-P12行星审计管线（Identity/Health/Resource/SAV/Dignity/Shadbala/Aspects/Nakshatra/Yogas） | `audit --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8` |
+| `shadbala` | 六重力量计算（Sthana/Dig/Kala/Chesta/Naisargika/Drik Bala） | `shadbala --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
+| `ashtakavarga` | 八分法计算（BPHS完整8×8矩阵，SAV=337） | `ashtakavarga --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
+| `validate` | R1-R10数学验证（SAV/BAV/延伸角/Rahu-Ketu/逆行/Dasha/完整性/度数/宫位） | `validate --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
+| `audit` | P1-P12行星审计管线（Identity/Health/Resource/SAV/Dignity/Shadbala/Aspects/Nakshatra/Yogas） | `audit --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
 | `memory` | Hermes记忆系统（store/search/context/stats） | `memory --action store --content "..." --tags "chart" --importance 8` |
 
 ### Transit与婚姻专项命令
@@ -380,19 +380,15 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 | 子命令 | 功能 | 典型用法 |
 |--------|------|---------|
 | `transit` | 行星过境查询（2026-2028） | `transit --year 2026 --month 7` |
-| `double-transit-pac` | KN Rao Double Transit PAC + D9层（D1/D9双层PAC检查+跨层确认） | `double-transit-pac --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --date 2026-07-01 --house 7` |
-| `transit-ll7l` | Transit LL/7L连接+互换（P5 PAC 98%命中率 + P8过宫 + Parivartana互换） | `transit-ll7l --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --date 2026-07-01` |
-| `planetary-congregation` | 行星聚集检测（本命Lagna/7H聚集 + Transit慢行星聚集） | `planetary-congregation --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --house 7 --transit-date 2026-07-01` |
-| `vivah-saham` | Vivah Saham婚姻敏感点（度数级计算 + Transit Jupiter/Saturn PAC激活） | `vivah-saham --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8 --transit-date 2026-07-01` |
+| `double-transit-pac` | KN Rao Double Transit PAC + D9层（D1/D9双层PAC检查+跨层确认） | `double-transit-pac --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --date 2026-07-01 --house 7` |
+| `transit-ll7l` | Transit LL/7L连接+互换（P5 PAC 98%命中率 + P8过宫 + Parivartana互换） | `transit-ll7l --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --date 2026-07-01` |
+| `planetary-congregation` | 行星聚集检测（本命Lagna/7H聚集 + Transit慢行星聚集） | `planetary-congregation --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --house 7 --transit-date 2026-07-01` |
+| `vivah-saham` | Vivah Saham婚姻敏感点（度数级计算 + Transit Jupiter/Saturn PAC激活） | `vivah-saham --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --transit-date 2026-07-01` |
 | `prashna` | Prashna问事占星（提问时刻星盘+Arudha Lagna+Sphuta组合+Sahams+失物查询） | `prashna --datetime "2026-04-25 14:30" --lat 39.9 --lon 116.4 --mode chart` |
 
 ### 其他命令
 
-| 子命令 | 功能 | 典型用法 |
-|--------|------|---------|
-| `celebrity` | 名人案例查询（SQLite + 15,807条CSV） | `celebrity --name Einstein` |
-| `db-stats` | 验证数据库统计（15,840条+10种技法） | `db-stats` |
-| `report` | MD→HTML报告生成（羊皮纸主题） | `report ./report_folder --name 一楠 --lagna Leo` |
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 ### 外部数据源（引擎自动读取）
 
@@ -443,11 +439,8 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 24. **modern-life-scenarios-complete.md**：现代生活场景完整版
 
 ### 占星系统（5个）
-25. **jaimini-complete-system.md**：Jaimini占星完整体系 ⭐⭐⭐⭐⭐
-26. **kp-astrology-complete-system.md**：KP占星完整体系 ⭐⭐⭐⭐⭐
-27. **kp-practical-event-timing.md**：KP实战案例与事件时机
-28. **remedies-complete-system.md**：补救措施完整体系
-29. **personalized-remedies-system.md**：个性化补救系统
+
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 ### 分盘与力量评估（7个）
 30. **ashtakavarga-complete-system.md**：Ashtakavarga完整体系（SAV=337）

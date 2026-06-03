@@ -29,66 +29,9 @@
 
 #### P0-1：Mangal Dosha 规则与全网经典冲突
 
-| 审计维度 | 结论 |
-|---------|------|
-| **问题描述是否准确？** | ⚠️ **半真半假，但关键前提错误** |
-| **是否真的需要修复？** | ⚠️ 需要，但不紧迫 |
-| **修复建议是否合理？** | ✅ 合理，但有更优方案 |
-
-**详细分析**：
-
-Kimi说：`badhaka-obstacle-planet-guide.md` 对 Leo 上升 Mars 的 Mangal Dosha 描述为"Yogakaraka 减轻"，应改为"完全取消"。
-
-**实际文件内容**：
-- `badhaka-obstacle-planet-guide.md` — **根本没有提到Mangal Dosha**！这个文件是关于Badhaka障碍星的
-- `raman-house-judgment-methodology.md` §3.3 的原文是："Mars如果庙旺或作为Yogakaraka，其Dosha效果**减轻**"
-
-**所以Kimi搞错了引用源**。它把Raman文件里的内容归因到了badhaka文件。
-
-**关于"减轻"vs"完全取消"的争议**：
-- B.V. Raman原话确实是"减轻"（mitigated/alleviated），不是"完全取消"
-- 但印度占星界确实存在两派观点：
-  - 传统派（Raman）：Yogakaraka Mars → Dosha **减轻**
-  - 现代派（某些老师）：Yogakaraka Mars → Dosha **不存在**
-- 对于一楠的情况（Leo上升Mars是Yogakaraka），两种说法都不影响核心结论——**婚姻有挑战但最终成功**
-
-**建议操作**：
-1. 在 `raman-house-judgment-methodology.md` §3.3 补充注释说明两派观点
-2. 在 `ai-reading-workflow-prompt.md` 中增加Mangal Dosha检查步骤（这个确实缺失了）
-3. 不需要改"完全取消"——保持Raman原文的"减轻"，加注替代观点即可
-
-**评级：⚠️ 问题描述有误，但方向正确，建议采纳（修正后）**
-
----
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 #### P0-2：Jupiter 功能性质规则错误
-
-| 审计维度 | 结论 |
-|---------|------|
-| **问题描述是否准确？** | ❌ **该问题已解决，Kimi不知道** |
-| **是否真的需要修复？** | ❌ 不需要 |
-| **修复建议是否合理？** | ⚠️ 方向对，但重复劳动 |
-
-**详细分析**：
-
-Kimi说：Skill文件未明确"Trikona lord 优先于 Dusthana lord"原则。
-
-**实际情况**：
-1. `SKILL.md` 第400行已明确写道：**"Trikona主星效应优先于Kendra"**
-2. `raman-house-judgment-methodology.md` 第18行明确写了例外规则：**"如果行星同时拥有Kendra和Trikona，三方宫力量胜出"**
-3. `precision-reading-methodology.md` 共识1（V.K. Choudhry）整段都在讲功能吉凶因盘而异
-4. Leo上升 Jupiter = 5宫Trikona主（非Dusthana）→ 功能吉星 → 这个判断在所有分析报告中已经一致
-
-**Kimi的问题根源**：它可能只看了早期版本的报告（那些确实犯过这个错），但没有看到后续修正后的SKILL.md和precision-reading-methodology.md。
-
-**建议操作**：
-- ❌ 无需新建 `functional-dignity-hierarchy.md` —— 规则已存在于多个文件中
-- ✅ 可选优化：在工作流中增加一个快速查找表（12上升×功能性质速查），让AI更容易检索到这条规则
-
-**评级：❌ 虚假问题，无需修复（或仅做轻微增强）**
-
----
-
 #### P0-3：Karaka 系统自动识别缺失
 
 | 审计维度 | 结论 |

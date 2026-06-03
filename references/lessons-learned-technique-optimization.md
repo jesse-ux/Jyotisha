@@ -84,19 +84,9 @@
 5. `download_vedastro_dataset.py` - 数据集下载
 6. `import_vedastro_celebrities.py` - 名人数据导入
 
-### 2.5 一楠星盘重新推理（2026-04-22 03:00）
+### 2.5 示例案例命盘重新推理（2026-04-22 03:00）
 
-**之前错误判断**：
-1. ❌ 宫位指标混淆（12 宫 ≠ 舞蹈/言语）
-2. ❌ 行星状态误判（火星落陷 ≠ 行动力弱）
-3. ❌ 8 宫误判（金星在 8 宫 ≠ 死亡宫）
-4. ❌ 土星在 7 宫误判（≠ 婚姻延迟）
-5. ❌ 推运应期简化（忽略三层验证法）
-
-**重新推理结果**：
-- 核心特质：领导力强、个人品牌意识强、艺术天赋强、财富转化能力强
-- 当前大运：Mercury 大运（2017-2026）
-- 婚姻触发点：Jupiter 过境狮子座（2027 年 5 月）
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 ### 2.6 技法漏洞修正方案（2026-04-22 03:14）
 
@@ -228,7 +218,7 @@
 6. 综合报告
 
 **目标仓库**：
-- 主要：`xingguigushi`（星轨故事）
+- 主要：`xingguigushi`（匿名项目故事）
 - 备选：`ziwei-engine`（紫微引擎）
 
 **预期时间**：1 小时
@@ -263,17 +253,7 @@
 
 ### 4.3 文档成果
 
-| 文件名 | 内容 | 字数 |
-|--------|------|------|
-| `印度占星技法缺陷分析报告-2026-04-22.md` | 技法缺陷分析 | ~5000 |
-| `印度占星批量推理最终汇总报告-2026-04-22.md` | 批量推理报告 | ~3000 |
-| `一楠印度占星星盘重新推理报告-2026-04-22.md` | 星盘重新推理 | ~4000 |
-| `印度占星技法漏洞修正方案-第一部分.md` | 技法修正方案 | ~6000 |
-| `印度占星技法优化完整报告-2026-04-22.md` | 综合报告 | ~3000 |
-
-**总文档量**：约 21000 字
-
----
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 ## 五、准确率提升预期
 
@@ -325,30 +305,10 @@
 
 ### 8.1 Python 脚本
 
-1. `/Users/wuyongnaren/WorkBuddy/Claw/init_database.py`
-2. `/Users/wuyongnaren/WorkBuddy/Claw/import_cases.py`
-3. `/Users/wuyongnaren/WorkBuddy/Claw/vedic_astrology_api.py`
-4. `/Users/wuyongnaren/WorkBuddy/Claw/record_new_case.py`
-5. `/Users/wuyongnaren/WorkBuddy/Claw/download_vedastro_dataset.py`
-6. `/Users/wuyongnaren/WorkBuddy/Claw/import_vedastro_celebrities.py`
-7. `/Users/wuyongnaren/WorkBuddy/Claw/yoga_recognition_system.py`
-8. `/Users/wuyongnaren/WorkBuddy/Claw/event_prediction_model.py`
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 ### 8.2 数据库文件
-
-1. `/Users/wuyongnaren/WorkBuddy/Claw/vedic_astrology_validation.db`（15,840 案例）
-2. `/Users/wuyongnaren/WorkBuddy/Claw/vedastro_data/PersonList-15k.csv`（15,807 名人）
-
 ### 8.3 文档文件
-
-1. `/Users/wuyongnaren/WorkBuddy/Claw/印度占星技法缺陷分析报告-2026-04-22.md`
-2. `/Users/wuyongnaren/WorkBuddy/Claw/印度占星批量推理最终汇总报告-2026-04-22.md`
-3. `/Users/wuyongnaren/WorkBuddy/Claw/一楠印度占星星盘重新推理报告-2026-04-22.md`
-4. `/Users/wuyongnaren/WorkBuddy/Claw/印度占星技法漏洞修正方案-第一部分.md`
-5. `/Users/wuyongnaren/WorkBuddy/Claw/印度占星技法优化完整报告-2026-04-22.md`
-
----
-
 ## 九、总结
 
 ### 9.1 核心成就

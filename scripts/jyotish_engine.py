@@ -29,9 +29,9 @@
   report       MD→HTML报告生成（v3.6新增，羊皮纸主题）
 
 用法示例:
-  python3 jyotish_engine.py chart --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8
-  python3 jyotish_engine.py shadbala --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8
-  python3 jyotish_engine.py ashtakavarga --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8
+  python3 jyotish_engine.py chart --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8
+  python3 jyotish_engine.py shadbala --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8
+  python3 jyotish_engine.py ashtakavarga --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8
   python3 jyotish_engine.py memory --action store --content "测试记忆"
 """
 

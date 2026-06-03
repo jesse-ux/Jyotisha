@@ -121,26 +121,7 @@ Dasa Convergence给出"哪个时间段"，Transit给出"精确触发点"。
 
 ## 四、实战案例：关系领域的Dasa Convergence匿名模板
 
-> 注意：本节仅示范Convergence方法，不代表任何特定个案。实际使用时必须替换为当事人的真实7宫、7宫主、DK、当前Dasha与可用条件Dasha数据。
-
-### 目标：关系/婚姻启动时机
-
-**Step 1 示例**：先定位7宫、7宫主、7宫内行星、DK、UL及D9相关指标。
-
-**Step 2-3 示例**：检查同一时间段是否有多个独立Dasha系统共同激活关系领域。
-
-| Dasha系统 | 当前周期 | 关系激活？ | 证据示例 |
-|-----------|---------|-----------|------|
-| Vimsottari | Maha + Bhukti | ✅/❌ | Maha/Bhukti主星是否为7宫主、7宫内行星、DK、UL主或关系Karaka |
-| Yogini | 当前Yogini | ✅/❌ | 当前Yogini主星是否连接7宫、D9或关系Karaka |
-| Chara/Sudasa | 当前星座周期 | ✅/❌ | 当前星座是否包含DK、照7宫/UL，或与D9关系轴形成连接 |
-| Kalachakra/其他 | 待精确计算 | ⚠️ | 需外部计算，不能伪造 |
-
-**Convergence等级**：按同时激活系统数量评估，2个为弱收敛，3个为中收敛，4个以上为强收敛。
-
-**结论模板**：当多个独立Dasha系统同时指向关系领域，再叠加Transit触发时，关系事件概率上调；但Convergence不等于确定事件，仍需本命承诺、分盘与过境共同确认。
-
----
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 ## 五、与其他技法的整合
 
@@ -312,61 +293,8 @@ Convergence等级：[Level 0/1/2/3]
 ═══════════════════════════════════════
 ```
 
-### 7.5 一楠案例：轻量Convergence实战
+### 7.5 示例案例案例：轻量Convergence实战
 
-**目标**：关系/婚姻启动时机（2027年3月）
-
-**Step 1**：7宫=Aquarius，7宫主=Saturn，DK=Mars
-
-**Step 2**：月亮在Dhanishta（序号23）
-
-**Yogini推算**：
-- 23 mod 8 = 7 → 起始Yogini = Siddha（序号7，7年）
-- 从出生开始累加年数，定位当前Yogini
-- 一楠出生于REDACTED_YEAR年，2027年=34岁
-- 累加：Siddha(7)→Sankata(8)→Mangala(1)→Pingala(2)→Dhanya(3)→Bhramari(4)→Bhadrika(5)→Ulka(6)→Siddha(7)=总43年
-- REDACTED_YEAR+7+8+1+2+3+4+5+6=REDACTED_YEAR+36=2029年（Siddha周期到2029）
-- 所以2027年在Siddha(7年)的后期（约2022-2029）
-- Siddha统治行星=Rahu/Ketu → ⚠️ 与7宫无直接关联
-
-**等等，重新计算**：
-- REDACTED_YEAR年起始Yogini=Siddha(7年)=REDACTED_YEAR-2000
-- Sankata(8年)=2000-2008
-- Mangala(1年)=2008-2009
-- Pingala(2年)=2009-2011
-- Dhanya(3年)=2011-2014
-- Bhramari(4年)=2014-2018
-- Bhadrika(5年)=2018-2023
-- Ulka(6年)=2023-2029
-- **2027年在Ulka周期（2023-2029），统治行星=Venus**
-
-**Venus = 女命恋爱征象星！与7宫关系核心行星直接相关！**
-
-| 系统 | 当前周期 | 关系激活？ | 证据 |
-|------|---------|-----------|------|
-| Vimsottari | Saturn Maha + Venus Bhukti | ✅ | Venus入庙8宫=恋爱征象星 |
-| Yogini | Ulka（Venus统治） | ✅ | Venus=女命恋爱星 |
-| Chara | 待精确（但Aquarius=7宫方向） | ⚠️ | 需更精确推算 |
-
-**轻量Convergence等级**：**Level 2（2系统确认+1待验证）**
-
-与之前用Sudasa做的分析结论一致：2027年3月前后，关系领域多系统同时激活。
-
----
+> **隐私保护**：本节曾包含真实用户个人星盘或人生事件资料，已移除。请使用公开名人案例、虚构 smoke case，或仅在当前会话中处理用户主动提供的数据；不得写入 skill 文件或公开仓库。
 
 ## 八、与其他文件的关系
-
-| 本文件章节 | 配套参考文件 | 关系 |
-|-----------|-------------|------|
-| §三 Convergence五步法 | `timing-prediction-template.md` | Convergence是L2的升级版 |
-| §七 轻量Convergence | `jaimini-complete-system.md` | Chara Dasha推算细节 |
-| §七 Yogini推算 | `vimshottari_dasha_guide.md` | 月宿→周期计算的参考 |
-| §五 Transit确认 | `transit-comprehensive-guide.md` | Transit四参考点分析 |
-
----
-
-**参考来源**：
-- K.N. Rao《Planets and Children》多Dasha验证法
-- Sanjay Rath《Vimshottari and Jaimini Dasha》收敛分析
-- 一楠案例实战验证（Vimsottari+Yogini+Sudasa三系统收敛2027.3）
-- B.V. Raman《Graha and Bhava Balas》Yogini周期计算法

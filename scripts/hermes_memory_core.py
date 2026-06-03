@@ -588,7 +588,7 @@ class HermesMemoryCore:
         entities = []
         
         project_names = [
-            '星语', '星轨人生', '星轨故事', '紫微引擎', '印度占星',
+            '星语', '示例项目人生', '示例项目故事', '紫微引擎', '印度占星',
             'cv01', 'plotGenerator', 'Hermes Agent', 'WorkBuddy'
         ]
         for name in project_names:
@@ -641,14 +641,14 @@ if __name__ == "__main__":
     # 测试2：存储项目背景
     print("\n--- 测试2: 存储项目背景 ---")
     mid2 = memory.store_memory(
-        content="一楠是星轨系列产品独立开发者，包括紫微斗数App(星轨人生)、AI剧本系统(cv01)、故事生成器(星语)。使用WorkBuddy作为开发助手。",
+        content="示例用户偏好结构化、简洁的协作方式（虚构演示数据）。",
         metadata={
             'source_type': 'user_provided',
             'session_id': 'profile-session',
             'importance': 9,
             'tags': ['project_background', 'developer_profile'],
             'entities': [
-                {'name': '星轨人生', 'type': 'project'},
+                {'name': '示例项目人生', 'type': 'project'},
                 {'name': 'cv01', 'type': 'project'},
                 {'name': '星语', 'type': 'project'}
             ]
@@ -659,7 +659,7 @@ if __name__ == "__main__":
     # 测试3：存储用户偏好
     print("\n--- 测试3: 存储用户偏好 ---")
     mid3 = memory.store_memory(
-        content="一楠偏好简洁直接的沟通风格，不要废话。称呼为'一楠'或'助手'。工作流程：读历史→执行→交付附件→写摘要",
+        content="示例用户偏好结构化、简洁的协作方式（虚构演示数据）。",
         metadata={
             'source_type': 'conversation',
             'session_id': 'pref-session',
@@ -678,7 +678,7 @@ if __name__ == "__main__":
     
     # 测试5：自动提取关键信息
     print("\n--- 测试5: 自动提取关键信息 ---")
-    test_message = "我给你发了11页的PDF星盘资料，你分析的时候一定要用正确的数据。另外我在做星轨人生的iOS版本开发，最近在研究奇门遁甲的编剧映射。"
+    test_message = "我给你发了11页的PDF星盘资料，你分析的时候一定要用正确的数据。另外我在做示例项目人生的iOS版本开发，最近在研究奇门遁甲的编剧映射。"
     extracted = memory.auto_extract_and_store(test_message, "test-session-auto")
     print(f"  输入: '{test_message}'")
     print(f"  自动提取并存储了 {len(extracted)} 条关键信息")

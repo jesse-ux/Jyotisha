@@ -108,22 +108,15 @@
 
 ## 五、示例分析：Leo 上升
 
-### 一楠星盘（Leo 上升 12.54°）
+### 通用分析框架
 
-| 项目 | 数据 |
-|------|------|
-| 上升 | Leo（固定星座） |
-| Badhaka宫 | **9宫 = Aries** |
-| Badhakesh | **Mars** |
-| Mars位置 | Cancer 1.32°（12宫，落陷+Neecha Bhanga） |
-| Badhaka宫(Aries)内 | 无行星 |
+> **隐私保护**：本节曾包含真实用户个人星盘资料，已移除。以下仅保留通用方法论。
 
 ### 分析
-- **Mars = Badhakesh = DK = 女性日盘丈夫征象星 = Yogakaraka** → 四重身份叠加
-- Mars落陷12宫 → 障碍因素隐藏在"远方/灵性/隐秘"领域
-- Neecha Bhanga → 障碍可被化解（需努力）
-- Badhaka宫Aries空宫 → 障碍更多来自Badhakesh本身而非宫内行星
-- **婚姻领域的Badhaka影响**: Mars同时是Badhakesh和DK → 配偶关系天然带有"需要克服的障碍"属性
+- 先确定上升类型与 Badhaka 宫。
+- 再确定 Badhakesh 是否同时承担 Yogakaraka、DK、7宫主、婚姻征象星等身份。
+- 若同一行星多重身份叠加，应区分“障碍来源”和“可转化资源”。
+- Badhaka 因素不独立断事，必须与 Dasha、Transit、D9/D10、Shadbala 交叉验证。
 
 ---
 

@@ -1,5 +1,24 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.4-privacy-sanitized（2026-06-03）— 移除个人化资料 + 隐私隔离规则
+
+> **触发原因**：用户明确要求“关于我个人的信息不可以暴露在印度占星skill里”。本版执行隐私清理：移除或匿名化 skill 中的真实个人星盘、出生资料、人生事件、项目背景、个案解读与回测痕迹，并新增隐私隔离规则。
+
+### ① 移除个人化个案资料
+
+- 移除完整个人星盘分析报告内容，改为隐私说明。
+- 清理出生时间矫正模板和高级指南中的真实事件样例，改为虚构字段格式。
+- 将个人化案例章节改为隐私保护占位或通用示例。
+- 清理 README smoke test 中的真实出生数据示例。
+
+### ② 新增隐私隔离规则
+
+- `SKILL.md` 新增“用户隐私与个案资料隔离”规则。
+- 真实用户资料只可在当前会话内用于分析，不得写入 `references/`、`assets/`、`tests/`、`CHANGELOG.md` 或公开仓库。
+- 方法论沉淀必须抽象化，不得保留可识别个人轨迹的细节。
+
+---
+
 ## v6.0.3-engineering-foundation（2026-06-03）— 能力平台化第一阶段
 
 > **触发原因**：用户要求从顶级软件工程师角度“智慧地下载使用全网帮助优化工作的开源项目”，快速把 skill 的效率和可靠性继续提高。调研 `jyotishyamitra`、`jyotisham/jyotisha`、`Yamale` 后，采用其工程启发：结构化 JSON 输出、计算层与解释层分离、注册表 schema 校验；但为避免新依赖，当前实现保持 Python stdlib。
@@ -134,7 +153,7 @@ A10/10th Arudha、完整 Bhava Chalit、Pushkara 自动化、Sudarshana Chakra�
 
 ## v4.2.0（2026-04-27）— 强制外部验证门控（MEVG）
 
-> **触发原因**：一楠多次强调"不要根据经验和固有认知去判断分析用户的情况，要全网去找针对性的内容，对应的知识点和相似案例分析综合分析反复验证"。v4.1.0 的 Transit Actionable Output 仅覆盖 Transit 预测环节的案例检索，缺少对静态分析、行星尊严判断、Yoga 识别等其他环节的外部验证要求。AI 反复跳过 web_search 验证，仅凭训练记忆输出解读。
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 
 ### ① 新增 MEVG 强制外部验证门控协议
 
@@ -188,7 +207,7 @@ A10/10th Arudha、完整 Bhava Chalit、Pushkara 自动化、Sudarshana Chakra�
 
 ## v4.1.0（2026-04-27）— Transit Actionable Output 强制升级
 
-> **触发原因**：一楠追问"我是怎么被发现的？展示内容什么时候开始创作？"——发现Skill输出的Transit分析停留在"星盘数据陈述"层，缺少Actionable Output模块；动态预测依赖理论推断，缺乏真实案例支撑。
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 
 ### ① Transit Actionable Output 强制规范
 
@@ -302,7 +321,7 @@ A10/10th Arudha、完整 Bhava Chalit、Pushkara 自动化、Sudarshana Chakra�
 - 传统派（Raman）：Yogakaraka Mars → Dosha**减轻**
 - 另一派：Yogakaraka Mars → Dosha**完全豁免**
 - Skill默认采用Raman"减轻"说，同时标注"完全豁免"观点
-- 一楠星盘实例：Mars@Cancer 12宫（落陷极浅+Neecha Bhanga）→ Mangal Dosha影响极弱
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 
 ### 文件变更清单
 
@@ -431,14 +450,14 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
 
 ### 触发词优化
 
-在frontmatter触发词中追加：`单事件问事`、`单事件查询`、`一楠星盘`、`婚姻四技法`、`Double Transit`、`Dasha支持`
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 
 ### SKILL.md变更
 
 - 版本：v3.12.1 → **v3.13.0**
 - 参考文件数：96 → **99**（新增3个）
 - §14 Prashna区域新增：单事件问事协议能力描述 + 婚姻四技法验证体系描述
-- frontmatter触发词追加：单事件问事、单事件查询、一楠星盘、婚姻四技法
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 - 参考列表：83→99重新编号完毕
 
 ---
@@ -542,7 +561,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
 
 - **`references/badhaka-obstacle-planet-guide.md`**：Badhaka障碍星系统完整指南
   - **12上升Badhaka Sthana+Badhakesh完整对照表**：Movable→11宫，Fixed→9宫，Dual→7宫
-  - **Leo上升分析**：Badhakesh=Mars（9宫Aries主），结合一楠星盘实战
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
   - **五步分析协议**：确定Badhakesh→分析落宫/相位→检查Badhaka Sthana→评估关系→补救
   - 来源：【古典·BPHS】
 
@@ -745,7 +764,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
 
 ### 核心升级
 
-将11页PDF完整深度分析实战中积累的方法论和推理技法经验，系统化为5篇独立参考文件，覆盖从排盘到解盘到推运的完整链路。
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 
 ### 新增参考文件（5个）
 
@@ -769,7 +788,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
   - **D9婚姻五维分析法**：D9上升/DK位置/Venus/7宫/DK-Lagna合相
   - **Vargottama婚姻意义**：19分盘频率分析+婚姻应用
   - **Pushkara Navamsa婚姻解读**：按元素分组的精确度数+婚姻分析应用
-  - **D9婚姻8步旗标算法实操版**：绿旗/黄旗/红旗评分表+实战案例
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
   - **D9与D1矛盾处理**：核心原则"D9>D1在婚姻分析中"
 
 - **`references/divisional-chart-deep-reading.md`**：分盘深度阅读工作流（约260行）
@@ -777,7 +796,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
   - **行星频率分析核心技法**：统计行星在19个分盘中的落座频率，≥40%=核心主题
   - **Vargottama检测矩阵**：D1-D9/多分盘/逆Vargottama/唯一Vargottama四种类型
   - **分盘组合阅读模式**：三角验证/生命线追踪/财富链/关系链
-  - **Swiss Ephemeris交叉验证**：160验证点+一楠验证10/10 D9匹配
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 
 - **`references/deep-analysis-complete-workflow.md`**：综合深度分析完整工作流（约330行）
   - **12模块系统化方法**：D1基础→特殊Lagna→Jaimini Karaka→Shadbala→Avastha→Bhava Bala→Vimsopaka→19分盘→AV→多Dasha收敛→Navamsa婚姻→综合结论
@@ -815,7 +834,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
   - 影响：所有行星度数、Karaka度数、Transit匹配精度、Pushkara判断等均受影响
   - **Karaka排序不受影响**（排序顺序相同，但度数精度显著提升）
 
-### 一楠星盘修正前后度数对比（REDACTED_DATE 14:45 UTC+8）
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 
 | 行星 | v3.7.3b（非Lahiri） | v3.7.4（Lahiri） | PDF数据 | 偏差修正 |
 |------|-------------------|-----------------|---------|---------|
@@ -830,7 +849,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
 
 ### 参考文档同步更新
 
-- `marriage-timing-validation-methodology.md`：一楠对比表AK/DK度数修正为Lahiri精确值
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 - `darakaraka-complete-guide.md`：Sun入庙→入旺术语修正
 
 ### Karaka验证（v3.7.4 Lahiri修正后）
@@ -865,7 +884,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
 
 ### 验证（v3.7.3b，仍使用非Lahiri Ayanamsa）
 
-一楠星盘修复前后对比（注意：此版本度数仍有~0.88°偏差，已在v3.7.4修正）：
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 
 | Karaka | 修复前(0-360排序) | 修复后(degree_in_sign) | PDF |
 |--------|-------------------|----------------------|-----|
@@ -1018,11 +1037,11 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
 - 版本 v3.6.0 → **v3.7.0**
 - 新增7个CLI子命令：`varga-full` / `aspects` / `jaimini` / `nakshatra-adv` / `argala` / `tajika` / `synastry`
 - 总子命令数：14 → **21**
-- 所有新模块通过一楠星盘验证（REDACTED_DATE 14:45）
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 
 ### 验证结果
 
-| 模块 | 子命令 | 一楠星盘验证 | 关键输出 |
+| 私有验证案例信息已移除 | 隐私保护 |
 |------|--------|-------------|---------|
 | varga | varga-full | ✅ | D9 Navamsa 精确度数+尊严 |
 | aspects | aspects | ✅ | 6个精确相位（Moon-Saturn合相等）|
@@ -1072,7 +1091,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
   - 每颗行星的 BAV 从所有 8 个来源（7行星+Lagna）获得贡献，非仅自贡献
   - BPHS 校正：月亮 BAV 木星贡献去12宫→49，金星 BAV 水星贡献加12宫→52
   - SAV 总和 = 337 ✅（7行星 BAV 之和），含 Lagna 完整总分 = 386
-  - 两组出生数据端到端验证通过（一楠+奥巴马）
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 - **新增 `scripts/validate.py`**：R1-R10 数学验证模块
   - R1: SAV 总和 = 337
   - R2: 各 BAV 行常数校验（Sun=48, Moon=49, ...）
@@ -1097,7 +1116,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
   - 完整实现Parashara系统六种Bala：Sthana（位置）、Dig（方向）、Kala（时间）、Chesta（运动）、Naisargika（天然）、Drik（相位）
   - 输出每颗行星的六维得分、总Virupas/Rupas、Ishta Bala百分比、强度等级（极强/强/充足/略弱/弱/极弱）
   - 行星力量排名
-  - 端到端验证：一楠星盘 Sun 6.73 Rupas（强）、Moon 5.45 Rupas（略弱）
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 - **新增 `scripts/ashtakavarga.py`**：Ashtakavarga八分法计算模块
   - BAV（Bhinna Ashtakavarga）8源独立贡献表
   - SAV（Sarva Ashtakavarga）聚合评分 + 吉凶评估（极吉/吉利/中等/挑战）
@@ -1126,7 +1145,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
   - 基于 Swiss Ephemeris 天文计算库（Lahiri Ayanamsa 恒星黄道标准）
   - 8大子命令：chart（星盘计算）、dasha（大运时间线）、yoga（格局识别）、predict（三层验证法）、varga（分盘D9/D10）、celebrity（名人案例查询）、db-stats（数据库统计）、transit（过境查询）
   - 自动连接外部数据源：验证数据库（15,840条）、名人CSV（15,807条）、过境配置（2026-2028）
-  - 完成端到端验证：一楠星盘上升狮子座（11.66° vs PDF 12.63°）、D9上升巨蟹座（与PDF一致）
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 - **SKILL.md v3.3.1**：新增 §13 计算引擎集成说明 + 触发词增加（算星盘/排盘/计算星盘/查名人）
 - **已知限制**：LAM深度学习模型（75.84MB）和 Hermes Agent 中间件未集成（超出 CLI 脚本能力范围）
 
@@ -1148,7 +1167,7 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
   - Yogini Dasha完整手工推算表（8位女神+年数+Nakshatra分组+定位公式）
   - Chara Dasha简化推算法（方向判断+Rashi Drishti速查）
   - 轻量Convergence实战模板（标准表格格式）
-  - 一楠案例Yogini推算实战验证（Ulka周期=Venus统治=女命恋爱星确认）
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 - **SKILL.md v3.2.0**：新增2个参考文件注册（66文件总数）+Argala能力描述+AI工作流描述+预测清单增加Argala检查项和Dasa Convergence轻量法+触发词增加Argala/Yogini/Chara Dasha/AI解盘
 
 ## v3.1.0（2026-04-24）— 多Dasa收敛+技法补齐+案例库整合
@@ -1156,10 +1175,10 @@ CHANGELOG中"v3.8.0新增案例库（13个）→编号58-70"的记录基于v3.8.
   - 9大Dasha系统独立性对照表（Vimsottari/Yogini/Kalachakra/Sudasa/Chara/Narayana/Nadi/Ashtottari/Shodashottari）
   - Convergence五步法：目标领域→提取Dasha→逐系统检查→寻找重叠→Transit确认
   - Convergence等级量化：Level 0-3 概率提升公式
-  - 一楠实战案例（Vimsottari+Yogini+Sudasa三系统收敛2027.3）
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 - **新增 `navatara-kantaka-shani-guide.md`**：双技法合并文件
-  - Navatara九星链分析：27宿三组分组法+行星分布解读+一楠实战
-  - Kantaka Shani刺土星：四敏感位置（1/4/8/10宫）+严重程度分级+缓解因素+一楠2025-2032 Kantaka预测
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
+- 私有验证案例/用户反馈细节已移除（隐私保护）。
 - **整合 `famous-case-library.md` v2.0**：
   - 从"1个案例"升级为"24个案例统一入口"
   - 分级索引：A级（AA级验证12个）、B级（1个，梦露⚠️）、C级（比对级11个）

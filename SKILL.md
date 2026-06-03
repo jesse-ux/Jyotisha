@@ -1,6 +1,6 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.0.3
+version: 6.0.4
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga、出生时间矫正、PDF星盘、读取PDF、分析PDF星盘、现代解读、误判纠错、Varga分盘、综合分析、过境分析、合盘、婚姻匹配、年运盘、Prashna、Argala、Jaimini、KP系统、Shadbala、Ashtakavarga、HTML报告、深度解盘。
 ---
 
@@ -10,7 +10,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.3-engineering-foundation | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.0.4-privacy-sanitized | **详细变更**：`CHANGELOG.md`
 
 ---
 
@@ -40,6 +40,20 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 ---
 
 ## ⚠️ 强制规则（与"不跳步"同级）
+
+
+### 用户隐私与个案资料隔离（v6.0.4-privacy）
+
+**严禁把真实用户个人信息写入 skill 文件或公开仓库。**
+
+包括但不限于：姓名/称呼、出生日期时间地点、星盘度数、人生事件、关系状态、职业经历、项目背景、历史回测结论、当前会话中的个案分析。
+
+允许的资料来源只有三类：
+1. 公开 AA 级名人案例；
+2. 明确标注为虚构的 smoke test / template；
+3. 用户在当前会话中主动提供的数据，但只能在当前会话中使用，不得持久化到 skill、tests、CHANGELOG 或公开仓库。
+
+如需沉淀方法论，只能抽象为通用规则，不得保留可识别个人轨迹的细节。
 
 ### Strict Workflow Router（v6.0.1-orchestration）
 
@@ -241,9 +255,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.0.3-engineering-foundation
+**版本**：v6.0.4-privacy-sanitized
 **创建日期**：2026-04-20
-**最后更新**：2026-06-03（v6.0.3 新增 technique registry、能力审计脚本、golden cases 回归测试和 GitHub Actions CI 门禁）
+**最后更新**：2026-06-03（v6.0.4 移除个人化个案资料，并新增用户隐私与个案资料隔离规则）
 
 ---
 

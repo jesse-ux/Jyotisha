@@ -52,7 +52,7 @@ pip install -r requirements.txt
 ### 3. 验证安装
 
 ```bash
-python3 scripts/jyotish_engine.py chart --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 --lat 36.6 --lon 114.5 --tz 8
+python3 scripts/jyotish_engine.py chart --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8
 ```
 
 如果输出包含行星位置 JSON，说明安装成功。
@@ -72,8 +72,8 @@ python3 scripts/jyotish_engine.py chart --year REDACTED_YEAR --month 4 --day 17 
 ```bash
 # 一键全链路计算（13 模块自动串行）
 python3 scripts/jyotish_engine.py full-reading \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8
 
 # 输出包含：
 # chart + dasha + yoga + varga_full + aspects + jaimini +
@@ -86,12 +86,12 @@ python3 scripts/jyotish_engine.py full-reading \
 ```bash
 # 基础星盘计算
 python3 scripts/jyotish_engine.py chart \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8 --validate
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8 --validate
 
 # Vimshottari 大运时间线
 python3 scripts/jyotish_engine.py dasha \
-  --moon-lon 326.5 --birthdate REDACTED_DATE --today 2026-04-25
+  --moon-lon 326.5 --birthdate 1990-01-01 --today 2026-04-25
 
 # Yoga 格局识别
 python3 scripts/jyotish_engine.py yoga \
@@ -99,43 +99,43 @@ python3 scripts/jyotish_engine.py yoga \
 
 # 十六分盘计算
 python3 scripts/jyotish_engine.py varga-full \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8 --divisions D9,D60
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8 --divisions D9,D60
 
 # 精确相位分析
 python3 scripts/jyotish_engine.py aspects \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8
 
 # Jaimini 系统（Chara Karaka + Chara Dasha + Karakamsha）
 python3 scripts/jyotish_engine.py jaimini \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8 --mode all
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8 --mode all
 
 # 高级 Nakshatra（Tara Bala + Sub-Lord）
 python3 scripts/jyotish_engine.py nakshatra-adv \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8 --mode all
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8 --mode all
 
 # Argala 门闩分析
 python3 scripts/jyotish_engine.py argala \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8
 
 # Tajika 年运盘
 python3 scripts/jyotish_engine.py tajika \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8 --age 33
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8 --age 33
 
 # Shadbala 六重力量
 python3 scripts/jyotish_engine.py shadbala \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8
 
 # Ashtakavarga 八分法
 python3 scripts/jyotish_engine.py ashtakavarga \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8
 
 # 合盘分析（Ashta Koota 36 分制）
 python3 scripts/jyotish_engine.py synastry \
@@ -150,13 +150,13 @@ python3 scripts/jyotish_engine.py celebrity --name Einstein
 
 # R1-R10 数学验证
 python3 scripts/jyotish_engine.py validate \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8
 
 # P1-P12 行星审计
 python3 scripts/jyotish_engine.py audit \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8
 
 # 行星过境查询
 python3 scripts/jyotish_engine.py transit --year 2026 --month 7
@@ -300,10 +300,10 @@ git clone git@github.com:732642856/yinduzhanxing.git \
 ## 🧪 验证与测试
 
 ```bash
-# 运行 full-reading 验证（一楠星盘）
+# 运行 full-reading smoke test（虚构示例数据）
 python3 scripts/jyotish_engine.py full-reading \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 45 \
-  --lat 36.6 --lon 114.5 --tz 8
+  --year 1990 --month 1 --day 1 --hour 12 --minute 0 \
+  --lat 39.9 --lon 116.4 --tz 8
 
 # 预期输出：12 modules computed, 0 errors
 ```
