@@ -1,5 +1,41 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.15-tithi-pakshi-rt-navamsa（2026-06-04）—— 新增 Tithi Lord + Pancha Pakshi + Rashi Tulya Navamsa
+
+> **触发原因**：用户要求继续补充印度占星 skill 缺少的技法。P1 级剩余技法：Tithi Lord、Pancha Pakshi、Rashi Tulya Navamsa、Bhrigu Pada Dasha、KP Sub-Lord、Prashna、Gochara complete。本轮实现前 3 项。
+
+### 新增功能
+
+- `scripts/tithi_lord.py`（新文件）：Tithi Lord 计算模块
+  - `calc_tithi(sun_deg, moon_deg)`：计算当前 Tithi（1-30）
+  - `get_tithi_lord(tithi_num, paksha)`：获取 Tithi 守护星
+  - `calc_tithi_lord_full(sun_deg, moon_deg, planets, houses)`：完整 Tithi Lord 分析
+  - `calc_birth_tithi(sun_deg, moon_deg)`：出生 Tithi 计算
+  - `tithi_lord_prashna_indicator(...)`：Prashna 时机指标
+- `scripts/pancha_pakshi.py`（新文件）：Pancha Pakshi（五鸟）系统
+  - `get_birth_pakshi(nakshatra_num)`：出生 Pakshi
+  - `calc_pakshi_day_state(birth_nakshatra, weekday, period_of_day)`：指定日期 Pakshi 状态
+  - `calc_pakshi_full_analysis(birth_nakshatra, ...)`：完整五鸟分析
+  - `pancha_pakshi_prashna_guide(...)`：Prashna 指导
+- `scripts/rashi_tulya_navamsa.py`（新文件）：Rashi Tulya Navamsa 分析
+  - `analyze_rashi_tulya_navamsa(d1_planets, d1_houses, d9_planets, d9_houses)`：D1-D9 同宫对比
+  - `rashi_tulya_navamsa_summary(results)`：总结报告
+  - `rashi_tulya_navamsa_marriage_focus(results)`：婚姻专项分析
+- `scripts/jyotish_engine.py` 的 `cmd_full_reading` 新增 Step 4.10：
+  - 调用 `calc_tithi_lord_full` → `modules.tithi_lord`
+  - 调用 `calc_pakshi_full_analysis` → `modules.pancha_pakshi`
+  - 调用 `analyze_rashi_tulya_navamsa` → `modules.rashi_tulya_navamsa`
+- `references/technique_registry.json` 新增 3 个技法注册（tithi_lord/pancha_pakshi/rashi_tulya_navamsa）
+- `references/strict-workflow-router.md`：Audit Table 模板新增 3 行
+
+### 技法状态变更
+
+| 技法 | 原状态 | 新状态 | 说明 |
+|------|--------|--------|------|
+| tithi_lord | missing | partial | 基础 Tithi 计算已实现，Prashna 集成待完善 |
+| pancha_pakshi | missing | partial | 基础五鸟计算已实现，Tamil 文献校准待完善 |
+| rashi_tulya_navamsa | missing | partial | D1-D9 同宫对比已实现，婚姻专项分析待完善 |
+
 ## v6.0.14-yogas-doshas-dk（2026-06-04）—— 新增 Yogas + Doshas + Special Lagnas + Darakaraka
 
 > **触发原因**：用户要求补充印度占星 skill 缺少的技法。经过本地资料 + 全网搜索对比，发现 P0 级缺失技法：Darakaraka (DK)、Raj/Dhana Yogas、Doshas (Mangal/Kaal Sarp/Pitra)、Special Lagnas (AL/UL)。

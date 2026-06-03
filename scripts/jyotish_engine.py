@@ -3502,6 +3502,54 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"yogas-doshas: {e}")
 
+    # ── Step 4.10: Tithi Lord + Pancha Pakshi + Rashi Tulya Navamsa (v6.0.15) ──
+    try:
+        # Tithi Lord（出生 Tithi + Lord 分析）
+        from tithi_lord import calc_tithi_lord_full
+        sun_deg = planet_lons[0]
+        moon_deg = planet_lons[1]
+        tithi_result = calc_tithi_lord_full(sun_deg, moon_deg, planets, houses)
+        report['modules']['tithi_lord'] = tithi_result
+    except Exception as e:
+        report['errors'].append(f"tithi-lord: {e}")
+
+    try:
+        # Pancha Pakshi（五鸟系统，需要出生 Nakshatra）
+        # 先尝试从 nakshatra_advanced 获取出生 Nakshatra
+        nakshatra_num = None
+        if 'moon_nakshatra' in dir() or 'moon_nak' in locals():
+            pass  # 动态获取
+        # 从 planets 数据推算 Nakshatra（Moon 的度数为基准）
+        moon_deg = planet_lons[1]
+        nak_num = int(moon_deg / 13.3333333) + 1
+        if nak_num > 27:
+            nak_num = 27
+        from pancha_pakshi import calc_pakshi_full_analysis
+        pk_result = calc_pakshi_full_analysis(nak_num, target_weekday=0, target_period=0)
+        report['modules']['pancha_pakshi'] = pk_result
+    except Exception as e:
+        report['errors'].append(f"pancha-pakshi: {e}")
+
+    try:
+        # Rashi Tulya Navamsa（D1 与 D9 同宫对比分析）
+        from rashi_tulya_navamsa import analyze_rashi_tulya_navamsa, rashi_tulya_navamsa_summary
+        varga_full = report['modules'].get('varga_full', {})
+        d9_data = varga_full.get('D9_Navamsa', {})
+        if d9_data and d9_data.get('planets') and d9_data.get('houses'):
+            rt_result = analyze_rashi_tulya_navamsa(
+                planets, houses,
+                d9_data['planets'], d9_data['houses']
+            )
+            rt_summary = rashi_tulya_navamsa_summary(rt_result)
+            report['modules']['rashi_tulya_navamsa'] = {
+                'analysis': rt_result,
+                'summary': rt_summary
+            }
+        else:
+            report['modules']['rashi_tulya_navamsa'] = {'note': 'D9 data incomplete, skip Rashi Tulya Navamsa'}
+    except Exception as e:
+        report['errors'].append(f"rashi-tulya-navamsa: {e}")
+
     # ── Step 5: 精确相位 ──
     try:
         from aspects import calc_all_aspects

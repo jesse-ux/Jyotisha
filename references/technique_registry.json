@@ -1,5 +1,5 @@
 {
-  "version": "v6.0.14-yogas-doshas-dk",
+  "version": "v6.0.15-tithi-pakshi-rt-navamsa",
   "source_inspiration": [
     {
       "name": "jyotishyamitra",
@@ -635,6 +635,63 @@
       ],
       "audit_label": "Upapada Lagna",
       "missing_impact": "Marriage quality analysis incomplete without UL."
+    },
+    "tithi_lord": {
+      "name": "Tithi Lord / 月日守护星",
+      "domains": [
+        "tithi",
+        "prashna",
+        "timing",
+        "moon_sun"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.tithi_lord"
+      ],
+      "audit_label": "Tithi Lord",
+      "missing_impact": "Tithi Lord 分析不完整，Prashna 问卜时机判断受限。"
+    },
+    "pancha_pakshi": {
+      "name": "Pancha Pakshi / 五鸟系统",
+      "domains": [
+        "pancha_pakshi",
+        "tamil",
+        "prashna",
+        "timing"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.pancha_pakshi"
+      ],
+      "audit_label": "Pancha Pakshi",
+      "missing_impact": "五鸟系统分析不完整，Tamil 占星时机判断受限。"
+    },
+    "rashi_tulya_navamsa": {
+      "name": "Rashi Tulya Navamsa / 本命对分盘分析",
+      "domains": [
+        "varga",
+        "d1_d9",
+        "analysis",
+        "marriage"
+      ],
+      "status": "partial",
+      "knowledge_refs": [],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.rashi_tulya_navamsa"
+      ],
+      "audit_label": "Rashi Tulya Navamsa",
+      "missing_impact": "D1-D9 同宫对比分析不完整，婚姻/内在潜力判断受限。"
     }
   },
   "routes": {
@@ -675,7 +732,10 @@
         "pitra_dosha",
         "sade_sati",
         "arudha_lagna",
-        "upapada_lagna"
+        "upapada_lagna",
+        "tithi_lord",
+        "pancha_pakshi",
+        "rashi_tulya_navamsa"
       ],
       "optional_techniques": [
         "bhava_chalit",
@@ -712,7 +772,10 @@
         "pitra_dosha",
         "sade_sati",
         "arudha_lagna",
-        "upapada_lagna"
+        "upapada_lagna",
+        "tithi_lord",
+        "pancha_pakshi",
+        "rashi_tulya_navamsa"
       ],
       "optional_techniques": [
         "d9_navamsa",
@@ -755,7 +818,10 @@
         "pitra_dosha",
         "sade_sati",
         "arudha_lagna",
-        "upapada_lagna"
+        "upapada_lagna",
+        "tithi_lord",
+        "pancha_pakshi",
+        "rashi_tulya_navamsa"
       ],
       "optional_techniques": [
         "bhava_chalit",
