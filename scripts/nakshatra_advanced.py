@@ -541,6 +541,10 @@ def nakshatra_full_report(
         'tara_auspicious_count': sum(1 for p in power_ranking if p['tara_quality'] == 'auspicious'),
         'chandra_auspicious_count': sum(1 for p in power_ranking if p['chandra_quality'] == 'auspicious'),
     }
+    # 将关键字段也复制到顶层，方便直接访问（兼容旧版验证脚本）
+    report['moon_nakshatra'] = NAK_NAMES[moon_nak_idx]
+    report['moon_nakshatra_lord'] = NAK_LORDS[moon_nak_idx]
+    report['moon_pada'] = int((moon_lon % (360.0/27)) / (360.0/108)) + 1
 
     return report
 

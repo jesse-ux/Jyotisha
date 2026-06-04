@@ -483,7 +483,7 @@ def solar_return_full_report(
     else:
         try:
             from tajika import calc_all_sahams
-            asc_lon = sr['ascendant'].get('degree', 0)
+            asc_lon = sr['ascendant'].get('lon', sr['ascendant'].get('degree', 0))
             sr_dt_ut = sr['solar_return']['dt_ut']
             sahams = calc_all_sahams(planet_lons, asc_lon, sr_dt_ut, chart_type='varsha')
             result['sahams'] = sahams

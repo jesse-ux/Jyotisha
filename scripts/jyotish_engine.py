@@ -444,8 +444,12 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz, node_mode='
     asc_deg = (asc_lon[0] - ayanamsa) % 360
     asc_idx = int(asc_deg / 30)
     asc_sign = SIGNS[asc_idx]
+    deg_in_sign = asc_deg - asc_idx * 30
     result["ascendant"] = {"sign": asc_sign, "sign_cn": SIGNS_CN[asc_sign],
-        "degree": round(asc_deg, 4), "degree_in_sign": round(asc_deg - asc_idx * 30, 4),
+        "degree": round(deg_in_sign, 4), "degree_raw": round(asc_deg, 4),
+        "degree_in_sign": round(deg_in_sign, 4),
+        "degree_in_sign_raw": asc_deg,
+        "lon": round(asc_deg, 4),
         "lord": SIGN_LORDS[asc_sign]}
 
     for i in range(12):
@@ -1022,7 +1026,7 @@ def cmd_yoga(args):
             yogas.append({"name": "Grahi Dhana Yoga", "name_cn": "星聚财富格局", "combination": f"{'、'.join(in_house)}同在第{wh}宫", "effects": ["财运亨通", "投资有利", "收入丰厚"], "strength": "强"})
             break
 
-    return {"ascendant": asc, "planets_analyzed": len(planets), "kendra_lords": kl, "trikona_lords": tl, "yogas_detected": len(yogas), "yogas": yogas}
+    return {"ascendant": asc, "planets_analyzed": len(planets), "kendra_lords": kl, "trikona_lords": tl, "yogas_detected": len(yogas), "yogas": yogas, "detected_yogas": yogas}
 
 
 # ============================================================================
@@ -1566,7 +1570,7 @@ def cmd_double_transit_pac(args):
 
     natal = chart.get('planets', {})
     asc_sign = chart.get('ascendant', {}).get('sign', 'Aries')
-    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+    asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
     event_house = args.house or 7
 
     # 2. 计算过境行星位置
@@ -1810,7 +1814,7 @@ def cmd_transit_ll7l(args):
 
     natal = chart.get('planets', {})
     asc_sign = chart.get('ascendant', {}).get('sign', 'Aries')
-    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+    asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
 
     ll_name = SIGN_LORDS[asc_sign]
     seven_sign = SIGNS[(SIGNS.index(asc_sign) + 6) % 12]
@@ -1974,7 +1978,7 @@ def cmd_vivah_saham(args):
         return {"error": "swisseph未安装"}
 
     natal = chart.get('planets', {})
-    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+    asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
     venus_lon = natal.get('Venus', {}).get('degree', 0)
     saturn_lon = natal.get('Saturn', {}).get('degree', 0)
 
@@ -2519,7 +2523,7 @@ def cmd_varga_full(args):
         return {"error": f"varga模块导入失败: {e}"}
     planets = chart.get('planets', {})
     planet_lons = {pn: pd.get('degree_raw', pd['degree']) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
-    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+    asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
     divisions = [int(d.strip().replace('D','')) for d in args.divisions.split(',')] if args.divisions else None
     return calc_all_vargas(planet_lons, asc_deg, divisions)
 
@@ -2543,7 +2547,7 @@ def cmd_aspects(args):
     for pn, pd in planets.items():
         if isinstance(pd, dict) and 'degree' in pd:
             planet_lons[pn] = pd['degree']
-    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+    asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
     return calc_all_aspects(planet_lons, asc_deg)
 
 
@@ -2569,7 +2573,7 @@ def cmd_jaimini(args):
         if isinstance(pd, dict) and 'degree' in pd:
             planet_lons[pn] = pd['degree']
             planet_degs[pn] = pd.get('degree_in_sign', pd['degree'] % 30)
-    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+    asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
 
     result = {}
     # Chara Karaka（必须传星座内度数0-30，不是完整经度0-360）
@@ -2664,7 +2668,7 @@ def cmd_tajika(args):
     for pn, pd in planets.items():
         if isinstance(pd, dict) and 'degree' in pd:
             planet_lons[pn] = pd['degree']
-    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+    asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
     asc_si = int(asc_deg / 30) % 12  # sign index
     age = args.age
     if age is None:
@@ -3229,7 +3233,7 @@ def cmd_full_reading(args):
     report['chart'] = chart
     report['modules']['chart'] = chart
     planets = chart.get('planets', {})
-    asc_deg = chart.get('ascendant', {}).get('degree', 0)
+    asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
     asc_sign = chart.get('ascendant', {}).get('sign', 'Unknown')
     planet_lons = {pn: pd.get('degree_raw', pd['degree']) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
     planet_degs = {pn: pd.get('degree_in_sign_raw', pd.get('degree_in_sign', pd['degree'] % 30)) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
@@ -3291,7 +3295,7 @@ def cmd_full_reading(args):
         pada = int((moon_lon % (360/27)) / (360/108)) + 1
 
         birthdate = f"{args.year}-{args.month:02d}-{args.day:02d}"
-        today_str = getattr(args, 'today', None) or datetime.now().strftime('%Y-%m-%d')
+        today_str = getattr(args, 'transit_date', None) or getattr(args, 'today', None) or datetime.now().strftime('%Y-%m-%d')
         dasha_result = cmd_dasha(type('Args', (), {
             'nakshatra': nak_name, 'pada': pada,
             'moon_lon': moon_lon, 'birthdate': birthdate, 'today': today_str
