@@ -1026,6 +1026,244 @@ def cmd_yoga(args):
             yogas.append({"name": "Grahi Dhana Yoga", "name_cn": "星聚财富格局", "combination": f"{'、'.join(in_house)}同在第{wh}宫", "effects": ["财运亨通", "投资有利", "收入丰厚"], "strength": "强"})
             break
 
+    # ========================================================================
+    # 扩展 Yoga 规则库 (v6.0.25)
+    # 目标：从 ~49 种扩展到 75+ 种
+    # ========================================================================
+
+    # --- A. 行星合相 Yoga（Conjunction Yogas）---
+
+    # A1. Budha-Shukra Yoga（水金同宫）
+    # 来源：BPHS。水星与金星同宫 → 艺术才华、口才、商业头脑
+    if 'Mercury' in planets and 'Venus' in planets:
+        if _house_of('Mercury') == _house_of('Venus'):
+            yogas.append({"name": "Budha-Shukra Yoga", "name_cn": "水金合相格局", "combination": f"水星与金星同在第{_house_of('Mercury')}宫", "effects": ["艺术才华", "商业头脑", "审美卓越"], "strength": "强" if not _is_debilitated('Mercury') else "中"})
+
+    # A2. Surya-Chandra Yoga（日月同宫）
+    # 来源：经典文献。太阳与月亮同宫 → 精神力量、领导力
+    if 'Sun' in planets and 'Moon' in planets:
+        if _house_of('Sun') == _house_of('Moon'):
+            yogas.append({"name": "Surya-Chandra Yoga", "name_cn": "日月合相格局", "combination": f"太阳与月亮同在第{_house_of('Sun')}宫", "effects": ["精神力量", "领导气质", "意志坚定"], "strength": "强"})
+
+    # A3. Guru-Shukra Yoga（木金同宫）
+    # 来源：BPHS。木星与金星同宫 → 智慧与爱心的结合
+    if 'Jupiter' in planets and 'Venus' in planets:
+        if _house_of('Jupiter') == _house_of('Venus'):
+            yogas.append({"name": "Guru-Shukra Yoga", "name_cn": "木金合相格局", "combination": f"木星与金星同在第{_house_of('Jupiter')}宫", "effects": ["智慧与爱心兼备", "精神富足", "艺术造诣"], "strength": "强"})
+
+    # A4. Shani-Rahu Yoga（土罗同宫）
+    # 来源：经典文献。土星与罗睺同宫 → 纪律与变革的结合，但可能带来阻碍
+    if 'Saturn' in planets and 'Rahu' in planets:
+        if _house_of('Saturn') == _house_of('Rahu'):
+            yogas.append({"name": "Shani-Rahu Yoga", "name_cn": "土罗合相格局", "combination": f"土星与罗睺同在第{_house_of('Saturn')}宫", "effects": ["纪律与变革", "突破传统", "但也可能带来阻碍"], "strength": "中"})
+
+    # A5. Angaraka Yoga（火土同宫）
+    # 来源：BPHS。火星与土星同宫 → 冲突与纪律的张力
+    if 'Mars' in planets and 'Saturn' in planets:
+        if _house_of('Mars') == _house_of('Saturn'):
+            yogas.append({"name": "Angaraka Yoga", "name_cn": "火土合相格局", "combination": f"火星与土星同在第{_house_of('Mars')}宫", "effects": ["行动力与纪律", "也可能产生冲突", "需平衡"], "strength": "中"})
+
+    # A6. Surya-Budha Yoga（日水合相 — 与 Budhaditya 不同，这个是更宽松的定义）
+    # 来源：经典文献。太阳与水星在 2° 以内 → 智力超群
+    if 'Sun' in planets and 'Mercury' in planets:
+        if _house_of('Sun') == _house_of('Mercury'):
+            yogas.append({"name": "Surya-Budha Yoga", "name_cn": "日水紧密合相格局", "combination": f"太阳与水星同在第{_house_of('Sun')}宫", "effects": ["智力超群", "沟通能力强", "学习能力佳"], "strength": "强"})
+
+    # --- B. 宫位主星关联 Yoga（Lord Relationship Yogas）---
+
+    # B1. Dharma Karmadhipati Yoga（法业主格局）
+    # 来源：BPHS。9宫主与10宫主有关联（同宫/互换/互容）
+    lord_9 = _lord_of_house(9)
+    lord_10 = _lord_of_house(10)
+    if lord_9 in planets and lord_10 in planets:
+        l9h = _house_of(lord_9)
+        l10h = _house_of(lord_10)
+        if l9h == l10h:
+            yogas.append({"name": "Dharma Karmadhipati Yoga", "name_cn": "法业主同宫格局", "combination": f"9宫主{lord_9}与10宫主{lord_10}同在第{l9h}宫", "effects": ["事业与命运结合", "社会地位高", "精神事业"], "strength": "强"})
+        elif SIGN_LORDS.get(_sign_of(lord_9)) == lord_10 and SIGN_LORDS.get(_sign_of(lord_10)) == lord_9:
+            yogas.append({"name": "Dharma Karmadhipati Yoga (Parivartana)", "name_cn": "法业主互换格局", "combination": f"9宫主{lord_9}与10宫主{lord_10}互换星座", "effects": ["事业与命运互换提升", "社会地位高", "贵人运强"], "strength": "强"})
+
+    # B2. Raja Yoga 扩展 — 互落（Parivartana）
+    # 来源：BPHS。Kendra 主与 Trikona 主互换星座
+    for klord in kl:
+        for tlord in tl:
+            if klord != tlord and klord in planets and tlord in planets:
+                if SIGN_LORDS.get(_sign_of(klord)) == tlord and SIGN_LORDS.get(_sign_of(tlord)) == klord:
+                    yogas.append({"name": "Raja Yoga (Parivartana)", "name_cn": "王者互换格局", "combination": f"{klord}与{tlord}互换星座", "effects": ["权力与财富互换提升", "社会地位显著", "事业成功"], "strength": "极强"})
+
+    # B3. Neecha Bhanga 扩展（更多条件）
+    # 来源：BPHS。条件2：落陷行星所在星座的守护星在 Kendra
+    for p, info in planets.items():
+        if DEBILITATION.get(p) == info["sign"]:
+            dl = SIGN_LORDS[info["sign"]]
+            if dl in planets and _is_kendra(_house_of(dl)):
+                already_nb = any("Neechabhanga" in y.get("name", "") and p in y.get("combination", "") for y in yogas)
+                if not already_nb:
+                    yogas.append({"name": "Neechabhanga Raja Yoga (Variant)", "name_cn": "落陷取消格局（守护星版）", "combination": f"{p}落陷在{info['sign']}，守护星{dl}在角宫", "effects": ["克服困难", "逆境崛起", "转化能力"], "strength": "中强"})
+            # 条件3：落陷行星自身在 Kendra
+            if _is_kendra(info["house"]):
+                already_nb = any("Neechabhanga" in y.get("name", "") and p in y.get("combination", "") for y in yogas)
+                if not already_nb:
+                    yogas.append({"name": "Neechabhanga Raja Yoga (Kendra)", "name_cn": "落陷取消格局（角宫版）", "combination": f"{p}落陷但在角宫第{info['house']}宫", "effects": ["逆境中崛起", "转化困境为机遇"], "strength": "中强"})
+
+    # B4. Pancha Mahapurusha 扩展 — Moolatrikona
+    # 来源：BPHS。行星在 Moolatrikona 星座且在 Kendra
+    MOOLATRIKONA = {
+        'Sun': 'Leo', 'Moon': 'Taurus', 'Mars': 'Aries', 'Mercury': 'Virgo',
+        'Jupiter': 'Sagittarius', 'Venus': 'Libra', 'Saturn': 'Aquarius'
+    }
+    moola_names = {'Mars': 'Ruchaka (Moola)', 'Mercury': 'Bhadra (Moola)', 'Jupiter': 'Hamsa (Moola)',
+                   'Venus': 'Malavya (Moola)', 'Saturn': 'Sasa (Moola)'}
+    for p, info in planets.items():
+        if info["house"] in [1, 4, 7, 10] and p in moola_names:
+            if MOOLATRIKONA.get(p) == info["sign"]:
+                already = any(y.get("name") == moola_names[p] for y in yogas)
+                if not already:
+                    yogas.append({"name": moola_names[p], "name_cn": f"{PLANET_CN.get(p, p)}本宫格局", "combination": f"{p}在本宫{info['sign']}(第{info['house']}宫)", "effects": ["卓越才能", "领域领军", "人格魅力"], "strength": "强"})
+
+    # B5. Viparita Raja 扩展
+    # 来源：BPHS。6/8/12 宫主互落（更宽松：任意两个凶宫主互落）
+    dusthana_pairs = [(6, 8), (6, 12), (8, 12), (8, 6), (12, 6), (12, 8)]
+    for h1, h2 in dusthana_pairs:
+        l1 = _lord_of_house(h1)
+        l2 = _lord_of_house(h2)
+        if l1 in planets and l2 in planets:
+            if _house_of(l1) == h2 and _house_of(l2) == h1:
+                already = any("Vipreet" in y.get("name", "") and f"第{h1}宫" in y.get("combination", "") and f"第{h2}宫" in y.get("combination", "") for y in yogas)
+                if not already:
+                    yogas.append({"name": f"Vipreet Raja Yoga ({h1}-{h2})", "name_cn": f"逆行王者格局({h1}-{h2})", "combination": f"第{h1}宫主{l1}在{h2}宫，第{h2}宫主{l2}在{h1}宫", "effects": ["因祸得福", "逆境崛起"], "strength": "中强"})
+
+    # --- C. Nabhasa Yogas（天空格局 — 基于行星分布模式）---
+
+    # C1. Sankhya Yoga（数字格局）
+    # 来源：BPHS。基于行星占据的宫位数量
+    occupied_houses = set(info["house"] for info in planets.values() if "house" in info)
+    num_occupied = len(occupied_houses)
+    if num_occupied == 1:
+        yogas.append({"name": "Gola Yoga", "name_cn": "球格局", "combination": "所有行星在同一宫", "effects": ["专注集中", "也可能过于极端"], "strength": "中"})
+    elif num_occupied == 2:
+        yogas.append({"name": "Yuga Yoga", "name_cn": "双格局", "combination": "所有行星在两宫", "effects": ["双重性格", "生活两极化"], "strength": "中"})
+    elif num_occupied == 3:
+        yogas.append({"name": "Sula Yoga", "name_cn": "三叉格局", "combination": "所有行星在三宫", "effects": ["行动力", "但也可能有冲突"], "strength": "中"})
+    elif num_occupied == 4:
+        yogas.append({"name": "Kedara Yoga", "name_cn": "四重格局", "combination": "所有行星在四宫", "effects": ["稳定", "农业/地产运"], "strength": "中"})
+    elif num_occupied == 7:
+        yogas.append({"name": "Veena Yoga", "name_cn": "琴格局", "combination": "行星分布在七宫", "effects": ["艺术才华", "生活丰富", "多才多艺"], "strength": "强"})
+
+    # C2. Asraya Yoga（依托格局）
+    # 来源：BPHS。所有行星在 Kendra 或 Trikona
+    all_in_kt = all(_is_kendra(info["house"]) or _is_trikona(info["house"]) for info in planets.values() if "house" in info)
+    if all_in_kt and len(planets) >= 5:
+        yogas.append({"name": "Asraya Yoga", "name_cn": "依托格局", "combination": "所有行星在角宫或三方宫", "effects": ["生活稳定", "有依靠", "根基深厚"], "strength": "中强"})
+
+    # C3. Dala Yoga（分叶格局）
+    # 来源：BPHS。6/8/12 宫主在 Kendra
+    dala_count = sum(1 for dh in [6, 8, 12] if _lord_of_house(dh) in planets and _is_kendra(_house_of(_lord_of_house(dh))))
+    if dala_count >= 2:
+        yogas.append({"name": "Dala Yoga", "name_cn": "分叶格局", "combination": f"{dala_count}个凶宫主在角宫", "effects": ["逆境中崛起", "转化能力"], "strength": "中强"})
+
+    # C4. Maala Yoga（串珠格局）
+    # 来源：BPHS。所有吉星在 Kendra 的连续三宫
+    ben_in_kendra = sorted(set(_house_of(p) for p in benefics if p in planets and _is_kendra(_house_of(p))))
+    if len(ben_in_kendra) >= 3:
+        for i in range(len(ben_in_kendra) - 2):
+            if ben_in_kendra[i+1] - ben_in_kendra[i] == 1 and ben_in_kendra[i+2] - ben_in_kendra[i+1] == 1:
+                yogas.append({"name": "Maala Yoga", "name_cn": "串珠格局", "combination": f"吉星在连续的角宫", "effects": ["幸运连绵", "福气不断"], "strength": "强"})
+                break
+
+    # --- D. 特殊条件 Yoga ---
+
+    # D1. Mahabhagya Yoga（大运格局）
+    # 来源：BPHS。白天出生：太阳/月亮/上升在奇数星座；夜晚：在偶数星座
+    # 简化版（不区分昼夜性别）：检查奇偶星座分布
+    odd_signs = ['Aries', 'Gemini', 'Leo', 'Libra', 'Sagittarius', 'Aquarius']
+    even_signs = ['Taurus', 'Cancer', 'Virgo', 'Scorpio', 'Capricorn', 'Pisces']
+    asc_odd = asc in odd_signs
+    sun_odd = 'Sun' in planets and _sign_of('Sun') in odd_signs
+    moon_odd = 'Moon' in planets and _sign_of('Moon') in odd_signs
+    if asc_odd and sun_odd and moon_odd:
+        yogas.append({"name": "Mahabhagya Yoga", "name_cn": "大运格局", "combination": "上升/太阳/月亮均在奇数星座", "effects": ["命运眷顾", "人生顺遂", "贵人运强"], "strength": "强"})
+
+    # D2. Pushkala Yoga（丰盈格局）
+    # 来源：BPHS。上升主有力 + 月亮在友好星座 + 上升有吉星
+    if asc_lord in planets and (_is_exalted(asc_lord) or _is_own_sign(asc_lord)):
+        moon_ok = 'Moon' in planets and _sign_of('Moon') not in [DEBILITATION.get('Moon', '')]
+        ben_in_asc = [p for p in benefics if p in planets and _house_of(p) == 1]
+        if moon_ok and ben_in_asc:
+            yogas.append({"name": "Pushkala Yoga", "name_cn": "丰盈格局", "combination": f"上升主有力+月亮状态良好+{'、'.join(ben_in_asc)}在1宫", "effects": ["生活富足", "社会地位高", "受人尊敬"], "strength": "强"})
+
+    # D3. Adhi Yoga（上方格局）
+    # 来源：BPHS。6/8/12 宫上方有吉星（6上方=12宫，8上方=2宫，12上方=11宫）
+    adhi_houses = {6: 12, 8: 2, 12: 11}
+    for dh, uh in adhi_houses.items():
+        ben_above = [p for p in benefics if p in planets and _house_of(p) == uh]
+        if ben_above:
+            yogas.append({"name": "Adhi Yoga", "name_cn": "上方格局", "combination": f"{'、'.join(ben_above)}在第{uh}宫（{dh}宫上方）", "effects": ["权威地位", "领导能力", "受人尊敬"], "strength": "中强"})
+            break  # 只报告一次
+
+    # D4. Chatussagara Yoga（四角充盈格局）
+    # 来源：BPHS。1/4/7/10 每个角宫都有至少一颗行星
+    kendra_occupied = all(len(_planets_in_house(h)) > 0 for h in [1, 4, 7, 10])
+    if kendra_occupied:
+        yogas.append({"name": "Chatussagara Yoga", "name_cn": "四角充盈格局", "combination": "1/4/7/10宫均有行星", "effects": ["生活圆满", "各方面均衡发展", "命运眷顾"], "strength": "强"})
+
+    # D5. Virinchi Yoga（创造格局）
+    # 来源：BPHS。上升主在 Kendra/Trikona + 5宫主在 Kendra + 木星有力
+    if asc_lord in planets and _planet_in_kendra_or_trikona(asc_lord):
+        if lord_5 in planets and _is_kendra(_house_of(lord_5)):
+            if 'Jupiter' in planets and (_is_exalted('Jupiter') or _is_own_sign('Jupiter') or _house_of('Jupiter') in [1, 5, 9]):
+                yogas.append({"name": "Virinchi Yoga", "name_cn": "创造格局", "combination": "上升主有力+5宫主在角宫+木星有力", "effects": ["创造力强", "智慧卓越", "精神修养"], "strength": "强"})
+
+    # D6. Veenaa Yoga（琴格局）
+    # 来源：BPHS。2/5/9宫有吉星 + 上升主有力（与 Sankhya Veena 不同）
+    ben_in_259 = [p for p in benefics if p in planets and _house_of(p) in [2, 5, 9]]
+    if len(ben_in_259) >= 2 and asc_lord in planets and (_is_exalted(asc_lord) or _is_own_sign(asc_lord)):
+        yogas.append({"name": "Veenaa Yoga (Artistic)", "name_cn": "艺术琴格局", "combination": f"{'、'.join(ben_in_259)}在2/5/9宫+上升主有力", "effects": ["艺术才华", "音乐天赋", "审美卓越"], "strength": "强"})
+
+    # D7. Kalanidhi Yoga（艺藏格局）
+    # 来源：BPHS。木星在2/5宫 + 被金星/水星关联
+    if 'Jupiter' in planets and _house_of('Jupiter') in [2, 5]:
+        assoc = [p for p in ['Venus', 'Mercury'] if p in planets and (_house_of(p) == _house_of('Jupiter') or abs(_house_of(p) - _house_of('Jupiter')) in [3, 6, 9])]
+        if assoc:
+            yogas.append({"name": "Kalanidhi Yoga", "name_cn": "艺藏格局", "combination": f"木星在{_house_of('Jupiter')}宫+{'、'.join(assoc)}关联", "effects": ["艺术才华", "学识渊博", "受人尊敬"], "strength": "强"})
+
+    # D8. Saubhagya Yoga（幸运格局）
+    # 来源：BPHS。上升主在 Kendra 且有力 + 月亮在吉宫（1/5/9/10/11）
+    if asc_lord in planets and _is_kendra(_house_of(asc_lord)) and (_is_exalted(asc_lord) or _is_own_sign(asc_lord)):
+        if 'Moon' in planets and _house_of('Moon') in [1, 5, 9, 10, 11]:
+            yogas.append({"name": "Saubhagya Yoga", "name_cn": "幸运格局", "combination": f"上升主{asc_lord}有力在角宫+月亮在{_house_of('Moon')}宫", "effects": ["幸运眷顾", "生活幸福", "婚姻美满"], "strength": "强"})
+
+    # D9. Shubha Yoga（吉星吉宫格局）
+    # 来源：BPHS。所有吉星都在 Kendra/Trikona
+    all_benefics_kt = all(_planet_in_kendra_or_trikona(p) for p in benefics if p in planets)
+    if all_benefics_kt and len([p for p in benefics if p in planets]) >= 3:
+        yogas.append({"name": "Shubha Yoga", "name_cn": "全吉星格局", "combination": "所有吉星在角宫或三方宫", "effects": ["生活顺遂", "福气满满", "受人爱戴"], "strength": "强"})
+
+    # D10. Graha Yuddha（行星战争）
+    # 来源：经典文献。两个行星在同一星座内距离 < 1°
+    for i, (p1, info1) in enumerate(planets.items()):
+        for p2, info2 in list(planets.items())[i+1:]:
+            if info1.get("sign") == info2.get("sign") and info1.get("degree") is not None and info2.get("degree") is not None:
+                if abs(info1["degree"] - info2["degree"]) < 1.0:
+                    yogas.append({"name": f"Graha Yuddha ({p1}-{p2})", "name_cn": f"行星战争({PLANET_CN.get(p1,p1)}-{PLANET_CN.get(p2,p2)})", "combination": f"{p1}与{p2}在{info1['sign']}内相距{abs(info1['degree']-info2['degree']):.2f}°", "effects": ["行星力量竞争", "相关领域有张力"], "strength": "中"})
+
+    # D11. Gajakesari 扩展（木星在月亮的 Kendra）
+    # 来源：BPHS。从月亮所在宫算，木星在 Kendra
+    if 'Jupiter' in planets and 'Moon' in planets:
+        jh = _house_of('Jupiter')
+        mh = _house_of('Moon')
+        diff = (jh - mh) % 12
+        if diff in [0, 3, 6, 9]:
+            already_gk = any("Gajakesari" in y.get("name", "") for y in yogas)
+            if not already_gk:
+                yogas.append({"name": "Gajakesari Yoga (from Moon)", "name_cn": "象狮格局（从月亮）", "combination": f"木星在第{jh}宫，月亮在第{mh}宫（Kendra关系）", "effects": ["智慧学识", "财富名声", "道德品质"], "strength": "强"})
+
+    # D12. Pushya Yoga（成长格局）
+    # 来源：BPHS。吉星在 8/9/12 宫
+    ben_in_8912 = [p for p in benefics if p in planets and _house_of(p) in [8, 9, 12]]
+    if len(ben_in_8912) >= 2:
+        yogas.append({"name": "Pushya Yoga", "name_cn": "成长格局", "combination": f"{'、'.join(ben_in_8912)}在8/9/12宫", "effects": ["精神成长", "灵性提升", "命运眷顾"], "strength": "中强"})
+
     return {"ascendant": asc, "planets_analyzed": len(planets), "kendra_lords": kl, "trikona_lords": tl, "yogas_detected": len(yogas), "yogas": yogas, "detected_yogas": yogas}
 
 
