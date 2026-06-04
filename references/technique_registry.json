@@ -1,5 +1,5 @@
 {
-  "version": "v6.0.19-sr-degraded-mode-fix",
+  "version": "v6.0.20-narayana-dasha",
   "source_inspiration": [
     {
       "name": "jyotishyamitra",
@@ -818,6 +818,28 @@
       ],
       "audit_label": "Bhrigu Pada Dasha",
       "missing_impact": "Bhrigu 足步推进法缺失，婚姻时机精确预测受限（通用近似版已实现）。"
+    },
+    "narayana_dasha": {
+      "name": "Narayana Dasha (Rishi Dasha / Padakrama Dasha)",
+      "domains": [
+        "dasha",
+        "rashi",
+        "timing",
+        "narayana"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "bphs-ch48-narayana-dasha.md"
+      ],
+      "commands": [
+        "narayana-dasha",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.narayana_dasha"
+      ],
+      "audit_label": "Narayana Dasha",
+      "missing_impact": "N/A - implemented in v6.0.20"
     }
   },
   "routes": {
@@ -963,7 +985,8 @@
         "muntha",
         "prashna_integration",
         "bhrigu_pada_dasha",
-        "solar_return"
+        "solar_return",
+        "narayana_dasha"
       ],
       "optional_techniques": [
         "bhava_chalit",

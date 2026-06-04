@@ -1,5 +1,42 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.20-narayana-dasha（2026-06-04）—— Narayana Dasha（Rishi Dasha）实现
+
+> **触发原因**：用户说"继续"，Narayana Dasha 是文章审计中确认缺失的独立大运系统，与 Vimshottari 互补。
+
+### 变更内容
+
+- `scripts/narayana_dasha.py`（新文件 v6.0.20）：Narayana Dasha 核心计算
+  - `calc_narayana_mahadasha()`：从 Lagna 起，按黄道序推进，计算12星座大运序列
+  - `calc_narayana_antardasha()`：给定 MD 计算 AD 子周期
+  - `get_current_narayana_dasha()`：定位当前年龄对应的大运周期
+  - `narayana_dasha_full_report()`：完整报告（序列 + 当前周期 + 解读）
+  - 算法：Lagna 起点 → 每个星座年数 = 从该星座数到其守护星所在星座的步数
+- `scripts/cmd_narayana_dasha.py`（新文件 v6.0.20）：`narayana-dasha` 子命令
+- `scripts/jyotish_engine.py` 更新：
+  - 新增 `cmd_narayana_dasha` import 和注册
+  - `cmd_full_reading` 新增 Step 4.13（Narayana Dasha 分析）
+  - `narayana-dasha` subparser 新增 `--age` 参数
+- `references/technique_registry.json` 更新：新增 narayana_dasha（covered, 41→42 entries）
+
+### 技法验证（用户星盘 Leo Asc）
+
+| 周期 | 星座 | 年数 | 年龄区间 | 解读 |
+|------|------|------|----------|------|
+| 1 | Leo | 8 | 0→8 | Lagna 起运 |
+| 2 | Virgo | 8 | 8→16 | |
+| 3 | Libra | 7 | 16→23 | |
+| 4 | Scorpio | 8 | 23→31 | |
+| **5** | **Sagittarius** | **7** | **31→38** | **当前周期（5宫/创意）** |
+| 6 | Capricorn | 1 | 38→39 | 快速过渡 |
+| 7 | Aquarius | 12 | 39→51 | Saturn 入庙，长周期 |
+| ... | ... | ... | ... | 总周期 88 年 |
+
+**Vimshottari vs Narayana 互补**：
+- Vimshottari 当前：Saturn MD（2020-2039）— 结构性、纪律性能量
+- Narayana 当前：Sagittarius MD（31→38）— 5宫、Jupiter 守护、创意扩张
+- 合理解读：结构化创意释放（Saturn MD 下的 Sagittarius Narayana 周期）
+
 ## v6.0.19-sr-degraded-mode-fix（2026-06-04）—— 修复无 swisseph 时 Muntha 跳过 bug
 
 > **触发原因**：v6.0.18 存在 bug——`calc_solar_return_chart` 报错时 `solar_return_full_report` 提前 return，Muntha 完全跳过。

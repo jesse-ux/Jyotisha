@@ -62,6 +62,7 @@ try:
 except ImportError:
     HAS_SWE = False
 from cmd_solar_return import cmd_solar_return  # v6.0.18
+from cmd_narayana_dasha import cmd_narayana_dasha  # v6.0.20
 
 # ============================================================================
 # 常量
@@ -3642,6 +3643,24 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"solar-return: {e}")
 
+    # ── Step 4.13: Narayana Dasha（Rishi Dasha，v6.0.20）──
+    try:
+        from narayana_dasha import narayana_dasha_full_report
+        # 计算当前年龄（从出生到 today）
+        from datetime import datetime
+        birth_dt = datetime(args.year, args.month, args.day, args.hour, args.minute)
+        today_dt = datetime.strptime(args.today, '%Y-%m-%d') if hasattr(args, 'today') and args.today else datetime.now()
+        current_age = (today_dt - birth_dt).days / 365.25
+        narayana_result = narayana_dasha_full_report(
+            lagna_sign_idx=asc_idx,
+            planet_lons=planet_lons,
+            current_age=current_age,
+            birth_year=args.year,
+        )
+        report['modules']['narayana_dasha'] = narayana_result
+    except Exception as e:
+        report['errors'].append(f"narayana-dasha: {e}")
+
     # ── Step 5: 精确相位 ──
     try:
         from aspects import calc_all_aspects
@@ -4109,6 +4128,11 @@ def main():
     _add_chart_args(p)
     p.add_argument('--target-year', type=int, required=True, help='目标年份（计算该年太阳返照）')
 
+    # 21.6 narayana-dasha (v6.0.20新增)
+    p = sub.add_parser('narayana-dasha', help='Narayana Dasha（Rishi Dasha）星座大运分析')
+    _add_chart_args(p)
+    p.add_argument('--age', type=float, default=None, help='当前年龄（用于定位大运位置）')
+
     # 21. synastry (v3.7新增)
     p = sub.add_parser('synastry', help='合盘分析（Ashta Koota 36分制）')
     p.add_argument('--moon1', type=float, required=True, help='Person1月亮黄经')
@@ -4173,7 +4197,8 @@ def main():
             'validate': cmd_validate, 'audit': cmd_audit, 'report': cmd_report,
             'varga-full': cmd_varga_full, 'aspects': cmd_aspects, 'jaimini': cmd_jaimini,
             'nakshatra-adv': cmd_nakshatra_adv, 'argala': cmd_argala, 'tajika': cmd_tajika,
-            'synastry': cmd_synastry, 'solar-return': cmd_solar_return, 'full-reading': cmd_full_reading, 'prashna': cmd_prashna,
+            'synastry': cmd_synastry, 'solar-return': cmd_solar_return, 'narayana-dasha': cmd_narayana_dasha,
+            'full-reading': cmd_full_reading, 'prashna': cmd_prashna,
             'double-transit-pac': cmd_double_transit_pac,
             'transit-ll7l': cmd_transit_ll7l, 'planetary-congregation': cmd_planetary_congregation,
             'vivah-saham': cmd_vivah_saham}
