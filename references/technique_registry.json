@@ -416,7 +416,8 @@
         "modules.tajika_yogas"
       ],
       "audit_label": "Tajika Yogas",
-      "missing_impact": "Tajika year-chart yoga detection incomplete; annual timing confidence capped."
+      "missing_impact": "Tajika year-chart yoga detection incomplete; annual timing confidence capped.",
+      "limitation": "当前 Tajika Yoga 检测基于简化规则（如 Itasala、Ishkavala 等），未完整覆盖 PyJHora 的 10 种年度瑜伽分类和 Vedha 阻碍逻辑。年运盘格局判断只能作为辅助参考，不宜作为高置信度应期主证据。"
     },
     "sahams": {
       "name": "Sahams / 特殊点",
@@ -435,7 +436,8 @@
         "modules.sahams"
       ],
       "audit_label": "Sahams",
-      "missing_impact": "Saham point calculation incomplete; annual/event timing layer missing."
+      "missing_impact": "Saham point calculation incomplete; annual/event timing layer missing.",
+      "limitation": "Saham 特殊点计算当前仅支持部分常用点，未完整覆盖 36 种传统 Saham。计算精度与 Tajika 系统对齐度未经验证，不宜作为精确事件定位依据。"
     },
     "darakaraka": {
       "name": "Darakaraka (DK) / 配偶星",
@@ -472,7 +474,8 @@
         "modules.yogas_doshas.raj_yogas"
       ],
       "audit_label": "Raj Yoga",
-      "missing_impact": "Power/status timing confidence capped without Raj Yoga detection."
+      "missing_impact": "Power/status timing confidence capped without Raj Yoga detection.",
+      "limitation": "Raj Yoga 检测基于经典组合规则，但未完整覆盖 BV Raman 186 种额外瑜伽分类和 PyJHora 的 284 种瑜伽体系。部分复杂组合（如 Viparita Raja Yoga 的变体）可能漏检。只能作为权力/地位潜力的辅助参考。"
     },
     "dhana_yoga": {
       "name": "Dhana Yoga / 财富瑜伽",
@@ -490,7 +493,8 @@
         "modules.yogas_doshas.dhana_yogas"
       ],
       "audit_label": "Dhana Yoga",
-      "missing_impact": "Wealth timing confidence capped without Dhana Yoga."
+      "missing_impact": "Wealth timing confidence capped without Dhana Yoga.",
+      "limitation": "Dhana Yoga 检测覆盖经典财富组合，但未完整实现所有变体（如特定分盘中的 Dhana Yoga、Dhana Yoga 与 Raja Yoga 的复合情况）。财富潜力评估应结合 D2、D9、D10 分盘综合分析，不宜仅凭 Yoga 检测做绝对断言。"
     },
     "pancha_mahapurusha": {
       "name": "Pancha Mahapurusha Yoga / 五王瑜伽",
@@ -508,7 +512,8 @@
         "modules.yogas_doshas.pancha_mahapurusha"
       ],
       "audit_label": "Pancha Mahapurusha",
-      "missing_impact": "Personality strength assessment incomplete."
+      "missing_impact": "Personality strength assessment incomplete.",
+      "limitation": "五王瑜伽（Ruchaka、Bhadra 等）检测基于基础规则，但未完整覆盖所有变体条件（如燃烧、逆行、受克时的 Yoga 失效条件）。与 PyJHora 的 284 种瑜伽体系对齐度未经验证。只能作为人格特质的辅助参考。"
     },
     "nicha_bhanga_raj": {
       "name": "Neecha Bhanga Raj Yoga / 落陷解除王者瑜伽",
@@ -526,7 +531,8 @@
         "modules.yogas_doshas.nicha_bhanga_raj"
       ],
       "audit_label": "Neecha Bhanga",
-      "missing_impact": "Debilitation recovery analysis incomplete."
+      "missing_impact": "Debilitation recovery analysis incomplete.",
+      "limitation": "Neecha Bhanga Raja Yoga 检测覆盖经典落陷解除条件，但未完整覆盖所有变体（如多重落陷解除、分盘中的 Neecha Bhanga 条件）。落陷解除后的力量恢复程度未做精细量化，不宜作为绝对断言依据。"
     },
     "mangal_dosha": {
       "name": "Mangal Dosha / 火星煞",
@@ -598,7 +604,8 @@
         "modules.yogas_doshas.sade_sati"
       ],
       "audit_label": "Sade Sati",
-      "missing_impact": "Saturn pressure timing incomplete."
+      "missing_impact": "Saturn pressure timing incomplete.",
+      "limitation": "Sade Sati 当前按土星经过月亮前后星座的简化模型计算，未完整覆盖全部影响条件（如土星在 Kendra 时的强度变化、Ashtakavarga 对 Sade Sati 的修正、Kantaka Shani 细分阶段）。压力程度评估为近似值，不宜作为精确事件预测依据。"
     },
     "arudha_lagna": {
       "name": "Arudha Lagna (AL) / 镜像上升",
@@ -653,7 +660,8 @@
         "modules.tithi_lord"
       ],
       "audit_label": "Tithi Lord",
-      "missing_impact": "Tithi Lord 分析不完整，Prashna 问卜时机判断受限。"
+      "missing_impact": "Tithi Lord 分析不完整，Prashna 问卜时机判断受限。",
+      "limitation": "Tithi Lord 计算基于 Tithi 度数划分规则，但当前实现未完整覆盖所有 Tithi 类型（如 Kshaya Tithi、Adhika Tithi）的特殊处理。与 Prashna 系统的深度整合仍在 partial 状态，问卜时机判断应结合 Nakshatra、Vara 等多要素综合分析。"
     },
     "pancha_pakshi": {
       "name": "Pancha Pakshi / 五鸟系统",
@@ -672,7 +680,8 @@
         "modules.pancha_pakshi"
       ],
       "audit_label": "Pancha Pakshi",
-      "missing_impact": "五鸟系统分析不完整，Tamil 占星时机判断受限。"
+      "missing_impact": "五鸟系统分析不完整，Tamil 占星时机判断受限。",
+      "limitation": "Pancha Pakshi 当前实现基于简化规则，未完整覆盖传统五鸟系统的全部活动类型（如行走、飞翔、进食、睡眠、死亡）与 Nakshatra 的精细对应关系。与 Tamil 占星传统中的完整五鸟法对齐度未经验证，不宜作为精确择时依据。"
     },
     "rashi_tulya_navamsa": {
       "name": "Rashi Tulya Navamsa / 本命对分盘分析",
@@ -691,7 +700,8 @@
         "modules.rashi_tulya_navamsa"
       ],
       "audit_label": "Rashi Tulya Navamsa",
-      "missing_impact": "D1-D9 同宫对比分析不完整，婚姻/内在潜力判断受限。"
+      "missing_impact": "D1-D9 同宫对比分析不完整，婚姻/内在潜力判断受限。",
+      "limitation": "Rashi Tulya Navamsa 分析当前基于 D1 与 D9 同宫行星的简单对比，未完整覆盖所有变体条件（如行星在 D9 中的精确度数对比、Vargottama 与非 Vargottama 的混合情况）。婚姻和内在潜力的深度解读应结合更多分盘（D7、D12）交叉验证。"
     },
     "marriage_counting": {
       "name": "Marriage Counting Method / 婚姻计数法",
@@ -703,7 +713,7 @@
       ],
       "status": "partial",
       "knowledge_refs": [
-        "bhrigu-pada-dasha-marriage-counting.md"
+        "references/bhrigu-pada-dasha-marriage-counting.md"
       ],
       "commands": [
         "full-reading"
@@ -712,7 +722,8 @@
         "modules.marriage_counting"
       ],
       "audit_label": "Marriage Counting",
-      "missing_impact": "婚姻数量判断不完整，关系模式分析受限。"
+      "missing_impact": "婚姻数量判断不完整，关系模式分析受限。",
+      "limitation": "当前实现使用 Bhrigu Pada 近似算法，未进行 Nakshatra-level 精细计数。与经典 Bhrigu 表格 benchmark 未完成。可作为婚姻时机辅助参考，不作为精确计数依据。"
     },
     "trimshamsa_d30": {
       "name": "Trimshamsa D30 / 三十分盘",
@@ -724,7 +735,7 @@
       ],
       "status": "partial",
       "knowledge_refs": [
-        "varga-system-quick-reference.md"
+        "references/varga-system-quick-reference.md"
       ],
       "commands": [
         "full-reading"
@@ -733,7 +744,8 @@
         "modules.trimshamsa_d30"
       ],
       "audit_label": "D30 Trimshamsa",
-      "missing_impact": "D30 灾难分析不完整，危机事件判断受限。"
+      "missing_impact": "D30 灾难分析不完整，危机事件判断受限。",
+      "limitation": "D30 分盘计算已实现，但 Trimshamsa 的灾难/突发事件解读规则未完整覆盖经典文献。当前输出可作为辅助参考，不作为精确灾难预测依据。"
     },
     "muntha": {
       "name": "Muntha / 年运之主 (Tajika)",
@@ -745,7 +757,7 @@
       ],
       "status": "covered",
       "knowledge_refs": [
-        "tajika-yoga-complete-guide.md"
+        "references/tajika-yoga-complete-guide.md"
       ],
       "commands": [
         "full-reading"
@@ -766,7 +778,7 @@
       ],
       "status": "covered",
       "knowledge_refs": [
-        "tajika-yoga-complete-guide.md"
+        "references/tajika-yoga-complete-guide.md"
       ],
       "commands": [
         "solar-return",
@@ -796,7 +808,8 @@
         "modules.prashna"
       ],
       "audit_label": "Prashna Integration",
-      "missing_impact": "Prashna 未接入 full-reading，问事分析不完整。"
+      "missing_impact": "Prashna 未接入 full-reading，问事分析不完整。",
+      "limitation": "Prashna 当前为 partial 状态，独立命令可用但尚未与 full-reading 严格路由完全整合。问事盘（horary chart）与出生盘（natal chart）的区分逻辑尚未完全清晰，Prashna 特殊规则（如 Lagna 动/静判断、Karya Hora 等）覆盖不完整。问事分析不宜与出生盘解读混用。"
     },
     "bhrigu_pada_dasha": {
       "name": "Bhrigu Pada Dasha / 足步推进法",
@@ -808,7 +821,7 @@
       ],
       "status": "partial",
       "knowledge_refs": [
-        "bhrigu-pada-dasha-marriage-counting.md"
+        "references/bhrigu-pada-dasha-marriage-counting.md"
       ],
       "commands": [
         "full-reading"
@@ -817,7 +830,8 @@
         "modules.bhrigu_pada_dasha"
       ],
       "audit_label": "Bhrigu Pada Dasha",
-      "missing_impact": "Bhrigu 足步推进法缺失，婚姻时机精确预测受限（通用近似版已实现）。"
+      "missing_impact": "Bhrigu 足步推进法缺失，婚姻时机精确预测受限（通用近似版已实现）。",
+      "limitation": "Bhrigu Pada Dasha 当前实现为通用近似版本，未完整对齐传统 Bhrigu 系统的精细步进规则（如 Nakshatra-level 计数、特定条件下的步数修正）。与经典 Bhrigu 表格和 PyJHora 对应模块的 benchmark 未完成。婚姻时机预测应结合 Vimshottari Dasha 和 Transit 多要素交叉验证。"
     },
     "narayana_dasha": {
       "name": "Narayana Dasha (Rishi Dasha / Padakrama Dasha)",
@@ -829,7 +843,7 @@
       ],
       "status": "covered",
       "knowledge_refs": [
-        "bphs-ch48-narayana-dasha.md"
+        "references/bphs-ch48-narayana-dasha.md"
       ],
       "commands": [
         "narayana-dasha",
@@ -855,7 +869,7 @@
       ],
       "status": "covered",
       "knowledge_refs": [
-        "muhurta-complete-guide.md"
+        "references/muhurta-complete-guide.md"
       ],
       "commands": [
         "muhurta"
