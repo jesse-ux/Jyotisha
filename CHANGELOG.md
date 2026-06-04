@@ -1,5 +1,36 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.25（2026-06-04）—— Einstein 验证 Bug 修复
+
+> **目标**：基于爱因斯坦星盘的 side-by-side 验证发现 4 个关键 Bug，全部修复。
+
+### Bug 修复
+
+- **Bug #1: 上升星座度数超出范围** (`scripts/jyotish_engine.py`)
+  - 根因：`cmd_chart` 将绝对黄经 (76.67°) 存入 `degree` 字段
+  - 修复：`degree` 现存储星座内度数，新增 `lon` 字段存绝对黄经
+  - 更新 7 处下游代码使用 `lon` 替代 `degree`
+  - 同步修复 `solar_return.py`
+
+- **Bug #2: Dasha 在 full-reading 中返回 N/A** (`scripts/jyotish_engine.py`)
+  - 根因：`cmd_full_reading` 传 `transit_date` 给 `cmd_dasha`，但后者查 `args.today`
+  - 修复：`today_str = getattr(args, 'transit_date', None) or getattr(args, 'today', None)`
+
+- **Bug #3: Nakshatra 在 full-reading 中返回 N/A** (`scripts/nakshatra_advanced.py`)
+  - 根因：`moon_nakshatra` 嵌套在 `summary` 子字典中
+  - 修复：在 `nakshatra_full_report` 返回中添加顶层 `moon_nakshatra`/`moon_pada` 字段
+
+- **Bug #4: Yoga 在 full-reading 中返回 0 个** (`scripts/jyotish_engine.py`)
+  - 根因：`cmd_yoga` 返回 `yogas` 列表，`cmd_full_reading` 期望 `detected_yogas`
+  - 修复：`cmd_yoga` 返回同时包含 `yogas` 和 `detected_yogas`
+
+### 验证
+- Einstein 星盘 full-reading：45 模块，0 错误，状态 complete
+- audit_capabilities --mode validate：valid=True，warnings=0，problems=0
+- 新增 `benchmark/validation-einstein-2026-06-04.md` 验证报告
+
+---
+
 ## v6.0.24-mcp-server（2026-06-05）—— MCP Server 接口实现
 
 > **目标**：实现 MCP Server 接口，让 Claude/Cursor 等 AI 工具能直接调用 Jyotish 解盘能力，学习 VedAstro 的 MCP 工程化思路。
