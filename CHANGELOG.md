@@ -1,5 +1,24 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.19-sr-degraded-mode-fix（2026-06-04）—— 修复无 swisseph 时 Muntha 跳过 bug
+
+> **触发原因**：v6.0.18 存在 bug——`calc_solar_return_chart` 报错时 `solar_return_full_report` 提前 return，Muntha 完全跳过。
+
+### 变更内容
+
+- `scripts/solar_return.py` 修复：
+  - 新增 `_estimate_sun_sign()` 查表法估算出生太阳星座（1950-2100 有效，±1 星座精度）
+  - 新增 `_SUN_SIGN_LOOKUP` 常量表（12 个月份→太阳星座映射）
+  - `solar_return_full_report()` 重构：swisseph 不可用时不再提前退出，改为降级模式
+    - Muntha + Year Lord：始终计算（使用查表法估算太阳星座）
+    - Tajika Yogas / Sahams / Tri-Pataka / Mudda Dasha：标注"swisseph 未安装，跳过"
+    - 所有 11 个 result key 始终存在
+
+### 已知限制
+
+- 查表法估算太阳星座精度 ±1 星座，Muntha 可能有 1 个星座的偏差
+- 完整星盘功能（Tajika Yogas 等）仍需 swisseph
+
 ## v6.0.18-solar-return-muntha-covered（2026-06-04）—— Solar Return/Varshaphala 实现 + Muntha covered
 
 > **触发原因**：用户问"继续，我这个是印度占星技法的skill也需要太阳返照盘吗？"，确认需要太阳返照盘。v6.0.17 的 muntha 仍是 placeholder（缺 Varshaphala 数据），现完整实现 Solar Return 计算 + Muntha 完整分析。

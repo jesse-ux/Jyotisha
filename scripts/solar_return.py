@@ -35,6 +35,34 @@ SIGN_LORDS = {'Aries':'Mars','Taurus':'Venus','Gemini':'Mercury','Cancer':'Moon'
     'Leo':'Sun','Virgo':'Mercury','Libra':'Venus','Scorpio':'Mars',
     'Sagittarius':'Jupiter','Capricorn':'Saturn','Aquarius':'Saturn','Pisces':'Jupiter'}
 
+# Sun sign lookup table (approximate, valid ~1950-2100, Lahiri ayanamsa)
+# Maps (month, day_range) → sidereal sign index
+_SUN_SIGN_LOOKUP = {
+    1: [(1, 14, 9), (15, 31, 10)],    # Jan: Sagittarius → Capricorn
+    2: [(1, 12, 10), (13, 29, 11)],   # Feb: Capricorn → Aquarius
+    3: [(1, 14, 11), (15, 31, 0)],    # Mar: Aquarius → Pisces
+    4: [(1, 13, 0), (14, 30, 1)],     # Apr: Pisces → Aries
+    5: [(1, 14, 1), (15, 31, 2)],     # May: Aries → Taurus
+    6: [(1, 15, 2), (16, 30, 3)],     # Jun: Taurus → Gemini
+    7: [(1, 16, 3), (17, 31, 4)],     # Jul: Gemini → Cancer
+    8: [(1, 16, 4), (17, 31, 5)],     # Aug: Cancer → Leo
+    9: [(1, 16, 5), (17, 30, 6)],     # Sep: Leo → Virgo
+    10: [(1, 17, 6), (18, 31, 7)],    # Oct: Virgo → Libra
+    11: [(1, 16, 7), (17, 30, 8)],    # Nov: Libra → Scorpio
+    12: [(1, 15, 8), (16, 31, 9)],    # Dec: Scorpio → Sagittarius
+}
+
+
+def _estimate_sun_sign(birth_month: int, birth_day: int) -> int:
+    """从出生月日估算出生太阳星座（查表法，用于无 swisseph 时的近似计算）。
+    精度 ±1 星座，对 Muntha 计算足够（Muntha 只关心12年周期）。
+    返回 sign index 0-11。"""
+    entries = _SUN_SIGN_LOOKUP.get(birth_month, [(1, 31, 0)])
+    for day_start, day_end, sign_idx in entries:
+        if day_start <= birth_day <= day_end:
+            return sign_idx
+    return 0  # fallback
+
 
 # =========================================================================
 # 工具函数
@@ -360,8 +388,13 @@ def solar_return_full_report(
       - Sahams（特殊点）
       - Tri-Pataka（三旗评估）
       - Mudda Dasha（年内大运）
+
+    v6.0.19 修复：swisseph 不可用时不再提前退出，
+    而是用查表法估算太阳星座，继续计算 Muntha 和 Year Lord。
     """
     result = {'target_year': target_year}
+    age = target_year - birth_year
+    degraded = False  # True when swisseph unavailable
 
     # 1. 计算太阳返照盘
     sr = calc_solar_return_chart(
@@ -370,29 +403,41 @@ def solar_return_full_report(
         birth_lat, birth_lon, birth_tz,
         target_year
     )
+
     if 'error' in sr:
+        degraded = True
         result['error'] = sr['error']
-        result['solar_return'] = sr.get('solar_return_approx', sr)
-        return result
-
-    result['solar_return'] = sr['solar_return']
-    result['sr_chart_info'] = {
-        'asc_sign': SIGNS[sr['asc_sign_idx']],
-        'asc_sign_idx': sr['asc_sign_idx'],
-        'age': sr['age'],
-    }
-
-    planet_lons = sr['planet_lons']
-    asc_sign_idx = sr['asc_sign_idx']
-    age = sr['age']
+        # Extract approximate solar return data if available
+        sr_approx = sr.get('solar_return_approx', {})
+        result['solar_return'] = sr_approx if sr_approx else sr
+        # Estimate sun sign from birth date for Muntha calculation
+        approx_sun_sign = _estimate_sun_sign(birth_month, birth_day)
+        planet_lons = {'Sun': approx_sun_sign * 30 + 15}  # mid-sign for computations
+        asc_sign_idx = None
+        result['sr_chart_info'] = {
+            'asc_sign': '未知（无swisseph）',
+            'asc_sign_idx': None,
+            'age': age,
+            'note': 'swisseph未安装，Muntha使用近似太阳星座（查表法，±1星座）',
+        }
+    else:
+        result['solar_return'] = sr['solar_return']
+        result['sr_chart_info'] = {
+            'asc_sign': SIGNS[sr['asc_sign_idx']],
+            'asc_sign_idx': sr['asc_sign_idx'],
+            'age': sr['age'],
+        }
+        planet_lons = sr['planet_lons']
+        asc_sign_idx = sr['asc_sign_idx']
 
     # 2. Muntha（正确算法：从返照盘太阳星座开始数）
     try:
-        from tajika import calc_muntha as tajika_calc_muntha
-        # tajika.calc_muntha 接收 (birth_asc_idx, age) — 但这是简化版
-        # 正确版：从返照盘太阳星座开始数
+        # Solar return sun sign = birth sun sign (by definition of solar return)
         sr_sun_sign = int(planet_lons.get('Sun', 0) / 30) % 12
-        muntha_sign = (sr_sun_sign + age) % 12  # 正确公式
+        muntha_sign = (sr_sun_sign + age) % 12
+        muntha_note = ''
+        if degraded:
+            muntha_note = '（基于查表法估算太阳星座，实际Muntha可能偏差±1星座）'
         result['muntha'] = {
             'muntha_sign_idx': muntha_sign,
             'muntha_sign': SIGNS[muntha_sign],
@@ -402,13 +447,16 @@ def solar_return_full_report(
             'age': age,
             'formula': f'(返照盘太阳星座{sr_sun_sign} + 年龄{age}) mod 12 = {muntha_sign}',
             'interpretation': _interpret_muntha_sign(muntha_sign),
+            'note': muntha_note,
         }
     except Exception as e:
         result['muntha'] = {'error': str(e)}
 
-    # 3. Year Lord
+    # 3. Year Lord（= Muntha 守护星）
     try:
-        year_lord_sign = muntha_sign  # Year Lord = Muntha 守护星
+        muntha_data = result.get('muntha', {})
+        muntha_sign_val = muntha_data.get('muntha_sign_idx', muntha_sign if 'muntha_sign' in dir() else 0)
+        year_lord_sign = muntha_sign_val
         year_lord = SIGN_LORDS[SIGNS[year_lord_sign]]
         result['year_lord'] = {
             'year_lord': year_lord,
@@ -418,45 +466,62 @@ def solar_return_full_report(
     except Exception as e:
         result['year_lord'] = {'error': str(e)}
 
-    # 4. Tajika Yogas
-    try:
-        from tajika import calc_tajika_yogas
-        yogas = calc_tajika_yogas(planet_lons, chart_type='varsha')
-        result['tajika_yogas'] = yogas
-    except Exception as e:
-        result['tajika_yogas'] = {'error': str(e)}
+    # 4. Tajika Yogas（需完整星盘，降级模式跳过）
+    if degraded:
+        result['tajika_yogas'] = {'error': 'swisseph未安装，无法计算Tajika Yogas（需完整星盘）'}
+    else:
+        try:
+            from tajika import calc_tajika_yogas
+            yogas = calc_tajika_yogas(planet_lons, chart_type='varsha')
+            result['tajika_yogas'] = yogas
+        except Exception as e:
+            result['tajika_yogas'] = {'error': str(e)}
 
-    # 5. Sahams（年运特殊点）
-    try:
-        from tajika import calc_all_sahams
-        asc_lon = sr['ascendant'].get('degree', 0)
-        sr_dt_ut = sr['solar_return']['dt_ut']
-        sahams = calc_all_sahams(planet_lons, asc_lon, sr_dt_ut, chart_type='varsha')
-        result['sahams'] = sahams
-    except Exception as e:
-        result['sahams'] = {'error': str(e)}
+    # 5. Sahams（需完整星盘，降级模式跳过）
+    if degraded:
+        result['sahams'] = {'error': 'swisseph未安装，无法计算Sahams（需完整星盘）'}
+    else:
+        try:
+            from tajika import calc_all_sahams
+            asc_lon = sr['ascendant'].get('degree', 0)
+            sr_dt_ut = sr['solar_return']['dt_ut']
+            sahams = calc_all_sahams(planet_lons, asc_lon, sr_dt_ut, chart_type='varsha')
+            result['sahams'] = sahams
+        except Exception as e:
+            result['sahams'] = {'error': str(e)}
 
-    # 6. Tri-Pataka
-    try:
-        from tajika import calc_tri_pataka
-        tri = calc_tri_pataka(planet_lons, year_lord, muntha_sign)
-        result['tri_pataka'] = tri
-    except Exception as e:
-        result['tri_pataka'] = {'error': str(e)}
+    # 6. Tri-Pataka（需完整星盘 + year_lord + muntha，降级模式跳过）
+    if degraded:
+        result['tri_pataka'] = {'error': 'swisseph未安装，无法计算Tri-Pataka（需完整星盘）'}
+    else:
+        try:
+            from tajika import calc_tri_pataka
+            yl_data = result.get('year_lord', {})
+            yl = yl_data.get('year_lord', '')
+            muntha_data = result.get('muntha', {})
+            ms = muntha_data.get('muntha_sign_idx', 0)
+            tri = calc_tri_pataka(planet_lons, yl, ms)
+            result['tri_pataka'] = tri
+        except Exception as e:
+            result['tri_pataka'] = {'error': str(e)}
 
-    # 7. Mudda Dasha（年内大运）
-    try:
-        from tajika import calc_mudda_dasha
-        mudda = calc_mudda_dasha(asc_sign_idx, year_lord, birth_month or 1)
-        result['mudda_dasha'] = mudda
-    except Exception as e:
-        result['mudda_dasha'] = {'error': str(e)}
+    # 7. Mudda Dasha（需 asc_sign_idx + year_lord，降级模式跳过）
+    if degraded:
+        result['mudda_dasha'] = {'error': 'swisseph未安装，无法计算Mudda Dasha（需完整星盘）'}
+    else:
+        try:
+            from tajika import calc_mudda_dasha
+            yl_data = result.get('year_lord', {})
+            yl = yl_data.get('year_lord', '')
+            mudda = calc_mudda_dasha(asc_sign_idx, yl, birth_month or 1)
+            result['mudda_dasha'] = mudda
+        except Exception as e:
+            result['mudda_dasha'] = {'error': str(e)}
 
     # 8. 综合总结
     result['summary'] = _make_sr_summary(result)
 
     return result
-
 
 def _interpret_muntha_sign(sign_idx: int) -> str:
     """Muntha 在12星座的解读"""
