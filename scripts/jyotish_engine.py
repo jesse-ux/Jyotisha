@@ -3168,6 +3168,44 @@ def cmd_full_reading(args):
     import time
     t0 = time.time()
 
+    def _build_whole_sign_houses(asc_index, planets_data):
+        """Build a compatibility house map for add-on modules.
+
+        compute_chart_data() exposes Placidus/equal-style cusp keys (house_1...),
+        while several v6.0.14-16 add-on modules expect 1..12 keys plus Hn_Lord.
+        This adapter keeps those modules wired without changing their public API.
+        """
+        house_map = {}
+        for house_num in range(1, 13):
+            sign_idx = (asc_index + house_num - 1) % 12
+            sign_name = SIGNS[sign_idx]
+            house_map[house_num] = {
+                'sign': sign_name,
+                'lord': SIGN_LORDS.get(sign_name, ''),
+                'planets': [],
+                'strength': 'Neutral',
+            }
+            house_map[str(house_num)] = house_map[house_num]
+            house_map[f'H{house_num}_Lord'] = house_map[house_num]['lord']
+        for planet_name, planet_data in planets_data.items():
+            if isinstance(planet_data, dict):
+                house_num = planet_data.get('house')
+                if isinstance(house_num, int) and house_num in house_map:
+                    house_map[house_num]['planets'].append(planet_name)
+        return house_map
+
+    def _varga_planet_lons(varga_chart):
+        """Convert calc_all_vargas() planet sign/degree data to longitude dict."""
+        lons = {}
+        if not isinstance(varga_chart, dict):
+            return lons
+        for planet_name, planet_data in varga_chart.items():
+            if planet_name.startswith('_') or planet_name == 'Ascendant':
+                continue
+            if isinstance(planet_data, dict) and 'sign_idx' in planet_data:
+                lons[planet_name] = planet_data['sign_idx'] * 30 + planet_data.get('degree_in_sign', 0)
+        return lons
+
     report = {
         'version': '4.4.0-full-reading',
         'birth_info': {
@@ -3195,6 +3233,8 @@ def cmd_full_reading(args):
     asc_sign = chart.get('ascendant', {}).get('sign', 'Unknown')
     planet_lons = {pn: pd.get('degree_raw', pd['degree']) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
     planet_degs = {pn: pd.get('degree_in_sign_raw', pd.get('degree_in_sign', pd['degree'] % 30)) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
+    houses = _build_whole_sign_houses(asc_idx, planets)
+    report['modules']['house_map'] = houses
     planet_sign_indices = {}
     for pn, pd in planets.items():
         if isinstance(pd, dict) and 'sign' in pd:
@@ -3498,8 +3538,8 @@ def cmd_full_reading(args):
     try:
         # Tithi Lord（出生 Tithi + Lord 分析）
         from tithi_lord import calc_tithi_lord_full
-        sun_deg = planet_lons[0]
-        moon_deg = planet_lons[1]
+        sun_deg = planet_lons.get('Sun', 0)
+        moon_deg = planet_lons.get('Moon', 0)
         tithi_result = calc_tithi_lord_full(sun_deg, moon_deg, planets, houses)
         report['modules']['tithi_lord'] = tithi_result
     except Exception as e:
@@ -3512,7 +3552,7 @@ def cmd_full_reading(args):
         if 'moon_nakshatra' in dir() or 'moon_nak' in locals():
             pass  # 动态获取
         # 从 planets 数据推算 Nakshatra（Moon 的度数为基准）
-        moon_deg = planet_lons[1]
+        moon_deg = planet_lons.get('Moon', 0)
         nak_num = int(moon_deg / 13.3333333) + 1
         if nak_num > 27:
             nak_num = 27
@@ -3549,10 +3589,11 @@ def cmd_full_reading(args):
         d1_house7_lord = houses.get('7', {}).get('lord', '') if isinstance(houses.get('7'), dict) else ''
         if d1_house7_lord and 'varga_full' in report['modules']:
             d9_data = report['modules']['varga_full'].get('D9_Navamsa', {})
-            if d9_data.get('planets'):
+            d9_planet_lons = _varga_planet_lons(d9_data)
+            if d9_planet_lons:
                 mc_result = marriage_counting_full_analysis(
-                    d1_house7_lord, planet_lons, d9_data['planets'],
-                    houses, d9_data.get('houses')
+                    d1_house7_lord, planet_lons, d9_planet_lons,
+                    houses, None
                 )
                 report['modules']['marriage_counting'] = mc_result
     except Exception as e:

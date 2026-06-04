@@ -614,7 +614,7 @@ def calc_all_yogas_doshas(planets_data: Dict, houses: Dict,
     ])
 
     results['summary'] = (
-        f"Yogas共{total_yoga_count}个；"
+        f"Yogas共{total_yogas_count}个；"
         f"Doshas: Mangal={'有' if results['mangal_dosha']['has_dosha'] else '无'}"
         f"/Kaal Sarp={'有' if results['kaal_sarp_dosha']['has_dosha'] else '无'}"
         f"/Pitra={'有' if results['pitra_dosha']['has_dosha'] else '无'}"

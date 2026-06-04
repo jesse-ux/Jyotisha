@@ -135,7 +135,11 @@ def _check_parivartana(
     SIGN_LORDS = ['Mars','Venus','Mercury','Moon','Sun','Mercury',
                    'Venus','Mars','Jupiter','Saturn','Saturn','Jupiter']
     host = SIGN_LORDS[lord_sign]  # lord 落入星座的主星
-    
+
+    # 落在自己掌管的星座不是 Parivartana（行星交换），只是 own-sign 状态。
+    if host == lord:
+        return {'has_parivartana': False, 'reason': f'{lord} 位于自己掌管的星座，不构成 Parivartana'}
+
     if host not in d1_planet_lons:
         return {'has_parivartana': False, 'reason': f'{host} 位置未知'}
     

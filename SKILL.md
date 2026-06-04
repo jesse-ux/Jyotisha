@@ -10,7 +10,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.22-nakshatra-advanced | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.0.23-full-reading-regression | **详细变更**：`CHANGELOG.md`
 
 ---
 
@@ -301,9 +301,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.0.22-nakshatra-advanced
+**版本**：v6.0.23-full-reading-regression
 **创建日期**：2026-04-20
-**最后更新**：2026-06-04（v6.0.22 新增 Nakshatra Advanced：Chandra Bala、Nakshatra Dasha、Transit Overlay）
+**最后更新**：2026-06-04（v6.0.23 修复 full-reading 残余模块接入错误，实盘抽查 errors=0）
 
 ---
 

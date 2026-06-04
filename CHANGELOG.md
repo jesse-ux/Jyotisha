@@ -1,5 +1,27 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.23-full-reading-regression（2026-06-04）—— full-reading 残余错误清零
+
+> **目标**：修复 v6.0.22 后 full-reading 抽查中遗留的 4 个旧模块接入错误，使完整链路输出 `errors=0`。
+
+### 变更内容
+
+- `scripts/jyotish_engine.py`：
+  - 新增 full-reading 内部 `_build_whole_sign_houses()` 兼容适配器，将 `compute_chart_data()` 的 `house_1...house_12` 结构转换为旧附加模块期望的 `1..12` / `"1".."12"` / `Hn_Lord` 混合结构。
+  - 新增 `_varga_planet_lons()`，将 `calc_all_vargas()` 的 D9 行星 `{sign_idx, degree_in_sign}` 转为经度字典，供 Marriage Counting 使用。
+  - 修复 full-reading 中 Tithi Lord / Pancha Pakshi 对 `planet_lons` 的错误数字索引访问，改为按 `'Sun'` / `'Moon'` 键访问。
+  - 修复 Marriage Counting 对 D9 数据结构的误判，不再要求不存在的 `d9_data['planets']`。
+- `scripts/yogas_doshas.py`：修复 summary 变量名 `total_yoga_count` → `total_yogas_count`。
+- `scripts/tithi_lord.py`：兼容 `{planet_name: data}` 行星字典，Tithi Lord 现在能正确读取 sign/house/status。
+- `scripts/marriage_counting.py`：修正 Parivartana 判断，行星落入自己掌管的星座不再误判为行星交换。
+
+### 回归验证
+
+- `py_compile` 通过：`yogas_doshas.py` / `tithi_lord.py` / `pancha_pakshi.py` / `marriage_counting.py` / `jyotish_engine.py`。
+- `audit_capabilities.py --mode validate` 通过：44 techniques（missing=0, partial=18, covered=26）。
+- `full-reading` 实盘抽查：45 modules computed，`errors=0`，`status=complete`。
+- `diff --check` 通过。
+
 ## v6.0.22-nakshatra-advanced（2026-06-04）—— Nakshatra Advanced 星宿进阶实现
 
 > **目标**：补齐 Nakshatra Advanced 缺口，将星宿层从静态详情扩展为 Tara Bala + Chandra Bala + Nakshatra Dasha + Transit Overlay 的完整计算层。

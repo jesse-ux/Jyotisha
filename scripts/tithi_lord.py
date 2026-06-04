@@ -95,13 +95,18 @@ def calc_tithi_lord_full(sun_deg, moon_deg, planets=None, houses=None):
         lord_house = None
         lord_dignity = None
 
-        # 从 planets 字典里找 Tithi Lord 的数据
-        # planets 格式：{0: {sign, house, dignity,...}, 1: {...}, ...}
+        # 从 planets 字典里找 Tithi Lord 的数据。
+        # 兼容两种格式：{0: {...}, 1: {...}} 或 {'Sun': {...}, 'Moon': {...}}
+        lord_data = None
         if lord_idx in planets:
             lord_data = planets[lord_idx]
+        elif lord_name in planets:
+            lord_data = planets[lord_name]
+
+        if isinstance(lord_data, dict):
             lord_sign = lord_data.get("sign")
             lord_house = lord_data.get("house")
-            lord_dignity = lord_data.get("dignity")
+            lord_dignity = lord_data.get("dignity") or lord_data.get("status")
 
         result["tithi_lord_sign"] = lord_sign
         result["tithi_lord_house"] = lord_house
