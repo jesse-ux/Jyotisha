@@ -1,5 +1,5 @@
 {
-  "version": "v6.0.20-narayana-dasha",
+  "version": "v6.0.21-muhurta",
   "source_inspiration": [
     {
       "name": "jyotishyamitra",
@@ -840,6 +840,31 @@
       ],
       "audit_label": "Narayana Dasha",
       "missing_impact": "N/A - implemented in v6.0.20"
+    },
+    "muhurta": {
+      "name": "Muhurta (Panchanga / Auspicious Timing)",
+      "domains": [
+        "muhurta",
+        "panchanga",
+        "electional",
+        "tithi",
+        "nakshatra",
+        "vara",
+        "yoga",
+        "karana"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "muhurta-complete-guide.md"
+      ],
+      "commands": [
+        "muhurta"
+      ],
+      "output_paths": [
+        "modules.muhurta"
+      ],
+      "audit_label": "Muhurta",
+      "missing_impact": "N/A - implemented in v6.0.21"
     }
   },
   "routes": {
@@ -986,7 +1011,8 @@
         "prashna_integration",
         "bhrigu_pada_dasha",
         "solar_return",
-        "narayana_dasha"
+        "narayana_dasha",
+        "muhurta"
       ],
       "optional_techniques": [
         "bhava_chalit",

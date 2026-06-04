@@ -63,6 +63,7 @@ except ImportError:
     HAS_SWE = False
 from cmd_solar_return import cmd_solar_return  # v6.0.18
 from cmd_narayana_dasha import cmd_narayana_dasha  # v6.0.20
+from cmd_muhurta import cmd_muhurta  # v6.0.21
 
 # ============================================================================
 # 常量
@@ -4133,6 +4134,16 @@ def main():
     _add_chart_args(p)
     p.add_argument('--age', type=float, default=None, help='当前年龄（用于定位大运位置）')
 
+    # 21.7 muhurta (v6.0.21新增)
+    p = sub.add_parser('muhurta', help='Muhurta 择时分析（Panchanga 五要素）')
+    p.add_argument('--date', default=None, help='查询日期 YYYY-MM-DD（默认今天）')
+    p.add_argument('--activity', default=None,
+                   choices=['marriage', 'business', 'travel', 'medical', 'education'],
+                   help='指定活动类型（默认检查所有）')
+    p.add_argument('--scan-days', type=int, default=1, help='扫描天数（默认1天，最多30天）')
+    p.add_argument('--hour-from-sunrise', type=float, default=6.0,
+                   help='从日出起算的小时数（默认6h约正午）')
+
     # 21. synastry (v3.7新增)
     p = sub.add_parser('synastry', help='合盘分析（Ashta Koota 36分制）')
     p.add_argument('--moon1', type=float, required=True, help='Person1月亮黄经')
@@ -4197,7 +4208,8 @@ def main():
             'validate': cmd_validate, 'audit': cmd_audit, 'report': cmd_report,
             'varga-full': cmd_varga_full, 'aspects': cmd_aspects, 'jaimini': cmd_jaimini,
             'nakshatra-adv': cmd_nakshatra_adv, 'argala': cmd_argala, 'tajika': cmd_tajika,
-            'synastry': cmd_synastry, 'solar-return': cmd_solar_return, 'narayana-dasha': cmd_narayana_dasha,
+            'synastry': cmd_synastry, 'solar-return': cmd_solar_return,
+            'narayana-dasha': cmd_narayana_dasha, 'muhurta': cmd_muhurta,
             'full-reading': cmd_full_reading, 'prashna': cmd_prashna,
             'double-transit-pac': cmd_double_transit_pac,
             'transit-ll7l': cmd_transit_ll7l, 'planetary-congregation': cmd_planetary_congregation,

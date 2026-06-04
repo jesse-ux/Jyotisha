@@ -1,5 +1,41 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.21-muhurta（2026-06-04）—— Muhurta 择时占星（Panchanga 五要素）实现
+
+> **触发原因**：用户说「继续」，Muhurta 是审计中确认缺失的独立技法，也是日常使用频率最高的传统技法之一。
+
+### 变更内容
+
+- `scripts/muhurta.py`（新文件 v6.0.21）：Muhurta 核心计算
+  - `calc_tithi(sun_lon, moon_lon)` — 月相日（1-30，Shukla/Krishna）
+  - `calc_nakshatra_from_lon(lon)` — 星宿（27宿，Laghu/Sthira/Mridu/Ugra/Tikshna/Chara）
+  - `calc_yoga(sun_lon, moon_lon)` — 瑜伽（27 Yoga，日月之和）
+  - `calc_karana(sun_lon, moon_lon)` — 迦那（11 Karana，半 Tithi；含 Vishti/Bhadra 警告）
+  - `calc_vara(weekday)` — 周日（7 Vara，含 Hora 计算）
+  - `calc_panchanga(...)` — 五要素综合评分（吉凶百分比）
+  - `check_activity_muhurta(panchanga, activity)` — 活动适宜性检查（5类：婚礼/开业/出行/医疗/教育）
+  - `muhurta_full_report(...)` — 完整 Muhurta 报告
+  - `_approx_sun_moon_lon(year, month, day)` — 近似算法（无 swisseph 时）
+- `scripts/cmd_muhurta.py`（新文件 v6.0.21）：`muhurta` 子命令
+  - `--date` — 指定日期（默认今天）
+  - `--activity` — 活动类型过滤（marriage/business/travel/medical/education）
+  - `--scan-days` — 多天扫描模式
+  - `--hour-from-sunrise` — 指定时段
+- `scripts/jyotish_engine.py` 更新：注册 `muhurta` 子命令
+- `references/technique_registry.json` 更新：新增 muhurta（covered, 41→42 entries）
+
+### 技法验证（2026-06-04 今日）
+
+| 要素 | 值 | 吉凶 |
+|------|-----|------|
+| Tithi | Krishna Tritiya | 吉 |
+| Nakshatra | Purva Ashadha | 凶 |
+| Yoga | Shukla | 吉 |
+| Karana | Vishti（Bhadra）| 凶⚠️ |
+| Vara | Thursday/Jupiter | 吉 |
+
+综合 50%（中等）；适合婚礼/出行/医疗/学习，开业一般，注意 Vishti 时段。
+
 ## v6.0.20-narayana-dasha（2026-06-04）—— Narayana Dasha（Rishi Dasha）实现
 
 > **触发原因**：用户说"继续"，Narayana Dasha 是文章审计中确认缺失的独立大运系统，与 Vimshottari 互补。
