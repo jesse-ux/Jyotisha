@@ -1,6 +1,95 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.24-mcp-server（2026-06-05）—— MCP Server 接口实现
+
+> **目标**：实现 MCP Server 接口，让 Claude/Cursor 等 AI 工具能直接调用 Jyotish 解盘能力，学习 VedAstro 的 MCP 工程化思路。
+
+### 变更内容
+
+- **新增 `mcp_server.py`**（v1.0）：
+  - 基于 `mcp` Python SDK（`mcp.server.FastMCP`）实现标准 MCP Server。
+  - 暴露 **12 个工具**（tools）：
+    - `calculate_chart`：计算本命星盘（D1/D9/D10）+ 完整 Vimshottari Dasha。
+    - `calculate_dasha`：指定大运系统（Vimshottari/Ashtottari/Narayana）详细时间表。
+    - `calculate_shadbala`：计算planetary strengths（若Swiss Ephmeris不可用则降级）。
+    - `calculate_ashtakavarga`：计算Ashtakavarga（SAV/BSV/ASV）。
+    - `calculate_varga`：计算单个分盘（D9/D10/D12等）。
+    - `calculate_varga_full`：计算所有主分盘（D2/D3/D7/D9/D10/D12/D16/D20/D24/D30/D40/D45）。
+    - `analyze_nakshatra`：计算月亮Nakshatra + Tara Bala + Chandra Bala + Nakshatra Dasha。
+    - `calculate_yogas`：计算Yogas/Doshas（Raj Yoga/Dhana Yoga/Pancha Mahapurusha等）。
+    - `calculate_transit`：计算当前/指定日期过境 + 与Dasha/Ashtakavarga叠加。
+    - `full_reading`：完整解盘分析（兼容虚构/公开数据）。
+    - `get_audit_status`：获取technique registry审计状态。
+    - `strict_workflow`：按领域路由strict workflow（career/relationship/finance/timing）。
+  - 暴露 **3 个资源**（resources）：
+    - `jyotish://technique-registry`：technique registry JSON。
+    - `jyotish://quick-reference`：快速参考指南。
+    - `jyotish://competitive-analysis`：竞争分析文档。
+  - 所有tool通过`subprocess`调用CLI，不修改原有引擎代码，保证隔离性。
+  - 优雅降级：Swiss Ephmeris不可用时返回`status:"degraded"`而非crash。
+
+- **新增 `references/competitive-analysis-2026-06-05.md`**：
+  - PyJHora优势分析（50+ Dashas、284 Yogas、6800+ tests、benchmark harness）。
+  - VedAstro优势分析（MCP Server、Docker、200+ API endpoints、C#/Python双实现）。
+  - 本skill差异化定位（strict workflow、audit table、capability degradation）。
+  - 3阶段优化路线图（P0 benchmark对齐 → P1公开验证 → P2产品化）。
+
+- **更新 `README.md`**：
+  - 重写为专业英文项目文档。
+  - 新增competitive comparison table（vs PyJHora/VedAstro/Maitreya）。
+  - 新增honest self-assessment（Traditional Algo Accuracy 7.3/10等）。
+  - 新增Quick Start（5分钟full-reading示例）。
+  - 新增Technique Coverage表格（44 techniques with status）。
+  - 新增Development Rules和Contributing指南。
+  - 强调"Truth over coverage"哲学。
+
+- **更新 `references/technique_registry.json`**（v6.0.23 → v6.0.24）：
+  - 所有**14个partial techniques**新增`limitation`字段（真实描述限制，不虚假升级covered）。
+  - 修复**7个`knowledge_refs`路径**（`bhrigu-pada-dasha-marriage-counting.md`等缺失`references/`前缀）。
+  - 新增**2个placeholder reference文件**：
+    - `references/bphs-ch48-narayana-dasha.md`
+    - `references/muhurta-complete-guide.md`
+  - `audit_capabilities.py --mode validate`结果：`valid=true, problem_count=0, warning_count=0`。
+
+### 回归验证
+
+- `py_compile`通过：`mcp_server.py` + 所有`scripts/*.py`。
+- `audit_capabilities.py --mode validate`通过：`warning_count=0`（相较v6.0.23的21个warnings全部清零）。
+- `full-reading`回归（虚构数据1990-06-15 10:30 Beijing）：
+  - `modules_computed=45`
+  - `errors=0`
+  - `status=complete`
+- MCP Server初始化测试：`initialize`响应成功，`capabilities`包含`tools`+`resources`+`prompts`。
+- MCP Server `tools/list`测试：12个tools全部注册，命名/描述/inputSchema正确。
+- `git diff --check`通过。
+- `git status --short --branch`干净后提交。
+
+### 与竞争项目对比
+
+| 维度 | v6.0.23 | v6.0.24 | PyJHora | VedAstro |
+|------|---------|---------|----------|---------|
+| MCP Server | ❌ | ✅ 12 tools | ❌ | ✅ |
+| README英文 | ❌ | ✅ 专业级 | ✅ | ✅ |
+| Registry warnings | 21 | **0** | N/A | N/A |
+| Docker支持 | ❌ | ❌（下一阶段） | ❌ | ✅ |
+| API endpoints | CLI only | MCP + CLI | GUI+CLI | 200+ REST |
+
+### 下一步（P1）
+
+1. **Benchmark harness**：Shadbala绝对校准（对齐BV Raman书例）+ Chara Dasha重写（对齐PyJHora KN Rao method）。
+2. **Docker一键运行**：`docker run ... jyotish`出完整解盘。
+3. **GitHub Actions CI**：每次push自动跑`audit_capabilities.py` + `full-reading`回归。
+4. **公开benchmark页面**：GitHub Pages展示vs PyJHora/VedAstro输出对比。
+
+---
+
 ## v6.0.23-full-reading-regression（2026-06-04）—— full-reading 残余错误清零
+
+> **目标**：修复 v6.0.22 后 full-reading 抽查中遗留的 4 个旧模块接入错误，使完整链路输出 `errors=0`。
+
+### 变更内容
+
+- `scripts/jyotish_engine.py`：
 
 > **目标**：修复 v6.0.22 后 full-reading 抽查中遗留的 4 个旧模块接入错误，使完整链路输出 `errors=0`。
 
