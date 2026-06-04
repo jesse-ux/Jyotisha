@@ -29,6 +29,15 @@
 - audit_capabilities --mode validate：valid=True，warnings=0，problems=0
 - 新增 `benchmark/validation-einstein-2026-06-04.md` 验证报告
 
+### Yoga 规则库扩展（同版本追加）
+
+- **Yoga 规则从 ~49 种扩展到 76 种** (`scripts/jyotish_engine.py`)
+  - A. 行星合相 Yoga（6种）：Budha-Shukra、Surya-Chandra、Guru-Shukra、Shani-Rahu、Angaraka、Surya-Budha
+  - B. 宫位主星关联 Yoga（5种）：Dharma Karmadhipati、Raja Parivartana、Neecha Bhanga 扩展、Moolatrikona Mahapurusha、Viparita Raja 扩展
+  - C. Nabhasa Yogas（5种）：Sankhya（Gola/Yuga/Sula/Kedara/Veena）、Asraya、Dala、Maala
+  - D. 特殊条件 Yoga（12种）：Mahabhagya、Pushkala、Adhi、Chatussagara、Virinchi、Veenaa、Kalanidhi、Saubhagya、Shubha、Graha Yuddha、Gajakesari（from Moon）、Pushya
+- Einstein 验证：检测到 Yoga 从 15 → **24 个**
+
 ---
 
 ## v6.0.24-mcp-server（2026-06-05）—— MCP Server 接口实现

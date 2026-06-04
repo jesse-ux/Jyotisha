@@ -113,7 +113,29 @@
 | **Budha-Shukra Yoga** | 水金合相 | lagna360 |
 | **多个 Raja Yoga** | 1-5、1-9、4-5、4-9 主星关系 | lagna360 |
 
-### 4.2 本 Skill 检测结果（修复前 vs 修复后）
+### 4.2 本 Skill 检测结果
+
+**修复前（v6.0.24）**: 0 个 Yoga（字段名不匹配 bug）
+
+**Bug 修复后（v6.0.25-bugfix）**: 15 个 Yoga
+
+**Yoga 扩展后（v6.0.25-yoga）**: **24 个 Yoga**（76 种规则定义）
+
+检测到的关键 Yoga：
+| # | Yoga | 条件 | 权威来源 |
+|---|------|------|---------|
+| 1 | Raja Yoga | Mercury+Saturn 同宫 | ✅ |
+| 2 | Raja Yoga | Mercury+Venus 同宫 | ✅ |
+| 3 | Malavya Yoga | Venus 入旺 Pisces | ✅ |
+| 6 | Harsha Vipreet Raja | Mars(6L) 在 8 宫 | ✅ |
+| 10 | Budhaditya Yoga | Sun+Mercury 同宫 | ✅ |
+| 16 | **Budha-Shukra Yoga** | Mercury+Venus 同宫 | ✅ 新增 |
+| 18 | **Dharma Karmadhipati** | 9L Saturn 与 10L Jupiter 互换 | — 新增 |
+| 24 | **Gajakesari (from Moon)** | Jupiter 在 Moon 的 Kendra | ✅ 新增 |
+
+**权威来源的 6 个 Yoga 中，本 skill 检测到 5 个**（Malavya、Budha Aditya、Harsha Vipreet、Raja、Gajakesari）。
+
+Budha-Shukra Yoga 是 lagna360 检测到的额外 Yoga，本 skill 也已覆盖。
 
 **修复前**:
 ```
