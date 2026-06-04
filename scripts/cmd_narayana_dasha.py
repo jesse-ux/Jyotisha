@@ -33,7 +33,17 @@ def cmd_narayana_dasha(args, chart_data):
         if isinstance(pd, dict) and 'degree' in pd:
             planet_lons[pn] = pd['degree']
 
-    asc_idx = chart_data.get('ascendant', {}).get('sign_idx', 0)
+    asc_idx = chart_data.get('ascendant_index')
+    if asc_idx is None:
+        asc_info = chart_data.get('ascendant', {}) if isinstance(chart_data, dict) else {}
+        asc_idx = asc_info.get('sign_idx', 0)
+        if asc_idx == 0 and isinstance(asc_info, dict):
+            # compute_chart_data 输出 ascendant.sign，但不一定输出 sign_idx；兼容旧结构
+            sign_name = asc_info.get('sign')
+            signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+                     'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
+            if sign_name in signs:
+                asc_idx = signs.index(sign_name)
     if isinstance(asc_idx, str):
         asc_idx = int(asc_idx)
 

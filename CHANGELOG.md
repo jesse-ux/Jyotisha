@@ -1,5 +1,46 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.22-nakshatra-advanced（2026-06-04）—— Nakshatra Advanced 星宿进阶实现
+
+> **目标**：补齐 Nakshatra Advanced 缺口，将星宿层从静态详情扩展为 Tara Bala + Chandra Bala + Nakshatra Dasha + Transit Overlay 的完整计算层。
+
+### 变更内容
+
+- `scripts/nakshatra_advanced.py` 升级为 v2.0：
+  - 新增 `calc_chandra_bala()`：月座力量 12 宫循环。
+  - 新增 `calc_tara_chandra_combined()`：Tara Bala（星宿层）+ Chandra Bala（月座层）双维综合评分。
+  - 新增 `calc_nakshatra_transits_natal()`：本命行星星宿分布。
+  - 新增 `nakshatra_full_report()`：完整星宿力量报告。
+- 新增 `scripts/nakshatra_dasha.py`：
+  - Ashtottari Dasha（108年星宿大运，Rahu 非 Kendra 条件判断）。
+  - Vimshottari Nakshatra-level breakdown（大运/小运守护星星宿、Pada、Tara关系）。
+  - Nakshatra Transit Overlay（过境行星星宿与本命月亮 Tara、同星宿叠加）。
+- 新增 `scripts/cmd_nakshatra_adv.py`：
+  - `nakshatra-adv` 支持 `all/detail/tara/chandra/combined/sublord/full`。
+  - 新增 `nakshatra-dasha` 子命令，支持 `all/ashtottari/vimshottari/overlay`。
+  - 新增 `nakshatra-full` 综合报告子命令。
+- `scripts/jyotish_engine.py`：
+  - full-reading Step 7 升级为完整 `nakshatra_advanced`。
+  - full-reading 新增 Step 7.5 `nakshatra_dasha`。
+  - 注册 `nakshatra-dasha` 与 `nakshatra-full` 子命令。
+- `references/technique_registry.json`：
+  - 版本升级到 `v6.0.22-nakshatra-advanced`。
+  - 新增 `nakshatra_advanced` 与 `nakshatra_dasha` 两个 covered 条目。
+  - `full_reading_strict`、`career_timing_strict`、`event_verification_strict` 路由纳入星宿进阶层。
+- `references/quick-reference-guide.md` 更新命令表。
+
+### 技法验证
+
+- `py_compile`：`nakshatra_advanced.py` / `nakshatra_dasha.py` / `cmd_nakshatra_adv.py` / `jyotish_engine.py` 全部通过。
+- `nakshatra-adv --mode chandra` 可输出 Chandra Bala。
+- `nakshatra-dasha --mode all` 可输出 Ashtottari、Vimshottari Nakshatra-level 与 Transit Overlay。
+- `audit_capabilities.py --mode validate` 通过：44 techniques（0 missing / 18 partial / 26 covered）。
+
+### 已知限制
+
+- Ashtottari 当前实现为工程化可用版本，仍需后续与传统书例/JHora 做外部绝对时间线对标。
+- KP Sub-Lord 仍沿用原先简化 9 等分版本，未扩展为完整不等分 KP Sub/SS 体系。
+
 ## v6.0.21-muhurta（2026-06-04）—— Muhurta 择时占星（Panchanga 五要素）实现
 
 > **触发原因**：用户说「继续」，Muhurta 是审计中确认缺失的独立技法，也是日常使用频率最高的传统技法之一。

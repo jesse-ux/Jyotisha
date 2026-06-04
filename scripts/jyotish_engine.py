@@ -62,7 +62,7 @@ try:
 except ImportError:
     HAS_SWE = False
 from cmd_solar_return import cmd_solar_return  # v6.0.18
-from cmd_narayana_dasha import cmd_narayana_dasha  # v6.0.20
+from cmd_narayana_dasha import cmd_narayana_dasha as _cmd_narayana_dasha_impl  # v6.0.20
 from cmd_muhurta import cmd_muhurta  # v6.0.21
 
 # ============================================================================
@@ -2142,11 +2142,11 @@ def _assess_conjunction_quality(lord, houses, planets):
     dusthana = {6, 8, 12}
     trikona = {1, 5, 9}
     kendra = {1, 4, 7, 10}
-    
+
     has_dusthana = any(h in dusthana for h in houses)
     has_trikona = any(h in trikona for h in houses)
     has_kendra = any(h in kendra for h in houses)
-    
+
     if has_dusthana and has_trikona:
         return f"凶吉混合 — 挑战与成长并存"
     elif has_dusthana and has_kendra:
@@ -2168,27 +2168,27 @@ def _conflict_arbitration(report):
     conflicts = []
     planets = report.get('planets', {})
     audit = report.get('audit', {})
-    
+
     p1 = audit.get('P1_identity', {})
     p7 = audit.get('P7_dignity', {})
     p2 = audit.get('P2_health', {})
-    
+
     asc_lord = p1.get('asc_lord', '')
-    
+
     # 规则1: P1清理者+P7入旺 → 检查上升主是否掌管8/12宫（清理者角色）
     # 清理者定义：掌管8宫或12宫的行星
     SIGN_LORDS_MAP = {'Aries': 'Mars', 'Taurus': 'Venus', 'Gemini': 'Mercury', 'Cancer': 'Moon',
                       'Leo': 'Sun', 'Virgo': 'Mercury', 'Libra': 'Venus', 'Scorpio': 'Mars',
                       'Sagittarius': 'Jupiter', 'Capricorn': 'Saturn', 'Aquarius': 'Saturn', 'Pisces': 'Jupiter'}
-    
+
     asc_sign = p1.get('asc_sign', '')
     asc_idx_local = SIGNS.index(asc_sign) if asc_sign in SIGNS else 0
-    
+
     # 找8宫主和12宫主
     h8_sign = SIGNS[(asc_idx_local + 7) % 12]
     h12_sign = SIGNS[(asc_idx_local + 11) % 12]
     destroyer_lords = {SIGN_LORDS_MAP.get(h8_sign, ''), SIGN_LORDS_MAP.get(h12_sign, '')}
-    
+
     for dl in destroyer_lords:
         if dl and dl in p7:
             dl_status = p7[dl].get('status', '')
@@ -2199,7 +2199,7 @@ def _conflict_arbitration(report):
                     'verdict': '带毒高价值资产',
                     'instruction': f"{dl}既是清理者(掌8/12宫)又入旺/入庙，力量极强但方向凶险——禁止说逢凶化吉",
                 })
-    
+
     # 规则2: P5凶宫+BAV高 → 检查6/8/12宫的SAV是否 >28
     asht_data = report.get('ashtakavarga', {})
     house_scores = {}
@@ -2212,7 +2212,7 @@ def _conflict_arbitration(report):
             house_scores = asht_result.get('house_scores', {})
         except:
             pass
-    
+
     for h in [6, 8, 12]:
         hs = house_scores.get(f'house_{h}', {})
         sav_score = hs.get('score', 0)
@@ -2224,7 +2224,7 @@ def _conflict_arbitration(report):
                 'verdict': '乱世出英雄',
                 'instruction': f"{h}宫是凶宫但SAV={sav_score}（>28），在困境中反而能出成就",
             })
-    
+
     # 规则3: P1吉+P2受损 → 上升主星状态好但太阳(健康指标)受损
     sun_info = p2.get('sun_status', '')
     lord_info = p7.get(asc_lord, {})
@@ -2236,7 +2236,7 @@ def _conflict_arbitration(report):
             'verdict': '空有雄心无着力点',
             'instruction': f"上升主{asc_lord}强健但太阳受损，有野心但执行力/健康跟不上",
         })
-    
+
     return conflicts
 
 
@@ -2595,41 +2595,30 @@ def cmd_jaimini(args):
 
 
 # ============================================================================
-# 18. 高级Nakshatra分析（v3.7新增）
+# 18. 高级Nakshatra分析（v3.7 → v6.0.22 移至 cmd_nakshatra_adv.py）
 # ============================================================================
-def cmd_nakshatra_adv(args):
+def cmd_narayana_dasha(args):
     chart, asc_idx, jd, ayanamsa = compute_chart_data(
         args.year, args.month, args.day, args.hour, args.minute,
         args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
-    if chart is None:
-        return {"error": "swisseph未安装"}
-    try:
-        sys.path.insert(0, SCRIPT_DIR)
-        from nakshatra_advanced import find_nakshatra, calc_all_tara_balas, calc_sub_lord, nakshatra_compatibility
-    except ImportError as e:
-        return {"error": f"nakshatra_advanced模块导入失败: {e}"}
-    planets = chart.get('planets', {})
-    planet_lons = {}
-    for pn, pd in planets.items():
-        if isinstance(pd, dict) and 'degree' in pd:
-            planet_lons[pn] = pd['degree']
+    if chart is not None:
+        chart['ascendant_index'] = asc_idx
+    return _cmd_narayana_dasha_impl(args, chart)
 
-    result = {'planets': {}}
-    mode = args.mode or 'all'
 
-    if mode in ('all', 'detail'):
-        for pn, lon in planet_lons.items():
-            result['planets'][pn] = find_nakshatra(lon)
+def cmd_nakshatra_adv(args):
+    from cmd_nakshatra_adv import cmd_nakshatra_adv as _impl
+    return _impl(args)
 
-    if mode in ('all', 'tara'):
-        moon_lon = planet_lons.get('Moon', 0)
-        moon_nak_idx = int(moon_lon / (360/27)) % 27
-        result['tara_bala'] = calc_all_tara_balas(moon_nak_idx, planet_lons)
 
-    if mode in ('all', 'sublord'):
-        result['sub_lords'] = {pn: calc_sub_lord(lon) for pn, lon in planet_lons.items()}
+def cmd_nakshatra_dasha(args):
+    from cmd_nakshatra_adv import cmd_nakshatra_dasha as _impl
+    return _impl(args)
 
-    return result
+
+def cmd_nakshatra_full(args):
+    from cmd_nakshatra_adv import cmd_nakshatra_full as _impl
+    return _impl(args)
 
 
 # ============================================================================
@@ -3648,7 +3637,6 @@ def cmd_full_reading(args):
     try:
         from narayana_dasha import narayana_dasha_full_report
         # 计算当前年龄（从出生到 today）
-        from datetime import datetime
         birth_dt = datetime(args.year, args.month, args.day, args.hour, args.minute)
         today_dt = datetime.strptime(args.today, '%Y-%m-%d') if hasattr(args, 'today') and args.today else datetime.now()
         current_age = (today_dt - birth_dt).days / 365.25
@@ -3708,19 +3696,49 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"jaimini: {e}")
 
-    # ── Step 7: 高级Nakshatra ──
+    # ── Step 7: 高级Nakshatra（v6.0.22 升级：含 Chandra Bala + 综合报告）──
     try:
-        from nakshatra_advanced import find_nakshatra, calc_all_tara_balas, calc_sub_lord
-
-        nak_result = {'planets': {}}
-        for pn, lon in planet_lons.items():
-            nak_result['planets'][pn] = find_nakshatra(lon)
-        moon_nak_idx = int(planet_lons.get('Moon', 0) / (360/27)) % 27
-        nak_result['tara_bala'] = calc_all_tara_balas(moon_nak_idx, planet_lons)
-        nak_result['sub_lords'] = {pn: calc_sub_lord(lon) for pn, lon in planet_lons.items()}
-        report['modules']['nakshatra_advanced'] = nak_result
+        from nakshatra_advanced import nakshatra_full_report as nakshatra_report
+        nak_full = nakshatra_report(chart)
+        report['modules']['nakshatra_advanced'] = nak_full
     except Exception as e:
         report['errors'].append(f"nakshatra-adv: {e}")
+
+    # ── Step 7.5: Nakshatra Dasha 星宿大运（v6.0.22 新增）──
+    try:
+        from nakshatra_dasha import nakshatra_dasha_full_report
+
+        birth_date_str = f"{args.year}-{args.month:02d}-{args.day:02d}"
+        # 年龄
+        nak_age = args.age
+        if nak_age is None:
+            try:
+                birth_date = datetime(args.year, args.month, args.day)
+                nak_age = (datetime.now() - birth_date).days / 365.25
+            except:
+                nak_age = None
+
+        if nak_age is not None:
+            # 获取过境星宿数据
+            transit_lons_for_nak = None
+            try:
+                transit_ref = getattr(args, 'transit_date', None) or datetime.now().strftime('%Y-%m-%d')
+                ty, tm, td = map(int, transit_ref.split('-'))
+                transit_jd_nak = swe.julday(ty, tm, td, 12.0 - args.tz)
+                transit_pl_nak, _ = _calc_sidereal_planets_for_jd(
+                    transit_jd_nak, node_mode=getattr(args, 'node_mode', 'mean'), include_ketu=True)
+                transit_lons_for_nak = {}
+                for pn, pd in transit_pl_nak.items():
+                    if isinstance(pd, dict) and 'degree' in pd:
+                        transit_lons_for_nak[pn] = pd['degree']
+            except:
+                pass
+
+            nak_dasha = nakshatra_dasha_full_report(
+                chart, birth_date_str, nak_age, transit_lons_for_nak)
+            report['modules']['nakshatra_dasha'] = nak_dasha
+    except Exception as e:
+        report['errors'].append(f"nakshatra-dasha: {e}")
 
     # ── Step 8: Argala门闩 ──
     try:
@@ -4109,10 +4127,27 @@ def main():
     p.add_argument('--mode', default='all', choices=['all','karaka','dasha','karakamsha'], help='分析模式')
     p.add_argument('--antardasha', action='store_true', help='Chara Dasha含Antardasha子周期（当前timing实现为partial）')
 
-    # 18. nakshatra-adv (v3.7新增)
-    p = sub.add_parser('nakshatra-adv', help='高级Nakshatra分析')
+    # 18. nakshatra-adv (v3.7新增 → v6.0.22 升级)
+    p = sub.add_parser('nakshatra-adv', help='高级Nakshatra分析（Tara/Chandra/Sub-Lord/综合）')
     _add_chart_args(p)
-    p.add_argument('--mode', default='all', choices=['all','detail','tara','sublord'], help='分析模式')
+    p.add_argument('--mode', default='all',
+                   choices=['all','detail','tara','chandra','combined','sublord','full'],
+                   help='分析模式')
+
+    # 18.5 nakshatra-dasha (v6.0.22新增)
+    p = sub.add_parser('nakshatra-dasha', help='星宿大运推演（Ashtottari / Vimshottari Nakshatra-level / Transit Overlay）')
+    _add_chart_args(p)
+    p.add_argument('--age', type=float, default=None, help='当前年龄（自动计算如果不提供）')
+    p.add_argument('--mode', default='all',
+                   choices=['all','ashtottari','vimshottari','overlay'],
+                   help='分析模式')
+    p.add_argument('--transit-date', default=None, help='过境日期 YYYY-MM-DD（overlay/all模式，默认今天）')
+
+    # 18.6 nakshatra-full (v6.0.22新增)
+    p = sub.add_parser('nakshatra-full', help='综合星宿完整报告（本命 + 大运 + 过境）')
+    _add_chart_args(p)
+    p.add_argument('--age', type=float, default=None, help='当前年龄')
+    p.add_argument('--transit-date', default=None, help='过境日期 YYYY-MM-DD（默认今天）')
 
     # 19. argala (v3.7新增)
     p = sub.add_parser('argala', help='Argala门闩系统')
@@ -4207,7 +4242,8 @@ def main():
             'shadbala': cmd_shadbala, 'ashtakavarga': cmd_ashtakavarga, 'memory': cmd_memory,
             'validate': cmd_validate, 'audit': cmd_audit, 'report': cmd_report,
             'varga-full': cmd_varga_full, 'aspects': cmd_aspects, 'jaimini': cmd_jaimini,
-            'nakshatra-adv': cmd_nakshatra_adv, 'argala': cmd_argala, 'tajika': cmd_tajika,
+            'nakshatra-adv': cmd_nakshatra_adv, 'nakshatra-dasha': cmd_nakshatra_dasha,
+            'nakshatra-full': cmd_nakshatra_full, 'argala': cmd_argala, 'tajika': cmd_tajika,
             'synastry': cmd_synastry, 'solar-return': cmd_solar_return,
             'narayana-dasha': cmd_narayana_dasha, 'muhurta': cmd_muhurta,
             'full-reading': cmd_full_reading, 'prashna': cmd_prashna,

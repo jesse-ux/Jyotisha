@@ -10,7 +10,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.11-shadbala-capability-downgrade | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.0.22-nakshatra-advanced | **详细变更**：`CHANGELOG.md`
 
 ---
 
@@ -164,7 +164,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 $PYTHON $SCRIPT <子命令> [参数]
 ```
 
-### 27大子命令速查
+### 30大子命令速查
 
 | 子命令 | 功能 |
 |--------|------|
@@ -185,7 +185,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 | `audit` | P1-P12行星审计管线 |
 | `aspects` | 度数精确相位系统 |
 | `jaimini` | Jaimini Karaka/Karakamsha；Chara Dasha 当前为 partial，需 KN Rao/PVN Rao 回归 |
-| `nakshatra-adv` | 高级Nakshatra（Tara Bala+Sub-Lord） |
+| `nakshatra-adv` | 高级Nakshatra（Tara Bala+Chandra Bala+Sub-Lord） |
+| `nakshatra-dasha` | 星宿大运推演（Ashtottari + Nakshatra-level Vimshottari） |
+| `nakshatra-full` | 星宿综合报告（本命 + 大运 + 过境星宿） |
 | `argala` | Argala门闩系统 |
 | `tajika` | Tajika年运盘（Muntha+YearLord+Mudda Dasha） |
 | `synastry` | 合盘分析（Ashta Koota 36分） |
@@ -299,9 +301,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.0.11-shadbala-capability-downgrade
+**版本**：v6.0.22-nakshatra-advanced
 **创建日期**：2026-04-20
-**最后更新**：2026-06-04（v6.0.11 将 Shadbala 降级为 partial：内部一致通过，外部绝对值校准待完成）
+**最后更新**：2026-06-04（v6.0.22 新增 Nakshatra Advanced：Chandra Bala、Nakshatra Dasha、Transit Overlay）
 
 ---
 

@@ -1,5 +1,5 @@
 {
-  "version": "v6.0.21-muhurta",
+  "version": "v6.0.22-nakshatra-advanced",
   "source_inspiration": [
     {
       "name": "jyotishyamitra",
@@ -865,6 +865,63 @@
       ],
       "audit_label": "Muhurta",
       "missing_impact": "N/A - implemented in v6.0.21"
+    },
+    "nakshatra_advanced": {
+      "name": "Nakshatra Advanced / 星宿进阶（Tara Bala + Chandra Bala + Sub-Lord）",
+      "domains": [
+        "nakshatra",
+        "static",
+        "strength",
+        "muhurta",
+        "timing"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/nakshatra-chinese-quick-ref.md",
+        "references/nakshatra_deities.md",
+        "references/pancha-pakshi-nakshatra-systems.md"
+      ],
+      "commands": [
+        "nakshatra-adv",
+        "nakshatra-full",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.nakshatra_advanced",
+        "modules.nakshatra_advanced.tara_bala",
+        "modules.nakshatra_advanced.chandra_bala",
+        "modules.nakshatra_advanced.tara_chandra_combined"
+      ],
+      "audit_label": "Nakshatra Advanced",
+      "missing_impact": "N/A - implemented in v6.0.22"
+    },
+    "nakshatra_dasha": {
+      "name": "Nakshatra Dasha / 星宿大运推演（Ashtottari + Nakshatra-level Vimshottari）",
+      "domains": [
+        "nakshatra",
+        "dasha",
+        "timing",
+        "transit"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/nakshatra-chinese-quick-ref.md",
+        "references/vimshottari_dasha_guide.md",
+        "references/alternative-dasha-systems.md"
+      ],
+      "commands": [
+        "nakshatra-dasha",
+        "nakshatra-full",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.nakshatra_dasha",
+        "modules.nakshatra_dasha.ashtottari",
+        "modules.nakshatra_dasha.vimshottari_nak_breakdown",
+        "modules.nakshatra_dasha.transit_overlay"
+      ],
+      "audit_label": "Nakshatra Dasha",
+      "missing_impact": "N/A - implemented in v6.0.22"
     }
   },
   "routes": {
@@ -913,7 +970,9 @@
         "trimshamsa_d30",
         "muntha",
         "prashna_integration",
-        "bhrigu_pada_dasha"
+        "bhrigu_pada_dasha",
+        "nakshatra_advanced",
+        "nakshatra_dasha"
       ],
       "optional_techniques": [
         "bhava_chalit",
@@ -958,7 +1017,9 @@
         "trimshamsa_d30",
         "muntha",
         "prashna_integration",
-        "bhrigu_pada_dasha"
+        "bhrigu_pada_dasha",
+        "nakshatra_advanced",
+        "nakshatra_dasha"
       ],
       "optional_techniques": [
         "d9_navamsa",
@@ -1012,7 +1073,9 @@
         "bhrigu_pada_dasha",
         "solar_return",
         "narayana_dasha",
-        "muhurta"
+        "muhurta",
+        "nakshatra_advanced",
+        "nakshatra_dasha"
       ],
       "optional_techniques": [
         "bhava_chalit",

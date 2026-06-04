@@ -1,6 +1,6 @@
 # 印度占星 Skill 执行总控指南
 
-> **用途**：本指南是 v6.0.0 升级的**执行总控文件**，承接 SKILL.md 的详细内容。包含：完整引擎命令参数、10大场景执行模板、27大子命令详表、105个参考文件完整索引、强制规范详情。
+> **用途**：本指南是 v6.0.0 升级的**执行总控文件**，承接 SKILL.md 的详细内容。包含：完整引擎命令参数、10大场景执行模板、30大子命令详表、105个参考文件完整索引、强制规范详情。
 >
 > **使用方式**：SKILL.md 为入口路由，本文件为执行操作手册。CTRL+F 搜索关键词快速定位。
 
@@ -360,7 +360,9 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 |--------|------|---------|
 | `aspects` | 度数精确相位系统（tight/moderate/loose + 入相位/出相位） | `aspects --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
 | `jaimini` | Jaimini Karaka/Karakamsha；Chara Dasha timing 当前为 partial，需 KN Rao/PVN Rao 回归验证 | `jaimini --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all --antardasha` |
-| `nakshatra-adv` | 高级Nakshatra（Tara Bala + Sub-Lord KP + 兼容性） | `nakshatra-adv --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all` |
+| `nakshatra-adv` | 高级Nakshatra（Tara Bala + Chandra Bala + Tara/Chandra综合 + Sub-Lord KP） | `nakshatra-adv --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all` |
+| `nakshatra-dasha` | 星宿大运推演（Ashtottari + Vimshottari Nakshatra-level + Transit Overlay） | `nakshatra-dasha --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --age 33 --mode all --transit-date 2026-06-04` |
+| `nakshatra-full` | 星宿综合报告（本命星宿力量 + 星宿大运 + 过境星宿叠加） | `nakshatra-full --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --age 33` |
 | `argala` | Argala门闩系统（主/副Argala + Virodha反干预 + 净评分） | `argala --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
 | `tajika` | Tajika年运盘（Muntha + YearLord + Mudda Dasha + Tri-Pataka） | `tajika --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --age 33` |
 | `synastry` | 合盘分析（Ashta Koota 36分 + Mangal Dosha + Papasamya） | `synastry --moon1 310.89 --moon2 45.5 --mars1 90.43 --mars2 120.3` |
