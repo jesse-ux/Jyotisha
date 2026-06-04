@@ -1,6 +1,6 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.0.21
+version: 6.0.24
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga、出生时间矫正、PDF星盘、读取PDF、分析PDF星盘、现代解读、误判纠错、Varga分盘、综合分析、过境分析、合盘、婚姻匹配、年运盘、Prashna、Argala、Jaimini、Shadbala、Ashtakavarga、HTML报告、深度解盘。
 ---
 
@@ -10,7 +10,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.23-full-reading-regression | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.0.24-mcp-server | **详细变更**：`CHANGELOG.md`
 
 ---
 

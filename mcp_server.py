@@ -531,6 +531,7 @@ def strict_workflow(
     tz: float,
     age: int,
     transit_date: str,
+    node_mode: str = "mean",
 ) -> Dict[str, Any]:
     """
     Strict workflow router: routes question to the correct analysis path.
@@ -552,34 +553,46 @@ def strict_workflow(
         tz: Timezone offset from UTC
         age: Current age
         transit_date: Transit date for prediction (YYYY-MM-DD)
+        node_mode: 'mean' or 'true'
 
     Returns:
         JSON with routed analysis and confidence level
     """
-    engine = os.path.join(SCRIPT_DIR, "scripts", "jyotish_engine.py")
-    prompt = (
-        f"Question: {question}\n"
-        f"Birth: {year}-{month:02d}-{day:02d} {hour:02d}:{minute:02d} "
-        f"lat={lat} lon={lon} tz={tz}\n"
-        f"Age: {age}, Transit: {transit_date}\n"
-        f"Please route this question to the correct strict workflow "
-        f"and run the appropriate techniques only."
-    )
-    cmd = [sys.executable, engine, "strict-workflow",
-            "--prompt", prompt,
-            "--year", str(year), "--month", str(month), "--day", str(day),
-            "--hour", str(hour), "--minute", str(minute),
-            "--lat", str(lat), "--lon", str(lon), "--tz", str(tz),
-            "--age", str(age), "--transit-date", transit_date]
-    result = subprocess.run(
-        cmd, capture_output=True, text=True, timeout=120, cwd=SCRIPT_DIR
-    )
-    if result.returncode != 0:
-        return {"error": True, "stderr": result.stderr}
-    try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError:
-        return {"raw_output": result.stdout}
+    q = question.lower()
+    if any(k in q for k in ("career", "job", "work", "promotion", "business", "profession", "事业", "工作", "升职", "生意")):
+        route = "career"
+        focus_techniques = ["D10", "Dasha", "Shadbala", "Transit", "Narayana Dasha"]
+    elif any(k in q for k in ("marriage", "relationship", "love", "spouse", "partner", "divorce", "婚恋", "婚姻", "感情", "配偶", "恋爱")):
+        route = "relationship"
+        focus_techniques = ["D9", "UL Upapada", "Dasha", "Nakshatra", "Vivah Saham"]
+    elif any(k in q for k in ("money", "wealth", "finance", "investment", "property", "income", "财务", "财富", "投资", "房产", "收入")):
+        route = "finance"
+        focus_techniques = ["D2", "D11", "Dasha", "Shadbala", "Ashtakavarga"]
+    elif any(k in q for k in ("when", "timing", "event", "prediction", "future", "应期", "预测", "何时", "将来")):
+        route = "timing"
+        focus_techniques = ["Dasha", "Transit", "Double Transit", "Gochara"]
+    else:
+        route = "general"
+        focus_techniques = ["D1", "D9", "Dasha", "Yoga", "Shadbala", "Ashtakavarga"]
+
+    result = _run_engine("full-reading", {
+        "year": year, "month": month, "day": day,
+        "hour": hour, "minute": minute,
+        "lat": lat, "lon": lon, "tz": tz,
+        "age": age, "transit_date": transit_date,
+        "node_mode": node_mode,
+    })
+
+    if isinstance(result, dict) and "error" not in result:
+        result["routing"] = {
+            "question_type": route,
+            "focus_techniques": focus_techniques,
+            "note": (
+                f"Routed to '{route}' path. Focus on the listed techniques "
+                f"for higher-confidence answers. Full reading included for context."
+            ),
+        }
+    return result
 
 
 # ============================================================================
