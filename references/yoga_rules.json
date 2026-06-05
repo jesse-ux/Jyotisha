@@ -1278,8 +1278,8 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\nlord_5 = lord(5)\nlord_6 = lord(6)\nif lord_5 in ctx.planets and lord_6 in ctx.planets:\n    l5h = house_of(lord_5)\n    l6h = house_of(lord_6)\n    (kendra(l5h) or trikona(l5h)) and (kendra(l6h) or trikona(l6h))\nelse:\n    False\n",
-        "combo_template": "5宫主与6宫主均在有力宫位"
+        "expr": "\n# PyJHora/BVR-12: (L1 strong and L5/L6 in mutual kendras) OR\n# (L1 and L10 together in a movable sign and L9 strong).\nl1, l5, l6, l9, l10 = [lord(h) for h in [1, 5, 6, 9, 10]]\nif not all(p in ctx.planets for p in [l1, l5, l6, l9, l10]):\n    False\nelse:\n    l1h, l5h, l6h, l9h, l10h = [house_of(p) for p in [l1, l5, l6, l9, l10]]\n    cond1 = strong(l1) and offset(l5h, l6h) in [0, 3, 6, 9] and offset(l6h, l5h) in [0, 3, 6, 9]\n    cond2 = strong(l9) and same_house(l1, l10) and movable_house(l1h)\n    cond1 or cond2\n",
+        "combo_template": "上升主强且5/6宫主互为Kendra，或1/10宫主合于变动星座且9宫主强"
       },
       "effects": [
         "学识渊博",
@@ -1386,8 +1386,8 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\nben_in_trikona = [p for p in BENEFICS if p in ctx.planets and house_of(p) in [5, 9]]\nmal_in_dusthana = [p for p in MALEFICS if p in ctx.planets and house_of(p) in [6, 8]]\nbool(ben_in_trikona and mal_in_dusthana)\n",
-        "combo_template": "吉星在三方宫+凶星在凶宫"
+        "expr": "\n# PyJHora/PVR method=2: benefics only in Lagna and 9th; 5th contains\n# both benefic and malefic; 4th and 8th contain only malefics.\ncond1 = only_benefics_in_house(1) and only_benefics_in_house(9)\ncond2 = house_has_benefic(5) and house_has_malefic(5)\ncond3 = only_malefics_in_house(4) and only_malefics_in_house(8)\ncond1 and cond2 and cond3\n",
+        "combo_template": "Lagna/9宫仅吉星，5宫吉凶同在，4/8宫仅凶星"
       },
       "effects": [
         "聪慧过人",
@@ -9081,8 +9081,8 @@
       "category": "health",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora BVR-11: (a) Lagna lord in Lagna joined by dusthana lord;\n# (b) weak Lagna lord in kendra/trikona joined by a kendra/trine lord.\nasc_lord = lord(1)\ndusthana_lords = [lord(h) for h in [6, 8, 12]]\nquad_trine_lords = [lord(h) for h in [1, 4, 5, 7, 9, 10]]\nif asc_lord not in ctx.planets:\n    False\nelse:\n    h = house_of(asc_lord)\n    condition_a = h == 1 and any(dl in ctx.planets and same_house(asc_lord, dl) for dl in dusthana_lords)\n    condition_b = (kendra(h) or trikona(h)) and not strong(asc_lord) and any(qtl in ctx.planets and same_house(asc_lord, qtl) for qtl in quad_trine_lords if qtl != asc_lord)\n    condition_a or condition_b\n",
-        "combo_template": "上升主与凶宫主或角/三方主形成疾病格局"
+        "expr": "\n# PyJHora BVR-11 exact D1-safe logic: (a) Lagna lord in Lagna joined by\n# dusthana lord; (b) weak Lagna lord joined by any kendra/trine lord.\nasc_lord = lord(1)\ndusthana_lords = [lord(h) for h in [6, 8, 12]]\nquad_trine_lords = [lord(h) for h in [1, 4, 5, 7, 9, 10]]\nif asc_lord not in ctx.planets:\n    False\nelse:\n    condition_a = house_of(asc_lord) == 1 and any(dl in ctx.planets and same_house(asc_lord, dl) for dl in dusthana_lords)\n    condition_b = (not strong(asc_lord)) and any(qtl in ctx.planets and same_house(asc_lord, qtl) for qtl in quad_trine_lords)\n    condition_a or condition_b\n",
+        "combo_template": "上升主在Lagna合凶宫主，或弱上升主合角/三方主"
       },
       "effects": [
         "疾病",
@@ -11236,14 +11236,9 @@
       "bvr_id": null,
       "category": "putra",
       "logic": {
-        "type": "compound_conditions",
-        "conditions": [
-          {
-            "type": "5th_lord_afflicted_by_saturn_or_rahu",
-            "note": "5th lord afflicted by Saturn or Rahu"
-          }
-        ],
-        "note": "Loss of children at specific times"
+        "type": "custom",
+        "expr": "\n# PyJHora 229/230 D1-safe logic. Variant 229: Rahu in 5th, L5 joined\n# malefic, Jupiter debilitated. Variant 230: malefics occupy/aspect both\n# 5th from Lagna and 5th from Jupiter.\nl5 = lord(5)\nif l5 not in ctx.planets or 'Jupiter' not in ctx.planets:\n    False\nelse:\n    cond229 = house_of('Rahu') == 5 and debil('Jupiter') and any(m in ctx.planets and same_house(l5, m) for m in MALEFICS if m != l5)\n    j5 = ((house_of('Jupiter') - 1 + 4) % 12) + 1\n    mal_lagna5 = any(m in ctx.planets and (house_of(m) == 5 or aspects_house(m, 5)) for m in MALEFICS)\n    mal_jupiter5 = any(m in ctx.planets and (house_of(m) == j5 or aspects_house(m, j5)) for m in MALEFICS)\n    cond229 or (mal_lagna5 and mal_jupiter5)\n",
+        "combo_template": "Rahu/L5/木星或凶星影响Lagna与木星起算第5宫"
       },
       "effects": [
         "Loss of progeny at predetermined periods"
@@ -11631,32 +11626,9 @@
       "bvr_id": null,
       "category": "special",
       "logic": {
-        "type": "compound_conditions",
-        "conditions": [
-          {
-            "type": "compound",
-            "operator": "OR",
-            "conditions": [
-              {
-                "type": "jupiter_in_lagna_mars_in_7th",
-                "note": "Jupiter in Lagna and Mars in 7th"
-              },
-              {
-                "type": "saturn_in_lagna_mars_in_5_7_9",
-                "note": "Saturn in Lagna and Mars in 9th/5th/7th"
-              },
-              {
-                "type": "saturn_in_12th_with_waning_moon",
-                "note": "Saturn in 12th with waning Moon"
-              },
-              {
-                "type": "moon_mercury_in_kendra_with_planet",
-                "note": "Moon and Mercury in kendra with another planet"
-              }
-            ]
-          }
-        ],
-        "note": ""
+        "type": "custom",
+        "expr": "\n# PyJHora 291/292/294 D1-safe variants. Variant 293 needs tithi/waning Moon\n# and remains unavailable from static planet_positions_60 data.\njm = 'Jupiter' in ctx.planets and 'Mars' in ctx.planets and house_of('Jupiter') == 1 and house_of('Mars') == 7\nsm = 'Saturn' in ctx.planets and 'Mars' in ctx.planets and house_of('Saturn') == 1 and house_of('Mars') in [5, 7, 9]\nmoon_mercury = False\nif 'Moon' in ctx.planets and 'Mercury' in ctx.planets:\n    moon_mercury = kendra(house_of('Moon')) and kendra(house_of('Mercury')) and any(p != 'Moon' and aspect(p, 'Moon') for p in ctx.planets) and any(p != 'Mercury' and aspect(p, 'Mercury') for p in ctx.planets)\njm or sm or moon_mercury\n",
+        "combo_template": "木火1/7、土升火5/7/9，或月水角宫并受相位"
       },
       "effects": [
         "Mental disturbance, confusion, erratic behavior"
@@ -13633,18 +13605,9 @@
       "bvr_id": null,
       "category": "raja",
       "logic": {
-        "type": "compound_conditions",
-        "conditions": [
-          {
-            "type": "planets_in_mutual_kendras_or_conjunction",
-            "planets": [
-              "Jupiter",
-              "Mars"
-            ],
-            "note": "Jupiter and Mars in mutual kendras or in conjunction"
-          }
-        ],
-        "note": "Jupiter and Mars in mutual kendras or conjunction"
+        "type": "custom",
+        "expr": "\n# PyJHora: Jupiter and Mars are together or in the 7th from each other.\n'Jupiter' in ctx.planets and 'Mars' in ctx.planets and offset(house_of('Jupiter'), house_of('Mars')) in [0, 6]\n",
+        "combo_template": "木星与火星同宫或互为7宫"
       },
       "effects": [
         "Courage, wisdom, leadership, military success"

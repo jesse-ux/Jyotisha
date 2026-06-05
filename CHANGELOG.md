@@ -1,5 +1,34 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.35（2026-06-05）—— Yoga 精度二次提升与 Top FP 收窄
+
+> **目标**：在 v6.0.34 已大幅提升 F1 后，继续按验证报告 Top FP/FN 队列修正高影响规则，优先降低过宽误报，同时保持质量门禁通过。
+
+### 对齐与修复
+
+- 修正 `matsya_yoga`：从过宽的“吉星三方+凶星凶宫”改为 PyJHora/PVR method=2 口径：Lagna 与 9宫仅吉星，5宫同时有吉/凶星，4宫与8宫仅凶星。
+- 修正 `sankha_yoga`：补齐 PyJHora/BVR-12 双分支：上升主强且5/6宫主互为 Kendra，或1/10宫主合于变动星座且9宫主强。
+- 修正 `bvr_103_guru_mangala_yoga`：从“木火互为 Kendra”收窄为 PyJHora 定义：木星与火星同宫或互为7宫。
+- 调整 `bvr_rogagrastha_precise`：对齐 PyJHora D1-safe 条件：上升主在Lagna合凶宫主，或弱上升主合角/三方主。
+- 修正 `bvr_kaalanirdesat_puthranaasa_yoga`：从单一“5宫主受土/Rahu伤”改为 PyJHora 229/230 组合条件。
+- 修复 `validate_logic_v2.py` 中 `kaahala_yoga` 的历史别名映射，确保 PyJHora `kaahala_yoga` 正确归入现有 `kahala_yoga`。
+- 为 custom Yoga 表达式新增 `occupants()`、`only_benefics_in_house()`、`only_malefics_in_house()`、`house_has_benefic()`、`house_has_malefic()`、`house_sign()`、`movable_house()` 与 `MOVABLE_SIGNS`，支持更接近源码的规则表达。
+
+### 当前验证结果
+
+- `scripts/validate_logic_v2.py`：Precision **83.84%**，Recall **69.64%**，F1 **76.08%**。
+- 相比 v6.0.34 的 F1 **74.13%**，提升 **+1.95 个百分点**；相比 v6.0.32/v6.0.33 基线 **58.08%**，累计提升 **+18.00 个百分点**。
+- `pytest tests/test_yoga_rules_integrity.py tests/test_dasha.py`：25 passed。
+- `scripts/run_quality_gate.py --skip-yoga-logic`：通过；完整 pytest 35 passed，BPHS/Ashtakavarga 不变量 18/18 通过，golden case 通过。
+
+### 已知后续优化点
+
+- 剩余 FN 主要集中在 `mathibhramana`、`matrunasa`、`rogagrastha`、`bahu_puthra`、`kahala`、`nishkapata`、`swaveeryaddhana` 等规则，其中部分需要 D9/Navamsa、tithi/waning Moon 或 Gulika 等当前 D1 静态验证数据未携带的信息。
+- 剩余 FP 主要集中在 `vanchana_chora_bheethi`、`sankha`、`bhratruvriddhi`、`mridanga`、`dehasthoulya`、`bahu_puthra`、`bandhu_pujya` 等规则。
+- v6.0.36 建议优先升级验证数据结构，把 D9、tithi、Gulika/Upagraha 等上下文纳入同盘验证，避免 D1-only 规则反复在召回和准确率之间拉扯。
+
+---
+
 ## v6.0.34（2026-06-05）—— Yoga 逻辑对齐与 F1 提升
 
 > **目标**：继续 v6.0.32 的“同盘逻辑正确性”路线，优先修复验证报告中高 FP/FN 的规则，而不是只堆规则名称。

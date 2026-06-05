@@ -96,7 +96,7 @@ PYJHORA_VARIANTS = {
     # Kedara
     'kedara_yoga': 'bvr_kedaara_yoga',
     # Kaahala/Kahala
-    'kaahala_yoga': 'bvr_kahala_yoga',
+    'kaahala_yoga': 'kahala_yoga',
     # Direct mappings for common yogas
     'vosi_yoga': 'bvr_vosi_precise',
     'sunaphaa_yoga': 'bvr_sunaphaa_precise',

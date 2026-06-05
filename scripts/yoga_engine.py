@@ -44,6 +44,7 @@ PLANET_CN = {
 }
 BENEFICS = ['Jupiter', 'Venus', 'Mercury', 'Moon']
 MALEFICS = ['Mars', 'Saturn', 'Sun', 'Rahu', 'Ketu']
+MOVABLE_SIGNS = ['Aries', 'Cancer', 'Libra', 'Capricorn']
 ALL_PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']
 
 
@@ -921,6 +922,31 @@ class YogaEngine:
             # PyJHora temporary friends: 2/3/4/10/11/12 from a planet.
             return offset(ctx.house_of(a), ctx.house_of(b)) in [1, 2, 3, 9, 10, 11]
 
+        def occupants(h):
+            return ctx.planets_in_house(h) if h is not None else []
+
+        def only_benefics_in_house(h):
+            ps = occupants(h)
+            return bool(ps) and all(p in BENEFICS for p in ps)
+
+        def only_malefics_in_house(h):
+            ps = occupants(h)
+            return bool(ps) and all(p in MALEFICS for p in ps)
+
+        def house_has_benefic(h):
+            return any(p in BENEFICS for p in occupants(h))
+
+        def house_has_malefic(h):
+            return any(p in MALEFICS for p in occupants(h))
+
+        def house_sign(h):
+            if h is None:
+                return None
+            return SIGNS[(ctx.asc_idx + h - 1) % 12]
+
+        def movable_house(h):
+            return house_sign(h) in MOVABLE_SIGNS
+
         def exal(p): return ctx.is_exalted(p)
         def lord_of_house(h): return ctx.lord_of_house(h)
         def sign(p): return ctx.sign_of(p)
@@ -955,6 +981,7 @@ class YogaEngine:
             "SIGNS": SIGNS, "SIGN_LORDS": SIGN_LORDS,
             "EXALTATION": EXALTATION, "DEBILITATION": DEBILITATION,
             "PLANET_CN": PLANET_CN, "BENEFICS": BENEFICS, "MALEFICS": MALEFICS,
+            "MOVABLE_SIGNS": MOVABLE_SIGNS,
             "ALL_PLANETS": ALL_PLANETS, "MOOLATRIKONA_SIGN": MOOLATRIKONA_SIGN,
             # 基础查询
             "house_of": house_of, "sign_of": sign_of, "deg_of": deg_of,
@@ -977,6 +1004,10 @@ class YogaEngine:
             # v6.0.32: 同宫与相位检查（custom规则常用）
             "same_house": same_house, "aspect": aspect, "aspects_house": aspects_house,
             "strong": strong, "associated": associated, "temporal_friend": temporal_friend,
+            "occupants": occupants, "only_benefics_in_house": only_benefics_in_house,
+            "only_malefics_in_house": only_malefics_in_house,
+            "house_has_benefic": house_has_benefic, "house_has_malefic": house_has_malefic,
+            "house_sign": house_sign, "movable_house": movable_house,
             "exal": exal, "lord_of_house": lord_of_house, "sign": sign,
             "check_amala_from": check_amala_from,
             "Benefics": BENEFICS, "Malefics": MALEFICS,
