@@ -1,5 +1,290 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.32（2026-06-05）—— 逻辑正确性验证框架、Dasha/Varga/Ashtakavarga 修复
+
+> **目标**：从“名称覆盖率”推进到“逻辑正确性验证”，并完成 Dasha、分盘与 Ashtakavarga 的核心准确率门禁。
+
+### Dasha / 分盘 / Ashtakavarga
+
+- `cmd_dasha()` 支持仅输入出生年月日时地点时自动计算 Moon Nakshatra，不再强制要求 `--nakshatra` 或 `--moon-lon`。
+- 修正 D9 Navamsa BPHS 算法：Movable 从本星座、Fixed 从第5星座、Dual 从第9星座开始。
+- 修正 D10 Dasamsa 算法：奇数星座从本星座、偶数星座从第9星座开始。
+- 修正 D3 Drekkana：统一 same → +4 → +8，无奇偶分支。
+- 修正 `divisional_charts_extended.py` 中 Fixed/Dual Navamsa 起点反置问题。
+- 新增 `scripts/validate_bphs_invariants.py`：18 项 BPHS/Ashtakavarga 不变量全部通过，包括 SAV=337 与各 BAV 固定总分。
+
+### Yoga 逻辑正确性验证
+
+- 新增 60 张名人星盘标准集与 PyJhora D1/Rasi Yoga 对比框架：
+  - `scripts/build_standard_test_charts.py`
+  - `scripts/_compute_one_chart.py`
+  - `scripts/validate_logic_v2.py`
+  - `references/planet_positions_60.json`
+  - `references/standard_test_charts.json`
+  - `references/validation_logic_report.json`
+- 重要修正：标准测试集改为 PyJhora `get_yoga_details(..., divisional_chart_factor=1)`，避免把 D2/D9/D10 等分盘 Yoga 混入 D1 Yoga 逻辑验证，消除大量假阴性。
+- `validate_logic_v2.py` 新增历史 rule_id 别名归一化，避免 `bvr_*`/编号型 ID 不一致造成假性漏检。
+
+### Yoga 引擎增强
+
+- `yoga_engine.py` 支持 `compound_conditions` / `compound` 规则结构。
+- `custom` 规则支持多行 `if/else/for` 语句，并用 AST 捕获实际执行分支的末尾表达式。
+- 修复 custom 沙箱中 list/dict comprehension 不能访问安全全局变量的问题。
+- 新增 custom 辅助函数：`same_house`、`aspect`、`exal`、`lord_of_house`、`sign`、`check_amala_from`，并开放 `list`/`bool`/`Benefics`/`Malefics`。
+- 新增一批 PyJhora/BVR 语义型 condition type 的保守解释器，用于逐步消化批量规则中的自然语言条件。
+
+### 当前验证结果
+
+- Yoga 名称覆盖 benchmark：473 条规则，379 条启用；PyJhora 246 个唯一 Yoga 名称中匹配 181 个，名称覆盖率 **73.58%**。
+- D1/Rasi 逻辑验证：70 条可比规则、60 张星盘；Precision **68.25%**，Recall **50.54%**，F1 **58.08%**。
+- BPHS 分盘与 Ashtakavarga 不变量：18/18 通过。
+- Dasha / D9 Varga / Ashtakavarga CLI smoke test：通过。
+
+> 说明：Yoga 逻辑验证仍有剩余 FP/FN，已从“不可验证/假阴性污染”推进到可追踪的逐规则错误清单，下一步应优先修正 FP 最高的 Adhi/Matsya/Kemadruma/Yukthi 等规则与 FN 最高的 Bhratruvriddhi/Swaveeryaddhana/Dharidhra 等规则。
+
+---
+
+## v6.0.31（2026-06-04）—— Yoga 引擎条件类型扩展与兼容性修复
+
+> **目标**：修复 v6.0.29/v6.0.30 中遗留的引擎兼容性问题，使 322 条规则（含 59 条禁用）能被引擎正确解释，确保用户得到准确结果。
+
+### Yoga 引擎（`scripts/yoga_engine.py`）增强
+
+- **新增 5 种条件类型**：
+  - `all_in_houses`：所有指定行星都在给定宫位集合中
+  - `all_in_house_sets`：所有指定行星都在多个候选宫位集合之一中
+  - `occupied_houses_exact`：指定行星实际占据的宫位集合与目标集合完全一致
+  - `has_planet_in_house_from`：指定行星集合中至少一颗在某参考行星的相对宫位
+  - `houses_with_planets_count`：在指定宫位集合中，有多少个宫位至少包含一颗指定集合行星
+  - `occupied_houses_exact_sets`：指定行星实际占据的宫位集合等于候选集合之一
+
+- **兼容性修复**：
+  - 支持历史规则中的 `"op"` 字段（原只认 `"type"`）
+  - 支持历史规则中的 `"status"` 字段（`"op":"dignity"` + `"status":"exalted"` 等）
+  - `_resolve_binding` 兼容 `"planets"` 键（原只认 `"items"`）
+  - `_eval_conjunction` 兼容 `{"planets": [...]}` 写法（原只认 `{"a":..., "b":...}`）
+  - `_eval_parivartana` 兼容 `{"planets": [...]}` 写法
+  - `_eval_dignity` 新增 `status` 字段支持（`exalted`/`own`/`debilitated`/`moolatrikona`/`strong`）
+  - `_resolve_role` 新增 `"visible"`/`"sun_to_saturn"` 角色
+  - `_eval_in_houses` 兼容 `"planet"` 缺失时从 bindings 读取 `$planet`
+
+- **沙箱增强**：
+  - 新增内置函数：`all`/`any`/`len`/`set`/`tuple`/`sorted`/`abs`/`min`/`max`/`sum`/`range`
+  - 修复 `_all_lords()` 辅助函数调用错误（`ctx._lord_of` → `ctx.lord_of_house`）
+
+### 规则库状态
+
+- **`references/yoga_rules.json`**：
+  - 总规则数：**322 条**
+  - 启用规则：**263 条**
+  - 禁用规则：**59 条**（v6.0.29 批量脚本生成的低置信近似规则）
+  - 重复 id：**0** ✅
+  - JSON 有效 ✅
+
+- **禁用规则说明**：
+  - 59 条 `yoga_001`–`yoga_059` 使用 `op` schema 且为近似定义
+  - 已全部设 `"enabled": false`，并添加 `accuracy_note`
+  - 后续用高精度 `bvr_*` 规则逐条替换
+
+### 回归验证
+
+- Einstein 星盘 `detect_yogas()`：**29 个 Yoga**（基线 26 个），0 crash ✅
+- `yoga_engine.py` 语法检查：通过 ✅
+- `yoga_rules.json` JSON 检查：通过 ✅
+
+### Benchmark 结果（v6.0.31）
+
+- 启用规则：**263 条**
+- PyJHora 唯一 Yoga 名称：**246**
+- 名称近似匹配：**73 / 246**
+- 疑似缺失：**173**
+- 名称覆盖率：**29.67%**
+
+> 说明：这是“名称覆盖率”，不是数学规则等价覆盖率。
+
+---
+
+## v6.0.30（2026-06-04）—— Yoga 覆盖率 benchmark 与版本元信息修正
+
+> **目标**：在 291 条规则基础上建立可重复运行的覆盖率 benchmark，避免继续凭粗略估算判断 PyJHora 覆盖情况。
+
+### 新增 benchmark
+
+- **新增 `scripts/benchmark_yoga_coverage.py`**：
+  - 读取 `references/yoga_rules.json`，统计规则总数、分类分布、strength 分布、重复 id
+  - 自动查找本机 PyJHora `jhora/horoscope/chart/yoga.py`
+  - 提取 PyJHora Yoga 函数并归一化为唯一 Yoga 名称
+  - 使用名称归一化 + alias 表进行近似覆盖匹配
+  - 支持 `--json` 机器可读输出与 `--show-missing N` 控制缺失列表长度
+
+### 当前 benchmark 结果
+
+- 当前 JSON 规则：**291 条**，declared_total_rules=291
+- 重复 id：0 ✅
+- strength 分布：强 173 / 中 85 / 弱 33
+- PyJHora yoga.py：当前环境提取 **246 个唯一 Yoga 名称**
+- 名称近似匹配：78 / 246
+- 疑似缺失：168
+- 名称覆盖率：**31.71%**
+
+> 说明：这是“名称覆盖率”，不是数学规则等价覆盖率。此前 v6.0.29 中“约 85% 高频覆盖”的说法属于人工粗估；v6.0.30 起以 benchmark 输出为准。
+
+### 元信息修正
+
+- 修正 `SKILL.md` 中仍停留在 v6.0.27 / v6.0.26 的版本描述
+- 当前版本更新为 `v6.0.30-yoga-benchmark`
+
+---
+
+## v6.0.29（2026-06-04）—— Yoga 规则库扩展 232→291 条，对齐 PyJhora
+
+> **目标**：基于 PyJhora yoga.py 的 239 个唯一 Yoga 名称，补齐高频标准 Yoga，达到 284+ 条。
+
+### 规则扩展
+
+- **`references/yoga_rules.json`**：从 232 条扩展到 **291 条**（+59 条）
+- **新增高频 Yoga（精选自 B.V. Raman / PyJhora）**：
+  - **Nabhasa 类**：Asraya / Dala / Mala / Sarpa Nabhasa（4 条）
+  - **财富类**：Lakshmi / Gaja Kesari / Chandra Adhi / Vasumati / Dhan Yoga（5 条）
+  - **婚姻类**：Satkalatra / Kalatra Malika（2 条）
+  - **子女类**：Santana / Putra Malika / Suputra（3 条）
+  - **健康类**：Dehapushti / Sareera Soukhya（2 条）
+  - **智识类**：Saraswati / Budha Aditya / Vidya（3 条）
+  - **地位类**：Gaja Kesari(Classic) / Jaya / Indra / Hari / Hara / Brahma（6 条）
+  - **特殊格局**：Chamara / Chatra / Kuta / Nauka / Yava / Go / Vihaga / Sakata / Vajra / Yoopa（10 条）
+  - **凶 Yoga**：Andha / Arishta(Classic) / Kemadruma(Classic) / Durmukha / Kapata（5 条）
+  - **精神类**：Siva / Vishnu / Harihara Brahma（3 条）
+  - **兄弟姐妹**：Bhratru Vriddhi / Eka Putra（2 条）
+  - **事业类**：Parakrama / Vikrama Malika / Karma Malika（3 条）
+  - **旅行类**：Sada Sanchara / Vahana（2 条）
+  - **健康凶**：Rogagrastha / Kshaya Roga（2 条）
+  - **日月伴星**：Ubhayachari / Vesi / Vosi / Nipuna / Duradhara / Sunaphaa / Anaphaa（7 条）
+
+### PyJhora 对比
+
+- PyJhora yoga.py：490 个函数 → 239 个唯一 Yoga 名称
+- Skill 当前：291 条规则，覆盖约 **85%** 高频标准 Yoga
+- 剩余约 50 条为低频/边缘 Yoga（如 `jananatpurvam_pitru_marana` 出生前父亡等）
+
+### 回归验证
+
+- Einstein 星盘 `detect_yogas()`：检测到 **26 个 Yoga**，0 crash ✅
+- 规则总数：291 条，无重复 id，JSON 有效 ✅
+
+---
+
+## v6.0.28（2026-06-04）—— Yoga 规则库系统扩展 159→232 条
+
+> **目标**：在 v6.0.26/6.0.27 架构重构基础上，系统性补齐高频 Yoga 规则，向 PyJHora 规则库靠近。
+
+### 规则扩展
+
+- **`references/yoga_rules.json`**：从 159 条扩展到 **232 条**（+73 条）
+- **新增分类**：
+  - `vipareeta`：3 条（Vipareeta Raja Yoga 变体）
+  - `chapa`：3 条（Dhanus/Chatra/Chapa Yoga）
+  - `shiva`：3 条（Shiva/Shambhu/Maheshvara Yoga）
+  - `vedha`：2 条（Vedha Yoga 变体）
+  - `nativity`：14 条（出生时刻特征类 Yoga）
+  - `dina`：3 条（Janardana/Dina/Adi Yoga）
+  - `sdness`：5 条（健康/精神类 Yoga）
+  - `composite`：5 条（复合条件 Yoga）
+- **大规模扩展现有分类**：
+  - `raja`：+19 条（含 Chandra-Mars/Lagna-Venus 组合、Ruchaka+Bhaskara 等）
+  - `dhana`：+10 条（含 2 宫主/11 宫主/9 宫主互相关联变体）
+  - `kalatra`：+9 条（含 Venus+7 宫主/金星受克/金星宗教联结等）
+  - `putra`：+9 条（含 5 宫主+木星/凯龙+5 宫/木星衰落变体）
+  - `ayur`：+7 条（含 8 宫主+土星/火星+8 宫/月亮+土星等）
+  - `nabhasa`：+9 条（新增 Additional Nabhasa 组）
+  - `durbhaga`：+3 条（Ganda/Raja/Daridra 变体）
+  - `auspicious`：+5 条（Shubha/Ganesha/Vishnu 变体）
+  - `conjunction`：+5 条（日月水/金火/木土/火木/日月木组合）
+  - `mahapurusha`：+2 条（Sasha/Vasumati 变体）
+  - `special`：+3 孝顺/智慧/信心 Yoga
+
+### 引擎增强
+
+- `yoga_engine.py` `_eval_custom` 沙箱：新增 `is_exalted`/`is_own_sign`/`is_debilitated`/`is_moolatrikona`/`is_kendra`/`is_trikona`/`is_dusthana`/`is_upachaya` 等别名函数
+- 新增辅助函数 `lords_of()`/`planets_list()`/`all_lords()`/`kendra_lords_list()`/`trikona_lords_list()`
+
+### 数据质量
+
+- **strength 归一化**：将所有值统一为 `强/中/弱` 三种（原混杂的 `极强/中强/吉/凶/中凶/大凶` 全部映射）
+- **JSON 有效性**：232 条，无重复 id，schema v1.0 ✅
+
+### 回归验证
+
+- Einstein 星盘 `detect_yogas()`：检测到 **26 个 Yoga**（基线 9+），0 crash
+- `cmd_yoga()` CLI 接口：两种输入模式均正常
+
+---
+
+## v6.0.26（2026-06-04）—— Yoga 数据驱动规则引擎重构
+
+> **目标**：先完成架构重构，再系统补规则。将 `cmd_yoga()` 从硬编码检测迁移到 JSON 规则库 + 通用条件解释器。
+
+### 架构变更
+
+- **新增 `scripts/yoga_engine.py`**：数据驱动 Yoga 规则引擎
+  - `YogaContext` 封装星盘数据查询接口
+  - `YogaEngine` 加载 JSON 规则并解释执行条件树
+  - 支持 `and/or/not/same_house/in_houses/dignity/houses_occupied/adjacent_houses/degree_gap/parivartana/any_pair/all_planets/custom` 等条件类型
+- **新增 `references/yoga_rules.json`**：90 条启用规则，schema v1.0
+- **新增 `scripts/generate_yoga_rules.py`**：规则生成辅助脚本
+
+### `cmd_yoga()` 改造
+
+- 替换为调用 `yoga_engine.detect_yogas()`，保持旧接口兼容
+- 新增出生信息直算支持：`yoga --year --month --day --hour --minute --lat --lon --tz`
+- `--planets` 支持第4段星座内度数
+- full-reading / audit 同步传入度数
+
+### 回归验证
+
+- 语法检查通过，Yoga CLI smoke test 通过
+- Einstein 星盘 `full-reading` 回归：45 模块，0 errors，Yoga 模块检测到 9 个 Yoga
+
+### 后续
+
+- 在新架构上继续系统补规则到 150+ / 200+
+- 补齐 PyJHora/BVR 中高频 Yoga 变体
+
+## v6.0.27（2026-06-04）—— Yoga 规则库扩展 90→159
+
+> **目标**：在数据驱动架构上系统补充 Yoga 规则到 150+ 条。
+
+### 新增规则（69 条，总计 159 条）
+
+| 分类 | 新增 | 累计 |
+|------|------|------|
+| raja | +12 | 24 |
+| dhana | +6 | 10 |
+| nabhasa | +12 | 20 |
+| durbhaga | +6 | 12 |
+| conjunction | +7 | 16 |
+| putra（新分类） | +5 | 5 |
+| kalatra（新分类） | +5 | 5 |
+| ayur（新分类） | +4 | 4 |
+| surya | +2 | 5 |
+| auspicious | +4 | 20 |
+| special | +3 | 14 |
+
+### 引擎改进
+
+- `yoga_engine.py` `_eval_custom` 沙箱扩展：
+  - 新增函数别名：`is_exalted`/`is_own_sign`/`is_debilitated`/`is_moolatrikona`/`is_kendra`/`is_trikona`/`is_dusthana`/`is_upachaya`
+  - 新增辅助函数：`lords_of()`/`planets_list()`/`all_lords()`/`kendra_lords_list()`/`trikona_lords_list()`
+  - 修复 `lord()` 别名正确指向 `ctx.lord_of_house()`
+
+### 回归验证
+
+- 159 条规则全部加载成功
+- Einstein `full-reading` 回归：45 模块，0 errors
+- Yoga 检测结果与 v6.0.26 一致（9 个 Yoga）
+
+
+---
+
 ## v6.0.25（2026-06-04）—— Einstein 验证 Bug 修复
 
 > **目标**：基于爱因斯坦星盘的 side-by-side 验证发现 4 个关键 Bug，全部修复。

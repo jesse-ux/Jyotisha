@@ -1,0 +1,2215 @@
+{
+  "total_cases": 5,
+  "cases": [
+    {
+      "case_name": "Einstein",
+      "birth": "1879-03-14 10:30",
+      "skill_yogas": [
+        "Raja Yoga",
+        "Malavya Yoga",
+        "Gajakesari Yoga",
+        "Gajakesari Yoga (from Moon)",
+        "Kahala Yoga",
+        "Budhaditya Yoga",
+        "Surya-Budha Yoga",
+        "Shakata Yoga (Jupiter in Dusthana)",
+        "Gajakesari Yoga (Kendra from Moon)",
+        "Dhana Yoga (2nd Lord Strong)",
+        "Chandra Yoga (Moon in Trikona)",
+        "Kalatra Yoga (7th Lord Exalted)",
+        "Kalatra Yoga (7th Lord in Kendra)",
+        "Kalatra Yoga (Venus in Kendra)",
+        "Mangal Dosha (Mars in 1/4/7/8/12)",
+        "Ayur Yoga (Jupiter in 8th)",
+        "Ayur Yoga (8th Lord in Kendra)",
+        "Shakti Yoga (Sun in 10th House)",
+        "Karma Yoga (10th & 11th Lords Combination)",
+        "Asha Yoga (11th Lord Strong)",
+        "Raja Yoga (5th & 10th Lords Combination)",
+        "Vesi Yoga",
+        "Vosi Yoga",
+        "Ubhayachara Yoga",
+        "Eka Puthra Yoga"
+      ],
+      "pyjhora_yogas": [
+        "vosi_yoga",
+        "nipuna_yoga",
+        "maalavya_yoga",
+        "kedaara_yoga",
+        "gaja_kesari_yoga",
+        "amala_yoga",
+        "vanchana_chora_bheethi_yoga",
+        "kahala_yoga",
+        "kedara_yoga",
+        "dharidhra_yoga",
+        "sareera_soukhya_yoga",
+        "rogagrastha_yoga",
+        "dehasthoulya_yoga_114",
+        "swaveeryaddhana_yoga",
+        "anthya_vayasi_dhana_yoga",
+        "asatyavadi_yoga",
+        "durmukha_yoga",
+        "bhratruvriddhi_yoga",
+        "bandhubhisthyaktha_yoga",
+        "matrunasa_yoga_198",
+        "nishkapata_yoga_205",
+        "matru_sneha_yoga",
+        "bahu_puthra_yoga_221",
+        "eka_puthra_yoga",
+        "buddhimaturya_yoga",
+        "satkalatra_yoga",
+        "vrana_yoga",
+        "mathibhramana_yoga_variation",
+        "rajabhrashta_yoga"
+      ],
+      "matched": [
+        "budhaditya",
+        "eka_puthra",
+        "gajakesari",
+        "kahala",
+        "malavya",
+        "vosi"
+      ],
+      "skill_only": [
+        "asha",
+        "ayur",
+        "chandra",
+        "dhana",
+        "kalatra",
+        "karma",
+        "mangal_dosha",
+        "raja",
+        "shakata",
+        "shakti",
+        "surya_budha",
+        "ubhayachara",
+        "vesi",
+        "yoga"
+      ],
+      "pyjhora_only": [
+        "amala",
+        "anthya_vayasi_dhana",
+        "asatyavadi",
+        "bahu_puthra",
+        "bandhubhisthyaktha",
+        "bhratruvriddhi",
+        "buddhimaturya",
+        "dehasthoulya",
+        "dharidhra",
+        "durmukha",
+        "kedaara",
+        "mathibhramana_variation",
+        "matru_sneha",
+        "matrunasa",
+        "nishkapata",
+        "rajabhrashta",
+        "rogagrastha",
+        "sareera_soukhya",
+        "satkalatra",
+        "swaveeryaddhana",
+        "vanchana_chora_bheethi",
+        "vrana"
+      ],
+      "error": null,
+      "skill_count": 25,
+      "skill_details": [
+        {
+          "name": "Raja Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Malavya Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Gajakesari Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Gajakesari Yoga (from Moon)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Kahala Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Budhaditya Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Surya-Budha Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Shakata Yoga (Jupiter in Dusthana)",
+          "id": "",
+          "strength": "弱"
+        },
+        {
+          "name": "Gajakesari Yoga (Kendra from Moon)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Dhana Yoga (2nd Lord Strong)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Chandra Yoga (Moon in Trikona)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Kalatra Yoga (7th Lord Exalted)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Kalatra Yoga (7th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Kalatra Yoga (Venus in Kendra)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Mangal Dosha (Mars in 1/4/7/8/12)",
+          "id": "",
+          "strength": "弱"
+        },
+        {
+          "name": "Ayur Yoga (Jupiter in 8th)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Ayur Yoga (8th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Shakti Yoga (Sun in 10th House)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Karma Yoga (10th & 11th Lords Combination)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Asha Yoga (11th Lord Strong)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Raja Yoga (5th & 10th Lords Combination)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Vesi Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Vosi Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Ubhayachara Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Eka Puthra Yoga",
+          "id": "",
+          "strength": "中"
+        }
+      ],
+      "pyjhora_count": 29,
+      "pyjhora_details": [
+        {
+          "function": "vosi_yoga",
+          "name": "Vosi Yoga",
+          "desc": "There is a planet other than Moon in the 12th house from Sun"
+        },
+        {
+          "function": "nipuna_yoga",
+          "name": "Nipuna Yoga",
+          "desc": "Sun and Mercury are together (in one sign)."
+        },
+        {
+          "function": "maalavya_yoga",
+          "name": "Maalavya Yoga",
+          "desc": "Venus is in a quadrant in own sign or exaltation sign."
+        },
+        {
+          "function": "kedaara_yoga",
+          "name": "Kedaara Yoga",
+          "desc": "The seven planets occupy exactly 4 distinct signs among them."
+        },
+        {
+          "function": "gaja_kesari_yoga",
+          "name": "gaja_kesari_yoga",
+          "desc": "Gaja-Kesari Yoga: If (1) Jupiter is in a quadrant from Moon, (2) a benefic planet conjoins or aspects Jupiter, and, (3) Jupiter is not debilitated or combust or in an enemy’s house"
+        },
+        {
+          "function": "amala_yoga",
+          "name": "Amala Yoga",
+          "desc": "There are only natural benefics present in the 10th house from lagna or Moon."
+        },
+        {
+          "function": "vanchana_chora_bheethi_yoga",
+          "name": "Vanchana Chora Bheethi Yoga",
+          "desc": "The Lord of Lagna is in the 6th, 8th, or 12th house joined with or aspected by malefics."
+        },
+        {
+          "function": "kahala_yoga",
+          "name": "Kahala Yoga",
+          "desc": "The lords of the 4th and 9th houses are in mutual Kendras and the lord of the Lagna is strong."
+        },
+        {
+          "function": "kedara_yoga",
+          "name": "Kedara Yoga",
+          "desc": "All seven planets are distributed among four different signs."
+        },
+        {
+          "function": "dharidhra_yoga",
+          "name": "Dharidhra Yoga",
+          "desc": "The lord of the 11th house is in the 6th, 8th, or 12th house."
+        },
+        {
+          "function": "sareera_soukhya_yoga",
+          "name": "Sareera Soukhya Yoga",
+          "desc": "The Lagna lord, Jupiter, and Venus are placed in Kendra houses."
+        },
+        {
+          "function": "rogagrastha_yoga",
+          "name": "Rogagrastha Yoga",
+          "desc": "The Lagna lord is in the 6th, 8th, or 12th house and is associated with the lord of the 6th."
+        },
+        {
+          "function": "dehasthoulya_yoga_114",
+          "name": "Dehasthoulya Yoga",
+          "desc": "Lagna Lord and its Navamsa Lord both occupy watery signs (in Rasi)."
+        },
+        {
+          "function": "swaveeryaddhana_yoga",
+          "name": "Swaveeryaddhana Yoga",
+          "desc": "The Lagna lord is the strongest planet in the chart and is placed in a Kendra, associated with the 2nd lord."
+        },
+        {
+          "function": "anthya_vayasi_dhana_yoga",
+          "name": "Anthya Vayasi Dhana Yoga",
+          "desc": "The lords of the 2nd, 9th, and 11th houses are placed in the 12th, 6th, or 8th houses from each other but associated with benefics."
+        },
+        {
+          "function": "asatyavadi_yoga",
+          "name": "Asatyavadi Yoga",
+          "desc": "The 2nd lord is associated with malefic planets (Saturn, Rahu, Ketu) and Mercury is weak."
+        },
+        {
+          "function": "durmukha_yoga",
+          "name": "Durmukha Yoga",
+          "desc": "Malefic planets (Saturn, Rahu, Ketu) occupy the 2nd house."
+        },
+        {
+          "function": "bhratruvriddhi_yoga",
+          "name": "Bhratruvriddhi Yoga",
+          "desc": "The 3rd lord or Mars is associated with a benefic planet or placed in a benefic sign/Navamsha."
+        },
+        {
+          "function": "bandhubhisthyaktha_yoga",
+          "name": "Bandhu Bhisthyaktha Yoga",
+          "desc": "195. The 4th lord must be associated with malefics or occupy evil shashtiamsas or join inimical or debilitation signs."
+        },
+        {
+          "function": "matrunasa_yoga_198",
+          "name": "Maathru Naasa yoga",
+          "desc": "198 - The Moon should be hemmed in between, associated with or aspected by evil planets."
+        },
+        {
+          "function": "nishkapata_yoga_205",
+          "name": "Nishkapata Yoga",
+          "desc": "205 - The 4th house must be occupied by a benefic, or a planet in exaltation, friendly or own house,or the 4th house must be a benefic sign."
+        },
+        {
+          "function": "matru_sneha_yoga",
+          "name": "Maathru Sneha Yoga",
+          "desc": "First Variation - The Lagna (1st house) and the 4th house have the same planetary ruler. The lst and 4th houses can have common lords only in respect of Ge/Vi (Me) or Sg/Pi (Ju). Second Variation - The lords of the 1st and 4th houses are either natural or temporal friends. Third Variation - The Lagna lord (1st house ruler) and the 4th house lord are aspected by benefics."
+        },
+        {
+          "function": "bahu_puthra_yoga_221",
+          "name": "Bahu Puthra Yoga",
+          "desc": "221 - The same yoga arises if the lord of the Navamsa occupied by a planet who is in association with the 7th lord is in the 1st, 2nd or 5th house. Steps: (1) Get 7th Lord in Rasi. (2) Find which rasi this 7th lord is in Navamsa chart. (3) Find the lord of that sign of step-2. (4) Find the sign of the Lord found from step-3 in rasi chart. (5) That sign should be either 1st, or 2nd or 5th from Lagna in rasi"
+        },
+        {
+          "function": "eka_puthra_yoga",
+          "name": "Eka Puthra Yoga",
+          "desc": "225 - Lord of 5th house should join a kendra or trikona."
+        },
+        {
+          "function": "buddhimaturya_yoga",
+          "name": "Buddhimaturya Yoga",
+          "desc": "231 - If the 5th lord, being a benefic, is either aspected by another benefic or occupies a benefic sign, the above yoga is given rise to."
+        },
+        {
+          "function": "satkalatra_yoga",
+          "name": "Sathkalatra Yoga",
+          "desc": "239 - The lord of the 7th or Venus should join or be aspected by Jupiter or Mercury."
+        },
+        {
+          "function": "vrana_yoga",
+          "name": "Vrana Yoga",
+          "desc": "265 - The 6th lord, being a malefic, should occupy the Lagna, 8th or 1Oth. Impacted organs depending on 6th lord: Sun- Spleen,heart. Moon-Oesophagus, alimentary canal. Mars-Genitals, left cerebral hemisphere, red colouring matter in blood,rectum. Mercury- Nerves, right cerebral hemisphere, cerebro-spinal-system, bronchial tubes, ears, tongue. Jupiter- Liver, supra-renals. Venus- Throat, kidneys, uterus, ovaries. Saturn- Teeth, skin, vagus nerve. Rahu- Pituitary body. Kethu- Pineal glands."
+        },
+        {
+          "function": "mathibhramana_yoga_variation",
+          "name": "Mathibhramana Yoga",
+          "desc": "This yoga occurs, per B.V.Raman Variations, if - (1) The 6th is occupied by Rahu and aspected by Kethu. (2) The 6th lord is further affiicted by conjunction with Mars. (3) The planet of nerves Mercury is in a common sign in conjunction with two malefics, Mars and Sun. (4) In the Navamsa again Mercury occupies the 6th with Rahu and the 6th lord is in conjunction with Mars."
+        },
+        {
+          "function": "rajabhrashta_yoga",
+          "name": "Rajabhrashta Yoga",
+          "desc": "297 - The lords of Aroodha Lagna (A1/AL) and Aroodha Dwadasa (A12/UL) should be in conjunction."
+        }
+      ],
+      "skill_only_functional": [
+        "asha",
+        "ayur",
+        "dhana",
+        "kalatra",
+        "karma",
+        "mangal_dosha",
+        "raja",
+        "shakti"
+      ],
+      "skill_only_classic": [
+        "chandra",
+        "shakata",
+        "surya_budha",
+        "ubhayachara",
+        "vesi",
+        "yoga"
+      ]
+    },
+    {
+      "case_name": "Steve Jobs",
+      "birth": "1955-02-24 19:30",
+      "skill_yogas": [
+        "Chandra-Mangala Yoga",
+        "Budha-Shukra Yoga",
+        "Dhana Yoga (11th Lord Exalted)",
+        "Putra Yoga (9th Lord in Kendra)",
+        "Kalatra Yoga (7th Lord in Kendra)",
+        "Kalatra Yoga (Venus in Kendra)",
+        "Mangal Dosha (Mars in 1/4/7/8/12)",
+        "Ayur Yoga (8th Lord in Kendra)",
+        "Shakti Yoga (10th Lord Exalted)",
+        "Karma Yoga (10th & 11th Lords Combination)",
+        "Asha Yoga (11th Lord Strong)",
+        "Aryama Yoga (9th Lord in Kendra)",
+        "Vosi Yoga",
+        "Sunaphaa Yoga",
+        "Eka Puthra Yoga"
+      ],
+      "pyjhora_yogas": [
+        "vosi_yoga",
+        "sunaphaa_yoga",
+        "veenaa_yoga",
+        "amala_yoga",
+        "kaahala_yoga",
+        "sarala_yoga",
+        "kahala_yoga",
+        "vallaki_yoga",
+        "sareera_soukhya_yoga",
+        "rogagrastha_yoga",
+        "krisanga_yoga_112",
+        "sada_sanchara_yoga",
+        "matrumooladdhana_yoga",
+        "sumukha_yoga",
+        "durmukha_yoga",
+        "bhratruvriddhi_yoga",
+        "yuddha_praveena_yoga",
+        "bandhu_pujya_yoga_194",
+        "bandhubhisthyaktha_yoga",
+        "matrunasa_yoga_198",
+        "kapata_yoga_202",
+        "nishkapata_yoga_205",
+        "bahu_puthra_yoga_221",
+        "satkalatra_yoga",
+        "rajabhrashta_yoga"
+      ],
+      "matched": [
+        "sunaphaa",
+        "vosi"
+      ],
+      "skill_only": [
+        "aryama",
+        "asha",
+        "ayur",
+        "budha_shukra",
+        "chandra_mangala",
+        "dhana",
+        "eka_puthra",
+        "kalatra",
+        "karma",
+        "mangal_dosha",
+        "putra",
+        "shakti",
+        "yoga"
+      ],
+      "pyjhora_only": [
+        "amala",
+        "bahu_puthra",
+        "bandhu_pujya",
+        "bandhubhisthyaktha",
+        "bhratruvriddhi",
+        "durmukha",
+        "kahala",
+        "kapata",
+        "krisanga",
+        "matrumooladdhana",
+        "matrunasa",
+        "nishkapata",
+        "rajabhrashta",
+        "rogagrastha",
+        "sada_sanchara",
+        "sarala",
+        "sareera_soukhya",
+        "satkalatra",
+        "sumukha",
+        "vallaki",
+        "veena",
+        "yuddha_praveena"
+      ],
+      "error": null,
+      "skill_count": 15,
+      "skill_details": [
+        {
+          "name": "Chandra-Mangala Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Budha-Shukra Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Dhana Yoga (11th Lord Exalted)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Putra Yoga (9th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Kalatra Yoga (7th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Kalatra Yoga (Venus in Kendra)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Mangal Dosha (Mars in 1/4/7/8/12)",
+          "id": "",
+          "strength": "弱"
+        },
+        {
+          "name": "Ayur Yoga (8th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Shakti Yoga (10th Lord Exalted)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Karma Yoga (10th & 11th Lords Combination)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Asha Yoga (11th Lord Strong)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Aryama Yoga (9th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Vosi Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Sunaphaa Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Eka Puthra Yoga",
+          "id": "",
+          "strength": "中"
+        }
+      ],
+      "pyjhora_count": 25,
+      "pyjhora_details": [
+        {
+          "function": "vosi_yoga",
+          "name": "Vosi Yoga",
+          "desc": "There is a planet other than Moon in the 12th house from Sun"
+        },
+        {
+          "function": "sunaphaa_yoga",
+          "name": "Sunaphaa Yoga",
+          "desc": "There are planets other than Sun in the 2nd house from Moon"
+        },
+        {
+          "function": "veenaa_yoga",
+          "name": "Veenaa Yoga",
+          "desc": "The seven planets occupy exactly 7 distinct signs among them."
+        },
+        {
+          "function": "amala_yoga",
+          "name": "Amala Yoga",
+          "desc": "There are only natural benefics present in the 10th house from lagna or Moon."
+        },
+        {
+          "function": "kaahala_yoga",
+          "name": "Kaahala Yoga",
+          "desc": "If (1) the 4th lord and Jupiter32 are in mutual quadrants and (2) lagna lord is strong, then this yoga is present. Alternately, this yoga is present if the 4th lord is exalted or in own sign and the 10th lord joins him."
+        },
+        {
+          "function": "sarala_yoga",
+          "name": "Sarala Yoga",
+          "desc": "If the 8th lord occupies the 8th house, then this yoga is present."
+        },
+        {
+          "function": "kahala_yoga",
+          "name": "Kahala Yoga",
+          "desc": "The lords of the 4th and 9th houses are in mutual Kendras and the lord of the Lagna is strong."
+        },
+        {
+          "function": "vallaki_yoga",
+          "name": "Vallaki Yoga",
+          "desc": "All seven planets are distributed among seven different signs."
+        },
+        {
+          "function": "sareera_soukhya_yoga",
+          "name": "Sareera Soukhya Yoga",
+          "desc": "The Lagna lord, Jupiter, and Venus are placed in Kendra houses."
+        },
+        {
+          "function": "rogagrastha_yoga",
+          "name": "Rogagrastha Yoga",
+          "desc": "The Lagna lord is in the 6th, 8th, or 12th house and is associated with the lord of the 6th."
+        },
+        {
+          "function": "krisanga_yoga_112",
+          "name": "Krisanga Yoga",
+          "desc": "Lagna lord in a dry sign or in a sign owned by a dry planet."
+        },
+        {
+          "function": "sada_sanchara_yoga",
+          "name": "Sada Sanchara Yoga",
+          "desc": "The Lagna lord or the Moon is in a movable sign (Chara Rashi)."
+        },
+        {
+          "function": "matrumooladdhana_yoga",
+          "name": "Matrumooladdhana Yoga",
+          "desc": "The 2nd lord is associated with the 4th lord or placed in the 4th house with strong benefic influence."
+        },
+        {
+          "function": "sumukha_yoga",
+          "name": "Sumukha Yoga",
+          "desc": "Benefic planets (Jupiter, Venus) are placed in or aspecting the 2nd house."
+        },
+        {
+          "function": "durmukha_yoga",
+          "name": "Durmukha Yoga",
+          "desc": "Malefic planets (Saturn, Rahu, Ketu) occupy the 2nd house."
+        },
+        {
+          "function": "bhratruvriddhi_yoga",
+          "name": "Bhratruvriddhi Yoga",
+          "desc": "The 3rd lord or Mars is associated with a benefic planet or placed in a benefic sign/Navamsha."
+        },
+        {
+          "function": "yuddha_praveena_yoga",
+          "name": "Yuddha Praveena Yoga",
+          "desc": "The lord of the Navamsa occupied by the 3rd lord's Navamsa lord is placed in its own Varga."
+        },
+        {
+          "function": "bandhu_pujya_yoga_194",
+          "name": "Bandhu Pujya Yoga",
+          "desc": "194 - The 4th house or the 4th lord should have the association or aspect of Jupiter."
+        },
+        {
+          "function": "bandhubhisthyaktha_yoga",
+          "name": "Bandhu Bhisthyaktha Yoga",
+          "desc": "195. The 4th lord must be associated with malefics or occupy evil shashtiamsas or join inimical or debilitation signs."
+        },
+        {
+          "function": "matrunasa_yoga_198",
+          "name": "Maathru Naasa yoga",
+          "desc": "198 - The Moon should be hemmed in between, associated with or aspected by evil planets."
+        },
+        {
+          "function": "kapata_yoga_202",
+          "name": "Kapata Yoga",
+          "desc": "202 - The 4th house must be joined by a malefic and the 4rh lord must be associated with or aspected by malefics or be hemmed in between malefics."
+        },
+        {
+          "function": "nishkapata_yoga_205",
+          "name": "Nishkapata Yoga",
+          "desc": "205 - The 4th house must be occupied by a benefic, or a planet in exaltation, friendly or own house,or the 4th house must be a benefic sign."
+        },
+        {
+          "function": "bahu_puthra_yoga_221",
+          "name": "Bahu Puthra Yoga",
+          "desc": "221 - The same yoga arises if the lord of the Navamsa occupied by a planet who is in association with the 7th lord is in the 1st, 2nd or 5th house. Steps: (1) Get 7th Lord in Rasi. (2) Find which rasi this 7th lord is in Navamsa chart. (3) Find the lord of that sign of step-2. (4) Find the sign of the Lord found from step-3 in rasi chart. (5) That sign should be either 1st, or 2nd or 5th from Lagna in rasi"
+        },
+        {
+          "function": "satkalatra_yoga",
+          "name": "Sathkalatra Yoga",
+          "desc": "239 - The lord of the 7th or Venus should join or be aspected by Jupiter or Mercury."
+        },
+        {
+          "function": "rajabhrashta_yoga",
+          "name": "Rajabhrashta Yoga",
+          "desc": "297 - The lords of Aroodha Lagna (A1/AL) and Aroodha Dwadasa (A12/UL) should be in conjunction."
+        }
+      ],
+      "skill_only_functional": [
+        "aryama",
+        "asha",
+        "ayur",
+        "dhana",
+        "eka_puthra",
+        "kalatra",
+        "karma",
+        "mangal_dosha",
+        "putra",
+        "shakti"
+      ],
+      "skill_only_classic": [
+        "budha_shukra",
+        "chandra_mangala",
+        "yoga"
+      ]
+    },
+    {
+      "case_name": "NM Gandhi",
+      "birth": "1869-10-02 08:52",
+      "skill_yogas": [
+        "Raja Yoga",
+        "Raja Yoga",
+        "Malavya Yoga",
+        "Sasa Yoga",
+        "Malavya (Moola) Yoga",
+        "Gajakesari Yoga",
+        "Gajakesari Yoga (from Moon)",
+        "Angaraka Yoga",
+        "Veena Yoga",
+        "Gajakesari Yoga (Kendra from Moon)",
+        "Dhana Yoga (2nd & 11th Lords Combination)",
+        "Dhana Yoga (5th & 9th Lords in Wealth House)",
+        "Dhana Yoga (11th Lord Exalted)",
+        "Dhana Yoga (2nd Lord Strong)",
+        "Putra Yoga (9th Lord in Kendra)",
+        "Kalatra Yoga (7th Lord in Kendra)",
+        "Kalatra Yoga (Venus in Kendra)",
+        "Mangal Dosha (Mars in 1/4/7/8/12)",
+        "Ayur Yoga (8th Lord in Kendra)",
+        "Vidya Yoga (5th Lord Strong)",
+        "Vidya Yoga (Mercury Exalted)",
+        "Shakti Yoga (10th Lord Exalted)",
+        "Karma Yoga (10th & 11th Lords Combination)",
+        "Karma Yoga (Mars in 10th House)",
+        "Ari Yoga (6th Lord Strong)",
+        "Asha Yoga (11th Lord Strong)",
+        "Asha Yoga (11th Lord in Kendra)",
+        "Aryama Yoga (9th Lord in Kendra)",
+        "Shukra-Mangala Yoga (Venus-Mars Conjunction)",
+        "Raja Yoga (1st & 4th Lords in Kendra)",
+        "Vesi Yoga",
+        "Anaphaa Yoga"
+      ],
+      "pyjhora_yogas": [
+        "vesi_yoga",
+        "maalavya_yoga",
+        "sarpa_yoga",
+        "vajra_yoga",
+        "paasa_yoga",
+        "asubha_yoga",
+        "gaja_kesari_yoga",
+        "guru_mangala_yoga",
+        "amala_yoga",
+        "sankha_yoga",
+        "bheri_yoga",
+        "mridanga_yoga",
+        "kalpadruma_yoga",
+        "bhaarathi_yoga",
+        "saraswathi_yoga",
+        "chatussagara_yoga",
+        "rajalakshana_yoga",
+        "dharidhra_yoga",
+        "dharidhra_yoga_152",
+        "sareera_soukhya_yoga",
+        "dehapushti_yoga",
+        "rogagrastha_yoga",
+        "dehasthoulya_yoga_116",
+        "sada_sanchara_yoga",
+        "swaveeryaddhana_yoga",
+        "anthya_vayasi_dhana_yoga",
+        "yukthi_samanwithavagmi_yoga_154",
+        "durmukha_yoga",
+        "annadana_yoga",
+        "bhratruvriddhi_yoga",
+        "parakrama_yoga",
+        "yuddha_praveena_yoga",
+        "ayatna_griha_prapta_yoga_189",
+        "bandhubhisthyaktha_yoga",
+        "matrunasa_yoga_198",
+        "kapata_yoga_202",
+        "nishkapata_yoga_205",
+        "matru_sneha_yoga",
+        "bahu_puthra_yoga_221",
+        "eka_puthra_yoga",
+        "thrikaala_gnana_yoga",
+        "bahu_sthree_yoga",
+        "satkalatra_yoga",
+        "mathibhramana_yoga_294"
+      ],
+      "matched": [
+        "gajakesari",
+        "malavya",
+        "vesi"
+      ],
+      "skill_only": [
+        "anaphaa",
+        "angaraka",
+        "ari",
+        "aryama",
+        "asha",
+        "ayur",
+        "dhana",
+        "kalatra",
+        "karma",
+        "mangal_dosha",
+        "putra",
+        "raja",
+        "sasa",
+        "shakti",
+        "shukra_mangala",
+        "veena",
+        "vidya",
+        "yoga"
+      ],
+      "pyjhora_only": [
+        "amala",
+        "annadana",
+        "anthya_vayasi_dhana",
+        "asubha",
+        "ayatna_griha_prapta",
+        "bahu_puthra",
+        "bahu_sthree",
+        "bandhubhisthyaktha",
+        "bharati",
+        "bheri",
+        "bhratruvriddhi",
+        "chatussagara",
+        "dehapushti",
+        "dehasthoulya",
+        "dharidhra",
+        "durmukha",
+        "eka_puthra",
+        "guru_mangala",
+        "kalpadruma",
+        "kapata",
+        "mathibhramana",
+        "matru_sneha",
+        "matrunasa",
+        "mridanga",
+        "nishkapata",
+        "parakrama",
+        "pasa",
+        "rajalakshana",
+        "rogagrastha",
+        "sada_sanchara",
+        "sankha",
+        "saraswati",
+        "sareera_soukhya",
+        "sarpa",
+        "satkalatra",
+        "swaveeryaddhana",
+        "thrikaala_gnana",
+        "vajra",
+        "yuddha_praveena",
+        "yukthi_samanwithavagmi"
+      ],
+      "error": null,
+      "skill_count": 32,
+      "skill_details": [
+        {
+          "name": "Raja Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Raja Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Malavya Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Sasa Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Malavya (Moola) Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Gajakesari Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Gajakesari Yoga (from Moon)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Angaraka Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Veena Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Gajakesari Yoga (Kendra from Moon)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Dhana Yoga (2nd & 11th Lords Combination)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Dhana Yoga (5th & 9th Lords in Wealth House)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Dhana Yoga (11th Lord Exalted)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Dhana Yoga (2nd Lord Strong)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Putra Yoga (9th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Kalatra Yoga (7th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Kalatra Yoga (Venus in Kendra)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Mangal Dosha (Mars in 1/4/7/8/12)",
+          "id": "",
+          "strength": "弱"
+        },
+        {
+          "name": "Ayur Yoga (8th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Vidya Yoga (5th Lord Strong)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Vidya Yoga (Mercury Exalted)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Shakti Yoga (10th Lord Exalted)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Karma Yoga (10th & 11th Lords Combination)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Karma Yoga (Mars in 10th House)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Ari Yoga (6th Lord Strong)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Asha Yoga (11th Lord Strong)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Asha Yoga (11th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Aryama Yoga (9th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Shukra-Mangala Yoga (Venus-Mars Conjunction)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Raja Yoga (1st & 4th Lords in Kendra)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Vesi Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Anaphaa Yoga",
+          "id": "",
+          "strength": "中"
+        }
+      ],
+      "pyjhora_count": 44,
+      "pyjhora_details": [
+        {
+          "function": "vesi_yoga",
+          "name": "Vesai Yoga",
+          "desc": "There is a planet other than Moon in the 2nd house from Sun"
+        },
+        {
+          "function": "maalavya_yoga",
+          "name": "Maalavya Yoga",
+          "desc": "Venus is in a quadrant in own sign or exaltation sign."
+        },
+        {
+          "function": "sarpa_yoga",
+          "name": "Sarpa Yoga",
+          "desc": "Three quadrants are occupied by natural malefic planets."
+        },
+        {
+          "function": "vajra_yoga",
+          "name": "Vajra Yoga",
+          "desc": "Lagna and the 7th houses are occupied by natural benefic planet and the 4th and 10th houses are occupied by natural malefic planets."
+        },
+        {
+          "function": "paasa_yoga",
+          "name": "Paasa Yoga",
+          "desc": "The seven planets occupy exactly 5 distinct signs among them."
+        },
+        {
+          "function": "asubha_yoga",
+          "name": "Asubha Yoga",
+          "desc": "Lagna has malefics or has “paapa kartari or maleefics in 12th and 2nd house from Lagna."
+        },
+        {
+          "function": "gaja_kesari_yoga",
+          "name": "gaja_kesari_yoga",
+          "desc": "Gaja-Kesari Yoga: If (1) Jupiter is in a quadrant from Moon, (2) a benefic planet conjoins or aspects Jupiter, and, (3) Jupiter is not debilitated or combust or in an enemy’s house"
+        },
+        {
+          "function": "guru_mangala_yoga",
+          "name": "guru_mangala_yoga",
+          "desc": "If Jupiter and Mars are together or in the 7th house from each other, then this yoga is present."
+        },
+        {
+          "function": "amala_yoga",
+          "name": "Amala Yoga",
+          "desc": "There are only natural benefics present in the 10th house from lagna or Moon."
+        },
+        {
+          "function": "sankha_yoga",
+          "name": "Sankha Yoga",
+          "desc": "If (1) lagna lord is strong and (2) 5th and 6th lords are in mutual quadrants, then this yoga is present. Alternately, this yoga is present if (1) lagna lord and 10th lord are together in a movable sign and (2) the 9th lord is strong."
+        },
+        {
+          "function": "bheri_yoga",
+          "name": "Bheri Yoga",
+          "desc": "]If (1) the 9th lord is strong and (2) 1st, 2nd, 7th and 12th houses are occupied by planets, then this yoga is present. Alternately, this is yoga is present if (1) the 9th lord is strong and (2) Jupiter, Venus and lagna lord are in mutual quadrants."
+        },
+        {
+          "function": "mridanga_yoga",
+          "name": "Mridanga Yoga",
+          "desc": "If (1) there are planets in own and exaltation signs in quadrants and trines and (2) lagna lord is strong, then this yoga is present."
+        },
+        {
+          "function": "kalpadruma_yoga",
+          "name": "Kalpadruma Yoga",
+          "desc": "Consider (1) lagna lord, (2) his dispositor, (3) the latter’s dispositor in rasi and (4) in navamsa. If all the four planets are all in quadrants, trines or exaltation signs of both rasi and navamsa, then this yoga is present."
+        },
+        {
+          "function": "bhaarathi_yoga",
+          "name": "Bhaarathi Yoga",
+          "desc": "If the lord of the sign occupied in navamsa by 2nd, 5th or 11th lord exalted and joins the 9th lord, then this yoga is present."
+        },
+        {
+          "function": "saraswathi_yoga",
+          "name": "Saraswathi Yoga",
+          "desc": "If (1) each of Mercury, Jupiter and Venus occupies a quadrant or a trine or the 2nd house (not necessarily together) and (2) Jupiter is in an own or friendly or exaltation sign, then this yoga is present."
+        },
+        {
+          "function": "chatussagara_yoga",
+          "name": "Chatussagara Yoga",
+          "desc": "All planets occupy the four Kendra houses (1, 4, 7, 10)."
+        },
+        {
+          "function": "rajalakshana_yoga",
+          "name": "Rajalakshana Yoga",
+          "desc": "Jupiter, Venus, Mercury, and the Moon are in Kendra houses."
+        },
+        {
+          "function": "dharidhra_yoga",
+          "name": "Dharidhra Yoga",
+          "desc": "The lord of the 11th house is in the 6th, 8th, or 12th house."
+        },
+        {
+          "function": "dharidhra_yoga_152",
+          "name": "Dharidhra Yoga",
+          "desc": "Natural malefics (not owning 9th or 10th) in Lagna associated with or aspected by maraka lords (L2/L7)."
+        },
+        {
+          "function": "sareera_soukhya_yoga",
+          "name": "Sareera Soukhya Yoga",
+          "desc": "The Lagna lord, Jupiter, and Venus are placed in Kendra houses."
+        },
+        {
+          "function": "dehapushti_yoga",
+          "name": "Dehapushti Yoga",
+          "desc": "The Lagna lord is in a movable sign (Chara Rashi) and is aspected by a benefic planet."
+        },
+        {
+          "function": "rogagrastha_yoga",
+          "name": "Rogagrastha Yoga",
+          "desc": "The Lagna lord is in the 6th, 8th, or 12th house and is associated with the lord of the 6th."
+        },
+        {
+          "function": "dehasthoulya_yoga_116",
+          "name": "Dehasthoulya Yoga",
+          "desc": "Lagna in a watery sign joined by benefics OR Lagna Lord is a watery planet."
+        },
+        {
+          "function": "sada_sanchara_yoga",
+          "name": "Sada Sanchara Yoga",
+          "desc": "The Lagna lord or the Moon is in a movable sign (Chara Rashi)."
+        },
+        {
+          "function": "swaveeryaddhana_yoga",
+          "name": "Swaveeryaddhana Yoga",
+          "desc": "The Lagna lord is the strongest planet in the chart and is placed in a Kendra, associated with the 2nd lord."
+        },
+        {
+          "function": "anthya_vayasi_dhana_yoga",
+          "name": "Anthya Vayasi Dhana Yoga",
+          "desc": "The lords of the 2nd, 9th, and 11th houses are placed in the 12th, 6th, or 8th houses from each other but associated with benefics."
+        },
+        {
+          "function": "yukthi_samanwithavagmi_yoga_154",
+          "name": "Yukthi Samanwithavagmi Yoga",
+          "desc": "The 2nd lord should join a benefic in a kendra or thrikona, or be exalted and combined with Jupiter."
+        },
+        {
+          "function": "durmukha_yoga",
+          "name": "Durmukha Yoga",
+          "desc": "Malefic planets (Saturn, Rahu, Ketu) occupy the 2nd house."
+        },
+        {
+          "function": "annadana_yoga",
+          "name": "Annadana Yoga",
+          "desc": "Jupiter or the Moon has a benefic association with the 2nd or 12th house."
+        },
+        {
+          "function": "bhratruvriddhi_yoga",
+          "name": "Bhratruvriddhi Yoga",
+          "desc": "The 3rd lord or Mars is associated with a benefic planet or placed in a benefic sign/Navamsha."
+        },
+        {
+          "function": "parakrama_yoga",
+          "name": "Parakrama Yoga",
+          "desc": "The lord of the 3rd should join a benefic navamsa being aspected by (or conjoined with) benefic planets, and Mars should occupy benefic signs."
+        },
+        {
+          "function": "yuddha_praveena_yoga",
+          "name": "Yuddha Praveena Yoga",
+          "desc": "The lord of the Navamsa occupied by the 3rd lord's Navamsa lord is placed in its own Varga."
+        },
+        {
+          "function": "ayatna_griha_prapta_yoga_189",
+          "name": "Ayatna Griha Prapta Yoga",
+          "desc": "189. Lords of Lagna and the 7th should occupy Lagna or the 4th, aspected by benefics."
+        },
+        {
+          "function": "bandhubhisthyaktha_yoga",
+          "name": "Bandhu Bhisthyaktha Yoga",
+          "desc": "195. The 4th lord must be associated with malefics or occupy evil shashtiamsas or join inimical or debilitation signs."
+        },
+        {
+          "function": "matrunasa_yoga_198",
+          "name": "Maathru Naasa yoga",
+          "desc": "198 - The Moon should be hemmed in between, associated with or aspected by evil planets."
+        },
+        {
+          "function": "kapata_yoga_202",
+          "name": "Kapata Yoga",
+          "desc": "202 - The 4th house must be joined by a malefic and the 4rh lord must be associated with or aspected by malefics or be hemmed in between malefics."
+        },
+        {
+          "function": "nishkapata_yoga_205",
+          "name": "Nishkapata Yoga",
+          "desc": "205 - The 4th house must be occupied by a benefic, or a planet in exaltation, friendly or own house,or the 4th house must be a benefic sign."
+        },
+        {
+          "function": "matru_sneha_yoga",
+          "name": "Maathru Sneha Yoga",
+          "desc": "First Variation - The Lagna (1st house) and the 4th house have the same planetary ruler. The lst and 4th houses can have common lords only in respect of Ge/Vi (Me) or Sg/Pi (Ju). Second Variation - The lords of the 1st and 4th houses are either natural or temporal friends. Third Variation - The Lagna lord (1st house ruler) and the 4th house lord are aspected by benefics."
+        },
+        {
+          "function": "bahu_puthra_yoga_221",
+          "name": "Bahu Puthra Yoga",
+          "desc": "221 - The same yoga arises if the lord of the Navamsa occupied by a planet who is in association with the 7th lord is in the 1st, 2nd or 5th house. Steps: (1) Get 7th Lord in Rasi. (2) Find which rasi this 7th lord is in Navamsa chart. (3) Find the lord of that sign of step-2. (4) Find the sign of the Lord found from step-3 in rasi chart. (5) That sign should be either 1st, or 2nd or 5th from Lagna in rasi"
+        },
+        {
+          "function": "eka_puthra_yoga",
+          "name": "Eka Puthra Yoga",
+          "desc": "225 - Lord of 5th house should join a kendra or trikona."
+        },
+        {
+          "function": "thrikaala_gnana_yoga",
+          "name": "Thrikaala Gnana Yoga",
+          "desc": "234 - Jupiter in Mrudwamsa in his own navamsa. OR Jupiter in Gopuramsa (score >= 4) AND aspected by a benefic."
+        },
+        {
+          "function": "bahu_sthree_yoga",
+          "name": "Bahu Sthree Yoga",
+          "desc": "238 - If the lords of the Lagna and the 7th are in conjunction or aspect with each other, the above yoga is given rise to."
+        },
+        {
+          "function": "satkalatra_yoga",
+          "name": "Sathkalatra Yoga",
+          "desc": "239 - The lord of the 7th or Venus should join or be aspected by Jupiter or Mercury."
+        },
+        {
+          "function": "mathibhramana_yoga_294",
+          "name": "Mathibhramana Yoga",
+          "desc": "294 - The Moon and Mercury should be in a kendra, aspected by or conjoined with any other planet."
+        }
+      ],
+      "skill_only_functional": [
+        "ari",
+        "aryama",
+        "asha",
+        "ayur",
+        "dhana",
+        "kalatra",
+        "karma",
+        "mangal_dosha",
+        "putra",
+        "raja",
+        "shakti",
+        "vidya"
+      ],
+      "skill_only_classic": [
+        "anaphaa",
+        "angaraka",
+        "sasa",
+        "shukra_mangala",
+        "veena",
+        "yoga"
+      ]
+    },
+    {
+      "case_name": "APJ Abdul Kalam",
+      "birth": "1931-10-15 06:00",
+      "skill_yogas": [
+        "Raja Yoga",
+        "Raja Yoga",
+        "Bhadra Yoga",
+        "Bhadra Yoga",
+        "Bhadra (Moola) Yoga",
+        "Gajakesari Yoga",
+        "Gajakesari Yoga (from Moon)",
+        "Chandra-Mangala Yoga",
+        "Budhaditya Yoga",
+        "Budha-Shukra Yoga",
+        "Surya-Budha Yoga",
+        "Surya-Shukra Yoga",
+        "Surya-Shukra Yoga",
+        "Gajakesari Yoga (Kendra from Moon)",
+        "Dhana Yoga (5th & 9th Lords in Wealth House)",
+        "Surya Yoga (Sun in 1st House)",
+        "Kalatra Yoga (7th Lord in Kendra)",
+        "Kalatra Yoga (Venus in Kendra)",
+        "Vidya Yoga (Mercury Exalted)",
+        "Karma Yoga (10th & 11th Lords Combination)",
+        "Ari Yoga (6th Lord Strong)",
+        "Asha Yoga (Jupiter in 11th House)",
+        "Asha Yoga (11th Lord in Kendra)",
+        "Moksha Yoga (12th Lord Strong)",
+        "Moksha Yoga (Ketu in 12th House)",
+        "Moksha Yoga (4th/8th/12th Lords Combination)",
+        "Aryama Yoga (9th Lord Exalted)",
+        "Vesi Yoga",
+        "Vosi Yoga",
+        "Ubhayachara Yoga",
+        "Anaphaa Yoga",
+        "Eka Puthra Yoga"
+      ],
+      "pyjhora_yogas": [
+        "vesi_yoga",
+        "nipuna_yoga",
+        "sunaphaa_yoga",
+        "anaphaa_yoga",
+        "duradhara_yoga",
+        "bhadra_yoga",
+        "sarpa_yoga",
+        "paasa_yoga",
+        "asubha_yoga",
+        "kaahala_yoga",
+        "sankha_yoga",
+        "mridanga_yoga",
+        "vanchana_chora_bheethi_yoga",
+        "kahala_yoga",
+        "dharidhra_yoga_149",
+        "dharidhra_yoga_150",
+        "sareera_soukhya_yoga",
+        "rogagrastha_yoga",
+        "krisanga_yoga_112",
+        "krisanga_yoga_113",
+        "swaveeryaddhana_yoga",
+        "madhya_vayasi_dhana_yoga",
+        "sumukha_yoga",
+        "durmukha_yoga",
+        "bhratruvriddhi_yoga",
+        "yuddha_praveena_yoga",
+        "bandhu_pujya_yoga_194",
+        "bandhubhisthyaktha_yoga",
+        "matrunasa_yoga_198",
+        "kapata_yoga_202",
+        "nishkapata_yoga_205",
+        "matru_sneha_yoga",
+        "eka_puthra_yoga",
+        "satkalatra_yoga",
+        "guhyaroga_yoga"
+      ],
+      "matched": [
+        "anaphaa",
+        "bhadra",
+        "budhaditya",
+        "eka_puthra",
+        "vesi"
+      ],
+      "skill_only": [
+        "ari",
+        "aryama",
+        "asha",
+        "budha_shukra",
+        "chandra_mangala",
+        "dhana",
+        "gajakesari",
+        "kalatra",
+        "karma",
+        "moksha",
+        "raja",
+        "surya",
+        "surya_budha",
+        "surya_shukra",
+        "ubhayachara",
+        "vidya",
+        "vosi",
+        "yoga"
+      ],
+      "pyjhora_only": [
+        "asubha",
+        "bandhu_pujya",
+        "bandhubhisthyaktha",
+        "bhratruvriddhi",
+        "dharidhra",
+        "duradhara",
+        "durmukha",
+        "guhyaroga",
+        "kahala",
+        "kapata",
+        "krisanga",
+        "madhya_vayasi_dhana",
+        "matru_sneha",
+        "matrunasa",
+        "mridanga",
+        "nishkapata",
+        "pasa",
+        "rogagrastha",
+        "sankha",
+        "sareera_soukhya",
+        "sarpa",
+        "satkalatra",
+        "sumukha",
+        "sunaphaa",
+        "swaveeryaddhana",
+        "vanchana_chora_bheethi",
+        "yuddha_praveena"
+      ],
+      "error": null,
+      "skill_count": 32,
+      "skill_details": [
+        {
+          "name": "Raja Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Raja Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Bhadra Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Bhadra Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Bhadra (Moola) Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Gajakesari Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Gajakesari Yoga (from Moon)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Chandra-Mangala Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Budhaditya Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Budha-Shukra Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Surya-Budha Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Surya-Shukra Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Surya-Shukra Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Gajakesari Yoga (Kendra from Moon)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Dhana Yoga (5th & 9th Lords in Wealth House)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Surya Yoga (Sun in 1st House)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Kalatra Yoga (7th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Kalatra Yoga (Venus in Kendra)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Vidya Yoga (Mercury Exalted)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Karma Yoga (10th & 11th Lords Combination)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Ari Yoga (6th Lord Strong)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Asha Yoga (Jupiter in 11th House)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Asha Yoga (11th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Moksha Yoga (12th Lord Strong)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Moksha Yoga (Ketu in 12th House)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Moksha Yoga (4th/8th/12th Lords Combination)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Aryama Yoga (9th Lord Exalted)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Vesi Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Vosi Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Ubhayachara Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Anaphaa Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Eka Puthra Yoga",
+          "id": "",
+          "strength": "中"
+        }
+      ],
+      "pyjhora_count": 35,
+      "pyjhora_details": [
+        {
+          "function": "vesi_yoga",
+          "name": "Vesai Yoga",
+          "desc": "There is a planet other than Moon in the 2nd house from Sun"
+        },
+        {
+          "function": "nipuna_yoga",
+          "name": "Nipuna Yoga",
+          "desc": "Sun and Mercury are together (in one sign)."
+        },
+        {
+          "function": "sunaphaa_yoga",
+          "name": "Sunaphaa Yoga",
+          "desc": "There are planets other than Sun in the 2nd house from Moon"
+        },
+        {
+          "function": "anaphaa_yoga",
+          "name": "Anaphaa Yoga",
+          "desc": "There are planets other than Sun in the 12th house from Moon"
+        },
+        {
+          "function": "duradhara_yoga",
+          "name": "Duradhara Yoga",
+          "desc": "There are planets other than Sun in the 2nd and 12th houses from Moon."
+        },
+        {
+          "function": "bhadra_yoga",
+          "name": "Bhadra Yoga",
+          "desc": "Mercury is in a quadrant in own sign or exaltation sign."
+        },
+        {
+          "function": "sarpa_yoga",
+          "name": "Sarpa Yoga",
+          "desc": "Three quadrants are occupied by natural malefic planets."
+        },
+        {
+          "function": "paasa_yoga",
+          "name": "Paasa Yoga",
+          "desc": "The seven planets occupy exactly 5 distinct signs among them."
+        },
+        {
+          "function": "asubha_yoga",
+          "name": "Asubha Yoga",
+          "desc": "Lagna has malefics or has “paapa kartari or maleefics in 12th and 2nd house from Lagna."
+        },
+        {
+          "function": "kaahala_yoga",
+          "name": "Kaahala Yoga",
+          "desc": "If (1) the 4th lord and Jupiter32 are in mutual quadrants and (2) lagna lord is strong, then this yoga is present. Alternately, this yoga is present if the 4th lord is exalted or in own sign and the 10th lord joins him."
+        },
+        {
+          "function": "sankha_yoga",
+          "name": "Sankha Yoga",
+          "desc": "If (1) lagna lord is strong and (2) 5th and 6th lords are in mutual quadrants, then this yoga is present. Alternately, this yoga is present if (1) lagna lord and 10th lord are together in a movable sign and (2) the 9th lord is strong."
+        },
+        {
+          "function": "mridanga_yoga",
+          "name": "Mridanga Yoga",
+          "desc": "If (1) there are planets in own and exaltation signs in quadrants and trines and (2) lagna lord is strong, then this yoga is present."
+        },
+        {
+          "function": "vanchana_chora_bheethi_yoga",
+          "name": "Vanchana Chora Bheethi Yoga",
+          "desc": "The Lord of Lagna is in the 6th, 8th, or 12th house joined with or aspected by malefics."
+        },
+        {
+          "function": "kahala_yoga",
+          "name": "Kahala Yoga",
+          "desc": "The lords of the 4th and 9th houses are in mutual Kendras and the lord of the Lagna is strong."
+        },
+        {
+          "function": "dharidhra_yoga_149",
+          "name": "Dharidhra Yoga",
+          "desc": "Lord of Lagna associated with 6th, 8th, or 12th lord and subjected to malefic aspects."
+        },
+        {
+          "function": "dharidhra_yoga_150",
+          "name": "Dharidhra Yoga",
+          "desc": "Lord of 5th joins lord of 6, 8, or 12 without beneficial aspects/conjunctions."
+        },
+        {
+          "function": "sareera_soukhya_yoga",
+          "name": "Sareera Soukhya Yoga",
+          "desc": "The Lagna lord, Jupiter, and Venus are placed in Kendra houses."
+        },
+        {
+          "function": "rogagrastha_yoga",
+          "name": "Rogagrastha Yoga",
+          "desc": "The Lagna lord is in the 6th, 8th, or 12th house and is associated with the lord of the 6th."
+        },
+        {
+          "function": "krisanga_yoga_112",
+          "name": "Krisanga Yoga",
+          "desc": "Lagna lord in a dry sign or in a sign owned by a dry planet."
+        },
+        {
+          "function": "krisanga_yoga_113",
+          "name": "Krisanga Yoga",
+          "desc": "The Navamsa Lagna is owned by a dry planet AND malefics join the Rasi Lagna."
+        },
+        {
+          "function": "swaveeryaddhana_yoga",
+          "name": "Swaveeryaddhana Yoga",
+          "desc": "The Lagna lord is the strongest planet in the chart and is placed in a Kendra, associated with the 2nd lord."
+        },
+        {
+          "function": "madhya_vayasi_dhana_yoga",
+          "name": "Madhya Vayasi Dhana Yoga",
+          "desc": "The lords of the Lagna, 2nd, and 11th houses are placed in Kendras or Thrikonas."
+        },
+        {
+          "function": "sumukha_yoga",
+          "name": "Sumukha Yoga",
+          "desc": "Benefic planets (Jupiter, Venus) are placed in or aspecting the 2nd house."
+        },
+        {
+          "function": "durmukha_yoga",
+          "name": "Durmukha Yoga",
+          "desc": "Malefic planets (Saturn, Rahu, Ketu) occupy the 2nd house."
+        },
+        {
+          "function": "bhratruvriddhi_yoga",
+          "name": "Bhratruvriddhi Yoga",
+          "desc": "The 3rd lord or Mars is associated with a benefic planet or placed in a benefic sign/Navamsha."
+        },
+        {
+          "function": "yuddha_praveena_yoga",
+          "name": "Yuddha Praveena Yoga",
+          "desc": "The lord of the Navamsa occupied by the 3rd lord's Navamsa lord is placed in its own Varga."
+        },
+        {
+          "function": "bandhu_pujya_yoga_194",
+          "name": "Bandhu Pujya Yoga",
+          "desc": "194 - The 4th house or the 4th lord should have the association or aspect of Jupiter."
+        },
+        {
+          "function": "bandhubhisthyaktha_yoga",
+          "name": "Bandhu Bhisthyaktha Yoga",
+          "desc": "195. The 4th lord must be associated with malefics or occupy evil shashtiamsas or join inimical or debilitation signs."
+        },
+        {
+          "function": "matrunasa_yoga_198",
+          "name": "Maathru Naasa yoga",
+          "desc": "198 - The Moon should be hemmed in between, associated with or aspected by evil planets."
+        },
+        {
+          "function": "kapata_yoga_202",
+          "name": "Kapata Yoga",
+          "desc": "202 - The 4th house must be joined by a malefic and the 4rh lord must be associated with or aspected by malefics or be hemmed in between malefics."
+        },
+        {
+          "function": "nishkapata_yoga_205",
+          "name": "Nishkapata Yoga",
+          "desc": "205 - The 4th house must be occupied by a benefic, or a planet in exaltation, friendly or own house,or the 4th house must be a benefic sign."
+        },
+        {
+          "function": "matru_sneha_yoga",
+          "name": "Maathru Sneha Yoga",
+          "desc": "First Variation - The Lagna (1st house) and the 4th house have the same planetary ruler. The lst and 4th houses can have common lords only in respect of Ge/Vi (Me) or Sg/Pi (Ju). Second Variation - The lords of the 1st and 4th houses are either natural or temporal friends. Third Variation - The Lagna lord (1st house ruler) and the 4th house lord are aspected by benefics."
+        },
+        {
+          "function": "eka_puthra_yoga",
+          "name": "Eka Puthra Yoga",
+          "desc": "225 - Lord of 5th house should join a kendra or trikona."
+        },
+        {
+          "function": "satkalatra_yoga",
+          "name": "Sathkalatra Yoga",
+          "desc": "239 - The lord of the 7th or Venus should join or be aspected by Jupiter or Mercury."
+        },
+        {
+          "function": "guhyaroga_yoga",
+          "name": "Guhyaroga Yoga",
+          "desc": "281 - The Moon should join malefics in the Navamsa of Cancer or Scorpio."
+        }
+      ],
+      "skill_only_functional": [
+        "ari",
+        "aryama",
+        "asha",
+        "dhana",
+        "kalatra",
+        "karma",
+        "moksha",
+        "raja",
+        "vidya"
+      ],
+      "skill_only_classic": [
+        "budha_shukra",
+        "chandra_mangala",
+        "gajakesari",
+        "surya",
+        "surya_budha",
+        "surya_shukra",
+        "ubhayachara",
+        "vosi",
+        "yoga"
+      ]
+    },
+    {
+      "case_name": "Queen Elizabeth II",
+      "birth": "1926-04-21 02:40",
+      "skill_yogas": [
+        "Raja Yoga",
+        "Raja Yoga",
+        "Raja Yoga",
+        "Ruchaka Yoga",
+        "Sasa Yoga",
+        "Guru-Mangala Yoga",
+        "Guru-Shukra Yoga",
+        "Dhana Yoga (11th Lord Exalted)",
+        "Putra Yoga (9th Lord in Kendra)",
+        "Kalatra Yoga (7th Lord in Kendra)",
+        "Kalatra Yoga (Venus in Kendra)",
+        "Mangal Dosha (Mars in 1/4/7/8/12)",
+        "Ayur Yoga (8th Lord in Kendra)",
+        "Shakti Yoga (10th Lord Exalted)",
+        "Karma Yoga (10th & 11th Lords Combination)",
+        "Asha Yoga (11th Lord Strong)",
+        "Asha Yoga (11th Lord in Kendra)",
+        "Moksha Yoga (Ketu in 12th House)",
+        "Moksha Yoga (4th/8th/12th Lords Combination)",
+        "Aryama Yoga (9th Lord in Kendra)",
+        "Guru Yoga (Jupiter with Ascendant Lord)",
+        "Shukra-Mangala Yoga (Venus-Mars Conjunction)",
+        "Varga Yoga (D1 & D9 Lord Same Sign)",
+        "Vosi Yoga"
+      ],
+      "pyjhora_yogas": [
+        "vosi_yoga",
+        "anaphaa_yoga",
+        "ruchaka_yoga",
+        "daama_yoga",
+        "guru_mangala_yoga",
+        "kaahala_yoga",
+        "dama_yoga",
+        "dharidhra_yoga",
+        "dharidhra_yoga_152",
+        "sareera_soukhya_yoga",
+        "rogagrastha_yoga",
+        "krisanga_yoga_112",
+        "dehasthoulya_yoga_114",
+        "dehasthoulya_yoga_115",
+        "sada_sanchara_yoga",
+        "swaveeryaddhana_yoga",
+        "sumukha_yoga",
+        "bhratruvriddhi_yoga",
+        "dwadasa_sahodara_yoga",
+        "yuddha_praveena_yoga",
+        "bandhu_pujya_yoga_194",
+        "bandhubhisthyaktha_yoga",
+        "matrunasa_yoga_198",
+        "kapata_yoga_202",
+        "nishkapata_yoga_205",
+        "matru_sneha_yoga",
+        "vahana_yoga_209",
+        "bahu_puthra_yoga_221",
+        "kaalanirdesat_puthranaasa_yoga_230",
+        "buddhimaturya_yoga",
+        "satkalatra_yoga",
+        "mathibhramana_yoga_variation"
+      ],
+      "matched": [
+        "guru_mangala",
+        "ruchaka",
+        "vosi"
+      ],
+      "skill_only": [
+        "aryama",
+        "asha",
+        "ayur",
+        "dhana",
+        "guru",
+        "guru_shukra",
+        "kalatra",
+        "karma",
+        "mangal_dosha",
+        "moksha",
+        "navamsa",
+        "putra",
+        "raja",
+        "sasa",
+        "shakti",
+        "shukra_mangala",
+        "varga",
+        "yoga"
+      ],
+      "pyjhora_only": [
+        "anaphaa",
+        "bahu_puthra",
+        "bandhu_pujya",
+        "bandhubhisthyaktha",
+        "bhratruvriddhi",
+        "buddhimaturya",
+        "dama",
+        "dehasthoulya",
+        "dharidhra",
+        "dwadasa_sahodara",
+        "kaalanirdesat_puthranaasa",
+        "kahala",
+        "kapata",
+        "krisanga",
+        "mathibhramana_variation",
+        "matru_sneha",
+        "matrunasa",
+        "nishkapata",
+        "rogagrastha",
+        "sada_sanchara",
+        "sareera_soukhya",
+        "satkalatra",
+        "sumukha",
+        "swaveeryaddhana",
+        "vahana",
+        "yuddha_praveena"
+      ],
+      "error": null,
+      "skill_count": 24,
+      "skill_details": [
+        {
+          "name": "Raja Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Raja Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Raja Yoga",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Ruchaka Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Sasa Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Guru-Mangala Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Guru-Shukra Yoga",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Dhana Yoga (11th Lord Exalted)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Putra Yoga (9th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Kalatra Yoga (7th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Kalatra Yoga (Venus in Kendra)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Mangal Dosha (Mars in 1/4/7/8/12)",
+          "id": "",
+          "strength": "弱"
+        },
+        {
+          "name": "Ayur Yoga (8th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Shakti Yoga (10th Lord Exalted)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Karma Yoga (10th & 11th Lords Combination)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Asha Yoga (11th Lord Strong)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Asha Yoga (11th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Moksha Yoga (Ketu in 12th House)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Moksha Yoga (4th/8th/12th Lords Combination)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Aryama Yoga (9th Lord in Kendra)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Guru Yoga (Jupiter with Ascendant Lord)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Shukra-Mangala Yoga (Venus-Mars Conjunction)",
+          "id": "",
+          "strength": "中"
+        },
+        {
+          "name": "Varga Yoga (D1 & D9 Lord Same Sign)",
+          "id": "",
+          "strength": "强"
+        },
+        {
+          "name": "Vosi Yoga",
+          "id": "",
+          "strength": "中"
+        }
+      ],
+      "pyjhora_count": 32,
+      "pyjhora_details": [
+        {
+          "function": "vosi_yoga",
+          "name": "Vosi Yoga",
+          "desc": "There is a planet other than Moon in the 12th house from Sun"
+        },
+        {
+          "function": "anaphaa_yoga",
+          "name": "Anaphaa Yoga",
+          "desc": "There are planets other than Sun in the 12th house from Moon"
+        },
+        {
+          "function": "ruchaka_yoga",
+          "name": "Ruchaka Yoga",
+          "desc": "Mars is in a quadrant in own sign or exaltation sign."
+        },
+        {
+          "function": "daama_yoga",
+          "name": "Daama Yoga",
+          "desc": "The seven planets occupy exactly 6 distinct signs among them."
+        },
+        {
+          "function": "guru_mangala_yoga",
+          "name": "guru_mangala_yoga",
+          "desc": "If Jupiter and Mars are together or in the 7th house from each other, then this yoga is present."
+        },
+        {
+          "function": "kaahala_yoga",
+          "name": "Kaahala Yoga",
+          "desc": "If (1) the 4th lord and Jupiter32 are in mutual quadrants and (2) lagna lord is strong, then this yoga is present. Alternately, this yoga is present if the 4th lord is exalted or in own sign and the 10th lord joins him."
+        },
+        {
+          "function": "dama_yoga",
+          "name": "Dama Yoga",
+          "desc": "All seven planets are distributed among six different signs."
+        },
+        {
+          "function": "dharidhra_yoga",
+          "name": "Dharidhra Yoga",
+          "desc": "The lord of the 11th house is in the 6th, 8th, or 12th house."
+        },
+        {
+          "function": "dharidhra_yoga_152",
+          "name": "Dharidhra Yoga",
+          "desc": "Natural malefics (not owning 9th or 10th) in Lagna associated with or aspected by maraka lords (L2/L7)."
+        },
+        {
+          "function": "sareera_soukhya_yoga",
+          "name": "Sareera Soukhya Yoga",
+          "desc": "The Lagna lord, Jupiter, and Venus are placed in Kendra houses."
+        },
+        {
+          "function": "rogagrastha_yoga",
+          "name": "Rogagrastha Yoga",
+          "desc": "The Lagna lord is in the 6th, 8th, or 12th house and is associated with the lord of the 6th."
+        },
+        {
+          "function": "krisanga_yoga_112",
+          "name": "Krisanga Yoga",
+          "desc": "Lagna lord in a dry sign or in a sign owned by a dry planet."
+        },
+        {
+          "function": "dehasthoulya_yoga_114",
+          "name": "Dehasthoulya Yoga",
+          "desc": "Lagna Lord and its Navamsa Lord both occupy watery signs (in Rasi)."
+        },
+        {
+          "function": "dehasthoulya_yoga_115",
+          "name": "Dehasthoulya Yoga",
+          "desc": "Jupiter in Lagna OR Jupiter aspects Lagna from a watery sign."
+        },
+        {
+          "function": "sada_sanchara_yoga",
+          "name": "Sada Sanchara Yoga",
+          "desc": "The Lagna lord or the Moon is in a movable sign (Chara Rashi)."
+        },
+        {
+          "function": "swaveeryaddhana_yoga",
+          "name": "Swaveeryaddhana Yoga",
+          "desc": "The Lagna lord is the strongest planet in the chart and is placed in a Kendra, associated with the 2nd lord."
+        },
+        {
+          "function": "sumukha_yoga",
+          "name": "Sumukha Yoga",
+          "desc": "Benefic planets (Jupiter, Venus) are placed in or aspecting the 2nd house."
+        },
+        {
+          "function": "bhratruvriddhi_yoga",
+          "name": "Bhratruvriddhi Yoga",
+          "desc": "The 3rd lord or Mars is associated with a benefic planet or placed in a benefic sign/Navamsha."
+        },
+        {
+          "function": "dwadasa_sahodara_yoga",
+          "name": "Dwadasa Sahodara Yoga",
+          "desc": "The 3rd lord is in a kendra and exalted Mars joins Jupiter in a thrikona from the 3rd lord."
+        },
+        {
+          "function": "yuddha_praveena_yoga",
+          "name": "Yuddha Praveena Yoga",
+          "desc": "The lord of the Navamsa occupied by the 3rd lord's Navamsa lord is placed in its own Varga."
+        },
+        {
+          "function": "bandhu_pujya_yoga_194",
+          "name": "Bandhu Pujya Yoga",
+          "desc": "194 - The 4th house or the 4th lord should have the association or aspect of Jupiter."
+        },
+        {
+          "function": "bandhubhisthyaktha_yoga",
+          "name": "Bandhu Bhisthyaktha Yoga",
+          "desc": "195. The 4th lord must be associated with malefics or occupy evil shashtiamsas or join inimical or debilitation signs."
+        },
+        {
+          "function": "matrunasa_yoga_198",
+          "name": "Maathru Naasa yoga",
+          "desc": "198 - The Moon should be hemmed in between, associated with or aspected by evil planets."
+        },
+        {
+          "function": "kapata_yoga_202",
+          "name": "Kapata Yoga",
+          "desc": "202 - The 4th house must be joined by a malefic and the 4rh lord must be associated with or aspected by malefics or be hemmed in between malefics."
+        },
+        {
+          "function": "nishkapata_yoga_205",
+          "name": "Nishkapata Yoga",
+          "desc": "205 - The 4th house must be occupied by a benefic, or a planet in exaltation, friendly or own house,or the 4th house must be a benefic sign."
+        },
+        {
+          "function": "matru_sneha_yoga",
+          "name": "Maathru Sneha Yoga",
+          "desc": "First Variation - The Lagna (1st house) and the 4th house have the same planetary ruler. The lst and 4th houses can have common lords only in respect of Ge/Vi (Me) or Sg/Pi (Ju). Second Variation - The lords of the 1st and 4th houses are either natural or temporal friends. Third Variation - The Lagna lord (1st house ruler) and the 4th house lord are aspected by benefics."
+        },
+        {
+          "function": "vahana_yoga_209",
+          "name": "Vaahana Yoga",
+          "desc": "209 - The lord of Lagna must join the 4th, 11th or the 9th."
+        },
+        {
+          "function": "bahu_puthra_yoga_221",
+          "name": "Bahu Puthra Yoga",
+          "desc": "221 - The same yoga arises if the lord of the Navamsa occupied by a planet who is in association with the 7th lord is in the 1st, 2nd or 5th house. Steps: (1) Get 7th Lord in Rasi. (2) Find which rasi this 7th lord is in Navamsa chart. (3) Find the lord of that sign of step-2. (4) Find the sign of the Lord found from step-3 in rasi chart. (5) That sign should be either 1st, or 2nd or 5th from Lagna in rasi"
+        },
+        {
+          "function": "kaalanirdesat_puthranaasa_yoga_230",
+          "name": "Kaalanirdesat Puthranaasa Yoga",
+          "desc": "230 - Malefics should be disposed (cojoins or aspect) in 5th from Jupiter and 5th from Lagna"
+        },
+        {
+          "function": "buddhimaturya_yoga",
+          "name": "Buddhimaturya Yoga",
+          "desc": "231 - If the 5th lord, being a benefic, is either aspected by another benefic or occupies a benefic sign, the above yoga is given rise to."
+        },
+        {
+          "function": "satkalatra_yoga",
+          "name": "Sathkalatra Yoga",
+          "desc": "239 - The lord of the 7th or Venus should join or be aspected by Jupiter or Mercury."
+        },
+        {
+          "function": "mathibhramana_yoga_variation",
+          "name": "Mathibhramana Yoga",
+          "desc": "This yoga occurs, per B.V.Raman Variations, if - (1) The 6th is occupied by Rahu and aspected by Kethu. (2) The 6th lord is further affiicted by conjunction with Mars. (3) The planet of nerves Mercury is in a common sign in conjunction with two malefics, Mars and Sun. (4) In the Navamsa again Mercury occupies the 6th with Rahu and the 6th lord is in conjunction with Mars."
+        }
+      ],
+      "skill_only_functional": [
+        "aryama",
+        "asha",
+        "ayur",
+        "dhana",
+        "guru",
+        "kalatra",
+        "karma",
+        "mangal_dosha",
+        "moksha",
+        "putra",
+        "raja",
+        "shakti",
+        "varga"
+      ],
+      "skill_only_classic": [
+        "guru_shukra",
+        "navamsa",
+        "sasa",
+        "shukra_mangala",
+        "yoga"
+      ]
+    }
+  ],
+  "summary": {
+    "total_skill_yogas": 128,
+    "total_pyjhora_yogas": 165,
+    "total_matched": 19,
+    "total_skill_only": 81,
+    "total_pyjhora_only": 137,
+    "total_skill_only_functional": 52,
+    "total_skill_only_classic": 29
+  }
+}

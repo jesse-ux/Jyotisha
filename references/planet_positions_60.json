@@ -1,0 +1,3065 @@
+{
+  "schema_version": "1.0",
+  "charts": [
+    {
+      "name": "Albert Einstein",
+      "planets": {
+        "Sun": {
+          "sign": "Aquarius",
+          "house": 4,
+          "degree": 29.964926916305274
+        },
+        "Moon": {
+          "sign": "Scorpio",
+          "house": 1,
+          "degree": 14.559415673755609
+        },
+        "Mars": {
+          "sign": "Capricorn",
+          "house": 3,
+          "degree": 3.5049841527608123
+        },
+        "Mercury": {
+          "sign": "Pisces",
+          "house": 5,
+          "degree": 9.136851119603818
+        },
+        "Jupiter": {
+          "sign": "Aquarius",
+          "house": 4,
+          "degree": 4.322189889272238
+        },
+        "Venus": {
+          "sign": "Pisces",
+          "house": 5,
+          "degree": 23.330963619813303
+        },
+        "Saturn": {
+          "sign": "Pisces",
+          "house": 5,
+          "degree": 11.078942437881949
+        },
+        "Rahu": {
+          "sign": "Capricorn",
+          "house": 3,
+          "degree": 9.683168419528215
+        },
+        "Ketu": {
+          "sign": "Cancer",
+          "house": 9,
+          "degree": 9.683168419528215
+        }
+      },
+      "ascendant": "Scorpio"
+    },
+    {
+      "name": "Marie Curie",
+      "planets": {
+        "Sun": {
+          "sign": "Libra",
+          "house": 3,
+          "degree": 21.20337634919366
+        },
+        "Moon": {
+          "sign": "Aquarius",
+          "house": 7,
+          "degree": 17.5076800949999
+        },
+        "Mars": {
+          "sign": "Scorpio",
+          "house": 4,
+          "degree": 6.3861213451124
+        },
+        "Mercury": {
+          "sign": "Scorpio",
+          "house": 4,
+          "degree": 13.47892556640636
+        },
+        "Jupiter": {
+          "sign": "Aquarius",
+          "house": 7,
+          "degree": 5.0907949627600715
+        },
+        "Venus": {
+          "sign": "Scorpio",
+          "house": 4,
+          "degree": 2.0885767209974233
+        },
+        "Saturn": {
+          "sign": "Scorpio",
+          "house": 4,
+          "degree": 2.3325895109023236
+        },
+        "Rahu": {
+          "sign": "Leo",
+          "house": 1,
+          "degree": 19.47076080344965
+        },
+        "Ketu": {
+          "sign": "Aquarius",
+          "house": 7,
+          "degree": 19.47076080344965
+        }
+      },
+      "ascendant": "Leo"
+    },
+    {
+      "name": "Nikola Tesla",
+      "planets": {
+        "Sun": {
+          "sign": "Gemini",
+          "house": 3,
+          "degree": 25.085374401725787
+        },
+        "Moon": {
+          "sign": "Virgo",
+          "house": 6,
+          "degree": 21.287304748072557
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 6,
+          "degree": 26.215731176773318
+        },
+        "Mercury": {
+          "sign": "Gemini",
+          "house": 3,
+          "degree": 5.38619124258949
+        },
+        "Jupiter": {
+          "sign": "Pisces",
+          "house": 12,
+          "degree": 15.857569229802948
+        },
+        "Venus": {
+          "sign": "Gemini",
+          "house": 3,
+          "degree": 22.11408137540718
+        },
+        "Saturn": {
+          "sign": "Gemini",
+          "house": 3,
+          "degree": 12.833168357448784
+        },
+        "Rahu": {
+          "sign": "Pisces",
+          "house": 12,
+          "degree": 27.3728398163351
+        },
+        "Ketu": {
+          "sign": "Virgo",
+          "house": 6,
+          "degree": 27.372839816335045
+        }
+      },
+      "ascendant": "Aries"
+    },
+    {
+      "name": "Stephen Hawking",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 23.155022481331343
+        },
+        "Moon": {
+          "sign": "Leo",
+          "house": 12,
+          "degree": 25.140179739722214
+        },
+        "Mars": {
+          "sign": "Aries",
+          "house": 8,
+          "degree": 4.165446045322873
+        },
+        "Mercury": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 3.3742330410175896
+        },
+        "Jupiter": {
+          "sign": "Taurus",
+          "house": 9,
+          "degree": 18.794677842626584
+        },
+        "Venus": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 26.75726129235818
+        },
+        "Saturn": {
+          "sign": "Aries",
+          "house": 8,
+          "degree": 27.921670532068443
+        },
+        "Rahu": {
+          "sign": "Leo",
+          "house": 12,
+          "degree": 21.03862186674621
+        },
+        "Ketu": {
+          "sign": "Aquarius",
+          "house": 6,
+          "degree": 21.03862186674621
+        }
+      },
+      "ascendant": "Virgo"
+    },
+    {
+      "name": "Charles Darwin",
+      "planets": {
+        "Sun": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 0.8537961347334431
+        },
+        "Moon": {
+          "sign": "Sagittarius",
+          "house": 3,
+          "degree": 27.522900187034793
+        },
+        "Mars": {
+          "sign": "Libra",
+          "house": 1,
+          "degree": 3.3189598389197954
+        },
+        "Mercury": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 17.4499802065871
+        },
+        "Jupiter": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 29.895090805881637
+        },
+        "Venus": {
+          "sign": "Pisces",
+          "house": 6,
+          "degree": 14.79076063443489
+        },
+        "Saturn": {
+          "sign": "Scorpio",
+          "house": 2,
+          "degree": 11.042079821436488
+        },
+        "Rahu": {
+          "sign": "Libra",
+          "house": 1,
+          "degree": 14.175573937425895
+        },
+        "Ketu": {
+          "sign": "Aries",
+          "house": 7,
+          "degree": 14.175573937425895
+        }
+      },
+      "ascendant": "Libra"
+    },
+    {
+      "name": "Thomas Edison",
+      "planets": {
+        "Sun": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 29.297479804726606
+        },
+        "Moon": {
+          "sign": "Sagittarius",
+          "house": 3,
+          "degree": 1.1471376251083143
+        },
+        "Mars": {
+          "sign": "Sagittarius",
+          "house": 3,
+          "degree": 7.876496665562598
+        },
+        "Mercury": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 25.146561364062165
+        },
+        "Jupiter": {
+          "sign": "Taurus",
+          "house": 8,
+          "degree": 14.187779750406875
+        },
+        "Venus": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 12.939755804632114
+        },
+        "Saturn": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 9.368174668115898
+        },
+        "Rahu": {
+          "sign": "Virgo",
+          "house": 12,
+          "degree": 28.10506931218586
+        },
+        "Ketu": {
+          "sign": "Pisces",
+          "house": 6,
+          "degree": 28.105069312185833
+        }
+      },
+      "ascendant": "Libra"
+    },
+    {
+      "name": "Alexander Fleming",
+      "planets": {
+        "Sun": {
+          "sign": "Cancer",
+          "house": 3,
+          "degree": 20.53440649914178
+        },
+        "Moon": {
+          "sign": "Scorpio",
+          "house": 7,
+          "degree": 26.242263865706036
+        },
+        "Mars": {
+          "sign": "Taurus",
+          "house": 1,
+          "degree": 8.25022636844065
+        },
+        "Mercury": {
+          "sign": "Cancer",
+          "house": 3,
+          "degree": 1.4925838373702902
+        },
+        "Jupiter": {
+          "sign": "Taurus",
+          "house": 1,
+          "degree": 0.652462170330729
+        },
+        "Venus": {
+          "sign": "Gemini",
+          "house": 2,
+          "degree": 6.526206813278478
+        },
+        "Saturn": {
+          "sign": "Aries",
+          "house": 12,
+          "degree": 19.039781184966003
+        },
+        "Rahu": {
+          "sign": "Scorpio",
+          "house": 7,
+          "degree": 23.535358490957947
+        },
+        "Ketu": {
+          "sign": "Taurus",
+          "house": 1,
+          "degree": 23.535358490957947
+        }
+      },
+      "ascendant": "Taurus"
+    },
+    {
+      "name": "Max Planck",
+      "planets": {
+        "Sun": {
+          "sign": "Aries",
+          "house": 6,
+          "degree": 9.734241308345833
+        },
+        "Moon": {
+          "sign": "Leo",
+          "house": 10,
+          "degree": 9.324170152752117
+        },
+        "Mars": {
+          "sign": "Scorpio",
+          "house": 1,
+          "degree": 8.488356874625737
+        },
+        "Mercury": {
+          "sign": "Aries",
+          "house": 6,
+          "degree": 29.45470510123613
+        },
+        "Jupiter": {
+          "sign": "Aries",
+          "house": 6,
+          "degree": 29.592291433529347
+        },
+        "Venus": {
+          "sign": "Aries",
+          "house": 6,
+          "degree": 23.227028318875032
+        },
+        "Saturn": {
+          "sign": "Gemini",
+          "house": 8,
+          "degree": 29.488240846852065
+        },
+        "Rahu": {
+          "sign": "Aquarius",
+          "house": 4,
+          "degree": 24.220272136466576
+        },
+        "Ketu": {
+          "sign": "Leo",
+          "house": 10,
+          "degree": 24.220272136466576
+        }
+      },
+      "ascendant": "Scorpio"
+    },
+    {
+      "name": "Niels Bohr",
+      "planets": {
+        "Sun": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 20.704240406335856
+        },
+        "Moon": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 3.2510762339489077
+        },
+        "Mars": {
+          "sign": "Cancer",
+          "house": 1,
+          "degree": 18.874184496370418
+        },
+        "Mercury": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 13.645738753397524
+        },
+        "Jupiter": {
+          "sign": "Leo",
+          "house": 2,
+          "degree": 29.22706644274689
+        },
+        "Venus": {
+          "sign": "Scorpio",
+          "house": 5,
+          "degree": 0.14314760788224135
+        },
+        "Saturn": {
+          "sign": "Gemini",
+          "house": 12,
+          "degree": 15.084254423068941
+        },
+        "Rahu": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 2.4069456470164994
+        },
+        "Ketu": {
+          "sign": "Pisces",
+          "house": 9,
+          "degree": 2.406945647016528
+        }
+      },
+      "ascendant": "Cancer"
+    },
+    {
+      "name": "Richard Feynman",
+      "planets": {
+        "Sun": {
+          "sign": "Aries",
+          "house": 4,
+          "degree": 26.090860616100247
+        },
+        "Moon": {
+          "sign": "Taurus",
+          "house": 5,
+          "degree": 5.135576540294224
+        },
+        "Mars": {
+          "sign": "Leo",
+          "house": 8,
+          "degree": 21.64110832302279
+        },
+        "Mercury": {
+          "sign": "Aries",
+          "house": 4,
+          "degree": 6.810124291585792
+        },
+        "Jupiter": {
+          "sign": "Taurus",
+          "house": 5,
+          "degree": 22.09015042022841
+        },
+        "Venus": {
+          "sign": "Pisces",
+          "house": 3,
+          "degree": 11.013134028085858
+        },
+        "Saturn": {
+          "sign": "Cancer",
+          "house": 7,
+          "degree": 14.901197692208072
+        },
+        "Rahu": {
+          "sign": "Scorpio",
+          "house": 11,
+          "degree": 28.896703957180364
+        },
+        "Ketu": {
+          "sign": "Taurus",
+          "house": 5,
+          "degree": 28.896703957180364
+        }
+      },
+      "ascendant": "Capricorn"
+    },
+    {
+      "name": "Mahatma Gandhi",
+      "planets": {
+        "Sun": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 15.685214056526235
+        },
+        "Moon": {
+          "sign": "Cancer",
+          "house": 2,
+          "degree": 22.235599493271266
+        },
+        "Mars": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 25.256944034643254
+        },
+        "Mercury": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 10.64383458745408
+        },
+        "Jupiter": {
+          "sign": "Aries",
+          "house": 11,
+          "degree": 27.278092725172126
+        },
+        "Venus": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 23.123683615296585
+        },
+        "Saturn": {
+          "sign": "Scorpio",
+          "house": 6,
+          "degree": 19.424835123361788
+        },
+        "Rahu": {
+          "sign": "Cancer",
+          "house": 2,
+          "degree": 12.784270532052616
+        },
+        "Ketu": {
+          "sign": "Capricorn",
+          "house": 8,
+          "degree": 12.78427053205263
+        }
+      },
+      "ascendant": "Gemini"
+    },
+    {
+      "name": "Jawaharlal Nehru",
+      "planets": {
+        "Sun": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 28.41683610388972
+        },
+        "Moon": {
+          "sign": "Cancer",
+          "house": 1,
+          "degree": 5.59187142626017
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 8.52287487233093
+        },
+        "Mercury": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 14.75940470454023
+        },
+        "Jupiter": {
+          "sign": "Sagittarius",
+          "house": 6,
+          "degree": 14.109659316042467
+        },
+        "Venus": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 5.28207268771294
+        },
+        "Saturn": {
+          "sign": "Leo",
+          "house": 2,
+          "degree": 9.862054935385942
+        },
+        "Rahu": {
+          "sign": "Gemini",
+          "house": 12,
+          "degree": 10.532994561335073
+        },
+        "Ketu": {
+          "sign": "Sagittarius",
+          "house": 6,
+          "degree": 10.532994561335073
+        }
+      },
+      "ascendant": "Cancer"
+    },
+    {
+      "name": "Narendra Modi",
+      "planets": {
+        "Sun": {
+          "sign": "Leo",
+          "house": 3,
+          "degree": 29.267003614161297
+        },
+        "Moon": {
+          "sign": "Scorpio",
+          "house": 6,
+          "degree": 1.3243557205028935
+        },
+        "Mars": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 29.741867418100753
+        },
+        "Mercury": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 0.3782968445438257
+        },
+        "Jupiter": {
+          "sign": "Aquarius",
+          "house": 9,
+          "degree": 5.75918325553539
+        },
+        "Venus": {
+          "sign": "Leo",
+          "house": 3,
+          "degree": 14.24820061858128
+        },
+        "Saturn": {
+          "sign": "Leo",
+          "house": 3,
+          "degree": 28.718486018705505
+        },
+        "Rahu": {
+          "sign": "Pisces",
+          "house": 10,
+          "degree": 4.322131835629932
+        },
+        "Ketu": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 4.322131835629989
+        }
+      },
+      "ascendant": "Gemini"
+    },
+    {
+      "name": "Indira Gandhi",
+      "planets": {
+        "Sun": {
+          "sign": "Scorpio",
+          "house": 4,
+          "degree": 2.272415620360988
+        },
+        "Moon": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 21.431237720824527
+        },
+        "Mars": {
+          "sign": "Leo",
+          "house": 1,
+          "degree": 15.008125924258849
+        },
+        "Mercury": {
+          "sign": "Scorpio",
+          "house": 4,
+          "degree": 10.869564632325734
+        },
+        "Jupiter": {
+          "sign": "Taurus",
+          "house": 10,
+          "degree": 14.242721349195321
+        },
+        "Venus": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 19.089494968050133
+        },
+        "Saturn": {
+          "sign": "Cancer",
+          "house": 12,
+          "degree": 20.892383591593685
+        },
+        "Rahu": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 8.297449293382556
+        },
+        "Ketu": {
+          "sign": "Gemini",
+          "house": 11,
+          "degree": 8.297449293382556
+        }
+      },
+      "ascendant": "Leo"
+    },
+    {
+      "name": "Winston Churchill",
+      "planets": {
+        "Sun": {
+          "sign": "Scorpio",
+          "house": 4,
+          "degree": 14.670267756162048
+        },
+        "Moon": {
+          "sign": "Leo",
+          "house": 1,
+          "degree": 5.837078264324589
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 2,
+          "degree": 23.52727171548588
+        },
+        "Mercury": {
+          "sign": "Libra",
+          "house": 3,
+          "degree": 24.554450077647488
+        },
+        "Jupiter": {
+          "sign": "Libra",
+          "house": 3,
+          "degree": 0.571156123638076
+        },
+        "Venus": {
+          "sign": "Scorpio",
+          "house": 4,
+          "degree": 29.064125653149432
+        },
+        "Saturn": {
+          "sign": "Capricorn",
+          "house": 6,
+          "degree": 16.602028717632322
+        },
+        "Rahu": {
+          "sign": "Aries",
+          "house": 9,
+          "degree": 2.8585598110692536
+        },
+        "Ketu": {
+          "sign": "Libra",
+          "house": 3,
+          "degree": 2.858559811069256
+        }
+      },
+      "ascendant": "Leo"
+    },
+    {
+      "name": "John F. Kennedy",
+      "planets": {
+        "Sun": {
+          "sign": "Taurus",
+          "house": 4,
+          "degree": 13.658704778357745
+        },
+        "Moon": {
+          "sign": "Leo",
+          "house": 7,
+          "degree": 16.14027588678377
+        },
+        "Mars": {
+          "sign": "Aries",
+          "house": 3,
+          "degree": 24.394301786574456
+        },
+        "Mercury": {
+          "sign": "Aries",
+          "house": 3,
+          "degree": 27.001580579072836
+        },
+        "Jupiter": {
+          "sign": "Aries",
+          "house": 3,
+          "degree": 29.318447777145686
+        },
+        "Venus": {
+          "sign": "Taurus",
+          "house": 4,
+          "degree": 22.398243542178626
+        },
+        "Saturn": {
+          "sign": "Cancer",
+          "house": 6,
+          "degree": 3.513936210908909
+        },
+        "Rahu": {
+          "sign": "Sagittarius",
+          "house": 11,
+          "degree": 17.66245159313104
+        },
+        "Ketu": {
+          "sign": "Gemini",
+          "house": 5,
+          "degree": 17.66245159313104
+        }
+      },
+      "ascendant": "Aquarius"
+    },
+    {
+      "name": "Nelson Mandela",
+      "planets": {
+        "Sun": {
+          "sign": "Cancer",
+          "house": 5,
+          "degree": 0.8765054475888405
+        },
+        "Moon": {
+          "sign": "Libra",
+          "house": 8,
+          "degree": 19.082206142907523
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 7,
+          "degree": 18.634515955659197
+        },
+        "Mercury": {
+          "sign": "Cancer",
+          "house": 5,
+          "degree": 21.530187341962417
+        },
+        "Jupiter": {
+          "sign": "Gemini",
+          "house": 4,
+          "degree": 7.431584438379602
+        },
+        "Venus": {
+          "sign": "Taurus",
+          "house": 3,
+          "degree": 28.24499739056077
+        },
+        "Saturn": {
+          "sign": "Cancer",
+          "house": 5,
+          "degree": 21.35571078568792
+        },
+        "Rahu": {
+          "sign": "Scorpio",
+          "house": 9,
+          "degree": 28.20998031426629
+        },
+        "Ketu": {
+          "sign": "Taurus",
+          "house": 3,
+          "degree": 28.209980314266318
+        }
+      },
+      "ascendant": "Pisces"
+    },
+    {
+      "name": "Abraham Lincoln",
+      "planets": {
+        "Sun": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 1.0643426073273758
+        },
+        "Moon": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 0.45675292463806727
+        },
+        "Mars": {
+          "sign": "Libra",
+          "house": 1,
+          "degree": 3.3591929749643725
+        },
+        "Mercury": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 17.763464527794156
+        },
+        "Jupiter": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 29.942469424622743
+        },
+        "Venus": {
+          "sign": "Pisces",
+          "house": 6,
+          "degree": 15.02790828801318
+        },
+        "Saturn": {
+          "sign": "Scorpio",
+          "house": 2,
+          "degree": 11.052174610399334
+        },
+        "Rahu": {
+          "sign": "Libra",
+          "house": 1,
+          "degree": 14.141007359138428
+        },
+        "Ketu": {
+          "sign": "Aries",
+          "house": 7,
+          "degree": 14.141007359138428
+        }
+      },
+      "ascendant": "Libra"
+    },
+    {
+      "name": "Margaret Thatcher",
+      "planets": {
+        "Sun": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 25.43687872904661
+        },
+        "Moon": {
+          "sign": "Leo",
+          "house": 2,
+          "degree": 0.4295167566769891
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 15.528654965603295
+        },
+        "Mercury": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 29.471905550325715
+        },
+        "Jupiter": {
+          "sign": "Sagittarius",
+          "house": 6,
+          "degree": 20.75333507049885
+        },
+        "Venus": {
+          "sign": "Scorpio",
+          "house": 5,
+          "degree": 7.943736309832445
+        },
+        "Saturn": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 20.03840798132859
+        },
+        "Rahu": {
+          "sign": "Cancer",
+          "house": 1,
+          "degree": 7.8468158384849005
+        },
+        "Ketu": {
+          "sign": "Capricorn",
+          "house": 7,
+          "degree": 7.846815838484872
+        }
+      },
+      "ascendant": "Cancer"
+    },
+    {
+      "name": "Barack Obama",
+      "planets": {
+        "Sun": {
+          "sign": "Cancer",
+          "house": 4,
+          "degree": 17.577801786466495
+        },
+        "Moon": {
+          "sign": "Aries",
+          "house": 1,
+          "degree": 28.80636319788402
+        },
+        "Mars": {
+          "sign": "Leo",
+          "house": 5,
+          "degree": 27.87955850418689
+        },
+        "Mercury": {
+          "sign": "Cancer",
+          "house": 4,
+          "degree": 6.532673681300608
+        },
+        "Jupiter": {
+          "sign": "Capricorn",
+          "house": 10,
+          "degree": 6.754946699286791
+        },
+        "Venus": {
+          "sign": "Gemini",
+          "house": 3,
+          "degree": 6.678899767484268
+        },
+        "Saturn": {
+          "sign": "Capricorn",
+          "house": 10,
+          "degree": 1.1814376764972963
+        },
+        "Rahu": {
+          "sign": "Leo",
+          "house": 5,
+          "degree": 3.1153732104050675
+        },
+        "Ketu": {
+          "sign": "Aquarius",
+          "house": 11,
+          "degree": 3.115373210405096
+        }
+      },
+      "ascendant": "Aries"
+    },
+    {
+      "name": "Rabindranath Tagore",
+      "planets": {
+        "Sun": {
+          "sign": "Aries",
+          "house": 4,
+          "degree": 23.359963077967322
+        },
+        "Moon": {
+          "sign": "Pisces",
+          "house": 3,
+          "degree": 18.438793345438683
+        },
+        "Mars": {
+          "sign": "Taurus",
+          "house": 5,
+          "degree": 29.205583621190414
+        },
+        "Mercury": {
+          "sign": "Aries",
+          "house": 4,
+          "degree": 6.781281379171495
+        },
+        "Jupiter": {
+          "sign": "Cancer",
+          "house": 7,
+          "degree": 25.05789794033086
+        },
+        "Venus": {
+          "sign": "Aries",
+          "house": 4,
+          "degree": 22.06031112305663
+        },
+        "Saturn": {
+          "sign": "Leo",
+          "house": 8,
+          "degree": 9.85966003047622
+        },
+        "Rahu": {
+          "sign": "Sagittarius",
+          "house": 12,
+          "degree": 22.69342386868601
+        },
+        "Ketu": {
+          "sign": "Gemini",
+          "house": 6,
+          "degree": 22.69342386868601
+        }
+      },
+      "ascendant": "Capricorn"
+    },
+    {
+      "name": "Ludwig van Beethoven",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 3.6052062589072023
+        },
+        "Moon": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 1.5564025268995465
+        },
+        "Mars": {
+          "sign": "Gemini",
+          "house": 11,
+          "degree": 0.7981614886396358
+        },
+        "Mercury": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 1.7341808992363497
+        },
+        "Jupiter": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 11.797298661443278
+        },
+        "Venus": {
+          "sign": "Capricorn",
+          "house": 6,
+          "degree": 5.277022704214062
+        },
+        "Saturn": {
+          "sign": "Cancer",
+          "house": 12,
+          "degree": 24.235506566684606
+        },
+        "Rahu": {
+          "sign": "Scorpio",
+          "house": 4,
+          "degree": 4.9311102666680995
+        },
+        "Ketu": {
+          "sign": "Taurus",
+          "house": 10,
+          "degree": 4.9311102666680995
+        }
+      },
+      "ascendant": "Leo"
+    },
+    {
+      "name": "Wolfgang Mozart",
+      "planets": {
+        "Sun": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 15.20396840127404
+        },
+        "Moon": {
+          "sign": "Scorpio",
+          "house": 2,
+          "degree": 14.329652782002114
+        },
+        "Mars": {
+          "sign": "Gemini",
+          "house": 9,
+          "degree": 9.104888207250141
+        },
+        "Mercury": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 15.370519709101188
+        },
+        "Jupiter": {
+          "sign": "Virgo",
+          "house": 12,
+          "degree": 27.166452604526683
+        },
+        "Venus": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 6.953180522764853
+        },
+        "Saturn": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 10.562753691526382
+        },
+        "Rahu": {
+          "sign": "Leo",
+          "house": 11,
+          "degree": 20.18167497570886
+        },
+        "Ketu": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 20.18167497570886
+        }
+      },
+      "ascendant": "Libra"
+    },
+    {
+      "name": "Pablo Picasso",
+      "planets": {
+        "Sun": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 8.64558958369912
+        },
+        "Moon": {
+          "sign": "Scorpio",
+          "house": 5,
+          "degree": 1.8478759327644525
+        },
+        "Mars": {
+          "sign": "Gemini",
+          "house": 12,
+          "degree": 18.994508089402572
+        },
+        "Mercury": {
+          "sign": "Scorpio",
+          "house": 5,
+          "degree": 0.8438853800761308
+        },
+        "Jupiter": {
+          "sign": "Taurus",
+          "house": 11,
+          "degree": 0.5783594353650372
+        },
+        "Venus": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 10.233702096100444
+        },
+        "Saturn": {
+          "sign": "Aries",
+          "house": 10,
+          "degree": 16.43763473746694
+        },
+        "Rahu": {
+          "sign": "Scorpio",
+          "house": 5,
+          "degree": 16.316523147963665
+        },
+        "Ketu": {
+          "sign": "Taurus",
+          "house": 11,
+          "degree": 16.316523147963665
+        }
+      },
+      "ascendant": "Cancer"
+    },
+    {
+      "name": "Vincent van Gogh",
+      "planets": {
+        "Sun": {
+          "sign": "Pisces",
+          "house": 5,
+          "degree": 16.520202825536785
+        },
+        "Moon": {
+          "sign": "Scorpio",
+          "house": 1,
+          "degree": 21.50298623305568
+        },
+        "Mars": {
+          "sign": "Pisces",
+          "house": 5,
+          "degree": 3.0929202592399747
+        },
+        "Mercury": {
+          "sign": "Aries",
+          "house": 6,
+          "degree": 2.8228551935458013
+        },
+        "Jupiter": {
+          "sign": "Sagittarius",
+          "house": 2,
+          "degree": 1.566593849261551
+        },
+        "Venus": {
+          "sign": "Pisces",
+          "house": 5,
+          "degree": 4.813221704378009
+        },
+        "Saturn": {
+          "sign": "Aries",
+          "house": 6,
+          "degree": 23.226934485161145
+        },
+        "Rahu": {
+          "sign": "Taurus",
+          "house": 7,
+          "degree": 29.787613948367287
+        },
+        "Ketu": {
+          "sign": "Scorpio",
+          "house": 1,
+          "degree": 29.787613948367294
+        }
+      },
+      "ascendant": "Scorpio"
+    },
+    {
+      "name": "Charlie Chaplin",
+      "planets": {
+        "Sun": {
+          "sign": "Aries",
+          "house": 6,
+          "degree": 3.002748895083001
+        },
+        "Moon": {
+          "sign": "Libra",
+          "house": 12,
+          "degree": 3.9571252724819885
+        },
+        "Mars": {
+          "sign": "Aries",
+          "house": 6,
+          "degree": 19.790194288568255
+        },
+        "Mercury": {
+          "sign": "Pisces",
+          "house": 5,
+          "degree": 23.002277610948795
+        },
+        "Jupiter": {
+          "sign": "Sagittarius",
+          "house": 2,
+          "degree": 14.958478319908039
+        },
+        "Venus": {
+          "sign": "Aries",
+          "house": 6,
+          "degree": 25.150266323176268
+        },
+        "Saturn": {
+          "sign": "Cancer",
+          "house": 9,
+          "degree": 20.23719688294294
+        },
+        "Rahu": {
+          "sign": "Gemini",
+          "house": 8,
+          "degree": 22.397584602210316
+        },
+        "Ketu": {
+          "sign": "Sagittarius",
+          "house": 2,
+          "degree": 22.397584602210316
+        }
+      },
+      "ascendant": "Scorpio"
+    },
+    {
+      "name": "Elvis Presley",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 23.206333003159045
+        },
+        "Moon": {
+          "sign": "Aquarius",
+          "house": 6,
+          "degree": 5.369067028847553
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 1,
+          "degree": 18.919467847019348
+        },
+        "Mercury": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 28.167466085582817
+        },
+        "Jupiter": {
+          "sign": "Libra",
+          "house": 2,
+          "degree": 24.207445512184535
+        },
+        "Venus": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 5.300266376139803
+        },
+        "Saturn": {
+          "sign": "Aquarius",
+          "house": 6,
+          "degree": 1.8922893025807639
+        },
+        "Rahu": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 7.296344235431093
+        },
+        "Ketu": {
+          "sign": "Cancer",
+          "house": 11,
+          "degree": 7.296344235431093
+        }
+      },
+      "ascendant": "Virgo"
+    },
+    {
+      "name": "Michael Jackson",
+      "planets": {
+        "Sun": {
+          "sign": "Leo",
+          "house": 4,
+          "degree": 11.196992751870965
+        },
+        "Moon": {
+          "sign": "Aquarius",
+          "house": 10,
+          "degree": 10.77051350858818
+        },
+        "Mars": {
+          "sign": "Aries",
+          "house": 12,
+          "degree": 27.504980435296716
+        },
+        "Mercury": {
+          "sign": "Leo",
+          "house": 4,
+          "degree": 1.6383520997838872
+        },
+        "Jupiter": {
+          "sign": "Libra",
+          "house": 6,
+          "degree": 4.241365081132983
+        },
+        "Venus": {
+          "sign": "Cancer",
+          "house": 3,
+          "degree": 21.91709346429255
+        },
+        "Saturn": {
+          "sign": "Scorpio",
+          "house": 7,
+          "degree": 24.95285139587085
+        },
+        "Rahu": {
+          "sign": "Virgo",
+          "house": 5,
+          "degree": 29.01997817411808
+        },
+        "Ketu": {
+          "sign": "Pisces",
+          "house": 11,
+          "degree": 29.01997817411808
+        }
+      },
+      "ascendant": "Taurus"
+    },
+    {
+      "name": "A.R. Rahman",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 20.46150092432572
+        },
+        "Moon": {
+          "sign": "Libra",
+          "house": 2,
+          "degree": 18.577256040034655
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 1,
+          "degree": 22.03839427516732
+        },
+        "Mercury": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 13.113617930151946
+        },
+        "Jupiter": {
+          "sign": "Cancer",
+          "house": 11,
+          "degree": 7.068319593820831
+        },
+        "Venus": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 4.423884933586692
+        },
+        "Saturn": {
+          "sign": "Pisces",
+          "house": 7,
+          "degree": 0.0441579189167669
+        },
+        "Rahu": {
+          "sign": "Aries",
+          "house": 8,
+          "degree": 20.162710572742157
+        },
+        "Ketu": {
+          "sign": "Libra",
+          "house": 2,
+          "degree": 20.162710572742157
+        }
+      },
+      "ascendant": "Virgo"
+    },
+    {
+      "name": "Lata Mangeshkar",
+      "planets": {
+        "Sun": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 10.40212311716735
+        },
+        "Moon": {
+          "sign": "Cancer",
+          "house": 2,
+          "degree": 2.691330190167278
+        },
+        "Mars": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 0.3593005969819103
+        },
+        "Mercury": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 29.37248195703299
+        },
+        "Jupiter": {
+          "sign": "Taurus",
+          "house": 12,
+          "degree": 22.55263795567945
+        },
+        "Venus": {
+          "sign": "Leo",
+          "house": 3,
+          "degree": 8.78902525339538
+        },
+        "Saturn": {
+          "sign": "Sagittarius",
+          "house": 7,
+          "degree": 0.851707165096002
+        },
+        "Rahu": {
+          "sign": "Aries",
+          "house": 11,
+          "degree": 19.111096672233973
+        },
+        "Ketu": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 19.11109667223397
+        }
+      },
+      "ascendant": "Gemini"
+    },
+    {
+      "name": "Steve Jobs",
+      "planets": {
+        "Sun": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 10.827873475540798
+        },
+        "Moon": {
+          "sign": "Pisces",
+          "house": 6,
+          "degree": 2.303329433892202
+        },
+        "Mars": {
+          "sign": "Aries",
+          "house": 7,
+          "degree": 4.41605065344086
+        },
+        "Mercury": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 20.305673992558468
+        },
+        "Jupiter": {
+          "sign": "Gemini",
+          "house": 9,
+          "degree": 26.438851079593675
+        },
+        "Venus": {
+          "sign": "Sagittarius",
+          "house": 3,
+          "degree": 26.147873272880133
+        },
+        "Saturn": {
+          "sign": "Libra",
+          "house": 1,
+          "degree": 27.038035841382765
+        },
+        "Rahu": {
+          "sign": "Sagittarius",
+          "house": 3,
+          "degree": 9.42598500629478
+        },
+        "Ketu": {
+          "sign": "Gemini",
+          "house": 9,
+          "degree": 9.425985006294809
+        }
+      },
+      "ascendant": "Libra"
+    },
+    {
+      "name": "Bill Gates",
+      "planets": {
+        "Sun": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 10.002847388405456
+        },
+        "Moon": {
+          "sign": "Pisces",
+          "house": 9,
+          "degree": 1.4333423658672473
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 15.411582363615196
+        },
+        "Mercury": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 21.626520904467753
+        },
+        "Jupiter": {
+          "sign": "Leo",
+          "house": 2,
+          "degree": 3.533521489638872
+        },
+        "Venus": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 24.97263961750059
+        },
+        "Saturn": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 27.365154754429398
+        },
+        "Rahu": {
+          "sign": "Scorpio",
+          "house": 5,
+          "degree": 24.114446205026354
+        },
+        "Ketu": {
+          "sign": "Taurus",
+          "house": 11,
+          "degree": 24.114446205026354
+        }
+      },
+      "ascendant": "Cancer"
+    },
+    {
+      "name": "Elon Musk",
+      "planets": {
+        "Sun": {
+          "sign": "Gemini",
+          "house": 4,
+          "degree": 11.2528246593929
+        },
+        "Moon": {
+          "sign": "Leo",
+          "house": 6,
+          "degree": 10.138313644689276
+        },
+        "Mars": {
+          "sign": "Capricorn",
+          "house": 11,
+          "degree": 26.510741843745393
+        },
+        "Mercury": {
+          "sign": "Gemini",
+          "house": 4,
+          "degree": 19.085381138815464
+        },
+        "Jupiter": {
+          "sign": "Scorpio",
+          "house": 9,
+          "degree": 3.3247233640765614
+        },
+        "Venus": {
+          "sign": "Taurus",
+          "house": 3,
+          "degree": 24.681986727805764
+        },
+        "Saturn": {
+          "sign": "Taurus",
+          "house": 3,
+          "degree": 6.748070057594944
+        },
+        "Rahu": {
+          "sign": "Capricorn",
+          "house": 11,
+          "degree": 20.759861379437382
+        },
+        "Ketu": {
+          "sign": "Cancer",
+          "house": 5,
+          "degree": 20.759861379437382
+        }
+      },
+      "ascendant": "Pisces"
+    },
+    {
+      "name": "Jeff Bezos",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 26.872269164922216
+        },
+        "Moon": {
+          "sign": "Scorpio",
+          "house": 3,
+          "degree": 28.13728690493818
+        },
+        "Mars": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 5.019650293878442
+        },
+        "Mercury": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 11.034472349522844
+        },
+        "Jupiter": {
+          "sign": "Pisces",
+          "house": 7,
+          "degree": 17.68557436421554
+        },
+        "Venus": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 29.850871718416386
+        },
+        "Saturn": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 27.381201880590652
+        },
+        "Rahu": {
+          "sign": "Gemini",
+          "house": 10,
+          "degree": 17.007524146992495
+        },
+        "Ketu": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 17.007524146992523
+        }
+      },
+      "ascendant": "Virgo"
+    },
+    {
+      "name": "Warren Buffett",
+      "planets": {
+        "Sun": {
+          "sign": "Leo",
+          "house": 3,
+          "degree": 12.37541193217831
+        },
+        "Moon": {
+          "sign": "Scorpio",
+          "house": 6,
+          "degree": 3.4954003959069837
+        },
+        "Mars": {
+          "sign": "Gemini",
+          "house": 1,
+          "degree": 7.349117668734948
+        },
+        "Mercury": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 9.17058220777102
+        },
+        "Jupiter": {
+          "sign": "Gemini",
+          "house": 1,
+          "degree": 19.775078690384092
+        },
+        "Venus": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 28.095875606283045
+        },
+        "Saturn": {
+          "sign": "Sagittarius",
+          "house": 7,
+          "degree": 11.579391789037288
+        },
+        "Rahu": {
+          "sign": "Aries",
+          "house": 11,
+          "degree": 1.115373549252863
+        },
+        "Ketu": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 1.1153735492528654
+        }
+      },
+      "ascendant": "Gemini"
+    },
+    {
+      "name": "Mukesh Ambani",
+      "planets": {
+        "Sun": {
+          "sign": "Aries",
+          "house": 5,
+          "degree": 4.406786379001032
+        },
+        "Moon": {
+          "sign": "Scorpio",
+          "house": 12,
+          "degree": 29.452352955179748
+        },
+        "Mars": {
+          "sign": "Taurus",
+          "house": 6,
+          "degree": 25.958964069120114
+        },
+        "Mercury": {
+          "sign": "Aries",
+          "house": 5,
+          "degree": 23.334684026689544
+        },
+        "Jupiter": {
+          "sign": "Leo",
+          "house": 9,
+          "degree": 29.041957293649233
+        },
+        "Venus": {
+          "sign": "Aries",
+          "house": 5,
+          "degree": 5.531397509170144
+        },
+        "Saturn": {
+          "sign": "Scorpio",
+          "house": 12,
+          "degree": 19.617939501278414
+        },
+        "Rahu": {
+          "sign": "Libra",
+          "house": 11,
+          "degree": 25.629815947006506
+        },
+        "Ketu": {
+          "sign": "Aries",
+          "house": 5,
+          "degree": 25.629815947006477
+        }
+      },
+      "ascendant": "Sagittarius"
+    },
+    {
+      "name": "Ratan Tata",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 11.737206056744412
+        },
+        "Moon": {
+          "sign": "Libra",
+          "house": 2,
+          "degree": 17.514413309500696
+        },
+        "Mars": {
+          "sign": "Aquarius",
+          "house": 6,
+          "degree": 10.69344452479936
+        },
+        "Mercury": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 17.21007589947982
+        },
+        "Jupiter": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 7.810497202289639
+        },
+        "Venus": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 2.5580711710293826
+        },
+        "Saturn": {
+          "sign": "Pisces",
+          "house": 7,
+          "degree": 5.070778398682194
+        },
+        "Rahu": {
+          "sign": "Scorpio",
+          "house": 3,
+          "degree": 11.9962888827107
+        },
+        "Ketu": {
+          "sign": "Taurus",
+          "house": 9,
+          "degree": 11.9962888827107
+        }
+      },
+      "ascendant": "Virgo"
+    },
+    {
+      "name": "Narayana Murthy",
+      "planets": {
+        "Sun": {
+          "sign": "Leo",
+          "house": 4,
+          "degree": 2.1634914274567194
+        },
+        "Moon": {
+          "sign": "Aries",
+          "house": 12,
+          "degree": 28.452603501561168
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 5,
+          "degree": 12.46815076772512
+        },
+        "Mercury": {
+          "sign": "Cancer",
+          "house": 3,
+          "degree": 13.745385462207068
+        },
+        "Jupiter": {
+          "sign": "Virgo",
+          "house": 5,
+          "degree": 29.260249931110735
+        },
+        "Venus": {
+          "sign": "Virgo",
+          "house": 5,
+          "degree": 17.295665110076726
+        },
+        "Saturn": {
+          "sign": "Cancer",
+          "house": 3,
+          "degree": 8.170594576420527
+        },
+        "Rahu": {
+          "sign": "Taurus",
+          "house": 1,
+          "degree": 24.276691194214862
+        },
+        "Ketu": {
+          "sign": "Scorpio",
+          "house": 7,
+          "degree": 24.276691194214862
+        }
+      },
+      "ascendant": "Taurus"
+    },
+    {
+      "name": "Azim Premji",
+      "planets": {
+        "Sun": {
+          "sign": "Cancer",
+          "house": 4,
+          "degree": 6.537079286927522
+        },
+        "Moon": {
+          "sign": "Sagittarius",
+          "house": 9,
+          "degree": 20.064659641006642
+        },
+        "Mars": {
+          "sign": "Taurus",
+          "house": 2,
+          "degree": 6.303669975233639
+        },
+        "Mercury": {
+          "sign": "Leo",
+          "house": 5,
+          "degree": 3.5309289472034635
+        },
+        "Jupiter": {
+          "sign": "Virgo",
+          "house": 6,
+          "degree": 0.009232138069023677
+        },
+        "Venus": {
+          "sign": "Taurus",
+          "house": 2,
+          "degree": 23.100143111113383
+        },
+        "Saturn": {
+          "sign": "Gemini",
+          "house": 3,
+          "degree": 22.592056393427143
+        },
+        "Rahu": {
+          "sign": "Gemini",
+          "house": 3,
+          "degree": 15.17940900094436
+        },
+        "Ketu": {
+          "sign": "Sagittarius",
+          "house": 9,
+          "degree": 15.17940900094436
+        }
+      },
+      "ascendant": "Aries"
+    },
+    {
+      "name": "Dhirubhai Ambani",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 12.029308328420427
+        },
+        "Moon": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 16.145503623044704
+        },
+        "Mars": {
+          "sign": "Leo",
+          "house": 12,
+          "degree": 23.198394106604468
+        },
+        "Mercury": {
+          "sign": "Scorpio",
+          "house": 3,
+          "degree": 20.522054504121115
+        },
+        "Jupiter": {
+          "sign": "Leo",
+          "house": 12,
+          "degree": 29.25776622366331
+        },
+        "Venus": {
+          "sign": "Scorpio",
+          "house": 3,
+          "degree": 14.219989797743665
+        },
+        "Saturn": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 9.765497060244854
+        },
+        "Rahu": {
+          "sign": "Aquarius",
+          "house": 6,
+          "degree": 16.076958225437522
+        },
+        "Ketu": {
+          "sign": "Leo",
+          "house": 12,
+          "degree": 16.076958225437522
+        }
+      },
+      "ascendant": "Virgo"
+    },
+    {
+      "name": "Sachin Tendulkar",
+      "planets": {
+        "Sun": {
+          "sign": "Aries",
+          "house": 5,
+          "degree": 9.086509498478529
+        },
+        "Moon": {
+          "sign": "Sagittarius",
+          "house": 1,
+          "degree": 17.282201002977843
+        },
+        "Mars": {
+          "sign": "Capricorn",
+          "house": 2,
+          "degree": 25.440265270246016
+        },
+        "Mercury": {
+          "sign": "Pisces",
+          "house": 4,
+          "degree": 15.045119414418195
+        },
+        "Jupiter": {
+          "sign": "Capricorn",
+          "house": 2,
+          "degree": 15.655369177557816
+        },
+        "Venus": {
+          "sign": "Aries",
+          "house": 5,
+          "degree": 12.717412479649463
+        },
+        "Saturn": {
+          "sign": "Taurus",
+          "house": 6,
+          "degree": 23.324675106701974
+        },
+        "Rahu": {
+          "sign": "Sagittarius",
+          "house": 1,
+          "degree": 15.502525461506906
+        },
+        "Ketu": {
+          "sign": "Gemini",
+          "house": 7,
+          "degree": 15.502525461506934
+        }
+      },
+      "ascendant": "Sagittarius"
+    },
+    {
+      "name": "Virat Kohli",
+      "planets": {
+        "Sun": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 17.98205206561761
+        },
+        "Moon": {
+          "sign": "Leo",
+          "house": 2,
+          "degree": 24.30022806915275
+        },
+        "Mars": {
+          "sign": "Pisces",
+          "house": 9,
+          "degree": 5.662341204318977
+        },
+        "Mercury": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 2.558567067847463
+        },
+        "Jupiter": {
+          "sign": "Taurus",
+          "house": 11,
+          "degree": 8.861622444399508
+        },
+        "Venus": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 12.430838430092564
+        },
+        "Saturn": {
+          "sign": "Sagittarius",
+          "house": 6,
+          "degree": 4.6856583159322724
+        },
+        "Rahu": {
+          "sign": "Aquarius",
+          "house": 8,
+          "degree": 17.83933195509246
+        },
+        "Ketu": {
+          "sign": "Leo",
+          "house": 2,
+          "degree": 17.83933195509246
+        }
+      },
+      "ascendant": "Cancer"
+    },
+    {
+      "name": "MS Dhoni",
+      "planets": {
+        "Sun": {
+          "sign": "Gemini",
+          "house": 4,
+          "degree": 20.102364403575393
+        },
+        "Moon": {
+          "sign": "Leo",
+          "house": 6,
+          "degree": 23.38395047915043
+        },
+        "Mars": {
+          "sign": "Taurus",
+          "house": 3,
+          "degree": 27.629457787767464
+        },
+        "Mercury": {
+          "sign": "Gemini",
+          "house": 4,
+          "degree": 2.2881454452934946
+        },
+        "Jupiter": {
+          "sign": "Virgo",
+          "house": 7,
+          "degree": 8.24803643848972
+        },
+        "Venus": {
+          "sign": "Cancer",
+          "house": 5,
+          "degree": 13.95371786441919
+        },
+        "Saturn": {
+          "sign": "Virgo",
+          "house": 7,
+          "degree": 9.351493792472269
+        },
+        "Rahu": {
+          "sign": "Cancer",
+          "house": 5,
+          "degree": 7.308140711999442
+        },
+        "Ketu": {
+          "sign": "Capricorn",
+          "house": 11,
+          "degree": 7.308140711999442
+        }
+      },
+      "ascendant": "Pisces"
+    },
+    {
+      "name": "Muhammad Ali",
+      "planets": {
+        "Sun": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 2.580009316619396
+        },
+        "Moon": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 7.360469331245326
+        },
+        "Mars": {
+          "sign": "Aries",
+          "house": 7,
+          "degree": 8.736413911870374
+        },
+        "Mercury": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 18.40044217415192
+        },
+        "Jupiter": {
+          "sign": "Taurus",
+          "house": 8,
+          "degree": 18.0735552767461
+        },
+        "Venus": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 26.88837111267503
+        },
+        "Saturn": {
+          "sign": "Aries",
+          "house": 7,
+          "degree": 27.737422982276513
+        },
+        "Rahu": {
+          "sign": "Leo",
+          "house": 11,
+          "degree": 20.409272704467753
+        },
+        "Ketu": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 20.409272704467753
+        }
+      },
+      "ascendant": "Libra"
+    },
+    {
+      "name": "Michael Jordan",
+      "planets": {
+        "Sun": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 3.5921297033202677
+        },
+        "Moon": {
+          "sign": "Scorpio",
+          "house": 2,
+          "degree": 8.834422684847794
+        },
+        "Mars": {
+          "sign": "Cancer",
+          "house": 10,
+          "degree": 15.925651611565513
+        },
+        "Mercury": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 7.779120874656485
+        },
+        "Jupiter": {
+          "sign": "Aquarius",
+          "house": 5,
+          "degree": 24.748909558535388
+        },
+        "Venus": {
+          "sign": "Sagittarius",
+          "house": 3,
+          "degree": 18.33716966122074
+        },
+        "Saturn": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 21.248663723838433
+        },
+        "Rahu": {
+          "sign": "Cancer",
+          "house": 10,
+          "degree": 5.056374264234279
+        },
+        "Ketu": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 5.05637426423425
+        }
+      },
+      "ascendant": "Libra"
+    },
+    {
+      "name": "Lionel Messi",
+      "planets": {
+        "Sun": {
+          "sign": "Gemini",
+          "house": 5,
+          "degree": 7.541142063405019
+        },
+        "Moon": {
+          "sign": "Taurus",
+          "house": 4,
+          "degree": 14.13059583316334
+        },
+        "Mars": {
+          "sign": "Gemini",
+          "house": 5,
+          "degree": 27.398061656073807
+        },
+        "Mercury": {
+          "sign": "Gemini",
+          "house": 5,
+          "degree": 21.918081422372936
+        },
+        "Jupiter": {
+          "sign": "Aries",
+          "house": 3,
+          "degree": 0.3446381025379667
+        },
+        "Venus": {
+          "sign": "Taurus",
+          "house": 4,
+          "degree": 21.160648887879418
+        },
+        "Saturn": {
+          "sign": "Scorpio",
+          "house": 10,
+          "degree": 22.21842264721664
+        },
+        "Rahu": {
+          "sign": "Pisces",
+          "house": 2,
+          "degree": 13.173838226948817
+        },
+        "Ketu": {
+          "sign": "Virgo",
+          "house": 8,
+          "degree": 13.173838226948874
+        }
+      },
+      "ascendant": "Aquarius"
+    },
+    {
+      "name": "Cristiano Ronaldo",
+      "planets": {
+        "Sun": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 21.60901418721261
+        },
+        "Moon": {
+          "sign": "Cancer",
+          "house": 11,
+          "degree": 13.10828439142422
+        },
+        "Mars": {
+          "sign": "Pisces",
+          "house": 7,
+          "degree": 7.194418379949525
+        },
+        "Mercury": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 11.391259203207426
+        },
+        "Jupiter": {
+          "sign": "Capricorn",
+          "house": 5,
+          "degree": 5.100787991857771
+        },
+        "Venus": {
+          "sign": "Pisces",
+          "house": 7,
+          "degree": 7.876117826409995
+        },
+        "Saturn": {
+          "sign": "Scorpio",
+          "house": 3,
+          "degree": 2.813864516042429
+        },
+        "Rahu": {
+          "sign": "Aries",
+          "house": 8,
+          "degree": 29.112709622439528
+        },
+        "Ketu": {
+          "sign": "Libra",
+          "house": 2,
+          "degree": 29.112709622439525
+        }
+      },
+      "ascendant": "Virgo"
+    },
+    {
+      "name": "Serena Williams",
+      "planets": {
+        "Sun": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 8.502240532612433
+        },
+        "Moon": {
+          "sign": "Leo",
+          "house": 3,
+          "degree": 14.98429638383945
+        },
+        "Mars": {
+          "sign": "Cancer",
+          "house": 2,
+          "degree": 20.584414386933474
+        },
+        "Mercury": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 4.4735512048069666
+        },
+        "Jupiter": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 22.386615418496092
+        },
+        "Venus": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 20.87046677971182
+        },
+        "Saturn": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 17.132791799928498
+        },
+        "Rahu": {
+          "sign": "Cancer",
+          "house": 2,
+          "degree": 5.379033329582398
+        },
+        "Ketu": {
+          "sign": "Capricorn",
+          "house": 8,
+          "degree": 5.379033329582398
+        }
+      },
+      "ascendant": "Gemini"
+    },
+    {
+      "name": "Pele",
+      "planets": {
+        "Sun": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 5.6493835906157415
+        },
+        "Moon": {
+          "sign": "Gemini",
+          "house": 1,
+          "degree": 21.917104084460533
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 17.421367105858934
+        },
+        "Mercury": {
+          "sign": "Libra",
+          "house": 5,
+          "degree": 29.818099443076534
+        },
+        "Jupiter": {
+          "sign": "Aries",
+          "house": 11,
+          "degree": 18.171402297882906
+        },
+        "Venus": {
+          "sign": "Leo",
+          "house": 3,
+          "degree": 24.75357623362001
+        },
+        "Saturn": {
+          "sign": "Aries",
+          "house": 11,
+          "degree": 18.32178115567249
+        },
+        "Rahu": {
+          "sign": "Virgo",
+          "house": 4,
+          "degree": 16.953162802164513
+        },
+        "Ketu": {
+          "sign": "Pisces",
+          "house": 10,
+          "degree": 16.953162802164513
+        }
+      },
+      "ascendant": "Gemini"
+    },
+    {
+      "name": "Roger Federer",
+      "planets": {
+        "Sun": {
+          "sign": "Cancer",
+          "house": 3,
+          "degree": 20.847578205534532
+        },
+        "Moon": {
+          "sign": "Libra",
+          "house": 6,
+          "degree": 22.466805915481956
+        },
+        "Mars": {
+          "sign": "Gemini",
+          "house": 2,
+          "degree": 19.267417197947182
+        },
+        "Mercury": {
+          "sign": "Cancer",
+          "house": 3,
+          "degree": 18.335579660713805
+        },
+        "Jupiter": {
+          "sign": "Virgo",
+          "house": 5,
+          "degree": 12.777545255861668
+        },
+        "Venus": {
+          "sign": "Leo",
+          "house": 4,
+          "degree": 22.833319967764936
+        },
+        "Saturn": {
+          "sign": "Virgo",
+          "house": 5,
+          "degree": 11.699613851775752
+        },
+        "Rahu": {
+          "sign": "Cancer",
+          "house": 3,
+          "degree": 7.123680015412219
+        },
+        "Ketu": {
+          "sign": "Capricorn",
+          "house": 9,
+          "degree": 7.123680015412219
+        }
+      },
+      "ascendant": "Taurus"
+    },
+    {
+      "name": "Swami Vivekananda",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 3,
+          "degree": 28.28431070746194
+        },
+        "Moon": {
+          "sign": "Virgo",
+          "house": 12,
+          "degree": 13.207937183690206
+        },
+        "Mars": {
+          "sign": "Aries",
+          "house": 7,
+          "degree": 5.312748244377682
+        },
+        "Mercury": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 10.477736599769173
+        },
+        "Jupiter": {
+          "sign": "Libra",
+          "house": 1,
+          "degree": 3.1102814224852295
+        },
+        "Venus": {
+          "sign": "Capricorn",
+          "house": 4,
+          "degree": 5.909446844234708
+        },
+        "Saturn": {
+          "sign": "Virgo",
+          "house": 12,
+          "degree": 12.689302738906065
+        },
+        "Rahu": {
+          "sign": "Scorpio",
+          "house": 2,
+          "degree": 22.624842335473147
+        },
+        "Ketu": {
+          "sign": "Taurus",
+          "house": 8,
+          "degree": 22.624842335473147
+        }
+      },
+      "ascendant": "Libra"
+    },
+    {
+      "name": "Amitabh Bachchan",
+      "planets": {
+        "Sun": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 22.88546199908359
+        },
+        "Moon": {
+          "sign": "Libra",
+          "house": 4,
+          "degree": 0.6335926986686786
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 21.318098982278315
+        },
+        "Mercury": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 23.512944124555588
+        },
+        "Jupiter": {
+          "sign": "Gemini",
+          "house": 12,
+          "degree": 29.595137702193952
+        },
+        "Venus": {
+          "sign": "Virgo",
+          "house": 3,
+          "degree": 13.537732436991206
+        },
+        "Saturn": {
+          "sign": "Taurus",
+          "house": 11,
+          "degree": 18.364474676790508
+        },
+        "Rahu": {
+          "sign": "Leo",
+          "house": 2,
+          "degree": 9.610218702915574
+        },
+        "Ketu": {
+          "sign": "Aquarius",
+          "house": 8,
+          "degree": 9.610218702915574
+        }
+      },
+      "ascendant": "Cancer"
+    },
+    {
+      "name": "Queen Elizabeth II",
+      "planets": {
+        "Sun": {
+          "sign": "Aries",
+          "house": 5,
+          "degree": 6.437615309973848
+        },
+        "Moon": {
+          "sign": "Cancer",
+          "house": 8,
+          "degree": 17.59499464514593
+        },
+        "Mars": {
+          "sign": "Capricorn",
+          "house": 2,
+          "degree": 27.115718461503604
+        },
+        "Mercury": {
+          "sign": "Pisces",
+          "house": 4,
+          "degree": 10.919412408950393
+        },
+        "Jupiter": {
+          "sign": "Capricorn",
+          "house": 2,
+          "degree": 28.7975594686352
+        },
+        "Venus": {
+          "sign": "Aquarius",
+          "house": 3,
+          "degree": 20.185090463286087
+        },
+        "Saturn": {
+          "sign": "Scorpio",
+          "house": 12,
+          "degree": 0.7399515886926054
+        },
+        "Rahu": {
+          "sign": "Gemini",
+          "house": 7,
+          "degree": 26.403539179118027
+        },
+        "Ketu": {
+          "sign": "Sagittarius",
+          "house": 1,
+          "degree": 26.403539179118013
+        }
+      },
+      "ascendant": "Sagittarius"
+    },
+    {
+      "name": "Princess Diana",
+      "planets": {
+        "Sun": {
+          "sign": "Gemini",
+          "house": 5,
+          "degree": 14.68412150782791
+        },
+        "Moon": {
+          "sign": "Capricorn",
+          "house": 12,
+          "degree": 18.668675822759383
+        },
+        "Mars": {
+          "sign": "Leo",
+          "house": 7,
+          "degree": 6.966373711476777
+        },
+        "Mercury": {
+          "sign": "Gemini",
+          "house": 5,
+          "degree": 9.410592319382928
+        },
+        "Jupiter": {
+          "sign": "Capricorn",
+          "house": 12,
+          "degree": 10.979366009344005
+        },
+        "Venus": {
+          "sign": "Aries",
+          "house": 3,
+          "degree": 29.36410583495056
+        },
+        "Saturn": {
+          "sign": "Capricorn",
+          "house": 12,
+          "degree": 3.6660826366072
+        },
+        "Rahu": {
+          "sign": "Leo",
+          "house": 7,
+          "degree": 3.9888170856387006
+        },
+        "Ketu": {
+          "sign": "Aquarius",
+          "house": 1,
+          "degree": 3.9888170856386864
+        }
+      },
+      "ascendant": "Aquarius"
+    },
+    {
+      "name": "Dalai Lama",
+      "planets": {
+        "Sun": {
+          "sign": "Gemini",
+          "house": 3,
+          "degree": 18.952959142909677
+        },
+        "Moon": {
+          "sign": "Leo",
+          "house": 5,
+          "degree": 14.23647572190049
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 6,
+          "degree": 24.36859180177251
+        },
+        "Mercury": {
+          "sign": "Gemini",
+          "house": 3,
+          "degree": 1.6459582125724168
+        },
+        "Jupiter": {
+          "sign": "Libra",
+          "house": 7,
+          "degree": 19.630107313843894
+        },
+        "Venus": {
+          "sign": "Leo",
+          "house": 5,
+          "degree": 4.274314485879074
+        },
+        "Saturn": {
+          "sign": "Aquarius",
+          "house": 11,
+          "degree": 16.213465318506223
+        },
+        "Rahu": {
+          "sign": "Sagittarius",
+          "house": 9,
+          "degree": 28.163026340209626
+        },
+        "Ketu": {
+          "sign": "Gemini",
+          "house": 3,
+          "degree": 28.163026340209626
+        }
+      },
+      "ascendant": "Aries"
+    },
+    {
+      "name": "Pope Francis",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 1.1571891853951115
+        },
+        "Moon": {
+          "sign": "Capricorn",
+          "house": 6,
+          "degree": 7.363817931486892
+        },
+        "Mars": {
+          "sign": "Virgo",
+          "house": 2,
+          "degree": 25.156354406006983
+        },
+        "Mercury": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 16.64192963441525
+        },
+        "Jupiter": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 9.482411666775903
+        },
+        "Venus": {
+          "sign": "Capricorn",
+          "house": 6,
+          "degree": 12.710906370075122
+        },
+        "Saturn": {
+          "sign": "Aquarius",
+          "house": 7,
+          "degree": 22.60032666497773
+        },
+        "Rahu": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 0.4172544108972147
+        },
+        "Ketu": {
+          "sign": "Gemini",
+          "house": 11,
+          "degree": 0.4172544108972147
+        }
+      },
+      "ascendant": "Leo"
+    },
+    {
+      "name": "Osho",
+      "planets": {
+        "Sun": {
+          "sign": "Scorpio",
+          "house": 4,
+          "degree": 23.96215798068232
+        },
+        "Moon": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 11.573225917608738
+        },
+        "Mars": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 6.705022658015167
+        },
+        "Mercury": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 12.508547430847898
+        },
+        "Jupiter": {
+          "sign": "Cancer",
+          "house": 12,
+          "degree": 28.845827280375943
+        },
+        "Venus": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 17.49381151051972
+        },
+        "Saturn": {
+          "sign": "Sagittarius",
+          "house": 5,
+          "degree": 27.602645814581763
+        },
+        "Rahu": {
+          "sign": "Pisces",
+          "house": 8,
+          "degree": 8.347180297263662
+        },
+        "Ketu": {
+          "sign": "Virgo",
+          "house": 2,
+          "degree": 8.347180297263662
+        }
+      },
+      "ascendant": "Leo"
+    },
+    {
+      "name": "J. Krishnamurti",
+      "planets": {
+        "Sun": {
+          "sign": "Aries",
+          "house": 4,
+          "degree": 27.497727576089957
+        },
+        "Moon": {
+          "sign": "Sagittarius",
+          "house": 12,
+          "degree": 1.6736762017501405
+        },
+        "Mars": {
+          "sign": "Gemini",
+          "house": 6,
+          "degree": 18.512153851618947
+        },
+        "Mercury": {
+          "sign": "Taurus",
+          "house": 5,
+          "degree": 5.5561429514632295
+        },
+        "Jupiter": {
+          "sign": "Gemini",
+          "house": 6,
+          "degree": 11.914861667154597
+        },
+        "Venus": {
+          "sign": "Gemini",
+          "house": 6,
+          "degree": 5.135128313372661
+        },
+        "Saturn": {
+          "sign": "Libra",
+          "house": 10,
+          "degree": 9.367409115503733
+        },
+        "Rahu": {
+          "sign": "Aquarius",
+          "house": 2,
+          "degree": 26.5678537651REDACTED_YEAR5
+        },
+        "Ketu": {
+          "sign": "Leo",
+          "house": 8,
+          "degree": 26.5678537651REDACTED_YEAR5
+        }
+      },
+      "ascendant": "Capricorn"
+    },
+    {
+      "name": "Ramana Maharshi",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 14.666860163644373
+        },
+        "Moon": {
+          "sign": "Gemini",
+          "house": 10,
+          "degree": 26.858926719211013
+        },
+        "Mars": {
+          "sign": "Aries",
+          "house": 8,
+          "degree": 21.07837606802257
+        },
+        "Mercury": {
+          "sign": "Scorpio",
+          "house": 3,
+          "degree": 22.182542485970572
+        },
+        "Jupiter": {
+          "sign": "Aquarius",
+          "house": 6,
+          "degree": 15.59982175446163
+        },
+        "Venus": {
+          "sign": "Libra",
+          "house": 2,
+          "degree": 29.54416163279629
+        },
+        "Saturn": {
+          "sign": "Pisces",
+          "house": 7,
+          "degree": 16.17664671815089
+        },
+        "Rahu": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 22.456643364016486
+        },
+        "Ketu": {
+          "sign": "Gemini",
+          "house": 10,
+          "degree": 22.456643364016486
+        }
+      },
+      "ascendant": "Virgo"
+    },
+    {
+      "name": "Paramahansa Yogananda",
+      "planets": {
+        "Sun": {
+          "sign": "Sagittarius",
+          "house": 4,
+          "degree": 21.46167518299535
+        },
+        "Moon": {
+          "sign": "Cancer",
+          "house": 11,
+          "degree": 20.63288063002014
+        },
+        "Mars": {
+          "sign": "Pisces",
+          "house": 7,
+          "degree": 11.873263941354026
+        },
+        "Mercury": {
+          "sign": "Scorpio",
+          "house": 3,
+          "degree": 29.030041709934636
+        },
+        "Jupiter": {
+          "sign": "Pisces",
+          "house": 7,
+          "degree": 22.900280409643813
+        },
+        "Venus": {
+          "sign": "Scorpio",
+          "house": 3,
+          "degree": 22.80356803827121
+        },
+        "Saturn": {
+          "sign": "Virgo",
+          "house": 1,
+          "degree": 19.31789775643668
+        },
+        "Rahu": {
+          "sign": "Aries",
+          "house": 8,
+          "degree": 11.957184394431312
+        },
+        "Ketu": {
+          "sign": "Libra",
+          "house": 2,
+          "degree": 11.957184394431323
+        }
+      },
+      "ascendant": "Virgo"
+    }
+  ]
+}

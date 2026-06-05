@@ -246,13 +246,16 @@ class DivisionalChartsCalculator:
         # 每个星座分为9个3.333度区间
         part = int(sign_degree // (30/9))
         
-        # 根据星座类型确定起始点
+        # 根据星座类型确定起始点 (BPHS标准)
+        # Movable(白羊/巨蟹/天秤/摩羯)=从本星座开始
+        # Fixed(金牛/狮子/天蝎/水瓶)=从第5个星座开始(+4)
+        # Dual(双子/处女/射手/双鱼)=从第9个星座开始(+8)
         if sign_index in self.MOVABLE_SIGNS:
-            start = sign_index  # 从本星座开始
+            start = sign_index
         elif sign_index in self.FIXED_SIGNS:
-            start = (sign_index + 8) % 12  # 从第9个星座开始
+            start = (sign_index + 4) % 12
         else:  # DUAL_SIGNS
-            start = (sign_index + 4) % 12  # 从第5个星座开始
+            start = (sign_index + 8) % 12
         
         varga_sign = (start + part) % 12
         varga_degree = (sign_degree % (30/9)) * 9
