@@ -1,5 +1,41 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.36（2026-06-05）—— Yoga 验证数据结构升级与 D9/Panchanga/Upagraha 上下文接入
+
+> **目标**：为继续提升 Yoga 逻辑准确率补齐验证数据层，不再把所有 B.V. Raman / PyJHora 条件硬塞进 D1-only 近似，优先让标准测试集携带 D9/Navamsa、tithi/waning Moon、Gulika/Maandi 等上下文。
+
+### 验证数据 schema 2.0
+
+- 升级 `references/standard_test_charts.json` 为 `schema_version: "2.0"`，每张名人星盘除 PyJHora D1/Rasi Yoga 结果外，新增 `context`。
+- 新增上下文字段：
+  - `context.d1`：D1 上升、上升度数、九行星星座/宫位/度数。
+  - `context.d9`：D9/Navamsa 上升、上升度数、九行星星座/宫位/度数。
+  - `context.panchanga`：tithi、paksha、`is_waning_moon`、原始 tithi 输出。
+  - `context.upagraha`：Gulika、Maandi 的 D1 星座/宫位/度数。
+- 新增 `scripts/build_planet_positions_60.py`，从标准测试集的 context 重建 Skill-side `references/planet_positions_60.json`，保证 Skill 与 PyJHora 使用同一套 fixture 来源。
+- 修正 `_compute_one_chart.py` 输出星座名时使用英文 `SIGNS` 常量，避免 PyJHora `utils.RAASI_LIST` 中的星座符号污染 JSON；同时修正 D9 上升计算为 `d1_asc_sign * 30 + d1_asc_degree` 后再分入 Navamsa。
+
+### Yoga 引擎上下文接入
+
+- `YogaContext` 新增可选 `context` 参数，并提供 D9/Panchanga/Upagraha 查询接口：`d9_house_of()`、`d9_sign_of()`、`d9_lord_of_house()`、`navamsa_dispositor()`、`tithi()`、`is_waning_moon()`、`upagraha_house()`、`upagraha_sign()`。
+- `YogaEngine.detect()`、`detect_yogas()`、`detect_yogas_from_json()` 支持透传扩展 context。
+- `validate_logic_v2.py` 现在读取 `chart["context"]` 并传给 Yoga 引擎，后续 D9/tithi/Gulika 规则修复可以在同一验证框架里直接评估。
+- custom Yoga 沙箱新增上下文 helper：`d9_house_of`、`d9_sign_of`、`d9_lord_of_house`、`navamsa_dispositor`、`tithi`、`is_waning_moon`、`upagraha_house`、`gulika_house`、`maandi_house` 等。
+- 首批语义条件从 D1 近似升级为 context-aware：`navamsa_lagna_in_dry_planet_sign`、`lagna_lord_and_navamsa_lord_both_in_watery_signs`、`saturn_in_12th_with_waning_moon`、`sun_and_mandi_in_house`、若干 Navamsa dispositor 条件与 Gulika 相关条件。
+
+### 当前验证结果
+
+- `scripts/validate_logic_v2.py`：Precision **83.84%**，Recall **69.64%**，F1 **76.08%**。
+- 本轮重点是把验证框架升级到可承载 D9/Panchanga/Upagraha 规则，指标暂与 v6.0.35 持平；这说明上下文接入没有制造新回归，后续可以开始逐条修依赖扩展上下文的 Top FN/FP。
+- `scripts/run_quality_gate.py --skip-yoga-logic`：通过；完整 pytest **35 passed**，BPHS/Ashtakavarga 不变量 **18/18** 通过，golden case 通过。
+
+### 后续优化点
+
+- 下一轮可直接针对 context-aware 队列修复：`mathibhramana`、`matrunasa`、`nishkapata`、`bahu_puthra`、`vanchana_chora_bheethi` 等。
+- 可继续减少 D1-only 近似，把 PyJHora/B.V. Raman 中明确依赖 Navamsa、tithi、Gulika/Maandi 的条件逐条迁移到扩展上下文。
+
+---
+
 ## v6.0.35（2026-06-05）—— Yoga 精度二次提升与 Top FP 收窄
 
 > **目标**：在 v6.0.34 已大幅提升 F1 后，继续按验证报告 Top FP/FN 队列修正高影响规则，优先降低过宽误报，同时保持质量门禁通过。

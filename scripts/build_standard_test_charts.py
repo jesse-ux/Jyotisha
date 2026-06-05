@@ -91,12 +91,18 @@ if __name__ == "__main__":
     print(f"Standard Test Charts Builder - {len(CELEBRITY_CHARTS)} charts")
     outpath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "references", "standard_test_charts.json")
     os.makedirs(os.path.dirname(outpath), exist_ok=True)
-    output = {"schema_version": "1.0", "description": "Standard test charts for yoga validation", "charts": []}
+    output = {
+        "schema_version": "2.0",
+        "description": "Standard test charts for yoga validation with D1/D9/Panchanga/Upagraha context",
+        "charts": [],
+    }
     for chart in CELEBRITY_CHARTS:
         print(f"  Computing {chart['name']}...", flush=True)
         yogas = compute_pyjhora_yogas(chart)
         entry = dict(chart)
         entry["expected_yogas"] = yogas.get("yogas", [])
+        if "context" in yogas:
+            entry["context"] = yogas["context"]
         entry["pyjhora_raw"] = yogas
         output["charts"].append(entry)
     with open(outpath, "w") as f:

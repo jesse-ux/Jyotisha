@@ -67,16 +67,29 @@ def _get_dignity_level(planet: str, sign: str) -> str:
 class YogaContext:
     """Yoga 检测上下文。封装行星数据并提供各类查询方法。"""
 
-    def __init__(self, planets: Dict[str, Dict], ascendant: str):
+    def __init__(self, planets: Dict[str, Dict], ascendant: str, context: Optional[Dict] = None):
         self.planets = planets  # name -> {sign, house, degree, ...}
         self.ascendant = ascendant
         self.asc_idx = SIGNS.index(ascendant) if ascendant in SIGNS else 0
+        self.context = context or {}
+        self.d9 = self.context.get("d9", {}) if isinstance(self.context, dict) else {}
+        self.panchanga = self.context.get("panchanga", {}) if isinstance(self.context, dict) else {}
+        self.upagraha = self.context.get("upagraha", {}) if isinstance(self.context, dict) else {}
 
-        # 预计算宫主星
+        # 预计算 D1 宫主星
         self._house_lords: Dict[int, str] = {}
         for h in range(1, 13):
             sign = SIGNS[(self.asc_idx + h - 1) % 12]
             self._house_lords[h] = SIGN_LORDS[sign]
+
+        # 预计算 D9 宫主星（用于依赖 Navamsa 的 B.V. Raman Yoga）
+        d9_asc = self.d9.get("ascendant")
+        d9_asc_idx = SIGNS.index(d9_asc) if d9_asc in SIGNS else None
+        self._d9_house_lords: Dict[int, str] = {}
+        if d9_asc_idx is not None:
+            for h in range(1, 13):
+                sign = SIGNS[(d9_asc_idx + h - 1) % 12]
+                self._d9_house_lords[h] = SIGN_LORDS[sign]
 
     # --- 基础查询 ---
     def house_of(self, planet: str) -> Optional[int]:
@@ -93,6 +106,34 @@ class YogaContext:
 
     def planets_in_house(self, house: int) -> List[str]:
         return [p for p, info in self.planets.items() if info.get("house") == house]
+
+    # --- D9 / Panchanga / Upagraha 扩展上下文 ---
+    def d9_house_of(self, planet: str) -> Optional[int]:
+        return self.d9.get("planets", {}).get(planet, {}).get("house")
+
+    def d9_sign_of(self, planet: str) -> Optional[str]:
+        return self.d9.get("planets", {}).get(planet, {}).get("sign")
+
+    def d9_lord_of_house(self, house: int) -> Optional[str]:
+        return self._d9_house_lords.get(house)
+
+    def navamsa_dispositor(self, planet: str) -> Optional[str]:
+        sign = self.d9_sign_of(planet)
+        return SIGN_LORDS.get(sign) if sign else None
+
+    def tithi(self) -> Optional[int]:
+        return self.panchanga.get("tithi")
+
+    def is_waning_moon(self) -> bool:
+        return bool(self.panchanga.get("is_waning_moon"))
+
+    def upagraha_house(self, name: str) -> Optional[int]:
+        payload = self.upagraha.get(str(name).lower(), {})
+        return payload.get("house")
+
+    def upagraha_sign(self, name: str) -> Optional[str]:
+        payload = self.upagraha.get(str(name).lower(), {})
+        return payload.get("sign")
 
     # --- 尊严 ---
     def is_exalted(self, planet: str) -> bool:
@@ -241,12 +282,12 @@ class YogaEngine:
         self.schema_version = data.get("schema_version", "1.0")
         self.rules = [r for r in data.get("rules", []) if r.get("enabled", True)]
 
-    def detect(self, planets: Dict[str, Dict], ascendant: str) -> List[Dict]:
+    def detect(self, planets: Dict[str, Dict], ascendant: str, context: Optional[Dict] = None) -> List[Dict]:
         """
         检测 Yoga。
         返回: [{name, name_cn, combination, effects, strength, source, bvr_id, category}, ...]
         """
-        ctx = YogaContext(planets, ascendant)
+        ctx = YogaContext(planets, ascendant, context=context)
         results = []
         seen_dedup = set()
 
@@ -947,6 +988,19 @@ class YogaEngine:
         def movable_house(h):
             return house_sign(h) in MOVABLE_SIGNS
 
+        def d9_house_of(p): return ctx.d9_house_of(p)
+        def d9_sign_of(p): return ctx.d9_sign_of(p)
+        def d9_lord_of_house(h): return ctx.d9_lord_of_house(h)
+        def navamsa_dispositor(p): return ctx.navamsa_dispositor(p)
+        def tithi(): return ctx.tithi()
+        def is_waning_moon(): return ctx.is_waning_moon()
+        def upagraha_house(name): return ctx.upagraha_house(name)
+        def upagraha_sign(name): return ctx.upagraha_sign(name)
+        def gulika_house(): return ctx.upagraha_house("gulika")
+        def maandi_house(): return ctx.upagraha_house("maandi")
+        def gulika_sign(): return ctx.upagraha_sign("gulika")
+        def maandi_sign(): return ctx.upagraha_sign("maandi")
+
         def exal(p): return ctx.is_exalted(p)
         def lord_of_house(h): return ctx.lord_of_house(h)
         def sign(p): return ctx.sign_of(p)
@@ -1008,6 +1062,12 @@ class YogaEngine:
             "only_malefics_in_house": only_malefics_in_house,
             "house_has_benefic": house_has_benefic, "house_has_malefic": house_has_malefic,
             "house_sign": house_sign, "movable_house": movable_house,
+            "d9_house_of": d9_house_of, "d9_sign_of": d9_sign_of,
+            "d9_lord_of_house": d9_lord_of_house, "navamsa_dispositor": navamsa_dispositor,
+            "tithi": tithi, "is_waning_moon": is_waning_moon,
+            "upagraha_house": upagraha_house, "upagraha_sign": upagraha_sign,
+            "gulika_house": gulika_house, "maandi_house": maandi_house,
+            "gulika_sign": gulika_sign, "maandi_sign": maandi_sign,
             "exal": exal, "lord_of_house": lord_of_house, "sign": sign,
             "check_amala_from": check_amala_from,
             "Benefics": BENEFICS, "Malefics": MALEFICS,
@@ -1187,6 +1247,39 @@ class YogaEngine:
             p = cond.get("planet") or cond.get("to")
             by = cond.get("by") or cond.get("from")
             return success() if p in ctx.planets and by in ctx.planets and aspects(by, p) else []
+        if ctype == "navamsa_lord_of_2_5_11_exalted_joins_9th_lord":
+            l9 = house_lord(9)
+            for h in (2, 5, 11):
+                lord_h = house_lord(h)
+                disp = ctx.navamsa_dispositor(lord_h) if lord_h else None
+                if disp and l9 and disp in ctx.planets and ctx.is_exalted(disp) and related(disp, l9):
+                    return success()
+            return []
+        if ctype == "navamsa_lord_of_moon_exalted_in_rasi":
+            disp = ctx.navamsa_dispositor("Moon")
+            return success() if disp and disp in ctx.planets and ctx.is_exalted(disp) else []
+        if ctype == "navamsa_dispositor_exalted_in_10th_with_lagna_lord":
+            ref = cond.get("reference_planet")
+            if ref == "10th_lord":
+                ref_planet = house_lord(10)
+            else:
+                ref_planet = ref if ref in ctx.planets else None
+            disp = ctx.navamsa_dispositor(ref_planet) if ref_planet else None
+            l1 = house_lord(1)
+            return success() if disp and l1 and disp in ctx.planets and ctx.is_exalted(disp) and ctx.house_of(disp) == 10 and related(disp, l1) else []
+        if ctype == "navamsa_lord_of_4th_lord_in_12th":
+            l4 = house_lord(4)
+            disp = ctx.navamsa_dispositor(l4) if l4 else None
+            return success() if disp and disp in ctx.planets and ctx.house_of(disp) == 12 else []
+        if ctype == "moon_with_malefics_in_navamsa_cancer_scorpio":
+            moon_sign = ctx.d9_sign_of("Moon")
+            moon_house = ctx.d9_house_of("Moon")
+            return success() if moon_sign in {"Cancer", "Scorpio"} and moon_house and any(ctx.d9_house_of(p) == moon_house for p in MALEFICS if p in ctx.planets and p != "Moon") else []
+        if ctype == "sun_and_mandi_in_house":
+            target = cond.get("house") or cond.get("in_house")
+            if target is None and cond.get("house_offset") is not None:
+                target = int(cond.get("house_offset")) + 1
+            return success() if target and ctx.house_of("Sun") == target and ctx.upagraha_house("maandi") == target else []
         if ctype == "planet_conjunct_planet":
             a = cond.get("planet") or cond.get("a")
             b = cond.get("with") or cond.get("b")
@@ -1233,7 +1326,13 @@ class YogaEngine:
             return success() if p and (related(p, "Saturn") or related(p, "Rahu")) else []
         if ctype == "malefic_in_lagna_or_gulika_in_trine_OR_gulika_with_kendra_trine_lord_OR_l1_with_rahu_sat_ket":
             l1 = house_lord(1)
-            return success() if any(ctx.house_of(p) == 1 for p in MALEFICS if p in ctx.planets) or (l1 and any(related(l1, p) for p in ["Rahu", "Saturn", "Ketu"] if p in ctx.planets)) else []
+            gh = ctx.upagraha_house("gulika")
+            gulika_in_trine = gh in (1, 5, 9)
+            kendra_trine_lords = {house_lord(h) for h in (1, 4, 5, 7, 9, 10)}
+            gulika_with_kendra_trine_lord = gh is not None and any(
+                lord and lord in ctx.planets and ctx.house_of(lord) == gh for lord in kendra_trine_lords
+            )
+            return success() if any(ctx.house_of(p) == 1 for p in MALEFICS if p in ctx.planets) or gulika_in_trine or gulika_with_kendra_trine_lord or (l1 and any(related(l1, p) for p in ["Rahu", "Saturn", "Ketu"] if p in ctx.planets)) else []
         if ctype == "same_lord_for_1st_and_4th":
             return success() if house_lord(1) == house_lord(4) else []
         if ctype == "1st_and_4th_lords_are_natural_or_temporal_friends":
@@ -1265,10 +1364,14 @@ class YogaEngine:
             dry_signs = {"Aries", "Gemini", "Leo", "Virgo", "Sagittarius", "Capricorn"}
             return success() if l1 and ctx.sign_of(l1) in dry_signs else []
         if ctype == "navamsa_lagna_in_dry_planet_sign":
-            return []  # 需要D9上下文，当前D1 Yoga验证中不强行近似
+            d9_asc = ctx.d9.get("ascendant")
+            dry_lords = {"Sun", "Mars", "Saturn"}
+            return success() if d9_asc and SIGN_LORDS.get(d9_asc) in dry_lords else []
         if ctype == "lagna_lord_and_navamsa_lord_both_in_watery_signs":
             l1 = house_lord(1)
-            return success() if l1 and ctx.sign_of(l1) in {"Cancer", "Scorpio", "Pisces"} else []
+            d9_lagna_lord = SIGN_LORDS.get(ctx.d9.get("ascendant"))
+            watery = {"Cancer", "Scorpio", "Pisces"}
+            return success() if l1 and d9_lagna_lord and ctx.sign_of(l1) in watery and ctx.sign_of(d9_lagna_lord) in watery else []
         if ctype == "jupiter_in_lagna_or_aspects_lagna_from_watery":
             return success() if "Jupiter" in ctx.planets and (ctx.house_of("Jupiter") == 1 or (ctx.sign_of("Jupiter") in {"Cancer", "Scorpio", "Pisces"} and aspects("Jupiter", 1))) else []
         if ctype == "lagna_watery_with_benefics_or_lagna_lord_watery":
@@ -1280,9 +1383,30 @@ class YogaEngine:
         if ctype == "saturn_in_lagna_mars_in_5_7_9":
             return success() if ctx.house_of("Saturn") == 1 and ctx.house_of("Mars") in (5, 7, 9) else []
         if ctype == "saturn_in_12th_with_waning_moon":
-            return success() if ctx.house_of("Saturn") == 12 and ctx.house_of("Moon") == 12 else []
+            return success() if ctx.house_of("Saturn") == 12 and ctx.is_waning_moon() else []
         if ctype == "moon_mercury_in_kendra_with_planet":
             return success() if ctx.house_of("Moon") == ctx.house_of("Mercury") and ctx.is_kendra(ctx.house_of("Moon")) and len(ctx.planets_in_house(ctx.house_of("Moon"))) >= 3 else []
+        if ctype == "four_planet_chain_all_in_kendra_trine_or_exaltation":
+            l1 = house_lord(1)
+            if not l1:
+                return []
+            chain = [l1]
+            current = l1
+            for _ in range(2):
+                sign_current = ctx.sign_of(current)
+                current = SIGN_LORDS.get(sign_current) if sign_current else None
+                if not current:
+                    return []
+                chain.append(current)
+            d9_disp = ctx.navamsa_dispositor(current)
+            if not d9_disp:
+                return []
+            chain.append(d9_disp)
+            ok = all(
+                p in ctx.planets and (ctx.is_kendra(ctx.house_of(p)) or ctx.is_trikona(ctx.house_of(p)) or ctx.is_exalted(p))
+                for p in chain
+            )
+            return success() if ok else []
         if ctype == "planets_in_relative_houses":
             base = house(cond.get("from", "lagna")) or 1
             offsets = cond.get("houses") or cond.get("offsets") or []
@@ -1321,7 +1445,8 @@ class YogaEngine:
 # 便捷入口
 # ============================================================================
 def detect_yogas(planets: Dict[str, Dict], ascendant: str,
-                 rules_path: Optional[str] = None) -> List[Dict]:
+                 rules_path: Optional[str] = None,
+                 context: Optional[Dict] = None) -> List[Dict]:
     """便捷函数：检测 Yoga"""
     if rules_path is None:
         # 自动查找规则文件
@@ -1329,14 +1454,14 @@ def detect_yogas(planets: Dict[str, Dict], ascendant: str,
         skill_dir = os.path.dirname(script_dir)
         rules_path = os.path.join(skill_dir, "references", "yoga_rules.json")
     engine = YogaEngine(rules_path)
-    return engine.detect(planets, ascendant)
+    return engine.detect(planets, ascendant, context=context)
 
 
 def detect_yogas_from_json(chart_json: Dict, rules_path: Optional[str] = None) -> List[Dict]:
     """从 chart JSON 结构中提取 planets + ascendant 并检测"""
     planets = chart_json.get("planets", {})
     asc = chart_json.get("ascendant", chart_json.get("ascendant_sign", "Aries"))
-    return detect_yogas(planets, asc, rules_path)
+    return detect_yogas(planets, asc, rules_path, context=chart_json.get("context"))
 
 
 if __name__ == "__main__":

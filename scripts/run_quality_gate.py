@@ -21,6 +21,9 @@ COMPILE_TARGETS = [
     ROOT / "scripts" / "yoga_engine.py",
     ROOT / "scripts" / "audit_capabilities.py",
     ROOT / "scripts" / "validate_bphs_invariants.py",
+    ROOT / "scripts" / "_compute_one_chart.py",
+    ROOT / "scripts" / "build_standard_test_charts.py",
+    ROOT / "scripts" / "build_planet_positions_60.py",
     ROOT / "tests" / "run_golden_cases.py",
 ]
 
