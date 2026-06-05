@@ -301,9 +301,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.0.30-yoga-benchmark
+**版本**：v6.0.33-engineering-quality-gate
 **创建日期**：2026-04-20
-**最后更新**：2026-06-04（v6.0.30 新增 Yoga 覆盖率 benchmark；当前291条JSON规则，PyJHora名称覆盖率以 benchmark 输出为准）
+**最后更新**：2026-06-05（v6.0.33 新增工程质量门禁、Hypothesis 属性测试、Ruff/pytest/CI 配置；当前 473 条 JSON 规则、379 条启用规则，D1/Rasi 逻辑验证报告以 `references/validation_logic_report.json` 为准）
 
 ---
 
