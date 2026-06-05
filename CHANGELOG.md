@@ -1,5 +1,59 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.38（2026-06-05）—— Yoga 源码口径对齐与 F1 深水区提升
+
+> **目标**：继续 v6.0.37 的 context-aware 路线，但不盲目扩规则；优先对齐 PyJHora 源码中已经明确的 house-strength、Navamsa dispositor、watery sign/planet、以及验证脚本路径口径，减少残余 Top FP/FN。
+
+### 引擎与 helper 修复
+
+- `scripts/yoga_engine.py` 新增 `HOUSE_STRENGTHS` 与 `PLANET_INDEX`，显式复刻 PyJHora `const.house_strengths_of_planets`，避免 `strong()` 继续用“落 Kendra/Trikona 即强”的过宽近似。
+- custom 沙箱新增：
+  - `house_strength(p)`：返回 PyJHora 式星座强度 0-5。
+  - `strong(p, include_neutral=False)`：默认 strength >= FRIEND；可选 include neutral。
+  - `weak(p)`：strength <= NEUTRAL。
+- 修复 `bvr_dehasthoulya_yoga` 内置条件：
+  - 114 改为“Lagna lord 的 Navamsa dispositor 在 Rasi 中落水象星座”，而不是误取 D9 上升主。
+  - 116 改为“Lagna lord 是 watery planet（Moon/Venus）”，而不是“Lagna lord 落水象星座”。
+
+### 高影响规则对齐
+
+- `sankha_yoga`：改用 PyJHora house-strength 口径判断 L1/L9 强弱，Top FP 从 12 收窄到 5。
+- `kahala_yoga`：对齐 PyJHora BVR-15：L1 落 Kendra/Trikona，且 L4/L9 互为 Kendra。
+- `bvr_kaahala_yoga`：对齐 PyJHora `kaahala_yoga` 的有效 D1 判定：L4 与 Jupiter 互为 Kendra。
+- `bvr_rogagrastha_precise`：对齐 PyJHora 条件 b 的实际行为：Lagna lord strength <= neutral 即可触发（源码中的 quad/trine lord 列表包含 L1 自身）。该规则本轮从 Top FN 中消失。
+- `bvr_swaveeryaddhana_precise`：补入 PyJHora 131 的 Navamsa dispositor chain D9-safe 条件。
+- `bvr_bahu_puthra_precise`：修正 221 语义为“7宫主所落 Navamsa 的 lord 落 Rasi 1/2/5”，不再错误扩大成“任意与7宫主 associated 的行星”。Top FP 从 15 清零。
+
+### 验证脚本修复
+
+- `scripts/validate_logic_v2.py` 固定读取/写入 `SKILL_DIR/references/*`，避免从工作区根目录运行时误读另一份 `references/` 并写出错误报告。
+
+### 验证结果
+
+- `scripts/validate_logic_v2.py`：
+  - Precision **88.37%**（v6.0.37 为 85.60%；实际 v6.0.38 旧路径校正基线为 84.25%）
+  - Recall **81.09%**（v6.0.37 为 72.38%；旧路径校正基线为 75.66%）
+  - F1 **84.57%**（v6.0.37 为 78.44%；旧路径校正基线为 79.72%）
+  - FP：114；FN：202
+- `scripts/run_quality_gate.py --skip-yoga-logic`：通过。
+  - pytest **35 passed**
+  - BPHS/Ashtakavarga 不变量 **18/18**
+  - golden case 通过
+
+### 规则库状态
+
+- JSON 规则总数：**475**
+- 启用规则：**381**
+- 当前验证报告：`references/validation_logic_report.json`
+
+### 后续优化点
+
+- 下一轮 Top FN 重点：`bvr_kaalanirdesat_puthranaasa_yoga`、`bvr_matrunasa_precise`、`bvr_kapata_yoga`、`bvr_vanchana_chora_bheethi_yoga`。
+- 下一轮 Top FP 重点：`mridanga_yoga`、`bvr_bandhu_pujya_yoga`、`bvr_002_sunapha_precise`、`bvr_bahu_sthree_yoga`、`bvr_bhratruvriddhi_precise`。
+- 建议继续对齐 PyJHora 的 dynamic benefics/malefics、`planets_aspecting_the_raasi()` 与 Upagraha house-index 口径。
+
+---
+
 ## v6.0.37（2026-06-05）—— Context-aware Yoga 精度提升
 
 > **目标**：利用 v6.0.36 已接入的 D9/Navamsa、Panchanga、Gulika/Maandi 上下文，继续修复 PyJHora/B.V. Raman 高影响 Yoga 误差，而不是回退到 D1-only 近似。

@@ -1256,7 +1256,7 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora/BVR-15: L4 and L9 in mutual kendras, and L1 strong.\nl1 = lord(1)\nl4 = lord(4)\nl9 = lord(9)\nif l1 not in ctx.planets or l4 not in ctx.planets or l9 not in ctx.planets:\n    False\nelse:\n    l1_strong = strong(l1)\n    mutual_kendra = offset(house_of(l4), house_of(l9)) in [0, 3, 6, 9]\n    l1_strong and mutual_kendra\n",
+        "expr": "\n# PyJHora/BVR-15: L4 and L9 in mutual kendras, and L1 is in a kendra/trine from Lagna.\nl1 = lord(1)\nl4 = lord(4)\nl9 = lord(9)\nif l1 not in ctx.planets or l4 not in ctx.planets or l9 not in ctx.planets:\n    False\nelse:\n    l1_strong = house_of(l1) in [1, 4, 5, 7, 9, 10]\n    mutual_kendra = offset(house_of(l4), house_of(l9)) in [0, 3, 6, 9]\n    l1_strong and mutual_kendra\n",
         "combo_template": "上升主有力，4宫主与9宫主互为Kendra"
       },
       "effects": [
@@ -1278,7 +1278,7 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora/BVR-12: (L1 strong and L5/L6 in mutual kendras) OR\n# (L1 and L10 together in a movable sign and L9 strong).\nl1, l5, l6, l9, l10 = [lord(h) for h in [1, 5, 6, 9, 10]]\nif not all(p in ctx.planets for p in [l1, l5, l6, l9, l10]):\n    False\nelse:\n    l1h, l5h, l6h, l9h, l10h = [house_of(p) for p in [l1, l5, l6, l9, l10]]\n    cond1 = strong(l1) and offset(l5h, l6h) in [0, 3, 6, 9] and offset(l6h, l5h) in [0, 3, 6, 9]\n    cond2 = strong(l9) and same_house(l1, l10) and movable_house(l1h)\n    cond1 or cond2\n",
+        "expr": "\n# PyJHora/BVR-12: (L1 strong and L5/L6 in mutual kendras) OR\n# (L1 and L10 together in a movable sign and L9 strong). PyJHora strong() uses\n# house_strength >= FRIEND, not generic kendra/trikona strength.\nl1, l5, l6, l9, l10 = [lord(h) for h in [1, 5, 6, 9, 10]]\nif not all(p in ctx.planets for p in [l1, l5, l6, l9, l10]):\n    False\nelse:\n    l1h, l5h, l6h, l9h, l10h = [house_of(p) for p in [l1, l5, l6, l9, l10]]\n    cond1 = strong(l1) and offset(l5h, l6h) in [0, 3, 6, 9] and offset(l6h, l5h) in [0, 3, 6, 9]\n    cond2 = strong(l9) and house_of(l1) == house_of(l10) and movable_house(l1h)\n    cond1 or cond2\n",
         "combo_template": "上升主强且5/6宫主互为Kendra，或1/10宫主合于变动星座且9宫主强"
       },
       "effects": [
@@ -9081,7 +9081,7 @@
       "category": "health",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora BVR-11: (a) Lagna lord in Lagna joined by dusthana lord;\n# (b) weak Lagna lord joined by any kendra/trine lord.\nasc_lord = lord(1)\ndusthana_lords = [lord(h) for h in [6, 8, 12]]\nquad_trine_lords = [lord(h) for h in [1, 4, 5, 7, 9, 10]]\nif asc_lord not in ctx.planets:\n    False\nelse:\n    condition_a = house_of(asc_lord) == 1 and any(dl in ctx.planets and same_house(asc_lord, dl) for dl in dusthana_lords)\n    weak_by_sign = not (exalted(asc_lord) or own(asc_lord) or moola(asc_lord))\n    condition_b = weak_by_sign and any(qtl in ctx.planets and same_house(asc_lord, qtl) for qtl in quad_trine_lords)\n    condition_a or condition_b\n",
+        "expr": "\n# PyJHora BVR-11: (a) Lagna lord in Lagna joined by dusthana lord;\n# (b) Lagna lord has house strength <= neutral. PyJHora's quad/trine lord\n# conjunction check includes the Lagna lord itself, so weak LL alone satisfies condition_b.\nasc_lord = lord(1)\ndusthana_lords = [lord(h) for h in [6, 8, 12]]\nif asc_lord not in ctx.planets:\n    False\nelse:\n    condition_a = house_of(asc_lord) == 1 and any(dl in ctx.planets and same_house(asc_lord, dl) for dl in dusthana_lords)\n    condition_b = weak(asc_lord)\n    condition_a or condition_b\n",
         "combo_template": "上升主在Lagna合凶宫主，或弱上升主合角/三方主"
       },
       "effects": [
@@ -9236,7 +9236,7 @@
       "category": "dhana",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora/BVR-132 D1-safe portion: 2nd lord in Kendra/Trine from Lagna lord,\n# or 2nd lord as benefic in exaltation / joined with an exalted planet.\nasc_lord = lord(1)\nlord_2 = lord(2)\nif asc_lord not in ctx.planets or lord_2 not in ctx.planets:\n    False\nelse:\n    rel_good = offset(house_of(asc_lord), house_of(lord_2)) in [0, 3, 4, 6, 8, 9]\n    lord2_benefic = lord_2 in BENEFICS\n    with_exalted = any(p != lord_2 and same_house(p, lord_2) and exalted(p) for p in ctx.planets)\n    rel_good or (lord2_benefic and (exalted(lord_2) or with_exalted))\n",
+        "expr": "\n# PyJHora/BVR-132 D1/D9-safe portions: 2nd lord in Kendra/Trine from Lagna lord;\n# or 2nd lord as benefic in exaltation / joined with an exalted planet;\n# or Navamsa-dispositor chain strength >= friend and related to 2nd lord.\nasc_lord = lord(1)\nlord_2 = lord(2)\nif asc_lord not in ctx.planets or lord_2 not in ctx.planets:\n    False\nelse:\n    l1h = house_of(asc_lord)\n    l2h = house_of(lord_2)\n    rel_good = offset(l1h, l2h) in [0, 3, 4, 6, 8, 9]\n    lord2_benefic = lord_2 in BENEFICS\n    with_exalted = any(p != lord_2 and same_house(p, lord_2) and exalted(p) for p in ctx.planets)\n    nav_lord = navamsa_dispositor(asc_lord)\n    final_disp = SIGN_LORDS.get(sign_of(nav_lord)) if nav_lord in ctx.planets else None\n    chain_good = bool(final_disp in ctx.planets and house_strength(final_disp) is not None and house_strength(final_disp) >= 3 and (offset(l2h, house_of(final_disp)) in [0, 3, 4, 6, 8, 9] or house_strength(final_disp) >= 4))\n    rel_good or (lord2_benefic and (exalted(lord_2) or with_exalted)) or chain_good\n",
         "combo_template": "2宫主与上升主成Kendra/Trine关系或2宫主吉且强"
       },
       "effects": [
@@ -9343,7 +9343,7 @@
       "category": "putra",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora/BVR 220-221 Bahu Puthra Yoga.\n# 220: Rahu in 5th and Rahu is not in Saturn navamsa.\ny220 = house_of('Rahu') == 5 and d9_sign_of('Rahu') not in {'Capricorn', 'Aquarius'}\n# 221: lord of Navamsa occupied by a planet associated with 7th lord is in 1st/2nd/5th in Rasi.\nl7 = lord(7)\ny221 = False\nif l7 in ctx.planets:\n    associated_planets = [p for p in ctx.planets if p != l7 and associated(p, l7)]\n    for p in associated_planets:\n        disp = navamsa_dispositor(p)\n        if disp in ctx.planets and house_of(disp) in [1, 2, 5]:\n            y221 = True\n            break\ny220 or y221\n",
+        "expr": "\n# PyJHora/BVR 220-221 Bahu Puthra Yoga.\n# 220: Rahu in 5th and Rahu is not in Saturn navamsa.\ny220 = house_of('Rahu') == 5 and d9_sign_of('Rahu') not in {'Capricorn', 'Aquarius'}\n# 221: lord of the Navamsa occupied by the 7th lord is in 1st/2nd/5th in Rasi.\nl7 = lord(7)\ny221 = False\nif l7 in ctx.planets:\n    disp = navamsa_dispositor(l7)\n    y221 = disp in ctx.planets and house_of(disp) in [1, 2, 5]\ny220 or y221\n",
         "combo_template": "Rahu在5且非土星Navamsa，或7宫主关联行星的Navamsa主落1/2/5"
       },
       "effects": [
@@ -13775,7 +13775,7 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora kaahala_yoga: 4th lord and Jupiter in mutual quadrants; Lagna lord strong.\nl1 = lord(1)\nl4 = lord(4)\nif l1 not in ctx.planets or l4 not in ctx.planets or 'Jupiter' not in ctx.planets:\n    False\nelse:\n    l1_strong = strong(l1)\n    mutual_kendra = offset(house_of(l4), house_of('Jupiter')) in [0, 3, 6, 9]\n    l1_strong and mutual_kendra\n",
+        "expr": "\n# PyJHora kaahala_yoga: 4th lord and Jupiter in mutual quadrants.\n# Note: PyJHora calls is_planet_strong(lagna_lord, asc_house, include_neutral=True);\n# for a Lagna lord in its own ascendant sign this is always >= neutral, so the\n# effective D1 comparison condition is the mutual-kendra relationship.\nl4 = lord(4)\nif l4 not in ctx.planets or 'Jupiter' not in ctx.planets:\n    False\nelse:\n    offset(house_of(l4), house_of('Jupiter')) in [0, 3, 6, 9]\n",
         "combo_template": "4宫主与木星互为Kendra，且上升主有力"
       },
       "effects": [

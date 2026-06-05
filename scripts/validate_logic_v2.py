@@ -231,12 +231,15 @@ def canonical_rule_id(rule_id, valid_rule_ids):
 
 
 def main():
-    # 1. 加载位置数据
-    with open('references/planet_positions_60.json') as f:
+    # 1. 加载位置数据。固定使用 skill 内部 references，避免从其他 cwd 运行时读写错目录。
+    planet_positions_path = os.path.join(SKILL_DIR, 'references', 'planet_positions_60.json')
+    standard_charts_path = os.path.join(SKILL_DIR, 'references', 'standard_test_charts.json')
+    report_path = os.path.join(SKILL_DIR, 'references', 'validation_logic_report.json')
+    with open(planet_positions_path) as f:
         pos_data = json.load(f)
 
     # 2. 加载 PyJhora Yoga 结果
-    with open('references/standard_test_charts.json') as f:
+    with open(standard_charts_path) as f:
         pyj_data = json.load(f)
 
     # 构建 name -> pyjhora yoga list 映射
@@ -401,9 +404,9 @@ def main():
         "false_positives": fp_details,
         "false_negatives": fn_details,
     }
-    with open('references/validation_logic_report.json', 'w') as f:
+    with open(report_path, 'w') as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
-    print("详细报告已保存至: references/validation_logic_report.json")
+    print(f"详细报告已保存至: {report_path}")
 
 
 if __name__ == "__main__":

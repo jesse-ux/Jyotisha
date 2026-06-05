@@ -46,6 +46,20 @@ BENEFICS = ['Jupiter', 'Venus', 'Mercury', 'Moon']
 MALEFICS = ['Mars', 'Saturn', 'Sun', 'Rahu', 'Ketu']
 MOVABLE_SIGNS = ['Aries', 'Cancer', 'Libra', 'Capricorn']
 ALL_PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']
+PLANET_INDEX = {planet: idx for idx, planet in enumerate(ALL_PLANETS)}
+# PyJHora const.house_strengths_of_planets, copied to make Yoga rule alignment deterministic.
+# Strength scale: 5 own/lord, 4 exalted, 3 friend, 2 neutral, 1 enemy, 0 debilitated.
+HOUSE_STRENGTHS = {
+    'Sun':     [4, 1, 2, 2, 5, 2, 0, 3, 3, 1, 1, 3],
+    'Moon':    [2, 4, 3, 5, 3, 3, 2, 0, 2, 2, 2, 2],
+    'Mars':    [5, 2, 1, 0, 3, 1, 2, 5, 3, 4, 2, 3],
+    'Mercury': [2, 3, 5, 1, 3, 5, 3, 2, 2, 2, 2, 0],
+    'Jupiter': [3, 1, 1, 4, 3, 3, 1, 3, 5, 0, 2, 5],
+    'Venus':   [2, 5, 3, 1, 1, 0, 5, 2, 3, 3, 3, 4],
+    'Saturn':  [0, 3, 3, 1, 1, 3, 4, 1, 2, 5, 5, 2],
+    'Rahu':    [1, 4, 4, 1, 1, 3, 3, 0, 0, 3, 1, 3],
+    'Ketu':    [1, 0, 0, 1, 1, 3, 3, 4, 4, 3, 1, 3],
+}
 
 
 def _get_dignity_level(planet: str, sign: str) -> str:
@@ -948,11 +962,25 @@ class YogaEngine:
                 return False
             return h == ctx.house_of(p) or offset(ctx.house_of(p), h) in (6, 3 if p == 'Mars' else -1, 7 if p == 'Mars' else -1, 4 if p == 'Jupiter' else -1, 8 if p == 'Jupiter' else -1, 2 if p == 'Saturn' else -1, 9 if p == 'Saturn' else -1)
 
-        def strong(p):
-            if p not in ctx.planets:
+        def sign_index_of_planet(p):
+            sign_name = ctx.sign_of(p)
+            return SIGNS.index(sign_name) if sign_name in SIGNS else None
+
+        def house_strength(p):
+            sign_idx = sign_index_of_planet(p)
+            if sign_idx is None or p not in HOUSE_STRENGTHS:
+                return None
+            return HOUSE_STRENGTHS[p][sign_idx]
+
+        def strong(p, include_neutral=False):
+            strength = house_strength(p)
+            if strength is None:
                 return False
-            h = ctx.house_of(p)
-            return bool(exalted(p) or own(p) or moola(p) or kendra(h) or trikona(h))
+            return strength >= (2 if include_neutral else 3)
+
+        def weak(p):
+            strength = house_strength(p)
+            return strength is not None and strength <= 2
 
         def associated(a, b):
             return a in ctx.planets and b in ctx.planets and (same_house(a, b) or aspect(a, b) or aspect(b, a))
@@ -1035,6 +1063,7 @@ class YogaEngine:
             "SIGNS": SIGNS, "SIGN_LORDS": SIGN_LORDS,
             "EXALTATION": EXALTATION, "DEBILITATION": DEBILITATION,
             "PLANET_CN": PLANET_CN, "BENEFICS": BENEFICS, "MALEFICS": MALEFICS,
+            "PLANET_INDEX": PLANET_INDEX, "HOUSE_STRENGTHS": HOUSE_STRENGTHS,
             "MOVABLE_SIGNS": MOVABLE_SIGNS,
             "ALL_PLANETS": ALL_PLANETS, "MOOLATRIKONA_SIGN": MOOLATRIKONA_SIGN,
             # 基础查询
@@ -1057,7 +1086,8 @@ class YogaEngine:
             "offset": offset,
             # v6.0.32: 同宫与相位检查（custom规则常用）
             "same_house": same_house, "aspect": aspect, "aspects_house": aspects_house,
-            "strong": strong, "associated": associated, "temporal_friend": temporal_friend,
+            "house_strength": house_strength, "strong": strong, "weak": weak,
+            "associated": associated, "temporal_friend": temporal_friend,
             "occupants": occupants, "only_benefics_in_house": only_benefics_in_house,
             "only_malefics_in_house": only_malefics_in_house,
             "house_has_benefic": house_has_benefic, "house_has_malefic": house_has_malefic,
@@ -1378,15 +1408,16 @@ class YogaEngine:
             return success() if d9_asc and SIGN_LORDS.get(d9_asc) in dry_lords else []
         if ctype == "lagna_lord_and_navamsa_lord_both_in_watery_signs":
             l1 = house_lord(1)
-            d9_lagna_lord = SIGN_LORDS.get(ctx.d9.get("ascendant"))
+            navamsa_lord = ctx.navamsa_dispositor(l1) if l1 else None
             watery = {"Cancer", "Scorpio", "Pisces"}
-            return success() if l1 and d9_lagna_lord and ctx.sign_of(l1) in watery and ctx.sign_of(d9_lagna_lord) in watery else []
+            return success() if l1 and navamsa_lord and ctx.sign_of(l1) in watery and ctx.sign_of(navamsa_lord) in watery else []
         if ctype == "jupiter_in_lagna_or_aspects_lagna_from_watery":
             return success() if "Jupiter" in ctx.planets and (ctx.house_of("Jupiter") == 1 or (ctx.sign_of("Jupiter") in {"Cancer", "Scorpio", "Pisces"} and aspects("Jupiter", 1))) else []
         if ctype == "lagna_watery_with_benefics_or_lagna_lord_watery":
             l1 = house_lord(1)
             asc_watery = ctx.ascendant in {"Cancer", "Scorpio", "Pisces"}
-            return success() if (asc_watery and any(ctx.house_of(b) == 1 for b in BENEFICS if b in ctx.planets)) or (l1 and ctx.sign_of(l1) in {"Cancer", "Scorpio", "Pisces"}) else []
+            watery_planets = {"Moon", "Venus"}
+            return success() if (asc_watery and any(ctx.house_of(b) == 1 for b in BENEFICS if b in ctx.planets)) or (l1 in watery_planets) else []
         if ctype == "jupiter_in_lagna_mars_in_7th":
             return success() if ctx.house_of("Jupiter") == 1 and ctx.house_of("Mars") == 7 else []
         if ctype == "saturn_in_lagna_mars_in_5_7_9":
