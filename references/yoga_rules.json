@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "description": "Yoga 规则库 - 数据驱动架构 v1.0",
-  "total_rules": 473,
+  "total_rules": 475,
   "rules": [
     {
       "id": "raja_yoga",
@@ -9081,7 +9081,7 @@
       "category": "health",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora BVR-11 exact D1-safe logic: (a) Lagna lord in Lagna joined by\n# dusthana lord; (b) weak Lagna lord joined by any kendra/trine lord.\nasc_lord = lord(1)\ndusthana_lords = [lord(h) for h in [6, 8, 12]]\nquad_trine_lords = [lord(h) for h in [1, 4, 5, 7, 9, 10]]\nif asc_lord not in ctx.planets:\n    False\nelse:\n    condition_a = house_of(asc_lord) == 1 and any(dl in ctx.planets and same_house(asc_lord, dl) for dl in dusthana_lords)\n    condition_b = (not strong(asc_lord)) and any(qtl in ctx.planets and same_house(asc_lord, qtl) for qtl in quad_trine_lords)\n    condition_a or condition_b\n",
+        "expr": "\n# PyJHora BVR-11: (a) Lagna lord in Lagna joined by dusthana lord;\n# (b) weak Lagna lord joined by any kendra/trine lord.\nasc_lord = lord(1)\ndusthana_lords = [lord(h) for h in [6, 8, 12]]\nquad_trine_lords = [lord(h) for h in [1, 4, 5, 7, 9, 10]]\nif asc_lord not in ctx.planets:\n    False\nelse:\n    condition_a = house_of(asc_lord) == 1 and any(dl in ctx.planets and same_house(asc_lord, dl) for dl in dusthana_lords)\n    weak_by_sign = not (exalted(asc_lord) or own(asc_lord) or moola(asc_lord))\n    condition_b = weak_by_sign and any(qtl in ctx.planets and same_house(asc_lord, qtl) for qtl in quad_trine_lords)\n    condition_a or condition_b\n",
         "combo_template": "上升主在Lagna合凶宫主，或弱上升主合角/三方主"
       },
       "effects": [
@@ -9301,8 +9301,8 @@
       "category": "durbhaga",
       "logic": {
         "type": "custom",
-        "expr": "\n# Moon hemmed, associated, or aspected by evil planets\nif 'Moon' not in ctx.planets:\n    False\nelse:\n    moon_h = ctx.planets['Moon'].get('house')\n    evil = {'Mars', 'Saturn', 'Rahu', 'Ketu', 'Sun'}\n    h_prev = ((moon_h - 1 + 10) % 12) + 1\n    h_next = ((moon_h - 1 + 1) % 12) + 1\n    prev_evil = any(ctx.planets[p].get('house') == h_prev for p in evil if p in ctx.planets)\n    next_evil = any(ctx.planets[p].get('house') == h_next for p in evil if p in ctx.planets)\n    hemmed = prev_evil and next_evil\n    associated = any(same_house('Moon', p) for p in evil if p in ctx.planets)\n    aspected = any(aspect(p, 'Moon') for p in evil if p in ctx.planets)\n    hemmed or associated or aspected\n",
-        "combo_template": "月亮受凶星影响"
+        "expr": "\n# PyJHora/BVR 198-199.\nif 'Moon' not in ctx.planets:\n    False\nelse:\n    evil = set(MALEFICS)\n    moon_h = house_of('Moon')\n    prev_h = ((moon_h - 2) % 12) + 1 if moon_h else None\n    next_h = (moon_h % 12) + 1 if moon_h else None\n    hemmed = bool(prev_h and next_h and house_has_malefic(prev_h) and house_has_malefic(next_h))\n    associated = any(same_house('Moon', p) for p in evil if p in ctx.planets)\n    aspected = any(aspect(p, 'Moon') for p in evil if p in ctx.planets)\n    y198 = hemmed or associated or aspected\n    l4 = lord(4)\n    nav_lord = navamsa_dispositor(l4) if l4 else None\n    final_planet = navamsa_dispositor(nav_lord) if nav_lord else None\n    y199 = final_planet in ctx.planets and house_of(final_planet) in [6, 8, 12]\n    y198 or y199\n",
+        "combo_template": "月亮受凶星夹制/合相/相位，或4宫主Navamsa链最终落6/8/12"
       },
       "effects": [
         "母亲健康不佳",
@@ -9322,8 +9322,8 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# 4th house occupied by benefic or exalted planet\nbenefics = {'Jupiter', 'Venus', 'Mercury', 'Moon'}\nplanets_in_4 = [p for p, info in ctx.planets.items() if info.get('house') == 4]\nhas_benefic = any(p in benefics for p in planets_in_4)\nhas_exalted = any(exal(p) for p in planets_in_4)\nhas_benefic or has_exalted\n",
-        "combo_template": "第4宫有吉星或旺星"
+        "expr": "\n# PyJHora/BVR 205-206 Nishkapata Yoga.\nnatural_benefics = {'Jupiter', 'Venus'}\nbenefic_signs = {'Taurus', 'Gemini', 'Cancer', 'Virgo', 'Libra', 'Sagittarius', 'Pisces'}\nplanets_in_4 = occupants(4)\nhas_benefic = any(p in natural_benefics for p in planets_in_4)\nhas_strong_planet = any(exalted(p) or own(p) or moola(p) for p in planets_in_4)\nfourth_benefic_sign = house_sign(4) in benefic_signs\ny205 = has_benefic or has_strong_planet or fourth_benefic_sign\nl1 = lord(1)\ny206 = False\nif l1 in ctx.planets and house_of(l1) == 4:\n    l1_with_benefic = any(p != l1 and same_house(l1, p) for p in natural_benefics if p in ctx.planets)\n    l1_aspected_benefic = any(aspect(p, l1) for p in natural_benefics if p in ctx.planets and p != l1)\n    y206 = l1_with_benefic or l1_aspected_benefic\ny205 or y206\n",
+        "combo_template": "第4宫有天然吉星/强星/吉性星座，或上升主入4宫且受吉星影响"
       },
       "effects": [
         "心地善良",
@@ -9343,8 +9343,8 @@
       "category": "putra",
       "logic": {
         "type": "custom",
-        "expr": "\n# 5th lord strong and associated with benefics\nlord_5 = lord(5)\nif lord_5 not in ctx.planets:\n    False\nelse:\n    benefics = {'Jupiter', 'Venus', 'Mercury', 'Moon'}\n    in_kendra_trikona = ctx.planets[lord_5].get('house') in [1, 4, 5, 7, 9, 10]\n    associated = any(same_house(lord_5, b) for b in benefics if b in ctx.planets)\n    in_kendra_trikona and associated\n",
-        "combo_template": "5宫主强且与吉星有关联"
+        "expr": "\n# PyJHora/BVR 220-221 Bahu Puthra Yoga.\n# 220: Rahu in 5th and Rahu is not in Saturn navamsa.\ny220 = house_of('Rahu') == 5 and d9_sign_of('Rahu') not in {'Capricorn', 'Aquarius'}\n# 221: lord of Navamsa occupied by a planet associated with 7th lord is in 1st/2nd/5th in Rasi.\nl7 = lord(7)\ny221 = False\nif l7 in ctx.planets:\n    associated_planets = [p for p in ctx.planets if p != l7 and associated(p, l7)]\n    for p in associated_planets:\n        disp = navamsa_dispositor(p)\n        if disp in ctx.planets and house_of(disp) in [1, 2, 5]:\n            y221 = True\n            break\ny220 or y221\n",
+        "combo_template": "Rahu在5且非土星Navamsa，或7宫主关联行星的Navamsa主落1/2/5"
       },
       "effects": [
         "子女众多",
@@ -11627,8 +11627,8 @@
       "category": "special",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora 291/292/294 D1-safe variants. Variant 293 needs tithi/waning Moon\n# and remains unavailable from static planet_positions_60 data.\njm = 'Jupiter' in ctx.planets and 'Mars' in ctx.planets and house_of('Jupiter') == 1 and house_of('Mars') == 7\nsm = 'Saturn' in ctx.planets and 'Mars' in ctx.planets and house_of('Saturn') == 1 and house_of('Mars') in [5, 7, 9]\nmoon_mercury = False\nif 'Moon' in ctx.planets and 'Mercury' in ctx.planets:\n    moon_mercury = kendra(house_of('Moon')) and kendra(house_of('Mercury')) and any(p != 'Moon' and aspect(p, 'Moon') for p in ctx.planets) and any(p != 'Mercury' and aspect(p, 'Mercury') for p in ctx.planets)\njm or sm or moon_mercury\n",
-        "combo_template": "木火1/7、土升火5/7/9，或月水角宫并受相位"
+        "expr": "\n# PyJHora/BVR 291-294 plus BVR variations.\njm = 'Jupiter' in ctx.planets and 'Mars' in ctx.planets and house_of('Jupiter') == 1 and house_of('Mars') == 7\nsm = 'Saturn' in ctx.planets and 'Mars' in ctx.planets and house_of('Saturn') == 1 and house_of('Mars') in [5, 7, 9]\nsaturn_waning = 'Saturn' in ctx.planets and house_of('Saturn') == 12 and is_waning_moon()\nmoon_mercury = False\nif 'Moon' in ctx.planets and 'Mercury' in ctx.planets:\n    moon_mercury = kendra(house_of('Moon')) and kendra(house_of('Mercury')) and any(p != 'Moon' and aspect(p, 'Moon') for p in ctx.planets) and any(p != 'Mercury' and aspect(p, 'Mercury') for p in ctx.planets)\nl6 = lord(6)\nvariation_1 = house_of('Rahu') == 6 and aspect('Ketu', 'Rahu')\nvariation_2 = l6 in ctx.planets and same_house(l6, 'Mars')\nvariation_3 = 'Mercury' in ctx.planets and same_house('Mercury', 'Mars') and same_house('Mercury', 'Sun')\nd9_l6 = d9_lord_of_house(6)\nvariation_4 = d9_house_of('Mercury') == 6 and d9_house_of('Rahu') == 6 and d9_l6 in ctx.planets and same_house(d9_l6, 'Mars')\njm or sm or saturn_waning or moon_mercury or variation_1 or variation_2 or variation_3 or variation_4\n",
+        "combo_template": "木火1/7、土升火5/7/9、土12宫逢亏月，或BVR精神扰动变体"
       },
       "effects": [
         "Mental disturbance, confusion, erratic behavior"
@@ -13765,7 +13765,47 @@
       "strength": "中",
       "enabled": true,
       "source_reference": "BVR-36: Malika Yoga starting from 5th house"
+    },
+    {
+      "id": "bvr_kaahala_yoga",
+      "name": "Kaahala Yoga",
+      "name_cn": "勇气格局（Kaahala）",
+      "source": "B.V. Raman / PyJHora",
+      "bvr_id": "BVR-15-alt",
+      "category": "auspicious",
+      "logic": {
+        "type": "custom",
+        "expr": "\n# PyJHora kaahala_yoga: 4th lord and Jupiter in mutual quadrants; Lagna lord strong.\nl1 = lord(1)\nl4 = lord(4)\nif l1 not in ctx.planets or l4 not in ctx.planets or 'Jupiter' not in ctx.planets:\n    False\nelse:\n    l1_strong = strong(l1)\n    mutual_kendra = offset(house_of(l4), house_of('Jupiter')) in [0, 3, 6, 9]\n    l1_strong and mutual_kendra\n",
+        "combo_template": "4宫主与木星互为Kendra，且上升主有力"
+      },
+      "effects": [
+        "Courage, initiative, status and practical drive"
+      ],
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "v6.0.37: split from kahala_yoga; aligned to PyJHora kaahala_yoga() definition."
+    },
+    {
+      "id": "bvr_kapata_yoga",
+      "name": "Kapata Yoga",
+      "name_cn": "欺诈瑜伽",
+      "source": "B.V. Raman / PyJHora",
+      "bvr_id": "BVR-202-204",
+      "category": "durbhaga",
+      "logic": {
+        "type": "custom",
+        "expr": "\n# PyJHora/BVR 202-204 Kapata Yoga.\nevil = set(MALEFICS)\nl4 = lord(4)\nl10 = lord(10)\nmaandi_h = maandi_house()\nif l4 not in ctx.planets or l10 not in ctx.planets:\n    False\nelse:\n    # 202: 4th joined by a malefic; 4th lord joined/aspected/hemmed by malefics.\n    malefic_in_4 = any(house_of(m) == 4 for m in evil if m in ctx.planets)\n    l4_h = house_of(l4)\n    l4_joined_malefic = any(m != l4 and same_house(l4, m) for m in evil if m in ctx.planets)\n    l4_aspected_malefic = any(aspect(m, l4) for m in evil if m in ctx.planets)\n    prev_h = ((l4_h - 2) % 12) + 1 if l4_h else None\n    next_h = (l4_h % 12) + 1 if l4_h else None\n    l4_hemmed = bool(prev_h and next_h and house_has_malefic(prev_h) and house_has_malefic(next_h))\n    yoga202 = malefic_in_4 and (l4_joined_malefic or l4_aspected_malefic or l4_hemmed)\n    # 203: Saturn, Mars, Rahu in 4th; malefic 10th lord aspected by malefics.\n    yoga203 = all(house_of(p) == 4 for p in ['Saturn', 'Mars', 'Rahu']) and l10 in evil and any(aspect(m, l10) for m in evil if m in ctx.planets and m != l10)\n    # 204: 4th lord joins Saturn, Mandi, Rahu and is aspected by malefics.\n    yoga204 = bool(maandi_h and house_of(l4) == house_of('Saturn') == house_of('Rahu') == maandi_h and any(aspect(m, l4) for m in evil if m in ctx.planets and m != l4))\n    yoga202 or yoga203 or yoga204\n",
+        "combo_template": "4宫/4宫主受凶星、Rahu、Maandi/Mandi 等严重影响"
+      },
+      "effects": [
+        "Deception, distrust, household/family complications"
+      ],
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "v6.0.37: high-confidence PyJHora Kapata 202-204 implementation."
     }
   ],
-  "total_enabled_rules": 379
+  "total_enabled_rules": 381
 }

@@ -1327,12 +1327,21 @@ class YogaEngine:
         if ctype == "malefic_in_lagna_or_gulika_in_trine_OR_gulika_with_kendra_trine_lord_OR_l1_with_rahu_sat_ket":
             l1 = house_lord(1)
             gh = ctx.upagraha_house("gulika")
+            # PyJHora: condition 3 stands alone; condition 1 requires BOTH malefic in Lagna AND Gulika in trine.
+            l1_with_rahu_sat_ket = l1 and any(ctx.house_of(l1) == ctx.house_of(p) for p in ["Rahu", "Saturn", "Ketu"] if p in ctx.planets and p != l1)
+            if l1_with_rahu_sat_ket:
+                return success()
+            if gh is None:
+                return []
+            malefic_in_lagna = any(ctx.house_of(p) == 1 for p in MALEFICS if p in ctx.planets)
             gulika_in_trine = gh in (1, 5, 9)
+            if malefic_in_lagna and gulika_in_trine:
+                return success()
             kendra_trine_lords = {house_lord(h) for h in (1, 4, 5, 7, 9, 10)}
-            gulika_with_kendra_trine_lord = gh is not None and any(
+            gulika_with_kendra_trine_lord = any(
                 lord and lord in ctx.planets and ctx.house_of(lord) == gh for lord in kendra_trine_lords
             )
-            return success() if any(ctx.house_of(p) == 1 for p in MALEFICS if p in ctx.planets) or gulika_in_trine or gulika_with_kendra_trine_lord or (l1 and any(related(l1, p) for p in ["Rahu", "Saturn", "Ketu"] if p in ctx.planets)) else []
+            return success() if gulika_with_kendra_trine_lord else []
         if ctype == "same_lord_for_1st_and_4th":
             return success() if house_lord(1) == house_lord(4) else []
         if ctype == "1st_and_4th_lords_are_natural_or_temporal_friends":

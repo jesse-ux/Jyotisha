@@ -78,9 +78,10 @@ PYJHORA_VARIANTS = {
     # Vahana variants
     'vahana_yoga_209': 'bvr_vahana_yoga',
     'vahana_yoga_210': 'bvr_vahana_yoga',
-    # Kapata -> Nishkapata
-    'kapata_yoga_202': 'bvr_nishkapata_precise',
-    'kapata_yoga_204': 'bvr_nishkapata_precise',
+    # Kapata family
+    'kapata_yoga_202': 'bvr_kapata_yoga',
+    'kapata_yoga_203': 'bvr_kapata_yoga',
+    'kapata_yoga_204': 'bvr_kapata_yoga',
     'pisacha_grastha_yoga': 'bvr_pisacha_grastha_yoga',
     'kaalanirdesat_puthranaasa_yoga_229': 'bvr_kaalanirdesat_puthranaasa_yoga',
     'dwadasa_sahodara_yoga': 'bvr_dwadasa_sahodara_yoga',
@@ -95,8 +96,11 @@ PYJHORA_VARIANTS = {
     'sula_yoga': 'bvr_soola_yoga',
     # Kedara
     'kedara_yoga': 'bvr_kedaara_yoga',
-    # Kaahala/Kahala
-    'kaahala_yoga': 'kahala_yoga',
+    # Kaahala/Kahala are distinct PyJHora functions:
+    # - kaahala_yoga: L4 and Jupiter in mutual quadrants + strong L1
+    # - kahala_yoga: L4 and L9 in mutual kendras + strong L1
+    'kaahala_yoga': 'bvr_kaahala_yoga',
+    'kahala_yoga': 'kahala_yoga',
     # Direct mappings for common yogas
     'vosi_yoga': 'bvr_vosi_precise',
     'sunaphaa_yoga': 'bvr_sunaphaa_precise',

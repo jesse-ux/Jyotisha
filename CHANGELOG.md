@@ -1,5 +1,54 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.37（2026-06-05）—— Context-aware Yoga 精度提升
+
+> **目标**：利用 v6.0.36 已接入的 D9/Navamsa、Panchanga、Gulika/Maandi 上下文，继续修复 PyJHora/B.V. Raman 高影响 Yoga 误差，而不是回退到 D1-only 近似。
+
+### 规则修复
+
+- 拆分 PyJHora 中两个不同函数：
+  - `kaahala_yoga` → 新增 `bvr_kaahala_yoga`：4宫主与木星互为 Kendra，且上升主有力。
+  - `kahala_yoga` 保留原 BVR 逻辑：4宫主与9宫主互为 Kendra，且上升主有力。
+- 新增 `bvr_kapata_yoga`，实现 PyJHora/B.V. Raman 202-204 三个 Kapata 条件，避免继续把 `kapata_yoga_*` 错映射到 `nishkapata`。
+- 修复 `bvr_mathibhramana_yoga`：补入 293 waning Moon/tithi 条件、BVR variation 1-4，包括 D9 中 Mercury/Rahu/6宫主/Mars 的组合。
+- 修复 `bvr_matrunasa_precise`：在 Moon 受凶星夹制/合相/相位基础上，补入 199 的双层 Navamsa dispositor 链落 6/8/12。
+- 修复 `bvr_nishkapata_precise`：补入第4宫为吉性星座、天然吉星、强星、以及上升主入4宫受吉星影响的 205/206 条件。
+- 修复 `bvr_bahu_puthra_precise`：补入 Rahu 在5宫且非 Saturn Navamsa，以及7宫主关联行星的 Navamsa 主落 1/2/5。
+- 调整 `bvr_rogagrastha_precise` 的弱上升主判定，贴近 PyJHora 的 sign-strength 口径。
+- 修正 `vanchana_chora_bheethi` 语义条件：Gulika 在三方不再单独触发，必须符合 PyJHora 条件组合，减少过宽 FP。
+
+### 映射修复
+
+- `validate_logic_v2.py` 中：
+  - `kaahala_yoga` 改映射到新增 `bvr_kaahala_yoga`。
+  - `kahala_yoga` 显式映射到 `kahala_yoga`。
+  - `kapata_yoga_202/203/204` 改映射到新增 `bvr_kapata_yoga`。
+
+### 验证结果
+
+- `scripts/validate_logic_v2.py`：
+  - Precision **85.60%**（v6.0.36 为 83.84%）
+  - Recall **72.38%**（v6.0.36 为 69.64%）
+  - F1 **78.44%**（v6.0.36 为 76.08%）
+  - FP：130；FN：295
+- `scripts/run_quality_gate.py --skip-yoga-logic`：通过。
+  - pytest **35 passed**
+  - BPHS/Ashtakavarga 不变量 **18/18**
+  - golden case 通过
+
+### 规则库状态
+
+- JSON 规则总数：**475**
+- 启用规则：**381**
+- 当前验证报告：`references/validation_logic_report.json`
+
+### 后续优化点
+
+- 下一轮优先处理仍在 Top 队列中的：`vanchana_chora_bheethi`、`rogagrastha`、`swaveeryaddhana`、`kaalanirdesat_puthranaasa`、`sankha`、`dehasthoulya`。
+- 建议继续把 PyJHora 的 sign-strength、natural benefics/malefics 与 aspect helper 进一步对齐，减少“同名但判定口径略不同”的残余误差。
+
+---
+
 ## v6.0.36（2026-06-05）—— Yoga 验证数据结构升级与 D9/Panchanga/Upagraha 上下文接入
 
 > **目标**：为继续提升 Yoga 逻辑准确率补齐验证数据层，不再把所有 B.V. Raman / PyJHora 条件硬塞进 D1-only 近似，优先让标准测试集携带 D9/Navamsa、tithi/waning Moon、Gulika/Maandi 等上下文。
