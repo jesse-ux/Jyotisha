@@ -1,5 +1,51 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.42（2026-06-05）—— Yoga F1 93% 源码口径续航
+
+> **目标**：继续用户要求的“准确率优先”路线；本轮先对残余 Top Yoga 做 A/B 模拟，只发布源码定义明确且整体指标健康改善的修改，不为了短期 F1 盲目扩大规则。
+
+### 源码语义确认
+
+- 复核 PyJHora `yoga._get_natural_benefics()`：Yoga 源码层的 natural benefics 默认为 Jupiter、Venus，Mercury 仅在独处或与 Jupiter/Venus 同宫时加入；不等同于 Skill 静态 `BENEFICS`。
+- 复核 PyJHora `house.aspected_planets_of_the_planet(chart, p)` 与 `house.planets_aspecting_the_planet(chart, p)` 方向差异：前者是“p 所相位到的行星”，后者才是“相位 p 的行星”。`bvr_bhratruvriddhi_precise` 按源码使用前者语义。
+- 复核 PyJHora `charts.benefics_and_malefics()`：jd/place 路径存在 tithi、Moon、Mercury 同宫动态凶吉；但当前 v6.0.42 只在源码明确需要的 Yoga 中使用已稳定复现的 `pyjhora_natural_benefics()`，暂不把 dynamic benefics/malefics 全局接入，避免影响过宽。
+
+### 高影响规则对齐
+
+- `bvr_bhratruvriddhi_precise`：改用 `pyjhora_natural_benefics()`，并按 PyJHora `_bhratruvriddhi_yoga_calculation()` 保留 `aspected_planets_of_the_planet()` 的方向语义；模拟结果 FP **7→0**，FN **0→3**，整体 precision 明显提升。
+- `bvr_ayatna_griha_prapta_yoga`：从旧 compound 占位结构改为 custom 源码口径，复刻 BVR-189/190：
+  - L1 与 L7 同在 Lagna 或 4宫，并至少一者受 natural benefic 相位；或
+  - L9 在 Kendra，且 L4 strong 或 moola-trikona。
+  - 模拟结果 FP **0→0**，FN **6→1**。
+- `bvr_utthama_graha_yoga`：从 semantic compound 改为 custom BVR-187 源码口径：4宫主在 Kendra/Trikona，且与 natural benefic 同宫，并受 natural benefic Graha Drishti；模拟结果 FP **3→1**，FN **5→6**，结合前两项后总指标仍健康改善。
+- `bvr_dharidhra_11_precise` 本轮只模拟、不修改：去掉 `method1` 后虽 FP **2→1**，但 FN **6→10**，不符合准确率优先与 source-comparable 收益标准。
+
+### 验证结果
+
+- `scripts/validate_logic_v2.py`：
+  - Precision **95.67%**（v6.0.41 为 94.82%）
+  - Recall **91.01%**（v6.0.41 为 90.92%）
+  - F1 **93.28%**（v6.0.41 为 92.83%）
+  - FP：44；FN：96
+- `scripts/run_quality_gate.py --skip-yoga-logic`：通过。
+  - pytest **35 passed**
+  - BPHS/Ashtakavarga 不变量 **18/18**
+  - golden case 通过
+  - capability audit valid，0 problem / 0 warning
+
+### 规则库状态
+
+- JSON 规则总数：**475**
+- 启用规则：**381**
+- 当前验证报告：`references/validation_logic_report.json`
+
+### 后续优化点
+
+- 下一轮 Top residual 仍集中在 `bvr_vanchana_chora_bheethi_yoga`、`bvr_kapata_yoga`、`bvr_mathibhramana_yoga`、`bvr_dharidhra_11_precise`、`bvr_kalaanidhi_yoga`、`bvr_krisanga_yoga`。
+- 暂不建议直接扩大 Kapata/Vanchana/Mathibhramana 条件；应优先复现 Gulika/Maandi house-index、`benefics_and_malefics()` dynamic malefics、以及 PyJHora variation mapping 的输入层。
+
+---
+
 ## v6.0.41（2026-06-05）—— Yoga F1 92% 源码口径续航
 
 > **目标**：在 v6.0.40 基础上继续推进残余 Yoga 误差，但仍坚持“准确率优先、源码确认后再改”；本轮只处理 PyJHora 源码定义非常明确且可稳定复现的规则。

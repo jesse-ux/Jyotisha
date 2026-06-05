@@ -9221,8 +9221,8 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora/BVR-177: 3rd lord, Mars, or 3rd house joined/aspected by benefics and strong.\n# Planet-to-house aspect uses rasi drishti; planet-to-planet uses graha drishti.\nlord_3 = lord(3)\nbenefics = [p for p in BENEFICS if p in ctx.planets]\ndef benefic_link_to_planet(p):\n    return p in ctx.planets and strong(p) and any(b != p and (same_house(b, p) or aspect(b, p)) for b in benefics)\nhouse_joined = any(house_of(b) == 3 for b in benefics)\nhouse_aspected = any(rasi_aspects_house(b, 3) for b in benefics)\nbenefic_link_to_planet(lord_3) or benefic_link_to_planet('Mars') or house_joined or house_aspected\n",
-        "combo_template": "3宫主、火星或3宫受吉星连接"
+        "expr": "\n# PyJHora/BVR-177 source-parity: 3rd lord, Mars, or 3rd house joined/aspected by PyJHora natural benefics.\n# NOTE: PyJHora house.aspected_planets_of_the_planet(chart, p) returns planets aspected BY p.\nlord_3 = lord(3)\nbenefics = pyjhora_natural_benefics()\ndef benefic_link_to_planet(p):\n    return p in ctx.planets and strong(p) and any(\n        b != p and (same_house(b, p) or aspect(p, b))\n        for b in benefics\n    )\nhouse_joined = any(house_of(b) == 3 for b in benefics)\nhouse_aspected = any(b in pyjhora_aspected_planets_of_raasi(3) for b in benefics)\nbenefic_link_to_planet(lord_3) or benefic_link_to_planet('Mars') or house_joined or house_aspected\n",
+        "combo_template": "3宫主、火星或3宫按PyJHora源码受吉星连接"
       },
       "effects": [
         "兄弟和睦",
@@ -9231,7 +9231,7 @@
       ],
       "strength": "中",
       "enabled": true,
-      "accuracy_note": "高置信：定义来自 PyJHora/B.V. Raman。"
+      "accuracy_note": "v6.0.42 source-parity: uses PyJHora natural benefics and preserves house.aspected_planets_of_the_planet() direction semantics."
     },
     {
       "id": "bvr_bandhubhisthyaktha_precise",
@@ -9615,64 +9615,9 @@
       "bvr_id": null,
       "category": "special",
       "logic": {
-        "type": "compound_conditions",
-        "conditions": [
-          {
-            "type": "compound",
-            "operator": "OR",
-            "conditions": [
-              {
-                "type": "compound",
-                "operator": "AND",
-                "conditions": [
-                  {
-                    "type": "lords_in_houses",
-                    "lords_and_houses": [
-                      [
-                        1,
-                        0
-                      ],
-                      [
-                        7,
-                        0
-                      ],
-                      [
-                        1,
-                        3
-                      ],
-                      [
-                        7,
-                        3
-                      ]
-                    ],
-                    "note": "Lords of Lagna and 7th in Lagna or 4th"
-                  },
-                  {
-                    "type": "aspected_by_benefics",
-                    "note": "Aspected by benefics"
-                  }
-                ]
-              },
-              {
-                "type": "compound",
-                "operator": "AND",
-                "conditions": [
-                  {
-                    "type": "lord_in_kendra",
-                    "lord_of": 9,
-                    "note": "9th lord in kendra"
-                  },
-                  {
-                    "type": "lord_in_exaltation_own_or_mool_trikona",
-                    "lord_of": 4,
-                    "note": "4th lord exalted, in own or mool-trikona"
-                  }
-                ]
-              }
-            ]
-          }
-        ],
-        "note": ""
+        "type": "custom",
+        "expr": "\n# PyJHora/BVR-189..190 Ayatna Griha Prapta Yoga source-parity.\nl1 = lord(1)\nl7 = lord(7)\nl4 = lord(4)\nl9 = lord(9)\nbenefics = pyjhora_natural_benefics()\ncond189 = False\nif l1 in ctx.planets and l7 in ctx.planets:\n    lords_in_lagna_or_4th = (house_of(l1) == house_of(l7) == 1) or (house_of(l1) == house_of(l7) == 4)\n    benefic_aspects_either = any(aspect(b, l1) or aspect(b, l7) for b in benefics)\n    cond189 = lords_in_lagna_or_4th and benefic_aspects_either\ncond190 = l4 in ctx.planets and l9 in ctx.planets and kendra(house_of(l9)) and (strong(l4) or moola(l4))\ncond189 or cond190\n",
+        "combo_template": "BVR-189/190 按PyJHora源码口径"
       },
       "effects": [
         "Gains property without effort, inherits house"
@@ -9680,7 +9625,8 @@
       "strength": "moderate",
       "enabled": true,
       "draft": false,
-      "evidence_note": "Source: B.V. Raman, BVR: None"
+      "evidence_note": "Source: B.V. Raman, BVR: None",
+      "accuracy_note": "v6.0.42 source-parity: rewritten as custom BVR-189/190 logic after A/B simulation improved recall without adding FP."
     },
     {
       "id": "bvr_ayatnadhanalabha_yoga",
@@ -12993,28 +12939,9 @@
       "bvr_id": null,
       "category": "special",
       "logic": {
-        "type": "compound_conditions",
-        "conditions": [
-          {
-            "type": "compound",
-            "operator": "AND",
-            "conditions": [
-              {
-                "type": "4th_lord_with_benefics",
-                "note": "4th lord joins benefics"
-              },
-              {
-                "type": "4th_lord_aspected_by_benefics",
-                "note": "4th lord aspected by benefics"
-              },
-              {
-                "type": "4th_lord_in_kendra_or_trikona",
-                "note": "4th lord in kendra or trikona"
-              }
-            ]
-          }
-        ],
-        "note": ""
+        "type": "custom",
+        "expr": "\n# PyJHora/BVR-187 Utthama Griha Yoga source-parity.\nl4 = lord(4)\nif l4 not in ctx.planets:\n    False\nelse:\n    benefics = pyjhora_natural_benefics()\n    h4 = house_of(l4)\n    fourth_lord_in_kendra_trikona = h4 in [1, 4, 5, 7, 9, 10]\n    fourth_lord_joins_benefic = any(house_of(nb) == h4 for nb in benefics)\n    fourth_lord_aspected_by_benefic = any(nb != l4 and aspect(nb, l4) for nb in benefics)\n    fourth_lord_in_kendra_trikona and fourth_lord_joins_benefic and fourth_lord_aspected_by_benefic\n",
+        "combo_template": "4宫主入角/三方且与PyJHora吉星同宫并受吉星相位"
       },
       "effects": [
         "Excellent house/property, comfortable living"
@@ -13022,7 +12949,8 @@
       "strength": "moderate",
       "enabled": true,
       "draft": false,
-      "evidence_note": "Source: B.V. Raman, BVR: None"
+      "evidence_note": "Source: B.V. Raman, BVR: None",
+      "accuracy_note": "v6.0.42 source-parity: rewritten as custom BVR-187 logic using PyJHora natural benefics and graha aspect semantics."
     },
     {
       "id": "bvr_vaatharoga_yoga",
