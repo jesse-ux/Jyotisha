@@ -1,0 +1,63 @@
+[project]
+name = "jyotish-vedic-astrology-skill"
+version = "6.0.33"
+description = "Jyotish WorkBuddy skill calculation engine and validation suite"
+requires-python = ">=3.11"
+dependencies = [
+  "pyswisseph",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "hypothesis>=6.0",
+  "coverage[toml]>=7.0",
+  "ruff>=0.6.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["scripts"]
+addopts = "-q --strict-markers --strict-config"
+markers = [
+  "slow: long-running validation tests",
+  "external: tests that depend on optional external datasets or tools",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["scripts"]
+omit = [
+  "scripts/add_high_confidence_yogas_batch1.py",
+  "scripts/build_standard_test_charts.py",
+  "scripts/_compute_one_chart.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 140
+exclude = [
+  ".git",
+  "__pycache__",
+  ".pytest_cache",
+  "jyotish-app",
+  "benchmark",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+  "E501",
+  "E701",
+  "E702",
+  "E741",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+"scripts/validate_bphs_invariants.py" = ["T201"]

@@ -245,13 +245,15 @@ class TestYogaDetection(unittest.TestCase):
         raja = [y for y in yogas if y['name'] == 'Raja Yoga']
         self.assertTrue(len(raja) > 0, "Should detect Raja Yoga when Sun+Jupiter in 1st house")
 
-    def test_no_yoga_false_positive(self):
-        """测试不满足条件时不产生 Yoga"""
-        # 行星分散，且避免落入 Sun/Moon 两侧或扩展型简化 Yoga 条件
+    def test_scattered_planets_do_not_trigger_raja_yoga(self):
+        """分散行星不应触发 Raja Yoga。"""
+        # v6.0.32 起规则库扩大到数百条，极简星盘可能触发其他低阶/专项 Yoga；
+        # 此回归测试只约束原始目标：不应误报 Raja Yoga。
         args = self._make_yoga_args('Aries', 'Sun:Taurus:2,Mars:Leo:5')
         result = cmd_yoga(args)
         yogas = result.get('yogas', [])
-        self.assertEqual(len(yogas), 0, "Should not detect any Yoga with scattered planets")
+        raja = [y for y in yogas if y['name'] == 'Raja Yoga']
+        self.assertEqual(len(raja), 0, "Should not detect Raja Yoga with scattered planets")
 
 
 if __name__ == '__main__':

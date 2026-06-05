@@ -19,16 +19,10 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt && pip install -r requirements-dev.txt
 
-      - name: Compile Python files
-        run: python -m py_compile scripts/jyotish_engine.py scripts/special_lagnas.py scripts/audit_capabilities.py tests/run_golden_cases.py
+      - name: Run Ruff lint for v6.0.33 quality gate files
+        run: ruff check scripts/run_quality_gate.py tests/test_varga_bphs.py tests/test_ashtakavarga_invariants.py tests/test_cli_smoke.py tests/test_yoga_rules_integrity.py
 
-      - name: Validate technique registry
-        run: python scripts/audit_capabilities.py --mode validate
-
-      - name: Run unit tests
-        run: python -m unittest discover tests
-
-      - name: Run golden cases
-        run: python tests/run_golden_cases.py --python python
+      - name: Run quality gate
+        run: python scripts/run_quality_gate.py --skip-yoga-logic

@@ -1,0 +1,5 @@
+# 开发与 CI 依赖
+pytest>=8.0
+hypothesis>=6.0
+coverage[toml]>=7.0
+ruff>=0.6.0

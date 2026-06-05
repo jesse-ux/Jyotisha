@@ -11,3 +11,9 @@ build/
 brain/
 COVERAGE_AUDIT_REPORT.md
 *.tmp
+.coverage
+coverage.xml
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+.hypothesis/

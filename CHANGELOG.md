@@ -1,5 +1,38 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.33（2026-06-05）—— 工程质量门禁、属性测试与 CI 强化
+
+> **目标**：把 v6.0.32 的准确率修复沉淀为可持续工程体系，防止 Dasha、Varga、Ashtakavarga、Yoga 规则与 full-reading 输出契约回归。
+
+### 工程配置
+
+- 新增 `pyproject.toml`，统一项目元数据、pytest 配置、coverage 配置与 Ruff 静态检查规则。
+- 新增 `requirements-dev.txt`，将 `pytest`、`hypothesis`、`coverage`、`ruff` 作为开发/CI 依赖独立管理。
+- 新增 `.pre-commit-config.yaml`，接入 Ruff 与基础 YAML/TOML/JSON/换行/尾随空格检查。
+- 更新 `.gitignore`，忽略 coverage、Ruff、Hypothesis 等本地质量工具缓存。
+
+### 自动化测试与质量门禁
+
+- 新增 `scripts/run_quality_gate.py`，统一执行核心 Python 编译、关键 JSON 校验、technique registry 校验、BPHS 不变量验证、pytest 与 golden case 回归。
+- 新增 `tests/test_varga_bphs.py`：用 Hypothesis 属性测试 D9 Navamsa、D10 Dasamsa、D3 Drekkana 的 BPHS 映射不变量。
+- 新增 `tests/test_ashtakavarga_invariants.py`：用属性测试证明 BAV 固定总分、SAV=337、full SAV=386 与输出契约不随行星位置变化。
+- 新增 `tests/test_cli_smoke.py`：覆盖 `dasha`、`varga`、`ashtakavarga`、`audit-capabilities` CLI smoke tests。
+- 新增 `tests/test_yoga_rules_integrity.py`：校验 Yoga 规则 ID 唯一性、规则计数、低频 Yoga 高置信规则存在，以及逻辑验证报告结构。
+- 更新 GitHub Actions：CI 安装开发依赖，执行 Ruff 和统一质量门禁。
+
+### 精度边界修复
+
+- 修复 `scripts/varga.py` 中分盘度数在星座边界处可能由 `29.999999...` 四舍五入为 `30.0000` 的显示问题；现在输出强制保持在 `[0, 30)`，避免下游范围不变量误报。
+- 调整旧单测 `test_no_yoga_false_positive` 的断言范围：v6.0.32 后规则库已扩大到数百条，极简星盘可能触发其他专项 Yoga；该测试现在只约束原始目标——不误报 Raja Yoga。
+
+### 当前验证结果
+
+- `pytest tests`：**35 passed**。
+- `scripts/run_quality_gate.py --skip-yoga-logic`：通过；包含 18 项 BPHS/Ashtakavarga 不变量、technique registry 校验、pytest 与 golden case 回归。
+- 新增代码 Ruff 检查：通过。
+
+---
+
 ## v6.0.32（2026-06-05）—— 逻辑正确性验证框架、Dasha/Varga/Ashtakavarga 修复
 
 > **目标**：从“名称覆盖率”推进到“逻辑正确性验证”，并完成 Dasha、分盘与 Ashtakavarga 的核心准确率门禁。

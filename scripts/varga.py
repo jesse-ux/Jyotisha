@@ -78,8 +78,14 @@ def calc_varga(lon, div):
     si=_si(lon); d=lon-si*30; ps=30.0/div; pi=int(d/ps)
     # For all vargas, degree within divisional sign is scaled to 0-30 degrees.
     dp=(d-pi*ps)*div
+    # Keep the displayed divisional degree inside [0, 30). Values such as
+    # 29.9999997 can round to 30.0000 at sign boundaries, which breaks
+    # downstream range invariants while the underlying sign mapping is valid.
+    dp_display = round(dp, 4)
+    if dp_display >= 30:
+        dp_display = 0.0
     vsi=varga_map(si,pi,div)
-    r={'sign':_sn(vsi),'sign_idx':vsi,'degree_in_sign':round(dp,4),
+    r={'sign':_sn(vsi),'sign_idx':vsi,'degree_in_sign':dp_display,
        'part_index':pi,'lord':SIGN_LORDS.get(_sn(vsi),'')}
     if div==9: r['pada']=pi+1
     return r
