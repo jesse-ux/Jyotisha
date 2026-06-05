@@ -1,6 +1,6 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.0.39
+version: 6.0.40
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga、出生时间矫正、PDF星盘、读取PDF、分析PDF星盘、现代解读、误判纠错、Varga分盘、综合分析、过境分析、合盘、婚姻匹配、年运盘、Prashna、Argala、Jaimini、Shadbala、Ashtakavarga、HTML报告、深度解盘。
 ---
 
@@ -10,7 +10,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.39-yoga-f1-90-source-parity | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.0.40-yoga-f1-91-source-parity | **详细变更**：`CHANGELOG.md`
 
 ---
 
@@ -301,9 +301,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.0.39-yoga-f1-90-source-parity
+**版本**：v6.0.40-yoga-f1-91-source-parity
 **创建日期**：2026-04-20
-**最后更新**：2026-06-05（v6.0.39 继续对齐 PyJHora Yoga 源码口径，实现 Scorpio/Aquarius 动态 co-lord resolver，修复 `bheri_yoga`、`bvr_sada_sanchara_precise`、`bvr_bandhu_pujya_yoga` 等高影响规则；当前 475 条 JSON 规则、381 条启用规则，D1/Rasi 逻辑验证 Precision=93.82%、Recall=86.70%、F1=90.12%，质量门禁通过，报告以 `references/validation_logic_report.json` 为准）
+**最后更新**：2026-06-05（v6.0.40 继续坚持 PyJHora 源码口径优先，修复 `bvr_amala_precise`、`bvr_kaalanirdesat_puthranaasa_yoga`、`bvr_bhaga_chumbana_yoga` 并新增 `pyjhora_natural_benefics()` helper；当前 475 条 JSON 规则、381 条启用规则，D1/Rasi 逻辑验证 Precision=94.63%、Recall=89.04%、F1=91.75%，质量门禁通过，报告以 `references/validation_logic_report.json` 为准）
 
 ---
 

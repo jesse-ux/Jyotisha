@@ -8999,7 +8999,7 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# Amala Yoga: only natural benefics in 10th from lagna OR from Moon\nbenefics = {'Jupiter', 'Venus', 'Mercury', 'Moon'}\ndef check_amala_from(base_h):\n    h10 = ((base_h - 1 + 9) % 12) + 1\n    planets_in_h10 = [p for p, info in ctx.planets.items() if info.get('house') == h10]\n    if not planets_in_h10:\n        return False\n    return all(p in benefics for p in planets_in_h10)\nasc_h = ctx.planets.get('Ascendant', {}).get('house', 1)\nmoon_h = ctx.planets.get('Moon', {}).get('house', 1) if 'Moon' in ctx.planets else None\ncheck_amala_from(asc_h) or (moon_h and check_amala_from(moon_h))\n",
+        "expr": "\n# PyJHora/BVR-13 Amala Yoga: any natural benefic in 10th from Lagna or Moon.\n# Source parity: PyJHora natural benefics are Jupiter, Venus, plus Mercury only if alone or with Jupiter/Venus.\nmoon_h = house_of('Moon')\nmoon_10 = ((moon_h - 1 + 9) % 12) + 1 if moon_h else None\nany(house_of(b) in [10, moon_10] for b in pyjhora_natural_benefics())\n",
         "combo_template": "第10宫只有吉星"
       },
       "effects": [
@@ -9901,37 +9901,9 @@
       "bvr_id": null,
       "category": "kalatra",
       "logic": {
-        "type": "compound_conditions",
-        "conditions": [
-          {
-            "type": "compound",
-            "operator": "OR",
-            "conditions": [
-              {
-                "type": "compound",
-                "operator": "AND",
-                "conditions": [
-                  {
-                    "type": "lord_in_house",
-                    "lord_of": 7,
-                    "house_offset": 3,
-                    "note": "7th lord in 4th conjunct Venus"
-                  },
-                  {
-                    "type": "venus_in_house",
-                    "house_offset": 3,
-                    "note": "Venus in 4th house"
-                  }
-                ]
-              },
-              {
-                "type": "lagna_lord_debilitated_in_rasi_or_navamsa",
-                "note": "Lagna lord debilitated in rasi or navamsa"
-              }
-            ]
-          }
-        ],
-        "note": ""
+        "type": "custom",
+        "expr": "\n# PyJHora/BVR-240 Bhaga Chumbana Yoga.\n# A: 7th lord in 4th and Venus in 4th. B: Lagna lord debilitated in D1 or Navamsa.\nl7 = lord(7)\nl1 = lord(1)\nif l7 not in ctx.planets or l1 not in ctx.planets:\n    False\nelse:\n    path_a = house_of(l7) == 4 and house_of('Venus') == 4\n    path_b = debil(l1) or d9_sign_of(l1) == DEBILITATION.get(l1)\n    path_a or path_b\n",
+        "combo_template": "7宫主与金星在4宫，或上升主D1/D9落陷"
       },
       "effects": [
         "Excessive sensuality, libidinous nature"
@@ -11158,7 +11130,7 @@
       "category": "putra",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora 229/230. Variant 229: Rahu in 5th, L5 joined malefic, Jupiter debilitated.\n# Variant 230: natural malefics occupy or rasi-aspect both 5th from Lagna and 5th from Jupiter.\nl5 = lord(5)\nif l5 not in ctx.planets or 'Jupiter' not in ctx.planets:\n    False\nelse:\n    cond229 = house_of('Rahu') == 5 and debil('Jupiter') and any(m in ctx.planets and same_house(l5, m) for m in MALEFICS)\n    j5 = ((house_of('Jupiter') - 1 + 4) % 12) + 1\n    mal_lagna5 = any(m in ctx.planets and (house_of(m) == 5 or rasi_aspects_house(m, 5)) for m in MALEFICS)\n    mal_jupiter5 = any(m in ctx.planets and (house_of(m) == j5 or rasi_aspects_house(m, j5)) for m in MALEFICS)\n    cond229 or (mal_lagna5 and mal_jupiter5)\n",
+        "expr": "\n# PyJHora 229/230. Variant 229: Rahu in 5th, L5 joined malefic, Jupiter debilitated.\n# Variant 230: natural malefics occupy or PyJHora-style rasi-aspect both 5th from Lagna and 5th from Jupiter.\nl5 = lord(5)\nif l5 not in ctx.planets or 'Jupiter' not in ctx.planets:\n    False\nelse:\n    cond229 = house_of('Rahu') == 5 and debil('Jupiter') and any(m in ctx.planets and same_house(l5, m) for m in MALEFICS)\n    j5 = ((house_of('Jupiter') - 1 + 4) % 12) + 1\n    mal_lagna5 = any(m in ctx.planets and (house_of(m) == 5 or pyjhora_planets_aspecting_raasi(m, 5)) for m in MALEFICS)\n    mal_jupiter5 = any(m in ctx.planets and (house_of(m) == j5 or pyjhora_planets_aspecting_raasi(m, j5)) for m in MALEFICS)\n    cond229 or (mal_lagna5 and mal_jupiter5)\n",
         "combo_template": "Rahu/L5/木星或凶星影响Lagna与木星起算第5宫"
       },
       "effects": [

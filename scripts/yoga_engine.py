@@ -1189,6 +1189,17 @@ class YogaEngine:
             occupants = ctx.planets_in_house(target)
             return bool(occupants) and all(p in BENEFICS for p in occupants)
 
+        def pyjhora_natural_benefics():
+            """Replicate PyJHora yoga._get_natural_benefics(): Jupiter, Venus, plus benefic Mercury."""
+            benefics = [p for p in ["Jupiter", "Venus"] if p in ctx.planets]
+            mercury_house = ctx.house_of("Mercury")
+            if mercury_house is not None:
+                mercury_alone = len(ctx.planets_in_house(mercury_house)) == 1
+                mercury_with_jupiter_or_venus = any(ctx.house_of(p) == mercury_house for p in ["Jupiter", "Venus"] if p in ctx.planets)
+                if mercury_alone or mercury_with_jupiter_or_venus:
+                    benefics.append("Mercury")
+            return benefics
+
         # 辅助：获取星盘所有行星名列表
         def _planets_list():
             return list(ctx.planets.keys())
@@ -1248,6 +1259,7 @@ class YogaEngine:
             "only_malefics_in_house": only_malefics_in_house,
             "house_has_benefic": house_has_benefic, "house_has_malefic": house_has_malefic,
             "house_sign": house_sign, "movable_house": movable_house,
+            "pyjhora_natural_benefics": pyjhora_natural_benefics,
             "d9_house_of": d9_house_of, "d9_sign_of": d9_sign_of,
             "d9_lord_of_house": d9_lord_of_house, "navamsa_dispositor": navamsa_dispositor,
             "tithi": tithi, "is_waning_moon": is_waning_moon,
