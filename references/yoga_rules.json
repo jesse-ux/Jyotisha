@@ -9177,7 +9177,7 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# Benefics (Jupiter, Venus) in 2nd house\nbenefics = {'Jupiter', 'Venus'}\nplanets_in_2 = [p for p, info in ctx.planets.items() if info.get('house') == 2]\nany(p in benefics for p in planets_in_2)\n",
+        "expr": "\n# PyJHora/BVR-166 Sumukha Yoga method 1.\n# L2 in a kendra and aspected by PyJHora natural benefics, OR natural benefics join the 2nd house.\nl2 = lord(2)\nif l2 not in ctx.planets:\n    False\nelse:\n    benefics = pyjhora_natural_benefics()\n    cond_1a = kendra(house_of(l2)) and any(b in pyjhora_aspected_planets_of_raasi(house_of(l2)) for b in benefics)\n    cond_1b = any(house_of(b) == 2 for b in benefics)\n    cond_1a or cond_1b\n",
         "combo_template": "吉星在第2宫"
       },
       "effects": [
@@ -10332,14 +10332,14 @@
     {
       "id": "bvr_dama_yoga",
       "name": "Dama Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name_cn": "达摩/达姆尼瑜伽",
+      "source": "B.V. Raman / PyJHora",
+      "bvr_id": "BVR-92",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\n# PyJHora/BVR-92 Dama/Damni Yoga: seven classical planets occupy exactly six signs.\nclassical = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']\nlen(set(sign_of(p) for p in classical if p in ctx.planets)) == 6\n",
+        "combo_template": "七曜分布在六个星座"
       },
       "effects": [
         "待补充"
@@ -11615,7 +11615,7 @@
       "category": "special",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora: same lord for 1st/4th OR natural/temporal friendship OR both aspected by benefics.\nl1 = lord(1)\nl4 = lord(4)\nif l1 not in ctx.planets or l4 not in ctx.planets:\n    False\nelse:\n    same_lord = l1 == l4\n    temporal_friends = temporal_friend(l1, l4) and temporal_friend(l4, l1)\n    both_benefic_aspected = all(any(aspect(b, p) for b in BENEFICS if b in ctx.planets) for p in [l1, l4])\n    same_lord or temporal_friends or both_benefic_aspected\n",
+        "expr": "\n# PyJHora Matru Sneha: same L1/L4, mutual temporary or natural friendship, or both aspected by PyJHora natural benefics.\nl1 = lord(1)\nl4 = lord(4)\nif l1 not in ctx.planets or l4 not in ctx.planets:\n    False\nelse:\n    same_lord = l1 == l4\n    temp_friends = temporal_friend(l1, l4) and temporal_friend(l4, l1)\n    nat_friends = natural_friend(l1, l4)\n    benefics = pyjhora_natural_benefics()\n    both_benefic_aspected = any(aspect(b, l1) for b in benefics) and any(aspect(b, l4) for b in benefics)\n    same_lord or temp_friends or nat_friends or both_benefic_aspected\n",
         "combo_template": "1宫主与4宫主同主、友好或同受吉星照拂"
       },
       "effects": [

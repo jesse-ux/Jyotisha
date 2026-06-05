@@ -1,5 +1,46 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.41（2026-06-05）—— Yoga F1 92% 源码口径续航
+
+> **目标**：在 v6.0.40 基础上继续推进残余 Yoga 误差，但仍坚持“准确率优先、源码确认后再改”；本轮只处理 PyJHora 源码定义非常明确且可稳定复现的规则。
+
+### 引擎与 helper 修复
+
+- `scripts/yoga_engine.py` 新增 `pyjhora_aspected_planets_of_raasi(h)`，复刻 PyJHora `house.aspected_planets_of_the_raasi()`：返回通过 Rasi Drishti 影响目标 rasi/house 的行星列表。
+- 新增 `FRIENDLY_PLANETS` 常量与 `natural_friend(a, b)` helper，对齐 PyJHora `const.friendly_planets`，用于 Matru Sneha 等需要自然友谊判断的 Yoga。
+
+### 高影响规则对齐
+
+- `bvr_sumukha_precise`：对齐 PyJHora/BVR-166，改为“2宫主在 Kendra 且被 PyJHora natural benefics 影响，或 natural benefics 入2宫”，不再只检查 Jupiter/Venus 入2宫。
+- `bvr_dama_yoga`：从占位规则改为 PyJHora/BVR-92 Dama/Damni Yoga 源码口径：七曜分布在恰好六个星座。
+- `bvr_matru_sneha_yoga`：补齐 PyJHora Matru Sneha 的自然友谊分支，并使用 PyJHora natural benefics 判断 L1/L4 是否同受吉星影响。
+
+### 验证结果
+
+- `scripts/validate_logic_v2.py`：
+  - Precision **94.82%**（v6.0.40 为 94.63%）
+  - Recall **90.92%**（v6.0.40 为 89.04%）
+  - F1 **92.83%**（v6.0.40 为 91.75%）
+  - FP：53；FN：97
+- `scripts/run_quality_gate.py --skip-yoga-logic`：通过。
+  - pytest **35 passed**
+  - BPHS/Ashtakavarga 不变量 **18/18**
+  - golden case 通过
+  - capability audit valid，0 problem / 0 warning
+
+### 规则库状态
+
+- JSON 规则总数：**475**
+- 启用规则：**381**
+- 当前验证报告：`references/validation_logic_report.json`
+
+### 后续优化点
+
+- 下一轮 Top residual 建议优先复现输入层后再动规则：`bvr_vanchana_chora_bheethi_yoga`、`bvr_kapata_yoga`、`bvr_mathibhramana_yoga`、`bvr_ayatna_griha_prapta_yoga`、`bvr_dharidhra_11_precise`、`bvr_utthama_graha_yoga`。
+- 特别注意：`vanchana_chora_bheethi` / `kapata` / `mathibhramana` 的残余差异仍高度依赖 Gulika/Maandi、`benefics_and_malefics()` 动态凶吉和 PyJHora 内部相位函数边界；下一轮不宜盲目扩大条件。
+
+---
+
 ## v6.0.40（2026-06-05）—— Yoga F1 91% 源码口径续航
 
 > **目标**：在 v6.0.39 首次突破 F1 90% 后继续推进，但仍保持“准确率优先、源码确认后再改”的路线；优先处理 Top residual 中 PyJHora 源码口径明确、收益高且过拟合风险低的规则。

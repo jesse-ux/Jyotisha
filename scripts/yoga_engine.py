@@ -37,6 +37,18 @@ MOOLATRIKONA_SIGN = {
     'Sun': 'Leo', 'Moon': 'Taurus', 'Mars': 'Aries', 'Mercury': 'Virgo',
     'Jupiter': 'Sagittarius', 'Venus': 'Libra', 'Saturn': 'Aquarius'
 }
+# PyJHora const.friendly_planets mapped from planet ids to names.
+FRIENDLY_PLANETS = {
+    'Sun': ['Moon', 'Mars', 'Jupiter'],
+    'Moon': ['Sun', 'Mercury'],
+    'Mars': ['Sun', 'Moon', 'Jupiter'],
+    'Mercury': ['Sun', 'Venus'],
+    'Jupiter': ['Sun', 'Moon', 'Mars'],
+    'Venus': ['Mercury', 'Saturn', 'Rahu'],
+    'Saturn': ['Mercury', 'Venus', 'Rahu'],
+    'Rahu': ['Venus', 'Saturn'],
+    'Ketu': ['Sun', 'Mars'],
+}
 PLANET_CN = {
     "Ketu": "南交点Ketu", "Venus": "金星Venus", "Sun": "太阳Sun",
     "Moon": "月亮Moon", "Mars": "火星Mars", "Rahu": "北交点Rahu",
@@ -1085,6 +1097,16 @@ class YogaEngine:
             ]
             return target_rasi_idx in planet_ids_in_aspected_signs
 
+        def pyjhora_aspected_planets_of_raasi(h):
+            """Replicate PyJHora house.aspected_planets_of_the_raasi(): planets whose rasi drishti hits a target house."""
+            if h is None:
+                return []
+            target_sign = house_sign(h)
+            return [
+                p for p in ctx.planets
+                if p in PLANET_INDEX and target_sign in rasi_drishti_signs_from(ctx.sign_of(p))
+            ]
+
         def rasi_drishti_signs_from(sign_name):
             if sign_name not in SIGNS:
                 return []
@@ -1140,6 +1162,9 @@ class YogaEngine:
                 return False
             # PyJHora temporary friends: 2/3/4/10/11/12 from a planet.
             return offset(ctx.house_of(a), ctx.house_of(b)) in [1, 2, 3, 9, 10, 11]
+
+        def natural_friend(a, b):
+            return a in FRIENDLY_PLANETS.get(b, []) and b in FRIENDLY_PLANETS.get(a, [])
 
         def occupants(h):
             return ctx.planets_in_house(h) if h is not None else []
@@ -1222,6 +1247,7 @@ class YogaEngine:
             "list": list, "bool": bool,
             "ctx": ctx, "bindings": bindings, "rule": rule,
             "SIGNS": SIGNS, "SIGN_LORDS": SIGN_LORDS,
+            "FRIENDLY_PLANETS": FRIENDLY_PLANETS,
             "RAHU_KETU_OWNED_SIGN_INDEX": RAHU_KETU_OWNED_SIGN_INDEX,
             "EXALTATION": EXALTATION, "DEBILITATION": DEBILITATION,
             "PLANET_CN": PLANET_CN, "BENEFICS": BENEFICS, "MALEFICS": MALEFICS,
@@ -1250,11 +1276,12 @@ class YogaEngine:
             "same_house": same_house, "aspect": aspect, "aspects_house": aspects_house,
             "graha_aspects_house": graha_aspects_house,
             "pyjhora_planets_aspecting_raasi": pyjhora_planets_aspecting_raasi,
+            "pyjhora_aspected_planets_of_raasi": pyjhora_aspected_planets_of_raasi,
             "rasi_drishti_signs_from": rasi_drishti_signs_from,
             "rasi_aspects_house": rasi_aspects_house, "rasi_aspects": rasi_aspects,
             "rasi_aspected_by_planets": rasi_aspected_by_planets,
             "house_strength": house_strength, "strong": strong, "weak": weak,
-            "associated": associated, "temporal_friend": temporal_friend,
+            "associated": associated, "temporal_friend": temporal_friend, "natural_friend": natural_friend,
             "occupants": occupants, "only_benefics_in_house": only_benefics_in_house,
             "only_malefics_in_house": only_malefics_in_house,
             "house_has_benefic": house_has_benefic, "house_has_malefic": house_has_malefic,
