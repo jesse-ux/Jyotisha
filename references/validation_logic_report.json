@@ -2,7 +2,7 @@
   "summary": {
     "charts_tested": 60,
     "comparable_rules": 70,
-    "skill_total": 756,
+    "skill_total": 873,
     "pyjhora_total": 1021,
     "unmapped_pyjhora": 720,
     "missing_mappings": {
@@ -131,14 +131,19 @@
         "yuddhatpoorvadridhachitta_yoga"
       ]
     },
-    "agreements": 516,
-    "false_positives": 240,
-    "false_negatives": 505,
-    "precision": 0.6825,
-    "recall": 0.5054,
-    "f1": 0.5808
+    "agreements": 702,
+    "false_positives": 171,
+    "false_negatives": 319,
+    "precision": 0.8041,
+    "recall": 0.6876,
+    "f1": 0.7413
   },
   "false_positives": [
+    {
+      "chart": "Albert Einstein",
+      "rule_id": "bvr_bhratruvriddhi_precise",
+      "rule_name": "Bhratruvriddhi Yoga"
+    },
     {
       "chart": "Albert Einstein",
       "rule_id": "vihaga_nabhasa",
@@ -151,28 +156,13 @@
     },
     {
       "chart": "Albert Einstein",
-      "rule_id": "mridanga_yoga",
-      "rule_name": "Mridanga Yoga"
-    },
-    {
-      "chart": "Albert Einstein",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
-    },
-    {
-      "chart": "Albert Einstein",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Albert Einstein",
       "rule_id": "koorma_yoga",
       "rule_name": "Koorma Yoga"
     },
     {
-      "chart": "Marie Curie",
-      "rule_id": "bvr_ayatna_griha_prapta_yoga",
-      "rule_name": "Ayatna Griha Prapta Yoga"
+      "chart": "Albert Einstein",
+      "rule_id": "mridanga_yoga",
+      "rule_name": "Mridanga Yoga"
     },
     {
       "chart": "Marie Curie",
@@ -186,18 +176,23 @@
     },
     {
       "chart": "Marie Curie",
+      "rule_id": "brahma_yoga",
+      "rule_name": "Brahma Yoga"
+    },
+    {
+      "chart": "Marie Curie",
       "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
       "rule_name": "Kaalanirdesat Puthranaasa Yoga"
     },
     {
       "chart": "Marie Curie",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
+      "rule_id": "bvr_matru_sneha_yoga",
+      "rule_name": "Matru Sneha Yoga"
     },
     {
       "chart": "Marie Curie",
-      "rule_id": "brahma_yoga",
-      "rule_name": "Brahma Yoga"
+      "rule_id": "bvr_ayatna_griha_prapta_yoga",
+      "rule_name": "Ayatna Griha Prapta Yoga"
     },
     {
       "chart": "Marie Curie",
@@ -205,19 +200,9 @@
       "rule_name": "Sankha Yoga"
     },
     {
-      "chart": "Nikola Tesla",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Nikola Tesla",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
-    },
-    {
       "chart": "Stephen Hawking",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga"
+      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
+      "rule_name": "Kaalanirdesat Puthranaasa Yoga"
     },
     {
       "chart": "Stephen Hawking",
@@ -230,29 +215,39 @@
       "rule_name": "Matsya Yoga"
     },
     {
-      "chart": "Stephen Hawking",
-      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
-      "rule_name": "Kaalanirdesat Puthranaasa Yoga"
-    },
-    {
-      "chart": "Stephen Hawking",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Stephen Hawking",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
-    },
-    {
       "chart": "Charles Darwin",
       "rule_id": "bvr_vanchana_chora_bheethi_yoga",
       "rule_name": "Vanchana Chora Bheethi Yoga"
     },
     {
-      "chart": "Charles Darwin",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "chart": "Thomas Edison",
+      "rule_id": "bvr_002_sunapha_precise",
+      "rule_name": "Sunaphaa Yoga"
+    },
+    {
+      "chart": "Thomas Edison",
+      "rule_id": "bvr_bhratruvriddhi_precise",
+      "rule_name": "Bhratruvriddhi Yoga"
+    },
+    {
+      "chart": "Thomas Edison",
+      "rule_id": "bvr_bahu_puthra_precise",
+      "rule_name": "Bahu Puthra Yoga"
+    },
+    {
+      "chart": "Thomas Edison",
+      "rule_id": "bvr_017_vosi_precise",
+      "rule_name": "Vosi Yoga"
+    },
+    {
+      "chart": "Thomas Edison",
+      "rule_id": "bvr_018_ubhayachara_precise",
+      "rule_name": "Ubhayachara Yoga"
+    },
+    {
+      "chart": "Thomas Edison",
+      "rule_id": "matsya_yoga",
+      "rule_name": "Matsya Yoga"
     },
     {
       "chart": "Thomas Edison",
@@ -265,59 +260,14 @@
       "rule_name": "Eka Puthra Yoga"
     },
     {
-      "chart": "Thomas Edison",
-      "rule_id": "bvr_018_ubhayachara_precise",
-      "rule_name": "Ubhayachara Yoga"
-    },
-    {
-      "chart": "Thomas Edison",
-      "rule_id": "bvr_017_vosi_precise",
-      "rule_name": "Vosi Yoga"
-    },
-    {
-      "chart": "Thomas Edison",
-      "rule_id": "matsya_yoga",
-      "rule_name": "Matsya Yoga"
-    },
-    {
-      "chart": "Thomas Edison",
-      "rule_id": "bvr_bahu_puthra_precise",
-      "rule_name": "Bahu Puthra Yoga"
-    },
-    {
-      "chart": "Thomas Edison",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Thomas Edison",
-      "rule_id": "bvr_002_sunapha_precise",
-      "rule_name": "Sunaphaa Yoga"
-    },
-    {
-      "chart": "Alexander Fleming",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
       "chart": "Alexander Fleming",
       "rule_id": "bvr_vanchana_chora_bheethi_yoga",
       "rule_name": "Vanchana Chora Bheethi Yoga"
     },
     {
-      "chart": "Alexander Fleming",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
-    },
-    {
       "chart": "Max Planck",
-      "rule_id": "mridanga_yoga",
-      "rule_name": "Mridanga Yoga"
-    },
-    {
-      "chart": "Max Planck",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
+      "rule_id": "bvr_bandhubhisthyaktha_precise",
+      "rule_name": "Bandhubhisthyaktha Yoga"
     },
     {
       "chart": "Max Planck",
@@ -326,28 +276,18 @@
     },
     {
       "chart": "Max Planck",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga"
+      "rule_id": "mridanga_yoga",
+      "rule_name": "Mridanga Yoga"
+    },
+    {
+      "chart": "Niels Bohr",
+      "rule_id": "bvr_bhratruvriddhi_precise",
+      "rule_name": "Bhratruvriddhi Yoga"
     },
     {
       "chart": "Niels Bohr",
       "rule_id": "vihaga_nabhasa",
       "rule_name": "Vihaga Nabhasa Yoga"
-    },
-    {
-      "chart": "Niels Bohr",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Richard Feynman",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga"
-    },
-    {
-      "chart": "Richard Feynman",
-      "rule_id": "bvr_018_ubhayachara_precise",
-      "rule_name": "Ubhayachara Yoga"
     },
     {
       "chart": "Richard Feynman",
@@ -356,8 +296,18 @@
     },
     {
       "chart": "Richard Feynman",
+      "rule_id": "bvr_dehasthoulya_yoga",
+      "rule_name": "Dehasthoulya Yoga"
+    },
+    {
+      "chart": "Richard Feynman",
       "rule_id": "bvr_003_anapha_precise",
       "rule_name": "Anaphaa Yoga"
+    },
+    {
+      "chart": "Richard Feynman",
+      "rule_id": "bvr_018_ubhayachara_precise",
+      "rule_name": "Ubhayachara Yoga"
     },
     {
       "chart": "Richard Feynman",
@@ -366,13 +316,8 @@
     },
     {
       "chart": "Richard Feynman",
-      "rule_id": "bvr_dehasthoulya_yoga",
-      "rule_name": "Dehasthoulya Yoga"
-    },
-    {
-      "chart": "Richard Feynman",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "rule_id": "bvr_dharidhra_11_precise",
+      "rule_name": "Dharidhra Yoga"
     },
     {
       "chart": "Mahatma Gandhi",
@@ -381,33 +326,13 @@
     },
     {
       "chart": "Mahatma Gandhi",
-      "rule_id": "matsya_yoga",
-      "rule_name": "Matsya Yoga"
-    },
-    {
-      "chart": "Mahatma Gandhi",
       "rule_id": "bvr_bahu_puthra_precise",
       "rule_name": "Bahu Puthra Yoga"
     },
     {
       "chart": "Mahatma Gandhi",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Mahatma Gandhi",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Mahatma Gandhi",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
-    },
-    {
-      "chart": "Jawaharlal Nehru",
-      "rule_id": "pushkala_yoga",
-      "rule_name": "Pushkala Yoga"
+      "rule_id": "matsya_yoga",
+      "rule_name": "Matsya Yoga"
     },
     {
       "chart": "Jawaharlal Nehru",
@@ -415,9 +340,9 @@
       "rule_name": "Guru Mangala Yoga"
     },
     {
-      "chart": "Narendra Modi",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "chart": "Jawaharlal Nehru",
+      "rule_id": "pushkala_yoga",
+      "rule_name": "Pushkala Yoga"
     },
     {
       "chart": "Narendra Modi",
@@ -426,13 +351,13 @@
     },
     {
       "chart": "Indira Gandhi",
-      "rule_id": "bvr_bandhu_pujya_yoga",
-      "rule_name": "Bandhu Pujya Yoga"
+      "rule_id": "bvr_103_guru_mangala_yoga",
+      "rule_name": "Guru Mangala Yoga"
     },
     {
       "chart": "Indira Gandhi",
-      "rule_id": "bvr_103_guru_mangala_yoga",
-      "rule_name": "Guru Mangala Yoga"
+      "rule_id": "bvr_dehasthoulya_yoga",
+      "rule_name": "Dehasthoulya Yoga"
     },
     {
       "chart": "Indira Gandhi",
@@ -441,23 +366,13 @@
     },
     {
       "chart": "Indira Gandhi",
-      "rule_id": "bvr_dehasthoulya_yoga",
-      "rule_name": "Dehasthoulya Yoga"
-    },
-    {
-      "chart": "Indira Gandhi",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "rule_id": "bvr_bandhu_pujya_yoga",
+      "rule_name": "Bandhu Pujya Yoga"
     },
     {
       "chart": "Winston Churchill",
       "rule_id": "bvr_dehasthoulya_yoga",
       "rule_name": "Dehasthoulya Yoga"
-    },
-    {
-      "chart": "Winston Churchill",
-      "rule_id": "bheri_yoga",
-      "rule_name": "Bheri Yoga"
     },
     {
       "chart": "Winston Churchill",
@@ -465,9 +380,14 @@
       "rule_name": "Kaalanirdesat Puthranaasa Yoga"
     },
     {
+      "chart": "Winston Churchill",
+      "rule_id": "bheri_yoga",
+      "rule_name": "Bheri Yoga"
+    },
+    {
       "chart": "John F. Kennedy",
-      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
-      "rule_name": "Vanchana Chora Bheethi Yoga"
+      "rule_id": "bvr_dehasthoulya_yoga",
+      "rule_name": "Dehasthoulya Yoga"
     },
     {
       "chart": "John F. Kennedy",
@@ -476,18 +396,18 @@
     },
     {
       "chart": "John F. Kennedy",
-      "rule_id": "bvr_dehasthoulya_yoga",
-      "rule_name": "Dehasthoulya Yoga"
-    },
-    {
-      "chart": "John F. Kennedy",
       "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
       "rule_name": "Kaalanirdesat Puthranaasa Yoga"
     },
     {
-      "chart": "Nelson Mandela",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "chart": "John F. Kennedy",
+      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
+      "rule_name": "Vanchana Chora Bheethi Yoga"
+    },
+    {
+      "chart": "John F. Kennedy",
+      "rule_id": "bvr_dharidhra_11_precise",
+      "rule_name": "Dharidhra Yoga"
     },
     {
       "chart": "Nelson Mandela",
@@ -496,23 +416,18 @@
     },
     {
       "chart": "Abraham Lincoln",
-      "rule_id": "bvr_sada_sanchara_precise",
-      "rule_name": "Sada Sanchara Yoga"
-    },
-    {
-      "chart": "Abraham Lincoln",
       "rule_id": "bvr_002_sunapha_precise",
       "rule_name": "Sunaphaa Yoga"
     },
     {
       "chart": "Abraham Lincoln",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
+      "rule_name": "Vanchana Chora Bheethi Yoga"
     },
     {
       "chart": "Abraham Lincoln",
-      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
-      "rule_name": "Vanchana Chora Bheethi Yoga"
+      "rule_id": "bvr_sada_sanchara_precise",
+      "rule_name": "Sada Sanchara Yoga"
     },
     {
       "chart": "Margaret Thatcher",
@@ -521,28 +436,13 @@
     },
     {
       "chart": "Margaret Thatcher",
-      "rule_id": "bvr_103_guru_mangala_yoga",
-      "rule_name": "Guru Mangala Yoga"
-    },
-    {
-      "chart": "Margaret Thatcher",
       "rule_id": "bvr_002_sunapha_precise",
       "rule_name": "Sunaphaa Yoga"
     },
     {
       "chart": "Margaret Thatcher",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Margaret Thatcher",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga"
-    },
-    {
-      "chart": "Barack Obama",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
+      "rule_id": "bvr_103_guru_mangala_yoga",
+      "rule_name": "Guru Mangala Yoga"
     },
     {
       "chart": "Barack Obama",
@@ -550,14 +450,14 @@
       "rule_name": "Bandhu Pujya Yoga"
     },
     {
-      "chart": "Barack Obama",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "chart": "Rabindranath Tagore",
+      "rule_id": "bvr_002_sunapha_precise",
+      "rule_name": "Sunaphaa Yoga"
     },
     {
       "chart": "Rabindranath Tagore",
-      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
-      "rule_name": "Vanchana Chora Bheethi Yoga"
+      "rule_id": "bvr_bhratruvriddhi_precise",
+      "rule_name": "Bhratruvriddhi Yoga"
     },
     {
       "chart": "Rabindranath Tagore",
@@ -566,13 +466,8 @@
     },
     {
       "chart": "Rabindranath Tagore",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Rabindranath Tagore",
-      "rule_id": "bvr_002_sunapha_precise",
-      "rule_name": "Sunaphaa Yoga"
+      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
+      "rule_name": "Vanchana Chora Bheethi Yoga"
     },
     {
       "chart": "Rabindranath Tagore",
@@ -581,38 +476,23 @@
     },
     {
       "chart": "Wolfgang Mozart",
-      "rule_id": "bvr_utthama_graha_yoga",
-      "rule_name": "Utthama Griha Yoga"
-    },
-    {
-      "chart": "Wolfgang Mozart",
       "rule_id": "bvr_103_guru_mangala_yoga",
       "rule_name": "Guru Mangala Yoga"
     },
     {
       "chart": "Wolfgang Mozart",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga"
+    },
+    {
+      "chart": "Wolfgang Mozart",
+      "rule_id": "bvr_utthama_graha_yoga",
+      "rule_name": "Utthama Griha Yoga"
+    },
+    {
+      "chart": "Wolfgang Mozart",
       "rule_id": "bvr_bahu_puthra_precise",
       "rule_name": "Bahu Puthra Yoga"
-    },
-    {
-      "chart": "Wolfgang Mozart",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Wolfgang Mozart",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
-    },
-    {
-      "chart": "Pablo Picasso",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Pablo Picasso",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
     },
     {
       "chart": "Pablo Picasso",
@@ -621,23 +501,8 @@
     },
     {
       "chart": "Vincent van Gogh",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga"
-    },
-    {
-      "chart": "Vincent van Gogh",
       "rule_id": "bvr_103_guru_mangala_yoga",
       "rule_name": "Guru Mangala Yoga"
-    },
-    {
-      "chart": "Vincent van Gogh",
-      "rule_id": "matsya_yoga",
-      "rule_name": "Matsya Yoga"
-    },
-    {
-      "chart": "Vincent van Gogh",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
     },
     {
       "chart": "Vincent van Gogh",
@@ -645,12 +510,12 @@
       "rule_name": "Koorma Yoga"
     },
     {
-      "chart": "Charlie Chaplin",
-      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
-      "rule_name": "Vanchana Chora Bheethi Yoga"
+      "chart": "Vincent van Gogh",
+      "rule_id": "bvr_dharidhra_11_precise",
+      "rule_name": "Dharidhra Yoga"
     },
     {
-      "chart": "Charlie Chaplin",
+      "chart": "Vincent van Gogh",
       "rule_id": "matsya_yoga",
       "rule_name": "Matsya Yoga"
     },
@@ -661,18 +526,18 @@
     },
     {
       "chart": "Charlie Chaplin",
+      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
+      "rule_name": "Vanchana Chora Bheethi Yoga"
+    },
+    {
+      "chart": "Charlie Chaplin",
       "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
       "rule_name": "Kaalanirdesat Puthranaasa Yoga"
     },
     {
       "chart": "Charlie Chaplin",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Elvis Presley",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
+      "rule_id": "matsya_yoga",
+      "rule_name": "Matsya Yoga"
     },
     {
       "chart": "Elvis Presley",
@@ -680,9 +545,9 @@
       "rule_name": "Matsya Yoga"
     },
     {
-      "chart": "Elvis Presley",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "chart": "Michael Jackson",
+      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
+      "rule_name": "Kaalanirdesat Puthranaasa Yoga"
     },
     {
       "chart": "Michael Jackson",
@@ -690,14 +555,14 @@
       "rule_name": "Bahu Sthree Yoga"
     },
     {
-      "chart": "Michael Jackson",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Michael Jackson",
+      "chart": "A.R. Rahman",
       "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
       "rule_name": "Kaalanirdesat Puthranaasa Yoga"
+    },
+    {
+      "chart": "A.R. Rahman",
+      "rule_id": "bvr_bandhubhisthyaktha_precise",
+      "rule_name": "Bandhubhisthyaktha Yoga"
     },
     {
       "chart": "A.R. Rahman",
@@ -711,23 +576,13 @@
     },
     {
       "chart": "A.R. Rahman",
-      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
-      "rule_name": "Kaalanirdesat Puthranaasa Yoga"
-    },
-    {
-      "chart": "A.R. Rahman",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "A.R. Rahman",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "A.R. Rahman",
       "rule_id": "sankha_yoga",
       "rule_name": "Sankha Yoga"
+    },
+    {
+      "chart": "Lata Mangeshkar",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga"
     },
     {
       "chart": "Lata Mangeshkar",
@@ -743,16 +598,6 @@
       "chart": "Lata Mangeshkar",
       "rule_id": "mridanga_yoga",
       "rule_name": "Mridanga Yoga"
-    },
-    {
-      "chart": "Lata Mangeshkar",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Lata Mangeshkar",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
     },
     {
       "chart": "Steve Jobs",
@@ -776,16 +621,6 @@
     },
     {
       "chart": "Bill Gates",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga"
-    },
-    {
-      "chart": "Bill Gates",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
-    },
-    {
-      "chart": "Bill Gates",
       "rule_id": "bheri_yoga",
       "rule_name": "Bheri Yoga"
     },
@@ -793,16 +628,6 @@
       "chart": "Elon Musk",
       "rule_id": "bvr_vanchana_chora_bheethi_yoga",
       "rule_name": "Vanchana Chora Bheethi Yoga"
-    },
-    {
-      "chart": "Elon Musk",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Jeff Bezos",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
     },
     {
       "chart": "Jeff Bezos",
@@ -821,8 +646,8 @@
     },
     {
       "chart": "Warren Buffett",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "rule_id": "bvr_bhratruvriddhi_precise",
+      "rule_name": "Bhratruvriddhi Yoga"
     },
     {
       "chart": "Warren Buffett",
@@ -831,8 +656,8 @@
     },
     {
       "chart": "Mukesh Ambani",
-      "rule_id": "bvr_bahu_sthree_yoga",
-      "rule_name": "Bahu Sthree Yoga"
+      "rule_id": "bvr_103_guru_mangala_yoga",
+      "rule_name": "Guru Mangala Yoga"
     },
     {
       "chart": "Mukesh Ambani",
@@ -841,28 +666,18 @@
     },
     {
       "chart": "Mukesh Ambani",
-      "rule_id": "bvr_103_guru_mangala_yoga",
-      "rule_name": "Guru Mangala Yoga"
+      "rule_id": "bvr_bahu_sthree_yoga",
+      "rule_name": "Bahu Sthree Yoga"
     },
     {
       "chart": "Mukesh Ambani",
       "rule_id": "matsya_yoga",
       "rule_name": "Matsya Yoga"
-    },
-    {
-      "chart": "Mukesh Ambani",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Mukesh Ambani",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
     },
     {
       "chart": "Ratan Tata",
-      "rule_id": "matsya_yoga",
-      "rule_name": "Matsya Yoga"
+      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
+      "rule_name": "Yukthi Samanwithavagmi Yoga"
     },
     {
       "chart": "Ratan Tata",
@@ -871,18 +686,18 @@
     },
     {
       "chart": "Ratan Tata",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Ratan Tata",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Ratan Tata",
       "rule_id": "sankha_yoga",
       "rule_name": "Sankha Yoga"
+    },
+    {
+      "chart": "Ratan Tata",
+      "rule_id": "matsya_yoga",
+      "rule_name": "Matsya Yoga"
+    },
+    {
+      "chart": "Narayana Murthy",
+      "rule_id": "bvr_bhratruvriddhi_precise",
+      "rule_name": "Bhratruvriddhi Yoga"
     },
     {
       "chart": "Narayana Murthy",
@@ -891,33 +706,8 @@
     },
     {
       "chart": "Azim Premji",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga"
-    },
-    {
-      "chart": "Azim Premji",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Azim Premji",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
-    },
-    {
-      "chart": "Azim Premji",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Azim Premji",
       "rule_id": "sankha_yoga",
       "rule_name": "Sankha Yoga"
-    },
-    {
-      "chart": "Dhirubhai Ambani",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
     },
     {
       "chart": "Dhirubhai Ambani",
@@ -931,8 +721,8 @@
     },
     {
       "chart": "Sachin Tendulkar",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
+      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
+      "rule_name": "Vanchana Chora Bheethi Yoga"
     },
     {
       "chart": "Sachin Tendulkar",
@@ -940,19 +730,9 @@
       "rule_name": "Matsya Yoga"
     },
     {
-      "chart": "Sachin Tendulkar",
-      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
-      "rule_name": "Vanchana Chora Bheethi Yoga"
-    },
-    {
-      "chart": "Sachin Tendulkar",
+      "chart": "Virat Kohli",
       "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
       "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Virat Kohli",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
     },
     {
       "chart": "Virat Kohli",
@@ -960,34 +740,14 @@
       "rule_name": "Eka Puthra Yoga"
     },
     {
-      "chart": "Virat Kohli",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "MS Dhoni",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "chart": "Muhammad Ali",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga"
     },
     {
       "chart": "Muhammad Ali",
       "rule_id": "bvr_bandhu_pujya_yoga",
       "rule_name": "Bandhu Pujya Yoga"
-    },
-    {
-      "chart": "Muhammad Ali",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Michael Jordan",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Michael Jordan",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
     },
     {
       "chart": "Michael Jordan",
@@ -1006,8 +766,8 @@
     },
     {
       "chart": "Lionel Messi",
-      "rule_id": "bvr_017_vosi_precise",
-      "rule_name": "Vosi Yoga"
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga"
     },
     {
       "chart": "Lionel Messi",
@@ -1016,23 +776,23 @@
     },
     {
       "chart": "Lionel Messi",
-      "rule_id": "matsya_yoga",
-      "rule_name": "Matsya Yoga"
-    },
-    {
-      "chart": "Lionel Messi",
       "rule_id": "bvr_dehasthoulya_yoga",
       "rule_name": "Dehasthoulya Yoga"
     },
     {
       "chart": "Lionel Messi",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "rule_id": "brahma_yoga",
+      "rule_name": "Brahma Yoga"
     },
     {
       "chart": "Lionel Messi",
-      "rule_id": "brahma_yoga",
-      "rule_name": "Brahma Yoga"
+      "rule_id": "bvr_017_vosi_precise",
+      "rule_name": "Vosi Yoga"
+    },
+    {
+      "chart": "Lionel Messi",
+      "rule_id": "matsya_yoga",
+      "rule_name": "Matsya Yoga"
     },
     {
       "chart": "Lionel Messi",
@@ -1051,28 +811,13 @@
     },
     {
       "chart": "Cristiano Ronaldo",
-      "rule_id": "matsya_yoga",
-      "rule_name": "Matsya Yoga"
-    },
-    {
-      "chart": "Cristiano Ronaldo",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Cristiano Ronaldo",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Cristiano Ronaldo",
       "rule_id": "brahma_yoga",
       "rule_name": "Brahma Yoga"
     },
     {
       "chart": "Cristiano Ronaldo",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
+      "rule_id": "matsya_yoga",
+      "rule_name": "Matsya Yoga"
     },
     {
       "chart": "Serena Williams",
@@ -1081,13 +826,8 @@
     },
     {
       "chart": "Serena Williams",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga"
-    },
-    {
-      "chart": "Serena Williams",
-      "rule_id": "matsya_yoga",
-      "rule_name": "Matsya Yoga"
+      "rule_id": "bvr_002_sunapha_precise",
+      "rule_name": "Sunaphaa Yoga"
     },
     {
       "chart": "Serena Williams",
@@ -1096,28 +836,8 @@
     },
     {
       "chart": "Serena Williams",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Serena Williams",
-      "rule_id": "bvr_002_sunapha_precise",
-      "rule_name": "Sunaphaa Yoga"
-    },
-    {
-      "chart": "Pele",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Pele",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Pele",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
+      "rule_id": "matsya_yoga",
+      "rule_name": "Matsya Yoga"
     },
     {
       "chart": "Roger Federer",
@@ -1125,29 +845,14 @@
       "rule_name": "Guru Mangala Yoga"
     },
     {
-      "chart": "Swami Vivekananda",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Swami Vivekananda",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
+      "chart": "Roger Federer",
+      "rule_id": "bvr_bhratruvriddhi_precise",
+      "rule_name": "Bhratruvriddhi Yoga"
     },
     {
       "chart": "Swami Vivekananda",
       "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
       "rule_name": "Kaalanirdesat Puthranaasa Yoga"
-    },
-    {
-      "chart": "Amitabh Bachchan",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Amitabh Bachchan",
-      "rule_id": "bvr_bandhu_pujya_yoga",
-      "rule_name": "Bandhu Pujya Yoga"
     },
     {
       "chart": "Amitabh Bachchan",
@@ -1160,17 +865,7 @@
       "rule_name": "Anaphaa Yoga"
     },
     {
-      "chart": "Queen Elizabeth II",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Queen Elizabeth II",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Princess Diana",
+      "chart": "Amitabh Bachchan",
       "rule_id": "bvr_bandhu_pujya_yoga",
       "rule_name": "Bandhu Pujya Yoga"
     },
@@ -1181,28 +876,18 @@
     },
     {
       "chart": "Princess Diana",
+      "rule_id": "bvr_bandhu_pujya_yoga",
+      "rule_name": "Bandhu Pujya Yoga"
+    },
+    {
+      "chart": "Princess Diana",
       "rule_id": "mridanga_yoga",
       "rule_name": "Mridanga Yoga"
     },
     {
-      "chart": "Princess Diana",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Princess Diana",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Princess Diana",
-      "rule_id": "bvr_rogagrastha_precise",
-      "rule_name": "Rogagrastha Yoga"
-    },
-    {
       "chart": "Dalai Lama",
-      "rule_id": "matsya_yoga",
-      "rule_name": "Matsya Yoga"
+      "rule_id": "bvr_bhratruvriddhi_precise",
+      "rule_name": "Bhratruvriddhi Yoga"
     },
     {
       "chart": "Dalai Lama",
@@ -1210,9 +895,9 @@
       "rule_name": "Matrunasa Yoga"
     },
     {
-      "chart": "Pope Francis",
-      "rule_id": "bvr_bandhu_pujya_yoga",
-      "rule_name": "Bandhu Pujya Yoga"
+      "chart": "Dalai Lama",
+      "rule_id": "matsya_yoga",
+      "rule_name": "Matsya Yoga"
     },
     {
       "chart": "Pope Francis",
@@ -1221,13 +906,13 @@
     },
     {
       "chart": "Pope Francis",
-      "rule_id": "bvr_sada_sanchara_precise",
-      "rule_name": "Sada Sanchara Yoga"
+      "rule_id": "bvr_103_guru_mangala_yoga",
+      "rule_name": "Guru Mangala Yoga"
     },
     {
       "chart": "Pope Francis",
-      "rule_id": "bvr_103_guru_mangala_yoga",
-      "rule_name": "Guru Mangala Yoga"
+      "rule_id": "bvr_sada_sanchara_precise",
+      "rule_name": "Sada Sanchara Yoga"
     },
     {
       "chart": "Pope Francis",
@@ -1236,18 +921,18 @@
     },
     {
       "chart": "Pope Francis",
+      "rule_id": "bvr_bandhu_pujya_yoga",
+      "rule_name": "Bandhu Pujya Yoga"
+    },
+    {
+      "chart": "Pope Francis",
       "rule_id": "sankha_yoga",
       "rule_name": "Sankha Yoga"
     },
     {
       "chart": "Osho",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Osho",
-      "rule_id": "matsya_yoga",
-      "rule_name": "Matsya Yoga"
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga"
     },
     {
       "chart": "Osho",
@@ -1255,9 +940,9 @@
       "rule_name": "Bandhu Pujya Yoga"
     },
     {
-      "chart": "J. Krishnamurti",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga"
+      "chart": "Osho",
+      "rule_id": "matsya_yoga",
+      "rule_name": "Matsya Yoga"
     },
     {
       "chart": "J. Krishnamurti",
@@ -1276,28 +961,13 @@
     },
     {
       "chart": "J. Krishnamurti",
+      "rule_id": "bvr_matru_sneha_yoga",
+      "rule_name": "Matru Sneha Yoga"
+    },
+    {
+      "chart": "J. Krishnamurti",
       "rule_id": "mridanga_yoga",
       "rule_name": "Mridanga Yoga"
-    },
-    {
-      "chart": "J. Krishnamurti",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
-    },
-    {
-      "chart": "J. Krishnamurti",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga"
-    },
-    {
-      "chart": "Ramana Maharshi",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Ramana Maharshi",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
     },
     {
       "chart": "Ramana Maharshi",
@@ -1306,8 +976,13 @@
     },
     {
       "chart": "Paramahansa Yogananda",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga"
+      "rule_id": "sankha_yoga",
+      "rule_name": "Sankha Yoga"
+    },
+    {
+      "chart": "Paramahansa Yogananda",
+      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
+      "rule_name": "Kaalanirdesat Puthranaasa Yoga"
     },
     {
       "chart": "Paramahansa Yogananda",
@@ -1318,77 +993,9 @@
       "chart": "Paramahansa Yogananda",
       "rule_id": "bvr_sada_sanchara_precise",
       "rule_name": "Sada Sanchara Yoga"
-    },
-    {
-      "chart": "Paramahansa Yogananda",
-      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
-      "rule_name": "Kaalanirdesat Puthranaasa Yoga"
-    },
-    {
-      "chart": "Paramahansa Yogananda",
-      "rule_id": "adhi_yoga",
-      "rule_name": "Adhi Yoga"
-    },
-    {
-      "chart": "Paramahansa Yogananda",
-      "rule_id": "kemadruma_yoga",
-      "rule_name": "Kemadruma Yoga"
-    },
-    {
-      "chart": "Paramahansa Yogananda",
-      "rule_id": "sankha_yoga",
-      "rule_name": "Sankha Yoga"
     }
   ],
   "false_negatives": [
-    {
-      "chart": "Albert Einstein",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Albert Einstein",
-      "rule_id": "bvr_bandhu_pujya_yoga",
-      "rule_name": "Bandhu Pujya Yoga",
-      "pyjhora_names": [
-        "bandhu_pujya_yoga_193",
-        "bandhu_pujya_yoga_194"
-      ]
-    },
-    {
-      "chart": "Albert Einstein",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Albert Einstein",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Albert Einstein",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
-      "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
-      ]
-    },
     {
       "chart": "Albert Einstein",
       "rule_id": "bvr_bahu_puthra_precise",
@@ -1396,14 +1003,6 @@
       "pyjhora_names": [
         "bahu_puthra_yoga_220",
         "bahu_puthra_yoga_221"
-      ]
-    },
-    {
-      "chart": "Albert Einstein",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
       ]
     },
     {
@@ -1417,34 +1016,14 @@
     },
     {
       "chart": "Albert Einstein",
-      "rule_id": "bvr_mathibhramana_yoga",
-      "rule_name": "Mathibhramana Yoga",
+      "rule_id": "bvr_bandhubhisthyaktha_precise",
+      "rule_name": "Bandhubhisthyaktha Yoga",
       "pyjhora_names": [
-        "mathibhramana_yoga_291",
-        "mathibhramana_yoga_292",
-        "mathibhramana_yoga_293",
-        "mathibhramana_yoga_294",
-        "mathibhramana_yoga_variation"
+        "bandhubhisthyaktha_yoga"
       ]
     },
     {
-      "chart": "Marie Curie",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Marie Curie",
-      "rule_id": "bvr_amala_precise",
-      "rule_name": "Amala Yoga",
-      "pyjhora_names": [
-        "amala_yoga"
-      ]
-    },
-    {
-      "chart": "Marie Curie",
+      "chart": "Albert Einstein",
       "rule_id": "bvr_dharidhra_11_precise",
       "rule_name": "Dharidhra Yoga",
       "pyjhora_names": [
@@ -1458,19 +1037,33 @@
       ]
     },
     {
-      "chart": "Marie Curie",
-      "rule_id": "bvr_bhaga_chumbana_yoga",
-      "rule_name": "Bhaga Chumbana Yoga",
+      "chart": "Albert Einstein",
+      "rule_id": "bvr_bandhu_pujya_yoga",
+      "rule_name": "Bandhu Pujya Yoga",
       "pyjhora_names": [
-        "bhaga_chumbana_yoga"
+        "bandhu_pujya_yoga_193",
+        "bandhu_pujya_yoga_194"
       ]
     },
     {
-      "chart": "Marie Curie",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
+      "chart": "Albert Einstein",
+      "rule_id": "bvr_mathibhramana_yoga",
+      "rule_name": "Mathibhramana Yoga",
       "pyjhora_names": [
-        "sareera_soukhya_yoga"
+        "mathibhramana_yoga_291",
+        "mathibhramana_yoga_292",
+        "mathibhramana_yoga_293",
+        "mathibhramana_yoga_294",
+        "mathibhramana_yoga_variation"
+      ]
+    },
+    {
+      "chart": "Albert Einstein",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
+      "pyjhora_names": [
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
       ]
     },
     {
@@ -1502,15 +1095,15 @@
       ]
     },
     {
-      "chart": "Nikola Tesla",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Marie Curie",
+      "rule_id": "bvr_bhaga_chumbana_yoga",
+      "rule_name": "Bhaga Chumbana Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "bhaga_chumbana_yoga"
       ]
     },
     {
-      "chart": "Nikola Tesla",
+      "chart": "Marie Curie",
       "rule_id": "bvr_amala_precise",
       "rule_name": "Amala Yoga",
       "pyjhora_names": [
@@ -1519,43 +1112,10 @@
     },
     {
       "chart": "Nikola Tesla",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
       "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Nikola Tesla",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Nikola Tesla",
-      "rule_id": "parvata_yoga",
-      "rule_name": "Parvata Yoga",
-      "pyjhora_names": [
-        "parvata_yoga"
-      ]
-    },
-    {
-      "chart": "Nikola Tesla",
-      "rule_id": "bvr_nishkapata_precise",
-      "rule_name": "Nishkapata Yoga",
-      "pyjhora_names": [
-        "nishkapata_yoga_205",
-        "nishkapata_yoga_206",
-        "kapata_yoga_202",
-        "kapata_yoga_204"
+        "kaahala_yoga"
       ]
     },
     {
@@ -1568,6 +1128,14 @@
     },
     {
       "chart": "Nikola Tesla",
+      "rule_id": "parvata_yoga",
+      "rule_name": "Parvata Yoga",
+      "pyjhora_names": [
+        "parvata_yoga"
+      ]
+    },
+    {
+      "chart": "Nikola Tesla",
       "rule_id": "bheri_yoga",
       "rule_name": "Bheri Yoga",
       "pyjhora_names": [
@@ -1575,31 +1143,7 @@
       ]
     },
     {
-      "chart": "Stephen Hawking",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Stephen Hawking",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Stephen Hawking",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Stephen Hawking",
+      "chart": "Nikola Tesla",
       "rule_id": "bvr_nishkapata_precise",
       "rule_name": "Nishkapata Yoga",
       "pyjhora_names": [
@@ -1607,6 +1151,22 @@
         "nishkapata_yoga_206",
         "kapata_yoga_202",
         "kapata_yoga_204"
+      ]
+    },
+    {
+      "chart": "Nikola Tesla",
+      "rule_id": "bvr_amala_precise",
+      "rule_name": "Amala Yoga",
+      "pyjhora_names": [
+        "amala_yoga"
+      ]
+    },
+    {
+      "chart": "Stephen Hawking",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
+      "pyjhora_names": [
+        "kaahala_yoga"
       ]
     },
     {
@@ -1620,14 +1180,6 @@
     },
     {
       "chart": "Stephen Hawking",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Stephen Hawking",
       "rule_id": "bvr_rogagrastha_precise",
       "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
@@ -1635,82 +1187,22 @@
       ]
     },
     {
-      "chart": "Charles Darwin",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Charles Darwin",
-      "rule_id": "bvr_sumukha_precise",
-      "rule_name": "Sumukha Yoga",
-      "pyjhora_names": [
-        "sumukha_yoga"
-      ]
-    },
-    {
-      "chart": "Charles Darwin",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Charles Darwin",
-      "rule_id": "bvr_utthama_graha_yoga",
-      "rule_name": "Utthama Griha Yoga",
-      "pyjhora_names": [
-        "utthama_graha_yoga"
-      ]
-    },
-    {
-      "chart": "Charles Darwin",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Charles Darwin",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Charles Darwin",
-      "rule_id": "bvr_kalaanidhi_yoga",
-      "rule_name": "Kalaanidhi Yoga",
-      "pyjhora_names": [
-        "kalaanidhi_yoga",
-        "kalanidhi_yoga"
-      ]
-    },
-    {
-      "chart": "Charles Darwin",
-      "rule_id": "bvr_eka_puthra_precise",
-      "rule_name": "Eka Puthra Yoga",
-      "pyjhora_names": [
-        "eka_puthra_yoga"
-      ]
-    },
-    {
-      "chart": "Charles Darwin",
+      "chart": "Stephen Hawking",
       "rule_id": "bvr_bandhubhisthyaktha_precise",
       "rule_name": "Bandhubhisthyaktha Yoga",
       "pyjhora_names": [
         "bandhubhisthyaktha_yoga"
+      ]
+    },
+    {
+      "chart": "Stephen Hawking",
+      "rule_id": "bvr_nishkapata_precise",
+      "rule_name": "Nishkapata Yoga",
+      "pyjhora_names": [
+        "nishkapata_yoga_205",
+        "nishkapata_yoga_206",
+        "kapata_yoga_202",
+        "kapata_yoga_204"
       ]
     },
     {
@@ -1724,23 +1216,47 @@
     },
     {
       "chart": "Charles Darwin",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
+      "rule_id": "bvr_kalaanidhi_yoga",
+      "rule_name": "Kalaanidhi Yoga",
       "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
+        "kalaanidhi_yoga",
+        "kalanidhi_yoga"
       ]
     },
     {
       "chart": "Charles Darwin",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
+      "rule_id": "bvr_sumukha_precise",
+      "rule_name": "Sumukha Yoga",
       "pyjhora_names": [
-        "kaahala_yoga"
+        "sumukha_yoga"
       ]
     },
     {
-      "chart": "Thomas Edison",
+      "chart": "Charles Darwin",
+      "rule_id": "bvr_utthama_graha_yoga",
+      "rule_name": "Utthama Griha Yoga",
+      "pyjhora_names": [
+        "utthama_graha_yoga"
+      ]
+    },
+    {
+      "chart": "Charles Darwin",
+      "rule_id": "bvr_matru_sneha_yoga",
+      "rule_name": "Matru Sneha Yoga",
+      "pyjhora_names": [
+        "matru_sneha_yoga"
+      ]
+    },
+    {
+      "chart": "Charles Darwin",
+      "rule_id": "bvr_eka_puthra_precise",
+      "rule_name": "Eka Puthra Yoga",
+      "pyjhora_names": [
+        "eka_puthra_yoga"
+      ]
+    },
+    {
+      "chart": "Charles Darwin",
       "rule_id": "bvr_swaveeryaddhana_precise",
       "rule_name": "Swaveeryaddhana Yoga",
       "pyjhora_names": [
@@ -1748,19 +1264,12 @@
       ]
     },
     {
-      "chart": "Thomas Edison",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
+      "chart": "Charles Darwin",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
       "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Thomas Edison",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
       ]
     },
     {
@@ -1771,6 +1280,14 @@
         "dehasthoulya_yoga_114",
         "dehasthoulya_yoga_115",
         "dehasthoulya_yoga_116"
+      ]
+    },
+    {
+      "chart": "Thomas Edison",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
+      "pyjhora_names": [
+        "kaahala_yoga"
       ]
     },
     {
@@ -1783,6 +1300,14 @@
     },
     {
       "chart": "Thomas Edison",
+      "rule_id": "bvr_bandhubhisthyaktha_precise",
+      "rule_name": "Bandhubhisthyaktha Yoga",
+      "pyjhora_names": [
+        "bandhubhisthyaktha_yoga"
+      ]
+    },
+    {
+      "chart": "Thomas Edison",
       "rule_id": "bheri_yoga",
       "rule_name": "Bheri Yoga",
       "pyjhora_names": [
@@ -1790,7 +1315,7 @@
       ]
     },
     {
-      "chart": "Alexander Fleming",
+      "chart": "Thomas Edison",
       "rule_id": "bvr_matru_sneha_yoga",
       "rule_name": "Matru Sneha Yoga",
       "pyjhora_names": [
@@ -1798,11 +1323,11 @@
       ]
     },
     {
-      "chart": "Alexander Fleming",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Thomas Edison",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "swaveeryaddhana_yoga"
       ]
     },
     {
@@ -1811,36 +1336,6 @@
       "rule_name": "Utthama Griha Yoga",
       "pyjhora_names": [
         "utthama_graha_yoga"
-      ]
-    },
-    {
-      "chart": "Alexander Fleming",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Alexander Fleming",
-      "rule_id": "bvr_sada_sanchara_precise",
-      "rule_name": "Sada Sanchara Yoga",
-      "pyjhora_names": [
-        "sada_sanchara_yoga"
-      ]
-    },
-    {
-      "chart": "Alexander Fleming",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
       ]
     },
     {
@@ -1854,19 +1349,10 @@
     },
     {
       "chart": "Alexander Fleming",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
+      "rule_id": "bvr_sada_sanchara_precise",
+      "rule_name": "Sada Sanchara Yoga",
       "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Max Planck",
-      "rule_id": "bvr_ayatna_griha_prapta_yoga",
-      "rule_name": "Ayatna Griha Prapta Yoga",
-      "pyjhora_names": [
-        "ayatna_griha_prapta_yoga_189",
-        "ayatna_griha_prapta_yoga_190"
+        "sada_sanchara_yoga"
       ]
     },
     {
@@ -1879,18 +1365,10 @@
     },
     {
       "chart": "Max Planck",
-      "rule_id": "bvr_amala_precise",
-      "rule_name": "Amala Yoga",
+      "rule_id": "bvr_rogagrastha_precise",
+      "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
-        "amala_yoga"
-      ]
-    },
-    {
-      "chart": "Max Planck",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
+        "rogagrastha_yoga"
       ]
     },
     {
@@ -1912,29 +1390,10 @@
     },
     {
       "chart": "Max Planck",
-      "rule_id": "bvr_nishkapata_precise",
-      "rule_name": "Nishkapata Yoga",
+      "rule_id": "bvr_matru_sneha_yoga",
+      "rule_name": "Matru Sneha Yoga",
       "pyjhora_names": [
-        "nishkapata_yoga_205",
-        "nishkapata_yoga_206",
-        "kapata_yoga_202",
-        "kapata_yoga_204"
-      ]
-    },
-    {
-      "chart": "Max Planck",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Max Planck",
-      "rule_id": "bvr_rogagrastha_precise",
-      "rule_name": "Rogagrastha Yoga",
-      "pyjhora_names": [
-        "rogagrastha_yoga"
+        "matru_sneha_yoga"
       ]
     },
     {
@@ -1950,45 +1409,7 @@
       ]
     },
     {
-      "chart": "Niels Bohr",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Niels Bohr",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Niels Bohr",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Niels Bohr",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Niels Bohr",
+      "chart": "Max Planck",
       "rule_id": "bvr_nishkapata_precise",
       "rule_name": "Nishkapata Yoga",
       "pyjhora_names": [
@@ -1996,6 +1417,23 @@
         "nishkapata_yoga_206",
         "kapata_yoga_202",
         "kapata_yoga_204"
+      ]
+    },
+    {
+      "chart": "Max Planck",
+      "rule_id": "bvr_amala_precise",
+      "rule_name": "Amala Yoga",
+      "pyjhora_names": [
+        "amala_yoga"
+      ]
+    },
+    {
+      "chart": "Max Planck",
+      "rule_id": "bvr_ayatna_griha_prapta_yoga",
+      "rule_name": "Ayatna Griha Prapta Yoga",
+      "pyjhora_names": [
+        "ayatna_griha_prapta_yoga_189",
+        "ayatna_griha_prapta_yoga_190"
       ]
     },
     {
@@ -2010,6 +1448,14 @@
     },
     {
       "chart": "Niels Bohr",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
+      "pyjhora_names": [
+        "kaahala_yoga"
+      ]
+    },
+    {
+      "chart": "Niels Bohr",
       "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
       "rule_name": "Kaalanirdesat Puthranaasa Yoga",
       "pyjhora_names": [
@@ -2019,10 +1465,10 @@
     },
     {
       "chart": "Niels Bohr",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
+      "rule_id": "bvr_bandhubhisthyaktha_precise",
+      "rule_name": "Bandhubhisthyaktha Yoga",
       "pyjhora_names": [
-        "kaahala_yoga"
+        "bandhubhisthyaktha_yoga"
       ]
     },
     {
@@ -2035,6 +1481,25 @@
         "mathibhramana_yoga_293",
         "mathibhramana_yoga_294",
         "mathibhramana_yoga_variation"
+      ]
+    },
+    {
+      "chart": "Niels Bohr",
+      "rule_id": "bvr_nishkapata_precise",
+      "rule_name": "Nishkapata Yoga",
+      "pyjhora_names": [
+        "nishkapata_yoga_205",
+        "nishkapata_yoga_206",
+        "kapata_yoga_202",
+        "kapata_yoga_204"
+      ]
+    },
+    {
+      "chart": "Richard Feynman",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
+      "pyjhora_names": [
+        "kaahala_yoga"
       ]
     },
     {
@@ -2056,46 +1521,6 @@
     },
     {
       "chart": "Richard Feynman",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Richard Feynman",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Richard Feynman",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Richard Feynman",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Richard Feynman",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Richard Feynman",
       "rule_id": "bvr_rogagrastha_precise",
       "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
@@ -2104,29 +1529,10 @@
     },
     {
       "chart": "Mahatma Gandhi",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Mahatma Gandhi",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Mahatma Gandhi",
-      "rule_id": "bvr_nishkapata_precise",
-      "rule_name": "Nishkapata Yoga",
-      "pyjhora_names": [
-        "nishkapata_yoga_205",
-        "nishkapata_yoga_206",
-        "kapata_yoga_202",
-        "kapata_yoga_204"
+        "kaahala_yoga"
       ]
     },
     {
@@ -2136,23 +1542,6 @@
       "pyjhora_names": [
         "kaalanirdesat_puthranaasa_yoga_230",
         "kaalanirdesat_puthranaasa_yoga_229"
-      ]
-    },
-    {
-      "chart": "Mahatma Gandhi",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Mahatma Gandhi",
-      "rule_id": "bvr_dattha_puthra_yoga",
-      "rule_name": "Dattha Puthra Yoga",
-      "pyjhora_names": [
-        "dattha_puthra_yoga_222",
-        "dattha_puthra_yoga_223"
       ]
     },
     {
@@ -2168,19 +1557,40 @@
       ]
     },
     {
-      "chart": "Jawaharlal Nehru",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Mahatma Gandhi",
+      "rule_id": "bvr_nishkapata_precise",
+      "rule_name": "Nishkapata Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "nishkapata_yoga_205",
+        "nishkapata_yoga_206",
+        "kapata_yoga_202",
+        "kapata_yoga_204"
+      ]
+    },
+    {
+      "chart": "Mahatma Gandhi",
+      "rule_id": "bvr_dattha_puthra_yoga",
+      "rule_name": "Dattha Puthra Yoga",
+      "pyjhora_names": [
+        "dattha_puthra_yoga_222",
+        "dattha_puthra_yoga_223"
       ]
     },
     {
       "chart": "Jawaharlal Nehru",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
+      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
+        "kaalanirdesat_puthranaasa_yoga_230",
+        "kaalanirdesat_puthranaasa_yoga_229"
+      ]
+    },
+    {
+      "chart": "Jawaharlal Nehru",
+      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
+      "rule_name": "Vanchana Chora Bheethi Yoga",
+      "pyjhora_names": [
+        "vanchana_chora_bheethi_yoga"
       ]
     },
     {
@@ -2194,18 +1604,10 @@
     },
     {
       "chart": "Jawaharlal Nehru",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
+      "rule_id": "sankha_yoga",
+      "rule_name": "Sankha Yoga",
       "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Jawaharlal Nehru",
-      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
-      "rule_name": "Vanchana Chora Bheethi Yoga",
-      "pyjhora_names": [
-        "vanchana_chora_bheethi_yoga"
+        "sankha_yoga"
       ]
     },
     {
@@ -2218,66 +1620,11 @@
       ]
     },
     {
-      "chart": "Jawaharlal Nehru",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Jawaharlal Nehru",
-      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
-      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
-      "pyjhora_names": [
-        "kaalanirdesat_puthranaasa_yoga_230",
-        "kaalanirdesat_puthranaasa_yoga_229"
-      ]
-    },
-    {
-      "chart": "Jawaharlal Nehru",
-      "rule_id": "sankha_yoga",
-      "rule_name": "Sankha Yoga",
-      "pyjhora_names": [
-        "sankha_yoga"
-      ]
-    },
-    {
-      "chart": "Narendra Modi",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
       "chart": "Narendra Modi",
       "rule_id": "bvr_amala_precise",
       "rule_name": "Amala Yoga",
       "pyjhora_names": [
         "amala_yoga"
-      ]
-    },
-    {
-      "chart": "Narendra Modi",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Narendra Modi",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
       ]
     },
     {
@@ -2291,10 +1638,45 @@
     },
     {
       "chart": "Narendra Modi",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
       "pyjhora_names": [
-        "sareera_soukhya_yoga"
+        "swaveeryaddhana_yoga"
+      ]
+    },
+    {
+      "chart": "Indira Gandhi",
+      "rule_id": "bvr_bahu_puthra_precise",
+      "rule_name": "Bahu Puthra Yoga",
+      "pyjhora_names": [
+        "bahu_puthra_yoga_220",
+        "bahu_puthra_yoga_221"
+      ]
+    },
+    {
+      "chart": "Indira Gandhi",
+      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
+      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
+      "pyjhora_names": [
+        "kaalanirdesat_puthranaasa_yoga_230",
+        "kaalanirdesat_puthranaasa_yoga_229"
+      ]
+    },
+    {
+      "chart": "Indira Gandhi",
+      "rule_id": "bvr_krisanga_yoga",
+      "rule_name": "Krisanga Yoga",
+      "pyjhora_names": [
+        "krisanga_yoga_112",
+        "krisanga_yoga_113"
+      ]
+    },
+    {
+      "chart": "Indira Gandhi",
+      "rule_id": "bvr_utthama_graha_yoga",
+      "rule_name": "Utthama Griha Yoga",
+      "pyjhora_names": [
+        "utthama_graha_yoga"
       ]
     },
     {
@@ -2307,126 +1689,6 @@
       ]
     },
     {
-      "chart": "Indira Gandhi",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Indira Gandhi",
-      "rule_id": "bvr_utthama_graha_yoga",
-      "rule_name": "Utthama Griha Yoga",
-      "pyjhora_names": [
-        "utthama_graha_yoga"
-      ]
-    },
-    {
-      "chart": "Indira Gandhi",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Indira Gandhi",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Indira Gandhi",
-      "rule_id": "bvr_krisanga_yoga",
-      "rule_name": "Krisanga Yoga",
-      "pyjhora_names": [
-        "krisanga_yoga_112",
-        "krisanga_yoga_113"
-      ]
-    },
-    {
-      "chart": "Indira Gandhi",
-      "rule_id": "bvr_bahu_puthra_precise",
-      "rule_name": "Bahu Puthra Yoga",
-      "pyjhora_names": [
-        "bahu_puthra_yoga_220",
-        "bahu_puthra_yoga_221"
-      ]
-    },
-    {
-      "chart": "Indira Gandhi",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Indira Gandhi",
-      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
-      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
-      "pyjhora_names": [
-        "kaalanirdesat_puthranaasa_yoga_230",
-        "kaalanirdesat_puthranaasa_yoga_229"
-      ]
-    },
-    {
-      "chart": "Indira Gandhi",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Winston Churchill",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Winston Churchill",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Winston Churchill",
-      "rule_id": "bvr_bandhu_pujya_yoga",
-      "rule_name": "Bandhu Pujya Yoga",
-      "pyjhora_names": [
-        "bandhu_pujya_yoga_193",
-        "bandhu_pujya_yoga_194"
-      ]
-    },
-    {
-      "chart": "Winston Churchill",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
       "chart": "Winston Churchill",
       "rule_id": "bvr_sada_sanchara_precise",
       "rule_name": "Sada Sanchara Yoga",
@@ -2444,10 +1706,33 @@
     },
     {
       "chart": "Winston Churchill",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
+      "rule_id": "bvr_dharidhra_11_precise",
+      "rule_name": "Dharidhra Yoga",
       "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
+        "dharidhra_yoga_144",
+        "dharidhra_yoga_147",
+        "dharidhra_yoga_148",
+        "dharidhra_yoga_149",
+        "dharidhra_yoga_150",
+        "dharidhra_yoga_151",
+        "dharidhra_yoga_152"
+      ]
+    },
+    {
+      "chart": "Winston Churchill",
+      "rule_id": "bvr_bandhu_pujya_yoga",
+      "rule_name": "Bandhu Pujya Yoga",
+      "pyjhora_names": [
+        "bandhu_pujya_yoga_193",
+        "bandhu_pujya_yoga_194"
+      ]
+    },
+    {
+      "chart": "Winston Churchill",
+      "rule_id": "sankha_yoga",
+      "rule_name": "Sankha Yoga",
+      "pyjhora_names": [
+        "sankha_yoga"
       ]
     },
     {
@@ -2460,51 +1745,20 @@
       ]
     },
     {
-      "chart": "Winston Churchill",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
+      "chart": "John F. Kennedy",
+      "rule_id": "bvr_rogagrastha_precise",
+      "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Winston Churchill",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Winston Churchill",
-      "rule_id": "sankha_yoga",
-      "rule_name": "Sankha Yoga",
-      "pyjhora_names": [
-        "sankha_yoga"
+        "rogagrastha_yoga"
       ]
     },
     {
       "chart": "John F. Kennedy",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "rule_id": "bvr_krisanga_yoga",
+      "rule_name": "Krisanga Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "John F. Kennedy",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "John F. Kennedy",
-      "rule_id": "bvr_amala_precise",
-      "rule_name": "Amala Yoga",
-      "pyjhora_names": [
-        "amala_yoga"
+        "krisanga_yoga_112",
+        "krisanga_yoga_113"
       ]
     },
     {
@@ -2514,14 +1768,6 @@
       "pyjhora_names": [
         "bandhu_pujya_yoga_193",
         "bandhu_pujya_yoga_194"
-      ]
-    },
-    {
-      "chart": "John F. Kennedy",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
       ]
     },
     {
@@ -2534,11 +1780,10 @@
     },
     {
       "chart": "John F. Kennedy",
-      "rule_id": "bvr_krisanga_yoga",
-      "rule_name": "Krisanga Yoga",
+      "rule_id": "bvr_amala_precise",
+      "rule_name": "Amala Yoga",
       "pyjhora_names": [
-        "krisanga_yoga_112",
-        "krisanga_yoga_113"
+        "amala_yoga"
       ]
     },
     {
@@ -2551,27 +1796,29 @@
       ]
     },
     {
-      "chart": "John F. Kennedy",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
+      "chart": "Nelson Mandela",
+      "rule_id": "bvr_bahu_puthra_precise",
+      "rule_name": "Bahu Puthra Yoga",
       "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "John F. Kennedy",
-      "rule_id": "bvr_rogagrastha_precise",
-      "rule_name": "Rogagrastha Yoga",
-      "pyjhora_names": [
-        "rogagrastha_yoga"
+        "bahu_puthra_yoga_220",
+        "bahu_puthra_yoga_221"
       ]
     },
     {
       "chart": "Nelson Mandela",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
+      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
+        "kaalanirdesat_puthranaasa_yoga_230",
+        "kaalanirdesat_puthranaasa_yoga_229"
+      ]
+    },
+    {
+      "chart": "Nelson Mandela",
+      "rule_id": "bvr_rogagrastha_precise",
+      "rule_name": "Rogagrastha Yoga",
+      "pyjhora_names": [
+        "rogagrastha_yoga"
       ]
     },
     {
@@ -2593,107 +1840,11 @@
     },
     {
       "chart": "Nelson Mandela",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Nelson Mandela",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Nelson Mandela",
       "rule_id": "bvr_matrunasa_precise",
       "rule_name": "Matrunasa Yoga",
       "pyjhora_names": [
         "matrunasa_yoga_198",
         "matrunasa_yoga_199"
-      ]
-    },
-    {
-      "chart": "Nelson Mandela",
-      "rule_id": "bvr_bahu_puthra_precise",
-      "rule_name": "Bahu Puthra Yoga",
-      "pyjhora_names": [
-        "bahu_puthra_yoga_220",
-        "bahu_puthra_yoga_221"
-      ]
-    },
-    {
-      "chart": "Nelson Mandela",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Nelson Mandela",
-      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
-      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
-      "pyjhora_names": [
-        "kaalanirdesat_puthranaasa_yoga_230",
-        "kaalanirdesat_puthranaasa_yoga_229"
-      ]
-    },
-    {
-      "chart": "Nelson Mandela",
-      "rule_id": "bvr_rogagrastha_precise",
-      "rule_name": "Rogagrastha Yoga",
-      "pyjhora_names": [
-        "rogagrastha_yoga"
-      ]
-    },
-    {
-      "chart": "Abraham Lincoln",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Abraham Lincoln",
-      "rule_id": "bvr_sumukha_precise",
-      "rule_name": "Sumukha Yoga",
-      "pyjhora_names": [
-        "sumukha_yoga"
-      ]
-    },
-    {
-      "chart": "Abraham Lincoln",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Abraham Lincoln",
-      "rule_id": "bvr_utthama_graha_yoga",
-      "rule_name": "Utthama Griha Yoga",
-      "pyjhora_names": [
-        "utthama_graha_yoga"
-      ]
-    },
-    {
-      "chart": "Abraham Lincoln",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
       ]
     },
     {
@@ -2707,30 +1858,22 @@
     },
     {
       "chart": "Abraham Lincoln",
-      "rule_id": "bvr_eka_puthra_precise",
-      "rule_name": "Eka Puthra Yoga",
+      "rule_id": "bvr_sumukha_precise",
+      "rule_name": "Sumukha Yoga",
       "pyjhora_names": [
-        "eka_puthra_yoga"
+        "sumukha_yoga"
       ]
     },
     {
       "chart": "Abraham Lincoln",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
+      "rule_id": "bvr_utthama_graha_yoga",
+      "rule_name": "Utthama Griha Yoga",
       "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
+        "utthama_graha_yoga"
       ]
     },
     {
       "chart": "Abraham Lincoln",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Margaret Thatcher",
       "rule_id": "bvr_matru_sneha_yoga",
       "rule_name": "Matru Sneha Yoga",
       "pyjhora_names": [
@@ -2738,50 +1881,11 @@
       ]
     },
     {
-      "chart": "Margaret Thatcher",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Abraham Lincoln",
+      "rule_id": "bvr_eka_puthra_precise",
+      "rule_name": "Eka Puthra Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Margaret Thatcher",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Margaret Thatcher",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Margaret Thatcher",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Margaret Thatcher",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
-      "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
+        "eka_puthra_yoga"
       ]
     },
     {
@@ -2792,14 +1896,6 @@
         "dehasthoulya_yoga_114",
         "dehasthoulya_yoga_115",
         "dehasthoulya_yoga_116"
-      ]
-    },
-    {
-      "chart": "Margaret Thatcher",
-      "rule_id": "sankha_yoga",
-      "rule_name": "Sankha Yoga",
-      "pyjhora_names": [
-        "sankha_yoga"
       ]
     },
     {
@@ -2815,11 +1911,61 @@
       ]
     },
     {
-      "chart": "Barack Obama",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Margaret Thatcher",
+      "rule_id": "bvr_bandhubhisthyaktha_precise",
+      "rule_name": "Bandhubhisthyaktha Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "bandhubhisthyaktha_yoga"
+      ]
+    },
+    {
+      "chart": "Margaret Thatcher",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
+      "pyjhora_names": [
+        "swaveeryaddhana_yoga"
+      ]
+    },
+    {
+      "chart": "Margaret Thatcher",
+      "rule_id": "sankha_yoga",
+      "rule_name": "Sankha Yoga",
+      "pyjhora_names": [
+        "sankha_yoga"
+      ]
+    },
+    {
+      "chart": "Margaret Thatcher",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
+      "pyjhora_names": [
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
+      ]
+    },
+    {
+      "chart": "Barack Obama",
+      "rule_id": "bvr_bandhubhisthyaktha_precise",
+      "rule_name": "Bandhubhisthyaktha Yoga",
+      "pyjhora_names": [
+        "bandhubhisthyaktha_yoga"
+      ]
+    },
+    {
+      "chart": "Barack Obama",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
+      "pyjhora_names": [
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
+      ]
+    },
+    {
+      "chart": "Barack Obama",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
+      "pyjhora_names": [
+        "swaveeryaddhana_yoga"
       ]
     },
     {
@@ -2845,102 +1991,6 @@
       ]
     },
     {
-      "chart": "Barack Obama",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Barack Obama",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Barack Obama",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
-      "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
-      ]
-    },
-    {
-      "chart": "Barack Obama",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Barack Obama",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Rabindranath Tagore",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Rabindranath Tagore",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Rabindranath Tagore",
-      "rule_id": "bvr_sada_sanchara_precise",
-      "rule_name": "Sada Sanchara Yoga",
-      "pyjhora_names": [
-        "sada_sanchara_yoga"
-      ]
-    },
-    {
-      "chart": "Rabindranath Tagore",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Rabindranath Tagore",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
-      "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
-      ]
-    },
-    {
-      "chart": "Rabindranath Tagore",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
       "chart": "Rabindranath Tagore",
       "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
       "rule_name": "Kaalanirdesat Puthranaasa Yoga",
@@ -2958,61 +2008,20 @@
       ]
     },
     {
-      "chart": "Ludwig van Beethoven",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
+      "chart": "Rabindranath Tagore",
+      "rule_id": "bvr_sada_sanchara_precise",
+      "rule_name": "Sada Sanchara Yoga",
       "pyjhora_names": [
-        "swaveeryaddhana_yoga"
+        "sada_sanchara_yoga"
       ]
     },
     {
-      "chart": "Ludwig van Beethoven",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
+      "chart": "Rabindranath Tagore",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
       "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Ludwig van Beethoven",
-      "rule_id": "bvr_kalaanidhi_yoga",
-      "rule_name": "Kalaanidhi Yoga",
-      "pyjhora_names": [
-        "kalaanidhi_yoga",
-        "kalanidhi_yoga"
-      ]
-    },
-    {
-      "chart": "Ludwig van Beethoven",
-      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
-      "rule_name": "Vanchana Chora Bheethi Yoga",
-      "pyjhora_names": [
-        "vanchana_chora_bheethi_yoga"
-      ]
-    },
-    {
-      "chart": "Ludwig van Beethoven",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Ludwig van Beethoven",
-      "rule_id": "bvr_nishkapata_precise",
-      "rule_name": "Nishkapata Yoga",
-      "pyjhora_names": [
-        "nishkapata_yoga_205",
-        "nishkapata_yoga_206",
-        "kapata_yoga_202",
-        "kapata_yoga_204"
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
       ]
     },
     {
@@ -3026,10 +2035,27 @@
     },
     {
       "chart": "Ludwig van Beethoven",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
+      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
+      "rule_name": "Vanchana Chora Bheethi Yoga",
       "pyjhora_names": [
-        "kaahala_yoga"
+        "vanchana_chora_bheethi_yoga"
+      ]
+    },
+    {
+      "chart": "Ludwig van Beethoven",
+      "rule_id": "bvr_kalaanidhi_yoga",
+      "rule_name": "Kalaanidhi Yoga",
+      "pyjhora_names": [
+        "kalaanidhi_yoga",
+        "kalanidhi_yoga"
+      ]
+    },
+    {
+      "chart": "Ludwig van Beethoven",
+      "rule_id": "bvr_matru_sneha_yoga",
+      "rule_name": "Matru Sneha Yoga",
+      "pyjhora_names": [
+        "matru_sneha_yoga"
       ]
     },
     {
@@ -3045,6 +2071,17 @@
       ]
     },
     {
+      "chart": "Ludwig van Beethoven",
+      "rule_id": "bvr_nishkapata_precise",
+      "rule_name": "Nishkapata Yoga",
+      "pyjhora_names": [
+        "nishkapata_yoga_205",
+        "nishkapata_yoga_206",
+        "kapata_yoga_202",
+        "kapata_yoga_204"
+      ]
+    },
+    {
       "chart": "Wolfgang Mozart",
       "rule_id": "bvr_bhratruvriddhi_precise",
       "rule_name": "Bhratruvriddhi Yoga",
@@ -3054,32 +2091,12 @@
     },
     {
       "chart": "Wolfgang Mozart",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "rule_id": "bvr_dehasthoulya_yoga",
+      "rule_name": "Dehasthoulya Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Wolfgang Mozart",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Wolfgang Mozart",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
+        "dehasthoulya_yoga_114",
+        "dehasthoulya_yoga_115",
+        "dehasthoulya_yoga_116"
       ]
     },
     {
@@ -3101,41 +2118,6 @@
     },
     {
       "chart": "Wolfgang Mozart",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
-      "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
-      ]
-    },
-    {
-      "chart": "Wolfgang Mozart",
-      "rule_id": "bvr_dehasthoulya_yoga",
-      "rule_name": "Dehasthoulya Yoga",
-      "pyjhora_names": [
-        "dehasthoulya_yoga_114",
-        "dehasthoulya_yoga_115",
-        "dehasthoulya_yoga_116"
-      ]
-    },
-    {
-      "chart": "Pablo Picasso",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Pablo Picasso",
-      "rule_id": "bvr_sumukha_precise",
-      "rule_name": "Sumukha Yoga",
-      "pyjhora_names": [
-        "sumukha_yoga"
-      ]
-    },
-    {
-      "chart": "Pablo Picasso",
       "rule_id": "bvr_dharidhra_11_precise",
       "rule_name": "Dharidhra Yoga",
       "pyjhora_names": [
@@ -3149,23 +2131,20 @@
       ]
     },
     {
-      "chart": "Pablo Picasso",
-      "rule_id": "bvr_nishkapata_precise",
-      "rule_name": "Nishkapata Yoga",
+      "chart": "Wolfgang Mozart",
+      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
+      "rule_name": "Yukthi Samanwithavagmi Yoga",
       "pyjhora_names": [
-        "nishkapata_yoga_205",
-        "nishkapata_yoga_206",
-        "kapata_yoga_202",
-        "kapata_yoga_204"
+        "yukthi_samanwithavagmi_yoga_154"
       ]
     },
     {
-      "chart": "Pablo Picasso",
-      "rule_id": "bvr_grihanasa_yoga",
-      "rule_name": "Grihanasa Yoga",
+      "chart": "Wolfgang Mozart",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
       "pyjhora_names": [
-        "grihanasa_yoga_191",
-        "grihanasa_yoga_192"
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
       ]
     },
     {
@@ -3175,6 +2154,15 @@
       "pyjhora_names": [
         "bahu_puthra_yoga_220",
         "bahu_puthra_yoga_221"
+      ]
+    },
+    {
+      "chart": "Pablo Picasso",
+      "rule_id": "bvr_grihanasa_yoga",
+      "rule_name": "Grihanasa Yoga",
+      "pyjhora_names": [
+        "grihanasa_yoga_191",
+        "grihanasa_yoga_192"
       ]
     },
     {
@@ -3194,35 +2182,22 @@
       ]
     },
     {
-      "chart": "Vincent van Gogh",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "chart": "Pablo Picasso",
+      "rule_id": "bvr_sumukha_precise",
+      "rule_name": "Sumukha Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
+        "sumukha_yoga"
       ]
     },
     {
-      "chart": "Vincent van Gogh",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Pablo Picasso",
+      "rule_id": "bvr_nishkapata_precise",
+      "rule_name": "Nishkapata Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Vincent van Gogh",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Vincent van Gogh",
-      "rule_id": "bvr_bhaga_chumbana_yoga",
-      "rule_name": "Bhaga Chumbana Yoga",
-      "pyjhora_names": [
-        "bhaga_chumbana_yoga"
+        "nishkapata_yoga_205",
+        "nishkapata_yoga_206",
+        "kapata_yoga_202",
+        "kapata_yoga_204"
       ]
     },
     {
@@ -3236,18 +2211,18 @@
     },
     {
       "chart": "Vincent van Gogh",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga",
+      "rule_id": "bvr_bhaga_chumbana_yoga",
+      "rule_name": "Bhaga Chumbana Yoga",
       "pyjhora_names": [
-        "yukthi_samanwithavagmi_yoga_154"
+        "bhaga_chumbana_yoga"
       ]
     },
     {
       "chart": "Vincent van Gogh",
-      "rule_id": "sankha_yoga",
-      "rule_name": "Sankha Yoga",
+      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
+      "rule_name": "Yukthi Samanwithavagmi Yoga",
       "pyjhora_names": [
-        "sankha_yoga"
+        "yukthi_samanwithavagmi_yoga_154"
       ]
     },
     {
@@ -3263,50 +2238,20 @@
       ]
     },
     {
-      "chart": "Charlie Chaplin",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Vincent van Gogh",
+      "rule_id": "sankha_yoga",
+      "rule_name": "Sankha Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "sankha_yoga"
       ]
     },
     {
       "chart": "Charlie Chaplin",
-      "rule_id": "bvr_bandhu_pujya_yoga",
-      "rule_name": "Bandhu Pujya Yoga",
+      "rule_id": "bvr_bahu_puthra_precise",
+      "rule_name": "Bahu Puthra Yoga",
       "pyjhora_names": [
-        "bandhu_pujya_yoga_193",
-        "bandhu_pujya_yoga_194"
-      ]
-    },
-    {
-      "chart": "Charlie Chaplin",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Charlie Chaplin",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Charlie Chaplin",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
+        "bahu_puthra_yoga_220",
+        "bahu_puthra_yoga_221"
       ]
     },
     {
@@ -3319,19 +2264,19 @@
     },
     {
       "chart": "Charlie Chaplin",
-      "rule_id": "bvr_bahu_puthra_precise",
-      "rule_name": "Bahu Puthra Yoga",
+      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
+      "rule_name": "Yukthi Samanwithavagmi Yoga",
       "pyjhora_names": [
-        "bahu_puthra_yoga_220",
-        "bahu_puthra_yoga_221"
+        "yukthi_samanwithavagmi_yoga_154"
       ]
     },
     {
       "chart": "Charlie Chaplin",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
+      "rule_id": "bvr_bandhu_pujya_yoga",
+      "rule_name": "Bandhu Pujya Yoga",
       "pyjhora_names": [
-        "kaahala_yoga"
+        "bandhu_pujya_yoga_193",
+        "bandhu_pujya_yoga_194"
       ]
     },
     {
@@ -3348,42 +2293,10 @@
     },
     {
       "chart": "Elvis Presley",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Elvis Presley",
       "rule_id": "bvr_bhratruvriddhi_precise",
       "rule_name": "Bhratruvriddhi Yoga",
       "pyjhora_names": [
         "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Elvis Presley",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Elvis Presley",
-      "rule_id": "bvr_sada_sanchara_precise",
-      "rule_name": "Sada Sanchara Yoga",
-      "pyjhora_names": [
-        "sada_sanchara_yoga"
-      ]
-    },
-    {
-      "chart": "Elvis Presley",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
       ]
     },
     {
@@ -3397,22 +2310,39 @@
     },
     {
       "chart": "Elvis Presley",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
+      "rule_id": "bvr_rogagrastha_precise",
+      "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
-        "sareera_soukhya_yoga"
+        "rogagrastha_yoga"
       ]
     },
     {
       "chart": "Elvis Presley",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
+      "rule_id": "bvr_sada_sanchara_precise",
+      "rule_name": "Sada Sanchara Yoga",
       "pyjhora_names": [
-        "kaahala_yoga"
+        "sada_sanchara_yoga"
       ]
     },
     {
       "chart": "Elvis Presley",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
+      "pyjhora_names": [
+        "swaveeryaddhana_yoga"
+      ]
+    },
+    {
+      "chart": "Michael Jackson",
+      "rule_id": "bvr_bahu_puthra_precise",
+      "rule_name": "Bahu Puthra Yoga",
+      "pyjhora_names": [
+        "bahu_puthra_yoga_220",
+        "bahu_puthra_yoga_221"
+      ]
+    },
+    {
+      "chart": "Michael Jackson",
       "rule_id": "bvr_rogagrastha_precise",
       "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
@@ -3421,18 +2351,30 @@
     },
     {
       "chart": "Michael Jackson",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "rule_id": "bvr_mathibhramana_yoga",
+      "rule_name": "Mathibhramana Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "mathibhramana_yoga_291",
+        "mathibhramana_yoga_292",
+        "mathibhramana_yoga_293",
+        "mathibhramana_yoga_294",
+        "mathibhramana_yoga_variation"
       ]
     },
     {
       "chart": "Michael Jackson",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
+      "rule_name": "Vanchana Chora Bheethi Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
+        "vanchana_chora_bheethi_yoga"
+      ]
+    },
+    {
+      "chart": "Michael Jackson",
+      "rule_id": "bvr_dama_yoga",
+      "rule_name": "Dama Yoga",
+      "pyjhora_names": [
+        "dama_yoga"
       ]
     },
     {
@@ -3452,102 +2394,11 @@
       ]
     },
     {
-      "chart": "Michael Jackson",
-      "rule_id": "bvr_vanchana_chora_bheethi_yoga",
-      "rule_name": "Vanchana Chora Bheethi Yoga",
-      "pyjhora_names": [
-        "vanchana_chora_bheethi_yoga"
-      ]
-    },
-    {
-      "chart": "Michael Jackson",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Michael Jackson",
-      "rule_id": "bvr_bahu_puthra_precise",
-      "rule_name": "Bahu Puthra Yoga",
-      "pyjhora_names": [
-        "bahu_puthra_yoga_220",
-        "bahu_puthra_yoga_221"
-      ]
-    },
-    {
-      "chart": "Michael Jackson",
-      "rule_id": "bvr_rogagrastha_precise",
-      "rule_name": "Rogagrastha Yoga",
-      "pyjhora_names": [
-        "rogagrastha_yoga"
-      ]
-    },
-    {
-      "chart": "Michael Jackson",
-      "rule_id": "bvr_mathibhramana_yoga",
-      "rule_name": "Mathibhramana Yoga",
-      "pyjhora_names": [
-        "mathibhramana_yoga_291",
-        "mathibhramana_yoga_292",
-        "mathibhramana_yoga_293",
-        "mathibhramana_yoga_294",
-        "mathibhramana_yoga_variation"
-      ]
-    },
-    {
-      "chart": "Michael Jackson",
+      "chart": "A.R. Rahman",
       "rule_id": "bvr_dama_yoga",
       "rule_name": "Dama Yoga",
       "pyjhora_names": [
         "dama_yoga"
-      ]
-    },
-    {
-      "chart": "A.R. Rahman",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "A.R. Rahman",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "A.R. Rahman",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "A.R. Rahman",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "A.R. Rahman",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
       ]
     },
     {
@@ -3560,49 +2411,10 @@
     },
     {
       "chart": "A.R. Rahman",
-      "rule_id": "bvr_dama_yoga",
-      "rule_name": "Dama Yoga",
-      "pyjhora_names": [
-        "dama_yoga"
-      ]
-    },
-    {
-      "chart": "Lata Mangeshkar",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Lata Mangeshkar",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Lata Mangeshkar",
       "rule_id": "bvr_swaveeryaddhana_precise",
       "rule_name": "Swaveeryaddhana Yoga",
       "pyjhora_names": [
         "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Lata Mangeshkar",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
-      "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
       ]
     },
     {
@@ -3612,14 +2424,6 @@
       "pyjhora_names": [
         "bahu_puthra_yoga_220",
         "bahu_puthra_yoga_221"
-      ]
-    },
-    {
-      "chart": "Lata Mangeshkar",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
       ]
     },
     {
@@ -3633,6 +2437,22 @@
     },
     {
       "chart": "Lata Mangeshkar",
+      "rule_id": "bvr_dama_yoga",
+      "rule_name": "Dama Yoga",
+      "pyjhora_names": [
+        "dama_yoga"
+      ]
+    },
+    {
+      "chart": "Lata Mangeshkar",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
+      "pyjhora_names": [
+        "swaveeryaddhana_yoga"
+      ]
+    },
+    {
+      "chart": "Lata Mangeshkar",
       "rule_id": "bvr_mathibhramana_yoga",
       "rule_name": "Mathibhramana Yoga",
       "pyjhora_names": [
@@ -3645,68 +2465,6 @@
     },
     {
       "chart": "Lata Mangeshkar",
-      "rule_id": "bvr_dama_yoga",
-      "rule_name": "Dama Yoga",
-      "pyjhora_names": [
-        "dama_yoga"
-      ]
-    },
-    {
-      "chart": "Steve Jobs",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Steve Jobs",
-      "rule_id": "bvr_amala_precise",
-      "rule_name": "Amala Yoga",
-      "pyjhora_names": [
-        "amala_yoga"
-      ]
-    },
-    {
-      "chart": "Steve Jobs",
-      "rule_id": "bvr_utthama_graha_yoga",
-      "rule_name": "Utthama Griha Yoga",
-      "pyjhora_names": [
-        "utthama_graha_yoga"
-      ]
-    },
-    {
-      "chart": "Steve Jobs",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Steve Jobs",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Steve Jobs",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Steve Jobs",
       "rule_id": "bvr_matrunasa_precise",
       "rule_name": "Matrunasa Yoga",
       "pyjhora_names": [
@@ -3733,34 +2491,36 @@
       ]
     },
     {
-      "chart": "Bill Gates",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Steve Jobs",
+      "rule_id": "bvr_utthama_graha_yoga",
+      "rule_name": "Utthama Griha Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "utthama_graha_yoga"
       ]
     },
     {
-      "chart": "Bill Gates",
-      "rule_id": "bvr_bandhu_pujya_yoga",
-      "rule_name": "Bandhu Pujya Yoga",
+      "chart": "Steve Jobs",
+      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
+      "rule_name": "Yukthi Samanwithavagmi Yoga",
       "pyjhora_names": [
-        "bandhu_pujya_yoga_193",
-        "bandhu_pujya_yoga_194"
+        "yukthi_samanwithavagmi_yoga_154"
       ]
     },
     {
-      "chart": "Bill Gates",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
+      "chart": "Steve Jobs",
+      "rule_id": "bvr_amala_precise",
+      "rule_name": "Amala Yoga",
       "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
+        "amala_yoga"
+      ]
+    },
+    {
+      "chart": "Steve Jobs",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
+      "pyjhora_names": [
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
       ]
     },
     {
@@ -3774,18 +2534,10 @@
     },
     {
       "chart": "Bill Gates",
-      "rule_id": "bvr_bhaga_chumbana_yoga",
-      "rule_name": "Bhaga Chumbana Yoga",
+      "rule_id": "bvr_rogagrastha_precise",
+      "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
-        "bhaga_chumbana_yoga"
-      ]
-    },
-    {
-      "chart": "Bill Gates",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
+        "rogagrastha_yoga"
       ]
     },
     {
@@ -3799,30 +2551,6 @@
     },
     {
       "chart": "Bill Gates",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga",
-      "pyjhora_names": [
-        "yukthi_samanwithavagmi_yoga_154"
-      ]
-    },
-    {
-      "chart": "Bill Gates",
-      "rule_id": "bvr_rogagrastha_precise",
-      "rule_name": "Rogagrastha Yoga",
-      "pyjhora_names": [
-        "rogagrastha_yoga"
-      ]
-    },
-    {
-      "chart": "Elon Musk",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Elon Musk",
       "rule_id": "bvr_bandhu_pujya_yoga",
       "rule_name": "Bandhu Pujya Yoga",
       "pyjhora_names": [
@@ -3831,25 +2559,11 @@
       ]
     },
     {
-      "chart": "Elon Musk",
-      "rule_id": "bvr_amala_precise",
-      "rule_name": "Amala Yoga",
+      "chart": "Bill Gates",
+      "rule_id": "bvr_bhaga_chumbana_yoga",
+      "rule_name": "Bhaga Chumbana Yoga",
       "pyjhora_names": [
-        "amala_yoga"
-      ]
-    },
-    {
-      "chart": "Elon Musk",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
+        "bhaga_chumbana_yoga"
       ]
     },
     {
@@ -3871,14 +2585,6 @@
     },
     {
       "chart": "Elon Musk",
-      "rule_id": "sankha_yoga",
-      "rule_name": "Sankha Yoga",
-      "pyjhora_names": [
-        "sankha_yoga"
-      ]
-    },
-    {
-      "chart": "Elon Musk",
       "rule_id": "bheri_yoga",
       "rule_name": "Bheri Yoga",
       "pyjhora_names": [
@@ -3886,58 +2592,36 @@
       ]
     },
     {
-      "chart": "Jeff Bezos",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Elon Musk",
+      "rule_id": "bvr_bandhu_pujya_yoga",
+      "rule_name": "Bandhu Pujya Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "bandhu_pujya_yoga_193",
+        "bandhu_pujya_yoga_194"
+      ]
+    },
+    {
+      "chart": "Elon Musk",
+      "rule_id": "bvr_amala_precise",
+      "rule_name": "Amala Yoga",
+      "pyjhora_names": [
+        "amala_yoga"
+      ]
+    },
+    {
+      "chart": "Elon Musk",
+      "rule_id": "sankha_yoga",
+      "rule_name": "Sankha Yoga",
+      "pyjhora_names": [
+        "sankha_yoga"
       ]
     },
     {
       "chart": "Jeff Bezos",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Jeff Bezos",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Jeff Bezos",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Jeff Bezos",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Jeff Bezos",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
-      "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
+        "kaahala_yoga"
       ]
     },
     {
@@ -3950,18 +2634,14 @@
     },
     {
       "chart": "Jeff Bezos",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
+      "rule_id": "bvr_mathibhramana_yoga",
+      "rule_name": "Mathibhramana Yoga",
       "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Jeff Bezos",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
+        "mathibhramana_yoga_291",
+        "mathibhramana_yoga_292",
+        "mathibhramana_yoga_293",
+        "mathibhramana_yoga_294",
+        "mathibhramana_yoga_variation"
       ]
     },
     {
@@ -3975,6 +2655,15 @@
     },
     {
       "chart": "Jeff Bezos",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
+      "pyjhora_names": [
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
+      ]
+    },
+    {
+      "chart": "Warren Buffett",
       "rule_id": "bvr_mathibhramana_yoga",
       "rule_name": "Mathibhramana Yoga",
       "pyjhora_names": [
@@ -3983,6 +2672,22 @@
         "mathibhramana_yoga_293",
         "mathibhramana_yoga_294",
         "mathibhramana_yoga_variation"
+      ]
+    },
+    {
+      "chart": "Warren Buffett",
+      "rule_id": "bheri_yoga",
+      "rule_name": "Bheri Yoga",
+      "pyjhora_names": [
+        "bheri_yoga"
+      ]
+    },
+    {
+      "chart": "Warren Buffett",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
+      "pyjhora_names": [
+        "swaveeryaddhana_yoga"
       ]
     },
     {
@@ -3996,24 +2701,10 @@
     },
     {
       "chart": "Warren Buffett",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
+      "rule_id": "bvr_bhaga_chumbana_yoga",
+      "rule_name": "Bhaga Chumbana Yoga",
       "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Warren Buffett",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
+        "bhaga_chumbana_yoga"
       ]
     },
     {
@@ -4026,109 +2717,11 @@
     },
     {
       "chart": "Warren Buffett",
-      "rule_id": "bvr_bhaga_chumbana_yoga",
-      "rule_name": "Bhaga Chumbana Yoga",
-      "pyjhora_names": [
-        "bhaga_chumbana_yoga"
-      ]
-    },
-    {
-      "chart": "Warren Buffett",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Warren Buffett",
       "rule_id": "bvr_matrunasa_precise",
       "rule_name": "Matrunasa Yoga",
       "pyjhora_names": [
         "matrunasa_yoga_198",
         "matrunasa_yoga_199"
-      ]
-    },
-    {
-      "chart": "Warren Buffett",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Warren Buffett",
-      "rule_id": "bvr_mathibhramana_yoga",
-      "rule_name": "Mathibhramana Yoga",
-      "pyjhora_names": [
-        "mathibhramana_yoga_291",
-        "mathibhramana_yoga_292",
-        "mathibhramana_yoga_293",
-        "mathibhramana_yoga_294",
-        "mathibhramana_yoga_variation"
-      ]
-    },
-    {
-      "chart": "Warren Buffett",
-      "rule_id": "bheri_yoga",
-      "rule_name": "Bheri Yoga",
-      "pyjhora_names": [
-        "bheri_yoga"
-      ]
-    },
-    {
-      "chart": "Mukesh Ambani",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Mukesh Ambani",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Mukesh Ambani",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Mukesh Ambani",
-      "rule_id": "bvr_sada_sanchara_precise",
-      "rule_name": "Sada Sanchara Yoga",
-      "pyjhora_names": [
-        "sada_sanchara_yoga"
-      ]
-    },
-    {
-      "chart": "Mukesh Ambani",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Mukesh Ambani",
-      "rule_id": "parvata_yoga",
-      "rule_name": "Parvata Yoga",
-      "pyjhora_names": [
-        "parvata_yoga"
       ]
     },
     {
@@ -4151,42 +2744,35 @@
       ]
     },
     {
+      "chart": "Mukesh Ambani",
+      "rule_id": "parvata_yoga",
+      "rule_name": "Parvata Yoga",
+      "pyjhora_names": [
+        "parvata_yoga"
+      ]
+    },
+    {
+      "chart": "Mukesh Ambani",
+      "rule_id": "bvr_sada_sanchara_precise",
+      "rule_name": "Sada Sanchara Yoga",
+      "pyjhora_names": [
+        "sada_sanchara_yoga"
+      ]
+    },
+    {
+      "chart": "Ratan Tata",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
+      "pyjhora_names": [
+        "kaahala_yoga"
+      ]
+    },
+    {
       "chart": "Ratan Tata",
       "rule_id": "bvr_bhratruvriddhi_precise",
       "rule_name": "Bhratruvriddhi Yoga",
       "pyjhora_names": [
         "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Ratan Tata",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Ratan Tata",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Ratan Tata",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
-      "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
       ]
     },
     {
@@ -4200,22 +2786,6 @@
     },
     {
       "chart": "Ratan Tata",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Ratan Tata",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Ratan Tata",
       "rule_id": "bvr_rogagrastha_precise",
       "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
@@ -4223,44 +2793,12 @@
       ]
     },
     {
-      "chart": "Narayana Murthy",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "chart": "Ratan Tata",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Narayana Murthy",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Narayana Murthy",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Narayana Murthy",
-      "rule_id": "bvr_nishkapata_precise",
-      "rule_name": "Nishkapata Yoga",
-      "pyjhora_names": [
-        "nishkapata_yoga_205",
-        "nishkapata_yoga_206",
-        "kapata_yoga_202",
-        "kapata_yoga_204"
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
       ]
     },
     {
@@ -4292,6 +2830,22 @@
     },
     {
       "chart": "Narayana Murthy",
+      "rule_id": "bvr_bandhubhisthyaktha_precise",
+      "rule_name": "Bandhubhisthyaktha Yoga",
+      "pyjhora_names": [
+        "bandhubhisthyaktha_yoga"
+      ]
+    },
+    {
+      "chart": "Narayana Murthy",
+      "rule_id": "adhi_yoga",
+      "rule_name": "Adhi Yoga",
+      "pyjhora_names": [
+        "adhi_yoga"
+      ]
+    },
+    {
+      "chart": "Narayana Murthy",
       "rule_id": "bvr_mathibhramana_yoga",
       "rule_name": "Mathibhramana Yoga",
       "pyjhora_names": [
@@ -4303,32 +2857,7 @@
       ]
     },
     {
-      "chart": "Azim Premji",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Azim Premji",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Azim Premji",
-      "rule_id": "bvr_krisanga_yoga",
-      "rule_name": "Krisanga Yoga",
-      "pyjhora_names": [
-        "krisanga_yoga_112",
-        "krisanga_yoga_113"
-      ]
-    },
-    {
-      "chart": "Azim Premji",
+      "chart": "Narayana Murthy",
       "rule_id": "bvr_nishkapata_precise",
       "rule_name": "Nishkapata Yoga",
       "pyjhora_names": [
@@ -4356,6 +2885,15 @@
     },
     {
       "chart": "Azim Premji",
+      "rule_id": "bvr_krisanga_yoga",
+      "rule_name": "Krisanga Yoga",
+      "pyjhora_names": [
+        "krisanga_yoga_112",
+        "krisanga_yoga_113"
+      ]
+    },
+    {
+      "chart": "Azim Premji",
       "rule_id": "bvr_dama_yoga",
       "rule_name": "Dama Yoga",
       "pyjhora_names": [
@@ -4363,50 +2901,22 @@
       ]
     },
     {
-      "chart": "Dhirubhai Ambani",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Azim Premji",
+      "rule_id": "bvr_nishkapata_precise",
+      "rule_name": "Nishkapata Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "nishkapata_yoga_205",
+        "nishkapata_yoga_206",
+        "kapata_yoga_202",
+        "kapata_yoga_204"
       ]
     },
     {
       "chart": "Dhirubhai Ambani",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Dhirubhai Ambani",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Dhirubhai Ambani",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Dhirubhai Ambani",
-      "rule_id": "bvr_krisanga_yoga",
-      "rule_name": "Krisanga Yoga",
-      "pyjhora_names": [
-        "krisanga_yoga_112",
-        "krisanga_yoga_113"
+        "kaahala_yoga"
       ]
     },
     {
@@ -4420,18 +2930,19 @@
     },
     {
       "chart": "Dhirubhai Ambani",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Dhirubhai Ambani",
       "rule_id": "bvr_rogagrastha_precise",
       "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
         "rogagrastha_yoga"
+      ]
+    },
+    {
+      "chart": "Dhirubhai Ambani",
+      "rule_id": "bvr_krisanga_yoga",
+      "rule_name": "Krisanga Yoga",
+      "pyjhora_names": [
+        "krisanga_yoga_112",
+        "krisanga_yoga_113"
       ]
     },
     {
@@ -4456,40 +2967,10 @@
     },
     {
       "chart": "Sachin Tendulkar",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Sachin Tendulkar",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Sachin Tendulkar",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Sachin Tendulkar",
-      "rule_id": "bheri_yoga",
-      "rule_name": "Bheri Yoga",
-      "pyjhora_names": [
-        "bheri_yoga"
+        "kaahala_yoga"
       ]
     },
     {
@@ -4499,23 +2980,6 @@
       "pyjhora_names": [
         "bahu_puthra_yoga_220",
         "bahu_puthra_yoga_221"
-      ]
-    },
-    {
-      "chart": "Sachin Tendulkar",
-      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
-      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
-      "pyjhora_names": [
-        "kaalanirdesat_puthranaasa_yoga_230",
-        "kaalanirdesat_puthranaasa_yoga_229"
-      ]
-    },
-    {
-      "chart": "Sachin Tendulkar",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
       ]
     },
     {
@@ -4528,6 +2992,15 @@
     },
     {
       "chart": "Sachin Tendulkar",
+      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
+      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
+      "pyjhora_names": [
+        "kaalanirdesat_puthranaasa_yoga_230",
+        "kaalanirdesat_puthranaasa_yoga_229"
+      ]
+    },
+    {
+      "chart": "Sachin Tendulkar",
       "rule_id": "bvr_pisacha_grastha_yoga",
       "rule_name": "Pisacha Grastha Yoga",
       "pyjhora_names": [
@@ -4535,43 +3008,11 @@
       ]
     },
     {
-      "chart": "Virat Kohli",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "chart": "Sachin Tendulkar",
+      "rule_id": "bheri_yoga",
+      "rule_name": "Bheri Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Virat Kohli",
-      "rule_id": "bvr_sumukha_precise",
-      "rule_name": "Sumukha Yoga",
-      "pyjhora_names": [
-        "sumukha_yoga"
-      ]
-    },
-    {
-      "chart": "Virat Kohli",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Virat Kohli",
-      "rule_id": "bvr_bhaga_chumbana_yoga",
-      "rule_name": "Bhaga Chumbana Yoga",
-      "pyjhora_names": [
-        "bhaga_chumbana_yoga"
-      ]
-    },
-    {
-      "chart": "Virat Kohli",
-      "rule_id": "bvr_sada_sanchara_precise",
-      "rule_name": "Sada Sanchara Yoga",
-      "pyjhora_names": [
-        "sada_sanchara_yoga"
+        "bheri_yoga"
       ]
     },
     {
@@ -4595,10 +3036,10 @@
     },
     {
       "chart": "Virat Kohli",
-      "rule_id": "sankha_yoga",
-      "rule_name": "Sankha Yoga",
+      "rule_id": "bvr_sada_sanchara_precise",
+      "rule_name": "Sada Sanchara Yoga",
       "pyjhora_names": [
-        "sankha_yoga"
+        "sada_sanchara_yoga"
       ]
     },
     {
@@ -4610,33 +3051,35 @@
       ]
     },
     {
-      "chart": "MS Dhoni",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "chart": "Virat Kohli",
+      "rule_id": "bvr_sumukha_precise",
+      "rule_name": "Sumukha Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
+        "sumukha_yoga"
+      ]
+    },
+    {
+      "chart": "Virat Kohli",
+      "rule_id": "bvr_bhaga_chumbana_yoga",
+      "rule_name": "Bhaga Chumbana Yoga",
+      "pyjhora_names": [
+        "bhaga_chumbana_yoga"
+      ]
+    },
+    {
+      "chart": "Virat Kohli",
+      "rule_id": "sankha_yoga",
+      "rule_name": "Sankha Yoga",
+      "pyjhora_names": [
+        "sankha_yoga"
       ]
     },
     {
       "chart": "MS Dhoni",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "MS Dhoni",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
+        "kaahala_yoga"
       ]
     },
     {
@@ -4650,14 +3093,6 @@
     },
     {
       "chart": "MS Dhoni",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "MS Dhoni",
       "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
       "rule_name": "Kaalanirdesat Puthranaasa Yoga",
       "pyjhora_names": [
@@ -4666,49 +3101,11 @@
       ]
     },
     {
-      "chart": "MS Dhoni",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
       "chart": "Muhammad Ali",
       "rule_id": "pushkala_yoga",
       "rule_name": "Pushkala Yoga",
       "pyjhora_names": [
         "pushkala_yoga"
-      ]
-    },
-    {
-      "chart": "Muhammad Ali",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Muhammad Ali",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Muhammad Ali",
-      "rule_id": "bvr_bhaga_chumbana_yoga",
-      "rule_name": "Bhaga Chumbana Yoga",
-      "pyjhora_names": [
-        "bhaga_chumbana_yoga"
       ]
     },
     {
@@ -4723,56 +3120,20 @@
     },
     {
       "chart": "Muhammad Ali",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Michael Jordan",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Michael Jordan",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Michael Jordan",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Michael Jordan",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Michael Jordan",
       "rule_id": "bvr_bhaga_chumbana_yoga",
       "rule_name": "Bhaga Chumbana Yoga",
       "pyjhora_names": [
         "bhaga_chumbana_yoga"
+      ]
+    },
+    {
+      "chart": "Michael Jordan",
+      "rule_id": "bvr_dehasthoulya_yoga",
+      "rule_name": "Dehasthoulya Yoga",
+      "pyjhora_names": [
+        "dehasthoulya_yoga_114",
+        "dehasthoulya_yoga_115",
+        "dehasthoulya_yoga_116"
       ]
     },
     {
@@ -4786,20 +3147,69 @@
     },
     {
       "chart": "Michael Jordan",
-      "rule_id": "bvr_dehasthoulya_yoga",
-      "rule_name": "Dehasthoulya Yoga",
+      "rule_id": "bvr_bhaga_chumbana_yoga",
+      "rule_name": "Bhaga Chumbana Yoga",
       "pyjhora_names": [
-        "dehasthoulya_yoga_114",
-        "dehasthoulya_yoga_115",
-        "dehasthoulya_yoga_116"
+        "bhaga_chumbana_yoga"
+      ]
+    },
+    {
+      "chart": "Michael Jordan",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
+      "pyjhora_names": [
+        "swaveeryaddhana_yoga"
+      ]
+    },
+    {
+      "chart": "Michael Jordan",
+      "rule_id": "bvr_dharidhra_11_precise",
+      "rule_name": "Dharidhra Yoga",
+      "pyjhora_names": [
+        "dharidhra_yoga_144",
+        "dharidhra_yoga_147",
+        "dharidhra_yoga_148",
+        "dharidhra_yoga_149",
+        "dharidhra_yoga_150",
+        "dharidhra_yoga_151",
+        "dharidhra_yoga_152"
       ]
     },
     {
       "chart": "Lionel Messi",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
+      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "kaalanirdesat_puthranaasa_yoga_230",
+        "kaalanirdesat_puthranaasa_yoga_229"
+      ]
+    },
+    {
+      "chart": "Lionel Messi",
+      "rule_id": "bvr_sada_sanchara_precise",
+      "rule_name": "Sada Sanchara Yoga",
+      "pyjhora_names": [
+        "sada_sanchara_yoga"
+      ]
+    },
+    {
+      "chart": "Lionel Messi",
+      "rule_id": "bvr_mathibhramana_yoga",
+      "rule_name": "Mathibhramana Yoga",
+      "pyjhora_names": [
+        "mathibhramana_yoga_291",
+        "mathibhramana_yoga_292",
+        "mathibhramana_yoga_293",
+        "mathibhramana_yoga_294",
+        "mathibhramana_yoga_variation"
+      ]
+    },
+    {
+      "chart": "Lionel Messi",
+      "rule_id": "bvr_matru_sneha_yoga",
+      "rule_name": "Matru Sneha Yoga",
+      "pyjhora_names": [
+        "matru_sneha_yoga"
       ]
     },
     {
@@ -4813,20 +3223,6 @@
     },
     {
       "chart": "Lionel Messi",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Lionel Messi",
       "rule_id": "bvr_swaveeryaddhana_precise",
       "rule_name": "Swaveeryaddhana Yoga",
       "pyjhora_names": [
@@ -4835,59 +3231,6 @@
     },
     {
       "chart": "Lionel Messi",
-      "rule_id": "bvr_sada_sanchara_precise",
-      "rule_name": "Sada Sanchara Yoga",
-      "pyjhora_names": [
-        "sada_sanchara_yoga"
-      ]
-    },
-    {
-      "chart": "Lionel Messi",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Lionel Messi",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Lionel Messi",
-      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
-      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
-      "pyjhora_names": [
-        "kaalanirdesat_puthranaasa_yoga_230",
-        "kaalanirdesat_puthranaasa_yoga_229"
-      ]
-    },
-    {
-      "chart": "Lionel Messi",
-      "rule_id": "bvr_mathibhramana_yoga",
-      "rule_name": "Mathibhramana Yoga",
-      "pyjhora_names": [
-        "mathibhramana_yoga_291",
-        "mathibhramana_yoga_292",
-        "mathibhramana_yoga_293",
-        "mathibhramana_yoga_294",
-        "mathibhramana_yoga_variation"
-      ]
-    },
-    {
-      "chart": "Cristiano Ronaldo",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Cristiano Ronaldo",
       "rule_id": "bvr_dharidhra_11_precise",
       "rule_name": "Dharidhra Yoga",
       "pyjhora_names": [
@@ -4902,10 +3245,26 @@
     },
     {
       "chart": "Cristiano Ronaldo",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
       "pyjhora_names": [
-        "swaveeryaddhana_yoga"
+        "kaahala_yoga"
+      ]
+    },
+    {
+      "chart": "Cristiano Ronaldo",
+      "rule_id": "bvr_yuddha_marana_yoga",
+      "rule_name": "Yuddha Marana Yoga",
+      "pyjhora_names": [
+        "yuddha_marana_yoga"
+      ]
+    },
+    {
+      "chart": "Cristiano Ronaldo",
+      "rule_id": "bvr_rogagrastha_precise",
+      "rule_name": "Rogagrastha Yoga",
+      "pyjhora_names": [
+        "rogagrastha_yoga"
       ]
     },
     {
@@ -4915,14 +3274,6 @@
       "pyjhora_names": [
         "kalaanidhi_yoga",
         "kalanidhi_yoga"
-      ]
-    },
-    {
-      "chart": "Cristiano Ronaldo",
-      "rule_id": "lakshmi_yoga",
-      "rule_name": "Lakshmi Yoga",
-      "pyjhora_names": [
-        "lakshmi_yoga"
       ]
     },
     {
@@ -4938,51 +3289,22 @@
     },
     {
       "chart": "Cristiano Ronaldo",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
+      "rule_id": "lakshmi_yoga",
+      "rule_name": "Lakshmi Yoga",
       "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Cristiano Ronaldo",
-      "rule_id": "bvr_yuddha_marana_yoga",
-      "rule_name": "Yuddha Marana Yoga",
-      "pyjhora_names": [
-        "yuddha_marana_yoga"
-      ]
-    },
-    {
-      "chart": "Cristiano Ronaldo",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Cristiano Ronaldo",
-      "rule_id": "bvr_rogagrastha_precise",
-      "rule_name": "Rogagrastha Yoga",
-      "pyjhora_names": [
-        "rogagrastha_yoga"
+        "lakshmi_yoga"
       ]
     },
     {
       "chart": "Serena Williams",
-      "rule_id": "bvr_ayatna_griha_prapta_yoga",
-      "rule_name": "Ayatna Griha Prapta Yoga",
+      "rule_id": "bvr_mathibhramana_yoga",
+      "rule_name": "Mathibhramana Yoga",
       "pyjhora_names": [
-        "ayatna_griha_prapta_yoga_189",
-        "ayatna_griha_prapta_yoga_190"
-      ]
-    },
-    {
-      "chart": "Serena Williams",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "mathibhramana_yoga_291",
+        "mathibhramana_yoga_292",
+        "mathibhramana_yoga_293",
+        "mathibhramana_yoga_294",
+        "mathibhramana_yoga_variation"
       ]
     },
     {
@@ -5004,41 +3326,11 @@
     },
     {
       "chart": "Serena Williams",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
+      "rule_id": "bvr_ayatna_griha_prapta_yoga",
+      "rule_name": "Ayatna Griha Prapta Yoga",
       "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Serena Williams",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Serena Williams",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
-      "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
-      ]
-    },
-    {
-      "chart": "Serena Williams",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
+        "ayatna_griha_prapta_yoga_189",
+        "ayatna_griha_prapta_yoga_190"
       ]
     },
     {
@@ -5051,44 +3343,11 @@
     },
     {
       "chart": "Serena Williams",
-      "rule_id": "bvr_mathibhramana_yoga",
-      "rule_name": "Mathibhramana Yoga",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
       "pyjhora_names": [
-        "mathibhramana_yoga_291",
-        "mathibhramana_yoga_292",
-        "mathibhramana_yoga_293",
-        "mathibhramana_yoga_294",
-        "mathibhramana_yoga_variation"
-      ]
-    },
-    {
-      "chart": "Pele",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Pele",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Pele",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
       ]
     },
     {
@@ -5113,14 +3372,6 @@
     },
     {
       "chart": "Pele",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Pele",
       "rule_id": "bvr_mathibhramana_yoga",
       "rule_name": "Mathibhramana Yoga",
       "pyjhora_names": [
@@ -5133,10 +3384,12 @@
     },
     {
       "chart": "Roger Federer",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "rule_id": "bvr_dehasthoulya_yoga",
+      "rule_name": "Dehasthoulya Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
+        "dehasthoulya_yoga_114",
+        "dehasthoulya_yoga_115",
+        "dehasthoulya_yoga_116"
       ]
     },
     {
@@ -5145,16 +3398,6 @@
       "rule_name": "Parvata Yoga",
       "pyjhora_names": [
         "parvata_yoga"
-      ]
-    },
-    {
-      "chart": "Roger Federer",
-      "rule_id": "bvr_dehasthoulya_yoga",
-      "rule_name": "Dehasthoulya Yoga",
-      "pyjhora_names": [
-        "dehasthoulya_yoga_114",
-        "dehasthoulya_yoga_115",
-        "dehasthoulya_yoga_116"
       ]
     },
     {
@@ -5168,18 +3411,18 @@
     },
     {
       "chart": "Roger Federer",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Roger Federer",
       "rule_id": "bvr_rogagrastha_precise",
       "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
         "rogagrastha_yoga"
+      ]
+    },
+    {
+      "chart": "Swami Vivekananda",
+      "rule_id": "bvr_matru_sneha_yoga",
+      "rule_name": "Matru Sneha Yoga",
+      "pyjhora_names": [
+        "matru_sneha_yoga"
       ]
     },
     {
@@ -5193,67 +3436,10 @@
     },
     {
       "chart": "Swami Vivekananda",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Swami Vivekananda",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Swami Vivekananda",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Swami Vivekananda",
       "rule_id": "bheri_yoga",
       "rule_name": "Bheri Yoga",
       "pyjhora_names": [
         "bheri_yoga"
-      ]
-    },
-    {
-      "chart": "Amitabh Bachchan",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Amitabh Bachchan",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Amitabh Bachchan",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Amitabh Bachchan",
-      "rule_id": "bvr_matrunasa_precise",
-      "rule_name": "Matrunasa Yoga",
-      "pyjhora_names": [
-        "matrunasa_yoga_198",
-        "matrunasa_yoga_199"
       ]
     },
     {
@@ -5268,18 +3454,18 @@
     },
     {
       "chart": "Amitabh Bachchan",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Amitabh Bachchan",
       "rule_id": "bvr_rogagrastha_precise",
       "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
         "rogagrastha_yoga"
+      ]
+    },
+    {
+      "chart": "Amitabh Bachchan",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
+      "pyjhora_names": [
+        "swaveeryaddhana_yoga"
       ]
     },
     {
@@ -5295,25 +3481,12 @@
       ]
     },
     {
-      "chart": "Queen Elizabeth II",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "chart": "Amitabh Bachchan",
+      "rule_id": "bvr_matrunasa_precise",
+      "rule_name": "Matrunasa Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Queen Elizabeth II",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
+        "matrunasa_yoga_198",
+        "matrunasa_yoga_199"
       ]
     },
     {
@@ -5322,6 +3495,14 @@
       "rule_name": "Kahala Yoga",
       "pyjhora_names": [
         "kaahala_yoga"
+      ]
+    },
+    {
+      "chart": "Queen Elizabeth II",
+      "rule_id": "bvr_dama_yoga",
+      "rule_name": "Dama Yoga",
+      "pyjhora_names": [
+        "dama_yoga"
       ]
     },
     {
@@ -5341,43 +3522,23 @@
       ]
     },
     {
-      "chart": "Queen Elizabeth II",
-      "rule_id": "bvr_dama_yoga",
-      "rule_name": "Dama Yoga",
+      "chart": "Princess Diana",
+      "rule_id": "bvr_nishkapata_precise",
+      "rule_name": "Nishkapata Yoga",
       "pyjhora_names": [
-        "dama_yoga"
+        "nishkapata_yoga_205",
+        "nishkapata_yoga_206",
+        "kapata_yoga_202",
+        "kapata_yoga_204"
       ]
     },
     {
       "chart": "Princess Diana",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
+      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Princess Diana",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Princess Diana",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Princess Diana",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
+        "kaalanirdesat_puthranaasa_yoga_230",
+        "kaalanirdesat_puthranaasa_yoga_229"
       ]
     },
     {
@@ -5391,90 +3552,10 @@
     },
     {
       "chart": "Princess Diana",
-      "rule_id": "bvr_nishkapata_precise",
-      "rule_name": "Nishkapata Yoga",
-      "pyjhora_names": [
-        "nishkapata_yoga_205",
-        "nishkapata_yoga_206",
-        "kapata_yoga_202",
-        "kapata_yoga_204"
-      ]
-    },
-    {
-      "chart": "Princess Diana",
-      "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
-      "rule_name": "Kaalanirdesat Puthranaasa Yoga",
-      "pyjhora_names": [
-        "kaalanirdesat_puthranaasa_yoga_230",
-        "kaalanirdesat_puthranaasa_yoga_229"
-      ]
-    },
-    {
-      "chart": "Princess Diana",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Princess Diana",
       "rule_id": "bheri_yoga",
       "rule_name": "Bheri Yoga",
       "pyjhora_names": [
         "bheri_yoga"
-      ]
-    },
-    {
-      "chart": "Dalai Lama",
-      "rule_id": "bvr_ayatna_griha_prapta_yoga",
-      "rule_name": "Ayatna Griha Prapta Yoga",
-      "pyjhora_names": [
-        "ayatna_griha_prapta_yoga_189",
-        "ayatna_griha_prapta_yoga_190"
-      ]
-    },
-    {
-      "chart": "Dalai Lama",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
-      "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Dalai Lama",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Dalai Lama",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
-      "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
-      ]
-    },
-    {
-      "chart": "Dalai Lama",
-      "rule_id": "parvata_yoga",
-      "rule_name": "Parvata Yoga",
-      "pyjhora_names": [
-        "parvata_yoga"
-      ]
-    },
-    {
-      "chart": "Dalai Lama",
-      "rule_id": "bvr_nishkapata_precise",
-      "rule_name": "Nishkapata Yoga",
-      "pyjhora_names": [
-        "nishkapata_yoga_205",
-        "nishkapata_yoga_206",
-        "kapata_yoga_202",
-        "kapata_yoga_204"
       ]
     },
     {
@@ -5488,26 +3569,46 @@
     },
     {
       "chart": "Dalai Lama",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Dalai Lama",
-      "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
-      "rule_name": "Yukthi Samanwithavagmi Yoga",
-      "pyjhora_names": [
-        "yukthi_samanwithavagmi_yoga_154"
-      ]
-    },
-    {
-      "chart": "Dalai Lama",
       "rule_id": "bvr_rogagrastha_precise",
       "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
         "rogagrastha_yoga"
+      ]
+    },
+    {
+      "chart": "Dalai Lama",
+      "rule_id": "parvata_yoga",
+      "rule_name": "Parvata Yoga",
+      "pyjhora_names": [
+        "parvata_yoga"
+      ]
+    },
+    {
+      "chart": "Dalai Lama",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
+      "pyjhora_names": [
+        "swaveeryaddhana_yoga"
+      ]
+    },
+    {
+      "chart": "Dalai Lama",
+      "rule_id": "bvr_nishkapata_precise",
+      "rule_name": "Nishkapata Yoga",
+      "pyjhora_names": [
+        "nishkapata_yoga_205",
+        "nishkapata_yoga_206",
+        "kapata_yoga_202",
+        "kapata_yoga_204"
+      ]
+    },
+    {
+      "chart": "Dalai Lama",
+      "rule_id": "bvr_ayatna_griha_prapta_yoga",
+      "rule_name": "Ayatna Griha Prapta Yoga",
+      "pyjhora_names": [
+        "ayatna_griha_prapta_yoga_189",
+        "ayatna_griha_prapta_yoga_190"
       ]
     },
     {
@@ -5516,45 +3617,6 @@
       "rule_name": "Bhratruvriddhi Yoga",
       "pyjhora_names": [
         "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Pope Francis",
-      "rule_id": "bvr_bahu_sthree_yoga",
-      "rule_name": "Bahu Sthree Yoga",
-      "pyjhora_names": [
-        "bahu_sthree_yoga"
-      ]
-    },
-    {
-      "chart": "Pope Francis",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
-      ]
-    },
-    {
-      "chart": "Pope Francis",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "Pope Francis",
-      "rule_id": "bvr_kalaanidhi_yoga",
-      "rule_name": "Kalaanidhi Yoga",
-      "pyjhora_names": [
-        "kalaanidhi_yoga",
-        "kalanidhi_yoga"
       ]
     },
     {
@@ -5568,10 +3630,19 @@
     },
     {
       "chart": "Pope Francis",
-      "rule_id": "bvr_bandhubhisthyaktha_precise",
-      "rule_name": "Bandhubhisthyaktha Yoga",
+      "rule_id": "bvr_bahu_sthree_yoga",
+      "rule_name": "Bahu Sthree Yoga",
       "pyjhora_names": [
-        "bandhubhisthyaktha_yoga"
+        "bahu_sthree_yoga"
+      ]
+    },
+    {
+      "chart": "Pope Francis",
+      "rule_id": "bvr_kalaanidhi_yoga",
+      "rule_name": "Kalaanidhi Yoga",
+      "pyjhora_names": [
+        "kalaanidhi_yoga",
+        "kalanidhi_yoga"
       ]
     },
     {
@@ -5584,35 +3655,11 @@
       ]
     },
     {
-      "chart": "Pope Francis",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
       "chart": "Osho",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "rule_id": "bvr_vichitra_saudha_prakara_yoga",
+      "rule_name": "Vichitra Saudha Prakara Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Osho",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Osho",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
+        "vichitra_saudha_prakara_yoga"
       ]
     },
     {
@@ -5626,29 +3673,10 @@
     },
     {
       "chart": "Osho",
-      "rule_id": "bvr_nishkapata_precise",
-      "rule_name": "Nishkapata Yoga",
+      "rule_id": "bvr_swaveeryaddhana_precise",
+      "rule_name": "Swaveeryaddhana Yoga",
       "pyjhora_names": [
-        "nishkapata_yoga_205",
-        "nishkapata_yoga_206",
-        "kapata_yoga_202",
-        "kapata_yoga_204"
-      ]
-    },
-    {
-      "chart": "Osho",
-      "rule_id": "bvr_vichitra_saudha_prakara_yoga",
-      "rule_name": "Vichitra Saudha Prakara Yoga",
-      "pyjhora_names": [
-        "vichitra_saudha_prakara_yoga"
-      ]
-    },
-    {
-      "chart": "Osho",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
+        "swaveeryaddhana_yoga"
       ]
     },
     {
@@ -5664,6 +3692,17 @@
       ]
     },
     {
+      "chart": "Osho",
+      "rule_id": "bvr_nishkapata_precise",
+      "rule_name": "Nishkapata Yoga",
+      "pyjhora_names": [
+        "nishkapata_yoga_205",
+        "nishkapata_yoga_206",
+        "kapata_yoga_202",
+        "kapata_yoga_204"
+      ]
+    },
+    {
       "chart": "J. Krishnamurti",
       "rule_id": "bvr_bhratruvriddhi_precise",
       "rule_name": "Bhratruvriddhi Yoga",
@@ -5673,26 +3712,10 @@
     },
     {
       "chart": "J. Krishnamurti",
-      "rule_id": "bvr_sumukha_precise",
-      "rule_name": "Sumukha Yoga",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
       "pyjhora_names": [
-        "sumukha_yoga"
-      ]
-    },
-    {
-      "chart": "J. Krishnamurti",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
-      "pyjhora_names": [
-        "swaveeryaddhana_yoga"
-      ]
-    },
-    {
-      "chart": "J. Krishnamurti",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
+        "kaahala_yoga"
       ]
     },
     {
@@ -5705,33 +3728,11 @@
       ]
     },
     {
-      "chart": "Ramana Maharshi",
-      "rule_id": "bvr_matru_sneha_yoga",
-      "rule_name": "Matru Sneha Yoga",
+      "chart": "J. Krishnamurti",
+      "rule_id": "bvr_sumukha_precise",
+      "rule_name": "Sumukha Yoga",
       "pyjhora_names": [
-        "matru_sneha_yoga"
-      ]
-    },
-    {
-      "chart": "Ramana Maharshi",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
-      "pyjhora_names": [
-        "bhratruvriddhi_yoga"
-      ]
-    },
-    {
-      "chart": "Ramana Maharshi",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
-      "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
+        "sumukha_yoga"
       ]
     },
     {
@@ -5763,40 +3764,35 @@
     },
     {
       "chart": "Paramahansa Yogananda",
-      "rule_id": "bvr_bhratruvriddhi_precise",
-      "rule_name": "Bhratruvriddhi Yoga",
+      "rule_id": "kahala_yoga",
+      "rule_name": "Kahala Yoga",
       "pyjhora_names": [
-        "bhratruvriddhi_yoga"
+        "kaahala_yoga"
       ]
     },
     {
       "chart": "Paramahansa Yogananda",
-      "rule_id": "bvr_dharidhra_11_precise",
-      "rule_name": "Dharidhra Yoga",
+      "rule_id": "bvr_yuddha_marana_yoga",
+      "rule_name": "Yuddha Marana Yoga",
       "pyjhora_names": [
-        "dharidhra_yoga_144",
-        "dharidhra_yoga_147",
-        "dharidhra_yoga_148",
-        "dharidhra_yoga_149",
-        "dharidhra_yoga_150",
-        "dharidhra_yoga_151",
-        "dharidhra_yoga_152"
+        "yuddha_marana_yoga"
       ]
     },
     {
       "chart": "Paramahansa Yogananda",
-      "rule_id": "bvr_swaveeryaddhana_precise",
-      "rule_name": "Swaveeryaddhana Yoga",
+      "rule_id": "bvr_bahu_puthra_precise",
+      "rule_name": "Bahu Puthra Yoga",
       "pyjhora_names": [
-        "swaveeryaddhana_yoga"
+        "bahu_puthra_yoga_220",
+        "bahu_puthra_yoga_221"
       ]
     },
     {
       "chart": "Paramahansa Yogananda",
-      "rule_id": "bvr_bhaga_chumbana_yoga",
-      "rule_name": "Bhaga Chumbana Yoga",
+      "rule_id": "bvr_rogagrastha_precise",
+      "rule_name": "Rogagrastha Yoga",
       "pyjhora_names": [
-        "bhaga_chumbana_yoga"
+        "rogagrastha_yoga"
       ]
     },
     {
@@ -5806,6 +3802,14 @@
       "pyjhora_names": [
         "krisanga_yoga_112",
         "krisanga_yoga_113"
+      ]
+    },
+    {
+      "chart": "Paramahansa Yogananda",
+      "rule_id": "bvr_bhaga_chumbana_yoga",
+      "rule_name": "Bhaga Chumbana Yoga",
+      "pyjhora_names": [
+        "bhaga_chumbana_yoga"
       ]
     },
     {
@@ -5826,47 +3830,6 @@
       "pyjhora_names": [
         "matrunasa_yoga_198",
         "matrunasa_yoga_199"
-      ]
-    },
-    {
-      "chart": "Paramahansa Yogananda",
-      "rule_id": "bvr_bahu_puthra_precise",
-      "rule_name": "Bahu Puthra Yoga",
-      "pyjhora_names": [
-        "bahu_puthra_yoga_220",
-        "bahu_puthra_yoga_221"
-      ]
-    },
-    {
-      "chart": "Paramahansa Yogananda",
-      "rule_id": "bvr_sareera_soukhya_precise",
-      "rule_name": "Sareera Soukhya Yoga",
-      "pyjhora_names": [
-        "sareera_soukhya_yoga"
-      ]
-    },
-    {
-      "chart": "Paramahansa Yogananda",
-      "rule_id": "bvr_yuddha_marana_yoga",
-      "rule_name": "Yuddha Marana Yoga",
-      "pyjhora_names": [
-        "yuddha_marana_yoga"
-      ]
-    },
-    {
-      "chart": "Paramahansa Yogananda",
-      "rule_id": "kahala_yoga",
-      "rule_name": "Kahala Yoga",
-      "pyjhora_names": [
-        "kaahala_yoga"
-      ]
-    },
-    {
-      "chart": "Paramahansa Yogananda",
-      "rule_id": "bvr_rogagrastha_precise",
-      "rule_name": "Rogagrastha Yoga",
-      "pyjhora_names": [
-        "rogagrastha_yoga"
       ]
     }
   ]

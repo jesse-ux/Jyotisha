@@ -901,6 +901,26 @@ class YogaEngine:
                 return True
             return False
 
+        def aspects_house(p, h):
+            if p not in ctx.planets or h is None:
+                return False
+            return h == ctx.house_of(p) or offset(ctx.house_of(p), h) in (6, 3 if p == 'Mars' else -1, 7 if p == 'Mars' else -1, 4 if p == 'Jupiter' else -1, 8 if p == 'Jupiter' else -1, 2 if p == 'Saturn' else -1, 9 if p == 'Saturn' else -1)
+
+        def strong(p):
+            if p not in ctx.planets:
+                return False
+            h = ctx.house_of(p)
+            return bool(exalted(p) or own(p) or moola(p) or kendra(h) or trikona(h))
+
+        def associated(a, b):
+            return a in ctx.planets and b in ctx.planets and (same_house(a, b) or aspect(a, b) or aspect(b, a))
+
+        def temporal_friend(a, b):
+            if a not in ctx.planets or b not in ctx.planets or a == b:
+                return False
+            # PyJHora temporary friends: 2/3/4/10/11/12 from a planet.
+            return offset(ctx.house_of(a), ctx.house_of(b)) in [1, 2, 3, 9, 10, 11]
+
         def exal(p): return ctx.is_exalted(p)
         def lord_of_house(h): return ctx.lord_of_house(h)
         def sign(p): return ctx.sign_of(p)
@@ -955,7 +975,8 @@ class YogaEngine:
             "kendra_from": kendra_from, "trikona_from": trikona_from,
             "offset": offset,
             # v6.0.32: 同宫与相位检查（custom规则常用）
-            "same_house": same_house, "aspect": aspect,
+            "same_house": same_house, "aspect": aspect, "aspects_house": aspects_house,
+            "strong": strong, "associated": associated, "temporal_friend": temporal_friend,
             "exal": exal, "lord_of_house": lord_of_house, "sign": sign,
             "check_amala_from": check_amala_from,
             "Benefics": BENEFICS, "Malefics": MALEFICS,

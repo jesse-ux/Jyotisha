@@ -1056,8 +1056,8 @@
       "category": "chandra",
       "logic": {
         "type": "custom",
-        "expr": "\nif 'Moon' not in ctx.planets:\n    False\nelse:\n    moon_h = house_of('Moon')\n    h12 = ((moon_h - 1 + 11) % 12) + 1\n    p_in_h12 = [p for p, info in ctx.planets.items() if p != 'Moon' and info.get('house') == h12]\n    h2 = ((moon_h - 1 + 1) % 12) + 1\n    p_in_h2 = [p for p, info in ctx.planets.items() if p != 'Moon' and info.get('house') == h2]\n    not p_in_h2 and not p_in_h12\n",
-        "combo_template": "月亮两侧均无行星"
+        "expr": "\n# PyJHora/BVR-5: no planets other than Sun in 1st/2nd/12th from Moon,\n# and no planets other than Moon in quadrants from Lagna.\nif 'Moon' not in ctx.planets:\n    False\nelse:\n    moon_h = house_of('Moon')\n    moon_zone = {moon_h, ((moon_h - 1 + 1) % 12) + 1, ((moon_h - 1 + 11) % 12) + 1}\n    ky1 = all(p in ['Moon', 'Sun'] for p, info in ctx.planets.items() if info.get('house') in moon_zone)\n    ky2 = all(p == 'Moon' for p, info in ctx.planets.items() if info.get('house') in [1, 4, 7, 10])\n    ky1 and ky2\n",
+        "combo_template": "月亮1/2/12宫仅日月，且Lagna角宫仅月亮"
       },
       "effects": [
         "人生艰辛",
@@ -1255,16 +1255,9 @@
       "bvr_id": "BVR-15",
       "category": "auspicious",
       "logic": {
-        "type": "same_house",
-        "a": {
-          "role": "lord",
-          "house": 3
-        },
-        "b": {
-          "role": "lord",
-          "house": 10
-        },
-        "combo_template": "3宫主{a}与10宫主{b}同在第{h}宫"
+        "type": "custom",
+        "expr": "\n# PyJHora/BVR-15: L4 and L9 in mutual kendras, and L1 strong.\nl1 = lord(1)\nl4 = lord(4)\nl9 = lord(9)\nif l1 not in ctx.planets or l4 not in ctx.planets or l9 not in ctx.planets:\n    False\nelse:\n    l1_strong = strong(l1)\n    mutual_kendra = offset(house_of(l4), house_of(l9)) in [0, 3, 6, 9]\n    l1_strong and mutual_kendra\n",
+        "combo_template": "上升主有力，4宫主与9宫主互为Kendra"
       },
       "effects": [
         "意志坚定",
@@ -2089,8 +2082,8 @@
       "category": "special",
       "logic": {
         "type": "custom",
-        "expr": "\nadhi = {6: 12, 8: 2, 12: 11}\nmatched = False\nfor dh, uh in adhi.items():\n    ben_above = [p for p in BENEFICS if p in ctx.planets and house_of(p) == uh]\n    if ben_above:\n        matched = True\n        break\nmatched\n",
-        "combo_template": "吉星在凶宫上方"
+        "expr": "\n# PyJHora/BVR-7: natural benefics occupy 6th/7th/8th from Moon.\nif 'Moon' not in ctx.planets:\n    False\nelse:\n    moon_h = house_of('Moon')\n    target_houses = {((moon_h - 1 + off) % 12) + 1 for off in [5, 6, 7]}\n    benefics = ['Jupiter', 'Venus'] + (['Mercury'] if 'Mercury' in ctx.planets else [])\n    all(p in ctx.planets and house_of(p) in target_houses for p in benefics)\n",
+        "combo_template": "自然吉星位于月亮起算6/7/8宫"
       },
       "effects": [
         "权威地位",
@@ -9067,8 +9060,8 @@
       "category": "health",
       "logic": {
         "type": "custom",
-        "expr": "\n# Lagna lord, Jupiter, and Venus in Kendra houses\nkendra = {1, 4, 7, 10}\nasc_lord = lord(1)\nplanets_to_check = [asc_lord, 'Jupiter', 'Venus']\nall_in_kendra = all(\n    p in ctx.planets and ctx.planets[p].get('house') in kendra\n    for p in planets_to_check if p\n)\nall_in_kendra\n",
-        "combo_template": "上升主、木星、金星均在Kendra"
+        "expr": "\n# PyJHora/BVR-108: Lagna lord, Jupiter, OR Venus should occupy a quadrant.\nasc_lord = lord(1)\nany(p in ctx.planets and kendra(house_of(p)) for p in [asc_lord, 'Jupiter', 'Venus'])\n",
+        "combo_template": "上升主、木星或金星位于Kendra"
       },
       "effects": [
         "身体健康",
@@ -9088,8 +9081,8 @@
       "category": "health",
       "logic": {
         "type": "custom",
-        "expr": "\n# Lagna lord in 6/8/12 and associated with 6th lord\nasc_lord = lord(1)\nlord_6 = lord(6)\nif asc_lord not in ctx.planets or lord_6 not in ctx.planets:\n    False\nelse:\n    asc_lord_h = ctx.planets[asc_lord].get('house')\n    in_dusthana = asc_lord_h in [6, 8, 12]\n    associated = same_house(asc_lord, lord_6) or aspect(asc_lord, lord_6)\n    in_dusthana and associated\n",
-        "combo_template": "上升主在凶宫且与6宫主有关联"
+        "expr": "\n# PyJHora BVR-11: (a) Lagna lord in Lagna joined by dusthana lord;\n# (b) weak Lagna lord in kendra/trikona joined by a kendra/trine lord.\nasc_lord = lord(1)\ndusthana_lords = [lord(h) for h in [6, 8, 12]]\nquad_trine_lords = [lord(h) for h in [1, 4, 5, 7, 9, 10]]\nif asc_lord not in ctx.planets:\n    False\nelse:\n    h = house_of(asc_lord)\n    condition_a = h == 1 and any(dl in ctx.planets and same_house(asc_lord, dl) for dl in dusthana_lords)\n    condition_b = (kendra(h) or trikona(h)) and not strong(asc_lord) and any(qtl in ctx.planets and same_house(asc_lord, qtl) for qtl in quad_trine_lords if qtl != asc_lord)\n    condition_a or condition_b\n",
+        "combo_template": "上升主与凶宫主或角/三方主形成疾病格局"
       },
       "effects": [
         "疾病",
@@ -9180,8 +9173,8 @@
       "category": "durbhaga",
       "logic": {
         "type": "custom",
-        "expr": "\n# 11th lord in 6th, 8th, or 12th\nlord_11 = lord(11)\nif lord_11 in ctx.planets:\n    ctx.planets[lord_11].get('house') in [6, 8, 12]\nelse:\n    False\n",
-        "combo_template": "11宫主在凶宫"
+        "expr": "\n# PyJHora/BVR-144..152 D1-safe Dharidhra variants.\nl1, l2, l5, l6, l7, l8, l11, l12 = [lord(h) for h in [1, 2, 5, 6, 7, 8, 11, 12]]\ndusthana = [6, 8, 12]\ndusthana_lords = [l6, l8, l12]\nmarakas = [l2, l7]\ndef in_chart(p):\n    return p in ctx.planets\ndef rel_to_any(p, others):\n    return in_chart(p) and any(in_chart(o) and associated(p, o) for o in others)\ndef aspected_by_any(p, others):\n    return in_chart(p) and any(in_chart(o) and aspect(o, p) for o in others)\nmethod1 = any(in_chart(p) and house_of(p) in dusthana for p in [l2, l11])\nv144 = in_chart(l1) and in_chart(l12) and house_of(l1) == 12 and house_of(l12) == 1 and (rel_to_any(l1, [l7]) or rel_to_any(l12, [l7]))\nv145 = in_chart(l1) and in_chart(l6) and house_of(l1) == 6 and house_of(l6) == 1 and aspected_by_any('Moon', marakas)\nv146 = house_of('Ketu') == 1 and house_of('Moon') == 1\nv147 = in_chart(l1) and house_of(l1) == 8 and rel_to_any(l1, marakas)\nv148 = in_chart(l1) and house_of(l1) in dusthana and any(same_house(l1, m) for m in MALEFICS if m in ctx.planets and m != l1) and rel_to_any(l1, marakas)\nv149 = rel_to_any(l1, dusthana_lords) and any(aspect(m, l1) for m in MALEFICS if m in ctx.planets and m != l1)\nv150 = in_chart(l5) and any(same_house(l5, tl) for tl in dusthana_lords if in_chart(tl)) and not any((same_house(l5, b) or aspect(b, l5)) for b in BENEFICS if b in ctx.planets)\nv151 = in_chart(l5) and house_of(l5) in [6, 10] and aspected_by_any(l5, [l2, l6, l7, l8, l12])\nv152 = any(m in ctx.planets and house_of(m) == 1 and m not in [lord(9), lord(10)] and rel_to_any(m, marakas) for m in MALEFICS)\nmethod1 or v144 or v145 or v146 or v147 or v148 or v149 or v150 or v151 or v152\n",
+        "combo_template": "Dharidhra：财帛/收益主落凶宫或Lagna/Maraka/Dusthana组合"
       },
       "effects": [
         "财务困难",
@@ -9243,8 +9236,8 @@
       "category": "dhana",
       "logic": {
         "type": "custom",
-        "expr": "\n# Lagna lord in Kendra, associated with 2nd lord\nasc_lord = lord(1)\nlord_2 = lord(2)\nif asc_lord not in ctx.planets or lord_2 not in ctx.planets:\n    False\nelse:\n    in_kendra = ctx.planets[asc_lord].get('house') in [1, 4, 7, 10]\n    associated = same_house(asc_lord, lord_2) or aspect(asc_lord, lord_2)\n    in_kendra and associated\n",
-        "combo_template": "上升主在Kendra且与2宫主有关联"
+        "expr": "\n# PyJHora/BVR-132 D1-safe portion: 2nd lord in Kendra/Trine from Lagna lord,\n# or 2nd lord as benefic in exaltation / joined with an exalted planet.\nasc_lord = lord(1)\nlord_2 = lord(2)\nif asc_lord not in ctx.planets or lord_2 not in ctx.planets:\n    False\nelse:\n    rel_good = offset(house_of(asc_lord), house_of(lord_2)) in [0, 3, 4, 6, 8, 9]\n    lord2_benefic = lord_2 in BENEFICS\n    with_exalted = any(p != lord_2 and same_house(p, lord_2) and exalted(p) for p in ctx.planets)\n    rel_good or (lord2_benefic and (exalted(lord_2) or with_exalted))\n",
+        "combo_template": "2宫主与上升主成Kendra/Trine关系或2宫主吉且强"
       },
       "effects": [
         "自力更生致富",
@@ -9266,8 +9259,8 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# 3rd lord or Mars associated with benefic\nlord_3 = lord(3)\ncandidates = []\nif lord_3 in ctx.planets:\n    candidates.append(lord_3)\nif 'Mars' in ctx.planets:\n    candidates.append('Mars')\nbenefics = {'Jupiter', 'Venus', 'Mercury', 'Moon'}\nfor c in candidates:\n    for b in benefics:\n        if b in ctx.planets and same_house(c, b):\n            True\nFalse\n",
-        "combo_template": "3宫主或火星与吉星有关联"
+        "expr": "\n# PyJHora/BVR-177: 3rd lord, Mars, or 3rd house joined/aspected by benefics.\nlord_3 = lord(3)\nhouse_3 = 3\nbenefics = [p for p in BENEFICS if p in ctx.planets]\ndef benefic_link_to_planet(p):\n    return p in ctx.planets and strong(p) and any(b != p and (same_house(b, p) or aspect(b, p)) for b in benefics)\nhouse_joined = any(house_of(b) == house_3 for b in benefics)\nhouse_aspected = any(aspects_house(b, house_3) for b in benefics)\nbenefic_link_to_planet(lord_3) or benefic_link_to_planet('Mars') or house_joined or house_aspected\n",
+        "combo_template": "3宫主、火星或3宫受吉星连接"
       },
       "effects": [
         "兄弟和睦",
@@ -9287,8 +9280,8 @@
       "category": "durbhaga",
       "logic": {
         "type": "custom",
-        "expr": "\n# 4th lord in dusthana or debilitated or with malefics\nlord_4 = lord(4)\nif lord_4 not in ctx.planets:\n    False\nelse:\n    malefics = {'Sun', 'Mars', 'Saturn', 'Rahu', 'Ketu'}\n    lord_4_h = ctx.planets[lord_4].get('house')\n    in_dusthana = lord_4_h in [6, 8, 12]\n    debilitated = debil(lord_4)\n    associated = any(same_house(lord_4, m) for m in malefics if m in ctx.planets)\n    in_dusthana or debilitated or associated\n",
-        "combo_template": "4宫主受凶星影响或在凶宫"
+        "expr": "\n# PyJHora BVR-195: 4th lord associated with malefics or in inimical/debilitated condition.\nlord_4 = lord(4)\nif lord_4 not in ctx.planets:\n    False\nelse:\n    malefic_assoc = any(m in ctx.planets and associated(lord_4, m) for m in MALEFICS if m != lord_4)\n    weak_or_bad = debil(lord_4) or not strong(lord_4)\n    malefic_assoc or weak_or_bad\n",
+        "combo_template": "4宫主受凶星关联或处于弱/不利状态"
       },
       "effects": [
         "被亲属遗弃",
@@ -11756,28 +11749,9 @@
       "bvr_id": null,
       "category": "special",
       "logic": {
-        "type": "compound_conditions",
-        "conditions": [
-          {
-            "type": "compound",
-            "operator": "OR",
-            "conditions": [
-              {
-                "type": "same_lord_for_1st_and_4th",
-                "note": "1st and 4th houses have same planetary ruler (Ge/Vi or Sg/Pi lagna)"
-              },
-              {
-                "type": "1st_and_4th_lords_are_natural_or_temporal_friends",
-                "note": "Lords of 1st and 4th are natural or temporal friends"
-              },
-              {
-                "type": "1st_and_4th_lords_aspected_by_benefics",
-                "note": "Lagna lord and 4th lord aspected by benefics"
-              }
-            ]
-          }
-        ],
-        "note": ""
+        "type": "custom",
+        "expr": "\n# PyJHora: same lord for 1st/4th OR natural/temporal friendship OR both aspected by benefics.\nl1 = lord(1)\nl4 = lord(4)\nif l1 not in ctx.planets or l4 not in ctx.planets:\n    False\nelse:\n    same_lord = l1 == l4\n    temporal_friends = temporal_friend(l1, l4) and temporal_friend(l4, l1)\n    both_benefic_aspected = all(any(aspect(b, p) for b in BENEFICS if b in ctx.planets) for p in [l1, l4])\n    same_lord or temporal_friends or both_benefic_aspected\n",
+        "combo_template": "1宫主与4宫主同主、友好或同受吉星照拂"
       },
       "effects": [
         "Deep love and affection with mother"
@@ -13639,14 +13613,9 @@
       "bvr_id": null,
       "category": "special",
       "logic": {
-        "type": "compound_conditions",
-        "conditions": [
-          {
-            "type": "mercury_strong_in_kendra_or_trikona",
-            "note": "Mercury strong in kendra or trikona"
-          }
-        ],
-        "note": "Mercury well-placed for eloquence"
+        "type": "custom",
+        "expr": "\n# PyJHora/BVR-154: 2nd lord joins a benefic in kendra/trikona,\n# or 2nd lord is exalted and combined with Jupiter.\nlord_2 = lord(2)\nif lord_2 not in ctx.planets:\n    False\nelse:\n    h2 = house_of(lord_2)\n    cond_a = (kendra(h2) or trikona(h2)) and any(b != lord_2 and b in ctx.planets and same_house(lord_2, b) for b in BENEFICS)\n    cond_b = exalted(lord_2) and 'Jupiter' in ctx.planets and same_house(lord_2, 'Jupiter')\n    cond_a or cond_b\n",
+        "combo_template": "2宫主在Kendra/Trikona合吉星，或2宫主擢升合木星"
       },
       "effects": [
         "Eloquent, skilled in debate, good communicator"

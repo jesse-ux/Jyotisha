@@ -1,5 +1,40 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.34（2026-06-05）—— Yoga 逻辑对齐与 F1 提升
+
+> **目标**：继续 v6.0.32 的“同盘逻辑正确性”路线，优先修复验证报告中高 FP/FN 的规则，而不是只堆规则名称。
+
+### 对齐 PyJHora / B.V. Raman 条件
+
+- 修正 `adhi_yoga`：从“吉星在凶宫上方”的过宽简化，改为 PyJHora/BVR-7 口径——自然吉星位于月亮起算 6/7/8 宫。
+- 修正 `kemadruma_yoga`：补齐 PyJHora BVR-5 的双条件，即月亮起算 1/2/12 宫只允许日/月，且 Lagna 角宫只允许月亮。
+- 修正 `kahala_yoga`：从错误的 3宫主/10宫主同宫，改为 BVR-15：4宫主与9宫主互为 Kendra，且上升主有力。
+- 修正 `bvr_sareera_soukhya_precise`：从“上升主、木星、金星全部在 Kendra”改为 PyJHora/BVR-108 的“任一者在 Kendra”。
+- 修正 `bvr_yukthi_samanwithavagmi_yoga`：从“水星强”改为 BVR-154：2宫主在 Kendra/Trikona 合吉星，或2宫主擢升合木星。
+- 修正 `bvr_swaveeryaddhana_precise`：补充 PyJHora/BVR-132 的 D1-safe 条件：2宫主与上升主成 Kendra/Trine，或2宫主为吉且擢升/合擢升星。
+- 修正 `bvr_bhratruvriddhi_precise`：补齐 3宫受吉星同宫/相位，以及 3宫主/火星强且受吉星连接的条件。
+- 扩展 `bvr_dharidhra_11_precise`：从单一 11宫主凶宫规则，扩展为 PyJHora/BVR-144..152 中可用的 D1-safe 多变体组合。
+- 对齐 `bvr_rogagrastha_precise`、`bvr_bandhubhisthyaktha_precise`、`bvr_matru_sneha_yoga` 的核心判定，减少高频 FN。
+
+### 引擎辅助能力
+
+- 为 custom Yoga 表达式新增 `aspects_house()`、`strong()`、`associated()`、`temporal_friend()` 辅助函数，减少规则里重复实现相位、强弱、关联和临时友好关系。
+
+### 当前验证结果
+
+- `scripts/validate_logic_v2.py`：Precision **80.41%**，Recall **68.76%**，F1 **74.13%**。
+- 相比 v6.0.33 / v6.0.32 的基线 F1 **58.08%**，提升 **+16.05 个百分点**。
+- `pytest tests/test_yoga_rules_integrity.py tests/test_dasha.py`：25 passed。
+- `scripts/run_quality_gate.py --skip-yoga-logic`：通过；完整 pytest 35 passed，BPHS/Ashtakavarga 不变量 18/18 通过，golden case 通过。
+
+### 已知后续优化点
+
+- 剩余 FN 主要集中在 `rogagrastha`、`mathibhramana`、`matrunasa`、`bahu_puthra`、`kahala`、`nishkapata`、`kaalanirdesat_puthranaasa` 等规则。
+- 剩余 FP 主要集中在 `matsya`、`vanchana_chora_bheethi`、`guru_mangala`、`kaalanirdesat_puthranaasa`、`sankha` 等规则。
+- v6.0.35 建议继续按 Top FP/FN 队列逐条查 PyJHora 源码并修规则。
+
+---
+
 ## v6.0.33（2026-06-05）—— 工程质量门禁、属性测试与 CI 强化
 
 > **目标**：把 v6.0.32 的准确率修复沉淀为可持续工程体系，防止 Dasha、Varga、Ashtakavarga、Yoga 规则与 full-reading 输出契约回归。
