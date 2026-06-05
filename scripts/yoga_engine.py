@@ -45,8 +45,11 @@ PLANET_CN = {
 BENEFICS = ['Jupiter', 'Venus', 'Mercury', 'Moon']
 MALEFICS = ['Mars', 'Saturn', 'Sun', 'Rahu', 'Ketu']
 MOVABLE_SIGNS = ['Aries', 'Cancer', 'Libra', 'Capricorn']
+FIXED_SIGNS = ['Taurus', 'Leo', 'Scorpio', 'Aquarius']
+DUAL_SIGNS = ['Gemini', 'Virgo', 'Sagittarius', 'Pisces']
 ALL_PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']
 PLANET_INDEX = {planet: idx for idx, planet in enumerate(ALL_PLANETS)}
+RAHU_KETU_OWNED_SIGN_INDEX = {'Rahu': 10, 'Ketu': 7}
 # PyJHora const.house_strengths_of_planets, copied to make Yoga rule alignment deterministic.
 # Strength scale: 5 own/lord, 4 exalted, 3 friend, 2 neutral, 1 enemy, 0 debilitated.
 HOUSE_STRENGTHS = {
@@ -90,11 +93,13 @@ class YogaContext:
         self.panchanga = self.context.get("panchanga", {}) if isinstance(self.context, dict) else {}
         self.upagraha = self.context.get("upagraha", {}) if isinstance(self.context, dict) else {}
 
-        # 预计算 D1 宫主星
+        # 预计算 D1 宫主星。v6.0.39: Scorpio/Aquarius follow PyJHora's dynamic co-lord resolver
+        # (Scorpio: stronger of Mars/Ketu; Aquarius: stronger of Saturn/Rahu), while SIGN_LORDS stays
+        # as the classical fixed fallback for dignity tables and non-Jaimini contexts.
         self._house_lords: Dict[int, str] = {}
         for h in range(1, 13):
             sign = SIGNS[(self.asc_idx + h - 1) % 12]
-            self._house_lords[h] = SIGN_LORDS[sign]
+            self._house_lords[h] = self._resolve_sign_lord(sign)
 
         # 预计算 D9 宫主星（用于依赖 Navamsa 的 B.V. Raman Yoga）
         d9_asc = self.d9.get("ascendant")
@@ -103,7 +108,104 @@ class YogaContext:
         if d9_asc_idx is not None:
             for h in range(1, 13):
                 sign = SIGNS[(d9_asc_idx + h - 1) % 12]
-                self._d9_house_lords[h] = SIGN_LORDS[sign]
+                self._d9_house_lords[h] = self._resolve_sign_lord(sign)
+
+    def _sign_index_of_planet(self, planet: str) -> Optional[int]:
+        sign = self.sign_of(planet)
+        return SIGNS.index(sign) if sign in SIGNS else None
+
+    def _rasi_drishti_sign_indices_from(self, sign_idx: int) -> List[int]:
+        sign_name = SIGNS[sign_idx]
+        if sign_name in MOVABLE_SIGNS:
+            return [i for i in [1, 4, 7, 10] if i not in ((sign_idx + 1) % 12, (sign_idx - 1) % 12)]
+        if sign_name in FIXED_SIGNS:
+            return [i for i in [0, 3, 6, 9] if i not in ((sign_idx + 1) % 12, (sign_idx - 1) % 12)]
+        return [SIGNS.index(s) for s in DUAL_SIGNS if SIGNS.index(s) != sign_idx]
+
+    def _stronger_co_lord(self, planet1: str, planet2: str) -> str:
+        """Approximate PyJHora stronger_planet_from_planet_positions() for Sc/Aq co-lords."""
+        h1 = self._sign_index_of_planet(planet1)
+        h2 = self._sign_index_of_planet(planet2)
+        if h1 is None:
+            return planet2
+        if h2 is None:
+            return planet1
+
+        node_owned_sign = RAHU_KETU_OWNED_SIGN_INDEX.get(planet1) or RAHU_KETU_OWNED_SIGN_INDEX.get(planet2)
+        if node_owned_sign is not None:
+            if h1 == node_owned_sign and h2 != node_owned_sign:
+                return planet2
+            if h2 == node_owned_sign and h1 != node_owned_sign:
+                return planet1
+
+        planet1_co_count = sum(1 for p in self.planets if self._sign_index_of_planet(p) == h1) - 1
+        planet2_co_count = sum(1 for p in self.planets if self._sign_index_of_planet(p) == h2) - 1
+        if planet1_co_count > planet2_co_count:
+            return planet1
+        if planet2_co_count > planet1_co_count:
+            return planet2
+
+        dispositor1 = self._resolve_sign_lord(SIGNS[h1], dynamic_co_lords=False)
+        dispositor2 = self._resolve_sign_lord(SIGNS[h2], dynamic_co_lords=False)
+        support1 = sum(
+            self._sign_index_of_planet(p) == h1
+            for p in ['Mercury', 'Jupiter', dispositor1]
+            if p in self.planets
+        )
+        support1 += sum(
+            p in self.planets and self._sign_index_of_planet(p) in self._rasi_drishti_sign_indices_from(h1)
+            for p in ['Mercury', 'Jupiter', dispositor1]
+        )
+        support2 = sum(
+            self._sign_index_of_planet(p) == h2
+            for p in ['Mercury', 'Jupiter', dispositor2]
+            if p in self.planets
+        )
+        support2 += sum(
+            p in self.planets and self._sign_index_of_planet(p) in self._rasi_drishti_sign_indices_from(h2)
+            for p in ['Mercury', 'Jupiter', dispositor2]
+        )
+        if support1 > support2:
+            return planet1
+        if support2 > support1:
+            return planet2
+
+        strength1 = HOUSE_STRENGTHS.get(planet1, [None] * 12)[h1]
+        strength2 = HOUSE_STRENGTHS.get(planet2, [None] * 12)[h2]
+        if strength1 == 4 and strength2 is not None and strength1 > strength2:
+            return planet1
+        if strength2 == 4 and strength1 is not None and strength2 > strength1:
+            return planet2
+
+        def modality_rank(sign_idx: int) -> int:
+            sign_name = SIGNS[sign_idx]
+            if sign_name in DUAL_SIGNS:
+                return 3
+            if sign_name in FIXED_SIGNS:
+                return 2
+            return 1
+
+        rank1 = modality_rank(h1)
+        rank2 = modality_rank(h2)
+        if rank1 > rank2:
+            return planet1
+        if rank2 > rank1:
+            return planet2
+
+        degree1 = self.degree_of(planet1)
+        degree2 = self.degree_of(planet2)
+        if degree1 is not None and degree2 is not None:
+            return planet1 if degree1 > degree2 else planet2
+        return planet1
+
+    def _resolve_sign_lord(self, sign: str, dynamic_co_lords: bool = True) -> Optional[str]:
+        if not dynamic_co_lords:
+            return SIGN_LORDS.get(sign)
+        if sign == 'Scorpio':
+            return self._stronger_co_lord('Mars', 'Ketu')
+        if sign == 'Aquarius':
+            return self._stronger_co_lord('Saturn', 'Rahu')
+        return SIGN_LORDS.get(sign)
 
     # --- 基础查询 ---
     def house_of(self, planet: str) -> Optional[int]:
@@ -133,7 +235,7 @@ class YogaContext:
 
     def navamsa_dispositor(self, planet: str) -> Optional[str]:
         sign = self.d9_sign_of(planet)
-        return SIGN_LORDS.get(sign) if sign else None
+        return self._resolve_sign_lord(sign) if sign else None
 
     def tithi(self) -> Optional[int]:
         return self.panchanga.get("tithi")
@@ -156,7 +258,7 @@ class YogaContext:
 
     def is_own_sign(self, planet: str) -> bool:
         s = self.sign_of(planet)
-        return s is not None and SIGN_LORDS.get(s) == planet
+        return s is not None and self._resolve_sign_lord(s) == planet
 
     def is_moolatrikona(self, planet: str) -> bool:
         s = self.sign_of(planet)
@@ -962,6 +1064,48 @@ class YogaEngine:
                 return False
             return h == ctx.house_of(p) or offset(ctx.house_of(p), h) in (6, 3 if p == 'Mars' else -1, 7 if p == 'Mars' else -1, 4 if p == 'Jupiter' else -1, 8 if p == 'Jupiter' else -1, 2 if p == 'Saturn' else -1, 9 if p == 'Saturn' else -1)
 
+        def graha_aspects_house(p, h):
+            if p not in ctx.planets or h is None:
+                return False
+            return offset(ctx.house_of(p), h) in (6, 3 if p == 'Mars' else -1, 7 if p == 'Mars' else -1, 4 if p == 'Jupiter' else -1, 8 if p == 'Jupiter' else -1, 2 if p == 'Saturn' else -1, 9 if p == 'Saturn' else -1)
+
+        def pyjhora_planets_aspecting_raasi(p, h):
+            """Replicate PyJHora house.planets_aspecting_the_raasi() behavior for source parity."""
+            if p not in ctx.planets or h is None:
+                return False
+            sign_name = ctx.sign_of(p)
+            if sign_name not in SIGNS:
+                return False
+            target_rasi_idx = (ctx.asc_idx + h - 1) % 12
+            aspected_signs = rasi_drishti_signs_from(sign_name)
+            planet_ids_in_aspected_signs = [
+                PLANET_INDEX[q]
+                for q in ctx.planets
+                if q in PLANET_INDEX and ctx.sign_of(q) in aspected_signs
+            ]
+            return target_rasi_idx in planet_ids_in_aspected_signs
+
+        def rasi_drishti_signs_from(sign_name):
+            if sign_name not in SIGNS:
+                return []
+            sign_idx = SIGNS.index(sign_name)
+            if sign_name in MOVABLE_SIGNS:
+                return [SIGNS[i] for i in [1, 4, 7, 10] if i not in ((sign_idx + 1) % 12, (sign_idx - 1) % 12)]
+            if sign_name in FIXED_SIGNS:
+                return [SIGNS[i] for i in [0, 3, 6, 9] if i not in ((sign_idx + 1) % 12, (sign_idx - 1) % 12)]
+            return [s for s in DUAL_SIGNS if s != sign_name]
+
+        def rasi_aspects_house(p, h):
+            if p not in ctx.planets or h is None:
+                return False
+            return house_sign(h) in rasi_drishti_signs_from(ctx.sign_of(p))
+
+        def rasi_aspects(a, b):
+            return a in ctx.planets and b in ctx.planets and rasi_aspects_house(a, ctx.house_of(b))
+
+        def rasi_aspected_by_planets(h):
+            return [p for p in ctx.planets if rasi_aspects_house(p, h)]
+
         def sign_index_of_planet(p):
             sign_name = ctx.sign_of(p)
             return SIGNS.index(sign_name) if sign_name in SIGNS else None
@@ -970,7 +1114,13 @@ class YogaEngine:
             sign_idx = sign_index_of_planet(p)
             if sign_idx is None or p not in HOUSE_STRENGTHS:
                 return None
-            return HOUSE_STRENGTHS[p][sign_idx]
+            strength = HOUSE_STRENGTHS[p][sign_idx]
+            sign_name = SIGNS[sign_idx]
+            # v6.0.39: PyJHora dynamic co-lord owner strength for Scorpio/Aquarius.
+            # Without this, Ketu/Rahu can become house lords but still look non-owner in strength checks.
+            if sign_name in ('Scorpio', 'Aquarius') and ctx._resolve_sign_lord(sign_name) == p:
+                return max(strength, 5)
+            return strength
 
         def strong(p, include_neutral=False):
             strength = house_strength(p)
@@ -1061,10 +1211,11 @@ class YogaEngine:
             "list": list, "bool": bool,
             "ctx": ctx, "bindings": bindings, "rule": rule,
             "SIGNS": SIGNS, "SIGN_LORDS": SIGN_LORDS,
+            "RAHU_KETU_OWNED_SIGN_INDEX": RAHU_KETU_OWNED_SIGN_INDEX,
             "EXALTATION": EXALTATION, "DEBILITATION": DEBILITATION,
             "PLANET_CN": PLANET_CN, "BENEFICS": BENEFICS, "MALEFICS": MALEFICS,
+            "MOVABLE_SIGNS": MOVABLE_SIGNS, "FIXED_SIGNS": FIXED_SIGNS, "DUAL_SIGNS": DUAL_SIGNS,
             "PLANET_INDEX": PLANET_INDEX, "HOUSE_STRENGTHS": HOUSE_STRENGTHS,
-            "MOVABLE_SIGNS": MOVABLE_SIGNS,
             "ALL_PLANETS": ALL_PLANETS, "MOOLATRIKONA_SIGN": MOOLATRIKONA_SIGN,
             # 基础查询
             "house_of": house_of, "sign_of": sign_of, "deg_of": deg_of,
@@ -1086,6 +1237,11 @@ class YogaEngine:
             "offset": offset,
             # v6.0.32: 同宫与相位检查（custom规则常用）
             "same_house": same_house, "aspect": aspect, "aspects_house": aspects_house,
+            "graha_aspects_house": graha_aspects_house,
+            "pyjhora_planets_aspecting_raasi": pyjhora_planets_aspecting_raasi,
+            "rasi_drishti_signs_from": rasi_drishti_signs_from,
+            "rasi_aspects_house": rasi_aspects_house, "rasi_aspects": rasi_aspects,
+            "rasi_aspected_by_planets": rasi_aspected_by_planets,
             "house_strength": house_strength, "strong": strong, "weak": weak,
             "associated": associated, "temporal_friend": temporal_friend,
             "occupants": occupants, "only_benefics_in_house": only_benefics_in_house,

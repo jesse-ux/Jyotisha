@@ -1,5 +1,52 @@
 # 印度占星 Skill 更新日志
 
+## v6.0.39（2026-06-05）—— Yoga F1 90% 源码口径冲刺
+
+> **目标**：继续用户要求的“准确率优先”路线，不为指标盲目调参；只在确认 PyJHora 源码口径后修改规则或 helper，使 D1/Rasi Yoga 逻辑验证首次突破 F1 90%。
+
+### 引擎与 helper 修复
+
+- `scripts/yoga_engine.py` 新增 PyJHora-style Scorpio/Aquarius 动态双主星 resolver：
+  - Scorpio 由 `Mars` / `Ketu` 动态择强；
+  - Aquarius 由 `Saturn` / `Rahu` 动态择强；
+  - `_house_lords`、`_d9_house_lords`、`is_own_sign()`、`navamsa_dispositor()` 与 custom `house_strength()` 均接入动态主星口径。
+- 新增 `graha_aspects_house(p, h)`，用于显式判断 Graha Drishti 对宫位的影响。
+- 新增 `pyjhora_planets_aspecting_raasi(p, h)`，复刻 PyJHora `house.planets_aspecting_the_raasi()` 在 Bandhu Pujya Yoga 194 中的实际源码行为，避免用常规 Rasi Drishti 语义替代源码 oracle。
+
+### 高影响规则对齐
+
+- `bheri_yoga`：对齐 PyJHora/BVR-45，改为“9宫主有力且 1/2/7/12 宫均有行星，或 Jupiter/Venus/Lagna lord 三者互为 Kendra”。
+- `bvr_sada_sanchara_precise`：对齐 PyJHora/BVR-117，改为“Lagna lord 在 movable sign，或 Lagna lord 的 dispositor 在 movable sign”，不再错误纳入 Moon movable 条件。
+- `bvr_bandhu_pujya_yoga`：对齐 PyJHora/BVR 193-194，修复 Jupiter 与 4宫/4宫主关联判断：
+  - 保留 193：benefic L4 被另一吉星相位且 Mercury 在 Lagna；
+  - 修复 194：Jupiter 在4宫、PyJHora-style 影响4宫 rasi、Jupiter 本身为动态4宫主、与 L4 同宫或相位 L4。
+
+### 验证结果
+
+- `scripts/validate_logic_v2.py`：
+  - Precision **93.82%**（v6.0.38 为 88.37%）
+  - Recall **86.70%**（v6.0.38 为 81.09%）
+  - F1 **90.12%**（v6.0.38 为 84.57%）
+  - FP：61；FN：142
+- `scripts/run_quality_gate.py --skip-yoga-logic`：通过。
+  - pytest **35 passed**
+  - BPHS/Ashtakavarga 不变量 **18/18**
+  - golden case 通过
+  - capability audit valid，0 problem / 0 warning
+
+### 规则库状态
+
+- JSON 规则总数：**475**
+- 启用规则：**381**
+- 当前验证报告：`references/validation_logic_report.json`
+
+### 后续优化点
+
+- 下一轮 Top residual 仍建议只做源码确认后再改：`bvr_vanchana_chora_bheethi_yoga`、`bvr_kaalanirdesat_puthranaasa_yoga`、`bvr_kapata_yoga`、`bvr_bhaga_chumbana_yoga`、`bvr_mathibhramana_yoga`、`bvr_amala_precise`、`bvr_sumukha_precise`。
+- 建议继续把 PyJHora dynamic benefics/malefics、Upagraha/Gulika house-index、以及 `planets_aspecting_the_raasi()` 的边界行为抽象为可复用 helper，减少 custom 规则重复。
+
+---
+
 ## v6.0.38（2026-06-05）—— Yoga 源码口径对齐与 F1 深水区提升
 
 > **目标**：继续 v6.0.37 的 context-aware 路线，但不盲目扩规则；优先对齐 PyJHora 源码中已经明确的 house-strength、Navamsa dispositor、watery sign/planet、以及验证脚本路径口径，减少残余 Top FP/FN。
