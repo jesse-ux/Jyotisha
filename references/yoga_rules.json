@@ -744,13 +744,23 @@
       "bvr_id": "BVR-1",
       "category": "chandra",
       "logic": {
-        "type": "in_houses_from",
-        "planet": "Jupiter",
-        "from": "Moon",
-        "relations": [
-          "kendra"
-        ],
-        "combo_template": "木星在月亮的Kendra（第{h}宫）"
+        "type": "and",
+        "conditions": [
+          {
+            "type": "in_houses_from",
+            "planet": "Jupiter",
+            "from": "Moon",
+            "relations": [
+              "kendra"
+            ],
+            "combo_template": "木星在月亮的Kendra（第{h}宫）"
+          },
+          {
+            "type": "custom",
+            "expr": "\n# BVR-1 Gajakesari: Jupiter must be strong or have benefic association\n# Jupiter not debilitated\njup_ok = not ctx.is_debilitated('Jupiter')\n# Benefic association (conjunction or graha drishti)\nbenefics = ['Venus', 'Mercury', 'Jupiter']\nhas_benefic = any(\n    ctx.house_of('Jupiter') == ctx.house_of(b) or aspect(b, 'Jupiter')\n    for b in benefics if b in ctx.planets and b != 'Jupiter'\n)\n# Jupiter strong on its own\njup_strong = ctx.is_exalted('Jupiter') or ctx.is_own_sign('Jupiter') or ctx.is_moolatrikona('Jupiter')\njup_ok and (has_benefic or jup_strong)\n",
+            "combo_template": "木星有吉星合/照或不弱陷"
+          }
+        ]
       },
       "effects": [
         "智慧学识",
@@ -759,7 +769,7 @@
       ],
       "strength": "中",
       "enabled": true,
-      "source_reference": "BVR-1: Jupiter in Kendra from Moon, with benefic association",
+      "source_reference": "BVR-1: Jupiter in Kendra from Moon, with benefic association or strong dignity",
       "bvr_chapter": "Chapter 1"
     },
     {
@@ -1096,7 +1106,7 @@
       "name_cn": "月火2/12格局",
       "source": "BPHS",
       "bvr_id": null,
-      "category": "chandra",
+      "category": "chandra_extended",
       "logic": {
         "type": "in_houses_from",
         "planet": "Mars",
@@ -9092,8 +9102,8 @@
       "category": "kalatra",
       "logic": {
         "type": "custom",
-        "expr": "\n# 7th lord or Venus joined or aspected by Jupiter or Mercury\nlord_7 = lord(7)\ncandidates = []\nif lord_7 in ctx.planets:\n    candidates.append(lord_7)\nif 'Venus' in ctx.planets:\n    candidates.append('Venus')\nfor c in candidates:\n    for benefic in ['Jupiter', 'Mercury']:\n        if benefic in ctx.planets:\n            if same_house(c, benefic) or aspect(c, benefic):\n                True\nFalse\n",
-        "combo_template": "7宫主或金星与木星/水星有关联"
+        "expr": "# BVR-66-74 Satkalatra Yoga: 7th lord or Venus joined or aspected by Jupiter or Mercury\n# Fix: use any() pattern instead of for-loop + trailing False (which overwrites True)\nlord_7 = lord(7)\ncandidates = []\nif lord_7 in planets:\n    candidates.append(lord_7)\nif 'Venus' in planets:\n    candidates.append('Venus')\nany(\n    benefic in planets and (same_house(c, benefic) or aspect(c, benefic))\n    for c in candidates\n    for benefic in ['Jupiter', 'Mercury']\n)",
+        "combo_template": "7宫主或金星与木星/水星合相或互照"
       },
       "effects": [
         "配偶品德高尚",
@@ -9453,43 +9463,41 @@
     },
     {
       "id": "bvr_annadana_yoga",
-      "name": "Annadana Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
-      "category": "special",
+      "name": "Annadana Yoga",
+      "name_cn": "施食瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-127",
+      "category": "dhana",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl2 = ctx.lord_of_house(2)\nif not l2 or l2 not in ctx.planets: False\nelse:\n    l2_strong = ctx.is_exalted(l2) or ctx.is_own_sign(l2) or ctx.is_moolatrikona(l2)\n    jup_link = ctx.house_of(l2) == ctx.house_of('Jupiter') or aspect('Jupiter', l2)\n    merc_link = ctx.house_of(l2) == ctx.house_of('Mercury') or aspect('Mercury', l2)\n    l2_strong and jup_link and merc_link\n"
       },
       "effects": [
-        "待补充"
+        "Generous, feeds others, charitable, abundance of food"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: annadana_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-127"
     },
     {
       "id": "bvr_annadana_yoga_from_planet_posi",
-      "name": "Annadana Yoga From Planet Position Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
-      "category": "special",
+      "name": "Annadana Yoga (Planet Position Variant)",
+      "name_cn": "施食瑜伽（变体）",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-127b",
+      "category": "dhana",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "False"
       },
       "effects": [
-        "待补充"
+        "Generous nature, charitable"
       ],
-      "strength": "待评估",
+      "strength": "moderate",
       "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: annadana_yoga_from_planet_position()"
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-127b"
     },
     {
       "id": "bvr_apakeerthi_yoga",
@@ -9896,63 +9904,60 @@
     },
     {
       "id": "bvr_bhojana_soukhya_yoga",
-      "name": "Bhojana Soukhya Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
-      "category": "special",
+      "name": "Bhojana Soukhya Yoga",
+      "name_cn": "饮食安乐瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-126",
+      "category": "dhana",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl2 = ctx.lord_of_house(2)\nif not l2 or l2 not in ctx.planets: False\nelse:\n    l2_strong = ctx.is_exalted(l2) or ctx.is_own_sign(l2) or ctx.is_moolatrikona(l2)\n    ben_aspect = any(b in ctx.planets and (ctx.house_of(l2) == ctx.house_of(b) or aspect(b, l2)) for b in ['Jupiter','Venus'])\n    l2_strong and ben_aspect\n"
       },
       "effects": [
-        "待补充"
+        "Enjoyment of food, pleasure in dining, hospitality"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: bhojana_soukhya_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-126"
     },
     {
       "id": "bvr_bhraathru_saapa_sutakshaya_yog",
-      "name": "Bhraathru Saapa Sutakshaya Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Bhraathru Saapa Sutakshaya Yoga",
+      "name_cn": "兄弟诅咒灭绝瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-219",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "False"
       },
       "effects": [
-        "待补充"
+        "Curse affecting siblings"
       ],
-      "strength": "待评估",
+      "strength": "rare",
       "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: bhraathru_saapa_sutakshaya_yoga()"
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-219"
     },
     {
       "id": "bvr_bhratrumooladdhanaprapti_yoga",
-      "name": "Bhratrumooladdhanaprapti Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Bhratrumooladdhanaprapti Yoga",
+      "name_cn": "兄弟得财瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-180",
       "category": "dhana",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl3 = ctx.lord_of_house(3)\nif not l3 or 'Mars' not in ctx.planets: False\nelse:\n    (l3 in ctx.planets and ctx.is_kendra(ctx.house_of(l3))) and ctx.is_kendra(ctx.house_of('Mars'))\n"
       },
       "effects": [
-        "待补充"
+        "Wealth through siblings"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: bhratrumooladdhanaprapti_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-180"
     },
     {
       "id": "bvr_buddhi_jada_yoga",
@@ -10514,23 +10519,22 @@
     },
     {
       "id": "bvr_dhurmarana_yoga",
-      "name": "Dhurmarana Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Dhurmarana Yoga",
+      "name_cn": "恶死瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-215",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nif 'Moon' not in ctx.planets: False\nelse:\n    moon_h = ctx.house_of('Moon')\n    if moon_h not in (6,8,12): False\n    else:\n        l1 = ctx.lord_of_house(1)\n        l1_link = l1 in ctx.planets and (ctx.house_of(l1) == moon_h or aspect(l1, 'Moon'))\n        sat_rahu = any(p in ctx.planets and ctx.house_of(p) == moon_h for p in ['Saturn','Rahu'])\n        l1_link and sat_rahu\n"
       },
       "effects": [
-        "待补充"
+        "Unnatural or violent death, danger from accidents"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: dhurmarana_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-215"
     },
     {
       "id": "bvr_durmarana_yoga",
@@ -10569,23 +10573,22 @@
     },
     {
       "id": "bvr_dwadasa_sahodara_yoga",
-      "name": "Dwadasa Sahodara Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Dwadasa Sahodara Yoga",
+      "name_cn": "十二兄弟瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-178",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nif 'Jupiter' not in ctx.planets: False\nelse:\n    jup_aspects_5 = aspect('Jupiter', 5)\n    l5 = ctx.lord_of_house(5)\n    jup_aspects_l5 = l5 in ctx.planets and aspect('Jupiter', l5)\n    l1 = ctx.lord_of_house(1)\n    l1_in_3_11 = l1 in ctx.planets and ctx.house_of(l1) in (3, 11)\n    (jup_aspects_5 or jup_aspects_l5) and l1_in_3_11\n"
       },
       "effects": [
-        "待补充"
+        "Twelve siblings, large family"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: dwadasa_sahodara_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-178"
     },
     {
       "id": "bvr_ekabhagini_yoga",
@@ -10860,23 +10863,22 @@
     },
     {
       "id": "bvr_grihanasa_yoga_planet_position",
-      "name": "Grihanasa Yoga Planet Positions Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Grihanasa Yoga (Planet Position Variant)",
+      "name_cn": "房屋损失瑜伽（变体）",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-192b",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl4 = ctx.lord_of_house(4)\nl4_dust = l4 in ctx.planets and ctx.house_of(l4) in (6,8,12)\nl4_asp = l4 in ctx.planets and any(m in ctx.planets and aspect(m, l4) for m in ['Mars','Saturn','Rahu','Ketu'])\njup_dust = 'Jupiter' in ctx.planets and ctx.house_of('Jupiter') in (6,8,12)\n(l4_dust and l4_asp) or jup_dust\n"
       },
       "effects": [
-        "待补充"
+        "Loss or destruction of property/house"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: grihanasa_yoga_planet_positions()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-192b"
     },
     {
       "id": "bvr_guhyaroga_yoga",
@@ -10969,23 +10971,22 @@
     },
     {
       "id": "bvr_jananatpurvam_pitru_marana_yog",
-      "name": "Jananatpurvam Pitru Marana Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Jananatpurvam Pitru Marana Yoga",
+      "name_cn": "生前父亡瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-220",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl9 = ctx.lord_of_house(9)\nsun_in_dust = 'Sun' in ctx.planets and ctx.is_dusthana(ctx.house_of('Sun'))\nl9_in_dust = l9 in ctx.planets and ctx.is_dusthana(ctx.house_of(l9))\nif not (sun_in_dust or l9_in_dust): False\nelse:\n    ms = ['Mars','Saturn','Rahu','Ketu']\n    any(m in ctx.planets and (aspect(m, 'Sun') or (l9 in ctx.planets and aspect(m, l9))) for m in ms)\n"
       },
       "effects": [
-        "待补充"
+        "Father died before birth, ancestral curse"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: jananatpurvam_pitru_marana_yoga()"
+      "strength": "rare",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-220"
     },
     {
       "id": "bvr_jara_yoga",
@@ -11049,23 +11050,22 @@
     },
     {
       "id": "bvr_kaalanirdesat_puthra_yoga",
-      "name": "Kaalanirdesat Puthra Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Kaalanirdesat Puthra Yoga",
+      "name_cn": "时定得子瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-225",
       "category": "putra",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\njup_in_5 = 'Jupiter' in ctx.planets and ctx.house_of('Jupiter') == 5\nl5 = ctx.lord_of_house(5)\nl5_strong = l5 in ctx.planets and (ctx.is_exalted(l5) or ctx.is_own_sign(l5) or ctx.is_kendra(ctx.house_of(l5)) or ctx.is_trikona(ctx.house_of(l5)))\njup_in_5 or l5_strong\n"
       },
       "effects": [
-        "待补充"
+        "Children at a specific time, delayed but certain progeny"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: kaalanirdesat_puthra_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-225"
     },
     {
       "id": "bvr_kaalanirdesat_puthranaasa_yoga",
@@ -11390,23 +11390,22 @@
     },
     {
       "id": "bvr_maathru_saapa_sutakshaya_yoga",
-      "name": "Maathru Saapa Sutakshaya Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Maathru Saapa Sutakshaya Yoga",
+      "name_cn": "母诅灭绝瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-218",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "False"
       },
       "effects": [
-        "待补充"
+        "Ancestral curse from maternal line"
       ],
-      "strength": "待评估",
+      "strength": "rare",
       "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: maathru_saapa_sutakshaya_yoga()"
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-218"
     },
     {
       "id": "bvr_marud_yoga",
@@ -11479,23 +11478,22 @@
     },
     {
       "id": "bvr_mathibhramana_yoga_variation",
-      "name": "Mathibhramana Yoga Variation Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Mathibhramana Yoga (Variation)",
+      "name_cn": "精神错乱瑜伽（变体）",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-294",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "False"
       },
       "effects": [
-        "待补充"
+        "Mental confusion, delusions, erratic thoughts"
       ],
-      "strength": "待评估",
+      "strength": "moderate",
       "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: mathibhramana_yoga_variation()"
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-294"
     },
     {
       "id": "bvr_matru_satrutwa_yoga",
@@ -11534,23 +11532,22 @@
     },
     {
       "id": "bvr_matru_satrutwa_yoga_from_plane",
-      "name": "Matru Satrutwa Yoga From Planet Position Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Matru Satrutwa Yoga (Variant)",
+      "name_cn": "母亲仇视瑜伽（变体）",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-185b",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl1 = ctx.lord_of_house(1)\nl4 = ctx.lord_of_house(4)\nif not l1 or not l4 or l1 != l4 or l1 != 'Mercury': False\nelse:\n    any(m in ctx.planets and (ctx.house_of('Mercury') == ctx.house_of(m) or aspect(m, 'Mercury')) for m in ['Mars','Saturn','Rahu','Ketu'])\n"
       },
       "effects": [
-        "待补充"
+        "Difficult relationship with mother"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: matru_satrutwa_yoga_from_planet_position()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-185b"
     },
     {
       "id": "bvr_matru_sneha_yoga",
@@ -11737,23 +11734,22 @@
     },
     {
       "id": "bvr_nav_yoga",
-      "name": "Nav Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
-      "category": "special",
+      "name": "Nav Yoga",
+      "name_cn": "船瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-75",
+      "category": "nabhasa",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\np_to_h = {p: ctx.house_of(p) for p in ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'] if ctx.house_of(p)}\nif len(p_to_h) < 7: False\nelse:\n    targets = list(range(1, 8))\n    all(h in targets for h in p_to_h.values()) and len(set(p_to_h.values())) == 7\n"
       },
       "effects": [
-        "待补充"
+        "Success in endeavors, safe passage through difficulties, leadership"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: nav_yoga()"
+      "strength": "rare",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-75"
     },
     {
       "id": "bvr_netranasa_yoga",
@@ -11867,43 +11863,41 @@
     },
     {
       "id": "bvr_parannabhojana_yoga",
-      "name": "Parannabhojana Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
-      "category": "special",
+      "name": "Parannabhojana Yoga",
+      "name_cn": "他食瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-128",
+      "category": "dhana",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl2 = ctx.lord_of_house(2)\nif not l2 or l2 not in ctx.planets: False\nelse:\n    l2_deb = ctx.is_debilitated(l2)\n    has_deb_aspect = any(ctx.is_debilitated(p) and aspect(p, l2) for p in ctx.planets if p != l2)\n    l2_deb and has_deb_aspect\n"
       },
       "effects": [
-        "待补充"
+        "Depends on others for food, eats at others' homes"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: parannabhojana_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-128"
     },
     {
       "id": "bvr_parihasaka_yoga",
-      "name": "Parihasaka Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Parihasaka Yoga",
+      "name_cn": "讥笑瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-170",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl2 = ctx.lord_of_house(2)\nl2_dust = l2 in ctx.planets and ctx.house_of(l2) in (6,8,12)\nh2_mal = any(p in ctx.planets_in_house(2) for p in ['Mars','Saturn','Sun','Rahu','Ketu'])\nl2_dust or h2_mal\n"
       },
       "effects": [
-        "待补充"
+        "Ridiculed by others, mocked, subject to derision"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: parihasaka_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-170"
     },
     {
       "id": "bvr_parijatha_yoga",
@@ -11967,23 +11961,22 @@
     },
     {
       "id": "bvr_pithru_saapa_sutakshaya_yoga",
-      "name": "Pithru Saapa Sutakshaya Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Pithru Saapa Sutakshaya Yoga",
+      "name_cn": "父诅灭绝瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-217",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "False"
       },
       "effects": [
-        "待补充"
+        "Ancestral curse from paternal line"
       ],
-      "strength": "待评估",
+      "strength": "rare",
       "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: pithru_saapa_sutakshaya_yoga()"
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-217"
     },
     {
       "id": "bvr_pittharoga_yoga",
@@ -12233,23 +12226,22 @@
     },
     {
       "id": "bvr_randhra_malika_yoga",
-      "name": "Randhra Malika Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
-      "category": "special",
+      "name": "Randhra Malika Yoga",
+      "name_cn": "障碍花环瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-39",
+      "category": "nabhasa",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\np_to_h = {p: ctx.house_of(p) for p in ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'] if ctx.house_of(p)}\nif len(p_to_h) < 7: False\nelse:\n    start = (1 + 7) % 12\n    if start == 0: start = 12\n    targets = [((start - 1 + i) % 12) + 1 for i in range(7)]\n    all(h in targets for h in p_to_h.values()) and len(set(p_to_h.values())) == 7\n"
       },
       "effects": [
-        "待补充"
+        "Dangers, obstacles, hidden enemies, sudden changes"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: randhra_malika_yoga()"
+      "strength": "rare",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-39"
     },
     {
       "id": "bvr_ravi_yoga",
@@ -12379,23 +12371,22 @@
     },
     {
       "id": "bvr_sapthasankhya_sahodara_yoga",
-      "name": "Sapthasankhya Sahodara Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Sapthasankhya Sahodara Yoga",
+      "name_cn": "七兄弟瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-179",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl3 = ctx.lord_of_house(3)\nh5_occupied = len(ctx.planets_in_house(5)) > 0\nl3_aspects_5 = l3 in ctx.planets and aspect(l3, 5)\nh5_occupied or l3_aspects_5\n"
       },
       "effects": [
-        "待补充"
+        "Seven siblings, moderate family size"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: sapthasankhya_sahodara_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-179"
     },
     {
       "id": "bvr_sarala_yoga",
@@ -12501,23 +12492,22 @@
     },
     {
       "id": "bvr_sarpasaapa_yoga",
-      "name": "Sarpasaapa Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Sarpasaapa Yoga",
+      "name_cn": "蛇咒瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-212",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nketu_h = ctx.house_of('Ketu') if 'Ketu' in ctx.planets else None\nif ketu_h is None: False\nelse:\n    sat_ketu_5_7_9 = 'Saturn' in ctx.planets and ctx.house_of('Saturn') == ketu_h and ketu_h in (5,7,9)\n    ketu_dusthana = ketu_h in (6,8,12)\n    sat_ketu_5_7_9 or ketu_dusthana\n"
       },
       "effects": [
-        "待补充"
+        "Danger from snakes, karmic snake curse"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: sarpasaapa_yoga()"
+      "strength": "rare",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-212"
     },
     {
       "id": "bvr_satkathadisravana_yoga",
@@ -12556,23 +12546,22 @@
     },
     {
       "id": "bvr_satru_malika_yoga",
-      "name": "Satru Malika Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
-      "category": "special",
+      "name": "Satru Malika Yoga",
+      "name_cn": "敌人花环瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-37",
+      "category": "nabhasa",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\np_to_h = {p: ctx.house_of(p) for p in ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'] if ctx.house_of(p)}\nif len(p_to_h) < 7: False\nelse:\n    start = (1 + 5) % 12\n    if start == 0: start = 12\n    targets = [((start - 1 + i) % 12) + 1 for i in range(7)]\n    all(h in targets for h in p_to_h.values()) and len(set(p_to_h.values())) == 7\n"
       },
       "effects": [
-        "待补充"
+        "Enemies, litigation, obstacles, struggles"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: satru_malika_yoga()"
+      "strength": "rare",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-37"
     },
     {
       "id": "bvr_sirachcheda_yoga",
@@ -12611,23 +12600,22 @@
     },
     {
       "id": "bvr_sodaranasa_yoga",
-      "name": "Sodaranasa Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Sodaranasa Yoga",
+      "name_cn": "兄弟受损瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-177b",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl3 = ctx.lord_of_house(3)\nif not l3 or 'Mars' not in ctx.planets: False\nelse:\n    targets = [3,5,7,8]\n    mars_h = ctx.house_of('Mars')\n    l3_h = ctx.house_of(l3) if l3 in ctx.planets else None\n    if mars_h not in targets or l3_h not in targets: False\n    else:\n        ms = ['Mars','Saturn','Sun','Rahu','Ketu']\n        any(m in ctx.planets and (aspect(m, 'Mars') or aspect(m, l3)) for m in ms if m not in ('Mars', l3))\n"
       },
       "effects": [
-        "待补充"
+        "Loss of siblings, difficulties with siblings"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: sodaranasa_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-177b"
     },
     {
       "id": "bvr_soola_yoga",
@@ -12666,23 +12654,22 @@
     },
     {
       "id": "bvr_sraddhannabhuktha_yoga",
-      "name": "Sraddhannabhuktha Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Sraddhannabhuktha Yoga",
+      "name_cn": "祭祀食物瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-129",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl2 = ctx.lord_of_house(2)\nif not l2 or 'Saturn' not in ctx.planets: False\nelse:\n    cond1 = l2 == 'Saturn'\n    cond2 = l2 in ctx.planets and ctx.house_of(l2) == ctx.house_of('Saturn')\n    sat_deb = ctx.is_debilitated('Saturn')\n    cond3 = sat_deb and aspect('Saturn', 2)\n    cond1 or cond2 or cond3\n"
       },
       "effects": [
-        "待补充"
+        "Subsists on ritual offerings, devotional nature"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: sraddhannabhuktha_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-129"
     },
     {
       "id": "bvr_sreenaatha_yoga",
@@ -12760,23 +12747,22 @@
     },
     {
       "id": "bvr_sukha_malika_yoga",
-      "name": "Sukha Malika Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
-      "category": "special",
+      "name": "Sukha Malika Yoga",
+      "name_cn": "快乐花环瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-35",
+      "category": "nabhasa",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\np_to_h = {p: ctx.house_of(p) for p in ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'] if ctx.house_of(p)}\nif len(p_to_h) < 7: False\nelse:\n    start = (1 + 3) % 12\n    if start == 0: start = 12\n    targets = [((start - 1 + i) % 12) + 1 for i in range(7)]\n    all(h in targets for h in p_to_h.values()) and len(set(p_to_h.values())) == 7\n"
       },
       "effects": [
-        "待补充"
+        "Happiness, comfort, material pleasures, good family life"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: sukha_malika_yoga()"
+      "strength": "rare",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-35"
     },
     {
       "id": "bvr_suputhra_yoga",
@@ -12863,43 +12849,41 @@
     },
     {
       "id": "bvr_theevrabuddhi_yoga",
-      "name": "Theevrabuddhi Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Theevrabuddhi Yoga",
+      "name_cn": "锐智瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-230",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nmerc_h = ctx.house_of('Mercury') if 'Mercury' in ctx.planets else None\nif merc_h is None: False\nelse:\n    merc_strong = ctx.is_exalted('Mercury') or ctx.is_own_sign('Mercury')\n    merc_kt = ctx.is_kendra(merc_h) or ctx.is_trikona(merc_h)\n    ben_aspect = any(b in ctx.planets and aspect(b, 'Mercury') for b in ['Jupiter','Venus'])\n    merc_strong or (merc_kt and ben_aspect)\n"
       },
       "effects": [
-        "待补充"
+        "Sharp intellect, penetrating mind, quick understanding"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: theevrabuddhi_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-230"
     },
     {
       "id": "bvr_thrikaala_gnana_yoga",
-      "name": "Thrikaala Gnana Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Thrikaala Gnana Yoga",
+      "name_cn": "三时智瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-248",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nif 'Jupiter' not in ctx.planets or 'Mercury' not in ctx.planets or 'Venus' not in ctx.planets: False\nelse:\n    jup_kt = ctx.is_kendra(ctx.house_of('Jupiter')) or ctx.is_trikona(ctx.house_of('Jupiter'))\n    all_strong = all(ctx.is_exalted(p) or ctx.is_own_sign(p) or ctx.is_moolatrikona(p) or ctx.is_kendra(ctx.house_of(p)) or ctx.is_trikona(ctx.house_of(p)) for p in ['Jupiter','Mercury','Venus'])\n    jup_kt and all_strong\n"
       },
       "effects": [
-        "待补充"
+        "Knowledge of past/present/future, intuitive wisdom"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: thrikaala_gnana_yoga()"
+      "strength": "rare",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-248"
     },
     {
       "id": "bvr_trilochana_yoga",
@@ -13000,23 +12984,22 @@
     },
     {
       "id": "bvr_vakchalana_yoga",
-      "name": "Vakchalana Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Vakchalana Yoga",
+      "name_cn": "言语障碍瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-175",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nl2 = ctx.lord_of_house(2)\nif not l2: False\nelse:\n    mal_lord = l2 in ['Mars','Saturn','Sun','Rahu','Ketu']\n    h2_ben = any(p in ctx.planets_in_house(2) for p in ['Jupiter','Venus','Mercury','Moon'])\n    ben_asp_2 = any(b in ctx.planets and aspect(b, 2) for b in ['Jupiter','Venus','Mercury'])\n    mal_lord and not (h2_ben or ben_asp_2)\n"
       },
       "effects": [
-        "待补充"
+        "Speech impediment, stammering, difficulty expressing"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: vakchalana_yoga()"
+      "strength": "moderate",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-175"
     },
     {
       "id": "bvr_vallaki_yoga",
@@ -13250,23 +13233,22 @@
     },
     {
       "id": "bvr_vishaprayoga_yoga",
-      "name": "Vishaprayoga Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Vishaprayoga Yoga",
+      "name_cn": "毒害瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-176",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\nh2p = ctx.planets_in_house(2)\nms = ['Mars','Saturn','Sun','Rahu','Ketu']\njoined = any(p in h2p for p in ms)\naspected = any(m in ctx.planets and aspect(m, 2) for m in ms)\njoined and aspected\n"
       },
       "effects": [
-        "待补充"
+        "Danger from poison, toxic environments"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: vishaprayoga_yoga()"
+      "strength": "rare",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-176"
     },
     {
       "id": "bvr_vrana_yoga",
@@ -13305,23 +13287,22 @@
     },
     {
       "id": "bvr_vyaya_malika_yoga",
-      "name": "Vyaya Malika Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
-      "category": "special",
+      "name": "Vyaya Malika Yoga",
+      "name_cn": "损耗花环瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-42",
+      "category": "nabhasa",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "\np_to_h = {p: ctx.house_of(p) for p in ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'] if ctx.house_of(p)}\nif len(p_to_h) < 7: False\nelse:\n    start = (1 + 11) % 12\n    if start == 0: start = 12\n    targets = [((start - 1 + i) % 12) + 1 for i in range(7)]\n    all(h in targets for h in p_to_h.values()) and len(set(p_to_h.values())) == 7\n"
       },
       "effects": [
-        "待补充"
+        "Loss, expenditure, waste, spiritual inclination"
       ],
-      "strength": "待评估",
-      "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: vyaya_malika_yoga()"
+      "strength": "rare",
+      "enabled": true,
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-42"
     },
     {
       "id": "bvr_yuddha_marana_yoga",
@@ -13360,43 +13341,41 @@
     },
     {
       "id": "bvr_yuddhatpaschaddrudha_yoga",
-      "name": "Yuddhatpaschaddrudha Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Yuddhatpaschaddrudha Yoga",
+      "name_cn": "战后坚强瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-241",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "False"
       },
       "effects": [
-        "待补充"
+        "Strong after battle"
       ],
-      "strength": "待评估",
+      "strength": "rare",
       "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: yuddhatpaschaddrudha_yoga()"
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-241"
     },
     {
       "id": "bvr_yuddhatpoorvadridhachitta_yoga",
-      "name": "Yuddhatpoorvadridhachitta Yoga Yoga",
-      "name_cn": "TBD",
-      "source": "待查",
-      "bvr_id": null,
+      "name": "Yuddhatpoorvadridhachitta Yoga",
+      "name_cn": "战前坚定瑜伽",
+      "source": "B.V. Raman",
+      "bvr_id": "BVR-240",
       "category": "special",
       "logic": {
-        "type": "placeholder",
-        "note": "BVR definition: TBD",
-        "draft": true
+        "type": "custom",
+        "expr": "False"
       },
       "effects": [
-        "待补充"
+        "Resolute before battle"
       ],
-      "strength": "待评估",
+      "strength": "rare",
       "enabled": false,
-      "draft": true,
-      "evidence_note": "From PyJhora function: yuddhatpoorvadridhachitta_yoga()"
+      "draft": false,
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-240"
     },
     {
       "id": "bvr_yukthi_samanwithavagmi_yoga",
@@ -13500,8 +13479,9 @@
         "Wealth through property, emotional intensity, business acumen"
       ],
       "strength": "moderate",
-      "enabled": true,
-      "evidence_note": "From PyJhora: chandra_mangala_yoga() - distinct from chandra_mangala_same"
+      "enabled": false,
+      "evidence_note": "From PyJhora: chandra_mangala_yoga() - distinct from chandra_mangala_same",
+      "duplicate_of": "chandra_mangala_same"
     },
     {
       "id": "bvr_106_indra_yoga",
@@ -13626,6 +13606,28 @@
       "enabled": true,
       "draft": false,
       "evidence_note": "v6.0.37: high-confidence PyJHora Kapata 202-204 implementation."
+    },
+    {
+      "id": "bvr_durmukha_yoga",
+      "name": "Durmukha Yoga",
+      "name_cn": "恶言瑜伽",
+      "source": "B.V. Raman / PyJHora",
+      "bvr_id": "BVR-170",
+      "category": "special",
+      "enabled": true,
+      "draft": false,
+      "logic": {
+        "type": "custom",
+        "expr": "# PyJHora durmukha Method 1 (rasi only):\n# Malefics occupy 2nd house AND 2nd lord is debilitated or conjunct malefics\nh2_occ = occupants(2)\nl2 = lord(2)\nif not h2_occ or l2 not in planets:\n    False\nelse:\n    has_malefic_in_2 = any(p in Malefics for p in h2_occ)\n    l2_debilitated = debil(l2)\n    l2_with_malefic = any(p in Malefics and same_house(l2, p) for p in planets if p != l2)\n    has_malefic_in_2 and (l2_debilitated or l2_with_malefic)",
+        "combo_template": "2宫有凶星且2宫主落陷或与凶星同宫"
+      },
+      "effects": [
+        "言语刻薄、口出恶言",
+        "人际冲突"
+      ],
+      "strength": "中",
+      "accuracy_note": "来源PyJHora durmukha Method 1（仅用Rasi）。",
+      "source_reference": "BVR-170: Malefics in 2nd + 2nd lord weak"
     }
   ],
   "total_enabled_rules": 381
