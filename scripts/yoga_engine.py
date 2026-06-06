@@ -1595,8 +1595,16 @@ class YogaEngine:
             return success() if l4 and (ctx.is_kendra(ctx.house_of(l4)) or ctx.is_trikona(ctx.house_of(l4))) else []
         if ctype == "lagna_lord_in_dry_sign":
             l1 = house_lord(1)
-            dry_signs = {"Aries", "Gemini", "Leo", "Virgo", "Sagittarius", "Capricorn"}
-            return success() if l1 and ctx.sign_of(l1) in dry_signs else []
+            # PyJHora const.dry_signs = [0,1,2,4,5,8] = Aries,Taurus,Gemini,Leo,Virgo,Sagittarius
+            dry_signs = {"Aries", "Taurus", "Gemini", "Leo", "Virgo", "Sagittarius"}
+            # PyJHora const.dry_planets = [0,2,6] = Sun,Mars,Saturn
+            dry_lords = {"Sun", "Mars", "Saturn"}
+            # PyJHora Y112: (ll_house in dry_signs) OR (ll_house_owner in dry_planets)
+            # ll_house = sign of lagna lord; ll_house_owner = dynamic lord of that sign
+            ll_in_dry = l1 and ctx.sign_of(l1) in dry_signs
+            l1_house = ctx.house_of(l1) if l1 else None
+            ll_owner_dry = l1_house and ctx.lord_of_house(l1_house) in dry_lords
+            return success() if l1 and (ll_in_dry or ll_owner_dry) else []
         if ctype == "navamsa_lagna_in_dry_planet_sign":
             d9_asc = ctx.d9.get("ascendant")
             dry_lords = {"Sun", "Mars", "Saturn"}
@@ -1651,6 +1659,37 @@ class YogaEngine:
         if ctype == "house_empty":
             h = cond.get("house")
             return success() if h and not ctx.planets_in_house(h) else []
+        if ctype == "planet_in_house_with_aspect_or_conjunction":
+            """Jupiter in 2nd/5th, conjoined or aspected by Mercury AND Venus (kalaanidhi yoga)"""
+            planet = cond.get("planet", "")
+            house_offsets = cond.get("house_offsets", [])
+            aspecting_or_conjoining = cond.get("aspecting_or_conjoining", [])
+            if not planet or planet not in ctx.planets:
+                return []
+            ph = ctx.house_of(planet)
+            if ph is None:
+                return []
+            # Check planet is in one of the target houses (from lagna)
+            target_houses = set()
+            for off in house_offsets:
+                h = (1 + off) % 12
+                if h == 0: h = 12
+                target_houses.add(h)
+            if ph not in target_houses:
+                return []
+            # Check ALL specified planets must conjoin or aspect
+            for other in aspecting_or_conjoining:
+                if other not in ctx.planets:
+                    return []
+                # Check conjunction (same house)
+                if ctx.house_of(other) == ph:
+                    continue
+                # Check aspect (graha drishti)
+                if aspects(other, planet):
+                    continue
+                # Neither conjoined nor aspecting → fail
+                return []
+            return success()
         return []
 
     # ------------------------------------------------------------------------

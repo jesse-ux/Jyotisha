@@ -1,6 +1,45 @@
 # 印度占星 Skill 更新日志
 
-## v6.0.42（2026-06-05）—— Yoga F1 93% 源码口径续航
+## v6.0.43（2026-06-06）—— Yoga F1 93.76%，引擎条件扩展 + PyJHora 源码 Bug 修复
+
+> **目标**：修复 PyJHora 源码中的 3 个 Bug，扩展 yoga_engine 语义条件类型，实现 kalaanidhi 和 krisanga 的源码口径对齐。
+> **指标**：F1 93.28% → **93.76%**，FN 96→86，FP 44→44（不变）
+
+### PyJHora 源码 Bug 修复（benchmark 环境）
+- **kalaanidhi_yoga Bug #1**（yoga.py:4644）：`is_venus_joined` 误用 `const.JUPITER_ID`（4）代替 `const.VENUS_ID`（5）
+- **kalaanidhi_yoga Bug #2**（yoga.py:4661）：Swakshetra 检查误用 `const.JUPITER_ID`（4）代替 `const.VENUS_ID`（5）
+- **krisanga_yoga Bug #3**（yoga.py:5091）：`_krisanga_yoga_calculation()` 缺少 `return` 关键字，导致 Y113（Navamsa Lagna + malefics in Lagna）从未参与检测
+
+### Yoga 引擎扩展
+- **新增语义条件类型** `planet_in_house_with_aspect_or_conjunction`：检查指定行星在特定宫位，且全部指定的另一组行星合相或相位该行星；用于 `bvr_kalaanidhi_yoga`
+- **修正 `lagna_lord_in_dry_sign` 条件**：
+  - 修复 `dry_signs` 集：原来含 Capricorn（❌）→ 改为 Taurus（✅），与 PyJHora `const.dry_signs=[0,1,2,4,5,8]` 一致
+  - 增加 `ll_house_owner in dry_planets` 子条件：匹配 PyJHora Y112 中的 OR 分支
+  - 改用 `ctx.lord_of_house()` 而非 `SIGN_LORDS` 静态映射，正确处理 Scorpio/Aquarius 动态共主
+
+### 验证指标变化
+
+| 规则 | v6.0.42 FP/FN | v6.0.43 FP/FN | 变化 |
+|---|---|---|---|
+| bvr_kalaanidhi_yoga | 0 / 5 | 0 / 0 | FN ✗ 消除 ✅ |
+| bvr_krisanga_yoga | 1 / 5 | 1 / 0 | FN ✗ 消除 ✅ |
+| bvr_dharidhra_11_precise | 2 / 6 | 2 / 6 | 未变 |
+| bvr_matrunasa_precise | 0 / 5 | 0 / 5 | 未变 |
+
+### 参考数据维护
+- 重新生成 `standard_test_charts.json`（60 盘 Yoga 结果基于已修复的 PyJHora）
+- 重新生成 `planet_positions_60.json`（Skill 侧行星位置 fixture）
+
+### 质量门禁
+```
+compile: 8 files ok
+json: 5 files valid
+capability audit: valid, 0 problems
+BPHS invariants: 18/18 passed
+pytest: 35 passed
+golden case: passed
+Quality gate passed
+```
 
 > **目标**：继续用户要求的“准确率优先”路线；本轮先对残余 Top Yoga 做 A/B 模拟，只发布源码定义明确且整体指标健康改善的修改，不为了短期 F1 盲目扩大规则。
 
