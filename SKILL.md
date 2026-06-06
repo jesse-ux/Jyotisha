@@ -10,20 +10,19 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.44 | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.0.46 | **详细变更**：`CHANGELOG.md`
 
 ## Yoga 逻辑验证指标
 
-| 指标 | v6.0.43（旧基线） | v6.0.44（正确基线） |
+| 指标 | v6.0.45（旧基线） | v6.0.46（当前） |
 |---|---|---|
-| Precision | 95.69% | **93.82%** |
-| Recall | 91.91% | **93.18%** |
-| **F1 Score** | **93.76%** | **93.50%** |
-| FP | 44 | **63** |
-| FN | 86 | **70** |
+| Precision | 83.26% | **92.51%** |
+| Recall | 91.52% | **91.80%** |
+| **F1 Score** | 87.19% | **92.15%** |
+| FP | 193 | **78** |
+| FN | 89 | **86** |
 
-> ⚠️ v6.0.44 修正了参考数据的 JD 时区 Bug，指标变化反映的是从错误基线切换到正确基线，非引擎退化。
-> 详细说明见 `CHANGELOG.md`。
+> v6.0.46 修复了 6 条完全错误的规则（kaalanirdesat_puthra 36→0, sapthasankhya 27→0, sarpasaapa 25→0, pushkala 9→0, koorma 9→0, bhratrumooladdhanaprapti 9→0），FP 减少 59.6%。
 
 ---
 
@@ -314,9 +313,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.0.42-yoga-f1-93-source-parity
+**版本**：v6.0.46-yoga-f1-92
 **创建日期**：2026-04-20
-**最后更新**：2026-06-05（v6.0.42 继续坚持 PyJHora 源码口径优先，先模拟再修改；本轮修复 `bvr_bhratruvriddhi_precise`、`bvr_ayatna_griha_prapta_yoga`、`bvr_utthama_graha_yoga`，对齐 PyJHora natural benefics、BVR-189/190 与 BVR-187 逻辑；当前 475 条 JSON 规则、381 条启用规则，D1/Rasi 逻辑验证 Precision=95.67%、Recall=91.01%、F1=93.28%，质量门禁通过，报告以 `references/validation_logic_report.json` 为准）
+**最后更新**：2026-06-06（v6.0.46 修复 6 条完全错误的瑜伽规则：kaalanirdesat_puthra/sapthasankhya_sahodara/sarpasaapa/pushkala/koorma/bhratrumooladdhanaprapti，FP 从 193→78，Precision 从 83.26%→92.51%，F1 从 87.19%→92.15%；当前 476 条规则、405 条启用，硬编码测试 8/9 通过）
 
 ---
 
