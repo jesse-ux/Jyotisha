@@ -1,6 +1,39 @@
 # 印度占星 Skill 更新日志
 
-## v6.0.43（2026-06-06）—— Yoga F1 93.76%，引擎条件扩展 + PyJHora 源码 Bug 修复
+## v6.0.44（2026-06-06）—— 修复参考数据 JD 时区 Bug，验证基线校正
+
+> **目标**：修复导致 `standard_test_charts.json` 中所有非正午出生星盘上升星座错误的 JD 时区 Bug。
+> **新基线**：F1 93.50%（Precision=93.82%, Recall=93.18%）
+
+### 关键 Bug 修复
+- **JD 时区 Bug**（`_compute_one_chart.py:93`）：PyJHora 的 `gregorian_to_jd()` 总是返回正午的 JD，完全忽略时间参数。改用 `swe.julday()` + UTC 时间计算正确 JD。
+  - 受影响：所有 `standard_test_charts.json` 中出生时间非 UTC 正午的星盘
+  - 修复效果示例（爱因斯坦）：上升从天蝎座 2° → 双子座 0.65°，与 Swiss Ephemeris 同星座
+  - 交叉验证：Swiss Ephemeris（行业金标准）+ xalen-ephemeris（Rust，500 万图表 oracle 测试）确认引擎计算正确
+
+### 验证指标变化
+| 指标 | v6.0.43（错误基线） | v6.0.44（正确基线） | 变化说明 |
+|---|---|---|---|
+| F1 | 93.76% | **93.50%** | 下降因参考数据修正，非引擎退化 |
+| Precision | 95.69% | 93.82% | FP 44→63 |
+| Recall | 91.91% | **93.18%** | FN 86→70 ↑ |
+| Agreements | 977 | 957 | 巧合一致减少 |
+
+### 参考数据维护
+- 重新生成 `standard_test_charts.json`（60 盘，基于已修复的 JD 计算）
+- 重新生成 `planet_positions_60.json`
+- 更新 `validation_logic_report.json`
+
+### 质量门禁
+```
+compile: 10 files ok
+json: 5 files valid
+capability audit: valid, 0 problems
+BPHS invariants: 18/18 passed
+pytest: 35 passed
+golden case: passed
+Quality gate passed
+```
 
 > **目标**：修复 PyJHora 源码中的 3 个 Bug，扩展 yoga_engine 语义条件类型，实现 kalaanidhi 和 krisanga 的源码口径对齐。
 > **指标**：F1 93.28% → **93.76%**，FN 96→86，FP 44→44（不变）

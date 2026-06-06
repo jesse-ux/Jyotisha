@@ -10,19 +10,20 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.43-yoga-f1-94 | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.0.44 | **详细变更**：`CHANGELOG.md`
 
 ## Yoga 逻辑验证指标
 
-| 指标 | v6.0.42 | v6.0.43 |
+| 指标 | v6.0.43（旧基线） | v6.0.44（正确基线） |
 |---|---|---|
-| Precision | 95.67% | **95.69%** |
-| Recall | 91.01% | **91.91%** |
-| **F1 Score** | **93.28%** | **93.76%** |
-| FP | 44 | **44** |
-| FN | 96 | **86** |
-| Charts Tested | 60 | 60 |
-| Comparable Rules | 72 | 72 |
+| Precision | 95.69% | **93.82%** |
+| Recall | 91.91% | **93.18%** |
+| **F1 Score** | **93.76%** | **93.50%** |
+| FP | 44 | **63** |
+| FN | 86 | **70** |
+
+> ⚠️ v6.0.44 修正了参考数据的 JD 时区 Bug，指标变化反映的是从错误基线切换到正确基线，非引擎退化。
+> 详细说明见 `CHANGELOG.md`。
 
 ---
 

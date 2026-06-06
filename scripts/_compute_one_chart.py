@@ -25,6 +25,7 @@ try:
         from jhora.panchanga import drik
         from jhora.panchanga.drik import Place
         import jhora.utils as utils
+        import swisseph as swe
     PYJHORA_OK = True
 except Exception as e:
     PYJHORA_OK = False
@@ -85,12 +86,13 @@ def compute_yogas(chart):
             tz = tz_to_float(chart["tz"])
             place = Place(chart["city"], chart["lat"], chart["lon"], tz)
 
-            # 构造datetime并转JD
+            # 构造datetime，转正确UTC JD（修复：PyJHora的gregorian_to_jd返回正午JD，无视时间）
             date_str = chart["date"] + " " + chart["time"]
             if date_str.count(':') == 1:
                 date_str += ":00"
             dt = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-            jd = utils.gregorian_to_jd(dt)
+            utc_hour = dt.hour - tz + dt.minute / 60.0 + dt.second / 3600.0
+            jd = swe.julday(dt.year, dt.month, dt.day, utc_hour)
             dob = drik.Date(dt.year, dt.month, dt.day)
             tob = (dt.hour, dt.minute, dt.second)
 
