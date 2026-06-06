@@ -5253,9 +5253,10 @@
       ],
       "logic": {
         "type": "custom",
-        "expr": "len(set(ctx.house_of(p) for p in ctx.planets if ctx.house_of(p) and ctx.house_of(p) in [1,5,9]))>=3",
+        "expr": "# PyJHora/BVR-83 Vihaga/Vihanga: ALL classical planets (Sun-Saturn) occupy only 4th and 10th houses from Lagna.\nhouses = {ctx.house_of(p) for p in [\"Sun\",\"Moon\",\"Mars\",\"Mercury\",\"Jupiter\",\"Venus\",\"Saturn\"]}\nallowed = {4, 10}\nhouses.issubset(allowed) and len(houses) >= 1\n",
         "combo_template": "行星集中在三方宫（Vihaga 飞鸟）"
-      }
+      },
+      "accuracy_note": "v6.0.48: fixed from wrong Sringaataka-like pattern (3+ in 1,5,9) to correct BVR-83 Vihaga (ALL planets in 4th+10th only)"
     },
     {
       "id": "hala_nabhasa",
