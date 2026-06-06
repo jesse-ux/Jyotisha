@@ -26,65 +26,67 @@ print('Hardcoded Yoga Tests (PyJHora style)')
 print('=' * 55)
 
 # -------------------------------------------------------
-# pushkala_yoga: asc_lord exalted/own + Moon not deb + benefic in 1st
+# pushkala_yoga (BVR-26): L1 with Moon; Moon's dispositor in kendra/Adhimitra + rasi-aspects Lagna
 # -------------------------------------------------------
 print('\n--- pushkala_yoga ---')
-results.append(check('True-lion-asc-exalted-sun', 'pushkala_yoga', {
+# Leo asc, Sun(L1) in 5th/Gemini with Moon, dispositor=Mercury in 10th/Capricorn(kendra, rasi-aspects Leo)
+results.append(check('True-l1-with-moon-disp-kendra', 'pushkala_yoga', {
+    'Sun':{'house':5,'sign':'Gemini','degree':10},'Moon':{'house':5,'sign':'Gemini','degree':15},
+    'Mars':{'house':8,'sign':'Pisces','degree':10},'Mercury':{'house':10,'sign':'Capricorn','degree':10},
+    'Jupiter':{'house':11,'sign':'Sagittarius','degree':5},'Venus':{'house':2,'sign':'Libra','degree':10},
+    'Saturn':{'house':7,'sign':'Aquarius','degree':10},'Rahu':{'house':6,'sign':'Capricorn','degree':10},
+    'Ketu':{'house':12,'sign':'Cancer','degree':10},
+}, 'Leo', True))
+
+results.append(check('False-l1-not-with-moon', 'pushkala_yoga', {
     'Sun':{'house':9,'sign':'Aries','degree':10},'Moon':{'house':5,'sign':'Gemini','degree':15},
     'Mars':{'house':8,'sign':'Pisces','degree':10},'Mercury':{'house':2,'sign':'Virgo','degree':10},
     'Jupiter':{'house':1,'sign':'Sagittarius','degree':5},'Venus':{'house':11,'sign':'Gemini','degree':10},
     'Saturn':{'house':7,'sign':'Aquarius','degree':10},'Rahu':{'house':6,'sign':'Capricorn','degree':10},
     'Ketu':{'house':12,'sign':'Cancer','degree':10},
-}, 'Leo', True))
+}, 'Leo', False))
 
-results.append(check('False-gemini-asc-neutral', 'pushkala_yoga', {
-    'Sun':{'house':12,'sign':'Taurus','degree':10},'Moon':{'house':6,'sign':'Libra','degree':15},
-    'Mars':{'house':3,'sign':'Virgo','degree':10},'Mercury':{'house':11,'sign':'Pisces','degree':10},
-    'Jupiter':{'house':7,'sign':'Pisces','degree':5},'Venus':{'house':5,'sign':'Sagittarius','degree':10},
-    'Saturn':{'house':8,'sign':'Capricorn','degree':10},'Rahu':{'house':4,'sign':'Scorpio','degree':10},
-    'Ketu':{'house':10,'sign':'Taurus','degree':10},
-}, 'Gemini', False))
-
-results.append(check('False-moon-debilitated', 'pushkala_yoga', {
-    'Sun':{'house':9,'sign':'Aries','degree':10},'Moon':{'house':12,'sign':'Scorpio','degree':15},
-    'Mars':{'house':4,'sign':'Scorpio','degree':10},'Mercury':{'house':8,'sign':'Pisces','degree':10},
+results.append(check('False-disp-not-kendra', 'pushkala_yoga', {
+    'Sun':{'house':5,'sign':'Gemini','degree':10},'Moon':{'house':5,'sign':'Gemini','degree':15},
+    'Mars':{'house':4,'sign':'Scorpio','degree':10},'Mercury':{'house':12,'sign':'Pisces','degree':10},
     'Jupiter':{'house':1,'sign':'Sagittarius','degree':5},'Venus':{'house':2,'sign':'Virgo','degree':10},
     'Saturn':{'house':6,'sign':'Capricorn','degree':10},'Rahu':{'house':3,'sign':'Libra','degree':10},
     'Ketu':{'house':9,'sign':'Aries','degree':10},
 }, 'Leo', False))
 
 # -------------------------------------------------------
-# koorma_yoga: benefic in 1st AND (5th or 9th lord in 1st)
+# koorma_yoga (BVR-54 Method 1): 5/6/7 all strong benefics OR 1/3/11 all strong benefics
 # -------------------------------------------------------
 print('\n--- koorma_yoga ---')
-results.append(check('True-5th-lord-in-1st', 'koorma_yoga', {
+# 1/3/11 all occupied by strong benefics: Jupiter(1/Leo), Venus(3/Libra), Moon(11/Gemini)
+results.append(check('True-benefics-in-1-3-11', 'koorma_yoga', {
+    'Sun':{'house':12,'sign':'Taurus','degree':10},'Moon':{'house':11,'sign':'Gemini','degree':15},
+    'Mars':{'house':8,'sign':'Pisces','degree':10},'Mercury':{'house':2,'sign':'Virgo','degree':10},
+    'Jupiter':{'house':1,'sign':'Leo','degree':5},'Venus':{'house':3,'sign':'Libra','degree':10},
+    'Saturn':{'house':7,'sign':'Aquarius','degree':10},'Rahu':{'house':6,'sign':'Capricorn','degree':10},
+    'Ketu':{'house':12,'sign':'Cancer','degree':10},
+}, 'Leo', True))
+
+results.append(check('False-malefic-in-target-houses', 'koorma_yoga', {
+    'Sun':{'house':1,'sign':'Leo','degree':10},'Moon':{'house':5,'sign':'Sagittarius','degree':15},
+    'Mars':{'house':10,'sign':'Taurus','degree':10},'Mercury':{'house':2,'sign':'Virgo','degree':10},
+    'Jupiter':{'house':9,'sign':'Aries','degree':5},'Venus':{'house':11,'sign':'Gemini','degree':10},
+    'Saturn':{'house':7,'sign':'Aquarius','degree':10},'Rahu':{'house':4,'sign':'Scorpio','degree':10},
+    'Ketu':{'house':10,'sign':'Taurus','degree':10},
+}, 'Leo', False))
+
+results.append(check('False-empty-target-house', 'koorma_yoga', {
     'Sun':{'house':9,'sign':'Aries','degree':10},'Moon':{'house':5,'sign':'Gemini','degree':15},
     'Mars':{'house':8,'sign':'Pisces','degree':10},'Mercury':{'house':2,'sign':'Virgo','degree':10},
-    'Jupiter':{'house':1,'sign':'Sagittarius','degree':5},'Venus':{'house':11,'sign':'Gemini','degree':10},
-    'Saturn':{'house':7,'sign':'Aquarius','degree':10},'Rahu':{'house':6,'sign':'Capricorn','degree':10},
-    'Ketu':{'house':12,'sign':'Cancer','degree':10},
-}, 'Leo', True))
-
-results.append(check('True-9th-lord-in-1st', 'koorma_yoga', {
-    'Sun':{'house':9,'sign':'Aries','degree':10},'Moon':{'house':5,'sign':'Gemini','degree':15},
-    'Mars':{'house':1,'sign':'Aries','degree':5},'Mercury':{'house':2,'sign':'Virgo','degree':10},
-    'Jupiter':{'house':11,'sign':'Sagittarius','degree':5},'Venus':{'house':1,'sign':'Libra','degree':10},
-    'Saturn':{'house':7,'sign':'Aquarius','degree':10},'Rahu':{'house':6,'sign':'Capricorn','degree':10},
-    'Ketu':{'house':12,'sign':'Cancer','degree':10},
-}, 'Leo', True))
-
-results.append(check('False-ben-in-1st-no-lord', 'koorma_yoga', {
-    'Sun':{'house':9,'sign':'Aries','degree':10},'Moon':{'house':5,'sign':'Gemini','degree':15},
-    'Mars':{'house':8,'sign':'Pisces','degree':10},'Mercury':{'house':1,'sign':'Virgo','degree':10},
-    'Jupiter':{'house':11,'sign':'Sagittarius','degree':5},'Venus':{'house':2,'sign':'Libra','degree':10},
+    'Jupiter':{'house':12,'sign':'Sagittarius','degree':5},'Venus':{'house':3,'sign':'Libra','degree':10},
     'Saturn':{'house':7,'sign':'Aquarius','degree':10},'Rahu':{'house':6,'sign':'Capricorn','degree':10},
     'Ketu':{'house':12,'sign':'Cancer','degree':10},
 }, 'Leo', False))
 
-results.append(check('False-lord-in-1st-no-ben', 'koorma_yoga', {
-    'Sun':{'house':9,'sign':'Aries','degree':10},'Moon':{'house':5,'sign':'Gemini','degree':15},
-    'Mars':{'house':1,'sign':'Aries','degree':5},'Mercury':{'house':2,'sign':'Virgo','degree':10},
-    'Jupiter':{'house':11,'sign':'Sagittarius','degree':5},'Venus':{'house':2,'sign':'Libra','degree':10},
+results.append(check('False-weak-benefic-in-house', 'koorma_yoga', {
+    'Sun':{'house':12,'sign':'Taurus','degree':10},'Moon':{'house':11,'sign':'Gemini','degree':15},
+    'Mars':{'house':8,'sign':'Pisces','degree':10},'Mercury':{'house':2,'sign':'Virgo','degree':10},
+    'Jupiter':{'house':1,'sign':'Capricorn','degree':5},'Venus':{'house':3,'sign':'Libra','degree':10},
     'Saturn':{'house':7,'sign':'Aquarius','degree':10},'Rahu':{'house':6,'sign':'Capricorn','degree':10},
     'Ketu':{'house':12,'sign':'Cancer','degree':10},
 }, 'Leo', False))
