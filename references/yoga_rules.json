@@ -12857,7 +12857,7 @@
       "category": "special",
       "logic": {
         "type": "custom",
-        "expr": "\nmerc_h = ctx.house_of('Mercury') if 'Mercury' in ctx.planets else None\nif merc_h is None: False\nelse:\n    merc_strong = ctx.is_exalted('Mercury') or ctx.is_own_sign('Mercury')\n    merc_kt = ctx.is_kendra(merc_h) or ctx.is_trikona(merc_h)\n    ben_aspect = any(b in ctx.planets and aspect(b, 'Mercury') for b in ['Jupiter','Venus'])\n    merc_strong or (merc_kt and ben_aspect)\n"
+        "expr": "# PyJHora/BVR-232: Lord of 5th in Rasi should be a benefic and should be in Navamsa Lagna.\n# Lord of Navamsa Lagna should be a benefic or aspected by benefic.\nl5 = lord(5)\nif l5 not in ctx.planets: False\nelse:\n    nb = pyjhora_natural_benefics()\n    cond1 = l5 in nb  # L5 is a natural benefic\n    cond2 = d9_house_of(l5) == 1  # L5 in Navamsa Lagna\n    d9_l1 = d9_lord_of_house(1)\n    cond3a = d9_l1 in nb  # D9 Lagna lord is benefic\n    cond3b = d9_l1 is not None and any(p in nb and p != l5 and aspect(p, d9_l1) for p in ctx.planets)\n    cond1 and cond2 and (cond3a or cond3b)\n"
       },
       "effects": [
         "Sharp intellect, penetrating mind, quick understanding"
@@ -12865,7 +12865,8 @@
       "strength": "moderate",
       "enabled": true,
       "draft": false,
-      "evidence_note": "Source: B.V. Raman, BVR: BVR-230"
+      "evidence_note": "Source: B.V. Raman, BVR: BVR-230",
+      "accuracy_note": "v6.0.49: rewritten to match PyJHora BVR-232 (D9-dependent: L5 benefic + in Navamsa Lagna; D9 L1 benefic/aspected)"
     },
     {
       "id": "bvr_thrikaala_gnana_yoga",

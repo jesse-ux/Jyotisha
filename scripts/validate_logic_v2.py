@@ -286,19 +286,19 @@ def main():
         name = chart['name']
         planets = chart['planets']
         ascendant = chart['ascendant']
-        context = chart.get('context')
 
-        # Skill 引擎检测
+        # 从 standard_test_charts.json 取完整 context（含 D9/Navamsa/Upagraha 数据）
+        pyj_chart = pyj_charts.get(name)
+        if not pyj_chart:
+            print(f"  WARNING: {name} not in PyJhora data")
+            continue
+        context = pyj_chart.get('context', {})
+        # Skill 引擎检测（使用含 D9 的完整 context）
         skill_results = engine.detect(planets, ascendant, context=context)
         skill_yoga_ids = set(r['rule_id'] for r in skill_results)
         skill_comp = skill_yoga_ids & comparable_rule_ids  # 只保留可对比的
         total_skill_comp += len(skill_comp)
 
-        # PyJhora 结果
-        pyj_chart = pyj_charts.get(name)
-        if not pyj_chart:
-            print(f"  WARNING: {name} not in PyJhora data")
-            continue
         pyj_yoga_names = set(pyj_chart.get('expected_yogas', []))
 
         # 将 PyJhora Yoga名映射到 Skill rule_id
