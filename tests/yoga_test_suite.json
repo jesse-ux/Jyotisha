@@ -1,0 +1,5282 @@
+[
+  {
+    "rule_id": "adhi_yoga",
+    "true": {
+      "asc": "Scorpio",
+      "planets": {
+        "Sun": {
+          "house": 6,
+          "sign": "Aries",
+          "degree": 27.296718804282207
+        },
+        "Moon": {
+          "house": 1,
+          "sign": "Scorpio",
+          "degree": 28.989350753247834
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Gemini",
+          "degree": 18.386109503634273
+        },
+        "Mercury": {
+          "house": 7,
+          "sign": "Taurus",
+          "degree": 5.1132178162032815
+        },
+        "Jupiter": {
+          "house": 8,
+          "sign": "Gemini",
+          "degree": 11.875154972815835
+        },
+        "Venus": {
+          "house": 8,
+          "sign": "Gemini",
+          "degree": 4.892103458671045
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Libra",
+          "degree": 9.382053478911985
+        },
+        "Rahu": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 26.600918301847344
+        },
+        "Ketu": {
+          "house": 10,
+          "sign": "Leo",
+          "degree": 26.600918301847344
+        }
+      },
+      "chart": "J. Krishnamurti"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "brahma_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_002_sunapha_precise",
+    "true": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 0.5182940463058685
+        },
+        "Moon": {
+          "house": 1,
+          "sign": "Sagittarius",
+          "degree": 18.058478756704005
+        },
+        "Mars": {
+          "house": 1,
+          "sign": "Sagittarius",
+          "degree": 8.728234037525027
+        },
+        "Mercury": {
+          "house": 2,
+          "sign": "Capricorn",
+          "degree": 27.262874465470418
+        },
+        "Jupiter": {
+          "house": 6,
+          "sign": "Taurus",
+          "degree": 14.2332889660263
+        },
+        "Venus": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 14.448881183387414
+        },
+        "Saturn": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 9.513758312785342
+        },
+        "Rahu": {
+          "house": 10,
+          "sign": "Virgo",
+          "degree": 27.96901924851622
+        },
+        "Ketu": {
+          "house": 4,
+          "sign": "Pisces",
+          "degree": 27.969019248516247
+        }
+      },
+      "chart": "Thomas Edison"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_003_anapha_precise",
+    "true": {
+      "asc": "Scorpio",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 0.9801258905856685
+        },
+        "Moon": {
+          "house": 2,
+          "sign": "Sagittarius",
+          "degree": 29.283833822063457
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Libra",
+          "degree": 3.3431475788195257
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 17.638410707644482
+        },
+        "Jupiter": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 29.923513566476004
+        },
+        "Venus": {
+          "house": 5,
+          "sign": "Pisces",
+          "degree": 14.93306483732033
+        },
+        "Saturn": {
+          "house": 1,
+          "sign": "Scorpio",
+          "degree": 11.04814473997871
+        },
+        "Rahu": {
+          "house": 12,
+          "sign": "Libra",
+          "degree": 14.155035422100894
+        },
+        "Ketu": {
+          "house": 6,
+          "sign": "Aries",
+          "degree": 14.155035422100923
+        }
+      },
+      "chart": "Charles Darwin"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_004_duradhara_precise",
+    "true": {
+      "asc": "Taurus",
+      "planets": {
+        "Sun": {
+          "house": 6,
+          "sign": "Libra",
+          "degree": 29.172631010878007
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Cancer",
+          "degree": 14.470814038375522
+        },
+        "Mars": {
+          "house": 5,
+          "sign": "Virgo",
+          "degree": 8.9756974435426
+        },
+        "Mercury": {
+          "house": 6,
+          "sign": "Libra",
+          "degree": 15.933205250627623
+        },
+        "Jupiter": {
+          "house": 8,
+          "sign": "Sagittarius",
+          "degree": 14.255822733398531
+        },
+        "Venus": {
+          "house": 6,
+          "sign": "Libra",
+          "degree": 6.2173044612828505
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Leo",
+          "degree": 9.902535492755135
+        },
+        "Rahu": {
+          "house": 2,
+          "sign": "Gemini",
+          "degree": 10.554502381839626
+        },
+        "Ketu": {
+          "house": 8,
+          "sign": "Sagittarius",
+          "degree": 10.554502381839626
+        }
+      },
+      "chart": "Jawaharlal Nehru"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_017_vosi_precise",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    }
+  },
+  {
+    "rule_id": "bvr_018_ubhayachara_precise",
+    "true": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 0.5182940463058685
+        },
+        "Moon": {
+          "house": 1,
+          "sign": "Sagittarius",
+          "degree": 18.058478756704005
+        },
+        "Mars": {
+          "house": 1,
+          "sign": "Sagittarius",
+          "degree": 8.728234037525027
+        },
+        "Mercury": {
+          "house": 2,
+          "sign": "Capricorn",
+          "degree": 27.262874465470418
+        },
+        "Jupiter": {
+          "house": 6,
+          "sign": "Taurus",
+          "degree": 14.2332889660263
+        },
+        "Venus": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 14.448881183387414
+        },
+        "Saturn": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 9.513758312785342
+        },
+        "Rahu": {
+          "house": 10,
+          "sign": "Virgo",
+          "degree": 27.96901924851622
+        },
+        "Ketu": {
+          "house": 4,
+          "sign": "Pisces",
+          "degree": 27.969019248516247
+        }
+      },
+      "chart": "Thomas Edison"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_075_naukaa_precise",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_103_guru_mangala_yoga",
+    "true": {
+      "asc": "Pisces",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 25.045647146877144
+        },
+        "Moon": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 20.79514255856907
+        },
+        "Mars": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 26.19591613453497
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 5.361450243366164
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 15.855021249080949
+        },
+        "Venus": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 22.062861185499514
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 12.827820000002859
+        },
+        "Rahu": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 27.37292067365013
+        },
+        "Ketu": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 27.37292067365013
+        }
+      },
+      "chart": "Nikola Tesla"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_105_chandra_mangala_yoga",
+    "true": {
+      "asc": "Pisces",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 25.045647146877144
+        },
+        "Moon": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 20.79514255856907
+        },
+        "Mars": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 26.19591613453497
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 5.361450243366164
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 15.855021249080949
+        },
+        "Venus": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 22.062861185499514
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 12.827820000002859
+        },
+        "Rahu": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 27.37292067365013
+        },
+        "Ketu": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 27.37292067365013
+        }
+      },
+      "chart": "Nikola Tesla"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_amala_precise",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Scorpio",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 0.9801258905856685
+        },
+        "Moon": {
+          "house": 2,
+          "sign": "Sagittarius",
+          "degree": 29.283833822063457
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Libra",
+          "degree": 3.3431475788195257
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 17.638410707644482
+        },
+        "Jupiter": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 29.923513566476004
+        },
+        "Venus": {
+          "house": 5,
+          "sign": "Pisces",
+          "degree": 14.93306483732033
+        },
+        "Saturn": {
+          "house": 1,
+          "sign": "Scorpio",
+          "degree": 11.04814473997871
+        },
+        "Rahu": {
+          "house": 12,
+          "sign": "Libra",
+          "degree": 14.155035422100894
+        },
+        "Ketu": {
+          "house": 6,
+          "sign": "Aries",
+          "degree": 14.155035422100923
+        }
+      },
+      "chart": "Charles Darwin"
+    }
+  },
+  {
+    "rule_id": "bvr_apakeerthi_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_ardha_chandra_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_ayatna_griha_prapta_yoga",
+    "true": {
+      "asc": "Pisces",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 25.045647146877144
+        },
+        "Moon": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 20.79514255856907
+        },
+        "Mars": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 26.19591613453497
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 5.361450243366164
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 15.855021249080949
+        },
+        "Venus": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 22.062861185499514
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 12.827820000002859
+        },
+        "Rahu": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 27.37292067365013
+        },
+        "Ketu": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 27.37292067365013
+        }
+      },
+      "chart": "Nikola Tesla"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_bahu_puthra_precise",
+    "true": {
+      "asc": "Virgo",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Sagittarius",
+          "degree": 23.155022481331343
+        },
+        "Moon": {
+          "house": 12,
+          "sign": "Leo",
+          "degree": 25.140179739722214
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Aries",
+          "degree": 4.165446045322873
+        },
+        "Mercury": {
+          "house": 5,
+          "sign": "Capricorn",
+          "degree": 3.3742330410175896
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Taurus",
+          "degree": 18.794677842626584
+        },
+        "Venus": {
+          "house": 5,
+          "sign": "Capricorn",
+          "degree": 26.75726129235818
+        },
+        "Saturn": {
+          "house": 8,
+          "sign": "Aries",
+          "degree": 27.921670532068443
+        },
+        "Rahu": {
+          "house": 12,
+          "sign": "Leo",
+          "degree": 21.03862186674621
+        },
+        "Ketu": {
+          "house": 6,
+          "sign": "Aquarius",
+          "degree": 21.03862186674621
+        }
+      },
+      "chart": "Stephen Hawking"
+    },
+    "false": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    }
+  },
+  {
+    "rule_id": "bvr_bahu_sthree_yoga",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Aries",
+          "degree": 10.099267539951482
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Leo",
+          "degree": 14.258126885669583
+        },
+        "Mars": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 8.430044906105934
+        },
+        "Mercury": {
+          "house": 11,
+          "sign": "Aries",
+          "degree": 29.731199626501592
+        },
+        "Jupiter": {
+          "house": 11,
+          "sign": "Aries",
+          "degree": 29.67825022284639
+        },
+        "Venus": {
+          "house": 11,
+          "sign": "Aries",
+          "degree": 23.688680980035425
+        },
+        "Saturn": {
+          "house": 1,
+          "sign": "Gemini",
+          "degree": 29.50849609013882
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 24.227016849794495
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Leo",
+          "degree": 24.227016849794495
+        }
+      },
+      "chart": "Max Planck"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_bandhu_pujya_yoga",
+    "true": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_bandhubhisthyaktha_precise",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Cancer",
+      "planets": {
+        "Sun": {
+          "house": 1,
+          "sign": "Cancer",
+          "degree": 18.751131990194764
+        },
+        "Moon": {
+          "house": 11,
+          "sign": "Taurus",
+          "degree": 14.41492728210767
+        },
+        "Mars": {
+          "house": 2,
+          "sign": "Leo",
+          "degree": 28.643044333549852
+        },
+        "Mercury": {
+          "house": 1,
+          "sign": "Cancer",
+          "degree": 8.982114052499668
+        },
+        "Jupiter": {
+          "house": 7,
+          "sign": "Capricorn",
+          "degree": 6.602344988849154
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Gemini",
+          "degree": 8.067437752203716
+        },
+        "Saturn": {
+          "house": 7,
+          "sign": "Capricorn",
+          "degree": 1.09700609943053
+        },
+        "Rahu": {
+          "house": 2,
+          "sign": "Leo",
+          "degree": 3.0866864602757573
+        },
+        "Ketu": {
+          "house": 8,
+          "sign": "Aquarius",
+          "degree": 3.0866864602757573
+        }
+      },
+      "chart": "Barack Obama"
+    }
+  },
+  {
+    "rule_id": "bvr_bhaga_chumbana_yoga",
+    "true": {
+      "asc": "Pisces",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 25.045647146877144
+        },
+        "Moon": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 20.79514255856907
+        },
+        "Mars": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 26.19591613453497
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 5.361450243366164
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 15.855021249080949
+        },
+        "Venus": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 22.062861185499514
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 12.827820000002859
+        },
+        "Rahu": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 27.37292067365013
+        },
+        "Ketu": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 27.37292067365013
+        }
+      },
+      "chart": "Nikola Tesla"
+    },
+    "false": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    }
+  },
+  {
+    "rule_id": "bvr_bhratruvriddhi_precise",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Scorpio",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 0.9801258905856685
+        },
+        "Moon": {
+          "house": 2,
+          "sign": "Sagittarius",
+          "degree": 29.283833822063457
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Libra",
+          "degree": 3.3431475788195257
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 17.638410707644482
+        },
+        "Jupiter": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 29.923513566476004
+        },
+        "Venus": {
+          "house": 5,
+          "sign": "Pisces",
+          "degree": 14.93306483732033
+        },
+        "Saturn": {
+          "house": 1,
+          "sign": "Scorpio",
+          "degree": 11.04814473997871
+        },
+        "Rahu": {
+          "house": 12,
+          "sign": "Libra",
+          "degree": 14.155035422100894
+        },
+        "Ketu": {
+          "house": 6,
+          "sign": "Aries",
+          "degree": 14.155035422100923
+        }
+      },
+      "chart": "Charles Darwin"
+    }
+  },
+  {
+    "rule_id": "bvr_dama_yoga",
+    "true": {
+      "asc": "Taurus",
+      "planets": {
+        "Sun": {
+          "house": 7,
+          "sign": "Scorpio",
+          "degree": 3.0191233701800684
+        },
+        "Moon": {
+          "house": 9,
+          "sign": "Capricorn",
+          "degree": 1.580649194494299
+        },
+        "Mars": {
+          "house": 4,
+          "sign": "Leo",
+          "degree": 15.382041638081859
+        },
+        "Mercury": {
+          "house": 7,
+          "sign": "Scorpio",
+          "degree": 12.010052855213218
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Taurus",
+          "degree": 14.145439846081175
+        },
+        "Venus": {
+          "house": 8,
+          "sign": "Sagittarius",
+          "degree": 19.88406873985906
+        },
+        "Saturn": {
+          "house": 3,
+          "sign": "Cancer",
+          "degree": 20.902061164369613
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Sagittarius",
+          "degree": 8.314932430081967
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Gemini",
+          "degree": 8.314932430081967
+        }
+      },
+      "chart": "Indira Gandhi"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_dattha_puthra_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_dehasthoulya_yoga",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    }
+  },
+  {
+    "rule_id": "bvr_dharidhra_11_precise",
+    "true": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    },
+    "false": {
+      "asc": "Aquarius",
+      "planets": {
+        "Sun": {
+          "house": 8,
+          "sign": "Virgo",
+          "degree": 11.097749705299265
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Cancer",
+          "degree": 12.821831612668959
+        },
+        "Mars": {
+          "house": 9,
+          "sign": "Libra",
+          "degree": 0.8340259378253165
+        },
+        "Mercury": {
+          "house": 8,
+          "sign": "Virgo",
+          "degree": 29.17440821937211
+        },
+        "Jupiter": {
+          "house": 4,
+          "sign": "Taurus",
+          "degree": 22.569839614937862
+        },
+        "Venus": {
+          "house": 7,
+          "sign": "Leo",
+          "degree": 9.647513779516231
+        },
+        "Saturn": {
+          "house": 11,
+          "sign": "Sagittarius",
+          "degree": 0.8855082378560155
+        },
+        "Rahu": {
+          "house": 3,
+          "sign": "Aries",
+          "degree": 19.06887525914524
+        },
+        "Ketu": {
+          "house": 9,
+          "sign": "Libra",
+          "degree": 19.068875259145244
+        }
+      },
+      "chart": "Lata Mangeshkar"
+    }
+  },
+  {
+    "rule_id": "bvr_eka_puthra_precise",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    }
+  },
+  {
+    "rule_id": "bvr_grihanasa_yoga",
+    "true": {
+      "asc": "Scorpio",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 0.9801258905856685
+        },
+        "Moon": {
+          "house": 2,
+          "sign": "Sagittarius",
+          "degree": 29.283833822063457
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Libra",
+          "degree": 3.3431475788195257
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 17.638410707644482
+        },
+        "Jupiter": {
+          "house": 4,
+          "sign": "Aquarius",
+          "degree": 29.923513566476004
+        },
+        "Venus": {
+          "house": 5,
+          "sign": "Pisces",
+          "degree": 14.93306483732033
+        },
+        "Saturn": {
+          "house": 1,
+          "sign": "Scorpio",
+          "degree": 11.04814473997871
+        },
+        "Rahu": {
+          "house": 12,
+          "sign": "Libra",
+          "degree": 14.155035422100894
+        },
+        "Ketu": {
+          "house": 6,
+          "sign": "Aries",
+          "degree": 14.155035422100923
+        }
+      },
+      "chart": "Charles Darwin"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_kaahala_yoga",
+    "true": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_kaalanirdesat_puthranaasa_yoga",
+    "true": {
+      "asc": "Pisces",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 25.045647146877144
+        },
+        "Moon": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 20.79514255856907
+        },
+        "Mars": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 26.19591613453497
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 5.361450243366164
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 15.855021249080949
+        },
+        "Venus": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 22.062861185499514
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 12.827820000002859
+        },
+        "Rahu": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 27.37292067365013
+        },
+        "Ketu": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 27.37292067365013
+        }
+      },
+      "chart": "Nikola Tesla"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_kalaanidhi_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_kapata_yoga",
+    "true": {
+      "asc": "Pisces",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 25.045647146877144
+        },
+        "Moon": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 20.79514255856907
+        },
+        "Mars": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 26.19591613453497
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 5.361450243366164
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 15.855021249080949
+        },
+        "Venus": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 22.062861185499514
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 12.827820000002859
+        },
+        "Rahu": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 27.37292067365013
+        },
+        "Ketu": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 27.37292067365013
+        }
+      },
+      "chart": "Nikola Tesla"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_karma_malika_precise",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_kedaara_yoga",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    }
+  },
+  {
+    "rule_id": "bvr_krisanga_yoga",
+    "true": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_kushtaroga_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_mathibhramana_yoga",
+    "true": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    },
+    "false": {
+      "asc": "Virgo",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Sagittarius",
+          "degree": 23.155022481331343
+        },
+        "Moon": {
+          "house": 12,
+          "sign": "Leo",
+          "degree": 25.140179739722214
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Aries",
+          "degree": 4.165446045322873
+        },
+        "Mercury": {
+          "house": 5,
+          "sign": "Capricorn",
+          "degree": 3.3742330410175896
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Taurus",
+          "degree": 18.794677842626584
+        },
+        "Venus": {
+          "house": 5,
+          "sign": "Capricorn",
+          "degree": 26.75726129235818
+        },
+        "Saturn": {
+          "house": 8,
+          "sign": "Aries",
+          "degree": 27.921670532068443
+        },
+        "Rahu": {
+          "house": 12,
+          "sign": "Leo",
+          "degree": 21.03862186674621
+        },
+        "Ketu": {
+          "house": 6,
+          "sign": "Aquarius",
+          "degree": 21.03862186674621
+        }
+      },
+      "chart": "Stephen Hawking"
+    }
+  },
+  {
+    "rule_id": "bvr_matru_satrutwa_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_matru_sneha_yoga",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Virgo",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Sagittarius",
+          "degree": 23.155022481331343
+        },
+        "Moon": {
+          "house": 12,
+          "sign": "Leo",
+          "degree": 25.140179739722214
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Aries",
+          "degree": 4.165446045322873
+        },
+        "Mercury": {
+          "house": 5,
+          "sign": "Capricorn",
+          "degree": 3.3742330410175896
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Taurus",
+          "degree": 18.794677842626584
+        },
+        "Venus": {
+          "house": 5,
+          "sign": "Capricorn",
+          "degree": 26.75726129235818
+        },
+        "Saturn": {
+          "house": 8,
+          "sign": "Aries",
+          "degree": 27.921670532068443
+        },
+        "Rahu": {
+          "house": 12,
+          "sign": "Leo",
+          "degree": 21.03862186674621
+        },
+        "Ketu": {
+          "house": 6,
+          "sign": "Aquarius",
+          "degree": 21.03862186674621
+        }
+      },
+      "chart": "Stephen Hawking"
+    }
+  },
+  {
+    "rule_id": "bvr_matrudeerghayur_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_matrunasa_precise",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Leo",
+      "planets": {
+        "Sun": {
+          "house": 1,
+          "sign": "Leo",
+          "degree": 29.49059007412032
+        },
+        "Moon": {
+          "house": 4,
+          "sign": "Scorpio",
+          "degree": 4.627710449728653
+        },
+        "Mars": {
+          "house": 3,
+          "sign": "Libra",
+          "degree": 29.89740005923275
+        },
+        "Mercury": {
+          "house": 2,
+          "sign": "Virgo",
+          "degree": 0.13771297913723402
+        },
+        "Jupiter": {
+          "house": 7,
+          "sign": "Aquarius",
+          "degree": 5.7340620544774765
+        },
+        "Venus": {
+          "house": 1,
+          "sign": "Leo",
+          "degree": 14.531990596404881
+        },
+        "Saturn": {
+          "house": 1,
+          "sign": "Leo",
+          "degree": 28.747108867089167
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Pisces",
+          "degree": 4.324552228721757
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Virgo",
+          "degree": 4.324552228721814
+        }
+      },
+      "chart": "Narendra Modi"
+    }
+  },
+  {
+    "rule_id": "bvr_nishkapata_precise",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Scorpio",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Virgo",
+          "degree": 21.13659978927788
+        },
+        "Moon": {
+          "house": 11,
+          "sign": "Virgo",
+          "degree": 9.361545467955807
+        },
+        "Mars": {
+          "house": 9,
+          "sign": "Cancer",
+          "degree": 19.1292997089748
+        },
+        "Mercury": {
+          "house": 11,
+          "sign": "Virgo",
+          "degree": 14.421736312943125
+        },
+        "Jupiter": {
+          "house": 10,
+          "sign": "Leo",
+          "degree": 29.318289381252697
+        },
+        "Venus": {
+          "house": 1,
+          "sign": "Scorpio",
+          "degree": 0.6613337444849776
+        },
+        "Saturn": {
+          "house": 8,
+          "sign": "Gemini",
+          "degree": 15.095029436836839
+        },
+        "Rahu": {
+          "house": 11,
+          "sign": "Virgo",
+          "degree": 2.4050615510101068
+        },
+        "Ketu": {
+          "house": 5,
+          "sign": "Pisces",
+          "degree": 2.405061551010135
+        }
+      },
+      "chart": "Niels Bohr"
+    }
+  },
+  {
+    "rule_id": "bvr_pisacha_grastha_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_pittharoga_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_raja_bhanga_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_rogagrastha_precise",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Pisces",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 25.045647146877144
+        },
+        "Moon": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 20.79514255856907
+        },
+        "Mars": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 26.19591613453497
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 5.361450243366164
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 15.855021249080949
+        },
+        "Venus": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 22.062861185499514
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 12.827820000002859
+        },
+        "Rahu": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 27.37292067365013
+        },
+        "Ketu": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 27.37292067365013
+        }
+      },
+      "chart": "Nikola Tesla"
+    }
+  },
+  {
+    "rule_id": "bvr_sada_sanchara_precise",
+    "true": {
+      "asc": "Virgo",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Sagittarius",
+          "degree": 23.155022481331343
+        },
+        "Moon": {
+          "house": 12,
+          "sign": "Leo",
+          "degree": 25.140179739722214
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Aries",
+          "degree": 4.165446045322873
+        },
+        "Mercury": {
+          "house": 5,
+          "sign": "Capricorn",
+          "degree": 3.3742330410175896
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Taurus",
+          "degree": 18.794677842626584
+        },
+        "Venus": {
+          "house": 5,
+          "sign": "Capricorn",
+          "degree": 26.75726129235818
+        },
+        "Saturn": {
+          "house": 8,
+          "sign": "Aries",
+          "degree": 27.921670532068443
+        },
+        "Rahu": {
+          "house": 12,
+          "sign": "Leo",
+          "degree": 21.03862186674621
+        },
+        "Ketu": {
+          "house": 6,
+          "sign": "Aquarius",
+          "degree": 21.03862186674621
+        }
+      },
+      "chart": "Stephen Hawking"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_sareera_soukhya_precise",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    }
+  },
+  {
+    "rule_id": "bvr_soola_yoga",
+    "true": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_sumukha_precise",
+    "true": {
+      "asc": "Pisces",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 25.045647146877144
+        },
+        "Moon": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 20.79514255856907
+        },
+        "Mars": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 26.19591613453497
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 5.361450243366164
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 15.855021249080949
+        },
+        "Venus": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 22.062861185499514
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 12.827820000002859
+        },
+        "Rahu": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 27.37292067365013
+        },
+        "Ketu": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 27.37292067365013
+        }
+      },
+      "chart": "Nikola Tesla"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_swaveeryaddhana_precise",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Libra",
+      "planets": {
+        "Sun": {
+          "house": 7,
+          "sign": "Aries",
+          "degree": 26.84689923673939
+        },
+        "Moon": {
+          "house": 8,
+          "sign": "Taurus",
+          "degree": 16.333060815095386
+        },
+        "Mars": {
+          "house": 11,
+          "sign": "Leo",
+          "degree": 21.780005368921167
+        },
+        "Mercury": {
+          "house": 7,
+          "sign": "Aries",
+          "degree": 6.882795439771582
+        },
+        "Jupiter": {
+          "house": 8,
+          "sign": "Taurus",
+          "degree": 22.261941621790626
+        },
+        "Venus": {
+          "house": 6,
+          "sign": "Pisces",
+          "degree": 11.852800608331506
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Cancer",
+          "degree": 14.944546349648448
+        },
+        "Rahu": {
+          "house": 2,
+          "sign": "Scorpio",
+          "degree": 28.871871087845136
+        },
+        "Ketu": {
+          "house": 8,
+          "sign": "Taurus",
+          "degree": 28.871871087845136
+        }
+      },
+      "chart": "Richard Feynman"
+    }
+  },
+  {
+    "rule_id": "bvr_utthama_graha_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_vaatharoga_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_vanchana_chora_bheethi_yoga",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 0.5182940463058685
+        },
+        "Moon": {
+          "house": 1,
+          "sign": "Sagittarius",
+          "degree": 18.058478756704005
+        },
+        "Mars": {
+          "house": 1,
+          "sign": "Sagittarius",
+          "degree": 8.728234037525027
+        },
+        "Mercury": {
+          "house": 2,
+          "sign": "Capricorn",
+          "degree": 27.262874465470418
+        },
+        "Jupiter": {
+          "house": 6,
+          "sign": "Taurus",
+          "degree": 14.2332889660263
+        },
+        "Venus": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 14.448881183387414
+        },
+        "Saturn": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 9.513758312785342
+        },
+        "Rahu": {
+          "house": 10,
+          "sign": "Virgo",
+          "degree": 27.96901924851622
+        },
+        "Ketu": {
+          "house": 4,
+          "sign": "Pisces",
+          "degree": 27.969019248516247
+        }
+      },
+      "chart": "Thomas Edison"
+    }
+  },
+  {
+    "rule_id": "bvr_yuddha_marana_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "bvr_yukthi_samanwithavagmi_yoga",
+    "true": {
+      "asc": "Pisces",
+      "planets": {
+        "Sun": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 25.045647146877144
+        },
+        "Moon": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 20.79514255856907
+        },
+        "Mars": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 26.19591613453497
+        },
+        "Mercury": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 5.361450243366164
+        },
+        "Jupiter": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 15.855021249080949
+        },
+        "Venus": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 22.062861185499514
+        },
+        "Saturn": {
+          "house": 4,
+          "sign": "Gemini",
+          "degree": 12.827820000002859
+        },
+        "Rahu": {
+          "house": 1,
+          "sign": "Pisces",
+          "degree": 27.37292067365013
+        },
+        "Ketu": {
+          "house": 7,
+          "sign": "Virgo",
+          "degree": 27.37292067365013
+        }
+      },
+      "chart": "Nikola Tesla"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "kahala_yoga",
+    "true": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    },
+    "false": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 21.663614734263177
+        },
+        "Moon": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 23.27059982713871
+        },
+        "Mars": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 6.715779919055876
+        },
+        "Mercury": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 13.730711964621236
+        },
+        "Jupiter": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 5.112229360637002
+        },
+        "Venus": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.6622106542509982
+        },
+        "Saturn": {
+          "house": 12,
+          "sign": "Scorpio",
+          "degree": 2.386540586273867
+        },
+        "Rahu": {
+          "house": 9,
+          "sign": "Leo",
+          "degree": 19.469937299058927
+        },
+        "Ketu": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 19.469937299058927
+        }
+      },
+      "chart": "Marie Curie"
+    }
+  },
+  {
+    "rule_id": "koorma_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "parvata_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "pushkala_yoga",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "veena_yoga",
+    "true": {
+      "asc": "Sagittarius",
+      "planets": {
+        "Sun": {
+          "house": 3,
+          "sign": "Aquarius",
+          "degree": 11.95983632374083
+        },
+        "Moon": {
+          "house": 4,
+          "sign": "Pisces",
+          "degree": 18.21161372350997
+        },
+        "Mars": {
+          "house": 5,
+          "sign": "Aries",
+          "degree": 5.20573057684108
+        },
+        "Mercury": {
+          "house": 2,
+          "sign": "Capricorn",
+          "degree": 20.238066844709238
+        },
+        "Jupiter": {
+          "house": 7,
+          "sign": "Gemini",
+          "degree": 26.36716023991501
+        },
+        "Venus": {
+          "house": 1,
+          "sign": "Sagittarius",
+          "degree": 27.426096761811664
+        },
+        "Saturn": {
+          "house": 11,
+          "sign": "Libra",
+          "degree": 27.046334118475016
+        },
+        "Rahu": {
+          "house": 1,
+          "sign": "Sagittarius",
+          "degree": 9.243127514969558
+        },
+        "Ketu": {
+          "house": 7,
+          "sign": "Gemini",
+          "degree": 9.243127514969558
+        }
+      },
+      "chart": "Steve Jobs"
+    },
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  },
+  {
+    "rule_id": "vihaga_nabhasa",
+    "false": {
+      "asc": "Gemini",
+      "planets": {
+        "Sun": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 0.4006851191097667
+        },
+        "Moon": {
+          "house": 6,
+          "sign": "Scorpio",
+          "degree": 20.694808668469307
+        },
+        "Mars": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 3.8236855072427147
+        },
+        "Mercury": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 9.992138566263463
+        },
+        "Jupiter": {
+          "house": 9,
+          "sign": "Aquarius",
+          "degree": 4.421706139838761
+        },
+        "Venus": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 23.86992054608652
+        },
+        "Saturn": {
+          "house": 10,
+          "sign": "Pisces",
+          "degree": 11.132957294420464
+        },
+        "Rahu": {
+          "house": 8,
+          "sign": "Capricorn",
+          "degree": 9.669643032869487
+        },
+        "Ketu": {
+          "house": 2,
+          "sign": "Cancer",
+          "degree": 9.669643032869487
+        }
+      },
+      "chart": "Albert Einstein"
+    }
+  }
+]
