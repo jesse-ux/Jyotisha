@@ -10,19 +10,19 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.46 | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.0.47 | **详细变更**：`CHANGELOG.md`
 
 ## Yoga 逻辑验证指标
 
-| 指标 | v6.0.45（旧基线） | v6.0.46（当前） |
+| 指标 | v6.0.45（旧基线） | v6.0.47（当前） |
 |---|---|---|
-| Precision | 83.26% | **92.51%** |
-| Recall | 91.52% | **91.80%** |
-| **F1 Score** | 87.19% | **92.15%** |
+| Precision | 83.26% | **92.50%** |
+| Recall | 91.52% | **91.71%** |
+| **F1 Score** | 87.19% | **92.10%** |
 | FP | 193 | **78** |
-| FN | 89 | **86** |
+| FN | 89 | **87** |
 
-> v6.0.46 修复了 6 条完全错误的规则（kaalanirdesat_puthra 36→0, sapthasankhya 27→0, sarpasaapa 25→0, pushkala 9→0, koorma 9→0, bhratrumooladdhanaprapti 9→0），FP 减少 59.6%。
+> v6.0.46: 修复 6 条规则（FP 193→78）。v6.0.47: 修复 dharidhra bidirectional associated() → one-way aspect()，FP 未进一步下降因残余根因在 lord 解析（co-lord vs 古典宫主）和 rasi/house 差异。
 
 ---
 
@@ -315,7 +315,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 **版本**：v6.0.46-yoga-f1-92
 **创建日期**：2026-04-20
-**最后更新**：2026-06-06（v6.0.46 修复 6 条完全错误的瑜伽规则：kaalanirdesat_puthra/sapthasankhya_sahodara/sarpasaapa/pushkala/koorma/bhratrumooladdhanaprapti，FP 从 193→78，Precision 从 83.26%→92.51%，F1 从 87.19%→92.15%；当前 476 条规则、405 条启用，硬编码测试 8/9 通过）
+**最后更新**：2026-06-06（v6.0.46 修复 6 条完全错误的瑜伽规则：kaalanirdesat_puthra/sapthasankhya_sahodara/sarpasaapa/pushkala/koorma/bhratrumooladdhanaprapti，FP 从 193→78，Precision 从 83.26%→92.50%，F1 从 87.19%→92.10%；当前 476 条规则、405 条启用，硬编码测试 8/9 通过）
 
 ---
 
