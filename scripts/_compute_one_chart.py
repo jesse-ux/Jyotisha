@@ -104,9 +104,11 @@ def compute_yogas(chart):
 
             d1_positions = drik.dhasavarga(jd, place, 1)[:9]
             d9_positions = drik.dhasavarga(jd, place, 9)[:9]
+            d60_positions = drik.dhasavarga(jd, place, 60)[:9]
             asc_info = drik.ascendant(jd, place)
             d1_asc_sign, d1_asc_degree = asc_info[0], asc_info[1]
             d9_asc_sign, d9_asc_degree = drik.dasavarga_from_long(d1_asc_sign * 30 + d1_asc_degree, 9)
+            d60_asc_sign, d60_asc_degree = drik.dasavarga_from_long(d1_asc_sign * 30 + d1_asc_degree, 60)
             tithi_info = drik.tithi(jd, place)
             tithi_no = int(tithi_info[0]) if tithi_info else None
             lunar_phase = None
@@ -127,6 +129,11 @@ def compute_yogas(chart):
                 "ascendant": SIGNS[d9_asc_sign],
                 "ascendant_degree": d9_asc_degree,
                 "planets": _planet_dict_from_pyjhora_positions(d9_positions, d9_asc_sign),
+            },
+            "d60": {
+                "ascendant": SIGNS[d60_asc_sign],
+                "ascendant_degree": d60_asc_degree,
+                "planets": _planet_dict_from_pyjhora_positions(d60_positions, d60_asc_sign),
             },
             "panchanga": {
                 "tithi": tithi_no,

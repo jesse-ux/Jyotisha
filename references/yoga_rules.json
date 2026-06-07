@@ -9146,7 +9146,7 @@
       "category": "durbhaga",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora/BVR-144..152 D1-safe Dharidhra variants (v6.0.47).\nl1, l2, l5, l6, l7, l8, l11, l12 = [lord(h) for h in [1, 2, 5, 6, 7, 8, 11, 12]]\ndusthana = [6, 8, 12]\ndusthana_lords = [l6, l8, l12]\nmarakas = [l2, l7]\n\ndef in_chart(p):\n    return p in ctx.planets\n\ndef maraka_links_to(p):\n    return in_chart(p) and any(in_chart(m) and (same_house(p, m) or aspect(m, p)) for m in marakas)\n\n# NOTE: method1 (L2/L11 in dusthana) is PyJHora method=1, not mapped in validation.\n# v145/v146 are also not mapped. Only v144, v147-v152 are checked.\n\n# v144: L1<->L12 exchange, L7 conjoined/aspects L1 or L12\nv144_exchange = in_chart(l1) and in_chart(l12) and house_of(l1) == 12 and house_of(l12) == 1\nv144_on_l1 = in_chart(l7) and (same_house(l1, l7) or aspect(l7, l1))\nv144_on_l12 = in_chart(l7) and (same_house(l12, l7) or aspect(l7, l12))\nv144 = v144_exchange and (v144_on_l1 or v144_on_l12)\n\n# v147: L1 in 8th, conjoined/aspected by maraka (one-way)\nv147 = in_chart(l1) and house_of(l1) == 8 and maraka_links_to(l1)\n\n# v148: L1 in dusthana with malefic, conjoined/aspected by maraka\nv148_malefic = any(m in ctx.planets and m != l1 and same_house(l1, m) for m in MALEFICS)\nv148 = in_chart(l1) and house_of(l1) in dusthana and v148_malefic and maraka_links_to(l1)\n\n# v149: L1 associated with trik lord (trik lord aspects L1), L1 aspected by malefic\nv149_assoc = any(in_chart(tl) and (same_house(l1, tl) or aspect(tl, l1)) for tl in dusthana_lords)\nv149_malefic = any(m in ctx.planets and m != l1 and aspect(m, l1) for m in MALEFICS)\nv149 = v149_assoc and v149_malefic\n\n# v150: L5 joins trik lord, no benefic influence\nv150_join = any(in_chart(tl) and same_house(l5, tl) for tl in dusthana_lords)\nv150_no_benefic = not any(b in ctx.planets and (same_house(l5, b) or aspect(b, l5)) for b in BENEFICS)\nv150 = in_chart(l5) and v150_join and v150_no_benefic\n\n# v151: L5 in 6th or 10th, aspected by lords of 2/6/7/8/12\nv151_pos = in_chart(l5) and house_of(l5) in [6, 10]\nv151_aspected = any(in_chart(tl) and (aspect(tl, l5)) for tl in [l2, l6, l7, l8, l12])\nv151 = v151_pos and v151_aspected\n\n# v152: natural malefic (not L9/L10) in Lagna, conjoined/aspected by maraka\nl9 = lord(9)\nl10 = lord(10)\nv152 = any(in_chart(m) and house_of(m) == 1 and m not in [l9, l10] and maraka_links_to(m) for m in MALEFICS)\n\nv144 or v147 or v148 or v149 or v150 or v151 or v152\n",
+        "expr": "\n# PyJHora/BVR-144..152 D1-safe Dharidhra variants (v6.0.47).\nl1, l2, l5, l6, l7, l8, l11, l12 = [lord(h) for h in [1, 2, 5, 6, 7, 8, 11, 12]]\ndusthana = [6, 8, 12]\ndusthana_lords = [l6, l8, l12]\nmarakas = [l2, l7]\n\ndef in_chart(p):\n    return p in ctx.planets\n\ndef maraka_links_to(p):\n    return in_chart(p) and any(in_chart(m) and (same_house(p, m) or aspect(m, p)) for m in marakas)\n\n# v6.1.3: Restored method1 (L2/L11 in dusthana with unfriendly navamsa).\n# PyJHora checks: L2 or L11 in 6/8/12 AND their navamsa is unfriendly.\nmethod1 = False\nif ctx.d9.get('ascendant'):\n    for p in [l2, l11]:\n        if in_chart(p) and house_of(p) in dusthana and is_unfriendly_navamsa(p) and any(aspect(m, p) for m in MALEFICS if m in ctx.planets and m != p):\n            method1 = True\n            break\n\n# v144: L1<->L12 exchange, L7 conjoined/aspects L1 or L12\nv144_exchange = in_chart(l1) and in_chart(l12) and house_of(l1) == 12 and house_of(l12) == 1\nv144_on_l1 = in_chart(l7) and (same_house(l1, l7) or aspect(l7, l1))\nv144_on_l12 = in_chart(l7) and (same_house(l12, l7) or aspect(l7, l12))\nv144 = v144_exchange and (v144_on_l1 or v144_on_l12)\n\n# v147: L1 in 8th, conjoined/aspected by maraka (one-way)\nv147 = in_chart(l1) and house_of(l1) == 8 and maraka_links_to(l1)\n\n# v148: L1 in dusthana with malefic, conjoined/aspected by maraka\nv148_malefic = any(m in ctx.planets and m != l1 and same_house(l1, m) for m in MALEFICS)\nv148 = in_chart(l1) and house_of(l1) in dusthana and v148_malefic and maraka_links_to(l1)\n\n# v149: L1 associated with trik lord (trik lord aspects L1), L1 aspected by malefic\nv149_assoc = any(in_chart(tl) and (same_house(l1, tl) or aspect(tl, l1)) for tl in dusthana_lords)\nv149_malefic = any(m in ctx.planets and m != l1 and aspect(m, l1) for m in MALEFICS)\nv149 = v149_assoc and v149_malefic\n\n# v150: L5 joins trik lord, no benefic influence\nv150_join = any(in_chart(tl) and same_house(l5, tl) for tl in dusthana_lords)\nv150_no_benefic = not any(b in ctx.planets and (same_house(l5, b) or aspect(b, l5)) for b in BENEFICS)\nv150 = in_chart(l5) and v150_join and v150_no_benefic\n\n# v151: L5 in 6th or 10th, aspected by lords of 2/6/7/8/12\nv151_pos = in_chart(l5) and house_of(l5) in [6, 10]\nv151_aspected = any(in_chart(tl) and (aspect(tl, l5)) for tl in [l2, l6, l7, l8, l12])\nv151 = v151_pos and v151_aspected\n\n# v152: natural malefic (not L9/L10) in Lagna, conjoined/aspected by maraka\nl9 = lord(9)\nl10 = lord(10)\nv152 = any(in_chart(m) and house_of(m) == 1 and m not in [l9, l10] and maraka_links_to(m) for m in MALEFICS)\n\nmethod1 or v144 or v147 or v148 or v149 or v150 or v151 or v152\n",
         "combo_template": "Dharidhra：财帛/收益主落凶宫或Lagna/Maraka/Dusthana组合"
       },
       "effects": [
@@ -9156,7 +9156,7 @@
       ],
       "strength": "弱",
       "enabled": true,
-      "accuracy_note": "v6.0.47: fixed one-way aspect direction to match PyJHora source (replaced bidirectional associated() with one-way aspect() checks)"
+      "accuracy_note": "v6.1.3: restored method1 with D9 unfriendly navamsa check"
     },
     {
       "id": "bvr_sada_sanchara_precise",
@@ -9253,7 +9253,7 @@
       "category": "durbhaga",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora BVR-195: 4th lord associated with malefics or inimical/debilitated.\n# PyJHora uses house_strength <= _ENEMY (1) for 'inimical', not <= _NEUTRAL (2).\nlord_4 = lord(4)\nif lord_4 not in ctx.planets:\n    False\nelse:\n    malefic_assoc = any(m in ctx.planets and associated(lord_4, m) for m in MALEFICS if m != lord_4)\n    inimical_or_debil = debil(lord_4) or (house_strength(lord_4) is not None and house_strength(lord_4) <= 1)\n    malefic_assoc or inimical_or_debil\n",
+        "expr": "\n# PyJHora BVR-195: 4th lord associated with malefics or inimical/debilitated.\n# PyJHora uses house_strength <= _ENEMY (1) for 'inimical', not <= _NEUTRAL (2).\nlord_4 = lord(4)\nif lord_4 not in ctx.planets:\n    False\nelse:\n    malefic_assoc = any(m in ctx.planets and associated(lord_4, m) for m in MALEFICS if m != lord_4)\n    inimical_or_debil = debil(lord_4) or (house_strength(lord_4) is not None and house_strength(lord_4) <= 1) or is_shashtiamsa_evil(lord_4)\n    malefic_assoc or inimical_or_debil\n",
         "combo_template": "4宫主受凶星关联或处于弱/不利状态"
       },
       "effects": [
@@ -9263,7 +9263,7 @@
       ],
       "strength": "弱",
       "enabled": true,
-      "accuracy_note": "高置信：定义来自 PyJHora/B.V. Raman。"
+      "accuracy_note": "v6.1.3: added D60 evil shashtiamsa check"
     },
     {
       "id": "bvr_matrunasa_precise",
@@ -9295,7 +9295,7 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora/BVR 205-206 Nishkapata Yoga.\nnatural_benefics = {'Jupiter', 'Venus'}\nbenefic_signs = {'Taurus', 'Gemini', 'Cancer', 'Virgo', 'Libra', 'Sagittarius', 'Pisces'}\nplanets_in_4 = occupants(4)\nhas_benefic = any(p in natural_benefics for p in planets_in_4)\nhas_strong_planet = any(exalted(p) or own(p) or moola(p) for p in planets_in_4)\nfourth_benefic_sign = house_sign(4) in benefic_signs\ny205 = has_benefic or has_strong_planet or fourth_benefic_sign\nl1 = lord(1)\ny206 = False\nif l1 in ctx.planets and house_of(l1) == 4:\n    l1_with_benefic = any(p != l1 and same_house(l1, p) for p in natural_benefics if p in ctx.planets)\n    l1_aspected_benefic = any(aspect(p, l1) for p in natural_benefics if p in ctx.planets and p != l1)\n    y206 = l1_with_benefic or l1_aspected_benefic\ny205 or y206\n",
+        "expr": "\n# PyJHora/BVR 205-206 Nishkapata Yoga.\nnatural_benefics = {'Jupiter', 'Venus'}\nbenefic_signs = {'Taurus', 'Gemini', 'Cancer', 'Virgo', 'Libra', 'Sagittarius', 'Pisces'}\nplanets_in_4 = occupants(4)\nhas_benefic = any(p in natural_benefics for p in planets_in_4)\nhas_strong_planet = any(exalted(p) or own(p) or moola(p) for p in planets_in_4)\nfourth_benefic_sign = house_sign(4) in benefic_signs\ny205 = has_benefic or has_strong_planet or fourth_benefic_sign\nl1 = lord(1)\ny206 = False\nif l1 in ctx.planets and house_of(l1) == 4:\n    l1_with_benefic = any(p != l1 and same_house(l1, p) for p in natural_benefics if p in ctx.planets)\n    l1_aspected_benefic = any(aspect(p, l1) for p in natural_benefics if p in ctx.planets and p != l1)\n    y206 = l1_with_benefic or l1_aspected_benefic\ny205 or y206 or vaiseshikamsa_score(lord(1)) >= 15\n",
         "combo_template": "第4宫有天然吉星/强星/吉性星座，或上升主入4宫且受吉星影响"
       },
       "effects": [
@@ -9305,7 +9305,7 @@
       ],
       "strength": "中",
       "enabled": true,
-      "accuracy_note": "高置信：定义来自 PyJHora/B.V. Raman。"
+      "accuracy_note": "v6.1.3: added Vaiseshikamsa scoring for lagna lord"
     },
     {
       "id": "bvr_bahu_puthra_precise",
@@ -12878,7 +12878,7 @@
       "category": "special",
       "logic": {
         "type": "custom",
-        "expr": "\nif 'Jupiter' not in ctx.planets or 'Mercury' not in ctx.planets or 'Venus' not in ctx.planets: False\nelse:\n    jup_kt = ctx.is_kendra(ctx.house_of('Jupiter')) or ctx.is_trikona(ctx.house_of('Jupiter'))\n    all_strong = all(ctx.is_exalted(p) or ctx.is_own_sign(p) or ctx.is_moolatrikona(p) or ctx.is_kendra(ctx.house_of(p)) or ctx.is_trikona(ctx.house_of(p)) for p in ['Jupiter','Mercury','Venus'])\n    jup_kt and all_strong\n"
+        "expr": "\nif 'Jupiter' not in ctx.planets or 'Mercury' not in ctx.planets or 'Venus' not in ctx.planets: False\nelse:\n    jup_kt = ctx.is_kendra(ctx.house_of('Jupiter')) or ctx.is_trikona(ctx.house_of('Jupiter'))\n    # D1 strong: exalted/own/moola ONLY (kendra/trikona removed per BVR-248)\n    d1_strong = lambda p: ctx.is_exalted(p) or ctx.is_own_sign(p) or ctx.is_moolatrikona(p)\n    # D9 strong: exalted/own/moola in D9 (if D9 available)\n    d9_strong = lambda p: ctx.is_exalted_in_d9(p) or ctx.is_own_sign_in_d9(p) or ctx.is_moolatrikona_in_d9(p)\n    all_strong = all(d1_strong(p) for p in ['Jupiter','Mercury','Venus'])\n    # If D9 data available, require at least 2 of 3 to be strong in D9 as well\n    d9_available = bool(ctx.d9.get('ascendant'))\n    d9_check = True\n    if d9_available:\n        d9_count = sum(1 for p in ['Jupiter','Mercury','Venus'] if d9_strong(p))\n        d9_check = d9_count >= 1\n    jup_kt and all_strong and d9_check\n"
       },
       "effects": [
         "Knowledge of past/present/future, intuitive wisdom"
@@ -13608,7 +13608,8 @@
       "strength": "moderate",
       "enabled": true,
       "draft": false,
-      "evidence_note": "v6.0.37: high-confidence PyJHora Kapata 202-204 implementation."
+      "evidence_note": "v6.0.37: high-confidence PyJHora Kapata 202-204 implementation.",
+      "accuracy_note": "v6.1.3-revert: back to MALEFICS (functional_malefics caused 22 FN)"
     },
     {
       "id": "bvr_durmukha_yoga",

@@ -102,6 +102,7 @@ class YogaContext:
         self.asc_idx = SIGNS.index(ascendant) if ascendant in SIGNS else 0
         self.context = context or {}
         self.d9 = self.context.get("d9", {}) if isinstance(self.context, dict) else {}
+        self.d60 = self.context.get("d60", {}) if isinstance(self.context, dict) else {}
         self.panchanga = self.context.get("panchanga", {}) if isinstance(self.context, dict) else {}
         self.upagraha = self.context.get("upagraha", {}) if isinstance(self.context, dict) else {}
 
@@ -121,6 +122,15 @@ class YogaContext:
             for h in range(1, 13):
                 sign = SIGNS[(d9_asc_idx + h - 1) % 12]
                 self._d9_house_lords[h] = self._resolve_sign_lord(sign)
+
+        # 预计算 D60 宫主星（用于依赖 Shashtiamsa 的 B.V. Raman Yoga）
+        d60_asc = self.d60.get("ascendant")
+        d60_asc_idx = SIGNS.index(d60_asc) if d60_asc in SIGNS else None
+        self._d60_house_lords: Dict[int, str] = {}
+        if d60_asc_idx is not None:
+            for h in range(1, 13):
+                sign = SIGNS[(d60_asc_idx + h - 1) % 12]
+                self._d60_house_lords[h] = self._resolve_sign_lord(sign)
 
     def _sign_index_of_planet(self, planet: str) -> Optional[int]:
         sign = self.sign_of(planet)
@@ -248,6 +258,142 @@ class YogaContext:
     def navamsa_dispositor(self, planet: str) -> Optional[str]:
         sign = self.d9_sign_of(planet)
         return self._resolve_sign_lord(sign) if sign else None
+
+    # --- D60 / Shashtiamsa 扩展上下文 ---
+    def d60_house_of(self, planet: str) -> Optional[int]:
+        return self.d60.get("planets", {}).get(planet, {}).get("house")
+
+    def d60_sign_of(self, planet: str) -> Optional[str]:
+        return self.d60.get("planets", {}).get(planet, {}).get("sign")
+
+    def d60_lord_of_house(self, house: int) -> Optional[str]:
+        return self._d60_house_lords.get(house)
+
+    def shashtiamsa_dispositor(self, planet: str) -> Optional[str]:
+        sign = self.d60_sign_of(planet)
+        return self._resolve_sign_lord(sign) if sign else None
+
+    # --- D9 尊严查询（用于跨分盘 Yoga 判断） ---
+    def is_exalted_in_d9(self, planet: str) -> bool:
+        s = self.d9_sign_of(planet)
+        return s is not None and EXALTATION.get(planet) == s
+
+    def is_debilitated_in_d9(self, planet: str) -> bool:
+        s = self.d9_sign_of(planet)
+        return s is not None and DEBILITATION.get(planet) == s
+
+    def is_own_sign_in_d9(self, planet: str) -> bool:
+        s = self.d9_sign_of(planet)
+        return s is not None and self._resolve_sign_lord(s) == planet
+
+    def is_moolatrikona_in_d9(self, planet: str) -> bool:
+        s = self.d9_sign_of(planet)
+        return s is not None and MOOLATRIKONA_SIGN.get(planet) == s
+
+    def dignity_in_d9(self, planet: str) -> str:
+        s = self.d9_sign_of(planet)
+        return _get_dignity_level(planet, s) if s else 'NEUTRAL'
+
+    def is_friendly_navamsa(self, planet: str) -> bool:
+        """Check if planet is in friendly sign in D9 (used by dharidhra method1)."""
+        s = self.d9_sign_of(planet)
+        if not s:
+            return False
+        lord = self._resolve_sign_lord(s)
+        return lord in FRIENDLY_PLANETS.get(planet, [])
+
+    def is_unfriendly_navamsa(self, planet: str) -> bool:
+        """Check if planet is in unfriendly/enemy sign in D9."""
+        s = self.d9_sign_of(planet)
+        if not s:
+            return False
+        lord = self._resolve_sign_lord(s)
+        # Enemy if not friendly and not self
+        if lord == planet:
+            return False
+        return lord not in FRIENDLY_PLANETS.get(planet, [])
+
+    # --- Functional Malefic / Benefic（基于月亮盈亏和宫主关系） ---
+    def functional_malefics(self) -> List[str]:
+        """
+        Return functional malefics for this chart.
+        Rules (per PyJHora/B.V. Raman):
+        - Lords of 3, 6, 8, 11, 12 are functional malefics
+        - Mercury is malefic if conjunct with malefic
+        - Moon is malefic if waning (Krishna Paksha)
+        """
+        fm = []
+        dusthana_lords = [self.lord_of_house(h) for h in [3, 6, 8, 11, 12]]
+        fm.extend([l for l in dusthana_lords if l])
+
+        # Mercury becomes functional malefic if conjunct with natural malefic
+        if 'Mercury' in self.planets:
+            merc_h = self.house_of('Mercury')
+            merc_conj_malefic = any(
+                m in self.planets and self.house_of(m) == merc_h
+                for m in ['Mars', 'Saturn', 'Rahu', 'Ketu', 'Sun']
+            )
+            if merc_conj_malefic and 'Mercury' not in fm:
+                fm.append('Mercury')
+
+        # Waning Moon is functional malefic
+        if self.is_waning_moon() and 'Moon' in self.planets and 'Moon' not in fm:
+            fm.append('Moon')
+
+        return list(set(fm))
+
+    def functional_benefics(self) -> List[str]:
+        """Return functional benefics = all planets minus functional malefics minus natural malefics."""
+        fm = set(self.functional_malefics())
+        nm = set(MALEFICS)
+        return [p for p in ALL_PLANETS if p in self.planets and p not in fm and p not in nm]
+
+    # --- Shashtiamsa / Vaiseshikamsa 简化评分 ---
+    def is_shashtiamsa_evil(self, planet: str) -> bool:
+        """
+        Simplified evil shashtiamsa check.
+        In D60, if planet is debilitated, in enemy sign, or in dusthana house → evil.
+        """
+        s = self.d60_sign_of(planet)
+        h = self.d60_house_of(planet)
+        if s is None or h is None:
+            return False
+        debil = DEBILITATION.get(planet) == s
+        lord = self._resolve_sign_lord(s)
+        enemy = lord not in FRIENDLY_PLANETS.get(planet, []) and lord != planet
+        dusthana = h in [6, 8, 12]
+        return debil or enemy or dusthana
+
+    def is_shashtiamsa_good(self, planet: str) -> bool:
+        """Good shashtiamsa: exalted, own sign, or moolatrikona in D60."""
+        s = self.d60_sign_of(planet)
+        if s is None:
+            return False
+        return EXALTATION.get(planet) == s or self._resolve_sign_lord(s) == planet or MOOLATRIKONA_SIGN.get(planet) == s
+
+    def vaiseshikamsa_score(self, planet: str) -> int:
+        """
+        Simplified Vaiseshikamsa scoring (0-20 scale, higher = better).
+        Combines D1 dignity + D9 dignity + D60 dignity.
+        """
+        score = 0
+        # D1 dignity (0-8)
+        d1_dignity = self.dignity(planet)
+        d1_scores = {'EXALTED': 8, 'OWN_SIGN': 7, 'MOOLATRIKONA': 6, 'NEUTRAL': 3, 'DEBILITATED': 0}
+        score += d1_scores.get(d1_dignity, 3)
+
+        # D9 dignity (0-7)
+        d9_dignity = self.dignity_in_d9(planet)
+        score += d1_scores.get(d9_dignity, 3) - 1  # slightly lower weight
+
+        # D60 dignity (0-5)
+        s60 = self.d60_sign_of(planet)
+        if s60:
+            d60_dignity = _get_dignity_level(planet, s60)
+            d60_scores = {'EXALTED': 5, 'OWN_SIGN': 4, 'MOOLATRIKONA': 3, 'NEUTRAL': 2, 'DEBILITATED': 0}
+            score += d60_scores.get(d60_dignity, 2)
+
+        return score
 
     def tithi(self) -> Optional[int]:
         return self.panchanga.get("tithi")
@@ -1291,6 +1437,26 @@ class YogaEngine:
             "upagraha_house": upagraha_house, "upagraha_sign": upagraha_sign,
             "gulika_house": gulika_house, "maandi_house": maandi_house,
             "gulika_sign": gulika_sign, "maandi_sign": maandi_sign,
+            # v6.1.3: D60 / Shashtiamsa 扩展
+            "d60_house_of": lambda p: ctx.d60_house_of(p),
+            "d60_sign_of": lambda p: ctx.d60_sign_of(p),
+            "d60_lord_of_house": lambda h: ctx.d60_lord_of_house(h),
+            "shashtiamsa_dispositor": lambda p: ctx.shashtiamsa_dispositor(p),
+            "is_shashtiamsa_evil": lambda p: ctx.is_shashtiamsa_evil(p),
+            "is_shashtiamsa_good": lambda p: ctx.is_shashtiamsa_good(p),
+            # v6.1.3: D9 尊严扩展
+            "is_exalted_in_d9": lambda p: ctx.is_exalted_in_d9(p),
+            "is_debilitated_in_d9": lambda p: ctx.is_debilitated_in_d9(p),
+            "is_own_sign_in_d9": lambda p: ctx.is_own_sign_in_d9(p),
+            "is_moolatrikona_in_d9": lambda p: ctx.is_moolatrikona_in_d9(p),
+            "dignity_in_d9": lambda p: ctx.dignity_in_d9(p),
+            "is_friendly_navamsa": lambda p: ctx.is_friendly_navamsa(p),
+            "is_unfriendly_navamsa": lambda p: ctx.is_unfriendly_navamsa(p),
+            # v6.1.3: Functional malefic / benefic
+            "functional_malefics": lambda: ctx.functional_malefics(),
+            "functional_benefics": lambda: ctx.functional_benefics(),
+            # v6.1.3: Vaiseshikamsa scoring
+            "vaiseshikamsa_score": lambda p: ctx.vaiseshikamsa_score(p),
             "exal": exal, "lord_of_house": lord_of_house, "sign": sign,
             "check_amala_from": check_amala_from,
             "Benefics": BENEFICS, "Malefics": MALEFICS,
