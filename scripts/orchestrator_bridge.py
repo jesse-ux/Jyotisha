@@ -15,7 +15,18 @@ orchestrator_bridge.py — 编排器桥接层
 """
 
 from typing import Dict, List, Any, Optional
+from datetime import datetime
 import json
+
+# Import dasha systems (handle relative imports)
+try:
+    from ashtottari_dasha import calculate_ashtottari_dasha
+    from yogini_dasha import calculate_yogini_dasha
+    from kalachakra_dasha import calculate_kalachakra_dasha
+except ImportError:
+    from scripts.ashtottari_dasha import calculate_ashtottari_dasha
+    from scripts.yogini_dasha import calculate_yogini_dasha
+    from scripts.kalachakra_dasha import calculate_kalachakra_dasha
 
 # Import both orchestrators (handle relative imports)
 try:
@@ -136,6 +147,235 @@ class OrchestratorBridge:
 
         return results
 
+    # ── 推运系统注入 ──
+
+    def inject_dasha_results(self, chart_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        计算并注入 Ashtottari / Yogini / Kalachakra Dasha 结果。
+
+        从 chart_data 提取 birth_info，调用三个推运模块，
+        将当前推运周期转换为 TimingAnchor 注入 report_orchestrator。
+
+        Returns:
+            三个推运系统的原始计算结果，供后续使用。
+        """
+        # 从 chart_data 提取 birth_info
+        birth_info = self._extract_birth_info(chart_data)
+        if not birth_info:
+            return {}
+
+        results: Dict[str, Any] = {}
+
+        # 1. Ashtottari Dasha (条件性推运)
+        try:
+            ash = calculate_ashtottari_dasha(birth_info)
+            results["ashtottari"] = ash
+            if ash.get("applicable") and ash.get("current"):
+                self._add_dasha_timing_anchor(
+                    system="Ashtottari",
+                    current=ash["current"],
+                    total_cycle=ash.get("total_cycle", 108),
+                )
+        except Exception:
+            pass
+
+        # 2. Yogini Dasha (普遍适用)
+        try:
+            yog = calculate_yogini_dasha(birth_info)
+            results["yogini"] = yog
+            if yog.get("current"):
+                self._add_dasha_timing_anchor(
+                    system="Yogini",
+                    current=yog["current"],
+                    total_cycle=yog.get("total_cycle", 36),
+                )
+        except Exception:
+            pass
+
+        # 3. Kalachakra Dasha (条件性推运)
+        try:
+            kal = calculate_kalachakra_dasha(birth_info)
+            results["kalachakra"] = kal
+            if kal.get("current"):
+                self._add_dasha_timing_anchor(
+                    system="Kalachakra",
+                    current=kal["current"],
+                    total_cycle=kal.get("total_cycle", 0),
+                )
+        except Exception:
+            pass
+
+        # 4. 将推运结果也作为 TechniqueResult 注入所有主题
+        self._inject_dasha_technique_results(results)
+
+        return results
+
+    def _extract_birth_info(self, chart_data: Any) -> Optional[Dict[str, Any]]:
+        """从 chart_data 提取推运计算所需的 birth_info。
+
+        支持 dict 和 dataclass 对象（如 BirthChartData）。
+        如果数据不足，返回 None（推运注入将静默跳过）。
+        """
+        import dataclasses
+
+        # 统一转为 dict
+        if hasattr(chart_data, "__dataclass_fields__"):
+            data = dataclasses.asdict(chart_data)
+        elif isinstance(chart_data, dict):
+            data = chart_data
+        else:
+            return None
+
+        info: Dict[str, Any] = {}
+
+        # birth_datetime
+        birth_dt = data.get("birth_datetime")
+        if birth_dt is None:
+            chart = data.get("chart") or data.get("natal_chart")
+            if chart:
+                birth_dt = chart.get("birth_datetime")
+        if isinstance(birth_dt, str):
+            birth_dt = datetime.fromisoformat(birth_dt.replace("Z", "+00:00"))
+        info["birth_datetime"] = birth_dt
+
+        # moon_nakshatra_index
+        moon_nak = data.get("moon_nakshatra_index")
+        if moon_nak is None:
+            chart = data.get("chart") or data.get("natal_chart")
+            if chart:
+                nakshatras = chart.get("nakshatras") or chart.get("nakshatra")
+                if nakshatras and "Moon" in nakshatras:
+                    moon_nak = nakshatras["Moon"].get("index")
+        if moon_nak is not None:
+            info["moon_nakshatra_index"] = int(moon_nak)
+
+        # is_shukla_paksha (从Tithi推断)
+        tithi = data.get("tithi")
+        if tithi is None:
+            chart = data.get("chart") or data.get("natal_chart")
+            if chart:
+                tithi = chart.get("tithi")
+        if tithi is not None:
+            tithi_num = int(tithi) if isinstance(tithi, (int, float, str)) else 15
+            info["is_shukla_paksha"] = 1 <= tithi_num <= 15
+
+        # lagna_rashi_index
+        lagna = data.get("ascendant") or data.get("lagna")
+        if lagna is None:
+            chart = data.get("chart") or data.get("natal_chart")
+            if chart:
+                lagna = chart.get("ascendant") or chart.get("lagna")
+        if lagna is not None:
+            if isinstance(lagna, str):
+                sign_names = [
+                    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+                    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+                ]
+                if lagna in sign_names:
+                    info["lagna_rashi_index"] = sign_names.index(lagna)
+            elif isinstance(lagna, dict):
+                sign = lagna.get("sign") or lagna.get("rashi")
+                if sign:
+                    sign_names = [
+                        "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+                        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+                    ]
+                    if sign in sign_names:
+                        info["lagna_rashi_index"] = sign_names.index(sign)
+                degree = lagna.get("degree")
+                if degree is not None:
+                    info["lagna_rashi_index"] = int(degree / 30) % 12
+
+        # moon_pada (for Kalachakra)
+        moon_pada = data.get("moon_pada")
+        if moon_pada is None:
+            chart = data.get("chart") or data.get("natal_chart")
+            if chart:
+                nakshatras = chart.get("nakshatras") or chart.get("nakshatra")
+                if nakshatras and "Moon" in nakshatras:
+                    moon_pada = nakshatras["Moon"].get("pada")
+        if moon_pada is not None:
+            info["moon_pada"] = int(moon_pada)
+        else:
+            info["moon_pada"] = 1
+
+        return info if info.get("birth_datetime") else None
+
+    def _add_dasha_timing_anchor(
+        self,
+        system: str,
+        current: Dict[str, Any],
+        total_cycle: int,
+    ) -> None:
+        """将单个推运当前周期转换为 TimingAnchor 并注入 report_orchestrator。"""
+        start_date = current.get("start_date", "")
+        end_date = current.get("end_date", "")
+
+        # 提取年份
+        try:
+            start_year = int(start_date[:4]) if isinstance(start_date, str) else datetime.now().year
+            end_year = int(end_date[:4]) if isinstance(end_date, str) else (start_year + 5)
+        except (ValueError, TypeError):
+            start_year = datetime.now().year
+            end_year = start_year + 5
+
+        # 确定行星名称
+        planet = current.get("planet") or current.get("yogini") or current.get("lord") or "Unknown"
+
+        # 构建激活描述
+        activation = f"{system}推运中，{planet}主运带来人生阶段的转换与业力展现"
+        if system == "Yogini":
+            activation = f"Yogini推运中，{planet}女神主导当前周期，影响心理与事件层面"
+        elif system == "Kalachakra":
+            rashi = current.get("rashi", "")
+            mode = current.get("mode", "")
+            activation = f"Kalachakra {mode}模式推运中，{planet}主宰{rashi}宫阶段"
+
+        anchor = TimingAnchor(
+            dasha_period=f"{system}-{planet}",
+            start_year=start_year,
+            end_year=end_year,
+            activation_description=activation,
+            is_current=True,
+        )
+
+        # 注入到所有5个主题
+        for tn in ThemeName:
+            self.rpo.add_timing(tn, anchor)
+
+    def _inject_dasha_technique_results(self, dasha_results: Dict[str, Any]) -> None:
+        """将推运结果作为 TechniqueResult 注入所有主题。"""
+        for system, result in dasha_results.items():
+            if not result:
+                continue
+            current = result.get("current")
+            if not current:
+                continue
+
+            planet = current.get("planet") or current.get("yogini") or current.get("lord") or "Unknown"
+            system_zh = {"ashtottari": "Ashtottari推运", "yogini": "Yogini推运", "kalachakra": "Kalachakra推运"}.get(system, system)
+
+            conclusion = f"{system_zh}：当前处于{planet}主运周期"
+            if system == "ashtottari" and result.get("applicable") is False:
+                conclusion = f"{system_zh}：不适用（出生条件不符合）"
+
+            tech_result = ReportTechniqueResult(
+                technique=f"{system}_dasha",
+                chart="Dasha",
+                conclusion=conclusion,
+                sentiment="neutral",
+                strength=StrengthLevel.MODERATE,
+                details={
+                    "system": system,
+                    "current_period": current,
+                    "total_cycle": result.get("total_cycle"),
+                    "applicable": result.get("applicable", True),
+                },
+            )
+
+            for tn in ThemeName:
+                self.rpo.add_technique(tn, tech_result)
+
     # ── 端到端报告生成 ──
 
     def generate_full_report(
@@ -155,6 +395,7 @@ class OrchestratorBridge:
                 "reading_chapters": Dict[ReadingTheme, List[ReadingChapter]],
                 "theme_reports": Dict[ThemeName, ThemeReport],
                 "unified_narrative": str,
+                "dasha_results": Dict[str, Any],
             }
         """
         if themes is None:
@@ -165,6 +406,9 @@ class OrchestratorBridge:
                 ReadingTheme.HEALTH,
                 ReadingTheme.SPIRITUAL,
             ]
+
+        # Step 0: 注入推运结果（在所有主题分析之前）
+        dasha_results = self.inject_dasha_results(chart_data)
 
         reading_chapters: Dict[str, List[ReadingChapter]] = {}
         theme_reports: Dict[str, Any] = {}
@@ -199,6 +443,7 @@ class OrchestratorBridge:
             },
             "theme_reports": theme_reports,
             "unified_narrative": unified,
+            "dasha_results": dasha_results,
         }
 
     # ── 内部辅助 ──

@@ -629,6 +629,9 @@ class ThematicReportOrchestrator:
             t: NarrativeGenerator(t) for t in ThemeName
         }
         self._timing_builder = TimingAnchorBuilder(chart_data)
+        self._external_timings: Dict[ThemeName, List[TimingAnchor]] = {
+            t: [] for t in ThemeName
+        }
 
     def add_technique(self, theme: ThemeName, result: TechniqueResult) -> None:
         """向指定主题添加一个技法分析结果"""
@@ -640,6 +643,10 @@ class ThematicReportOrchestrator:
         for r in results:
             self.add_technique(theme, r)
 
+    def add_timing(self, theme: ThemeName, timing: TimingAnchor) -> None:
+        """向指定主题添加外部注入的时间锚定（如推运结果）"""
+        self._external_timings[theme].append(timing)
+
     def generate_report(self, theme: ThemeName) -> ThemeReport:
         """生成单一主题完整报告"""
         validator = self._validators[theme]
@@ -650,8 +657,12 @@ class ThematicReportOrchestrator:
         strength = validator.compute_overall_strength()
         dominant = validator.get_dominant_sentiment()
 
-        # 2. 时间锚定
-        timing = self._timing_builder.build_for_theme(theme)
+        # 2. 时间锚定（优先使用外部注入的推运结果）
+        if self._external_timings.get(theme):
+            # 使用最新注入的外部timing
+            timing = self._external_timings[theme][-1]
+        else:
+            timing = self._timing_builder.build_for_theme(theme)
 
         # 3. 叙事生成
         narrator = self._narrators[theme]

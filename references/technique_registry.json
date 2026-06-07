@@ -111,6 +111,66 @@
       "audit_label": "Vimshottari",
       "missing_impact": "Primary timing layer unavailable."
     },
+    "ashtottari_dasha": {
+      "name": "Ashtottari Dasha / 108年周期",
+      "domains": [
+        "timing",
+        "event",
+        "nakshatra"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/alternative-dasha-systems.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.ashtottari_dasha"
+      ],
+      "audit_label": "Ashtottari",
+      "missing_impact": "Nakshatra-based conditional timing layer unavailable for qualifying charts."
+    },
+    "yogini_dasha": {
+      "name": "Yogini Dasha / 36年周期",
+      "domains": [
+        "timing",
+        "event",
+        "yogini"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/alternative-dasha-systems.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogini_dasha"
+      ],
+      "audit_label": "Yogini",
+      "missing_impact": "Lagna-based 36-year timing layer unavailable."
+    },
+    "kalachakra_dasha": {
+      "name": "Kalachakra Dasha / 时轮大运",
+      "domains": [
+        "timing",
+        "event",
+        "nakshatra"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/alternative-dasha-systems.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.kalachakra_dasha"
+      ],
+      "audit_label": "Kalachakra",
+      "missing_impact": "Savya/Apasavya dual-mode timing layer unavailable."
+    },
     "dasha_sandhi": {
       "name": "Dasha Sandhi",
       "domains": [
