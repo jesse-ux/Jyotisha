@@ -1,202 +1,343 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-pancha_pakshi.py - Pancha Pakshi（五鸟）系统计算模块
-v6.0.15 新增技法
+pancha_pakshi.py — Pancha Pakshi 五鸟择时引擎
+===============================================
+基于出生Nakshatra和Paksha计算每日吉凶活动时段
 
-Pancha Pakshi 是泰米尔占星系统，将 27 Nakshatra 分配给 5 只"鸟"
-（代表生命力的 5 种状态：统治、进食、行走、睡眠、死亡）。
-每个人根据出生 Nakshatra 和当前时日，处于某种 Pakshi 状态。
+版本: v1.0 | 2026-06-07
 """
 
-# 五鸟名称与状态
-PAKSHI_NAMES = {
-    0: "Vulture / Rule (统治)",
-    1: "Crow / Eat (进食)",
-    2: "Crane / Walk (行走)",
-    3: "Owl / Sleep (睡眠)",
-    4: "Bat / Die (死亡)",
+from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass, field
+from enum import Enum
+
+
+class ActivityType(Enum):
+    """五鸟活动类型"""
+    RULE = "rule"           # 统治 — 吉
+    EAT = "eat"             # 进食 — 吉
+    WALK = "walk"           # 行走 — 中
+    SLEEP = "sleep"         # 睡眠 — 凶
+    DEATH = "death"         # 死亡 — 凶
+
+
+class BirdType(Enum):
+    """五鸟类型"""
+    VULTURE = "vulture"     # 兀鹫
+    OWL = "owl"             # 猫头鹰
+    CROW = "crow"           # 乌鸦
+    COCK = "cock"           # 公鸡
+    PEACOCK = "peacock"     # 孔雀
+
+
+# Nakshatra到鸟的映射（Shukla Paksha / Krishna Paksha）
+NAKSHATRA_BIRDS = {
+    # Shukla Paksha (亮月期)
+    "shukla": {
+        "Ashwini": BirdType.VULTURE, "Bharani": BirdType.OWL,
+        "Krittika": BirdType.CROW, "Rohini": BirdType.COCK,
+        "Mrigashira": BirdType.PEACOCK, "Ardra": BirdType.VULTURE,
+        "Punarvasu": BirdType.OWL, "Pushya": BirdType.CROW,
+        "Ashlesha": BirdType.COCK, "Magha": BirdType.PEACOCK,
+        "Purva Phalguni": BirdType.VULTURE, "Uttara Phalguni": BirdType.OWL,
+        "Hasta": BirdType.CROW, "Chitra": BirdType.COCK,
+        "Swati": BirdType.PEACOCK, "Vishakha": BirdType.VULTURE,
+        "Anuradha": BirdType.OWL, "Jyeshtha": BirdType.CROW,
+        "Mula": BirdType.COCK, "Purva Ashadha": BirdType.PEACOCK,
+        "Uttara Ashadha": BirdType.VULTURE, "Shravana": BirdType.OWL,
+        "Dhanishta": BirdType.CROW, "Shatabhisha": BirdType.COCK,
+        "Purva Bhadrapada": BirdType.PEACOCK, "Uttara Bhadrapada": BirdType.VULTURE,
+        "Revati": BirdType.OWL,
+    },
+    # Krishna Paksha (暗月期)
+    "krishna": {
+        "Ashwini": BirdType.OWL, "Bharani": BirdType.VULTURE,
+        "Krittika": BirdType.PEACOCK, "Rohini": BirdType.COCK,
+        "Mrigashira": BirdType.CROW, "Ardra": BirdType.OWL,
+        "Punarvasu": BirdType.VULTURE, "Pushya": BirdType.PEACOCK,
+        "Ashlesha": BirdType.COCK, "Magha": BirdType.CROW,
+        "Purva Phalguni": BirdType.OWL, "Uttara Phalguni": BirdType.VULTURE,
+        "Hasta": BirdType.PEACOCK, "Chitra": BirdType.COCK,
+        "Swati": BirdType.CROW, "Vishakha": BirdType.OWL,
+        "Anuradha": BirdType.VULTURE, "Jyeshtha": BirdType.PEACOCK,
+        "Mula": BirdType.COCK, "Purva Ashadha": BirdType.CROW,
+        "Uttara Ashadha": BirdType.OWL, "Shravana": BirdType.VULTURE,
+        "Dhanishta": BirdType.PEACOCK, "Shatabhisha": BirdType.COCK,
+        "Purva Bhadrapada": BirdType.CROW, "Uttara Bhadrapada": BirdType.OWL,
+        "Revati": BirdType.VULTURE,
+    },
 }
 
-# 27 Nakshatra 对应的 Pakshi 分配（按泰米尔传统）
-# 来源：泰米尔占星文献
-# 分配方式：每个 Pakshi 掌管 5-6 个 Nakshatra
-NAKSHATRA_PAKSHI = {
-    # Vulture / Rule (0)
-    1: 0, 2: 0, 3: 0, 4: 0, 5: 0,
-    # Crow / Eat (1)
-    6: 1, 7: 1, 8: 1, 9: 1, 10: 1,
-    # Crane / Walk (2)
-    11: 2, 12: 2, 13: 2, 14: 2, 15: 2,
-    # Owl / Sleep (3)
-    16: 3, 17: 3, 18: 3, 19: 3, 20: 3,
-    # Bat / Die (4)
-    21: 4, 22: 4, 23: 4, 24: 4, 25: 4, 26: 4, 27: 4,
+# 鸟的活动周期表（5个Yama × 5种活动）
+# 每个Yama约3小时（一天15小时，从日出到日落）
+BIRD_ACTIVITY_TABLE = {
+    BirdType.VULTURE: [
+        [ActivityType.RULE, ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH],
+        [ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE],
+        [ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT],
+        [ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT, ActivityType.WALK],
+        [ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP],
+    ],
+    BirdType.OWL: [
+        [ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT],
+        [ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT, ActivityType.WALK],
+        [ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP],
+        [ActivityType.RULE, ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH],
+        [ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE],
+    ],
+    BirdType.CROW: [
+        [ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP],
+        [ActivityType.RULE, ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH],
+        [ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE],
+        [ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT],
+        [ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT, ActivityType.WALK],
+    ],
+    BirdType.COCK: [
+        [ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT, ActivityType.WALK],
+        [ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP],
+        [ActivityType.RULE, ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH],
+        [ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE],
+        [ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT],
+    ],
+    BirdType.PEACOCK: [
+        [ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE],
+        [ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT],
+        [ActivityType.SLEEP, ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT, ActivityType.WALK],
+        [ActivityType.DEATH, ActivityType.RULE, ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP],
+        [ActivityType.RULE, ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH],
+    ],
 }
 
-# Nakshatra 名称列表
-NAKSHATRA_NAMES = [
-    "Ashvini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
-    "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni",
-    "Hasta", "Chitra", "Svati", "Vishakha", "Anuradha", "Jyeshtha",
-    "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta",
-    "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
-]
+# 活动吉凶
+ACTIVITY_FORTUNE = {
+    ActivityType.RULE: "吉",      # 统治 — 适合开始重要事务
+    ActivityType.EAT: "吉",       # 进食 — 适合获取资源
+    ActivityType.WALK: "中",      # 行走 — 适合日常活动
+    ActivityType.SLEEP: "凶",     # 睡眠 — 避免重要决策
+    ActivityType.DEATH: "凶",     # 死亡 — 极度不利
+}
 
-# 五状态顺序（统治 → 进食 → 行走 → 睡眠 → 死亡 → 统治...）
-PAKSHI_CYCLE = [0, 1, 2, 3, 4]  # Rule, Eat, Walk, Sleep, Die
+# 活动建议
+ACTIVITY_ADVICE = {
+    ActivityType.RULE: ["开始新项目", "做重要决策", "领导会议", "签署合同"],
+    ActivityType.EAT: ["财务活动", "求职面试", "购买资产", "接受礼物"],
+    ActivityType.WALK: ["日常事务", "短途旅行", "社交活动", "信息收集"],
+    ActivityType.SLEEP: ["避免重要决策", "休息", "内省", "推迟行动"],
+    ActivityType.DEATH: ["避免一切重要活动", "取消计划", "防护", "等待"],
+}
 
-# 星期对应的 Pakshi 起始偏移（0=周日，1=周一...6=周六）
-# 每个星期开始时的 Pakshi 偏移量
-WEEKDAY_PAKSHI_OFFSET = {
-    0: 0,  # 周日：从 Rule 开始
-    1: 2,  # 周一：从 Walk 开始
-    2: 4,  # 周二：从 Die 开始
-    3: 1,  # 周三：从 Eat 开始
-    4: 3,  # 周四：从 Sleep 开始
-    5: 0,  # 周五：从 Rule 开始
-    6: 2,  # 周六：从 Walk 开始
+# 活动相克
+ACTIVITY_DOMINANCE = {
+    ActivityType.RULE: [ActivityType.EAT, ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH],
+    ActivityType.EAT: [ActivityType.WALK, ActivityType.SLEEP, ActivityType.DEATH],
+    ActivityType.WALK: [ActivityType.SLEEP, ActivityType.DEATH],
+    ActivityType.SLEEP: [ActivityType.DEATH],
+    ActivityType.DEATH: [],
 }
 
 
-def get_birth_pakshi(nakshatra_num):
-    """
-    根据出生 Nakshatra 获取所属 Pakshi。
-    """
-    if nakshatra_num < 1 or nakshatra_num > 27:
-        return None, f"Nakshatra 编号 {nakshatra_num} 超出范围（1-27）"
-
-    pakshi_idx = NAKSHATRA_PAKSHI.get(nakshatra_num)
-    if pakshi_idx is None:
-        return None, f"Nakshatra {nakshatra_num} 未找到 Pakshi 映射"
-
-    return pakshi_idx, PAKSHI_NAMES[pakshi_idx]
-
-
-def calc_pakshi_day_state(birth_nakshatra, weekday, period_of_day=0):
-    """
-    计算指定日期的 Pakshi 状态。
-    birth_nakshatra: 出生 Nakshatra 编号（1-27）
-    weekday: 星期（0=周日，1=周一...6=周六）
-    period_of_day: 一天中的时段（0-4，对应五个 Pakshi 时段）
-    """
-    birth_pakshi, _ = get_birth_pakshi(birth_nakshatra)
-    if birth_pakshi is None:
-        return None, f"出生 Nakshatra {birth_nakshatra} 无效"
-
-    # 星期起始偏移
-    offset = WEEKDAY_PAKSHI_OFFSET.get(weekday, 0)
-
-    # 当日当前时段的 Pakshi = (出生 Pakshi + 星期偏移 + 时段) % 5
-    current_pakshi = (birth_pakshi + offset + period_of_day) % 5
-
-    return current_pakshi, PAKSHI_NAMES[current_pakshi]
+@dataclass
+class YamaActivity:
+    """单个Yama的活动"""
+    yama_number: int           # 1-5
+    yama_name: str             # Pratah/Madhyahna/Aparahna/Sayam/Ratri
+    start_time: str            # 开始时间（近似）
+    end_time: str              # 结束时间
+    activity: ActivityType
+    activity_cn: str
+    fortune: str               # 吉/中/凶
+    advice: List[str]
 
 
-def calc_pakshi_full_analysis(birth_nakshatra, birth_weekday=None, target_weekday=None, target_period=0):
-    """
-    完整 Pancha Pakshi 分析。
-    birth_nakshatra: 出生 Nakshatra（1-27）
-    birth_weekday: 出生星期（可选，用于更精确分析）
-    target_weekday: 目标日期星期（用于预测，0-6）
-    target_period: 目标时段（0-4）
-    """
-    birth_pakshi_idx, birth_pakshi_name = get_birth_pakshi(birth_nakshatra)
-    if birth_pakshi_idx is None:
-        return {"error": birth_pakshi_name}
+@dataclass
+class DailySchedule:
+    """每日活动表"""
+    date: str
+    bird: BirdType
+    bird_cn: str
+    paksha: str                # shukla/krishna
+    yama_activities: List[YamaActivity] = field(default_factory=list)
+    
+    # 推荐时段
+    best_periods: List[str] = field(default_factory=list)
+    avoid_periods: List[str] = field(default_factory=list)
+    
+    narrative: str = ""
 
-    result = {
-        "birth_nakshatra": birth_nakshatra,
-        "birth_nakshatra_name": NAKSHATRA_NAMES[birth_nakshatra - 1] if 1 <= birth_nakshatra <= 27 else "Unknown",
-        "birth_pakshi_idx": birth_pakshi_idx,
-        "birth_pakshi_name": birth_pakshi_name,
-    }
 
-    # 出生时的 Pakshi 状态解释
-    pakshi_interpretations = {
-        0: "统治鸟（Vulture）：出生时有领导力，能掌控局面，适合开始重要项目。",
-        1: "进食鸟（Crow）：出生时需要滋养，关注物质获取，适合积累资源。",
-        2: "行走鸟（Crane）：出生时处于行动状态，适合旅行、移动、沟通。",
-        3: "睡眠鸟（Owl）：出生时休息状态，适合内省、规划、潜伏等待。",
-        4: "死亡鸟（Bat）：出生时转化状态，适合结束、释放、深度改变。",
-    }
-    result["birth_pakshi_interpretation"] = pakshi_interpretations.get(birth_pakshi_idx, "")
-
-    # 如果提供了目标日期，计算那时的 Pakshi 状态
-    if target_weekday is not None:
-        target_pakshi_idx, target_pakshi_name = calc_pakshi_day_state(
-            birth_nakshatra, target_weekday, target_period
+class PanchaPakshi:
+    """五鸟择时引擎"""
+    
+    def __init__(self):
+        self.nakshatra_birds = NAKSHATRA_BIRDS
+        self.activity_table = BIRD_ACTIVITY_TABLE
+        self.activity_fortune = ACTIVITY_FORTUNE
+        self.activity_advice = ACTIVITY_ADVICE
+    
+    def calculate(self, birth_nakshatra: str, paksha: str,
+                  date: Optional[str] = None) -> DailySchedule:
+        """
+        计算某日的五鸟活动表
+        
+        Args:
+            birth_nakshatra: 出生Nakshatra
+            paksha: 'shukla' (亮月) 或 'krishna' (暗月)
+            date: 日期字符串（可选）
+        
+        Returns:
+            DailySchedule对象
+        """
+        # 确定鸟类型
+        bird = self._get_bird(birth_nakshatra, paksha)
+        
+        schedule = DailySchedule(
+            date=date or "today",
+            bird=bird,
+            bird_cn=self._bird_to_chinese(bird),
+            paksha=paksha,
         )
-        result["target_weekday"] = target_weekday
-        result["target_period"] = target_period
-        result["target_pakshi_idx"] = target_pakshi_idx
-        result["target_pakshi_name"] = target_pakshi_name
-
-        # 目标状态的解读
-        target_interpretations = {
-            0: "统治时段：适合开始新项目、领导、决策、公开行动。能量最强。",
-            1: "进食时段：适合积累、学习、获取资源、建立联系。能量恢复中。",
-            2: "行走时段：适合旅行、移动、沟通、短途出行。能量流动。",
-            3: "睡眠时段：适合休息、规划、内省、等待。能量最低，不宜重要决策。",
-            4: "死亡时段：适合结束、释放、深度转化、灵性实践。能量转化中。",
+        
+        # 生成5个Yama的活动
+        yama_names = ["Pratah (晨)", "Madhyahna (午)", "Aparahna (下午)", 
+                      "Sayam (傍晚)", "Ratri (夜)"]
+        time_ranges = ["6:00-9:00", "9:00-12:00", "12:00-15:00", 
+                       "15:00-18:00", "18:00-21:00"]
+        
+        for i in range(5):
+            activity = self.activity_table[bird][i][i]  # 对角线
+            
+            yama = YamaActivity(
+                yama_number=i+1,
+                yama_name=yama_names[i],
+                start_time=time_ranges[i].split("-")[0],
+                end_time=time_ranges[i].split("-")[1],
+                activity=activity,
+                activity_cn=self._activity_to_chinese(activity),
+                fortune=self.activity_fortune.get(activity, "中"),
+                advice=self.activity_advice.get(activity, [])
+            )
+            schedule.yama_activities.append(yama)
+        
+        # 推荐/避免时段
+        self._generate_recommendations(schedule)
+        
+        # 生成叙事
+        schedule.narrative = self._generate_narrative(schedule)
+        
+        return schedule
+    
+    def _get_bird(self, nakshatra: str, paksha: str) -> BirdType:
+        """根据Nakshatra和Paksha确定鸟"""
+        paksha_data = self.nakshatra_birds.get(paksha, self.nakshatra_birds["shukla"])
+        return paksha_data.get(nakshatra, BirdType.PEACOCK)
+    
+    def _bird_to_chinese(self, bird: BirdType) -> str:
+        """鸟类型转中文"""
+        names = {
+            BirdType.VULTURE: "兀鹫",
+            BirdType.OWL: "猫头鹰",
+            BirdType.CROW: "乌鸦",
+            BirdType.COCK: "公鸡",
+            BirdType.PEACOCK: "孔雀",
         }
-        result["target_pakshi_interpretation"] = target_interpretations.get(target_pakshi_idx, "")
+        return names.get(bird, "未知")
+    
+    def _activity_to_chinese(self, activity: ActivityType) -> str:
+        """活动类型转中文"""
+        names = {
+            ActivityType.RULE: "统治",
+            ActivityType.EAT: "进食",
+            ActivityType.WALK: "行走",
+            ActivityType.SLEEP: "睡眠",
+            ActivityType.DEATH: "死亡",
+        }
+        return names.get(activity, "未知")
+    
+    def _generate_recommendations(self, schedule: DailySchedule):
+        """生成推荐和避免时段"""
+        for yama in schedule.yama_activities:
+            time_str = f"{yama.start_time}-{yama.end_time}"
+            
+            if yama.fortune == "吉":
+                schedule.best_periods.append(f"{time_str} ({yama.activity_cn})")
+            elif yama.fortune == "凶":
+                schedule.avoid_periods.append(f"{time_str} ({yama.activity_cn})")
+    
+    def _generate_narrative(self, schedule: DailySchedule) -> str:
+        """生成叙事"""
+        parts = []
+        
+        parts.append("### Pancha Pakshi 五鸟择时\n")
+        parts.append(f"您的出生鸟: **{schedule.bird_cn}** ({schedule.bird.value})\n")
+        parts.append(f"月相: {'亮月期 (Shukla Paksha)' if schedule.paksha == 'shukla' else '暗月期 (Krishna Paksha)'}\n")
+        
+        parts.append("\n#### 今日活动表\n")
+        for yama in schedule.yama_activities:
+            emoji = "🟢" if yama.fortune == "吉" else "🟡" if yama.fortune == "中" else "🔴"
+            parts.append(f"{emoji} **{yama.yama_name}** ({yama.start_time}-{yama.end_time})")
+            parts.append(f"   活动: {yama.activity_cn} ({yama.fortune})")
+            if yama.advice:
+                parts.append(f"   建议: {'; '.join(yama.advice[:2])}")
+            parts.append("")
+        
+        if schedule.best_periods:
+            parts.append(f"\n✅ **最佳活动时段**: {'; '.join(schedule.best_periods[:3])}\n")
+        
+        if schedule.avoid_periods:
+            parts.append(f"\n❌ **避免活动时段**: {'; '.join(schedule.avoid_periods)}\n")
+        
+        parts.append(f"\n#### 五鸟相克规则\n")
+        parts.append("统治 > 进食 > 行走 > 睡眠 > 死亡\n")
+        parts.append("当对方的活动克制你的活动时，不利。\n")
+        
+        return "\n".join(parts)
+    
+    def to_dict(self, schedule: DailySchedule) -> Dict:
+        """转换为字典"""
+        return {
+            "date": schedule.date,
+            "bird": schedule.bird.value,
+            "bird_cn": schedule.bird_cn,
+            "paksha": schedule.paksha,
+            "activities": [
+                {
+                    "yama": y.yama_number,
+                    "time": f"{y.start_time}-{y.end_time}",
+                    "activity": y.activity.value,
+                    "activity_cn": y.activity_cn,
+                    "fortune": y.fortune,
+                    "advice": y.advice,
+                }
+                for y in schedule.yama_activities
+            ],
+            "best_periods": schedule.best_periods,
+            "avoid_periods": schedule.avoid_periods,
+            "narrative": schedule.narrative,
+        }
 
-    # Pakshi 周期完整列表（一天五个时段）
-    day_periods = []
-    for period in range(5):
-        p_idx, p_name = calc_pakshi_day_state(birth_nakshatra, target_weekday or 0, period)
-        day_periods.append({
-            "period": period,
-            "pakshi_idx": p_idx,
-            "pakshi_name": p_name,
-        })
-    result["day_periods"] = day_periods
 
-    return result
+# ============================================================================
+# 便捷函数
+# ============================================================================
+
+def get_pancha_pakshi_schedule(birth_nakshatra: str, paksha: str,
+                                date: Optional[str] = None) -> Dict:
+    """便捷函数"""
+    engine = PanchaPakshi()
+    schedule = engine.calculate(birth_nakshatra, paksha, date)
+    return engine.to_dict(schedule)
 
 
-def pancha_pakshi_prashna_guide(birth_nakshatra, question_type="general"):
-    """
-    Pancha Pakshi 用于 Prashna（问卜）的指导。
-    根据出生 Pakshi 和当前时段判断问题是否适合提问。
-    """
-    birth_pakshi_idx, _ = get_birth_pakshi(birth_nakshatra)
-
-    # 不同时段适合的问题类型
-    suitable_for = {
-        0: ["new_beginning", "leadership", "decision"],  # 统治：新开始、领导、决策
-        1: ["resource", "learning", "relationship"],  # 进食：资源、学习、关系
-        2: ["travel", "communication", "short_term"],  # 行走：旅行、沟通、短期
-        3: ["rest", "planning", "inner_work"],  # 睡眠：休息、规划、内在工作
-        4: ["ending", "transformation", "spiritual"],  # 死亡：结束、转化、灵性
-    }
-
-    guidance = {
-        "current_pakshi": birth_pakshi_idx,
-        "current_pakshi_name": PAKSHI_NAMES[birth_pakshi_idx],
-        "suitable_question_types": suitable_for.get(birth_pakshi_idx, []),
-        "prashna_advice": (
-            "当前为统治时段，问题关于新开始或领导最适合。"
-            if birth_pakshi_idx == 0 else
-            "当前为进食时段，问题关于资源或学习最适合。"
-            if birth_pakshi_idx == 1 else
-            "当前为行走时段，问题关于旅行或沟通最适合。"
-            if birth_pakshi_idx == 2 else
-            "当前为睡眠时段，问题关于休息或规划最适合，不宜重要决策。"
-            if birth_pakshi_idx == 3 else
-            "当前为死亡时段，问题关于结束或转化最适合。"
-        ),
-    }
-
-    return guidance
-
+# ============================================================================
+# CLI 调试
+# ============================================================================
 
 if __name__ == "__main__":
-    # 测试：出生 Nakshatra 10（Magha），目标周三（weekday=3），时段 0
-    result = calc_pakshi_full_analysis(10, target_weekday=3, target_period=0)
-    print("Pancha Pakshi 测试结果：")
-    for k, v in result.items():
-        if k != "day_periods":
-            print(f"  {k}: {v}")
-    print("  时段列表：")
-    for p in result.get("day_periods", []):
-        print(f"    {p}")
+    print("=" * 60)
+    print("Pancha Pakshi 五鸟择时引擎")
+    print("=" * 60)
+    
+    result = get_pancha_pakshi_schedule("Rohini", "shukla", "2026-06-07")
+    print(result["narrative"])
+    print(f"\n出生鸟: {result['bird_cn']}")
