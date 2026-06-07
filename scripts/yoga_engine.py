@@ -1041,9 +1041,7 @@ class YogaEngine:
 
         # v6.0.32: 修复 custom 规则中常用的缺失辅助函数
         def same_house(a, b):
-            """两颗行星是否同宫"""
-            if a == b:
-                return False
+            """两颗行星是否同宫（允许自比较：同星恒为 True）"""
             ha = ctx.house_of(a)
             hb = ctx.house_of(b)
             return ha is not None and ha == hb
