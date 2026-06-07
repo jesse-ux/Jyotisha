@@ -1,6 +1,6 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.0.43
+version: 6.1.6
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga、出生时间矫正、PDF星盘、读取PDF、分析PDF星盘、现代解读、误判纠错、Varga分盘、综合分析、过境分析、合盘、婚姻匹配、年运盘、Prashna、Argala、Jaimini、Shadbala、Ashtakavarga、HTML报告、深度解盘。
 ---
 
@@ -10,7 +10,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.0.47 | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.1.6 | **详细变更**：`CHANGELOG.md`
 
 ## Yoga 逻辑验证指标
 
@@ -43,7 +43,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 2. **阶段一**（仅B）：PDF/图片提取 + Quality Gate
 3. **阶段二**：意图识别 → 路由目标宫位（无明确意图→Level 2综合解盘）
 4. **阶段三**：静态分析10步（宫位→承诺→Yoga→Argala→逆行→NK→Shadbala→AV→Ketu→分盘）
-5. **阶段四**：动态推运7步（Dasha→Convergence→Transit→Double Transit→Jaimini→KP→Varshaphala）
+5. **阶段四**：动态推运7步（Dasha→五系统Convergence→Transit→Double Transit→Jaimini→KP→Varshaphala）
 6. **阶段五**：应期输出（五层验证→时间窗口→Actionable Output+案例检索）
 7. **阶段六**：补救措施（可选）
 8. **阶段七**：现代措辞包装
@@ -180,7 +180,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 | 子命令 | 功能 |
 |--------|------|
-| `full-reading` | ⭐全自动综合解盘（13模块一键出） |
+| `full-reading` | ⭐全自动综合解盘（47模块一键出，含五系统Dasha收敛） |
 | `chart` | 星盘计算+`--validate`附加R1-R10验证 |
 | `dasha` | Vimshottari大运时间线+小运展开 |
 | `yoga` | Yoga格局识别 |
@@ -313,9 +313,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.0.46-yoga-f1-92
+**版本**：v6.1.6-full-reading-five-dasha-convergence
 **创建日期**：2026-04-20
-**最后更新**：2026-06-06（v6.0.46 修复 6 条完全错误的瑜伽规则：kaalanirdesat_puthra/sapthasankhya_sahodara/sarpasaapa/pushkala/koorma/bhratrumooladdhanaprapti，FP 从 193→78，Precision 从 83.26%→92.50%，F1 从 87.19%→92.10%；当前 476 条规则、405 条启用，硬编码测试 8/9 通过）
+**最后更新**：2026-06-07（v6.1.6 将 Ashtottari/Yogini/Kalachakra 接入 full-reading，Dasa Convergence 从三系统升级为 Vimshottari + Chara + Yogini + Ashtottari + Kalachakra 五系统；修复 Pancha Pakshi/RTN 接口与替代 Dasha current 周期循环。Yoga 当前以 `references/validation_logic_report.json` 为准。）
 
 ---
 

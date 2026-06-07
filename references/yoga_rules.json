@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "description": "Yoga 规则库 - 数据驱动架构 v1.0",
-  "total_rules": 475,
+  "total_rules": 476,
   "rules": [
     {
       "id": "raja_yoga",
@@ -9295,7 +9295,7 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora/BVR 205-206 Nishkapata Yoga.\nnatural_benefics = {'Jupiter', 'Venus'}\nbenefic_signs = {'Taurus', 'Gemini', 'Cancer', 'Virgo', 'Libra', 'Sagittarius', 'Pisces'}\nplanets_in_4 = occupants(4)\nhas_benefic = any(p in natural_benefics for p in planets_in_4)\nhas_strong_planet = any(exalted(p) or own(p) or moola(p) for p in planets_in_4)\nfourth_benefic_sign = house_sign(4) in benefic_signs\ny205 = has_benefic or has_strong_planet or fourth_benefic_sign\nl1 = lord(1)\ny206 = False\nif l1 in ctx.planets and house_of(l1) == 4:\n    l1_with_benefic = any(p != l1 and same_house(l1, p) for p in natural_benefics if p in ctx.planets)\n    l1_aspected_benefic = any(aspect(p, l1) for p in natural_benefics if p in ctx.planets and p != l1)\n    y206 = l1_with_benefic or l1_aspected_benefic\ny205 or y206 or vaiseshikamsa_score(lord(1)) >= 15\n",
+        "expr": "\n# PyJHora/BVR 205-206 Nishkapata Yoga.\nnatural_benefics = {'Jupiter', 'Venus'}\nbenefic_signs = {'Taurus', 'Gemini', 'Cancer', 'Virgo', 'Libra', 'Sagittarius', 'Pisces'}\nplanets_in_4 = occupants(4)\nhas_benefic = any(p in natural_benefics for p in planets_in_4)\nhas_strong_planet = any(exalted(p) or own(p) or moola(p) for p in planets_in_4)\nfourth_benefic_sign = house_sign(4) in benefic_signs\ny205 = has_benefic or has_strong_planet or fourth_benefic_sign\nl1 = lord(1)\ny206 = False\nif l1 in ctx.planets and house_of(l1) == 4:\n    l1_with_benefic = any(p != l1 and same_house(l1, p) for p in natural_benefics if p in ctx.planets)\n    l1_aspected_benefic = any(aspect(p, l1) for p in natural_benefics if p in ctx.planets and p != l1)\n    y206 = l1_with_benefic or l1_aspected_benefic\ny205 or y206 or vaiseshikamsa_score(lord(1)) >= 16\n",
         "combo_template": "第4宫有天然吉星/强星/吉性星座，或上升主入4宫且受吉星影响"
       },
       "effects": [
@@ -13634,5 +13634,5 @@
       "source_reference": "BVR-170: Malefics in 2nd + 2nd lord weak"
     }
   ],
-  "total_enabled_rules": 381
+  "total_enabled_rules": 405
 }

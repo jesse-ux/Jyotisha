@@ -2506,9 +2506,9 @@ def _calc_transit_multi_reference(planets, asc_idx, asc_deg, planet_lons, transi
 
 
 # ============================================================================
-# Dasa Convergence 三系统交叉验证（v4.5.0 P1补齐）
+# Dasa Convergence 多系统交叉验证（v6.1.6）
 # 基于 dasa-convergence-methodology.md
-# 三系统：Vimshottari + Chara Dasha + Yogini
+# 系统：Vimshottari + Chara Dasha + Yogini + Ashtottari + Kalachakra
 # ============================================================================
 # Yogini Dasha 常量
 YOGINI_ORDER = ['Mangala', 'Pingala', 'Dhanya', 'Bhramari', 'Bhadrika', 'Ulka', 'Siddha', 'Sankata']
@@ -2589,10 +2589,11 @@ def _calc_yogini_dasha(moon_lon, birthdate_str):
     }
 
 
-def _calc_dasa_convergence(dasha_result, chara_dasha_result, yogini_result, planet_lons, asc_idx):
+def _calc_dasa_convergence(dasha_result, chara_dasha_result, yogini_result, planet_lons, asc_idx, ashtottari_result=None, kalachakra_result=None):
     """
-    ⭐ v4.5.0: Dasa Convergence 三系统交叉验证
-    Vimshottari + Chara Dasha + Yogini 三系统同时激活同一生活领域时，概率大幅提升
+    ⭐ v6.1.6: Dasa Convergence 多系统交叉验证
+    Vimshottari + Chara Dasha + Yogini + Ashtottari + Kalachakra 同时激活同一生活领域时，概率大幅提升。
+    Chara Dasha 当前仍按 skill 规范降级为 partial，只作为低权重辅助。
     """
     # 提取各系统当前周期
     convergence_data = {'systems': {}}
@@ -2628,11 +2629,33 @@ def _calc_dasa_convergence(dasha_result, chara_dasha_result, yogini_result, plan
 
     # 系统3: Yogini
     if isinstance(yogini_result, dict):
-        cur_yog = yogini_result.get('current_yogini', {})
+        cur_yog = yogini_result.get('current_yogini') or yogini_result.get('current') or {}
         convergence_data['systems']['yogini'] = {
             'yogini': cur_yog.get('yogini') if isinstance(cur_yog, dict) else None,
-            'years': cur_yog.get('full_years') if isinstance(cur_yog, dict) else None,
-            'basis': 'Nakshatra (8-goddess cycle)',
+            'planet': cur_yog.get('planet') if isinstance(cur_yog, dict) else None,
+            'years': cur_yog.get('full_years', cur_yog.get('years')) if isinstance(cur_yog, dict) else None,
+            'basis': 'Nakshatra/Lagna 36-year cycle',
+        }
+
+    # 系统4: Ashtottari Dasha（条件性）
+    if isinstance(ashtottari_result, dict):
+        cur_ash = ashtottari_result.get('current') or {}
+        convergence_data['systems']['ashtottari'] = {
+            'applicable': ashtottari_result.get('applicable', True),
+            'planet': cur_ash.get('planet') if isinstance(cur_ash, dict) else None,
+            'years': cur_ash.get('years') if isinstance(cur_ash, dict) else None,
+            'basis': 'Conditional Nakshatra/Paksha 108-year cycle',
+        }
+
+    # 系统5: Kalachakra Dasha
+    if isinstance(kalachakra_result, dict):
+        cur_kal = kalachakra_result.get('current') or {}
+        convergence_data['systems']['kalachakra'] = {
+            'mode': kalachakra_result.get('mode'),
+            'lord': cur_kal.get('lord') if isinstance(cur_kal, dict) else None,
+            'rashi': cur_kal.get('rashi') if isinstance(cur_kal, dict) else None,
+            'years': cur_kal.get('years') if isinstance(cur_kal, dict) else None,
+            'basis': 'Moon Nakshatra Pada / Rashi-year cycle',
         }
 
     # 宫位主题映射
@@ -2691,6 +2714,73 @@ def _calc_dasa_convergence(dasha_result, chara_dasha_result, yogini_result, plan
                         'reason': f'Chara大运星座{cd_sign}是{house}宫',
                     })
 
+        # Yogini / Ashtottari: 当前行星是否掌管或落入该宫
+        for system_key, system_label, planet_key in [
+            ('yogini', 'Yogini', 'planet'),
+            ('ashtottari', 'Ashtottari', 'planet'),
+        ]:
+            sys_data = convergence_data['systems'].get(system_key, {})
+            planet = sys_data.get(planet_key)
+            if not planet or not isinstance(planet, str):
+                continue
+            target_sign_idx = (asc_idx + house - 1) % 12
+            target_sign = SIGNS[target_sign_idx]
+            target_lord = SIGN_LORDS.get(target_sign, '')
+            if planet == target_lord:
+                activations.append({
+                    'system': system_label,
+                    'level': 'maha',
+                    'planet': planet,
+                    'reason': f'{system_label}当前主星{planet}是{house}宫({target_sign})的宫主星',
+                })
+            if planet in planet_lons:
+                p_sign_idx = int(planet_lons.get(planet, 0) / 30) % 12
+                p_house = ((p_sign_idx - asc_idx) % 12) + 1
+                if p_house == house:
+                    activations.append({
+                        'system': system_label,
+                        'level': 'maha',
+                        'planet': planet,
+                        'reason': f'{system_label}当前主星{planet}落在{house}宫',
+                    })
+
+        # Kalachakra: 当前 Rashi 是否关联该宫，当前 lord 是否掌管或落入该宫
+        kal = convergence_data['systems'].get('kalachakra', {})
+        if kal:
+            kal_rashi = kal.get('rashi')
+            if kal_rashi in SIGNS:
+                kal_sign_idx = SIGNS.index(kal_rashi)
+                kal_house_from_asc = ((kal_sign_idx - asc_idx) % 12) + 1
+                if kal_house_from_asc == house:
+                    activations.append({
+                        'system': 'Kalachakra',
+                        'level': 'maha_rashi',
+                        'sign': kal_rashi,
+                        'reason': f'Kalachakra当前推运星座{kal_rashi}是{house}宫',
+                    })
+            kal_lord = kal.get('lord')
+            if kal_lord and isinstance(kal_lord, str):
+                target_sign_idx = (asc_idx + house - 1) % 12
+                target_sign = SIGNS[target_sign_idx]
+                target_lord = SIGN_LORDS.get(target_sign, '')
+                if kal_lord == target_lord:
+                    activations.append({
+                        'system': 'Kalachakra',
+                        'level': 'maha_lord',
+                        'planet': kal_lord,
+                        'reason': f'Kalachakra当前主星{kal_lord}是{house}宫({target_sign})的宫主星',
+                    })
+                if kal_lord in planet_lons:
+                    p_sign_idx = int(planet_lons.get(kal_lord, 0) / 30) % 12
+                    p_house = ((p_sign_idx - asc_idx) % 12) + 1
+                    if p_house == house:
+                        activations.append({
+                            'system': 'Kalachakra',
+                            'level': 'maha_lord',
+                            'planet': kal_lord,
+                            'reason': f'Kalachakra当前主星{kal_lord}落在{house}宫',
+                        })
+
         if activations:
             domain_activations[domain] = {
                 'house': house,
@@ -2701,7 +2791,11 @@ def _calc_dasa_convergence(dasha_result, chara_dasha_result, yogini_result, plan
     # 收敛等级评估
     for domain, info in domain_activations.items():
         sc = info['system_count']
-        if sc >= 3:
+        if sc >= 4:
+            info['convergence_level'] = 'L5'
+            info['probability'] = '85-92%'
+            info['interpretation'] = '四个及以上推运系统同时激活，顶级收敛信号'
+        elif sc >= 3:
             info['convergence_level'] = 'L4'
             info['probability'] = '75-85%'
             info['interpretation'] = '三系统同时激活，极强信号'
@@ -2721,7 +2815,7 @@ def _calc_dasa_convergence(dasha_result, chara_dasha_result, yogini_result, plan
         'systems_summary': convergence_data['systems'],
         'domain_activations': domain_activations,
         'top_convergent_domains': [(d, info['convergence_level']) for d, info in top_domains],
-        'protocol': 'v4.5.0 Dasa Convergence 三系统交叉验证。收敛等级: L1(单系统)→L3(双系统)→L4(三系统)。所有预测必须标注收敛等级。',
+        'protocol': 'v6.1.6 Dasa Convergence 多系统交叉验证。收敛等级: L1(单系统)→L3(双系统)→L4(三系统)→L5(四个及以上系统)。Chara Dasha 当前为 partial，所有预测仍必须由 Vimshottari/Transit/Varga 等独立层确认。',
     }
 
 
@@ -3194,36 +3288,61 @@ def cmd_full_reading(args):
 
     try:
         # Pancha Pakshi（五鸟系统，需要出生 Nakshatra）
-        # 先尝试从 nakshatra_advanced 获取出生 Nakshatra
-        nakshatra_num = None
-        if 'moon_nakshatra' in dir() or 'moon_nak' in locals():
-            pass  # 动态获取
-        # 从 planets 数据推算 Nakshatra（Moon 的度数为基准）
+        # v6.1.6: 对齐 pancha_pakshi.py 现有公共接口 get_pancha_pakshi_schedule()
         moon_deg = planet_lons.get('Moon', 0)
-        nak_num = int(moon_deg / 13.3333333) + 1
+        nak_num = int(moon_deg / (360.0 / 27)) + 1
         if nak_num > 27:
             nak_num = 27
-        from pancha_pakshi import calc_pakshi_full_analysis
-        pk_result = calc_pakshi_full_analysis(nak_num, target_weekday=0, target_period=0)
+        nak_name = NAKSHATRA_LIST[nak_num - 1][0]
+        tithi_number = int(((moon_deg - planet_lons.get('Sun', 0)) % 360) / 12) + 1
+        paksha = 'shukla' if 1 <= tithi_number <= 15 else 'krishna'
+        from pancha_pakshi import get_pancha_pakshi_schedule
+        pk_result = get_pancha_pakshi_schedule(
+            birth_nakshatra=nak_name,
+            paksha=paksha,
+            date=f"{args.year}-{args.month:02d}-{args.day:02d}",
+        )
+        pk_result['input_context'] = {
+            'moon_nakshatra_index': nak_num - 1,
+            'moon_nakshatra': nak_name,
+            'tithi_number': tithi_number,
+            'paksha': paksha,
+        }
         report['modules']['pancha_pakshi'] = pk_result
     except Exception as e:
         report['errors'].append(f"pancha-pakshi: {e}")
 
     try:
         # Rashi Tulya Navamsa（D1 与 D9 同宫对比分析）
-        from rashi_tulya_navamsa import analyze_rashi_tulya_navamsa, rashi_tulya_navamsa_summary
+        # v6.1.6: 对齐 rashi_tulya_navamsa.py 现有公共接口 analyze_rtn(chart_data)
+        from rashi_tulya_navamsa import analyze_rtn
         varga_full = report['modules'].get('varga_full', {})
         d9_data = varga_full.get('D9_Navamsa', {})
-        if d9_data and d9_data.get('planets') and d9_data.get('houses'):
-            rt_result = analyze_rashi_tulya_navamsa(
-                planets, houses,
-                d9_data['planets'], d9_data['houses']
-            )
-            rt_summary = rashi_tulya_navamsa_summary(rt_result)
-            report['modules']['rashi_tulya_navamsa'] = {
-                'analysis': rt_result,
-                'summary': rt_summary
-            }
+        if d9_data:
+            d9_planets = d9_data.get('planets') if isinstance(d9_data, dict) else None
+            if not d9_planets and isinstance(d9_data, dict):
+                d9_planets = {
+                    pn: pd for pn, pd in d9_data.items()
+                    if isinstance(pd, dict) and pn not in ('_meta', 'Ascendant') and 'sign' in pd
+                }
+            if d9_planets:
+                rt_chart = {
+                    'ascendant': chart.get('ascendant', {}),
+                    'planets': planets,
+                    'context': {'navamsa_planets': d9_planets},
+                }
+                rt_result = analyze_rtn(rt_chart)
+                report['modules']['rashi_tulya_navamsa'] = {
+                    'analysis': rt_result,
+                    'summary': {
+                        'strength_score': rt_result.get('strength_score'),
+                        'weakness_score': rt_result.get('weakness_score'),
+                        'exalted_cancelled_count': len(rt_result.get('exalted_cancelled', [])),
+                        'debilitated_cancelled_count': len(rt_result.get('debilitated_cancelled', [])),
+                    },
+                }
+            else:
+                report['modules']['rashi_tulya_navamsa'] = {'note': 'D9 planet data incomplete, skip Rashi Tulya Navamsa'}
         else:
             report['modules']['rashi_tulya_navamsa'] = {'note': 'D9 data incomplete, skip Rashi Tulya Navamsa'}
     except Exception as e:
@@ -3585,15 +3704,56 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"transit-multi-ref: {e}")
 
-    # ── Step 18: Dasa Convergence 三系统交叉验证 (v4.5.0 P1) ──
+    # ── Step 18: Dasa Convergence 多系统交叉验证 (v6.1.6) ──
     try:
         dasha_data = report['modules'].get('dasha', {})
         jaimini_data = report['modules'].get('jaimini', {})
         chara_dasha_data = jaimini_data.get('chara_dasha', {}) if isinstance(jaimini_data, dict) else {}
-        birthdate_str = f"{args.year}-{args.month:02d}-{args.day:02d}"
-        yogini_data = _calc_yogini_dasha(planet_lons.get('Moon', 0), birthdate_str)
-        report['modules']['yogini_dasha'] = yogini_data
-        convergence = _calc_dasa_convergence(dasha_data, chara_dasha_data, yogini_data, planet_lons, asc_idx)
+        moon_lon = planet_lons.get('Moon', 0)
+        moon_nakshatra_index = int(moon_lon / (360 / 27)) % 27
+        moon_pada = int((moon_lon % (360 / 27)) / (360 / 108)) + 1
+        tithi_number = int(((moon_lon - planet_lons.get('Sun', 0)) % 360) / 12) + 1
+        birth_info_for_alt_dasha = {
+            'birth_datetime': datetime(args.year, args.month, args.day, args.hour, args.minute),
+            'moon_nakshatra_index': moon_nakshatra_index,
+            'moon_pada': moon_pada,
+            'is_shukla_paksha': 1 <= tithi_number <= 15,
+            'lagna_rashi_index': asc_idx,
+        }
+
+        try:
+            from yogini_dasha import calculate_yogini_dasha
+            yogini_data = calculate_yogini_dasha(birth_info_for_alt_dasha)
+            report['modules']['yogini_dasha'] = yogini_data
+        except Exception as alt_e:
+            yogini_data = {'error': str(alt_e)}
+            report['modules']['yogini_dasha'] = yogini_data
+
+        try:
+            from ashtottari_dasha import calculate_ashtottari_dasha
+            ashtottari_data = calculate_ashtottari_dasha(birth_info_for_alt_dasha)
+            report['modules']['ashtottari_dasha'] = ashtottari_data
+        except Exception as alt_e:
+            ashtottari_data = {'error': str(alt_e)}
+            report['modules']['ashtottari_dasha'] = ashtottari_data
+
+        try:
+            from kalachakra_dasha import calculate_kalachakra_dasha
+            kalachakra_data = calculate_kalachakra_dasha(birth_info_for_alt_dasha)
+            report['modules']['kalachakra_dasha'] = kalachakra_data
+        except Exception as alt_e:
+            kalachakra_data = {'error': str(alt_e)}
+            report['modules']['kalachakra_dasha'] = kalachakra_data
+
+        convergence = _calc_dasa_convergence(
+            dasha_data,
+            chara_dasha_data,
+            yogini_data,
+            planet_lons,
+            asc_idx,
+            ashtottari_result=ashtottari_data,
+            kalachakra_result=kalachakra_data,
+        )
         report['modules']['dasa_convergence'] = convergence
     except Exception as e:
         report['errors'].append(f"dasa-convergence: {e}")
@@ -3651,7 +3811,7 @@ def cmd_full_reading(args):
         'modules_computed': module_count,
         'errors': error_count,
         'status': 'complete' if error_count == 0 else f'{error_count} errors',
-        'next_step': '⭐ v4.5.0: P1缺口已补齐。新增 transit_multi_reference(四参考点) + dasa_convergence(三系统交叉) + yogini_dasha + d9_navamsa_expanded(逐行星尊严展开)。AI必须使用四参考点分析Transit，Dasa预测必须标注收敛等级。',
+        'next_step': '⭐ v6.1.6: full-reading 已输出 transit_multi_reference(四参考点) + dasa_convergence(五系统交叉) + yogini_dasha + ashtottari_dasha + kalachakra_dasha + d9_navamsa_expanded。AI必须使用四参考点分析Transit，Dasa预测必须标注多系统收敛等级。',
     }
 
     return report

@@ -136,17 +136,26 @@ def calculate_yogini_dasha(birth_info: dict) -> dict:
 
     major_periods = _build_major_periods(start_idx, birth_dt)
 
-    # Determine current period
+    # Determine current period. Yogini repeats every 36 years; older natives
+    # should still return a current period instead of None after the first cycle.
     now = datetime.now()
     current_period = None
+    age_years = max((now - birth_dt).days / 365.25, 0)
+    current_in_cycle = age_years % TOTAL_CYCLE
+    cumulative = 0.0
     for p in major_periods:
-        p_start = datetime.fromisoformat(p["start_date"])
-        p_end = datetime.fromisoformat(p["end_date"])
-        if p_start <= now < p_end:
+        years = p["years"]
+        if cumulative <= current_in_cycle < cumulative + years:
+            cycle_start = birth_dt + timedelta(days=(age_years - current_in_cycle + cumulative) * 365.25)
+            cycle_end = cycle_start + timedelta(days=years * 365.25)
             current_period = p.copy()
-            current_period["elapsed_years"] = (now - p_start).days / 365.25
-            current_period["remaining_years"] = (p_end - now).days / 365.25
+            current_period["start_date"] = cycle_start.isoformat()
+            current_period["end_date"] = cycle_end.isoformat()
+            current_period["elapsed_years"] = (now - cycle_start).days / 365.25
+            current_period["remaining_years"] = (cycle_end - now).days / 365.25
+            current_period["cycle_number"] = int(age_years // TOTAL_CYCLE) + 1
             break
+        cumulative += years
 
     return {
         "major": major_periods,

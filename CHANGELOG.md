@@ -1,5 +1,29 @@
 # 印度占星 Skill 更新日志
 
+## v6.1.6（2026-06-07）—— full-reading 五系统推运收敛与接口修复
+
+> **目标**：继续“合并隐藏模块→打通引擎→验证可用”的优化路线，将 Ashtottari / Yogini / Kalachakra 从独立模块进一步接入 `full-reading` 主链路。
+
+### 关键改进
+- `full-reading` 新增输出：`modules.ashtottari_dasha`、`modules.kalachakra_dasha`，并改用 `scripts/yogini_dasha.py` 的公共接口输出 `modules.yogini_dasha`。
+- `dasa_convergence` 从三系统升级为五系统：Vimshottari + Chara Dasha + Yogini + Ashtottari + Kalachakra。
+- 新增 L5 收敛等级：四个及以上推运系统同时激活同一领域时标为顶级收敛信号；Chara Dasha 仍按既有规范保持 partial/低权重辅助。
+- 增强领域激活检测：Yogini/Ashtottari 当前主星、Kalachakra 当前 Rashi 与 lord 均参与宫位主题激活判断。
+- 修复替代 Dasha 模块 current 周期：超过单周期年龄时按 36/108/150 年周期循环，不再返回 None。
+- 修复 `full-reading` 中 Pancha Pakshi 与 Rashi Tulya Navamsa 的接口调用，改为对齐现有公共函数 `get_pancha_pakshi_schedule()` 与 `analyze_rtn()`。
+
+### 验证
+```bash
+python3 -m py_compile scripts/jyotish_engine.py scripts/ashtottari_dasha.py scripts/yogini_dasha.py scripts/kalachakra_dasha.py scripts/orchestrator_bridge.py
+PYTHONPATH=scripts python3 scripts/jyotish_engine.py full-reading --year 1990 --month 6 --day 15 --hour 10 --minute 30 --lat 39.9 --lon 116.4 --tz 8
+```
+- smoke case：`summary.status = complete`
+- `errors = []`
+- `modules_computed = 47`
+- `dasa_convergence.systems_summary` 包含 `ashtottari`、`chara_dasha`、`kalachakra`、`vimshottari`、`yogini`
+
+---
+
 ## v6.0.44（2026-06-06）—— 修复参考数据 JD 时区 Bug，验证基线校正
 
 > **目标**：修复导致 `standard_test_charts.json` 中所有非正午出生星盘上升星座错误的 JD 时区 Bug。
