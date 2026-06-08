@@ -264,7 +264,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 - [ ] Ketu双重属性检查
 - [ ] **MEVG-动态门控**：Transit/Dasha/天文现象必须验证
 - [ ] Dasha推运（大运+小运+Pratyantar）
-- [ ] Dasa Convergence三系统交叉验证
+- [ ] Dasa Convergence五系统交叉验证
 - [ ] Jaimini分析（Karaka/Karakamsha；Chara Dasha 当前 partial，须交叉确认）
 - [ ] KP系统分析（Significator+Sub-Lord）
 - [ ] Transit分析（多参考点强制）
@@ -313,9 +313,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.1.7-yoga-f1-95-sankha-tightening
+**版本**：v6.1.7-yoga-f1-95-d9-d60-context
 **创建日期**：2026-04-20
-**最后更新**：2026-06-08（v6.1.7 在 v6.1.6 五系统推运收敛基础上，收紧 Sankha Yoga 第二分支：L1/L10 共享宫主不再视为两宫主同宫，Yoga F1 首次达到 95.02%。Yoga 当前以 `references/validation_logic_report.json` 为准。）
+**最后更新**：2026-06-08（v6.1.7 在 v6.1.6 五系统推运收敛基础上，把 D9/D60/Panchanga YogaContext 接入 `yoga` 子命令与 `full-reading` 主链路，并收紧 Sankha Yoga 第二分支；Yoga F1 首次达到 95.02%。Yoga 当前以 `references/validation_logic_report.json` 为准。）
 
 ---
 

@@ -1,8 +1,8 @@
 # 印度占星 Skill 更新日志
 
-## v6.1.7（2026-06-08）—— Yoga F1 首次突破 95% 与 Sankha 误报收紧
+## v6.1.7（2026-06-08）—— Yoga F1 首次突破 95% 与 full-reading D9/D60 注入
 
-> **目标**：继续 Yoga 精度冲刺，但只发布源码语义明确、能减少误报且不牺牲召回的规则修复。
+> **目标**：继续 Yoga 精度冲刺，同时把已在验证管线生效的 D9/D60 YogaContext 正式接入 `yoga` 子命令与 `full-reading` 主链路。
 
 ### 关键改进
 - `full-reading` 与 `yoga` 子命令补齐 D9/D60/Panchanga 上下文注入：出生信息路径会从 `varga-full` 构造 YogaContext，让依赖 Navamsa / Shashtiamsa 的 Yoga 规则在主链路中实际生效。
