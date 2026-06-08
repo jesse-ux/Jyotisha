@@ -508,7 +508,10 @@
         "karaka"
       ],
       "status": "covered",
-      "knowledge_refs": [],
+      "knowledge_refs": [
+        "references/darakaraka-complete-guide.md",
+        "references/spouse-multi-layer-methodology.md"
+      ],
       "commands": [
         "full-reading"
       ],
@@ -516,7 +519,8 @@
         "modules.jaimini.darakaraka"
       ],
       "audit_label": "Darakaraka (DK)",
-      "missing_impact": "Marriage/partner analysis incomplete without DK."
+      "missing_impact": "Marriage/partner analysis incomplete without DK.",
+      "validation_note": "v6.1.10 wires scripts/darakaraka_reader.py into full-reading and thematic reports; output includes DK planet/sign/house, D9 dignity, conjunctions, quality score and narrative."
     },
     "raj_yoga": {
       "name": "Raj Yoga / 王者瑜伽",
@@ -752,7 +756,10 @@
         "marriage"
       ],
       "status": "partial",
-      "knowledge_refs": [],
+      "knowledge_refs": [
+        "references/rashi-tulya-navamsa-root-impulse.md",
+        "references/varga-system-quick-reference.md"
+      ],
       "commands": [
         "full-reading"
       ],
@@ -761,7 +768,8 @@
       ],
       "audit_label": "Rashi Tulya Navamsa",
       "missing_impact": "D1-D9 同宫对比分析不完整，婚姻/内在潜力判断受限。",
-      "limitation": "Rashi Tulya Navamsa 分析当前基于 D1 与 D9 同宫行星的简单对比，未完整覆盖所有变体条件（如行星在 D9 中的精确度数对比、Vargottama 与非 Vargottama 的混合情况）。婚姻和内在潜力的深度解读应结合更多分盘（D7、D12）交叉验证。"
+      "limitation": "Rashi Tulya Navamsa 分析当前基于 D1 与 D9 同宫行星的简单对比，未完整覆盖所有变体条件（如行星在 D9 中的精确度数对比、Vargottama 与非 Vargottama 的混合情况）。婚姻和内在潜力的深度解读应结合更多分盘（D7、D12）交叉验证。",
+      "validation_note": "v6.1.10 exposes RTN evidence to thematic reports: relationship mapping, curse-yoga warnings and Guna balance are injected from modules.rashi_tulya_navamsa."
     },
     "marriage_counting": {
       "name": "Marriage Counting Method / 婚姻计数法",

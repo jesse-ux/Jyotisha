@@ -313,9 +313,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.1.9-public-benchmarks-research-roadmap
+**版本**：v6.1.10-dk-rtn-theme-bridge
 **创建日期**：2026-04-20
-**最后更新**：2026-06-08（v6.1.9 将历史散落资料安全整理入仓：新增 `benchmarks/jyotish/` 公开/虚构 smoke benchmark 套件、`docs/research/jyotish_projects_comparison.md`、`docs/roadmap/jyotish_technique_coverage_map.md` 与 `references/validation/pdf-chart-reading-validation-methodology.md`。v6.1.8 Yoga 指标保持有效：F1=95.22%，FP=36、FN=63；Yoga 当前以 `references/validation_logic_report.json` 为准。）
+**最后更新**：2026-06-08（v6.1.10 继续落地 P0 规划：`full-reading.modules.jaimini.darakaraka` 已接入 Darakaraka 深度解读，主题化报告桥接层已消费 `jaimini.darakaraka` 与 `rashi_tulya_navamsa`，为婚姻/健康/灵性主题补入真实 DK/RTN 证据。v6.1.9 已将历史散落资料安全整理入仓；v6.1.8 Yoga 指标保持有效：F1=95.22%，FP=36、FN=63。）
 
 ---
 

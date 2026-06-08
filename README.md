@@ -266,24 +266,24 @@ Examples:
 
 ## Project Status
 
-**Current version:** `v6.0.23-full-reading-regression`
+**Current version:** `v6.1.10-dk-rtn-theme-bridge`
 
 ### Recently Completed
 
-- `v6.0.11` — Shadbala internal invariant validation (1200/1200 pass); downgraded to `partial`
-- `v6.0.18` — Solar Return / Varshaphala + Muntha
-- `v6.0.20` — Narayana Dasha / Rishi Dasha
-- `v6.0.21` — Muhurta (Panchanga-based electional astrology)
-- `v6.0.22` — Nakshatra Advanced (Chandra Bala / Tara Bala)
-- `v6.0.23` — Full-reading regression fix (45 modules, 0 errors)
+- `v6.1.10` — Darakaraka deep reader wired into `full-reading.modules.jaimini.darakaraka`; thematic reports now consume real DK and Rashi Tulya Navamsa evidence.
+- `v6.1.9` — Public/sanitized benchmark suite, competitive research, coverage roadmap and PDF validation methodology added.
+- `v6.1.8` — Yoga validation reached F1=95.22% (FP=36, FN=63); thematic reports consume real `full-reading.modules` evidence.
+- `v6.1.6` — Five-system Dasha convergence wired into full-reading (Vimshottari + Chara + Yogini + Ashtottari + Kalachakra).
+- `v6.0.11` — Shadbala internal invariant validation (1200/1200 pass); downgraded to `partial`.
 
 ### Actively Working On (P0)
 
 1. **Chara Dasha rewrite** — align with PyJHora KN Rao method (target: ≥95% match)
 2. **Shadbala external calibration** — align with JHora / PyJHora / BV Raman
-3. **KP Sub-Lord full implementation** — unequal Vimshottari subdivisions
-4. **Bhava Chalit complete** — cusp-based planet reassignment
-5. **Sudarshana Chakra traditional** — Sun/Moon/Lagna reference points
+3. **Darakaraka / RTN external benchmark** — v6.1.10 has wired the modules; next step is traditional case validation and evidence ranking
+4. **KP Sub-Lord full implementation** — unequal Vimshottari subdivisions
+5. **Bhava Chalit complete** — cusp-based planet reassignment
+6. **Sudarshana Chakra traditional** — Sun/Moon/Lagna reference points
 
 ### Next (P1)
 

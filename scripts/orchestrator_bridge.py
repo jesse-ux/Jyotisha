@@ -401,6 +401,7 @@ class OrchestratorBridge:
         self._inject_yoga_module(modules, add)
         self._inject_varga_modules(modules, add)
         self._inject_strength_modules(modules, add)
+        self._inject_jaimini_relationship_modules(modules, add)
         self._inject_special_points(modules, add)
         self._inject_dasa_convergence_module(modules, add)
         self._inject_transit_module(modules, add)
@@ -411,7 +412,8 @@ class OrchestratorBridge:
             "counts": counts,
             "source_modules": sorted(k for k in modules.keys() if k in {
                 "yoga", "varga_full", "d9_navamsa_expanded", "ashtakavarga", "shadbala",
-                "special_lagnas", "vivah_saham", "dasa_convergence", "transit_multi_reference",
+                "jaimini", "rashi_tulya_navamsa", "special_lagnas", "vivah_saham",
+                "dasa_convergence", "transit_multi_reference",
                 "dasha", "yogini_dasha", "ashtottari_dasha", "kalachakra_dasha",
             }),
         }
@@ -541,6 +543,79 @@ class OrchestratorBridge:
                     sentiment="positive" if avg >= 28 else ("negative" if avg <= 24 else "neutral"),
                     strength=StrengthLevel.MODERATE,
                     details={"source_module": "ashtakavarga", "scores": houses},
+                ))
+
+    def _inject_jaimini_relationship_modules(self, modules: Dict[str, Any], add) -> None:
+        """Inject relationship evidence from Jaimini DK and RTN modules.
+
+        v6.1.10 connects two previously underused P0 relationship layers:
+        `modules.jaimini.darakaraka` and `modules.rashi_tulya_navamsa`.
+        Both are deterministic full-reading outputs; the bridge translates them into
+        marriage/health/spirituality evidence so thematic reports can narrate them.
+        """
+        jaimini = modules.get("jaimini") or {}
+        darakaraka = jaimini.get("darakaraka") if isinstance(jaimini, dict) else None
+        if isinstance(darakaraka, dict) and darakaraka and not darakaraka.get("error"):
+            score = darakaraka.get("marriage_quality_score")
+            score_text = f"，质量评分约{score:.0%}" if isinstance(score, (int, float)) else ""
+            conclusion = (
+                f"Darakaraka：{darakaraka.get('dk_planet', '未知')}落{darakaraka.get('dk_sign', '未知')}"
+                f"第{darakaraka.get('dk_house', '?')}宫，伴侣原型={darakaraka.get('core_profile', '未标注')}{score_text}。"
+            )
+            if darakaraka.get("d9_sign"):
+                conclusion += f" D9中落{darakaraka.get('d9_sign')}，尊严={darakaraka.get('d9_dignity', '未知')}。"
+            add(ThemeName.MARRIAGE, ReportTechniqueResult(
+                technique="jaimini:darakaraka_deep_reader",
+                chart="D1/D9",
+                conclusion=conclusion,
+                sentiment="positive" if isinstance(score, (int, float)) and score >= 0.6 else ("negative" if isinstance(score, (int, float)) and score < 0.4 else "neutral"),
+                strength=StrengthLevel.STRONG,
+                details={"source_module": "jaimini.darakaraka", "raw": darakaraka},
+            ))
+
+        rtn_module = modules.get("rashi_tulya_navamsa") or {}
+        rtn = rtn_module.get("analysis") if isinstance(rtn_module, dict) and isinstance(rtn_module.get("analysis"), dict) else rtn_module
+        if isinstance(rtn, dict) and rtn and not rtn.get("error"):
+            house_mapping = rtn.get("house_mapping") or {}
+            curse_yogas = rtn.get("curse_yogas") or []
+            strength_score = rtn.get("strength_score")
+            weakness_score = rtn.get("weakness_score")
+            marriage_planets = house_mapping.get(7) or house_mapping.get("7") or []
+            summary_parts = []
+            if marriage_planets:
+                summary_parts.append(f"RTN第7宫映射行星={marriage_planets}")
+            if curse_yogas:
+                summary_parts.append(f"检测到{len(curse_yogas)}个凶星合相命名")
+            if isinstance(strength_score, (int, float)) and isinstance(weakness_score, (int, float)):
+                summary_parts.append(f"隐藏力量={strength_score:.0%}，弱点={weakness_score:.0%}")
+            conclusion = "；".join(summary_parts) or "Rashi Tulya Navamsa 已完成 D1/D9 映射分析。"
+            sentiment = "negative" if curse_yogas or (isinstance(weakness_score, (int, float)) and weakness_score > strength_score) else "positive"
+            add(ThemeName.MARRIAGE, ReportTechniqueResult(
+                technique="rashi_tulya_navamsa:relationship_mapping",
+                chart="D1/D9",
+                conclusion=conclusion,
+                sentiment=sentiment,
+                strength=StrengthLevel.MODERATE,
+                details={"source_module": "rashi_tulya_navamsa", "raw": rtn},
+            ))
+            if curse_yogas:
+                add(ThemeName.HEALTH, ReportTechniqueResult(
+                    technique="rashi_tulya_navamsa:curse_yogas",
+                    chart="D1/D9",
+                    conclusion=f"RTN凶星合相提示健康/危机压力：{[c.get('name') for c in curse_yogas[:3]]}",
+                    sentiment="negative",
+                    strength=StrengthLevel.MODERATE,
+                    details={"source_module": "rashi_tulya_navamsa", "curse_yogas": curse_yogas},
+                ))
+            guna = rtn.get("guna_narrative")
+            if guna:
+                add(ThemeName.SPIRITUALITY, ReportTechniqueResult(
+                    technique="rashi_tulya_navamsa:guna_balance",
+                    chart="D1/D9",
+                    conclusion=f"RTN Gunas：{guna}",
+                    sentiment="neutral",
+                    strength=StrengthLevel.MODERATE,
+                    details={"source_module": "rashi_tulya_navamsa", "guna_balance": rtn.get("guna_balance")},
                 ))
 
     def _inject_special_points(self, modules: Dict[str, Any], add) -> None:
@@ -791,7 +866,8 @@ def _extract_modules(chart_data: Any) -> Dict[str, Any]:
     # Allow passing modules directly in tests.
     known = {
         "yoga", "varga_full", "d9_navamsa_expanded", "ashtakavarga", "shadbala",
-        "special_lagnas", "vivah_saham", "dasa_convergence", "transit_multi_reference",
+        "jaimini", "rashi_tulya_navamsa", "special_lagnas", "vivah_saham",
+        "dasa_convergence", "transit_multi_reference",
         "dasha", "yogini_dasha", "ashtottari_dasha", "kalachakra_dasha",
     }
     if any(k in chart_data for k in known):

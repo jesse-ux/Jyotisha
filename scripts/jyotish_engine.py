@@ -3600,6 +3600,39 @@ def cmd_full_reading(args):
         ak_d9 = calc_varga(ak_lon, 9)
         jaimini_result['karakamsha'] = calc_karakamsha(
             ak_d9.get('sign', 'Aries'), ak_d9.get('degree_in_sign', 0))
+
+        # Darakaraka 深度解读（v6.1.10）
+        # Registry 已将 modules.jaimini.darakaraka 标为 covered；这里把独立 DK
+        # reader 接入 full-reading，使婚姻主题报告可消费真实 DK 画像、D9 状态、
+        # 合相影响和质量评分，而不是只停留在 chara_karaka 表格层。
+        try:
+            from darakaraka_reader import analyze_darakaraka
+            d9_planets_for_dk = {}
+            varga_data = report['modules'].get('varga_full', {})
+            d9_data = varga_data.get('D9_Navamsa', {}) if isinstance(varga_data, dict) else {}
+            d9_asc = d9_data.get('Ascendant', {}) if isinstance(d9_data, dict) else {}
+            d9_asc_idx = SIGNS.index(d9_asc.get('sign', 'Aries')) if isinstance(d9_asc, dict) and d9_asc.get('sign') in SIGNS else 0
+            if isinstance(d9_data, dict):
+                for d9_pn, d9_pd in d9_data.items():
+                    if d9_pn == '_meta' or d9_pn == 'Ascendant' or not isinstance(d9_pd, dict) or 'sign' not in d9_pd:
+                        continue
+                    d9_sign = d9_pd.get('sign')
+                    d9_deg = d9_pd.get('degree_in_sign', d9_pd.get('degree', 0) % 30)
+                    d9_sign_idx = SIGNS.index(d9_sign) if d9_sign in SIGNS else 0
+                    d9_planets_for_dk[d9_pn] = {
+                        'sign': d9_sign,
+                        'house': ((d9_sign_idx - d9_asc_idx) % 12) + 1,
+                        'degree_in_sign': d9_deg,
+                        'dignity': _get_dignity_level(d9_pn, d9_sign, d9_deg),
+                    }
+            jaimini_result['darakaraka'] = analyze_darakaraka({
+                'ascendant': chart.get('ascendant', {}),
+                'planets': planets,
+                'context': {'navamsa_planets': d9_planets_for_dk},
+            }, use_8_karaka=True)
+        except Exception as dk_e:
+            jaimini_result['darakaraka'] = {'error': str(dk_e)}
+
         report['modules']['jaimini'] = jaimini_result
     except Exception as e:
         report['errors'].append(f"jaimini: {e}")

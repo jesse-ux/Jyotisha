@@ -1,5 +1,26 @@
 # 印度占星 Skill 更新日志
 
+## v6.1.10（2026-06-08）—— P0 规划继续落地：Darakaraka / RTN 接入主题化报告
+
+> **目标**：继续执行覆盖度地图中的 P0 规划，把已经存在但未充分进入 full-reading / 主题报告叙事链的婚姻核心技法真正接线。
+
+### 关键改进
+- `scripts/jyotish_engine.py`：将 `scripts/darakaraka_reader.py` 接入 `full-reading.modules.jaimini.darakaraka`，输出 DK 行星、星座、宫位、D9 尊严、合相影响、婚姻质量评分和叙事。
+- `scripts/orchestrator_bridge.py`：新增 Jaimini/关系层注入，把 `jaimini.darakaraka` 与 `rashi_tulya_navamsa` 转为婚姻主题证据；RTN 的凶星合相与 Gunas 平衡也分别注入健康/灵性主题。
+- `references/technique_registry.json`：补齐 Darakaraka / Rashi Tulya Navamsa 的知识引用与 v6.1.10 验证说明。
+- `docs/roadmap/jyotish_technique_coverage_map.md`：更新 P0 规划状态，标注 DK、RTN、主题报告、Yoga F1 95%+ 的当前落地状态。
+
+### 验证
+```bash
+python3 -m py_compile scripts/jyotish_engine.py scripts/orchestrator_bridge.py scripts/darakaraka_reader.py scripts/rashi_tulya_navamsa.py
+python3 scripts/jyotish_engine.py full-reading --year 1990 --month 6 --day 15 --hour 10 --minute 30 --lat 39.9 --lon 116.4 --tz 8
+python3 scripts/orchestrator_bridge.py /tmp/jyotish_full_reading_v6110.json
+python3 scripts/audit_capabilities.py --mode validate
+python3 scripts/run_quality_gate.py --skip-yoga-logic
+```
+
+---
+
 ## v6.1.9（2026-06-08）—— 本地散落资料安全入仓：Benchmark、竞品研究、覆盖度地图与PDF验证方法论
 
 > **目标**：把历史 WorkBuddy 会话中散落但有长期价值的资料，按公开仓库隐私边界整理入 `yinduzhanxing`，避免遗漏，同时不上传真实用户个案、原始 PDF 文本或 raw full-reading 输出。
