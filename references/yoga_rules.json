@@ -9296,7 +9296,7 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora/BVR 205-206 Nishkapata Yoga.\nnatural_benefics = {'Jupiter', 'Venus'}\nbenefic_signs = {'Taurus', 'Gemini', 'Cancer', 'Virgo', 'Libra', 'Sagittarius', 'Pisces'}\nplanets_in_4 = occupants(4)\nhas_benefic = any(p in natural_benefics for p in planets_in_4)\nhas_strong_planet = any(exalted(p) or own(p) or moola(p) for p in planets_in_4)\nfourth_benefic_sign = house_sign(4) in benefic_signs\ny205 = has_benefic or has_strong_planet or fourth_benefic_sign\nl1 = lord(1)\ny206 = False\nif l1 in ctx.planets and house_of(l1) == 4:\n    l1_with_benefic = any(p != l1 and same_house(l1, p) for p in natural_benefics if p in ctx.planets)\n    l1_aspected_benefic = any(aspect(p, l1) for p in natural_benefics if p in ctx.planets and p != l1)\n    y206 = l1_with_benefic or l1_aspected_benefic\ny205 or y206 or vaiseshikamsa_score(lord(1)) >= 16\n",
+        "expr": "\n# PyJHora/BVR 205-206 Nishkapata Yoga.\nnatural_benefics = {'Jupiter', 'Venus'}\nbenefic_signs = {'Taurus', 'Gemini', 'Cancer', 'Virgo', 'Libra', 'Sagittarius', 'Pisces'}\nplanets_in_4 = occupants(4)\nhas_benefic = any(p in natural_benefics for p in planets_in_4)\nhas_strong_planet = any(exalted(p) or own(p) or moola(p) for p in planets_in_4)\n# BVR-205/PyJHora also treats a planet in a friendly sign in the 4th as qualifying.\nhas_friendly_planet = any(p in ctx.planets and p in planets_in_4 and house_strength(p) is not None and house_strength(p) >= 3 for p in planets_in_4)\nfourth_benefic_sign = house_sign(4) in benefic_signs\ny205 = has_benefic or has_strong_planet or has_friendly_planet or fourth_benefic_sign\nl1 = lord(1)\ny206 = False\nif l1 in ctx.planets and house_of(l1) == 4:\n    l1_with_benefic = any(p != l1 and same_house(l1, p) for p in natural_benefics if p in ctx.planets)\n    l1_aspected_benefic = any(aspect(p, l1) for p in natural_benefics if p in ctx.planets and p != l1)\n    y206 = l1_with_benefic or l1_aspected_benefic\ny205 or y206 or vaiseshikamsa_score(lord(1)) >= 16\n",
         "combo_template": "第4宫有天然吉星/强星/吉性星座，或上升主入4宫且受吉星影响"
       },
       "effects": [
@@ -9306,7 +9306,7 @@
       ],
       "strength": "中",
       "enabled": true,
-      "accuracy_note": "v6.1.3: added Vaiseshikamsa scoring for lagna lord"
+      "accuracy_note": "v6.1.8: BVR-205 restored friendly-sign planet in 4th check; keeps Vaiseshikamsa scoring for lagna lord"
     },
     {
       "id": "bvr_bahu_puthra_precise",

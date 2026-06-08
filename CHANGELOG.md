@@ -1,5 +1,32 @@
 # 印度占星 Skill 更新日志
 
+## v6.1.8（2026-06-08）—— Nishkapata 友好星座条件恢复 + 主题化报告真实模块接线，Yoga F1 提升至 95.22%
+
+> **目标**：继续冲击 Yoga FN 瓶颈，但坚持准确率优先，只接受来源语义明确且预验证不增加 FP 的规则优化。
+
+### 关键改进
+- `bvr_nishkapata_precise` 恢复 BVR-205 / PyJHora 描述中的“4宫行星处于友好星座”条件：第4宫若有行星处于友好/自/旺等强势星座，也可触发 Nishkapata Yoga。
+- 预验证过的但未采纳方案：Kapata Yoga 的 4宫主受凶星相位方向候选会增加 FP 且无 FN 收益，因此保持原逻辑不变。
+- 继续保留 Thrikaala / Dharidhra / Parannabhojana 的保守口径：这些规则牵涉特定 amsa、Navamsa/弱势定义或 PyJHora 口径，暂不为召回做宽泛放松。
+- `scripts/orchestrator_bridge.py` 新增 `inject_full_reading_modules()`：直接消费 `full-reading.modules` 的真实结果，把 `yoga`、`varga_full`、`d9_navamsa_expanded`、`ashtakavarga`、`shadbala`、`special_lagnas`、`vivah_saham`、`dasa_convergence`、`transit_multi_reference` 等模块转换为 `ReportTechniqueResult`。
+- 主题化报告不再主要依赖 registry/MockDataFactory；在 full-reading JSON 输入下，婚姻/事业/财富/健康/灵性五大主题会获得真实证据与真实 Vimshottari 时间锚。
+
+### 验证
+```bash
+python3 -m py_compile scripts/orchestrator_bridge.py scripts/report_orchestrator.py scripts/reading_orchestrator.py scripts/jyotish_engine.py
+python3 scripts/validate_logic_v2.py
+python3 scripts/jyotish_engine.py full-reading --year 1990 --month 6 --day 15 --hour 10 --minute 30 --lat 39.9 --lon 116.4 --tz 8
+python3 scripts/orchestrator_bridge.py /tmp/jyotish_full_reading_for_theme.json
+python3 scripts/run_quality_gate.py --skip-yoga-logic
+```
+- 60 张测试图，82 条可对比规则
+- FP=36，FN=63
+- Precision=96.48%，Recall=93.99%，F1=95.22%
+- 主题化桥接 smoke：生成5个主题报告；真实模块注入 evidence counts 为 marriage=9、career=12、wealth=9、health=12、spirituality=13；统一叙事生成成功。
+- 质量门禁：compile/json/audit/BPHS/pytest 35 passed/golden case 全通过
+
+---
+
 ## v6.1.7（2026-06-08）—— Yoga F1 首次突破 95% 与 full-reading D9/D60 注入
 
 > **目标**：继续 Yoga 精度冲刺，同时把已在验证管线生效的 D9/D60 YogaContext 正式接入 `yoga` 子命令与 `full-reading` 主链路。
