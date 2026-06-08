@@ -1,5 +1,29 @@
 # 印度占星 Skill 更新日志
 
+## v6.1.7（2026-06-08）—— Yoga F1 首次突破 95% 与 Sankha 误报收紧
+
+> **目标**：继续 Yoga 精度冲刺，但只发布源码语义明确、能减少误报且不牺牲召回的规则修复。
+
+### 关键改进
+- `full-reading` 与 `yoga` 子命令补齐 D9/D60/Panchanga 上下文注入：出生信息路径会从 `varga-full` 构造 YogaContext，让依赖 Navamsa / Shashtiamsa 的 Yoga 规则在主链路中实际生效。
+- `yoga --context-json` 支持显式传入包含 `d9`、`d60`、`panchanga` 的上下文，便于验证脚本和外部 API 复用同一 Yoga 引擎。
+- 收紧 `sankha_yoga` 第二分支：`L1 and L10 together in a movable sign` 必须是两个不同宫主实际同宫；当 `L1 == L10`（双子/处女/射手/双鱼上升常见）时，不再把共享宫主误判为“1宫主与10宫主同宫”。
+- 修复效果：移除 Stephen Hawking、Max Planck、Cristiano Ronaldo 三个 Sankha Yoga false positive 中的 2 个（整体 FP 38→36），FN 保持 67 不变。
+- 保持“准确率优先”：未为了短期召回扩大 Thrikaala / Dharidhra / Nishkapata 等高风险规则。
+
+### 验证
+```bash
+python3 -m py_compile scripts/yoga_engine.py scripts/validate_logic_v2.py
+python3 scripts/validate_logic_v2.py
+python3 scripts/jyotish_engine.py full-reading --year 1990 --month 6 --day 15 --hour 10 --minute 30 --lat 39.9 --lon 116.4 --tz 8
+```
+- 60 张测试图，82 条可对比规则
+- FP=36，FN=67
+- Precision=96.46%，Recall=93.61%，F1=95.02%
+- full-reading smoke：`summary.status=complete`，`errors=[]`，`modules=47`，`modules.yoga.context_layers=['d60','d9','panchanga']`
+
+---
+
 ## v6.1.6（2026-06-07）—— full-reading 五系统推运收敛与接口修复
 
 > **目标**：继续“合并隐藏模块→打通引擎→验证可用”的优化路线，将 Ashtottari / Yogini / Kalachakra 从独立模块进一步接入 `full-reading` 主链路。

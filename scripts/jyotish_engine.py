@@ -418,6 +418,60 @@ def _add_chart_args(p):
     p.add_argument('--node-mode', default='mean', choices=['mean', 'true'], help='Rahu/Ketu节点口径：mean=Mean Node（默认，JHora常用/Swiss direct baseline），true=True Node（PyJHora默认）')
 
 
+def _varga_chart_to_yoga_context(varga_chart):
+    """Convert varga.py output into yoga_engine context chart shape."""
+    if not isinstance(varga_chart, dict):
+        return {}
+    asc = varga_chart.get('Ascendant', {})
+    asc_sign = asc.get('sign') if isinstance(asc, dict) else None
+    asc_idx = SIGNS.index(asc_sign) if asc_sign in SIGNS else None
+    planets_ctx = {}
+    for pn, pd in varga_chart.items():
+        if pn in ('Ascendant', '_meta', '_dignity', '_d9_analysis', '_d60_analysis'):
+            continue
+        if not isinstance(pd, dict) or 'sign' not in pd:
+            continue
+        sign = pd.get('sign')
+        sign_idx = pd.get('sign_idx')
+        if sign_idx is None and sign in SIGNS:
+            sign_idx = SIGNS.index(sign)
+        house = None
+        if asc_idx is not None and sign_idx is not None:
+            house = ((int(sign_idx) - asc_idx) % 12) + 1
+        planets_ctx[pn] = {
+            'sign': sign,
+            'house': house,
+            'degree': pd.get('degree_in_sign', pd.get('degree')),
+            'degree_in_sign': pd.get('degree_in_sign', pd.get('degree')),
+            'sign_idx': sign_idx,
+        }
+    return {
+        'ascendant': asc_sign,
+        'ascendant_degree': asc.get('degree_in_sign') if isinstance(asc, dict) else None,
+        'planets': planets_ctx,
+    }
+
+
+def _build_yoga_context_from_vargas(varga_result, planet_lons=None):
+    """Build optional YogaContext payload with D9/D60 and basic panchanga."""
+    context = {}
+    if isinstance(varga_result, dict):
+        d9 = varga_result.get('D9_Navamsa') or {}
+        d60 = varga_result.get('D60_Shashtiamsa') or varga_result.get('D60_Shashtyamsa') or {}
+        if d9:
+            context['d9'] = _varga_chart_to_yoga_context(d9)
+        if d60:
+            context['d60'] = _varga_chart_to_yoga_context(d60)
+    if isinstance(planet_lons, dict) and 'Moon' in planet_lons and 'Sun' in planet_lons:
+        tithi_no = int(((planet_lons.get('Moon', 0) - planet_lons.get('Sun', 0)) % 360) / 12) + 1
+        context['panchanga'] = {
+            'tithi': tithi_no,
+            'paksha': 'waxing' if 1 <= tithi_no <= 15 else 'waning',
+            'is_waning_moon': tithi_no > 15,
+        }
+    return context
+
+
 # ============================================================================
 # 公共星盘计算（供 chart/shadbala/ashtakavarga 共用，v3.4提取）
 # ============================================================================
@@ -608,6 +662,8 @@ def cmd_yoga(args):
     planets = {}
     asc = args.ascendant or "Aries"
 
+    yoga_context = None
+
     if args.planets:
         for item in args.planets.split(','):
             parts = item.strip().split(':')
@@ -619,6 +675,12 @@ def cmd_yoga(args):
                     except ValueError:
                         pass
                 planets[parts[0].strip()] = pdata
+        context_json = getattr(args, 'context_json', None)
+        if context_json:
+            try:
+                yoga_context = json.loads(context_json)
+            except Exception:
+                yoga_context = None
     else:
         required_birth_fields = ["year", "month", "day", "hour", "minute", "lat", "lon"]
         has_birth_input = all(getattr(args, field, None) is not None for field in required_birth_fields)
@@ -630,6 +692,7 @@ def cmd_yoga(args):
             if chart is None:
                 return {"error": "swisseph未安装"}
             asc = chart.get("ascendant", {}).get("sign", asc)
+            planet_lons_for_varga = {}
             for pname, pd in chart.get("planets", {}).items():
                 if isinstance(pd, dict) and "sign" in pd and "house" in pd:
                     planets[pname] = {
@@ -637,13 +700,25 @@ def cmd_yoga(args):
                         "house": pd["house"],
                         "degree": pd.get("degree_in_sign", pd.get("degree")),
                     }
+                    if pd.get("degree_raw") is not None:
+                        planet_lons_for_varga[pname] = pd.get("degree_raw")
+            try:
+                from varga import calc_all_vargas
+                asc_deg_raw = chart.get("ascendant", {}).get("degree_raw")
+                if asc_deg_raw is not None and planet_lons_for_varga:
+                    yoga_context = _build_yoga_context_from_vargas(
+                        calc_all_vargas(planet_lons_for_varga, asc_deg_raw, [9, 60]),
+                        planet_lons_for_varga,
+                    )
+            except Exception:
+                yoga_context = None
 
     ai = SIGNS.index(asc) if asc in SIGNS else 0
     kl = list(set([SIGN_LORDS[SIGNS[(ai + h - 1) % 12]] for h in [1, 4, 7, 10]]))
     tl = list(set([SIGN_LORDS[SIGNS[(ai + h - 1) % 12]] for h in [1, 5, 9]]))
 
     # 调用数据驱动引擎（yoga_engine.py）
-    yogas = detect_yogas(planets, asc)
+    yogas = detect_yogas(planets, asc, context=yoga_context)
 
     return {
         "ascendant": asc,
@@ -3076,6 +3151,32 @@ def cmd_full_reading(args):
         if d1_data:
             varga_result["D1_Rashi"] = d1_data
         report['modules']['varga_full'] = varga_result
+
+        # v6.1.7: Re-run Yoga with D9/D60 context after varga-full is available.
+        # The earlier Step 3 remains a D1-only fallback for backward compatibility.
+        try:
+            yoga_context = _build_yoga_context_from_vargas(varga_result, planet_lons)
+            yoga_planets = {}
+            for pn, pd in planets.items():
+                if isinstance(pd, dict) and 'sign' in pd and 'house' in pd:
+                    yoga_planets[pn] = {
+                        'sign': pd['sign'],
+                        'house': pd['house'],
+                        'degree': pd.get('degree_in_sign', pd.get('degree')),
+                    }
+            yoga_result = cmd_yoga(type('Args', (), {
+                'ascendant': asc_sign,
+                'planets': ','.join([
+                    f"{k}:{v['sign']}:{v['house']}" + (f":{v['degree']}" if v.get('degree') is not None else "")
+                    for k, v in yoga_planets.items()
+                ]),
+                'context_json': json.dumps(yoga_context, ensure_ascii=False),
+            })())
+            yoga_result['context_layers'] = sorted(k for k, v in yoga_context.items() if v)
+            report['modules']['yoga'] = yoga_result
+        except Exception as yoga_ctx_e:
+            report['errors'].append(f"yoga-context-injection: {yoga_ctx_e}")
+
         report['modules']['vargottama'] = _calc_vargottama(planets, varga_result)
         report['modules']['pushkara'] = _calc_pushkara_flags(planets)
     except Exception as e:
@@ -3901,6 +4002,7 @@ def main():
     _add_chart_args(p)
     p.add_argument('--ascendant', default=None)
     p.add_argument('--planets', default=None, help="格式: 'Sun:Aries:9[:10.5],Moon:Aquarius:7[:15.2],...'；若提供则优先使用并忽略出生信息")
+    p.add_argument('--context-json', default=None, help='可选：传入包含 d9/d60/panchanga 的 YogaContext JSON')
     for action in p._actions:
         if action.dest in ['year', 'month', 'day', 'hour', 'minute', 'lat', 'lon']:
             action.required = False

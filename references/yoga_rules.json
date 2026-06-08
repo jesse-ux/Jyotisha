@@ -1288,7 +1288,7 @@
       "category": "auspicious",
       "logic": {
         "type": "custom",
-        "expr": "\n# PyJHora/BVR-12: (L1 strong and L5/L6 in mutual kendras) OR\n# (L1 and L10 together in a movable sign and L9 strong). PyJHora strong() uses\n# house_strength >= FRIEND, not generic kendra/trikona strength.\nl1, l5, l6, l9, l10 = [lord(h) for h in [1, 5, 6, 9, 10]]\nif not all(p in ctx.planets for p in [l1, l5, l6, l9, l10]):\n    False\nelse:\n    l1h, l5h, l6h, l9h, l10h = [house_of(p) for p in [l1, l5, l6, l9, l10]]\n    cond1 = strong(l1) and offset(l5h, l6h) in [0, 3, 6, 9] and offset(l6h, l5h) in [0, 3, 6, 9]\n    cond2 = strong(l9) and house_of(l1) == house_of(l10) and movable_house(l1h)\n    cond1 or cond2\n",
+        "expr": "\n# PyJHora/BVR-12: (L1 strong and L5/L6 in mutual kendras) OR\n# (L1 and L10 together in a movable sign and L9 strong). PyJHora strong() uses\n# house_strength >= FRIEND, not generic kendra/trikona strength.\nl1, l5, l6, l9, l10 = [lord(h) for h in [1, 5, 6, 9, 10]]\nif not all(p in ctx.planets for p in [l1, l5, l6, l9, l10]):\n    False\nelse:\n    l1h, l5h, l6h, l9h, l10h = [house_of(p) for p in [l1, l5, l6, l9, l10]]\n    cond1 = strong(l1) and offset(l5h, l6h) in [0, 3, 6, 9] and offset(l6h, l5h) in [0, 3, 6, 9]\n    # The second branch requires actual conjunction of two distinct lords; if L1==L10\n    # (common for Gemini/Virgo/Sagittarius/Pisces ascendants), PyJHora does not count\n    # the shared lord as \"L1 and L10 together\" for Sankha Yoga.\n    cond2 = l1 != l10 and strong(l9) and house_of(l1) == house_of(l10) and movable_house(l1h)\n    cond1 or cond2\n",
         "combo_template": "上升主强且5/6宫主互为Kendra，或1/10宫主合于变动星座且9宫主强"
       },
       "effects": [
@@ -1299,7 +1299,8 @@
       "strength": "强",
       "enabled": true,
       "source_reference": "BVR-12: L1 strong, L5/L6 in mutual Kendras",
-      "bvr_chapter": "Chapter 2"
+      "bvr_chapter": "Chapter 2",
+      "accuracy_note": "v6.1.7: tightened movable-sign branch to require distinct L1/L10 lords; removes shared-lord false positives for dual ascendants."
     },
     {
       "id": "bheri_yoga",

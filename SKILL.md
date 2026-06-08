@@ -1,6 +1,6 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.1.6
+version: 6.1.7
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga、出生时间矫正、PDF星盘、读取PDF、分析PDF星盘、现代解读、误判纠错、Varga分盘、综合分析、过境分析、合盘、婚姻匹配、年运盘、Prashna、Argala、Jaimini、Shadbala、Ashtakavarga、HTML报告、深度解盘。
 ---
 
@@ -10,19 +10,19 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.1.6 | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.1.7 | **详细变更**：`CHANGELOG.md`
 
 ## Yoga 逻辑验证指标
 
-| 指标 | v6.0.45（旧基线） | v6.0.47（当前） |
-|---|---|---|
-| Precision | 83.26% | **92.50%** |
-| Recall | 91.52% | **91.71%** |
-| **F1 Score** | 87.19% | **92.10%** |
-| FP | 193 | **78** |
-| FN | 89 | **87** |
+| 指标 | v6.0.45（旧基线） | v6.1.7（当前） |
+|---|---:|---:|
+| Precision | 83.26% | **96.46%** |
+| Recall | 91.52% | **93.61%** |
+| **F1 Score** | 87.19% | **95.02%** |
+| FP | 193 | **36** |
+| FN | 89 | **67** |
 
-> v6.0.46: 修复 6 条规则（FP 193→78）。v6.0.47: 修复 dharidhra bidirectional associated() → one-way aspect()，FP 未进一步下降因残余根因在 lord 解析（co-lord vs 古典宫主）和 rasi/house 差异。
+> v6.1.7 当前真实指标以 `references/validation_logic_report.json` 为准：60张测试图、82条可对比规则，FP=36、FN=67、F1=95.02%。关键提升来自 aspect 方向修正、D9/D60 上下文注入、Thrikaala Gnana 收紧、Dharidhra/Navamsa 方法恢复、五系统 Dasha Convergence 接入、full-reading YogaContext 桥接，以及 Sankha Yoga 共享宫主误报收紧。
 
 ---
 
@@ -313,9 +313,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.1.6-full-reading-five-dasha-convergence
+**版本**：v6.1.7-yoga-f1-95-sankha-tightening
 **创建日期**：2026-04-20
-**最后更新**：2026-06-07（v6.1.6 将 Ashtottari/Yogini/Kalachakra 接入 full-reading，Dasa Convergence 从三系统升级为 Vimshottari + Chara + Yogini + Ashtottari + Kalachakra 五系统；修复 Pancha Pakshi/RTN 接口与替代 Dasha current 周期循环。Yoga 当前以 `references/validation_logic_report.json` 为准。）
+**最后更新**：2026-06-08（v6.1.7 在 v6.1.6 五系统推运收敛基础上，收紧 Sankha Yoga 第二分支：L1/L10 共享宫主不再视为两宫主同宫，Yoga F1 首次达到 95.02%。Yoga 当前以 `references/validation_logic_report.json` 为准。）
 
 ---
 
