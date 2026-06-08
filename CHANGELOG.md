@@ -1,5 +1,28 @@
 # 印度占星 Skill 更新日志
 
+## v6.1.9（2026-06-08）—— 本地散落资料安全入仓：Benchmark、竞品研究、覆盖度地图与PDF验证方法论
+
+> **目标**：把历史 WorkBuddy 会话中散落但有长期价值的资料，按公开仓库隐私边界整理入 `yinduzhanxing`，避免遗漏，同时不上传真实用户个案、原始 PDF 文本或 raw full-reading 输出。
+
+### 新增资料
+- `benchmarks/jyotish/`：公开/虚构 smoke case benchmark 套件，包含 `data/benchmark_samples.json`、12 个可复跑 benchmark 脚本、13 份历史 markdown benchmark 报告与 README。
+- `docs/research/jyotish_projects_comparison.md`：开源 Jyotish 项目竞品分析，覆盖 PyJHora、jyotisha、VedAstro、drik-panchanga、VedicAstro、jyotishganit、Kerykeion 等项目。
+- `docs/roadmap/jyotish_technique_coverage_map.md`：完整技法覆盖度地图，按 Natal / Dasha / Transit / Muhurta / Prashna / Synastry 与 L1-L4 层级梳理已实现、partial、missing 和待优化项。
+- `references/validation/pdf-chart-reading-validation-methodology.md`：从私有 PDF 星盘验证经验中脱敏抽象出的通用方法论，覆盖 PDF/OCR 提取、Quality Gate、字段核对、置信度分级和隐私边界。
+
+### 隐私与入仓边界
+- 已排除：benchmark raw JSON/CSV、`__pycache__`、个人解盘/个人运势报告、真实 PDF 提取文本、私有 full-reading JSON、包含个人出生资料或人生事件的原始个案文件。
+- 5月4日 10案例报告暂未直接入仓：虽然多为公开人物案例，但含完整出生资料与叙事判断，后续如需使用，应先改写为公开名人验证摘要或测试夹具。
+- 所有入仓 benchmark 样本均标记为 `fictional_or_public_test`。
+
+### 验证
+```bash
+python3 -m py_compile benchmarks/jyotish/scripts/*.py
+python3 scripts/run_quality_gate.py --skip-yoga-logic
+```
+
+---
+
 ## v6.1.8（2026-06-08）—— Nishkapata 友好星座条件恢复 + 主题化报告真实模块接线，Yoga F1 提升至 95.22%
 
 > **目标**：继续冲击 Yoga FN 瓶颈，但坚持准确率优先，只接受来源语义明确且预验证不增加 FP 的规则优化。

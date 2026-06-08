@@ -1,0 +1,82 @@
+[
+  {
+    "id": "smoke_beijing_1990_noon",
+    "label": "Smoke Beijing 1990 noon",
+    "category": "smoke",
+    "birth": {"year": 1990, "month": 1, "day": 1, "hour": 12, "minute": 0, "lat": 39.9042, "lon": 116.4074, "tz": 8},
+    "today": "2026-06-03",
+    "privacy": "fictional_or_public_test"
+  },
+  {
+    "id": "smoke_newyork_1985_morning",
+    "label": "Smoke New York 1985 morning",
+    "category": "smoke",
+    "birth": {"year": 1985, "month": 7, "day": 13, "hour": 8, "minute": 30, "lat": 40.7128, "lon": -74.0060, "tz": -4},
+    "today": "2026-06-03",
+    "privacy": "fictional_or_public_test"
+  },
+  {
+    "id": "smoke_london_1970_evening",
+    "label": "Smoke London 1970 evening",
+    "category": "smoke",
+    "birth": {"year": 1970, "month": 3, "day": 21, "hour": 18, "minute": 15, "lat": 51.5074, "lon": -0.1278, "tz": 0},
+    "today": "2026-06-03",
+    "privacy": "fictional_or_public_test"
+  },
+  {
+    "id": "smoke_delhi_2000_midnight",
+    "label": "Smoke Delhi 2000 midnight",
+    "category": "smoke",
+    "birth": {"year": 2000, "month": 12, "day": 25, "hour": 0, "minute": 5, "lat": 28.6139, "lon": 77.2090, "tz": 5.5},
+    "today": "2026-06-03",
+    "privacy": "fictional_or_public_test"
+  },
+  {
+    "id": "smoke_sydney_1999_afternoon",
+    "label": "Smoke Sydney 1999 afternoon",
+    "category": "smoke",
+    "birth": {"year": 1999, "month": 9, "day": 9, "hour": 15, "minute": 45, "lat": -33.8688, "lon": 151.2093, "tz": 10},
+    "today": "2026-06-03",
+    "privacy": "fictional_or_public_test"
+  },
+  {
+    "id": "smoke_tokyo_1964_noon",
+    "label": "Smoke Tokyo 1964 noon",
+    "category": "smoke",
+    "birth": {"year": 1964, "month": 10, "day": 10, "hour": 12, "minute": 0, "lat": 35.6762, "lon": 139.6503, "tz": 9},
+    "today": "2026-06-03",
+    "privacy": "fictional_or_public_test"
+  },
+  {
+    "id": "smoke_cairo_1952_dawn",
+    "label": "Smoke Cairo 1952 dawn",
+    "category": "smoke",
+    "birth": {"year": 1952, "month": 7, "day": 23, "hour": 5, "minute": 20, "lat": 30.0444, "lon": 31.2357, "tz": 2},
+    "today": "2026-06-03",
+    "privacy": "fictional_or_public_test"
+  },
+  {
+    "id": "smoke_paris_1989_noon",
+    "label": "Smoke Paris 1989 noon",
+    "category": "smoke",
+    "birth": {"year": 1989, "month": 11, "day": 9, "hour": 12, "minute": 0, "lat": 48.8566, "lon": 2.3522, "tz": 1},
+    "today": "2026-06-03",
+    "privacy": "fictional_or_public_test"
+  },
+  {
+    "id": "smoke_losangeles_1995_night",
+    "label": "Smoke Los Angeles 1995 night",
+    "category": "smoke",
+    "birth": {"year": 1995, "month": 5, "day": 5, "hour": 23, "minute": 40, "lat": 34.0522, "lon": -118.2437, "tz": -7},
+    "today": "2026-06-03",
+    "privacy": "fictional_or_public_test"
+  },
+  {
+    "id": "smoke_sao_paulo_2004_morning",
+    "label": "Smoke Sao Paulo 2004 morning",
+    "category": "smoke",
+    "birth": {"year": 2004, "month": 2, "day": 29, "hour": 9, "minute": 10, "lat": -23.5558, "lon": -46.6396, "tz": -3},
+    "today": "2026-06-03",
+    "privacy": "fictional_or_public_test"
+  }
+]

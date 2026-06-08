@@ -313,9 +313,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.1.8-yoga-f1-95-theme-real-modules
+**版本**：v6.1.9-public-benchmarks-research-roadmap
 **创建日期**：2026-04-20
-**最后更新**：2026-06-08（v6.1.8 在 v6.1.7 D9/D60 YogaContext 基础上，恢复 Nishkapata Yoga 的 BVR-205 友好星座条件；Yoga F1 提升至 95.22%，FP=36、FN=63。`orchestrator_bridge.py` 已可直接消费 `full-reading.modules` 真实结果生成婚姻/事业/财富/健康/灵性五大主题证据与叙事。Yoga 当前以 `references/validation_logic_report.json` 为准。）
+**最后更新**：2026-06-08（v6.1.9 将历史散落资料安全整理入仓：新增 `benchmarks/jyotish/` 公开/虚构 smoke benchmark 套件、`docs/research/jyotish_projects_comparison.md`、`docs/roadmap/jyotish_technique_coverage_map.md` 与 `references/validation/pdf-chart-reading-validation-methodology.md`。v6.1.8 Yoga 指标保持有效：F1=95.22%，FP=36、FN=63；Yoga 当前以 `references/validation_logic_report.json` 为准。）
 
 ---
 
