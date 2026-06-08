@@ -376,6 +376,293 @@ class OrchestratorBridge:
             for tn in ThemeName:
                 self.rpo.add_technique(tn, tech_result)
 
+    # ── full-reading.modules → ReportTechniqueResult ──
+
+    def inject_full_reading_modules(self, chart_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        将 `jyotish_engine.py full-reading` 的真实模块输出注入主题化报告。
+
+        v6.1.8 之前，桥接层主要依赖 reading_orchestrator 的 registry；当 registry
+        未注册真实执行函数时，主题报告容易退化为少量模拟/占位信息。本方法直接消费
+        full-reading.modules 中已经计算完成的模块，把 Yoga、分盘、Ashtakavarga、
+        Shadbala、特殊上升点、Vivah Saham、Transit、多系统 Dasha Convergence 等
+        转成 report_orchestrator 可叙事的 TechniqueResult。
+        """
+        modules = _extract_modules(chart_data)
+        if not modules:
+            return {"injected": False, "reason": "no full-reading modules found", "counts": {}}
+
+        counts = {theme.value: 0 for theme in ThemeName}
+
+        def add(theme: ThemeName, result: ReportTechniqueResult) -> None:
+            self.rpo.add_technique(theme, result)
+            counts[theme.value] += 1
+
+        self._inject_yoga_module(modules, add)
+        self._inject_varga_modules(modules, add)
+        self._inject_strength_modules(modules, add)
+        self._inject_special_points(modules, add)
+        self._inject_dasa_convergence_module(modules, add)
+        self._inject_transit_module(modules, add)
+
+        return {
+            "injected": True,
+            "source": "full-reading.modules",
+            "counts": counts,
+            "source_modules": sorted(k for k in modules.keys() if k in {
+                "yoga", "varga_full", "d9_navamsa_expanded", "ashtakavarga", "shadbala",
+                "special_lagnas", "vivah_saham", "dasa_convergence", "transit_multi_reference",
+                "dasha", "yogini_dasha", "ashtottari_dasha", "kalachakra_dasha",
+            }),
+        }
+
+    def _inject_yoga_module(self, modules: Dict[str, Any], add) -> None:
+        yoga = modules.get("yoga") or {}
+        yogas = yoga.get("yogas") or yoga.get("detected_yogas") or []
+        if not isinstance(yogas, list):
+            return
+
+        added_per_theme = {theme: 0 for theme in ThemeName}
+        for y in yogas:
+            if not isinstance(y, dict):
+                continue
+            themes = _themes_for_yoga(y)
+            if not themes:
+                continue
+            strength = _strength_from_text(y.get("strength"), default=StrengthLevel.MODERATE)
+            sentiment = _sentiment_from_yoga(y)
+            effects = y.get("effects") or []
+            if isinstance(effects, list):
+                effect_text = "、".join(str(e) for e in effects[:4])
+            else:
+                effect_text = str(effects)
+            conclusion = f"{y.get('name_cn') or y.get('name') or 'Yoga'}：{y.get('combination', '检测到相关组合')}"
+            if effect_text:
+                conclusion += f"；传统效应：{effect_text}"
+
+            for theme in themes:
+                if added_per_theme[theme] >= 8:
+                    continue
+                add(theme, ReportTechniqueResult(
+                    technique=f"yoga:{y.get('rule_id') or y.get('name') or 'unknown'}",
+                    chart="D1",
+                    conclusion=conclusion,
+                    sentiment=sentiment,
+                    strength=strength,
+                    details={"source_module": "yoga", "raw": y},
+                ))
+                added_per_theme[theme] += 1
+
+    def _inject_varga_modules(self, modules: Dict[str, Any], add) -> None:
+        d9 = modules.get("d9_navamsa_expanded") or {}
+        if isinstance(d9, dict) and d9:
+            asc = d9.get("Ascendant") or {}
+            venus = d9.get("Venus") or {}
+            jupiter = d9.get("Jupiter") or {}
+            parts = []
+            if asc:
+                parts.append(f"D9上升落{asc.get('sign_cn') or asc.get('sign')}，主星{asc.get('lord', '未知')}")
+            if venus:
+                parts.append(f"Venus在D9落{venus.get('sign_cn') or venus.get('sign')}，尊严={venus.get('dignity', '未知')}")
+            if jupiter:
+                parts.append(f"Jupiter在D9落{jupiter.get('sign_cn') or jupiter.get('sign')}，尊严={jupiter.get('dignity', '未知')}")
+            add(ThemeName.MARRIAGE, ReportTechniqueResult(
+                technique="d9_navamsa_expanded",
+                chart="D9",
+                conclusion="；".join(parts[:3]) or "D9 Navamsa 已完成展开",
+                sentiment=_sentiment_from_dignities([venus.get("dignity"), jupiter.get("dignity")]),
+                strength=StrengthLevel.STRONG,
+                details={"source_module": "d9_navamsa_expanded", "ascendant": asc, "venus": venus, "jupiter": jupiter},
+            ))
+
+        varga = modules.get("varga_full") or {}
+        if not isinstance(varga, dict):
+            return
+        mapping = [
+            ("D2_Hora", ThemeName.WEALTH, "D2", "Hora财富分盘"),
+            ("D10_Dasamsa", ThemeName.CAREER, "D10", "Dashamsha事业分盘"),
+            ("D20_Vimsamsa", ThemeName.SPIRITUALITY, "D20", "Vimsamsa灵性分盘"),
+            ("D30_Trimsamsa", ThemeName.HEALTH, "D30", "Trimsamsa健康/灾厄分盘"),
+            ("D60_Shashtyamsa", ThemeName.SPIRITUALITY, "D60", "Shashtyamsha业力分盘"),
+        ]
+        for key, theme, chart, label in mapping:
+            data = varga.get(key) or {}
+            if not isinstance(data, dict) or not data:
+                continue
+            asc = data.get("Ascendant") or {}
+            dignity = data.get("_dignity") or {}
+            strong = [p for p, d in dignity.items() if str(d).lower() in {"exalted", "own sign", "moolatrikona"}]
+            weak = [p for p, d in dignity.items() if "debil" in str(d).lower()]
+            conclusion = f"{label}：上升落{asc.get('sign', '未知')}；强势行星{strong[:3] or '未突出'}；需留意行星{weak[:3] or '无明显落陷'}"
+            add(theme, ReportTechniqueResult(
+                technique=f"varga_full:{key}",
+                chart=chart,
+                conclusion=conclusion,
+                sentiment="positive" if len(strong) > len(weak) else ("negative" if weak else "neutral"),
+                strength=StrengthLevel.STRONG,
+                details={"source_module": "varga_full", "varga": key, "ascendant": asc, "dignity": dignity},
+            ))
+
+    def _inject_strength_modules(self, modules: Dict[str, Any], add) -> None:
+        shadbala = modules.get("shadbala") or {}
+        if isinstance(shadbala, dict) and shadbala:
+            strongest = shadbala.get("strongest") or []
+            weakest = shadbala.get("weakest") or []
+            conclusion = f"Shadbala相对力量：最强={strongest}；最弱={weakest}。该模块当前用于相对强弱排序。"
+            result = ReportTechniqueResult(
+                technique="shadbala_relative_strength",
+                chart="D1",
+                conclusion=conclusion,
+                sentiment="neutral",
+                strength=StrengthLevel.MODERATE,
+                details={"source_module": "shadbala", "strongest": strongest, "weakest": weakest, "status": shadbala.get("status")},
+            )
+            for theme in [ThemeName.CAREER, ThemeName.HEALTH, ThemeName.SPIRITUALITY]:
+                add(theme, result)
+
+        av = modules.get("ashtakavarga") or {}
+        if isinstance(av, dict) and av:
+            house_scores = av.get("house_scores") or av.get("house_scores_full") or {}
+            wealth_scores = _pick_house_scores(house_scores, [2, 11])
+            health_scores = _pick_house_scores(house_scores, [6, 8, 12])
+            career_scores = _pick_house_scores(house_scores, [10])
+            for theme, houses, label in [
+                (ThemeName.WEALTH, wealth_scores, "2/11宫财富"),
+                (ThemeName.HEALTH, health_scores, "6/8/12宫健康压力"),
+                (ThemeName.CAREER, career_scores, "10宫事业"),
+            ]:
+                if not houses:
+                    continue
+                avg = sum(houses.values()) / len(houses)
+                add(theme, ReportTechniqueResult(
+                    technique=f"ashtakavarga:{label}",
+                    chart="AV",
+                    conclusion=f"Ashtakavarga {label}分值：{houses}，均值约{avg:.1f}",
+                    sentiment="positive" if avg >= 28 else ("negative" if avg <= 24 else "neutral"),
+                    strength=StrengthLevel.MODERATE,
+                    details={"source_module": "ashtakavarga", "scores": houses},
+                ))
+
+    def _inject_special_points(self, modules: Dict[str, Any], add) -> None:
+        special = modules.get("special_lagnas") or {}
+        if isinstance(special, dict):
+            upapada = special.get("Upapada_Lagna") or {}
+            a10 = special.get("A10_Karma_Pada") or {}
+            arudha = special.get("Arudha_Lagna") or {}
+            if upapada:
+                add(ThemeName.MARRIAGE, ReportTechniqueResult(
+                    technique="special_lagnas:upapada_lagna",
+                    chart="D1",
+                    conclusion=f"Upapada Lagna落{upapada.get('sign', '未知')}第{upapada.get('house', '?')}宫，提示婚姻的社会呈现与伴侣形象。",
+                    sentiment="neutral",
+                    strength=StrengthLevel.STRONG,
+                    details={"source_module": "special_lagnas", "upapada_lagna": upapada},
+                ))
+            if a10:
+                add(ThemeName.CAREER, ReportTechniqueResult(
+                    technique="special_lagnas:a10_karma_pada",
+                    chart="D1",
+                    conclusion=f"A10/Karma Pada落{a10.get('sign', '未知')}第{a10.get('house', '?')}宫，用于观察事业名声与业力方向。",
+                    sentiment="neutral",
+                    strength=StrengthLevel.STRONG,
+                    details={"source_module": "special_lagnas", "a10_karma_pada": a10},
+                ))
+            if arudha:
+                add(ThemeName.CAREER, ReportTechniqueResult(
+                    technique="special_lagnas:arudha_lagna",
+                    chart="D1",
+                    conclusion=f"Arudha Lagna落{arudha.get('sign', '未知')}第{arudha.get('house', '?')}宫，显示公众形象与外界评价。",
+                    sentiment="neutral",
+                    strength=StrengthLevel.MODERATE,
+                    details={"source_module": "special_lagnas", "arudha_lagna": arudha},
+                ))
+
+        vivah = modules.get("vivah_saham") or {}
+        if isinstance(vivah, dict) and vivah:
+            point = vivah.get("vivah_saham") or vivah
+            add(ThemeName.MARRIAGE, ReportTechniqueResult(
+                technique="vivah_saham",
+                chart="Tajika",
+                conclusion=f"Vivah Saham婚姻敏感点落{point.get('sign', vivah.get('saham_sign', '未知'))}第{point.get('house', vivah.get('saham_house', '?'))}宫；适合与Transit触发联合判断婚恋窗口。",
+                sentiment="neutral",
+                strength=StrengthLevel.MODERATE,
+                details={"source_module": "vivah_saham", "raw": vivah},
+            ))
+
+    def _inject_dasa_convergence_module(self, modules: Dict[str, Any], add) -> None:
+        convergence = modules.get("dasa_convergence") or {}
+        if not isinstance(convergence, dict) or not convergence:
+            return
+
+        # 从 full-reading 的 Vimshottari current antar 注入真实时间锚，避免报告退回模拟 TimingAnchorBuilder。
+        systems_summary = convergence.get("systems_summary") or {}
+        vim = systems_summary.get("vimshottari") or {}
+        antar = vim.get("antar") or {}
+        if isinstance(antar, dict):
+            start_year = _year_from_date(antar.get("start"), datetime.now().year)
+            end_year = _year_from_date(antar.get("end"), start_year + 3)
+            maha = vim.get("maha") or "Unknown"
+            antar_lord = antar.get("lord") or "Unknown"
+            anchor = TimingAnchor(
+                dasha_period=f"Vimshottari-{maha}-{antar_lord}",
+                start_year=start_year,
+                end_year=end_year,
+                activation_description="full-reading 五系统 Dasa Convergence 已完成，当前 Vimshottari 主/副运作为主题报告时间锚。",
+                is_current=bool(antar.get("is_current", True)),
+            )
+            for tn in ThemeName:
+                self.rpo.add_timing(tn, anchor)
+
+        domain_map = {
+            "marriage_partnership": ThemeName.MARRIAGE,
+            "career_status": ThemeName.CAREER,
+            "wealth_family": ThemeName.WEALTH,
+            "health_service": ThemeName.HEALTH,
+            "fortune_dharma": ThemeName.SPIRITUALITY,
+            "transformation": ThemeName.SPIRITUALITY,
+        }
+        domains = convergence.get("domain_activations") or {}
+        for domain, data in domains.items():
+            theme = domain_map.get(domain)
+            if not theme or not isinstance(data, dict):
+                continue
+            activations = data.get("activations") or []
+            systems = sorted({a.get("system") for a in activations if isinstance(a, dict) and a.get("system")})
+            conclusion = f"Dasa Convergence：{domain} 获得{data.get('system_count', len(systems))}个系统激活（{', '.join(systems) or '未列出'}），收敛等级{data.get('convergence_level', '未知')}，概率{data.get('probability', '未标注')}。"
+            add(theme, ReportTechniqueResult(
+                technique=f"dasa_convergence:{domain}",
+                chart="Dasha",
+                conclusion=conclusion,
+                sentiment="positive" if data.get("system_count", 0) >= 2 else "neutral",
+                strength=StrengthLevel.STRONG if data.get("system_count", 0) >= 3 else StrengthLevel.MODERATE,
+                details={"source_module": "dasa_convergence", "domain": domain, "raw": data},
+            ))
+
+    def _inject_transit_module(self, modules: Dict[str, Any], add) -> None:
+        transit = modules.get("transit_multi_reference") or {}
+        if not isinstance(transit, dict) or not transit:
+            return
+        target_date = transit.get("target_date")
+        analysis = transit.get("transit_analysis") or {}
+        for planet in ["Jupiter", "Saturn", "Rahu", "Ketu"]:
+            pdata = analysis.get(planet)
+            if not isinstance(pdata, dict):
+                continue
+            house_map = pdata.get("house_from_ref") or {}
+            lagna_house = (house_map.get("Lagna") or {}).get("house")
+            if not lagna_house:
+                continue
+            themes = _themes_for_transit_house(int(lagna_house))
+            for theme in themes:
+                add(theme, ReportTechniqueResult(
+                    technique=f"transit_multi_reference:{planet}",
+                    chart="Transit",
+                    conclusion=f"{target_date or '当前'}真实过境：{planet}从Lagna参考点落第{lagna_house}宫，并需结合Chandra/Arudha/Navamsa多参考点校验。",
+                    sentiment="positive" if planet == "Jupiter" and lagna_house in [2, 5, 7, 9, 10, 11] else ("negative" if planet in ["Saturn", "Rahu", "Ketu"] and lagna_house in [6, 8, 12] else "neutral"),
+                    strength=StrengthLevel.MODERATE,
+                    details={"source_module": "transit_multi_reference", "planet": planet, "raw": pdata},
+                ))
+
     # ── 端到端报告生成 ──
 
     def generate_full_report(
@@ -407,8 +694,9 @@ class OrchestratorBridge:
                 ReadingTheme.SPIRITUAL,
             ]
 
-        # Step 0: 注入推运结果（在所有主题分析之前）
+        # Step 0: 注入推运结果与 full-reading 真实模块（在所有主题分析之前）
         dasha_results = self.inject_dasha_results(chart_data)
+        full_reading_injection = self.inject_full_reading_modules(chart_data)
 
         reading_chapters: Dict[str, List[ReadingChapter]] = {}
         theme_reports: Dict[str, Any] = {}
@@ -444,6 +732,7 @@ class OrchestratorBridge:
             "theme_reports": theme_reports,
             "unified_narrative": unified,
             "dasha_results": dasha_results,
+            "full_reading_injection": full_reading_injection,
         }
 
     # ── 内部辅助 ──
@@ -492,6 +781,119 @@ class OrchestratorBridge:
 # 辅助函数
 # ═══════════════════════════════════════════════════════════════
 
+def _extract_modules(chart_data: Any) -> Dict[str, Any]:
+    """Return full-reading modules from either a full report dict or a modules dict."""
+    if not isinstance(chart_data, dict):
+        return {}
+    modules = chart_data.get("modules")
+    if isinstance(modules, dict):
+        return modules
+    # Allow passing modules directly in tests.
+    known = {
+        "yoga", "varga_full", "d9_navamsa_expanded", "ashtakavarga", "shadbala",
+        "special_lagnas", "vivah_saham", "dasa_convergence", "transit_multi_reference",
+        "dasha", "yogini_dasha", "ashtottari_dasha", "kalachakra_dasha",
+    }
+    if any(k in chart_data for k in known):
+        return chart_data
+    return {}
+
+
+def _strength_from_text(value: Any, default: StrengthLevel = StrengthLevel.MODERATE) -> StrengthLevel:
+    text = str(value or "").lower()
+    if any(x in text for x in ["强", "strong", "high", "极"]):
+        return StrengthLevel.STRONG
+    if any(x in text for x in ["弱", "weak", "low"]):
+        return StrengthLevel.WEAK
+    return default
+
+
+def _sentiment_from_yoga(yoga: Dict[str, Any]) -> str:
+    category = str(yoga.get("category") or yoga.get("name") or yoga.get("name_cn") or "").lower()
+    negative_tokens = ["darid", "dharidhra", "kapata", "arista", "dosha", "curse", "poverty", "roga", "mrityu", "凶", "贫", "病", "灾", "欺"]
+    positive_tokens = ["raja", "dhana", "lakshmi", "gaja", "kesari", "amala", "yoga", "财富", "王", "吉", "成就"]
+    if any(t in category for t in negative_tokens):
+        return "negative"
+    if any(t in category for t in positive_tokens):
+        return "positive"
+    return "neutral"
+
+
+def _themes_for_yoga(yoga: Dict[str, Any]) -> List[ThemeName]:
+    text = " ".join(str(yoga.get(k, "")) for k in ["name", "name_cn", "category", "rule_id", "combination"])
+    effects = yoga.get("effects") or []
+    if isinstance(effects, list):
+        text += " " + " ".join(str(e) for e in effects)
+    lower = text.lower()
+    themes: List[ThemeName] = []
+    keyword_map = [
+        (ThemeName.WEALTH, ["dhana", "lakshmi", "wealth", "money", "income", "财富", "财", "收入", "资源"]),
+        (ThemeName.CAREER, ["raja", "career", "profession", "status", "authority", "power", "事业", "权力", "地位", "名声", "成就"]),
+        (ThemeName.MARRIAGE, ["marriage", "spouse", "venus", "vivah", "partner", "婚", "配偶", "伴侣", "金星"]),
+        (ThemeName.HEALTH, ["arista", "roga", "disease", "health", "illness", "saturn-mars", "病", "健康", "灾", "凶"]),
+        (ThemeName.SPIRITUALITY, ["moksha", "jupiter", "ketu", "spiritual", "dharma", "智慧", "灵性", "木星", "解脱"]),
+    ]
+    for theme, keywords in keyword_map:
+        if any(k in lower or k in text for k in keywords):
+            themes.append(theme)
+    if not themes and yoga.get("category") in ["raja", "bvr"]:
+        themes.append(ThemeName.CAREER)
+    return themes[:3]
+
+
+def _sentiment_from_dignities(values: List[Any]) -> str:
+    text = " ".join(str(v or "").lower() for v in values)
+    if any(k in text for k in ["exalted", "own", "moola", "friend"]):
+        return "positive"
+    if any(k in text for k in ["debil", "enemy"]):
+        return "negative"
+    return "neutral"
+
+
+def _pick_house_scores(house_scores: Any, houses: List[int]) -> Dict[int, float]:
+    if not isinstance(house_scores, dict):
+        return {}
+    picked: Dict[int, float] = {}
+    for house in houses:
+        value = None
+        for key in [house, str(house), f"house_{house}", f"H{house}"]:
+            if key in house_scores:
+                value = house_scores[key]
+                break
+        if isinstance(value, dict):
+            value = value.get("score") or value.get("bindus") or value.get("sav")
+        if isinstance(value, (int, float)):
+            picked[house] = float(value)
+    return picked
+
+
+def _year_from_date(value: Any, default: int) -> int:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and len(value) >= 4:
+        try:
+            return int(value[:4])
+        except ValueError:
+            return default
+    return default
+
+
+def _themes_for_transit_house(house: int) -> List[ThemeName]:
+    mapping = {
+        1: [ThemeName.HEALTH],
+        2: [ThemeName.WEALTH],
+        5: [ThemeName.WEALTH, ThemeName.SPIRITUALITY],
+        6: [ThemeName.HEALTH, ThemeName.CAREER],
+        7: [ThemeName.MARRIAGE],
+        8: [ThemeName.HEALTH, ThemeName.SPIRITUALITY],
+        9: [ThemeName.SPIRITUALITY, ThemeName.CAREER],
+        10: [ThemeName.CAREER],
+        11: [ThemeName.WEALTH, ThemeName.CAREER],
+        12: [ThemeName.HEALTH, ThemeName.SPIRITUALITY],
+    }
+    return mapping.get(house, [])
+
+
 def _infer_sentiment(text: str) -> str:
     """从 finding 文本推断 sentiment。"""
     negative_keywords = [
@@ -531,14 +933,23 @@ def _infer_strength(text: str, conflicts: List[Any]) -> StrengthLevel:
 # ═══════════════════════════════════════════════════════════════
 
 def demo():
-    """演示桥接功能（使用模拟数据）。"""
+    """演示桥接功能。
+
+    默认使用 MockDataFactory；如果传入一个 full-reading JSON 路径，则直接消费
+    `modules` 真实结果，验证 v6.1.8 的真实模块接线。
+    """
+    import sys
     from report_orchestrator import MockDataFactory
 
-    # 创建模拟星盘数据
-    chart_data = MockDataFactory.create_sample_chart()
+    # 创建星盘数据：优先使用 full-reading JSON，否则使用模拟数据
+    if len(sys.argv) > 1:
+        with open(sys.argv[1], "r", encoding="utf-8") as f:
+            chart_data = json.load(f)
+    else:
+        chart_data = MockDataFactory.create_sample_chart()
 
     # 创建 orchestrators
-    # NOTE: reading_orchestrator 需要 registry，这里用空 registry 演示
+    # NOTE: reading_orchestrator 需要 registry，这里用空 registry 演示；真实证据由 full-reading 注入层提供
     class DummyRegistry:
         def get(self, name):
             return None
