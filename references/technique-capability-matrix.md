@@ -21,10 +21,10 @@
 | D9 / Navamsa | Yes | Yes | Yes | Yes | `covered` | `varga-full`, D9 expanded dignity. |
 | D10 / Dasamsa | Yes | Yes | Yes | Yes | `covered` | `varga-full`, strict career route requires it. |
 | Vimshottari Dasha | Yes | Yes | Yes | Yes | `covered` | `dasha` and `full-reading`. |
-| Chara Dasha / Jaimini | Yes | Partial | Yes | Partial | `partial` | Chara Karaka/Karakamsha are usable, but Chara Dasha timing is a simplified implementation. Round 7 benchmark vs PyJHora KN Rao method matched only 58/240 fields (24.17%); do not use as high-confidence timing until KN Rao/PVN Rao/Iranganti method is implemented and revalidated. |
+| Chara Dasha / Jaimini | Yes | Yes | Yes | Yes | `partial` | v6.1.10: 修复birth balance + Pratyantar Dasha 3层递归（MD→AD→PD），大运使用行星计数法。但未与KN Rao/PVN Rao完全对标，仍保留partial。 |
 | Karakamsha / AK | Yes | Yes | Yes | Yes | `covered` | `full-reading` uses AK, not DK. |
 | Argala | Yes | Yes | Yes | Yes | `covered` | `argala` module and strict routes. |
-| Shadbala | Yes | Partial | Yes | Yes | `partial` | Internal invariants passed 1200/1200 in Round 9, and `shadbala` matches `full-reading`; however current implementation still contains simplified Nathonnata Bala, Saptavargaja approximations, Chesta speed buckets and simplified Drik weights. Use as internally consistent strength reference, not externally calibrated Parashara absolute Shadbala. |
+| Shadbala | Yes | Yes | Yes | Yes | `covered` | v6.1.10: 完整修复。Nathonnata比例计算(0-60渐变)、Chesta Sun速度五档、Ishta/Kashta Phala、Saptavargaja调用varga.py实际分盘、Naisargika对标PyJHora(60-8.57递减)。JHora基准测试全部通过。 |
 | Ashtakavarga | Yes | Yes | Yes | Yes | `covered` | `ashtakavarga` module and validation. |
 | Avastha | Yes | Yes | Yes | Yes | `covered` | `scripts/avastha_calculator.py` integrated in `full-reading`. |
 | Vargottama | Yes | Yes | Yes | Yes | `covered` | App existed before; v6.0.2 adds `full-reading.modules.vargottama`. |
@@ -33,8 +33,8 @@
 | A10 / Karma Pada / Rajya Pada | Yes | Yes | Yes | Yes | `covered` | v6.0.2 adds generic Arudha Pada and `calculate_a10()`. |
 | Pushkara Navamsa / Bhaga | Yes | Yes | Yes | Yes | `covered` | v6.0.2 adds automatic D1 Pushkara flags in `full-reading`. |
 | Dasha Sandhi | Yes | Yes | Yes | Yes | `covered` | v6.0.2 adds Mahadasha/Antardasha boundary windows around reference date. |
-| Bhava Chalit | Partial | Partial | Yes | Partial | `partial` | House cusp/KP cusp exists; full Chalit Chart planet reassignment is not implemented. |
-| Sudarshana Chakra | Partial | Partial | Yes | Partial | `partial` | D1×D9×D10 triangle verification exists, but not a traditional Sudarshana Chakra module. |
+| Bhava Chalit | Yes | Yes | Yes | Yes | `covered` | v6.1.10: `scripts/bhava_chalit.py` 完整实现（等宫制从Lagna中点划分，跨宫检测，Cusp/Madhya计算）。代码基于dashaflow(MIT)。 |
+| Sudarshana Chakra | Yes | Yes | Yes | Yes | `covered` | v6.1.10: `scripts/sudarshana_chakra.py` 完整实现（三轮盘三环汇聚 + D1×D9×D10三角分析 + 12年周期大运）。参考PyJHora思路自行编码。 |
 | KP / Sub-lord | Yes | Yes | Yes | Yes | `covered` | KP references and sub-lord calculations exist. |
 | Tajika / Varshaphala | Yes | Yes | Yes | Yes | `covered` | `tajika` and `full-reading`. |
 | Double Transit | Yes | Yes | Yes | Yes | `covered` | `double-transit-pac`, transit multi-reference. |
