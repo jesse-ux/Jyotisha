@@ -64,10 +64,12 @@ DIG_BALA_HOUSE = {
     'Saturn': 7,  # Descendant
 }
 
-# Naisargika Bala（天然力量，单位 Virupas）
+# Naisargika Bala（天然力量，单位 Shashtiamshas）
+# v6.1.10: 改为PyJHora/JHora标准值（60-8.57递减序列）
+# 来源：PyJHora strength.py, PVR Rao, BPHS第9章
 NAISARGIKA_BALA = {
-    'Sun': 60.0, 'Moon': 60.0, 'Venus': 52.5,
-    'Jupiter': 45.0, 'Mercury': 37.5, 'Mars': 30.0, 'Saturn': 22.5
+    'Sun': 60.0, 'Moon': 51.43, 'Venus': 42.86,
+    'Jupiter': 34.29, 'Mercury': 25.71, 'Mars': 17.14, 'Saturn': 8.57
 }
 
 # Shadbala 最低要求（Rupas）
