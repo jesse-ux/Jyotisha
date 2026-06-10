@@ -1,37 +1,82 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "jyotish-vedic-astrology-skill"
-version = "6.0.33"
-description = "Jyotish WorkBuddy skill calculation engine and validation suite"
+name = "jyotish-vedic-astrology"
+version = "6.1.10"
+description = "Comprehensive Jyotish (Vedic Astrology) calculation engine with AI-ready APIs"
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
+authors = [
+    {name = "732642856", email = "dev@yinduzhanxing.local"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Religion and Philosophy :: Astrology",
+]
+keywords = ["jyotish", "vedic", "astrology", "astronomy", "dasha", "varga", "nakshatra", "shadbala", "panchanga", "horoscope", "birth-chart"]
 dependencies = [
-  "pyswisseph",
+    "pyswisseph>=2.8",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=8.0",
-  "hypothesis>=6.0",
-  "coverage[toml]>=7.0",
-  "ruff>=0.6.0",
+    "pytest>=8.0",
+    "hypothesis>=6.0",
+    "coverage[toml]>=7.0",
+    "ruff>=0.6.0",
+    "build>=0.9",
+    "twine>=4.0",
 ]
+
+[project.scripts]
+jyotish = "jyotish_vedic.cli:main"
+jyotish-engine = "jyotish_vedic.engine:cli_main"
+jyotish-mcp = "jyotish_vedic.mcp_server:main"
+
+[project.urls]
+Homepage = "https://github.com/732642856/yinduzhanxing"
+Documentation = "https://github.com/732642856/yinduzhanxing#readme"
+Repository = "https://github.com/732642856/yinduzhanxing"
+"Bug Reports" = "https://github.com/732642856/yinduzhanxing/issues"
+Changelog = "https://github.com/732642856/yinduzhanxing/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["jyotish_vedic*"]
+exclude = ["tests*", "docs*", "jyotish-app*", "benchmark*", "references*"]
+
+[tool.setuptools.package-data]
+jyotish_vedic = ["*.json", "*.md", "*.csv", "*.db"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-pythonpath = ["scripts"]
+pythonpath = ["jyotish_vedic"]
 addopts = "-q --strict-markers --strict-config"
 markers = [
-  "slow: long-running validation tests",
-  "external: tests that depend on optional external datasets or tools",
+    "slow: long-running validation tests",
+    "external: tests that depend on optional external datasets or tools",
 ]
 
 [tool.coverage.run]
 branch = true
-source = ["scripts"]
+source = ["jyotish_vedic"]
 omit = [
-  "scripts/add_high_confidence_yogas_batch1.py",
-  "scripts/build_standard_test_charts.py",
-  "scripts/_compute_one_chart.py",
+    "jyotish_vedic/add_high_confidence_yogas_batch1.py",
+    "jyotish_vedic/build_standard_test_charts.py",
+    "jyotish_vedic/_compute_one_chart.py",
 ]
 
 [tool.coverage.report]
@@ -42,22 +87,22 @@ skip_covered = true
 target-version = "py311"
 line-length = 140
 exclude = [
-  ".git",
-  "__pycache__",
-  ".pytest_cache",
-  "jyotish-app",
-  "benchmark",
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    "jyotish-app",
+    "benchmark",
 ]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = [
-  "E501",
-  "E701",
-  "E702",
-  "E741",
+    "E501",
+    "E701",
+    "E702",
+    "E741",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
-"scripts/validate_bphs_invariants.py" = ["T201"]
+"jyotish_vedic/validate_bphs_invariants.py" = ["T201"]
