@@ -14,7 +14,15 @@ Shadbala 计算模块（六重力量）
 """
 
 import math
+import sys
+import os
 from typing import Dict, Tuple
+
+# v6.1.10: 导入实际Varga计算器（支持脚本和包两种调用方式）
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+if _script_dir not in sys.path:
+    sys.path.insert(0, _script_dir)
+from varga import varga_map, SIGNS as VARGA_SIGNS, SIGN_LORDS as VARGA_SIGN_LORDS
 
 # ============================================================================
 # 常量
@@ -248,96 +256,105 @@ def calc_sthana_bala(pname: str, lon: float, sign: str, house: int) -> Dict:
     ucha_bala = offset / 180 * 60  # 0-60 Virupas
 
     # B. Saptavargaja Bala（七分盘力量）max ~315 Virupas (7 × 45)
-    # v4.5.0: 完整7层Varga计算（D1/D2/D3/D4/D7/D9/D12）
-    # 每层评估行星在该分盘中的尊严状态，满分45
+    # v6.1.10: 调用varga.py实际分盘计算替代简化算法
     sign_idx = SIGNS.index(sign) if sign in SIGNS else 0
     deg_in_sign = lon % 30
-
-    # D1 (Rashi) — 直接用当前sign
-    d1_score = _dignity_score(pname, sign)
-    # 检查入庙/落陷覆盖
     exalt_sign = SIGNS[int(EXALTATION_DEG.get(pname, 0) / 30) % 12]
     debilit_sign = SIGNS[int(DEBILITATION_DEG.get(pname, 0) / 30) % 12]
+
+    # D1 (Rashi) — 直接用当前sign，检查入庙/落陷
+    d1_score = _dignity_score(pname, sign)
     if sign == exalt_sign:
-        d1_score = 50.0  # Exalted 高于 Own Sign（BPHS 标准）
+        d1_score = 50.0
     elif sign == debilit_sign:
-        d1_score = 5.0  # Debilitated
+        d1_score = 5.0
 
-    # D2 (Hora) — 奇数度Leo/Sun rule, 偶数度Cancer/Moon rule
-    if deg_in_sign < 15:
-        hora_lord = 'Sun'
-    else:
-        hora_lord = 'Moon'
-    # Simplified: evaluate relationship to hora lord
-    if hora_lord in FRIENDSHIP.get(pname, {}).get('friend', []):
-        d2_score = 35.0
-    elif hora_lord in FRIENDSHIP.get(pname, {}).get('enemy', []):
-        d2_score = 15.0
-    else:
-        d2_score = 25.0
-    if pname == hora_lord:
+    # D2 (Hora) — 调用varga_map
+    d2_part = int(deg_in_sign / 15)  # 30/2=15
+    d2_sign_idx = varga_map(sign_idx, d2_part, 2)
+    d2_sign = VARGA_SIGNS[d2_sign_idx]
+    if pname == VARGA_SIGN_LORDS.get(d2_sign, ''):
         d2_score = 45.0
-
-    # D3 (Drekkana) — 0-10°: Aries group, 10-20°: Taurus group, 20-30°: Gemini group
-    drekkana_idx = int(deg_in_sign / 10)  # 0, 1, 2
-    drekkana_lord_idx = drekkana_idx  # Aries=0/Mars, Taurus=1/Venus, Gemini=2/Mercury
-    drekkana_lords = ['Mars', 'Venus', 'Mercury']
-    d3_lord = drekkana_lords[drekkana_idx]
-    if pname == d3_lord:
-        d3_score = 45.0
-    elif d3_lord in FRIENDSHIP.get(pname, {}).get('friend', []):
-        d3_score = 35.0
-    elif d3_lord in FRIENDSHIP.get(pname, {}).get('enemy', []):
-        d3_score = 15.0
+    elif d2_sign == exalt_sign:
+        d2_score = 50.0
+    elif d2_sign == debilit_sign:
+        d2_score = 5.0
     else:
-        d3_score = 25.0
+        d2_score = _dignity_score(pname, d2_sign)
 
-    # D4 (Navamsa of Turyamsa) — simplified using navamsa calculation
-    try:
-        navamsa_part = int(deg_in_sign / (30 / 9))
-        el_starts = [0, 9, 6, 3]  # Fire=0, Earth=9, Air=6, Water=3
-        d4_sign_idx = (el_starts[sign_idx % 4] + navamsa_part) % 12
-        d4_sign = SIGNS[d4_sign_idx]
+    # D3 (Drekkana) — 调用varga_map
+    d3_part = int(deg_in_sign / 10)  # 30/3=10
+    d3_sign_idx = varga_map(sign_idx, d3_part, 3)
+    d3_sign = VARGA_SIGNS[d3_sign_idx]
+    if pname == VARGA_SIGN_LORDS.get(d3_sign, ''):
+        d3_score = 45.0
+    elif d3_sign == exalt_sign:
+        d3_score = 50.0
+    elif d3_sign == debilit_sign:
+        d3_score = 5.0
+    else:
+        d3_score = _dignity_score(pname, d3_sign)
+
+    # D4 (Turyamsa/Chaturthamsa) — 调用varga_map
+    d4_part = int(deg_in_sign / 7.5)  # 30/4=7.5
+    # 边界处理：最后一份
+    if d4_part >= 4:
+        d4_part = 3
+    d4_sign_idx = varga_map(sign_idx, d4_part, 4)
+    d4_sign = VARGA_SIGNS[d4_sign_idx]
+    if pname == VARGA_SIGN_LORDS.get(d4_sign, ''):
+        d4_score = 45.0
+    elif d4_sign == exalt_sign:
+        d4_score = 50.0
+    elif d4_sign == debilit_sign:
+        d4_score = 5.0
+    else:
         d4_score = _dignity_score(pname, d4_sign)
-    except:
-        d4_score = 25.0
 
-    # D7 (Saptamsa) — 7 parts per sign
-    try:
-        saptamsa_part = int(deg_in_sign / (30 / 7))
-        # D7 sign calculation: for odd signs count forward, even signs backward
-        if sign_idx % 2 == 0:  # odd sign (Aries=0)
-            d7_sign_idx = (sign_idx + saptamsa_part) % 12
-        else:  # even sign
-            d7_sign_idx = (sign_idx - saptamsa_part) % 12
-        d7_sign = SIGNS[d7_sign_idx]
+    # D7 (Saptamsa) — 调用varga_map
+    d7_part = int(deg_in_sign / (30 / 7))
+    if d7_part >= 7:
+        d7_part = 6
+    d7_sign_idx = varga_map(sign_idx, d7_part, 7)
+    d7_sign = VARGA_SIGNS[d7_sign_idx]
+    if pname == VARGA_SIGN_LORDS.get(d7_sign, ''):
+        d7_score = 45.0
+    elif d7_sign == exalt_sign:
+        d7_score = 50.0
+    elif d7_sign == debilit_sign:
+        d7_score = 5.0
+    else:
         d7_score = _dignity_score(pname, d7_sign)
-    except:
-        d7_score = 25.0
 
-    # D9 (Navamsa) — reuse D4 calculation (same navamsa)
-    try:
-        d9_part = int(deg_in_sign / (30 / 9))
-        d9_sign_idx = (el_starts[sign_idx % 4] + d9_part) % 12
-        d9_sign = SIGNS[d9_sign_idx]
+    # D9 (Navamsa) — 调用varga_map
+    d9_part = int(deg_in_sign / (30 / 9))
+    if d9_part >= 9:
+        d9_part = 8
+    d9_sign_idx = varga_map(sign_idx, d9_part, 9)
+    d9_sign = VARGA_SIGNS[d9_sign_idx]
+    if pname == VARGA_SIGN_LORDS.get(d9_sign, ''):
+        d9_score = 45.0
+    elif d9_sign == exalt_sign:
+        d9_score = 50.0
+    elif d9_sign == debilit_sign:
+        d9_score = 5.0
+    else:
         d9_score = _dignity_score(pname, d9_sign)
-        # Check exaltation/debilitation in D9
-        if d9_sign == exalt_sign:
-            d9_score = max(d9_score, 45.0)
-        elif d9_sign == debilit_sign:
-            d9_score = 5.0
-    except:
-        d9_score = 25.0
 
-    # D12 (Dwadashamsa) — 12 parts, each 2.5°
-    try:
-        dwad_part = int(deg_in_sign / 2.5)
-        # D12: start from the sign itself, count forward
-        d12_sign_idx = (sign_idx + dwad_part) % 12
-        d12_sign = SIGNS[d12_sign_idx]
+    # D12 (Dwadashamsa) — 调用varga_map
+    d12_part = int(deg_in_sign / 2.5)  # 30/12=2.5
+    if d12_part >= 12:
+        d12_part = 11
+    d12_sign_idx = varga_map(sign_idx, d12_part, 12)
+    d12_sign = VARGA_SIGNS[d12_sign_idx]
+    if pname == VARGA_SIGN_LORDS.get(d12_sign, ''):
+        d12_score = 45.0
+    elif d12_sign == exalt_sign:
+        d12_score = 50.0
+    elif d12_sign == debilit_sign:
+        d12_score = 5.0
+    else:
         d12_score = _dignity_score(pname, d12_sign)
-    except:
-        d12_score = 25.0
 
     sapta_score = d1_score + d2_score + d3_score + d4_score + d7_score + d9_score + d12_score
 
