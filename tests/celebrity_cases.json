@@ -1,0 +1,122 @@
+[
+  {
+    "id": "einstein",
+    "name": "Albert Einstein",
+    "year": 1879, "month": 3, "day": 14,
+    "hour": 11, "minute": 30, "second": 0,
+    "lat": 48.4, "lon": 9.98, "tz": 1.0,
+    "known_lagna": "Gemini",
+    "known_sun_sign": "Pisces",
+    "known_moon_sign": "Scorpio",
+    "summary_conclusion": "水星入庙→智力、土星在10宫→长期研究、Ketu在9宫→灵性智慧",
+    "file_match_rating": "92%"
+  },
+  {
+    "id": "obama",
+    "name": "Barack Obama",
+    "year": 1961, "month": 8, "day": 4,
+    "hour": 19, "minute": 24, "second": 0,
+    "lat": 21.3, "lon": -157.8, "tz": -10.0,
+    "known_lagna": "",
+    "known_sun_sign": "",
+    "known_moon_sign": "",
+    "summary_conclusion": "月亮入庙→公众吸引力、土星本垣→领导力、Rahu小运→非传统突破",
+    "file_match_rating": "95%"
+  },
+  {
+    "id": "trump",
+    "name": "Donald Trump",
+    "year": 1946, "month": 6, "day": 14,
+    "hour": 10, "minute": 54, "second": 0,
+    "lat": 40.7, "lon": -73.8, "tz": -5.0,
+    "known_lagna": "",
+    "known_sun_sign": "",
+    "known_moon_sign": "",
+    "summary_conclusion": "月亮落陷→非传统情感路径、Rahu在10宫→非传统职业突破",
+    "file_match_rating": "94%"
+  },
+  {
+    "id": "curie",
+    "name": "Marie Curie",
+    "year": 1867, "month": 11, "day": 7,
+    "hour": 12, "minute": 0, "second": 0,
+    "lat": 52.2, "lon": 21.0, "tz": 1.0,
+    "known_lagna": "",
+    "known_sun_sign": "",
+    "known_moon_sign": "",
+    "summary_conclusion": "",
+    "file_match_rating": ""
+  },
+  {
+    "id": "picasso",
+    "name": "Pablo Picasso",
+    "year": 1881, "month": 10, "day": 25,
+    "hour": 23, "minute": 15, "second": 0,
+    "lat": 36.7, "lon": -4.4, "tz": 1.0,
+    "known_lagna": "",
+    "known_sun_sign": "",
+    "known_moon_sign": "",
+    "summary_conclusion": "",
+    "file_match_rating": ""
+  },
+  {
+    "id": "mjackson",
+    "name": "Michael Jackson",
+    "year": 1958, "month": 8, "day": 29,
+    "hour": 19, "minute": 33, "second": 0,
+    "lat": 41.6, "lon": -87.3, "tz": -6.0,
+    "known_lagna": "",
+    "known_sun_sign": "",
+    "known_moon_sign": "",
+    "summary_conclusion": "",
+    "file_match_rating": ""
+  },
+  {
+    "id": "dicaprio",
+    "name": "Leonardo DiCaprio",
+    "year": 1974, "month": 11, "day": 11,
+    "hour": 2, "minute": 47, "second": 0,
+    "lat": 34.0, "lon": -118.2, "tz": -8.0,
+    "known_lagna": "",
+    "known_sun_sign": "",
+    "known_moon_sign": "",
+    "summary_conclusion": "",
+    "file_match_rating": ""
+  },
+  {
+    "id": "monroe",
+    "name": "Marilyn Monroe",
+    "year": 1926, "month": 6, "day": 1,
+    "hour": 9, "minute": 30, "second": 0,
+    "lat": 34.0, "lon": -118.2, "tz": -8.0,
+    "known_lagna": "",
+    "known_sun_sign": "",
+    "known_moon_sign": "",
+    "summary_conclusion": "",
+    "file_match_rating": ""
+  },
+  {
+    "id": "presley",
+    "name": "Elvis Presley",
+    "year": 1935, "month": 1, "day": 8,
+    "hour": 4, "minute": 35, "second": 0,
+    "lat": 34.2, "lon": -88.6, "tz": -6.0,
+    "known_lagna": "",
+    "known_sun_sign": "",
+    "known_moon_sign": "",
+    "summary_conclusion": "",
+    "file_match_rating": ""
+  },
+  {
+    "id": "indira",
+    "name": "Indira Gandhi",
+    "year": 1917, "month": 11, "day": 19,
+    "hour": 23, "minute": 11, "second": 0,
+    "lat": 25.6, "lon": 85.1, "tz": 5.5,
+    "known_lagna": "",
+    "known_sun_sign": "",
+    "known_moon_sign": "",
+    "summary_conclusion": "",
+    "file_match_rating": ""
+  }
+]
