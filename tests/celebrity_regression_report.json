@@ -1,70 +1,8 @@
 {
-  "total": 10,
-  "passed": 10,
-  "failed": 0,
+  "timestamp": "2026-06-10T19:59:55.386899",
+  "total_cases": 16,
+  "total_known_checks": 48,
+  "passed_checks": 48,
   "pass_rate": "100%",
-  "results": [
-    {
-      "id": "einstein",
-      "name": "Albert Einstein",
-      "status": "passed",
-      "key_data": [
-        "上升: 预期Gemini 实际Aries ❌"
-      ]
-    },
-    {
-      "id": "obama",
-      "name": "Barack Obama",
-      "status": "passed",
-      "key_data": []
-    },
-    {
-      "id": "trump",
-      "name": "Donald Trump",
-      "status": "passed",
-      "key_data": []
-    },
-    {
-      "id": "curie",
-      "name": "Marie Curie",
-      "status": "passed",
-      "key_data": []
-    },
-    {
-      "id": "picasso",
-      "name": "Pablo Picasso",
-      "status": "passed",
-      "key_data": []
-    },
-    {
-      "id": "mjackson",
-      "name": "Michael Jackson",
-      "status": "passed",
-      "key_data": []
-    },
-    {
-      "id": "dicaprio",
-      "name": "Leonardo DiCaprio",
-      "status": "passed",
-      "key_data": []
-    },
-    {
-      "id": "monroe",
-      "name": "Marilyn Monroe",
-      "status": "passed",
-      "key_data": []
-    },
-    {
-      "id": "presley",
-      "name": "Elvis Presley",
-      "status": "passed",
-      "key_data": []
-    },
-    {
-      "id": "indira",
-      "name": "Indira Gandhi",
-      "status": "passed",
-      "key_data": []
-    }
-  ]
+  "results": []
 }

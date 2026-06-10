@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Argala（门闩）行星干预模块 v1.0
-Parashara体系的行星影响力锁定机制
+Argala（门闩）行星干预模块 v1.1
 
-Argala = "门闩/木栓"，指一颗行星通过特定宫位对另一颗行星产生
-不可阻挡的干预影响。这是判断行星力量和结果表达的关键技法。
+从旧版“逐行星Argala”升级为“逐参考点/逐宫完整Argala”：
+- 主Argala: 2/4/11宫
+- Virodhargala: 12/10/3宫分别阻挡2/4/11宫
+- 特殊Argala: 第3宫有2颗以上凶星
+- 次级Argala: 5/9宫
+- Argala Rajayoga分类: Poornargala / Tripadargala / Ardhargala / Padargala
 
-规则:
-  - 主Argala: 2/4/11宫位产生正面干预
-  - 副Argala: 5/8宫位（从第2宫起算）产生正面干预
-  - Virodha Argala: 12/10/3宫位产生反向阻止
-  - 更强Argala: 多颗行星在同一Argala位置则力量增强
+MIT复用来源：
+- jaimini-tropical/jaimini/core/argala.py (tunanfang-pixel, MIT)
+适配：使用本项目 chart 输出的英文行星名与恒星黄道星座索引。
 """
 from typing import Dict, List
 
@@ -21,129 +22,178 @@ SIGN_LORDS = {'Aries':'Mars','Taurus':'Venus','Gemini':'Mercury','Cancer':'Moon'
     'Leo':'Sun','Virgo':'Mercury','Libra':'Venus','Scorpio':'Mars',
     'Sagittarius':'Jupiter','Capricorn':'Saturn','Aquarius':'Saturn','Pisces':'Jupiter'}
 
-BENEFICS = ['Jupiter', 'Venus', 'Moon']
-MALEFICS = ['Saturn', 'Mars', 'Sun', 'Rahu', 'Ketu']
+NATURAL_MALEFICS = {'Sun', 'Mars', 'Saturn'}
+NATURAL_BENEFICS = {'Moon', 'Mercury', 'Jupiter', 'Venus'}
+NODES = {'Rahu', 'Ketu'}
+
+PRIMARY_ARGALA = {2, 4, 11}
+VIRODHARGALA_MAP = {2: 12, 4: 10, 11: 3}
+SECONDARY_ARGALA = {5, 9}
 
 
-def calc_argala(planet_sign_indices: Dict[str, int], asc_sign_idx: int) -> Dict:
+def _house_from(ref_sign_idx: int, offset: int) -> int:
+    """从参考星座起算第offset宫对应的星座索引。"""
+    return (ref_sign_idx + offset - 1) % 12
+
+
+def _planets_in_sign(sign_idx: int, planet_sign_indices: Dict[str, int], include_nodes: bool = False) -> List[str]:
+    planets = []
+    for pname, psi in planet_sign_indices.items():
+        if not include_nodes and pname in NODES:
+            continue
+        if psi % 12 == sign_idx % 12:
+            planets.append(pname)
+    return planets
+
+
+def classify_argala_rajayoga(argala_result: Dict) -> Dict:
+    """按主Argala占据数量分类Rajayoga强度。"""
+    primary = argala_result.get('primary', {})
+    occupied = sum(1 for h in ['H2', 'H4', 'H11'] if primary.get(h, {}).get('planets'))
+    blocked = sum(1 for h in ['H2', 'H4', 'H11'] if primary.get(h, {}).get('blockers'))
+    if occupied == 3:
+        return {'type': 'Poornargala', 'level': 4, 'cn': '完整Argala，最强支持'}
+    if occupied == 2:
+        return {'type': 'Tripadargala', 'level': 3, 'cn': '三足Argala，强支持'}
+    if occupied == 1:
+        return {'type': 'Ardhargala', 'level': 2, 'cn': '半Argala，中等支持'}
+    if blocked:
+        return {'type': 'Padargala', 'level': 1, 'cn': '弱Argala且受阻'}
+    return {'type': 'None', 'level': 0, 'cn': '无明显Argala'}
+
+
+def calc_argala_for_reference(ref_sign_idx: int, planet_sign_indices: Dict[str, int], include_nodes: bool = False) -> Dict:
+    """计算单一参考点的完整Argala。"""
+    result = {
+        'ref_sign': SIGNS[ref_sign_idx],
+        'ref_sign_idx': ref_sign_idx,
+        'primary': {},
+        'specific': None,
+        'secondary': {},
+        'argala_count': 0,
+        'virodhargala_count': 0,
+        'net_result': 'neutral',
+    }
+
+    for h in sorted(PRIMARY_ARGALA):
+        argala_sign = _house_from(ref_sign_idx, h)
+        planets = _planets_in_sign(argala_sign, planet_sign_indices, include_nodes)
+        block_h = VIRODHARGALA_MAP[h]
+        block_sign = _house_from(ref_sign_idx, block_h)
+        blockers = _planets_in_sign(block_sign, planet_sign_indices, include_nodes)
+        effective = len(planets) > len(blockers)
+        result['primary'][f'H{h}'] = {
+            'house_from_reference': h,
+            'sign': SIGNS[argala_sign],
+            'sign_idx': argala_sign,
+            'planets': planets,
+            'blocked_by_house': block_h,
+            'blocked_by_sign': SIGNS[block_sign],
+            'blockers': blockers,
+            'effective': effective,
+            'effect': _argala_effect(h, planets, blockers),
+        }
+        if planets:
+            result['argala_count'] += 1
+        if blockers:
+            result['virodhargala_count'] += 1
+
+    h3_sign = _house_from(ref_sign_idx, 3)
+    h3_planets = _planets_in_sign(h3_sign, planet_sign_indices, include_nodes)
+    h3_malefics = [p for p in h3_planets if p in NATURAL_MALEFICS]
+    result['specific'] = {
+        'house': 3,
+        'sign': SIGNS[h3_sign],
+        'sign_idx': h3_sign,
+        'planets': h3_planets,
+        'malefics': h3_malefics,
+        'effective': len(h3_malefics) >= 2,
+        'rule': '第3宫有2颗以上天然凶星形成特殊Argala',
+    }
+    if result['specific']['effective']:
+        result['argala_count'] += 1
+
+    for h in sorted(SECONDARY_ARGALA):
+        sign_idx = _house_from(ref_sign_idx, h)
+        planets = _planets_in_sign(sign_idx, planet_sign_indices, include_nodes)
+        result['secondary'][f'H{h}'] = {
+            'house_from_reference': h,
+            'sign': SIGNS[sign_idx],
+            'sign_idx': sign_idx,
+            'planets': planets,
+        }
+
+    if result['argala_count'] > result['virodhargala_count']:
+        result['net_result'] = 'supported'
+    elif result['argala_count'] < result['virodhargala_count']:
+        result['net_result'] = 'obstructed'
+    result['rajayoga_classification'] = classify_argala_rajayoga(result)
+    return result
+
+
+def calc_argala(planet_sign_indices: Dict[str, int], asc_sign_idx: int, include_nodes: bool = False) -> Dict:
     """
-    计算所有行星的Argala和Virodha Argala
-    
-    参数:
-        planet_sign_indices: {'Sun': 0, 'Moon': 3, ...} 行星所在星座索引
+    计算全盘Argala。
+
+    Args:
+        planet_sign_indices: {'Sun': 0, 'Moon': 3, ...}
         asc_sign_idx: 上升星座索引
-    
-    返回: {
-        planet_name: {
-            'house': 宫位,
-            'argala_from': [对哪些宫位有Argala],
-            'argala_to': [被哪些行星Argala],
-            'virodha_from': [被哪些行星阻止],
-            'net_argala': 净Argala力量评估,
-        }
-    }
+        include_nodes: 是否把Rahu/Ketu纳入占位阻挡统计（默认False，遵循Jaimini七行星口径）
     """
-    # 计算各行星宫位
     houses = {}
-    for pname, si in planet_sign_indices.items():
-        h = ((si - asc_sign_idx) % 12) + 1
-        houses[pname] = h
-    
-    # 主Argala位置（从目标行星宫位起算）
-    # 2宫=财富Argala, 4宫=幸福Argala, 11宫=收益Argala
-    MAIN_ARGALA = [2, 4, 11]
-    # 副Argala位置（特殊条件：需要无其他行星在相应Virodha位置）
-    SUB_ARGALA = [5, 8]  # 第5宫=权力Argala(当2宫无Virodha), 第8宫(当4宫无Virodha)
-    # Virodha Argala位置（反向阻止）
-    VIRODHA = {2: 12, 4: 10, 11: 3, 5: 9, 8: 2}
-    
-    results = {}
-    
-    for target_p, target_h in houses.items():
-        argala_on_target = []  # 作用于此行星的Argala
-        virodha_on_target = []  # 作用于此行星的Virodha
-        argala_by_target = []  # 此行星作用于其他位置的Argala
-        
-        # 检查哪些行星对此行星有Argala
-        for source_p, source_h in houses.items():
-            if source_p == target_p:
-                continue
-            rel = ((source_h - target_h) % 12) + 1
-            
-            # 主Argala检查
-            if rel in MAIN_ARGALA:
-                nature = 'benefic' if source_p in BENEFICS else 'malefic'
-                strength = 'strong' if _is_strong_argala(source_p, rel) else 'normal'
-                argala_on_target.append({
-                    'source': source_p, 'house_from': rel,
-                    'type': 'main', 'nature': nature, 'strength': strength,
-                    'effect': _argala_effect(rel, nature),
-                })
-            
-            # 副Argala检查
-            elif rel in SUB_ARGALA:
-                nature = 'benefic' if source_p in BENEFICS else 'malefic'
-                argala_on_target.append({
-                    'source': source_p, 'house_from': rel,
-                    'type': 'sub', 'nature': nature, 'strength': 'conditional',
-                    'effect': _argala_effect(rel, nature),
-                })
-            
-            # Virodha检查
-            for a_house, v_house in VIRODHA.items():
-                if rel == v_house:
-                    nature = 'benefic' if source_p in BENEFICS else 'malefic'
-                    virodha_on_target.append({
-                        'source': source_p, 'house_from': rel,
-                        'blocks_argala_from': a_house,
-                        'nature': nature,
-                    })
-        
-        # 此行星对其他位置产生的Argala
-        for rel_house in MAIN_ARGALA:
-            target_house = ((target_h - 1 + rel_house - 1) % 12) + 1
-            planets_there = [p for p, h in houses.items() if h == target_house]
-            if planets_there:
-                argala_by_target.append({
-                    'argala_type': f'{rel_house}宫Argala',
-                    'target_house': target_house,
-                    'affects': planets_there,
-                    'effect': _argala_effect(rel_house, 'benefic' if target_p in BENEFICS else 'malefic'),
-                })
-        
-        # 净Argala评估
-        benefic_argala = sum(1 for a in argala_on_target if a['nature'] == 'benefic')
-        malefic_argala = sum(1 for a in argala_on_target if a['nature'] == 'malefic')
-        benefic_virodha = sum(1 for v in virodha_on_target if v['nature'] == 'benefic')
-        malefic_virodha = sum(1 for v in virodha_on_target if v['nature'] == 'malefic')
-        
-        net = (benefic_argala - malefic_virodha) - (malefic_argala - benefic_virodha)
-        
-        results[target_p] = {
-            'house': target_h,
-            'argala_on_this': argala_on_target,
-            'virodha_on_this': virodha_on_target,
-            'argala_by_this': argala_by_target,
-            'net_score': net,
-            'net_assessment': 'strongly_supported' if net >= 2 else 'supported' if net >= 1 
-                else 'blocked' if net <= -2 else 'neutral',
-        }
-    
-    return results
+    for house_num in range(1, 13):
+        ref_sign_idx = (asc_sign_idx + house_num - 1) % 12
+        houses[f'house_{house_num}'] = calc_argala_for_reference(ref_sign_idx, planet_sign_indices, include_nodes)
 
+    planet_refs = {}
+    for pname, sign_idx in planet_sign_indices.items():
+        if pname in NODES and not include_nodes:
+            continue
+        planet_refs[pname] = calc_argala_for_reference(sign_idx, planet_sign_indices, include_nodes)
 
-def _is_strong_argala(planet, house):
-    """判断Argala是否特别强（有2+行星在同一位置）"""
-    return False  # 需要宫位行星数信息，简化返回
-
-
-def _argala_effect(house, nature):
-    """Argala效果描述"""
-    effects = {
-        2: {'benefic': '财富和资源流入', 'malefic': '财务压力和资源消耗'},
-        4: {'benefic': '幸福感、住所和内心平静增强', 'malefic': '家庭不和、住所问题'},
-        11: {'benefic': '收益、愿望实现和社会认可', 'malefic': '损失、社会障碍'},
-        5: {'benefic': '智慧、权力和创造力增强', 'malefic': '智力困扰、决策失误'},
-        8: {'benefic': '隐藏资源和转化力量', 'malefic': '隐藏障碍和突发危机'},
+    summary = _summarize_argala(houses)
+    return {
+        'method': 'Jaimini Argala + Virodhargala (jaimini-tropical MIT adapted)',
+        'version': '1.1',
+        'include_nodes': include_nodes,
+        'ascendant': SIGNS[asc_sign_idx],
+        'houses': houses,
+        'planets': planet_refs,
+        'summary': summary,
     }
-    return effects.get(house, {}).get(nature, '一般性影响')
+
+
+def _summarize_argala(houses: Dict) -> Dict:
+    supported = []
+    obstructed = []
+    strongest = []
+    for house_key, data in houses.items():
+        if data['net_result'] == 'supported':
+            supported.append(house_key)
+        elif data['net_result'] == 'obstructed':
+            obstructed.append(house_key)
+        level = data.get('rajayoga_classification', {}).get('level', 0)
+        strongest.append((house_key, level, data.get('rajayoga_classification', {}).get('type')))
+    strongest.sort(key=lambda x: x[1], reverse=True)
+    return {
+        'supported_houses': supported,
+        'obstructed_houses': obstructed,
+        'top_argala_houses': [{'house': h, 'level': lvl, 'type': typ} for h, lvl, typ in strongest[:5] if lvl > 0],
+        'supported_count': len(supported),
+        'obstructed_count': len(obstructed),
+    }
+
+
+def _argala_effect(house: int, planets: List[str], blockers: List[str]) -> str:
+    if not planets:
+        return '无行星形成此类Argala'
+    base = {
+        2: '资源、语言、家族与财务支持',
+        4: '内在稳定、住所、母亲、教育与幸福感支持',
+        11: '收益、人脉、愿望实现与社会网络支持',
+    }.get(house, '一般支持')
+    if blockers and len(blockers) >= len(planets):
+        return f'{base}，但被{len(blockers)}个Virodhargala阻挡'
+    if blockers:
+        return f'{base}，有轻度阻挡但仍可能有效'
+    return f'{base}，未见对应阻挡'

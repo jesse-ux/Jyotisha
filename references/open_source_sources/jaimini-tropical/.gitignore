@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project temp files
+progress/
+output/
+*.png
+*.bat
+
+# Skyfield ephemeris cache (auto-downloaded, ~17MB)
+jaimini/data/*.bsp
+*.bsp
+*.bsp.gz
+
+# PDF pipeline (separate project)
+pipeline.py
+run.bat
+pdf_translate.py
+Jaimini占星文件/
+古典占星著作/
+
+# Original micrograd files (separate project)
+test.py
+run.sh
+
+# Claude internal
+.claude/
+CLAUDE.md
+
+# Test outputs
+jaimini/tests/test_output.txt
+jaimini/tests/test_full.txt

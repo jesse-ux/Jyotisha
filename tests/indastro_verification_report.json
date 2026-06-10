@@ -1,0 +1,123 @@
+{
+  "report": "Indastro External Verification Report",
+  "updated": "2026-06-10",
+  "engine_version": "v3.7.1",
+  "ayanamsa": "Lahiri (23.46°)",
+  "timezone_fixes_applied": [
+    {
+      "case": "Joe Biden",
+      "original_tz": -5.0,
+      "corrected_tz": -4.0,
+      "reason": "1942 US War Time (year-round DST, UTC-4)"
+    },
+    {
+      "case": "Kamala Harris",
+      "original_tz": -8.0,
+      "corrected_tz": -7.0,
+      "reason": "IANA database confirms PDT in October 1964"
+    },
+    {
+      "case": "Katy Perry",
+      "original_tz": -8.0,
+      "corrected_tz": -7.0,
+      "reason": "October 25, 1984 was within DST (ended Oct 28)"
+    }
+  ],
+  "expected_lagna_fixes": [
+    {
+      "case": "Elon Musk",
+      "original_expected": "Cancer",
+      "corrected_expected": "Gemini",
+      "reason": "Indastro.com confirmed: Gemini 20°03'"
+    }
+  ],
+  "results": {
+    "total": 11,
+    "passed": 6,
+    "failed": 5,
+    "pass_rate_lagna": "54.5%",
+    "pass_rate_sun_moon": "90.9%",
+    "cases": [
+      {
+        "id": "elon_musk", "name": "Elon Musk",
+        "lagna_match": true, "sun_match": true, "moon_match": true,
+        "engine_lagna": "Gemini", "indastro_lagna": "Gemini",
+        "lagna_diff_deg": 0.03, "status": "RESOLVED"
+      },
+      {
+        "id": "messi", "name": "Lionel Messi",
+        "lagna_match": false, "sun_match": true, "moon_match": true,
+        "engine_lagna": "Capricorn", "indastro_lagna": "Sagittarius",
+        "note": "Indastro internal contradiction: text says Capricorn",
+        "status": "INDSTRO_DATA_ISSUE"
+      },
+      {
+        "id": "aishwarya_rai", "name": "Aishwarya Rai",
+        "lagna_match": true, "sun_match": true, "moon_match": true,
+        "status": "PASS"
+      },
+      {
+        "id": "rihanna", "name": "Rihanna",
+        "lagna_match": true, "sun_match": true, "moon_match": true,
+        "engine_lagna": "Pisces", "indastro_lagna": "Pisces",
+        "lagna_diff_deg": 0.03, "status": "PASS"
+      },
+      {
+        "id": "tendulkar", "name": "Sachin Tendulkar",
+        "lagna_match": true, "sun_match": true, "moon_match": false,
+        "engine_moon": "Sagittarius", "indastro_moon": "Capricorn",
+        "status": "MOON_BOUNDARY"
+      },
+      {
+        "id": "beyonce", "name": "Beyoncé",
+        "lagna_match": true, "sun_match": true, "moon_match": true,
+        "status": "PASS"
+      },
+      {
+        "id": "brad_pitt", "name": "Brad Pitt",
+        "lagna_match": true, "sun_match": true, "moon_match": true,
+        "status": "PASS"
+      },
+      {
+        "id": "dhoni", "name": "M.S. Dhoni",
+        "lagna_match": true, "sun_match": true, "moon_match": true,
+        "status": "PASS"
+      },
+      {
+        "id": "biden", "name": "Joe Biden",
+        "lagna_match": false, "sun_match": true, "moon_match": true,
+        "engine_lagna": "Scorpio", "indastro_lagna": "Sagittarius",
+        "lagna_diff_deg": 13.49,
+        "tz_fixed": true, "tz_from": -5.0, "tz_to": -4.0,
+        "status": "OUTSTANDING_DEVIATION"
+      },
+      {
+        "id": "harris", "name": "Kamala Harris",
+        "lagna_match": false, "sun_match": true, "moon_match": true,
+        "engine_lagna": "Gemini", "indastro_lagna": "Taurus",
+        "lagna_diff_deg": 20.03,
+        "tz_fixed": true, "tz_from": -8.0, "tz_to": -7.0,
+        "status": "OUTSTANDING_DEVIATION"
+      },
+      {
+        "id": "katy_perry", "name": "Katy Perry",
+        "lagna_match": false, "sun_match": true, "moon_match": true,
+        "engine_lagna": "Libra", "indastro_lagna": "Scorpio",
+        "lagna_diff_deg": 5.83,
+        "boundary_case": true,
+        "note": "PST: 29.47° Libra (0.53° to Scorpio), PDT: 17.13° Libra",
+        "tz_fixed": true, "tz_from": -8.0, "tz_to": -7.0,
+        "status": "BOUNDARY_CASE"
+      }
+    ]
+  },
+  "deviations_summary": {
+    "count": 5,
+    "categories": {
+      "indastro_contradiction": 1,
+      "tz_ambiguity": 2,
+      "boundary_case": 1,
+      "moon_discrepancy": 1
+    }
+  }
+}

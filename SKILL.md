@@ -153,8 +153,9 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | 能力域 | 核心内容 | 主要参考文件 |
 |--------|---------|------------|
 | **静态分析** | 行星配置、Yoga、NK、宫位、Argala、Shadbala、AV、Badhaka、Raman方法论 | `planets.md` `yoga_list.md` `argala-complete-guide.md` `badhaka-obstacle-planet-guide.md` `raman-house-judgment-methodology.md` |
-| **动态推运** | Vimshottari、Chara Dasha、KP、Double Transit、Varshaphala、替代Dasha | `vimshottari_dasha_guide.md` `dasa-convergence-methodology.md` `alternative-dasha-systems.md` |
-| **关系占星** | Koota 36分、D9伴侣、DK、Mangal Dosha、配偶六层确认、高地位配偶Yoga | `spouse-multi-layer-methodology.md` `darakaraka-complete-guide.md` `marc-boney-marriage-six-step.md` |
+| **动态推运** | Vimshottari、Chara Dasha（timing partial）、KP、Double Transit、Varshaphala、替代Dasha | `vimshottari_dasha_guide.md` `dasa-convergence-methodology.md` `alternative-dasha-systems.md` |
+| **Jaimini静态层** | Chara Karaka、Karakamsha、A1-A12/UL、Graha Pada、Argala/Virodhargala、Special Lagnas（部分） | `jaimini-complete-system.md` `argala-complete-guide.md` `technique-capability-matrix.md` |
+| **关系占星** | Koota 36分、Mahendra/Stree Deergha/Vedha/Rajju、D9伴侣、DK、Mangal Dosha、Papasamya、配偶六层确认 | `spouse-multi-layer-methodology.md` `darakaraka-complete-guide.md` `relationship-astrology-guide.md` |
 | **出生时间矫正** | 八大方法、自动化流程、验证报告 | `birth-time-rectification-advanced.md` |
 | **PDF读取** | JH/PL PDF全量提取、完整性门、交叉校验 | `pdf-chart-reading-guide.md` `data-bridge-mapping.md` |
 | **Prashna问事** | 十步断卦、AL、Sphuta、Sahams、失物查询 | `prashna-complete-guide.md` `single-event-inquiry-protocol.md` |
@@ -196,13 +197,13 @@ $PYTHON $SCRIPT <子命令> [参数]
 | `validate` | R1-R10数学验证 |
 | `audit` | P1-P12行星审计管线 |
 | `aspects` | 度数精确相位系统 |
-| `jaimini` | Jaimini Karaka/Karakamsha；Chara Dasha 当前为 partial，需 KN Rao/PVN Rao 回归 |
+| `jaimini` | Jaimini Karaka/Karakamsha、A1-A12/UL、Graha Pada、Special Lagnas；Chara Dasha timing 当前为 partial，需 KN Rao/PVN Rao 回归 |
 | `nakshatra-adv` | 高级Nakshatra（Tara Bala+Chandra Bala+Sub-Lord） |
 | `nakshatra-dasha` | 星宿大运推演（Ashtottari + Nakshatra-level Vimshottari） |
 | `nakshatra-full` | 星宿综合报告（本命 + 大运 + 过境星宿） |
-| `argala` | Argala门闩系统 |
+| `argala` | Argala门闩系统：主 Argala + Virodhargala + Rajayoga 分类 |
 | `tajika` | Tajika年运盘（Muntha+YearLord+Mudda Dasha） |
-| `synastry` | 合盘分析（Ashta Koota 36分） |
+| `synastry` | 合盘分析：Ashta Koota 36分 + Mahendra/Stree Deergha/Vedha/Rajju 等附加Kuta |
 | `report` | MD→HTML报告生成（羊皮纸主题） |
 | `prashna` | Prashna问事占星 |
 | `double-transit-pac` | KN Rao Double Transit PAC+D9层 |

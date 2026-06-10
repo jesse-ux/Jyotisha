@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 """
-名人案例批量回归测试 v1.0
-验证引擎对22个名人案例的排盘和解盘能力
+名人案例批量回归测试 v1.2
+验证引擎排盘正确性 + 解盘结论匹配度
+修复：v1.1 使用的 sign_index/longitude 字段引擎不存在，改用 sign 字段
 """
-import json
-import sys
-import os
-import subprocess
+import json, sys, os, subprocess
+from datetime import datetime
 
-# 路径
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENGINE = os.path.join(REPO_ROOT, "scripts", "jyotish_engine.py")
 CASES_FILE = os.path.join(REPO_ROOT, "tests", "celebrity_cases.json")
@@ -16,143 +14,145 @@ CASES_FILE = os.path.join(REPO_ROOT, "tests", "celebrity_cases.json")
 SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
          'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
 
+SIGNS_CN = ['白羊','金牛','双子','巨蟹','狮子','处女',
+            '天秤','天蝎','射手','摩羯','水瓶','双鱼']
+
+EXALTATION = {'Sun':'Aries','Moon':'Taurus','Mars':'Capricorn','Mercury':'Virgo',
+              'Jupiter':'Cancer','Venus':'Pisces','Saturn':'Libra'}
+DEBILITATION = {'Sun':'Libra','Moon':'Scorpio','Mars':'Cancer','Mercury':'Pisces',
+                'Jupiter':'Capricorn','Venus':'Virgo','Saturn':'Aries'}
+
 
 def run_case(case):
-    """对单个案例跑 full-reading 引擎"""
     cmd = [
         sys.executable, ENGINE, "chart",
-        "--year", str(case["year"]),
-        "--month", str(case["month"]),
-        "--day", str(case["day"]),
-        "--hour", str(case["hour"]),
-        "--minute", str(case["minute"]),
-        "--lat", str(case["lat"]),
-        "--lon", str(case["lon"]),
-        "--tz", str(case["tz"]),
+        "--year", str(case["year"]), "--month", str(case["month"]),
+        "--day", str(case["day"]), "--hour", str(case["hour"]),
+        "--minute", str(case["minute"]), "--lat", str(case["lat"]),
+        "--lon", str(case["lon"]), "--tz", str(case["tz"]),
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, cwd=REPO_ROOT)
-    
     if result.returncode != 0:
         return {"error": result.stderr[:500]}
-    
     try:
         return json.loads(result.stdout)
     except json.JSONDecodeError:
-        return {"error": f"JSON解析失败: {result.stdout[:300]}"}
+        return {"error": f"JSON parse error: {result.stdout[:200]}"}
 
 
-def extract_chart_summary(chart_data):
-    """从引擎输出中提取解盘关键结论"""
-    if not chart_data or "error" in chart_data:
-        return None
+def get_sign_cn(sign_name):
+    return SIGNS_CN[SIGNS.index(sign_name)] if sign_name in SIGNS else sign_name
+
+
+def get_sign_state(planet_name, sign_name):
+    """检查行星庙旺落陷，返回格式化字符串"""
+    if sign_name == EXALTATION.get(planet_name, ''):
+        return '擢升'
+    if sign_name == DEBILITATION.get(planet_name, ''):
+        return '落陷'
+    return ''
+
+
+def validate_case(case, chart_data):
+    """与已知数据做比对 — 使用引擎实际的 sign 字段"""
+    checks = []
     
-    planets = {}
-    for pname in ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']:
-        p = chart_data.get("planets", {}).get(pname, {})
-        if p:
-            sign_idx = int(p.get("longitude", 0) / 30) % 12
-            planets[pname] = {
-                "sign": SIGNS[sign_idx],
-                "house": int(p.get("house", 0)),
-                "degree": round(p.get("longitude", 0) % 30, 2),
-            }
-
-    asc_sign = SIGNS.get(int(chart_data.get("ascendant", {}).get("sign_index", 0)), "?")
+    # 上升比对
+    known_lagna = case.get("known_lagna", "")
+    if known_lagna:
+        actual_lagna = chart_data.get("ascendant", {}).get("sign", "?")
+        match = "✅" if actual_lagna == known_lagna else "❌"
+        checks.append({"type": "上升", "expected": known_lagna, "actual": actual_lagna, "pass": match == "✅"})
     
-    return {
-        "lagna": asc_sign,
-        "planets": planets,
-        "summary": f"上升{asc_sign}，"
-    }
+    # 太阳比对
+    known_sun = case.get("known_sun_sign", "")
+    if known_sun:
+        sun_sign = chart_data.get("planets", {}).get("Sun", {}).get("sign", "?")
+        match = "✅" if sun_sign == known_sun else "❌"
+        state = get_sign_state("Sun", sun_sign)
+        checks.append({"type": "太阳", "expected": known_sun, "actual": sun_sign, "pass": match == "✅"})
+    
+    # 月亮比对
+    known_moon = case.get("known_moon_sign", "")
+    if known_moon:
+        moon_sign = chart_data.get("planets", {}).get("Moon", {}).get("sign", "?")
+        match = "✅" if moon_sign == known_moon else "❌"
+        checks.append({"type": "月亮", "expected": known_moon, "actual": moon_sign, "pass": match == "✅"})
+    
+    passed = sum(1 for c in checks if c["pass"])
+    total = max(len(checks), 1)
+    return checks, passed, total
 
 
 def run_all():
     with open(CASES_FILE, "r", encoding="utf-8") as f:
         cases = json.load(f)
     
-    results = []
-    passed = 0
-    failed = 0
+    print(f"{'='*100}")
+    print(f" 印度占星Skill · 名人案例回归测试 v1.1")
+    print(f" 案例数: {len(cases)}")
+    print(f" 运行时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"{'='*100}")
     
-    print(f"{'='*80}")
-    print(f"名人案例批量回归测试")
-    print(f"案例数: {len(cases)}")
-    print(f"测试时间: 引擎 chart 命令排盘正确性")
-    print(f"{'='*80}")
+    results = []
+    total_known = 0
+    total_passed = 0
     
     for i, case in enumerate(cases, 1):
         name = case["name"]
-        print(f"\n[{i}/{len(cases)}] {name} ({case['year']}-{case['month']:02d}-{case['day']:02d})")
+        rating = case.get("file_match_rating", "")
+        conclusion = case.get("summary_conclusion", "")
         
         data = run_case(case)
         
         if "error" in data:
-            print(f"  ❌ 引擎错误: {data['error'][:100]}")
-            failed += 1
-            results.append({"id": case["id"], "name": name, "status": "error", "detail": data["error"]})
+            print(f"\n[{i:>2}/{len(cases)}] {name:<22} ❌ 引擎错误")
+            results.append({"id": case["id"], "name": name, "status": "error"})
             continue
         
-        # 提取信息
-        has_asc = "ascendant" in data
-        planet_count = len(data.get("planets", {}))
+        checks, p, t = validate_case(case, data)
+        total_known += t
+        total_passed += p
         
-        status = "✅" if has_asc else "⚠️"
-        print(f"  {status} 上升: {has_asc}, 行星数: {planet_count}")
+        # 符号
+        if checks:
+            all_pass = all(c["pass"] for c in checks)
+            status = "✅" if all_pass else "⚠️"
+        else:
+            status = "✅"
         
-        # 与已知数据比对（如果有）
-        known_check = []
-        if case.get("known_lagna") and has_asc:
-            asc_sign = SIGNS[data.get("ascendant", {}).get("sign_index", 0) % 12]
-            match = "✅" if asc_sign == case["known_lagna"] else "❌"
-            known_check.append(f"上升: 预期{case['known_lagna']} 实际{asc_sign} {match}")
-        
-        for check in known_check:
-            print(f"    {check}")
-        
-        passed_count = sum(1 for c in known_check if "✅" in c)
-        
-        results.append({
-            "id": case["id"],
-            "name": name,
-            "status": "passed" if has_asc else "warn",
-            "key_data": known_check,
-        })
-        passed += 1
+        print(f"\n[{i:>2}/{len(cases)}] {name:<22} {status} 匹配率={rating or 'N/A':>4}")
+        for c in checks:
+            state_str = get_sign_state(c["type"], c["actual"])
+            state_tag = f" ({state_str})" if state_str else ""
+            pass_str = "✅" if c["pass"] else "❌"
+            print(f"     {c['type']}:预期{get_sign_cn(c['expected'])} 实际{get_sign_cn(c['actual'])}{state_tag} {pass_str}")
+        if conclusion:
+            print(f"     关键发现: {conclusion[:50]}")
     
-    # 汇总报告
-    print(f"\n\n{'='*80}")
-    print(f"汇总报告")
-    print(f"{'='*80}")
-    print(f"总计: {len(cases)} 案例")
-    print(f"通过: {passed}")
-    print(f"失败: {failed}")
-    print(f"通过率: {passed/len(cases)*100:.0f}%")
+    # 汇总
+    pass_rate = f"{total_passed/total_known*100:.0f}%" if total_known > 0 else "N/A"
+    print(f"\n{'='*100}")
+    print(f" 汇总报告")
+    print(f"{'='*100}")
+    print(f" 总案例: {len(cases)}")
+    print(f" 已知比对项: {total_known} 项")
+    print(f" 通过: {total_passed} 项")
+    print(f" 匹配率: {pass_rate}")
     
-    print(f"\n{'='*80}")
-    print(f"案例清单")
-    print(f"{'='*80}")
-    print(f"{'姓名':>22} | {'状态':>4} | {'出生日期':>14} | {'上升':>8} | {'星盘结论'}")
-    print("-"*80)
-    for r in results:
-        status_mark = "✅" if r["status"] == "passed" else "❌"
-        case = next(c for c in cases if c["id"] == r["id"])
-        conclusion = case.get("summary_conclusion", "")[:35]
-        print(f"{r['name']:>22} | {status_mark:>4} | "
-              f"{case['year']}-{case['month']:02d}-{case['day']:02d} | "
-              f"{'...' if r['key_data'] else '?':>8} | {conclusion}")
-    
-    # 保存报告
     report = {
-        "total": len(cases),
-        "passed": passed,
-        "failed": failed,
-        "pass_rate": f"{passed/len(cases)*100:.0f}%",
+        "timestamp": datetime.now().isoformat(),
+        "total_cases": len(cases),
+        "total_known_checks": total_known,
+        "passed_checks": total_passed,
+        "pass_rate": pass_rate,
         "results": results,
     }
+    
     report_path = os.path.join(REPO_ROOT, "tests", "celebrity_regression_report.json")
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
-    print(f"\n报告已保存: {report_path}")
+    print(f"\n 报告已保存: {report_path}")
 
 
 if __name__ == "__main__":

@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Jaimini占星体系模块 v1.1
+Jaimini占星体系模块 v1.2
 Parashara传承中的Jaimini子系统
 
 支持:
   - Chara Karaka: 7/8个功能指示星（按度数排序）
+  - Arudha Pada: A1-A12 + Upapada（UL），复用 dashaflow/jaimini-tropical 的 MIT 算法
   - Karakamsha: AK在Navamsa中的上升（灵魂方向）
   - Chara Dasha: 当前为简化 timing 实现，v6.0.9 后标注为 partial，不得单独作为高置信度应期依据
-  - Jaimini Sutras关键规则
+  - Special Lagnas: HL/GL/VL 简化计算（出生时间敏感，作为辅助）
+
+MIT复用来源:
+  - dashaflow (adarshj322): Arudha/Upapada公式与例外规则
+  - jaimini-tropical (tunanfang-pixel): Pada命名、Graha Pada与Jaimini特殊点结构
 """
 from typing import Dict, List, Tuple, Optional
 import math
@@ -54,6 +59,26 @@ KARAKA_DOMAINS = {
     'Pitrukaraka': '父亲、祖先业力、传统传承',
 }
 
+ARUDHA_NAMES = {
+    1: 'Arudha Lagna (AL)', 2: 'Dhana Pada (A2)', 3: 'Vikrama Pada (A3)',
+    4: 'Sukha Pada (A4)', 5: 'Mantra Pada (A5)', 6: 'Roga Pada (A6)',
+    7: 'Dara Pada (A7)', 8: 'Mrityu Pada (A8)', 9: 'Dharma Pada (A9)',
+    10: 'Karma Pada (A10)', 11: 'Labha Pada (A11)', 12: 'Upapada (UL)',
+}
+
+
+def _sign_idx(sign_name: str) -> int:
+    return SIGNS.index(sign_name) if sign_name in SIGNS else 0
+
+
+def _sign_name(sign_idx: int) -> str:
+    return SIGNS[sign_idx % 12]
+
+
+def _house_count(from_idx: int, to_idx: int) -> int:
+    """从A星座顺数到B星座，含起点，返回1-12。"""
+    return ((to_idx - from_idx) % 12) + 1
+
 
 def calc_chara_karaka_7(planet_degrees: Dict[str, float]) -> Dict:
     """
@@ -64,13 +89,9 @@ def calc_chara_karaka_7(planet_degrees: Dict[str, float]) -> Dict:
     
     返回: {karaka_name: {'planet': str, 'degree': float, 'domain': str}}
     """
-    # 排除Rahu和Ketu
     exclude = {'Rahu', 'Ketu'}
     planets = {k: v for k, v in planet_degrees.items() if k not in exclude}
-    
-    # 按度数降序排列（度数最高的=AK）
     sorted_planets = sorted(planets.items(), key=lambda x: x[1], reverse=True)
-    
     results = {}
     for rank, (pname, deg) in enumerate(sorted_planets, 1):
         if rank > 7:
@@ -83,11 +104,8 @@ def calc_chara_karaka_7(planet_degrees: Dict[str, float]) -> Dict:
             'domain': KARAKA_DOMAINS.get(karaka, ''),
             'cn_name': KARAKA_CN.get(karaka, karaka),
         }
-    
-    # 额外分析
     ak = results.get('Atmakaraka', {})
     dk = results.get('Darakaraka', {})
-    
     return {
         'karaka_table': results,
         'summary': {
@@ -100,21 +118,13 @@ def calc_chara_karaka_7(planet_degrees: Dict[str, float]) -> Dict:
 
 
 def calc_chara_karaka_8(planet_degrees: Dict[str, float]) -> Dict:
-    """
-    计算8星制Chara Karaka（含Rahu，使用30-度数来处理Rahu逆行）
-    """
+    """计算8星制Chara Karaka（含Rahu，Ketu排除）。"""
     planets = {}
     for pname, deg in planet_degrees.items():
         if pname == 'Ketu':
             continue
-        if pname == 'Rahu':
-            # Rahu直接使用星座内度数（与其它行星相同），不做取反
-            planets[pname] = deg
-        else:
-            planets[pname] = deg
-    
+        planets[pname] = deg
     sorted_planets = sorted(planets.items(), key=lambda x: x[1], reverse=True)
-    
     results = {}
     for rank, (pname, deg) in enumerate(sorted_planets, 1):
         if rank > 8:
@@ -127,11 +137,99 @@ def calc_chara_karaka_8(planet_degrees: Dict[str, float]) -> Dict:
             'domain': KARAKA_DOMAINS.get(karaka, ''),
             'cn_name': KARAKA_CN.get(karaka, karaka),
         }
-    
     return {'karaka_table_8': results}
 
 
-def calc_chara_dasha(asc_sign_idx: int, 
+def calc_arudha_pada_for_house(house_sign_idx: int, planet_longitudes: Dict[str, float]) -> Optional[Dict]:
+    """
+    计算单宫Arudha Pada。
+
+    公式复用 dashaflow / jaimini-tropical MIT 实现：
+    1. 从目标宫星座数到宫主所在星座；
+    2. 从宫主所在星座再数同样距离；
+    3. 若落回本宫或本宫第七，则改取本宫第十。
+    """
+    house_sign = _sign_name(house_sign_idx)
+    lord = SIGN_LORDS[house_sign]
+    if lord not in planet_longitudes:
+        return None
+    lord_sign_idx = int(planet_longitudes[lord] / 30) % 12
+    distance = _house_count(house_sign_idx, lord_sign_idx)
+    pada_idx = (lord_sign_idx + distance - 1) % 12
+    exception_triggered = False
+    if pada_idx == house_sign_idx or pada_idx == (house_sign_idx + 6) % 12:
+        pada_idx = (house_sign_idx + 9) % 12
+        exception_triggered = True
+    return {
+        'sign': _sign_name(pada_idx),
+        'sign_idx': pada_idx,
+        'lord': SIGN_LORDS[_sign_name(pada_idx)],
+        'source_house_sign': house_sign,
+        'source_house_lord': lord,
+        'lord_sign': _sign_name(lord_sign_idx),
+        'distance': distance,
+        'exception_triggered': exception_triggered,
+    }
+
+
+def calc_arudha_padas(asc_sign_idx: int, planet_longitudes: Dict[str, float]) -> Dict:
+    """计算A1-A12全部Arudha Padas，含Upapada/UL。"""
+    padas = {}
+    for house_num in range(1, 13):
+        house_sign_idx = (asc_sign_idx + house_num - 1) % 12
+        pada = calc_arudha_pada_for_house(house_sign_idx, planet_longitudes)
+        if pada:
+            pada.update({
+                'house_num': house_num,
+                'name': ARUDHA_NAMES.get(house_num, f'A{house_num}'),
+            })
+            padas[f'A{house_num}' if house_num != 12 else 'UL'] = pada
+    return {
+        'method': 'Arudha Pada A1-A12 (dashaflow/jaimini-tropical MIT adapted)',
+        'ascendant': _sign_name(asc_sign_idx),
+        'padas': padas,
+        'arudha_lagna': padas.get('A1'),
+        'upapada': padas.get('UL'),
+    }
+
+
+def calc_upapada(asc_sign_idx: int, planet_longitudes: Dict[str, float]) -> Optional[Dict]:
+    """计算Upapada Lagna（第12宫Arudha）。"""
+    result = calc_arudha_padas(asc_sign_idx, planet_longitudes).get('upapada')
+    if result:
+        second_idx = (result['sign_idx'] + 1) % 12
+        result = dict(result)
+        result['second_from_ul'] = _sign_name(second_idx)
+        result['description'] = f"Upapada在{result['sign']}，第二宫为{result['second_from_ul']}，用于婚姻持续性与配偶外显画像。"
+    return result
+
+
+def calc_graha_padas(planet_longitudes: Dict[str, float]) -> Dict:
+    """计算行星Graha Pada：行星位置通过其宫主映射出的外显影像。"""
+    results = {}
+    for planet, lon in planet_longitudes.items():
+        if planet in ('Rahu', 'Ketu'):
+            continue
+        planet_sign_idx = int(lon / 30) % 12
+        planet_sign = _sign_name(planet_sign_idx)
+        lord = SIGN_LORDS[planet_sign]
+        if lord not in planet_longitudes:
+            continue
+        lord_sign_idx = int(planet_longitudes[lord] / 30) % 12
+        distance = _house_count(planet_sign_idx, lord_sign_idx)
+        pada_idx = (lord_sign_idx + distance - 1) % 12
+        results[planet] = {
+            'planet_sign': planet_sign,
+            'lord': lord,
+            'lord_sign': _sign_name(lord_sign_idx),
+            'graha_pada_sign': _sign_name(pada_idx),
+            'graha_pada_sign_idx': pada_idx,
+            'distance': distance,
+        }
+    return {'method': 'Graha Pada (jaimini-tropical MIT adapted)', 'graha_padas': results}
+
+
+def calc_chara_dasha(asc_sign_idx: int,
                      planet_longitudes: Dict[str, float],
                      birth_year: int, birth_month: int,
                      birth_day: int = 1) -> Dict:
@@ -144,23 +242,16 @@ def calc_chara_dasha(asc_sign_idx: int,
       - 偶数星座(Taurus, Cancer...)：反向顺序
       - 大运长度 = 12 - 落入该星座的行星数（Jaimini Sutras 1:1-3标准）
     """
-    # 确定顺序方向
     is_odd = asc_sign_idx % 2 == 0
     direction = 1 if is_odd else -1
-    
-    # 生成大运序列
     dasha_sequence = []
-    
     for i in range(12):
         sign_idx = (asc_sign_idx + direction * i) % 12
         sign_name = SIGNS[sign_idx]
         lord = SIGN_LORDS[sign_name]
-        
-        # 大运长度: 12 - 落入该星座的行星数（Jaimini标准）
-        count_in_sign = sum(1 for lon in planet_longitudes.values() 
+        count_in_sign = sum(1 for lon in planet_longitudes.values()
                           if int(lon / 30) % 12 == sign_idx and lon >= 0)
         duration = max(1, 12 - count_in_sign)
-        
         dasha_sequence.append({
             'sign': sign_name,
             'sign_idx': sign_idx,
@@ -169,21 +260,11 @@ def calc_chara_dasha(asc_sign_idx: int,
             'planets_in_sign': count_in_sign,
             'order': i + 1,
         })
-    
-    # v6.1.10: 计算出生时的平衡（balance at birth）
-    # 第一个大运中已过期的部分 = (从出生月日到下一个大运的比例)
-    # 简化：全年按365.25天
-    total_months = sum(d['duration_years'] * 12 for d in dasha_sequence)
     first_duration_months = dasha_sequence[0]['duration_years'] * 12
-    
-    # 出生月的剩余天数（简化：假设出生在月中）
     days_in_month = 30.44
     remaining_days = (days_in_month - birth_day + days_in_month / 2)
     remaining_fraction = remaining_days / (first_duration_months * days_in_month)
     dasha_sequence[0]['balance_at_birth'] = round(remaining_fraction, 4)
-    
-    # 计算日期
-    # 第一个大运从出生日开始，但只运行剩余的 balance 部分
     if birth_day <= 15:
         start_year, start_month = birth_year, birth_month
     else:
@@ -191,15 +272,12 @@ def calc_chara_dasha(asc_sign_idx: int,
         if start_month > 12:
             start_month = 1
             start_year += 1
-    
     current_year, current_month = start_year, start_month
-    
     for i, d in enumerate(dasha_sequence):
         d['start_date'] = f"{current_year}-{current_month:02d}"
         actual_duration = d['duration_years']
         if i == 0:
-            actual_duration *= remaining_fraction  # 第一个大运只有剩余部分
-        
+            actual_duration *= remaining_fraction
         end_month = current_month + int(actual_duration * 12)
         end_year = current_year + end_month // 12
         end_month = end_month % 12
@@ -211,13 +289,13 @@ def calc_chara_dasha(asc_sign_idx: int,
         if current_month > 12:
             current_month = 1
             current_year += 1
-    
     return {
         'method': 'Chara Dasha (Jaimini Sutras 1:1-3, v6.1.10 balance-at-birth fix)',
         'ascendant': SIGNS[asc_sign_idx],
         'direction': 'forward' if is_odd else 'backward',
         'dasha_sequence': dasha_sequence,
         'total_cycle_years': sum(d['duration_years'] for d in dasha_sequence),
+        'capability_status': 'partial',
     }
 
 
@@ -225,54 +303,36 @@ def calc_chara_dasha_with_antardasha(asc_sign_idx: int,
                                       planet_longitudes: Dict[str, float],
                                       birth_year: int, birth_month: int,
                                       birth_day: int = 1) -> Dict:
-    """
-    Chara Dasha 完整3层计算 v6.1.10（MD → AD → PD）
-    
-    三层递归:
-      - Mahadasha (MD): 12个星座周期
-      - Antardasha (AD): 每个MD内12个子周期，时长按比例分配
-      - Pratyantar Dasha (PD): 每个AD内12个子子周期（新增v6.1.10）
-    
-    每层都从该层主星座开始，同方向，比例分配
-    """
-    # 先算 Mahadasha
+    """Chara Dasha 完整3层计算 v6.1.10（MD → AD → PD）。"""
     base = calc_chara_dasha(asc_sign_idx, planet_longitudes, birth_year, birth_month, birth_day)
     is_odd = asc_sign_idx % 2 == 0
     direction = 1 if is_odd else -1
-    cycle_total = sum(max(1, 12 - sum(1 for lon in planet_longitudes.values() 
+    cycle_total = sum(max(1, 12 - sum(1 for lon in planet_longitudes.values()
                            if int(lon / 30) % 12 == (asc_sign_idx + direction * i) % 12 and lon >= 0))
                       for i in range(12))
-
-    # 为每个 Mahadasha 计算 Antardasha（和 Pratyantar）
     for md in base['dasha_sequence']:
         md_sign_idx = md['sign_idx']
         md_duration = md['duration_years']
         antardasha_list = []
-
         for j in range(12):
             ad_sign_idx = (md_sign_idx + direction * j) % 12
             ad_sign = SIGNS[ad_sign_idx]
             ad_lord = SIGN_LORDS[ad_sign]
-            
             count_in_sign = sum(1 for lon in planet_longitudes.values()
                             if int(lon / 30) % 12 == ad_sign_idx and lon >= 0)
             ad_duration = round((max(1, 12 - count_in_sign) / cycle_total) * md_duration, 3)
             if ad_duration < 0.003:
-                ad_duration = 0.003  # 最小约1天
-
-            # v6.1.10: 计算 Pratyantar Dasha（第3层）
+                ad_duration = 0.003
             pratyantar_list = []
             for k in range(12):
                 pd_sign_idx = (ad_sign_idx + direction * k) % 12
                 pd_sign = SIGNS[pd_sign_idx]
                 pd_lord = SIGN_LORDS[pd_sign]
-                
                 pd_count = sum(1 for lon in planet_longitudes.values()
                             if int(lon / 30) % 12 == pd_sign_idx and lon >= 0)
                 pd_duration = round((max(1, 12 - pd_count) / cycle_total) * ad_duration, 3)
                 if pd_duration < 0.001:
                     pd_duration = 0.001
-                
                 pratyantar_list.append({
                     'sign': pd_sign,
                     'sign_idx': pd_sign_idx,
@@ -280,7 +340,6 @@ def calc_chara_dasha_with_antardasha(asc_sign_idx: int,
                     'duration_years': pd_duration,
                     'order': k + 1,
                 })
-            
             antardasha_list.append({
                 'sign': ad_sign,
                 'sign_idx': ad_sign_idx,
@@ -289,8 +348,6 @@ def calc_chara_dasha_with_antardasha(asc_sign_idx: int,
                 'order': j + 1,
                 'pratyantar_dashas': pratyantar_list,
             })
-
-        # 计算 Antardasha 日期
         start_year, start_month = map(int, md['start_date'].split('-'))
         for ad in antardasha_list:
             ad['start_date'] = f"{start_year}-{start_month:02d}"
@@ -300,54 +357,20 @@ def calc_chara_dasha_with_antardasha(asc_sign_idx: int,
             end_month = int((end_day % 365) / 30.44) + 1
             end_month = max(1, min(12, end_month))
             ad['end_date'] = f"{end_year}-{end_month:02d}"
-            
-            # 更新下一个ad起始
             if end_month < 12:
                 start_year, start_month = end_year, end_month + 1
             else:
                 start_year, start_month = end_year + 1, 1
-
         md['antardashas'] = antardasha_list
-
     base['has_antardasha'] = True
     base['has_pratyantar'] = True
     return base
 
 
-def _chara_dasha_duration(sign_idx, planet_lons):
-    """计算Chara Dasha单个大运的年数"""
-    # 标准方法：12 - 落入该星座的行星数量（最少1年，最多12年）
-    count = 0
-    for pname, lon in planet_lons.items():
-        if pname in ('Rahu', 'Ketu'):
-            continue
-        p_sign = int(lon / 30) % 12
-        if p_sign == sign_idx:
-            count += 1
-    return max(1, 12 - count)
-
-
 def calc_karakamsha(ak_sign_in_d9: str, ak_degree_in_d9: float) -> Dict:
-    """
-    Karakamsha分析：AK（Atmakaraka，灵魂星）在D9中的位置作为"灵魂上升"
-    这是Jaimini体系中判断人生终极方向的关键技法
-    
-    经典定义：Karakamsha = Atmakaraka在Navamsa(D9)中落入的星座
-    从这个星座看12宫的布局，分析灵魂方向
-    
-    ⚠️ 2026-05-03修正：此前版本错误使用DK（配偶星），现已修正为AK（灵魂星）
-    
-    参数:
-        ak_sign_in_d9: AK（灵魂星）在D9中的星座
-        ak_degree_in_d9: AK在D9中的度数
-    """
-    sign_idx = SIGNS.index(ak_sign_in_d9) if ak_sign_in_d9 in SIGNS else 0
+    """Karakamsha分析：AK在D9中的位置作为灵魂上升。"""
     lord = SIGN_LORDS.get(ak_sign_in_d9, '')
-    
-    # Karakamsha Lagna = AK（灵魂星）在D9中的位置
-    # 从这个位置看12宫的布局，分析灵魂方向
     interpretations = _karakamsha_interpretations(ak_sign_in_d9, lord)
-    
     return {
         'karakamsha_sign': ak_sign_in_d9,
         'karakamsha_degree': ak_degree_in_d9,
@@ -357,7 +380,7 @@ def calc_karakamsha(ak_sign_in_d9: str, ak_degree_in_d9: float) -> Dict:
 
 
 def _karakamsha_interpretations(sign, lord):
-    """Karakamsha的灵魂方向解读"""
+    """Karakamsha的灵魂方向解读。"""
     directions = {
         'Aries': '灵魂追求独立、开拓、成为先驱',
         'Taurus': '灵魂追求稳定、物质安全感、感官和谐',
@@ -387,5 +410,25 @@ def _karakamsha_interpretations(sign, lord):
     }
 
 
+def calc_special_lagnas(asc_sign_idx: int, hour: int, minute: int = 0) -> Dict:
+    """
+    Jaimini特殊上升点简化版：HL/GL/VL。
 
-
+    注：jaimini-tropical原版基于日出时间计算；这里在无日出依赖的CLI层提供
+    可运行的近似辅助值，精确断语仍应优先使用出生地日出校正版本。
+    """
+    local_hours = hour + minute / 60.0
+    ghatis = (local_hours / 24.0) * 60.0
+    ghati_floor = int(ghatis)
+    hl_idx = ghati_floor % 12 if ghati_floor % 2 else (7 - ghati_floor) % 12
+    gl_idx = ghati_floor % 12
+    vl_idx = (asc_sign_idx * 3) % 12
+    return {
+        'method': 'Special Lagnas HL/GL/VL simplified (jaimini-tropical MIT adapted; sunrise-sensitive)',
+        'capability_status': 'auxiliary_partial',
+        'ghatis_elapsed_from_midnight': round(ghatis, 4),
+        'HL': {'sign': _sign_name(hl_idx), 'sign_idx': hl_idx, 'lord': SIGN_LORDS[_sign_name(hl_idx)]},
+        'GL': {'sign': _sign_name(gl_idx), 'sign_idx': gl_idx, 'lord': SIGN_LORDS[_sign_name(gl_idx)]},
+        'VL': {'sign': _sign_name(vl_idx), 'sign_idx': vl_idx, 'lord': SIGN_LORDS[_sign_name(vl_idx)]},
+        'note': 'HL/GL/VL对日出非常敏感；本函数用于结构化补齐，精确版本需接入当地日出。'
+    }

@@ -136,6 +136,98 @@ def _calc_nadi(n1, n2):
             'note':'不同Nadi=吉，互补生命力'}
 
 # ============================================================================
+# dashaflow MIT增强：8分制之外的附加Kuta
+# ============================================================================
+def _calc_mahendra(n1, n2):
+    """Mahendra Kuta：男方星宿从女方星宿数起为4/7/10/13/16/19/22/25则吉。"""
+    count = ((n1 - n2) % 27) + 1
+    return {'result': 'good' if count in {4, 7, 10, 13, 16, 19, 22, 25} else 'bad', 'count': count}
+
+
+def _calc_stree_deergha(n1, n2):
+    """Stree Deergha：男方星宿从女方星宿数起至少9宿为吉。"""
+    count = ((n1 - n2) % 27) + 1
+    return {'result': 'good' if count >= 9 else 'bad', 'count': count}
+
+
+VEDHA_PAIRS = {
+    (0, 17), (1, 16), (2, 15), (3, 14), (5, 21), (6, 20), (7, 19),
+    (8, 18), (9, 26), (10, 25), (11, 24), (12, 23), (4, 22)
+}
+
+
+def _calc_vedha(n1, n2):
+    """Vedha Kuta：特定星宿对形成阻隔。"""
+    pair = tuple(sorted((n1, n2)))
+    bad = pair in {tuple(sorted(p)) for p in VEDHA_PAIRS}
+    return {'result': 'bad' if bad else 'good', 'pair': pair}
+
+
+RAJJU_GROUPS = {
+    'Pada': {0, 8, 9, 17, 18, 26},
+    'Kati': {1, 7, 10, 16, 25, 19},
+    'Udara': {2, 6, 11, 15, 20, 24},
+    'Kanta': {3, 5, 12, 14, 21, 23},
+    'Sira': {4, 13, 22},
+}
+RAJJU_EFFECTS = {
+    'Sira': '头部Rajju：传统认为影响丈夫寿命',
+    'Kanta': '颈部Rajju：传统认为影响妻子寿命',
+    'Udara': '腹部Rajju：传统认为影响子女',
+    'Kati': '腰部Rajju：传统认为影响财务稳定',
+    'Pada': '足部Rajju：传统认为迁动奔波较多',
+}
+
+
+def _rajju_group(n):
+    for group, indices in RAJJU_GROUPS.items():
+        if n in indices:
+            return group
+    return None
+
+
+def _calc_rajju(n1, n2):
+    g1 = _rajju_group(n1)
+    g2 = _rajju_group(n2)
+    if g1 and g1 == g2:
+        return {'result': 'bad', 'group': g1, 'effect': RAJJU_EFFECTS.get(g1, '')}
+    return {'result': 'good', 'group1': g1, 'group2': g2, 'effect': ''}
+
+
+def _calc_bad_constellations(n1, n2):
+    """坏星宿简化检测：Moola/Ashlesha/Jyeshtha/Vishakha等传统敏感宿。"""
+    bad = []
+    names = {8: 'Ashlesha', 15: 'Vishakha', 17: 'Jyeshtha', 18: 'Moola'}
+    for label, n in [('person1', n1), ('person2', n2)]:
+        if n in names:
+            bad.append({'person': label, 'nakshatra': names[n]})
+    return {'result': 'bad' if bad else 'good', 'issues': bad}
+
+
+def _calc_additional_kutas(n1, n2, base_scores):
+    """复用dashaflow 16因子婚配思路，补充传统8分制以外的Kuta。"""
+    mahendra = _calc_mahendra(n1, n2)
+    stree = _calc_stree_deergha(n1, n2)
+    vedha = _calc_vedha(n1, n2)
+    rajju = _calc_rajju(n1, n2)
+    bad_const = _calc_bad_constellations(n1, n2)
+    exceptions = []
+    if base_scores.get('Nadi(生命力)', {}).get('score') == 0 and base_scores.get('Bhakuta(情感经济)', {}).get('score', 0) > 0 and rajju['result'] == 'good':
+        exceptions.append('Nadi Dosha因Bhakuta与Rajju良好而减弱')
+    if rajju['result'] == 'bad' and base_scores.get('Graha Maitri(行星友谊)', {}).get('score', 0) >= 4 and base_scores.get('Tara(星宿距离)', {}).get('score', 0) >= 1.5:
+        exceptions.append('Rajju Dosha因Graha Maitri与Tara较好而减弱')
+    return {
+        'method': 'dashaflow MIT adapted additional kutas',
+        'Mahendra': mahendra,
+        'StreeDeergha': stree,
+        'Vedha': vedha,
+        'Rajju': rajju,
+        'BadConstellations': bad_const,
+        'exceptions': exceptions,
+    }
+
+
+# ============================================================================
 # 合盘主函数
 # ============================================================================
 def calc_synastry(person1: dict, person2: dict) -> dict:
@@ -180,6 +272,8 @@ def calc_synastry(person1: dict, person2: dict) -> dict:
         ('Yoni(生理)', yoni), ('Graha Maitri(行星友谊)', graha),
         ('Gana(气质)', gana), ('Bhakuta(情感经济)', bhakuta), ('Nadi(生命力)', nadi),
     ]
+    koota_map = {k: v for k, v in kootas}
+    additional_kutas = _calc_additional_kutas(n1, n2, koota_map)
 
     total = sum(k[1]['score'] for k in kootas)
     max_total = sum(k[1]['max'] for k in kootas)
@@ -197,11 +291,12 @@ def calc_synastry(person1: dict, person2: dict) -> dict:
     papasamya = _calc_papasamya(person1, person2)
 
     return {
-        'method': 'Ashta Koota 36分制 + Mangal Dosha + Papasamya',
-        'version': '3.7',
+        'method': 'Ashta Koota 36分制 + Mangal Dosha + Papasamya + dashaflow附加Kuta',
+        'version': '3.8-dashaflow-mit-adapted',
         'person1': {'moon_nakshatra': NAK27[n1][0], 'nak_idx': n1, 'moon_sign': SIGNS[s1]},
         'person2': {'moon_nakshatra': NAK27[n2][0], 'nak_idx': n2, 'moon_sign': SIGNS[s2]},
-        'kootas': {k:v for k,v in kootas},
+        'kootas': koota_map,
+        'additional_kutas': additional_kutas,
         'total_score': total,
         'max_score': max_total,
         'percentage': pct,

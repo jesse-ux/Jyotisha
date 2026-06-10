@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jaimini 回归黄道占星引擎</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div style="color:#f0c040;font-size:0.9rem">计算中...</div>
+    </div>
+
+    <div id="app">
+        <header>
+            <h1>Jaimini 回归黄道占星引擎</h1>
+            <p class="subtitle">Panchanga 五支历法 + 完整星盘计算 · Tropical Zodiac · Whole Sign</p>
+        </header>
+
+        <main class="layout">
+            <!-- LEFT: Input Panel -->
+            <section id="input-panel" class="panel">
+                <h2>输入出生数据</h2>
+                <form id="chart-form">
+                    <div class="form-row">
+                        <label>日期 <input type="date" id="input-date"></label>
+                        <label>时间 <input type="time" id="input-time" step="1"></label>
+                    </div>
+                    <div class="form-row">
+                        <label>时区
+                            <select id="input-tz">
+                                <option value="+8" selected>UTC+8 (北京/新加坡)</option>
+                                <option value="+5:30">UTC+5:30 (印度)</option>
+                                <option value="+9">UTC+9 (东京)</option>
+                                <option value="+7">UTC+7 (曼谷)</option>
+                                <option value="0">UTC+0 (伦敦)</option>
+                                <option value="+1">UTC+1 (巴黎/柏林)</option>
+                                <option value="+2">UTC+2 (开罗)</option>
+                                <option value="+3">UTC+3 (莫斯科)</option>
+                                <option value="+4">UTC+4 (迪拜)</option>
+                                <option value="+5">UTC+5 (卡拉奇)</option>
+                                <option value="+6">UTC+6 (达卡)</option>
+                                <option value="+6:30">UTC+6:30 (仰光)</option>
+                                <option value="+8:45">UTC+8:45 (澳大利亚中西部)</option>
+                                <option value="+10">UTC+10 (悉尼)</option>
+                                <option value="+12">UTC+12 (奥克兰)</option>
+                                <option value="-10">UTC-10 (夏威夷)</option>
+                                <option value="-9">UTC-9 (阿拉斯加)</option>
+                                <option value="-8">UTC-8 (洛杉矶)</option>
+                                <option value="-7">UTC-7 (丹佛)</option>
+                                <option value="-6">UTC-6 (芝加哥)</option>
+                                <option value="-5">UTC-5 (纽约)</option>
+                                <option value="-4">UTC-4 (圣地亚哥)</option>
+                                <option value="-3">UTC-3 (巴西利亚)</option>
+                                <option value="-1">UTC-1 (亚速尔)</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label>纬度 <input type="text" id="input-lat" value="39.907" placeholder="如 39.907 或 39°54'25&quot;N"></label>
+                        <label>经度 <input type="text" id="input-lon" value="116.397" placeholder="如 116.397 或 116°23'50&quot;E"></label>
+                    </div>
+                    <div class="form-row" style="align-items:end">
+                        <button type="button" id="locate-btn" class="locate-btn" title="使用浏览器定位获取当前位置">
+                            📍 获取当前位置
+                        </button>
+                        <span id="locate-status" style="font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem;align-self:center"></span>
+                    </div>
+                    <div class="form-row">
+                        <label>名称 <input type="text" id="input-name" placeholder="可选"></label>
+                        <label>宫位制
+                            <select id="input-house">
+                                <option value="W">整宫制 (Whole Sign)</option>
+                                <option value="P">普拉西度 (Placidus)</option>
+                                <option value="E">等宫制 (Equal)</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div id="map-container">
+                        <div id="map"></div>
+                    </div>
+                    <button type="submit" id="calc-btn">计算星盘</button>
+                </form>
+            </section>
+
+            <!-- RIGHT: Results Panel -->
+            <section id="results-panel" class="panel" style="display:none">
+                <div id="export-bar" style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap">
+                    <button type="button" id="export-json-btn" class="export-btn" title="导出完整数据（含算法标注）">📥 导出 JSON</button>
+                    <button type="button" id="export-txt-btn" class="export-btn" title="导出人类可读文本报告">📄 导出 TXT 报告</button>
+                </div>
+                <nav id="tabs">
+                    <button class="tab active" data-tab="panchanga">Panchanga 五支历法</button>
+                    <button class="tab" data-tab="planets">行星</button>
+                    <button class="tab" data-tab="houses">宫位</button>
+                    <button class="tab" data-tab="karakas">Karaka</button>
+                    <button class="tab" data-tab="dashas">Dasha</button>
+                    <button class="tab" data-tab="padas">Pada</button>
+                    <button class="tab" data-tab="lagnas">特殊Lagna</button>
+                    <button class="tab" data-tab="divisions">分盘</button>
+                    <button class="tab" data-tab="argala">Argala</button>
+                </nav>
+
+                <div id="tab-content">
+                    <div class="tab-panel active" id="tab-panchanga">
+                        <div id="panchanga-cards"></div>
+                    </div>
+
+                    <div class="tab-panel" id="tab-planets">
+                        <table id="planet-table" class="data-table"></table>
+                    </div>
+
+                    <div class="tab-panel" id="tab-houses">
+                        <table id="house-table" class="data-table"></table>
+                    </div>
+
+                    <div class="tab-panel" id="tab-karakas">
+                        <table id="karaka-table" class="data-table"></table>
+                    </div>
+
+                    <div class="tab-panel" id="tab-dashas">
+                        <h3 style="font-size:0.9rem;color:var(--accent-amber);margin-bottom:0.5rem">Dasha 年数</h3>
+                        <div id="dasha-years-grid" class="info-grid"></div>
+                        <h3 style="font-size:0.9rem;color:var(--accent-amber);margin:1rem 0 0.5rem">Chara Dasha 大运</h3>
+                        <table id="dasha-table" class="data-table"></table>
+                    </div>
+
+                    <div class="tab-panel" id="tab-padas">
+                        <table id="pada-table" class="data-table"></table>
+                    </div>
+
+                    <div class="tab-panel" id="tab-lagnas">
+                        <div id="lagnas-grid" class="info-grid"></div>
+                    </div>
+
+                    <div class="tab-panel" id="tab-divisions">
+                        <h3 style="font-size:0.9rem;color:var(--accent-amber);margin-bottom:0.5rem">D-9 Navamsa</h3>
+                        <table id="d9-table" class="data-table"></table>
+                        <h3 style="font-size:0.9rem;color:var(--accent-amber);margin:1rem 0 0.5rem">D-3 Drekkana</h3>
+                        <table id="d3-table" class="data-table"></table>
+                    </div>
+
+                    <div class="tab-panel" id="tab-argala">
+                        <h3 style="font-size:0.9rem;color:var(--accent-amber);margin-bottom:0.5rem">Argala 分析 (所有宫位)</h3>
+                        <table id="argala-table" class="data-table"></table>
+                        <h3 style="font-size:0.9rem;color:var(--accent-amber);margin:1rem 0 0.5rem">Rajayoga 总结</h3>
+                        <div id="rajayoga-info" class="info-grid"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>

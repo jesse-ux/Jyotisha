@@ -2280,7 +2280,9 @@ def cmd_jaimini(args):
         return {"error": "swisseph未安装"}
     try:
         sys.path.insert(0, SCRIPT_DIR)
-        from jaimini import calc_chara_karaka_7, calc_chara_karaka_8, calc_chara_dasha, calc_karakamsha, calc_chara_dasha_with_antardasha
+        from jaimini import (calc_chara_karaka_7, calc_chara_karaka_8, calc_chara_dasha,
+                             calc_karakamsha, calc_chara_dasha_with_antardasha,
+                             calc_arudha_padas, calc_graha_padas, calc_special_lagnas)
         from varga import calc_varga
     except ImportError as e:
         return {"error": f"jaimini模块导入失败: {e}"}
@@ -2313,6 +2315,11 @@ def cmd_jaimini(args):
         ak_lon = planet_lons.get(ak_name, 0)
         ak_d9 = calc_varga(ak_lon, 9)
         result['karakamsha'] = calc_karakamsha(ak_d9.get('sign', 'Aries'), ak_d9.get('degree_in_sign', 0))
+    if mode in ('all', 'arudha'):
+        result['arudha_padas'] = calc_arudha_padas(asc_idx, planet_lons)
+        result['graha_padas'] = calc_graha_padas(planet_lons)
+    if mode in ('all', 'special'):
+        result['special_lagnas'] = calc_special_lagnas(asc_idx, args.hour, args.minute)
     return result
 
 
@@ -3568,7 +3575,9 @@ def cmd_full_reading(args):
 
     # ── Step 6: Jaimini系统 ──
     try:
-        from jaimini import calc_chara_karaka_7, calc_chara_karaka_8, calc_chara_dasha, calc_karakamsha, calc_chara_dasha_with_antardasha
+        from jaimini import (calc_chara_karaka_7, calc_chara_karaka_8, calc_chara_dasha,
+                             calc_karakamsha, calc_chara_dasha_with_antardasha,
+                             calc_arudha_padas, calc_graha_padas, calc_special_lagnas)
         from varga import calc_varga
 
         jaimini_result = {}
@@ -3600,6 +3609,9 @@ def cmd_full_reading(args):
         ak_d9 = calc_varga(ak_lon, 9)
         jaimini_result['karakamsha'] = calc_karakamsha(
             ak_d9.get('sign', 'Aries'), ak_d9.get('degree_in_sign', 0))
+        jaimini_result['arudha_padas'] = calc_arudha_padas(asc_idx, planet_lons)
+        jaimini_result['graha_padas'] = calc_graha_padas(planet_lons)
+        jaimini_result['special_lagnas'] = calc_special_lagnas(asc_idx, args.hour, args.minute)
 
         # Darakaraka 深度解读（v6.1.10）
         # Registry 已将 modules.jaimini.darakaraka 标为 covered；这里把独立 DK
@@ -4120,9 +4132,9 @@ def main():
     _add_chart_args(p)
 
     # 17. jaimini (v3.7新增)
-    p = sub.add_parser('jaimini', help='Jaimini系统（Chara Karaka/Dasha/Karakamsha）')
+    p = sub.add_parser('jaimini', help='Jaimini系统（Chara Karaka/Dasha/Karakamsha/Arudha/Special Lagnas）')
     _add_chart_args(p)
-    p.add_argument('--mode', default='all', choices=['all','karaka','dasha','karakamsha'], help='分析模式')
+    p.add_argument('--mode', default='all', choices=['all','karaka','dasha','karakamsha','arudha','special'], help='分析模式')
     p.add_argument('--antardasha', action='store_true', help='Chara Dasha含Antardasha子周期（当前timing实现为partial）')
 
     # 18. nakshatra-adv (v3.7新增 → v6.0.22 升级)
