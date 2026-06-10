@@ -73,7 +73,7 @@ NAISARGIKA_REF = {
 # ============================================================================
 # 内部一致性测试：检查 Shadbala 子项和是否等于总分
 # ============================================================================
-def test_internal_consistency(result):
+def _check_internal_consistency(result):
     """检查每个行星的6个子项之和是否等于 total_virupas"""
     errors = []
     for pname, pd in result.get("planets", {}).items():
@@ -95,7 +95,7 @@ def test_internal_consistency(result):
 # ============================================================================
 # 外部一致性测试：检查是否满足 BPHS 最低要求
 # ============================================================================
-def test_min_required(result):
+def _check_min_required(result):
     """检查每个行星是否满足 BPHS 最低 Shadbala Rupas 要求"""
     errors = []
     for pname, pd in result.get("planets", {}).items():
@@ -109,7 +109,7 @@ def test_min_required(result):
 # ============================================================================
 # Naisargika Bala 对比
 # ============================================================================
-def test_naisargika(result):
+def _check_naisargika(result):
     """检查 Naisargika Bala 是否匹配参考值"""
     errors = []
     for pname, pd in result.get("planets", {}).items():
@@ -123,7 +123,7 @@ def test_naisargika(result):
 # ============================================================================
 # 排序合理性测试
 # ============================================================================
-def test_ranking_sanity(result):
+def _check_ranking_sanity(result):
     """检查排名是否合理（擢升行星应比落陷行星强）"""
     planets = result.get("planets", {})
     ranking = result.get("ranking", [])
@@ -205,12 +205,12 @@ def verify_shadbala_for_chart(planets, asc_sign, birth_hour, sun_lon, moon_lon,
             errors.append(f"{pname}: {rupas:.2f} < {min_req:.2f}")
     
     # 内部一致性测试
-    consistency = test_internal_consistency(result)
+    consistency = _check_internal_consistency(result)
     for e in consistency:
         errors.append(e)
     
     # Naisargika 测试
-    naisargika = test_naisargika(result)
+    naisargika = _check_naisargika(result)
     for e in naisargika:
         errors.append(e)
     
