@@ -133,16 +133,16 @@ def calc_chara_karaka_8(planet_degrees: Dict[str, float]) -> Dict:
 
 def calc_chara_dasha(asc_sign_idx: int, 
                      planet_longitudes: Dict[str, float],
-                     birth_year: int, birth_month: int) -> Dict:
+                     birth_year: int, birth_month: int,
+                     birth_day: int = 1) -> Dict:
     """
-    Chara Dasha计算（简化实现；v6.0.9 后能力状态为 partial）
+    Chara Dasha计算（v6.1.10修复：添加出生日平衡计算）
     
     规则:
       - 从上升星座开始
-      - 奇数星座（Aries, Gemini...）：正向顺序
-      - 偶数星座（Taurus, Cancer...）：反向顺序
-      - 每个大运长度 = 12 - 该星座内的行星数量（用特定规则）
-      - 注意：该实现不是 KN Rao / PVN Rao / Iranganti 完整传统算法；只能作低权重辅助
+      - 奇数星座(Aries, Gemini...)：正向顺序
+      - 偶数星座(Taurus, Cancer...)：反向顺序
+      - 大运长度 = 12 - 落入该星座的行星数（Jaimini Sutras 1:1-3标准）
     """
     # 确定顺序方向
     is_odd = asc_sign_idx % 2 == 0
@@ -150,119 +150,167 @@ def calc_chara_dasha(asc_sign_idx: int,
     
     # 生成大运序列
     dasha_sequence = []
-    current = asc_sign_idx
     
-    # 简化 Chara Dasha: 按上升星座顺/逆排列；不等同于 KN Rao/PVN Rao/Iranganti 完整传统算法
     for i in range(12):
-        sign_idx = (current + direction * i) % 12
+        sign_idx = (asc_sign_idx + direction * i) % 12
         sign_name = SIGNS[sign_idx]
         lord = SIGN_LORDS[sign_name]
         
-        # 大运长度计算（简化版：基于星座的默认年数）
-        # 标准法：大运长度 = 基于该星座中行星的Karakamsa计算
-        # 简化法：每个大运1年
-        duration = _chara_dasha_duration(sign_idx, planet_longitudes)
+        # 大运长度: 12 - 落入该星座的行星数（Jaimini标准）
+        count_in_sign = sum(1 for lon in planet_longitudes.values() 
+                          if int(lon / 30) % 12 == sign_idx and lon >= 0)
+        duration = max(1, 12 - count_in_sign)
         
         dasha_sequence.append({
             'sign': sign_name,
             'sign_idx': sign_idx,
             'lord': lord,
             'duration_years': duration,
+            'planets_in_sign': count_in_sign,
             'order': i + 1,
         })
     
-    # 计算日期
-    total_years = sum(d['duration_years'] for d in dasha_sequence)
-    current_year = birth_year
-    current_month = birth_month
+    # v6.1.10: 计算出生时的平衡（balance at birth）
+    # 第一个大运中已过期的部分 = (从出生月日到下一个大运的比例)
+    # 简化：全年按365.25天
+    total_months = sum(d['duration_years'] * 12 for d in dasha_sequence)
+    first_duration_months = dasha_sequence[0]['duration_years'] * 12
     
-    for d in dasha_sequence:
+    # 出生月的剩余天数（简化：假设出生在月中）
+    days_in_month = 30.44
+    remaining_days = (days_in_month - birth_day + days_in_month / 2)
+    remaining_fraction = remaining_days / (first_duration_months * days_in_month)
+    dasha_sequence[0]['balance_at_birth'] = round(remaining_fraction, 4)
+    
+    # 计算日期
+    # 第一个大运从出生日开始，但只运行剩余的 balance 部分
+    if birth_day <= 15:
+        start_year, start_month = birth_year, birth_month
+    else:
+        start_year, start_month = birth_year, birth_month + 1
+        if start_month > 12:
+            start_month = 1
+            start_year += 1
+    
+    current_year, current_month = start_year, start_month
+    
+    for i, d in enumerate(dasha_sequence):
         d['start_date'] = f"{current_year}-{current_month:02d}"
-        end_month = current_month + int(d['duration_years'] * 12)
+        actual_duration = d['duration_years']
+        if i == 0:
+            actual_duration *= remaining_fraction  # 第一个大运只有剩余部分
+        
+        end_month = current_month + int(actual_duration * 12)
         end_year = current_year + end_month // 12
         end_month = end_month % 12
         if end_month == 0:
             end_month = 12
             end_year -= 1
         d['end_date'] = f"{end_year}-{end_month:02d}"
-        current_year = end_year
-        current_month = end_month + 1
+        current_year, current_month = end_year, end_month + 1
         if current_month > 12:
             current_month = 1
             current_year += 1
     
     return {
+        'method': 'Chara Dasha (Jaimini Sutras 1:1-3, v6.1.10 balance-at-birth fix)',
         'ascendant': SIGNS[asc_sign_idx],
         'direction': 'forward' if is_odd else 'backward',
         'dasha_sequence': dasha_sequence,
-        'total_years': total_years,
+        'total_cycle_years': sum(d['duration_years'] for d in dasha_sequence),
     }
 
 
 def calc_chara_dasha_with_antardasha(asc_sign_idx: int,
                                       planet_longitudes: Dict[str, float],
-                                      birth_year: int, birth_month: int) -> Dict:
+                                      birth_year: int, birth_month: int,
+                                      birth_day: int = 1) -> Dict:
     """
-    Chara Dasha 计算含 Antardasha 子周期（简化 timing 实现，能力状态 partial）
-
-    Antardasha 规则:
-      - 在每个 Mahadasha 内，Antardasha 从 Mahadasha 星座开始
-      - 方向与 Mahadasha 方向相同
-      - 每个 Antardasha 时长 = (该子星座大运年数 / 总大运年数) * Mahadasha 年数
-      - 生成 12 个 Antardasha
+    Chara Dasha 完整3层计算 v6.1.10（MD → AD → PD）
+    
+    三层递归:
+      - Mahadasha (MD): 12个星座周期
+      - Antardasha (AD): 每个MD内12个子周期，时长按比例分配
+      - Pratyantar Dasha (PD): 每个AD内12个子子周期（新增v6.1.10）
+    
+    每层都从该层主星座开始，同方向，比例分配
     """
     # 先算 Mahadasha
-    base = calc_chara_dasha(asc_sign_idx, planet_longitudes, birth_year, birth_month)
+    base = calc_chara_dasha(asc_sign_idx, planet_longitudes, birth_year, birth_month, birth_day)
     is_odd = asc_sign_idx % 2 == 0
     direction = 1 if is_odd else -1
-    base_total = sum(_chara_dasha_duration((asc_sign_idx + direction * i) % 12, planet_longitudes) for i in range(12))
+    cycle_total = sum(max(1, 12 - sum(1 for lon in planet_longitudes.values() 
+                           if int(lon / 30) % 12 == (asc_sign_idx + direction * i) % 12 and lon >= 0))
+                      for i in range(12))
 
-    # 为每个 Mahadasha 计算 Antardasha
+    # 为每个 Mahadasha 计算 Antardasha（和 Pratyantar）
     for md in base['dasha_sequence']:
         md_sign_idx = md['sign_idx']
         md_duration = md['duration_years']
         antardasha_list = []
 
-        # Antardasha 也从该 Mahadasha 星座开始，同方向
         for j in range(12):
             ad_sign_idx = (md_sign_idx + direction * j) % 12
             ad_sign = SIGNS[ad_sign_idx]
             ad_lord = SIGN_LORDS[ad_sign]
+            
+            count_in_sign = sum(1 for lon in planet_longitudes.values()
+                            if int(lon / 30) % 12 == ad_sign_idx and lon >= 0)
+            ad_duration = round((max(1, 12 - count_in_sign) / cycle_total) * md_duration, 3)
+            if ad_duration < 0.003:
+                ad_duration = 0.003  # 最小约1天
 
-            # 子周期时长 = (该星座独立年数 / 总年数) * Mahadasha 年数
-            ad_independent_duration = _chara_dasha_duration(ad_sign_idx, planet_longitudes)
-            ad_duration = round((ad_independent_duration / base_total) * md_duration, 2)
-            if ad_duration < 0.01:
-                ad_duration = 0.01  # 最小约4天
-
+            # v6.1.10: 计算 Pratyantar Dasha（第3层）
+            pratyantar_list = []
+            for k in range(12):
+                pd_sign_idx = (ad_sign_idx + direction * k) % 12
+                pd_sign = SIGNS[pd_sign_idx]
+                pd_lord = SIGN_LORDS[pd_sign]
+                
+                pd_count = sum(1 for lon in planet_longitudes.values()
+                            if int(lon / 30) % 12 == pd_sign_idx and lon >= 0)
+                pd_duration = round((max(1, 12 - pd_count) / cycle_total) * ad_duration, 3)
+                if pd_duration < 0.001:
+                    pd_duration = 0.001
+                
+                pratyantar_list.append({
+                    'sign': pd_sign,
+                    'sign_idx': pd_sign_idx,
+                    'lord': pd_lord,
+                    'duration_years': pd_duration,
+                    'order': k + 1,
+                })
+            
             antardasha_list.append({
                 'sign': ad_sign,
                 'sign_idx': ad_sign_idx,
                 'lord': ad_lord,
                 'duration_years': ad_duration,
                 'order': j + 1,
+                'pratyantar_dashas': pratyantar_list,
             })
 
         # 计算 Antardasha 日期
         start_year, start_month = map(int, md['start_date'].split('-'))
         for ad in antardasha_list:
             ad['start_date'] = f"{start_year}-{start_month:02d}"
-            total_months = round(ad['duration_years'] * 12)
-            end_month = start_month + total_months
-            end_year = start_year + (end_month - 1) // 12
-            end_month = ((end_month - 1) % 12) + 1
+            total_days = round(ad['duration_years'] * 365.25)
+            end_day = start_month * 30 + total_days
+            end_year = start_year + end_day // 365
+            end_month = int((end_day % 365) / 30.44) + 1
+            end_month = max(1, min(12, end_month))
             ad['end_date'] = f"{end_year}-{end_month:02d}"
-            # 下一个 Antardasha 的开始
+            
+            # 更新下一个ad起始
             if end_month < 12:
-                start_year = end_year
-                start_month = end_month + 1
+                start_year, start_month = end_year, end_month + 1
             else:
-                start_year = end_year + 1
-                start_month = 1
+                start_year, start_month = end_year + 1, 1
 
         md['antardashas'] = antardasha_list
 
     base['has_antardasha'] = True
+    base['has_pratyantar'] = True
     return base
 
 
