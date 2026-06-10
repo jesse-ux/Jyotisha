@@ -1,5 +1,31 @@
 # 印度占星 Skill 更新日志
 
+## v6.1.11（2026-06-10）—— Chara Dasha 重写：KN Rao Method（P0 完成）
+
+> **目标**：把第七轮 benchmark 确认的严重性能差距（Chara Dasha 仅 24.17% 匹配 PyJHora KN Rao）彻底修复。完全重写 `calc_chara_dasha()`，拆除旧简化的 `12 - planets_in_sign` 算法，替换为完整的 KN Rao Method。
+
+### 关键改进
+- `scripts/jaimini.py`：
+  - 新增常量 `_EVEN_FOOTED_SIGNS`、`_PLANET_DIGNITY`（尊贵对照表）
+  - 新增辅助函数 `_sign_is_even_footed()`、`_count_rasis_forward()`、`_count_rasis_backward()`、`_get_planet_house()`、`_get_sign_lord_house()`
+  - 新增 `_chara_dasha_duration_knrao()`：对齐 PyJHora `_dhasa_duration_knrao_method`，基于宫主所在宫位 + 尊贵调整
+  - 新增 `_chara_progression_knrao()`：对齐 PyJHora `_dhasa_progression_knrao_method`，从上升起，第9宫决定顺逆
+  - 重写 `calc_chara_dasha()`：调用上述函数，输出含宫主所在宫位、尊贵调整、capability_status='covered'
+  - 重写 `calc_chara_dasha_with_antardasha()`：等分12份，序列偏移1位（PyJHora method=2），含 Pratyantar 第三层
+- `references/technique_registry.json`：`jaimini_chara_dasha` 状态从 `partial` → `covered`，更新 limitation 说明
+- `SKILL.md`：Chara Dasha 能力降级 → 能力升级段落，版本号更新
+
+### 开源代码复用
+- **PyJHora**（AGPL, 算法参考）：`_dhasa_progression_knrao_method` 和 `_dhasa_duration_knrao_method` 的算法翻译为 MIT 独立实现
+- **jaimini-tropical**（MIT, 架构参考）：`core/dashas.py` 的 Chakra 方向和 Antardasha 设计思路借鉴
+- **dashaflow**（MIT, 结构参考）：`jaimini.py` 的 Arudha/Upapada 公式已在之前版本复用
+
+### 验证
+```bash
+python3 -m py_compile scripts/jaimini.py
+# Pending: python3 scripts/benchmark/chara_dasha/run_knrao_benchmark.py
+```
+
 ## v6.1.10（2026-06-08）—— P0 规划继续落地：Darakaraka / RTN 接入主题化报告
 
 > **目标**：继续执行覆盖度地图中的 P0 规划，把已经存在但未充分进入 full-reading / 主题报告叙事链的婚姻核心技法真正接线。

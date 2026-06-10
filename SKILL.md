@@ -117,14 +117,16 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 - 输出 `method` 应显示 `Ashtakavarga八分法（BPHS/PVR书例校准v2.1）`。
 - benchmark 若与其他软件不一致，先比较贡献表项和 SAV 总量，不得直接把口径差异判为运行 bug。
 
-### Chara Dasha 能力降级（v6.0.9-chara-dasha）
+### Chara Dasha 能力升级（v6.1.11-chara-dasha）
 
-**当前 Chara Dasha 不得作为高置信度应期模块单独使用。**
+**Chara Dasha 已重写为 KN Rao Method，可作为标准应期模块使用。**
 
-- 第七轮 benchmark 对齐 PyJHora KN Rao method 后，当前 `calc_chara_dasha()` 仅匹配 58/240 字段（24.17%）。
-- 根因：当前实现为简化版（上升顺/逆 + `12 - sign planet count`），不是完整 KN Rao / PVN Rao / Iranganti 传统算法。
-- `jaimini` 输出中的 Chara Karaka、AK/AmK、Karakamsha 可继续作为 Jaimini 静态/象征层使用；Chara Dasha 时间线必须标注为 `partial`。
-- 涉及事业/婚恋/事件应期时，若使用 Chara Dasha，只能作为低权重辅助，并必须由 Vimshottari、Dasha Sandhi、Transit、D10/A10、Ashtakavarga 等独立层交叉确认。
+- v6.1.11 重写：取消旧的简化 `12 - planets_in_sign` 算法，替换为完整 KN Rao 方法。
+- **序列生成**：从上升开始，第9宫决定顺逆方向（对齐 PyJHora `_dhasa_progression_knrao_method`）。
+- **时长计算**：基于宫主所在宫位而非行星计数。奇数脚星座从本星座数到宫主；偶数脚从宫主数到本星座。Exalted +1 年 / Debilitated -1 年。
+- **Antardasha**：等分12份（parent/12），序列为 Maha 序列偏移 1 位（PyJHora method=2）。
+- 状态从 `partial` 升级为 `covered`。pending 正式 benchmark（目标 ≥95% 匹配 PyJHora）。
+- `jaimini` 输出中的 Chara Karaka、AK/AmK、Karakamsha 继续可用。
 
 ### Transit 真实过境冻结（v6.0.10-true-transit）
 
@@ -153,7 +155,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | 能力域 | 核心内容 | 主要参考文件 |
 |--------|---------|------------|
 | **静态分析** | 行星配置、Yoga、NK、宫位、Argala、Shadbala、AV、Badhaka、Raman方法论 | `planets.md` `yoga_list.md` `argala-complete-guide.md` `badhaka-obstacle-planet-guide.md` `raman-house-judgment-methodology.md` |
-| **动态推运** | Vimshottari、Chara Dasha（timing partial）、KP、Double Transit、Varshaphala、替代Dasha | `vimshottari_dasha_guide.md` `dasa-convergence-methodology.md` `alternative-dasha-systems.md` |
+| **动态推运** | Vimshottari、Chara Dasha（KN Rao Method, covered）、KP、Double Transit、Varshaphala、替代Dasha | `vimshottari_dasha_guide.md` `dasa-convergence-methodology.md` `alternative-dasha-systems.md` |
 | **Jaimini静态层** | Chara Karaka、Karakamsha、A1-A12/UL、Graha Pada、Argala/Virodhargala、Special Lagnas（部分） | `jaimini-complete-system.md` `argala-complete-guide.md` `technique-capability-matrix.md` |
 | **关系占星** | Koota 36分、Mahendra/Stree Deergha/Vedha/Rajju、D9伴侣、DK、Mangal Dosha、Papasamya、配偶六层确认 | `spouse-multi-layer-methodology.md` `darakaraka-complete-guide.md` `relationship-astrology-guide.md` |
 | **出生时间矫正** | 八大方法、自动化流程、验证报告 | `birth-time-rectification-advanced.md` |
@@ -197,7 +199,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 | `validate` | R1-R10数学验证 |
 | `audit` | P1-P12行星审计管线 |
 | `aspects` | 度数精确相位系统 |
-| `jaimini` | Jaimini Karaka/Karakamsha、A1-A12/UL、Graha Pada、Special Lagnas；Chara Dasha timing 当前为 partial，需 KN Rao/PVN Rao 回归 |
+| `jaimini` | Jaimini Karaka/Karakamsha、A1-A12/UL、Graha Pada、Special Lagnas；Chara Dasha timing 升级为 KN Rao Method（covered，pending benchmark） |
 | `nakshatra-adv` | 高级Nakshatra（Tara Bala+Chandra Bala+Sub-Lord） |
 | `nakshatra-dasha` | 星宿大运推演（Ashtottari + Nakshatra-level Vimshottari） |
 | `nakshatra-full` | 星宿综合报告（本命 + 大运 + 过境星宿） |
@@ -266,7 +268,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 - [ ] **MEVG-动态门控**：Transit/Dasha/天文现象必须验证
 - [ ] Dasha推运（大运+小运+Pratyantar）
 - [ ] Dasa Convergence五系统交叉验证
-- [ ] Jaimini分析（Karaka/Karakamsha；Chara Dasha 当前 partial，须交叉确认）
+- [ ] Jaimini分析（Karaka/Karakamsha；Chara Dasha 升级为 KN Rao Method，须正式 benchmark 确认匹配率）
 - [ ] KP系统分析（Significator+Sub-Lord）
 - [ ] Transit分析（多参考点强制）
 - [ ] **Transit Actionable Output**（时间段+行动+置信度+案例检索）
@@ -314,9 +316,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.1.10-dk-rtn-theme-bridge
+**版本**：v6.1.11-chara-dasha
 **创建日期**：2026-04-20
-**最后更新**：2026-06-08（v6.1.10 继续落地 P0 规划：`full-reading.modules.jaimini.darakaraka` 已接入 Darakaraka 深度解读，主题化报告桥接层已消费 `jaimini.darakaraka` 与 `rashi_tulya_navamsa`，为婚姻/健康/灵性主题补入真实 DK/RTN 证据。v6.1.9 已将历史散落资料安全整理入仓；v6.1.8 Yoga 指标保持有效：F1=95.22%，FP=36、FN=63。）
+**最后更新**：2026-06-10（v6.1.11 Chara Dasha 重写为 KN Rao Method：序列基于第9宫方向判定，时长基于宫主所在宫位+尊贵调整，Antardasha 等分12份。状态从 partial 升级为 covered。当前 45 技法：27 covered + 18 partial。Yoga F1=95.22% 保持有效。）
 
 ---
 

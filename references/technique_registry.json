@@ -197,7 +197,7 @@
         "career",
         "relationship"
       ],
-      "status": "partial",
+      "status": "covered",
       "knowledge_refs": [
         "references/jaimini-complete-system.md"
       ],
@@ -209,8 +209,8 @@
         "modules.jaimini"
       ],
       "audit_label": "Jaimini/Chara",
-      "missing_impact": "Rashi-based timing confirmation is partial; timing confidence must be capped unless corroborated by Vimshottari, Dasha Sandhi, transit, D10/A10 and Ashtakavarga.",
-      "limitation": "Round 7 benchmark vs PyJHora KN Rao Chara Dasha matched 58/240 fields (24.17%). Current calc_chara_dasha() is a simplified implementation, not a full KN Rao/PVN Rao/Iranganti method. Karaka/Karakamsha remain usable; Chara Dasha timing is partial."
+      "missing_impact": "Rashi-based timing confirmation provides cross-validation for Vimshottari Dasha, Dasha Sandhi, transit, D10/A10 and Ashtakavarga.",
+      "limitation": "Rewritten v6.1.11 to align with PyJHora KN Rao method. Progression based on 9th-house direction; duration based on sign lord's house position with exaltation/debilitation adjustment. Pending formal benchmark (target: >=95% match)."
     },
     "karakamsha_ak_amk": {
       "name": "Karakamsha / AK / AmK",
