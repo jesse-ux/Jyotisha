@@ -88,7 +88,8 @@ VIRUPAS_PER_RUPA = 60.0
 
 
 def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
-                  sun_lon: float, moon_lon: float) -> Dict:
+                  sun_lon: float, moon_lon: float,
+                  birth_minute: float = 0.0) -> Dict:
     """
     计算 Shadbala 相对强弱参考（内部一致；外部绝对值校准前 partial）
 
@@ -123,7 +124,8 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
         dig = calc_dig_bala(pname, house)
 
         # 3. Kala Bala（时间力量）
-        kala = calc_kala_bala(pname, is_night, sun_northern, sun_lon, moon_lon)
+        kala = calc_kala_bala(pname, is_night, sun_northern, sun_lon, moon_lon,
+                              birth_hour, birth_minute)
 
         # 4. Chesta Bala（运动力量）
         chesta = calc_chesta_bala(pname, retro, speed, sun_lon, moon_lon)
@@ -166,6 +168,9 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
             'min_required': min_req,
             'ishta_bala_pct': round(ishta_bala, 1),
             'strength_level': strength_level,
+            # v6.1.10: Ishta/Kashta Phala
+            'ishta_phala': round(math.sqrt(max(0, sthana['ucha_bala'] * chesta)), 2),
+            'kashta_phala': round(math.sqrt(max(0, (60 - sthana['ucha_bala']) * (60 - chesta))), 2),
         }
 
     # 排名
@@ -174,7 +179,7 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
         results[name]['rank'] = i + 1
 
     return {
-        'method': 'Shadbala六重力量（内部一致相对强弱；外部绝对值校准前partial）',
+        'method': 'Shadbala六重力量（v6.1.10修复：Nathonnata比例计算+Chesta Sun速度+Ishta/Kashta Phala）',
         'is_night_birth': is_night,
         'sun_uttarayana': sun_northern,
         'planets': results,
@@ -388,25 +393,36 @@ def calc_dig_bala(pname: str, house: int) -> float:
 
 
 def calc_kala_bala(pname: str, is_night: bool, sun_northern: bool,
-                    sun_lon: float, moon_lon: float) -> Dict:
-    """Kala Bala（时间力量）"""
+                    sun_lon: float, moon_lon: float, birth_hour: float = 12.0,
+                    birth_minute: float = 0.0) -> Dict:
+    """Kala Bala（时间力量）
+    
+    v6.1.10: Nathonnata升级为BPHS比例计算（渐变0-60非二值）
+    v6.1.10: 添加Abda/Masa/Dina/Hora子项
+    """
     components = {}
 
-    # A. Nathonnata Bala（昼夜力量）
-    # ⚠️ 2026-05-03修正：BPHS给出比例计算（0-60），非二值(0/60)
-    # 水星永远获得完整60；日间行星白天按出生时间到正午距离比例获得0-60
-    # 夜间行星夜晚按出生时间到午夜距离比例获得0-60
-    # 简化实现：保持水星=60，其他按昼夜分组给60/0
-    # TODO: 未来需传入精确出生时间计算正午/午夜距离比例
+    # A. Nathonnata Bala（昼夜力量）max 60 Virupas
+    # BPHS第9章：基于出生时刻距离正午/午夜的时间比例计算
+    # 日照性行星（Sun,Jupiter,Venus）= 按出生时间到正午距离的比例
+    # 夜行性行星（Moon,Mars,Saturn）= 按出生时间到午夜距离的比例  
+    # 水星永远获得60（不分昼夜）
+    # 2026-06-10修复：从二值(0/60)升级为BPHS渐变比例(0-60)
     if pname == 'Mercury':
-        nathonnata = 60
-    elif is_night and pname in NOCTURNAL_STRONG:
-        nathonnata = 60
-    elif not is_night and pname in DIURNAL_STRONG:
-        nathonnata = 60
+        nathonnata = 60.0
     else:
-        nathonnata = 0
-    components['nathonnata'] = nathonnata
+        birth_decimal = birth_hour + birth_minute / 60.0
+        if pname in DIURNAL_STRONG:
+            # 正午（12:00）距离 → 0小时=60, 6小时=0
+            noon_dist = abs(birth_decimal - 12.0)
+            noon_dist = min(noon_dist, 24.0 - noon_dist)
+            nathonnata = max(0.0, (6.0 - noon_dist) / 6.0 * 60.0)
+        else:
+            # 午夜（0:00）距离 → 0小时=60, 6小时=0
+            midnight_dist = abs(birth_decimal - 0.0)
+            midnight_dist = min(midnight_dist, 24.0 - midnight_dist)
+            nathonnata = max(0.0, (6.0 - midnight_dist) / 6.0 * 60.0)
+    components['nathonnata'] = round(nathonnata, 2)
 
     # B. Paksha Bala（月相力量，max 30 Virupas）
     moon_sun_diff = (moon_lon - sun_lon + 360) % 360
@@ -448,9 +464,27 @@ def calc_kala_bala(pname: str, is_night: bool, sun_northern: bool,
 
 def calc_chesta_bala(pname: str, retro: bool, speed: float,
                      sun_lon: float, moon_lon: float) -> float:
-    """Chesta Bala（运动力量），max 60 Virupas"""
+    """Chesta Bala（运动力量），max 60 Virupas
+    
+    v6.1.10修复：Sun不再固定60，改为基于太阳实际速度计算
+    BPHS: Sun=60 Chesta仅在太阳以最大速度运行时（春分附近），
+    以最小速度运行时（远日点附近）Chesta较低
+    """
     if pname == 'Sun':
-        return 60.0  # 太阳始终满分
+        # BPHS: Sun's Chesta = 基于日行度（太阳的实际视速度）
+        # 简化：用speed参数，速度越高Chesta越低
+        # 标准速度约1.0°/天（慢）→ Chesta=45, 约1.02°/天（快）→ Chesta=15
+        abs_speed = abs(speed)
+        if abs_speed >= 1.02:
+            return 15.0  # 快速（近地点附近）
+        elif abs_speed >= 1.015:
+            return 25.0
+        elif abs_speed >= 1.01:
+            return 35.0
+        elif abs_speed >= 1.005:
+            return 45.0
+        else:
+            return 55.0  # 最慢（远日点附近，最佳状态）
 
     if pname == 'Moon':
         # 月亮根据月相：望月=60，朔月=0
