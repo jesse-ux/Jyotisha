@@ -29,6 +29,12 @@ BENCHMARKS = {
         'expected': 85.0,
         'unit': '%',
     },
+    'yoga_accuracy': {
+        'file': 'run_yoga_accuracy.py',
+        'name': 'Yoga Detection Accuracy',
+        'expected': 90.0,
+        'unit': '%',
+    },
 }
 
 
