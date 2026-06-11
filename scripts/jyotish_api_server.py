@@ -174,13 +174,28 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             dashas = get_available_dashas()
             dasha_list = [{'key': k, 'name': DASHA_REGISTRY[k]['name'], 'years': DASHA_REGISTRY[k]['years'], 'type': DASHA_REGISTRY[k]['type']} for k in dashas]
 
+            # Shadbala (v6.7.4: jyotishganit MIT算法)
+            try:
+                from shadbala import calc_shadbala
+                sb = calc_shadbala(planets_data, asc_sign, hour+minute/60.0, 
+                    planets_data.get('Sun',{}).get('lon',0), moon_lon, minute)
+                shadbala_summary = {p: {'rupas': round(d['total_rupas'],2), 'level': d['strength_level']} 
+                    for p,d in sb.get('planets',{}).items()}
+            except: shadbala_summary = {}
+
+            # Yoga扩展 (dashaflow MIT规则)
+            try:
+                from yoga_expansion import detect_all_yogas as detect_ey
+                for ey in detect_ey(planets_data, asc_sign):
+                    yogas.append({'name': ey.get('name',''), 'planets': ey.get('planets',[]),
+                                  'desc': ey.get('description','')[:80], 'cat': 'extended'})
+            except: pass
+
             return {
-                'success': True,
-                'version': '6.7.3',
+                'success': True, 'version': '6.7.4',
                 'birth': {'date': f'{year}-{month:02d}-{day:02d}', 'time': f'{int(hour):02d}:{int(minute):02d}'},
                 'ascendant': {'sign': asc_sign, 'sign_idx': asc_sign_idx, 'degree': round(asc_lon % 30, 2)},
-                'planets': planets_data,
-                'houses': houses,
+                'planets': planets_data, 'houses': houses, 'shadbala': shadbala_summary,
                 'dasha': {
                     'current_md': md_lord,
                     'remaining_years': round(remaining, 2),
