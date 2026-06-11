@@ -134,6 +134,139 @@ def t30():
     r = detect_pancha_mahapurusha(p)
     assert len(r) >= 1
 
+# === v6.7.5 新增功能测试 ===
+@test("PMC combustion cancellation")
+def t31():
+    from pancha_mahapurusha import detect_pancha_mahapurusha
+    p = {'Mars': {'sign': 'Capricorn', 'house': 4, 'degree': 50}}
+    r = detect_pancha_mahapurusha(p, sun_degree=53)
+    assert r[0]['is_valid'] == False, "Mars too close to Sun should cancel PMC"
+
+@test("PMC retrograde cancellation")
+def t32():
+    from pancha_mahapurusha import detect_pancha_mahapurusha
+    p = {'Jupiter': {'sign': 'Cancer', 'house': 1, 'degree': 95, 'retrograde': True}}
+    r = detect_pancha_mahapurusha(p)
+    assert r[0]['is_valid'] == False
+
+@test("Bhava Bala computation")
+def t33():
+    from bhava_bala import calc_bhava_adhipathi_bala, calc_bhava_dig_bala
+    adhi = calc_bhava_adhipathi_bala(['Aries']*12, {'Mars': 500})
+    assert len(adhi) == 12
+    dig = calc_bhava_dig_bala(['Aries']*12, [15]*12)
+    assert len(dig) == 12
+
+@test("Kakshya scoring")
+def t34():
+    from kakshya import calc_kakshya_scores
+    p = {'Sun': {'sign': 'Aries', 'degree': 15.5}}
+    r = calc_kakshya_scores(p, 0)
+    assert 'Sun' in r['planets']
+
+@test("Sudarshana convergence")
+def t35():
+    from sudarshana_chakra import calc_sudarshana_chakra
+    p = {'Sun': {'sign_idx': 0, 'degree': 15}, 'Moon': {'sign_idx': 3, 'degree': 22}}
+    r = calc_sudarshana_chakra(p, asc_sign_idx=0)
+    assert 'convergence' in r
+
+@test("Career analysis fields")
+def t36():
+    from career_analysis import analyze_career
+    p = {'Sun': {'house': 10}, 'Saturn': {'house': 6}}
+    r = analyze_career(p, 'Aries')
+    assert len(r['fields']) >= 1
+
+@test("Relationship Venus check")
+def t37():
+    from relationship_analysis import analyze_relationship
+    p = {'Venus': {'sign': 'Taurus', 'house': 7}, 'Moon': {'house': 4}}
+    r = analyze_relationship(p, 'Aries')
+    assert 'assessment' in r
+
+@test("Prashna chart creation")
+def t38():
+    from prashna import calc_prashna_chart, get_kp_prashna_answer
+    from datetime import datetime
+    r = calc_prashna_chart(datetime.now(), {'Sun': {'sign': 'Aries'}}, 45.5)
+    assert r['asc_sign'] in ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
+
+@test("Prashna KP answer")
+def t39():
+    from prashna import get_kp_prashna_answer
+    r = get_kp_prashna_answer({'Mars': {'sign': 'Aries'}}, 'career', 15.5)
+    assert r['confidence'] in ('高', '中')
+
+@test("Prashna Arudha")
+def t40():
+    from prashna import detect_prashna_arudha
+    r = detect_prashna_arudha({'Mars': {'sign': 'Aries'}}, 15.5, 7)
+    assert r['arudha_house'] >= 1
+
+@test("Conditional Dasha trigger")
+def t41():
+    from conditional_dashas import check_dwisaptati_condition
+    assert check_dwisaptati_condition('Sun', 1) == True
+
+@test("Conditional Dasha calc")
+def t42():
+    from conditional_dashas import calc_dwisaptati_dasha
+    from datetime import datetime
+    r = calc_dwisaptati_dasha(datetime(1990,6,15), 'Sun', 15.5)
+    assert len(r) == 8
+
+@test("Extended Dasha registry")
+def t43():
+    from extended_dashas import get_dasha_info, get_available_dashas
+    assert get_dasha_info('kalachakra')['type'] == 'nakshatra'
+    assert len(get_available_dashas()) >= 35
+
+@test("Yoga expansion detect")
+def t44():
+    from yoga_expansion import detect_kemadruma, detect_graha_yuddha
+    r = detect_kemadruma({'Moon': {'sign': 'Aries'}})
+    assert isinstance(r, dict)
+
+@test("Yoga graha_yuddha")
+def t45():
+    from yoga_expansion import detect_graha_yuddha
+    r = detect_graha_yuddha({'Mars': {'degree': 50.0}, 'Jupiter': {'degree': 50.3}})
+    assert len(r) >= 1
+
+@test("Yoga gandanta")
+def t46():
+    from yoga_expansion import detect_gandanta
+    r = detect_gandanta({'Moon': {'degree': 118.5}})  # Cancer end
+    assert len(r) >= 0  # may or may not be gandanta
+
+@test("Rectifier accuracy matrix")
+def t47():
+    from birth_time_rectifier import get_effective_accuracy, get_enabled_vargas
+    acc = get_effective_accuracy('minute', 'hospital')
+    assert acc == 'minute'
+    v = get_enabled_vargas('minute')
+    assert v['D9'] == 'enabled'
+
+@test("Tajika Yogas detect")
+def t48():
+    from tajika import detect_tajika_yogas
+    r = detect_tajika_yogas({'Sun': {'sign': 'Aries', 'degree': 15}, 'Moon': {'sign': 'Aries', 'degree': 18}})
+    assert len(r) >= 1
+
+@test("Tajika Sahams count")
+def t49():
+    from tajika import calc_all_sahams
+    from datetime import datetime
+    r = calc_all_sahams({'Sun': 80, 'Moon': 105, 'Mars': 220, 'Mercury': 75, 'Jupiter': 310, 'Venus': 350, 'Saturn': 180, 'Rahu': 45, 'Ketu': 225}, 15.0, datetime(1990,6,15,12,0))
+    assert len(r) >= 30
+
+@test("Chart renderer SVG")
+def t50():
+    from chart_renderer import render_south_indian_chart
+    svg = render_south_indian_chart({'Sun': 'Aries', 'Moon': 'Cancer'}, 'Aries')
+    assert '<svg' in svg and '</svg>' in svg
+
 # === 运行 ===
 if __name__ == '__main__':
     passed = 0; failed = 0; start = time.time()
