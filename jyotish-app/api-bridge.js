@@ -1,11 +1,16 @@
 /**
- * API Bridge v2.0
- * 连接前端到 Python v6.7.0 精算引擎
- * 
- * 部署: API_KEY 在生产环境通过服务端环境变量注入
- *       此处为前端调用凭证，实际部署时建议配置环境变量
+ * API Bridge v3.0
+ * 自动检测环境：本地用 localhost:5200，云端用 copse.top
+ * 均不可达时回退到浏览器端 JS 引擎
  */
-const API_BASE = 'https://copse.top';
+const API_BASE = (() => {
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.')) {
+    return 'http://localhost:5200';
+  }
+  return 'https://copse.top';
+})();
+
 const API_KEY = 'sk-828a787bd2bb69d2d4707e8c05ae5cfe81b13de7be1db7f85932d49ed72e4c6a';
 
 const API_CACHE = {};

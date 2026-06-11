@@ -216,16 +216,29 @@ function setupForm() {
     const [hour, minute] = timeVal.split(':').map(Number);
     btnText.classList.add('hidden'); btnLoading.classList.remove('hidden'); btn.disabled = true;
     try {
-      // 🔥 v6.7.0: 始终使用 Python API 精算引擎
+      // v6.9.2: API优先, 不可用时回退JS引擎
       if (window.JyotishAPI) {
         chartData = await window.JyotishAPI.computeAll({ year, month, day, hour, minute, lat, lon, tz });
-        if (!chartData || !chartData.success) {
-          throw new Error(chartData?.error || 'API计算失败');
-        }
-        console.log('[Jyotish] ✅ Python API v6.7.0 —', chartData.dasha_count, '种Dasha,', chartData.yogas?.length || 0, '个Yoga');
+        if (!chartData || !chartData.success) throw new Error(chartData?.error || 'API计算失败');
+        console.log('[Jyotish] ✅ API —', chartData.dasha_count, 'Dasha,', chartData.yogas?.length || 0, 'Yoga');
       } else {
-        throw new Error('API桥接未加载，请刷新页面');
+        throw new Error('API桥接未加载');
       }
+    } catch (apiErr) {
+      console.warn('[Jyotish] API不可用:', apiErr.message, '→ 回退JS引擎');
+      try {
+        await initEngine();
+        chartData = await computeChart({ year, month, day, hour, minute, lat, lon, tz });
+        chartData._fallback = true;
+        console.log('[Jyotish] ⚠️ JS引擎回退成功');
+      } catch (jsErr) {
+        console.error('[Jyotish] JS引擎也失败:', jsErr);
+        alert('计算失败: ' + (apiErr.message || jsErr.message) + '\n请检查网络或启动API服务器');
+        btnText.classList.remove('hidden'); btnLoading.classList.add('hidden'); btn.disabled = false;
+        return;
+      }
+    }
+    try {
       // 保存出生数据供生时校正使用
       window.__jyotishBirth = { year, month, day, hour, minute, lat, lon, tz };
       renderAll();
