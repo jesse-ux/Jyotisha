@@ -1,5 +1,23 @@
 # 印度占星 Skill 更新日志
 
+## v6.1.12（2026-06-11）—— Chara Dasha KN Rao Benchmark 正式通过（95.83%）
+
+> **验证**：PyJHora oracle benchmark 10案例×120字段：Sign 100%, Duration 91.67%, Overall 95.83% ≥ 95% ✅ PASS
+
+### 修复内容
+- `scripts/jaimini.py`：Chara Dasha v6.1.12
+  - 修复 `<=0` 检查顺序（先于尊贵调整，对齐PyJHora）
+  - 新增 `_PLANET_DIGNITY_KNRAO` 表（含Rahu/Ketu尊贵+set检查+Mercury own sign排除）
+  - 新增 `_resolve_chara_dasha_lord()` 动态宫主判定框架（当前用传统宫主，Rahu/Ketu共主为未来优化）
+  - 移除旧的 `_PLANET_DIGNITY` 单值字典（改为 `_PLANET_DIGNITY_KNRAO` set-based）
+- `benchmarks/jyotish/scripts/run_chara_dasha_knrao.py`：新增官方benchmark脚本（PyJHora oracle，含Rahu/Ketu行星映射）
+- `references/technique_registry.json`：更新 `jaimini_chara_dasha` limitation（95.83% benchmark通过）
+- `SKILL.md`：更新Chara Dasha能力升级段落（v6.1.12）
+
+### 已知限制
+- Aquarius/Scorpio 共主判定 ~4.2% 案例不匹配（需复制 PyJHora `_stronger_planet_new` 完整尊严比较链）
+- 已在 `_resolve_chara_dasha_lord()` 中预留扩展点
+
 ## v6.1.11（2026-06-10）—— Chara Dasha KN Rao Method + 遗失Solar/Lunar Yogas恢复 + 文件碎片审计
 
 > **目标**：1) Chara Dasha 从24.17%匹配修复为完整KN Rao Method。2) 从Git遗失提交恢复Solar Yogas (Veshi/Voshi/Ubhayachari) 和 Lunar Yogas (Sunapha/Anapha/Durudhura)至yoga_engine.py。3) 地毯式审计所有碎片文件：brain目录3个session 16文件 + 2个workspace + Desktop + Downloads + Git遗失提交 + auto-generated skills。

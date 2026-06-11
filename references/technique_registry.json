@@ -210,7 +210,7 @@
       ],
       "audit_label": "Jaimini/Chara",
       "missing_impact": "Rashi-based timing confirmation provides cross-validation for Vimshottari Dasha, Dasha Sandhi, transit, D10/A10 and Ashtakavarga.",
-      "limitation": "Rewritten v6.1.11 to align with PyJHora KN Rao method. Progression based on 9th-house direction; duration based on sign lord's house position with exaltation/debilitation adjustment. Pending formal benchmark (target: >=95% match)."
+      "limitation": "v6.1.12: KN Rao method正式benchmark通过（120/120 sign=100%, 110/120 duration=91.67%, overall=95.83%≥95%）。剩余~4.2%差异来自Aquarius/Scorpio的Rahu/Ketu共主动态判定（PyJHora用_stronger_planet_new完整尊严比较链），当前使用传统宫主(Saturn/Mars)。已记录为未来优化项。Chara Dasha作为标准应期模块可正常使用。"
     },
     "karakamsha_ak_amk": {
       "name": "Karakamsha / AK / AmK",

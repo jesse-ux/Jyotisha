@@ -117,15 +117,13 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 - 输出 `method` 应显示 `Ashtakavarga八分法（BPHS/PVR书例校准v2.1）`。
 - benchmark 若与其他软件不一致，先比较贡献表项和 SAV 总量，不得直接把口径差异判为运行 bug。
 
-### Chara Dasha 能力升级（v6.1.11-chara-dasha）
+### Chara Dasha 能力升级（v6.1.12 benchmark验证通过）
 
-**Chara Dasha 已重写为 KN Rao Method，可作为标准应期模块使用。**
+**Chara Dasha KN Rao Method 正式 benchmark 通过（95.83% ≥ 95%），可作为标准应期模块使用。**
 
-- v6.1.11 重写：取消旧的简化 `12 - planets_in_sign` 算法，替换为完整 KN Rao 方法。
-- **序列生成**：从上升开始，第9宫决定顺逆方向（对齐 PyJHora `_dhasa_progression_knrao_method`）。
-- **时长计算**：基于宫主所在宫位而非行星计数。奇数脚星座从本星座数到宫主；偶数脚从宫主数到本星座。Exalted +1 年 / Debilitated -1 年。
-- **Antardasha**：等分12份（parent/12），序列为 Maha 序列偏移 1 位（PyJHora method=2）。
-- 状态从 `partial` 升级为 `covered`。pending 正式 benchmark（目标 ≥95% 匹配 PyJHora）。
+- v6.1.12: PyJHora oracle benchmark **10案例×12星座=120对**: Sign 100%, Dur 91.67%, Overall 95.83% ✅ PASS
+- v6.1.11: 重写为完整 KN Rao Method（序列基于第9宫方向，时长基于宫主所在宫位+尊贵调整）
+- 剩余~4.2%差异: Aquarius/Scorpio 的 Rahu/Ketu 共主动态判定（需复制 PyJHora _stronger_planet_new）
 - `jaimini` 输出中的 Chara Karaka、AK/AmK、Karakamsha 继续可用。
 
 ### Transit 真实过境冻结（v6.0.10-true-transit）
@@ -316,7 +314,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.1.11-chara-dasha
+**版本**：v6.1.12-chara-dasha-benchmark
 **创建日期**：2026-04-20
 **最后更新**：2026-06-10（v6.1.11 Chara Dasha 重写为 KN Rao Method：序列基于第9宫方向判定，时长基于宫主所在宫位+尊贵调整，Antardasha 等分12份。状态从 partial 升级为 covered。当前 45 技法：27 covered + 18 partial。Yoga F1=95.22% 保持有效。）
 
