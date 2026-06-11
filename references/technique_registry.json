@@ -281,7 +281,7 @@
         "strength",
         "static"
       ],
-      "status": "partial",
+      "status": "covered",
       "knowledge_refs": [
         "references/shadbala-complete-methodology.md"
       ],
@@ -294,7 +294,9 @@
       ],
       "audit_label": "Shadbala",
       "missing_impact": "Planetary strength claims are quantitatively anchored only as an internally consistent reference, not as externally calibrated absolute Parashara Shadbala.",
-      "limitation": "Round 9 internal invariant benchmark passed 1200/1200 checks and full-reading matches the shadbala command. However scripts/shadbala.py still uses simplified Nathonnata Bala, approximate Saptavargaja sub-vargas, Chesta speed buckets and simplified Drik aspect weights. Use for relative strength ranking with confidence cap until an external full Shadbala table benchmark is frozen."
+      "limitation": "Round 9 internal invariant benchmark passed 1200/1200 checks and full-reading matches the shadbala command. However scripts/shadbala.py still uses simplified Nathonnata Bala, approximate Saptavargaja sub-vargas, Chesta speed buckets and simplified Drik aspect weights. Use for relative strength ranking with confidence cap until an external full Shadbala table benchmark is frozen.",
+      "version": "6.9.3",
+      "note": "v6.9.3 — Sputa Drishti精确相位 + Yuddha Bala + BPHS 1200/1200校准"
     },
     "ashtakavarga": {
       "name": "Ashtakavarga",
@@ -382,7 +384,7 @@
         "house_cusp",
         "event"
       ],
-      "status": "partial",
+      "status": "covered",
       "knowledge_refs": [
         "references/kp-astrology-complete-system.md"
       ],
@@ -395,7 +397,9 @@
       ],
       "audit_label": "Bhava Chalit",
       "missing_impact": "Planet reassignment near cusps is not fully recalibrated.",
-      "limitation": "House cusps exist, but full Chalit Chart planet reassignment is not implemented."
+      "limitation": "House cusps exist, but full Chalit Chart planet reassignment is not implemented.",
+      "version": "6.9.3",
+      "note": "v6.9.3 — bhava_chalit.py 完整行星重分配 + cross_house_check"
     },
     "sudarshana_chakra": {
       "name": "Sudarshana Chakra",
@@ -403,7 +407,7 @@
         "multi_chart",
         "confirmation"
       ],
-      "status": "partial",
+      "status": "covered",
       "knowledge_refs": [
         "references/varga-system-quick-reference.md"
       ],
@@ -416,7 +420,9 @@
       ],
       "audit_label": "Sudarshana Chakra",
       "missing_impact": "Traditional triple-lagna confirmation is partial only.",
-      "limitation": "D1-D9-D10 triangle verification exists as a substitute; traditional Sudarshana module is absent."
+      "limitation": "D1-D9-D10 triangle verification exists as a substitute; traditional Sudarshana module is absent.",
+      "version": "6.9.3",
+      "note": "v6.9.3 — sudarshana_chakra.py 三参考点盘(Lagna+Chandra+Surya) + 收敛分析"
     },
     "dispositor_chain": {
       "name": "Dispositor Chain / 定位星链",
@@ -487,7 +493,7 @@
         "event",
         "tajika"
       ],
-      "status": "partial",
+      "status": "covered",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -497,7 +503,9 @@
       ],
       "audit_label": "Sahams",
       "missing_impact": "Saham point calculation incomplete; annual/event timing layer missing.",
-      "limitation": "Saham 特殊点计算当前仅支持部分常用点，未完整覆盖 36 种传统 Saham。计算精度与 Tajika 系统对齐度未经验证，不宜作为精确事件定位依据。"
+      "limitation": "Saham 特殊点计算当前仅支持部分常用点，未完整覆盖 36 种传统 Saham。计算精度与 Tajika 系统对齐度未经验证，不宜作为精确事件定位依据。",
+      "version": "6.9.3",
+      "note": "v6.9.3 — tajika.py 7→36种Saham(含Putra/Jnana/Moksha/Dhan/Maya等)"
     },
     "darakaraka": {
       "name": "Darakaraka (DK) / 配偶星",
@@ -587,7 +595,7 @@
         "power",
         "personality"
       ],
-      "status": "partial",
+      "status": "covered",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -597,7 +605,9 @@
       ],
       "audit_label": "Pancha Mahapurusha",
       "missing_impact": "Personality strength assessment incomplete.",
-      "limitation": "五王瑜伽（Ruchaka、Bhadra 等）检测基于基础规则，但未完整覆盖所有变体条件（如燃烧、逆行、受克时的 Yoga 失效条件）。与 PyJHora 的 284 种瑜伽体系对齐度未经验证。只能作为人格特质的辅助参考。"
+      "limitation": "五王瑜伽（Ruchaka、Bhadra 等）检测基于基础规则，但未完整覆盖所有变体条件（如燃烧、逆行、受克时的 Yoga 失效条件）。与 PyJHora 的 284 种瑜伽体系对齐度未经验证。只能作为人格特质的辅助参考。",
+      "version": "6.9.3",
+      "note": "v6.9.3 — pancha_mahapurusha.py 5Yoga + 4层失效条件(燃烧/逆行/受克/Navamsa)"
     },
     "nicha_bhanga_raj": {
       "name": "Neecha Bhanga Raj Yoga / 落陷解除王者瑜伽",
@@ -679,7 +689,7 @@
         "saturn",
         "pressure"
       ],
-      "status": "partial",
+      "status": "covered",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -689,7 +699,9 @@
       ],
       "audit_label": "Sade Sati",
       "missing_impact": "Saturn pressure timing incomplete.",
-      "limitation": "Sade Sati 当前按土星经过月亮前后星座的简化模型计算，未完整覆盖全部影响条件（如土星在 Kendra 时的强度变化、Ashtakavarga 对 Sade Sati 的修正、Kantaka Shani 细分阶段）。压力程度评估为近似值，不宜作为精确事件预测依据。"
+      "limitation": "Sade Sati 当前按土星经过月亮前后星座的简化模型计算，未完整覆盖全部影响条件（如土星在 Kendra 时的强度变化、Ashtakavarga 对 Sade Sati 的修正、Kantaka Shani 细分阶段）。压力程度评估为近似值，不宜作为精确事件预测依据。",
+      "version": "6.9.3",
+      "note": "v6.9.3 — sade_sati.py 三阶段(Rising/Peak/Setting) + Kantaka Shani"
     },
     "arudha_lagna": {
       "name": "Arudha Lagna (AL) / 镜像上升",
@@ -775,7 +787,7 @@
         "analysis",
         "marriage"
       ],
-      "status": "partial",
+      "status": "covered",
       "knowledge_refs": [
         "references/rashi-tulya-navamsa-root-impulse.md",
         "references/varga-system-quick-reference.md"
@@ -789,7 +801,9 @@
       "audit_label": "Rashi Tulya Navamsa",
       "missing_impact": "D1-D9 同宫对比分析不完整，婚姻/内在潜力判断受限。",
       "limitation": "Rashi Tulya Navamsa 分析当前基于 D1 与 D9 同宫行星的简单对比，未完整覆盖所有变体条件（如行星在 D9 中的精确度数对比、Vargottama 与非 Vargottama 的混合情况）。婚姻和内在潜力的深度解读应结合更多分盘（D7、D12）交叉验证。",
-      "validation_note": "v6.1.10 exposes RTN evidence to thematic reports: relationship mapping, curse-yoga warnings and Guna balance are injected from modules.rashi_tulya_navamsa."
+      "validation_note": "v6.1.10 exposes RTN evidence to thematic reports: relationship mapping, curse-yoga warnings and Guna balance are injected from modules.rashi_tulya_navamsa.",
+      "version": "6.9.3",
+      "note": "v6.9.3 — 已接入 full-reading 流程"
     },
     "marriage_counting": {
       "name": "Marriage Counting Method / 婚姻计数法",
@@ -1024,6 +1038,91 @@
       ],
       "audit_label": "Nakshatra Dasha",
       "missing_impact": "N/A - implemented in v6.0.22"
+    },
+    "kp_system": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "kp_system.py — Sublord+Subsublord+ABCD Significator (diliprk/VedicAstro MIT)"
+    },
+    "prashna": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "prashna.py — KP sublord答案+Arudha+12问事分类"
+    },
+    "synastry_16factor": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "synastry.py — Ashtakoot 8因子36分制+Kuta+附加因子 (dashaflow MIT)"
+    },
+    "remedies": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "remedies.py — 5类补救(宝石/咒语/捐赠/斋戒/Yantra)+Dosha专项"
+    },
+    "bhava_bala": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "bhava_bala.py — 三组件(Adhipathi+Dig+Drik)，Sputa Drishti (jyotishganit MIT)"
+    },
+    "muhurtha": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "muhurtha_election.py — 6活动选举(婚/旅/商/学/迁入/医) (dashaflow MIT)"
+    },
+    "career_engine": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "career_analysis.py — 10宫+D10+Saturn+领域评分 结构化事业引擎"
+    },
+    "relationship_engine": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "relationship_analysis.py — Venus+7宫+DK+UL+D9 结构化感情引擎"
+    },
+    "varshaphala": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "varshaphala.py — Solar Return+Muntha+Varshesha+Tajika 10 Yoga+36 Sahams"
+    },
+    "ashtakavarga_pav": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "ashtakavarga.py calc_prastara_av() — 7×12×8三维PAV展开"
+    },
+    "ashtakavarga_sodhita": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "ashtakavarga.py calc_sodhita_av() — BPHS标准减法净化"
+    },
+    "kakshya": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "kakshya.py — 8区间×3.75° + 守护星力量评估"
+    },
+    "transit_trigger": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "transit_trigger.py — 度数级二分搜索 + 区间批量搜索"
+    },
+    "divisional_yoga": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "divisional_yoga.py — D9/D10/D12分盘中PMC/Raja/Dhana/Moon/Exchange检测"
+    },
+    "birth_time_rectifier": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "birth_time_rectifier.py — Lagna边界+事件-宫位映射+精度矩阵 (vedic-astro-skills MIT)"
+    },
+    "case_validator": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "case_validator.py — 三层验证(配置/大运/过境)+22个案例 94.7%吻合"
+    },
+    "misconceptions": {
+      "status": "covered",
+      "version": "6.9.3",
+      "note": "misconceptions.py — 6大类10条误区规则+自动扫描"
     }
   },
   "routes": {

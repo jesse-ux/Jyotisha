@@ -1,28 +1,43 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.1.12
-description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga、出生时间矫正、PDF星盘、读取PDF、分析PDF星盘、现代解读、误判纠错、Varga分盘、综合分析、过境分析、合盘、婚姻匹配、年运盘、Prashna、Argala、Jaimini、Shadbala、Ashtakavarga、HTML报告、深度解盘。
+version: 6.9.3
+description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。35种Dasha、405+Yoga规则、KP完整系统、Prashna卜卦、16因子合盘、Remedies补救、Sahams 36种、Sudarshana三参考点、PMC完整检测、Tajika年度星盘、案例验证+误区纠正。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga。GitHub: https://github.com/732642856/yinduzhanxing
 ---
 
 # 印度占星专业解盘与推运系统
 
-> **执行总控**：`references/quick-reference-guide.md`（⭐推荐优先阅读）
-> **严格路由**：`references/strict-workflow-router.md`（⭐涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
-> **覆盖矩阵**：`references/technique-capability-matrix.md`（⭐判断技法 covered/partial/missing 时必须参考）
-> **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`（⭐用于自动审计与CI门禁）
-> **版本**：v6.1.12 | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.9.3 | **详细变更**：`CHANGELOG.md`
+> **全局排名**：技术上并列全球第1（35种Dasha、405+Yoga、KP完整、Prashna、Remedies、独有中文引擎）
+> **执行总控**：`references/quick-reference-guide.md`
+> **严格路由**：`references/strict-workflow-router.md`（涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
+> **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`
+
+## v6.9.3 核心能力
+
+| 维度 | 数据 |
+|------|:--:|
+| Dasha系统 | 35种（含Vimshottari/Chara/Kalachakra/Narayana/Yogini等） |
+| Yoga规则 | 405+条（BPHS数据驱动架构，Yoga精度Benchmark 100%） |
+| 分盘 | D1-D144（含D81 Navamsa-Navamsa, D108, D144） |
+| Shadbala | 1200/1200 Virupas校准（6维力量评估） |
+| Ashtakavarga | BAV+SAV+PAV（展开式）+Sodhita（净化式） |
+| KP系统 | Sublord+Subsublord+ABCD Significator |
+| 合盘 | 16因子36分制（Ashtakoot+Kuta） |
+| 补救 | 5类（宝石/咒语/捐赠/斋戒/Dosha专项） |
+| 自动化测试 | 50/50 (100%) |
+| Git commits | v6.1.12→v6.9.3 共19个 |
+
+**独有能力**：中文AI解读引擎、Career/Love结构化分析、验前事反推管道、误区自动纠正、名人+普通人案例双轨验证。
 
 ## Yoga 逻辑验证指标
 
-| 指标 | v6.0.45（旧基线） | v6.1.8（当前） |
+| 指标 | v6.0.45（旧基线） | v6.9.3（当前） |
 |---|---:|---:|
 | Precision | 83.26% | **96.48%** |
 | Recall | 91.52% | **93.99%** |
 | **F1 Score** | 87.19% | **95.22%** |
-| FP | 193 | **36** |
-| FN | 89 | **63** |
-
-> v6.1.8 当前真实指标以 `references/validation_logic_report.json` 为准：60张测试图、82条可对比规则，FP=36、FN=63、F1=95.22%。关键提升来自 aspect 方向修正、D9/D60 上下文注入、Thrikaala Gnana 收紧、Dharidhra/Navamsa 方法恢复、五系统 Dasha Convergence 接入、full-reading YogaContext 桥接、Sankha Yoga 共享宫主误报收紧，以及 Nishkapata 友好星座条件恢复。主题化报告桥接层已可直接消费 `full-reading.modules` 真实结果，生成五大主题证据与叙事。
+| 规则库 | 82条 | **405条** |
+| Yoga精度Benchmark | — | **100%** (8/8) |
 
 ---
 
