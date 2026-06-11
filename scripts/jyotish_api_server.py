@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 印度占星 API 服务器 v1.0
-为 jyotish-app 前端提供 v6.6.0 引擎的精算能力
+为 jyotish-app 前端提供 v6.7.3 引擎的精算能力
 
 启动: python3 scripts/jyotish_api_server.py --port 5200
 """
@@ -52,7 +52,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urlparse(self.path).path
         if path == '/api/health':
-            self._json({'status': 'ok', 'version': '6.6.0', 'modules': 'KP/Synastry/Prashna/Remedies/PMC/SadeSati'})
+            self._json({'status': 'ok', 'version': '6.7.3', 'modules': 'KP/Synastry/Prashna/Remedies/PMC/SadeSati'})
         elif path == '/api/cities':
             self._json(list(CITY_DB.keys()))
         else:
@@ -176,7 +176,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
             return {
                 'success': True,
-                'version': '6.6.0',
+                'version': '6.7.3',
                 'birth': {'date': f'{year}-{month:02d}-{day:02d}', 'time': f'{int(hour):02d}:{int(minute):02d}'},
                 'ascendant': {'sign': asc_sign, 'sign_idx': asc_sign_idx, 'degree': round(asc_lon % 30, 2)},
                 'planets': planets_data,
@@ -221,7 +221,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             houses[h] = {'sign': SIGNS[s], 'sign_idx': s}
 
         return {
-            'success': True, 'version': '6.6.0-fallback',
+            'success': True, 'version': '6.7.3-fallback',
             'warning': 'Swiss Ephemeris未安装，使用简化计算',
             'ascendant': {'sign': asc_sign, 'sign_idx': asc_sign_idx},
             'planets': planets, 'houses': houses,
@@ -293,7 +293,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
 def start_server(port=5200):
     server = HTTPServer(('0.0.0.0', port), JyotishAPIHandler)
-    print(f'🔮 Jyotish API v6.6.0 running on http://localhost:{port}')
+    print(f'🔮 Jyotish API v6.7.3 running on http://localhost:{port}')
     print(f'  POST /api/chart — 完整星盘计算')
     print(f'  POST /api/remedies — 补救建议')
     print(f'  POST /api/kp — KP分析')
