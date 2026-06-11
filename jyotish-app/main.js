@@ -216,8 +216,28 @@ function setupForm() {
     const [hour, minute] = timeVal.split(':').map(Number);
     btnText.classList.add('hidden'); btnLoading.classList.remove('hidden'); btn.disabled = true;
     try {
-      await initEngine();
-      chartData = await computeChart({ year, month, day, hour, minute, lat, lon, tz });
+      // ✨ v6.6.0: 优先尝试 Python API 精算引擎
+      let apiResult = null;
+      if (window.JyotishAPI) {
+        const apiAvailable = await window.JyotishAPI.checkAvailable();
+        if (apiAvailable) {
+          try {
+            apiResult = await window.JyotishAPI.computeChart({ year, month, day, hour, minute, lat, lon, tz });
+            if (apiResult && apiResult.success) {
+              chartData = apiResult;
+              console.log('[Jyotish] ✅ Using Python API v6.6.0');
+            }
+          } catch (apiErr) {
+            console.warn('[Jyotish] API unavailable, falling back to JS engine:', apiErr.message);
+          }
+        }
+      }
+      // 回退到 JS 引擎
+      if (!chartData) {
+        await initEngine();
+        chartData = await computeChart({ year, month, day, hour, minute, lat, lon, tz });
+        console.log('[Jyotish] ⚠️ Fallback to JS engine');
+      }
       // 保存出生数据供生时校正使用
       window.__jyotishBirth = { year, month, day, hour, minute, lat, lon, tz };
       renderAll();
