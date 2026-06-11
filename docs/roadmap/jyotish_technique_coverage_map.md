@@ -127,7 +127,7 @@
 | 技法 | 状态 | 说明 |
 |------|------|------|
 | **Vargottama (同星座分盘)** | ✅ | D1和D9同星座 |
-| **Rashi Tulya Navamsa (RTN)** | ❌ | **6大缺失模块之一** |
+| **Rashi Tulya Navamsa (RTN)** | ✅ | v6.1.10 已接入 full-reading |
 | **Navamsa Tulya Rashi** | ❌ | RTN反向 |
 | **Rashi Tulya Dashamsa** | ❌ | D10映射 |
 | **Rashi Tulya Trimshamsa** | ❌ | D30映射 |
@@ -275,9 +275,9 @@
 | **Antardasha (Bhukti)** | ✅ | dasha_calculator.py | 二级推运 |
 | **Pratyantardasha** | ✅ | dasha_calculator.py | 三级推运 |
 | **Sookshma/Prana Dasha** | ⚠️ | dasha_calculator_enhanced.py | 四五级 |
-| **Ashtottari Dasha** | ❌ | — | 未实现 |
+| **Ashtottari Dasha** | ✅ | ashtottari_dasha.py | v6.1.10 已实现 |
 | **Yogini Dasha** | ❌ | — | 未实现 |
-| **Jaimini Chara Dasha** | ⚠️ | jaimini.py | 有计算，待完善 |
+| **Jaimini Chara Dasha** | ✅ | jaimini.py | v6.1.12 KN Rao Method, benchmark 95.83% |
 | **Sthira Dasha** | ❌ | — | 未实现 |
 | **Kalachakra Dasha** | ❌ | — | 未实现 |
 | **Narayana Dasha** | ❌ | — | 未实现 |

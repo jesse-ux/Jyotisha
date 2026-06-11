@@ -1,0 +1,21 @@
+{
+  "$schema": "https://kilo.ai/docs/kilo-json-schema",
+  "mcp": {
+    "vedic-astrology": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "rishi-ai-mcp"
+      ],
+      "enabled": true
+    },
+    "google-ai-search": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "google-ai-mode-mcp@latest"
+      ]
+    }
+  }
+}

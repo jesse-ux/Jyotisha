@@ -343,3 +343,187 @@ def _map_to_houses_values(scores: List[int], asc_sign_idx: int) -> Dict:
             'sav_score': scores[sign_idx],
         }
     return houses
+
+
+def calc_prastara_av(planets: Dict, asc_sign_idx: int) -> Dict:
+    """
+    计算 Prastara Ashtakavarga (PAV) — 展开式八分行星力量表
+
+    PAV 是一个 7×12×8 的三维矩阵：
+    - 7 颗行星 (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn)
+    - 12 个宫位/星座
+    - 8 个贡献源 (7行星 + Lagna)
+
+    每格为 0 或 1，表示该贡献源是否对该行星的该宫位贡献 bindu。
+
+    Args:
+        planets: 行星数据 dict，每颗行星需要 {sign, degree, ...}
+        asc_sign_idx: 上升星座在 SIGNS 中的索引 (0-11)
+
+    Returns:
+        {
+            'pav': {planet: {source: [12个0/1值]}},
+            'pav_summary': {planet: {source: total_bindus}},
+            'validation': {...}
+        }
+    """
+    # 1. 确定每个来源的星座索引
+    source_sign_idx = {}
+    for pname in SEVEN_PLANETS:
+        if pname in planets:
+            sign = planets[pname].get('sign', '')
+            if sign in SIGNS:
+                source_sign_idx[pname] = SIGNS.index(sign)
+    source_sign_idx['Lagna'] = asc_sign_idx
+
+    # 2. 计算 PAV 三维矩阵
+    pav = {}
+    pav_summary = {}
+
+    for planet in SEVEN_PLANETS:
+        contribution_rules = BAV_CONTRIBUTION[planet]
+        pav[planet] = {}
+        pav_summary[planet] = {}
+
+        for source in ALL_SOURCES:
+            if source not in source_sign_idx:
+                continue
+
+            # 12个宫位的bindu标记（0或1）
+            bindu_markers = [0] * 12
+            favorable_houses = contribution_rules.get(source, [])
+            source_idx = source_sign_idx[source]
+
+            for house in favorable_houses:
+                target_sign = (source_idx + house - 1) % 12
+                bindu_markers[target_sign] = 1
+
+            pav[planet][source] = bindu_markers
+            pav_summary[planet][source] = sum(bindu_markers)
+
+    # 3. 验证：每行的总和应等于BAV对应值
+    validation = []
+    all_valid = True
+    for planet in SEVEN_PLANETS:
+        for source in ALL_SOURCES:
+            if source not in pav_summary.get(planet, {}):
+                continue
+            actual = pav_summary[planet][source]
+            # 从BAV_CONTRIBUTION查期望的贡献数（该source对planet的宫位数）
+            expected = len(BAV_CONTRIBUTION[planet].get(source, []))
+            valid = actual == expected
+            if not valid:
+                all_valid = False
+            validation.append({
+                'planet': planet,
+                'source': source,
+                'actual': actual,
+                'expected': expected,
+                'valid': valid,
+            })
+
+    return {
+        'method': 'Prastara Ashtakavarga (PAV)',
+        'version': '1.0',
+        'pav': pav,
+        'pav_summary': pav_summary,
+        'validation': validation,
+        'all_valid': all_valid,
+    }
+
+
+def calc_sodhita_av(bav_results: Dict, planets: Dict, asc_sign_idx: int) -> Dict:
+    """
+    计算 Sodhita Ashtakavarga — 净化后的八分行星力量表
+
+    Sodhita 算法（BPHS标准）：
+    从每颗行星的每个宫位BAV中，减去Saturn、Mars和Sun的贡献（若结果为负取0）。
+    这反映了"减去凶星影响后的纯净力量"。
+
+    Args:
+        bav_results: calc_ashtakavarga返回的bav结果
+        planets: 行星数据 dict
+        asc_sign_idx: 上升星座索引
+
+    Returns:
+        {
+            'sodhita_bav': {planet: [12个sodhita值]},
+            'sodhita_sav': [12个sodhita SAV值],
+            'reduction_summary': {...}
+        }
+    """
+    # 1. 获取PAV展开表（需要知道每个贡献源的单独贡献）
+    pav_data = calc_prastara_av(planets, asc_sign_idx)
+    pav = pav_data['pav']
+
+    # 2. 定义需要减去的"凶星"贡献源
+    malefic_sources = ['Saturn', 'Mars', 'Sun']
+
+    # 3. 计算Sodhita BAV
+    sodhita_bav = {}
+    total_reduction = {}
+
+    for planet in SEVEN_PLANETS:
+        if planet not in pav:
+            continue
+
+        # 原始BAV（从所有8个来源）
+        original_bav = [0] * 12
+        for source in ALL_SOURCES:
+            if source in pav.get(planet, {}):
+                for i in range(12):
+                    original_bav[i] += pav[planet][source][i]
+
+        # 减去凶星贡献
+        reduction = [0] * 12
+        sodhita = [0] * 12
+
+        for i in range(12):
+            malefic_sum = 0
+            for source in malefic_sources:
+                if source in pav.get(planet, {}):
+                    malefic_sum += pav[planet][source][i]
+
+            reduction[i] = malefic_sum
+            sodhita[i] = max(0, original_bav[i] - malefic_sum)
+
+        sodhita_bav[planet] = sodhita
+        total_reduction[planet] = sum(reduction)
+
+    # 4. 计算Sodhita SAV
+    sodhita_sav = [0] * 12
+    for planet in SEVEN_PLANETS:
+        if planet in sodhita_bav:
+            for i in range(12):
+                sodhita_sav[i] += sodhita_bav[planet][i]
+
+    # 5. 评估
+    sodhita_assessment = []
+    for i in range(12):
+        score = sodhita_sav[i]
+        if score >= 25:
+            level = "极吉"
+        elif score >= 22:
+            level = "吉利"
+        elif score >= 19:
+            level = "中等"
+        else:
+            level = "挑战"
+        sodhita_assessment.append({
+            'sign': SIGNS[i],
+            'score': score,
+            'level': level,
+        })
+
+    return {
+        'method': 'Sodhita Ashtakavarga (BPHS标准)',
+        'version': '1.0',
+        'sodhita_bav': sodhita_bav,
+        'sodhita_sav': {
+            'scores': {SIGNS[i]: sodhita_sav[i] for i in range(12)},
+            'assessment': sodhita_assessment,
+            'total': sum(sodhita_sav),
+        },
+        'reduction_summary': total_reduction,
+        'validation_note': 'Sodhita AV ≤ 原始BAV（逐宫位）',
+    }

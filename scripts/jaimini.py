@@ -24,6 +24,19 @@ SIGN_LORDS = {'Aries':'Mars','Taurus':'Venus','Gemini':'Mercury','Cancer':'Moon'
     'Leo':'Sun','Virgo':'Mercury','Libra':'Venus','Scorpio':'Mars',
     'Sagittarius':'Jupiter','Capricorn':'Saturn','Aquarius':'Saturn','Pisces':'Jupiter'}
 
+# 行星友好/敌对关系（用于Jaimini共主比较）
+FRIENDSHIP = {
+    'Sun': {'friend': ['Moon', 'Mars', 'Jupiter'], 'enemy': ['Saturn', 'Venus'], 'neutral': ['Mercury']},
+    'Moon': {'friend': ['Sun', 'Mercury'], 'enemy': [], 'neutral': ['Mars', 'Jupiter', 'Venus', 'Saturn']},
+    'Mars': {'friend': ['Sun', 'Moon', 'Jupiter'], 'enemy': ['Mercury'], 'neutral': ['Venus', 'Saturn']},
+    'Mercury': {'friend': ['Sun', 'Venus'], 'enemy': ['Moon'], 'neutral': ['Mars', 'Jupiter', 'Saturn']},
+    'Jupiter': {'friend': ['Sun', 'Moon', 'Mars'], 'enemy': ['Mercury', 'Venus'], 'neutral': ['Saturn']},
+    'Venus': {'friend': ['Mercury', 'Saturn'], 'enemy': ['Sun', 'Moon'], 'neutral': ['Mars', 'Jupiter']},
+    'Saturn': {'friend': ['Mercury', 'Venus'], 'enemy': ['Sun', 'Moon', 'Mars'], 'neutral': ['Jupiter']},
+    'Rahu': {'friend': ['Jupiter', 'Venus', 'Saturn'], 'enemy': ['Sun', 'Moon', 'Mars'], 'neutral': ['Mercury']},
+    'Ketu': {'friend': ['Mars', 'Venus', 'Saturn'], 'enemy': ['Sun', 'Moon'], 'neutral': ['Mercury', 'Jupiter']},
+}
+
 # Chara Karaka 定义（7星制，排除Rahu）
 KARAKA_7 = {
     1: 'Atmakaraka',    # AK - 灵魂指示星（度数最高）
@@ -260,14 +273,117 @@ _PLANET_DIGNITY_KNRAO = {
 # Chara Dasha 宫主动态判定
 # Aquarius (sign 10): 传统主Saturn vs 共主Rahu — PyJHora用stronger_planet动态判定
 # Scorpio (sign 7): 传统主Mars vs 共主Ketu — PyJHora用stronger_planet动态判定
-# 当前简化: 使用传统宫主 (Saturn/Mars)。已知限制: ~4.6%案例中PyJHora选Rahu/Ketu
-# 完整对齐需要复制PyJHora的_stronger_planet_new尊严比较链，作为未来优化。
 _CHARA_DASHA_CO_LORD_SIGNS = {10, 7}  # Aquarius, Scorpio 有共主争议
 
 
+def _jaimini_planet_dignity_level(planet: str, sign_idx: int) -> int:
+    """
+    计算行星在指定星座的尊严层级（用于Jaimini共主比较）。
+    基于PyJHora _stronger_planet_new 尊严比较链。
+
+    层级值: 6=exalted, 5=own_sign, 4=friendly, 3=neutral, 2=enemy, 1=debilitated
+    """
+    dignities = _PLANET_DIGNITY_KNRAO.get(planet, {})
+    if not dignities:
+        return 2  # default: enemy level for unknown planets
+
+    # Check exalted (highest dignity)
+    if sign_idx in dignities.get('exalted', set()):
+        return 6
+
+    # Check debilitated (lowest)
+    if sign_idx in dignities.get('debilitated', set()):
+        return 1
+
+    # Check own sign (lord association)
+    sign_name = SIGNS[sign_idx]
+    traditional_lord = SIGN_LORDS.get(sign_name, '')
+    if planet == traditional_lord:
+        # For Mercury: own sign is Gemini or Virgo (not exalted)
+        return 5
+
+    # Check friendship
+    friendship = FRIENDSHIP.get(planet, {})
+    if planet in friendship.get('friend', []):
+        friend_planets = friendship['friend']
+        if traditional_lord in friend_planets:
+            return 4
+
+    if planet in friendship.get('enemy', []):
+        enemy_planets = friendship['enemy']
+        if traditional_lord in enemy_planets:
+            return 2
+
+    # Neutral
+    return 3
+
+
+def _jaimini_stronger_planet(longitudes: Dict[str, float], planet_a: str,
+                              planet_b: str, sign_idx: int) -> str:
+    """
+    动态比较两颗行星在指定星座的力量，返回较强者。
+    基于PyJHora _stronger_planet_new 算法翻译。
+
+    比较层次：
+    1. 尊严层级: exalted(6) > own(5) > friendly(4) > neutral(3) > enemy(2) > debilitated(1)
+    2. 同层级：比较行星经度位置（度数更靠近星座中心更强）
+    3. 仍相同：比较Naisargika Bala（天然力量）
+    """
+    level_a = _jaimini_planet_dignity_level(planet_a, sign_idx)
+    level_b = _jaimini_planet_dignity_level(planet_b, sign_idx)
+
+    if level_a > level_b:
+        return planet_a
+    if level_b > level_a:
+        return planet_b
+
+    # 同层级：比较行星在星座中的位置（更靠近星座中心度数=15°更强）
+    deg_a = longitudes.get(planet_a, 0) % 30
+    deg_b = longitudes.get(planet_b, 0) % 30
+
+    center_diff_a = abs(deg_a - 15)
+    center_diff_b = abs(deg_b - 15)
+
+    if center_diff_a < center_diff_b:
+        return planet_a
+    if center_diff_b < center_diff_a:
+        return planet_b
+
+    # 完全平局：使用Naisargika Bala决断
+    naisargika_order = ['Sun', 'Moon', 'Venus', 'Jupiter', 'Mercury', 'Mars', 'Saturn']
+    idx_a = naisargika_order.index(planet_a) if planet_a in naisargika_order else 99
+    idx_b = naisargika_order.index(planet_b) if planet_b in naisargika_order else 99
+    return planet_a if idx_a <= idx_b else planet_b
+
+
 def _resolve_chara_dasha_lord(longitudes, sign_idx):
-    """解析Chara Dasha宫主。当前使用传统宫主，共主比较为未来优化。"""
-    return SIGN_LORDS[SIGNS[sign_idx]]
+    """
+    解析Chara Dasha宫主。v6.1.13: 实现动态共主判定。
+
+    Aquarius (sign 10): 比较 Saturn vs Rahu
+    Scorpio (sign 7): 比较 Mars vs Ketu
+    其他星座: 使用传统宫主
+    """
+    sign_name = SIGNS[sign_idx]
+    traditional_lord = SIGN_LORDS.get(sign_name, '')
+
+    # Aquarius: Saturn vs Rahu 共主判定
+    if sign_idx == 10:  # Aquarius
+        saturn_present = 'Saturn' in longitudes and longitudes['Saturn'] >= 0
+        rahu_present = 'Rahu' in longitudes and longitudes['Rahu'] >= 0
+        if saturn_present and rahu_present:
+            return _jaimini_stronger_planet(longitudes, 'Saturn', 'Rahu', sign_idx)
+        return 'Saturn' if saturn_present else 'Rahu'
+
+    # Scorpio: Mars vs Ketu 共主判定
+    if sign_idx == 7:  # Scorpio
+        mars_present = 'Mars' in longitudes and longitudes['Mars'] >= 0
+        ketu_present = 'Ketu' in longitudes and longitudes['Ketu'] >= 0
+        if mars_present and ketu_present:
+            return _jaimini_stronger_planet(longitudes, 'Mars', 'Ketu', sign_idx)
+        return 'Mars' if mars_present else 'Ketu'
+
+    return traditional_lord
 
 
 def _sign_is_even_footed(sign_idx: int) -> bool:

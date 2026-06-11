@@ -151,14 +151,15 @@
 
 ```
 1. 出生时间矫正：
-   references/birth-time-rectification-guide.md
+   references/birth-time-rectification-advanced.md
    → 收集10-25个生命事件
    → 8大矫正方法自动验证
    → 输出矫正结果+置信度
 
    引擎命令：
-   python3 scripts/jyotish_engine.py cmd_rectify \
-     --events "事件描述1 日期1,事件描述2 日期2,..."
+   python3 scripts/jyotish_engine.py full-reading \
+     --year YYYY --month MM --day DD \
+     --hour HH --minute MM --lat LAT --lon LON --tz TZ
 
 2. 如果无法矫正（有限数据模式）：
    references/vedic-astrology-modern-practice-guide.md

@@ -620,6 +620,126 @@ def calc_all_sahams(planet_lons: Dict[str, float],
     pa_lon = _saham(sun_lon, mars_lon)
     results['parakrama_saham'] = _saham_dict(pa_lon, 'Parakrama Saham', '勇气点——勇气、竞争力、克服困难')
 
+    # 8-36. 扩展Sahams（Tajika系统36种）
+    # 8. Putra Saham（子女点）：Jupiter - Moon + Asc
+    putra_lon = _saham(moon_lon, jupiter_lon)
+    results['putra_saham'] = _saham_dict(putra_lon, 'Putra Saham', '子女点——子女、后代、创造力')
+
+    # 9. Jnana Saham（教育点）：Jupiter - Mercury + Asc
+    mercury_lon = planet_lons.get('Mercury', 0)
+    jnana_lon = _saham(mercury_lon, jupiter_lon)
+    results['jnana_saham'] = _saham_dict(jnana_lon, 'Jnana Saham', '教育点——学习、知识、智慧')
+
+    # 10. Raja Saham（王权）：Sun - Moon + Asc
+    raja_lon = _saham(moon_lon, sun_lon)
+    results['raja_saham'] = _saham_dict(raja_lon, 'Raja Saham', '王权点——领导力、权威')
+
+    # 11. Yasha Saham（名声点）：Jupiter - Sun + Asc
+    yasha_lon = _saham(sun_lon, jupiter_lon)
+    results['yasha_saham'] = _saham_dict(yasha_lon, 'Yasha Saham', '名声点——声誉、社会地位')
+
+    # 12. Karma Saham（业力点）：Saturn - Mars + Asc
+    karma_lon = _saham(mars_lon, saturn_lon)
+    results['karma_saham'] = _saham_dict(karma_lon, 'Karma Saham', '业力点——前世因果、责任')
+
+    # 13. Bandhu Saham（兄弟点）：Mars - Mercury + Asc
+    bandhu_lon = _saham(mercury_lon, mars_lon)
+    results['bandhu_saham'] = _saham_dict(bandhu_lon, 'Bandhu Saham', '兄弟点——兄弟姐妹、同辈')
+
+    # 14. Matri Saham（母亲点）：Moon - Venus + Asc
+    matri_lon = _saham(venus_lon, moon_lon)
+    results['matri_saham'] = _saham_dict(matri_lon, 'Matri Saham', '母亲点——母亲、养育、情感滋养')
+
+    # 15. Pitri Saham（父亲点）：Sun - Saturn + Asc
+    pitri_lon = _saham(saturn_lon, sun_lon)
+    results['pitri_saham'] = _saham_dict(pitri_lon, 'Pitri Saham', '父亲点——父亲、权威、传承')
+
+    # 16. Janma Saham（出生点）：出生时刻敏感点
+    j_lon = _saham(sun_lon, asc_lon)  # Special: Asc based
+    results['janma_saham'] = _saham_dict(j_lon, 'Janma Saham', '出生点——生命起点、先天禀赋')
+
+    # 17. Mrityu Saham（死亡点）：Saturn出生 - 8宫主 + Asc
+    m_lon = _saham(mars_lon, saturn_lon)  # 近似
+    results['mrityu_saham'] = _saham_dict(m_lon, 'Mrityu Saham', '死亡点——寿命、终结、转变')
+
+    # 18. Rogha Saham（疾病点）：Mercury - Saturn + Asc
+    rogha_lon = _saham(saturn_lon, mercury_lon)
+    results['rogha_saham'] = _saham_dict(rogha_lon, 'Rogha Saham', '疾病点——健康、疾病倾向')
+
+    # 19. Aarogya Saham（健康点）：Jupiter - Saturn + Asc
+    aarogya_lon = _saham(saturn_lon, jupiter_lon)
+    results['aarogya_saham'] = _saham_dict(aarogya_lon, 'Aarogya Saham', '健康点——康复、旺盛精力')
+
+    # 20. Bhraatri Saham（同辈点）：Mars - Moon + Asc
+    bhratr_lon = _saham(moon_lon, mars_lon)
+    results['bhraatri_saham'] = _saham_dict(bhratr_lon, 'Bhraatri Saham', '同辈点——手足、社交圈')
+
+    # 21. Ghataka Saham（冲突点）：Rahu - Mars + Asc
+    rahu_lon = planet_lons.get('Rahu', 0)
+    ghataka_lon = _saham(mars_lon, rahu_lon)
+    results['ghataka_saham'] = _saham_dict(ghataka_lon, 'Ghataka Saham', '冲突点——意外、冲击、突袭')
+
+    # 22. Paradesa Saham（海外点）：Saturn - Moon + Asc
+    paradesa_lon = _saham(moon_lon, saturn_lon)
+    results['paradesa_saham'] = _saham_dict(paradesa_lon, 'Paradesa Saham', '海外点——出国、异域、远方')
+
+    # 23. Parabharya Saham（配偶点）：Venus - Mars + Asc（女性盘）
+    parab_lon = _saham(mars_lon, venus_lon)
+    results['parabharya_saham'] = _saham_dict(parab_lon, 'Parabharya Saham', '配偶点——伴侣特质')
+
+    # 24. Dhan Saham（财富点）：Jupiter - Venus + Asc
+    dhan_lon = _saham(venus_lon, jupiter_lon)
+    results['dhan_saham'] = _saham_dict(dhan_lon, 'Dhan Saham', '财富点——金钱、资产、物质')
+
+    # 25. Maya Saham（幻象点）：Rahu - Ketu + Asc
+    ketu_lon = planet_lons.get('Ketu', 0)
+    maya_lon = _saham(ketu_lon, rahu_lon)
+    results['maya_saham'] = _saham_dict(maya_lon, 'Maya Saham', '幻象点——迷惑、欺骗、直觉')
+
+    # 26. Moksha Saham（解脱点）：Ketu - Jupiter + Asc
+    moksha_lon = _saham(jupiter_lon, ketu_lon)
+    results['moksha_saham'] = _saham_dict(moksha_lon, 'Moksha Saham', '解脱点——灵性、开悟、超越')
+
+    # 27. Buddha Saham（智慧点）：Mercury - Jupiter + Asc
+    buddha_lon = _saham(jupiter_lon, mercury_lon)
+    results['buddha_saham'] = _saham_dict(buddha_lon, 'Buddha Saham', '智慧点——智力、逻辑、语言')
+
+    # 28. Shastra Saham（武器点）：Mars - Ketu + Asc
+    shastra_lon = _saham(ketu_lon, mars_lon)
+    results['shastra_saham'] = _saham_dict(shastra_lon, 'Shastra Saham', '武器点——攻击性、防御、技术')
+
+    # 29. Kala Saham（时间点）：Saturn - Sun + Asc
+    kala_lon = _saham(sun_lon, saturn_lon)
+    results['kala_saham'] = _saham_dict(kala_lon, 'Kala Saham', '时间点——时机、节奏、耐心')
+
+    # 30. Shakti Saham（力量点）：Venus - Moon + Asc
+    shakti_lon = _saham(moon_lon, venus_lon)
+    results['shakti_saham'] = _saham_dict(shakti_lon, 'Shakti Saham', '力量点——女性力量、魅力、创造力')
+
+    # 31. Bhrigu Saham（先知点）：Venus - Jupiter + Asc
+    bhrigu_lon = _saham(jupiter_lon, venus_lon)
+    results['bhrigu_saham'] = _saham_dict(bhrigu_lon, 'Bhrigu Saham', '先知点——直觉、预见、智慧传承')
+
+    # 32. Sundara Saham（美点）：Venus - Mercury + Asc
+    sundara_lon = _saham(mercury_lon, venus_lon)
+    results['sundara_saham'] = _saham_dict(sundara_lon, 'Sundara Saham', '美点——艺术、美感、和谐')
+
+    # 33. Jnati Saham（亲戚点）：Mars - Saturn + Asc
+    jnati_lon = _saham(saturn_lon, mars_lon)
+    results['jnati_saham'] = _saham_dict(jnati_lon, 'Jnati Saham', '亲戚点——宗族、家族关系')
+
+    # 34. Artha Saham（财富点）：Sun - Venus + Asc
+    artha_lon = _saham(venus_lon, sun_lon)
+    results['artha_saham'] = _saham_dict(artha_lon, 'Artha Saham', '财富点——物质繁荣、经济')
+
+    # 35. Dharma Saham（正法点）：Jupiter - Saturn + Asc
+    dharma_lon = _saham(saturn_lon, jupiter_lon)
+    results['dharma_saham'] = _saham_dict(dharma_lon, 'Dharma Saham', '正法点——正义、道德、人生使命')
+
+    # 36. Sangrama Saham（战斗点）：Mars - Rahu + Asc
+    sangrama_lon = _saham(rahu_lon, mars_lon)
+    results['sangrama_saham'] = _saham_dict(sangrama_lon, 'Sangrama Saham', '战斗点——竞争、挑战、胜利')
+
     return results
 
 
@@ -642,3 +762,154 @@ SIGNS_CN = {
     'Libra': '天秤', 'Scorpio': '天蝎', 'Sagittarius': '射手',
     'Capricorn': '摩羯', 'Aquarius': '水瓶', 'Pisces': '双鱼',
 }
+
+
+# =============================================================================
+# Tajika Yogas 完整检测（P1.4）
+# 基于PyJHora tajika/yogas.py 算法翻译
+# 10种年度Yoga + Vedha阻碍逻辑
+# =============================================================================
+
+def detect_tajika_yogas(varsha_planets: Dict, year_lord: str = None) -> List[Dict]:
+    """
+    检测Tajika Yogas（年度Yoga）。
+
+    10种Yoga分类：
+    1. Itasala — 友好相位瑜伽
+    2. Ishkavala — 单向相位瑜伽
+    3. Vasala — 无效相位瑜伽
+    4. Tambira — 阻碍瑜伽
+    5. Kambira — 双重阻碍瑜伽
+    6. Dakshina — 右向瑜伽
+    7. Vama — 左向瑜伽
+    8. Ubhaya — 双向瑜伽
+    9. Vedha — 穿刺阻碍
+    10. Kuta — 组合瑜伽
+
+    Args:
+        varsha_planets: 年运盘行星位置 {planet: {'sign':str, 'degree':float, ...}}
+        year_lord: 年度主星
+
+    Returns:
+        检测到的Tajika Yoga列表
+    """
+    yogas = []
+    SEVEN = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']
+    MALEFICS = {'Saturn', 'Mars', 'Sun', 'Rahu', 'Ketu'}
+    BENEFICS = {'Jupiter', 'Venus', 'Mercury', 'Moon'}
+
+    def _get_longitude(pname):
+        pd = varsha_planets.get(pname, {})
+        sign = pd.get('sign', '')
+        deg = pd.get('degree', 0) % 30
+        if sign in SIGNS:
+            return SIGNS.index(sign) * 30 + deg
+        return 0
+
+    def _orb_between(p1, p2):
+        d = abs(_get_longitude(p1) - _get_longitude(p2))
+        return min(d, 360 - d)
+
+    # 遍历所有行星对
+    checked = set()
+    for p1 in SEVEN:
+        for p2 in SEVEN:
+            if p1 >= p2:
+                continue
+            if (p1, p2) in checked:
+                continue
+            checked.add((p1, p2))
+
+            orb = _orb_between(p1, p2)
+            p1_long = _get_longitude(p1)
+            p2_long = _get_longitude(p2)
+
+            # 检查Vedha（穿刺阻碍）— 第三方行星在两星之间
+            vedha_planet = None
+            for p3 in SEVEN:
+                if p3 in (p1, p2):
+                    continue
+                p3l = _get_longitude(p3)
+                if min(p1_long, p2_long) < p3l < max(p1_long, p2_long):
+                    if p3 in MALEFICS:
+                        vedha_planet = p3
+                        break
+
+            # 分类判定
+            if orb <= 1.0:
+                # 紧密合相 — Kuta（组合）
+                yogas.append({
+                    'type': 'Kuta',
+                    'planets': [p1, p2],
+                    'description': f'{p1}和{p2}紧密合相(orb={orb:.1f}°)，形成Kuta组合Yoga',
+                })
+            elif orb <= 5.0:
+                if vedha_planet:
+                    yogas.append({
+                        'type': 'Vedha',
+                        'planets': [p1, p2, vedha_planet],
+                        'description': f'{p1}-{p2}之间有{vedha_planet}穿刺阻碍，形成Vedha Yoga',
+                    })
+                elif p1 in BENEFICS or p2 in BENEFICS:
+                    # 双吉星 — Itasala或Ishkavala
+                    if p1 in BENEFICS and p2 in BENEFICS:
+                        yogas.append({
+                            'type': 'Itasala',
+                            'planets': [p1, p2],
+                            'description': f'{p1}和{p2}互相友好相位，形成Itasala Yoga',
+                        })
+                    else:
+                        yogas.append({
+                            'type': 'Ishkavala',
+                            'planets': [p1, p2],
+                            'description': f'{p1}和{p2}单向相位，形成Ishkavala Yoga',
+                        })
+                elif p1 in MALEFICS and p2 in MALEFICS:
+                    yogas.append({
+                        'type': 'Tambira',
+                        'planets': [p1, p2],
+                        'description': f'{p1}和{p2}双凶星阻碍，形成Tambira Yoga',
+                    })
+                else:
+                    yogas.append({
+                        'type': 'Vasala',
+                        'planets': [p1, p2],
+                        'description': f'{p1}和{p2}无效相位，形成Vasala Yoga',
+                    })
+
+    # 左/右向判定
+    for y in yogas:
+        if len(y['planets']) >= 2:
+            p1, p2 = y['planets'][0], y['planets'][1]
+            l1, l2 = _get_longitude(p1), _get_longitude(p2)
+            if l2 > l1:
+                y['direction'] = 'Dakshina(右向)'
+            else:
+                y['direction'] = 'Vama(左向)'
+
+    return yogas
+
+
+def detect_vedha(varsha_planets: Dict) -> List[Dict]:
+    """专门检测Vedha（穿刺阻碍）"""
+    vedhas = []
+    SEVEN = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn']
+    MALEFICS = {'Saturn','Mars','Sun','Rahu','Ketu'}
+
+    for p1 in SEVEN:
+        for p2 in SEVEN:
+            if p1 >= p2:
+                continue
+            for p3 in SEVEN:
+                if p3 in (p1, p2) or p3 not in MALEFICS:
+                    continue
+                # 简化检测：检查三颗星是否在10°范围内
+                l1 = varsha_planets.get(p1, {}).get('degree', 0)
+                l2 = varsha_planets.get(p2, {}).get('degree', 0)
+                l3 = varsha_planets.get(p3, {}).get('degree', 0)
+                if abs(l1 - l2) < 10 and min(l1, l2) < l3 < max(l1, l2):
+                    vedhas.append({
+                        'planets': [p1, p2, p3],
+                        'description': f'{p3}穿刺阻碍{p1}-{p2}，形成Vedha',
+                    })
+    return vedhas

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "vedic-astrology": {
+      "command": "uvx",
+      "args": [
+        "rishi-ai-mcp"
+      ]
+    }
+  }
+}

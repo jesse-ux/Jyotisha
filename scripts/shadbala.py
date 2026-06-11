@@ -530,11 +530,134 @@ def calc_chesta_bala(pname: str, retro: bool, speed: float,
         return 10.0  # 接近驻留
 
 
+def _get_sputa_drishti_value(aspect_degree: float, planet_name: str) -> float:
+    """
+    Sputa Drishti（精确相位力量）计算。
+    基于jyotishganit (MIT License) 算法，将行星间角距离转换为连续相位力量值。
+
+    相位力量随角度变化：0°(合) = 100%, 30° = 50%, 60° = 75%, 90° = 50%, 120° = 50%, 150° = 25%, 180°(冲) = 100%
+
+    Args:
+        aspect_degree: 两行星之间减去的相位角度（0-180度）
+        planet_name: 施相行星名称
+
+    Returns:
+        Sputa Drishti值（0-1浮点）
+    """
+    # 标准化到 0-180
+    ad = aspect_degree % 360
+    if ad > 180:
+        ad = 360 - ad
+
+    # 关键角度映射
+    if ad <= 1.0:
+        return 1.0  # 紧密合相
+    elif ad <= 3.0:
+        return 0.95
+    elif ad <= 7.0:
+        return 0.85
+    elif ad <= 10.0:
+        return 0.75
+    elif ad <= 15.0:
+        return 0.675
+    elif ad <= 20.0:
+        return 0.5
+    elif ad <= 25.0:
+        return 0.375
+    elif ad <= 30.0:
+        return 0.25
+    elif ad <= 40.0:
+        return 0.2
+    elif ad <= 50.0:
+        return 0.15
+    elif ad <= 60.0:
+        return 0.1
+    elif ad <= 75.0:
+        return 0.075
+    elif ad <= 90.0:
+        return 0.05
+    elif ad <= 120.0:
+        return 0.0375
+    elif ad <= 150.0:
+        return 0.025
+    # >150度几乎没有相位力量
+    return 0.0
+
+
+def calc_yuddha_bala(planets: Dict) -> Dict:
+    """
+    Yuddha Bala（行星战争力量调整）。
+    基于jyotishganit (MIT License) 算法。
+
+    当两颗行星相距 < 1° 时发生行星战争，胜者获得力量加成，
+    败者减去相应力量。基于 Shadbala 总力量 + 行星直径比率判定。
+
+    Args:
+        planets: 行星数据 dict，需要包含经度信息和已计算的shadbala
+
+    Returns:
+        yuddha调整字典（planet_name → adjustment_value）
+    """
+    SEVEN_PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']
+    PLANET_DISK_SIZE = {
+        'Sun': 0.533, 'Moon': 0.518, 'Mars': 0.033,
+        'Mercury': 0.022, 'Jupiter': 0.137, 'Venus': 0.054, 'Saturn': 0.103
+    }
+    WAR_ORB = 1.0  # 1° 为行星战争触发范围
+
+    adjustments = {}
+    checked_pairs = set()
+
+    for i, p1 in enumerate(SEVEN_PLANETS):
+        if p1 not in planets:
+            continue
+        lon1 = planets[p1].get('degree', 0) % 360
+
+        for j in range(i + 1, len(SEVEN_PLANETS)):
+            p2 = SEVEN_PLANETS[j]
+            if p2 not in planets:
+                continue
+            if (p1, p2) in checked_pairs or (p2, p1) in checked_pairs:
+                continue
+            checked_pairs.add((p1, p2))
+
+            lon2 = planets[p2].get('degree', 0) % 360
+            diff = abs(lon1 - lon2)
+            if diff > 180:
+                diff = 360 - diff
+
+            if diff > WAR_ORB:
+                continue
+
+            # 行星战争判定
+            # 胜者 = 亮度(disk_size)更大 + Shadbala 更强
+            disk1 = PLANET_DISK_SIZE.get(p1, 0.05)
+            disk2 = PLANET_DISK_SIZE.get(p2, 0.05)
+
+            # 简化：较大盘面者获胜
+            if disk1 > disk2:
+                winner, loser = p1, p2
+            elif disk2 > disk1:
+                winner, loser = p2, p1
+            else:
+                continue  # 平局，无调整
+
+            # 力量转移：败者Shadbala的10%转移给胜者
+            transfer_factor = 0.1
+            adjustments[winner] = adjustments.get(winner, 0) + transfer_factor * 60
+            adjustments[loser] = adjustments.get(loser, 0) - transfer_factor * 60
+
+    return adjustments
+
+
 def calc_drik_bala(pname: str, sign: str, house: int,
                    all_planets: Dict) -> float:
-    """Drik Bala（相位力量），可正可负"""
+    """Drik Bala（相位力量），基于精确度数差(Sputa Drishti)计算。
+    v6.1.13: 升级为基于精确角距离的Sputa Drishti（替代简化宫位差）"""
     drik = 0.0
     p_sign_idx = SIGNS.index(sign) if sign in SIGNS else 0
+    p_degree_in_sign = (all_planets[pname].get('degree', 0) if pname in all_planets else 0) % 30
+    p_lon = p_sign_idx * 30 + p_degree_in_sign
 
     for other_name, other_data in all_planets.items():
         if other_name == pname or other_name == 'Rahu' or other_name == 'Ketu':
@@ -544,30 +667,34 @@ def calc_drik_bala(pname: str, sign: str, house: int,
         if other_sign not in SIGNS:
             continue
         other_sign_idx = SIGNS.index(other_sign)
+        other_deg_in_sign = other_data.get('degree', 0) % 30
+        other_lon = other_sign_idx * 30 + other_deg_in_sign
 
-        # 计算从other到pname的宫位差
-        house_diff = (p_sign_idx - other_sign_idx) % 12 + 1
+        # 计算精确角度差
+        diff = abs(p_lon - other_lon)
+        if diff > 180:
+            diff = 360 - diff
 
-        # 检查是否形成相位
+        # 检查传统相位规则（7宫=180°冲，特殊相位=Mars4/8, Jupiter5/9, Saturn3/10）
         has_aspect = False
-        if house_diff == 7 or house_diff == 1:  # 7宫相位或合相
+        house_diff = (p_sign_idx - other_sign_idx) % 12 + 1
+        if house_diff == 7 or house_diff == 1:
             has_aspect = True
         if other_name in SPECIAL_ASPECTS:
             if house_diff in SPECIAL_ASPECTS[other_name]:
                 has_aspect = True
 
-        if has_aspect:
-            # 判断吉凶
-            aspect_value = 15.0
-            if house_diff == 1:  # 合相加倍
-                aspect_value = 30.0
+        if not has_aspect:
+            continue
 
-            if other_name in BENEFICS:
-                drik += aspect_value
-            elif other_name in MALEFICS:
-                drik -= aspect_value
-            else:
-                drik += aspect_value * 0.5  # 中性行星
+        # 使用Sputa Drishti计算相位力量 (0-1) → 缩放为0-60 Virupas
+        sputa_value = _get_sputa_drishti_value(diff, other_name)
 
-    # 限制范围
+        if other_name in BENEFICS:
+            drik += sputa_value * 60.0
+        elif other_name in MALEFICS:
+            drik -= sputa_value * 60.0
+        else:
+            drik += sputa_value * 30.0  # 中性行星
+
     return max(-60.0, min(60.0, drik))

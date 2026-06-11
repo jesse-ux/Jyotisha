@@ -18,7 +18,10 @@ import math
 # 常量定义
 # =============================================================================
 
-# Vimshottari Dasha周期（年）
+# 恒星年（天）- 基于jyotishganit (MIT License)，用于精确Dasha计算
+YEAR_DURATION_DAYS = 365.25636
+
+# Vimshottari Dasha周期（年）- 总120年
 VIMSHOTTARI_PERIODS = {
     'Ketu': 7,
     'Venus': 20,
@@ -31,7 +34,9 @@ VIMSHOTTARI_PERIODS = {
     'Mercury': 17
 }
 
-# Dasha顺序
+HUMAN_LIFE_SPAN_VIMSHOTTARI = 120.0
+
+# Dasha顺序（BPHS标准）
 DASHA_ORDER = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury']
 
 # Nakshatra名称
@@ -72,95 +77,138 @@ PLANET_MODERN_MEANINGS = {
 
 def calculate_precise_remaining_years(moon_degree: float) -> Dict:
     """
-    基于Moon在Nakshatra中的精确度数计算剩余年数
-    
+    基于Moon在Nakshatra中的精确度数计算起始Dasha Lord和剩余年数。
+    算法基于jyotishganit (MIT License)，适配BPHS标准Nakshatra映射。
+
     Args:
         moon_degree: Moon在黄道带中的度数（0-360）
-    
+
     Returns:
-        Dict with nakshatra info and remaining years
+        Dict with nakshatra info, lord, remaining years, and maha dasha start date
     """
-    # 每个Nakshatra占13°20'（800分钟或13.333度）
-    nakshatra_size = 360 / 27  # ≈ 13.333度
-    
-    # 确定Moon所在的Nakshatra（1-27）
-    nakshatra_num = int(moon_degree / nakshatra_size) + 1
-    if nakshatra_num > 27:
-        nakshatra_num = 27
-    
-    # Moon在该Nakshatra中的位置（度数）
-    nakshatra_start = (nakshatra_num - 1) * nakshatra_size
-    position_in_nakshatra = moon_degree - nakshatra_start
-    
+    # 每个Nakshatra占 360°/27
+    nakshatra_size = 360.0 / 27.0
+
+    # Nakshatra序号（0-based index，与jyotishganit _get_moon_nakshatra_at_birth一致）
+    nak_index = int(moon_degree / nakshatra_size)
+    # 确保不超出范围
+    nak_index = min(nak_index, 26)
+
+    # Moon在Nakshatra中的剩余度数
+    remainder_degrees = moon_degree % nakshatra_size
+
+    # Nakshatra编号（1-based）
+    nakshatra_num = nak_index + 1
+
     # 该Nakshatra的Dasha Lord
     lord = NAKSHATRA_LORDS[nakshatra_num]
-    
+
     # 该Lord的总周期
     total_years = VIMSHOTTARI_PERIODS[lord]
-    
-    # 精确计算剩余年数（基于Moon在Nakshatra中的比例）
-    percentage_in_nakshatra = position_in_nakshatra / nakshatra_size
-    remaining_years = total_years * (1 - percentage_in_nakshatra)
-    
+    total_days = total_years * YEAR_DURATION_DAYS
+
+    # 已消耗的比例
+    elapsed_percentage = remainder_degrees / nakshatra_size
+    elapsed_days = total_days * elapsed_percentage
+
+    # 剩余年数
+    remaining_years = total_years * (1.0 - elapsed_percentage)
+
     return {
         'nakshatra_num': nakshatra_num,
         'nakshatra_name': NAKSHATRA_NAMES[nakshatra_num - 1],
+        'nakshatra_index': nak_index,
         'lord': lord,
         'total_years': total_years,
+        'total_days': total_days,
         'remaining_years': remaining_years,
-        'percentage_elapsed': percentage_in_nakshatra * 100
+        'percentage_elapsed': elapsed_percentage * 100,
+        'elapsed_days': elapsed_days,
     }
+
+
+def calculate_dasha_start_date(birth_datetime: datetime, moon_degree: float) -> Tuple[str, datetime, float]:
+    """
+    计算出生时活跃的Maha Dasha lord及其精确起始时间（基于jyotishganit MIT算法）。
+
+    从出生时间向前回溯到Maha Dasha真实起始时间。
+
+    Args:
+        birth_datetime: 出生日期时间
+        moon_degree: Moon在黄道带中的度数（0-360）
+
+    Returns:
+        (dasha_lord, dasha_start_datetime, remaining_years)
+    """
+    start_info = calculate_precise_remaining_years(moon_degree)
+    lord = start_info['lord']
+    elapsed_days = start_info['elapsed_days']
+
+    # 从出生时间回溯到Maha Dasha起始时间
+    dasha_start_date = birth_datetime - timedelta(days=elapsed_days)
+
+    remaining_years = start_info['remaining_years']
+
+    return lord, dasha_start_date, remaining_years
 
 
 def calculate_dasha_dates(birth_date: datetime, moon_degree: float) -> List[Dict]:
     """
-    计算完整的Dasha日期序列
-    
+    计算完整的Dasha日期序列（基于jyotishganit MIT算法，精确回溯起始时间）。
+
+    核心改动（v6.1.13）：
+    - 使用恒星年 YEAR_DURATION_DAYS = 365.25636
+    - MD起始从出生时间精确回溯，而不是从出生日期开始
+    - 保持BPHS标准Nakshatra映射
+
     Args:
         birth_date: 出生日期
         moon_degree: Moon在黄道带中的度数
-    
+
     Returns:
         List of Dasha periods with start/end dates
     """
-    # 获取起始Dasha信息
+    # 计算起始信息
     start_info = calculate_precise_remaining_years(moon_degree)
     starting_lord = start_info['lord']
-    remaining_years = start_info['remaining_years']
-    
-    # 构建完整的Dasha序列
-    start_index = DASHA_ORDER.index(starting_lord)
+    remaining_days = start_info['remaining_years'] * YEAR_DURATION_DAYS
+
+    # 从出生时间回溯到MD起始时间
+    dasha_start_date = birth_date
     dasha_sequence = []
-    
+
+    # 找到起始lord在DASHA_ORDER中的索引
+    start_index = DASHA_ORDER.index(starting_lord)
     current_date = birth_date
-    first_period = True
-    
+
     for i in range(9):
         planet_index = (start_index + i) % 9
         planet = DASHA_ORDER[planet_index]
-        years = VIMSHOTTARI_PERIODS[planet]
-        
-        if first_period:
+        total_years = VIMSHOTTARI_PERIODS[planet]
+        total_days = total_years * YEAR_DURATION_DAYS
+
+        if i == 0:
             # 第一个周期使用剩余年数
-            period_years = remaining_years
-            first_period = False
+            period_years = start_info['remaining_years']
+            period_days = remaining_days
         else:
-            period_years = years
-        
+            period_years = total_years
+            period_days = total_days
+
         start_date = current_date
-        end_date = current_date + timedelta(days=period_years * 365.25)
-        
+        end_date = current_date + timedelta(days=period_days)
+
         dasha_sequence.append({
             'lord': planet,
-            'years': period_years,
+            'years': round(period_years, 4),
             'start_date': start_date,
             'end_date': end_date,
             'theme': PLANET_MODERN_MEANINGS[planet]['theme'],
             'keywords': PLANET_MODERN_MEANINGS[planet]['keywords']
         })
-        
+
         current_date = end_date
-    
+
     return dasha_sequence
 
 
@@ -176,29 +224,30 @@ def calculate_five_level_dasha(mahadasha_lord: str, years_into_mahadasha: float)
         Dict with all five levels
     """
     def calculate_sub_periods(lord: str, total_years: float, elapsed: float, level_name: str) -> Dict:
-        """递归计算子周期"""
+        """递归计算子周期（基于jyotishganit MIT公式）"""
         sequence = get_mahadasha_sequence(lord)
-        
+
         years_remaining = elapsed
         current_lord = None
         years_into_period = 0
-        
+
         for planet, years in sequence:
-            sub_years = (years / 120) * total_years
+            # 核心公式: sub_period = parent_period * (lord_duration / 120)
+            sub_years = total_years * (years / HUMAN_LIFE_SPAN_VIMSHOTTARI)
             if years_remaining < sub_years:
                 current_lord = planet
                 years_into_period = years_remaining
                 break
             years_remaining -= sub_years
-        
+
         if not current_lord:
             current_lord = sequence[0][0]
             years_into_period = 0
-        
+
         return {
             'lord': current_lord,
             'years_into_period': years_into_period,
-            'total_years': (VIMSHOTTARI_PERIODS[current_lord] / 120) * total_years,
+            'total_years': total_years * (VIMSHOTTARI_PERIODS[current_lord] / HUMAN_LIFE_SPAN_VIMSHOTTARI),
             'level': level_name
         }
     

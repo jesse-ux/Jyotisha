@@ -42,6 +42,9 @@ class VargaType(Enum):
     D40 = (40, "Khavedamsa", "吉凶效果")
     D45 = (45, "Akshavedamsa", "全面判断")
     D60 = (60, "Shashtiamsa", "前世业力")
+    D81 = (81, "Navamsa-Navamsa", "D9之D9精微分盘")
+    D108 = (108, "Dwadasamsa-Navamsa", "D12之D9精微分盘")
+    D144 = (144, "Dwadasamsa-Dwadasamsa", "D12之D12精微分盘")
     
     def __init__(self, division: int, name: str, meaning: str):
         self.division = division
@@ -193,6 +196,12 @@ class DivisionalChartsCalculator:
             return self._calculate_d45(sign_index, sign_degree)
         elif division == 60:
             return self._calculate_d60(sign_index, sign_degree)
+        elif division == 81:
+            return self._calculate_d81(sign_index, sign_degree)
+        elif division == 108:
+            return self._calculate_d108(sign_index, sign_degree)
+        elif division == 144:
+            return self._calculate_d144(sign_index, sign_degree)
         else:
             # 通用算法（适用于其他分盘）
             return self._calculate_generic_varga(sign_index, sign_degree, division)
@@ -405,6 +414,29 @@ class DivisionalChartsCalculator:
         varga_sign = (sign_index + part) % 12
         varga_degree = (sign_degree % 0.5) * 60
         return varga_sign * 30 + varga_degree
+
+    def _calculate_d81(self, sign_index: int, sign_degree: float) -> float:
+        """D81 Navamsa-Navamsa — D9的D9精微分盘"""
+        # 先计算D9位置
+        d9_lon = self._calculate_d9(sign_index, sign_degree)
+        d9_sign = int(d9_lon / 30) % 12
+        d9_deg = d9_lon % 30
+        # 再对D9结果计算一次D9
+        return self._calculate_d9(d9_sign, d9_deg)
+
+    def _calculate_d108(self, sign_index: int, sign_degree: float) -> float:
+        """D108 Dwadasamsa-Navamsa — D12的D9精微分盘"""
+        d9_lon = self._calculate_d9(sign_index, sign_degree)
+        d9_sign = int(d9_lon / 30) % 12
+        d9_deg = d9_lon % 30
+        return self._calculate_d12(d9_sign, d9_deg)
+
+    def _calculate_d144(self, sign_index: int, sign_degree: float) -> float:
+        """D144 Dwadasamsa-Dwadasamsa — D12的D12精微分盘"""
+        d12_lon = self._calculate_d12(sign_index, sign_degree)
+        d12_sign = int(d12_lon / 30) % 12
+        d12_deg = d12_lon % 30
+        return self._calculate_d12(d12_sign, d12_deg)
     
     def _calculate_d5(self, sign_index: int, sign_degree: float) -> float:
         """D5 Panchamsa - 名声/权力分盘"""
