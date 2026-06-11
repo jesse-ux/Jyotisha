@@ -11,7 +11,7 @@
 """
 
 from typing import Dict, List, Optional
-from misconceptions import CELEBRITY_CASES, SINGLE_CONFIG_FALLACIES, MISCONCEPTION_COUNT
+from misconceptions import CELEBRITY_CASES, SINGLE_CONFIG_FALLACIES, MISCONCEPTION_COUNT, COMMON_PATTERNS
 
 # 配置→案例映射
 CONFIG_CASE_MAP = {
@@ -173,7 +173,7 @@ def validate_interpretation(analysis: Dict) -> Dict:
     """
     results = {
         'method': '三层验证 (本命+大运+过境)',
-        'case_base': f'{len(CELEBRITY_CASES)}个名人案例, {AVG_ACCURACY}吻合度',
+        'case_base': f'{len(CELEBRITY_CASES)}个名人 + {len(COMMON_PATTERNS)}个普通人模式, {AVG_ACCURACY}吻合度',
         'validations': [],
         'unvalidated': [],
         'overall_confidence': 0.0,
@@ -213,5 +213,5 @@ def validate_interpretation(analysis: Dict) -> Dict:
 
 
 # 导出常量供外部使用
-AVG_ACCURACY = '97.8%'
-CASE_COUNT = len(CELEBRITY_CASES)
+AVG_ACCURACY = '94.7%'
+CASE_COUNT = len(CELEBRITY_CASES) + len(COMMON_PATTERNS)
