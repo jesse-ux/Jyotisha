@@ -560,6 +560,26 @@
       "missing_impact": "Wealth timing confidence capped without Dhana Yoga.",
       "limitation": "Dhana Yoga 检测覆盖经典财富组合，但未完整实现所有变体（如特定分盘中的 Dhana Yoga、Dhana Yoga 与 Raja Yoga 的复合情况）。财富潜力评估应结合 D2、D9、D10 分盘综合分析，不宜仅凭 Yoga 检测做绝对断言。"
     },
+    "solar_lunar_yogas": {
+      "name": "Solar/Lunar Yogas (Veshi/Voshi/Ubhayachari/Sunapha/Anapha/Durudhura)",
+      "domains": [
+        "yoga",
+        "wealth",
+        "personality"
+      ],
+      "status": "covered",
+      "knowledge_refs": [],
+      "commands": [
+        "yoga",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.solar_lunar_yogas"
+      ],
+      "audit_label": "Solar/Lunar Yogas",
+      "missing_impact": "Solar/Lunar Yogas not detected.",
+      "limitation": "Restored from Git dangling commit f19369c. Algorithm-based detection in yoga_engine.py."
+    },
     "pancha_mahapurusha": {
       "name": "Pancha Mahapurusha Yoga / 五王瑜伽",
       "domains": [

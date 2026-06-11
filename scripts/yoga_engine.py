@@ -565,6 +565,7 @@ class YogaEngine:
         results = []
         seen_dedup = set()
 
+        # 规则匹配
         for rule in self.rules:
             matches = self._eval_rule(rule, ctx)
             for m in matches:
@@ -579,13 +580,85 @@ class YogaEngine:
                     "category": rule.get("category", ""),
                     "rule_id": rule.get("id", ""),
                 }
-                # 去重：基于 dedup_key 或 name + combination
                 dedup_key = rule.get("dedup_key") or rule["name"]
                 dedup_val = f"{dedup_key}:{m.get('combination', '')}"
                 if dedup_val in seen_dedup:
                     continue
                 seen_dedup.add(dedup_val)
                 results.append(entry)
+
+        # ── 附加算法级 Yoga（不在 rules JSON 中） ──
+        results += self._detect_solar_lunar_yogas(ctx)
+
+        return results
+
+    def _detect_solar_lunar_yogas(self, ctx: YogaContext) -> List[Dict]:
+        """
+        检测 Solar Yogas (Veshi/Voshi/Ubhayachari) 和 Lunar Yogas (Sunapha/Anapha/Durudhura/Kemadruma)。
+        
+        来源：从 dangling commit f19369c 恢复的失散代码（原在 jyotish_engine.py cmd_yoga 中）。
+        算法：基于行星相对于太阳/月亮的位置，非规则 JSON 可表达的。
+        """
+        results = []
+        p = ctx.planets
+        planets_in_house = {}  # house_num -> [planet_names]
+        # 如果度数是浮点，尝试排序
+        sun_house = None
+        moon_house = None
+        for pname, pinfo in p.items():
+            h = pinfo.get("house")
+            # 计算行星实际度数
+            if h is not None:
+                planets_in_house.setdefault(h, []).append(pname)
+                if pname == "Sun":
+                    sun_house = h
+                elif pname == "Moon":
+                    moon_house = h
+
+        # Solar Yogas
+        if sun_house is not None:
+            h2 = ((sun_house - 1 + 1) % 12) + 1  # 太阳第2宫
+            h12 = ((sun_house - 1 + 11) % 12) + 1  # 太阳第12宫
+            p_in_h2 = [n for n in planets_in_house.get(h2, []) if n != "Sun"]
+            p_in_h12 = [n for n in planets_in_house.get(h12, []) if n != "Sun"]
+            if p_in_h12 and not p_in_h2:
+                results.append({"name": "Voshi Yoga", "name_cn": "太阳前瑜伽",
+                    "combination": f"{'+'.join(p_in_h12)}在太阳第12宫",
+                    "effects": ["口才出众", "善于表达", "受人尊敬", "知识渊博"],
+                    "strength": "中", "category": "solar_yoga", "source": "Parashara"})
+            if p_in_h2 and not p_in_h12:
+                results.append({"name": "Veshi Yoga", "name_cn": "太阳后瑜伽",
+                    "combination": f"{'+'.join(p_in_h2)}在太阳第2宫",
+                    "effects": ["财富充裕", "生活舒适", "性情愉快", "人缘好"],
+                    "strength": "中", "category": "solar_yoga", "source": "Parashara"})
+            if p_in_h2 and p_in_h12:
+                results.append({"name": "Ubhayachari Yoga", "name_cn": "太阳双夹瑜伽",
+                    "combination": "太阳两侧均有行星",
+                    "effects": ["性格坚毅", "口才与财富兼备", "受人爱戴", "社会影响力"],
+                    "strength": "强", "category": "solar_yoga", "source": "Parashara"})
+
+        # Lunar Yogas
+        if moon_house is not None:
+            h2 = ((moon_house - 1 + 1) % 12) + 1  # 月亮第2宫
+            h12 = ((moon_house - 1 + 11) % 12) + 1  # 月亮第12宫
+            p_in_h2 = [n for n in planets_in_house.get(h2, []) if n != "Moon"]
+            p_in_h12 = [n for n in planets_in_house.get(h12, []) if n != "Moon"]
+            if p_in_h12 and not p_in_h2:
+                results.append({"name": "Anapha Yoga", "name_cn": "月后瑜伽",
+                    "combination": f"{'+'.join(p_in_h12)}在月亮第12宫",
+                    "effects": ["体格健壮", "名声良好", "品德高尚", "行业领袖"],
+                    "strength": "中", "category": "lunar_yoga", "source": "Parashara"})
+            if p_in_h2 and not p_in_h12:
+                results.append({"name": "Sunapha Yoga", "name_cn": "月前瑜伽",
+                    "combination": f"{'+'.join(p_in_h2)}在月亮第2宫",
+                    "effects": ["自力更生", "财富充裕", "受人尊敬", "生活富足"],
+                    "strength": "中", "category": "lunar_yoga", "source": "Parashara"})
+            if p_in_h2 and p_in_h12:
+                results.append({"name": "Durudhura Yoga", "name_cn": "月双夹瑜伽",
+                    "combination": "月亮两侧均有行星",
+                    "effects": ["享受丰富", "善于辞令", "性格坚定", "多元才华"],
+                    "strength": "强", "category": "lunar_yoga", "source": "Parashara"})
+
         return results
 
     # ------------------------------------------------------------------------

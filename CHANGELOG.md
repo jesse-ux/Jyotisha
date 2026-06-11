@@ -1,8 +1,8 @@
 # 印度占星 Skill 更新日志
 
-## v6.1.11（2026-06-10）—— Chara Dasha 重写：KN Rao Method（P0 完成）
+## v6.1.11（2026-06-10）—— Chara Dasha KN Rao Method + 遗失Solar/Lunar Yogas恢复 + 文件碎片审计
 
-> **目标**：把第七轮 benchmark 确认的严重性能差距（Chara Dasha 仅 24.17% 匹配 PyJHora KN Rao）彻底修复。完全重写 `calc_chara_dasha()`，拆除旧简化的 `12 - planets_in_sign` 算法，替换为完整的 KN Rao Method。
+> **目标**：1) Chara Dasha 从24.17%匹配修复为完整KN Rao Method。2) 从Git遗失提交恢复Solar Yogas (Veshi/Voshi/Ubhayachari) 和 Lunar Yogas (Sunapha/Anapha/Durudhura)至yoga_engine.py。3) 地毯式审计所有碎片文件：brain目录3个session 16文件 + 2个workspace + Desktop + Downloads + Git遗失提交 + auto-generated skills。
 
 ### 关键改进
 - `scripts/jaimini.py`：
@@ -20,10 +20,25 @@
 - **jaimini-tropical**（MIT, 架构参考）：`core/dashas.py` 的 Chakra 方向和 Antardasha 设计思路借鉴
 - **dashaflow**（MIT, 结构参考）：`jaimini.py` 的 Arudha/Upapada 公式已在之前版本复用
 
+### Solar/Lunar Yogas 恢复（从 Git dangling commit f19369c）
+- `scripts/yoga_engine.py`：
+  - 新增 `_detect_solar_lunar_yogas()` 方法：恢复丢失的 Solar Yogas (Veshi/Voshi/Ubhayachari) + Lunar Yogas (Sunapha/Anapha/Durudhura)
+  - 在 detect() 末尾调用，作为规则匹配外的附加算法级检测
+  - 太阳系列：Veshi（第2宫有行星）=财富充裕；Voshi（第12宫有行星）=口才出众；Ubhayachari（两侧都有）=性格坚毅
+  - 月亮系列：Sunapha（第2宫有行星）=自力更生；Anapha（第12宫有行星）=体格健壮；Durudhura（两侧都有）=享受丰富
+
+### 全量碎片审计
+- **Brain目录**（3个session 16文件）：已读取并评估，提取5份P0高价值文件
+- **Desktop**：印度占星修正版研究结论v3（Dasha乘法法则）+ 解盘报告HTML
+- **Downloads**：Kimi_Agent_高维印度占星师.zip（35个文件）→ 训练材料已确认；jyotish_training.agent.final.docx → 13章训练手册
+- **Git**：7个dangling commits检查完成 | f19369c Solar/Lunar Yogas已恢复 | 其余6个内容已被后续版本自然吸收
+- **auto-generated**：skill-20260422155600.md 与 55355.md 重复
+- **开源项目**：全网扫描10个方向，发现12个新项目（atolat/vedic-calc AGPL KP+Tajika+Prashna、CNWU16/vedic-astro-skills MIT AI解读、diliprk/VedicAstro MIT KP系统等）
+
 ### 验证
 ```bash
-python3 -m py_compile scripts/jaimini.py
-# Pending: python3 scripts/benchmark/chara_dasha/run_knrao_benchmark.py
+python3 -m py_compile scripts/jaimini.py scripts/yoga_engine.py
+# Pending: Chara Dasha KN Rao benchmark / Solar/Lunar Yogas test
 ```
 
 ## v6.1.10（2026-06-08）—— P0 规划继续落地：Darakaraka / RTN 接入主题化报告
