@@ -231,20 +231,46 @@ def calc_shoola_dasha(birth_date: datetime, moon_sign_idx: int) -> List[Dict]:
 # =============================================================================
 
 DASHA_REGISTRY = {
+    # Nakshatra-based
     'vimshottari': {'name': 'Vimshottari', 'years': 120, 'type': 'nakshatra'},
-    'chara': {'name': 'Chara (Jaimini)', 'years': 36, 'type': 'rasi'},
-    'ashtottari': {'name': 'Ashtottari', 'years': 108, 'type': 'conditional'},
+    'ashtottari': {'name': 'Ashtottari', 'years': 108, 'type': 'nakshatra'},
+    'yogini': {'name': 'Yogini', 'years': 36, 'type': 'nakshatra'},
     'kalachakra': {'name': 'Kalachakra', 'years': 94, 'type': 'nakshatra'},
+    'tara': {'name': 'Tara Dasha', 'years': 81, 'type': 'nakshatra'},
+    'shodasottari': {'name': 'Shodasottari', 'years': 128, 'type': 'nakshatra'},
+    'panchottari': {'name': 'Panchottari', 'years': 105, 'type': 'nakshatra'},
+    'satabdika': {'name': 'Satabdika', 'years': 100, 'type': 'nakshatra'},
+    # Rasi-based
+    'chara': {'name': 'Chara (Jaimini)', 'years': 36, 'type': 'rasi'},
+    'narayana': {'name': 'Narayana', 'years': 36, 'type': 'rasi'},
+    'shoola': {'name': 'Shoola Dasha', 'years': 9, 'type': 'rasi'},
+    'sudasa': {'name': 'Sudasa', 'years': 36, 'type': 'rasi'},
+    'drig': {'name': 'Drig Dasha', 'years': 36, 'type': 'rasi'},
+    'sthira': {'name': 'Sthira Dasha', 'years': 36, 'type': 'rasi'},
+    'mandooka': {'name': 'Mandooka Dasha', 'years': 36, 'type': 'rasi'},
+    'lagnamsaka': {'name': 'Lagnamsaka Dasha', 'years': 36, 'type': 'rasi'},
+    'yogardha': {'name': 'Yogardha Dasha', 'years': 36, 'type': 'rasi'},
+    'brahma': {'name': 'Brahma Dasha', 'years': 36, 'type': 'rasi'},
+    # Conditional/Tithi-based
     'dwisaptati': {'name': 'Dwisaptati Sama', 'years': 72, 'type': 'conditional'},
     'shattrimsa': {'name': 'Shattrimsa Sama', 'years': 36, 'type': 'conditional'},
     'dwadashottari': {'name': 'Dwadashottari', 'years': 112, 'type': 'conditional'},
-    'narayana': {'name': 'Narayana', 'years': 36, 'type': 'rasi'},
-    'yogini': {'name': 'Yogini', 'years': 36, 'type': 'nakshatra'},
     'shasti_hayani': {'name': 'Shasti-Hayani', 'years': 60, 'type': 'conditional'},
+    'chaturaaseeti': {'name': 'Chaturaaseeti Sama', 'years': 84, 'type': 'conditional'},
+    'tithi_ashtottari': {'name': 'Tithi Ashtottari', 'years': 108, 'type': 'conditional'},
+    'tithi_yogini': {'name': 'Tithi Yogini', 'years': 36, 'type': 'conditional'},
+    'patyayini': {'name': 'Patyayini', 'years': 36, 'type': 'conditional'},
+    # Varga/Bhava-based
     'navamsa': {'name': 'Navamsa Dasha', 'years': 36, 'type': 'varga'},
     'kendradi': {'name': 'Kendradi', 'years': 38, 'type': 'bhav'},
-    'tara': {'name': 'Tara Dasha', 'years': 81, 'type': 'nakshatra'},
-    'shoola': {'name': 'Shoola Dasha', 'years': 9, 'type': 'rasi'},
+    'paryaaya': {'name': 'Paryaaya Dasha', 'years': 36, 'type': 'varga'},
+    # Special
+    'rashmi': {'name': 'Rashmi Dasha', 'years': 36, 'type': 'special'},
+    'naisargika': {'name': 'Naisargika Dasha', 'years': 120, 'type': 'special'},
+    'aayu': {'name': 'Aayu Dasha', 'years': 36, 'type': 'special'},
+    'karaka': {'name': 'Karaka Dasha', 'years': 36, 'type': 'special'},
+    'panchasvara': {'name': 'Panchasvara Dasha', 'years': 36, 'type': 'special'},
+    'sudarsana': {'name': 'Sudarsana Chakra Dasha', 'years': 36, 'type': 'special'},
 }
 
 def get_available_dashas() -> List[str]:
