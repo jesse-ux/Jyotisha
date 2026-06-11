@@ -216,35 +216,29 @@ function setupForm() {
     const [hour, minute] = timeVal.split(':').map(Number);
     btnText.classList.add('hidden'); btnLoading.classList.remove('hidden'); btn.disabled = true;
     try {
-      // v6.9.2: API优先, 不可用时回退JS引擎
-      if (window.JyotishAPI) {
-        chartData = await window.JyotishAPI.computeAll({ year, month, day, hour, minute, lat, lon, tz });
-        if (!chartData || !chartData.success) throw new Error(chartData?.error || 'API计算失败');
-        console.log('[Jyotish] ✅ API —', chartData.dasha_count, 'Dasha,', chartData.yogas?.length || 0, 'Yoga');
-      } else {
-        throw new Error('API桥接未加载');
-      }
-    } catch (apiErr) {
-      console.warn('[Jyotish] API不可用:', apiErr.message, '→ 回退JS引擎');
-      try {
+      // v6.9.4: 计算层 — 优先Python API, 回退JS引擎
+      chartData = await window.JyotishAPI?.computeWithPython({ year, month, day, hour, minute, lat, lon, tz });
+      if (!chartData || !chartData.success) {
         await initEngine();
         chartData = await computeChart({ year, month, day, hour, minute, lat, lon, tz });
         chartData._fallback = true;
-        console.log('[Jyotish] ⚠️ JS引擎回退成功');
-      } catch (jsErr) {
-        console.error('[Jyotish] JS引擎也失败:', jsErr);
-        alert('计算失败: ' + (apiErr.message || jsErr.message) + '\n请检查网络或启动API服务器');
-        btnText.classList.remove('hidden'); btnLoading.classList.add('hidden'); btn.disabled = false;
-        return;
+        console.log('[Jyotish] ⚠️ JS引擎计算完成');
+      } else {
+        console.log('[Jyotish] ✅ Python API —', chartData.dasha_count, 'Dasha');
       }
+    } catch (e) {
+      console.error('[Jyotish] 计算失败:', e);
+      alert('计算失败: ' + e.message);
+      btnText.classList.remove('hidden'); btnLoading.classList.add('hidden'); btn.disabled = false;
+      return;
     }
     try {
-      // 保存出生数据供生时校正使用
       window.__jyotishBirth = { year, month, day, hour, minute, lat, lon, tz };
       renderAll();
       showPage('chart');
-      // 将当前星盘数据传给 AI 聊天
       aiChatSetChartData(chartData);
+      // v6.9.4: 触发 AI 解读
+      triggerAIReading(chartData);
     } catch (err) {
       console.error('[Jyotish] Error:', err);
       alert(t('alert.error') + err.message);
@@ -577,6 +571,28 @@ function renderTransitCompareTab(chartData) {
       rd.innerHTML = '<p style="text-align:center;color:#999;padding:20px">过境数据需API服务器 (python3 scripts/jyotish_api_server.py)</p>';
     }
   };
+}
+
+// ============================================================================
+// AI 解读触发 (v6.9.4)
+// ============================================================================
+async function triggerAIReading(chartData) {
+  if (!window.JyotishAPI?.aiFullReading) return;
+  const summaryEl = document.getElementById('chart-summary');
+  if (summaryEl) summaryEl.innerHTML += '<p style="color:#1565c0;font-size:13px">🤖 AI 正在生成个性化解读...</p>';
+  try {
+    const result = await window.JyotishAPI.aiFullReading(chartData);
+    if (result.success) {
+      if (summaryEl) {
+        summaryEl.innerHTML = '<div style="background:#e3f2fd;padding:14px;border-radius:10px;margin-top:10px;font-size:14px;line-height:1.7">'
+          + result.reading.replace(/\n/g, '<br>') + '</div>';
+      }
+      console.log('[AI] ✅ 解读生成成功');
+    }
+  } catch(e) {
+    console.warn('[AI] 解读失败:', e.message);
+    if (summaryEl) summaryEl.innerHTML += '<p style="color:#999;font-size:12px">AI解读不可用，请查看结构化数据</p>';
+  }
 }
 
 // ============================================================================
