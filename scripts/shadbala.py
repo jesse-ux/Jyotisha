@@ -115,8 +115,10 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
     """
     results = {}
     is_night = birth_hour < 6.0 or birth_hour >= 18.0
-    sun_northern = sun_lon >= 270 or sun_lon < 90  # Uttarayana 概略判断
+    sun_northern = sun_lon >= 270 or sun_lon < 90
 
+    # 第一轮：计算所有原始值
+    raw_totals = {}
     for pname in ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']:
         if pname not in planets:
             continue
@@ -127,27 +129,40 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
         retro = p.get('retrograde', False)
         speed = p.get('speed', 1.0)
 
-        # 1. Sthana Bala（位置力量）
         sthana = calc_sthana_bala(pname, lon, sign, house)
-
-        # 2. Dig Bala（方向力量）
         dig = calc_dig_bala(pname, house)
-
-        # 3. Kala Bala（时间力量）
-        kala = calc_kala_bala(pname, is_night, sun_northern, sun_lon, moon_lon,
-                              birth_hour, birth_minute)
-
-        # 4. Chesta Bala（运动力量）
+        kala = calc_kala_bala(pname, is_night, sun_northern, sun_lon, moon_lon, birth_hour, birth_minute)
         chesta = calc_chesta_bala(pname, retro, speed, sun_lon, moon_lon)
-
-        # 5. Naisargika Bala（天然力量）
         naisargika = NAISARGIKA_BALA.get(pname, 30.0)
-
-        # 6. Drik Bala（相位力量）
         drik = calc_drik_bala(pname, sign, house, planets)
 
-        # 总分（Virupas → Rupas）
-        total_virupas = sthana['total'] + dig + kala['total'] + chesta + naisargika + drik
+        raw = sthana['total'] + dig + kala['total'] + chesta + naisargika + drik
+        raw_totals[pname] = max(1.0, raw)
+    
+    sum_raw = sum(raw_totals.values())
+    
+    # 第二轮：BPHS标准化(1200 Virupas不变量)并生成结果
+    for pname in ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']:
+        if pname not in planets or pname not in raw_totals:
+            continue
+        p = planets[pname]
+        lon = p.get('degree', 0)
+        sign = p.get('sign', 'Aries')
+        house = p.get('house', 1)
+        retro = p.get('retrograde', False)
+        speed = p.get('speed', 1.0)
+
+        sthana = calc_sthana_bala(pname, lon, sign, house)
+        dig = calc_dig_bala(pname, house)
+        kala = calc_kala_bala(pname, is_night, sun_northern, sun_lon, moon_lon, birth_hour, birth_minute)
+        chesta = calc_chesta_bala(pname, retro, speed, sun_lon, moon_lon)
+        naisargika = NAISARGIKA_BALA.get(pname, 30.0)
+        drik = calc_drik_bala(pname, sign, house, planets)
+
+        # v6.7.7: BPHS标准化为1200 Virupas不变量
+        raw = raw_totals[pname]
+        scale = 1200.0 / sum_raw if sum_raw > 0 else 1.0
+        total_virupas = raw * scale
         total_rupas = total_virupas / VIRUPAS_PER_RUPA
 
         min_req = MIN_REQUIRED.get(pname, 5.0)
