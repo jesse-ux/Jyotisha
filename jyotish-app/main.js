@@ -378,9 +378,121 @@ function renderAll() {
   renderAVPinda(pinda);
   renderExtraDasas(extraDasas);
 
+  // 🔥 v6.7.2: API数据渲染 Recovery & KP tabs
+  renderRemediesTab(chartData);
+  renderKPTab(chartData);
+
   // 绑定术语 Tooltip（延迟确保所有异步渲染完成）
   setTimeout(() => bindTerms(document.querySelector('#page-chart')), 200);
   setTimeout(() => bindTerms(document.querySelector('#page-chart')), 800);
+}
+
+// ============================================================================
+// Remedies Tab 渲染
+// ============================================================================
+function renderRemediesTab(chartData) {
+  const sec = document.getElementById('remedies-section');
+  if (!sec) return;
+  const ext = chartData._extended;
+  if (!ext?.remedies) {
+    sec.innerHTML = '<p style="text-align:center;color:#999;padding:40px">补救建议将在API返回后展示</p>';
+    return;
+  }
+  const { recommendations, summary } = ext.remedies;
+  let html = `<p style="color:#666;margin-bottom:15px">${summary}</p>`;
+  
+  // Gems
+  const gems = recommendations?.gems || [];
+  if (gems.length > 0) {
+    html += '<h4 style="color:#9c27b0;margin-top:15px">💎 宝石建议</h4><div style="display:flex;flex-wrap:wrap;gap:8px">';
+    for (const g of gems.slice(0, 4)) {
+      html += `<div style="background:#f3e5f5;padding:8px 12px;border-radius:8px;font-size:13px">
+        <strong>${g.planet}</strong>: ${g.gem}<br><small style="color:#888">${g.metal || ''} · ${g.finger || ''} · ${g.day || ''}</small></div>`;
+    }
+    html += '</div>';
+  }
+
+  // Mantras
+  const mantras = recommendations?.mantras || [];
+  if (mantras.length > 0) {
+    html += '<h4 style="color:#1565c0;margin-top:15px">🕉️ 咒语建议</h4>';
+    for (const m of mantras.slice(0, 5)) {
+      html += `<div style="background:#e3f2fd;padding:6px 12px;border-radius:6px;margin:4px 0;font-size:13px">
+        <strong>${m.mantra}</strong> × ${m.repetitions} — ${m.note || ''}</div>`;
+    }
+  }
+
+  // Donations  
+  const donations = recommendations?.donations || [];
+  if (donations.length > 0) {
+    html += '<h4 style="color:#2e7d32;margin-top:15px">🙏 捐赠建议</h4>';
+    for (const d of donations.slice(0, 3)) {
+      html += `<div style="background:#e8f5e9;padding:6px 12px;border-radius:6px;margin:4px 0;font-size:13px">${d.note || ''}</div>`;
+    }
+  }
+
+  // Dosha remedies
+  const dr = recommendations?.dosha_remedies || [];
+  if (dr.length > 0) {
+    html += '<h4 style="color:#e65100;margin-top:15px">⚠️ Dosha专项补救</h4>';
+    for (const d of dr) {
+      html += `<div style="background:#fff3e0;padding:8px 12px;border-radius:6px;margin:4px 0;font-size:13px">
+        <strong>${d.dosha}</strong>: ${d.note || ''}</div>`;
+    }
+  }
+
+  sec.innerHTML = html;
+}
+
+// ============================================================================
+// KP Tab 渲染  
+// ============================================================================
+function renderKPTab(chartData) {
+  const sec = document.getElementById('kp-section');
+  if (!sec) return;
+  const ext = chartData._extended;
+  if (!ext?.kp?.houses) {
+    sec.innerHTML = '<p style="text-align:center;color:#999;padding:40px">KP分析将在API返回后展示</p>';
+    return;
+  }
+  
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px">';
+  
+  // House significators
+  for (let h = 1; h <= 12; h++) {
+    const hd = ext.kp.houses[h];
+    if (!hd) continue;
+    const sig = hd.significators || {};
+    html += `<div style="background:#f9f9f9;padding:10px;border-radius:8px;font-size:12px">
+      <strong>${h}宫 (${hd.sign || ''})</strong><br>
+      A: ${(sig.A || []).join(', ') || '—'}<br>
+      B: ${(sig.B || []).join(', ') || '—'}<br>
+      C: ${(sig.C || []).join(', ') || '—'}<br>
+      D: ${sig.D || '—'}
+    </div>`;
+  }
+  html += '</div>';
+
+  // KP lords summary
+  const planets = ext.kp.planets || {};
+  if (Object.keys(planets).length > 0) {
+    html += '<h4 style="margin-top:15px">KP Sublord 概览</h4><table style="width:100%;font-size:12px">';
+    html += '<tr style="background:#f5f5f5"><th>行星</th><th>Sub Lord</th><th>SubSub Lord</th><th>A</th><th>B</th></tr>';
+    for (const [pn, pd] of Object.entries(planets).slice(0, 9)) {
+      const kl = pd.kp_lords || {};
+      const sig = pd.significators || {};
+      html += `<tr>
+        <td>${pn}</td>
+        <td>${kl.sub_lord || '—'}</td>
+        <td>${kl.sub_sub_lord || '—'}</td>
+        <td>${sig.A || '—'}</td>
+        <td>${sig.B || '—'}</td>
+      </tr>`;
+    }
+    html += '</table>';
+  }
+
+  sec.innerHTML = html;
 }
 
 // ============================================================================
