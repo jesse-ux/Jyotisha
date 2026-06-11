@@ -139,6 +139,8 @@
           <button class="tab-btn" data-tab="extended"><span class="tab-full" data-i18n="tab.extended.full">Vishesh Pariksha 扩展分析</span><span class="tab-short" data-i18n="tab.extended.short">扩展分析</span></button>
           <button class="tab-btn" data-tab="remedies">🪷 补救</button>
           <button class="tab-btn" data-tab="kp">KP</button>
+          <button class="tab-btn" data-tab="verify">🔍 验证</button>
+          <button class="tab-btn" data-tab="transit-compare">🪐 过境</button>
           <button class="tab-btn" id="btn-print" title="打印/导出PDF">📥</button>
         </nav>
 
@@ -415,12 +417,26 @@
           </div>
         </div>
 
-        <!-- === Tab: KP 系统 === -->
-        <div class="tab-panel" id="tab-kp">
-          <h3 class="section-title">KP (Krishnamurti Paddhati) 系统</h3>
-          <div id="kp-section" class="deep-section">
-            <p style="color:#999;text-align:center;padding:40px">正在计算KP Sublord与Significator...</p>
+        <!-- === Tab: 验证 === -->
+        <div class="tab-panel" id="tab-verify">
+          <h3 class="section-title">🔍 验前事 / 案例验证</h3>
+          <div id="verify-section">
+            <div class="deep-section"><h4>📅 反推历史关键时段</h4><div id="past-events-result"><p style="color:#999;text-align:center;padding:20px">计算中...</p></div></div>
+            <div class="deep-section"><h4>📊 名人案例匹配</h4><div id="case-match-result"><p style="color:#999;text-align:center;padding:20px">搜索中...</p></div></div>
+            <div class="deep-section"><h4>⚠️ 误区警告</h4><div id="fallacy-warn-result"><p style="color:#999;text-align:center;padding:20px">扫描中...</p></div></div>
           </div>
+        </div>
+
+        <!-- === Tab: Transit === -->
+        <div class="tab-panel" id="tab-transit">
+          <h3 class="section-title">🪐 过境与对比</h3>
+          <div id="transit-section">
+            <div style="display:flex;gap:10px;margin-bottom:15px">
+              <input type="date" id="transit-start" style="flex:1;padding:6px;border-radius:6px;border:1px solid #ddd">
+              <input type="date" id="transit-end" style="flex:1;padding:6px;border-radius:6px;border:1px solid #ddd">
+              <button id="btn-run-transit" style="background:#1565c0;color:#fff;padding:6px 16px;border-radius:6px;border:none;cursor:pointer">搜索过境</button>
+            </div>
+            <div id="transit-result"><p style="color:#999;text-align:center;padding:20px">选择日期范围后点击搜索</p></div></div>
         </div>
 
         <!-- 生时校正全屏模态面板 -->

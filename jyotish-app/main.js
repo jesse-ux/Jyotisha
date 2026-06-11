@@ -381,6 +381,9 @@ function renderAll() {
   // 🔥 v6.7.2: API数据渲染 Recovery & KP tabs
   renderRemediesTab(chartData);
   renderKPTab(chartData);
+  // v6.9.0: 验证 & 过境 Tab
+  renderVerifyTab(chartData);
+  renderTransitCompareTab(chartData);
 
   // 绑定术语 Tooltip（延迟确保所有异步渲染完成）
   setTimeout(() => bindTerms(document.querySelector('#page-chart')), 200);
@@ -493,6 +496,74 @@ function renderKPTab(chartData) {
   }
 
   sec.innerHTML = html;
+}
+
+// ============================================================================
+// 🔍 验证Tab渲染 (v6.9.0)
+// ============================================================================
+function renderVerifyTab(chartData) {
+  const pastSec = document.getElementById('past-events-result');
+  if (pastSec && chartData._extended?.past_events) {
+    const pe = chartData._extended.past_events;
+    pastSec.innerHTML = `<p style="color:#666;margin-bottom:8px">${pe.summary || '基于Dasha/Transit反推'}</p>
+      ${(pe.events || []).map(e => `<div style="background:#e8f5e9;padding:8px 12px;border-radius:6px;margin:4px 0;font-size:13px">
+        <strong>${e.period || ''}</strong>: ${e.description || ''} <span style="color:#888">(${e.confidence || ''})</span></div>`).join('')}`;
+  }
+
+  const caseSec = document.getElementById('case-match-result');
+  if (caseSec && chartData._extended?.case_matches) {
+    const cm = chartData._extended.case_matches;
+    caseSec.innerHTML = `<p style="color:#666;margin-bottom:8px">匹配到${cm.length || 0}个相似案例</p>
+      ${(cm || []).slice(0,5).map(c => `<div style="background:#e3f2fd;padding:8px 12px;border-radius:6px;margin:4px 0;font-size:13px">
+        <strong>${c.name || ''}</strong>: ${c.match || ''} <span style="color:#666">吻合度:${c.accuracy || '?'}</span></div>`).join('')}`;
+  }
+
+  const fallSec = document.getElementById('fallacy-warn-result');
+  if (fallSec) {
+    let warnings = [];
+    const interps = chartData._extended?.interpretations || {};
+    for (const [k, v] of Object.entries(interps)) {
+      if (typeof v === 'string' && (v.includes('毁灭') || v.includes('落陷') || v.includes('必坏'))) {
+        warnings.push({text: v.slice(0, 60), fix: '需多配置综合判断'});
+      }
+    }
+    if (warnings.length === 0) warnings.push({text: '未检测到常见误区', fix: ''});
+    fallSec.innerHTML = warnings.map(w => `<div style="background:#fff3e0;padding:6px 12px;border-radius:6px;margin:4px 0;font-size:12px">
+      ⚠️ ${w.text}${w.fix ? ' → '+w.fix : ''}</div>`).join('');
+  }
+}
+
+// ============================================================================
+// 🪐 过境对比 Tab渲染 (v6.9.0)
+// ============================================================================
+function renderTransitCompareTab(chartData) {
+  const transitBtn = document.getElementById('btn-run-transit');
+  if (!transitBtn) return;
+  transitBtn.onclick = async () => {
+    const start = document.getElementById('transit-start').value;
+    const end = document.getElementById('transit-end').value;
+    if (!start || !end) return;
+    const rd = document.getElementById('transit-result');
+    rd.innerHTML = '<p style="text-align:center;color:#999;padding:20px">搜索过境触发点...</p>';
+    try {
+      const base = window.JyotishAPI?.apiBase || '';
+      const key = window.JyotishAPI?.apiKey || '';
+      const resp = await fetch(`${base}/api/transit`, {
+        method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${key}`},
+        body: JSON.stringify({start, end, planets: Object.keys(chartData.planets || {}).slice(0, 9)})
+      });
+      const data = await resp.json();
+      if (data.triggers?.length) {
+        rd.innerHTML = `<p style="color:#666">发现${data.triggers.length}个触发点</p>
+          ${data.triggers.slice(0, 20).map(t => `<div style="background:#f9f9f9;padding:6px 12px;border-radius:6px;margin:3px 0;font-size:12px">
+            <strong>${t.planet || ''}</strong> → ${t.event || t.description} · ${t.start_date || t.date}</div>`).join('')}`;
+      } else {
+        rd.innerHTML = '<p style="text-align:center;color:#999;padding:20px">无显著过境触发点</p>';
+      }
+    } catch(e) {
+      rd.innerHTML = '<p style="text-align:center;color:#999;padding:20px">过境数据需API服务器 (python3 scripts/jyotish_api_server.py)</p>';
+    }
+  };
 }
 
 // ============================================================================
