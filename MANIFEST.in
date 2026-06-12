@@ -1,0 +1,26 @@
+include README.md
+include CHANGELOG.md
+include LICENSE
+include requirements.txt
+include requirements-dev.txt
+include mcp_server.py
+recursive-include scripts *.py
+recursive-include scripts *.json
+recursive-include scripts *.csv
+recursive-include jyotish_vedic *.py
+recursive-include jyotish_vedic *.json
+recursive-include jyotish_vedic *.md
+recursive-include jyotish-app *
+recursive-include tests *.py
+recursive-include tests *.json
+recursive-include assets *
+prune references
+prune benchmarks
+prune .github
+prune docs
+prune skills
+prune __pycache__
+prune .pytest_cache
+prune .ruff_cache
+prune .hypothesis
+prune **/__pycache__

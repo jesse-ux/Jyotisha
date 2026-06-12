@@ -266,10 +266,15 @@ Examples:
 
 ## Project Status
 
-**Current version:** `v6.1.10-dk-rtn-theme-bridge`
+**Current version:** `v6.9.6`
 
 ### Recently Completed
 
+- `v6.9.6` — Field mapping fixes (degree→degree_in_sign + toFixed null safety); PyPI publishing config.
+- `v6.9.5` — birth_info null safety + API field mapping fixes.
+- `v6.9.4` — AI interpretation integration (GPT relay via copse.top); api-bridge.js bundled into public/.
+- `v6.9.3` — 35 Dasha systems, 405+ Yoga rules, KP complete system, Prashna, 16-factor synastry, Remedies, Sahams 36, Sudarshana, PMC, Tajika.
+- `v6.1.12` — Chara Dasha KN Rao Method rewrite, PyJHora benchmark 95.83% PASS.
 - `v6.1.10` — Darakaraka deep reader wired into `full-reading.modules.jaimini.darakaraka`; thematic reports now consume real DK and Rashi Tulya Navamsa evidence.
 - `v6.1.9` — Public/sanitized benchmark suite, competitive research, coverage roadmap and PDF validation methodology added.
 - `v6.1.8` — Yoga validation reached F1=95.22% (FP=36, FN=63); thematic reports consume real `full-reading.modules` evidence.
@@ -278,20 +283,18 @@ Examples:
 
 ### Actively Working On (P0)
 
-1. **Chara Dasha rewrite** — align with PyJHora KN Rao method (target: ≥95% match)
+1. **PyPI release** — Package validated; needs `twine upload` and GitHub Actions tag-trigger
 2. **Shadbala external calibration** — align with JHora / PyJHora / BV Raman
-3. **Darakaraka / RTN external benchmark** — v6.1.10 has wired the modules; next step is traditional case validation and evidence ranking
+3. **Test expansion** — from 50 smoke tests to 200+ unit/regression tests
 4. **KP Sub-Lord full implementation** — unequal Vimshottari subdivisions
 5. **Bhava Chalit complete** — cusp-based planet reassignment
 6. **Sudarshana Chakra traditional** — Sun/Moon/Lagna reference points
 
 ### Next (P1)
 
-- Benchmark harness (PyJHora output comparison)
+- Docker image (Dockerfile + docker-compose.yml created, needs push)
 - English documentation completion
-- Docker image
-- MCP Server endpoint
-- GitHub Actions CI
+- Multi-Ayanamsa support (Lahiri + Raman + KP + custom)
 
 ---
 

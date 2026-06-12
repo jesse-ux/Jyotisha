@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jyotish-vedic-astrology"
-version = "6.1.10"
+version = "6.9.6"
 description = "Comprehensive Jyotish (Vedic Astrology) calculation engine with AI-ready APIs"
 readme = "README.md"
 license = "MIT"
@@ -39,6 +39,9 @@ dev = [
     "build>=0.9",
     "twine>=4.0",
 ]
+api = [
+    "mcp>=1.0",
+]
 
 [project.scripts]
 jyotish = "jyotish_vedic.cli:main"
@@ -54,8 +57,8 @@ Changelog = "https://github.com/732642856/yinduzhanxing/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["jyotish_vedic*"]
-exclude = ["tests*", "docs*", "jyotish-app*", "benchmark*", "references*"]
+include = ["jyotish_vedic*", "scripts*"]
+exclude = ["tests*", "docs*", "jyotish-app*", "benchmark*", "benchmarks*", "references*", "skills*", "assets*"]
 
 [tool.setuptools.package-data]
 jyotish_vedic = ["*.json", "*.md", "*.csv", "*.db"]

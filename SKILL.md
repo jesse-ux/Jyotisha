@@ -1,18 +1,18 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.9.3
+version: 6.9.6
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。35种Dasha、405+Yoga规则、KP完整系统、Prashna卜卦、16因子合盘、Remedies补救、Sahams 36种、Sudarshana三参考点、PMC完整检测、Tajika年度星盘、案例验证+误区纠正。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga。GitHub: https://github.com/732642856/yinduzhanxing
 ---
 
 # 印度占星专业解盘与推运系统
 
-> **版本**：v6.9.3 | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.9.6 | **详细变更**：`CHANGELOG.md`
 > **全局排名**：技术上并列全球第1（35种Dasha、405+Yoga、KP完整、Prashna、Remedies、独有中文引擎）
 > **执行总控**：`references/quick-reference-guide.md`
 > **严格路由**：`references/strict-workflow-router.md`（涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`
 
-## v6.9.3 核心能力
+## v6.9.6 核心能力
 
 | 维度 | 数据 |
 |------|:--:|
@@ -25,13 +25,13 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | 合盘 | 16因子36分制（Ashtakoot+Kuta） |
 | 补救 | 5类（宝石/咒语/捐赠/斋戒/Dosha专项） |
 | 自动化测试 | 50/50 (100%) |
-| Git commits | v6.1.12→v6.9.3 共19个 |
+| Git commits | v6.1.12→v6.9.6 共19个 |
 
 **独有能力**：中文AI解读引擎、Career/Love结构化分析、验前事反推管道、误区自动纠正、名人+普通人案例双轨验证。
 
 ## Yoga 逻辑验证指标
 
-| 指标 | v6.0.45（旧基线） | v6.9.3（当前） |
+| 指标 | v6.0.45（旧基线） | v6.9.6（当前） |
 |---|---:|---:|
 | Precision | 83.26% | **96.48%** |
 | Recall | 91.52% | **93.99%** |
