@@ -22,9 +22,19 @@ async function computeWithPython(birthData) {
     const data = await resp.json();
     if (data.success) {
       console.log('[Compute] ✅ Python API v' + data.version);
-      // Python API返回 'birth'，统一转为JS引擎的 'birth_info' 格式
-      if (data.birth && !data.birth_info) {
-        data.birth_info = data.birth;
+      // Python API → JS引擎字段映射
+      if (data.birth && !data.birth_info) data.birth_info = data.birth;
+      // ascendant.degree → ascendant.degree_in_sign
+      if (data.ascendant?.degree != null && data.ascendant.degree_in_sign == null) {
+        data.ascendant.degree_in_sign = data.ascendant.degree;
+      }
+      // planet degree → degree_in_sign
+      if (data.planets) {
+        for (const [k, v] of Object.entries(data.planets)) {
+          if (v?.degree != null && v.degree_in_sign == null) {
+            v.degree_in_sign = v.degree % 30;
+          }
+        }
       }
       return data;
     }

@@ -272,7 +272,7 @@ function renderAll() {
 
   // Banner
   $('asc-sign').textContent = `${ascendant.sign} · ${signName(ascendant.sign)}`;
-  $('asc-degree').textContent = `${(ascendant.degree_in_sign != null ? ascendant.degree_in_sign : ascendant.degree).toFixed(2)}°  |  ${t('asc.lord')}: ${planetName(ascendant.lord)}`;
+  $('asc-degree').textContent = `${((ascendant.degree_in_sign ?? ascendant.degree) ?? 0).toFixed(2)}°  |  ${t('asc.lord')}: ${planetName(ascendant.lord)}`;
   if (moonP) $('asc-nakshatra').textContent = `${t('asc.nakshatra')}: ${moonP.nakshatra} Pada ${moonP.nakshatra_pada}`;
   $('asc-lord-badge').textContent = `${t('asc.lord')}: ${planetName(ascendant.lord)} (${ascendant.lord})`;
 
