@@ -253,7 +253,10 @@ function setupForm() {
 // ============================================================================
 function renderAll() {
   if (!chartData) return;
-  const { ascendant, planets, birth_info } = chartData;
+  const { ascendant = {}, planets = {}, birth_info = {} } = chartData;
+  if (!birth_info.date) birth_info.date = '2000-01-01';
+  if (!birth_info.time) birth_info.time = '12:00';
+  if (!birth_info.tz) birth_info.tz = 'UTC+8';
   const moonP = planets.Moon;
 
   // 高级计算
