@@ -22,6 +22,10 @@ async function computeWithPython(birthData) {
     const data = await resp.json();
     if (data.success) {
       console.log('[Compute] ✅ Python API v' + data.version);
+      // Python API返回 'birth'，统一转为JS引擎的 'birth_info' 格式
+      if (data.birth && !data.birth_info) {
+        data.birth_info = data.birth;
+      }
       return data;
     }
   } catch(e) {
