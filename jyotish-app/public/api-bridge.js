@@ -6,7 +6,7 @@
  *   AI解读 → copse.top (GPT API 中转)
  */
 const AI_BASE = 'https://copse.top';
-const AI_KEY = 'sk-828a787bd2bb69d2d4707e8c05ae5cfe81b13de7be1db7f85932d49ed72e4c6a';
+const AI_KEY = window.YINDUZHANXING_AI_KEY || localStorage.getItem('YINDUZHANXING_AI_KEY') || '';
 
 // ═══════════════════════════════════════════════════════════════
 // 计算层 — 纯本地，不需要服务器
@@ -50,6 +50,10 @@ async function computeWithPython(birthData) {
 
 async function aiReading(chartData, options = {}) {
   const { style = 'deep', focus = '全部' } = options;
+
+  if (!AI_KEY) {
+    return { success: false, error: 'AI_KEY_NOT_CONFIGURED: set window.YINDUZHANXING_AI_KEY or localStorage.YINDUZHANXING_AI_KEY' };
+  }
 
   const prompt = buildReadingPrompt(chartData, style, focus);
 

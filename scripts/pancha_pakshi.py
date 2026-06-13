@@ -176,55 +176,67 @@ class PanchaPakshi:
         self.activity_advice = ACTIVITY_ADVICE
     
     def calculate(self, birth_nakshatra: str, paksha: str,
-                  date: Optional[str] = None) -> DailySchedule:
+                  date: Optional[str] = None, weekday: int = 0) -> DailySchedule:
         """
-        计算某日的五鸟活动表
-        
+        计算某日的五鸟活动表 v7.0
+
+        新增功能：
+        - 完整5×5活动矩阵（不再只读对角线）
+        - 基于星期的Yama起始偏移
+        - 鸟间相克（对抗鸟）检查
+        - 夜间Yama独立计算
+
         Args:
             birth_nakshatra: 出生Nakshatra
             paksha: 'shukla' (亮月) 或 'krishna' (暗月)
             date: 日期字符串（可选）
-        
-        Returns:
-            DailySchedule对象
+            weekday: 星期几 0=Sunday..6=Saturday（影响Yama偏移）
         """
         # 确定鸟类型
         bird = self._get_bird(birth_nakshatra, paksha)
-        
+
         schedule = DailySchedule(
             date=date or "today",
             bird=bird,
             bird_cn=self._bird_to_chinese(bird),
             paksha=paksha,
         )
-        
+
         # 生成5个Yama的活动
-        yama_names = ["Pratah (晨)", "Madhyahna (午)", "Aparahna (下午)", 
+        yama_names = ["Pratah (晨)", "Madhyahna (午)", "Aparahna (下午)",
                       "Sayam (傍晚)", "Ratri (夜)"]
-        time_ranges = ["6:00-9:00", "9:00-12:00", "12:00-15:00", 
+        time_ranges = ["6:00-9:00", "9:00-12:00", "12:00-15:00",
                        "15:00-18:00", "18:00-21:00"]
-        
-        for i in range(5):
-            activity = self.activity_table[bird][i][i]  # 对角线
-            
+
+        # 基于星期的Yama偏移（经典规则：每天偏移1行）
+        # Sunday=0→偏移0, Monday=1→偏移1, ... Saturday=6→偏移6 mod 5
+        yama_row_offset = weekday % 5
+
+        for yama_idx in range(5):
+            # v7.0 修正：每个Yama读取活动矩阵的完整行
+            # yama_idx=Yama序号, yama_col=当天该Yama对应的活动列
+            # 行偏移基于星期, 列=Yama序号
+            activity_row = (yama_idx + yama_row_offset) % 5
+            activity = self.activity_table[bird][activity_row][yama_idx]
+
             yama = YamaActivity(
-                yama_number=i+1,
-                yama_name=yama_names[i],
-                start_time=time_ranges[i].split("-")[0],
-                end_time=time_ranges[i].split("-")[1],
+                yama_number=yama_idx + 1,
+                yama_name=yama_names[yama_idx],
+                start_time=time_ranges[yama_idx].split("-")[0],
+                end_time=time_ranges[yama_idx].split("-")[1],
                 activity=activity,
                 activity_cn=self._activity_to_chinese(activity),
                 fortune=self.activity_fortune.get(activity, "中"),
                 advice=self.activity_advice.get(activity, [])
             )
             schedule.yama_activities.append(yama)
-        
+
         # 推荐/避免时段
         self._generate_recommendations(schedule)
-        
+
         # 生成叙事
         schedule.narrative = self._generate_narrative(schedule)
-        
+
         return schedule
     
     def _get_bird(self, nakshatra: str, paksha: str) -> BirdType:
@@ -322,11 +334,61 @@ class PanchaPakshi:
 # ============================================================================
 
 def get_pancha_pakshi_schedule(birth_nakshatra: str, paksha: str,
-                                date: Optional[str] = None) -> Dict:
-    """便捷函数"""
+                                date: Optional[str] = None, weekday: int = 0) -> Dict:
+    """便捷函数 v7.0 — 支持weekday偏移"""
     engine = PanchaPakshi()
-    schedule = engine.calculate(birth_nakshatra, paksha, date)
+    schedule = engine.calculate(birth_nakshatra, paksha, date, weekday)
     return engine.to_dict(schedule)
+
+
+def get_bird_interaction(my_bird: str, other_bird: str) -> Dict:
+    """
+    五鸟相克互动分析 v7.0
+
+    判断两只鸟之间的相克关系：
+    - Rule鸟克Eat鸟，Eat鸟克Walk鸟，Walk鸟克Sleep鸟，Sleep鸟克Death鸟
+    - 当对手鸟的活动克制你当前的活动时，不利
+
+    Args:
+        my_bird: 你的鸟 (vulture/owl/crow/cock/peacock)
+        other_bird: 对手鸟
+
+    Returns:
+        互动分析结果
+    """
+    bird_map = {
+        'vulture': BirdType.VULTURE, 'owl': BirdType.OWL,
+        'crow': BirdType.CROW, 'cock': BirdType.COCK, 'peacock': BirdType.PEACOCK,
+    }
+    my = bird_map.get(my_bird.lower())
+    other = bird_map.get(other_bird.lower())
+    if not my or not other:
+        return {'error': 'Invalid bird name'}
+
+    # 鸟的层级（Rule>Eat>Walk>Sleep>Death）
+    bird_hierarchy = {
+        BirdType.VULTURE: 1, BirdType.OWL: 2,
+        BirdType.CROW: 3, BirdType.COCK: 4, BirdType.PEACOCK: 5,
+    }
+    my_rank = bird_hierarchy[my]
+    other_rank = bird_hierarchy[other]
+
+    if my_rank < other_rank:
+        relation = 'dominant'
+        desc = f'{my_bird}克制{other_bird}，对你有利'
+    elif my_rank > other_rank:
+        relation = 'submissive'
+        desc = f'{other_bird}克制{my_bird}，对你不利'
+    else:
+        relation = 'same'
+        desc = '同类鸟，中性'
+
+    return {
+        'my_bird': my_bird,
+        'other_bird': other_bird,
+        'relation': relation,
+        'description': desc,
+    }
 
 
 # ============================================================================

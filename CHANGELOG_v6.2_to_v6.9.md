@@ -1,4 +1,31 @@
-# 印度占星 Skill Changelog v6.2.0 → v6.9.3
+# 印度占星 Skill Changelog v6.2.0 → v6.9.12
+
+## v6.9.12 (2026-06-13)
+- Shadbala精度升级：Nathonnata Bala连续化+Drik Bala Sputa Drishti精确相位
+- Ashtakoot 36点合婚：8标准Kuta+7附加Kuta+Kuja Dosha检测
+- 子命令扩展至35个
+
+## v6.9.11
+- Transit Swiss Ephemeris精度升级：真实过境行星位置+多参考点校验
+- KP Oracle测试框架：SubLord+SubSubLord断言验证
+
+## v6.9.10
+- Chara Dasha bug fix：KN Rao Method序列+时长修正
+- 多Ayanamsa支持：Lahiri/Raman/Krishnamurti/Chitra Paksha切换
+- KP CLI子命令：完整SubLord+SubSubLord+ABCD Significator
+
+## v6.9.9
+- 精度增强：smoke_test_runner自动化+MEVG门控+dashboard可视化
+- Ayanamsa多系统支持：apply_ayanamsa()函数
+
+## v6.9.8
+- PDF报告输出：Playwright截图+南印盘SVG渲染
+- report子命令升级：MD→HTML→PDF完整管线
+
+## v6.9.7
+- PyPI包发布：pip install jyotish-vedic-astrology
+- Docker容器化：多阶段构建+Swiss Ephemeris预装
+- CI/CD基础设施：GitHub Actions自动测试+发布
 
 ## v6.9.3 (2026-06-11)
 - 纯前端架构：恢复SwissEph WASM，无需后端即可计算
@@ -65,7 +92,7 @@
 - Kakshya、Sudarshana、PMC、Sade Sati
 
 ## 总计
-- 版本：v6.1.12 → v6.9.3
+- 版本：v6.1.12 → v6.9.12
 - 新模块：24个
 - Dasha：7 → 35种
 - Yoga：100 → 405+条规则

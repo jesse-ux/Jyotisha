@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jyotish-vedic-astrology"
-version = "6.9.6"
+version = "6.9.12"
 description = "Comprehensive Jyotish (Vedic Astrology) calculation engine with AI-ready APIs"
 readme = "README.md"
 license = "MIT"

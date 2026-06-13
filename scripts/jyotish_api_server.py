@@ -181,7 +181,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     planets_data.get('Sun',{}).get('lon',0), moon_lon, minute)
                 shadbala_summary = {p: {'rupas': round(d['total_rupas'],2), 'level': d['strength_level']} 
                     for p,d in sb.get('planets',{}).items()}
-            except: shadbala_summary = {}
+            except Exception as e:
+                import logging
+                logging.warning(f"[api_server] shadbala calculation failed: {e}")
+                shadbala_summary = {}
 
             # Yoga扩展 (dashaflow MIT规则)
             try:
@@ -189,9 +192,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 for ey in detect_ey(planets_data, asc_sign):
                     yogas.append({'name': ey.get('name',''), 'planets': ey.get('planets',[]),
                                   'desc': ey.get('description','')[:80], 'cat': 'extended'})
-            except: pass
-
-            return {
+            except Exception as e:
+                import logging
+                logging.warning(f"[api_server] yoga expansion detection failed: {e}")
                 'success': True, 'version': '6.7.4',
                 'birth': {'date': f'{year}-{month:02d}-{day:02d}', 'time': f'{int(hour):02d}:{int(minute):02d}'},
                 'ascendant': {'sign': asc_sign, 'sign_idx': asc_sign_idx, 'degree': round(asc_lon % 30, 2)},
@@ -254,13 +257,17 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             for y in pmc:
                 if y['is_valid']:
                     yogas.append({'name': y['name'], 'planets': [y['planet']], 'category': 'PMC'})
-        except: pass
+        except Exception as e:
+            import logging
+            logging.warning(f"[api_server] pancha_mahapurusha detection failed: {e}")
 
         try:
             from yoga_expansion import detect_all_yogas as detect_yogas_ext
             for y in detect_yogas_ext(planets, SIGNS[asc_idx]):
                 yogas.append({'name': y.get('name',''), 'planets': y.get('planets',[]), 'category': 'extended'})
-        except: pass
+        except Exception as e:
+            import logging
+            logging.warning(f"[api_server] yoga expansion in _detect_yogas failed: {e}")
 
         return yogas[:10]
 

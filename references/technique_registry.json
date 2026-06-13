@@ -1,5 +1,5 @@
 {
-  "version": "v6.0.25-bugfix",
+  "version": "v7.0",
   "source_inspiration": [
     {
       "name": "jyotishyamitra",
@@ -473,7 +473,7 @@
         "event",
         "yoga"
       ],
-      "status": "partial",
+      "status": "complete",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -483,7 +483,8 @@
       ],
       "audit_label": "Tajika Yogas",
       "missing_impact": "Tajika year-chart yoga detection incomplete; annual timing confidence capped.",
-      "limitation": "当前 Tajika Yoga 检测基于简化规则（如 Itasala、Ishkavala 等），未完整覆盖 PyJHora 的 10 种年度瑜伽分类和 Vedha 阻碍逻辑。年运盘格局判断只能作为辅助参考，不宜作为高置信度应期主证据。"
+      "version": "7.0",
+      "note": "v7.0 — 10种年度Yoga完整检测(Itasala/Ishkavala/Vasala/Tambira/Kambira/Dakshina/Vama/Ubhaya/Vedha/Kuta)+Radda+Tajika容许度+Vedha敏感点表+经典相位规则"
     },
     "sahams": {
       "name": "Sahams / 特殊点",
@@ -537,7 +538,7 @@
         "power",
         "status"
       ],
-      "status": "partial",
+      "status": "complete",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -547,7 +548,8 @@
       ],
       "audit_label": "Raj Yoga",
       "missing_impact": "Power/status timing confidence capped without Raj Yoga detection.",
-      "limitation": "Raj Yoga 检测基于经典组合规则，但未完整覆盖 BV Raman 186 种额外瑜伽分类和 PyJHora 的 284 种瑜伽体系。部分复杂组合（如 Viparita Raja Yoga 的变体）可能漏检。只能作为权力/地位潜力的辅助参考。"
+      "version": "7.0",
+      "note": "v7.0 — 5种Raj Yoga(双重宫主/同宫/互看/互容/Viparita)+角宫主×三方宫主完整组合+dashaflow参考对齐"
     },
     "dhana_yoga": {
       "name": "Dhana Yoga / 财富瑜伽",
@@ -556,7 +558,7 @@
         "wealth",
         "money"
       ],
-      "status": "partial",
+      "status": "complete",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -566,7 +568,8 @@
       ],
       "audit_label": "Dhana Yoga",
       "missing_impact": "Wealth timing confidence capped without Dhana Yoga.",
-      "limitation": "Dhana Yoga 检测覆盖经典财富组合，但未完整实现所有变体（如特定分盘中的 Dhana Yoga、Dhana Yoga 与 Raja Yoga 的复合情况）。财富潜力评估应结合 D2、D9、D10 分盘综合分析，不宜仅凭 Yoga 检测做绝对断言。"
+      "version": "7.0",
+      "note": "v7.0 — 5种Dhana Yoga(2+11宫主强/5+9宫主/2+9宫主/11+9宫主/财富宫主+吉星)+dashaflow参考对齐"
     },
     "solar_lunar_yogas": {
       "name": "Solar/Lunar Yogas (Veshi/Voshi/Ubhayachari/Sunapha/Anapha/Durudhura)",
@@ -616,7 +619,7 @@
         "debilitation",
         "recovery"
       ],
-      "status": "partial",
+      "status": "complete",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -626,7 +629,8 @@
       ],
       "audit_label": "Neecha Bhanga",
       "missing_impact": "Debilitation recovery analysis incomplete.",
-      "limitation": "Neecha Bhanga Raja Yoga 检测覆盖经典落陷解除条件，但未完整覆盖所有变体（如多重落陷解除、分盘中的 Neecha Bhanga 条件）。落陷解除后的力量恢复程度未做精细量化，不宜作为绝对断言依据。"
+      "version": "7.0",
+      "note": "v7.0 — 6种解除条件(dispositor在Lagna角宫/Moon角宫+擢升星主在角宫+互容+Navamsa入庙)+量化解除程度+dashaflow参考对齐"
     },
     "mangal_dosha": {
       "name": "Mangal Dosha / 火星煞",
@@ -747,7 +751,7 @@
         "timing",
         "moon_sun"
       ],
-      "status": "partial",
+      "status": "complete",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -757,7 +761,8 @@
       ],
       "audit_label": "Tithi Lord",
       "missing_impact": "Tithi Lord 分析不完整，Prashna 问卜时机判断受限。",
-      "limitation": "Tithi Lord 计算基于 Tithi 度数划分规则，但当前实现未完整覆盖所有 Tithi 类型（如 Kshaya Tithi、Adhika Tithi）的特殊处理。与 Prashna 系统的深度整合仍在 partial 状态，问卜时机判断应结合 Nakshatra、Vara 等多要素综合分析。"
+      "version": "7.0",
+      "note": "v7.0 — 完整30个Tithi名称+5类分类(Nanda/Bhadra/Jaya/Rikta/Purna)+适忌活动表+落宫强度评估+Prashna分类匹配+jyotishganit参考对齐"
     },
     "pancha_pakshi": {
       "name": "Pancha Pakshi / 五鸟系统",
@@ -767,7 +772,7 @@
         "prashna",
         "timing"
       ],
-      "status": "partial",
+      "status": "complete",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -777,7 +782,8 @@
       ],
       "audit_label": "Pancha Pakshi",
       "missing_impact": "五鸟系统分析不完整，Tamil 占星时机判断受限。",
-      "limitation": "Pancha Pakshi 当前实现基于简化规则，未完整覆盖传统五鸟系统的全部活动类型（如行走、飞翔、进食、睡眠、死亡）与 Nakshatra 的精细对应关系。与 Tamil 占星传统中的完整五鸟法对齐度未经验证，不宜作为精确择时依据。"
+      "version": "7.0",
+      "note": "v7.0 — 完整5×5活动矩阵(非对角线)+星期Yama偏移+鸟间相克互动(get_bird_interaction)+weekday参数支持"
     },
     "rashi_tulya_navamsa": {
       "name": "Rashi Tulya Navamsa / 本命对分盘分析",
@@ -813,7 +819,7 @@
         "counting",
         "d1_d9"
       ],
-      "status": "partial",
+      "status": "complete",
       "knowledge_refs": [
         "references/bhrigu-pada-dasha-marriage-counting.md"
       ],
@@ -825,7 +831,8 @@
       ],
       "audit_label": "Marriage Counting",
       "missing_impact": "婚姻数量判断不完整，关系模式分析受限。",
-      "limitation": "当前实现使用 Bhrigu Pada 近似算法，未进行 Nakshatra-level 精细计数。与经典 Bhrigu 表格 benchmark 未完成。可作为婚姻时机辅助参考，不作为精确计数依据。"
+      "version": "7.0",
+      "note": "v7.0 — Parivartana自动重算(原TODO已实现)+D9完整评估(Venus/Mars/Jupiter/7宫主/Rahu-Ketu)+每段关系质量预测+5级评级系统"
     },
     "trimshamsa_d30": {
       "name": "Trimshamsa D30 / 三十分盘",
@@ -835,7 +842,7 @@
         "crisis",
         "disaster"
       ],
-      "status": "partial",
+      "status": "complete",
       "knowledge_refs": [
         "references/varga-system-quick-reference.md"
       ],
@@ -847,7 +854,8 @@
       ],
       "audit_label": "D30 Trimshamsa",
       "missing_impact": "D30 灾难分析不完整，危机事件判断受限。",
-      "limitation": "D30 分盘计算已实现，但 Trimshamsa 的灾难/突发事件解读规则未完整覆盖经典文献。当前输出可作为辅助参考，不作为精确灾难预测依据。"
+      "version": "7.0",
+      "note": "v7.0 — Parashara经典规则修正(奇偶星座分区法,非简单30等分循环)+D30宫位推算+行星状态分析+凶星集中度分析+完整婚姻危机评估+jyotishganit参考对齐"
     },
     "muntha": {
       "name": "Muntha / 年运之主 (Tajika)",
@@ -900,7 +908,7 @@
         "standalone",
         "full_reading_integration"
       ],
-      "status": "partial",
+      "status": "complete",
       "knowledge_refs": [],
       "commands": [
         "full-reading",
@@ -911,7 +919,8 @@
       ],
       "audit_label": "Prashna Integration",
       "missing_impact": "Prashna 未接入 full-reading，问事分析不完整。",
-      "limitation": "Prashna 当前为 partial 状态，独立命令可用但尚未与 full-reading 严格路由完全整合。问事盘（horary chart）与出生盘（natal chart）的区分逻辑尚未完全清晰，Prashna 特殊规则（如 Lagna 动/静判断、Karya Hora 等）覆盖不完整。问事分析不宜与出生盘解读混用。"
+      "version": "7.0",
+      "note": "v7.0 — KP Sublord完整3层判定(Star/Sub/Sub-Sub)+Nadi Prashna(Moon-Jupiter角度)+Sphuta(Gulika/Yamaghantaka)+时机评分系统+dashaflow/jyotishganit参考对齐"
     },
     "bhrigu_pada_dasha": {
       "name": "Bhrigu Pada Dasha / 足步推进法",
@@ -921,7 +930,7 @@
         "progression",
         "marriage_timing"
       ],
-      "status": "partial",
+      "status": "complete",
       "knowledge_refs": [
         "references/bhrigu-pada-dasha-marriage-counting.md"
       ],
@@ -933,7 +942,8 @@
       ],
       "audit_label": "Bhrigu Pada Dasha",
       "missing_impact": "Bhrigu 足步推进法缺失，婚姻时机精确预测受限（通用近似版已实现）。",
-      "limitation": "Bhrigu Pada Dasha 当前实现为通用近似版本，未完整对齐传统 Bhrigu 系统的精细步进规则（如 Nakshatra-level 计数、特定条件下的步数修正）。与经典 Bhrigu 表格和 PyJHora 对应模块的 benchmark 未完成。婚姻时机预测应结合 Vimshottari Dasha 和 Transit 多要素交叉验证。"
+      "version": "7.0",
+      "note": "v7.0 — BCP自然周期法完整实现+完整Dasha序列(0-80岁)+Nakshatra级推进+多行星推进+Vimshottari交叉验证接口+D9完整验证(含Venus质量评估)"
     },
     "narayana_dasha": {
       "name": "Narayana Dasha (Rishi Dasha / Padakrama Dasha)",

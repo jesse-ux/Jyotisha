@@ -1,18 +1,18 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.9.6
+version: 6.9.12
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。35种Dasha、405+Yoga规则、KP完整系统、Prashna卜卦、16因子合盘、Remedies补救、Sahams 36种、Sudarshana三参考点、PMC完整检测、Tajika年度星盘、案例验证+误区纠正。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga。GitHub: https://github.com/732642856/yinduzhanxing
 ---
 
 # 印度占星专业解盘与推运系统
 
-> **版本**：v6.9.6 | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.9.12 | **详细变更**：`CHANGELOG.md`
 > **全局排名**：技术上并列全球第1（35种Dasha、405+Yoga、KP完整、Prashna、Remedies、独有中文引擎）
 > **执行总控**：`references/quick-reference-guide.md`
 > **严格路由**：`references/strict-workflow-router.md`（涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`
 
-## v6.9.6 核心能力
+## v6.9.12 核心能力
 
 | 维度 | 数据 |
 |------|:--:|
@@ -25,13 +25,13 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | 合盘 | 16因子36分制（Ashtakoot+Kuta） |
 | 补救 | 5类（宝石/咒语/捐赠/斋戒/Dosha专项） |
 | 自动化测试 | 50/50 (100%) |
-| Git commits | v6.1.12→v6.9.6 共19个 |
+| Git commits | v6.1.12→v6.9.12 共22个 |
 
 **独有能力**：中文AI解读引擎、Career/Love结构化分析、验前事反推管道、误区自动纠正、名人+普通人案例双轨验证。
 
 ## Yoga 逻辑验证指标
 
-| 指标 | v6.0.45（旧基线） | v6.9.6（当前） |
+| 指标 | v6.0.45（旧基线） | v6.9.12（当前） |
 |---|---:|---:|
 | Precision | 83.26% | **96.48%** |
 | Recall | 91.52% | **93.99%** |
@@ -192,7 +192,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 $PYTHON $SCRIPT <子命令> [参数]
 ```
 
-### 30大子命令速查
+### 35大子命令速查
 
 | 子命令 | 功能 |
 |--------|------|
@@ -226,6 +226,11 @@ $PYTHON $SCRIPT <子命令> [参数]
 | `planetary-congregation` | 行星聚集检测 |
 | `vivah-saham` | Vivah Saham婚姻敏感点 |
 | `audit-capabilities` | technique registry 校验 + route 审计表输出 |
+| `kp` | KP完整分析（SubLord+SubSubLord+ABCD Significator） |
+| `ashtakoot` | 36点合婚（8标准Kuta+7附加+Kuja Dosha） |
+| `solar-return` | 太阳返照盘年运分析（Newton迭代精确返照） |
+| `narayana-dasha` | Narayana Dasha星座大运 |
+| `muhurta` | Muhurta择时分析 |
 
 → 完整参数和示例 → `references/quick-reference-guide.md`
 
@@ -329,9 +334,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.1.12-chara-dasha-benchmark
+**版本**：v6.9.12-chara-dasha-benchmark
 **创建日期**：2026-04-20
-**最后更新**：2026-06-10（v6.1.11 Chara Dasha 重写为 KN Rao Method：序列基于第9宫方向判定，时长基于宫主所在宫位+尊贵调整，Antardasha 等分12份。状态从 partial 升级为 covered。当前 45 技法：27 covered + 18 partial。Yoga F1=95.22% 保持有效。）
+**最后更新**：2026-06-13（v6.9.12 Shadbala精度升级+Ashtakoot 36点合婚。当前 45 技法：27 covered + 18 partial。Yoga F1=95.22% 保持有效。）
 
 ---
 

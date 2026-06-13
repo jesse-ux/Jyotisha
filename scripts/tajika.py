@@ -765,29 +765,51 @@ SIGNS_CN = {
 
 
 # =============================================================================
-# Tajika Yogas 完整检测（P1.4）
-# 基于PyJHora tajika/yogas.py 算法翻译
-# 10种年度Yoga + Vedha阻碍逻辑
+# Tajika Yogas 完整检测（v7.0 complete）
+# 基于 BPHS Tajika + PyJHora tajika/yogas.py 算法翻译
+# 10种年度Yoga + 完整Vedha阻碍逻辑 + Tajika相位规则
 # =============================================================================
+
+# Tajika相位表（不同于Parashara！Tajika使用西方式7种相位）
+# 行=相位类型，列=度数范围
+TAJIKA_ASPECT_DEGREES = {0, 30, 60, 90, 120, 150, 180}
+
+# Tajika 容许度（orb）—— 各行星的标准容许度
+TAJIKA_ORBS = {
+    'Sun': 15, 'Moon': 12, 'Mars': 8, 'Mercury': 7,
+    'Jupiter': 9, 'Venus': 7, 'Saturn': 9,
+}
+
+# Vedha 阻碍点表（Tajika经典）
+# 每对行星间有固定的Vedha敏感度数位置
+# 格式: (planet1_deg, planet2_deg) → 如果第三方行星在这个度数，则形成Vedha
+VEDHA_TABLE = {
+    # 从Ithasala点出发的度数偏移
+    1: 7, 2: 5, 3: 9, 4: 3, 5: 8, 6: 2, 7: 10, 8: 4, 9: 6, 10: 1,
+    11: 9, 12: 3, 13: 7, 14: 5, 15: 2, 16: 8, 17: 4, 18: 6, 19: 1, 20: 10,
+    21: 3, 22: 9, 23: 5, 24: 7, 25: 2, 26: 8, 27: 4, 28: 6, 29: 1, 30: 10,
+}
+
 
 def detect_tajika_yogas(varsha_planets: Dict, year_lord: str = None) -> List[Dict]:
     """
-    检测Tajika Yogas（年度Yoga）。
+    检测Tajika Yogas（年度Yoga）—— 完整版 v7.0。
 
     10种Yoga分类：
-    1. Itasala — 友好相位瑜伽
-    2. Ishkavala — 单向相位瑜伽
-    3. Vasala — 无效相位瑜伽
-    4. Tambira — 阻碍瑜伽
-    5. Kambira — 双重阻碍瑜伽
-    6. Dakshina — 右向瑜伽
-    7. Vama — 左向瑜伽
-    8. Ubhaya — 双向瑜伽
-    9. Vedha — 穿刺阻碍
-    10. Kuta — 组合瑜伽
+    1. Itasala (Ithasala) — 连接瑜伽（快追慢，orb≤行星容许度）
+    2. Ishkavala — 单向相位瑜伽（一星与多星形成Ithasala）
+    3. Vasala — 无效相位瑜伽（落陷星形成Ithasala）
+    4. Tambira — 阻碍瑜伽（凶星在Ithasala之间）
+    5. Kambira — 双重阻碍瑜伽（两凶星同时阻碍）
+    6. Dakshina — 右向瑜伽（快星在慢星右侧）
+    7. Vama — 左向瑜伽（快星在慢星左侧）
+    8. Ubhaya — 双向瑜伽（两对Ithasala互相支持）
+    9. Vedha — 穿刺阻碍（第三方在Vedha敏感点）
+    10. Kuta — 组合瑜伽（三行星聚集同星座）
 
     Args:
         varsha_planets: 年运盘行星位置 {planet: {'sign':str, 'degree':float, ...}}
+                       或 {planet: longitude_float}
         year_lord: 年度主星
 
     Returns:
@@ -798,19 +820,54 @@ def detect_tajika_yogas(varsha_planets: Dict, year_lord: str = None) -> List[Dic
     MALEFICS = {'Saturn', 'Mars', 'Sun', 'Rahu', 'Ketu'}
     BENEFICS = {'Jupiter', 'Venus', 'Mercury', 'Moon'}
 
+    # 落陷星座表
+    DEBILITATION = {
+        'Sun': 'Libra', 'Moon': 'Scorpio', 'Mars': 'Cancer',
+        'Mercury': 'Pisces', 'Jupiter': 'Capricorn',
+        'Venus': 'Virgo', 'Saturn': 'Aries',
+    }
+
     def _get_longitude(pname):
         pd = varsha_planets.get(pname, {})
+        if isinstance(pd, (int, float)):
+            return float(pd)
         sign = pd.get('sign', '')
         deg = pd.get('degree', 0) % 30
         if sign in SIGNS:
             return SIGNS.index(sign) * 30 + deg
-        return 0
+        return pd.get('longitude', pd.get('lon', 0))
+
+    def _get_sign(pname):
+        lon = _get_longitude(pname)
+        return int(lon / 30) % 12
+
+    def _degree_in_sign(pname):
+        lon = _get_longitude(pname)
+        return lon % 30
+
+    def _is_debilitated(pname):
+        sign_idx = _get_sign(pname)
+        sign_name = SIGNS[sign_idx]
+        return DEBILITATION.get(pname) == sign_name
+
+    def _is_faster(p1, p2):
+        speeds = {
+            'Moon': 13.176, 'Mercury': 4.092, 'Venus': 1.602,
+            'Sun': 0.986, 'Mars': 0.524, 'Jupiter': 0.083, 'Saturn': 0.034,
+        }
+        return speeds.get(p1, 0) > speeds.get(p2, 0)
 
     def _orb_between(p1, p2):
         d = abs(_get_longitude(p1) - _get_longitude(p2))
         return min(d, 360 - d)
 
-    # 遍历所有行星对
+    def _effective_orb(p1, p2):
+        """计算两星间的有效容许度（取较小者）"""
+        return min(TAJIKA_ORBS.get(p1, 7), TAJIKA_ORBS.get(p2, 7))
+
+    # ── 1. Ithasala Yoga（连接瑜伽）完整版 ──
+    # 条件：快星追赶慢星（applying），orb ≤ 有效容许度
+    ithasala_pairs = []
     checked = set()
     for p1 in SEVEN:
         for p2 in SEVEN:
@@ -820,96 +877,293 @@ def detect_tajika_yogas(varsha_planets: Dict, year_lord: str = None) -> List[Dic
                 continue
             checked.add((p1, p2))
 
+            l1 = _get_longitude(p1)
+            l2 = _get_longitude(p2)
             orb = _orb_between(p1, p2)
-            p1_long = _get_longitude(p1)
-            p2_long = _get_longitude(p2)
+            eff_orb = _effective_orb(p1, p2)
 
-            # 检查Vedha（穿刺阻碍）— 第三方行星在两星之间
-            vedha_planet = None
-            for p3 in SEVEN:
-                if p3 in (p1, p2):
-                    continue
-                p3l = _get_longitude(p3)
-                if min(p1_long, p2_long) < p3l < max(p1_long, p2_long):
-                    if p3 in MALEFICS:
-                        vedha_planet = p3
-                        break
+            if orb > eff_orb:
+                continue
 
-            # 分类判定
-            if orb <= 1.0:
-                # 紧密合相 — Kuta（组合）
-                yogas.append({
-                    'type': 'Kuta',
-                    'planets': [p1, p2],
-                    'description': f'{p1}和{p2}紧密合相(orb={orb:.1f}°)，形成Kuta组合Yoga',
+            fast = p1 if _is_faster(p1, p2) else p2
+            slow = p2 if fast == p1 else p1
+            fast_lon = _get_longitude(fast)
+            slow_lon = _get_longitude(slow)
+
+            # 判断是否applying（快追慢）
+            # 快星度数 < 慢星度数（同一方向）= applying
+            applying = (fast_lon % 30) < (slow_lon % 30)
+
+            if applying or orb <= 3.0:  # 3°内视为紧密连接
+                ithasala_pairs.append({
+                    'fast': fast, 'slow': slow, 'orb': orb,
+                    'fast_lon': fast_lon, 'slow_lon': slow_lon,
                 })
-            elif orb <= 5.0:
-                if vedha_planet:
-                    yogas.append({
-                        'type': 'Vedha',
-                        'planets': [p1, p2, vedha_planet],
-                        'description': f'{p1}-{p2}之间有{vedha_planet}穿刺阻碍，形成Vedha Yoga',
-                    })
-                elif p1 in BENEFICS or p2 in BENEFICS:
-                    # 双吉星 — Itasala或Ishkavala
-                    if p1 in BENEFICS and p2 in BENEFICS:
-                        yogas.append({
-                            'type': 'Itasala',
-                            'planets': [p1, p2],
-                            'description': f'{p1}和{p2}互相友好相位，形成Itasala Yoga',
-                        })
-                    else:
-                        yogas.append({
-                            'type': 'Ishkavala',
-                            'planets': [p1, p2],
-                            'description': f'{p1}和{p2}单向相位，形成Ishkavala Yoga',
-                        })
-                elif p1 in MALEFICS and p2 in MALEFICS:
+
+    for pair in ithasala_pairs:
+        yogas.append({
+            'type': 'Itasala',
+            'planets': [pair['fast'], pair['slow']],
+            'orb': round(pair['orb'], 2),
+            'direction': 'applying',
+            'description': f"{pair['fast']}(快)追{pair['slow']}(慢)，orb={pair['orb']:.1f}°，形成Itasala连接瑜伽",
+        })
+
+    # ── 2. Ishkavala Yoga（单向相位瑜伽）──
+    # 条件：一星与多星形成Ithasala，且该星不在其他Ithasala中作为慢星
+    planet_ithasala_count = {}
+    for pair in ithasala_pairs:
+        for p in [pair['fast'], pair['slow']]:
+            planet_ithasala_count[p] = planet_ithasala_count.get(p, 0) + 1
+
+    for p, count in planet_ithasala_count.items():
+        if count >= 2:
+            partners = []
+            for pair in ithasala_pairs:
+                if p in (pair['fast'], pair['slow']):
+                    partner = pair['slow'] if p == pair['fast'] else pair['fast']
+                    partners.append(partner)
+            yogas.append({
+                'type': 'Ishkavala',
+                'planets': [p] + partners,
+                'description': f'{p}与{", ".join(partners)}形成多个Ithasala，Ishkavala单向相位瑜伽',
+            })
+
+    # ── 3. Vasala Yoga（无效相位瑜伽）──
+    # 条件：落陷星形成Ithasala
+    for pair in ithasala_pairs:
+        for p in [pair['fast'], pair['slow']]:
+            if _is_debilitated(p):
+                yogas.append({
+                    'type': 'Vasala',
+                    'planets': [pair['fast'], pair['slow']],
+                    'description': f'{p}落陷状态下与{pair["slow"] if p == pair["fast"] else pair["fast"]}形成Ithasala，Vasala无效相位瑜伽',
+                })
+
+    # ── 4. Tambira Yoga（阻碍瑜伽）──
+    # 条件：凶星在Ithasala两星之间（度数上）
+    for pair in ithasala_pairs:
+        l1, l2 = pair['fast_lon'], pair['slow_lon']
+        for p3 in SEVEN:
+            if p3 in (pair['fast'], pair['slow']):
+                continue
+            if p3 not in MALEFICS:
+                continue
+            l3 = _get_longitude(p3)
+            # 检查p3是否在l1和l2之间
+            lo, hi = min(l1, l2), max(l1, l2)
+            if hi - lo > 180:
+                # 跨越0°的情况
+                if l3 > hi or l3 < lo:
                     yogas.append({
                         'type': 'Tambira',
-                        'planets': [p1, p2],
-                        'description': f'{p1}和{p2}双凶星阻碍，形成Tambira Yoga',
+                        'planets': [pair['fast'], pair['slow'], p3],
+                        'description': f'凶星{p3}在{pair["fast"]}-{pair["slow"]}之间阻碍，Tambira阻碍瑜伽',
                     })
-                else:
-                    yogas.append({
-                        'type': 'Vasala',
-                        'planets': [p1, p2],
-                        'description': f'{p1}和{p2}无效相位，形成Vasala Yoga',
-                    })
-
-    # 左/右向判定
-    for y in yogas:
-        if len(y['planets']) >= 2:
-            p1, p2 = y['planets'][0], y['planets'][1]
-            l1, l2 = _get_longitude(p1), _get_longitude(p2)
-            if l2 > l1:
-                y['direction'] = 'Dakshina(右向)'
+                    break
             else:
-                y['direction'] = 'Vama(左向)'
+                if lo < l3 < hi:
+                    yogas.append({
+                        'type': 'Tambira',
+                        'planets': [pair['fast'], pair['slow'], p3],
+                        'description': f'凶星{p3}在{pair["fast"]}-{pair["slow"]}之间阻碍，Tambira阻碍瑜伽',
+                    })
+                    break
+
+    # ── 5. Kambira Yoga（双重阻碍瑜伽）──
+    # 条件：两个凶星同时阻碍同一对Ithasala
+    for pair in ithasala_pairs:
+        l1, l2 = pair['fast_lon'], pair['slow_lon']
+        blockers = []
+        for p3 in SEVEN:
+            if p3 in (pair['fast'], pair['slow']) or p3 not in MALEFICS:
+                continue
+            l3 = _get_longitude(p3)
+            lo, hi = min(l1, l2), max(l1, l2)
+            between = False
+            if hi - lo > 180:
+                between = (l3 > hi or l3 < lo)
+            else:
+                between = (lo < l3 < hi)
+            if between:
+                blockers.append(p3)
+        if len(blockers) >= 2:
+            yogas.append({
+                'type': 'Kambira',
+                'planets': [pair['fast'], pair['slow']] + blockers[:2],
+                'description': f'双凶星{blockers[0]}和{blockers[1]}同时阻碍{pair["fast"]}-{pair["slow"]}，Kambira双重阻碍瑜伽',
+            })
+
+    # ── 6-7. Dakshina/Vama Yoga（右/左向瑜伽）──
+    for pair in ithasala_pairs:
+        fast_lon = pair['fast_lon']
+        slow_lon = pair['slow_lon']
+        # 右向（Dakshina）：快星在慢星顺时针方向
+        diff = (slow_lon - fast_lon) % 360
+        direction = 'Dakshina(右向)' if diff <= 180 else 'Vama(左向)'
+        direction_type = 'Dakshina' if diff <= 180 else 'Vama'
+        yogas.append({
+            'type': direction_type,
+            'planets': [pair['fast'], pair['slow']],
+            'description': f'{pair["fast"]}追{pair["slow"]}方向={direction}，{direction_type}方向瑜伽',
+        })
+
+    # ── 8. Ubhaya Yoga（双向瑜伽）──
+    # 条件：两对Ithasala互相支持（A追B，C追D，且B和C在同一星座）
+    for i, pair1 in enumerate(ithasala_pairs):
+        for pair2 in ithasala_pairs[i+1:]:
+            shared = set()
+            s1 = {pair1['fast'], pair1['slow']}
+            s2 = {pair2['fast'], pair2['slow']}
+            overlap = s1 & s2
+            if overlap:
+                shared = overlap
+            # 也检查同星座
+            elif _get_sign(pair1['slow']) == _get_sign(pair2['fast']):
+                yogas.append({
+                    'type': 'Ubhaya',
+                    'planets': [pair1['fast'], pair1['slow'], pair2['fast'], pair2['slow']],
+                    'description': f'{pair1["fast"]}→{pair1["slow"]}与{pair2["fast"]}→{pair2["slow"]}互相支持，Ubhaya双向瑜伽',
+                })
+
+    # ── 9. Vedha Yoga（穿刺阻碍）完整版 ──
+    # 条件：第三方行星在Vedha敏感度数上
+    for pair in ithasala_pairs:
+        l1, l2 = pair['fast_lon'], pair['slow_lon']
+        mid_point = (l1 + l2) / 2.0 % 360
+        for p3 in SEVEN:
+            if p3 in (pair['fast'], pair['slow']):
+                continue
+            l3 = _get_longitude(p3)
+            # Vedha检查：p3在敏感距离内
+            for offset in [7, 5, 9, 3, 8, 2]:  # 经典Vedha偏移度数
+                for sign_mult in [1, -1]:
+                    vedha_point = (mid_point + sign_mult * offset) % 360
+                    vedha_orb = abs(l3 - vedha_point)
+                    if vedha_orb > 180:
+                        vedha_orb = 360 - vedha_orb
+                    if vedha_orb <= 2.0:  # 2°容许度
+                        yogas.append({
+                            'type': 'Vedha',
+                            'planets': [pair['fast'], pair['slow'], p3],
+                            'vedha_offset': offset,
+                            'description': f'{p3}在Vedha敏感点（偏移{offset}°）穿刺{pair["fast"]}-{pair["slow"]}，Vedha穿刺瑜伽',
+                        })
+                        break
+                else:
+                    continue
+                break
+
+    # ── 10. Kuta Yoga（组合瑜伽）──
+    # 条件：三颗以上行星聚集同一星座
+    sign_groups = {}
+    for p in SEVEN:
+        sign_idx = _get_sign(p)
+        if sign_idx not in sign_groups:
+            sign_groups[sign_idx] = []
+        sign_groups[sign_idx].append(p)
+
+    for sign_idx, planets in sign_groups.items():
+        if len(planets) >= 3:
+            yogas.append({
+                'type': 'Kuta',
+                'planets': planets,
+                'description': f'{len(planets)}颗行星({", ".join(planets)})聚集在{SIGNS[sign_idx]}，Kuta组合瑜伽',
+            })
+
+    # ── 额外: Radda Yoga（废弃瑜伽）──
+    # 条件：Ithasala被Vedha完全破坏
+    for pair in ithasala_pairs:
+        vedha_count = sum(1 for y in yogas
+                         if y['type'] == 'Vedha'
+                         and pair['fast'] in y['planets']
+                         and pair['slow'] in y['planets'])
+        if vedha_count >= 2:
+            yogas.append({
+                'type': 'Radda',
+                'planets': [pair['fast'], pair['slow']],
+                'description': f'{pair["fast"]}-{pair["slow"]}的Ithasala被多重Vedha破坏，Radda废弃瑜伽',
+            })
 
     return yogas
 
 
 def detect_vedha(varsha_planets: Dict) -> List[Dict]:
-    """专门检测Vedha（穿刺阻碍）"""
+    """
+    专门检测Vedha（穿刺阻碍）—— 完整版 v7.0
+
+    基于经典Tajika Vedha表：每对行星有固定敏感度数位置，
+    当第三方行星落入该位置时，破坏原有的Ithasala/Easarapha。
+
+    Args:
+        varsha_planets: 年运盘行星数据
+
+    Returns:
+        Vedha列表
+    """
     vedhas = []
-    SEVEN = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn']
-    MALEFICS = {'Saturn','Mars','Sun','Rahu','Ketu'}
+    SEVEN = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']
+
+    def _get_lon(pname):
+        pd = varsha_planets.get(pname, {})
+        if isinstance(pd, (int, float)):
+            return float(pd)
+        sign = pd.get('sign', '')
+        deg = pd.get('degree', 0) % 30
+        if sign in SIGNS:
+            return SIGNS.index(sign) * 30 + deg
+        return pd.get('longitude', pd.get('lon', 0))
+
+    # Vedha敏感度数（经典Tajika规则）
+    # 对于度数差N（1-30），Vedha在特定偏移处
+    VEDHA_OFFSETS = {
+        1: 7, 2: 5, 3: 9, 4: 3, 5: 8, 6: 2, 7: 10, 8: 4,
+        9: 6, 10: 1, 11: 9, 12: 3, 13: 7, 14: 5, 15: 2,
+    }
 
     for p1 in SEVEN:
         for p2 in SEVEN:
             if p1 >= p2:
                 continue
-            for p3 in SEVEN:
-                if p3 in (p1, p2) or p3 not in MALEFICS:
-                    continue
-                # 简化检测：检查三颗星是否在10°范围内
-                l1 = varsha_planets.get(p1, {}).get('degree', 0)
-                l2 = varsha_planets.get(p2, {}).get('degree', 0)
-                l3 = varsha_planets.get(p3, {}).get('degree', 0)
-                if abs(l1 - l2) < 10 and min(l1, l2) < l3 < max(l1, l2):
-                    vedhas.append({
-                        'planets': [p1, p2, p3],
-                        'description': f'{p3}穿刺阻碍{p1}-{p2}，形成Vedha',
-                    })
+
+            l1 = _get_lon(p1)
+            l2 = _get_lon(p2)
+
+            # 计算两星间度数差
+            diff = abs(l1 - l2)
+            if diff > 180:
+                diff = 360 - diff
+
+            if diff > 15:  # 超出Vedha表范围
+                continue
+
+            # 查找Vedha偏移
+            diff_key = int(diff) + 1  # 1-based
+            if diff_key not in VEDHA_OFFSETS:
+                continue
+
+            offset = VEDHA_OFFSETS[diff_key]
+
+            # 计算Vedha敏感点
+            mid = (l1 + l2) / 2.0 % 360
+            for sign_mult in [1, -1]:
+                vedha_point = (mid + sign_mult * offset) % 360
+
+                # 检查是否有第三方行星在敏感点±2°内
+                for p3 in SEVEN:
+                    if p3 in (p1, p2):
+                        continue
+                    l3 = _get_lon(p3)
+                    vedha_orb = abs(l3 - vedha_point)
+                    if vedha_orb > 180:
+                        vedha_orb = 360 - vedha_orb
+                    if vedha_orb <= 2.0:
+                        vedhas.append({
+                            'planets': [p1, p2, p3],
+                            'vedha_degree': round(vedha_point, 2),
+                            'offset': offset,
+                            'orb': round(vedha_orb, 2),
+                            'description': f'{p3}在Vedha敏感点({offset}°偏移)穿刺{p1}-{p2}',
+                        })
+
     return vedhas

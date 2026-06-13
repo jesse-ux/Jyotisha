@@ -31,62 +31,163 @@ NATURAL_MALEFICS = {'Saturn', 'Mars', 'Sun', 'Rahu', 'Ketu'}
 
 def calc_raj_yogas(planets_data: Dict, houses: Dict) -> Dict:
     """
-    计算 Raj Yogas（王者瑜伽）——权力、地位、社会影响力格局
+    计算 Raj Yogas（王者瑜伽）——权力、地位、社会影响力格局 v7.0
 
     经典 Raj Yoga 形成条件：
-      1. 角宫主（1/4/7/10宫主）与三方宫主（5/9宫主）结合
-      2. 角宫主与角宫主结合
-      3. 三方宫主与三方宫主结合
-      4. 以上组合发生在角宫/三方宫/11宫
+      1. 角宫主（1/4/7/10宫主）与三方宫主（5/9宫主）同宫（conjunction）
+      2. 角宫主与三方宫主互看（mutual aspect）
+      3. 角宫主与三方宫主互容（parivartana）
+      4. 同一星同时掌管角宫和三方宫（dual lordship）
+      5. Viparita Raja Yoga：凶宫主（6/8/12宫主）落入另一个凶宫
+
+    参考：dashaflow yoga.py (MIT)
 
     返回：检测到的 Raj Yogas 列表
     """
     results = {'yogas': [], 'summary': ''}
 
+    SIGNS_LIST = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+                  'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
+
     # 提取宫主星信息
-    house_lords = {}
-    for h in range(1, 13):
-        lord_key = f'H{h}_Lord'
-        if lord_key in houses:
-            house_lords[h] = houses[lord_key]
+    def _lord_of_house(house_num):
+        """获取某宫的宫主星"""
+        lkey = f'H{house_num}_Lord'
+        if lkey in houses:
+            return houses[lkey]
+        # 从行星数据推断
+        asc_sign = houses.get('asc_sign', '')
+        if asc_sign and asc_sign in SIGN_LORDS:
+            asc_idx = SIGNS_LIST.index(asc_sign) if asc_sign in SIGNS_LIST else 0
+            sign_idx = (asc_idx + house_num - 1) % 12
+            return SIGN_LORDS[SIGNS_LIST[sign_idx]]
+        return None
+
+    def _get_planet_sign_idx(pname):
+        """获取行星所在星座索引"""
+        pdata = planets_data.get(pname, {})
+        if isinstance(pdata, dict) and 'sign' in pdata:
+            sign = pdata['sign']
+            if sign in SIGNS_LIST:
+                return SIGNS_LIST.index(sign)
+        # 从经度推断
+        if isinstance(pdata, dict) and 'longitude' in pdata:
+            return int(pdata['longitude'] / 30) % 12
+        return None
+
+    def _get_planet_house(pname):
+        """获取行星所在宫位"""
+        pdata = planets_data.get(pname, {})
+        if isinstance(pdata, dict) and 'house' in pdata:
+            return pdata['house']
+        return None
 
     # 检查每对宫主星的组合
     kendras = [1, 4, 7, 10]  # 角宫
-    trikonas = [5, 9]  # 三方宫
+    trikonas = [1, 5, 9]  # 三方宫（含1宫）
+    dusthanas = [6, 8, 12]  # 凶宫
 
-    def _get_lord_sign_lord(house_num):
-        """获取某宫宫主星及其所在宫位"""
-        lkey = f'H{house_num}_Lord'
-        if lkey not in houses:
-            return None, None
-        lord = houses[lkey]
-        # 找lord在哪里（简化：返回lord所在宫位）
-        for pname, pdata in planets_data.items():
-            if pname == lord and isinstance(pdata, dict) and 'house' in pdata:
-                return lord, pdata['house']
-        return lord, None
+    # ── 条件4: 双重宫主星（同一星掌管角宫+三方宫）──
+    kendra_lords = {}
+    trikona_lords = {}
+    for h in kendras:
+        lord = _lord_of_house(h)
+        if lord:
+            kendra_lords.setdefault(lord, []).append(h)
+    for h in trikonas:
+        lord = _lord_of_house(h)
+        if lord:
+            trikona_lords.setdefault(lord, []).append(h)
 
-    # 检查条件1：角宫主 × 三方宫主
-    for k_house in kendras:
-        for t_house in trikonas:
-            k_lord, k_lord_house = _get_lord_sign_lord(k_house)
-            t_lord, t_lord_house = _get_lord_sign_lord(t_house)
-            if not k_lord or not t_lord:
+    dual_lords = set(kendra_lords.keys()) & set(trikona_lords.keys())
+    for lord in dual_lords:
+        k_houses = kendra_lords[lord]
+        t_houses = trikona_lords[lord]
+        lord_house = _get_planet_house(lord)
+        if lord_house and lord_house in kendras + trikonas:
+            yoga = {
+                'type': 'Raj Yoga',
+                'subtype': 'dual_lordship',
+                'combination': f'{lord}(H{k_houses}主+H{t_houses}主)',
+                'formation_house': lord_house,
+                'strength': 'strong' if lord_house in kendras else 'moderate',
+                'interpretation': f'Raj Yoga——{lord}同时掌管角宫{k_houses}和三方宫{t_houses}，且在{lord_house}宫，双重权力格局',
+            }
+            results['yogas'].append(yoga)
+
+    # ── 条件1+2+3: 角宫主 × 三方宫主 的组合检测 ──
+    pure_kendra_lords = set(kendra_lords.keys()) - dual_lords
+    pure_trikona_lords = set(trikona_lords.keys()) - dual_lords
+
+    for kl in pure_kendra_lords:
+        for tl in pure_trikona_lords:
+            kl_sign = _get_planet_sign_idx(kl)
+            tl_sign = _get_planet_sign_idx(tl)
+
+            if kl_sign is None or tl_sign is None:
                 continue
 
-            # 检查两主星是否在同一宫或互看对方宫
-            # 简化：检查两主星所在宫位是否形成权力宫（角/三方/11）
-            if k_lord_house and t_lord_house:
-                power_houses = kendras + trikonas + [11]
-                if k_lord_house in power_houses or t_lord_house in power_houses:
+            # 条件1: 同宫（conjunction）
+            if kl_sign == tl_sign:
+                house_from_asc = (kl_sign - (SIGNS_LIST.index(houses.get('asc_sign', 'Aries')) if houses.get('asc_sign') in SIGNS_LIST else 0)) % 12 + 1
+                yoga = {
+                    'type': 'Raj Yoga',
+                    'subtype': 'conjunction',
+                    'combination': f'{kl}(角宫主) + {tl}(三方宫主)',
+                    'formation_house': house_from_asc,
+                    'strength': 'strong' if house_from_asc in kendras else 'moderate',
+                    'interpretation': f'Raj Yoga——{kl}(角宫主)与{tl}(三方宫主)同宫在{SIGNS_LIST[kl_sign]}，权力格局',
+                }
+                results['yogas'].append(yoga)
+
+            # 条件2: 互看（mutual aspect: 7宫关系）
+            elif abs(kl_sign - tl_sign) == 6 or abs(kl_sign - tl_sign) == 6 + 12:
+                yoga = {
+                    'type': 'Raj Yoga',
+                    'subtype': 'mutual_aspect',
+                    'combination': f'{kl}(角宫主) ↔ {tl}(三方宫主)',
+                    'interpretation': f'Raj Yoga——{kl}(角宫主)与{tl}(三方宫主)互看（对宫相位），权力格局',
+                }
+                results['yogas'].append(yoga)
+
+            # 条件3: 互容（parivartana）
+            else:
+                # 检查kl是否在tl掌管的星座，且tl是否在kl掌管的星座
+                kl_lord_signs = []  # kl掌管的星座
+                tl_lord_signs = []  # tl掌管的星座
+                for s_idx, s_name in enumerate(SIGNS_LIST):
+                    if SIGN_LORDS[s_name] == kl:
+                        kl_lord_signs.append(s_idx)
+                    if SIGN_LORDS[s_name] == tl:
+                        tl_lord_signs.append(s_idx)
+
+                if tl_sign in kl_lord_signs and kl_sign in tl_lord_signs:
                     yoga = {
                         'type': 'Raj Yoga',
-                        'combination': f'H{k_house}_Lord({k_lord}) + H{t_house}_Lord({t_lord})',
-                        'formation_house': k_lord_house,
-                        'strength': 'strong' if k_lord_house in kendras else 'moderate',
-                        'interpretation': f'Raj Yoga——{k_lord}(H{k_house}主)与{t_lord}(H{t_house}主)结合，权力与地位格局',
+                        'subtype': 'parivartana',
+                        'combination': f'{kl}(角宫主) ⇄ {tl}(三方宫主)',
+                        'interpretation': f'Raj Yoga——{kl}(角宫主)与{tl}(三方宫主)互容交换，权力格局强化',
                     }
                     results['yogas'].append(yoga)
+
+    # ── 条件5: Viparita Raja Yoga ──
+    # 6/8/12宫主落入另一个凶宫（凶中凶=逆转大吉）
+    dusthana_lords = {}
+    for h in dusthanas:
+        lord = _lord_of_house(h)
+        if lord:
+            dusthana_lords[h] = lord
+
+    for h, lord in dusthana_lords.items():
+        lord_house = _get_planet_house(lord)
+        if lord_house and lord_house in dusthanas and lord_house != h:
+            yoga = {
+                'type': 'Viparita Raja Yoga',
+                'subtype': 'dusthana_in_dusthana',
+                'combination': f'H{h}_Lord({lord}) in H{lord_house}',
+                'interpretation': f'Viparita Raja Yoga——{h}宫主{lord}落入{lord_house}宫（凶中凶），先苦后甜逆转格局',
+            }
+            results['yogas'].append(yoga)
 
     results['summary'] = f"Raj Yoga检测：共{len(results['yogas'])}个格局"
     return results
@@ -94,46 +195,143 @@ def calc_raj_yogas(planets_data: Dict, houses: Dict) -> Dict:
 
 def calc_dhana_yogas(planets_data: Dict, houses: Dict) -> Dict:
     """
-    计算 Dhana Yogas（财富瑜伽）——财富积累格局
+    计算 Dhana Yogas（财富瑜伽）——财富积累格局 v7.0
 
-    经典 Dhana Yoga 形成条件：
-      1. 2宫主（财富宫主）与吉星/11宫主结合
-      2. 11宫主（收益宫主）与吉星/2宫主结合
-      3. 以上组合发生在2/11/角宫/三方宫
+    经典 Dhana Yoga 形成条件（参考dashaflow yoga.py MIT）：
+      1. 2宫主+11宫主同在角宫/三方宫
+      2. 5宫主+9宫主同宫或互看
+      3. 2宫主+9宫主（财富+幸运）同宫/互看
+      4. 11宫主+9宫主（收益+幸运）同宫/互看
+      5. 2/11宫主与吉星（Jupiter/Venus）同宫
 
     返回：检测到的 Dhana Yogas 列表
     """
     results = {'yogas': [], 'summary': ''}
 
-    # 2宫主和11宫主
-    h2_lord = houses.get('H2_Lord', '')
-    h11_lord = houses.get('H11_Lord', '')
+    SIGNS_LIST = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+                  'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
+    KENDRA = {1, 4, 7, 10}
+    TRIKONA = {1, 5, 9}
+    GOOD_HOUSES = KENDRA | TRIKONA | {2, 11}
+    BENEFICS = {'Jupiter', 'Venus'}
 
-    if not h2_lord or not h11_lord:
-        results['summary'] = 'Dhana Yoga检测：缺少2/11宫主信息'
-        return results
+    def _lord_of_house(house_num):
+        lkey = f'H{house_num}_Lord'
+        if lkey in houses:
+            return houses[lkey]
+        asc_sign = houses.get('asc_sign', '')
+        if asc_sign and asc_sign in SIGN_LORDS:
+            asc_idx = SIGNS_LIST.index(asc_sign) if asc_sign in SIGNS_LIST else 0
+            sign_idx = (asc_idx + house_num - 1) % 12
+            return SIGN_LORDS[SIGNS_LIST[sign_idx]]
+        return None
 
-    # 检查2宫主和11宫主的组合
-    # 找h2_lord和h11_lord的宫位
-    h2_lord_house = None
-    h11_lord_house = None
-    for pname, pdata in planets_data.items():
-        if pname == h2_lord and isinstance(pdata, dict) and 'house' in pdata:
-            h2_lord_house = pdata['house']
-        if pname == h11_lord and isinstance(pdata, dict) and 'house' in pdata:
-            h11_lord_house = pdata['house']
+    def _get_planet_house(pname):
+        pdata = planets_data.get(pname, {})
+        if isinstance(pdata, dict) and 'house' in pdata:
+            return pdata['house']
+        return None
 
-    if h2_lord_house and h11_lord_house:
-        wealth_houses = [2, 11, 1, 4, 7, 10, 5, 9]
-        if h2_lord_house in wealth_houses or h11_lord_house in wealth_houses:
-            yoga = {
+    def _get_planet_sign(pname):
+        pdata = planets_data.get(pname, {})
+        if isinstance(pdata, dict) and 'sign' in pdata:
+            return pdata['sign']
+        return None
+
+    def _same_sign(p1, p2):
+        s1 = _get_planet_sign(p1)
+        s2 = _get_planet_sign(p2)
+        return s1 and s2 and s1 == s2
+
+    # ── 条件1: 2宫主+11宫主同在角宫/三方宫 ──
+    lord_2 = _lord_of_house(2)
+    lord_11 = _lord_of_house(11)
+    if lord_2 and lord_11:
+        h2 = _get_planet_house(lord_2)
+        h11 = _get_planet_house(lord_11)
+        if h2 and h11 and h2 in GOOD_HOUSES and h11 in GOOD_HOUSES:
+            results['yogas'].append({
                 'type': 'Dhana Yoga',
-                'combination': f'H2_Lord({h2_lord}) + H11_Lord({h11_lord})',
-                'formation_house': h2_lord_house,
-                'strength': 'strong' if h2_lord_house in [2, 11] else 'moderate',
-                'interpretation': f'Dhana Yoga——{h2_lord}(H2主)与{h11_lord}(H11主)结合，财富积累格局',
-            }
-            results['yogas'].append(yoga)
+                'subtype': '2nd_11th_lords_strong',
+                'combination': f'H2_Lord({lord_2}) in H{h2} + H11_Lord({lord_11}) in H{h11}',
+                'strength': 'strong' if h2 in KENDRA and h11 in KENDRA else 'moderate',
+                'interpretation': f'Dhana Yoga——2宫主{lord_2}(H{h2})与11宫主{lord_11}(H{h11})均落强宫，财富积累格局',
+            })
+
+    # ── 条件2: 5宫主+9宫主同宫/互看 ──
+    lord_5 = _lord_of_house(5)
+    lord_9 = _lord_of_house(9)
+    if lord_5 and lord_9:
+        if _same_sign(lord_5, lord_9):
+            s = _get_planet_sign(lord_5)
+            results['yogas'].append({
+                'type': 'Dhana Yoga',
+                'subtype': '5th_9th_conjunction',
+                'combination': f'H5_Lord({lord_5}) + H9_Lord({lord_9})',
+                'strength': 'strong',
+                'interpretation': f'Dhana Yoga——5宫主{lord_5}与9宫主{lord_9}同宫在{s}，财富+幸运格局',
+            })
+        else:
+            h5 = _get_planet_house(lord_5)
+            h9 = _get_planet_house(lord_9)
+            if h5 and h9:
+                # 互看: 7宫关系
+                if abs(h5 - h9) == 6:
+                    results['yogas'].append({
+                        'type': 'Dhana Yoga',
+                        'subtype': '5th_9th_mutual_aspect',
+                        'combination': f'H5_Lord({lord_5}) ↔ H9_Lord({lord_9})',
+                        'strength': 'moderate',
+                        'interpretation': f'Dhana Yoga——5宫主{lord_5}(H{h5})与9宫主{lord_9}(H{h9})互看，财富格局',
+                    })
+                # 同在角宫/三方宫
+                elif h5 in GOOD_HOUSES and h9 in GOOD_HOUSES:
+                    results['yogas'].append({
+                        'type': 'Dhana Yoga',
+                        'subtype': '5th_9th_strong_houses',
+                        'combination': f'H5_Lord({lord_5}) in H{h5} + H9_Lord({lord_9}) in H{h9}',
+                        'strength': 'moderate',
+                        'interpretation': f'Dhana Yoga——5宫主{lord_5}与9宫主{lord_9}均落强宫，财富格局',
+                    })
+
+    # ── 条件3: 2宫主+9宫主同宫/互看 ──
+    if lord_2 and lord_9:
+        if _same_sign(lord_2, lord_9):
+            s = _get_planet_sign(lord_2)
+            results['yogas'].append({
+                'type': 'Dhana Yoga',
+                'subtype': '2nd_9th_conjunction',
+                'combination': f'H2_Lord({lord_2}) + H9_Lord({lord_9})',
+                'strength': 'strong',
+                'interpretation': f'Dhana Yoga——2宫主{lord_2}与9宫主{lord_9}同宫在{s}，财富+幸运组合',
+            })
+
+    # ── 条件4: 11宫主+9宫主同宫/互看 ──
+    if lord_11 and lord_9:
+        if _same_sign(lord_11, lord_9):
+            s = _get_planet_sign(lord_11)
+            results['yogas'].append({
+                'type': 'Dhana Yoga',
+                'subtype': '11th_9th_conjunction',
+                'combination': f'H11_Lord({lord_11}) + H9_Lord({lord_9})',
+                'strength': 'strong',
+                'interpretation': f'Dhana Yoga——11宫主{lord_11}与9宫主{lord_9}同宫在{s}，收益+幸运组合',
+            })
+
+    # ── 条件5: 2/11宫主与吉星同宫 ──
+    for wealth_lord, w_house in [(lord_2, 2), (lord_11, 11)]:
+        if not wealth_lord:
+            continue
+        for benefic in BENEFICS:
+            if _same_sign(wealth_lord, benefic):
+                s = _get_planet_sign(wealth_lord)
+                results['yogas'].append({
+                    'type': 'Dhana Yoga',
+                    'subtype': f'{w_house}th_lord_benefic_conjunction',
+                    'combination': f'H{w_house}_Lord({wealth_lord}) + {benefic}',
+                    'strength': 'moderate',
+                    'interpretation': f'Dhana Yoga——{w_house}宫主{wealth_lord}与吉星{benefic}同宫在{s}，财富助力格局',
+                })
 
     results['summary'] = f"Dhana Yoga检测：共{len(results['yogas'])}个格局"
     return results
@@ -202,21 +400,65 @@ def calc_pancha_mahapurusha_yoga(planets_data: Dict) -> Dict:
 
 def calc_nicha_bhanga_raj_yoga(planets_data: Dict, houses: Dict) -> Dict:
     """
-    计算 Neecha Bhanga Raj Yoga（落陷解除王者瑜伽）
+    计算 Neecha Bhanga Raj Yoga（落陷解除王者瑜伽）v7.0
 
-    条件（需同时满足）：
+    条件（需满足落陷 + 解除，参考dashaflow yoga.py MIT）：
       1. 某行星落陷（在落陷星座）
-      2. 该行星的落陷星座主星在某个角宫/三方宫
-      3. 或者：落陷星座主星与落陷行星形成互容
+      解除条件（满足任一即可）：
+      A. 落陷星座主星（dispositor）在Lagna角宫(1/4/7/10)
+      B. 落陷星座主星在Moon角宫
+      C. 擢升星座主星在Lagna角宫
+      D. 擢升星座主星在Moon角宫
+      E. 落陷星与落陷星座主星互容（parivartana）
+      F. 落陷星在Navamsa中入庙/擢升（vargottama缓解）
 
     经典：落陷+落陷解除 = 王者瑜伽（先抑后扬，大器晚成）
     """
     results = {'yogas': [], 'summary': ''}
 
+    SIGNS_LIST = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+                  'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
+
     # 落陷星座表
     debilitation = {'Mars': 'Cancer', 'Mercury': 'Pisces', 'Jupiter': 'Capricorn',
                     'Venus': 'Virgo', 'Saturn': 'Aries', 'Sun': 'Libra',
                     'Moon': 'Scorpio'}
+
+    # 擢升星座表
+    exaltation = {'Sun': 'Aries', 'Moon': 'Taurus', 'Mars': 'Capricorn',
+                  'Mercury': 'Virgo', 'Jupiter': 'Cancer', 'Venus': 'Pisces',
+                  'Saturn': 'Libra'}
+
+    KENDRA = {1, 4, 7, 10}
+
+    def _get_planet_house(pname):
+        pdata = planets_data.get(pname, {})
+        if isinstance(pdata, dict) and 'house' in pdata:
+            return pdata['house']
+        return None
+
+    def _get_planet_sign(pname):
+        pdata = planets_data.get(pname, {})
+        if isinstance(pdata, dict) and 'sign' in pdata:
+            return pdata['sign']
+        return None
+
+    def _get_planet_sign_idx(pname):
+        s = _get_planet_sign(pname)
+        if s and s in SIGNS_LIST:
+            return SIGNS_LIST.index(s)
+        return None
+
+    def _get_moon_house():
+        return _get_planet_house('Moon')
+
+    def _house_from_moon(planet_name):
+        """计算从Moon看某行星在第几宫"""
+        moon_idx = _get_planet_sign_idx('Moon')
+        p_idx = _get_planet_sign_idx(planet_name)
+        if moon_idx is not None and p_idx is not None:
+            return ((p_idx - moon_idx) % 12) + 1
+        return None
 
     for pname, deb_sign in debilitation.items():
         pdata = planets_data.get(pname, {})
@@ -227,30 +469,75 @@ def calc_nicha_bhanga_raj_yoga(planets_data: Dict, houses: Dict) -> Dict:
         if sign != deb_sign:
             continue  # 没落陷
 
-        # 检查落陷解除条件：
-        # 条件A：落陷星座主星在角宫/三方宫
+        cancellation = False
+        cancel_reasons = []
+
+        # 条件A: 落陷星座主星(dispositor)在Lagna角宫
         deb_lord = SIGN_LORDS.get(deb_sign, '')
-        deb_lord_data = planets_data.get(deb_lord, {})
-        deb_lord_house = deb_lord_data.get('house') if isinstance(deb_lord_data, dict) else None
+        deb_lord_house = _get_planet_house(deb_lord)
+        if deb_lord_house and deb_lord_house in KENDRA:
+            cancellation = True
+            cancel_reasons.append(f'定位星{deb_lord}在Lagna第{deb_lord_house}宫(角宫)')
 
-        condition_met = False
-        if deb_lord_house and deb_lord_house in [1, 4, 7, 10, 5, 9]:
-            condition_met = True
+        # 条件B: 落陷星座主星在Moon角宫
+        if deb_lord:
+            hfm = _house_from_moon(deb_lord)
+            if hfm and hfm in KENDRA:
+                cancellation = True
+                cancel_reasons.append(f'定位星{deb_lord}在Moon第{hfm}宫(角宫)')
 
-        # 条件B：落陷行星与落陷星座主星互容（在两星星座中）
-        # 简化：检查两星是否在同一宫
-        p_house = pdata.get('house')
-        if deb_lord_house and p_house and deb_lord_house == p_house:
-            condition_met = True
+        # 条件C: 擢升星座主星在Lagna角宫
+        exalt_sign = exaltation.get(pname, '')
+        exalt_lord = SIGN_LORDS.get(exalt_sign, '')
+        if exalt_lord:
+            exalt_lord_house = _get_planet_house(exalt_lord)
+            if exalt_lord_house and exalt_lord_house in KENDRA:
+                cancellation = True
+                cancel_reasons.append(f'擢升星主{exalt_lord}在Lagna第{exalt_lord_house}宫(角宫)')
 
-        if condition_met:
+        # 条件D: 擢升星座主星在Moon角宫
+        if exalt_lord:
+            hfm = _house_from_moon(exalt_lord)
+            if hfm and hfm in KENDRA:
+                cancellation = True
+                cancel_reasons.append(f'擢升星主{exalt_lord}在Moon第{hfm}宫(角宫)')
+
+        # 条件E: 落陷星与定位星互容（parivartana）
+        if deb_lord and deb_lord != pname:
+            p_sign = _get_planet_sign(pname)
+            lord_sign = _get_planet_sign(deb_lord)
+            if p_sign and lord_sign:
+                # pname在deb_sign(由deb_lord掌管), deb_lord是否在pname掌管的星座?
+                pname_own_signs = [s for s, l in SIGN_LORDS.items() if l == pname]
+                if lord_sign in pname_own_signs:
+                    cancellation = True
+                    cancel_reasons.append(f'{pname}与{deb_lord}互容(Parivartana)')
+
+        # 条件F: Navamsa入庙/擢升缓解（如果有navamsa数据）
+        navamsa_sign = pdata.get('navamsa_sign')
+        if navamsa_sign:
+            own_signs = [s for s, l in SIGN_LORDS.items() if l == pname]
+            if navamsa_sign in own_signs or navamsa_sign == exaltation.get(pname, ''):
+                cancellation = True
+                cancel_reasons.append(f'{pname}在Navamsa中入庙/擢升({navamsa_sign})')
+
+        if cancellation:
+            # 量化解除程度
+            cancel_count = len(cancel_reasons)
+            strength = 'very strong' if cancel_count >= 3 else 'strong' if cancel_count >= 2 else 'moderate'
+
             yoga = {
                 'type': 'Neecha Bhanga Raj Yoga',
                 'planet': pname,
                 'debilitated_sign': deb_sign,
                 'debility_lord': deb_lord,
                 'lord_house': deb_lord_house,
-                'interpretation': f'Neecha Bhanga Raj Yoga——{pname}在{deb_sign}落陷但解除（{deb_lord}在{deb_lord_house}宫），先抑后扬大器晚成',
+                'exaltation_sign': exalt_sign,
+                'exaltation_lord': exalt_lord,
+                'cancellation_reasons': cancel_reasons,
+                'cancellation_count': cancel_count,
+                'strength': strength,
+                'interpretation': f'Neecha Bhanga Raj Yoga——{pname}在{deb_sign}落陷但解除（{"; ".join(cancel_reasons)}），先抑后扬大器晚成',
             }
             results['yogas'].append(yoga)
 

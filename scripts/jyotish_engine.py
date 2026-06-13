@@ -72,11 +72,14 @@ try:
     HAS_SWE = True
 except ImportError:
     HAS_SWE = False
+    AYANAMSA_MODES = {'lahiri': 1}  # fallback for argparse choices
 from cmd_solar_return import cmd_solar_return  # v6.0.18
 from cmd_narayana_dasha import cmd_narayana_dasha as _cmd_narayana_dasha_impl  # v6.0.20
 from cmd_muhurta import cmd_muhurta  # v6.0.21
 from yoga_engine import detect_yogas  # v6.0.26: data-driven Yoga engine
 from kp_system import calc_kp_analysis, get_kp_lords  # v6.9.10: KP完整系统
+from bhava_chalit import cmd_bhava_chalit  # v6.9.13: Bhava Chalit 不等宫边界调整
+from sudarshana_chakra import calc_sudarshana_chakra, generate_sudarshana_report  # v6.9.14: Sudarshana Chakra 三参考点盘
 
 # ============================================================================
 # 常量
@@ -2317,6 +2320,49 @@ def cmd_varga_full(args):
         args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
     if chart is None:
         return {"error": "swisseph未安装"}
+
+    # --- Custom D-N mode (v6.9.12) ---
+    custom_n = getattr(args, 'custom', None)
+    if custom_n:
+        try:
+            sys.path.insert(0, SCRIPT_DIR)
+            from divisional_charts_extended import DivisionalChartsCalculator
+            calc = DivisionalChartsCalculator()
+        except ImportError as e:
+            return {"error": f"divisional_charts_extended模块导入失败: {e}"}
+        planets = chart.get('planets', {})
+        planet_lons = {pn: pd.get('degree_raw', pd['degree']) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
+        asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
+        result = {'custom_div': custom_n}
+        result['Ascendant'] = calc.calc_custom_varga(asc_deg, custom_n)
+        for pn, lon in planet_lons.items():
+            result[pn] = calc.calc_custom_varga(lon, custom_n)
+        return result
+
+    # --- Composite D-m×n mode (v6.9.12) ---
+    composite = getattr(args, 'composite', None)
+    if composite:
+        try:
+            sys.path.insert(0, SCRIPT_DIR)
+            from divisional_charts_extended import DivisionalChartsCalculator
+            calc = DivisionalChartsCalculator()
+        except ImportError as e:
+            return {"error": f"divisional_charts_extended模块导入失败: {e}"}
+        parts = [int(x.strip()) for x in composite.split(',')]
+        if len(parts) != 2:
+            return {"error": "--composite 需要两个整数，逗号分隔（如 9,12 表示D9×D12）"}
+        outer, inner = parts
+        planets = chart.get('planets', {})
+        planet_lons = {pn: pd.get('degree_raw', pd['degree']) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
+        asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
+        result = {'composite_div': f'D{outer}×D{inner}=D{outer*inner}', 'outer': outer, 'inner': inner}
+        result['Ascendant'] = calc.calc_composite_varga(asc_deg, outer, inner)
+        for pn, lon in planet_lons.items():
+            result[pn] = calc.calc_composite_varga(lon, outer, inner)
+        return result
+
+    # --- Standard / variant mode ---
+    variant = getattr(args, 'variant', None)
     try:
         sys.path.insert(0, SCRIPT_DIR)
         from varga import calc_all_vargas
@@ -2326,6 +2372,22 @@ def cmd_varga_full(args):
     planet_lons = {pn: pd.get('degree_raw', pd['degree']) for pn, pd in planets.items() if isinstance(pd, dict) and 'degree' in pd}
     asc_deg = chart.get('ascendant', {}).get('lon', chart.get('ascendant', {}).get('degree', 0))
     divisions = [int(d.strip().replace('D','')) for d in args.divisions.split(',')] if args.divisions else None
+
+    # If variant requested for D2/D3, use DivisionalChartsCalculator
+    if variant and divisions and len(divisions) == 1 and divisions[0] in (2, 3):
+        try:
+            sys.path.insert(0, SCRIPT_DIR)
+            from divisional_charts_extended import DivisionalChartsCalculator
+            calc = DivisionalChartsCalculator()
+        except ImportError:
+            variant = None  # fallback to standard
+        if variant:
+            result = {'variant': variant, 'div': divisions[0]}
+            result['Ascendant'] = calc.calc_varga_with_variant(asc_deg, divisions[0], variant)
+            for pn, lon in planet_lons.items():
+                result[pn] = calc.calc_varga_with_variant(lon, divisions[0], variant)
+            return result
+
     return calc_all_vargas(planet_lons, asc_deg, divisions)
 
 
@@ -4097,10 +4159,42 @@ def cmd_prashna(args):
 
 
 # ============================================================================
+# Sudarshana Chakra (v6.9.14新增)
+# ============================================================================
+def cmd_sudarshana(args):
+    """Sudarshana Chakra 三参考点盘分析"""
+    chart, asc_idx, jd, ayanamsa = compute_chart_data(
+        args.year, args.month, args.day, args.hour, args.minute,
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean')
+    )
+    if chart is None:
+        return {"error": "swisseph未安装"}
+
+    # 构造 planet_lons 和 asc_lon
+    planet_lons = {}
+    for pname, pdata in chart.get('planets', {}).items():
+        if isinstance(pdata, dict) and 'degree_raw' in pdata:
+            planet_lons[pname] = pdata['degree_raw']
+
+    asc_data = chart.get('ascendant', {})
+    asc_lon = asc_data.get('degree_raw', asc_data.get('degree', 0))
+    if asc_lon == 0:
+        asc_lon = asc_idx * 30.0
+
+    house = getattr(args, 'house', None)
+    if getattr(args, 'text', False):
+        report = generate_sudarshana_report(planet_lons, asc_lon)
+        print(report)
+        return {"format": "text", "report_printed": True}
+
+    return calc_sudarshana_chakra(planet_lons, asc_lon, house=house)
+
+
+# ============================================================================
 # CLI入口
 # ============================================================================
 def main():
-    parser = argparse.ArgumentParser(description='印度占星统一引擎 v6.9.9', formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description='印度占星统一引擎 v6.9.12', formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest='command', help='子命令')
 
     # 1. chart
@@ -4226,10 +4320,16 @@ def main():
     p.add_argument('--lang', default='cn', choices=['cn', 'en'], help='语言 (默认cn)')
     p.add_argument('--output', default=None, help='输出HTML路径')
 
-    # 15. varga-full (v3.7新增)
-    p = sub.add_parser('varga-full', help='BPHS十六分盘完整计算')
+    # 15. varga-full (v3.7新增 → v6.9.12 扩展变体/复合/自定义D-N)
+    p = sub.add_parser('varga-full', help='BPHS十六分盘+变体+复合+自定义D-N(2-300)')
     _add_chart_args(p)
     p.add_argument('--divisions', default=None, help='指定分盘，逗号分隔(如 D2,D9,D60)，空=全部')
+    p.add_argument('--variant', default=None,
+                   help='D2/D3变体名称。D2: parashara/pariveshta/parivritta/parivritta_trayodamsa/surya_chandra/ahoratra; D3: parashara/parivritta_trayodamsa/somaja/khara')
+    p.add_argument('--custom', type=int, default=None,
+                   help='自定义D-N分盘，N=2-300（如 --custom 150）')
+    p.add_argument('--composite', default=None,
+                   help='复合分盘D-m×n，逗号分隔两个整数（如 --composite 9,12 = D108）')
 
     # 16. aspects (v3.7新增)
     p = sub.add_parser('aspects', help='度数精确相位系统')
@@ -4341,6 +4441,21 @@ def main():
     _add_chart_args(p)
     p.add_argument('--transit-date', default=None, help='过境日期 YYYY-MM-DD（可选）')
 
+    # 29. bhava-chalit (v6.9.13新增)
+    p = sub.add_parser('bhava-chalit', help='Bhava Chalit 不等宫边界调整（Rashi vs Bhava 宫位对比）')
+    _add_chart_args(p)
+    p.add_argument('--house-system', default='sripati',
+                   choices=['equal', 'placidus', 'porphyry', 'sripati', 'whole_sign', 'koch'],
+                   help='宫位制（默认sripati）')
+    p.add_argument('--mode', default='compare', choices=['compare', 'chart', 'boundaries'],
+                   help='输出模式: compare=Rashi与Bhava对比, chart=Bhava宫位表, boundaries=宫位边界详情')
+
+    # 30. sudarshana (v6.9.14新增)
+    p = sub.add_parser('sudarshana', help='Sudarshana Chakra 三参考点盘分析（上升/月亮/太阳）')
+    _add_chart_args(p)
+    p.add_argument('--house', type=int, default=None, help='指定宫位(1-12)详细分析')
+    p.add_argument('--text', action='store_true', help='输出文本报告（默认JSON）')
+
     # 28. audit-capabilities (v6.0.3新增)
     p = sub.add_parser('audit-capabilities', help='校验 technique registry 并输出能力覆盖审计')
     p.add_argument('--registry', default=None, help='technique_registry.json 路径（默认 references/technique_registry.json）')
@@ -4373,7 +4488,9 @@ def main():
             'full-reading': cmd_full_reading, 'prashna': cmd_prashna,
             'double-transit-pac': cmd_double_transit_pac,
             'transit-ll7l': cmd_transit_ll7l, 'planetary-congregation': cmd_planetary_congregation,
-            'vivah-saham': cmd_vivah_saham}
+            'vivah-saham': cmd_vivah_saham,
+            'bhava-chalit': cmd_bhava_chalit,
+            'sudarshana': cmd_sudarshana}
     if args.command == 'audit-capabilities':
         from audit_capabilities import build_audit_table, load_registry, validate_registry
         registry = load_registry(args.registry) if args.registry else load_registry()

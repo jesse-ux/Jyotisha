@@ -176,8 +176,9 @@ class OrchestratorBridge:
                     current=ash["current"],
                     total_cycle=ash.get("total_cycle", 108),
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.warning(f"[orchestrator] ashtottari dasha calculation failed: {e}")
 
         # 2. Yogini Dasha (普遍适用)
         try:
@@ -189,8 +190,9 @@ class OrchestratorBridge:
                     current=yog["current"],
                     total_cycle=yog.get("total_cycle", 36),
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.warning(f"[orchestrator] yogini dasha calculation failed: {e}")
 
         # 3. Kalachakra Dasha (条件性推运)
         try:
@@ -202,8 +204,9 @@ class OrchestratorBridge:
                     current=kal["current"],
                     total_cycle=kal.get("total_cycle", 0),
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.warning(f"[orchestrator] kalachakra dasha calculation failed: {e}")
 
         # 4. 将推运结果也作为 TechniqueResult 注入所有主题
         self._inject_dasha_technique_results(results)

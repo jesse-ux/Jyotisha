@@ -24,7 +24,7 @@ _scripts_dir = os.path.join(_repo_root, "scripts")
 if _scripts_dir not in sys.path:
     sys.path.insert(0, _scripts_dir)
 
-__version__ = "6.9.6"
+__version__ = "6.9.12"
 __all__ = [
     "calculate_chart",
     "calculate_dasha",

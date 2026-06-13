@@ -198,21 +198,23 @@ def calc_varsha_maasa_dina_hora_bala(pname: str, year: int, month: int, day: int
         maasa_lord = get_maasa_lord(solar_lon, year)
         if pname == maasa_lord:
             bala += 30.0
-    except:
-        pass
-    
+    except Exception as e:
+        import logging
+        logging.warning(f"[shadbala] maasa lord calculation failed: {e}")
+
     # Dina Lord
     vaara_lord = get_vaara_lord(year, month, day, hour)
     if pname == vaara_lord:
         bala += 45.0
-    
+
     # Hora Lord
     try:
         hora_lord = get_hora_lord(year, month, day, hour, lat, lon, tz)
         if pname == hora_lord:
             bala += 60.0
-    except:
-        pass
+    except Exception as e:
+        import logging
+        logging.warning(f"[shadbala] hora lord calculation failed: {e}")
     
     return bala
 

@@ -48,8 +48,9 @@ def get_repo_info(repo_url: str) -> dict:
                 'license': data.get('license', ''),
                 'desc': data.get('description', '')[:100],
             }
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.warning(f"[oss_monitor] repo info fetch failed for {repo_url}: {e}")
 
     # Fallback: cached data
     return {}
@@ -90,8 +91,9 @@ def check_changes() -> dict:
                     changes.append(f"{name}: ⭐ {prev.get('stars',0)} → {info.get('stars',0)} ({diff:+d})")
                 if info.get('last_updated') != prev.get('last_updated'):
                     changes.append(f"{name}: 有更新 ({info.get('last_updated','')[:10]})")
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.warning(f"[oss_monitor] change comparison failed: {e}")
 
     current['changes'] = changes
     with open(MONITOR_FILE, 'w') as f:
