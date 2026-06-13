@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Jyotish Report Builder v1.0
-将 Markdown 分析报告转换为精美 HTML（羊皮纸风格）
+Jyotish Report Builder v2.0
+将 Markdown 分析报告转换为精美 HTML + PDF（羊皮纸风格）
 
 基于 CNWU16/vedic-astro-skills 的 report_builder.py 改编
 适配我们的 jyotish-vedic-astrology 引擎输出格式
 
 用法:
-  python3 report_builder.py <folder> --name "名字" --lagna "上升" --lang cn
+  # HTML 输出
   python3 report_builder.py ./report_dir --name "张三" --lagna "狮子座" --lang cn
-  python3 report_builder.py ./report_dir --name "Obama" --lagna "Leo" --lang en
+  # PDF 直接输出（需要 playwright 已安装）
+  python3 report_builder.py ./report_dir --name "张三" --lagna "狮子座" --lang cn --pdf
+  # 英文
+  python3 report_builder.py ./report_dir --name "Obama" --lagna "Leo" --lang en --pdf
 
 功能:
   - 自动扫描目录下的 MD 文件，按章节注册表排序
@@ -18,7 +21,7 @@ Jyotish Report Builder v1.0
   - 自动生成目录
   - 每个章节独立分页（A4打印优化）
   - 羊皮纸主题CSS，支持中英文双语
-  - 可直接浏览器打开后 Ctrl+P → Save as PDF
+  - --pdf: 使用 Playwright 直接生成 PDF（无需手动打印）
 """
 
 import os
@@ -345,6 +348,33 @@ def build_section(num, title, md_text):
 </div>"""
 
 
+def _html_to_pdf(html_path, pdf_path):
+    """Convert HTML to PDF using Playwright headless Chromium."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print("  [WARN] playwright not installed. Install with: pip install playwright && playwright install chromium")
+        print("  [INFO] HTML report available at:", html_path)
+        return False
+
+    print("  Launching headless Chromium...")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(f"file://{os.path.abspath(html_path)}", wait_until="networkidle")
+        page.pdf(
+            path=pdf_path,
+            format="A4",
+            print_background=True,
+            margin={"top": "22mm", "bottom": "24mm", "left": "20mm", "right": "20mm"},
+        )
+        browser.close()
+
+    size_kb = os.path.getsize(pdf_path) / 1024
+    print(f"  [OK] PDF: {pdf_path} ({size_kb:.0f} KB)")
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Jyotish Report Builder — MD → HTML",
@@ -361,6 +391,7 @@ Examples:
     parser.add_argument("--status", default="—", help="Current status")
     parser.add_argument("--lang", default="cn", choices=["cn", "en"], help="Language (default: cn)")
     parser.add_argument("--output", default=None, help="Output HTML path")
+    parser.add_argument("--pdf", action="store_true", help="Generate PDF directly (requires playwright)")
     args = parser.parse_args()
 
     folder = args.folder.rstrip("/\\")
@@ -406,11 +437,11 @@ Examples:
     footer_cn = """<div class="footer-note">
   本报告基于传统吠陀占星方法（Parashari Jyotish | KN Rao School）。<br>
   每项结论均有量化行星指标支撑。仅供自我反思与战略思考参考。<br>
-  Powered by Jyotish Engine v3.5 &amp; Swiss Ephemeris</div>"""
+  Powered by Jyotish Engine v6.9.7 &amp; Swiss Ephemeris</div>"""
     footer_en = """<div class="footer-note">
   Generated using traditional Vedic astrological methods (Parashari Jyotish | KN Rao School).<br>
   Every claim backed by quantified planetary metrics. For self-reflection purposes only.<br>
-  Powered by Jyotish Engine v3.5 &amp; Swiss Ephemeris</div>"""
+  Powered by Jyotish Engine v6.9.7 &amp; Swiss Ephemeris</div>"""
     footer = footer_cn if lang == "cn" else footer_en
 
     html_lang = "zh-CN" if lang == "cn" else "en"
@@ -427,7 +458,18 @@ Examples:
 
     size = os.path.getsize(out) / 1024
     print(f"\n  [OK] Output: {out} ({size:.0f} KB)")
-    print(f"  -> Open in browser -> Ctrl+P -> Save as PDF")
+
+    # PDF generation
+    if args.pdf:
+        pdf_out = os.path.splitext(out)[0] + ".pdf"
+        ok = _html_to_pdf(out, pdf_out)
+        if ok:
+            print(f"  -> PDF ready: {pdf_out}")
+        else:
+            print(f"  -> HTML report: {out} (open in browser → Ctrl+P → Save as PDF)")
+    else:
+        print(f"  -> Open in browser -> Ctrl+P -> Save as PDF")
+        print(f"  -> Or re-run with --pdf for direct PDF generation")
 
 
 if __name__ == "__main__":
