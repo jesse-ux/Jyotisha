@@ -76,6 +76,7 @@ from cmd_solar_return import cmd_solar_return  # v6.0.18
 from cmd_narayana_dasha import cmd_narayana_dasha as _cmd_narayana_dasha_impl  # v6.0.20
 from cmd_muhurta import cmd_muhurta  # v6.0.21
 from yoga_engine import detect_yogas  # v6.0.26: data-driven Yoga engine
+from kp_system import calc_kp_analysis, get_kp_lords  # v6.9.10: KP完整系统
 
 # ============================================================================
 # 常量
@@ -1801,6 +1802,32 @@ def cmd_ashtakavarga(args):
         return {"error": f"ashtakavarga模块导入失败: {e}"}
     planets = chart.get("planets", {})
     return calc_ashtakavarga(planets, asc_idx)
+
+
+# ============================================================================
+# 10b. KP 系统（v6.9.10新增）
+# ============================================================================
+def cmd_kp(args):
+    chart, asc_idx, jd, ayanamsa = compute_chart_data(
+        args.year, args.month, args.day, args.hour, args.minute,
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    if chart is None:
+        return {"error": "swisseph未安装"}
+
+    asc_sign = chart.get("ascendant", {}).get("sign", "Aries")
+    planets = chart.get("planets", {})
+
+    # 构建KP需要的行星位置格式
+    planet_positions = {}
+    for pname, pdata in planets.items():
+        if isinstance(pdata, dict) and 'sign' in pdata:
+            planet_positions[pname] = {
+                'sign': pdata['sign'],
+                'degree': pdata.get('degree_in_sign', pdata.get('degree', 0) % 30),
+                'house': pdata.get('house', 1),
+            }
+
+    return calc_kp_analysis(planet_positions, asc_sign)
 
 
 # ============================================================================
@@ -4118,6 +4145,10 @@ def main():
     p = sub.add_parser('ashtakavarga', help='Ashtakavarga八分法计算')
     _add_chart_args(p)
 
+    # 10b. kp (v6.9.10新增)
+    p = sub.add_parser('kp', help='KP Krishnamurti Paddhati 完整分析（Sublord+SubSub+ABCD Significator）')
+    _add_chart_args(p)
+
     # 11. memory (v3.4新增)
     p = sub.add_parser('memory', help='Hermes记忆系统')
     p.add_argument('--action', default='stats', choices=['store', 'search', 'context', 'stats'])
@@ -4279,9 +4310,9 @@ def main():
         else:
             print(f"  [Ayanamsa] {ayanamsa_name}", file=sys.stderr)
 
-    cmds = {'chart': cmd_chart, 'dasha': cmd_dasha, 'yoga': cmd_yoga, 'predict': cmd_predict,
+    cmds = {            'chart': cmd_chart, 'dasha': cmd_dasha, 'yoga': cmd_yoga, 'predict': cmd_predict,
             'varga': cmd_varga, 'celebrity': cmd_celebrity, 'db-stats': cmd_db_stats, 'transit': cmd_transit,
-            'shadbala': cmd_shadbala, 'ashtakavarga': cmd_ashtakavarga, 'memory': cmd_memory,
+            'shadbala': cmd_shadbala, 'ashtakavarga': cmd_ashtakavarga, 'kp': cmd_kp, 'memory': cmd_memory,
             'validate': cmd_validate, 'audit': cmd_audit, 'report': cmd_report,
             'varga-full': cmd_varga_full, 'aspects': cmd_aspects, 'jaimini': cmd_jaimini,
             'nakshatra-adv': cmd_nakshatra_adv, 'nakshatra-dasha': cmd_nakshatra_dasha,
