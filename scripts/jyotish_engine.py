@@ -1805,6 +1805,41 @@ def cmd_ashtakavarga(args):
 
 
 # ============================================================================
+# 10c. Ashtakoot 合婚（v6.9.12新增）
+# ============================================================================
+def cmd_ashtakoot(args):
+    """Ashtakoot 36点合婚 + Kuja Dosha"""
+    try:
+        sys.path.insert(0, SCRIPT_DIR)
+        from ashtakoot import calculate_ashtakoot
+    except ImportError as e:
+        return {"error": f"ashtakoot模块导入失败: {e}"}
+
+    # 男方星盘
+    m_chart, m_asc_idx, m_jd, m_aya = compute_chart_data(
+        args.m_year, args.m_month, args.m_day, args.m_hour, args.m_minute,
+        args.m_lat, args.m_lon, args.m_tz, getattr(args, 'node_mode', 'mean'))
+    if m_chart is None:
+        return {"error": "男方: swisseph未安装"}
+
+    # 女方星盘
+    f_chart, f_asc_idx, f_jd, f_aya = compute_chart_data(
+        args.f_year, args.f_month, args.f_day, args.f_hour, args.f_minute,
+        args.f_lat, args.f_lon, args.f_tz, getattr(args, 'node_mode', 'mean'))
+    if f_chart is None:
+        return {"error": "女方: swisseph未安装"}
+
+    m_moon_lon = m_chart.get("planets", {}).get("Moon", {}).get("degree", 0)
+    f_moon_lon = f_chart.get("planets", {}).get("Moon", {}).get("degree", 0)
+
+    # 构建 lagna 数据供附加 Kuta 使用
+    m_chart_full = {"lagna": m_chart.get("ascendant", {}), "planets": m_chart.get("planets", {})}
+    f_chart_full = {"lagna": f_chart.get("ascendant", {}), "planets": f_chart.get("planets", {})}
+
+    return calculate_ashtakoot(m_moon_lon, f_moon_lon, m_chart_full, f_chart_full)
+
+
+# ============================================================================
 # 10b. KP 系统（v6.9.10新增）
 # ============================================================================
 def cmd_kp(args):
@@ -4149,6 +4184,21 @@ def main():
     p = sub.add_parser('kp', help='KP Krishnamurti Paddhati 完整分析（Sublord+SubSub+ABCD Significator）')
     _add_chart_args(p)
 
+    # 10c. ashtakoot (v6.9.12新增)
+    p = sub.add_parser('ashtakoot', help='Ashtakoot 36点合婚 + Kuja Dosha 火星凶相分析')
+    # 男方参数
+    for prefix in ['m_', 'f_']:
+        label = '男方' if prefix == 'm_' else '女方'
+        p.add_argument(f'--{prefix}year', type=int, required=True, help=f'{label}出生年')
+        p.add_argument(f'--{prefix}month', type=int, required=True, help=f'{label}出生月')
+        p.add_argument(f'--{prefix}day', type=int, required=True, help=f'{label}出生日')
+        p.add_argument(f'--{prefix}hour', type=int, required=True, help=f'{label}出生时')
+        p.add_argument(f'--{prefix}minute', type=int, required=True, help=f'{label}出生分')
+        p.add_argument(f'--{prefix}lat', type=float, required=True, help=f'{label}出生纬度')
+        p.add_argument(f'--{prefix}lon', type=float, required=True, help=f'{label}出生经度')
+        p.add_argument(f'--{prefix}tz', type=float, default=0, help=f'{label}时区')
+    p.add_argument('--node-mode', default='mean', choices=['mean', 'true'])
+
     # 11. memory (v3.4新增)
     p = sub.add_parser('memory', help='Hermes记忆系统')
     p.add_argument('--action', default='stats', choices=['store', 'search', 'context', 'stats'])
@@ -4312,7 +4362,8 @@ def main():
 
     cmds = {            'chart': cmd_chart, 'dasha': cmd_dasha, 'yoga': cmd_yoga, 'predict': cmd_predict,
             'varga': cmd_varga, 'celebrity': cmd_celebrity, 'db-stats': cmd_db_stats, 'transit': cmd_transit,
-            'shadbala': cmd_shadbala, 'ashtakavarga': cmd_ashtakavarga, 'kp': cmd_kp, 'memory': cmd_memory,
+            'shadbala': cmd_shadbala, 'ashtakavarga': cmd_ashtakavarga, 'kp': cmd_kp,
+            'ashtakoot': cmd_ashtakoot, 'memory': cmd_memory,
             'validate': cmd_validate, 'audit': cmd_audit, 'report': cmd_report,
             'varga-full': cmd_varga_full, 'aspects': cmd_aspects, 'jaimini': cmd_jaimini,
             'nakshatra-adv': cmd_nakshatra_adv, 'nakshatra-dasha': cmd_nakshatra_dasha,
