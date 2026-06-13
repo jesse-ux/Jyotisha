@@ -111,7 +111,7 @@ def render_south_indian_chart(planets: Dict, asc_sign: str, title: str = "D1 —
                 if p_sign == sign_name:
                     symbol = PLANET_SYMBOLS.get(pname, pname[:2])
                     color = PLANET_COLORS.get(pname, '#333')
-                    lines.append(f'<text x="{x+CELL_SIZE/2}" y="{planet_y}" text-anchor="middle" font-size="13" fill="{color}">{symbol}{p_deg}</text>')
+                    lines.append(f'<text x="{x+CELL_SIZE/2}" y="{planet_y}" text-anchor="middle" font-size="13" fill="{color}" data-planet="{pname}"><title>{pname}</title>{symbol}{p_deg}</text>')
                     planet_y += 16
 
     # 中心区域（传统上写星盘信息）

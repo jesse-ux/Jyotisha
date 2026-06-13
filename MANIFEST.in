@@ -10,7 +10,13 @@ recursive-include scripts *.csv
 recursive-include jyotish_vedic *.py
 recursive-include jyotish_vedic *.json
 recursive-include jyotish_vedic *.md
-recursive-include jyotish-app *
+recursive-include jyotish-app *.html
+recursive-include jyotish-app *.css
+recursive-include jyotish-app *.js
+recursive-include jyotish-app *.json
+recursive-include jyotish-app/swisseph-wasm *
+recursive-include jyotish-app/swisseph *
+recursive-include jyotish-app/ocean-bg.mp4
 recursive-include tests *.py
 recursive-include tests *.json
 recursive-include assets *
@@ -24,3 +30,7 @@ prune .pytest_cache
 prune .ruff_cache
 prune .hypothesis
 prune **/__pycache__
+prune **/node_modules
+prune jyotish-app/node_modules
+prune jyotish-app/.vite
+prune dist

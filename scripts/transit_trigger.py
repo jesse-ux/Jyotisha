@@ -26,15 +26,25 @@ EXACT_ORB = 0.1     # 精确接触
 
 
 def _get_transit_lon(planet: str, base_date: datetime, days_offset: float) -> float:
-    """计算行星在指定日期的过境经度（简化模型，基于平均速度）"""
+    """计算行星在指定日期的过境经度（简化模型，仅作为 Swiss Ephemeris 不可用时的回退）。"""
     speed = PLANET_SPEED.get(planet, 0.5)
-    # 从base_date的初始位置推算
-    # 注意：实际应使用Swiss Ephemeris，此为近似值
     return (base_date.toordinal() * speed + days_offset * 360 / 365.25) % 360
 
 
-def _get_planet_lon_swe(planet_name: str, jd: float) -> float:
-    """使用Swiss Ephemeris计算行星经度（如果可用）"""
+def _datetime_to_jd(dt: datetime) -> float:
+    """Convert a datetime to Julian day UT."""
+    import swisseph as swe
+    hour = dt.hour + dt.minute / 60.0 + dt.second / 3600.0 + dt.microsecond / 3_600_000_000.0
+    return swe.julday(dt.year, dt.month, dt.day, hour)
+
+
+def _angular_diff(a: float, b: float) -> float:
+    """Smallest angular distance in degrees."""
+    return abs((a - b + 180.0) % 360.0 - 180.0)
+
+
+def _get_planet_lon_swe(planet_name: str, jd: float, sidereal: bool = True) -> float:
+    """使用 Swiss Ephemeris 计算行星经度（默认 Lahiri 恒星黄道）。"""
     try:
         import swisseph as swe
         planet_ids = {
@@ -44,15 +54,31 @@ def _get_planet_lon_swe(planet_name: str, jd: float) -> float:
             'Rahu': swe.MEAN_NODE, 'Ketu': swe.MEAN_NODE,
         }
         pid = planet_ids.get(planet_name)
-        if pid:
-            result = swe.calc_ut(jd, pid, swe.FLG_SWIEPH)
-            lon = result[0][0]
-            if planet_name == 'Ketu':
-                lon = (lon + 180) % 360
-            return lon
+        if pid is None:
+            return None
+        flags = swe.FLG_SWIEPH
+        if sidereal:
+            swe.set_sid_mode(swe.SIDM_LAHIRI)
+            flags |= swe.FLG_SIDEREAL
+        result = swe.calc_ut(jd, pid, flags)
+        lon = result[0][0]
+        if planet_name == 'Ketu':
+            lon = (lon + 180) % 360
+        return lon % 360
     except (ImportError, Exception):
         pass
     return None
+
+
+def _get_transit_lon_precise(planet: str, dt: datetime, base_date: datetime) -> Tuple[float, str]:
+    """Return transit longitude and calculation source."""
+    try:
+        lon = _get_planet_lon_swe(planet, _datetime_to_jd(dt))
+        if lon is not None:
+            return lon, 'swiss_ephemeris_lahiri'
+    except Exception:
+        pass
+    return _get_transit_lon(planet, base_date, (dt - base_date).total_seconds() / 86400.0), 'mean_speed_fallback'
 
 
 def search_transit_triggers(
@@ -97,9 +123,10 @@ def search_transit_triggers(
     prev_orb = None
     prev_sign = None
 
+    source = 'unknown'
     while current_date <= end_date:
-        lon = _get_transit_lon(planet, start_date, (current_date - start_date).days)
-        diff = min(abs(lon - target_longitude), 360 - abs(lon - target_longitude))
+        lon, source = _get_transit_lon_precise(planet, current_date, start_date)
+        diff = _angular_diff(lon, target_longitude)
 
         if diff <= orb:
             # 检测是否是进入/离开接触
@@ -110,6 +137,7 @@ def search_transit_triggers(
                     'orb': round(diff, 2),
                     'event': 'entering',
                     'type': 'transit_contact',
+                    'source': source,
                 })
             elif prev_orb is None:
                 if diff <= EXACT_ORB:
@@ -119,6 +147,7 @@ def search_transit_triggers(
                         'orb': round(diff, 2),
                         'event': 'exact',
                         'type': 'exact_hit',
+                        'source': source,
                     })
 
         prev_orb = diff
@@ -152,6 +181,7 @@ def _merge_contact_intervals(triggers: List[Dict], planet: str, target: float) -
                 'duration_days': (period_end - entry['date']).days,
                 'event': f'{planet} transit over {target:.1f}°',
                 'type': 'transit_period',
+                'source': entry.get('source', 'unknown'),
             })
             i = j
         else:
@@ -163,6 +193,7 @@ def _merge_contact_intervals(triggers: List[Dict], planet: str, target: float) -
                 'duration_days': 1,
                 'event': f'{planet} exact on {target:.1f}°',
                 'type': 'exact_hit',
+                'source': entry.get('source', 'unknown'),
             })
             i += 1
     return merged
@@ -285,24 +316,21 @@ def find_exact_transit_date(
     lo_days = 0.0
     hi_days = (end_date - start_date).days
 
-    lo_lon = _get_transit_lon(planet, start_date, 0)
-    hi_lon = _get_transit_lon(planet, start_date, hi_days)
-
-    # 判断目标是否在区间内（考虑360°环绕）
-    def angle_between(target, a, b):
-        a, b, target = sorted([a % 360, b % 360, target % 360])
-        return target == b  # target在中间
+    lo_lon, source = _get_transit_lon_precise(planet, start_date, start_date)
+    hi_lon, _ = _get_transit_lon_precise(planet, end_date, start_date)
 
     for _ in range(30):  # 30次迭代精度 ≈ 1分钟
         mid_days = (lo_days + hi_days) / 2.0
-        mid_lon = _get_transit_lon(planet, start_date, mid_days)
+        mid_dt = start_date + timedelta(days=mid_days)
+        mid_lon, source = _get_transit_lon_precise(planet, mid_dt, start_date)
 
-        if abs(mid_lon - target_longitude) < EXACT_ORB:
+        if _angular_diff(mid_lon, target_longitude) < EXACT_ORB:
             return {
                 'planet': planet,
                 'target_degree': round(target_longitude, 1),
-                'date': (start_date + timedelta(days=mid_days)).strftime('%Y-%m-%d %H:%M'),
+                'date': mid_dt.strftime('%Y-%m-%d %H:%M'),
                 'exact_degree': round(mid_lon, 2),
+                'source': source,
             }
 
         if (mid_lon - lo_lon) % 360 < (target_longitude - lo_lon) % 360:
