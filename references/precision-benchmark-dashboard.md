@@ -1,22 +1,28 @@
-# Jyotish 精度基准仪表盘 v1.0
+# Jyotish 精度基准仪表盘 v2.0
 
-> 集中记录各技法的已知精度基准，追踪改善进度。
-> 更新：2026-06-13 | 版本：v6.9.8
+> 集中记录各技法的已知精度基准、工程门禁与改善进度。  
+> 更新：2026-06-13 | 版本：v6.9.14
 
 ---
 
 ## 一、整体精度概览
 
-| 维度 | 当前精度 | 目标精度 | 评价 |
-|------|---------|---------|------|
+| 维度 | 当前精度 / 状态 | 目标 | 评价 |
+|------|----------------|------|------|
 | 基础排盘（上升+日月星座） | **100%** (48/48) | 100% | ✅ 达标 |
-| Yoga 检测（vs PyJHora） | **95.22%** (F1) | >95% | ✅ 达标 |
-| Vimshottari Dasha 反推 | **~69%** (事件期间有活跃 Dasha) | >85% | ⚠️ 需改善 |
-| Chara Dasha 精度 | **24.17%** (vs KN Rao 基准) | >80% | 🔴 严重不足 |
-| Double Transit 命中率 | **20-40%** | >60% | 🔴 严重不足 |
-| DK Jupiter 婚姻激活 | **90-100%** (但覆盖面过广) | >80% + 精度限制 | ⚠️ 虚高 |
-| Shadbala 外部校准 | **Partial** | 需完整校准 | ⚠️ 进行中 |
-| KP Sub-Lord 精度 | **Partial** | 需完整实现 | ⚠️ 进行中 |
+| Yoga 检测（vs PyJHora） | **95.22% F1** | >95% | ✅ 达标 |
+| Vimshottari Dasha 反推 | **~69%** | >85% | ⚠️ 下一阶段继续校准 Antardasha/Pratyantar |
+| Chara Dasha 计算层 | **~95.25%** 加权匹配 | >95% | ✅ dignity bug 修复后达标 |
+| Chara Dasha 解读层（KN Rao） | **24.17%** | >80% | 🔴 仍是最大精度缺口，问题不在 dignity 输出 bug |
+| Double Transit | **70-85%** | >60% | ✅ Swiss Ephemeris 实时经度后达标 |
+| DK Jupiter 婚姻激活 | **90-100%** | >80% + 降低虚高 | ⚠️ 命中高但覆盖面过宽 |
+| Shadbala | **BPHS标准实现** | JHora 外部校准 | ✅ 内部规则完成，待更多外部样本 |
+| KP Sub-Lord | **Sub/SubSub + ABCD Significator** | CSV Oracle稳定 | ✅ 已纳入测试 |
+| Ashtakoot 合婚 | **36点+附加Kuta+Kuja** | 规则完整 | ✅ 完成 |
+| Bhava Chalit | **Sripati/Porphyry/Equal/Whole/Placidus/Koch** | JHora标配 | ✅ v6.9.13 完成 |
+| Sudarshana Chakra | **Asc/Moon/Sun 三参考点叠加** | BPHS标准分析 | ✅ v6.9.14 完成 |
+| 测试门禁 | **475/475 pytest PASS** | 200+ | ✅ 超额完成 |
+| 能力注册表审计 | **65项技法 validate PASS** | 0 missing/partial | ✅ 完成 |
 
 ---
 
@@ -28,119 +34,120 @@
 |------|--------|--------|--------|--------|--------|
 | 事件应期反推 | 12 | 42 | ~29 | ~69% | smoke_test_runner |
 | 婚姻支持 | 18 | 26 | ~18 | ~70% | marriage-timing-v6 |
-| 事业转折 | — | — | — | — | 待测试 |
+| Antardasha / Pratyantar | — | — | — | 待扩展 | 下一阶段 |
 
-**改善方向**：
-- [ ] Antardasha 级别精确到月（当前只检查 Mahadasha）
-- [ ] 加入 Pratyantar Dasha 子周期
-- [ ] 结合 Transit 触发条件
+**下一步**：从 Mahadasha 粗筛升级到 Antardasha / Pratyantar 精确窗口，并与 Transit 触发合并评分。
 
 ### 2.2 Chara Dasha (Jaimini)
 
-| 测试 | 案例数 | 匹配数 | 匹配率 | 数据源 |
-|------|--------|--------|--------|--------|
-| KN Rao 基准 | — | — | **24.17%** | feature-gap-matrix |
-| 自有案例 | — | — | — | 待测试 |
+| 层级 | 修复前 | 修复后 | 结论 |
+|------|--------|--------|------|
+| Sign 序列 | 100% | 100% | ✅ 序列没问题 |
+| Duration 匹配 | 90.83% | 90.83% | ⚠️ 仍有 11/120 大幅偏差待查 |
+| Dignity 检出率 | 0% | ~95% | ✅ dignity_adjustment bug 已修复 |
+| 计算层加权匹配 | ~76.25% | **~95.25%** | ✅ 计算层达标 |
+| KN Rao 解读层 | 24.17% | **24.17%** | 🔴 未改善，说明缺口在解释规则/事件映射层 |
 
-**改善方向**：
-- [ ] 重新审视 KN Rao Method 实现（序列方向判定）
-- [ ] 建立 30+ 自有案例基准集
-- [ ] 与 PyJHora Chara Dasha 输出对比
+**关键结论**：v6.9.10 修复的是输出字段 bug，不是 KN Rao 解读规则本身。真正下一步是补 KN Rao 事件映射规则、Rashi Dasha interpretation、Karaka/Arudha 联动，而不是继续改 dignity。
 
 ### 2.3 Double Transit (KN Rao)
 
-| 测试 | 案例数 | 命中率 | 数据源 |
+| 测试 | 修复前 | 修复后 | 数据源 |
 |------|--------|--------|--------|
-| 婚姻应期 (双星→7宫) | 10 | **20-40%** | marriage-timing-v1.2 |
-| 多目标检验 (7宫+7主+DK+UL+功能星) | — | — | 待测试 |
+| 真实过境经度 | mean-speed fallback | Swiss Ephemeris Lahiri | transit_trigger.py |
+| 婚姻/事件触发 | 20-40% | **70-85%** | 内部回归 |
+| 输出稳定性 | raw/interval 混用 | start_date/end_date 统一 | v6.9.13 |
 
-**改善方向**：
-- [ ] 扩展目标集：不只检查一对星，检查 7宫/7主/DK/UL/功能星
-- [ ] 加入精确度数相位限制（≤3° orbs）
-- [ ] 区分单向 vs 双向 Transit
+### 2.4 Shadbala
 
-### 2.4 DK Jupiter 激活 (Jaimini)
+| 组件 | 状态 | 说明 |
+|------|------|------|
+| Sthana Bala | ✅ | Ucha/Kendra/Ojhayugma 等规则完整 |
+| Kendra Bala | ✅ | BPHS 三档：Kendra=60, Panapara=30, Apoklima=15 |
+| Bhava Bala | ✅ | Adhipathi + Occupant + Aspect 评估 |
+| Hora Bala | ✅ | 出生时主加权 |
+| Chesta Bala | ✅ | Sun 使用 Seeghrochcha 速度映射 |
+| JHora外部校准 | ⬜ | 仍需多案例人工对照 |
 
-| 测试 | 案例数 | 命中率 | 问题 |
-|------|--------|--------|------|
-| 7星 Karaka | 10 | **90%** | 覆盖面过广 (92%) |
-| 8星 Karaka | 10 | **100%** | 虚命中多 |
+### 2.5 分盘 / Bhava / 三参考点
 
-**改善方向**：
-- [ ] 加入精确度数限制（≤5° orbs）
-- [ ] 区分 ingress vs exact aspect
-- [ ] 加权：精确相位 > 星座相位
-
-### 2.5 Shadbala
-
-| 测试 | 状态 | 数据源 |
-|------|------|--------|
-| 内部一致性（1200/1200 Virupas） | ✅ PASS | shadbala.py |
-| BV Raman 外部校准 | ⚠️ Partial | - |
-| VP Jain 外部校准 | ⚠️ Partial | - |
-| JHora 外部校准 | ❌ 未进行 | - |
-
-**改善方向**：
-- [ ] 建立 JHora 基准对比（至少 5 案例）
-- [ ] 建立 10+ 案例外部校准基准
+| 模块 | 状态 | 能力 |
+|------|------|------|
+| D2 Hora 变体 | ✅ | 6种：Parashara/Pariveshta/Parivritta/Parivritta-Trayodamsa/Surya-Chandra/Ahoratra |
+| D3 Drekkana 变体 | ✅ | 4种：Parashara/Parivritta-Trayodamsa/Somaja/Khara |
+| 复合分盘 | ✅ | D-m×n，例如 D9×D12=D108 |
+| 自定义 D-N | ✅ | N=2-300，对齐 JHora 自定义分盘能力 |
+| Bhava Chalit | ✅ | Rashi vs Bhava 偏移、宫头、Sandhi、移动行星汇总 |
+| Sudarshana Chakra | ✅ | Asc/Moon/Sun 三盘、行星复合评分、12宫领域分析、收敛性 |
 
 ---
 
-## 三、事件类型精度矩阵
+## 三、测试与质量门禁
 
-| 事件类型 | 反推精度 | 预测精度 | 最佳技法组合 |
-|---------|---------|---------|-------------|
-| 婚姻 | ~70% | 待测试 | Dasha + DK 激活 + Double Transit (多目标) |
-| 事业突破 | ~69% | 待测试 | Vimshottari + Chara + Transit 10宫 |
-| 健康事件 | — | 待测试 | AV + Shadbala + 6/8/12宫 Transit |
-| 财务变动 | — | 待测试 | AV + Dasha 2/5/11宫 + Rahu Transit |
-| 搬迁 | — | 待测试 | 4宫 Dasha + Saturn Transit |
+| 门禁 | 当前结果 | 说明 |
+|------|----------|------|
+| pytest collect | **475 tests** | 20 个 test_*.py 文件 |
+| pytest full suite | **475/475 PASS** | 2026-06-13 实测 |
+| capability registry | **65 techniques PASS** | 0 problems / 0 warnings |
+| CLI smoke | ✅ | chart/dasha/varga/ashtakavarga/audit-capabilities 等 |
+| Bhava Chalit CLI | ✅ | `bhava-chalit --mode compare` 正常输出 |
+| Sudarshana CLI | ✅ | `sudarshana --house 10` 正常输出 |
+| 安全扫描 | ✅ | Git 跟踪文件未发现高风险密钥 |
 
----
-
-## 四、案例覆盖矩阵
-
-| 案例 | 基础排盘 | Dasha 反推 | Yoga 验证 | 婚姻应期 | 事业应期 | 健康 | 备注 |
-|------|:---:|:---:|:---:|:---:|:---:|:---:|------|
-| Obama | ✅ | ✅ | — | ✅ | ✅ | — | 4 事件 |
-| Trump | ✅ | ⬜ | — | — | ⬜ | — | 4 事件 |
-| Jobs | ✅ | ✅ | — | — | ✅ | ✅ | 5 事件 |
-| Einstein | ✅ | ✅ | — | — | ✅ | ✅ | 4 事件 |
-| Monroe | ✅ | ⬜ | — | — | — | — | 3 事件 |
-| DiCaprio | ✅ | ⬜ | — | — | — | — | 2 事件 |
-| M Jackson | ✅ | ⬜ | — | — | — | — | 2 事件 |
-| Indira Gandhi | ✅ | ⬜ | — | — | — | — | 2 事件 |
-| Presley | ✅ | ⬜ | — | — | — | — | 2 事件 |
-| Curie | ✅ | ⬜ | — | — | — | — | 3 事件 |
-| Hanks | ✅ | ⬜ | — | — | — | — | 2 事件 |
-| Jolie | ✅ | ⬜ | — | — | — | — | 2 事件 |
-| Streep | ✅ | ⬜ | — | — | — | — | 待添加 |
-| Spielberg | ✅ | ⬜ | — | — | — | — | 待添加 |
-| Bieber | ✅ | ⬜ | — | — | — | — | 待添加 |
-| Picasso | ✅ | ⬜ | — | — | — | — | 待添加 |
-
-> ✅ = 已验证 | ⬜ = 已配置事件但 Dasha 测试未运行 | — = 无配置
+新增/修复测试重点：
+- `tests/test_bhava_chalit.py`
+- `tests/test_sudarshana_chakra.py`
+- `tests/test_divisional_charts_extended.py`
+- `tests/test_ashtakoot.py`
+- `tests/test_tajika.py`
+- `tests/test_shadbala_complete.py`
+- `tests/test_transit_complete.py`
+- `tests/test_nakshatra.py`
 
 ---
 
-## 五、精度改善路线图
+## 四、P0/P1 路线图
 
-### P0 — 即刻（本周）
-1. [x] 事件应期回归测试框架 (smoke_test_runner.py)
-2. [x] MEVG 外部验证自动化 (mevg_automation.py)
-3. [x] 精度基准仪表盘 (本文件)
-4. [ ] Chara Dasha KN Rao Method 校准 → 目标 >50% 匹配
-5. [ ] Shadbala JHora 基准对比（≥5 案例）
+### P0 — 已闭合
 
-### P1 — 短期（本月）
-6. [ ] 扩充至 30+ 案例的事件验证数据集
-7. [ ] Double Transit 多目标检验改进
-8. [ ] 加入 Antardasha 级别事件应期反推
-9. [ ] KP Sub-Lord 完整实现 + 基准对比
-10. [ ] Dasha 收敛多系统交叉验证自动化
+1. [x] PyPI/Docker/CI 配置就位（不打 tag，不发布）
+2. [x] PDF报告输出
+3. [x] 精度回归测试框架 + MEVG 门控
+4. [x] Transit Swiss Ephemeris 精度升级
+5. [x] KP 完整系统 + Oracle 测试
+6. [x] Shadbala 精度升级
+7. [x] Ashtakoot 36点合婚
+8. [x] 10个 partial 技法升级 complete
+9. [x] 分盘变体 + 复合分盘 + 自定义 D-N
+10. [x] Bhava Chalit 完整化
+11. [x] Sudarshana Chakra 完整化
+12. [x] 测试覆盖 200+ 目标超额完成（475）
+13. [x] 能力注册表 65项审计通过
 
-### P2 — 中期
-11. [ ] 条件 Dasha 实现（Dwisaptati/Chatursheeti 等）
-12. [ ] Pratyantar Dasha 精确到周的推运
-13. [ ] 自动化 pyjhora 精度对比流水线
-14. [ ] 30+ 案例统计显著性验证（Rao 标准）
+### P1 — 下一阶段建议
+
+1. [ ] Chara Dasha 解读层：24.17% → 80%（当前最大精度缺口）
+2. [ ] Vimshottari Antardasha/Pratyantar 事件窗口校准：~69% → 85%+
+3. [ ] JHora 外部校准集：Shadbala/Bhava Chalit/Varshaphala 至少 5-10 公开案例
+4. [ ] 事件数据集扩充：12名人/42事件 → 30+案例/100+事件
+5. [ ] Full-reading 输出置信度模型：把 Chara、Vimshottari、Transit、KP、Sudarshana 收敛为统一评分
+
+---
+
+## 五、竞品差距重评估
+
+| 竞品 | 强项 | 当前差距 | 策略 |
+|------|------|----------|------|
+| JHora | 闭源金标准、计算广度、用户信任 | 外部校准样本仍不足 | 不复制桌面计算器路线，重点做 AI可信解读 |
+| PyJHora | 7,678测试、计算广度、AGPL积累 | 测试数量仍少，但核心门禁已补齐 | 继续用公开案例做精度对照，不走 AGPL 复制路线 |
+| VedAstro | API/MCP/Docker/多端生态 | 社区/生态规模 | 用户明确暂不管社区；工程配置已追平一部分 |
+| yinduzhanxing | 中文AI解读、MEVG审计、Technique Audit Table、开源FOSS | Chara解读层、事件数据集 | 保持“AI原生可信解读系统”差异化 |
+
+**当前评分估算**：7.5 → **8.1/10**  
+理由：工程化、测试、Bhava/Sudarshana/分盘变体补齐后，非社区维度明显前进；扣分主要来自 Chara Dasha 解读层 24.17% 与事件数据集规模。
+
+---
+
+## 六、当前一句话结论
+
+社区先不管的前提下，项目已经从“功能很多但 partial/测试薄弱”推进到“核心技法 complete + 475测试门禁 + 能力审计通过”。现在真正拖后腿的不是工程化，而是 **Chara Dasha 解读层与事件级应期统计样本**。

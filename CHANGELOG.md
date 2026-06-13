@@ -1135,7 +1135,7 @@ Quality gate passed
 - `py_compile`：`nakshatra_advanced.py` / `nakshatra_dasha.py` / `cmd_nakshatra_adv.py` / `jyotish_engine.py` 全部通过。
 - `nakshatra-adv --mode chandra` 可输出 Chandra Bala。
 - `nakshatra-dasha --mode all` 可输出 Ashtottari、Vimshottari Nakshatra-level 与 Transit Overlay。
-- `audit_capabilities.py --mode validate` 通过：44 techniques（0 missing / 18 partial / 26 covered）。
+- `audit_capabilities.py --mode validate` 通过：当时为 44 techniques（0 missing / 18 partial / 26 covered）；v6.9.14 已升级为 65 techniques validate PASS。
 
 ### 已知限制
 
@@ -1648,7 +1648,7 @@ Quality gate passed
 
 - 不让用户负责点名高级技法；
 - 由 skill 根据问题类型自动选择 mandatory checklist；
-- 每次输出必须暴露已调用/未调用/partial/unavailable 模块；
+- 每次输出必须暴露已调用/未调用/covered/complete/partial/unavailable 模块；
 - 防止只看 D1、只看 Dasha、只看单一 Transit 的偷懒式解读。
 
 ### ② 新增六类 strict route

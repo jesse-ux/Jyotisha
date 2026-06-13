@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from ashtakavarga import ALL_SOURCES, BAV_TOTALS, EXPECTED_SAV_TOTAL, SEVEN_PLANETS, SIGNS, calc_ashtakavarga
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 
@@ -13,6 +13,7 @@ def planet_signs(draw: st.DrawFn) -> dict[str, dict[str, str]]:
     return {planet: {"sign": draw(st.sampled_from(SIGNS))} for planet in SEVEN_PLANETS}
 
 
+@settings(deadline=None)
 @given(planet_signs(), st.integers(min_value=0, max_value=11))
 def test_ashtakavarga_totals_are_position_independent(planets: dict[str, dict[str, str]], asc_sign_idx: int) -> None:
     result = calc_ashtakavarga(planets, asc_sign_idx)

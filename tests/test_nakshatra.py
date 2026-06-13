@@ -35,8 +35,8 @@ class TestFindNakshatra:
 
     @pytest.mark.parametrize("lon,expected_idx", [
         (0.0, 0), (6.0, 0), (13.34, 1),
-        (26.67, 1), (26.68, 2),
-        (40.0, 2), (53.34, 3),
+        (26.66, 1), (26.67, 2),
+        (39.99, 2), (40.0, 3), (53.33, 3), (53.34, 4),
         (180.0, 13), (240.0, 18), (320.0, 24), (346.67, 26),
     ])
     def test_nakshatra_indices(self, lon, expected_idx):

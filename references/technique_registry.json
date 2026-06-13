@@ -396,10 +396,10 @@
         "modules.chart.houses"
       ],
       "audit_label": "Bhava Chalit",
-      "missing_impact": "Planet reassignment near cusps is not fully recalibrated.",
-      "limitation": "House cusps exist, but full Chalit Chart planet reassignment is not implemented.",
-      "version": "6.9.3",
-      "note": "v6.9.3 — bhava_chalit.py 完整行星重分配 + cross_house_check"
+      "missing_impact": "covered",
+      "limitation": "Complete in v6.9.13: house cusps, Bhava Sandhi boundaries, planet reassignment, Rashi-vs-Bhava shift detection.",
+      "version": "6.9.13",
+      "note": "v6.9.13 — bhava_chalit.py 完整行星重分配 + cross_house_check"
     },
     "sudarshana_chakra": {
       "name": "Sudarshana Chakra",
@@ -412,17 +412,18 @@
         "references/varga-system-quick-reference.md"
       ],
       "commands": [
+        "sudarshana",
         "full-reading"
       ],
       "output_paths": [
-        "modules.varga_full",
-        "modules.d9_navamsa_expanded"
+        "scripts/sudarshana_chakra.py",
+        "modules.sudarshana"
       ],
       "audit_label": "Sudarshana Chakra",
-      "missing_impact": "Traditional triple-lagna confirmation is partial only.",
-      "limitation": "D1-D9-D10 triangle verification exists as a substitute; traditional Sudarshana module is absent.",
-      "version": "6.9.3",
-      "note": "v6.9.3 — sudarshana_chakra.py 三参考点盘(Lagna+Chandra+Surya) + 收敛分析"
+      "missing_impact": "covered",
+      "limitation": "Complete in v6.9.14: traditional triple-lagna confirmation with Ascendant/Moon/Sun reference charts and life-area convergence scoring.",
+      "version": "6.9.14",
+      "note": "v6.9.14 — sudarshana_chakra.py 三参考点盘(Lagna+Chandra+Surya) + 收敛分析"
     },
     "dispositor_chain": {
       "name": "Dispositor Chain / 定位星链",
@@ -1052,87 +1053,274 @@
     "kp_system": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "kp_system.py — Sublord+Subsublord+ABCD Significator (diliprk/VedicAstro MIT)"
+      "note": "kp_system.py — Sublord+Subsublord+ABCD Significator (diliprk/VedicAstro MIT)",
+      "name": "kp_system.py",
+      "domains": [
+        "kp"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/kp_system.py"
+      ],
+      "audit_label": "kp_system.py",
+      "missing_impact": "covered"
     },
     "prashna": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "prashna.py — KP sublord答案+Arudha+12问事分类"
+      "note": "prashna.py — KP sublord答案+Arudha+12问事分类",
+      "name": "prashna.py",
+      "domains": [
+        "prashna"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/prashna.py"
+      ],
+      "audit_label": "prashna.py",
+      "missing_impact": "covered"
     },
     "synastry_16factor": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "synastry.py — Ashtakoot 8因子36分制+Kuta+附加因子 (dashaflow MIT)"
+      "note": "synastry.py — Ashtakoot 8因子36分制+Kuta+附加因子 (dashaflow MIT)",
+      "name": "synastry.py",
+      "domains": [
+        "synastry"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/synastry.py"
+      ],
+      "audit_label": "synastry.py",
+      "missing_impact": "covered"
     },
     "remedies": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "remedies.py — 5类补救(宝石/咒语/捐赠/斋戒/Yantra)+Dosha专项"
+      "note": "remedies.py — 5类补救(宝石/咒语/捐赠/斋戒/Yantra)+Dosha专项",
+      "name": "remedies.py",
+      "domains": [
+        "remedies"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/remedies.py"
+      ],
+      "audit_label": "remedies.py",
+      "missing_impact": "covered"
     },
     "bhava_bala": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "bhava_bala.py — 三组件(Adhipathi+Dig+Drik)，Sputa Drishti (jyotishganit MIT)"
+      "note": "bhava_bala.py — 三组件(Adhipathi+Dig+Drik)，Sputa Drishti (jyotishganit MIT)",
+      "name": "bhava_bala.py",
+      "domains": [
+        "bhava"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/bhava_bala.py"
+      ],
+      "audit_label": "bhava_bala.py",
+      "missing_impact": "covered"
     },
     "muhurtha": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "muhurtha_election.py — 6活动选举(婚/旅/商/学/迁入/医) (dashaflow MIT)"
+      "note": "muhurtha_election.py — 6活动选举(婚/旅/商/学/迁入/医) (dashaflow MIT)",
+      "name": "muhurtha_election.py",
+      "domains": [
+        "muhurtha"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/muhurtha_election.py"
+      ],
+      "audit_label": "muhurtha_election.py",
+      "missing_impact": "covered"
     },
     "career_engine": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "career_analysis.py — 10宫+D10+Saturn+领域评分 结构化事业引擎"
+      "note": "career_analysis.py — 10宫+D10+Saturn+领域评分 结构化事业引擎",
+      "name": "career_analysis.py",
+      "domains": [
+        "career"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/career_analysis.py"
+      ],
+      "audit_label": "career_analysis.py",
+      "missing_impact": "covered"
     },
     "relationship_engine": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "relationship_analysis.py — Venus+7宫+DK+UL+D9 结构化感情引擎"
+      "note": "relationship_analysis.py — Venus+7宫+DK+UL+D9 结构化感情引擎",
+      "name": "relationship_analysis.py",
+      "domains": [
+        "relationship"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/relationship_analysis.py"
+      ],
+      "audit_label": "relationship_analysis.py",
+      "missing_impact": "covered"
     },
     "varshaphala": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "varshaphala.py — Solar Return+Muntha+Varshesha+Tajika 10 Yoga+36 Sahams"
+      "note": "varshaphala.py — Solar Return+Muntha+Varshesha+Tajika 10 Yoga+36 Sahams",
+      "name": "varshaphala.py",
+      "domains": [
+        "varshaphala"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/varshaphala.py"
+      ],
+      "audit_label": "varshaphala.py",
+      "missing_impact": "covered"
     },
     "ashtakavarga_pav": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "ashtakavarga.py calc_prastara_av() — 7×12×8三维PAV展开"
+      "note": "ashtakavarga.py calc_prastara_av() — 7×12×8三维PAV展开",
+      "name": "ashtakavarga.py calc_prastara_av()",
+      "domains": [
+        "ashtakavarga"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/ashtakavarga_pav.py"
+      ],
+      "audit_label": "ashtakavarga.py calc_prastara_av()",
+      "missing_impact": "covered"
     },
     "ashtakavarga_sodhita": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "ashtakavarga.py calc_sodhita_av() — BPHS标准减法净化"
+      "note": "ashtakavarga.py calc_sodhita_av() — BPHS标准减法净化",
+      "name": "ashtakavarga.py calc_sodhita_av()",
+      "domains": [
+        "ashtakavarga"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/ashtakavarga_sodhita.py"
+      ],
+      "audit_label": "ashtakavarga.py calc_sodhita_av()",
+      "missing_impact": "covered"
     },
     "kakshya": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "kakshya.py — 8区间×3.75° + 守护星力量评估"
+      "note": "kakshya.py — 8区间×3.75° + 守护星力量评估",
+      "name": "kakshya.py",
+      "domains": [
+        "kakshya"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/kakshya.py"
+      ],
+      "audit_label": "kakshya.py",
+      "missing_impact": "covered"
     },
     "transit_trigger": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "transit_trigger.py — 度数级二分搜索 + 区间批量搜索"
+      "note": "transit_trigger.py — 度数级二分搜索 + 区间批量搜索",
+      "name": "transit_trigger.py",
+      "domains": [
+        "transit"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/transit_trigger.py"
+      ],
+      "audit_label": "transit_trigger.py",
+      "missing_impact": "covered"
     },
     "divisional_yoga": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "divisional_yoga.py — D9/D10/D12分盘中PMC/Raja/Dhana/Moon/Exchange检测"
+      "note": "divisional_yoga.py — D9/D10/D12分盘中PMC/Raja/Dhana/Moon/Exchange检测",
+      "name": "divisional_yoga.py",
+      "domains": [
+        "divisional"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/divisional_yoga.py"
+      ],
+      "audit_label": "divisional_yoga.py",
+      "missing_impact": "covered"
     },
     "birth_time_rectifier": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "birth_time_rectifier.py — Lagna边界+事件-宫位映射+精度矩阵 (vedic-astro-skills MIT)"
+      "note": "birth_time_rectifier.py — Lagna边界+事件-宫位映射+精度矩阵 (vedic-astro-skills MIT)",
+      "name": "birth_time_rectifier.py",
+      "domains": [
+        "birth"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/birth_time_rectifier.py"
+      ],
+      "audit_label": "birth_time_rectifier.py",
+      "missing_impact": "covered"
     },
     "case_validator": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "case_validator.py — 三层验证(配置/大运/过境)+22个案例 94.7%吻合"
+      "note": "case_validator.py — 三层验证(配置/大运/过境)+22个案例 94.7%吻合",
+      "name": "case_validator.py",
+      "domains": [
+        "case"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/case_validator.py"
+      ],
+      "audit_label": "case_validator.py",
+      "missing_impact": "covered"
     },
     "misconceptions": {
       "status": "covered",
       "version": "6.9.3",
-      "note": "misconceptions.py — 6大类10条误区规则+自动扫描"
+      "note": "misconceptions.py — 6大类10条误区规则+自动扫描",
+      "name": "misconceptions.py",
+      "domains": [
+        "misconceptions"
+      ],
+      "knowledge_refs": [],
+      "commands": [],
+      "output_paths": [
+        "scripts/misconceptions.py"
+      ],
+      "audit_label": "misconceptions.py",
+      "missing_impact": "covered"
     }
   },
   "routes": {

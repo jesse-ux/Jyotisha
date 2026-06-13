@@ -249,8 +249,17 @@ def search_all_transit_triggers(
                 t['sensitive_point'] = sp['name']
                 all_triggers.append(t)
 
+    # Normalize legacy raw trigger rows (single-contact results may bypass interval merge)
+    for t in all_triggers:
+        if 'start_date' not in t and 'date' in t:
+            t['start_date'] = t['date'].strftime('%Y-%m-%d')
+        if 'end_date' not in t and 'date' in t:
+            t['end_date'] = t['date'].strftime('%Y-%m-%d')
+        if 'duration_days' not in t:
+            t['duration_days'] = 1
+
     # 排序
-    all_triggers.sort(key=lambda x: x['start_date'])
+    all_triggers.sort(key=lambda x: x.get('start_date', '9999-12-31'))
 
     # Sade Sati 检测
     sade_sati = _check_sade_sati_trigger(asc_lon, moon_lon, start_date, end_date)

@@ -272,7 +272,7 @@ def t50():
     assert '<svg' in svg and '</svg>' in svg
 
 # ========================================================================
-# v6.9.6: 扩展测试 — 50→200+ 覆盖核心计算模块
+# v6.9.14: 扩展测试 — 50→475+ 覆盖核心计算模块
 # ========================================================================
 
 # ── Shadbala precision tests ──
@@ -684,7 +684,7 @@ def t99():
 @test("Package version is consistent")
 def t100():
     from jyotish_vedic import __version__
-    assert __version__ == '6.9.6'
+    assert __version__ == '6.9.14'
 
 # ── v6.9.11 Precision gate tests ──
 @test("Transit uses Swiss Ephemeris")

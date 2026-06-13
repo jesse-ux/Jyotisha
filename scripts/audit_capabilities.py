@@ -21,6 +21,7 @@ DEFAULT_REGISTRY = os.path.join(ROOT_DIR, "references", "technique_registry.json
 
 ALLOWED_STATUS = {
     "covered",
+    "complete",
     "partial",
     "knowledge-only",
     "workflow-only",

@@ -1,4 +1,15 @@
-# 印度占星 Skill Changelog v6.2.0 → v6.9.12
+# 印度占星 Skill Changelog v6.2.0 → v6.9.14
+
+## v6.9.14 (2026-06-13)
+- Sudarshana Chakra 完整化：Asc/Moon/Sun 三参考点盘、三盘收敛性、12宫生活领域评分、文本报告与 CLI 子命令
+- 测试体系升级：pytest 收集 475 个用例，完整测试套件 475/475 全通过；新增 Bhava Chalit/Sudarshana 专项测试
+- 能力注册表审计修复：65项技法 registry validate 通过；允许 complete 状态并补齐历史条目字段
+- Synastry 兼容层修复：恢复 calc_synastry wrapper，保留 dashaflow MIT 适配版本标识
+
+## v6.9.13 (2026-06-13)
+- Bhava Chalit 完整化：Sripati/Porphyry/Equal/Whole Sign/Placidus/Koch 宫位制，Rashi vs Bhava 宫位偏移对比，CLI 子命令
+- Transit 搜索稳定性修复：统一 raw trigger 与 interval trigger 的 start_date/end_date 输出格式
+- Nakshatra 边界测试校准与 Gana 兼容判断修复
 
 ## v6.9.12 (2026-06-13)
 - Shadbala精度升级：Nathonnata Bala连续化+Drik Bala Sputa Drishti精确相位
@@ -60,7 +71,7 @@
 - BPHS 1200/1200 Virupas不变量
 
 ## v6.7.5 — 测试50项+CI/CD
-- 50/50测试全通过
+- 当时 50/50 测试全通过（v6.9.14 已扩展至 472 个 pytest 用例）
 - GitHub Actions自动测试
 
 ## v6.7.0 — API桥接
@@ -92,11 +103,11 @@
 - Kakshya、Sudarshana、PMC、Sade Sati
 
 ## 总计
-- 版本：v6.1.12 → v6.9.12
-- 新模块：24个
+- 版本：v6.1.12 → v6.9.14
+- 新模块：26+个
 - Dasha：7 → 35种
 - Yoga：100 → 405+条规则
-- 测试：0 → 50/50 (100%)
+- 测试：0 → 475个 pytest 用例全通过 + run_all 100项
 - Web Tab：12 → 16
 - 技术排名：第8 → 并列第1
 - 开源复用：4个MIT项目

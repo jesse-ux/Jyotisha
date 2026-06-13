@@ -1,37 +1,39 @@
 ---
 name: jyotish-vedic-astrology
-version: 6.9.12
+version: 6.9.14
 description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。35种Dasha、405+Yoga规则、KP完整系统、Prashna卜卦、16因子合盘、Remedies补救、Sahams 36种、Sudarshana三参考点、PMC完整检测、Tajika年度星盘、案例验证+误区纠正。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga。GitHub: https://github.com/732642856/yinduzhanxing
 ---
 
 # 印度占星专业解盘与推运系统
 
-> **版本**：v6.9.12 | **详细变更**：`CHANGELOG.md`
+> **版本**：v6.9.14 | **详细变更**：`CHANGELOG.md`
 > **全局排名**：技术上并列全球第1（35种Dasha、405+Yoga、KP完整、Prashna、Remedies、独有中文引擎）
 > **执行总控**：`references/quick-reference-guide.md`
 > **严格路由**：`references/strict-workflow-router.md`（涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`
 
-## v6.9.12 核心能力
+## v6.9.14 核心能力
 
 | 维度 | 数据 |
 |------|:--:|
 | Dasha系统 | 35种（含Vimshottari/Chara/Kalachakra/Narayana/Yogini等） |
 | Yoga规则 | 405+条（BPHS数据驱动架构，Yoga精度Benchmark 100%） |
-| 分盘 | D1-D144（含D81 Navamsa-Navamsa, D108, D144） |
+| 分盘 | D1-D144 + D2/D3变体 + 复合D-m×n + 自定义D-N(2-300) |
+| Bhava Chalit | Sripati/Porphyry/Equal/Whole Sign/Placidus/Koch 不等宫位调整 |
+| Sudarshana | Asc/Moon/Sun 三参考点盘 + 宫位收敛分析 |
 | Shadbala | 1200/1200 Virupas校准（6维力量评估） |
 | Ashtakavarga | BAV+SAV+PAV（展开式）+Sodhita（净化式） |
 | KP系统 | Sublord+Subsublord+ABCD Significator |
 | 合盘 | 16因子36分制（Ashtakoot+Kuta） |
 | 补救 | 5类（宝石/咒语/捐赠/斋戒/Dosha专项） |
-| 自动化测试 | 50/50 (100%) |
-| Git commits | v6.1.12→v6.9.12 共22个 |
+| 自动化测试 | 475个 pytest 用例全通过 + run_all 100项 |
+| Git commits | v6.1.12→v6.9.14 持续推进 |
 
 **独有能力**：中文AI解读引擎、Career/Love结构化分析、验前事反推管道、误区自动纠正、名人+普通人案例双轨验证。
 
 ## Yoga 逻辑验证指标
 
-| 指标 | v6.0.45（旧基线） | v6.9.12（当前） |
+| 指标 | v6.0.45（旧基线） | v6.9.14（当前） |
 |---|---:|---:|
 | Precision | 83.26% | **96.48%** |
 | Recall | 91.52% | **93.99%** |
@@ -90,7 +92,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 1. 先判断问题类型，再自动选择 `career-timing-strict` / `relationship-timing-strict` / `wealth-timing-strict` / `event-timing-strict` / `event-verification-strict`。
 2. 用户不需要知道 Chara Dasha、A10、Argala、Shadbala、Ashtakavarga 等技法名称；AI 必须按问题类型自动调用。
 3. 输出末尾必须给出 Technique Audit Table，说明每项高级技法是否调用、结果是什么、缺失会如何降低置信度。
-4. 不得把未实现或未调用的技法静默省略；A10/Karma Pada、Pushkara、Vargottama、Dasha Sandhi 已进入 full-reading 输出；完整 Bhava Chalit 与传统 Sudarshana Chakra 仍需显式标注为 partial/unavailable。
+4. 不得把未实现或未调用的技法静默省略；A10/Karma Pada、Pushkara、Vargottama、Dasha Sandhi 已进入 full-reading 输出；Bhava Chalit 与 Sudarshana Chakra 已进入 complete，可正常纳入 Technique Audit Table。
 
 ### MEVG 强制外部验证门控（v4.2.0+）
 
@@ -192,7 +194,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 $PYTHON $SCRIPT <子命令> [参数]
 ```
 
-### 35大子命令速查
+### 37大子命令速查
 
 | 子命令 | 功能 |
 |--------|------|
@@ -275,7 +277,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 ## 预测清单
 
 - [ ] **Strict Router**：已读取 `references/strict-workflow-router.md`，并声明本轮使用的 strict route
-- [ ] **Technique Audit Table**：输出末尾已列出已调用/未调用/partial/unavailable 技法及置信度影响
+- [ ] **Technique Audit Table**：输出末尾已列出已调用/未调用/complete/covered/仍需外部校准技法及置信度影响
 - [ ] **MEVG-静态门控**：所有静态解读声明必须web_search验证
 - [ ] 静态星盘分析（行星配置、Yoga、Nakshatra、宫位）
 - [ ] Argala检查（2/4/5/8/11宫干预+Virodha）
@@ -334,9 +336,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.9.12-chara-dasha-benchmark
+**版本**：v6.9.14-precision-complete
 **创建日期**：2026-04-20
-**最后更新**：2026-06-13（v6.9.12 Shadbala精度升级+Ashtakoot 36点合婚。当前 45 技法：27 covered + 18 partial。Yoga F1=95.22% 保持有效。）
+**最后更新**：2026-06-13（v6.9.14 Bhava Chalit + Sudarshana 完成，10个 partial 技法升级为 complete，65项技法注册表审计通过；pytest 475项全通过。Yoga F1=95.22% 保持有效。）
 
 ---
 

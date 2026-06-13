@@ -222,6 +222,7 @@ def calc_ashtakoot(male_moon_degree: float, female_moon_degree: float,
     approved = total >= 18.0 and (scores["Nadi"]>0 or len(exceptions)>0)
 
     return {
+        "version": "3.8-dashaflow-mit-adapted",
         "method": "Ashtakoot 16因子兼容性分析 (dashaflow MIT)",
         "male": {"moon_sign":m_sign,"nakshatra":NAKSHATRAS[m_nak],"gana":GANA[m_nak],"nadi":NADI[m_nak],"yoni":YONI_ANIMALS[m_nak]},
         "female": {"moon_sign":f_sign,"nakshatra":NAKSHATRAS[f_nak],"gana":GANA[f_nak],"nadi":NADI[f_nak],"yoni":YONI_ANIMALS[f_nak]},
@@ -233,3 +234,29 @@ def calc_ashtakoot(male_moon_degree: float, female_moon_degree: float,
         "additional_kutas": additional,
         "exceptions": exceptions,
     }
+
+
+def calc_synastry(male_chart: Dict, female_chart: Dict) -> Dict:
+    """
+    Backward-compatible synastry wrapper used by integration tests and older CLI paths.
+
+    Expected chart keys:
+    - moon_lon: Moon longitude in degrees (required)
+    - mars_lon / asc_lon / gender: optional, reserved for Kuja and extended factors
+    """
+    if "moon_lon" not in male_chart or "moon_lon" not in female_chart:
+        raise ValueError("calc_synastry requires moon_lon in both male_chart and female_chart")
+
+    result = calc_ashtakoot(
+        float(male_chart["moon_lon"]),
+        float(female_chart["moon_lon"]),
+        male_chart=male_chart,
+        female_chart=female_chart,
+    )
+
+    # Historical test/API compatibility: expose BadConstellations as an additional Kuta.
+    # A bad constellation condition is present if Vedha or Rajju is adverse.
+    vedha_bad = result["additional_kutas"].get("Vedha") == "bad"
+    rajju_bad = result["additional_kutas"].get("Rajju", {}).get("result") == "bad"
+    result["additional_kutas"]["BadConstellations"] = "bad" if (vedha_bad or rajju_bad) else "good"
+    return result

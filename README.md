@@ -162,7 +162,7 @@ The AI does NOT require the user to name techniques (e.g., "Chara Dasha"). It au
 
 ## Technique Coverage
 
-Current count: **44 techniques** (26 covered, 18 partial, 0 missing)
+Current count: **65 techniques** (55 covered, 10 complete, 0 partial, 0 missing)
 
 | Technique | Status | Notes |
 |-----------|--------|-------|
@@ -266,10 +266,13 @@ Examples:
 
 ## Project Status
 
-**Current version:** `v6.9.6`
+**Current version:** `v6.9.14`
 
 ### Recently Completed
 
+- `v6.9.14` — Sudarshana Chakra complete + 475 pytest cases + 65-technique registry audit PASS.
+- `v6.9.13` — Bhava Chalit complete + transit trigger output normalization + Nakshatra test calibration.
+- `v6.9.12` — Shadbala precision upgrade + Ashtakoot 36-point compatibility + expanded subcommands.
 - `v6.9.6` — Field mapping fixes (degree→degree_in_sign + toFixed null safety); PyPI publishing config.
 - `v6.9.5` — birth_info null safety + API field mapping fixes.
 - `v6.9.4` — AI interpretation integration (GPT relay via copse.top); api-bridge.js bundled into public/.

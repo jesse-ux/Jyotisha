@@ -204,7 +204,8 @@ def nakshatra_compatibility(nak1_idx: int, nak2_idx: int) -> Dict:
     # Gana匹配
     g1 = NAK_GANA.get(nak1_idx, '')
     g2 = NAK_GANA.get(nak2_idx, '')
-    gana_score = 6 if g1 == g2 else 3 if ('Dev' in g1 and 'Manushya' in g2) or ('Manushya' in g1 and 'Dev' in g2) else 0
+    same_gana = bool(g1 and g2 and (g1 == g2 or ('Dev' in g1 and 'Dev' in g2) or ('Manushya' in g1 and 'Manushya' in g2) or ('Rakshasa' in g1 and 'Rakshasa' in g2)))
+    gana_score = 6 if same_gana else 3 if ('Dev' in g1 and 'Manushya' in g2) or ('Manushya' in g1 and 'Dev' in g2) else 0
 
     return {
         'nak1': NAK_NAMES[nak1_idx],

@@ -4194,7 +4194,7 @@ def cmd_sudarshana(args):
 # CLI入口
 # ============================================================================
 def main():
-    parser = argparse.ArgumentParser(description='印度占星统一引擎 v6.9.12', formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description='印度占星统一引擎 v6.9.14', formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest='command', help='子命令')
 
     # 1. chart

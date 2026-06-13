@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jyotish-vedic-astrology"
-version = "6.9.12"
+version = "6.9.14"
 description = "Comprehensive Jyotish (Vedic Astrology) calculation engine with AI-ready APIs"
 readme = "README.md"
 license = "MIT"
@@ -71,6 +71,7 @@ addopts = "-q --strict-markers --strict-config"
 markers = [
     "slow: long-running validation tests",
     "external: tests that depend on optional external datasets or tools",
+    "precision: precision benchmark and calibration tests",
 ]
 
 [tool.coverage.run]
