@@ -57,6 +57,17 @@ TRANSIT_JSON = os.path.join(CLAW_DIR, '月运过境配置-2026-2028.json')
 
 try:
     import swisseph as swe
+    # 默认 Lahiri，可被 --ayanamsa 参数覆盖
+    AYANAMSA_MODES = {
+        'lahiri': swe.SIDM_LAHIRI,
+        'raman': swe.SIDM_RAMAN,
+        'kp': swe.SIDM_KRISHNAMURTI,
+        'krishnamurti': swe.SIDM_KRISHNAMURTI,
+        'fagan_bradley': swe.SIDM_FAGAN_BRADLEY,
+        'djwhal_khul': swe.SIDM_DJWHAL_KHUL,
+        'sassanian': swe.SIDM_SASSANIAN,
+        'true_citra': swe.SIDM_TRUE_CITRA,
+    }
     swe.set_sid_mode(swe.SIDM_LAHIRI)  # P0修复：必须设置Lahiri恒星黄道模式
     HAS_SWE = True
 except ImportError:
@@ -416,6 +427,16 @@ def _add_chart_args(p):
     p.add_argument('--lon', type=float, required=True)
     p.add_argument('--tz', type=float, default=0)
     p.add_argument('--node-mode', default='mean', choices=['mean', 'true'], help='Rahu/Ketu节点口径：mean=Mean Node（默认，JHora常用/Swiss direct baseline），true=True Node（PyJHora默认）')
+    p.add_argument('--ayanamsa', default='lahiri', choices=list(AYANAMSA_MODES.keys()),
+                   help='恒星黄道系统（默认lahiri）。可选: raman, kp(krishnamurti), fagan_bradley, djwhal_khul, sassanian, true_citra')
+
+
+def _apply_ayanamsa(ayanamsa_name):
+    """应用指定的 Ayanamsa 系统到全局 swissph 设置。新增 v6.9.9"""
+    if not HAS_SWE or ayanamsa_name not in AYANAMSA_MODES:
+        return False
+    swe.set_sid_mode(AYANAMSA_MODES[ayanamsa_name])
+    return True
 
 
 def _varga_chart_to_yoga_context(varga_chart):
@@ -4017,7 +4038,7 @@ def cmd_prashna(args):
 # CLI入口
 # ============================================================================
 def main():
-    parser = argparse.ArgumentParser(description='印度占星统一引擎 v3.7.0', formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description='印度占星统一引擎 v6.9.9', formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest='command', help='子命令')
 
     # 1. chart
@@ -4037,6 +4058,8 @@ def main():
     p.add_argument('--lon', type=float, required=False)
     p.add_argument('--tz', type=float, default=0)
     p.add_argument('--node-mode', default='mean', choices=['mean', 'true'])
+    p.add_argument('--ayanamsa', default='lahiri', choices=list(AYANAMSA_MODES.keys()),
+                   help='恒星黄道系统（默认lahiri）。可选: raman, kp, fagan_bradley, djwhal_khul, sassanian, true_citra')
     p.add_argument('--nakshatra', default=None); p.add_argument('--pada', type=int, default=None)
     p.add_argument('--moon-lon', type=float, default=None); p.add_argument('--birthdate', default=None)
     p.add_argument('--today', default=None)
@@ -4246,6 +4269,15 @@ def main():
     args = parser.parse_args()
     if not args.command:
         parser.print_help(); sys.exit(1)
+
+    # 应用 Ayanamsa 设置（v6.9.9 新增多系统支持）
+    ayanamsa_name = getattr(args, 'ayanamsa', 'lahiri')
+    if ayanamsa_name and ayanamsa_name != 'lahiri':
+        applied = _apply_ayanamsa(ayanamsa_name)
+        if not applied:
+            print(f"Warning: Ayanamsa '{ayanamsa_name}' not recognized, using default Lahiri", file=sys.stderr)
+        else:
+            print(f"  [Ayanamsa] {ayanamsa_name}", file=sys.stderr)
 
     cmds = {'chart': cmd_chart, 'dasha': cmd_dasha, 'yoga': cmd_yoga, 'predict': cmd_predict,
             'varga': cmd_varga, 'celebrity': cmd_celebrity, 'db-stats': cmd_db_stats, 'transit': cmd_transit,

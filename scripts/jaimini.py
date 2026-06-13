@@ -521,12 +521,14 @@ def calc_chara_dasha(asc_sign_idx: int,
         lord_house_name = SIGNS[lord_house]
 
         # 尊贵状态
-        dignities = _PLANET_DIGNITY.get(lord, {})
+        dignities = _PLANET_DIGNITY_KNRAO.get(lord, {})
         dignity_status = 'none'
         if dignities:
-            if lord_house == dignities.get('exalted'):
+            exalted_set = dignities.get('exalted', set())
+            debil_set = dignities.get('debilitated', set())
+            if lord_house in exalted_set:
                 dignity_status = 'exalted'
-            elif lord_house == dignities.get('debilitated'):
+            elif lord_house in debil_set:
                 dignity_status = 'debilitated'
 
         dasha_sequence.append({
