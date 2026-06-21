@@ -6,17 +6,14 @@ include requirements-dev.txt
 include mcp_server.py
 recursive-include scripts *.py
 recursive-include scripts *.json
-recursive-include scripts *.csv
 recursive-include jyotish_vedic *.py
-recursive-include jyotish_vedic *.json
-recursive-include jyotish_vedic *.md
 recursive-include jyotish-app *.html
 recursive-include jyotish-app *.css
 recursive-include jyotish-app *.js
 recursive-include jyotish-app *.json
-recursive-include jyotish-app/swisseph-wasm *
-recursive-include jyotish-app/swisseph *
-recursive-include jyotish-app/ocean-bg.mp4
+recursive-include jyotish-app *.wasm
+recursive-include jyotish-app *.data
+recursive-include jyotish-app *.mp4
 recursive-include tests *.py
 recursive-include tests *.json
 recursive-include assets *

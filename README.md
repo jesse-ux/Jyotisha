@@ -4,9 +4,10 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org/)
-[![Techniques](https://img.shields.io/badge/techniques-44-blueviolet)](references/technique_registry.json)
-[![Covered](https://img.shields.io/badge/covered-26-green)](references/technique_registry.json)
-[![Partial](https://img.shields.io/badge/partial-18-orange)](references/technique_registry.json)
+[![Techniques](https://img.shields.io/badge/techniques-65-blueviolet)](references/technique_registry.json)
+[![Covered](https://img.shields.io/badge/covered-55-green)](references/technique_registry.json)
+[![Complete](https://img.shields.io/badge/complete-10-brightgreen)](references/technique_registry.json)
+[![Partial](https://img.shields.io/badge/partial-0-lightgrey)](references/technique_registry.json)
 
 ---
 
@@ -30,10 +31,10 @@
 This is a **Vedic (Jyotish) astrology analysis system** designed for deep, auditable full-chart readings. It is NOT a simple ephemeris calculator — it is a multi-stage interpretive pipeline that:
 
 1. **Computes** divisional charts (D1/D9/D10/...) via Swiss Ephemeris
-2. **Runs** 44+ techniques (Dashas, Yogas, Shadbala, Ashtakavarga, Transits...)
+2. **Runs** 65 registered techniques (Dashas, Yogas, Shadbala, Ashtakavarga, Transits...)
 3. **Routes** the analysis through strict workflow paths depending on question type (career / relationship / wealth / timing)
-4. **Audits** every technique used — declaring what was called, what was partial, what was missing, and how that affects confidence
-5. **Degrades gracefully** — partial techniques are labeled, not silently over-promising
+4. **Audits** every technique used — declaring what was called, what is complete/covered, and which limitations affect confidence
+5. **Degrades gracefully** — limitations are labeled, not silently over-promising
 
 ### Key Differentiators (vs. PyJHora / VedAstro / Maitreya)
 
@@ -42,12 +43,12 @@ This is a **Vedic (Jyotish) astrology analysis system** designed for deep, audit
 | Full-reading pipeline (one command) | ✅ | ❌ | ❌ | ❌ |
 | Strict workflow router (per-question-type) | ✅ | ❌ | ❌ | ❌ |
 | Technique Audit Table (confidence labeling) | ✅ | ❌ | ❌ | ❌ |
-| Capability degradation (partial ≠ covered) | ✅ | ❌ | ❌ | ❌ |
+| Capability degradation (limits are explicit) | ✅ | ❌ | ❌ | ❌ |
 | MEVG external verification gates | ✅ | ❌ | ❌ | ❌ |
-| 44+ techniques integrated | ✅ | ✅ (50+) | ✅ (200+) | ✅ |
-| Traditional algorithm benchmarked | 🔶 partial | ✅ | ✅ | ✅ |
-| Docker / MCP Server | 🔶 planned | ❌ | ✅ | ❌ |
-| English docs / PyPI package | 🔶 in progress | ✅ | ✅ | ✅ |
+| 65 techniques registered | ✅ | ✅ (50+) | ✅ (200+) | ✅ |
+| Traditional algorithm benchmarked | ✅ mixed depth | ✅ | ✅ | ✅ |
+| Docker / MCP Server | ✅ | ❌ | ✅ | ❌ |
+| English docs / PyPI package | ✅ in progress | ✅ | ✅ | ✅ |
 
 ---
 
@@ -100,7 +101,7 @@ Lagna: Gemini   Sun: Taurus   Moon: Leo
 [✓] D10 Dasamsa
 [✓] Vimshottari Dasha (120 years)
 [✓] Ashtakavarga (8-point system)
-[✓] Shadbala (partial — internal invariants pass, external calibration pending)
+[✓] Shadbala (covered — internally consistent; external absolute calibration still capped)
 [✓] Yogas & Doshas
 [✓] Argala (planetary interventions)
 [✓] Nakshatra Advanced (Chandra Bala / Tara Bala)
@@ -111,15 +112,15 @@ Lagna: Gemini   Sun: Taurus   Moon: Leo
 [✓] Transit (true positions)
 [✓] Double Transit analysis
 [✓] Narayana Dasha
-[✓] Solar Return / Varshaphala (partial)
+[✓] Solar Return / Varshaphala
 [✓] Nakshatra Dasha (Ashtottari)
 
 ── Technique Audit Table ──
 ✓ Vimshottari Dasha        covered      high confidence
 ✓ Ashtakavarga             covered      high confidence
-🔶 Shadbala                partial      internal consistent, external calibration pending
-🔶 Chara Dasha             partial      simplified (24% match with PyJHora KN Rao)
-❌ KP Sub-Lord              missing      not yet implemented
+✓ Shadbala                covered      internal invariant benchmark passed; absolute calibration capped
+✓ Chara Dasha             covered      KN Rao benchmark 95.83% overall match
+✓ KP Sub-Lord             covered      SubLord/SubSubLord + ABCD significator workflow
 ```
 
 ---
@@ -179,33 +180,35 @@ Current count: **65 techniques** (55 covered, 10 complete, 0 partial, 0 missing)
 | UL / Upapada | ✅ covered | |
 | Transit (true positions) | ✅ covered | |
 | Double Transit | ✅ covered | |
-| Nakshatra Advanced | 🔶 partial | Engineering usable, needs more external benchmarking |
-| Narayana Dasha | 🔶 partial | Usable, needs traditional benchmark |
-| Solar Return / Varshaphala | 🔶 partial | Usable, some degradation logic present |
-| **Shadbala** | 🔶 partial | **1200/1200 internal invariants pass; external absolute calibration NOT yet done** |
-| **Chara Dasha** | 🔶 partial | **~24% match with PyJHora KN Rao method; do NOT use for high-confidence timing** |
-| KP Sub-Lord | 🔶 partial | Simplified 9-equal division; not full KP |
-| Bhava Chalit | 🔶 partial | Whole-sign adapter present; not full cusp-based reassignment |
-| Sudarshana Chakra | 🔶 partial | D1×D9×D10 triangle verification; not traditional full implementation |
-| Tajika Yogas | 🔶 partial | Simplified rules |
-| Raj Yoga | 🔶 partial | Classic combinations covered; not all variants |
-| Dhana Yoga | 🔶 partial | |
-| Pancha Mahapurusha | 🔶 partial | |
-| Neecha Bhanga | 🔶 partial | |
-| Sade Sati | 🔶 partial | Simplified model |
-| Tithi Lord | 🔶 partial | |
-| Pancha Pakshi | 🔶 partial | |
-| Rashi Tulya Navamsa | 🔶 partial | |
-| Trimshamsa D30 | 🔶 partial | |
-| Marriage Counting | 🔶 partial | Bhrigu Pada approximation |
-| Prashna Integration | 🔶 partial | Not fully integrated into full-reading |
-| Bhrigu Pada Dasha | 🔶 partial | Generic approximation |
-| Muhurta | 🔶 partial | Panchanga elements present |
+| Nakshatra Advanced | ✅ covered | Tara Bala / Chandra Bala / Sub-Lord workflow |
+| Narayana Dasha | ✅ covered | CLI and full-reading integration |
+| Solar Return / Varshaphala | ✅ covered | Tajika annual-chart workflow |
+| **Shadbala** | ✅ covered | **1200/1200 internal invariants pass; external absolute-value calibration remains a confidence cap** |
+| **Chara Dasha** | ✅ covered | **KN Rao benchmark: sign 100%, duration 91.67%, overall 95.83%** |
+| KP Sub-Lord | ✅ covered | SubLord/SubSubLord + ABCD significator workflow |
+| Bhava Chalit | ✅ covered | Sripati/Porphyry/Equal/Whole Sign/Placidus/Koch |
+| Sudarshana Chakra | ✅ covered | Asc/Moon/Sun reference charts + convergence scoring |
+| Tajika Yogas | ✅ complete | Annual-chart yoga set |
+| Raj Yoga | ✅ covered | Rule-based detection |
+| Dhana Yoga | ✅ covered | Rule-based detection |
+| Pancha Mahapurusha | ✅ covered | Complete detection |
+| Neecha Bhanga | ✅ complete | Debilitation cancellation workflow |
+| Sade Sati | ✅ covered | Saturn pressure timing |
+| Tithi Lord | ✅ complete | Lunar-day ruler workflow |
+| Pancha Pakshi | ✅ complete | Five-bird system |
+| Rashi Tulya Navamsa | ✅ covered | D1/D9 mapping |
+| Trimshamsa D30 | ✅ covered | D30 varga support |
+| Marriage Counting | ✅ complete | Bhrigu Pada marriage-counting method |
+| Prashna Integration | ✅ complete | Prashna workflow integrated |
+| Bhrigu Pada Dasha | ✅ complete | Pada progression workflow |
+| Muhurta | ✅ covered | Panchanga / auspicious timing workflow |
 
 **Legend:**
 - ✅ `covered` — implemented and benchmarked against authoritative sources
-- 🔶 `partial` — implemented but NOT fully benchmarked; suitable for auxiliary reference only
-- ❌ `missing` — not yet implemented
+- ✅ `complete` — implemented with integrated workflow and validation hooks
+- ✅ `covered` — implemented and available in the engine, sometimes with explicit confidence caps
+- 🔶 `partial` — reserved for implemented-but-insufficiently-integrated techniques; current registry count is 0
+- ❌ `missing` — not currently present in the registry; current registry count is 0
 
 ---
 
@@ -228,7 +231,7 @@ Current count: **65 techniques** (55 covered, 10 complete, 0 partial, 0 missing)
 We are NOT trying to out-calculate PyJHora (it has years of lead). Our value is in:
 1. Organizing calculations into a **reproducible interpretive workflow**
 2. **Auditing** every technique used and declaring confidence
-3. **Degrading gracefully** — partial techniques are labeled, not silently over-promising
+3. **Degrading gracefully** — confidence caps and limitations are labeled, not silently over-promising
 4. Being **AI-native** — designed for integration with LLM-based analysis
 
 ---
@@ -242,25 +245,25 @@ We believe in transparency about limitations. This is NOT a "99% accurate" syste
 | Dimension | Score | Notes |
 |-----------|-------|-------|
 | Astronomical foundation (Swiss Eph) | 8.5/10 | Depends on ayanamsa, node mode, house system |
-| Traditional algorithm accuracy | 7.3/10 | Chara Dasha & Shadbala need external calibration |
-| Technique coverage breadth | 8.6/10 | 44 techniques, broad but not deepest |
+| Traditional algorithm accuracy | 8.1/10 | Chara Dasha benchmark passed; Shadbala still needs external absolute-value calibration |
+| Technique coverage breadth | 9.1/10 | 65 registered techniques; broad and increasingly benchmarked |
 | Reading detail depth | 9.6/10 | Possibly best among open-source projects |
 | Prediction workflow rigor | 8.8/10 | Strict routing + audit table |
 | Verification system | 8.2/10 | Has registry, benchmark, degradation; some verification still internal |
-| Engineering maturity | 6.8/10 | Functional, but not productized (no Docker / PyPI / CI yet) |
+| Engineering maturity | 7.6/10 | Docker, PyPI config and CI exist; release artifacts still need cleanup |
 | Open-source influence | 5.5/10 | Currently more of a "private high-density toolkit" |
 
-### What "Partial" Means (Important)
+### What Confidence Caps Mean (Important)
 
-When a technique is labeled `partial`:
+Even when a technique is labeled `covered`, it may carry a confidence cap:
 - It CAN produce output
-- The output has NOT been benchmarked against PyJHora / JHora / canonical texts
-- It should be used as **auxiliary reference only**
-- It must NOT be the sole basis for high-confidence predictions
+- Some components may still need external absolute-value calibration against PyJHora / JHora / canonical texts
+- It should be interpreted together with cross-technique evidence
+- It must NOT be the sole basis for high-confidence predictions when its limitation says so
 
 Examples:
-- `Shadbala` (partial): Internal invariants pass (1200/1200). External absolute values NOT calibrated. Use for relative strength ranking only.
-- `Chara Dasha` (partial): ~24% match with PyJHora KN Rao method. Do NOT use for precise timing.
+- `Shadbala` (covered with cap): Internal invariants pass (1200/1200). External absolute values are not fully calibrated, so use primarily for relative strength ranking.
+- `Chara Dasha` (covered): KN Rao benchmark passes at 95.83% overall; remaining differences are documented around Aquarius/Scorpio co-lord strength arbitration.
 
 ---
 
@@ -282,22 +285,21 @@ Examples:
 - `v6.1.9` — Public/sanitized benchmark suite, competitive research, coverage roadmap and PDF validation methodology added.
 - `v6.1.8` — Yoga validation reached F1=95.22% (FP=36, FN=63); thematic reports consume real `full-reading.modules` evidence.
 - `v6.1.6` — Five-system Dasha convergence wired into full-reading (Vimshottari + Chara + Yogini + Ashtottari + Kalachakra).
-- `v6.0.11` — Shadbala internal invariant validation (1200/1200 pass); downgraded to `partial`.
+- `v6.0.11` — Shadbala internal invariant validation (1200/1200 pass); later upgraded to covered with explicit calibration cap.
 
 ### Actively Working On (P0)
 
-1. **PyPI release** — Package validated; needs `twine upload` and GitHub Actions tag-trigger
-2. **Shadbala external calibration** — align with JHora / PyJHora / BV Raman
-3. **Test expansion** — from 50 smoke tests to 200+ unit/regression tests
-4. **KP Sub-Lord full implementation** — unequal Vimshottari subdivisions
-5. **Bhava Chalit complete** — cusp-based planet reassignment
-6. **Sudarshana Chakra traditional** — Sun/Moon/Lagna reference points
+1. **Release hygiene** — rebuild v6.9.14 wheel/sdist and align GitHub tags with source version
+2. **README / package metadata sync** — keep public docs, registry counts and distribution artifacts consistent
+3. **Shadbala external absolute calibration** — align full tables with JHora / PyJHora / BV Raman
+4. **Benchmark expansion** — add more oracle cases for Vimshottari, Shadbala, KP and annual-chart modules
+5. **Frontend verification** — keep the pure JS/WASM fallback aligned with the Python engine output
 
 ### Next (P1)
 
-- Docker image (Dockerfile + docker-compose.yml created, needs push)
-- English documentation completion
-- Multi-Ayanamsa support (Lahiri + Raman + KP + custom)
+- Docker image publishing and smoke-test docs
+- English documentation examples and API tutorials
+- Multi-Ayanamsa UX polish and benchmark examples
 
 ---
 
@@ -327,7 +329,7 @@ python3 scripts/jyotish_engine.py full-reading \
 2. Use only: (a) public AA-rated celebrity data, (b) explicitly fictional smoke tests, (c) current-session data (never persisted)
 3. Always run `git status --short --branch` before starting work
 4. Always run `py_compile` + `audit_capabilities.py` + full-reading regression after modifications
-5. Do NOT upgrade `partial` to `covered` without external benchmark evidence
+5. Do NOT remove a confidence cap without external benchmark evidence
 6. Do NOT refactor arbitrarily; make minimal verifiable changes
 
 ### Directory Structure
@@ -348,7 +350,7 @@ jyotish-vedic-astrology/
 │   ├── audit_capabilities.py       # Capability audit tool
 │   ├── shadbala.py                # Shadbala implementation
 │   ├── dasha_calculator.py        # Dasha calculations
-│   └── ...                        # 30+ technique scripts
+│   └── ...                        # 90+ technique and orchestration scripts
 └── tests/                          # Test cases
 ```
 

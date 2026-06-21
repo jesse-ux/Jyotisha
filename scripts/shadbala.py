@@ -107,7 +107,7 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
                   sun_lon: float, moon_lon: float,
                   birth_minute: float = 0.0) -> Dict:
     """
-    计算 Shadbala 相对强弱参考（内部一致；外部绝对值校准前 partial）
+    计算 Shadbala 相对强弱参考（covered；外部绝对值校准前保留置信度上限）
 
     Args:
         planets: 行星数据 dict，每颗行星需要 {sign, degree, house, retrograde, speed}

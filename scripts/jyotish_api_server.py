@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 印度占星 API 服务器 v1.0
-为 jyotish-app 前端提供 v6.7.3 引擎的精算能力
+为 jyotish-app 前端提供 v6.9.14 引擎的精算能力
 
 启动: python3 scripts/jyotish_api_server.py --port 5200
 """
@@ -52,7 +52,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urlparse(self.path).path
         if path == '/api/health':
-            self._json({'status': 'ok', 'version': '6.7.3', 'modules': 'KP/Synastry/Prashna/Remedies/PMC/SadeSati'})
+            self._json({'status': 'ok', 'version': '6.9.14', 'modules': 'KP/Synastry/Prashna/Remedies/PMC/SadeSati'})
         elif path == '/api/cities':
             self._json(list(CITY_DB.keys()))
         else:
@@ -119,13 +119,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
             for pid, pname in planet_names_rev.items():
                 if pid == 20:
-                    lon_rahu, _ = swe.calc_ut(jd, 10)
-                    lon = (lon_rahu[0] + 180) % 360
+                    rahu_result, _ = swe.calc_ut(jd, 10)
+                    planet_lon = (rahu_result[0] + 180) % 360
                 else:
                     result, _ = swe.calc_ut(jd, pid)
-                    lon = result[0] % 360
-                sign_idx = int(lon / 30) % 12
-                planets_data[pname] = {'lon': lon, 'sign_idx': sign_idx, 'sign': SIGNS[sign_idx], 'degree': lon % 30}
+                    planet_lon = result[0] % 360
+                sign_idx = int(planet_lon / 30) % 12
+                planets_data[pname] = {'lon': planet_lon, 'sign_idx': sign_idx, 'sign': SIGNS[sign_idx], 'degree': planet_lon % 30}
 
             # Ascendant
             asc_lon = swe.houses_ex(jd, lat, lon, b'E')[0][0] % 360
@@ -174,7 +174,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             dashas = get_available_dashas()
             dasha_list = [{'key': k, 'name': DASHA_REGISTRY[k]['name'], 'years': DASHA_REGISTRY[k]['years'], 'type': DASHA_REGISTRY[k]['type']} for k in dashas]
 
-            # Shadbala (v6.7.4: jyotishganit MIT算法)
+            # Shadbala (v6.9.14: covered with external absolute-calibration cap)
             try:
                 from shadbala import calc_shadbala
                 sb = calc_shadbala(planets_data, asc_sign, hour+minute/60.0, 
@@ -195,7 +195,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 import logging
                 logging.warning(f"[api_server] yoga expansion detection failed: {e}")
-                'success': True, 'version': '6.7.4',
+            return {
+                'success': True, 'version': '6.9.14',
                 'birth': {'date': f'{year}-{month:02d}-{day:02d}', 'time': f'{int(hour):02d}:{int(minute):02d}'},
                 'ascendant': {'sign': asc_sign, 'sign_idx': asc_sign_idx, 'degree': round(asc_lon % 30, 2)},
                 'planets': planets_data, 'houses': houses, 'shadbala': shadbala_summary,
@@ -239,7 +240,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             houses[h] = {'sign': SIGNS[s], 'sign_idx': s}
 
         return {
-            'success': True, 'version': '6.7.3-fallback',
+            'success': True, 'version': '6.9.14-fallback',
             'warning': 'Swiss Ephemeris未安装，使用简化计算',
             'ascendant': {'sign': asc_sign, 'sign_idx': asc_sign_idx},
             'planets': planets, 'houses': houses,
@@ -315,7 +316,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
 def start_server(port=5200):
     server = HTTPServer(('0.0.0.0', port), JyotishAPIHandler)
-    print(f'🔮 Jyotish API v6.7.3 running on http://localhost:{port}')
+    print(f'🔮 Jyotish API v6.9.14 running on http://localhost:{port}')
     print(f'  POST /api/chart — 完整星盘计算')
     print(f'  POST /api/remedies — 补救建议')
     print(f'  POST /api/kp — KP分析')

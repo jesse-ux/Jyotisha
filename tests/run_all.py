@@ -171,8 +171,8 @@ def t34():
 @test("Sudarshana convergence")
 def t35():
     from sudarshana_chakra import calc_sudarshana_chakra
-    p = {'Sun': {'sign_idx': 0, 'degree': 15}, 'Moon': {'sign_idx': 3, 'degree': 22}}
-    r = calc_sudarshana_chakra(p, asc_sign_idx=0)
+    p = {'Sun': 15.0, 'Moon': 112.0, 'Mars': 280.0}
+    r = calc_sudarshana_chakra(p, asc_lon=0.0)
     assert 'convergence' in r
 
 @test("Career analysis fields")

@@ -1,5 +1,31 @@
 # 印度占星 Skill 更新日志
 
+## v6.9.14（2026-06-21）—— 发布卫生、CI门禁与包产物校验
+
+> **验证**：65 techniques registry validate PASS（55 covered / 10 complete / 0 partial / 0 missing）；475 pytest PASS；legacy runner 102/102 PASS；frontend Vite build PASS；wheel/sdist build PASS；twine check PASS。
+
+### 关键修复
+- `scripts/jyotish_api_server.py`：修复 API server 语法错误，避免边缘脚本逃过旧门禁；同时修复行星黄经循环覆盖出生地经度变量的问题。
+- `scripts/run_quality_gate.py`：编译范围从少数核心脚本扩展为整个 `scripts/`、`jyotish_vedic/` 与入口文件，防止 API/server/包装脚本语法错误漏检。
+- `tests/run_all.py`：更新 Sudarshana Chakra legacy runner 的旧接口调用，恢复 102/102 通过。
+- `jyotish-app/style.css`：移除多余闭合括号，前端生产构建不再出现 CSS 解析警告。
+
+### 状态口径同步
+- `README.md`、`SKILL.md`、`references/quick-reference-guide.md`、CLI help、报告模板统一为当前能力基线：65项技法，0 partial / 0 missing。
+- Chara Dasha 统一为 `covered`：KN Rao benchmark overall 95.83%，Aquarius/Scorpio 共主强弱仲裁仍作为声明边界。
+- Shadbala 统一为 `covered`：内部一致性通过，但外部绝对值校准前必须保留置信度上限。
+
+### CI / 发布链路
+- `.github/workflows/ci.yml`：加入 Node 20、`npm ci`、Python syntax check、quality gate、frontend build、Python package build。
+- `.github/workflows/test.yml`：从只装 `swisseph` + legacy runner，升级为 requirements-dev、pytest、legacy runner 与 frontend build。
+- `requirements-dev.txt` / `pyproject.toml`：同步补齐 `build`、`twine`、`wheel` 发布校验依赖。
+- `MANIFEST.in`：同步 Python sdist 的前端资源包含规则，保留 `.wasm`、`.data`、`.mp4` 等 Web 运行资源，排除 `node_modules`、缓存和构建垃圾。
+
+### 发布产物
+- `dist/jyotish_vedic_astrology-6.9.14-py3-none-any.whl`
+- `dist/jyotish-vedic-astrology-6.9.14.tar.gz`
+- `twine check dist/*` 通过；wheel `--no-deps` 隔离安装后，`python -m jyotish_vedic.engine --help` 与 `chart` smoke test 均正常。
+
 ## v6.1.12（2026-06-11）—— Chara Dasha KN Rao Benchmark 正式通过（95.83%）
 
 > **验证**：PyJHora oracle benchmark 10案例×120字段：Sign 100%, Duration 91.67%, Overall 95.83% ≥ 95% ✅ PASS

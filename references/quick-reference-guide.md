@@ -6,7 +6,7 @@
 
 > **来源标签**: 【现代演绎·Skill整合】 — 执行总控指南
 >
-> **版本**：v6.9.14 | **最后更新**：2026-06-13
+> **版本**：v6.9.14 | **最后更新**：2026-06-21
 ---
 
 ## 场景一：用户说"帮我看盘"或"分析我的星盘"
@@ -106,7 +106,7 @@
 | 用户意图 | 主参考文件 | 引擎命令 |
 |---------|-----------|---------|
 | 事业时机 | references/strict-workflow-router.md + references/yoga-phala-timing-guide.md | `full-reading` + `varga-full` + `dasha` + `jaimini --mode all` + `shadbala` + `ashtakavarga` + `argala` + `transit` |
-| **→ Jaimini静态层** | `jaimini --mode all` 会输出 Karaka/Karakamsha、A1-A12/UL、Graha Pada、Special Lagnas；Chara Dasha timing 仍按 partial 降权 | 事业用 A10/Karma Pada + Graha Pada + Argala 交叉确认 |
+| **→ Jaimini静态层** | `jaimini --mode all` 会输出 Karaka/Karakamsha、A1-A12/UL、Graha Pada、Special Lagnas；Chara Dasha timing 已通过 KN Rao benchmark（overall 95.83%） | 事业用 A10/Karma Pada + Graha Pada + Argala 交叉确认；Aquarius/Scorpio 共主仲裁差异需声明 |
 | **→ Actionable Output** | references/transit-actionable-output-guide.md ⭐v4.1.0 | 必须输出时间段+行动+置信度 |
 | 财运来源 | references/strict-workflow-router.md + references/darakaraka-complete-guide.md（DK财富5模式）| `chart` + `varga-full` + `dasha` + `shadbala` + `ashtakavarga` + `argala` |
 | 学业考试 | references/planetary-dignity-complete-reference.md（D24分析） | `varga -d 24` |
@@ -361,7 +361,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 | 子命令 | 功能 | 典型用法 |
 |--------|------|---------|
 | `aspects` | 度数精确相位系统（tight/moderate/loose + 入相位/出相位） | `aspects --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
-| `jaimini` | Jaimini Karaka/Karakamsha、A1-A12/UL、Graha Pada、Special Lagnas；Chara Dasha timing 当前为 partial，需 KN Rao/PVN Rao 回归验证 | `jaimini --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all --antardasha` |
+| `jaimini` | Jaimini Karaka/Karakamsha、A1-A12/UL、Graha Pada、Special Lagnas；Chara Dasha timing 已通过 KN Rao benchmark（overall 95.83%），Aquarius/Scorpio 共主强弱仲裁仍需声明 | `jaimini --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all --antardasha` |
 | `nakshatra-adv` | 高级Nakshatra（Tara Bala + Chandra Bala + Tara/Chandra综合 + Sub-Lord KP） | `nakshatra-adv --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --mode all` |
 | `nakshatra-dasha` | 星宿大运推演（Ashtottari + Vimshottari Nakshatra-level + Transit Overlay） | `nakshatra-dasha --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --age 33 --mode all --transit-date 2026-06-04` |
 | `nakshatra-full` | 星宿综合报告（本命星宿力量 + 星宿大运 + 过境星宿叠加） | `nakshatra-full --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8 --age 33` |
@@ -373,7 +373,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 
 | 子命令 | 功能 | 典型用法 |
 |--------|------|---------|
-| `shadbala` | 六重力量计算（内部一致；外部绝对值校准前为 partial） | `shadbala --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
+| `shadbala` | 六重力量计算（covered；内部一致，外部绝对值校准前须保留置信度上限） | `shadbala --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
 | `ashtakavarga` | 八分法计算（BPHS完整8×8矩阵，SAV=337） | `ashtakavarga --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
 | `validate` | R1-R10数学验证（SAV/BAV/延伸角/Rahu-Ketu/逆行/Dasha/完整性/度数/宫位） | `validate --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
 | `audit` | P1-P12行星审计管线（Identity/Health/Resource/SAV/Dignity/Shadbala/Aspects/Nakshatra/Yogas） | `audit --year 1990 --month 1 --day 1 --hour 12 --minute 0 --lat 39.9 --lon 116.4 --tz 8` |
@@ -448,7 +448,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 
 ### 分盘与力量评估（7个）
 30. **ashtakavarga-complete-system.md**：Ashtakavarga完整体系（SAV=337）
-31. **shadbala-complete-methodology.md**：Shadbala计算方法论（当前计算层 partial，内部一致但外部绝对值校准待完成）
+31. **shadbala-complete-methodology.md**：Shadbala计算方法论（covered；内部一致，外部绝对值校准前须保留置信度上限）
 32. **planetary-strength-quick-ref.md**：行星力量速查表
 33. **varga-system-quick-reference.md**：综合九层分盘体系对照手册
 34. **varga-divisional-charts-quick-reference.md**：分盘快速参考

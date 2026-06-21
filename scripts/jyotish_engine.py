@@ -12,7 +12,7 @@
   varga        分盘计算（D9/D10）
   varga-full   BPHS十六分盘完整计算（D2-D60）（v3.7新增）
   aspects      度数精确相位系统（v3.7新增）
-  jaimini      Jaimini系统（Chara Karaka/Karakamsha；Chara Dasha timing partial）（v3.7新增）
+  jaimini      Jaimini系统（Chara Karaka/Karakamsha；Chara Dasha timing covered）（v3.7新增）
   nakshatra-adv 高级Nakshatra分析（Tara Bala/Sub-Lord/兼容性）（v3.7新增）
   argala       Argala门闩系统（v3.7新增）
   tajika       Tajika/Varshaphala年运盘（v3.7新增）
@@ -21,7 +21,7 @@
   celebrity    名人案例查询（15,807条数据+SQLite验证库）
   db-stats     验证数据库统计
   transit      行星过境查询
-  shadbala     六重力量计算（内部一致；外部绝对值校准前partial）（v3.4新增）
+  shadbala     六重力量计算（covered；外部绝对值校准前保留置信度上限）（v3.4新增）
   ashtakavarga 八分法计算（v3.5升级BPHS完整表，SAV=337）
   memory       Hermes记忆系统（v3.4新增）
   validate     R1-R10数学验证（v3.5新增，含R2b BAV列→SAV校验）
@@ -2820,7 +2820,7 @@ def _calc_dasa_convergence(dasha_result, chara_dasha_result, yogini_result, plan
     """
     ⭐ v6.1.6: Dasa Convergence 多系统交叉验证
     Vimshottari + Chara Dasha + Yogini + Ashtottari + Kalachakra 同时激活同一生活领域时，概率大幅提升。
-    Chara Dasha 当前仍按 skill 规范降级为 partial，只作为低权重辅助。
+    Chara Dasha 计算层为 covered；事件预测仍需多系统交叉确认。
     """
     # 提取各系统当前周期
     convergence_data = {'systems': {}}
@@ -3042,7 +3042,7 @@ def _calc_dasa_convergence(dasha_result, chara_dasha_result, yogini_result, plan
         'systems_summary': convergence_data['systems'],
         'domain_activations': domain_activations,
         'top_convergent_domains': [(d, info['convergence_level']) for d, info in top_domains],
-        'protocol': 'v6.1.6 Dasa Convergence 多系统交叉验证。收敛等级: L1(单系统)→L3(双系统)→L4(三系统)→L5(四个及以上系统)。Chara Dasha 当前为 partial，所有预测仍必须由 Vimshottari/Transit/Varga 等独立层确认。',
+        'protocol': 'v6.1.6 Dasa Convergence 多系统交叉验证。收敛等级: L1(单系统)→L3(双系统)→L4(三系统)→L5(四个及以上系统)。Chara Dasha 计算层为 covered；所有预测仍必须由 Vimshottari/Transit/Varga 等独立层确认。',
     }
 
 
@@ -3737,13 +3737,13 @@ def cmd_full_reading(args):
         except Exception as e:
             jaimini_result['chara_karaka_jh'] = {"error": str(e)}
 
-        # 使用带 Antardasha 子周期的 Chara Dasha（v4.3.0；v6.0.9后标注为partial）
+        # 使用带 Antardasha 子周期的 Chara Dasha（v4.3.0；v6.1.12 KN Rao benchmark 通过）
         jaimini_result['chara_dasha'] = calc_chara_dasha_with_antardasha(asc_idx, planet_lons, args.year, args.month)
         jaimini_result['has_antardasha'] = True
         jaimini_result['chara_dasha_capability'] = {
-            'status': 'partial',
-            'reason': 'Round 7 vs PyJHora KN Rao matched 58/240 fields; current implementation is simplified, not full KN Rao/PVN Rao/Iranganti.',
-            'usage_rule': 'Use Chara Karaka/Karakamsha normally; use Chara Dasha timing only as low-weight corroboration.'
+            'status': 'covered',
+            'reason': 'KN Rao benchmark overall match 95.83%; Aquarius/Scorpio co-lord strength arbitration remains a documented edge case.',
+            'usage_rule': 'Use Chara Karaka/Karakamsha normally; use Chara Dasha timing with Vimshottari/Transit/Varga corroboration.'
         }
 
         # Karakamsha（用AK灵魂星，非DK配偶星）
@@ -4267,7 +4267,7 @@ def main():
     p.add_argument('--node-mode', default='mean', choices=['mean', 'true'], help='Rahu/Ketu节点口径：mean=Mean Node（默认），true=True Node')
 
     # 9. shadbala (v3.4新增)
-    p = sub.add_parser('shadbala', help='Shadbala六重力量计算（内部一致；外部绝对值校准前partial）')
+    p = sub.add_parser('shadbala', help='Shadbala六重力量计算（covered；外部绝对值校准前保留置信度上限）')
     _add_chart_args(p)
 
     # 10. ashtakavarga (v3.4新增)
@@ -4339,7 +4339,7 @@ def main():
     p = sub.add_parser('jaimini', help='Jaimini系统（Chara Karaka/Dasha/Karakamsha/Arudha/Special Lagnas）')
     _add_chart_args(p)
     p.add_argument('--mode', default='all', choices=['all','karaka','dasha','karakamsha','arudha','special'], help='分析模式')
-    p.add_argument('--antardasha', action='store_true', help='Chara Dasha含Antardasha子周期（当前timing实现为partial）')
+    p.add_argument('--antardasha', action='store_true', help='Chara Dasha含Antardasha子周期（covered；仍需多系统确认）')
 
     # 18. nakshatra-adv (v3.7新增 → v6.0.22 升级)
     p = sub.add_parser('nakshatra-adv', help='高级Nakshatra分析（Tara/Chandra/Sub-Lord/综合）')

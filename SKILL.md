@@ -152,14 +152,15 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 - `--transit-date YYYY-MM-DD` 可显式指定过境日期；若未提供，则跟随 `--today`，再否则使用当前日期。
 - 第八轮 benchmark 已用 10 个公开/虚构 smoke case 对齐 Swiss Ephemeris：340/340 字段匹配，0 mismatch。
 
-### Shadbala 能力降级（v6.0.11-shadbala）
+### Shadbala 能力边界（v6.9.14-shadbala）
 
-**当前 Shadbala 可作为内部一致的相对强弱参考，不得声称已完成外部绝对值校准。**
+**当前 Shadbala 在注册表中为 covered，可作为内部一致的相对强弱参考；但不得声称已完成外部绝对值校准。**
 
 - 第九轮 benchmark 使用 10 个公开/虚构 smoke case 验证 `shadbala` 子命令与 `full-reading.modules.shadbala`：1200/1200 内部不变量通过。
+- v6.9.12 已升级 Nathonnata Bala 连续化与 Drik Bala Sputa Drishti 精确相位，v6.9.14 注册表状态为 `covered`。
 - 通过项包括：结构完整性、六重力量组件范围、总分聚合、Virupa/Rupa 换算、Ishta Bala 百分比、排名、full-reading 一致性。
-- 但 `scripts/shadbala.py` 仍存在简化项：Nathonnata Bala 二值化、部分 Saptavargaja 子分盘近似、Chesta Bala 速度分档近似、Drik Bala 简化相位权重。
-- 因此 `technique_registry.json` 中 Shadbala 状态为 `partial`：可用于相对强弱排序和内部校验；涉及精确力量断语时必须加置信度上限，直到接入 JHora/公开书例等完整外部绝对值对标。
+- 仍需保留边界：部分 Saptavargaja 子分盘与 Chesta Bala 速度分档仍需更多外部绝对值对标。
+- 因此 `technique_registry.json` 中 Shadbala 状态为 `covered`，但涉及精确力量断语时必须加置信度上限，直到接入 JHora/公开书例等完整外部绝对值对标。
 
 ---
 
@@ -208,7 +209,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 | `celebrity` | 名人案例查询 |
 | `db-stats` | 验证数据库统计 |
 | `transit` | 行星过境查询 |
-| `shadbala` | 六重力量计算（内部一致；外部绝对值校准前为 partial） |
+| `shadbala` | 六重力量计算（covered；外部绝对值校准前须保留置信度上限） |
 | `ashtakavarga` | 八分法计算（SAV=337） |
 | `memory` | Hermes记忆系统 |
 | `validate` | R1-R10数学验证 |
@@ -267,7 +268,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 | Transit Actionable | v4.1.0 | 预测必须输出时间段+行动+置信度 | `transit-actionable-output-guide.md` |
 | 过境多参考点 | v1.9.0 | Lagna+Chandra Lagna双参考点(强制) | `transit-multi-reference-guide.md` |
 | Ketu双属性 | v2.0.0 | 必须同时评估"放手"和"突破" | `ketu-dual-nature-guide.md` |
-| Shadbala评估 | v6.0.11 | 六种力量内部一致评估；外部绝对值校准前为 partial | `shadbala-complete-methodology.md` |
+| Shadbala评估 | v6.9.14 | 六种力量内部一致评估；外部绝对值校准前须保留置信度上限 | `shadbala-complete-methodology.md` |
 | Yoga Phala Timing | v2.1.0 | 识别Yoga后必须预测何时发生 | `yoga-phala-timing-guide.md` |
 | 逆行/燃烧/战争 | v2.1.0 | 每颗行星检查三重叠加 | `retrograde-combustion-war-guide.md` |
 | 精准方法论 | v3.12.1 | PACDARES+九层+L3矛盾检查 | `precision-reading-methodology.md` |
@@ -282,13 +283,13 @@ $PYTHON $SCRIPT <子命令> [参数]
 - [ ] 静态星盘分析（行星配置、Yoga、Nakshatra、宫位）
 - [ ] Argala检查（2/4/5/8/11宫干预+Virodha）
 - [ ] 逆行/燃烧/行星战争检查（三重叠加）
-- [ ] Shadbala评估（六种力量内部一致评估；外部绝对值校准前 partial）
+- [ ] Shadbala评估（六种力量内部一致评估；外部绝对值校准前保留置信度上限）
 - [ ] Ashtakavarga评估（BAV+SAV聚合校验337点）
 - [ ] Ketu双重属性检查
 - [ ] **MEVG-动态门控**：Transit/Dasha/天文现象必须验证
 - [ ] Dasha推运（大运+小运+Pratyantar）
 - [ ] Dasa Convergence五系统交叉验证
-- [ ] Jaimini分析（Karaka/Karakamsha；Chara Dasha 升级为 KN Rao Method，须正式 benchmark 确认匹配率）
+- [ ] Jaimini分析（Karaka/Karakamsha；Chara Dasha 已通过 KN Rao Method benchmark，剩余共主仲裁差异需声明）
 - [ ] KP系统分析（Significator+Sub-Lord）
 - [ ] Transit分析（多参考点强制）
 - [ ] **Transit Actionable Output**（时间段+行动+置信度+案例检索）

@@ -8,7 +8,7 @@ Parashara传承中的Jaimini子系统
   - Chara Karaka: 7/8个功能指示星（按度数排序）
   - Arudha Pada: A1-A12 + Upapada（UL），复用 dashaflow/jaimini-tropical 的 MIT 算法
   - Karakamsha: AK在Navamsa中的上升（灵魂方向）
-  - Chara Dasha: 当前为简化 timing 实现，v6.0.9 后标注为 partial，不得单独作为高置信度应期依据
+  - Chara Dasha: KN Rao benchmark overall 95.83%，作为 covered timing 模块使用；事件应期仍需多系统确认
   - Special Lagnas: HL/GL/VL 简化计算（出生时间敏感，作为辅助）
 
 MIT复用来源:

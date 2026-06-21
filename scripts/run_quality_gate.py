@@ -14,16 +14,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 
-COMPILE_TARGETS = [
-    ROOT / "scripts" / "jyotish_engine.py",
-    ROOT / "scripts" / "varga.py",
-    ROOT / "scripts" / "ashtakavarga.py",
-    ROOT / "scripts" / "yoga_engine.py",
-    ROOT / "scripts" / "audit_capabilities.py",
-    ROOT / "scripts" / "validate_bphs_invariants.py",
-    ROOT / "scripts" / "_compute_one_chart.py",
-    ROOT / "scripts" / "build_standard_test_charts.py",
-    ROOT / "scripts" / "build_planet_positions_60.py",
+COMPILE_DIRS = [
+    ROOT / "scripts",
+    ROOT / "jyotish_vedic",
+]
+
+EXTRA_COMPILE_TARGETS = [
+    ROOT / "mcp_server.py",
     ROOT / "tests" / "run_golden_cases.py",
 ]
 
@@ -41,7 +38,16 @@ def run(cmd: list[str], *, optional: bool = False) -> bool:
 
 def compile_targets() -> None:
     print("\n== Compile core Python files ==")
-    for target in COMPILE_TARGETS:
+    targets: list[Path] = []
+    for directory in COMPILE_DIRS:
+        targets.extend(sorted(directory.glob("*.py")))
+    targets.extend(EXTRA_COMPILE_TARGETS)
+
+    seen: set[Path] = set()
+    for target in targets:
+        if target in seen or not target.exists():
+            continue
+        seen.add(target)
         print(f"compile {target.relative_to(ROOT)}")
         py_compile.compile(str(target), doraise=True)
 

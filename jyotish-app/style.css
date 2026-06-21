@@ -1737,6 +1737,5 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   .rect-prompt { flex-wrap: wrap; gap: 8px; }
   .rect-prompt-btn { width: 100%; text-align: center; }
   .rect-modal, .rect-panel { width: 100vw; }
-}
   .rect-banner-btn { width: 100%; }
 }
