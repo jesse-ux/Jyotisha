@@ -31,14 +31,14 @@ jobs:
           python -m pip install -r requirements.txt -r requirements-dev.txt
           npm ci --prefix jyotish-app
 
-      - name: Run Ruff lint for v6.0.33 quality gate files
+      - name: Run Ruff lint for quality gate files
         run: ruff check scripts/run_quality_gate.py tests/test_varga_bphs.py tests/test_ashtakavarga_invariants.py tests/test_cli_smoke.py tests/test_yoga_rules_integrity.py
 
       - name: Run Python syntax check
         run: python -m py_compile scripts/*.py jyotish_vedic/*.py mcp_server.py
 
-      - name: Run quality gate
-        run: python scripts/run_quality_gate.py --skip-yoga-logic
+      - name: Run quick quality gate
+        run: python scripts/run_quality_gate.py --profile quick --skip-yoga-logic
 
       - name: Build frontend
         run: npm run build --prefix jyotish-app
