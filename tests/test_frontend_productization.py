@@ -564,8 +564,30 @@ def test_github_release_quality_gate_runs_browser_release_profile() -> None:
         "python -m pip install playwright",
         "python -m playwright install --with-deps chromium",
         "python scripts/run_quality_gate.py --profile release --frontend-click-timeout 240",
+        "actions/upload-artifact@v4",
+        "release-quality-gate-diagnostics",
+        "release-quality-gate.log",
     ]:
         assert token in workflow
+
+
+def test_github_ci_workflows_upload_failure_diagnostics() -> None:
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    tests = (ROOT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")
+    for token in [
+        "actions/upload-artifact@v4",
+        "quick-quality-gate-diagnostics",
+        "quick-quality-gate.log",
+    ]:
+        assert token in ci
+    for token in [
+        "actions/upload-artifact@v4",
+        "pytest-diagnostics",
+        "--junitxml=artifacts/pytest.xml",
+        "artifacts/pytest.log",
+        "--maxfail=1",
+    ]:
+        assert token in tests
 
 
 def test_auth_and_subscription_failures_have_recovery_guidance() -> None:

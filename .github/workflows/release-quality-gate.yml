@@ -52,4 +52,12 @@ jobs:
           PY
 
       - name: Run release quality gate
-        run: python scripts/run_quality_gate.py --profile release --frontend-click-timeout 240
+        run: |
+          mkdir -p artifacts
+          python scripts/run_quality_gate.py --profile release --frontend-click-timeout 240 2>&1 | tee artifacts/release-quality-gate.log
+      - name: Upload release quality gate diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-quality-gate-diagnostics
+          path: artifacts/

@@ -98,4 +98,5 @@
 - [x] Clean checkout CI 复现与修复：用干净 clone 复现 `.git/lost-found` 本机残留假设和 KP 外部 CSV fixture 缺失，修复为 clean checkout 可运行/可跳过的测试策略。
 - [x] 发布包基础链路验证：wheel/sdist 构建成功，`twine check dist/*` 通过，全新 venv 安装 wheel 后 CLI help 可用。
 - [x] PR merge ref 复现与 release-only workflow 守门：在 `/tmp/yinduzhanxing-pr6-merge` 拉取 PR #6 merge ref，确认完整依赖安装后 pytest 与 quick gate 通过；新增手动发布质量门 workflow 跑 release profile 与 Playwright Chromium，并为 CI/test workflow 增加 Vite/Node/Python 诊断。
-- [ ] 下一步：推送 release workflow 后复查 GitHub Actions 结果；若云端仍失败，依据新增诊断定位 runner 环境差异。
+- [x] CI 失败 artifact 诊断：pytest 改为 `-vv --maxfail=1 --junitxml`，quick/release quality gate 输出 tee 到 artifact，避免云端只暴露 exit code。
+- [ ] 下一步：推送 artifact 诊断后复查 GitHub Actions 结果；下载或读取诊断 artifact，按首个 Linux runner 失败继续修复。
