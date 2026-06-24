@@ -1573,6 +1573,7 @@ function renderTrustCenterPanel() {
         ${renderTrustStatus('运行体检', runtime.label, runtime.note)}
       </div>
       ${renderRuntimeHealthPanel(runtime)}
+      ${renderValidationTransparencyPanel()}
       ${renderTerminologyModePanel()}
       <div class="trust-center-copy">
         <p>出生资料、保存星盘、配对记录、问事记录和计算设置默认保存在本机浏览器。导出报告会写入你主动下载的文件；PDF 后端工件仅由本地 API 生成。</p>
@@ -1586,6 +1587,51 @@ function renderTrustCenterPanel() {
       </div>
       <div id="trust-center-status" class="workspace-import-status" aria-live="polite">${escapeHtml(statusMessage)}</div>
     </section>
+  `;
+}
+
+const VALIDATION_TRANSPARENCY = {
+  source: 'Yoga logic benchmark',
+  charts: '60 charts',
+  comparableRules: '82 comparable rules',
+  precision: 'Precision 96.48%',
+  recall: 'Recall 93.99%',
+  f1: 'F1 95.22%',
+  unmappedPyjhora: 'unmapped_pyjhora: 718',
+  gates: ['golden cases', 'BPHS invariants', 'release-quality-gate'],
+};
+
+function renderValidationTransparencyPanel() {
+  return `
+    <div class="validation-transparency-panel">
+      <div class="calculation-settings-head">
+        <strong>Validation Transparency</strong>
+        <span>${escapeHtml(VALIDATION_TRANSPARENCY.source)} · ${escapeHtml(VALIDATION_TRANSPARENCY.charts)} · ${escapeHtml(VALIDATION_TRANSPARENCY.comparableRules)}</span>
+      </div>
+      <div class="validation-transparency-grid">
+        ${renderValidationTransparencyMetric('Precision', VALIDATION_TRANSPARENCY.precision, '命中的规则中，与参考比较一致的比例。')}
+        ${renderValidationTransparencyMetric('Recall', VALIDATION_TRANSPARENCY.recall, '参考可比较规则中，被当前引擎找回的比例。')}
+        ${renderValidationTransparencyMetric('F1', VALIDATION_TRANSPARENCY.f1, 'Precision 与 Recall 的综合分。')}
+        ${renderValidationTransparencyMetric('Coverage gap', VALIDATION_TRANSPARENCY.unmappedPyjhora, '仍未映射的 PyJHora/B.V. Raman 规则保持可见。')}
+      </div>
+      <div class="validation-transparency-boundary">
+        <strong>边界</strong>
+        <span>这些数字来自 references/validation_logic_report.json 的 Yoga 规则对照，不是个人事件预测准确率；出生时间、地点、星历、流派选择和现实事件记录仍会影响解读。</span>
+      </div>
+      <div class="capability-command-tags">
+        ${VALIDATION_TRANSPARENCY.gates.map(gate => `<span>${escapeHtml(gate)}</span>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderValidationTransparencyMetric(label, value, note) {
+  return `
+    <div class="validation-transparency-metric">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <small>${escapeHtml(note)}</small>
+    </div>
   `;
 }
 

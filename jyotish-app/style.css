@@ -5725,6 +5725,56 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   font-size: 12px;
   line-height: 1.5;
 }
+.validation-transparency-panel {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid var(--border-light);
+  border-left: 3px solid var(--green);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+.validation-transparency-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.validation-transparency-metric {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+}
+.validation-transparency-metric span,
+.validation-transparency-metric small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.validation-transparency-metric strong {
+  display: block;
+  margin: 3px 0;
+  color: var(--text-heading);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.validation-transparency-boundary {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+  padding: 9px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.validation-transparency-boundary strong {
+  color: var(--text-heading);
+}
 .terminology-mode-panel {
   margin: 10px 0;
   padding: 10px;
@@ -6115,6 +6165,7 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   .trust-status-grid,
   .terminology-mode-options,
   .case-workspace-controls { grid-template-columns: 1fr; }
+  .validation-transparency-grid { grid-template-columns: 1fr; }
   .case-workspace-counts,
   .case-bulk-actions,
   .workspace-chart-list,

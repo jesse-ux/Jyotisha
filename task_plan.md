@@ -100,4 +100,5 @@
 - [x] PR merge ref 复现与 release-only workflow 守门：在 `/tmp/yinduzhanxing-pr6-merge` 拉取 PR #6 merge ref，确认完整依赖安装后 pytest 与 quick gate 通过；新增手动发布质量门 workflow 跑 release profile 与 Playwright Chromium，并为 CI/test workflow 增加 Vite/Node/Python 诊断。
 - [x] CI 失败 artifact 诊断：pytest 改为 `-vv --maxfail=1 --junitxml`，quick/release quality gate 输出 tee 到 artifact，避免云端只暴露 exit code。
 - [x] 云端 CI 收口：PR #6 head `925e73e` 的 `validate`、`test`、`release-quality-gate` 三条 GitHub Actions 检查均已通过。
-- [ ] 下一步：进入成品化最后一批缺口，优先补普通用户交付形态（部署/桌面打包/公开演示环境）和准确率透明度页面。
+- [x] 准确率透明度页面：Trust Center 新增 Validation Transparency 面板，展示 Yoga logic benchmark 的 60 charts、82 comparable rules、Precision/Recall/F1、unmapped_pyjhora 与“不是个人事件预测准确率”的边界说明。
+- [ ] 下一步：进入成品化最后一批缺口，优先补普通用户交付形态（部署/桌面打包/公开演示环境）。

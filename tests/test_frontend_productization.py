@@ -402,6 +402,34 @@ def test_runtime_smoke_covers_ai_and_report_recovery() -> None:
         assert token in smoke
 
 
+def test_trust_center_exposes_validation_transparency() -> None:
+    main = read("main.js")
+    style = read("style.css")
+    for token in [
+        "renderValidationTransparencyPanel",
+        "VALIDATION_TRANSPARENCY",
+        "Validation Transparency",
+        "Yoga logic benchmark",
+        "60 charts",
+        "82 comparable rules",
+        "Precision 96.48%",
+        "Recall 93.99%",
+        "F1 95.22%",
+        "unmapped_pyjhora",
+        "golden cases",
+        "release-quality-gate",
+        "不是个人事件预测准确率",
+    ]:
+        assert token in main
+    for token in [
+        ".validation-transparency-panel",
+        ".validation-transparency-grid",
+        ".validation-transparency-metric",
+        ".validation-transparency-boundary",
+    ]:
+        assert token in style
+
+
 def test_click_smoke_covers_core_interactive_workflows() -> None:
     smoke_path = ROOT / "tests" / "run_frontend_click_smoke.py"
     quality_gate = (ROOT / "scripts" / "run_quality_gate.py").read_text(encoding="utf-8")
