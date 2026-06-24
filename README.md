@@ -79,7 +79,13 @@ This is a **Vedic (Jyotish) astrology analysis system** designed for deep, audit
 
 - quick：快速开发守门，适合普通代码/文案修改后先跑：`python3 scripts/run_quality_gate.py --profile quick`
 - browser：完整浏览器守门，覆盖 runtime smoke 与真实浏览器用户路径：`python3 scripts/run_quality_gate.py --profile browser`
-- release：发布前守门，包含关键产品文件未跟踪检查、慢速 golden cases 与 Yoga 逻辑报告：`python3 scripts/run_quality_gate.py --profile release`
+- release：发布前守门，包含关键产品文件未跟踪检查、慢速 golden cases、真实案例复验与 Yoga 逻辑报告：`python3 scripts/run_quality_gate.py --profile release`
+
+### 真实案例复验与准确率边界
+
+公开人物样本复验命令：`python3 tests/run_real_case_revalidation.py`。
+
+当前复验口径是公开人物样本的出生盘星座级一致率，并对部分带有来源矛盾、时区争议或边界度数的参考行标记为 controversial_reference。这个指标用于验证排盘计算是否稳定，不等同于人生事件预测准确率，也不应被当作个人命运判断的命中率。
 
 ### Prerequisites
 

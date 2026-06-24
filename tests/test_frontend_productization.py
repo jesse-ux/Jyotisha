@@ -1725,6 +1725,39 @@ def test_user_delivery_matrix_is_documented_and_checkable() -> None:
     assert '[PYTHON, "scripts/deployment_preflight.py"]' in quality_gate
 
 
+def test_real_case_revalidation_is_release_gate_and_accuracy_boundary() -> None:
+    runner_path = ROOT / "tests" / "run_real_case_revalidation.py"
+    assert runner_path.exists()
+    runner = runner_path.read_text(encoding="utf-8")
+    quality_gate = (ROOT / "scripts" / "run_quality_gate.py").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    for token in [
+        "tests/celebrity_cases.json",
+        "tests/indastro_cases.json",
+        "public_reference",
+        "controversial_reference",
+        "min_pass_rate",
+        "event_prediction_accuracy",
+        "passed_checks",
+        "total_checks",
+    ]:
+        assert token in runner
+
+    assert '"tests/run_real_case_revalidation.py"' in quality_gate
+    assert '[PYTHON, "tests/run_real_case_revalidation.py"' in quality_gate
+    assert "--skip-real-cases" in quality_gate
+
+    for token in [
+        "真实案例复验",
+        "公开人物样本",
+        "星座级一致率",
+        "不等同于人生事件预测准确率",
+        "python3 tests/run_real_case_revalidation.py",
+    ]:
+        assert token in readme
+
+
 def test_user_startup_labels_are_consistent_across_recovery_surfaces() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     quality_gate = (ROOT / "scripts" / "run_quality_gate.py").read_text(encoding="utf-8")

@@ -25,6 +25,7 @@ EXTRA_COMPILE_TARGETS = [
     ROOT / "scripts" / "audit_fragments.py",
     ROOT / "scripts" / "deployment_preflight.py",
     ROOT / "tests" / "run_golden_cases.py",
+    ROOT / "tests" / "run_real_case_revalidation.py",
     ROOT / "tests" / "run_frontend_runtime_smoke.py",
 ]
 
@@ -77,6 +78,7 @@ QUALITY_GATE_PROFILES = {
         "skip_frontend_click": True,
         "frontend_click_mode": "core",
         "check_release_hygiene": False,
+        "skip_real_cases": True,
     },
     "browser": {
         "skip_slow": True,
@@ -85,6 +87,7 @@ QUALITY_GATE_PROFILES = {
         "skip_frontend_click": False,
         "frontend_click_mode": "all",
         "check_release_hygiene": False,
+        "skip_real_cases": True,
     },
     "release": {
         "skip_slow": False,
@@ -93,6 +96,7 @@ QUALITY_GATE_PROFILES = {
         "skip_frontend_click": False,
         "frontend_click_mode": "all",
         "check_release_hygiene": True,
+        "skip_real_cases": False,
     },
 }
 
@@ -252,7 +256,7 @@ def validate_json_files() -> None:
 
 def run_profile(args: argparse.Namespace) -> dict:
     profile = dict(QUALITY_GATE_PROFILES[args.profile])
-    for key in ["skip_slow", "skip_yoga_logic", "skip_frontend_runtime", "skip_frontend_click"]:
+    for key in ["skip_slow", "skip_yoga_logic", "skip_frontend_runtime", "skip_frontend_click", "skip_real_cases"]:
         if getattr(args, key):
             profile[key] = True
     if args.frontend_click_mode:
@@ -267,6 +271,7 @@ def main() -> int:
     parser.add_argument("--skip-yoga-logic", action="store_true", help="Skip Yoga logic comparison report refresh")
     parser.add_argument("--skip-frontend-runtime", action="store_true", help="Skip frontend build and runtime smoke")
     parser.add_argument("--skip-frontend-click", action="store_true", help="Skip browser click smoke")
+    parser.add_argument("--skip-real-cases", action="store_true", help="Skip public real-person chart revalidation")
     parser.add_argument("--frontend-click-mode", choices=["core", "mobile", "offline", "pdf", "workspace", "mobile-trust", "import-files", "all"], default=None, help="Browser click smoke mode for browser/release profiles")
     parser.add_argument("--frontend-click-timeout", type=int, default=240, help="Timeout seconds for browser click smoke")
     parser.add_argument("--all-tests", action="store_true", help="Run every pytest file, including optional-dependency suites")
@@ -300,6 +305,8 @@ def main() -> int:
         ])
     if not profile["skip_slow"]:
         run([PYTHON, "tests/run_golden_cases.py", "--python", PYTHON])
+    if not profile["skip_real_cases"]:
+        run([PYTHON, "tests/run_real_case_revalidation.py", "--python", PYTHON, "--summary"])
     if not profile["skip_yoga_logic"]:
         run([PYTHON, "scripts/validate_logic_v2.py"], optional=True)
     print("\nQuality gate passed.")
