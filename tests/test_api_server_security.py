@@ -15,8 +15,8 @@ if SCRIPTS not in sys.path:
 
 import jyotish_api_server  # noqa: E402
 from jyotish_api_server import (  # noqa: E402
-    BadRequest,
     DEFAULT_ALLOWED_ORIGINS,
+    BadRequest,
     JyotishAPIHandler,
     _load_local_module,
     _parse_allowed_origins,
@@ -538,7 +538,8 @@ def test_fragment_audit_blocks_registry_surface_drift() -> None:
     assert result['registry']['technique_count'] >= 60
     assert result['workspace_residue']['untracked_count'] >= 0
     assert isinstance(result['workspace_residue']['untracked_files'], list)
-    assert result['workspace_residue']['git_lost_found_count'] >= 1
+    assert result['workspace_residue']['git_lost_found_count'] >= 0
+    assert isinstance(result['workspace_residue']['git_lost_found_files'], list)
     assert result['open_source_sources']['source_count'] >= 3
     assert all(row['commands'] for row in result['rows'] if row['status'] in {'covered', 'complete'})
     assert not any(problem['kind'] == 'missing_output_path' for problem in result['problems'])

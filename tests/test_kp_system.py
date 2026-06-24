@@ -9,10 +9,11 @@ import csv
 import os
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 
 from kp_system import get_kp_lords
-
 
 SIGNS = [
     'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
@@ -39,6 +40,8 @@ def _dms_to_degree(value: str) -> float:
 
 
 def _load_rows(limit=None):
+    if not os.path.exists(CSV_PATH):
+        pytest.skip(f"VedicAstro KP oracle fixture not available: {CSV_PATH}")
     with open(CSV_PATH, newline='', encoding='utf-8') as f:
         rows = list(csv.DictReader(f))
     return rows if limit is None else rows[:limit]

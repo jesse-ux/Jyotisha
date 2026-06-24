@@ -95,4 +95,6 @@
 - [x] 完整 browser/release profile 与云端分支同步检查：browser/release profile 均通过，分支 `codex/release-hygiene-ci` 已推送到远端并更新现有 PR #6。
 - [x] PR CI 云端稳定性修复：`.github/workflows/ci.yml` 显式使用 `--profile quick --skip-yoga-logic`，避免 PR 环境因未安装真实浏览器/Playwright 依赖而误触 browser click smoke。
 - [x] GitHub Actions 失败根因修复：本地复现 PR `validate` 的 Ruff E402 与 `test` 全量 pytest 的 WorkBuddy 旧 skill 路径污染，新增 pytest import guard 并修复 Ashtakavarga lint。
-- [ ] 下一步：推送 CI 修复后复查 GitHub Actions 结果；继续检查发布包链路，必要时补充 release-only workflow 的 browser/release 守门。
+- [x] Clean checkout CI 复现与修复：用干净 clone 复现 `.git/lost-found` 本机残留假设和 KP 外部 CSV fixture 缺失，修复为 clean checkout 可运行/可跳过的测试策略。
+- [x] 发布包基础链路验证：wheel/sdist 构建成功，`twine check dist/*` 通过，全新 venv 安装 wheel 后 CLI help 可用。
+- [ ] 下一步：推送 clean checkout 修复后复查 GitHub Actions 结果；补充 release-only workflow 的 browser/release 守门。

@@ -297,3 +297,6 @@
 - GitHub Actions 复查发现 PR #6 head `062dc86` 的 `validate` 与 `test` 均失败：`validate` 失败点为 Ruff lint，`test` 失败点为全量 `python -m pytest -q`；Actions 日志下载需要仓库 admin 权限，改为本地补齐 dev 依赖后复现。
 - 修复 CI 阻断：`tests/conftest.py` 统一保证当前仓库 `scripts` 在 `sys.path[0]`，并在每个测试前清理从 `~/.workbuddy/skills/jyotish-vedic-astrology/scripts` 载入的同名模块，避免历史测试收集期污染 `prashna`；`tests/test_ashtakavarga_invariants.py` 给需要先改 `sys.path` 的脚本导入加 Ruff E402 标注。
 - 验证完成：`python3 -m ruff check scripts/run_quality_gate.py tests/test_varga_bphs.py tests/test_ashtakavarga_invariants.py tests/test_cli_smoke.py tests/test_yoga_rules_integrity.py` 通过；`python3 -m pytest -q` 全量通过；`python3 scripts/run_quality_gate.py --profile quick --skip-yoga-logic` 通过，核心质量门 198 个 pytest、npm build 与 runtime smoke 通过。
+- 继续复查 PR #6 Actions：Ruff 已转绿，但 `quick quality gate` 与 `pytest suite` 仍失败；在 `/tmp/yinduzhanxing-ci-repro` 干净 clone 复现，根因为 `test_fragment_audit_blocks_registry_surface_drift` 假设 `.git/lost-found` 一定存在，以及 `test_kp_system.py` 依赖未纳入 Git 的 `VedicAstro/vedicastro/data/KP_SL_Divisions.csv`。
+- 修复 clean checkout 测试依赖：碎片审计测试改为检查 lost-found 字段结构而非要求本机残留数量；KP 外部 oracle CSV 缺失时明确 `pytest.skip`，保留内建 360° wrap 测试。
+- 发布包链路进展：`python3 -m build --no-isolation --wheel --sdist` 成功生成 wheel/sdist；`python3 -m twine check dist/*` 通过；全新 venv 安装 wheel 后 `jyotish-engine --help` 可用。
