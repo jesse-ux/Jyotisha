@@ -99,4 +99,5 @@
 - [x] 发布包基础链路验证：wheel/sdist 构建成功，`twine check dist/*` 通过，全新 venv 安装 wheel 后 CLI help 可用。
 - [x] PR merge ref 复现与 release-only workflow 守门：在 `/tmp/yinduzhanxing-pr6-merge` 拉取 PR #6 merge ref，确认完整依赖安装后 pytest 与 quick gate 通过；新增手动发布质量门 workflow 跑 release profile 与 Playwright Chromium，并为 CI/test workflow 增加 Vite/Node/Python 诊断。
 - [x] CI 失败 artifact 诊断：pytest 改为 `-vv --maxfail=1 --junitxml`，quick/release quality gate 输出 tee 到 artifact，避免云端只暴露 exit code。
-- [ ] 下一步：推送 artifact 诊断后复查 GitHub Actions 结果；下载或读取诊断 artifact，按首个 Linux runner 失败继续修复。
+- [x] 云端 CI 收口：PR #6 head `925e73e` 的 `validate`、`test`、`release-quality-gate` 三条 GitHub Actions 检查均已通过。
+- [ ] 下一步：进入成品化最后一批缺口，优先补普通用户交付形态（部署/桌面打包/公开演示环境）和准确率透明度页面。
