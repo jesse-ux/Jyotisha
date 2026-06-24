@@ -11,7 +11,7 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from ashtakavarga import (
+from ashtakavarga import (  # noqa: E402
     ALL_SOURCES,
     BAV_TOTALS,
     EXPECTED_SAV_TOTAL,

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import subprocess
 import sys
@@ -92,3 +93,18 @@ def test_yoga_logic_validation_import_does_not_shadow_project_modules() -> None:
 
     assert not sys.path[0].endswith(".workbuddy/skills/jyotish-vedic-astrology/scripts")
     sys.path[:] = before
+
+
+def test_pytest_import_guard_restores_project_scripts_first() -> None:
+    before = list(sys.path)
+    try:
+        sys.path.insert(0, str(ROOT / ".workbuddy" / "skills" / "jyotish-vedic-astrology" / "scripts"))
+
+        import tests.conftest as conftest
+
+        importlib.reload(conftest)
+        assert sys.path[0] == str(ROOT / "scripts")
+        assert str(ROOT / "scripts") == conftest.SCRIPTS
+        assert conftest.WORKBUDDY_SKILL_SCRIPTS == ".workbuddy/skills/jyotish-vedic-astrology/scripts"
+    finally:
+        sys.path[:] = before
