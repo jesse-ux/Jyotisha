@@ -553,6 +553,21 @@ def test_release_quality_gate_tracks_untracked_product_files() -> None:
         assert path in quality_gate.RELEASE_CRITICAL_UNTRACKED_PATHS
 
 
+def test_github_release_quality_gate_runs_browser_release_profile() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "release-quality-gate.yml").read_text(encoding="utf-8")
+    for token in [
+        "workflow_dispatch",
+        "pull_request",
+        "python-version: '3.11'",
+        "node-version: '20'",
+        "npm ci --prefix jyotish-app",
+        "python -m pip install playwright",
+        "python -m playwright install --with-deps chromium",
+        "python scripts/run_quality_gate.py --profile release --frontend-click-timeout 240",
+    ]:
+        assert token in workflow
+
+
 def test_auth_and_subscription_failures_have_recovery_guidance() -> None:
     auth = read("auth.js")
     subscription = read("subscription.js")
