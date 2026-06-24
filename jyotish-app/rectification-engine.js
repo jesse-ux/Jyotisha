@@ -34,6 +34,15 @@ export const EVENT_CATEGORIES = {
   fame:        {cn:'名声/荣誉',  en:'Fame/Honor',       icon:'🌟',planets:['Sun','Jupiter'],  houses:[1,10,9],varga:'D10'},
 };
 
+export const EVENT_COLLECTION_GUIDE = [
+  { key: 'relationship', cn: '感情/婚姻/分离', en: 'relationship, marriage, separation', categories: ['marriage', 'divorce', 'relationship'] },
+  { key: 'career', cn: '入职/升职/创业/换工作', en: 'job start, promotion, business, job change', categories: ['career', 'job_change', 'business', 'fame'] },
+  { key: 'education', cn: '升学/考试/毕业', en: 'education, exam, graduation', categories: ['education'] },
+  { key: 'family', cn: '生育/父母/家庭房产', en: 'childbirth, parents, home, property', categories: ['child', 'property'] },
+  { key: 'stress', cn: '健康/事故/诉讼/破财', en: 'health, accident, legal dispute, loss', categories: ['health', 'legal', 'finance_neg', 'loss'] },
+  { key: 'mobility', cn: '搬家/远行/移民', en: 'relocation, travel, migration', categories: ['travel'] },
+];
+
 // ——— 工具函数 ———
 export function getHouseLord(ai, h) { return SIGN_LORDS[SIGNS[(ai + h - 1) % 12]]; }
 
@@ -128,6 +137,92 @@ function scoreNak(baseDeg, offDeg) {
   return 0;
 }
 
+function eventCategoryGroup(category) {
+  return EVENT_COLLECTION_GUIDE.find(group => group.categories.includes(category))?.key || category;
+}
+
+function summarizeEventCoverage(events) {
+  const valid = (events || []).filter(evt => evt?.date && EVENT_CATEGORIES[evt.category]);
+  const groups = [...new Set(valid.map(evt => eventCategoryGroup(evt.category)))];
+  const categories = [...new Set(valid.map(evt => evt.category))];
+  const datedYears = valid.map(evt => Number(String(evt.date).slice(0, 4))).filter(Number.isFinite);
+  const yearSpan = datedYears.length ? Math.max(...datedYears) - Math.min(...datedYears) : 0;
+  const idealCount = valid.length >= 8;
+  const enoughCount = valid.length >= 5;
+  const enoughGroups = groups.length >= 3;
+  const enoughSpan = yearSpan >= 7 || valid.length >= 8;
+  const qualityScore = Math.round(
+    Math.min(valid.length / 8, 1) * 40 +
+    Math.min(groups.length / 4, 1) * 30 +
+    Math.min(yearSpan / 12, 1) * 20 +
+    Math.min(categories.length / 5, 1) * 10
+  );
+  const missing = EVENT_COLLECTION_GUIDE
+    .filter(group => !groups.includes(group.key))
+    .slice(0, 3)
+    .map(group => group.cn);
+  return {
+    event_count: valid.length,
+    category_count: categories.length,
+    group_count: groups.length,
+    year_span: yearSpan,
+    quality_score: qualityScore,
+    quality_level: idealCount && enoughGroups && enoughSpan ? 'strong' : enoughCount && enoughGroups ? 'usable' : 'thin',
+    missing_groups: missing,
+  };
+}
+
+function countMatchedEvents(result) {
+  return (result?.eventScores || []).filter(es => (es.dashaScore || 0) > 0 || (es.vargaScore || 0) > 0).length;
+}
+
+function summarizeCandidateEvidence(result, events) {
+  const eventCount = Math.max((events || []).length, 1);
+  const matchedEvents = countMatchedEvents(result);
+  const strongEvents = (result?.eventScores || []).filter(es => (es.dashaScore || 0) >= 4 || ((es.dashaScore || 0) > 0 && (es.vargaScore || 0) > 0)).length;
+  const sensitiveVargas = (result?.vargaChanges || [])
+    .filter(v => ['D9', 'D10', 'D24', 'D30', 'D60'].includes(v.varga))
+    .map(v => v.varga);
+  const changedPlanets = (result?.houseChanges || []).map(c => c.planet);
+  return {
+    matched_events: matchedEvents,
+    strong_events: strongEvents,
+    match_rate: Math.round((matchedEvents / eventCount) * 100),
+    sensitive_vargas: [...new Set(sensitiveVargas)],
+    changed_planets: [...new Set(changedPlanets)],
+  };
+}
+
+function buildRectificationAudit(best, results, events) {
+  const second = results[1] || null;
+  const coverage = summarizeEventCoverage(events);
+  const evidence = summarizeCandidateEvidence(best, events);
+  const cluster = results.filter(r => Math.abs((r.totalScore || 0) - (best?.totalScore || 0)) <= 3).slice(0, 8);
+  const clusterOffsets = cluster.map(r => r.offsetMin);
+  const clusterSpan = clusterOffsets.length
+    ? { min: Math.min(...clusterOffsets), max: Math.max(...clusterOffsets), count: clusterOffsets.length }
+    : { min: 0, max: 0, count: 0 };
+  const gap = second ? Math.max(0, (best.totalScore || 0) - (second.totalScore || 0)) : best?.totalScore || 0;
+  const exactTie = second ? (best.totalScore || 0) === (second.totalScore || 0) : false;
+  const shouldStayNearBaseline = exactTie || clusterSpan.count >= 4 || (best?.totalScore || 0) < 45;
+  const warnings = [];
+  if (coverage.event_count < 5) warnings.push('事件数量不足，建议至少补到5个，理想为8-15个。');
+  if (coverage.group_count < 3) warnings.push('事件类型过于集中，容易把结果锁到单一主题。');
+  if (coverage.year_span < 7 && coverage.event_count < 8) warnings.push('事件年份跨度偏短，建议补童年/青年/近年事件。');
+  if (exactTie) warnings.push('第一名与第二名同分，不应把单一候选时间视为确定校正。');
+  if (best?.vargaChanges?.some(v => v.varga === 'D9')) warnings.push('推荐时间会改变D9上升，婚姻与内在成熟判断需二次确认。');
+  return {
+    coverage,
+    evidence,
+    runner_up: second ? { offsetMin: second.offsetMin, time: second.time, totalScore: second.totalScore } : null,
+    score_gap: gap,
+    exact_tie: exactTie,
+    top_cluster: clusterSpan,
+    should_stay_near_baseline: shouldStayNearBaseline,
+    warnings,
+  };
+}
+
 // ——— 主函数 ———
 export async function runRectification(birth, events, options={}) {
   const {rangeMin=15,stepMin=1,onProgress=null}=options;
@@ -179,11 +274,12 @@ export async function runRectification(birth, events, options={}) {
     }catch(e){console.warn('[Rect]',off,e);}
     if(onProgress)onProgress(i+1,offsets.length);
   }
-  results.sort((a,b)=>b.totalScore-a.totalScore);
+  results.sort((a,b)=>(b.totalScore-a.totalScore)||Math.abs(a.offsetMin)-Math.abs(b.offsetMin)||a.offsetMin-b.offsetMin);
   if(results.length>0){
     results[0].isBest=true;
     if(results.findIndex(r=>r.offsetMin===0)>0) results[0].correctionEffective=true;
   }
+  const audit = results.length ? buildRectificationAudit(results[0], results, events) : null;
   return {
     birth,events,options:{rangeMin,stepMin,totalCandidates:offsets.length},
     baseChartInfo:{
@@ -192,23 +288,27 @@ export async function runRectification(birth, events, options={}) {
       vargaLagnas:baseVL,moonNak:getNakPada(baseMoon),
     },
     results,bestMatch:results[0]||null,
-    confidence:calcConf(results,events.length),
+    confidence:calcConf(results,events.length,audit),
+    audit,
   };
 }
 
-function calcConf(results, evtCount) {
+function calcConf(results, evtCount, audit=null) {
   if(!results.length) return {level:'不确定',score:0,bestPct:0,gapPct:0,description:'',recommendation:[]};
   const best=results[0],sec=results[1];
   const gap=sec?best.totalScore-sec.totalScore:best.totalScore;
   const gapPct=sec&&sec.totalScore>0?Math.round(gap/sec.totalScore*100):100;
   let level,score;
-  if(best.totalScore>=65&&gapPct>=15){level='高';score=3;}
-  else if(best.totalScore>=45&&gapPct>=8){level='中';score=2;}
+  const coverageOk = !audit || audit.coverage.quality_level !== 'thin';
+  if(best.totalScore>=65&&gapPct>=15&&coverageOk&&!audit?.exact_tie){level='高';score=3;}
+  else if(best.totalScore>=45&&gapPct>=8&&!audit?.exact_tie){level='中';score=2;}
   else if(best.totalScore>=25){level='低';score=1;}
   else{level='不确定';score=0;}
   const recs=[`建议出生时间校正 ${best.offsetMin>=0?'+':''}${best.offsetMin} 分钟`];
   if(best.vargaChanges?.some(v=>v.varga==='D9')) recs.push('⚠️ 此校正会改变Navamsa(D9)上升，影响重大，建议专业验证');
-  if(evtCount<3) recs.push('建议提供至少5个以上生命事件以提高准确性');
+  if(audit?.should_stay_near_baseline) recs.push('候选时间仍有聚集或同分现象，建议先保留原始时间为主、把推荐时间作为验证候选。');
+  if(evtCount<5) recs.push('建议提供至少5个以上生命事件以提高准确性');
+  if(audit?.coverage?.missing_groups?.length) recs.push(`可优先补充：${audit.coverage.missing_groups.join('、')}。`);
   if(level==='高') recs.push('多个事件一致指向此时间，可信度较高');
   else if(level==='低'||level==='不确定') recs.push('事件对齐度较低，可能需要更多事件数据或尝试更大时间范围');
   return {level,score,bestPct:best.totalScore,gapPct,description:`最佳匹配评分 ${best.totalScore}%，领先第二名 ${gapPct}%`,recommendation:recs};

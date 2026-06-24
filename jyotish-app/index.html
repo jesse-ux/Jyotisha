@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
   <title>Jyotish · 印度占星</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/pwa-icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -31,6 +34,30 @@
 
         <div class="card input-card reveal">
           <h2 class="card-title" data-i18n="input.title">输入出生信息</h2>
+          <div class="first-use-panel" id="first-use-panel" aria-live="polite">
+            <div class="first-use-head">
+              <strong>首次使用</strong>
+              <span>先确认运行环境，或用示例盘快速进入完整解盘。</span>
+            </div>
+            <div class="first-use-grid">
+              <button type="button" class="first-use-step" id="first-use-health" data-first-use-action="health">
+                <span class="first-use-kicker">检查</span>
+                <strong>运行健康检查</strong>
+                <small>确认本地 API、技法目录与 PWA 状态。</small>
+              </button>
+              <button type="button" class="first-use-step" id="first-use-demo" data-first-use-action="demo">
+                <span class="first-use-kicker">示例</span>
+                <strong>填入示例盘</strong>
+                <small>用北京 1990-01-01 12:00 先熟悉流程。</small>
+              </button>
+              <button type="button" class="first-use-step" id="first-use-import" data-first-use-action="import">
+                <span class="first-use-kicker">导入</span>
+                <strong>识别已有星盘</strong>
+                <small>从 PDF 文本层或粘贴资料开始。</small>
+              </button>
+            </div>
+            <div class="first-use-status" id="first-use-status"></div>
+          </div>
           <form id="birth-form">
             <div class="form-row">
               <div class="form-group">
@@ -78,10 +105,28 @@
             </div>
             <input type="hidden" id="birth-lat">
             <input type="hidden" id="birth-lon">
+            <div class="chart-import-panel" id="chart-import-panel">
+              <div class="chart-import-head">
+                <strong>已有 PDF / 文本星盘？</strong>
+                <span>上传文本层 PDF，或粘贴出生资料，识别后先校验再填表。</span>
+              </div>
+              <textarea id="chart-import-text" rows="4" placeholder="示例：Date of Birth: 1990-06-15&#10;Time of Birth: 12:30&#10;Place of Birth: Delhi&#10;Timezone: UTC+5:30"></textarea>
+              <div class="chart-import-actions">
+                <label class="chart-import-file">
+                  <input type="file" id="chart-import-file" accept=".txt,.md,.json,.pdf,text/plain,application/pdf">
+                  <span>上传文件</span>
+                </label>
+                <button type="button" id="chart-import-parse">识别信息</button>
+                <button type="button" id="chart-import-apply" disabled>填入表单</button>
+              </div>
+              <div class="chart-import-result" id="chart-import-result" aria-live="polite"></div>
+            </div>
+            <div class="saved-chart-panel" id="saved-chart-panel" aria-live="polite"></div>
             <button type="submit" class="btn-primary" id="btn-calculate">
               <span class="btn-text" data-i18n="btn.calculate">生 成 星 盘</span>
               <span class="btn-loading hidden"><span class="spinner"></span> <span data-i18n="btn.calculating">计算中...</span></span>
             </button>
+            <div class="chart-compute-status hidden" id="chart-compute-status" aria-live="polite"></div>
           </form>
         </div>
       </div>
@@ -99,13 +144,17 @@
           </div>
           <div class="header-actions">
             <div data-auth-header></div>
+            <button class="btn-save-chart" id="btn-save-chart" type="button">保存星盘</button>
             <div class="export-dropdown">
               <button class="btn-export" id="btn-export" data-i18n="btn.export">⬇ 导出</button>
               <div class="export-menu hidden" id="export-menu">
                 <button class="export-item" data-format="json" data-i18n="export.json">导出 JSON 数据</button>
+                <button class="export-item" data-format="html">导出 HTML 报告</button>
+                <button class="export-item" data-format="pdf">导出 PDF 报告</button>
                 <button class="export-item" data-format="svg" data-i18n="export.svg">导出星盘 SVG</button>
                 <button class="export-item" data-format="png" data-i18n="export.png">导出星盘 PNG</button>
               </div>
+              <div class="export-status hidden" id="export-status" aria-live="polite"></div>
             </div>
             <button class="btn-back" id="btn-back" data-i18n="btn.back">← 重新输入</button>
           </div>
@@ -126,6 +175,8 @@
         <!-- Tab 导航 -->
         <nav class="section-tabs" id="section-tabs">
           <button class="tab-btn active" data-tab="chart" data-i18n="tab.chart">本命盘</button>
+          <button class="tab-btn" data-tab="complete">完整解盘</button>
+          <button class="tab-btn" data-tab="provenance">参数/日历</button>
           <button class="tab-btn" data-tab="karaka">Karaka</button>
           <button class="tab-btn" data-tab="houses" data-i18n="tab.houses">宫位分析</button>
           <button class="tab-btn" data-tab="aspects" data-i18n="tab.aspects">相位</button>
@@ -138,6 +189,8 @@
           <button class="tab-btn" data-tab="deep"><span class="tab-full" data-i18n="tab.deep.full">Samagra Viveka 综合深度</span><span class="tab-short" data-i18n="tab.deep.short">综合深度</span></button>
           <button class="tab-btn" data-tab="extended"><span class="tab-full" data-i18n="tab.extended.full">Vishesh Pariksha 扩展分析</span><span class="tab-short" data-i18n="tab.extended.short">扩展分析</span></button>
           <button class="tab-btn" data-tab="remedies">🪷 补救</button>
+          <button class="tab-btn" data-tab="synastry">合盘</button>
+          <button class="tab-btn" data-tab="prashna">问事</button>
           <button class="tab-btn" data-tab="kp">KP</button>
           <button class="tab-btn" data-tab="verify">🔍 验证</button>
           <button class="tab-btn" data-tab="transit-compare">🪐 过境</button>
@@ -197,6 +250,20 @@
           </div>
         </div>
 
+        <!-- === Tab: 完整解盘 === -->
+        <div class="tab-panel" id="tab-complete">
+          <h3 class="section-title">完整解盘总览</h3>
+          <div id="special-lagna-section"></div>
+          <div id="mevg-audit-section"></div>
+          <div id="skill-coverage-section"></div>
+        </div>
+
+        <!-- === Tab: 参数 / Panchanga / 工作区 === -->
+        <div class="tab-panel" id="tab-provenance">
+          <h3 class="section-title">参数、历法与工作区</h3>
+          <div id="provenance-panel"></div>
+        </div>
+
         <!-- === Tab: Karaka === -->
         <div class="tab-panel" id="tab-karaka">
           <h3 class="section-title" data-i18n="karaka.title">Jaimini Karaka 灵魂指针</h3>
@@ -211,7 +278,7 @@
             </div>
           </div>
           <div class="karaka-note">
-            <p data-i18n="karaka.note">Karaka 是 Jaimini 系统的核心概念。AK（Atmakaraka）代表灵魂目标，DK（Darakaraka）代表配偶征象星。度数越高，Karaka 力量越强。</p>
+            <p data-i18n="karaka.note">Karaka 是 Jaimini 系统的核心概念。AK（Atmakaraka）代表灵魂目标，DK（Darakaraka）代表配偶征象星。7-Karaka 与 8-Karaka 是两种传承口径，Rahu 是否纳入会改变部分角色归属；实际解读需先固定所用体系。</p>
           </div>
         </div>
 
@@ -259,6 +326,7 @@
               </div>
             </div>
           </div>
+          <div class="d9-marriage-section" id="d9-marriage-section"></div>
           <div class="arudha-section" id="arudha-section"></div>
         </div>
 
@@ -288,7 +356,8 @@
 
         <!-- === Tab: Dasha === -->
         <div class="tab-panel" id="tab-dasha">
-          <h3 class="section-title" data-i18n="dasha.title">Vimshottari Dasha 大运</h3>
+          <h3 class="section-title" data-i18n="dasha.title">Dasha 大运系统</h3>
+          <div id="dasha-system-section"></div>
           <div class="dasha-current" id="dasha-current"></div>
           <div class="dasha-timeline" id="dasha-timeline"></div>
           <div class="dasha-detail-layout">
@@ -366,6 +435,12 @@
             <div id="pacdares-grid" class="pacdares-grid"></div>
           </div>
 
+          <!-- Argala 干预分析 -->
+          <div class="deep-section">
+            <h4 class="sub-title">Argala / Virodhargala 干预与阻挡</h4>
+            <div id="argala-section"></div>
+          </div>
+
           <!-- Raman 宫位评级 -->
           <div class="deep-section">
             <h4 class="sub-title" data-i18n="deep.grades">Bhava Sadhana 宫位六步评级 (A-F)</h4>
@@ -421,6 +496,107 @@
           </div>
         </div>
 
+        <!-- === Tab: 合盘 === -->
+        <div class="tab-panel" id="tab-synastry">
+          <h3 class="section-title">完整合盘匹配</h3>
+          <div class="synastry-tool">
+            <div class="synastry-library-panel">
+              <div class="form-group">
+                <label>从本地星盘库选择对方</label>
+                <select id="synastry-partner-library">
+                  <option value="">暂无保存星盘</option>
+                </select>
+              </div>
+              <button class="btn-secondary synastry-run" id="btn-run-synastry-library">使用所选星盘合盘</button>
+            </div>
+            <div class="synastry-inputs synastry-full-inputs">
+              <div class="form-group synastry-field-wide">
+                <label>对方出生城市</label>
+                <div class="city-input-wrapper">
+                  <input type="text" id="synastry-partner-city" placeholder="输入城市名">
+                  <div id="synastry-city-suggestions" class="suggestions hidden"></div>
+                </div>
+                <input type="hidden" id="synastry-partner-lat">
+                <input type="hidden" id="synastry-partner-lon">
+              </div>
+              <div class="form-group">
+                <label>出生日期</label>
+                <input type="date" id="synastry-partner-date">
+              </div>
+              <div class="form-group">
+                <label>出生时间</label>
+                <input type="time" id="synastry-partner-time">
+              </div>
+              <div class="form-group">
+                <label>时区</label>
+                <input type="number" id="synastry-partner-tz" min="-12" max="14" step="0.25" placeholder="5.5">
+              </div>
+              <button class="btn-primary synastry-run" id="btn-run-synastry-full">完整合盘</button>
+            </div>
+            <details class="synastry-quick">
+              <summary>只知道月亮黄经时使用快算</summary>
+              <div class="synastry-inputs synastry-quick-inputs">
+                <div class="form-group">
+                  <label>本人月亮黄经</label>
+                  <input type="number" id="synastry-self-moon" min="0" max="360" step="0.01" readonly>
+                </div>
+                <div class="form-group">
+                  <label>对方月亮黄经</label>
+                  <input type="number" id="synastry-partner-moon" min="0" max="360" step="0.01" placeholder="例如 124.50">
+                </div>
+                <button class="btn-secondary synastry-run" id="btn-run-synastry">Ashtakoot 快算</button>
+              </div>
+            </details>
+            <div id="synastry-result" class="synastry-result">
+              <p>输入对方完整出生资料后，可同时计算 36 分 Ashtakoot、双方星盘摘要、D9 婚姻专题、Kuja Dosha 平衡与当前 Dasha 同步。</p>
+            </div>
+            <div id="synastry-pair-workspace" class="synastry-pair-workspace"></div>
+          </div>
+        </div>
+
+        <!-- === Tab: Prashna 问事 === -->
+        <div class="tab-panel" id="tab-prashna">
+          <h3 class="section-title">Prashna 问事占星</h3>
+          <div class="prashna-tool">
+            <div class="prashna-inputs">
+              <div class="form-group">
+                <label>问题类型</label>
+                <select id="prashna-category">
+                  <option value="career">事业 / 工作</option>
+                  <option value="finance">财务 / 收入</option>
+                  <option value="health">健康</option>
+                  <option value="marriage">感情 / 婚姻</option>
+                  <option value="children">子女</option>
+                  <option value="relocation">搬迁 / 家宅</option>
+                  <option value="education">学习 / 考试</option>
+                  <option value="legal">法律 / 纠纷</option>
+                  <option value="property">房产</option>
+                  <option value="travel">旅行 / 远方</option>
+                  <option value="spiritual">修行 / 精神</option>
+                  <option value="general">一般问题</option>
+                </select>
+              </div>
+              <div class="form-group prashna-question">
+                <label>具体问题</label>
+                <input type="text" id="prashna-question" maxlength="120" placeholder="例如：这个工作机会是否值得争取？">
+              </div>
+              <button class="btn-primary prashna-run" id="btn-run-prashna">问事分析</button>
+            </div>
+            <div id="prashna-result" class="prashna-result">
+              <p>Prashna 使用提问当下的时刻与当前星盘数据判断具体问题，适合一次只问一个清晰问题。</p>
+            </div>
+            <div id="prashna-case-workspace" class="prashna-case-workspace"></div>
+          </div>
+        </div>
+
+        <!-- === Tab: KP === -->
+        <div class="tab-panel" id="tab-kp">
+          <h3 class="section-title">KP Sublord 分析</h3>
+          <div id="kp-section" class="deep-section">
+            <p style="color:#999;text-align:center;padding:40px">KP 分析将在星盘计算完成后展示。</p>
+          </div>
+        </div>
+
         <!-- === Tab: 验证 === -->
         <div class="tab-panel" id="tab-verify">
           <h3 class="section-title">🔍 验前事 / 案例验证</h3>
@@ -431,8 +607,8 @@
           </div>
         </div>
 
-        <!-- === Tab: Transit === -->
-        <div class="tab-panel" id="tab-transit">
+        <!-- === Tab: Transit 对比 === -->
+        <div class="tab-panel" id="tab-transit-compare">
           <h3 class="section-title">🪐 过境与对比</h3>
           <div id="transit-section">
             <div style="display:flex;gap:10px;margin-bottom:15px">

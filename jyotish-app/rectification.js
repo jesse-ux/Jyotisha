@@ -4,10 +4,11 @@
  */
 import { SIGNS, PLANET_CN, SIGN_LORDS } from './jyotish-engine.js';
 import {
-  EVENT_CATEGORIES, VARGA_SENSITIVITY, runRectification,
+  EVENT_CATEGORIES, EVENT_COLLECTION_GUIDE, VARGA_SENSITIVITY, runRectification,
   getHouseLord, fmtTime, dateToJD
 } from './rectification-engine.js';
 import { t, getLang, signName, planetName } from './i18n.js';
+import { escapeHtml, escapeAttr } from './security.js';
 
 function fmtOffset(m) { return m === 0 ? t('rect.baseline') : `${m > 0 ? '+' : ''}${m}min`; }
 
@@ -53,6 +54,9 @@ export function renderRectificationTab(container) {
     <div class="rect-events card">
       <h4 class="sub-title">${t('rect.events')} <span class="rect-count" id="rect-event-count">0 ${t('rect.event.count')}</span></h4>
       <p class="rect-hint">${t('rect.events.hint')}</p>
+      <div class="rect-event-guide">${EVENT_COLLECTION_GUIDE.map(group =>
+        `<span>${lang === 'en' ? escapeHtml(group.en) : escapeHtml(group.cn)}</span>`
+      ).join('')}</div>
       <div class="rect-add-row">
         <div class="form-group"><label>${t('rect.event.date')}</label><input type="date" id="rect-event-date" required></div>
         <div class="form-group"><label>${t('rect.event.cat')}</label>
@@ -78,6 +82,12 @@ export function renderRectificationTab(container) {
   bindEvents(container);
 }
 
+function pctStyle(value) {
+  const num = Number(value);
+  const pct = Number.isFinite(num) ? Math.max(0, Math.min(100, Math.round(num))) : 0;
+  return `${pct}%`;
+}
+
 function bindEvents(container) {
   const q = s => container.querySelector(s);
   q('#rect-add-btn').addEventListener('click', () => {
@@ -100,10 +110,10 @@ function renderEventList(container) {
     const cat = EVENT_CATEGORIES[evt.category];
     return `<div class="rect-event-item">
       <span class="rect-evt-icon">${cat.icon}</span>
-      <span class="rect-evt-date">${evt.date}</span>
-      <span class="rect-evt-cat">${lang === 'en' ? cat.en : cat.cn} (${cat.varga})</span>
-      <span class="rect-evt-desc">${evt.desc}</span>
-      <button class="rect-evt-del" data-idx="${i}">✕</button></div>`;
+      <span class="rect-evt-date">${escapeHtml(evt.date)}</span>
+      <span class="rect-evt-cat">${escapeHtml(lang === 'en' ? cat.en : cat.cn)} (${escapeHtml(cat.varga)})</span>
+      <span class="rect-evt-desc">${escapeHtml(evt.desc)}</span>
+      <button class="rect-evt-del" data-idx="${escapeAttr(i)}">✕</button></div>`;
   }).join('');
   listEl.querySelectorAll('.rect-evt-del').forEach(b => {
     b.addEventListener('click', () => { rectEvents.splice(+b.dataset.idx, 1); renderEventList(container); });
@@ -144,7 +154,10 @@ function renderResults(container, result) {
   const el = container.querySelector('#rect-results'); el.classList.remove('hidden');
   const lang = getLang();
   const { bestMatch: bm, confidence: conf, baseChartInfo: base, results: all } = result;
+  const audit = result.audit || {};
   const confClr = { '高': '#22c55e', '中': '#f59e0b', '低': '#ef4444', '不确定': '#9ca3af' };
+  const correctedBirth = buildCorrectedBirth(result.birth, bm.offsetMin);
+  const reportText = buildRectificationReportText(result, correctedBirth);
 
   // 分盘变化
   const vcHtml = bm.vargaChanges.length > 0
@@ -157,33 +170,47 @@ function renderResults(container, result) {
     const s = bm.scores[k];
     return `<div class="rect-score-row">
       <span class="rect-score-label">${t('rect.scoring.'+k)} (${weights[k]})</span>
-      <div class="rect-score-bar"><div class="rect-score-fill" style="width:${s.pct}%"></div></div>
-      <span class="rect-score-val">${s.pct}%</span></div>`;
+      <div class="rect-score-bar"><div class="rect-score-fill" style="width:${pctStyle(s.pct)}"></div></div>
+      <span class="rect-score-val">${escapeHtml(s.pct)}%</span></div>`;
   }).join('');
+
+  const auditCards = renderAuditCards(audit, conf, lang);
+  const warningHtml = (audit.warnings || []).length
+    ? `<div class="rect-audit-warnings">${audit.warnings.map(w => `<p>${escapeHtml(w)}</p>`).join('')}</div>`
+    : '';
 
   // 事件详情
   const evtRows = bm.eventScores.map(es => {
     const cat = EVENT_CATEGORIES[es.event.category];
     const rel = getRelevanceText(es.dasha, es.event.category, bm.ascSign);
     return `<tr>
-      <td>${cat.icon} ${lang==='en'?cat.en:cat.cn} <small>(${cat.varga})</small></td>
-      <td>${es.event.date}</td>
-      <td>${es.dasha ? planetName(es.dasha.mahadasha) : '—'}</td>
-      <td>${es.dasha?.antardasha ? planetName(es.dasha.antardasha) : '—'}</td>
-      <td class="${es.dashaScore>0?'rect-score-pos':'rect-score-neg'}">${es.dashaScore.toFixed(1)}</td>
-      <td class="${es.vargaScore>0?'rect-score-pos':'rect-score-neg'}">${es.vargaScore.toFixed(1)}</td>
-      <td class="rect-relevance">${rel}</td></tr>`;
+      <td>${cat.icon} ${escapeHtml(lang==='en'?cat.en:cat.cn)} <small>(${escapeHtml(cat.varga)})</small></td>
+      <td>${escapeHtml(es.event.date)}</td>
+      <td>${escapeHtml(es.dasha ? planetName(es.dasha.mahadasha) : '—')}</td>
+      <td>${escapeHtml(es.dasha?.antardasha ? planetName(es.dasha.antardasha) : '—')}</td>
+      <td class="${es.dashaScore>0?'rect-score-pos':'rect-score-neg'}">${escapeHtml(es.dashaScore.toFixed(1))}</td>
+      <td class="${es.vargaScore>0?'rect-score-pos':'rect-score-neg'}">${escapeHtml(es.vargaScore.toFixed(1))}</td>
+      <td class="rect-relevance">${escapeHtml(rel)}</td></tr>`;
   }).join('');
 
   el.innerHTML = `
     <div class="rect-result-summary card">
       <h4 class="sub-title">${t('rect.result')}</h4>
       <div class="rect-summary-grid">
-        <div class="rect-summary-item"><span class="rect-label">${t('rect.original.time')}</span><span class="rect-value">${base.time}</span></div>
-        <div class="rect-summary-item"><span class="rect-label">${t('rect.rec.time')}</span><span class="rect-value rect-best">${bm.time} (${fmtOffset(bm.offsetMin)})</span></div>
+        <div class="rect-summary-item"><span class="rect-label">${t('rect.original.time')}</span><span class="rect-value">${escapeHtml(base.time)}</span></div>
+        <div class="rect-summary-item"><span class="rect-label">${t('rect.rec.time')}</span><span class="rect-value rect-best">${escapeHtml(bm.time)} (${escapeHtml(fmtOffset(bm.offsetMin))})</span></div>
         <div class="rect-summary-item"><span class="rect-label">${t('rect.confidence')}</span><span class="rect-value" style="color:${confClr[conf.level]||'#9ca3af'}">${conf.level} (${conf.bestPct}%)</span></div>
       </div>
-      <div class="rect-recommendations">${conf.recommendation.map(r => `<p class="rect-rec-line">${r}</p>`).join('')}</div>
+      <div class="rect-recommendations">${conf.recommendation.map(r => `<p class="rect-rec-line">${escapeHtml(r)}</p>`).join('')}</div>
+      ${warningHtml}
+      <div class="rect-result-actions">
+        <button type="button" class="rect-secondary-btn" id="rect-copy-report">复制校正摘要</button>
+        <button type="button" class="rect-apply-btn" id="rect-apply-time">应用推荐时间重新排盘</button>
+      </div>
+    </div>
+    <div class="rect-audit card">
+      <h4 class="sub-title">证据闭环</h4>
+      <div class="rect-audit-grid">${auditCards}</div>
     </div>
     <div class="rect-scoring-detail card">
       <h4 class="sub-title">${t('rect.scoring.title')}</h4>
@@ -203,11 +230,11 @@ function renderResults(container, result) {
           const d9=r.vargaLagnas?.D9?.sign||r.ascSign, d10=r.vargaLagnas?.D10?.sign||r.ascSign;
           const d9chg=r.vargaChanges?.some(v=>v.varga==='D9')?' ⚠️':'';
           const d10chg=r.vargaChanges?.some(v=>v.varga==='D10')?' ⚠️':'';
-          return `<tr class="${r.isBest?'rect-best-row':''}" data-offset="${r.offsetMin}">
-            <td>${i+1}</td><td>${r.time}</td><td>${fmtOffset(r.offsetMin)}</td>
-            <td>${signName(r.ascSign)}</td><td>${signName(d9)}${d9chg}</td><td>${signName(d10)}${d10chg}</td>
-            <td>${r.totalScore}%</td>
-            <td><div class="rect-match-bar"><div class="rect-match-fill" style="width:${r.totalScore}%"></div><span class="rect-match-pct">${r.totalScore}%</span></div></td></tr>`;
+          return `<tr class="${r.isBest?'rect-best-row':''}" data-offset="${escapeAttr(r.offsetMin)}">
+            <td>${i+1}</td><td>${escapeHtml(r.time)}</td><td>${escapeHtml(fmtOffset(r.offsetMin))}</td>
+            <td>${escapeHtml(signName(r.ascSign))}</td><td>${escapeHtml(signName(d9))}${d9chg}</td><td>${escapeHtml(signName(d10))}${d10chg}</td>
+            <td>${escapeHtml(r.totalScore)}%</td>
+            <td><div class="rect-match-bar"><div class="rect-match-fill" style="width:${pctStyle(r.totalScore)}"></div><span class="rect-match-pct">${escapeHtml(r.totalScore)}%</span></div></td></tr>`;
         }).join('')}</tbody>
       </table></div>
     </div>
@@ -219,6 +246,21 @@ function renderResults(container, result) {
       </table></div>
     </div>`;
 
+  el.querySelector('#rect-apply-time')?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('jyotish:apply-rectified-birth', {
+      detail: { birth: correctedBirth, rectification: result },
+    }));
+  });
+  el.querySelector('#rect-copy-report')?.addEventListener('click', async () => {
+    await copyRectificationReport(reportText);
+    const btn = el.querySelector('#rect-copy-report');
+    if (btn) {
+      const oldText = btn.textContent;
+      btn.textContent = '已复制';
+      setTimeout(() => { btn.textContent = oldText; }, 1200);
+    }
+  });
+
   el.querySelectorAll('.rect-top-results tr[data-offset]').forEach(tr => {
     tr.style.cursor = 'pointer';
     tr.addEventListener('click', () => {
@@ -227,6 +269,84 @@ function renderResults(container, result) {
       if (r) showOffsetDetail(el, r, base);
     });
   });
+}
+
+function buildCorrectedBirth(birth, offsetMin) {
+  const date = new Date(birth.year, birth.month - 1, birth.day, birth.hour, birth.minute || 0, 0);
+  date.setMinutes(date.getMinutes() + offsetMin);
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate(),
+    hour: date.getHours(),
+    minute: date.getMinutes(),
+    lat: birth.lat,
+    lon: birth.lon,
+    tz: birth.tz,
+  };
+}
+
+function buildRectificationReportText(result, correctedBirth) {
+  const bm = result.bestMatch || {};
+  const conf = result.confidence || {};
+  const audit = result.audit || {};
+  const lines = [
+    'Janma Samaya Shuddhi 生时校正摘要',
+    `原始时间：${result.baseChartInfo?.time || '-'}`,
+    `推荐时间：${fmtTime(correctedBirth.hour, correctedBirth.minute)} (${fmtOffset(bm.offsetMin || 0)})`,
+    `推荐日期：${correctedBirth.year}-${String(correctedBirth.month).padStart(2, '0')}-${String(correctedBirth.day).padStart(2, '0')}`,
+    `置信度：${conf.level || '不确定'} / ${conf.bestPct || 0}%`,
+    `事件覆盖：${audit.coverage?.event_count || 0} 个事件，${audit.coverage?.group_count || 0} 类主题，跨度 ${audit.coverage?.year_span || 0} 年`,
+    `候选差距：领先 ${audit.score_gap ?? 0} 分；同分簇 ${audit.top_cluster?.count || 0} 个`,
+    `使用边界：${conf.recommendation?.join('；') || '建议补充事件后复核。'}`,
+  ];
+  if (audit.warnings?.length) {
+    lines.push(`警告：${audit.warnings.join('；')}`);
+  }
+  return lines.join('\n');
+}
+
+async function copyRectificationReport(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  ta.remove();
+}
+
+function renderAuditCards(audit, conf, lang) {
+  const coverage = audit.coverage || {};
+  const evidence = audit.evidence || {};
+  const cluster = audit.top_cluster || {};
+  const missing = coverage.missing_groups?.length ? coverage.missing_groups.join('、') : '暂不需要';
+  const runner = audit.runner_up ? `${audit.runner_up.time} (${fmtOffset(audit.runner_up.offsetMin)}, ${audit.runner_up.totalScore}%)` : '无';
+  const confidenceMeaning = {
+    '高': '可把推荐时间作为主候选，但仍建议保留原始记录。',
+    '中': '可用于D1/D9/D10观察，高敏感分盘需谨慎。',
+    '低': '只能作为探索候选，不建议覆盖出生证明/家人记录。',
+    '不确定': '证据不足，应继续收集事件。',
+  }[conf?.level] || '证据不足，应继续收集事件。';
+  const cards = [
+    ['事件覆盖', `${coverage.event_count || 0}个事件 · ${coverage.group_count || 0}类主题`, `质量 ${coverage.quality_score || 0}%；年份跨度 ${coverage.year_span || 0} 年。`],
+    ['命中证据', `${evidence.matched_events || 0}个匹配 · ${evidence.match_rate || 0}%`, `强证据 ${evidence.strong_events || 0} 个；敏感分盘 ${evidence.sensitive_vargas?.join('/') || '无变化'}。`],
+    ['候选差距', `领先 ${audit.score_gap ?? 0} 分`, `第二名：${runner}；同分簇 ${cluster.count || 0} 个，范围 ${fmtOffset(cluster.min || 0)} 到 ${fmtOffset(cluster.max || 0)}。`],
+    ['使用边界', conf?.level || '不确定', confidenceMeaning],
+    ['补充建议', missing, '优先补充不同年龄段、不同主题、日期明确的事件。'],
+  ];
+  return cards.map(([label, value, note]) => `
+    <div class="rect-audit-card">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <p>${escapeHtml(note)}</p>
+    </div>
+  `).join('');
 }
 
 function getRelevanceText(di, category, ascSign) {
@@ -245,17 +365,17 @@ function showOffsetDetail(container, r, base) {
   let det = container.querySelector('.rect-offset-detail');
   if (!det) { det = document.createElement('div'); det.className = 'rect-offset-detail card'; container.appendChild(det); }
   const vlHtml = Object.entries(r.vargaLagnas || {}).map(([k, v]) =>
-    `<span class="rect-change-tag">${k}: ${v ? signName(v.sign) : '—'}</span>`
+    `<span class="rect-change-tag">${escapeHtml(k)}: ${escapeHtml(v ? signName(v.sign) : '—')}</span>`
   ).join('');
   const hcHtml = r.houseChanges.length > 0
-    ? r.houseChanges.map(c => `<span class="rect-change-tag">${planetName(c.planet)}: H${c.from}→H${c.to}</span>`).join('')
-    : t('rect.no.change');
+    ? r.houseChanges.map(c => `<span class="rect-change-tag">${escapeHtml(planetName(c.planet))}: H${escapeHtml(c.from)}→H${escapeHtml(c.to)}</span>`).join('')
+    : escapeHtml(t('rect.no.change'));
   det.innerHTML = `
-    <h4 class="sub-title">${t('rect.offset.detail').replace('{0}',fmtOffset(r.offsetMin)).replace('{1}',r.time)}</h4>
+    <h4 class="sub-title">${escapeHtml(t('rect.offset.detail').replace('{0}',fmtOffset(r.offsetMin)).replace('{1}',r.time))}</h4>
     <div class="rect-detail-grid">
-      <div><strong>${t('rect.asc.label')}</strong>${signName(r.ascSign)} ${r.ascDeg?.toFixed(2)}°</div>
-      <div><strong>${t('rect.moon.nak')}</strong>${r.moonNak?.nakName||'—'} Pada ${r.moonNak?.pada||'?'}</div>
-      <div><strong>${t('rect.total.score')}</strong>${r.totalScore}%</div>
+      <div><strong>${t('rect.asc.label')}</strong>${escapeHtml(signName(r.ascSign))} ${escapeHtml(r.ascDeg?.toFixed(2) || '-')}°</div>
+      <div><strong>${t('rect.moon.nak')}</strong>${escapeHtml(r.moonNak?.nakName||'—')} Pada ${escapeHtml(r.moonNak?.pada||'?')}</div>
+      <div><strong>${t('rect.total.score')}</strong>${escapeHtml(r.totalScore)}%</div>
     </div>
     <h5 class="rect-sub">${t('rect.varga.changes')}</h5>
     <div class="rect-changes">${vlHtml}</div>

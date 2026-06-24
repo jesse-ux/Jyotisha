@@ -21,6 +21,13 @@ SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
 SIGN_LORDS = {'Aries':'Mars','Taurus':'Venus','Gemini':'Mercury','Cancer':'Moon',
     'Leo':'Sun','Virgo':'Mercury','Libra':'Venus','Scorpio':'Mars',
     'Sagittarius':'Jupiter','Capricorn':'Saturn','Aquarius':'Saturn','Pisces':'Jupiter'}
+CLASSICAL_PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']
+BENEFICS = {'Moon', 'Mercury', 'Jupiter', 'Venus'}
+MALEFICS = {'Sun', 'Mars', 'Saturn'}
+EXALT_SIGN = {'Sun': 0, 'Moon': 1, 'Mars': 9, 'Mercury': 5, 'Jupiter': 3, 'Venus': 11, 'Saturn': 6}
+DEBIL_SIGN = {'Sun': 6, 'Moon': 7, 'Mars': 3, 'Mercury': 11, 'Jupiter': 9, 'Venus': 5, 'Saturn': 0}
+OWN_SIGNS = {'Sun': [4], 'Moon': [3], 'Mars': [0, 7], 'Mercury': [2, 5],
+             'Jupiter': [8, 11], 'Venus': [1, 6], 'Saturn': [9, 10]}
 
 
 def calc_muntha(birth_asc_idx: int, age: int) -> Dict:
@@ -204,6 +211,247 @@ def calc_tri_pataka(planet_lons: Dict[str, float],
             'challenging': '三旗中两旗以上衰弱，年度运势挑战较大',
         }.get(verdict, ''),
     }
+
+
+def calc_tajika_strength_layers(
+    planet_lons: Dict[str, float],
+    asc_lon: float = 0.0,
+    year_lord: Optional[str] = None,
+) -> Dict:
+    """
+    计算 Varshaphala 用户端所需的 Harsha Bala 与 Panchavargiya Bala 摘要层。
+
+    该函数优先服务产品解释链：保留每颗星的分项分、等级和下一步提示。
+    Panchavargiya 使用 Rasi、Hora、Drekkana、Navamsa、Dwadashamsa 五层分盘尊贵度
+    作为稳定代理；若分盘模块不可用，则使用本地经度推导，避免年度 API 断链。
+    """
+    normalized = {
+        planet: float(planet_lons[planet]) % 360
+        for planet in CLASSICAL_PLANETS
+        if planet in planet_lons and _is_number(planet_lons[planet])
+    }
+    harsha_bala = {}
+    panchavargiya_bala = {}
+    combined_strength = {}
+
+    for planet, lon in normalized.items():
+        harsha = _calc_harsha_bala_for_planet(planet, lon, asc_lon, year_lord)
+        panchavargiya = _calc_panchavargiya_bala_for_planet(planet, lon)
+        total = round(harsha['score'] + panchavargiya['score'], 2)
+        max_score = harsha['max_score'] + panchavargiya['max_score']
+        grade = _strength_grade(total, max_score)
+        harsha_bala[planet] = harsha
+        panchavargiya_bala[planet] = panchavargiya
+        combined_strength[planet] = {
+            'score': total,
+            'max_score': max_score,
+            'grade': grade,
+            'components': {
+                'harsha_bala': harsha['score'],
+                'panchavargiya_bala': panchavargiya['score'],
+            },
+            'interpretation': _strength_interpretation(planet, grade),
+        }
+
+    ranked = sorted(
+        (
+            {'planet': planet, **data}
+            for planet, data in combined_strength.items()
+        ),
+        key=lambda item: item['score'],
+        reverse=True,
+    )
+
+    return {
+        'method': 'Tajika Harsha/Panchavargiya Bala',
+        'source': '本地 Tajika 强度模型：Harsha Bala + Panchavargiya 五分盘尊贵度代理，用于年度盘证据链与用户端排序。',
+        'available_planets': len(normalized),
+        'year_lord': year_lord or '',
+        'ascendant_longitude': round(float(asc_lon or 0) % 360, 4),
+        'harsha_bala': harsha_bala,
+        'panchavargiya_bala': panchavargiya_bala,
+        'combined_strength': combined_strength,
+        'summary': {
+            'strongest_planets': ranked[:3],
+            'weakest_planets': list(reversed(ranked[-3:])) if ranked else [],
+            'headline': _strength_headline(ranked),
+            'next_action': '用最强星解释年度可主动推进的主题，用最弱星标注需要 Dasha/Transit 二次确认的风险点。',
+        },
+    }
+
+
+def _is_number(value) -> bool:
+    try:
+        float(value)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def _sign_idx_from_lon(lon: float) -> int:
+    return int((float(lon) % 360) / 30) % 12
+
+
+def _house_from_asc(lon: float, asc_lon: float) -> int:
+    return ((_sign_idx_from_lon(lon) - _sign_idx_from_lon(asc_lon)) % 12) + 1
+
+
+def _dignity_points(planet: str, sign_idx: int) -> float:
+    if EXALT_SIGN.get(planet) == sign_idx:
+        return 5.0
+    if sign_idx in OWN_SIGNS.get(planet, []):
+        return 4.0
+    if DEBIL_SIGN.get(planet) == sign_idx:
+        return 0.5
+    sign_lord = SIGN_LORDS.get(SIGNS[sign_idx])
+    if sign_lord == planet:
+        return 4.0
+    return 2.5
+
+
+def _strength_grade(score: float, max_score: float) -> str:
+    if max_score <= 0:
+        return 'unknown'
+    ratio = score / max_score
+    if ratio >= 0.78:
+        return 'excellent'
+    if ratio >= 0.62:
+        return 'strong'
+    if ratio >= 0.42:
+        return 'moderate'
+    return 'weak'
+
+
+def _calc_harsha_bala_for_planet(planet: str, lon: float, asc_lon: float, year_lord: Optional[str]) -> Dict:
+    house = _house_from_asc(lon, asc_lon)
+    sign_idx = _sign_idx_from_lon(lon)
+    house_joy = _harsha_house_points(planet, house)
+    dignity = _dignity_points(planet, sign_idx)
+    year_lord_bonus = 3.0 if year_lord == planet else 0.0
+    angular_support = 2.0 if house in (1, 4, 7, 10) else 1.0 if house in (5, 9, 11) else 0.0
+    score = round(house_joy + dignity + year_lord_bonus + angular_support, 2)
+    max_score = 15.0
+    return {
+        'score': min(score, max_score),
+        'max_score': max_score,
+        'grade': _strength_grade(score, max_score),
+        'components': {
+            'house': house,
+            'sign': SIGNS[sign_idx],
+            'house_joy': house_joy,
+            'dignity': dignity,
+            'year_lord_bonus': year_lord_bonus,
+            'angular_support': angular_support,
+        },
+    }
+
+
+def _harsha_house_points(planet: str, house: int) -> float:
+    if planet in MALEFICS:
+        if house in (3, 6, 10, 11):
+            return 5.0
+        if house in (1, 4, 7):
+            return 2.5
+        return 1.0
+    if planet in BENEFICS:
+        if house in (1, 2, 4, 5, 7, 9, 10, 11):
+            return 5.0
+        if house in (3, 6):
+            return 2.0
+        return 1.0
+    return 2.5
+
+
+def _calc_panchavargiya_bala_for_planet(planet: str, lon: float) -> Dict:
+    components = {
+        'rasi': _varga_dignity_component(planet, lon, 1),
+        'hora': _varga_dignity_component(planet, lon, 2),
+        'drekkana': _varga_dignity_component(planet, lon, 3),
+        'navamsa': _varga_dignity_component(planet, lon, 9),
+        'dwadasamsa': _varga_dignity_component(planet, lon, 12),
+    }
+    score = round(sum(item['points'] for item in components.values()), 2)
+    max_score = 25.0
+    return {
+        'score': score,
+        'max_score': max_score,
+        'grade': _strength_grade(score, max_score),
+        'components': components,
+    }
+
+
+def _varga_dignity_component(planet: str, lon: float, div: int) -> Dict:
+    if div == 1:
+        sign_idx = _sign_idx_from_lon(lon)
+    else:
+        sign_idx = _calc_varga_sign_idx(lon, div)
+    points = _dignity_points(planet, sign_idx)
+    return {
+        'division': f'D{div}',
+        'sign': SIGNS[sign_idx],
+        'points': points,
+        'dignity': _dignity_label(planet, sign_idx),
+    }
+
+
+def _calc_varga_sign_idx(lon: float, div: int) -> int:
+    try:
+        from varga import calc_varga
+        return int(calc_varga(lon, div).get('sign_idx', _fallback_varga_sign_idx(lon, div))) % 12
+    except Exception:
+        return _fallback_varga_sign_idx(lon, div)
+
+
+def _fallback_varga_sign_idx(lon: float, div: int) -> int:
+    sign_idx = _sign_idx_from_lon(lon)
+    degree_in_sign = (float(lon) % 30)
+    part_index = int(degree_in_sign / (30.0 / div))
+    if div == 2:
+        return 4 if part_index == 0 else 3
+    if div == 3:
+        return (sign_idx + part_index * 4) % 12
+    if div == 9:
+        start = sign_idx if sign_idx % 3 == 0 else (sign_idx + 4) % 12 if sign_idx % 3 == 1 else (sign_idx + 8) % 12
+        return (start + part_index) % 12
+    if div == 12:
+        return (sign_idx + part_index) % 12
+    return sign_idx
+
+
+def _dignity_label(planet: str, sign_idx: int) -> str:
+    if EXALT_SIGN.get(planet) == sign_idx:
+        return 'exalted'
+    if sign_idx in OWN_SIGNS.get(planet, []):
+        return 'own'
+    if DEBIL_SIGN.get(planet) == sign_idx:
+        return 'debilitated'
+    return 'neutral'
+
+
+def _strength_interpretation(planet: str, grade: str) -> str:
+    planet_topics = {
+        'Sun': '权威、目标感、父亲/上级',
+        'Moon': '情绪、安全感、公众反馈',
+        'Mars': '行动、竞争、执行压力',
+        'Mercury': '沟通、交易、学习',
+        'Jupiter': '机会、导师、财富增长',
+        'Venus': '关系、审美、享受资源',
+        'Saturn': '责任、结构、长期压力',
+    }
+    topic = planet_topics.get(planet, planet)
+    if grade in ('excellent', 'strong'):
+        return f'{planet} 强，年度可主动使用“{topic}”作为推进点。'
+    if grade == 'moderate':
+        return f'{planet} 中等，“{topic}”需结合 Dasha/Transit 再确认。'
+    return f'{planet} 偏弱，“{topic}”宜作为风险提醒和补救重点。'
+
+
+def _strength_headline(ranked: List[Dict]) -> str:
+    if not ranked:
+        return '缺少可用行星经度，暂无法生成 Tajika 强度摘要。'
+    top = ranked[0]
+    bottom = ranked[-1]
+    return f"年度最可用行星为 {top['planet']}（{top['grade']}），最需复核行星为 {bottom['planet']}（{bottom['grade']}）。"
 
 
 def _muntha_interp(sign, lord):

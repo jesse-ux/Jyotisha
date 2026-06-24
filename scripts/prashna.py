@@ -405,6 +405,121 @@ def get_kp_prashna_answer_v2(planet_positions: Dict, question_category: str,
     }
 
 
+def build_kp_horary_evidence(planet_positions: Dict, question_category: str,
+                             asc_degree: float, horary_number: int = None) -> Dict:
+    """Build structured KP Horary evidence for Prashna UI/API contracts.
+
+    This is intentionally lightweight: it reuses the local KP sub-lord and
+    significator rules instead of running an all-day 1-249 exact-time search.
+    """
+    cat = QUESTION_CATEGORIES.get(question_category, QUESTION_CATEGORIES['general'])
+    primary = cat['primary']
+    secondary = cat.get('secondary', [])
+    asc_idx = int(asc_degree / 30) % 12
+    asc_sign = SIGNS[asc_idx]
+    asc_lord = SIGN_LORDS[asc_sign]
+    moon_lon = _planet_longitude(planet_positions, 'Moon')
+    moon_kp = calc_kp_sublord(moon_lon)
+    cusp_lon = (asc_degree + (primary - 1) * 30) % 360
+    cusp_kp = calc_kp_sublord(cusp_lon)
+    houses = _kp_horary_houses(asc_idx)
+    normalized_planets = _kp_horary_planets(planet_positions, asc_idx)
+    house_significators = _house_significators_for_horary(normalized_planets, houses)
+    focus_houses = [primary] + [h for h in secondary if h != primary]
+    judgement = []
+    for house in focus_houses:
+        sig = house_significators.get(house, {})
+        strength = len(sig.get('A', [])) * 3 + len(sig.get('B', [])) * 2 + len(sig.get('C', [])) + (1 if sig.get('D') else 0)
+        judgement.append({
+            'house': house,
+            'role': 'primary' if house == primary else 'supporting',
+            'significators': sig,
+            'score': strength,
+            'signal': 'strong' if strength >= 4 else 'moderate' if strength >= 2 else 'thin',
+        })
+    return {
+        'method': 'KP Horary',
+        'source': 'local prashna.py + kp_system.py; VedicAstro-compatible KP sub-lord proportions',
+        'horary_number': horary_number,
+        'question_type': question_category,
+        'question_houses': {
+            'primary': primary,
+            'secondary': secondary,
+            'karaka': cat.get('karaka'),
+        },
+        'ruling_planets': {
+            'ascendant_lord': asc_lord,
+            'moon_star_lord': moon_kp['nakshatra_lord'],
+            'moon_sub_lord': moon_kp['sub_lord'],
+            'day_lord': '',
+            'method_note': 'Ruling planets use available Prashna ascendant and Moon KP lords; day lord is omitted when exact question date is not supplied.',
+        },
+        'cuspal_sub_lord': {
+            'house': primary,
+            'cusp_longitude': round(cusp_lon, 4),
+            'kp_lords': cusp_kp,
+        },
+        'house_significators': {str(h): house_significators.get(h, {}) for h in focus_houses},
+        'judgement_matrix': judgement,
+        'next_action': 'KP Horary evidence should confirm the YES/NO answer through ruling planets, cuspal sub-lord and house significators.',
+    }
+
+
+def _planet_longitude(planet_positions: Dict, planet: str) -> float:
+    data = planet_positions.get(planet, {}) if isinstance(planet_positions, dict) else {}
+    lon = data.get('longitude', data.get('lon'))
+    if isinstance(lon, (int, float)):
+        return lon % 360
+    sign = data.get('sign')
+    if sign in SIGNS:
+        return (SIGNS.index(sign) * 30 + float(data.get('degree', data.get('degree_in_sign', 0)) or 0)) % 360
+    return 0.0
+
+
+def _kp_horary_houses(asc_idx: int) -> List[Dict]:
+    houses = []
+    for house in range(1, 13):
+        sign = SIGNS[(asc_idx + house - 1) % 12]
+        houses.append({'house': house, 'sign': sign, 'rasi_lord': SIGN_LORDS[sign]})
+    return houses
+
+
+def _kp_horary_planets(planet_positions: Dict, asc_idx: int) -> Dict:
+    normalized = {}
+    for planet, data in planet_positions.items():
+        if not isinstance(data, dict):
+            continue
+        lon = _planet_longitude(planet_positions, planet)
+        sign = SIGNS[int(lon / 30) % 12]
+        house = ((SIGNS.index(sign) - asc_idx) % 12) + 1
+        normalized[planet] = {
+            'sign': sign,
+            'house': house,
+            'longitude': round(lon, 4),
+            'kp_lords': calc_kp_sublord(lon),
+        }
+    return normalized
+
+
+def _house_significators_for_horary(planet_positions: Dict, houses: List[Dict]) -> Dict:
+    planet_nak_lords = {
+        planet: data.get('kp_lords', {}).get('nakshatra_lord', '')
+        for planet, data in planet_positions.items()
+    }
+    result = {}
+    for house in houses:
+        house_num = house['house']
+        occupants = [planet for planet, data in planet_positions.items() if data.get('house') == house_num]
+        lord = house.get('rasi_lord', '')
+        result[house_num] = {
+            'A': [planet for planet, nak_lord in planet_nak_lords.items() if nak_lord in occupants],
+            'B': occupants,
+            'C': [planet for planet, nak_lord in planet_nak_lords.items() if nak_lord == lord],
+            'D': lord,
+        }
+    return result
+
+
 # =============================================================================
 # Nadi Prashna v7.0
 # =============================================================================
@@ -662,4 +777,209 @@ def prashna_timing_score(planet_positions: Dict, asc_degree: float,
         'rating': rating,
         'factors': factors,
         'recommendation': "建议在更佳时机重新询问" if score < 45 else "可以进行Prashna分析",
+    }
+
+
+# =============================================================================
+# Legacy CLI compatibility + Prashna advanced modes
+# =============================================================================
+def _norm(lon: float) -> float:
+    return float(lon or 0) % 360
+
+
+def _sign(lon: float) -> str:
+    return SIGNS[int(_norm(lon) / 30) % 12]
+
+
+def _house_from_asc(lon: float, asc_lon: float) -> int:
+    return (int(_norm(lon) / 30) - int(_norm(asc_lon) / 30)) % 12 + 1
+
+
+def _point(name: str, lon: float, asc_lon: float, note: str = "") -> Dict:
+    lon = _norm(lon)
+    return {
+        "name": name,
+        "longitude": round(lon, 4),
+        "sign": _sign(lon),
+        "house": _house_from_asc(lon, asc_lon),
+        "note": note,
+    }
+
+
+def _planet_lon(planet_lons: Dict, planet: str, default: float = 0.0) -> float:
+    return _norm(planet_lons.get(planet, default))
+
+
+def calc_gulika_simple(asc_lon: float, sun_lon: float = 0.0, weekday: int = 0) -> float:
+    """Lightweight Gulika approximation used when sunrise data is unavailable."""
+    weekday_offsets = [210, 180, 150, 120, 90, 60, 30]
+    return _norm((sun_lon or asc_lon) + weekday_offsets[weekday % 7])
+
+
+def calc_arudha(asc_lon: float, planet_lons: Dict) -> Dict:
+    """Compatibility wrapper for CLI Arudha mode."""
+    asc_idx = int(_norm(asc_lon) / 30) % 12
+    asc_lord = SIGN_LORDS[SIGNS[asc_idx]]
+    lord_lon = _planet_lon(planet_lons, asc_lord, asc_lon)
+    lord_house = _house_from_asc(lord_lon, asc_lon)
+    distance = max(1, lord_house - 1)
+    arudha_house = ((lord_house + distance - 1) % 12) + 1
+    if arudha_house in (1, 7):
+        arudha_house = 10 if arudha_house == 1 else 4
+    arudha_lon = _norm(asc_lon + (arudha_house - 1) * 30)
+    return {
+        "asc_lord": asc_lord,
+        "lord_house": lord_house,
+        "arudha_house": arudha_house,
+        "arudha_lagna": _point("Arudha Lagna", arudha_lon, asc_lon, "问题外显/镜像关注点"),
+    }
+
+
+def calc_sphutas(planet_lons: Dict, asc_lon: float = 0.0) -> Dict:
+    sun = _planet_lon(planet_lons, "Sun")
+    moon = _planet_lon(planet_lons, "Moon")
+    rahu = _planet_lon(planet_lons, "Rahu")
+    gulika = calc_gulika_simple(asc_lon, sun)
+    trisphuta = _norm(asc_lon + moon + gulika)
+    catusphuta = _norm(trisphuta + sun)
+    pancasphuta = _norm(catusphuta + rahu)
+    return {
+        "method": "Prashna Sphuta combinations",
+        "gulika": _point("Gulika", gulika, asc_lon, "延迟/压力敏感点"),
+        "trisphuta": _point("Trisphuta", trisphuta, asc_lon, "Lagna + Moon + Gulika"),
+        "catusphuta": _point("Catusphuta", catusphuta, asc_lon, "Trisphuta + Sun"),
+        "pancasphuta": _point("Pancasphuta", pancasphuta, asc_lon, "Catusphuta + Rahu"),
+        "boundary": "Sphuta 是 Prashna 辅助证据，不应单独作为医疗、死亡或重大决策结论。",
+    }
+
+
+def calc_life_sphutas(asc_lon: float, moon_lon: float, sun_lon: float, gulika_lon: float = 0.0) -> Dict:
+    gulika = _norm(gulika_lon or calc_gulika_simple(asc_lon, sun_lon))
+    prana = _norm(asc_lon * 5 + gulika)
+    deha = _norm(moon_lon * 8 + gulika)
+    mrityu = _norm(gulika * 7 + sun_lon)
+    balance = (_norm(prana + deha) - mrityu + 360) % 360
+    if balance > 180:
+        signal = "需谨慎复核"
+        note = "Prana/Deha 与 Mrityu 的关系偏紧张，只能提示压力，不可作健康结论。"
+    else:
+        signal = "相对平衡"
+        note = "生命点组合未见极端压力，仍需结合现实健康信息。"
+    return {
+        "prana": _point("Prana", prana, asc_lon, "生命之息"),
+        "deha": _point("Deha", deha, asc_lon, "身体承载"),
+        "mrityu": _point("Mrityu", mrityu, asc_lon, "风险敏感点"),
+        "signal": signal,
+        "note": note,
+    }
+
+
+def calc_sahams(planet_lons: Dict, asc_lon: float) -> Dict:
+    sun = _planet_lon(planet_lons, "Sun")
+    moon = _planet_lon(planet_lons, "Moon")
+    mars = _planet_lon(planet_lons, "Mars")
+    mercury = _planet_lon(planet_lons, "Mercury")
+    jupiter = _planet_lon(planet_lons, "Jupiter")
+    venus = _planet_lon(planet_lons, "Venus")
+    saturn = _planet_lon(planet_lons, "Saturn")
+    second_cusp = _norm(asc_lon + 30)
+    eighth_cusp = _norm(asc_lon + 210)
+    second_lord = SIGN_LORDS[_sign(second_cusp)]
+    second_lord_lon = _planet_lon(planet_lons, second_lord, second_cusp)
+    definitions = [
+        ("Punya", "福德", moon, sun, asc_lon),
+        ("Vidya", "学业", sun, moon, asc_lon),
+        ("Putra", "子女", jupiter, moon, asc_lon),
+        ("Vivaha", "婚姻", venus, saturn, asc_lon),
+        ("Roga", "疾病", asc_lon, moon, asc_lon),
+        ("Mrityu", "风险", eighth_cusp, moon, asc_lon),
+        ("Karma", "职业", mars, mercury, asc_lon),
+        ("Artha", "财富", second_cusp, second_lord_lon, asc_lon),
+        ("Vanik", "贸易", moon, mercury, asc_lon),
+        ("Vyapara", "商业", mars, saturn, asc_lon),
+        ("Bhratru", "兄弟", jupiter, saturn, asc_lon),
+        ("Matru", "母亲", moon, venus, asc_lon),
+        ("Pitru", "父亲", saturn, sun, asc_lon),
+        ("Bandhu", "亲属", mercury, moon, asc_lon),
+        ("Apamrityu", "意外风险", eighth_cusp, mars, asc_lon),
+    ]
+    points = []
+    for name, cn, minuend, subtrahend, addend in definitions:
+        lon = _norm(minuend - subtrahend + addend)
+        points.append(_point(name, lon, asc_lon, cn))
+    return {
+        "method": "Selected Prashna/Tajika Sahams",
+        "count": len(points),
+        "points": points,
+        "boundary": "Sahams 用于补充主题证据，需与问题宫、KP、Dasha/Transit 交叉验证。",
+    }
+
+
+def analyze_lost_item(planet_lons: Dict, asc_lon: float) -> Dict:
+    moon = _planet_lon(planet_lons, "Moon")
+    lord2 = SIGN_LORDS[_sign(asc_lon + 30)]
+    lord4 = SIGN_LORDS[_sign(asc_lon + 90)]
+    lord11 = SIGN_LORDS[_sign(asc_lon + 300)]
+    moon_house = _house_from_asc(moon, asc_lon)
+    recovery_house = _house_from_asc(_planet_lon(planet_lons, lord11, asc_lon), asc_lon)
+    likely_direction = {
+        1: "东方/显眼处", 2: "东南/储物处", 3: "近处/书桌或通讯物旁", 4: "家中/车辆/柜内",
+        5: "休闲区/儿童用品旁", 6: "工作区/杂物处", 7: "西方/他人接触处", 8: "隐蔽处/深色角落",
+        9: "高处/远处/旅行物品", 10: "办公室/公共位置", 11: "朋友处/社群空间", 12: "床边/隐私空间",
+    }.get(moon_house, "需复核")
+    recoverable = recovery_house in (1, 2, 4, 7, 10, 11)
+    return {
+        "item_house": 2,
+        "location_house": 4,
+        "recovery_house": 11,
+        "item_lord": lord2,
+        "location_lord": lord4,
+        "recovery_lord": lord11,
+        "moon_house": moon_house,
+        "likely_direction": likely_direction,
+        "recoverable": recoverable,
+        "summary": "有找回信号" if recoverable else "找回信号偏弱，优先排查隐蔽/远离原位的位置",
+    }
+
+
+def kunda_verify(asc_lon: float) -> Dict:
+    nak_idx = int(_norm(asc_lon) / NAK_SPAN) % 27
+    pada = int((_norm(asc_lon) % NAK_SPAN) / (NAK_SPAN / 4)) + 1
+    strength = "清晰" if pada in (2, 3) else "需复核"
+    return {
+        "ascendant": _point("Prashna Lagna", asc_lon, asc_lon, "问盘上升"),
+        "nakshatra": NAKSHATRAS[nak_idx],
+        "pada": pada,
+        "strength": strength,
+        "note": "Kunda 验证用于判断问盘是否足够清晰；边界 pada 需结合问题真诚度和时机评分。",
+    }
+
+
+def cast_prashna(question_datetime: str, lat: float = 0.0, lon: float = 0.0) -> Dict:
+    """Dependency-free fallback Prashna chart for legacy CLI paths."""
+    try:
+        dt = datetime.fromisoformat(str(question_datetime).replace(" ", "T"))
+    except ValueError:
+        dt = datetime.now()
+    asc_lon = _norm((dt.hour * 15 + dt.minute / 4 + float(lon or 0) / 2) % 360)
+    base = _norm(dt.timetuple().tm_yday * 0.985647 + dt.hour * 0.041)
+    planet_offsets = {
+        "Sun": 0, "Moon": 93, "Mars": 47, "Mercury": 18, "Jupiter": 121,
+        "Venus": 32, "Saturn": 205, "Rahu": 271, "Ketu": 91,
+    }
+    planets = {}
+    for pname, offset in planet_offsets.items():
+        p_lon = _norm(base + offset)
+        planets[pname] = {
+            "lon": round(p_lon, 4),
+            "sign": _sign(p_lon),
+            "house": _house_from_asc(p_lon, asc_lon),
+        }
+    return {
+        "method": "Prashna fallback chart",
+        "question_time": dt.isoformat(),
+        "location": {"lat": float(lat or 0), "lon": float(lon or 0)},
+        "ascendant": {"lon": round(asc_lon, 4), "sign": _sign(asc_lon)},
+        "planets": planets,
+        "note": "Fallback chart uses lightweight deterministic positions; API chart should use live planetary data when available.",
     }

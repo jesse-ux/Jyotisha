@@ -1,0 +1,29 @@
+{
+  "name": "Jyotish Vedic Astrology",
+  "short_name": "Jyotish",
+  "description": "Local-first Vedic astrology charting, Panchanga, Dasha, reports, and case workspace.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "categories": ["productivity", "education", "utilities"],
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "新建星盘",
+      "short_name": "星盘",
+      "url": "/",
+      "description": "输入出生信息并生成印度占星星盘"
+    }
+  ]
+}

@@ -12,7 +12,7 @@ if SCRIPTS not in sys.path:
 from tajika import (
     calc_muntha, calc_year_lord, calc_mudda_dasha,
     calc_tri_pataka, calc_tajika_yogas, detect_tajika_yogas,
-    detect_vedha, calc_all_sahams, _is_faster,
+    detect_vedha, calc_all_sahams, calc_tajika_strength_layers, _is_faster,
     SIGNS, SIGN_LORDS,
 )
 
@@ -103,6 +103,38 @@ class TestTriPataka:
         assert 'dasha_lord' in result
         assert 'muntha_lord' in result
         assert 'year_lord' in result
+
+
+# ── Harsha / Panchavargiya Bala Tests ─────────────────────────────
+
+class TestTajikaStrengthLayers:
+    def test_harsha_and_panchavargiya_strength_layers(self):
+        planet_lons = {
+            'Sun': 10.0,
+            'Moon': 45.0,
+            'Mars': 92.0,
+            'Mercury': 152.0,
+            'Jupiter': 244.0,
+            'Venus': 330.0,
+            'Saturn': 300.0,
+        }
+
+        result = calc_tajika_strength_layers(planet_lons, asc_lon=15.0, year_lord='Jupiter')
+
+        assert result['method'] == 'Tajika Harsha/Panchavargiya Bala'
+        assert result['available_planets'] == 7
+        assert 'harsha_bala' in result
+        assert 'panchavargiya_bala' in result
+        assert 'combined_strength' in result
+        assert result['summary']['strongest_planets']
+        assert result['summary']['weakest_planets']
+        assert result['summary']['next_action']
+
+        for planet in ('Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'):
+            assert planet in result['harsha_bala']
+            assert planet in result['panchavargiya_bala']
+            assert {'score', 'max_score', 'grade', 'components'} <= set(result['combined_strength'][planet])
+            assert result['combined_strength'][planet]['max_score'] > 0
 
 
 # ── Tajika Yogas Tests ─────────────────────────────────────────────

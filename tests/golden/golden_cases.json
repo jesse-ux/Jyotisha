@@ -27,8 +27,140 @@
         "modules.dasha_sandhi",
         "modules.shadbala",
         "modules.ashtakavarga",
-        "modules.validation"
+        "modules.validation",
+        "modules.remedies",
+        "modules.dasa_convergence",
+        "modules.transit_multi_reference"
       ],
+      "quality_gates": {
+        "min_modules": 45,
+        "non_empty_paths": [
+          "modules.shadbala.planets",
+          "modules.ashtakavarga.house_scores",
+          "modules.remedies.evidence_chain",
+          "modules.dasa_convergence.top_convergent_domains",
+          "modules.transit_multi_reference.references"
+        ],
+        "invariants": {
+          "validation_valid": true,
+          "ashtakavarga_sav_total": 337,
+          "min_remedies_evidence": 1,
+          "dasha_current_covers_reference": true,
+          "dasa_convergence_non_empty": true,
+          "transit_has_references": true
+        },
+        "boundaries": {
+          "forbidden_absolute_terms": [
+            "一定会",
+            "必然",
+            "保证"
+          ]
+        }
+      },
+      "max_errors": 0
+    },
+    {
+      "id": "ux_regression_delhi_1988",
+      "description": "A real-use regression case for India-local time, Dasha coverage, remedies evidence, transit references and Ashtakavarga invariants.",
+      "input": {
+        "year": 1988,
+        "month": 5,
+        "day": 14,
+        "hour": 6,
+        "minute": 30,
+        "lat": 28.6139,
+        "lon": 77.209,
+        "tz": 5.5,
+        "today": "2026-06-22"
+      },
+      "expected_output_paths": [
+        "modules.chart",
+        "modules.dasha",
+        "modules.varga_full.D9_Navamsa",
+        "modules.shadbala",
+        "modules.ashtakavarga",
+        "modules.validation",
+        "modules.remedies",
+        "modules.dasa_convergence",
+        "modules.transit_multi_reference"
+      ],
+      "quality_gates": {
+        "min_modules": 45,
+        "non_empty_paths": [
+          "modules.shadbala.planets",
+          "modules.ashtakavarga.house_scores",
+          "modules.remedies.evidence_chain",
+          "modules.dasa_convergence.top_convergent_domains",
+          "modules.transit_multi_reference.references"
+        ],
+        "invariants": {
+          "validation_valid": true,
+          "ashtakavarga_sav_total": 337,
+          "min_remedies_evidence": 1,
+          "dasha_current_covers_reference": true,
+          "dasa_convergence_non_empty": true,
+          "transit_has_references": true
+        },
+        "boundaries": {
+          "forbidden_absolute_terms": [
+            "一定会",
+            "必然",
+            "保证"
+          ]
+        }
+      },
+      "max_errors": 0
+    },
+    {
+      "id": "ux_regression_newyork_2000",
+      "description": "A western-timezone regression case to catch timezone, Dasha-current, evidence and invariant drift.",
+      "input": {
+        "year": 2000,
+        "month": 7,
+        "day": 4,
+        "hour": 21,
+        "minute": 15,
+        "lat": 40.7128,
+        "lon": -74.006,
+        "tz": -4,
+        "today": "2026-06-22"
+      },
+      "expected_output_paths": [
+        "modules.chart",
+        "modules.dasha",
+        "modules.varga_full.D9_Navamsa",
+        "modules.shadbala",
+        "modules.ashtakavarga",
+        "modules.validation",
+        "modules.remedies",
+        "modules.dasa_convergence",
+        "modules.transit_multi_reference"
+      ],
+      "quality_gates": {
+        "min_modules": 45,
+        "non_empty_paths": [
+          "modules.shadbala.planets",
+          "modules.ashtakavarga.house_scores",
+          "modules.remedies.evidence_chain",
+          "modules.dasa_convergence.top_convergent_domains",
+          "modules.transit_multi_reference.references"
+        ],
+        "invariants": {
+          "validation_valid": true,
+          "ashtakavarga_sav_total": 337,
+          "min_remedies_evidence": 1,
+          "dasha_current_covers_reference": true,
+          "dasa_convergence_non_empty": true,
+          "transit_has_references": true
+        },
+        "boundaries": {
+          "forbidden_absolute_terms": [
+            "一定会",
+            "必然",
+            "保证"
+          ]
+        }
+      },
       "max_errors": 0
     }
   ]

@@ -7,6 +7,7 @@ import { VARGA_DEFS } from './jyotish-advanced.js';
 import { renderSouthIndianChart } from './chart-renderer.js';
 import { t, signName, planetName, statusName, houseLabel, yearsLabel } from './i18n.js';
 import { DASHA_THEMES, NAKSHATRA_DATA, PLANET_DIGNITY, ASCENDANT_TABLE } from './interpretation.js';
+import { escapeHtml, escapeAttr, safeNumber } from './security.js';
 const $ = id => document.getElementById(id);
 
 // ========== Varga 分盘星座计算（与 jyotish-advanced.js 同逻辑） ==========
@@ -43,11 +44,11 @@ export function renderTithiInfo(ty) {
   el.innerHTML = `
     <h4 class="sub-title" style="margin-bottom:10px;">${t('panch.title')}</h4>
     <div class="panchanga-grid">
-      <div class="tithi-item"><div class="tithi-label">Vara 星期</div><div class="tithi-value">${ty.vara || '-'}</div></div>
-      <div class="tithi-item"><div class="tithi-label">Tithi 月相</div><div class="tithi-value">${ty.tithi.name}</div></div>
-      <div class="tithi-item"><div class="tithi-label">Paksha 半月</div><div class="tithi-value">${ty.tithi.paksha}</div></div>
-      <div class="tithi-item"><div class="tithi-label">Karana 半月相</div><div class="tithi-value">${ty.karana?.name || '-'}</div></div>
-      <div class="tithi-item"><div class="tithi-label">Yoga 日月瑜伽</div><div class="tithi-value">${ty.yoga.name}</div></div>
+      <div class="tithi-item"><div class="tithi-label">Vara 星期</div><div class="tithi-value">${escapeHtml(ty.vara || '-')}</div></div>
+      <div class="tithi-item"><div class="tithi-label">Tithi 月相</div><div class="tithi-value">${escapeHtml(ty.tithi.name)}</div></div>
+      <div class="tithi-item"><div class="tithi-label">Paksha 半月</div><div class="tithi-value">${escapeHtml(ty.tithi.paksha)}</div></div>
+      <div class="tithi-item"><div class="tithi-label">Karana 半月相</div><div class="tithi-value">${escapeHtml(ty.karana?.name || '-')}</div></div>
+      <div class="tithi-item"><div class="tithi-label">Yoga 日月瑜伽</div><div class="tithi-value">${escapeHtml(ty.yoga.name)}</div></div>
     </div>
   `;
 }
@@ -57,7 +58,7 @@ export function renderArudhaQuick(arudha) {
   const el = $('arudha-quick-section');
   if (!arudha || Object.keys(arudha).length === 0) { el.innerHTML = ''; return; }
   const items = Object.entries(arudha).map(([k, v]) =>
-    `<div class="arudha-quick-item"><div class="ar-label">${k}${v.label ? ' ' + v.label : ''}</div><div class="ar-sign">${signName(v.sign)} ${houseLabel(v.pada_house)}</div></div>`
+    `<div class="arudha-quick-item"><div class="ar-label">${escapeHtml(k)}${v.label ? ' ' + escapeHtml(v.label) : ''}</div><div class="ar-sign">${escapeHtml(signName(v.sign))} ${escapeHtml(houseLabel(v.pada_house))}</div></div>`
   ).join('');
   el.innerHTML = `<h4 class="sub-title" style="margin-bottom:10px;">${t('arudha.overview')}</h4><div class="arudha-quick-grid">${items}</div>`;
 }
@@ -73,9 +74,9 @@ function renderKarakaGrid(container, data) {
   container.innerHTML = Object.entries(data).map(([k, v]) => {
     const isDK = k === 'DK';
     return `<div class="karaka-item${isDK ? ' k-dk' : ''}">
-      <div class="k-label">${labels[k] || k}</div>
-      <div class="k-planet">${PLANET_SYMBOLS[v.planet] || ''} ${planetName(v.planet)}</div>
-      <div class="k-detail">${v.degree.toFixed(2)}° · ${signName(v.sign)} H${v.house}</div>
+      <div class="k-label">${escapeHtml(labels[k] || k)}</div>
+      <div class="k-planet">${escapeHtml(PLANET_SYMBOLS[v.planet] || '')} ${escapeHtml(planetName(v.planet))}</div>
+      <div class="k-detail">${safeNumber(v.degree).toFixed(2)}° · ${escapeHtml(signName(v.sign))} H${escapeHtml(v.house)}</div>
     </div>`;
   }).join('');
 }
@@ -86,7 +87,7 @@ export function renderVargas(allV, planets, ascendant) {
   const order = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn','Rahu','Ketu'];
   // 渲染选择器
   selector.innerHTML = VARGA_DEFS.map(v =>
-    `<button class="varga-btn${v.id === 'D9' ? ' active' : ''}" data-varga="${v.id}">${v.id} ${v.cn}</button>`
+    `<button class="varga-btn${v.id === 'D9' ? ' active' : ''}" data-varga="${escapeAttr(v.id)}">${escapeHtml(v.id)} ${escapeHtml(v.cn)}</button>`
   ).join('');
   selector.querySelectorAll('.varga-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -105,7 +106,8 @@ function renderSingleVarga(vargaId, planets, ascendant) {
 
   // 计算分盘上升
   const ascSi = SIGNS.indexOf(ascendant.sign);
-  const ascDegInSign = ascendant.degree - ascSi * 30;
+  const ascDegRaw = safeNumber(ascendant.degree_in_sign ?? ascendant.degree);
+  const ascDegInSign = ascDegRaw >= 30 ? ((ascDegRaw % 30) + 30) % 30 : ascDegRaw;
   const vargaAscIdx = d === 1 ? ascSi : vargaSignIdx(ascDegInSign, ascSi, d);
   const vargaAscSign = SIGNS[vargaAscIdx];
 
@@ -136,7 +138,7 @@ function renderSingleVarga(vargaId, planets, ascendant) {
   const order = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn','Rahu','Ketu'];
   tbody.innerHTML = order.filter(pn => vPlanets[pn]).map(pn => {
     const vp = vPlanets[pn];
-    return `<tr><td><span class="planet-symbol">${PLANET_SYMBOLS[pn]||''}</span>${planetName(pn)}</td><td>${signName(vp.sign)}</td><td>H${vp.house}</td></tr>`;
+    return `<tr><td><span class="planet-symbol">${escapeHtml(PLANET_SYMBOLS[pn]||'')}</span>${escapeHtml(planetName(pn))}</td><td>${escapeHtml(signName(vp.sign))}</td><td>H${escapeHtml(vp.house)}</td></tr>`;
   }).join('');
 }
 
@@ -145,7 +147,7 @@ export function renderArudha(arudha) {
   const el = $('arudha-section');
   if (!arudha || Object.keys(arudha).length === 0) { el.innerHTML = ''; return; }
   const items = Object.entries(arudha).map(([k, v]) =>
-    `<div class="arudha-item"><div class="ar-pada">${k}${v.label ? ' · ' + v.label : ''}</div><div class="ar-sign">${signName(v.sign)}</div><div class="ar-house">${houseLabel(v.pada_house)} · ${t('house.lord')}: ${planetName(v.lord)}</div></div>`
+    `<div class="arudha-item"><div class="ar-pada">${escapeHtml(k)}${v.label ? ' · ' + escapeHtml(v.label) : ''}</div><div class="ar-sign">${escapeHtml(signName(v.sign))}</div><div class="ar-house">${escapeHtml(houseLabel(v.pada_house))} · ${t('house.lord')}: ${escapeHtml(planetName(v.lord))}</div></div>`
   ).join('');
   el.innerHTML = `<div class="arudha-title">${t('arudha.title')}</div><div class="arudha-grid">${items}</div>`;
 }
@@ -165,14 +167,14 @@ export function renderAshtakavarga(av, ascSign) {
   for (let h = 1; h <= 12; h++) {
     const sh = av.sav_by_house[h];
     if (!sh) continue;
-    const score = sh.score;
-    const pct = Math.round(score / 56 * 100);
+    const score = safeNumber(sh.score);
+    const pct = Math.max(0, Math.min(100, Math.round(score / 56 * 100)));
     const bavRow = pOrder.map(pn => {
       const has = av.bav_by_house[h]?.[pn] ? 'contrib' : '';
-      return `<span class="av-bav-dot ${has}" title="${planetName(pn)}: ${av.bav_by_house[h]?.[pn] || 0}"></span>`;
+      return `<span class="av-bav-dot ${has}" title="${escapeAttr(planetName(pn))}: ${escapeAttr(av.bav_by_house[h]?.[pn] || 0)}"></span>`;
     }).join('');
     details.innerHTML += `<div class="av-house-card">
-      <div class="av-house-num">${houseLabel(h)} · ${sh.sign}</div>
+      <div class="av-house-num">${escapeHtml(houseLabel(h))} · ${escapeHtml(sh.sign)}</div>
       <div class="av-score">${score}</div>
       <div class="av-score-bar"><div class="av-score-fill" style="width:${pct}%"></div></div>
       <div class="av-bav-row">${bavRow}</div>
@@ -194,7 +196,7 @@ function renderSAVChart(av, ascSign) {
     const [r, c] = layout[i];
     const signIdx = i; // South Indian: Pisces=0, Aries=1, ...
     const house = ((signIdx - ai + 12) % 12) + 1;
-    const score = av.sav_by_house[house]?.score || 0;
+    const score = safeNumber(av.sav_by_house[house]?.score);
     const color = score >= 30 ? 'rgba(22,163,74,0.15)' : score >= 25 ? 'rgba(109,40,217,0.08)' : score < 20 ? 'rgba(220,38,38,0.1)' : '#fff';
     const x = c * cell, y = r * cell;
     svg += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="${color}" stroke="#c9c8c8" stroke-width="1"/>`;
@@ -212,19 +214,19 @@ export function renderShadbala(sb) {
   tbody.innerHTML = '';
   for (const pn of ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn']) {
     const s = sb[pn]; if (!s) continue;
-    const pct = s.percentage;
+    const pct = safeNumber(s.percentage);
     const barClass = pct >= 100 ? 'strong' : pct >= 75 ? 'medium' : 'weak';
     tbody.innerHTML += `<tr>
-      <td><span class="planet-symbol">${PLANET_SYMBOLS[pn]||''}</span>${planetName(pn)}</td>
-      <td>${s.total} R</td>
-      <td>${s.required} R</td>
+      <td><span class="planet-symbol">${escapeHtml(PLANET_SYMBOLS[pn]||'')}</span>${escapeHtml(planetName(pn))}</td>
+      <td>${escapeHtml(s.total)} R</td>
+      <td>${escapeHtml(s.required)} R</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
           <span>${pct}%</span>
           <div class="shadbala-bar" style="flex:1"><div class="shadbala-bar-fill ${barClass}" style="width:${Math.min(pct,120)}%"></div></div>
         </div>
       </td>
-      <td class="${pct>=100?'status-exalted':pct>=75?'status-own':'status-debilitated'}">${s.status}</td>
+      <td class="${pct>=100?'status-exalted':pct>=75?'status-own':'status-debilitated'}">${escapeHtml(s.status)}</td>
     </tr>`;
   }
 }
@@ -240,12 +242,12 @@ export function renderDasha3Level(data) {
     const curSub = cd.antardasha?.find(a => a.is_current);
     const curPraty = curSub?.pratyantardasha?.find(p => p.is_current);
     const theme = DASHA_THEMES[cd.lord];
-    const themeHtml = theme ? `<div class="dasha-theme">${theme.theme}</div><div class="dasha-detail"><span class="dasha-pos">✦ ${theme.positive}</span><span class="dasha-neg">⚠ ${theme.negative}</span></div>` : '';
+    const themeHtml = theme ? `<div class="dasha-theme">${escapeHtml(theme.theme)}</div><div class="dasha-detail"><span class="dasha-pos">✦ ${escapeHtml(theme.positive)}</span><span class="dasha-neg">⚠ ${escapeHtml(theme.negative)}</span></div>` : '';
     currentEl.innerHTML = `
-      <div><div class="dasha-current-label">${t('dasha.maha')}</div><div class="dasha-current-planet">${planetName(cd.lord)}</div></div>
-      <div><div class="dasha-current-label">${t('dasha.antar')}</div><div class="dasha-current-sub">${curSub ? planetName(curSub.lord) : '-'}</div></div>
-      <div><div class="dasha-current-label">${t('dasha.praty')}</div><div class="dasha-current-sub">${curPraty ? planetName(curPraty.lord) : '-'}</div></div>
-      <div class="dasha-current-date">${cd.start} ~ ${cd.end}</div>
+      <div><div class="dasha-current-label">${t('dasha.maha')}</div><div class="dasha-current-planet">${escapeHtml(planetName(cd.lord))}</div></div>
+      <div><div class="dasha-current-label">${t('dasha.antar')}</div><div class="dasha-current-sub">${curSub ? escapeHtml(planetName(curSub.lord)) : '-'}</div></div>
+      <div><div class="dasha-current-label">${t('dasha.praty')}</div><div class="dasha-current-sub">${curPraty ? escapeHtml(planetName(curPraty.lord)) : '-'}</div></div>
+      <div class="dasha-current-date">${escapeHtml(cd.start)} ~ ${escapeHtml(cd.end)}</div>
       ${themeHtml}
     `;
   }
@@ -254,7 +256,7 @@ export function renderDasha3Level(data) {
     const isCur = data.current_dasha && data.current_dasha.lord === d.lord;
     const bar = document.createElement('div');
     bar.className = `dasha-bar${isCur ? ' active' : ''}`;
-    bar.innerHTML = `<div class="dasha-planet">${planetName(d.lord)}</div><div class="dasha-years">${yearsLabel(d.years)}</div><div class="dasha-date">${d.start.slice(2)}</div>`;
+    bar.innerHTML = `<div class="dasha-planet">${escapeHtml(planetName(d.lord))}</div><div class="dasha-years">${escapeHtml(yearsLabel(d.years))}</div><div class="dasha-date">${escapeHtml(String(d.start || '').slice(2))}</div>`;
     bar.addEventListener('click', () => {
       container.querySelectorAll('.dasha-bar').forEach(b => b.classList.remove('selected'));
       bar.classList.add('selected');
@@ -274,7 +276,7 @@ function renderAntardashaPanel(subs) {
   for (const ad of subs) {
     const div = document.createElement('div');
     div.className = `antardasha-item${ad.is_current ? ' current' : ''}`;
-    div.innerHTML = `<div class="ad-planet">${planetName(ad.lord)}${ad.is_current ? ' ◀' : ''}</div><div class="ad-date">${ad.start.slice(5)}~${ad.end.slice(5)}</div>`;
+    div.innerHTML = `<div class="ad-planet">${escapeHtml(planetName(ad.lord))}${ad.is_current ? ' ◀' : ''}</div><div class="ad-date">${escapeHtml(String(ad.start || '').slice(5))}~${escapeHtml(String(ad.end || '').slice(5))}</div>`;
     div.addEventListener('click', () => {
       panel.querySelectorAll('.antardasha-item').forEach(i => i.classList.remove('selected'));
       div.classList.add('selected');
@@ -293,8 +295,8 @@ function renderPratyantardasha(pratyList) {
   const grid = panel.querySelector('.praty-grid');
   for (const p of pratyList) {
     grid.innerHTML += `<div class="praty-item${p.is_current ? ' current' : ''}">
-      <div class="praty-planet">${planetName(p.lord)}${p.is_current ? ' ◀' : ''}</div>
-      <div class="praty-date">${p.start.slice(5)}~${p.end.slice(5)}</div>
+      <div class="praty-planet">${escapeHtml(planetName(p.lord))}${p.is_current ? ' ◀' : ''}</div>
+      <div class="praty-date">${escapeHtml(String(p.start || '').slice(5))}~${escapeHtml(String(p.end || '').slice(5))}</div>
     </div>`;
   }
 }
@@ -318,13 +320,13 @@ export function updatePlanetsTable(planets, d9Varga) {
       d9sign = signName(d9Varga.planets[pn].sign) || '-';
     }
     tbody.innerHTML += `<tr>
-      <td><span class="planet-symbol">${PLANET_SYMBOLS[pn]||''}</span>${pn}${retro}${combust}</td>
-      <td>${signName(p.sign)}</td>
-      <td>${p.degree_in_sign.toFixed(2)}°</td>
-      <td>H${p.house}</td>
+      <td><span class="planet-symbol">${escapeHtml(PLANET_SYMBOLS[pn]||'')}</span>${escapeHtml(pn)}${retro}${combust}</td>
+      <td>${escapeHtml(signName(p.sign))}</td>
+      <td>${safeNumber(p.degree_in_sign).toFixed(2)}°</td>
+      <td>H${escapeHtml(p.house)}</td>
       <td class="${sc}">${statusName(p.status)}</td>
-      <td>${p.nakshatra} P${p.nakshatra_pada}</td>
-      <td>${d9sign}</td>
+      <td>${escapeHtml(p.nakshatra)} P${escapeHtml(p.nakshatra_pada)}</td>
+      <td>${escapeHtml(d9sign)}</td>
     </tr>`;
   }
 }
@@ -334,9 +336,9 @@ export function updatePlanetsTable(planets, d9Varga) {
 export function renderBhavaBala(bb) {
   const el = $('bhava-bala-section'); if (!el || !bb) return;
   const rows = bb.houses.map(h => {
-    const bar = Math.min(100, h.in_rupas / 12 * 100);
-    return `<tr><td>${h.house}</td><td>${signName(h.sign)}</td><td>${planetName(h.lord)||h.lord}</td>
-      <td>${h.in_rupas}</td><td>${h.lord_bala}</td><td>${h.dig_bala}</td><td>${h.drig_bala}</td>
+    const bar = Math.min(100, safeNumber(h.in_rupas) / 12 * 100);
+    return `<tr><td>${escapeHtml(h.house)}</td><td>${escapeHtml(signName(h.sign))}</td><td>${escapeHtml(planetName(h.lord)||h.lord)}</td>
+      <td>${escapeHtml(h.in_rupas)}</td><td>${escapeHtml(h.lord_bala)}</td><td>${escapeHtml(h.dig_bala)}</td><td>${escapeHtml(h.drig_bala)}</td>
       <td><div style="background:#222;height:8px;border-radius:4px;width:${bar}%;max-width:120px;"></div></td></tr>`;
   }).join('');
   el.innerHTML = `<h4 class="sub-title">${t('ext.bhava')}</h4>
@@ -350,11 +352,11 @@ export function renderVimsopakaVaiseshikamsa(vim, vais) {
   const PL = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn','Rahu','Ketu'];
   const rows = PL.map(pn => {
     const d = vim.dasa[pn], s = vim.shodasa[pn], v = vais?.[pn];
-    return `<tr><td>${planetName(pn)}</td>
-      <td>${d?d.score:'-'}</td><td>${d?d.pct+'%':'-'}</td>
-      <td>${v?v.dasa.name:'-'}</td><td>${v?v.dasa.level:'-'}</td>
-      <td>${s?s.score:'-'}</td><td>${s?s.pct+'%':'-'}</td>
-      <td>${v?v.shodasa.name:'-'}</td><td>${v?v.shodasa.level:'-'}</td></tr>`;
+    return `<tr><td>${escapeHtml(planetName(pn))}</td>
+      <td>${escapeHtml(d?d.score:'-')}</td><td>${escapeHtml(d?d.pct+'%':'-')}</td>
+      <td>${escapeHtml(v?v.dasa.name:'-')}</td><td>${escapeHtml(v?v.dasa.level:'-')}</td>
+      <td>${escapeHtml(s?s.score:'-')}</td><td>${escapeHtml(s?s.pct+'%':'-')}</td>
+      <td>${escapeHtml(v?v.shodasa.name:'-')}</td><td>${escapeHtml(v?v.shodasa.level:'-')}</td></tr>`;
   }).join('');
   el.innerHTML = `<h4 class="sub-title">${t('ext.vim')}</h4>
     <table class="planets-table"><tr><th>${t('col.planet')}</th>
@@ -367,9 +369,9 @@ export function renderPlanetStates(activity, age, alertness, mood) {
   const PL = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn','Rahu','Ketu'];
   const rows = PL.map(pn => {
     const a=activity[pn], ag=age?.[pn], al=alertness?.[pn], m=mood?.[pn];
-    return `<tr><td>${planetName(pn)}</td>
-      <td>${a?.activity||'-'}</td><td>${ag?.age||'-'}</td>
-      <td>${al?.alertness||'-'}</td><td>${m?.moods?.join(', ')||'-'}</td></tr>`;
+    return `<tr><td>${escapeHtml(planetName(pn))}</td>
+      <td>${escapeHtml(a?.activity||'-')}</td><td>${escapeHtml(ag?.age||'-')}</td>
+      <td>${escapeHtml(al?.alertness||'-')}</td><td>${escapeHtml(m?.moods?.join(', ')||'-')}</td></tr>`;
   }).join('');
   el.innerHTML = `<h4 class="sub-title">${t('ext.states')}</h4>
     <table class="planets-table"><tr><th>${t('col.planet')}</th><th>${t('col.activity')}</th><th>${t('col.age')}</th><th>${t('col.alertness')}</th><th>${t('col.mood')}</th></tr>${rows}</table>`;
@@ -380,8 +382,8 @@ export function renderAVPinda(pinda) {
   const PL = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn','Lagna'];
   const rows = PL.map(pn => {
     const p = pinda[pn];
-    return `<tr><td>${pn==='Lagna'?'Lagna':planetName(pn)}</td>
-      <td>${p?p.sodhya_pinda:'-'}</td><td>${p?p.rasi_pinda:'-'}</td><td>${p?p.graha_pinda:'-'}</td></tr>`;
+    return `<tr><td>${escapeHtml(pn==='Lagna'?'Lagna':planetName(pn))}</td>
+      <td>${escapeHtml(p?p.sodhya_pinda:'-')}</td><td>${escapeHtml(p?p.rasi_pinda:'-')}</td><td>${escapeHtml(p?p.graha_pinda:'-')}</td></tr>`;
   }).join('');
   el.innerHTML = `<h4 class="sub-title">${t('ext.pinda')}</h4>
     <table class="planets-table"><tr><th>${t('col.planet')}</th><th>Sodhya Pinda</th><th>Rasi Pinda</th><th>Graha Pinda</th></tr>${rows}</table>`;
@@ -394,13 +396,13 @@ export function renderExtraDasas(dasas) {
   for (const [key, dasa] of systems) {
     if (!dasa) continue;
     const cur = dasa.current;
-    html += `<div class="dasa-system"><h5>${dasa.system}${cur?' — 当前: '+(cur.lord_cn||cur.lord)+' ('+cur.start+' ~ '+cur.end+')':''}</h5>`;
+    html += `<div class="dasa-system"><h5>${escapeHtml(dasa.system)}${cur?' — 当前: '+escapeHtml(cur.lord_cn||cur.lord)+' ('+escapeHtml(cur.start)+' ~ '+escapeHtml(cur.end)+')':''}</h5>`;
     // Antardasha
     if (cur?.antardasha) {
       html += '<div class="dasha-subs">';
       for (const s of cur.antardasha) {
         const cls = s.is_current ? 'style="font-weight:bold;color:#222;"' : 'style="color:#888;"';
-        html += `<span ${cls}>${s.lord_cn||s.lord} ${s.start}~${s.end}</span> `;
+        html += `<span ${cls}>${escapeHtml(s.lord_cn||s.lord)} ${escapeHtml(s.start)}~${escapeHtml(s.end)}</span> `;
       }
       html += '</div>';
     }
@@ -408,7 +410,7 @@ export function renderExtraDasas(dasas) {
     html += '<div class="dasha-timeline-row">';
     for (const d of dasa.timeline) {
       const cls = d.is_current ? 'dasha-active' : '';
-      html += `<span class="dasha-period ${cls}" title="${d.start}~${d.end}">${d.lord_cn||d.lord}</span>`;
+      html += `<span class="dasha-period ${cls}" title="${escapeAttr(d.start)}~${escapeAttr(d.end)}">${escapeHtml(d.lord_cn||d.lord)}</span>`;
     }
     html += '</div></div>';
   }

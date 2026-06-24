@@ -322,7 +322,6 @@ def calc_tithi_ashtottari(birth_date, tithi_num):
 
 def calc_tithi_yogini(birth_date, tithi_num):
     """Tithi Yogini Dasha (36年周期)"""
-    from extended_dashas import YOGINI_LORDS, YOGINI_YEARS
     return calc_generic_dasha(birth_date, YOGINI_LORDS, YOGINI_YEARS)
 
 def calc_patyayini(birth_date, asc_sign_idx):
@@ -383,7 +382,27 @@ def calc_any_dasha(name: str, birth_date, **kwargs) -> List[Dict]:
         return calc_generic_dasha(birth_date, DASHA_ORDER, [4]*9)
     if calc_fn:
         try:
+            if name == 'kalachakra':
+                return calc_fn(birth_date, kwargs.get('moon_nak_idx', 0), kwargs.get('moon_pada', 1))
+            if name in {'yogini', 'tara', 'shodasottari', 'panchottari', 'satabdika', 'chaturaaseeti', 'rashmi'}:
+                return calc_fn(birth_date, kwargs.get('moon_nak_idx', 0))
+            if name == 'narayana':
+                return calc_fn(birth_date, kwargs.get('asc_sign_idx', 0))
+            if name == 'shoola':
+                return calc_fn(birth_date, kwargs.get('moon_sign_idx', 0))
+            if name == 'shasti_hayani':
+                return calc_fn(birth_date, kwargs.get('sun_sign_idx', 0))
+            if name == 'navamsa':
+                return calc_fn(birth_date, kwargs.get('d9_asc_sign_idx', kwargs.get('asc_sign_idx', 0)))
+            if name == 'kendradi':
+                return calc_fn(birth_date, kwargs.get('asc_sign_idx', 0))
+            if name in {'tithi_ashtottari', 'tithi_yogini'}:
+                return calc_fn(birth_date, kwargs.get('tithi_num', 1))
+            if name == 'patyayini':
+                return calc_fn(birth_date, kwargs.get('asc_sign_idx', 0))
+            if name == 'naisargika':
+                return calc_fn(birth_date)
             return calc_fn(birth_date, **kwargs)
-        except:
+        except Exception:
             return calc_generic_dasha(birth_date, DASHA_ORDER, [4]*9)
     return []

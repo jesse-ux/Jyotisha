@@ -317,7 +317,7 @@
         "modules.ashtakavarga"
       ],
       "audit_label": "Ashtakavarga",
-      "missing_impact": "Transit strength filter missing."
+      "missing_impact": "covered: SAV/BAV/PAV/Sodhita/Yoga Pinda are exposed through /api/ashtakavarga and the Skill workbench."
     },
     "avastha": {
       "name": "Avastha",
@@ -1059,7 +1059,9 @@
         "kp"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "kp"
+      ],
       "output_paths": [
         "scripts/kp_system.py"
       ],
@@ -1075,7 +1077,9 @@
         "prashna"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "prashna"
+      ],
       "output_paths": [
         "scripts/prashna.py"
       ],
@@ -1091,7 +1095,9 @@
         "synastry"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "synastry"
+      ],
       "output_paths": [
         "scripts/synastry.py"
       ],
@@ -1107,7 +1113,10 @@
         "remedies"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "remedies",
+        "full-reading"
+      ],
       "output_paths": [
         "scripts/remedies.py"
       ],
@@ -1123,7 +1132,10 @@
         "bhava"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "bhava-bala",
+        "full-reading"
+      ],
       "output_paths": [
         "scripts/bhava_bala.py"
       ],
@@ -1139,7 +1151,9 @@
         "muhurtha"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "muhurta"
+      ],
       "output_paths": [
         "scripts/muhurtha_election.py"
       ],
@@ -1155,7 +1169,9 @@
         "career"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "career"
+      ],
       "output_paths": [
         "scripts/career_analysis.py"
       ],
@@ -1171,7 +1187,9 @@
         "relationship"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "relationship"
+      ],
       "output_paths": [
         "scripts/relationship_analysis.py"
       ],
@@ -1187,7 +1205,11 @@
         "varshaphala"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "solar-return",
+        "tajika",
+        "full-reading"
+      ],
       "output_paths": [
         "scripts/varshaphala.py"
       ],
@@ -1203,9 +1225,12 @@
         "ashtakavarga"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "ashtakavarga",
+        "full-reading"
+      ],
       "output_paths": [
-        "scripts/ashtakavarga_pav.py"
+        "scripts/ashtakavarga.py"
       ],
       "audit_label": "ashtakavarga.py calc_prastara_av()",
       "missing_impact": "covered"
@@ -1219,11 +1244,35 @@
         "ashtakavarga"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "ashtakavarga",
+        "full-reading"
+      ],
       "output_paths": [
-        "scripts/ashtakavarga_sodhita.py"
+        "scripts/ashtakavarga.py"
       ],
       "audit_label": "ashtakavarga.py calc_sodhita_av()",
+      "missing_impact": "covered"
+    },
+    "ashtakavarga_yoga_pinda": {
+      "status": "covered",
+      "version": "6.9.14",
+      "note": "ashtakavarga.py calc_yoga_pinda() — Yoga Pinda / Shodhya Pinda first-class contract",
+      "name": "ashtakavarga.py calc_yoga_pinda()",
+      "domains": [
+        "ashtakavarga",
+        "strength"
+      ],
+      "knowledge_refs": [],
+      "commands": [
+        "ashtakavarga",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.ashtakavarga.yoga_pinda",
+        "/api/ashtakavarga.yoga_pinda_summary"
+      ],
+      "audit_label": "ashtakavarga.py calc_yoga_pinda()",
       "missing_impact": "covered"
     },
     "kakshya": {
@@ -1235,7 +1284,9 @@
         "kakshya"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "kakshya"
+      ],
       "output_paths": [
         "scripts/kakshya.py"
       ],
@@ -1251,7 +1302,9 @@
         "transit"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "transit-trigger"
+      ],
       "output_paths": [
         "scripts/transit_trigger.py"
       ],
@@ -1267,11 +1320,40 @@
         "divisional"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "divisional-yoga"
+      ],
       "output_paths": [
         "scripts/divisional_yoga.py"
       ],
       "audit_label": "divisional_yoga.py",
+      "missing_impact": "covered"
+    },
+    "deep_varga_avastha": {
+      "status": "covered",
+      "version": "7.1.0",
+      "note": "deep_varga_avastha.py — Sayanadi/Shayanadi状态汇总 + D24/D30/D60深层模板卡",
+      "name": "Deep Varga Avastha / Sayanadi-Shayanadi + D24/D30/D60",
+      "domains": [
+        "divisional",
+        "avastha",
+        "d24",
+        "d30",
+        "d60",
+        "strength"
+      ],
+      "knowledge_refs": [
+        "references/varga-system-quick-reference.md",
+        "references/technique-capability-matrix.md"
+      ],
+      "commands": [
+        "deep-varga-avastha"
+      ],
+      "output_paths": [
+        "scripts/deep_varga_avastha.py",
+        "/api/deep_varga_avastha.report.deep_varga_templates"
+      ],
+      "audit_label": "Deep Varga Avastha",
       "missing_impact": "covered"
     },
     "birth_time_rectifier": {
@@ -1283,7 +1365,9 @@
         "birth"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "rectification"
+      ],
       "output_paths": [
         "scripts/birth_time_rectifier.py"
       ],
@@ -1299,7 +1383,9 @@
         "case"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "case-validation"
+      ],
       "output_paths": [
         "scripts/case_validator.py"
       ],
@@ -1315,11 +1401,39 @@
         "misconceptions"
       ],
       "knowledge_refs": [],
-      "commands": [],
+      "commands": [
+        "case-validation",
+        "full-reading"
+      ],
       "output_paths": [
         "scripts/misconceptions.py"
       ],
       "audit_label": "misconceptions.py",
+      "missing_impact": "covered"
+    },
+    "thematic_report_orchestrator": {
+      "status": "covered",
+      "version": "6.9.15",
+      "note": "report_orchestrator.py — 五主题报告、证据链聚合、冲突裁决与 Dasha 时间锚定；/api/thematic_report 可被用户端技法工作台调用",
+      "name": "Thematic Report Orchestrator / 主题化报告编排",
+      "domains": [
+        "report",
+        "reading",
+        "marriage",
+        "career",
+        "timing"
+      ],
+      "knowledge_refs": [],
+      "commands": [
+        "thematic-report",
+        "full-reading"
+      ],
+      "output_paths": [
+        "scripts/report_orchestrator.py",
+        "scripts/reading_orchestrator.py",
+        "scripts/orchestrator_bridge.py"
+      ],
+      "audit_label": "report_orchestrator.py",
       "missing_impact": "covered"
     }
   },

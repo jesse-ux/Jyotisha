@@ -4,6 +4,7 @@
  */
 import { getToken, getUser, getApiBase, fetchUser, isLoggedIn, apiPost } from './auth.js';
 import { t } from './i18n.js';
+import { escapeHtml } from './security.js';
 
 // ============================================================================
 // 配置
@@ -50,6 +51,7 @@ async function setupCapacitorIAP() {
     }
   } catch (err) {
     console.warn('[Subscription] IAP setup failed:', err);
+    showSubscriptionNotice(buildSubscriptionRecoveryMessage(err, 'iap_setup'));
   }
 }
 
@@ -78,7 +80,7 @@ async function handleSubscribe() {
 async function purchaseNative() {
   try {
     if (!_purchasesPlugin) {
-      alert(t('sub.iap.unavail'));
+      showSubscriptionNotice(buildSubscriptionRecoveryMessage(t('sub.iap.unavail'), 'iap'));
       return;
     }
 
@@ -87,7 +89,7 @@ async function purchaseNative() {
     const product = offerings?.current?.availablePackages?.[0]?.product;
     
     if (!product) {
-      alert(t('sub.no.product'));
+      showSubscriptionNotice(buildSubscriptionRecoveryMessage(t('sub.no.product'), 'product'));
       return;
     }
 
@@ -101,12 +103,12 @@ async function purchaseNative() {
       await verifyReceipt(purchaseResult);
       // 刷新用户信息
       await fetchUser();
-      alert(t('sub.success'));
+      showSubscriptionNotice(t('sub.success'));
     }
   } catch (err) {
     if (err.userCancelled) return;
     console.error('[Subscription] Purchase failed:', err);
-    alert(t('sub.failed') + (err.message || ''));
+    showSubscriptionNotice(buildSubscriptionRecoveryMessage(err, 'purchase'));
   }
 }
 
@@ -124,6 +126,7 @@ async function verifyReceipt(purchaseResult) {
     });
   } catch (err) {
     console.error('[Subscription] Receipt verification failed:', err);
+    showSubscriptionNotice(buildSubscriptionRecoveryMessage(err, 'verify'));
     // 即使验证失败，RevenueCat 已经记录了购买
   }
 }
@@ -133,7 +136,7 @@ async function verifyReceipt(purchaseResult) {
 // ============================================================================
 export async function restorePurchases() {
   if (!_purchasesPlugin) {
-    alert(t('sub.restore.only'));
+    showSubscriptionNotice(buildSubscriptionRecoveryMessage(t('sub.restore.only'), 'restore'));
     return;
   }
 
@@ -142,14 +145,44 @@ export async function restorePurchases() {
     if (result?.customerInfo?.activeSubscriptions?.length > 0) {
       // 恢复成功，验证并更新状态
       await fetchUser();
-      alert(t('sub.restore.ok'));
+      showSubscriptionNotice(t('sub.restore.ok'));
     } else {
-      alert(t('sub.restore.none'));
+      showSubscriptionNotice(t('sub.restore.none'));
     }
   } catch (err) {
     console.error('[Subscription] Restore failed:', err);
-    alert(t('sub.restore.fail') + (err.message || ''));
+    showSubscriptionNotice(buildSubscriptionRecoveryMessage(err, 'restore'));
   }
+}
+
+function buildSubscriptionRecoveryMessage(error, context = 'subscription') {
+  const message = typeof error === 'string' ? error : (error?.message || '');
+  const recovery = t('sub.recovery.iap');
+  return `${message || t('sub.failed')}\n${recovery}\nTrust Center / 网页服务 /本地 API 服务`;
+}
+
+function showSubscriptionNotice(message) {
+  const safeMessage = escapeHtml(String(message)).replace(/\n/g, '<br>');
+  const overlay = document.createElement('div');
+  overlay.className = 'auth-modal-overlay open';
+  overlay.style.cssText = 'opacity:1;visibility:visible;';
+  overlay.innerHTML = `
+    <div class="auth-modal">
+      <button class="auth-modal-close" id="sub-notice-close">&times;</button>
+      <div class="auth-view">
+        <div class="auth-view-header">
+          <span class="auth-view-icon" style="font-size:42px">☉</span>
+          <h3>${t('auth.upgrade.title')}</h3>
+          <p>${safeMessage}</p>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#sub-notice-close').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.remove();
+  });
 }
 
 // ============================================================================

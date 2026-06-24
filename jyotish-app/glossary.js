@@ -236,19 +236,93 @@ function scanBindings(text) {
 
 // ===== Tooltip 显示/隐藏 =====
 const CAT_MAP = {graha:'行星 Graha',bhava:'宫位 Bhava',rashi:'星座 Rashi',status:'状态',concept:'概念 Concept'};
+const TERMINOLOGY_MODE_LABELS = {
+  balanced: '平衡模式',
+  beginner: '入门解释',
+  professional: '专业对照',
+};
+const TERMINOLOGY_MODES = Object.keys(TERMINOLOGY_MODE_LABELS);
+
+export function setGlossaryTerminologyMode(mode = 'balanced') {
+  window.__jyotishTerminologyMode = normalizeGlossaryTerminologyMode(mode);
+  if (tooltipEl) tooltipEl.dataset.mode = window.__jyotishTerminologyMode;
+  const visibleKey = tooltipEl?.dataset?.termKey;
+  if (visibleKey && tooltipEl && !tooltipEl.classList.contains('hidden')) showTooltip(visibleKey);
+  return window.__jyotishTerminologyMode;
+}
+
+export function getGlossaryTerminologyMode() {
+  return normalizeGlossaryTerminologyMode(window.__jyotishTerminologyMode);
+}
+
+function normalizeGlossaryTerminologyMode(mode) {
+  return TERMINOLOGY_MODES.includes(mode) ? mode : 'balanced';
+}
+
+function buildTerminologyDisplay(entry, mode) {
+  if (mode === 'professional') {
+    return {
+      title: `${entry.cn} · ${entry.en}`,
+      names: [entry.sk, entry.cat].filter(Boolean),
+      desc: `${entry.desc} 专业模式保留中文、英文与 Sanskrit 名称，方便和 API、报告及古典术语交叉核对。`,
+    };
+  }
+  if (mode === 'beginner') {
+    return {
+      title: entry.cn,
+      names: [entry.en, '初学解释'].filter(Boolean),
+      desc: modernizeGlossaryDescription(entry.desc),
+    };
+  }
+  return {
+    title: entry.cn,
+    names: [entry.sk, entry.en].filter(Boolean),
+    desc: entry.desc,
+  };
+}
+
+function modernizeGlossaryDescription(text) {
+  return String(text || '')
+    .replace(/业力/g, '长期模式')
+    .replace(/前世课题/g, '深层习惯与未完成议题')
+    .replace(/凶宫/g, '压力宫')
+    .replace(/致命/g, '高风险')
+    .replace(/凶星/g, '压力星')
+    .replace(/吉星/g, '支持星')
+    .replace(/最黑暗处有最光明/g, '困难条件中可能出现反转机会');
+}
 
 function showTooltip(key) {
   const entry = G[key];
   if (!entry) return;
-  tooltipEl.querySelector('.jt-cat').textContent = CAT_MAP[entry.cat] || entry.cat;
-  tooltipEl.querySelector('.jt-title').textContent = entry.cn;
-  tooltipEl.querySelector('.jt-names').innerHTML = `<span class="jt-sk">${entry.sk}</span><span class="jt-en">${entry.en}</span>`;
-  tooltipEl.querySelector('.jt-desc').textContent = entry.desc;
+  const mode = getGlossaryTerminologyMode();
+  const display = buildTerminologyDisplay(entry, mode);
+  tooltipEl.dataset.termKey = key;
+  tooltipEl.dataset.mode = mode;
+  tooltipEl.querySelector('.jt-cat').textContent = `${CAT_MAP[entry.cat] || entry.cat} · ${TERMINOLOGY_MODE_LABELS[mode]}`;
+  tooltipEl.querySelector('.jt-title').textContent = display.title;
+  tooltipEl.querySelector('.jt-names').innerHTML = display.names.map((name, index) => (
+    `<span class="${index === 0 ? 'jt-sk' : 'jt-en'}">${escapeHtml(String(name))}</span>`
+  )).join('');
+  tooltipEl.querySelector('.jt-desc').textContent = display.desc;
   tooltipEl.classList.remove('hidden');
 }
 
 function hideTooltip() {
-  if (tooltipEl) tooltipEl.classList.add('hidden');
+  if (tooltipEl) {
+    tooltipEl.classList.add('hidden');
+    delete tooltipEl.dataset.termKey;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[ch]));
 }
 
 // ===== 视觉标记：bindTerms 仍然用于添加高亮样式 =====

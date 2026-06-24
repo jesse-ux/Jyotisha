@@ -11,7 +11,7 @@ if SCRIPTS not in sys.path:
 from jaimini import (
     calc_chara_karaka_7, calc_chara_karaka_8,
     calc_arudha_pada_for_house, calc_arudha_padas, calc_upapada,
-    calc_graha_padas, calc_karakamsha, calc_special_lagnas,
+    calc_graha_padas, calc_karakamsha, calc_special_lagnas, calc_special_lagnas_precise,
     calc_chara_dasha, calc_chara_dasha_with_antardasha,
     KARAKA_7, KARAKA_8, SIGNS, SIGN_LORDS,
 )
@@ -168,6 +168,27 @@ class TestSpecialLagnas:
     def test_note_about_sunrise(self):
         result = calc_special_lagnas(0, 10, 30)
         assert 'note' in result
+
+    def test_precise_special_lagnas_use_sunrise_reference(self):
+        result = calc_special_lagnas_precise(
+            0, 1990, 6, 15, 10, 30, lat=28.6, lon=77.2, tz_offset=5.5
+        )
+        assert result['capability_status'] == 'covered'
+        assert result['precision'] == 'sunrise_correct'
+        assert 'sunrise_local_time' in result
+        assert result['ghatis_elapsed_from_sunrise'] > 0
+        for key in ['HL', 'GL', 'VL']:
+            assert result[key]['sign'] in SIGNS
+            assert result[key]['lord'] in SIGN_LORDS.values()
+
+    def test_precise_special_lagnas_are_time_sensitive(self):
+        morning = calc_special_lagnas_precise(
+            0, 1990, 6, 15, 10, 0, lat=28.6, lon=77.2, tz_offset=5.5
+        )
+        later = calc_special_lagnas_precise(
+            0, 1990, 6, 15, 11, 0, lat=28.6, lon=77.2, tz_offset=5.5
+        )
+        assert later['ghatis_elapsed_from_sunrise'] > morning['ghatis_elapsed_from_sunrise']
 
 
 # ── Graha Padas Tests ──────────────────────────────────────────────

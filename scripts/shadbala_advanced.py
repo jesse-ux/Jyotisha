@@ -142,12 +142,7 @@ def get_hora_lord(year: int, month: int, day: int, hour: float, lat: float, lon:
     - 日出日落之间：白天Hora，从日主星开始
     - 日落日出之间：夜晚Hora，从日主星+5开始
     """
-    # 计算日出时间
-    jd = swe.julday(year, month, day, hour - tz)  # 转换为UT
-    sunrise_jd = swe.rise_trans(jd, swe.SUN, b'SUNSET' if False else b'SUNRISE', 
-                               lonlat=(lon, lat, 0), rsmi=swe.BIT_DISC_CENTER + swe.BIT_GEOCTR)
-    
-    # 简化：假设日出6:00，日落18:00
+    # 当前增强层只作为证据补充；保持与主 shadbala.py 一致的轻量近似。
     sunrise_hour = 6.0
     sunset_hour = 18.0
     

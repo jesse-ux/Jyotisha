@@ -11,7 +11,9 @@ if SCRIPTS not in sys.path:
 from muhurta import (
     calc_tithi, calc_nakshatra_from_lon, calc_yoga, calc_karana,
     calc_vara, calc_hora, calc_abhijit_muhurta, calc_panchanga,
-    check_activity_muhurta, muhurta_full_report,
+    check_activity_muhurta, muhurta_full_report, calc_daytime_inauspicious_periods,
+    panchanga_range_report, muhurta_range_search, calc_sunrise_sunset_local, calc_panchanga_end_times,
+    classify_vrata_tags, classify_panchanga_condition_tags, calc_choghadiya_windows, calc_hora_windows,
     TITHI_NAMES, TITHI_QUALITY, NAKSHATRAS, NAKSHATRA_TYPE,
     YOGA_NAMES, YOGA_QUALITY, KARANA_NAMES, KARANA_QUALITY,
     VARA_LORDS, ACTIVITY_RULES,
@@ -197,6 +199,26 @@ class TestAbhijitMuhurta:
         assert 'abhijit_end_jd' in result
 
 
+class TestDaytimeInauspiciousPeriods:
+    def test_monday_rahu_kala_uses_second_segment(self):
+        result = calc_daytime_inauspicious_periods(1, '06:00', '18:00')
+        assert result['rahu_kala']['segment'] == 2
+        assert result['rahu_kala']['start'] == '07:30'
+        assert result['rahu_kala']['end'] == '09:00'
+
+    def test_gulika_and_yamaganda_present(self):
+        result = calc_daytime_inauspicious_periods(4, '06:00', '18:00')
+        assert result['policy'] == 'daytime_8_segments_local_clock'
+        assert 'yamaganda' in result
+        assert 'gulika' in result
+
+    def test_location_aware_sunrise_sunset(self):
+        result = calc_sunrise_sunset_local(2026, 6, 22, 28.6, 77.2, 5.5)
+        assert result['policy'] in {'swisseph_rise_trans', 'location_aware_solar_event_approximation'}
+        assert ':' in result['sunrise']
+        assert ':' in result['sunset']
+
+
 # ── Panchanga Complete Tests ────────────────────────────────────────
 
 class TestPanchangaComplete:
@@ -219,6 +241,95 @@ class TestPanchangaComplete:
     def test_warnings_list(self):
         result = calc_panchanga(45.0, 120.0, 4, 6.0)
         assert isinstance(result['warnings'], list)
+
+    def test_panchanga_range_report_includes_inauspicious_periods(self):
+        result = panchanga_range_report('2026-06-22', '2026-06-24')
+        assert result['day_count'] == 3
+        assert result['days'][0]['query_date'] == '2026-06-22'
+        assert result['days'][0]['inauspicious_periods']['rahu_kala']['label'] == 'Rahu Kala'
+        assert result['calculation_policy']['inauspicious_periods']
+
+    def test_panchanga_range_report_can_use_location_aware_solar_times(self):
+        result = panchanga_range_report('2026-06-22', '2026-06-22', lat=28.6, lon=77.2, tz=5.5)
+        assert result['location']['lat'] == 28.6
+        assert result['calculation_policy']['sunrise_sunset'] in {
+            'SwissEph rise_trans',
+            'location-aware solar approximation',
+            'mixed SwissEph rise_trans with approximation fallback',
+        }
+        assert 'solar_times' in result['days'][0]
+        assert 'end_times' in result['days'][0]
+        assert 'vrata_tags' in result['days'][0]
+        assert 'condition_tags' in result['days'][0]
+        assert 'festival_details' in result['days'][0]
+        assert 'search_summary' in result
+        assert 'condition_counts' in result['search_summary']
+        assert 'choghadiya' in result['days'][0]
+        assert 'hora_windows' in result['days'][0]
+
+    def test_panchanga_range_report_includes_month_grid_for_single_month(self):
+        result = panchanga_range_report('2026-06-01', '2026-06-30', activity='business', lat=28.6, lon=77.2, tz=5.5)
+        assert result['month_grid']
+        cells = [cell for week in result['month_grid'] for cell in week if cell]
+        assert len(cells) == 30
+        assert cells[0]['date'] == '2026-06-01'
+        assert 'best_activities' in cells[0]
+        assert 'vrata_tags' in cells[0]
+        assert 'condition_tags' in cells[0]
+
+    def test_festival_details_explain_candidate_basis(self):
+        result = panchanga_range_report('2026-06-01', '2026-06-30', lat=28.6, lon=77.2, tz=5.5)
+        details = [detail for day in result['days'] for detail in day.get('festival_details', [])]
+        assert details
+        assert all('basis' in detail for detail in details)
+        assert any('confirmation_note' in detail for detail in details)
+        assert result['search_summary']['query_examples']
+
+    def test_panchanga_end_times_are_available_with_swisseph(self):
+        result = calc_panchanga_end_times(2026, 6, 22, 5.5, 11.4)
+        assert result is not None
+        assert result['policy'] == 'swisseph_boundary_bisection'
+        assert 'tithi' in result
+        assert 'ends_at' in result['tithi']
+
+    def test_basic_vrata_tags(self):
+        assert classify_vrata_tags({'tithi_num': 11, 'paksha': 'Shukla', 'name': 'Ekadashi'})[0]['key'] == 'ekadashi'
+        assert classify_vrata_tags({'tithi_num': 28, 'paksha': 'Krishna', 'name': 'Trayodashi'})[0]['key'] == 'pradosham'
+        assert classify_vrata_tags({'tithi_num': 30, 'paksha': 'Krishna', 'name': 'Amavasya'})[0]['key'] == 'amavasya'
+
+    def test_richer_vrata_tags_use_nakshatra_and_vara(self):
+        tags = classify_vrata_tags(
+            {'tithi_num': 13, 'paksha': 'Shukla', 'name': 'Trayodashi'},
+            {'nakshatra': 'Pushya'},
+            {'vara': 'Thursday'},
+        )
+        keys = {tag['key'] for tag in tags}
+        assert {'pradosham', 'pushya_nakshatra', 'guru_pushya'} <= keys
+
+    def test_vrata_tags_mark_masa_dependent_festivals_as_candidates(self):
+        tags = classify_vrata_tags({'tithi_num': 3, 'paksha': 'Shukla', 'name': 'Tritiya'})
+        assert any(tag['key'] == 'akshaya_tritiya_candidate' and tag['type'] == 'festival_candidate' for tag in tags)
+
+    def test_panchanga_condition_tags_are_searchable(self):
+        report = {
+            'panchanga': {'warnings': ['avoid']},
+            'summary': {'best_activities': ['business'], 'warnings': ['avoid']},
+            'vrata_tags': [{'key': 'ekadashi', 'type': 'fasting'}],
+            'activity_checks': {'business': {'verdict': '大吉（Excellent）'}},
+            'choghadiya': {'day': [{'quality': 'auspicious'}], 'night': []},
+        }
+        keys = {tag['key'] for tag in classify_panchanga_condition_tags(report, activity='business')}
+        assert {'has_vrata', 'spiritual_practice', 'auspicious_activity', 'avoid_new_start', 'good_choghadiya', 'selected_activity_good'} <= keys
+
+    def test_choghadiya_and_hora_windows(self):
+        choghadiya = calc_choghadiya_windows(1, '06:00', '18:00')
+        assert choghadiya['day'][0]['name'] == 'Amrit'
+        assert len(choghadiya['day']) == 8
+        assert len(choghadiya['night']) == 8
+        hora = calc_hora_windows(1, '06:00', '18:00')
+        assert hora['day'][0]['lord'] == 'Moon'
+        assert len(hora['day']) == 12
+        assert len(hora['night']) == 12
 
 
 # ── Activity Muhurta Tests ─────────────────────────────────────────
@@ -275,3 +386,27 @@ class TestMuhurtaFullReport:
     def test_query_date_preserved(self):
         result = muhurta_full_report(45.0, 120.0, 4, 6.0, '2026-06-04')
         assert result['query_date'] == '2026-06-04'
+
+
+class TestMuhurtaRangeSearch:
+    def test_returns_ranked_activity_windows_for_date_range(self):
+        result = muhurta_range_search(
+            '2026-06-22',
+            '2026-06-28',
+            activity='business',
+            limit=3,
+            sunrise='06:00',
+            sunset='18:00',
+        )
+
+        assert result['mode'] == 'muhurta_date_range_solver'
+        assert result['activity'] == 'business'
+        assert result['date_range'] == {'start': '2026-06-22', 'end': '2026-06-28'}
+        assert result['candidate_count'] <= 3
+        assert result['best_windows']
+        assert result['rejected_dates']
+        assert result['constraints']['avoid_inauspicious_periods'] is True
+        first = result['best_windows'][0]
+        assert {'date', 'score', 'quality', 'activity_verdict', 'recommended_windows', 'evidence'} <= set(first)
+        assert first['recommended_windows']
+        assert first['evidence']['panchanga']

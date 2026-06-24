@@ -604,7 +604,7 @@ export function computeNakshatraAdvanced(planets, birthNakIdx) {
       gana: NAK_GANA[nakIdx],
       element: NAK_ELEMENT[nakIdx],
       tara_bala: { tara: taraNames[taraDist], index: taraDist },
-      sub_lord,
+      sub_lord: subLord,
       sub_index: subIdx,
     };
   }

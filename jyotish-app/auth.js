@@ -4,6 +4,7 @@
  */
 import { aiChatSetAuth } from './ai-chat.js';
 import { t, getLang } from './i18n.js';
+import { escapeAttr, escapeHtml } from './security.js';
 
 // ============================================================================
 // 配置
@@ -11,6 +12,7 @@ import { t, getLang } from './i18n.js';
 const API_BASE = '';  // 同域部署，留空；Capacitor 打包时改为服务器地址
 const TOKEN_KEY = 'jyotish_auth_token';
 const USER_KEY = 'jyotish_auth_user';
+const API_BASE_KEY = 'jyotish_api_base';
 
 // ============================================================================
 // 状态
@@ -25,8 +27,8 @@ let _onAuthChange = null;  // 外部回调
 // ============================================================================
 function loadSavedAuth() {
   try {
-    _token = localStorage.getItem(TOKEN_KEY);
-    const raw = localStorage.getItem(USER_KEY);
+    _token = sessionStorage.getItem(TOKEN_KEY);
+    const raw = sessionStorage.getItem(USER_KEY) || localStorage.getItem(USER_KEY);
     _user = raw ? JSON.parse(raw) : null;
   } catch { _token = null; _user = null; }
 }
@@ -35,10 +37,12 @@ function saveAuth(token, user) {
   _token = token;
   _user = user;
   if (token) {
-    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   } else {
-    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
     localStorage.removeItem(USER_KEY);
   }
   // 同步给 ai-chat
@@ -57,11 +61,7 @@ export function getUser() { return _user; }
 export function isLoggedIn() { return !!_token && !!_user; }
 
 export function getApiBase() {
-  // Capacitor 环境用服务器地址
-  if (window.Capacitor?.isNativePlatform?.()) {
-    return localStorage.getItem('jyotish_api_base') || 'https://your-server.com';
-  }
-  return API_BASE;
+  return window.JYOTISH_API_BASE || import.meta.env?.VITE_JYOTISH_API_BASE || localStorage.getItem(API_BASE_KEY) || API_BASE;
 }
 
 export function onAuthChange(cb) { _onAuthChange = cb; }
@@ -109,8 +109,8 @@ function updateHeaderUI() {
       const planLabel = sub.plan === 'premium' ? '∞' : `${sub.todayUsage ?? 0}/3`;
       el.innerHTML = `
         <div class="auth-user-info">
-          <button class="auth-avatar" data-auth-action="open-profile" title="${_user.email || ''}">${initial}</button>
-          <span class="auth-usage-badge" data-auth-action="open-profile">${planLabel}</span>
+          <button class="auth-avatar" data-auth-action="open-profile" title="${escapeAttr(_user.email || '')}">${escapeHtml(initial)}</button>
+          <span class="auth-usage-badge" data-auth-action="open-profile">${escapeHtml(planLabel)}</span>
         </div>
         <button class="auth-logout" data-auth-action="logout" title="${t('auth.logout')}">${t('auth.logout')}</button>
       `;
@@ -222,8 +222,7 @@ function bindLoginForm(container) {
       saveAuth(res.token, res.user);
       closeModal();
     } catch (err) {
-      errEl.textContent = err.message || t('auth.login.failed');
-      errEl.classList.remove('hidden');
+      showAuthError(errEl, err, 'login');
     } finally {
       btnText.classList.remove('hidden');
       btnLoading.classList.add('hidden');
@@ -308,8 +307,7 @@ function bindRegisterForm(container) {
       saveAuth(res.token, res.user);
       closeModal();
     } catch (err) {
-      errEl.textContent = err.message || t('auth.register.failed');
-      errEl.classList.remove('hidden');
+      showAuthError(errEl, err, 'register');
     } finally {
       btnText.classList.remove('hidden');
       btnLoading.classList.add('hidden');
@@ -358,7 +356,7 @@ async function handleAppleToken(idToken) {
     saveAuth(res.token, res.user);
     closeModal();
   } catch (err) {
-    alert(t('auth.apple.failed') + (err.message || t('auth.error.unknown')));
+    alert(buildAuthRecoveryMessage(err, 'apple'));
   }
 }
 
@@ -375,10 +373,10 @@ function renderProfileView(container) {
   container.innerHTML = `
     <div class="auth-view">
       <div class="auth-view-header">
-        <div class="auth-profile-avatar">${(_user.email || 'U')[0].toUpperCase()}</div>
-        <h3>${_user.email || t('auth.profile')}</h3>
+        <div class="auth-profile-avatar">${escapeHtml((_user.email || 'U')[0].toUpperCase())}</div>
+        <h3>${escapeHtml(_user.email || t('auth.profile'))}</h3>
         <p class="auth-plan-label ${isPremium ? 'premium' : 'free'}">
-          ${isPremium ? t('auth.premium.plan') : t('auth.free.plan').replace('{0}', usage).replace('{1}', limit)}
+          ${escapeHtml(isPremium ? t('auth.premium.plan') : t('auth.free.plan').replace('{0}', usage).replace('{1}', limit))}
         </p>
       </div>
       ${!isPremium ? `
@@ -477,28 +475,64 @@ async function apiPost(path, body) {
   const headers = { 'Content-Type': 'application/json' };
   if (_token) headers['Authorization'] = `Bearer ${_token}`;
 
-  const resp = await fetch(`${base}${path}`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-  });
+  let resp;
+  try {
+    resp = await fetch(`${base}${path}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    throw new Error(buildAuthRecoveryMessage(err, 'network'));
+  }
 
-  const data = await resp.json();
+  const data = await parseResponseJson(resp);
   if (!resp.ok) {
-    throw new Error(data.error || data.message || t('auth.request.failed') + ` (${resp.status})`);
+    throw new Error(buildAuthRecoveryMessage(data.error || data.message || `${t('auth.request.failed')} (${resp.status})`, 'api'));
   }
   return data;
 }
 
+async function parseResponseJson(resp) {
+  const raw = await resp.text();
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return { message: raw?.slice(0, 160) || '' };
+  }
+}
+
+function buildAuthRecoveryMessage(error, context = 'api') {
+  const message = typeof error === 'string' ? error : (error?.message || t('auth.error.unknown'));
+  const apiHint = `${t('auth.recovery.api')} ${t('auth.recovery.retry')}`;
+  const commandHint = `Trust Center / 网页服务 /本地 API 服务`;
+  if (context === 'login') return `${t('auth.login.failed')}：${message}\n${apiHint}\n${commandHint}`;
+  if (context === 'register') return `${t('auth.register.failed')}：${message}\n${apiHint}\n${commandHint}`;
+  if (context === 'apple') return `${t('auth.apple.failed')}${message}\n${apiHint}\n${commandHint}`;
+  return `${message}\n${apiHint}\n${commandHint}`;
+}
+
+function showAuthError(errEl, error, context = 'api') {
+  if (!errEl) return;
+  errEl.textContent = buildAuthRecoveryMessage(error, context);
+  errEl.classList.remove('hidden');
+}
+
 async function fetchUser() {
   const base = getApiBase();
-  const resp = await fetch(`${base}/api/auth/me`, {
-    headers: { 'Authorization': `Bearer ${_token}` },
-  });
-  if (!resp.ok) throw new Error(t('auth.token.expired'));
-  const data = await resp.json();
+  let resp;
+  try {
+    resp = await fetch(`${base}/api/auth/me`, {
+      headers: { 'Authorization': `Bearer ${_token}` },
+    });
+  } catch (err) {
+    throw new Error(buildAuthRecoveryMessage(err, 'network'));
+  }
+  const data = await parseResponseJson(resp);
+  if (!resp.ok) throw new Error(buildAuthRecoveryMessage(data.error || data.message || t('auth.token.expired'), 'api'));
   // 更新本地用户数据
   _user = data.user || data;
+  sessionStorage.setItem(USER_KEY, JSON.stringify(_user));
   localStorage.setItem(USER_KEY, JSON.stringify(_user));
   updateHeaderUI();
   aiChatSetAuth(_token, _user);

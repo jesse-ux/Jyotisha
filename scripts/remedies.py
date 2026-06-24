@@ -101,13 +101,30 @@ def recommend_remedies(shadbala_results: Dict, planet_dignities: Dict = None,
     # 分析需要补救的行星
     weak_planets = []
     moderate_planets = []
+    evidence_chain = []
 
     for planet, data in shadbala_results.items():
-        rupas = data.get('total_rupas', 1.0)
+        rupas = data.get('total_rupas', data.get('rupas', 1.0))
         if rupas < STRENGTH_THRESHOLDS['weak']:
             weak_planets.append(planet)
+            evidence_chain.append({
+                'source': 'shadbala',
+                'planet': planet,
+                'severity': 'high',
+                'value': round(rupas, 3) if isinstance(rupas, (int, float)) else rupas,
+                'threshold': STRENGTH_THRESHOLDS['weak'],
+                'reason': f'{planet} Shadbala低于极弱阈值',
+            })
         elif rupas < STRENGTH_THRESHOLDS['moderate']:
             moderate_planets.append(planet)
+            evidence_chain.append({
+                'source': 'shadbala',
+                'planet': planet,
+                'severity': 'medium',
+                'value': round(rupas, 3) if isinstance(rupas, (int, float)) else rupas,
+                'threshold': STRENGTH_THRESHOLDS['moderate'],
+                'reason': f'{planet} Shadbala低于偏弱阈值',
+            })
 
     # 1. 宝石建议（仅对极弱行星）
     for planet in weak_planets:
@@ -153,6 +170,12 @@ def recommend_remedies(shadbala_results: Dict, planet_dignities: Dict = None,
             'repetitions': 108,
             'note': f'当前大运为{active_dasha_lord}期间，建议强化念诵 {PLANET_MANTRAS[active_dasha_lord]}',
             'priority': 'dasha_lord',
+        })
+        evidence_chain.append({
+            'source': 'dasha',
+            'planet': active_dasha_lord,
+            'severity': 'context',
+            'reason': f'当前大运主星为{active_dasha_lord}，补救优先级上调',
         })
 
     # 4. 捐赠建议
@@ -202,6 +225,12 @@ def recommend_remedies(shadbala_results: Dict, planet_dignities: Dict = None,
                 'gem': dr.get('gem'),
                 'note': f'{dosha_name}检测到。建议进行: {"; ".join(dr["actions"][:2])}',
             })
+            evidence_chain.append({
+                'source': 'dosha',
+                'dosha': dosha_name,
+                'severity': 'context',
+                'reason': f'{dosha_name}命中，生成专项补救建议',
+            })
 
     # 7. 生活建议
     colors = []
@@ -223,12 +252,19 @@ def recommend_remedies(shadbala_results: Dict, planet_dignities: Dict = None,
     # 建议摘要
     total_recs = sum(len(v) for v in recommendations.values())
     summary = f'共{total_recs}条补救建议 — 重点关注: {", ".join(weak_planets[:3]) if weak_planets else "无极度虚弱行星"}'
+    next_action = (
+        '先执行咒语、捐赠、生活调整等低风险补救；宝石、斋戒和仪式类建议需结合体质、预算与专业意见二次确认。'
+        if total_recs else
+        '当前未发现必须补救的弱项，保持观察并等待Dasha/Transit触发再复核。'
+    )
 
     return {
         'method': 'BPHS补救系统 v1.0',
         'weak_planets': weak_planets,
         'moderate_planets': moderate_planets,
         'recommendations': recommendations,
+        'evidence_chain': evidence_chain,
+        'next_action': next_action,
         'summary': summary,
     }
 

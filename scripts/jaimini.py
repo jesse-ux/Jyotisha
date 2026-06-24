@@ -16,6 +16,7 @@ MIT复用来源:
   - jaimini-tropical (tunanfang-pixel): Pada命名、Graha Pada与Jaimini特殊点结构
 """
 from typing import Dict, List, Tuple, Optional
+from datetime import datetime, timedelta
 import math
 
 SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
@@ -652,6 +653,148 @@ def _karakamsha_interpretations(sign, lord):
     return {
         'sign_direction': directions.get(sign, ''),
         'lord_method': lord_meanings.get(lord, ''),
+    }
+
+
+def _julian_day(year: int, month: int, day: int, hour: float = 12.0) -> float:
+    if month <= 2:
+        year -= 1
+        month += 12
+    a = int(year / 100)
+    b = 2 - a + int(a / 4)
+    return (
+        int(365.25 * (year + 4716))
+        + int(30.6001 * (month + 1))
+        + day
+        + b
+        - 1524.5
+        + hour / 24.0
+    )
+
+
+def _solar_obliquity(jd: float) -> float:
+    t = (jd - 2451545.0) / 36525.0
+    eps0 = 84381.448 - 46.8150 * t - 0.00059 * t * t + 0.001813 * t * t * t
+    return eps0 / 3600.0
+
+
+def calc_sunrise_utc_hours(year: int, month: int, day: int, lat: float, lon: float) -> float:
+    """
+    Calculate sunrise UTC decimal hours for a date/location.
+
+    MIT-adapted from jaimini-tropical's sunrise helper; accuracy is sufficient for
+    product-facing Special Lagna timing and avoids a hard dependency on SwissEph.
+    """
+    jd = _julian_day(year, month, day, 12.0)
+    mean_anomaly = (357.5291 + 0.98560028 * (jd - 2451545.0)) % 360
+    center = (
+        1.9148 * math.sin(math.radians(mean_anomaly))
+        + 0.0200 * math.sin(math.radians(2 * mean_anomaly))
+        + 0.0003 * math.sin(math.radians(3 * mean_anomaly))
+    )
+    sun_lon = (mean_anomaly + center + 180.10248 + 0.000048 * (jd - 2451545.0) * 360) % 360
+    eps = _solar_obliquity(jd)
+    declination = math.degrees(
+        math.asin(math.sin(math.radians(sun_lon)) * math.sin(math.radians(eps)))
+    )
+    lat_rad = math.radians(lat)
+    dec_rad = math.radians(declination)
+    cos_ha = (
+        math.cos(math.radians(90.833))
+        - math.sin(lat_rad) * math.sin(dec_rad)
+    ) / (math.cos(lat_rad) * math.cos(dec_rad))
+    cos_ha = max(-1.0, min(1.0, cos_ha))
+    hour_angle = math.degrees(math.acos(cos_ha))
+
+    b = math.radians(360.0 * (jd - 2451545.0 - 0.5) / 365.25)
+    eq_time = 229.18 * (
+        0.000075
+        + 0.001868 * math.cos(b)
+        - 0.032077 * math.sin(b)
+        - 0.014615 * math.cos(2 * b)
+        - 0.040849 * math.sin(2 * b)
+    )
+    solar_noon = (720.0 - 4.0 * lon - eq_time) / 60.0
+    return (solar_noon - hour_angle / 15.0) % 24.0
+
+
+def _elapsed_ghatis_from_sunrise(sunrise_utc_hours: float, birth_utc_hours: float) -> float:
+    diff_hours = birth_utc_hours - sunrise_utc_hours
+    if diff_hours < 0:
+        diff_hours += 24
+    return diff_hours / 0.4
+
+
+def _special_lagna_payload(name: str, full_name: str, sign_idx: int, degree_in_sign: float,
+                           ghatis_elapsed: float, night_birth: bool = False) -> Dict:
+    sign = _sign_name(sign_idx)
+    payload = {
+        'name': name,
+        'full_name': full_name,
+        'sign': sign,
+        'sign_idx': sign_idx % 12,
+        'lord': SIGN_LORDS[sign],
+        'degree_in_sign': round(degree_in_sign % 30, 4),
+        'longitude': round((sign_idx % 12) * 30 + (degree_in_sign % 30), 4),
+        'ghatis_elapsed': round(ghatis_elapsed, 4),
+    }
+    if night_birth:
+        payload['night_birth'] = True
+    return payload
+
+
+def calc_special_lagnas_precise(
+    asc_sign_idx: int,
+    year: int,
+    month: int,
+    day: int,
+    hour: int,
+    minute: int = 0,
+    lat: float = 0.0,
+    lon: float = 0.0,
+    tz_offset: float = 0.0,
+) -> Dict:
+    """
+    Sunrise-correct Jaimini Special Lagnas: HL/GL/VL.
+
+    Uses local birth time, converts it to UTC, calculates local sunrise in UTC,
+    then maps elapsed Ghatis from sunrise to HL/GL. VL remains Ascendant-derived.
+    """
+    local_dt = datetime(year, month, day, int(hour), int(minute))
+    utc_dt = local_dt - timedelta(hours=tz_offset)
+    birth_utc_hours = utc_dt.hour + utc_dt.minute / 60.0 + utc_dt.second / 3600.0
+    sunrise_utc = calc_sunrise_utc_hours(utc_dt.year, utc_dt.month, utc_dt.day, lat, lon)
+    ghatis = _elapsed_ghatis_from_sunrise(sunrise_utc, birth_utc_hours)
+    ghati_floor = int(ghatis)
+    fraction = ghatis - ghati_floor
+
+    hl_idx = ghati_floor % 12 if ghati_floor % 2 else (7 - ghati_floor) % 12
+    gl_idx = ghati_floor % 12
+    vl_idx = (asc_sign_idx * 3) % 12
+
+    sunrise_local_hours = (sunrise_utc + tz_offset) % 24
+    sunrise_local_minutes = int(round(sunrise_local_hours * 60)) % (24 * 60)
+    local_birth_hours = int(hour) + int(minute) / 60.0
+    before_sunrise = local_birth_hours < sunrise_local_hours
+    return {
+        'method': 'Special Lagnas HL/GL/VL sunrise-correct (jaimini-tropical MIT adapted)',
+        'capability_status': 'covered',
+        'precision': 'sunrise_correct',
+        'sunrise_utc_hours': round(sunrise_utc, 4),
+        'sunrise_local_time': f'{sunrise_local_minutes // 60:02d}:{sunrise_local_minutes % 60:02d}',
+        'birth_utc_hours': round(birth_utc_hours, 4),
+        'ghatis_elapsed_from_sunrise': round(ghatis, 4),
+        'HL': _special_lagna_payload('HL', 'Hora Lagna', hl_idx, fraction * 30.0, ghatis, before_sunrise),
+        'GL': _special_lagna_payload('GL', 'Ghati Lagna', gl_idx, fraction * 30.0, ghatis, before_sunrise),
+        'VL': {
+            'name': 'VL',
+            'full_name': 'Varnada Lagna',
+            'sign': _sign_name(vl_idx),
+            'sign_idx': vl_idx,
+            'lord': SIGN_LORDS[_sign_name(vl_idx)],
+            'method': 'Ascendant sign × 3',
+        },
+        'note': 'HL/GL以出生地日出为起点计算；GL对24分钟边界敏感，出生时间不准时应结合生时校正。'
     }
 
 

@@ -33,9 +33,7 @@ import argparse
 try:
     import markdown
 except ImportError:
-    print("Installing markdown...")
-    os.system(f"{sys.executable} -m pip install markdown -q")
-    import markdown
+    markdown = None
 
 # ============================================================================
 # CSS 样式 — 羊皮纸主题（A4打印优化）
@@ -337,6 +335,12 @@ def build_toc(sections, lang="cn"):
 
 def build_section(num, title, md_text):
     """Convert MD content to HTML section."""
+    global markdown
+    if markdown is None:
+        print("Installing markdown...")
+        os.system(f"{sys.executable} -m pip install markdown -q")
+        import markdown as markdown_module
+        markdown = markdown_module
     body = markdown.markdown(md_text, extensions=["tables", "fenced_code"])
     return f"""
 <div class="section">

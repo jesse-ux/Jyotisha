@@ -518,7 +518,25 @@ def solar_return_full_report(
         except Exception as e:
             result['mudda_dasha'] = {'error': str(e)}
 
-    # 8. 综合总结
+    # 8. Harsha / Panchavargiya Bala（年度强度层）
+    try:
+        from tajika import calc_tajika_strength_layers
+        yl_data = result.get('year_lord', {})
+        yl = yl_data.get('year_lord', '')
+        if degraded:
+            asc_lon = float((asc_sign_idx or 0) * 30)
+        else:
+            asc = sr.get('ascendant', {})
+            asc_lon = asc.get('lon', asc.get('degree', float((asc_sign_idx or 0) * 30)))
+        result['tajika_strength'] = calc_tajika_strength_layers(
+            planet_lons,
+            asc_lon=asc_lon,
+            year_lord=yl,
+        )
+    except Exception as e:
+        result['tajika_strength'] = {'error': str(e)}
+
+    # 9. 综合总结
     result['summary'] = _make_sr_summary(result)
 
     return result

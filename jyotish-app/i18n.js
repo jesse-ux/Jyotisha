@@ -87,8 +87,8 @@ const D = {
   'karaka.title':        { zh:'Jaimini Karaka 灵魂指针',    en:'Jaimini Karaka — Soul Pointers' },
   'karaka.7k':           { zh:'7-Karaka（古典系统）',       en:'7-Karaka (Classical)' },
   'karaka.8k':           { zh:'8-Karaka（含 Rahu）',       en:'8-Karaka (incl. Rahu)' },
-  'karaka.note':         { zh:'Karaka 是 Jaimini 系统的核心概念。AK（Atmakaraka）代表灵魂目标，DK（Darakaraka）代表配偶征象星。度数越高，Karaka 力量越强。',
-                           en:'Karaka is the core concept of the Jaimini system. AK (Atmakaraka) represents the soul\'s purpose, DK (Darakaraka) represents the spouse significator. The higher the degree, the stronger the Karaka.' },
+  'karaka.note':         { zh:'Karaka 是 Jaimini 系统的核心概念。AK（Atmakaraka）代表灵魂目标，DK（Darakaraka）代表配偶征象星。7-Karaka 与 8-Karaka 是两种传承口径，Rahu 是否纳入会改变部分角色归属；实际解读需先固定所用体系。',
+                           en:'Karaka is a core concept in the Jaimini system. AK (Atmakaraka) represents the soul purpose, and DK (Darakaraka) represents the spouse significator. 7-Karaka and 8-Karaka are two lineage conventions; including Rahu can change role assignments, so readings should first fix the chosen convention.' },
 
   // Karaka 标签
   'k.ak':    { zh:'AK 自我灵魂',    en:'AK Soul Self' },
@@ -147,7 +147,7 @@ const D = {
                            en:'Shadbala measures planetary strength across 6 dimensions: Positional (Sthana), Directional (Dig), Temporal (Kala), Motional (Chesta), Natural (Naisargika), and Aspectual (Drik) strength. Ratio ≥100% = strong, 75-99% = medium, <75% = weak.' },
 
   // ---- Dasha Tab ----
-  'dasha.title':         { zh:'Vimshottari Dasha 大运',     en:'Vimshottari Dasha' },
+  'dasha.title':         { zh:'Dasha 大运系统',             en:'Dasha Systems' },
   'dasha.maha':          { zh:'大运',                       en:'Mahadasha' },
   'dasha.antar':         { zh:'次运',                       en:'Antardasha' },
   'dasha.praty':         { zh:'三运',                       en:'Pratyantardasha' },
@@ -407,6 +407,10 @@ const D = {
   'ai.error.prefix':     { zh:'对话出错：', en:'Chat error: ' },
   'ai.no.data':          { zh:'无星盘数据', en:'No chart data' },
   'ai.no.reply':         { zh:'AI 未返回内容', en:'AI returned no content' },
+  'ai.setup.title':      { zh:'配置 AI 后端可获得完整 AI 解读', en:'Configure an AI backend for full AI reading' },
+  'ai.setup.server':     { zh:'请通过本地/服务端 API 代理连接模型，例如 /api/chat。', en:'Connect through a local or server-side API proxy, for example /api/chat.' },
+  'ai.setup.secret':     { zh:'不要把 OpenAI API key 放进浏览器；在服务端环境变量 OPENAI_API_KEY 或密钥管理服务中读取。', en:'Do not put an OpenAI API key in the browser; load it from server-side OPENAI_API_KEY or a key management service.' },
+  'ai.setup.trust':      { zh:'可在 Trust Center 先运行健康检查，确认本地 API 与能力目录可用。', en:'Run the Trust Center health check first to confirm the local API and capability catalog are available.' },
 
   // ---- Auth ----
   'auth.login':          { zh:'登录', en:'Login' },
@@ -452,6 +456,8 @@ const D = {
   'auth.request.failed': { zh:'请求失败', en:'Request failed' },
   'auth.token.expired':  { zh:'Token 已过期', en:'Token expired' },
   'auth.error.unknown':  { zh:'未知错误', en:'Unknown error' },
+  'auth.recovery.api':   { zh:'登录/注册需要本地或服务端 API 在线；请先到 Trust Center 运行健康检查。', en:'Login/register requires the local or server API to be online; run the Trust Center health check first.' },
+  'auth.recovery.retry': { zh:'若未连接，请按 README 的普通用户启动路径启动网页服务和本地 API 服务后重试。', en:'If disconnected, follow the README first-use startup path to start the web service and local API service, then retry.' },
 
   // ---- Subscription ----
   'sub.iap.unavail':     { zh:'IAP 功能不可用，请在 iOS 设备上使用', en:'IAP unavailable. Please use on an iOS device' },
@@ -478,6 +484,7 @@ const D = {
   'sub.contact':         { zh:'如有问题请联系: jyotish.app@proton.me', en:'Questions? Contact: jyotish.app@proton.me' },
   'sub.check.login':     { zh:'请先登录以使用 AI 对话', en:'Please login to use AI chat' },
   'sub.check.limit':     { zh:'今日免费对话已用完', en:'Daily free chat limit reached' },
+  'sub.recovery.iap':    { zh:'订阅/恢复购买需要 iOS IAP 或后端验证服务；网页端可继续使用免费功能，并可先到 Trust Center 检查 API。', en:'Subscription/restore needs iOS IAP or backend receipt verification; on web you can keep using free features and check the API in Trust Center.' },
 
   // ---- Shadbala 状态 ----
   'sb.strong':           { zh:'强',       en:'Strong' },

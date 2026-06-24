@@ -54,6 +54,22 @@ This is a **Vedic (Jyotish) astrology analysis system** designed for deep, audit
 
 ## Quick Start
 
+### 普通用户启动路径
+
+如果只是打开网页/app，请按同一条路径走，不要在多个入口之间猜：
+
+1. 先启动网页服务：cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173
+2. 再启动本地 API 服务：python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200
+3. 打开 Trust Center，点击运行健康检查；页面地址是 `http://127.0.0.1:5173`。
+4. 如果只安装 PWA：PWA 安装壳只包装网页服务，本地 API 服务仍需单独启动；无 API 时网页会保留基础浏览器 fallback，但 PDF/高级技法需要本地 API 服务。
+5. 开发者做完整自检时运行：`python3 scripts/run_quality_gate.py --frontend-click-timeout 240`。
+
+### 质量门分层
+
+- quick：快速开发守门，适合普通代码/文案修改后先跑：`python3 scripts/run_quality_gate.py --profile quick`
+- browser：完整浏览器守门，覆盖 runtime smoke 与真实浏览器用户路径：`python3 scripts/run_quality_gate.py --profile browser`
+- release：发布前守门，包含关键产品文件未跟踪检查、慢速 golden cases 与 Yoga 逻辑报告：`python3 scripts/run_quality_gate.py --profile release`
+
 ### Prerequisites
 
 - Python 3.11+
@@ -278,7 +294,7 @@ Examples:
 - `v6.9.12` — Shadbala precision upgrade + Ashtakoot 36-point compatibility + expanded subcommands.
 - `v6.9.6` — Field mapping fixes (degree→degree_in_sign + toFixed null safety); PyPI publishing config.
 - `v6.9.5` — birth_info null safety + API field mapping fixes.
-- `v6.9.4` — AI interpretation integration (GPT relay via copse.top); api-bridge.js bundled into public/.
+- `v6.9.4` — AI interpretation integration; current browser build disables direct model API keys and routes AI through server-side `/api/chat` or a backend proxy.
 - `v6.9.3` — 35 Dasha systems, 405+ Yoga rules, KP complete system, Prashna, 16-factor synastry, Remedies, Sahams 36, Sudarshana, PMC, Tajika.
 - `v6.1.12` — Chara Dasha KN Rao Method rewrite, PyJHora benchmark 95.83% PASS.
 - `v6.1.10` — Darakaraka deep reader wired into `full-reading.modules.jaimini.darakaraka`; thematic reports now consume real DK and Rashi Tulya Navamsa evidence.
@@ -289,7 +305,7 @@ Examples:
 
 ### Actively Working On (P0)
 
-1. **Release hygiene** — rebuild v6.9.14 wheel/sdist and align GitHub tags with source version
+1. **Release hygiene** — run the release profile, keep product-critical files tracked, rebuild wheel/sdist, and align GitHub tags with source version
 2. **README / package metadata sync** — keep public docs, registry counts and distribution artifacts consistent
 3. **Shadbala external absolute calibration** — align full tables with JHora / PyJHora / BV Raman
 4. **Benchmark expansion** — add more oracle cases for Vimshottari, Shadbala, KP and annual-chart modules
@@ -300,6 +316,7 @@ Examples:
 - Docker image publishing and smoke-test docs
 - English documentation examples and API tutorials
 - Multi-Ayanamsa UX polish and benchmark examples
+- Desktop packaging path: PWA now, Pake URL shell for quick wrappers, Tauri sidecar after API lifecycle/signing decisions. See `docs/research/desktop_packaging_spike_2026_06_23.md`.
 
 ---
 
@@ -313,6 +330,12 @@ python3 -m py_compile scripts/*.py
 
 # Capability audit (must pass with 0 problems, 0 warnings)
 python3 scripts/audit_capabilities.py --mode validate
+
+# Desktop packaging readiness
+python3 scripts/desktop_packaging_preflight.py
+
+# Installed-shell / first-launch browser smoke
+python3 tests/run_frontend_click_smoke.py --mode all
 
 # Full-reading regression test (use FICTIONAL data only)
 python3 scripts/jyotish_engine.py full-reading \

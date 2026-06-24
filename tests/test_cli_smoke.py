@@ -8,8 +8,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+from tests.run_golden_cases import run_cases
+
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "scripts" / "jyotish_engine.py"
+GOLDEN_CASES = ROOT / "tests" / "golden" / "golden_cases.json"
 BASE_BIRTH_ARGS = [
     "--year", "1990",
     "--month", "1",
@@ -58,3 +61,34 @@ def test_ashtakavarga_cli_keeps_sav_invariant() -> None:
 def test_audit_capabilities_cli_validates_registry() -> None:
     result = run_engine("audit-capabilities", "--mode", "validate")
     assert result.get("valid") is True
+
+
+def test_full_reading_golden_cases_cover_user_ready_output() -> None:
+    result = run_cases(sys.executable, str(GOLDEN_CASES))
+    assert result["valid"] is True, result
+    assert result["total"] >= 3
+
+
+def test_yoga_logic_validation_tolerates_algorithmic_yogas_without_rule_id() -> None:
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import validate_logic_v2
+
+    results = [
+        {"rule_id": "bvr_vosi_precise", "name": "Vosi Yoga"},
+        {"id": "bvr_sunaphaa_precise", "name": "Sunapha Yoga"},
+        {"name": "Algorithmic Solar Yoga"},
+    ]
+
+    assert validate_logic_v2.extract_skill_rule_ids(results) == {
+        "bvr_vosi_precise",
+        "bvr_sunaphaa_precise",
+    }
+
+
+def test_yoga_logic_validation_import_does_not_shadow_project_modules() -> None:
+    before = list(sys.path)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import validate_logic_v2  # noqa: F401
+
+    assert not sys.path[0].endswith(".workbuddy/skills/jyotish-vedic-astrology/scripts")
+    sys.path[:] = before

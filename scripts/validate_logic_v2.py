@@ -4,11 +4,12 @@
 对比 Skill 引擎和 PyJhora 对60张名人星盘的 Yoga 检测结果
 """
 import json, sys, os
+from pathlib import Path
 
 # ==== 路径 ====
-SKILL_DIR = '/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology'
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+SKILL_DIR = str(PROJECT_DIR)
 RULES_PATH = os.path.join(SKILL_DIR, 'references', 'yoga_rules.json')
-sys.path.insert(0, os.path.join(SKILL_DIR, 'scripts'))
 from yoga_engine import YogaEngine
 
 # CROSS_NAME_MAP: PyJhora Yoga名 → Skill rule_id
@@ -227,6 +228,18 @@ def canonical_rule_id(rule_id, valid_rule_ids):
                 return candidate
     return None
 
+
+def extract_skill_rule_ids(skill_results):
+    """Extract comparable rule ids while ignoring algorithmic Yoga rows."""
+    ids = set()
+    for row in skill_results:
+        if not isinstance(row, dict):
+            continue
+        rule_id = row.get('rule_id') or row.get('id')
+        if isinstance(rule_id, str) and rule_id:
+            ids.add(rule_id)
+    return ids
+
 # ---- 内联结束 ----
 
 
@@ -295,7 +308,7 @@ def main():
         context = pyj_chart.get('context', {})
         # Skill 引擎检测（使用含 D9 的完整 context）
         skill_results = engine.detect(planets, ascendant, context=context)
-        skill_yoga_ids = set(r['rule_id'] for r in skill_results)
+        skill_yoga_ids = extract_skill_rule_ids(skill_results)
         skill_comp = skill_yoga_ids & comparable_rule_ids  # 只保留可对比的
         total_skill_comp += len(skill_comp)
 

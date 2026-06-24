@@ -132,11 +132,11 @@ class TithiAnalysis:
     lord_retrograde: bool
     
     # 解读
-    emotional_pattern: str
-    relationship_style: str
-    attracted_to: List[str]
-    challenges: List[str]
-    strengths: List[str]
+    emotional_pattern: str = ""
+    relationship_style: str = ""
+    attracted_to: List[str] = field(default_factory=list)
+    challenges: List[str] = field(default_factory=list)
+    strengths: List[str] = field(default_factory=list)
     
     # 瑕疵
     doshas: List[Dict] = field(default_factory=list)
@@ -226,8 +226,8 @@ class TithiAnalyzer:
         if not isinstance(sun_data, dict) or not isinstance(moon_data, dict):
             return 1, "shukla"
         
-        sun_lon = sun_data.get("degree", 0)
-        moon_lon = moon_data.get("degree", 0)
+        sun_lon = sun_data.get("lon", sun_data.get("degree", 0))
+        moon_lon = moon_data.get("lon", moon_data.get("degree", 0))
         
         # Tithi = (Moon - Sun) / 12
         diff = (moon_lon - sun_lon) % 360

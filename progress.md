@@ -1,0 +1,294 @@
+# 印度占星产品化进度日志
+
+## 2026-06-22
+
+- 恢复上下文：项目根目录此前没有 `task_plan.md`、`findings.md`、`progress.md`。
+- 读取了 `planning-with-files-zh` 技能说明，按复杂任务要求建立磁盘工作记忆。
+- 检查了 `docs/research/product_gap_matrix_2026_06_22.md`，当前最高优先级为 richer Panchanga festival rules 和 search-by-condition。
+- 网络扫描 GitHub：确认 VedAstro、VedAstro.Python、kunjara/jyotish、panchanga_api、jyotidarshan 等仍是 Panchanga/Muhurta 同类对标对象。
+- 完成 Panchanga richer rules：`scripts/muhurta.py` 增加保守 vrata/festival-candidate 标签和 `condition_tags`。
+- 完成前端条件检索：`jyotish-app/main.js` 增加 `PANCHANGA_CONDITIONS`、`panchanga-condition`、行过滤、条件徽章、CSV/ICS 条件标签。
+- 完成样式与测试：`jyotish-app/style.css` 增加 `.panchanga-condition-chip`；`tests/test_muhurta.py`、`tests/test_api_server_security.py`、`tests/test_frontend_productization.py` 增加覆盖。
+- 验证：`python3 -m pytest tests/test_muhurta.py tests/test_api_server_security.py tests/test_frontend_productization.py -q` 通过。
+- 验证：`npm run build` 通过；`python3 scripts/audit_fragments.py --strict` 通过，65 registry / 37 commands / 32 API endpoints / 42 frontend files，0 problems。
+- 完成多人/家庭案例工作区 MVP：`jyotish-app/main.js` 增加 `CASE_GROUP_PRESETS`、`CASE_RELATION_PRESETS`、元数据归一化、统一 chart/pair/prashna 列表、group/relation 筛选、星盘打开、三类记录批量导出/删除。
+- 完成样式与测试：`jyotish-app/style.css` 增加 `.case-meta-line`；`tests/test_frontend_productization.py` 增加案例分组/关系 token。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py -q` 通过；`npm run build` 通过。
+- 网络扫描合盘/匹配开源：`ashtakoot kundli matching` 与 `jyotish matchmaking python` 无高价值直接结果；`vedic astrology compatibility matching` 命中 VedAstro MCP、dashaflow、Cosmic Harmony Match、MyRashifal 等，其中可复用内核仍以本地 `dashaflow` MIT 为准。
+- 完成关系报告模板：`jyotish-app/main.js` 增加 `buildRelationshipReportTemplate`、`renderRelationshipReport`，保存配对记录、复盘、当前工作流与 HTML 导出都携带 `relationshipReport`/`relationship_report`。
+- 完成 bi-wheel/composite-style 比较视图：新增双人轴线、行星 overlay 宫位、星座关系 tone、Sun/Moon/Venus/Mars midpoint；完整合盘深度区会渲染 `renderBiWheelComparisonView`。
+- 完成样式与测试：`jyotish-app/style.css` 增加 `.relationship-report-*`、`.biwheel-*`、`.composite-style-strip`；`tests/test_frontend_productization.py` 增加关系报告和比较视图 token。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py -q` 通过；`npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 完成 `spouse_status_yoga.py` 关系折叠：`scripts/jyotish_api_server.py` 的 `/api/relationship` 返回 `spouse_status_yoga`；`jyotish-app/main.js` 增加 `buildSynastrySpouseStatusContext`、`renderSpouseStatusComparison`、保存复盘归一化和关系报告证据；`jyotish-app/export.js` 在 HTML 报告中输出 spouse-status 表。
+- 完成样式与测试：`jyotish-app/style.css` 增加 `.spouse-status-*`；`tests/test_api_server_security.py` 增加 relationship fragment 测试；`tests/test_frontend_productization.py` 增加 spouse-status token。
+- 验证：`python3 -m pytest tests/test_api_server_security.py tests/test_frontend_productization.py -q` 通过；`npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 完成关系报告打印 polish：`jyotish-app/export.js` 的合盘 HTML 报告升级为 `relationship-deliverable`，包含结论 hero、证据卡、bi-wheel 轴线、overlay 表、midpoint、spouse-status、行动列表和边界说明，并增加 print break-inside 规则。
+- 完成测试：`tests/test_frontend_productization.py` 增加 relationship deliverable/export token。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py -q` 通过；`npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 完成可编辑关系元数据：`jyotish-app/main.js` 的统一案例工作区增加 `workspace-edit-case`，支持编辑 chart/pair/prashna 标题、分组、关系类型和标签，并通过 `applyWorkspaceCaseMetadata` 归一化后写回原本地库。
+- 完成测试：`tests/test_frontend_productization.py` 增加 metadata editing token。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py -q` 通过；`npm run build` 通过，仅保留既有 Vite chunk size warning。
+
+## 2026-06-23
+
+- 本地/网络报告管线复核：外部 GitHub 命中的 Vedic report/PDF 项目大多是无许可证仓库、API SDK、产品壳或 notebook；决定复用本地 `vedic-astro-skills` 来源的 `scripts/report_builder.py`。
+- 完成后端报告 artifact/PDF 管线：`scripts/jyotish_api_server.py` 新增 `/api/report_artifact`，限制 HTML 体积，阻断 script/iframe/object/embed/on* 事件属性和 `javascript:` URL，写入 `/private/tmp/jyotish-reports`，并调用 `report_builder._html_to_pdf` 生成 PDF。
+- 完成安全降级：Playwright/Chromium 不可用时 API 返回后端生成 HTML 工件、`html_base64` 和 fallback 状态，不让导出流程空失败。
+- 完成前端 PDF 导出：`jyotish-app/api-bridge.js` 暴露 `generateReportArtifact`；`jyotish-app/export.js` 新增 `exportPDFReport` 和 `downloadBase64File`；`jyotish-app/index.html` 导出菜单新增 PDF；`jyotish-app/main.js` 懒加载导出分支支持 `data-format="pdf"`。
+- 完成测试与审计：`python3 -m pytest tests/test_api_server_security.py tests/test_frontend_productization.py -q` 通过；`python3 scripts/audit_fragments.py --strict` 通过，65 registry / 37 commands / 33 API endpoints / 42 frontend files，0 problems；`npm run build` 通过。
+- 完成关系时机/UL-DK 折叠：前端完整合盘上下文新增 `ulDkTiming`，聚合 7星制/8星制 DK、UL、当前 Dasha 与 7宫主/关系自然征象触发；当前合盘、保存配对回放、关系报告模板都能展示“UL/DK 与关系时机”证据卡。
+- 完成后端关系时机补强：`/api/relationship` 新增 `relationship_timing`，复用 `darakaraka_reader.py` 与 `jaimini.py`，并返回 `darakaraka_reader.py`/`jaimini.py` fragment source；HTML/PDF 合盘报告新增 `uldk-print-grid`。
+- 完成导出体验 polish：导出菜单新增 `aria-live` 状态区，导出期间禁用按钮/菜单项，PDF 回退以可见状态反馈提示，避免重复点击和“点了没反应”。
+- 完成构建体积优化：`export.js` 改为动态导入，`vite.config.js` 将 reference/audit chunks 拆分；生产构建主 JS 保持在约 356K。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py -q` 通过；`npm run build` 通过；`git diff --check` 通过。
+- 完成 Panchanga 搜索增强：条件筛选从单选升级为多选组合，支持 `has_vrata`、`festival_candidate`、`spiritual_practice`、`auspicious_activity`、`avoid_new_start`、`good_choghadiya` 的 AND 组合筛选，并在结果上方展示条件说明；CSV/ICS 继续使用筛选后的日期。
+- 完成 Panchanga search/details 补强：后端返回 `search_summary` 和逐日 `festival_details`；前端新增“满足全部/满足任一”模式、节日说明卡和 location-aware 坐标/时区摘要。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`git diff --check` 通过。
+- 额外验证：`python3 scripts/audit_fragments.py --strict` 通过。
+- 完成计算设置选择器：参数/日历中心新增 Calculation Settings 面板，支持保存 ayanamsa、node、house、sunrise、geocoder 策略到 localStorage；排盘请求会携带策略字段，星盘对象、provenance、JSON/HTML 导出都会记录这些设置。
+- 约束说明：当前核心排盘仍以 Lahiri / Mean Node / Whole Sign 为主路径，Raman/KP/True node 等先作为策略记录与后续统一引擎切换入口，避免 UI 假装已改变底层黄经。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`git diff --check` 通过。
+- 完成规则/技法检索目录与 API Explorer：`scripts/jyotish_api_server.py` 新增 `/api/technique_catalog` 和白名单 `/api/technique_example`；`jyotish-app/api-bridge.js`/`public/api-bridge.js` 暴露 `getTechniqueCatalog`、`runTechniqueExample`；`jyotish-app/skill-map.js` 的目录卡片可携带 endpoint，用当前星盘生成 payload 并试算 API，保留 workbench fallback。
+- 完成样式与测试：`jyotish-app/style.css` 补 Explorer call/sample 样式；`tests/test_api_server_security.py` 验证 catalog/runnable examples；`tests/test_frontend_productization.py` 验证 bridge、目录、payload builder、endpoint/action 映射。
+- 验证：`python3 -m pytest tests/test_api_server_security.py tests/test_frontend_productization.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`python3 scripts/audit_fragments.py --strict` 通过，65 registry / 37 commands / 35 API endpoints / 42 frontend files，0 problems。
+- 当前下一最高优先级：规则变体/流派 toggles 与候选碎片归档。
+- 完成规则变体/流派 toggles 可见化：Calculation Settings 新增 Yoga、Jaimini Karaka、KP significator、Ashtakavarga、Shadbala、Dasha reference 六类 Rule Variants；保存后进入排盘 payload、星盘对象 provenance、JSON/HTML/PDF 导出。
+- 约束说明：Rule Variants 当前作为解释口径和导出审计记录；非当前选项标注为 staged，后续逐项接入实时算法切换，避免 UI 假装已经改变底层判断。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`git diff --check` 通过；`python3 scripts/audit_fragments.py --strict` 通过，候选碎片从 8 个降至 6 个。
+- 当前下一最高优先级：继续分流 `dasha_analyzer.py`、`reading_orchestrator.py`、`report_orchestrator.py`、`orchestrator_bridge.py`、`hermes_bridge.py`、`mevg_automation.py`。
+- 完成 Yoga/Shadbala 规则碎片真实接入：`/api/yogas` 复用 `curse_yoga_detector.py` 返回 `curse_yogas`、`curse_count`、风险等级与规则口径；`/api/shadbala` 复用 `shadbala_advanced.py` 返回 `advanced_layer`、Kala VMDH、Yuddha Bala、Sputa Drishti 与规则口径。
+- 完成前端 Explorer 渲染：`jyotish-app/skill-map.js` 新增 Shadbala/Yoga 专属结果卡，显示规则来源、凶星合相风险、Kala/Yuddha/Sputa 摘要和下一步边界提示。
+- 修复碎片警告：移除 `shadbala_advanced.py` 中未使用且会触发 SwissEph 属性警告的日出调用，保持轻量 Hora 近似与主 Shadbala 一致。
+- 验证：`python3 -m pytest tests/test_api_server_security.py tests/test_frontend_productization.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`python3 scripts/audit_fragments.py --strict` 通过，0 problems，候选碎片保持 6 个。
+- 当前下一最高优先级：把 `dasha_analyzer.py` 决定为 API/报告 Dasha 叙事接入或归档；随后处理 report/reading orchestrator 与 bridge/automation 类碎片。
+- 完成 Dasha 候选碎片接入：`/api/dasha` 在 Vimshottari 模式下新增 `vimshottari_analysis`，复用 `dasha_analyzer.py` 的真实 Mahadasha 起点、当前 Antardasha 计算，并结合 `dasha_calculator_enhanced.py` 输出五级层级；主 `periods` 合同保持不变。
+- 完成 Dasha 前端可见化：Skill workbench 和主界面“多 Dasha 系统”详情都会显示当前 MD/AD、五级层级、Nakshatra/Pada、关键词与 fragment source。
+- 验证：`python3 -m pytest tests/test_api_server_security.py tests/test_frontend_productization.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`python3 scripts/audit_fragments.py --strict` 通过，候选碎片从 6 个降至 4 个。
+- 当前下一最高优先级：处理 `reading_orchestrator.py`、`orchestrator_bridge.py`、`hermes_bridge.py`、`mevg_automation.py` 的产品归属。
+- 完成主题化报告编排器接入：新增 `/api/thematic_report`，复用 `report_orchestrator.py` 生成五主题 summary/narrative/evidence/conflict/timing/recommendations，并把 `reading_orchestrator.py`、`orchestrator_bridge.py` 作为 registry 输出路径纳入真实引用链。
+- 完成前端承载：`api-bridge.js`/`public/api-bridge.js` 暴露 `computeThematicReport`，Skill workbench 新增“主题报告”动作，Technique Directory/API Explorer 可试算 `/api/thematic_report`，结果以主题卡展示强度、时间锚点、证据和建议。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py -q` 通过；`python3 scripts/audit_fragments.py --strict` 通过，66 registry / 36 API endpoints / 42 frontend files，0 problems，候选碎片从 4 个降至 2 个。
+- 当前下一最高优先级：处理剩余 `hermes_bridge.py` 与 `mevg_automation.py`；两者偏外部学习/自动化门控，需做非破坏性产品归属或工具化决策。
+- 完成主题报告/编排碎片归档：`/api/thematic_report` 返回 `fragment_sources` 与 `workflow_orchestration`，声明 `report_orchestrator.py`、`reading_orchestrator.py`、`orchestrator_bridge.py` 的分工；Skill workbench 主题报告结果会展示这些来源。
+- 完成 MEVG 自动化接入：`/api/case_validation` 返回 `mevg_gate`，只读 `mevg_automation.py` 的门控协议/状态文件，不运行子进程、不写状态；无 `tests/mevg_state.json` 时明确返回 `NOT_INITIALIZED`。
+- 完成 Hermes 归档决策：`hermes_bridge.py` 属于外部个人 agent/WorkBuddy 学习桥，依赖 `hermes_memory_core.py` 且默认写 `~/.workbuddy`，不进入印度占星网页/app 默认产品面，已加入 `scripts/audit_fragments.py` 的忽略清单。
+- 当前下一最高优先级：跑全量回归、build、碎片审计，确认候选碎片清零。
+- 完成回归确认：`python3 -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`git diff --check` 通过；`python3 scripts/audit_fragments.py --strict` 通过，候选碎片清零。
+- 当前下一最高优先级：从“碎片清理”转向真实用户端质量，优先把 `/api/thematic_report` 从样例 evidence 升级为消费真实 full-reading 模块证据。
+- 完成主题报告真实证据链：`/api/thematic_report` 在没有自定义 evidence、但提供 birth/chart payload 时进入 `derived_chart_evidence` 模式，best-effort 调用 chart、dasha、yogas、shadbala、ashtakavarga、relationship、career、Jaimini 模块，生成 marriage/career/wealth/health/spirituality 五主题证据。
+- 完成前端证据透明度：Skill workbench 主题报告结果显示 `evidence_source`、`module_status`、warning 数和 real/sample fallback 状态，让用户能区分真实计算报告与示例报告。
+- 验证：`python3 -m pytest tests/test_api_server_security.py::test_thematic_report_derives_evidence_from_birth_payload tests/test_api_server_security.py::test_thematic_report_declares_orchestrator_fragments tests/test_frontend_productization.py::test_skill_workbench_exposes_all_expected_advanced_actions -q` 通过；`npm run build` 通过。
+- 当前下一最高优先级：补 Technique Directory/API Explorer 的方法文档、可复制 cURL/OpenAPI 示例，并继续检查同品类产品 polish 缺口。
+- 完成方法文档/API 示例：`/api/technique_catalog` 新增 `api_docs` 与每行 `method_docs`，白名单 endpoint 自动生成 cURL、最小 OpenAPI operation、方法 notes；主题报告等多 endpoint 技法会按 id/name/domain 优先绑定最相关 API。
+- 完成前端 API 文档展示：Technique Directory 卡片显示方法摘要、边界和 API doc key；Explorer 样例结果显示 `cURL / OpenAPI` 折叠区，支持复制本地 API 调用片段。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py::test_skill_workbench_exposes_all_expected_advanced_actions tests/test_frontend_productization.py::test_frontend_backend_contracts_with_api_handler -q` 通过；`npm run build` 通过。
+- 当前下一最高优先级：执行全量回归/审计后，转向 P2 同品类产品 polish：PWA/桌面包装审计、隐私信任中心、术语模式与可替换星历底座。
+- 完成 PWA/信任中心 MVP：新增 `manifest.webmanifest`、`pwa-icon.svg`、`sw.js`，HTML 关联 manifest/theme color，主入口注册 service worker、监听 install prompt，并在参数/日历页展示 PWA 状态。
+- 完成本地数据 Trust Center：参数/日历页显示 Local-first 数据说明、本地星盘/配对/问事数量、API/AI 边界；提供“安装为应用”“导出本地资料”“清空本地资料”按钮，清空动作保留 `window.confirm` 二次确认。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py::test_provenance_panchanga_workspace_panel_is_productized tests/test_frontend_productization.py::test_mobile_layout_keeps_dense_sections_single_column -q` 通过；`npm run build` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：全量回归/审计后，推进术语模式和星历底座可替换性说明。
+- 完成术语模式产品化：Trust Center 新增入门/专业/梵文优先三档；tooltip 会按当前模式切换标题、名称对照和说明深度；provenance、Trust Center 本地导出、JSON/HTML 报告都会记录当前术语偏好。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py::test_provenance_panchanga_workspace_panel_is_productized tests/test_frontend_productization.py::test_mobile_layout_keeps_dense_sections_single_column -q` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：补桌面包装说明/spike，并继续星历底座可替换性分析。
+- 完成主题报告 full-reading 证据链升级：`/api/thematic_report` 在出生数据路径下优先调用 `cmd_full_reading`，读取 full-reading modules，并把 marriage_counting、Vivah Saham、Dasa convergence、Dhana Yoga、validation、D30、D20/Jaimini 等真实模块折叠进五主题证据。
+- 修复主题报告兼容性 Bug：full-reading 的 Dasha timeline 中 `antardasha` 可能是对象，已在 `_normalize_thematic_dasha_timeline` 中统一提取 lord/name 并归一化年份，避免 `report_orchestrator.TimingAnchorBuilder` 拼接时报 TypeError。
+- 完成前端证据透明度增强：Skill workbench 主题报告结果显示 `full-reading:<module_count> modules` 与 `full_reading_modules` 来源，普通用户可区分 full-reading 实算证据和 sample fallback。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`python3 scripts/audit_fragments.py --strict` 通过，66 registry / 36 API endpoints / 43 frontend files / candidate_count 0；`git diff --check` 通过。
+- 当前下一最高优先级：术语模式与星历底座抽象，先检查现有 glossary/i18n/calculation settings 是否已有半接入碎片，再补用户端切换入口与导出/provenance 记录。
+- 完成术语模式与星历底座 MVP：Calculation Settings 增加 `ephemerisBackend` 与 `terminologyMode`，兼容旧 `jyotish_terminology_mode`；tooltip 支持 balanced/beginner/professional 三种解释层，Trust Center、provenance、HTML/JSON 导出都会记录当前模式与星历底座。
+- 产品边界：`xalen-ephemeris` 先作为 Apache-2.0 可行性记录，不改变当前 Swiss Ephemeris 主路径；避免 UI 暗示已替换核心黄经。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`python3 scripts/audit_fragments.py --strict` 通过；`git diff --check` 通过。
+- 当前下一最高优先级：桌面包装说明与运行健康检查入口，让普通用户能判断本地 API/PWA/导出能力是否可用。
+- 完成普通用户运行健康检查入口：`api-bridge.js`/`public/api-bridge.js` 暴露 `getAPIHealth()`；Trust Center 新增 Runtime Health 面板和“运行健康检查”按钮，串联 `/api/health`、`/api/capability_audit`、PWA 状态、Pake/Tauri 桌面路线与 preflight 命令。
+- 修复普通用户可用性 Bug：此前 Trust Center 只展示静态 API 说明，用户无法判断本地 Python API 是否在线；现在失败时给出 `npm run web` / `python3 scripts/jyotish_api_server.py` / `python3 scripts/desktop_packaging_preflight.py` 的具体恢复路径。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py::test_api_bridge_exports_productized_backend_actions tests/test_frontend_productization.py::test_provenance_panchanga_workspace_panel_is_productized tests/test_frontend_productization.py::test_mobile_layout_keeps_dense_sections_single_column tests/test_frontend_productization.py::test_desktop_packaging_spike_is_documented_and_checkable -q` 通过；`npm run build` 通过。
+- 当前下一最高优先级：跑全量回归/碎片审计后，继续首次使用引导与普通用户空状态路径。
+- 会话恢复检查：`session-catchup.py` 提示前一窗口存在未同步上下文；已按建议读取 `task_plan.md`、`progress.md`、`findings.md` 并查看 `git diff --stat`，继续在原计划文件内同步状态。
+- 完成首屏首次使用引导：`jyotish-app/index.html` 新增 `first-use-panel`，提供“运行健康检查”“填入示例盘”“识别已有星盘”三条入口；`main.js` 新增 `DEMO_BIRTH`、`setupFirstUsePanel`、`fillDemoBirth`、`runFirstUseHealthCheck`、`focusFirstUseImport`，并把本地星盘库空状态改成可行动提示。
+- 完成首屏样式与移动端守门：`style.css` 新增 first-use 操作区样式，并把 `.first-use-grid` 纳入现有 768px 单列响应式守门。
+- 测试先行：先新增 `test_first_use_onboarding_is_actionable` 并确认红灯失败于缺失 `first-use-panel`；实现后继续复跑到产品矩阵同步阶段。
+- 当前下一最高优先级：完成首屏测试转绿后，运行构建/preflight/diff 检查，再用真实浏览器做桌面/移动首次运行冒烟。
+- 浏览器冒烟发现并修复首跑 Banner Bug：Python API 返回的 `ascendant` 不含 `lord`、`Moon` 不含 `nakshatra/nakshatra_pada`，前端原本直拼字段会显示 `undefined`；新增 `getAscendantLord`、`normalizePlanetRecord`、`formatMoonNakshatra`，从星座推导上升主星，缺星宿时隐藏该行。
+- 新增回归守门：`test_chart_banner_avoids_undefined_api_fields` 先红灯捕捉 Banner 直拼问题，修复后转绿。
+- 真实浏览器验证：使用系统 Google Chrome + Codex bundled Playwright 访问 `http://127.0.0.1:5173/`，完成首屏健康检查、示例盘填入、生成星盘、移动端 390px 单列检查；输出确认 `hasUndefined=false`、`chartVisible=true`、`consoleErrors=[]`。
+- 当前下一最高优先级：跑全量前端测试、build、desktop preflight、diff check，并关闭本地 API/Vite 会话。
+- 完成首次使用入口接线复核：输入页已有“运行健康检查 / 填入示例盘 / 识别已有星盘”三入口；修正首次使用健康检查读取 `/api/capability_audit` 的字段口径，使用 `registry.technique_count` 与 `surfaces.api_endpoint_count`，避免显示模糊的“技法目录已返回”。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`python3 scripts/audit_fragments.py --strict` 通过，candidate_count 0；`git diff --check` 通过；`python3 tests/run_frontend_runtime_smoke.py --start-if-needed` 通过，66 registry / 66 excellent UX / 66 productized。
+- 浏览器交互守门：Playwright Python 包存在，但 Chromium 二进制下载多次超时/断连，已停止卡住的安装进程；当前以 runtime smoke + curl 首页/manifest/api-bridge + packaging preflight 作为可执行首跑验证。
+- 完成高级技法错误恢复提示：Skill Workbench/API Explorer 的 `renderWorkbenchError` 现在提示先到 Trust Center 运行健康检查，并给出 `npm run web` / `python3 scripts/jyotish_api_server.py` 的恢复动作。
+- 当前下一最高优先级：继续导出/报告失败恢复和 AI/API key 安全提示，降低普通用户在 PDF、AI 聊天和外部凭证配置上的误操作。
+- 官方文档核对：OpenAI API authentication 文档明确 API key 是 secret，不应暴露在浏览器/app 客户端代码里，应从服务端环境变量或密钥管理服务读取；据此修正 AI 聊天配置提示。
+- 完成 AI/API key 安全提示：`ai-chat.js` 新增 `buildAISetupGuidance`，未登录与本地默认回复都提示通过服务端 `/api/chat` 或后端代理连接模型，并说明 `OPENAI_API_KEY` 放在服务端环境变量；移除“浏览器控制台 localStorage 配置 endpoint”的旧提示。
+- 完成导出失败恢复：`main.js` 新增 `getPDFExportRecoveryMessage` / `getGenericExportRecoveryMessage`，PDF fallback 明确“已改为导出 HTML 报告”，并指向 Trust Center 健康检查与 `python3 scripts/jyotish_api_server.py` 恢复路径；导出异常不再弹窗打断。
+- 新增测试：`test_ai_chat_guides_server_side_secret_handling` 先红灯后转绿，并守住 `buildAISetupGuidance` 只定义一次；`test_export_failure_recovery_guides_health_check` 先红灯后转绿。
+- 当前下一最高优先级：跑完整前端产品化测试、API 安全测试、runtime smoke、build、preflight、audit fragments 与 diff check，然后继续 ephemeris abstraction feasibility。
+- 验证完成：`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`python3 tests/run_frontend_runtime_smoke.py --start-if-needed` 通过；`npm run build` 通过；`python3 scripts/desktop_packaging_preflight.py` 通过；`python3 scripts/audit_fragments.py --strict` 通过，problem_count/warning_count/candidate_count 均为 0；相关 `git diff --check` 通过。
+- 当前下一最高优先级：进入 ephemeris abstraction feasibility，先扫描本地 `xalen`/VedAstro/PyJHora/SwissEph 记录与现有 calculation settings，再决定做探针脚本还是 API contract。
+- 完成 AI 安全提示修复：`ai-chat.js` 不再在默认回复中引导用户通过浏览器控制台/localStorage 配置 AI endpoint；新增 `buildAISetupGuidance()`，明确 `OPENAI_API_KEY` 必须放在服务端环境变量，并通过服务端 `/api/chat` 或后端代理使用。
+- 完成导出失败恢复提示：`main.js` 新增 `buildExportRecoveryMessage()`；PDF 失败时在 `export-status` 中提示先运行 Trust Center 健康检查、启动本地 API，或先导出 HTML 再浏览器打印 PDF，不再用 alert 打断。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py::test_ai_chat_guides_server_side_secret_handling tests/test_frontend_productization.py::test_provenance_panchanga_workspace_panel_is_productized -q` 通过；`npm run build` 通过；`git diff --check` 通过。
+- 当前下一最高优先级：跑全量回归/碎片审计后，继续检查 `api-bridge.js` 中旧版 `YINDUZHANXING_AI_KEY` 浏览器密钥路径是否应降级为 legacy warning 或移除。
+- 完成浏览器 AI key 路径降级：`api-bridge.js`/`public/api-bridge.js` 不再读取 `YINDUZHANXING_AI_KEY`、不再暴露 `apiKey`、不再向旧 relay 发送 Bearer token；`aiReading/aiFullReading/aiQuickInsight` 保留函数名但返回 `AI_BROWSER_KEY_DISABLED` 安全指引，AI 对话统一走登录后的服务端 `/api/chat` 或后端代理。
+- 修复过境对比旧 key 传播：`renderTransitCompareTab` 请求本地 `/api/transit` 时不再从 `window.JyotishAPI.apiKey` 拼 `Authorization` header。
+- 文档同步：README 历史说明改为当前浏览器构建禁用模型 API key 直连，避免普通用户继续按旧方式配置。
+- 验证：`python3 -m pytest tests/test_frontend_productization.py::test_api_bridge_exports_productized_backend_actions tests/test_frontend_productization.py::test_ai_chat_guides_server_side_secret_handling -q` 通过；`npm run build` 通过。
+- 当前下一最高优先级：执行全量回归/碎片审计后，继续检查登录/订阅/API 调用失败是否有用户端恢复提示。
+- Ephemeris TDD 红灯：新增 `test_ephemeris_abstraction_feasibility_is_probeable` 后先运行 `python3 -B -m pytest tests/test_frontend_productization.py::test_ephemeris_abstraction_feasibility_is_probeable -q`，按预期失败于缺少 `scripts/ephemeris_backend_probe.py`。
+- 完成星历后端可行性探针：新增 `scripts/ephemeris_backend_probe.py`，只读检查 `swisseph_python`、`swisseph_wasm`、`xalen_ephemeris`、`vedastro`、`pyjhora_benchmark` 的可用性、`license_posture` 与 `replacement_readiness`，输出 JSON。
+- 完成星历可行性文档：新增 `docs/research/ephemeris_abstraction_feasibility_2026_06_23.md`，同步 `docs/research/product_gap_matrix_2026_06_22.md`、`task_plan.md`、`findings.md`。
+- 当前下一最高优先级：跑探针/测试/build/preflight/audit 回归后，继续进入星历 backend adapter contract 与 longitude parity matrix。
+- Ephemeris contract TDD 红灯：新增 `test_ephemeris_adapter_contract_and_parity_matrix_are_defined` 后先运行，按预期失败于缺少 `scripts/ephemeris_adapter_contract.py`。
+- 完成星历 adapter contract：新增 `scripts/ephemeris_adapter_contract.py`，复用现有 `compute_chart_data` 生成 `swisseph_python` baseline，定义 `EphemerisAdapterContract`、`PARITY_CASES`、`sun_moon_asc_nodes` 和 `acceptance_thresholds`。
+- 完成 parity matrix 文档：新增 `docs/research/ephemeris_adapter_contract_2026_06_23.md`，明确 Sun/Moon/Asc/Rahu/Ketu 的 `longitude_delta_arcsec` 验收阈值与 xalen/VedAstro/PyJHora 的接入边界。
+- 当前下一最高优先级：跑 contract 脚本、测试、build、preflight、fragment audit、diff check，然后继续候选 adapter spike 或 AI/export 交互 smoke。
+- 完成 runtime smoke 补强：`tests/run_frontend_runtime_smoke.py` 现在 POST `/api/report_artifact` 并验证 HTML fallback artifact，同时读取 `/api-bridge.js` 确认 `AI_BROWSER_KEY_DISABLED`、`server_side_only` 和无前端 Bearer key 泄漏。
+- 完成候选星历 adapter spike：新增 `scripts/ephemeris_candidate_adapter_spike.py` 与 `docs/research/ephemeris_candidate_adapter_spike_2026_06_23.md`，将 `swisseph_wasm_candidate` 和 `xalen_ephemeris_candidate` 都挡在 `license_gate` / `parity_gate_required` / `runtime_setting_exposure` 之后。
+- 当前下一最高优先级：跑候选 spike 与全量回归；随后继续检查登录/订阅/API 调用失败恢复提示。
+- 调试修复：`scripts/ephemeris_adapter_contract.py` 首跑暴露 `PARITY_CASES` 的 `id/label` 被混传进 dataclass，已修正为只传计算输入字段，保留 `id/label` 用于矩阵行。
+- 验证完成：`python3 scripts/ephemeris_backend_probe.py` 通过，确认 SwissEph Python/WASM 可用、xalen 未本地接入、VedAstro/PyJHora 为基准；`python3 scripts/ephemeris_adapter_contract.py` 通过并生成 3 组 baseline parity rows。
+- 回归完成：`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build` 通过；`python3 scripts/desktop_packaging_preflight.py` 通过；`python3 scripts/audit_fragments.py --strict` 通过，problem/warning/candidate 均为 0；相关 `git diff --check` 通过。
+- 当前下一最高优先级：检查候选星历 adapter 的本地可执行性；若没有 xalen 本地二进制/源码，则先做 SwissEph WASM parity smoke 或转向 AI/export 实际交互 smoke。
+- 候选 adapter spike 复核：本地有 Rust/Cargo，但没有 xalen 源码或二进制；SwissEph WASM 资产存在，`@swisseph/browser` package license 为 `AGPL-3.0`，`swisseph-wasm` package license 为 `GPL-3.0-or-later`。
+- 完成许可证门禁结构化：`scripts/ephemeris_candidate_adapter_spike.py` 新增 `package_license` 输出和 distribution gate，避免把 GPL/AGPL WASM fallback 误当作低风险生产替换后端。
+- 当前下一最高优先级：跑候选 gate 测试和全量回归后，转向 AI/export runtime smoke 或 xalen 隔离获取/构建 spike。
+- 验证完成：`python3 scripts/ephemeris_candidate_adapter_spike.py` 输出 `package_license`，`test_ephemeris_candidate_adapter_spike_is_gated` 通过；全量 `tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py` 通过；`npm run build`、`desktop_packaging_preflight.py`、`audit_fragments.py --strict`、相关 `git diff --check` 均通过。
+- 当前下一最高优先级：从星历 gate 转向真实用户运行路径，优先检查 AI/export runtime smoke 是否覆盖点击失败恢复、服务端密钥提示和 PDF/HTML fallback。
+- 真实浏览器 AI 交互验证：打开 `http://127.0.0.1:5173/`，示例盘生成后打开 AI 面板，输入“请概述这个星盘”并按 Enter；面板在 1280x720 视口内，回复明确提示 `/api/chat`、服务端环境变量 `OPENAI_API_KEY`、不要把 key 放浏览器，且无 `jyotish_ai_endpoint` 或浏览器控制台配置文案。
+- 修复 AI 安全残留：删除 `ai-chat.js` 旧版 `localStorage.getItem('jyotish_ai_endpoint')` 自定义 endpoint fetch 路径；`test_ai_chat_guides_server_side_secret_handling` 现在禁止 `jyotish_ai_endpoint` 和 `Custom endpoint failed`。
+- Runtime smoke 补强：`tests/run_frontend_runtime_smoke.py` 现在同时检查 `api-bridge.js` 和 `ai-chat.js`，确认 AI 浏览器 key 禁用、聊天配置指向服务端 `/api/chat` 和 `OPENAI_API_KEY`。
+- 当前下一最高优先级：跑 runtime smoke、全量回归、build、审计和 diff check；然后继续导出点击路径是否需要更强可见状态守门。
+- 完成登录/订阅/API 恢复提示：`auth.js` 新增 `buildAuthRecoveryMessage`、`showAuthError` 与安全响应解析，登录/注册/Apple/token 校验失败时会提示 Trust Center、`npm run web`、`python3 scripts/jyotish_api_server.py`；`subscription.js` 新增 `buildSubscriptionRecoveryMessage`、`showSubscriptionNotice`，IAP/恢复购买/收据验证失败不再只弹 alert，并对消息做 HTML 转义。
+- 验证完成：`test_auth_and_subscription_failures_have_recovery_guidance` 通过；全量 `tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py` 通过；`tests/run_frontend_runtime_smoke.py --start-if-needed` 通过；`npm run build` 通过；`ephemeris_backend_probe.py`、`ephemeris_adapter_contract.py`、`ephemeris_candidate_adapter_spike.py`、`desktop_packaging_preflight.py`、`audit_fragments.py --strict` 和 `git diff --check` 均通过。
+- 当前下一最高优先级：继续检查主排盘、关系工作流、Skill Workbench 的 API 调用失败恢复是否同样完整。
+- 完成 API bridge 与主排盘失败恢复：`api-bridge.js`/`public/api-bridge.js` 安全解析非 JSON 响应，主排盘表单新增 `chart-compute-status` 可见状态，失败时提示 Trust Center、`npm run web`、`python3 scripts/jyotish_api_server.py`，不再用 alert 打断。
+- 完成 AI chat API 失败恢复：`ai-chat.js` 对 `/api/chat` 使用安全响应解析；服务端 AI 不可用时提示服务端环境变量 `OPENAI_API_KEY`、Trust Center 与本地 API 启动路径，同时保留本地解释 fallback。
+- 完成 Transit/互动 API 失败恢复：`renderTransitCompareTab` 不再直接 `resp.json()`，非 JSON/HTTP 错误会显示可行动恢复提示；Transit 主渲染、关系合盘、Prashna、校正时间应用统一走 `buildInteractiveAPIRecoveryMessage`/`renderInlineAPIError`，避免裸错误和旧版启动命令散落。
+- 当前下一最高优先级：跑完整回归、runtime smoke、build、星历/打包/碎片审计与 diff check；若通过，进入真实浏览器点击级 smoke，覆盖生成星盘、AI chat、导出、Transit/合盘/问事失败态。
+- 真实浏览器点击级 smoke 发现并修复首盘渲染残留：示例盘生成后页面仍有 `☽ undefined Pundefined` 与 Raman 详情 `(undefined)`；已改为 `buildChartSummary` 复用 `formatMoonNakshatra`，`analysis-renderers.js` 新增 `sanitizeRamanDetail` 将缺失星座显示为“缺星座”。
+- 验证完成：`python3 -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；浏览器复验示例盘后 `hasUndefined=false`、`hasNaN=false`、控制台无 error；`npm run build` 通过；`python3 tests/run_frontend_runtime_smoke.py --start-if-needed` 通过；`python3 scripts/audit_fragments.py --strict` 与 `git diff --check` 通过。
+- 当前下一最高优先级：把真实浏览器点击级 smoke 固化为可重复脚本，继续覆盖 AI chat、导出、Transit/合盘/问事失败态。
+- 完成真实浏览器点击级 smoke 固化：新增 `tests/run_frontend_click_smoke.py`，动态启动本地 API/Vite，向页面注入 `YINDUZHANXING_API_BASE`，使用系统 Chrome 真实点击示例盘生成、AI chat、HTML 导出、Transit、合盘、问事，并输出 JSON 结果。
+- 点击级 smoke 发现并修复 HTML 导出真 Bug：`computeNakshatraAdvanced` 中对象简写误写 `sub_lord,`，运行时抛 `sub_lord is not defined`，导致 HTML 报告导出失败；已修为 `sub_lord: subLord`，并在产品化测试中禁止回归。
+- 验证完成：`tests/run_frontend_click_smoke.py` 通过，HTML 导出状态为“HTML 报告已开始下载，可直接打开或打印”；`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build`、`desktop_packaging_preflight.py`、`audit_fragments.py --strict`、`run_frontend_runtime_smoke.py --start-if-needed`、三条 ephemeris 脚本和 `git diff --check` 均通过。
+- 当前下一最高优先级：把真实浏览器守门扩展到移动端/离线/PWA 安装与无 API 失败路径，避免只验证在线桌面 happy path。
+- 完成移动端/离线/PWA 点击守门扩展：`tests/run_frontend_click_smoke.py` 支持 `--mode core|mobile|offline|all`；`mobile` 跑 390x844 真机视口，`offline` 故意指向未监听 API 端口，验证健康检查恢复提示、浏览器 fallback 排盘和 manifest/serviceWorker。
+- 真实移动端修复：mobile smoke 发现 AI FAB 在 390px 视口被星盘/行星表截获，并发现页面横向溢出 528px；已把移动 FAB 改为左侧安全区定位、AI panel 改为 `100vw` 左侧滑入，并给 chart/table 容器补 `minmax(0,1fr)`/`min-width:0`/`max-width:100%`。
+- 完成 Pake/Tauri 非破坏性本机探测：`scripts/desktop_packaging_preflight.py` 新增 `toolchain_probe`，只读探测 node/npm/rustc/cargo/xcodebuild/pake/tauri；本机 node/npm/rust/cargo 可用，pake/tauri CLI 未安装，xcodebuild 只有 CommandLineTools 因此 `macos_signing_notarization=false`。
+- 验证完成：`python3 tests/run_frontend_click_smoke.py --mode all` 通过；`python3 -B -m pytest tests/test_frontend_productization.py -q` 通过；`npm run build` 通过；`python3 scripts/desktop_packaging_preflight.py` 输出 `toolchain_probe.non_destructive=true`；相关 `git diff --check` 通过。
+- 当前下一最高优先级：继续检查 PDF fallback 的真实点击路径、PWA 离线 shell 二次加载、以及移动端长页面关键标签切换。
+- 完成 PDF fallback 真实点击守门：`run_pdf_fallback_smoke` 会生成示例盘后 monkeypatch `window.JyotishAPI.generateReportArtifact` 返回 HTML fallback，真实点击“导出 PDF 报告”，验证用户看到“PDF 渲染器不可用 / 已改为导出 HTML 报告 / Trust Center / npm run web / python3 scripts/jyotish_api_server.py”。
+- 完成 PWA 离线 shell 二次加载守门：`run_offline_shell_reload_smoke` 等待 service worker 控制后切换 `context.set_offline(True)` 并 reload，确认 `first-use-panel` 仍可加载，离线 JS module 请求的 `ERR_FAILED` 被归入 `offline_shell_expected_console_errors`，不污染真正 console error。
+- 完成移动端长标签切换守门：`run_mobile_tab_smoke` 在 390x844 视口依次点击 Complete、Vargas、Synastry、Prashna、Transit Compare，确认对应 panel active、无 `undefined/NaN`、无非豁免横向溢出。
+- 验证完成：`python3 tests/run_frontend_click_smoke.py --mode all` 通过，输出 `pdf_fallback_checked=true`、`offline_shell_reload_checked=true`、`mobile_tab_switch_checked=true`；`python3 -B -m pytest tests/test_frontend_productization.py -q` 通过；`npm run build` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：检查报告/导出后端 artifact 的用户可见完整性，包括 HTML/PDF artifact 状态、失败恢复、下载命名和普通用户可理解提示。
+- 完成移动/离线/PWA 点击守门：`tests/run_frontend_click_smoke.py` 新增 `--mode online|offline|all`；在线模式补移动首屏和 `manifest.webmanifest`/`serviceWorker` 检查；离线模式只启动前端，用未监听 API 端口验证 `first-use-health` 与排盘 fallback 恢复提示。
+- 完成质量门接入：`scripts/run_quality_gate.py` 默认运行 `tests/run_frontend_click_smoke.py --mode all`，并提供 `--skip-frontend-click` 给无浏览器环境跳过。
+- 验证完成：`python3 tests/run_frontend_click_smoke.py --mode all` 通过，在线/离线 console_errors 均为空，离线连接拒绝被归类为 `expected_offline_console_errors`；`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build`、`run_frontend_runtime_smoke.py --start-if-needed`、`desktop_packaging_preflight.py`、`audit_fragments.py --strict`、`git diff --check` 均通过。
+- 当前下一最高优先级：继续补普通用户“桌面应用/安装后首次打开”路线说明与验证，让 PWA/Pake/Tauri 路径从文档提示进一步变成可执行检查。
+- 完成桌面首启路线可执行化：`scripts/desktop_packaging_preflight.py` 新增 `first_launch_checks`，输出 PWA installed shell、Pake first launch、Tauri sidecar readiness 三条可执行检查；README 与 `docs/research/desktop_packaging_spike_2026_06_23.md` 增加 `tests/run_frontend_click_smoke.py --mode all` 和“安装后首次打开”步骤。
+- 调试修正：首轮 click smoke 抓到 390px 移动视口 `scrollWidth=528`；诊断确认来源是 `.section-tabs` 合法横向滚动项，而非页面主体溢出。已将 smoke 的溢出检测改为排除 `.section-tabs` 等明确滚动容器，继续抓其他非预期溢出。
+- 验证完成：`python3 tests/run_frontend_click_smoke.py --mode all` 通过；`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py tests/test_muhurta.py -q` 通过；`npm run build`、`run_frontend_runtime_smoke.py --start-if-needed`、`desktop_packaging_preflight.py`、`audit_fragments.py --strict`、`git diff --check` 均通过。
+- 当前下一最高优先级：做 Pake/Tauri 本机可用性探测脚本，只检测 CLI、Rust/Node、签名/sidecar 前置条件，不生成真实包，避免破坏性打包。
+- 完成 PDF fallback / PWA 离线 shell / 移动长标签守门：`tests/run_frontend_click_smoke.py --mode all` 覆盖 PDF 渲染器不可用时 HTML fallback 提示、移动端 Complete/Vargas/Synastry/Prashna/Transit Compare 标签切换、service worker 真离线二次加载。
+- 修复 PWA 离线 shell 噪声：`jyotish-app/public/sw.js` 现在只在 `request.mode === 'navigate'` 时 fallback 到 `/index.html`，避免 JS module 离线请求拿到 HTML 并触发 MIME 错误；断网资源错误会被 smoke 归类为 expected，真正异常仍留在 `console_errors`。
+- 当前下一最高优先级：跑完整回归链后，继续检查报告/导出后端 artifact 的用户可见完整性。
+- 完成报告/导出 artifact 契约收口：`/api/report_artifact` 现在对 HTML、PDF 成功、PDF fallback 都返回 `artifact_status`、`primary_artifact`、`download_filename`、`download_mime`、`fallback_reason`、`user_message`、`next_action`，并在 `delivery` 中提供同构字段。
+- 完成前端 artifact 下载与提示收口：`exportPDFReport` 优先使用后端 `download_filename`/`download_mime`，保留 `downloaded_filename` 作为实际浏览器下载记录；`formatReportArtifactStatus` 优先使用后端 `user_message`，PDF fallback 继续显示 HTML 降级、文件名与打印 PDF 路径。
+- 验证完成：新增 report artifact PDF fallback 单元测试先红灯后转绿；`tests/run_frontend_runtime_smoke.py --start-if-needed` 输出 `artifact_status=html_ready` 与 `download_filename`；`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py -q` 通过；`npm run build` 在 `jyotish-app/` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：补真实浏览器导入/案例库工作流守门，覆盖文本/PDF 星盘导入入口、识别失败恢复、保存案例、重新打开和导出案例库，继续排查移动端导出菜单与 Trust Center 长内容。
+- 完成导入/案例库真实浏览器守门补强：`tests/run_frontend_click_smoke.py --mode workspace` 先用不完整出生资料验证“仍需手动补充：出生时间、出生地经纬度、时区”，再用完整 Delhi 文本资料验证识别质量分、自动填表、生成星盘、保存本地星盘、重新打开、保存到案例库、导出已选和导出全库。
+- 验证完成：`python3 tests/run_frontend_click_smoke.py --mode workspace --keep-logs` 通过，下载 `jyotish-selected-cases-2026-06-23.json` 与 `jyotish-case-library-2026-06-23.json`，console_errors 为空。
+- 当前下一最高优先级：排查移动端导出菜单与 Trust Center 长内容，确认 390px 视口下菜单不遮挡、长面板无横向溢出、健康检查/本地数据/安装说明在移动端可读可操作。
+- 完成导入/案例库真实点击守门：`tests/run_frontend_click_smoke.py` 新增 `run_import_workspace_smoke` 和 `--mode workspace`，真实输入出生资料文本，确认识别质量 100、填表、生成星盘、保存本地星盘、返回输入页重开保存星盘、进入参数/日历工作区保存当前盘、导出已选案例和整库。
+- 验证完成：`python3 tests/run_frontend_click_smoke.py --mode workspace` 通过；`python3 tests/run_frontend_click_smoke.py --mode all` 通过并包含 `import_workspace_checked=true`、`jyotish-selected-cases-*.json`、`jyotish-case-library-*.json`；`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py -q` 通过；`python3 tests/run_frontend_runtime_smoke.py --start-if-needed` 通过；`npm run build` 在 `jyotish-app/` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：排查移动端导出菜单与 Trust Center 长内容，确认 390px 视口下菜单不遮挡、长面板无横向溢出、健康检查/本地数据/安装说明在移动端可读可操作。
+- 完成移动端导出菜单与 Trust Center 长内容守门：`tests/run_frontend_click_smoke.py --mode mobile-trust` 在 390px 视口检查导出菜单五项、JSON 下载、Trust Center 健康检查、本地资料导出、关键按钮文案和长面板横向溢出。
+- 修复移动端问题：Trust Center 健康检查成功后 `renderAll()` 会重渲染面板，原先状态被 PWA 默认说明覆盖；新增 `getTrustCenterStatusMessage` 保留健康检查结果。工作区案例块在移动端会因内部 360px 宽度加 padding 越界，已给 case workspace 相关块补 `min-width:0`、移动单列和 `max-width:100%`。
+- 完成点击 smoke 超时/质量门接入：`tests/run_frontend_click_smoke.py --timeout 1` 验证超时路径输出 `process_snapshot` 与日志尾部，PID 清理后 `ps` 无残留；`scripts/run_quality_gate.py` 新增 `--frontend-click-timeout` 并传给点击 smoke 默认 `--timeout 240`。
+- 验证完成：`python3 tests/run_frontend_click_smoke.py --mode all` 通过；`python3 tests/run_frontend_click_smoke.py --mode mobile-trust --timeout 120` 通过；`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py -q` 通过；`python3 tests/run_frontend_runtime_smoke.py --start-if-needed` 通过；`npm run build` 在 `jyotish-app/` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：给 PDF/文本星盘导入的文件上传分支补真实浏览器守门，覆盖 PDF 文本抽取失败恢复、文本文件上传解析、导入后字段质量提示与移动端文件选择入口。
+- 完成 PDF/文本文件上传导入守门：`tests/run_frontend_click_smoke.py --mode import-files` 真实上传 `.txt` 出生资料，验证识别质量 100、字段填入到 1988-11-09 06:45 Mumbai/UTC+5:30；monkeypatch PDF import API 抛错后上传 `.pdf`，验证“PDF文本抽取失败”和“可复制PDF文字后粘贴到文本框”恢复文案；移动 390px 视口确认“上传文件”入口可见且触控高度达标。
+- 修复移动端文件入口：`.chart-import-actions button, .chart-import-file` 的 `min-height` 从 38px 提升到 44px，满足移动端基本触控目标。
+- 稳定全量点击 smoke：workspace 案例库导出改为 `page.expect_download()` 明确等待 `jyotish-selected-cases-*.json` 与 `jyotish-case-library-*.json`，避免长链路中下载事件偶发未捕获。
+- 验证完成：`python3 tests/run_frontend_click_smoke.py --mode import-files --timeout 120` 通过；`python3 tests/run_frontend_click_smoke.py --mode all --timeout 240` 通过并包含 `import_files`；`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py -q` 通过；`python3 tests/run_frontend_runtime_smoke.py --start-if-needed` 通过；`npm run build` 在 `jyotish-app/` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：把普通用户安装/启动文档与质量门输出统一，减少“npm run web / python API / PWA 安装”多入口带来的认知负担。
+- 完成普通用户启动路径统一：README 新增“普通用户启动路径”，将网页启动、本地 API、Trust Center 健康检查、PWA 边界和完整自检命令压成一条路径；`scripts/run_quality_gate.py` 的失败摘要也输出同一套网页/API/Trust Center 步骤。
+- 验证完成：`test_desktop_packaging_spike_is_documented_and_checkable` 先红灯后转绿；`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py -q` 通过；`python3 tests/run_frontend_runtime_smoke.py --start-if-needed` 通过；`npm run build` 在 `jyotish-app/` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：继续检查 README/应用内 Trust Center/失败恢复文案的术语一致性，把“npm run web / npm run dev / python API / PWA”统一成普通用户可理解的一组标签。
+- 完成术语一致性收口：`main.js`、`api-bridge.js`、`public/api-bridge.js`、`ai-chat.js`、`i18n.js`、`skill-map.js` 的普通用户可见恢复提示统一为“按 README 的普通用户启动路径启动网页服务和本地 API 服务”，Trust Center 成功状态统一为“本地 API 服务、能力目录和 PWA 安装壳”。
+- 边界约束：README 与 `scripts/run_quality_gate.py` 继续保留可复制命令；应用界面不再散落 `npm run web`、`npm run dev`、完整 `python3 scripts/jyotish_api_server.py --host ...` 这类开发者命令。
+- 验证完成：术语聚焦 pytest 8 项通过；`python3 -B -m pytest tests/test_frontend_productization.py tests/test_api_server_security.py -q` 通过；`python3 tests/run_frontend_click_smoke.py --mode mobile-trust --timeout 120` 通过；`python3 tests/run_frontend_runtime_smoke.py --start-if-needed` 通过；`npm run build` 在 `jyotish-app/` 通过；`git diff --check` 通过。
+- 当前下一最高优先级：梳理质量门分层与运行成本，把快速开发守门、完整浏览器守门、发布前守门拆得更清楚，避免遗漏真实用户路径也避免每步都跑超长链路。
+- 启动整机与 Git 云端地毯式遗漏审计：当前仓库 remote 为 `git@github.com:732642856/yinduzhanxing.git`，分支 `codex/release-hygiene-ci`；初步只读枚举发现整机存在 `.workbuddy/skills/jyotish-vedic-astrology`、`Projects/星轨资料恢复/*/jyotish-vedic-astrology`、`engines-repo/jyotish`、`WorkBuddy/*/jyotish-fragments`、多个历史审计/验证报告、PDF/Docx 资料库和多个 star-track/占星相关 git 仓库。
+- 审计边界：只读索引与摘要，不删除、不移动、不上传整机资料；密钥/凭证类文件只记录路径和命中类别，不读取内容；远端仓库以当前认证/公开可访问 refs 为准，若被凭证阻断则记录阻断点。
+- 远端探测进展：`git ls-remote` 走 SSH 被 22 端口超时阻断；改用 HTTPS 成功列出 `main`、`codex/release-hygiene-ci` 和 v6.0.47-v6.0.52 tags。GitHub REST API 匿名请求被 rate limit，后续以 HTTPS git 协议和 `/tmp` mirror 为主。
+- 安全发现：多个历史仓库 remote URL 内嵌 GitHub token；后续报告只记录“存在嵌入 token 的 remote”与路径类别，不复述 token 字符串。
+- 旧审计报告提取到的候选遗漏：Navatara/Tara Bala、Kantaka Shani、Pushkar Navamsa、Ishta/Kashta Phala、Ashtakavarga PAV/Prashtara/Kakshya/Yoga Pinda、Bhava Bala、Sripathi/Placidus、Vimshottari 多起算点、36 Sahams、Tajika 强度体系、完整 Prashna/KP Horary、Muhurta 求解器、精微分盘 D24/D30/D60 深度模板。
+- 完成云端 mirror 第一轮：`/tmp/yinduzhanxing-cloud` 来自 GitHub HTTPS mirror，HEAD 为 `11bdee3ba1f480aff38440ad58cfbb81bfa5567d`，文件数 720，tree `d3a89944bb1c319120f61f66a88c879d0fa28375`。本地工作区文件数 1525，其中大量是 build/cache/node_modules/dist 与未提交产品化改动。
+- 完成遗漏映射文档：新增 `docs/research/whole_machine_git_audit_2026_06_23.md`，记录整机资料源、远端 refs、历史报告共识、当前 registry/API/frontend 覆盖矩阵和下一优先级。
+- 第一轮结论：旧报告的 30 类缺口已有一批被 v6.9 后续补上（Kantaka Shani、Pushkara、Kakshya、Bhava Bala、Trisphuta、部分 Sahams/Prashna/Muhurta），真正仍缺第一类产品化闭环的是 Ashtakavarga Prashtara/Yoga Pinda、Sripathi/Placidus 用户可控切换、KP Horary、Tajika Harsha/Panchavargiya、Muhurta date-range solver、Sayanadi/Shayanadi 与精微分盘深度模板。
+- 当前下一最高优先级：从 Ashtakavarga Prashtara / Yoga Pinda 开始实现，因为它在历史报告中反复出现，且当前只有 BAV/SAV 总分和参考代码，没有专业工具应有的来源贡献表与 Pinda 层。
+- 完成 Ashtakavarga Prashtara / Yoga Pinda 产品闭环：`scripts/ashtakavarga.py` 保留并验证 `calc_prastara_av` 的 7×12×8 PAV 矩阵，新增 `calc_yoga_pinda` 一等契约；`/api/ashtakavarga` 返回 `yoga_pinda_summary` 和 `rule_variants.selected += yoga_pinda`；Skill workbench 显示 `Ashtakavarga / PAV / Sodhita / Yoga Pinda`、Yoga Pinda 卡片与校验标签。
+- 完成 Ashtakavarga 守门：`tests/test_ashtakavarga_invariants.py` 不再依赖本机缺失的 Hypothesis，改为确定性 invariant；新增 PAV 回推 BAV、Yoga Pinda 与 legacy Shodhya Pinda 兼容断言；产品化测试要求 API 返回 `pav.matrix_shape` 与 `yoga_pinda_summary`。
+- 验证完成：`python3 -m pytest -q tests/test_ashtakavarga_invariants.py` 4 项通过；`python3 -m pytest -q tests/test_frontend_productization.py -k "technique_catalog or ashtakavarga or api_runtime"` 通过；`python3 -m json.tool references/technique_registry.json` 与 `git diff --check` 通过。
+- 当前下一最高优先级：推进 Sripathi/Placidus 房宫算法用户可控切换与 parity 守门，因为历史审计多次指出它仍停留在 staged policy/局部代码层，尚未形成用户可验证的房宫算法切换闭环。
+- 完成移动端导出菜单与 Trust Center 长内容守门：`tests/run_frontend_click_smoke.py --mode mobile-trust --keep-logs` 在 390x844 移动视口下验证导出菜单 JSON/HTML/PDF/SVG/PNG 不溢出，JSON 星盘下载成功，Trust Center 健康检查通过，本地资料 JSON 导出成功，长面板无横向溢出且无 console error。
+- 验证输出：`mobile_trust_export_checked=true`，下载 `jyotish-chart-1990-01-01.json` 与 `jyotish-local-data-2026-06-23.json`，`health_status=健康检查通过：本地 API、能力目录和 PWA 状态已记录。`
+- 当前下一最高优先级：给真实浏览器点击级 smoke 增加命令级超时/残留进程诊断，避免 `--mode all` 或局部模式异常时留下 API/Vite/Chromium 后台进程。
+- 完成真实浏览器 smoke 超时与残留诊断：`tests/run_frontend_click_smoke.py` 新增 `--timeout`、`run_with_timeout`、`ClickSmokeTimeoutError`、`process_snapshot` 与 `force_stop_process`，超时失败会输出 API/Vite pid、running 状态和日志尾部，并在 finally 强制清理子进程。
+- TDD 验证：先让 `test_click_smoke_covers_core_interactive_workflows` 要求 `--timeout/run_with_timeout/process_snapshot/force_stop_process` 后红灯，再实现；`python3 tests/run_frontend_click_smoke.py --mode mobile-trust --timeout 1 --keep-logs` 按预期失败并输出 process_snapshot，随后 ps 未发现残留 API/Vite 进程。
+- 正常路径复验：`python3 tests/run_frontend_click_smoke.py --mode mobile-trust --timeout 120 --keep-logs` 通过，移动 Trust/export 仍返回 `mobile_trust_export_checked=true`。
+- 当前下一最高优先级：跑完整回归链与碎片审计，然后继续推进普通用户长链路质量门的剩余缺口。
+- 完成普通用户长链路质量门摘要：`scripts/run_quality_gate.py` 新增 `format_failure_summary`、stdout/stderr 尾部、cwd、JSON reason/process_snapshot 提取；真实失败时会提示聚焦命令、`--keep-logs` 与 Trust Center/API 恢复路径。
+- 修复质量门真实 Bug：`npm run build` 原先在仓库根目录执行导致找不到 `package.json`，已新增 `APP = ROOT / "jyotish-app"` 并让前端 build 在 `cwd=APP` 执行。
+- 修复 click smoke 真实 Bug：`run_import_file_smoke` 已等待 PDF 失败恢复文案但没有赋值 `pdf_import_recovery`，导致 `--mode all` NameError；已保存该文案并通过 `--mode import-files` 和 `--mode all` 验证。
+- 验证完成：`python3 tests/run_frontend_click_smoke.py --mode import-files --timeout 120 --keep-logs` 通过；`python3 scripts/run_quality_gate.py --skip-slow --skip-yoga-logic --frontend-click-timeout 240` 通过，覆盖 compile、JSON、capability/fragment audit、BPHS invariants、185 个 pytest、前端 build、runtime smoke、全量 click smoke。
+- 当前下一最高优先级：把普通用户安装/启动文档与质量门输出统一，减少“npm run web / python API / PWA 安装”多入口带来的认知负担。
+- 完成普通用户启动路径与术语统一：README、质量门失败摘要、AI/API/auth/subscription/Skill Workbench/Trust Center/离线恢复提示统一使用“普通用户启动路径 / 网页服务 / 本地 API 服务 / PWA 安装壳 / Trust Center”；用户面旧称 `npm run web`、`PWA shell`、`PWA 壳`、`Local API` 已从应用与 README/质量门中移除。
+- 修复离线恢复提示：offline click smoke 发现首用健康检查失败文案缺少“普通用户启动路径”，已补回并验证 `offline_recovery_guidance_visible=true`。
+- 验证完成：`python3 -B -m pytest tests/test_frontend_productization.py -q` 通过；`npm run build` 通过；`python3 tests/run_frontend_runtime_smoke.py --start-if-needed` 通过；`python3 tests/run_frontend_click_smoke.py --mode mobile-trust --timeout 120 --keep-logs` 通过；`python3 tests/run_frontend_click_smoke.py --mode offline --timeout 120 --keep-logs` 通过。
+- 当前下一最高优先级：梳理质量门分层与运行成本，把快速开发守门、完整浏览器守门、发布前守门拆得更清楚，避免遗漏真实用户路径也避免每步都跑超长链路。
+- 完成质量门分层：`scripts/run_quality_gate.py` 新增 `QUALITY_GATE_PROFILES` 与 `--profile quick|browser|release`；quick 适合普通代码/文案修改，browser 覆盖 runtime 与真实浏览器路径，release 恢复慢速 golden cases 与 Yoga 逻辑报告；`--frontend-click-mode` 可局部复验 `mobile-trust/import-files/all` 等浏览器路径。
+- 文档与守门同步：README 新增“质量门分层”，`tests/test_frontend_productization.py` 增加静态契约，防止 profile、README 命令或关键浏览器模式后续漂移。
+- 验证完成：先让 `test_quality_gate_declares_fast_browser_release_profiles` 红灯确认缺口，再实现转绿；`python3 scripts/run_quality_gate.py --profile quick` 通过；`python3 scripts/run_quality_gate.py --profile browser --frontend-click-mode mobile-trust --frontend-click-timeout 120` 通过，覆盖 187 个核心 pytest、前端 build、runtime smoke 与 mobile-trust click smoke；`python3 -B -m pytest tests/test_frontend_productization.py -q` 与 `git diff --check` 通过。
+- 当前下一最高优先级：推进 Sripathi/Placidus 房宫算法用户可控切换与 parity 守门，先确认现有 `bhava_chalit`/UI/API 是否只是显示 staged policy，再补用户可验证闭环。
+- 完成 Sripathi/Placidus 用户可控切换：`jyotish-app/skill-map.js` 的 Bhava Chalit 工作台读取 `calculationSettings.houseSystem`，请求带上出生时间地点 payload，不再硬编码 `sripati`；结果渲染宫位制、可选系统、第一宫边界和行星 Rashi→Bhava 迁移摘要。
+- 完成 Bhava Chalit API parity 契约：`/api/bhava_chalit` 返回 `requested_house_system`、`selected_house_system`、`available_house_systems`、`calculation_note` 与 `fallback_reason`；Placidus/Koch 使用 swisseph JD + lat/lon/tz，缺依赖或参数时降级 Sripati 并解释原因。
+- TDD 验证：新增测试先红灯抓到 Placidus 缺 JD/location 参数、前端硬编码 Sripati；实现后 `test_bhava_chalit_endpoint_exposes_user_selected_house_systems`、`test_bhava_chalit_uses_user_selected_house_system` 转绿。
+- 验证完成：`python3 -B -m pytest tests/test_api_server_security.py tests/test_frontend_productization.py tests/test_bhava_chalit.py -q` 通过；`npm run build` 通过；`python3 -m py_compile scripts/jyotish_api_server.py scripts/bhava_chalit.py` 通过；`python3 scripts/run_quality_gate.py --profile quick` 通过，覆盖 189 个核心 pytest、前端 build 与 runtime smoke；`git diff --check` 通过。
+- 当前下一最高优先级：推进 KP Horary 产品化闭环，先复核 `scripts/prashna.py`、VedicAstro horary 参考与当前 KP 快读，确认是否缺 ruling planets/sub-lord/house significator 的普通用户可验证输出。
+- 完成 KP Horary 结构化证据闭环：`scripts/prashna.py` 新增 `build_kp_horary_evidence`，复用本地 KP sub-lord 与 significator 规则，返回 question houses、ruling planets、cuspal sub-lord、house significators 与 judgement matrix；`/api/prashna` 支持可选 `horary_number` 1-249 并返回 `kp_horary`。
+- 完成普通用户端承载：Prashna 面板渲染 “KP Horary：Ruling Planets / Sub Lord / Significators” 证据块；问事 workflow、案例保存和导出都保留 `kp_horary`，避免只保存 YES/NO 结论。
+- TDD 验证：新增 API 测试先红灯抓到 `kp_horary` 缺失；新增前端产品化 token 先红灯抓到 `renderKPHoraryEvidence/ruling_planets/house_significators` 缺失；实现后聚焦测试转绿。
+- 验证完成：`python3 -B -m pytest tests/test_kp_system.py tests/test_api_server_security.py tests/test_frontend_productization.py -q` 通过；`npm run build` 通过；`python3 -m py_compile scripts/prashna.py scripts/kp_system.py scripts/jyotish_api_server.py` 通过；`python3 scripts/run_quality_gate.py --profile quick` 通过，覆盖 189 个核心 pytest、前端 build 与 runtime smoke；`git diff --check` 通过。
+- 当前下一最高优先级：推进 Tajika Harsha/Panchavargiya Bala 产品化闭环，先检查 `scripts/tajika.py`、`scripts/varshaphala.py`、`/api/annual` 和 Skill Workbench 的年运强度层缺口。
+- 完成 Tajika Harsha/Panchavargiya Bala 产品化闭环：`scripts/tajika.py` 新增 `calc_tajika_strength_layers`，输出 Harsha Bala、Panchavargiya 五分盘强度、综合排序、最强/最弱行星和下一步提示；`scripts/solar_return.py` 与 `scripts/varshaphala.py` 年报路径均追加 `tajika_strength`，避免 API/旧入口能力碎片。
+- 完成普通用户端承载：`jyotish-app/skill-map.js` 的 Varshaphala / Tajika 结果新增“年度强度/年度风险”卡片和 Harsha Bala / Panchavargiya Bala 证据展开，不再只显示 Tajika Yoga 数量与 JSON。
+- TDD 验证：新增算法、年度 API、前端产品化三条红灯测试，确认缺口后实现并转绿；`tests/test_tajika.py`、年度 API 聚焦测试、前端聚焦测试均通过。
+- 验证完成：`python3 -B -m pytest tests/test_tajika.py tests/test_api_server_security.py::test_annual_endpoint_returns_varshaphala_report tests/test_frontend_productization.py::test_annual_workbench_renders_tajika_strength_layers -q` 通过；`python3 -m py_compile scripts/tajika.py scripts/solar_return.py scripts/varshaphala.py scripts/jyotish_api_server.py` 通过；`npm run build` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：推进 Muhurta date-range solver，把当前单日评分升级为可按活动、日期范围与约束搜索的普通用户择日工作流。
+- 完成 Muhurta date-range solver 产品化闭环：`scripts/muhurta.py` 新增 `muhurta_range_search`，复用 `panchanga_range_report` 的日历、Rahu Kala/Yamaganda/Gulika、Choghadiya、Hora 与活动评分，输出 `best_windows`、`rejected_dates`、`constraints` 和 `next_action`。
+- 完成 `/api/muhurta` 范围入口：传入 `start_date/end_date/activity/limit/lat/lon/tz` 时返回 `range_search`，同时保留原单日 `report` 兼容旧调用，并继续限制 63 天以内。
+- 完成普通用户端承载：`jyotish-app/skill-map.js` 的 Muhurta 结果新增“范围择日 · 择日候选”展开区，显示候选日期、评分、活动结论、推荐 Choghadiya/Hora 窗口、Panchanga 证据和过滤原因。
+- TDD 验证：新增核心 solver、API、前端产品化三条红灯测试，确认缺口后实现并转绿；修复候选全合格时 `rejected_dates` 为空导致用户缺少过滤解释的问题。
+- 验证完成：`python3 -B -m pytest tests/test_muhurta.py tests/test_api_server_security.py::test_muhurta_endpoint_returns_activity_checks tests/test_api_server_security.py::test_muhurta_endpoint_returns_date_range_solver tests/test_api_server_security.py::test_panchanga_range_endpoint_returns_calendar_rows tests/test_api_server_security.py::test_panchanga_range_endpoint_uses_location_when_available tests/test_frontend_productization.py::test_muhurta_workbench_renders_date_range_solver -q` 通过；`python3 -m py_compile scripts/muhurta.py scripts/jyotish_api_server.py` 通过；`npm run build` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：推进 Sayanadi/Shayanadi Avastha 与 D24/D30/D60 深度模板产品化，把已有计算碎片变成 API/前端可验证的解释层。
+- 完成 Sayanadi/Shayanadi Avastha 与 D24/D30/D60 深度模板产品化：新增 `scripts/deep_varga_avastha.py`，聚合 `avastha_calculator.py`、`divisional_charts_extended.py`、`trimshamsa_d30.py`，输出 `avastha_summary`、`deep_varga_templates`、D24/D30/D60 关键行星卡、risk_flags 与 next_action。
+- 完成 API 承载：新增 `/api/deep_varga_avastha` 与 `_compute_deep_varga_avastha`，Technique Explorer dispatch、方法说明和示例 payload 均接入，避免该能力只停留在本地碎片。
+- 完成普通用户端承载：`jyotish-app/skill-map.js` 新增 `deepVargaAvastha` 工作台按钮和 `renderDeepVargaAvasthaResult`，展示 Sayanadi/Shayanadi 主导状态、弱状态行星、D24/D30/D60 模板、risk_flags 与下一步边界。
+- TDD 验证：新增 `tests/test_deep_varga_avastha.py`、API 测试、前端产品化测试，先红灯确认模块/API/action 缺失，后实现转绿。
+- 验证完成：`python3 -B -m pytest tests/test_deep_varga_avastha.py tests/test_api_server_security.py::test_deep_varga_avastha_endpoint_returns_templates tests/test_api_server_security.py::test_divisional_yoga_endpoint_returns_varga_yoga_summary tests/test_frontend_productization.py::test_deep_varga_avastha_workbench_renders_templates tests/test_frontend_productization.py::test_skill_workbench_exposes_all_expected_advanced_actions -q` 通过；`python3 -m py_compile scripts/deep_varga_avastha.py scripts/jyotish_api_server.py scripts/avastha_calculator.py scripts/divisional_charts_extended.py scripts/trimshamsa_d30.py` 通过；`npm run build` 通过；相关 `git diff --check` 通过。
+- 当前下一最高优先级：二轮整机/Git/开源对标审计与全球排名更新，复核第一类缺口是否已闭环，并重新生成下一批优先级。
+- 完成二轮整机/Git/开源对标审计与全球排名更新：`python3 scripts/audit_fragments.py --strict` 显示 registry 68 技法、37 API、frontend 43 文件、候选碎片 0、hard problems 0、warnings 0；`docs/research/whole_machine_git_audit_2026_06_23.md` 已追加 2026-06-24 二轮结论与全球排名口径。
+- 修复二轮审计发现的产品目录缺口：`deep_varga_avastha` 已有 API 与 Skill Workbench，但未进入 registry/catalog/audit command map；新增注册表条目、audit 映射、后端产品化/UX/目录推断，并增加测试要求 `/api/deep_varga_avastha` 出现在能力审计、Technique Explorer filter、sample payload 与 runnable example。
+- TDD 验证：新增断言后先红灯（`KeyError: deep_varga_avastha` 与 catalog 缺 `/api/deep_varga_avastha`），修复后 `python3 -B -m pytest tests/test_api_server_security.py::test_capability_audit_scans_registry_and_local_sources tests/test_api_server_security.py::test_technique_catalog_exposes_runnable_api_examples -q` 通过；`python3 -m json.tool references/technique_registry.json`、`python3 -m py_compile scripts/jyotish_api_server.py scripts/audit_fragments.py scripts/deep_varga_avastha.py`、`python3 scripts/audit_fragments.py --strict` 通过。
+- 当前下一最高优先级：发布/仓库卫生与 release 质量门收口，优先确认未跟踪产品文件不会在 GitHub/普通用户安装路径中遗漏，再跑完整 browser/release profile。
+- 完成发布/仓库卫生第一步：`scripts/run_quality_gate.py` 新增 `RELEASE_CRITICAL_UNTRACKED_PATHS`、`release_hygiene_check` 与 release profile 的 `check_release_hygiene`；先用聚焦测试红灯确认缺口，再实现守门。
+- 真实风险复现：新增 release hygiene 后在当前工作区按预期失败，列出 28 个关键产品文件仍未跟踪；随后将这些文件纳入 Git 暂存，`release_hygiene_check` 复跑通过，`audit_fragments.py --strict` 当前 `workspace_residue.untracked_count=0`。
+- 旧测试调整：`test_fragment_audit_blocks_registry_surface_drift` 不再强制要求一定存在 untracked 文件，改为检查字段存在和列表结构，适配发布卫生目标。
+- 验证完成：`python3 -B -m pytest tests/test_api_server_security.py::test_fragment_audit_blocks_registry_surface_drift tests/test_frontend_productization.py::test_release_quality_gate_tracks_untracked_product_files -q` 通过；`python3 scripts/run_quality_gate.py --profile quick` 通过，覆盖 195 个核心 pytest、npm build 与 runtime smoke，runtime smoke 显示 registry/productized/UX 均为 68。
+- 当前下一最高优先级：跑完整 browser/release profile，并检查云端分支同步状态，确认普通用户从 GitHub 拉取不会丢失网页/API/PWA/高级工作台关键文件。
+- 完成完整 browser/release profile：`python3 scripts/run_quality_gate.py --profile browser --frontend-click-timeout 240` 与 `python3 scripts/run_quality_gate.py --profile release --frontend-click-timeout 240` 均通过；release 覆盖 release hygiene、195+核心 pytest、runtime smoke、真实浏览器 all smoke、golden cases 与 Yoga 逻辑校验。
+- 修复 release profile 暴露的 Yoga 逻辑校验 Bug：`scripts/validate_logic_v2.py` 现在用 `extract_skill_rule_ids` 安全跳过算法级无 `rule_id` Yoga，并默认使用当前仓库路径，不再在 import 时把 `~/.workbuddy/.../scripts` 插入 `sys.path` 污染后续 `import prashna`。
+- 验证细节：新增 `test_yoga_logic_validation_tolerates_algorithmic_yogas_without_rule_id` 与 `test_yoga_logic_validation_import_does_not_shadow_project_modules` 先红灯后转绿；`validate_logic_v2.py` 输出 Precision 96.48%、Recall 93.99%、F1 95.22%，并写入当前仓库 `references/validation_logic_report.json`。
+- 云端同步检查：`git ls-remote https://github.com/732642856/yinduzhanxing.git` 可访问，远端 `codex/release-hygiene-ci` 仍在 `11bdee3...`；当前本地大量改动已暂存/修改但尚未 commit/push，下一步应提交并推送分支。

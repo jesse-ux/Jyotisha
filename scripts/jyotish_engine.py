@@ -3900,6 +3900,38 @@ def cmd_full_reading(args):
     except Exception as e:
         report['errors'].append(f"shadbala: {e}")
 
+    # ── Step 10.1: Remedies 补救建议 ──
+    try:
+        from remedies import recommend_remedies
+        shadbala_for_remedies = {}
+        for pn, pdata in (report['modules'].get('shadbala') or {}).get('planets', {}).items():
+            if isinstance(pdata, dict):
+                shadbala_for_remedies[pn] = {
+                    'total_rupas': pdata.get('total_rupas', pdata.get('rupas', 1.0)),
+                    'strength_level': pdata.get('strength_level', pdata.get('level', '')),
+                }
+        yd = report['modules'].get('yogas_doshas') or {}
+        doshas = []
+        dosha_sources = [
+            ('mangal_dosha', 'Mangal Dosha'),
+            ('kaal_sarp_dosha', 'Kaal Sarp Dosha'),
+            ('pitra_dosha', 'Pitra Dosha'),
+        ]
+        for key, label in dosha_sources:
+            item = yd.get(key) if isinstance(yd, dict) else None
+            if isinstance(item, dict) and item.get('has_dosha'):
+                doshas.append(label)
+        dasha = report['modules'].get('dasha') or {}
+        current_dasha = dasha.get('current_dasha') if isinstance(dasha, dict) else {}
+        active_dasha_lord = current_dasha.get('lord') if isinstance(current_dasha, dict) else None
+        report['modules']['remedies'] = recommend_remedies(
+            shadbala_for_remedies,
+            active_dasha_lord=active_dasha_lord,
+            doshas=doshas,
+        )
+    except Exception as e:
+        report['errors'].append(f"remedies: {e}")
+
     # ── Step 10.5: Avasthas 行星状态 (v4.4.0) ──
     try:
         from avastha_calculator import AvasthaCalculator

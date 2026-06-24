@@ -293,13 +293,21 @@ function buildChartContext(cd) {
   return ctx;
 }
 
+function buildAISetupGuidance() {
+  const lang = getLang();
+  if (lang === 'en') {
+    return `💡 **${t('ai.setup.title')}**\n${t('ai.setup.server')}\n${t('ai.setup.secret')}\n${t('ai.setup.trust')}`;
+  }
+  return `💡 **${t('ai.setup.title')}**\n${t('ai.setup.server')}\n${t('ai.setup.secret')}\n${t('ai.setup.trust')}`;
+}
+
 // ============================================================================
 // AI API 调用（对接后端 Jyotish Server）
 // ============================================================================
 function getApiBase() {
-  if (window.Capacitor?.isNativePlatform?.()) {
-    return localStorage.getItem('jyotish_api_base') || 'https://your-server.com';
-  }
+  if (window.JYOTISH_API_BASE) return window.JYOTISH_API_BASE;
+  if (import.meta.env?.VITE_JYOTISH_API_BASE) return import.meta.env.VITE_JYOTISH_API_BASE;
+  if (window.Capacitor?.isNativePlatform?.()) return localStorage.getItem('jyotish_api_base') || '';
   return '';  // 同域部署
 }
 
@@ -322,7 +330,7 @@ async function callAI(userMessage, chartContext) {
           chart_data: cd,
         }),
       });
-      const data = await resp.json();
+      const data = await parseAIResponse(resp);
       if (!resp.ok) {
         // 401 = token 过期
         if (resp.status === 401) {
@@ -334,7 +342,7 @@ async function callAI(userMessage, chartContext) {
           const limit = data.limit ?? 3;
           return `**今日对话次数已用完 (${todayUsage}/${limit})**\n\n免费用户每日 3 次 AI 对话。升级高级会员可享无限对话。\n\n点击右上角头像 → 升级高级会员。`;
         }
-        throw new Error(data.error || `服务器错误 (${resp.status})`);
+        throw new Error(data.error || data.message || `服务器错误 (${resp.status})`);
       }
       // 更新用量显示
       if (data.todayUsage !== undefined && _authUser) {
@@ -354,37 +362,31 @@ async function callAI(userMessage, chartContext) {
         return err.message;
       }
       console.warn('[AI Chat] Backend API failed, falling back:', err);
-    }
-  }
-
-  // 检查旧版自定义 endpoint
-  const customEndpoint = localStorage.getItem('jyotish_ai_endpoint');
-  if (customEndpoint) {
-    try {
-      const resp = await fetch(customEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage,
-          chart_context: chartContext,
-          chart_data: getSelectedChartData(),
-        }),
-      });
-      if (!resp.ok) throw new Error(`API 返回错误: ${resp.status}`);
-      const data = await resp.json();
-      return data.reply || data.message || data.content || 'AI 未返回内容';
-    } catch (err) {
-      console.warn('[AI Chat] Custom endpoint failed:', err);
+      return `${buildAIRecoveryMessage(err)}\n\n${generateLocalReply(userMessage, chartContext)}`;
     }
   }
 
   // 未登录提示
   if (!_authToken) {
-    return '**请先登录以使用 AI 占星师对话**\n\n登录后每日可免费对话 3 次。\n\n点击页面右上角「登录」按钮即可注册/登录。\n\n💡 支持邮箱注册和 Apple 登录。';
+    return `**请先登录以使用 AI 占星师对话**\n\n登录后每日可免费对话 3 次。\n\n点击页面右上角「登录」按钮即可注册/登录。\n\n${buildAISetupGuidance()}`;
   }
 
   // 兜底：本地回复
   return generateLocalReply(userMessage, chartContext);
+}
+
+async function parseAIResponse(resp) {
+  const raw = await resp.text();
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return { message: raw?.slice(0, 180) || '' };
+  }
+}
+
+function buildAIRecoveryMessage(error) {
+  const message = error?.message || error || '本地 API 未连接';
+  return `**服务端 AI 对话暂不可用**\n\n${message}\n\n请到 Trust Center 运行健康检查；如本地 API 未连接，请按 README 的普通用户启动路径启动网页服务和本地 API 服务后重试。\n\n${buildAISetupGuidance()}`;
 }
 
 function generateLocalReply(message, ctx) {
@@ -419,8 +421,7 @@ function generateLocalReply(message, ctx) {
       : `**健康分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)}:\n- 第1宫代表身体和生命力\n- 第6宫代表疾病\n- 第8宫代表慢性健康问题\n\n⚠️ 完整分析需 D6。\n\n💡 配置 AI 后端获取深度健康解读。`;
   }
 
-  // 默认回复
   return lang === 'en'
-    ? `**Chart Overview**\n\nAscendant: ${signName(asc?.sign)} ${asc?.degree?.toFixed(2) || ''}°\n\nYou can ask about:\n- Career\n- Marriage & relationships\n- Wealth\n- Health\n- Dasha analysis\n- Transit impacts\n\n💡 **Configure AI backend for full AI reading**\nIn browser console:\n\`localStorage.setItem('jyotish_ai_endpoint', 'YOUR_API_URL')\``
-    : `**星盘概览**\n\n上升: ${signName(asc?.sign)} ${asc?.degree?.toFixed(2) || ''}°\n\n你可以询问以下话题：\n- 事业运 / 工作方向\n- 婚姻感情\n- 财运分析\n- 健康运势\n- Dasha 大运分析\n- Transit 过境影响\n\n💡 **配置 AI 后端可获得完整 AI 解读**\n在浏览器控制台输入:\n\`localStorage.setItem('jyotish_ai_endpoint', '你的API地址')\`\n即可连接你的 Jyotish AI Skill。`;
+    ? `**Chart Overview**\n\nAscendant: ${signName(asc?.sign)} ${asc?.degree?.toFixed(2) || ''}°\n\nYou can ask about:\n- Career\n- Marriage & relationships\n- Wealth\n- Health\n- Dasha analysis\n- Transit impacts\n\n${buildAISetupGuidance()}`
+    : `**星盘概览**\n\n上升: ${signName(asc?.sign)} ${asc?.degree?.toFixed(2) || ''}°\n\n你可以询问以下话题：\n- 事业运 / 工作方向\n- 婚姻感情\n- 财运分析\n- 健康运势\n- Dasha 大运分析\n- Transit 过境影响\n\n${buildAISetupGuidance()}`;
 }

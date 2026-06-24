@@ -260,21 +260,17 @@ def calc_ashtakavarga(planets: Dict, asc_sign_idx: int) -> Dict:
     # 5. 含 Lagna 的完整 SAV（386 = 337 + 49）
     full_sav = [sav[i] + lagna_sav[i] for i in range(12)]
 
-    # 6. Shodhya Pinda 计算
-    shodhya = {}
-    for pname in SEVEN_PLANETS:
-        if pname in source_sign_idx and pname in bav_results:
-            own_sign = source_sign_idx[pname]
-            bindu_at_own = bav_results[pname]['bindus'][own_sign]
-            sign_weight = 4  # 简化：星座权重统一为4
-            rashi_pinda = bindu_at_own * sign_weight
-            graha_pinda = bindu_at_own * PLANET_WEIGHTS.get(pname, 5)
-            shodhya[pname] = {
-                'rashi_pinda': rashi_pinda,
-                'graha_pinda': graha_pinda,
-                'total_pinda': rashi_pinda + graha_pinda,
-                'bindu_at_own_sign': bindu_at_own,
-            }
+    # 6. Shodhya/Yoga Pinda 计算
+    yoga_pinda = calc_yoga_pinda(bav_results, planets, asc_sign_idx)
+    shodhya = {
+        pname: {
+            'rashi_pinda': row['rashi_pinda'],
+            'graha_pinda': row['graha_pinda'],
+            'total_pinda': row['yoga_pinda'],
+            'bindu_at_own_sign': row['bindu_at_own_sign'],
+        }
+        for pname, row in yoga_pinda.get('planets', {}).items()
+    }
 
     # 7. 排名
     ranked_sav = sorted(enumerate(sav_assessment), key=lambda x: x[1]['score'], reverse=True)
@@ -311,6 +307,7 @@ def calc_ashtakavarga(planets: Dict, asc_sign_idx: int) -> Dict:
         'bav_validation': bav_validation,
         'all_bav_valid': all_valid,
         'shodhya_pinda': shodhya,
+        'yoga_pinda': yoga_pinda,
         'strongest_signs': [SIGNS[i] for i, _ in ranked_sav[:3]],
         'weakest_signs': [SIGNS[i] for i, _ in ranked_sav[-3:]],
         'house_scores': _map_to_houses(sav_assessment, asc_sign_idx),
@@ -425,10 +422,72 @@ def calc_prastara_av(planets: Dict, asc_sign_idx: int) -> Dict:
     return {
         'method': 'Prastara Ashtakavarga (PAV)',
         'version': '1.0',
+        'matrix_shape': {'planets': len(SEVEN_PLANETS), 'signs': 12, 'sources': len(ALL_SOURCES)},
         'pav': pav,
         'pav_summary': pav_summary,
         'validation': validation,
         'all_valid': all_valid,
+    }
+
+
+def calc_yoga_pinda(bav_results: Dict, planets: Dict, asc_sign_idx: int) -> Dict:
+    """
+    计算 Yoga Pinda / Shodhya Pinda 汇总。
+
+    本项目沿用既有 v2.1 口径：取行星本星座的 BAV bindu，分别乘以星座权重与行星权重；
+    两者相加作为 Yoga Pinda。该函数把原本嵌在 calc_ashtakavarga() 内部的结果提升为
+    一等契约，便于 API、前端与测试直接引用。
+    """
+    source_sign_idx = {}
+    for pname in SEVEN_PLANETS:
+        if pname in planets:
+            sign = planets[pname].get('sign', '')
+            if sign in SIGNS:
+                source_sign_idx[pname] = SIGNS.index(sign)
+    source_sign_idx['Lagna'] = asc_sign_idx
+
+    rows = {}
+    all_valid = True
+    for pname in SEVEN_PLANETS:
+        bav_row = bav_results.get(pname, {})
+        bindus = bav_row.get('bindus', [])
+        own_sign = source_sign_idx.get(pname)
+        if own_sign is None or len(bindus) != 12:
+            all_valid = False
+            continue
+
+        bindu_at_own = bindus[own_sign]
+        sign_weight = 4
+        planet_weight = PLANET_WEIGHTS.get(pname, 5)
+        rashi_pinda = bindu_at_own * sign_weight
+        graha_pinda = bindu_at_own * planet_weight
+        rows[pname] = {
+            'sign': SIGNS[own_sign],
+            'bindu_at_own_sign': bindu_at_own,
+            'rashi_weight': sign_weight,
+            'planet_weight': planet_weight,
+            'rashi_pinda': rashi_pinda,
+            'graha_pinda': graha_pinda,
+            'yoga_pinda': rashi_pinda + graha_pinda,
+        }
+
+    ranked = sorted(rows.items(), key=lambda item: item[1]['yoga_pinda'], reverse=True)
+    strongest = ranked[0][0] if ranked else None
+    weakest = ranked[-1][0] if ranked else None
+    total = sum(item['yoga_pinda'] for item in rows.values())
+
+    return {
+        'method': 'Yoga Pinda',
+        'version': '1.0',
+        'planets': rows,
+        'summary': {
+            'strongest_planet': strongest,
+            'weakest_planet': weakest,
+            'total_yoga_pinda': total,
+            'average_yoga_pinda': round(total / len(rows), 2) if rows else 0,
+        },
+        'all_valid': all_valid and len(rows) == len(SEVEN_PLANETS),
+        'validation_note': 'Yoga Pinda = Rashi Pinda + Graha Pinda；当前复用既有 v2.1 Shodhya Pinda 权重口径。',
     }
 
 

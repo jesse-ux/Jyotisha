@@ -57,7 +57,14 @@ def varshaphala_report(
     # 5. Sahams 扩展
     sahams = _calc_sahams_safe(natal_planets, asc_sign)
 
-    # 6. 关键预测
+    # 6. Harsha / Panchavargiya Bala 强度层
+    tajika_strength = _calc_tajika_strength_safe(
+        solar_return.get('planets', {}),
+        solar_return.get('asc_sign', asc_sign),
+        varshesha.get('lord') or varshesha.get('planet'),
+    )
+
+    # 7. 关键预测
     predictions = _generate_predictions(solar_return, muntha, varshesha,
                                          tajika_yogas, natal_planets)
 
@@ -73,6 +80,7 @@ def varshaphala_report(
         'muntha': muntha,
         'varshesha': varshesha,
         'tajika_yogas': tajika_yogas,
+        'tajika_strength': tajika_strength,
         'sahams': {k: v.get('sign', '?') for k, v in sahams.items() if isinstance(v, dict)} if sahams else {},
         'predictions': predictions,
     }
@@ -116,6 +124,26 @@ def _calc_solar_return(by, bm, bd, bh, blat, blon, btz, ry):
         }
     except ImportError:
         return {'date': f'{ry}-06-15', 'asc_sign': 'Aries', 'planets': {}}
+
+
+def _calc_tajika_strength_safe(planets: Dict, asc_sign: str, year_lord: Optional[str]) -> Dict:
+    try:
+        from tajika import calc_tajika_strength_layers, SIGNS
+        planet_lons = {}
+        for planet, data in planets.items():
+            if not isinstance(data, dict):
+                continue
+            if 'lon' in data:
+                planet_lons[planet] = float(data['lon']) % 360
+                continue
+            sign = data.get('sign')
+            degree = float(data.get('degree', 0) or 0)
+            if sign in SIGNS:
+                planet_lons[planet] = SIGNS.index(sign) * 30 + degree
+        asc_lon = SIGNS.index(asc_sign) * 30 if asc_sign in SIGNS else 0.0
+        return calc_tajika_strength_layers(planet_lons, asc_lon=asc_lon, year_lord=year_lord)
+    except Exception as e:
+        return {'error': str(e)}
 
 
 def _calc_muntha(asc_sign, birth_year, report_year):
