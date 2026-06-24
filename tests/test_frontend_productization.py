@@ -1684,6 +1684,47 @@ def test_desktop_packaging_spike_is_documented_and_checkable() -> None:
     assert "python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200" in quality_gate
 
 
+def test_user_delivery_matrix_is_documented_and_checkable() -> None:
+    preflight_path = ROOT / "scripts" / "deployment_preflight.py"
+    assert preflight_path.exists()
+    preflight = preflight_path.read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+    compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+
+    for token in [
+        "delivery_matrix",
+        "local-dev",
+        "docker-compose",
+        "static-demo-pwa",
+        "desktop-shell",
+        "public demo shell",
+        "api_required",
+        "python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200",
+        "npm run preview -- --host 127.0.0.1 --port 4173",
+        "http://localhost:5300",
+    ]:
+        assert token in preflight
+
+    for token in [
+        "普通用户交付形态",
+        "Local dev",
+        "Docker Compose",
+        "Static demo / PWA",
+        "Desktop shell",
+        "python3 scripts/deployment_preflight.py",
+        "公开演示环境只能完整展示静态壳",
+        "完整高级技法需要本地 API 服务",
+    ]:
+        assert token in readme
+
+    assert "python3 scripts/deployment_preflight.py" in dockerfile
+    assert "http://localhost:5300" in compose
+    quality_gate = (ROOT / "scripts" / "run_quality_gate.py").read_text(encoding="utf-8")
+    assert '"scripts/deployment_preflight.py"' in quality_gate
+    assert '[PYTHON, "scripts/deployment_preflight.py"]' in quality_gate
+
+
 def test_user_startup_labels_are_consistent_across_recovery_surfaces() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     quality_gate = (ROOT / "scripts" / "run_quality_gate.py").read_text(encoding="utf-8")

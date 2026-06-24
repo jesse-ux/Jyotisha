@@ -101,4 +101,5 @@
 - [x] CI 失败 artifact 诊断：pytest 改为 `-vv --maxfail=1 --junitxml`，quick/release quality gate 输出 tee 到 artifact，避免云端只暴露 exit code。
 - [x] 云端 CI 收口：PR #6 head `925e73e` 的 `validate`、`test`、`release-quality-gate` 三条 GitHub Actions 检查均已通过。
 - [x] 准确率透明度页面：Trust Center 新增 Validation Transparency 面板，展示 Yoga logic benchmark 的 60 charts、82 comparable rules、Precision/Recall/F1、unmapped_pyjhora 与“不是个人事件预测准确率”的边界说明。
-- [ ] 下一步：进入成品化最后一批缺口，优先补普通用户交付形态（部署/桌面打包/公开演示环境）。
+- [x] 普通用户交付形态：新增 deployment preflight 与 README 交付矩阵，明确 Local dev、Docker Compose、Static demo/PWA、Desktop shell 的入口、命令和 API 边界，并纳入 quick/release 守门。
+- [ ] 下一步：继续公开演示环境 polish，优先增加静态 demo 的离线/无 API 文案和部署目标示例。

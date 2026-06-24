@@ -64,6 +64,17 @@ This is a **Vedic (Jyotish) astrology analysis system** designed for deep, audit
 4. 如果只安装 PWA：PWA 安装壳只包装网页服务，本地 API 服务仍需单独启动；无 API 时网页会保留基础浏览器 fallback，但 PDF/高级技法需要本地 API 服务。
 5. 开发者做完整自检时运行：`python3 scripts/run_quality_gate.py --frontend-click-timeout 240`。
 
+### 普通用户交付形态
+
+| 形态 | 入口 | 命令 | 能力边界 |
+|------|------|------|----------|
+| Local dev | `http://127.0.0.1:5173` | `cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173` + `python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200` | 完整网页/app 用户端，适合本机普通用户试用。 |
+| Docker Compose | `http://localhost:5300` | `docker compose up -d` | 同时启动 Web shell 与本地 API，适合低门槛本机部署。 |
+| Static demo / PWA | 静态站点 URL | `cd jyotish-app && npm run build` | 公开演示环境只能完整展示静态壳；完整高级技法需要本地 API 服务。 |
+| Desktop shell | PWA / Pake / Tauri | `python3 scripts/desktop_packaging_preflight.py` | PWA/Pake 当前可用；Tauri sidecar 需等 API 生命周期、签名和权限策略固定。 |
+
+发布前检查交付矩阵：`python3 scripts/deployment_preflight.py`。如果该命令失败，不要把当前构建交给普通用户。
+
 ### 质量门分层
 
 - quick：快速开发守门，适合普通代码/文案修改后先跑：`python3 scripts/run_quality_gate.py --profile quick`

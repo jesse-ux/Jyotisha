@@ -30,6 +30,7 @@ COPY assets/       ./assets/
 
 # ─── Verify installation ───
 RUN python -c "from jyotish_vedic import __version__; print(f'Jyotish v{__version__} ready')"
+RUN python3 scripts/deployment_preflight.py
 
 # ─── Ports ───
 # 5200: REST API server

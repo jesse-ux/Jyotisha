@@ -23,6 +23,7 @@ COMPILE_DIRS = [
 EXTRA_COMPILE_TARGETS = [
     ROOT / "mcp_server.py",
     ROOT / "scripts" / "audit_fragments.py",
+    ROOT / "scripts" / "deployment_preflight.py",
     ROOT / "tests" / "run_golden_cases.py",
     ROOT / "tests" / "run_frontend_runtime_smoke.py",
 ]
@@ -55,6 +56,7 @@ RELEASE_CRITICAL_UNTRACKED_PATHS = [
     "progress.md",
     "scripts/audit_fragments.py",
     "scripts/deep_varga_avastha.py",
+    "scripts/deployment_preflight.py",
     "scripts/desktop_packaging_preflight.py",
     "scripts/ephemeris_adapter_contract.py",
     "scripts/ephemeris_backend_probe.py",
@@ -278,6 +280,7 @@ def main() -> int:
     validate_json_files()
     run([PYTHON, "scripts/audit_capabilities.py", "--mode", "validate"])
     run([PYTHON, "scripts/audit_fragments.py", "--strict"])
+    run([PYTHON, "scripts/deployment_preflight.py"])
     if profile["check_release_hygiene"]:
         release_hygiene_check()
     run([PYTHON, "scripts/validate_bphs_invariants.py"])
