@@ -147,3 +147,4 @@
 - 质量门覆盖结论：只在 release profile 运行 oracle 队列不足以支撑日常主动迭代；`CORE_PYTEST_TARGETS` 已纳入 collection queue 和 evidence validator 测试，使 quick gate 也能发现采集队列/证据包漂移。
 - Round 7 后续审计发现：如果未来人工把 oracle JSON 某条 case 升级为 `external_verified`，旧队列生成器会重新生成 draft evidence packet，导致“已填外部真值仍过不了 validator”。已修为保留 `evidence_packet.status/metadata`，并用 `target_fields` 固定目标字段集合。
 - 对标差距结论：相对 VedAstro/PyJHora/JHora，当前最实质缺口不是基础 D1/D9，而是 Dasha/Shadbala 外部真值样本库、合婚/Koota/Panchanga 的 API/产品深度、以及普通用户一键使用/校准状态可视化。PyJHora 因 AGPL 只能黑盒参照，JHora 因闭源只能截图级人工采集。
+- 2026-06-26 Round 28/29 接力结论：Round 28 的 30 份研究报告已回到主仓待归档区，覆盖全球开源排名、PyJHora/JHora 广度差距、MIT 可复制资产、Dasha/Panchanga/Muhurta/Synastry/Shadbala/Jaimini/KP/Varga/Yoga 深度路线、skill 同步缺口、真新增技法最小集与 Round29 Top100；同时新增 `docs/research/antigravity_sidecar_work_order_round29_2026_06_26.md`，将副手任务继续加压到 skill 全量补齐差距、API/CLI/前端隐藏能力、整机碎片复用第二轮、云端同步白名单、外部 oracle 精度闭环与 Round30 Top120。
