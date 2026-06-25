@@ -341,4 +341,8 @@
 - 同项目 Git 副本扫描结论：除当前主仓外，发现 `.workbuddy/skills/jyotish-vedic-astrology` 指向同一远端但停在 `main@4ff6248`，仅 `references/validation_logic_report.json` 有排序类本地修改；该副本作为历史 skill/基线来源，不直接覆盖当前主仓。
 - 私人输出同步边界：`output_report.txt` 和 `results_extracted.md` 是用户个人星盘复验临时输出，已加入 `.gitignore`，默认不纳入 GitHub 同步。
 - 完成 Antigravity Round 10 副手任务单：新增 `docs/research/antigravity_sidecar_work_order_round10_2026_06_25.md`，要求副手复核整机碎片/Git 云端同步、Round 9 校准透明度 P0/P1、全球对标差距，并只产出 `docs/research/*round10*2026_06_25.md` 报告。
-- 当前下一最高优先级：提交并推送 Round 9 副手报告、Round 10 任务单和私人输出忽略规则；随后推进网页/app Trust Center 暴露 Dasha/Shadbala calibration status，避免普通用户误解“已完全校准”。
+- 完成 Round 10 副手报告接收：`docs/research/antigravity_round10_*_2026_06_25.md` 记录了整机碎片同步、Git 云端状态、全球对标差距和校准透明度缺口；结论确认 `.workbuddy/skills/jyotish-vedic-astrology` 是旧副本，不直接合并。
+- 完成 Dasha/Shadbala 校准透明度前端修复：Trust Center 新增 `Dasha/Shadbala Calibration Status` 面板，直接展示 `ready_for_calibration: 0`、`valid_packets: 0`、`production_tuning_allowed: false` 与 `D1/D9/SAV 高可信` / 大运起点和 Shadbala 绝对值仍需外部 evidence validator 的边界。
+- 完成 AI/Skill 边界同步：`ai-chat.js`、`api-bridge.js`、`public/api-bridge.js` 与 `SKILL.md` 均强制注入“不得把大运起点或 Shadbala 绝对值说成已完成外部校准”的提示，避免普通用户误解“已完全校准”。
+- 验证完成：新增 `test_trust_center_and_ai_expose_dasha_shadbala_calibration_status` 先红灯后转绿；聚焦产品化测试 5 项通过；`npm run build --prefix jyotish-app` 通过；`python3 -m py_compile scripts/oracle_collection_queue.py scripts/oracle_evidence_validator.py scripts/oracle_boundary_audit.py scripts/run_quality_gate.py` 通过；`git diff --cached --check` 通过且暂未发现密钥特征。
+- 当前下一最高优先级：提交本轮校准透明度修复并再次尝试推送 GitHub；若网络仍阻断，则继续在本地保持提交完整并给出可复验的远端差异说明。

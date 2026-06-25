@@ -545,6 +545,43 @@ def test_trust_center_exposes_validation_transparency() -> None:
         assert token in style
 
 
+def test_trust_center_and_ai_expose_dasha_shadbala_calibration_status() -> None:
+    main = read("main.js")
+    style = read("style.css")
+    ai_chat = read("ai-chat.js")
+    api_bridge = read("api-bridge.js")
+    skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+
+    for token in [
+        "DASHA_SHADBALA_CALIBRATION_STATUS",
+        "renderDashaShadbalaCalibrationPanel",
+        "Dasha/Shadbala Calibration Status",
+        "ready_for_calibration: 0",
+        "valid_packets: 0",
+        "production_tuning_allowed: false",
+        "external_oracle_evidence_validation",
+        "D1/D9/SAV 高可信",
+        "大运起点和 Shadbala 绝对值仍在外部 evidence validator 校准中",
+    ]:
+        assert token in main
+
+    for token in [
+        ".dasha-shadbala-calibration-panel",
+        ".dasha-shadbala-calibration-grid",
+        ".dasha-shadbala-calibration-boundary",
+    ]:
+        assert token in style
+
+    for text in [ai_chat, api_bridge, skill]:
+        for token in [
+            "Dasha/Shadbala Calibration Status",
+            "ready_for_calibration: 0",
+            "external_oracle_evidence_validation",
+            "不得把大运起点或 Shadbala 绝对值说成已完成外部校准",
+        ]:
+            assert token in text
+
+
 def test_trust_center_exposes_real_case_revalidation_to_users() -> None:
     main = read("main.js")
     style = read("style.css")

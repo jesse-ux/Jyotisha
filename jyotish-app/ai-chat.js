@@ -7,6 +7,13 @@ import { t, getLang, signName, planetName } from './i18n.js';
 
 const STORAGE_KEY = 'jyotish_chart_library';
 const CHAT_CTX_KEY = 'jyotish_chat_context';
+const DASHA_SHADBALA_AI_CALIBRATION_BOUNDARY = [
+  '【Dasha/Shadbala Calibration Status】',
+  'ready_for_calibration: 0',
+  'external_oracle_evidence_validation: valid_packets: 0',
+  'D1/D9/SAV 高可信；大运起点和 Shadbala 绝对值仍在外部 evidence validator 校准中。',
+  '不得把大运起点或 Shadbala 绝对值说成已完成外部校准；涉及具体日期/绝对力量值时必须说明当前只可作参考标定。',
+].join('\n');
 
 let _currentChartData = null;
 let _selectedChartId = null;
@@ -286,6 +293,8 @@ function buildChartContext(cd) {
       '【AI Prompt Pack】',
       cd.ai_prompt_pack.prompt_zh,
       '',
+      DASHA_SHADBALA_AI_CALIBRATION_BOUNDARY,
+      '',
       '【evidence_snapshot】',
       JSON.stringify(cd.ai_prompt_pack.evidence_snapshot, null, 2),
       '',
@@ -302,7 +311,7 @@ function buildChartContext(cd) {
     if (!p || p.error) continue;
     ctx += `${planetName(pn)}: ${signName(p.sign)} ${p.degree_in_sign?.toFixed(2) || ''}° H${p.house} ${p.status || ''} ${p.retrograde ? 'R' : ''} ${p.nakshatra || ''}\n`;
   }
-  return ctx;
+  return `${ctx}\n${DASHA_SHADBALA_AI_CALIBRATION_BOUNDARY}`;
 }
 
 function buildAISetupGuidance() {
@@ -406,9 +415,11 @@ function generateLocalReply(message, ctx) {
   const asc = cd?.ascendant;
   const promptPack = cd?.ai_prompt_pack;
   const packAyanamsa = promptPack?.evidence_snapshot?.ayanamsa;
-  const contextBoundary = packAyanamsa
+  const parameterBoundary = packAyanamsa
     ? `\n\n参数：${packAyanamsa.display || packAyanamsa.name || 'Lahiri'} Ayanamsa；节点口径 ${packAyanamsa.node_mode || 'mean'}。AI Prompt Pack 已作为上下文入口；完整生成式解读需要服务端 /api/chat。`
     : '';
+  const calibrationBoundary = `\n\n${DASHA_SHADBALA_AI_CALIBRATION_BOUNDARY}`;
+  const contextBoundary = `${parameterBoundary}${calibrationBoundary}`;
   const lower = message.toLowerCase();
   const lang = getLang();
 

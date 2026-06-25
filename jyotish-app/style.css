@@ -5847,6 +5847,35 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   gap: 6px;
   margin: 8px 0 10px;
 }
+.dasha-shadbala-calibration-panel {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid var(--border-light);
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--red) 5%, var(--bg-surface));
+}
+.dasha-shadbala-calibration-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.dasha-shadbala-calibration-boundary {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.dasha-shadbala-calibration-boundary strong {
+  flex: 0 0 auto;
+  color: var(--red);
+}
 .runtime-health-panel {
   margin: 10px 0;
   padding: 10px;

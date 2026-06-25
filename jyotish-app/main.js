@@ -1712,6 +1712,7 @@ function renderTrustCenterPanel() {
       </div>
       ${renderRuntimeHealthPanel(runtime)}
       ${renderValidationTransparencyPanel()}
+      ${renderDashaShadbalaCalibrationPanel()}
       ${renderRealCaseRevalidationPanel()}
       ${renderTerminologyModePanel()}
       <div class="trust-center-copy">
@@ -1727,6 +1728,40 @@ function renderTrustCenterPanel() {
       </div>
       <div id="trust-center-status" class="workspace-import-status" aria-live="polite">${escapeHtml(statusMessage)}</div>
     </section>
+  `;
+}
+
+const DASHA_SHADBALA_CALIBRATION_STATUS = {
+  title: 'Dasha/Shadbala Calibration Status',
+  collection: 'external_oracle_collection_queue',
+  validator: 'external_oracle_evidence_validation',
+  totalTasks: '5 template cases',
+  readyForCalibration: 'ready_for_calibration: 0',
+  validPackets: 'valid_packets: 0',
+  productionTuning: 'production_tuning_allowed: false',
+  highConfidence: 'D1/D9/SAV 高可信',
+  boundary: '大运起点和 Shadbala 绝对值仍在外部 evidence validator 校准中',
+  nextAction: '继续采集 JHora/PyJHora 黑盒截图与分量值；未达标前不得把大运起点或 Shadbala 绝对值说成已完成外部校准。',
+};
+
+function renderDashaShadbalaCalibrationPanel() {
+  return `
+    <div class="dasha-shadbala-calibration-panel">
+      <div class="calculation-settings-head">
+        <strong>${escapeHtml(DASHA_SHADBALA_CALIBRATION_STATUS.title)}</strong>
+        <span>${escapeHtml(DASHA_SHADBALA_CALIBRATION_STATUS.highConfidence)} · ${escapeHtml(DASHA_SHADBALA_CALIBRATION_STATUS.boundary)}</span>
+      </div>
+      <div class="dasha-shadbala-calibration-grid">
+        ${renderValidationTransparencyMetric('Queue', DASHA_SHADBALA_CALIBRATION_STATUS.totalTasks, DASHA_SHADBALA_CALIBRATION_STATUS.collection)}
+        ${renderValidationTransparencyMetric('Calibration', DASHA_SHADBALA_CALIBRATION_STATUS.readyForCalibration, '可用于生产调参的外部证据包数量。')}
+        ${renderValidationTransparencyMetric('Evidence', DASHA_SHADBALA_CALIBRATION_STATUS.validPackets, DASHA_SHADBALA_CALIBRATION_STATUS.validator)}
+        ${renderValidationTransparencyMetric('Tuning', DASHA_SHADBALA_CALIBRATION_STATUS.productionTuning, '禁止用单份 PDF、本地输出或全局缩放调生产常数。')}
+      </div>
+      <div class="dasha-shadbala-calibration-boundary">
+        <strong>边界</strong>
+        <span>${escapeHtml(DASHA_SHADBALA_CALIBRATION_STATUS.nextAction)}</span>
+      </div>
+    </div>
   `;
 }
 

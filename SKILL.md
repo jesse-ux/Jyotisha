@@ -136,6 +136,16 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 - AI 解读必须优先消费 `ai_prompt_pack.prompt_zh`、`ai_prompt_pack.evidence_snapshot`、`ai_prompt_pack.retrieval_plan`，并在结论中保留“不要仅凭单一配置下结论”的证据交叉要求。
 - 若浏览器 fallback 无法实时切换 Raman/KP，应明确提示需启动本地 API 服务；不得把 fallback 结果伪装成已按目标 Ayanamsa 重算。
 
+### Dasha/Shadbala 外部校准边界（v6.9.15-oracle-evidence）
+
+**普通用户解释时必须显式区分基础排盘高可信与高阶绝对值待外部校准。**
+
+- Dasha/Shadbala Calibration Status：`ready_for_calibration: 0`，`external_oracle_evidence_validation.valid_packets: 0`。
+- D1/D9/SAV 高可信；但大运起点和 Shadbala 绝对值仍在外部 evidence validator 校准中。
+- 不得把大运起点或 Shadbala 绝对值说成已完成外部校准；涉及具体日期、剩余天数、绝对 Rupa/Virupa 分值时，必须声明当前只可作参考标定。
+- `production_tuning_allowed: false` 前，禁止为了贴合单份 PDF、单个 JHora 截图或本仓库本地输出而改生产常数。
+- 对普通用户的建议话术：基础落座、D9、SAV 可作为稳定证据；Dasha/Shadbala 精细边界需等 JHora/PyJHora 黑盒证据包通过 `external_oracle_evidence_validation` 后再提升置信度。
+
 ### Ashtakavarga 口径冻结（v6.0.8-av-calibration）
 
 **Ashtakavarga 默认使用 BPHS/PVR 书例校准口径，必须保留 SAV=337 与 full SAV=386 不变量。**

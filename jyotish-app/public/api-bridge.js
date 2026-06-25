@@ -343,12 +343,23 @@ const SYSTEM_PROMPT = `你是印度占星(Jyotish/Vedic Astrology)专业解盘�
 - 避免刻板教条（"土星落陷=不好"），必须结合多配置综合判断
 - 语气专业但不冷漠，像面对面交谈
 - 给出具体的时间窗口，不要说"未来几年"
-- 如果某个配置有多种可能性，列出2-3种最可能的走向`;
+- 如果某个配置有多种可能性，列出2-3种最可能的走向
+- Dasha/Shadbala Calibration Status: ready_for_calibration: 0；external_oracle_evidence_validation valid_packets: 0；不得把大运起点或 Shadbala 绝对值说成已完成外部校准`;
+
+const DASHA_SHADBALA_PROMPT_BOUNDARY = [
+  '【Dasha/Shadbala Calibration Status】',
+  'ready_for_calibration: 0',
+  'external_oracle_evidence_validation: valid_packets: 0',
+  'D1/D9/SAV 高可信；大运起点和 Shadbala 绝对值仍在外部 evidence validator 校准中。',
+  '不得把大运起点或 Shadbala 绝对值说成已完成外部校准；涉及具体日期/绝对力量值时必须说明当前只可作参考标定。',
+].join('\n');
 
 function buildReadingPrompt(chartData, style, focus) {
   if (chartData?.ai_prompt_pack?.prompt_zh && chartData?.ai_prompt_pack?.evidence_snapshot) {
     return [
       chartData.ai_prompt_pack.prompt_zh,
+      '',
+      DASHA_SHADBALA_PROMPT_BOUNDARY,
       '',
       '【evidence_snapshot】',
       JSON.stringify(chartData.ai_prompt_pack.evidence_snapshot, null, 2),
@@ -389,7 +400,7 @@ function buildReadingPrompt(chartData, style, focus) {
   if (focus === '健康' || focus === '全部') prompt += `\n3) 需注意的健康周期`;
   if (focus === '全部') prompt += `\n4) 当前大运的核心主题`;
 
-  return prompt;
+  return `${prompt}\n\n${DASHA_SHADBALA_PROMPT_BOUNDARY}`;
 }
 
 // ═══════════════════════════════════════════════════════════════
