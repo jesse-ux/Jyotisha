@@ -67,6 +67,13 @@ class DivisionalChartsCalculator:
     
     def __init__(self):
         pass
+
+    def _position_parts(self, longitude: float) -> Tuple[int, float, float]:
+        """Normalize a varga longitude into sign index, sign degree and 0-360 longitude."""
+        normalized = longitude % 360.0
+        sign_idx = int(normalized // 30) % 12
+        sign_degree = normalized % 30
+        return sign_idx, sign_degree, normalized
     
     def calculate_all_vargas(self, planet_positions: Dict[str, float],
                             asc_degree: float) -> Dict[str, Dict]:
@@ -103,15 +110,13 @@ class DivisionalChartsCalculator:
         
         # 计算分盘上升点
         varga_asc = self._calculate_varga_position(asc_degree, division)
-        varga_asc_sign = int(varga_asc // 30)
-        varga_asc_degree = varga_asc % 30
+        varga_asc_sign, varga_asc_degree, varga_asc_abs = self._position_parts(varga_asc)
         
         # 计算所有行星的分盘位置
         varga_planets = {}
         for planet, degree in planet_positions.items():
             varga_pos = self._calculate_varga_position(degree, division)
-            varga_sign = int(varga_pos // 30)
-            varga_degree = varga_pos % 30
+            varga_sign, varga_degree, varga_abs = self._position_parts(varga_pos)
             
             # 计算宫位（从上升点开始）
             house = ((varga_sign - varga_asc_sign) % 12) + 1
@@ -121,7 +126,7 @@ class DivisionalChartsCalculator:
                 "sign_index": varga_sign,
                 "degree": round(varga_degree, 4),
                 "house": house,
-                "absolute_degree": round(varga_pos, 4)
+                "absolute_degree": round(varga_abs, 4)
             }
         
         # 生成宫位图（12个宫位，每个宫位包含的行星列表）
@@ -136,7 +141,8 @@ class DivisionalChartsCalculator:
             "ascendant": {
                 "sign": self.SIGNS[varga_asc_sign],
                 "sign_index": varga_asc_sign,
-                "degree": round(varga_asc_degree, 4)
+                "degree": round(varga_asc_degree, 4),
+                "absolute_degree": round(varga_asc_abs, 4)
             },
             "planets": varga_planets,
             "house_chart": house_chart
@@ -257,14 +263,14 @@ class DivisionalChartsCalculator:
         
         # 根据星座类型确定起始点 (BPHS标准)
         # Movable(白羊/巨蟹/天秤/摩羯)=从本星座开始
-        # Fixed(金牛/狮子/天蝎/水瓶)=从第5个星座开始(+4)
-        # Dual(双子/处女/射手/双鱼)=从第9个星座开始(+8)
+        # Fixed(金牛/狮子/天蝎/水瓶)=从第9个星座开始(+8)
+        # Dual(双子/处女/射手/双鱼)=从第5个星座开始(+4)
         if sign_index in self.MOVABLE_SIGNS:
             start = sign_index
         elif sign_index in self.FIXED_SIGNS:
-            start = (sign_index + 4) % 12
-        else:  # DUAL_SIGNS
             start = (sign_index + 8) % 12
+        else:  # DUAL_SIGNS
+            start = (sign_index + 4) % 12
         
         varga_sign = (start + part) % 12
         varga_degree = (sign_degree % (30/9)) * 9
@@ -736,13 +742,11 @@ class DivisionalChartsCalculator:
         """
         # Step 1: Apply outer division
         outer_result = self._calculate_varga_position(degree, outer_div)
-        outer_sign = int(outer_result // 30)
-        outer_deg = outer_result % 30
+        outer_sign, outer_deg, outer_abs = self._position_parts(outer_result)
 
         # Step 2: Apply inner division to the outer result
-        inner_result = self._calculate_varga_position(outer_result, inner_div)
-        inner_sign = int(inner_result // 30)
-        inner_deg = inner_result % 30
+        inner_result = self._calculate_varga_position(outer_abs, inner_div)
+        inner_sign, inner_deg, inner_abs = self._position_parts(inner_result)
 
         return {
             'composite_div': outer_div * inner_div,
@@ -751,9 +755,10 @@ class DivisionalChartsCalculator:
             'sign': self.SIGNS[inner_sign],
             'sign_idx': inner_sign,
             'degree': round(inner_deg, 4),
-            'absolute_degree': round(inner_result, 4),
+            'absolute_degree': round(inner_abs, 4),
             'intermediate': {
                 'outer_sign': self.SIGNS[outer_sign],
+                'outer_sign_idx': outer_sign,
                 'outer_degree': round(outer_deg, 4)
             }
         }
@@ -802,8 +807,7 @@ class DivisionalChartsCalculator:
             sign_degree = degree % 30
             varga_pos = self._custom_varga_general(sign_index, sign_degree, n)
 
-        varga_sign = int(varga_pos // 30)
-        varga_deg = varga_pos % 30
+        varga_sign, varga_deg, varga_abs = self._position_parts(varga_pos)
 
         # Calculate part index
         amsa_size = 30.0 / n
@@ -817,7 +821,7 @@ class DivisionalChartsCalculator:
             'sign_idx': varga_sign,
             'degree': round(varga_deg, 4),
             'part_index': part_index,
-            'absolute_degree': round(varga_pos, 4),
+            'absolute_degree': round(varga_abs, 4),
             'amsa_size': round(amsa_size, 6)
         }
 
@@ -894,8 +898,7 @@ class DivisionalChartsCalculator:
             varga_pos = self._calculate_varga_position(degree, div)
             used_variant = 'parashara'  # default
 
-        varga_sign = int(varga_pos // 30)
-        varga_deg = varga_pos % 30
+        varga_sign, varga_deg, varga_abs = self._position_parts(varga_pos)
 
         return {
             'div': div,
@@ -903,7 +906,7 @@ class DivisionalChartsCalculator:
             'sign_idx': varga_sign,
             'degree': round(varga_deg, 4),
             'variant': used_variant,
-            'absolute_degree': round(varga_pos, 4)
+            'absolute_degree': round(varga_abs, 4)
         }
 
     def list_available_variants(self) -> Dict:

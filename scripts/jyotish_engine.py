@@ -45,6 +45,14 @@ import sqlite3
 from datetime import datetime, timedelta
 from typing import Dict, List
 
+from ayanamsa_utils import (
+    AYANAMSA_DISPLAY_NAMES,
+    AYANAMSA_MODES,
+    apply_ayanamsa,
+    ayanamsa_display_name,
+    current_ayanamsa_name,
+)
+
 # ============================================================================
 # 路径常量
 # ============================================================================
@@ -57,22 +65,11 @@ TRANSIT_JSON = os.path.join(CLAW_DIR, '月运过境配置-2026-2028.json')
 
 try:
     import swisseph as swe
-    # 默认 Lahiri，可被 --ayanamsa 参数覆盖
-    AYANAMSA_MODES = {
-        'lahiri': swe.SIDM_LAHIRI,
-        'raman': swe.SIDM_RAMAN,
-        'kp': swe.SIDM_KRISHNAMURTI,
-        'krishnamurti': swe.SIDM_KRISHNAMURTI,
-        'fagan_bradley': swe.SIDM_FAGAN_BRADLEY,
-        'djwhal_khul': swe.SIDM_DJWHAL_KHUL,
-        'sassanian': swe.SIDM_SASSANIAN,
-        'true_citra': swe.SIDM_TRUE_CITRA,
-    }
-    swe.set_sid_mode(swe.SIDM_LAHIRI)  # P0修复：必须设置Lahiri恒星黄道模式
+    apply_ayanamsa('lahiri', swe)  # P0修复：必须设置Lahiri恒星黄道模式
     HAS_SWE = True
 except ImportError:
     HAS_SWE = False
-    AYANAMSA_MODES = {'lahiri': 1}  # fallback for argparse choices
+
 from cmd_solar_return import cmd_solar_return  # v6.0.18
 from cmd_narayana_dasha import cmd_narayana_dasha as _cmd_narayana_dasha_impl  # v6.0.20
 from cmd_muhurta import cmd_muhurta  # v6.0.21
@@ -126,6 +123,15 @@ PERMANENT_ENEMIES = {
     'Saturn': ['Sun', 'Moon', 'Mars'],
     'Rahu': ['Sun', 'Moon', 'Jupiter'],
     'Ketu': ['Sun', 'Moon'],
+}
+DIGNITY_LABELS = {
+    'EXALTED': '入旺(Exalted)',
+    'MOOLATRIKONA': '本垣(Moolatrikona)',
+    'OWN_SIGN': '入庙(Own Sign)',
+    'FRIEND': '入友(Friendly Sign)',
+    'ENEMY': '入敌(Enemy Sign)',
+    'DEBILITATED': '落陷(Debilitated)',
+    'NEUTRAL': '中性',
 }
 PUSHKARA_NAVAMSA_RANGES = {
     'fire': [(6 + 40/60, 10), (23 + 20/60, 26 + 40/60)],
@@ -349,13 +355,18 @@ def _get_dignity_level(planet, sign, deg_in_sign=None):
         return 'OWN_SIGN'
     if DEBILITATION.get(planet) == sign:
         return 'DEBILITATED'
-    # 友好/敌对
+    # Natural dignity is judged by the planet's attitude toward the sign lord.
     sign_lord = SIGN_LORDS.get(sign, '')
-    if planet in PERMANENT_FRIENDS.get(sign_lord, []):
+    if sign_lord in PERMANENT_FRIENDS.get(planet, []):
         return 'FRIEND'
-    if planet in PERMANENT_ENEMIES.get(sign_lord, []):
+    if sign_lord in PERMANENT_ENEMIES.get(planet, []):
         return 'ENEMY'
     return 'NEUTRAL'
+
+
+def _get_planet_status_label(planet, sign, deg_in_sign=None):
+    """Return the user-facing D1 dignity label for chart output."""
+    return DIGNITY_LABELS.get(_get_dignity_level(planet, sign, deg_in_sign), '中性')
 PLANET_CN = {"Ketu": "南交点Ketu", "Venus": "金星Venus", "Sun": "太阳Sun", "Moon": "月亮Moon", "Mars": "火星Mars", "Rahu": "北交点Rahu", "Jupiter": "木星Jupiter", "Saturn": "土星Saturn", "Mercury": "水星Mercury"}
 BASE_PLANETS_SWE = {'Sun': swe.SUN, 'Moon': swe.MOON, 'Mars': swe.MARS, 'Mercury': swe.MERCURY, 'Jupiter': swe.JUPITER, 'Venus': swe.VENUS, 'Saturn': swe.SATURN} if HAS_SWE else {}
 PLANETS_SWE = {**BASE_PLANETS_SWE, 'Rahu': swe.MEAN_NODE} if HAS_SWE else {}
@@ -420,6 +431,51 @@ def output_json(data):
     print(json.dumps(data, ensure_ascii=False, indent=2, default=str))
 
 
+def _second_arg(value):
+    """Validate CLI birth second values."""
+    second = int(value)
+    if second < 0 or second > 59:
+        raise argparse.ArgumentTypeError("second must be between 0 and 59")
+    return second
+
+
+def _arg_second(args):
+    """Return an argparse namespace's optional birth second."""
+    return int(getattr(args, 'second', 0) or 0)
+
+
+def _birth_hour_decimal(hour, minute, second=0):
+    return hour + minute / 60.0 + second / 3600.0
+
+
+def _birth_time_string(hour, minute, second=0):
+    second = int(second or 0)
+    if second:
+        return f"{int(hour):02d}:{int(minute):02d}:{second:02d}"
+    return f"{int(hour):02d}:{int(minute):02d}"
+
+
+def _birth_datetime_from_args(args):
+    return datetime(args.year, args.month, args.day, args.hour, args.minute, _arg_second(args))
+
+
+def _compute_chart_from_args(args):
+    return compute_chart_data(
+        args.year, args.month, args.day, args.hour, args.minute,
+        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'),
+        second=_arg_second(args),
+        ayanamsa_name=_current_ayanamsa_name(args),
+    )
+
+
+def _current_ayanamsa_name(args=None):
+    return current_ayanamsa_name(args)
+
+
+def _ayanamsa_display_name(name):
+    return ayanamsa_display_name(name)
+
+
 def _add_chart_args(p):
     """为需要出生数据的子命令添加公共参数"""
     p.add_argument('--year', type=int, required=True)
@@ -427,6 +483,7 @@ def _add_chart_args(p):
     p.add_argument('--day', type=int, required=True)
     p.add_argument('--hour', type=int, required=True)
     p.add_argument('--minute', type=int, required=True)
+    p.add_argument('--second', type=_second_arg, default=0)
     p.add_argument('--lat', type=float, required=True)
     p.add_argument('--lon', type=float, required=True)
     p.add_argument('--tz', type=float, default=0)
@@ -437,10 +494,7 @@ def _add_chart_args(p):
 
 def _apply_ayanamsa(ayanamsa_name):
     """应用指定的 Ayanamsa 系统到全局 swissph 设置。新增 v6.9.9"""
-    if not HAS_SWE or ayanamsa_name not in AYANAMSA_MODES:
-        return False
-    swe.set_sid_mode(AYANAMSA_MODES[ayanamsa_name])
-    return True
+    return bool(HAS_SWE and apply_ayanamsa(ayanamsa_name, swe))
 
 
 def _varga_chart_to_yoga_context(varga_chart):
@@ -497,15 +551,144 @@ def _build_yoga_context_from_vargas(varga_result, planet_lons=None):
     return context
 
 
+def _planet_snapshot(planets, planet_name):
+    pdata = planets.get(planet_name, {}) if isinstance(planets, dict) else {}
+    if not isinstance(pdata, dict):
+        return {}
+    return {
+        'sign': pdata.get('sign'),
+        'sign_cn': pdata.get('sign_cn'),
+        'house': pdata.get('house'),
+        'degree_in_sign': pdata.get('degree_in_sign'),
+        'nakshatra': pdata.get('nakshatra'),
+        'nakshatra_pada': pdata.get('nakshatra_pada'),
+        'status': pdata.get('status'),
+        'retrograde': pdata.get('retrograde'),
+    }
+
+
+def _build_ai_prompt_pack(report):
+    """Build a compact, evidence-first prompt pack for downstream AI/RAG reading."""
+    modules = report.get('modules', {}) if isinstance(report, dict) else {}
+    chart = report.get('chart') or modules.get('chart') or {}
+    planets = chart.get('planets', {}) if isinstance(chart, dict) else {}
+    birth_info = chart.get('birth_info', {}) if isinstance(chart, dict) else {}
+    dasha = modules.get('dasha') or {}
+    current_dasha = dasha.get('current_dasha') if isinstance(dasha, dict) else {}
+    shadbala = modules.get('shadbala') or {}
+    shadbala_planets = shadbala.get('planets', {}) if isinstance(shadbala, dict) else {}
+    ashtakavarga = modules.get('ashtakavarga') or {}
+    sav = ashtakavarga.get('sav') if isinstance(ashtakavarga, dict) else {}
+    d9 = modules.get('d9_navamsa_expanded') or {}
+
+    shadbala_ranking = []
+    for planet_name, pdata in sorted(
+        shadbala_planets.items(),
+        key=lambda item: item[1].get('rank', 99) if isinstance(item[1], dict) else 99,
+    ):
+        if isinstance(pdata, dict):
+            shadbala_ranking.append({
+                'planet': planet_name,
+                'rank': pdata.get('rank'),
+                'total_rupas': pdata.get('total_rupas'),
+                'min_required': pdata.get('min_required'),
+                'strength_level': pdata.get('strength_level'),
+            })
+
+    current_ad = current_dasha.get('antardasha') if isinstance(current_dasha, dict) else {}
+    evidence_snapshot = {
+        'birth': report.get('birth_info', {}),
+        'ayanamsa': {
+            'name': birth_info.get('ayanamsa_name', 'lahiri'),
+            'display': birth_info.get('ayanamsa_display', 'Lahiri'),
+            'value': birth_info.get('ayanamsa'),
+            'node_mode': birth_info.get('node_mode'),
+        },
+        'core': {
+            'ascendant': chart.get('ascendant', {}),
+            'Sun': _planet_snapshot(planets, 'Sun'),
+            'Moon': _planet_snapshot(planets, 'Moon'),
+            'Mars': _planet_snapshot(planets, 'Mars'),
+            'Jupiter': _planet_snapshot(planets, 'Jupiter'),
+            'Venus': _planet_snapshot(planets, 'Venus'),
+            'Saturn': _planet_snapshot(planets, 'Saturn'),
+            'Rahu': _planet_snapshot(planets, 'Rahu'),
+            'Ketu': _planet_snapshot(planets, 'Ketu'),
+        },
+        'timing': {
+            'current_mahadasha': current_dasha.get('lord') if isinstance(current_dasha, dict) else None,
+            'current_antardasha': current_ad.get('lord') if isinstance(current_ad, dict) else None,
+            'current_md_start': current_dasha.get('start') if isinstance(current_dasha, dict) else None,
+            'current_md_end': current_dasha.get('end') if isinstance(current_dasha, dict) else None,
+        },
+        'strength': {
+            'shadbala_ranking': shadbala_ranking[:7],
+            'sav_total': sav.get('total') if isinstance(sav, dict) else None,
+            'sav_scores': sav.get('scores') if isinstance(sav, dict) else None,
+        },
+        'varga_focus': {
+            'd9': {
+                'Ascendant': d9.get('Ascendant') if isinstance(d9, dict) else None,
+                'Venus': d9.get('Venus') if isinstance(d9, dict) else None,
+                'Jupiter': d9.get('Jupiter') if isinstance(d9, dict) else None,
+                'Mars': d9.get('Mars') if isinstance(d9, dict) else None,
+                'Saturn': d9.get('Saturn') if isinstance(d9, dict) else None,
+            }
+        },
+        'quality_boundary': {
+            'errors': report.get('errors', []),
+            'warnings': report.get('warnings', []),
+            'external_oracle_status': 'D1/D9/VedAstro longitude boundary covered; Dasha/Shadbala external absolute calibration still requires multi-source oracle expansion.',
+        },
+    }
+
+    prompt_lines = [
+        "你是一个审慎的 AI Native 印度/吠陀占星分析助手。",
+        "请只基于 evidence_snapshot 中的计算证据生成解读，不要编造星盘不存在的配置。",
+        f"本盘使用 {evidence_snapshot['ayanamsa']['display']} ayanamsa，节点口径为 {evidence_snapshot['ayanamsa']['node_mode']}。",
+        "必须遵守：不要仅凭单一配置下结论；每个核心判断至少交叉 D1、D9、Dasha、Shadbala/Ashtakavarga 或 Transit 中的两个证据层。",
+        "必须显式标注置信度和边界：Dasha/PDF 起点差异、Shadbala 外部绝对值 oracle 尚未完成时，不得声称已经完全校准。",
+        "输出结构建议：参数声明、核心星盘、关系/事业/财富/健康分主题、当前时机、证据表、风险边界、可行动建议。",
+        "若引用经典法则，请优先检索 retrieval_plan.local_reference_docs；需要外部断语时再做 web/source verification。",
+    ]
+
+    return {
+        'schema_version': 1,
+        'mode': 'jyotish_structured_prompt_pack',
+        'prompt_zh': "\n".join(prompt_lines),
+        'evidence_snapshot': evidence_snapshot,
+        'retrieval_plan': {
+            'local_reference_docs': [
+                'references/ai-reading-workflow-prompt.md',
+                'references/comprehensive-reading-workflow.md',
+                'references/prediction-boundary-protocol.md',
+                'references/dasa-convergence-methodology.md',
+                'references/shadbala-interpretation-methodology.md',
+                'references/navamsa-d9-interpretation-template.md',
+            ],
+            'retrieval_tags': [
+                'no_single_factor_conclusion',
+                'd1_d9_dasha_cross_validation',
+                'oracle_boundary_visible',
+                'confidence_labeled_reading',
+            ],
+        },
+    }
+
+
 # ============================================================================
 # 公共星盘计算（供 chart/shadbala/ashtakavarga 共用，v3.4提取）
 # ============================================================================
-def compute_chart_data(year, month, day, hour, minute, lat, lon, tz, node_mode='mean'):
+def compute_chart_data(year, month, day, hour, minute, lat, lon, tz, node_mode='mean', second=0, ayanamsa_name=None):
     """计算星盘核心数据，返回 (result_dict, asc_idx, jd, ayanamsa)。node_mode: mean|true。"""
     if not HAS_SWE:
         return None, None, None, None
     swe.set_ephe_path('')
-    hour_decimal = hour + minute / 60.0 - tz
+    if ayanamsa_name:
+        _apply_ayanamsa(ayanamsa_name)
+    ayanamsa_name = _current_ayanamsa_name(type('Args', (), {'ayanamsa': ayanamsa_name})())
+    second = int(second or 0)
+    hour_decimal = _birth_hour_decimal(hour, minute, second) - tz
     jd = swe.julday(year, month, day, hour_decimal)
     ayanamsa = swe.get_ayanamsa(jd)
 
@@ -514,9 +697,12 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz, node_mode='
         node_mode = 'mean'
     node_pid = _node_pid(node_mode)
     result = {"birth_info": {
-        "date": f"{year}-{month:02d}-{day:02d}", "time": f"{hour:02d}:{minute:02d}",
+        "date": f"{year}-{month:02d}-{day:02d}", "time": _birth_time_string(hour, minute, second),
+        "hour": int(hour), "minute": int(minute), "second": second,
         "tz": f"UTC{'+' if tz >= 0 else ''}{tz}", "lat": lat, "lon": lon,
         "julian_day": round(jd, 6), "ayanamsa": round(ayanamsa, 4),
+        "ayanamsa_name": ayanamsa_name,
+        "ayanamsa_display": _ayanamsa_display_name(ayanamsa_name),
         "node_mode": node_mode, "node_mode_note": "mean=Mean Node; true=True Node. PyJHora默认true，本skill默认mean。"
     }, "ascendant": None, "planets": {}, "houses": {}}
 
@@ -548,10 +734,7 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz, node_mode='
             si = int(lon_p / 30); d_in_s = lon_p - si * 30; sign = SIGNS[si]
             retro = spd < 0
             house = ((si - asc_idx) % 12) + 1
-            status = "中性"
-            if EXALTATION.get(pname) == sign: status = "入旺(Exalted)"
-            elif DEBILITATION.get(pname) == sign: status = "落陷(Debilitated)"
-            elif SIGN_LORDS.get(sign) == pname: status = "入庙(Own Sign)"
+            status = _get_planet_status_label(pname, sign, d_in_s)
             ni = int(lon_p / nak_span); pada = int((lon_p % nak_span) / (nak_span / 4)) + 1
             nak_n, nak_l, _ = NAKSHATRA_LIST[ni % 27]
             result["planets"][pname] = {
@@ -581,7 +764,7 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz, node_mode='
 # 1. 星盘计算
 # ============================================================================
 def cmd_chart(args):
-    result, asc_idx, jd, ayanamsa = compute_chart_data(args.year, args.month, args.day, args.hour, args.minute, args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    result, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if result is None:
         return {"error": "swisseph未安装"}
     # v3.5: --validate 触发 R1-R10 校验
@@ -615,10 +798,7 @@ def cmd_dasha(args):
         if args.pada: progress = (max(1, min(4, args.pada)) - 1) / 4 + 0.125
     else:
         # v6.0.27: Auto-calculate Moon's Nakshatra from birth datetime
-        chart, asc_idx, jd, ayanamsa = compute_chart_data(
-            args.year, args.month, args.day, args.hour, args.minute,
-            args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean')
-        )
+        chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
         if chart is None:
             return {"error": "swisseph未安装，无法自动计算Nakshatra"}
         moon = chart.get("planets", {}).get("Moon", {})
@@ -630,7 +810,9 @@ def cmd_dasha(args):
 
     nak_name, start_lord, start_years = nak_info
     birthdate = args.birthdate or f"{args.year}-{args.month:02d}-{args.day:02d}"
-    birth_dt = datetime.strptime(birthdate, "%Y-%m-%d")
+    has_birth_clock = all(getattr(args, field, None) is not None for field in ("year", "month", "day", "hour", "minute"))
+    birth_time = _birth_time_string(args.hour, args.minute, _arg_second(args)) if has_birth_clock else None
+    birth_dt = _birth_datetime_from_args(args) if has_birth_clock else datetime.strptime(birthdate, "%Y-%m-%d")
     elapsed = progress * start_years; remaining = start_years - elapsed
     dt = birth_dt - timedelta(days=elapsed * 365.25)
     si = DASHA_ORDER.index(start_lord)
@@ -640,7 +822,20 @@ def cmd_dasha(args):
         end_dt = dt + timedelta(days=years * 365.25)
         # 第一个 MD 的展示 years 用 balance，实际日期计算用完整年数（数学等价）
         display_years = round(remaining, 2) if i == 0 else years
-        timeline.append({"lord": lord, "lord_cn": PLANET_CN[lord], "start": dt.strftime("%Y-%m-%d"), "end": end_dt.strftime("%Y-%m-%d"), "years": display_years, "full_years": years, "is_current": False, "is_balance": i == 0, "balance_years": round(remaining, 2) if i == 0 else None, "elapsed_at_birth": round(elapsed, 2) if i == 0 else None})
+        timeline.append({
+            "lord": lord,
+            "lord_cn": PLANET_CN[lord],
+            "start": dt.strftime("%Y-%m-%d"),
+            "end": end_dt.strftime("%Y-%m-%d"),
+            "start_datetime": dt.isoformat(timespec="seconds"),
+            "end_datetime": end_dt.isoformat(timespec="seconds"),
+            "years": display_years,
+            "full_years": years,
+            "is_current": False,
+            "is_balance": i == 0,
+            "balance_years": round(remaining, 2) if i == 0 else None,
+            "elapsed_at_birth": round(elapsed, 2) if i == 0 else None,
+        })
         dt = end_dt
 
     today = datetime.strptime(args.today, "%Y-%m-%d") if args.today else datetime.now()
@@ -670,7 +865,11 @@ def cmd_dasha(args):
             d["antardasha"] = current_ad or (sub[0] if sub else None)
             current = d
 
-    return {"moon_nakshatra": nak_name, "birth_date": birthdate, "reference_date": today.strftime("%Y-%m-%d"), "timeline": timeline, "current_dasha": current}
+    result = {"moon_nakshatra": nak_name, "birth_date": birthdate, "reference_date": today.strftime("%Y-%m-%d"), "timeline": timeline, "current_dasha": current}
+    if birth_time:
+        result["birth_time"] = birth_time
+        result["birth_datetime"] = f"{birthdate} {birth_time}"
+    return result
 
 
 # ============================================================================
@@ -712,7 +911,8 @@ def cmd_yoga(args):
         if has_birth_input:
             chart, asc_idx, jd, ayanamsa = compute_chart_data(
                 args.year, args.month, args.day, args.hour, args.minute,
-                args.lat, args.lon, getattr(args, 'tz', 0), getattr(args, 'node_mode', 'mean')
+                args.lat, args.lon, getattr(args, 'tz', 0), getattr(args, 'node_mode', 'mean'),
+                second=_arg_second(args),
             )
             if chart is None:
                 return {"error": "swisseph未安装"}
@@ -762,9 +962,7 @@ def cmd_yoga(args):
 def cmd_predict(args):
     # 验前事模式（v3.5新增）
     if getattr(args, 'past_verify', False) and args.year:
-        chart, asc_idx, jd, ayanamsa = compute_chart_data(
-            args.year, args.month, args.day, args.hour, args.minute,
-            args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+        chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
         if chart is None:
             return {"error": "swisseph未安装"}
         return _past_event_verify(chart, asc_idx, args)
@@ -944,7 +1142,7 @@ def _past_event_verify(chart: Dict, asc_idx: int, args) -> Dict:
 def cmd_varga(args):
     if not HAS_SWE: return {"error": "swisseph未安装"}
     swe.set_ephe_path('')
-    hd = args.hour + args.minute / 60.0 - args.tz
+    hd = _birth_hour_decimal(args.hour, args.minute, _arg_second(args)) - args.tz
     jd = swe.julday(args.year, args.month, args.day, hd)
 
     # Lahiri Ayanamsa（恒星黄道修正，与cmd_chart一致）
@@ -973,7 +1171,7 @@ def cmd_varga(args):
         start = si if si % 2 == 0 else (si + 8) % 12
         return SIGNS[(start + di) % 12]
 
-    result = {"birth_info": f"{args.year}-{args.month:02d}-{args.day:02d} {args.hour:02d}:{args.minute:02d}", "divisional_charts": {}}
+    result = {"birth_info": f"{args.year}-{args.month:02d}-{args.day:02d} {_birth_time_string(args.hour, args.minute, _arg_second(args))}", "divisional_charts": {}}
     if args.d9 or args.all:
         d9 = {"ascendant": navamsa(asc_deg)}
         for p, l in natal.items(): d9[p] = {"sign": navamsa(l), "sign_cn": SIGNS_CN[navamsa(l)]}
@@ -1298,9 +1496,7 @@ def _check_pac(planet_name, planet_lon, target_lon, asc_idx):
 def cmd_double_transit_pac(args):
     """Double Transit PAC + D9 层计算"""
     # 1. 计算本命星盘
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -1542,9 +1738,7 @@ def _calc_transit_lon(jd, planet_name):
 
 def cmd_transit_ll7l(args):
     """Transit LL/7L 连接 + 互换检测"""
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -1627,9 +1821,7 @@ def cmd_transit_ll7l(args):
 # ============================================================================
 def cmd_planetary_congregation(args):
     """行星聚集检测"""
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -1707,9 +1899,7 @@ def cmd_planetary_congregation(args):
 # ============================================================================
 def cmd_vivah_saham(args):
     """Vivah Saham 计算 + Transit 激活"""
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -1771,9 +1961,7 @@ def cmd_vivah_saham(args):
 # 9. Shadbala 六重力量（v3.4新增）
 # ============================================================================
 def cmd_shadbala(args):
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -1783,7 +1971,7 @@ def cmd_shadbala(args):
         return {"error": f"shadbala模块导入失败: {e}"}
     planets = chart.get("planets", {})
     asc_sign = chart.get("ascendant", {}).get("sign", "Aries")
-    birth_hour = args.hour + args.minute / 60.0
+    birth_hour = _birth_hour_decimal(args.hour, args.minute, _arg_second(args))
     sun_lon = planets.get("Sun", {}).get("degree", 0)
     moon_lon = planets.get("Moon", {}).get("degree", 0)
     return calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon)
@@ -1793,9 +1981,7 @@ def cmd_shadbala(args):
 # 10. Ashtakavarga 八分法（v3.4新增）
 # ============================================================================
 def cmd_ashtakavarga(args):
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -1846,9 +2032,7 @@ def cmd_ashtakoot(args):
 # 10b. KP 系统（v6.9.10新增）
 # ============================================================================
 def cmd_kp(args):
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -1914,9 +2098,7 @@ def cmd_memory(args):
 # 12. R1-R10 数学验证（v3.5新增）
 # ============================================================================
 def cmd_validate(args):
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -2043,9 +2225,7 @@ def _conflict_arbitration(report):
 
 def cmd_audit(args):
     """P1-P12 行星审计：调用 chart→shadbala→ashtakavarga→yoga，输出统一审计报告"""
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -2183,7 +2363,7 @@ def cmd_audit(args):
     try:
         sys.path.insert(0, SCRIPT_DIR)
         from shadbala import calc_shadbala
-        birth_hour = args.hour + args.minute / 60.0
+        birth_hour = _birth_hour_decimal(args.hour, args.minute, _arg_second(args))
         sun_lon = planets.get('Sun', {}).get('degree', 0)
         moon_lon = planets.get('Moon', {}).get('degree', 0)
         shadbala = calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon)
@@ -2315,9 +2495,7 @@ def cmd_report(args):
 # 15. BPHS十六分盘完整计算（v3.7新增）
 # ============================================================================
 def cmd_varga_full(args):
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -2395,9 +2573,7 @@ def cmd_varga_full(args):
 # 16. 度数精确相位系统（v3.7新增）
 # ============================================================================
 def cmd_aspects(args):
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -2418,9 +2594,7 @@ def cmd_aspects(args):
 # 17. Jaimini系统（v3.7新增）
 # ============================================================================
 def cmd_jaimini(args):
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -2464,7 +2638,7 @@ def cmd_jaimini(args):
         result['arudha_padas'] = calc_arudha_padas(asc_idx, planet_lons)
         result['graha_padas'] = calc_graha_padas(planet_lons)
     if mode in ('all', 'special'):
-        result['special_lagnas'] = calc_special_lagnas(asc_idx, args.hour, args.minute)
+        result['special_lagnas'] = calc_special_lagnas(asc_idx, args.hour, args.minute + _arg_second(args) / 60.0)
     return result
 
 
@@ -2472,9 +2646,7 @@ def cmd_jaimini(args):
 # 18. 高级Nakshatra分析（v3.7 → v6.0.22 移至 cmd_nakshatra_adv.py）
 # ============================================================================
 def cmd_narayana_dasha(args):
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is not None:
         chart['ascendant_index'] = asc_idx
     return _cmd_narayana_dasha_impl(args, chart)
@@ -2499,9 +2671,7 @@ def cmd_nakshatra_full(args):
 # 19. Argala门闩系统（v3.7新增）
 # ============================================================================
 def cmd_argala(args):
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -2523,9 +2693,7 @@ def cmd_argala(args):
 # 20. Tajika/Varshaphala年运盘（v3.7新增）
 # ============================================================================
 def cmd_tajika(args):
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
     try:
@@ -3178,7 +3346,10 @@ def cmd_full_reading(args):
         'version': '4.4.0-full-reading',
         'birth_info': {
             'date': f"{args.year}-{args.month:02d}-{args.day:02d}",
-            'time': f"{args.hour:02d}:{args.minute:02d}",
+            'time': _birth_time_string(args.hour, args.minute, _arg_second(args)),
+            'hour': int(args.hour),
+            'minute': int(args.minute),
+            'second': _arg_second(args),
             'lat': args.lat, 'lon': args.lon,
             'tz': f"UTC{'+' if args.tz >= 0 else ''}{args.tz}",
         },
@@ -3188,11 +3359,18 @@ def cmd_full_reading(args):
     }
 
     # ── Step 1: 核心星盘 ──
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'))
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装，无法计算星盘"}
+
+    chart_birth = chart.get('birth_info', {}) if isinstance(chart, dict) else {}
+    report['birth_info']['ayanamsa'] = chart_birth.get('ayanamsa')
+    report['birth_info']['ayanamsa_name'] = chart_birth.get('ayanamsa_name', _current_ayanamsa_name(args))
+    report['birth_info']['ayanamsa_display'] = chart_birth.get(
+        'ayanamsa_display',
+        _ayanamsa_display_name(report['birth_info']['ayanamsa_name']),
+    )
+    report['birth_info']['node_mode'] = chart_birth.get('node_mode', getattr(args, 'node_mode', 'mean'))
 
     report['chart'] = chart
     report['modules']['chart'] = chart
@@ -3213,7 +3391,7 @@ def cmd_full_reading(args):
         sys.path.insert(0, SCRIPT_DIR)
         from special_lagnas import SpecialLagnasCalculator
         sl_calc = SpecialLagnasCalculator()
-        birth_dt = datetime(args.year, args.month, args.day, args.hour, args.minute)
+        birth_dt = _birth_datetime_from_args(args)
         # 简化处理：sunrise 近似为 6:00 当地时间
         sunrise_dt = datetime(args.year, args.month, args.day, 6, 0)
         sl_result = sl_calc.calculate_all_lagnas(
@@ -3262,7 +3440,19 @@ def cmd_full_reading(args):
         today_str = getattr(args, 'transit_date', None) or getattr(args, 'today', None) or datetime.now().strftime('%Y-%m-%d')
         dasha_result = cmd_dasha(type('Args', (), {
             'nakshatra': nak_name, 'pada': pada,
-            'moon_lon': moon_lon, 'birthdate': birthdate, 'today': today_str
+            'moon_lon': moon_lon,
+            'birthdate': birthdate,
+            'year': args.year,
+            'month': args.month,
+            'day': args.day,
+            'hour': args.hour,
+            'minute': args.minute,
+            'second': _arg_second(args),
+            'lat': args.lat,
+            'lon': args.lon,
+            'tz': args.tz,
+            'node_mode': getattr(args, 'node_mode', 'mean'),
+            'today': today_str
         })())
         report['modules']['dasha'] = dasha_result
         report['modules']['dasha_sandhi'] = _calc_dasha_sandhi(dasha_result, today_str)
@@ -3673,7 +3863,8 @@ def cmd_full_reading(args):
                 args.year, args.month, args.day,
                 args.hour, args.minute,
                 args.lat, args.lon, args.tz,
-                args.target_year
+                args.target_year,
+                ayanamsa_name=_current_ayanamsa_name(args),
             )
             report['modules']['solar_return'] = sr_result
             # 更新 muntha 为正确值（来自太阳返照盘）
@@ -3697,7 +3888,7 @@ def cmd_full_reading(args):
     try:
         from narayana_dasha import narayana_dasha_full_report
         # 计算当前年龄（从出生到 today）
-        birth_dt = datetime(args.year, args.month, args.day, args.hour, args.minute)
+        birth_dt = _birth_datetime_from_args(args)
         today_dt = datetime.strptime(args.today, '%Y-%m-%d') if hasattr(args, 'today') and args.today else datetime.now()
         current_age = (today_dt - birth_dt).days / 365.25
         narayana_result = narayana_dasha_full_report(
@@ -3756,7 +3947,7 @@ def cmd_full_reading(args):
             ak_d9.get('sign', 'Aries'), ak_d9.get('degree_in_sign', 0))
         jaimini_result['arudha_padas'] = calc_arudha_padas(asc_idx, planet_lons)
         jaimini_result['graha_padas'] = calc_graha_padas(planet_lons)
-        jaimini_result['special_lagnas'] = calc_special_lagnas(asc_idx, args.hour, args.minute)
+        jaimini_result['special_lagnas'] = calc_special_lagnas(asc_idx, args.hour, args.minute + _arg_second(args) / 60.0)
 
         # Darakaraka 深度解读（v6.1.10）
         # Registry 已将 modules.jaimini.darakaraka 标为 covered；这里把独立 DK
@@ -3875,7 +4066,7 @@ def cmd_full_reading(args):
     # ── Step 10: Shadbala六重力量 ──
     try:
         from shadbala import calc_shadbala
-        birth_hour = args.hour + args.minute / 60.0
+        birth_hour = _birth_hour_decimal(args.hour, args.minute, _arg_second(args))
         sun_lon = planet_lons.get('Sun', 0)
         moon_lon = planet_lons.get('Moon', 0)
         shadbala_result = calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon)
@@ -4037,7 +4228,7 @@ def cmd_full_reading(args):
         moon_pada = int((moon_lon % (360 / 27)) / (360 / 108)) + 1
         tithi_number = int(((moon_lon - planet_lons.get('Sun', 0)) % 360) / 12) + 1
         birth_info_for_alt_dasha = {
-            'birth_datetime': datetime(args.year, args.month, args.day, args.hour, args.minute),
+            'birth_datetime': _birth_datetime_from_args(args),
             'moon_nakshatra_index': moon_nakshatra_index,
             'moon_pada': moon_pada,
             'is_shukla_paksha': 1 <= tithi_number <= 15,
@@ -4136,6 +4327,7 @@ def cmd_full_reading(args):
         'status': 'complete' if error_count == 0 else f'{error_count} errors',
         'next_step': '⭐ v6.1.6: full-reading 已输出 transit_multi_reference(四参考点) + dasa_convergence(五系统交叉) + yogini_dasha + ashtottari_dasha + kalachakra_dasha + d9_navamsa_expanded。AI必须使用四参考点分析Transit，Dasa预测必须标注多系统收敛等级。',
     }
+    report['ai_prompt_pack'] = _build_ai_prompt_pack(report)
 
     return report
 
@@ -4195,10 +4387,7 @@ def cmd_prashna(args):
 # ============================================================================
 def cmd_sudarshana(args):
     """Sudarshana Chakra 三参考点盘分析"""
-    chart, asc_idx, jd, ayanamsa = compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean')
-    )
+    chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装"}
 
@@ -4242,6 +4431,7 @@ def main():
     p.add_argument('--day', type=int, required=False)
     p.add_argument('--hour', type=int, required=False)
     p.add_argument('--minute', type=int, required=False)
+    p.add_argument('--second', type=_second_arg, default=0)
     p.add_argument('--lat', type=float, required=False)
     p.add_argument('--lon', type=float, required=False)
     p.add_argument('--tz', type=float, default=0)
@@ -4273,6 +4463,7 @@ def main():
     p.add_argument('--day', type=int, default=None, help='出生日')
     p.add_argument('--hour', type=int, default=None, help='出生时')
     p.add_argument('--minute', type=int, default=None, help='出生分')
+    p.add_argument('--second', type=_second_arg, default=0, help='出生秒')
     p.add_argument('--lat', type=float, default=None, help='纬度')
     p.add_argument('--lon', type=float, default=None, help='经度')
     p.add_argument('--tz', type=float, default=0, help='时区')

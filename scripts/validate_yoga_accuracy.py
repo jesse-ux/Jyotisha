@@ -23,6 +23,8 @@ import traceback
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set
 
+from ayanamsa_utils import sidereal_flags
+
 # ============================================================
 # 路径设置
 # ============================================================
@@ -94,13 +96,13 @@ def skill_compute_chart(year, month, day, hour, minute, lat, lon, tz,
     返回：(planets_dict, asc_idx, jd, ayanamsa)
     """
     import swisseph as swe
-    swe.set_sid_mode(swe.SIDM_LAHIRI)
 
     # Julian Day（本地时间 → UTC）
     hour_decimal = hour + minute / 60.0 - tz
     jd = swe.julday(year, month, day, hour_decimal)
 
     # Ayanamsa
+    flags = sidereal_flags(swe, 'lahiri')
     ayanamsa = swe.get_ayanamsa_ut(jd)
 
     # Ascendant
@@ -119,9 +121,8 @@ def skill_compute_chart(year, month, day, hour, minute, lat, lon, tz,
     ]
 
     for pname, pid in planet_map:
-        flags = swe.FLG_SIDEREAL | swe.FLG_SWIEPH
         res = swe.calc_ut(jd, pid, flags)
-        long = (res[0][0] - ayanamsa) % 360
+        long = res[0][0] % 360
         sign = int(long / 30)
         deg = long % 30.0
         speed = res[0][3]
@@ -134,12 +135,11 @@ def skill_compute_chart(year, month, day, hour, minute, lat, lon, tz,
         }
 
     # Rahu / Ketu
-    flags = swe.FLG_SIDEREAL | swe.FLG_SWIEPH
     if node_mode == 'true':
         rahu_res = swe.calc_ut(jd, swe.TRUE_NODE, flags)
     else:
         rahu_res = swe.calc_ut(jd, swe.MEAN_NODE, flags)
-    rahu_long = (rahu_res[0][0] - ayanamsa) % 360
+    rahu_long = rahu_res[0][0] % 360
     ketu_long = (rahu_long + 180.0) % 360
 
     for name, long in [('Rahu', rahu_long), ('Ketu', ketu_long)]:

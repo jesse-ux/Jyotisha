@@ -117,10 +117,12 @@
 | **D40** | Khavedamsa |  auspicious acts | ✅ | 完整 |
 | **D45** | Akshavedamsa | 性格/品质 | ✅ | 完整 |
 | **D60** | Shashtiamsa | 一般指示/业力 | ✅ | 完整 |
-| **D144** | Nadiamsa | 最精微分盘 | ❌ | 未实现 |
+| **D81** | Navamsa-Navamsa | D9之D9精微分盘 | ✅ | 已实现并纳入扩展分盘 |
+| **D108** | Dwadasamsa-Navamsa | D12之D9精微分盘 | ✅ | 已实现并纳入扩展分盘 |
+| **D144** | Dwadasamsa-Dwadasamsa | D12之D12精微分盘 | ✅ | 已实现并纳入扩展分盘 |
 | **D150** | — | 更精微 | ❌ | 未实现 |
 
-**覆盖度: 16/18 = 89%**
+**覆盖度: 19/20 = 95%（分盘计算层；深度解读模板仍集中在 D24/D30/D60 等重点分盘）**
 
 ### 2.4 分盘映射技法 (Varga Mapping)
 

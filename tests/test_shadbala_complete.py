@@ -203,6 +203,24 @@ class TestShadbalaFull:
         for pname, data in result['planets'].items():
             assert data['total_rupas'] > 0
 
+    def test_total_virupas_preserves_component_sum_without_global_normalization(self):
+        result = calc_shadbala(_sample_planets(), 'Leo', 10.0, 70.0, 45.0)
+        for pname, data in result['planets'].items():
+            component_sum = (
+                data['sthana_bala']['total']
+                + data['dig_bala']
+                + data['kala_bala']['total']
+                + data['chesta_bala']
+                + data['naisargika_bala']
+                + data['drik_bala']
+            )
+            assert data['total_virupas'] == pytest.approx(component_sum, abs=0.08), pname
+
+    def test_total_required_strength_is_not_halved_by_global_1200_invariant(self):
+        result = calc_shadbala(_sample_planets(), 'Leo', 10.0, 70.0, 45.0)
+        total_rupas = sum(data['total_rupas'] for data in result['planets'].values())
+        assert total_rupas >= sum(MIN_REQUIRED.values())
+
     def test_ishta_bala_calculated(self):
         result = calc_shadbala(_sample_planets(), 'Leo', 10.0, 70.0, 45.0)
         for pname, data in result['planets'].items():

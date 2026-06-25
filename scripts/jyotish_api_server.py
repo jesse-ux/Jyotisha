@@ -194,6 +194,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             self._json(self._capability_audit())
         elif path == '/api/technique_catalog':
             self._json(self._technique_catalog())
+        elif path == '/api/real_case_revalidation':
+            self._json(self._real_case_revalidation())
         else:
             self._json({'error': 'Not found'}, 404)
 
@@ -362,6 +364,17 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
     def _normalize_degree(self, body, key, default):
         return self._get_float(body, key, default, 0, 360) % 360
+
+    def _get_birth_second(self, body, default=0.0):
+        return self._get_float(body, 'second', body.get('birth_second', default), 0, 59)
+
+    def _birth_hour_decimal(self, hour, minute, second=0.0):
+        return float(hour) + float(minute) / 60.0 + float(second) / 3600.0
+
+    def _format_birth_time(self, hour, minute, second=0.0):
+        second_int = int(float(second))
+        base = f'{int(hour):02d}:{int(minute):02d}'
+        return f'{base}:{second_int:02d}' if second_int else base
 
     def _safe_report_slug(self, value):
         slug = re.sub(r'[^a-zA-Z0-9._-]+', '-', str(value or 'jyotish-report')).strip('-._')
@@ -1252,8 +1265,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         day = self._get_int(body, 'day', 15, 1, 31)
         hour = self._get_float(body, 'hour', 12, 0, 23)
         minute = self._get_float(body, 'minute', 0, 0, 59)
+        second = self._get_birth_second(body)
         try:
-            return datetime(year, month, day, int(hour), int(minute))
+            return datetime(year, month, day, int(hour), int(minute), int(second))
         except ValueError as e:
             raise BadRequest('Invalid birth date') from e
 
@@ -1264,11 +1278,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         day = self._get_int(body, 'day', 15, 1, 31)
         hour = self._get_float(body, 'hour', 12, 0, 23)
         minute = self._get_float(body, 'minute', 0, 0, 59)
+        second = self._get_birth_second(body)
         lat = self._get_float(body, 'lat', 39.9, -90, 90)
         lon = self._get_float(body, 'lon', 116.4, -180, 180)
         tz = self._get_float(body, 'tz', 8, -14, 14)
         try:
-            datetime(year, month, day, int(hour), int(minute))
+            datetime(year, month, day, int(hour), int(minute), int(second))
         except ValueError as e:
             raise BadRequest('Invalid birth date') from e
 
@@ -1282,10 +1297,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'day': day,
             'hour': int(hour),
             'minute': int(minute),
+            'second': int(second),
             'lat': lat,
             'lon': lon,
             'tz': tz,
             'node_mode': node_mode,
+            'ayanamsa': body.get('ayanamsa', 'lahiri'),
             'age': body.get('age'),
             'today': body.get('today') or body.get('current_date'),
             'transit_date': body.get('transit_date'),
@@ -1461,20 +1478,30 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         day = self._get_int(body, 'day', 15, 1, 31)
         hour = self._get_float(body, 'hour', 12, 0, 23)
         minute = self._get_float(body, 'minute', 0, 0, 59)
+        second = self._get_birth_second(body)
         lat = self._get_float(body, 'lat', 39.9, -90, 90)
         lon = self._get_float(body, 'lon', 116.4, -180, 180)
         tz = self._get_float(body, 'tz', 8, -14, 14)
         try:
-            datetime(year, month, day)
+            datetime(year, month, day, int(hour), int(minute), int(second))
         except ValueError as e:
             raise BadRequest('Invalid birth date') from e
 
         try:
             import swisseph as swe
             swe.set_ephe_path(os.path.join(SCRIPTS_DIR, '..', 'swiss_ephemeris'))
-            hour_ut = hour + minute / 60.0 - tz
+            birth_hour_decimal = self._birth_hour_decimal(hour, minute, second)
+            hour_ut = birth_hour_decimal - tz
             jd = swe.julday(year, month, day, hour_ut)
-            swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+            ayanamsa_name = body.get('ayanamsa', 'lahiri')
+            try:
+                from jyotish_engine import _apply_ayanamsa, _ayanamsa_display_name
+                _apply_ayanamsa(ayanamsa_name)
+                ayanamsa_display = _ayanamsa_display_name(ayanamsa_name)
+            except ImportError:
+                swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
+                ayanamsa_name = 'lahiri'
+                ayanamsa_display = 'Lahiri'
             ayanamsa = swe.get_ayanamsa(jd)
 
             planets_data = {}
@@ -1519,7 +1546,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             elapsed = (moon_lon % nak_size) / nak_size * total_years
             remaining = total_years - elapsed
 
-            birth_dt = datetime(year, month, day, int(hour), int(minute))
+            birth_dt = datetime(year, month, day, int(hour), int(minute), int(second))
             elapsed_days = elapsed * 365.25636
             dasha_start = birth_dt - timedelta(days=elapsed_days) if elapsed_days < 365*120 else birth_dt
 
@@ -1542,18 +1569,23 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             try:
                 jaimini = _load_local_module('jaimini')
                 special_lagnas = jaimini.calc_special_lagnas_precise(
-                    asc_sign_idx, year, month, day, int(hour), int(minute), lat, lon, tz
+                    asc_sign_idx, year, month, day, int(hour), minute + second / 60.0, lat, lon, tz
                 )
             except Exception as e:
                 import logging
                 logging.warning(f"[api_server] special lagnas calculation failed: {e}")
                 special_lagnas = {}
 
-            # Shadbala (v6.9.14: covered with external absolute-calibration cap)
+            # Shadbala (v6.9.15: absolute component sum, no global 1200 downscaling)
             try:
                 from shadbala import calc_shadbala
-                sb = calc_shadbala(planets_data, asc_sign, hour+minute/60.0, 
-                    planets_data.get('Sun',{}).get('lon',0), moon_lon, minute)
+                sb = calc_shadbala(
+                    planets_data,
+                    asc_sign,
+                    birth_hour_decimal,
+                    planets_data.get('Sun',{}).get('lon',0),
+                    moon_lon,
+                )
                 shadbala_summary = {p: {'rupas': round(d['total_rupas'],2), 'level': d['strength_level']} 
                     for p,d in sb.get('planets',{}).items()}
             except Exception as e:
@@ -1586,16 +1618,22 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 import logging
                 logging.warning(f"[api_server] yoga expansion detection failed: {e}")
-            return {
-                'success': True, 'version': '6.9.14',
+            result = {
+                'success': True, 'version': '6.9.15',
                 'birth': {
                     'date': f'{year}-{month:02d}-{day:02d}',
-                    'time': f'{int(hour):02d}:{int(minute):02d}',
+                    'time': self._format_birth_time(hour, minute, second),
+                    'hour': int(hour),
+                    'minute': int(minute),
+                    'second': int(second),
                     'tz': f"UTC{'+' if tz >= 0 else ''}{tz}",
                     'lat': lat,
                     'lon': lon,
                     'julian_day': round(jd, 6),
                     'ayanamsa': round(ayanamsa, 4),
+                    'ayanamsa_name': ayanamsa_name,
+                    'ayanamsa_display': ayanamsa_display,
+                    'node_mode': body.get('node_mode', body.get('nodeMode', 'mean')),
                 },
                 'ascendant': {
                     'sign': asc_sign,
@@ -1619,13 +1657,15 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'available_dashas': dasha_list,
                 'dasha_count': len(dasha_list),
             }
+            result['ai_prompt_pack'] = self._build_chart_prompt_pack(result)
+            return result
         except ImportError:
-            return self._fallback_chart(year, month, day, hour, minute, lat, lon, tz)
+            return self._fallback_chart(year, month, day, hour, minute, second, lat, lon, tz)
 
-    def _fallback_chart(self, year, month, day, hour, minute, lat, lon, tz):
+    def _fallback_chart(self, year, month, day, hour, minute, second, lat, lon, tz):
         """无Swiss Ephemeris时的简化计算"""
         import hashlib
-        seed = int(hashlib.md5(f"{year}{month}{day}{hour}{minute}{lat}{lon}".encode()).hexdigest()[:8], 16)
+        seed = int(hashlib.md5(f"{year}{month}{day}{hour}{minute}{second}{lat}{lon}".encode()).hexdigest()[:8], 16)
         asc_sign_idx = seed % 12
         asc_sign = SIGNS[asc_sign_idx]
 
@@ -1650,18 +1690,21 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         try:
             jaimini = _load_local_module('jaimini')
             special_lagnas = jaimini.calc_special_lagnas_precise(
-                asc_sign_idx, year, month, day, int(hour), int(minute), lat, lon, tz
+                asc_sign_idx, year, month, day, int(hour), minute + second / 60.0, lat, lon, tz
             )
         except Exception:
             jaimini = _load_local_module('jaimini')
-            special_lagnas = jaimini.calc_special_lagnas(asc_sign_idx, int(hour), int(minute))
+            special_lagnas = jaimini.calc_special_lagnas(asc_sign_idx, int(hour), minute + second / 60.0)
 
-        return {
-            'success': True, 'version': '6.9.14-fallback',
+        result = {
+            'success': True, 'version': '6.9.15-fallback',
             'warning': 'Swiss Ephemeris未安装，使用简化计算',
             'birth': {
                 'date': f'{year}-{month:02d}-{day:02d}',
-                'time': f'{int(hour):02d}:{int(minute):02d}',
+                'time': self._format_birth_time(hour, minute, second),
+                'hour': int(hour),
+                'minute': int(minute),
+                'second': int(second),
                 'tz': f"UTC{'+' if tz >= 0 else ''}{tz}",
                 'lat': lat,
                 'lon': lon,
@@ -1673,6 +1716,93 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'tithi_lord_analysis': _load_local_module('tithi_analyzer').analyze_tithi({'planets': planets}),
             'special_lagnas': special_lagnas,
             'available_dashas': [], 'dasha_count': 0,
+        }
+        result['ai_prompt_pack'] = self._build_chart_prompt_pack(result)
+        return result
+
+    def _build_chart_prompt_pack(self, chart):
+        birth = chart.get('birth') or chart.get('birth_info') or {}
+        ascendant = chart.get('ascendant') or {}
+        planets = chart.get('planets') or {}
+        dasha = chart.get('dasha') or {}
+        shadbala = chart.get('shadbala') or {}
+        top_strength = sorted(
+            [
+                {
+                    'planet': planet,
+                    'rupas': pdata.get('rupas'),
+                    'level': pdata.get('level'),
+                }
+                for planet, pdata in shadbala.items()
+                if isinstance(pdata, dict)
+            ],
+            key=lambda row: row.get('rupas') if isinstance(row.get('rupas'), (int, float)) else -1,
+            reverse=True,
+        )[:7]
+        core_planets = {
+            planet: {
+                'sign': pdata.get('sign'),
+                'degree': pdata.get('degree'),
+                'house': pdata.get('house'),
+                'lon': pdata.get('lon'),
+            }
+            for planet, pdata in planets.items()
+            if planet in {'Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'}
+            and isinstance(pdata, dict)
+        }
+        ayanamsa_display = birth.get('ayanamsa_display') or 'Lahiri'
+        node_mode = birth.get('node_mode') or 'mean'
+        prompt_lines = [
+            '你是一个审慎的 AI Native 印度/吠陀占星分析助手。',
+            '请只基于 evidence_snapshot 中的计算证据生成解读，不要编造星盘不存在的配置。',
+            f'本盘使用 {ayanamsa_display} ayanamsa，节点口径为 {node_mode}。',
+            '不要仅凭单一配置下结论；核心判断至少交叉 D1、D9、Dasha、Shadbala/Ashtakavarga 或 Transit 中的两个证据层。',
+            '必须显式标注置信度和边界：Dasha/PDF 起点差异、Shadbala 外部绝对值 oracle 尚未完成时，不得声称已经完全校准。',
+        ]
+        return {
+            'schema_version': 1,
+            'mode': 'jyotish_structured_prompt_pack',
+            'prompt_zh': '\n'.join(prompt_lines),
+            'evidence_snapshot': {
+                'birth': birth,
+                'ayanamsa': {
+                    'name': birth.get('ayanamsa_name', 'lahiri'),
+                    'display': ayanamsa_display,
+                    'value': birth.get('ayanamsa'),
+                    'node_mode': node_mode,
+                },
+                'core': {
+                    'ascendant': ascendant,
+                    **core_planets,
+                },
+                'timing': {
+                    'current_mahadasha': dasha.get('current_md') or dasha.get('maha_dasha'),
+                    'remaining_years': dasha.get('remaining_years'),
+                    'start_date': dasha.get('start_date'),
+                },
+                'strength': {
+                    'shadbala_ranking': top_strength,
+                },
+                'quality_boundary': {
+                    'external_oracle_status': 'D1/D9/VedAstro longitude boundary covered; Dasha/Shadbala external absolute calibration still requires multi-source oracle expansion.',
+                },
+            },
+            'retrieval_plan': {
+                'local_reference_docs': [
+                    'references/ai-reading-workflow-prompt.md',
+                    'references/comprehensive-reading-workflow.md',
+                    'references/prediction-boundary-protocol.md',
+                    'references/dasa-convergence-methodology.md',
+                    'references/shadbala-interpretation-methodology.md',
+                    'references/navamsa-d9-interpretation-template.md',
+                ],
+                'retrieval_tags': [
+                    'no_single_factor_conclusion',
+                    'd1_d9_dasha_cross_validation',
+                    'oracle_boundary_visible',
+                    'confidence_labeled_reading',
+                ],
+            },
         }
 
     def _detect_yogas(self, planets, asc_idx):
@@ -2379,6 +2509,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         month = self._get_int(body, 'month', 1, 1, 12)
         hour = self._get_int(body, 'hour', 12, 0, 23)
         minute = self._get_int(body, 'minute', 0, 0, 59)
+        second = self._get_birth_second(body)
         jaimini = _load_local_module('jaimini')
         varga = _load_local_module('varga')
         planet_degs = {planet: lon % 30 for planet, lon in planet_lons.items()}
@@ -2403,7 +2534,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             result['arudha_padas'] = jaimini.calc_arudha_padas(asc_sign_idx, planet_lons)
             result['graha_padas'] = jaimini.calc_graha_padas(planet_lons)
         if mode in ('all', 'special'):
-            result['special_lagnas'] = jaimini.calc_special_lagnas(asc_sign_idx, hour, minute)
+            result['special_lagnas'] = jaimini.calc_special_lagnas(asc_sign_idx, hour, minute + second / 60.0)
         return {
             'success': True,
             'endpoint': 'jaimini',
@@ -2519,13 +2650,14 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             raise BadRequest('planets must include Sun and Moon longitude data')
         birth_hour = self._get_float(body, 'birth_hour', body.get('hour', 12), 0, 23)
         birth_minute = self._get_float(body, 'birth_minute', body.get('minute', 0), 0, 59)
+        birth_second = self._get_birth_second(body)
+        birth_hour_decimal = self._birth_hour_decimal(birth_hour, birth_minute, birth_second)
         result = _load_local_module('shadbala').calc_shadbala(
             planets,
             SIGNS[asc_sign_idx],
-            birth_hour,
+            birth_hour_decimal,
             planet_lons['Sun'],
             planet_lons['Moon'],
-            birth_minute=birth_minute,
         )
         advanced = self._compute_shadbala_advanced_layer(body, planets, result)
         return {
@@ -2633,13 +2765,14 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             advanced_mod = _load_local_module('shadbala_advanced')
             birth_hour = self._get_float(body, 'birth_hour', body.get('hour', 12), 0, 23)
             birth_minute = self._get_float(body, 'birth_minute', body.get('minute', 0), 0, 59)
+            birth_second = self._get_birth_second(body)
             year = self._get_int(body, 'year', datetime.now().year, 1800, 2400)
             month = self._get_int(body, 'month', 1, 1, 12)
             day = self._get_int(body, 'day', 1, 1, 31)
             lat = self._get_float(body, 'lat', body.get('birth_lat', 0), -90, 90)
             lon = self._get_float(body, 'lon', body.get('birth_lon', 0), -180, 180)
             tz = self._get_float(body, 'tz', body.get('birth_tz', 0), -14, 14)
-            hour_decimal = birth_hour + birth_minute / 60.0
+            hour_decimal = self._birth_hour_decimal(birth_hour, birth_minute, birth_second)
             solar_lon = planets.get('Sun', {}).get('lon', 0)
             base_planets = base_result.get('planets', {}) if isinstance(base_result, dict) else {}
             comparison_planets = {}
@@ -2705,6 +2838,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             lon,
             tz,
             target_year,
+            ayanamsa_name=body.get('ayanamsa', 'lahiri'),
         )
         return {'success': True, 'endpoint': 'annual', 'report': report}
 
@@ -2774,6 +2908,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     lat=lat,
                     lon=lon,
                     tz=tz,
+                    ayanamsa_name=body.get('ayanamsa', 'lahiri'),
                 )
             except ValueError as e:
                 raise BadRequest(str(e)) from e
@@ -3229,6 +3364,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             start_date,
             end_date,
             planets_to_check=planets_to_check,
+            ayanamsa_name=body.get('ayanamsa', 'lahiri'),
         )
         top_triggers = result.get('triggers', [])[:6]
         headline = '发现可观察过境触发点' if result.get('total_triggers', 0) else '当前区间未发现精确触发'
@@ -3283,12 +3419,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 day = self._get_int(body, 'day', 15, 1, 31)
                 hour = self._get_float(body, 'hour', 12, 0, 23)
                 minute = self._get_float(body, 'minute', 0, 0, 59)
+                second = self._get_birth_second(body)
                 lat = self._get_float(body, 'lat', body.get('birth_lat', 0), -90, 90)
                 lon = self._get_float(body, 'lon', body.get('birth_lon', 0), -180, 180)
                 tz = self._get_float(body, 'tz', body.get('birth_tz', 0), -14, 14)
-                datetime(year, month, day)
+                datetime(year, month, day, int(hour), int(minute), int(second))
                 import swisseph as swe
-                hour_ut = hour + minute / 60.0 - tz
+                hour_ut = self._birth_hour_decimal(hour, minute, second) - tz
                 jd = swe.julday(year, month, day, hour_ut)
                 calculation_note = f'{selected_house_system} cusps use swisseph houses with birth JD and location.'
             except Exception as exc:
@@ -3580,6 +3717,41 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'target_endpoint': endpoint,
             'sample_payload': payload,
             'result': result,
+        }
+
+    def _real_case_revalidation(self):
+        validator_path = os.path.join(REPO_ROOT, 'tests', 'run_real_case_revalidation.py')
+        spec = importlib.util.spec_from_file_location('_jyotish_real_case_revalidation', validator_path)
+        if not spec or not spec.loader:
+            raise RuntimeError('Cannot load real case revalidation runner')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        args = argparse.Namespace(
+            python=sys.executable,
+            min_pass_rate=0.98,
+            degree_tolerance=1.0,
+        )
+        report = module.build_report(args)
+        return {
+            'success': bool(report.get('valid')),
+            'endpoint': 'real_case_revalidation',
+            'scope': report.get('scope'),
+            'accuracy_boundary': '公开人物星座级一致率，不是人生事件预测准确率。',
+            'public_reference': {
+                'label': '公开人物星座级一致率',
+                'passed': report.get('gated_passed_checks'),
+                'total': report.get('gated_total_checks'),
+                'pass_rate': report.get('pass_rate'),
+            },
+            'all_checks': {
+                'passed': report.get('passed_checks'),
+                'total': report.get('total_checks'),
+            },
+            'controversial_reference': {
+                'case_count': report.get('controversial_reference_cases'),
+                'note': '来源矛盾、时区争议或边界度数样本保留展示，但不计入发布阻断口径。',
+            },
+            'failures': report.get('failures', []),
         }
 
     def _dispatch_technique_endpoint(self, endpoint, payload):

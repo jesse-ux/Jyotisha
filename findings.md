@@ -109,3 +109,31 @@
 - Ashtakavarga 本轮修复：新增 `calc_yoga_pinda()`，让 Yoga/Shodhya Pinda 可被 API 与测试直接调用；`/api/ashtakavarga` 返回 `yoga_pinda_summary`；前端 Skill workbench 新增 Yoga Pinda 卡片与校验标签；registry 新增 `ashtakavarga_yoga_pinda` 条目并更新主 Ashtakavarga covered 状态。
 - Ashtakavarga 剩余边界：当前 Yoga Pinda 复用项目既有 v2.1 Shodhya Pinda 权重口径，并已明示 validation note；若后续要对齐更严格传统流派，需要引入外部书例/benchmark，而不是把当前权重伪装成全部流派通用标准。
 - 下一高价值遗漏：Sripathi/Placidus 房宫算法切换。当前设置层已有 house policy 叙事，但用户还不能验证切换后房宫、Bhava Chalit 与报告证据如何变化；应先地毯式查本地 `bhava_chalit`、历史碎片和开源 references，再补 parity tests/API provenance/frontend selector。
+- Antigravity/VedAstro 复核结论：Antigravity 临时 SDK 报告中 D1/D9 对齐结果有效，可增强对当前基础排盘和 Navamsa 映射的信心；但报告未成功取得 VedAstro Shadbala/Dasha，因此不能用它来判定当前 Shadbala 或 Vimshottari 实现错误。
+- 过期结论纠正：当前项目已经支持 `--second`，前端/API/wrapper 也能保留秒级时间；Shadbala 主输出已改为 v6.9.15 absolute Rupas，用户样本总量约 55.1437、Sun 约 9.7035，不再是旧报告中的 1.7-3.5 归一化档。
+- Dasha 差异边界：用户 PDF 目标起点 `1986-05-18` 与当前引擎 `1986-05-23T22:45:10` 仍相差约 5.948032 天；`scripts/dasha_reference_audit.py` 显示秒级输入和年长常数不能单独解释，应继续比较外部 oracle 的 Moon sidereal longitude、ayanamsa 与 Vimshottari 起算口径，不能为单份 PDF 直接调生产常数。
+- 分盘回归 Bug：`scripts/divisional_charts_extended.py` 的 D81/D108/D144、custom、composite varga 曾可能生成超过 360 度的中间黄经并导致 sign index 越界；已统一用 `_position_parts()` 归一化，并增加回归测试。
+- Level 3 外部解盘审计：附件解盘的 D1/D9 和 Saturn/Ketu 大运方向可参考，但存在 Sun Ashwini Pada、Venus combustion、retrograde、Ashtakavarga SAV 与 True/Mean Node 口径混用等可计算错误，已记录到 `docs/research/level3_reading_audit_2026_06_25.md`。
+- 尊严状态 Bug：外部解盘触发了真实产品问题，`scripts/jyotish_engine.py` 与前端 fallback 原本只把 Exalted/Debilitated/Own Sign 标出来，导致 Jupiter in Virgo 被显示成“中性”。已按行星对星座主星的态度输出 `入友/入敌`，并补 CLI/前端测试。
+- Skill 同步结论：网页/app 主线已修复的 D81/D108/D144 分盘归一化和 D1 友敌尊严标签需要同步到 skill 分发层，否则不同窗口/自动化可能继续使用旧副本。本轮已同步 `skills/jyotish-engine-modules/scripts/divisional_charts_extended.py`，并修正根 `SKILL.md` 中“全球第1”“1200/1200 Virupas校准”等过强/过期口径，新增测试防止再次漂移。
+- 公开演示环境结论：静态 demo/PWA 不能伪装成完整本地 API 应用。首屏和 Trust Center 现已展示“静态演示模式”能力边界：可直接体验出生资料输入、基础 D1/D9、术语模式和 Trust Center；PDF/HTML 报告、高级技法、真实案例复验、AI 解读代理需要本地 API。`deployment_preflight.py` 输出 `static_demo_boundary_visible`，发布前会阻断边界文案缺失。
+- Dasha/Shadbala oracle 边界结论：新增合并审计后，当前可重复报告显示 Dasha 用户 PDF 起点差异仍为 `1986-05-23T22:45:10` vs `1986-05-18`、所需 Moon 偏移约 `0.01206283°`；VedAstro SDK 黄经样本已进入 `longitude_cases`，本地 Moon 与 VedAstro Moon 差约 `26.2254` 角秒、全 9 项均在 120 角秒阈值内，因此基础落座/D9 可信度更高，但不足以解释 Dasha 起点差异；Shadbala 输出已是 v6.9.15 absolute Rupas，但外部目标仍缺六分量拆分，因此 `production_tuning_recommended=false`，不能把单份 PDF 或全局缩放当成校准完成。
+- Antigravity 并行修改审计：其写入的 Shadbala `component_targets` 是本地结构样本，不是 JHora/PyJHora 外部权威样本；`scripts/oracle_boundary_audit.py` 已将这类目标标为 `component_targets_sample_only` / `sample_only_not_external_oracle`，防止误宣称绝对值校准完成。
+- AI Native 差异化承载：`scripts/jyotish_engine.py full-reading` 已输出 `ai_prompt_pack`，将核心星盘、Dasha、Shadbala、SAV、D9、错误/边界整理成 RAG/Prompt 上下文。该层用于网页/app 和 skill 的大模型解读，不替代底层计算，也不硬编码断语。
+- Antigravity 副手定位：官方 Antigravity artifacts/implementation plan 适合做可审查副任务；结合公开安全事件与用户本地密钥风险，本项目把它限制为 oracle 样本采集、网页/app 审计、skill 同步审计和浏览器用户流验证，不让它直接重写核心引擎或执行破坏性命令。
+- 新发现的下一修复点：`scripts/transit_trigger.py`、`scripts/solar_return.py`、`scripts/muhurta.py`、`scripts/cmd_muhurta.py` 中 sidereal mode 设置被注释后依赖进程全局状态；下一步应引入统一 ayanamsa helper，默认 Lahiri，并允许调用方显式覆盖。
+- Ayanamsa 全局状态根因确认：Swiss Ephemeris 的 sidereal mode 是进程全局配置，`FLG_SIDEREAL` 不会自动指定 Lahiri。红灯测试显示在全局切到 Raman 后，Transit/Muhurta/Solar Return 默认输出会漂移约 `1.446°`。已通过 `scripts/ayanamsa_utils.py` 统一在每次 sidereal helper 调用前设置口径，默认 Lahiri，并允许调用方显式覆盖。
+- Yoga 准确率脚本修正：`scripts/validate_yoga_accuracy.py` 原先在 `FLG_SIDEREAL` 后又手动减 ayanamsa，存在双重扣减风险；现改为显式 Lahiri sidereal flags，并直接使用 SwissEph 返回的恒星黄经，避免准确率报告被验证脚本自身污染。
+- 前端联调结论：`/api/chart` 是普通用户最常走路径，必须直接返回 Ayanamsa 元数据与 `ai_prompt_pack`，不能只让 CLI `full-reading` 拥有 AI Native 上下文。当前已补 `/api/chart.ai_prompt_pack`、完整解盘面板和 AI Chat 上下文优先级。
+- 产品头像结论：原图 1046×1024、约 1.4MB，作为页头头像和 PWA 图标过大；已压缩到 512px、约 417KB，并把页头显示尺寸收敛到 28px。
+- Antigravity Round 2 边界：副手适合继续做全球产品黑盒复验和 oracle 样本可行性，不适合直接改核心计算或读取密钥；任务单已把输出限定在 `docs/research`，避免与 Codex 当前实现冲突。
+- Antigravity Round 3 派工结论：副手下一轮不再重复旧的“前端未接 Prompt Pack”静态结论，而是以黑盒复验为准，检查 Network payload、API response、完整解盘面板、AI Chat 上下文、头像资源体积和普通用户可用路径；仍禁止读取密钥或修改核心代码。
+- Antigravity Round 4 派工结论：副手要从“缺 oracle”的抽象结论进入“每个 template case 缺什么、从哪里采、何时能升 external_verified”的执行层；当前 5 个模板全部保持 `template_only`，审计脚本会输出缺失字段并保持 `production_tuning_recommended=false`。
+- Dasha/Shadbala 采集队列结论：`scripts/oracle_collection_queue.py` 当前从 5 个 template case 生成 5 个 `ready_for_collection` 任务，但 `ready_for_calibration` 仍为 0、`production_tuning_allowed=false`。这把下一步从“讨论准确率差距”推进到“逐字段采 Moon longitude、Vimshottari boundary、Shadbala 六分量外部真值”，同时继续阻止用本地输出或模板值调生产常数。
+- 质量门结论：release profile 不应只报告 `production_tuning_recommended=false`，还要给维护者/副手可执行的采集清单；因此 `ORACLE_COLLECTION_QUEUE_CMD` 已跟随 oracle boundary audit 运行，并被 README/静态测试锁定。
+- Evidence packet 结论：仅有采集 task 不够，必须给每条任务一个可填写证据包，要求 `tool_name`、`source_artifact`、`ayanamsa`、`node_mode`、`timezone` 等元数据，并把 target placeholders 与 missing fields 逐项绑定。这样后续录入时可以审计“这个值来自哪里”，而不是只看数字。
+- Shadbala 防线结论：凡是缺 `target.shadbala_components` 的任务，证据包都会标记 `reject_global_shadbala_scaling`，防止为了贴合一个总分而引入粗暴倍乘系数。
+- Evidence validator 结论：采集队列还需要第二道门来验证“已填写的证据包能否晋级”。`scripts/oracle_evidence_validator.py` 当前会拒绝空 metadata、缺 `source_artifact`、未填 target placeholders、非 `external_verified` 状态，以及含 `Local Engine`/`this-repo`/`scripts/jyotish_engine.py` 等本仓库来源的 artifact。
+- 质量门覆盖结论：只在 release profile 运行 oracle 队列不足以支撑日常主动迭代；`CORE_PYTEST_TARGETS` 已纳入 collection queue 和 evidence validator 测试，使 quick gate 也能发现采集队列/证据包漂移。
+- Round 7 后续审计发现：如果未来人工把 oracle JSON 某条 case 升级为 `external_verified`，旧队列生成器会重新生成 draft evidence packet，导致“已填外部真值仍过不了 validator”。已修为保留 `evidence_packet.status/metadata`，并用 `target_fields` 固定目标字段集合。
+- 对标差距结论：相对 VedAstro/PyJHora/JHora，当前最实质缺口不是基础 D1/D9，而是 Dasha/Shadbala 外部真值样本库、合婚/Koota/Panchanga 的 API/产品深度、以及普通用户一键使用/校准状态可视化。PyJHora 因 AGPL 只能黑盒参照，JHora 因闭源只能截图级人工采集。

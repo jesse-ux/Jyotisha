@@ -142,6 +142,14 @@ def test_composite_d9_d12_equals_d108():
     assert 0 <= result['sign_idx'] < 12
 
 
+def test_composite_varga_normalizes_large_intermediate_longitudes():
+    """Composite vargas should never expose sign indices outside 0-11."""
+    result = calc.calc_composite_varga(80.0, 9, 12)
+    assert 0 <= result['sign_idx'] < 12
+    assert 0 <= result['intermediate']['outer_sign_idx'] < 12
+    assert 0 <= result['absolute_degree'] < 360
+
+
 def test_composite_d12_d12_equals_d144():
     result = calc.calc_composite_varga(45.0, 12, 12)
     assert result['composite_div'] == 144
@@ -177,13 +185,24 @@ def test_custom_d9_matches_standard():
     """Custom D9 should match standard D9 calculation."""
     custom = calc.calc_custom_varga(45.0, 9)
     standard = calc._calculate_varga_position(45.0, 9)
-    assert custom['sign_idx'] == int(standard // 30)
+    assert custom['sign_idx'] == int((standard % 360) // 30)
 
 
 def test_custom_d2_matches_standard():
     custom = calc.calc_custom_varga(30.0, 2)
     standard = calc._calculate_varga_position(30.0, 2)
-    assert custom['sign_idx'] == int(standard // 30)
+    assert custom['sign_idx'] == int((standard % 360) // 30)
+
+
+def test_standard_extended_vargas_normalize_sign_indices():
+    chart = calc._calculate_single_varga(
+        VargaType.D108,
+        {"Moon": 80.0},
+        92.0,
+    )
+    assert 0 <= chart["ascendant"]["sign_index"] < 12
+    assert 0 <= chart["planets"]["Moon"]["sign_index"] < 12
+    assert 0 <= chart["planets"]["Moon"]["absolute_degree"] < 360
 
 
 def test_custom_out_of_range_raises():
@@ -259,6 +278,11 @@ def test_d9_navamsa_aries_0_degrees():
     """Aries 0° → Navamsa sign should be Aries (movable sign, part 0)."""
     lon = calc._calculate_varga_position(0.0, 9)
     assert int(lon // 30) == 0  # Aries
+
+
+def test_d9_navamsa_fixed_and_dual_sign_starts_match_jhora_reference():
+    assert int(calc._calculate_varga_position(30.0, 9) // 30) == 9  # Taurus starts Capricorn
+    assert int(calc._calculate_varga_position(60.0, 9) // 30) == 6  # Gemini starts Libra
 
 
 def test_d60_shashtiamsa_many_signs():

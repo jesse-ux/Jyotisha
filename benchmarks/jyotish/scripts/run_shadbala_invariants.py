@@ -5,19 +5,22 @@
 #!/usr/bin/env python3
 import csv
 import json
+import os
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_SCRIPT = Path(__file__).resolve().parents[2] / 'scripts' / 'jyotish_engine.py'
+REPO_ROOT = Path(os.environ.get('JYOTISH_BENCHMARK_ROOT', Path(__file__).resolve().parents[3])).resolve()
+SKILL_SCRIPT = Path(os.environ.get('JYOTISH_SKILL_SCRIPT', REPO_ROOT / 'scripts' / 'jyotish_engine.py')).resolve()
 PYTHON = Path(sys.executable)
 DATA = ROOT / 'data/benchmark_samples.json'
 OUT = ROOT / 'outputs'
 RAW = OUT / 'raw'
 SHADBALA_OUT = OUT / 'shadbala_invariants'
 PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']
-NAISARGIKA = {'Sun': 60.0, 'Moon': 60.0, 'Venus': 52.5, 'Jupiter': 45.0, 'Mercury': 37.5, 'Mars': 30.0, 'Saturn': 22.5}
+NAISARGIKA = {'Sun': 60.0, 'Moon': 51.43, 'Venus': 42.86, 'Jupiter': 34.29, 'Mercury': 25.71, 'Mars': 17.14, 'Saturn': 8.57}
 MIN_REQUIRED = {'Sun': 5.0, 'Moon': 6.0, 'Mars': 5.0, 'Mercury': 7.0, 'Jupiter': 6.5, 'Venus': 5.5, 'Saturn': 5.0}
 
 
@@ -107,10 +110,10 @@ def validate_shadbala(sample, shadbala, full_reading):
         range_checks = {
             'sthana.ucha_bala_range': (sthana.get('ucha_bala'), 0, 60),
             'sthana.ojayugma_enum': (sthana.get('ojayugma_bala'), {0, 15}, None),
-            'sthana.kendra_enum': (sthana.get('kendra_bala'), {0, 15}, None),
+            'sthana.kendra_enum': (sthana.get('kendra_bala'), {15.0, 30.0, 60.0}, None),
             'sthana.drekkana_enum': (sthana.get('drekkana_bala'), {0, 15}, None),
             'dig_bala_range': (pdata.get('dig_bala'), 0, 60),
-            'kala.total_range': (kala.get('total'), 0, 195),
+            'kala.total_range': (kala.get('total'), 0, 225),
             'chesta_bala_range': (pdata.get('chesta_bala'), 0, 60),
             'drik_bala_range': (pdata.get('drik_bala'), -60, 60),
         }
@@ -155,7 +158,7 @@ def write_report(rows):
     lines = []
     lines.append('# Jyotish benchmark 第九轮 Shadbala 内部不变量报告')
     lines.append('')
-    lines.append('生成时间：2026-06-04')
+    lines.append(f'生成时间：{date.today().isoformat()}')
     lines.append('')
     lines.append('## 1. 范围')
     lines.append('')
@@ -192,8 +195,8 @@ def write_report(rows):
         lines.append('- Shadbala 内部一致性存在失败项，应先修复输出或公式聚合。')
     else:
         lines.append('- Shadbala 输出结构、总分聚合、Rupa/Virupa换算、排名、full-reading一致性均通过内部不变量验证。')
-    lines.append('- 但源码仍包含简化项：Nathonnata Bala 二值化、部分 Saptavargaja 子分盘近似、Chesta Bala 速度分档近似、Drik Bala 简化相位权重。')
-    lines.append('- 因此能力标注应从 `covered` 降级为 `partial`：可作为内部一致的强弱参考，不应声称已完成传统 Parashara Shadbala 的外部绝对值校准。')
+    lines.append('- 本报告验证内部绝对值不变量：每颗星 total_virupas 等于 Sthana/Dig/Kala/Chesta/Naisargika/Drik 六项合计，且 total_rupas = total_virupas / 60。')
+    lines.append('- 这不是外部软件逐项对标；传统 Parashara Shadbala 的最终置信度仍需要 JHora/PyJHora/PDF oracle 做逐项差异审计。')
     report = OUT / 'jyotish_benchmark_round9_shadbala_invariants.md'
     report.write_text('\n'.join(lines))
     return report

@@ -181,12 +181,12 @@ const TERMINOLOGY_MODE_OPTIONS = {
 const CALCULATION_SETTING_OPTIONS = {
   ayanamsa: [
     ['lahiri', 'Lahiri / Chitrapaksha'],
-    ['raman', 'Raman（后续统一引擎切换）'],
-    ['kp', 'KP / Krishnamurti（后续统一引擎切换）'],
+    ['raman', 'Raman'],
+    ['kp', 'KP / Krishnamurti'],
   ],
   nodeMode: [
     ['mean', 'Mean node / 平均罗喉'],
-    ['true', 'True node / 真罗喉（后续统一引擎切换）'],
+    ['true', 'True node / 真罗喉'],
   ],
   houseSystem: [
     ['whole_sign', 'Whole Sign / Rashi'],
@@ -449,17 +449,25 @@ function initDateSelects() {
 // 表单提交
 // ============================================================================
 async function computeChartForBirth(birth) {
-  const { year, month, day, hour, minute, lat, lon, tz } = birth;
+  const { year, month, day, hour, minute, second = 0, lat, lon, tz } = birth;
   const settings = readCalculationSettings();
-  const payload = applyCalculationSettingsToPayload({ year, month, day, hour, minute, lat, lon, tz });
+  const payload = applyCalculationSettingsToPayload({ year, month, day, hour, minute, second, lat, lon, tz });
+  if (!payload.ayanamsa) payload.ayanamsa = settings.ayanamsa;
   const apiChart = await window.JyotishAPI?.computeWithPython(payload);
   if (apiChart?.success) {
     console.log('[Jyotish] ✅ 本地 API 服务 —', apiChart.dasha_count, 'Dasha');
     return attachCalculationSettings(apiChart, settings);
   }
   await initEngine();
-  const fallbackChart = await computeChart({ year, month, day, hour, minute, lat, lon, tz });
+  const fallbackChart = await computeChart({ year, month, day, hour, minute, second, lat, lon, tz });
   fallbackChart._fallback = true;
+  fallbackChart._calculation_boundary = {
+    ayanamsa: settings.ayanamsa,
+    appliedAyanamsa: 'lahiri',
+    note: settings.ayanamsa === 'lahiri'
+      ? 'Browser fallback uses Lahiri-compatible SwissEph WASM path.'
+      : `Browser fallback cannot apply ${settings.ayanamsa}; start the local API service to calculate this ayanamsa.`,
+  };
   attachCalculationSettings(fallbackChart, settings);
   console.log('[Jyotish] ⚠️ JS引擎计算完成');
   return fallbackChart;
@@ -501,12 +509,12 @@ function setupForm() {
     const tz = resolveTimezoneValue($('birth-tz').value);
     if (!year || !month || !day || !timeVal) { alert(t('alert.date')); return; }
     if (isNaN(lat) || isNaN(lon)) { alert(t('alert.city')); return; }
-    const [hour, minute] = timeVal.split(':').map(Number);
+    const [hour, minute, second = 0] = timeVal.split(':').map(Number);
     btnText.classList.add('hidden'); btnLoading.classList.remove('hidden'); btn.disabled = true;
     setChartComputeStatus('正在计算星盘...', 'warn');
     try {
       // v6.9.4: 计算层 — 优先本地 API 服务, 回退JS引擎
-      chartData = await computeChartForBirth({ year, month, day, hour, minute, lat, lon, tz });
+      chartData = await computeChartForBirth({ year, month, day, hour, minute, second, lat, lon, tz });
     } catch (e) {
       console.error('[Jyotish] 计算失败:', e);
       setChartComputeStatus(buildChartComputeRecoveryMessage(e), 'error');
@@ -514,7 +522,7 @@ function setupForm() {
       return;
     }
     try {
-      window.__jyotishBirth = { year, month, day, hour, minute, lat, lon, tz };
+      window.__jyotishBirth = { year, month, day, hour, minute, second, lat, lon, tz };
       renderAll();
       showPage('chart');
       aiChatSetChartData(chartData);
@@ -539,7 +547,10 @@ function fillBirthFormFromData(birth) {
   monthEl.value = String(birth.month);
   monthEl.dispatchEvent(new Event('change'));
   dayEl.value = String(birth.day);
-  $('birth-time').value = `${String(birth.hour).padStart(2, '0')}:${String(birth.minute).padStart(2, '0')}`;
+  const second = Number.isFinite(Number(birth.second)) ? Number(birth.second) : 0;
+  $('birth-time').value = second
+    ? `${String(birth.hour).padStart(2, '0')}:${String(birth.minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`
+    : `${String(birth.hour).padStart(2, '0')}:${String(birth.minute).padStart(2, '0')}`;
   $('birth-lat').value = birth.lat;
   $('birth-lon').value = birth.lon;
   $('birth-tz').value = String(birth.tz);
@@ -817,6 +828,7 @@ function renderAll() {
   chartData._client_audit = { validation, audit, actionableContext: actionableCtx, provenance };
   renderSpecialLagnaReport(arudha, ascendant, birth_info, chartData.special_lagnas);
   renderCompleteReadingTab({ ascendant, moonP, allYogas, dashaData, extraDasas, chartData, validation, audit });
+  renderAIPromptPackPanel(chartData);
   renderProvenancePanel({
     chartData,
     panchanga: ty,
@@ -861,6 +873,129 @@ function renderCompleteReadingTab({ ascendant, moonP, allYogas, dashaData, extra
   });
   const mevg = buildMEVGAudit({ ascendant, moonP, allYogas, dashaData, chartData, validation, audit });
   renderMEVGAudit($('mevg-audit-section'), mevg);
+}
+
+function renderAIPromptPackPanel(cd) {
+  const host = $('ai-prompt-pack-panel');
+  if (!host) return;
+  const pack = normalizeAIPromptPack(cd);
+  const evidence = pack.evidence_snapshot || {};
+  const ayanamsa = evidence.ayanamsa || {};
+  const core = evidence.core || {};
+  const timing = evidence.timing || {};
+  const strength = evidence.strength || {};
+  const docs = pack.retrieval_plan?.local_reference_docs || [];
+  const tags = pack.retrieval_plan?.retrieval_tags || [];
+  const ranking = Array.isArray(strength.shadbala_ranking) ? strength.shadbala_ranking : [];
+  host.innerHTML = `
+    <section class="ai-prompt-pack-panel">
+      <div class="ai-prompt-pack-head">
+        <div>
+          <span>AI Prompt Pack</span>
+          <strong>${escapeHtml(pack.mode || 'jyotish_structured_prompt_pack')}</strong>
+        </div>
+        <em>schema v${escapeHtml(String(pack.schema_version || 1))}</em>
+      </div>
+      <div class="ai-prompt-pack-grid">
+        <div class="ai-prompt-pack-card">
+          <span>Ayanamsa</span>
+          <strong>${escapeHtml(ayanamsa.display || getCalculationSettingLabel('ayanamsa', readCalculationSettings().ayanamsa))}</strong>
+          <small>${escapeHtml(`node=${ayanamsa.node_mode || 'mean'} · value=${ayanamsa.value ?? '-'}`)}</small>
+        </div>
+        <div class="ai-prompt-pack-card">
+          <span>Lagna / Moon</span>
+          <strong>${escapeHtml(core.ascendant?.sign || cd?.ascendant?.sign || '-')} / ${escapeHtml(core.Moon?.sign || cd?.planets?.Moon?.sign || '-')}</strong>
+          <small>D1 evidence snapshot</small>
+        </div>
+        <div class="ai-prompt-pack-card">
+          <span>Dasha</span>
+          <strong>${escapeHtml(timing.current_mahadasha || cd?.dasha?.current_md || '-')}</strong>
+          <small>${escapeHtml(timing.current_antardasha ? `AD ${timing.current_antardasha}` : timing.start_date || '')}</small>
+        </div>
+      </div>
+      <div class="ai-prompt-pack-body">
+        <div>
+          <h4>Prompt</h4>
+          <pre>${escapeHtml(pack.prompt_zh || '')}</pre>
+        </div>
+        <div>
+          <h4>Evidence</h4>
+          <div class="ai-prompt-pack-evidence">
+            ${['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].map(planet => {
+              const pdata = core[planet] || cd?.planets?.[planet] || {};
+              return `<span>${escapeHtml(planet)} · ${escapeHtml(pdata.sign || '-')} ${escapeHtml(formatCompactDegree(pdata.degree))}</span>`;
+            }).join('')}
+          </div>
+          ${ranking.length ? `
+            <div class="ai-prompt-pack-strength">
+              ${ranking.slice(0, 5).map(item => `<span>${escapeHtml(item.planet || '-')} ${escapeHtml(String(item.total_rupas ?? item.rupas ?? '-'))}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+      <div class="ai-prompt-pack-foot">
+        <div>
+          <strong>Retrieval</strong>
+          ${docs.slice(0, 6).map(doc => `<span>${escapeHtml(doc)}</span>`).join('')}
+        </div>
+        <div>
+          <strong>Boundary</strong>
+          ${(tags.length ? tags : ['oracle_boundary_visible', 'confidence_labeled_reading']).map(tag => `<span>${escapeHtml(tag)}</span>`).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function normalizeAIPromptPack(cd = {}) {
+  if (cd?.ai_prompt_pack?.evidence_snapshot) return cd.ai_prompt_pack;
+  const settings = normalizeCalculationSettings(cd?._calculation_settings || readCalculationSettings());
+  const birth = cd.birth || cd.birth_info || {};
+  const planets = cd.planets || {};
+  return {
+    schema_version: 1,
+    mode: 'jyotish_structured_prompt_pack',
+    prompt_zh: [
+      '你是一个审慎的 AI Native 印度/吠陀占星分析助手。',
+      '请只基于 evidence_snapshot 中的计算证据生成解读，不要编造星盘不存在的配置。',
+      `本盘使用 ${getCalculationSettingLabel('ayanamsa', settings.ayanamsa)} ayanamsa，节点口径为 ${getCalculationSettingLabel('nodeMode', settings.nodeMode)}。`,
+      '不要仅凭单一配置下结论；核心判断至少交叉 D1、D9、Dasha、Shadbala/Ashtakavarga 或 Transit 中的两个证据层。',
+    ].join('\n'),
+    evidence_snapshot: {
+      birth,
+      ayanamsa: {
+        name: settings.ayanamsa,
+        display: getCalculationSettingLabel('ayanamsa', settings.ayanamsa),
+        value: birth.ayanamsa ?? cd.ayanamsa,
+        node_mode: settings.nodeMode,
+      },
+      core: {
+        ascendant: cd.ascendant || {},
+        ...Object.fromEntries(Object.entries(planets).filter(([planet]) => ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'].includes(planet))),
+      },
+      timing: {
+        current_mahadasha: cd.dasha?.current_md,
+        remaining_years: cd.dasha?.remaining_years,
+        start_date: cd.dasha?.start_date,
+      },
+      strength: {
+        shadbala_ranking: Object.entries(cd.shadbala || {}).map(([planet, pdata]) => ({ planet, rupas: pdata?.rupas, level: pdata?.level })),
+      },
+    },
+    retrieval_plan: {
+      local_reference_docs: [
+        'references/ai-reading-workflow-prompt.md',
+        'references/comprehensive-reading-workflow.md',
+        'references/prediction-boundary-protocol.md',
+      ],
+      retrieval_tags: ['no_single_factor_conclusion', 'oracle_boundary_visible', 'confidence_labeled_reading'],
+    },
+  };
+}
+
+function formatCompactDegree(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? `${num.toFixed(2)}°` : '-';
 }
 
 function readCalculationSettings() {
@@ -929,9 +1064,10 @@ function buildCalculationProvenance(chartData, panchanga, context = {}) {
   const terminologyMode = readTerminologyMode(chartData?._terminology_mode);
   const terminology = getTerminologyModeOption(terminologyMode);
   const ayanamsaValue = birth.ayanamsa ?? chartData?.birth?.ayanamsa ?? chartData?.ayanamsa;
+  const ayanamsaLabel = birth.ayanamsa_display || chartData?.birth?.ayanamsa_display || getCalculationSettingLabel('ayanamsa', settings.ayanamsa);
   const ayanamsa = ayanamsaValue != null
-    ? `${getCalculationSettingLabel('ayanamsa', settings.ayanamsa)} (${Number(ayanamsaValue).toFixed(4)} deg)`
-    : getCalculationSettingLabel('ayanamsa', settings.ayanamsa);
+    ? `${ayanamsaLabel} (${Number(ayanamsaValue).toFixed(4)} deg)`
+    : ayanamsaLabel;
   const hasPython = chartData?.success && !chartData?._fallback;
   return {
     engine: hasPython ? `本地 API 服务 ${chartData?.version || ''}`.trim() : 'Browser SwissEph fallback',
@@ -939,7 +1075,7 @@ function buildCalculationProvenance(chartData, panchanga, context = {}) {
     ephemerisBackend: getCalculationSettingLabel('ephemerisBackend', settings.ephemerisBackend),
     terminologyMode: getCalculationSettingLabel('terminologyMode', settings.terminologyMode),
     ayanamsa,
-    nodeMode: `${getCalculationSettingLabel('nodeMode', settings.nodeMode)}；Ketu derived 180 deg opposite`,
+    nodeMode: `${birth.node_mode || getCalculationSettingLabel('nodeMode', settings.nodeMode)}；Ketu derived 180 deg opposite`,
     houseSystem: `${getCalculationSettingLabel('houseSystem', settings.houseSystem)}；Bhava Chalit 可在专项接口复核`,
     sunrisePolicy: getCalculationSettingLabel('sunrisePolicy', settings.sunrisePolicy),
     geocoderPolicy: getCalculationSettingLabel('geocoderPolicy', settings.geocoderPolicy),
@@ -954,7 +1090,7 @@ function buildCalculationProvenance(chartData, panchanga, context = {}) {
     terminologyNote: terminology.note,
     calculationSettings: settings,
     ruleVariantStatus: 'Rule variants are saved/exported as interpretive policy; non-current variants are staged until each engine path supports live switching.',
-    calculationSettingsStatus: 'Settings are saved and exported; ayanamsa/node/rule/ephemeris switching beyond the current path is staged for unified engine support.',
+    calculationSettingsStatus: 'Settings are saved and exported; ayanamsa and node mode are live API parameters. Rule variants remain interpretive policy unless the target endpoint returns live variant metadata.',
     chartStyle: context.chartStyle === 'north' ? 'North Indian' : 'South Indian',
     timezone: birth.tz || 'UTC+8',
     coordinates: `${safeNumber(birth.lat ?? 0).toFixed(4)}, ${safeNumber(birth.lon ?? 0).toFixed(4)}`,
@@ -1233,13 +1369,15 @@ function openSavedChartFromPanel(id) {
 function normalizeSavedBirth(cd) {
   const birth = cd?.birth_info || cd?.birth || {};
   const [year, month, day] = String(birth.date || '').split('-').map(Number);
-  const [hour, minute] = String(birth.time || '').split(':').map(Number);
+  const [hour, minute, secondRaw] = String(birth.time || '').split(':').map(Number);
+  const second = Number.isFinite(secondRaw) ? secondRaw : Number(birth.second) || 0;
   return {
     year: year || 2000,
     month: month || 1,
     day: day || 1,
     hour: hour || 12,
     minute: minute || 0,
+    second,
     lat: Number(birth.lat) || 0,
     lon: Number(birth.lon) || 0,
     tz: resolveTimezoneValue(birth.tz),
@@ -1574,6 +1712,7 @@ function renderTrustCenterPanel() {
       </div>
       ${renderRuntimeHealthPanel(runtime)}
       ${renderValidationTransparencyPanel()}
+      ${renderRealCaseRevalidationPanel()}
       ${renderTerminologyModePanel()}
       <div class="trust-center-copy">
         <p>出生资料、保存星盘、配对记录、问事记录和计算设置默认保存在本机浏览器。导出报告会写入你主动下载的文件；PDF 后端工件仅由本地 API 生成。</p>
@@ -1581,6 +1720,7 @@ function renderTrustCenterPanel() {
       </div>
       <div class="provenance-actions">
         <button type="button" class="provenance-action" data-action="trust-run-health">运行健康检查</button>
+        <button type="button" class="provenance-action" data-action="trust-run-real-cases">复验真实案例</button>
         <button type="button" class="provenance-action" data-action="pwa-install">安装为应用</button>
         <button type="button" class="provenance-action" data-action="trust-export-local">导出本地资料</button>
         <button type="button" class="provenance-action danger" data-action="trust-clear-local">清空本地资料</button>
@@ -1628,6 +1768,52 @@ function renderValidationTransparencyPanel() {
 function renderValidationTransparencyMetric(label, value, note) {
   return `
     <div class="validation-transparency-metric">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <small>${escapeHtml(note)}</small>
+    </div>
+  `;
+}
+
+const REAL_CASE_REVALIDATION_BASELINE = {
+  status: 'baseline',
+  publicReference: { label: '公开人物星座级一致率', passed: 66, total: 66, passRate: 1, display: '66/66' },
+  allChecks: { passed: 87, total: 99, display: '87/99' },
+  controversialReference: { caseCount: 5, note: 'controversial_reference 样本保留展示，不计入发布阻断口径。' },
+  boundary: '公开人物星座级一致率，不是人生事件预测准确率。',
+};
+
+function renderRealCaseRevalidationPanel() {
+  const state = window.__jyotishRealCaseRevalidation || REAL_CASE_REVALIDATION_BASELINE;
+  const publicRef = state.publicReference || REAL_CASE_REVALIDATION_BASELINE.publicReference;
+  const allChecks = state.allChecks || REAL_CASE_REVALIDATION_BASELINE.allChecks;
+  const controversial = state.controversialReference || REAL_CASE_REVALIDATION_BASELINE.controversialReference;
+  const checkedLabel = state.checkedAt ? `已复验 · ${formatDateTime(state.checkedAt)}` : 'release gate baseline';
+  const tone = state.status === 'warn' ? 'warn' : state.status === 'checking' ? 'pending' : 'ok';
+  const publicValue = publicRef.display || `${publicRef.passed ?? 66}/${publicRef.total ?? 66}`;
+  const allValue = allChecks.display || `${allChecks.passed ?? 87}/${allChecks.total ?? 99}`;
+  return `
+    <div class="real-case-revalidation-panel real-case-revalidation-${escapeAttr(tone)}">
+      <div class="calculation-settings-head">
+        <strong>真实案例复验</strong>
+        <span>${escapeHtml(checkedLabel)}</span>
+      </div>
+      <div class="real-case-revalidation-grid">
+        ${renderRealCaseMetric('公开人物星座级一致率', publicValue, '发布阻断口径，只统计非争议公开样本的 Lagna/Sun/Moon 星座。')}
+        ${renderRealCaseMetric('全量诊断', allValue, '包含争议来源和度数诊断，保留差异供审计。')}
+        ${renderRealCaseMetric('controversial_reference', `${controversial.caseCount ?? 5} cases`, controversial.note || '来源矛盾、时区争议或边界度数样本。')}
+      </div>
+      <div class="real-case-revalidation-boundary">
+        <strong>边界</strong>
+        <span>${escapeHtml(state.boundary || REAL_CASE_REVALIDATION_BASELINE.boundary)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderRealCaseMetric(label, value, note) {
+  return `
+    <div class="real-case-revalidation-metric">
       <span>${escapeHtml(label)}</span>
       <strong>${escapeHtml(value)}</strong>
       <small>${escapeHtml(note)}</small>
@@ -1708,7 +1894,33 @@ function renderRuntimeHealthPanel(runtime = getRuntimeHealthStatus()) {
           </div>
         `).join('')}
       </div>
+      ${renderStaticDemoBoundary()}
       <p class="runtime-health-note">Packaging preflight: python3 scripts/desktop_packaging_preflight.py。Pake 适合快速 URL 壳；Tauri shell with sidecar 适合后续一键启动本地 API 服务。</p>
+    </div>
+  `;
+}
+
+function renderStaticDemoBoundary() {
+  return `
+    <div class="static-demo-boundary static-demo-boundary-compact" data-static-demo-boundary>
+      <div class="static-demo-boundary-head">
+        <strong>静态演示模式</strong>
+        <span>公开静态站点只承载网页壳；完整计算需要用户自己启动本地 API。</span>
+      </div>
+      <div class="static-demo-boundary-grid">
+        <div>
+          <span>浏览器 fallback</span>
+          <p>可直接体验：出生资料输入、基础 D1/D9 星盘、术语模式、Trust Center</p>
+        </div>
+        <div>
+          <span>需要本地 API 服务</span>
+          <p>需要本地 API：PDF/HTML 报告、高级技法、真实案例复验、AI 解读代理</p>
+        </div>
+        <div>
+          <span>Deploy</span>
+          <p>Vercel / Netlify / GitHub Pages 适合静态壳；Docker Compose 适合完整本机版本。</p>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -1828,6 +2040,57 @@ async function runTrustCenterHealthCheck() {
       ],
     };
     if (status) status.textContent = `健康检查未通过：${window.__jyotishRuntimeHealth.error}`;
+  }
+  renderAll();
+}
+
+async function runTrustCenterRealCaseRevalidation() {
+  const status = $('trust-center-status');
+  window.__jyotishRealCaseRevalidation = {
+    status: 'checking',
+    checkedAt: new Date().toISOString(),
+    publicReference: REAL_CASE_REVALIDATION_BASELINE.publicReference,
+    allChecks: REAL_CASE_REVALIDATION_BASELINE.allChecks,
+    controversialReference: REAL_CASE_REVALIDATION_BASELINE.controversialReference,
+    boundary: REAL_CASE_REVALIDATION_BASELINE.boundary,
+  };
+  if (status) status.textContent = '正在复验真实案例...';
+  renderAll();
+  try {
+    const result = await window.JyotishAPI.getRealCaseRevalidation();
+    window.__jyotishRealCaseRevalidation = {
+      status: result.success ? 'ok' : 'warn',
+      checkedAt: new Date().toISOString(),
+      publicReference: {
+        label: result.public_reference?.label || '公开人物星座级一致率',
+        passed: result.public_reference?.passed,
+        total: result.public_reference?.total,
+        passRate: result.public_reference?.pass_rate,
+      },
+      allChecks: {
+        passed: result.all_checks?.passed,
+        total: result.all_checks?.total,
+      },
+      controversialReference: {
+        caseCount: result.controversial_reference?.case_count,
+        note: result.controversial_reference?.note,
+      },
+      boundary: result.accuracy_boundary || REAL_CASE_REVALIDATION_BASELINE.boundary,
+    };
+    if (status) {
+      const ref = window.__jyotishRealCaseRevalidation.publicReference;
+      status.textContent = `真实案例复验完成：公开人物星座级一致率 ${ref.passed}/${ref.total}。`;
+    }
+  } catch (error) {
+    window.__jyotishRealCaseRevalidation = {
+      status: 'warn',
+      checkedAt: new Date().toISOString(),
+      publicReference: REAL_CASE_REVALIDATION_BASELINE.publicReference,
+      allChecks: REAL_CASE_REVALIDATION_BASELINE.allChecks,
+      controversialReference: REAL_CASE_REVALIDATION_BASELINE.controversialReference,
+      boundary: `真实案例复验需要本地 API 服务：${error?.message || '请先启动本地 API。'} 这不是人生事件预测准确率。`,
+    };
+    if (status) status.textContent = `真实案例复验未完成：${error?.message || '本地 API 未连接'}`;
   }
   renderAll();
 }
@@ -3261,11 +3524,12 @@ function buildSpecialLagnaReport(arudha, ascendant, birthInfo, specialLagnas) {
 
   const birth = window.__jyotishBirth || {};
   const time = birthInfo?.time || `${String(birth.hour ?? 12).padStart(2, '0')}:${String(birth.minute ?? 0).padStart(2, '0')}`;
-  const [hourRaw, minuteRaw] = String(time).split(':');
+  const [hourRaw, minuteRaw, secondRaw] = String(time).split(':');
   const hour = Number.isFinite(Number(hourRaw)) ? Number(hourRaw) : safeNumber(birth.hour, 12);
   const minute = Number.isFinite(Number(minuteRaw)) ? Number(minuteRaw) : safeNumber(birth.minute, 0);
+  const second = Number.isFinite(Number(secondRaw)) ? Number(secondRaw) : safeNumber(birth.second, 0);
   const ascIdx = SIGNS.indexOf(ascendant.sign);
-  const ghatis = ((hour + minute / 60) / 24) * 60;
+  const ghatis = ((hour + minute / 60 + second / 3600) / 24) * 60;
   const ghatiFloor = Math.floor(ghatis);
   const hlIdx = ghatiFloor % 2 ? ghatiFloor % 12 : (7 - ghatiFloor + 120) % 12;
   const glIdx = ghatiFloor % 12;
@@ -4266,9 +4530,9 @@ function readSynastryPartnerBirth() {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('请选择对方出生城市，或通过城市搜索填入经纬度。');
   if (!Number.isFinite(tz)) throw new Error('请填写对方出生地时区，例如印度为 5.5，中国为 8。');
   const [year, month, day] = dateValue.split('-').map(Number);
-  const [hour, minute] = timeValue.split(':').map(Number);
+  const [hour, minute, second = 0] = timeValue.split(':').map(Number);
   if (![year, month, day, hour, minute].every(Number.isFinite)) throw new Error('对方出生日期或时间格式不正确。');
-  return { year, month, day, hour, minute, lat, lon, tz };
+  return { year, month, day, hour, minute, second, lat, lon, tz };
 }
 
 function buildSynastryDeepContext(selfChart, partnerChart, partnerBirth) {

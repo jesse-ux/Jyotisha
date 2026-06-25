@@ -102,4 +102,14 @@
 - [x] 云端 CI 收口：PR #6 head `925e73e` 的 `validate`、`test`、`release-quality-gate` 三条 GitHub Actions 检查均已通过。
 - [x] 准确率透明度页面：Trust Center 新增 Validation Transparency 面板，展示 Yoga logic benchmark 的 60 charts、82 comparable rules、Precision/Recall/F1、unmapped_pyjhora 与“不是个人事件预测准确率”的边界说明。
 - [x] 普通用户交付形态：新增 deployment preflight 与 README 交付矩阵，明确 Local dev、Docker Compose、Static demo/PWA、Desktop shell 的入口、命令和 API 边界，并纳入 quick/release 守门。
-- [ ] 下一步：继续公开演示环境 polish，优先增加静态 demo 的离线/无 API 文案和部署目标示例。
+- [x] Antigravity/VedAstro 外部评审复核：确认 D1/D9 对齐，纠正 Shadbala/秒级输入过期结论，新增 Dasha 参考差异审计记录。
+- [x] Level 3 外部解盘审计：拆分可采纳解读与可计算错误，并修复 D1 尊严状态漏掉友敌标签的问题。
+- [x] Skill 分发同步：根 `SKILL.md` 已修正 Shadbala/对标边界，`skills/jyotish-engine-modules` 的分盘脚本副本已同步 D81/D108/D144 归一化修复，并新增守门测试防止 skill 与网页/app 主线再次漂移。
+- [x] 公开演示环境 polish：首屏与 Trust Center 新增静态 demo/PWA 无 API 能力边界，README 与 `deployment_preflight.py` 增加 `static_demo_boundary_visible` 守门，明确 Vercel/Netlify/GitHub Pages 只适合作为静态壳，完整技法走 Docker Compose 或本地双服务。
+- [x] Dasha/Shadbala 外部 oracle 边界第一步：新增 `references/oracle/dasha_shadbala_oracle_cases.json` 与 `scripts/oracle_boundary_audit.py`，把用户 PDF 的 Vimshottari 起点差异和 Shadbala 分量级校准缺口纳入可重复审计报告。
+- [x] VedAstro 黄经 oracle 接入：`longitude_cases` 已记录用户盘 9 项外部 sidereal longitude，本地最大差约 26.23 角秒且 D1/D9 落点一致；该样本只用于 ephemeris drift 审计，不作为 Dasha/Shadbala 调参依据。
+- [x] Multi-Ayanamsa 计算层可验证切换：`full-reading --ayanamsa` 已在输出中记录 `ayanamsa_name/display/value`，`compute_chart_data(..., ayanamsa_name=...)` 也能直接切换；测试覆盖 Lahiri/Raman/KP 差异。
+- [x] AI Native Prompt/RAG 承载层第一步：`full-reading.ai_prompt_pack` 输出证据快照、检索文档、边界约束和结构化中文提示词，供网页/app 或 skill 后端 AI 代理生成高阶解读。
+- [x] Antigravity AI 副手工作单：新增 `docs/research/antigravity_sidecar_work_order_2026_06_25.md`，把 Antigravity 限定为外部 oracle 样本采集、网页/app 审计、skill 同步审计和浏览器用户流验证，避免与核心计算修改冲突。
+- [x] Standalone ayanamsa 全局状态修复：新增 `scripts/ayanamsa_utils.py`，让 Transit、Solar Return、Muhurta、cmd_muhurta、Yoga 验证脚本在 `FLG_SIDEREAL` 前显式设置 ayanamsa；默认 Lahiri，调用方可显式传入 Raman/KP 等。
+- [ ] 下一步：继续扩充多来源 oracle 样本，补 JHora/PyJHora 的 Moon sidereal longitude、ayanamsa、Vimshottari 起点和 Shadbala 六分量目标值；同时把前端 Multi-Ayanamsa 设置与 `ai_prompt_pack` 可视化。

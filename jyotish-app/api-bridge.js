@@ -60,6 +60,28 @@ async function postJson(path, payload, { requireModernChart = false } = {}) {
   throw lastError || new Error(buildAPIRecoveryMessage(path, '本地 API 未连接', lastAttempt));
 }
 
+async function fetchJson(path) {
+  let lastError = null;
+  let lastAttempt = null;
+  for (const base of getApiBases(true)) {
+    try {
+      const resp = await fetch(`${base}${path}`);
+      const data = await parseApiResponse(resp);
+      lastAttempt = `${base}${path}`;
+      if (!resp.ok || data?.success === false) {
+        lastError = new Error(buildAPIRecoveryMessage(path, data?.error || data?.message || `API请求失败: ${path}`, lastAttempt));
+        continue;
+      }
+      activeApiBase = base;
+      return data;
+    } catch (error) {
+      lastAttempt = `${base}${path}`;
+      lastError = new Error(buildAPIRecoveryMessage(path, error, lastAttempt));
+    }
+  }
+  throw lastError || new Error(buildAPIRecoveryMessage(path, '本地 API 未连接', lastAttempt));
+}
+
 async function parseApiResponse(resp) {
   const raw = await resp.text();
   try {
@@ -277,6 +299,10 @@ async function computeCaseValidation(payload) {
   return postJson('/api/case_validation', payload);
 }
 
+async function getRealCaseRevalidation() {
+  return fetchJson('/api/real_case_revalidation');
+}
+
 async function computeDivisionalYoga(payload) {
   return postJson('/api/divisional_yoga', payload);
 }
@@ -299,7 +325,15 @@ async function computeTransitTriggers(payload) {
 
 async function aiReading(chartData, options = {}) {
   const { style = 'deep', focus = '全部' } = options;
-  return { success: false, error: AI_DISABLED_MESSAGE, style, focus, chartDataPresent: Boolean(chartData) };
+  return {
+    success: false,
+    error: AI_DISABLED_MESSAGE,
+    style,
+    focus,
+    chartDataPresent: Boolean(chartData),
+    prompt_context: buildReadingPrompt(chartData || {}, style, focus),
+    promptPackUsed: Boolean(chartData?.ai_prompt_pack?.prompt_zh),
+  };
 }
 
 const SYSTEM_PROMPT = `你是印度占星(Jyotish/Vedic Astrology)专业解盘师。
@@ -312,6 +346,17 @@ const SYSTEM_PROMPT = `你是印度占星(Jyotish/Vedic Astrology)专业解盘�
 - 如果某个配置有多种可能性，列出2-3种最可能的走向`;
 
 function buildReadingPrompt(chartData, style, focus) {
+  if (chartData?.ai_prompt_pack?.prompt_zh && chartData?.ai_prompt_pack?.evidence_snapshot) {
+    return [
+      chartData.ai_prompt_pack.prompt_zh,
+      '',
+      '【evidence_snapshot】',
+      JSON.stringify(chartData.ai_prompt_pack.evidence_snapshot, null, 2),
+      '',
+      '【retrieval_plan】',
+      JSON.stringify(chartData.ai_prompt_pack.retrieval_plan || {}, null, 2),
+    ].join('\n');
+  }
   const asc = chartData.ascendant?.sign || '?';
   const planets = chartData.planets || {};
   const yogas = (chartData.yogas || []).slice(0, 15);
@@ -400,6 +445,7 @@ window.JyotishAPI = {
   computeAspects,
   computeRectificationGate,
   computeCaseValidation,
+  getRealCaseRevalidation,
   computeDivisionalYoga,
   computeKakshya,
   computeBhavaBala,

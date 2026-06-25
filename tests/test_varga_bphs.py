@@ -15,9 +15,9 @@ def navamsa_ref(lon: float) -> int:
     if sign_index % 3 == 0:
         start = sign_index
     elif sign_index % 3 == 1:
-        start = (sign_index + 4) % 12
-    else:
         start = (sign_index + 8) % 12
+    else:
+        start = (sign_index + 4) % 12
     return (start + part_index) % 12
 
 
@@ -60,7 +60,25 @@ def test_drekkana_uses_same_plus_four_plus_eight(lon: float) -> None:
 
 def test_varga_map_boundary_examples() -> None:
     assert varga_map(0, 0, 9) == 0  # Aries Navamsa starts Aries
-    assert varga_map(1, 0, 9) == 5  # Taurus Navamsa starts Virgo
-    assert varga_map(2, 0, 9) == 10  # Gemini Navamsa starts Aquarius
+    assert varga_map(1, 0, 9) == 9  # Taurus Navamsa starts Capricorn (9th from sign)
+    assert varga_map(2, 0, 9) == 6  # Gemini Navamsa starts Libra (5th from sign)
     assert varga_map(1, 0, 10) == 9  # Taurus Dasamsa starts Capricorn
     assert varga_map(0, 2, 3) == 8  # Aries third Drekkana = Sagittarius
+
+
+def test_navamsa_matches_user_jhora_pdf_reference_chart() -> None:
+    """Regression from 印度占星1.pdf: JHora-style D9 table for REDACTED_DATE 14:45:20 Fengfeng."""
+    expected = {
+        132.355025: "Cancer",      # Ascendant 12 Leo 21'18.09"
+        3.5226611111111112: "Taurus",
+        311.78995555555554: "Capricorn",
+        91.33091388888889: "Cancer",
+        338.5488: "Virgo",
+        163.83150833333335: "Taurus",
+        340.5554638888889: "Libra",
+        304.3033805555556: "Scorpio",
+        231.04509444444443: "Capricorn",
+        51.045094444444445: "Cancer",
+    }
+    for longitude, expected_sign in expected.items():
+        assert calc_varga(longitude, 9)["sign"] == expected_sign

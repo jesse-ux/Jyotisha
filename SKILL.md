@@ -7,7 +7,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 # 印度占星专业解盘与推运系统
 
 > **版本**：v6.9.14 | **详细变更**：`CHANGELOG.md`
-> **全局排名**：技术上并列全球第1（35种Dasha、405+Yoga、KP完整、Prashna、Remedies、独有中文引擎）
+> **对标状态**：中文用户端与技法覆盖领先；D1/D9/AV/Chara 等有守门，Dasha/Shadbala 外部 oracle 扩充仍在进行。
 > **执行总控**：`references/quick-reference-guide.md`
 > **严格路由**：`references/strict-workflow-router.md`（涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`
@@ -21,12 +21,12 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | 分盘 | D1-D144 + D2/D3变体 + 复合D-m×n + 自定义D-N(2-300) |
 | Bhava Chalit | Sripati/Porphyry/Equal/Whole Sign/Placidus/Koch 不等宫位调整 |
 | Sudarshana | Asc/Moon/Sun 三参考点盘 + 宫位收敛分析 |
-| Shadbala | 1200/1200 Virupas校准（6维力量评估） |
+| Shadbala | absolute Rupa 分量求和；内部不变量通过，外部绝对值 oracle 扩充中 |
 | Ashtakavarga | BAV+SAV+PAV（展开式）+Sodhita（净化式） |
 | KP系统 | Sublord+Subsublord+ABCD Significator |
 | 合盘 | 16因子36分制（Ashtakoot+Kuta） |
 | 补救 | 5类（宝石/咒语/捐赠/斋戒/Dosha专项） |
-| 自动化测试 | 475个 pytest 用例全通过 + run_all 100项 |
+| 自动化测试 | pytest/quality gate 分层守门；以当前仓库质量门输出为准 |
 | Git commits | v6.1.12→v6.9.14 持续推进 |
 
 **独有能力**：中文AI解读引擎、Career/Love结构化分析、验前事反推管道、误区自动纠正、名人+普通人案例双轨验证。
@@ -59,6 +59,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 1. **阶段零**：入口路由（A/B/C自动判断）
 2. **阶段一**（仅B）：PDF/图片提取 + Quality Gate
 3. **阶段二**：意图识别 → 路由目标宫位（无明确意图→Level 2综合解盘）
+4. **阶段二点五**：若 `full-reading` 或网页/API 返回 `ai_prompt_pack`，必须优先读取 `prompt_zh`、`evidence_snapshot`、`retrieval_plan` 作为 AI/RAG 主上下文；若没有该字段，再退回传统 JSON 摘要。
 4. **阶段三**：静态分析10步（宫位→承诺→Yoga→Argala→逆行→NK→Shadbala→AV→Ketu→分盘）
 5. **阶段四**：动态推运7步（Dasha→五系统Convergence→Transit→Double Transit→Jaimini→KP→Varshaphala）
 6. **阶段五**：应期输出（五层验证→时间窗口→Actionable Output+案例检索）
@@ -126,6 +127,15 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 - PyJHora 4.8.6 的 `rasi_chart()` 默认使用 True Node；第三轮 benchmark 的 Rahu/Ketu 差异已由第四轮仲裁确认为 Mean/True Node 口径差异，不应再误判为 D9/D10 计算 bug。
 - 输出 `birth_info.node_mode` 与 `node_mode_note` 必须保留，作为参数冻结证据。
 
+### Multi-Ayanamsa 与 Prompt Pack 冻结（v6.9.15-ai-native）
+
+**所有排盘、网页/app 和 AI 解读必须显式携带 Ayanamsa 与 Prompt Pack 证据。**
+
+- `full-reading --ayanamsa lahiri|raman|kp` 与 `/api/chart` 的 `ayanamsa` payload 会影响黄经计算；不得在用户选择 Raman/KP 时仍假定 Lahiri。
+- 输出优先读取 `birth_info.ayanamsa_name`、`birth_info.ayanamsa_display`、`birth_info.ayanamsa`；网页/app 的 `birth.ayanamsa_display` 同样视为参数真源。
+- AI 解读必须优先消费 `ai_prompt_pack.prompt_zh`、`ai_prompt_pack.evidence_snapshot`、`ai_prompt_pack.retrieval_plan`，并在结论中保留“不要仅凭单一配置下结论”的证据交叉要求。
+- 若浏览器 fallback 无法实时切换 Raman/KP，应明确提示需启动本地 API 服务；不得把 fallback 结果伪装成已按目标 Ayanamsa 重算。
+
 ### Ashtakavarga 口径冻结（v6.0.8-av-calibration）
 
 **Ashtakavarga 默认使用 BPHS/PVR 书例校准口径，必须保留 SAV=337 与 full SAV=386 不变量。**
@@ -154,11 +164,11 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 
 ### Shadbala 能力边界（v6.9.14-shadbala）
 
-**当前 Shadbala 在注册表中为 covered，可作为内部一致的相对强弱参考；但不得声称已完成外部绝对值校准。**
+**当前 Shadbala 在注册表中为 covered，主输出为 absolute Rupa 分量求和，可作为内部一致的相对强弱参考；但不得声称已完成外部绝对值校准。**
 
-- 第九轮 benchmark 使用 10 个公开/虚构 smoke case 验证 `shadbala` 子命令与 `full-reading.modules.shadbala`：1200/1200 内部不变量通过。
+- 当前 benchmark 验证 `shadbala` 子命令与 `full-reading.modules.shadbala` 的六重分量求和、Virupa/Rupa 换算和 total invariant；用户样本已输出 absolute Rupa。
 - v6.9.12 已升级 Nathonnata Bala 连续化与 Drik Bala Sputa Drishti 精确相位，v6.9.14 注册表状态为 `covered`。
-- 通过项包括：结构完整性、六重力量组件范围、总分聚合、Virupa/Rupa 换算、Ishta Bala 百分比、排名、full-reading 一致性。
+- 通过项包括：结构完整性、六重力量组件范围、总分聚合、Virupa/Rupa 换算、排名、full-reading 一致性。
 - 仍需保留边界：部分 Saptavargaja 子分盘与 Chesta Bala 速度分档仍需更多外部绝对值对标。
 - 因此 `technique_registry.json` 中 Shadbala 状态为 `covered`，但涉及精确力量断语时必须加置信度上限，直到接入 JHora/公开书例等完整外部绝对值对标。
 
@@ -209,7 +219,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 | `celebrity` | 名人案例查询 |
 | `db-stats` | 验证数据库统计 |
 | `transit` | 行星过境查询 |
-| `shadbala` | 六重力量计算（covered；外部绝对值校准前须保留置信度上限） |
+| `shadbala` | 六重力量计算（covered；absolute Rupa 输出，外部绝对值 oracle 完成前须保留置信度上限） |
 | `ashtakavarga` | 八分法计算（SAV=337） |
 | `memory` | Hermes记忆系统 |
 | `validate` | R1-R10数学验证 |
@@ -268,7 +278,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 | Transit Actionable | v4.1.0 | 预测必须输出时间段+行动+置信度 | `transit-actionable-output-guide.md` |
 | 过境多参考点 | v1.9.0 | Lagna+Chandra Lagna双参考点(强制) | `transit-multi-reference-guide.md` |
 | Ketu双属性 | v2.0.0 | 必须同时评估"放手"和"突破" | `ketu-dual-nature-guide.md` |
-| Shadbala评估 | v6.9.14 | 六种力量内部一致评估；外部绝对值校准前须保留置信度上限 | `shadbala-complete-methodology.md` |
+| Shadbala评估 | v6.9.15 | absolute Rupa 分量求和；外部绝对值 oracle 完成前须保留置信度上限 | `shadbala-complete-methodology.md` |
 | Yoga Phala Timing | v2.1.0 | 识别Yoga后必须预测何时发生 | `yoga-phala-timing-guide.md` |
 | 逆行/燃烧/战争 | v2.1.0 | 每颗行星检查三重叠加 | `retrograde-combustion-war-guide.md` |
 | 精准方法论 | v3.12.1 | PACDARES+九层+L3矛盾检查 | `precision-reading-methodology.md` |
@@ -283,7 +293,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 - [ ] 静态星盘分析（行星配置、Yoga、Nakshatra、宫位）
 - [ ] Argala检查（2/4/5/8/11宫干预+Virodha）
 - [ ] 逆行/燃烧/行星战争检查（三重叠加）
-- [ ] Shadbala评估（六种力量内部一致评估；外部绝对值校准前保留置信度上限）
+- [ ] Shadbala评估（absolute Rupa 分量求和；外部绝对值 oracle 完成前保留置信度上限）
 - [ ] Ashtakavarga评估（BAV+SAV聚合校验337点）
 - [ ] Ketu双重属性检查
 - [ ] **MEVG-动态门控**：Transit/Dasha/天文现象必须验证
@@ -337,9 +347,9 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 ---
 
-**版本**：v6.9.14-precision-complete
+**版本**：v6.9.15-calibration-boundary
 **创建日期**：2026-04-20
-**最后更新**：2026-06-13（v6.9.14 Bhava Chalit + Sudarshana 完成，10个 partial 技法升级为 complete，65项技法注册表审计通过；pytest 475项全通过。Yoga F1=95.22% 保持有效。）
+**最后更新**：2026-06-25（秒级输入、Dasha 参考差异审计、Shadbala absolute Rupa、D1 友敌尊严标签、D81/D108/D144 分盘归一化已同步；外部 oracle 扩充仍在进行。）
 
 ---
 

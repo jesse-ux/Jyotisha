@@ -7,6 +7,7 @@
   <title>Jyotish · 印度占星</title>
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/pwa-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/brand-avatar.png">
   <link rel="stylesheet" href="/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -23,7 +24,7 @@
       <div class="container">
         <header class="header">
           <div class="logo">
-            <span class="logo-icon">☉</span>
+            <img class="logo-avatar" src="/brand-avatar.png" alt="" aria-hidden="true">
             <span class="logo-text">Jyotish</span>
           </div>
           <div class="header-right">
@@ -58,6 +59,26 @@
             </div>
             <div class="first-use-status" id="first-use-status"></div>
           </div>
+          <div class="static-demo-boundary" id="static-demo-boundary" data-static-demo-boundary aria-label="静态演示能力边界">
+            <div class="static-demo-boundary-head">
+              <strong>静态演示模式</strong>
+              <span>公开链接或 PWA 离线壳默认不连接你的本地 API。</span>
+            </div>
+            <div class="static-demo-boundary-grid">
+              <div>
+                <span>Browser fallback</span>
+                <p>可直接体验：出生资料输入、基础 D1/D9 星盘、术语模式、Trust Center</p>
+              </div>
+              <div>
+                <span>Local API required</span>
+                <p>需要本地 API：PDF/HTML 报告、高级技法、真实案例复验、AI 解读代理</p>
+              </div>
+              <div>
+                <span>Deployment target</span>
+                <p>推荐部署：Vercel / Netlify / GitHub Pages 作为静态壳；完整版本用 Docker Compose 或本地双服务</p>
+              </div>
+            </div>
+          </div>
           <form id="birth-form">
             <div class="form-row">
               <div class="form-group">
@@ -70,7 +91,7 @@
               </div>
               <div class="form-group">
                 <label data-i18n="label.time">出生时间</label>
-                <input type="time" id="birth-time" required>
+                <input type="time" id="birth-time" step="1" required>
               </div>
             </div>
             <div class="form-row">
@@ -139,7 +160,7 @@
         <!-- 顶部导航 -->
         <header class="header">
           <div class="logo">
-            <span class="logo-icon">☉</span>
+            <img class="logo-avatar" src="/brand-avatar.png" alt="" aria-hidden="true">
             <span class="logo-text">Jyotish</span>
           </div>
           <div class="header-actions">
@@ -255,6 +276,7 @@
           <h3 class="section-title">完整解盘总览</h3>
           <div id="special-lagna-section"></div>
           <div id="mevg-audit-section"></div>
+          <div id="ai-prompt-pack-panel"></div>
           <div id="skill-coverage-section"></div>
         </div>
 
@@ -525,7 +547,7 @@
               </div>
               <div class="form-group">
                 <label>出生时间</label>
-                <input type="time" id="synastry-partner-time">
+                <input type="time" id="synastry-partner-time" step="1">
               </div>
               <div class="form-group">
                 <label>时区</label>

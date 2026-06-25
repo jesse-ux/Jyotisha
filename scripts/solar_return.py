@@ -20,10 +20,11 @@ import math
 import sys
 import os
 
+from ayanamsa_utils import sidereal_flags
+
 # ── swisseph 可用性检测 ─────────────────────────────────────────────
 try:
     import swisseph as swe
-    swe.set_sid_mode(swe.SIDM_LAHIRI)
     HAS_SWE = True
 except ImportError:
     HAS_SWE = False
@@ -94,14 +95,13 @@ def _datetime_to_jd_ut(dt: datetime) -> float:
         return 2440587.5 + unix_sec / 86400.0
 
 
-def _get_sun_lon_jd(jd_ut: float) -> Optional[float]:
+def _get_sun_lon_jd(jd_ut: float, ayanamsa_name: str = 'lahiri') -> Optional[float]:
     """计算给定 JD (UT) 的太阳恒星黄经（Lahiri）"""
     if not HAS_SWE:
         return None
     try:
-        # FLG_SIDEREAL = 返回恒星坐标（ayanamsa 由 set_sid_mode 设定）
-        res = swe.calc_ut(jd_ut, swe.SUN, swe.FLG_SIDEREAL)
-        return res[0]  # longitude in degrees (0-360)
+        res = swe.calc_ut(jd_ut, swe.SUN, sidereal_flags(swe, ayanamsa_name))
+        return float(res[0][0] % 360.0)
     except Exception:
         return None
 
@@ -119,6 +119,7 @@ def find_solar_return_ut(
     tz: float = 0.0,
     max_iter: int = 30,
     tol_deg: float = 0.0003,  # ~1 arcsec
+    ayanamsa_name: str = 'lahiri',
 ) -> Dict:
     """
     计算太阳返照（Solar Return）精确 UT 时刻。
@@ -145,7 +146,7 @@ def find_solar_return_ut(
     """
     if HAS_SWE:
         return _find_solar_return_swe(birth_jd_ut, birth_sun_lon, target_year,
-                                      max_iter, tol_deg)
+                                      max_iter, tol_deg, ayanamsa_name)
     else:
         return _find_solar_return_approx(birth_jd_ut, birth_sun_lon, target_year, tz)
 
@@ -156,6 +157,7 @@ def _find_solar_return_swe(
     target_year: int,
     max_iter: int,
     tol_deg: float,
+    ayanamsa_name: str = 'lahiri',
 ) -> Dict:
     """使用 swisseph 精确计算太阳返照时刻（Newton 迭代法）"""
     # 近似起始点：出生日期在目标年份的同一天
@@ -169,7 +171,7 @@ def _find_solar_return_swe(
 
     prev_diff = None
     for i in range(max_iter):
-        sun_lon = _get_sun_lon_jd(jd_guess)
+        sun_lon = _get_sun_lon_jd(jd_guess, ayanamsa_name=ayanamsa_name)
         if sun_lon is None:
             return {'error': 'swisseph calc_ut failed', 'method': 'swisseph_failed'}
         diff = (sun_lon - birth_sun_lon + 180.0) % 360.0 - 180.0  # -180..180
@@ -189,7 +191,7 @@ def _find_solar_return_swe(
         # Newton 步：sun 速度 ~1°/天，步长 = -diff（天）
         # 更精确：用瞬时速度（下一小时的速度）
         jd_next = jd_guess + 1.0 / 24.0
-        sun_lon_next = _get_sun_lon_jd(jd_next)
+        sun_lon_next = _get_sun_lon_jd(jd_next, ayanamsa_name=ayanamsa_name)
         if sun_lon_next is not None:
             speed = (sun_lon_next - sun_lon) * 24.0  # °/day
             if abs(speed) > 0.01:
@@ -203,7 +205,7 @@ def _find_solar_return_swe(
 
     # 未收敛：返回当前最佳估计
     dt_ut = _jd_to_datetime(jd_guess)
-    sun_lon = _get_sun_lon_jd(jd_guess)
+    sun_lon = _get_sun_lon_jd(jd_guess, ayanamsa_name=ayanamsa_name)
     return {
         'jd_ut': jd_guess,
         'dt_ut': dt_ut,
@@ -257,6 +259,7 @@ def calc_solar_return_chart(
     birth_hour: int, birth_minute: int,
     birth_lat: float, birth_lon: float, birth_tz: float,
     target_year: int,
+    ayanamsa_name: str = 'lahiri',
 ) -> Dict:
     """
     计算太阳返照盘（Varshaphala）。
@@ -306,7 +309,8 @@ def calc_solar_return_chart(
             birth_year, birth_month, birth_day,
             birth_hour, birth_minute,
             birth_lat, birth_lon, birth_tz,
-            'mean'
+            'mean',
+            ayanamsa_name=ayanamsa_name,
         )
         if birth_chart is None:
             return {'error': '出生盘计算失败（swisseph问题）'}
@@ -317,7 +321,8 @@ def calc_solar_return_chart(
         # Step 2: 计算太阳返照精确时刻
         sr_result = find_solar_return_ut(
             birth_jd_ut, birth_sun_lon, target_year,
-            birth_lat, birth_lon, birth_tz
+            birth_lat, birth_lon, birth_tz,
+            ayanamsa_name=ayanamsa_name,
         )
         if 'error' in sr_result:
             return {'error': sr_result['error'], 'solar_return': sr_result}
@@ -336,7 +341,8 @@ def calc_solar_return_chart(
             sr_year, sr_month, sr_day,
             sr_hour_int, sr_minute_int,
             birth_lat, birth_lon, 0,  # UT 时间，时区=0
-            'mean'
+            'mean',
+            ayanamsa_name=ayanamsa_name,
         )
         if sr_chart is None:
             return {'error': '返照盘计算失败', 'solar_return': sr_result}
@@ -376,6 +382,7 @@ def solar_return_full_report(
     birth_hour: int, birth_minute: int,
     birth_lat: float, birth_lon: float, birth_tz: float,
     target_year: int,
+    ayanamsa_name: str = 'lahiri',
 ) -> Dict:
     """
     太阳返照盘完整报告（Varshaphala 年运分析）。
@@ -401,7 +408,8 @@ def solar_return_full_report(
         birth_year, birth_month, birth_day,
         birth_hour, birth_minute,
         birth_lat, birth_lon, birth_tz,
-        target_year
+        target_year,
+        ayanamsa_name=ayanamsa_name,
     )
 
     if 'error' in sr:

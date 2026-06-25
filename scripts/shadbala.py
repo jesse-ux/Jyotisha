@@ -145,9 +145,10 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
         raw = sthana['total'] + dig + kala['total'] + chesta + naisargika + drik
         raw_totals[pname] = max(1.0, raw)
     
-    sum_raw = sum(raw_totals.values())
-    
-    # 第二轮：BPHS标准化(1200 Virupas不变量)并生成结果
+    # 第二轮：按六项子力绝对值生成结果。
+    # Shadbala 的绝对 Rupas 必须保留子项合计，不做七星总和归一。
+    # 旧的 1200 Virupas 全局不变量会把七颗星总 Rupa 固定到 20，
+    # 低于 BPHS 最低要求合计 40 Rupa，导致 JHora/PDF 对标系统性偏低。
     for pname in ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']:
         if pname not in planets or pname not in raw_totals:
             continue
@@ -165,10 +166,8 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
         naisargika = NAISARGIKA_BALA.get(pname, 30.0)
         drik = calc_drik_bala(pname, sign, house, planets)
 
-        # v6.7.7: BPHS标准化为1200 Virupas不变量
         raw = raw_totals[pname]
-        scale = 1200.0 / sum_raw if sum_raw > 0 else 1.0
-        total_virupas = raw * scale
+        total_virupas = raw
         total_rupas = total_virupas / VIRUPAS_PER_RUPA
 
         min_req = MIN_REQUIRED.get(pname, 5.0)
@@ -213,7 +212,7 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
     bhava_bala = calc_bhava_bala(planets, asc_sign)
 
     return {
-        'method': 'Shadbala六重力量（v6.9.12: Kendra三档+Bhava Bala+Hora Lord+Seeghrochcha Sun）',
+        'method': 'Shadbala六重力量（v6.9.15: absolute Rupas, Kendra三档+Bhava Bala+Hora Lord+Seeghrochcha Sun）',
         'is_night_birth': is_night,
         'sun_uttarayana': sun_northern,
         'planets': results,

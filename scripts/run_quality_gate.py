@@ -9,6 +9,7 @@ import os
 import py_compile
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +24,10 @@ COMPILE_DIRS = [
 EXTRA_COMPILE_TARGETS = [
     ROOT / "mcp_server.py",
     ROOT / "scripts" / "audit_fragments.py",
+    ROOT / "scripts" / "dasha_reference_audit.py",
+    ROOT / "scripts" / "oracle_boundary_audit.py",
+    ROOT / "scripts" / "oracle_collection_queue.py",
+    ROOT / "scripts" / "oracle_evidence_validator.py",
     ROOT / "scripts" / "deployment_preflight.py",
     ROOT / "tests" / "run_golden_cases.py",
     ROOT / "tests" / "run_real_case_revalidation.py",
@@ -36,6 +41,8 @@ CORE_PYTEST_TARGETS = [
     "tests/test_jaimini.py",
     "tests/test_shadbala_complete.py",
     "tests/test_transit_trigger.py",
+    "tests/test_oracle_collection_queue.py",
+    "tests/test_oracle_evidence_validator.py",
 ]
 
 RELEASE_CRITICAL_UNTRACKED_PATHS = [
@@ -55,19 +62,28 @@ RELEASE_CRITICAL_UNTRACKED_PATHS = [
     "jyotish-app/security.js",
     "jyotish-app/skill-map.js",
     "progress.md",
+    "references/oracle/dasha_shadbala_oracle_cases.json",
     "scripts/audit_fragments.py",
     "scripts/deep_varga_avastha.py",
     "scripts/deployment_preflight.py",
     "scripts/desktop_packaging_preflight.py",
+    "scripts/dasha_reference_audit.py",
     "scripts/ephemeris_adapter_contract.py",
     "scripts/ephemeris_backend_probe.py",
     "scripts/ephemeris_candidate_adapter_spike.py",
+    "scripts/oracle_boundary_audit.py",
+    "scripts/oracle_collection_queue.py",
+    "scripts/oracle_evidence_validator.py",
     "task_plan.md",
     "tests/run_frontend_click_smoke.py",
     "tests/run_frontend_runtime_smoke.py",
     "tests/test_api_server_security.py",
+    "tests/test_dasha_reference_audit.py",
     "tests/test_deep_varga_avastha.py",
     "tests/test_frontend_productization.py",
+    "tests/test_oracle_boundary_audit.py",
+    "tests/test_oracle_collection_queue.py",
+    "tests/test_oracle_evidence_validator.py",
 ]
 
 QUALITY_GATE_PROFILES = {
@@ -79,6 +95,8 @@ QUALITY_GATE_PROFILES = {
         "frontend_click_mode": "core",
         "check_release_hygiene": False,
         "skip_real_cases": True,
+        "skip_dasha_audit": True,
+        "skip_oracle_audit": True,
     },
     "browser": {
         "skip_slow": True,
@@ -88,6 +106,8 @@ QUALITY_GATE_PROFILES = {
         "frontend_click_mode": "all",
         "check_release_hygiene": False,
         "skip_real_cases": True,
+        "skip_dasha_audit": True,
+        "skip_oracle_audit": True,
     },
     "release": {
         "skip_slow": False,
@@ -97,8 +117,61 @@ QUALITY_GATE_PROFILES = {
         "frontend_click_mode": "all",
         "check_release_hygiene": True,
         "skip_real_cases": False,
+        "skip_dasha_audit": False,
+        "skip_oracle_audit": False,
     },
 }
+
+DASHA_REFERENCE_AUDIT_CMD = [
+    PYTHON,
+    "scripts/dasha_reference_audit.py",
+    "--year",
+    "REDACTED_YEAR",
+    "--month",
+    "4",
+    "--day",
+    "17",
+    "--hour",
+    "14",
+    "--minute",
+    "45",
+    "--second",
+    "20",
+    "--lat",
+    "36.466667",
+    "--lon",
+    "114.2",
+    "--tz",
+    "8",
+    "--target-start-date",
+    "1986-05-18",
+    "--target-source",
+    "印度占星1.pdf",
+]
+
+ORACLE_BOUNDARY_AUDIT_CMD = [
+    PYTHON,
+    "scripts/oracle_boundary_audit.py",
+    "--oracle-file",
+    "references/oracle/dasha_shadbala_oracle_cases.json",
+]
+
+ORACLE_COLLECTION_QUEUE_CMD = [
+    PYTHON,
+    "scripts/oracle_collection_queue.py",
+    "--oracle-file",
+    "references/oracle/dasha_shadbala_oracle_cases.json",
+    "--format",
+    "json",
+]
+ORACLE_COLLECTION_QUEUE_EXPECTED_FIELDS = ["evidence_packet", "capture_id", "target_fields"]
+
+ORACLE_EVIDENCE_VALIDATOR_CMD = [
+    PYTHON,
+    "scripts/oracle_evidence_validator.py",
+    "--queue-file",
+    "{queue_file}",
+]
 
 
 def tail_text(text: str, *, limit: int = 2400) -> str:
@@ -184,6 +257,38 @@ def run(cmd: list[str], *, optional: bool = False, step: str | None = None, cwd:
     raise SystemExit(completed.returncode)
 
 
+def run_oracle_collection_queue_and_validator() -> None:
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as handle:
+        queue_path = Path(handle.name)
+    try:
+        print(f"\n$ {' '.join(ORACLE_COLLECTION_QUEUE_CMD)}")
+        completed = subprocess.run(ORACLE_COLLECTION_QUEUE_CMD, cwd=ROOT, text=True, capture_output=True)
+        if completed.stdout:
+            print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n")
+        if completed.stderr:
+            print(completed.stderr, end="" if completed.stderr.endswith("\n") else "\n", file=sys.stderr)
+        if completed.returncode != 0:
+            print(
+                format_failure_summary(
+                    "oracle_collection_queue",
+                    ORACLE_COLLECTION_QUEUE_CMD,
+                    completed.returncode,
+                    stdout=completed.stdout,
+                    stderr=completed.stderr,
+                ),
+                file=sys.stderr,
+            )
+            raise SystemExit(completed.returncode)
+        queue_path.write_text(completed.stdout, encoding="utf-8")
+        validator_cmd = [part if part != "{queue_file}" else str(queue_path) for part in ORACLE_EVIDENCE_VALIDATOR_CMD]
+        run(validator_cmd, step="oracle_evidence_validator")
+    finally:
+        try:
+            queue_path.unlink()
+        except FileNotFoundError:
+            pass
+
+
 def git_untracked_files() -> set[str]:
     completed = subprocess.run(
         ["git", "ls-files", "--others", "--exclude-standard"],
@@ -244,6 +349,7 @@ def validate_json_files() -> None:
         "references/yoga_rules.json",
         "references/standard_test_charts.json",
         "references/validation_logic_report.json",
+        "references/oracle/dasha_shadbala_oracle_cases.json",
         "tests/golden/golden_cases.json",
     ]:
         path = ROOT / relative
@@ -256,7 +362,7 @@ def validate_json_files() -> None:
 
 def run_profile(args: argparse.Namespace) -> dict:
     profile = dict(QUALITY_GATE_PROFILES[args.profile])
-    for key in ["skip_slow", "skip_yoga_logic", "skip_frontend_runtime", "skip_frontend_click", "skip_real_cases"]:
+    for key in ["skip_slow", "skip_yoga_logic", "skip_frontend_runtime", "skip_frontend_click", "skip_real_cases", "skip_dasha_audit", "skip_oracle_audit"]:
         if getattr(args, key):
             profile[key] = True
     if args.frontend_click_mode:
@@ -272,6 +378,8 @@ def main() -> int:
     parser.add_argument("--skip-frontend-runtime", action="store_true", help="Skip frontend build and runtime smoke")
     parser.add_argument("--skip-frontend-click", action="store_true", help="Skip browser click smoke")
     parser.add_argument("--skip-real-cases", action="store_true", help="Skip public real-person chart revalidation")
+    parser.add_argument("--skip-dasha-audit", action="store_true", help="Skip Dasha reference-drift audit")
+    parser.add_argument("--skip-oracle-audit", action="store_true", help="Skip combined Dasha/Shadbala external oracle boundary audit")
     parser.add_argument("--frontend-click-mode", choices=["core", "mobile", "offline", "pdf", "workspace", "mobile-trust", "import-files", "all"], default=None, help="Browser click smoke mode for browser/release profiles")
     parser.add_argument("--frontend-click-timeout", type=int, default=240, help="Timeout seconds for browser click smoke")
     parser.add_argument("--all-tests", action="store_true", help="Run every pytest file, including optional-dependency suites")
@@ -307,6 +415,11 @@ def main() -> int:
         run([PYTHON, "tests/run_golden_cases.py", "--python", PYTHON])
     if not profile["skip_real_cases"]:
         run([PYTHON, "tests/run_real_case_revalidation.py", "--python", PYTHON, "--summary"])
+    if not profile["skip_dasha_audit"]:
+        run(DASHA_REFERENCE_AUDIT_CMD)
+    if not profile["skip_oracle_audit"]:
+        run(ORACLE_BOUNDARY_AUDIT_CMD)
+        run_oracle_collection_queue_and_validator()
     if not profile["skip_yoga_logic"]:
         run([PYTHON, "scripts/validate_logic_v2.py"], optional=True)
     print("\nQuality gate passed.")

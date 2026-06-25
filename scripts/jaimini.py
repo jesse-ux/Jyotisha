@@ -749,10 +749,11 @@ def calc_special_lagnas_precise(
     month: int,
     day: int,
     hour: int,
-    minute: int = 0,
+    minute: float = 0,
     lat: float = 0.0,
     lon: float = 0.0,
     tz_offset: float = 0.0,
+    second: float = 0.0,
 ) -> Dict:
     """
     Sunrise-correct Jaimini Special Lagnas: HL/GL/VL.
@@ -760,7 +761,14 @@ def calc_special_lagnas_precise(
     Uses local birth time, converts it to UTC, calculates local sunrise in UTC,
     then maps elapsed Ghatis from sunrise to HL/GL. VL remains Ascendant-derived.
     """
-    local_dt = datetime(year, month, day, int(hour), int(minute))
+    whole_minute = int(minute)
+    second_total = (float(minute) - whole_minute) * 60.0 + float(second)
+    whole_second = int(second_total)
+    microsecond = int(round((second_total - whole_second) * 1_000_000))
+    if microsecond >= 1_000_000:
+        whole_second += 1
+        microsecond -= 1_000_000
+    local_dt = datetime(year, month, day, int(hour), whole_minute, whole_second, microsecond)
     utc_dt = local_dt - timedelta(hours=tz_offset)
     birth_utc_hours = utc_dt.hour + utc_dt.minute / 60.0 + utc_dt.second / 3600.0
     sunrise_utc = calc_sunrise_utc_hours(utc_dt.year, utc_dt.month, utc_dt.day, lat, lon)
@@ -774,7 +782,7 @@ def calc_special_lagnas_precise(
 
     sunrise_local_hours = (sunrise_utc + tz_offset) % 24
     sunrise_local_minutes = int(round(sunrise_local_hours * 60)) % (24 * 60)
-    local_birth_hours = int(hour) + int(minute) / 60.0
+    local_birth_hours = int(hour) + whole_minute / 60.0 + whole_second / 3600.0 + microsecond / 3_600_000_000.0
     before_sunrise = local_birth_hours < sunrise_local_hours
     return {
         'method': 'Special Lagnas HL/GL/VL sunrise-correct (jaimini-tropical MIT adapted)',

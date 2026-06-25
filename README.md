@@ -4,8 +4,8 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org/)
-[![Techniques](https://img.shields.io/badge/techniques-65-blueviolet)](references/technique_registry.json)
-[![Covered](https://img.shields.io/badge/covered-55-green)](references/technique_registry.json)
+[![Techniques](https://img.shields.io/badge/techniques-68-blueviolet)](references/technique_registry.json)
+[![Covered](https://img.shields.io/badge/covered-58-green)](references/technique_registry.json)
 [![Complete](https://img.shields.io/badge/complete-10-brightgreen)](references/technique_registry.json)
 [![Partial](https://img.shields.io/badge/partial-0-lightgrey)](references/technique_registry.json)
 
@@ -31,7 +31,7 @@
 This is a **Vedic (Jyotish) astrology analysis system** designed for deep, auditable full-chart readings. It is NOT a simple ephemeris calculator — it is a multi-stage interpretive pipeline that:
 
 1. **Computes** divisional charts (D1/D9/D10/...) via Swiss Ephemeris
-2. **Runs** 65 registered techniques (Dashas, Yogas, Shadbala, Ashtakavarga, Transits...)
+2. **Runs** 68 registered techniques (Dashas, Yogas, Shadbala, Ashtakavarga, Transits...)
 3. **Routes** the analysis through strict workflow paths depending on question type (career / relationship / wealth / timing)
 4. **Audits** every technique used — declaring what was called, what is complete/covered, and which limitations affect confidence
 5. **Degrades gracefully** — limitations are labeled, not silently over-promising
@@ -73,6 +73,8 @@ This is a **Vedic (Jyotish) astrology analysis system** designed for deep, audit
 | Static demo / PWA | 静态站点 URL | `cd jyotish-app && npm run build` | 公开演示环境只能完整展示静态壳；完整高级技法需要本地 API 服务。 |
 | Desktop shell | PWA / Pake / Tauri | `python3 scripts/desktop_packaging_preflight.py` | PWA/Pake 当前可用；Tauri sidecar 需等 API 生命周期、签名和权限策略固定。 |
 
+Static demo / PWA 发布要求：必须保留 `static_demo_boundary_visible` 说明。静态演示模式下，可直接体验出生资料输入、基础 D1/D9 星盘、术语模式、Trust Center；需要本地 API 的能力包括 PDF/HTML 报告、高级技法、真实案例复验、AI 解读代理。推荐部署：Vercel / Netlify / GitHub Pages 作为静态壳；完整版本用 Docker Compose 或本地双服务。
+
 发布前检查交付矩阵：`python3 scripts/deployment_preflight.py`。如果该命令失败，不要把当前构建交给普通用户。
 
 ### 质量门分层
@@ -86,6 +88,63 @@ This is a **Vedic (Jyotish) astrology analysis system** designed for deep, audit
 公开人物样本复验命令：`python3 tests/run_real_case_revalidation.py`。
 
 当前复验口径是公开人物样本的出生盘星座级一致率，并对部分带有来源矛盾、时区争议或边界度数的参考行标记为 controversial_reference。这个指标用于验证排盘计算是否稳定，不等同于人生事件预测准确率，也不应被当作个人命运判断的命中率。
+
+### Dasha 参考差异审计
+
+对照外部 PDF 或第三方软件时，先运行 Dasha 参考差异审计，而不是直接改生产常数：
+
+```bash
+python3 scripts/dasha_reference_audit.py \
+  --year REDACTED_YEAR --month 4 --day 17 \
+  --hour 14 --minute 45 --second 20 \
+  --lat 36.466667 --lon 114.2 --tz 8 \
+  --target-start-date 1986-05-18 \
+  --target-source 印度占星1.pdf
+```
+
+该工具会输出当前 Vimshottari 起点、秒级出生时间敏感性、年长常数敏感性，以及对齐目标日期所需的 Moon sidereal longitude 偏移量。不要为单份 PDF 直接调生产常数；应先建立更大的 oracle 样本集，比较 ayanamsa、Moon sidereal longitude、Nakshatra 边界与 Vimshottari 起算口径。
+
+也可以运行合并版外部 oracle 边界审计，同时查看 Dasha、外部黄经与 Shadbala 的校准状态：
+
+```bash
+python3 scripts/oracle_boundary_audit.py \
+  --oracle-file references/oracle/dasha_shadbala_oracle_cases.json
+```
+
+该报告会明确标出 `production_tuning_recommended: false`：Dasha 当前只有单份 PDF 起点差异样本；VedAstro SDK 黄经样本已纳入 `longitude_cases`，当前用户盘最大差异约 26.23 角秒、D1/D9 落点一致，但这只能说明基础黄经接近；Shadbala 还缺 Sthana/Dig/Kala/Chesta/Naisargika/Drik 分量级外部目标值，因此不能声称 Dasha/Shadbala 已完成外部绝对值校准。
+
+外部真值采集队列用于把缺失目标值拆成可执行任务，而不是直接调生产参数：
+
+```bash
+python3 scripts/oracle_collection_queue.py \
+  --oracle-file references/oracle/dasha_shadbala_oracle_cases.json \
+  --format markdown
+```
+
+如需给自动化或副手读取，可改用 JSON 输出：
+
+```bash
+python3 scripts/oracle_collection_queue.py \
+  --oracle-file references/oracle/dasha_shadbala_oracle_cases.json \
+  --format json
+```
+
+该 JSON 的 scope 是 `external_oracle_collection_queue`。当前队列有 5 个 `template_only` 任务、`ready_for_calibration: 0`、`production_tuning_allowed: false`，说明只能继续采集 JHora/PyJHora/VedAstro 等外部黑盒目标值；在模板字段未填充、状态未升为 `external_verified` 前，不能用这些样本做 Dasha/Shadbala 生产调参。
+
+每个队列任务还包含 `evidence_packet.capture_id` 草稿证据包。人工或副手录入外部真值时，必须至少填写 `tool_name`、`tool_version_or_url`、`capture_date`、`source_artifact`、`ayanamsa`、`node_mode`、`timezone`、`operator_note`，并保留截图、API 响应或 stdout 等外部 artifact；不得把本仓库本地计算输出当作 `source_artifact`。
+
+外部目标字段采用 `target_fields` + `target_placeholders` 双层结构：`target_fields` 固定记录该案例需要校验的目标，例如 `target.moon_sidereal_longitude_deg`、`target.vimshottari_start_date`、`target.shadbala_components`；当这些字段被真实外部来源填入并且证据包状态升为 `external_verified` 后，队列生成器会保留这些值，不会再把它们降级成 `draft`。这保证了“人工/JHora/PyJHora/VedAstro 采集 → JSON 填写 → 队列生成 → validator 复核”的路径可复验。
+
+当外部证据包被填写回队列 JSON 后，用证据验证器做第二层防线：
+
+```bash
+python3 scripts/oracle_evidence_validator.py \
+  --queue-file /path/to/filled_external_oracle_collection_queue.json
+```
+
+该验证器输出 `external_oracle_evidence_validation`，会检查 `evidence_packet` 必填元数据、`target_placeholders` 是否已填、是否覆盖 `target_fields`、是否包含外部 artifact，以及是否错误使用本仓库本地引擎输出。当前 draft 队列会保持 `valid_packets: 0` / `ready_for_calibration: 0`；只有状态为 `external_verified` 且证据完整的包才会进入可复核状态。
+
+`full-reading` 也会输出 `ai_prompt_pack`：这是给网页/app、skill 或后端 AI 代理使用的结构化 Prompt/RAG 上下文包。它不会硬编码断语，而是携带 D1/D9/Dasha/Shadbala/Ashtakavarga 的证据快照、推荐检索文档和边界提示，要求大模型基于计算证据交叉验证，避免单一配置下结论。
 
 ### Prerequisites
 
@@ -134,7 +193,7 @@ Lagna: Gemini   Sun: Taurus   Moon: Leo
 [✓] D10 Dasamsa
 [✓] Vimshottari Dasha (120 years)
 [✓] Ashtakavarga (8-point system)
-[✓] Shadbala (covered — internally consistent; external absolute calibration still capped)
+[✓] Shadbala (covered — absolute Rupa totals, component invariants verified)
 [✓] Yogas & Doshas
 [✓] Argala (planetary interventions)
 [✓] Nakshatra Advanced (Chandra Bala / Tara Bala)
@@ -151,7 +210,7 @@ Lagna: Gemini   Sun: Taurus   Moon: Leo
 ── Technique Audit Table ──
 ✓ Vimshottari Dasha        covered      high confidence
 ✓ Ashtakavarga             covered      high confidence
-✓ Shadbala                covered      internal invariant benchmark passed; absolute calibration capped
+✓ Shadbala                covered      absolute Rupa output; total_virupas component invariant passed
 ✓ Chara Dasha             covered      KN Rao benchmark 95.83% overall match
 ✓ KP Sub-Lord             covered      SubLord/SubSubLord + ABCD significator workflow
 ```
@@ -216,7 +275,7 @@ Current count: **65 techniques** (55 covered, 10 complete, 0 partial, 0 missing)
 | Nakshatra Advanced | ✅ covered | Tara Bala / Chandra Bala / Sub-Lord workflow |
 | Narayana Dasha | ✅ covered | CLI and full-reading integration |
 | Solar Return / Varshaphala | ✅ covered | Tajika annual-chart workflow |
-| **Shadbala** | ✅ covered | **1200/1200 internal invariants pass; external absolute-value calibration remains a confidence cap** |
+| **Shadbala** | ✅ covered | **absolute Rupa component-sum output; internal invariants pass; external absolute-value oracle expansion remains open** |
 | **Chara Dasha** | ✅ covered | **KN Rao benchmark: sign 100%, duration 91.67%, overall 95.83%** |
 | KP Sub-Lord | ✅ covered | SubLord/SubSubLord + ABCD significator workflow |
 | Bhava Chalit | ✅ covered | Sripati/Porphyry/Equal/Whole Sign/Placidus/Koch |
@@ -278,7 +337,7 @@ We believe in transparency about limitations. This is NOT a "99% accurate" syste
 | Dimension | Score | Notes |
 |-----------|-------|-------|
 | Astronomical foundation (Swiss Eph) | 8.5/10 | Depends on ayanamsa, node mode, house system |
-| Traditional algorithm accuracy | 8.1/10 | Chara Dasha benchmark passed; Shadbala still needs external absolute-value calibration |
+| Traditional algorithm accuracy | 8.4/10 | Chara Dasha benchmark passed; Shadbala absolute Rupa invariants now pass; Dasha oracle expansion remains open |
 | Technique coverage breadth | 9.1/10 | 65 registered techniques; broad and increasingly benchmarked |
 | Reading detail depth | 9.6/10 | Possibly best among open-source projects |
 | Prediction workflow rigor | 8.8/10 | Strict routing + audit table |
@@ -288,14 +347,14 @@ We believe in transparency about limitations. This is NOT a "99% accurate" syste
 
 ### What Confidence Caps Mean (Important)
 
-Even when a technique is labeled `covered`, it may carry a confidence cap:
+Even when a technique is labeled `covered`, it may carry a confidence or validation boundary:
 - It CAN produce output
-- Some components may still need external absolute-value calibration against PyJHora / JHora / canonical texts
+- Some components may still need broader external oracle expansion against PyJHora / JHora / canonical texts
 - It should be interpreted together with cross-technique evidence
 - It must NOT be the sole basis for high-confidence predictions when its limitation says so
 
 Examples:
-- `Shadbala` (covered with cap): Internal invariants pass (1200/1200). External absolute values are not fully calibrated, so use primarily for relative strength ranking.
+- `Shadbala` (covered): absolute Rupa totals are reported directly from six component sums; internal component invariants pass and `total_rupas = total_virupas / 60`, while external absolute-value oracle expansion remains open.
 - `Chara Dasha` (covered): KN Rao benchmark passes at 95.83% overall; remaining differences are documented around Aquarius/Scorpio co-lord strength arbitration.
 
 ---
@@ -318,21 +377,21 @@ Examples:
 - `v6.1.9` — Public/sanitized benchmark suite, competitive research, coverage roadmap and PDF validation methodology added.
 - `v6.1.8` — Yoga validation reached F1=95.22% (FP=36, FN=63); thematic reports consume real `full-reading.modules` evidence.
 - `v6.1.6` — Five-system Dasha convergence wired into full-reading (Vimshottari + Chara + Yogini + Ashtottari + Kalachakra).
-- `v6.0.11` — Shadbala internal invariant validation (1200/1200 pass); later upgraded to covered with explicit calibration cap.
+- `v6.0.11` — Shadbala 1200/1200 internal invariants pass; later upgraded to absolute Rupa component-sum output.
 
 ### Actively Working On (P0)
 
 1. **Release hygiene** — run the release profile, keep product-critical files tracked, rebuild wheel/sdist, and align GitHub tags with source version
 2. **README / package metadata sync** — keep public docs, registry counts and distribution artifacts consistent
-3. **Shadbala external absolute calibration** — align full tables with JHora / PyJHora / BV Raman
-4. **Benchmark expansion** — add more oracle cases for Vimshottari, Shadbala, KP and annual-chart modules
+3. **Dasha oracle expansion** — add external cases for Vimshottari start/end boundaries and configurable year-length/ayanamsa comparisons
+4. **Benchmark expansion** — add more oracle cases for Shadbala, KP and annual-chart modules
 5. **Frontend verification** — keep the pure JS/WASM fallback aligned with the Python engine output
 
 ### Next (P1)
 
 - Docker image publishing and smoke-test docs
 - English documentation examples and API tutorials
-- Multi-Ayanamsa UX polish and benchmark examples
+- Multi-Ayanamsa UX polish and benchmark examples（计算层已可验证切换；网页设置展示和更多外部样本仍需补齐）
 - Desktop packaging path: PWA now, Pake URL shell for quick wrappers, Tauri sidecar after API lifecycle/signing decisions. See `docs/research/desktop_packaging_spike_2026_06_23.md`.
 
 ---
@@ -369,7 +428,7 @@ python3 scripts/jyotish_engine.py full-reading \
 2. Use only: (a) public AA-rated celebrity data, (b) explicitly fictional smoke tests, (c) current-session data (never persisted)
 3. Always run `git status --short --branch` before starting work
 4. Always run `py_compile` + `audit_capabilities.py` + full-reading regression after modifications
-5. Do NOT remove a confidence cap without external benchmark evidence
+5. Do NOT remove a confidence or validation boundary without external benchmark evidence
 6. Do NOT refactor arbitrarily; make minimal verifiable changes
 
 ### Directory Structure

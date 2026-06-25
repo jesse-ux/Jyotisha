@@ -125,6 +125,47 @@ def sample_birth_payload() -> dict:
     }
 
 
+def sample_second_precision_payload() -> dict:
+    return {
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 45,
+        "second": 20,
+        "lat": 36.466667,
+        "lon": 114.2,
+        "tz": 8,
+    }
+
+
+def test_frontend_fallback_chart_reports_friend_and_enemy_sign_dignity() -> None:
+    engine_js = read("jyotish-engine.js")
+    analysis_deep_js = read("analysis-deep.js")
+
+    assert "export function getPlanetStatus" in engine_js
+    assert "PLANET_RELATIONS[planet]" in engine_js
+    assert 'return "入友";' in engine_js
+    assert 'return "入敌";' in engine_js
+    assert "getPlanetStatus(pname, sign)" in engine_js
+    assert "getPlanetStatus(pn, sign)" in analysis_deep_js
+
+
+def test_skill_distribution_stays_in_sync_with_current_calculation_boundaries() -> None:
+    root_skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+    engine_skill = (ROOT / "skills" / "jyotish-engine-modules" / "SKILL.md").read_text(encoding="utf-8")
+    skill_varga = (ROOT / "skills" / "jyotish-engine-modules" / "scripts" / "divisional_charts_extended.py").read_text(encoding="utf-8")
+
+    assert "全球第1" not in root_skill
+    assert "1200/1200 Virupas校准" not in root_skill
+    assert "absolute Rupa" in root_skill
+    assert "外部绝对值" in root_skill
+    assert "本 Skill 的 `scripts/` 副本仅作为独立分发包" in engine_skill
+    assert "D81 = (81" in skill_varga
+    assert "def _position_parts" in skill_varga
+    assert "calc_custom_varga" in skill_varga
+
+
 def start_process(cmd: list[str], cwd: Path, log_path: Path) -> subprocess.Popen[str]:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_handle = log_path.open("w", encoding="utf-8")
@@ -180,6 +221,80 @@ def test_result_page_keeps_core_user_tabs() -> None:
     assert 'id="btn-save-chart"' in html
     assert 'id="remedies-section"' in html
     assert 'id="provenance-panel"' in html
+
+
+def test_frontend_birth_time_preserves_seconds_for_user_flows() -> None:
+    html = read("index.html")
+    main = read("main.js")
+    engine = read("jyotish-engine.js")
+
+    assert '<input type="time" id="birth-time" step="1" required>' in html
+    assert '<input type="time" id="synastry-partner-time" step="1">' in html
+    assert "const [hour, minute, second = 0] = timeVal.split(':').map(Number)" in main
+    assert "window.__jyotishBirth = { year, month, day, hour, minute, second, lat, lon, tz }" in main
+    assert "const [hour, minute, second = 0] = timeValue.split(':').map(Number)" in main
+    assert "return { year, month, day, hour, minute, second, lat, lon, tz }" in main
+    assert "const [hour, minute, secondRaw] = String(birth.time || '').split(':').map(Number)" in main
+    assert "const { year, month, day, hour, minute, second = 0, lat, lon, tz } = birth" in engine
+    assert "second / 3600.0" in engine
+
+
+def test_frontend_branded_avatar_and_prompt_pack_are_productized() -> None:
+    html = read("index.html")
+    main = read("main.js")
+    style = read("style.css")
+    manifest = read("public/manifest.webmanifest")
+
+    assert (APP / "public" / "brand-avatar.png").exists()
+    assert 'rel="apple-touch-icon"' in html
+    assert "/brand-avatar.png" in html
+    assert 'class="logo-avatar"' in html
+    assert "renderAIPromptPackPanel(chartData)" in main
+    assert "function renderAIPromptPackPanel" in main
+    assert "ai-prompt-pack-panel" in main
+    assert "evidence_snapshot" in main
+    assert "retrieval_plan" in main
+    assert ".logo-avatar" in style
+    assert ".ai-prompt-pack-panel" in style
+    assert '"src": "/brand-avatar.png"' in manifest
+    assert '"sizes": "512x512"' in manifest
+
+
+def test_frontend_ayanamsa_settings_are_live_api_parameters() -> None:
+    main = read("main.js")
+
+    assert "['lahiri', 'Lahiri / Chitrapaksha']" in main
+    assert "['raman', 'Raman']" in main
+    assert "['kp', 'KP / Krishnamurti']" in main
+    ayanamsa_block = main.split("ayanamsa: [", 1)[1].split("],", 1)[0]
+    assert "后续" not in ayanamsa_block
+    assert "const { year, month, day, hour, minute, second = 0, lat, lon, tz } = birth" in main
+    assert "const payload = applyCalculationSettingsToPayload({ year, month, day, hour, minute, second, lat, lon, tz })" in main
+    assert "computeChart({ year, month, day, hour, minute, second, lat, lon, tz })" in main
+    assert "fallbackChart._calculation_boundary" in main
+    assert "payload.ayanamsa" in main
+
+
+def test_ai_chat_prefers_backend_prompt_pack_context() -> None:
+    ai_chat = read("ai-chat.js")
+
+    assert "cd.ai_prompt_pack?.prompt_zh" in ai_chat
+    assert "【AI Prompt Pack】" in ai_chat
+    assert "JSON.stringify(cd.ai_prompt_pack.evidence_snapshot" in ai_chat
+    assert "JSON.stringify(cd.ai_prompt_pack.retrieval_plan" in ai_chat
+    assert "AI Prompt Pack 已作为上下文入口" in ai_chat
+
+
+def test_api_bridge_variants_prefer_backend_prompt_pack_context() -> None:
+    for rel_path in ["api-bridge.js", "public/api-bridge.js"]:
+        bridge = read(rel_path)
+
+        assert "prompt_context: buildReadingPrompt(chartData || {}, style, focus)" in bridge
+        assert "promptPackUsed: Boolean(chartData?.ai_prompt_pack?.prompt_zh)" in bridge
+        assert "chartData?.ai_prompt_pack?.prompt_zh" in bridge
+        assert "【evidence_snapshot】" in bridge
+        assert "JSON.stringify(chartData.ai_prompt_pack.evidence_snapshot" in bridge
+        assert "JSON.stringify(chartData.ai_prompt_pack.retrieval_plan" in bridge
 
 
 def test_first_use_onboarding_is_actionable() -> None:
@@ -428,6 +543,40 @@ def test_trust_center_exposes_validation_transparency() -> None:
         ".validation-transparency-boundary",
     ]:
         assert token in style
+
+
+def test_trust_center_exposes_real_case_revalidation_to_users() -> None:
+    main = read("main.js")
+    style = read("style.css")
+    api_bridge = read("api-bridge.js")
+    api_server = (ROOT / "scripts" / "jyotish_api_server.py").read_text(encoding="utf-8")
+
+    for token in [
+        "renderRealCaseRevalidationPanel",
+        "runTrustCenterRealCaseRevalidation",
+        "window.__jyotishRealCaseRevalidation",
+        "真实案例复验",
+        "公开人物星座级一致率",
+        "66/66",
+        "87/99",
+        "controversial_reference",
+        "不是人生事件预测准确率",
+        "data-action=\"trust-run-real-cases\"",
+    ]:
+        assert token in main
+
+    for token in [
+        ".real-case-revalidation-panel",
+        ".real-case-revalidation-grid",
+        ".real-case-revalidation-metric",
+        ".real-case-revalidation-boundary",
+    ]:
+        assert token in style
+
+    assert "getRealCaseRevalidation" in api_bridge
+    assert "fetchJson('/api/real_case_revalidation')" in api_bridge
+    assert "/api/real_case_revalidation" in api_server
+    assert "_real_case_revalidation" in api_server
 
 
 def test_click_smoke_covers_core_interactive_workflows() -> None:
@@ -1725,6 +1874,40 @@ def test_user_delivery_matrix_is_documented_and_checkable() -> None:
     assert '[PYTHON, "scripts/deployment_preflight.py"]' in quality_gate
 
 
+def test_static_demo_has_user_visible_capability_boundary() -> None:
+    """Public static demos must say what works without a local API."""
+    html = read("index.html")
+    main = read("main.js")
+    style = read("style.css")
+    preflight = (ROOT / "scripts" / "deployment_preflight.py").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    for token in [
+        'id="static-demo-boundary"',
+        "data-static-demo-boundary",
+        "静态演示模式",
+        "可直接体验：出生资料输入、基础 D1/D9 星盘、术语模式、Trust Center",
+        "需要本地 API：PDF/HTML 报告、高级技法、真实案例复验、AI 解读代理",
+        "推荐部署：Vercel / Netlify / GitHub Pages 作为静态壳；完整版本用 Docker Compose 或本地双服务",
+    ]:
+        assert token in html
+
+    for token in [
+        "renderStaticDemoBoundary",
+        "static-demo-boundary",
+        "浏览器 fallback",
+        "需要本地 API 服务",
+        "Vercel / Netlify / GitHub Pages",
+        "Docker Compose",
+    ]:
+        assert token in main
+
+    assert ".static-demo-boundary" in style
+    assert "static_demo_boundary_visible" in preflight
+    assert "static_demo_boundary_visible" in readme
+    assert "Vercel / Netlify / GitHub Pages" in readme
+
+
 def test_real_case_revalidation_is_release_gate_and_accuracy_boundary() -> None:
     runner_path = ROOT / "tests" / "run_real_case_revalidation.py"
     assert runner_path.exists()
@@ -1754,6 +1937,92 @@ def test_real_case_revalidation_is_release_gate_and_accuracy_boundary() -> None:
         "星座级一致率",
         "不等同于人生事件预测准确率",
         "python3 tests/run_real_case_revalidation.py",
+    ]:
+        assert token in readme
+
+
+def test_readme_shadbala_claim_matches_absolute_rupa_engine() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    for stale_phrase in [
+        "external absolute calibration still capped",
+        "absolute calibration capped",
+        "external absolute-value calibration remains a confidence cap",
+        "Shadbala still needs external absolute-value calibration",
+        "External absolute values are not fully calibrated",
+        "Shadbala external absolute calibration",
+        "later upgraded to covered with explicit calibration cap",
+    ]:
+        assert stale_phrase not in readme
+
+    for token in [
+        "absolute Rupa",
+        "total_virupas",
+        "total_rupas = total_virupas / 60",
+        "1200/1200 internal invariants pass",
+    ]:
+        assert token in readme
+
+
+def test_dasha_reference_audit_is_documented_and_gated() -> None:
+    audit_script = ROOT / "scripts" / "dasha_reference_audit.py"
+    oracle_script = ROOT / "scripts" / "oracle_boundary_audit.py"
+    queue_script = ROOT / "scripts" / "oracle_collection_queue.py"
+    evidence_validator = ROOT / "scripts" / "oracle_evidence_validator.py"
+    oracle_fixture = ROOT / "references" / "oracle" / "dasha_shadbala_oracle_cases.json"
+    quality_gate_module = load_quality_gate_module()
+    quality_gate = (ROOT / "scripts" / "run_quality_gate.py").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert audit_script.exists()
+    assert oracle_script.exists()
+    assert queue_script.exists()
+    assert evidence_validator.exists()
+    assert oracle_fixture.exists()
+    assert "tests/test_oracle_collection_queue.py" in quality_gate_module.CORE_PYTEST_TARGETS
+    assert "tests/test_oracle_evidence_validator.py" in quality_gate_module.CORE_PYTEST_TARGETS
+    for token in [
+        '"scripts" / "dasha_reference_audit.py"',
+        '"scripts" / "oracle_boundary_audit.py"',
+        '"scripts" / "oracle_collection_queue.py"',
+        '"scripts" / "oracle_evidence_validator.py"',
+        '"scripts/dasha_reference_audit.py"',
+        '"scripts/oracle_boundary_audit.py"',
+        '"scripts/oracle_collection_queue.py"',
+        '"scripts/oracle_evidence_validator.py"',
+        '"references/oracle/dasha_shadbala_oracle_cases.json"',
+        "--target-start-date",
+        "--oracle-file",
+        "印度占星1.pdf",
+        "skip_oracle_audit",
+        "ORACLE_COLLECTION_QUEUE_CMD",
+        "ORACLE_EVIDENCE_VALIDATOR_CMD",
+        "evidence_packet",
+        "capture_id",
+        "target_fields",
+    ]:
+        assert token in quality_gate
+
+    for token in [
+        "Dasha 参考差异审计",
+        "python3 scripts/dasha_reference_audit.py",
+        "python3 scripts/oracle_boundary_audit.py",
+        "python3 scripts/oracle_collection_queue.py",
+        "python3 scripts/oracle_evidence_validator.py",
+        "references/oracle/dasha_shadbala_oracle_cases.json",
+        "--target-start-date 1986-05-18",
+        "不要为单份 PDF 直接调生产常数",
+        "Moon sidereal longitude",
+        "production_tuning_recommended: false",
+        "external_oracle_collection_queue",
+        "ready_for_calibration: 0",
+        "evidence_packet.capture_id",
+        "target_fields",
+        "target_placeholders",
+        "external_verified",
+        "tool_name",
+        "source_artifact",
+        "external_oracle_evidence_validation",
     ]:
         assert token in readme
 
@@ -1863,6 +2132,39 @@ def test_frontend_backend_contracts_with_api_handler() -> None:
     kp = handler._compute_kp(payload)
     assert kp
     assert "error" not in kp
+
+
+def test_api_birth_seconds_are_preserved_in_user_facing_flows() -> None:
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from jyotish_api_server import JyotishAPIHandler
+    from shadbala import calc_shadbala
+
+    handler = object.__new__(JyotishAPIHandler)
+    payload = sample_second_precision_payload()
+
+    birth_dt = handler._parse_birth_datetime(payload)
+    assert birth_dt.isoformat() == "REDACTED_DATET14:45:20"
+
+    without_seconds = handler._compute_chart({**payload, "second": 0})
+    with_seconds = handler._compute_chart(payload)
+    assert with_seconds["success"] is True
+    assert with_seconds["birth"]["time"] == "14:45:20"
+    assert with_seconds["birth"]["second"] == 20
+    assert with_seconds["birth"]["julian_day"] > without_seconds["birth"]["julian_day"]
+
+    expected_shadbala = calc_shadbala(
+        with_seconds["planets"],
+        with_seconds["ascendant"]["sign"],
+        payload["hour"] + payload["minute"] / 60.0 + payload["second"] / 3600.0,
+        with_seconds["planets"]["Sun"]["lon"],
+        with_seconds["planets"]["Moon"]["lon"],
+    )
+    assert with_seconds["shadbala"]["Sun"]["rupas"] == round(expected_shadbala["planets"]["Sun"]["total_rupas"], 2)
+
+    full_reading = handler._compute_full_reading_for_thematic(payload)
+    assert full_reading["birth_info"]["time"] == "14:45:20"
+    assert full_reading["birth_info"]["second"] == 20
+    assert full_reading["modules"]["chart"]["birth_info"]["time"] == "14:45:20"
 
 
 def test_local_frontend_and_api_runtime_smoke() -> None:

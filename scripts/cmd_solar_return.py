@@ -41,6 +41,7 @@ def cmd_solar_return(args: Any) -> Dict[str, Any]:
         args.hour, args.minute,
         args.lat, args.lon, args.tz,
         args.target_year,
+        ayanamsa_name=getattr(args, 'ayanamsa', 'lahiri'),
     )
 
 

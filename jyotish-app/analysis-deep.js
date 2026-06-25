@@ -2,7 +2,7 @@
  * Jyotish Deep Analysis Engine v1.0
  * 核心计算：Raman功能吉凶 · PACDARES · 宫位互影响 · 分盘交叉验证 · Vargottama · 频率分析
  */
-import { SIGNS, SIGNS_CN, SIGN_LORDS, PLANET_CN, PLANET_SYMBOLS, EXALTATION, DEBILITATION, PLANET_ASPECTS } from './jyotish-engine.js';
+import { SIGNS, SIGNS_CN, SIGN_LORDS, PLANET_CN, PLANET_SYMBOLS, EXALTATION, DEBILITATION, PLANET_ASPECTS, getPlanetStatus } from './jyotish-engine.js';
 import { VARGA_DEFS } from './jyotish-advanced.js';
 
 // ============================================================================
@@ -86,10 +86,7 @@ function vargaSI(degIS, si, d) {
 }
 
 function planetStatus(pn, sign) {
-  if(EXALTATION[pn]===sign) return '入旺';
-  if(DEBILITATION[pn]===sign) return '落陷';
-  if(SIGN_LORDS[sign]===pn) return '入庙';
-  return '中性';
+  return getPlanetStatus(pn, sign);
 }
 
 // ============================================================================

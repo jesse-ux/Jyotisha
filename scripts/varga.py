@@ -56,10 +56,10 @@ def varga_map(si, pi, div):
     if div==4: return (si+pi)%12 if o else (si+8+pi)%12
     if div==7: return (si+pi)%12 if o else (si+6+pi)%12
     if div==9:
-        # BPHS Navamsa: movable(0,3,6,9)=same, fixed(1,4,7,10)=+4, dual(2,5,8,11)=+8
+        # BPHS Navamsa: movable=same, fixed=9th from sign (+8), dual=5th from sign (+4)
         if si%3==0: start=si
-        elif si%3==1: start=(si+4)%12
-        else: start=(si+8)%12
+        elif si%3==1: start=(si+8)%12
+        else: start=(si+4)%12
         return (start+pi)%12
     if div==10: return (si+pi)%12 if o else (si+8+pi)%12  # D10: even signs count from 9th inclusively => +8 offset
     if div==12: return (si+pi)%12

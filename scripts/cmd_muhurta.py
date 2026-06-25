@@ -17,6 +17,8 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from ayanamsa_utils import sidereal_flags
+
 
 def _weekday_to_vara(py_weekday: int) -> int:
     """Python weekday (0=Mon) → Vara index (0=Sun)"""
@@ -24,15 +26,14 @@ def _weekday_to_vara(py_weekday: int) -> int:
 
 
 def _get_sun_moon_lons(year: int, month: int, day: int,
-                       hour: int = 12) -> tuple:
+                       hour: int = 12, ayanamsa_name: str = 'lahiri') -> tuple:
     """获取太阳/月亮恒星黄经。优先 swisseph，退化为近似算法。"""
     try:
         import swisseph as swe
-        swe.set_sid_mode(swe.SIDM_LAHIRI)
-        import math
         jd_ut = swe.julday(year, month, day, hour)
-        sun_res = swe.calc_ut(jd_ut, swe.SUN, swe.FLG_SIDEREAL)
-        moon_res = swe.calc_ut(jd_ut, swe.MOON, swe.FLG_SIDEREAL)
+        flags = sidereal_flags(swe, ayanamsa_name)
+        sun_res = swe.calc_ut(jd_ut, swe.SUN, flags)
+        moon_res = swe.calc_ut(jd_ut, swe.MOON, flags)
         return sun_res[0], moon_res[0], True
     except Exception:
         pass
@@ -106,6 +107,7 @@ def cmd_muhurta(args, chart_data: Optional[Dict] = None) -> int:
     hour_from_sunrise = getattr(args, 'hour_from_sunrise', 6.0)
     target_activity = getattr(args, 'activity', None)
     scan_days = getattr(args, 'scan_days', 1)
+    ayanamsa_name = getattr(args, 'ayanamsa', 'lahiri')
 
     activities = list(ACTIVITY_RULES.keys())
     if target_activity and target_activity not in activities:
@@ -120,7 +122,8 @@ def cmd_muhurta(args, chart_data: Optional[Dict] = None) -> int:
 
     for dt in dates_to_check:
         sun_lon, moon_lon, has_swe = _get_sun_moon_lons(
-            dt.year, dt.month, dt.day, int(hour_from_sunrise + 6)  # rough solar hour
+            dt.year, dt.month, dt.day, int(hour_from_sunrise + 6),  # rough solar hour
+            ayanamsa_name=ayanamsa_name,
         )
         vara_idx = _weekday_to_vara(dt.weekday())
         date_str = dt.strftime('%Y-%m-%d')

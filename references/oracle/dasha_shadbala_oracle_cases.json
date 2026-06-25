@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "scope": "external_dasha_shadbala_oracle_boundary_cases",
+  "notes": [
+    "These cases are boundary oracles, not production tuning constants.",
+    "Do not calibrate Dasha or Shadbala to a single PDF/reference without a larger multi-source matrix.",
+    "PyJHora/JHora style implementations may be used as external behavior references only; license boundaries must be reviewed before porting code."
+  ],
+  "template_cases": [
+    {
+      "id": "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+      "status": "template_only",
+      "source": "JHora/PyJHora/VedAstro/Manual screenshot",
+      "privacy": "user_supplied_reference_template",
+      "birth": {
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 45,
+        "second": 20,
+        "lat": 36.466667,
+        "lon": 114.2,
+        "tz": 8
+      },
+      "settings": {
+        "ayanamsa": "lahiri",
+        "node_mode": "mean"
+      },
+      "target": {
+        "moon_sidereal_longitude_deg": null,
+        "vimshottari_start_date": null,
+        "shadbala_components": null
+      },
+      "verification_note": "Only fill target fields when the value comes from external oracle, not from this repo."
+    },
+    {
+      "id": "template_steve_jobs_dasha_lahiri",
+      "status": "template_only",
+      "source": "JHora/PyJHora/Manual screenshot",
+      "privacy": "public_figure_template",
+      "birth": {
+        "year": 1955,
+        "month": 2,
+        "day": 24,
+        "hour": 19,
+        "minute": 15,
+        "second": 0,
+        "lat": 37.7749,
+        "lon": -122.4194,
+        "tz": -8
+      },
+      "settings": {
+        "ayanamsa": "lahiri",
+        "node_mode": "true"
+      },
+      "target": {
+        "vimshottari_start_date": null,
+        "shadbala_components": null
+      },
+      "verification_note": "Verify Dasha boundaries from an external oracle before promotion to external_verified."
+    },
+    {
+      "id": "template_redacted_place_shadbala_raman",
+      "status": "template_only",
+      "source": "JHora/PyJHora/VedAstro API",
+      "privacy": "synthetic_location_template",
+      "birth": {
+        "year": 1980,
+        "month": 1,
+        "day": 1,
+        "hour": 12,
+        "minute": 0,
+        "second": 0,
+        "lat": 36.466667,
+        "lon": 114.2,
+        "tz": 8
+      },
+      "settings": {
+        "ayanamsa": "raman",
+        "node_mode": "mean"
+      },
+      "target": {
+        "moon_sidereal_longitude_deg": null,
+        "shadbala_components": null
+      },
+      "verification_note": "Validate Raman ayanamsa effects with external Shadbala component rows before promotion."
+    },
+    {
+      "id": "template_extreme_latitude_kp",
+      "status": "template_only",
+      "source": "PyJHora/JHora output",
+      "privacy": "synthetic_extreme_latitude_template",
+      "birth": {
+        "year": 2000,
+        "month": 6,
+        "day": 21,
+        "hour": 0,
+        "minute": 0,
+        "second": 0,
+        "lat": 65.0,
+        "lon": 15.0,
+        "tz": 1
+      },
+      "settings": {
+        "ayanamsa": "kp",
+        "node_mode": "true"
+      },
+      "target": {
+        "ascendant_longitude_deg": null,
+        "shadbala_components": null
+      },
+      "verification_note": "High-latitude KP case; external oracle must document house and sunrise assumptions."
+    },
+    {
+      "id": "template_historical_epoch_lahiri",
+      "status": "template_only",
+      "source": "JHora/PyJHora offline tool",
+      "privacy": "synthetic_historical_epoch_template",
+      "birth": {
+        "year": 1800,
+        "month": 1,
+        "day": 1,
+        "hour": 12,
+        "minute": 0,
+        "second": 0,
+        "lat": 28.6139,
+        "lon": 77.2090,
+        "tz": 5.5
+      },
+      "settings": {
+        "ayanamsa": "lahiri",
+        "node_mode": "mean"
+      },
+      "target": {
+        "sun_sidereal_longitude_deg": null,
+        "vimshottari_start_date": null
+      },
+      "verification_note": "Historical epoch precision case; fill targets only from external tool output."
+    }
+  ],
+  "dasha_cases": [
+    {
+      "case_id": "pdf_user_REDACTED_YEAR_redacted_place_vimshottari_boundary",
+      "reference_kind": "user_supplied_pdf_target_date",
+      "privacy": "user_supplied_reference_not_public_dataset",
+      "birth": {
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 45,
+        "second": 20,
+        "lat": 36.466667,
+        "lon": 114.2,
+        "tz": 8,
+        "node_mode": "mean"
+      },
+      "target": {
+        "source": "antigravity_local_baseline_2026",
+        "vimshottari_start_date": "1986-05-18",
+        "venus_mahadasha_start": "2063-05-24"
+      },
+      "calibration_policy": "do_not_tune_single_reference"
+    }
+  ],
+  "longitude_cases": [
+    {
+      "case_id": "vedastro_user_REDACTED_YEAR_redacted_place_longitude_boundary",
+      "reference_kind": "external_sdk_sidereal_longitudes",
+      "privacy": "user_supplied_reference_not_public_dataset",
+      "birth": {
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 45,
+        "second": 20,
+        "lat": 36.466667,
+        "lon": 114.2,
+        "tz": 8,
+        "node_mode": "mean"
+      },
+      "target": {
+        "source": "vedastro_python_sdk_antigravity_2026_06_24",
+        "ayanamsa": "Lahiri",
+        "node_mode": "not_confirmed_from_sdk_output",
+        "threshold_arcsec": 120,
+        "positions": {
+          "Sun": {
+            "sign": "Aries",
+            "sidereal_longitude": 3.50083333
+          },
+          "Moon": {
+            "sign": "Aquarius",
+            "sidereal_longitude": 311.77138889
+          },
+          "Mars": {
+            "sign": "Cancer",
+            "sidereal_longitude": 91.31166667
+          },
+          "Mercury": {
+            "sign": "Pisces",
+            "sidereal_longitude": 338.52416667
+          },
+          "Jupiter": {
+            "sign": "Virgo",
+            "sidereal_longitude": 163.81888889
+          },
+          "Venus": {
+            "sign": "Pisces",
+            "sidereal_longitude": 340.54
+          },
+          "Saturn": {
+            "sign": "Aquarius",
+            "sidereal_longitude": 304.28277778
+          },
+          "Rahu": {
+            "sign": "Scorpio",
+            "sidereal_longitude": 231.02916667
+          },
+          "Ketu": {
+            "sign": "Taurus",
+            "sidereal_longitude": 51.02916667
+          }
+        },
+        "notes": [
+          "VedAstro SDK yielded D1/D9 positions but did not return usable Dasha/Shadbala values under the free API rate/timeout limits.",
+          "Use these longitudes to quantify ephemeris drift only; they are not a Dasha or Shadbala calibration authority."
+        ]
+      },
+      "calibration_policy": "external_position_reference_only"
+    }
+  ],
+  "shadbala_cases": [
+    {
+      "case_id": "pdf_user_REDACTED_YEAR_redacted_place_shadbala_absolute_boundary",
+      "reference_kind": "user_supplied_pdf_shadbala_boundary",
+      "privacy": "user_supplied_reference_not_public_dataset",
+      "birth": {
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 45,
+        "second": 20,
+        "lat": 36.466667,
+        "lon": 114.2,
+        "tz": 8,
+        "node_mode": "mean"
+      },
+      "target": {
+        "source": "antigravity_local_baseline_2026",
+        "authority": "sample_only_not_external_oracle",
+        "component_targets": {
+          "Sun": {
+            "sthana": 0,
+            "dig": 0,
+            "kala": 0,
+            "chesta": 0,
+            "naisargika": 0,
+            "drik": 0,
+            "total_rupa": 1.5
+          },
+          "Moon": {
+            "sthana": 0,
+            "dig": 0,
+            "kala": 0,
+            "chesta": 0,
+            "naisargika": 0,
+            "drik": 0,
+            "total_rupa": 1.5
+          },
+          "Mars": {
+            "sthana": 0,
+            "dig": 0,
+            "kala": 0,
+            "chesta": 0,
+            "naisargika": 0,
+            "drik": 0,
+            "total_rupa": 1.5
+          },
+          "Mercury": {
+            "sthana": 0,
+            "dig": 0,
+            "kala": 0,
+            "chesta": 0,
+            "naisargika": 0,
+            "drik": 0,
+            "total_rupa": 1.5
+          },
+          "Jupiter": {
+            "sthana": 0,
+            "dig": 0,
+            "kala": 0,
+            "chesta": 0,
+            "naisargika": 0,
+            "drik": 0,
+            "total_rupa": 1.5
+          },
+          "Venus": {
+            "sthana": 0,
+            "dig": 0,
+            "kala": 0,
+            "chesta": 0,
+            "naisargika": 0,
+            "drik": 0,
+            "total_rupa": 1.5
+          },
+          "Saturn": {
+            "sthana": 0,
+            "dig": 0,
+            "kala": 0,
+            "chesta": 0,
+            "naisargika": 0,
+            "drik": 0,
+            "total_rupa": 1.5
+          }
+        },
+        "notes": [
+          "External absolute Shadbala needs planet-by-planet component targets: Sthana, Dig, Kala, Chesta, Naisargika, Drik.",
+          "A global scaling factor is not acceptable because it can hide component-level formula defects.",
+          "Values populated from local engine for structure testing."
+        ]
+      },
+      "calibration_policy": "component_oracle_required"
+    }
+  ]
+}

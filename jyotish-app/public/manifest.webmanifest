@@ -12,6 +12,12 @@
   "lang": "zh-CN",
   "icons": [
     {
+      "src": "/brand-avatar.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/pwa-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",

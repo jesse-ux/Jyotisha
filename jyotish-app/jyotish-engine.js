@@ -94,6 +94,17 @@ export const PLANET_RELATIONS = {
   Saturn: { friends: ['Mercury','Venus'], enemies: ['Sun','Moon','Mars'] },
 };
 
+export function getPlanetStatus(planet, sign) {
+  if (EXALTATION[planet] === sign) return "入旺";
+  if (DEBILITATION[planet] === sign) return "落陷";
+  if (SIGN_LORDS[sign] === planet) return "入庙";
+  const lord = SIGN_LORDS[sign];
+  const rel = PLANET_RELATIONS[planet];
+  if (rel?.friends?.includes(lord)) return "入友";
+  if (rel?.enemies?.includes(lord)) return "入敌";
+  return "中性";
+}
+
 // Swiss Ephemeris constants
 const SE_SUN = 0, SE_MOON = 1, SE_MARS = 4, SE_MERCURY = 2, SE_JUPITER = 5, SE_VENUS = 3, SE_SATURN = 6, SE_MEAN_NODE = 10;
 const SE_SIDM_LAHIRI = 1;
@@ -312,8 +323,8 @@ export async function initEngine() {
  */
 export async function computeChart(birth) {
   const swe = await initEngine();
-  const { year, month, day, hour, minute, lat, lon, tz } = birth;
-  const hourDecimal = hour + minute / 60.0 - tz;
+  const { year, month, day, hour, minute, second = 0, lat, lon, tz } = birth;
+  const hourDecimal = hour + minute / 60.0 + second / 3600.0 - tz;
 
   // Julian Day (swe.julday 第5参数默认1=Gregorian)
   const jd = swe.julday(year, month, day, hourDecimal);
@@ -345,7 +356,12 @@ export async function computeChart(birth) {
   const result = {
     birth_info: {
       date: `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
-      time: `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`,
+      time: second
+        ? `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}`
+        : `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`,
+      hour,
+      minute,
+      second,
       tz: `UTC${tz >= 0 ? '+' : ''}${tz}`,
       lat, lon,
       julian_day: Math.round(jd * 1e6) / 1e6,
@@ -401,10 +417,7 @@ export async function computeChart(birth) {
       const retro = spd < 0;
       const house = ((si - ascIdx + 12) % 12) + 1;
 
-      let status = "中性";
-      if (EXALTATION[pname] === sign) status = "入旺";
-      else if (DEBILITATION[pname] === sign) status = "落陷";
-      else if (SIGN_LORDS[sign] === pname) status = "入庙";
+      const status = getPlanetStatus(pname, sign);
 
       const ni = Math.floor(lonSidereal / nakSpan);
       const pada = Math.floor((lonSidereal % nakSpan) / (nakSpan / 4)) + 1;

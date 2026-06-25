@@ -18,6 +18,8 @@ from datetime import datetime, timedelta
 import calendar
 import math
 
+from ayanamsa_utils import sidereal_flags
+
 # ── Vara（周日行星）──────────────────────────────────────────────────
 VARA_LORDS = {
     0: ('Sunday',    'Sun',     'asubha'),  # 周日
@@ -611,11 +613,10 @@ def _local_time_from_jd(jd: float, tz: float) -> str:
     return local_dt.strftime('%Y-%m-%d %H:%M')
 
 
-def _swisseph_sun_moon_lon(jd: float) -> Optional[Tuple[float, float]]:
+def _swisseph_sun_moon_lon(jd: float, ayanamsa_name: str = 'lahiri') -> Optional[Tuple[float, float]]:
     try:
         import swisseph as swe
-        swe.set_sid_mode(swe.SIDM_LAHIRI)
-        flags = getattr(swe, 'FLG_SWIEPH', 2) | getattr(swe, 'FLG_SIDEREAL', 65536)
+        flags = sidereal_flags(swe, ayanamsa_name)
         sun = swe.calc_ut(jd, swe.SUN, flags)[0][0] % 360
         moon = swe.calc_ut(jd, swe.MOON, flags)[0][0] % 360
         return sun, moon
@@ -666,6 +667,7 @@ def calc_panchanga_end_times(
     day: int,
     tz: float,
     local_hours: float,
+    ayanamsa_name: str = 'lahiri',
 ) -> Optional[Dict]:
     """Calculate current Tithi/Nakshatra/Yoga end times from SwissEph positions."""
     jd_start = _jd_for_local_time(year, month, day, local_hours, tz)
@@ -673,20 +675,20 @@ def calc_panchanga_end_times(
         return None
 
     def tithi_value(jd: float) -> Optional[float]:
-        positions = _swisseph_sun_moon_lon(jd)
+        positions = _swisseph_sun_moon_lon(jd, ayanamsa_name=ayanamsa_name)
         if not positions:
             return None
         sun, moon = positions
         return (moon - sun) % 360
 
     def nakshatra_value(jd: float) -> Optional[float]:
-        positions = _swisseph_sun_moon_lon(jd)
+        positions = _swisseph_sun_moon_lon(jd, ayanamsa_name=ayanamsa_name)
         if not positions:
             return None
         return positions[1] % 360
 
     def yoga_value(jd: float) -> Optional[float]:
-        positions = _swisseph_sun_moon_lon(jd)
+        positions = _swisseph_sun_moon_lon(jd, ayanamsa_name=ayanamsa_name)
         if not positions:
             return None
         sun, moon = positions
@@ -1311,6 +1313,7 @@ def panchanga_range_report(
     lat: Optional[float] = None,
     lon: Optional[float] = None,
     tz: Optional[float] = None,
+    ayanamsa_name: str = 'lahiri',
 ) -> Dict:
     """Build a date-range Panchanga calendar with daytime inauspicious windows."""
     start_dt = datetime.strptime(start_date[:10], '%Y-%m-%d')
@@ -1342,7 +1345,7 @@ def panchanga_range_report(
                 sunrise_local_hours = sunrise_h + sunrise_m / 60.0
             reference_local_hours = float(sunrise_local_hours) + hour_from_sunrise
             reference_jd = _jd_for_local_time(current.year, current.month, current.day, reference_local_hours, tz)
-            positions = _swisseph_sun_moon_lon(reference_jd) if reference_jd is not None else None
+            positions = _swisseph_sun_moon_lon(reference_jd, ayanamsa_name=ayanamsa_name) if reference_jd is not None else None
             if positions:
                 sun_lon, moon_lon = positions
                 panchanga_policy = 'SwissEph Lahiri at sunrise-relative reference time'
@@ -1352,6 +1355,7 @@ def panchanga_range_report(
                     current.day,
                     tz,
                     reference_local_hours,
+                    ayanamsa_name=ayanamsa_name,
                 )
         panchanga_policies.add(panchanga_policy)
         report = muhurta_full_report(
@@ -1438,6 +1442,7 @@ def muhurta_range_search(
     lon: Optional[float] = None,
     tz: Optional[float] = None,
     avoid_inauspicious_periods: bool = True,
+    ayanamsa_name: str = 'lahiri',
 ) -> Dict:
     """Search a date range for ranked Muhurta candidates for a selected activity."""
     limit = max(1, min(int(limit or 5), 20))
@@ -1452,6 +1457,7 @@ def muhurta_range_search(
         lat=lat,
         lon=lon,
         tz=tz,
+        ayanamsa_name=ayanamsa_name,
     )
     candidates = []
     rejected_dates = []

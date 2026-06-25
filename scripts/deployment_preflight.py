@@ -71,9 +71,14 @@ def main() -> int:
     package = json.loads(read(APP / "package.json"))
     manifest = json.loads(read(APP / "public" / "manifest.webmanifest"))
     sw = read(APP / "public" / "sw.js")
+    index_html = read(APP / "index.html")
+    main_js = read(APP / "main.js")
 
     require("普通用户交付形态" in readme, "README missing ordinary-user delivery matrix", failures)
     require("python3 scripts/deployment_preflight.py" in readme, "README missing deployment preflight command", failures)
+    require("static_demo_boundary_visible" in readme, "README missing static demo boundary marker", failures)
+    require('id="static-demo-boundary"' in index_html, "static demo capability boundary must be visible on first screen", failures)
+    require("renderStaticDemoBoundary" in main_js, "Trust Center must render static demo capability boundary", failures)
     require("http://localhost:5300" in compose, "docker-compose missing ordinary web URL note", failures)
     require("python3 scripts/deployment_preflight.py" in dockerfile, "Dockerfile must run deployment preflight", failures)
     require("build" in package.get("scripts", {}), "jyotish-app missing build script", failures)
@@ -85,6 +90,7 @@ def main() -> int:
         "valid": not failures,
         "failures": failures,
         "delivery_matrix": delivery_matrix(),
+        "static_demo_boundary_visible": "static shell is labeled; local API-only capabilities are listed for ordinary users.",
         "ordinary_user_note": "公开演示环境只能完整展示静态壳；完整高级技法需要本地 API 服务。",
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))

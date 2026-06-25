@@ -42,7 +42,11 @@ def _import_engine():
     return jyotish_engine
 
 
-def calculate_chart(year, month, day, hour, minute, lat, lon, tz, node_mode="mean"):
+def _birth_second_args(second):
+    return ["--second", str(second)] if int(second or 0) else []
+
+
+def calculate_chart(year, month, day, hour, minute, lat, lon, tz, node_mode="mean", second=0):
     """Calculate D1 Rashi chart."""
     import json
     import subprocess
@@ -51,6 +55,7 @@ def calculate_chart(year, month, day, hour, minute, lat, lon, tz, node_mode="mea
         sys.executable, engine, "chart",
         "--year", str(year), "--month", str(month), "--day", str(day),
         "--hour", str(hour), "--minute", str(minute),
+        *_birth_second_args(second),
         "--lat", str(lat), "--lon", str(lon), "--tz", str(tz),
         "--node-mode", node_mode,
     ]
@@ -58,7 +63,7 @@ def calculate_chart(year, month, day, hour, minute, lat, lon, tz, node_mode="mea
     return json.loads(result.stdout) if result.returncode == 0 else {"error": result.stderr}
 
 
-def calculate_dasha(year, month, day, hour, minute, lat, lon, tz, years=10, node_mode="mean"):
+def calculate_dasha(year, month, day, hour, minute, lat, lon, tz, years=10, node_mode="mean", second=0):
     """Calculate Vimshottari Dasha timeline."""
     import json
     import subprocess
@@ -67,6 +72,7 @@ def calculate_dasha(year, month, day, hour, minute, lat, lon, tz, years=10, node
         sys.executable, engine, "dasha",
         "--year", str(year), "--month", str(month), "--day", str(day),
         "--hour", str(hour), "--minute", str(minute),
+        *_birth_second_args(second),
         "--lat", str(lat), "--lon", str(lon), "--tz", str(tz),
         "--years", str(years), "--node-mode", node_mode,
     ]
@@ -74,7 +80,7 @@ def calculate_dasha(year, month, day, hour, minute, lat, lon, tz, years=10, node
     return json.loads(result.stdout) if result.returncode == 0 else {"error": result.stderr}
 
 
-def calculate_shadbala(year, month, day, hour, minute, lat, lon, tz, node_mode="mean"):
+def calculate_shadbala(year, month, day, hour, minute, lat, lon, tz, node_mode="mean", second=0):
     """Calculate Shadbala (six-fold strength)."""
     import json
     import subprocess
@@ -83,6 +89,7 @@ def calculate_shadbala(year, month, day, hour, minute, lat, lon, tz, node_mode="
         sys.executable, engine, "shadbala",
         "--year", str(year), "--month", str(month), "--day", str(day),
         "--hour", str(hour), "--minute", str(minute),
+        *_birth_second_args(second),
         "--lat", str(lat), "--lon", str(lon), "--tz", str(tz),
         "--node-mode", node_mode,
     ]
@@ -90,7 +97,7 @@ def calculate_shadbala(year, month, day, hour, minute, lat, lon, tz, node_mode="
     return json.loads(result.stdout) if result.returncode == 0 else {"error": result.stderr}
 
 
-def calculate_ashtakavarga(year, month, day, hour, minute, lat, lon, tz, node_mode="mean"):
+def calculate_ashtakavarga(year, month, day, hour, minute, lat, lon, tz, node_mode="mean", second=0):
     """Calculate Ashtakavarga matrix."""
     import json
     import subprocess
@@ -99,6 +106,7 @@ def calculate_ashtakavarga(year, month, day, hour, minute, lat, lon, tz, node_mo
         sys.executable, engine, "ashtakavarga",
         "--year", str(year), "--month", str(month), "--day", str(day),
         "--hour", str(hour), "--minute", str(minute),
+        *_birth_second_args(second),
         "--lat", str(lat), "--lon", str(lon), "--tz", str(tz),
         "--node-mode", node_mode,
     ]
@@ -106,7 +114,7 @@ def calculate_ashtakavarga(year, month, day, hour, minute, lat, lon, tz, node_mo
     return json.loads(result.stdout) if result.returncode == 0 else {"error": result.stderr}
 
 
-def calculate_varga(year, month, day, hour, minute, lat, lon, tz, varga="D9", node_mode="mean"):
+def calculate_varga(year, month, day, hour, minute, lat, lon, tz, varga="D9", node_mode="mean", second=0):
     """Calculate a specific Varga (D9, D10, etc.)."""
     import json
     import subprocess
@@ -115,6 +123,7 @@ def calculate_varga(year, month, day, hour, minute, lat, lon, tz, varga="D9", no
         sys.executable, engine, "varga",
         "--year", str(year), "--month", str(month), "--day", str(day),
         "--hour", str(hour), "--minute", str(minute),
+        *_birth_second_args(second),
         "--lat", str(lat), "--lon", str(lon), "--tz", str(tz),
         "--varga", varga, "--node-mode", node_mode,
     ]
@@ -122,7 +131,7 @@ def calculate_varga(year, month, day, hour, minute, lat, lon, tz, varga="D9", no
     return json.loads(result.stdout) if result.returncode == 0 else {"error": result.stderr}
 
 
-def calculate_yogas(year, month, day, hour, minute, lat, lon, tz, node_mode="mean"):
+def calculate_yogas(year, month, day, hour, minute, lat, lon, tz, node_mode="mean", second=0):
     """Detect Yogas in the birth chart."""
     import json
     import subprocess
@@ -131,6 +140,7 @@ def calculate_yogas(year, month, day, hour, minute, lat, lon, tz, node_mode="mea
         sys.executable, engine, "yoga",
         "--year", str(year), "--month", str(month), "--day", str(day),
         "--hour", str(hour), "--minute", str(minute),
+        *_birth_second_args(second),
         "--lat", str(lat), "--lon", str(lon), "--tz", str(tz),
         "--node-mode", node_mode,
     ]
@@ -138,7 +148,7 @@ def calculate_yogas(year, month, day, hour, minute, lat, lon, tz, node_mode="mea
     return json.loads(result.stdout) if result.returncode == 0 else {"error": result.stderr}
 
 
-def full_reading(year, month, day, hour, minute, lat, lon, tz, age, transit_date, node_mode="mean"):
+def full_reading(year, month, day, hour, minute, lat, lon, tz, age, transit_date, node_mode="mean", second=0):
     """Run the complete full-reading pipeline."""
     import json
     import subprocess
@@ -147,6 +157,7 @@ def full_reading(year, month, day, hour, minute, lat, lon, tz, age, transit_date
         sys.executable, engine, "full-reading",
         "--year", str(year), "--month", str(month), "--day", str(day),
         "--hour", str(hour), "--minute", str(minute),
+        *_birth_second_args(second),
         "--lat", str(lat), "--lon", str(lon), "--tz", str(tz),
         "--age", str(age), "--transit-date", transit_date,
         "--node-mode", node_mode,

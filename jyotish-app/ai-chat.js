@@ -281,6 +281,18 @@ async function sendMessage() {
 
 function buildChartContext(cd) {
   if (!cd?.planets || !cd?.ascendant) return t('ai.no.data');
+  if (cd.ai_prompt_pack?.prompt_zh && cd.ai_prompt_pack?.evidence_snapshot) {
+    return [
+      '【AI Prompt Pack】',
+      cd.ai_prompt_pack.prompt_zh,
+      '',
+      '【evidence_snapshot】',
+      JSON.stringify(cd.ai_prompt_pack.evidence_snapshot, null, 2),
+      '',
+      '【retrieval_plan】',
+      JSON.stringify(cd.ai_prompt_pack.retrieval_plan || {}, null, 2),
+    ].join('\n');
+  }
   const asc = cd.ascendant;
   const bi = cd.birth_info;
   let ctx = `【${t('ai.no.data').replace(t('ai.no.data'), 'Chart Info')}】\n${t('label.date')}: ${bi?.date || '?'}\nAscendant: ${signName(asc.sign)} (${asc.sign}) ${asc.degree?.toFixed(2) || ''}°\n\n[Planets]\n`;
@@ -392,6 +404,11 @@ function buildAIRecoveryMessage(error) {
 function generateLocalReply(message, ctx) {
   const cd = getSelectedChartData();
   const asc = cd?.ascendant;
+  const promptPack = cd?.ai_prompt_pack;
+  const packAyanamsa = promptPack?.evidence_snapshot?.ayanamsa;
+  const contextBoundary = packAyanamsa
+    ? `\n\n参数：${packAyanamsa.display || packAyanamsa.name || 'Lahiri'} Ayanamsa；节点口径 ${packAyanamsa.node_mode || 'mean'}。AI Prompt Pack 已作为上下文入口；完整生成式解读需要服务端 /api/chat。`
+    : '';
   const lower = message.toLowerCase();
   const lang = getLang();
 
@@ -399,29 +416,29 @@ function generateLocalReply(message, ctx) {
     const h10 = cd?.planets ? Object.entries(cd.planets).filter(([,p]) => p.house === 10).map(([pn]) => planetName(pn)) : [];
     return lang === 'en'
       ? `**Career Analysis (D1 Rasi)**\n\nAscendant ${signName(asc?.sign)} — 10th House:\n${h10.length > 0 ? '- Planets in H10: ' + h10.join(', ') : '- No planets in H10'}\n\n⚠️ Full career analysis requires D10, Dasha cycles, and Transit.\n\n💡 Configure AI backend for deeper insights.`
-      : `**事业分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)} 的第10宫：\n${h10.length > 0 ? '- 10宫内行星: ' + h10.join('、') : '- 10宫无行星落入'}\n\n⚠️ 完整职业分析需 D10、Dasha 大运、Transit 等。\n\n💡 建议配置 AI 后端获取更深入的分析。`;
+      : `**事业分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)} 的第10宫：\n${h10.length > 0 ? '- 10宫内行星: ' + h10.join('、') : '- 10宫无行星落入'}\n\n⚠️ 完整职业分析需 D10、Dasha 大运、Transit 等。${contextBoundary}\n\n💡 建议配置 AI 后端获取更深入的分析。`;
   }
 
   if (lower.includes('婚姻') || lower.includes('感情') || lower.includes('配偶') || lower.includes('恋爱') || lower.includes('marriage') || lower.includes('love') || lower.includes('spouse')) {
     const h7 = cd?.planets ? Object.entries(cd.planets).filter(([,p]) => p.house === 7).map(([pn]) => planetName(pn)) : [];
     return lang === 'en'
       ? `**Marriage & Relationship (D1 Rasi)**\n\nAscendant ${signName(asc?.sign)} — 7th House:\n${h7.length > 0 ? '- Planets in H7: ' + h7.join(', ') : '- No planets in H7'}\n\n⚠️ Full analysis needs DK, D9, Vimshottari Venus periods.\n\n💡 Configure AI backend for complete reading.`
-      : `**婚姻感情分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)} 的第7宫：\n${h7.length > 0 ? '- 7宫内行星: ' + h7.join('、') : '- 7宫无行星落入'}\n\n⚠️ 完整婚姻分析需 DK、D9、Dasha 等。\n\n💡 配置 AI 后端获取完整解读。`;
+      : `**婚姻感情分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)} 的第7宫：\n${h7.length > 0 ? '- 7宫内行星: ' + h7.join('、') : '- 7宫无行星落入'}\n\n⚠️ 完整婚姻分析需 DK、D9、Dasha 等。${contextBoundary}\n\n💡 配置 AI 后端获取完整解读。`;
   }
 
   if (lower.includes('财运') || lower.includes('财富') || lower.includes('收入') || lower.includes('wealth') || lower.includes('money') || lower.includes('finance')) {
     return lang === 'en'
       ? `**Wealth Analysis (D1 Rasi)**\n\nAscendant ${signName(asc?.sign)}:\n- H2 (earned income) and H11 (gains) are key houses\n- Jupiter and Venus status directly affects wealth potential\n\n⚠️ Full analysis needs D2, Dasha, and Transit.\n\n💡 Configure AI backend for deeper wealth reading.`
-      : `**财运分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)}:\n- 第2宫(正财)和第11宫(收入)是关键宫位\n- Jupiter 和 Venus 的状态直接影响财富潜力\n\n⚠️ 完整分析需 D2、Dasha 和 Transit。\n\n💡 配置 AI 后端获取深度财运解读。`;
+      : `**财运分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)}:\n- 第2宫(正财)和第11宫(收入)是关键宫位\n- Jupiter 和 Venus 的状态直接影响财富潜力\n\n⚠️ 完整分析需 D2、Dasha 和 Transit。${contextBoundary}\n\n💡 配置 AI 后端获取深度财运解读。`;
   }
 
   if (lower.includes('健康') || lower.includes('身体') || lower.includes('health')) {
     return lang === 'en'
       ? `**Health Analysis (D1 Rasi)**\n\nAscendant ${signName(asc?.sign)}:\n- H1 represents body and vitality\n- H6 represents disease\n- H8 represents chronic health issues\n\n⚠️ Full analysis requires D6 (Shashtamsa).\n\n💡 Configure AI backend for deeper health reading.`
-      : `**健康分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)}:\n- 第1宫代表身体和生命力\n- 第6宫代表疾病\n- 第8宫代表慢性健康问题\n\n⚠️ 完整分析需 D6。\n\n💡 配置 AI 后端获取深度健康解读。`;
+      : `**健康分析（基于 D1 本命盘）**\n\n上升 ${signName(asc?.sign)}:\n- 第1宫代表身体和生命力\n- 第6宫代表疾病\n- 第8宫代表慢性健康问题\n\n⚠️ 完整分析需 D6。${contextBoundary}\n\n💡 配置 AI 后端获取深度健康解读。`;
   }
 
   return lang === 'en'
     ? `**Chart Overview**\n\nAscendant: ${signName(asc?.sign)} ${asc?.degree?.toFixed(2) || ''}°\n\nYou can ask about:\n- Career\n- Marriage & relationships\n- Wealth\n- Health\n- Dasha analysis\n- Transit impacts\n\n${buildAISetupGuidance()}`
-    : `**星盘概览**\n\n上升: ${signName(asc?.sign)} ${asc?.degree?.toFixed(2) || ''}°\n\n你可以询问以下话题：\n- 事业运 / 工作方向\n- 婚姻感情\n- 财运分析\n- 健康运势\n- Dasha 大运分析\n- Transit 过境影响\n\n${buildAISetupGuidance()}`;
+    : `**星盘概览**\n\n上升: ${signName(asc?.sign)} ${asc?.degree?.toFixed(2) || ''}°${contextBoundary}\n\n你可以询问以下话题：\n- 事业运 / 工作方向\n- 婚姻感情\n- 财运分析\n- 健康运势\n- Dasha 大运分析\n- Transit 过境影响\n\n${buildAISetupGuidance()}`;
 }

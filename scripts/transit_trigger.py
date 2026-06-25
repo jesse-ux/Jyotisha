@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 import math
 
+from ayanamsa_utils import ayanamsa_display_name, normalize_ayanamsa_name, sidereal_flags
+
 # 行星每日运动速度（°/天）- 用于步长优化
 PLANET_SPEED = {
     'Sun': 0.9856, 'Moon': 13.176, 'Mars': 0.524, 'Mercury': 1.383,
@@ -43,7 +45,12 @@ def _angular_diff(a: float, b: float) -> float:
     return abs((a - b + 180.0) % 360.0 - 180.0)
 
 
-def _get_planet_lon_swe(planet_name: str, jd: float, sidereal: bool = True) -> float:
+def _get_planet_lon_swe(
+    planet_name: str,
+    jd: float,
+    sidereal: bool = True,
+    ayanamsa_name: str = 'lahiri',
+) -> float:
     """使用 Swiss Ephemeris 计算行星经度（默认 Lahiri 恒星黄道）。"""
     try:
         import swisseph as swe
@@ -58,8 +65,7 @@ def _get_planet_lon_swe(planet_name: str, jd: float, sidereal: bool = True) -> f
             return None
         flags = swe.FLG_SWIEPH
         if sidereal:
-            swe.set_sid_mode(swe.SIDM_LAHIRI)
-            flags |= swe.FLG_SIDEREAL
+            flags = sidereal_flags(swe, ayanamsa_name)
         result = swe.calc_ut(jd, pid, flags)
         lon = result[0][0]
         if planet_name == 'Ketu':
@@ -70,12 +76,18 @@ def _get_planet_lon_swe(planet_name: str, jd: float, sidereal: bool = True) -> f
     return None
 
 
-def _get_transit_lon_precise(planet: str, dt: datetime, base_date: datetime) -> Tuple[float, str]:
+def _get_transit_lon_precise(
+    planet: str,
+    dt: datetime,
+    base_date: datetime,
+    ayanamsa_name: str = 'lahiri',
+) -> Tuple[float, str]:
     """Return transit longitude and calculation source."""
     try:
-        lon = _get_planet_lon_swe(planet, _datetime_to_jd(dt))
+        ayanamsa = normalize_ayanamsa_name(ayanamsa_name)
+        lon = _get_planet_lon_swe(planet, _datetime_to_jd(dt), ayanamsa_name=ayanamsa)
         if lon is not None:
-            return lon, 'swiss_ephemeris_lahiri'
+            return lon, f'swiss_ephemeris_{ayanamsa}'
     except Exception:
         pass
     return _get_transit_lon(planet, base_date, (dt - base_date).total_seconds() / 86400.0), 'mean_speed_fallback'
@@ -88,6 +100,7 @@ def search_transit_triggers(
     end_date: datetime,
     orb: float = CONTACT_ORB,
     natal_planets: Dict = None,
+    ayanamsa_name: str = 'lahiri',
 ) -> List[Dict]:
     """
     搜索单个行星的过境触发点。
@@ -125,7 +138,12 @@ def search_transit_triggers(
 
     source = 'unknown'
     while current_date <= end_date:
-        lon, source = _get_transit_lon_precise(planet, current_date, start_date)
+        lon, source = _get_transit_lon_precise(
+            planet,
+            current_date,
+            start_date,
+            ayanamsa_name=ayanamsa_name,
+        )
         diff = _angular_diff(lon, target_longitude)
 
         if diff <= orb:
@@ -204,6 +222,7 @@ def search_all_transit_triggers(
     start_date: datetime,
     end_date: datetime,
     planets_to_check: List[str] = None,
+    ayanamsa_name: str = 'lahiri',
 ) -> Dict:
     """
     搜索所有过境触发点。
@@ -243,7 +262,8 @@ def search_all_transit_triggers(
     for sp in sensitive_points:
         for planet in planets_to_check:
             triggers = search_transit_triggers(
-                planet, sp['degree'], start_date, end_date, orb=CONTACT_ORB
+                planet, sp['degree'], start_date, end_date, orb=CONTACT_ORB,
+                ayanamsa_name=ayanamsa_name,
             )
             for t in triggers:
                 t['sensitive_point'] = sp['name']
@@ -280,6 +300,10 @@ def search_all_transit_triggers(
         'retrograde_notes': retro_note,
         'total_triggers': len(all_triggers),
         'summary': summary,
+        'ayanamsa': {
+            'name': normalize_ayanamsa_name(ayanamsa_name),
+            'display': ayanamsa_display_name(ayanamsa_name),
+        },
     }
 
 
@@ -308,6 +332,7 @@ def find_exact_transit_date(
     target_longitude: float,
     start_date: datetime,
     end_date: datetime,
+    ayanamsa_name: str = 'lahiri',
 ) -> Optional[Dict]:
     """
     找到行星精确经过目标经度的日期（二分搜索法）。
@@ -325,13 +350,28 @@ def find_exact_transit_date(
     lo_days = 0.0
     hi_days = (end_date - start_date).days
 
-    lo_lon, source = _get_transit_lon_precise(planet, start_date, start_date)
-    hi_lon, _ = _get_transit_lon_precise(planet, end_date, start_date)
+    lo_lon, source = _get_transit_lon_precise(
+        planet,
+        start_date,
+        start_date,
+        ayanamsa_name=ayanamsa_name,
+    )
+    hi_lon, _ = _get_transit_lon_precise(
+        planet,
+        end_date,
+        start_date,
+        ayanamsa_name=ayanamsa_name,
+    )
 
     for _ in range(30):  # 30次迭代精度 ≈ 1分钟
         mid_days = (lo_days + hi_days) / 2.0
         mid_dt = start_date + timedelta(days=mid_days)
-        mid_lon, source = _get_transit_lon_precise(planet, mid_dt, start_date)
+        mid_lon, source = _get_transit_lon_precise(
+            planet,
+            mid_dt,
+            start_date,
+            ayanamsa_name=ayanamsa_name,
+        )
 
         if _angular_diff(mid_lon, target_longitude) < EXACT_ORB:
             return {

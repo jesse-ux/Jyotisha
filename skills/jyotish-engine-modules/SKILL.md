@@ -146,6 +146,7 @@ from divisional_charts_extended import DivisionalChartsCalculator
 ```
 
 > **注意**：这 5 个模块已整合到主仓库的 `scripts/` 目录中，与引擎一起维护。本 Skill 的 `scripts/` 副本仅作为独立分发包。
+> **AI Native 注意**：主仓库 `full-reading` 与 `/api/chart` 已输出 `ai_prompt_pack` 和 Ayanamsa 元数据；独立分发时若调用主引擎，应优先消费这些字段作为解读上下文，不要在 Raman/KP 等非 Lahiri 设置下硬编码默认口径。
 
 ## 验证测试
 

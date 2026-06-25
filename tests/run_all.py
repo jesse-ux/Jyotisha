@@ -286,9 +286,9 @@ def t51():
     r = calc_shadbala(p, 'Aries', 12, 15, 75, 0)
     for pn, d in r['planets'].items():
         assert isinstance(d['total_rupas'], float), f"{pn} total_rupas should be float"
-        assert 0 < d['total_rupas'] < 10, f"{pn} rupas out of range"
+        assert 0 < d['total_rupas'] < 20, f"{pn} rupas out of range"
 
-@test("Shadbala 1200 invariant")
+@test("Shadbala absolute component invariant")
 def t52():
     from shadbala import calc_shadbala
     s = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -296,8 +296,12 @@ def t52():
     for i,(pn,d) in enumerate([('Sun',15),('Moon',75),('Mars',220),('Mercury',55),('Jupiter',310),('Venus',350),('Saturn',180)]):
         p[pn] = {'sign':s[int(d/30)%12],'degree':d,'house':i+1}
     r = calc_shadbala(p, 'Aries', 12, 15, 75, 0)
-    total = sum(d['total_virupas'] for d in r['planets'].values())
-    assert abs(total - 1200) < 5, f"Total should be ~1200, got {total}"
+    for pn, d in r['planets'].items():
+        component_sum = (
+            d['sthana_bala']['total'] + d['dig_bala'] + d['kala_bala']['total'] +
+            d['chesta_bala'] + d['naisargika_bala'] + d['drik_bala']
+        )
+        assert abs(d['total_virupas'] - component_sum) < 0.1, f"{pn} total should equal component sum"
 
 # ── Yoga engine deep tests ──
 @test("Yoga engine Raja detection")
