@@ -1688,6 +1688,19 @@ def test_provenance_panchanga_workspace_panel_is_productized() -> None:
     assert "generateReportArtifact" in export_js
     assert "formatReportArtifactStatus" in export_js
     assert "downloaded_filename" in export_js
+    for token in [
+        "DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS",
+        "calibration_status",
+        "dasha_shadbala",
+        "ready_for_calibration: 0",
+        "valid_packets: 0",
+        "production_tuning_allowed: false",
+        "external_oracle_evidence_validation",
+        "高级技法校准状态",
+        "大运起点和 Shadbala 绝对值仍在外部 evidence validator 校准中",
+        "不得把大运起点或 Shadbala 绝对值说成已完成外部校准",
+    ]:
+        assert token in export_js
     assert "result.download_filename || result.delivery?.filename" in export_js
     assert "result.download_mime || result.delivery?.mime" in export_js
     assert "result.user_message || delivery.user_message" in export_js

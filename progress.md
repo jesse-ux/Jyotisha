@@ -347,4 +347,7 @@
 - 验证完成：新增 `test_trust_center_and_ai_expose_dasha_shadbala_calibration_status` 先红灯后转绿；聚焦产品化测试 5 项通过；`npm run build --prefix jyotish-app` 通过；`python3 -m py_compile scripts/oracle_collection_queue.py scripts/oracle_evidence_validator.py scripts/oracle_boundary_audit.py scripts/run_quality_gate.py` 通过；`git diff --cached --check` 通过且暂未发现密钥特征。
 - 完成 GitHub 同步：`codex/release-hygiene-ci` 已成功推送到远端 `56a86dd53ecdc906a546a51cf2c63f02b61a7475`；本地 tracking ref 已同步对齐，`git status --short --branch` 无未提交文件。
 - 完成 Antigravity Round 11 副手任务单：新增 `docs/research/antigravity_sidecar_work_order_round11_2026_06_25.md`，要求副手复核远端同步、Trust Center/AI/Skill 校准透明度修复和下一批普通用户成品缺口。
-- 当前下一最高优先级：把 Round 11 任务单推送到 GitHub 后，等待副手复核报告；Codex 主线程继续优先推进“校准状态进入导出报告”和“外部真值采集表单化”。
+- 完成 Antigravity Round 11 副手复核接收：新增 `docs/research/antigravity_round11_*_2026_06_25.md` 四份报告，确认远端同步、Trust Center/AI/Skill 校准透明度已修复，同时建议把 Dasha/Shadbala 校准状态写入导出 HTML/JSON。
+- 完成导出报告校准边界同步：`jyotish-app/export.js` 新增 `DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS`，JSON 导出在 `meta.calibration_status` 与 `modules.calibration_status.dasha_shadbala` 携带 `ready_for_calibration: 0`、`valid_packets: 0`、`production_tuning_allowed: false`；HTML 报告新增“高级技法校准状态”区块。
+- TDD/验证完成：`test_provenance_panchanga_workspace_panel_is_productized` 先因导出模块缺 `DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS` 红灯，修复后转绿；相关 10 项 pytest 通过；`npm run build --prefix jyotish-app` 通过；`oracle_collection_queue.py` + `oracle_evidence_validator.py` 复验仍保持 `valid_packets: 0` / `production_tuning_allowed: false`。
+- 当前下一最高优先级：发布 Round 12 副手任务，复核导出 HTML/JSON 校准边界，并推进“外部真值采集表单化 / 手工 JHora 证据包录入模板”。

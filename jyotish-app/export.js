@@ -9,6 +9,23 @@
 
 import { SIGNS, SIGN_LORDS, PLANET_CN } from './jyotish-engine.js';
 
+const DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS = {
+  id: 'dasha_shadbala',
+  title: 'Dasha/Shadbala Calibration Status',
+  queue: 'external_oracle_collection_queue',
+  validator: 'external_oracle_evidence_validation',
+  ready_for_calibration: 0,
+  valid_packets: 0,
+  production_tuning_allowed: false,
+  confidence_boundary: 'D1/D9/SAV 高可信；大运起点和 Shadbala 绝对值仍在外部 evidence validator 校准中。',
+  user_facing_rule: '不得把大运起点或 Shadbala 绝对值说成已完成外部校准。',
+  status_labels: [
+    'ready_for_calibration: 0',
+    'valid_packets: 0',
+    'production_tuning_allowed: false',
+  ],
+};
+
 // ============================================================================
 // JSON 导出 — 完整星盘数据 (100% coverage)
 // ============================================================================
@@ -23,6 +40,9 @@ export function exportJSON(chartData, extras = {}) {
       provenance: extras.provenance || chartData?._client_audit?.provenance || null,
       calculation_settings: extras.provenance?.calculationSettings || chartData?._calculation_settings || null,
       terminology_mode: extras.provenance?.terminologyMode || chartData?._terminology_mode || null,
+      calibration_status: {
+        dasha_shadbala: DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS,
+      },
     },
     birth_info,
     ascendant: _cleanAscendant(ascendant),
@@ -142,6 +162,12 @@ export function exportJSON(chartData, extras = {}) {
     payload.modules = payload.modules || {};
     payload.modules.actionable_context = extras.actionableContext;
   }
+
+  // ── 16. Calibration Status ──
+  payload.modules = payload.modules || {};
+  payload.modules.calibration_status = {
+    dasha_shadbala: DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS,
+  };
 
   // ── 16. User Workflows ──
   if (extras.workflows) {
@@ -380,7 +406,7 @@ function _buildHTMLReport(chartData, extras) {
     :root {
       --paper: #fbfaf6; --ink: #24201b; --muted: #6d665d;
       --line: #ded7ca; --soft: #f1ece2; --accent: #7a5a22;
-      --good: #166534; --warn: #92400e;
+      --good: #166534; --warn: #92400e; --danger: #991b1b;
     }
     * { box-sizing: border-box; }
     body {
@@ -439,6 +465,12 @@ function _buildHTMLReport(chartData, extras) {
     .relationship-list ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
     .relationship-boundary { background: #fff8ed; border: 1px solid #ead7b8; border-radius: 6px; padding: 9px; margin-top: 8px; }
     .relationship-boundary span { display: block; color: var(--muted); font-size: 12px; }
+    .calibration-status {
+      background: #fff7ed; border: 1px solid #fed7aa; border-left: 4px solid var(--danger);
+      border-radius: 6px; padding: 12px; margin-top: 10px; break-inside: avoid;
+    }
+    .calibration-status strong { display: block; color: var(--danger); margin-bottom: 4px; }
+    .calibration-status span { display: block; color: var(--muted); font-size: 12px; }
     .comparison-print-table { font-size: 12px; }
     .factor-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
     .factor { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
@@ -552,6 +584,8 @@ function _buildHTMLReport(chartData, extras) {
 
   ${_workflowReportSection(workflows)}
 
+  ${_calibrationStatusSection(DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS)}
+
   <section>
     <h2>校验与审计</h2>
     <div class="grid">
@@ -573,6 +607,19 @@ function _buildHTMLReport(chartData, extras) {
 </main>
 </body>
 </html>`;
+}
+
+function _calibrationStatusSection(status) {
+  return `<section>
+    <h2>高级技法校准状态</h2>
+    <div class="calibration-status">
+      <strong>${_h(status.title)}</strong>
+      <span>${_h(status.status_labels.join('；'))}</span>
+      <span>${_h(status.validator)} · ${_h(status.queue)}</span>
+      <span>${_h(status.confidence_boundary)}</span>
+      <span>${_h(status.user_facing_rule)}</span>
+    </div>
+  </section>`;
 }
 
 function _workflowReportSection(workflows = {}) {
