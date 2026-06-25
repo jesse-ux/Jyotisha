@@ -1713,6 +1713,7 @@ function renderTrustCenterPanel() {
       ${renderRuntimeHealthPanel(runtime)}
       ${renderValidationTransparencyPanel()}
       ${renderDashaShadbalaCalibrationPanel()}
+      ${renderOracleEvidenceIntakePanel()}
       ${renderRealCaseRevalidationPanel()}
       ${renderTerminologyModePanel()}
       <div class="trust-center-copy">
@@ -1744,6 +1745,60 @@ const DASHA_SHADBALA_CALIBRATION_STATUS = {
   nextAction: '继续采集 JHora/PyJHora 黑盒截图与分量值；未达标前不得把大运起点或 Shadbala 绝对值说成已完成外部校准。',
 };
 
+const ORACLE_EVIDENCE_PACKET_REQUIRED_METADATA = [
+  'tool_name',
+  'tool_version_or_url',
+  'capture_date',
+  'source_artifact',
+  'ayanamsa',
+  'node_mode',
+  'timezone',
+  'operator_note',
+];
+
+const ORACLE_EVIDENCE_INTAKE_TASKS = [
+  {
+    caseId: 'template_user_REDACTED_YEAR_moon_longitude_lahiri',
+    title: 'REDACTED_YEAR 用户盘 · Lahiri 月亮/大运',
+    birth: 'REDACTED_DATE 14:45:20 · REDACTED_PLACE · 36.466667, 114.2 · TZ +08:00',
+    settings: 'ayanamsa=lahiri · node_mode=mean',
+    preferredSources: 'JHora screenshot / PyJHora stdout / VedAstro HTTP',
+    targetFields: ['moon_sidereal_longitude_deg', 'vimshottari_start_date', 'shadbala_components'],
+  },
+  {
+    caseId: 'template_steve_jobs_dasha_lahiri',
+    title: 'Steve Jobs · Dasha 边界样本',
+    birth: '1955-02-24 19:15 · San Francisco · 37.7749, -122.4194 · TZ -08:00',
+    settings: 'ayanamsa=lahiri · node_mode=mean',
+    preferredSources: 'JHora / PyJHora 黑盒输出',
+    targetFields: ['vimshottari_start_date', 'shadbala_components'],
+  },
+  {
+    caseId: 'template_redacted_place_shadbala_raman',
+    title: 'REDACTED_PLACE样本 · Raman Shadbala',
+    birth: 'REDACTED_DATE 14:45:20 · REDACTED_PLACE · 36.466667, 114.2 · TZ +08:00',
+    settings: 'ayanamsa=raman · node_mode=mean',
+    preferredSources: 'JHora Shadbala table screenshot',
+    targetFields: ['shadbala_components'],
+  },
+  {
+    caseId: 'template_extreme_latitude_kp',
+    title: '高纬样本 · KP/Ayanamsa 边界',
+    birth: 'Extreme latitude fixture · local civil time retained',
+    settings: 'ayanamsa=kp · node_mode=mean',
+    preferredSources: 'JHora / VedAstro longitude cross-check',
+    targetFields: ['ascendant_longitude_deg', 'shadbala_components'],
+  },
+  {
+    caseId: 'template_historical_epoch_lahiri',
+    title: '历史年代样本 · Lahiri 回归',
+    birth: 'Historical epoch fixture · Julian/Gregorian policy noted',
+    settings: 'ayanamsa=lahiri · node_mode=mean',
+    preferredSources: 'JHora date policy screenshot',
+    targetFields: ['sun_sidereal_longitude_deg', 'vimshottari_start_date'],
+  },
+];
+
 function renderDashaShadbalaCalibrationPanel() {
   return `
     <div class="dasha-shadbala-calibration-panel">
@@ -1761,6 +1816,168 @@ function renderDashaShadbalaCalibrationPanel() {
         <strong>边界</strong>
         <span>${escapeHtml(DASHA_SHADBALA_CALIBRATION_STATUS.nextAction)}</span>
       </div>
+    </div>
+  `;
+}
+
+function renderOracleEvidenceIntakePanel() {
+  return `
+    <div class="oracle-evidence-intake-panel">
+      <div class="calculation-settings-head">
+        <strong>Oracle Evidence Intake</strong>
+        <span>下载 5 个外部真值空白包；只接受 JHora/PyJHora/VedAstro 黑盒证据，禁止本地输出冒充 external_verified。</span>
+      </div>
+      <div class="oracle-evidence-intake-grid">
+        ${ORACLE_EVIDENCE_INTAKE_TASKS.map(task => `
+          <article class="oracle-evidence-card">
+            <div>
+              <strong>${escapeHtml(task.title)}</strong>
+              <span>${escapeHtml(task.birth)}</span>
+              <small>${escapeHtml(task.settings)} · ${escapeHtml(task.preferredSources)}</small>
+            </div>
+            <div class="oracle-evidence-fields">
+              ${task.targetFields.map(field => `<span>${escapeHtml(field)}</span>`).join('')}
+            </div>
+            <button type="button" class="mini-action" data-action="oracle-download-packet" data-case-id="${escapeAttr(task.caseId)}">下载 Evidence Packet</button>
+          </article>
+        `).join('')}
+      </div>
+      <div class="dasha-shadbala-calibration-boundary">
+        <strong>晋级规则</strong>
+        <span>默认 status=draft；必须补齐 ${escapeHtml(ORACLE_EVIDENCE_PACKET_REQUIRED_METADATA.join(', '))} 与目标字段，且通过 external_oracle_evidence_validation 后，才允许进入 external_verified 审核。</span>
+      </div>
+      <div class="oracle-evidence-import">
+        <label class="provenance-action file-action">
+          <input type="file" id="oracle-evidence-upload" accept=".json,application/json">
+          导入 Evidence Packet 判卷
+        </label>
+      <div id="oracle-evidence-validation-result" class="oracle-evidence-validation-result" aria-live="polite">
+          等待填写后的 Evidence Packet；draft、空字段、本地输出会被 external_oracle_evidence_validation 拦截。常见红灯：status_not_external_verified、local_engine_artifact_rejected。
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildOracleEvidencePacket(task) {
+  const target = {};
+  task.targetFields.forEach(field => {
+    target[field] = field === 'shadbala_components' ? {} : null;
+  });
+  return {
+    schema_version: 1,
+    packet_type: 'dasha_shadbala_external_oracle_evidence',
+    case_id: task.caseId,
+    status: 'draft',
+    source_policy: {
+      allowed_sources: task.preferredSources,
+      forbidden_sources: ['local_engine_output', 'copied_agpl_or_commercial_code'],
+      integrity_checks: [
+        'must_not_come_from_local_engine',
+        'requires_external_artifact',
+        'reject_global_shadbala_scaling',
+      ],
+      promotion_target: 'external_verified',
+    },
+    case_context: {
+      title: task.title,
+      birth: task.birth,
+      settings: task.settings,
+      target_fields: task.targetFields,
+    },
+    target,
+    evidence_packet: {
+      status: 'draft',
+      metadata: ORACLE_EVIDENCE_PACKET_REQUIRED_METADATA.reduce((acc, key) => {
+        acc[key] = key === 'capture_date' ? toDateISO(new Date()) : '';
+        return acc;
+      }, {}),
+    },
+    operator_checklist: [
+      'Fill tool_name and tool_version_or_url from the external product.',
+      'Attach source_artifact as a screenshot/export path outside this local engine.',
+      'Fill every target value from black-box output before requesting review.',
+    ],
+  };
+}
+
+function downloadOracleEvidencePacket(caseId) {
+  const task = ORACLE_EVIDENCE_INTAKE_TASKS.find(item => item.caseId === caseId);
+  const status = $('trust-center-status');
+  if (!task) {
+    if (status) status.textContent = '未找到对应的外部真值采集任务。';
+    return;
+  }
+  const packet = buildOracleEvidencePacket(task);
+  downloadText(JSON.stringify(packet, null, 2), `jyotish-oracle-evidence-${task.caseId}.json`, 'application/json;charset=utf-8');
+  if (status) {
+    status.textContent = `已下载 ${task.caseId} 空白证据包；填入外部截图和数值后再运行 evidence validator。`;
+  }
+}
+
+async function importOracleEvidencePacket(file) {
+  const result = $('oracle-evidence-validation-result');
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.json') && file.type !== 'application/json') {
+    if (result) result.textContent = '请选择 JSON Evidence Packet 文件。';
+    return;
+  }
+  try {
+    const packet = JSON.parse(await readWorkspaceFileAsText(file));
+    if (result) result.textContent = '正在调用本地 external_oracle_evidence_validation 判卷...';
+    const response = await validateOracleEvidencePacket(packet);
+    if (result) result.innerHTML = renderOracleEvidenceValidationResult(response);
+  } catch (error) {
+    if (result) {
+      result.innerHTML = renderOracleEvidenceValidationResult({
+        summary: {
+          valid_packets: 0,
+          ready_for_calibration: 0,
+          production_tuning_allowed: false,
+        },
+        packets: [{
+          case_id: 'uploaded',
+          valid: false,
+          problems: [error?.message || 'JSON 格式不正确或本地 API 未连接'],
+        }],
+        boundary: 'Evidence Packet 必须是 JSON，并通过 /api/oracle_evidence 调用本地 validator。',
+      });
+    }
+  }
+}
+
+async function validateOracleEvidencePacket(packet) {
+  if (!window.JyotishAPI?.validateOracleEvidence) {
+    throw new Error('/api/oracle_evidence 不可用，请先启动本地 API 服务。');
+  }
+  return window.JyotishAPI.validateOracleEvidence({ packet });
+}
+
+function renderOracleEvidenceValidationResult(response = {}) {
+  const summary = response.summary || response.report?.summary || {};
+  const packets = response.packets || response.report?.packets || [];
+  const valid = Number(summary.valid_packets || 0);
+  const ready = Number(summary.ready_for_calibration || 0);
+  const tuningAllowed = summary.production_tuning_allowed === true;
+  const tone = tuningAllowed ? 'ok' : (valid > 0 || ready > 0 ? 'warn' : 'blocked');
+  const rows = packets.map(packet => {
+    const problems = Array.isArray(packet.problems) ? packet.problems : [];
+    return `
+      <li>
+        <strong>${escapeHtml(packet.case_id || packet.task_id || 'uploaded')}</strong>
+        <span>${escapeHtml(packet.valid ? 'external_verified 可进入人工复核' : '未通过')}</span>
+        ${problems.length ? `<small>${problems.map(escapeHtml).join(' · ')}</small>` : '<small>无 problems；仍需人工确认外部截图与数值。</small>'}
+      </li>
+    `;
+  }).join('');
+  return `
+    <div class="oracle-evidence-validation-result oracle-evidence-validation-${escapeAttr(tone)}">
+      <div>
+        <strong>external_oracle_evidence_validation</strong>
+        <span>valid_packets: ${escapeHtml(String(valid))} · ready_for_calibration: ${escapeHtml(String(ready))} · production_tuning_allowed: ${escapeHtml(String(Boolean(tuningAllowed)).toLowerCase())}</span>
+      </div>
+      <ul>${rows || '<li><strong>uploaded</strong><span>没有返回 packet 明细</span><small>请检查 JSON 格式。</small></li>'}</ul>
+      <small>${escapeHtml(response.boundary || response.report?.boundary || 'Local engine output remains rejected as an external oracle source.')}</small>
     </div>
   `;
 }
@@ -2689,6 +2906,9 @@ function bindProvenanceActions() {
     if (btn.dataset.action === 'trust-clear-local') {
       clearTrustCenterLocalData();
     }
+    if (btn.dataset.action === 'oracle-download-packet') {
+      downloadOracleEvidencePacket(btn.dataset.caseId || '');
+    }
     if (btn.dataset.action === 'workspace-export-selected') {
       exportSelectedWorkspaceChart();
     }
@@ -2743,6 +2963,12 @@ function bindProvenanceActions() {
     if (input) {
       importWorkspaceCaseLibrary(input.files?.[0]);
       input.value = '';
+      return;
+    }
+    const oracleInput = event.target.closest('#oracle-evidence-upload');
+    if (oracleInput) {
+      importOracleEvidencePacket(oracleInput.files?.[0]);
+      oracleInput.value = '';
       return;
     }
     const caseToggle = event.target.closest('[data-action="workspace-toggle-case"]');

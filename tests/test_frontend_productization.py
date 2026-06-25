@@ -582,6 +582,65 @@ def test_trust_center_and_ai_expose_dasha_shadbala_calibration_status() -> None:
             assert token in text
 
 
+def test_trust_center_exposes_oracle_evidence_intake_cards() -> None:
+    main = read("main.js")
+    style = read("style.css")
+    api_bridge = read("api-bridge.js")
+    api_server = (ROOT / "scripts" / "jyotish_api_server.py").read_text(encoding="utf-8")
+
+    for token in [
+        "ORACLE_EVIDENCE_INTAKE_TASKS",
+        "ORACLE_EVIDENCE_PACKET_REQUIRED_METADATA",
+        "renderOracleEvidenceIntakePanel",
+        "renderOracleEvidenceValidationResult",
+        "downloadOracleEvidencePacket",
+        "importOracleEvidencePacket",
+        "validateOracleEvidencePacket",
+        "Oracle Evidence Intake",
+        "data-action=\"oracle-download-packet\"",
+        "oracle-evidence-upload",
+        "导入 Evidence Packet 判卷",
+        "/api/oracle_evidence",
+        "external_verified",
+        "must_not_come_from_local_engine",
+        "requires_external_artifact",
+        "reject_global_shadbala_scaling",
+        "status_not_external_verified",
+        "local_engine_artifact_rejected",
+        "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "template_steve_jobs_dasha_lahiri",
+        "template_redacted_place_shadbala_raman",
+        "template_extreme_latitude_kp",
+        "template_historical_epoch_lahiri",
+        "moon_sidereal_longitude_deg",
+        "ascendant_longitude_deg",
+        "sun_sidereal_longitude_deg",
+        "vimshottari_start_date",
+        "shadbala_components",
+        "tool_name",
+        "tool_version_or_url",
+        "capture_date",
+        "source_artifact",
+        "operator_note",
+    ]:
+        assert token in main
+
+    assert "validateOracleEvidence" in api_bridge
+    assert "postJson('/api/oracle_evidence'" in api_bridge
+    assert "'/api/oracle_evidence'" in api_server
+    assert "_compute_oracle_evidence" in api_server
+
+    for token in [
+        ".oracle-evidence-intake-panel",
+        ".oracle-evidence-intake-grid",
+        ".oracle-evidence-card",
+        ".oracle-evidence-fields",
+        ".oracle-evidence-validation-result",
+        ".oracle-evidence-card button",
+    ]:
+        assert token in style
+
+
 def test_trust_center_exposes_real_case_revalidation_to_users() -> None:
     main = read("main.js")
     style = read("style.css")

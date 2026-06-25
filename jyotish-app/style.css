@@ -5876,6 +5876,108 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   flex: 0 0 auto;
   color: var(--red);
 }
+.oracle-evidence-intake-panel {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid var(--border-light);
+  border-left: 3px solid var(--purple);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+.oracle-evidence-intake-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.oracle-evidence-card {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+}
+.oracle-evidence-card strong,
+.oracle-evidence-card span,
+.oracle-evidence-card small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.oracle-evidence-card strong {
+  color: var(--text-heading);
+  font-size: 13px;
+}
+.oracle-evidence-card span,
+.oracle-evidence-card small {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.oracle-evidence-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.oracle-evidence-fields span {
+  width: auto;
+  padding: 4px 6px;
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--text-heading);
+  font-size: 10px;
+}
+.oracle-evidence-card button {
+  justify-self: start;
+}
+.oracle-evidence-import {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+.oracle-evidence-validation-result {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.oracle-evidence-validation-result strong,
+.oracle-evidence-validation-result span,
+.oracle-evidence-validation-result small {
+  display: block;
+}
+.oracle-evidence-validation-result ul {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+.oracle-evidence-validation-result li {
+  padding: 8px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+.oracle-evidence-validation-result strong {
+  color: var(--text-heading);
+}
+.oracle-evidence-validation-ok {
+  border-left: 3px solid var(--green);
+}
+.oracle-evidence-validation-warn {
+  border-left: 3px solid var(--amber);
+}
+.oracle-evidence-validation-blocked {
+  border-left: 3px solid var(--red);
+}
 .runtime-health-panel {
   margin: 10px 0;
   padding: 10px;
@@ -6420,6 +6522,7 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   .first-use-grid,
   .runtime-health-grid,
   .trust-status-grid,
+  .oracle-evidence-intake-grid,
   .terminology-mode-options,
   .case-workspace-controls { grid-template-columns: 1fr; }
   .static-demo-boundary-grid { grid-template-columns: 1fr; }

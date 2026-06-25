@@ -239,6 +239,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             elif path == '/api/report_artifact':
                 result = self._compute_report_artifact(body)
                 self._json(result)
+            elif path == '/api/oracle_evidence':
+                result = self._compute_oracle_evidence(body)
+                self._json(result)
             elif path == '/api/annual':
                 result = self._compute_annual(body)
                 self._json(result)
@@ -403,6 +406,61 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             return None
         with open(path, 'rb') as fh:
             return base64.b64encode(fh.read()).decode('ascii')
+
+    def _compute_oracle_evidence(self, body):
+        packet = body.get('packet')
+        if not isinstance(packet, dict):
+            raise BadRequest('packet must be an object')
+        case_id = packet.get('case_id')
+        if not case_id:
+            raise BadRequest('packet.case_id is required')
+
+        collection_queue = _load_local_module('oracle_collection_queue')
+        evidence_validator = _load_local_module('oracle_evidence_validator')
+        target = packet.get('target') if isinstance(packet.get('target'), dict) else {}
+        target_fields = collection_queue._target_fields(target)
+        status = packet.get('status') or packet.get('evidence_packet', {}).get('status') or 'draft'
+        evidence_packet = packet.get('evidence_packet') if isinstance(packet.get('evidence_packet'), dict) else {}
+        metadata = evidence_packet.get('metadata') if isinstance(evidence_packet.get('metadata'), dict) else {}
+        task = {
+            'task_id': f'uploaded_{case_id}',
+            'case_id': case_id,
+            'status': status,
+            'target_fields': target_fields,
+            'missing_target_fields': collection_queue._missing_target_fields(target),
+            'evidence_packet': {
+                'capture_id': evidence_packet.get('capture_id') or f'uploaded_{case_id}',
+                'status': evidence_packet.get('status') or status,
+                'case_id': case_id,
+                'required_metadata_fields': collection_queue.REQUIRED_EVIDENCE_METADATA_FIELDS,
+                'metadata': metadata,
+                'target_placeholders': {
+                    field: collection_queue._target_value(target, field)
+                    for field in target_fields
+                },
+                'integrity_checks': {
+                    'must_not_come_from_local_engine': True,
+                    'requires_external_artifact': True,
+                    'requires_status_external_verified_before_calibration': True,
+                    'reject_global_shadbala_scaling': 'target.shadbala_components' in target_fields,
+                },
+                'promotion_status_after_fill': 'external_verified',
+            },
+        }
+        report = evidence_validator.build_report({
+            'scope': 'uploaded_oracle_evidence_packet',
+            'schema_version': 1,
+            'tasks': [task],
+        })
+        return {
+            'success': True,
+            'endpoint': 'oracle_evidence',
+            'scope': report['scope'],
+            'report': report,
+            'summary': report['summary'],
+            'packets': report['packets'],
+            'boundary': report['boundary'],
+        }
 
     def _compute_report_artifact(self, body):
         html = self._validate_report_html(body.get('html'))

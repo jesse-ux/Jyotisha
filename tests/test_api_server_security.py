@@ -387,6 +387,83 @@ def test_report_artifact_rejects_active_html(html: str) -> None:
         handler._compute_report_artifact({'format': 'html', 'html': html})
 
 
+def test_oracle_evidence_api_validates_uploaded_packets() -> None:
+    handler = _handler()
+    draft_packet = {
+        'case_id': 'template_user_REDACTED_YEAR_moon_longitude_lahiri',
+        'status': 'draft',
+        'evidence_packet': {
+            'status': 'draft',
+            'metadata': {
+                'tool_name': '',
+                'tool_version_or_url': '',
+                'capture_date': '',
+                'source_artifact': '',
+                'ayanamsa': '',
+                'node_mode': '',
+                'timezone': '',
+                'operator_note': '',
+            },
+        },
+        'target': {
+            'moon_sidereal_longitude_deg': None,
+            'vimshottari_start_date': None,
+            'shadbala_components': {},
+        },
+    }
+
+    draft_result = handler._compute_oracle_evidence({'packet': draft_packet})
+
+    assert draft_result['success'] is True
+    assert draft_result['endpoint'] == 'oracle_evidence'
+    assert draft_result['report']['summary']['valid_packets'] == 0
+    assert draft_result['report']['summary']['ready_for_calibration'] == 0
+    assert draft_result['report']['summary']['production_tuning_allowed'] is False
+    first = draft_result['report']['packets'][0]
+    assert first['valid'] is False
+    assert 'missing_metadata:tool_name' in first['problems']
+    assert 'missing_external_artifact' in first['problems']
+    assert 'status_not_external_verified:draft' in first['problems']
+
+    filled_packet = {
+        **draft_packet,
+        'status': 'external_verified',
+        'evidence_packet': {
+            'status': 'external_verified',
+            'metadata': {
+                'tool_name': 'Local Engine',
+                'tool_version_or_url': 'this-repo',
+                'capture_date': '2026-06-25',
+                'source_artifact': 'scripts/jyotish_engine.py output',
+                'ayanamsa': 'lahiri',
+                'node_mode': 'mean',
+                'timezone': 'UTC+08:00',
+                'operator_note': 'Local run',
+            },
+        },
+        'target': {
+            'moon_sidereal_longitude_deg': 311.7897,
+            'vimshottari_start_date': '1986-05-18',
+            'shadbala_components': {
+                'Sun': {
+                    'sthana': 100.0,
+                    'dig': 50.0,
+                    'kala': 100.0,
+                    'chesta': 40.0,
+                    'naisargika': 60.0,
+                    'drik': 30.0,
+                },
+            },
+        },
+    }
+
+    local_result = handler._compute_oracle_evidence({'packet': filled_packet})
+
+    local_first = local_result['report']['packets'][0]
+    assert local_first['valid'] is False
+    assert 'local_engine_artifact_rejected' in local_first['problems']
+
+
 def test_capability_audit_scans_registry_and_local_sources() -> None:
     handler = _handler()
     audit = handler._capability_audit()
