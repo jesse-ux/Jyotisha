@@ -70,8 +70,23 @@ def test_synastry_rejects_non_numeric_moon_degree() -> None:
 def test_synastry_normalizes_360_degree_boundary() -> None:
     handler = _handler()
     result = handler._compute_synastry({'male_moon': 360, 'female_moon': 0})
-    assert result['male']['nakshatra'] == result['female']['nakshatra']
+    assert result['male_details']['nakshatra'] == result['female_details']['nakshatra']
     assert result['max_score'] == 36.0
+
+
+def test_synastry_api_uses_full_ashtakoot_engine() -> None:
+    from ashtakoot import calculate_ashtakoot
+
+    handler = _handler()
+    api_result = handler._compute_synastry({'male_moon': 0, 'female_moon': 60})
+    engine_result = calculate_ashtakoot(0, 60)
+
+    assert api_result['method'] == engine_result['method']
+    assert api_result['scores'] == engine_result['scores']
+    assert api_result['total_score'] == engine_result['total_score']
+    assert api_result['is_match_approved'] == engine_result['is_match_approved']
+    assert api_result['scores']['Vashya'] == 0.5
+    assert 'BadConstellations' in api_result['additional_kutas']
 
 
 def test_prashna_rejects_non_string_question() -> None:

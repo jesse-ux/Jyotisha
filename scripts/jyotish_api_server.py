@@ -1999,11 +1999,23 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         }
 
     def _compute_synastry(self, body):
-        from synastry import calc_ashtakoot
-        return calc_ashtakoot(
+        from ashtakoot import calculate_ashtakoot
+
+        result = calculate_ashtakoot(
             self._normalize_degree(body, 'male_moon', 0),
             self._normalize_degree(body, 'female_moon', 0),
         )
+        # Backward-compatible aliases for older frontend/report consumers.
+        result['is_approved'] = result.get('is_match_approved', False)
+        result['assessment'] = (
+            '优秀' if result.get('total_score', 0) >= 28 else
+            '良好' if result.get('total_score', 0) >= 21 else
+            '一般' if result.get('total_score', 0) >= 18 else
+            '不推荐'
+        )
+        result['male'] = result.get('male_details', {})
+        result['female'] = result.get('female_details', {})
+        return result
 
     def _compute_dasha_system(self, body):
         dasha_key = body.get('dasha', body.get('name', 'vimshottari'))
