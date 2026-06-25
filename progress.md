@@ -336,4 +336,9 @@
 - 完成 Antigravity Round 7 副手任务单：新增 `docs/research/antigravity_sidecar_work_order_round7_2026_06_25.md`，要求副手复核 evidence validator、quick/release 质量门接入、external_verified 晋级清单和用户准确率话术。
 - 修复 external_verified 晋级路径：`scripts/oracle_collection_queue.py` 现在保留 oracle JSON 中已填的 `evidence_packet.status/metadata` 和目标值，新增 `target_fields`，避免外部证据包被重新降级为 `draft`；`scripts/oracle_evidence_validator.py` 改为用 `target_fields` 校验已填目标，兼容旧 draft 队列。
 - 完成 Antigravity Round 8 副手任务单：新增 `docs/research/antigravity_sidecar_work_order_round8_2026_06_25.md`，要求副手黑盒复验 external_verified 晋级链路，并输出相对 VedAstro/PyJHora/JHora 的全球差距矩阵。
-- 当前下一最高优先级：跑聚焦测试和 quick 质量门；随后推进网页/app Trust Center 暴露 Dasha/Shadbala calibration status，避免普通用户误解“已完全校准”。
+- 完成 GitHub 远端真实 HEAD 复核：`git ls-remote ssh://git@ssh.github.com:443/732642856/yinduzhanxing.git` 显示远端 `codex/release-hygiene-ci` 为 `912867f2ec35ce13f757fb0362da6bced9edf404`，与本地主分支 HEAD 一致；本地 `origin/... [gone]` 是 22 端口 fetch 失败后的跟踪引用异常，已用 `git update-ref` 按远端真实 HEAD 修复。
+- 完成地毯式本机碎片扫描第一轮：高相关路径约 297 条，主要分布在当前主仓、`.workbuddy/skills/jyotish-vedic-astrology` 旧 skill 副本、`.gemini/antigravity-ide` scratch、Downloads PDF/压缩包、Desktop 私人报告、WorkBuddy 历史碎片、Projects 恢复目录、Documents/Codex 历史审计与 `Documents/星轨talk/engines-repo/jyotish`。
+- 同项目 Git 副本扫描结论：除当前主仓外，发现 `.workbuddy/skills/jyotish-vedic-astrology` 指向同一远端但停在 `main@4ff6248`，仅 `references/validation_logic_report.json` 有排序类本地修改；该副本作为历史 skill/基线来源，不直接覆盖当前主仓。
+- 私人输出同步边界：`output_report.txt` 和 `results_extracted.md` 是用户个人星盘复验临时输出，已加入 `.gitignore`，默认不纳入 GitHub 同步。
+- 完成 Antigravity Round 10 副手任务单：新增 `docs/research/antigravity_sidecar_work_order_round10_2026_06_25.md`，要求副手复核整机碎片/Git 云端同步、Round 9 校准透明度 P0/P1、全球对标差距，并只产出 `docs/research/*round10*2026_06_25.md` 报告。
+- 当前下一最高优先级：提交并推送 Round 9 副手报告、Round 10 任务单和私人输出忽略规则；随后推进网页/app Trust Center 暴露 Dasha/Shadbala calibration status，避免普通用户误解“已完全校准”。

@@ -19,3 +19,5 @@ htmlcov/
 .mypy_cache/
 .hypothesis/
 benchmarks/jyotish/outputs/
+output_report.txt
+results_extracted.md
