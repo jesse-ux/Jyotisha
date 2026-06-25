@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "scope": "external_ashtakoot_oracle_cases",
+  "notes": [
+    "These rows are external compatibility evidence templates, not production tuning constants.",
+    "Do not promote any row to external_verified until all target values come from JHora/VedAstro/AstroSage or another documented external source.",
+    "Do not copy AGPL/GPL/commercial implementation code or proprietary screenshots beyond redacted evidence artifacts."
+  ],
+  "template_cases": [
+    {
+      "id": "ashtakoot_public_couple_lahiri_01",
+      "status": "template_only",
+      "source": "JHora/VedAstro/AstroSage compatibility screenshot",
+      "privacy": "public_or_synthetic_relationship_template",
+      "birth": {
+        "male": {
+          "year": 1955,
+          "month": 2,
+          "day": 24,
+          "hour": 19,
+          "minute": 15,
+          "second": 0,
+          "lat": 37.7749,
+          "lon": -122.4194,
+          "tz": -8
+        },
+        "female": {
+          "year": 1958,
+          "month": 8,
+          "day": 14,
+          "hour": 12,
+          "minute": 0,
+          "second": 0,
+          "lat": 34.0522,
+          "lon": -118.2437,
+          "tz": -8
+        }
+      },
+      "settings": {
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "matching_system": "ashtakoot_36_point"
+      },
+      "target": {
+        "total_score": null,
+        "varna": null,
+        "vashya": null,
+        "tara": null,
+        "yoni": null,
+        "graha_maitri": null,
+        "gana": null,
+        "bhakoot": null,
+        "nadi": null,
+        "kuja_status": null
+      },
+      "verification_note": "Use public/synthetic relationship data first; fill targets only from external compatibility output."
+    },
+    {
+      "id": "ashtakoot_synthetic_high_score_lahiri_02",
+      "status": "template_only",
+      "source": "VedAstro/JHora compatibility screenshot",
+      "privacy": "synthetic_relationship_template",
+      "birth": {
+        "male_moon_longitude_deg": 45.0,
+        "female_moon_longitude_deg": 48.0
+      },
+      "settings": {
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "matching_system": "ashtakoot_36_point",
+        "input_mode": "moon_longitude_only"
+      },
+      "target": {
+        "total_score": null,
+        "varna": null,
+        "vashya": null,
+        "tara": null,
+        "yoni": null,
+        "graha_maitri": null,
+        "gana": null,
+        "bhakoot": null,
+        "nadi": null,
+        "kuja_status": null
+      },
+      "verification_note": "Synthetic high-score style case; use an external tool that accepts Moon longitude or matching birth data."
+    },
+    {
+      "id": "ashtakoot_synthetic_nadi_dosha_03",
+      "status": "template_only",
+      "source": "JHora/AstroSage compatibility screenshot",
+      "privacy": "synthetic_relationship_template",
+      "birth": {
+        "male_moon_longitude_deg": 0.0,
+        "female_moon_longitude_deg": 180.0
+      },
+      "settings": {
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "matching_system": "ashtakoot_36_point",
+        "input_mode": "moon_longitude_only"
+      },
+      "target": {
+        "total_score": null,
+        "varna": null,
+        "vashya": null,
+        "tara": null,
+        "yoni": null,
+        "graha_maitri": null,
+        "gana": null,
+        "bhakoot": null,
+        "nadi": null,
+        "kuja_status": null
+      },
+      "verification_note": "Nadi-dosha boundary case; capture any exception or mitigation note shown by the external source."
+    },
+    {
+      "id": "ashtakoot_synthetic_bhakoot_boundary_04",
+      "status": "template_only",
+      "source": "VedAstro/JHora compatibility screenshot",
+      "privacy": "synthetic_relationship_template",
+      "birth": {
+        "male_moon_longitude_deg": 15.5,
+        "female_moon_longitude_deg": 120.0
+      },
+      "settings": {
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "matching_system": "ashtakoot_36_point",
+        "input_mode": "moon_longitude_only"
+      },
+      "target": {
+        "total_score": null,
+        "varna": null,
+        "vashya": null,
+        "tara": null,
+        "yoni": null,
+        "graha_maitri": null,
+        "gana": null,
+        "bhakoot": null,
+        "nadi": null,
+        "kuja_status": null
+      },
+      "verification_note": "Bhakoot/rashi distance boundary case; capture component score and external explanation."
+    },
+    {
+      "id": "ashtakoot_kuja_dosha_chart_05",
+      "status": "template_only",
+      "source": "JHora/AstroSage compatibility screenshot",
+      "privacy": "synthetic_relationship_template",
+      "birth": {
+        "male": {
+          "year": 1990,
+          "month": 1,
+          "day": 15,
+          "hour": 6,
+          "minute": 30,
+          "second": 0,
+          "lat": 28.6139,
+          "lon": 77.209,
+          "tz": 5.5
+        },
+        "female": {
+          "year": 1992,
+          "month": 7,
+          "day": 20,
+          "hour": 18,
+          "minute": 45,
+          "second": 0,
+          "lat": 19.076,
+          "lon": 72.8777,
+          "tz": 5.5
+        }
+      },
+      "settings": {
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "matching_system": "ashtakoot_36_point",
+        "requires_full_chart": true
+      },
+      "target": {
+        "total_score": null,
+        "varna": null,
+        "vashya": null,
+        "tara": null,
+        "yoni": null,
+        "graha_maitri": null,
+        "gana": null,
+        "bhakoot": null,
+        "nadi": null,
+        "kuja_status": null
+      },
+      "verification_note": "Full chart compatibility case; external artifact must show Kuja/Manglik status or its absence."
+    }
+  ]
+}

@@ -172,6 +172,10 @@ async function generateReportArtifact(payload) {
   return postJson('/api/report_artifact', payload);
 }
 
+async function validateOracleEvidence(payload) {
+  return postJson('/api/oracle_evidence', payload);
+}
+
 async function computeThematicReport(payload) {
   return postJson('/api/thematic_report', payload);
 }
@@ -437,6 +441,7 @@ window.JyotishAPI = {
   computeRelationship,
   importChart,
   generateReportArtifact,
+  validateOracleEvidence,
   computeThematicReport,
   getAPIHealth,
   getCapabilityAudit,

@@ -1817,6 +1817,17 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '不要仅凭单一配置下结论；核心判断至少交叉 D1、D9、Dasha、Shadbala/Ashtakavarga 或 Transit 中的两个证据层。',
             '必须显式标注置信度和边界：Dasha/PDF 起点差异、Shadbala 外部绝对值 oracle 尚未完成时，不得声称已经完全校准。',
         ]
+        oracle_progress = {
+            'scope': 'external_oracle_evidence_validation',
+            'collection_queue': 'external_oracle_collection_queue',
+            'total_packets': 5,
+            'valid_packets': 0,
+            'ready_for_calibration': 0,
+            'production_tuning_allowed': False,
+            'artifact_policy': 'references/oracle/artifacts/',
+            'promotion_rule': 'external_verified requires source_artifact, filled target values, and non-local-engine external evidence.',
+            'boundary': 'Dasha/Shadbala absolute values are not externally calibrated until enough packets pass validation.',
+        }
         return {
             'schema_version': 1,
             'mode': 'jyotish_structured_prompt_pack',
@@ -1844,6 +1855,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'quality_boundary': {
                     'external_oracle_status': 'D1/D9/VedAstro longitude boundary covered; Dasha/Shadbala external absolute calibration still requires multi-source oracle expansion.',
                 },
+                'oracle_progress': oracle_progress,
             },
             'retrieval_plan': {
                 'local_reference_docs': [
@@ -1858,6 +1870,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'no_single_factor_conclusion',
                     'd1_d9_dasha_cross_validation',
                     'oracle_boundary_visible',
+                    'external_oracle_evidence_validation',
                     'confidence_labeled_reading',
                 ],
             },

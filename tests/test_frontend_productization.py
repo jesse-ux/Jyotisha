@@ -253,6 +253,8 @@ def test_frontend_branded_avatar_and_prompt_pack_are_productized() -> None:
     assert "function renderAIPromptPackPanel" in main
     assert "ai-prompt-pack-panel" in main
     assert "evidence_snapshot" in main
+    assert "oracle_progress" in main
+    assert "artifact_policy: 'references/oracle/artifacts/'" in main
     assert "retrieval_plan" in main
     assert ".logo-avatar" in style
     assert ".ai-prompt-pack-panel" in style
@@ -273,6 +275,11 @@ def test_frontend_ayanamsa_settings_are_live_api_parameters() -> None:
     assert "computeChart({ year, month, day, hour, minute, second, lat, lon, tz })" in main
     assert "fallbackChart._calculation_boundary" in main
     assert "payload.ayanamsa" in main
+    assert "renderAyanamsaRuntimeStatus(cd, pack)" in main
+    assert "function renderAyanamsaRuntimeStatus" in main
+    assert "backend_computed" in main
+    assert "browser_fallback" in main
+    assert "ayanamsa-runtime-status" in main
 
 
 def test_ai_chat_prefers_backend_prompt_pack_context() -> None:
@@ -285,6 +292,20 @@ def test_ai_chat_prefers_backend_prompt_pack_context() -> None:
     assert "AI Prompt Pack 已作为上下文入口" in ai_chat
 
 
+def test_ai_prompt_pack_panel_exposes_copyable_audit_context() -> None:
+    main = read("main.js")
+    style = read("style.css")
+
+    assert "ai-prompt-pack-actions" in main
+    assert "data-ai-prompt-action=\"copy-prompt\"" in main
+    assert "data-ai-prompt-action=\"copy-evidence\"" in main
+    assert "setupAIPromptPackActions" in main
+    assert "copyAIPromptPackSection" in main
+    assert "AI Prompt Pack 审计上下文已复制" in main
+    assert ".ai-prompt-pack-actions" in style
+    assert ".ayanamsa-runtime-status" in style
+
+
 def test_api_bridge_variants_prefer_backend_prompt_pack_context() -> None:
     for rel_path in ["api-bridge.js", "public/api-bridge.js"]:
         bridge = read(rel_path)
@@ -295,6 +316,7 @@ def test_api_bridge_variants_prefer_backend_prompt_pack_context() -> None:
         assert "【evidence_snapshot】" in bridge
         assert "JSON.stringify(chartData.ai_prompt_pack.evidence_snapshot" in bridge
         assert "JSON.stringify(chartData.ai_prompt_pack.retrieval_plan" in bridge
+        assert "external_oracle_evidence_validation: valid_packets: 0" in bridge
 
 
 def test_first_use_onboarding_is_actionable() -> None:
@@ -607,6 +629,12 @@ def test_trust_center_exposes_oracle_evidence_intake_cards() -> None:
         "reject_global_shadbala_scaling",
         "status_not_external_verified",
         "local_engine_artifact_rejected",
+        "renderOracleEvidenceProgressDashboard",
+        "Dasha/Shadbala 真实进度",
+        "0 / 5",
+        "references/oracle/artifacts/",
+        "必须打码",
+        "missing_shadbala_component",
         "template_user_REDACTED_YEAR_moon_longitude_lahiri",
         "template_steve_jobs_dasha_lahiri",
         "template_redacted_place_shadbala_raman",
@@ -637,8 +665,92 @@ def test_trust_center_exposes_oracle_evidence_intake_cards() -> None:
         ".oracle-evidence-fields",
         ".oracle-evidence-validation-result",
         ".oracle-evidence-card button",
+        ".oracle-evidence-progress-dashboard",
+        ".oracle-evidence-progress-bar",
     ]:
         assert token in style
+
+
+def test_oracle_artifact_storage_policy_is_documented() -> None:
+    artifact_readme = ROOT / "references" / "oracle" / "artifacts" / "README.md"
+    assert artifact_readme.exists()
+    text = artifact_readme.read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    for token in [
+        "references/oracle/artifacts/",
+        "source_artifact",
+        "必须打码",
+        "不得提交私人 PDF 原件",
+        "不得提交完整出生报告",
+        "浏览器 scratch",
+        "external_oracle_artifact",
+    ]:
+        assert token in text
+
+    for token in [
+        "references/oracle/artifacts/",
+        "source_artifact",
+        "必须打码",
+        "不得提交私人 PDF 原件",
+    ]:
+        assert token in readme
+
+
+def test_runtime_smoke_html_artifacts_are_ignored() -> None:
+    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    for token in [
+        "runtime-smoke-report-*.html",
+        "jyotish-app/runtime-smoke-report-*.html",
+    ]:
+        assert token in gitignore
+
+
+def test_first_jhora_capture_guide_is_actionable() -> None:
+    guide = ROOT / "docs" / "user_jhora_capture_guide.md"
+    assert guide.exists()
+    text = guide.read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    for token in [
+        "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "template_steve_jobs_dasha_lahiri",
+        "Lahiri",
+        "Raman",
+        "KP",
+        "mean node",
+        "true node",
+        "Moon sidereal longitude",
+        "Vimshottari start date",
+        "Shadbala 七曜六分量",
+        "Sun",
+        "Moon",
+        "Mars",
+        "Mercury",
+        "Jupiter",
+        "Venus",
+        "Saturn",
+        "sthana",
+        "dig",
+        "kala",
+        "chesta",
+        "naisargika",
+        "drik",
+        "references/oracle/artifacts/",
+        "source_artifact",
+        "external_verified",
+        "python3 scripts/oracle_collection_queue.py",
+        "python3 scripts/oracle_evidence_validator.py",
+        "valid_packets: 1",
+        "ready_for_calibration: 1",
+        "必须打码",
+        "不得提交私人 PDF 原件",
+        "不得提交完整出生报告",
+        "浏览器 scratch",
+    ]:
+        assert token in text
+
+    assert "docs/user_jhora_capture_guide.md" in readme
 
 
 def test_trust_center_exposes_real_case_revalidation_to_users() -> None:
@@ -2079,6 +2191,7 @@ def test_dasha_reference_audit_is_documented_and_gated() -> None:
     queue_script = ROOT / "scripts" / "oracle_collection_queue.py"
     evidence_validator = ROOT / "scripts" / "oracle_evidence_validator.py"
     oracle_fixture = ROOT / "references" / "oracle" / "dasha_shadbala_oracle_cases.json"
+    ashtakoot_oracle_fixture = ROOT / "references" / "oracle" / "ashtakoot_oracle_cases.json"
     quality_gate_module = load_quality_gate_module()
     quality_gate = (ROOT / "scripts" / "run_quality_gate.py").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -2088,6 +2201,7 @@ def test_dasha_reference_audit_is_documented_and_gated() -> None:
     assert queue_script.exists()
     assert evidence_validator.exists()
     assert oracle_fixture.exists()
+    assert ashtakoot_oracle_fixture.exists()
     assert "tests/test_oracle_collection_queue.py" in quality_gate_module.CORE_PYTEST_TARGETS
     assert "tests/test_oracle_evidence_validator.py" in quality_gate_module.CORE_PYTEST_TARGETS
     for token in [
@@ -2119,7 +2233,20 @@ def test_dasha_reference_audit_is_documented_and_gated() -> None:
         "python3 scripts/oracle_collection_queue.py",
         "python3 scripts/oracle_evidence_validator.py",
         "references/oracle/dasha_shadbala_oracle_cases.json",
+        "references/oracle/ashtakoot_oracle_cases.json",
         "--target-start-date 1986-05-18",
+        "Ashtakoot 外部合婚 oracle",
+        "ashtakoot_36_point",
+        "target.total_score",
+        "target.varna",
+        "target.vashya",
+        "target.tara",
+        "target.yoni",
+        "target.graha_maitri",
+        "target.gana",
+        "target.bhakoot",
+        "target.nadi",
+        "target.kuja_status",
         "不要为单份 PDF 直接调生产常数",
         "Moon sidereal longitude",
         "production_tuning_recommended: false",

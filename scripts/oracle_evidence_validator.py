@@ -24,6 +24,29 @@ LOCAL_ENGINE_MARKERS = [
     "oracle_collection_queue.py",
     "oracle_boundary_audit.py",
 ]
+SHADBALA_REQUIRED_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
+SHADBALA_REQUIRED_COMPONENTS = ["sthana", "dig", "kala", "chesta", "naisargika", "drik"]
+ASHTAKOOT_SCORE_RANGES = {
+    "target.total_score": (0.0, 36.0),
+    "target.varna": (0.0, 1.0),
+    "target.vashya": (0.0, 2.0),
+    "target.tara": (0.0, 3.0),
+    "target.yoni": (0.0, 4.0),
+    "target.graha_maitri": (0.0, 5.0),
+    "target.gana": (0.0, 6.0),
+    "target.bhakoot": (0.0, 7.0),
+    "target.nadi": (0.0, 8.0),
+}
+ASHTAKOOT_COMPONENT_FIELDS = [
+    "target.varna",
+    "target.vashya",
+    "target.tara",
+    "target.yoni",
+    "target.graha_maitri",
+    "target.gana",
+    "target.bhakoot",
+    "target.nadi",
+]
 
 
 def _resolve_path(path: str) -> str:
@@ -72,6 +95,13 @@ def _validate_packet(task: dict[str, Any]) -> dict[str, Any]:
         if _is_blank(value):
             problems.append(f"placeholder_unfilled:{field}")
 
+    shadbala_components = target_placeholders.get("target.shadbala_components")
+    if "target.shadbala_components" in expected_fields:
+        problems.extend(_validate_shadbala_components(shadbala_components))
+
+    if "target.total_score" in expected_fields:
+        problems.extend(_validate_ashtakoot_scores(target_placeholders))
+
     integrity = packet.get("integrity_checks", {})
     if integrity.get("must_not_come_from_local_engine") and _is_local_engine_artifact(packet):
         problems.append("local_engine_artifact_rejected")
@@ -93,6 +123,58 @@ def _validate_packet(task: dict[str, Any]) -> dict[str, Any]:
         "ready_for_calibration": valid and packet.get("status") == "external_verified",
         "problems": problems,
     }
+
+
+def _validate_shadbala_components(value: Any) -> list[str]:
+    problems: list[str] = []
+    if _is_blank(value) or not isinstance(value, dict):
+        return ["missing_shadbala_component:all_planets"]
+    for planet in SHADBALA_REQUIRED_PLANETS:
+        row = value.get(planet)
+        if not isinstance(row, dict) or _is_blank(row):
+            problems.append(f"missing_shadbala_component:{planet}")
+            continue
+        for component in SHADBALA_REQUIRED_COMPONENTS:
+            component_value = row.get(component)
+            if _is_blank(component_value):
+                problems.append(f"missing_shadbala_component:{planet}.{component}")
+                continue
+            if not isinstance(component_value, (int, float)) or isinstance(component_value, bool):
+                problems.append(f"invalid_shadbala_component_type:{planet}.{component}")
+                continue
+            if component_value < 0:
+                problems.append(f"invalid_shadbala_component_negative:{planet}.{component}")
+    return problems
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _validate_ashtakoot_scores(target_placeholders: dict[str, Any]) -> list[str]:
+    problems: list[str] = []
+    numeric_values: dict[str, float] = {}
+    for field, (minimum, maximum) in ASHTAKOOT_SCORE_RANGES.items():
+        if field not in target_placeholders:
+            continue
+        value = target_placeholders.get(field)
+        if _is_blank(value):
+            continue
+        if not _is_number(value):
+            problems.append(f"invalid_ashtakoot_score_type:{field}")
+            continue
+        numeric_value = float(value)
+        numeric_values[field] = numeric_value
+        if numeric_value < minimum or numeric_value > maximum:
+            problems.append(f"invalid_ashtakoot_score_range:{field}")
+
+    if "target.total_score" in numeric_values and all(
+        field in numeric_values for field in ASHTAKOOT_COMPONENT_FIELDS
+    ):
+        component_sum = sum(numeric_values[field] for field in ASHTAKOOT_COMPONENT_FIELDS)
+        if abs(component_sum - numeric_values["target.total_score"]) > 0.01:
+            problems.append("ashtakoot_score_sum_mismatch")
+    return problems
 
 
 def build_report(queue: dict[str, Any]) -> dict[str, Any]:

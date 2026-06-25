@@ -567,6 +567,20 @@ def _planet_snapshot(planets, planet_name):
     }
 
 
+def _oracle_progress_snapshot():
+    return {
+        'scope': 'external_oracle_evidence_validation',
+        'collection_queue': 'external_oracle_collection_queue',
+        'total_packets': 5,
+        'valid_packets': 0,
+        'ready_for_calibration': 0,
+        'production_tuning_allowed': False,
+        'artifact_policy': 'references/oracle/artifacts/',
+        'promotion_rule': 'external_verified requires source_artifact, filled target values, and non-local-engine external evidence.',
+        'boundary': 'Dasha/Shadbala absolute values are not externally calibrated until enough packets pass validation.',
+    }
+
+
 def _build_ai_prompt_pack(report):
     """Build a compact, evidence-first prompt pack for downstream AI/RAG reading."""
     modules = report.get('modules', {}) if isinstance(report, dict) else {}
@@ -640,6 +654,7 @@ def _build_ai_prompt_pack(report):
             'warnings': report.get('warnings', []),
             'external_oracle_status': 'D1/D9/VedAstro longitude boundary covered; Dasha/Shadbala external absolute calibration still requires multi-source oracle expansion.',
         },
+        'oracle_progress': _oracle_progress_snapshot(),
     }
 
     prompt_lines = [
@@ -670,6 +685,7 @@ def _build_ai_prompt_pack(report):
                 'no_single_factor_conclusion',
                 'd1_d9_dasha_cross_validation',
                 'oracle_boundary_visible',
+                'external_oracle_evidence_validation',
                 'confidence_labeled_reading',
             ],
         },

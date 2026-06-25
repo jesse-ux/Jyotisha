@@ -21,3 +21,5 @@ htmlcov/
 benchmarks/jyotish/outputs/
 output_report.txt
 results_extracted.md
+runtime-smoke-report-*.html
+jyotish-app/runtime-smoke-report-*.html

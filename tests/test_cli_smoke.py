@@ -186,6 +186,13 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert "references/ai-reading-workflow-prompt.md" in prompt_pack["retrieval_plan"]["local_reference_docs"]
     assert prompt_pack["evidence_snapshot"]["ayanamsa"]["name"] == "raman"
     assert prompt_pack["evidence_snapshot"]["core"]["ascendant"]["sign"] == result["chart"]["ascendant"]["sign"]
+    oracle_progress = prompt_pack["evidence_snapshot"]["oracle_progress"]
+    assert oracle_progress["scope"] == "external_oracle_evidence_validation"
+    assert oracle_progress["valid_packets"] == 0
+    assert oracle_progress["ready_for_calibration"] == 0
+    assert oracle_progress["production_tuning_allowed"] is False
+    assert oracle_progress["artifact_policy"] == "references/oracle/artifacts/"
+    assert "external_verified" in oracle_progress["promotion_rule"]
 
 
 def test_varga_cli_outputs_d9_and_d10() -> None:

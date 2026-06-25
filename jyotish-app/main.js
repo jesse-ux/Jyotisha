@@ -894,8 +894,13 @@ function renderAIPromptPackPanel(cd) {
           <span>AI Prompt Pack</span>
           <strong>${escapeHtml(pack.mode || 'jyotish_structured_prompt_pack')}</strong>
         </div>
-        <em>schema v${escapeHtml(String(pack.schema_version || 1))}</em>
+        <div class="ai-prompt-pack-actions">
+          <button type="button" data-ai-prompt-action="copy-prompt">复制 Prompt</button>
+          <button type="button" data-ai-prompt-action="copy-evidence">复制 Evidence</button>
+          <em>schema v${escapeHtml(String(pack.schema_version || 1))}</em>
+        </div>
       </div>
+      ${renderAyanamsaRuntimeStatus(cd, pack)}
       <div class="ai-prompt-pack-grid">
         <div class="ai-prompt-pack-card">
           <span>Ayanamsa</span>
@@ -945,6 +950,79 @@ function renderAIPromptPackPanel(cd) {
       </div>
     </section>
   `;
+  setupAIPromptPackActions(host, cd, pack);
+}
+
+function renderAyanamsaRuntimeStatus(cd, pack) {
+  const settings = readCalculationSettings();
+  const boundary = cd?._calculation_boundary || {};
+  const evidenceAyanamsa = pack?.evidence_snapshot?.ayanamsa || {};
+  const requested = evidenceAyanamsa.name || settings.ayanamsa;
+  const applied = boundary.appliedAyanamsa || evidenceAyanamsa.name || requested;
+  const status = cd?._fallback ? 'browser_fallback' : 'backend_computed';
+  const label = status === 'backend_computed' ? '后端实算' : '浏览器降级';
+  const note = boundary.note || (
+    status === 'backend_computed'
+      ? '当前 Ayanamsa 来自本地 API 服务返回，可随导出和 AI Prompt Pack 追溯。'
+      : '浏览器 fallback 只能使用 Lahiri 兼容路径；Raman/KP 等需启动本地 API 服务。'
+  );
+  return `
+    <div class="ayanamsa-runtime-status ayanamsa-runtime-status-${escapeAttr(status)}">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(getCalculationSettingLabel('ayanamsa', requested))}</strong>
+      <small>${escapeHtml(`applied=${applied} · status=${status}`)}</small>
+      <em>${escapeHtml(note)}</em>
+    </div>
+  `;
+}
+
+function setupAIPromptPackActions(host, cd, pack) {
+  host.querySelectorAll('[data-ai-prompt-action]').forEach(button => {
+    button.addEventListener('click', async () => {
+      const action = button.getAttribute('data-ai-prompt-action');
+      const copied = await copyAIPromptPackSection(action, cd, pack);
+      button.textContent = copied ? '已复制' : '复制失败';
+      setTimeout(() => {
+        button.textContent = action === 'copy-evidence' ? '复制 Evidence' : '复制 Prompt';
+      }, 1400);
+    });
+  });
+}
+
+async function copyAIPromptPackSection(action, cd, pack) {
+  const payload = action === 'copy-evidence'
+    ? {
+        evidence_snapshot: pack?.evidence_snapshot || {},
+        retrieval_plan: pack?.retrieval_plan || {},
+        calculation_boundary: cd?._calculation_boundary || null,
+      }
+    : {
+        prompt_zh: pack?.prompt_zh || '',
+        mode: pack?.mode || 'jyotish_structured_prompt_pack',
+        schema_version: pack?.schema_version || 1,
+      };
+  const text = [
+    'AI Prompt Pack 审计上下文已复制',
+    JSON.stringify(payload, null, 2),
+  ].join('\n');
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', 'true');
+    area.style.position = 'fixed';
+    area.style.left = '-9999px';
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(area);
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 function normalizeAIPromptPack(cd = {}) {
@@ -981,6 +1059,7 @@ function normalizeAIPromptPack(cd = {}) {
       strength: {
         shadbala_ranking: Object.entries(cd.shadbala || {}).map(([planet, pdata]) => ({ planet, rupas: pdata?.rupas, level: pdata?.level })),
       },
+      oracle_progress: oracleProgressSnapshot(),
     },
     retrieval_plan: {
       local_reference_docs: [
@@ -990,6 +1069,20 @@ function normalizeAIPromptPack(cd = {}) {
       ],
       retrieval_tags: ['no_single_factor_conclusion', 'oracle_boundary_visible', 'confidence_labeled_reading'],
     },
+  };
+}
+
+function oracleProgressSnapshot() {
+  return {
+    scope: 'external_oracle_evidence_validation',
+    collection_queue: 'external_oracle_collection_queue',
+    total_packets: 5,
+    valid_packets: 0,
+    ready_for_calibration: 0,
+    production_tuning_allowed: false,
+    artifact_policy: 'references/oracle/artifacts/',
+    promotion_rule: 'external_verified requires source_artifact, filled target values, and non-local-engine external evidence.',
+    boundary: 'Dasha/Shadbala absolute values are not externally calibrated until enough packets pass validation.',
   };
 }
 
@@ -1827,6 +1920,7 @@ function renderOracleEvidenceIntakePanel() {
         <strong>Oracle Evidence Intake</strong>
         <span>下载 5 个外部真值空白包；只接受 JHora/PyJHora/VedAstro 黑盒证据，禁止本地输出冒充 external_verified。</span>
       </div>
+      ${renderOracleEvidenceProgressDashboard()}
       <div class="oracle-evidence-intake-grid">
         ${ORACLE_EVIDENCE_INTAKE_TASKS.map(task => `
           <article class="oracle-evidence-card">
@@ -1856,6 +1950,38 @@ function renderOracleEvidenceIntakePanel() {
         </div>
       </div>
     </div>
+  `;
+}
+
+function renderOracleEvidenceProgressDashboard() {
+  const totalPackets = ORACLE_EVIDENCE_INTAKE_TASKS.length;
+  const validPackets = 0;
+  const readyPackets = 0;
+  const shadbalaTargets = ORACLE_EVIDENCE_INTAKE_TASKS
+    .filter(task => task.targetFields.includes('shadbala_components')).length;
+  const dashaTargets = ORACLE_EVIDENCE_INTAKE_TASKS
+    .filter(task => task.targetFields.includes('vimshottari_start_date')).length;
+  const progress = totalPackets ? Math.round((validPackets / totalPackets) * 100) : 0;
+  return `
+    <section class="oracle-evidence-progress-dashboard" aria-label="Dasha/Shadbala 真实进度">
+      <div class="calculation-settings-head">
+        <strong>Dasha/Shadbala 真实进度</strong>
+        <span>${validPackets} / ${totalPackets} valid_packets · ${readyPackets} ready_for_calibration · production_tuning_allowed=false</span>
+      </div>
+      <div class="oracle-evidence-progress-bar" aria-label="Oracle evidence progress ${validPackets} / ${totalPackets}">
+        <span style="width: ${progress}%"></span>
+      </div>
+      <div class="dasha-shadbala-calibration-grid">
+        ${renderValidationTransparencyMetric('Evidence', `${validPackets} / ${totalPackets}`, '0 / 5 外部证据包通过前，生产调参保持关闭。')}
+        ${renderValidationTransparencyMetric('Dasha', `${dashaTargets} targets`, 'vimshottari_start_date 需要 JHora/PyJHora 黑盒对照。')}
+        ${renderValidationTransparencyMetric('Shadbala', `${shadbalaTargets} targets`, 'missing_shadbala_component 会拦截缺 sthana/dig/kala/chesta/naisargika/drik 的七曜分量。')}
+        ${renderValidationTransparencyMetric('Artifacts', 'references/oracle/artifacts/', 'source_artifact 必须指向脱敏后的外部截图或 stdout。')}
+      </div>
+      <div class="dasha-shadbala-calibration-boundary">
+        <strong>隐私</strong>
+        <span>私人截图必须打码；不得上传私人 PDF 原件、完整出生报告或浏览器 scratch 会话文件。</span>
+      </div>
+    </section>
   `;
 }
 
@@ -1895,7 +2021,8 @@ function buildOracleEvidencePacket(task) {
     },
     operator_checklist: [
       'Fill tool_name and tool_version_or_url from the external product.',
-      'Attach source_artifact as a screenshot/export path outside this local engine.',
+      'Attach source_artifact as a repo-relative references/oracle/artifacts/... path after 必须打码.',
+      'Do not attach private PDF originals, complete birth reports, browser scratch folders, account sessions, cookies, tokens, or desktop notifications.',
       'Fill every target value from black-box output before requesting review.',
     ],
   };
@@ -1911,7 +2038,7 @@ function downloadOracleEvidencePacket(caseId) {
   const packet = buildOracleEvidencePacket(task);
   downloadText(JSON.stringify(packet, null, 2), `jyotish-oracle-evidence-${task.caseId}.json`, 'application/json;charset=utf-8');
   if (status) {
-    status.textContent = `已下载 ${task.caseId} 空白证据包；填入外部截图和数值后再运行 evidence validator。`;
+    status.textContent = `已下载 ${task.caseId} 空白证据包；source_artifact 请指向 references/oracle/artifacts/ 下已打码文件，再运行 evidence validator。`;
   }
 }
 

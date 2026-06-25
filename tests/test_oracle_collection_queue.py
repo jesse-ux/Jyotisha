@@ -102,6 +102,67 @@ def test_oracle_collection_queue_outputs_markdown_table() -> None:
     assert "capture_id" in markdown
 
 
+def test_first_jhora_evidence_packet_template_is_safe_and_fillable() -> None:
+    template = ROOT / "references" / "oracle" / "evidence_packet_templates" / "jhora_steve_jobs_lahiri_first_packet.json"
+    assert template.exists()
+    packet = json.loads(template.read_text(encoding="utf-8"))
+
+    assert packet["capture_id"] == "external_template_steve_jobs_dasha_lahiri"
+    assert packet["status"] == "draft"
+    assert packet["case_id"] == "template_steve_jobs_dasha_lahiri"
+    assert packet["metadata"]["tool_name"] == ""
+    assert packet["metadata"]["source_artifact"] == "references/oracle/artifacts/"
+    assert packet["metadata"]["ayanamsa"] == "Lahiri"
+    assert packet["metadata"]["node_mode"] == "true node"
+    assert packet["integrity_checks"]["must_not_come_from_local_engine"] is True
+    assert packet["integrity_checks"]["requires_external_artifact"] is True
+    assert packet["integrity_checks"]["reject_global_shadbala_scaling"] is True
+    assert packet["target_placeholders"]["target.vimshottari_start_date"] is None
+
+    shadbala = packet["target_placeholders"]["target.shadbala_components"]
+    assert set(shadbala) == {"Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"}
+    for row in shadbala.values():
+        assert set(row) == {"sthana", "dig", "kala", "chesta", "naisargika", "drik"}
+        assert all(value is None for value in row.values())
+
+
+def test_ashtakoot_oracle_cases_generate_collection_tasks() -> None:
+    oracle_file = ROOT / "references" / "oracle" / "ashtakoot_oracle_cases.json"
+    assert oracle_file.exists()
+
+    completed = run_queue_for_file(oracle_file, "--format", "json")
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["scope"] == "external_oracle_collection_queue"
+    assert report["summary"]["total_tasks"] == 5
+    assert report["summary"]["ready_for_calibration"] == 0
+    assert report["summary"]["production_tuning_allowed"] is False
+
+    first = report["tasks"][0]
+    assert first["case_id"] == "ashtakoot_public_couple_lahiri_01"
+    assert first["privacy"] == "public_or_synthetic_relationship_template"
+    assert "ashtakoot" in first["target_modules"]
+    assert any("JHora" in source for source in first["preferred_sources"])
+    assert any("VedAstro" in source for source in first["preferred_sources"])
+    for field in [
+        "target.total_score",
+        "target.varna",
+        "target.vashya",
+        "target.tara",
+        "target.yoni",
+        "target.graha_maitri",
+        "target.gana",
+        "target.bhakoot",
+        "target.nadi",
+        "target.kuja_status",
+    ]:
+        assert field in first["target_fields"]
+        assert field in first["evidence_packet"]["target_placeholders"]
+    assert first["evidence_packet"]["integrity_checks"]["must_not_come_from_local_engine"] is True
+    assert first["do_not_tune_production"] is True
+
+
 def test_oracle_collection_queue_preserves_external_verified_evidence(tmp_path: Path) -> None:
     oracle = json.loads((ROOT / "references/oracle/dasha_shadbala_oracle_cases.json").read_text(encoding="utf-8"))
     case = oracle["template_cases"][0]

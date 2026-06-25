@@ -112,4 +112,8 @@
 - [x] AI Native Prompt/RAG 承载层第一步：`full-reading.ai_prompt_pack` 输出证据快照、检索文档、边界约束和结构化中文提示词，供网页/app 或 skill 后端 AI 代理生成高阶解读。
 - [x] Antigravity AI 副手工作单：新增 `docs/research/antigravity_sidecar_work_order_2026_06_25.md`，把 Antigravity 限定为外部 oracle 样本采集、网页/app 审计、skill 同步审计和浏览器用户流验证，避免与核心计算修改冲突。
 - [x] Standalone ayanamsa 全局状态修复：新增 `scripts/ayanamsa_utils.py`，让 Transit、Solar Return、Muhurta、cmd_muhurta、Yoga 验证脚本在 `FLG_SIDEREAL` 前显式设置 ayanamsa；默认 Lahiri，调用方可显式传入 Raman/KP 等。
-- [ ] 下一步：继续扩充多来源 oracle 样本，补 JHora/PyJHora 的 Moon sidereal longitude、ayanamsa、Vimshottari 起点和 Shadbala 六分量目标值；同时把前端 Multi-Ayanamsa 设置与 `ai_prompt_pack` 可视化。
+- [x] 前端 Multi-Ayanamsa 设置与 `ai_prompt_pack` 可视化：完整解盘页显示 Ayanamsa 后端实算/浏览器降级状态，AI Prompt Pack 支持复制 Prompt 与 Evidence 审计上下文。
+- [x] Oracle artifact 存档规范、Shadbala evidence 强校验与真实进度面板：`references/oracle/artifacts/` 已有脱敏规范与占位，Trust Center 显示 `0 / 5` 真实采集进度，validator 强制 Shadbala 七曜六分量，quick quality gate 已通过。
+- [x] Ashtakoot 外部 oracle 样本队列与第一层 validator：新增 5 条外部合婚 oracle draft cases，README/队列生成器/测试同步；validator 拦截 36 分制范围、8 Kuta 分项范围和总分不一致，防止假外部证据污染。
+- [x] Antigravity Round 21 重型副手任务单：把副手任务扩展到 18 个报告包、至少 20 个联网对标对象、Top 40 ROI 拆解，继续承接 Ashtakoot、开源复用、Trust Center UX、Git 入库和 Round 22 规划。
+- [ ] 第一条 JHora/PyJHora 黑盒证据包：等待人工外部工具截图/输出，补 Moon sidereal longitude、ayanamsa、Vimshottari 起点和 Shadbala 七曜六分量目标值，把 `valid_packets` 从 0/5 推到 1/5。

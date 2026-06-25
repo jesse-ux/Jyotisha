@@ -5217,6 +5217,64 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   font-size: 12px;
   font-style: normal;
 }
+.ai-prompt-pack-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+.ai-prompt-pack-actions button {
+  min-height: 30px;
+  padding: 5px 9px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-body);
+  font-size: 12px;
+  cursor: pointer;
+}
+.ai-prompt-pack-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.ayanamsa-runtime-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+.ayanamsa-runtime-status span {
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  background: rgba(32, 111, 83, 0.12);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+}
+.ayanamsa-runtime-status-browser_fallback span {
+  background: rgba(160, 98, 0, 0.13);
+  color: #8a5600;
+}
+.ayanamsa-runtime-status strong {
+  min-width: 0;
+  color: var(--text-heading);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.ayanamsa-runtime-status small,
+.ayanamsa-runtime-status em {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-style: normal;
+  overflow-wrap: anywhere;
+}
 .ai-prompt-pack-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -5884,6 +5942,28 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   border-radius: var(--radius-sm);
   background: var(--bg-surface);
 }
+.oracle-evidence-progress-dashboard {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid rgba(21, 94, 117, 0.18);
+  border-radius: var(--radius-sm);
+  background: rgba(236, 254, 255, 0.74);
+}
+.oracle-evidence-progress-bar {
+  position: relative;
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
+}
+.oracle-evidence-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue), var(--green));
+}
 .oracle-evidence-intake-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6522,9 +6602,9 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   .first-use-grid,
   .runtime-health-grid,
   .trust-status-grid,
-  .oracle-evidence-intake-grid,
   .terminology-mode-options,
   .case-workspace-controls { grid-template-columns: 1fr; }
+  .oracle-evidence-intake-grid { grid-template-columns: 1fr; }
   .static-demo-boundary-grid { grid-template-columns: 1fr; }
   .validation-transparency-grid { grid-template-columns: 1fr; }
   .case-workspace-counts,

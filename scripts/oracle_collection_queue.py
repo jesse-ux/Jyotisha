@@ -58,6 +58,19 @@ SOURCE_GUIDANCE = {
             "The row is not derived from this repository's local Shadbala output.",
         ],
     },
+    "ashtakoot": {
+        "preferred_sources": ["JHora compatibility screenshot", "VedAstro HTTP/API output", "AstroSage public compatibility screen"],
+        "steps": [
+            "Set both birth records or both Moon longitudes in the external compatibility tool.",
+            "Record the 36-point total score and all eight Kuta component scores.",
+            "Capture Kuja/Manglik status and any visible ayanamsa, node mode or matching settings.",
+        ],
+        "promotion_criteria": [
+            "All eight Ashtakoot component targets are filled from an external compatibility source.",
+            "The 36-point total is traceable to component scores.",
+            "The row is not derived from this repository's local synastry/ashtakoot output.",
+        ],
+    },
 }
 
 
@@ -67,6 +80,16 @@ FIELD_TO_MODULE = {
     "ascendant_longitude_deg": "longitude",
     "vimshottari_start_date": "dasha",
     "shadbala_components": "shadbala",
+    "total_score": "ashtakoot",
+    "varna": "ashtakoot",
+    "vashya": "ashtakoot",
+    "tara": "ashtakoot",
+    "yoni": "ashtakoot",
+    "graha_maitri": "ashtakoot",
+    "gana": "ashtakoot",
+    "bhakoot": "ashtakoot",
+    "nadi": "ashtakoot",
+    "kuja_status": "ashtakoot",
 }
 
 REQUIRED_EVIDENCE_METADATA_FIELDS = [

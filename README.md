@@ -131,7 +131,21 @@ python3 scripts/oracle_collection_queue.py \
 
 该 JSON 的 scope 是 `external_oracle_collection_queue`。当前队列有 5 个 `template_only` 任务、`ready_for_calibration: 0`、`production_tuning_allowed: false`，说明只能继续采集 JHora/PyJHora/VedAstro 等外部黑盒目标值；在模板字段未填充、状态未升为 `external_verified` 前，不能用这些样本做 Dasha/Shadbala 生产调参。
 
+Ashtakoot 外部合婚 oracle 使用同一个队列生成器，但独立样本文件是 `references/oracle/ashtakoot_oracle_cases.json`：
+
+```bash
+python3 scripts/oracle_collection_queue.py \
+  --oracle-file references/oracle/ashtakoot_oracle_cases.json \
+  --format json
+```
+
+该队列同样保持 `ready_for_calibration: 0`，用于采集 `ashtakoot_36_point` 外部合婚目标值，而不是重写现有 `scripts/ashtakoot.py` 算法。每条样本要补齐 `target.total_score`、`target.varna`、`target.vashya`、`target.tara`、`target.yoni`、`target.graha_maitri`、`target.gana`、`target.bhakoot`、`target.nadi`、`target.kuja_status`，并保留 JHora/VedAstro/AstroSage 等外部截图或 API artifact。
+
 每个队列任务还包含 `evidence_packet.capture_id` 草稿证据包。人工或副手录入外部真值时，必须至少填写 `tool_name`、`tool_version_or_url`、`capture_date`、`source_artifact`、`ayanamsa`、`node_mode`、`timezone`、`operator_note`，并保留截图、API 响应或 stdout 等外部 artifact；不得把本仓库本地计算输出当作 `source_artifact`。
+
+外部截图和 stdout 片段统一存入 `references/oracle/artifacts/`，证据包里的 `source_artifact` 必须使用该目录下的 repo-relative 路径或明确标注的外部审阅位置。所有私人截图必须打码；不得提交私人 PDF 原件、不得提交完整出生报告，也不得提交浏览器 scratch 目录或含账号会话/cookie/token/桌面通知的截图。
+
+第一条 JHora/PyJHora 黑盒证据采集按 `docs/user_jhora_capture_guide.md` 执行：优先使用 Steve Jobs 或合成样本，采集 Moon sidereal longitude、Vimshottari start date 与 Shadbala 七曜六分量，保存到 `references/oracle/artifacts/` 后再运行 evidence validator。
 
 外部目标字段采用 `target_fields` + `target_placeholders` 双层结构：`target_fields` 固定记录该案例需要校验的目标，例如 `target.moon_sidereal_longitude_deg`、`target.vimshottari_start_date`、`target.shadbala_components`；当这些字段被真实外部来源填入并且证据包状态升为 `external_verified` 后，队列生成器会保留这些值，不会再把它们降级成 `draft`。这保证了“人工/JHora/PyJHora/VedAstro 采集 → JSON 填写 → 队列生成 → validator 复核”的路径可复验。
 

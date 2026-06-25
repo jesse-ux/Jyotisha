@@ -10,6 +10,18 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SHADBALA_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
+SHADBALA_COMPONENTS = ["sthana", "dig", "kala", "chesta", "naisargika", "drik"]
+
+
+def complete_shadbala_components() -> dict[str, dict[str, float]]:
+    return {
+        planet: {
+            component: float(40 + planet_index * 3 + component_index)
+            for component_index, component in enumerate(SHADBALA_COMPONENTS)
+        }
+        for planet_index, planet in enumerate(SHADBALA_PLANETS)
+    }
 
 
 def build_queue() -> dict:
@@ -104,16 +116,7 @@ def test_validator_accepts_filled_external_packet_but_not_whole_queue(tmp_path: 
     packet["target_placeholders"] = {
         "target.moon_sidereal_longitude_deg": 311.7897,
         "target.vimshottari_start_date": "1986-05-18",
-        "target.shadbala_components": {
-            "Sun": {
-                "sthana": 100.0,
-                "dig": 50.0,
-                "kala": 100.0,
-                "chesta": 40.0,
-                "naisargika": 60.0,
-                "drik": 30.0,
-            }
-        },
+        "target.shadbala_components": complete_shadbala_components(),
     }
     packet["status"] = "external_verified"
     queue_path = tmp_path / "queue.json"
@@ -126,6 +129,197 @@ def test_validator_accepts_filled_external_packet_but_not_whole_queue(tmp_path: 
     assert report["summary"]["valid_packets"] == 1
     assert report["summary"]["ready_for_calibration"] == 1
     assert report["summary"]["all_packets_external_verified"] is False
+    first = report["packets"][0]
+    assert first["valid"] is True
+    assert first["problems"] == []
+
+
+def test_validator_rejects_incomplete_shadbala_component_rows(tmp_path: Path) -> None:
+    queue = build_queue()
+    packet = queue["tasks"][0]["evidence_packet"]
+    packet["metadata"] = {
+        "tool_name": "JHora",
+        "tool_version_or_url": "manual-screenshot-v1",
+        "capture_date": "2026-06-25",
+        "source_artifact": "references/oracle/artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "timezone": "UTC+08:00",
+        "operator_note": "Manual external screenshot; values typed from JHora screen.",
+    }
+    packet["target_placeholders"] = {
+        "target.moon_sidereal_longitude_deg": 311.7897,
+        "target.vimshottari_start_date": "1986-05-18",
+        "target.shadbala_components": {
+            "Sun": {
+                "sthana": 100.0,
+                "dig": 50.0,
+            }
+        },
+    }
+    packet["status"] = "external_verified"
+    queue_path = tmp_path / "queue.json"
+    queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_validator(queue_path)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    first = report["packets"][0]
+    assert first["valid"] is False
+    assert "missing_shadbala_component:Sun.kala" in first["problems"]
+    assert "missing_shadbala_component:Sun.chesta" in first["problems"]
+    assert "missing_shadbala_component:Sun.naisargika" in first["problems"]
+    assert "missing_shadbala_component:Sun.drik" in first["problems"]
+    assert "missing_shadbala_component:Moon" in first["problems"]
+
+
+def test_validator_rejects_non_numeric_or_negative_shadbala_components(tmp_path: Path) -> None:
+    queue = build_queue()
+    packet = queue["tasks"][0]["evidence_packet"]
+    shadbala = complete_shadbala_components()
+    shadbala["Sun"]["sthana"] = "100"
+    shadbala["Moon"]["dig"] = -1.0
+    packet["metadata"] = {
+        "tool_name": "JHora",
+        "tool_version_or_url": "manual-screenshot-v1",
+        "capture_date": "2026-06-25",
+        "source_artifact": "references/oracle/artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "timezone": "UTC+08:00",
+        "operator_note": "Manual external screenshot; values typed from JHora screen.",
+    }
+    packet["target_placeholders"] = {
+        "target.moon_sidereal_longitude_deg": 311.7897,
+        "target.vimshottari_start_date": "1986-05-18",
+        "target.shadbala_components": shadbala,
+    }
+    packet["status"] = "external_verified"
+    queue_path = tmp_path / "queue.json"
+    queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_validator(queue_path)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    first = report["packets"][0]
+    assert first["valid"] is False
+    assert "invalid_shadbala_component_type:Sun.sthana" in first["problems"]
+    assert "invalid_shadbala_component_negative:Moon.dig" in first["problems"]
+
+
+def test_validator_rejects_invalid_ashtakoot_score_ranges(tmp_path: Path) -> None:
+    queue = build_queue_from_file(ROOT / "references/oracle/ashtakoot_oracle_cases.json")
+    packet = queue["tasks"][0]["evidence_packet"]
+    packet["metadata"] = {
+        "tool_name": "VedAstro",
+        "tool_version_or_url": "https://vedastro.org/API",
+        "capture_date": "2026-06-25",
+        "source_artifact": "references/oracle/artifacts/manual_ashtakoot_case_01.png",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "timezone": "UTC-08:00",
+        "operator_note": "External compatibility calculator screenshot.",
+    }
+    packet["target_placeholders"] = {
+        "target.total_score": 99.0,
+        "target.varna": 1.0,
+        "target.vashya": 2.0,
+        "target.tara": 3.0,
+        "target.yoni": 4.0,
+        "target.graha_maitri": 5.0,
+        "target.gana": 6.0,
+        "target.bhakoot": 7.0,
+        "target.nadi": 99.0,
+        "target.kuja_status": "",
+    }
+    packet["status"] = "external_verified"
+    queue_path = tmp_path / "queue.json"
+    queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_validator(queue_path)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    first = report["packets"][0]
+    assert first["valid"] is False
+    assert "invalid_ashtakoot_score_range:target.total_score" in first["problems"]
+    assert "invalid_ashtakoot_score_range:target.nadi" in first["problems"]
+    assert "placeholder_unfilled:target.kuja_status" in first["problems"]
+
+
+def test_validator_rejects_ashtakoot_score_sum_mismatch(tmp_path: Path) -> None:
+    queue = build_queue_from_file(ROOT / "references/oracle/ashtakoot_oracle_cases.json")
+    packet = queue["tasks"][0]["evidence_packet"]
+    packet["metadata"] = {
+        "tool_name": "VedAstro",
+        "tool_version_or_url": "https://vedastro.org/API",
+        "capture_date": "2026-06-25",
+        "source_artifact": "references/oracle/artifacts/manual_ashtakoot_case_01.png",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "timezone": "UTC-08:00",
+        "operator_note": "External compatibility calculator screenshot.",
+    }
+    packet["target_placeholders"] = {
+        "target.total_score": 20.0,
+        "target.varna": 1.0,
+        "target.vashya": 2.0,
+        "target.tara": 3.0,
+        "target.yoni": 4.0,
+        "target.graha_maitri": 5.0,
+        "target.gana": 6.0,
+        "target.bhakoot": 7.0,
+        "target.nadi": 8.0,
+        "target.kuja_status": "no_dosha",
+    }
+    packet["status"] = "external_verified"
+    queue_path = tmp_path / "queue.json"
+    queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_validator(queue_path)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    first = report["packets"][0]
+    assert first["valid"] is False
+    assert "ashtakoot_score_sum_mismatch" in first["problems"]
+
+
+def test_validator_accepts_valid_ashtakoot_external_packet(tmp_path: Path) -> None:
+    queue = build_queue_from_file(ROOT / "references/oracle/ashtakoot_oracle_cases.json")
+    packet = queue["tasks"][0]["evidence_packet"]
+    packet["metadata"] = {
+        "tool_name": "VedAstro",
+        "tool_version_or_url": "https://vedastro.org/API",
+        "capture_date": "2026-06-25",
+        "source_artifact": "references/oracle/artifacts/manual_ashtakoot_case_01.png",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "timezone": "UTC-08:00",
+        "operator_note": "External compatibility calculator screenshot.",
+    }
+    packet["target_placeholders"] = {
+        "target.total_score": 18.0,
+        "target.varna": 1.0,
+        "target.vashya": 1.0,
+        "target.tara": 2.0,
+        "target.yoni": 3.0,
+        "target.graha_maitri": 4.0,
+        "target.gana": 2.0,
+        "target.bhakoot": 3.0,
+        "target.nadi": 2.0,
+        "target.kuja_status": "no_dosha",
+    }
+    packet["status"] = "external_verified"
+    queue_path = tmp_path / "queue.json"
+    queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_validator(queue_path)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
     first = report["packets"][0]
     assert first["valid"] is True
     assert first["problems"] == []
@@ -167,16 +361,7 @@ def test_validator_accepts_external_verified_packet_generated_from_oracle_file(t
     case["target"] = {
         "moon_sidereal_longitude_deg": 311.7897,
         "vimshottari_start_date": "1986-05-18",
-        "shadbala_components": {
-            "Sun": {
-                "sthana": 100.0,
-                "dig": 50.0,
-                "kala": 100.0,
-                "chesta": 40.0,
-                "naisargika": 60.0,
-                "drik": 30.0,
-            }
-        },
+        "shadbala_components": complete_shadbala_components(),
     }
     case["evidence_packet"] = {
         "status": "external_verified",
