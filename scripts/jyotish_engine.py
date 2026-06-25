@@ -44,6 +44,7 @@ import math
 import sqlite3
 from datetime import datetime, timedelta
 from typing import Dict, List
+from tabulate import tabulate
 
 from ayanamsa_utils import (
     AYANAMSA_DISPLAY_NAMES,
@@ -429,6 +430,30 @@ def _calc_sidereal_planets_for_jd(jd, node_mode='mean', include_ketu=True):
 def output_json(data):
     """统一JSON输出"""
     print(json.dumps(data, ensure_ascii=False, indent=2, default=str))
+
+
+def output_table(command, data):
+    """Human-readable ASCII table output for selected commands."""
+    if command == 'chart':
+        birth_info = data.get('birth_info', {}) if isinstance(data, dict) else {}
+        ascendant = data.get('ascendant', {}) if isinstance(data, dict) else {}
+        planets = data.get('planets', {}) if isinstance(data, dict) else {}
+        rows = []
+        for planet_name, planet_data in planets.items():
+            if not isinstance(planet_data, dict):
+                continue
+            rows.append([
+                planet_name,
+                planet_data.get('sign', ''),
+                planet_data.get('house', ''),
+                planet_data.get('nakshatra', ''),
+                planet_data.get('status', ''),
+            ])
+        print(f"Birth: {birth_info.get('date', '')} {birth_info.get('time', '')}")
+        print(f"Ascendant: {ascendant.get('sign', '')} {ascendant.get('degree', '')}")
+        print(tabulate(rows, headers=['Planet', 'Sign', 'House', 'Nakshatra', 'Status'], tablefmt='github'))
+        return
+    output_json(data)
 
 
 def _second_arg(value):
@@ -4438,6 +4463,7 @@ def main():
     p = sub.add_parser('chart', help='计算完整星盘')
     _add_chart_args(p)
     p.add_argument('--validate', action='store_true', help='附加R1-R10数学验证')
+    p.add_argument('--table', action='store_true', help='以 ASCII 表格输出核心排盘结果')
 
     # 2. dasha
     p = sub.add_parser('dasha', help='计算Dasha大运')
@@ -4737,7 +4763,10 @@ def main():
         output_json(result)
         sys.exit(0 if result.get('valid', True) else 1)
     result = cmds[args.command](args)
-    output_json(result)
+    if getattr(args, 'table', False):
+        output_table(args.command, result)
+    else:
+        output_json(result)
 
 
 if __name__ == '__main__':

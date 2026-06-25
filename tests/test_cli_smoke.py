@@ -37,6 +37,17 @@ def run_engine(*args: str) -> dict:
     return json.loads(completed.stdout)
 
 
+def run_engine_text(*args: str) -> str:
+    completed = subprocess.run(
+        [sys.executable, str(ENGINE), *args],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return completed.stdout
+
+
 def test_dignity_helper_uses_planet_attitude_to_sign_lord() -> None:
     sys.path.insert(0, str(ROOT / "scripts"))
     import jyotish_engine
@@ -131,6 +142,17 @@ def test_chart_reports_friend_and_enemy_sign_dignity_for_user_case() -> None:
 
     assert result["planets"]["Jupiter"]["sign"] == "Virgo"
     assert result["planets"]["Jupiter"]["status"] == "入敌(Enemy Sign)"
+
+
+def test_chart_table_mode_prints_readable_ascii_table() -> None:
+    output = run_engine_text("chart", *BASE_BIRTH_ARGS, "--table")
+
+    assert "Planet" in output
+    assert "Sign" in output
+    assert "House" in output
+    assert "Ascendant" in output
+    assert "Sun" in output
+    assert "Moon" in output
 
 
 def test_full_reading_accepts_second_and_preserves_birth_time_precision() -> None:

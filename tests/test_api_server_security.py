@@ -536,6 +536,7 @@ def test_capability_audit_scans_registry_and_local_sources() -> None:
     assert audit['registry']['technique_count'] >= 60
     assert audit['surfaces']['engine_command_count'] >= 30
     assert '/api/chart' in audit['surfaces']['api_endpoints']
+    assert '/api/tajika' in audit['surfaces']['api_endpoints']
     assert 'varga-full' not in audit['surfaces']['engine_not_api']
     assert 'jaimini' not in audit['surfaces']['engine_not_api']
     assert 'ashtakavarga' not in audit['surfaces']['engine_not_api']
@@ -604,6 +605,7 @@ def test_technique_catalog_exposes_runnable_api_examples() -> None:
     assert catalog['summary']['technique_count'] >= 60
     assert catalog['summary']['runnable_count'] >= 20
     assert '/api/ashtakavarga' in catalog['filters']['api_endpoints']
+    assert '/api/tajika' in catalog['filters']['api_endpoints']
     assert '/api/deep_varga_avastha' in catalog['filters']['api_endpoints']
     assert catalog['example_payloads']['/api/ashtakavarga']['planets']
     assert catalog['example_payloads']['/api/deep_varga_avastha']['planets']
@@ -920,6 +922,30 @@ def test_annual_endpoint_returns_varshaphala_report() -> None:
     assert 'panchavargiya_bala' in strength
     assert strength['summary']['strongest_planets']
     assert strength['summary']['next_action']
+
+
+def test_tajika_endpoint_alias_returns_varshaphala_report() -> None:
+    handler = _handler()
+    result = handler._compute_tajika({
+        'year': 1990,
+        'month': 6,
+        'day': 15,
+        'hour': 12,
+        'minute': 0,
+        'lat': 28.6,
+        'lon': 77.2,
+        'tz': 5.5,
+        'target_year': 2026,
+    })
+
+    assert result['success'] is True
+    assert result['endpoint'] == 'tajika'
+    assert result['alias_of'] == 'annual'
+    assert result['report']['target_year'] == 2026
+    assert 'muntha' in result['report']
+    strength = result['report']['tajika_strength']
+    assert strength['method'] == 'Tajika Harsha/Panchavargiya Bala'
+    assert strength['summary']['strongest_planets']
 
 
 def test_bhava_chalit_endpoint_compares_shifted_houses() -> None:

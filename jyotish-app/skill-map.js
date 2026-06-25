@@ -61,7 +61,7 @@ const TECHNIQUE_API_ENDPOINTS = {
   career: '/api/career',
   relationship: '/api/relationship',
   'full-reading': '/api/chart',
-  tajika: '/api/annual',
+  tajika: '/api/tajika',
   'solar-return': '/api/annual',
   muhurta: '/api/muhurta',
   'bhava-chalit': '/api/bhava_chalit',
@@ -1986,6 +1986,7 @@ function actionForEndpoint(endpoint) {
   return {
     '/api/varga_full': 'varga',
     '/api/annual': 'annual',
+    '/api/tajika': 'annual',
     '/api/muhurta': 'muhurta',
     '/api/bhava_chalit': 'bhava',
     '/api/sudarshana': 'sudarshana',
@@ -2018,6 +2019,7 @@ function endpointForAction(action) {
   return {
     varga: '/api/varga_full',
     annual: '/api/annual',
+    tajika: '/api/tajika',
     muhurta: '/api/muhurta',
     bhava: '/api/bhava_chalit',
     sudarshana: '/api/sudarshana',

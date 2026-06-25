@@ -68,7 +68,7 @@ API_COMMAND_MAP = {
     'career': '/api/career',
     'relationship': '/api/relationship',
     'full-reading': '/api/chart',
-    'tajika': '/api/annual',
+    'tajika': '/api/tajika',
     'solar-return': '/api/annual',
     'muhurta': '/api/muhurta',
     'panchanga-range': '/api/panchanga_range',
@@ -252,6 +252,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             elif path == '/api/annual':
                 result = self._compute_annual(body)
+                self._json(result)
+            elif path == '/api/tajika':
+                result = self._compute_tajika(body)
                 self._json(result)
             elif path == '/api/muhurta':
                 result = self._compute_muhurta(body)
@@ -2932,6 +2935,14 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             ayanamsa_name=body.get('ayanamsa', 'lahiri'),
         )
         return {'success': True, 'endpoint': 'annual', 'report': report}
+
+    def _compute_tajika(self, body):
+        result = self._compute_annual(body)
+        return {
+            **result,
+            'endpoint': 'tajika',
+            'alias_of': 'annual',
+        }
 
     def _compute_muhurta(self, body):
         has_range = body.get('start_date') or body.get('end_date') or body.get('start') or body.get('end')
