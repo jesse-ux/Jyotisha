@@ -15,13 +15,15 @@ SHADBALA_COMPONENTS = ["sthana", "dig", "kala", "chesta", "naisargika", "drik"]
 
 
 def complete_shadbala_components() -> dict[str, dict[str, float]]:
-    return {
-        planet: {
-            component: float(40 + planet_index * 3 + component_index)
+    result = {}
+    for planet_index, planet in enumerate(SHADBALA_PLANETS):
+        row = {
+            component: round(0.1 + planet_index * 0.01 + component_index * 0.02, 4)
             for component_index, component in enumerate(SHADBALA_COMPONENTS)
         }
-        for planet_index, planet in enumerate(SHADBALA_PLANETS)
-    }
+        row["total_rupa"] = round(sum(row[component] for component in SHADBALA_COMPONENTS), 4)
+        result[planet] = row
+    return result
 
 
 def build_queue() -> dict:
@@ -207,6 +209,106 @@ def test_validator_rejects_non_numeric_or_negative_shadbala_components(tmp_path:
     assert first["valid"] is False
     assert "invalid_shadbala_component_type:Sun.sthana" in first["problems"]
     assert "invalid_shadbala_component_negative:Moon.dig" in first["problems"]
+
+
+def test_validator_rejects_missing_shadbala_total_rupa(tmp_path: Path) -> None:
+    queue = build_queue()
+    packet = queue["tasks"][0]["evidence_packet"]
+    shadbala = complete_shadbala_components()
+    del shadbala["Sun"]["total_rupa"]
+    packet["metadata"] = {
+        "tool_name": "JHora",
+        "tool_version_or_url": "manual-screenshot-v1",
+        "capture_date": "2026-06-25",
+        "source_artifact": "references/oracle/artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "timezone": "UTC+08:00",
+        "operator_note": "Manual external screenshot; values typed from JHora screen.",
+    }
+    packet["target_placeholders"] = {
+        "target.moon_sidereal_longitude_deg": 311.7897,
+        "target.vimshottari_start_date": "1986-05-18",
+        "target.shadbala_components": shadbala,
+    }
+    packet["status"] = "external_verified"
+    queue_path = tmp_path / "queue.json"
+    queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_validator(queue_path)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    first = report["packets"][0]
+    assert first["valid"] is False
+    assert "missing_shadbala_total_rupa:Sun" in first["problems"]
+
+
+def test_validator_rejects_shadbala_component_values_above_20_rupas(tmp_path: Path) -> None:
+    queue = build_queue()
+    packet = queue["tasks"][0]["evidence_packet"]
+    shadbala = complete_shadbala_components()
+    shadbala["Sun"]["sthana"] = 20.01
+    shadbala["Sun"]["total_rupa"] = round(sum(shadbala["Sun"][component] for component in SHADBALA_COMPONENTS), 4)
+    packet["metadata"] = {
+        "tool_name": "JHora",
+        "tool_version_or_url": "manual-screenshot-v1",
+        "capture_date": "2026-06-25",
+        "source_artifact": "references/oracle/artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "timezone": "UTC+08:00",
+        "operator_note": "Manual external screenshot; values typed from JHora screen.",
+    }
+    packet["target_placeholders"] = {
+        "target.moon_sidereal_longitude_deg": 311.7897,
+        "target.vimshottari_start_date": "1986-05-18",
+        "target.shadbala_components": shadbala,
+    }
+    packet["status"] = "external_verified"
+    queue_path = tmp_path / "queue.json"
+    queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_validator(queue_path)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    first = report["packets"][0]
+    assert first["valid"] is False
+    assert "invalid_shadbala_component_range:Sun.sthana" in first["problems"]
+
+
+def test_validator_rejects_shadbala_total_rupa_sum_mismatch(tmp_path: Path) -> None:
+    queue = build_queue()
+    packet = queue["tasks"][0]["evidence_packet"]
+    shadbala = complete_shadbala_components()
+    shadbala["Sun"]["total_rupa"] = round(shadbala["Sun"]["total_rupa"] + 0.06, 4)
+    packet["metadata"] = {
+        "tool_name": "JHora",
+        "tool_version_or_url": "manual-screenshot-v1",
+        "capture_date": "2026-06-25",
+        "source_artifact": "references/oracle/artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "timezone": "UTC+08:00",
+        "operator_note": "Manual external screenshot; values typed from JHora screen.",
+    }
+    packet["target_placeholders"] = {
+        "target.moon_sidereal_longitude_deg": 311.7897,
+        "target.vimshottari_start_date": "1986-05-18",
+        "target.shadbala_components": shadbala,
+    }
+    packet["status"] = "external_verified"
+    queue_path = tmp_path / "queue.json"
+    queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_validator(queue_path)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    first = report["packets"][0]
+    assert first["valid"] is False
+    assert "shadbala_total_rupa_sum_mismatch:Sun" in first["problems"]
 
 
 def test_validator_rejects_invalid_ashtakoot_score_ranges(tmp_path: Path) -> None:

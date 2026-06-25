@@ -97,6 +97,7 @@ QUALITY_GATE_PROFILES = {
         "skip_real_cases": True,
         "skip_dasha_audit": True,
         "skip_oracle_audit": True,
+        "skip_local_accuracy_report": True,
     },
     "browser": {
         "skip_slow": True,
@@ -108,6 +109,7 @@ QUALITY_GATE_PROFILES = {
         "skip_real_cases": True,
         "skip_dasha_audit": True,
         "skip_oracle_audit": True,
+        "skip_local_accuracy_report": True,
     },
     "release": {
         "skip_slow": False,
@@ -119,6 +121,19 @@ QUALITY_GATE_PROFILES = {
         "skip_real_cases": False,
         "skip_dasha_audit": False,
         "skip_oracle_audit": False,
+        "skip_local_accuracy_report": False,
+    },
+    "accuracy": {
+        "skip_slow": True,
+        "skip_yoga_logic": False,
+        "skip_frontend_runtime": True,
+        "skip_frontend_click": True,
+        "frontend_click_mode": "core",
+        "check_release_hygiene": False,
+        "skip_real_cases": False,
+        "skip_dasha_audit": False,
+        "skip_oracle_audit": False,
+        "skip_local_accuracy_report": False,
     },
 }
 
@@ -362,7 +377,16 @@ def validate_json_files() -> None:
 
 def run_profile(args: argparse.Namespace) -> dict:
     profile = dict(QUALITY_GATE_PROFILES[args.profile])
-    for key in ["skip_slow", "skip_yoga_logic", "skip_frontend_runtime", "skip_frontend_click", "skip_real_cases", "skip_dasha_audit", "skip_oracle_audit"]:
+    for key in [
+        "skip_slow",
+        "skip_yoga_logic",
+        "skip_frontend_runtime",
+        "skip_frontend_click",
+        "skip_real_cases",
+        "skip_dasha_audit",
+        "skip_oracle_audit",
+        "skip_local_accuracy_report",
+    ]:
         if getattr(args, key):
             profile[key] = True
     if args.frontend_click_mode:
@@ -372,7 +396,7 @@ def run_profile(args: argparse.Namespace) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Jyotish skill quality gate")
-    parser.add_argument("--profile", choices=["quick", "browser", "release"], default="browser", help="Quality gate profile: quick, browser, or release")
+    parser.add_argument("--profile", choices=["quick", "browser", "release", "accuracy"], default="browser", help="Quality gate profile: quick, browser, release, or accuracy")
     parser.add_argument("--skip-slow", action="store_true", help="Skip slow golden-case regressions")
     parser.add_argument("--skip-yoga-logic", action="store_true", help="Skip Yoga logic comparison report refresh")
     parser.add_argument("--skip-frontend-runtime", action="store_true", help="Skip frontend build and runtime smoke")
@@ -380,6 +404,7 @@ def main() -> int:
     parser.add_argument("--skip-real-cases", action="store_true", help="Skip public real-person chart revalidation")
     parser.add_argument("--skip-dasha-audit", action="store_true", help="Skip Dasha reference-drift audit")
     parser.add_argument("--skip-oracle-audit", action="store_true", help="Skip combined Dasha/Shadbala external oracle boundary audit")
+    parser.add_argument("--skip-local-accuracy-report", action="store_true", help="Skip consolidated local accuracy report")
     parser.add_argument("--frontend-click-mode", choices=["core", "mobile", "offline", "pdf", "workspace", "mobile-trust", "import-files", "all"], default=None, help="Browser click smoke mode for browser/release profiles")
     parser.add_argument("--frontend-click-timeout", type=int, default=240, help="Timeout seconds for browser click smoke")
     parser.add_argument("--all-tests", action="store_true", help="Run every pytest file, including optional-dependency suites")
@@ -422,6 +447,8 @@ def main() -> int:
         run_oracle_collection_queue_and_validator()
     if not profile["skip_yoga_logic"]:
         run([PYTHON, "scripts/validate_logic_v2.py"], optional=True)
+    if not profile["skip_local_accuracy_report"]:
+        run([PYTHON, "scripts/local_accuracy_report.py", "--format", "json"])
     print("\nQuality gate passed.")
     return 0
 

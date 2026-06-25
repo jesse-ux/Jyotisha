@@ -340,15 +340,15 @@ def main():
         total_false_negatives += len(false_negatives)
 
         if false_positives:
-            for rid in false_positives:
+            for rid in sorted(false_positives):
                 fp_details.append({
                     'chart': name,
                     'rule_id': rid,
                     'rule_name': rule_id_to_name.get(rid, '?'),
                 })
         if false_negatives:
-            for rid in false_negatives:
-                orig_names = [pn for pn, sid in variant_to_rule_id.items() if sid == rid]
+            for rid in sorted(false_negatives):
+                orig_names = sorted(pn for pn, sid in variant_to_rule_id.items() if sid == rid)
                 fn_details.append({
                     'chart': name,
                     'rule_id': rid,
@@ -414,8 +414,8 @@ def main():
             "recall": round(recall, 4),
             "f1": round(f1, 4),
         },
-        "false_positives": fp_details,
-        "false_negatives": fn_details,
+        "false_positives": sorted(fp_details, key=lambda row: (row["chart"], row["rule_id"])),
+        "false_negatives": sorted(fn_details, key=lambda row: (row["chart"], row["rule_id"])),
     }
     with open(report_path, 'w') as f:
         json.dump(report, f, indent=2, ensure_ascii=False)

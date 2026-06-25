@@ -26,6 +26,8 @@ LOCAL_ENGINE_MARKERS = [
 ]
 SHADBALA_REQUIRED_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
 SHADBALA_REQUIRED_COMPONENTS = ["sthana", "dig", "kala", "chesta", "naisargika", "drik"]
+SHADBALA_COMPONENT_MAX_RUPA = 20.0
+SHADBALA_TOTAL_TOLERANCE_RUPA = 0.05
 ASHTAKOOT_SCORE_RANGES = {
     "target.total_score": (0.0, 36.0),
     "target.varna": (0.0, 1.0),
@@ -144,6 +146,31 @@ def _validate_shadbala_components(value: Any) -> list[str]:
                 continue
             if component_value < 0:
                 problems.append(f"invalid_shadbala_component_negative:{planet}.{component}")
+                continue
+            if component_value > SHADBALA_COMPONENT_MAX_RUPA:
+                problems.append(f"invalid_shadbala_component_range:{planet}.{component}")
+        total_rupa = row.get("total_rupa")
+        if _is_blank(total_rupa):
+            problems.append(f"missing_shadbala_total_rupa:{planet}")
+            continue
+        if not isinstance(total_rupa, (int, float)) or isinstance(total_rupa, bool):
+            problems.append(f"invalid_shadbala_total_rupa_type:{planet}")
+            continue
+        if total_rupa < 0:
+            problems.append(f"invalid_shadbala_total_rupa_negative:{planet}")
+            continue
+        if total_rupa > SHADBALA_COMPONENT_MAX_RUPA * len(SHADBALA_REQUIRED_COMPONENTS):
+            problems.append(f"invalid_shadbala_total_rupa_range:{planet}")
+            continue
+        numeric_components = [
+            float(row[component])
+            for component in SHADBALA_REQUIRED_COMPONENTS
+            if isinstance(row.get(component), (int, float)) and not isinstance(row.get(component), bool)
+        ]
+        if len(numeric_components) == len(SHADBALA_REQUIRED_COMPONENTS):
+            component_sum = sum(numeric_components)
+            if abs(component_sum - float(total_rupa)) > SHADBALA_TOTAL_TOLERANCE_RUPA:
+                problems.append(f"shadbala_total_rupa_sum_mismatch:{planet}")
     return problems
 
 

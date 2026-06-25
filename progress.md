@@ -378,3 +378,18 @@
 - 完成 Antigravity Round 21 重型副手任务单：新增 `docs/research/antigravity_sidecar_work_order_round21_2026_06_25.md`，把副手工作量扩到 18 个报告包、至少 20 个联网开源/产品复核对象、Top 40 ROI 任务，并明确 Ashtakoot oracle、VedAstro/RaviKarrii/pyhora2 许可证深挖、Trust Center UX、Git 入库、Shadbala 二期校验和 Round 22 执行计划。
 - 完成 Ashtakoot 外部 oracle 第一层队列与 validator 强化：新增 `references/oracle/ashtakoot_oracle_cases.json` 5 条 draft cases，`oracle_collection_queue.py` 可输出 `target_modules=["ashtakoot"]`，README 记录 `Ashtakoot 外部合婚 oracle` 命令；`oracle_evidence_validator.py` 增加 36 分制范围、8 Kuta 分项范围和总分求和一致性拦截，拒绝 99 分、字符串/非法范围与 sum mismatch 的假外部证据包。
 - 验证完成：`python3 -m pytest -q tests/test_oracle_evidence_validator.py tests/test_oracle_collection_queue.py` 14 项通过；`python3 -m pytest -q tests/test_ashtakoot.py tests/test_frontend_productization.py::test_dasha_reference_audit_is_documented_and_gated` 53 项通过；`npm run build --prefix jyotish-app` 通过；Ashtakoot queue 输出 5 条 template-only 样本且 `production_tuning_allowed=false`。
+# 2026-06-25 Round 25 地毯式扫描与副手派工
+
+- 用户强调：所有工作前必须地毯式探索印度占星全部信息，尤其检查不同窗口/多个文件夹中的碎片。
+- 已读取 `task_plan.md`、`findings.md`、`progress.md`，确认计划中已有“实现前扫描本地碎片、open_source_sources、现有测试与产品差距矩阵”的硬规则。
+- 已发布 `docs/research/antigravity_sidecar_work_order_round25_2026_06_25.md`，要求副手纠正 Round 24 Ashtakoot 误判、复核 VedAstro MIT 可复用范围、验收 accuracy profile、继续拆 UI/API/CLI/Prompt Pack/Oracle 缺口。
+- 已创建 `docs/research/whole_machine_fragment_sweep_round25_2026_06_25.md`，记录整机扫描范围、高价值本地资料源、Git 远端状态、隐私边界和后续实现前置命令。
+- 已发现高价值碎片源：当前主仓、`.workbuddy/skills/jyotish-vedic-astrology`、`Documents/星轨talk/engines-repo/jyotish`、`Documents/Codex/2026-06-20/.../engines-repo/jyotish`、Obsidian Jyotish 笔记、Downloads 私人 PDF/zip/docx、`references/open_source_sources`、`benchmarks/jyotish`。
+- Git 状态：本地 `bac3748 docs(research): archive antigravity round 23 and 24 audits` 已创建；push 通过 SSH 22 超时失败，远端 HTTPS refs 显示 `codex/release-hygiene-ci` 仍在 `6338cf5`。后续需换 SSH-443 或其他可达方式再推。
+- TDD 状态：已为 `run_quality_gate.py --profile accuracy` 写红灯测试，当前失败点是 `accuracy` profile 未实现；实现前已先响应用户要求完成碎片扫描。
+- 已发布 `docs/research/antigravity_sidecar_work_order_round26_2026_06_25.md`，要求副手纠正 Round 25 Panchang 过强结论、黑盒验收 accuracy profile、设计 Git 远端替代同步和继续拆解 Ashtakoot/Shadbala/Kuja/Prompt Pack 票据。
+- 已实现并验证 `run_quality_gate.py --profile accuracy`：跳过浏览器重活，强制运行真实案例复验、Dasha/Oracle 审计、Yoga 逻辑对照和 `local_accuracy_report.py`；真实运行输出 `Quality gate passed`。
+- 修复 `scripts/validate_logic_v2.py` 的 set 顺序抖动，让 `references/validation_logic_report.json` 的 false positive/negative 列表稳定排序，避免 accuracy profile 每次制造无意义 diff。
+- 完成 Antigravity Round 27 重型副手任务单：新增 `docs/research/antigravity_sidecar_work_order_round27_2026_06_25.md`，把副手工作量提高到 24 份报告，强制复核 Round25/26 归档、accuracy profile 稳定性、Yoga diff 稳定性、SSH-443/HTTPS 同步方案、Shadbala Phase 2、Kuja enum、Prompt Pack 安全护栏、Panchanga 商业级 UI、Ashtakoot oracle/许可证、API/前端隐藏技能 ROI、全机碎片后续读取顺序和 Round28 Top60。
+- 完成 Shadbala Evidence Validator Phase 2 第一批实现：在现有 `sthana/dig/kala/chesta/naisargika/drik` schema 上增加 `total_rupa` 必填、单项 Rupa 上限 20.0、七曜六分量求和与 `total_rupa` 0.05 容差校验，避免人工 evidence packet 只填分量但总分不自洽仍被误判有效。TDD 红灯确认 3 个缺口后转绿，聚焦 validator/API 13 项测试通过。
+- 完成“有效文件复用索引”：新增 `docs/research/local_reuse_candidate_index_round28_2026_06_26.md`，把当前 repo、旧 WorkBuddy skill、历史 benchmark、本地开源镜像按 `direct current repo reuse`、`older WorkBuddy skill reuse`、`local open-source mirrors`、`benchmark-only sources` 分类，明确未来补 Kuja/Panchanga/Tajika/Chara/Prompt Pack 时必须先查已有文件和许可证边界，再决定是否新写。

@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import base64
+import json
 import os
 import sys
+from io import BytesIO
 
 import pytest
 
@@ -27,6 +29,40 @@ def _handler() -> JyotishAPIHandler:
     return JyotishAPIHandler.__new__(JyotishAPIHandler)
 
 
+class _FakeHeaders(dict):
+    def get(self, key, default=None):
+        return super().get(key, default)
+
+
+class _FakeServer:
+    allowed_origins = DEFAULT_ALLOWED_ORIGINS
+
+
+class _ResponseCaptureHandler(JyotishAPIHandler):
+    def __init__(self) -> None:
+        self.headers = _FakeHeaders()
+        self.server = _FakeServer()
+        self.path = '/api/capability_audit'
+        self.wfile = BytesIO()
+        self.status_code = None
+        self.response_headers = []
+
+    def send_response(self, code, message=None):  # noqa: ANN001
+        self.status_code = code
+
+    def send_header(self, key, value):  # noqa: ANN001
+        self.response_headers.append((key, value))
+
+    def end_headers(self):
+        return None
+
+    def _capability_audit(self):
+        raise RuntimeError('simulated internal failure')
+
+    def payload(self) -> dict:
+        return json.loads(self.wfile.getvalue().decode('utf-8'))
+
+
 def test_default_cors_origins_are_local_only() -> None:
     assert 'http://localhost:3456' in DEFAULT_ALLOWED_ORIGINS
     assert '*' not in DEFAULT_ALLOWED_ORIGINS
@@ -38,6 +74,19 @@ def test_env_cors_parser_ignores_empty_entries() -> None:
         'https://app.example.com',
         'http://localhost:3456',
     }
+
+
+def test_get_internal_errors_are_json_wrapped() -> None:
+    handler = _ResponseCaptureHandler()
+
+    handler.do_GET()
+
+    assert handler.status_code == 500
+    assert ('Content-Type', 'application/json; charset=utf-8') in handler.response_headers
+    payload = handler.payload()
+    assert payload['success'] is False
+    assert payload['error'] == 'Internal server error'
+    assert payload['error_code'] == 'ERR_INTERNAL'
 
 
 @pytest.mark.parametrize(

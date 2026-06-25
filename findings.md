@@ -1,5 +1,15 @@
 # 印度占星产品化发现记录
 
+## 2026-06-25 Round 25 地毯式碎片扫描前置结论
+
+- 已按用户要求在继续实现前进行整机/多窗口碎片扫描，并生成 `docs/research/whole_machine_fragment_sweep_round25_2026_06_25.md`。
+- 当前必须作为实现前置读取的规划文件仍是 `task_plan.md`、`findings.md`、`progress.md`。
+- 高价值 Jyotish 资料源不只当前主仓：还包括 `.workbuddy/skills/jyotish-vedic-astrology` 旧 skill 副本、`Documents/星轨talk/engines-repo/jyotish`、`Documents/Codex/2026-06-20/.../engines-repo/jyotish`、Obsidian Jyotish 研究笔记、Downloads 中的 `印度占星.pdf/印度占星1.pdf/Kimi_Agent_高维印度占星师.zip/jyotish_training.agent.final.docx`、以及当前 repo 内 `references/open_source_sources` 和 `benchmarks/jyotish`。
+- 隐私边界：Downloads/Obsidian/私人 PDF/完整解盘报告仅作为需求和差距发现来源，默认不提交原文、不复制私人出生资料、不上传完整报告。
+- 远端状态：HTTPS `git ls-remote` 可达，`origin/codex/release-hygiene-ci` 远端仍停在 `6338cf5`；本地 `bac3748` docs commit 因 SSH 22 超时尚未确认推送成功。后续需使用 SSH-443 或其他可达方式同步。
+- Round 25 副手任务已发布，扫描时已看到部分 `antigravity_round25_*` 报告开始生成，但未满 18+ 前不能视为完成。
+- Ashtakoot 结论边界：Round 24 “全 0/瞎编”属于需纠正的过强说法；当前 `scripts/ashtakoot.py` 有非零本地规则，但外部 oracle 仍 0/5，不能声称与 JHora/AstroSage/VedAstro 完全一致。
+
 ## 开源与本地基线
 
 - `references/open-source-jyotish-scan-2026.md` 已记录可直接复用/对标项目：dashaflow、jyotishganit、panchanga_api、jaimini-tropical、VedicAstro、KPAstroDashboard、vedic_astro_npm、PyJHora、VedAstro、xalen-ephemeris。

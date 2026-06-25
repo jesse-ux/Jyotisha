@@ -82,6 +82,7 @@ Static demo / PWA 发布要求：必须保留 `static_demo_boundary_visible` 说
 - quick：快速开发守门，适合普通代码/文案修改后先跑：`python3 scripts/run_quality_gate.py --profile quick`
 - browser：完整浏览器守门，覆盖 runtime smoke 与真实浏览器用户路径：`python3 scripts/run_quality_gate.py --profile browser`
 - release：发布前守门，包含关键产品文件未跟踪检查、慢速 golden cases、真实案例复验与 Yoga 逻辑报告：`python3 scripts/run_quality_gate.py --profile release`
+- accuracy：本地准确率守门，跳过浏览器点击重活，但强制运行真实案例复验、Dasha/Oracle 审计、Yoga 逻辑对照和本地准确率总报告：`python3 scripts/run_quality_gate.py --profile accuracy`
 
 ### 真实案例复验与准确率边界
 
@@ -283,7 +284,7 @@ The AI does NOT require the user to name techniques (e.g., "Chara Dasha"). It au
 
 ## Technique Coverage
 
-Current count: **65 techniques** (55 covered, 10 complete, 0 partial, 0 missing)
+Current count: **68 techniques** (58 covered, 10 complete, 0 partial, 0 missing)
 
 | Technique | Status | Notes |
 |-----------|--------|-------|

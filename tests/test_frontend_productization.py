@@ -891,11 +891,14 @@ def test_quality_gate_declares_fast_browser_release_profiles() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     for token in [
         "--profile",
-        "choices=[\"quick\", \"browser\", \"release\"]",
+        "choices=[\"quick\", \"browser\", \"release\", \"accuracy\"]",
         "QUALITY_GATE_PROFILES",
         "quick",
         "browser",
         "release",
+        "accuracy",
+        "skip_local_accuracy_report",
+        "scripts/local_accuracy_report.py",
         "skip_slow",
         "skip_yoga_logic",
         "skip_frontend_click",
@@ -913,9 +916,11 @@ def test_quality_gate_declares_fast_browser_release_profiles() -> None:
         "quick：快速开发守门",
         "browser：完整浏览器守门",
         "release：发布前守门",
+        "accuracy：本地准确率守门",
         "python3 scripts/run_quality_gate.py --profile quick",
         "python3 scripts/run_quality_gate.py --profile browser",
         "python3 scripts/run_quality_gate.py --profile release",
+        "python3 scripts/run_quality_gate.py --profile accuracy",
     ]:
         assert token in readme
 
@@ -936,6 +941,19 @@ def test_release_quality_gate_tracks_untracked_product_files() -> None:
         "progress.md",
     ]:
         assert path in quality_gate.RELEASE_CRITICAL_UNTRACKED_PATHS
+
+
+def test_accuracy_quality_gate_runs_local_accuracy_report_without_frontend_click() -> None:
+    quality_gate = load_quality_gate_module()
+    profile = quality_gate.QUALITY_GATE_PROFILES["accuracy"]
+
+    assert profile["skip_frontend_click"] is True
+    assert profile["skip_frontend_runtime"] is True
+    assert profile["skip_real_cases"] is False
+    assert profile["skip_dasha_audit"] is False
+    assert profile["skip_oracle_audit"] is False
+    assert profile["skip_yoga_logic"] is False
+    assert profile["skip_local_accuracy_report"] is False
 
 
 def test_github_release_quality_gate_runs_browser_release_profile() -> None:

@@ -171,6 +171,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False, default=str).encode())
 
+    def _error_json(self, message, status=500, error_code='ERR_INTERNAL'):
+        self._json({'success': False, 'error': message, 'error_code': error_code}, status)
+
     def _send_cors_headers(self):
         origin = self.headers.get('Origin')
         allowed = getattr(self.server, 'allowed_origins', DEFAULT_ALLOWED_ORIGINS)
@@ -182,22 +185,27 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
-        if path == '/api/health':
-            self._json({
-                'status': 'ok',
-                'version': '6.9.14',
-                'modules': 'Chart/KP/Synastry/Prashna/Remedies/Dasha/Varga/Jaimini/Ashtakavarga/Shadbala/Yoga/Aspects/Tajika/Muhurta/BhavaChalit/BhavaBala/Sudarshana/Nakshatra/Transit/RectificationGate/CaseValidation/DivisionalYoga/Kakshya',
-            })
-        elif path == '/api/cities':
-            self._json(list(CITY_DB.keys()))
-        elif path == '/api/capability_audit':
-            self._json(self._capability_audit())
-        elif path == '/api/technique_catalog':
-            self._json(self._technique_catalog())
-        elif path == '/api/real_case_revalidation':
-            self._json(self._real_case_revalidation())
-        else:
-            self._json({'error': 'Not found'}, 404)
+        try:
+            if path == '/api/health':
+                self._json({
+                    'status': 'ok',
+                    'version': '6.9.14',
+                    'modules': 'Chart/KP/Synastry/Prashna/Remedies/Dasha/Varga/Jaimini/Ashtakavarga/Shadbala/Yoga/Aspects/Tajika/Muhurta/BhavaChalit/BhavaBala/Sudarshana/Nakshatra/Transit/RectificationGate/CaseValidation/DivisionalYoga/Kakshya',
+                })
+            elif path == '/api/cities':
+                self._json(list(CITY_DB.keys()))
+            elif path == '/api/capability_audit':
+                self._json(self._capability_audit())
+            elif path == '/api/technique_catalog':
+                self._json(self._technique_catalog())
+            elif path == '/api/real_case_revalidation':
+                self._json(self._real_case_revalidation())
+            else:
+                self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+        except Exception:
+            import logging
+            logging.exception("[api_server] GET request failed for %s", path)
+            self._error_json('Internal server error', 500, 'ERR_INTERNAL')
 
     def do_POST(self):
         path = urlparse(self.path).path
@@ -306,13 +314,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 result = self._compute_technique_example(body)
                 self._json(result)
             else:
-                self._json({'error': f'Unknown endpoint: {path}'}, 404)
+                self._error_json(f'Unknown endpoint: {path}', 404, 'ERR_NOT_FOUND')
         except BadRequest as e:
-            self._json({'error': str(e)}, 400)
+            self._error_json(str(e), 400, 'ERR_BAD_REQUEST')
         except Exception:
             import logging
             logging.exception("[api_server] request failed for %s", path)
-            self._json({'error': 'Internal server error'}, 500)
+            self._error_json('Internal server error', 500, 'ERR_INTERNAL')
 
     def _read_json_body(self):
         raw_length = self.headers.get('Content-Length', '0')
