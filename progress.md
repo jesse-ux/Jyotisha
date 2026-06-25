@@ -345,4 +345,6 @@
 - 完成 Dasha/Shadbala 校准透明度前端修复：Trust Center 新增 `Dasha/Shadbala Calibration Status` 面板，直接展示 `ready_for_calibration: 0`、`valid_packets: 0`、`production_tuning_allowed: false` 与 `D1/D9/SAV 高可信` / 大运起点和 Shadbala 绝对值仍需外部 evidence validator 的边界。
 - 完成 AI/Skill 边界同步：`ai-chat.js`、`api-bridge.js`、`public/api-bridge.js` 与 `SKILL.md` 均强制注入“不得把大运起点或 Shadbala 绝对值说成已完成外部校准”的提示，避免普通用户误解“已完全校准”。
 - 验证完成：新增 `test_trust_center_and_ai_expose_dasha_shadbala_calibration_status` 先红灯后转绿；聚焦产品化测试 5 项通过；`npm run build --prefix jyotish-app` 通过；`python3 -m py_compile scripts/oracle_collection_queue.py scripts/oracle_evidence_validator.py scripts/oracle_boundary_audit.py scripts/run_quality_gate.py` 通过；`git diff --cached --check` 通过且暂未发现密钥特征。
-- 当前下一最高优先级：提交本轮校准透明度修复并再次尝试推送 GitHub；若网络仍阻断，则继续在本地保持提交完整并给出可复验的远端差异说明。
+- 完成 GitHub 同步：`codex/release-hygiene-ci` 已成功推送到远端 `56a86dd53ecdc906a546a51cf2c63f02b61a7475`；本地 tracking ref 已同步对齐，`git status --short --branch` 无未提交文件。
+- 完成 Antigravity Round 11 副手任务单：新增 `docs/research/antigravity_sidecar_work_order_round11_2026_06_25.md`，要求副手复核远端同步、Trust Center/AI/Skill 校准透明度修复和下一批普通用户成品缺口。
+- 当前下一最高优先级：把 Round 11 任务单推送到 GitHub 后，等待副手复核报告；Codex 主线程继续优先推进“校准状态进入导出报告”和“外部真值采集表单化”。
