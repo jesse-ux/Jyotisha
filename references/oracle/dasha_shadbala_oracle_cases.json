@@ -142,7 +142,7 @@
     },
     {
       "id": "template_historical_epoch_lahiri",
-      "status": "template_only",
+      "status": "external_verified",
       "source": "JHora/PyJHora offline tool",
       "privacy": "synthetic_historical_epoch_template",
       "birth": {
@@ -162,9 +162,23 @@
       },
       "target": {
         "sun_sidereal_longitude_deg": null,
-        "vimshottari_start_date": null
+        "vimshottari_start_date": "1787-01-19"
       },
-      "verification_note": "Historical epoch precision case; fill targets only from external tool output."
+      "verification_note": "Historical epoch precision case; fill targets only from external tool output.",
+      "evidence_packet": {
+        "capture_id": "external_template_historical_epoch_lahiri",
+        "status": "external_verified",
+        "metadata": {
+          "tool_name": "PyJHora",
+          "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
+          "capture_date": "2026-06-27",
+          "source_artifact": "references/oracle/artifacts/pyjhora_historical_epoch_dasha_stdout_20260627.txt",
+          "ayanamsa": "lahiri",
+          "node_mode": "PyJHora default",
+          "timezone": "UTC+05:30",
+          "operator_note": "Black-box stdout from isolated /tmp virtualenv. PyJHora AGPL code was not copied into this repository; only the generated output artifact is stored as external evidence."
+        }
+      }
     }
   ],
   "dasha_cases": [

@@ -143,11 +143,11 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 
 **普通用户解释时必须显式区分基础排盘高可信与高阶绝对值待外部校准。**
 
-- Dasha-only 外部证据已进入专项闭环：`dasha_external_oracle_evidence_validation.valid_dasha_packets: 2/3`；Steve Jobs / Lahiri 与 REDACTED_YEAR Lahiri 模板的 Vimshottari 起始边界来自 PyJHora 4.8.7 隔离黑盒 stdout artifact。
+- Dasha-only 外部证据当前目标集已闭环：`dasha_external_oracle_evidence_validation.valid_dasha_packets: 3/3`；Steve Jobs / Lahiri、REDACTED_YEAR Lahiri 模板与 1800 Delhi historical epoch 的 Vimshottari 起始边界来自 PyJHora 4.8.7 隔离黑盒 stdout artifact。
 - 全局 Dasha/Shadbala Calibration Status 仍未完成：`external_oracle_evidence_validation.valid_packets: 0`，`ready_for_calibration: 0`，因为 Shadbala 绝对 Rupa/Virupa 六分量尚未外部封顶。
 - D1/D9/SAV 高可信；Dasha 精细日期可引用已验证 Dasha-only 样本的局部进度，但不得把全部大运边界、Shadbala 绝对值或全局精度说成已完成外部校准。
 - `production_tuning_allowed: false` 前，禁止为了贴合单份 PDF、单个 JHora 截图或本仓库本地输出而改生产常数。
-- 对普通用户的建议话术：基础落座、D9、SAV 可作为稳定证据；Dasha 精细边界已有两个外部黑盒样本但仍需扩展，Shadbala 绝对值仍需 JHora/PyJHora/公开书例六分量证据后再提升置信度。
+- 对普通用户的建议话术：基础落座、D9、SAV 可作为稳定证据；当前 Dasha-only 目标集已完成外部黑盒验证，但多 Dasha 家族、Antardasha/Pratyantar 细边界仍需扩展；Shadbala 绝对值仍需 JHora/PyJHora/公开书例六分量证据后再提升置信度。
 - 工作流要求：Dasha-only packet 用 `python3 scripts/dasha_oracle_evidence_validator.py --queue-file <queue.json>` 验证；全局校准仍必须跑 `python3 scripts/oracle_evidence_validator.py --queue-file <queue.json>`，两者不可混用。
 
 ### Ashtakavarga 口径冻结（v6.0.8-av-calibration）

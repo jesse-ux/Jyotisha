@@ -12,15 +12,15 @@
     "dasha_external_oracle": {
       "title": "Dasha external oracle",
       "priority": "P0",
-      "status": "active_partial_external_evidence",
-      "current_truth": "Dasha engines are usable and Dasha-only external oracle evidence is partially closed at 2/3 packets; exact start dates, balance periods and sub-period boundaries cannot be called fully closed until the remaining packet and multi-family comparisons pass validation.",
+      "status": "active_target_set_closed",
+      "current_truth": "Dasha engines are usable and the current Dasha-only external oracle target set is closed at 3/3 packets; exact start dates beyond this target set, balance periods, sub-period boundaries and multi-family comparisons still need expansion before claiming software-grade Dasha timing accuracy.",
       "completion_standard": [
         "All current Dasha-only external_verified packets are accepted by scripts/dasha_oracle_evidence_validator.py.",
         "Multiple Dasha families have versioned boundary comparisons.",
         "Differences between local output and external oracle output are documented without production tuning from local data."
       ],
       "forbidden_claims": [
-        "Dasha external oracle alone is complete",
+        "Dasha external oracle alone proves global timing accuracy",
         "Exact Dasha dates are perfectly calibrated",
         "One local chart output proves software-grade timing accuracy"
       ],

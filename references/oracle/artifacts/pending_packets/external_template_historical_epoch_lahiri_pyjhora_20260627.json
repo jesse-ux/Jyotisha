@@ -1,0 +1,51 @@
+{
+  "capture_id": "external_template_historical_epoch_lahiri",
+  "status": "external_verified",
+  "case_id": "template_historical_epoch_lahiri",
+  "birth": {
+    "year": 1800,
+    "month": 1,
+    "day": 1,
+    "hour": 12,
+    "minute": 0,
+    "second": 0,
+    "lat": 28.6139,
+    "lon": 77.209,
+    "tz": 5.5
+  },
+  "settings": {
+    "ayanamsa": "lahiri",
+    "node_mode": "mean"
+  },
+  "required_metadata_fields": [
+    "tool_name",
+    "tool_version_or_url",
+    "capture_date",
+    "source_artifact",
+    "ayanamsa",
+    "node_mode",
+    "timezone",
+    "operator_note"
+  ],
+  "metadata": {
+    "tool_name": "PyJHora",
+    "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
+    "capture_date": "2026-06-27",
+    "source_artifact": "references/oracle/artifacts/pyjhora_historical_epoch_dasha_stdout_20260627.txt",
+    "ayanamsa": "lahiri",
+    "node_mode": "PyJHora default",
+    "timezone": "UTC+05:30",
+    "operator_note": "Black-box stdout from isolated /tmp virtualenv. PyJHora AGPL code was not copied into this repository; only the generated output artifact is stored as external evidence."
+  },
+  "target_placeholders": {
+    "target.vimshottari_start_date": "1787-01-19"
+  },
+  "integrity_checks": {
+    "must_not_come_from_local_engine": true,
+    "requires_external_artifact": true,
+    "requires_status_external_verified_before_calibration": true,
+    "reject_global_shadbala_scaling": false
+  },
+  "promotion_status_after_fill": "external_verified",
+  "operator_goal": "Fill one external Vimshottari start date only."
+}

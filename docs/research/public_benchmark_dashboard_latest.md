@@ -1,6 +1,6 @@
 # Public Jyotish Benchmark Dashboard
 
-Generated: `2026-06-26T16:48:58.727959+00:00`
+Generated: `2026-06-26T17:01:59.939612+00:00`
 
 ## Capability Registry
 
@@ -14,7 +14,7 @@ Generated: `2026-06-26T16:48:58.727959+00:00`
 - valid_packets: `0`
 - ready_for_calibration: `0`
 - production_tuning_allowed: `false`
-- valid_dasha_packets: `2`
+- valid_dasha_packets: `3`
 - total_dasha_packets: `3`
 
 ## Boundary Audit
@@ -30,11 +30,11 @@ Generated: `2026-06-26T16:48:58.727959+00:00`
 
 ## Remaining Gap
 
-Dasha-only external oracle readiness is 2/3; Shadbala absolute values still need component-level external evidence, and public long-term benchmark history is not yet comparable to the strongest global open-source projects.
+Dasha-only external oracle readiness is 3/3; Shadbala absolute values still need component-level external evidence, and public long-term benchmark history is not yet comparable to the strongest global open-source projects.
 
 ## Next Actions
 
-- Fill the next open external JHora/PyJHora packet under references/oracle/artifacts/pending_packets.
+- Fill the next open Tajika/Sahams or Shadbala external packet under references/oracle/artifacts/pending_packets.
 - Run oracle_evidence_validator.py until at least one packet is valid.
 - Run oracle_boundary_audit.py to inspect Dasha/Shadbala deltas without tuning constants.
 - Publish this dashboard after each validated sample batch.

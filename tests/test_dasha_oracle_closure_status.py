@@ -29,7 +29,7 @@ def run_status(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_dasha_oracle_closure_status_identifies_first_shortest_packet() -> None:
+def test_dasha_oracle_closure_status_reports_current_dasha_closure() -> None:
     completed = run_status("--format", "json")
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
@@ -37,21 +37,9 @@ def test_dasha_oracle_closure_status_identifies_first_shortest_packet() -> None:
     assert report["scope"] == "dasha_external_oracle_closure_status"
     assert report["schema_version"] == 1
     assert report["summary"]["dasha_task_count"] == 3
-    assert report["summary"]["external_verified_dasha_tasks"] == 2
-    assert report["summary"]["can_claim_dasha_oracle_closure"] is False
-    assert report["first_priority"]["case_id"] == "template_historical_epoch_lahiri"
-    assert report["first_priority"]["capture_id"] == "external_template_historical_epoch_lahiri"
-    assert report["first_priority"]["required_target_fields"] == ["target.vimshottari_start_date"]
-    assert "metadata.tool_name" in report["first_priority"]["missing_fields"]
-    assert "target.vimshottari_start_date" in report["first_priority"]["missing_fields"]
-    assert report["first_priority"]["missing_groups"]["metadata"]["count"] == 5
-    assert report["first_priority"]["missing_groups"]["target"]["count"] == 1
-    assert report["first_priority"]["prefilled_fields"]["metadata"]["ayanamsa"] == "lahiri"
-    assert report["first_priority"]["prefilled_fields"]["metadata"]["timezone"] == 5.5
-    assert report["first_priority"]["manual_fill_plan"]["status_value"] == "external_verified"
-    assert report["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 6
-    assert report["first_priority"]["apply_command"]
-    assert report["first_priority"]["validate_command"]
+    assert report["summary"]["external_verified_dasha_tasks"] == 3
+    assert report["summary"]["can_claim_dasha_oracle_closure"] is True
+    assert report["first_priority"] is None
 
 
 def test_dasha_oracle_closure_status_markdown_can_be_written(tmp_path: Path) -> None:
@@ -62,29 +50,19 @@ def test_dasha_oracle_closure_status_markdown_can_be_written(tmp_path: Path) -> 
     assert output.exists()
     markdown = output.read_text(encoding="utf-8")
     assert "# Dasha External Oracle Closure Status" in markdown
-    assert "can_claim_dasha_oracle_closure: `false`" in markdown
-    assert "external_template_historical_epoch_lahiri" in markdown
-    assert "target.vimshottari_start_date" in markdown
-    assert "## Missing Summary" in markdown
-    assert "## Prefilled Fields" in markdown
-    assert "## Manual Fill Plan" in markdown
+    assert "can_claim_dasha_oracle_closure: `true`" in markdown
+    assert "none: Dasha-only external oracle closure is complete" in markdown
+    assert "Keep global calibration blocked" in markdown
 
 
 def test_dasha_oracle_closure_status_advances_after_first_packet_is_filled(tmp_path: Path) -> None:
-    oracle_file = tmp_path / "oracle_cases.json"
-    oracle_file.write_text(
-        (ROOT / "references/oracle/dasha_shadbala_oracle_cases.json").read_text(encoding="utf-8"),
-        encoding="utf-8",
-    )
-    packet = ROOT / "references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri_pyjhora_20260627.json"
-    apply_completed = subprocess.run(
+    queue_file = tmp_path / "queue.json"
+    queue_completed = subprocess.run(
         [
             sys.executable,
             "scripts/oracle_collection_queue.py",
             "--oracle-file",
-            str(oracle_file),
-            "--apply-packet",
-            str(packet),
+            "references/oracle/dasha_shadbala_oracle_cases.json",
             "--format",
             "json",
         ],
@@ -94,16 +72,15 @@ def test_dasha_oracle_closure_status_advances_after_first_packet_is_filled(tmp_p
         timeout=60,
         check=False,
     )
-    assert apply_completed.returncode == 0, apply_completed.stderr or apply_completed.stdout
+    assert queue_completed.returncode == 0, queue_completed.stderr or queue_completed.stdout
+    queue_file.write_text(queue_completed.stdout, encoding="utf-8")
 
     completed = subprocess.run(
         [
             sys.executable,
-            "scripts/dasha_oracle_closure_status.py",
-            "--oracle-file",
-            str(oracle_file),
-            "--format",
-            "json",
+            "scripts/dasha_oracle_evidence_validator.py",
+            "--queue-file",
+            str(queue_file),
         ],
         cwd=ROOT,
         text=True,
@@ -114,6 +91,19 @@ def test_dasha_oracle_closure_status_advances_after_first_packet_is_filled(tmp_p
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["external_verified_dasha_tasks"] == 2
-    assert report["first_priority"]["case_id"] == "template_historical_epoch_lahiri"
-    assert report["first_priority"]["missing_fields"]
+    assert report["summary"]["valid_dasha_packets"] == 3
+    assert report["summary"]["all_dasha_packets_external_verified"] is True
+
+
+def test_dasha_oracle_closure_status_has_no_first_priority_after_all_dasha_packets_are_filled() -> None:
+    completed = run_status("--format", "json")
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["summary"]["external_verified_dasha_tasks"] == 3
+    assert report["summary"]["can_claim_dasha_oracle_closure"] is True
+    assert report["first_priority"] is None
+    assert report["next_actions"] == [
+        "Dasha-only external oracle closure is complete for the current target set.",
+        "Keep global calibration blocked until Shadbala and other non-Dasha oracle packets pass validation.",
+    ]

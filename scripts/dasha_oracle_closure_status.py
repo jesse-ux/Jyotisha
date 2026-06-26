@@ -132,35 +132,27 @@ def build_status(oracle_file: str) -> dict[str, Any]:
         task for task in dasha_tasks
         if not _dasha_target_filled(task, required_target_fields)
     ]
-    priority_pool = unverified_dasha_tasks or dasha_tasks
+    dasha_closed = bool(dasha_tasks) and not unverified_dasha_tasks
+    priority_pool = unverified_dasha_tasks if not dasha_closed else []
     priority = next((task for task in priority_pool if task.get("case_id") == FIRST_PRIORITY_CASE_ID), None)
     if priority is None and priority_pool:
         priority = priority_pool[0]
-    if priority is None:
+    if priority is None and not dasha_closed:
         raise RuntimeError("No Dasha target task found")
-
-    queue_packet = priority["evidence_packet"]
-    capture_id = queue_packet["capture_id"]
-    packet_path = f"references/oracle/artifacts/pending_packets/{capture_id}.json"
-    template_path = FIRST_PRIORITY_TEMPLATE_PATH if priority["case_id"] == FIRST_PRIORITY_CASE_ID else packet_path
-    packet = json.loads((ROOT / template_path).read_text(encoding="utf-8"))
-    missing_fields = _metadata_missing(packet) + _target_missing(packet, required_target_fields)
-    missing_groups = _group_missing_fields(missing_fields)
     external_verified = [
         task for task in dasha_tasks
         if _dasha_target_filled(task, required_target_fields)
     ]
-
-    return {
-        "scope": "dasha_external_oracle_closure_status",
-        "schema_version": 1,
-        "summary": {
-            "dasha_task_count": len(dasha_tasks),
-            "external_verified_dasha_tasks": len(external_verified),
-            "can_claim_dasha_oracle_closure": bool(dasha_tasks) and len(external_verified) == len(dasha_tasks),
-            "production_tuning_allowed": False,
-        },
-        "first_priority": {
+    first_priority = None
+    if priority is not None:
+        queue_packet = priority["evidence_packet"]
+        capture_id = queue_packet["capture_id"]
+        packet_path = f"references/oracle/artifacts/pending_packets/{capture_id}.json"
+        template_path = FIRST_PRIORITY_TEMPLATE_PATH if priority["case_id"] == FIRST_PRIORITY_CASE_ID else packet_path
+        packet = json.loads((ROOT / template_path).read_text(encoding="utf-8"))
+        missing_fields = _metadata_missing(packet) + _target_missing(packet, required_target_fields)
+        missing_groups = _group_missing_fields(missing_fields)
+        first_priority = {
             "case_id": priority["case_id"],
             "capture_id": capture_id,
             "packet_path": packet_path,
@@ -179,13 +171,28 @@ def build_status(oracle_file: str) -> dict[str, Any]:
             "artifact_policy": "Save redacted screenshots or stdout snippets under references/oracle/artifacts/.",
             "apply_command": _apply_command(packet_path, oracle_file),
             "validate_command": _validate_command(oracle_file),
+        }
+    next_actions = [
+        "Dasha-only external oracle closure is complete for the current target set.",
+        "Keep global calibration blocked until Shadbala and other non-Dasha oracle packets pass validation.",
+    ] if dasha_closed else [
+        "Open the first priority packet and fill metadata from an external oracle.",
+        "Fill target.vimshottari_start_date only from JHora/PyJHora/book example, not from this repository.",
+        "Set status to external_verified after the artifact path and Dasha target are filled.",
+        "Apply the packet, regenerate the queue, and run oracle_evidence_validator.py.",
+    ]
+
+    return {
+        "scope": "dasha_external_oracle_closure_status",
+        "schema_version": 1,
+        "summary": {
+            "dasha_task_count": len(dasha_tasks),
+            "external_verified_dasha_tasks": len(external_verified),
+            "can_claim_dasha_oracle_closure": bool(dasha_tasks) and len(external_verified) == len(dasha_tasks),
+            "production_tuning_allowed": False,
         },
-        "next_actions": [
-            "Open the first priority packet and fill metadata from an external oracle.",
-            "Fill target.vimshottari_start_date only from JHora/PyJHora/book example, not from this repository.",
-            "Set status to external_verified after the artifact path and Dasha target are filled.",
-            "Apply the packet, regenerate the queue, and run oracle_evidence_validator.py.",
-        ],
+        "first_priority": first_priority,
+        "next_actions": next_actions,
         "boundary": (
             "This board isolates the Dasha shortest path. Shadbala remains a separate absolute-value "
             "closure task and must not block collecting the first Dasha boundary date."
@@ -204,6 +211,24 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- can_claim_dasha_oracle_closure: `{str(summary['can_claim_dasha_oracle_closure']).lower()}`",
         f"- production_tuning_allowed: `{str(summary['production_tuning_allowed']).lower()}`",
         "",
+    ]
+    if first is None:
+        lines.extend(
+            [
+                "## First Priority Packet",
+                "",
+                "- none: Dasha-only external oracle closure is complete for the current target set.",
+                "",
+                "## Next Actions",
+                "",
+            ]
+        )
+        lines.extend(f"- {item}" for item in report["next_actions"])
+        lines.extend(["", "## Boundary", "", report["boundary"], ""])
+        return "\n".join(lines)
+
+    lines.extend(
+        [
         "## First Priority Packet",
         "",
         f"- case_id: `{first['case_id']}`",
@@ -221,7 +246,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- status: `{first['prefilled_fields']['status']}`",
         f"- promotion_status_after_fill: `{first['prefilled_fields']['promotion_status_after_fill']}`",
         "",
-    ]
+        ]
+    )
     if first["prefilled_fields"]["metadata"]:
         lines.append("- metadata:")
         lines.append("")

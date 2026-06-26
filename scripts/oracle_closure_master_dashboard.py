@@ -35,6 +35,16 @@ def _front_from_status(name: str, status: dict[str, Any], task_key: str, verifie
     first = status["first_priority"]
     task_count = int(summary[task_key])
     verified = int(summary[verified_key])
+    if first is None:
+        return {
+            "front": name,
+            "task_count": task_count,
+            "external_verified_tasks": verified,
+            "open_tasks": task_count - verified,
+            "can_claim_closure": bool(summary[claim_key]),
+            "production_tuning_allowed": bool(summary.get("production_tuning_allowed", False)),
+            "first_priority": None,
+        }
     missing_fields = first.get("missing_fields", [])
     return {
         "front": name,
@@ -120,7 +130,7 @@ def build_dashboard(dasha_oracle_file: str, tajika_oracle_file: str) -> dict[str
                 "apply_command": front["first_priority"]["apply_command"],
             }
             for front in fronts.values()
-            if not front["can_claim_closure"]
+            if not front["can_claim_closure"] and front["first_priority"] is not None
         ],
         key=lambda item: item["missing_field_count"],
     )
@@ -167,6 +177,12 @@ def render_markdown(report: dict[str, Any]) -> str:
     for key in ["dasha", "tajika_sahams", "shadbala"]:
         front = report["fronts"][key]
         first = front["first_priority"]
+        if first is None:
+            lines.append(
+                f"| `{key}` | {front['task_count']} | {front['external_verified_tasks']} | `complete` | "
+                "0 | 0 | 0 | 0 |"
+            )
+            continue
         missing_groups = first.get("missing_groups", {})
         manual_fill_plan = first.get("manual_fill_plan", {})
         lines.append(

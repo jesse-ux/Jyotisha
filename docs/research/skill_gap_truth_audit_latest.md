@@ -1,6 +1,6 @@
 # Jyotish Skill Gap Truth Audit
 
-Generated: `2026-06-26T16:49:33.796913+00:00`
+Generated: `2026-06-26T17:01:36.751861+00:00`
 
 ## Public Claim Boundary
 
@@ -19,8 +19,8 @@ Generated: `2026-06-26T16:49:33.796913+00:00`
 ## External Oracle Closure
 
 - total_tasks: `12`
-- external_verified_tasks: `2`
-- open_tasks: `10`
+- external_verified_tasks: `3`
+- open_tasks: `9`
 - can_claim_global_oracle_closure: `false`
 
 ## Remaining Hard Fronts
@@ -29,8 +29,8 @@ Generated: `2026-06-26T16:49:33.796913+00:00`
 
 - id: `dasha_external_oracle`
 - priority: `P0`
-- status: `active_partial_external_evidence`
-- current_truth: Dasha engines are usable and Dasha-only external oracle evidence is partially closed at 2/3 packets; exact start dates, balance periods and sub-period boundaries cannot be called fully closed until the remaining packet and multi-family comparisons pass validation.
+- status: `active_target_set_closed`
+- current_truth: Dasha engines are usable and the current Dasha-only external oracle target set is closed at 3/3 packets; exact start dates beyond this target set, balance periods, sub-period boundaries and multi-family comparisons still need expansion before claiming software-grade Dasha timing accuracy.
 
 ### Long-term public benchmark
 

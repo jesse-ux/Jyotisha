@@ -111,7 +111,7 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
         },
         "global_first_gap": global_first_gap,
         "next_actions": [
-            "Fill the next open external JHora/PyJHora packet under references/oracle/artifacts/pending_packets.",
+            "Fill the next open Tajika/Sahams or Shadbala external packet under references/oracle/artifacts/pending_packets.",
             "Run oracle_evidence_validator.py until at least one packet is valid.",
             "Run oracle_boundary_audit.py to inspect Dasha/Shadbala deltas without tuning constants.",
             "Publish this dashboard after each validated sample batch.",
