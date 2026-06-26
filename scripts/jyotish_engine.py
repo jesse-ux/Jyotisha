@@ -502,6 +502,37 @@ def output_table(command, data):
         )
         print(tabulate(rows, headers=['Kuta', 'Score'], tablefmt='github'))
         return
+    if command == 'ashtakavarga':
+        sav = data.get('sav', {}) if isinstance(data, dict) else {}
+        assessment = sav.get('assessment', []) if isinstance(sav, dict) else []
+        bav_validation = data.get('bav_validation', []) if isinstance(data, dict) else []
+        sign_rows = []
+        for item in assessment:
+            sign_rows.append([
+                item.get('sign', ''),
+                item.get('score', ''),
+                item.get('level', ''),
+            ])
+        validation_rows = []
+        for item in bav_validation:
+            validation_rows.append([
+                item.get('planet', ''),
+                item.get('actual', ''),
+                item.get('expected', ''),
+                item.get('status', ''),
+            ])
+        print(f"Ashtakavarga Method: {data.get('method', '')}")
+        print(
+            f"SAV Total: {sav.get('total', '')}/{sav.get('expected_total', '')} | "
+            f"Valid: {sav.get('valid', '')} | "
+            f"Strongest Signs: {', '.join(data.get('strongest_signs', []))}"
+        )
+        print(tabulate(sign_rows, headers=['Sign', 'Score', 'Level'], tablefmt='github'))
+        if validation_rows:
+            print()
+            print("BAV Validation:")
+            print(tabulate(validation_rows, headers=['Planet', 'Actual', 'Expected', 'Status'], tablefmt='github'))
+        return
     output_json(data)
 
 
@@ -4589,6 +4620,7 @@ def main():
     # 10. ashtakavarga (v3.4新增)
     p = sub.add_parser('ashtakavarga', help='Ashtakavarga八分法计算')
     _add_chart_args(p)
+    p.add_argument('--table', action='store_true', help='以 ASCII 表格输出 SAV 总表与 BAV 校验')
 
     # 10b. kp (v6.9.10新增)
     p = sub.add_parser('kp', help='KP Krishnamurti Paddhati 完整分析（Sublord+SubSub+ABCD Significator）')

@@ -292,6 +292,19 @@ def test_ashtakavarga_cli_keeps_sav_invariant() -> None:
     assert result["all_bav_valid"] is True
 
 
+def test_ashtakavarga_table_mode_prints_readable_ascii_table() -> None:
+    output = run_engine_text("ashtakavarga", *BASE_BIRTH_ARGS, "--table")
+
+    assert "Ashtakavarga Method" in output
+    assert "SAV Total" in output
+    assert "Strongest Signs" in output
+    assert "Sign" in output
+    assert "Score" in output
+    assert "Level" in output
+    assert "Sagittarius" in output
+    assert "Aquarius" in output
+
+
 def test_audit_capabilities_cli_validates_registry() -> None:
     result = run_engine("audit-capabilities", "--mode", "validate")
     assert result.get("valid") is True
