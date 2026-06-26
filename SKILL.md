@@ -13,6 +13,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 > **执行总控**：`references/quick-reference-guide.md`
 > **严格路由**：`references/strict-workflow-router.md`（涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`
+> **文章级细节模板**：`references/interpretation_template_registry.json` + `scripts/validate_interpretation_templates.py`
 
 ## v6.9.14 核心能力
 
@@ -220,6 +221,37 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | **现代解读** | 现代措辞映射、现代生活场景、常见误判纠错 | `modern-language-guide.md` `common-misconceptions.md` |
 | **实战智慧** | ⭐反教条主义经验精华（全球占星师真实案例反馈总结） | `practitioner-wisdom-anti-dogma.md` |
 | **验证与错题** | 深度数据审计、技法缺陷与修复、推运反思、15+名人验证案例 | `audit-*` `lessons-learned-*` `verified-celebrity-cases-*` |
+
+## 文章级细节模板入口（v6.9.17-template-registry）
+
+用户问到“吉祥天女/财富点、Yogi Point、娄宿 Ashwini 天赋、上升点度数定位、紧密合相、RTN/D9、Bhrigu Pada、Tithi Lord、Pancha Pakshi/Swara”等细颗粒技法时，不得临场凭记忆发挥，也不得把网上文章断语直接当权威。
+
+必须先查：
+
+```bash
+python3 scripts/validate_interpretation_templates.py --format markdown
+```
+
+注册表真源：
+
+`references/interpretation_template_registry.json`
+
+当前已冻结 6 个可复用模板：
+
+1. `yogi_asc_tight_orb_wealth`：Yogi Point / 上升度数 / `<1°` 紧密合相 / 财富激活
+2. `ashwini_talent_profile`：Ashwini / Ketu 系星宿 / Abhijit 择时边界
+3. `rtn_high_order_d9`：Rashi Tulya Navamsa / 高阶 D9 异象
+4. `bhrigu_pada_all_event`：Bhrigu Pada / Arudha Pada 全事件推进
+5. `tithi_lord_relationship`：Tithi Lord 关系与情绪节奏
+6. `pancha_pakshi_swara_boundary`：Pancha Pakshi / Swara 择时边界
+
+使用规则：
+
+- 这些模板是“细节解释层”，不能替代 D1/D9/Dasha/Transit/相关分盘。
+- `<1°` 紧密合相只能提高敏感度或置信度，不能单独断财富、婚姻、事故或成就。
+- Ashwini/Abhijit/Ketu 星宿只能作为天赋、行动风格或择时偏好，不可单独断职业、财富或灵性高低。
+- Bhrigu Pada / RTN / Tithi Lord / Pancha Pakshi 必须作为辅助确认层；若没有主承诺和推运激活，输出置信度不得超过 C。
+- 所有文章/课程/网上说法默认归入 B/C 级线索，必须经过注册表中的 `required_cross_checks` 与 `forbidden_claims` 过滤。
 
 ## 当前最硬的未闭环点
 

@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "scope": "jyotish_interpretation_template_registry",
+  "purpose": "Skill-level high-granularity interpretation templates distilled from local references and user-supplied article clues. These templates are guarded by source levels, cross-checks, confidence ceilings and forbidden claims.",
+  "global_rules": [
+    "Do not turn online article claims into hard predictions without D1/Varga/Dasha/Transit cross-checks.",
+    "Use these templates after the strict workflow router has established the relevant promise and timing layer.",
+    "Keep personal user data out of persistent skill files and public repositories.",
+    "Treat JHora/PyJHora as external oracle sources only; do not copy incompatible licensed implementations."
+  ],
+  "templates": {
+    "yogi_asc_tight_orb_wealth": {
+      "title": "Yogi Point / Ascendant Degree / Tight Orb Wealth Activation",
+      "status": "frozen_template",
+      "authority_level": "A/B/C layered",
+      "domain": ["wealth", "lagna", "panchanga", "tight_orb"],
+      "source_refs": [
+        "references/yogi-asc-tight-orb-wealth-freeze-guide.md",
+        "references/yogi-avayogi-system.md",
+        "scripts/aspects.py",
+        "scripts/special_lagnas.py"
+      ],
+      "trigger_patterns": [
+        "财富点",
+        "吉祥天女财富点",
+        "Yogi Point",
+        "上升点度数定位",
+        "紧密合相",
+        "1度内合相"
+      ],
+      "required_cross_checks": [
+        "D1 wealth promise: 2H/11H/5H/9H and their lords",
+        "Dhana/Lakshmi Yoga and Jupiter/Venus support",
+        "D2, D9 and D10 confirmation when wealth is career-linked",
+        "Dasha and transit activation of Yogi planet, Duplicate Yogi or wealth lords",
+        "Avayogi damage check before upgrading confidence"
+      ],
+      "confidence_ceiling": "B unless wealth promise, varga support and timing activation all agree; C when only Yogi/tight-orb signal exists.",
+      "forbidden_claims": [
+        "Yogi Point conjunct Lagna guarantees wealth",
+        "A tight orb alone proves millionaire status",
+        "Gemstone/remedy guarantees money"
+      ],
+      "safe_output_patterns": [
+        "Yogi Point can refine the prosperity activation channel after the main wealth promise is established.",
+        "A <1° contact is a sensitivity amplifier, not an independent wealth promise.",
+        "Avayogi contacts should be framed as leakage or friction to manage, not fatalism."
+      ]
+    },
+    "ashwini_talent_profile": {
+      "title": "Ashwini / Ketu Nakshatra Talent And Action Style",
+      "status": "frozen_template",
+      "authority_level": "A/B/C layered",
+      "domain": ["nakshatra", "talent", "career", "muhurta"],
+      "source_refs": [
+        "references/ashwini-abhijit-ketu-nakshatra-freeze-guide.md",
+        "references/nakshatra_deities.md",
+        "references/nakshatra-chinese-quick-ref.md",
+        "scripts/kalachakra_dasha.py"
+      ],
+      "trigger_patterns": [
+        "娄宿",
+        "Ashwini",
+        "Ketu星宿",
+        "天赋特征",
+        "Abhijit",
+        "快速启动"
+      ],
+      "required_cross_checks": [
+        "Placement of Moon, Lagna, Sun, AK, AmK, 10L or 1L in Ashwini/Magha/Mula",
+        "Ketu condition, dispositor and Dasha activation",
+        "Mars condition because Ashwini is in Aries",
+        "D9, D10 and D24 support for talent-to-career conversion",
+        "Panchanga context for electional use"
+      ],
+      "confidence_ceiling": "B for career style when D10/Dasha support exists; C for personality color only.",
+      "forbidden_claims": [
+        "Ashwini alone makes someone a doctor",
+        "Ashwini guarantees wealth or spiritual status",
+        "Ketu nakshatra days are always bad"
+      ],
+      "safe_output_patterns": [
+        "Ashwini favors quick response, repair, healing, mobility and pioneer behavior when the chart supports it.",
+        "Ketu nakshatra days are task-sensitive: useful for cutting, repair and root-work; cautious for pure stability commitments.",
+        "Abhijit is mainly an electional support window, not a standalone natal destiny marker."
+      ]
+    },
+    "rtn_high_order_d9": {
+      "title": "Rashi Tulya Navamsa And High-Order D9 Anomaly Reading",
+      "status": "frozen_template",
+      "authority_level": "A/B/C layered",
+      "domain": ["d9", "navamsa", "relationship", "deep_motive"],
+      "source_refs": [
+        "references/rtn-high-order-d9-freeze-execution-guide.md",
+        "references/rashi-tulya-navamsa-root-impulse.md",
+        "references/high-order-d9-execution-guide.md",
+        "scripts/rashi_tulya_navamsa.py"
+      ],
+      "trigger_patterns": [
+        "RTN",
+        "Rashi Tulya Navamsa",
+        "高阶D9",
+        "D9异象",
+        "Navamsa返照"
+      ],
+      "required_cross_checks": [
+        "Standard D1 and D9 promise first",
+        "Vargottama and Pushkara check before RTN weighting",
+        "D9 7L, Venus/Jupiter, DK and D9 Lagna condition",
+        "Mapped D1 house condition and event-relevant Varga",
+        "Dasha/transit activation before event claims"
+      ],
+      "confidence_ceiling": "B for motive/inner-pattern interpretation; C for timing unless Dasha and event Varga agree.",
+      "forbidden_claims": [
+        "RTN alone proves divorce, death or disaster",
+        "Yama/Preta/Pisacha labels can be used as deterministic outcomes",
+        "D9 anomaly overrides D1 promise"
+      ],
+      "safe_output_patterns": [
+        "RTN explains how Navamsa motives project into D1 life fields.",
+        "High-order D9 anomalies are warnings that require timing confirmation.",
+        "Use RTN as a depth layer after ordinary D1/D9 analysis, not as the first judgment."
+      ]
+    },
+    "bhrigu_pada_all_event": {
+      "title": "Bhrigu Pada / Arudha Pada All-Event Progression Template",
+      "status": "frozen_template",
+      "authority_level": "A/B/C layered",
+      "domain": ["arudha", "bhrigu", "event", "timing"],
+      "source_refs": [
+        "references/bhrigu-pada-all-event-freeze-execution-guide.md",
+        "references/bhrigu-pada-dasha-marriage-counting.md",
+        "scripts/bhrigu_pada_dasha.py",
+        "scripts/jaimini.py",
+        "scripts/special_lagnas.py"
+      ],
+      "trigger_patterns": [
+        "Bhrigu Pada",
+        "Arudha Pada",
+        "A10",
+        "A2",
+        "UL",
+        "全事件推进"
+      ],
+      "required_cross_checks": [
+        "D1 promise for the event domain",
+        "Select correct Pada: A2/A5/A7/A8/A10/A11/UL",
+        "Pada lord condition and relevant Varga",
+        "Vimshottari/Chara/transit convergence",
+        "Past-event verification before personal rule upgrade"
+      ],
+      "confidence_ceiling": "B as auxiliary event confirmation; C if used without Dasha/transit convergence.",
+      "forbidden_claims": [
+        "Bhrigu Pada Dasha alone proves an event",
+        "A single progression proves exact date",
+        "Marriage-counting rules can be generalized to all charts without verification"
+      ],
+      "safe_output_patterns": [
+        "Use the relevant Arudha Pada to identify how an event becomes visible in the world.",
+        "Treat Bhrigu Pada as a confirmation/progression layer, not a standalone prediction engine.",
+        "Upgrade only after Dasha, transit and event Varga agree."
+      ]
+    },
+    "tithi_lord_relationship": {
+      "title": "Tithi Lord Relationship And Emotional Rhythm Template",
+      "status": "frozen_template",
+      "authority_level": "B/C guarded",
+      "domain": ["tithi", "relationship", "moon_sun", "panchanga"],
+      "source_refs": [
+        "references/tithi-lord-freeze-execution-guide.md",
+        "references/tithi-lord-relationship-system.md"
+      ],
+      "trigger_patterns": [
+        "Tithi Lord",
+        "月相主",
+        "关系节奏",
+        "情绪周期"
+      ],
+      "required_cross_checks": [
+        "D1/D9 relationship promise",
+        "Moon, Venus/Jupiter and 7L condition",
+        "Dasha activation of Tithi lord or relationship significators",
+        "Transit Moon/Jupiter/Saturn trigger only inside supported windows"
+      ],
+      "confidence_ceiling": "C for standalone relationship judgment; B only when D1/D9/Dasha agree.",
+      "forbidden_claims": [
+        "Tithi Lord alone decides marriage fate",
+        "One lunar-day trait proves compatibility"
+      ],
+      "safe_output_patterns": [
+        "Tithi Lord can describe emotional rhythm and response style after relationship promise is checked.",
+        "Use it to refine timing texture, not to replace 7H/D9/Dasha."
+      ]
+    },
+    "pancha_pakshi_swara_boundary": {
+      "title": "Pancha Pakshi / Swara Boundary Template",
+      "status": "covered_template",
+      "authority_level": "B/C guarded",
+      "domain": ["tamil", "muhurta", "panchanga", "action_timing"],
+      "source_refs": [
+        "references/pancha-pakshi-nakshatra-systems.md"
+      ],
+      "trigger_patterns": [
+        "Pancha Pakshi",
+        "五鸟",
+        "Swara",
+        "行动窗口",
+        "择时细节"
+      ],
+      "required_cross_checks": [
+        "Primary Muhurta factors: Tithi, Vara, Nakshatra, Yoga, Karana",
+        "Moon strength and Tarabala/Chandrabala when available",
+        "Natal Dasha/transit relevance for personal actions",
+        "Avoid replacing core Muhurta with Pakshi/Swara alone"
+      ],
+      "confidence_ceiling": "C as auxiliary electional texture; B only with full Muhurta support.",
+      "forbidden_claims": [
+        "Pakshi/Swara alone makes a time auspicious",
+        "One folk-timing layer overrides bad Moon or Dasha"
+      ],
+      "safe_output_patterns": [
+        "Use Pakshi/Swara as a final action-timing refinement after ordinary Muhurta checks.",
+        "Frame weak Pakshi/Swara periods as caution or lower efficiency, not unavoidable failure."
+      ]
+    }
+  }
+}
