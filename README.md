@@ -225,6 +225,17 @@ python3 scripts/dasha_oracle_closure_status.py \
 
 当前第一优先级是 `external_template_steve_jobs_dasha_lahiri`。该状态板只要求 `target.vimshottari_start_date` 和外部证据 metadata，不要求同时填完 Shadbala 七曜六分量；这样可以先完成 Dasha oracle 的第一条闭环，再单独推进 Shadbala 绝对值闭环。
 
+Shadbala 外部绝对值闭环使用独立状态板，专门追踪七曜的六分量与总 Rupa：
+
+```bash
+python3 scripts/shadbala_oracle_closure_status.py \
+  --oracle-file references/oracle/dasha_shadbala_oracle_cases.json \
+  --format markdown \
+  --output docs/benchmark/shadbala_external_absolute_value_closure_status.md
+```
+
+当前第一优先级是 `external_template_redacted_place_shadbala_raman`。必须填写 Sun/Moon/Mars/Mercury/Jupiter/Venus/Saturn 的 `sthana`、`dig`、`kala`、`chesta`、`naisargika`、`drik`、`total_rupa`；验证器会检查分量和总分，不允许用一个全局倍率把本地输出硬缩放成外部值。
+
 Tajika/Sahams 年运系统使用独立的外部 oracle 队列，专门追踪 Varshaphala、太阳回归、Muntha、Year Lord、Mudda Dasha、Sahams 与 Tajika Yogas 的外部验证状态：
 
 ```bash
