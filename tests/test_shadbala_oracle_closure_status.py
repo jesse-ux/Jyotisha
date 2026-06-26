@@ -43,8 +43,12 @@ def test_shadbala_oracle_closure_status_identifies_first_absolute_value_packet()
     assert report["summary"]["required_components"] == ["sthana", "dig", "kala", "chesta", "naisargika", "drik", "total_rupa"]
     assert report["first_priority"]["case_id"] == "template_redacted_place_shadbala_raman"
     assert report["first_priority"]["capture_id"] == "external_template_redacted_place_shadbala_raman"
-    assert report["first_priority"]["required_target_fields"] == ["target.shadbala_components"]
+    assert report["first_priority"]["required_target_fields"] == [
+        "target.moon_sidereal_longitude_deg",
+        "target.shadbala_components",
+    ]
     assert "metadata.tool_name" in report["first_priority"]["missing_fields"]
+    assert "target.moon_sidereal_longitude_deg" in report["first_priority"]["missing_fields"]
     assert "target.shadbala_components.Sun.sthana" in report["first_priority"]["missing_fields"]
     assert "target.shadbala_components.Saturn.total_rupa" in report["first_priority"]["missing_fields"]
     assert report["first_priority"]["reject_global_scaling"] is True

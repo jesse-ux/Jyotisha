@@ -45,6 +45,7 @@
       "node_mode": "mean"
     },
     "required_target_fields": [
+      "target.moon_sidereal_longitude_deg",
       "target.shadbala_components"
     ],
     "missing_fields": [
@@ -53,6 +54,7 @@
       "metadata.capture_date",
       "metadata.operator_note",
       "metadata.source_artifact",
+      "target.moon_sidereal_longitude_deg",
       "target.shadbala_components.Sun.sthana",
       "target.shadbala_components.Sun.dig",
       "target.shadbala_components.Sun.kala",
@@ -114,6 +116,7 @@
     "validate_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --format json > /tmp/jyotish_oracle_queue_filled.json && python3 scripts/oracle_evidence_validator.py --queue-file /tmp/jyotish_oracle_queue_filled.json"
   },
   "next_actions": [
+    "Fill any supporting target fields on the same oracle row, such as Moon sidereal longitude, before validator review.",
     "Fill all seven planets with Sthana, Dig, Kala, Chesta, Naisargika, Drik and total_rupa from an external oracle.",
     "Do not use a single global multiplier to force totals; validator checks component sums.",
     "Set status to external_verified only after artifact path and all Shadbala targets are filled.",

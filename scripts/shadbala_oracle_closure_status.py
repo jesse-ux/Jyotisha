@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 FIRST_PRIORITY_CASE_ID = "template_redacted_place_shadbala_raman"
 SHADBALA_TARGET_FIELD = "target.shadbala_components"
+SUPPORTING_TARGET_FIELDS = ["target.moon_sidereal_longitude_deg"]
 REQUIRED_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
 REQUIRED_COMPONENTS = ["sthana", "dig", "kala", "chesta", "naisargika", "drik", "total_rupa"]
 
@@ -69,6 +70,18 @@ def _shadbala_missing(packet: dict[str, Any]) -> list[str]:
     return missing
 
 
+def _supporting_missing(packet: dict[str, Any], target_fields: list[str]) -> list[str]:
+    placeholders = packet.get("target_placeholders", {})
+    missing: list[str] = []
+    for field in SUPPORTING_TARGET_FIELDS:
+        if field not in target_fields:
+            continue
+        value = placeholders.get(field)
+        if value is None or value == "" or value == [] or value == {}:
+            missing.append(field)
+    return missing
+
+
 def _apply_command(packet_path: str, oracle_file: str) -> str:
     return (
         "python3 scripts/oracle_collection_queue.py "
@@ -101,10 +114,16 @@ def build_status(oracle_file: str) -> dict[str, Any]:
     packet = priority["evidence_packet"]
     capture_id = packet["capture_id"]
     packet_path = f"references/oracle/artifacts/pending_packets/{capture_id}.json"
-    missing_fields = _metadata_missing(packet) + _shadbala_missing(packet)
+    target_fields = priority.get("target_fields", [])
+    supporting_target_fields = [field for field in SUPPORTING_TARGET_FIELDS if field in target_fields]
+    missing_fields = _metadata_missing(packet) + _supporting_missing(packet, target_fields) + _shadbala_missing(packet)
     external_verified = [
         task for task in shadbala_tasks
-        if task.get("status") == "external_verified" and not _shadbala_missing(task.get("evidence_packet", {}))
+        if (
+            task.get("status") == "external_verified"
+            and not _supporting_missing(task.get("evidence_packet", {}), task.get("target_fields", []))
+            and not _shadbala_missing(task.get("evidence_packet", {}))
+        )
     ]
 
     return {
@@ -124,7 +143,7 @@ def build_status(oracle_file: str) -> dict[str, Any]:
             "packet_path": packet_path,
             "birth": priority.get("birth", {}),
             "settings": priority.get("settings", {}),
-            "required_target_fields": [SHADBALA_TARGET_FIELD],
+            "required_target_fields": supporting_target_fields + [SHADBALA_TARGET_FIELD],
             "missing_fields": missing_fields,
             "external_sources": [
                 "JHora Shadbala component table screenshot",
@@ -137,6 +156,7 @@ def build_status(oracle_file: str) -> dict[str, Any]:
             "validate_command": _validate_command(oracle_file),
         },
         "next_actions": [
+            "Fill any supporting target fields on the same oracle row, such as Moon sidereal longitude, before validator review.",
             "Fill all seven planets with Sthana, Dig, Kala, Chesta, Naisargika, Drik and total_rupa from an external oracle.",
             "Do not use a single global multiplier to force totals; validator checks component sums.",
             "Set status to external_verified only after artifact path and all Shadbala targets are filled.",

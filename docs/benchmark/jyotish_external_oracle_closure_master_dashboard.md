@@ -1,6 +1,6 @@
 # Jyotish External Oracle Closure Master Dashboard
 
-Generated: `2026-06-26T10:13:07.673185+00:00`
+Generated: `2026-06-26T10:31:38.662077+00:00`
 
 ## Summary
 
@@ -16,7 +16,7 @@ Generated: `2026-06-26T10:13:07.673185+00:00`
 |---|---:|---:|---|---:|
 | `dasha` | 3 | 0 | `template_steve_jobs_dasha_lahiri` | 6 |
 | `tajika_sahams` | 5 | 0 | `template_steve_jobs_varshaphala_1984_lahiri` | 15 |
-| `shadbala` | 4 | 0 | `template_redacted_place_shadbala_raman` | 54 |
+| `shadbala` | 4 | 0 | `template_redacted_place_shadbala_raman` | 55 |
 
 ## Next Action Order
 
@@ -44,7 +44,7 @@ python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/ta
 
 - case_id: `template_redacted_place_shadbala_raman`
 - capture_id: `external_template_redacted_place_shadbala_raman`
-- missing_field_count: `54`
+- missing_field_count: `55`
 
 ```bash
 python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json --format json

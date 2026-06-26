@@ -224,7 +224,7 @@ python3 scripts/oracle_closure_master_dashboard.py \
   --output docs/benchmark/jyotish_external_oracle_closure_master_dashboard.md
 ```
 
-当前总控看板固定输出 `total_tasks: 12`、`external_verified_tasks: 0`、`can_claim_global_oracle_closure: false`。推荐执行顺序是先填 Dasha 第一条 6 个字段，再填 Tajika/Sahams 第一条 15 个字段，最后填 Shadbala 第一条 54 个字段。
+当前总控看板固定输出 `total_tasks: 12`、`external_verified_tasks: 0`、`can_claim_global_oracle_closure: false`。推荐执行顺序是先填 Dasha 第一条 6 个字段，再填 Tajika/Sahams 第一条 15 个字段，最后填 Shadbala 第一条 55 个字段。
 
 Dasha 外部 oracle 最短闭环状态板用于把“大运外部真值”从 Shadbala 绝对值大包中拆出来，优先推进第一条可验证边界日期：
 
@@ -246,7 +246,7 @@ python3 scripts/shadbala_oracle_closure_status.py \
   --output docs/benchmark/shadbala_external_absolute_value_closure_status.md
 ```
 
-当前第一优先级是 `external_template_redacted_place_shadbala_raman`。必须填写 Sun/Moon/Mars/Mercury/Jupiter/Venus/Saturn 的 `sthana`、`dig`、`kala`、`chesta`、`naisargika`、`drik`、`total_rupa`；验证器会检查分量和总分，不允许用一个全局倍率把本地输出硬缩放成外部值。
+当前第一优先级是 `external_template_redacted_place_shadbala_raman`。除了同一 oracle 行里的 `target.moon_sidereal_longitude_deg`，还必须填写 Sun/Moon/Mars/Mercury/Jupiter/Venus/Saturn 的 `sthana`、`dig`、`kala`、`chesta`、`naisargika`、`drik`、`total_rupa`；验证器会检查分量和总分，不允许用一个全局倍率把本地输出硬缩放成外部值。
 
 Tajika/Sahams 年运系统使用独立的外部 oracle 队列，专门追踪 Varshaphala、太阳回归、Muntha、Year Lord、Mudda Dasha、Sahams 与 Tajika Yogas 的外部验证状态：
 
