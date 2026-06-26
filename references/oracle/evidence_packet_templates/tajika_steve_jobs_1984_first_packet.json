@@ -1,0 +1,66 @@
+{
+  "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
+  "status": "draft",
+  "case_id": "template_steve_jobs_varshaphala_1984_lahiri",
+  "operator_goal": "Fill one external Varshaphala/Tajika annual chart packet.",
+  "birth": {
+    "year": 1955,
+    "month": 2,
+    "day": 24,
+    "hour": 19,
+    "minute": 15,
+    "second": 0,
+    "lat": 37.7749,
+    "lon": -122.4194,
+    "tz": -8
+  },
+  "settings": {
+    "ayanamsa": "lahiri",
+    "node_mode": "true",
+    "annual_system": "varshaphala",
+    "target_year": 1984
+  },
+  "required_metadata_fields": [
+    "tool_name",
+    "tool_version_or_url",
+    "capture_date",
+    "source_artifact",
+    "ayanamsa",
+    "node_mode",
+    "timezone",
+    "annual_system",
+    "target_year",
+    "operator_note"
+  ],
+  "metadata": {
+    "tool_name": "",
+    "tool_version_or_url": "",
+    "capture_date": "",
+    "source_artifact": "references/oracle/artifacts/",
+    "ayanamsa": "Lahiri",
+    "node_mode": "true node",
+    "timezone": "UTC-08:00",
+    "annual_system": "Varshaphala/Tajika",
+    "target_year": 1984,
+    "operator_note": ""
+  },
+  "target_placeholders": {
+    "target.solar_return_datetime": null,
+    "target.varsha_lagna_deg": null,
+    "target.muntha_sign": null,
+    "target.year_lord": null,
+    "target.mudda_dasha_first_lord": null,
+    "target.sahams.punya_saham": null,
+    "target.sahams.rajya_saham": null,
+    "target.sahams.vivah_saham": null,
+    "target.tajika_yogas": null,
+    "target.source_artifact": null
+  },
+  "integrity_checks": {
+    "must_not_come_from_local_engine": true,
+    "requires_external_artifact": true,
+    "requires_status_external_verified_before_calibration": true,
+    "requires_solar_return_convention": true
+  },
+  "promotion_status_after_fill": "external_verified"
+}
