@@ -36,7 +36,7 @@
     },
     {
       "id": "template_steve_jobs_dasha_lahiri",
-      "status": "template_only",
+      "status": "external_verified",
       "source": "JHora/PyJHora/Manual screenshot",
       "privacy": "public_figure_template",
       "birth": {
@@ -55,10 +55,24 @@
         "node_mode": "true"
       },
       "target": {
-        "vimshottari_start_date": null,
+        "vimshottari_start_date": "1939-03-22",
         "shadbala_components": null
       },
-      "verification_note": "Verify Dasha boundaries from an external oracle before promotion to external_verified."
+      "verification_note": "Verify Dasha boundaries from an external oracle before promotion to external_verified.",
+      "evidence_packet": {
+        "capture_id": "external_template_steve_jobs_dasha_lahiri",
+        "status": "external_verified",
+        "metadata": {
+          "tool_name": "PyJHora",
+          "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
+          "capture_date": "2026-06-27",
+          "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_dasha_stdout_20260627.txt",
+          "ayanamsa": "lahiri",
+          "node_mode": "PyJHora default",
+          "timezone": "UTC-08:00",
+          "operator_note": "Black-box stdout from isolated /tmp virtualenv. PyJHora AGPL code was not copied into this repository; only the generated output artifact is stored as external evidence."
+        }
+      }
     },
     {
       "id": "template_redacted_place_shadbala_raman",
@@ -125,7 +139,7 @@
         "minute": 0,
         "second": 0,
         "lat": 28.6139,
-        "lon": 77.2090,
+        "lon": 77.209,
         "tz": 5.5
       },
       "settings": {

@@ -1,6 +1,6 @@
 # Jyotish Skill Gap Truth Audit
 
-Generated: `2026-06-26T16:09:34.006081+00:00`
+Generated: `2026-06-26T16:35:14.991645+00:00`
 
 ## Public Claim Boundary
 
@@ -19,8 +19,8 @@ Generated: `2026-06-26T16:09:34.006081+00:00`
 ## External Oracle Closure
 
 - total_tasks: `12`
-- external_verified_tasks: `0`
-- open_tasks: `12`
+- external_verified_tasks: `1`
+- open_tasks: `11`
 - can_claim_global_oracle_closure: `false`
 
 ## Remaining Hard Fronts

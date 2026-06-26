@@ -49,6 +49,15 @@ def _oracle_readiness(oracle_file: str) -> dict[str, Any]:
     }
 
 
+def _dasha_readiness(oracle_file: str) -> dict[str, Any]:
+    queue = _run_json([PYTHON, "scripts/oracle_collection_queue.py", "--oracle-file", oracle_file, "--format", "json"])
+    with tempfile.NamedTemporaryFile("w+", suffix=".json", encoding="utf-8", delete=True) as fh:
+        json.dump(queue, fh, ensure_ascii=False)
+        fh.flush()
+        validation = _run_json([PYTHON, "scripts/dasha_oracle_evidence_validator.py", "--queue-file", fh.name])
+    return validation["summary"]
+
+
 def _boundary_audit(oracle_file: str) -> dict[str, Any]:
     report = _run_json([PYTHON, "scripts/oracle_boundary_audit.py", "--oracle-file", oracle_file])
     summary = report["summary"]
@@ -68,10 +77,12 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
     capability = _run_json([PYTHON, "scripts/audit_capabilities.py", "--mode", "validate"])
     oracle = _oracle_readiness(oracle_file)
     boundary = _boundary_audit(oracle_file)
+    dasha = _dasha_readiness(oracle_file)
     global_first_gap = (
-        "Dasha/Shadbala external oracle readiness remains 0, Shadbala absolute values still need "
-        "component-level external evidence, and public long-term benchmark history is not yet comparable "
-        "to the strongest global open-source projects."
+        f"Dasha-only external oracle readiness is {dasha['valid_dasha_packets']}/"
+        f"{dasha['total_dasha_packets']}; Shadbala absolute values still need component-level "
+        "external evidence, and public long-term benchmark history is not yet comparable to the strongest "
+        "global open-source projects."
     )
     can_claim_global_first = bool(
         capability.get("valid")
@@ -89,6 +100,7 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
             "status_counts": capability["status_counts"],
         },
         "oracle_readiness": oracle,
+        "dasha_oracle_readiness": dasha,
         "boundary_audit": boundary,
         "public_claim": {
             "can_claim_global_first": can_claim_global_first,
@@ -99,7 +111,7 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
         },
         "global_first_gap": global_first_gap,
         "next_actions": [
-            "Fill the first external JHora/PyJHora packet under references/oracle/artifacts/pending_packets.",
+            "Fill the next open external JHora/PyJHora packet under references/oracle/artifacts/pending_packets.",
             "Run oracle_evidence_validator.py until at least one packet is valid.",
             "Run oracle_boundary_audit.py to inspect Dasha/Shadbala deltas without tuning constants.",
             "Publish this dashboard after each validated sample batch.",
@@ -109,6 +121,7 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
 
 def render_markdown(report: dict[str, Any]) -> str:
     oracle = report["oracle_readiness"]
+    dasha = report["dasha_oracle_readiness"]
     boundary = report["boundary_audit"]
     claim = report["public_claim"]
     lines = [
@@ -128,6 +141,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- valid_packets: `{oracle['valid_packets']}`",
         f"- ready_for_calibration: `{oracle['ready_for_calibration']}`",
         f"- production_tuning_allowed: `{str(oracle['production_tuning_allowed']).lower()}`",
+        f"- valid_dasha_packets: `{dasha['valid_dasha_packets']}`",
+        f"- total_dasha_packets: `{dasha['total_dasha_packets']}`",
         "",
         "## Boundary Audit",
         "",

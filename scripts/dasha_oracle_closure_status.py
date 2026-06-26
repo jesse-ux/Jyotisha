@@ -56,6 +56,11 @@ def _target_missing(packet: dict[str, Any], fields: list[str]) -> list[str]:
     return missing
 
 
+def _dasha_target_filled(task: dict[str, Any], fields: list[str]) -> bool:
+    packet = task.get("evidence_packet", {})
+    return task.get("status") == "external_verified" and not _target_missing(packet, fields)
+
+
 def _group_missing_fields(missing_fields: list[str]) -> dict[str, Any]:
     metadata_fields = [field for field in missing_fields if field.startswith("metadata.")]
     target_fields = [field for field in missing_fields if field.startswith("target.")]
@@ -122,9 +127,15 @@ def build_status(oracle_file: str) -> dict[str, Any]:
         task for task in queue.get("tasks", [])
         if DASHA_TARGET_FIELD in task.get("target_fields", [])
     ]
-    priority = next((task for task in dasha_tasks if task.get("case_id") == FIRST_PRIORITY_CASE_ID), None)
-    if priority is None and dasha_tasks:
-        priority = dasha_tasks[0]
+    required_target_fields = [DASHA_TARGET_FIELD]
+    unverified_dasha_tasks = [
+        task for task in dasha_tasks
+        if not _dasha_target_filled(task, required_target_fields)
+    ]
+    priority_pool = unverified_dasha_tasks or dasha_tasks
+    priority = next((task for task in priority_pool if task.get("case_id") == FIRST_PRIORITY_CASE_ID), None)
+    if priority is None and priority_pool:
+        priority = priority_pool[0]
     if priority is None:
         raise RuntimeError("No Dasha target task found")
 
@@ -133,12 +144,11 @@ def build_status(oracle_file: str) -> dict[str, Any]:
     packet_path = f"references/oracle/artifacts/pending_packets/{capture_id}.json"
     template_path = FIRST_PRIORITY_TEMPLATE_PATH if priority["case_id"] == FIRST_PRIORITY_CASE_ID else packet_path
     packet = json.loads((ROOT / template_path).read_text(encoding="utf-8"))
-    required_target_fields = [DASHA_TARGET_FIELD]
     missing_fields = _metadata_missing(packet) + _target_missing(packet, required_target_fields)
     missing_groups = _group_missing_fields(missing_fields)
     external_verified = [
         task for task in dasha_tasks
-        if task.get("status") == "external_verified" and not _target_missing(task.get("evidence_packet", {}), required_target_fields)
+        if _dasha_target_filled(task, required_target_fields)
     ]
 
     return {
