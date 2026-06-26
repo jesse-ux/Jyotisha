@@ -31,6 +31,40 @@ FRONTS = {
             "PyJHora black-box dasha output",
             "documented printed/software example",
         ],
+    },
+    "tajika_sahams": {
+        "status_command": [
+            PYTHON,
+            "scripts/tajika_annual_closure_status.py",
+            "--oracle-file",
+            "references/oracle/tajika_annual_oracle_cases.json",
+            "--format",
+            "json",
+        ],
+        "operator_card": "docs/benchmark/tajika_steve_jobs_1984_first_packet_operator_card.md",
+        "packet_template": "references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json",
+        "external_sources": [
+            "JHora Varshaphala/Tajika annual chart screen",
+            "PyJHora black-box annual output",
+            "printed Tajika/Varshaphala example",
+        ],
+    },
+    "shadbala": {
+        "status_command": [
+            PYTHON,
+            "scripts/shadbala_oracle_closure_status.py",
+            "--oracle-file",
+            "references/oracle/dasha_shadbala_oracle_cases.json",
+            "--format",
+            "json",
+        ],
+        "operator_card": "docs/benchmark/shadbala_redacted_place_raman_first_packet_operator_card.md",
+        "packet_template": "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json",
+        "external_sources": [
+            "JHora Shadbala component table screenshot",
+            "PyJHora black-box shadbala output",
+            "documented printed/software Shadbala example",
+        ],
     }
 }
 
@@ -60,9 +94,16 @@ def _packet_missing(packet_path: str) -> list[str]:
     if metadata.get("source_artifact") in {"references/oracle/artifacts/", "references/oracle/artifacts", "", None}:
         if "metadata.source_artifact" not in missing:
             missing.append("metadata.source_artifact")
-    for field, value in packet.get("target_placeholders", {}).items():
+    def walk(prefix: str, value: Any) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                walk(f"{prefix}.{key}" if prefix else key, child)
+            return
         if value is None or value == "" or value == [] or value == {}:
-            missing.append(field)
+            missing.append(prefix)
+
+    for field, value in packet.get("target_placeholders", {}).items():
+        walk(field, value)
     return missing
 
 
