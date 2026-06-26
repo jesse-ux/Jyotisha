@@ -209,6 +209,34 @@ def _calc_pushkara_flags(planets):
     return result
 
 
+def _calc_sensitive_points(planets):
+    result = {}
+    try:
+        from varga import calc_bhrigu_bindu, calc_sarpa_drekkana
+    except Exception:
+        return result
+
+    moon = planets.get('Moon', {}) if isinstance(planets, dict) else {}
+    rahu = planets.get('Rahu', {}) if isinstance(planets, dict) else {}
+    moon_lon = moon.get('degree_raw', moon.get('degree'))
+    rahu_lon = rahu.get('degree_raw', rahu.get('degree'))
+    if moon_lon is not None and rahu_lon is not None:
+        result['bhrigu_bindu'] = calc_bhrigu_bindu(moon_lon, rahu_lon)
+
+    sarpa = {}
+    for planet_name, pdata in planets.items():
+        if not isinstance(pdata, dict):
+            continue
+        lon = pdata.get('degree_raw', pdata.get('degree'))
+        if lon is None:
+            continue
+        payload = calc_sarpa_drekkana(lon)
+        if payload.get('is_sarpa_drekkana'):
+            sarpa[planet_name] = payload
+    result['sarpa_drekkana'] = sarpa
+    return result
+
+
 def _calc_dasha_sandhi(dasha_result, reference_date=None, orb_days=90):
     ref = datetime.strptime(reference_date, "%Y-%m-%d") if reference_date else datetime.now()
     sandhi = []
@@ -591,7 +619,7 @@ def _add_chart_args(p):
     p.add_argument('--second', type=_second_arg, default=0)
     p.add_argument('--lat', type=float, required=True)
     p.add_argument('--lon', type=float, required=True)
-    p.add_argument('--tz', type=float, default=0)
+    p.add_argument('--tz', type=float, default=None)
     p.add_argument('--node-mode', default='mean', choices=['mean', 'true'], help='Rahu/Ketu节点口径：mean=Mean Node（默认，JHora常用/Swiss direct baseline），true=True Node（PyJHora默认）')
     p.add_argument('--ayanamsa', default='lahiri', choices=list(AYANAMSA_MODES.keys()),
                    help='恒星黄道系统（默认lahiri）。可选: raman, kp(krishnamurti), fagan_bradley, djwhal_khul, sassanian, true_citra')
@@ -3642,6 +3670,7 @@ def cmd_full_reading(args):
 
         report['modules']['vargottama'] = _calc_vargottama(planets, varga_result)
         report['modules']['pushkara'] = _calc_pushkara_flags(planets)
+        report['modules']['sensitive_points'] = _calc_sensitive_points(planets)
     except Exception as e:
         report['errors'].append(f"varga-full: {e}")
 
@@ -4556,7 +4585,7 @@ def main():
     p.add_argument('--second', type=_second_arg, default=0)
     p.add_argument('--lat', type=float, required=False)
     p.add_argument('--lon', type=float, required=False)
-    p.add_argument('--tz', type=float, default=0)
+    p.add_argument('--tz', type=float, default=None)
     p.add_argument('--node-mode', default='mean', choices=['mean', 'true'])
     p.add_argument('--ayanamsa', default='lahiri', choices=list(AYANAMSA_MODES.keys()),
                    help='恒星黄道系统（默认lahiri）。可选: raman, kp, fagan_bradley, djwhal_khul, sassanian, true_citra')
@@ -4589,7 +4618,7 @@ def main():
     p.add_argument('--second', type=_second_arg, default=0, help='出生秒')
     p.add_argument('--lat', type=float, default=None, help='纬度')
     p.add_argument('--lon', type=float, default=None, help='经度')
-    p.add_argument('--tz', type=float, default=0, help='时区')
+    p.add_argument('--tz', type=float, default=None, help='时区')
 
     # 5. varga
     p = sub.add_parser('varga', help='分盘计算')
@@ -4609,7 +4638,7 @@ def main():
     p.add_argument('--year', type=int, required=True); p.add_argument('--month', type=int, required=True)
     p.add_argument('--day', type=int, default=15, help='指定日期（默认15日取月中代表）')
     p.add_argument('--planet', default=None, help='目标行星，逗号分隔（默认全部，如：Jupiter,Saturn）')
-    p.add_argument('--tz', type=float, default=8, help='时区（默认UTC+8）')
+    p.add_argument('--tz', type=float, default=None, help='时区')
     p.add_argument('--node-mode', default='mean', choices=['mean', 'true'], help='Rahu/Ketu节点口径：mean=Mean Node（默认），true=True Node')
 
     # 9. shadbala (v3.4新增)
@@ -4811,7 +4840,23 @@ def main():
     p.add_argument('--mode', default='validate', choices=['validate', 'table'], help='validate=校验注册表；table=输出路由审计表')
     p.add_argument('--route', default=None, help='table模式下的 route id，如 career_timing_strict')
 
+
     args = parser.parse_args()
+
+    if hasattr(args, 'tz') and args.tz is None:
+        from timezone_utils import infer_timezone
+        from datetime import datetime
+        try:
+            if hasattr(args, 'year'):
+                dt = datetime(args.year, args.month, args.day, args.hour, args.minute)
+            else:
+                dt = datetime.utcnow()
+        except Exception:
+            dt = datetime.utcnow()
+        args.tz = infer_timezone(getattr(args, 'lat', 0), getattr(args, 'lon', 0), dt)
+        if args.tz is None:
+            args.tz = 8.0
+
     if not args.command:
         parser.print_help(); sys.exit(1)
 

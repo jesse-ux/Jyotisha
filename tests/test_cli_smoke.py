@@ -277,6 +277,32 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert "external_verified" in oracle_progress["promotion_rule"]
 
 
+def test_full_reading_exposes_sensitive_point_modules() -> None:
+    result = run_engine(
+        "full-reading",
+        "--year", "REDACTED_YEAR",
+        "--month", "4",
+        "--day", "17",
+        "--hour", "14",
+        "--minute", "45",
+        "--second", "20",
+        "--lat", "36.466667",
+        "--lon", "114.2",
+        "--tz", "8",
+        "--today", "2026-06-24",
+        "--transit-date", "2026-06-24",
+    )
+
+    sensitive = result["modules"]["sensitive_points"]
+    assert "bhrigu_bindu" in sensitive
+    assert "sarpa_drekkana" in sensitive
+    assert sensitive["bhrigu_bindu"]["sign"]
+    assert isinstance(sensitive["sarpa_drekkana"], dict)
+    for payload in sensitive["sarpa_drekkana"].values():
+        assert payload["definition"] == "Cancer-2, Scorpio-1, Pisces-3"
+        assert payload["is_sarpa_drekkana"] is True
+
+
 def test_varga_cli_outputs_d9_and_d10() -> None:
     result = run_engine("varga", *BASE_BIRTH_ARGS, "--d9", "--d10")
     charts = result.get("divisional_charts", {})
