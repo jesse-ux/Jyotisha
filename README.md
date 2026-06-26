@@ -255,6 +255,16 @@ python3 scripts/first_oracle_packet_assistant.py --front shadbala --format markd
 
 该助手不会生成或猜测 JHora/PyJHora 真值，只会列出当前 packet 还缺哪些字段、可用外部来源、apply 命令和 validator 命令。
 
+如需先看三条硬闭环 front 的统一排序入口，而不是分别运行三个助手：
+
+```bash
+python3 scripts/oracle_packet_assistant_index.py \
+  --format markdown \
+  --output docs/benchmark/first_oracle_packet_assistant_index.md
+```
+
+该索引会固定列出 `dasha`、`tajika_sahams`、`shadbala` 三条 front 的首包 case、缺失字段数、operator card 与推荐执行顺序，方便直接判断当前最短闭环路径。
+
 Shadbala 外部绝对值闭环使用独立状态板，专门追踪七曜的六分量与总 Rupa：
 
 ```bash
