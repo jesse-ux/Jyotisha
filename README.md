@@ -154,6 +154,15 @@ python3 scripts/prepare_oracle_capture_packets.py \
 
 该命令会生成 `capture_manifest.json`、`OPERATOR_NEXT_STEPS.md` 和 5 个 `external_*.json`，并在输出中确认 draft 队列仍是 `valid_packets: 0` / `ready_for_calibration: 0`。
 
+如果只想优先准备当前最短闭环链路的三条首包，而不是一次性导出整批 pending packets，可直接生成统一 blank kit：
+
+```bash
+python3 scripts/generate_blank_oracle.py \
+  --output-dir references/oracle/artifacts/first_packet_blank_kit
+```
+
+该命令会按当前推荐顺序导出 `dasha`、`tajika_sahams`、`shadbala` 三条 front 的首包草稿、`blank_oracle_kit_manifest.json` 和 `BLANK_ORACLE_KIT_NEXT_STEPS.md`。它只复制当前首包模板，不会猜测真值，也不会把本地引擎输出伪装成 external oracle。
+
 填完某个 `external_*.json` 后，必须把 `status` 改为 `external_verified`，补齐 metadata、具体 `source_artifact` 文件路径以及所有 `target_placeholders`。再把该包合并回 oracle 文件：
 
 ```bash
