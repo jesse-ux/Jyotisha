@@ -83,6 +83,15 @@ def _supporting_missing(packet: dict[str, Any], target_fields: list[str]) -> lis
     return missing
 
 
+def _shadbala_target_filled(task: dict[str, Any]) -> bool:
+    packet = task.get("evidence_packet", {})
+    return (
+        task.get("status") == "external_verified"
+        and not _supporting_missing(packet, task.get("target_fields", []))
+        and not _shadbala_missing(packet)
+    )
+
+
 def _group_missing_fields(missing_fields: list[str]) -> dict[str, Any]:
     metadata_fields = [field for field in missing_fields if field.startswith("metadata.")]
     target_fields = [field for field in missing_fields if field.startswith("target.")]
@@ -167,9 +176,14 @@ def build_status(oracle_file: str) -> dict[str, Any]:
         task for task in queue.get("tasks", [])
         if SHADBALA_TARGET_FIELD in task.get("target_fields", [])
     ]
-    priority = next((task for task in shadbala_tasks if task.get("case_id") == FIRST_PRIORITY_CASE_ID), None)
-    if priority is None and shadbala_tasks:
-        priority = shadbala_tasks[0]
+    unverified_shadbala_tasks = [
+        task for task in shadbala_tasks
+        if not _shadbala_target_filled(task)
+    ]
+    priority_pool = unverified_shadbala_tasks or shadbala_tasks
+    priority = next((task for task in priority_pool if task.get("case_id") == FIRST_PRIORITY_CASE_ID), None)
+    if priority is None and priority_pool:
+        priority = priority_pool[0]
     if priority is None:
         raise RuntimeError("No Shadbala target task found")
 
@@ -184,11 +198,7 @@ def build_status(oracle_file: str) -> dict[str, Any]:
     missing_groups = _group_missing_fields(missing_fields)
     external_verified = [
         task for task in shadbala_tasks
-        if (
-            task.get("status") == "external_verified"
-            and not _supporting_missing(task.get("evidence_packet", {}), task.get("target_fields", []))
-            and not _shadbala_missing(task.get("evidence_packet", {}))
-        )
+        if _shadbala_target_filled(task)
     ]
 
     return {

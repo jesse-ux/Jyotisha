@@ -37,12 +37,12 @@ def test_shadbala_oracle_closure_status_identifies_first_absolute_value_packet()
     assert report["scope"] == "shadbala_external_absolute_value_closure_status"
     assert report["schema_version"] == 1
     assert report["summary"]["shadbala_task_count"] == 4
-    assert report["summary"]["external_verified_shadbala_tasks"] == 0
+    assert report["summary"]["external_verified_shadbala_tasks"] == 1
     assert report["summary"]["can_claim_shadbala_absolute_closure"] is False
     assert report["summary"]["required_planets"] == ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
     assert report["summary"]["required_components"] == ["sthana", "dig", "kala", "chesta", "naisargika", "drik", "total_rupa"]
-    assert report["first_priority"]["case_id"] == "template_redacted_place_shadbala_raman"
-    assert report["first_priority"]["capture_id"] == "external_template_redacted_place_shadbala_raman"
+    assert report["first_priority"]["case_id"] == "template_user_REDACTED_YEAR_moon_longitude_lahiri"
+    assert report["first_priority"]["capture_id"] == "external_template_user_REDACTED_YEAR_moon_longitude_lahiri"
     assert report["first_priority"]["required_target_fields"] == [
         "target.moon_sidereal_longitude_deg",
         "target.shadbala_components",
@@ -54,7 +54,7 @@ def test_shadbala_oracle_closure_status_identifies_first_absolute_value_packet()
     assert report["first_priority"]["missing_groups"]["metadata"]["count"] == 5
     assert report["first_priority"]["missing_groups"]["target"]["count"] == 50
     assert report["first_priority"]["missing_groups"]["bodies"]["Sun"]["count"] == 7
-    assert report["first_priority"]["prefilled_fields"]["metadata"]["ayanamsa"] == "Raman"
+    assert report["first_priority"]["prefilled_fields"]["metadata"]["ayanamsa"] == "lahiri"
     assert report["first_priority"]["manual_fill_plan"]["status_value"] == "external_verified"
     assert report["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 55
     assert report["first_priority"]["reject_global_scaling"] is True
@@ -70,7 +70,7 @@ def test_shadbala_oracle_closure_status_markdown_can_be_written(tmp_path: Path) 
     markdown = output.read_text(encoding="utf-8")
     assert "# Shadbala External Absolute-Value Closure Status" in markdown
     assert "can_claim_shadbala_absolute_closure: `false`" in markdown
-    assert "external_template_redacted_place_shadbala_raman" in markdown
+    assert "external_template_user_REDACTED_YEAR_moon_longitude_lahiri" in markdown
     assert "target.shadbala_components.Sun.sthana" in markdown
     assert "## Missing Summary" in markdown
     assert "## Prefilled Fields" in markdown

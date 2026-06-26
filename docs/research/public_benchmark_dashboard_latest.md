@@ -1,6 +1,6 @@
 # Public Jyotish Benchmark Dashboard
 
-Generated: `2026-06-26T17:01:59.939612+00:00`
+Generated: `2026-06-26T17:25:43.800702+00:00`
 
 ## Capability Registry
 
@@ -11,16 +11,18 @@ Generated: `2026-06-26T17:01:59.939612+00:00`
 ## Dasha/Shadbala Oracle Readiness
 
 - total_packets: `5`
-- valid_packets: `0`
-- ready_for_calibration: `0`
+- valid_packets: `1`
+- ready_for_calibration: `1`
 - production_tuning_allowed: `false`
 - valid_dasha_packets: `3`
 - total_dasha_packets: `3`
+- external_verified_shadbala_tasks: `1`
+- shadbala_task_count: `4`
 
 ## Boundary Audit
 
-- external_verified_template_cases: `0`
-- template_comparison_count: `0`
+- external_verified_template_cases: `1`
+- template_comparison_count: `1`
 - production_tuning_recommended: `false`
 
 ## Global First Claim
@@ -30,7 +32,7 @@ Generated: `2026-06-26T17:01:59.939612+00:00`
 
 ## Remaining Gap
 
-Dasha-only external oracle readiness is 3/3; Shadbala absolute values still need component-level external evidence, and public long-term benchmark history is not yet comparable to the strongest global open-source projects.
+Dasha-only external oracle readiness is 3/3; Shadbala external absolute-value readiness is 1/4; public long-term benchmark history is not yet comparable to the strongest global open-source projects.
 
 ## Next Actions
 

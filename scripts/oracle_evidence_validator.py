@@ -27,6 +27,7 @@ LOCAL_ENGINE_MARKERS = [
 SHADBALA_REQUIRED_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
 SHADBALA_REQUIRED_COMPONENTS = ["sthana", "dig", "kala", "chesta", "naisargika", "drik"]
 SHADBALA_COMPONENT_MAX_RUPA = 20.0
+SHADBALA_DRIK_MIN_RUPA = -20.0
 SHADBALA_TOTAL_TOLERANCE_RUPA = 0.05
 ASHTAKOOT_SCORE_RANGES = {
     "target.total_score": (0.0, 36.0),
@@ -153,7 +154,10 @@ def _validate_shadbala_components(value: Any) -> list[str]:
             if not isinstance(component_value, (int, float)) or isinstance(component_value, bool):
                 problems.append(f"invalid_shadbala_component_type:{planet}.{component}")
                 continue
-            if component_value < 0:
+            if component == "drik" and component_value < SHADBALA_DRIK_MIN_RUPA:
+                problems.append(f"invalid_shadbala_component_range:{planet}.{component}")
+                continue
+            if component != "drik" and component_value < 0:
                 problems.append(f"invalid_shadbala_component_negative:{planet}.{component}")
                 continue
             if component_value > SHADBALA_COMPONENT_MAX_RUPA:

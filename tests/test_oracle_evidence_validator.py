@@ -90,15 +90,14 @@ def test_validator_rejects_draft_packets_without_external_artifacts(tmp_path: Pa
     report = json.loads(completed.stdout)
     assert report["scope"] == "external_oracle_evidence_validation"
     assert report["summary"]["total_packets"] == 5
-    assert report["summary"]["valid_packets"] == 0
-    assert report["summary"]["ready_for_calibration"] == 0
+    assert report["summary"]["valid_packets"] == 1
+    assert report["summary"]["ready_for_calibration"] == 1
     assert report["summary"]["all_packets_external_verified"] is False
     first = report["packets"][0]
     assert first["capture_id"] == "external_template_user_REDACTED_YEAR_moon_longitude_lahiri"
     assert first["valid"] is False
-    assert "missing_metadata:tool_name" in first["problems"]
-    assert "missing_external_artifact" in first["problems"]
     assert "placeholder_unfilled:target.moon_sidereal_longitude_deg" in first["problems"]
+    assert "missing_shadbala_component:Sun.sthana" in first["problems"]
 
 
 def test_validator_accepts_filled_external_packet_but_not_whole_queue(tmp_path: Path) -> None:
@@ -128,8 +127,8 @@ def test_validator_accepts_filled_external_packet_but_not_whole_queue(tmp_path: 
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["valid_packets"] == 1
-    assert report["summary"]["ready_for_calibration"] == 1
+    assert report["summary"]["valid_packets"] == 2
+    assert report["summary"]["ready_for_calibration"] == 2
     assert report["summary"]["all_packets_external_verified"] is False
     first = report["packets"][0]
     assert first["valid"] is True
@@ -209,6 +208,40 @@ def test_validator_rejects_non_numeric_or_negative_shadbala_components(tmp_path:
     assert first["valid"] is False
     assert "invalid_shadbala_component_type:Sun.sthana" in first["problems"]
     assert "invalid_shadbala_component_negative:Moon.dig" in first["problems"]
+
+
+def test_validator_accepts_negative_drik_bala_when_component_sum_matches(tmp_path: Path) -> None:
+    queue = build_queue()
+    packet = queue["tasks"][0]["evidence_packet"]
+    shadbala = complete_shadbala_components()
+    shadbala["Sun"]["drik"] = -0.25
+    shadbala["Sun"]["total_rupa"] = round(sum(shadbala["Sun"][component] for component in SHADBALA_COMPONENTS), 4)
+    packet["metadata"] = {
+        "tool_name": "PyJHora",
+        "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
+        "capture_date": "2026-06-27",
+        "source_artifact": "references/oracle/artifacts/pyjhora_shadbala_stdout.txt",
+        "ayanamsa": "raman",
+        "node_mode": "PyJHora default",
+        "timezone": "UTC+08:00",
+        "operator_note": "Black-box external stdout; Drik Bala can be negative.",
+    }
+    packet["target_placeholders"] = {
+        "target.moon_sidereal_longitude_deg": 311.7897,
+        "target.vimshottari_start_date": "1986-05-18",
+        "target.shadbala_components": shadbala,
+    }
+    packet["status"] = "external_verified"
+    queue_path = tmp_path / "queue.json"
+    queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_validator(queue_path)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    first = report["packets"][0]
+    assert first["valid"] is True
+    assert first["problems"] == []
 
 
 def test_validator_rejects_missing_shadbala_total_rupa(tmp_path: Path) -> None:
@@ -488,8 +521,8 @@ def test_validator_accepts_external_verified_packet_generated_from_oracle_file(t
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["valid_packets"] == 1
-    assert report["summary"]["ready_for_calibration"] == 1
+    assert report["summary"]["valid_packets"] == 2
+    assert report["summary"]["ready_for_calibration"] == 2
     assert report["summary"]["production_tuning_allowed"] is False
     assert report["packets"][0]["valid"] is True
     assert report["packets"][0]["problems"] == []

@@ -58,6 +58,18 @@ def _dasha_readiness(oracle_file: str) -> dict[str, Any]:
     return validation["summary"]
 
 
+def _shadbala_readiness(oracle_file: str) -> dict[str, Any]:
+    report = _run_json([
+        PYTHON,
+        "scripts/shadbala_oracle_closure_status.py",
+        "--oracle-file",
+        oracle_file,
+        "--format",
+        "json",
+    ])
+    return report["summary"]
+
+
 def _boundary_audit(oracle_file: str) -> dict[str, Any]:
     report = _run_json([PYTHON, "scripts/oracle_boundary_audit.py", "--oracle-file", oracle_file])
     summary = report["summary"]
@@ -78,10 +90,12 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
     oracle = _oracle_readiness(oracle_file)
     boundary = _boundary_audit(oracle_file)
     dasha = _dasha_readiness(oracle_file)
+    shadbala = _shadbala_readiness(oracle_file)
     global_first_gap = (
         f"Dasha-only external oracle readiness is {dasha['valid_dasha_packets']}/"
-        f"{dasha['total_dasha_packets']}; Shadbala absolute values still need component-level "
-        "external evidence, and public long-term benchmark history is not yet comparable to the strongest "
+        f"{dasha['total_dasha_packets']}; Shadbala external absolute-value readiness is "
+        f"{shadbala['external_verified_shadbala_tasks']}/{shadbala['shadbala_task_count']}; "
+        "public long-term benchmark history is not yet comparable to the strongest "
         "global open-source projects."
     )
     can_claim_global_first = bool(
@@ -101,6 +115,7 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
         },
         "oracle_readiness": oracle,
         "dasha_oracle_readiness": dasha,
+        "shadbala_oracle_readiness": shadbala,
         "boundary_audit": boundary,
         "public_claim": {
             "can_claim_global_first": can_claim_global_first,
@@ -122,6 +137,7 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
 def render_markdown(report: dict[str, Any]) -> str:
     oracle = report["oracle_readiness"]
     dasha = report["dasha_oracle_readiness"]
+    shadbala = report["shadbala_oracle_readiness"]
     boundary = report["boundary_audit"]
     claim = report["public_claim"]
     lines = [
@@ -143,6 +159,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- production_tuning_allowed: `{str(oracle['production_tuning_allowed']).lower()}`",
         f"- valid_dasha_packets: `{dasha['valid_dasha_packets']}`",
         f"- total_dasha_packets: `{dasha['total_dasha_packets']}`",
+        f"- external_verified_shadbala_tasks: `{shadbala['external_verified_shadbala_tasks']}`",
+        f"- shadbala_task_count: `{shadbala['shadbala_task_count']}`",
         "",
         "## Boundary Audit",
         "",

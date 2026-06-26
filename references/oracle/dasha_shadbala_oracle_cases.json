@@ -90,7 +90,7 @@
     },
     {
       "id": "template_redacted_place_shadbala_raman",
-      "status": "template_only",
+      "status": "external_verified",
       "source": "JHora/PyJHora/VedAstro API",
       "privacy": "synthetic_location_template",
       "birth": {
@@ -109,10 +109,88 @@
         "node_mode": "mean"
       },
       "target": {
-        "moon_sidereal_longitude_deg": null,
-        "shadbala_components": null
+        "moon_sidereal_longitude_deg": 63.228185,
+        "shadbala_components": {
+          "Sun": {
+            "sthana": 2.439,
+            "dig": 1.9718,
+            "kala": 1.0337,
+            "chesta": 0.0,
+            "naisargika": 1.0,
+            "drik": -0.0113,
+            "total_rupa": 6.4332
+          },
+          "Moon": {
+            "sthana": 3.1445,
+            "dig": 2.1273,
+            "kala": 1.0472,
+            "chesta": 0.0,
+            "naisargika": 0.8572,
+            "drik": -0.361,
+            "total_rupa": 6.8152
+          },
+          "Mars": {
+            "sthana": 2.7263,
+            "dig": 1.7472,
+            "kala": 0.3898,
+            "chesta": 0.7592,
+            "naisargika": 0.2857,
+            "drik": 0.1142,
+            "total_rupa": 6.0224
+          },
+          "Mercury": {
+            "sthana": 3.1745,
+            "dig": 2.1688,
+            "kala": 0.453,
+            "chesta": 0.1417,
+            "naisargika": 0.4285,
+            "drik": -0.0113,
+            "total_rupa": 6.3552
+          },
+          "Jupiter": {
+            "sthana": 3.3232,
+            "dig": 3.8015,
+            "kala": 0.1472,
+            "chesta": 0.6942,
+            "naisargika": 0.5715,
+            "drik": 0.0903,
+            "total_rupa": 8.6279
+          },
+          "Venus": {
+            "sthana": 2.7498,
+            "dig": 2.2482,
+            "kala": 0.2098,
+            "chesta": 0.3582,
+            "naisargika": 0.7143,
+            "drik": 0.0598,
+            "total_rupa": 6.3401
+          },
+          "Saturn": {
+            "sthana": 3.7492,
+            "dig": 1.3578,
+            "kala": 1.0538,
+            "chesta": 0.6068,
+            "naisargika": 0.1428,
+            "drik": 0.1852,
+            "total_rupa": 7.0956
+          }
+        }
       },
-      "verification_note": "Validate Raman ayanamsa effects with external Shadbala component rows before promotion."
+      "verification_note": "Validate Raman ayanamsa effects with external Shadbala component rows before promotion.",
+      "evidence_packet": {
+        "capture_id": "external_template_redacted_place_shadbala_raman",
+        "status": "external_verified",
+        "metadata": {
+          "tool_name": "PyJHora",
+          "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
+          "capture_date": "2026-06-27",
+          "source_artifact": "references/oracle/artifacts/pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
+          "ayanamsa": "raman",
+          "node_mode": "PyJHora default",
+          "timezone": "UTC+08:00",
+          "operator_note": "Black-box stdout from isolated /tmp virtualenv. PyJHora AGPL code was not copied into this repository; only the generated output artifact is stored as external evidence. Shadbala raw values are Virupa; packet stores Rupa values by dividing by 60."
+        }
+      }
     },
     {
       "id": "template_extreme_latitude_kp",

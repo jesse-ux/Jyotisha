@@ -144,10 +144,10 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 **普通用户解释时必须显式区分基础排盘高可信与高阶绝对值待外部校准。**
 
 - Dasha-only 外部证据当前目标集已闭环：`dasha_external_oracle_evidence_validation.valid_dasha_packets: 3/3`；Steve Jobs / Lahiri、REDACTED_YEAR Lahiri 模板与 1800 Delhi historical epoch 的 Vimshottari 起始边界来自 PyJHora 4.8.7 隔离黑盒 stdout artifact。
-- 全局 Dasha/Shadbala Calibration Status 仍未完成：`external_oracle_evidence_validation.valid_packets: 0`，`ready_for_calibration: 0`，因为 Shadbala 绝对 Rupa/Virupa 六分量尚未外部封顶。
+- 全局 Dasha/Shadbala Calibration Status 仍未完成：`external_oracle_evidence_validation.valid_packets: 1`，`ready_for_calibration: 1`；首个 Shadbala 外部绝对值样本已通过，剩余 Shadbala rows 与非 Dasha 靶点尚未封顶。
 - D1/D9/SAV 高可信；Dasha 精细日期可引用已验证 Dasha-only 样本的局部进度，但不得把全部大运边界、Shadbala 绝对值或全局精度说成已完成外部校准。
 - `production_tuning_allowed: false` 前，禁止为了贴合单份 PDF、单个 JHora 截图或本仓库本地输出而改生产常数。
-- 对普通用户的建议话术：基础落座、D9、SAV 可作为稳定证据；当前 Dasha-only 目标集已完成外部黑盒验证，但多 Dasha 家族、Antardasha/Pratyantar 细边界仍需扩展；Shadbala 绝对值仍需 JHora/PyJHora/公开书例六分量证据后再提升置信度。
+- 对普通用户的建议话术：基础落座、D9、SAV 可作为稳定证据；当前 Dasha-only 目标集已完成外部黑盒验证，但多 Dasha 家族、Antardasha/Pratyantar 细边界仍需扩展；Shadbala 已有首个外部六分量样本，绝对值断语仍需更多 JHora/PyJHora/公开书例证据后再提升置信度。
 - 工作流要求：Dasha-only packet 用 `python3 scripts/dasha_oracle_evidence_validator.py --queue-file <queue.json>` 验证；全局校准仍必须跑 `python3 scripts/oracle_evidence_validator.py --queue-file <queue.json>`，两者不可混用。
 
 ### Ashtakavarga 口径冻结（v6.0.8-av-calibration）
@@ -194,13 +194,13 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 
 ### Shadbala 能力边界（v6.9.14-shadbala）
 
-**当前 Shadbala 在注册表中为 covered，主输出为 absolute Rupa 分量求和，可作为内部一致的相对强弱参考；但不得声称已完成外部绝对值校准。**
+**当前 Shadbala 在注册表中为 covered，主输出为 absolute Rupa 分量求和，可作为内部一致的相对强弱参考；首个外部绝对值六分量样本已通过，但不得声称全部 Shadbala 绝对值已完成校准。**
 
 - 当前 benchmark 验证 `shadbala` 子命令与 `full-reading.modules.shadbala` 的六重分量求和、Virupa/Rupa 换算和 total invariant；用户样本已输出 absolute Rupa。
 - v6.9.12 已升级 Nathonnata Bala 连续化与 Drik Bala Sputa Drishti 精确相位，v6.9.14 注册表状态为 `covered`。
 - 通过项包括：结构完整性、六重力量组件范围、总分聚合、Virupa/Rupa 换算、排名、full-reading 一致性。
 - 仍需保留边界：部分 Saptavargaja 子分盘与 Chesta Bala 速度分档仍需更多外部绝对值对标。
-- 因此 `technique_registry.json` 中 Shadbala 状态为 `covered`，但涉及精确力量断语时必须加置信度上限，直到接入 JHora/公开书例等完整外部绝对值对标。
+- 因此 `technique_registry.json` 中 Shadbala 状态为 `covered`，但涉及精确力量断语时必须加置信度上限，直到更多 JHora/公开书例等完整外部绝对值对标通过。
 
 ---
 
