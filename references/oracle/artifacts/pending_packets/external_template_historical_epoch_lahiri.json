@@ -1,0 +1,51 @@
+{
+  "capture_id": "external_template_historical_epoch_lahiri",
+  "status": "draft",
+  "case_id": "template_historical_epoch_lahiri",
+  "birth": {
+    "year": 1800,
+    "month": 1,
+    "day": 1,
+    "hour": 12,
+    "minute": 0,
+    "second": 0,
+    "lat": 28.6139,
+    "lon": 77.209,
+    "tz": 5.5
+  },
+  "settings": {
+    "ayanamsa": "lahiri",
+    "node_mode": "mean"
+  },
+  "required_metadata_fields": [
+    "tool_name",
+    "tool_version_or_url",
+    "capture_date",
+    "source_artifact",
+    "ayanamsa",
+    "node_mode",
+    "timezone",
+    "operator_note"
+  ],
+  "metadata": {
+    "tool_name": "",
+    "tool_version_or_url": "",
+    "capture_date": "",
+    "source_artifact": "references/oracle/artifacts/",
+    "ayanamsa": "lahiri",
+    "node_mode": "mean",
+    "timezone": 5.5,
+    "operator_note": ""
+  },
+  "target_placeholders": {
+    "target.sun_sidereal_longitude_deg": null,
+    "target.vimshottari_start_date": null
+  },
+  "integrity_checks": {
+    "must_not_come_from_local_engine": true,
+    "requires_external_artifact": true,
+    "requires_status_external_verified_before_calibration": true,
+    "reject_global_shadbala_scaling": false
+  },
+  "promotion_status_after_fill": "external_verified"
+}

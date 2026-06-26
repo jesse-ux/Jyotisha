@@ -1,0 +1,20 @@
+{
+  "scope": "external_oracle_capture_packet_manifest",
+  "oracle_file": "references/oracle/dasha_shadbala_oracle_cases.json",
+  "packet_count": 5,
+  "packets": [
+    "external_template_extreme_latitude_kp.json",
+    "external_template_redacted_place_shadbala_raman.json",
+    "external_template_historical_epoch_lahiri.json",
+    "external_template_steve_jobs_dasha_lahiri.json",
+    "external_template_user_REDACTED_YEAR_moon_longitude_lahiri.json"
+  ],
+  "first_priority_packet": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json",
+  "validator_summary": {
+    "total_packets": 5,
+    "valid_packets": 0,
+    "ready_for_calibration": 0,
+    "all_packets_external_verified": false,
+    "production_tuning_allowed": false
+  }
+}

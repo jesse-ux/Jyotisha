@@ -1,0 +1,115 @@
+{
+  "capture_id": "external_template_extreme_latitude_kp",
+  "status": "draft",
+  "case_id": "template_extreme_latitude_kp",
+  "birth": {
+    "year": 2000,
+    "month": 6,
+    "day": 21,
+    "hour": 0,
+    "minute": 0,
+    "second": 0,
+    "lat": 65.0,
+    "lon": 15.0,
+    "tz": 1
+  },
+  "settings": {
+    "ayanamsa": "kp",
+    "node_mode": "true"
+  },
+  "required_metadata_fields": [
+    "tool_name",
+    "tool_version_or_url",
+    "capture_date",
+    "source_artifact",
+    "ayanamsa",
+    "node_mode",
+    "timezone",
+    "operator_note"
+  ],
+  "metadata": {
+    "tool_name": "",
+    "tool_version_or_url": "",
+    "capture_date": "",
+    "source_artifact": "references/oracle/artifacts/",
+    "ayanamsa": "kp",
+    "node_mode": "true",
+    "timezone": 1,
+    "operator_note": ""
+  },
+  "target_placeholders": {
+    "target.ascendant_longitude_deg": null,
+    "target.shadbala_components": {
+      "Sun": {
+        "sthana": null,
+        "dig": null,
+        "kala": null,
+        "chesta": null,
+        "naisargika": null,
+        "drik": null,
+        "total_rupa": null
+      },
+      "Moon": {
+        "sthana": null,
+        "dig": null,
+        "kala": null,
+        "chesta": null,
+        "naisargika": null,
+        "drik": null,
+        "total_rupa": null
+      },
+      "Mars": {
+        "sthana": null,
+        "dig": null,
+        "kala": null,
+        "chesta": null,
+        "naisargika": null,
+        "drik": null,
+        "total_rupa": null
+      },
+      "Mercury": {
+        "sthana": null,
+        "dig": null,
+        "kala": null,
+        "chesta": null,
+        "naisargika": null,
+        "drik": null,
+        "total_rupa": null
+      },
+      "Jupiter": {
+        "sthana": null,
+        "dig": null,
+        "kala": null,
+        "chesta": null,
+        "naisargika": null,
+        "drik": null,
+        "total_rupa": null
+      },
+      "Venus": {
+        "sthana": null,
+        "dig": null,
+        "kala": null,
+        "chesta": null,
+        "naisargika": null,
+        "drik": null,
+        "total_rupa": null
+      },
+      "Saturn": {
+        "sthana": null,
+        "dig": null,
+        "kala": null,
+        "chesta": null,
+        "naisargika": null,
+        "drik": null,
+        "total_rupa": null
+      }
+    }
+  },
+  "integrity_checks": {
+    "must_not_come_from_local_engine": true,
+    "requires_external_artifact": true,
+    "requires_status_external_verified_before_calibration": true,
+    "reject_global_shadbala_scaling": true
+  },
+  "promotion_status_after_fill": "external_verified"
+}

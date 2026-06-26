@@ -147,11 +147,12 @@ python3 scripts/oracle_collection_queue.py \
 如需让真人或 Antigravity AI 副手直接填写证据包，可一次性导出每个 case 的 draft JSON：
 
 ```bash
-python3 scripts/oracle_collection_queue.py \
+python3 scripts/prepare_oracle_capture_packets.py \
   --oracle-file references/oracle/dasha_shadbala_oracle_cases.json \
-  --write-packet-dir references/oracle/artifacts/pending_packets \
-  --format json
+  --output-dir references/oracle/artifacts/pending_packets
 ```
+
+该命令会生成 `capture_manifest.json`、`OPERATOR_NEXT_STEPS.md` 和 5 个 `external_*.json`，并在输出中确认 draft 队列仍是 `valid_packets: 0` / `ready_for_calibration: 0`。
 
 填完某个 `external_*.json` 后，必须把 `status` 改为 `external_verified`，补齐 metadata、具体 `source_artifact` 文件路径以及所有 `target_placeholders`。再把该包合并回 oracle 文件：
 

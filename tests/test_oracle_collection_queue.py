@@ -118,6 +118,9 @@ def test_oracle_collection_queue_can_write_draft_evidence_packets(tmp_path: Path
     assert packet["metadata"]["source_artifact"] == "references/oracle/artifacts/"
     assert packet["metadata"]["tool_name"] == ""
     assert packet["target_placeholders"]["target.vimshottari_start_date"] is None
+    shadbala = packet["target_placeholders"]["target.shadbala_components"]
+    assert set(shadbala) == {"Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"}
+    assert set(shadbala["Sun"]) == {"sthana", "dig", "kala", "chesta", "naisargika", "drik", "total_rupa"}
     assert packet["integrity_checks"]["must_not_come_from_local_engine"] is True
 
 

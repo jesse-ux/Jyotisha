@@ -103,6 +103,8 @@ REQUIRED_EVIDENCE_METADATA_FIELDS = [
     "timezone",
     "operator_note",
 ]
+SHADBALA_DRAFT_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
+SHADBALA_DRAFT_COMPONENTS = ["sthana", "dig", "kala", "chesta", "naisargika", "drik", "total_rupa"]
 
 
 def _resolve_path(path: str) -> str:
@@ -182,6 +184,13 @@ def _evidence_packet(case: dict[str, Any], target_fields: list[str]) -> dict[str
         field: _target_value(target, field)
         for field in target_fields
     }
+    if "target.shadbala_components" in target_placeholders and _is_blank_target(
+        target_placeholders["target.shadbala_components"]
+    ):
+        target_placeholders["target.shadbala_components"] = {
+            planet: {component: None for component in SHADBALA_DRAFT_COMPONENTS}
+            for planet in SHADBALA_DRAFT_PLANETS
+        }
     existing_placeholders = existing.get("target_placeholders", {})
     if isinstance(existing_placeholders, dict):
         target_placeholders.update(existing_placeholders)
@@ -215,6 +224,10 @@ def _evidence_packet(case: dict[str, Any], target_fields: list[str]) -> dict[str
         },
         "promotion_status_after_fill": "external_verified",
     }
+
+
+def _is_blank_target(value: Any) -> bool:
+    return value is None or value == "" or value == [] or value == {}
 
 
 def _task_from_template(case: dict[str, Any]) -> dict[str, Any]:
