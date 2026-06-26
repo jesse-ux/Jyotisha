@@ -237,6 +237,17 @@ python3 scripts/dasha_oracle_closure_status.py \
 
 当前第一优先级是 `external_template_steve_jobs_dasha_lahiri`。该状态板只要求 `target.vimshottari_start_date` 和外部证据 metadata，不要求同时填完 Shadbala 七曜六分量；这样可以先完成 Dasha oracle 的第一条闭环，再单独推进 Shadbala 绝对值闭环。
 
+第一条 Dasha 证据包的交互辅助命令：
+
+```bash
+python3 scripts/first_oracle_packet_assistant.py \
+  --front dasha \
+  --format markdown \
+  --output docs/benchmark/first_dasha_oracle_packet_assistant.md
+```
+
+该助手不会生成或猜测 JHora/PyJHora 真值，只会列出 `dasha_steve_jobs_lahiri_first_packet_only.json` 当前还缺哪些字段、可用外部来源、apply 命令和 validator 命令。
+
 Shadbala 外部绝对值闭环使用独立状态板，专门追踪七曜的六分量与总 Rupa：
 
 ```bash
