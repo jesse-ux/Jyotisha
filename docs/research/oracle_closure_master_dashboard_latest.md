@@ -1,12 +1,12 @@
 # Jyotish External Oracle Closure Master Dashboard
 
-Generated: `2026-06-26T17:25:44.270300+00:00`
+Generated: `2026-06-26T17:46:35.915403+00:00`
 
 ## Summary
 
 - total_tasks: `12`
-- external_verified_tasks: `4`
-- open_tasks: `8`
+- external_verified_tasks: `5`
+- open_tasks: `7`
 - can_claim_global_oracle_closure: `false`
 - production_tuning_allowed: `false`
 
@@ -16,7 +16,7 @@ Generated: `2026-06-26T17:25:44.270300+00:00`
 |---|---:|---:|---|---:|---:|---:|---:|
 | `dasha` | 3 | 3 | `complete` | 0 | 0 | 0 | 0 |
 | `tajika_sahams` | 5 | 0 | `template_steve_jobs_varshaphala_1984_lahiri` | 15 | 15 | 5 | 10 |
-| `shadbala` | 4 | 1 | `template_user_REDACTED_YEAR_moon_longitude_lahiri` | 55 | 55 | 5 | 50 |
+| `shadbala` | 4 | 2 | `template_steve_jobs_dasha_lahiri` | 54 | 54 | 5 | 49 |
 
 ## Next Action Order
 
@@ -33,13 +33,13 @@ python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/ta
 
 ### shadbala
 
-- case_id: `template_user_REDACTED_YEAR_moon_longitude_lahiri`
-- capture_id: `external_template_user_REDACTED_YEAR_moon_longitude_lahiri`
-- missing_field_count: `55`
-- manual_entry_count: `55`
+- case_id: `template_steve_jobs_dasha_lahiri`
+- capture_id: `external_template_steve_jobs_dasha_lahiri`
+- missing_field_count: `54`
+- manual_entry_count: `54`
 
 ```bash
-python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_moon_longitude_lahiri.json --format json
+python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json --format json
 ```
 
 ## Boundary

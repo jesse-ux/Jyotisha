@@ -28,9 +28,73 @@
         "node_mode": "mean"
       },
       "target": {
-        "moon_sidereal_longitude_deg": null,
+        "moon_sidereal_longitude_deg": 311.774424,
         "vimshottari_start_date": "1986-05-25",
-        "shadbala_components": null
+        "shadbala_components": {
+          "Sun": {
+            "sthana": 3.964,
+            "dig": 1.5362,
+            "kala": 1.1985,
+            "chesta": 0.0,
+            "naisargika": 1.0,
+            "drik": 0.045,
+            "total_rupa": 7.7437
+          },
+          "Moon": {
+            "sthana": 3.1737,
+            "dig": -0.5255,
+            "kala": 1.5142,
+            "chesta": 0.0,
+            "naisargika": 0.8572,
+            "drik": -0.0947,
+            "total_rupa": 4.9249
+          },
+          "Mars": {
+            "sthana": 1.3982,
+            "dig": 1.4362,
+            "kala": 0.7107,
+            "chesta": 0.5905,
+            "naisargika": 0.2857,
+            "drik": 0.076,
+            "total_rupa": 4.4973
+          },
+          "Mercury": {
+            "sthana": 2.411,
+            "dig": 3.6523,
+            "kala": 0.1455,
+            "chesta": 0.6908,
+            "naisargika": 0.4285,
+            "drik": 0.0872,
+            "total_rupa": 7.4153
+          },
+          "Jupiter": {
+            "sthana": 1.9613,
+            "dig": 4.4507,
+            "kala": 0.8252,
+            "chesta": 0.9133,
+            "naisargika": 0.5715,
+            "drik": -0.0692,
+            "total_rupa": 8.6528
+          },
+          "Venus": {
+            "sthana": 2.7835,
+            "dig": 2.808,
+            "kala": 1.674,
+            "chesta": 0.1385,
+            "naisargika": 0.7143,
+            "drik": 0.1038,
+            "total_rupa": 8.2221
+          },
+          "Saturn": {
+            "sthana": 3.2332,
+            "dig": 1.994,
+            "kala": 0.9553,
+            "chesta": 1.6748,
+            "naisargika": 0.1428,
+            "drik": -0.0792,
+            "total_rupa": 7.9209
+          }
+        }
       },
       "verification_note": "Only fill target fields when the value comes from external oracle, not from this repo.",
       "evidence_packet": {
@@ -40,11 +104,11 @@
           "tool_name": "PyJHora",
           "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
           "capture_date": "2026-06-27",
-          "source_artifact": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt",
+          "source_artifact": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt",
           "ayanamsa": "lahiri",
           "node_mode": "PyJHora default",
           "timezone": "UTC+08:00",
-          "operator_note": "Black-box stdout from isolated /tmp virtualenv. PyJHora AGPL code was not copied into this repository; only the generated output artifact is stored as external evidence."
+          "operator_note": "Black-box stdout from isolated /tmp virtualenv. PyJHora AGPL code was not copied into this repository; only the generated output artifact is stored as external evidence. Shadbala raw values are Virupa; packet stores Rupa values by dividing by 60."
         }
       }
     },

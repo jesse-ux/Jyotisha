@@ -80,7 +80,7 @@ def run_validator(input_path: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
-def test_validator_rejects_draft_packets_without_external_artifacts(tmp_path: Path) -> None:
+def test_validator_accepts_current_external_packets_but_rejects_remaining_drafts(tmp_path: Path) -> None:
     queue_path = tmp_path / "queue.json"
     queue_path.write_text(json.dumps(build_queue(), ensure_ascii=False), encoding="utf-8")
 
@@ -90,14 +90,16 @@ def test_validator_rejects_draft_packets_without_external_artifacts(tmp_path: Pa
     report = json.loads(completed.stdout)
     assert report["scope"] == "external_oracle_evidence_validation"
     assert report["summary"]["total_packets"] == 5
-    assert report["summary"]["valid_packets"] == 1
-    assert report["summary"]["ready_for_calibration"] == 1
+    assert report["summary"]["valid_packets"] == 2
+    assert report["summary"]["ready_for_calibration"] == 2
     assert report["summary"]["all_packets_external_verified"] is False
     first = report["packets"][0]
     assert first["capture_id"] == "external_template_user_REDACTED_YEAR_moon_longitude_lahiri"
-    assert first["valid"] is False
-    assert "placeholder_unfilled:target.moon_sidereal_longitude_deg" in first["problems"]
-    assert "missing_shadbala_component:Sun.sthana" in first["problems"]
+    assert first["valid"] is True
+    assert first["problems"] == []
+    remaining_drafts = [packet for packet in report["packets"] if not packet["valid"]]
+    assert remaining_drafts
+    assert any("status_not_external_verified:draft" in packet["problems"] for packet in remaining_drafts)
 
 
 def test_validator_accepts_filled_external_packet_but_not_whole_queue(tmp_path: Path) -> None:
@@ -180,7 +182,7 @@ def test_validator_rejects_non_numeric_or_negative_shadbala_components(tmp_path:
     packet = queue["tasks"][0]["evidence_packet"]
     shadbala = complete_shadbala_components()
     shadbala["Sun"]["sthana"] = "100"
-    shadbala["Moon"]["dig"] = -1.0
+    shadbala["Moon"]["kala"] = -1.0
     packet["metadata"] = {
         "tool_name": "JHora",
         "tool_version_or_url": "manual-screenshot-v1",
@@ -207,7 +209,7 @@ def test_validator_rejects_non_numeric_or_negative_shadbala_components(tmp_path:
     first = report["packets"][0]
     assert first["valid"] is False
     assert "invalid_shadbala_component_type:Sun.sthana" in first["problems"]
-    assert "invalid_shadbala_component_negative:Moon.dig" in first["problems"]
+    assert "invalid_shadbala_component_negative:Moon.kala" in first["problems"]
 
 
 def test_validator_accepts_negative_drik_bala_when_component_sum_matches(tmp_path: Path) -> None:
@@ -229,6 +231,45 @@ def test_validator_accepts_negative_drik_bala_when_component_sum_matches(tmp_pat
     packet["target_placeholders"] = {
         "target.moon_sidereal_longitude_deg": 311.7897,
         "target.vimshottari_start_date": "1986-05-18",
+        "target.shadbala_components": shadbala,
+    }
+    packet["status"] = "external_verified"
+    queue_path = tmp_path / "queue.json"
+    queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_validator(queue_path)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    first = report["packets"][0]
+    assert first["valid"] is True
+    assert first["problems"] == []
+
+
+def test_validator_accepts_pyjhora_negative_dig_and_drik_values(tmp_path: Path) -> None:
+    queue = build_queue()
+    packet = queue["tasks"][0]["evidence_packet"]
+    shadbala = complete_shadbala_components()
+    for component in SHADBALA_COMPONENTS:
+        shadbala["Moon"][component] = 1.0
+    shadbala["Moon"]["dig"] = -0.5255
+    shadbala["Moon"]["drik"] = -0.0947
+    shadbala["Moon"]["total_rupa"] = round(sum(shadbala["Moon"][component] for component in SHADBALA_COMPONENTS), 4)
+    shadbala["Jupiter"]["drik"] = -0.0692
+    shadbala["Jupiter"]["total_rupa"] = round(sum(shadbala["Jupiter"][component] for component in SHADBALA_COMPONENTS), 4)
+    packet["metadata"] = {
+        "tool_name": "PyJHora",
+        "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
+        "capture_date": "2026-06-27",
+        "source_artifact": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt",
+        "ayanamsa": "lahiri",
+        "node_mode": "PyJHora default",
+        "timezone": "UTC+08:00",
+        "operator_note": "Black-box external stdout; PyJHora can emit negative Dig and Drik Bala values.",
+    }
+    packet["target_placeholders"] = {
+        "target.moon_sidereal_longitude_deg": 311.774424,
+        "target.vimshottari_start_date": "1986-05-25",
         "target.shadbala_components": shadbala,
     }
     packet["status"] = "external_verified"
