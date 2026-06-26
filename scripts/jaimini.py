@@ -779,6 +779,9 @@ def calc_special_lagnas_precise(
     hl_idx = ghati_floor % 12 if ghati_floor % 2 else (7 - ghati_floor) % 12
     gl_idx = ghati_floor % 12
     vl_idx = (asc_sign_idx * 3) % 12
+    vl_from_hl_idx = (hl_idx * 3) % 12
+    pp_idx = (hl_idx + gl_idx) % 12
+    vil_idx = int((ghatis * 2)) % 12
 
     sunrise_local_hours = (sunrise_utc + tz_offset) % 24
     sunrise_local_minutes = int(round(sunrise_local_hours * 60)) % (24 * 60)
@@ -794,6 +797,8 @@ def calc_special_lagnas_precise(
         'ghatis_elapsed_from_sunrise': round(ghatis, 4),
         'HL': _special_lagna_payload('HL', 'Hora Lagna', hl_idx, fraction * 30.0, ghatis, before_sunrise),
         'GL': _special_lagna_payload('GL', 'Ghati Lagna', gl_idx, fraction * 30.0, ghatis, before_sunrise),
+        'PP': _special_lagna_payload('PP', 'Pranapada Lagna', pp_idx, fraction * 30.0, ghatis, before_sunrise),
+        'ViL': _special_lagna_payload('ViL', 'Vighati Lagna', vil_idx, fraction * 30.0, ghatis, before_sunrise),
         'VL': {
             'name': 'VL',
             'full_name': 'Varnada Lagna',
@@ -801,8 +806,13 @@ def calc_special_lagnas_precise(
             'sign_idx': vl_idx,
             'lord': SIGN_LORDS[_sign_name(vl_idx)],
             'method': 'Ascendant sign × 3',
+            'vl_from_hl': {
+                'sign': _sign_name(vl_from_hl_idx),
+                'sign_idx': vl_from_hl_idx,
+                'lord': SIGN_LORDS[_sign_name(vl_from_hl_idx)],
+            },
         },
-        'note': 'HL/GL以出生地日出为起点计算；GL对24分钟边界敏感，出生时间不准时应结合生时校正。'
+        'note': 'HL/GL/PP/ViL以出生地日出为起点计算；GL与ViL对细分钟边界敏感，出生时间不准时应结合生时校正。'
     }
 
 
@@ -819,12 +829,22 @@ def calc_special_lagnas(asc_sign_idx: int, hour: int, minute: int = 0) -> Dict:
     hl_idx = ghati_floor % 12 if ghati_floor % 2 else (7 - ghati_floor) % 12
     gl_idx = ghati_floor % 12
     vl_idx = (asc_sign_idx * 3) % 12
+    vl_from_hl_idx = (hl_idx * 3) % 12
+    pp_idx = (hl_idx + gl_idx) % 12
+    vil_idx = int(ghatis * 2) % 12
     return {
         'method': 'Special Lagnas HL/GL/VL simplified (jaimini-tropical MIT adapted; sunrise-sensitive)',
         'capability_status': 'auxiliary_partial',
         'ghatis_elapsed_from_midnight': round(ghatis, 4),
         'HL': {'sign': _sign_name(hl_idx), 'sign_idx': hl_idx, 'lord': SIGN_LORDS[_sign_name(hl_idx)]},
         'GL': {'sign': _sign_name(gl_idx), 'sign_idx': gl_idx, 'lord': SIGN_LORDS[_sign_name(gl_idx)]},
-        'VL': {'sign': _sign_name(vl_idx), 'sign_idx': vl_idx, 'lord': SIGN_LORDS[_sign_name(vl_idx)]},
-        'note': 'HL/GL/VL对日出非常敏感；本函数用于结构化补齐，精确版本需接入当地日出。'
+        'PP': {'sign': _sign_name(pp_idx), 'sign_idx': pp_idx, 'lord': SIGN_LORDS[_sign_name(pp_idx)]},
+        'ViL': {'sign': _sign_name(vil_idx), 'sign_idx': vil_idx, 'lord': SIGN_LORDS[_sign_name(vil_idx)]},
+        'VL': {
+            'sign': _sign_name(vl_idx),
+            'sign_idx': vl_idx,
+            'lord': SIGN_LORDS[_sign_name(vl_idx)],
+            'vl_from_hl': {'sign': _sign_name(vl_from_hl_idx), 'sign_idx': vl_from_hl_idx, 'lord': SIGN_LORDS[_sign_name(vl_from_hl_idx)]},
+        },
+        'note': 'HL/GL/VL/PP/ViL对日出非常敏感；本函数用于结构化补齐，精确版本需接入当地日出。'
     }

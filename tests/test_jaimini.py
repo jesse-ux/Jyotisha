@@ -150,6 +150,8 @@ class TestSpecialLagnas:
         assert 'HL' in result
         assert 'GL' in result
         assert 'VL' in result
+        assert 'PP' in result
+        assert 'ViL' in result
 
     def test_ghatis_calculated(self):
         result = calc_special_lagnas(0, 10, 30)
@@ -177,9 +179,23 @@ class TestSpecialLagnas:
         assert result['precision'] == 'sunrise_correct'
         assert 'sunrise_local_time' in result
         assert result['ghatis_elapsed_from_sunrise'] > 0
-        for key in ['HL', 'GL', 'VL']:
+        for key in ['HL', 'GL', 'VL', 'PP', 'ViL']:
             assert result[key]['sign'] in SIGNS
             assert result[key]['lord'] in SIGN_LORDS.values()
+
+    def test_precise_special_lagnas_include_varnada_crosscheck(self):
+        result = calc_special_lagnas_precise(
+            4, REDACTED_YEAR, 4, 17, 14, 45, lat=36.466667, lon=114.2, tz_offset=8
+        )
+        assert result['VL']['sign_idx'] == (4 * 3) % 12
+        assert 'vl_from_hl' in result['VL']
+
+    def test_precise_special_lagnas_expose_named_extended_payloads(self):
+        result = calc_special_lagnas_precise(
+            0, 1990, 6, 15, 10, 30, lat=28.6, lon=77.2, tz_offset=5.5
+        )
+        assert result['PP']['full_name'] == 'Pranapada Lagna'
+        assert result['ViL']['full_name'] == 'Vighati Lagna'
 
     def test_precise_special_lagnas_are_time_sensitive(self):
         morning = calc_special_lagnas_precise(

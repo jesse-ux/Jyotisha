@@ -878,6 +878,32 @@
       "audit_label": "Upapada Lagna",
       "missing_impact": "Marriage quality analysis incomplete without UL."
     },
+    "special_lagnas_extended": {
+      "name": "Special Lagnas / HL GL VL PP ViL",
+      "domains": [
+        "lagna",
+        "timing",
+        "wealth",
+        "status"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/open_source_sources/jaimini-tropical/jaimini/core/lagnas.py"
+      ],
+      "commands": [
+        "chart",
+        "full-reading"
+      ],
+      "output_paths": [
+        "special_lagnas.HL",
+        "special_lagnas.GL",
+        "special_lagnas.VL",
+        "special_lagnas.PP",
+        "special_lagnas.ViL"
+      ],
+      "audit_label": "Special Lagnas",
+      "missing_impact": "Special Lagna timing, status and prosperity sub-angles are thinner without HL/GL/VL/PP/ViL."
+    },
     "tithi_lord": {
       "name": "Tithi Lord / 月日守护星",
       "domains": [
