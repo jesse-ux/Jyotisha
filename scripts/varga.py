@@ -90,6 +90,42 @@ def calc_varga(lon, div):
     if div==9: r['pada']=pi+1
     return r
 
+
+def calc_64th_navamsa(moon_lon: float) -> Dict:
+    """Compute the 64th Navamsa from the Moon's Navamsa position.
+
+    Traditional counting is inclusive, so the 64th point is +63 signs from the
+    Moon's Navamsa anchor.
+    """
+    base = calc_varga(moon_lon, 9)
+    sign_idx = (base['sign_idx'] + 63) % 12
+    return {
+        'base_navamsa_sign_idx': base['sign_idx'],
+        'base_navamsa_sign': base['sign'],
+        'offset_from_moon_navamsa': 64,
+        'sign_idx': sign_idx,
+        'sign': _sn(sign_idx),
+        'lord': SIGN_LORDS.get(_sn(sign_idx), ''),
+    }
+
+
+def calc_22nd_drekkana(lagna_lon: float) -> Dict:
+    """Compute the 22nd Drekkana from the Lagna's Drekkana position.
+
+    Traditional counting is inclusive, so the 22nd point is +21 signs from the
+    Lagna Drekkana anchor.
+    """
+    base = calc_varga(lagna_lon, 3)
+    sign_idx = (base['sign_idx'] + 21) % 12
+    return {
+        'base_drekkana_sign_idx': base['sign_idx'],
+        'base_drekkana_sign': base['sign'],
+        'offset_from_lagna_drekkana': 22,
+        'sign_idx': sign_idx,
+        'sign': _sn(sign_idx),
+        'lord': SIGN_LORDS.get(_sn(sign_idx), ''),
+    }
+
 def dignity(planet, sign_idx):
     if planet in EXALT_SIGN and sign_idx==EXALT_SIGN[planet]: return 'Exalted'
     if planet in DEBIL_SIGN and sign_idx==DEBIL_SIGN[planet]: return 'Debilitated'

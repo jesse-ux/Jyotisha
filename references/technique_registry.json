@@ -512,6 +512,48 @@
       "audit_label": "Pushkara",
       "missing_impact": "D9 grace/support layer may be undercounted."
     },
+    "navamsa_64th": {
+      "name": "64th Navamsa / Chatushashti Navamsa",
+      "domains": [
+        "varga",
+        "nakshatra",
+        "crisis",
+        "timing"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/navamsa-d9-interpretation-template.md"
+      ],
+      "commands": [
+        "scripts/varga.py"
+      ],
+      "output_paths": [
+        "scripts.varga.calc_64th_navamsa"
+      ],
+      "audit_label": "64th Navamsa",
+      "missing_impact": "A classical stress-sensitive Navamsa trigger is unavailable, weakening vulnerability and event-pressure analysis."
+    },
+    "drekkana_22nd": {
+      "name": "22nd Drekkana",
+      "domains": [
+        "varga",
+        "d30",
+        "crisis",
+        "timing"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/varga-system-quick-reference.md"
+      ],
+      "commands": [
+        "scripts/varga.py"
+      ],
+      "output_paths": [
+        "scripts.varga.calc_22nd_drekkana"
+      ],
+      "audit_label": "22nd Drekkana",
+      "missing_impact": "A classical danger-sensitive Drekkana trigger is absent, weakening accident and adversity screening."
+    },
     "bhava_chalit": {
       "name": "Bhava Chalit",
       "domains": [

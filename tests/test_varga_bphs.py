@@ -5,7 +5,13 @@ from __future__ import annotations
 
 from hypothesis import given
 from hypothesis import strategies as st
-from varga import SIGNS, calc_varga, varga_map
+from varga import (
+    SIGNS,
+    calc_22nd_drekkana,
+    calc_64th_navamsa,
+    calc_varga,
+    varga_map,
+)
 
 
 def navamsa_ref(lon: float) -> int:
@@ -82,3 +88,21 @@ def test_navamsa_matches_user_jhora_pdf_reference_chart() -> None:
     }
     for longitude, expected_sign in expected.items():
         assert calc_varga(longitude, 9)["sign"] == expected_sign
+
+
+def test_64th_navamsa_counts_forward_from_moon_navamsa() -> None:
+    moon_lon = 42.3
+    result = calc_64th_navamsa(moon_lon)
+    expected_sign_idx = (navamsa_ref(moon_lon) + 63) % 12
+    assert result["sign_idx"] == expected_sign_idx
+    assert result["sign"] == SIGNS[expected_sign_idx]
+    assert result["offset_from_moon_navamsa"] == 64
+
+
+def test_22nd_drekkana_counts_forward_from_lagna_drekkana() -> None:
+    asc_lon = 25.5
+    result = calc_22nd_drekkana(asc_lon)
+    expected_sign_idx = (drekkana_ref(asc_lon) + 21) % 12
+    assert result["sign_idx"] == expected_sign_idx
+    assert result["sign"] == SIGNS[expected_sign_idx]
+    assert result["offset_from_lagna_drekkana"] == 22
