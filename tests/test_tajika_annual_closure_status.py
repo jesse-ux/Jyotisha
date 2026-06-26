@@ -56,6 +56,11 @@ def test_tajika_annual_closure_status_identifies_first_annual_packet() -> None:
     assert "metadata.tool_name" in report["first_priority"]["missing_fields"]
     assert "target.solar_return_datetime" in report["first_priority"]["missing_fields"]
     assert "target.sahams.punya_saham" in report["first_priority"]["missing_fields"]
+    assert report["first_priority"]["missing_groups"]["metadata"]["count"] == 5
+    assert report["first_priority"]["missing_groups"]["target"]["count"] == 10
+    assert report["first_priority"]["prefilled_fields"]["metadata"]["annual_system"] == "Varshaphala/Tajika"
+    assert report["first_priority"]["manual_fill_plan"]["status_value"] == "external_verified"
+    assert report["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 15
     assert report["first_priority"]["validate_command"]
 
 
@@ -70,3 +75,6 @@ def test_tajika_annual_closure_status_markdown_can_be_written(tmp_path: Path) ->
     assert "can_claim_tajika_sahams_closure: `false`" in markdown
     assert "external_template_steve_jobs_varshaphala_1984_lahiri" in markdown
     assert "target.sahams.punya_saham" in markdown
+    assert "## Missing Summary" in markdown
+    assert "## Prefilled Fields" in markdown
+    assert "## Manual Fill Plan" in markdown

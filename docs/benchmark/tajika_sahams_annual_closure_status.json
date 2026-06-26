@@ -57,6 +57,71 @@
       "target.tajika_yogas",
       "target.source_artifact"
     ],
+    "missing_groups": {
+      "metadata": {
+        "count": 5,
+        "fields": [
+          "metadata.tool_name",
+          "metadata.tool_version_or_url",
+          "metadata.capture_date",
+          "metadata.operator_note",
+          "metadata.source_artifact"
+        ]
+      },
+      "target": {
+        "count": 10,
+        "fields": [
+          "target.solar_return_datetime",
+          "target.varsha_lagna_deg",
+          "target.muntha_sign",
+          "target.year_lord",
+          "target.mudda_dasha_first_lord",
+          "target.sahams.punya_saham",
+          "target.sahams.rajya_saham",
+          "target.sahams.vivah_saham",
+          "target.tajika_yogas",
+          "target.source_artifact"
+        ]
+      }
+    },
+    "prefilled_fields": {
+      "status": "draft",
+      "promotion_status_after_fill": "external_verified",
+      "metadata": {
+        "ayanamsa": "Lahiri",
+        "node_mode": "true node",
+        "timezone": "UTC-08:00",
+        "annual_system": "Varshaphala/Tajika",
+        "target_year": 1984
+      },
+      "settings": {
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "annual_system": "varshaphala",
+        "target_year": 1984
+      }
+    },
+    "manual_fill_plan": {
+      "status_value": "external_verified",
+      "manual_entry_count": 15,
+      "remaining_manual_fields": [
+        "metadata.tool_name",
+        "metadata.tool_version_or_url",
+        "metadata.capture_date",
+        "metadata.operator_note",
+        "metadata.source_artifact",
+        "target.solar_return_datetime",
+        "target.varsha_lagna_deg",
+        "target.muntha_sign",
+        "target.year_lord",
+        "target.mudda_dasha_first_lord",
+        "target.sahams.punya_saham",
+        "target.sahams.rajya_saham",
+        "target.sahams.vivah_saham",
+        "target.tajika_yogas",
+        "target.source_artifact"
+      ]
+    },
     "external_sources": [
       "JHora Varshaphala screenshot",
       "PyJHora black-box annual output",

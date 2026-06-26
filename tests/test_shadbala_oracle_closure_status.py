@@ -51,6 +51,12 @@ def test_shadbala_oracle_closure_status_identifies_first_absolute_value_packet()
     assert "target.moon_sidereal_longitude_deg" in report["first_priority"]["missing_fields"]
     assert "target.shadbala_components.Sun.sthana" in report["first_priority"]["missing_fields"]
     assert "target.shadbala_components.Saturn.total_rupa" in report["first_priority"]["missing_fields"]
+    assert report["first_priority"]["missing_groups"]["metadata"]["count"] == 5
+    assert report["first_priority"]["missing_groups"]["target"]["count"] == 50
+    assert report["first_priority"]["missing_groups"]["bodies"]["Sun"]["count"] == 7
+    assert report["first_priority"]["prefilled_fields"]["metadata"]["ayanamsa"] == "Raman"
+    assert report["first_priority"]["manual_fill_plan"]["status_value"] == "external_verified"
+    assert report["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 55
     assert report["first_priority"]["reject_global_scaling"] is True
     assert report["first_priority"]["validate_command"]
 
@@ -66,3 +72,6 @@ def test_shadbala_oracle_closure_status_markdown_can_be_written(tmp_path: Path) 
     assert "can_claim_shadbala_absolute_closure: `false`" in markdown
     assert "external_template_redacted_place_shadbala_raman" in markdown
     assert "target.shadbala_components.Sun.sthana" in markdown
+    assert "## Missing Summary" in markdown
+    assert "## Prefilled Fields" in markdown
+    assert "## Manual Fill Plan" in markdown

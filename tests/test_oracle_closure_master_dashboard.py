@@ -48,8 +48,13 @@ def test_oracle_closure_master_dashboard_aggregates_all_hard_fronts() -> None:
     assert report["fronts"]["dasha"]["first_priority"]["case_id"] == "template_steve_jobs_dasha_lahiri"
     assert report["fronts"]["shadbala"]["first_priority"]["case_id"] == "template_redacted_place_shadbala_raman"
     assert report["fronts"]["tajika_sahams"]["first_priority"]["case_id"] == "template_steve_jobs_varshaphala_1984_lahiri"
+    assert report["fronts"]["dasha"]["first_priority"]["missing_groups"]["metadata"]["count"] == 5
+    assert report["fronts"]["dasha"]["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 6
+    assert report["fronts"]["tajika_sahams"]["first_priority"]["missing_groups"]["target"]["count"] == 10
+    assert report["fronts"]["shadbala"]["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 55
     assert report["next_action_order"][0]["front"] == "dasha"
     assert report["next_action_order"][0]["missing_field_count"] == 6
+    assert report["next_action_order"][0]["manual_entry_count"] == 6
     assert report["next_action_order"][1]["front"] == "tajika_sahams"
     assert report["next_action_order"][2]["front"] == "shadbala"
 
@@ -67,3 +72,5 @@ def test_oracle_closure_master_dashboard_markdown_can_be_written(tmp_path: Path)
     assert "template_steve_jobs_dasha_lahiri" in markdown
     assert "template_redacted_place_shadbala_raman" in markdown
     assert "template_steve_jobs_varshaphala_1984_lahiri" in markdown
+    assert "manual entries" in markdown
+    assert "metadata missing" in markdown

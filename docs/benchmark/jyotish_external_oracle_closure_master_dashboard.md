@@ -1,6 +1,6 @@
 # Jyotish External Oracle Closure Master Dashboard
 
-Generated: `2026-06-26T10:31:38.662077+00:00`
+Generated: `2026-06-26T12:13:46.930643+00:00`
 
 ## Summary
 
@@ -12,11 +12,11 @@ Generated: `2026-06-26T10:31:38.662077+00:00`
 
 ## Fronts
 
-| front | tasks | verified | first priority | missing fields |
-|---|---:|---:|---|---:|
-| `dasha` | 3 | 0 | `template_steve_jobs_dasha_lahiri` | 6 |
-| `tajika_sahams` | 5 | 0 | `template_steve_jobs_varshaphala_1984_lahiri` | 15 |
-| `shadbala` | 4 | 0 | `template_redacted_place_shadbala_raman` | 55 |
+| front | tasks | verified | first priority | missing fields | manual entries | metadata missing | target missing |
+|---|---:|---:|---|---:|---:|---:|---:|
+| `dasha` | 3 | 0 | `template_steve_jobs_dasha_lahiri` | 6 | 6 | 5 | 1 |
+| `tajika_sahams` | 5 | 0 | `template_steve_jobs_varshaphala_1984_lahiri` | 15 | 15 | 5 | 10 |
+| `shadbala` | 4 | 0 | `template_redacted_place_shadbala_raman` | 55 | 55 | 5 | 50 |
 
 ## Next Action Order
 
@@ -25,6 +25,7 @@ Generated: `2026-06-26T10:31:38.662077+00:00`
 - case_id: `template_steve_jobs_dasha_lahiri`
 - capture_id: `external_template_steve_jobs_dasha_lahiri`
 - missing_field_count: `6`
+- manual_entry_count: `6`
 
 ```bash
 python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json --format json
@@ -35,6 +36,7 @@ python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha
 - case_id: `template_steve_jobs_varshaphala_1984_lahiri`
 - capture_id: `external_template_steve_jobs_varshaphala_1984_lahiri`
 - missing_field_count: `15`
+- manual_entry_count: `15`
 
 ```bash
 python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json --format json
@@ -45,6 +47,7 @@ python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/ta
 - case_id: `template_redacted_place_shadbala_raman`
 - capture_id: `external_template_redacted_place_shadbala_raman`
 - missing_field_count: `55`
+- manual_entry_count: `55`
 
 ```bash
 python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json --format json

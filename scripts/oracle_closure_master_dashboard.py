@@ -49,6 +49,9 @@ def _front_from_status(name: str, status: dict[str, Any], task_key: str, verifie
             "packet_path": first["packet_path"],
             "missing_field_count": len(missing_fields),
             "missing_fields": missing_fields,
+            "missing_groups": first.get("missing_groups", {}),
+            "prefilled_fields": first.get("prefilled_fields", {}),
+            "manual_fill_plan": first.get("manual_fill_plan", {}),
             "apply_command": first.get("apply_command", ""),
             "validate_command": first.get("validate_command", ""),
         },
@@ -113,6 +116,7 @@ def build_dashboard(dasha_oracle_file: str, tajika_oracle_file: str) -> dict[str
                 "case_id": front["first_priority"]["case_id"],
                 "capture_id": front["first_priority"]["capture_id"],
                 "missing_field_count": front["first_priority"]["missing_field_count"],
+                "manual_entry_count": int(front["first_priority"].get("manual_fill_plan", {}).get("manual_entry_count", front["first_priority"]["missing_field_count"])),
                 "apply_command": front["first_priority"]["apply_command"],
             }
             for front in fronts.values()
@@ -157,14 +161,18 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "## Fronts",
         "",
-        "| front | tasks | verified | first priority | missing fields |",
-        "|---|---:|---:|---|---:|",
+        "| front | tasks | verified | first priority | missing fields | manual entries | metadata missing | target missing |",
+        "|---|---:|---:|---|---:|---:|---:|---:|",
     ]
     for key in ["dasha", "tajika_sahams", "shadbala"]:
         front = report["fronts"][key]
         first = front["first_priority"]
+        missing_groups = first.get("missing_groups", {})
+        manual_fill_plan = first.get("manual_fill_plan", {})
         lines.append(
-            f"| `{key}` | {front['task_count']} | {front['external_verified_tasks']} | `{first['case_id']}` | {first['missing_field_count']} |"
+            f"| `{key}` | {front['task_count']} | {front['external_verified_tasks']} | `{first['case_id']}` | "
+            f"{first['missing_field_count']} | {manual_fill_plan.get('manual_entry_count', first['missing_field_count'])} | "
+            f"{missing_groups.get('metadata', {}).get('count', 0)} | {missing_groups.get('target', {}).get('count', 0)} |"
         )
     lines.extend(["", "## Next Action Order", ""])
     for item in report["next_action_order"]:
@@ -175,6 +183,7 @@ def render_markdown(report: dict[str, Any]) -> str:
                 f"- case_id: `{item['case_id']}`",
                 f"- capture_id: `{item['capture_id']}`",
                 f"- missing_field_count: `{item['missing_field_count']}`",
+                f"- manual_entry_count: `{item['manual_entry_count']}`",
                 "",
                 "```bash",
                 item["apply_command"],

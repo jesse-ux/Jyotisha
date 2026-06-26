@@ -14,6 +14,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 FIRST_PRIORITY_CASE_ID = "template_redacted_place_shadbala_raman"
+FIRST_PRIORITY_TEMPLATE_PATH = "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json"
 SHADBALA_TARGET_FIELD = "target.shadbala_components"
 SUPPORTING_TARGET_FIELDS = ["target.moon_sidereal_longitude_deg"]
 REQUIRED_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
@@ -82,6 +83,67 @@ def _supporting_missing(packet: dict[str, Any], target_fields: list[str]) -> lis
     return missing
 
 
+def _group_missing_fields(missing_fields: list[str]) -> dict[str, Any]:
+    metadata_fields = [field for field in missing_fields if field.startswith("metadata.")]
+    target_fields = [field for field in missing_fields if field.startswith("target.")]
+    body_groups: dict[str, list[str]] = {}
+    prefix = f"{SHADBALA_TARGET_FIELD}."
+    for field in target_fields:
+        if not field.startswith(prefix):
+            continue
+        remainder = field[len(prefix):]
+        body, _, component = remainder.partition(".")
+        if not body or not component:
+            continue
+        body_groups.setdefault(body, []).append(field)
+    grouped_bodies = {
+        body: {
+            "count": len(fields),
+            "fields": fields,
+        }
+        for body, fields in sorted(body_groups.items())
+    }
+    return {
+        "metadata": {
+            "count": len(metadata_fields),
+            "fields": metadata_fields,
+        },
+        "target": {
+            "count": len(target_fields),
+            "fields": target_fields,
+        },
+        "bodies": grouped_bodies,
+    }
+
+
+def _prefilled_fields(packet: dict[str, Any], missing_fields: list[str]) -> dict[str, Any]:
+    missing = set(missing_fields)
+    metadata = {
+        key: value
+        for key, value in packet.get("metadata", {}).items()
+        if f"metadata.{key}" not in missing and value not in ("", None, [], {})
+    }
+    settings = {
+        key: value
+        for key, value in packet.get("settings", {}).items()
+        if value not in ("", None, [], {})
+    }
+    return {
+        "status": packet.get("status"),
+        "promotion_status_after_fill": packet.get("promotion_status_after_fill"),
+        "metadata": metadata,
+        "settings": settings,
+    }
+
+
+def _manual_fill_plan(packet: dict[str, Any], missing_fields: list[str]) -> dict[str, Any]:
+    return {
+        "status_value": packet.get("promotion_status_after_fill", "external_verified"),
+        "manual_entry_count": len(missing_fields),
+        "remaining_manual_fields": missing_fields,
+    }
+
+
 def _apply_command(packet_path: str, oracle_file: str) -> str:
     return (
         "python3 scripts/oracle_collection_queue.py "
@@ -111,12 +173,15 @@ def build_status(oracle_file: str) -> dict[str, Any]:
     if priority is None:
         raise RuntimeError("No Shadbala target task found")
 
-    packet = priority["evidence_packet"]
-    capture_id = packet["capture_id"]
+    queue_packet = priority["evidence_packet"]
+    capture_id = queue_packet["capture_id"]
     packet_path = f"references/oracle/artifacts/pending_packets/{capture_id}.json"
+    template_path = FIRST_PRIORITY_TEMPLATE_PATH if priority["case_id"] == FIRST_PRIORITY_CASE_ID else packet_path
+    packet = json.loads((ROOT / template_path).read_text(encoding="utf-8"))
     target_fields = priority.get("target_fields", [])
     supporting_target_fields = [field for field in SUPPORTING_TARGET_FIELDS if field in target_fields]
     missing_fields = _metadata_missing(packet) + _supporting_missing(packet, target_fields) + _shadbala_missing(packet)
+    missing_groups = _group_missing_fields(missing_fields)
     external_verified = [
         task for task in shadbala_tasks
         if (
@@ -145,6 +210,9 @@ def build_status(oracle_file: str) -> dict[str, Any]:
             "settings": priority.get("settings", {}),
             "required_target_fields": supporting_target_fields + [SHADBALA_TARGET_FIELD],
             "missing_fields": missing_fields,
+            "missing_groups": missing_groups,
+            "prefilled_fields": _prefilled_fields(packet, missing_fields),
+            "manual_fill_plan": _manual_fill_plan(packet, missing_fields),
             "external_sources": [
                 "JHora Shadbala component table screenshot",
                 "PyJHora black-box shadbala output",
@@ -186,9 +254,59 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- capture_id: `{first['capture_id']}`",
         f"- packet_path: `{first['packet_path']}`",
         f"- required_target_fields: `{', '.join(first['required_target_fields'])}`",
-        f"- missing_fields: `{', '.join(first['missing_fields'])}`",
         f"- reject_global_scaling: `{str(first['reject_global_scaling']).lower()}`",
         "",
+        "## Missing Summary",
+        "",
+        f"- metadata: `{first['missing_groups']['metadata']['count']}`",
+        f"- target: `{first['missing_groups']['target']['count']}`",
+    ]
+    if first["missing_groups"]["bodies"]:
+        lines.extend(["- bodies:", ""])
+        lines.extend(
+            f"  - {body}: `{payload['count']}`"
+            for body, payload in first["missing_groups"]["bodies"].items()
+        )
+    lines.extend(
+        [
+            "",
+            "## Prefilled Fields",
+            "",
+            f"- status: `{first['prefilled_fields']['status']}`",
+            f"- promotion_status_after_fill: `{first['prefilled_fields']['promotion_status_after_fill']}`",
+            "",
+        ]
+    )
+    if first["prefilled_fields"]["metadata"]:
+        lines.append("- metadata:")
+        lines.append("")
+        lines.extend(
+            f"  - {key}: `{value}`"
+            for key, value in first["prefilled_fields"]["metadata"].items()
+        )
+        lines.append("")
+    if first["prefilled_fields"]["settings"]:
+        lines.append("- settings:")
+        lines.append("")
+        lines.extend(
+            f"  - {key}: `{value}`"
+            for key, value in first["prefilled_fields"]["settings"].items()
+        )
+        lines.append("")
+    lines.extend(
+        [
+            "## Manual Fill Plan",
+            "",
+            f"- status_value: `{first['manual_fill_plan']['status_value']}`",
+            f"- manual_entry_count: `{first['manual_fill_plan']['manual_entry_count']}`",
+            "",
+            "## Missing Fields",
+            "",
+        ]
+    )
+    lines.extend(f"- `{field}`" for field in first["missing_fields"])
+    lines.extend(
+        [
         "## Required Matrix",
         "",
         f"- planets: `{', '.join(summary['required_planets'])}`",
@@ -206,7 +324,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "## Next Actions",
         "",
-    ]
+        ]
+    )
     lines.extend(f"- {item}" for item in report["next_actions"])
     lines.extend(["", "## Boundary", "", report["boundary"], ""])
     return "\n".join(lines)
