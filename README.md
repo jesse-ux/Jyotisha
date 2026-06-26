@@ -194,6 +194,15 @@ python3 scripts/oracle_evidence_validator.py \
 
 该验证器输出 `external_oracle_evidence_validation`，会检查 `evidence_packet` 必填元数据、`target_placeholders` 是否已填、是否覆盖 `target_fields`、是否包含外部 artifact，以及是否错误使用本仓库本地引擎输出。当前 draft 队列会保持 `valid_packets: 0` / `ready_for_calibration: 0`；只有状态为 `external_verified` 且证据完整的包才会进入可复核状态。
 
+证据包通过 validator 之后，再运行边界差异审计，比较本地引擎与外部 Dasha/Shadbala 目标值：
+
+```bash
+python3 scripts/oracle_boundary_audit.py \
+  --oracle-file references/oracle/dasha_shadbala_oracle_cases.json
+```
+
+审计报告中的 `template_comparisons` 会列出 external-verified template 的 Dasha 起点差异、Shadbala 七曜分量/总分差异，并继续保持 `production_tuning_recommended: false`，防止用单个样本调生产常数。
+
 `full-reading` 也会输出 `ai_prompt_pack`：这是给网页/app、skill 或后端 AI 代理使用的结构化 Prompt/RAG 上下文包。它不会硬编码断语，而是携带 D1/D9/Dasha/Shadbala/Ashtakavarga 的证据快照、推荐检索文档和边界提示，要求大模型基于计算证据交叉验证，避免单一配置下结论。
 
 ### Prerequisites

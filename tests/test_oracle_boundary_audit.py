@@ -72,3 +72,65 @@ def test_oracle_boundary_audit_reports_dasha_and_shadbala_boundaries() -> None:
     assert template["status"] == "template_only"
     assert template["ready_for_calibration"] is False
     assert template["missing_target_fields"]
+
+
+def test_oracle_boundary_audit_compares_external_verified_template_rows(tmp_path: Path) -> None:
+    oracle = json.loads((ROOT / "references/oracle/dasha_shadbala_oracle_cases.json").read_text(encoding="utf-8"))
+    case = oracle["template_cases"][1]
+    case["status"] = "external_verified"
+    case["target"]["vimshottari_start_date"] = "1951-11-01"
+    case["target"]["shadbala_components"] = {
+        planet: {
+            "sthana": 1.0,
+            "dig": 2.0,
+            "kala": 3.0,
+            "chesta": 4.0,
+            "naisargika": 5.0,
+            "drik": 6.0,
+            "total_rupa": 21.0,
+        }
+        for planet in ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
+    }
+    case["evidence_packet"] = {
+        "capture_id": "external_template_steve_jobs_dasha_lahiri",
+        "status": "external_verified",
+        "metadata": {
+            "tool_name": "JHora",
+            "tool_version_or_url": "manual-jhora-8.0",
+            "capture_date": "2026-06-26",
+            "source_artifact": "references/oracle/artifacts/steve_jobs_jhora_redacted.png",
+            "ayanamsa": "lahiri",
+            "node_mode": "true",
+            "timezone": "UTC-08:00",
+            "operator_note": "Typed from redacted external JHora screenshot.",
+        },
+    }
+    oracle_path = tmp_path / "oracle.json"
+    oracle_path.write_text(json.dumps(oracle, ensure_ascii=False), encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/oracle_boundary_audit.py",
+            "--oracle-file",
+            str(oracle_path),
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["summary"]["external_verified_template_cases"] == 1
+    assert report["summary"]["production_tuning_recommended"] is False
+    comparison = report["template_comparisons"][0]
+    assert comparison["case_id"] == "template_steve_jobs_dasha_lahiri"
+    assert comparison["status"] == "external_verified"
+    assert comparison["dasha"]["target_start_date"] == "1951-11-01"
+    assert comparison["dasha"]["date_delta_days"] is not None
+    assert comparison["shadbala"]["planets"]["Sun"]["external_total_rupa"] == 21.0
+    assert comparison["shadbala"]["planets"]["Sun"]["total_rupa_delta"] is not None
+    assert comparison["calibration_decision"] == "do_not_tune_single_template"

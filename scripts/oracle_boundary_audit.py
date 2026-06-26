@@ -232,6 +232,99 @@ def _audit_template_case(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _namespace_from_template(case: dict[str, Any]) -> argparse.Namespace:
+    birth = dict(case.get("birth", {}))
+    settings = case.get("settings", {})
+    if "node_mode" not in birth and settings.get("node_mode"):
+        birth["node_mode"] = settings["node_mode"]
+    return _namespace_from_birth(
+        birth,
+        ayanamsa=settings.get("ayanamsa", "lahiri"),
+        moon_lon=None,
+        nakshatra=None,
+        pada=None,
+        birthdate=None,
+        today=None,
+        years=120,
+        table=False,
+    )
+
+
+def _first_dasha_start(result: dict[str, Any]) -> str | None:
+    timeline = result.get("timeline")
+    if isinstance(timeline, list) and timeline:
+        return timeline[0].get("start")
+    return None
+
+
+def _date_delta_days(engine_date: str | None, target_date: str | None) -> int | None:
+    if not engine_date or not target_date:
+        return None
+    from datetime import date
+
+    try:
+        engine_parts = [int(part) for part in engine_date.split("-")[:3]]
+        target_parts = [int(part) for part in target_date.split("-")[:3]]
+        return (date(*engine_parts) - date(*target_parts)).days
+    except Exception:
+        return None
+
+
+def _template_shadbala_comparison(case: dict[str, Any]) -> dict[str, Any]:
+    target_components = case.get("target", {}).get("shadbala_components")
+    if not isinstance(target_components, dict):
+        return {"status": "missing_external_shadbala_components", "planets": {}}
+
+    result = engine.cmd_shadbala(_namespace_from_template(case))
+    if "error" in result:
+        return {"status": "engine_error", "error": result["error"], "planets": {}}
+
+    rows: dict[str, Any] = {}
+    for planet in SHADBALA_PLANETS:
+        external_row = target_components.get(planet, {})
+        engine_row = result.get("planets", {}).get(planet, {})
+        engine_components = _component_totals(engine_row) if engine_row else {}
+        external_total = external_row.get("total_rupa") if isinstance(external_row, dict) else None
+        engine_total = round(float(engine_row.get("total_rupas", 0.0)), 4) if engine_row else None
+        rows[planet] = {
+            "engine_total_rupa": engine_total,
+            "external_total_rupa": external_total,
+            "total_rupa_delta": (
+                round(engine_total - float(external_total), 4)
+                if engine_total is not None and isinstance(external_total, (int, float))
+                else None
+            ),
+            "engine_components": engine_components,
+            "external_components": external_row,
+        }
+    return {"status": "compared", "planets": rows}
+
+
+def _audit_external_verified_template_case(case: dict[str, Any]) -> dict[str, Any]:
+    target = case.get("target", {})
+    dasha_result = engine.cmd_dasha(_namespace_from_template(case))
+    engine_start = _first_dasha_start(dasha_result) if "error" not in dasha_result else None
+    target_start = target.get("vimshottari_start_date")
+    return {
+        "case_id": case.get("id") or case.get("case_id"),
+        "status": case.get("status"),
+        "source": case.get("source"),
+        "metadata": case.get("evidence_packet", {}).get("metadata", {}),
+        "dasha": {
+            "status": "compared" if engine_start and target_start else "missing_dasha_target",
+            "engine_start_date": engine_start,
+            "target_start_date": target_start,
+            "date_delta_days": _date_delta_days(engine_start, target_start),
+        },
+        "shadbala": _template_shadbala_comparison(case),
+        "calibration_decision": "do_not_tune_single_template",
+        "finding": (
+            "External-verified template rows are comparison evidence. Production constants require "
+            "a multi-source sample matrix and must not be tuned to a single packet."
+        ),
+    }
+
+
 def _status_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
     counts: dict[str, int] = {}
     for row in rows:
@@ -242,6 +335,11 @@ def _status_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
 
 def build_report(oracle: dict[str, Any]) -> dict[str, Any]:
     template_rows = [_audit_template_case(case) for case in oracle.get("template_cases", [])]
+    template_comparisons = [
+        _audit_external_verified_template_case(case)
+        for case in oracle.get("template_cases", [])
+        if case.get("status") in ORACLE_TEMPLATE_READY_STATUSES and not _missing_target_fields(case.get("target", {}))
+    ]
     dasha_rows = [_audit_dasha_case(case) for case in oracle.get("dasha_cases", [])]
     longitude_rows = [_audit_longitude_case(case) for case in oracle.get("longitude_cases", [])]
     shadbala_rows = [_audit_shadbala_case(case) for case in oracle.get("shadbala_cases", [])]
@@ -251,6 +349,7 @@ def build_report(oracle: dict[str, Any]) -> dict[str, Any]:
         "summary": {
             "template_cases": len(template_rows),
             "template_status_counts": _status_counts(template_rows),
+            "external_verified_template_cases": len(template_comparisons),
             "dasha_cases": len(dasha_rows),
             "longitude_cases": len(longitude_rows),
             "shadbala_cases": len(shadbala_rows),
@@ -262,6 +361,7 @@ def build_report(oracle: dict[str, Any]) -> dict[str, Any]:
             ],
         },
         "template_cases": template_rows,
+        "template_comparisons": template_comparisons,
         "dasha_cases": dasha_rows,
         "longitude_cases": longitude_rows,
         "shadbala_cases": shadbala_rows,
