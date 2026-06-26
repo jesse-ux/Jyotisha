@@ -214,6 +214,17 @@ python3 scripts/public_benchmark_dashboard.py \
 
 当前看板固定输出 `can_claim_global_first: false`，直到外部 oracle 样本、差异审计和长期公开 benchmark 都达到生产调参标准。
 
+Dasha 外部 oracle 最短闭环状态板用于把“大运外部真值”从 Shadbala 绝对值大包中拆出来，优先推进第一条可验证边界日期：
+
+```bash
+python3 scripts/dasha_oracle_closure_status.py \
+  --oracle-file references/oracle/dasha_shadbala_oracle_cases.json \
+  --format markdown \
+  --output docs/benchmark/dasha_external_oracle_closure_status.md
+```
+
+当前第一优先级是 `external_template_steve_jobs_dasha_lahiri`。该状态板只要求 `target.vimshottari_start_date` 和外部证据 metadata，不要求同时填完 Shadbala 七曜六分量；这样可以先完成 Dasha oracle 的第一条闭环，再单独推进 Shadbala 绝对值闭环。
+
 Tajika/Sahams 年运系统使用独立的外部 oracle 队列，专门追踪 Varshaphala、太阳回归、Muntha、Year Lord、Mudda Dasha、Sahams 与 Tajika Yogas 的外部验证状态：
 
 ```bash
