@@ -336,6 +336,44 @@
         "Use avastha to describe whether the relevant planet is awake enough to deliver its promise cleanly, with weak states framed as drag or uneven expression.",
         "Use RTN and deep varga layers to describe motive, background pressure or hidden developmental themes after the main promise and timing are already established."
       ]
+    },
+    "asc_degree_nakshatra_pada_personality": {
+      "title": "Ascendant Degree / Nakshatra / Pada Personality And Rectification Template",
+      "status": "frozen_template",
+      "authority_level": "A/B/C layered",
+      "domain": ["lagna", "nakshatra", "pada", "rectification"],
+      "source_refs": [
+        "references/birth-time-rectification-advanced.md",
+        "references/nakshatra-chinese-quick-ref.md",
+        "references/pdf-chart-reading-guide.md",
+        "docs/research/high_granularity_technique_deepening_backlog_2026_06_26.md"
+      ],
+      "trigger_patterns": [
+        "上升点度数",
+        "Lagna degree",
+        "Asc degree",
+        "Ascendant Pada",
+        "上升星宿",
+        "出生时间矫正"
+      ],
+      "required_cross_checks": [
+        "Validate ascendant degree against the actual sign, nakshatra and pada boundaries before any interpretation",
+        "Separate sign-level Lagna expression from nakshatra-level style and pada-level micro-tone",
+        "Use body type, temperament and life-launch style as supportive evidence only, not as standalone rectification proof",
+        "For rectification claims, require event timing, D9/D10 plausibility or multiple independent appearance/life-pattern checks",
+        "Downgrade confidence sharply when the ascendant sits near a sign or pada boundary"
+      ],
+      "confidence_ceiling": "B for personality and launch-style interpretation when degree, nakshatra, pada and chart context agree; C when used near boundaries or for rectification hints only.",
+      "forbidden_claims": [
+        "Ascendant degree alone proves exact birth time",
+        "A single Lagna nakshatra or pada alone determines fate, profession or marriage outcome",
+        "Body appearance alone is sufficient to finalize rectification"
+      ],
+      "safe_output_patterns": [
+        "Use the Lagna sign for the main behavioral frame, the nakshatra for instinctive style, and the pada for fine-grained expression tone.",
+        "When the ascendant is close to a boundary, explicitly say the result is sensitive and should be verified with life events, D9/D10 and timing evidence.",
+        "Frame ascendant degree interpretation as a launch-style or embodiment modifier, not a standalone verdict on wealth, marriage or destiny."
+      ]
     }
   }
 }
