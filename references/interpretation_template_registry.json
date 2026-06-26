@@ -298,6 +298,44 @@
         "If DK methods disagree, weaken DK and let D1 seventh house plus Venus/Jupiter lead the interpretation.",
         "Upgrade only when D1 promise, D9 support, UL condition and timing all point in the same direction."
       ]
+    },
+    "pushkara_vargottama_avastha_synthesis": {
+      "title": "Pushkara / Vargottama / Avastha / RTN Synthesis Template",
+      "status": "frozen_template",
+      "authority_level": "A/B/C layered",
+      "domain": ["deep_varga", "d9", "avastha", "motivation"],
+      "source_refs": [
+        "references/deep-varga-avastha-execution-guide.md",
+        "references/high-order-d9-execution-guide.md",
+        "references/rtn-high-order-d9-freeze-execution-guide.md",
+        "references/strict-workflow-router.md"
+      ],
+      "trigger_patterns": [
+        "Pushkara",
+        "Vargottama",
+        "Avastha",
+        "RTN",
+        "高阶D9联动",
+        "深分盘状态"
+      ],
+      "required_cross_checks": [
+        "D1 promise and event-relevant houses/lords first",
+        "D9 dignity, reversal and relationship to the D1 promise",
+        "Avastha states used as delivery-capacity modifiers rather than standalone verdicts",
+        "Pushkara and Vargottama treated as protection/consistency weighting only",
+        "RTN, D24, D30 or D60 used only after Dasha and transit confirm the active topic"
+      ],
+      "confidence_ceiling": "B when natal promise, D9 support, avastha delivery state and timing all converge; C when the pattern is only a high-order explanatory layer.",
+      "forbidden_claims": [
+        "Pushkara or Vargottama alone guarantees the event",
+        "A single avastha state alone proves success or failure",
+        "RTN or D60 alone can override the main D1 promise or produce exact timing"
+      ],
+      "safe_output_patterns": [
+        "Use Pushkara and Vargottama to explain why a promise is preserved, stabilized or slightly protected rather than guaranteed.",
+        "Use avastha to describe whether the relevant planet is awake enough to deliver its promise cleanly, with weak states framed as drag or uneven expression.",
+        "Use RTN and deep varga layers to describe motive, background pressure or hidden developmental themes after the main promise and timing are already established."
+      ]
     }
   }
 }
