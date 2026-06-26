@@ -404,7 +404,7 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 
 ## 参考资料完整索引
 
-共 **105个文件**，按功能分组。
+共 **100+ 个文件**，按功能分组。
 
 ### AI解盘工作流（2个）
 0. **ai-reading-workflow-prompt.md**：AI解盘工作流Prompt工程（7阶段完整执行引擎）
@@ -523,18 +523,28 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 92. **bhrigu-pada-dasha-marriage-counting.md**：Bhrigu Pada Dasha与婚姻计数法
 93. **pancha-pakshi-nakshatra-systems.md**：Pancha Pakshi五鸟择时术+Nakshatra三体系
 
+### 高阶执行补充（8个）
+94. **deep-varga-avastha-execution-guide.md**：高阶分盘 / Avastha / Pushkara / Vargottama执行链
+95. **sahams-execution-guide.md**：Sahams专项执行与边界声明
+96. **high-order-d9-execution-guide.md**：高阶D9婚姻/灵性/关系执行链
+97. **tithi-lord-freeze-execution-guide.md**：Tithi Lord专题冻结执行手册
+98. **rtn-high-order-d9-freeze-execution-guide.md**：RTN + 高阶D9专题冻结执行手册
+99. **bhrigu-pada-all-event-freeze-execution-guide.md**：Bhrigu Pada全事件辅助推进执行手册
+100. **yogi-asc-tight-orb-wealth-freeze-guide.md**：Yogi/上升度数/紧密合相财富专题冻结执行手册
+101. **ashwini-abhijit-ketu-nakshatra-freeze-guide.md**：Ashwini/Abhijit/Ketu星宿专题冻结执行手册
+
 ### BPHS/Raman/Goel体系（5个）
-94. **badhaka-obstacle-planet-guide.md**：Badhaka障碍星系统
-95. **raman-house-judgment-methodology.md**：B.V. Raman宫位判断方法论
-96. **shasti-hayani-dasha-guide.md**：Shasti Hayani条件Dasha指南
-97. **marc-boney-marriage-six-step.md**：Marc Boney婚姻六步法
-98. **vp-goel-jaimini-dasha-systems.md**：V.P. Goel Jaimini Dasha系统概览
+102. **badhaka-obstacle-planet-guide.md**：Badhaka障碍星系统
+103. **raman-house-judgment-methodology.md**：B.V. Raman宫位判断方法论
+104. **shasti-hayani-dasha-guide.md**：Shasti Hayani条件Dasha指南
+105. **marc-boney-marriage-six-step.md**：Marc Boney婚姻六步法
+106. **vp-goel-jaimini-dasha-systems.md**：V.P. Goel Jaimini Dasha系统概览
 
 ### 精准解盘方法论（1个）
-99. **precision-reading-methodology.md**：精准解盘与推运方法论 ⭐⭐⭐⭐⭐
+107. **precision-reading-methodology.md**：精准解盘与推运方法论 ⭐⭐⭐⭐⭐
 
 ### MEVG强制验证（1个）
-100. **mandatory-verification-gate-protocol.md**：强制外部验证门控协议（MEVG）
+108. **mandatory-verification-gate-protocol.md**：强制外部验证门控协议（MEVG）
 | 数学验证 | `python3 scripts/jyotish_engine.py validate ...` |
 | 行星审计 | `python3 scripts/jyotish_engine.py audit ...` |
 | HTML报告 | `python3 scripts/jyotish_engine.py report ...` |

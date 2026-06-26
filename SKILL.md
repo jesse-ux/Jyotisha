@@ -1,13 +1,15 @@
 ---
 name: jyotish-vedic-astrology
 version: 6.9.14
-description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。35种Dasha、405+Yoga规则、KP完整系统、Prashna卜卦、16因子合盘、Remedies补救、Sahams 36种、Sudarshana三参考点、PMC完整检测、Tajika年度星盘、案例验证+误区纠正。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga。GitHub: https://github.com/732642856/yinduzhanxing
+description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。35种Dasha、405+Yoga规则、KP系统、Prashna卜卦、16因子合盘、Remedies补救、Sahams部分覆盖、Sudarshana三参考点、PMC完整检测、Tajika年度星盘、案例验证+误区纠正。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga。GitHub: https://github.com/732642856/yinduzhanxing
 ---
 
 # 印度占星专业解盘与推运系统
 
 > **版本**：v6.9.14 | **详细变更**：`CHANGELOG.md`
 > **对标状态**：中文用户端与技法覆盖领先；D1/D9/AV/Chara 等有守门，Dasha/Shadbala 外部 oracle 扩充仍在进行。
+>
+> **真相边界**：当前问题已不是“完全缺技法名称”，而是少数高价值传统深度仍未闭环；请优先修复精度与裁决链，而不是继续表面堆功能名。
 > **执行总控**：`references/quick-reference-guide.md`
 > **严格路由**：`references/strict-workflow-router.md`（涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`
@@ -16,14 +18,14 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 
 | 维度 | 数据 |
 |------|:--:|
-| Dasha系统 | 35种（含Vimshottari/Chara/Kalachakra/Narayana/Yogini等） |
+| Dasha系统 | 35种（含Vimshottari/Chara/Kalachakra/Narayana/Yogini等；成熟度不完全一致，以 registry 边界说明为准） |
 | Yoga规则 | 405+条（BPHS数据驱动架构，Yoga精度Benchmark 100%） |
 | 分盘 | D1-D144 + D2/D3变体 + 复合D-m×n + 自定义D-N(2-300) |
 | Bhava Chalit | Sripati/Porphyry/Equal/Whole Sign/Placidus/Koch 不等宫位调整 |
 | Sudarshana | Asc/Moon/Sun 三参考点盘 + 宫位收敛分析 |
 | Shadbala | absolute Rupa 分量求和；内部不变量通过，外部绝对值 oracle 扩充中 |
 | Ashtakavarga | BAV+SAV+PAV（展开式）+Sodhita（净化式） |
-| KP系统 | Sublord+Subsublord+ABCD Significator |
+| KP系统 | Sublord+Subsublord+ABCD Significator（输出可用，细粒度传统口径仍以实测与案例闭环为准） |
 | 合盘 | 16因子36分制（Ashtakoot+Kuta） |
 | 补救 | 5类（宝石/咒语/捐赠/斋戒/Dosha专项） |
 | 自动化测试 | pytest/quality gate 分层守门；以当前仓库质量门输出为准 |
@@ -163,6 +165,22 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 - 剩余~4.2%差异: Aquarius/Scorpio 的 Rahu/Ketu 共主动态判定（需复制 PyJHora _stronger_planet_new）
 - `jaimini` 输出中的 Chara Karaka、AK/AmK、Karakamsha 继续可用。
 
+### 开源复用边界冻结（v6.9.16-reuse-whitelist）
+
+**后续 skill 深化优先复用 MIT 资产，禁止继续对 AGPL/闭源项目做“看着像就手写一份”的低效重复工作。**
+
+- 可直接复用主来源：
+  - `jyotishganit`（MIT）：Shadbala / Bhava Bala / Panchanga / Vimshottari 常数与实现思路
+  - `VedicAstro`（MIT）：KP / Horary / API workflow
+  - `jaimini-tropical`（MIT）：Jaimini / Arudha / Chara Dasha 方向常数与细分规则
+  - `dashaflow`（MIT）：合盘 / Muhurta / 部分 Jaimini / dignity / Yoga 规则
+- 仅允许黑盒对标、禁止复制实现：
+  - `PyJHora`（AGPL）
+  - JHora（闭源）
+  - `hora-prakash`（AGPL）
+- 本仓已落地的 MIT 复用点包括：`kp_system.py`、`synastry.py`、`muhurtha_election.py`、`bhava_bala.py`、`dasha_calculator_enhanced.py`、`jaimini.py`、`constants/mit_imported_constants.py`
+- 继续扩 skill 前，先查 `/Users/wuyongnaren/Documents/印度占星/docs/research/reuse_license_whitelist_for_skill_2026_06_26.md`，避免重复造轮子或踩许可证边界。
+
 ### Transit 真实过境冻结（v6.0.10-true-transit）
 
 **full-reading 中的 Transit 多参考点分析必须使用真实过境行星位置，不得复用本命行星位置。**
@@ -197,11 +215,94 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | **出生时间矫正** | 八大方法、自动化流程、验证报告 | `birth-time-rectification-advanced.md` |
 | **PDF读取** | JH/PL PDF全量提取、完整性门、交叉校验 | `pdf-chart-reading-guide.md` `data-bridge-mapping.md` |
 | **Prashna问事** | 十步断卦、AL、Sphuta、Sahams、失物查询 | `prashna-complete-guide.md` `single-event-inquiry-protocol.md` |
-| **多元技法** | Yogi/Ava Yogi、Tithi Lord、Rashi Tulya Navamsa、BCP、Pancha Pakshi | `yogi-avayogi-system.md` `tithi-lord-relationship-system.md` `bhrigu-chakra-paddhati.md` |
+| **多元技法** | Yogi/Ava Yogi、Tithi Lord、Rashi Tulya Navamsa、BCP、Bhrigu Pada、Pancha Pakshi、Ashwini/Abhijit/Ketu星宿专题（需保留成熟度边界） | `yogi-avayogi-system.md` `yogi-asc-tight-orb-wealth-freeze-guide.md` `tithi-lord-relationship-system.md` `tithi-lord-freeze-execution-guide.md` `rtn-high-order-d9-freeze-execution-guide.md` `bhrigu-pada-all-event-freeze-execution-guide.md` `ashwini-abhijit-ketu-nakshatra-freeze-guide.md` `bhrigu-chakra-paddhati.md` |
 | **精准方法论** | PACDARES框架、九层复合方法、L3矛盾检查、三级置信度 | `precision-reading-methodology.md` |
 | **现代解读** | 现代措辞映射、现代生活场景、常见误判纠错 | `modern-language-guide.md` `common-misconceptions.md` |
 | **实战智慧** | ⭐反教条主义经验精华（全球占星师真实案例反馈总结） | `practitioner-wisdom-anti-dogma.md` |
 | **验证与错题** | 深度数据审计、技法缺陷与修复、推运反思、15+名人验证案例 | `audit-*` `lessons-learned-*` `verified-celebrity-cases-*` |
+
+## 当前最硬的未闭环点
+
+> 这部分比“再加几个技法名”更重要，决定 skill 距离传统软件级深度还有多远。
+
+1. **Dasha 外部绝对边界闭环**
+   - 当前 `ready_for_calibration: 0`
+   - 大运起点、剩余年数、精确日期边界仍未通过 JHora/PyJHora 黑盒证据冻结
+2. **Shadbala 外部绝对值闭环**
+   - 当前 absolute Rupa 结构自洽，但还不是外部绝对值完全校准
+3. **Chara Dasha 共主仲裁尾差**
+   - KN Rao benchmark 已过，但 Aquarius/Scorpio 的 Rahu/Ketu 共主强弱仲裁仍有尾差
+4. **KP ruling planets / 事件裁决细节**
+   - KP 表层输出可用，但传统工作流深度仍需继续闭环
+5. **Prashna 分支工作流**
+   - 问事类型分支、裁决链、时机判断仍需更稳定的传统链路
+6. **Varshaphala / Tajika / Sahams 年运裁决深度**
+   - 年盘骨架已在，但事件裁决与权重层仍需继续成熟
+7. **Kalachakra / Narayana 等替代 Dasha 的成熟度边界**
+   - 已有覆盖，但部分子层、边界口径、外部黑盒对照仍需继续收紧
+8. **高阶解释层整合**
+   - `Pushkara / Vargottama / Avastha / RTN / Inter-chart linkage` 已存在，但还未形成传统高手式稳定裁决层
+
+完整排序见 `/Users/wuyongnaren/Documents/印度占星/docs/research/current_skill_core_gap_rerank_2026_06_26.md`。
+
+## 全球开源定位
+
+**当前还不能诚实地说这是全球开源印度占星 / 吠陀占星项目里的无争议第一。**
+
+更准确的判断是：
+
+- 在**中文 skill 工作流、本地可用性、产品化组织、MIT 资产整合**上，已经处于第一梯队。
+- 在**长期黑盒 benchmark、传统软件级精度闭环、全球社区势能**上，仍落后于部分头部项目。
+
+### 主要对标对象
+
+1. **PyJHora**
+   - 优势：47 Dasha、300+ 分盘、284+ Yoga、6800+ 级别验证与 JHora 对照壁垒
+   - 边界：AGPL，只能黑盒 benchmark，不可复制实现
+2. **VedAstro**
+   - 优势：全球社区势能更强，API/Web/AI 平台生态更成熟
+   - 边界：更偏平台化，全局离线本地 skill 体验不一定更优
+3. **VedicAstro / jyotishganit / jaimini-tropical / dashaflow**
+   - 价值：MIT，可直接作为继续补深的合法资产来源
+
+完整定位分析见 `/Users/wuyongnaren/Documents/印度占星/docs/research/global_open_source_positioning_of_skill_2026_06_26.md`。
+
+## 冲顶路线
+
+> 如果目标是冲击“全球开源第一梯队”，后续优先级必须按这个顺序推进。
+
+### P0 - 精度护城河（不完成就不能宣称“精准度完美”）
+
+1. 冻结 `Dasha` 外部 oracle
+2. 冻结 `Shadbala` 外部绝对值 oracle
+3. 建立可重复、可公开的 benchmark 报表与案例链
+
+### P1 - 传统裁决深度（不是补技法名，而是补传统工作流）
+
+4. 收紧 `Chara Dasha` 共主仲裁尾差
+5. 补深 `KP ruling planets / Horary workflow`
+6. 补深 `Prashna` 问事分支裁决链
+7. 补深 `Varshaphala / Tajika / Sahams` 的年度解释层
+8. 收紧 `Kalachakra / Narayana` 的成熟度边界与黑盒一致性说明
+
+### P2 - 老练度与口感（决定“像不像老练传统占星师”）
+
+9. 继续补 `Pancha Pakshi` Tamil 细则
+10. 整合 `Pushkara / Vargottama / Avastha / RTN / Inter-chart linkage` 的高阶解释层
+11. 统一各输出面的边界表达，避免 `covered` 被误读成 `complete`
+
+## 施工判断原则
+
+> 后续所有优化都按这个判断，避免重复劳动或把“已覆盖但不够成熟”误判成“完全缺失”。
+
+1. **先判断是不是已经存在**
+   - 若 `scripts/`、`references/`、`skills/` 已有主体实现或执行链，优先视为“补成熟度/补入口”，不是重写。
+2. **再判断是不是可合法复用**
+   - MIT / Apache / BSD 资产优先复用；GPL / AGPL / 闭源只做黑盒对照，不复制实现。
+3. **再判断是不是必须依赖外部 oracle**
+   - 凡涉及 `Dasha` 精确日期边界、`Shadbala` 绝对值、传统软件口径冻结，必须走 JHora / PyJHora / 公开样本闭环。
+4. **最后才决定是否新增技法**
+   - 如果只是入口缺失、索引缺失、解释层不够厚，优先补入口和执行链，不先堆新名词。
 
 ---
 
@@ -235,7 +336,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 | `validate` | R1-R10数学验证 |
 | `audit` | P1-P12行星审计管线 |
 | `aspects` | 度数精确相位系统 |
-| `jaimini` | Jaimini Karaka/Karakamsha、A1-A12/UL、Graha Pada、Special Lagnas；Chara Dasha timing 升级为 KN Rao Method（covered，pending benchmark） |
+| `jaimini` | Jaimini Karaka/Karakamsha、A1-A12/UL、Graha Pada、Special Lagnas；Chara Dasha timing 为 KN Rao Method（covered；仍需保留共主仲裁与外部对标边界） |
 | `nakshatra-adv` | 高级Nakshatra（Tara Bala+Chandra Bala+Sub-Lord） |
 | `nakshatra-dasha` | 星宿大运推演（Ashtottari + Nakshatra-level Vimshottari） |
 | `nakshatra-full` | 星宿综合报告（本命 + 大运 + 过境星宿） |
@@ -325,7 +426,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 > 完整描述和版本信息 → `references/quick-reference-guide.md` §参考资料完整索引
 
-共 **105个文件**，按功能分组：
+共 **100+ 个文件**，按功能分组：
 
 | 分组 | 数量 | 核心文件 |
 |------|------|---------|
@@ -342,6 +443,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 | 高级技法 | 5 | `advanced-techniques.md` `global-astrologer-practical-methodology.md` |
 | 案例库 | 13 | `famous-case-library.md` `verified-celebrity-cases.md` |
 | 多元技法 | 5 | `yogi-avayogi-system.md` `bhrigu-chakra-paddhati.md` `pancha-pakshi-nakshatra-systems.md` |
+| 高阶执行补充 | 8 | `deep-varga-avastha-execution-guide.md` `sahams-execution-guide.md` `high-order-d9-execution-guide.md` `tithi-lord-freeze-execution-guide.md` `rtn-high-order-d9-freeze-execution-guide.md` `bhrigu-pada-all-event-freeze-execution-guide.md` `yogi-asc-tight-orb-wealth-freeze-guide.md` `ashwini-abhijit-ketu-nakshatra-freeze-guide.md` |
 | BPHS/Raman/Goel | 5 | `badhaka-obstacle-planet-guide.md` `raman-house-judgment-methodology.md` `vp-goel-jaimini-dasha-systems.md` |
 | MEVG | 1 | `mandatory-verification-gate-protocol.md` |
 
@@ -359,7 +461,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 **版本**：v6.9.15-calibration-boundary
 **创建日期**：2026-04-20
-**最后更新**：2026-06-25（秒级输入、Dasha 参考差异审计、Shadbala absolute Rupa、D1 友敌尊严标签、D81/D108/D144 分盘归一化已同步；外部 oracle 扩充仍在进行。）
+**最后更新**：2026-06-26（skill 真源碎片已重新归拢并同步到 WorkBuddy；MIT 复用白名单已冻结；Chara/KP/Shadbala/Prashna/Tajika 的核心未闭环点已重排；外部 oracle 扩充仍在进行。）
 
 ---
 
