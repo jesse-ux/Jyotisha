@@ -255,6 +255,33 @@ python3 scripts/tajika_annual_benchmark_dashboard.py \
 
 当前 Tajika/Sahams 看板固定输出 `can_claim_tajika_sahams_closure: false`：本地 skill 已有年运计算与解释骨架，但太阳回归精确时刻、Varsha Lagna、Muntha、Mudda Dasha、Punya/Rajya/Vivah Saham 和 Tajika Yogas 仍需 JHora/PyJHora/书例级外部证据后，才能宣称年运闭环。
 
+年运第一条最短闭环状态板：
+
+```bash
+python3 scripts/tajika_annual_closure_status.py \
+  --oracle-file references/oracle/tajika_annual_oracle_cases.json \
+  --format markdown \
+  --output docs/benchmark/tajika_sahams_annual_closure_status.md
+```
+
+如需导出可填写的年运证据包：
+
+```bash
+python3 scripts/tajika_annual_oracle_queue.py \
+  --oracle-file references/oracle/tajika_annual_oracle_cases.json \
+  --write-packet-dir references/oracle/artifacts/pending_packets \
+  --format json
+```
+
+填完 `external_template_steve_jobs_varshaphala_1984_lahiri.json` 后，可合并回年运 oracle：
+
+```bash
+python3 scripts/tajika_annual_oracle_queue.py \
+  --oracle-file references/oracle/tajika_annual_oracle_cases.json \
+  --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json \
+  --format json
+```
+
 `full-reading` 也会输出 `ai_prompt_pack`：这是给网页/app、skill 或后端 AI 代理使用的结构化 Prompt/RAG 上下文包。它不会硬编码断语，而是携带 D1/D9/Dasha/Shadbala/Ashtakavarga 的证据快照、推荐检索文档和边界提示，要求大模型基于计算证据交叉验证，避免单一配置下结论。
 
 ### Prerequisites
