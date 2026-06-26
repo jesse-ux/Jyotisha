@@ -102,6 +102,78 @@ def test_oracle_collection_queue_outputs_markdown_table() -> None:
     assert "capture_id" in markdown
 
 
+def test_oracle_collection_queue_can_write_draft_evidence_packets(tmp_path: Path) -> None:
+    completed = run_queue("--write-packet-dir", str(tmp_path))
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["summary"]["written_evidence_packets"] == 5
+
+    packet_path = tmp_path / "external_template_steve_jobs_dasha_lahiri.json"
+    assert packet_path.exists()
+    packet = json.loads(packet_path.read_text(encoding="utf-8"))
+    assert packet["capture_id"] == "external_template_steve_jobs_dasha_lahiri"
+    assert packet["status"] == "draft"
+    assert packet["case_id"] == "template_steve_jobs_dasha_lahiri"
+    assert packet["metadata"]["source_artifact"] == "references/oracle/artifacts/"
+    assert packet["metadata"]["tool_name"] == ""
+    assert packet["target_placeholders"]["target.vimshottari_start_date"] is None
+    assert packet["integrity_checks"]["must_not_come_from_local_engine"] is True
+
+
+def test_oracle_collection_queue_can_apply_filled_evidence_packet(tmp_path: Path) -> None:
+    oracle = json.loads((ROOT / "references/oracle/dasha_shadbala_oracle_cases.json").read_text(encoding="utf-8"))
+    oracle_path = tmp_path / "oracle.json"
+    oracle_path.write_text(json.dumps(oracle, ensure_ascii=False), encoding="utf-8")
+
+    packet_dir = tmp_path / "packets"
+    generated = run_queue_for_file(oracle_path, "--write-packet-dir", str(packet_dir))
+    assert generated.returncode == 0, generated.stderr or generated.stdout
+
+    packet_path = packet_dir / "external_template_steve_jobs_dasha_lahiri.json"
+    packet = json.loads(packet_path.read_text(encoding="utf-8"))
+    packet["status"] = "external_verified"
+    packet["metadata"].update(
+        {
+            "tool_name": "JHora",
+            "tool_version_or_url": "manual-jhora-8.0",
+            "capture_date": "2026-06-26",
+            "source_artifact": "references/oracle/artifacts/steve_jobs_jhora_redacted.png",
+            "ayanamsa": "lahiri",
+            "node_mode": "true",
+            "timezone": "UTC-08:00",
+            "operator_note": "Typed from redacted external JHora screenshot.",
+        }
+    )
+    packet["target_placeholders"]["target.vimshottari_start_date"] = "1951-11-01"
+    packet["target_placeholders"]["target.shadbala_components"] = {
+        planet: {
+            "sthana": 1.0,
+            "dig": 2.0,
+            "kala": 3.0,
+            "chesta": 4.0,
+            "naisargika": 5.0,
+            "drik": 6.0,
+            "total_rupa": 21.0,
+        }
+        for planet in ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
+    }
+    packet_path.write_text(json.dumps(packet, ensure_ascii=False), encoding="utf-8")
+
+    applied = run_queue_for_file(oracle_path, "--apply-packet", str(packet_path))
+
+    assert applied.returncode == 0, applied.stderr or applied.stdout
+    report = json.loads(applied.stdout)
+    assert report["summary"]["applied_evidence_packets"] == 1
+
+    updated = json.loads(oracle_path.read_text(encoding="utf-8"))
+    case = next(row for row in updated["template_cases"] if row["id"] == "template_steve_jobs_dasha_lahiri")
+    assert case["status"] == "external_verified"
+    assert case["target"]["vimshottari_start_date"] == "1951-11-01"
+    assert case["target"]["shadbala_components"]["Sun"]["total_rupa"] == 21.0
+    assert case["evidence_packet"]["metadata"]["tool_name"] == "JHora"
+
+
 def test_first_jhora_evidence_packet_template_is_safe_and_fillable() -> None:
     template = ROOT / "references" / "oracle" / "evidence_packet_templates" / "jhora_steve_jobs_lahiri_first_packet.json"
     assert template.exists()

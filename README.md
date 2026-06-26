@@ -144,6 +144,26 @@ python3 scripts/oracle_collection_queue.py \
   --format json
 ```
 
+如需让真人或 Antigravity AI 副手直接填写证据包，可一次性导出每个 case 的 draft JSON：
+
+```bash
+python3 scripts/oracle_collection_queue.py \
+  --oracle-file references/oracle/dasha_shadbala_oracle_cases.json \
+  --write-packet-dir references/oracle/artifacts/pending_packets \
+  --format json
+```
+
+填完某个 `external_*.json` 后，必须把 `status` 改为 `external_verified`，补齐 metadata、具体 `source_artifact` 文件路径以及所有 `target_placeholders`。再把该包合并回 oracle 文件：
+
+```bash
+python3 scripts/oracle_collection_queue.py \
+  --oracle-file references/oracle/dasha_shadbala_oracle_cases.json \
+  --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json \
+  --format json
+```
+
+这一步只负责把人工填写的外部证据写回 `template_cases`；它不会自动认可证据，也不会允许生产调参。合并后仍必须重新生成 queue 并运行 validator。
+
 该 JSON 的 scope 是 `external_oracle_collection_queue`。当前队列有 5 个 `template_only` 任务、`ready_for_calibration: 0`、`production_tuning_allowed: false`，说明只能继续采集 JHora/PyJHora/VedAstro 等外部黑盒目标值；在模板字段未填充、状态未升为 `external_verified` 前，不能用这些样本做 Dasha/Shadbala 生产调参。
 
 Ashtakoot 外部合婚 oracle 使用同一个队列生成器，但独立样本文件是 `references/oracle/ashtakoot_oracle_cases.json`：

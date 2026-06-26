@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from typing import Any
 
 
@@ -115,6 +116,12 @@ def _load_json(path: str) -> dict[str, Any]:
         return json.load(fh)
 
 
+def _write_json(path: str, value: dict[str, Any]) -> None:
+    with open(_resolve_path(path), "w", encoding="utf-8") as fh:
+        json.dump(value, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+
+
 def _target_fields(value: Any, prefix: str = "target") -> list[str]:
     if prefix == "target" and isinstance(value, dict):
         return [f"{prefix}.{key}" for key in value]
@@ -178,6 +185,19 @@ def _evidence_packet(case: dict[str, Any], target_fields: list[str]) -> dict[str
     existing_placeholders = existing.get("target_placeholders", {})
     if isinstance(existing_placeholders, dict):
         target_placeholders.update(existing_placeholders)
+    default_metadata = {
+        "tool_name": "",
+        "tool_version_or_url": "",
+        "capture_date": "",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": case.get("settings", {}).get("ayanamsa", ""),
+        "node_mode": case.get("settings", {}).get("node_mode", ""),
+        "timezone": case.get("birth", {}).get("tz", ""),
+        "operator_note": "",
+    }
+    existing_metadata = existing.get("metadata", {})
+    if isinstance(existing_metadata, dict):
+        default_metadata.update(existing_metadata)
     return {
         "capture_id": existing.get("capture_id") or f"external_{case_id}",
         "status": existing.get("status", "draft"),
@@ -185,7 +205,7 @@ def _evidence_packet(case: dict[str, Any], target_fields: list[str]) -> dict[str
         "birth": case.get("birth", {}),
         "settings": case.get("settings", {}),
         "required_metadata_fields": REQUIRED_EVIDENCE_METADATA_FIELDS,
-        "metadata": existing.get("metadata", {}),
+        "metadata": default_metadata,
         "target_placeholders": target_placeholders,
         "integrity_checks": {
             "must_not_come_from_local_engine": True,
@@ -308,17 +328,93 @@ def render_markdown(queue: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _safe_filename(value: str) -> str:
+    safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", value).strip("._")
+    return safe or "external_oracle_packet"
+
+
+def _set_target_value(target: dict[str, Any], field: str, value: Any) -> None:
+    parts = field.split(".")
+    if not parts or parts[0] != "target":
+        return
+    cursor = target
+    for part in parts[1:-1]:
+        child = cursor.get(part)
+        if not isinstance(child, dict):
+            child = {}
+            cursor[part] = child
+        cursor = child
+    cursor[parts[-1]] = value
+
+
+def apply_evidence_packet(oracle: dict[str, Any], packet: dict[str, Any]) -> bool:
+    case_id = packet.get("case_id")
+    if not case_id:
+        return False
+    for case in oracle.get("template_cases", []):
+        if case.get("id") != case_id and case.get("case_id") != case_id:
+            continue
+        target = case.setdefault("target", {})
+        placeholders = packet.get("target_placeholders", {})
+        if isinstance(placeholders, dict):
+            for field, value in placeholders.items():
+                _set_target_value(target, field, value)
+        case["status"] = packet.get("status", case.get("status", "draft"))
+        case["evidence_packet"] = {
+            "capture_id": packet.get("capture_id"),
+            "status": packet.get("status"),
+            "metadata": packet.get("metadata", {}),
+        }
+        return True
+    return False
+
+
+def write_evidence_packets(queue: dict[str, Any], output_dir: str) -> int:
+    os.makedirs(output_dir, exist_ok=True)
+    written = 0
+    for task in queue.get("tasks", []):
+        packet = task.get("evidence_packet", {})
+        capture_id = packet.get("capture_id") or f"external_{task.get('case_id', 'unknown')}"
+        packet_path = os.path.join(output_dir, f"{_safe_filename(str(capture_id))}.json")
+        with open(packet_path, "w", encoding="utf-8") as fh:
+            json.dump(packet, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+        written += 1
+    return written
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate external oracle collection tasks")
     parser.add_argument("--oracle-file", required=True, help="Path to oracle fixture JSON")
     parser.add_argument("--format", choices=["json", "markdown"], default="json")
+    parser.add_argument(
+        "--write-packet-dir",
+        help="Optional directory where draft evidence_packet JSON files should be written.",
+    )
+    parser.add_argument(
+        "--apply-packet",
+        action="append",
+        default=[],
+        help="Filled evidence_packet JSON to merge back into the oracle file.",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     oracle = _load_json(args.oracle_file)
+    applied_packets = 0
+    for packet_path in args.apply_packet:
+        packet = _load_json(packet_path)
+        if apply_evidence_packet(oracle, packet):
+            applied_packets += 1
+    if applied_packets:
+        _write_json(args.oracle_file, oracle)
     queue = build_queue(oracle)
+    if applied_packets:
+        queue["summary"]["applied_evidence_packets"] = applied_packets
+    if args.write_packet_dir:
+        queue["summary"]["written_evidence_packets"] = write_evidence_packets(queue, args.write_packet_dir)
     if args.format == "markdown":
         print(render_markdown(queue))
     else:

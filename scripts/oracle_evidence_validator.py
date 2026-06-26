@@ -66,6 +66,15 @@ def _is_blank(value: Any) -> bool:
     return value is None or value == "" or value == [] or value == {}
 
 
+def _is_missing_external_artifact(value: Any) -> bool:
+    if _is_blank(value):
+        return True
+    text = str(value).strip()
+    if text.endswith("/"):
+        return True
+    return text in {"references/oracle/artifacts", "references/oracle/artifacts/"}
+
+
 def _is_local_engine_artifact(packet: dict[str, Any]) -> bool:
     metadata = packet.get("metadata", {})
     haystack = " ".join(
@@ -85,7 +94,7 @@ def _validate_packet(task: dict[str, Any]) -> dict[str, Any]:
         if _is_blank(metadata.get(field)):
             problems.append(f"missing_metadata:{field}")
 
-    if _is_blank(metadata.get("source_artifact")):
+    if _is_missing_external_artifact(metadata.get("source_artifact")):
         problems.append("missing_external_artifact")
 
     target_placeholders = packet.get("target_placeholders", {})
@@ -108,7 +117,7 @@ def _validate_packet(task: dict[str, Any]) -> dict[str, Any]:
     if integrity.get("must_not_come_from_local_engine") and _is_local_engine_artifact(packet):
         problems.append("local_engine_artifact_rejected")
 
-    if integrity.get("requires_external_artifact") and _is_blank(metadata.get("source_artifact")):
+    if integrity.get("requires_external_artifact") and _is_missing_external_artifact(metadata.get("source_artifact")):
         if "missing_external_artifact" not in problems:
             problems.append("missing_external_artifact")
 
