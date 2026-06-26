@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "scope": "jyotish_skill_gap_truth_registry",
+  "purpose": "Machine-readable truth boundary for the Jyotish skill: what remains unfinished, what must not be overclaimed, and which past analysis claims have been corrected.",
+  "public_claim_rules": {
+    "can_claim_global_first": false,
+    "can_claim_all_skills_complete": false,
+    "can_claim_perfect_accuracy": false,
+    "reason": "The skill has strong breadth, but external oracle closure, long-term benchmark history and several traditional judgment layers remain unfinished."
+  },
+  "hard_fronts": {
+    "dasha_external_oracle": {
+      "title": "Dasha external oracle",
+      "priority": "P0",
+      "status": "blocked_external_evidence",
+      "current_truth": "Dasha engines are usable, but exact start dates, balance periods and sub-period boundaries cannot be called externally closed until real JHora/PyJHora/book-example packets pass validation.",
+      "completion_standard": [
+        "At least one real external_verified packet is accepted for the first Dasha target.",
+        "Multiple Dasha families have versioned boundary comparisons.",
+        "Differences between local output and external oracle output are documented without production tuning from local data."
+      ],
+      "forbidden_claims": [
+        "Dasha external oracle alone is complete",
+        "Exact Dasha dates are perfectly calibrated",
+        "One local chart output proves software-grade timing accuracy"
+      ],
+      "next_actions": [
+        "Use scripts/dasha_oracle_closure_status.py to fill the first external packet.",
+        "Collect redacted JHora/PyJHora/book evidence under references/oracle/artifacts.",
+        "Re-run scripts/oracle_evidence_validator.py after packet application."
+      ]
+    },
+    "shadbala_external_absolute_values": {
+      "title": "Shadbala external absolute values",
+      "priority": "P0",
+      "status": "blocked_external_evidence",
+      "current_truth": "Internal six-component Rupa/Virupa aggregation is usable, but external absolute-value closure is not complete.",
+      "completion_standard": [
+        "All seven visible planets have external Sthana, Dig, Kala, Chesta, Naisargika, Drik and total Rupa evidence.",
+        "Component sums match validated packet structure.",
+        "Any differences are explained component-by-component rather than hidden with a global multiplier."
+      ],
+      "forbidden_claims": [
+        "Shadbala absolute values alone are fully JHora-calibrated",
+        "Relative planetary ranking proves absolute Rupa correctness",
+        "Global scaling alone fixes Shadbala"
+      ],
+      "next_actions": [
+        "Use scripts/shadbala_oracle_closure_status.py for the first absolute-value packet.",
+        "Fill the REDACTED_PLACE/Raman or equivalent component table from an external oracle.",
+        "Reject production constant changes until component-level evidence is accepted."
+      ]
+    },
+    "tajika_sahams_annual_closure": {
+      "title": "Tajika / Sahams annual closure",
+      "priority": "P0",
+      "status": "active_gap",
+      "current_truth": "Varshaphala, Muntha, Year Lord, Mudda Dasha and Sahams have local structure, but annual judgment depth and external sample closure remain incomplete.",
+      "completion_standard": [
+        "External annual packets include solar return time, Varsha Lagna, Muntha, Year Lord, Mudda Dasha, key Sahams and Tajika Yogas.",
+        "Annual interpretation templates distinguish calculation evidence from judgment confidence.",
+        "At least several public cases are benchmarked over multiple years."
+      ],
+      "forbidden_claims": [
+        "Tajika or Sahams alone are fully closed",
+        "A calculated Saham alone predicts an annual event",
+        "Local Varshaphala output alone is external oracle evidence"
+      ],
+      "next_actions": [
+        "Use scripts/tajika_annual_closure_status.py to fill the first annual packet.",
+        "Freeze the annual judgment template around Muntha, Year Lord, Mudda Dasha and Sahams.",
+        "Add public benchmark rows only after external annual evidence exists."
+      ]
+    },
+    "article_template_industrialization": {
+      "title": "Article-level interpretation template industrialization",
+      "priority": "P1",
+      "status": "active_gap",
+      "current_truth": "Several high-granularity templates are frozen, but article-derived rules must keep being distilled into guarded templates with sources, cross-checks and forbidden claims.",
+      "completion_standard": [
+        "High-value topics have reusable templates in references/interpretation_template_registry.json.",
+        "Each template states required cross-checks, confidence ceiling and forbidden single-factor claims.",
+        "User-supplied article claims are treated as B/C-level clues unless supported by stronger sources."
+      ],
+      "forbidden_claims": [
+        "Article claims alone are authoritative",
+        "A screenshot or online article alone proves a Jyotish rule",
+        "A high-granularity template replaces D1, Varga, Dasha or Transit"
+      ],
+      "next_actions": [
+        "Keep extending references/interpretation_template_registry.json instead of scattering rules.",
+        "Run scripts/validate_interpretation_templates.py after each template addition.",
+        "Promote only source-graded, cross-checked templates into SKILL.md."
+      ]
+    },
+    "long_term_public_benchmark": {
+      "title": "Long-term public benchmark",
+      "priority": "P0",
+      "status": "active_gap",
+      "current_truth": "Benchmark scripts exist, but the skill still lacks a long-running public history comparable to the strongest global projects.",
+      "completion_standard": [
+        "Capability, oracle readiness and public benchmark reports are versioned after every sample batch.",
+        "Benchmark rows separate internal consistency, external oracle evidence and interpretation maturity.",
+        "Global-first claims remain false until public evidence supports them."
+      ],
+      "forbidden_claims": [
+        "Long-term benchmark alone is complete",
+        "A green local test suite alone proves global first status",
+        "Many covered techniques equal public benchmark leadership"
+      ],
+      "next_actions": [
+        "Run scripts/public_benchmark_dashboard.py and scripts/oracle_closure_master_dashboard.py after evidence changes.",
+        "Publish markdown reports only after validation commands pass.",
+        "Track global-first gap as a durable public claim boundary."
+      ]
+    }
+  },
+  "past_case_analysis_corrections": [
+    {
+      "id": "ashtakoot_not_all_zero",
+      "wrong_pattern": "Treating Ashtakoot as if it returned all zero scores.",
+      "corrected_truth": "Ashtakoot matrices and non-zero scoring exist; the remaining issue is external validation and finer-grained comparison, not total absence.",
+      "source_ref": "docs/research/antigravity_round25_ashtakoot_round24_claim_correction_2026_06_25.md"
+    },
+    {
+      "id": "panchanga_not_empty",
+      "wrong_pattern": "Treating Panchanga/Muhurta as completely blank.",
+      "corrected_truth": "Panchanga and Muhurta engines are deep; remaining work is UI, external oracle comparison and festival/v vrata breadth.",
+      "source_ref": "docs/research/antigravity_round26_panchang_round25_claim_correction_2026_06_25.md"
+    },
+    {
+      "id": "covered_is_not_complete",
+      "wrong_pattern": "Using covered and complete as if they meant the same thing.",
+      "corrected_truth": "Covered means there is a stable entry or usable layer; complete requires mature workflow, tests, boundary text and, where needed, external oracle closure.",
+      "source_ref": "docs/research/current_skill_core_gap_rerank_2026_06_26.md"
+    },
+    {
+      "id": "single_factor_reading_risk",
+      "wrong_pattern": "Drawing case conclusions from one planet, one yoga, one transit, one Dasha or one article rule.",
+      "corrected_truth": "Use D1, relevant Varga, Dasha, Transit, strength and historical verification where applicable. Single-factor readings should be capped at low confidence.",
+      "source_ref": "references/practitioner-wisdom-anti-dogma.md"
+    },
+    {
+      "id": "enemy_sign_not_debilitation",
+      "wrong_pattern": "Confusing enemy sign with debilitation.",
+      "corrected_truth": "Enemy sign and debilitation are separate dignity states. Do not label a planet as debilitated unless it is in the classical debilitation sign/degree zone.",
+      "source_ref": "references/common-misconceptions.md"
+    },
+    {
+      "id": "jaimini_kp_tajika_not_absent",
+      "wrong_pattern": "Describing Chara Dasha, KP/Prashna or Tajika/Sahams as absent.",
+      "corrected_truth": "These fronts have usable structures; the hard work is tail-difference closure, traditional workflow deepening and external sample validation.",
+      "source_ref": "docs/research/three_fronts_skill_depth_audit_2026_06_26.md"
+    }
+  ],
+  "must_not_overclaim": [
+    "Dasha exact-date boundaries are externally closed.",
+    "Shadbala absolute Rupa values are fully calibrated against JHora or book examples.",
+    "Tajika/Sahams annual prediction is traditional-software-grade closed.",
+    "All Indian astrology techniques are complete.",
+    "The skill is already the undisputed global open-source number one.",
+    "A single chart factor, article rule, screenshot or template can override D1/Varga/Dasha/Transit convergence."
+  ]
+}

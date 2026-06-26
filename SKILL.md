@@ -277,6 +277,26 @@ python3 scripts/validate_interpretation_templates.py --format markdown
 
 完整排序见 `/Users/wuyongnaren/Documents/印度占星/docs/research/current_skill_core_gap_rerank_2026_06_26.md`。
 
+### Skill Gap Truth Audit（严禁过度声明）
+
+当用户问“是否已经全球第一”“是否包含所有印度占星技法”“过去案例哪里错了”“还差什么硬任务”时，必须先运行：
+
+```bash
+python3 scripts/skill_gap_truth_audit.py --format markdown
+```
+
+真源文件：
+
+`references/skill_gap_truth_registry.json`
+
+此审计的结论优先级高于口头记忆：
+
+- 若 `can_claim_global_first: false`，不得宣称全球无争议第一。
+- 若 `can_claim_all_skills_complete: false`，不得宣称所有技法已完全封顶。
+- 若 `can_claim_perfect_accuracy: false`，不得宣称排盘、Dasha、Shadbala、年运等已达到完美精度。
+- 若某技法为 `covered`，只能说“有稳定入口或可用层”，不能自动说成 `complete`。
+- 过去案例分析若触及 `past_case_analysis_corrections` 中的误判类型，必须主动修正并降低置信度。
+
 ## 全球开源定位
 
 **当前还不能诚实地说这是全球开源印度占星 / 吠陀占星项目里的无争议第一。**
