@@ -55,6 +55,7 @@ const TECHNIQUE_API_ENDPOINTS = {
   synastry: '/api/synastry',
   ashtakoot: '/api/synastry',
   dasha: '/api/dasha',
+  'chara-dasha': '/api/dasha/chara',
   remedies: '/api/remedies',
   sade_sati: '/api/sade_sati',
   pancha_mahapurusha: '/api/pancha_mahapurusha',
@@ -96,6 +97,7 @@ const TECHNIQUE_COMMAND_ACTIONS = {
   sudarshana: 'sudarshana',
   'nakshatra-full': 'nakshatra',
   jaimini: 'jaimini',
+  'chara-dasha': 'charaDasha',
   ashtakavarga: 'ashtakavarga',
   shadbala: 'shadbala',
   yoga: 'yogas',
@@ -272,6 +274,7 @@ function renderTechniqueWorkbench(container, context = {}) {
     ['sudarshana', 'Sudarshana', '三重Lagna'],
     ['nakshatra', 'Nakshatra+', '星宿深层'],
     ['jaimini', 'Jaimini', 'Karaka/Arudha'],
+    ['charaDasha', 'Chara Dasha', 'Jaimini 应期'],
     ['ashtakavarga', 'Ashtakavarga', 'SAV/BAV'],
     ['shadbala', 'Shadbala', '六重力量'],
     ['yogas', 'Yogas', '格局检测'],
@@ -385,6 +388,13 @@ async function runTechniqueAction(action, context) {
       ...base,
       ...buildBirthPayload(context),
       mode: 'all',
+    });
+  }
+  if (action === 'charaDasha') {
+    return window.JyotishAPI.computeCharaDasha({
+      ...base,
+      ...buildBirthPayload(context),
+      antardasha: true,
     });
   }
   if (action === 'ashtakavarga') {
@@ -1935,6 +1945,7 @@ function buildTechniqueExplorerPayload(action, context = {}) {
   if (action === 'bhava') return { ...base, ...buildBirthPayload(context), mode: 'compare', house_system: resolveBhavaHouseSystem(context) };
   if (action === 'nakshatra') return { ...base, age: estimateAge(context) };
   if (action === 'jaimini') return { ...base, ...buildBirthPayload(context), mode: 'all' };
+  if (action === 'charaDasha') return { ...base, ...buildBirthPayload(context), antardasha: true };
   if (action === 'shadbala') return { ...base, ...buildBirthPayload(context) };
   if (action === 'yogas') return { ...base, current_dasha: chartData.dasha?.current_md || chartData.dasha_lord || '' };
   if (action === 'dasha') return { ...base, ...buildBirthPayload(context), dasha: 'vimshottari' };
@@ -1992,6 +2003,7 @@ function actionForEndpoint(endpoint) {
     '/api/sudarshana': 'sudarshana',
     '/api/nakshatra_full': 'nakshatra',
     '/api/jaimini': 'jaimini',
+    '/api/dasha/chara': 'charaDasha',
     '/api/ashtakavarga': 'ashtakavarga',
     '/api/shadbala': 'shadbala',
     '/api/yogas': 'yogas',
@@ -2025,6 +2037,7 @@ function endpointForAction(action) {
     sudarshana: '/api/sudarshana',
     nakshatra: '/api/nakshatra_full',
     jaimini: '/api/jaimini',
+    charaDasha: '/api/dasha/chara',
     ashtakavarga: '/api/ashtakavarga',
     shadbala: '/api/shadbala',
     yogas: '/api/yogas',

@@ -1222,6 +1222,7 @@ def test_api_bridge_exports_productized_backend_actions() -> None:
         "computeKP",
         "computePrashna",
         "computeSynastry",
+        "computeCharaDasha",
         "computeRemedies",
         "computeSadeSati",
         "computePanchaMahapurusha",
@@ -2347,8 +2348,10 @@ def test_frontend_backend_contracts_with_api_handler() -> None:
     assert catalog["summary"]["technique_count"] == audit["registry"]["technique_count"]
     assert catalog["summary"]["runnable_count"] >= 20
     assert "/api/ashtakavarga" in catalog["filters"]["api_endpoints"]
+    assert "/api/dasha/chara" in catalog["filters"]["api_endpoints"]
     assert "/api/thematic_report" in catalog["filters"]["api_endpoints"]
     assert catalog["example_payloads"]["/api/ashtakavarga"]["planets"]
+    assert catalog["example_payloads"]["/api/dasha/chara"]["antardasha"] is True
     assert catalog["example_payloads"]["/api/thematic_report"]["theme"] == "marriage"
     assert catalog["api_docs"]["/api/thematic_report"]["method"] == "POST"
     assert "curl -sS -X POST" in catalog["api_docs"]["/api/thematic_report"]["curl"]

@@ -144,6 +144,10 @@ async function computeDashaSystem(payload) {
   return postJson('/api/dasha', payload);
 }
 
+async function computeCharaDasha(payload) {
+  return postJson('/api/dasha/chara', payload);
+}
+
 async function computeRemedies(payload) {
   return postJson('/api/remedies', payload);
 }
@@ -434,6 +438,7 @@ window.JyotishAPI = {
   computePrashna,
   computeKP,
   computeDashaSystem,
+  computeCharaDasha,
   computeRemedies,
   computeSadeSati,
   computePanchaMahapurusha,
