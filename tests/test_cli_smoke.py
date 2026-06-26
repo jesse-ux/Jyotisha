@@ -155,6 +155,66 @@ def test_chart_table_mode_prints_readable_ascii_table() -> None:
     assert "Moon" in output
 
 
+def test_dasha_table_mode_prints_readable_ascii_table() -> None:
+    output = run_engine_text(
+        "dasha",
+        *BASE_BIRTH_ARGS,
+        "--today", "2026-01-01",
+        "--table",
+    )
+
+    assert "Moon Nakshatra" in output
+    assert "Reference Date" in output
+    assert "Mahadasha" in output
+    assert "Start" in output
+    assert "End" in output
+    assert "Current" in output
+    assert "Rahu" in output or "Mars" in output
+
+
+def test_shadbala_table_mode_prints_readable_ascii_table() -> None:
+    output = run_engine_text("shadbala", *BASE_BIRTH_ARGS, "--table")
+
+    assert "Shadbala Method" in output
+    assert "Planet" in output
+    assert "Rupas" in output
+    assert "Strength" in output
+    assert "Rank" in output
+    assert "Sun" in output
+    assert "Saturn" in output
+
+
+def test_ashtakoot_table_mode_prints_readable_ascii_table() -> None:
+    output = run_engine_text(
+        "ashtakoot",
+        "--m_year", "1990",
+        "--m_month", "1",
+        "--m_day", "1",
+        "--m_hour", "12",
+        "--m_minute", "0",
+        "--m_lat", "39.9",
+        "--m_lon", "116.4",
+        "--m_tz", "8",
+        "--f_year", "1992",
+        "--f_month", "5",
+        "--f_day", "10",
+        "--f_hour", "9",
+        "--f_minute", "30",
+        "--f_lat", "31.2",
+        "--f_lon", "121.5",
+        "--f_tz", "8",
+        "--table",
+    )
+
+    assert "Ashtakoot Method" in output
+    assert "Kuta" in output
+    assert "Score" in output
+    assert "Total Score" in output
+    assert "Match Approved" in output
+    assert "Varna" in output
+    assert "Nadi" in output
+
+
 def test_full_reading_accepts_second_and_preserves_birth_time_precision() -> None:
     result = run_engine(
         "full-reading",

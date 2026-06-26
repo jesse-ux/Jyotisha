@@ -453,6 +453,55 @@ def output_table(command, data):
         print(f"Ascendant: {ascendant.get('sign', '')} {ascendant.get('degree', '')}")
         print(tabulate(rows, headers=['Planet', 'Sign', 'House', 'Nakshatra', 'Status'], tablefmt='github'))
         return
+    if command == 'dasha':
+        timeline = data.get('timeline', []) if isinstance(data, dict) else []
+        current = data.get('current_dasha') if isinstance(data, dict) else {}
+        rows = []
+        for item in timeline:
+            rows.append([
+                item.get('lord', ''),
+                item.get('start', ''),
+                item.get('end', ''),
+                item.get('years', ''),
+                'yes' if item.get('is_current') else '',
+            ])
+        print(f"Moon Nakshatra: {data.get('moon_nakshatra', '')}")
+        print(f"Birth Date: {data.get('birth_date', '')}")
+        print(f"Reference Date: {data.get('reference_date', '')}")
+        if isinstance(current, dict) and current:
+            print(
+                "Current: "
+                f"{current.get('lord', '')}"
+                f" ({current.get('start', '')} -> {current.get('end', '')})"
+            )
+        print(tabulate(rows, headers=['Mahadasha', 'Start', 'End', 'Years', 'Current'], tablefmt='github'))
+        return
+    if command == 'shadbala':
+        planets = data.get('planets', {}) if isinstance(data, dict) else {}
+        rows = []
+        for planet_name, planet_data in planets.items():
+            if not isinstance(planet_data, dict):
+                continue
+            rows.append([
+                planet_name,
+                planet_data.get('total_rupas', ''),
+                planet_data.get('min_required', ''),
+                planet_data.get('strength_level', ''),
+                planet_data.get('rank', ''),
+            ])
+        print(f"Shadbala Method: {data.get('method', '')}")
+        print(tabulate(rows, headers=['Planet', 'Rupas', 'Min Required', 'Strength', 'Rank'], tablefmt='github'))
+        return
+    if command == 'ashtakoot':
+        scores = data.get('scores', {}) if isinstance(data, dict) else {}
+        rows = [[kuta, score] for kuta, score in scores.items()]
+        print(f"Ashtakoot Method: {data.get('method', '')}")
+        print(
+            f"Total Score: {data.get('total_score', '')}/{data.get('max_score', '')} | "
+            f"Match Approved: {data.get('is_match_approved', '')}"
+        )
+        print(tabulate(rows, headers=['Kuta', 'Score'], tablefmt='github'))
+        return
     output_json(data)
 
 
@@ -4484,6 +4533,7 @@ def main():
     p.add_argument('--moon-lon', type=float, default=None); p.add_argument('--birthdate', default=None)
     p.add_argument('--today', default=None)
     p.add_argument('--years', type=int, default=10)
+    p.add_argument('--table', action='store_true', help='以 ASCII 表格输出大运主时间线')
 
     # 3. yoga
     p = sub.add_parser('yoga', help='Yoga格局识别')
@@ -4534,6 +4584,7 @@ def main():
     # 9. shadbala (v3.4新增)
     p = sub.add_parser('shadbala', help='Shadbala六重力量计算（covered；外部绝对值校准前保留置信度上限）')
     _add_chart_args(p)
+    p.add_argument('--table', action='store_true', help='以 ASCII 表格输出七曜力量汇总')
 
     # 10. ashtakavarga (v3.4新增)
     p = sub.add_parser('ashtakavarga', help='Ashtakavarga八分法计算')
@@ -4557,6 +4608,7 @@ def main():
         p.add_argument(f'--{prefix}lon', type=float, required=True, help=f'{label}出生经度')
         p.add_argument(f'--{prefix}tz', type=float, default=0, help=f'{label}时区')
     p.add_argument('--node-mode', default='mean', choices=['mean', 'true'])
+    p.add_argument('--table', action='store_true', help='以 ASCII 表格输出 8 Kuta 分数和总分')
 
     # 11. memory (v3.4新增)
     p = sub.add_parser('memory', help='Hermes记忆系统')
