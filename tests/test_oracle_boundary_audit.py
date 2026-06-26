@@ -133,4 +133,11 @@ def test_oracle_boundary_audit_compares_external_verified_template_rows(tmp_path
     assert comparison["dasha"]["date_delta_days"] is not None
     assert comparison["shadbala"]["planets"]["Sun"]["external_total_rupa"] == 21.0
     assert comparison["shadbala"]["planets"]["Sun"]["total_rupa_delta"] is not None
+    assert comparison["shadbala"]["unit"] == "rupa"
+    assert comparison["shadbala"]["component_tolerances"]["sthana"] == 0.1
+    assert comparison["shadbala"]["component_tolerances"]["drik"] == 1.5
+    assert comparison["shadbala"]["planets"]["Sun"]["component_deltas"]["sthana"]["tolerance_rupa"] == 0.1
+    assert comparison["shadbala"]["planets"]["Sun"]["component_deltas"]["drik"]["tolerance_rupa"] == 1.5
+    assert comparison["shadbala"]["global_scaling_check"]["allowed"] is False
+    assert comparison["shadbala"]["global_scaling_check"]["recommendation"] == "reject_global_scaling"
     assert comparison["calibration_decision"] == "do_not_tune_single_template"

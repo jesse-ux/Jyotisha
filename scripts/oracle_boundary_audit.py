@@ -26,6 +26,23 @@ import jyotish_engine as engine  # noqa: E402
 
 SHADBALA_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
 ORACLE_TEMPLATE_READY_STATUSES = {"external_verified"}
+SHADBALA_COMPONENT_FIELD_MAP = {
+    "sthana": "sthana_bala",
+    "dig": "dig_bala",
+    "kala": "kala_bala",
+    "chesta": "chesta_bala",
+    "naisargika": "naisargika_bala",
+    "drik": "drik_bala",
+}
+SHADBALA_COMPONENT_TOLERANCES_RUPA = {
+    "sthana": 0.1,
+    "dig": 0.5,
+    "kala": 0.5,
+    "chesta": 1.0,
+    "naisargika": 0.05,
+    "drik": 1.5,
+}
+SHADBALA_TOTAL_TOLERANCE_RUPA = 1.0
 
 
 def _resolve_path(path: str) -> str:
@@ -280,24 +297,69 @@ def _template_shadbala_comparison(case: dict[str, Any]) -> dict[str, Any]:
         return {"status": "engine_error", "error": result["error"], "planets": {}}
 
     rows: dict[str, Any] = {}
+    scale_ratios: list[float] = []
     for planet in SHADBALA_PLANETS:
         external_row = target_components.get(planet, {})
         engine_row = result.get("planets", {}).get(planet, {})
         engine_components = _component_totals(engine_row) if engine_row else {}
         external_total = external_row.get("total_rupa") if isinstance(external_row, dict) else None
         engine_total = round(float(engine_row.get("total_rupas", 0.0)), 4) if engine_row else None
+        component_deltas: dict[str, Any] = {}
+        if isinstance(external_row, dict):
+            for external_name, engine_name in SHADBALA_COMPONENT_FIELD_MAP.items():
+                engine_value = engine_components.get(engine_name)
+                external_value = external_row.get(external_name)
+                tolerance = SHADBALA_COMPONENT_TOLERANCES_RUPA[external_name]
+                delta = (
+                    round(float(engine_value) - float(external_value), 4)
+                    if isinstance(engine_value, (int, float)) and isinstance(external_value, (int, float))
+                    else None
+                )
+                component_deltas[external_name] = {
+                    "engine_rupa": engine_value,
+                    "external_rupa": external_value,
+                    "delta_rupa": delta,
+                    "abs_delta_rupa": round(abs(delta), 4) if delta is not None else None,
+                    "tolerance_rupa": tolerance,
+                    "within_tolerance": abs(delta) <= tolerance if delta is not None else None,
+                }
+        if isinstance(engine_total, (int, float)) and isinstance(external_total, (int, float)) and external_total:
+            scale_ratios.append(round(float(engine_total) / float(external_total), 6))
+        total_delta = (
+            round(engine_total - float(external_total), 4)
+            if engine_total is not None and isinstance(external_total, (int, float))
+            else None
+        )
         rows[planet] = {
             "engine_total_rupa": engine_total,
             "external_total_rupa": external_total,
-            "total_rupa_delta": (
-                round(engine_total - float(external_total), 4)
-                if engine_total is not None and isinstance(external_total, (int, float))
-                else None
+            "total_rupa_delta": total_delta,
+            "total_abs_delta_rupa": round(abs(total_delta), 4) if total_delta is not None else None,
+            "total_tolerance_rupa": SHADBALA_TOTAL_TOLERANCE_RUPA,
+            "total_within_tolerance": (
+                abs(total_delta) <= SHADBALA_TOTAL_TOLERANCE_RUPA if total_delta is not None else None
             ),
             "engine_components": engine_components,
             "external_components": external_row,
+            "component_deltas": component_deltas,
         }
-    return {"status": "compared", "planets": rows}
+    ratio_spread = round(max(scale_ratios) - min(scale_ratios), 6) if len(scale_ratios) >= 2 else None
+    return {
+        "status": "compared",
+        "unit": "rupa",
+        "component_tolerances": SHADBALA_COMPONENT_TOLERANCES_RUPA,
+        "total_tolerance_rupa": SHADBALA_TOTAL_TOLERANCE_RUPA,
+        "global_scaling_check": {
+            "allowed": False,
+            "recommendation": "reject_global_scaling",
+            "engine_to_external_total_ratios": scale_ratios,
+            "ratio_spread": ratio_spread,
+            "finding": (
+                "Do not fix Shadbala with a global multiplier; inspect component-level deltas by planet."
+            ),
+        },
+        "planets": rows,
+    }
 
 
 def _audit_external_verified_template_case(case: dict[str, Any]) -> dict[str, Any]:
