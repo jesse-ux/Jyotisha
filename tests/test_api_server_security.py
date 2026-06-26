@@ -627,6 +627,49 @@ def test_technique_catalog_exposes_runnable_api_examples() -> None:
         handler._compute_technique_example({'endpoint': '/api/report_artifact'})
 
 
+def test_chara_dasha_endpoint_alias_returns_jaimini_dasha_payload() -> None:
+    handler = _handler()
+    result = handler._compute_chara_dasha({
+        'planets': jyotish_api_server.SAMPLE_PLANETS,
+        'ascendant': jyotish_api_server.SAMPLE_ASCENDANT,
+        'year': 1990,
+        'month': 1,
+        'day': 1,
+        'hour': 12,
+        'minute': 0,
+        'lat': 28.6,
+        'lon': 77.2,
+        'tz': 5.5,
+        'antardasha': True,
+    })
+
+    assert result['success'] is True
+    assert result['endpoint'] == 'chara_dasha'
+    assert result['alias_of'] == 'jaimini'
+    assert result['mode'] == 'dasha'
+    assert result['result']['chara_dasha']
+
+
+def test_capability_audit_lists_chara_dasha_endpoint() -> None:
+    handler = _handler()
+    audit = handler._capability_audit()
+
+    assert '/api/dasha/chara' in audit['surfaces']['api_endpoints']
+
+
+def test_technique_catalog_exposes_chara_dasha_example() -> None:
+    handler = _handler()
+    catalog = handler._technique_catalog()
+
+    assert '/api/dasha/chara' in catalog['filters']['api_endpoints']
+    assert catalog['example_payloads']['/api/dasha/chara']['antardasha'] is True
+
+    result = handler._compute_technique_example({'endpoint': '/api/dasha/chara'})
+    assert result['success'] is True
+    assert result['target_endpoint'] == '/api/dasha/chara'
+    assert result['result']['result']['chara_dasha']
+
+
 def test_thematic_report_declares_orchestrator_fragments() -> None:
     handler = _handler()
     result = handler._compute_thematic_report({'theme': 'marriage'})

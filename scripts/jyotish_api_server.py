@@ -62,6 +62,7 @@ API_COMMAND_MAP = {
     'synastry': '/api/synastry',
     'ashtakoot': '/api/synastry',
     'dasha': '/api/dasha',
+    'chara-dasha': '/api/dasha/chara',
     'remedies': '/api/remedies',
     'sade_sati': '/api/sade_sati',
     'pancha_mahapurusha': '/api/pancha_mahapurusha',
@@ -100,6 +101,7 @@ TECHNIQUE_EXAMPLE_ENDPOINTS = {
     '/api/career',
     '/api/case_validation',
     '/api/dasha',
+    '/api/dasha/chara',
     '/api/divisional_yoga',
     '/api/deep_varga_avastha',
     '/api/jaimini',
@@ -228,6 +230,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             elif path == '/api/dasha':
                 result = self._compute_dasha_system(body)
+                self._json(result)
+            elif path == '/api/dasha/chara':
+                result = self._compute_chara_dasha(body)
                 self._json(result)
             elif path == '/api/sade_sati':
                 result = self._compute_sade_sati(body)
@@ -2944,6 +2949,16 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'alias_of': 'annual',
         }
 
+    def _compute_chara_dasha(self, body):
+        payload = dict(body or {})
+        payload['mode'] = 'dasha'
+        result = self._compute_jaimini(payload)
+        return {
+            **result,
+            'endpoint': 'chara_dasha',
+            'alias_of': 'jaimini',
+        }
+
     def _compute_muhurta(self, body):
         has_range = body.get('start_date') or body.get('end_date') or body.get('start') or body.get('end')
         query_date = body.get('date') or datetime.now().strftime('%Y-%m-%d')
@@ -3747,6 +3762,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 for command in commands
                 if API_COMMAND_MAP.get(command) in api_endpoints
             ]
+            if technique.get('id') == 'jaimini_chara_dasha' and '/api/dasha/chara' in api_endpoints:
+                mapped.append('/api/dasha/chara')
             runnable = [endpoint for endpoint in mapped if endpoint in TECHNIQUE_EXAMPLE_ENDPOINTS]
             primary_endpoint = self._primary_catalog_endpoint(technique, mapped, runnable)
             rows.append({
@@ -3787,6 +3804,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             ('/api/relationship', ['relationship', 'spouse', '婚姻', '感情']),
             ('/api/career', ['career', '事业']),
             ('/api/dasha', ['dasha', 'vimshottari']),
+            ('/api/dasha/chara', ['chara dasha', 'chara_dasha', 'jaimini dasha']),
             ('/api/yogas', ['yoga', 'dosha']),
             ('/api/shadbala', ['shadbala']),
             ('/api/deep_varga_avastha', ['deep_varga_avastha', 'deep varga', 'avastha', 'sayanadi', 'shayanadi', 'd24', 'd30', 'd60']),
@@ -3864,6 +3882,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/career': self._compute_career,
             '/api/case_validation': self._compute_case_validation,
             '/api/dasha': self._compute_dasha_system,
+            '/api/dasha/chara': self._compute_chara_dasha,
             '/api/deep_varga_avastha': self._compute_deep_varga_avastha,
             '/api/divisional_yoga': self._compute_divisional_yoga,
             '/api/jaimini': self._compute_jaimini,
@@ -3985,6 +4004,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/career': 'Compute career analysis from planets and ascendant',
             '/api/case_validation': 'Run case validation and MEVG gate status',
             '/api/dasha': 'Compute Dasha periods and Vimshottari analysis layer',
+            '/api/dasha/chara': 'Compute explicit Jaimini Chara Dasha timing layer',
             '/api/deep_varga_avastha': 'Compute Sayanadi/Shayanadi avastha and D24/D30/D60 templates',
             '/api/divisional_yoga': 'Detect D9/D10/D12 divisional yogas',
             '/api/jaimini': 'Compute Jaimini karaka, arudha, dasha, and karakamsha data',
@@ -4042,6 +4062,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/career': {'planets': SAMPLE_PLANETS, 'asc_sign': 'Aries'},
             '/api/case_validation': {**base, 'current_md': 'Jupiter', 'predicted_events': ['事业巅峰', '关系发展'], 'transit_desc': 'Double Jupiter Saturn activation'},
             '/api/dasha': {**base, **birth, 'dasha': 'vimshottari'},
+            '/api/dasha/chara': {**base, **birth, 'antardasha': True},
             '/api/deep_varga_avastha': base,
             '/api/divisional_yoga': {**base, 'divisions': ['D9', 'D10', 'D12']},
             '/api/jaimini': {**base, **birth, 'mode': 'all'},
