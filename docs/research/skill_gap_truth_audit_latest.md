@@ -1,6 +1,6 @@
 # Jyotish Skill Gap Truth Audit
 
-Generated: `2026-06-26T18:24:46.495916+00:00`
+Generated: `2026-06-26T18:30:42.500897+00:00`
 
 ## Public Claim Boundary
 
@@ -19,8 +19,8 @@ Generated: `2026-06-26T18:24:46.495916+00:00`
 ## External Oracle Closure
 
 - total_tasks: `12`
-- external_verified_tasks: `6`
-- open_tasks: `6`
+- external_verified_tasks: `7`
+- open_tasks: `5`
 - can_claim_global_oracle_closure: `false`
 
 ## Remaining Hard Fronts
@@ -43,8 +43,8 @@ Generated: `2026-06-26T18:24:46.495916+00:00`
 
 - id: `shadbala_external_absolute_values`
 - priority: `P0`
-- status: `active_partial_external_evidence`
-- current_truth: Internal six-component Rupa/Virupa aggregation is usable and three external Shadbala absolute-value packets are accepted; remaining Shadbala rows and broader source comparisons are not complete.
+- status: `active_target_set_closed`
+- current_truth: Internal six-component Rupa/Virupa aggregation is usable and the current Shadbala external absolute-value target set is closed at 4/4 packets; Raman expansion rows and broader source comparisons are not complete.
 
 ### Tajika / Sahams annual closure
 
