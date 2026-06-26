@@ -222,6 +222,82 @@
         "Use Pakshi/Swara as a final action-timing refinement after ordinary Muhurta checks.",
         "Frame weak Pakshi/Swara periods as caution or lower efficiency, not unavoidable failure."
       ]
+    },
+    "lakshmi_dhana_activation_chain": {
+      "title": "Lakshmi Yoga / Dhana Yoga / Wealth Activation Chain",
+      "status": "frozen_template",
+      "authority_level": "A/B/C layered",
+      "domain": ["wealth", "yoga", "dhana", "timing"],
+      "source_refs": [
+        "references/consultation-case-library.md",
+        "references/yogi-asc-tight-orb-wealth-freeze-guide.md",
+        "references/modern-language-guide.md",
+        "docs/research/high_granularity_technique_deepening_backlog_2026_06_26.md"
+      ],
+      "trigger_patterns": [
+        "Lakshmi Yoga",
+        "吉祥天女瑜伽",
+        "Dhana Yoga",
+        "财富格局",
+        "财富激活链",
+        "wealth activation"
+      ],
+      "required_cross_checks": [
+        "D1 wealth promise through 2H, 11H, 5H, 9H, 10H and their lords",
+        "Lakshmi Yoga / Dhana Yoga / Raja Yoga overlap and benefic support",
+        "D2, D9 and D10 confirmation for asset, merit and career monetization",
+        "Shadbala, Ashtakavarga and dignity support before upgrading confidence",
+        "Dasha, transit and annual activation before claiming a wealth window"
+      ],
+      "confidence_ceiling": "B unless promise, divisional support and timing all agree; C when only one wealth yoga or article-style signal is present.",
+      "forbidden_claims": [
+        "Lakshmi Yoga alone guarantees great wealth",
+        "Dhana Yoga alone proves millionaire status",
+        "A single wealth yoga overrides weak houses, weak D2 or hostile Dasha"
+      ],
+      "safe_output_patterns": [
+        "Treat Lakshmi and Dhana Yogas as wealth potential that still needs divisional support and timing activation.",
+        "Explain whether wealth comes through career, luck, family, assets or patronage rather than only saying rich/not rich.",
+        "If Avayogi, weak D2 or hostile Dasha interferes, frame the result as delayed or effort-heavy wealth rather than denial or guarantee."
+      ]
+    },
+    "darakaraka_ul_spouse_depth": {
+      "title": "Darakaraka / Upapada / D9 Spouse Depth Template",
+      "status": "frozen_template",
+      "authority_level": "A/B/C layered",
+      "domain": ["relationship", "jaimini", "d9", "spouse"],
+      "source_refs": [
+        "references/relationship-astrology-guide.md",
+        "references/navamsa-marriage-deep-analysis.md",
+        "references/varga-system-quick-reference.md",
+        "references/prediction-boundary-protocol.md"
+      ],
+      "trigger_patterns": [
+        "Darakaraka",
+        "DK",
+        "Upapada",
+        "UL",
+        "配偶深层特质",
+        "spouse profile"
+      ],
+      "required_cross_checks": [
+        "D1 seventh house, seventh lord and classical spouse significators first",
+        "D9 seventh house, D9 lagna, Venus/Jupiter and DK condition",
+        "UL sign, UL lord and second-from-UL support",
+        "Declare DK system ambiguity when 7-karaka and 8-karaka methods disagree",
+        "Dasha, transit and relationship timing support before event or marriage timing claims"
+      ],
+      "confidence_ceiling": "B for spouse profile when D1, D9, DK and UL converge; C when only one Jaimini indicator is active or DK method is disputed.",
+      "forbidden_claims": [
+        "DK alone proves the spouse type",
+        "UL alone guarantees marriage outcome",
+        "A single DK or UL signal alone predicts divorce, widowhood or exact marriage fate"
+      ],
+      "safe_output_patterns": [
+        "Use DK to describe the spouse archetype, UL to describe the visible marriage narrative, and D9 to describe the lived marriage quality.",
+        "If DK methods disagree, weaken DK and let D1 seventh house plus Venus/Jupiter lead the interpretation.",
+        "Upgrade only when D1 promise, D9 support, UL condition and timing all point in the same direction."
+      ]
     }
   }
 }

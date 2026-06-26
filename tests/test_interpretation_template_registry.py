@@ -25,6 +25,8 @@ def test_interpretation_template_registry_covers_article_level_hard_topics() -> 
         "bhrigu_pada_all_event",
         "tithi_lord_relationship",
         "pancha_pakshi_swara_boundary",
+        "lakshmi_dhana_activation_chain",
+        "darakaraka_ul_spouse_depth",
     }
     assert required <= set(templates)
 
@@ -53,6 +55,8 @@ def test_interpretation_template_validator_reports_skill_readiness() -> None:
     report = json.loads(completed.stdout)
     assert report["scope"] == "jyotish_interpretation_template_validation"
     assert report["valid"] is True
-    assert report["summary"]["template_count"] >= 6
+    assert report["summary"]["template_count"] >= 8
     assert report["summary"]["problem_count"] == 0
     assert "yogi_asc_tight_orb_wealth" in report["summary"]["template_ids"]
+    assert "lakshmi_dhana_activation_chain" in report["summary"]["template_ids"]
+    assert "darakaraka_ul_spouse_depth" in report["summary"]["template_ids"]
