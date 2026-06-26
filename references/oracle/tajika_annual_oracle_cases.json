@@ -9,7 +9,7 @@
   "template_cases": [
     {
       "id": "template_steve_jobs_varshaphala_1984_lahiri",
-      "status": "template_only",
+      "status": "external_verified",
       "source": "JHora Varshaphala screenshot / PyJHora black-box annual output / printed example",
       "privacy": "public_figure_template",
       "birth": {
@@ -30,20 +30,110 @@
         "target_year": 1984
       },
       "target": {
-        "solar_return_datetime": null,
-        "varsha_lagna_deg": null,
-        "muntha_sign": null,
-        "year_lord": null,
-        "mudda_dasha_first_lord": null,
+        "solar_return_datetime": "1984-02-25T05:41:37-08:00",
+        "varsha_lagna_deg": 287.4007,
+        "muntha_sign": "Cancer",
+        "year_lord": "Mars",
+        "mudda_dasha_first_lord": "Sun",
         "sahams": {
-          "punya_saham": null,
-          "rajya_saham": null,
-          "vivah_saham": null
+          "punya_saham": 249.1148,
+          "rajya_saham": 207.6343,
+          "vivah_saham": 8.8762
         },
-        "tajika_yogas": null,
-        "source_artifact": null
+        "tajika_yogas": {
+          "eesarpha": [
+            [
+              0,
+              5
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              6
+            ],
+            [
+              4,
+              5
+            ]
+          ],
+          "gairi_kamboola": null,
+          "ithasala": [
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              4,
+              2
+            ],
+            [
+              1,
+              4,
+              3
+            ]
+          ],
+          "kamboola": [
+            true,
+            [
+              [
+                1,
+                4
+              ]
+            ],
+            [
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                4
+              ]
+            ]
+          ],
+          "khallasara": null,
+          "manahoo": [
+            [
+              0,
+              4,
+              10
+            ]
+          ],
+          "nakta": [],
+          "yamaya": []
+        },
+        "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt"
       },
-      "verification_note": "Fill only from external annual-chart output. Local scripts/varshaphala.py output is not valid evidence."
+      "verification_note": "Fill only from external annual-chart output. Local scripts/varshaphala.py output is not valid evidence.",
+      "evidence_packet": {
+        "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
+        "status": "external_verified",
+        "metadata": {
+          "tool_name": "PyJHora",
+          "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
+          "capture_date": "2026-06-27",
+          "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+          "ayanamsa": "lahiri",
+          "node_mode": "PyJHora default",
+          "timezone": "UTC-08:00",
+          "annual_system": "Varshaphala/Tajika",
+          "target_year": 1984,
+          "operator_note": "Black-box annual output from isolated /tmp virtualenv. PyJHora AGPL code was not copied into this repository; only generated output is stored as external evidence. Year Lord direct call raised KeyError when Rahu appeared in candidates; packet records the filtered classical-planet workaround per PyJHora docstring boundary."
+        }
+      }
     },
     {
       "id": "template_einstein_varshaphala_1905_lahiri",

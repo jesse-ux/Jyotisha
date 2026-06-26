@@ -131,7 +131,9 @@ def _validate_command(oracle_file: str) -> str:
 def build_status(oracle_file: str) -> dict[str, Any]:
     queue = _run_json([PYTHON, "scripts/tajika_annual_oracle_queue.py", "--oracle-file", oracle_file, "--format", "json"])
     annual_tasks = queue.get("tasks", [])
-    priority = next((task for task in annual_tasks if task.get("case_id") == FIRST_PRIORITY_CASE_ID), None)
+    priority = next((task for task in annual_tasks if not task.get("ready_for_calibration")), None)
+    if priority is None:
+        priority = next((task for task in annual_tasks if task.get("case_id") == FIRST_PRIORITY_CASE_ID), None)
     if priority is None and annual_tasks:
         priority = annual_tasks[0]
     if priority is None:
@@ -141,7 +143,11 @@ def build_status(oracle_file: str) -> dict[str, Any]:
     capture_id = queue_packet["capture_id"]
     packet_path = f"references/oracle/artifacts/pending_packets/{capture_id}.json"
     template_path = FIRST_PRIORITY_TEMPLATE_PATH if priority["case_id"] == FIRST_PRIORITY_CASE_ID else packet_path
-    packet = json.loads((ROOT / template_path).read_text(encoding="utf-8"))
+    template_file = ROOT / template_path
+    if template_file.exists():
+        packet = json.loads(template_file.read_text(encoding="utf-8"))
+    else:
+        packet = queue_packet
     missing_fields = _metadata_missing(packet) + _target_missing(packet)
     missing_groups = _group_missing_fields(missing_fields)
     external_verified = [

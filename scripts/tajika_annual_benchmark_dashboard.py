@@ -33,6 +33,8 @@ def _run_json(command: list[str]) -> dict[str, Any]:
 def build_dashboard(oracle_file: str) -> dict[str, Any]:
     queue = _run_json([PYTHON, "scripts/tajika_annual_oracle_queue.py", "--oracle-file", oracle_file, "--format", "json"])
     summary = queue["summary"]
+    next_task = next((task for task in queue["tasks"] if not task["ready_for_calibration"]), None)
+    next_case = next_task["case_id"] if next_task else None
     can_claim_closure = bool(summary["production_tuning_allowed"] and summary["ready_for_calibration"] == summary["total_tasks"])
     remaining_gap = (
         "Solar return exact time, Varsha Lagna, Muntha, Year Lord, Mudda Dasha first lord, "
@@ -58,8 +60,13 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
             ),
         },
         "remaining_gap": remaining_gap,
+        "first_priority": next_task,
         "next_actions": [
-            "Fill one Steve Jobs annual evidence packet from JHora or PyJHora.",
+            (
+                f"Fill the next annual evidence packet from JHora or PyJHora: {next_case}."
+                if next_case
+                else "All annual evidence packets are filled; review tolerance checks before any production tuning."
+            ),
             "Add solar return datetime and Varsha Lagna tolerance checks after the first external row exists.",
             "Add Saham-specific tolerance checks for Punya, Rajya and Vivah Saham.",
             "Expand the annual benchmark with at least one printed Varshaphala example.",

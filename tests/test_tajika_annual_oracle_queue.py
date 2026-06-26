@@ -32,19 +32,40 @@ def test_tajika_annual_queue_outputs_collection_tasks() -> None:
     assert queue["scope"] == "tajika_sahams_annual_oracle_collection_queue"
     assert queue["schema_version"] == 1
     assert queue["summary"]["total_tasks"] == 5
-    assert queue["summary"]["ready_for_calibration"] == 0
+    assert queue["summary"]["ready_for_calibration"] == 1
     assert queue["summary"]["production_tuning_allowed"] is False
     assert "solar return" in queue["boundary"].lower()
 
     first = queue["tasks"][0]
     assert first["task_id"].startswith("collect_")
-    assert first["status"] == "template_only"
-    assert first["ready_for_collection"] is True
-    assert first["ready_for_calibration"] is False
+    assert first["case_id"] == "template_steve_jobs_varshaphala_1984_lahiri"
+    assert first["status"] == "external_verified"
+    assert first["ready_for_collection"] is False
+    assert first["ready_for_calibration"] is True
     assert "target.solar_return_datetime" in first["target_fields"]
-    assert "target.sahams.punya_saham" in first["missing_target_fields"]
+    assert first["missing_target_fields"] == []
+    assert first["target_fields"] == [
+        "target.solar_return_datetime",
+        "target.varsha_lagna_deg",
+        "target.muntha_sign",
+        "target.year_lord",
+        "target.mudda_dasha_first_lord",
+        "target.sahams.punya_saham",
+        "target.sahams.rajya_saham",
+        "target.sahams.vivah_saham",
+        "target.tajika_yogas",
+        "target.source_artifact",
+    ]
+    assert first["evidence_packet"]["metadata"]["tool_name"] == "PyJHora"
+    assert first["evidence_packet"]["target_placeholders"]["target.year_lord"] == "Mars"
+    assert first["evidence_packet"]["target_placeholders"]["target.mudda_dasha_first_lord"] == "Sun"
     assert "JHora Varshaphala screenshot" in first["preferred_sources"]
     assert first["evidence_packet"]["integrity_checks"]["requires_external_artifact"] is True
+
+    second = queue["tasks"][1]
+    assert second["case_id"] == "template_einstein_varshaphala_1905_lahiri"
+    assert second["ready_for_collection"] is True
+    assert "target.sahams.punya_saham" in second["missing_target_fields"]
 
 
 def test_tajika_annual_queue_markdown_lists_sahams_and_yogas() -> None:

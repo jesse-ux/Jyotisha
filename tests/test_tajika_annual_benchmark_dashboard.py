@@ -38,7 +38,7 @@ def test_tajika_annual_dashboard_outputs_stable_json_summary() -> None:
     assert report["scope"] == "tajika_sahams_annual_benchmark_dashboard"
     assert report["schema_version"] == 1
     assert report["summary"]["total_tasks"] == 5
-    assert report["summary"]["ready_for_calibration"] == 0
+    assert report["summary"]["ready_for_calibration"] == 1
     assert report["summary"]["production_tuning_allowed"] is False
     assert report["annual_claim"]["can_claim_tajika_sahams_closure"] is False
     assert "Solar return" in report["remaining_gap"]

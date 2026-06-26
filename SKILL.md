@@ -145,6 +145,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 
 - Dasha-only 外部证据当前目标集已闭环：`dasha_external_oracle_evidence_validation.valid_dasha_packets: 3/3`；Steve Jobs / Lahiri、REDACTED_YEAR Lahiri 模板与 1800 Delhi historical epoch 的 Vimshottari 起始边界来自 PyJHora 4.8.7 隔离黑盒 stdout artifact。
 - 全局 Dasha/Shadbala Calibration Status 仍未完成：`external_oracle_evidence_validation.valid_packets: 4`，`ready_for_calibration: 4`；Shadbala 外部绝对值当前目标集已通过 4/4，Raman 扩展样本与非 Dasha 靶点尚未封顶。
+- Tajika/Sahams 年运外部样本已开始闭环：`tajika_sahams_annual_benchmark_dashboard.ready_for_calibration: 1/5`；Steve Jobs 1984 Varshaphala/Lahiri 的 solar return、Varsha Lagna、Muntha、Year Lord、Mudda Dasha 首主、三项 Sahams 与 Tajika Yogas 已由 PyJHora 4.8.7 隔离黑盒 artifact 验证，下一优先级为 Einstein 1905。仍不得声称 Tajika/Sahams 年运体系已全局封顶。
 - D1/D9/SAV 高可信；Dasha 精细日期可引用已验证 Dasha-only 样本的局部进度，但不得把全部大运边界、Shadbala 绝对值或全局精度说成已完成外部校准。
 - `production_tuning_allowed: false` 前，禁止为了贴合单份 PDF、单个 JHora 截图或本仓库本地输出而改生产常数。
 - 对普通用户的建议话术：基础落座、D9、SAV 可作为稳定证据；当前 Dasha-only 目标集已完成外部黑盒验证，但多 Dasha 家族、Antardasha/Pratyantar 细边界仍需扩展；Shadbala 当前目标集已有四个外部六分量样本，绝对值断语可引用 4/4 闭合进度；但跨软件差异、Raman 扩展样本与公开书例仍需更多证据后再提升到全局置信。
@@ -270,7 +271,7 @@ python3 scripts/validate_interpretation_templates.py --format markdown
 5. **Prashna 分支工作流**
    - 问事类型分支、裁决链、时机判断仍需更稳定的传统链路
 6. **Varshaphala / Tajika / Sahams 年运裁决深度**
-   - 年盘骨架已在，但事件裁决与权重层仍需继续成熟
+   - 年盘骨架已在，第一条 Steve Jobs 1984 外部年运样本已闭环；但整体仍只有 `1/5`，事件裁决、权重层、Einstein 1905 等后续样本仍需继续成熟
 7. **Kalachakra / Narayana 等替代 Dasha 的成熟度边界**
    - 已有覆盖，但部分子层、边界口径、外部黑盒对照仍需继续收紧
 8. **高阶解释层整合**

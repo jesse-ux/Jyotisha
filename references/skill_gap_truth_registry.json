@@ -55,7 +55,7 @@
       "title": "Tajika / Sahams annual closure",
       "priority": "P0",
       "status": "active_gap",
-      "current_truth": "Varshaphala, Muntha, Year Lord, Mudda Dasha and Sahams have local structure, but annual judgment depth and external sample closure remain incomplete.",
+      "current_truth": "Varshaphala, Muntha, Year Lord, Mudda Dasha and Sahams have local structure, and the first annual external packet is now accepted at 1/5 for Steve Jobs 1984 Lahiri via PyJHora 4.8.7 black-box artifact; annual judgment depth, Einstein 1905 and the remaining external sample set are still incomplete.",
       "completion_standard": [
         "External annual packets include solar return time, Varsha Lagna, Muntha, Year Lord, Mudda Dasha, key Sahams and Tajika Yogas.",
         "Annual interpretation templates distinguish calculation evidence from judgment confidence.",
@@ -67,9 +67,9 @@
         "Local Varshaphala output alone is external oracle evidence"
       ],
       "next_actions": [
-        "Use scripts/tajika_annual_closure_status.py to fill the first annual packet.",
-        "Freeze the annual judgment template around Muntha, Year Lord, Mudda Dasha and Sahams.",
-        "Add public benchmark rows only after external annual evidence exists."
+        "Use scripts/tajika_annual_closure_status.py to fill the next annual packet: template_einstein_varshaphala_1905_lahiri.",
+        "Freeze the annual judgment template around Muntha, Year Lord, Mudda Dasha and Sahams without treating one annual sample as predictive closure.",
+        "Add public benchmark rows only after external annual evidence exists and scripts/tajika_annual_benchmark_dashboard.py reports readiness."
       ]
     },
     "article_template_industrialization": {

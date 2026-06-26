@@ -69,6 +69,8 @@ def _write_json(path: str, value: dict[str, Any]) -> None:
 
 
 def _target_fields(value: Any, prefix: str = "target") -> list[str]:
+    if prefix == "target.tajika_yogas":
+        return [prefix]
     if prefix == "target" and isinstance(value, dict):
         fields: list[str] = []
         for key, child in value.items():
@@ -93,6 +95,10 @@ def _target_value(target: dict[str, Any], field: str) -> Any:
 
 def _missing_target_fields(value: Any, prefix: str = "target") -> list[str]:
     missing: list[str] = []
+    if prefix == "target.tajika_yogas":
+        if value is None or value == "" or value == {}:
+            return [prefix]
+        return []
     if isinstance(value, dict):
         for key, child in value.items():
             missing.extend(_missing_target_fields(child, f"{prefix}.{key}"))
@@ -117,9 +123,13 @@ def _evidence_packet(case: dict[str, Any], target_fields: list[str]) -> dict[str
         "target_year": settings.get("target_year", ""),
         "operator_note": "",
     }
+    existing = case.get("evidence_packet", {})
+    existing_metadata = existing.get("metadata", {}) if isinstance(existing, dict) else {}
+    if isinstance(existing_metadata, dict):
+        metadata.update(existing_metadata)
     return {
-        "capture_id": f"external_{case_id}",
-        "status": "draft",
+        "capture_id": existing.get("capture_id") or f"external_{case_id}" if isinstance(existing, dict) else f"external_{case_id}",
+        "status": existing.get("status", "draft") if isinstance(existing, dict) else "draft",
         "case_id": case_id,
         "birth": case.get("birth", {}),
         "settings": settings,

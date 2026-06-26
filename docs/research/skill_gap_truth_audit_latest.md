@@ -1,6 +1,6 @@
 # Jyotish Skill Gap Truth Audit
 
-Generated: `2026-06-26T18:30:42.500897+00:00`
+Generated: `2026-06-26T19:05:04.292300+00:00`
 
 ## Public Claim Boundary
 
@@ -19,8 +19,8 @@ Generated: `2026-06-26T18:30:42.500897+00:00`
 ## External Oracle Closure
 
 - total_tasks: `12`
-- external_verified_tasks: `7`
-- open_tasks: `5`
+- external_verified_tasks: `8`
+- open_tasks: `4`
 - can_claim_global_oracle_closure: `false`
 
 ## Remaining Hard Fronts
@@ -51,7 +51,7 @@ Generated: `2026-06-26T18:30:42.500897+00:00`
 - id: `tajika_sahams_annual_closure`
 - priority: `P0`
 - status: `active_gap`
-- current_truth: Varshaphala, Muntha, Year Lord, Mudda Dasha and Sahams have local structure, but annual judgment depth and external sample closure remain incomplete.
+- current_truth: Varshaphala, Muntha, Year Lord, Mudda Dasha and Sahams have local structure, and the first annual external packet is now accepted at 1/5 for Steve Jobs 1984 Lahiri via PyJHora 4.8.7 black-box artifact; annual judgment depth, Einstein 1905 and the remaining external sample set are still incomplete.
 
 ### Article-level interpretation template industrialization
 

@@ -92,3 +92,24 @@ def test_skill_gap_truth_audit_markdown_is_human_readable() -> None:
     assert "can_claim_global_first: `false`" in markdown
     assert "Dasha external oracle" in markdown
     assert "Past Corrections" in markdown
+
+
+def test_transit_reference_blocks_single_factor_override_claims() -> None:
+    transit = (ROOT / "references" / "transit-comprehensive-guide.md").read_text(encoding="utf-8")
+    kantaka = (ROOT / "references" / "navatara-kantaka-shani-guide.md").read_text(encoding="utf-8")
+    combined = transit + "\n" + kantaka
+
+    assert "Natal Promise First Protocol" in transit
+    assert "本命盘决定事件可发生的范围" in transit
+    assert "Dasha 决定主题是否进入兑现期" in transit
+    assert "Transit 主要负责触发" in transit
+    assert "是否获得奖项/地位必须再看10宫、11宫、D10、Dasha、AV与现实领域证据" in kantaka
+
+    forbidden_overclaims = [
+        "一票否决",
+        "完全反转",
+        "免疫纯粹灾难",
+        "土星过4宫必主",
+    ]
+    for phrase in forbidden_overclaims:
+        assert phrase not in combined

@@ -1,0 +1,30 @@
+panchanga /Users/wuyongnaren added to system path ['', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python311.zip', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/lib-dynload', '/private/tmp/jyotish_pyjhora_blackbox/lib/python3.11/site-packages', '/Users/wuyongnaren']
+/Users added to system path ['', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python311.zip', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/lib-dynload', '/private/tmp/jyotish_pyjhora_blackbox/lib/python3.11/site-packages', '/Users/wuyongnaren', '/Users']
+house_planet_dict ['', '7', '', '', '', '', '2/6', '8', '1/4', 'L/5', '0/3', '']
+house_planet_dict ['', '7', '', '', '', '', '2/6', '8', '1/4', 'L/5', '0/3', '']
+house_planet_dict ['', '7', '', '', '', '', '2/6', '8', '1/4', 'L/5', '0/3', '']
+_get_nakta_triples iy_list [(0, [(1, 4)])]
+_get_nakta_triples iylist1 [(4, [(0, 1)])]
+_get_nakta_triples iy_list [(0, [(1, 4)]), (4, [(0, 1)])]
+house_planet_dict ['', '7', '', '', '', '', '2/6', '8', '1/4', 'L/5', '0/3', '']
+ithasala_yoga_planet_pairs [(0, 1, 1), (0, 4, 2), (1, 4, 3)]
+_get_nakta_triples iy_list [(0, [(1, 4)])]
+_get_nakta_triples iylist1 [(4, [(0, 1)])]
+_get_nakta_triples iy_list [(0, [(1, 4)]), (4, [(0, 1)])]
+_yamaya_triples [(0, [(1, 4)]), (4, [(0, 1)])]
+checking triples 0 12.51819523474876 1 4.232244722579111 4 4 12.51819523474876
+checking triples 4 13.495962116843629 0 12.51819523474876 1 1 13.495962116843629
+yamaya planet triples []
+house_planet_dict ['', '7', '', '', '', '', '2/6', '8', '1/4', 'L/5', '0/3', '']
+PYJHORA_BLACKBOX_VERSION 4.8.7
+CASE_ID template_steve_jobs_varshaphala_1984_lahiri
+DOB (1955, 2, 24)
+TOB (19, 15, 0)
+PLACE Place(Place='San Francisco, CA Steve Jobs Varshaphala 1984 template', latitude=37.7749, longitude=-122.4194, timezone=-8.0, elevation=0.0)
+AYANAMSA LAHIRI
+NODE_MODE PyJHora default
+TARGET_YEAR 1984
+YEARS_FROM_DOB_USED 30
+NATAL_JD 2435163.3020833335
+ANNUAL_CHART_RAW [['L', (9, 17.400729761262824)], [0, (10, 12.51819523474876)], [1, (8, 4.232244722579111)], [2, (6, 26.729647475518334)], [3, (10, 2.592766661293183)], [4, (8, 13.495962116843629)], [5, (9, 14.22730692496367)], [6, (6, 22.75179249306666)], [7, (1, 18.443240534378823)], [8, (7, 18.443240534378816)]]
+TAJIKA_ANNUAL_VALUES_JSON {"mudda_dasha_first_lord": "Sun", "mudda_first_raw": [[0, 0], [1985, 2, 9, 7.255877505987883], 0.91], "muntha_sign": "Cancer", "muntha_sign_index": 3, "sahams": {"punya_saham": 249.1148, "rajya_saham": 207.6343, "vivah_saham": 8.8762}, "solar_return_datetime": "1984-02-25T05:41:37-08:00", "solar_return_raw": [[1984, 2, 25], "05:41:37"], "tajika_yogas": {"eesarpha": [[0, 5], [1, 3], [2, 6], [4, 5]], "gairi_kamboola": null, "ithasala": [[0, 1, 1], [0, 4, 2], [1, 4, 3]], "kamboola": [true, [[1, 4]], [[0, 4], [1, 4], [0, 1], [0, 4]]], "khallasara": null, "manahoo": [[0, 4, 10]], "nakta": [], "yamaya": []}, "varsha_lagna_deg": 287.4007, "year_lord": "Mars", "year_lord_boundary": {"candidate_policy": "PyJHora docstring says Rahu/Ketu do not form lord of the year; filtered candidates to classical planets 0..6 after direct call raised KeyError.", "direct": {"error": "KeyError: 7", "ok": false, "value": null}, "filtered_candidates": [0, 2, 5], "jd_at_years": 2446120.9930033335, "night_time_birth": false, "raw_candidates": [7, 0, 2, 5]}, "year_lord_raw": 2}

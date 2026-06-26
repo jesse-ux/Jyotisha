@@ -37,10 +37,10 @@ def test_tajika_annual_closure_status_identifies_first_annual_packet() -> None:
     assert report["scope"] == "tajika_sahams_annual_closure_status"
     assert report["schema_version"] == 1
     assert report["summary"]["annual_task_count"] == 5
-    assert report["summary"]["external_verified_annual_tasks"] == 0
+    assert report["summary"]["external_verified_annual_tasks"] == 1
     assert report["summary"]["can_claim_tajika_sahams_closure"] is False
-    assert report["first_priority"]["case_id"] == "template_steve_jobs_varshaphala_1984_lahiri"
-    assert report["first_priority"]["capture_id"] == "external_template_steve_jobs_varshaphala_1984_lahiri"
+    assert report["first_priority"]["case_id"] == "template_einstein_varshaphala_1905_lahiri"
+    assert report["first_priority"]["capture_id"] == "external_template_einstein_varshaphala_1905_lahiri"
     assert report["first_priority"]["required_target_fields"] == [
         "target.solar_return_datetime",
         "target.varsha_lagna_deg",
@@ -58,7 +58,9 @@ def test_tajika_annual_closure_status_identifies_first_annual_packet() -> None:
     assert "target.sahams.punya_saham" in report["first_priority"]["missing_fields"]
     assert report["first_priority"]["missing_groups"]["metadata"]["count"] == 5
     assert report["first_priority"]["missing_groups"]["target"]["count"] == 10
-    assert report["first_priority"]["prefilled_fields"]["metadata"]["annual_system"] == "Varshaphala/Tajika"
+    assert report["first_priority"]["prefilled_fields"]["metadata"]["annual_system"] == "varshaphala"
+    assert report["first_priority"]["prefilled_fields"]["metadata"]["target_year"] == 1905
+    assert report["first_priority"]["prefilled_fields"]["settings"]["node_mode"] == "mean"
     assert report["first_priority"]["manual_fill_plan"]["status_value"] == "external_verified"
     assert report["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 15
     assert report["first_priority"]["validate_command"]
@@ -73,7 +75,7 @@ def test_tajika_annual_closure_status_markdown_can_be_written(tmp_path: Path) ->
     markdown = output.read_text(encoding="utf-8")
     assert "# Tajika/Sahams Annual Closure Status" in markdown
     assert "can_claim_tajika_sahams_closure: `false`" in markdown
-    assert "external_template_steve_jobs_varshaphala_1984_lahiri" in markdown
+    assert "external_template_einstein_varshaphala_1905_lahiri" in markdown
     assert "target.sahams.punya_saham" in markdown
     assert "## Missing Summary" in markdown
     assert "## Prefilled Fields" in markdown
