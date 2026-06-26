@@ -23,6 +23,34 @@
     "target.tajika_yogas",
     "target.source_artifact"
   ],
+  "missing_groups": {
+    "metadata": {
+      "count": 5,
+      "fields": [
+        "metadata.tool_name",
+        "metadata.tool_version_or_url",
+        "metadata.capture_date",
+        "metadata.operator_note",
+        "metadata.source_artifact"
+      ]
+    },
+    "target": {
+      "count": 10,
+      "fields": [
+        "target.solar_return_datetime",
+        "target.varsha_lagna_deg",
+        "target.muntha_sign",
+        "target.year_lord",
+        "target.mudda_dasha_first_lord",
+        "target.sahams.punya_saham",
+        "target.sahams.rajya_saham",
+        "target.sahams.vivah_saham",
+        "target.tajika_yogas",
+        "target.source_artifact"
+      ]
+    },
+    "bodies": {}
+  },
   "ready_to_apply": false,
   "external_sources": [
     "JHora Varshaphala/Tajika annual chart screen",

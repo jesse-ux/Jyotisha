@@ -7,6 +7,11 @@
 - operator_card: `docs/benchmark/tajika_steve_jobs_1984_first_packet_operator_card.md`
 - packet_template: `references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json`
 
+## Missing Summary
+
+- metadata: `5`
+- target: `10`
+
 ## Missing Fields
 
 - `metadata.tool_name`

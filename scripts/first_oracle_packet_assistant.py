@@ -69,6 +69,39 @@ FRONTS = {
 }
 
 
+def _group_missing_fields(missing_fields: list[str]) -> dict[str, Any]:
+    metadata_fields = [field for field in missing_fields if field.startswith("metadata.")]
+    target_fields = [field for field in missing_fields if field.startswith("target.")]
+    body_groups: dict[str, list[str]] = {}
+    prefix = "target.shadbala_components."
+    for field in target_fields:
+        if not field.startswith(prefix):
+            continue
+        remainder = field[len(prefix):]
+        body, _, component = remainder.partition(".")
+        if not body or not component:
+            continue
+        body_groups.setdefault(body, []).append(field)
+    grouped_bodies = {
+        body: {
+            "count": len(fields),
+            "fields": fields,
+        }
+        for body, fields in sorted(body_groups.items())
+    }
+    return {
+        "metadata": {
+            "count": len(metadata_fields),
+            "fields": metadata_fields,
+        },
+        "target": {
+            "count": len(target_fields),
+            "fields": target_fields,
+        },
+        "bodies": grouped_bodies,
+    }
+
+
 def _run_json(command: list[str]) -> dict[str, Any]:
     completed = subprocess.run(
         command,
@@ -114,6 +147,7 @@ def build_report(front: str) -> dict[str, Any]:
     status = _run_json(config["status_command"])
     first = status["first_priority"]
     packet_missing = _packet_missing(config["packet_template"])
+    missing_groups = _group_missing_fields(packet_missing)
     return {
         "scope": "first_external_oracle_packet_assistant",
         "schema_version": 1,
@@ -123,6 +157,7 @@ def build_report(front: str) -> dict[str, Any]:
         "operator_card": config["operator_card"],
         "packet_template": config["packet_template"],
         "missing_fields": packet_missing,
+        "missing_groups": missing_groups,
         "ready_to_apply": not packet_missing,
         "external_sources": config["external_sources"],
         "apply_command": first["apply_command"].replace(first["packet_path"], config["packet_template"]),
@@ -145,9 +180,24 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- operator_card: `{report['operator_card']}`",
         f"- packet_template: `{report['packet_template']}`",
         "",
+        "## Missing Summary",
+        "",
+        f"- metadata: `{report['missing_groups']['metadata']['count']}`",
+        f"- target: `{report['missing_groups']['target']['count']}`",
+    ]
+    if report["missing_groups"]["bodies"]:
+        lines.extend(["- bodies:", ""])
+        lines.extend(
+            f"  - {body}: `{payload['count']}`"
+            for body, payload in report["missing_groups"]["bodies"].items()
+        )
+    lines.extend(
+        [
+            "",
         "## Missing Fields",
         "",
-    ]
+        ]
+    )
     lines.extend(f"- `{field}`" for field in report["missing_fields"])
     lines.extend(
         [

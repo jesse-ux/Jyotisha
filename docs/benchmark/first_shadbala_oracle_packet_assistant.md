@@ -7,6 +7,20 @@
 - operator_card: `docs/benchmark/shadbala_redacted_place_raman_first_packet_operator_card.md`
 - packet_template: `references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json`
 
+## Missing Summary
+
+- metadata: `5`
+- target: `50`
+- bodies:
+
+  - Jupiter: `7`
+  - Mars: `7`
+  - Mercury: `7`
+  - Moon: `7`
+  - Saturn: `7`
+  - Sun: `7`
+  - Venus: `7`
+
 ## Missing Fields
 
 - `metadata.tool_name`

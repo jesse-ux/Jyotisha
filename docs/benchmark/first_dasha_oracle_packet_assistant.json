@@ -14,6 +14,25 @@
     "metadata.source_artifact",
     "target.vimshottari_start_date"
   ],
+  "missing_groups": {
+    "metadata": {
+      "count": 5,
+      "fields": [
+        "metadata.tool_name",
+        "metadata.tool_version_or_url",
+        "metadata.capture_date",
+        "metadata.operator_note",
+        "metadata.source_artifact"
+      ]
+    },
+    "target": {
+      "count": 1,
+      "fields": [
+        "target.vimshottari_start_date"
+      ]
+    },
+    "bodies": {}
+  },
   "ready_to_apply": false,
   "external_sources": [
     "JHora Vimshottari Dasha screen",

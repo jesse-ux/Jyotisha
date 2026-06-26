@@ -7,6 +7,11 @@
 - operator_card: `docs/benchmark/dasha_steve_jobs_first_packet_operator_card.md`
 - packet_template: `references/oracle/evidence_packet_templates/dasha_steve_jobs_lahiri_first_packet_only.json`
 
+## Missing Summary
+
+- metadata: `5`
+- target: `1`
+
 ## Missing Fields
 
 - `metadata.tool_name`
