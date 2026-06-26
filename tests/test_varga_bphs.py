@@ -7,8 +7,10 @@ from hypothesis import given
 from hypothesis import strategies as st
 from varga import (
     SIGNS,
+    calc_bhrigu_bindu,
     calc_22nd_drekkana,
     calc_64th_navamsa,
+    calc_sarpa_drekkana,
     calc_varga,
     varga_map,
 )
@@ -106,3 +108,38 @@ def test_22nd_drekkana_counts_forward_from_lagna_drekkana() -> None:
     assert result["sign_idx"] == expected_sign_idx
     assert result["sign"] == SIGNS[expected_sign_idx]
     assert result["offset_from_lagna_drekkana"] == 22
+
+
+def test_bhrigu_bindu_uses_rahu_to_moon_arc_midpoint() -> None:
+    result = calc_bhrigu_bindu(270.5, 160.2333333333)
+    assert result["longitude"] == 215.3667
+    assert result["sign"] == "Scorpio"
+    assert result["degree_in_sign"] == 5.3667
+
+
+def test_bhrigu_bindu_handles_wraparound_across_zero_aries() -> None:
+    result = calc_bhrigu_bindu(10.0, 350.0)
+    assert result["longitude"] == 0.0
+    assert result["sign"] == "Aries"
+    assert result["degree_in_sign"] == 0.0
+
+
+def test_sarpa_drekkana_detects_classical_sensitive_ranges() -> None:
+    cancer_second = calc_sarpa_drekkana(105.0)
+    scorpio_first = calc_sarpa_drekkana(215.0)
+    pisces_third = calc_sarpa_drekkana(355.0)
+    safe_aries = calc_sarpa_drekkana(15.0)
+
+    assert cancer_second["is_sarpa_drekkana"] is True
+    assert cancer_second["sign"] == "Cancer"
+    assert cancer_second["drekkana_number"] == 2
+
+    assert scorpio_first["is_sarpa_drekkana"] is True
+    assert scorpio_first["sign"] == "Scorpio"
+    assert scorpio_first["drekkana_number"] == 1
+
+    assert pisces_third["is_sarpa_drekkana"] is True
+    assert pisces_third["sign"] == "Pisces"
+    assert pisces_third["drekkana_number"] == 3
+
+    assert safe_aries["is_sarpa_drekkana"] is False

@@ -126,6 +126,47 @@ def calc_22nd_drekkana(lagna_lon: float) -> Dict:
         'lord': SIGN_LORDS.get(_sn(sign_idx), ''),
     }
 
+
+def calc_bhrigu_bindu(moon_lon: float, rahu_lon: float) -> Dict:
+    """Compute Bhrigu Bindu as the midpoint on the Rahu->Moon forward arc."""
+    moon = moon_lon % 360
+    rahu = rahu_lon % 360
+    arc = (moon - rahu) % 360
+    longitude = (rahu + arc / 2.0) % 360
+    sign_idx = _si(longitude)
+    degree_in_sign = round(longitude - sign_idx * 30, 4)
+    return {
+        'longitude': round(longitude, 4),
+        'sign_idx': sign_idx,
+        'sign': _sn(sign_idx),
+        'degree_in_sign': degree_in_sign,
+        'arc_mode': 'forward_rahu_to_moon',
+        'lord': SIGN_LORDS.get(_sn(sign_idx), ''),
+    }
+
+
+SARPA_DREKKANA_SIGNS = {'Cancer': 2, 'Scorpio': 1, 'Pisces': 3}
+
+
+def calc_sarpa_drekkana(lon: float) -> Dict:
+    """Classify Sarpa Drekkana using the classical water-sign sensitive drekkanas."""
+    base = calc_varga(lon, 3)
+    sign = _sn(_si(lon))
+    degree_in_sign = round((lon % 30), 4)
+    drekkana_number = int(degree_in_sign / 10) + 1
+    expected = SARPA_DREKKANA_SIGNS.get(sign)
+    return {
+        'longitude': round(lon % 360, 4),
+        'sign': sign,
+        'sign_idx': _si(lon),
+        'degree_in_sign': degree_in_sign,
+        'drekkana_number': drekkana_number,
+        'd3_sign': base['sign'],
+        'd3_sign_idx': base['sign_idx'],
+        'is_sarpa_drekkana': bool(expected == drekkana_number),
+        'definition': 'Cancer-2, Scorpio-1, Pisces-3',
+    }
+
 def dignity(planet, sign_idx):
     if planet in EXALT_SIGN and sign_idx==EXALT_SIGN[planet]: return 'Exalted'
     if planet in DEBIL_SIGN and sign_idx==DEBIL_SIGN[planet]: return 'Debilitated'

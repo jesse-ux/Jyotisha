@@ -554,6 +554,48 @@
       "audit_label": "22nd Drekkana",
       "missing_impact": "A classical danger-sensitive Drekkana trigger is absent, weakening accident and adversity screening."
     },
+    "bhrigu_bindu": {
+      "name": "Bhrigu Bindu",
+      "domains": [
+        "sensitive_point",
+        "timing",
+        "destiny"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/bhrigu-pada-dasha-marriage-counting.md",
+        "references/feature-gap-matrix-2026.md"
+      ],
+      "commands": [
+        "scripts/varga.py"
+      ],
+      "output_paths": [
+        "scripts.varga.calc_bhrigu_bindu"
+      ],
+      "audit_label": "Bhrigu Bindu",
+      "missing_impact": "A commonly used Moon-Rahu destiny trigger is unavailable, weakening event-sensitive reading depth."
+    },
+    "sarpa_drekkana": {
+      "name": "Sarpa Drekkana",
+      "domains": [
+        "varga",
+        "toxicity",
+        "crisis"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/translated-articles/3印度占星_preview.txt",
+        "references/feature-gap-matrix-2026.md"
+      ],
+      "commands": [
+        "scripts/varga.py"
+      ],
+      "output_paths": [
+        "scripts.varga.calc_sarpa_drekkana"
+      ],
+      "audit_label": "Sarpa Drekkana",
+      "missing_impact": "A classical toxic-crisis Drekkana marker is absent, thinning advanced risk and temperament screening."
+    },
     "bhava_chalit": {
       "name": "Bhava Chalit",
       "domains": [

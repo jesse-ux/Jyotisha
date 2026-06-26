@@ -4,8 +4,8 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org/)
-[![Techniques](https://img.shields.io/badge/techniques-77-blueviolet)](references/technique_registry.json)
-[![Covered](https://img.shields.io/badge/covered-68-green)](references/technique_registry.json)
+[![Techniques](https://img.shields.io/badge/techniques-79-blueviolet)](references/technique_registry.json)
+[![Covered](https://img.shields.io/badge/covered-70-green)](references/technique_registry.json)
 [![Complete](https://img.shields.io/badge/complete-9-brightgreen)](references/technique_registry.json)
 [![Partial](https://img.shields.io/badge/partial-0-lightgrey)](references/technique_registry.json)
 
@@ -31,7 +31,7 @@
 This is a **Vedic (Jyotish) astrology analysis system** designed for deep, auditable full-chart readings. It is NOT a simple ephemeris calculator — it is a multi-stage interpretive pipeline that:
 
 1. **Computes** divisional charts (D1/D9/D10/...) via Swiss Ephemeris
-2. **Runs** 77 registered techniques (Dashas, Yogas, Shadbala, Ashtakavarga, Transits...)
+2. **Runs** 79 registered techniques (Dashas, Yogas, Shadbala, Ashtakavarga, Transits...)
 3. **Routes** the analysis through strict workflow paths depending on question type (career / relationship / wealth / timing)
 4. **Audits** every technique used — declaring what was called, what is complete/covered, and which limitations affect confidence
 5. **Degrades gracefully** — limitations are labeled, not silently over-promising
@@ -45,7 +45,7 @@ This is a **Vedic (Jyotish) astrology analysis system** designed for deep, audit
 | Technique Audit Table (confidence labeling) | ✅ | ❌ | ❌ | ❌ |
 | Capability degradation (limits are explicit) | ✅ | ❌ | ❌ | ❌ |
 | MEVG external verification gates | ✅ | ❌ | ❌ | ❌ |
-| 77 techniques registered | ✅ | ✅ (50+) | ✅ (200+) | ✅ |
+| 79 techniques registered | ✅ | ✅ (50+) | ✅ (200+) | ✅ |
 | Traditional algorithm benchmarked | ✅ mixed depth | ✅ | ✅ | ✅ |
 | Docker / MCP Server | ✅ | ❌ | ✅ | ❌ |
 | English docs / PyPI package | ✅ in progress | ✅ | ✅ | ✅ |
