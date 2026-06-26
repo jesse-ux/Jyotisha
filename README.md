@@ -5,8 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://www.python.org/)
 [![Techniques](https://img.shields.io/badge/techniques-68-blueviolet)](references/technique_registry.json)
-[![Covered](https://img.shields.io/badge/covered-58-green)](references/technique_registry.json)
-[![Complete](https://img.shields.io/badge/complete-10-brightgreen)](references/technique_registry.json)
+[![Covered](https://img.shields.io/badge/covered-59-green)](references/technique_registry.json)
+[![Complete](https://img.shields.io/badge/complete-9-brightgreen)](references/technique_registry.json)
 [![Partial](https://img.shields.io/badge/partial-0-lightgrey)](references/technique_registry.json)
 
 ---
