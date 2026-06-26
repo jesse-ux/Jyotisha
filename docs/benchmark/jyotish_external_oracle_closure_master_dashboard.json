@@ -1,0 +1,167 @@
+{
+  "scope": "jyotish_external_oracle_closure_master_dashboard",
+  "schema_version": 1,
+  "generated_at": "2026-06-26T10:13:06.681297+00:00",
+  "summary": {
+    "total_tasks": 12,
+    "external_verified_tasks": 0,
+    "open_tasks": 12,
+    "can_claim_global_oracle_closure": false,
+    "production_tuning_allowed": false
+  },
+  "fronts": {
+    "dasha": {
+      "front": "dasha",
+      "task_count": 3,
+      "external_verified_tasks": 0,
+      "open_tasks": 3,
+      "can_claim_closure": false,
+      "production_tuning_allowed": false,
+      "first_priority": {
+        "case_id": "template_steve_jobs_dasha_lahiri",
+        "capture_id": "external_template_steve_jobs_dasha_lahiri",
+        "packet_path": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json",
+        "missing_field_count": 6,
+        "missing_fields": [
+          "metadata.tool_name",
+          "metadata.tool_version_or_url",
+          "metadata.capture_date",
+          "metadata.operator_note",
+          "metadata.source_artifact",
+          "target.vimshottari_start_date"
+        ],
+        "apply_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json --format json",
+        "validate_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --format json > /tmp/jyotish_oracle_queue_filled.json && python3 scripts/oracle_evidence_validator.py --queue-file /tmp/jyotish_oracle_queue_filled.json"
+      }
+    },
+    "shadbala": {
+      "front": "shadbala",
+      "task_count": 4,
+      "external_verified_tasks": 0,
+      "open_tasks": 4,
+      "can_claim_closure": false,
+      "production_tuning_allowed": false,
+      "first_priority": {
+        "case_id": "template_redacted_place_shadbala_raman",
+        "capture_id": "external_template_redacted_place_shadbala_raman",
+        "packet_path": "references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json",
+        "missing_field_count": 54,
+        "missing_fields": [
+          "metadata.tool_name",
+          "metadata.tool_version_or_url",
+          "metadata.capture_date",
+          "metadata.operator_note",
+          "metadata.source_artifact",
+          "target.shadbala_components.Sun.sthana",
+          "target.shadbala_components.Sun.dig",
+          "target.shadbala_components.Sun.kala",
+          "target.shadbala_components.Sun.chesta",
+          "target.shadbala_components.Sun.naisargika",
+          "target.shadbala_components.Sun.drik",
+          "target.shadbala_components.Sun.total_rupa",
+          "target.shadbala_components.Moon.sthana",
+          "target.shadbala_components.Moon.dig",
+          "target.shadbala_components.Moon.kala",
+          "target.shadbala_components.Moon.chesta",
+          "target.shadbala_components.Moon.naisargika",
+          "target.shadbala_components.Moon.drik",
+          "target.shadbala_components.Moon.total_rupa",
+          "target.shadbala_components.Mars.sthana",
+          "target.shadbala_components.Mars.dig",
+          "target.shadbala_components.Mars.kala",
+          "target.shadbala_components.Mars.chesta",
+          "target.shadbala_components.Mars.naisargika",
+          "target.shadbala_components.Mars.drik",
+          "target.shadbala_components.Mars.total_rupa",
+          "target.shadbala_components.Mercury.sthana",
+          "target.shadbala_components.Mercury.dig",
+          "target.shadbala_components.Mercury.kala",
+          "target.shadbala_components.Mercury.chesta",
+          "target.shadbala_components.Mercury.naisargika",
+          "target.shadbala_components.Mercury.drik",
+          "target.shadbala_components.Mercury.total_rupa",
+          "target.shadbala_components.Jupiter.sthana",
+          "target.shadbala_components.Jupiter.dig",
+          "target.shadbala_components.Jupiter.kala",
+          "target.shadbala_components.Jupiter.chesta",
+          "target.shadbala_components.Jupiter.naisargika",
+          "target.shadbala_components.Jupiter.drik",
+          "target.shadbala_components.Jupiter.total_rupa",
+          "target.shadbala_components.Venus.sthana",
+          "target.shadbala_components.Venus.dig",
+          "target.shadbala_components.Venus.kala",
+          "target.shadbala_components.Venus.chesta",
+          "target.shadbala_components.Venus.naisargika",
+          "target.shadbala_components.Venus.drik",
+          "target.shadbala_components.Venus.total_rupa",
+          "target.shadbala_components.Saturn.sthana",
+          "target.shadbala_components.Saturn.dig",
+          "target.shadbala_components.Saturn.kala",
+          "target.shadbala_components.Saturn.chesta",
+          "target.shadbala_components.Saturn.naisargika",
+          "target.shadbala_components.Saturn.drik",
+          "target.shadbala_components.Saturn.total_rupa"
+        ],
+        "apply_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json --format json",
+        "validate_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --format json > /tmp/jyotish_oracle_queue_filled.json && python3 scripts/oracle_evidence_validator.py --queue-file /tmp/jyotish_oracle_queue_filled.json"
+      }
+    },
+    "tajika_sahams": {
+      "front": "tajika_sahams",
+      "task_count": 5,
+      "external_verified_tasks": 0,
+      "open_tasks": 5,
+      "can_claim_closure": false,
+      "production_tuning_allowed": false,
+      "first_priority": {
+        "case_id": "template_steve_jobs_varshaphala_1984_lahiri",
+        "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
+        "packet_path": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json",
+        "missing_field_count": 15,
+        "missing_fields": [
+          "metadata.tool_name",
+          "metadata.tool_version_or_url",
+          "metadata.capture_date",
+          "metadata.operator_note",
+          "metadata.source_artifact",
+          "target.solar_return_datetime",
+          "target.varsha_lagna_deg",
+          "target.muntha_sign",
+          "target.year_lord",
+          "target.mudda_dasha_first_lord",
+          "target.sahams.punya_saham",
+          "target.sahams.rajya_saham",
+          "target.sahams.vivah_saham",
+          "target.tajika_yogas",
+          "target.source_artifact"
+        ],
+        "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json --format json",
+        "validate_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --format json && python3 scripts/tajika_annual_benchmark_dashboard.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --format json"
+      }
+    }
+  },
+  "next_action_order": [
+    {
+      "front": "dasha",
+      "case_id": "template_steve_jobs_dasha_lahiri",
+      "capture_id": "external_template_steve_jobs_dasha_lahiri",
+      "missing_field_count": 6,
+      "apply_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json --format json"
+    },
+    {
+      "front": "tajika_sahams",
+      "case_id": "template_steve_jobs_varshaphala_1984_lahiri",
+      "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
+      "missing_field_count": 15,
+      "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json --format json"
+    },
+    {
+      "front": "shadbala",
+      "case_id": "template_redacted_place_shadbala_raman",
+      "capture_id": "external_template_redacted_place_shadbala_raman",
+      "missing_field_count": 54,
+      "apply_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json --format json"
+    }
+  ],
+  "boundary": "This dashboard merges external evidence readiness only. It does not claim prediction accuracy, does not tune production constants, and does not treat local engine output as oracle evidence."
+}

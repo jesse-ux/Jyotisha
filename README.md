@@ -214,6 +214,18 @@ python3 scripts/public_benchmark_dashboard.py \
 
 当前看板固定输出 `can_claim_global_first: false`，直到外部 oracle 样本、差异审计和长期公开 benchmark 都达到生产调参标准。
 
+外部 oracle 总控 closure 看板会合并 Dasha、Shadbala 与 Tajika/Sahams 三条硬闭环战线，给出总任务数、已验证数、第一优先级和下一条执行命令：
+
+```bash
+python3 scripts/oracle_closure_master_dashboard.py \
+  --dasha-oracle-file references/oracle/dasha_shadbala_oracle_cases.json \
+  --tajika-oracle-file references/oracle/tajika_annual_oracle_cases.json \
+  --format markdown \
+  --output docs/benchmark/jyotish_external_oracle_closure_master_dashboard.md
+```
+
+当前总控看板固定输出 `total_tasks: 12`、`external_verified_tasks: 0`、`can_claim_global_oracle_closure: false`。推荐执行顺序是先填 Dasha 第一条 6 个字段，再填 Tajika/Sahams 第一条 15 个字段，最后填 Shadbala 第一条 54 个字段。
+
 Dasha 外部 oracle 最短闭环状态板用于把“大运外部真值”从 Shadbala 绝对值大包中拆出来，优先推进第一条可验证边界日期：
 
 ```bash
