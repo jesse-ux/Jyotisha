@@ -1,0 +1,55 @@
+{
+  "scope": "public_jyotish_benchmark_dashboard",
+  "schema_version": 1,
+  "generated_at": "2026-06-26T09:20:53.904412+00:00",
+  "summary": {
+    "technique_count": 68,
+    "capability_valid": true,
+    "problem_count": 0,
+    "status_counts": {
+      "complete": 9,
+      "covered": 59,
+      "knowledge-only": 0,
+      "missing": 0,
+      "not-integrated": 0,
+      "partial": 0,
+      "workflow-only": 0
+    }
+  },
+  "oracle_readiness": {
+    "total_packets": 5,
+    "valid_packets": 0,
+    "ready_for_calibration": 0,
+    "production_tuning_allowed": false,
+    "all_packets_external_verified": false,
+    "queue_status_counts": {
+      "template_only": 5
+    },
+    "boundary": "Evidence packets can become review-ready only with external artifacts and filled target values. Local engine output remains rejected as an external oracle source."
+  },
+  "boundary_audit": {
+    "template_cases": 5,
+    "external_verified_template_cases": 0,
+    "dasha_cases": 1,
+    "longitude_cases": 1,
+    "shadbala_cases": 1,
+    "production_tuning_recommended": false,
+    "open_items": [
+      "Promote template cases to external_verified only after filling external target rows.",
+      "Add multi-source Vimshottari rows with Moon longitude, ayanamsa and start-boundary settings.",
+      "Add Shadbala component targets before claiming external absolute calibration."
+    ],
+    "template_comparison_count": 0
+  },
+  "public_claim": {
+    "can_claim_global_first": false,
+    "reason": "Do not claim global first until Dasha/Shadbala external oracle packets are valid, production tuning is allowed, and public benchmark history is stable."
+  },
+  "global_first_gap": "Dasha/Shadbala external oracle readiness remains 0, Shadbala absolute values still need component-level external evidence, and public long-term benchmark history is not yet comparable to the strongest global open-source projects.",
+  "next_actions": [
+    "Fill the first external JHora/PyJHora packet under references/oracle/artifacts/pending_packets.",
+    "Run oracle_evidence_validator.py until at least one packet is valid.",
+    "Run oracle_boundary_audit.py to inspect Dasha/Shadbala deltas without tuning constants.",
+    "Publish this dashboard after each validated sample batch."
+  ]
+}

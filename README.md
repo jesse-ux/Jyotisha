@@ -203,6 +203,17 @@ python3 scripts/oracle_boundary_audit.py \
 
 审计报告中的 `template_comparisons` 会列出 external-verified template 的 Dasha 起点差异、Shadbala 七曜分量/总分差异、每个分量的 Rupa 容差、单位说明和 `global_scaling_check.recommendation: reject_global_scaling`，并继续保持 `production_tuning_recommended: false`，防止用单个样本或全局倍率调生产常数。
 
+公开 benchmark 看板用于长期展示能力状态、oracle readiness 和“是否可宣称全球第一”的诚实边界：
+
+```bash
+python3 scripts/public_benchmark_dashboard.py \
+  --oracle-file references/oracle/dasha_shadbala_oracle_cases.json \
+  --format markdown \
+  --output docs/benchmark/public_jyotish_benchmark_dashboard.md
+```
+
+当前看板固定输出 `can_claim_global_first: false`，直到外部 oracle 样本、差异审计和长期公开 benchmark 都达到生产调参标准。
+
 `full-reading` 也会输出 `ai_prompt_pack`：这是给网页/app、skill 或后端 AI 代理使用的结构化 Prompt/RAG 上下文包。它不会硬编码断语，而是携带 D1/D9/Dasha/Shadbala/Ashtakavarga 的证据快照、推荐检索文档和边界提示，要求大模型基于计算证据交叉验证，避免单一配置下结论。
 
 ### Prerequisites
