@@ -90,8 +90,8 @@ def test_validator_accepts_current_external_packets_but_rejects_remaining_drafts
     report = json.loads(completed.stdout)
     assert report["scope"] == "external_oracle_evidence_validation"
     assert report["summary"]["total_packets"] == 5
-    assert report["summary"]["valid_packets"] == 2
-    assert report["summary"]["ready_for_calibration"] == 2
+    assert report["summary"]["valid_packets"] == 3
+    assert report["summary"]["ready_for_calibration"] == 3
     assert report["summary"]["all_packets_external_verified"] is False
     first = report["packets"][0]
     assert first["capture_id"] == "external_template_user_REDACTED_YEAR_moon_longitude_lahiri"
@@ -129,8 +129,8 @@ def test_validator_accepts_filled_external_packet_but_not_whole_queue(tmp_path: 
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["valid_packets"] == 2
-    assert report["summary"]["ready_for_calibration"] == 2
+    assert report["summary"]["valid_packets"] == 3
+    assert report["summary"]["ready_for_calibration"] == 3
     assert report["summary"]["all_packets_external_verified"] is False
     first = report["packets"][0]
     assert first["valid"] is True
@@ -562,8 +562,8 @@ def test_validator_accepts_external_verified_packet_generated_from_oracle_file(t
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["valid_packets"] == 2
-    assert report["summary"]["ready_for_calibration"] == 2
+    assert report["summary"]["valid_packets"] == 3
+    assert report["summary"]["ready_for_calibration"] == 3
     assert report["summary"]["production_tuning_allowed"] is False
     assert report["packets"][0]["valid"] is True
     assert report["packets"][0]["problems"] == []
