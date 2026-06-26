@@ -50,6 +50,12 @@ def test_first_oracle_packet_assistant_reports_dasha_next_fields() -> None:
     assert report["missing_groups"]["metadata"]["count"] == 5
     assert report["missing_groups"]["target"]["count"] == 1
     assert report["missing_groups"]["target"]["fields"] == ["target.vimshottari_start_date"]
+    assert report["prefilled_fields"]["metadata"]["ayanamsa"] == "Lahiri"
+    assert report["prefilled_fields"]["metadata"]["node_mode"] == "true node"
+    assert report["prefilled_fields"]["metadata"]["timezone"] == "UTC-08:00"
+    assert report["manual_fill_plan"]["status_value"] == "external_verified"
+    assert report["manual_fill_plan"]["manual_entry_count"] == 6
+    assert report["manual_fill_plan"]["remaining_manual_fields"][-1] == "target.vimshottari_start_date"
     assert report["ready_to_apply"] is False
     assert "JHora" in " ".join(report["external_sources"])
 
@@ -92,6 +98,7 @@ def test_first_oracle_packet_assistant_reports_tajika_front() -> None:
     assert report["packet_template"].endswith("tajika_steve_jobs_1984_first_packet.json")
     assert report["missing_groups"]["metadata"]["count"] == 5
     assert report["missing_groups"]["target"]["count"] == 10
+    assert report["manual_fill_plan"]["manual_entry_count"] == 15
     assert "target.solar_return_datetime" in report["missing_fields"]
     assert "target.sahams.punya_saham" in report["missing_fields"]
 
@@ -124,6 +131,7 @@ def test_first_oracle_packet_assistant_reports_shadbala_front() -> None:
     assert report["missing_groups"]["bodies"]["Sun"]["count"] == 7
     assert report["missing_groups"]["bodies"]["Moon"]["count"] == 7
     assert report["missing_groups"]["bodies"]["Saturn"]["count"] == 7
+    assert report["manual_fill_plan"]["manual_entry_count"] == 55
     assert "target.moon_sidereal_longitude_deg" in report["missing_fields"]
     assert "target.shadbala_components.Sun.sthana" in report["missing_fields"]
 
@@ -148,6 +156,9 @@ def test_first_oracle_packet_assistant_markdown_includes_group_summary() -> None
     assert completed.returncode == 0, completed.stderr or completed.stdout
     markdown = completed.stdout
     assert "## Missing Summary" in markdown
+    assert "## Prefilled Fields" in markdown
+    assert "## Manual Fill Plan" in markdown
     assert "- metadata: `5`" in markdown
     assert "- target: `50`" in markdown
     assert "- Sun: `7`" in markdown
+    assert "- status_value: `external_verified`" in markdown

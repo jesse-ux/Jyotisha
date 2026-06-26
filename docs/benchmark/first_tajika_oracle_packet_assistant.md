@@ -12,6 +12,32 @@
 - metadata: `5`
 - target: `10`
 
+## Prefilled Fields
+
+- status: `draft`
+- promotion_status_after_fill: `external_verified`
+
+- metadata:
+
+  - ayanamsa: `Lahiri`
+  - node_mode: `true node`
+  - timezone: `UTC-08:00`
+  - annual_system: `Varshaphala/Tajika`
+  - target_year: `1984`
+
+- settings:
+
+  - ayanamsa: `lahiri`
+  - node_mode: `true`
+  - annual_system: `varshaphala`
+  - target_year: `1984`
+
+
+## Manual Fill Plan
+
+- status_value: `external_verified`
+- manual_entry_count: `15`
+
 ## Missing Fields
 
 - `metadata.tool_name`

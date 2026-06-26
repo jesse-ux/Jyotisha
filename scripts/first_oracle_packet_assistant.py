@@ -102,6 +102,34 @@ def _group_missing_fields(missing_fields: list[str]) -> dict[str, Any]:
     }
 
 
+def _prefilled_fields(packet: dict[str, Any], missing_fields: list[str]) -> dict[str, Any]:
+    missing = set(missing_fields)
+    metadata = {
+        key: value
+        for key, value in packet.get("metadata", {}).items()
+        if f"metadata.{key}" not in missing and value not in ("", None, [], {})
+    }
+    settings = {
+        key: value
+        for key, value in packet.get("settings", {}).items()
+        if value not in ("", None, [], {})
+    }
+    return {
+        "status": packet.get("status"),
+        "promotion_status_after_fill": packet.get("promotion_status_after_fill"),
+        "metadata": metadata,
+        "settings": settings,
+    }
+
+
+def _manual_fill_plan(packet: dict[str, Any], missing_fields: list[str]) -> dict[str, Any]:
+    return {
+        "status_value": packet.get("promotion_status_after_fill", "external_verified"),
+        "manual_entry_count": len(missing_fields),
+        "remaining_manual_fields": missing_fields,
+    }
+
+
 def _run_json(command: list[str]) -> dict[str, Any]:
     completed = subprocess.run(
         command,
@@ -148,6 +176,7 @@ def build_report(front: str) -> dict[str, Any]:
     first = status["first_priority"]
     packet_missing = _packet_missing(config["packet_template"])
     missing_groups = _group_missing_fields(packet_missing)
+    packet = json.loads((ROOT / config["packet_template"]).read_text(encoding="utf-8"))
     return {
         "scope": "first_external_oracle_packet_assistant",
         "schema_version": 1,
@@ -158,6 +187,8 @@ def build_report(front: str) -> dict[str, Any]:
         "packet_template": config["packet_template"],
         "missing_fields": packet_missing,
         "missing_groups": missing_groups,
+        "prefilled_fields": _prefilled_fields(packet, packet_missing),
+        "manual_fill_plan": _manual_fill_plan(packet, packet_missing),
         "ready_to_apply": not packet_missing,
         "external_sources": config["external_sources"],
         "apply_command": first["apply_command"].replace(first["packet_path"], config["packet_template"]),
@@ -194,8 +225,39 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-        "## Missing Fields",
-        "",
+            "## Prefilled Fields",
+            "",
+            f"- status: `{report['prefilled_fields']['status']}`",
+            f"- promotion_status_after_fill: `{report['prefilled_fields']['promotion_status_after_fill']}`",
+            "",
+        ]
+    )
+    if report["prefilled_fields"]["metadata"]:
+        lines.append("- metadata:")
+        lines.append("")
+        lines.extend(
+            f"  - {key}: `{value}`"
+            for key, value in report["prefilled_fields"]["metadata"].items()
+        )
+        lines.append("")
+    if report["prefilled_fields"]["settings"]:
+        lines.append("- settings:")
+        lines.append("")
+        lines.extend(
+            f"  - {key}: `{value}`"
+            for key, value in report["prefilled_fields"]["settings"].items()
+        )
+        lines.append("")
+    lines.extend(
+        [
+            "",
+            "## Manual Fill Plan",
+            "",
+            f"- status_value: `{report['manual_fill_plan']['status_value']}`",
+            f"- manual_entry_count: `{report['manual_fill_plan']['manual_entry_count']}`",
+            "",
+            "## Missing Fields",
+            "",
         ]
     )
     lines.extend(f"- `{field}`" for field in report["missing_fields"])
