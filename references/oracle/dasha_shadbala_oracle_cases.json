@@ -9,7 +9,7 @@
   "template_cases": [
     {
       "id": "template_user_REDACTED_YEAR_moon_longitude_lahiri",
-      "status": "template_only",
+      "status": "external_verified",
       "source": "JHora/PyJHora/VedAstro/Manual screenshot",
       "privacy": "user_supplied_reference_template",
       "birth": {
@@ -29,10 +29,24 @@
       },
       "target": {
         "moon_sidereal_longitude_deg": null,
-        "vimshottari_start_date": null,
+        "vimshottari_start_date": "1986-05-25",
         "shadbala_components": null
       },
-      "verification_note": "Only fill target fields when the value comes from external oracle, not from this repo."
+      "verification_note": "Only fill target fields when the value comes from external oracle, not from this repo.",
+      "evidence_packet": {
+        "capture_id": "external_template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "status": "external_verified",
+        "metadata": {
+          "tool_name": "PyJHora",
+          "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
+          "capture_date": "2026-06-27",
+          "source_artifact": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt",
+          "ayanamsa": "lahiri",
+          "node_mode": "PyJHora default",
+          "timezone": "UTC+08:00",
+          "operator_note": "Black-box stdout from isolated /tmp virtualenv. PyJHora AGPL code was not copied into this repository; only the generated output artifact is stored as external evidence."
+        }
+      }
     },
     {
       "id": "template_steve_jobs_dasha_lahiri",

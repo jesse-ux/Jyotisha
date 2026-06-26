@@ -31,7 +31,7 @@ def test_skill_gap_truth_registry_lists_hard_fronts_and_past_corrections() -> No
     assert required_fronts <= set(hard_fronts)
     for front_id in required_fronts:
         front = hard_fronts[front_id]
-        assert front["status"] in {"blocked_external_evidence", "active_gap"}
+        assert front["status"] in {"blocked_external_evidence", "active_gap", "active_partial_external_evidence"}
         assert front["priority"] in {"P0", "P1", "P2"}
         assert front["completion_standard"]
         assert front["forbidden_claims"]

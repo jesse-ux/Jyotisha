@@ -39,14 +39,14 @@ def test_oracle_closure_master_dashboard_aggregates_all_hard_fronts() -> None:
     assert report["scope"] == "jyotish_external_oracle_closure_master_dashboard"
     assert report["schema_version"] == 1
     assert report["summary"]["total_tasks"] == 12
-    assert report["summary"]["external_verified_tasks"] == 1
-    assert report["summary"]["open_tasks"] == 11
+    assert report["summary"]["external_verified_tasks"] == 2
+    assert report["summary"]["open_tasks"] == 10
     assert report["summary"]["can_claim_global_oracle_closure"] is False
     assert report["fronts"]["dasha"]["task_count"] == 3
     assert report["fronts"]["shadbala"]["task_count"] == 4
     assert report["fronts"]["tajika_sahams"]["task_count"] == 5
-    assert report["fronts"]["dasha"]["external_verified_tasks"] == 1
-    assert report["fronts"]["dasha"]["first_priority"]["case_id"] == "template_user_REDACTED_YEAR_moon_longitude_lahiri"
+    assert report["fronts"]["dasha"]["external_verified_tasks"] == 2
+    assert report["fronts"]["dasha"]["first_priority"]["case_id"] == "template_historical_epoch_lahiri"
     assert report["fronts"]["shadbala"]["first_priority"]["case_id"] == "template_redacted_place_shadbala_raman"
     assert report["fronts"]["tajika_sahams"]["first_priority"]["case_id"] == "template_steve_jobs_varshaphala_1984_lahiri"
     assert report["fronts"]["dasha"]["first_priority"]["missing_groups"]["metadata"]["count"] == 5
@@ -70,7 +70,7 @@ def test_oracle_closure_master_dashboard_markdown_can_be_written(tmp_path: Path)
     assert "# Jyotish External Oracle Closure Master Dashboard" in markdown
     assert "total_tasks: `12`" in markdown
     assert "can_claim_global_oracle_closure: `false`" in markdown
-    assert "template_user_REDACTED_YEAR_moon_longitude_lahiri" in markdown
+    assert "template_historical_epoch_lahiri" in markdown
     assert "template_redacted_place_shadbala_raman" in markdown
     assert "template_steve_jobs_varshaphala_1984_lahiri" in markdown
     assert "manual entries" in markdown
