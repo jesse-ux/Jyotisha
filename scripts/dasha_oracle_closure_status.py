@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 FIRST_PRIORITY_CASE_ID = "template_steve_jobs_dasha_lahiri"
 DASHA_TARGET_FIELD = "target.vimshottari_start_date"
+FIRST_PRIORITY_TEMPLATE_PATH = "references/oracle/evidence_packet_templates/dasha_steve_jobs_lahiri_first_packet_only.json"
 
 
 def _run_json(command: list[str]) -> dict[str, Any]:
@@ -55,6 +56,49 @@ def _target_missing(packet: dict[str, Any], fields: list[str]) -> list[str]:
     return missing
 
 
+def _group_missing_fields(missing_fields: list[str]) -> dict[str, Any]:
+    metadata_fields = [field for field in missing_fields if field.startswith("metadata.")]
+    target_fields = [field for field in missing_fields if field.startswith("target.")]
+    return {
+        "metadata": {
+            "count": len(metadata_fields),
+            "fields": metadata_fields,
+        },
+        "target": {
+            "count": len(target_fields),
+            "fields": target_fields,
+        },
+    }
+
+
+def _prefilled_fields(packet: dict[str, Any], missing_fields: list[str]) -> dict[str, Any]:
+    missing = set(missing_fields)
+    metadata = {
+        key: value
+        for key, value in packet.get("metadata", {}).items()
+        if f"metadata.{key}" not in missing and value not in ("", None, [], {})
+    }
+    settings = {
+        key: value
+        for key, value in packet.get("settings", {}).items()
+        if value not in ("", None, [], {})
+    }
+    return {
+        "status": packet.get("status"),
+        "promotion_status_after_fill": packet.get("promotion_status_after_fill"),
+        "metadata": metadata,
+        "settings": settings,
+    }
+
+
+def _manual_fill_plan(packet: dict[str, Any], missing_fields: list[str]) -> dict[str, Any]:
+    return {
+        "status_value": packet.get("promotion_status_after_fill", "external_verified"),
+        "manual_entry_count": len(missing_fields),
+        "remaining_manual_fields": missing_fields,
+    }
+
+
 def _apply_command(packet_path: str, oracle_file: str) -> str:
     return (
         "python3 scripts/oracle_collection_queue.py "
@@ -84,11 +128,14 @@ def build_status(oracle_file: str) -> dict[str, Any]:
     if priority is None:
         raise RuntimeError("No Dasha target task found")
 
-    packet = priority["evidence_packet"]
-    capture_id = packet["capture_id"]
+    queue_packet = priority["evidence_packet"]
+    capture_id = queue_packet["capture_id"]
     packet_path = f"references/oracle/artifacts/pending_packets/{capture_id}.json"
+    template_path = FIRST_PRIORITY_TEMPLATE_PATH if priority["case_id"] == FIRST_PRIORITY_CASE_ID else packet_path
+    packet = json.loads((ROOT / template_path).read_text(encoding="utf-8"))
     required_target_fields = [DASHA_TARGET_FIELD]
     missing_fields = _metadata_missing(packet) + _target_missing(packet, required_target_fields)
+    missing_groups = _group_missing_fields(missing_fields)
     external_verified = [
         task for task in dasha_tasks
         if task.get("status") == "external_verified" and not _target_missing(task.get("evidence_packet", {}), required_target_fields)
@@ -111,6 +158,9 @@ def build_status(oracle_file: str) -> dict[str, Any]:
             "settings": priority.get("settings", {}),
             "required_target_fields": required_target_fields,
             "missing_fields": missing_fields,
+            "missing_groups": missing_groups,
+            "prefilled_fields": _prefilled_fields(packet, missing_fields),
+            "manual_fill_plan": _manual_fill_plan(packet, missing_fields),
             "external_sources": [
                 "JHora Vimshottari Dasha screenshot",
                 "PyJHora black-box dasha output",
@@ -150,8 +200,48 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- capture_id: `{first['capture_id']}`",
         f"- packet_path: `{first['packet_path']}`",
         f"- required_target_fields: `{', '.join(first['required_target_fields'])}`",
-        f"- missing_fields: `{', '.join(first['missing_fields'])}`",
         "",
+        "## Missing Summary",
+        "",
+        f"- metadata: `{first['missing_groups']['metadata']['count']}`",
+        f"- target: `{first['missing_groups']['target']['count']}`",
+        "",
+        "## Prefilled Fields",
+        "",
+        f"- status: `{first['prefilled_fields']['status']}`",
+        f"- promotion_status_after_fill: `{first['prefilled_fields']['promotion_status_after_fill']}`",
+        "",
+    ]
+    if first["prefilled_fields"]["metadata"]:
+        lines.append("- metadata:")
+        lines.append("")
+        lines.extend(
+            f"  - {key}: `{value}`"
+            for key, value in first["prefilled_fields"]["metadata"].items()
+        )
+        lines.append("")
+    if first["prefilled_fields"]["settings"]:
+        lines.append("- settings:")
+        lines.append("")
+        lines.extend(
+            f"  - {key}: `{value}`"
+            for key, value in first["prefilled_fields"]["settings"].items()
+        )
+        lines.append("")
+    lines.extend(
+        [
+            "## Manual Fill Plan",
+            "",
+            f"- status_value: `{first['manual_fill_plan']['status_value']}`",
+            f"- manual_entry_count: `{first['manual_fill_plan']['manual_entry_count']}`",
+            "",
+            "## Missing Fields",
+            "",
+        ]
+    )
+    lines.extend(f"- `{field}`" for field in first["missing_fields"])
+    lines.extend(
+        [
         "## Commands",
         "",
         "```bash",
@@ -164,7 +254,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "## Next Actions",
         "",
-    ]
+        ]
+    )
     lines.extend(f"- {item}" for item in report["next_actions"])
     lines.extend(["", "## Boundary", "", report["boundary"], ""])
     return "\n".join(lines)

@@ -11,8 +11,41 @@
 - capture_id: `external_template_steve_jobs_dasha_lahiri`
 - packet_path: `references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json`
 - required_target_fields: `target.vimshottari_start_date`
-- missing_fields: `metadata.tool_name, metadata.tool_version_or_url, metadata.capture_date, metadata.operator_note, metadata.source_artifact, target.vimshottari_start_date`
 
+## Missing Summary
+
+- metadata: `5`
+- target: `1`
+
+## Prefilled Fields
+
+- status: `draft`
+- promotion_status_after_fill: `external_verified`
+
+- metadata:
+
+  - ayanamsa: `Lahiri`
+  - node_mode: `true node`
+  - timezone: `UTC-08:00`
+
+- settings:
+
+  - ayanamsa: `lahiri`
+  - node_mode: `true`
+
+## Manual Fill Plan
+
+- status_value: `external_verified`
+- manual_entry_count: `6`
+
+## Missing Fields
+
+- `metadata.tool_name`
+- `metadata.tool_version_or_url`
+- `metadata.capture_date`
+- `metadata.operator_note`
+- `metadata.source_artifact`
+- `target.vimshottari_start_date`
 ## Commands
 
 ```bash

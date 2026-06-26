@@ -44,6 +44,12 @@ def test_dasha_oracle_closure_status_identifies_first_shortest_packet() -> None:
     assert report["first_priority"]["required_target_fields"] == ["target.vimshottari_start_date"]
     assert "metadata.tool_name" in report["first_priority"]["missing_fields"]
     assert "target.vimshottari_start_date" in report["first_priority"]["missing_fields"]
+    assert report["first_priority"]["missing_groups"]["metadata"]["count"] == 5
+    assert report["first_priority"]["missing_groups"]["target"]["count"] == 1
+    assert report["first_priority"]["prefilled_fields"]["metadata"]["ayanamsa"] == "Lahiri"
+    assert report["first_priority"]["prefilled_fields"]["metadata"]["timezone"] == "UTC-08:00"
+    assert report["first_priority"]["manual_fill_plan"]["status_value"] == "external_verified"
+    assert report["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 6
     assert report["first_priority"]["apply_command"]
     assert report["first_priority"]["validate_command"]
 
@@ -59,3 +65,6 @@ def test_dasha_oracle_closure_status_markdown_can_be_written(tmp_path: Path) -> 
     assert "can_claim_dasha_oracle_closure: `false`" in markdown
     assert "external_template_steve_jobs_dasha_lahiri" in markdown
     assert "target.vimshottari_start_date" in markdown
+    assert "## Missing Summary" in markdown
+    assert "## Prefilled Fields" in markdown
+    assert "## Manual Fill Plan" in markdown
