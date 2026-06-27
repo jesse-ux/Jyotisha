@@ -184,6 +184,38 @@ def build_status(oracle_file: str) -> dict[str, Any]:
     priority = next((task for task in priority_pool if task.get("case_id") == FIRST_PRIORITY_CASE_ID), None)
     if priority is None and priority_pool:
         priority = priority_pool[0]
+    if priority is None and shadbala_tasks:
+        raise RuntimeError("No Shadbala target task found")
+
+    external_verified = [
+        task for task in shadbala_tasks
+        if _shadbala_target_filled(task)
+    ]
+    closure_complete = bool(shadbala_tasks) and len(external_verified) == len(shadbala_tasks)
+
+    if closure_complete:
+        return {
+            "scope": "shadbala_external_absolute_value_closure_status",
+            "schema_version": 1,
+            "summary": {
+                "shadbala_task_count": len(shadbala_tasks),
+                "external_verified_shadbala_tasks": len(external_verified),
+                "can_claim_shadbala_absolute_closure": True,
+                "production_tuning_allowed": False,
+                "required_planets": REQUIRED_PLANETS,
+                "required_components": REQUIRED_COMPONENTS,
+            },
+            "first_priority": None,
+            "next_actions": [
+                "Shadbala external absolute-value closure is complete for the current target set.",
+                "Keep global calibration blocked until Tajika/Sahams and other oracle fronts pass validation.",
+            ],
+            "boundary": (
+                "This board isolates Shadbala absolute values. Dasha boundary dates are a separate closure task. "
+                "Production tuning remains forbidden until external component-level evidence is complete."
+            ),
+        }
+
     if priority is None:
         raise RuntimeError("No Shadbala target task found")
 
@@ -196,10 +228,6 @@ def build_status(oracle_file: str) -> dict[str, Any]:
     supporting_target_fields = [field for field in SUPPORTING_TARGET_FIELDS if field in target_fields]
     missing_fields = _metadata_missing(packet) + _supporting_missing(packet, target_fields) + _shadbala_missing(packet)
     missing_groups = _group_missing_fields(missing_fields)
-    external_verified = [
-        task for task in shadbala_tasks
-        if _shadbala_target_filled(task)
-    ]
 
     return {
         "scope": "shadbala_external_absolute_value_closure_status",
@@ -207,7 +235,7 @@ def build_status(oracle_file: str) -> dict[str, Any]:
         "summary": {
             "shadbala_task_count": len(shadbala_tasks),
             "external_verified_shadbala_tasks": len(external_verified),
-            "can_claim_shadbala_absolute_closure": bool(shadbala_tasks) and len(external_verified) == len(shadbala_tasks),
+            "can_claim_shadbala_absolute_closure": closure_complete,
             "production_tuning_allowed": False,
             "required_planets": REQUIRED_PLANETS,
             "required_components": REQUIRED_COMPONENTS,
@@ -258,6 +286,21 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- can_claim_shadbala_absolute_closure: `{str(summary['can_claim_shadbala_absolute_closure']).lower()}`",
         f"- production_tuning_allowed: `{str(summary['production_tuning_allowed']).lower()}`",
         "",
+    ]
+    if first is None:
+        lines.extend([
+            "## Closure Complete",
+            "",
+            "Shadbala external absolute-value closure is complete for the current target set.",
+            "",
+            "## Next Actions",
+            "",
+        ])
+        lines.extend(f"- {item}" for item in report["next_actions"])
+        lines.extend(["", "## Boundary", "", report["boundary"], ""])
+        return "\n".join(lines)
+
+    lines.extend([
         "## First Priority Packet",
         "",
         f"- case_id: `{first['case_id']}`",
@@ -270,7 +313,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         f"- metadata: `{first['missing_groups']['metadata']['count']}`",
         f"- target: `{first['missing_groups']['target']['count']}`",
-    ]
+    ])
     if first["missing_groups"]["bodies"]:
         lines.extend(["- bodies:", ""])
         lines.extend(
