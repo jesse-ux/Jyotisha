@@ -218,7 +218,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | **出生时间矫正** | 八大方法、自动化流程、验证报告 | `birth-time-rectification-advanced.md` |
 | **PDF读取** | JH/PL PDF全量提取、完整性门、交叉校验 | `pdf-chart-reading-guide.md` `data-bridge-mapping.md` |
 | **Prashna问事** | 十步断卦、AL、Sphuta、Sahams、失物查询 | `prashna-complete-guide.md` `single-event-inquiry-protocol.md` |
-| **多元技法** | Yogi/Ava Yogi、Tithi Lord、Rashi Tulya Navamsa、BCP、Bhrigu Pada、Pancha Pakshi、Ashwini/Abhijit/Ketu星宿专题（需保留成熟度边界） | `yogi-avayogi-system.md` `yogi-asc-tight-orb-wealth-freeze-guide.md` `tithi-lord-relationship-system.md` `tithi-lord-freeze-execution-guide.md` `rtn-high-order-d9-freeze-execution-guide.md` `bhrigu-pada-all-event-freeze-execution-guide.md` `ashwini-abhijit-ketu-nakshatra-freeze-guide.md` `bhrigu-chakra-paddhati.md` |
+| **多元技法** | Yogi/Ava Yogi、Tithi Lord、Rashi Tulya Navamsa、BCP、Bhrigu Pada、Pancha Pakshi、Tara Bala、Deha/Jeeva、Moolatrikona、Shodasavarga/Vimsopaka、Ashwini/Abhijit/Ketu星宿专题（需保留成熟度边界） | `yogi-avayogi-system.md` `yogi-asc-tight-orb-wealth-freeze-guide.md` `tithi-lord-relationship-system.md` `tithi-lord-freeze-execution-guide.md` `rtn-high-order-d9-freeze-execution-guide.md` `bhrigu-pada-all-event-freeze-execution-guide.md` `ashwini-abhijit-ketu-nakshatra-freeze-guide.md` `bhrigu-chakra-paddhati.md` `shodasavarga-complete-guide.md` `planetary-dignity-complete-reference.md` `alternative-dasha-systems.md` |
 | **精准方法论** | PACDARES框架、九层复合方法、L3矛盾检查、三级置信度 | `precision-reading-methodology.md` |
 | **现代解读** | 现代措辞映射、现代生活场景、常见误判纠错 | `modern-language-guide.md` `common-misconceptions.md` |
 | **实战智慧** | ⭐反教条主义经验精华（全球占星师真实案例反馈总结） | `practitioner-wisdom-anti-dogma.md` |

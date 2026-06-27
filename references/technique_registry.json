@@ -344,6 +344,31 @@
       "audit_label": "Sphuta/Trisphuta",
       "missing_impact": "Prashna energy convergence and life-sensitivity markers are absent, leaving horary and life-risk reading thinner than classical toolchains."
     },
+    "deha_jeeva": {
+      "name": "Deha / Jeeva Framework",
+      "domains": [
+        "dasha",
+        "prashna",
+        "health",
+        "spiritual"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/alternative-dasha-systems.md",
+        "references/prashna-complete-guide.md"
+      ],
+      "commands": [
+        "full-reading",
+        "prashna"
+      ],
+      "output_paths": [
+        "modules.prashna.deha_jeeva",
+        "modules.alternative_dasha_frameworks.deha_jeeva"
+      ],
+      "audit_label": "Deha/Jeeva",
+      "missing_impact": "Without Deha/Jeeva routing, body-vs-consciousness event classification and some classical alternative Dasha judgments stay shallow.",
+      "note": "Current role is primarily interpretive and workflow-level. Keep maturity at covered until more explicit engine-level outputs and external cases are frozen."
+    },
     "shadbala": {
       "name": "Shadbala",
       "domains": [
@@ -472,6 +497,31 @@
       "audit_label": "Gandanta",
       "missing_impact": "Water-fire knot transitions are not surfaced, weakening crisis and karmic transition interpretation."
     },
+    "moolatrikona": {
+      "name": "Moolatrikona / 原始三方",
+      "domains": [
+        "dignity",
+        "strength",
+        "static"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/planetary-dignity-complete-reference.md",
+        "references/planets.md"
+      ],
+      "commands": [
+        "chart",
+        "shadbala",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.chart.planets.*.dignity",
+        "modules.shadbala.sthana_bala"
+      ],
+      "audit_label": "Moolatrikona",
+      "missing_impact": "Without a first-class Moolatrikona layer, dignity ranking, Sthana Bala nuance and several yoga-strength judgments become too coarse.",
+      "note": "Degree-band details vary by lineage. Current skill already uses Moolatrikona in dignity reasoning and strength interpretation, but should keep lineage notes explicit."
+    },
     "vargottama": {
       "name": "Vargottama",
       "domains": [
@@ -511,6 +561,54 @@
       ],
       "audit_label": "Pushkara",
       "missing_impact": "D9 grace/support layer may be undercounted."
+    },
+    "shodasavarga": {
+      "name": "Shodasavarga / 十六分盘体系",
+      "domains": [
+        "varga",
+        "strength",
+        "classification"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/shodasavarga-complete-guide.md",
+        "references/varga-system-quick-reference.md"
+      ],
+      "commands": [
+        "full-reading",
+        "chart"
+      ],
+      "output_paths": [
+        "modules.chart.divisional_charts",
+        "modules.varga_strength_overview"
+      ],
+      "audit_label": "Shodasavarga",
+      "missing_impact": "Without a first-class 16-varga map, divisional interpretation and traditional weighting logic remain fragmented across isolated chart outputs.",
+      "note": "Registry entry covers the traditional 16-varga framework and teaching layer; not a claim that every Vimsopaka weighting path is already fully benchmark-closed."
+    },
+    "vimsopaka_bala": {
+      "name": "Vimsopaka Bala / 分盘综合力量",
+      "domains": [
+        "varga",
+        "strength",
+        "timing"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/shodasavarga-complete-guide.md",
+        "references/shadbala-interpretation-methodology.md",
+        "references/dasha-calculation-tool.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "analysis_natal_full.vimsopaka_bala",
+        "modules.vimsopaka_bala"
+      ],
+      "audit_label": "Vimsopaka Bala",
+      "missing_impact": "Without Vimsopaka Bala, cross-varga strength synthesis stays under-modeled, weakening Dasha-lord judgment and deep divisional confidence calibration.",
+      "note": "Keep maturity at covered: the interpretive layer and reference doctrine exist, but external benchmark closure for all weighting schemes is still incomplete."
     },
     "navamsa_64th": {
       "name": "64th Navamsa / Chatushashti Navamsa",
@@ -850,6 +948,28 @@
       "missing_impact": "Debilitation recovery analysis incomplete.",
       "version": "7.0",
       "note": "v7.0 — 6种解除条件(dispositor在Lagna角宫/Moon角宫+擢升星主在角宫+互容+Navamsa入庙)+量化解除程度+dashaflow参考对齐"
+    },
+    "neechabhanga": {
+      "name": "Neechabhanga / 落陷取消（别名入口）",
+      "domains": [
+        "yoga",
+        "debilitation",
+        "recovery"
+      ],
+      "status": "complete",
+      "knowledge_refs": [
+        "references/neechabhanga-raja-yoga.md",
+        "references/common-misconceptions.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.yogas_doshas.nicha_bhanga_raj"
+      ],
+      "audit_label": "Neechabhanga",
+      "missing_impact": "Debilitation cancellation logic becomes harder to discover when users ask with the common spelling only.",
+      "note": "Alias entry to keep common terminology aligned with nicha_bhanga_raj. Do not interpret this alias as a separate extra technique."
     },
     "mangal_dosha": {
       "name": "Mangal Dosha / 火星煞",
@@ -1265,6 +1385,32 @@
       ],
       "audit_label": "Nakshatra Advanced",
       "missing_impact": "N/A - implemented in v6.0.22"
+    },
+    "tara_bala": {
+      "name": "Tara Bala / Tarabala / 星宿力",
+      "domains": [
+        "nakshatra",
+        "muhurta",
+        "timing",
+        "strength"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/pancha-pakshi-nakshatra-systems.md",
+        "references/navatara-kantaka-shani-guide.md",
+        "references/quick-reference-guide.md"
+      ],
+      "commands": [
+        "nakshatra-adv",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.nakshatra_advanced.tara_bala",
+        "modules.nakshatra_advanced.tara_chandra_combined"
+      ],
+      "audit_label": "Tara Bala",
+      "missing_impact": "Without a first-class Tara Bala entry, personalized Muhurta filtering and Nakshatra-based caution windows stay hidden behind generic Nakshatra outputs.",
+      "note": "This is a first-class view over the existing Nakshatra Advanced layer, not a claim that every Navatara branch has already been benchmark-closed."
     },
     "nakshatra_dasha": {
       "name": "Nakshatra Dasha / 星宿大运推演（Ashtottari + Nakshatra-level Vimshottari）",
