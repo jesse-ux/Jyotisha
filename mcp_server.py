@@ -160,11 +160,23 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             _convergence_score(present.get("gains_convergence")),
             _convergence_score(present.get("career_convergence")),
         )
+        public_wealth_lift = (
+            not missing
+            and bool(present.get("wealth_convergence"))
+            and (
+                bool(present.get("gains_convergence"))
+                or bool(present.get("career_convergence"))
+            )
+            and bool(present.get("vimshottari_current"))
+            and bool(present.get("narayana_current"))
+        )
         if missing:
             score = min(score, 35)
         score = min(score, 100)
         if missing:
             verdict = "insufficient_evidence"
+        elif public_wealth_lift and score >= 60:
+            verdict = "moderate_probability_window"
         elif score >= 80:
             verdict = "high_probability_window"
         elif score >= 60:
@@ -173,10 +185,14 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             verdict = "weak_window_needs_confirmation"
         else:
             verdict = "insufficient_evidence"
+        payout_label = None
+        if public_wealth_lift:
+            payout_label = "public_wealth_status"
         return {
             "event_family": "finance",
             "score": score,
             "verdict": verdict,
+            "payout_label": payout_label,
             "primary_drivers": [
                 key for key in (
                     "wealth_convergence",
