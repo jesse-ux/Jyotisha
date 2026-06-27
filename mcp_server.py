@@ -149,12 +149,15 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
 
     if route == "finance":
         score = 0
+        wealth_promise = present.get("wealth_promise_strength")
+        wealth_promise_level = wealth_promise.get("level") if isinstance(wealth_promise, dict) else None
         score += 15 if present.get("d2_hora") else 0
         score += 10 if present.get("d10_dasamsa") else 0
         score += 10 if present.get("shadbala") else 0
         score += 10 if present.get("ashtakavarga_house_scores") else 0
         score += 10 if present.get("vimshottari_current") else 0
         score += 10 if present.get("narayana_current") else 0
+        score += 20 if wealth_promise_level == "strong" else 10 if wealth_promise_level == "moderate" else 0
         score += max(
             _convergence_score(present.get("wealth_convergence")),
             _convergence_score(present.get("gains_convergence")),
@@ -186,7 +189,12 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         else:
             verdict = "insufficient_evidence"
         payout_label = None
-        if public_wealth_lift and score >= 60:
+        gains_score = _convergence_score(present.get("gains_convergence"))
+        wealth_score = _convergence_score(present.get("wealth_convergence"))
+        career_score = _convergence_score(present.get("career_convergence"))
+        if gains_score >= 60 and wealth_score < 40 and career_score < 40:
+            payout_label = "income_growth"
+        elif public_wealth_lift and score >= 60:
             payout_label = "public_wealth_status"
         return {
             "event_family": "finance",
