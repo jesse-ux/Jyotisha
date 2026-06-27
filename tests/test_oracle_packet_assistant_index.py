@@ -39,6 +39,9 @@ def test_oracle_packet_assistant_index_aggregates_three_fronts() -> None:
     assert report["fronts"]["dasha"]["missing_field_count"] == 6
     assert report["fronts"]["tajika_sahams"]["missing_field_count"] == 15
     assert report["fronts"]["shadbala"]["missing_field_count"] == 55
+    assert report["fronts"]["tajika_sahams"]["case_id"] == "template_einstein_varshaphala_1905_lahiri"
+    assert report["fronts"]["tajika_sahams"]["operator_card"].endswith("tajika_einstein_1905_first_packet_operator_card.md")
+    assert report["fronts"]["tajika_sahams"]["packet_template"].endswith("external_template_einstein_varshaphala_1905_lahiri.json")
     assert report["recommended_order"][0]["front"] == "dasha"
     assert report["recommended_order"][1]["front"] == "tajika_sahams"
     assert report["recommended_order"][2]["front"] == "shadbala"

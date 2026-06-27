@@ -1,13 +1,13 @@
 # First Oracle Packet Assistant Index
 
-Generated: `2026-06-26T11:10:59.664177+00:00`
+Generated: `2026-06-27T07:17:37.797365+00:00`
 
 ## Fronts
 
 | front | case_id | missing fields | ready_to_apply |
 |---|---|---:|---|
 | `dasha` | `template_steve_jobs_dasha_lahiri` | 6 | `false` |
-| `tajika_sahams` | `template_steve_jobs_varshaphala_1984_lahiri` | 15 | `false` |
+| `tajika_sahams` | `template_einstein_varshaphala_1905_lahiri` | 15 | `false` |
 | `shadbala` | `template_redacted_place_shadbala_raman` | 55 | `false` |
 
 ## Recommended Order
@@ -19,17 +19,17 @@ Generated: `2026-06-26T11:10:59.664177+00:00`
 - operator_card: `docs/benchmark/dasha_steve_jobs_first_packet_operator_card.md`
 
 ```bash
-python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/evidence_packet_templates/dasha_steve_jobs_lahiri_first_packet_only.json --format json
+
 ```
 
 ### tajika_sahams
 
-- case_id: `template_steve_jobs_varshaphala_1984_lahiri`
+- case_id: `template_einstein_varshaphala_1905_lahiri`
 - missing_field_count: `15`
-- operator_card: `docs/benchmark/tajika_steve_jobs_1984_first_packet_operator_card.md`
+- operator_card: `docs/benchmark/tajika_einstein_1905_first_packet_operator_card.md`
 
 ```bash
-python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json --format json
+python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json
 ```
 
 ### shadbala
