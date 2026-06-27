@@ -67,11 +67,14 @@ def test_skill_gap_truth_audit_outputs_current_truth_boundary() -> None:
     assert report["summary"]["technique_count"] >= 79
     assert report["summary"]["capability_valid"] is True
     assert report["summary"]["hard_front_count"] >= 5
+    assert report["summary"]["pyjhora_artifact_count"] >= 8
+    assert report["summary"]["pyjhora_packet_count"] >= 8
     assert report["public_claim"]["can_claim_global_first"] is False
     assert report["public_claim"]["can_claim_all_skills_complete"] is False
     assert report["public_claim"]["can_claim_perfect_accuracy"] is False
     assert "Dasha" in report["must_not_overclaim"][0]
     assert report["oracle_closure"]["summary"]["can_claim_global_oracle_closure"] is False
+    assert report["pyjhora_blackbox_assets"]["fronts"]["tajika_sahams"]["artifact_count"] >= 1
     assert report["remaining_hard_fronts"][0]["id"] == "dasha_external_oracle"
     assert "covered_is_not_complete" in report["past_correction_ids"]
 
@@ -90,6 +93,7 @@ def test_skill_gap_truth_audit_markdown_is_human_readable() -> None:
     markdown = completed.stdout
     assert "# Jyotish Skill Gap Truth Audit" in markdown
     assert "can_claim_global_first: `false`" in markdown
+    assert "PyJHora Black-Box Assets" in markdown
     assert "Dasha external oracle" in markdown
     assert "Past Corrections" in markdown
 

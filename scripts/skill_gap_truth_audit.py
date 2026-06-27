@@ -89,6 +89,7 @@ def build_report(registry_path: Path) -> dict[str, Any]:
         "--format",
         "json",
     ])
+    pyjhora_assets = _run_json([PYTHON, "scripts/generate_pyjhora_oracle_artifact_manifest.py"])
     hard_fronts = registry.get("hard_fronts", {})
     remaining = [
         {
@@ -134,6 +135,8 @@ def build_report(registry_path: Path) -> dict[str, Any]:
             "capability_problem_count": capability["problem_count"],
             "status_counts": capability["status_counts"],
             "hard_front_count": len(hard_fronts),
+            "pyjhora_artifact_count": pyjhora_assets["artifact_count"],
+            "pyjhora_packet_count": pyjhora_assets["packet_count"],
             "past_correction_count": len(corrections),
             "registry_problem_count": len(problems),
         },
@@ -147,6 +150,7 @@ def build_report(registry_path: Path) -> dict[str, Any]:
             "summary": oracle["summary"],
             "next_action_order": oracle.get("next_action_order", []),
         },
+        "pyjhora_blackbox_assets": pyjhora_assets,
         "remaining_hard_fronts": remaining,
         "past_correction_ids": [item["id"] for item in corrections],
         "past_case_analysis_corrections": corrections,
@@ -180,7 +184,15 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- technique_count: `{summary['technique_count']}`",
         f"- capability_valid: `{str(summary['capability_valid']).lower()}`",
         f"- hard_front_count: `{summary['hard_front_count']}`",
+        f"- pyjhora_artifact_count: `{summary['pyjhora_artifact_count']}`",
+        f"- pyjhora_packet_count: `{summary['pyjhora_packet_count']}`",
         f"- past_correction_count: `{summary['past_correction_count']}`",
+        "",
+        "## PyJHora Black-Box Assets",
+        "",
+        f"- dasha_artifacts: `{report['pyjhora_blackbox_assets']['fronts']['dasha']['artifact_count']}`",
+        f"- shadbala_artifacts: `{report['pyjhora_blackbox_assets']['fronts']['shadbala']['artifact_count']}`",
+        f"- tajika_sahams_artifacts: `{report['pyjhora_blackbox_assets']['fronts']['tajika_sahams']['artifact_count']}`",
         "",
         "## External Oracle Closure",
         "",
