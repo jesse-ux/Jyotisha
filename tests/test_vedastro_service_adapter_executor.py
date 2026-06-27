@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -72,3 +73,27 @@ def test_ephemeris_adapter_contract_can_call_vedastro_candidate_stub() -> None:
     first = report["rows"][0]["candidate_backend"]
     assert first["backend"] == "vedastro_service_adapter_candidate"
     assert first["status"] == "service_endpoint_not_configured"
+
+
+def test_vedastro_service_adapter_builds_request_preview_before_real_network_use() -> None:
+    env = os.environ.copy()
+    env["VEDASTRO_API_ENDPOINT"] = "https://example.invalid/vedastro"
+
+    completed = subprocess.run(
+        [sys.executable, "scripts/vedastro_service_adapter.py", "--case", "beijing_first_use_demo"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=120,
+        check=False,
+        env=env,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["backend"] == "vedastro_service_adapter_candidate"
+    assert report["status"] == "network_execution_disabled"
+    assert report["request_preview"]["year"] == 1990
+    assert report["request_preview"]["ayanamsa_policy"] == "lahiri"
+    assert report["source_metadata"]["endpoint"] == "https://example.invalid/vedastro"
+    assert report["source_metadata"]["provenance_mode"] == "external_service_candidate"

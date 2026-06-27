@@ -63,6 +63,7 @@ RETRY_POLICY = {
     "backoff_seconds": 1,
     "retry_on": ["timeout", "429", "502", "503", "504"],
 }
+ALLOW_NETWORK_ENV = "VEDASTRO_ENABLE_NETWORK"
 
 
 def schema() -> dict[str, Any]:
@@ -134,6 +135,13 @@ def _unconfigured(reason: str) -> dict[str, Any]:
     }
 
 
+def _request_preview(case: dict[str, Any]) -> dict[str, Any]:
+    return {
+        **case,
+        "body_list": ["Sun", "Moon", "Ascendant", "Rahu", "Ketu"],
+    }
+
+
 def run_case(case_id: str) -> dict[str, Any]:
     if case_id not in PARITY_CASES:
         return {
@@ -148,21 +156,36 @@ def run_case(case_id: str) -> dict[str, Any]:
         return _unconfigured("VEDASTRO_API_ENDPOINT is not configured; adapter skeleton stops before network access.")
 
     case = PARITY_CASES[case_id]
+    request_preview = _request_preview(case)
+    if os.environ.get(ALLOW_NETWORK_ENV, "").strip().lower() not in {"1", "true", "yes"}:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "network_execution_disabled",
+            "reason": f"{ALLOW_NETWORK_ENV} is not enabled; adapter stops after building request/provenance metadata.",
+            "request_preview": request_preview,
+            "source_metadata": {
+                "transport": "http_json_service_boundary",
+                "endpoint": endpoint,
+                "provenance_mode": "external_service_candidate",
+                "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+                "retry_policy": RETRY_POLICY,
+                "network_execution_env": ALLOW_NETWORK_ENV,
+            },
+        }
     return {
         "backend": "vedastro_service_adapter_candidate",
         "available": False,
         "status": "service_execution_not_implemented",
         "reason": "Endpoint is configured, but the real HTTP execution/normalization layer is intentionally not implemented yet.",
-        "request_preview": {
-            **case,
-            "body_list": ["Sun", "Moon", "Ascendant", "Rahu", "Ketu"],
-        },
+        "request_preview": request_preview,
         "source_metadata": {
             "transport": "http_json_service_boundary",
             "endpoint": endpoint,
             "provenance_mode": "external_service_candidate",
             "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
             "retry_policy": RETRY_POLICY,
+            "network_execution_env": ALLOW_NETWORK_ENV,
         },
     }
 
