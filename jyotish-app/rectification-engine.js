@@ -43,6 +43,26 @@ export const EVENT_COLLECTION_GUIDE = [
   { key: 'mobility', cn: '搬家/远行/移民', en: 'relocation, travel, migration', categories: ['travel'] },
 ];
 
+const RECTIFICATION_THEME_VARGAS = {
+  marriage: ['D9'],
+  divorce: ['D9'],
+  relationship: ['D9'],
+  career: ['D10'],
+  job_change: ['D10'],
+  business: ['D10'],
+  fame: ['D10'],
+  child: ['D7'],
+  parents: ['D12'],
+  education: ['D24'],
+  property: ['D4'],
+  finance_pos: ['D2'],
+  finance_neg: ['D2'],
+  health: ['D30'],
+  legal: ['D30'],
+  loss: ['D30'],
+  travel: ['D4'],
+};
+
 // ——— 工具函数 ———
 export function getHouseLord(ai, h) { return SIGN_LORDS[SIGNS[(ai + h - 1) % 12]]; }
 
@@ -193,6 +213,44 @@ function summarizeCandidateEvidence(result, events) {
   };
 }
 
+function buildRectificationDecisionPlan(events) {
+  const valid = (events || []).filter(evt => evt?.date && EVENT_CATEGORIES[evt.category]);
+  const categorySet = [...new Set(valid.map(evt => evt.category))];
+  const themeVargas = [];
+  for (const category of categorySet) {
+    const vargas = RECTIFICATION_THEME_VARGAS[category] || [];
+    for (const varga of vargas) {
+      if (!themeVargas.includes(varga)) themeVargas.push(varga);
+    }
+  }
+
+  const eventCount = valid.length;
+  const tightenWithSensitive = themeVargas.length > 0;
+  const useD30 = themeVargas.includes('D30');
+  const useD60 = eventCount >= 8 && themeVargas.length >= 2;
+
+  return {
+    principle: 'Dasha 定框，D9/D10 定核心，专项分盘补刀，D30/D60 谨慎后置。',
+    ordered_layers: [
+      { step: 1, label: 'Dasha + dated events', role: '主引擎', reason: '先用真实事件把时间框住，再决定要不要细分盘。' },
+      { step: 2, label: 'D9', role: '核心验证', reason: '婚姻、关系质量、内在成熟路线的第一核心分盘。' },
+      { step: 3, label: 'D10', role: '核心验证', reason: '事业显化、职业兑现、升职和名声路径的第一核心分盘。' },
+      { step: 4, label: themeVargas.length ? themeVargas.join(' / ') : 'D7 / D12 / D24 / D4 / D2', role: '主题补刀', reason: '按用户真实事件主题调用专项分盘，不一股脑全开。' },
+      { step: 5, label: 'Nakshatra / Pada / house shifts', role: '细分钟收口', reason: '用于最后 2-10 分钟缩窄，不适合一开始拍板。' },
+      { step: 6, label: useD30 ? 'D30' : 'D30（仅当有健康/事故/创伤事件）', role: '高敏慎用', reason: '高敏但易过拟合，只在明确压力事件时启用。' },
+      { step: 7, label: useD60 ? 'D60（仅作最后参考）' : 'D60（默认后置）', role: '超高敏慎用', reason: '只在高收敛后作为最后参考，不反向主导校时结论。' },
+    ],
+    selected_theme_vargas: themeVargas,
+    event_count: eventCount,
+    warnings: [
+      ...(eventCount < 5 ? ['事件少于 5 个时，不建议过早依赖高敏感分盘。'] : []),
+      ...(!tightenWithSensitive ? ['当前事件主题不足以触发专项分盘，先补婚恋/事业/家庭/健康类 dated events。'] : []),
+      ...(!useD30 ? ['没有明确健康/事故/创伤事件时，D30 默认不主导结论。'] : []),
+      ...(!useD60 ? ['D60 默认后置，只在高收敛后作最后参考。'] : []),
+    ],
+  };
+}
+
 function buildRectificationAudit(best, results, events) {
   const second = results[1] || null;
   const coverage = summarizeEventCoverage(events);
@@ -280,6 +338,7 @@ export async function runRectification(birth, events, options={}) {
     if(results.findIndex(r=>r.offsetMin===0)>0) results[0].correctionEffective=true;
   }
   const audit = results.length ? buildRectificationAudit(results[0], results, events) : null;
+  const decisionPlan = buildRectificationDecisionPlan(events);
   return {
     birth,events,options:{rangeMin,stepMin,totalCandidates:offsets.length},
     baseChartInfo:{
@@ -290,6 +349,7 @@ export async function runRectification(birth, events, options={}) {
     results,bestMatch:results[0]||null,
     confidence:calcConf(results,events.length,audit),
     audit,
+    decisionPlan,
   };
 }
 

@@ -26,6 +26,8 @@ FRONTS = {
         ],
         "operator_card": "docs/benchmark/dasha_steve_jobs_first_packet_operator_card.md",
         "packet_template": "references/oracle/evidence_packet_templates/dasha_steve_jobs_lahiri_first_packet_only.json",
+        "oracle_file": "references/oracle/dasha_shadbala_oracle_cases.json",
+        "apply_script": "scripts/oracle_collection_queue.py",
         "external_sources": [
             "JHora Vimshottari Dasha screen",
             "PyJHora black-box dasha output",
@@ -43,6 +45,8 @@ FRONTS = {
         ],
         "operator_card": "docs/benchmark/tajika_einstein_1905_first_packet_operator_card.md",
         "packet_template": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
+        "oracle_file": "references/oracle/tajika_annual_oracle_cases.json",
+        "apply_script": "scripts/tajika_annual_oracle_queue.py",
         "external_sources": [
             "JHora Varshaphala/Tajika annual chart screen",
             "PyJHora black-box annual output",
@@ -60,6 +64,8 @@ FRONTS = {
         ],
         "operator_card": "docs/benchmark/shadbala_redacted_place_raman_first_packet_operator_card.md",
         "packet_template": "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json",
+        "oracle_file": "references/oracle/dasha_shadbala_oracle_cases.json",
+        "apply_script": "scripts/oracle_collection_queue.py",
         "external_sources": [
             "JHora Shadbala component table screenshot",
             "PyJHora black-box shadbala output",
@@ -67,6 +73,24 @@ FRONTS = {
         ],
     }
 }
+
+
+def _fallback_apply_command(config: dict[str, Any]) -> str:
+    return (
+        f"python3 {config['apply_script']} "
+        f"--oracle-file {config['oracle_file']} "
+        f"--apply-packet {config['packet_template']} "
+        "--format json"
+    )
+
+
+def _fallback_validate_command(config: dict[str, Any]) -> str:
+    queue_path = "/tmp/jyotish_oracle_queue_filled.json"
+    return (
+        f"python3 scripts/oracle_collection_queue.py --oracle-file {config['oracle_file']} "
+        f"--format json > {queue_path} && "
+        f"python3 scripts/oracle_evidence_validator.py --queue-file {queue_path}"
+    )
 
 
 def _group_missing_fields(missing_fields: list[str]) -> dict[str, Any]:
@@ -177,8 +201,8 @@ def build_report(front: str) -> dict[str, Any]:
     first = status.get("first_priority") or {
         "case_id": packet.get("case_id"),
         "capture_id": packet.get("capture_id"),
-        "apply_command": "",
-        "validate_command": "",
+        "apply_command": _fallback_apply_command(config),
+        "validate_command": _fallback_validate_command(config),
         "packet_path": config["packet_template"],
     }
     packet_missing = _packet_missing(config["packet_template"])

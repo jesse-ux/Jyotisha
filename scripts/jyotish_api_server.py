@@ -189,9 +189,21 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             if path == '/api/health':
+                swisseph_available = False
+                swisseph_version = None
+                try:
+                    import swisseph as swe
+                    swisseph_available = True
+                    swisseph_version = getattr(swe, 'version', None) or getattr(swe, '__version__', None)
+                except Exception:
+                    swisseph_available = False
+                    swisseph_version = None
                 self._json({
                     'status': 'ok',
                     'version': '6.9.14',
+                    'swisseph_available': swisseph_available,
+                    'swisseph_version': swisseph_version,
+                    'ayanamsa_default': 'lahiri',
                     'modules': 'Chart/KP/Synastry/Prashna/Remedies/Dasha/Varga/Jaimini/Ashtakavarga/Shadbala/Yoga/Aspects/Tajika/Muhurta/BhavaChalit/BhavaBala/Sudarshana/Nakshatra/Transit/RectificationGate/CaseValidation/DivisionalYoga/Kakshya',
                 })
             elif path == '/api/cities':
@@ -358,6 +370,19 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             raise BadRequest(f'{key} must be an integer') from e
         self._check_range(key, number, min_value, max_value)
         return number
+
+
+    def _parse_timezone(self, body, lat, lon, year, month, day, hour, minute, second):
+        tz = body.get('tz')
+        if tz is not None and tz != "":
+            return self._get_float(body, 'tz', 8, -14, 14)
+        from timezone_utils import infer_timezone
+        from datetime import datetime
+        try:
+            dt = datetime(int(year), int(month), int(day), int(hour), int(minute), int(second))
+        except Exception:
+            dt = datetime.utcnow()
+        return infer_timezone(lat, lon, dt)
 
     def _get_float(self, body, key, default, min_value=None, max_value=None):
         value = body.get(key, default)
@@ -1355,7 +1380,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         second = self._get_birth_second(body)
         lat = self._get_float(body, 'lat', 39.9, -90, 90)
         lon = self._get_float(body, 'lon', 116.4, -180, 180)
-        tz = self._get_float(body, 'tz', 8, -14, 14)
+        tz = self._parse_timezone(body, lat, lon, year, month, day, hour, minute, second)
         try:
             datetime(year, month, day, int(hour), int(minute), int(second))
         except ValueError as e:
@@ -1555,7 +1580,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         second = self._get_birth_second(body)
         lat = self._get_float(body, 'lat', 39.9, -90, 90)
         lon = self._get_float(body, 'lon', 116.4, -180, 180)
-        tz = self._get_float(body, 'tz', 8, -14, 14)
+        tz = self._parse_timezone(body, lat, lon, year, month, day, hour, minute, second)
         try:
             datetime(year, month, day, int(hour), int(minute), int(second))
         except ValueError as e:
@@ -1800,6 +1825,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         planets = chart.get('planets') or {}
         dasha = chart.get('dasha') or {}
         shadbala = chart.get('shadbala') or {}
+        functional_layer = self._functional_benefic_malefic_snapshot(planets, ascendant)
         top_strength = sorted(
             [
                 {
@@ -1868,6 +1894,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'strength': {
                     'shadbala_ranking': top_strength,
                 },
+                'functional_benefic_malefic': functional_layer,
                 'quality_boundary': {
                     'external_oracle_status': 'D1/D9/VedAstro longitude boundary covered; Dasha/Shadbala external absolute calibration still requires multi-source oracle expansion.',
                 },
@@ -1891,6 +1918,34 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 ],
             },
         }
+
+    def _functional_benefic_malefic_snapshot(self, planets, ascendant):
+        try:
+            from yoga_engine import YogaContext
+            asc_sign = ascendant.get('sign')
+            if not asc_sign or not isinstance(planets, dict):
+                raise ValueError('missing ascendant sign or planets')
+            context = YogaContext(planets, asc_sign)
+            benefics = context.functional_benefics()
+            malefics = context.functional_malefics()
+            return {
+                'status': 'used',
+                'ascendant': asc_sign,
+                'functional_benefics': benefics,
+                'functional_malefics': malefics,
+                'effect_on_confidence': (
+                    '高严谨模式下必须叠加功能性吉凶星；若与自然吉凶属性冲突，'
+                    '应降低置信度并在 Technique Audit Table 中显式说明。'
+                ),
+            }
+        except Exception as exc:
+            return {
+                'status': 'blocked',
+                'ascendant': ascendant.get('sign'),
+                'functional_benefics': [],
+                'functional_malefics': [],
+                'effect_on_confidence': f'未完成功能性吉凶星判定，需降低高严谨结论置信度: {exc}',
+            }
 
     def _detect_yogas(self, planets, asc_idx):
         yogas = []
@@ -2870,7 +2925,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             day = self._get_int(body, 'day', 1, 1, 31)
             lat = self._get_float(body, 'lat', body.get('birth_lat', 0), -90, 90)
             lon = self._get_float(body, 'lon', body.get('birth_lon', 0), -180, 180)
-            tz = self._get_float(body, 'tz', body.get('birth_tz', 0), -14, 14)
+            tz = self._parse_timezone(body, lat, lon, year, month, day, hour, minute, second)
             hour_decimal = self._birth_hour_decimal(birth_hour, birth_minute, birth_second)
             solar_lon = planets.get('Sun', {}).get('lon', 0)
             base_planets = base_result.get('planets', {}) if isinstance(base_result, dict) else {}
@@ -2925,7 +2980,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         birth_dt = self._parse_birth_datetime(body)
         lat = self._get_float(body, 'lat', body.get('birth_lat', 0), -90, 90)
         lon = self._get_float(body, 'lon', body.get('birth_lon', 0), -180, 180)
-        tz = self._get_float(body, 'tz', body.get('birth_tz', 0), -14, 14)
+        tz = self._parse_timezone(body, lat, lon, year, month, day, hour, minute, second)
         solar_return = _load_local_module('solar_return')
         report = solar_return.solar_return_full_report(
             birth_dt.year,
@@ -3539,7 +3594,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 second = self._get_birth_second(body)
                 lat = self._get_float(body, 'lat', body.get('birth_lat', 0), -90, 90)
                 lon = self._get_float(body, 'lon', body.get('birth_lon', 0), -180, 180)
-                tz = self._get_float(body, 'tz', body.get('birth_tz', 0), -14, 14)
+                tz = self._parse_timezone(body, lat, lon, year, month, day, hour, minute, second)
                 datetime(year, month, day, int(hour), int(minute), int(second))
                 import swisseph as swe
                 hour_ut = self._birth_hour_decimal(hour, minute, second) - tz

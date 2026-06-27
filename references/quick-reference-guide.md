@@ -414,7 +414,8 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 1. **common-misconceptions.md**：印度占星常见误判与冲突问题集（错题本）⭐⭐⭐⭐⭐
 2. **modern-language-guide.md**：现代生活措辞指南
 3. **birth-time-rectification-advanced.md**：出生时间矫正高级方法论
-4. **birth-time-rectification-cases.md**：出生时间矫正案例集
+4. **birth-time-rectification-decision-tree.md**：生时校正分盘调用决策树（Dasha 定框，D9/D10 定核心）
+5. **birth-time-rectification-cases.md**：出生时间矫正案例集
 5. **pdf-chart-reading-guide.md**：PDF星盘读取指南 v3.0
 6. **prediction-checklist.md**：预测清单
 7. **data-bridge-mapping.md**：数据桥接映射

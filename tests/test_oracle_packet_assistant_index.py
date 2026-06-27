@@ -42,6 +42,12 @@ def test_oracle_packet_assistant_index_aggregates_three_fronts() -> None:
     assert report["fronts"]["tajika_sahams"]["case_id"] == "template_einstein_varshaphala_1905_lahiri"
     assert report["fronts"]["tajika_sahams"]["operator_card"].endswith("tajika_einstein_1905_first_packet_operator_card.md")
     assert report["fronts"]["tajika_sahams"]["packet_template"].endswith("external_template_einstein_varshaphala_1905_lahiri.json")
+    assert report["fronts"]["dasha"]["apply_command"] == (
+        "python3 scripts/oracle_collection_queue.py "
+        "--oracle-file references/oracle/dasha_shadbala_oracle_cases.json "
+        "--apply-packet references/oracle/evidence_packet_templates/"
+        "dasha_steve_jobs_lahiri_first_packet_only.json --format json"
+    )
     assert report["recommended_order"][0]["front"] == "dasha"
     assert report["recommended_order"][1]["front"] == "tajika_sahams"
     assert report["recommended_order"][2]["front"] == "shadbala"

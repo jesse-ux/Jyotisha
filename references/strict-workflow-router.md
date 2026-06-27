@@ -12,6 +12,23 @@ The user should not need to ask for Chara Dasha, A10, Argala, Shadbala, Ashtakav
 
 Every non-trivial reading must end with a **Technique Audit Table**.
 
+## 0.5 High-Rigor Override
+
+When the user asks for maximum rigor, no guessing, past-event verification, raw evidence, or full parity with top open-source Jyotish engines, the reading enters **High-Rigor Override**.
+
+Under this override, the engine must:
+
+1. Attempt cross-reference against `PyJHora / VedAstro / jyotishganit`, while respecting license boundaries.
+2. Use native repository implementations instead of lightweight summary scripts whenever a native module already exists.
+3. Require `Vimshottari + Narayana Dasha` before making major timing claims; if they materially conflict, mark the conclusion `blocked` or downgrade confidence.
+4. Force relevant divisional microscope layers:
+   - `D10` + `A10` for career
+   - `D2/D11` for wealth
+   - `D9` + `UL` for relationship
+5. Include raw outputs: exact degrees, dasha boundaries, Shadbala / AV values, Yoga names, ayanamsa / node mode, and external evidence pointers where available.
+
+If any of the above cannot be completed because of missing birth precision, external oracle gaps, license quarantine, adapter failure, or missing field mapping, the report must explicitly say `blocked` rather than silently continuing with a fake-complete conclusion.
+
 ---
 
 ## 1. Question router

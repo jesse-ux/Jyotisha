@@ -13,6 +13,7 @@ from tajika import (
     calc_muntha, calc_year_lord, calc_mudda_dasha,
     calc_tri_pataka, calc_tajika_yogas, detect_tajika_yogas,
     detect_vedha, calc_all_sahams, calc_tajika_strength_layers, _is_faster,
+    SAHAM_RULES_PATH,
     SIGNS, SIGN_LORDS,
 )
 
@@ -215,6 +216,10 @@ class TestVedhaDetection:
 # ── Sahams Tests ────────────────────────────────────────────────────
 
 class TestSahams:
+    def test_tajika_module_exposes_saham_rules_reference_path(self):
+        assert SAHAM_RULES_PATH.endswith('references/saham_rules.json')
+        assert os.path.exists(SAHAM_RULES_PATH)
+
     def test_all_sahams_calculated(self):
         planet_lons = {'Sun': 45.0, 'Moon': 120.0, 'Mars': 90.0,
                        'Mercury': 60.0, 'Jupiter': 180.0, 'Venus': 210.0,
@@ -236,8 +241,7 @@ class TestSahams:
                 assert 0 <= val['longitude'] < 360
 
     def test_punya_saham_formula(self):
-        # Punya = Asc + (Moon - Sun) (note: formula is Moon-Sun not Sun-Moon)
-        # Actually calc_all_sahams uses _saham(sun_lon, moon_lon) = asc + (moon - sun)
+        # Punya = Asc + (Moon - Sun), sourced from references/saham_rules.json
         sun, moon, asc = 45.0, 120.0, 10.0
         expected = (asc + (moon - sun)) % 360  # = 10 + 75 = 85
         planet_lons = {'Sun': sun, 'Moon': moon, 'Mars': 90.0,
@@ -245,6 +249,16 @@ class TestSahams:
                        'Saturn': 300.0, 'Rahu': 150.0, 'Ketu': 330.0}
         result = calc_all_sahams(planet_lons, asc, datetime(1990, 6, 15, 12, 0))
         assert abs(result['punya_saham']['longitude'] - expected) < 0.01
+
+    def test_karma_saham_uses_reference_json_day_formula(self):
+        # Karma_Saham day rule = Mars - Mercury + Asc, sourced from references/saham_rules.json
+        asc = 10.0
+        planet_lons = {'Sun': 45.0, 'Moon': 120.0, 'Mars': 90.0,
+                       'Mercury': 60.0, 'Jupiter': 180.0, 'Venus': 210.0,
+                       'Saturn': 300.0, 'Rahu': 150.0, 'Ketu': 330.0}
+        expected = (asc + (90.0 - 60.0)) % 360
+        result = calc_all_sahams(planet_lons, asc, datetime(1990, 6, 15, 12, 0))
+        assert abs(result['karma_saham']['longitude'] - expected) < 0.01
 
     def test_is_faster_moon_vs_sun(self):
         assert _is_faster('Moon', 'Sun')

@@ -155,6 +155,7 @@ function renderResults(container, result) {
   const lang = getLang();
   const { bestMatch: bm, confidence: conf, baseChartInfo: base, results: all } = result;
   const audit = result.audit || {};
+  const decisionPlan = result.decisionPlan || {};
   const confClr = { '高': '#22c55e', '中': '#f59e0b', '低': '#ef4444', '不确定': '#9ca3af' };
   const correctedBirth = buildCorrectedBirth(result.birth, bm.offsetMin);
   const reportText = buildRectificationReportText(result, correctedBirth);
@@ -211,6 +212,21 @@ function renderResults(container, result) {
     <div class="rect-audit card">
       <h4 class="sub-title">证据闭环</h4>
       <div class="rect-audit-grid">${auditCards}</div>
+    </div>
+    <div class="rect-plan card">
+      <h4 class="sub-title">分盘调用顺序</h4>
+      <p class="rect-plan-principle">${escapeHtml(decisionPlan.principle || 'Dasha 定框，核心分盘先行，专项分盘后置。')}</p>
+      <ol class="rect-plan-list">${(decisionPlan.ordered_layers || []).map(layer => `
+        <li>
+          <div class="rect-plan-row">
+            <strong>${escapeHtml(layer.label)}</strong>
+            <span>${escapeHtml(layer.role)}</span>
+          </div>
+          <p>${escapeHtml(layer.reason)}</p>
+        </li>
+      `).join('')}</ol>
+      ${(decisionPlan.selected_theme_vargas || []).length ? `<p class="rect-plan-focus">本轮优先专项分盘：${escapeHtml(decisionPlan.selected_theme_vargas.join(' / '))}</p>` : ''}
+      ${(decisionPlan.warnings || []).length ? `<div class="rect-audit-warnings">${decisionPlan.warnings.map(w => `<p>${escapeHtml(w)}</p>`).join('')}</div>` : ''}
     </div>
     <div class="rect-scoring-detail card">
       <h4 class="sub-title">${t('rect.scoring.title')}</h4>

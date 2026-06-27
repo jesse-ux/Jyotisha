@@ -701,17 +701,152 @@ def _planet_snapshot(planets, planet_name):
 
 
 def _oracle_progress_snapshot():
-    return {
-        'scope': 'external_oracle_evidence_validation',
-        'collection_queue': 'external_oracle_collection_queue',
-        'total_packets': 5,
-        'valid_packets': 0,
-        'ready_for_calibration': 0,
-        'production_tuning_allowed': False,
-        'artifact_policy': 'references/oracle/artifacts/',
-        'promotion_rule': 'external_verified requires source_artifact, filled target values, and non-local-engine external evidence.',
-        'boundary': 'Dasha/Shadbala absolute values are not externally calibrated until enough packets pass validation.',
-    }
+    try:
+        import json
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[1]
+        oracle_file = root / 'references' / 'oracle' / 'dasha_shadbala_oracle_cases.json'
+        with tempfile.NamedTemporaryFile('w+', suffix='.json', delete=True, encoding='utf-8') as handle:
+            queue = subprocess.run(
+                [sys.executable, 'scripts/oracle_collection_queue.py', '--oracle-file', str(oracle_file), '--format', 'json'],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                timeout=90,
+                check=False,
+            )
+            if queue.returncode != 0:
+                raise RuntimeError(queue.stderr.strip() or queue.stdout.strip())
+            handle.write(queue.stdout)
+            handle.flush()
+            validation = subprocess.run(
+                [sys.executable, 'scripts/oracle_evidence_validator.py', '--queue-file', handle.name],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                timeout=90,
+                check=False,
+            )
+            if validation.returncode != 0:
+                raise RuntimeError(validation.stderr.strip() or validation.stdout.strip())
+            report = json.loads(validation.stdout)
+        summary = report.get('summary', {})
+        return {
+            'scope': 'external_oracle_evidence_validation',
+            'collection_queue': 'external_oracle_collection_queue',
+            'total_packets': summary.get('total_packets', 0),
+            'valid_packets': summary.get('valid_packets', 0),
+            'ready_for_calibration': summary.get('ready_for_calibration', 0),
+            'production_tuning_allowed': summary.get('production_tuning_allowed', False),
+            'artifact_policy': 'references/oracle/artifacts/',
+            'promotion_rule': 'external_verified requires source_artifact, filled target values, and non-local-engine external evidence.',
+            'boundary': report.get('boundary', 'Dasha/Shadbala absolute values are not externally calibrated until enough packets pass validation.'),
+        }
+    except Exception as exc:
+        return {
+            'scope': 'external_oracle_evidence_validation',
+            'collection_queue': 'external_oracle_collection_queue',
+            'total_packets': 0,
+            'valid_packets': 0,
+            'ready_for_calibration': 0,
+            'production_tuning_allowed': False,
+            'artifact_policy': 'references/oracle/artifacts/',
+            'promotion_rule': 'external_verified requires source_artifact, filled target values, and non-local-engine external evidence.',
+            'boundary': f'Oracle progress unavailable: {exc}',
+        }
+
+
+def _functional_benefic_malefic_snapshot(planets, ascendant):
+    try:
+        from yoga_engine import YogaContext
+        asc_sign = ascendant.get('sign') if isinstance(ascendant, dict) else None
+        if not asc_sign or not isinstance(planets, dict):
+            raise ValueError('missing ascendant sign or planets')
+        context = YogaContext(planets, asc_sign)
+        benefics = context.functional_benefics()
+        malefics = context.functional_malefics()
+        return {
+            'status': 'used',
+            'ascendant': asc_sign,
+            'functional_benefics': benefics,
+            'functional_malefics': malefics,
+            'effect_on_confidence': (
+                '高严谨模式下必须叠加功能性吉凶星；若与自然吉凶属性冲突，'
+                '应降低置信度并在 Technique Audit Table 中显式说明。'
+            ),
+        }
+    except Exception as exc:
+        return {
+            'status': 'blocked',
+            'ascendant': ascendant.get('sign') if isinstance(ascendant, dict) else None,
+            'functional_benefics': [],
+            'functional_malefics': [],
+            'effect_on_confidence': f'未完成功能性吉凶星判定，需降低高严谨结论置信度: {exc}',
+        }
+
+
+def _build_technique_audit_table(functional_layer, oracle_progress, modules):
+    dasha = modules.get('dasha') if isinstance(modules, dict) else {}
+    narayana = modules.get('narayana_dasha') if isinstance(modules, dict) else {}
+    d9 = modules.get('d9_navamsa_expanded') if isinstance(modules, dict) else {}
+    shadbala = modules.get('shadbala') if isinstance(modules, dict) else {}
+    ashtakavarga = modules.get('ashtakavarga') if isinstance(modules, dict) else {}
+    vimsopaka = modules.get('vimsopaka') if isinstance(modules, dict) else {}
+    dasa_convergence = modules.get('dasa_convergence') if isinstance(modules, dict) else {}
+
+    rows = [
+        {
+            'technique': 'Functional Benefic/Malefic',
+            'status': functional_layer.get('status', 'blocked'),
+            'source': 'scripts/yoga_engine.py::YogaContext',
+            'note': functional_layer.get('effect_on_confidence', '高严谨模式缺少功能性吉凶星判定。'),
+        },
+        {
+            'technique': 'External Oracle Progress',
+            'status': 'used' if oracle_progress.get('total_packets', 0) else 'blocked',
+            'source': 'scripts/oracle_collection_queue.py + scripts/oracle_evidence_validator.py',
+            'note': (
+                f"当前 external oracle 进度 {oracle_progress.get('ready_for_calibration', 0)}/"
+                f"{oracle_progress.get('total_packets', 0)} ready，"
+                f"production_tuning_allowed={oracle_progress.get('production_tuning_allowed', False)}。"
+            ),
+        },
+    ]
+
+    rows.append({
+        'technique': 'Vimshottari + Narayana Cross-check',
+        'status': 'used' if isinstance(dasha, dict) and isinstance(narayana, dict) and dasha and narayana else 'blocked',
+        'source': 'modules.dasha + modules.narayana_dasha + modules.dasa_convergence',
+        'note': (
+            f"Vimshottari 当前主运={((dasha.get('current_dasha') or {}).get('lord')) if isinstance(dasha, dict) else None}; "
+            f"Narayana 当前主运={narayana.get('current_dasha') if isinstance(narayana, dict) else None}; "
+            f"多系统收敛摘要={dasa_convergence.get('top_convergent_domains') if isinstance(dasa_convergence, dict) else None}。"
+        ),
+    })
+    rows.append({
+        'technique': 'Relevant Vargas',
+        'status': 'used' if isinstance(d9, dict) and d9 else 'blocked',
+        'source': 'modules.d9_navamsa_expanded',
+        'note': (
+            f"D9 已接入；可见键={list(d9.keys())[:5] if isinstance(d9, dict) else []}。"
+            "高严谨解读至少应交叉 D1 + D9，婚姻/关系主题不得跳过 D9。"
+        ),
+    })
+    rows.append({
+        'technique': 'Strength Layers',
+        'status': 'used' if isinstance(shadbala, dict) and isinstance(ashtakavarga, dict) and isinstance(vimsopaka, dict) else 'blocked',
+        'source': 'modules.shadbala + modules.ashtakavarga + modules.vimsopaka',
+        'note': (
+            f"Shadbala status={shadbala.get('status') if isinstance(shadbala, dict) else None}; "
+            f"Ashtakavarga SAV={((ashtakavarga.get('sav') or {}).get('total')) if isinstance(ashtakavarga, dict) else None}; "
+            f"Vimsopaka status={vimsopaka.get('status') if isinstance(vimsopaka, dict) else None}。"
+        ),
+    })
+    return rows
 
 
 def _build_ai_prompt_pack(report):
@@ -722,11 +857,16 @@ def _build_ai_prompt_pack(report):
     birth_info = chart.get('birth_info', {}) if isinstance(chart, dict) else {}
     dasha = modules.get('dasha') or {}
     current_dasha = dasha.get('current_dasha') if isinstance(dasha, dict) else {}
+    narayana = modules.get('narayana_dasha') or {}
+    dasa_convergence = modules.get('dasa_convergence') or {}
     shadbala = modules.get('shadbala') or {}
     shadbala_planets = shadbala.get('planets', {}) if isinstance(shadbala, dict) else {}
     ashtakavarga = modules.get('ashtakavarga') or {}
     sav = ashtakavarga.get('sav') if isinstance(ashtakavarga, dict) else {}
     d9 = modules.get('d9_navamsa_expanded') or {}
+    functional_layer = _functional_benefic_malefic_snapshot(planets, chart.get('ascendant', {}))
+    oracle_progress = _oracle_progress_snapshot()
+    technique_audit_table = _build_technique_audit_table(functional_layer, oracle_progress, modules)
 
     shadbala_ranking = []
     for planet_name, pdata in sorted(
@@ -763,10 +903,18 @@ def _build_ai_prompt_pack(report):
             'Ketu': _planet_snapshot(planets, 'Ketu'),
         },
         'timing': {
-            'current_mahadasha': current_dasha.get('lord') if isinstance(current_dasha, dict) else None,
-            'current_antardasha': current_ad.get('lord') if isinstance(current_ad, dict) else None,
-            'current_md_start': current_dasha.get('start') if isinstance(current_dasha, dict) else None,
-            'current_md_end': current_dasha.get('end') if isinstance(current_dasha, dict) else None,
+            'vimshottari': {
+                'mahadasha': current_dasha.get('lord') if isinstance(current_dasha, dict) else None,
+                'antardasha': current_ad.get('lord') if isinstance(current_ad, dict) else None,
+                'start': current_dasha.get('start') if isinstance(current_dasha, dict) else None,
+                'end': current_dasha.get('end') if isinstance(current_dasha, dict) else None,
+            },
+            'narayana': {
+                'current_dasha': narayana.get('current_dasha') if isinstance(narayana, dict) else None,
+                'current_year': narayana.get('current_year') if isinstance(narayana, dict) else None,
+                'current_age': narayana.get('current_age') if isinstance(narayana, dict) else None,
+            },
+            'convergence_top_domains': dasa_convergence.get('top_convergent_domains', []) if isinstance(dasa_convergence, dict) else [],
         },
         'strength': {
             'shadbala_ranking': shadbala_ranking[:7],
@@ -787,7 +935,9 @@ def _build_ai_prompt_pack(report):
             'warnings': report.get('warnings', []),
             'external_oracle_status': 'D1/D9/VedAstro longitude boundary covered; Dasha/Shadbala external absolute calibration still requires multi-source oracle expansion.',
         },
-        'oracle_progress': _oracle_progress_snapshot(),
+        'oracle_progress': oracle_progress,
+        'functional_benefic_malefic': functional_layer,
+        'technique_audit_table': technique_audit_table,
     }
 
     prompt_lines = [

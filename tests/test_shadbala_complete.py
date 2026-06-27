@@ -2,6 +2,7 @@
 """Tests for shadbala.py — 6-fold strength, Kendra 3-tier, Bhava Bala, Hora Bala."""
 
 from __future__ import annotations
+import json
 import sys, os, pytest
 
 SCRIPTS = os.path.join(os.path.dirname(__file__), '..', 'scripts')
@@ -12,6 +13,7 @@ from shadbala import (
     calc_shadbala, calc_sthana_bala, calc_dig_bala, calc_kala_bala,
     calc_chesta_bala, calc_drik_bala, calc_bhava_bala,
     NAISARGIKA_BALA, MIN_REQUIRED, DIG_BALA_HOUSE,
+    EXALTATION_DEG, DEBILITATION_DEG, FRIENDSHIP, SHADBALA_CONSTANTS_PATH,
 )
 
 # Standard test chart data
@@ -25,6 +27,11 @@ def _sample_planets():
         'Venus': {'sign': 'Leo', 'degree': 130.0, 'house': 4, 'retrograde': False, 'speed': 1.2},
         'Saturn': {'sign': 'Aquarius', 'degree': 320.0, 'house': 12, 'retrograde': True, 'speed': -0.03},
     }
+
+
+def _shadbala_constants():
+    with open(os.path.join(os.path.dirname(__file__), '..', 'references', 'shat_bala_constants.json'), 'r', encoding='utf-8') as handle:
+        return json.load(handle)
 
 
 # ── Sthana Bala Tests ───────────────────────────────────────────────
@@ -193,6 +200,22 @@ class TestDrikBala:
 # ── Full Shadbala Tests ─────────────────────────────────────────────
 
 class TestShadbalaFull:
+    def test_shadbala_module_exposes_reference_constants_path(self):
+        assert SHADBALA_CONSTANTS_PATH.endswith('references/shat_bala_constants.json')
+        assert os.path.exists(SHADBALA_CONSTANTS_PATH)
+
+    def test_static_shadbala_constants_are_loaded_from_reference_json(self):
+        constants = _shadbala_constants()
+        sun_exalt = constants['exaltation_degrees']['Sun']
+        saturn_debil = constants['debilitation_degrees']['Saturn']
+        mercury_rel = constants['natural_relationships']['Mercury']
+
+        assert EXALTATION_DEG['Sun'] == pytest.approx(sun_exalt['sign'] * 30 + sun_exalt['degree'])
+        assert DEBILITATION_DEG['Saturn'] == pytest.approx(saturn_debil['sign'] * 30 + saturn_debil['degree'])
+        assert FRIENDSHIP['Mercury']['friend'] == mercury_rel['friends']
+        assert FRIENDSHIP['Mercury']['enemy'] == mercury_rel['enemies']
+        assert FRIENDSHIP['Mercury']['neutral'] == mercury_rel['neutrals']
+
     def test_all_7_planets_calculated(self):
         result = calc_shadbala(_sample_planets(), 'Leo', 10.0, 70.0, 45.0)
         for pname in ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']:

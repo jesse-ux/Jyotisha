@@ -63,6 +63,28 @@ class _ResponseCaptureHandler(JyotishAPIHandler):
         return json.loads(self.wfile.getvalue().decode('utf-8'))
 
 
+class _HealthCaptureHandler(JyotishAPIHandler):
+    def __init__(self) -> None:
+        self.headers = _FakeHeaders()
+        self.server = _FakeServer()
+        self.path = '/api/health'
+        self.wfile = BytesIO()
+        self.status_code = None
+        self.response_headers = []
+
+    def send_response(self, code, message=None):  # noqa: ANN001
+        self.status_code = code
+
+    def send_header(self, key, value):  # noqa: ANN001
+        self.response_headers.append((key, value))
+
+    def end_headers(self):
+        return None
+
+    def payload(self) -> dict:
+        return json.loads(self.wfile.getvalue().decode('utf-8'))
+
+
 def test_default_cors_origins_are_local_only() -> None:
     assert 'http://localhost:3456' in DEFAULT_ALLOWED_ORIGINS
     assert '*' not in DEFAULT_ALLOWED_ORIGINS
@@ -87,6 +109,19 @@ def test_get_internal_errors_are_json_wrapped() -> None:
     assert payload['success'] is False
     assert payload['error'] == 'Internal server error'
     assert payload['error_code'] == 'ERR_INTERNAL'
+
+
+def test_health_endpoint_exposes_runtime_accuracy_metadata() -> None:
+    handler = _HealthCaptureHandler()
+
+    handler.do_GET()
+
+    assert handler.status_code == 200
+    payload = handler.payload()
+    assert payload['status'] == 'ok'
+    assert payload['ayanamsa_default'] == 'lahiri'
+    assert 'swisseph_available' in payload
+    assert 'swisseph_version' in payload
 
 
 @pytest.mark.parametrize(
@@ -1176,6 +1211,29 @@ def test_shadbala_endpoint_returns_ranked_planet_strength() -> None:
     assert result['advanced_layer']['source'] == 'scripts/shadbala_advanced.py'
     assert result['advanced_layer']['top_kala_support']
     assert 'sputa_drik_bala' in result['advanced_layer']
+
+
+def test_chart_ai_prompt_pack_exposes_functional_benefic_malefic_layer() -> None:
+    handler = _handler()
+
+    result = handler._compute_chart({
+        'year': 1990,
+        'month': 6,
+        'day': 15,
+        'hour': 12,
+        'minute': 0,
+        'lat': 39.9,
+        'lon': 116.4,
+        'tz': 8,
+    })
+
+    prompt_pack = result['ai_prompt_pack']
+    functional = prompt_pack['evidence_snapshot']['functional_benefic_malefic']
+    assert functional['status'] == 'used'
+    assert functional['ascendant']
+    assert isinstance(functional['functional_benefics'], list)
+    assert isinstance(functional['functional_malefics'], list)
+    assert functional['effect_on_confidence']
 
 
 def test_yogas_endpoint_returns_summary_counts() -> None:

@@ -4768,6 +4768,46 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   font-size: 12px;
   line-height: 1.55;
 }
+.rect-plan { margin-bottom: 16px; }
+.rect-plan-principle {
+  margin: 0 0 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.rect-plan-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 10px;
+}
+.rect-plan-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rect-plan-row strong {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.rect-plan-row span {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+.rect-plan-list p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+.rect-plan-focus {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--text-primary);
+}
 
 /* Top 10 表格 */
 .rect-top-results { margin-bottom: 16px; }

@@ -15,6 +15,8 @@ Tajika/Varshaphala年运盘模块 v1.0
 from typing import Dict, List, Optional
 from datetime import datetime
 import math
+import json
+import os
 
 SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
          'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -28,6 +30,41 @@ EXALT_SIGN = {'Sun': 0, 'Moon': 1, 'Mars': 9, 'Mercury': 5, 'Jupiter': 3, 'Venus
 DEBIL_SIGN = {'Sun': 6, 'Moon': 7, 'Mars': 3, 'Mercury': 11, 'Jupiter': 9, 'Venus': 5, 'Saturn': 0}
 OWN_SIGNS = {'Sun': [4], 'Moon': [3], 'Mars': [0, 7], 'Mercury': [2, 5],
              'Jupiter': [8, 11], 'Venus': [1, 6], 'Saturn': [9, 10]}
+
+SAHAM_RULES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'references', 'saham_rules.json')
+
+
+def _load_saham_rules() -> Dict:
+    with open(SAHAM_RULES_PATH, 'r', encoding='utf-8') as handle:
+        return json.load(handle)
+
+
+_SAHAM_RULES = _load_saham_rules()
+
+
+def _resolve_saham_operand(operand: str, planet_lons: Dict[str, float], asc_lon: float, computed: Dict[str, float]) -> float:
+    if operand == 'Ascendant':
+        return float(asc_lon) % 360
+    if operand in computed:
+        return float(computed[operand]) % 360
+    if operand in planet_lons:
+        return float(planet_lons[operand]) % 360
+    raise KeyError(f"Unsupported saham operand: {operand}")
+
+
+def _calc_formula_saham(
+    rule_name: str,
+    planet_lons: Dict[str, float],
+    asc_lon: float,
+    is_day: bool,
+    computed: Dict[str, float],
+) -> float:
+    rule = _SAHAM_RULES['sahams'][rule_name]
+    formula = rule['formula_day'] if is_day else rule['formula_night']
+    first = _resolve_saham_operand(formula[0], planet_lons, asc_lon, computed)
+    second = _resolve_saham_operand(formula[1], planet_lons, asc_lon, computed)
+    third = _resolve_saham_operand(formula[2], planet_lons, asc_lon, computed)
+    return (third + (first - second)) % 360
 
 
 def calc_muntha(birth_asc_idx: int, age: int) -> Dict:
@@ -833,9 +870,11 @@ def calc_all_sahams(planet_lons: Dict[str, float],
     is_day = _is_daytime(birth_dt, sun_lon, asc_lon)
 
     results = {}
+    computed_formula_sahams: Dict[str, float] = {}
 
     # 1. Punya Saham（福德点）：Moon - Sun + Asc
-    p_lon = _saham(sun_lon, moon_lon)
+    p_lon = _calc_formula_saham('Punya_Saham', planet_lons, asc_lon, is_day, computed_formula_sahams)
+    computed_formula_sahams['Punya_Saham'] = p_lon
     results['punya_saham'] = _saham_dict(p_lon, 'Punya Saham', '福德点——善业、精神成长、父系福德')
 
     # 2. Karya Saham（事业点）：
@@ -883,11 +922,19 @@ def calc_all_sahams(planet_lons: Dict[str, float],
     results['raja_saham'] = _saham_dict(raja_lon, 'Raja Saham', '王权点——领导力、权威')
 
     # 11. Yasha Saham（名声点）：Jupiter - Sun + Asc
-    yasha_lon = _saham(sun_lon, jupiter_lon)
+    try:
+        yasha_lon = _calc_formula_saham('Yashas_Saham', planet_lons, asc_lon, is_day, computed_formula_sahams)
+        computed_formula_sahams['Yashas_Saham'] = yasha_lon
+    except KeyError:
+        yasha_lon = _saham(sun_lon, jupiter_lon)
     results['yasha_saham'] = _saham_dict(yasha_lon, 'Yasha Saham', '名声点——声誉、社会地位')
 
     # 12. Karma Saham（业力点）：Saturn - Mars + Asc
-    karma_lon = _saham(mars_lon, saturn_lon)
+    try:
+        karma_lon = _calc_formula_saham('Karma_Saham', planet_lons, asc_lon, is_day, computed_formula_sahams)
+        computed_formula_sahams['Karma_Saham'] = karma_lon
+    except KeyError:
+        karma_lon = _saham(mars_lon, saturn_lon)
     results['karma_saham'] = _saham_dict(karma_lon, 'Karma Saham', '业力点——前世因果、责任')
 
     # 13. Bandhu Saham（兄弟点）：Mars - Mercury + Asc

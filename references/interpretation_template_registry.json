@@ -299,6 +299,50 @@
         "Upgrade only when D1 promise, D9 support, UL condition and timing all point in the same direction."
       ]
     },
+    "natural_malefic_functional_role_guardrail": {
+      "title": "Natural Malefic vs Functional Role Guardrail",
+      "status": "frozen_template",
+      "authority_level": "A/B/C layered",
+      "domain": ["interpretation_boundary", "functional_role", "saturn", "mars", "rahu", "ketu"],
+      "source_refs": [
+        "AGENTS.md",
+        "SKILL.md",
+        "references/prediction-boundary-protocol.md",
+        "docs/research/malefic_overread_top10_2026_06_27.md"
+      ],
+      "trigger_patterns": [
+        "Saturn negative",
+        "Mars negative",
+        "Rahu negative",
+        "Ketu negative",
+        "功能性吉凶星",
+        "自然凶星",
+        "Rahu/Ketu 负面",
+        "土星是不是坏",
+        "火星是不是坏"
+      ],
+      "required_cross_checks": [
+        "Separate natural benefic/malefic status from functional role under the current Lagna",
+        "State the topic-domain role before giving any positive or negative conclusion",
+        "Check D1 promise plus the relevant Varga before calling the planet harmful or helpful",
+        "Check Dasha/Transit activation before upgrading from trait to event claim",
+        "For Rahu/Ketu, declare node mode/dispositor and evaluate both breakthrough and loss patterns"
+      ],
+      "confidence_ceiling": "B when natural role, functional role, topic-domain role and timing all agree; C when only natural malefic language is available or the functional role is unresolved.",
+      "forbidden_claims": [
+        "Saturn alone means failure",
+        "Mars alone means relationship destruction",
+        "Rahu or Ketu alone proves damage, scandal or collapse",
+        "A natural malefic label alone overrides functional role, D1 promise or timing"
+      ],
+      "safe_output_patterns": [
+        "Always describe the planet in four layers: natural nature, functional role, topic-domain role and current activated outcome.",
+        "Frame Saturn as delay, responsibility, structure or long-cycle payoff depending on promise and activation, not as automatic negativity.",
+        "Frame Mars as conflict, execution, surgery, competition or entrepreneurial drive depending on context, not as automatic damage.",
+        "Frame Rahu and Ketu as dual-edge amplifiers that can produce breakthrough, disruption, detachment or leakage depending on promise, dispositor and activation.",
+        "If natural and functional meanings conflict, explicitly lower confidence and let the promise/timing layer decide the practical reading."
+      ]
+    },
     "pushkara_vargottama_avastha_synthesis": {
       "title": "Pushkara / Vargottama / Avastha / RTN Synthesis Template",
       "status": "frozen_template",

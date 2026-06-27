@@ -552,7 +552,7 @@ def test_trust_center_exposes_validation_transparency() -> None:
         "Precision 96.48%",
         "Recall 93.99%",
         "F1 95.22%",
-        "unmapped_pyjhora",
+        "unmapped_external_benchmark",
         "golden cases",
         "release-quality-gate",
         "不是个人事件预测准确率",
@@ -1112,7 +1112,7 @@ def test_ephemeris_abstraction_feasibility_is_probeable() -> None:
         "swisseph_wasm",
         "xalen_ephemeris",
         "vedastro",
-        "pyjhora_benchmark",
+        "external_benchmark_benchmark",
         "license_posture",
         "replacement_readiness",
         "candidate_backends",
@@ -1377,13 +1377,16 @@ def test_skill_workbench_exposes_all_expected_advanced_actions() -> None:
     ]:
         assert token in skill_map
 
-    for token in [
-        "renderVimshottariAnalysisBlock",
-        "dasha-analysis-block",
-        "dasha-analysis-grid",
-        "vimshottari_analysis",
-    ]:
-        assert token in main or token in style
+
+def test_rectification_ui_exposes_decision_plan_and_execution_order() -> None:
+    rect_engine = read("rectification-engine.js")
+    rect_ui = read("rectification.js")
+    assert "buildRectificationDecisionPlan" in rect_engine
+    assert "decisionPlan" in rect_engine
+    assert "Dasha 定框，D9/D10 定核心" in rect_engine
+    assert "selected_theme_vargas" in rect_engine
+    assert "分盘调用顺序" in rect_ui
+    assert "rect-plan" in rect_ui
 
 
 def test_remedies_ui_keeps_evidence_boundary_and_hidden_json() -> None:
@@ -1528,6 +1531,10 @@ def test_provenance_panchanga_workspace_panel_is_productized() -> None:
         "__jyotishRuntimeHealth",
         "trust-run-health",
         "/api/health",
+        "Swiss Ephemeris",
+        "Ayanamsa",
+        "api.swisseph_version",
+        "api.ayanamsa_default",
         "Technique catalog",
         "Runtime Health",
         "运行健康检查",
@@ -2474,6 +2481,9 @@ def test_local_frontend_and_api_runtime_smoke() -> None:
         assert health["status"] == "ok"
         assert "Remedies" in health["modules"]
         assert "Ashtakavarga" in health["modules"]
+        assert "swisseph_available" in health
+        assert "swisseph_version" in health
+        assert health["ayanamsa_default"] == "lahiri"
 
         audit = fetch_json(f"http://127.0.0.1:{api_port}/api/capability_audit")
         assert audit["productization"]["summary"]["productized"] == audit["registry"]["technique_count"]

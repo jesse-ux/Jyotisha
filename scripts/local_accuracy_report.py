@@ -64,11 +64,12 @@ def load_real_case_revalidation() -> dict[str, Any]:
 def load_yoga_logic_benchmark() -> dict[str, Any]:
     report = json.loads((ROOT / "references/validation_logic_report.json").read_text(encoding="utf-8"))
     summary = report["summary"]
+    external_benchmark_total = summary.get("external_benchmark_total", summary.get("pyjhora_total", 0))
     return {
         "charts_tested": summary["charts_tested"],
         "comparable_rules": summary["comparable_rules"],
         "skill_total": summary["skill_total"],
-        "pyjhora_total": summary["pyjhora_total"],
+        "external_benchmark_total": external_benchmark_total,
         "agreements": summary["agreements"],
         "false_positives": summary["false_positives"],
         "false_negatives": summary["false_negatives"],
@@ -162,7 +163,11 @@ def build_skill_matrix(checks: dict[str, Any]) -> list[dict[str, str]]:
         {
             "area": "Dasha and timing",
             "local_status": "usable with boundary warning",
-            "accuracy_signal": "Local tests pass, but oracle evidence packets are 0 ready.",
+            "accuracy_signal": (
+                f"Local tests pass; external oracle packets ready "
+                f"{checks['dasha_shadbala_oracle_evidence']['ready_for_calibration']}/"
+                f"{checks['dasha_shadbala_oracle_evidence']['total_packets']}."
+            ),
             "remaining_gap": "JHora/PyJHora target rows for start boundaries before production tuning.",
         },
         {

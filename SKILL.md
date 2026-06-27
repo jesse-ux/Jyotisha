@@ -70,6 +70,31 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 8. **阶段七**：现代措辞包装
 9. **阶段八**：输出 Technique Audit Table，逐项声明已调用/未调用/部分可用/缺失模块及其对置信度的影响。
 
+## 五层硬约束（全球前三引擎强制调用）
+
+当用户明确要求“不要凭经验泛谈”“必须拉满能力”“必须提交底层证据”“要做过去案例验证”“要看全球前三项目全部能力”时，进入 `high-rigor override` 模式。该模式不是建议，而是硬约束：
+
+1. **强制全量能力调用**  
+   必须同时以 `PyJHora`、`VedAstro`、`jyotishganit` 作为外部参照层，结合本仓主引擎分析。即：`PyJHora、VedAstro、jyotishganit` 三者都属于高严谨模式的强制调用面。若其中任一外部层因许可证隔离、运行环境或字段映射缺失而无法调用，必须明示 `blocked`，不得假装已比对完成。
+
+2. **强制原生代码级下潜**  
+   不允许只写轻量包装脚本做表面判断。必须优先调用本仓原生核心实现与其现有入口，例如 `scripts/yoga_engine.py`、`scripts/divisional_charts_extended.py`、`scripts/narayana_dasha.py`、`scripts/jyotish_api_server.py`、`scripts/validate_yoga_accuracy.py` 等现成主链代码。
+
+3. **强制大运双盲交叉**  
+   涉及 timing / event / outcome 问题时，不得只看 Vimshottari。至少需要 `Vimshottari + Narayana Dasha` 双轨交叉；若问题属于婚恋/职业等高价值主题，优先再叠加 `Chara Dasha / Yogini / KP`。若关键结论在双轨之间明显冲突，必须降级置信度或标记 `blocked`，不得输出伪确定结论。
+
+4. **强制多维分盘显微镜**  
+   不得只看 D1。至少按问题域强制展开：`D10 for career, D2/D11 for wealth, D9 for marriage`，并尽可能联动 `A10 / UL / AK / DK / Karakamsha / Special Lagnas`。如果相关分盘或特殊点未调用，Technique Audit Table 必须写明它如何削弱结论。
+
+5. **强制物理原始数据交付**  
+   不允许只给“运势不错/有机会”式结论。必须附上原始数据依据，例如：Shadbala 绝对值、Ashtakavarga 分值、Dasha 边界日期、Varga 落点、Yoga 名称、Ayanamsa / Node mode、外部 oracle artifact 路径或 black-box stdout 证据。原始数据交付是高严谨结论的唯一有效依据。
+
+诚实边界：
+
+- 若 `PyJHora / VedAstro / jyotishganit` 中任何一层无法合法或稳定调用，必须明确说明缺口来源。
+- 若外部 oracle 尚未闭环，不得把内部一致性伪装成“全球第一级精度”。
+- 若用户问题只给出模糊数据，必须先降低结论等级，而不是脑补。
+
 ---
 
 ## ⚠️ 强制规则（与"不跳步"同级）
@@ -215,11 +240,12 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | **动态推运** | Vimshottari、Chara Dasha（KN Rao Method, covered）、KP、Double Transit、Varshaphala、替代Dasha | `vimshottari_dasha_guide.md` `dasa-convergence-methodology.md` `alternative-dasha-systems.md` |
 | **Jaimini静态层** | Chara Karaka、Karakamsha、A1-A12/UL、Graha Pada、Argala/Virodhargala、Special Lagnas（部分） | `jaimini-complete-system.md` `argala-complete-guide.md` `technique-capability-matrix.md` |
 | **关系占星** | Koota 36分、Mahendra/Stree Deergha/Vedha/Rajju、D9伴侣、DK、Mangal Dosha、Papasamya、配偶六层确认 | `spouse-multi-layer-methodology.md` `darakaraka-complete-guide.md` `relationship-astrology-guide.md` |
-| **出生时间矫正** | 八大方法、自动化流程、验证报告 | `birth-time-rectification-advanced.md` |
+| **出生时间矫正** | 八大方法、自动化流程、验证报告、分盘调用决策树 | `birth-time-rectification-advanced.md` `birth-time-rectification-decision-tree.md` |
 | **PDF读取** | JH/PL PDF全量提取、完整性门、交叉校验 | `pdf-chart-reading-guide.md` `data-bridge-mapping.md` |
 | **Prashna问事** | 十步断卦、AL、Sphuta、Sahams、失物查询 | `prashna-complete-guide.md` `single-event-inquiry-protocol.md` |
 | **多元技法** | Yogi/Ava Yogi、Tithi Lord、Rashi Tulya Navamsa、BCP、Bhrigu Pada、Pancha Pakshi、Tara Bala、Deha/Jeeva、Moolatrikona、Shodasavarga/Vimsopaka、Ashwini/Abhijit/Ketu星宿专题（需保留成熟度边界） | `yogi-avayogi-system.md` `yogi-asc-tight-orb-wealth-freeze-guide.md` `tithi-lord-relationship-system.md` `tithi-lord-freeze-execution-guide.md` `rtn-high-order-d9-freeze-execution-guide.md` `bhrigu-pada-all-event-freeze-execution-guide.md` `ashwini-abhijit-ketu-nakshatra-freeze-guide.md` `bhrigu-chakra-paddhati.md` `shodasavarga-complete-guide.md` `planetary-dignity-complete-reference.md` `alternative-dasha-systems.md` |
 | **精准方法论** | PACDARES框架、九层复合方法、L3矛盾检查、三级置信度 | `precision-reading-methodology.md` |
+| **解读质检** | 真实解读结构质检、参数冻结、分盘强制展开、oracle 诚信边界 | `real-reading-quality-checklist.md` |
 | **现代解读** | 现代措辞映射、现代生活场景、常见误判纠错 | `modern-language-guide.md` `common-misconceptions.md` |
 | **实战智慧** | ⭐反教条主义经验精华（全球占星师真实案例反馈总结） | `practitioner-wisdom-anti-dogma.md` |
 | **验证与错题** | 深度数据审计、技法缺陷与修复、推运反思、15+名人验证案例 | `audit-*` `lessons-learned-*` `verified-celebrity-cases-*` |

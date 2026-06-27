@@ -30,10 +30,12 @@ def test_local_accuracy_report_outputs_machine_readable_baseline():
     assert yoga["precision"] >= 0.9
     assert yoga["recall"] >= 0.9
     assert yoga["f1"] >= 0.9
+    assert yoga["external_benchmark_total"] >= yoga["agreements"]
 
     oracle = report["checks"]["dasha_shadbala_oracle_evidence"]
     assert oracle["production_tuning_allowed"] is False
-    assert oracle["valid_packets"] == 0
+    assert oracle["valid_packets"] >= 4
+    assert oracle["ready_for_calibration"] >= 4
 
     ashtakoot = report["checks"]["ashtakoot_synastry_engine"]
     assert ashtakoot["full_engine_parity"] is True

@@ -22,6 +22,7 @@ v6.9.12 修复：
 import math
 import sys
 import os
+import json
 from typing import Dict, Tuple
 
 # v6.1.10: 导入实际Varga计算器（支持脚本和包两种调用方式）
@@ -42,24 +43,40 @@ SIGN_LORDS = {
     'Sagittarius': 'Jupiter', 'Capricorn': 'Saturn', 'Aquarius': 'Saturn', 'Pisces': 'Jupiter'
 }
 
+SHADBALA_CONSTANTS_PATH = os.path.join(_script_dir, '..', 'references', 'shat_bala_constants.json')
+
+
+def _to_longitude(entry: Dict[str, float]) -> float:
+    return float(entry['sign']) * 30 + float(entry['degree'])
+
+
+def _load_shadbala_constants() -> Dict:
+    with open(SHADBALA_CONSTANTS_PATH, 'r', encoding='utf-8') as handle:
+        return json.load(handle)
+
+
+_SHADBALA_CONSTANTS = _load_shadbala_constants()
+
 # 入庙度数（sign_idx * 30 + degree）
 EXALTATION_DEG = {
-    'Sun': 10.0, 'Moon': 33.0, 'Mars': 298.0, 'Mercury': 165.0,
-    'Jupiter': 95.0, 'Venus': 357.0, 'Saturn': 200.0
+    planet: _to_longitude(entry)
+    for planet, entry in _SHADBALA_CONSTANTS['exaltation_degrees'].items()
 }
 
-# 落陷度数（入庙 + 180°）
-DEBILITATION_DEG = {p: (d + 180) % 360 for p, d in EXALTATION_DEG.items()}
+# 落陷度数（由参考 JSON 直接提供，避免隐式推导与外部真值漂移）
+DEBILITATION_DEG = {
+    planet: _to_longitude(entry)
+    for planet, entry in _SHADBALA_CONSTANTS['debilitation_degrees'].items()
+}
 
-# 行星友好/敌对关系
+# 行星友好/敌对关系（静态真值表）
 FRIENDSHIP = {
-    'Sun': {'friend': ['Moon', 'Mars', 'Jupiter'], 'enemy': ['Saturn', 'Venus'], 'neutral': ['Mercury']},
-    'Moon': {'friend': ['Sun', 'Mercury'], 'enemy': [], 'neutral': ['Mars', 'Jupiter', 'Venus', 'Saturn']},
-    'Mars': {'friend': ['Sun', 'Moon', 'Jupiter'], 'enemy': ['Mercury'], 'neutral': ['Venus', 'Saturn']},
-    'Mercury': {'friend': ['Sun', 'Venus'], 'enemy': ['Moon'], 'neutral': ['Mars', 'Jupiter', 'Saturn']},
-    'Jupiter': {'friend': ['Sun', 'Moon', 'Mars'], 'enemy': ['Mercury', 'Venus'], 'neutral': ['Saturn']},
-    'Venus': {'friend': ['Mercury', 'Saturn'], 'enemy': ['Sun', 'Moon'], 'neutral': ['Mars', 'Jupiter']},
-    'Saturn': {'friend': ['Mercury', 'Venus'], 'enemy': ['Sun', 'Moon', 'Mars'], 'neutral': ['Jupiter']},
+    planet: {
+        'friend': relation['friends'],
+        'enemy': relation['enemies'],
+        'neutral': relation['neutrals'],
+    }
+    for planet, relation in _SHADBALA_CONSTANTS['natural_relationships'].items()
 }
 
 # Dig Bala 最强宫位

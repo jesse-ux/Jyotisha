@@ -268,10 +268,37 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert "references/ai-reading-workflow-prompt.md" in prompt_pack["retrieval_plan"]["local_reference_docs"]
     assert prompt_pack["evidence_snapshot"]["ayanamsa"]["name"] == "raman"
     assert prompt_pack["evidence_snapshot"]["core"]["ascendant"]["sign"] == result["chart"]["ascendant"]["sign"]
+    timing = prompt_pack["evidence_snapshot"]["timing"]
+    assert timing["vimshottari"]["mahadasha"]
+    assert "narayana" in timing
+    assert isinstance(timing["convergence_top_domains"], list)
+    functional = prompt_pack["evidence_snapshot"]["functional_benefic_malefic"]
+    assert functional["status"] == "used"
+    assert functional["ascendant"] == result["chart"]["ascendant"]["sign"]
+    assert isinstance(functional["functional_benefics"], list)
+    assert isinstance(functional["functional_malefics"], list)
+    audit_table = prompt_pack["evidence_snapshot"]["technique_audit_table"]
+    assert isinstance(audit_table, list)
+    functional_rows = [row for row in audit_table if row["technique"] == "Functional Benefic/Malefic"]
+    assert functional_rows
+    assert functional_rows[0]["status"] == "used"
+    assert "高严谨" in functional_rows[0]["note"]
+    dasha_rows = [row for row in audit_table if row["technique"] == "Vimshottari + Narayana Cross-check"]
+    assert dasha_rows
+    assert dasha_rows[0]["status"] == "used"
+    assert "Narayana" in dasha_rows[0]["note"]
+    varga_rows = [row for row in audit_table if row["technique"] == "Relevant Vargas"]
+    assert varga_rows
+    assert varga_rows[0]["status"] == "used"
+    assert "D9" in varga_rows[0]["note"]
+    strength_rows = [row for row in audit_table if row["technique"] == "Strength Layers"]
+    assert strength_rows
+    assert strength_rows[0]["status"] == "used"
+    assert "Shadbala" in strength_rows[0]["note"]
     oracle_progress = prompt_pack["evidence_snapshot"]["oracle_progress"]
     assert oracle_progress["scope"] == "external_oracle_evidence_validation"
-    assert oracle_progress["valid_packets"] == 0
-    assert oracle_progress["ready_for_calibration"] == 0
+    assert oracle_progress["valid_packets"] >= 4
+    assert oracle_progress["ready_for_calibration"] >= 4
     assert oracle_progress["production_tuning_allowed"] is False
     assert oracle_progress["artifact_policy"] == "references/oracle/artifacts/"
     assert "external_verified" in oracle_progress["promotion_rule"]
