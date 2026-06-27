@@ -4,7 +4,9 @@ import json
 import os
 import subprocess
 import sys
+import threading
 from pathlib import Path
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -97,3 +99,102 @@ def test_vedastro_service_adapter_builds_request_preview_before_real_network_use
     assert report["request_preview"]["ayanamsa_policy"] == "lahiri"
     assert report["source_metadata"]["endpoint"] == "https://example.invalid/vedastro"
     assert report["source_metadata"]["provenance_mode"] == "external_service_candidate"
+
+
+def test_vedastro_service_adapter_can_normalize_mock_http_response() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            length = int(self.headers.get("Content-Length", "0"))
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            assert payload["year"] == 1990
+            response = {
+                "ayanamsa_value": 23.717413,
+                "node_policy": "mean",
+                "body_list": ["Sun", "Moon", "Ascendant", "Rahu", "Ketu"],
+                "bodies": {
+                    "Sun": {"sidereal_longitude": 256.757014, "sign": "Sagittarius"},
+                    "Moon": {"sidereal_longitude": 305.071255, "sign": "Aquarius"},
+                    "Ascendant": {"sidereal_longitude": 348.1199, "sign": "Pisces"},
+                    "Rahu": {"sidereal_longitude": 294.735223, "sign": "Capricorn"},
+                    "Ketu": {"sidereal_longitude": 114.735223, "sign": "Cancer"},
+                },
+                "source_metadata": {
+                    "service": "mock-vedastro",
+                    "version": "test",
+                },
+            }
+            body = json.dumps(response).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/vedastro"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        completed = subprocess.run(
+            [sys.executable, "scripts/vedastro_service_adapter.py", "--case", "beijing_first_use_demo"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["backend"] == "vedastro_service_adapter_candidate"
+    assert report["available"] is True
+    assert report["status"] == "ok"
+    assert report["ayanamsa_value"] == 23.717413
+    assert report["bodies"]["Sun"]["sign"] == "Sagittarius"
+    assert report["source_metadata"]["transport"] == "http_json_service_boundary"
+    assert report["source_metadata"]["endpoint"].startswith("http://127.0.0.1:")
+
+
+def test_vedastro_service_adapter_classifies_http_error() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            self.send_response(503)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/vedastro"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        completed = subprocess.run(
+            [sys.executable, "scripts/vedastro_service_adapter.py", "--case", "beijing_first_use_demo"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["status"] == "http_error"
+    assert "503" in report["reason"]

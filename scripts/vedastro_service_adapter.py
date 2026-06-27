@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from urllib import request, error
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -142,6 +143,26 @@ def _request_preview(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _normalize_success(payload: dict[str, Any], endpoint: str) -> dict[str, Any]:
+    return {
+        "backend": "vedastro_service_adapter_candidate",
+        "available": True,
+        "status": "ok",
+        "ayanamsa_value": payload.get("ayanamsa_value"),
+        "node_policy": payload.get("node_policy"),
+        "body_list": payload.get("body_list"),
+        "bodies": payload.get("bodies"),
+        "source_metadata": {
+            "transport": "http_json_service_boundary",
+            "endpoint": endpoint,
+            "provenance_mode": "external_service_candidate",
+            "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+            "retry_policy": RETRY_POLICY,
+            **(payload.get("source_metadata") or {}),
+        },
+    }
+
+
 def run_case(case_id: str) -> dict[str, Any]:
     if case_id not in PARITY_CASES:
         return {
@@ -173,21 +194,82 @@ def run_case(case_id: str) -> dict[str, Any]:
                 "network_execution_env": ALLOW_NETWORK_ENV,
             },
         }
-    return {
-        "backend": "vedastro_service_adapter_candidate",
-        "available": False,
-        "status": "service_execution_not_implemented",
-        "reason": "Endpoint is configured, but the real HTTP execution/normalization layer is intentionally not implemented yet.",
-        "request_preview": request_preview,
-        "source_metadata": {
-            "transport": "http_json_service_boundary",
-            "endpoint": endpoint,
-            "provenance_mode": "external_service_candidate",
-            "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
-            "retry_policy": RETRY_POLICY,
-            "network_execution_env": ALLOW_NETWORK_ENV,
-        },
-    }
+    try:
+        req = request.Request(
+            endpoint,
+            data=json.dumps(request_preview).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with request.urlopen(req, timeout=DEFAULT_TIMEOUT_SECONDS) as resp:
+            raw = resp.read().decode("utf-8")
+            payload = json.loads(raw)
+    except error.HTTPError as exc:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "http_error",
+            "reason": f"VedAstro adapter HTTP error: {exc.code}",
+            "request_preview": request_preview,
+            "source_metadata": {
+                "transport": "http_json_service_boundary",
+                "endpoint": endpoint,
+                "provenance_mode": "external_service_candidate",
+                "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+                "retry_policy": RETRY_POLICY,
+                "network_execution_env": ALLOW_NETWORK_ENV,
+            },
+        }
+    except error.URLError as exc:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "network_error",
+            "reason": f"VedAstro adapter network error: {exc.reason}",
+            "request_preview": request_preview,
+            "source_metadata": {
+                "transport": "http_json_service_boundary",
+                "endpoint": endpoint,
+                "provenance_mode": "external_service_candidate",
+                "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+                "retry_policy": RETRY_POLICY,
+                "network_execution_env": ALLOW_NETWORK_ENV,
+            },
+        }
+    except TimeoutError:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "timeout",
+            "reason": "VedAstro adapter timed out",
+            "request_preview": request_preview,
+            "source_metadata": {
+                "transport": "http_json_service_boundary",
+                "endpoint": endpoint,
+                "provenance_mode": "external_service_candidate",
+                "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+                "retry_policy": RETRY_POLICY,
+                "network_execution_env": ALLOW_NETWORK_ENV,
+            },
+        }
+    except json.JSONDecodeError:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "invalid_json",
+            "reason": "VedAstro adapter received non-JSON response",
+            "request_preview": request_preview,
+            "source_metadata": {
+                "transport": "http_json_service_boundary",
+                "endpoint": endpoint,
+                "provenance_mode": "external_service_candidate",
+                "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+                "retry_policy": RETRY_POLICY,
+                "network_execution_env": ALLOW_NETWORK_ENV,
+            },
+        }
+
+    return _normalize_success(payload, endpoint)
 
 
 def main() -> int:
