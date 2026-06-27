@@ -74,7 +74,7 @@ CELEBRITY_CHARTS = [
     {"name": "Paramahansa Yogananda", "date": "1893-01-05", "time": "20:38", "tz": "+05:30", "lat": 27.0360, "lon": 88.2627, "city": "Gorakhpur, India"},
 ]
 
-def compute_pyjhora_yogas(chart):
+def compute_external_benchmark_yogas(chart):
     try:
         result = subprocess.run(
             [PYJHORA, HELPER],
@@ -98,12 +98,12 @@ if __name__ == "__main__":
     }
     for chart in CELEBRITY_CHARTS:
         print(f"  Computing {chart['name']}...", flush=True)
-        yogas = compute_pyjhora_yogas(chart)
+        yogas = compute_external_benchmark_yogas(chart)
         entry = dict(chart)
         entry["expected_yogas"] = yogas.get("yogas", [])
         if "context" in yogas:
             entry["context"] = yogas["context"]
-        entry["pyjhora_raw"] = yogas
+        entry["external_benchmark_raw"] = yogas
         output["charts"].append(entry)
     with open(outpath, "w") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)

@@ -8,6 +8,7 @@ mkdir -p "$WB/references"
 mkdir -p "$WB/skills/jyotish-engine-modules"
 mkdir -p "$WB/skills/jyotish-full-reading-integration"
 
+cp "$ROOT/AGENTS.md" "$WB/AGENTS.md"
 cp "$ROOT/SKILL.md" "$WB/SKILL.md"
 cp "$ROOT/references/technique_registry.json" "$WB/references/technique_registry.json"
 cp "$ROOT/references/quick-reference-guide.md" "$WB/references/quick-reference-guide.md"

@@ -353,7 +353,7 @@ def main():
                     'chart': name,
                     'rule_id': rid,
                     'rule_name': rule_id_to_name.get(rid, '?'),
-                    'pyjhora_names': orig_names,
+                    'external_benchmark_names': orig_names,
                 })
 
     # ==== 输出报告 ====
@@ -404,8 +404,8 @@ def main():
             "charts_tested": 60,
             "comparable_rules": len(comparable_rule_ids),
             "skill_total": total_skill_comp,
-            "pyjhora_total": total_pyj_comp,
-            "unmapped_pyjhora": total_unmapped_pyj,
+            "external_benchmark_total": total_pyj_comp,
+            "unmapped_external_benchmark": total_unmapped_pyj,
             "missing_mappings": {k: v for k, v in sorted(missing_mappings.items())},
             "agreements": total_agreements,
             "false_positives": total_false_positives,

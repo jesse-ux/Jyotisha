@@ -460,3 +460,74 @@ Arudha Sphuta = Arudha Rashi + Lagna的度数（仅度数）
 | Tajika Yoga | `tajika-yoga-complete-guide.md` | Ithasala 等是/否判断 |
 | Tajika 年运盘 | `scripts/tajika.py` | Muntha/YearLord 等 |
 | Dasha 系统 | `alternative-dasha-systems.md` | 大运辅助验证 |
+
+## 附录 B：当前 skill 的 Prashna 落地流程
+
+> 这部分不是古典理论摘要，而是当前 skill 的实际使用方法。
+
+### B1. 当前已经具备的落地点
+
+当前 `prashna` 模块并不只是一个“问事按钮”，而是已经整合了：
+
+1. `KP Prashna answer`
+2. `KP answer v2`
+3. `KP Horary evidence`
+4. `Arudha`
+5. `Nadi Prashna`
+6. `Sphuta`
+7. `Sahams`
+8. `timing score`
+
+### B2. 当前推荐执行顺序
+
+对单一具体问题，建议按这个顺序读：
+
+1. **问题类型分类**
+   - career / relationship / finance / lost item / health / general
+2. **YES/NO 主结论**
+   - 先看 `kp_answer_v2`
+3. **Horary 证据层**
+   - `ruling_planets`
+   - `cuspal_sub_lord`
+   - `house_significators`
+   - `judgement_matrix`
+4. **镜像与心理层**
+   - `Arudha`
+   - `Nadi`
+5. **时机辅助层**
+   - `timing_score`
+   - `sphutas`
+   - `sahams`
+
+### B3. 当前真实边界
+
+当前 skill 中的 Prashna 已经能跑完整结果，但还不能夸张成“所有传统分支都完全封顶”。
+
+仍需保留的边界：
+
+1. 不同问事分支（事业、婚姻、失物、诉讼等）的传统裁决链成熟度不完全一样
+2. Horary evidence 已经有结构，但仍需更多真实外部案例来继续收紧命中率
+3. `Sphuta / Saham / timing_score` 属于辅助证据层，不应单独承担重大医学、法律、寿命结论
+
+### B4. 当前 skill 的安全使用原则
+
+- **适合：**
+  - 单一、当下、具体的问题
+  - yes/no 倾向
+  - 短期时机线索
+- **不适合：**
+  - 用一次问事替代完整本命盘
+  - 只凭 Prashna 决定重大人生事项
+  - 将死亡、重病、法律责任作绝对断言
+
+### B5. 与其他模块的正确关系
+
+当前 skill 中，Prashna 的最佳角色不是孤立系统，而是：
+
+1. 与出生盘 promise 交叉验证
+2. 与 Dasha / Transit 做时机交叉
+3. 与 KP significator / ruling planets 做细节仲裁
+
+换句话说：
+
+**Prashna 在当前 skill 里已经是强模块，但仍应作为“专项仲裁层”，而不是唯一裁判。**

@@ -2401,6 +2401,8 @@ async function runTrustCenterHealthCheck() {
       details: [
         ['PWA 安装壳', getPWAStatus().label, getPWAStatus().note],
         ['本地 API 服务', api.base || 'online', `health ok · v${api.version || '-'} · ${api.latencyMs}ms`],
+        ['Swiss Ephemeris', api.swisseph_available ? (api.swisseph_version || 'available') : 'unavailable', '当前本地 API 的星历运行时状态'],
+        ['Ayanamsa', api.ayanamsa_default || 'lahiri', '当前健康检查声明的默认 sidereal 基准'],
         ['Technique catalog', `${registry.technique_count || 0} techniques`, `${surfaces.api_endpoint_count || 0} API endpoints 可被前端发现`],
         ['Desktop path', 'PWA now', 'Pake shell 可快速包 URL；Tauri sidecar 等 API 生命周期和签名策略确定后再落地。'],
       ],

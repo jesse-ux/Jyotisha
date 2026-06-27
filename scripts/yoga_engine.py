@@ -1298,7 +1298,7 @@ class YogaEngine:
                 return False
             return offset(ctx.house_of(p), h) in (6, 3 if p == 'Mars' else -1, 7 if p == 'Mars' else -1, 4 if p == 'Jupiter' else -1, 8 if p == 'Jupiter' else -1, 2 if p == 'Saturn' else -1, 9 if p == 'Saturn' else -1)
 
-        def pyjhora_planets_aspecting_raasi(p, h):
+        def external_benchmark_planets_aspecting_raasi(p, h):
             """Replicate PyJHora house.planets_aspecting_the_raasi() behavior for source parity."""
             if p not in ctx.planets or h is None:
                 return False
@@ -1314,7 +1314,7 @@ class YogaEngine:
             ]
             return target_rasi_idx in planet_ids_in_aspected_signs
 
-        def pyjhora_aspected_planets_of_raasi(h):
+        def external_benchmark_aspected_planets_of_raasi(h):
             """Replicate PyJHora house.aspected_planets_of_the_raasi(): planets whose rasi drishti hits a target house."""
             if h is None:
                 return []
@@ -1431,7 +1431,7 @@ class YogaEngine:
             occupants = ctx.planets_in_house(target)
             return bool(occupants) and all(p in BENEFICS for p in occupants)
 
-        def pyjhora_natural_benefics():
+        def external_benchmark_natural_benefics():
             """Replicate PyJHora yoga._get_natural_benefics(): Jupiter, Venus, plus benefic Mercury."""
             benefics = [p for p in ["Jupiter", "Venus"] if p in ctx.planets]
             mercury_house = ctx.house_of("Mercury")
@@ -1492,8 +1492,8 @@ class YogaEngine:
             # v6.0.32: 同宫与相位检查（custom规则常用）
             "same_house": same_house, "aspect": aspect, "aspects_house": aspects_house,
             "graha_aspects_house": graha_aspects_house,
-            "pyjhora_planets_aspecting_raasi": pyjhora_planets_aspecting_raasi,
-            "pyjhora_aspected_planets_of_raasi": pyjhora_aspected_planets_of_raasi,
+            "external_benchmark_planets_aspecting_raasi": external_benchmark_planets_aspecting_raasi,
+            "external_benchmark_aspected_planets_of_raasi": external_benchmark_aspected_planets_of_raasi,
             "rasi_drishti_signs_from": rasi_drishti_signs_from,
             "rasi_aspects_house": rasi_aspects_house, "rasi_aspects": rasi_aspects,
             "rasi_aspected_by_planets": rasi_aspected_by_planets,
@@ -1503,7 +1503,7 @@ class YogaEngine:
             "only_malefics_in_house": only_malefics_in_house,
             "house_has_benefic": house_has_benefic, "house_has_malefic": house_has_malefic,
             "house_sign": house_sign, "movable_house": movable_house,
-            "pyjhora_natural_benefics": pyjhora_natural_benefics,
+            "external_benchmark_natural_benefics": external_benchmark_natural_benefics,
             "d9_house_of": d9_house_of, "d9_sign_of": d9_sign_of,
             "d9_lord_of_house": d9_lord_of_house, "navamsa_dispositor": navamsa_dispositor,
             "tithi": tithi, "is_waning_moon": is_waning_moon,

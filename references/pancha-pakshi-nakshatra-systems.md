@@ -235,4 +235,54 @@ Nakshatra 有三种不同的起始计数体系，各自对应不同的宇宙功�
 
 ---
 
+## 第五部分：在当前 skill 中如何执行
+
+> 这一节只回答：**Pancha Pakshi / Savya / Apasavya 在当前 skill 里到底怎么使用。**
+
+### 22. 当前已具备的能力
+
+| 能力 | 当前落点 | 当前状态 |
+|------|---------|---------|
+| Pancha Pakshi 鸟分配 | `scripts/pancha_pakshi.py` | 可直接计算 |
+| 5x5 活动矩阵 | `scripts/pancha_pakshi.py` | 可直接使用 |
+| 星期 Yama 偏移 | `scripts/pancha_pakshi.py` | 可直接使用 |
+| 活动建议 / 吉凶时段 | `scripts/pancha_pakshi.py` | 可直接使用 |
+| Savya / Apasavya 概念说明 | 本参考文件 | 有知识层 |
+
+### 23. 当前推荐角色
+
+在当前 skill 里，Pancha Pakshi 最适合的角色是：
+
+1. **日内择时辅助层**
+2. **活动时段偏好层**
+3. **和 Panchanga / Muhurta / Transit 交叉的补充层**
+
+它不适合单独承担：
+
+- 婚姻/事业重大承诺
+- 长期命运判断
+- 替代 Dasha / Transit / 本命盘
+
+### 24. 当前真实边界
+
+当前 skill 中已经能输出基础鸟态、活动矩阵、推荐/避开时段。
+
+但必须保留的边界：
+
+1. Tamil 传统细则仍不完整
+2. 地域化口径仍未完全闭环
+3. 与真实案例的长期外部验证仍不足
+4. 适合做“择时辅助”，不适合被包装成独立终极判断器
+
+### 25. 当前 skill 的推荐话术
+
+- 适合说：
+  - “Pancha Pakshi 显示这个时段更适合/不适合某类行动”
+  - “可把五鸟系统作为 Panchanga/Muhurta 的补充层”
+- 不适合直接说：
+  - “五鸟系统已经完成全部传统地区细则对齐”
+  - “单凭五鸟系统即可决定重大事项”
+
+---
+
 *本文件整合自公众号文章「2印度占星」和「3印度占星」，涵盖 Pancha Pakshi 五鸟择时术、Nakshatra 三种计数体系（Ashwinādi/Krittikādi/Ardrādi）、Savya/Apasavya Nakshatra 分组。*

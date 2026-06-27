@@ -26,6 +26,7 @@ from jyotish_engine import (
     EXALTATION, DEBILITATION, SIGN_LORDS, MOOLATRIKONA,
     DASHA_ORDER, DASHA_YEARS, NAKSHATRA_LIST, SIGNS,
 )
+from kalachakra_dasha import calculate_kalachakra_dasha
 
 
 class TestDignityLevel(unittest.TestCase):
@@ -52,10 +53,8 @@ class TestDignityLevel(unittest.TestCase):
         self.assertEqual(_get_dignity_level('Mars', 'Aries', 15.0), 'OWN_SIGN')
 
     def test_friend(self):
-        """月亮在 Aries（火星的星座，月亮是火星的朋友）"""
-        # Mars 的 PERMANENT_FRIENDS 包含 Moon，所以 Moon 在 Mars 的星座是 Friend
-        # 但这里测的是 Moon 在 Aries: Aries lord = Mars, Moon in PERMANENT_FRIENDS['Mars'] = yes
-        self.assertEqual(_get_dignity_level('Moon', 'Aries'), 'FRIEND')
+        """太阳在 Cancer（Sun 对 Moon 为友，且不触发更高优先级尊严）"""
+        self.assertEqual(_get_dignity_level('Sun', 'Cancer'), 'FRIEND')
 
     def test_enemy(self):
         """金星在 Aries（火星的星座，金星是火星的敌人 → 但实际看 Aries lord(Mars) 的朋友表里没有 Venus → 不是 Friend）
@@ -69,10 +68,8 @@ class TestDignityLevel(unittest.TestCase):
         self.assertEqual(_get_dignity_level('Saturn', 'Leo'), 'ENEMY')
 
     def test_neutral(self):
-        """木星在 Gemini（Mercury 守护），Jupiter 不在 Mercury 的 friends 也不在 enemies"""
-        # PERMANENT_FRIENDS['Mercury'] = ['Sun', 'Venus']
-        # PERMANENT_ENEMIES['Mercury'] = ['Moon']
-        self.assertEqual(_get_dignity_level('Jupiter', 'Gemini'), 'NEUTRAL')
+        """月亮在 Aries（Moon 对 Mars 既非友也非敌）"""
+        self.assertEqual(_get_dignity_level('Moon', 'Aries'), 'NEUTRAL')
 
     def test_all_exaltation_signs(self):
         """验证所有行星的入旺星座"""
@@ -223,6 +220,32 @@ class TestNakshatraMapping(unittest.TestCase):
         })()
         result = cmd_dasha(args)
         self.assertEqual(result['moon_nakshatra'], 'Jyeshtha')
+
+
+class TestKalachakraDasha(unittest.TestCase):
+    """测试 Kalachakra Dasha 简化集成状态"""
+
+    def test_kalachakra_reports_savya_mode(self):
+        result = calculate_kalachakra_dasha({
+            'moon_nakshatra_index': 0,
+            'moon_pada': 1,
+            'birth_datetime': datetime(1990, 6, 15, 10, 30),
+        })
+        self.assertEqual(result['mode'], 'savya')
+        self.assertEqual(result['starting_lord'], 'Ketu')
+        self.assertEqual(result['starting_rashi'], 'Capricorn')
+        self.assertTrue(result['current'])
+
+    def test_kalachakra_reports_apasavya_mode(self):
+        result = calculate_kalachakra_dasha({
+            'moon_nakshatra_index': 3,
+            'moon_pada': 2,
+            'birth_datetime': datetime(1985, 3, 20, 8, 0),
+        })
+        self.assertEqual(result['mode'], 'apasavya')
+        self.assertEqual(result['starting_lord'], 'Ketu')
+        self.assertTrue(result['current'])
+        self.assertGreater(result['total_cycle'], 0)
 
 
 class TestYogaDetection(unittest.TestCase):

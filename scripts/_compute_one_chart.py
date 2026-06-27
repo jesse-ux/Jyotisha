@@ -41,7 +41,7 @@ def tz_to_float(tz_str):
     minutes = int(parts[1]) if len(parts) > 1 else 0
     return sign * (hours + minutes / 60.0)
 
-def _planet_dict_from_pyjhora_positions(positions, asc_sign):
+def _planet_dict_from_external_benchmark_positions(positions, asc_sign):
     """Convert PyJHora planet positions to the skill validation schema."""
     names = {
         0: "Sun",
@@ -123,17 +123,17 @@ def compute_yogas(chart):
             "d1": {
                 "ascendant": SIGNS[d1_asc_sign],
                 "ascendant_degree": d1_asc_degree,
-                "planets": _planet_dict_from_pyjhora_positions(d1_positions, d1_asc_sign),
+                "planets": _planet_dict_from_external_benchmark_positions(d1_positions, d1_asc_sign),
             },
             "d9": {
                 "ascendant": SIGNS[d9_asc_sign],
                 "ascendant_degree": d9_asc_degree,
-                "planets": _planet_dict_from_pyjhora_positions(d9_positions, d9_asc_sign),
+                "planets": _planet_dict_from_external_benchmark_positions(d9_positions, d9_asc_sign),
             },
             "d60": {
                 "ascendant": SIGNS[d60_asc_sign],
                 "ascendant_degree": d60_asc_degree,
-                "planets": _planet_dict_from_pyjhora_positions(d60_positions, d60_asc_sign),
+                "planets": _planet_dict_from_external_benchmark_positions(d60_positions, d60_asc_sign),
             },
             "panchanga": {
                 "tithi": tithi_no,

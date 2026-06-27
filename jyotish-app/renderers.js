@@ -86,16 +86,17 @@ export function renderVargas(allV, planets, ascendant) {
   const selector = $('varga-selector');
   const order = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn','Rahu','Ketu'];
   // 渲染选择器
-  selector.innerHTML = VARGA_DEFS.map(v =>
-    `<button class="varga-btn${v.id === 'D9' ? ' active' : ''}" data-varga="${escapeAttr(v.id)}">${escapeHtml(v.id)} ${escapeHtml(v.cn)}</button>`
-  ).join('');
-  selector.querySelectorAll('.varga-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selector.querySelectorAll('.varga-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderSingleVarga(btn.dataset.varga, planets, ascendant);
+  selector.innerHTML = `
+    <select id="vargaSelect" class="varga-select" style="padding: 8px; border-radius: 6px; border: 1px solid var(--border-input); font-size: 14px; width: 100%; margin-bottom: 15px; background: var(--bg-card); color: var(--text-primary);">
+      ${VARGA_DEFS.map(v => `<option value="${escapeAttr(v.id)}" ${v.id === 'D9' ? 'selected' : ''}>${escapeHtml(v.id)} ${escapeHtml(v.cn)}</option>`).join('')}
+    </select>
+  `;
+  const selectEl = document.getElementById('vargaSelect');
+  if (selectEl) {
+    selectEl.addEventListener('change', (e) => {
+      renderSingleVarga(e.target.value, planets, ascendant);
     });
-  });
+  }
   renderSingleVarga('D9', planets, ascendant);
 }
 
@@ -233,9 +234,11 @@ export function renderShadbala(sb) {
 
 // ========== Dasha 三级 ==========
 export function renderDasha3Level(data) {
-  const container = $('dasha-timeline');
-  const currentEl = $('dasha-current');
+  const container = document.getElementById('dasha-timeline');
+  const currentEl = document.getElementById('dasha-current');
   container.innerHTML = '';
+  document.getElementById('antardasha-panel').innerHTML = '';
+  document.getElementById('pratyantardasha-panel').innerHTML = '';
 
   if (data.current_dasha) {
     const cd = data.current_dasha;
@@ -252,53 +255,43 @@ export function renderDasha3Level(data) {
     `;
   }
 
-  for (const d of data.timeline) {
-    const isCur = data.current_dasha && data.current_dasha.lord === d.lord;
-    const bar = document.createElement('div');
-    bar.className = `dasha-bar${isCur ? ' active' : ''}`;
-    bar.innerHTML = `<div class="dasha-planet">${escapeHtml(planetName(d.lord))}</div><div class="dasha-years">${escapeHtml(yearsLabel(d.years))}</div><div class="dasha-date">${escapeHtml(String(d.start || '').slice(2))}</div>`;
-    bar.addEventListener('click', () => {
-      container.querySelectorAll('.dasha-bar').forEach(b => b.classList.remove('selected'));
-      bar.classList.add('selected');
-      renderAntardashaPanel(d.antardasha || []);
-    });
-    container.appendChild(bar);
+  let html = '<div class="dasha-tree">';
+  for (const md of data.timeline) {
+    const isCurMd = data.current_dasha && data.current_dasha.lord === md.lord;
+    html += `<details class="dasha-node-md" ${isCurMd ? 'open' : ''} style="margin-bottom: 5px;">`;
+    html += `<summary style="padding: 10px; background: var(--bg-card); border: 1px solid var(--border-input); border-radius: 6px; cursor: pointer; font-weight: ${isCurMd ? 'bold' : 'normal'}; color: ${isCurMd ? 'var(--primary-color)' : 'inherit'};">`;
+    html += `${escapeHtml(planetName(md.lord))} (${escapeHtml(yearsLabel(md.years))}) : ${escapeHtml(String(md.start || '').slice(0, 10))} ~ ${escapeHtml(String(md.end || '').slice(0, 10))}`;
+    html += `</summary>`;
+    
+    if (md.antardasha && md.antardasha.length > 0) {
+      html += `<div style="padding-left: 15px; margin-top: 5px;">`;
+      for (const ad of md.antardasha) {
+        const isCurAd = isCurMd && ad.is_current;
+        html += `<details class="dasha-node-ad" ${isCurAd ? 'open' : ''} style="margin-bottom: 2px;">`;
+        html += `<summary style="padding: 5px 10px; font-size: 14px; cursor: pointer; color: ${isCurAd ? 'var(--primary-color)' : 'inherit'}; font-weight: ${isCurAd ? 'bold' : 'normal'};">`;
+        html += `${escapeHtml(planetName(ad.lord))} : ${escapeHtml(String(ad.start || '').slice(0, 10))} ~ ${escapeHtml(String(ad.end || '').slice(0, 10))}`;
+        html += `</summary>`;
+        
+        if (ad.pratyantardasha && ad.pratyantardasha.length > 0) {
+          html += `<div style="padding-left: 20px; font-size: 13px; color: var(--text-secondary); margin-bottom: 5px;">`;
+          for (const pd of ad.pratyantardasha) {
+             const isCurPd = isCurAd && pd.is_current;
+             html += `<div style="${isCurPd ? 'color: var(--primary-color); font-weight: bold;' : ''}">`;
+             html += `↳ ${escapeHtml(planetName(pd.lord))} : ${escapeHtml(String(pd.start || '').slice(0, 10))} ~ ${escapeHtml(String(pd.end || '').slice(0, 10))}`;
+             html += `</div>`;
+          }
+          html += `</div>`;
+        }
+        
+        html += `</details>`;
+      }
+      html += `</div>`;
+    }
+    
+    html += `</details>`;
   }
-
-  if (data.current_dasha?.antardasha) {
-    renderAntardashaPanel(data.current_dasha.antardasha);
-  }
-}
-
-function renderAntardashaPanel(subs) {
-  const panel = $('antardasha-panel');
-  panel.innerHTML = '';
-  for (const ad of subs) {
-    const div = document.createElement('div');
-    div.className = `antardasha-item${ad.is_current ? ' current' : ''}`;
-    div.innerHTML = `<div class="ad-planet">${escapeHtml(planetName(ad.lord))}${ad.is_current ? ' ◀' : ''}</div><div class="ad-date">${escapeHtml(String(ad.start || '').slice(5))}~${escapeHtml(String(ad.end || '').slice(5))}</div>`;
-    div.addEventListener('click', () => {
-      panel.querySelectorAll('.antardasha-item').forEach(i => i.classList.remove('selected'));
-      div.classList.add('selected');
-      renderPratyantardasha(ad.pratyantardasha || []);
-    });
-    panel.appendChild(div);
-  }
-  // 自动展开当前次运的三运
-  const cur = subs.find(s => s.is_current);
-  if (cur?.pratyantardasha) renderPratyantardasha(cur.pratyantardasha);
-}
-
-function renderPratyantardasha(pratyList) {
-  const panel = $('pratyantardasha-panel');
-  panel.innerHTML = `<h4>${t('dasha.praty')}</h4><div class="praty-grid"></div>`;
-  const grid = panel.querySelector('.praty-grid');
-  for (const p of pratyList) {
-    grid.innerHTML += `<div class="praty-item${p.is_current ? ' current' : ''}">
-      <div class="praty-planet">${escapeHtml(planetName(p.lord))}${p.is_current ? ' ◀' : ''}</div>
-      <div class="praty-date">${escapeHtml(String(p.start || '').slice(5))}~${escapeHtml(String(p.end || '').slice(5))}</div>
-    </div>`;
-  }
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 // ========== 行星表更新（含D9列） ==========

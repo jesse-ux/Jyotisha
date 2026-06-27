@@ -1,15 +1,40 @@
 ---
 name: jyotish-full-reading-integration
-description: 印度占星 full-reading 21步调用链集成方案（v4.4.0）
+description: 印度占星 full-reading 历史集成方案（供审计与迁移参考，当前真源以主 SKILL.md 与 registry 为准）
 version: 4.4.0
 author: 助手
 tags: [jyotish, integration, full-reading, karaka-jh-mode, jyotish-engine]
 related_skills: [jyotish-engine-modules, jyotish-vedic-astrology]
 ---
 
-# 印度占星 Full-Reading 21步调用链集成方案
+# 印度占星 Full-Reading 历史集成方案
 
-将 5 个新增模块（`special_lagnas` / `karaka_calculator` / `vimsopaka_calculator` / `avastha_calculator` / `divisional_charts_extended`）整合进 `jyotish_engine.py` 的 `full-reading` 调用链。
+本文档记录把 5 个模块整合进 `jyotish_engine.py` 的历史方案，主要用于审计、迁移和比对旧调用链。
+
+当前项目的唯一对外真源以以下文件为准：
+
+1. `/Users/wuyongnaren/Documents/印度占星/SKILL.md`
+2. `/Users/wuyongnaren/Documents/印度占星/references/technique_registry.json`
+3. `/Users/wuyongnaren/Documents/印度占星/references/strict-workflow-router.md`
+
+如果本文件与主 skill/registry 的成熟度、边界或步骤定义不一致，必须以后者为准。
+
+## 当前使用边界
+
+本文件的定位是：
+
+1. 记录 full-reading 历史调用链如何演进
+2. 方便审计旧版整合方案与迁移痕迹
+3. 帮助识别“哪些能力早已存在，只是后来入口或描述变化了”
+
+本文件**不是**当前 skill 精度闭环、成熟度分级或对标完成度的最终依据。
+
+## 判断原则（与主 skill 保持一致）
+
+1. 先判断当前主仓是否已经存在对应模块与执行链；若已存在，优先补入口、补边界、补解释层，不重复实现。
+2. 凡涉及 `covered` 与 `complete` 的区分，以主 skill 和 registry 为准，不得因为历史 full-reading 曾调用某模块，就推断该能力已经完全闭环。
+3. 凡涉及 MIT / Apache / BSD 资产，可继续作为合法复用来源；GPL / AGPL / 闭源方案只做黑盒 benchmark，不复制实现。
+4. 凡涉及 `Dasha`、`Shadbala`、`KP/Prashna`、`Tajika/Varshaphala/Sahams` 的传统软件级冻结，必须额外经过外部 oracle 或公开样本闭环。
 
 ## 核心变化
 

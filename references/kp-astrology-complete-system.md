@@ -212,6 +212,56 @@ KP占星术由K.S. Krishnamurti教授（1908-1972）创立，是对传统Parasha
 4. **不考虑否定宫位**：只看有利信号不看否定信号→假阳性
 5. **Ayanamsa用错**：必须用KP专属Ayanamsa，不是Lahiri
 
+## 九、在当前 skill 中如何执行
+
+> 这一节只回答一个问题：**KP 理论在当前 skill 里如何真正落地，而不是停留在概念层。**
+
+### 9.1 当前可直接调用的能力
+
+| 能力 | 当前入口 | 当前状态 |
+|------|---------|---------|
+| KP Sublord / SubSubLord | `kp` / `/api/kp` | 可直接使用 |
+| ABCD Significator | `kp` / `/api/kp` | 可直接使用 |
+| KP Prashna YES/NO | `prashna` / `/api/prashna` | 可直接使用 |
+| KP Horary evidence | `/api/prashna` | 可直接使用 |
+| Ruling planets | `/api/prashna -> kp_horary.ruling_planets` | 已有基础版，仍需继续补深 |
+
+### 9.2 建议执行顺序
+
+当用户问“会不会”“值不值得”“什么时候会落地”时，当前 skill 推荐按下面顺序执行：
+
+1. **先看出生盘承诺**
+   - relevant houses / lords / Dasha / Transit
+2. **再看 KP significator**
+   - `kp` 输出 ABCD significator
+3. **再看 Cuspal Sub-Lord**
+   - 问题主宫位的 sub-lord
+4. **最后用 KP Horary evidence 做仲裁**
+   - `ruling_planets`
+   - `cuspal_sub_lord`
+   - `house_significators`
+   - `judgement_matrix`
+
+### 9.3 当前不要夸大的地方
+
+当前 skill 的 KP 已经不是“只有表面按钮”，但也还没有达到“传统 KP 老师完整工作流”的终态。
+
+尤其要注意：
+
+1. `ruling planets` 已有基础结构，但 `day_lord` 等细化链条仍未完全厚化
+2. Horary workflow 已可运行，但不同问事类型的裁决链仍需更多外部案例收敛
+3. KP 结果适合做**精细仲裁层**，不应单独替代出生盘、本命 promise、Dasha 与现实信息
+
+### 9.4 当前 skill 中的推荐话术
+
+- 适合说：
+  - “KP 显示该问题有/无承诺倾向”
+  - “KP Horary 证据支持/削弱这个判断”
+  - “KP 更适合做 yes/no 与时机仲裁”
+- 不适合直接说：
+  - “KP 已完全等同传统专业软件级全部工作流”
+  - “单凭一次 Horary 就足够决定重大人生事项”
+
 ### 准确率基准
 - 熟练KP占星师的事件预测准确率：**70-85%**
 - 初学者准确率：**40-55%**

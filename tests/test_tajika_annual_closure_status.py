@@ -39,6 +39,9 @@ def test_tajika_annual_closure_status_identifies_first_annual_packet() -> None:
     assert report["summary"]["annual_task_count"] == 5
     assert report["summary"]["external_verified_annual_tasks"] == 1
     assert report["summary"]["can_claim_tajika_sahams_closure"] is False
+    from scripts import tajika_annual_closure_status as module
+    assert module.FIRST_PRIORITY_CASE_ID == "template_einstein_varshaphala_1905_lahiri"
+    assert module.FIRST_PRIORITY_TEMPLATE_PATH.endswith("external_template_einstein_varshaphala_1905_lahiri.json")
     assert report["first_priority"]["case_id"] == "template_einstein_varshaphala_1905_lahiri"
     assert report["first_priority"]["capture_id"] == "external_template_einstein_varshaphala_1905_lahiri"
     assert report["first_priority"]["required_target_fields"] == [

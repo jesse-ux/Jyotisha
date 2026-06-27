@@ -175,7 +175,7 @@ def skill_detect_yogas(planets, asc):
 # ============================================================
 # PyJhora 接口封装
 # ============================================================
-def init_pyjhora():
+def init_external_benchmark():
     """初始化 PyJhora，返回是否成功"""
     try:
         import jhora.horoscope.chart.yoga as py_yoga
@@ -188,13 +188,13 @@ def init_pyjhora():
         return False
 
 
-def pyjhora_jd(year, month, day, hour_frac):
+def external_benchmark_jd(year, month, day, hour_frac):
     """计算 Julian Day（与 PyJhora 一致）"""
     import swisseph as swe
     return swe.julday(year, month, day, hour_frac)
 
 
-def pyjhora_get_yogas(jd, lat, lon, tz, divisional_chart_factor=1):
+def external_benchmark_get_yogas(jd, lat, lon, tz, divisional_chart_factor=1):
     """
     调用 PyJhora 获取 D1 宫盘的 Yoga 检测结果。
     返回：{yoga_function_name: {"name": ..., "desc": ..., "benefits": ...}}
@@ -329,10 +329,10 @@ def _canonical_name(key: str) -> str:
     return CROSS_NAME_MAP.get(key, key)
 
 
-def get_pyjhora_yoga_keys(pyjhora_results: Dict[str, dict]) -> Set[str]:
+def get_external_benchmark_yoga_keys(external_benchmark_results: Dict[str, dict]) -> Set[str]:
     """从 PyJhora 检测结果中提取归一化名称集合"""
     keys = set()
-    for fname in pyjhora_results.keys():
+    for fname in external_benchmark_results.keys():
         # 去掉 _from_jd_place 等后缀
         base = re.sub(r"_(from_jd_place|from_planet_positions|calculation|calc)$",
                       "", fname)
@@ -347,7 +347,7 @@ def get_pyjhora_yoga_keys(pyjhora_results: Dict[str, dict]) -> Set[str]:
 # ============================================================
 # 核心验证逻辑
 # ============================================================
-def validate_one_case(case: dict, run_pyjhora: bool = True) -> dict:
+def validate_one_case(case: dict, run_external_benchmark: bool = True) -> dict:
     """
     验证单个测试用例。
 
@@ -363,10 +363,10 @@ def validate_one_case(case: dict, run_pyjhora: bool = True) -> dict:
         "birth": f"{case['year']}-{case['month']:02d}-{case['day']:02d} "
                 f"{case.get('hour', 12):02d}:{case.get('minute', 0):02d}",
         "skill_yogas": [],
-        "pyjhora_yogas": [],
+        "external_benchmark_yogas": [],
         "matched": [],
         "skill_only": [],   # false positive
-        "pyjhora_only": [], # false negative
+        "external_benchmark_only": [], # false negative
         "error": None,
     }
 
@@ -399,16 +399,16 @@ def validate_one_case(case: dict, run_pyjhora: bool = True) -> dict:
         return result
 
     # --- PyJhora 检测 ---
-    if run_pyjhora:
+    if run_external_benchmark:
         try:
-            jd_py = pyjhora_jd(year, month, day, hour + minute / 60.0)
-            pyjhora_results = pyjhora_get_yogas(jd_py, lat, lon, tz,
+            jd_py = external_benchmark_jd(year, month, day, hour + minute / 60.0)
+            external_benchmark_results = external_benchmark_get_yogas(jd_py, lat, lon, tz,
                                                  divisional_chart_factor=1)
-            result['pyjhora_yogas'] = list(pyjhora_results.keys())
-            result['pyjhora_count'] = len(pyjhora_results)
-            result['pyjhora_details'] = []
-            for fname, details in pyjhora_results.items():
-                result['pyjhora_details'].append({
+            result['external_benchmark_yogas'] = list(external_benchmark_results.keys())
+            result['external_benchmark_count'] = len(external_benchmark_results)
+            result['external_benchmark_details'] = []
+            for fname, details in external_benchmark_results.items():
+                result['external_benchmark_details'].append({
                     'function': fname,
                     'name': details.get('name', ''),
                     'desc': details.get('desc', ''),
@@ -419,11 +419,11 @@ def validate_one_case(case: dict, run_pyjhora: bool = True) -> dict:
 
         # --- 对比 ---
         skill_keys = get_skill_yoga_keys(skill_yogas)
-        pyjhora_keys = get_pyjhora_yoga_keys(pyjhora_results)
+        external_benchmark_keys = get_external_benchmark_yoga_keys(external_benchmark_results)
 
-        result['matched'] = sorted(skill_keys & pyjhora_keys)
-        result['skill_only'] = sorted(skill_keys - pyjhora_keys)
-        result['pyjhora_only'] = sorted(pyjhora_keys - skill_keys)
+        result['matched'] = sorted(skill_keys & external_benchmark_keys)
+        result['skill_only'] = sorted(skill_keys - external_benchmark_keys)
+        result['external_benchmark_only'] = sorted(external_benchmark_keys - skill_keys)
 
         # --- 分类：功能性 Yoga vs 经典 Yoga ---
         cat_map = get_skill_rule_categories()
@@ -439,17 +439,17 @@ def validate_one_case(case: dict, run_pyjhora: bool = True) -> dict:
     return result
 
 
-def run_validation(cases: List[dict], run_pyjhora: bool = True) -> dict:
+def run_validation(cases: List[dict], run_external_benchmark: bool = True) -> dict:
     """运行批量验证"""
     report = {
         "total_cases": len(cases),
         "cases": [],
         "summary": {
             "total_skill_yogas": 0,
-            "total_pyjhora_yogas": 0,
+            "total_external_benchmark_yogas": 0,
             "total_matched": 0,
             "total_skill_only": 0,
-            "total_pyjhora_only": 0,
+            "total_external_benchmark_only": 0,
             "total_skill_only_functional": 0,
             "total_skill_only_classic": 0,
         }
@@ -458,7 +458,7 @@ def run_validation(cases: List[dict], run_pyjhora: bool = True) -> dict:
     for case in cases:
         name = case.get('name', 'unknown')
         print(f"🔍 验证: {name} ({case['year']}-{case['month']:02d}-{case['day']:02d})")
-        r = validate_one_case(case, run_pyjhora=run_pyjhora)
+        r = validate_one_case(case, run_external_benchmark=run_external_benchmark)
         report['cases'].append(r)
 
         if r['error']:
@@ -466,21 +466,21 @@ def run_validation(cases: List[dict], run_pyjhora: bool = True) -> dict:
             continue
 
         sc = r.get('skill_count', 0)
-        pc = r.get('pyjhora_count', '?')
+        pc = r.get('external_benchmark_count', '?')
         func_n = len(r.get('skill_only_functional', []))
         classic_n = len(r.get('skill_only_classic', []))
         print(f"   Skill: {sc} | PyJhora: {pc}")
         print(f"   匹配: {len(r['matched'])} | "
               f"Skill独有: {len(r['skill_only'])} (功能性{func_n}, 经典{classic_n}) | "
-              f"PyJhora独有: {len(r['pyjhora_only'])}")
+              f"PyJhora独有: {len(r['external_benchmark_only'])}")
 
         report['summary']['total_skill_yogas'] += sc
         if isinstance(pc, int):
-            report['summary']['total_pyjhora_yogas'] += pc
+            report['summary']['total_external_benchmark_yogas'] += pc
         report['summary']['total_matched'] += len(r['matched'])
         report['summary']['total_skill_only'] += len(r['skill_only'])
         if isinstance(pc, int):
-            report['summary']['total_pyjhora_only'] += len(r['pyjhora_only'])
+            report['summary']['total_external_benchmark_only'] += len(r['external_benchmark_only'])
         report['summary']['total_skill_only_functional'] += func_n
         report['summary']['total_skill_only_classic'] += classic_n
 
@@ -535,27 +535,27 @@ def print_report(report: dict):
 
     summary = report['summary']
     total_skill = summary['total_skill_yogas']
-    total_pyjhora = summary['total_pyjhora_yogas']
+    total_external_benchmark = summary['total_external_benchmark_yogas']
     matched = summary['total_matched']
     skill_only = summary['total_skill_only']
-    pyjhora_only = summary['total_pyjhora_only']
+    external_benchmark_only = summary['total_external_benchmark_only']
     func_only = summary.get('total_skill_only_functional', 0)
     classic_only = summary.get('total_skill_only_classic', 0)
 
     print(f"\n📊 汇总:")
     print(f"  测试用例数: {report['total_cases']}")
     print(f"  Skill 检测总数: {total_skill}")
-    print(f"  PyJhora 检测总数: {total_pyjhora}")
+    print(f"  PyJhora 检测总数: {total_external_benchmark}")
     print(f"  匹配总数: {matched}")
     print(f"  Skill 独有: {skill_only} (功能性{func_only}, 经典{classic_only})")
-    print(f"  PyJhora 独有 (skill 缺失): {pyjhora_only}")
+    print(f"  PyJhora 独有 (skill 缺失): {external_benchmark_only}")
 
     if total_skill > 0:
         precision = matched / total_skill * 100
         print(f"\n  总体精确率 (Precision): {precision:.1f}%")
 
-    if total_pyjhora > 0:
-        recall = matched / total_pyjhora * 100
+    if total_external_benchmark > 0:
+        recall = matched / total_external_benchmark * 100
         print(f"  总体召回率 (Recall): {recall:.1f}%")
 
     # --- 核心经典 Yoga 准确率（排除 skill 特色功能性 Yoga）---
@@ -564,21 +564,21 @@ def print_report(report: dict):
         classic_precision = matched / classic_skill_total * 100
         print(f"\n  🎯 核心经典 Yoga 精确率: {classic_precision:.1f}%")
         print(f"     (排除 {func_only} 条功能性 Yoga 后: {matched}/{classic_skill_total})")
-    if total_pyjhora > 0:
-        classic_recall = matched / total_pyjhora * 100
+    if total_external_benchmark > 0:
+        classic_recall = matched / total_external_benchmark * 100
         print(f"  🎯 核心经典 Yoga 召回率: {classic_recall:.1f}%")
 
     # --- 全局不匹配统计 ---
     print(f"\n🔍 全局不匹配分析:")
     all_skill_classic = set()
     all_skill_func = set()
-    all_pyjhora_missing = set()
+    all_external_benchmark_missing = set()
     for r in report['cases']:
         if r.get('error'):
             continue
         all_skill_classic.update(r.get('skill_only_classic', []))
         all_skill_func.update(r.get('skill_only_functional', []))
-        all_pyjhora_missing.update(r.get('pyjhora_only', []))
+        all_external_benchmark_missing.update(r.get('external_benchmark_only', []))
 
     print(f"  Skill 经典 Yoga 不匹配（可能误判）: {len(all_skill_classic)} 种")
     if all_skill_classic:
@@ -586,9 +586,9 @@ def print_report(report: dict):
     print(f"  Skill 功能性 Yoga（PyJhora 无对应，属 skill 特色）: {len(all_skill_func)} 种")
     if all_skill_func:
         print(f"     {sorted(all_skill_func)[:15]}")
-    print(f"  PyJhora 有但 Skill 缺失的 Yoga: {len(all_pyjhora_missing)} 种")
-    if all_pyjhora_missing:
-        print(f"     {sorted(all_pyjhora_missing)[:15]}")
+    print(f"  PyJhora 有但 Skill 缺失的 Yoga: {len(all_external_benchmark_missing)} 种")
+    if all_external_benchmark_missing:
+        print(f"     {sorted(all_external_benchmark_missing)[:15]}")
 
     # --- 改进建议 ---
     print(f"\n💡 改进建议:")
@@ -599,13 +599,13 @@ def print_report(report: dict):
     if len(all_skill_classic) > 10:
         print(f"     ... 等共 {len(all_skill_classic)} 种")
 
-    missing_top = sorted(all_pyjhora_missing)[:20]
-    print(f"\n  2. 【规则补齐】以下 {len(all_pyjhora_missing)} 种 Yoga PyJhora 已实现但 skill 缺失，")
+    missing_top = sorted(all_external_benchmark_missing)[:20]
+    print(f"\n  2. 【规则补齐】以下 {len(all_external_benchmark_missing)} 种 Yoga PyJhora 已实现但 skill 缺失，")
     print(f"     建议按优先级补充（推荐先补充高频出现的）:")
     for name in missing_top[:15]:
         print(f"     - {name}")
-    if len(all_pyjhora_missing) > 15:
-        print(f"     ... 等共 {len(all_pyjhora_missing)} 种")
+    if len(all_external_benchmark_missing) > 15:
+        print(f"     ... 等共 {len(all_external_benchmark_missing)} 种")
 
     print(f"\n  3. 【名称映射】当前 CROSS_NAME_MAP 已覆盖常见别名，")
     print(f"     如仍有新别名发现，请添加到映射表中。")
@@ -617,20 +617,20 @@ def print_report(report: dict):
             print(f"    ❌ {r['error'][:300]}")
             continue
         sc = r.get('skill_count', 0)
-        pc = r.get('pyjhora_count', '?')
+        pc = r.get('external_benchmark_count', '?')
         print(f"    Skill ({sc}): {r['skill_yogas'][:5]}{'...' if len(r['skill_yogas']) > 5 else ''}")
-        if 'pyjhora_yogas' in r:
-            print(f"    PyJhora ({pc}): {r['pyjhora_yogas'][:5]}{'...' if len(r['pyjhora_yogas']) > 5 else ''}")
+        if 'external_benchmark_yogas' in r:
+            print(f"    PyJhora ({pc}): {r['external_benchmark_yogas'][:5]}{'...' if len(r['external_benchmark_yogas']) > 5 else ''}")
         func_n = len(r.get('skill_only_functional', []))
         cls_n = len(r.get('skill_only_classic', []))
-        print(f"    匹配: {len(r['matched'])} | Skill独有: {len(r['skill_only'])}(功能{func_n},经典{cls_n}) | PyJhora独有: {len(r['pyjhora_only'])}")
+        print(f"    匹配: {len(r['matched'])} | Skill独有: {len(r['skill_only'])}(功能{func_n},经典{cls_n}) | PyJhora独有: {len(r['external_benchmark_only'])}")
 
         if r.get('skill_only_classic'):
             print(f"    Skill 经典不匹配: {r['skill_only_classic'][:10]}")
         if r.get('skill_only_functional'):
             print(f"    Skill 功能性: {r['skill_only_functional'][:10]}")
-        if r.get('pyjhora_only'):
-            print(f"    PyJhora 独有: {r['pyjhora_only'][:10]}")
+        if r.get('external_benchmark_only'):
+            print(f"    PyJhora 独有: {r['external_benchmark_only'][:10]}")
 
 
 def save_report(report: dict, output_file: str):
@@ -653,8 +653,8 @@ def main():
     args = parser.parse_args()
 
     # 检查 PyJhora
-    if not args.skip_pyjhora:
-        if not init_pyjhora():
+    if not args.skip_external_benchmark:
+        if not init_external_benchmark():
             print("❌ PyJhora 不可用，请先安装: pip install pyjhora swisseph")
             print("   提示：也可用 --skip-pyjhora 只测试 skill 侧")
             return 1
@@ -672,7 +672,7 @@ def main():
         return 1
 
     # 运行验证
-    report = run_validation(cases, run_pyjhora=not args.skip_pyjhora)
+    report = run_validation(cases, run_external_benchmark=not args.skip_external_benchmark)
 
     # 输出报告
     print_report(report)

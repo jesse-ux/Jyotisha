@@ -101,8 +101,8 @@ def extract_skill_names(rules: list[dict]) -> tuple[set[str], dict[str, list[str
     return keys, reverse
 
 
-def extract_pyjhora_names(pyjhora_yoga_file: Path) -> set[str]:
-    content = pyjhora_yoga_file.read_text(encoding="utf-8", errors="ignore")
+def extract_external_benchmark_names(external_benchmark_yoga_file: Path) -> set[str]:
+    content = external_benchmark_yoga_file.read_text(encoding="utf-8", errors="ignore")
     funcs = re.findall(r"^def ([a-zA-Z_][a-zA-Z0-9_]*)\(", content, re.MULTILINE)
     names: set[str] = set()
     for fn in funcs:
@@ -126,7 +126,7 @@ def extract_pyjhora_names(pyjhora_yoga_file: Path) -> set[str]:
     return names
 
 
-def find_pyjhora_yoga_file(explicit: str | None = None) -> Path | None:
+def find_external_benchmark_yoga_file(explicit: str | None = None) -> Path | None:
     if explicit:
         p = Path(explicit).expanduser().resolve()
         return p if p.exists() else None
@@ -176,12 +176,12 @@ def main() -> int:
 
     skill_keys, skill_reverse = extract_skill_names(rules)
 
-    pyjhora_file = find_pyjhora_yoga_file(args.pyjhora_yoga_file)
+    external_benchmark_file = find_external_benchmark_yoga_file(args.external_benchmark_yoga_file)
     py_names: set[str] = set()
     missing: list[str] = []
     coverage_pct = None
-    if pyjhora_file:
-        py_names = extract_pyjhora_names(pyjhora_file)
+    if external_benchmark_file:
+        py_names = extract_external_benchmark_names(external_benchmark_file)
         missing = sorted([name for name in py_names if not covered(name, skill_keys)])
         coverage_pct = round((len(py_names) - len(missing)) / len(py_names) * 100, 2) if py_names else None
 
@@ -197,11 +197,11 @@ def main() -> int:
         "categories": dict(categories.most_common()),
         "strength_values": dict(strength_values),
         "skill_normalized_name_keys": len(skill_keys),
-        "pyjhora_yoga_file": str(pyjhora_file) if pyjhora_file else None,
-        "pyjhora_unique_yoga_names": len(py_names) if pyjhora_file else None,
-        "matched_unique_yoga_names": (len(py_names) - len(missing)) if pyjhora_file else None,
+        "external_benchmark_yoga_file": str(external_benchmark_file) if external_benchmark_file else None,
+        "external_benchmark_unique_yoga_names": len(py_names) if external_benchmark_file else None,
+        "matched_unique_yoga_names": (len(py_names) - len(missing)) if external_benchmark_file else None,
         "coverage_pct": coverage_pct,
-        "missing_count": len(missing) if pyjhora_file else None,
+        "missing_count": len(missing) if external_benchmark_file else None,
         "missing": missing,
     }
 
@@ -221,11 +221,11 @@ def main() -> int:
         print(f"  {cat:16s} {count:3d}")
 
     print("\nPyJHora 对比:")
-    if not pyjhora_file:
+    if not external_benchmark_file:
         print("  未找到 PyJHora yoga.py；仅完成本地 JSON 统计。")
         print("  可用 --pyjhora-yoga-file 指定路径。")
     else:
-        print(f"  yoga.py: {pyjhora_file}")
+        print(f"  yoga.py: {external_benchmark_file}")
         print(f"  PyJHora 唯一 Yoga 名称: {len(py_names)}")
         print(f"  已匹配: {len(py_names) - len(missing)}")
         print(f"  疑似缺失: {len(missing)}")

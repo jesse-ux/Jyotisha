@@ -1,17 +1,42 @@
 ---
 name: jyotish-engine-modules
-description: 印度占星排盘引擎缺失模块完整代码（5个核心模块）
+description: 印度占星排盘引擎历史模块集成说明（供审计与迁移参考，当前真源以主 SKILL.md 与 registry 为准）
 version: 1.0.0
 author: 助手
 tags: [jyotish, vedic-astrology, calculation-engine, karaka, special-lagnas, vimsopaka, avastha, divisional-charts]
 related_skills: [jyotish-full-reading-integration, jyotish-vedic-astrology]
 ---
 
-# 印度占星排盘引擎缺失模块
+# 印度占星排盘引擎历史模块说明
 
-本skill包含5个核心计算模块的完整Python代码，用于补充GitHub仓库 `yinduzhanxing` 的排盘引擎。
+本 skill 记录了 5 个核心计算模块的历史集成背景，主要用于审计、迁移和对照旧工作流。
 
-## 模块清单
+当前项目的唯一对外真源以以下文件为准：
+
+1. `/Users/wuyongnaren/Documents/印度占星/SKILL.md`
+2. `/Users/wuyongnaren/Documents/印度占星/references/technique_registry.json`
+3. `/Users/wuyongnaren/Documents/印度占星/references/strict-workflow-router.md`
+
+本文件不得单独作为“当前能力完整性”依据；若与主 skill 描述冲突，以主 skill 与 registry 为准。
+
+## 当前使用边界
+
+本文件的定位是：
+
+1. 说明历史模块曾如何并入主仓
+2. 便于审计、迁移、回收旧碎片
+3. 为“是否已有实现可复用”提供线索
+
+本文件**不是**当前 skill 完成度、成熟度或精度闭环的直接依据。
+
+## 判断原则（与主 skill 保持一致）
+
+1. 若主仓 `scripts/`、`references/`、`skills/` 已有主体实现，优先判断为“补成熟度/补入口”，不要在旧模块层面重写。
+2. 若外部来源是 MIT / Apache / BSD，可优先考虑复用结构、常数、映射与文档资产；GPL / AGPL / 闭源仅允许黑盒对照。
+3. 涉及 `Dasha` 精确边界、`Shadbala` 绝对值、传统软件口径冻结时，必须以外部 oracle 闭环为准，不能仅凭历史模块说明认定“已完成”。
+4. 若本文件的历史调用链与主仓当前真相源不一致，以主仓真相源为准，不沿用旧版本表述。
+
+## 历史模块清单
 
 1. **karaka_calculator.py** - Karaka分配计算器（支持BPHS/JH兼容模式）
 2. **special_lagnas.py** - 特殊上升点计算（Bhava/Hora/Ghati Lagna等）
@@ -145,7 +170,7 @@ from avastha_calculator import AvasthaCalculator
 from divisional_charts_extended import DivisionalChartsCalculator
 ```
 
-> **注意**：这 5 个模块已整合到主仓库的 `scripts/` 目录中，与引擎一起维护。本 Skill 的 `scripts/` 副本仅作为独立分发包。
+> **注意**：这 5 个模块现已并入主仓库维护。本 Skill 的 `scripts/` 副本只作为历史分发包/迁移参考，不代表当前能力边界。
 > **AI Native 注意**：主仓库 `full-reading` 与 `/api/chart` 已输出 `ai_prompt_pack` 和 Ayanamsa 元数据；独立分发时若调用主引擎，应优先消费这些字段作为解读上下文，不要在 Raman/KP 等非 Lahiri 设置下硬编码默认口径。
 
 ## 验证测试
