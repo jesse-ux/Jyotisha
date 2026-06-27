@@ -93,9 +93,9 @@ def test_first_oracle_packet_assistant_reports_tajika_front() -> None:
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
     assert report["front"] == "tajika_sahams"
-    assert report["case_id"] == "template_steve_jobs_varshaphala_1984_lahiri"
-    assert report["operator_card"].endswith("tajika_steve_jobs_1984_first_packet_operator_card.md")
-    assert report["packet_template"].endswith("tajika_steve_jobs_1984_first_packet.json")
+    assert report["case_id"] == "template_einstein_varshaphala_1905_lahiri"
+    assert report["operator_card"].endswith("tajika_einstein_1905_first_packet_operator_card.md")
+    assert report["packet_template"].endswith("external_template_einstein_varshaphala_1905_lahiri.json")
     assert report["missing_groups"]["metadata"]["count"] == 5
     assert report["missing_groups"]["target"]["count"] == 10
     assert report["manual_fill_plan"]["manual_entry_count"] == 15

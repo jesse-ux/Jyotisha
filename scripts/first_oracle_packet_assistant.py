@@ -41,8 +41,8 @@ FRONTS = {
             "--format",
             "json",
         ],
-        "operator_card": "docs/benchmark/tajika_steve_jobs_1984_first_packet_operator_card.md",
-        "packet_template": "references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json",
+        "operator_card": "docs/benchmark/tajika_einstein_1905_first_packet_operator_card.md",
+        "packet_template": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
         "external_sources": [
             "JHora Varshaphala/Tajika annual chart screen",
             "PyJHora black-box annual output",
@@ -173,10 +173,17 @@ def build_report(front: str) -> dict[str, Any]:
         raise RuntimeError(f"Unsupported front: {front}")
     config = FRONTS[front]
     status = _run_json(config["status_command"])
-    first = status["first_priority"]
+    packet = json.loads((ROOT / config["packet_template"]).read_text(encoding="utf-8"))
+    first = status.get("first_priority") or {
+        "case_id": packet.get("case_id"),
+        "capture_id": packet.get("capture_id"),
+        "apply_command": "",
+        "validate_command": "",
+        "packet_path": config["packet_template"],
+    }
     packet_missing = _packet_missing(config["packet_template"])
     missing_groups = _group_missing_fields(packet_missing)
-    packet = json.loads((ROOT / config["packet_template"]).read_text(encoding="utf-8"))
+    apply_command = first["apply_command"].replace(first["packet_path"], config["packet_template"]) if first.get("apply_command") else ""
     return {
         "scope": "first_external_oracle_packet_assistant",
         "schema_version": 1,
@@ -191,8 +198,8 @@ def build_report(front: str) -> dict[str, Any]:
         "manual_fill_plan": _manual_fill_plan(packet, packet_missing),
         "ready_to_apply": not packet_missing,
         "external_sources": config["external_sources"],
-        "apply_command": first["apply_command"].replace(first["packet_path"], config["packet_template"]),
-        "validate_command": first["validate_command"],
+        "apply_command": apply_command,
+        "validate_command": first.get("validate_command", ""),
         "boundary": (
             "This assistant only reports what to fill. It must not invent external oracle values, "
             "must not use local engine output as evidence, and must not copy incompatible external code."

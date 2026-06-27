@@ -46,7 +46,7 @@ def test_generate_blank_oracle_writes_first_packet_kit(tmp_path: Path) -> None:
     assert manifest_data["fronts"]["shadbala"]["missing_field_count"] == 55
 
     dasha_packet = tmp_path / "dasha" / "external_template_steve_jobs_dasha_lahiri.json"
-    tajika_packet = tmp_path / "tajika_sahams" / "external_template_steve_jobs_varshaphala_1984_lahiri.json"
+    tajika_packet = tmp_path / "tajika_sahams" / "external_template_einstein_varshaphala_1905_lahiri.json"
     shadbala_packet = tmp_path / "shadbala" / "external_template_redacted_place_shadbala_raman.json"
     assert dasha_packet.exists()
     assert tajika_packet.exists()
