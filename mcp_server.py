@@ -115,11 +115,18 @@ def _derive_wealth_promise_strength(modules: Dict[str, Any]) -> Optional[Dict[st
     if not isinstance(yogas, list) or not yogas:
         return None
 
-    strengths = [
-        str(row.get("strength", "")).lower()
-        for row in yogas
-        if isinstance(row, dict)
-    ]
+    strengths = []
+    sources = set()
+    for row in yogas:
+        if not isinstance(row, dict):
+            continue
+        strengths.append(str(row.get("strength", "")).lower())
+        row_type = str(row.get("type", "")).lower()
+        if "lakshmi" in row_type:
+            sources.add("lakshmi")
+        elif "dhana" in row_type:
+            sources.add("dhana")
+
     if any(level == "strong" for level in strengths):
         level = "strong"
     elif any(level == "moderate" for level in strengths):
@@ -127,10 +134,14 @@ def _derive_wealth_promise_strength(modules: Dict[str, Any]) -> Optional[Dict[st
     else:
         level = "weak"
 
+    supporting_sources = sorted(sources) or ["dhana"]
+    primary_source = "dhana_lakshmi_hooks" if len(supporting_sources) > 1 else "dhana_yogas"
     return {
         "level": level,
-        "source": "dhana_yogas",
+        "primary_source": primary_source,
+        "supporting_sources": supporting_sources,
         "count": len(yogas),
+        "source_diversity": len(supporting_sources),
     }
 
 

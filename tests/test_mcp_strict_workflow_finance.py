@@ -113,9 +113,48 @@ def test_collect_strict_evidence_finance_derives_wealth_promise_from_dhana_yogas
     present = strict["present_evidence"]
     assert present["wealth_promise_strength"] == {
         "level": "strong",
-        "source": "dhana_yogas",
+        "primary_source": "dhana_yogas",
         "count": 2,
+        "source_diversity": 1,
+        "supporting_sources": ["dhana"],
     }
     assert strict["event_judgement"]["score"] == 100
     assert strict["event_judgement"]["verdict"] == "moderate_probability_window"
     assert strict["event_judgement"]["payout_label"] == "public_wealth_status"
+
+
+def test_collect_strict_evidence_finance_combines_dhana_and_lakshmi_hooks() -> None:
+    result = {
+        "modules": {
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 31, "11": 36}},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [
+                        {"type": "Dhana Yoga", "strength": "moderate"},
+                        {"type": "Lakshmi Yoga", "strength": "strong"},
+                    ],
+                    "summary": "Dhana/Lakshmi检测：共2个格局",
+                }
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+    assert strict["present_evidence"]["wealth_promise_strength"] == {
+        "level": "strong",
+        "primary_source": "dhana_lakshmi_hooks",
+        "count": 2,
+        "source_diversity": 2,
+        "supporting_sources": ["dhana", "lakshmi"],
+    }
