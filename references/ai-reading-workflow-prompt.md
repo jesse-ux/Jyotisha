@@ -1,13 +1,14 @@
 # AI解盘工作流Prompt工程（AI Reading Workflow）
 
 > **适用场景**：AI收到出生信息、PDF星盘或文字星盘后，如何一步步执行完整的解盘+推运分析
-> **版本**：v5.0.0 | **更新日期**：2026-04-27
+> **版本**：v5.1.0 | **更新日期**：2026-06-27
 > **来源标签**: 【工具/模板】 — AI解盘执行引擎工作流
 > **优先级**：⭐⭐⭐⭐⭐（AI解盘质量的决定性文件）
 > **定位**：本文件是AI解盘的**执行引擎**，将Skill中所有参考资料串联成可执行的工作流
 > **v3.0重大变更**：三条入口路径明确分流，引擎全自动计算无需用户逐模块触发
 > **v4.0重大变更**：Step 0.5 Karaka系统自动识别（解决DK摇摆问题）、预测输出强制[A/B/C]标注、统一精度边界声明、来源标签体系引用
 > **v5.0重大变更**：强制外部验证门控（MEVG）——新增核心原则"不凭记忆"、三个门控步骤（Step 3.11/4.10/5.5）嵌入工作流、与"不跳步"同级强制
+> **v5.1重大变更**：事件判定骨架接入主工作流——新增 `Route -> Evidence Ledger -> Adjudication -> Output Contract` 四段式事件裁决层，并引入 marriage 专用 adjudicator。
 
 ---
 
@@ -460,6 +461,33 @@ AI不应该凭空假设一个时间，而应该通过结构化互动帮助用户
 3. 识别最强和最弱的领域
 4. 重点展开当前Dasha激活的领域
 5. 主动提示用户可以深入询问任何领域
+
+### 2.3 事件判定骨架（v5.1 新增）
+
+凡是以下题型，必须进入事件判定骨架，不得只靠 `strict route` 后直接写结论：
+
+- marriage / relationship
+- career / offer / promotion / project landing
+- wealth / payment / gains / asset timing
+- generic event verification
+
+固定执行顺序：
+
+1. `Route`
+   - 先冻结 **问题域**、**任务类型**、**目标粒度**
+2. `Evidence Ledger`
+   - 把每个模块落成结构化证据块
+3. `Adjudication`
+   - 按 `Promise -> Activation -> Manifestation -> Timing`
+4. `Output Contract`
+   - 只输出 `verdict + confidence + conflicts + audit + raw evidence`
+
+详细协议：
+
+- `references/event_judgment_skeleton.md`
+- `references/event_judgment_marriage.md`
+
+若问题属于婚恋，必须再额外执行 `event_judgment_marriage.md` 的专用裁决器。
 
 ---
 

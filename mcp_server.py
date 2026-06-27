@@ -27,7 +27,7 @@ import os
 import json
 import subprocess
 import asyncio
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 # Add scripts dir to path so imports work
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -89,6 +89,229 @@ def _audit_status() -> Dict[str, Any]:
         return json.loads(result.stdout)
     except Exception:
         return {"valid": False, "raw": result.stdout}
+
+
+def _safe_get(data: Dict[str, Any], *path: str) -> Any:
+    cur: Any = data
+    for part in path:
+        if not isinstance(cur, dict) or part not in cur:
+            return None
+        cur = cur[part]
+    return cur
+
+
+def _convergence_score(convergence: Any) -> int:
+    if not isinstance(convergence, dict):
+        return 0
+    level = convergence.get("convergence_level")
+    mapping = {"L1": 20, "L2": 40, "L3": 60, "L4": 80, "L5": 95}
+    return mapping.get(level, 0)
+
+
+def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[str]) -> Dict[str, Any]:
+    if route == "relationship":
+        score = 0
+        score += 15 if present.get("d9_navamsa") else 0
+        score += 15 if present.get("upapada_lagna") else 0
+        score += 15 if present.get("darakaraka") else 0
+        score += 10 if present.get("vivah_saham") else 0
+        score += 10 if present.get("vimshottari_current") else 0
+        score += 10 if present.get("narayana_current") else 0
+        score += _convergence_score(present.get("marriage_convergence"))
+        if missing:
+            score = min(score, 35)
+        score = min(score, 100)
+        if missing:
+            verdict = "insufficient_evidence"
+        elif score >= 80:
+            verdict = "high_probability_window"
+        elif score >= 60:
+            verdict = "moderate_probability_window"
+        elif score >= 40:
+            verdict = "weak_window_needs_confirmation"
+        else:
+            verdict = "insufficient_evidence"
+        return {
+            "event_family": "relationship",
+            "score": score,
+            "verdict": verdict,
+            "primary_drivers": [
+                key for key in (
+                    "marriage_convergence",
+                    "vimshottari_current",
+                    "narayana_current",
+                    "darakaraka",
+                    "upapada_lagna",
+                )
+                if present.get(key)
+            ],
+        }
+
+    if route == "finance":
+        score = 0
+        score += 15 if present.get("d2_hora") else 0
+        score += 10 if present.get("d10_dasamsa") else 0
+        score += 10 if present.get("shadbala") else 0
+        score += 10 if present.get("ashtakavarga_house_scores") else 0
+        score += 10 if present.get("vimshottari_current") else 0
+        score += 10 if present.get("narayana_current") else 0
+        score += max(
+            _convergence_score(present.get("wealth_convergence")),
+            _convergence_score(present.get("gains_convergence")),
+            _convergence_score(present.get("career_convergence")),
+        )
+        if missing:
+            score = min(score, 35)
+        score = min(score, 100)
+        if missing:
+            verdict = "insufficient_evidence"
+        elif score >= 80:
+            verdict = "high_probability_window"
+        elif score >= 60:
+            verdict = "moderate_probability_window"
+        elif score >= 40:
+            verdict = "weak_window_needs_confirmation"
+        else:
+            verdict = "insufficient_evidence"
+        return {
+            "event_family": "finance",
+            "score": score,
+            "verdict": verdict,
+            "primary_drivers": [
+                key for key in (
+                    "wealth_convergence",
+                    "gains_convergence",
+                    "career_convergence",
+                    "vimshottari_current",
+                    "narayana_current",
+                )
+                if present.get(key)
+            ],
+        }
+
+    return {
+        "event_family": route,
+        "score": 0,
+        "verdict": "context_only",
+        "primary_drivers": [],
+    }
+
+
+def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, Any]:
+    modules = result.get("modules", {}) if isinstance(result, dict) else {}
+    domain_activations = _safe_get(modules, "dasa_convergence", "domain_activations") or {}
+
+    if route == "relationship":
+        required = [
+            "varga_full.D9_Navamsa",
+            "special_lagnas.Upapada_Lagna",
+            "jaimini.darakaraka",
+            "vivah_saham",
+            "dasha.current_dasha",
+            "narayana_dasha.current_dasha",
+            "dasa_convergence.domain_activations.marriage_partnership",
+        ]
+        present = {
+            "d9_navamsa": _safe_get(modules, "varga_full", "D9_Navamsa"),
+            "upapada_lagna": _safe_get(modules, "special_lagnas", "Upapada_Lagna"),
+            "darakaraka": _safe_get(modules, "jaimini", "darakaraka"),
+            "vivah_saham": _safe_get(modules, "vivah_saham"),
+            "vimshottari_current": _safe_get(modules, "dasha", "current_dasha"),
+            "narayana_current": _safe_get(modules, "narayana_dasha", "current_dasha"),
+            "marriage_convergence": domain_activations.get("marriage_partnership"),
+        }
+        missing = [key for key, value in present.items() if value in (None, {}, [], "")]
+        convergence = present["marriage_convergence"] or {}
+        confidence_cap = "medium"
+        if missing:
+            confidence_cap = "low"
+        elif convergence.get("convergence_level") in {"L4", "L5"}:
+            confidence_cap = "medium-high"
+        elif convergence.get("convergence_level") == "L3":
+            confidence_cap = "medium"
+        else:
+            confidence_cap = "medium-low"
+        event_judgement = _derive_event_judgement(route, present, missing)
+        return {
+            "question_type": route,
+            "required_evidence": required,
+            "present_evidence": present,
+            "missing_evidence": missing,
+            "confidence_cap": confidence_cap,
+            "blocked": bool(missing),
+            "event_judgement": event_judgement,
+            "reason": (
+                "Marriage timing requires D9 + UL + DK + dual dasha + Vivah Saham "
+                "and convergence support; missing links cap confidence."
+            ),
+        }
+
+    if route == "finance":
+        required = [
+            "varga_full.D2_Hora",
+            "varga_full.D10_Dasamsa",
+            "shadbala.planets",
+            "ashtakavarga.house_scores",
+            "dasha.current_dasha",
+            "narayana_dasha.current_dasha",
+            "dasa_convergence.domain_activations.wealth_family",
+        ]
+        present = {
+            "d2_hora": _safe_get(modules, "varga_full", "D2_Hora"),
+            "d10_dasamsa": _safe_get(modules, "varga_full", "D10_Dasamsa"),
+            "shadbala": _safe_get(modules, "shadbala", "planets"),
+            "ashtakavarga_house_scores": _safe_get(modules, "ashtakavarga", "house_scores"),
+            "vimshottari_current": _safe_get(modules, "dasha", "current_dasha"),
+            "narayana_current": _safe_get(modules, "narayana_dasha", "current_dasha"),
+            "wealth_convergence": domain_activations.get("wealth_family"),
+            "gains_convergence": domain_activations.get("gains_wishes"),
+            "career_convergence": domain_activations.get("career_status"),
+        }
+        missing = [key for key, value in present.items() if key not in {
+            "gains_convergence", "career_convergence"
+        } and value in (None, {}, [], "")]
+        convergence_hits: List[Dict[str, Any]] = [
+            item for item in [
+                present["wealth_convergence"],
+                present["gains_convergence"],
+                present["career_convergence"],
+            ]
+            if isinstance(item, dict) and item
+        ]
+        confidence_cap = "medium"
+        if missing:
+            confidence_cap = "low"
+        elif any(hit.get("convergence_level") in {"L4", "L5"} for hit in convergence_hits):
+            confidence_cap = "medium-high"
+        elif convergence_hits:
+            confidence_cap = "medium"
+        else:
+            confidence_cap = "medium-low"
+        event_judgement = _derive_event_judgement(route, present, missing)
+        return {
+            "question_type": route,
+            "required_evidence": required,
+            "present_evidence": present,
+            "missing_evidence": missing,
+            "confidence_cap": confidence_cap,
+            "blocked": bool(missing),
+            "event_judgement": event_judgement,
+            "reason": (
+                "Finance timing requires D2/D10 + strength + SAV + dual dasha "
+                "plus at least one wealth-related convergence domain."
+            ),
+        }
+
+    return {
+        "question_type": route,
+        "required_evidence": [],
+        "present_evidence": {},
+        "missing_evidence": [],
+        "confidence_cap": "context-only",
+        "blocked": False,
+        "event_judgement": _derive_event_judgement(route, {}, []),
+        "reason": "Route-specific strict evidence audit is currently implemented for relationship and finance timing.",
+    }
 
 
 # ============================================================================
@@ -562,7 +785,7 @@ def strict_workflow(
     if any(k in q for k in ("career", "job", "work", "promotion", "business", "profession", "事业", "工作", "升职", "生意")):
         route = "career"
         focus_techniques = ["D10", "Dasha", "Shadbala", "Transit", "Narayana Dasha"]
-    elif any(k in q for k in ("marriage", "relationship", "love", "spouse", "partner", "divorce", "婚恋", "婚姻", "感情", "配偶", "恋爱")):
+    elif any(k in q for k in ("marriage", "married", "wedding", "relationship", "love", "spouse", "partner", "divorce", "婚恋", "婚姻", "感情", "配偶", "恋爱", "结婚")):
         route = "relationship"
         focus_techniques = ["D9", "UL Upapada", "Dasha", "Nakshatra", "Vivah Saham"]
     elif any(k in q for k in ("money", "wealth", "finance", "investment", "property", "income", "财务", "财富", "投资", "房产", "收入")):
@@ -584,14 +807,17 @@ def strict_workflow(
     })
 
     if isinstance(result, dict) and "error" not in result:
+        strict_evidence = _collect_strict_evidence(route, result)
         result["routing"] = {
             "question_type": route,
             "focus_techniques": focus_techniques,
             "note": (
                 f"Routed to '{route}' path. Focus on the listed techniques "
-                f"for higher-confidence answers. Full reading included for context."
+                f"for higher-confidence answers. Full reading included for context, "
+                f"and strict evidence audit now reports confidence cap and missing links."
             ),
         }
+        result["strict_workflow"] = strict_evidence
     return result
 
 

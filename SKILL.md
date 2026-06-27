@@ -56,9 +56,10 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | **B：PDF/文字星盘** | PDF/详细文字描述 | 提取数据+Quality Gate → `references/pdf-chart-reading-guide.md` |
 | **C：时间不明确** | "不知道几点出生" | 互动式出生时间矫正 → 确认后走路径A |
 
-**强制工作流**（完整规范 → `references/ai-reading-workflow-prompt.md` v3.0）：
+**强制工作流**（完整规范 → `references/ai-reading-workflow-prompt.md` v5.1.0）：
 
 0. **阶段负一**：问题类型路由（事业/婚恋/财务/应期/历史验证/综合解盘）→ 必须先读 `references/strict-workflow-router.md`，按对应 strict checklist 执行；用户不需要主动点名高级技法。
+0.1 **事件判定骨架**：凡涉及 marriage / career / wealth / event verify，必须执行 `事件判定骨架 v1.0`，按 `Route -> Evidence Ledger -> Adjudication -> Output Contract` 顺序输出；不得再凭直觉跳模块或随口给置信度。详见 `references/ai-reading-workflow-prompt.md`、`references/event_judgment_skeleton.md`、`references/event_judgment_marriage.md` 与 `references/event_judgment_examples.md`。
 1. **阶段零**：入口路由（A/B/C自动判断）
 2. **阶段一**（仅B）：PDF/图片提取 + Quality Gate
 3. **阶段二**：意图识别 → 路由目标宫位（无明确意图→Level 2综合解盘）
@@ -69,6 +70,40 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 7. **阶段六**：补救措施（可选）
 8. **阶段七**：现代措辞包装
 9. **阶段八**：输出 Technique Audit Table，逐项声明已调用/未调用/部分可用/缺失模块及其对置信度的影响。
+
+### ⚙️ 事件判定骨架（总入口）
+
+涉及 `marriage / career / wealth / health / generic event verification` 的问题，不得只按关键词随意调模块，必须进入事件判定骨架。
+
+总骨架固定为四段：
+
+1. `Route`
+   - 先判断 **问题域**（婚恋 / 事业 / 财富 / 健康 / 泛事件）
+   - 再判断 **任务类型**（预测 / 回测 / 校时辅助 / 多方案裁决）
+   - 再判断 **目标粒度**（趋势 / 窗口 / 月份 / 具体事件验证）
+2. `Evidence Ledger`
+   - 每个模块都要落成结构化证据块，不得只写散文式描述
+3. `Adjudication`
+   - 必须按 `Promise -> Activation -> Manifestation -> Timing` 裁决
+4. `Output Contract`
+   - 最终只允许输出 `verdict + confidence + conflicts + audit + raw evidence`
+
+硬规则：
+
+- timing / event 不得只看 `Vimshottari`，必须 `Vimshottari + Narayana`
+- 事业必须 `D10 + A10`
+- 财富必须 `D2 / D11`
+- 婚恋必须 `D9 + UL`
+- 必须显式给出 `Functional Benefic/Malefic`
+- 缺少关键层时必须 `blocked` 或降置信度
+- 必须交付原始依据：度数、Dasha 边界、Shadbala、AV、Ayanamsa、Node mode、模板/案例引用
+
+详细执行文档：
+
+- [`references/event_judgment_skeleton.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_skeleton.md)
+- [`references/event_judgment_marriage.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_marriage.md)
+- [`references/event_judgment_wealth.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_wealth.md)
+- （后续再补）`event_judgment_career.md`
 
 ## 五层硬约束（全球前三引擎强制调用）
 

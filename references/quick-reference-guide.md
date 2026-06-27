@@ -409,6 +409,9 @@ SCRIPT=~/.workbuddy/skills/jyotish-vedic-astrology/scripts/jyotish_engine.py
 ### AI解盘工作流（2个）
 0. **ai-reading-workflow-prompt.md**：AI解盘工作流Prompt工程（7阶段完整执行引擎）
 0b. **quick-reference-guide.md**：⭐执行总控指南（本文件）
+0c. **event_judgment_skeleton.md**：事件裁决总骨架（Route -> Evidence Ledger -> Adjudication -> Output Contract）
+0d. **event_judgment_marriage.md**：婚恋事件专用裁决器（Promise -> Activation -> Manifestation -> Timing）
+0e. **event_judgment_wealth.md**：财富事件专用裁决器（wealth promise -> activation -> manifestation -> payout label）
 
 ### 核心方法论（9个）
 1. **common-misconceptions.md**：印度占星常见误判与冲突问题集（错题本）⭐⭐⭐⭐⭐

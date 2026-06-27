@@ -15,5 +15,6 @@ cp "$ROOT/references/quick-reference-guide.md" "$WB/references/quick-reference-g
 cp "$ROOT/references/strict-workflow-router.md" "$WB/references/strict-workflow-router.md"
 cp "$ROOT/skills/jyotish-engine-modules/SKILL.md" "$WB/skills/jyotish-engine-modules/SKILL.md"
 cp "$ROOT/skills/jyotish-full-reading-integration/SKILL.md" "$WB/skills/jyotish-full-reading-integration/SKILL.md"
+cp "$ROOT/mcp_server.py" "$WB/mcp_server.py"
 
 echo "synced skill truth files to workbuddy"
