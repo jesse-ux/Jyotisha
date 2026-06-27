@@ -1,11 +1,11 @@
 # First External Oracle Packet Assistant
 
 - front: `tajika_sahams`
-- case_id: `template_steve_jobs_varshaphala_1984_lahiri`
-- capture_id: `external_template_steve_jobs_varshaphala_1984_lahiri`
+- case_id: `template_einstein_varshaphala_1905_lahiri`
+- capture_id: `external_template_einstein_varshaphala_1905_lahiri`
 - ready_to_apply: `false`
-- operator_card: `docs/benchmark/tajika_steve_jobs_1984_first_packet_operator_card.md`
-- packet_template: `references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json`
+- operator_card: `docs/benchmark/tajika_einstein_1905_first_packet_operator_card.md`
+- packet_template: `references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json`
 
 ## Missing Summary
 
@@ -19,18 +19,18 @@
 
 - metadata:
 
-  - ayanamsa: `Lahiri`
-  - node_mode: `true node`
-  - timezone: `UTC-08:00`
-  - annual_system: `Varshaphala/Tajika`
-  - target_year: `1984`
+  - ayanamsa: `lahiri`
+  - node_mode: `mean`
+  - timezone: `0.883333`
+  - annual_system: `varshaphala`
+  - target_year: `1905`
 
 - settings:
 
   - ayanamsa: `lahiri`
-  - node_mode: `true`
+  - node_mode: `mean`
   - annual_system: `varshaphala`
-  - target_year: `1984`
+  - target_year: `1905`
 
 
 ## Manual Fill Plan
@@ -65,7 +65,7 @@
 ## Apply
 
 ```bash
-python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json --format json
+python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json
 ```
 
 ## Validate

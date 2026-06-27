@@ -3,30 +3,30 @@
   "schema_version": 1,
   "summary": {
     "annual_task_count": 5,
-    "external_verified_annual_tasks": 0,
+    "external_verified_annual_tasks": 1,
     "can_claim_tajika_sahams_closure": false,
     "production_tuning_allowed": false
   },
   "first_priority": {
-    "case_id": "template_steve_jobs_varshaphala_1984_lahiri",
-    "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
-    "packet_path": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json",
+    "case_id": "template_einstein_varshaphala_1905_lahiri",
+    "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
+    "packet_path": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
     "birth": {
-      "year": 1955,
-      "month": 2,
-      "day": 24,
-      "hour": 19,
-      "minute": 15,
+      "year": 1879,
+      "month": 3,
+      "day": 14,
+      "hour": 11,
+      "minute": 30,
       "second": 0,
-      "lat": 37.7749,
-      "lon": -122.4194,
-      "tz": -8
+      "lat": 48.3984,
+      "lon": 9.9916,
+      "tz": 0.883333
     },
     "settings": {
       "ayanamsa": "lahiri",
-      "node_mode": "true",
+      "node_mode": "mean",
       "annual_system": "varshaphala",
-      "target_year": 1984
+      "target_year": 1905
     },
     "required_target_fields": [
       "target.solar_return_datetime",
@@ -88,17 +88,17 @@
       "status": "draft",
       "promotion_status_after_fill": "external_verified",
       "metadata": {
-        "ayanamsa": "Lahiri",
-        "node_mode": "true node",
-        "timezone": "UTC-08:00",
-        "annual_system": "Varshaphala/Tajika",
-        "target_year": 1984
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "timezone": 0.883333,
+        "annual_system": "varshaphala",
+        "target_year": 1905
       },
       "settings": {
         "ayanamsa": "lahiri",
-        "node_mode": "true",
+        "node_mode": "mean",
         "annual_system": "varshaphala",
-        "target_year": 1984
+        "target_year": 1905
       }
     },
     "manual_fill_plan": {
@@ -128,7 +128,7 @@
       "printed Tajika/Varshaphala example"
     ],
     "artifact_policy": "Save redacted screenshots, stdout snippets or book citations under references/oracle/artifacts/.",
-    "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json --format json",
+    "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json",
     "validate_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --format json && python3 scripts/tajika_annual_benchmark_dashboard.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --format json"
   },
   "next_actions": [

@@ -13,8 +13,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
-FIRST_PRIORITY_CASE_ID = "template_steve_jobs_varshaphala_1984_lahiri"
-FIRST_PRIORITY_TEMPLATE_PATH = "references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json"
+FIRST_PRIORITY_CASE_ID = "template_einstein_varshaphala_1905_lahiri"
+FIRST_PRIORITY_TEMPLATE_PATH = "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json"
 REQUIRED_TARGET_FIELDS = [
     "target.solar_return_datetime",
     "target.varsha_lagna_deg",

@@ -1,15 +1,15 @@
 # Tajika/Sahams Annual Closure Status
 
 - annual_task_count: `5`
-- external_verified_annual_tasks: `0`
+- external_verified_annual_tasks: `1`
 - can_claim_tajika_sahams_closure: `false`
 - production_tuning_allowed: `false`
 
 ## First Priority Packet
 
-- case_id: `template_steve_jobs_varshaphala_1984_lahiri`
-- capture_id: `external_template_steve_jobs_varshaphala_1984_lahiri`
-- packet_path: `references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json`
+- case_id: `template_einstein_varshaphala_1905_lahiri`
+- capture_id: `external_template_einstein_varshaphala_1905_lahiri`
+- packet_path: `references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json`
 - required_target_fields: `target.solar_return_datetime, target.varsha_lagna_deg, target.muntha_sign, target.year_lord, target.mudda_dasha_first_lord, target.sahams.punya_saham, target.sahams.rajya_saham, target.sahams.vivah_saham, target.tajika_yogas, target.source_artifact`
 
 ## Missing Summary
@@ -24,18 +24,18 @@
 
 - metadata:
 
-  - ayanamsa: `Lahiri`
-  - node_mode: `true node`
-  - timezone: `UTC-08:00`
-  - annual_system: `Varshaphala/Tajika`
-  - target_year: `1984`
+  - ayanamsa: `lahiri`
+  - node_mode: `mean`
+  - timezone: `0.883333`
+  - annual_system: `varshaphala`
+  - target_year: `1905`
 
 - settings:
 
   - ayanamsa: `lahiri`
-  - node_mode: `true`
+  - node_mode: `mean`
   - annual_system: `varshaphala`
-  - target_year: `1984`
+  - target_year: `1905`
 
 ## Manual Fill Plan
 
@@ -62,7 +62,7 @@
 ## Commands
 
 ```bash
-python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json --format json
+python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json
 ```
 
 ```bash

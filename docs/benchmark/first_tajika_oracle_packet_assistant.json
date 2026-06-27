@@ -2,10 +2,10 @@
   "scope": "first_external_oracle_packet_assistant",
   "schema_version": 1,
   "front": "tajika_sahams",
-  "case_id": "template_steve_jobs_varshaphala_1984_lahiri",
-  "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
-  "operator_card": "docs/benchmark/tajika_steve_jobs_1984_first_packet_operator_card.md",
-  "packet_template": "references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json",
+  "case_id": "template_einstein_varshaphala_1905_lahiri",
+  "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
+  "operator_card": "docs/benchmark/tajika_einstein_1905_first_packet_operator_card.md",
+  "packet_template": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
   "missing_fields": [
     "metadata.tool_name",
     "metadata.tool_version_or_url",
@@ -55,17 +55,17 @@
     "status": "draft",
     "promotion_status_after_fill": "external_verified",
     "metadata": {
-      "ayanamsa": "Lahiri",
-      "node_mode": "true node",
-      "timezone": "UTC-08:00",
-      "annual_system": "Varshaphala/Tajika",
-      "target_year": 1984
+      "ayanamsa": "lahiri",
+      "node_mode": "mean",
+      "timezone": 0.883333,
+      "annual_system": "varshaphala",
+      "target_year": 1905
     },
     "settings": {
       "ayanamsa": "lahiri",
-      "node_mode": "true",
+      "node_mode": "mean",
       "annual_system": "varshaphala",
-      "target_year": 1984
+      "target_year": 1905
     }
   },
   "manual_fill_plan": {
@@ -95,7 +95,7 @@
     "PyJHora black-box annual output",
     "printed Tajika/Varshaphala example"
   ],
-  "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json --format json",
+  "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json",
   "validate_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --format json && python3 scripts/tajika_annual_benchmark_dashboard.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --format json",
   "boundary": "This assistant only reports what to fill. It must not invent external oracle values, must not use local engine output as evidence, and must not copy incompatible external code."
 }
