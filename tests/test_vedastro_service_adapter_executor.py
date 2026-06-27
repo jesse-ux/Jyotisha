@@ -198,3 +198,83 @@ def test_vedastro_service_adapter_classifies_http_error() -> None:
     report = json.loads(completed.stdout)
     assert report["status"] == "http_error"
     assert "503" in report["reason"]
+
+
+def test_vedastro_service_adapter_classifies_invalid_json_response() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            body = b"not-json"
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/vedastro"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        completed = subprocess.run(
+            [sys.executable, "scripts/vedastro_service_adapter.py", "--case", "beijing_first_use_demo"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["status"] == "invalid_json"
+
+
+def test_vedastro_service_adapter_classifies_timeout() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            import time
+
+            time.sleep(0.2)
+            body = b"{}"
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/vedastro"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        env["VEDASTRO_TIMEOUT_SECONDS"] = "0.05"
+        completed = subprocess.run(
+            [sys.executable, "scripts/vedastro_service_adapter.py", "--case", "beijing_first_use_demo"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["status"] == "timeout"

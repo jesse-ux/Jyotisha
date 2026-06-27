@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import socket
 from pathlib import Path
 from typing import Any
 from urllib import request, error
@@ -59,12 +60,23 @@ PARITY_CASES = {
 }
 
 DEFAULT_TIMEOUT_SECONDS = 8
+TIMEOUT_ENV = "VEDASTRO_TIMEOUT_SECONDS"
 RETRY_POLICY = {
     "max_attempts": 2,
     "backoff_seconds": 1,
     "retry_on": ["timeout", "429", "502", "503", "504"],
 }
 ALLOW_NETWORK_ENV = "VEDASTRO_ENABLE_NETWORK"
+
+
+def _timeout_seconds() -> float:
+    raw = os.environ.get(TIMEOUT_ENV, "").strip()
+    if not raw:
+        return DEFAULT_TIMEOUT_SECONDS
+    try:
+        return float(raw)
+    except ValueError:
+        return DEFAULT_TIMEOUT_SECONDS
 
 
 def schema() -> dict[str, Any]:
@@ -130,7 +142,7 @@ def _unconfigured(reason: str) -> dict[str, Any]:
             "endpoint_env": "VEDASTRO_API_ENDPOINT",
             "api_key_env": "VEDASTRO_API_KEY",
             "provenance_mode": "external_service_candidate",
-            "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+            "timeout_seconds": _timeout_seconds(),
             "retry_policy": RETRY_POLICY,
         },
     }
@@ -156,7 +168,7 @@ def _normalize_success(payload: dict[str, Any], endpoint: str) -> dict[str, Any]
             "transport": "http_json_service_boundary",
             "endpoint": endpoint,
             "provenance_mode": "external_service_candidate",
-            "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+            "timeout_seconds": _timeout_seconds(),
             "retry_policy": RETRY_POLICY,
             **(payload.get("source_metadata") or {}),
         },
@@ -189,7 +201,7 @@ def run_case(case_id: str) -> dict[str, Any]:
                 "transport": "http_json_service_boundary",
                 "endpoint": endpoint,
                 "provenance_mode": "external_service_candidate",
-                "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+                "timeout_seconds": _timeout_seconds(),
                 "retry_policy": RETRY_POLICY,
                 "network_execution_env": ALLOW_NETWORK_ENV,
             },
@@ -201,7 +213,7 @@ def run_case(case_id: str) -> dict[str, Any]:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with request.urlopen(req, timeout=DEFAULT_TIMEOUT_SECONDS) as resp:
+        with request.urlopen(req, timeout=_timeout_seconds()) as resp:
             raw = resp.read().decode("utf-8")
             payload = json.loads(raw)
     except error.HTTPError as exc:
@@ -215,7 +227,7 @@ def run_case(case_id: str) -> dict[str, Any]:
                 "transport": "http_json_service_boundary",
                 "endpoint": endpoint,
                 "provenance_mode": "external_service_candidate",
-                "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+                "timeout_seconds": _timeout_seconds(),
                 "retry_policy": RETRY_POLICY,
                 "network_execution_env": ALLOW_NETWORK_ENV,
             },
@@ -231,12 +243,12 @@ def run_case(case_id: str) -> dict[str, Any]:
                 "transport": "http_json_service_boundary",
                 "endpoint": endpoint,
                 "provenance_mode": "external_service_candidate",
-                "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+                "timeout_seconds": _timeout_seconds(),
                 "retry_policy": RETRY_POLICY,
                 "network_execution_env": ALLOW_NETWORK_ENV,
             },
         }
-    except TimeoutError:
+    except (TimeoutError, socket.timeout):
         return {
             "backend": "vedastro_service_adapter_candidate",
             "available": False,
@@ -247,7 +259,7 @@ def run_case(case_id: str) -> dict[str, Any]:
                 "transport": "http_json_service_boundary",
                 "endpoint": endpoint,
                 "provenance_mode": "external_service_candidate",
-                "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+                "timeout_seconds": _timeout_seconds(),
                 "retry_policy": RETRY_POLICY,
                 "network_execution_env": ALLOW_NETWORK_ENV,
             },
@@ -263,7 +275,7 @@ def run_case(case_id: str) -> dict[str, Any]:
                 "transport": "http_json_service_boundary",
                 "endpoint": endpoint,
                 "provenance_mode": "external_service_candidate",
-                "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+                "timeout_seconds": _timeout_seconds(),
                 "retry_policy": RETRY_POLICY,
                 "network_execution_env": ALLOW_NETWORK_ENV,
             },

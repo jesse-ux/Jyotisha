@@ -1,0 +1,76 @@
+{
+  "scope": "pyjhora_oracle_artifact_manifest",
+  "generated_at": "2026-06-27T06:25:10.958318+00:00",
+  "artifact_count": 9,
+  "packet_count": 8,
+  "artifacts": [
+    "pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
+    "pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
+    "pyjhora_historical_epoch_dasha_stdout_20260627.txt",
+    "pyjhora_oracle_artifact_manifest.json",
+    "pyjhora_steve_jobs_dasha_stdout_20260627.txt",
+    "pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+    "pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+    "pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt",
+    "pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt"
+  ],
+  "pending_packets": [
+    "external_template_extreme_latitude_kp_pyjhora_20260627.json",
+    "external_template_redacted_place_shadbala_raman_pyjhora_20260627.json",
+    "external_template_historical_epoch_lahiri_pyjhora_20260627.json",
+    "external_template_steve_jobs_dasha_lahiri_pyjhora_20260627.json",
+    "external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json",
+    "external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json",
+    "external_template_user_REDACTED_YEAR_moon_longitude_lahiri_pyjhora_20260627.json",
+    "external_template_user_REDACTED_YEAR_shadbala_lahiri_pyjhora_20260627.json"
+  ],
+  "fronts": {
+    "dasha": {
+      "artifact_count": 4,
+      "packet_count": 3,
+      "artifacts": [
+        "pyjhora_historical_epoch_dasha_stdout_20260627.txt",
+        "pyjhora_oracle_artifact_manifest.json",
+        "pyjhora_steve_jobs_dasha_stdout_20260627.txt",
+        "pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt"
+      ],
+      "pending_packets": [
+        "external_template_extreme_latitude_kp_pyjhora_20260627.json",
+        "external_template_historical_epoch_lahiri_pyjhora_20260627.json",
+        "external_template_steve_jobs_dasha_lahiri_pyjhora_20260627.json"
+      ]
+    },
+    "shadbala": {
+      "artifact_count": 4,
+      "packet_count": 4,
+      "artifacts": [
+        "pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
+        "pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
+        "pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+        "pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt"
+      ],
+      "pending_packets": [
+        "external_template_redacted_place_shadbala_raman_pyjhora_20260627.json",
+        "external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json",
+        "external_template_user_REDACTED_YEAR_moon_longitude_lahiri_pyjhora_20260627.json",
+        "external_template_user_REDACTED_YEAR_shadbala_lahiri_pyjhora_20260627.json"
+      ]
+    },
+    "tajika_sahams": {
+      "artifact_count": 1,
+      "packet_count": 1,
+      "artifacts": [
+        "pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt"
+      ],
+      "pending_packets": [
+        "external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json"
+      ]
+    }
+  },
+  "files": {
+    "manifest": "references/oracle/artifacts/pyjhora_oracle_artifact_manifest.json",
+    "artifacts_dir": "references/oracle/artifacts",
+    "pending_packets_dir": "references/oracle/artifacts/pending_packets"
+  },
+  "boundary": "These files are black-box external evidence only. They document PyJHora outputs and pending oracle packets without importing AGPL code into the local skill implementation."
+}
