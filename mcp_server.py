@@ -186,7 +186,7 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         else:
             verdict = "insufficient_evidence"
         payout_label = None
-        if public_wealth_lift:
+        if public_wealth_lift and score >= 60:
             payout_label = "public_wealth_status"
         return {
             "event_family": "finance",
