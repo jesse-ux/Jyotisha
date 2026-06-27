@@ -9,7 +9,7 @@ Purpose: make the ephemeris roadmap probeable instead of relying on UI labels or
 | `swisseph_python` | Primary local Python API path through `scripts/jyotish_api_server.py` | `primary` | Current Swiss Ephemeris boundary must stay explicit in settings, exports, and docs | Keep as canonical longitude source |
 | `swisseph_wasm` | Browser/local-first degradation path through bundled WASM assets and `@swisseph/browser` / `swisseph-wasm` dependencies | `fallback` | Same Swiss Ephemeris boundary as the Python path | Keep as fallback, not a separate accuracy oracle |
 | `xalen_ephemeris` | External Apache-2.0 Rust candidate from `vedika-io/xalen-ephemeris` | `spike_only` | Favorable for experiments, but no local adapter or parity matrix exists yet | Do not expose as real runtime replacement until a parity spike passes |
-| `vedastro` | MIT full-stack product/API benchmark | `product_api_benchmark` | Can inform API, OpenAPI, chat, Panchanga, and product workflow design; C# core should stay behind an API/service boundary if reused | Reuse product/API ideas, not as a drop-in Python ephemeris |
+| `vedastro` | MIT full-stack product/API benchmark and service-boundary adapter candidate | `service_adapter_candidate` | Can inform API, OpenAPI, chat, Panchanga, and product workflow design; C# core should stay behind an API/service boundary if reused | Reuse product/API ideas and progress through an adapter contract, not as a drop-in Python ephemeris |
 | `pyjhora_benchmark` | Broad JHora-style behavior/oracle benchmark | `benchmark_only` | AGPL; do not copy implementation code into this app unless the whole downstream license posture is changed | Use only expected outputs, public examples, and behavior comparisons |
 
 ## Probe
@@ -31,4 +31,4 @@ The app already records `ephemerisBackend` in calculation settings and export pr
 - parity gate: compare Moon, Sun, Ascendant, Rahu/Ketu, and daily boundary cases against `swisseph_python`
 - acceptance: document max deltas before any new backend can be selectable as a runtime calculation source
 
-Until that exists, `swisseph_python` remains the production source, `swisseph_wasm` remains the fallback, `xalen_ephemeris` remains a spike candidate, `vedastro` remains a product/API benchmark, and `pyjhora_benchmark` remains an AGPL behavior benchmark only.
+Until that exists, `swisseph_python` remains the production source, `swisseph_wasm` remains the fallback, `xalen_ephemeris` remains a spike candidate, `vedastro` remains a gated service-adapter candidate, and `pyjhora_benchmark` remains an AGPL behavior benchmark only.

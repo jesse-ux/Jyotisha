@@ -27,9 +27,22 @@ That means the WASM path is useful for local/PWA fallback experiments, but it mu
 
 `xalen_ephemeris_candidate` remains the best permissive-direction spike because `vedika-io/xalen-ephemeris` is tracked as Apache-2.0. There is no local executable mirror in this workspace yet, so the current spike status is documentation-only.
 
+## vedastro_service_adapter_candidate
+
+`vedastro_service_adapter_candidate` is now recognized as a formal candidate backend shape, but only through a reviewed external service boundary.
+
+It is still blocked for direct `runtime_setting_exposure` because the workspace does not yet contain:
+
+1. a real adapter executor,
+2. timeout / retry policy,
+3. normalized parity rows that satisfy `EphemerisAdapterContract`,
+4. response provenance fields that make external-service usage auditable.
+
+This keeps VedAstro in the engineering path without pretending that its C# stack is a drop-in local Python replacement.
+
 ## Gate
 
-Both candidates are blocked until `parity_gate_required` is satisfied:
+All candidates are blocked until `parity_gate_required` is satisfied:
 
 1. Produce rows matching `EphemerisAdapterContract`.
 2. Compare against `swisseph_python` baseline rows.

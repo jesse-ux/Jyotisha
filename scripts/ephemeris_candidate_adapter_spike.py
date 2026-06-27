@@ -82,6 +82,21 @@ def build_spike() -> Dict[str, Any]:
         "parity_gate_required": "Must produce Sun/Moon/Asc/Rahu/Ketu rows compatible with EphemerisAdapterContract.",
     }
 
+    vedastro_service_adapter_candidate = {
+        "candidate_backend": "vedastro_service_adapter_candidate",
+        "candidate_adapter_spike": "service_boundary_not_yet_executable",
+        "available": True,
+        "evidence": [
+            "VedAstro/VedAstro tracked in local open-source scans",
+            "MIT posture already recorded in research docs",
+            "adapter execution is still missing from this Python workspace",
+        ],
+        "license_gate": "VedAstro is MIT, but the C# core must stay behind a reviewed service boundary rather than being mixed into the Python runtime path.",
+        "runtime_setting_exposure": "blocked_until_parity_timeout_and_license_gates",
+        "parity_gate_required": "Must emit EphemerisAdapterContract rows, enforce timeout handling, and pass longitude parity thresholds before any runtime setting exposure.",
+        "service_gate": "Need a documented request schema, response normalization layer, retry/timeout policy, and provenance fields before wiring a real adapter.",
+    }
+
     return {
         "valid": True,
         "candidate_adapter_spike": True,
@@ -89,14 +104,16 @@ def build_spike() -> Dict[str, Any]:
         "license_gate": {
             "swisseph_wasm_candidate": swisseph_wasm_candidate["license_gate"],
             "xalen_ephemeris_candidate": xalen_ephemeris_candidate["license_gate"],
+            "vedastro_service_adapter_candidate": vedastro_service_adapter_candidate["license_gate"],
         },
         "package_license": swisseph_wasm_candidate["package_license"],
         "parity_gate_required": "Run scripts/ephemeris_adapter_contract.py with real candidate rows before settings exposure.",
         "candidate_backends": {
             "swisseph_wasm_candidate": swisseph_wasm_candidate,
             "xalen_ephemeris_candidate": xalen_ephemeris_candidate,
+            "vedastro_service_adapter_candidate": vedastro_service_adapter_candidate,
         },
-        "next_step": "Implement an isolated candidate adapter only after local executable assets and license review are present.",
+        "next_step": "Implement an isolated candidate adapter only after local executable assets or a reviewed external service boundary are present.",
     }
 
 

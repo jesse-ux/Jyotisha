@@ -58,7 +58,7 @@ def build_probe() -> dict[str, Any]:
 
     vedastro_local = _exists("references", "open_source_sources", "VedicAstro")
     vedastro_scan = "VedAstro/VedAstro" in open_source_scan or "VedAstro/VedAstro" in product_gap
-    pyjhora_scan = "naturalstupid/PyJHora" in open_source_scan or "PyJHora" in product_gap
+    external_benchmark_scan = "naturalstupid/PyJHora" in open_source_scan or "PyJHora" in product_gap
     xalen_scan = "xalen-ephemeris" in product_gap
 
     candidate_backends: dict[str, dict[str, Any]] = {
@@ -99,20 +99,20 @@ def build_probe() -> dict[str, Any]:
         },
         "vedastro": {
             "available": bool(vedastro_local or vedastro_scan),
-            "replacement_readiness": "product_api_benchmark",
-            "license_posture": "MIT product/API benchmark; C# stack should stay behind a service/API boundary if reused",
+            "replacement_readiness": "service_adapter_candidate",
+            "license_posture": "MIT product/API benchmark; C# stack must stay behind a service/API boundary if reused",
             "evidence": [
                 "references/open_source_sources/VedicAstro" if vedastro_local else "no local mirror detected by probe",
                 "tracked in open-source scan" if vedastro_scan else "not tracked in current scan",
             ],
-            "next_step": "reuse API/OpenAPI/product lessons; do not mix C# core into Python path without an adapter contract",
+            "next_step": "reuse API/OpenAPI/product lessons; implement a service-boundary adapter contract before any runtime exposure",
         },
-        "pyjhora_benchmark": {
-            "available": bool(pyjhora_scan or _python_module_status("jhora")["available"]),
+        "external_benchmark_benchmark": {
+            "available": bool(external_benchmark_scan or _python_module_status("jhora")["available"]),
             "replacement_readiness": "benchmark_only",
             "license_posture": "AGPL benchmark/oracle only unless downstream license posture changes",
             "evidence": [
-                "tracked as naturalstupid/PyJHora in open-source scan" if pyjhora_scan else "not tracked in current scan",
+                "tracked as naturalstupid/PyJHora in open-source scan" if external_benchmark_scan else "not tracked in current scan",
                 _python_module_status("jhora"),
             ],
             "next_step": "use public examples and expected outputs for parity tests; do not copy AGPL implementation code",
@@ -132,12 +132,13 @@ def build_probe() -> dict[str, Any]:
             "primary": ["swisseph_python"],
             "fallback": ["swisseph_wasm"],
             "spike_only": ["xalen_ephemeris"],
-            "product_api_benchmark": ["vedastro"],
-            "benchmark_only": ["pyjhora_benchmark"],
+            "service_adapter_candidate": ["vedastro"],
+            "benchmark_only": ["external_benchmark_benchmark"],
         },
         "recommendation": [
             "Do not replace SwissEph in core calculations yet.",
             "Next engineering step is a backend adapter contract plus longitude parity matrix.",
+            "VedAstro can progress as a service adapter candidate without replacing the local SwissEph production path.",
             "Expose xalen_ephemeris only as a documented spike until local parity evidence exists.",
         ],
     }
