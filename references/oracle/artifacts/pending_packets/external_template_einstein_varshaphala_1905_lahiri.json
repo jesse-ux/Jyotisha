@@ -1,0 +1,65 @@
+{
+  "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
+  "status": "draft",
+  "case_id": "template_einstein_varshaphala_1905_lahiri",
+  "birth": {
+    "year": 1879,
+    "month": 3,
+    "day": 14,
+    "hour": 11,
+    "minute": 30,
+    "second": 0,
+    "lat": 48.3984,
+    "lon": 9.9916,
+    "tz": 0.883333
+  },
+  "settings": {
+    "ayanamsa": "lahiri",
+    "node_mode": "mean",
+    "annual_system": "varshaphala",
+    "target_year": 1905
+  },
+  "required_metadata_fields": [
+    "tool_name",
+    "tool_version_or_url",
+    "capture_date",
+    "source_artifact",
+    "ayanamsa",
+    "node_mode",
+    "timezone",
+    "annual_system",
+    "target_year",
+    "operator_note"
+  ],
+  "metadata": {
+    "tool_name": "",
+    "tool_version_or_url": "",
+    "capture_date": "",
+    "source_artifact": "references/oracle/artifacts/",
+    "ayanamsa": "lahiri",
+    "node_mode": "mean",
+    "timezone": 0.883333,
+    "annual_system": "varshaphala",
+    "target_year": 1905,
+    "operator_note": ""
+  },
+  "target_placeholders": {
+    "target.solar_return_datetime": null,
+    "target.varsha_lagna_deg": null,
+    "target.muntha_sign": null,
+    "target.year_lord": null,
+    "target.mudda_dasha_first_lord": null,
+    "target.sahams.punya_saham": null,
+    "target.sahams.rajya_saham": null,
+    "target.sahams.vivah_saham": null,
+    "target.tajika_yogas": null,
+    "target.source_artifact": null
+  },
+  "integrity_checks": {
+    "must_not_come_from_local_engine": true,
+    "requires_external_artifact": true,
+    "requires_status_external_verified_before_calibration": true,
+    "requires_solar_return_convention": true
+  },
+  "promotion_status_after_fill": "external_verified"
+}

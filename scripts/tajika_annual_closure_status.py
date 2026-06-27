@@ -27,6 +27,7 @@ REQUIRED_TARGET_FIELDS = [
     "target.tajika_yogas",
     "target.source_artifact",
 ]
+PENDING_PACKET_DIR = "references/oracle/artifacts/pending_packets"
 
 
 def _run_json(command: list[str]) -> dict[str, Any]:
@@ -128,7 +129,21 @@ def _validate_command(oracle_file: str) -> str:
     )
 
 
+def _ensure_pending_packets(oracle_file: str) -> None:
+    _run_json([
+        PYTHON,
+        "scripts/tajika_annual_oracle_queue.py",
+        "--oracle-file",
+        oracle_file,
+        "--write-packet-dir",
+        PENDING_PACKET_DIR,
+        "--format",
+        "json",
+    ])
+
+
 def build_status(oracle_file: str) -> dict[str, Any]:
+    _ensure_pending_packets(oracle_file)
     queue = _run_json([PYTHON, "scripts/tajika_annual_oracle_queue.py", "--oracle-file", oracle_file, "--format", "json"])
     annual_tasks = queue.get("tasks", [])
     priority = next((task for task in annual_tasks if not task.get("ready_for_calibration")), None)
@@ -141,7 +156,7 @@ def build_status(oracle_file: str) -> dict[str, Any]:
 
     queue_packet = priority["evidence_packet"]
     capture_id = queue_packet["capture_id"]
-    packet_path = f"references/oracle/artifacts/pending_packets/{capture_id}.json"
+    packet_path = f"{PENDING_PACKET_DIR}/{capture_id}.json"
     template_path = FIRST_PRIORITY_TEMPLATE_PATH if priority["case_id"] == FIRST_PRIORITY_CASE_ID else packet_path
     template_file = ROOT / template_path
     if template_file.exists():

@@ -64,6 +64,12 @@ def test_tajika_annual_closure_status_identifies_first_annual_packet() -> None:
     assert report["first_priority"]["manual_fill_plan"]["status_value"] == "external_verified"
     assert report["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 15
     assert report["first_priority"]["validate_command"]
+    packet_path = ROOT / report["first_priority"]["packet_path"]
+    assert packet_path.exists(), report["first_priority"]["packet_path"]
+    packet = json.loads(packet_path.read_text(encoding="utf-8"))
+    assert packet["capture_id"] == "external_template_einstein_varshaphala_1905_lahiri"
+    assert packet["status"] == "draft"
+    assert packet["target_placeholders"]["target.solar_return_datetime"] is None
 
 
 def test_tajika_annual_closure_status_markdown_can_be_written(tmp_path: Path) -> None:
