@@ -57,13 +57,25 @@ PARITY_CASES = {
     },
 }
 
+DEFAULT_TIMEOUT_SECONDS = 8
+RETRY_POLICY = {
+    "max_attempts": 2,
+    "backoff_seconds": 1,
+    "retry_on": ["timeout", "429", "502", "503", "504"],
+}
+
 
 def schema() -> dict[str, Any]:
+    request_example = {
+        **PARITY_CASES["beijing_first_use_demo"],
+        "body_list": ["Sun", "Moon", "Ascendant", "Rahu", "Ketu"],
+    }
     return {
         "adapter": "vedastro_service_adapter",
         "backend": "vedastro_service_adapter_candidate",
         "transport": "http_json_service_boundary",
-        "default_timeout_seconds": 8,
+        "default_timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+        "retry_policy": RETRY_POLICY,
         "required_env": {
             "endpoint": "VEDASTRO_API_ENDPOINT",
             "api_key_optional": "VEDASTRO_API_KEY",
@@ -91,6 +103,17 @@ def schema() -> dict[str, Any]:
             "bodies",
             "source_metadata",
         ],
+        "request_example": request_example,
+        "provenance_contract": {
+            "external_service": True,
+            "required_fields": [
+                "endpoint",
+                "transport",
+                "provenance_mode",
+                "retry_policy",
+                "timeout_seconds",
+            ],
+        },
     }
 
 
@@ -104,6 +127,9 @@ def _unconfigured(reason: str) -> dict[str, Any]:
             "transport": "http_json_service_boundary",
             "endpoint_env": "VEDASTRO_API_ENDPOINT",
             "api_key_env": "VEDASTRO_API_KEY",
+            "provenance_mode": "external_service_candidate",
+            "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+            "retry_policy": RETRY_POLICY,
         },
     }
 
@@ -135,6 +161,8 @@ def run_case(case_id: str) -> dict[str, Any]:
             "transport": "http_json_service_boundary",
             "endpoint": endpoint,
             "provenance_mode": "external_service_candidate",
+            "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+            "retry_policy": RETRY_POLICY,
         },
     }
 

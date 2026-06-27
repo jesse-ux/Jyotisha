@@ -24,10 +24,15 @@ def test_vedastro_service_adapter_executor_schema_is_declared() -> None:
     assert report["adapter"] == "vedastro_service_adapter"
     assert report["transport"] == "http_json_service_boundary"
     assert report["default_timeout_seconds"] >= 3
+    assert report["retry_policy"]["max_attempts"] >= 1
+    assert report["retry_policy"]["backoff_seconds"] >= 0
     assert "endpoint" in report["required_env"]
     assert "ayanamsa_policy" in report["request_contract"]
     assert "bodies" in report["response_contract"]
     assert "source_metadata" in report["response_contract"]
+    assert "request_example" in report
+    assert report["provenance_contract"]["external_service"] is True
+    assert "endpoint" in report["provenance_contract"]["required_fields"]
 
 
 def test_vedastro_service_adapter_returns_controlled_unconfigured_status() -> None:
@@ -46,6 +51,9 @@ def test_vedastro_service_adapter_returns_controlled_unconfigured_status() -> No
     assert report["available"] is False
     assert report["status"] == "service_endpoint_not_configured"
     assert "VEDASTRO" in report["reason"]
+    assert report["source_metadata"]["transport"] == "http_json_service_boundary"
+    assert report["source_metadata"]["retry_policy"]["max_attempts"] >= 1
+    assert report["source_metadata"]["provenance_mode"] == "external_service_candidate"
 
 
 def test_ephemeris_adapter_contract_can_call_vedastro_candidate_stub() -> None:
