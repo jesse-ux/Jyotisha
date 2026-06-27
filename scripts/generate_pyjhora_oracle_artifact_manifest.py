@@ -32,7 +32,7 @@ def _relative(path: Path) -> str:
 def build_manifest() -> dict[str, Any]:
     artifacts = sorted(
         path for path in ARTIFACTS_DIR.glob("pyjhora_*")
-        if path.is_file()
+        if path.is_file() and path.name != OUTPUT_PATH.name
     )
     pending_packets = sorted(
         path for path in PENDING_DIR.glob("*pyjhora_20260627.json")

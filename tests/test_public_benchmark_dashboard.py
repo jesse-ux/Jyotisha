@@ -45,8 +45,12 @@ def test_public_benchmark_dashboard_outputs_stable_json_summary() -> None:
     assert report["dasha_oracle_readiness"]["valid_dasha_packets"] == 3
     assert report["dasha_oracle_readiness"]["total_dasha_packets"] == 3
     assert report["boundary_audit"]["production_tuning_recommended"] is False
+    assert report["pyjhora_blackbox_assets"]["artifact_count"] >= 8
+    assert report["pyjhora_blackbox_assets"]["packet_count"] >= 8
+    assert report["pyjhora_blackbox_assets"]["fronts"]["tajika_sahams"]["artifact_count"] >= 1
     assert "Dasha-only external oracle readiness is 3/3" in report["global_first_gap"]
     assert "Shadbala external absolute-value readiness is 4/4" in report["global_first_gap"]
+    assert "PyJHora black-box assets are 8 artifacts / 8 packets" in report["global_first_gap"]
     assert report["public_claim"]["can_claim_global_first"] is False
     assert report["public_claim"]["reason"]
 
@@ -60,6 +64,7 @@ def test_public_benchmark_dashboard_outputs_markdown_and_can_write_file(tmp_path
     markdown = output.read_text(encoding="utf-8")
     assert "# Public Jyotish Benchmark Dashboard" in markdown
     assert "Dasha/Shadbala Oracle Readiness" in markdown
+    assert "PyJHora Black-Box Assets" in markdown
     assert "Global First Claim" in markdown
     assert "can_claim_global_first: `false`" in markdown
     assert "production_tuning_allowed: `false`" in markdown

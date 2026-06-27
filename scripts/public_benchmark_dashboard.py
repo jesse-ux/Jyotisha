@@ -85,16 +85,23 @@ def _boundary_audit(oracle_file: str) -> dict[str, Any]:
     }
 
 
+def _pyjhora_blackbox_assets() -> dict[str, Any]:
+    return _run_json([PYTHON, "scripts/generate_pyjhora_oracle_artifact_manifest.py"])
+
+
 def build_dashboard(oracle_file: str) -> dict[str, Any]:
     capability = _run_json([PYTHON, "scripts/audit_capabilities.py", "--mode", "validate"])
     oracle = _oracle_readiness(oracle_file)
     boundary = _boundary_audit(oracle_file)
     dasha = _dasha_readiness(oracle_file)
     shadbala = _shadbala_readiness(oracle_file)
+    pyjhora_assets = _pyjhora_blackbox_assets()
     global_first_gap = (
         f"Dasha-only external oracle readiness is {dasha['valid_dasha_packets']}/"
         f"{dasha['total_dasha_packets']}; Shadbala external absolute-value readiness is "
         f"{shadbala['external_verified_shadbala_tasks']}/{shadbala['shadbala_task_count']}; "
+        f"PyJHora black-box assets are {pyjhora_assets['artifact_count']} artifacts / "
+        f"{pyjhora_assets['packet_count']} packets; "
         "public long-term benchmark history is not yet comparable to the strongest "
         "global open-source projects."
     )
@@ -116,6 +123,7 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
         "oracle_readiness": oracle,
         "dasha_oracle_readiness": dasha,
         "shadbala_oracle_readiness": shadbala,
+        "pyjhora_blackbox_assets": pyjhora_assets,
         "boundary_audit": boundary,
         "public_claim": {
             "can_claim_global_first": can_claim_global_first,
@@ -161,6 +169,14 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- total_dasha_packets: `{dasha['total_dasha_packets']}`",
         f"- external_verified_shadbala_tasks: `{shadbala['external_verified_shadbala_tasks']}`",
         f"- shadbala_task_count: `{shadbala['shadbala_task_count']}`",
+        "",
+        "## PyJHora Black-Box Assets",
+        "",
+        f"- artifact_count: `{report['pyjhora_blackbox_assets']['artifact_count']}`",
+        f"- packet_count: `{report['pyjhora_blackbox_assets']['packet_count']}`",
+        f"- dasha_artifacts: `{report['pyjhora_blackbox_assets']['fronts']['dasha']['artifact_count']}`",
+        f"- shadbala_artifacts: `{report['pyjhora_blackbox_assets']['fronts']['shadbala']['artifact_count']}`",
+        f"- tajika_sahams_artifacts: `{report['pyjhora_blackbox_assets']['fronts']['tajika_sahams']['artifact_count']}`",
         "",
         "## Boundary Audit",
         "",

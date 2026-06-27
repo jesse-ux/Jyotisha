@@ -1,13 +1,12 @@
 {
   "scope": "pyjhora_oracle_artifact_manifest",
-  "generated_at": "2026-06-27T06:25:10.958318+00:00",
-  "artifact_count": 9,
+  "generated_at": "2026-06-27T06:34:04.627003+00:00",
+  "artifact_count": 8,
   "packet_count": 8,
   "artifacts": [
     "pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
     "pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
     "pyjhora_historical_epoch_dasha_stdout_20260627.txt",
-    "pyjhora_oracle_artifact_manifest.json",
     "pyjhora_steve_jobs_dasha_stdout_20260627.txt",
     "pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
     "pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
@@ -26,11 +25,10 @@
   ],
   "fronts": {
     "dasha": {
-      "artifact_count": 4,
+      "artifact_count": 3,
       "packet_count": 3,
       "artifacts": [
         "pyjhora_historical_epoch_dasha_stdout_20260627.txt",
-        "pyjhora_oracle_artifact_manifest.json",
         "pyjhora_steve_jobs_dasha_stdout_20260627.txt",
         "pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt"
       ],

@@ -35,3 +35,4 @@ def test_pyjhora_oracle_artifact_manifest_reports_current_blackbox_assets() -> N
     assert manifest_data["scope"] == "pyjhora_oracle_artifact_manifest"
     assert "pyjhora_steve_jobs_dasha_stdout_20260627.txt" in manifest_data["artifacts"]
     assert "external_template_steve_jobs_dasha_lahiri_pyjhora_20260627.json" in manifest_data["pending_packets"]
+    assert "pyjhora_oracle_artifact_manifest.json" not in manifest_data["artifacts"]
