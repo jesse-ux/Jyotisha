@@ -586,6 +586,28 @@
       "missing_impact": "Without a first-class 16-varga map, divisional interpretation and traditional weighting logic remain fragmented across isolated chart outputs.",
       "note": "Registry entry covers the traditional 16-varga framework and teaching layer; not a claim that every Vimsopaka weighting path is already fully benchmark-closed."
     },
+    "varga_dignity": {
+      "name": "Varga Dignity / 分盘尊严等级",
+      "domains": [
+        "varga",
+        "strength",
+        "classification"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/shodasavarga-complete-guide.md",
+        "references/planetary-dignity-complete-reference.md"
+      ],
+      "commands": [
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.vimsopaka_bala",
+        "modules.varga_strength_overview"
+      ],
+      "audit_label": "Varga Dignity",
+      "missing_impact": "Without a first-class Varga Dignity entry, Simhasana/Parijata/Shridhama-style honor ladders remain buried inside divisional doctrine and are easy to omit in deep reading."
+    },
     "vimsopaka_bala": {
       "name": "Vimsopaka Bala / 分盘综合力量",
       "domains": [
@@ -1108,6 +1130,34 @@
       "audit_label": "Special Lagnas",
       "missing_impact": "Special Lagna timing, status and prosperity sub-angles are thinner without HL/GL/VL/PP/ViL."
     },
+    "special_lagnas": {
+      "name": "Special Lagnas / 特殊上升点（别名入口）",
+      "domains": [
+        "lagna",
+        "timing",
+        "wealth",
+        "status"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/open_source_sources/jaimini-tropical/jaimini/core/lagnas.py",
+        "references/strict-workflow-router.md"
+      ],
+      "commands": [
+        "chart",
+        "full-reading"
+      ],
+      "output_paths": [
+        "special_lagnas.HL",
+        "special_lagnas.GL",
+        "special_lagnas.VL",
+        "special_lagnas.PP",
+        "special_lagnas.ViL"
+      ],
+      "audit_label": "Special Lagnas",
+      "missing_impact": "Important prosperity/status/timing sub-ascendants become harder to discover when users ask for special lagnas by the common umbrella term.",
+      "note": "Alias entry aligned to special_lagnas_extended; not a separate additional calculation family."
+    },
     "tithi_lord": {
       "name": "Tithi Lord / 月日守护星",
       "domains": [
@@ -1411,6 +1461,55 @@
       "audit_label": "Tara Bala",
       "missing_impact": "Without a first-class Tara Bala entry, personalized Muhurta filtering and Nakshatra-based caution windows stay hidden behind generic Nakshatra outputs.",
       "note": "This is a first-class view over the existing Nakshatra Advanced layer, not a claim that every Navatara branch has already been benchmark-closed."
+    },
+    "chandra_bala": {
+      "name": "Chandra Bala / 月亮力",
+      "domains": [
+        "nakshatra",
+        "muhurta",
+        "timing",
+        "strength"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/quick-reference-guide.md",
+        "references/pancha-pakshi-nakshatra-systems.md"
+      ],
+      "commands": [
+        "nakshatra-adv",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.nakshatra_advanced.chandra_bala",
+        "modules.nakshatra_advanced.tara_chandra_combined"
+      ],
+      "audit_label": "Chandra Bala",
+      "missing_impact": "Without a first-class Chandra Bala entry, Moon-relative suitability and emotional timing filters remain hidden behind a generic advanced Nakshatra surface."
+    },
+    "navatara": {
+      "name": "Navatara / 九星链",
+      "domains": [
+        "nakshatra",
+        "timing",
+        "personality",
+        "spiritual"
+      ],
+      "status": "covered",
+      "knowledge_refs": [
+        "references/navatara-kantaka-shani-guide.md",
+        "references/pancha-pakshi-nakshatra-systems.md"
+      ],
+      "commands": [
+        "nakshatra-adv",
+        "full-reading"
+      ],
+      "output_paths": [
+        "modules.nakshatra_advanced.tara_bala",
+        "modules.nakshatra_advanced"
+      ],
+      "audit_label": "Navatara",
+      "missing_impact": "Without a first-class Navatara entry, 27-star three-cycle grouping remains invisible in the skill map even when related Tara layers already exist.",
+      "note": "Current maturity reflects doctrinal and workflow coverage; treat as covered until a dedicated structured Navatara output surface is frozen."
     },
     "nakshatra_dasha": {
       "name": "Nakshatra Dasha / 星宿大运推演（Ashtottari + Nakshatra-level Vimshottari）",
