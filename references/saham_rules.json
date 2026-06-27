@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "description": "Tajika Saham Formulas. Format: P1 - P2 + P3. If birth is at night, the formula often flips to P2 - P1 + P3 (depending on the specific Saham rule).",
+  "sahams": {
+    "Punya_Saham": {
+      "name_en": "Fortune / Good Deeds",
+      "formula_day": ["Moon", "Sun", "Ascendant"],
+      "formula_night": ["Sun", "Moon", "Ascendant"],
+      "description": "Indicates auspiciousness and good fortune."
+    },
+    "Vidya_Saham": {
+      "name_en": "Education",
+      "formula_day": ["Sun", "Moon", "Ascendant"],
+      "formula_night": ["Moon", "Sun", "Ascendant"],
+      "description": "Indicates learning, intellect, and education."
+    },
+    "Yashas_Saham": {
+      "name_en": "Fame",
+      "formula_day": ["Jupiter", "Punya_Saham", "Ascendant"],
+      "formula_night": ["Punya_Saham", "Jupiter", "Ascendant"],
+      "description": "Indicates fame, status, and recognition."
+    },
+    "Mitra_Saham": {
+      "name_en": "Friends",
+      "formula_day": ["Jupiter", "Venus", "Ascendant"],
+      "formula_night": ["Venus", "Jupiter", "Ascendant"],
+      "description": "Indicates friends and social circle."
+    },
+    "Mahatmya_Saham": {
+      "name_en": "Greatness",
+      "formula_day": ["Punya_Saham", "Mars", "Ascendant"],
+      "formula_night": ["Mars", "Punya_Saham", "Ascendant"],
+      "description": "Indicates greatness and grand achievements."
+    },
+    "Gaurava_Saham": {
+      "name_en": "Respect",
+      "formula_day": ["Jupiter", "Moon", "Ascendant"],
+      "formula_night": ["Moon", "Jupiter", "Ascendant"],
+      "description": "Indicates respect and honor in society."
+    },
+    "Karma_Saham": {
+      "name_en": "Action / Profession",
+      "formula_day": ["Mars", "Mercury", "Ascendant"],
+      "formula_night": ["Mercury", "Mars", "Ascendant"],
+      "description": "Indicates profession and karma."
+    }
+  },
+  "exception_rules": {
+    "add_30_degrees": "If the Ascendant does not fall between the first and the second point in the zodiacal order, add 30 degrees (1 sign) to the final result."
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "description": "Nakshatra baseline properties stripped of subjective fortune-telling descriptors. Used purely as a static data reference for engine mapping.",
+  "nakshatras": [
+    {
+      "id": 1,
+      "name_sanskrit": "Ashwini",
+      "ruler": "Ketu",
+      "deity": "Ashwini Kumaras (Physicians of the Gods)",
+      "symbol": "Horse's Head",
+      "animal": "Male Horse",
+      "caste": "Vaishya (Merchant)",
+      "guna": ["Rajas", "Rajas", "Rajas"],
+      "dosha": "Vata"
+    },
+    {
+      "id": 2,
+      "name_sanskrit": "Bharani",
+      "ruler": "Venus",
+      "deity": "Yama (God of Death / Dharma)",
+      "symbol": "Yoni (Female Reproductive Organ)",
+      "animal": "Male Elephant",
+      "caste": "Mleccha (Outcaste)",
+      "guna": ["Rajas", "Rajas", "Tamas"],
+      "dosha": "Pitta"
+    },
+    {
+      "id": 3,
+      "name_sanskrit": "Krittika",
+      "ruler": "Sun",
+      "deity": "Agni (God of Fire)",
+      "symbol": "Knife / Razor",
+      "animal": "Female Sheep",
+      "caste": "Brahmin (Priest)",
+      "guna": ["Rajas", "Rajas", "Sattva"],
+      "dosha": "Kapha"
+    },
+    {
+      "id": 4,
+      "name_sanskrit": "Rohini",
+      "ruler": "Moon",
+      "deity": "Brahma (The Creator)",
+      "symbol": "Chariot / Cart",
+      "animal": "Male Serpent",
+      "caste": "Shudra (Laborer)",
+      "guna": ["Rajas", "Tamas", "Rajas"],
+      "dosha": "Kapha"
+    },
+    {
+      "id": 5,
+      "name_sanskrit": "Mrigashira",
+      "ruler": "Mars",
+      "deity": "Soma (Moon God)",
+      "symbol": "Deer's Head",
+      "animal": "Female Serpent",
+      "caste": "Servant",
+      "guna": ["Rajas", "Tamas", "Tamas"],
+      "dosha": "Pitta"
+    }
+  ],
+  "note": "For brevity, only the first 5 are mocked up. The remaining 22 Nakshatras should be appended via batch script when connected to standard astrological databases."
+}

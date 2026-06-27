@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "description": "Shat Bala Constants: Natural Relationships (Naisargika Mitra/Shatru) to be used as static lookups for Saptavargaja Bala, overriding dynamic astronomical calculations.",
+  "natural_relationships": {
+    "Sun": {
+      "friends": ["Moon", "Mars", "Jupiter"],
+      "enemies": ["Venus", "Saturn"],
+      "neutrals": ["Mercury"]
+    },
+    "Moon": {
+      "friends": ["Sun", "Mercury"],
+      "enemies": [],
+      "neutrals": ["Mars", "Jupiter", "Venus", "Saturn"]
+    },
+    "Mars": {
+      "friends": ["Sun", "Moon", "Jupiter"],
+      "enemies": ["Mercury"],
+      "neutrals": ["Venus", "Saturn"]
+    },
+    "Mercury": {
+      "friends": ["Sun", "Venus"],
+      "enemies": ["Moon"],
+      "neutrals": ["Mars", "Jupiter", "Saturn"]
+    },
+    "Jupiter": {
+      "friends": ["Sun", "Moon", "Mars"],
+      "enemies": ["Mercury", "Venus"],
+      "neutrals": ["Saturn"]
+    },
+    "Venus": {
+      "friends": ["Mercury", "Saturn"],
+      "enemies": ["Sun", "Moon"],
+      "neutrals": ["Mars", "Jupiter"]
+    },
+    "Saturn": {
+      "friends": ["Mercury", "Venus"],
+      "enemies": ["Sun", "Moon", "Mars"],
+      "neutrals": ["Jupiter"]
+    }
+  },
+  "exaltation_degrees": {
+    "Sun": {"sign": 0, "degree": 10},
+    "Moon": {"sign": 1, "degree": 3},
+    "Mars": {"sign": 9, "degree": 28},
+    "Mercury": {"sign": 5, "degree": 15},
+    "Jupiter": {"sign": 3, "degree": 5},
+    "Venus": {"sign": 11, "degree": 27},
+    "Saturn": {"sign": 6, "degree": 20}
+  },
+  "debilitation_degrees": {
+    "Sun": {"sign": 6, "degree": 10},
+    "Moon": {"sign": 7, "degree": 3},
+    "Mars": {"sign": 3, "degree": 28},
+    "Mercury": {"sign": 11, "degree": 15},
+    "Jupiter": {"sign": 9, "degree": 5},
+    "Venus": {"sign": 5, "degree": 27},
+    "Saturn": {"sign": 0, "degree": 20}
+  }
+}

@@ -15,6 +15,7 @@ Yoga规则扩展模块 v1.0
 """
 
 from typing import Dict, List
+from aspects import TIGHT_ORB_DEGREE
 
 SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
          'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -165,7 +166,7 @@ def detect_graha_yuddha(planets: Dict) -> List[Dict]:
             diff = abs(lon1 - lon2) % 360
             if diff > 180:
                 diff = 360 - diff
-            if diff <= 1.0:
+            if diff <= TIGHT_ORB_DEGREE:
                 winner = p1 if lon1 > lon2 else p2
                 loser = p2 if winner == p1 else p1
                 wars.append({

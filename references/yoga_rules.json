@@ -880,9 +880,12 @@
               "role": "lord",
               "house": 9
             },
-            "houses": [
-              1
-            ]
+          "houses": [
+            1,
+            4,
+            7,
+            10
+          ]
           },
           {
             "type": "dignity",

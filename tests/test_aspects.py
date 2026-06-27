@@ -11,6 +11,7 @@ if SCRIPTS not in sys.path:
 from aspects import (
     calc_all_aspects, calc_house_aspects,
     DEFAULT_ORBS, ORBIT_CATEGORIES, SPECIAL_ASPECTS,
+    TIGHT_ORB_DEGREE,
 )
 
 # ── Graha Drishti Tests ────────────────────────────────────────────
@@ -53,6 +54,9 @@ class TestGrahaDrishti:
 # ── Exact Degree Aspects Tests ──────────────────────────────────────
 
 class TestExactDegreeAspects:
+    def test_tight_orb_constant_is_frozen_to_one_degree(self):
+        assert TIGHT_ORB_DEGREE == 1.0
+
     def test_tight_orb_categorization(self):
         assert 3 <= ORBIT_CATEGORIES['tight']
         assert ORBIT_CATEGORIES['tight'] == 3

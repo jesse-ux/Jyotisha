@@ -24,6 +24,7 @@ ORBIT_CATEGORIES = {
     'moderate': 6,   # 中等相位
     'loose': 10,     # 松散相位（最弱）
 }
+TIGHT_ORB_DEGREE = 1.0
 
 # 特殊相位规则（从行星所在宫位算起）
 SPECIAL_ASPECTS = {
