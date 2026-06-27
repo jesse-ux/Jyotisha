@@ -14,6 +14,7 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+import importlib.util
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -168,6 +169,21 @@ def run_swisseph_python(case: dict[str, Any]) -> dict[str, Any]:
 def run_candidate_backend(case: dict[str, Any], backend: str) -> dict[str, Any]:
     if backend == "swisseph_python":
         return run_swisseph_python(case)
+    if backend == "vedastro_service_adapter_candidate":
+        spec = importlib.util.spec_from_file_location(
+            "vedastro_service_adapter",
+            SCRIPT_DIR / "vedastro_service_adapter.py",
+        )
+        if spec is None or spec.loader is None:
+            return {
+                "backend": backend,
+                "available": False,
+                "status": "service_adapter_missing",
+                "reason": "vedastro_service_adapter.py is missing",
+            }
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.run_case(case["id"])
     return {
         "backend": backend,
         "available": False,
