@@ -108,6 +108,32 @@ def _convergence_score(convergence: Any) -> int:
     return mapping.get(level, 0)
 
 
+def _derive_wealth_promise_strength(modules: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    yogas_doshas = modules.get("yogas_doshas") if isinstance(modules, dict) else {}
+    dhana = yogas_doshas.get("dhana_yogas") if isinstance(yogas_doshas, dict) else {}
+    yogas = dhana.get("yogas") if isinstance(dhana, dict) else None
+    if not isinstance(yogas, list) or not yogas:
+        return None
+
+    strengths = [
+        str(row.get("strength", "")).lower()
+        for row in yogas
+        if isinstance(row, dict)
+    ]
+    if any(level == "strong" for level in strengths):
+        level = "strong"
+    elif any(level == "moderate" for level in strengths):
+        level = "moderate"
+    else:
+        level = "weak"
+
+    return {
+        "level": level,
+        "source": "dhana_yogas",
+        "count": len(yogas),
+    }
+
+
 def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[str]) -> Dict[str, Any]:
     if route == "relationship":
         score = 0
@@ -290,6 +316,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "wealth_convergence": domain_activations.get("wealth_family"),
             "gains_convergence": domain_activations.get("gains_wishes"),
             "career_convergence": domain_activations.get("career_status"),
+            "wealth_promise_strength": _derive_wealth_promise_strength(modules),
         }
         missing = [key for key, value in present.items() if key not in {
             "gains_convergence", "career_convergence"
