@@ -20,6 +20,13 @@ This file is the small index for the current engineering fronts that still drive
 - `/Users/wuyongnaren/Documents/印度占星/docs/superpowers/specs/2026-06-28-jaimini-marriage-bridge-v1-design.md`
 - `/Users/wuyongnaren/Documents/印度占星/scripts/marriage_benchmark_summary.py`
 
+## Career Adjudication
+
+- `/Users/wuyongnaren/Documents/印度占星/references/event_judgment_career.md`
+- `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_career.py`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/life_event_graph_v1_audit_2026_06_28.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/functional_benefic_malefic_strict_layer_audit_2026_06_28.md`
+
 ## Wealth Adjudication
 
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/wealth_adjudicator_first_pass_audit_2026_06_27.md`
@@ -49,11 +56,18 @@ This file is the small index for the current engineering fronts that still drive
 
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/vedastro_parity_matrix_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/vedastro_parity_matrix_latest.json`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/vedastro_fast_path_checklist_latest.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/vedastro_fast_path_checklist_latest.json`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/life_event_graph_v1_audit_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/vedastro_range_scan_allowlist_audit_2026_06_28.md`
+- `/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_python_bridge.py`
+- `/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_official_mcp_bridge.py`
+- `/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_method_catalog_sync.py`
+- `/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_fast_path_checklist.py`
 - `/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_service_adapter.py`
 - follow only after the Jaimini marriage bridge v1 regression loop is closed
 - Use the parity matrix before adding or claiming VedAstro-equivalent capability.
+- Use the fast-path checklist when deciding whether a VedAstro-facing feature should go through official MCP, official Python bridge, REST adapter, or remain local-native.
 
 ## Dignity / Role Guardrails
 

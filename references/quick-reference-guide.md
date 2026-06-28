@@ -6,7 +6,7 @@
 
 > **来源标签**: 【现代演绎·Skill整合】 — 执行总控指南
 >
-> **版本**：v6.9.14 | **最后更新**：2026-06-21
+> **版本**：v6.9.15 | **最后更新**：2026-06-29
 ---
 
 ## 场景一：用户说"帮我看盘"或"分析我的星盘"
@@ -105,8 +105,9 @@
 
 | 用户意图 | 主参考文件 | 引擎命令 |
 |---------|-----------|---------|
-| 事业时机 | references/strict-workflow-router.md + references/yoga-phala-timing-guide.md | `full-reading` + `varga-full` + `dasha` + `jaimini --mode all` + `shadbala` + `ashtakavarga` + `argala` + `transit` |
+| 事业时机 | references/strict-workflow-router.md + references/yoga-phala-timing-guide.md + references/event_judgment_career.md | `full-reading` + `varga-full` + `dasha` + `jaimini --mode all` + `shadbala` + `ashtakavarga` + `argala` + `transit` |
 | **→ Jaimini静态层** | `jaimini --mode all` 会输出 Karaka/Karakamsha、A1-A12/UL、Graha Pada、Special Lagnas；Chara Dasha timing 已通过 KN Rao benchmark（overall 95.83%） | 事业用 A10/Karma Pada + Graha Pada + Argala 交叉确认；Aquarius/Scorpio 共主仲裁差异需声明 |
+| **→ 事业裁决骨架** | `references/event_judgment_career.md` | 必须按 `promise -> activation -> manifestation -> label` 顺序裁决，不得只凭单一大运或 transit 直接上结论 |
 | **→ Actionable Output** | references/transit-actionable-output-guide.md ⭐v4.1.0 | 必须输出时间段+行动+置信度 |
 | 财运来源 | references/strict-workflow-router.md + references/darakaraka-complete-guide.md（DK财富5模式）| `chart` + `varga-full` + `dasha` + `shadbala` + `ashtakavarga` + `argala` |
 | 学业考试 | references/planetary-dignity-complete-reference.md（D24分析） | `varga -d 24` |

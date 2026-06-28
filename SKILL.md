@@ -103,7 +103,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 - [`references/event_judgment_skeleton.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_skeleton.md)
 - [`references/event_judgment_marriage.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_marriage.md)
 - [`references/event_judgment_wealth.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_wealth.md)
-- （后续再补）`event_judgment_career.md`
+- [`references/event_judgment_career.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_career.md)
 
 ## 五层硬约束（全球前三引擎强制调用）
 

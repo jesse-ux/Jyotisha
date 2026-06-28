@@ -443,3 +443,41 @@
 - 守住边界：VedAstro 事件证据不直接替代本地双重大运、分盘、Shadbala/Ashtakavarga/Jaimini/Functional role，也不直接设置 `dominant_label / payout_label`；缺本地 promise 时仍受原评分上限约束。
 - 新增审计文档 `docs/research/vedastro_required_high_frequency_radar_contract_2026_06_28.md`。
 - 验证：`python3 -m pytest tests/test_vedastro_service_adapter_executor.py tests/test_vedastro_external_technique_evidence.py tests/test_vedastro_parity_matrix.py tests/test_vedastro_adapter_candidate_guard.py -q` 通过；`python3 -m pytest tests/test_mcp_strict_workflow_finance.py tests/test_mcp_strict_workflow_relationship.py tests/test_mcp_strict_workflow_career.py tests/test_life_event_graph_v1.py -q` 通过。
+
+## 2026-06-29T00:00:00+08:00 - VedAstro Adapter MVP 方案 A 收口
+
+- 按用户批准的方案 A 执行：在 `scripts/vedastro_service_adapter.py` 中补齐外部 range scan 的 `request_hash`、`response_hash`、`called_at`、`endpoint_host`、`artifact_path`、`attempt_count`、`retry_error_codes`、allowlist/raw/filtered event counts，并把归一化结果写入 `scratch/local/vedastro_adapter/` evidence artifact。
+- 新增安全状态面：`/api/vedastro/status` 只暴露配置状态、网络开关、endpoint host、live profile、artifact 目录与最新 artifact，不泄露完整 endpoint；Trust Center 运行健康检查时读取该状态并显示 VedAstro 外部雷达是否 live-ready / network-disabled / endpoint-missing。
+- 质量门新增 `vedastro-live` profile：默认跳过浏览器重活和本地重型审计；没有 `VEDASTRO_API_ENDPOINT` 或 `VEDASTRO_ENABLE_NETWORK=1` 时输出受控 `blocked`，配置齐全后才执行真实 VedAstro range scan smoke。
+- MCP strict workflow 不再要求人工把 adapter 结果重包装到 `external_activation`：`modules.vedastro_range_scan_result` 现在可直接进入 external activation ledger，并保留 adapter provenance；该外部雷达仍不覆盖本地双重大运、分盘、Shadbala/Ashtakavarga/Jaimini/Functional role，也不直接改写评分标签。
+- 方案 A 文档与计划：新增 `docs/superpowers/plans/2026-06-29-vedastro-adapter-mvp.md`；`README.md` 记录 `vedastro-live` 命令。
+- Fresh verification：`git diff --check` 通过；`python3 -m py_compile scripts/vedastro_service_adapter.py scripts/jyotish_api_server.py scripts/run_quality_gate.py mcp_server.py` 通过；`env -u VEDASTRO_API_ENDPOINT -u VEDASTRO_ENABLE_NETWORK python3 scripts/run_quality_gate.py --profile vedastro-live` 通过且明确返回 `status=blocked` / `reason=vedastro_live_endpoint_or_network_flag_missing`；`python3 scripts/run_quality_gate.py --profile quick --skip-frontend-runtime` 通过，配置内 295 项 pytest 通过；VedAstro/MCP/Life Event Graph 聚焦 33 项通过；strict workflow 58 项通过；`npm run build --prefix jyotish-app` 通过。
+- 剩余诚实边界：本机尚未配置 VedAstro 官方实网 endpoint，因此只能说 adapter、状态面、artifact/provenance、重试、质量门和下游 strict workflow 已闭环；不能声称 VedAstro 官方 live smoke 已实际命中官方服务。
+
+## 2026-06-29T05:30:00+08:00 - VedAstro 普通用户可点击入口
+
+- 用户追问“普通用户是否可以用上 VedAstro”后，确认上一阶段只是底层/状态面已接好，普通用户还缺按钮式入口；本轮按最小产品入口继续补齐。
+- 新增 `docs/superpowers/specs/2026-06-29-vedastro-user-range-scan-design.md` 与 `docs/superpowers/plans/2026-06-29-vedastro-user-range-scan.md`，约束 UI 必须使用当前星盘出生资料，不跑硬编码 demo case。
+- 后端新增 `/api/vedastro/range_scan`：支持 `career / relationship / finance` UI domain，映射到 adapter 的 `career / marriage / wealth`；验证出生资料、日期范围、坐标、时区后调用 `vedastro_service_adapter.run_range_scan_for_case()`。
+- 前端新增 `window.JyotishAPI.runVedAstroRangeScan()`，Trust Center 增加 `VedAstro Range Scan` 面板，用户生成星盘后可选择领域与日期范围点击“运行 VedAstro 外部雷达扫描”；结果会显示 status/event count/artifact 或 blocked reason，并写入 `chartData.modules.vedastro_range_scan_result`。
+- 实测 HTTP：未配置 `VEDASTRO_API_ENDPOINT` / `VEDASTRO_ENABLE_NETWORK` 时，`POST /api/vedastro/range_scan` 返回 `success=true`、`ui_domain=relationship`、`adapter_domain=marriage`、`result.status=service_endpoint_not_configured`，且 request_preview 使用用户 `REDACTED_DATE REDACTED_TIME`、REDACTED_PLACE坐标与 Lahiri/mean node。
+- Fresh verification：新增后端红灯测试先 404 后转绿；新增前端静态红灯测试先缺 bridge 后转绿；VedAstro/API/frontend 聚焦 19 项通过；`npm run build --prefix jyotish-app` 通过；`python3 scripts/run_quality_gate.py --profile quick --skip-frontend-runtime` 通过，当前 quick 集合 297 项 pytest 通过；`git diff --check` 与 `py_compile` 通过。
+- 剩余诚实边界：普通用户现在可以点击使用 VedAstro 入口，但在服务端未配置官方 endpoint 和网络开关前，产品显示的是 blocked 边界；要看到真实 VedAstro 事件结果仍需配置 `VEDASTRO_API_ENDPOINT` 与 `VEDASTRO_ENABLE_NETWORK=1`。
+
+## 2026-06-29T07:20:00+08:00 - VedAstro 596+ 最快路径矩阵收口
+
+- 新增 `scripts/vedastro_python_bridge.py`：自动发现 `venv_vedastro`，兼容官方实际模块名 `vedastro`，并可通过 typed params 直接调用 `Calculate.*` 方法；live smoke 已验证 `PlanetNirayanaLongitude(Sun, REDACTED_DATE REDACTED_TIME, REDACTED_PLACE)` 返回官方结果。
+- 新增 `scripts/vedastro_method_catalog_sync.py`：真实从官方 `GetAllEventDataGroupedByTag` 拉取 catalog 并写入 `scratch/local/vedastro_adapter/method_catalog_snapshot.json`；当前快照统计为 `tag_count=46`、`method_count=2258`。
+- 扩展 `scripts/vedastro_parity_matrix.py` 与 latest 文档：新增 `fastest_path_lane` / `route_notes`，把高价值能力明确分流到 `official_mcp`、`official_python_bridge`、`rest_adapter`、`local_native_preferred`、`hybrid_router`、`external_evidence_only` 六条执行车道。
+- 新增 `scripts/vedastro_fast_path_checklist.py` 与 `docs/research/vedastro_fast_path_checklist_latest.{md,json}`，正式沉淀“VedAstro 596+ 节点接入实施清单（按最快路径）”。
+- 路由真相当前冻结为：`MCP/API Surface -> official_mcp`；`Shadbala / Ashtakavarga / Tajika -> official_python_bridge`；`EventsAtRange / Birth Time ML -> rest_adapter`；`D1-D60 / Jaimini / Synastry / Prashna -> local_native_preferred`；`Ayanamsa -> hybrid_router`；`Numerology -> external_evidence_only`。
+- Fresh verification：`python3 -m pytest tests/test_vedastro_parity_matrix.py tests/test_vedastro_fast_path_checklist.py tests/test_vedastro_python_bridge.py tests/test_vedastro_method_catalog_sync.py tests/test_vedastro_range_scan_replay.py tests/test_vedastro_service_adapter_executor.py tests/test_vedastro_external_technique_evidence.py -q` 通过；`python3 scripts/vedastro_parity_matrix.py --write` 与 `python3 scripts/vedastro_fast_path_checklist.py --write --format markdown` 通过。
+
+## 2026-06-29T07:45:00+08:00 - 官方 MCP 真接入与 career 骨架收口
+
+- 新增 `scripts/vedastro_official_mcp_bridge.py`：以官方公共端点 `https://mcp.vedastro.org/api/mcp/public` 为默认入口，提供极薄的 `initialize` / `tools_list` 两个操作，只负责官方 MCP 可达性与工具发现，不允许外部 MCP 结果直接改写本地 `score / dominant_label / payout_label`。
+- 新增 `tests/test_vedastro_official_mcp_bridge.py`：用本地 mock MCP 服务验证 `Mcp-Session-Id` 透传与 `tools/list` 结果归一化，确保这不是“手写文档假接入”。
+- `scripts/vedastro_python_bridge.py` 继续往高价值方法层推进：新增 `--high-value` 快捷层，先把 `event_tag_catalog -> GetAllEventDataGroupedByTag`、`planet_longitude -> PlanetNirayanaLongitude`、`vimshottari_snapshot -> DasaAtTime` 收成稳定入口；`GetCharaDasaAtTime` 的真实调用形状仍在核对，不会把半通状态混进完成声明。
+- 实测真相：官方公共 MCP `initialize` 与 `tools/list` 已通过真实 HTTP 返回；Python bridge 的 `DasaAtTime` 通过 positional args 已成功返回 Vimshottari 快照；`GetCharaDasaAtTime` 的 bound-method 形状已进一步探明，其真实桥接仍需按 positional contract 单独收口，但不再属于“完全未知调用面”。
+- 本地主线真相同步：补齐 `references/event_judgment_career.md`，并将其挂入 `SKILL.md`、`references/quick-reference-guide.md` 与 `docs/research/ACTIVE_FRONTS.md`。这意味着 career 线不再缺“专用裁决骨架”，后续尾巴集中在裁决细化、报告渲染与 oracle 闭环，而非入口缺失。
+- Fresh oracle status re-check：`python3 scripts/oracle_closure_master_dashboard.py --format json` 当前显示 `12` 个总任务中 `8` 个已 external_verified、`4` 个未闭合；未闭合核心已收缩到 `tajika_sahams` 前线，而非 Dasha/Shadbala 主前线。`python3 scripts/public_benchmark_dashboard.py --format json` 当前显示 `valid_packets=5`、`ready_for_calibration=5`、`production_tuning_allowed=false`，因此仍不能宣称全局 oracle 已封顶。
