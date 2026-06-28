@@ -240,6 +240,20 @@ def _normalize_range_scan_success(
             }
         )
 
+    top_event = None
+    if evidence_ledger:
+        top = max(
+            evidence_ledger,
+            key=lambda item: item.get("score") if isinstance(item.get("score"), (int, float)) else float("-inf"),
+        )
+        top_event = {
+            "event_id": top.get("event_id"),
+            "score": top.get("score"),
+            "start": top.get("start"),
+            "end": top.get("end"),
+            "tags": top.get("tags") or [],
+        }
+
     return {
         "backend": "vedastro_service_adapter_candidate",
         "available": True,
@@ -247,6 +261,8 @@ def _normalize_range_scan_success(
         "operation": "range_scan",
         "domain": request_preview["domain"],
         "request_preview": request_preview,
+        "event_count": len(evidence_ledger),
+        "top_event": top_event,
         "evidence_ledger": evidence_ledger,
         "source_metadata": {
             "transport": "http_json_service_boundary",

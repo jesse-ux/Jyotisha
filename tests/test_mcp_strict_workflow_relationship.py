@@ -114,6 +114,59 @@ def test_relationship_collects_vedastro_range_scan_as_external_activation_contex
     assert "external_activation_support" in strict["event_judgement"]["secondary_context"]
 
 
+def test_relationship_synastry_bridge_adds_context_and_small_score_bump_without_overriding_label_gate() -> None:
+    base = _collect_strict_evidence("relationship", _base_relationship_result())
+    result = _base_relationship_result()
+    result["modules"]["synastry"] = {
+        "total_score": 29.0,
+        "max_score": 36.0,
+        "is_approved": True,
+        "additional_kutas": {
+            "Mahendra": "good",
+            "StreeDeergha": "good",
+            "Vedha": "good",
+            "Rajju": {"result": "good", "group": None, "effect": ""},
+            "BadConstellations": "good",
+        },
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["synastry_relationship_support"] == {
+        "level": "supportive",
+        "source": "synastry_relationship_bridge_v1",
+        "signals": ["ashtakoot_approved", "ashtakoot_high_score", "kuta_exception_clean"],
+        "total_score": 29.0,
+        "approved": True,
+    }
+    assert strict["event_judgement"]["dominant_label"] == "legal_marriage"
+    assert strict["event_judgement"]["score"] == base["event_judgement"]["score"] + 5
+    assert "synastry_support" in strict["event_judgement"]["secondary_context"]
+
+
+def test_relationship_synastry_bridge_cannot_lift_label_when_core_marriage_layers_are_missing() -> None:
+    result = _base_relationship_result()
+    del result["modules"]["varga_full"]["D9_Navamsa"]
+    del result["modules"]["special_lagnas"]["Upapada_Lagna"]
+    result["modules"]["synastry"] = {
+        "total_score": 31.0,
+        "is_approved": True,
+        "additional_kutas": {
+            "Vedha": "good",
+            "Rajju": {"result": "good"},
+            "BadConstellations": "good",
+        },
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["synastry_relationship_support"]["level"] == "supportive"
+    assert strict["event_judgement"]["dominant_label"] is None
+    assert "synastry_support" in strict["event_judgement"]["secondary_context"]
+    assert "d9_navamsa" in strict["missing_evidence"]
+    assert "upapada_lagna" in strict["missing_evidence"]
+
+
 def test_relationship_dignity_guardrail_ignores_non_relevant_planets() -> None:
     result = _base_relationship_result()
     result["modules"]["chart"] = {

@@ -280,6 +280,14 @@ def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> No
     assert report["status"] == "ok"
     assert report["operation"] == "range_scan"
     assert report["domain"] == "marriage"
+    assert report["event_count"] == 1
+    assert report["top_event"] == {
+        "event_id": "jupiter_7h_window",
+        "score": 72,
+        "start": "2026-05-01",
+        "end": "2026-06-01",
+        "tags": ["marriage", "transit"],
+    }
     assert report["evidence_ledger"][0]["event_id"] == "jupiter_7h_window"
     assert report["evidence_ledger"][0]["domain"] == "marriage"
     assert report["evidence_ledger"][0]["score"] == 72

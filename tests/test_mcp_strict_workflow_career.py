@@ -96,6 +96,36 @@ def test_career_argala_bridge_uses_tenth_house_as_modifier_only() -> None:
     assert "argala_support" in strict["event_judgement"]["secondary_context"]
 
 
+def test_career_kakshya_support_adds_small_score_bump_without_label_override() -> None:
+    base_result = _base_career_result()
+    base_result["modules"]["dasa_convergence"]["domain_activations"]["career_status"] = {
+        "convergence_level": "L1",
+        "probability": "+15-20%",
+    }
+    base = _collect_strict_evidence("career", base_result)
+    result = _base_career_result()
+    result["modules"]["dasa_convergence"]["domain_activations"]["career_status"] = {
+        "convergence_level": "L1",
+        "probability": "+15-20%",
+    }
+    result["modules"]["kakshya"] = {
+        "summary": {"average_strength": 6.7},
+        "planets": {"Sun": {"kakshya_strength": 7.0}},
+    }
+
+    strict = _collect_strict_evidence("career", result)
+
+    assert strict["present_evidence"]["kakshya_career_support"] == {
+        "level": "supportive",
+        "source": "kakshya_career_bridge_v1",
+        "signals": ["kakshya_career_support"],
+        "average_strength": 6.7,
+    }
+    assert strict["event_judgement"]["dominant_label"] == "career_status"
+    assert strict["event_judgement"]["score"] >= base["event_judgement"]["score"]
+    assert "kakshya_career_support" in strict["event_judgement"]["secondary_context"]
+
+
 def test_career_caps_confidence_when_provided_shadbala_components_are_incomplete() -> None:
     result = _base_career_result()
     result["modules"]["dasa_convergence"]["domain_activations"]["career_status"] = {
