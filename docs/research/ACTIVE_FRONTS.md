@@ -2,6 +2,13 @@
 
 This file is the small index for the current engineering fronts that still drive code changes.
 
+## Fragment Discipline
+
+- Before touching strict workflow or adjudicator logic, check:
+  - `/Users/wuyongnaren/Documents/印度占星/docs/research/high_value_fragment_source_map_2026_06_28.md`
+- Treat repo truth as authoritative.
+- Treat `docs/research/local_drafts`, Gemini brain notes, Codex attachments, and WorkBuddy copies as candidate sources only.
+
 ## Relationship Adjudication
 
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/marriage_adjudicator_first_pass_audit_2026_06_27.md`
