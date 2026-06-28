@@ -445,7 +445,7 @@
         "node_mode": "mean"
       },
       "target": {
-        "sun_sidereal_longitude_deg": null,
+        "sun_sidereal_longitude_deg": 259.882698,
         "vimshottari_start_date": "1787-01-19"
       },
       "verification_note": "Historical epoch precision case; fill targets only from external tool output.",

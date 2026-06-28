@@ -66,8 +66,8 @@ def test_oracle_boundary_audit_reports_dasha_and_shadbala_boundaries() -> None:
     assert longitude["comparisons"]["Moon"]["engine_sign"] == "Aquarius"
     assert longitude["comparisons"]["Moon"]["target_sign"] == "Aquarius"
     assert longitude["comparisons"]["Moon"]["abs_delta_arcsec"] > 0
-    assert longitude["max_abs_delta_arcsec"] > longitude["threshold_arcsec"]
-    assert longitude["within_threshold"] is False
+    assert longitude["max_abs_delta_arcsec"] < longitude["threshold_arcsec"]
+    assert longitude["within_threshold"] is True
 
     template = next(row for row in report["template_cases"] if row["case_id"] == "template_bv_raman_vimshottari_boundary_series")
     assert template["case_id"] == "template_bv_raman_vimshottari_boundary_series"

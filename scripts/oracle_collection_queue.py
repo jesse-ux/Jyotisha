@@ -248,8 +248,11 @@ def _task_from_template(case: dict[str, Any]) -> dict[str, Any]:
         promotion_criteria.extend(guidance["promotion_criteria"])
 
     status = case.get("status", "template_only")
-    ready_for_calibration = status == "external_verified" and not missing_fields
-    if ready_for_calibration or missing_fields:
+    evidence_packet = _evidence_packet(case, target_fields)
+    packet_status = evidence_packet.get("status")
+    ready_for_collection = bool(missing_fields) or status != "external_verified" or packet_status != "external_verified"
+    ready_for_calibration = status == "external_verified" and packet_status == "external_verified" and not missing_fields
+    if ready_for_calibration or ready_for_collection:
         blocked_reason = ""
     else:
         blocked_reason = "external_evidence_status_required"
@@ -268,8 +271,8 @@ def _task_from_template(case: dict[str, Any]) -> dict[str, Any]:
         "preferred_sources": _dedupe(preferred_sources),
         "collection_steps": _dedupe(collection_steps),
         "promotion_criteria": _dedupe(promotion_criteria),
-        "evidence_packet": _evidence_packet(case, target_fields),
-        "ready_for_collection": bool(missing_fields),
+        "evidence_packet": evidence_packet,
+        "ready_for_collection": ready_for_collection,
         "ready_for_calibration": ready_for_calibration,
         "blocked_reason": blocked_reason,
         "do_not_tune_production": not ready_for_calibration,

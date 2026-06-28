@@ -53,7 +53,7 @@ def test_oracle_collection_queue_outputs_executable_json_tasks() -> None:
 
     assert report["scope"] == "external_oracle_collection_queue"
     assert report["summary"]["total_tasks"] == 6
-    assert report["summary"]["ready_for_calibration"] == 4
+    assert report["summary"]["ready_for_calibration"] == 5
     assert report["summary"]["ready_for_collection"] == 1
     assert report["summary"]["by_status"]["external_verified"] == 5
     assert report["summary"]["by_status"]["template_only"] == 1
@@ -88,12 +88,21 @@ def test_oracle_collection_queue_outputs_executable_json_tasks() -> None:
     assert packet["integrity_checks"]["must_not_come_from_local_engine"] is True
     assert packet["integrity_checks"]["requires_external_artifact"] is True
 
-    blocked = next(task for task in report["tasks"] if task["case_id"] == "template_historical_epoch_lahiri")
-    assert blocked["status"] == "external_verified"
-    assert blocked["ready_for_collection"] is True
-    assert blocked["ready_for_calibration"] is False
-    assert blocked["do_not_tune_production"] is True
-    assert blocked["missing_target_fields"] == ["target.sun_sidereal_longitude_deg"]
+    historical = next(task for task in report["tasks"] if task["case_id"] == "template_historical_epoch_lahiri")
+    assert historical["status"] == "external_verified"
+    assert historical["ready_for_collection"] is False
+    assert historical["ready_for_calibration"] is True
+    assert historical["do_not_tune_production"] is False
+    assert historical["missing_target_fields"] == []
+    assert historical["evidence_packet"]["target_placeholders"]["target.sun_sidereal_longitude_deg"] == 259.882698
+
+    raman = next(task for task in report["tasks"] if task["case_id"] == "template_bv_raman_vimshottari_boundary_series")
+    assert raman["status"] == "template_only"
+    assert raman["ready_for_collection"] is True
+    assert raman["ready_for_calibration"] is False
+    assert raman["blocked_reason"] == ""
+    assert raman["missing_target_fields"] == []
+    assert raman["evidence_packet"]["status"] == "draft"
 
 
 def test_oracle_collection_queue_outputs_markdown_table() -> None:
@@ -105,7 +114,8 @@ def test_oracle_collection_queue_outputs_markdown_table() -> None:
     assert "| task_id | case_id | status | missing fields | preferred sources |" in markdown
     assert "collect_template_user_REDACTED_YEAR_moon_longitude_lahiri" in markdown
     assert "`external_verified`" in markdown
-    assert "target.sun_sidereal_longitude_deg" in markdown
+    assert "collect_template_bv_raman_vimshottari_boundary_series" in markdown
+    assert "template_only" in markdown
     assert "production_tuning_allowed: `false`" in markdown
     assert "Evidence Packet Fields" in markdown
     assert "tool_name" in markdown
@@ -292,7 +302,7 @@ def test_oracle_collection_queue_preserves_external_verified_evidence(tmp_path: 
     assert first["ready_for_collection"] is False
     assert first["ready_for_calibration"] is True
     assert first["do_not_tune_production"] is False
-    assert report["summary"]["ready_for_calibration"] == 4
+    assert report["summary"]["ready_for_calibration"] == 5
     assert report["summary"]["production_tuning_allowed"] is False
 
     packet = first["evidence_packet"]

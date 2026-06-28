@@ -39,8 +39,8 @@ def test_public_benchmark_dashboard_outputs_stable_json_summary() -> None:
     assert report["summary"]["technique_count"] >= 60
     assert report["summary"]["capability_valid"] is True
     assert report["oracle_readiness"]["total_packets"] == 6
-    assert report["oracle_readiness"]["valid_packets"] == 4
-    assert report["oracle_readiness"]["ready_for_calibration"] == 4
+    assert report["oracle_readiness"]["valid_packets"] == 5
+    assert report["oracle_readiness"]["ready_for_calibration"] == 5
     assert report["oracle_readiness"]["production_tuning_allowed"] is False
     assert report["dasha_oracle_readiness"]["valid_dasha_packets"] == 3
     assert report["dasha_oracle_readiness"]["total_dasha_packets"] == 3
