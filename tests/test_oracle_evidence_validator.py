@@ -89,7 +89,7 @@ def test_validator_accepts_current_external_packets_but_rejects_remaining_drafts
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
     assert report["scope"] == "external_oracle_evidence_validation"
-    assert report["summary"]["total_packets"] == 5
+    assert report["summary"]["total_packets"] == 6
     assert report["summary"]["valid_packets"] == 4
     assert report["summary"]["ready_for_calibration"] == 4
     assert report["summary"]["all_packets_external_verified"] is False
@@ -100,6 +100,11 @@ def test_validator_accepts_current_external_packets_but_rejects_remaining_drafts
     remaining_invalid = [packet for packet in report["packets"] if not packet["valid"]]
     assert remaining_invalid
     assert any("placeholder_unfilled:" in problem for packet in remaining_invalid for problem in packet["problems"])
+    assert any(
+        packet["capture_id"] == "external_template_historical_epoch_lahiri"
+        and "placeholder_unfilled:target.sun_sidereal_longitude_deg" in packet["problems"]
+        for packet in remaining_invalid
+    )
 
 
 def test_validator_accepts_filled_external_packet_but_not_whole_queue(tmp_path: Path) -> None:
