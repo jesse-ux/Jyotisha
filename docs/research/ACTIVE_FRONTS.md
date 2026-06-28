@@ -38,6 +38,7 @@ This file is the small index for the current engineering fronts that still drive
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_closure_master_dashboard_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/public_benchmark_dashboard_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/shadbala_absolute_oracle_comparison_audit_2026_06_28.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/raman_dasha_boundary_series_oracle_seed_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/scripts/shadbala_oracle_comparison.py`
 - `/Users/wuyongnaren/Documents/印度占星/references/oracle/`
 - Before changing oracle-dependent adjudicator or benchmark claims, run:

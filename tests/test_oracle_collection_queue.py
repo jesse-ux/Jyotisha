@@ -52,10 +52,11 @@ def test_oracle_collection_queue_outputs_executable_json_tasks() -> None:
     report = json.loads(completed.stdout)
 
     assert report["scope"] == "external_oracle_collection_queue"
-    assert report["summary"]["total_tasks"] == 5
+    assert report["summary"]["total_tasks"] == 6
     assert report["summary"]["ready_for_calibration"] == 4
     assert report["summary"]["ready_for_collection"] == 1
     assert report["summary"]["by_status"]["external_verified"] == 5
+    assert report["summary"]["by_status"]["template_only"] == 1
     assert report["summary"]["production_tuning_allowed"] is False
 
     first = report["tasks"][0]
@@ -116,7 +117,7 @@ def test_oracle_collection_queue_can_write_draft_evidence_packets(tmp_path: Path
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["written_evidence_packets"] == 5
+    assert report["summary"]["written_evidence_packets"] == 6
 
     packet_path = tmp_path / "external_template_steve_jobs_dasha_lahiri.json"
     assert packet_path.exists()
@@ -300,3 +301,57 @@ def test_oracle_collection_queue_preserves_external_verified_evidence(tmp_path: 
     assert packet["target_placeholders"]["target.moon_sidereal_longitude_deg"] == 311.7897
     assert packet["target_placeholders"]["target.vimshottari_start_date"] == "1986-05-18"
     assert packet["target_placeholders"]["target.shadbala_components"]["Sun"]["sthana"] == 100.0
+
+
+def test_oracle_collection_queue_recognizes_vimshottari_boundary_series(tmp_path: Path) -> None:
+    oracle = {
+        "schema_version": 1,
+        "scope": "external_dasha_boundary_series_oracle_cases",
+        "template_cases": [
+            {
+                "id": "template_bv_raman_vimshottari_boundary_series",
+                "status": "template_only",
+                "source": "B.V. Raman Hindu Predictive Astrology published example",
+                "privacy": "public_reference_chart",
+                "birth": {
+                    "year": 1912,
+                    "month": 8,
+                    "day": 8,
+                    "hour": 19,
+                    "minute": 43,
+                    "second": 0,
+                    "lat": 13.0,
+                    "lon": 77.583333,
+                    "tz": 5.5,
+                },
+                "settings": {
+                    "ayanamsa": "raman",
+                    "node_mode": "unspecified",
+                    "year_length_policy": "source_boundary_dates",
+                },
+                "target": {
+                    "vimshottari_mahadasa_boundaries": {
+                        "Mars": "1912-08-08",
+                        "Rahu": "1918-09-21",
+                        "Jupiter": "1936-09-21",
+                        "Saturn": "1952-09-21",
+                        "Mercury": "1971-09-21",
+                        "Ketu": "1988-09-21",
+                    }
+                },
+            }
+        ],
+    }
+    oracle_path = tmp_path / "raman_oracle.json"
+    oracle_path.write_text(json.dumps(oracle, ensure_ascii=False), encoding="utf-8")
+
+    completed = run_queue_for_file(oracle_path, "--format", "json")
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    task = report["tasks"][0]
+    assert task["case_id"] == "template_bv_raman_vimshottari_boundary_series"
+    assert task["target_modules"] == ["dasha"]
+    assert "target.vimshottari_mahadasa_boundaries" in task["target_fields"]
+    assert any("boundary dates" in step for step in task["collection_steps"])
+    assert task["evidence_packet"]["target_placeholders"]["target.vimshottari_mahadasa_boundaries"]["Rahu"] == "1918-09-21"

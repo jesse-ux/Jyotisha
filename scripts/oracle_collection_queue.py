@@ -80,6 +80,7 @@ FIELD_TO_MODULE = {
     "sun_sidereal_longitude_deg": "longitude",
     "ascendant_longitude_deg": "longitude",
     "vimshottari_start_date": "dasha",
+    "vimshottari_mahadasa_boundaries": "dasha",
     "shadbala_components": "shadbala",
     "total_score": "ashtakoot",
     "varna": "ashtakoot",

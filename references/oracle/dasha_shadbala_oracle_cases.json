@@ -463,6 +463,39 @@
           "operator_note": "Black-box stdout from isolated /tmp virtualenv. PyJHora AGPL code was not copied into this repository; only the generated output artifact is stored as external evidence."
         }
       }
+    },
+    {
+      "id": "template_bv_raman_vimshottari_boundary_series",
+      "status": "template_only",
+      "source": "B.V. Raman Hindu Predictive Astrology published example",
+      "privacy": "public_reference_chart",
+      "birth": {
+        "year": 1912,
+        "month": 8,
+        "day": 8,
+        "hour": 19,
+        "minute": 43,
+        "second": 0,
+        "lat": 13.0,
+        "lon": 77.583333,
+        "tz": 5.5
+      },
+      "settings": {
+        "ayanamsa": "raman",
+        "node_mode": "unspecified",
+        "year_length_policy": "source_boundary_dates"
+      },
+      "target": {
+        "vimshottari_mahadasa_boundaries": {
+          "Mars": "1912-08-08",
+          "Rahu": "1918-09-21",
+          "Jupiter": "1936-09-21",
+          "Saturn": "1952-09-21",
+          "Mercury": "1971-09-21",
+          "Ketu": "1988-09-21"
+        }
+      },
+      "verification_note": "Seeded from a public B.V. Raman book example. Treat as a Dasha boundary series collection target; do not use for production tuning until source artifact metadata and ayanamsa/year-length assumptions are captured."
     }
   ],
   "dasha_cases": [

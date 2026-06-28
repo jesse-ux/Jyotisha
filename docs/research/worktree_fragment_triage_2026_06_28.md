@@ -53,7 +53,8 @@ Only promote this report later if a stable human-facing archive is needed.
 
 - `/Users/wuyongnaren/Documents/印度占星/tests/test_dasha_raman_truth.py`
   - Current state: `pytest.xfail` placeholder with mocked computation.
-  - Better path: convert B.V. Raman Dasha boundaries into an external oracle packet or executable comparison after local Raman ayanamsa support is explicit.
+  - Disposition: useful boundary values were promoted into `/Users/wuyongnaren/Documents/印度占星/references/oracle/dasha_shadbala_oracle_cases.json` as `template_bv_raman_vimshottari_boundary_series`.
+  - Follow-up: collect source artifact metadata before promoting beyond `template_only`.
 - `/Users/wuyongnaren/Documents/印度占星/tests/test_yoga_benchmark_cases.py`
   - Current state: smoke-style test ending in `assert True`.
   - Better path: replace with concrete yoga names and expected detections before promotion.
@@ -73,4 +74,3 @@ Only promote this report later if a stable human-facing archive is needed.
 - `/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pyjhora_oracle_artifact_manifest.json`
 
 Current diff only changes `generated_at`. Do not commit timestamp-only churn unless the artifact inventory materially changes.
-
