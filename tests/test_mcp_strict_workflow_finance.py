@@ -71,7 +71,13 @@ def test_finance_strong_wealth_promise_can_unlock_public_wealth_status() -> None
             "career_convergence": {"convergence_level": "L1", "probability": "+15-20%"},
             "vimshottari_current": {"mahadasha": "Venus", "antardasha": "Mercury"},
             "narayana_current": {"sign": "Taurus", "lord": "Venus"},
-            "wealth_promise_strength": {"level": "strong", "source": "dhana_yogas"},
+            "wealth_promise_strength": {
+                "level": "strong",
+                "primary_source": "dhana_yogas",
+                "supporting_sources": ["dhana"],
+                "source_diversity": 1,
+                "count": 1,
+            },
         },
         [],
     )
@@ -80,6 +86,49 @@ def test_finance_strong_wealth_promise_can_unlock_public_wealth_status() -> None
     assert judgement["score"] == 60
     assert judgement["verdict"] == "moderate_probability_window"
     assert judgement["payout_label"] == "public_wealth_status"
+
+
+def test_finance_source_diversity_adds_small_bump_without_changing_verdict_band() -> None:
+    low_diversity = _derive_event_judgement(
+        "finance",
+        {
+            "wealth_convergence": {"convergence_level": "L1", "probability": "+15-20%"},
+            "gains_convergence": {"convergence_level": "L1", "probability": "+15-20%"},
+            "career_convergence": {"convergence_level": "L1", "probability": "+15-20%"},
+            "vimshottari_current": {"mahadasha": "Venus", "antardasha": "Mercury"},
+            "narayana_current": {"sign": "Taurus", "lord": "Venus"},
+            "wealth_promise_strength": {
+                "level": "strong",
+                "primary_source": "dhana_yogas",
+                "supporting_sources": ["dhana"],
+                "source_diversity": 1,
+                "count": 2,
+            },
+        },
+        [],
+    )
+    high_diversity = _derive_event_judgement(
+        "finance",
+        {
+            "wealth_convergence": {"convergence_level": "L1", "probability": "+15-20%"},
+            "gains_convergence": {"convergence_level": "L1", "probability": "+15-20%"},
+            "career_convergence": {"convergence_level": "L1", "probability": "+15-20%"},
+            "vimshottari_current": {"mahadasha": "Venus", "antardasha": "Mercury"},
+            "narayana_current": {"sign": "Taurus", "lord": "Venus"},
+            "wealth_promise_strength": {
+                "level": "strong",
+                "primary_source": "dhana_lakshmi_hooks",
+                "supporting_sources": ["dhana", "lakshmi"],
+                "source_diversity": 2,
+                "count": 2,
+            },
+        },
+        [],
+    )
+
+    assert low_diversity["verdict"] == "moderate_probability_window"
+    assert high_diversity["verdict"] == "moderate_probability_window"
+    assert high_diversity["score"] == low_diversity["score"] + 5
 
 
 def test_collect_strict_evidence_finance_derives_wealth_promise_from_dhana_yogas() -> None:

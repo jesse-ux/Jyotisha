@@ -188,6 +188,7 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         score = 0
         wealth_promise = present.get("wealth_promise_strength")
         wealth_promise_level = wealth_promise.get("level") if isinstance(wealth_promise, dict) else None
+        wealth_promise_diversity = wealth_promise.get("source_diversity", 0) if isinstance(wealth_promise, dict) else 0
         score += 15 if present.get("d2_hora") else 0
         score += 10 if present.get("d10_dasamsa") else 0
         score += 10 if present.get("shadbala") else 0
@@ -195,6 +196,7 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         score += 10 if present.get("vimshottari_current") else 0
         score += 10 if present.get("narayana_current") else 0
         score += 20 if wealth_promise_level == "strong" else 10 if wealth_promise_level == "moderate" else 0
+        score += 5 if wealth_promise_diversity >= 2 else 0
         score += max(
             _convergence_score(present.get("wealth_convergence")),
             _convergence_score(present.get("gains_convergence")),
