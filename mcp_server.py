@@ -421,6 +421,17 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         score += 10 if present.get("vimshottari_current") else 0
         score += 10 if present.get("narayana_current") else 0
         score += _convergence_score(present.get("marriage_convergence"))
+
+        # Dignity Adjustments
+        chart = present.get("chart") if isinstance(present.get("chart"), dict) else {}
+        planets = chart.get("planets", {})
+        for pn, pd in planets.items():
+            if isinstance(pd, dict):
+                st = str(pd.get("status", ""))
+                if "Neecha Bhanga" in st or "落陷取消" in st:
+                    score += 10
+                elif "Great Enemy" in st or "极敌" in st:
+                    score -= 5
         if missing:
             score = min(score, 35)
         score = min(score, 100)
@@ -496,6 +507,17 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             _convergence_score(present.get("gains_convergence")),
             _convergence_score(present.get("career_convergence")),
         )
+
+        # Dignity Adjustments
+        chart = present.get("chart") if isinstance(present.get("chart"), dict) else {}
+        planets = chart.get("planets", {})
+        for pn, pd in planets.items():
+            if isinstance(pd, dict):
+                st = str(pd.get("status", ""))
+                if "Neecha Bhanga" in st or "落陷取消" in st:
+                    score += 10
+                elif "Great Enemy" in st or "极敌" in st:
+                    score -= 5
         score -= 5 if isinstance(avayogi_risk, dict) and avayogi_risk.get("risk_level") == "moderate" else 0
         public_wealth_lift = (
             not missing
@@ -587,6 +609,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "upapada_lagna": _safe_get(modules, "special_lagnas", "Upapada_Lagna"),
             "darakaraka": _safe_get(modules, "jaimini", "darakaraka"),
             "vivah_saham": _safe_get(modules, "vivah_saham"),
+            "chart": _safe_get(modules, "chart"),
             "vimshottari_current": _safe_get(modules, "dasha", "current_dasha"),
             "narayana_current": _safe_get(modules, "narayana_dasha", "current_dasha"),
             "marriage_convergence": domain_activations.get("marriage_partnership"),
@@ -595,7 +618,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["jaimini_marriage_support"] = _derive_jaimini_marriage_support(present)
         missing = [
             key for key, value in present.items()
-            if key not in {"jaimini_marriage_support", "jaimini_timing_support"}
+            if key not in {"chart", "jaimini_marriage_support", "jaimini_timing_support"}
             and value in (None, {}, [], "")
         ]
         convergence = present["marriage_convergence"] or {}
@@ -643,12 +666,13 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "narayana_current": _safe_get(modules, "narayana_dasha", "current_dasha"),
             "wealth_convergence": domain_activations.get("wealth_family"),
             "gains_convergence": domain_activations.get("gains_wishes"),
+            "chart": _safe_get(modules, "chart"),
             "career_convergence": domain_activations.get("career_status"),
             "wealth_promise_strength": _derive_wealth_promise_strength(modules),
             "avayogi_risk": avayogi_risk,
         }
         missing = [key for key, value in present.items() if key not in {
-            "gains_convergence", "career_convergence", "avayogi_risk"
+            "chart", "gains_convergence", "career_convergence", "avayogi_risk"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [
