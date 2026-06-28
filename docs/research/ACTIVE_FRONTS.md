@@ -42,6 +42,7 @@ This file is the small index for the current engineering fronts that still drive
 
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/vedastro_parity_matrix_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/vedastro_parity_matrix_latest.json`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/life_event_graph_v1_audit_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_service_adapter.py`
 - follow only after the Jaimini marriage bridge v1 regression loop is closed
 - Use the parity matrix before adding or claiming VedAstro-equivalent capability.

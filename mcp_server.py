@@ -1173,6 +1173,109 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
     }
 
 
+def _build_life_event_graph(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    event_judgement = strict.get("event_judgement") if isinstance(strict, dict) else {}
+    present = strict.get("present_evidence") if isinstance(strict, dict) else {}
+    if not isinstance(event_judgement, dict):
+        event_judgement = {}
+    if not isinstance(present, dict):
+        present = {}
+
+    nodes: List[Dict[str, Any]] = []
+    nodes.append(
+        {
+            "kind": "judgement",
+            "label": event_judgement.get("dominant_label") or event_judgement.get("event_family") or route,
+            "verdict": event_judgement.get("verdict"),
+            "score": event_judgement.get("score"),
+            "source": "strict_workflow",
+        }
+    )
+
+    vim = present.get("vimshottari_current")
+    if isinstance(vim, dict):
+        md = vim.get("mahadasha")
+        ad = vim.get("antardasha")
+        label = "/".join([part for part in (md, ad) if part])
+        if label:
+            nodes.append(
+                {
+                    "kind": "dasha_window",
+                    "label": label,
+                    "source": "vimshottari_current",
+                }
+            )
+
+    narayana = present.get("narayana_current")
+    if isinstance(narayana, dict):
+        sign = narayana.get("sign")
+        lord = narayana.get("lord")
+        label = "/".join([part for part in (sign, lord) if part])
+        if label:
+            nodes.append(
+                {
+                    "kind": "dasha_window",
+                    "label": label,
+                    "source": "narayana_current",
+                }
+            )
+
+    convergence_keys = (
+        "marriage_convergence",
+        "career_convergence",
+        "wealth_convergence",
+        "gains_convergence",
+    )
+    for key in convergence_keys:
+        convergence = present.get(key)
+        if not isinstance(convergence, dict) or not convergence:
+            continue
+        nodes.append(
+            {
+                "kind": "convergence",
+                "label": key,
+                "level": convergence.get("convergence_level"),
+                "probability": convergence.get("probability"),
+                "source": "dasa_convergence",
+            }
+        )
+
+    external_activation = present.get("external_activation")
+    if isinstance(external_activation, dict):
+        for event in external_activation.get("events") or []:
+            if not isinstance(event, dict):
+                continue
+            nodes.append(
+                {
+                    "kind": "external_window",
+                    "label": event.get("event_id"),
+                    "score": event.get("score"),
+                    "start": event.get("start"),
+                    "end": event.get("end"),
+                    "tags": event.get("tags") or [],
+                    "source": event.get("source") or external_activation.get("source"),
+                }
+            )
+
+    return {
+        "version": "life_event_graph_v1",
+        "route": route,
+        "dominant_label": event_judgement.get("dominant_label"),
+        "verdict": event_judgement.get("verdict"),
+        "confidence_cap": strict.get("confidence_cap"),
+        "blocked": bool(strict.get("blocked")),
+        "missing_evidence": strict.get("missing_evidence") or [],
+        "event_nodes": nodes,
+        "secondary_context": event_judgement.get("secondary_context") or [],
+        "primary_drivers": event_judgement.get("primary_drivers") or [],
+    }
+
+
+def _with_life_event_graph(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    strict["life_event_graph"] = _build_life_event_graph(route, strict)
+    return strict
+
+
 def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, Any]:
     modules = result.get("modules", {}) if isinstance(result, dict) else {}
     domain_activations = _safe_get(modules, "dasa_convergence", "domain_activations") or {}
@@ -1217,7 +1320,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         else:
             confidence_cap = "medium-low"
         event_judgement = _derive_event_judgement(route, present, missing)
-        return {
+        return _with_life_event_graph(route, {
             "question_type": route,
             "required_evidence": required,
             "present_evidence": present,
@@ -1229,7 +1332,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
                 "Career timing requires D10 + A10/Karma Pada + AmK/Karakamsha "
                 "plus dual dasha and career convergence support."
             ),
-        }
+        })
 
     if route == "relationship":
         required = [
@@ -1279,7 +1382,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         else:
             confidence_cap = "medium-low"
         event_judgement = _derive_event_judgement(route, present, missing)
-        return {
+        return _with_life_event_graph(route, {
             "question_type": route,
             "required_evidence": required,
             "present_evidence": present,
@@ -1291,7 +1394,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
                 "Marriage timing requires D9 + UL + DK + dual dasha + Vivah Saham "
                 "and convergence support; missing links cap confidence."
             ),
-        }
+        })
 
     if route == "finance":
         avayogi_risk = _check_external_avayogi_risk(result)
@@ -1359,7 +1462,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         promise = present.get("wealth_promise_strength") or {}
         if "yogi" in promise.get("supporting_sources", []) and event_judgement.get("dominant_label") and "yogi_active" not in event_judgement.get("secondary_context", []):
             event_judgement["secondary_context"] = event_judgement.get("secondary_context", []) + ["yogi_active"]
-        return {
+        return _with_life_event_graph(route, {
             "question_type": route,
             "required_evidence": required,
             "present_evidence": present,
@@ -1371,9 +1474,9 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
                 "Finance timing requires D2/D10 + strength + SAV + dual dasha "
                 "plus at least one wealth-related convergence domain."
             ),
-        }
+        })
 
-    return {
+    return _with_life_event_graph(route, {
         "question_type": route,
         "required_evidence": [],
         "present_evidence": {},
@@ -1382,7 +1485,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         "blocked": False,
         "event_judgement": _derive_event_judgement(route, {}, []),
         "reason": "Route-specific strict evidence audit is currently implemented for relationship and finance timing.",
-    }
+    })
 
 
 # ============================================================================
@@ -1890,6 +1993,52 @@ def strict_workflow(
         }
         result["strict_workflow"] = strict_evidence
     return result
+
+
+@mcp.tool()
+def life_event_graph(
+    question: str,
+    year: int,
+    month: int,
+    day: int,
+    hour: int,
+    minute: int,
+    lat: float,
+    lon: float,
+    tz: float,
+    age: int,
+    transit_date: str,
+    node_mode: str = "mean",
+) -> Dict[str, Any]:
+    """
+    Build a graph-friendly event timeline from strict workflow evidence.
+
+    This tool reuses the local full-reading pipeline plus strict adjudicator
+    evidence and optional VedAstro range-scan windows already present in the
+    evidence ledger. It does not claim external oracle closure by itself.
+    """
+    result = strict_workflow(
+        question=question,
+        year=year,
+        month=month,
+        day=day,
+        hour=hour,
+        minute=minute,
+        lat=lat,
+        lon=lon,
+        tz=tz,
+        age=age,
+        transit_date=transit_date,
+        node_mode=node_mode,
+    )
+    route = _safe_get(result, "routing", "question_type") or "general"
+    strict = result.get("strict_workflow") if isinstance(result, dict) else {}
+    return {
+        "question": question,
+        "route": route,
+        "life_event_graph": _build_life_event_graph(route, strict if isinstance(strict, dict) else {}),
+        "strict_workflow": strict,
+    }
 
 
 # ============================================================================
