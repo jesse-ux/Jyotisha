@@ -483,6 +483,63 @@ def _derive_argala_support(modules: Dict[str, Any], target_house: int) -> Dict[s
     }
 
 
+def _extract_house_score_value(score: Any) -> Optional[float]:
+    if isinstance(score, dict):
+        for key in ("sav", "score", "total", "bindus"):
+            if key in score:
+                try:
+                    return float(score[key])
+                except (TypeError, ValueError):
+                    return None
+        return None
+    try:
+        return float(score)
+    except (TypeError, ValueError):
+        return None
+
+
+def _derive_ashtakavarga_finance_support(house_scores: Any) -> Dict[str, Any]:
+    if not isinstance(house_scores, dict):
+        return {
+            "level": "none",
+            "source": "ashtakavarga_house_scores_bridge_v1",
+            "target_houses": [2, 11],
+            "signals": [],
+            "raw_scores": {},
+        }
+
+    raw_scores: Dict[str, Any] = {}
+    numeric_scores: Dict[str, float] = {}
+    for house in ("2", "11"):
+        value = house_scores.get(house) or house_scores.get(f"house_{house}")
+        score = _extract_house_score_value(value)
+        if score is None:
+            continue
+        numeric_scores[house] = score
+        raw_scores[house] = int(score) if score.is_integer() else score
+
+    if len(numeric_scores) < 2:
+        level = "none"
+        signals: List[str] = []
+    elif min(numeric_scores.values()) >= 32:
+        level = "supportive"
+        signals = ["wealth_sav_support"]
+    elif max(numeric_scores.values()) <= 24:
+        level = "obstructive"
+        signals = ["wealth_sav_low"]
+    else:
+        level = "none"
+        signals = []
+
+    return {
+        "level": level,
+        "source": "ashtakavarga_house_scores_bridge_v1",
+        "target_houses": [2, 11],
+        "signals": signals,
+        "raw_scores": raw_scores,
+    }
+
+
 def _sign_to_index(sign: str) -> Optional[int]:
     try:
         return _SIGNS.index(sign)
@@ -785,6 +842,11 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         score += 10 if present.get("ashtakavarga_house_scores") else 0
         score += 10 if present.get("vimshottari_current") else 0
         score += 10 if present.get("narayana_current") else 0
+        ashtakavarga_finance = present.get("ashtakavarga_finance_support") or {}
+        if ashtakavarga_finance.get("level") == "supportive":
+            score += 5
+        elif ashtakavarga_finance.get("level") == "obstructive":
+            score -= 5
         score += 20 if wealth_promise_level == "strong" else 10 if wealth_promise_level == "moderate" else 0
         score += 5 if wealth_promise_diversity >= 2 else 0
         score += max(
@@ -839,6 +901,10 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
                 secondary_context.append("gains_wishes")
         if isinstance(avayogi_risk, dict) and avayogi_risk.get("risk_level") == "moderate":
             secondary_context.append("avayogi_active")
+        if ashtakavarga_finance.get("level") == "supportive":
+            secondary_context.append("ashtakavarga_wealth_support")
+        elif ashtakavarga_finance.get("level") == "obstructive":
+            secondary_context.append("ashtakavarga_wealth_friction")
         external_activation = present.get("external_activation") or {}
         if external_activation.get("level") == "moderate":
             secondary_context.append("external_activation_support")
@@ -1010,10 +1076,13 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "wealth_promise_strength": _derive_wealth_promise_strength(modules),
             "avayogi_risk": avayogi_risk,
         }
+        present["ashtakavarga_finance_support"] = _derive_ashtakavarga_finance_support(
+            present["ashtakavarga_house_scores"]
+        )
         present["external_activation"] = _derive_external_activation_support(modules, "wealth")
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         missing = [key for key, value in present.items() if key not in {
-            "chart", "external_activation", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk"
+            "chart", "external_activation", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [
