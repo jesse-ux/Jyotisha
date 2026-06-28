@@ -1,0 +1,225 @@
+{
+  "scope": "vedastro_fast_path_checklist",
+  "generated_at": "2026-06-28T23:49:39.978828+00:00",
+  "summary": {
+    "row_count": 13,
+    "local_registry_technique_count": 89,
+    "catalog_tag_count": 46,
+    "catalog_method_count": 2258
+  },
+  "boundary": {
+    "do_not_clone_vedastro": true,
+    "keep_local_adjudicator_authoritative": true,
+    "external_outputs_default_to_secondary_context": true
+  },
+  "official_catalog": {
+    "available": true,
+    "path": "/Users/wuyongnaren/Documents/印度占星/scratch/local/vedastro_adapter/method_catalog_snapshot.json",
+    "tag_count": 46,
+    "method_count": 2258
+  },
+  "lanes": {
+    "official_mcp": [
+      {
+        "capability": "MCP / API Surface",
+        "priority": "P0",
+        "recommended_path": "hybrid_local_plus_vedastro",
+        "local_status": "partial",
+        "adjudicator_use": "primary",
+        "route_notes": "If official MCP is available, that is the fastest direct agent path; otherwise fall back to local REST adapter.",
+        "gap_notes": "Local API/MCP surfaces exist and the official public MCP bridge is live; REST adapter official endpoint smoke still depends on configured endpoint-backed execution.",
+        "local_assets": [
+          "mcp_server.py",
+          "jyotish_api_server.py",
+          "strict workflows",
+          "vedastro_service_adapter.py",
+          "vedastro_official_mcp_bridge.py"
+        ]
+      }
+    ],
+    "official_python_bridge": [
+      {
+        "capability": "Tajika Annual",
+        "priority": "P0",
+        "recommended_path": "hybrid_local_plus_vedastro",
+        "local_status": "partial",
+        "adjudicator_use": "secondary",
+        "route_notes": "Use Python bridge for breadth, but keep year-chart reasoning and labels local.",
+        "gap_notes": "Annual modules exist; yearly career/wealth/month windows need stronger strict-workflow integration.",
+        "local_assets": [
+          "tajika.py",
+          "varshaphala.py",
+          "sahams",
+          "solar_return"
+        ]
+      },
+      {
+        "capability": "Ashtakavarga",
+        "priority": "P0",
+        "recommended_path": "hybrid_local_plus_vedastro",
+        "local_status": "partial",
+        "adjudicator_use": "secondary",
+        "route_notes": "Use the Python bridge for broad calculator access while local strict workflows stay authoritative.",
+        "gap_notes": "SAV/BAV is in production; PAV/Sodhita/Kakshya bridges need continued regression before being dominant labels.",
+        "local_assets": [
+          "ashtakavarga",
+          "ashtakavarga_pav",
+          "ashtakavarga_sodhita",
+          "finance_ashtakavarga_bridge"
+        ]
+      },
+      {
+        "capability": "Shadbala",
+        "priority": "P0",
+        "recommended_path": "hybrid_local_plus_vedastro",
+        "local_status": "partial",
+        "adjudicator_use": "secondary",
+        "route_notes": "Broad strength calculators are easiest through the Python bridge, then folded back as oracle evidence.",
+        "gap_notes": "Local component-aware cap exists; absolute external oracle closure is still incomplete.",
+        "local_assets": [
+          "shadbala",
+          "shadbala_advanced",
+          "shadbala_component_cap",
+          "oracle_shadbala_queue"
+        ]
+      }
+    ],
+    "rest_adapter": [
+      {
+        "capability": "EventsAtRange / Life Event Graph",
+        "priority": "P0",
+        "recommended_path": "hybrid_local_plus_vedastro",
+        "local_status": "partial",
+        "adjudicator_use": "oracle_only",
+        "route_notes": "Use official REST adapter first for range scans; keep local adjudicator as the reasoning layer.",
+        "gap_notes": "Local timing modules exist, but a high-frequency day/hour event graph is not yet a local productized radar.",
+        "local_assets": [
+          "transit_trigger",
+          "dasha",
+          "narayana_dasha",
+          "vedastro_service_adapter.range_scan"
+        ]
+      },
+      {
+        "capability": "Birth Time ML / Rectification Assistant",
+        "priority": "P1",
+        "recommended_path": "hybrid_local_plus_vedastro",
+        "local_status": "partial",
+        "adjudicator_use": "secondary",
+        "route_notes": "Use VedAstro externally only as supporting evidence; local rectification gate stays in control.",
+        "gap_notes": "Local rectification exists; ML parity with VedAstro-style service behavior is not established.",
+        "local_assets": [
+          "birth_time_rectifier.py",
+          "rectification_gate",
+          "jyotish-app rectification"
+        ]
+      }
+    ],
+    "local_native_preferred": [
+      {
+        "capability": "Prashna / Horary",
+        "priority": "P0",
+        "recommended_path": "local_native",
+        "local_status": "covered",
+        "adjudicator_use": "secondary",
+        "route_notes": "No need to outsource core horary math while local modules already exist.",
+        "gap_notes": "Horary modules exist but are not yet a first-class question adjudicator route.",
+        "local_assets": [
+          "prashna.py",
+          "kp_system.py",
+          "upagraha_gulika_maandi",
+          "sphuta_trisphuta_family"
+        ]
+      },
+      {
+        "capability": "Jaimini / Chara Dasha",
+        "priority": "P0",
+        "recommended_path": "local_native",
+        "local_status": "covered",
+        "adjudicator_use": "secondary",
+        "route_notes": "Keep Jaimini native; external engines help only as spot-check evidence.",
+        "gap_notes": "Core Jaimini exists; mission/career/marriage quality adjudicator folding is not yet exhaustive.",
+        "local_assets": [
+          "jaimini.py",
+          "AK",
+          "DK",
+          "UL",
+          "Chara Dasha",
+          "Jaimini marriage bridge v1"
+        ]
+      },
+      {
+        "capability": "Report Rendering",
+        "priority": "P0",
+        "recommended_path": "new_local_impl",
+        "local_status": "partial",
+        "adjudicator_use": "not_used",
+        "route_notes": "Rendering is a local product concern, not a VedAstro dependency.",
+        "gap_notes": "HTML/PDF artifact path exists; polished SVG/PDF chart rendering and cloud-scale report production are not finished.",
+        "local_assets": [
+          "report_artifact API",
+          "report_builder.py",
+          "chart_renderer.py",
+          "jyotish-app export"
+        ]
+      },
+      {
+        "capability": "Synastry / Ashtakoot",
+        "priority": "P0",
+        "recommended_path": "local_native",
+        "local_status": "covered",
+        "adjudicator_use": "secondary",
+        "route_notes": "Local matching is already stronger than a thin external call unless you need an oracle comparison.",
+        "gap_notes": "Matching modules exist and API-backed; relationship adjudicator still needs a formal bridge.",
+        "local_assets": [
+          "synastry.py",
+          "ashtakoot.py",
+          "36-point Ashtakoot",
+          "16-factor compatibility"
+        ]
+      },
+      {
+        "capability": "D1-D60 Divisional Charts",
+        "priority": "P0",
+        "recommended_path": "local_native",
+        "local_status": "covered",
+        "adjudicator_use": "primary",
+        "route_notes": "Do not pay external-call cost here; local engine is already the primary route.",
+        "gap_notes": "Local varga coverage is strong; keep VedAstro/PyJHora as benchmark evidence rather than replacing local math.",
+        "local_assets": [
+          "varga",
+          "varga_full",
+          "shodasavarga",
+          "divisional_charts_extended"
+        ]
+      }
+    ],
+    "hybrid_router": [
+      {
+        "capability": "Ayanamsa Selection",
+        "priority": "P0",
+        "recommended_path": "hybrid_local_plus_vedastro",
+        "local_status": "partial",
+        "adjudicator_use": "oracle_only",
+        "route_notes": "Prefer local ayanamsa controls for production and use VedAstro only as parity/oracle evidence.",
+        "gap_notes": "Local Lahiri path is usable, but broad ayanamsa parity and public comparison artifacts remain incomplete.",
+        "local_assets": [
+          "ayanamsa_utils",
+          "ephemeris_adapter_contract"
+        ]
+      }
+    ],
+    "external_evidence_only": [
+      {
+        "capability": "Numerology / Non-Jyotish Tools",
+        "priority": "P2",
+        "recommended_path": "external_evidence_only",
+        "local_status": "missing",
+        "adjudicator_use": "not_used",
+        "route_notes": "Do not implement locally unless it becomes product-critical.",
+        "gap_notes": "Adjacent product feature; not required for Jyotish adjudicator depth.",
+        "local_assets": []
+      }
+    ]
+  }
+}

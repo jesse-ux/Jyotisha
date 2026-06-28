@@ -1,6 +1,6 @@
 # Public Jyotish Benchmark Dashboard
 
-Generated: `2026-06-28T07:20:42.239186+00:00`
+Generated: `2026-06-28T23:44:26.816376+00:00`
 
 ## Capability Registry
 
@@ -10,9 +10,9 @@ Generated: `2026-06-28T07:20:42.239186+00:00`
 
 ## Dasha/Shadbala Oracle Readiness
 
-- total_packets: `5`
-- valid_packets: `4`
-- ready_for_calibration: `4`
+- total_packets: `6`
+- valid_packets: `5`
+- ready_for_calibration: `5`
 - production_tuning_allowed: `false`
 - valid_dasha_packets: `3`
 - total_dasha_packets: `3`
@@ -29,8 +29,8 @@ Generated: `2026-06-28T07:20:42.239186+00:00`
 
 ## Boundary Audit
 
-- external_verified_template_cases: `4`
-- template_comparison_count: `4`
+- external_verified_template_cases: `5`
+- template_comparison_count: `5`
 - production_tuning_recommended: `false`
 
 ## Global First Claim

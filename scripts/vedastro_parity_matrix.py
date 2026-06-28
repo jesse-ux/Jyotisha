@@ -29,6 +29,15 @@ ALLOWED_RECOMMENDED_PATHS = {
     "hybrid_local_plus_vedastro",
 }
 
+ALLOWED_FASTEST_PATH_LANES = {
+    "local_native_preferred",
+    "official_mcp",
+    "official_python_bridge",
+    "rest_adapter",
+    "hybrid_router",
+    "external_evidence_only",
+}
+
 
 VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
     {
@@ -38,10 +47,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["transit_trigger", "dasha", "narayana_dasha", "vedastro_service_adapter.range_scan"],
         "can_call_vedastro": True,
         "recommended_path": "hybrid_local_plus_vedastro",
+        "fastest_path_lane": "rest_adapter",
         "priority": "P0",
         "license_boundary": "external_service_or_clean_room_only",
         "adjudicator_use": "oracle_only",
         "gap_notes": "Local timing modules exist, but a high-frequency day/hour event graph is not yet a local productized radar.",
+        "route_notes": "Use official REST adapter first for range scans; keep local adjudicator as the reasoning layer.",
     },
     {
         "vedastro_capability": "Ayanamsa Selection",
@@ -50,10 +61,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["ayanamsa_utils", "ephemeris_adapter_contract"],
         "can_call_vedastro": True,
         "recommended_path": "hybrid_local_plus_vedastro",
+        "fastest_path_lane": "hybrid_router",
         "priority": "P0",
         "license_boundary": "external_service_or_clean_room_only",
         "adjudicator_use": "oracle_only",
         "gap_notes": "Local Lahiri path is usable, but broad ayanamsa parity and public comparison artifacts remain incomplete.",
+        "route_notes": "Prefer local ayanamsa controls for production and use VedAstro only as parity/oracle evidence.",
     },
     {
         "vedastro_capability": "D1-D60 Divisional Charts",
@@ -62,10 +75,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["varga", "varga_full", "shodasavarga", "divisional_charts_extended"],
         "can_call_vedastro": True,
         "recommended_path": "local_native",
+        "fastest_path_lane": "local_native_preferred",
         "priority": "P0",
         "license_boundary": "local_native_or_clean_room",
         "adjudicator_use": "primary",
         "gap_notes": "Local varga coverage is strong; keep VedAstro/PyJHora as benchmark evidence rather than replacing local math.",
+        "route_notes": "Do not pay external-call cost here; local engine is already the primary route.",
     },
     {
         "vedastro_capability": "Ashtakavarga",
@@ -74,10 +89,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["ashtakavarga", "ashtakavarga_pav", "ashtakavarga_sodhita", "finance_ashtakavarga_bridge"],
         "can_call_vedastro": True,
         "recommended_path": "hybrid_local_plus_vedastro",
+        "fastest_path_lane": "official_python_bridge",
         "priority": "P0",
         "license_boundary": "local_native_or_external_oracle",
         "adjudicator_use": "secondary",
         "gap_notes": "SAV/BAV is in production; PAV/Sodhita/Kakshya bridges need continued regression before being dominant labels.",
+        "route_notes": "Use the Python bridge for broad calculator access while local strict workflows stay authoritative.",
     },
     {
         "vedastro_capability": "Shadbala",
@@ -86,10 +103,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["shadbala", "shadbala_advanced", "shadbala_component_cap", "oracle_shadbala_queue"],
         "can_call_vedastro": True,
         "recommended_path": "hybrid_local_plus_vedastro",
+        "fastest_path_lane": "official_python_bridge",
         "priority": "P0",
         "license_boundary": "local_native_or_external_oracle",
         "adjudicator_use": "secondary",
         "gap_notes": "Local component-aware cap exists; absolute external oracle closure is still incomplete.",
+        "route_notes": "Broad strength calculators are easiest through the Python bridge, then folded back as oracle evidence.",
     },
     {
         "vedastro_capability": "Jaimini / Chara Dasha",
@@ -98,10 +117,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["jaimini.py", "AK", "DK", "UL", "Chara Dasha", "Jaimini marriage bridge v1"],
         "can_call_vedastro": True,
         "recommended_path": "local_native",
+        "fastest_path_lane": "local_native_preferred",
         "priority": "P0",
         "license_boundary": "local_native_mit_attribution_for_reused_parts",
         "adjudicator_use": "secondary",
         "gap_notes": "Core Jaimini exists; mission/career/marriage quality adjudicator folding is not yet exhaustive.",
+        "route_notes": "Keep Jaimini native; external engines help only as spot-check evidence.",
     },
     {
         "vedastro_capability": "Synastry / Ashtakoot",
@@ -110,10 +131,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["synastry.py", "ashtakoot.py", "36-point Ashtakoot", "16-factor compatibility"],
         "can_call_vedastro": True,
         "recommended_path": "local_native",
+        "fastest_path_lane": "local_native_preferred",
         "priority": "P0",
         "license_boundary": "local_native_mit_attribution_for_reused_parts",
         "adjudicator_use": "secondary",
         "gap_notes": "Matching modules exist and API-backed; relationship adjudicator still needs a formal bridge.",
+        "route_notes": "Local matching is already stronger than a thin external call unless you need an oracle comparison.",
     },
     {
         "vedastro_capability": "Tajika Annual",
@@ -122,10 +145,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["tajika.py", "varshaphala.py", "sahams", "solar_return"],
         "can_call_vedastro": True,
         "recommended_path": "hybrid_local_plus_vedastro",
+        "fastest_path_lane": "official_python_bridge",
         "priority": "P0",
         "license_boundary": "local_native_or_external_oracle",
         "adjudicator_use": "secondary",
         "gap_notes": "Annual modules exist; yearly career/wealth/month windows need stronger strict-workflow integration.",
+        "route_notes": "Use Python bridge for breadth, but keep year-chart reasoning and labels local.",
     },
     {
         "vedastro_capability": "Prashna / Horary",
@@ -134,10 +159,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["prashna.py", "kp_system.py", "upagraha_gulika_maandi", "sphuta_trisphuta_family"],
         "can_call_vedastro": True,
         "recommended_path": "local_native",
+        "fastest_path_lane": "local_native_preferred",
         "priority": "P0",
         "license_boundary": "local_native_or_clean_room",
         "adjudicator_use": "secondary",
         "gap_notes": "Horary modules exist but are not yet a first-class question adjudicator route.",
+        "route_notes": "No need to outsource core horary math while local modules already exist.",
     },
     {
         "vedastro_capability": "Report Rendering",
@@ -146,22 +173,32 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["report_artifact API", "report_builder.py", "chart_renderer.py", "jyotish-app export"],
         "can_call_vedastro": False,
         "recommended_path": "new_local_impl",
+        "fastest_path_lane": "local_native_preferred",
         "priority": "P0",
         "license_boundary": "local_native",
         "adjudicator_use": "not_used",
         "gap_notes": "HTML/PDF artifact path exists; polished SVG/PDF chart rendering and cloud-scale report production are not finished.",
+        "route_notes": "Rendering is a local product concern, not a VedAstro dependency.",
     },
     {
         "vedastro_capability": "MCP / API Surface",
         "category": "service_surface",
         "domains": ["event", "relationship", "wealth", "career"],
-        "local_assets": ["mcp_server.py", "jyotish_api_server.py", "strict workflows", "vedastro_service_adapter.py"],
+        "local_assets": [
+            "mcp_server.py",
+            "jyotish_api_server.py",
+            "strict workflows",
+            "vedastro_service_adapter.py",
+            "vedastro_official_mcp_bridge.py",
+        ],
         "can_call_vedastro": True,
         "recommended_path": "hybrid_local_plus_vedastro",
+        "fastest_path_lane": "official_mcp",
         "priority": "P0",
         "license_boundary": "external_service_or_local_native",
         "adjudicator_use": "primary",
-        "gap_notes": "Local API/MCP surfaces exist; VedAstro live adapter needs endpoint-backed smoke tests and provenance capture.",
+        "gap_notes": "Local API/MCP surfaces exist and the official public MCP bridge is live; REST adapter official endpoint smoke still depends on configured endpoint-backed execution.",
+        "route_notes": "If official MCP is available, that is the fastest direct agent path; otherwise fall back to local REST adapter.",
     },
     {
         "vedastro_capability": "Numerology / Non-Jyotish Tools",
@@ -170,10 +207,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": [],
         "can_call_vedastro": True,
         "recommended_path": "external_evidence_only",
+        "fastest_path_lane": "external_evidence_only",
         "priority": "P2",
         "license_boundary": "external_service_only",
         "adjudicator_use": "not_used",
         "gap_notes": "Adjacent product feature; not required for Jyotish adjudicator depth.",
+        "route_notes": "Do not implement locally unless it becomes product-critical.",
     },
     {
         "vedastro_capability": "Birth Time ML / Rectification Assistant",
@@ -182,10 +221,12 @@ VEDASTRO_CAPABILITY_SEEDS: list[dict[str, Any]] = [
         "local_assets": ["birth_time_rectifier.py", "rectification_gate", "jyotish-app rectification"],
         "can_call_vedastro": True,
         "recommended_path": "hybrid_local_plus_vedastro",
+        "fastest_path_lane": "rest_adapter",
         "priority": "P1",
         "license_boundary": "external_service_or_local_native",
         "adjudicator_use": "secondary",
         "gap_notes": "Local rectification exists; ML parity with VedAstro-style service behavior is not established.",
+        "route_notes": "Use VedAstro externally only as supporting evidence; local rectification gate stays in control.",
     },
 ]
 
@@ -232,10 +273,12 @@ def _build_row(seed: dict[str, Any], audit: dict[str, Any]) -> dict[str, Any]:
         "local_assets": list(seed["local_assets"]),
         "can_call_vedastro": bool(seed["can_call_vedastro"]),
         "recommended_path": recommended_path,
+        "fastest_path_lane": seed["fastest_path_lane"],
         "priority": seed["priority"],
         "license_boundary": seed["license_boundary"],
         "adjudicator_use": seed["adjudicator_use"],
         "gap_notes": seed["gap_notes"],
+        "route_notes": seed["route_notes"],
     }
 
 
@@ -246,10 +289,12 @@ def build_matrix(audit: dict[str, Any] | None = None) -> dict[str, Any]:
 
     status_counts: dict[str, int] = {}
     path_counts: dict[str, int] = {}
+    lane_counts: dict[str, int] = {}
     priority_counts: dict[str, int] = {}
     for row in rows:
         status_counts[row["local_status"]] = status_counts.get(row["local_status"], 0) + 1
         path_counts[row["recommended_path"]] = path_counts.get(row["recommended_path"], 0) + 1
+        lane_counts[row["fastest_path_lane"]] = lane_counts.get(row["fastest_path_lane"], 0) + 1
         priority_counts[row["priority"]] = priority_counts.get(row["priority"], 0) + 1
 
     return {
@@ -261,6 +306,7 @@ def build_matrix(audit: dict[str, Any] | None = None) -> dict[str, Any]:
             "p0_count": priority_counts.get("P0", 0),
             "status_counts": status_counts,
             "recommended_path_counts": path_counts,
+            "fastest_path_lane_counts": lane_counts,
             "local_registry_technique_count": audit.get("technique_count"),
         },
         "boundary": {
@@ -290,16 +336,17 @@ def render_markdown(matrix: dict[str, Any]) -> str:
         "",
         f"- Local status counts: `{json.dumps(summary['status_counts'], ensure_ascii=False, sort_keys=True)}`",
         f"- Recommended path counts: `{json.dumps(summary['recommended_path_counts'], ensure_ascii=False, sort_keys=True)}`",
+        f"- Fastest path lane counts: `{json.dumps(summary['fastest_path_lane_counts'], ensure_ascii=False, sort_keys=True)}`",
         "",
         "## Matrix",
         "",
-        "| VedAstro capability | Category | Local status | Path | Priority | Adjudicator use | Local assets | Gap notes |",
-        "|---|---|---:|---|---:|---|---|---|",
+        "| VedAstro capability | Category | Local status | Path | Fastest lane | Priority | Adjudicator use | Local assets | Gap notes |",
+        "|---|---|---:|---|---|---:|---|---|---|",
     ]
     for row in matrix["rows"]:
         assets = ", ".join(row["local_assets"]) if row["local_assets"] else "-"
         lines.append(
-            "| {vedastro_capability} | {category} | {local_status} | {recommended_path} | {priority} | {adjudicator_use} | {assets} | {gap_notes} |".format(
+            "| {vedastro_capability} | {category} | {local_status} | {recommended_path} | {fastest_path_lane} | {priority} | {adjudicator_use} | {assets} | {gap_notes} |".format(
                 assets=assets,
                 **row,
             )

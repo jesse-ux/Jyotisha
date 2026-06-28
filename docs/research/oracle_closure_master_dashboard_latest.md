@@ -1,6 +1,6 @@
 # Jyotish External Oracle Closure Master Dashboard
 
-Generated: `2026-06-26T19:05:03.531931+00:00`
+Generated: `2026-06-28T23:44:03.079746+00:00`
 
 ## Summary
 
@@ -16,7 +16,7 @@ Generated: `2026-06-26T19:05:03.531931+00:00`
 |---|---:|---:|---|---:|---:|---:|---:|
 | `dasha` | 3 | 3 | `complete` | 0 | 0 | 0 | 0 |
 | `tajika_sahams` | 5 | 1 | `template_einstein_varshaphala_1905_lahiri` | 15 | 15 | 5 | 10 |
-| `shadbala` | 4 | 4 | `template_redacted_place_shadbala_raman` | 55 | 55 | 5 | 50 |
+| `shadbala` | 4 | 4 | `complete` | 0 | 0 | 0 | 0 |
 
 ## Next Action Order
 
