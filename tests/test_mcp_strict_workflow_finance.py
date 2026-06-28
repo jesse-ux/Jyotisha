@@ -314,6 +314,196 @@ def test_collect_strict_evidence_finance_accepts_complete_shadbala_components() 
     assert "shadbala_component_gap" not in strict["event_judgement"]["secondary_context"]
 
 
+def test_collect_strict_evidence_finance_adds_pav_and_kakshya_support_as_secondary_context() -> None:
+    result = {
+        "modules": {
+            "chart": {"ascendant": {"sign": "Aries"}},
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {
+                "planets": {
+                    "Venus": {
+                        "components": {
+                            "sthana": 1.2,
+                            "dig": 0.8,
+                            "kala": 1.1,
+                            "chesta": 0.9,
+                            "naisargika": 0.7,
+                            "drik": 0.4,
+                        },
+                        "total_rupa": 5.1,
+                    }
+                }
+            },
+            "ashtakavarga": {
+                "house_scores": {"2": 33, "11": 35},
+                "pav": {
+                    "pav_summary": {
+                        "Venus": {"Jupiter": 5, "Venus": 6, "Lagna": 5},
+                        "Saturn": {"Saturn": 2},
+                    }
+                },
+            },
+            "kakshya": {
+                "summary": {"average_strength": 6.8},
+                "planets": {
+                    "Venus": {"kakshya_strength": 7.4},
+                    "Jupiter": {"kakshya_strength": 6.9},
+                },
+            },
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "strong"}],
+                    "summary": "Dhana Yoga检测：共1个格局",
+                }
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+
+    assert strict["present_evidence"]["pav_finance_support"] == {
+        "level": "supportive",
+        "source": "ashtakavarga_pav_bridge_v1",
+        "signals": ["pav_finance_support"],
+        "top_planets": ["Venus"],
+    }
+    assert strict["present_evidence"]["kakshya_finance_support"] == {
+        "level": "supportive",
+        "source": "kakshya_finance_bridge_v1",
+        "signals": ["kakshya_finance_support"],
+        "average_strength": 6.8,
+    }
+    assert "pav_finance_support" in strict["event_judgement"]["secondary_context"]
+    assert "kakshya_finance_support" in strict["event_judgement"]["secondary_context"]
+
+
+def test_collect_strict_evidence_finance_flags_sodhita_wealth_friction() -> None:
+    result = {
+        "modules": {
+            "chart": {"ascendant": {"sign": "Aries"}},
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {
+                "planets": {
+                    "Venus": {
+                        "components": {
+                            "sthana": 1.2,
+                            "dig": 0.8,
+                            "kala": 1.1,
+                            "chesta": 0.9,
+                            "naisargika": 0.7,
+                            "drik": 0.4,
+                        },
+                        "total_rupa": 5.1,
+                    }
+                }
+            },
+            "ashtakavarga": {
+                "house_scores": {"2": 33, "11": 35},
+                "sodhita": {
+                    "sodhita_sav": {
+                        "assessment": [
+                            {"sign": "Taurus", "score": 18, "level": "挑战"},
+                            {"sign": "Aquarius", "score": 17, "level": "挑战"},
+                        ]
+                    }
+                },
+            },
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "strong"}],
+                    "summary": "Dhana Yoga检测：共1个格局",
+                }
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+
+    assert strict["present_evidence"]["sodhita_finance_support"] == {
+        "level": "obstructive",
+        "source": "ashtakavarga_sodhita_bridge_v1",
+        "signals": ["sodhita_wealth_friction"],
+        "target_houses": [2, 11],
+        "raw_scores": {"2": 18, "11": 17},
+    }
+    assert "sodhita_wealth_friction" in strict["event_judgement"]["secondary_context"]
+
+
+def test_collect_strict_evidence_finance_flags_kakshya_friction_as_secondary_only() -> None:
+    result = {
+        "modules": {
+            "chart": {"ascendant": {"sign": "Aries"}},
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {
+                "planets": {
+                    "Venus": {
+                        "components": {
+                            "sthana": 1.2,
+                            "dig": 0.8,
+                            "kala": 1.1,
+                            "chesta": 0.9,
+                            "naisargika": 0.7,
+                            "drik": 0.4,
+                        },
+                        "total_rupa": 5.1,
+                    }
+                }
+            },
+            "ashtakavarga": {"house_scores": {"2": 33, "11": 35}},
+            "kakshya": {
+                "summary": {"average_strength": 4.1},
+                "planets": {
+                    "Venus": {"kakshya_strength": 4.0},
+                },
+            },
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "strong"}],
+                    "summary": "Dhana Yoga检测：共1个格局",
+                }
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+
+    assert strict["present_evidence"]["kakshya_finance_support"] == {
+        "level": "obstructive",
+        "source": "kakshya_finance_bridge_v1",
+        "signals": ["kakshya_finance_friction"],
+        "average_strength": 4.1,
+    }
+    assert strict["event_judgement"]["dominant_label"] == "public_wealth_status"
+    assert "kakshya_finance_friction" in strict["event_judgement"]["secondary_context"]
+
+
 def test_collect_strict_evidence_finance_flags_low_wealth_ashtakavarga_friction() -> None:
     result = {
         "modules": {

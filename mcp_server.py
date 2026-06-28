@@ -569,6 +569,93 @@ def _derive_shadbala_component_audit(planets: Any) -> Dict[str, Any]:
     return audit
 
 
+def _derive_pav_finance_support(ashtakavarga: Any) -> Dict[str, Any]:
+    base = {
+        "level": "none",
+        "source": "ashtakavarga_pav_bridge_v1",
+        "signals": [],
+        "top_planets": [],
+    }
+    pav_summary = _safe_get(ashtakavarga, "pav", "pav_summary")
+    if not isinstance(pav_summary, dict):
+        return base
+
+    top_planets: List[str] = []
+    for planet, source_scores in pav_summary.items():
+        if not isinstance(source_scores, dict):
+            continue
+        high_sources = [
+            source for source, bindus in source_scores.items()
+            if isinstance(bindus, (int, float)) and bindus >= 5
+        ]
+        if high_sources:
+            top_planets.append(str(planet))
+
+    if top_planets:
+        base["level"] = "supportive"
+        base["signals"] = ["pav_finance_support"]
+        base["top_planets"] = sorted(top_planets)
+    return base
+
+
+def _derive_sodhita_finance_support(ashtakavarga: Any, asc_sign: Optional[str]) -> Dict[str, Any]:
+    base = {
+        "level": "none",
+        "source": "ashtakavarga_sodhita_bridge_v1",
+        "signals": [],
+        "target_houses": [2, 11],
+        "raw_scores": {},
+    }
+    assessment = _safe_get(ashtakavarga, "sodhita", "sodhita_sav", "assessment")
+    asc_idx = _SIGN_TO_INDEX.get(asc_sign) if asc_sign else None
+    if not isinstance(assessment, list) or asc_idx is None:
+        return base
+
+    sign_to_score: Dict[str, float] = {}
+    for row in assessment:
+        if not isinstance(row, dict):
+            continue
+        sign = row.get("sign")
+        score = row.get("score")
+        if sign in _SIGN_TO_INDEX and isinstance(score, (int, float)):
+            sign_to_score[str(sign)] = float(score)
+
+    raw_scores: Dict[str, Any] = {}
+    numeric_scores: Dict[int, float] = {}
+    for house in (2, 11):
+        sign = _SIGNS[(asc_idx + house - 1) % 12]
+        if sign in sign_to_score:
+            numeric_scores[house] = sign_to_score[sign]
+            value = sign_to_score[sign]
+            raw_scores[str(house)] = int(value) if value.is_integer() else value
+
+    base["raw_scores"] = raw_scores
+    if len(numeric_scores) == 2 and max(numeric_scores.values()) <= 19:
+        base["level"] = "obstructive"
+        base["signals"] = ["sodhita_wealth_friction"]
+    return base
+
+
+def _derive_kakshya_finance_support(kakshya: Any) -> Dict[str, Any]:
+    base = {
+        "level": "none",
+        "source": "kakshya_finance_bridge_v1",
+        "signals": [],
+        "average_strength": None,
+    }
+    avg = _safe_get(kakshya, "summary", "average_strength")
+    if not isinstance(avg, (int, float)):
+        return base
+    base["average_strength"] = float(avg)
+    if avg >= 6.5:
+        base["level"] = "supportive"
+        base["signals"] = ["kakshya_finance_support"]
+    elif avg <= 4.5:
+        base["level"] = "obstructive"
+        base["signals"] = ["kakshya_finance_friction"]
+    return base
+
+
 def _sign_to_index(sign: str) -> Optional[int]:
     try:
         return _SIGNS.index(sign)
@@ -939,6 +1026,17 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         shadbala_component_audit = present.get("shadbala_component_audit") or {}
         if shadbala_component_audit.get("status") in {"blocked", "incomplete"}:
             secondary_context.append("shadbala_component_gap")
+        pav_finance_support = present.get("pav_finance_support") or {}
+        if pav_finance_support.get("level") == "supportive":
+            secondary_context.append("pav_finance_support")
+        sodhita_finance_support = present.get("sodhita_finance_support") or {}
+        if sodhita_finance_support.get("level") == "obstructive":
+            secondary_context.append("sodhita_wealth_friction")
+        kakshya_finance_support = present.get("kakshya_finance_support") or {}
+        if kakshya_finance_support.get("level") == "supportive":
+            secondary_context.append("kakshya_finance_support")
+        elif kakshya_finance_support.get("level") == "obstructive":
+            secondary_context.append("kakshya_finance_friction")
         if ashtakavarga_finance.get("level") == "supportive":
             secondary_context.append("ashtakavarga_wealth_support")
         elif ashtakavarga_finance.get("level") == "obstructive":
@@ -1122,14 +1220,21 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "wealth_promise_strength": _derive_wealth_promise_strength(modules),
             "avayogi_risk": avayogi_risk,
         }
+        present["asc_sign"] = _safe_get(modules, "chart", "ascendant", "sign")
         present["shadbala_component_audit"] = _derive_shadbala_component_audit(present["shadbala"])
         present["ashtakavarga_finance_support"] = _derive_ashtakavarga_finance_support(
             present["ashtakavarga_house_scores"]
         )
+        present["pav_finance_support"] = _derive_pav_finance_support(_safe_get(modules, "ashtakavarga"))
+        present["sodhita_finance_support"] = _derive_sodhita_finance_support(
+            _safe_get(modules, "ashtakavarga"),
+            present["asc_sign"],
+        )
+        present["kakshya_finance_support"] = _derive_kakshya_finance_support(_safe_get(modules, "kakshya"))
         present["external_activation"] = _derive_external_activation_support(modules, "wealth")
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         missing = [key for key, value in present.items() if key not in {
-            "chart", "external_activation", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support", "shadbala_component_audit"
+            "chart", "external_activation", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support", "shadbala_component_audit", "asc_sign", "pav_finance_support", "sodhita_finance_support", "kakshya_finance_support"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [
