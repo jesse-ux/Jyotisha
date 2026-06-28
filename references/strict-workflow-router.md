@@ -182,6 +182,7 @@ Every Level 2+ output must include this table near the end.
 | D1 | Used / not used | ... | ... |
 | D9 | Used / not used | ... | ... |
 | D10 / relevant Varga | Used / not used | ... | ... |
+| Functional Benefic/Malefic | Used / not used / blocked | Key functional benefics, malefics, functional neutrals, yogakarakas | Mandatory in high-rigor mode; lower confidence or mark blocked if omitted |
 | Vimshottari | Used / not used | ... | ... |
 | Jaimini / Chara Dasha | Used / partial / not used | Karaka/Karakamsha reliable; Chara Dasha timing partial if used | Cap timing confidence unless independently corroborated |
 | AmK / Karakamsha | Used / not used | ... | ... |
@@ -208,6 +209,7 @@ Every Level 2+ output must include this table near the end.
 | Historical verification | Used / not provided | ... | ... |
 
 Never omit unavailable techniques silently. Mark them as unavailable or not integrated.
+When Functional Benefic/Malefic is used, explicitly surface the functional neutrals and yogakarakas instead of collapsing them into a generic summary.
 
 ---
 

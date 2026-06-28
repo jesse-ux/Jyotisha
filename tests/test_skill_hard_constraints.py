@@ -27,6 +27,9 @@ def test_router_declares_rigorous_multi_engine_and_raw_data_policy() -> None:
     assert "Narayana Dasha" in router
     assert "raw outputs" in router
     assert "blocked" in router
+    assert "Functional Benefic/Malefic" in router
+    assert "functional neutrals" in router.lower()
+    assert "yogakarakas" in router
 
 
 def test_agents_declares_functional_benefic_malefic_hard_constraint() -> None:
