@@ -91,6 +91,43 @@ class TestDignityLevel(unittest.TestCase):
             result = _get_dignity_level(planet, sign)
             self.assertEqual(result, 'DEBILITATED', f"{planet} in {sign} should be DEBILITATED, got {result}")
 
+    def test_temporary_relationship_depends_on_passed_chart_context(self):
+        """同一落位若误用 D1 planets_data，会改变分盘 dignity 结果。"""
+        d1_like_context = {
+            'Jupiter': {'sign': 'Virgo'},
+            'Mercury': {'sign': 'Libra'},
+        }
+        d9_like_context = {
+            'Jupiter': {'sign': 'Virgo'},
+            'Mercury': {'sign': 'Capricorn'},
+        }
+        d1_result = _get_dignity_level('Jupiter', 'Virgo', 10.0, d1_like_context)
+        d9_result = _get_dignity_level('Jupiter', 'Virgo', 10.0, d9_like_context)
+
+        self.assertEqual(d1_result, 'NEUTRAL')
+        self.assertEqual(d9_result, 'GREAT_ENEMY')
+
+    def test_neecha_bhanga_depends_on_passed_chart_context(self):
+        """落陷取消必须依赖当前分盘上下文，而不是借用 D1 planets_data。"""
+        with_cancelling_dispositor = {
+            'Mercury': {'sign': 'Pisces'},
+            'Jupiter': {'sign': 'Cancer'},
+            'Venus': {'sign': 'Aries'},
+        }
+        without_cancelling_dispositor = {
+            'Mercury': {'sign': 'Pisces'},
+            'Jupiter': {'sign': 'Capricorn'},
+            'Venus': {'sign': 'Aries'},
+        }
+        self.assertEqual(
+            _get_dignity_level('Mercury', 'Pisces', 12.0, with_cancelling_dispositor),
+            'NEECHA_BHANGA',
+        )
+        self.assertEqual(
+            _get_dignity_level('Mercury', 'Pisces', 12.0, without_cancelling_dispositor),
+            'DEBILITATED',
+        )
+
 
 class TestDashaCalculation(unittest.TestCase):
     """测试 Dasha 时间线计算"""

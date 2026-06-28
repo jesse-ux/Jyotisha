@@ -129,10 +129,13 @@ DIGNITY_LABELS = {
     'EXALTED': '入旺(Exalted)',
     'MOOLATRIKONA': '本垣(Moolatrikona)',
     'OWN_SIGN': '入庙(Own Sign)',
+    'GREAT_FRIEND': '极友(Great Friend)',
     'FRIEND': '入友(Friendly Sign)',
+    'NEUTRAL': '中性(Neutral)',
     'ENEMY': '入敌(Enemy Sign)',
+    'GREAT_ENEMY': '极敌(Great Enemy)',
     'DEBILITATED': '落陷(Debilitated)',
-    'NEUTRAL': '中性',
+    'NEECHA_BHANGA': '落陷取消(Neecha Bhanga)',
 }
 PUSHKARA_NAVAMSA_RANGES = {
     'fire': [(6 + 40/60, 10), (23 + 20/60, 26 + 40/60)],
@@ -371,31 +374,125 @@ def calc_all_inter_chart_linkages(d1_data, d9_data, d10_data, d12_data=None, d1_
 
 
 
-def _get_dignity_level(planet, sign, deg_in_sign=None):
-    """判断行星在某星座的尊严等级 (用于 Vimsopaka 映射)"""
+def _get_temporary_relationship(planet1, planet2, planets_data):
+    """Calculate Temporary Friendship (Tatkalika Maitri)."""
+    if not planets_data or planet1 not in planets_data or planet2 not in planets_data:
+        return 'NEUTRAL'
+    
+    p1_sign = planets_data[planet1].get('sign')
+    p2_sign = planets_data[planet2].get('sign')
+    if not p1_sign or not p2_sign:
+        return 'NEUTRAL'
+        
+    idx1 = SIGNS.index(p1_sign)
+    idx2 = SIGNS.index(p2_sign)
+    distance = (idx2 - idx1) % 12 + 1
+    
+    # 2, 3, 4, 10, 11, 12 from planet are temporary friends
+    if distance in [2, 3, 4, 10, 11, 12]:
+        return 'FRIEND'
+    # 1 (conjunct), 5, 6, 7, 8, 9 are temporary enemies
+    else:
+        return 'ENEMY'
+
+def _check_neecha_bhanga(planet, sign, planets_data):
+    """Check for Cancellation of Debilitation."""
+    if not planets_data:
+        return False
+        
+    sign_lord = SIGN_LORDS.get(sign)
+    
+    # Condition 1: Dispositor is exalted.
+    if sign_lord and sign_lord in planets_data:
+        lord_sign = planets_data[sign_lord].get('sign')
+        if lord_sign and EXALTATION.get(sign_lord) == lord_sign:
+            return True
+            
+    # Condition 2: Planet exalted in this sign is conjunct.
+    exalted_planet = None
+    for p, ex_sign in EXALTATION.items():
+        if ex_sign == sign:
+            exalted_planet = p
+            break
+            
+    if exalted_planet and exalted_planet in planets_data:
+        ex_p_sign = planets_data[exalted_planet].get('sign')
+        if ex_p_sign == sign:
+            return True
+            
+    return False
+
+
+def _build_dignity_context(chart_data):
+    """Normalize a chart/varga payload into the per-planet context used by dignity checks."""
+    context = {}
+    if not isinstance(chart_data, dict):
+        return context
+
+    for pn, pd in chart_data.items():
+        if pn in ('_meta', 'Ascendant') or not isinstance(pd, dict) or 'sign' not in pd:
+            continue
+        context[pn] = {
+            'sign': pd.get('sign'),
+            'degree_in_sign': pd.get('degree_in_sign', pd.get('degree', 0) % 30),
+        }
+    return context
+
+def _get_dignity_level(planet, sign, deg_in_sign=None, planets_data=None):
+    """判断行星在某星座的尊严等级 (用于 Vimsopaka 映射), 包含五重敌友和落陷取消"""
     if EXALTATION.get(planet) == sign:
         return 'EXALTED'
-    # Moolatrikona: 需要检查度数范围
+    
     mt = MOOLATRIKONA.get(planet)
     if mt and mt[0] == sign:
         if deg_in_sign is not None and mt[1] <= deg_in_sign < mt[2]:
             return 'MOOLATRIKONA'
+            
     if SIGN_LORDS.get(sign) == planet:
         return 'OWN_SIGN'
+        
     if DEBILITATION.get(planet) == sign:
+        if _check_neecha_bhanga(planet, sign, planets_data):
+            return 'NEECHA_BHANGA'
         return 'DEBILITATED'
-    # Natural dignity is judged by the planet's attitude toward the sign lord.
+        
     sign_lord = SIGN_LORDS.get(sign, '')
+    if not sign_lord:
+        return 'NEUTRAL'
+        
+    # Naisargika (Permanent)
+    perm = 'NEUTRAL'
     if sign_lord in PERMANENT_FRIENDS.get(planet, []):
+        perm = 'FRIEND'
+    elif sign_lord in PERMANENT_ENEMIES.get(planet, []):
+        perm = 'ENEMY'
+        
+    if not planets_data:
+        return perm
+        
+    # Tatkalika (Temporary)
+    temp = _get_temporary_relationship(planet, sign_lord, planets_data)
+    
+    # Panchadha Maitri (Compound)
+    if perm == 'FRIEND' and temp == 'FRIEND':
+        return 'GREAT_FRIEND'
+    elif perm == 'ENEMY' and temp == 'ENEMY':
+        return 'GREAT_ENEMY'
+    elif perm == 'FRIEND' and temp == 'ENEMY':
+        return 'NEUTRAL'
+    elif perm == 'NEUTRAL' and temp == 'FRIEND':
         return 'FRIEND'
-    if sign_lord in PERMANENT_ENEMIES.get(planet, []):
+    elif perm == 'NEUTRAL' and temp == 'ENEMY':
         return 'ENEMY'
+    elif perm == 'ENEMY' and temp == 'FRIEND':
+        return 'NEUTRAL'
+        
     return 'NEUTRAL'
 
 
-def _get_planet_status_label(planet, sign, deg_in_sign=None):
+def _get_planet_status_label(planet, sign, deg_in_sign=None, planets_data=None):
     """Return the user-facing D1 dignity label for chart output."""
-    return DIGNITY_LABELS.get(_get_dignity_level(planet, sign, deg_in_sign), '中性')
+    return DIGNITY_LABELS.get(_get_dignity_level(planet, sign, deg_in_sign, planets_data), '中性')
 PLANET_CN = {"Ketu": "南交点Ketu", "Venus": "金星Venus", "Sun": "太阳Sun", "Moon": "月亮Moon", "Mars": "火星Mars", "Rahu": "北交点Rahu", "Jupiter": "木星Jupiter", "Saturn": "土星Saturn", "Mercury": "水星Mercury"}
 BASE_PLANETS_SWE = {'Sun': swe.SUN, 'Moon': swe.MOON, 'Mars': swe.MARS, 'Mercury': swe.MERCURY, 'Jupiter': swe.JUPITER, 'Venus': swe.VENUS, 'Saturn': swe.SATURN} if HAS_SWE else {}
 PLANETS_SWE = {**BASE_PLANETS_SWE, 'Rahu': swe.MEAN_NODE} if HAS_SWE else {}
@@ -1033,14 +1130,13 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz, node_mode='
             si = int(lon_p / 30); d_in_s = lon_p - si * 30; sign = SIGNS[si]
             retro = spd < 0
             house = ((si - asc_idx) % 12) + 1
-            status = _get_planet_status_label(pname, sign, d_in_s)
             ni = int(lon_p / nak_span); pada = int((lon_p % nak_span) / (nak_span / 4)) + 1
             nak_n, nak_l, _ = NAKSHATRA_LIST[ni % 27]
             result["planets"][pname] = {
                 "sign": sign, "sign_cn": SIGNS_CN[sign], "degree": round(lon_p, 4),
                 "degree_raw": lon_p,
                 "degree_in_sign": round(d_in_s, 4), "degree_in_sign_raw": d_in_s,
-                "house": house, "status": status,
+                "house": house, "status": "",
                 "retrograde": retro, "speed": round(spd, 6),
                 "nakshatra": nak_n, "nakshatra_pada": pada, "nakshatra_lord": nak_l}
             if pname == 'Rahu':
@@ -1051,11 +1147,16 @@ def compute_chart_data(year, month, day, hour, minute, lat, lon, tz, node_mode='
                     "sign": SIGNS[ksi], "sign_cn": SIGNS_CN[SIGNS[ksi]],
                     "degree": round(klon, 4), "degree_raw": klon,
                     "degree_in_sign": round(kd, 4), "degree_in_sign_raw": kd,
-                    "house": ((ksi - asc_idx) % 12) + 1, "status": "中性",
+                    "house": ((ksi - asc_idx) % 12) + 1, "status": "",
                     "retrograde": True, "speed": round(spd, 6),
                     "nakshatra": kn, "nakshatra_pada": kp, "nakshatra_lord": kl}
         except Exception as e:
             result["planets"][pname] = {"error": str(e)}
+            
+    for pn, p_data in result["planets"].items():
+        if "error" not in p_data and pn != "Lagna":
+            p_data["status"] = _get_planet_status_label(pn, p_data["sign"], p_data["degree_in_sign"], result["planets"])
+            
     return result, asc_idx, jd, ayanamsa
 
 
@@ -3861,14 +3962,16 @@ def cmd_full_reading(args):
                     # 不使用 _dignity 字典（只有 Exalted/Debilitated/Own Sign）
                     pinfo = vdata.get(pn, {})
                     if isinstance(pinfo, dict) and 'sign' in pinfo:
+                        dignity_context = planets if div == 1 else _build_dignity_context(vdata)
                         dl_key = _get_dignity_level(pn, pinfo['sign'],
-                                      pinfo.get('degree_in_sign', pinfo.get('degree', 0) % 30))
+                                      pinfo.get('degree_in_sign', pinfo.get('degree', 0) % 30),
+                                      dignity_context)
                         planet_vargas_input[pn][vt] = dignity_map.get(dl_key, DignityLevel.NEUTRAL)
                     elif div == 1:
                         # D1 直接用本命盘数据
                         p_sign = SIGNS[int(planet_lons.get(pn, 0) / 30) % 12]
                         d_in_s = planet_lons.get(pn, 0) % 30
-                        dl_key = _get_dignity_level(pn, p_sign, d_in_s)
+                        dl_key = _get_dignity_level(pn, p_sign, d_in_s, planets)
                         planet_vargas_input[pn][vt] = dignity_map.get(dl_key, DignityLevel.NEUTRAL)
                     else:
                         planet_vargas_input[pn][vt] = DignityLevel.NEUTRAL
@@ -3876,7 +3979,7 @@ def cmd_full_reading(args):
                     # fallback: D1 从 planet_lons 计算
                     p_sign = SIGNS[int(planet_lons.get(pn, 0) / 30) % 12]
                     d_in_s = planet_lons.get(pn, 0) % 30
-                    dl_key = _get_dignity_level(pn, p_sign, d_in_s)
+                    dl_key = _get_dignity_level(pn, p_sign, d_in_s, planets)
                     planet_vargas_input[pn][vt] = dignity_map.get(dl_key, DignityLevel.NEUTRAL)
                 else:
                     planet_vargas_input[pn][vt] = DignityLevel.NEUTRAL
@@ -4260,6 +4363,7 @@ def cmd_full_reading(args):
             d9_data = varga_data.get('D9_Navamsa', {}) if isinstance(varga_data, dict) else {}
             d9_asc = d9_data.get('Ascendant', {}) if isinstance(d9_data, dict) else {}
             d9_asc_idx = SIGNS.index(d9_asc.get('sign', 'Aries')) if isinstance(d9_asc, dict) and d9_asc.get('sign') in SIGNS else 0
+            d9_context = _build_dignity_context(d9_data)
             if isinstance(d9_data, dict):
                 for d9_pn, d9_pd in d9_data.items():
                     if d9_pn == '_meta' or d9_pn == 'Ascendant' or not isinstance(d9_pd, dict) or 'sign' not in d9_pd:
@@ -4271,7 +4375,7 @@ def cmd_full_reading(args):
                         'sign': d9_sign,
                         'house': ((d9_sign_idx - d9_asc_idx) % 12) + 1,
                         'degree_in_sign': d9_deg,
-                        'dignity': _get_dignity_level(d9_pn, d9_sign, d9_deg),
+                        'dignity': _get_dignity_level(d9_pn, d9_sign, d9_deg, d9_context),
                     }
             jaimini_result['darakaraka'] = analyze_darakaraka({
                 'ascendant': chart.get('ascendant', {}),
@@ -4578,12 +4682,13 @@ def cmd_full_reading(args):
         d9_data = varga_data.get('D9_Navamsa', {}) if isinstance(varga_data, dict) else {}
         if d9_data:
             d9_expanded = {}
+            d9_context = _build_dignity_context(d9_data)
             for pn, pd in d9_data.items():
                 if pn == '_meta' or not isinstance(pd, dict) or 'sign' not in pd:
                     continue
                 d9_sign = pd['sign']
                 d9_deg = pd.get('degree_in_sign', pd.get('degree', 0) % 30)
-                dignity = _get_dignity_level(pn, d9_sign, d9_deg)
+                dignity = _get_dignity_level(pn, d9_sign, d9_deg, d9_context)
                 # D9 宫位（从D9 Asc计算）
                 d9_asc_data = d9_data.get('Ascendant', {})
                 d9_asc_sign_idx = SIGNS.index(d9_asc_data.get('sign', 'Aries')) if isinstance(d9_asc_data, dict) and d9_asc_data.get('sign') in SIGNS else 0

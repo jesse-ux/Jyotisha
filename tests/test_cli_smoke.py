@@ -126,7 +126,7 @@ def test_chart_accepts_second_and_preserves_birth_time_precision() -> None:
     assert with_seconds["birth_info"]["julian_day"] > without_seconds["birth_info"]["julian_day"]
 
 
-def test_chart_reports_friend_and_enemy_sign_dignity_for_user_case() -> None:
+def test_chart_reports_richer_d1_dignity_labels_for_user_case() -> None:
     result = run_engine(
         "chart",
         "--year", "REDACTED_YEAR",
@@ -141,7 +141,7 @@ def test_chart_reports_friend_and_enemy_sign_dignity_for_user_case() -> None:
     )
 
     assert result["planets"]["Jupiter"]["sign"] == "Virgo"
-    assert result["planets"]["Jupiter"]["status"] == "入敌(Enemy Sign)"
+    assert result["planets"]["Jupiter"]["status"] == "极敌(Great Enemy)"
 
 
 def test_chart_table_mode_prints_readable_ascii_table() -> None:
@@ -328,6 +328,50 @@ def test_full_reading_exposes_sensitive_point_modules() -> None:
     for payload in sensitive["sarpa_drekkana"].values():
         assert payload["definition"] == "Cancer-2, Scorpio-1, Pisces-3"
         assert payload["is_sarpa_drekkana"] is True
+
+
+def test_full_reading_uses_d9_context_for_navamsa_dignity() -> None:
+    result = run_engine("full-reading", *BASE_BIRTH_ARGS)
+
+    d9_jupiter = result["modules"]["d9_navamsa_expanded"]["Jupiter"]
+    assert d9_jupiter["sign"] == "Capricorn"
+    assert d9_jupiter["dignity"] == "NEECHA_BHANGA"
+
+
+def test_full_reading_uses_d9_context_for_darakaraka_dignity() -> None:
+    result = run_engine(
+        "full-reading",
+        "--year", "1992",
+        "--month", "8",
+        "--day", "25",
+        "--hour", "23",
+        "--minute", "10",
+        "--lat", "35.6895",
+        "--lon", "139.6917",
+        "--tz", "9",
+    )
+
+    darakaraka = result["modules"]["jaimini"]["darakaraka"]
+    assert darakaraka["dk_planet"] == "Sun"
+    assert darakaraka["d9_sign"] == "Gemini"
+    assert darakaraka["d9_dignity"] == "ENEMY"
+
+
+def test_full_reading_uses_d9_context_for_vimsopaka_navamsa_dignity() -> None:
+    result = run_engine(
+        "full-reading",
+        "--year", "1992",
+        "--month", "8",
+        "--day", "25",
+        "--hour", "23",
+        "--minute", "10",
+        "--lat", "35.6895",
+        "--lon", "139.6917",
+        "--tz", "9",
+    )
+
+    navamsa = result["modules"]["vimsopaka"]["Sun"]["varga_scores"]["Navamsa"]
+    assert navamsa["dignity"] == "Enemy"
 
 
 def test_varga_cli_outputs_d9_and_d10() -> None:
