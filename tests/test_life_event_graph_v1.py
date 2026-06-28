@@ -39,7 +39,10 @@ def test_life_event_graph_folds_strict_evidence_and_vedastro_top_event() -> None
                 "signals": ["vedastro_range_scan"],
                 "events": [
                     {
-                        "event_id": "jupiter_7h_window",
+                        "event_id": "GocharJupiterIn7th",
+                        "signal_key": "gochar_jupiter_7th_marriage",
+                        "signal_label": "Jupiter in 7th marriage window",
+                        "signal_family": "marriage_trigger",
                         "score": 72,
                         "start": "2026-05-01",
                         "end": "2026-06-01",
@@ -86,7 +89,10 @@ def test_life_event_graph_folds_strict_evidence_and_vedastro_top_event() -> None
     }
     assert graph["event_nodes"][4] == {
         "kind": "external_window",
-        "label": "jupiter_7h_window",
+        "label": "Jupiter in 7th marriage window",
+        "event_id": "GocharJupiterIn7th",
+        "signal_key": "gochar_jupiter_7th_marriage",
+        "signal_family": "marriage_trigger",
         "score": 72,
         "start": "2026-05-01",
         "end": "2026-06-01",
@@ -118,7 +124,10 @@ def test_life_event_graph_is_returned_from_strict_relationship_evidence() -> Non
                         "source": "vedastro_service_adapter_candidate",
                         "operation": "range_scan",
                         "domain": "marriage",
-                        "event_id": "jupiter_7h_window",
+                        "event_id": "GocharJupiterIn7th",
+                        "signal_key": "gochar_jupiter_7th_marriage",
+                        "signal_label": "Jupiter in 7th marriage window",
+                        "signal_family": "marriage_trigger",
                         "score": 72,
                         "start": "2026-05-01",
                         "end": "2026-06-01",

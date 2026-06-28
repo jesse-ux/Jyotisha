@@ -90,6 +90,79 @@ RANGE_SCAN_EVENT_ALLOWLIST = {
         "tags": {"career", "profession", "work", "transit"},
     },
 }
+RANGE_SCAN_SIGNAL_METADATA = {
+    "marriage": {
+        "GocharJupiterIn7th": {
+            "signal_key": "gochar_jupiter_7th_marriage",
+            "signal_label": "Jupiter in 7th marriage window",
+            "signal_family": "marriage_trigger",
+        },
+        "GocharJupiterAspect7th": {
+            "signal_key": "gochar_jupiter_aspect_7th_marriage",
+            "signal_label": "Jupiter aspecting 7th marriage window",
+            "signal_family": "marriage_trigger",
+        },
+        "GocharSaturnAspect7th": {
+            "signal_key": "gochar_saturn_aspect_7th_relationship_pressure",
+            "signal_label": "Saturn aspecting 7th relationship window",
+            "signal_family": "relationship_pressure",
+        },
+        "JupiterSupportsMarriageAxis": {
+            "signal_key": "jupiter_supports_marriage_axis",
+            "signal_label": "Jupiter supports marriage axis",
+            "signal_family": "marriage_trigger",
+        },
+    },
+    "wealth": {
+        "GocharJupiterIn2nd": {
+            "signal_key": "gochar_jupiter_2nd_wealth",
+            "signal_label": "Jupiter in 2nd wealth window",
+            "signal_family": "wealth_trigger",
+        },
+        "GocharJupiterIn11th": {
+            "signal_key": "gochar_jupiter_11th_gains",
+            "signal_label": "Jupiter in 11th gains window",
+            "signal_family": "gains_trigger",
+        },
+        "GocharJupiterAspect2nd": {
+            "signal_key": "gochar_jupiter_aspect_2nd_wealth",
+            "signal_label": "Jupiter aspecting 2nd wealth window",
+            "signal_family": "wealth_trigger",
+        },
+        "GocharJupiterAspect11th": {
+            "signal_key": "gochar_jupiter_aspect_11th_gains",
+            "signal_label": "Jupiter aspecting 11th gains window",
+            "signal_family": "gains_trigger",
+        },
+        "WealthExpansionWindow": {
+            "signal_key": "wealth_expansion_window",
+            "signal_label": "Wealth expansion window",
+            "signal_family": "wealth_trigger",
+        },
+    },
+    "career": {
+        "GocharJupiterIn10th": {
+            "signal_key": "gochar_jupiter_10th_career",
+            "signal_label": "Jupiter in 10th career window",
+            "signal_family": "career_trigger",
+        },
+        "GocharSaturnIn10th": {
+            "signal_key": "gochar_saturn_10th_career",
+            "signal_label": "Saturn in 10th career window",
+            "signal_family": "career_pressure",
+        },
+        "GocharJupiterAspect10th": {
+            "signal_key": "gochar_jupiter_aspect_10th_career",
+            "signal_label": "Jupiter aspecting 10th career window",
+            "signal_family": "career_trigger",
+        },
+        "CareerExpansionWindow": {
+            "signal_key": "career_expansion_window",
+            "signal_label": "Career expansion window",
+            "signal_family": "career_trigger",
+        },
+    },
+}
 DEFAULT_TIMEOUT_SECONDS = 8
 TIMEOUT_ENV = "VEDASTRO_TIMEOUT_SECONDS"
 RETRY_POLICY = {
@@ -276,12 +349,16 @@ def _normalize_range_scan_success(
         tag_set = {str(tag) for tag in tags}
         if event_id not in allowed_ids and tag_set.isdisjoint(allowed_tags):
             continue
+        signal_metadata = RANGE_SCAN_SIGNAL_METADATA.get(domain, {}).get(event_id, {})
         evidence_ledger.append(
             {
                 "source": "vedastro_service_adapter_candidate",
                 "operation": "range_scan",
                 "domain": domain,
                 "event_id": event_id,
+                "signal_key": signal_metadata.get("signal_key"),
+                "signal_label": signal_metadata.get("signal_label") or event.get("name") or event_id,
+                "signal_family": signal_metadata.get("signal_family"),
                 "start": event.get("start") or event.get("start_time") or event.get("start_date"),
                 "end": event.get("end") or event.get("end_time") or event.get("end_date"),
                 "score": event.get("score") if event.get("score") is not None else event.get("strength"),
@@ -298,6 +375,9 @@ def _normalize_range_scan_success(
         )
         top_event = {
             "event_id": top.get("event_id"),
+            "signal_key": top.get("signal_key"),
+            "signal_label": top.get("signal_label"),
+            "signal_family": top.get("signal_family"),
             "score": top.get("score"),
             "start": top.get("start"),
             "end": top.get("end"),

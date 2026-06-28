@@ -220,7 +220,7 @@ def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> No
             response = {
                 "events": [
                     {
-                        "id": "jupiter_7h_window",
+                        "id": "GocharJupiterIn7th",
                         "name": "Jupiter supports marriage axis",
                         "start": "2026-05-01",
                         "end": "2026-06-01",
@@ -284,13 +284,19 @@ def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> No
     assert report["domain"] == "marriage"
     assert report["event_count"] == 1
     assert report["top_event"] == {
-        "event_id": "jupiter_7h_window",
+        "event_id": "GocharJupiterIn7th",
+        "signal_key": "gochar_jupiter_7th_marriage",
+        "signal_label": "Jupiter in 7th marriage window",
+        "signal_family": "marriage_trigger",
         "score": 72,
         "start": "2026-05-01",
         "end": "2026-06-01",
         "tags": ["marriage", "transit"],
     }
-    assert report["evidence_ledger"][0]["event_id"] == "jupiter_7h_window"
+    assert report["evidence_ledger"][0]["event_id"] == "GocharJupiterIn7th"
+    assert report["evidence_ledger"][0]["signal_key"] == "gochar_jupiter_7th_marriage"
+    assert report["evidence_ledger"][0]["signal_label"] == "Jupiter in 7th marriage window"
+    assert report["evidence_ledger"][0]["signal_family"] == "marriage_trigger"
     assert report["evidence_ledger"][0]["domain"] == "marriage"
     assert report["evidence_ledger"][0]["score"] == 72
     assert report["evidence_ledger"][0]["raw"]["name"] == "Jupiter supports marriage axis"

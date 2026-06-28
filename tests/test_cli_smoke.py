@@ -283,6 +283,8 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert functional_rows
     assert functional_rows[0]["status"] == "used"
     assert "高严谨" in functional_rows[0]["note"]
+    assert "关键功能吉星=" in functional_rows[0]["note"]
+    assert "关键功能凶星=" in functional_rows[0]["note"]
     dasha_rows = [row for row in audit_table if row["technique"] == "Vimshottari + Narayana Cross-check"]
     assert dasha_rows
     assert dasha_rows[0]["status"] == "used"

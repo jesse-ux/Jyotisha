@@ -900,7 +900,11 @@ def _build_technique_audit_table(functional_layer, oracle_progress, modules):
             'technique': 'Functional Benefic/Malefic',
             'status': functional_layer.get('status', 'blocked'),
             'source': 'scripts/yoga_engine.py::YogaContext',
-            'note': functional_layer.get('effect_on_confidence', '高严谨模式缺少功能性吉凶星判定。'),
+            'note': (
+                f"关键功能吉星={functional_layer.get('functional_benefics', [])}; "
+                f"关键功能凶星={functional_layer.get('functional_malefics', [])}; "
+                f"{functional_layer.get('effect_on_confidence', '高严谨模式缺少功能性吉凶星判定。')}"
+            ),
         },
         {
             'technique': 'External Oracle Progress',

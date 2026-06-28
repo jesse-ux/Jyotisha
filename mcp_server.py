@@ -1342,7 +1342,10 @@ def _build_life_event_graph(route: str, strict: Dict[str, Any]) -> Dict[str, Any
             nodes.append(
                 {
                     "kind": "external_window",
-                    "label": event.get("event_id"),
+                    "label": event.get("signal_label") or event.get("event_id"),
+                    "event_id": event.get("event_id"),
+                    "signal_key": event.get("signal_key"),
+                    "signal_family": event.get("signal_family"),
                     "score": event.get("score"),
                     "start": event.get("start"),
                     "end": event.get("end"),
