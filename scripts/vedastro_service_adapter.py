@@ -541,62 +541,7 @@ def _source_metadata(endpoint: str) -> dict[str, Any]:
 
 
 def _post_json(endpoint: str, request_preview: dict[str, Any]) -> dict[str, Any] | str:
-    # If this is a range scan, format it for VedAstro's EventsAtRange API
-    if request_preview.get("operation") == "range_scan":
-        # VedAstro EventsAtRange schema requires: birthTime, startTime, endTime, eventTagList
-        from datetime import datetime
-        
-        # Parse dates
-        start_dt = datetime.strptime(request_preview["start_date"], "%Y-%m-%d")
-        end_dt = datetime.strptime(request_preview["end_date"], "%Y-%m-%d")
-        
-        # Extract location and timezone
-        tz = f"+0{int(request_preview['tz'])}:00" if request_preview['tz'] > 0 else f"-0{abs(int(request_preview['tz']))}:00"
-        location = {
-            "name": "AutoLocation",
-            "lat": request_preview["lat"],
-            "lng": request_preview["lon"]
-        }
-        
-        vedastro_payload = {
-            "birthTime": {
-                "year": request_preview["year"],
-                "month": request_preview["month"],
-                "date": request_preview["day"],
-                "hour": request_preview["hour"],
-                "minute": request_preview["minute"],
-                "location": location,
-                "timeOffset": tz
-            },
-            "startTime": {
-                "year": start_dt.year,
-                "month": start_dt.month,
-                "date": start_dt.day,
-                "hour": 0,
-                "minute": 0,
-                "location": location,
-                "timeOffset": tz
-            },
-            "endTime": {
-                "year": end_dt.year,
-                "month": end_dt.month,
-                "date": end_dt.day,
-                "hour": 0,
-                "minute": 0,
-                "location": location,
-                "timeOffset": tz
-            },
-            "eventTagList": ["Gochara"] # Can map based on domain in future
-        }
-        # Append /EventsAtRange if the endpoint is the base Calculate API
-        if endpoint.endswith("Calculate"):
-            endpoint = f"{endpoint}/EventsAtRange"
-        elif not endpoint.endswith("EventsAtRange"):
-            endpoint = f"{endpoint}/api/Calculate/EventsAtRange"
-            
-    else:
-        vedastro_payload = request_preview
-
+    vedastro_payload = request_preview
     req = request.Request(
         endpoint,
         data=json.dumps(vedastro_payload).encode("utf-8"),
