@@ -1,0 +1,243 @@
+{
+  "scope": "vedastro_parity_matrix",
+  "schema_version": 1,
+  "generated_at": "2026-06-28T08:31:52.958980+00:00",
+  "summary": {
+    "row_count": 13,
+    "p0_count": 11,
+    "status_counts": {
+      "partial": 8,
+      "covered": 4,
+      "missing": 1
+    },
+    "recommended_path_counts": {
+      "hybrid_local_plus_vedastro": 7,
+      "local_native": 4,
+      "new_local_impl": 1,
+      "external_evidence_only": 1
+    },
+    "local_registry_technique_count": 89
+  },
+  "boundary": {
+    "not_a_clone_claim": true,
+    "external_outputs_are_adapter_evidence_until_promoted": true,
+    "local_adjudicator_remains_final_reasoning_layer": true
+  },
+  "rows": [
+    {
+      "vedastro_capability": "Tajika Annual",
+      "category": "annual_prediction",
+      "local_status": "partial",
+      "local_assets": [
+        "tajika.py",
+        "varshaphala.py",
+        "sahams",
+        "solar_return"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "hybrid_local_plus_vedastro",
+      "priority": "P0",
+      "license_boundary": "local_native_or_external_oracle",
+      "adjudicator_use": "secondary",
+      "gap_notes": "Annual modules exist; yearly career/wealth/month windows need stronger strict-workflow integration."
+    },
+    {
+      "vedastro_capability": "Ayanamsa Selection",
+      "category": "ephemeris_policy",
+      "local_status": "partial",
+      "local_assets": [
+        "ayanamsa_utils",
+        "ephemeris_adapter_contract"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "hybrid_local_plus_vedastro",
+      "priority": "P0",
+      "license_boundary": "external_service_or_clean_room_only",
+      "adjudicator_use": "oracle_only",
+      "gap_notes": "Local Lahiri path is usable, but broad ayanamsa parity and public comparison artifacts remain incomplete."
+    },
+    {
+      "vedastro_capability": "Prashna / Horary",
+      "category": "horary",
+      "local_status": "covered",
+      "local_assets": [
+        "prashna.py",
+        "kp_system.py",
+        "upagraha_gulika_maandi",
+        "sphuta_trisphuta_family"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "local_native",
+      "priority": "P0",
+      "license_boundary": "local_native_or_clean_room",
+      "adjudicator_use": "secondary",
+      "gap_notes": "Horary modules exist but are not yet a first-class question adjudicator route."
+    },
+    {
+      "vedastro_capability": "Jaimini / Chara Dasha",
+      "category": "jaimini",
+      "local_status": "covered",
+      "local_assets": [
+        "jaimini.py",
+        "AK",
+        "DK",
+        "UL",
+        "Chara Dasha",
+        "Jaimini marriage bridge v1"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "local_native",
+      "priority": "P0",
+      "license_boundary": "local_native_mit_attribution_for_reused_parts",
+      "adjudicator_use": "secondary",
+      "gap_notes": "Core Jaimini exists; mission/career/marriage quality adjudicator folding is not yet exhaustive."
+    },
+    {
+      "vedastro_capability": "Report Rendering",
+      "category": "presentation",
+      "local_status": "partial",
+      "local_assets": [
+        "report_artifact API",
+        "report_builder.py",
+        "chart_renderer.py",
+        "jyotish-app export"
+      ],
+      "can_call_vedastro": false,
+      "recommended_path": "new_local_impl",
+      "priority": "P0",
+      "license_boundary": "local_native",
+      "adjudicator_use": "not_used",
+      "gap_notes": "HTML/PDF artifact path exists; polished SVG/PDF chart rendering and cloud-scale report production are not finished."
+    },
+    {
+      "vedastro_capability": "Synastry / Ashtakoot",
+      "category": "relationship_matching",
+      "local_status": "covered",
+      "local_assets": [
+        "synastry.py",
+        "ashtakoot.py",
+        "36-point Ashtakoot",
+        "16-factor compatibility"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "local_native",
+      "priority": "P0",
+      "license_boundary": "local_native_mit_attribution_for_reused_parts",
+      "adjudicator_use": "secondary",
+      "gap_notes": "Matching modules exist and API-backed; relationship adjudicator still needs a formal bridge."
+    },
+    {
+      "vedastro_capability": "MCP / API Surface",
+      "category": "service_surface",
+      "local_status": "partial",
+      "local_assets": [
+        "mcp_server.py",
+        "jyotish_api_server.py",
+        "strict workflows",
+        "vedastro_service_adapter.py"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "hybrid_local_plus_vedastro",
+      "priority": "P0",
+      "license_boundary": "external_service_or_local_native",
+      "adjudicator_use": "primary",
+      "gap_notes": "Local API/MCP surfaces exist; VedAstro live adapter needs endpoint-backed smoke tests and provenance capture."
+    },
+    {
+      "vedastro_capability": "Ashtakavarga",
+      "category": "strength",
+      "local_status": "partial",
+      "local_assets": [
+        "ashtakavarga",
+        "ashtakavarga_pav",
+        "ashtakavarga_sodhita",
+        "finance_ashtakavarga_bridge"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "hybrid_local_plus_vedastro",
+      "priority": "P0",
+      "license_boundary": "local_native_or_external_oracle",
+      "adjudicator_use": "secondary",
+      "gap_notes": "SAV/BAV is in production; PAV/Sodhita/Kakshya bridges need continued regression before being dominant labels."
+    },
+    {
+      "vedastro_capability": "Shadbala",
+      "category": "strength",
+      "local_status": "partial",
+      "local_assets": [
+        "shadbala",
+        "shadbala_advanced",
+        "shadbala_component_cap",
+        "oracle_shadbala_queue"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "hybrid_local_plus_vedastro",
+      "priority": "P0",
+      "license_boundary": "local_native_or_external_oracle",
+      "adjudicator_use": "secondary",
+      "gap_notes": "Local component-aware cap exists; absolute external oracle closure is still incomplete."
+    },
+    {
+      "vedastro_capability": "EventsAtRange / Life Event Graph",
+      "category": "timing_range_scan",
+      "local_status": "partial",
+      "local_assets": [
+        "transit_trigger",
+        "dasha",
+        "narayana_dasha",
+        "vedastro_service_adapter.range_scan"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "hybrid_local_plus_vedastro",
+      "priority": "P0",
+      "license_boundary": "external_service_or_clean_room_only",
+      "adjudicator_use": "oracle_only",
+      "gap_notes": "Local timing modules exist, but a high-frequency day/hour event graph is not yet a local productized radar."
+    },
+    {
+      "vedastro_capability": "D1-D60 Divisional Charts",
+      "category": "varga",
+      "local_status": "covered",
+      "local_assets": [
+        "varga",
+        "varga_full",
+        "shodasavarga",
+        "divisional_charts_extended"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "local_native",
+      "priority": "P0",
+      "license_boundary": "local_native_or_clean_room",
+      "adjudicator_use": "primary",
+      "gap_notes": "Local varga coverage is strong; keep VedAstro/PyJHora as benchmark evidence rather than replacing local math."
+    },
+    {
+      "vedastro_capability": "Birth Time ML / Rectification Assistant",
+      "category": "birth_time_rectification",
+      "local_status": "partial",
+      "local_assets": [
+        "birth_time_rectifier.py",
+        "rectification_gate",
+        "jyotish-app rectification"
+      ],
+      "can_call_vedastro": true,
+      "recommended_path": "hybrid_local_plus_vedastro",
+      "priority": "P1",
+      "license_boundary": "external_service_or_local_native",
+      "adjudicator_use": "secondary",
+      "gap_notes": "Local rectification exists; ML parity with VedAstro-style service behavior is not established."
+    },
+    {
+      "vedastro_capability": "Numerology / Non-Jyotish Tools",
+      "category": "adjacent_tools",
+      "local_status": "missing",
+      "local_assets": [],
+      "can_call_vedastro": true,
+      "recommended_path": "external_evidence_only",
+      "priority": "P2",
+      "license_boundary": "external_service_only",
+      "adjudicator_use": "not_used",
+      "gap_notes": "Adjacent product feature; not required for Jyotish adjudicator depth."
+    }
+  ]
+}
