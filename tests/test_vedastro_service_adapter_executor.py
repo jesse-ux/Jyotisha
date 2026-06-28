@@ -41,6 +41,8 @@ def test_vedastro_service_adapter_executor_schema_is_declared() -> None:
     assert "start_date" in report["range_scan_request_contract"]
     assert "range_scan_response_contract" in report
     assert "evidence_ledger" in report["range_scan_response_contract"]
+    assert report["range_scan_event_allowlist"]["marriage"]["event_ids"]
+    assert "marriage" in report["range_scan_event_allowlist"]["marriage"]["tags"]
 
 
 def test_vedastro_service_adapter_returns_controlled_unconfigured_status() -> None:
@@ -293,6 +295,78 @@ def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> No
     assert report["evidence_ledger"][0]["score"] == 72
     assert report["evidence_ledger"][0]["raw"]["name"] == "Jupiter supports marriage axis"
     assert report["source_metadata"]["endpoint"].startswith("http://127.0.0.1:")
+
+
+def test_vedastro_service_adapter_applies_domain_allowlist_to_range_scan_noise() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            response = {
+                "events": [
+                    {
+                        "id": "GocharJupiterIn7th",
+                        "name": "Jupiter enters 7th house",
+                        "start": "2026-05-01",
+                        "end": "2026-06-01",
+                        "score": 72,
+                        "tags": ["marriage", "transit"],
+                    },
+                    {
+                        "id": "RandomMoonMoodShift",
+                        "name": "Random moon mood shift",
+                        "start": "2026-05-08",
+                        "end": "2026-05-09",
+                        "score": 91,
+                        "tags": ["emotion", "noise"],
+                    },
+                ]
+            }
+            body = json.dumps(response).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/vedastro"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "scripts/vedastro_service_adapter.py",
+                "--range-scan",
+                "--domain",
+                "marriage",
+                "--case",
+                "beijing_first_use_demo",
+                "--start-date",
+                "2026-01-01",
+                "--end-date",
+                "2031-01-01",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["event_count"] == 1
+    assert report["top_event"]["event_id"] == "GocharJupiterIn7th"
+    assert report["evidence_ledger"][0]["event_id"] == "GocharJupiterIn7th"
 
 
 def test_vedastro_service_adapter_classifies_http_error() -> None:

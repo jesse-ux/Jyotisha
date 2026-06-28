@@ -60,6 +60,36 @@ PARITY_CASES = {
 }
 
 SUPPORTED_RANGE_SCAN_DOMAINS = {"marriage", "wealth", "career"}
+RANGE_SCAN_EVENT_ALLOWLIST = {
+    "marriage": {
+        "event_ids": {
+            "GocharJupiterIn7th",
+            "GocharJupiterAspect7th",
+            "GocharSaturnAspect7th",
+            "JupiterSupportsMarriageAxis",
+        },
+        "tags": {"marriage", "relationship", "spouse", "transit"},
+    },
+    "wealth": {
+        "event_ids": {
+            "GocharJupiterIn2nd",
+            "GocharJupiterIn11th",
+            "GocharJupiterAspect2nd",
+            "GocharJupiterAspect11th",
+            "WealthExpansionWindow",
+        },
+        "tags": {"wealth", "finance", "income", "gains", "transit"},
+    },
+    "career": {
+        "event_ids": {
+            "GocharJupiterIn10th",
+            "GocharSaturnIn10th",
+            "GocharJupiterAspect10th",
+            "CareerExpansionWindow",
+        },
+        "tags": {"career", "profession", "work", "transit"},
+    },
+}
 DEFAULT_TIMEOUT_SECONDS = 8
 TIMEOUT_ENV = "VEDASTRO_TIMEOUT_SECONDS"
 RETRY_POLICY = {
@@ -84,6 +114,13 @@ def schema() -> dict[str, Any]:
     request_example = {
         **PARITY_CASES["beijing_first_use_demo"],
         "body_list": ["Sun", "Moon", "Ascendant", "Rahu", "Ketu"],
+    }
+    range_scan_allowlist = {
+        domain: {
+            "event_ids": sorted(values["event_ids"]),
+            "tags": sorted(values["tags"]),
+        }
+        for domain, values in sorted(RANGE_SCAN_EVENT_ALLOWLIST.items())
     }
     return {
         "adapter": "vedastro_service_adapter",
@@ -144,6 +181,7 @@ def schema() -> dict[str, Any]:
             "evidence_ledger",
             "source_metadata",
         ],
+        "range_scan_event_allowlist": range_scan_allowlist,
         "request_example": request_example,
         "provenance_contract": {
             "external_service": True,
@@ -222,20 +260,32 @@ def _normalize_range_scan_success(
     if not isinstance(events, list):
         events = []
 
+    domain = request_preview["domain"]
+    allowlist = RANGE_SCAN_EVENT_ALLOWLIST.get(domain, {})
+    allowed_ids = allowlist.get("event_ids", set())
+    allowed_tags = allowlist.get("tags", set())
+
     evidence_ledger = []
     for index, event in enumerate(events, start=1):
         if not isinstance(event, dict):
+            continue
+        event_id = event.get("id") or event.get("name") or f"event_{index}"
+        tags = event.get("tags") or []
+        if not isinstance(tags, list):
+            tags = []
+        tag_set = {str(tag) for tag in tags}
+        if event_id not in allowed_ids and tag_set.isdisjoint(allowed_tags):
             continue
         evidence_ledger.append(
             {
                 "source": "vedastro_service_adapter_candidate",
                 "operation": "range_scan",
-                "domain": request_preview["domain"],
-                "event_id": event.get("id") or event.get("name") or f"event_{index}",
+                "domain": domain,
+                "event_id": event_id,
                 "start": event.get("start") or event.get("start_time") or event.get("start_date"),
                 "end": event.get("end") or event.get("end_time") or event.get("end_date"),
                 "score": event.get("score") if event.get("score") is not None else event.get("strength"),
-                "tags": event.get("tags") or [],
+                "tags": tags,
                 "raw": event,
             }
         )
@@ -259,7 +309,7 @@ def _normalize_range_scan_success(
         "available": True,
         "status": "ok",
         "operation": "range_scan",
-        "domain": request_preview["domain"],
+        "domain": domain,
         "request_preview": request_preview,
         "event_count": len(evidence_ledger),
         "top_event": top_event,

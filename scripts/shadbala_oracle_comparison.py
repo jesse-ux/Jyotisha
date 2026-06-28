@@ -8,7 +8,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-import oracle_boundary_audit
+try:
+    from scripts import oracle_boundary_audit
+except ImportError:  # pragma: no cover - supports direct script execution.
+    import oracle_boundary_audit
 
 
 ROOT = Path(__file__).resolve().parents[1]

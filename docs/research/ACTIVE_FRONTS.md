@@ -34,6 +34,8 @@ This file is the small index for the current engineering fronts that still drive
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_benchmark_inventory_latest.json`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_closure_master_dashboard_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/public_benchmark_dashboard_latest.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/shadbala_absolute_oracle_comparison_audit_2026_06_28.md`
+- `/Users/wuyongnaren/Documents/印度占星/scripts/shadbala_oracle_comparison.py`
 - `/Users/wuyongnaren/Documents/印度占星/references/oracle/`
 - Before changing oracle-dependent adjudicator or benchmark claims, run:
   - `python3 scripts/oracle_benchmark_inventory.py --format json`
@@ -43,6 +45,7 @@ This file is the small index for the current engineering fronts that still drive
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/vedastro_parity_matrix_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/vedastro_parity_matrix_latest.json`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/life_event_graph_v1_audit_2026_06_28.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/vedastro_range_scan_allowlist_audit_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_service_adapter.py`
 - follow only after the Jaimini marriage bridge v1 regression loop is closed
 - Use the parity matrix before adding or claiming VedAstro-equivalent capability.
