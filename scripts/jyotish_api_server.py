@@ -2925,7 +2925,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             day = self._get_int(body, 'day', 1, 1, 31)
             lat = self._get_float(body, 'lat', body.get('birth_lat', 0), -90, 90)
             lon = self._get_float(body, 'lon', body.get('birth_lon', 0), -180, 180)
-            tz = self._parse_timezone(body, lat, lon, year, month, day, hour, minute, second)
+            tz = self._parse_timezone(body, lat, lon, year, month, day, birth_hour, birth_minute, birth_second)
             hour_decimal = self._birth_hour_decimal(birth_hour, birth_minute, birth_second)
             solar_lon = planets.get('Sun', {}).get('lon', 0)
             base_planets = base_result.get('planets', {}) if isinstance(base_result, dict) else {}
@@ -2980,7 +2980,17 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         birth_dt = self._parse_birth_datetime(body)
         lat = self._get_float(body, 'lat', body.get('birth_lat', 0), -90, 90)
         lon = self._get_float(body, 'lon', body.get('birth_lon', 0), -180, 180)
-        tz = self._parse_timezone(body, lat, lon, year, month, day, hour, minute, second)
+        tz = self._parse_timezone(
+            body,
+            lat,
+            lon,
+            birth_dt.year,
+            birth_dt.month,
+            birth_dt.day,
+            birth_dt.hour,
+            birth_dt.minute,
+            birth_dt.second,
+        )
         solar_return = _load_local_module('solar_return')
         report = solar_return.solar_return_full_report(
             birth_dt.year,
@@ -4558,6 +4568,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             inferred.append('ashtakavarga')
         if 'ashtakavarga' in domains and 'sodhita' in name:
             inferred.append('ashtakavarga')
+        if key == 'bhrigu_bindu' or 'calc_bhrigu_bindu' in path_text:
+            inferred.append('full-reading')
+            inferred.append('varga-full')
         return sorted(set(inferred))
 
     def _productization_next_action(self, level, commands, api_commands, visible_markers):

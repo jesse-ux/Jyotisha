@@ -12,6 +12,8 @@ Purpose: make the ephemeris roadmap probeable instead of relying on UI labels or
 | `vedastro` | MIT full-stack product/API benchmark and service-boundary adapter candidate | `service_adapter_candidate` | Can inform API, OpenAPI, chat, Panchanga, and product workflow design; C# core should stay behind an API/service boundary if reused | Reuse product/API ideas and progress through an adapter contract, not as a drop-in Python ephemeris |
 | `pyjhora_benchmark` | Broad JHora-style behavior/oracle benchmark | `benchmark_only` | AGPL; do not copy implementation code into this app unless the whole downstream license posture is changed | Use only expected outputs, public examples, and behavior comparisons |
 
+Probe compatibility note: `external_benchmark_benchmark` is retained as a machine-readable role alias for external API/product comparison surfaces such as VedAstro. It is a benchmark role, not permission to import external implementation code or treat external output as production tuning without oracle validation.
+
 ## Probe
 
 Run:

@@ -53,27 +53,28 @@ def test_oracle_collection_queue_outputs_executable_json_tasks() -> None:
 
     assert report["scope"] == "external_oracle_collection_queue"
     assert report["summary"]["total_tasks"] == 5
-    assert report["summary"]["ready_for_calibration"] == 0
-    assert report["summary"]["by_status"]["template_only"] == 5
+    assert report["summary"]["ready_for_calibration"] == 4
+    assert report["summary"]["ready_for_collection"] == 1
+    assert report["summary"]["by_status"]["external_verified"] == 5
     assert report["summary"]["production_tuning_allowed"] is False
 
     first = report["tasks"][0]
     assert first["case_id"] == "template_user_REDACTED_YEAR_moon_longitude_lahiri"
-    assert first["status"] == "template_only"
-    assert first["ready_for_collection"] is True
-    assert first["ready_for_calibration"] is False
-    assert "target.moon_sidereal_longitude_deg" in first["missing_target_fields"]
+    assert first["status"] == "external_verified"
+    assert first["ready_for_collection"] is False
+    assert first["ready_for_calibration"] is True
+    assert first["missing_target_fields"] == []
     assert "longitude" in first["target_modules"]
     assert "dasha" in first["target_modules"]
     assert "shadbala" in first["target_modules"]
     assert any("JHora" in source for source in first["preferred_sources"])
     assert any("VedAstro" in source for source in first["preferred_sources"])
     assert first["promotion_criteria"]
-    assert first["do_not_tune_production"] is True
+    assert first["do_not_tune_production"] is False
 
     packet = first["evidence_packet"]
     assert packet["capture_id"] == "external_template_user_REDACTED_YEAR_moon_longitude_lahiri"
-    assert packet["status"] == "draft"
+    assert packet["status"] == "external_verified"
     assert packet["case_id"] == first["case_id"]
     assert packet["birth"] == first["birth"]
     assert packet["settings"] == first["settings"]
@@ -82,9 +83,16 @@ def test_oracle_collection_queue_outputs_executable_json_tasks() -> None:
     assert "capture_date" in packet["required_metadata_fields"]
     assert "source_artifact" in packet["required_metadata_fields"]
     assert "target.moon_sidereal_longitude_deg" in packet["target_placeholders"]
-    assert packet["target_placeholders"]["target.moon_sidereal_longitude_deg"] is None
+    assert packet["target_placeholders"]["target.moon_sidereal_longitude_deg"] == 311.774424
     assert packet["integrity_checks"]["must_not_come_from_local_engine"] is True
     assert packet["integrity_checks"]["requires_external_artifact"] is True
+
+    blocked = next(task for task in report["tasks"] if task["case_id"] == "template_historical_epoch_lahiri")
+    assert blocked["status"] == "external_verified"
+    assert blocked["ready_for_collection"] is True
+    assert blocked["ready_for_calibration"] is False
+    assert blocked["do_not_tune_production"] is True
+    assert blocked["missing_target_fields"] == ["target.sun_sidereal_longitude_deg"]
 
 
 def test_oracle_collection_queue_outputs_markdown_table() -> None:
@@ -95,7 +103,8 @@ def test_oracle_collection_queue_outputs_markdown_table() -> None:
     assert "# Dasha/Shadbala External Oracle Collection Queue" in markdown
     assert "| task_id | case_id | status | missing fields | preferred sources |" in markdown
     assert "collect_template_user_REDACTED_YEAR_moon_longitude_lahiri" in markdown
-    assert "`template_only`" in markdown
+    assert "`external_verified`" in markdown
+    assert "target.sun_sidereal_longitude_deg" in markdown
     assert "production_tuning_allowed: `false`" in markdown
     assert "Evidence Packet Fields" in markdown
     assert "tool_name" in markdown
@@ -113,11 +122,11 @@ def test_oracle_collection_queue_can_write_draft_evidence_packets(tmp_path: Path
     assert packet_path.exists()
     packet = json.loads(packet_path.read_text(encoding="utf-8"))
     assert packet["capture_id"] == "external_template_steve_jobs_dasha_lahiri"
-    assert packet["status"] == "draft"
+    assert packet["status"] == "external_verified"
     assert packet["case_id"] == "template_steve_jobs_dasha_lahiri"
-    assert packet["metadata"]["source_artifact"] == "references/oracle/artifacts/"
-    assert packet["metadata"]["tool_name"] == ""
-    assert packet["target_placeholders"]["target.vimshottari_start_date"] is None
+    assert packet["metadata"]["source_artifact"].startswith("references/oracle/artifacts/")
+    assert packet["metadata"]["tool_name"] == "PyJHora"
+    assert packet["target_placeholders"]["target.vimshottari_start_date"] == "1939-03-22"
     shadbala = packet["target_placeholders"]["target.shadbala_components"]
     assert set(shadbala) == {"Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"}
     assert set(shadbala["Sun"]) == {"sthana", "dig", "kala", "chesta", "naisargika", "drik", "total_rupa"}
@@ -282,7 +291,7 @@ def test_oracle_collection_queue_preserves_external_verified_evidence(tmp_path: 
     assert first["ready_for_collection"] is False
     assert first["ready_for_calibration"] is True
     assert first["do_not_tune_production"] is False
-    assert report["summary"]["ready_for_calibration"] == 1
+    assert report["summary"]["ready_for_calibration"] == 4
     assert report["summary"]["production_tuning_allowed"] is False
 
     packet = first["evidence_packet"]

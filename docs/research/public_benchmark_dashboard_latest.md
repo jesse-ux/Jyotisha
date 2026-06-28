@@ -1,10 +1,10 @@
 # Public Jyotish Benchmark Dashboard
 
-Generated: `2026-06-26T18:30:41.336555+00:00`
+Generated: `2026-06-28T07:20:42.239186+00:00`
 
 ## Capability Registry
 
-- technique_count: `79`
+- technique_count: `89`
 - capability_valid: `true`
 - problem_count: `0`
 
@@ -19,6 +19,14 @@ Generated: `2026-06-26T18:30:41.336555+00:00`
 - external_verified_shadbala_tasks: `4`
 - shadbala_task_count: `4`
 
+## PyJHora Black-Box Assets
+
+- artifact_count: `8`
+- packet_count: `8`
+- dasha_artifacts: `3`
+- shadbala_artifacts: `4`
+- tajika_sahams_artifacts: `1`
+
 ## Boundary Audit
 
 - external_verified_template_cases: `4`
@@ -32,7 +40,7 @@ Generated: `2026-06-26T18:30:41.336555+00:00`
 
 ## Remaining Gap
 
-Dasha-only external oracle readiness is 3/3; Shadbala external absolute-value readiness is 4/4; public long-term benchmark history is not yet comparable to the strongest global open-source projects.
+Dasha-only external oracle readiness is 3/3; Shadbala external absolute-value readiness is 4/4; PyJHora black-box assets are 8 artifacts / 8 packets; public long-term benchmark history is not yet comparable to the strongest global open-source projects.
 
 ## Next Actions
 

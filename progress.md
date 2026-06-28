@@ -395,3 +395,13 @@
 - 完成“有效文件复用索引”：新增 `docs/research/local_reuse_candidate_index_round28_2026_06_26.md`，把当前 repo、旧 WorkBuddy skill、历史 benchmark、本地开源镜像按 `direct current repo reuse`、`older WorkBuddy skill reuse`、`local open-source mirrors`、`benchmark-only sources` 分类，明确未来补 Kuja/Panchanga/Tajika/Chara/Prompt Pack 时必须先查已有文件和许可证边界，再决定是否新写。
 - 2026-06-26：新增 `docs/research/antigravity_sidecar_work_order_round29_2026_06_26.md`，继续扩大副手任务规模，集中拆 skill 全量补齐、本地可直接测试、云端同步白名单、外部 oracle 精度闭环与 `Round30 Top120`。
 - 2026-06-26：当前待正式归档并推云的核心资产为 `docs/research/antigravity_round28_*_2026_06_26.md` 与 `docs/research/antigravity_sidecar_work_order_round29_2026_06_26.md`；归档完成后主线程继续优先补高 ROI 的 API/CLI/前端隐藏技法，而不是重新空写算法。
+
+## 2026-06-28 Oracle/Benchmark 收口
+
+- 按用户要求继续完成未完成任务前，重新读取 `task_plan.md`、`findings.md`、`progress.md` 与 `docs/research/ACTIVE_FRONTS.md`，确认当前高价值遗漏集中在外部 oracle/PyJHora 黑盒证据包、pending packets、benchmark dashboard 与 Shadbala 组件边界。
+- 先写红灯测试 `tests/test_oracle_benchmark_inventory.py`，要求项目能机器化索引 oracle registries、oracle cases、pending packets、PyJHora artifacts、manifest 与 dashboards。
+- 新增 `scripts/oracle_benchmark_inventory.py`，生成 `oracle_benchmark_single_truth_inventory`，把 `references/oracle/`、`references/oracle/cases/`、`references/oracle/artifacts/pending_packets/` 与 dashboard 文件折叠成单一 JSON/Markdown 真相入口。
+- 生成 `docs/research/oracle_benchmark_inventory_latest.json` 与 `docs/research/oracle_benchmark_inventory_latest.md`，当前索引统计为 3 个 oracle registry、9 个 oracle case、19 个 pending packet、8 个 PyJHora 黑盒 artifact、4 个 dashboard。
+- 更新 `docs/research/ACTIVE_FRONTS.md` 的 Oracle Closure 入口，要求后续修改 oracle-dependent adjudicator 或 benchmark claims 前先运行 `python3 scripts/oracle_benchmark_inventory.py --format json`。
+- 收口上一轮遗留的 finance Shadbala 组件审计：`mcp_server.py` 对 `shadbala.planets` 要求 `sthana/dig/kala/chesta/naisargika/drik` 六分量，缺失时 `confidence_cap = low` 且进入 `secondary_context += ["shadbala_component_gap"]`；补文档 `docs/research/shadbala_component_confidence_cap_v1_2026_06_28.md`。
+- 验证：`python3 -m pytest tests/test_oracle_benchmark_inventory.py -q` 通过；`python3 -m pytest tests/test_mcp_strict_workflow_finance.py -q` 24 项通过；`python3 -m json.tool docs/research/oracle_benchmark_inventory_latest.json` 通过。

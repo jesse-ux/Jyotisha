@@ -11,6 +11,8 @@ related_skills: [jyotish-full-reading-integration, jyotish-vedic-astrology]
 
 本 skill 记录了 5 个核心计算模块的历史集成背景，主要用于审计、迁移和对照旧工作流。
 
+本 Skill 的 `scripts/` 副本仅作为独立分发包与历史迁移参考；主仓当前计算真源、成熟度判断、外部 oracle 边界和发布口径一律以主 `SKILL.md`、`references/technique_registry.json` 与主仓测试为准。
+
 当前项目的唯一对外真源以以下文件为准：
 
 1. `/Users/wuyongnaren/Documents/印度占星/SKILL.md`

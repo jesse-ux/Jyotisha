@@ -2117,6 +2117,7 @@ const VALIDATION_TRANSPARENCY = {
   recall: 'Recall 93.99%',
   f1: 'F1 95.22%',
   unmappedPyjhora: 'unmapped_pyjhora: 718',
+  unmappedExternalBenchmark: 'unmapped_external_benchmark: tracked',
   gates: ['golden cases', 'BPHS invariants', 'release-quality-gate'],
 };
 
@@ -2132,6 +2133,7 @@ function renderValidationTransparencyPanel() {
         ${renderValidationTransparencyMetric('Recall', VALIDATION_TRANSPARENCY.recall, '参考可比较规则中，被当前引擎找回的比例。')}
         ${renderValidationTransparencyMetric('F1', VALIDATION_TRANSPARENCY.f1, 'Precision 与 Recall 的综合分。')}
         ${renderValidationTransparencyMetric('Coverage gap', VALIDATION_TRANSPARENCY.unmappedPyjhora, '仍未映射的 PyJHora/B.V. Raman 规则保持可见。')}
+        ${renderValidationTransparencyMetric('External gap', VALIDATION_TRANSPARENCY.unmappedExternalBenchmark, '外部 benchmark 缺口保持可见，但不得等同个人事件预测准确率。')}
       </div>
       <div class="validation-transparency-boundary">
         <strong>边界</strong>

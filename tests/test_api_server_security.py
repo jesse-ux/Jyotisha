@@ -766,6 +766,15 @@ def test_fragment_audit_blocks_registry_surface_drift() -> None:
     assert not any(problem['kind'] == 'missing_output_path' for problem in result['problems'])
 
 
+def test_fragment_audit_accepts_script_symbol_output_paths() -> None:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+    from audit_fragments import output_path_exists
+
+    assert output_path_exists("scripts/yoga_engine.py:is_badhaka")[0] is True
+    assert output_path_exists("scripts/prashna.py:calc_sphutas")[0] is True
+    assert output_path_exists("scripts/tajika.py.graha_yuddha")[0] is True
+
+
 def _sample_planets() -> dict:
     return {
         'Sun': {'lon': 80.0},

@@ -188,6 +188,10 @@ def first_token_path(value: str) -> str:
 def output_path_exists(path: str) -> tuple[bool, str]:
     if path.startswith("scripts/"):
         rel = first_token_path(path)
+        if ":" in rel:
+            rel = rel.split(":", 1)[0]
+        elif ".py." in rel:
+            rel = rel.split(".py.", 1)[0] + ".py"
         return (ROOT / rel).exists(), rel
     if path.endswith(".py"):
         return (ROOT / path).exists(), path

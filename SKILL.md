@@ -205,8 +205,10 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 
 - Dasha-only 外部证据当前目标集已闭环：`dasha_external_oracle_evidence_validation.valid_dasha_packets: 3/3`；Steve Jobs / Lahiri、REDACTED_YEAR Lahiri 模板与 1800 Delhi historical epoch 的 Vimshottari 起始边界来自 PyJHora 4.8.7 隔离黑盒 stdout artifact。
 - 全局 Dasha/Shadbala Calibration Status 仍未完成：`external_oracle_evidence_validation.valid_packets: 4`，`ready_for_calibration: 4`；Shadbala 外部绝对值当前目标集已通过 4/4，Raman 扩展样本与非 Dasha 靶点尚未封顶。
+- 历史 UI 静态门禁仍保留旧提示 `ready_for_calibration: 0` 作为“不得过度宣称”的保守文案；实际进度必须以当前 `oracle_collection_queue.py` / `oracle_evidence_validator.py` 输出为准。
 - Tajika/Sahams 年运外部样本已开始闭环：`tajika_sahams_annual_benchmark_dashboard.ready_for_calibration: 1/5`；Steve Jobs 1984 Varshaphala/Lahiri 的 solar return、Varsha Lagna、Muntha、Year Lord、Mudda Dasha 首主、三项 Sahams 与 Tajika Yogas 已由 PyJHora 4.8.7 隔离黑盒 artifact 验证，下一优先级为 Einstein 1905。仍不得声称 Tajika/Sahams 年运体系已全局封顶。
 - D1/D9/SAV 高可信；Dasha 精细日期可引用已验证 Dasha-only 样本的局部进度，但不得把全部大运边界、Shadbala 绝对值或全局精度说成已完成外部校准。
+- 不得把大运起点或 Shadbala 绝对值说成已完成外部校准；涉及具体日期/绝对力量值时，必须同时报告 `Dasha/Shadbala Calibration Status`、`external_oracle_evidence_validation` 与 `production_tuning_allowed: false` 边界。
 - `production_tuning_allowed: false` 前，禁止为了贴合单份 PDF、单个 JHora 截图或本仓库本地输出而改生产常数。
 - 对普通用户的建议话术：基础落座、D9、SAV 可作为稳定证据；当前 Dasha-only 目标集已完成外部黑盒验证，但多 Dasha 家族、Antardasha/Pratyantar 细边界仍需扩展；Shadbala 当前目标集已有四个外部六分量样本，绝对值断语可引用 4/4 闭合进度；但跨软件差异、Raman 扩展样本与公开书例仍需更多证据后再提升到全局置信。
 - 工作流要求：Dasha-only packet 用 `python3 scripts/dasha_oracle_evidence_validator.py --queue-file <queue.json>` 验证；全局校准仍必须跑 `python3 scripts/oracle_evidence_validator.py --queue-file <queue.json>`，两者不可混用。
@@ -321,8 +323,8 @@ python3 scripts/validate_interpretation_templates.py --format markdown
 > 这部分比“再加几个技法名”更重要，决定 skill 距离传统软件级深度还有多远。
 
 1. **Dasha 外部绝对边界闭环**
-   - 当前 `ready_for_calibration: 0`
-   - 大运起点、剩余年数、精确日期边界仍未通过 JHora/PyJHora 黑盒证据冻结
+   - 当前 `ready_for_calibration: 4`
+   - Dasha-only 目标集已由 PyJHora 黑盒证据推进到 3/3，但全局 Dasha/Shadbala 队列仍有非 Dasha 靶点缺字段，`production_tuning_allowed: false`
 2. **Shadbala 外部绝对值闭环**
    - 当前 absolute Rupa 结构自洽，但还不是外部绝对值完全校准
 3. **Chara Dasha 共主仲裁尾差**

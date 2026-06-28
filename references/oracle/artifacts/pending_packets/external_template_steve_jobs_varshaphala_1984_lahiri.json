@@ -1,0 +1,139 @@
+{
+  "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
+  "status": "external_verified",
+  "case_id": "template_steve_jobs_varshaphala_1984_lahiri",
+  "birth": {
+    "year": 1955,
+    "month": 2,
+    "day": 24,
+    "hour": 19,
+    "minute": 15,
+    "second": 0,
+    "lat": 37.7749,
+    "lon": -122.4194,
+    "tz": -8
+  },
+  "settings": {
+    "ayanamsa": "lahiri",
+    "node_mode": "true",
+    "annual_system": "varshaphala",
+    "target_year": 1984
+  },
+  "required_metadata_fields": [
+    "tool_name",
+    "tool_version_or_url",
+    "capture_date",
+    "source_artifact",
+    "ayanamsa",
+    "node_mode",
+    "timezone",
+    "annual_system",
+    "target_year",
+    "operator_note"
+  ],
+  "metadata": {
+    "tool_name": "PyJHora",
+    "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
+    "capture_date": "2026-06-27",
+    "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+    "ayanamsa": "lahiri",
+    "node_mode": "PyJHora default",
+    "timezone": "UTC-08:00",
+    "annual_system": "Varshaphala/Tajika",
+    "target_year": 1984,
+    "operator_note": "Black-box annual output from isolated /tmp virtualenv. PyJHora AGPL code was not copied into this repository; only generated output is stored as external evidence. Year Lord direct call raised KeyError when Rahu appeared in candidates; packet records the filtered classical-planet workaround per PyJHora docstring boundary."
+  },
+  "target_placeholders": {
+    "target.solar_return_datetime": "1984-02-25T05:41:37-08:00",
+    "target.varsha_lagna_deg": 287.4007,
+    "target.muntha_sign": "Cancer",
+    "target.year_lord": "Mars",
+    "target.mudda_dasha_first_lord": "Sun",
+    "target.sahams.punya_saham": 249.1148,
+    "target.sahams.rajya_saham": 207.6343,
+    "target.sahams.vivah_saham": 8.8762,
+    "target.tajika_yogas": {
+      "eesarpha": [
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "gairi_kamboola": null,
+      "ithasala": [
+        [
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          4,
+          2
+        ],
+        [
+          1,
+          4,
+          3
+        ]
+      ],
+      "kamboola": [
+        true,
+        [
+          [
+            1,
+            4
+          ]
+        ],
+        [
+          [
+            0,
+            4
+          ],
+          [
+            1,
+            4
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            4
+          ]
+        ]
+      ],
+      "khallasara": null,
+      "manahoo": [
+        [
+          0,
+          4,
+          10
+        ]
+      ],
+      "nakta": [],
+      "yamaya": []
+    },
+    "target.source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt"
+  },
+  "integrity_checks": {
+    "must_not_come_from_local_engine": true,
+    "requires_external_artifact": true,
+    "requires_status_external_verified_before_calibration": true,
+    "requires_solar_return_convention": true
+  },
+  "promotion_status_after_fill": "external_verified"
+}

@@ -29,9 +29,13 @@ This file is the small index for the current engineering fronts that still drive
 
 ## Oracle Closure
 
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_benchmark_inventory_latest.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_benchmark_inventory_latest.json`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_closure_master_dashboard_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/public_benchmark_dashboard_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/references/oracle/`
+- Before changing oracle-dependent adjudicator or benchmark claims, run:
+  - `python3 scripts/oracle_benchmark_inventory.py --format json`
 
 ## VedAstro Adapter MVP
 

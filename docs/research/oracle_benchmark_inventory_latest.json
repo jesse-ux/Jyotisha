@@ -1,0 +1,641 @@
+{
+  "scope": "oracle_benchmark_single_truth_inventory",
+  "schema_version": 1,
+  "generated_at": "2026-06-28T07:20:42.310743+00:00",
+  "summary": {
+    "oracle_registry_count": 3,
+    "oracle_case_count": 9,
+    "evidence_template_count": 4,
+    "pending_packet_count": 19,
+    "pending_pyjhora_packet_count": 8,
+    "pending_non_pyjhora_packet_count": 11,
+    "pyjhora_artifact_count": 8,
+    "dashboard_count": 4
+  },
+  "fronts": {
+    "ashtakoot": {
+      "oracle_registry_count": 1,
+      "oracle_case_count": 0,
+      "evidence_template_count": 0,
+      "pending_packet_count": 0,
+      "pyjhora_artifact_count": 0,
+      "dashboard_count": 0
+    },
+    "dasha": {
+      "oracle_registry_count": 0,
+      "oracle_case_count": 0,
+      "evidence_template_count": 1,
+      "pending_packet_count": 4,
+      "pyjhora_artifact_count": 3,
+      "dashboard_count": 0
+    },
+    "general": {
+      "oracle_registry_count": 0,
+      "oracle_case_count": 9,
+      "evidence_template_count": 1,
+      "pending_packet_count": 3,
+      "pyjhora_artifact_count": 0,
+      "dashboard_count": 2
+    },
+    "shadbala": {
+      "oracle_registry_count": 1,
+      "oracle_case_count": 0,
+      "evidence_template_count": 1,
+      "pending_packet_count": 6,
+      "pyjhora_artifact_count": 4,
+      "dashboard_count": 0
+    },
+    "tajika_sahams": {
+      "oracle_registry_count": 1,
+      "oracle_case_count": 0,
+      "evidence_template_count": 1,
+      "pending_packet_count": 6,
+      "pyjhora_artifact_count": 1,
+      "dashboard_count": 2
+    }
+  },
+  "files": {
+    "oracle_registries": [
+      {
+        "path": "references/oracle/ashtakoot_oracle_cases.json",
+        "name": "ashtakoot_oracle_cases.json",
+        "category": "oracle_registry",
+        "front": "ashtakoot",
+        "bytes": 5726,
+        "json_valid": true,
+        "scope": "external_ashtakoot_oracle_cases",
+        "schema_version": 1,
+        "template_cases_count": 5
+      },
+      {
+        "path": "references/oracle/dasha_shadbala_oracle_cases.json",
+        "name": "dasha_shadbala_oracle_cases.json",
+        "category": "oracle_registry",
+        "front": "shadbala",
+        "bytes": 20265,
+        "json_valid": true,
+        "scope": "external_dasha_shadbala_oracle_boundary_cases",
+        "schema_version": 1,
+        "template_cases_count": 5,
+        "longitude_cases_count": 1
+      },
+      {
+        "path": "references/oracle/tajika_annual_oracle_cases.json",
+        "name": "tajika_annual_oracle_cases.json",
+        "category": "oracle_registry",
+        "front": "tajika_sahams",
+        "bytes": 8557,
+        "json_valid": true,
+        "scope": "external_tajika_sahams_annual_oracle_cases",
+        "schema_version": 1,
+        "template_cases_count": 5
+      }
+    ],
+    "oracle_cases": [
+      {
+        "path": "references/oracle/cases/albert_einstein.json",
+        "name": "albert_einstein.json",
+        "category": "oracle_case",
+        "front": "general",
+        "bytes": 108,
+        "json_valid": true
+      },
+      {
+        "path": "references/oracle/cases/elon_musk.json",
+        "name": "elon_musk.json",
+        "category": "oracle_case",
+        "front": "general",
+        "bytes": 108,
+        "json_valid": true
+      },
+      {
+        "path": "references/oracle/cases/equator_quito.json",
+        "name": "equator_quito.json",
+        "category": "oracle_case",
+        "front": "general",
+        "bytes": 108,
+        "json_valid": true
+      },
+      {
+        "path": "references/oracle/cases/historical_dst_london_1943.json",
+        "name": "historical_dst_london_1943.json",
+        "category": "oracle_case",
+        "front": "general",
+        "bytes": 108,
+        "json_valid": true
+      },
+      {
+        "path": "references/oracle/cases/katy_perry.json",
+        "name": "katy_perry.json",
+        "category": "oracle_case",
+        "front": "general",
+        "bytes": 108,
+        "json_valid": true
+      },
+      {
+        "path": "references/oracle/cases/marilyn_monroe.json",
+        "name": "marilyn_monroe.json",
+        "category": "oracle_case",
+        "front": "general",
+        "bytes": 108,
+        "json_valid": true
+      },
+      {
+        "path": "references/oracle/cases/polar_reykjavik.json",
+        "name": "polar_reykjavik.json",
+        "category": "oracle_case",
+        "front": "general",
+        "bytes": 108,
+        "json_valid": true
+      },
+      {
+        "path": "references/oracle/cases/steve_jobs.json",
+        "name": "steve_jobs.json",
+        "category": "oracle_case",
+        "front": "general",
+        "bytes": 108,
+        "json_valid": true
+      },
+      {
+        "path": "references/oracle/cases/yinan_video_truth_2026_06_28.json",
+        "name": "yinan_video_truth_2026_06_28.json",
+        "category": "oracle_case",
+        "front": "general",
+        "bytes": 1970,
+        "json_valid": true
+      }
+    ],
+    "evidence_templates": [
+      {
+        "path": "references/oracle/evidence_packet_templates/dasha_steve_jobs_lahiri_first_packet_only.json",
+        "name": "dasha_steve_jobs_lahiri_first_packet_only.json",
+        "category": "evidence_template",
+        "front": "dasha",
+        "bytes": 1208,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_steve_jobs_dasha_lahiri",
+        "capture_id": "external_template_steve_jobs_dasha_lahiri",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "target_placeholder_count": 1
+      },
+      {
+        "path": "references/oracle/evidence_packet_templates/jhora_steve_jobs_lahiri_first_packet.json",
+        "name": "jhora_steve_jobs_lahiri_first_packet.json",
+        "category": "evidence_template",
+        "front": "general",
+        "bytes": 2803,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_steve_jobs_dasha_lahiri",
+        "capture_id": "external_template_steve_jobs_dasha_lahiri",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "target_placeholder_count": 2
+      },
+      {
+        "path": "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json",
+        "name": "shadbala_redacted_place_raman_first_packet.json",
+        "category": "evidence_template",
+        "front": "shadbala",
+        "bytes": 2695,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_redacted_place_shadbala_raman",
+        "capture_id": "external_template_redacted_place_shadbala_raman",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "raman",
+        "node_mode": "mean",
+        "target_placeholder_count": 2
+      },
+      {
+        "path": "references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json",
+        "name": "tajika_steve_jobs_1984_first_packet.json",
+        "category": "evidence_template",
+        "front": "tajika_sahams",
+        "bytes": 1783,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_steve_jobs_varshaphala_1984_lahiri",
+        "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "annual_system": "varshaphala",
+        "target_year": 1984,
+        "target_placeholder_count": 10
+      }
+    ],
+    "pending_packets": [
+      {
+        "path": "references/oracle/artifacts/pending_packets/capture_manifest.json",
+        "name": "capture_manifest.json",
+        "category": "pending_packet",
+        "front": "general",
+        "bytes": 796,
+        "json_valid": true,
+        "scope": "external_oracle_capture_packet_manifest"
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
+        "name": "external_template_einstein_varshaphala_1905_lahiri.json",
+        "category": "pending_packet",
+        "front": "tajika_sahams",
+        "bytes": 1687,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_einstein_varshaphala_1905_lahiri",
+        "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "annual_system": "varshaphala",
+        "target_year": 1905,
+        "target_placeholder_count": 10
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_extreme_latitude_kp.json",
+        "name": "external_template_extreme_latitude_kp.json",
+        "category": "pending_packet",
+        "front": "general",
+        "bytes": 2543,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_extreme_latitude_kp",
+        "capture_id": "external_template_extreme_latitude_kp",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "kp",
+        "node_mode": "true",
+        "target_placeholder_count": 2
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_extreme_latitude_kp_pyjhora_20260627.json",
+        "name": "external_template_extreme_latitude_kp_pyjhora_20260627.json",
+        "category": "pending_packet",
+        "front": "general",
+        "bytes": 3054,
+        "json_valid": true,
+        "status": "external_verified",
+        "case_id": "template_extreme_latitude_kp",
+        "capture_id": "external_template_extreme_latitude_kp",
+        "source_artifact": "references/oracle/artifacts/pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
+        "tool_name": "PyJHora",
+        "ayanamsa": "kp",
+        "node_mode": "true",
+        "target_placeholder_count": 2
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json",
+        "name": "external_template_redacted_place_shadbala_raman.json",
+        "category": "pending_packet",
+        "front": "shadbala",
+        "bytes": 2563,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_redacted_place_shadbala_raman",
+        "capture_id": "external_template_redacted_place_shadbala_raman",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "raman",
+        "node_mode": "mean",
+        "target_placeholder_count": 2
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman_pyjhora_20260627.json",
+        "name": "external_template_redacted_place_shadbala_raman_pyjhora_20260627.json",
+        "category": "pending_packet",
+        "front": "shadbala",
+        "bytes": 3173,
+        "json_valid": true,
+        "status": "external_verified",
+        "case_id": "template_redacted_place_shadbala_raman",
+        "capture_id": "external_template_redacted_place_shadbala_raman",
+        "source_artifact": "references/oracle/artifacts/pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
+        "tool_name": "PyJHora",
+        "ayanamsa": "raman",
+        "node_mode": "mean",
+        "target_placeholder_count": 2
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_historical_dst_london_varshaphala_1943_lahiri.json",
+        "name": "external_template_historical_dst_london_varshaphala_1943_lahiri.json",
+        "category": "pending_packet",
+        "front": "tajika_sahams",
+        "bytes": 1699,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_historical_dst_london_varshaphala_1943_lahiri",
+        "capture_id": "external_template_historical_dst_london_varshaphala_1943_lahiri",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "annual_system": "varshaphala",
+        "target_year": 1943,
+        "target_placeholder_count": 10
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_historical_epoch_lahiri.json",
+        "name": "external_template_historical_epoch_lahiri.json",
+        "category": "pending_packet",
+        "front": "dasha",
+        "bytes": 1214,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_historical_epoch_lahiri",
+        "capture_id": "external_template_historical_epoch_lahiri",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "target_placeholder_count": 2
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_historical_epoch_lahiri_pyjhora_20260627.json",
+        "name": "external_template_historical_epoch_lahiri_pyjhora_20260627.json",
+        "category": "pending_packet",
+        "front": "dasha",
+        "bytes": 1552,
+        "json_valid": true,
+        "status": "external_verified",
+        "case_id": "template_historical_epoch_lahiri",
+        "capture_id": "external_template_historical_epoch_lahiri",
+        "source_artifact": "references/oracle/artifacts/pyjhora_historical_epoch_dasha_stdout_20260627.txt",
+        "tool_name": "PyJHora",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "target_placeholder_count": 1
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_marilyn_monroe_varshaphala_1962_lahiri.json",
+        "name": "external_template_marilyn_monroe_varshaphala_1962_lahiri.json",
+        "category": "pending_packet",
+        "front": "tajika_sahams",
+        "bytes": 1688,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_marilyn_monroe_varshaphala_1962_lahiri",
+        "capture_id": "external_template_marilyn_monroe_varshaphala_1962_lahiri",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "annual_system": "varshaphala",
+        "target_year": 1962,
+        "target_placeholder_count": 10
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json",
+        "name": "external_template_steve_jobs_dasha_lahiri.json",
+        "category": "pending_packet",
+        "front": "dasha",
+        "bytes": 2570,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_steve_jobs_dasha_lahiri",
+        "capture_id": "external_template_steve_jobs_dasha_lahiri",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "target_placeholder_count": 2
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri_pyjhora_20260627.json",
+        "name": "external_template_steve_jobs_dasha_lahiri_pyjhora_20260627.json",
+        "category": "pending_packet",
+        "front": "dasha",
+        "bytes": 1549,
+        "json_valid": true,
+        "status": "external_verified",
+        "case_id": "template_steve_jobs_dasha_lahiri",
+        "capture_id": "external_template_steve_jobs_dasha_lahiri",
+        "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_dasha_stdout_20260627.txt",
+        "tool_name": "PyJHora",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "target_placeholder_count": 1
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json",
+        "name": "external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json",
+        "category": "pending_packet",
+        "front": "shadbala",
+        "bytes": 3036,
+        "json_valid": true,
+        "status": "external_verified",
+        "case_id": "template_steve_jobs_dasha_lahiri",
+        "capture_id": "external_template_steve_jobs_dasha_lahiri",
+        "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+        "tool_name": "PyJHora",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "target_placeholder_count": 2
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json",
+        "name": "external_template_steve_jobs_varshaphala_1984_lahiri.json",
+        "category": "pending_packet",
+        "front": "tajika_sahams",
+        "bytes": 3249,
+        "json_valid": true,
+        "status": "external_verified",
+        "case_id": "template_steve_jobs_varshaphala_1984_lahiri",
+        "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
+        "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+        "tool_name": "PyJHora",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "annual_system": "varshaphala",
+        "target_year": 1984,
+        "target_placeholder_count": 10
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json",
+        "name": "external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json",
+        "category": "pending_packet",
+        "front": "tajika_sahams",
+        "bytes": 3249,
+        "json_valid": true,
+        "status": "external_verified",
+        "case_id": "template_steve_jobs_varshaphala_1984_lahiri",
+        "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
+        "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+        "tool_name": "PyJHora",
+        "ayanamsa": "lahiri",
+        "node_mode": "true",
+        "annual_system": "varshaphala",
+        "target_year": 1984,
+        "target_placeholder_count": 10
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_synthetic_extreme_latitude_varshaphala_kp.json",
+        "name": "external_template_synthetic_extreme_latitude_varshaphala_kp.json",
+        "category": "pending_packet",
+        "front": "tajika_sahams",
+        "bytes": 1676,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_synthetic_extreme_latitude_varshaphala_kp",
+        "capture_id": "external_template_synthetic_extreme_latitude_varshaphala_kp",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "kp",
+        "node_mode": "true",
+        "annual_system": "varshaphala",
+        "target_year": 2024,
+        "target_placeholder_count": 10
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_moon_longitude_lahiri.json",
+        "name": "external_template_user_REDACTED_YEAR_moon_longitude_lahiri.json",
+        "category": "pending_packet",
+        "front": "shadbala",
+        "bytes": 2631,
+        "json_valid": true,
+        "status": "draft",
+        "case_id": "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "capture_id": "external_template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "source_artifact": "references/oracle/artifacts/",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "target_placeholder_count": 3
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_moon_longitude_lahiri_pyjhora_20260627.json",
+        "name": "external_template_user_REDACTED_YEAR_moon_longitude_lahiri_pyjhora_20260627.json",
+        "category": "pending_packet",
+        "front": "shadbala",
+        "bytes": 1562,
+        "json_valid": true,
+        "status": "external_verified",
+        "case_id": "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "capture_id": "external_template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "source_artifact": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt",
+        "tool_name": "PyJHora",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "target_placeholder_count": 1
+      },
+      {
+        "path": "references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_shadbala_lahiri_pyjhora_20260627.json",
+        "name": "external_template_user_REDACTED_YEAR_shadbala_lahiri_pyjhora_20260627.json",
+        "category": "pending_packet",
+        "front": "shadbala",
+        "bytes": 3275,
+        "json_valid": true,
+        "status": "external_verified",
+        "case_id": "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "capture_id": "external_template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "source_artifact": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt",
+        "tool_name": "PyJHora",
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "target_placeholder_count": 3
+      }
+    ],
+    "pyjhora_artifacts": [
+      {
+        "path": "references/oracle/artifacts/pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
+        "name": "pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
+        "category": "pyjhora_artifact",
+        "front": "shadbala",
+        "bytes": 2973
+      },
+      {
+        "path": "references/oracle/artifacts/pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
+        "name": "pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
+        "category": "pyjhora_artifact",
+        "front": "shadbala",
+        "bytes": 2994
+      },
+      {
+        "path": "references/oracle/artifacts/pyjhora_historical_epoch_dasha_stdout_20260627.txt",
+        "name": "pyjhora_historical_epoch_dasha_stdout_20260627.txt",
+        "category": "pyjhora_artifact",
+        "front": "dasha",
+        "bytes": 6188
+      },
+      {
+        "path": "references/oracle/artifacts/pyjhora_steve_jobs_dasha_stdout_20260627.txt",
+        "name": "pyjhora_steve_jobs_dasha_stdout_20260627.txt",
+        "category": "pyjhora_artifact",
+        "front": "dasha",
+        "bytes": 5765
+      },
+      {
+        "path": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+        "name": "pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+        "category": "pyjhora_artifact",
+        "front": "shadbala",
+        "bytes": 2980
+      },
+      {
+        "path": "references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+        "name": "pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+        "category": "pyjhora_artifact",
+        "front": "tajika_sahams",
+        "bytes": 3491
+      },
+      {
+        "path": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt",
+        "name": "pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt",
+        "category": "pyjhora_artifact",
+        "front": "dasha",
+        "bytes": 6224
+      },
+      {
+        "path": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt",
+        "name": "pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt",
+        "category": "pyjhora_artifact",
+        "front": "shadbala",
+        "bytes": 3018
+      }
+    ],
+    "pyjhora_manifest": {
+      "path": "references/oracle/artifacts/pyjhora_oracle_artifact_manifest.json",
+      "name": "pyjhora_oracle_artifact_manifest.json",
+      "category": "pyjhora_manifest",
+      "front": "general",
+      "bytes": 3239,
+      "json_valid": true,
+      "scope": "pyjhora_oracle_artifact_manifest",
+      "artifact_count": 8,
+      "packet_count": 8
+    },
+    "dashboards": [
+      {
+        "path": "docs/research/oracle_closure_master_dashboard_latest.md",
+        "name": "oracle_closure_master_dashboard_latest.md",
+        "category": "dashboard",
+        "front": "general",
+        "bytes": 1322
+      },
+      {
+        "path": "docs/research/public_benchmark_dashboard_latest.md",
+        "name": "public_benchmark_dashboard_latest.md",
+        "category": "dashboard",
+        "front": "general",
+        "bytes": 1578
+      },
+      {
+        "path": "docs/research/tajika_annual_benchmark_dashboard_latest.md",
+        "name": "tajika_annual_benchmark_dashboard_latest.md",
+        "category": "dashboard",
+        "front": "tajika_sahams",
+        "bytes": 1053
+      },
+      {
+        "path": "docs/research/tajika_annual_closure_status_latest.md",
+        "name": "tajika_annual_closure_status_latest.md",
+        "category": "dashboard",
+        "front": "tajika_sahams",
+        "bytes": 2789
+      }
+    ]
+  },
+  "boundary": "This inventory tracks external oracle evidence only. It does not import PyJHora/JHora implementation code, does not tune production constants, and does not treat internal consistency as external validation.",
+  "next_actions": [
+    "Promote verified pending packets into the relevant oracle registry only after metadata and source_artifact pass validation.",
+    "Keep PyJHora outputs as black-box artifacts and regenerate the artifact manifest after each external capture batch.",
+    "Update public_benchmark_dashboard_latest.md after each validated packet batch so public claims stay conservative.",
+    "Use this inventory before changing strict workflow or adjudicator logic that depends on external truth."
+  ]
+}
