@@ -734,6 +734,9 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("amk_active")
         if present.get("karakamsha"):
             secondary_context.append("karakamsha_context")
+        shadbala_component_audit = present.get("shadbala_component_audit") or {}
+        if shadbala_component_audit.get("status") in {"blocked", "incomplete"}:
+            secondary_context.append("shadbala_component_gap")
         if argala_support.get("level") == "supportive":
             secondary_context.append("argala_support")
         elif argala_support.get("level") == "obstructive":
@@ -810,6 +813,9 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("jaimini_support")
         if present.get("upapada_lagna"):
             secondary_context.append("ul_support")
+        shadbala_component_audit = present.get("shadbala_component_audit") or {}
+        if shadbala_component_audit.get("status") in {"blocked", "incomplete"}:
+            secondary_context.append("shadbala_component_gap")
         if argala_support.get("level") == "supportive":
             secondary_context.append("argala_support")
         elif argala_support.get("level") == "obstructive":
@@ -996,14 +1002,18 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "narayana_current": _safe_get(modules, "narayana_dasha", "current_dasha"),
             "career_convergence": domain_activations.get("career_status"),
         }
+        present["shadbala"] = _safe_get(modules, "shadbala", "planets")
+        present["shadbala_component_audit"] = _derive_shadbala_component_audit(present["shadbala"]) if present["shadbala"] else None
         present["argala_support"] = _derive_argala_support(modules, 10)
         present["external_activation"] = _derive_external_activation_support(modules, "career")
         missing = [key for key, value in present.items() if key not in {
-            "external_activation", "argala_support"
+            "external_activation", "argala_support", "shadbala", "shadbala_component_audit"
         } and value in (None, {}, [], "")]
         convergence = present["career_convergence"] or {}
         confidence_cap = "medium"
         if missing:
+            confidence_cap = "low"
+        elif (present.get("shadbala_component_audit") or {}).get("status") in {"blocked", "incomplete"}:
             confidence_cap = "low"
         elif convergence.get("convergence_level") in {"L4", "L5"}:
             confidence_cap = "medium-high"
@@ -1046,6 +1056,8 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "narayana_current": _safe_get(modules, "narayana_dasha", "current_dasha"),
             "marriage_convergence": domain_activations.get("marriage_partnership"),
         }
+        present["shadbala"] = _safe_get(modules, "shadbala", "planets")
+        present["shadbala_component_audit"] = _derive_shadbala_component_audit(present["shadbala"]) if present["shadbala"] else None
         present["jaimini_timing_support"] = _safe_get(modules, "jaimini", "marriage_timing_support")
         present["jaimini_marriage_support"] = _derive_jaimini_marriage_support(present)
         present["argala_support"] = _derive_argala_support(modules, 7)
@@ -1053,7 +1065,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         missing = [
             key for key, value in present.items()
-            if key not in {"chart", "external_activation", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support", "argala_support"}
+            if key not in {"chart", "external_activation", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support", "argala_support", "shadbala", "shadbala_component_audit"}
             and value in (None, {}, [], "")
         ]
         convergence = present["marriage_convergence"] or {}
@@ -1061,6 +1073,8 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         if missing:
             confidence_cap = "low"
         elif present["dignity_guardrail"].get("status") == "conflict":
+            confidence_cap = "low"
+        elif (present.get("shadbala_component_audit") or {}).get("status") in {"blocked", "incomplete"}:
             confidence_cap = "low"
         elif convergence.get("convergence_level") in {"L4", "L5"}:
             confidence_cap = "medium-high"

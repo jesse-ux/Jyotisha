@@ -149,3 +149,52 @@ def test_relationship_dignity_guardrail_uses_relevant_planets_only() -> None:
 
     assert strict["present_evidence"]["dignity_guardrail"]["score_delta"] == 5
     assert "dignity_supportive_recovery" in strict["event_judgement"]["secondary_context"]
+
+
+def test_relationship_caps_confidence_when_provided_shadbala_components_are_incomplete() -> None:
+    result = _base_relationship_result()
+    result["modules"]["dasa_convergence"]["domain_activations"]["marriage_partnership"] = {
+        "convergence_level": "L4",
+        "probability": "70-85%",
+    }
+    result["modules"]["shadbala"] = {"planets": {"Venus": {"total_rupa": 8.2}}}
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["shadbala_component_audit"] == {
+        "status": "incomplete",
+        "source": "shadbala.planets",
+        "required_components": ["sthana", "dig", "kala", "chesta", "naisargika", "drik"],
+        "missing": {"Venus": ["sthana", "dig", "kala", "chesta", "naisargika", "drik"]},
+    }
+    assert strict["confidence_cap"] == "low"
+    assert "shadbala_component_gap" in strict["event_judgement"]["secondary_context"]
+
+
+def test_relationship_accepts_complete_shadbala_components_without_cap_penalty() -> None:
+    result = _base_relationship_result()
+    result["modules"]["dasa_convergence"]["domain_activations"]["marriage_partnership"] = {
+        "convergence_level": "L4",
+        "probability": "70-85%",
+    }
+    result["modules"]["shadbala"] = {
+        "planets": {
+            "Venus": {
+                "components": {
+                    "sthana": 1.0,
+                    "dig": 0.8,
+                    "kala": 1.2,
+                    "chesta": 0.7,
+                    "naisargika": 0.5,
+                    "drik": 0.3,
+                },
+                "total_rupa": 4.5,
+            }
+        }
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["shadbala_component_audit"]["status"] == "complete"
+    assert strict["confidence_cap"] == "medium-high"
+    assert "shadbala_component_gap" not in strict["event_judgement"]["secondary_context"]

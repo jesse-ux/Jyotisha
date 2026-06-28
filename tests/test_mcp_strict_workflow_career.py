@@ -94,3 +94,52 @@ def test_career_argala_bridge_uses_tenth_house_as_modifier_only() -> None:
     }
     assert strict["event_judgement"]["dominant_label"] == "career_status"
     assert "argala_support" in strict["event_judgement"]["secondary_context"]
+
+
+def test_career_caps_confidence_when_provided_shadbala_components_are_incomplete() -> None:
+    result = _base_career_result()
+    result["modules"]["dasa_convergence"]["domain_activations"]["career_status"] = {
+        "convergence_level": "L4",
+        "probability": "70-85%",
+    }
+    result["modules"]["shadbala"] = {"planets": {"Mercury": {"total_rupa": 7.5}}}
+
+    strict = _collect_strict_evidence("career", result)
+
+    assert strict["present_evidence"]["shadbala_component_audit"] == {
+        "status": "incomplete",
+        "source": "shadbala.planets",
+        "required_components": ["sthana", "dig", "kala", "chesta", "naisargika", "drik"],
+        "missing": {"Mercury": ["sthana", "dig", "kala", "chesta", "naisargika", "drik"]},
+    }
+    assert strict["confidence_cap"] == "low"
+    assert "shadbala_component_gap" in strict["event_judgement"]["secondary_context"]
+
+
+def test_career_accepts_complete_shadbala_components_without_cap_penalty() -> None:
+    result = _base_career_result()
+    result["modules"]["dasa_convergence"]["domain_activations"]["career_status"] = {
+        "convergence_level": "L4",
+        "probability": "70-85%",
+    }
+    result["modules"]["shadbala"] = {
+        "planets": {
+            "Mercury": {
+                "components": {
+                    "sthana": 1.0,
+                    "dig": 0.8,
+                    "kala": 1.2,
+                    "chesta": 0.7,
+                    "naisargika": 0.5,
+                    "drik": 0.3,
+                },
+                "total_rupa": 4.5,
+            }
+        }
+    }
+
+    strict = _collect_strict_evidence("career", result)
+
+    assert strict["present_evidence"]["shadbala_component_audit"]["status"] == "complete"
+    assert strict["confidence_cap"] == "medium-high"
+    assert "shadbala_component_gap" not in strict["event_judgement"]["secondary_context"]
