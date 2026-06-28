@@ -21,6 +21,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 PARITY_CASES = {
+    "user_REDACTED_YEAR_test": {
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 49,
+        "lat": 36.42,
+        "lon": 114.2,
+        "tz": 8.0,
+        "ayanamsa_policy": "lahiri",
+        "node_policy": "mean",
+    },
     "beijing_first_use_demo": {
         "year": 1990,
         "month": 1,
@@ -60,6 +72,24 @@ PARITY_CASES = {
 }
 
 SUPPORTED_RANGE_SCAN_DOMAINS = {"marriage", "wealth", "career"}
+SUPPORTED_EXTERNAL_TECHNIQUE_DOMAINS = {"marriage", "wealth", "career", "general"}
+VEDASTRO_CALCULATION_COVERAGE = {
+    "official_python_library_calculations": "596+",
+    "official_api_builder_calculators": "600+",
+    "official_events_builder_events": "400+",
+    "official_events_builder_methods": ["SearchEvents", "GetEventTiming", "ListEventTypes"],
+    "range_scan_role": "high_frequency_life_event_radar",
+    "intended_use": "external_timing_evidence_for_strict_workflow",
+}
+EXTERNAL_TECHNIQUE_ROLE = "external_technique_evidence"
+EXTERNAL_TECHNIQUE_OPERATION = "calculation_method"
+EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY = {
+    "role": EXTERNAL_TECHNIQUE_ROLE,
+    "can_change_score": False,
+    "can_set_dominant_label": False,
+    "can_set_payout_label": False,
+    "allowed_destinations": ["secondary_context", "technique_audit"],
+}
 RANGE_SCAN_EVENT_ALLOWLIST = {
     "marriage": {
         "event_ids": {
@@ -163,7 +193,7 @@ RANGE_SCAN_SIGNAL_METADATA = {
         },
     },
 }
-DEFAULT_TIMEOUT_SECONDS = 8
+DEFAULT_TIMEOUT_SECONDS = 120
 TIMEOUT_ENV = "VEDASTRO_TIMEOUT_SECONDS"
 RETRY_POLICY = {
     "max_attempts": 2,
@@ -230,6 +260,7 @@ def schema() -> dict[str, Any]:
         ],
         "range_scan_request_contract": [
             "operation",
+            "vedastro_event_method",
             "domain",
             "start_date",
             "end_date",
@@ -254,6 +285,36 @@ def schema() -> dict[str, Any]:
             "evidence_ledger",
             "source_metadata",
         ],
+        "vedastro_calculation_coverage": VEDASTRO_CALCULATION_COVERAGE,
+        "external_technique_request_contract": [
+            "operation",
+            "role",
+            "domain",
+            "method",
+            "api_endpoint",
+            "year",
+            "month",
+            "day",
+            "hour",
+            "minute",
+            "lat",
+            "lon",
+            "tz",
+            "ayanamsa_policy",
+            "node_policy",
+        ],
+        "external_technique_response_contract": [
+            "backend",
+            "available",
+            "status",
+            "operation",
+            "role",
+            "domain",
+            "evidence_ledger",
+            "adjudicator_policy",
+            "source_metadata",
+        ],
+        "external_technique_adjudicator_policy": EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY,
         "range_scan_event_allowlist": range_scan_allowlist,
         "request_example": request_example,
         "provenance_contract": {
@@ -296,10 +357,27 @@ def _request_preview(case: dict[str, Any]) -> dict[str, Any]:
 def _range_scan_preview(case: dict[str, Any], domain: str, start_date: str, end_date: str) -> dict[str, Any]:
     return {
         "operation": "range_scan",
+        "vedastro_event_method": "SearchEvents",
         "domain": domain,
         "start_date": start_date,
         "end_date": end_date,
         "event_model": "vedastro_events_at_range_candidate",
+        **case,
+    }
+
+
+def _external_technique_preview(
+    case: dict[str, Any],
+    domain: str,
+    method: str,
+    api_endpoint: str,
+) -> dict[str, Any]:
+    return {
+        "operation": EXTERNAL_TECHNIQUE_OPERATION,
+        "role": EXTERNAL_TECHNIQUE_ROLE,
+        "domain": domain,
+        "method": method,
+        "api_endpoint": api_endpoint,
         **case,
     }
 
@@ -324,16 +402,61 @@ def _normalize_success(payload: dict[str, Any], endpoint: str) -> dict[str, Any]
     }
 
 
+def _normalize_external_technique_success(
+    payload: dict[str, Any],
+    endpoint: str,
+    request_preview: dict[str, Any],
+) -> dict[str, Any]:
+    evidence = {
+        "source": "vedastro_service_adapter_candidate",
+        "operation": EXTERNAL_TECHNIQUE_OPERATION,
+        "role": EXTERNAL_TECHNIQUE_ROLE,
+        "domain": request_preview["domain"],
+        "method": request_preview["method"],
+        "api_endpoint": request_preview["api_endpoint"],
+        "status": payload.get("status") or "ok",
+        "summary": payload.get("summary"),
+        "nature": payload.get("nature"),
+        "tags": payload.get("tags") if isinstance(payload.get("tags"), list) else [],
+        "raw": payload,
+    }
+    return {
+        "backend": "vedastro_service_adapter_candidate",
+        "available": True,
+        "status": "ok",
+        "operation": EXTERNAL_TECHNIQUE_OPERATION,
+        "role": EXTERNAL_TECHNIQUE_ROLE,
+        "domain": request_preview["domain"],
+        "request_preview": request_preview,
+        "evidence_ledger": [evidence],
+        "adjudicator_policy": EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY,
+        "source_metadata": {
+            "transport": "http_json_service_boundary",
+            "endpoint": endpoint,
+            "provenance_mode": "external_service_candidate",
+            "timeout_seconds": _timeout_seconds(),
+            "retry_policy": RETRY_POLICY,
+            **(payload.get("source_metadata") or {}),
+        },
+    }
+
+
 def _normalize_range_scan_success(
     payload: dict[str, Any],
     endpoint: str,
     request_preview: dict[str, Any],
 ) -> dict[str, Any]:
-    events = payload.get("events")
+    # Handle actual VedAstro response format: {"Status": "Pass", "Payload": [...]}
+    if payload.get("Status") == "Pass":
+        events = payload.get("Payload", [])
+    else:
+        # Fallback to local stub format if not VedAstro format
+        events = payload.get("events", [])
+        
     if not isinstance(events, list):
         events = []
 
-    domain = request_preview["domain"]
+    domain = request_preview.get("domain", "")
     allowlist = RANGE_SCAN_EVENT_ALLOWLIST.get(domain, {})
     allowed_ids = allowlist.get("event_ids", set())
     allowed_tags = allowlist.get("tags", set())
@@ -342,8 +465,9 @@ def _normalize_range_scan_success(
     for index, event in enumerate(events, start=1):
         if not isinstance(event, dict):
             continue
-        event_id = event.get("id") or event.get("name") or f"event_{index}"
-        tags = event.get("tags") or []
+        # VedAstro uses "Name" for event id, and "EventTags" for tags
+        event_id = event.get("Name") or event.get("id") or event.get("name") or f"event_{index}"
+        tags = event.get("EventTags") or event.get("tags") or []
         if not isinstance(tags, list):
             tags = []
         tag_set = {str(tag) for tag in tags}
@@ -359,8 +483,8 @@ def _normalize_range_scan_success(
                 "signal_key": signal_metadata.get("signal_key"),
                 "signal_label": signal_metadata.get("signal_label") or event.get("name") or event_id,
                 "signal_family": signal_metadata.get("signal_family"),
-                "start": event.get("start") or event.get("start_time") or event.get("start_date"),
-                "end": event.get("end") or event.get("end_time") or event.get("end_date"),
+                "start": event.get("StartTime") or event.get("start") or event.get("start_time") or event.get("start_date"),
+                "end": event.get("EndTime") or event.get("end") or event.get("end_time") or event.get("end_date"),
                 "score": event.get("score") if event.get("score") is not None else event.get("strength"),
                 "tags": tags,
                 "raw": event,
@@ -417,9 +541,65 @@ def _source_metadata(endpoint: str) -> dict[str, Any]:
 
 
 def _post_json(endpoint: str, request_preview: dict[str, Any]) -> dict[str, Any] | str:
+    # If this is a range scan, format it for VedAstro's EventsAtRange API
+    if request_preview.get("operation") == "range_scan":
+        # VedAstro EventsAtRange schema requires: birthTime, startTime, endTime, eventTagList
+        from datetime import datetime
+        
+        # Parse dates
+        start_dt = datetime.strptime(request_preview["start_date"], "%Y-%m-%d")
+        end_dt = datetime.strptime(request_preview["end_date"], "%Y-%m-%d")
+        
+        # Extract location and timezone
+        tz = f"+0{int(request_preview['tz'])}:00" if request_preview['tz'] > 0 else f"-0{abs(int(request_preview['tz']))}:00"
+        location = {
+            "name": "AutoLocation",
+            "lat": request_preview["lat"],
+            "lng": request_preview["lon"]
+        }
+        
+        vedastro_payload = {
+            "birthTime": {
+                "year": request_preview["year"],
+                "month": request_preview["month"],
+                "date": request_preview["day"],
+                "hour": request_preview["hour"],
+                "minute": request_preview["minute"],
+                "location": location,
+                "timeOffset": tz
+            },
+            "startTime": {
+                "year": start_dt.year,
+                "month": start_dt.month,
+                "date": start_dt.day,
+                "hour": 0,
+                "minute": 0,
+                "location": location,
+                "timeOffset": tz
+            },
+            "endTime": {
+                "year": end_dt.year,
+                "month": end_dt.month,
+                "date": end_dt.day,
+                "hour": 0,
+                "minute": 0,
+                "location": location,
+                "timeOffset": tz
+            },
+            "eventTagList": ["Gochara"] # Can map based on domain in future
+        }
+        # Append /EventsAtRange if the endpoint is the base Calculate API
+        if endpoint.endswith("Calculate"):
+            endpoint = f"{endpoint}/EventsAtRange"
+        elif not endpoint.endswith("EventsAtRange"):
+            endpoint = f"{endpoint}/api/Calculate/EventsAtRange"
+            
+    else:
+        vedastro_payload = request_preview
+
     req = request.Request(
         endpoint,
-        data=json.dumps(request_preview).encode("utf-8"),
+        data=json.dumps(vedastro_payload).encode("utf-8"),
         headers={"Content-Type": "application/json"},
         method="POST",
     )
@@ -510,11 +690,15 @@ def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) ->
             "reason": f"Unsupported range scan domain: {domain}",
         }
 
+    request_preview = _range_scan_preview(PARITY_CASES[case_id], domain, start_date, end_date)
     endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
     if not endpoint:
-        return _unconfigured("VEDASTRO_API_ENDPOINT is not configured; range scan stops before network access.")
+        result = _unconfigured("VEDASTRO_API_ENDPOINT is not configured; range scan stops before network access.")
+        result["operation"] = "range_scan"
+        result["domain"] = domain
+        result["request_preview"] = request_preview
+        return result
 
-    request_preview = _range_scan_preview(PARITY_CASES[case_id], domain, start_date, end_date)
     if os.environ.get(ALLOW_NETWORK_ENV, "").strip().lower() not in {"1", "true", "yes"}:
         return {
             "backend": "vedastro_service_adapter_candidate",
@@ -567,18 +751,120 @@ def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) ->
     return _normalize_range_scan_success(payload, endpoint, request_preview)
 
 
+def run_external_technique(case_id: str, domain: str, method: str, api_endpoint: str) -> dict[str, Any]:
+    if case_id not in PARITY_CASES:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "unknown_case_id",
+            "reason": f"Unknown parity case: {case_id}",
+        }
+    if domain not in SUPPORTED_EXTERNAL_TECHNIQUE_DOMAINS:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "unsupported_external_technique_domain",
+            "reason": f"Unsupported external technique domain: {domain}",
+            "adjudicator_policy": EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY,
+        }
+    if not method.strip() or not api_endpoint.strip():
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "missing_external_technique_method",
+            "reason": "Both method and api_endpoint are required for external technique evidence.",
+            "adjudicator_policy": EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY,
+        }
+
+    endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
+    if not endpoint:
+        result = _unconfigured(
+            "VEDASTRO_API_ENDPOINT is not configured; external technique evidence stops before network access."
+        )
+        result["operation"] = EXTERNAL_TECHNIQUE_OPERATION
+        result["role"] = EXTERNAL_TECHNIQUE_ROLE
+        result["domain"] = domain
+        result["adjudicator_policy"] = EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY
+        return result
+
+    request_preview = _external_technique_preview(PARITY_CASES[case_id], domain, method, api_endpoint)
+    if os.environ.get(ALLOW_NETWORK_ENV, "").strip().lower() not in {"1", "true", "yes"}:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "network_execution_disabled",
+            "reason": (
+                f"{ALLOW_NETWORK_ENV} is not enabled; external technique evidence stops "
+                "after building request/provenance metadata."
+            ),
+            "request_preview": request_preview,
+            "adjudicator_policy": EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY,
+            "source_metadata": _source_metadata(endpoint),
+        }
+
+    try:
+        payload = _post_json(endpoint, request_preview)
+    except error.HTTPError as exc:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "http_error",
+            "reason": f"VedAstro external technique HTTP error: {exc.code}",
+            "request_preview": request_preview,
+            "adjudicator_policy": EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY,
+            "source_metadata": _source_metadata(endpoint),
+        }
+    except error.URLError as exc:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "network_error",
+            "reason": f"VedAstro external technique network error: {exc.reason}",
+            "request_preview": request_preview,
+            "adjudicator_policy": EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY,
+            "source_metadata": _source_metadata(endpoint),
+        }
+    except (TimeoutError, socket.timeout):
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "timeout",
+            "reason": "VedAstro external technique timed out",
+            "request_preview": request_preview,
+            "adjudicator_policy": EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY,
+            "source_metadata": _source_metadata(endpoint),
+        }
+    except json.JSONDecodeError:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "invalid_json",
+            "reason": "VedAstro external technique received non-JSON response",
+            "request_preview": request_preview,
+            "adjudicator_policy": EXTERNAL_TECHNIQUE_ADJUDICATOR_POLICY,
+            "source_metadata": _source_metadata(endpoint),
+        }
+
+    return _normalize_external_technique_success(payload, endpoint, request_preview)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="VedAstro service adapter skeleton")
     parser.add_argument("--print-schema", action="store_true")
     parser.add_argument("--case", default="beijing_first_use_demo")
     parser.add_argument("--range-scan", action="store_true")
-    parser.add_argument("--domain", choices=sorted(SUPPORTED_RANGE_SCAN_DOMAINS), default="marriage")
+    parser.add_argument("--domain", choices=sorted(SUPPORTED_EXTERNAL_TECHNIQUE_DOMAINS), default="marriage")
     parser.add_argument("--start-date", default="2026-01-01")
     parser.add_argument("--end-date", default="2031-01-01")
+    parser.add_argument("--external-technique", action="store_true")
+    parser.add_argument("--method", default="")
+    parser.add_argument("--api-endpoint", default="")
     args = parser.parse_args()
 
     if args.print_schema:
         result = schema()
+    elif args.external_technique:
+        result = run_external_technique(args.case, args.domain, args.method, args.api_endpoint)
     elif args.range_scan:
         result = run_range_scan(args.case, args.domain, args.start_date, args.end_date)
     else:

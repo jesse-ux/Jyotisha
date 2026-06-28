@@ -56,6 +56,7 @@ def test_career_collects_a10_amk_karakamsha_as_strict_evidence() -> None:
         "amk_active",
         "karakamsha_context",
         "argala_support",
+        "vedastro_range_scan_missing",
     ]
 
 
@@ -73,6 +74,7 @@ def test_career_blocks_label_when_d10_is_missing_but_preserves_jaimini_context()
         "amk_active",
         "karakamsha_context",
         "argala_support",
+        "vedastro_range_scan_missing",
     ]
 
 

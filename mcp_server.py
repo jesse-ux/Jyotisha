@@ -417,10 +417,17 @@ def _derive_external_activation_support(modules: Dict[str, Any], domain: str) ->
     ledger = _safe_get(modules, "external_activation", "evidence_ledger")
     if not isinstance(ledger, list):
         return {
-            "level": "none",
-            "source": None,
+            "level": "missing_required_external_radar",
+            "source": "vedastro_service_adapter_candidate",
             "signals": [],
             "events": [],
+            "required": True,
+            "operation": "range_scan",
+            "external_calculation_coverage": "VedAstro 596+/600+ calculation nodes",
+            "reason": (
+                "VedAstro EventsAtRange / FindLifeEvents-style high-frequency radar "
+                "was not provided; keep timing confidence bounded."
+            ),
         }
 
     events: List[Dict[str, Any]] = []
@@ -447,7 +454,100 @@ def _derive_external_activation_support(modules: Dict[str, Any], domain: str) ->
         "source": "vedastro_service_adapter_candidate" if events else None,
         "signals": ["vedastro_range_scan"] if events else [],
         "events": events,
+        "required": True,
+        "operation": "range_scan",
+        "external_calculation_coverage": "VedAstro 596+/600+ calculation nodes",
     }
+
+
+def _external_activation_audit(external_activation: Any) -> List[Dict[str, Any]]:
+    if not isinstance(external_activation, dict):
+        return []
+    if external_activation.get("level") == "missing_required_external_radar":
+        return [
+            {
+                "technique": "VedAstro EventsAtRange / 596+ Calculator Radar",
+                "status": "blocked",
+                "role": "required_external_timing_radar",
+                "effect": "confidence_boundary_only_no_score_or_label_lift",
+            }
+        ]
+    if external_activation.get("source") == "vedastro_service_adapter_candidate":
+        events = external_activation.get("events") or []
+        if isinstance(events, list) and events:
+            return [
+                {
+                    "technique": "VedAstro EventsAtRange / 596+ Calculator Radar",
+                    "status": "used",
+                    "role": "external_timing_evidence",
+                    "event_count": len(events),
+                    "effect": "activation_context_only_guarded_score_bump",
+                }
+            ]
+    return []
+
+
+def _derive_external_technique_evidence(modules: Dict[str, Any], domain: str) -> Dict[str, Any]:
+    ledger = _safe_get(modules, "external_technique_evidence", "evidence_ledger")
+    if not isinstance(ledger, list):
+        return {
+            "level": "none",
+            "source": None,
+            "signals": [],
+            "methods": [],
+            "evidence": [],
+            "policy": {
+                "can_change_score": False,
+                "can_set_dominant_label": False,
+                "can_set_payout_label": False,
+            },
+        }
+
+    evidence: List[Dict[str, Any]] = []
+    methods: List[str] = []
+    for item in ledger:
+        if not isinstance(item, dict):
+            continue
+        if item.get("source") != "vedastro_service_adapter_candidate":
+            continue
+        if item.get("operation") != "calculation_method":
+            continue
+        if item.get("role") != "external_technique_evidence":
+            continue
+        item_domain = item.get("domain") or "general"
+        if item_domain not in {domain, "general"}:
+            continue
+        evidence.append(item)
+        method = item.get("method")
+        if isinstance(method, str) and method and method not in methods:
+            methods.append(method)
+
+    return {
+        "level": "context_only" if evidence else "none",
+        "source": "vedastro_service_adapter_candidate" if evidence else None,
+        "signals": ["vedastro_external_calculation_method"] if evidence else [],
+        "methods": methods,
+        "evidence": evidence,
+        "policy": {
+            "can_change_score": False,
+            "can_set_dominant_label": False,
+            "can_set_payout_label": False,
+        },
+    }
+
+
+def _external_technique_audit(external_technique: Any) -> List[Dict[str, Any]]:
+    if not isinstance(external_technique, dict) or external_technique.get("level") != "context_only":
+        return []
+    return [
+        {
+            "technique": "VedAstro External Technique Evidence",
+            "status": "used",
+            "role": "external_evidence_only",
+            "methods": external_technique.get("methods") or [],
+            "effect": "secondary_context_only_no_score_or_label_lift",
+        }
+    ]
 
 
 def _derive_functional_benefic_malefic(modules: Dict[str, Any]) -> Dict[str, Any]:
@@ -507,10 +607,20 @@ def _derive_synastry_relationship_support(modules: Dict[str, Any]) -> Dict[str, 
                 return str(result).lower() if result is not None else None
             return str(value).lower() if value is not None else None
 
+        if _kuta_result(additional_kutas.get("Mahendra")) == "good":
+            signals.append("mahendra_support")
+        if _kuta_result(additional_kutas.get("StreeDeergha")) == "good":
+            signals.append("stree_deergha_support")
         vedha_good = _kuta_result(additional_kutas.get("Vedha")) == "good"
         bad_constellations_good = _kuta_result(additional_kutas.get("BadConstellations")) == "good"
         rajju = additional_kutas.get("Rajju")
         rajju_good = isinstance(rajju, dict) and rajju.get("result") == "good"
+        if vedha_good:
+            signals.append("vedha_clean")
+        if rajju_good:
+            signals.append("rajju_clean")
+        if bad_constellations_good:
+            signals.append("bad_constellations_clean")
         if vedha_good and bad_constellations_good and rajju_good:
             signals.append("kuta_exception_clean")
 
@@ -945,6 +1055,11 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("virodhargala_obstruction")
         if external_activation.get("level") == "moderate":
             secondary_context.append("external_activation_support")
+        elif external_activation.get("level") == "missing_required_external_radar":
+            secondary_context.append("vedastro_range_scan_missing")
+        external_technique = present.get("external_technique_evidence") or {}
+        if external_technique.get("level") == "context_only":
+            secondary_context.append("external_technique_evidence")
 
         hard_gate_missing = any(
             key in missing for key in (
@@ -1018,8 +1133,32 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("jaimini_support")
         if present.get("upapada_lagna"):
             secondary_context.append("ul_support")
-        if synastry_support.get("level") in {"supportive", "moderate"}:
+        synastry_level = synastry_support.get("level")
+        if synastry_level in {"supportive", "moderate"}:
             secondary_context.append("synastry_support")
+        synastry_signals = synastry_support.get("signals") or []
+        if synastry_level in {"supportive", "moderate"} and any(
+            signal in synastry_signals for signal in ("mahendra_support", "stree_deergha_support")
+        ):
+            secondary_context.append("synastry_compatibility_support")
+        if synastry_level in {"supportive", "moderate"} and any(
+            signal in synastry_signals for signal in ("vedha_clean", "rajju_clean", "bad_constellations_clean")
+        ):
+            secondary_context.append("synastry_protective_kuta_support")
+        if synastry_level in {"supportive", "moderate"} and "exception_mitigated_match" in synastry_signals:
+            secondary_context.append("synastry_exception_mitigated")
+        if synastry_level in {"supportive", "moderate"} and "kuta_exception_clean" in synastry_signals:
+            secondary_context.append("synastry_kuta_exception_clean")
+        if synastry_level in {"supportive", "moderate"} and "mahendra_support" in synastry_signals:
+            secondary_context.append("mahendra_support")
+        if synastry_level in {"supportive", "moderate"} and "stree_deergha_support" in synastry_signals:
+            secondary_context.append("stree_deergha_support")
+        if synastry_level in {"supportive", "moderate"} and "vedha_clean" in synastry_signals:
+            secondary_context.append("vedha_clean")
+        if synastry_level in {"supportive", "moderate"} and "rajju_clean" in synastry_signals:
+            secondary_context.append("rajju_clean")
+        if synastry_level in {"supportive", "moderate"} and "bad_constellations_clean" in synastry_signals:
+            secondary_context.append("bad_constellations_clean")
         shadbala_component_audit = present.get("shadbala_component_audit") or {}
         if shadbala_component_audit.get("status") in {"blocked", "incomplete"}:
             secondary_context.append("shadbala_component_gap")
@@ -1033,6 +1172,11 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         external_activation = present.get("external_activation") or {}
         if external_activation.get("level") == "moderate":
             secondary_context.append("external_activation_support")
+        elif external_activation.get("level") == "missing_required_external_radar":
+            secondary_context.append("vedastro_range_scan_missing")
+        external_technique = present.get("external_technique_evidence") or {}
+        if external_technique.get("level") == "context_only":
+            secondary_context.append("external_technique_evidence")
         if dignity_guardrail.get("status") == "conflict":
             secondary_context.append("dignity_conflict")
         elif dignity_guardrail.get("score_delta") == 5:
@@ -1056,6 +1200,13 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             and jaimini_support.get("level") == "moderate"
         ):
             dominant_label = "legal_marriage"
+        elif (
+            not hard_gate_missing
+            and not label_support_present
+            and jaimini_support.get("level") == "moderate"
+            and external_activation.get("level") == "moderate"
+        ):
+            secondary_context.append("public_formalization_candidate")
         return {
             "event_family": "relationship",
             "score": score,
@@ -1179,6 +1330,11 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         external_activation = present.get("external_activation") or {}
         if external_activation.get("level") == "moderate":
             secondary_context.append("external_activation_support")
+        elif external_activation.get("level") == "missing_required_external_radar":
+            secondary_context.append("vedastro_range_scan_missing")
+        external_technique = present.get("external_technique_evidence") or {}
+        if external_technique.get("level") == "context_only":
+            secondary_context.append("external_technique_evidence")
         if dignity_guardrail.get("status") == "conflict":
             secondary_context.append("dignity_conflict")
         elif dignity_guardrail.get("score_delta") == 5:
@@ -1235,6 +1391,10 @@ def _build_life_event_graph(route: str, strict: Dict[str, Any]) -> Dict[str, Any
     if isinstance(vim, dict):
         md = vim.get("mahadasha")
         ad = vim.get("antardasha")
+        if isinstance(md, dict):
+            md = md.get("lord") or md.get("mahadasha")
+        if isinstance(ad, dict):
+            ad = ad.get("lord") or ad.get("antardasha")
         label = "/".join([part for part in (md, ad) if part])
         if label:
             nodes.append(
@@ -1299,6 +1459,18 @@ def _build_life_event_graph(route: str, strict: Dict[str, Any]) -> Dict[str, Any
                 }
             )
 
+    for label in event_judgement.get("secondary_context") or []:
+        if not isinstance(label, str):
+            continue
+        if label.startswith("synastry_"):
+            nodes.append(
+                {
+                    "kind": "context",
+                    "label": label,
+                    "source": "event_judgement.secondary_context",
+                }
+            )
+
     return {
         "version": "life_event_graph_v1",
         "route": route,
@@ -1335,7 +1507,10 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present = {
             "d10_dasamsa": _safe_get(modules, "varga_full", "D10_Dasamsa"),
             "a10_karma_pada": _safe_get(modules, "special_lagnas", "A10_Karma_Pada"),
-            "amatyakaraka": _safe_get(modules, "jaimini", "karakas", "Amatyakaraka"),
+            "amatyakaraka": (
+                _safe_get(modules, "jaimini", "chara_karaka_7", "karaka_table", "Amatyakaraka")
+                or _safe_get(modules, "jaimini", "karakas", "Amatyakaraka")
+            ),
             "karakamsha": _safe_get(modules, "jaimini", "karakamsha"),
             "vimshottari_current": _safe_get(modules, "dasha", "current_dasha"),
             "narayana_current": _safe_get(modules, "narayana_dasha", "current_dasha"),
@@ -1346,9 +1521,10 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["kakshya_career_support"] = _derive_kakshya_career_support(_safe_get(modules, "kakshya"))
         present["argala_support"] = _derive_argala_support(modules, 10)
         present["external_activation"] = _derive_external_activation_support(modules, "career")
+        present["external_technique_evidence"] = _derive_external_technique_evidence(modules, "career")
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
         missing = [key for key, value in present.items() if key not in {
-            "external_activation", "argala_support", "shadbala", "shadbala_component_audit", "kakshya_career_support", "functional_benefic_malefic"
+            "external_activation", "external_technique_evidence", "argala_support", "shadbala", "shadbala_component_audit", "kakshya_career_support", "functional_benefic_malefic"
         } and value in (None, {}, [], "")]
         convergence = present["career_convergence"] or {}
         confidence_cap = "medium"
@@ -1363,7 +1539,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         else:
             confidence_cap = "medium-low"
         event_judgement = _derive_event_judgement(route, present, missing)
-        return _with_life_event_graph(route, {
+        strict = {
             "question_type": route,
             "required_evidence": required,
             "present_evidence": present,
@@ -1375,7 +1551,14 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
                 "Career timing requires D10 + A10/Karma Pada + AmK/Karakamsha "
                 "plus dual dasha and career convergence support."
             ),
-        })
+        }
+        audit = (
+            _external_activation_audit(present.get("external_activation"))
+            + _external_technique_audit(present.get("external_technique_evidence"))
+        )
+        if audit:
+            strict["technique_audit"] = audit
+        return _with_life_event_graph(route, strict)
 
     if route == "relationship":
         required = [
@@ -1404,11 +1587,12 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["synastry_relationship_support"] = _derive_synastry_relationship_support(modules)
         present["argala_support"] = _derive_argala_support(modules, 7)
         present["external_activation"] = _derive_external_activation_support(modules, "marriage")
+        present["external_technique_evidence"] = _derive_external_technique_evidence(modules, "marriage")
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
         missing = [
             key for key, value in present.items()
-            if key not in {"chart", "external_activation", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support", "synastry_relationship_support", "argala_support", "shadbala", "shadbala_component_audit", "functional_benefic_malefic"}
+            if key not in {"chart", "external_activation", "external_technique_evidence", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support", "synastry_relationship_support", "argala_support", "shadbala", "shadbala_component_audit", "functional_benefic_malefic"}
             and value in (None, {}, [], "")
         ]
         convergence = present["marriage_convergence"] or {}
@@ -1426,7 +1610,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         else:
             confidence_cap = "medium-low"
         event_judgement = _derive_event_judgement(route, present, missing)
-        return _with_life_event_graph(route, {
+        strict = {
             "question_type": route,
             "required_evidence": required,
             "present_evidence": present,
@@ -1438,7 +1622,14 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
                 "Marriage timing requires D9 + UL + DK + dual dasha + Vivah Saham "
                 "and convergence support; missing links cap confidence."
             ),
-        })
+        }
+        audit = (
+            _external_activation_audit(present.get("external_activation"))
+            + _external_technique_audit(present.get("external_technique_evidence"))
+        )
+        if audit:
+            strict["technique_audit"] = audit
+        return _with_life_event_graph(route, strict)
 
     if route == "finance":
         avayogi_risk = _check_external_avayogi_risk(result)
@@ -1477,10 +1668,11 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         )
         present["kakshya_finance_support"] = _derive_kakshya_finance_support(_safe_get(modules, "kakshya"))
         present["external_activation"] = _derive_external_activation_support(modules, "wealth")
+        present["external_technique_evidence"] = _derive_external_technique_evidence(modules, "wealth")
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
         missing = [key for key, value in present.items() if key not in {
-            "chart", "external_activation", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support", "shadbala_component_audit", "asc_sign", "pav_finance_support", "sodhita_finance_support", "kakshya_finance_support", "functional_benefic_malefic"
+            "chart", "external_activation", "external_technique_evidence", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support", "shadbala_component_audit", "asc_sign", "pav_finance_support", "sodhita_finance_support", "kakshya_finance_support", "functional_benefic_malefic"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [
@@ -1507,7 +1699,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         promise = present.get("wealth_promise_strength") or {}
         if "yogi" in promise.get("supporting_sources", []) and event_judgement.get("dominant_label") and "yogi_active" not in event_judgement.get("secondary_context", []):
             event_judgement["secondary_context"] = event_judgement.get("secondary_context", []) + ["yogi_active"]
-        return _with_life_event_graph(route, {
+        strict = {
             "question_type": route,
             "required_evidence": required,
             "present_evidence": present,
@@ -1519,7 +1711,14 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
                 "Finance timing requires D2/D10 + strength + SAV + dual dasha "
                 "plus at least one wealth-related convergence domain."
             ),
-        })
+        }
+        audit = (
+            _external_activation_audit(present.get("external_activation"))
+            + _external_technique_audit(present.get("external_technique_evidence"))
+        )
+        if audit:
+            strict["technique_audit"] = audit
+        return _with_life_event_graph(route, strict)
 
     return _with_life_event_graph(route, {
         "question_type": route,

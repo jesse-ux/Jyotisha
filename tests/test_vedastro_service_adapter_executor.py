@@ -38,7 +38,16 @@ def test_vedastro_service_adapter_executor_schema_is_declared() -> None:
     assert "endpoint" in report["provenance_contract"]["required_fields"]
     assert "range_scan_request_contract" in report
     assert "domain" in report["range_scan_request_contract"]
+    assert "vedastro_event_method" in report["range_scan_request_contract"]
     assert "start_date" in report["range_scan_request_contract"]
+    assert report["vedastro_calculation_coverage"] == {
+        "official_python_library_calculations": "596+",
+        "official_api_builder_calculators": "600+",
+        "official_events_builder_events": "400+",
+        "official_events_builder_methods": ["SearchEvents", "GetEventTiming", "ListEventTypes"],
+        "range_scan_role": "high_frequency_life_event_radar",
+        "intended_use": "external_timing_evidence_for_strict_workflow",
+    }
     assert "range_scan_response_contract" in report
     assert "evidence_ledger" in report["range_scan_response_contract"]
     assert report["range_scan_event_allowlist"]["marriage"]["event_ids"]
@@ -139,11 +148,47 @@ def test_vedastro_service_adapter_builds_range_scan_preview_before_real_network_
     assert report["backend"] == "vedastro_service_adapter_candidate"
     assert report["status"] == "network_execution_disabled"
     assert report["request_preview"]["operation"] == "range_scan"
+    assert report["request_preview"]["vedastro_event_method"] == "SearchEvents"
     assert report["request_preview"]["domain"] == "marriage"
     assert report["request_preview"]["start_date"] == "2026-01-01"
     assert report["request_preview"]["end_date"] == "2031-01-01"
     assert report["request_preview"]["event_model"] == "vedastro_events_at_range_candidate"
     assert report["source_metadata"]["endpoint"] == "https://example.invalid/vedastro"
+
+
+def test_vedastro_range_scan_unconfigured_still_returns_official_search_events_preview() -> None:
+    env = os.environ.copy()
+    env.pop("VEDASTRO_API_ENDPOINT", None)
+    env.pop("VEDASTRO_ENABLE_NETWORK", None)
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/vedastro_service_adapter.py",
+            "--range-scan",
+            "--domain",
+            "wealth",
+            "--case",
+            "beijing_first_use_demo",
+            "--start-date",
+            "2026-01-01",
+            "--end-date",
+            "2031-01-01",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=120,
+        check=False,
+        env=env,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["status"] == "service_endpoint_not_configured"
+    assert report["request_preview"]["operation"] == "range_scan"
+    assert report["request_preview"]["vedastro_event_method"] == "SearchEvents"
+    assert report["request_preview"]["domain"] == "wealth"
 
 
 def test_vedastro_service_adapter_can_normalize_mock_http_response() -> None:
