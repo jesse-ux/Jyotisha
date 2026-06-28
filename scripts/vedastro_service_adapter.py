@@ -76,6 +76,14 @@ PARITY_CASES = {
 
 SUPPORTED_RANGE_SCAN_DOMAINS = {"marriage", "wealth", "career"}
 SUPPORTED_EXTERNAL_TECHNIQUE_DOMAINS = {"marriage", "wealth", "career", "general"}
+OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH = "/Calculate/SearchEvents"
+OFFICIAL_SEARCH_EVENTS_METHOD = "POST"
+OFFICIAL_SEARCH_EVENTS_PROFILE_VERSION = "official_builder_search_events_v1"
+OFFICIAL_RANGE_SCAN_EVENT_TAGS = {
+    "marriage": ["Marriage", "General"],
+    "wealth": ["LendingMoney", "BorrowingMoney", "General"],
+    "career": ["General", "Building", "Travel"],
+}
 VEDASTRO_CALCULATION_COVERAGE = {
     "official_python_library_calculations": "596+",
     "official_api_builder_calculators": "600+",
@@ -341,6 +349,22 @@ def schema() -> dict[str, Any]:
             "evidence_ledger",
             "source_metadata",
         ],
+        "official_search_events_profile_contract": {
+            "profile_version": OFFICIAL_SEARCH_EVENTS_PROFILE_VERSION,
+            "base_url_requirement": "VEDASTRO_API_ENDPOINT must end with /api",
+            "route_template": OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH,
+            "method": OFFICIAL_SEARCH_EVENTS_METHOD,
+            "content_type": "application/json",
+            "optional_auth_header": "x-api-key",
+            "body_fields": [
+                "BirthTime",
+                "Ayanamsa",
+                "EventTagList",
+            ],
+            "range_mode_fields": [
+                "AtTime | StartTime + EndTime + PrecisionHours",
+            ],
+        },
         "vedastro_calculation_coverage": VEDASTRO_CALCULATION_COVERAGE,
         "external_technique_request_contract": [
             "operation",
@@ -416,7 +440,7 @@ def _request_preview(case: dict[str, Any]) -> dict[str, Any]:
 
 
 def _range_scan_preview(case: dict[str, Any], domain: str, start_date: str, end_date: str) -> dict[str, Any]:
-    return {
+    preview = {
         "operation": "range_scan",
         "vedastro_event_method": "SearchEvents",
         "domain": domain,
@@ -424,6 +448,68 @@ def _range_scan_preview(case: dict[str, Any], domain: str, start_date: str, end_
         "end_date": end_date,
         "event_model": "vedastro_events_at_range_candidate",
         **case,
+    }
+    preview["official_request_profile"] = _build_official_search_events_profile(preview)
+    return preview
+
+
+def _format_std_time(date_text: str, hour: Any, minute: Any, tz: Any) -> str:
+    year, month, day = str(date_text).split("-")
+    hour_int = int(float(hour))
+    minute_int = int(float(minute))
+    return f"{hour_int:02d}:{minute_int:02d} {day}/{month}/{year} {tz}"
+
+
+def _time_json_from_case(case: dict[str, Any], date_text: str) -> dict[str, Any]:
+    return {
+        "StdTime": _format_std_time(date_text, case.get("hour", 0), case.get("minute", 0), case.get("tz", "+00:00")),
+        "Location": {
+            "Name": case.get("case_id") or "UserLocation",
+            "Latitude": case.get("lat"),
+            "Longitude": case.get("lon"),
+        },
+    }
+
+
+def _normalize_tz(case: dict[str, Any]) -> str:
+    tz = case.get("tz")
+    if isinstance(tz, str):
+        return tz
+    if tz is None:
+        return "+00:00"
+    sign = "+" if float(tz) >= 0 else "-"
+    value = abs(float(tz))
+    hours = int(value)
+    minutes = int(round((value - hours) * 60))
+    return f"{sign}{hours:02d}:{minutes:02d}"
+
+
+def _build_official_search_events_profile(request_preview: dict[str, Any]) -> dict[str, Any]:
+    case = dict(request_preview)
+    case["tz"] = _normalize_tz(case)
+    body = {
+        "BirthTime": _time_json_from_case(case, f"{case['year']:04d}-{case['month']:02d}-{case['day']:02d}"),
+        "Ayanamsa": str(case.get("ayanamsa_policy") or "lahiri"),
+        "EventTagList": OFFICIAL_RANGE_SCAN_EVENT_TAGS.get(str(request_preview.get("domain") or ""), ["General"]),
+    }
+    start_time = _time_json_from_case(case, str(request_preview["start_date"]))
+    end_time = _time_json_from_case(case, str(request_preview["end_date"]))
+    if str(request_preview["start_date"]) == str(request_preview["end_date"]):
+        body["AtTime"] = start_time
+    else:
+        body["StartTime"] = start_time
+        body["EndTime"] = end_time
+        body["PrecisionHours"] = 100
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    api_key = os.environ.get("VEDASTRO_API_KEY", "").strip()
+    if api_key:
+        headers["x-api-key"] = api_key
+    return {
+        "profile_version": OFFICIAL_SEARCH_EVENTS_PROFILE_VERSION,
+        "endpoint_path": OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH,
+        "method": OFFICIAL_SEARCH_EVENTS_METHOD,
+        "headers": headers,
+        "body": body,
     }
 
 
@@ -451,7 +537,8 @@ def _base_live_metadata(
     attempt_count: int = 1,
     retry_error_codes: list[int] | None = None,
 ) -> dict[str, Any]:
-    return {
+    official_request_profile = request_preview.get("official_request_profile") if isinstance(request_preview, dict) else None
+    metadata = {
         "transport": "http_json_service_boundary",
         "endpoint": endpoint,
         "endpoint_host": _endpoint_host(endpoint),
@@ -467,6 +554,18 @@ def _base_live_metadata(
         "attempt_count": attempt_count,
         "retry_error_codes": retry_error_codes or [],
     }
+    if isinstance(official_request_profile, dict):
+        redacted_headers = dict(official_request_profile.get("headers") or {})
+        if "x-api-key" in redacted_headers:
+            redacted_headers["x-api-key"] = "[redacted]"
+        redacted_profile = {
+            **official_request_profile,
+            "headers": redacted_headers,
+        }
+        metadata["official_endpoint_path"] = official_request_profile.get("endpoint_path")
+        metadata["official_request_profile"] = redacted_profile
+        metadata["official_request_profile_hash"] = _hash_payload(redacted_profile)
+    return metadata
 
 
 def _normalize_success(
@@ -640,11 +739,18 @@ def _source_metadata(endpoint: str) -> dict[str, Any]:
 
 
 def _post_json(endpoint: str, request_preview: dict[str, Any]) -> dict[str, Any] | str:
+    official_request_profile = request_preview.get("official_request_profile") if isinstance(request_preview, dict) else None
+    request_url = endpoint
+    headers = {"Content-Type": "application/json"}
     vedastro_payload = request_preview
+    if isinstance(official_request_profile, dict):
+        request_url = f"{endpoint.rstrip('/')}{official_request_profile.get('endpoint_path', '')}"
+        headers = dict(official_request_profile.get("headers") or headers)
+        vedastro_payload = dict(official_request_profile.get("body") or {})
     req = request.Request(
-        endpoint,
+        request_url,
         data=json.dumps(vedastro_payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
     with request.urlopen(req, timeout=_timeout_seconds()) as resp:
@@ -747,14 +853,7 @@ def run_case(case_id: str) -> dict[str, Any]:
     return _normalize_success(payload, endpoint, request_preview)
 
 
-def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) -> dict[str, Any]:
-    if case_id not in PARITY_CASES:
-        return {
-            "backend": "vedastro_service_adapter_candidate",
-            "available": False,
-            "status": "unknown_case_id",
-            "reason": f"Unknown parity case: {case_id}",
-        }
+def _run_range_scan_case(case: dict[str, Any], domain: str, start_date: str, end_date: str) -> dict[str, Any]:
     if domain not in SUPPORTED_RANGE_SCAN_DOMAINS:
         return {
             "backend": "vedastro_service_adapter_candidate",
@@ -763,7 +862,7 @@ def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) ->
             "reason": f"Unsupported range scan domain: {domain}",
         }
 
-    request_preview = _range_scan_preview(PARITY_CASES[case_id], domain, start_date, end_date)
+    request_preview = _range_scan_preview(case, domain, start_date, end_date)
     endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
     if not endpoint:
         result = _unconfigured("VEDASTRO_API_ENDPOINT is not configured; range scan stops before network access.")
@@ -822,6 +921,41 @@ def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) ->
         }
 
     return _normalize_range_scan_success(payload, endpoint, request_preview, attempt_count, retry_error_codes)
+
+
+def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) -> dict[str, Any]:
+    if case_id not in PARITY_CASES:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "unknown_case_id",
+            "reason": f"Unknown parity case: {case_id}",
+        }
+    return _run_range_scan_case(PARITY_CASES[case_id], domain, start_date, end_date)
+
+
+def run_range_scan_for_case(
+    case: dict[str, Any],
+    domain: str,
+    start_date: str,
+    end_date: str,
+    case_id: str = "user_chart",
+) -> dict[str, Any]:
+    user_case = {
+        "case_id": case_id,
+        "year": case.get("year"),
+        "month": case.get("month"),
+        "day": case.get("day"),
+        "hour": case.get("hour"),
+        "minute": case.get("minute"),
+        "second": case.get("second", 0),
+        "lat": case.get("lat"),
+        "lon": case.get("lon"),
+        "tz": case.get("tz"),
+        "ayanamsa_policy": case.get("ayanamsa_policy") or case.get("ayanamsa") or "lahiri",
+        "node_policy": case.get("node_policy") or case.get("node_mode") or "mean",
+    }
+    return _run_range_scan_case(user_case, domain, start_date, end_date)
 
 
 def run_external_technique(case_id: str, domain: str, method: str, api_endpoint: str) -> dict[str, Any]:

@@ -189,6 +189,115 @@ def test_vedastro_range_scan_unconfigured_still_returns_official_search_events_p
     assert report["request_preview"]["operation"] == "range_scan"
     assert report["request_preview"]["vedastro_event_method"] == "SearchEvents"
     assert report["request_preview"]["domain"] == "wealth"
+    assert report["request_preview"]["official_request_profile"]["endpoint_path"] == "/Calculate/SearchEvents"
+    assert report["request_preview"]["official_request_profile"]["method"] == "POST"
+    assert report["request_preview"]["official_request_profile"]["headers"] == {"Content-Type": "application/json"}
+    assert report["request_preview"]["official_request_profile"]["body"]["Ayanamsa"] == "lahiri"
+    assert report["request_preview"]["official_request_profile"]["body"]["EventTagList"] == ["LendingMoney", "BorrowingMoney", "General"]
+    assert "AtTime" not in report["request_preview"]["official_request_profile"]["body"]
+    assert report["request_preview"]["official_request_profile"]["body"]["StartTime"]["StdTime"] == "12:00 01/01/2026 +08:00"
+    assert report["request_preview"]["official_request_profile"]["body"]["EndTime"]["StdTime"] == "12:00 01/01/2031 +08:00"
+    assert report["request_preview"]["official_request_profile"]["body"]["PrecisionHours"] == 100
+
+
+def test_vedastro_schema_declares_official_search_events_live_contract() -> None:
+    completed = subprocess.run(
+        [sys.executable, "scripts/vedastro_service_adapter.py", "--print-schema"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=120,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    contract = report["official_search_events_profile_contract"]
+    assert contract["route_template"] == "/Calculate/SearchEvents"
+    assert contract["method"] == "POST"
+    assert contract["optional_auth_header"] == "x-api-key"
+    assert "BirthTime" in contract["body_fields"]
+    assert "EventTagList" in contract["body_fields"]
+    assert "AtTime | StartTime + EndTime + PrecisionHours" in contract["range_mode_fields"]
+
+
+def test_vedastro_service_adapter_posts_official_search_events_contract() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            assert self.path == "/api/Calculate/SearchEvents"
+            assert self.headers.get("Content-Type") == "application/json"
+            assert self.headers.get("x-api-key") == "sk_live_test"
+            length = int(self.headers.get("Content-Length", "0"))
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            assert payload["Ayanamsa"] == "lahiri"
+            assert payload["EventTagList"] == ["Marriage", "General"]
+            assert payload["BirthTime"]["StdTime"] == "12:00 01/01/1990 +08:00"
+            assert payload["AtTime"]["StdTime"] == "12:00 01/01/2026 +08:00"
+            assert "StartTime" not in payload
+            response = {
+                "Status": "Pass",
+                "Payload": [
+                    {
+                        "Name": "JupiterSupportsMarriageAxis",
+                        "StartTime": "2026-05-01",
+                        "EndTime": "2026-06-01",
+                        "EventTags": ["marriage", "transit"],
+                        "Nature": "Good",
+                    }
+                ],
+            }
+            body = json.dumps(response).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/api"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        env["VEDASTRO_API_KEY"] = "sk_live_test"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "scripts/vedastro_service_adapter.py",
+                "--range-scan",
+                "--domain",
+                "marriage",
+                "--case",
+                "beijing_first_use_demo",
+                "--start-date",
+                "2026-01-01",
+                "--end-date",
+                "2026-01-01",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["status"] == "ok"
+    assert report["source_metadata"]["endpoint"].endswith("/api")
+    assert report["source_metadata"]["official_endpoint_path"] == "/Calculate/SearchEvents"
+    assert report["source_metadata"]["official_request_profile"]["method"] == "POST"
+    assert report["source_metadata"]["official_request_profile"]["headers"]["x-api-key"] == "[redacted]"
+    assert report["source_metadata"]["official_request_profile_hash"]
+    assert report["source_metadata"]["request_hash"] != report["source_metadata"]["official_request_profile_hash"]
 
 
 def test_vedastro_service_adapter_can_normalize_mock_http_response() -> None:
@@ -259,9 +368,12 @@ def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> No
         def do_POST(self) -> None:  # noqa: N802
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
-            assert payload["operation"] == "range_scan"
-            assert payload["domain"] == "marriage"
-            assert payload["start_date"] == "2026-01-01"
+            assert payload["Ayanamsa"] == "lahiri"
+            assert payload["EventTagList"] == ["Marriage", "General"]
+            assert payload["BirthTime"]["StdTime"] == "12:00 01/01/1990 +08:00"
+            assert payload["StartTime"]["StdTime"] == "12:00 01/01/2026 +08:00"
+            assert payload["EndTime"]["StdTime"] == "12:00 01/01/2031 +08:00"
+            assert payload["PrecisionHours"] == 100
             response = {
                 "events": [
                     {
@@ -417,6 +529,10 @@ def test_vedastro_range_scan_records_hashes_and_artifact_path() -> None:
     assert metadata["method"] == "POST"
     assert metadata["operation"] == "range_scan"
     assert metadata["vedastro_event_method"] == "SearchEvents"
+    assert metadata["official_endpoint_path"] == "/Calculate/SearchEvents"
+    assert metadata["official_request_profile"]["method"] == "POST"
+    assert metadata["official_request_profile"]["body"]["EventTagList"] == ["Marriage", "General"]
+    assert metadata["official_request_profile_hash"]
     assert metadata["allowlist_domain"] == "marriage"
     assert metadata["allowlist_event_count"] == 1
     assert metadata["filtered_event_count"] == 1
