@@ -445,6 +445,8 @@ def test_report_artifact_can_render_functional_benefic_malefic_summary() -> None
             'ascendant': 'Leo',
             'functional_benefics': ['Sun', 'Mars', 'Jupiter'],
             'functional_malefics': ['Venus', 'Saturn'],
+            'functional_neutrals': ['Mercury'],
+            'yogakarakas': ['Mars'],
             'effect_on_confidence': '高严谨模式下必须叠加功能性吉凶星。',
         },
     })
@@ -455,6 +457,10 @@ def test_report_artifact_can_render_functional_benefic_malefic_summary() -> None
     assert 'Leo' in html
     assert 'Sun, Mars, Jupiter' in html
     assert 'Venus, Saturn' in html
+    assert 'Mercury' in html
+    assert 'Mars' in html
+    assert 'Yogakarakas' in html
+    assert 'Functional Neutrals' in html
     assert '高严谨模式下必须叠加功能性吉凶星。' in html
 
 

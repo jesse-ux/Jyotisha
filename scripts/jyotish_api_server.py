@@ -451,6 +451,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         malefics = snapshot.get('functional_malefics')
         if not isinstance(benefics, list) or not isinstance(malefics, list):
             return html
+        neutrals = snapshot.get('functional_neutrals') if isinstance(snapshot.get('functional_neutrals'), list) else []
+        yogakarakas = snapshot.get('yogakarakas') if isinstance(snapshot.get('yogakarakas'), list) else []
 
         def _escape(value):
             return html_lib.escape(str(value or ''))
@@ -458,6 +460,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         ascendant = _escape(snapshot.get('ascendant') or snapshot.get('asc_sign') or 'Unknown')
         benefic_text = _escape(', '.join(str(item) for item in benefics) or 'None')
         malefic_text = _escape(', '.join(str(item) for item in malefics) or 'None')
+        neutral_text = _escape(', '.join(str(item) for item in neutrals) or 'None')
+        yogakaraka_text = _escape(', '.join(str(item) for item in yogakarakas) or 'None')
         confidence_text = _escape(snapshot.get('effect_on_confidence') or 'Functional role layer was used in the final judgement.')
         source_text = _escape(snapshot.get('source') or 'strict_functional_benefic_malefic_v1')
 
@@ -469,6 +473,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             f'<p style="margin:0 0 8px;"><strong>Ascendant:</strong> {ascendant}</p>'
             f'<p style="margin:0 0 8px;"><strong>Functional Benefics:</strong> {benefic_text}</p>'
             f'<p style="margin:0 0 8px;"><strong>Functional Malefics:</strong> {malefic_text}</p>'
+            f'<p style="margin:0 0 8px;"><strong>Functional Neutrals:</strong> {neutral_text}</p>'
+            f'<p style="margin:0 0 8px;"><strong>Yogakarakas:</strong> {yogakaraka_text}</p>'
             f'<p style="margin:0 0 8px;"><strong>Confidence Impact:</strong> {confidence_text}</p>'
             f'<p style="margin:0;color:#5b6472;font-size:13px;"><strong>Source:</strong> {source_text}</p>'
             '</section>'
