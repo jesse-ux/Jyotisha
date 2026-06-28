@@ -228,6 +228,92 @@ def test_collect_strict_evidence_finance_folds_wealth_ashtakavarga_support() -> 
     assert "ashtakavarga_wealth_support" in strict["event_judgement"]["secondary_context"]
 
 
+def test_collect_strict_evidence_finance_caps_confidence_when_shadbala_components_missing() -> None:
+    result = {
+        "modules": {
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 33, "11": 35}},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L4", "probability": "70-85%"},
+                    "gains_wishes": {"convergence_level": "L4", "probability": "70-85%"},
+                    "career_status": {"convergence_level": "L4", "probability": "70-85%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "strong"}],
+                    "summary": "Dhana Yoga检测：共1个格局",
+                }
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+
+    assert strict["present_evidence"]["shadbala_component_audit"] == {
+        "status": "incomplete",
+        "source": "shadbala.planets",
+        "required_components": ["sthana", "dig", "kala", "chesta", "naisargika", "drik"],
+        "missing": {"Venus": ["sthana", "dig", "kala", "chesta", "naisargika", "drik"]},
+    }
+    assert strict["confidence_cap"] == "low"
+    assert "shadbala_component_gap" in strict["event_judgement"]["secondary_context"]
+
+
+def test_collect_strict_evidence_finance_accepts_complete_shadbala_components() -> None:
+    result = {
+        "modules": {
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {
+                "planets": {
+                    "Venus": {
+                        "components": {
+                            "sthana": 1.2,
+                            "dig": 0.8,
+                            "kala": 1.1,
+                            "chesta": 0.9,
+                            "naisargika": 0.7,
+                            "drik": 0.4,
+                        },
+                        "total_rupa": 5.1,
+                    }
+                }
+            },
+            "ashtakavarga": {"house_scores": {"2": 33, "11": 35}},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L4", "probability": "70-85%"},
+                    "gains_wishes": {"convergence_level": "L4", "probability": "70-85%"},
+                    "career_status": {"convergence_level": "L4", "probability": "70-85%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "strong"}],
+                    "summary": "Dhana Yoga检测：共1个格局",
+                }
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+
+    assert strict["present_evidence"]["shadbala_component_audit"] == {
+        "status": "complete",
+        "source": "shadbala.planets",
+        "required_components": ["sthana", "dig", "kala", "chesta", "naisargika", "drik"],
+        "missing": {},
+    }
+    assert strict["confidence_cap"] == "medium-high"
+    assert "shadbala_component_gap" not in strict["event_judgement"]["secondary_context"]
+
+
 def test_collect_strict_evidence_finance_flags_low_wealth_ashtakavarga_friction() -> None:
     result = {
         "modules": {

@@ -142,6 +142,7 @@ _NAKSHATRA_LORDS = [
 ]
 _WEALTH_HOUSES = {2, 5, 9, 10, 11}
 _NAKSHATRA_SPAN = 360.0 / 27.0
+_SHADBALA_REQUIRED_COMPONENTS = ["sthana", "dig", "kala", "chesta", "naisargika", "drik"]
 
 
 def _normalize_longitude(value: Any) -> Optional[float]:
@@ -540,6 +541,34 @@ def _derive_ashtakavarga_finance_support(house_scores: Any) -> Dict[str, Any]:
     }
 
 
+def _derive_shadbala_component_audit(planets: Any) -> Dict[str, Any]:
+    audit = {
+        "status": "blocked",
+        "source": "shadbala.planets",
+        "required_components": _SHADBALA_REQUIRED_COMPONENTS,
+        "missing": {},
+    }
+    if not isinstance(planets, dict) or not planets:
+        return audit
+
+    missing: Dict[str, List[str]] = {}
+    for planet, pdata in planets.items():
+        if not isinstance(pdata, dict):
+            missing[str(planet)] = list(_SHADBALA_REQUIRED_COMPONENTS)
+            continue
+        components = pdata.get("components") if isinstance(pdata.get("components"), dict) else pdata
+        planet_missing = [
+            component for component in _SHADBALA_REQUIRED_COMPONENTS
+            if components.get(component) in (None, "", [], {})
+        ]
+        if planet_missing:
+            missing[str(planet)] = planet_missing
+
+    audit["missing"] = missing
+    audit["status"] = "complete" if not missing else "incomplete"
+    return audit
+
+
 def _sign_to_index(sign: str) -> Optional[int]:
     try:
         return _SIGNS.index(sign)
@@ -901,6 +930,9 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
                 secondary_context.append("gains_wishes")
         if isinstance(avayogi_risk, dict) and avayogi_risk.get("risk_level") == "moderate":
             secondary_context.append("avayogi_active")
+        shadbala_component_audit = present.get("shadbala_component_audit") or {}
+        if shadbala_component_audit.get("status") in {"blocked", "incomplete"}:
+            secondary_context.append("shadbala_component_gap")
         if ashtakavarga_finance.get("level") == "supportive":
             secondary_context.append("ashtakavarga_wealth_support")
         elif ashtakavarga_finance.get("level") == "obstructive":
@@ -1076,13 +1108,14 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "wealth_promise_strength": _derive_wealth_promise_strength(modules),
             "avayogi_risk": avayogi_risk,
         }
+        present["shadbala_component_audit"] = _derive_shadbala_component_audit(present["shadbala"])
         present["ashtakavarga_finance_support"] = _derive_ashtakavarga_finance_support(
             present["ashtakavarga_house_scores"]
         )
         present["external_activation"] = _derive_external_activation_support(modules, "wealth")
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         missing = [key for key, value in present.items() if key not in {
-            "chart", "external_activation", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support"
+            "chart", "external_activation", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support", "shadbala_component_audit"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [
@@ -1096,6 +1129,8 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         if missing:
             confidence_cap = "low"
         elif present["dignity_guardrail"].get("status") == "conflict":
+            confidence_cap = "low"
+        elif present["shadbala_component_audit"].get("status") in {"blocked", "incomplete"}:
             confidence_cap = "low"
         elif any(hit.get("convergence_level") in {"L4", "L5"} for hit in convergence_hits):
             confidence_cap = "medium-high"
