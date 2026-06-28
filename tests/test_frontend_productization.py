@@ -1378,6 +1378,16 @@ def test_skill_workbench_exposes_all_expected_advanced_actions() -> None:
         assert token in skill_map
 
 
+def test_skill_map_surfaces_functional_benefic_malefic_audit_row() -> None:
+    skill_map = read("skill-map.js")
+    for token in [
+        "Functional Benefic/Malefic",
+        "功能吉凶星",
+        "Technique Audit Table",
+    ]:
+        assert token in skill_map
+
+
 def test_rectification_ui_exposes_decision_plan_and_execution_order() -> None:
     rect_engine = read("rectification-engine.js")
     rect_ui = read("rectification.js")
