@@ -228,18 +228,29 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         else:
             verdict = "insufficient_evidence"
         payout_label = None
+        dominant_label = None
+        secondary_context: List[str] = []
         gains_score = _convergence_score(present.get("gains_convergence"))
         wealth_score = _convergence_score(present.get("wealth_convergence"))
         career_score = _convergence_score(present.get("career_convergence"))
         if gains_score >= 60 and wealth_score < 40 and career_score < 40:
             payout_label = "income_growth"
+            dominant_label = "income_growth"
+            secondary_context = ["wealth_family"] if present.get("wealth_convergence") else []
         elif public_wealth_lift and score >= 60:
             payout_label = "public_wealth_status"
+            dominant_label = "public_wealth_status"
+            if present.get("career_convergence"):
+                secondary_context.append("career_status")
+            if present.get("gains_convergence"):
+                secondary_context.append("gains_wishes")
         return {
             "event_family": "finance",
             "score": score,
             "verdict": verdict,
             "payout_label": payout_label,
+            "dominant_label": dominant_label,
+            "secondary_context": secondary_context,
             "primary_drivers": [
                 key for key in (
                     "wealth_convergence",

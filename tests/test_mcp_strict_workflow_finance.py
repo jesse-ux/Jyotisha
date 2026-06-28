@@ -23,6 +23,8 @@ def test_finance_public_wealth_label_requires_at_least_moderate_window() -> None
     assert judgement["score"] == 40
     assert judgement["verdict"] == "weak_window_needs_confirmation"
     assert judgement["payout_label"] is None
+    assert judgement["dominant_label"] is None
+    assert judgement["secondary_context"] == []
 
 
 def test_finance_public_wealth_label_can_lift_visible_wealth_cases() -> None:
@@ -42,6 +44,8 @@ def test_finance_public_wealth_label_can_lift_visible_wealth_cases() -> None:
     assert judgement["score"] == 60
     assert judgement["verdict"] == "moderate_probability_window"
     assert judgement["payout_label"] == "public_wealth_status"
+    assert judgement["dominant_label"] == "public_wealth_status"
+    assert judgement["secondary_context"] == ["career_status", "gains_wishes"]
 
 
 def test_finance_prefers_income_growth_when_gains_outrun_public_status_signals() -> None:
@@ -60,6 +64,8 @@ def test_finance_prefers_income_growth_when_gains_outrun_public_status_signals()
     assert judgement["score"] == 80
     assert judgement["verdict"] == "moderate_probability_window"
     assert judgement["payout_label"] == "income_growth"
+    assert judgement["dominant_label"] == "income_growth"
+    assert judgement["secondary_context"] == ["wealth_family"]
 
 
 def test_finance_strong_wealth_promise_can_unlock_public_wealth_status() -> None:
@@ -86,6 +92,8 @@ def test_finance_strong_wealth_promise_can_unlock_public_wealth_status() -> None
     assert judgement["score"] == 60
     assert judgement["verdict"] == "moderate_probability_window"
     assert judgement["payout_label"] == "public_wealth_status"
+    assert judgement["dominant_label"] == "public_wealth_status"
+    assert judgement["secondary_context"] == ["career_status", "gains_wishes"]
 
 
 def test_finance_source_diversity_adds_small_bump_without_changing_verdict_band() -> None:
