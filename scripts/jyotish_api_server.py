@@ -9,6 +9,7 @@
 
 import argparse
 import base64
+import html as html_lib
 import io
 import json, sys, os, math
 import importlib.util
@@ -441,6 +442,42 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             raise BadRequest('report html cannot include active content')
         return html
 
+    def _inject_functional_benefic_malefic_summary(self, html, snapshot):
+        if not isinstance(snapshot, dict):
+            return html
+        if snapshot.get('status') in {None, 'blocked', 'not_used'}:
+            return html
+        benefics = snapshot.get('functional_benefics')
+        malefics = snapshot.get('functional_malefics')
+        if not isinstance(benefics, list) or not isinstance(malefics, list):
+            return html
+
+        def _escape(value):
+            return html_lib.escape(str(value or ''))
+
+        ascendant = _escape(snapshot.get('ascendant') or snapshot.get('asc_sign') or 'Unknown')
+        benefic_text = _escape(', '.join(str(item) for item in benefics) or 'None')
+        malefic_text = _escape(', '.join(str(item) for item in malefics) or 'None')
+        confidence_text = _escape(snapshot.get('effect_on_confidence') or 'Functional role layer was used in the final judgement.')
+        source_text = _escape(snapshot.get('source') or 'strict_functional_benefic_malefic_v1')
+
+        summary = (
+            '<section data-functional-role-summary="true" '
+            'style="margin:24px 0;padding:16px;border:1px solid #d9dde8;border-radius:8px;'
+            'background:#f7f9fc;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">'
+            '<h2 style="margin:0 0 12px;font-size:20px;">Functional Benefic/Malefic</h2>'
+            f'<p style="margin:0 0 8px;"><strong>Ascendant:</strong> {ascendant}</p>'
+            f'<p style="margin:0 0 8px;"><strong>Functional Benefics:</strong> {benefic_text}</p>'
+            f'<p style="margin:0 0 8px;"><strong>Functional Malefics:</strong> {malefic_text}</p>'
+            f'<p style="margin:0 0 8px;"><strong>Confidence Impact:</strong> {confidence_text}</p>'
+            f'<p style="margin:0;color:#5b6472;font-size:13px;"><strong>Source:</strong> {source_text}</p>'
+            '</section>'
+        )
+        body_close = re.search(r'</body\s*>', html, re.IGNORECASE)
+        if body_close:
+            return html[:body_close.start()] + summary + html[body_close.start():]
+        return html + summary
+
     def _artifact_base64(self, path):
         size = os.path.getsize(path)
         if size > MAX_REPORT_BASE64_BYTES:
@@ -505,6 +542,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
     def _compute_report_artifact(self, body):
         html = self._validate_report_html(body.get('html'))
+        html = self._inject_functional_benefic_malefic_summary(
+            html,
+            body.get('functional_benefic_malefic'),
+        )
         fmt = body.get('format', 'html')
         if fmt not in {'html', 'pdf'}:
             raise BadRequest('format must be html or pdf')
@@ -1921,30 +1962,20 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
     def _functional_benefic_malefic_snapshot(self, planets, ascendant):
         try:
-            from yoga_engine import YogaContext
+            from functional_benefics import derive_functional_benefic_malefic
             asc_sign = ascendant.get('sign')
-            if not asc_sign or not isinstance(planets, dict):
-                raise ValueError('missing ascendant sign or planets')
-            context = YogaContext(planets, asc_sign)
-            benefics = context.functional_benefics()
-            malefics = context.functional_malefics()
-            return {
-                'status': 'used',
-                'ascendant': asc_sign,
-                'functional_benefics': benefics,
-                'functional_malefics': malefics,
-                'effect_on_confidence': (
-                    '高严谨模式下必须叠加功能性吉凶星；若与自然吉凶属性冲突，'
-                    '应降低置信度并在 Technique Audit Table 中显式说明。'
-                ),
-            }
+            return derive_functional_benefic_malefic(asc_sign)
         except Exception as exc:
             return {
                 'status': 'blocked',
                 'ascendant': ascendant.get('sign'),
                 'functional_benefics': [],
                 'functional_malefics': [],
+                'functional_neutrals': [],
+                'yogakarakas': [],
+                'owned_houses': {},
                 'effect_on_confidence': f'未完成功能性吉凶星判定，需降低高严谨结论置信度: {exc}',
+                'source': 'strict_functional_benefic_malefic_v1',
             }
 
     def _detect_yogas(self, planets, asc_idx):

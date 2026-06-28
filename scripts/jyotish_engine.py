@@ -859,30 +859,20 @@ def _oracle_progress_snapshot():
 
 def _functional_benefic_malefic_snapshot(planets, ascendant):
     try:
-        from yoga_engine import YogaContext
+        from functional_benefics import derive_functional_benefic_malefic
         asc_sign = ascendant.get('sign') if isinstance(ascendant, dict) else None
-        if not asc_sign or not isinstance(planets, dict):
-            raise ValueError('missing ascendant sign or planets')
-        context = YogaContext(planets, asc_sign)
-        benefics = context.functional_benefics()
-        malefics = context.functional_malefics()
-        return {
-            'status': 'used',
-            'ascendant': asc_sign,
-            'functional_benefics': benefics,
-            'functional_malefics': malefics,
-            'effect_on_confidence': (
-                '高严谨模式下必须叠加功能性吉凶星；若与自然吉凶属性冲突，'
-                '应降低置信度并在 Technique Audit Table 中显式说明。'
-            ),
-        }
+        return derive_functional_benefic_malefic(asc_sign)
     except Exception as exc:
         return {
             'status': 'blocked',
             'ascendant': ascendant.get('sign') if isinstance(ascendant, dict) else None,
             'functional_benefics': [],
             'functional_malefics': [],
+            'functional_neutrals': [],
+            'yogakarakas': [],
+            'owned_houses': {},
             'effect_on_confidence': f'未完成功能性吉凶星判定，需降低高严谨结论置信度: {exc}',
+            'source': 'strict_functional_benefic_malefic_v1',
         }
 
 

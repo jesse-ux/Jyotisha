@@ -34,6 +34,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(SCRIPT_DIR, "scripts"))
 
 from mcp.server.fastmcp import FastMCP
+from functional_benefics import derive_functional_benefic_malefic
 
 # ============================================================================
 # MCP Server
@@ -452,86 +453,19 @@ def _derive_external_activation_support(modules: Dict[str, Any], domain: str) ->
 def _derive_functional_benefic_malefic(modules: Dict[str, Any]) -> Dict[str, Any]:
     chart = _safe_get(modules, "chart")
     ascendant = _safe_get(chart, "ascendant") if isinstance(chart, dict) else None
-    planets = _safe_get(chart, "planets") if isinstance(chart, dict) else None
-    if not isinstance(ascendant, dict) or not isinstance(planets, dict):
+    if not isinstance(ascendant, dict):
         return {
             "status": "blocked",
             "ascendant": ascendant.get("sign") if isinstance(ascendant, dict) else None,
             "functional_benefics": [],
             "functional_malefics": [],
-            "effect_on_confidence": "Missing chart.ascendant or chart.planets; functional layer blocked.",
+            "functional_neutrals": [],
+            "yogakarakas": [],
+            "owned_houses": {},
+            "effect_on_confidence": "Missing chart.ascendant; functional layer blocked.",
             "source": "strict_functional_benefic_malefic_v1",
         }
-    asc_sign = ascendant.get("sign")
-    asc_idx = _SIGN_TO_INDEX.get(asc_sign)
-    if asc_idx is None:
-        return {
-            "status": "blocked",
-            "ascendant": asc_sign,
-            "functional_benefics": [],
-            "functional_malefics": [],
-            "effect_on_confidence": "Functional layer blocked: unknown ascendant sign.",
-            "source": "strict_functional_benefic_malefic_v1",
-        }
-
-    owned_houses: Dict[str, List[int]] = {}
-    for house_num in range(1, 13):
-        sign = _SIGNS[(asc_idx + house_num - 1) % 12]
-        lord = _SIGN_LORDS.get(sign)
-        if lord:
-            owned_houses.setdefault(lord, []).append(house_num)
-
-    trines = {1, 5, 9}
-    kendras = {1, 4, 7, 10}
-    challenging = {3, 6, 8, 11, 12}
-    benefics: set[str] = set()
-    malefics: set[str] = set()
-    yogakarakas: set[str] = set()
-    neutrals: set[str] = set()
-
-    for planet in ("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"):
-        houses = owned_houses.get(planet, [])
-        if not houses:
-            continue
-        owns_trine = any(house in trines for house in houses)
-        owns_kendra = any(house in kendras for house in houses)
-        owns_challenge = any(house in challenging for house in houses)
-
-        if owns_trine and owns_kendra and planet not in {"Sun", "Moon"}:
-            yogakarakas.add(planet)
-            benefics.add(planet)
-        elif owns_trine:
-            benefics.add(planet)
-        elif owns_challenge and 1 not in houses:
-            malefics.add(planet)
-        elif owns_kendra and planet in {"Jupiter", "Venus", "Mercury", "Moon"}:
-            neutrals.add(planet)
-        else:
-            neutrals.add(planet)
-
-    # Classical softening: Sun/Moon as 8L are not treated as harshly as other 8L.
-    eighth_lord = owned_houses and next(
-        (planet for planet, houses in owned_houses.items() if 8 in houses),
-        None,
-    )
-    if eighth_lord in {"Sun", "Moon"} and eighth_lord in malefics:
-        malefics.remove(eighth_lord)
-        neutrals.add(eighth_lord)
-
-    return {
-        "status": "used",
-        "ascendant": asc_sign,
-        "functional_benefics": sorted(benefics),
-        "functional_malefics": sorted(malefics),
-        "functional_neutrals": sorted(neutrals - benefics - malefics),
-        "yogakarakas": sorted(yogakarakas),
-        "owned_houses": {planet: houses for planet, houses in sorted(owned_houses.items())},
-        "effect_on_confidence": (
-            "High-rigor outputs must combine functional house-lord roles with natural roles; "
-            "conflicts should cap confidence or be explicitly noted."
-        ),
-        "source": "strict_functional_benefic_malefic_v1",
-    }
+    return derive_functional_benefic_malefic(ascendant.get("sign"))
 
 
 def _derive_synastry_relationship_support(modules: Dict[str, Any]) -> Dict[str, Any]:

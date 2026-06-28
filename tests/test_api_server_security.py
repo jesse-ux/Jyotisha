@@ -8,6 +8,7 @@ import json
 import os
 import sys
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -431,6 +432,30 @@ def test_report_artifact_generates_html_fallback_artifact() -> None:
     assert result['delivery']['artifact_status'] == 'html_ready'
     assert result['delivery']['user_message']
     assert result['delivery']['next_action']
+
+
+def test_report_artifact_can_render_functional_benefic_malefic_summary() -> None:
+    handler = _handler()
+    result = handler._compute_report_artifact({
+        'format': 'html',
+        'name': 'functional-role-report',
+        'html': '<!doctype html><html><body><h1>Jyotish</h1></body></html>',
+        'functional_benefic_malefic': {
+            'status': 'used',
+            'ascendant': 'Leo',
+            'functional_benefics': ['Sun', 'Mars', 'Jupiter'],
+            'functional_malefics': ['Venus', 'Saturn'],
+            'effect_on_confidence': '高严谨模式下必须叠加功能性吉凶星。',
+        },
+    })
+
+    assert result['success'] is True
+    html = Path(result['html_path']).read_text(encoding='utf-8')
+    assert 'Functional Benefic/Malefic' in html
+    assert 'Leo' in html
+    assert 'Sun, Mars, Jupiter' in html
+    assert 'Venus, Saturn' in html
+    assert '高严谨模式下必须叠加功能性吉凶星。' in html
 
 
 def test_report_artifact_pdf_fallback_exposes_user_visible_delivery(monkeypatch) -> None:
