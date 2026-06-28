@@ -24,6 +24,7 @@ This file is the small index for the current engineering fronts that still drive
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/wealth_adjudicator_fifth_pass_audit_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/wealth_adjudicator_sixth_pass_audit_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/wealth_adjudicator_sixth_pass_avayogi_boundary_2026_06_28.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/wealth_adjudicator_seventh_pass_ashtakavarga_bridge_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/references/event_judgment_wealth.md`
 
 ## Oracle Closure

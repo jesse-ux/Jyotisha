@@ -186,6 +186,48 @@ def test_collect_strict_evidence_finance_derives_wealth_promise_from_dhana_yogas
     assert strict["event_judgement"]["payout_label"] == "public_wealth_status"
 
 
+def test_collect_strict_evidence_finance_folds_wealth_ashtakavarga_support() -> None:
+    result = {
+        "modules": {
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {
+                "house_scores": {
+                    "2": 33,
+                    "11": 35,
+                    "10": {"sav": 32},
+                }
+            },
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "moderate"}],
+                    "summary": "Dhana Yoga检测：共1个格局",
+                }
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+
+    assert strict["present_evidence"]["ashtakavarga_finance_support"] == {
+        "level": "supportive",
+        "source": "ashtakavarga_house_scores_bridge_v1",
+        "target_houses": [2, 11],
+        "signals": ["wealth_sav_support"],
+        "raw_scores": {"2": 33, "11": 35},
+    }
+    assert "ashtakavarga_wealth_support" in strict["event_judgement"]["secondary_context"]
+
+
 def test_collect_strict_evidence_finance_combines_dhana_and_lakshmi_hooks() -> None:
     result = {
         "modules": {
