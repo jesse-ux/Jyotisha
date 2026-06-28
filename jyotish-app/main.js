@@ -1806,6 +1806,7 @@ function renderTrustCenterPanel() {
         ${renderVedAstroStatus(vedastro)}
       </div>
       ${renderRuntimeHealthPanel(runtime)}
+      ${renderVedAstroUserScanPanel()}
       ${renderValidationTransparencyPanel()}
       ${renderDashaShadbalaCalibrationPanel()}
       ${renderOracleEvidenceIntakePanel()}
@@ -2270,6 +2271,84 @@ function renderVedAstroStatus(status = getVedAstroStatus()) {
   return renderTrustStatus('VedAstro 外部雷达', status.label, status.note);
 }
 
+function getVedAstroScanState() {
+  return window.__jyotishVedAstroRangeScan || { status: 'idle' };
+}
+
+function renderVedAstroUserScanPanel(state = getVedAstroScanState()) {
+  const today = new Date();
+  const start = state.start_date || `${today.getFullYear()}-01-01`;
+  const end = state.end_date || `${today.getFullYear()}-12-31`;
+  const domain = state.domain || 'career';
+  return `
+    <div class="runtime-health-panel vedastro-user-scan-panel" data-vedastro-user-scan="true">
+      <div class="calculation-settings-head">
+        <strong>VedAstro Range Scan</strong>
+        <span>对当前星盘运行外部高频事件雷达；外部证据只进 secondary context。</span>
+      </div>
+      <div class="calculation-settings-grid">
+        <label>
+          <span>领域</span>
+          <select id="vedastro-scan-domain">
+            <option value="career"${domain === 'career' ? ' selected' : ''}>事业</option>
+            <option value="relationship"${domain === 'relationship' ? ' selected' : ''}>婚恋</option>
+            <option value="finance"${domain === 'finance' ? ' selected' : ''}>财富</option>
+          </select>
+        </label>
+        <label>
+          <span>开始</span>
+          <input id="vedastro-scan-start" type="date" value="${escapeAttr(start)}">
+        </label>
+        <label>
+          <span>结束</span>
+          <input id="vedastro-scan-end" type="date" value="${escapeAttr(end)}">
+        </label>
+      </div>
+      <div class="provenance-actions">
+        <button type="button" class="provenance-action" data-action="vedastro-run-range-scan">运行 VedAstro 外部雷达扫描</button>
+      </div>
+      ${renderVedAstroRangeScanResult(state)}
+    </div>
+  `;
+}
+
+function renderVedAstroRangeScanResult(state = getVedAstroScanState()) {
+  if (state.status === 'running') {
+    return '<div class="workspace-import-status" aria-live="polite">正在请求 /api/vedastro/range_scan...</div>';
+  }
+  if (state.status === 'idle') {
+    return '<div class="calculation-settings-note">请先生成星盘，再选择年份或日期范围运行扫描。没有配置 VEDASTRO_API_ENDPOINT 时会返回 blocked 边界。</div>';
+  }
+  if (state.status === 'error') {
+    return `<div class="workspace-import-status" aria-live="polite">VedAstro Range Scan 未完成：${escapeHtml(state.error || '本地 API 不可用')}</div>`;
+  }
+  const result = state.result?.result || state.result || {};
+  const metadata = result.source_metadata || {};
+  const events = Array.isArray(result.evidence_ledger) ? result.evidence_ledger.slice(0, 5) : [];
+  const status = result.status || state.status || '-';
+  const eventCount = result.event_count ?? events.length ?? 0;
+  return `
+    <div class="workspace-import-status" aria-live="polite">
+      VedAstro Range Scan：${escapeHtml(status)} · ${escapeHtml(String(eventCount))} events · ${escapeHtml(state.start_date || '-')}/${escapeHtml(state.end_date || '-')}
+    </div>
+    <div class="calculation-settings-note">
+      ${escapeHtml(result.reason || state.result?.boundary || '外部雷达结果已挂到 chartData.modules.vedastro_range_scan_result；本地 Jyotish gates 仍为主判断。')}
+      ${metadata.artifact_path ? ` artifact: ${escapeHtml(metadata.artifact_path)}` : ''}
+    </div>
+    ${events.length ? `
+      <div class="runtime-health-grid">
+        ${events.map(event => `
+          <div class="trust-status-card">
+            <span>${escapeHtml(event.signal_label || event.event_id || 'VedAstro event')}</span>
+            <strong>${escapeHtml(event.start || '-')}</strong>
+            <small>${escapeHtml(event.signal_family || event.domain || 'range_scan')}</small>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+  `;
+}
+
 function getRuntimeHealthStatus() {
   const health = window.__jyotishRuntimeHealth;
   if (!health) {
@@ -2544,6 +2623,69 @@ async function runTrustCenterRealCaseRevalidation() {
       boundary: `真实案例复验需要本地 API 服务：${error?.message || '请先启动本地 API。'} 这不是人生事件预测准确率。`,
     };
     if (status) status.textContent = `真实案例复验未完成：${error?.message || '本地 API 未连接'}`;
+  }
+  renderAll();
+}
+
+function buildVedAstroRangeScanPayload(panel) {
+  const birth = window.__jyotishBirth || normalizeSavedBirth(chartData || {});
+  if (!chartData && !window.__jyotishBirth) {
+    throw new Error('请先生成星盘，再运行 VedAstro 外部雷达扫描。');
+  }
+  const settings = readCalculationSettings();
+  return {
+    ...birth,
+    domain: panel.querySelector('#vedastro-scan-domain')?.value || 'career',
+    start_date: panel.querySelector('#vedastro-scan-start')?.value || `${new Date().getFullYear()}-01-01`,
+    end_date: panel.querySelector('#vedastro-scan-end')?.value || `${new Date().getFullYear()}-12-31`,
+    ayanamsa_policy: settings.ayanamsa,
+    node_policy: settings.nodeMode,
+    case_id: getCurrentChartId(chartData || { birth_info: birth }) || 'user_chart',
+  };
+}
+
+async function runVedAstroRangeScanFromPanel(panel) {
+  const status = $('trust-center-status');
+  let payload;
+  try {
+    payload = buildVedAstroRangeScanPayload(panel);
+  } catch (error) {
+    window.__jyotishVedAstroRangeScan = { status: 'error', error: error?.message || '缺少当前星盘' };
+    if (status) status.textContent = window.__jyotishVedAstroRangeScan.error;
+    renderAll();
+    return;
+  }
+  window.__jyotishVedAstroRangeScan = {
+    status: 'running',
+    domain: payload.domain,
+    start_date: payload.start_date,
+    end_date: payload.end_date,
+  };
+  if (status) status.textContent = '正在运行 VedAstro 外部雷达扫描...';
+  renderAll();
+  try {
+    const result = await window.JyotishAPI.runVedAstroRangeScan(payload);
+    window.__jyotishVedAstroRangeScan = {
+      status: result.result?.status || 'ok',
+      domain: payload.domain,
+      start_date: payload.start_date,
+      end_date: payload.end_date,
+      result,
+    };
+    if (chartData) {
+      chartData.modules = chartData.modules || {};
+      chartData.modules.vedastro_range_scan_result = result.result;
+    }
+    if (status) status.textContent = `VedAstro Range Scan 完成：${result.result?.status || 'ok'}`;
+  } catch (error) {
+    window.__jyotishVedAstroRangeScan = {
+      status: 'error',
+      domain: payload.domain,
+      start_date: payload.start_date,
+      end_date: payload.end_date,
+      error: error?.message || 'VedAstro Range Scan failed',
+    };
+    if (status) status.textContent = `VedAstro Range Scan 未完成：${window.__jyotishVedAstroRangeScan.error}`;
   }
   renderAll();
 }
@@ -3097,6 +3239,9 @@ function bindProvenanceActions() {
     }
     if (btn.dataset.action === 'trust-run-health') {
       runTrustCenterHealthCheck();
+    }
+    if (btn.dataset.action === 'vedastro-run-range-scan') {
+      runVedAstroRangeScanFromPanel(panel);
     }
     if (btn.dataset.action === 'pwa-install') {
       promptPWAInstall();

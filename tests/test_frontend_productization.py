@@ -987,6 +987,30 @@ def test_trust_center_surfaces_vedastro_adapter_status_without_endpoint_secret()
     assert "secret/path" not in main
 
 
+def test_trust_center_exposes_user_runnable_vedastro_range_scan() -> None:
+    main = (ROOT / "jyotish-app" / "main.js").read_text(encoding="utf-8")
+    api_bridge = (ROOT / "jyotish-app" / "api-bridge.js").read_text(encoding="utf-8")
+    public_bridge = (ROOT / "jyotish-app" / "public" / "api-bridge.js").read_text(encoding="utf-8")
+
+    for bridge in (api_bridge, public_bridge):
+        assert "runVedAstroRangeScan" in bridge
+        assert "/api/vedastro/range_scan" in bridge
+    for token in [
+        "renderVedAstroUserScanPanel",
+        "runVedAstroRangeScanFromPanel",
+        "vedastro-run-range-scan",
+        "vedastro-scan-domain",
+        "vedastro-scan-start",
+        "vedastro-scan-end",
+        "VedAstro Range Scan",
+        "modules.vedastro_range_scan_result",
+        "service_endpoint_not_configured",
+        "network_execution_disabled",
+        "外部证据只进 secondary context",
+    ]:
+        assert token in main
+
+
 def test_github_release_quality_gate_runs_browser_release_profile() -> None:
     workflow = (ROOT / ".github" / "workflows" / "release-quality-gate.yml").read_text(encoding="utf-8")
     for token in [
@@ -1686,6 +1710,8 @@ def test_provenance_panchanga_workspace_panel_is_productized() -> None:
         "ulDkTiming",
         "UL/DK 与关系时机",
         "buildRelationshipReportTemplate",
+        "public_formalization_candidate",
+        "不能误读成接近结婚",
         "relationshipKutaMeaning",
         "renderRelationshipReport",
         "renderRelationshipReportList",
@@ -1902,9 +1928,30 @@ def test_provenance_panchanga_workspace_panel_is_productized() -> None:
     assert "_relationshipReportBullets" in export_js
     assert "_relationshipReportList" in export_js
     assert "_relationshipBoundary" in export_js
+    assert "_relationshipStrictNarrativeSection" in export_js
     assert "relationship_report" in export_js
+    assert "relationship_narrative" in export_js
+    assert "relationship_narrative" in main
+    assert "strictNarrative" in main
     assert "relationship-deliverable" in export_js
     assert "relationship-evidence-grid" in export_js
+    assert "relationship-strict-narrative" in export_js
+    assert "relationship-caution" in export_js
+    assert "婚恋严格裁决" in export_js
+    assert "dual dasha" in export_js
+
+
+def test_synastry_relationship_report_template_keeps_public_formalization_candidate_as_context_not_near_marriage() -> None:
+    main = read("main.js")
+    export_js = read("export.js")
+    html = read("index.html")
+    manifest = read("public/manifest.webmanifest")
+    sw = read("public/sw.js")
+    glossary = read("glossary.js")
+
+    assert "public_formalization_candidate" in main
+    assert "不能误读成接近结婚" in main
+    assert "不得越权抬升 legal_marriage" in main
     assert "comparison-print-table" in export_js
     assert "composite-print-grid" in export_js
     assert "uldk-print-grid" in export_js
@@ -1985,6 +2032,28 @@ def test_provenance_panchanga_workspace_panel_is_productized() -> None:
     assert "parseFloat($('birth-tz').value)" not in main
     assert "window.confirm(`删除" in main
     assert "window.confirm('清空本地星盘" in main
+    assert "高兼容，仍需完整复核" in main
+    assert "若当前更偏向 public_formalization_candidate，请把它理解为关系公开化候选，而不是婚姻逼近。" in main
+    assert "公开化候选浮现，但婚姻承诺与时机仍需保守复核。" in main
+    assert "公开化候选，不等于婚姻逼近" in main
+    assert "先不要把高 Ashtakoot 分数翻译成婚姻逼近，应先复核 promise、dual dasha 与 external timing。" in main
+    assert "status = hasPublicFormalizationCandidate && hasConflictWarning ? 'needs_context'" in main
+
+
+def test_synastry_relationship_report_template_keeps_high_ashtakoot_public_formalization_and_weak_promise_case_fully_conservative() -> None:
+    main = read("main.js")
+
+    for token in [
+        "高兼容，仍需完整复核",
+        "public_formalization_candidate 说明当前更偏向公开化/关系可见度候选，而不是法律婚姻本身。",
+        "当前即便存在合盘支持与公开化候选，也不能误读成接近结婚；若 weak core promise、dual dasha 或 external timing 未收敛，仍应保持保守。",
+        "若当前更偏向 public_formalization_candidate，请把它理解为关系公开化候选，而不是婚姻逼近。",
+        "先不要把高 Ashtakoot 分数翻译成婚姻逼近，应先复核 promise、dual dasha 与 external timing。",
+        "public_formalization_candidate 只表示公开化候选，不得越权抬升 legal_marriage，也不能误读成接近结婚。",
+        "公开化候选浮现，但婚姻承诺与时机仍需保守复核。",
+        "公开化候选，不等于婚姻逼近",
+    ]:
+        assert token in main
 
 
 def test_mobile_layout_keeps_dense_sections_single_column() -> None:

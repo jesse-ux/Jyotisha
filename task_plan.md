@@ -108,6 +108,9 @@
 - [x] 公开演示环境 polish：首屏与 Trust Center 新增静态 demo/PWA 无 API 能力边界，README 与 `deployment_preflight.py` 增加 `static_demo_boundary_visible` 守门，明确 Vercel/Netlify/GitHub Pages 只适合作为静态壳，完整技法走 Docker Compose 或本地双服务。
 - [x] Dasha/Shadbala 外部 oracle 边界第一步：新增 `references/oracle/dasha_shadbala_oracle_cases.json` 与 `scripts/oracle_boundary_audit.py`，把用户 PDF 的 Vimshottari 起点差异和 Shadbala 分量级校准缺口纳入可重复审计报告。
 - [x] VedAstro 黄经 oracle 接入：`longitude_cases` 已记录用户盘 9 项外部 sidereal longitude，本地最大差约 26.23 角秒且 D1/D9 落点一致；该样本只用于 ephemeris drift 审计，不作为 Dasha/Shadbala 调参依据。
+- [x] VedAstro Adapter MVP 方案 A：`vedastro_service_adapter` 已补来源哈希、响应哈希、调用时间、endpoint host、artifact path、重试元数据与本地 evidence artifact；`/api/vedastro/status`、Trust Center、`vedastro-live` 质量门和 MCP strict workflow 直接消费 `modules.vedastro_range_scan_result` 已接入。
+- [x] VedAstro 普通用户入口：新增 `/api/vedastro/range_scan` 与 Trust Center `VedAstro Range Scan` 面板，用户生成星盘后可选择事业/婚恋/财富和日期范围运行外部雷达；未配置 endpoint 时返回受控 blocked，配置后走同一 adapter 实网链路。
+- [ ] VedAstro 官方实网 endpoint smoke：等待配置 `VEDASTRO_API_ENDPOINT` 与 `VEDASTRO_ENABLE_NETWORK=1` 后运行 `python3 scripts/run_quality_gate.py --profile vedastro-live`，当前默认 CI 只验证受控 `blocked` 边界，不声称官方实网已闭环。
 - [x] Multi-Ayanamsa 计算层可验证切换：`full-reading --ayanamsa` 已在输出中记录 `ayanamsa_name/display/value`，`compute_chart_data(..., ayanamsa_name=...)` 也能直接切换；测试覆盖 Lahiri/Raman/KP 差异。
 - [x] AI Native Prompt/RAG 承载层第一步：`full-reading.ai_prompt_pack` 输出证据快照、检索文档、边界约束和结构化中文提示词，供网页/app 或 skill 后端 AI 代理生成高阶解读。
 - [x] Antigravity AI 副手工作单：新增 `docs/research/antigravity_sidecar_work_order_2026_06_25.md`，把 Antigravity 限定为外部 oracle 样本采集、网页/app 审计、skill 同步审计和浏览器用户流验证，避免与核心计算修改冲突。

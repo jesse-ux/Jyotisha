@@ -80,9 +80,9 @@ OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH = "/Calculate/SearchEvents"
 OFFICIAL_SEARCH_EVENTS_METHOD = "POST"
 OFFICIAL_SEARCH_EVENTS_PROFILE_VERSION = "official_builder_search_events_v1"
 OFFICIAL_RANGE_SCAN_EVENT_TAGS = {
-    "marriage": ["Marriage", "General"],
-    "wealth": ["LendingMoney", "BorrowingMoney", "General"],
-    "career": ["General", "Building", "Travel"],
+    "marriage": ["Marriage", "Personal", "General"],
+    "wealth": ["LendingMoney", "BorrowingMoney", "BuyingSelling", "General"],
+    "career": ["Personal", "General", "Building", "Travel"],
 }
 VEDASTRO_CALCULATION_COVERAGE = {
     "official_python_library_calculations": "596+",
@@ -204,6 +204,52 @@ RANGE_SCAN_SIGNAL_METADATA = {
         },
     },
 }
+RANGE_SCAN_OFFICIAL_TAG_MATCHES = {
+    "marriage": {"Marriage"},
+    "wealth": {"LendingMoney", "BorrowingMoney", "BuyingSelling"},
+    "career": {"Building", "Travel"},
+}
+RANGE_SCAN_ALIAS_TERMS = {
+    "marriage": {
+        "marriage",
+        "spouse",
+        "wedding",
+        "relationship",
+        "partner",
+        "partnership",
+    },
+    "wealth": {
+        "wealth",
+        "money",
+        "finance",
+        "financial",
+        "income",
+        "gain",
+        "gains",
+        "lending",
+        "borrowing",
+        "business",
+        "cash",
+    },
+    "career": {
+        "career",
+        "profession",
+        "work",
+        "job",
+        "business",
+        "travel",
+        "building",
+        "public",
+        "status",
+    },
+}
+MATCH_METADATA_BY_TYPE = {
+    "exact_id": {"signal_lift": 3, "confidence": "high"},
+    "official_tag": {"signal_lift": 2, "confidence": "medium_high"},
+    "alias": {"signal_lift": 1, "confidence": "low"},
+    "rejected": {"signal_lift": 0, "confidence": "rejected"},
+}
+ALIAS_NEGATIVE_GUARD_TERMS = {"noise", "without", "generic", "irrelevant", "insignificance", "not"}
 DEFAULT_TIMEOUT_SECONDS = 120
 TIMEOUT_ENV = "VEDASTRO_TIMEOUT_SECONDS"
 BACKOFF_ENV = "VEDASTRO_RETRY_BACKOFF_SECONDS"
@@ -653,9 +699,20 @@ def _normalize_range_scan_success(
     allowlist = RANGE_SCAN_EVENT_ALLOWLIST.get(domain, {})
     allowed_ids = allowlist.get("event_ids", set())
     allowed_tags = allowlist.get("tags", set())
+    official_tags = RANGE_SCAN_OFFICIAL_TAG_MATCHES.get(domain, set())
+    alias_terms = RANGE_SCAN_ALIAS_TERMS.get(domain, set())
 
     original_event_count = len(events)
     evidence_ledger = []
+    mapping_details = []
+    matched_tags: set[str] = set()
+    recommended_allowlist_candidates: set[str] = set()
+    match_counts = {
+        "exact_id": 0,
+        "official_tag": 0,
+        "alias": 0,
+        "rejected": 0,
+    }
     for index, event in enumerate(events, start=1):
         if not isinstance(event, dict):
             continue
@@ -665,15 +722,75 @@ def _normalize_range_scan_success(
         if not isinstance(tags, list):
             tags = []
         tag_set = {str(tag) for tag in tags}
-        if event_id not in allowed_ids and tag_set.isdisjoint(allowed_tags):
-            continue
+        matched_by = "rejected"
+        matched_terms: list[str] = []
+        drop_reason = "no_supported_match"
         signal_metadata = RANGE_SCAN_SIGNAL_METADATA.get(domain, {}).get(event_id, {})
+        if event_id in allowed_ids:
+            matched_by = "exact_id"
+            matched_terms = [event_id]
+            drop_reason = ""
+        else:
+            official_tag_hits = sorted(tag_set.intersection(official_tags))
+            if official_tag_hits:
+                matched_by = "official_tag"
+                matched_terms = official_tag_hits
+                drop_reason = ""
+            else:
+                haystack_parts = [
+                    str(event_id),
+                    str(event.get("Description") or ""),
+                    str(event.get("description") or ""),
+                    str(event.get("Name") or ""),
+                    " ".join(str(tag) for tag in tags),
+                ]
+                haystack = " ".join(part.lower() for part in haystack_parts if part)
+                alias_hits = sorted(term for term in alias_terms if term in haystack)
+                guard_hits = sorted(term for term in ALIAS_NEGATIVE_GUARD_TERMS if term in haystack)
+                if alias_hits and not guard_hits:
+                    matched_by = "alias"
+                    matched_terms = alias_hits
+                    drop_reason = ""
+        match_counts[matched_by] += 1
+        if matched_by == "rejected":
+            mapping_details.append(
+                {
+                    "event_id": event_id,
+                    "matched_by": matched_by,
+                    "matched_terms": matched_terms,
+                    "drop_reason": drop_reason,
+                    "tags": tags,
+                }
+            )
+            continue
+        if matched_by == "official_tag":
+            matched_tags.update(matched_terms)
+            if event_id not in allowed_ids and not tag_set.intersection(allowed_tags):
+                recommended_allowlist_candidates.add(event_id)
+        elif matched_by == "alias":
+            if event_id not in allowed_ids:
+                recommended_allowlist_candidates.add(event_id)
+        match_meta = MATCH_METADATA_BY_TYPE[matched_by]
+        mapping_details.append(
+            {
+                "event_id": event_id,
+                "matched_by": matched_by,
+                "matched_terms": matched_terms,
+                "drop_reason": drop_reason,
+                "tags": tags,
+            }
+        )
         evidence_ledger.append(
             {
                 "source": "vedastro_service_adapter_candidate",
                 "operation": "range_scan",
                 "domain": domain,
                 "event_id": event_id,
+                "matched_by": matched_by,
+                "matched_terms": matched_terms,
+                "signal_lift": match_meta["signal_lift"],
+                "confidence": match_meta["confidence"],
+                "drop_reason": None,
                 "signal_key": signal_metadata.get("signal_key"),
                 "signal_label": signal_metadata.get("signal_label") or event.get("name") or event_id,
                 "signal_family": signal_metadata.get("signal_family"),
@@ -709,6 +826,15 @@ def _normalize_range_scan_success(
         "allowlist_event_count": len(evidence_ledger),
         "filtered_event_count": len(evidence_ledger),
         "raw_event_count": original_event_count,
+        "mapping_replay": {
+            "raw_event_count": original_event_count,
+            "filtered_event_count": len(evidence_ledger),
+            "zero_event_domains": [domain] if original_event_count > 0 and not evidence_ledger else [],
+            "match_counts": match_counts,
+            "matched_tags": sorted(matched_tags),
+            "recommended_allowlist_candidates": sorted(recommended_allowlist_candidates),
+            "events": mapping_details,
+        },
         **(payload.get("source_metadata") or {}),
     }
     result = {

@@ -20,6 +20,8 @@ def test_life_event_graph_folds_strict_evidence_and_vedastro_top_event() -> None
                 "ul_support",
                 "external_activation_support",
                 "synastry_support",
+                "synastry_compatibility_support",
+                "synastry_protective_kuta_support",
             ],
             "primary_drivers": [
                 "marriage_convergence",
@@ -99,6 +101,16 @@ def test_life_event_graph_folds_strict_evidence_and_vedastro_top_event() -> None
         "tags": ["marriage", "transit"],
         "source": "vedastro_service_adapter_candidate",
     }
+    assert {
+        "kind": "context",
+        "label": "synastry_compatibility_support",
+        "source": "event_judgement.secondary_context",
+    } in graph["event_nodes"]
+    assert {
+        "kind": "context",
+        "label": "synastry_protective_kuta_support",
+        "source": "event_judgement.secondary_context",
+    } in graph["event_nodes"]
 
 
 def test_life_event_graph_is_returned_from_strict_relationship_evidence() -> None:

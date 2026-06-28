@@ -232,6 +232,10 @@ async function getVedAstroStatus() {
   return fetchJson('/api/vedastro/status');
 }
 
+async function runVedAstroRangeScan(payload) {
+  return postJson('/api/vedastro/range_scan', payload);
+}
+
 async function getTechniqueCatalog() {
   let lastError = null;
   for (const base of getApiBases(true)) {
@@ -455,6 +459,7 @@ window.JyotishAPI = {
   getAPIHealth,
   getCapabilityAudit,
   getVedAstroStatus,
+  runVedAstroRangeScan,
   getTechniqueCatalog,
   runTechniqueExample,
   computeAnnual,

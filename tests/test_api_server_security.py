@@ -108,6 +108,30 @@ class _VedAstroStatusCaptureHandler(JyotishAPIHandler):
         return json.loads(self.wfile.getvalue().decode('utf-8'))
 
 
+class _PostCaptureHandler(JyotishAPIHandler):
+    def __init__(self, path: str, payload: dict) -> None:
+        raw = json.dumps(payload).encode('utf-8')
+        self.headers = _FakeHeaders({'Content-Length': str(len(raw))})
+        self.server = _FakeServer()
+        self.path = path
+        self.rfile = BytesIO(raw)
+        self.wfile = BytesIO()
+        self.status_code = None
+        self.response_headers = []
+
+    def send_response(self, code, message=None):  # noqa: ANN001
+        self.status_code = code
+
+    def send_header(self, key, value):  # noqa: ANN001
+        self.response_headers.append((key, value))
+
+    def end_headers(self):
+        return None
+
+    def payload(self) -> dict:
+        return json.loads(self.wfile.getvalue().decode('utf-8'))
+
+
 def test_default_cors_origins_are_local_only() -> None:
     assert 'http://localhost:3456' in DEFAULT_ALLOWED_ORIGINS
     assert '*' not in DEFAULT_ALLOWED_ORIGINS
@@ -164,6 +188,42 @@ def test_vedastro_status_endpoint_exposes_safe_adapter_state(monkeypatch) -> Non
     assert 'secret/path' not in json.dumps(payload)
     assert payload['required_env']['endpoint'] == 'VEDASTRO_API_ENDPOINT'
     assert payload['live_profile'] == 'vedastro-live'
+
+
+def test_vedastro_range_scan_endpoint_uses_user_birth_and_returns_controlled_blocked_state(monkeypatch) -> None:
+    monkeypatch.delenv('VEDASTRO_API_ENDPOINT', raising=False)
+    monkeypatch.delenv('VEDASTRO_ENABLE_NETWORK', raising=False)
+    handler = _PostCaptureHandler('/api/vedastro/range_scan', {
+        'domain': 'relationship',
+        'start_date': '2026-01-01',
+        'end_date': '2026-12-31',
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'second': 0,
+        'lat': 36.4467,
+        'lon': 114.2,
+        'tz': 8,
+        'ayanamsa_policy': 'lahiri',
+        'node_policy': 'mean',
+    })
+
+    handler.do_POST()
+
+    assert handler.status_code == 200
+    payload = handler.payload()
+    assert payload['success'] is True
+    assert payload['endpoint'] == 'vedastro_range_scan'
+    assert payload['ui_domain'] == 'relationship'
+    assert payload['adapter_domain'] == 'marriage'
+    assert payload['result']['status'] == 'service_endpoint_not_configured'
+    assert payload['result']['operation'] == 'range_scan'
+    assert payload['result']['request_preview']['year'] == REDACTED_YEAR
+    assert payload['result']['request_preview']['lat'] == 36.4467
+    assert payload['result']['request_preview']['domain'] == 'marriage'
+    assert payload['boundary'] == 'VedAstro range scan is optional external timing evidence; local Jyotish gates remain authoritative.'
 
 
 @pytest.mark.parametrize(
@@ -518,6 +578,124 @@ def test_report_artifact_can_render_functional_benefic_malefic_summary() -> None
     assert '高严谨模式下必须叠加功能性吉凶星。' in html
 
 
+def test_report_artifact_can_render_relationship_strict_narrative_summary() -> None:
+    handler = _handler()
+    result = handler._compute_report_artifact({
+        'format': 'html',
+        'name': 'relationship-strict-report',
+        'html': '<!doctype html><html><body><h1>Jyotish</h1></body></html>',
+        'relationship_narrative': {
+            'headline': '婚恋严格裁决已接入 synastry taxonomy，可把合盘支持翻译成次级关系语义。',
+            'strengths': ['合盘支持已进入婚恋主链，但它只说明关系兼容度有帮助。'],
+            'risks': ['当前 confidence cap 偏低，dual dasha / external timing / marriage convergence 存在冲突或不足。'],
+            'boundaries': ['婚恋高严谨模式至少需要 D1、D9、UL、Vimshottari 与 Narayana dual dasha 同时在场。'],
+        },
+    })
+
+    assert result['success'] is True
+    html = Path(result['html_path']).read_text(encoding='utf-8')
+    assert 'Relationship Strict Narrative' in html
+    assert 'synastry taxonomy' in html
+    assert 'dual dasha' in html
+    assert 'D1、D9、UL' in html
+
+
+def test_report_artifact_relationship_strict_narrative_keeps_conflict_downgrade_language() -> None:
+    handler = _handler()
+    result = handler._compute_report_artifact({
+        'format': 'html',
+        'name': 'relationship-strict-conflict-report',
+        'html': '<!doctype html><html><body><h1>Jyotish</h1></body></html>',
+        'relationship_narrative': {
+            'headline': '婚恋 strict workflow 已识别支持层，但 timing conflict 仍要求降置信度。',
+            'strengths': ['D9、UL 与部分 synastry taxonomy 已在场。'],
+            'risks': ['dual dasha 与 external timing 发生冲突，不能把窗口直接抬成 legal marriage。'],
+            'boundaries': ['存在 timing conflict 时，最终婚恋 narrative 必须明确降置信度。'],
+            'markdown': '### 婚恋严格裁决\n- 当前 dual dasha 与 external timing 存在冲突，必须降置信度，不能把 supportive kuta 直接提升为 legal marriage。\n',
+        },
+    })
+
+    assert result['success'] is True
+    html = Path(result['html_path']).read_text(encoding='utf-8')
+    assert 'timing conflict' in html
+    assert 'dual dasha' in html
+    assert '降置信度' in html
+
+
+def test_report_artifact_relationship_strict_narrative_surfaces_public_formalization_candidate_boundary() -> None:
+    handler = _handler()
+    result = handler._compute_report_artifact({
+        'format': 'html',
+        'name': 'relationship-strict-public-formalization-report',
+        'html': '<!doctype html><html><body><h1>Jyotish</h1></body></html>',
+        'relationship_narrative': {
+            'headline': '当前关系更接近 public_formalization candidate，而不是 legal marriage。',
+            'strengths': ['公开化/可见度支持正在升温，但仍属于 context-only 线索。'],
+            'risks': ['dual dasha 与 marriage convergence 还不足以把事件抬升为法律婚姻。'],
+            'boundaries': ['public_formalization_candidate 只表示公开化候选，不等于法律婚姻，不能越权替代 legal_marriage。'],
+            'markdown': '### 婚恋严格裁决\n- public_formalization_candidate 已进入 secondary-context，但仍不能替代 legal_marriage。\n',
+        },
+    })
+
+    assert result['success'] is True
+    html = Path(result['html_path']).read_text(encoding='utf-8')
+    assert 'public_formalization_candidate' in html
+    assert '不等于法律婚姻' in html
+    assert 'legal_marriage' in html
+
+
+def test_report_artifact_relationship_strict_narrative_warns_public_formalization_candidate_not_to_be_misread_as_near_marriage() -> None:
+    handler = _handler()
+    result = handler._compute_report_artifact({
+        'format': 'html',
+        'name': 'relationship-strict-public-formalization-conflict-report',
+        'html': '<!doctype html><html><body><h1>Jyotish</h1></body></html>',
+        'relationship_narrative': {
+            'headline': '当前更接近 public_formalization candidate，但 timing conflict 仍然存在。',
+            'strengths': ['公开化候选正在形成，但仍只是 context-only 层。'],
+            'risks': ['当前 dual dasha / external timing 仍有冲突，不能误读成接近结婚。'],
+            'boundaries': ['public_formalization_candidate 不等于法律婚姻，不能越权替代 legal_marriage。'],
+            'markdown': '### 婚恋严格裁决\n- public_formalization_candidate 已进入 secondary-context，但当前 dual dasha 与 external timing 仍有冲突，不能误读成接近结婚，也不能替代 legal_marriage。\n',
+        },
+    })
+
+    assert result['success'] is True
+    html = Path(result['html_path']).read_text(encoding='utf-8')
+    assert 'public_formalization_candidate' in html
+    assert '不能误读成接近结婚' in html
+    assert 'legal_marriage' in html
+
+
+def test_report_artifact_relationship_strict_narrative_surfaces_weak_core_promise_guardrail_for_public_formalization_candidate() -> None:
+    handler = _handler()
+    result = handler._compute_report_artifact({
+        'format': 'html',
+        'name': 'relationship-strict-weak-core-promise-report',
+        'html': '<!doctype html><html><body><h1>Jyotish</h1></body></html>',
+        'relationship_narrative': {
+            'headline': '当前更接近 public_formalization candidate，但 core marriage promise 仍偏弱。',
+            'strengths': [
+                '合盘支持已进入婚恋主链，但它只说明关系兼容度有帮助。',
+                '公开化/关系可见度候选正在增强，但仍未达到法律婚姻落地。',
+            ],
+            'risks': ['当前 core marriage promise 偏弱，不能误读成接近结婚。'],
+            'boundaries': [
+                'protective kuta support 只能辅助，不得越权抬升 legal_marriage。',
+                'public_formalization_candidate 不等于法律婚姻。',
+            ],
+            'markdown': '### 婚恋严格裁决\n- public_formalization_candidate 与 synastry_support 可以同时存在，但在 weak core marriage promise 下，仍不能写成婚姻逼近，也不能替代 legal_marriage。\n',
+        },
+    })
+
+    assert result['success'] is True
+    html = Path(result['html_path']).read_text(encoding='utf-8')
+    assert 'public_formalization_candidate' in html
+    assert '合盘支持已进入婚恋主链' in html
+    assert '不能误读成接近结婚' in html
+    assert 'legal_marriage' in html
+    assert 'relationship-caution' in html
+
+
 def test_report_artifact_pdf_fallback_exposes_user_visible_delivery(monkeypatch) -> None:
     class BrokenReportBuilder:
         @staticmethod
@@ -832,7 +1010,35 @@ def test_thematic_report_derives_evidence_from_birth_payload() -> None:
     }
     assert 'chart' in marriage_sources
     assert 'full_reading.modules.marriage_counting' in marriage_sources
+    assert 'full_reading.modules.relationship_strict_evidence.user_narrative' in marriage_sources
     assert any(item['details'].get('derived') for item in result['themes']['career']['evidence'])
+
+
+def test_thematic_report_derives_relationship_strict_narrative_evidence() -> None:
+    handler = _handler()
+    result = handler._compute_thematic_report({
+        'theme': ['marriage'],
+        'year': 1990,
+        'month': 1,
+        'day': 1,
+        'hour': 12,
+        'minute': 0,
+        'lat': 39.9,
+        'lon': 116.4,
+        'tz': 8,
+    })
+
+    assert result['success'] is True
+    marriage_evidence = result['themes']['marriage']['evidence']
+    strict_rows = [
+        item for item in marriage_evidence
+        if item['details'].get('source') == 'full_reading.modules.relationship_strict_evidence.user_narrative'
+    ]
+    assert strict_rows
+    strict_note = strict_rows[0]['conclusion']
+    assert 'dual dasha' in strict_note
+    assert 'D9' in strict_note
+    assert 'legal_marriage' in strict_note or '婚恋' in strict_note
 
 
 def test_fragment_audit_blocks_registry_surface_drift() -> None:

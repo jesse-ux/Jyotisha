@@ -193,7 +193,7 @@ def test_vedastro_range_scan_unconfigured_still_returns_official_search_events_p
     assert report["request_preview"]["official_request_profile"]["method"] == "POST"
     assert report["request_preview"]["official_request_profile"]["headers"] == {"Content-Type": "application/json"}
     assert report["request_preview"]["official_request_profile"]["body"]["Ayanamsa"] == "lahiri"
-    assert report["request_preview"]["official_request_profile"]["body"]["EventTagList"] == ["LendingMoney", "BorrowingMoney", "General"]
+    assert report["request_preview"]["official_request_profile"]["body"]["EventTagList"] == ["LendingMoney", "BorrowingMoney", "BuyingSelling", "General"]
     assert "AtTime" not in report["request_preview"]["official_request_profile"]["body"]
     assert report["request_preview"]["official_request_profile"]["body"]["StartTime"]["StdTime"] == "12:00 01/01/2026 +08:00"
     assert report["request_preview"]["official_request_profile"]["body"]["EndTime"]["StdTime"] == "12:00 01/01/2031 +08:00"
@@ -230,7 +230,7 @@ def test_vedastro_service_adapter_posts_official_search_events_contract() -> Non
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
             assert payload["Ayanamsa"] == "lahiri"
-            assert payload["EventTagList"] == ["Marriage", "General"]
+            assert payload["EventTagList"] == ["Marriage", "Personal", "General"]
             assert payload["BirthTime"]["StdTime"] == "12:00 01/01/1990 +08:00"
             assert payload["AtTime"]["StdTime"] == "12:00 01/01/2026 +08:00"
             assert "StartTime" not in payload
@@ -369,7 +369,7 @@ def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> No
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
             assert payload["Ayanamsa"] == "lahiri"
-            assert payload["EventTagList"] == ["Marriage", "General"]
+            assert payload["EventTagList"] == ["Marriage", "Personal", "General"]
             assert payload["BirthTime"]["StdTime"] == "12:00 01/01/1990 +08:00"
             assert payload["StartTime"]["StdTime"] == "12:00 01/01/2026 +08:00"
             assert payload["EndTime"]["StdTime"] == "12:00 01/01/2031 +08:00"
@@ -531,7 +531,7 @@ def test_vedastro_range_scan_records_hashes_and_artifact_path() -> None:
     assert metadata["vedastro_event_method"] == "SearchEvents"
     assert metadata["official_endpoint_path"] == "/Calculate/SearchEvents"
     assert metadata["official_request_profile"]["method"] == "POST"
-    assert metadata["official_request_profile"]["body"]["EventTagList"] == ["Marriage", "General"]
+    assert metadata["official_request_profile"]["body"]["EventTagList"] == ["Marriage", "Personal", "General"]
     assert metadata["official_request_profile_hash"]
     assert metadata["allowlist_domain"] == "marriage"
     assert metadata["allowlist_event_count"] == 1
@@ -689,6 +689,84 @@ def test_vedastro_service_adapter_applies_domain_allowlist_to_range_scan_noise()
     assert report["event_count"] == 1
     assert report["top_event"]["event_id"] == "GocharJupiterIn7th"
     assert report["evidence_ledger"][0]["event_id"] == "GocharJupiterIn7th"
+
+
+def test_vedastro_service_adapter_preserves_match_metadata_for_official_tag_and_alias_hits() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            response = {
+                "Status": "Pass",
+                "Payload": [
+                    {
+                        "Name": "GoodForMarriage",
+                        "Nature": "Good",
+                        "Description": "Marriage event support.",
+                        "StartTime": "2026-05-01",
+                        "EndTime": "2026-05-02",
+                        "EventTags": ["Marriage"],
+                    },
+                    {
+                        "Name": "PartnershipBlessingWindow",
+                        "Nature": "Good",
+                        "Description": "Spouse alignment and relationship blessing.",
+                        "StartTime": "2026-05-03",
+                        "EndTime": "2026-05-04",
+                        "EventTags": ["Personal"],
+                    },
+                ],
+            }
+            body = json.dumps(response).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/api"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "scripts/vedastro_service_adapter.py",
+                "--range-scan",
+                "--domain",
+                "marriage",
+                "--case",
+                "beijing_first_use_demo",
+                "--start-date",
+                "2026-01-01",
+                "--end-date",
+                "2026-12-31",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["event_count"] == 2
+    exact = {item["event_id"]: item for item in report["evidence_ledger"]}
+    assert exact["GoodForMarriage"]["matched_by"] == "official_tag"
+    assert exact["PartnershipBlessingWindow"]["matched_by"] == "alias"
+    assert exact["GoodForMarriage"]["confidence"] == "medium_high"
+    assert exact["PartnershipBlessingWindow"]["confidence"] == "low"
+    assert report["source_metadata"]["mapping_replay"]["match_counts"]["official_tag"] == 1
+    assert report["source_metadata"]["mapping_replay"]["match_counts"]["alias"] == 1
 
 
 def test_vedastro_service_adapter_classifies_http_error() -> None:

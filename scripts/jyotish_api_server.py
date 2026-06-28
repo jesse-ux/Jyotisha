@@ -305,6 +305,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             elif path == '/api/relationship':
                 result = self._compute_relationship(body)
                 self._json(result)
+            elif path == '/api/vedastro/range_scan':
+                result = self._compute_vedastro_range_scan(body)
+                self._json(result)
             elif path == '/api/import_chart':
                 result = self._import_chart_text(body)
                 self._json(result)
@@ -595,6 +598,73 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             return None
         with open(path, 'rb') as fh:
             return base64.b64encode(fh.read()).decode('ascii')
+
+    def _compute_vedastro_range_scan(self, body):
+        ui_domain = str(body.get('domain') or 'career').strip().lower()
+        domain_map = {
+            'career': 'career',
+            'relationship': 'marriage',
+            'marriage': 'marriage',
+            'finance': 'wealth',
+            'wealth': 'wealth',
+        }
+        if ui_domain not in domain_map:
+            raise BadRequest('domain must be career, relationship, marriage, finance, or wealth')
+        start_date = str(body.get('start_date') or '').strip()
+        end_date = str(body.get('end_date') or '').strip()
+        if not start_date or not end_date:
+            raise BadRequest('start_date and end_date are required')
+        try:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+        except ValueError as e:
+            raise BadRequest('start_date and end_date must be YYYY-MM-DD') from e
+        if end_dt < start_dt:
+            raise BadRequest('end_date must be on or after start_date')
+
+        year = self._get_int(body, 'year', None, 1800, 2400)
+        month = self._get_int(body, 'month', None, 1, 12)
+        day = self._get_int(body, 'day', None, 1, 31)
+        hour = self._get_float(body, 'hour', 12, 0, 23)
+        minute = self._get_float(body, 'minute', 0, 0, 59)
+        second = self._get_birth_second(body)
+        lat = self._get_float(body, 'lat', 0, -90, 90)
+        lon = self._get_float(body, 'lon', 0, -180, 180)
+        tz = self._parse_timezone(body, lat, lon, year, month, day, hour, minute, second)
+        try:
+            datetime(year, month, day, int(hour), int(minute), int(second))
+        except ValueError as e:
+            raise BadRequest('Invalid birth date') from e
+
+        adapter_domain = domain_map[ui_domain]
+        case = {
+            'year': year,
+            'month': month,
+            'day': day,
+            'hour': hour,
+            'minute': minute,
+            'second': second,
+            'lat': lat,
+            'lon': lon,
+            'tz': tz,
+            'ayanamsa_policy': body.get('ayanamsa_policy') or body.get('ayanamsa') or 'lahiri',
+            'node_policy': body.get('node_policy') or body.get('node_mode') or 'mean',
+        }
+        result = _load_local_module('vedastro_service_adapter').run_range_scan_for_case(
+            case,
+            adapter_domain,
+            start_date,
+            end_date,
+            case_id=str(body.get('case_id') or 'user_chart'),
+        )
+        return {
+            'success': True,
+            'endpoint': 'vedastro_range_scan',
+            'ui_domain': ui_domain,
+            'adapter_domain': adapter_domain,
+            'result': result,
+            'boundary': 'VedAstro range scan is optional external timing evidence; local Jyotish gates remain authoritative.',
+        }
 
     def _compute_oracle_evidence(self, body):
         packet = body.get('packet')
