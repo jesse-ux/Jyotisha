@@ -372,6 +372,45 @@ def _check_external_avayogi_risk(result: Dict[str, Any]) -> Optional[Dict[str, A
     }
 
 
+def _derive_jaimini_marriage_support(present: Dict[str, Any]) -> Dict[str, Any]:
+    signals: List[str] = []
+    darakaraka = present.get("darakaraka")
+    upapada_lagna = present.get("upapada_lagna")
+
+    if darakaraka:
+        signals.append("darakaraka_active")
+
+    if isinstance(darakaraka, dict):
+        if darakaraka.get("house") == 7 or darakaraka.get("house_from_lagna") == 7:
+            signals.append("dk_7h_link")
+        if darakaraka.get("ul_link") or darakaraka.get("linked_to_ul"):
+            signals.append("dk_ul_link")
+
+    if isinstance(upapada_lagna, dict) and isinstance(darakaraka, dict):
+        dk_sign = darakaraka.get("sign")
+        ul_sign = upapada_lagna.get("sign")
+        if dk_sign and ul_sign and dk_sign == ul_sign and "dk_ul_link" not in signals:
+            signals.append("dk_ul_link")
+
+    if present.get("jaimini_timing_support"):
+        signals.append("jaimini_dasha_support")
+
+    if not signals:
+        level = "none"
+    elif len(signals) == 1:
+        level = "weak"
+    elif "darakaraka_active" in signals:
+        level = "moderate"
+    else:
+        level = "weak"
+
+    return {
+        "level": level,
+        "signals": signals,
+        "source": "jaimini_bridge_v1",
+    }
+
+
 def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[str]) -> Dict[str, Any]:
     if route == "relationship":
         score = 0
@@ -395,10 +434,37 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             verdict = "weak_window_needs_confirmation"
         else:
             verdict = "insufficient_evidence"
+        jaimini_support = present.get("jaimini_marriage_support") or {}
+        secondary_context: List[str] = []
+        if present.get("darakaraka"):
+            secondary_context.append("darakaraka_active")
+        if jaimini_support.get("level") == "moderate":
+            secondary_context.append("jaimini_support")
+        if present.get("upapada_lagna"):
+            secondary_context.append("ul_support")
+
+        hard_gate_missing = any(
+            key in missing for key in (
+                "d9_navamsa",
+                "upapada_lagna",
+                "vimshottari_current",
+                "narayana_current",
+            )
+        )
+        label_support_present = bool(present.get("vivah_saham") or present.get("marriage_convergence"))
+        dominant_label = None
+        if (
+            not hard_gate_missing
+            and label_support_present
+            and jaimini_support.get("level") == "moderate"
+        ):
+            dominant_label = "legal_marriage"
         return {
             "event_family": "relationship",
             "score": score,
             "verdict": verdict,
+            "dominant_label": dominant_label,
+            "secondary_context": secondary_context,
             "primary_drivers": [
                 key for key in (
                     "marriage_convergence",
@@ -525,7 +591,13 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "narayana_current": _safe_get(modules, "narayana_dasha", "current_dasha"),
             "marriage_convergence": domain_activations.get("marriage_partnership"),
         }
-        missing = [key for key, value in present.items() if value in (None, {}, [], "")]
+        present["jaimini_timing_support"] = _safe_get(modules, "jaimini", "marriage_timing_support")
+        present["jaimini_marriage_support"] = _derive_jaimini_marriage_support(present)
+        missing = [
+            key for key, value in present.items()
+            if key not in {"jaimini_marriage_support", "jaimini_timing_support"}
+            and value in (None, {}, [], "")
+        ]
         convergence = present["marriage_convergence"] or {}
         confidence_cap = "medium"
         if missing:

@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Regression tests for MCP relationship event adjudication."""
+
+from __future__ import annotations
+
+from mcp_server import _collect_strict_evidence
+
+
+def _base_relationship_result() -> dict:
+    return {
+        "modules": {
+            "varga_full": {"D9_Navamsa": {"summary": "ok"}},
+            "special_lagnas": {"Upapada_Lagna": {"sign": "Libra", "lord": "Venus"}},
+            "jaimini": {
+                "darakaraka": {"planet": "Venus", "house": 7},
+                "marriage_support": {"dk_7h_link": True},
+            },
+            "vivah_saham": {"sign": "Taurus", "house": 7},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Moon"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Libra", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "marriage_partnership": {"convergence_level": "L1", "probability": "+15-20%"}
+                }
+            },
+        }
+    }
+
+
+def test_relationship_jaimini_bridge_lifts_legal_marriage_label() -> None:
+    strict = _collect_strict_evidence("relationship", _base_relationship_result())
+
+    assert strict["present_evidence"]["jaimini_marriage_support"] == {
+        "level": "moderate",
+        "signals": ["darakaraka_active", "dk_7h_link"],
+        "source": "jaimini_bridge_v1",
+    }
+    assert strict["event_judgement"]["dominant_label"] == "legal_marriage"
+    assert strict["event_judgement"]["secondary_context"] == [
+        "darakaraka_active",
+        "jaimini_support",
+        "ul_support",
+    ]
+
+
+def test_relationship_jaimini_bridge_stays_context_only_when_d9_missing() -> None:
+    result = _base_relationship_result()
+    del result["modules"]["varga_full"]["D9_Navamsa"]
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["jaimini_marriage_support"] == {
+        "level": "moderate",
+        "signals": ["darakaraka_active", "dk_7h_link"],
+        "source": "jaimini_bridge_v1",
+    }
+    assert strict["event_judgement"]["dominant_label"] is None
+    assert strict["event_judgement"]["secondary_context"] == [
+        "darakaraka_active",
+        "jaimini_support",
+        "ul_support",
+    ]
