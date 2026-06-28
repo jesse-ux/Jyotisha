@@ -3,6 +3,9 @@ __pycache__/
 *.pyo
 *.db
 *.sqlite
+.agents/
+venv_vedastro/
+scratch/local/
 hermes_memory.db/
 *.egg-info/
 dist/
