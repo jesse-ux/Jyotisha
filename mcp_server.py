@@ -574,6 +574,74 @@ def _derive_dignity_guardrail(route: str, present: Dict[str, Any]) -> Dict[str, 
 
 
 def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[str]) -> Dict[str, Any]:
+    if route == "career":
+        score = 0
+        score += 20 if present.get("d10_dasamsa") else 0
+        score += 15 if present.get("a10_karma_pada") else 0
+        score += 15 if present.get("amatyakaraka") else 0
+        score += 10 if present.get("karakamsha") else 0
+        score += 10 if present.get("vimshottari_current") else 0
+        score += 10 if present.get("narayana_current") else 0
+        score += _convergence_score(present.get("career_convergence"))
+        external_activation = present.get("external_activation") or {}
+        if external_activation.get("level") == "moderate":
+            score += 5
+        if missing:
+            score = min(score, 35)
+        score = min(score, 100)
+
+        if missing:
+            verdict = "insufficient_evidence"
+        elif score >= 80:
+            verdict = "high_probability_window"
+        elif score >= 60:
+            verdict = "moderate_probability_window"
+        elif score >= 40:
+            verdict = "weak_window_needs_confirmation"
+        else:
+            verdict = "insufficient_evidence"
+
+        secondary_context: List[str] = []
+        if present.get("a10_karma_pada"):
+            secondary_context.append("a10_active")
+        if present.get("amatyakaraka"):
+            secondary_context.append("amk_active")
+        if present.get("karakamsha"):
+            secondary_context.append("karakamsha_context")
+        if external_activation.get("level") == "moderate":
+            secondary_context.append("external_activation_support")
+
+        hard_gate_missing = any(
+            key in missing for key in (
+                "d10_dasamsa",
+                "a10_karma_pada",
+                "vimshottari_current",
+                "narayana_current",
+            )
+        )
+        dominant_label = None
+        if not hard_gate_missing and present.get("career_convergence") and score >= 60:
+            dominant_label = "career_status"
+
+        return {
+            "event_family": "career",
+            "score": score,
+            "verdict": verdict,
+            "dominant_label": dominant_label,
+            "secondary_context": secondary_context,
+            "primary_drivers": [
+                key for key in (
+                    "career_convergence",
+                    "vimshottari_current",
+                    "narayana_current",
+                    "a10_karma_pada",
+                    "amatyakaraka",
+                    "karakamsha",
+                )
+                if present.get(key)
+            ],
+        }
+
     if route == "relationship":
         score = 0
         score += 15 if present.get("d9_navamsa") else 0
@@ -755,6 +823,54 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
 def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, Any]:
     modules = result.get("modules", {}) if isinstance(result, dict) else {}
     domain_activations = _safe_get(modules, "dasa_convergence", "domain_activations") or {}
+
+    if route == "career":
+        required = [
+            "varga_full.D10_Dasamsa",
+            "special_lagnas.A10_Karma_Pada",
+            "jaimini.karakas.Amatyakaraka",
+            "jaimini.karakamsha",
+            "dasha.current_dasha",
+            "narayana_dasha.current_dasha",
+            "dasa_convergence.domain_activations.career_status",
+        ]
+        present = {
+            "d10_dasamsa": _safe_get(modules, "varga_full", "D10_Dasamsa"),
+            "a10_karma_pada": _safe_get(modules, "special_lagnas", "A10_Karma_Pada"),
+            "amatyakaraka": _safe_get(modules, "jaimini", "karakas", "Amatyakaraka"),
+            "karakamsha": _safe_get(modules, "jaimini", "karakamsha"),
+            "vimshottari_current": _safe_get(modules, "dasha", "current_dasha"),
+            "narayana_current": _safe_get(modules, "narayana_dasha", "current_dasha"),
+            "career_convergence": domain_activations.get("career_status"),
+        }
+        present["external_activation"] = _derive_external_activation_support(modules, "career")
+        missing = [key for key, value in present.items() if key not in {
+            "external_activation"
+        } and value in (None, {}, [], "")]
+        convergence = present["career_convergence"] or {}
+        confidence_cap = "medium"
+        if missing:
+            confidence_cap = "low"
+        elif convergence.get("convergence_level") in {"L4", "L5"}:
+            confidence_cap = "medium-high"
+        elif convergence.get("convergence_level") == "L3":
+            confidence_cap = "medium"
+        else:
+            confidence_cap = "medium-low"
+        event_judgement = _derive_event_judgement(route, present, missing)
+        return {
+            "question_type": route,
+            "required_evidence": required,
+            "present_evidence": present,
+            "missing_evidence": missing,
+            "confidence_cap": confidence_cap,
+            "blocked": bool(missing),
+            "event_judgement": event_judgement,
+            "reason": (
+                "Career timing requires D10 + A10/Karma Pada + AmK/Karakamsha "
+                "plus dual dasha and career convergence support."
+            ),
+        }
 
     if route == "relationship":
         required = [
