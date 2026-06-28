@@ -36,3 +36,9 @@ This file is the small index for the current engineering fronts that still drive
 
 - `/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_service_adapter.py`
 - follow only after the Jaimini marriage bridge v1 regression loop is closed
+
+## Dignity / Role Guardrails
+
+- `/Users/wuyongnaren/Documents/印度占星/docs/superpowers/specs/2026-06-28-dignity-guardrail-v1-design.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/dignity_guardrail_v1_boundary_audit_2026_06_28.md`
+- D1-only dignity guardrail is now landed; divisional dignity repair and a separate functional-role guardrail remain open fronts.
