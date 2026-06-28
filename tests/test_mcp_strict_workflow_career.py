@@ -25,6 +25,15 @@ def _base_career_result() -> dict:
                     "career_status": {"convergence_level": "L2", "probability": "35-50%"}
                 }
             },
+            "argala": {
+                "houses": {
+                    "house_10": {
+                        "net_result": "supported",
+                        "argala_count": 2,
+                        "virodhargala_count": 0,
+                    }
+                }
+            },
         }
     }
 
@@ -46,6 +55,7 @@ def test_career_collects_a10_amk_karakamsha_as_strict_evidence() -> None:
         "a10_active",
         "amk_active",
         "karakamsha_context",
+        "argala_support",
     ]
 
 
@@ -62,4 +72,25 @@ def test_career_blocks_label_when_d10_is_missing_but_preserves_jaimini_context()
         "a10_active",
         "amk_active",
         "karakamsha_context",
+        "argala_support",
     ]
+
+
+def test_career_argala_bridge_uses_tenth_house_as_modifier_only() -> None:
+    result = _base_career_result()
+
+    strict = _collect_strict_evidence("career", result)
+
+    assert strict["present_evidence"]["argala_support"] == {
+        "level": "supportive",
+        "target_house": 10,
+        "source": "argala_house_bridge_v1",
+        "signals": ["argala_support"],
+        "raw": {
+            "net_result": "supported",
+            "argala_count": 2,
+            "virodhargala_count": 0,
+        },
+    }
+    assert strict["event_judgement"]["dominant_label"] == "career_status"
+    assert "argala_support" in strict["event_judgement"]["secondary_context"]

@@ -448,6 +448,41 @@ def _derive_external_activation_support(modules: Dict[str, Any], domain: str) ->
     }
 
 
+def _derive_argala_support(modules: Dict[str, Any], target_house: int) -> Dict[str, Any]:
+    house_data = _safe_get(modules, "argala", "houses", f"house_{target_house}")
+    if not isinstance(house_data, dict):
+        return {
+            "level": "none",
+            "target_house": target_house,
+            "source": "argala_house_bridge_v1",
+            "signals": [],
+            "raw": None,
+        }
+
+    net_result = house_data.get("net_result")
+    if net_result == "supported":
+        level = "supportive"
+        signals = ["argala_support"]
+    elif net_result == "obstructed":
+        level = "obstructive"
+        signals = ["virodhargala_obstruction"]
+    else:
+        level = "none"
+        signals = []
+
+    return {
+        "level": level,
+        "target_house": target_house,
+        "source": "argala_house_bridge_v1",
+        "signals": signals,
+        "raw": {
+            "net_result": net_result,
+            "argala_count": house_data.get("argala_count"),
+            "virodhargala_count": house_data.get("virodhargala_count"),
+        },
+    }
+
+
 def _sign_to_index(sign: str) -> Optional[int]:
     try:
         return _SIGNS.index(sign)
@@ -583,6 +618,11 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         score += 10 if present.get("vimshottari_current") else 0
         score += 10 if present.get("narayana_current") else 0
         score += _convergence_score(present.get("career_convergence"))
+        argala_support = present.get("argala_support") or {}
+        if argala_support.get("level") == "supportive":
+            score += 5
+        elif argala_support.get("level") == "obstructive":
+            score -= 5
         external_activation = present.get("external_activation") or {}
         if external_activation.get("level") == "moderate":
             score += 5
@@ -608,6 +648,10 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("amk_active")
         if present.get("karakamsha"):
             secondary_context.append("karakamsha_context")
+        if argala_support.get("level") == "supportive":
+            secondary_context.append("argala_support")
+        elif argala_support.get("level") == "obstructive":
+            secondary_context.append("virodhargala_obstruction")
         if external_activation.get("level") == "moderate":
             secondary_context.append("external_activation_support")
 
@@ -637,6 +681,7 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
                     "a10_karma_pada",
                     "amatyakaraka",
                     "karakamsha",
+                    "argala_support",
                 )
                 if present.get(key)
             ],
@@ -653,6 +698,11 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         score += _convergence_score(present.get("marriage_convergence"))
         dignity_guardrail = present.get("dignity_guardrail") or {}
         score += dignity_guardrail.get("score_delta", 0)
+        argala_support = present.get("argala_support") or {}
+        if argala_support.get("level") == "supportive":
+            score += 5
+        elif argala_support.get("level") == "obstructive":
+            score -= 5
         if missing:
             score = min(score, 35)
         score = min(score, 100)
@@ -674,6 +724,10 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("jaimini_support")
         if present.get("upapada_lagna"):
             secondary_context.append("ul_support")
+        if argala_support.get("level") == "supportive":
+            secondary_context.append("argala_support")
+        elif argala_support.get("level") == "obstructive":
+            secondary_context.append("virodhargala_obstruction")
         external_activation = present.get("external_activation") or {}
         if external_activation.get("level") == "moderate":
             secondary_context.append("external_activation_support")
@@ -713,6 +767,7 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
                     "narayana_current",
                     "darakaraka",
                     "upapada_lagna",
+                    "argala_support",
                 )
                 if present.get(key)
             ],
@@ -843,9 +898,10 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "narayana_current": _safe_get(modules, "narayana_dasha", "current_dasha"),
             "career_convergence": domain_activations.get("career_status"),
         }
+        present["argala_support"] = _derive_argala_support(modules, 10)
         present["external_activation"] = _derive_external_activation_support(modules, "career")
         missing = [key for key, value in present.items() if key not in {
-            "external_activation"
+            "external_activation", "argala_support"
         } and value in (None, {}, [], "")]
         convergence = present["career_convergence"] or {}
         confidence_cap = "medium"
@@ -894,11 +950,12 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         }
         present["jaimini_timing_support"] = _safe_get(modules, "jaimini", "marriage_timing_support")
         present["jaimini_marriage_support"] = _derive_jaimini_marriage_support(present)
+        present["argala_support"] = _derive_argala_support(modules, 7)
         present["external_activation"] = _derive_external_activation_support(modules, "marriage")
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         missing = [
             key for key, value in present.items()
-            if key not in {"chart", "external_activation", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support"}
+            if key not in {"chart", "external_activation", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support", "argala_support"}
             and value in (None, {}, [], "")
         ]
         convergence = present["marriage_convergence"] or {}

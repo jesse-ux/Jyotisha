@@ -23,6 +23,15 @@ def _base_relationship_result() -> dict:
                     "marriage_partnership": {"convergence_level": "L1", "probability": "+15-20%"}
                 }
             },
+            "argala": {
+                "houses": {
+                    "house_7": {
+                        "net_result": "obstructed",
+                        "argala_count": 1,
+                        "virodhargala_count": 2,
+                    }
+                }
+            },
         }
     }
 
@@ -40,6 +49,7 @@ def test_relationship_jaimini_bridge_lifts_legal_marriage_label() -> None:
         "darakaraka_active",
         "jaimini_support",
         "ul_support",
+        "virodhargala_obstruction",
     ]
 
 
@@ -59,7 +69,28 @@ def test_relationship_jaimini_bridge_stays_context_only_when_d9_missing() -> Non
         "darakaraka_active",
         "jaimini_support",
         "ul_support",
+        "virodhargala_obstruction",
     ]
+
+
+def test_relationship_argala_bridge_uses_seventh_house_as_modifier_only() -> None:
+    result = _base_relationship_result()
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["argala_support"] == {
+        "level": "obstructive",
+        "target_house": 7,
+        "source": "argala_house_bridge_v1",
+        "signals": ["virodhargala_obstruction"],
+        "raw": {
+            "net_result": "obstructed",
+            "argala_count": 1,
+            "virodhargala_count": 2,
+        },
+    }
+    assert strict["event_judgement"]["dominant_label"] == "legal_marriage"
+    assert "virodhargala_obstruction" in strict["event_judgement"]["secondary_context"]
 
 
 def test_relationship_collects_vedastro_range_scan_as_external_activation_context() -> None:
