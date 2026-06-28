@@ -394,6 +394,7 @@ function _buildHTMLReport(chartData, extras) {
   const validation = extras.validation || {};
   const audit = extras.audit || {};
   const workflows = extras.workflows || chartData._client_workflows || {};
+  const relationshipNarrative = extras.relationship_narrative || chartData?.ai_prompt_pack?.evidence_snapshot?.relationship_narrative || chartData?.relationship_narrative || null;
   const generatedAt = new Date().toLocaleString('zh-CN');
 
   return `<!doctype html>
@@ -463,6 +464,12 @@ function _buildHTMLReport(chartData, extras) {
     .relationship-list { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 9px; break-inside: avoid; }
     .relationship-list strong { color: var(--accent); }
     .relationship-list ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+    .relationship-caution {
+      background: #fff8ed; border: 1px solid #f3d19c; border-left: 4px solid #c67a00;
+      border-radius: 6px; padding: 10px 12px; margin: 10px 0 12px; break-inside: avoid;
+    }
+    .relationship-caution strong { display: block; color: #7a4b00; margin-bottom: 4px; }
+    .relationship-caution span { display: block; color: #7a4b00; font-size: 12px; }
     .relationship-boundary { background: #fff8ed; border: 1px solid #ead7b8; border-radius: 6px; padding: 9px; margin-top: 8px; }
     .relationship-boundary span { display: block; color: var(--muted); font-size: 12px; }
     .calibration-status {
@@ -582,6 +589,8 @@ function _buildHTMLReport(chartData, extras) {
     </table>` : '<p>当前导出未附带 Dasha 时间线。</p>'}
   </section>
 
+  ${_relationshipStrictNarrativeSection(relationshipNarrative)}
+
   ${_workflowReportSection(workflows)}
 
   ${_calibrationStatusSection(DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS)}
@@ -607,6 +616,40 @@ function _buildHTMLReport(chartData, extras) {
 </main>
 </body>
 </html>`;
+}
+
+function _relationshipStrictNarrativeSection(narrative) {
+  if (!narrative || typeof narrative !== 'object') return '';
+  const strengths = Array.isArray(narrative.strengths) ? narrative.strengths : [];
+  const risks = Array.isArray(narrative.risks) ? narrative.risks : [];
+  const boundaries = Array.isArray(narrative.boundaries) ? narrative.boundaries : [];
+  const markdown = typeof narrative.markdown === 'string' ? narrative.markdown : '';
+  const compactMarkdown = markdown
+    .replace(/^###\s+/gm, '')
+    .replace(/^\-\s+/gm, '')
+    .replace(/\n+/g, ' ')
+    .trim();
+  const showCaution = (
+    risks.some(item => String(item).includes('不能误读成接近结婚'))
+    || boundaries.some(item => String(item).includes('不等于法律婚姻'))
+  );
+  return `<section class="relationship-strict-narrative">
+    <h2>婚恋严格裁决</h2>
+    <div class="relationship-hero">
+      <div>
+        <strong>${_h(narrative.headline || '婚恋 strict narrative 已接入导出主链。')}</strong>
+        <span>本段直接消费 relationship strict evidence，把 D9、UL、dual dasha 与 synastry taxonomy 的边界写进用户可见正文。</span>
+      </div>
+      <div class="relationship-status">strict narrative</div>
+    </div>
+    ${showCaution ? `<div class="relationship-caution"><strong>防误判提示</strong><span>当前公开化/关系可见度候选不能被误读成接近法律婚姻；若 core marriage promise、dual dasha 或 external timing 仍未收敛，必须继续降置信度并保持 context-only 解释。</span></div>` : ''}
+    <div class="relationship-columns">
+      ${_relationshipReportList('支持证据', strengths)}
+      ${_relationshipReportList('需要观察', risks)}
+      ${_relationshipReportList('边界条件', boundaries)}
+    </div>
+    ${compactMarkdown ? `<div class="relationship-boundary"><span>${_h(compactMarkdown)}</span></div>` : ''}
+  </section>`;
 }
 
 function _calibrationStatusSection(status) {

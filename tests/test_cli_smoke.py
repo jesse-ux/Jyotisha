@@ -299,6 +299,20 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert strength_rows
     assert strength_rows[0]["status"] == "used"
     assert "Shadbala" in strength_rows[0]["note"]
+    relationship_synastry_rows = [row for row in audit_table if row["technique"] == "Relationship Synastry Taxonomy"]
+    assert relationship_synastry_rows
+    assert relationship_synastry_rows[0]["status"] in {"used", "blocked"}
+    assert "relationship secondary_context" in relationship_synastry_rows[0]["note"]
+    assert "compatibility support" in relationship_synastry_rows[0]["note"]
+    assert "protective kuta support" in relationship_synastry_rows[0]["note"]
+    relationship_narrative = prompt_pack["evidence_snapshot"]["relationship_narrative"]
+    assert relationship_narrative["headline"]
+    assert isinstance(relationship_narrative["strengths"], list)
+    assert isinstance(relationship_narrative["risks"], list)
+    assert isinstance(relationship_narrative["boundaries"], list)
+    assert relationship_narrative["markdown"]
+    assert "D9" in "".join(relationship_narrative["boundaries"])
+    assert "dual dasha" in relationship_narrative["markdown"]
     oracle_progress = prompt_pack["evidence_snapshot"]["oracle_progress"]
     assert oracle_progress["scope"] == "external_oracle_evidence_validation"
     assert oracle_progress["valid_packets"] >= 4

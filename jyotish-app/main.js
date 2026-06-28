@@ -1788,6 +1788,7 @@ function renderTrustCenterPanel() {
   const pwa = getPWAStatus();
   const terminology = getTerminologyModeOption();
   const runtime = getRuntimeHealthStatus();
+  const vedastro = getVedAstroStatus();
   const statusMessage = getTrustCenterStatusMessage(pwa, runtime);
   return `
     <section class="provenance-card trust-center-panel">
@@ -1802,6 +1803,7 @@ function renderTrustCenterPanel() {
         ${renderTrustStatus('术语', terminology.shortLabel, terminology.note)}
         ${renderTrustStatus('API', '127.0.0.1:5200', '本地 API 服务；不需要外部账号')}
         ${renderTrustStatus('运行体检', runtime.label, runtime.note)}
+        ${renderVedAstroStatus(vedastro)}
       </div>
       ${renderRuntimeHealthPanel(runtime)}
       ${renderValidationTransparencyPanel()}
@@ -2220,6 +2222,54 @@ function renderTrustStatus(label, value, note) {
   `;
 }
 
+function getVedAstroStatus() {
+  const status = window.__jyotishVedAstroStatus;
+  if (!status) {
+    return {
+      label: '未检查',
+      note: '运行健康检查后读取 /api/vedastro/status；需要 VEDASTRO_API_ENDPOINT 才会连接外部雷达。',
+      tone: 'pending',
+    };
+  }
+  if (status.status === 'checking') {
+    return {
+      label: '检查中',
+      note: '正在读取 /api/vedastro/status。',
+      tone: 'pending',
+    };
+  }
+  if (status.status === 'live_ready') {
+    return {
+      label: 'live-ready',
+      note: `${status.endpoint_host || 'configured'} · VEDASTRO_ENABLE_NETWORK 已启用；外部证据仍只进 secondary context。`,
+      tone: 'ok',
+    };
+  }
+  if (status.status === 'network_execution_disabled') {
+    return {
+      label: '已配置/禁用网络',
+      note: `${status.endpoint_host || 'endpoint configured'} · 需显式启用 VEDASTRO_ENABLE_NETWORK。`,
+      tone: 'warn',
+    };
+  }
+  if (status.status === 'service_endpoint_not_configured') {
+    return {
+      label: '未配置',
+      note: '未设置 VEDASTRO_API_ENDPOINT；本地引擎继续可用，VedAstro 外部雷达保持 blocked。',
+      tone: 'pending',
+    };
+  }
+  return {
+    label: '需处理',
+    note: status.error || status.boundary || 'VedAstro 外部雷达状态不可用。',
+    tone: 'warn',
+  };
+}
+
+function renderVedAstroStatus(status = getVedAstroStatus()) {
+  return renderTrustStatus('VedAstro 外部雷达', status.label, status.note);
+}
+
 function getRuntimeHealthStatus() {
   const health = window.__jyotishRuntimeHealth;
   if (!health) {
@@ -2385,13 +2435,26 @@ async function runTrustCenterHealthCheck() {
       ['PWA 安装壳', getPWAStatus().label, getPWAStatus().note],
       ['本地 API 服务', '检查中', '正在请求 /api/health'],
       ['Technique catalog', '等待中', 'API 在线后检查能力目录'],
+      ['VedAstro 外部雷达', '检查中', '正在请求 /api/vedastro/status'],
     ],
   };
+  window.__jyotishVedAstroStatus = { status: 'checking' };
   if (status) status.textContent = '正在运行健康检查...';
   renderAll();
   try {
     const api = await window.JyotishAPI.getAPIHealth();
     const audit = await window.JyotishAPI.getCapabilityAudit();
+    let vedastroStatus;
+    try {
+      vedastroStatus = await window.JyotishAPI.getVedAstroStatus();
+    } catch (error) {
+      vedastroStatus = {
+        status: 'unavailable',
+        error: error?.message || '/api/vedastro/status 不可用',
+      };
+    }
+    window.__jyotishVedAstroStatus = vedastroStatus;
+    const vedastro = getVedAstroStatus();
     const surfaces = audit?.surfaces || {};
     const registry = audit?.registry || {};
     window.__jyotishRuntimeHealth = {
@@ -2406,11 +2469,17 @@ async function runTrustCenterHealthCheck() {
         ['Swiss Ephemeris', api.swisseph_available ? (api.swisseph_version || 'available') : 'unavailable', '当前本地 API 的星历运行时状态'],
         ['Ayanamsa', api.ayanamsa_default || 'lahiri', '当前健康检查声明的默认 sidereal 基准'],
         ['Technique catalog', `${registry.technique_count || 0} techniques`, `${surfaces.api_endpoint_count || 0} API endpoints 可被前端发现`],
+        ['VedAstro 外部雷达', vedastro.label, vedastro.note],
         ['Desktop path', 'PWA now', 'Pake shell 可快速包 URL；Tauri sidecar 等 API 生命周期和签名策略确定后再落地。'],
       ],
     };
     if (status) status.textContent = '健康检查通过：本地 API 服务、能力目录和 PWA 安装壳状态已记录。';
   } catch (error) {
+    window.__jyotishVedAstroStatus = {
+      status: 'unavailable',
+      error: '本地 API 未连接时无法读取 /api/vedastro/status。',
+    };
+    const vedastro = getVedAstroStatus();
     window.__jyotishRuntimeHealth = {
       status: 'warn',
       checkedAt,
@@ -2418,6 +2487,7 @@ async function runTrustCenterHealthCheck() {
       details: [
         ['PWA 安装壳', getPWAStatus().label, getPWAStatus().note],
         ['本地 API 服务', '未连接', error?.message || '请确认本地 API 服务正在 127.0.0.1:5200 运行'],
+        ['VedAstro 外部雷达', vedastro.label, vedastro.note],
         ['启动路径', '普通用户启动路径', '按 README 先启动网页服务，再启动本地 API 服务。'],
         ['Packaging preflight', '待检查', '运行 python3 scripts/desktop_packaging_preflight.py 获取桌面包装前置结果。'],
       ],
@@ -5364,18 +5434,40 @@ function buildRelationshipReportTemplate(data = {}, deep = null) {
   const hasDeep = Boolean(deep?.selfD9 || deep?.partnerD9 || kuja || dasha);
   const spouseStatus = deep?.spouseStatus || null;
   const ulDkTiming = deep?.ulDkTiming || null;
+  const strictNarrative = data.ai_prompt_pack?.evidence_snapshot?.relationship_narrative || data.relationship_narrative || deep?.relationshipNarrative || null;
+  const strictMarkdown = typeof strictNarrative?.markdown === 'string' ? strictNarrative.markdown : '';
+  const strictSecondaryContext = strictMarkdown.includes('public_formalization_candidate')
+    || (Array.isArray(strictNarrative?.strengths) && strictNarrative.strengths.some(item => String(item).includes('public_formalization_candidate')))
+    || (Array.isArray(strictNarrative?.boundaries) && strictNarrative.boundaries.some(item => String(item).includes('public_formalization_candidate')));
+  const hasPublicFormalizationCandidate = strictSecondaryContext;
+  const hasConflictWarning = (
+    Array.isArray(strictNarrative?.risks)
+    && strictNarrative.risks.some(item => String(item).includes('不能误读成接近结婚'))
+  ) || (
+    Array.isArray(strictNarrative?.boundaries)
+    && strictNarrative.boundaries.some(item => String(item).includes('不等于法律婚姻'))
+  );
   const approvedFlag = data.is_match_approved ?? data.is_approved;
-  const status = percentage >= 78 && approvedFlag !== false
-    ? 'strong'
-    : percentage >= 58 && approvedFlag !== false
-      ? 'workable'
-      : 'needs_context';
-  const statusLabel = {
+  const conservativePublicFormalizationStatus = hasPublicFormalizationCandidate && hasConflictWarning
+    ? 'needs_context'
+    : null;
+  const status = hasPublicFormalizationCandidate && hasConflictWarning ? 'needs_context'
+    : conservativePublicFormalizationStatus
+      || (percentage >= 78 && approvedFlag !== false
+        ? 'strong'
+        : percentage >= 58 && approvedFlag !== false
+          ? 'workable'
+          : 'needs_context');
+  const statusLabel = hasPublicFormalizationCandidate && hasConflictWarning
+    ? '公开化候选，不等于婚姻逼近'
+    : {
     strong: '高兼容，仍需完整复核',
     workable: '可推进观察',
     needs_context: '需谨慎综合判断',
   }[status];
-  const headline = status === 'strong'
+  const headline = hasPublicFormalizationCandidate && hasConflictWarning
+    ? '公开化候选浮现，但婚姻承诺与时机仍需保守复核。'
+    : status === 'strong'
     ? 'Ashtakoot 基础匹配较强，适合进入 D9、Kuja 与现实互动复核。'
     : status === 'workable'
       ? '基础匹配有可用支撑，但关键风险位需要逐项确认。'
@@ -5385,6 +5477,10 @@ function buildRelationshipReportTemplate(data = {}, deep = null) {
   if (dasha?.level === 'strong' || dasha?.level === 'supportive') strengths.push(dasha.note || dasha.label);
   collectULDKTimingStrengths(ulDkTiming).forEach(item => strengths.push(item));
   collectSpouseStatusStrengths(spouseStatus).forEach(item => strengths.push(item));
+  if (Array.isArray(strictNarrative?.strengths)) strictNarrative.strengths.forEach(item => strengths.push(item));
+  if (hasPublicFormalizationCandidate) {
+    strengths.push('public_formalization_candidate 说明当前更偏向公开化/关系可见度候选，而不是法律婚姻本身。');
+  }
   if (!strengths.length) strengths.push('尚未出现足够稳定的强项，建议先补完整出生盘与 D9 复核。');
   const risks = weakKutas.map(item => `${item.name} ${item.score}/${item.max}：需重点观察${relationshipKutaMeaning(item.name)}。`);
   if (kuja?.verdict === 'hard' || kuja?.verdict === 'watch') risks.push(kuja.note || kuja.label);
@@ -5392,6 +5488,10 @@ function buildRelationshipReportTemplate(data = {}, deep = null) {
   if ((data.exceptions || []).length) risks.push(`存在缓解条件：${(data.exceptions || []).join('；')}`);
   collectULDKTimingRisks(ulDkTiming).forEach(item => risks.push(item));
   collectSpouseStatusRisks(spouseStatus).forEach(item => risks.push(item));
+  if (Array.isArray(strictNarrative?.risks)) strictNarrative.risks.forEach(item => risks.push(item));
+  if (hasPublicFormalizationCandidate) {
+    risks.push('当前即便存在合盘支持与公开化候选，也不能误读成接近结婚；若 weak core promise、dual dasha 或 external timing 未收敛，仍应保持保守。');
+  }
   if (!hasDeep) risks.push('当前只完成基础 Ashtakoot，缺少 D9、Kuja Dosha 与 Dasha 同步证据。');
   if (!risks.length) risks.push('未见明显红旗，但仍需结合双方完整星盘与现实互动。');
   const evidence = [
@@ -5405,7 +5505,7 @@ function buildRelationshipReportTemplate(data = {}, deep = null) {
   return {
     status,
     statusLabel,
-    headline,
+    headline: strictNarrative?.headline || headline,
     percentage,
     evidence,
     strongestKutas,
@@ -5416,11 +5516,17 @@ function buildRelationshipReportTemplate(data = {}, deep = null) {
       '先确认双方出生时间精度，再复核 D9 与 7宫/7主。',
       '把低分 Kuta 对应到现实互动议题，不用单一分数替代沟通。',
       '若 Kuja 或 Dasha 出现压力，优先安排边界、节奏和冲突处理观察期。',
+      ...(hasPublicFormalizationCandidate ? [
+        '若当前更偏向 public_formalization_candidate，请把它理解为关系公开化候选，而不是婚姻逼近。',
+        '先不要把高 Ashtakoot 分数翻译成婚姻逼近，应先复核 promise、dual dasha 与 external timing。',
+      ] : []),
     ],
     boundaries: [
       '合盘报告只提供传统 Jyotish 证据，不替代个人选择。',
       '总分通过不等于关系必然稳定；总分偏低也不等于关系不可经营。',
-    ],
+      ...(hasPublicFormalizationCandidate ? ['public_formalization_candidate 只表示公开化候选，不得越权抬升 legal_marriage，也不能误读成接近结婚。'] : []),
+      ...((Array.isArray(strictNarrative?.boundaries) ? strictNarrative.boundaries : [])),
+    ].slice(0, 5),
   };
 }
 
@@ -7226,12 +7332,17 @@ function buildExportExtras(sourceChart) {
   const audit = computeAudit(planets, ascendant, av, validation);
   const actionableContext = computeActionableContext(planets, ascendant);
   const jaimini = _buildJaiminiModule(karaka, charaDasha, karakamsha);
+  const relationshipNarrative = sourceChart?.ai_prompt_pack?.evidence_snapshot?.relationship_narrative
+    || sourceChart?.relationship_narrative
+    || sourceChart?.modules?.relationship_strict_evidence?.user_narrative
+    || null;
 
   return {
     dasha, yogas, vargas, aspects, jaimini,
     nakshatraAdvanced, argala, tajika,
     shadbala: sb, ashtakavarga: _buildAVModule(av),
     panchanga, validation, audit, actionableContext,
+    relationship_narrative: relationshipNarrative,
     provenance: sourceChart._client_audit?.provenance,
     workflows: buildWorkflowExportExtras(sourceChart),
   };

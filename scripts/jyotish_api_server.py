@@ -183,6 +183,50 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if origin in allowed:
             self.send_header('Access-Control-Allow-Origin', origin)
 
+    def _vedastro_status(self):
+        adapter = _load_local_module('vedastro_service_adapter')
+        endpoint = os.environ.get('VEDASTRO_API_ENDPOINT', '').strip()
+        network_flag = os.environ.get('VEDASTRO_ENABLE_NETWORK', '').strip().lower()
+        network_enabled = network_flag in {'1', 'true', 'yes'}
+        parsed = urlparse(endpoint) if endpoint else None
+        configured = bool(endpoint)
+        if not configured:
+            status = 'service_endpoint_not_configured'
+        elif not network_enabled:
+            status = 'network_execution_disabled'
+        else:
+            status = 'live_ready'
+        artifact_dir = getattr(adapter, 'ARTIFACT_DIR', None)
+        latest_artifact = None
+        if artifact_dir and os.path.isdir(artifact_dir):
+            artifacts = sorted(
+                (os.path.join(artifact_dir, name) for name in os.listdir(artifact_dir) if name.endswith('.json')),
+                key=lambda path: os.path.getmtime(path),
+                reverse=True,
+            )
+            if artifacts:
+                latest_artifact = os.path.relpath(artifacts[0], REPO_ROOT)
+        return {
+            'adapter': 'vedastro_service_adapter',
+            'backend': 'vedastro_service_adapter_candidate',
+            'status': status,
+            'configured': configured,
+            'network_enabled': network_enabled,
+            'endpoint_host': parsed.netloc if parsed else None,
+            'required_env': {
+                'endpoint': 'VEDASTRO_API_ENDPOINT',
+                'network': 'VEDASTRO_ENABLE_NETWORK',
+                'api_key_optional': 'VEDASTRO_API_KEY',
+            },
+            'live_profile': 'vedastro-live',
+            'transport': 'http_json_service_boundary',
+            'range_scan_role': adapter.VEDASTRO_CALCULATION_COVERAGE['range_scan_role'],
+            'official_events_builder_methods': adapter.VEDASTRO_CALCULATION_COVERAGE['official_events_builder_methods'],
+            'artifact_dir': 'scratch/local/vedastro_adapter',
+            'latest_artifact': latest_artifact,
+            'boundary': 'VedAstro is optional external timing evidence; local Jyotish gates remain authoritative.',
+        }
+
     def do_OPTIONS(self):
         self._json({})
 
@@ -213,6 +257,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(self._capability_audit())
             elif path == '/api/technique_catalog':
                 self._json(self._technique_catalog())
+            elif path == '/api/vedastro/status':
+                self._json(self._vedastro_status())
             elif path == '/api/real_case_revalidation':
                 self._json(self._real_case_revalidation())
             else:
@@ -484,6 +530,65 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             return html[:body_close.start()] + summary + html[body_close.start():]
         return html + summary
 
+    def _inject_relationship_narrative_summary(self, html, narrative):
+        if not isinstance(narrative, dict):
+            return html
+        headline = narrative.get('headline')
+        if not headline:
+            return html
+
+        def _escape(value):
+            return html_lib.escape(str(value or ''))
+
+        def _list_html(items):
+            if not isinstance(items, list) or not items:
+                return '<li>暂无补充。</li>'
+            return ''.join(f'<li>{_escape(item)}</li>' for item in items[:6])
+
+        risks = narrative.get("risks")
+        boundaries = narrative.get("boundaries")
+        caution_block = ''
+        if (
+            isinstance(risks, list)
+            and any('不能误读成接近结婚' in str(item) for item in risks)
+        ) or (
+            isinstance(boundaries, list)
+            and any('不等于法律婚姻' in str(item) for item in boundaries)
+        ):
+            caution_block = (
+                '<div class="relationship-caution" '
+                'style="margin:12px 0 16px;padding:12px 14px;border:1px solid #f3d19c;'
+                'border-left:4px solid #c67a00;border-radius:8px;background:#fff8ed;color:#7a4b00;">'
+                '<strong style="display:block;margin:0 0 6px;">Caution</strong>'
+                '<span style="display:block;font-size:13px;line-height:1.6;">'
+                '当前公开化/关系可见度候选不能被误读成接近法律婚姻；若 core marriage promise、dual dasha 或 external timing 仍未收敛，'
+                '必须继续降置信度并保持 context-only 解释。'
+                '</span>'
+                '</div>'
+            )
+
+        summary = (
+            '<section data-relationship-strict-narrative="true" '
+            'style="margin:24px 0;padding:16px;border:1px solid #d9dde8;border-radius:8px;'
+            'background:#fbfcff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">'
+            '<h2 style="margin:0 0 12px;font-size:20px;">Relationship Strict Narrative</h2>'
+            f'<p style="margin:0 0 12px;">{_escape(headline)}</p>'
+            f'{caution_block}'
+            '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">'
+            '<div><strong>Strengths</strong><ul style="margin:8px 0 0 18px;padding:0;">'
+            f'{_list_html(narrative.get("strengths"))}</ul></div>'
+            '<div><strong>Risks</strong><ul style="margin:8px 0 0 18px;padding:0;">'
+            f'{_list_html(narrative.get("risks"))}</ul></div>'
+            '<div><strong>Boundaries</strong><ul style="margin:8px 0 0 18px;padding:0;">'
+            f'{_list_html(narrative.get("boundaries"))}</ul></div>'
+            '</div>'
+            '</section>'
+        )
+        body_close = re.search(r'</body\s*>', html, re.IGNORECASE)
+        if body_close:
+            return html[:body_close.start()] + summary + html[body_close.start():]
+        return html + summary
+
     def _artifact_base64(self, path):
         size = os.path.getsize(path)
         if size > MAX_REPORT_BASE64_BYTES:
@@ -551,6 +656,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         html = self._inject_functional_benefic_malefic_summary(
             html,
             body.get('functional_benefic_malefic'),
+        )
+        html = self._inject_relationship_narrative_summary(
+            html,
+            body.get('relationship_narrative'),
         )
         fmt = body.get('format', 'html')
         if fmt not in {'html', 'pdf'}:
@@ -1049,6 +1158,23 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'moderate',
                 source='full_reading.modules.vivah_saham',
                 details=vivah.get('vivah_saham') if isinstance(vivah.get('vivah_saham'), dict) else vivah,
+            ))
+        strict_relationship = full_modules.get('relationship_strict_evidence') if isinstance(full_modules, dict) else {}
+        user_narrative = strict_relationship.get('user_narrative') if isinstance(strict_relationship, dict) else {}
+        if isinstance(user_narrative, dict) and user_narrative.get('markdown'):
+            items.append(self._theme_evidence(
+                'Relationship-strict-narrative',
+                'Strict',
+                user_narrative.get('markdown'),
+                'neutral',
+                'strong',
+                source='full_reading.modules.relationship_strict_evidence.user_narrative',
+                details={
+                    'headline': user_narrative.get('headline'),
+                    'strengths': user_narrative.get('strengths', [])[:3],
+                    'risks': user_narrative.get('risks', [])[:3],
+                    'boundaries': user_narrative.get('boundaries', [])[:3],
+                },
             ))
         return items
 

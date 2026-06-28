@@ -42,9 +42,11 @@ import os
 import csv
 import math
 import sqlite3
+import importlib.util
 from datetime import datetime, timedelta
 from typing import Dict, List
 from tabulate import tabulate
+from life_stage_hook import generate_life_stage_hooks
 
 from ayanamsa_utils import (
     AYANAMSA_DISPLAY_NAMES,
@@ -58,6 +60,7 @@ from ayanamsa_utils import (
 # 路径常量
 # ============================================================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 HOME_DIR = os.path.expanduser('~')
 CLAW_DIR = os.path.join(HOME_DIR, 'WorkBuddy', 'Claw')
 DB_PATH = os.path.join(CLAW_DIR, 'vedic_astrology_validation.db')
@@ -378,7 +381,7 @@ def _get_temporary_relationship(planet1, planet2, planets_data):
     """Calculate Temporary Friendship (Tatkalika Maitri)."""
     if not planets_data or planet1 not in planets_data or planet2 not in planets_data:
         return 'NEUTRAL'
-    
+
     p1_sign = planets_data[planet1].get('sign')
     p2_sign = planets_data[planet2].get('sign')
     if not p1_sign or not p2_sign:
@@ -387,7 +390,7 @@ def _get_temporary_relationship(planet1, planet2, planets_data):
     idx1 = SIGNS.index(p1_sign)
     idx2 = SIGNS.index(p2_sign)
     distance = (idx2 - idx1) % 12 + 1
-    
+
     # 2, 3, 4, 10, 11, 12 from planet are temporary friends
     if distance in [2, 3, 4, 10, 11, 12]:
         return 'FRIEND'
@@ -884,6 +887,7 @@ def _build_technique_audit_table(functional_layer, oracle_progress, modules):
     ashtakavarga = modules.get('ashtakavarga') if isinstance(modules, dict) else {}
     vimsopaka = modules.get('vimsopaka') if isinstance(modules, dict) else {}
     dasa_convergence = modules.get('dasa_convergence') if isinstance(modules, dict) else {}
+    relationship = modules.get('relationship_strict_evidence') if isinstance(modules, dict) else {}
 
     rows = [
         {
@@ -939,7 +943,129 @@ def _build_technique_audit_table(functional_layer, oracle_progress, modules):
             f"Vimsopaka status={vimsopaka.get('status') if isinstance(vimsopaka, dict) else None}。"
         ),
     })
+
+    event_judgement = relationship.get('event_judgement') if isinstance(relationship, dict) else {}
+    secondary_context = event_judgement.get('secondary_context') if isinstance(event_judgement, dict) else []
+    synastry_context = [item for item in (secondary_context or []) if isinstance(item, str) and item.startswith('synastry_')]
+    rows.append({
+        'technique': 'Relationship Synastry Taxonomy',
+        'status': 'used' if synastry_context else 'blocked',
+        'source': 'relationship strict workflow + synastry_relationship_bridge_v1',
+        'note': (
+            f"relationship secondary_context 中的 synastry 语义={synastry_context}; "
+            "compatibility support 表示匹配/延续性支持；"
+            "protective kuta support 表示防护型 Kuta 清洁度支持；"
+            "若 dual dasha / external timing / marriage convergence 冲突，"
+            "不得把这些支持越权解释成 legal marriage 的高置信度落地。"
+        ),
+    })
     return rows
+
+
+def _build_relationship_narrative_payload(relationship_strict):
+    if not isinstance(relationship_strict, dict) or not relationship_strict:
+        return {
+            'headline': '婚恋严格裁决证据尚未完成，当前不能生成高严谨关系叙事。',
+            'strengths': [],
+            'risks': ['缺少 relationship strict workflow 的核心证据，婚恋正文需降级。'],
+            'boundaries': [
+                '未完成 D1 + D9 + UL + dual dasha 交叉前，不得把单一关系信号写成高置信度婚姻结论。',
+            ],
+            'markdown': (
+                "### 婚恋严格裁决\n"
+                "- 当前缺少 relationship strict evidence，无法生成高严谨婚恋 narrative。\n"
+                "- 在 D1、D9、UL、Vimshottari 与 Narayana 未齐备前，应标记为 blocked 或降低置信度。"
+            ),
+        }
+
+    event_judgement = relationship_strict.get('event_judgement') if isinstance(relationship_strict, dict) else {}
+    present = relationship_strict.get('present_evidence') if isinstance(relationship_strict, dict) else {}
+    missing = relationship_strict.get('missing_evidence') or []
+    secondary_context = event_judgement.get('secondary_context') if isinstance(event_judgement, dict) else []
+    secondary_context = secondary_context if isinstance(secondary_context, list) else []
+    confidence_cap = relationship_strict.get('confidence_cap') or event_judgement.get('confidence_cap') or 'unknown'
+    dominant_label = event_judgement.get('dominant_label') if isinstance(event_judgement, dict) else None
+    synastry = present.get('synastry_relationship_support') if isinstance(present, dict) else {}
+    synastry_signals = synastry.get('signals') if isinstance(synastry, dict) else []
+    synastry_signals = synastry_signals if isinstance(synastry_signals, list) else []
+
+    strengths = []
+    risks = []
+    boundaries = []
+
+    if dominant_label == 'legal_marriage':
+        strengths.append('本轮严格裁决已把婚恋主标签抬到 legal_marriage，但仍需尊重时机与现实承诺层。')
+    elif dominant_label == 'public_formalization':
+        strengths.append('当前更偏向 public_formalization，表示关系可见度/公开化支持强于法律婚姻落地。')
+    elif 'public_formalization_candidate' in secondary_context:
+        strengths.append('当前更接近 public_formalization_candidate，表示公开化/关系可见度候选正在增强，但仍未达到法律婚姻落地。')
+
+    if 'jaimini_support' in secondary_context:
+        strengths.append('Jaimini 桥接已提供配偶征象支持，DK/UL 线索可用于补强婚恋叙事。')
+    if 'ul_support' in secondary_context:
+        strengths.append('Upapada Lagna 已进入严格证据，可作为关系承诺与婚姻叙事的辅助锚点。')
+    if 'synastry_support' in secondary_context:
+        strengths.append('合盘支持已进入婚恋主链，但它只说明关系兼容度有帮助，不能单独决定婚姻落地。')
+    if 'synastry_compatibility_support' in secondary_context:
+        strengths.append('protective kuta / compatibility support 说明部分 Kuta 与关系延续性维度较干净。')
+    if 'synastry_protective_kuta_support' in secondary_context:
+        strengths.append('protective kuta support 已被识别，可作为关系稳定性的次级支持语义。')
+    if 'synastry_exception_mitigated' in secondary_context:
+        strengths.append('存在 exception mitigation，说明部分 Dosha/不利匹配在传统规则里有缓解条件。')
+
+    if confidence_cap in {'low', 'blocked'}:
+        risks.append('当前 confidence cap 偏低，dual dasha / external timing / marriage convergence 至少有一层存在冲突或不足。')
+        if 'public_formalization_candidate' in secondary_context:
+            risks.append('当前虽更接近 public_formalization_candidate，但在 timing conflict 未解除前，不能误读成接近结婚。')
+    if missing:
+        risks.append(f"仍缺少关键层：{', '.join(str(item) for item in missing[:4])}。")
+    if 'virodhargala_obstruction' in secondary_context:
+        risks.append('第七宫 Argala 出现阻滞，关系推进可能伴随现实阻力或时间延后。')
+    if 'dignity_high_friction' in secondary_context:
+        risks.append('相关婚恋行星尊贵度摩擦较高，关系推进时更容易出现磨损与反复确认。')
+    if 'shadbala_component_gap' in secondary_context:
+        risks.append('Shadbala 六分量还存在缺口，关系强弱结论需继续保守处理。')
+
+    boundaries.append('婚恋高严谨模式至少需要 D1、D9、UL、Vimshottari 与 Narayana dual dasha 同时在场。')
+    boundaries.append('protective kuta support、Mahendra、Stree Deergha 等合盘细信号只能辅助，不得越权抬升 legal_marriage。')
+    boundaries.append('若 dual dasha、external timing 或 marriage convergence 冲突，必须明确降置信度，而不是把关系窗口包装成婚姻必然落地。')
+    if 'public_formalization_candidate' in secondary_context:
+        boundaries.append('public_formalization_candidate 只表示公开化候选，不等于法律婚姻，不能越权替代 legal_marriage。')
+    if synastry_signals:
+        boundaries.append(f"当前 synastry taxonomy 已命中 {', '.join(synastry_signals[:5])}，但这些信号仍从属于 secondary-context。")
+
+    if not strengths:
+        strengths.append('当前婚恋 strict workflow 主要提供边界与缺口提示，尚未形成足够稳定的正向落地支持。')
+    if not risks:
+        risks.append('未见强烈负面冲突，但仍需用现实事件、D9 和 dual dasha 做最后复核。')
+
+    headline = (
+        '婚恋严格裁决已接入 synastry taxonomy，可把合盘支持翻译成次级关系语义。'
+        if 'synastry_support' in secondary_context
+        else '婚恋严格裁决已接入主链，但当前更依赖本命、D9 与时机层，而非合盘辅助。'
+    )
+
+    markdown_lines = [
+        '### 婚恋严格裁决',
+        f"- headline: {headline}",
+        f"- dominant_label: {dominant_label or 'none'}",
+        f"- confidence_cap: {confidence_cap}",
+        f"- secondary_context: {secondary_context}",
+        '- strengths:',
+        *[f"  - {item}" for item in strengths],
+        '- risks:',
+        *[f"  - {item}" for item in risks],
+        '- boundaries:',
+        *[f"  - {item}" for item in boundaries],
+    ]
+
+    return {
+        'headline': headline,
+        'strengths': strengths,
+        'risks': risks,
+        'boundaries': boundaries,
+        'markdown': "\n".join(markdown_lines),
+    }
 
 
 def _build_ai_prompt_pack(report):
@@ -960,6 +1086,7 @@ def _build_ai_prompt_pack(report):
     functional_layer = _functional_benefic_malefic_snapshot(planets, chart.get('ascendant', {}))
     oracle_progress = _oracle_progress_snapshot()
     technique_audit_table = _build_technique_audit_table(functional_layer, oracle_progress, modules)
+    relationship_narrative = _build_relationship_narrative_payload(modules.get('relationship_strict_evidence'))
 
     shadbala_ranking = []
     for planet_name, pdata in sorted(
@@ -1031,6 +1158,7 @@ def _build_ai_prompt_pack(report):
         'oracle_progress': oracle_progress,
         'functional_benefic_malefic': functional_layer,
         'technique_audit_table': technique_audit_table,
+        'relationship_narrative': relationship_narrative,
     }
 
     prompt_lines = [
@@ -1066,6 +1194,25 @@ def _build_ai_prompt_pack(report):
             ],
         },
     }
+
+
+def _load_relationship_strict_collector():
+    try:
+        from mcp_server import _collect_strict_evidence as collector
+        return collector
+    except Exception:
+        mcp_path = os.path.join(ROOT_DIR, 'mcp_server.py')
+        if not os.path.exists(mcp_path):
+            raise
+        spec = importlib.util.spec_from_file_location("jyotish_root_mcp_server", mcp_path)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Unable to load mcp_server from {mcp_path}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        collector = getattr(module, "_collect_strict_evidence", None)
+        if collector is None:
+            raise ImportError("mcp_server._collect_strict_evidence not found")
+        return collector
 
 
 # ============================================================================
@@ -4739,6 +4886,20 @@ def cmd_full_reading(args):
     elapsed = round(time.time() - t0, 2)
     module_count = len(report['modules'])
     error_count = len(report['errors'])
+
+    # ── 生成动态引导 (Dynamic Hooks) ──
+    try:
+        report['dynamic_hooks'] = generate_life_stage_hooks(
+            planets=report['modules'].get('chart', {}).get('planets', {}),
+            asc_sign=report['modules'].get('chart', {}).get('ascendant', {}).get('sign', ''),
+            asc_idx=report['modules'].get('chart', {}).get('ascendant', {}).get('sign_idx', 0),
+            current_dasha=report['modules'].get('dasha', {}).get('current_dasha', {}),
+            narayana_dasha=report['modules'].get('narayana_dasha', {})
+        )
+    except Exception as e:
+        report['dynamic_hooks'] = []
+        report['errors'].append(f"hook_engine: {e}")
+
     report['summary'] = {
         'elapsed_seconds': elapsed,
         'modules_computed': module_count,
@@ -4746,6 +4907,16 @@ def cmd_full_reading(args):
         'status': 'complete' if error_count == 0 else f'{error_count} errors',
         'next_step': '⭐ v6.1.6: full-reading 已输出 transit_multi_reference(四参考点) + dasa_convergence(五系统交叉) + yogini_dasha + ashtottari_dasha + kalachakra_dasha + d9_navamsa_expanded。AI必须使用四参考点分析Transit，Dasa预测必须标注多系统收敛等级。',
     }
+
+    try:
+        relationship_strict_collector = _load_relationship_strict_collector()
+        report['modules']['relationship_strict_evidence'] = relationship_strict_collector('relationship', report)
+        report['modules']['relationship_strict_evidence']['user_narrative'] = _build_relationship_narrative_payload(
+            report['modules']['relationship_strict_evidence']
+        )
+    except Exception as e:
+        report['errors'].append(f"relationship-strict-evidence: {e}")
+
     report['ai_prompt_pack'] = _build_ai_prompt_pack(report)
 
     return report
