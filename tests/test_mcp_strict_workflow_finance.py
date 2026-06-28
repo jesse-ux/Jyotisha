@@ -215,3 +215,96 @@ def test_collect_strict_evidence_finance_combines_dhana_and_lakshmi_hooks() -> N
         "source_diversity": 2,
         "supporting_sources": ["dhana", "lakshmi"],
     }
+
+
+def test_collect_strict_evidence_finance_adds_yogi_hook_only_when_external_truth_is_present() -> None:
+    result = {
+        "modules": {
+            "chart": {
+                "ascendant": {"sign": "Pisces", "lord": "Jupiter"},
+                "planets": {
+                    "Venus": {
+                        "sign": "Capricorn",
+                        "house": 10,
+                        "status": "入友(Friendly Sign)",
+                    }
+                },
+            },
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 31, "11": 36}},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "moderate"}],
+                    "summary": "Dhana检测：共1个格局",
+                }
+            },
+        },
+        "external_truth": {"yogi_planet": "Venus"},
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+    assert strict["present_evidence"]["wealth_promise_strength"] == {
+        "level": "moderate",
+        "primary_source": "dhana_yogi_hooks",
+        "count": 2,
+        "source_diversity": 2,
+        "supporting_sources": ["dhana", "yogi"],
+    }
+    assert "yogi_active" in strict["event_judgement"]["secondary_context"]
+
+
+def test_collect_strict_evidence_finance_does_not_promote_yogi_outside_kendra_trikona() -> None:
+    result = {
+        "modules": {
+            "chart": {
+                "ascendant": {"sign": "Pisces", "lord": "Jupiter"},
+                "planets": {
+                    "Venus": {
+                        "sign": "Capricorn",
+                        "house": 11,
+                        "status": "入友(Friendly Sign)",
+                    }
+                },
+            },
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 31, "11": 36}},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "moderate"}],
+                    "summary": "Dhana检测：共1个格局",
+                }
+            },
+        },
+        "external_truth": {"yogi_planet": "Venus"},
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+    assert strict["present_evidence"]["yogi_promise"] is None
+    assert strict["present_evidence"]["wealth_promise_strength"] == {
+        "level": "moderate",
+        "primary_source": "dhana_yogas",
+        "count": 1,
+        "source_diversity": 1,
+        "supporting_sources": ["dhana"],
+    }
+    assert "yogi_active" not in strict["event_judgement"]["secondary_context"]

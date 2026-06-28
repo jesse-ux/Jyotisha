@@ -145,6 +145,34 @@ def _derive_wealth_promise_strength(modules: Dict[str, Any]) -> Optional[Dict[st
     }
 
 
+def _check_yogi_promise(result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    external_truth = result.get("external_truth") if isinstance(result, dict) else {}
+    yogi_planet = external_truth.get("yogi_planet") if isinstance(external_truth, dict) else None
+    if not yogi_planet:
+        return None
+
+    modules = result.get("modules", {}) if isinstance(result, dict) else {}
+    chart = modules.get("chart") if isinstance(modules, dict) else {}
+    planets = chart.get("planets") if isinstance(chart, dict) else {}
+    planet_data = planets.get(yogi_planet) if isinstance(planets, dict) else None
+    if not isinstance(planet_data, dict):
+        return None
+
+    house = planet_data.get("house")
+    status = str(planet_data.get("status", ""))
+    if house not in {1, 4, 5, 7, 9, 10}:
+        return None
+    if "落陷" in status or "Debilitated" in status:
+        return None
+
+    return {
+        "planet": yogi_planet,
+        "house": house,
+        "status": status,
+        "source": "external_yogi_planet",
+    }
+
+
 def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[str]) -> Dict[str, Any]:
     if route == "relationship":
         score = 0
@@ -321,6 +349,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         }
 
     if route == "finance":
+        yogi_promise = _check_yogi_promise(result)
         required = [
             "varga_full.D2_Hora",
             "varga_full.D10_Dasamsa",
@@ -341,9 +370,22 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "gains_convergence": domain_activations.get("gains_wishes"),
             "career_convergence": domain_activations.get("career_status"),
             "wealth_promise_strength": _derive_wealth_promise_strength(modules),
+            "yogi_promise": yogi_promise,
         }
+        if present["wealth_promise_strength"] and yogi_promise:
+            promise = dict(present["wealth_promise_strength"])
+            supporting_sources = sorted(set((promise.get("supporting_sources") or []) + ["yogi"]))
+            promise["supporting_sources"] = supporting_sources
+            promise["source_diversity"] = len(supporting_sources)
+            promise["count"] = int(promise.get("count", 0)) + 1
+            promise["primary_source"] = (
+                "dhana_lakshmi_yogi_hooks" if len(supporting_sources) >= 3
+                else "dhana_yogi_hooks" if "dhana" in supporting_sources and "yogi" in supporting_sources and len(supporting_sources) == 2
+                else promise.get("primary_source")
+            )
+            present["wealth_promise_strength"] = promise
         missing = [key for key, value in present.items() if key not in {
-            "gains_convergence", "career_convergence"
+            "gains_convergence", "career_convergence", "yogi_promise"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [
@@ -363,6 +405,8 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         else:
             confidence_cap = "medium-low"
         event_judgement = _derive_event_judgement(route, present, missing)
+        if yogi_promise and event_judgement.get("dominant_label") and "yogi_active" not in event_judgement.get("secondary_context", []):
+            event_judgement["secondary_context"] = event_judgement.get("secondary_context", []) + ["yogi_active"]
         return {
             "question_type": route,
             "required_evidence": required,
