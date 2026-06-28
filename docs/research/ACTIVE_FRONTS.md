@@ -52,8 +52,9 @@ This file is the small index for the current engineering fronts that still drive
 - `/Users/wuyongnaren/Documents/印度占星/docs/superpowers/specs/2026-06-28-dignity-guardrail-v1-design.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/dignity_guardrail_v1_boundary_audit_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/divisional_dignity_context_repair_audit_2026_06_28.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/functional_benefic_malefic_strict_layer_audit_2026_06_28.md`
 - D1-only dignity guardrail is landed.
 - Divisional dignity context repair for D9/DK/Vimsopaka Navamsa is also landed.
 - Still open:
   - Vimsopaka semantic mapping for `NEECHA_BHANGA / GREAT_FRIEND / GREAT_ENEMY`
-  - a separate functional-role guardrail
+  - functional role now enters strict evidence; follow-up is Technique Audit Table rendering.
