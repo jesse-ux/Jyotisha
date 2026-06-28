@@ -448,6 +448,131 @@ def _derive_external_activation_support(modules: Dict[str, Any], domain: str) ->
     }
 
 
+def _sign_to_index(sign: str) -> Optional[int]:
+    try:
+        return _SIGNS.index(sign)
+    except ValueError:
+        return None
+
+
+def _lord_for_house_from_lagna(asc_sign: Optional[str], house_num: int) -> Optional[str]:
+    asc_idx = _sign_to_index(asc_sign) if asc_sign else None
+    if asc_idx is None:
+        return None
+    sign = _SIGNS[(asc_idx + house_num - 1) % 12]
+    return _SIGN_LORDS.get(sign)
+
+
+def _extract_dignity_code(status: str) -> Optional[str]:
+    if "Neecha Bhanga" in status or "落陷取消" in status:
+        return "NEECHA_BHANGA"
+    if "Great Enemy" in status or "极敌" in status:
+        return "GREAT_ENEMY"
+    return None
+
+
+def _derive_dignity_guardrail(route: str, present: Dict[str, Any]) -> Dict[str, Any]:
+    base = {
+        "route": route,
+        "status": "blocked",
+        "score_delta": 0,
+        "source": "chart.planets.status",
+        "relevant_planets": [],
+        "ignored_planets": [],
+        "conflict_flags": [],
+        "notes": ["Only domain-relevant planets are allowed to affect score."],
+    }
+
+    chart = present.get("chart") if isinstance(present.get("chart"), dict) else {}
+    ascendant = chart.get("ascendant") if isinstance(chart.get("ascendant"), dict) else {}
+    planets = chart.get("planets") if isinstance(chart.get("planets"), dict) else {}
+    asc_sign = ascendant.get("sign")
+
+    if not asc_sign or not isinstance(planets, dict) or not planets:
+        return base
+
+    relevant_roles: Dict[str, str] = {}
+
+    if route == "relationship":
+        lord_7 = _lord_for_house_from_lagna(asc_sign, 7)
+        if not lord_7:
+            return base
+        relevant_roles[lord_7] = "7l"
+        relevant_roles["Venus"] = "relationship_karaka"
+        relevant_roles["Jupiter"] = "relationship_support"
+        darakaraka = present.get("darakaraka")
+        if isinstance(darakaraka, dict) and darakaraka.get("planet"):
+            relevant_roles[darakaraka["planet"]] = "darakaraka"
+    elif route == "finance":
+        lord_2 = _lord_for_house_from_lagna(asc_sign, 2)
+        lord_11 = _lord_for_house_from_lagna(asc_sign, 11)
+        if not lord_2 or not lord_11:
+            return base
+        relevant_roles[lord_2] = "2l"
+        relevant_roles[lord_11] = "11l"
+        relevant_roles["Venus"] = "finance_karaka"
+        relevant_roles["Jupiter"] = "finance_support"
+        if present.get("career_convergence"):
+            lord_10 = _lord_for_house_from_lagna(asc_sign, 10)
+            if lord_10:
+                relevant_roles[lord_10] = "10l_career_monetization"
+    else:
+        base["status"] = "ok"
+        return base
+
+    supportive_hits: List[str] = []
+    friction_hits: List[str] = []
+
+    for planet_name, pdata in planets.items():
+        if planet_name not in relevant_roles:
+            base["ignored_planets"].append({
+                "planet": planet_name,
+                "reason": "not_domain_relevant",
+            })
+            continue
+        if not isinstance(pdata, dict):
+            return base
+        status = str(pdata.get("status", ""))
+        if not status:
+            return base
+        dignity_code = _extract_dignity_code(status)
+        effect = (
+            "supportive_recovery" if dignity_code == "NEECHA_BHANGA"
+            else "high_friction" if dignity_code == "GREAT_ENEMY"
+            else "none"
+        )
+        base["relevant_planets"].append({
+            "planet": planet_name,
+            "role": relevant_roles[planet_name],
+            "status": status,
+            "dignity_code": dignity_code,
+            "effect": effect,
+        })
+        if dignity_code == "NEECHA_BHANGA":
+            supportive_hits.append(planet_name)
+        elif dignity_code == "GREAT_ENEMY":
+            friction_hits.append(planet_name)
+
+    if supportive_hits and friction_hits:
+        base["status"] = "conflict"
+        base["conflict_flags"] = [
+            "neecha_bhanga_on_key_significator",
+            "great_enemy_on_key_significator",
+        ]
+        base["score_delta"] = 0
+    elif supportive_hits:
+        base["status"] = "caution"
+        base["score_delta"] = 5
+    elif friction_hits:
+        base["status"] = "caution"
+        base["score_delta"] = -5
+    else:
+        base["status"] = "ok"
+        base["score_delta"] = 0
+
+    return base
+
+
 def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[str]) -> Dict[str, Any]:
     if route == "relationship":
         score = 0
@@ -458,17 +583,8 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         score += 10 if present.get("vimshottari_current") else 0
         score += 10 if present.get("narayana_current") else 0
         score += _convergence_score(present.get("marriage_convergence"))
-
-        # Dignity Adjustments
-        chart = present.get("chart") if isinstance(present.get("chart"), dict) else {}
-        planets = chart.get("planets", {})
-        for pn, pd in planets.items():
-            if isinstance(pd, dict):
-                st = str(pd.get("status", ""))
-                if "Neecha Bhanga" in st or "落陷取消" in st:
-                    score += 10
-                elif "Great Enemy" in st or "极敌" in st:
-                    score -= 5
+        dignity_guardrail = present.get("dignity_guardrail") or {}
+        score += dignity_guardrail.get("score_delta", 0)
         if missing:
             score = min(score, 35)
         score = min(score, 100)
@@ -493,6 +609,12 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         external_activation = present.get("external_activation") or {}
         if external_activation.get("level") == "moderate":
             secondary_context.append("external_activation_support")
+        if dignity_guardrail.get("status") == "conflict":
+            secondary_context.append("dignity_conflict")
+        elif dignity_guardrail.get("score_delta") == 5:
+            secondary_context.append("dignity_supportive_recovery")
+        elif dignity_guardrail.get("score_delta") == -5:
+            secondary_context.append("dignity_high_friction")
 
         hard_gate_missing = any(
             key in missing for key in (
@@ -547,17 +669,8 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             _convergence_score(present.get("gains_convergence")),
             _convergence_score(present.get("career_convergence")),
         )
-
-        # Dignity Adjustments
-        chart = present.get("chart") if isinstance(present.get("chart"), dict) else {}
-        planets = chart.get("planets", {})
-        for pn, pd in planets.items():
-            if isinstance(pd, dict):
-                st = str(pd.get("status", ""))
-                if "Neecha Bhanga" in st or "落陷取消" in st:
-                    score += 10
-                elif "Great Enemy" in st or "极敌" in st:
-                    score -= 5
+        dignity_guardrail = present.get("dignity_guardrail") or {}
+        score += dignity_guardrail.get("score_delta", 0)
         score -= 5 if isinstance(avayogi_risk, dict) and avayogi_risk.get("risk_level") == "moderate" else 0
         public_wealth_lift = (
             not missing
@@ -606,6 +719,12 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         external_activation = present.get("external_activation") or {}
         if external_activation.get("level") == "moderate":
             secondary_context.append("external_activation_support")
+        if dignity_guardrail.get("status") == "conflict":
+            secondary_context.append("dignity_conflict")
+        elif dignity_guardrail.get("score_delta") == 5:
+            secondary_context.append("dignity_supportive_recovery")
+        elif dignity_guardrail.get("score_delta") == -5:
+            secondary_context.append("dignity_high_friction")
         return {
             "event_family": "finance",
             "score": score,
@@ -660,14 +779,17 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["jaimini_timing_support"] = _safe_get(modules, "jaimini", "marriage_timing_support")
         present["jaimini_marriage_support"] = _derive_jaimini_marriage_support(present)
         present["external_activation"] = _derive_external_activation_support(modules, "marriage")
+        present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         missing = [
             key for key, value in present.items()
-            if key not in {"chart", "external_activation", "jaimini_marriage_support", "jaimini_timing_support"}
+            if key not in {"chart", "external_activation", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support"}
             and value in (None, {}, [], "")
         ]
         convergence = present["marriage_convergence"] or {}
         confidence_cap = "medium"
         if missing:
+            confidence_cap = "low"
+        elif present["dignity_guardrail"].get("status") == "conflict":
             confidence_cap = "low"
         elif convergence.get("convergence_level") in {"L4", "L5"}:
             confidence_cap = "medium-high"
@@ -716,8 +838,9 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "avayogi_risk": avayogi_risk,
         }
         present["external_activation"] = _derive_external_activation_support(modules, "wealth")
+        present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         missing = [key for key, value in present.items() if key not in {
-            "chart", "external_activation", "gains_convergence", "career_convergence", "avayogi_risk"
+            "chart", "external_activation", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [
@@ -729,6 +852,8 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         ]
         confidence_cap = "medium"
         if missing:
+            confidence_cap = "low"
+        elif present["dignity_guardrail"].get("status") == "conflict":
             confidence_cap = "low"
         elif any(hit.get("convergence_level") in {"L4", "L5"} for hit in convergence_hits):
             confidence_cap = "medium-high"

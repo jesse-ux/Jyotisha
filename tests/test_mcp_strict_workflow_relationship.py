@@ -81,3 +81,40 @@ def test_relationship_collects_vedastro_range_scan_as_external_activation_contex
     assert strict["present_evidence"]["external_activation"]["level"] == "moderate"
     assert strict["present_evidence"]["external_activation"]["source"] == "vedastro_service_adapter_candidate"
     assert "external_activation_support" in strict["event_judgement"]["secondary_context"]
+
+
+def test_relationship_dignity_guardrail_ignores_non_relevant_planets() -> None:
+    result = _base_relationship_result()
+    result["modules"]["chart"] = {
+        "ascendant": {"sign": "Leo"},
+        "planets": {
+            "Mars": {"status": "落陷取消(Neecha Bhanga)"},
+            "Mercury": {"status": "极敌(Great Enemy)"},
+            "Venus": {"status": "中性(Neutral)"},
+            "Jupiter": {"status": "中性(Neutral)"},
+        },
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["dignity_guardrail"]["score_delta"] == 0
+    assert strict["event_judgement"]["dominant_label"] == "legal_marriage"
+    assert "dignity_supportive_recovery" not in strict["event_judgement"]["secondary_context"]
+    assert "dignity_high_friction" not in strict["event_judgement"]["secondary_context"]
+
+
+def test_relationship_dignity_guardrail_uses_relevant_planets_only() -> None:
+    result = _base_relationship_result()
+    result["modules"]["chart"] = {
+        "ascendant": {"sign": "Aries"},
+        "planets": {
+            "Venus": {"status": "落陷取消(Neecha Bhanga)"},
+            "Jupiter": {"status": "中性(Neutral)"},
+            "Saturn": {"status": "极敌(Great Enemy)"},
+        },
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["dignity_guardrail"]["score_delta"] == 5
+    assert "dignity_supportive_recovery" in strict["event_judgement"]["secondary_context"]

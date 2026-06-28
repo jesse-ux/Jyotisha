@@ -260,6 +260,73 @@ def test_collect_strict_evidence_finance_collects_vedastro_range_scan_as_externa
     assert "external_activation_support" in strict["event_judgement"]["secondary_context"]
 
 
+def test_finance_dignity_guardrail_conflict_caps_to_zero_delta() -> None:
+    result = {
+        "modules": {
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 31, "11": 36}},
+            "chart": {
+                "ascendant": {"sign": "Leo"},
+                "planets": {
+                    "Mercury": {"status": "落陷取消(Neecha Bhanga)"},
+                    "Venus": {"status": "极敌(Great Enemy)"},
+                    "Jupiter": {"status": "中性(Neutral)"},
+                },
+            },
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+
+    assert strict["present_evidence"]["dignity_guardrail"]["status"] == "conflict"
+    assert strict["present_evidence"]["dignity_guardrail"]["score_delta"] == 0
+    assert "dignity_conflict" in strict["event_judgement"]["secondary_context"]
+
+
+def test_finance_dignity_guardrail_ignores_non_relevant_planets() -> None:
+    result = {
+        "modules": {
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 31, "11": 36}},
+            "chart": {
+                "ascendant": {"sign": "Leo"},
+                "planets": {
+                    "Mars": {"status": "落陷取消(Neecha Bhanga)"},
+                    "Saturn": {"status": "极敌(Great Enemy)"},
+                    "Venus": {"status": "中性(Neutral)"},
+                    "Jupiter": {"status": "中性(Neutral)"},
+                },
+            },
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+
+    assert strict["present_evidence"]["dignity_guardrail"]["score_delta"] == 0
+    assert "dignity_supportive_recovery" not in strict["event_judgement"]["secondary_context"]
+    assert "dignity_high_friction" not in strict["event_judgement"]["secondary_context"]
+
+
 def test_collect_strict_evidence_finance_ignores_non_matching_external_activation_domains() -> None:
     result = {
         "modules": {
