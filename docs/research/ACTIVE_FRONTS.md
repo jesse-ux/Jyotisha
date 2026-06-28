@@ -12,9 +12,11 @@ This file is the small index for the current engineering fronts that still drive
 ## Relationship Adjudication
 
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/marriage_adjudicator_first_pass_audit_2026_06_27.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/marriage_benchmark_summary_bridge_audit_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/isolated_asset_bridge_audit_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/references/event_judgment_marriage.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/superpowers/specs/2026-06-28-jaimini-marriage-bridge-v1-design.md`
+- `/Users/wuyongnaren/Documents/印度占星/scripts/marriage_benchmark_summary.py`
 
 ## Wealth Adjudication
 
