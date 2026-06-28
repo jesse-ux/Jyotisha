@@ -969,6 +969,17 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             score += 5
         elif ashtakavarga_finance.get("level") == "obstructive":
             score -= 5
+        pav_finance_support = present.get("pav_finance_support") or {}
+        if pav_finance_support.get("level") == "supportive":
+            score += 2
+        sodhita_finance_support = present.get("sodhita_finance_support") or {}
+        if sodhita_finance_support.get("level") == "obstructive":
+            score -= 2
+        kakshya_finance_support = present.get("kakshya_finance_support") or {}
+        if kakshya_finance_support.get("level") == "supportive":
+            score += 2
+        elif kakshya_finance_support.get("level") == "obstructive":
+            score -= 2
         score += 20 if wealth_promise_level == "strong" else 10 if wealth_promise_level == "moderate" else 0
         score += 5 if wealth_promise_diversity >= 2 else 0
         score += max(
@@ -1026,13 +1037,10 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         shadbala_component_audit = present.get("shadbala_component_audit") or {}
         if shadbala_component_audit.get("status") in {"blocked", "incomplete"}:
             secondary_context.append("shadbala_component_gap")
-        pav_finance_support = present.get("pav_finance_support") or {}
         if pav_finance_support.get("level") == "supportive":
             secondary_context.append("pav_finance_support")
-        sodhita_finance_support = present.get("sodhita_finance_support") or {}
         if sodhita_finance_support.get("level") == "obstructive":
             secondary_context.append("sodhita_wealth_friction")
-        kakshya_finance_support = present.get("kakshya_finance_support") or {}
         if kakshya_finance_support.get("level") == "supportive":
             secondary_context.append("kakshya_finance_support")
         elif kakshya_finance_support.get("level") == "obstructive":
