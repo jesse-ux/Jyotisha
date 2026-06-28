@@ -108,7 +108,172 @@ def _convergence_score(convergence: Any) -> int:
     return mapping.get(level, 0)
 
 
+_SIGNS = [
+    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+]
+_SIGN_TO_INDEX = {name: idx for idx, name in enumerate(_SIGNS)}
+_SIGN_LORDS = {
+    "Aries": "Mars",
+    "Taurus": "Venus",
+    "Gemini": "Mercury",
+    "Cancer": "Moon",
+    "Leo": "Sun",
+    "Virgo": "Mercury",
+    "Libra": "Venus",
+    "Scorpio": "Mars",
+    "Sagittarius": "Jupiter",
+    "Capricorn": "Saturn",
+    "Aquarius": "Saturn",
+    "Pisces": "Jupiter",
+}
+_NAKSHATRA_NAMES = [
+    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
+    "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni",
+    "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha",
+    "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana",
+    "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada",
+    "Revati",
+]
+_NAKSHATRA_LORDS = [
+    "Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury",
+    "Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury",
+    "Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury",
+]
+_WEALTH_HOUSES = {2, 5, 9, 10, 11}
+_NAKSHATRA_SPAN = 360.0 / 27.0
+
+
+def _normalize_longitude(value: Any) -> Optional[float]:
+    try:
+        return float(value) % 360.0
+    except (TypeError, ValueError):
+        return None
+
+
+def _circular_distance_deg(a: float, b: float) -> float:
+    diff = abs(a - b) % 360.0
+    return min(diff, 360.0 - diff)
+
+
+def _sign_from_longitude(lon: float) -> str:
+    return _SIGNS[int(lon // 30.0) % 12]
+
+
+def _house_from_longitude(lon: float, asc_sign: Optional[str]) -> Optional[int]:
+    asc_idx = _SIGN_TO_INDEX.get(asc_sign) if asc_sign else None
+    if asc_idx is None:
+        return None
+    return ((int(lon // 30.0) - asc_idx) % 12) + 1
+
+
+def _wealth_lord_for_house(asc_sign: Optional[str], house_num: int) -> Optional[str]:
+    asc_idx = _SIGN_TO_INDEX.get(asc_sign) if asc_sign else None
+    if asc_idx is None:
+        return None
+    house_sign = _SIGNS[(asc_idx + house_num - 1) % 12]
+    return _SIGN_LORDS.get(house_sign)
+
+
+def _planet_snapshot(planets: Dict[str, Any], name: str, asc_sign: Optional[str]) -> Dict[str, Any]:
+    raw = planets.get(name) if isinstance(planets, dict) else None
+    data = dict(raw) if isinstance(raw, dict) else {}
+    lon = _normalize_longitude(data.get("degree_raw", data.get("degree")))
+    if lon is not None:
+        data.setdefault("degree_raw", lon)
+        data.setdefault("sign", _sign_from_longitude(lon))
+        if data.get("house") is None:
+            house = _house_from_longitude(lon, asc_sign)
+            if house is not None:
+                data["house"] = house
+    return data
+
+
+def _derive_yogi_wealth_support(modules: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    if not isinstance(modules, dict):
+        return None
+    chart = modules.get("chart")
+    if not isinstance(chart, dict):
+        return None
+
+    ascendant = chart.get("ascendant") if isinstance(chart.get("ascendant"), dict) else {}
+    asc_lon = _normalize_longitude(ascendant.get("degree_raw", ascendant.get("lon", ascendant.get("degree"))))
+    asc_sign = ascendant.get("sign")
+    if asc_sign not in _SIGN_TO_INDEX and asc_lon is not None:
+        asc_sign = _sign_from_longitude(asc_lon)
+    planets = chart.get("planets") if isinstance(chart.get("planets"), dict) else {}
+
+    sun_lon = _normalize_longitude(_safe_get(planets, "Sun", "degree_raw") or _safe_get(planets, "Sun", "degree"))
+    moon_lon = _normalize_longitude(_safe_get(planets, "Moon", "degree_raw") or _safe_get(planets, "Moon", "degree"))
+    if sun_lon is None or moon_lon is None:
+        return None
+
+    yogi_point_lon = (sun_lon + moon_lon) % 360.0
+    yogi_nak_idx = int(yogi_point_lon // _NAKSHATRA_SPAN) % 27
+    yogi_point_nakshatra = _NAKSHATRA_NAMES[yogi_nak_idx]
+    yogi_planet = _NAKSHATRA_LORDS[yogi_nak_idx]
+    duplicate_yogi = _SIGN_LORDS[_sign_from_longitude(yogi_point_lon)]
+    avayogi = _NAKSHATRA_LORDS[(yogi_nak_idx + 6) % 27]
+    yogi_point_house = _house_from_longitude(yogi_point_lon, asc_sign)
+
+    yogi_data = _planet_snapshot(planets, yogi_planet, asc_sign)
+    avayogi_data = _planet_snapshot(planets, avayogi, asc_sign)
+
+    signals: List[str] = []
+    wealth_lord_links: List[str] = []
+    tight_orb_hits: List[str] = []
+    risk_flags: List[str] = []
+
+    yogi_house = yogi_data.get("house")
+    if yogi_house in _WEALTH_HOUSES:
+        signals.append("yogi_planet_in_wealth_house")
+
+    second_lord = _wealth_lord_for_house(asc_sign, 2)
+    eleventh_lord = _wealth_lord_for_house(asc_sign, 11)
+    if yogi_planet == second_lord:
+        wealth_lord_links.append("yogi_planet_is_2l")
+        signals.append("yogi_planet_is_2l")
+    if yogi_planet == eleventh_lord:
+        wealth_lord_links.append("yogi_planet_is_11l")
+        signals.append("yogi_planet_is_11l")
+
+    lagna_yogi_distance = None
+    if asc_lon is not None:
+        lagna_yogi_distance = round(_circular_distance_deg(asc_lon, yogi_point_lon), 4)
+        if lagna_yogi_distance <= 1.0:
+            tight_orb_hits.append("lagna_yogi_tight_orb")
+            signals.append("lagna_yogi_tight_orb")
+
+    avayogi_house = avayogi_data.get("house")
+    if avayogi_house in _WEALTH_HOUSES:
+        risk_flags.append("avayogi_in_wealth_house")
+
+    if len(signals) >= 3 and not risk_flags:
+        level = "strong"
+    elif len(signals) >= 2:
+        level = "moderate"
+    else:
+        level = "weak"
+
+    return {
+        "level": level,
+        "source": "yogi_asc_tight_orb_wealth",
+        "yogi_planet": yogi_planet,
+        "duplicate_yogi": duplicate_yogi,
+        "avayogi": avayogi,
+        "yogi_point_longitude": round(yogi_point_lon, 4),
+        "yogi_point_nakshatra": yogi_point_nakshatra,
+        "yogi_point_house": yogi_point_house,
+        "lagna_yogi_distance_deg": lagna_yogi_distance,
+        "tight_orb_hits": tight_orb_hits,
+        "wealth_lord_links": wealth_lord_links,
+        "signals": signals,
+        "risk_flags": risk_flags,
+    }
+
+
 def _derive_wealth_promise_strength(modules: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    yogi_support = _derive_yogi_wealth_support(modules)
     yogas_doshas = modules.get("yogas_doshas") if isinstance(modules, dict) else {}
     dhana = yogas_doshas.get("dhana_yogas") if isinstance(yogas_doshas, dict) else {}
     yogas = dhana.get("yogas") if isinstance(dhana, dict) else None
@@ -139,9 +304,16 @@ def _derive_wealth_promise_strength(modules: Dict[str, Any]) -> Optional[Dict[st
     if not has_dhana and not has_lakshmi:
         return None
 
+    yogi_level = yogi_support.get("level") if isinstance(yogi_support, dict) else None
+    if yogi_level in {"moderate", "strong"}:
+        sources.add("yogi")
     supporting_sources = sorted(sources)
 
-    if has_dhana and has_lakshmi:
+    if has_dhana and has_lakshmi and "yogi" in sources:
+        primary_source = "dhana_lakshmi_yogi_hooks"
+    elif has_dhana and "yogi" in sources:
+        primary_source = "dhana_yogi_hooks"
+    elif has_dhana and has_lakshmi:
         primary_source = "dhana_lakshmi_hooks"
     elif has_dhana:
         primary_source = "dhana_yogas"
@@ -161,35 +333,42 @@ def _derive_wealth_promise_strength(modules: Dict[str, Any]) -> Optional[Dict[st
         "supporting_sources": supporting_sources,
         "count": len(yogas) if isinstance(yogas, list) else 0,
         "source_diversity": len(supporting_sources),
-        "yogi_support": None,
+        "yogi_support": yogi_support if yogi_level in {"moderate", "strong"} else None,
     }
 
 
-def _check_yogi_promise(result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _check_external_avayogi_risk(result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     external_truth = result.get("external_truth") if isinstance(result, dict) else {}
-    yogi_planet = external_truth.get("yogi_planet") if isinstance(external_truth, dict) else None
-    if not yogi_planet:
+    avayogi_planet = external_truth.get("avayogi_planet") if isinstance(external_truth, dict) else None
+    if not avayogi_planet:
         return None
 
     modules = result.get("modules", {}) if isinstance(result, dict) else {}
     chart = modules.get("chart") if isinstance(modules, dict) else {}
     planets = chart.get("planets") if isinstance(chart, dict) else {}
-    planet_data = planets.get(yogi_planet) if isinstance(planets, dict) else None
+    planet_data = planets.get(avayogi_planet) if isinstance(planets, dict) else None
     if not isinstance(planet_data, dict):
         return None
 
     house = planet_data.get("house")
     status = str(planet_data.get("status", ""))
-    if house not in {1, 4, 5, 7, 9, 10}:
+    if "Own Sign" in status or "Moolatrikona" in status or "Exalted" in status:
         return None
-    if "落陷" in status or "Debilitated" in status:
+
+    signals: List[str] = []
+    if house in {1, 2, 5, 9, 10, 11}:
+        signals.append("avayogi_in_wealth_house")
+
+    if not signals:
         return None
 
     return {
-        "planet": yogi_planet,
+        "planet": avayogi_planet,
         "house": house,
         "status": status,
-        "source": "external_yogi_planet",
+        "source": "external_avayogi_planet",
+        "risk_level": "moderate",
+        "signals": signals,
     }
 
 
@@ -237,6 +416,7 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         wealth_promise = present.get("wealth_promise_strength")
         wealth_promise_level = wealth_promise.get("level") if isinstance(wealth_promise, dict) else None
         wealth_promise_diversity = wealth_promise.get("source_diversity", 0) if isinstance(wealth_promise, dict) else 0
+        avayogi_risk = present.get("avayogi_risk")
         score += 15 if present.get("d2_hora") else 0
         score += 10 if present.get("d10_dasamsa") else 0
         score += 10 if present.get("shadbala") else 0
@@ -250,6 +430,7 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             _convergence_score(present.get("gains_convergence")),
             _convergence_score(present.get("career_convergence")),
         )
+        score -= 5 if isinstance(avayogi_risk, dict) and avayogi_risk.get("risk_level") == "moderate" else 0
         public_wealth_lift = (
             not missing
             and bool(present.get("wealth_convergence"))
@@ -292,6 +473,8 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
                 secondary_context.append("career_status")
             if present.get("gains_convergence"):
                 secondary_context.append("gains_wishes")
+        if isinstance(avayogi_risk, dict) and avayogi_risk.get("risk_level") == "moderate":
+            secondary_context.append("avayogi_active")
         return {
             "event_family": "finance",
             "score": score,
@@ -369,7 +552,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         }
 
     if route == "finance":
-        yogi_promise = _check_yogi_promise(result)
+        avayogi_risk = _check_external_avayogi_risk(result)
         required = [
             "varga_full.D2_Hora",
             "varga_full.D10_Dasamsa",
@@ -390,22 +573,10 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "gains_convergence": domain_activations.get("gains_wishes"),
             "career_convergence": domain_activations.get("career_status"),
             "wealth_promise_strength": _derive_wealth_promise_strength(modules),
-            "yogi_promise": yogi_promise,
+            "avayogi_risk": avayogi_risk,
         }
-        if present["wealth_promise_strength"] and yogi_promise:
-            promise = dict(present["wealth_promise_strength"])
-            supporting_sources = sorted(set((promise.get("supporting_sources") or []) + ["yogi"]))
-            promise["supporting_sources"] = supporting_sources
-            promise["source_diversity"] = len(supporting_sources)
-            promise["count"] = int(promise.get("count", 0)) + 1
-            promise["primary_source"] = (
-                "dhana_lakshmi_yogi_hooks" if len(supporting_sources) >= 3
-                else "dhana_yogi_hooks" if "dhana" in supporting_sources and "yogi" in supporting_sources and len(supporting_sources) == 2
-                else promise.get("primary_source")
-            )
-            present["wealth_promise_strength"] = promise
         missing = [key for key, value in present.items() if key not in {
-            "gains_convergence", "career_convergence", "yogi_promise"
+            "gains_convergence", "career_convergence", "avayogi_risk"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [
@@ -426,7 +597,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             confidence_cap = "medium-low"
         event_judgement = _derive_event_judgement(route, present, missing)
         promise = present.get("wealth_promise_strength") or {}
-        if yogi_promise and "yogi" in promise.get("supporting_sources", []) and event_judgement.get("dominant_label") and "yogi_active" not in event_judgement.get("secondary_context", []):
+        if "yogi" in promise.get("supporting_sources", []) and event_judgement.get("dominant_label") and "yogi_active" not in event_judgement.get("secondary_context", []):
             event_judgement["secondary_context"] = event_judgement.get("secondary_context", []) + ["yogi_active"]
         return {
             "question_type": route,

@@ -3,7 +3,12 @@
 
 from __future__ import annotations
 
-from mcp_server import _collect_strict_evidence, _derive_event_judgement, _derive_wealth_promise_strength
+from mcp_server import (
+    _collect_strict_evidence,
+    _derive_event_judgement,
+    _derive_wealth_promise_strength,
+    _derive_yogi_wealth_support,
+)
 
 
 def test_finance_public_wealth_label_requires_at_least_moderate_window() -> None:
@@ -219,7 +224,37 @@ def test_collect_strict_evidence_finance_combines_dhana_and_lakshmi_hooks() -> N
     }
 
 
-def test_wealth_folding_dhana_does_not_self_infer_yogi_without_external_truth() -> None:
+def test_derive_yogi_wealth_support_detects_strong_native_hook() -> None:
+    modules = {
+        "chart": {
+            "ascendant": {"sign": "Aries", "degree_raw": 20.0},
+            "planets": {
+                "Sun": {"degree_raw": 140.0},
+                "Moon": {"degree_raw": 240.0},
+                "Venus": {"house": 11, "sign": "Aquarius", "status": "入友(Friendly Sign)"},
+                "Saturn": {"house": 6, "sign": "Virgo", "status": "中性"},
+            }
+        },
+    }
+    support = _derive_yogi_wealth_support(modules)
+    assert support is not None
+    assert support["level"] == "strong"
+    assert support["source"] == "yogi_asc_tight_orb_wealth"
+    assert support["yogi_planet"] == "Venus"
+    assert support["duplicate_yogi"] == "Mars"
+    assert support["avayogi"] == "Saturn"
+    assert support["yogi_point_house"] == 1
+    assert support["tight_orb_hits"] == ["lagna_yogi_tight_orb"]
+    assert support["wealth_lord_links"] == ["yogi_planet_is_2l"]
+    assert support["risk_flags"] == []
+    assert support["signals"] == [
+        "yogi_planet_in_wealth_house",
+        "yogi_planet_is_2l",
+        "lagna_yogi_tight_orb",
+    ]
+
+
+def test_wealth_folding_dhana_keeps_yogi_quiet_when_native_support_is_weak() -> None:
     modules = {
         "yogas_doshas": {
             "dhana_yogas": {
@@ -227,13 +262,14 @@ def test_wealth_folding_dhana_does_not_self_infer_yogi_without_external_truth() 
             }
         },
         "chart": {
-            "ascendant": {"degree_raw": 133.0},
+            "ascendant": {"sign": "Taurus", "degree_raw": 45.0},
             "planets": {
                 "Sun": {"degree_raw": 20.0},
                 "Moon": {"degree_raw": 20.0},
-                "Venus": {"house": 11, "sign": "Gemini"},
+                "Venus": {"house": 3, "sign": "Cancer", "status": "中性"},
+                "Saturn": {"house": 8, "sign": "Sagittarius", "status": "中性"},
             }
-        }
+        },
     }
     res = _derive_wealth_promise_strength(modules)
     assert res["primary_source"] == "dhana_yogas"
@@ -243,54 +279,61 @@ def test_wealth_folding_dhana_does_not_self_infer_yogi_without_external_truth() 
     assert res["yogi_support"] is None
 
 
-def test_wealth_folding_dhana_lakshmi_does_not_self_infer_yogi_without_external_truth() -> None:
+def test_wealth_folding_adds_native_yogi_support_only_when_base_promise_exists() -> None:
     modules = {
         "yogas_doshas": {
             "dhana_yogas": {
-                "yogas": [{"type": "dhana", "strength": "moderate"}, {"type": "lakshmi", "strength": "moderate"}]
+                "yogas": [{"type": "dhana", "strength": "moderate"}]
             }
         },
         "chart": {
-            "ascendant": {"degree_raw": 133.0},
+            "ascendant": {"sign": "Aries", "degree_raw": 20.0},
             "planets": {
-                "Sun": {"degree_raw": 20.0},
-                "Moon": {"degree_raw": 20.0},
-                "Venus": {"house": 11, "sign": "Gemini"},
+                "Sun": {"degree_raw": 140.0},
+                "Moon": {"degree_raw": 240.0},
+                "Venus": {"house": 11, "sign": "Aquarius", "status": "入友(Friendly Sign)"},
+                "Saturn": {"house": 6, "sign": "Virgo", "status": "中性"},
             }
-        }
+        },
     }
     res = _derive_wealth_promise_strength(modules)
-    assert res["primary_source"] == "dhana_lakshmi_hooks"
-    assert res["source_diversity"] == 2
     assert res["level"] == "moderate"
-    assert res["yogi_support"] is None
+    assert res["primary_source"] == "dhana_yogi_hooks"
+    assert res["source_diversity"] == 2
+    assert res["supporting_sources"] == ["dhana", "yogi"]
+    assert res["yogi_support"]["level"] == "strong"
+    assert res["yogi_support"]["wealth_lord_links"] == ["yogi_planet_is_2l"]
 
 
-def test_wealth_folding_yogi_only_is_blocked_without_external_truth() -> None:
+def test_wealth_folding_yogi_only_is_blocked_without_base_promise() -> None:
     modules = {
         "chart": {
-            "ascendant": {"degree_raw": 133.0},
+            "ascendant": {"sign": "Aries", "degree_raw": 20.0},
             "planets": {
-                "Sun": {"degree_raw": 20.0},
-                "Moon": {"degree_raw": 20.0},
-                "Venus": {"house": 11, "sign": "Gemini"},
+                "Sun": {"degree_raw": 140.0},
+                "Moon": {"degree_raw": 240.0},
+                "Venus": {"house": 11, "sign": "Aquarius", "status": "入友(Friendly Sign)"},
+                "Saturn": {"house": 6, "sign": "Virgo", "status": "中性"},
             }
-        }
+        },
     }
     assert _derive_wealth_promise_strength(modules) is None
 
 
-def test_collect_strict_evidence_finance_adds_yogi_hook_only_when_external_truth_is_present() -> None:
+def test_collect_strict_evidence_finance_adds_native_yogi_hook_without_external_truth() -> None:
     result = {
         "modules": {
             "chart": {
-                "ascendant": {"sign": "Pisces", "lord": "Jupiter"},
+                "ascendant": {"sign": "Aries", "lord": "Mars", "degree_raw": 20.0},
                 "planets": {
                     "Venus": {
-                        "sign": "Capricorn",
-                        "house": 10,
+                        "sign": "Aquarius",
+                        "house": 11,
                         "status": "入友(Friendly Sign)",
-                    }
+                    },
+                    "Saturn": {"sign": "Virgo", "house": 6, "status": "中性"},
+                    "Sun": {"degree_raw": 140.0},
+                    "Moon": {"degree_raw": 240.0},
                 },
             },
             "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
@@ -312,38 +355,52 @@ def test_collect_strict_evidence_finance_adds_yogi_hook_only_when_external_truth
                 }
             },
         },
-        "external_truth": {"yogi_planet": "Venus"},
     }
 
     strict = _collect_strict_evidence("finance", result)
-    assert strict["present_evidence"]["yogi_promise"] == {
-        "planet": "Venus",
-        "house": 10,
-        "status": "入友(Friendly Sign)",
-        "source": "external_yogi_planet",
-    }
     assert strict["present_evidence"]["wealth_promise_strength"] == {
         "level": "moderate",
         "primary_source": "dhana_yogi_hooks",
-        "count": 2,
+        "count": 1,
         "source_diversity": 2,
         "supporting_sources": ["dhana", "yogi"],
-        "yogi_support": None,
+        "yogi_support": {
+            "avayogi": "Saturn",
+            "duplicate_yogi": "Mars",
+            "lagna_yogi_distance_deg": 0.0,
+            "level": "strong",
+            "risk_flags": [],
+            "signals": [
+                "yogi_planet_in_wealth_house",
+                "yogi_planet_is_2l",
+                "lagna_yogi_tight_orb",
+            ],
+            "source": "yogi_asc_tight_orb_wealth",
+            "tight_orb_hits": ["lagna_yogi_tight_orb"],
+            "wealth_lord_links": ["yogi_planet_is_2l"],
+            "yogi_planet": "Venus",
+            "yogi_point_house": 1,
+            "yogi_point_longitude": 20.0,
+            "yogi_point_nakshatra": "Bharani",
+        },
     }
     assert "yogi_active" in strict["event_judgement"]["secondary_context"]
 
 
-def test_collect_strict_evidence_finance_does_not_promote_yogi_outside_kendra_trikona() -> None:
+def test_collect_strict_evidence_finance_keeps_native_yogi_quiet_when_support_is_weak() -> None:
     result = {
         "modules": {
             "chart": {
-                "ascendant": {"sign": "Pisces", "lord": "Jupiter"},
+                "ascendant": {"sign": "Taurus", "lord": "Venus", "degree_raw": 45.0},
                 "planets": {
                     "Venus": {
-                        "sign": "Capricorn",
-                        "house": 11,
-                        "status": "入友(Friendly Sign)",
-                    }
+                        "sign": "Cancer",
+                        "house": 3,
+                        "status": "中性",
+                    },
+                    "Saturn": {"sign": "Sagittarius", "house": 8, "status": "中性"},
+                    "Sun": {"degree_raw": 20.0},
+                    "Moon": {"degree_raw": 20.0},
                 },
             },
             "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
@@ -365,11 +422,9 @@ def test_collect_strict_evidence_finance_does_not_promote_yogi_outside_kendra_tr
                 }
             },
         },
-        "external_truth": {"yogi_planet": "Venus"},
     }
 
     strict = _collect_strict_evidence("finance", result)
-    assert strict["present_evidence"]["yogi_promise"] is None
     assert strict["present_evidence"]["wealth_promise_strength"] == {
         "level": "moderate",
         "primary_source": "dhana_yogas",
@@ -379,3 +434,132 @@ def test_collect_strict_evidence_finance_does_not_promote_yogi_outside_kendra_tr
         "yogi_support": None,
     }
     assert "yogi_active" not in strict["event_judgement"]["secondary_context"]
+
+
+def test_collect_strict_evidence_finance_adds_external_avayogi_risk_penalty() -> None:
+    result = {
+        "modules": {
+            "chart": {
+                "ascendant": {"sign": "Pisces", "lord": "Jupiter"},
+                "planets": {
+                    "Saturn": {
+                        "sign": "Aries",
+                        "house": 11,
+                        "status": "Debilitated",
+                    }
+                },
+            },
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 31, "11": 36}},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "moderate"}],
+                    "summary": "Dhana检测：共1个格局",
+                }
+            },
+        },
+        "external_truth": {"avayogi_planet": "Saturn"},
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+    assert strict["present_evidence"]["avayogi_risk"] == {
+        "planet": "Saturn",
+        "house": 11,
+        "status": "Debilitated",
+        "source": "external_avayogi_planet",
+        "risk_level": "moderate",
+        "signals": ["avayogi_in_wealth_house"],
+    }
+    assert strict["event_judgement"]["score"] == 90
+    assert "avayogi_active" in strict["event_judgement"]["secondary_context"]
+
+
+def test_collect_strict_evidence_finance_keeps_external_avayogi_quiet_in_own_sign() -> None:
+    result = {
+        "modules": {
+            "chart": {
+                "ascendant": {"sign": "Pisces", "lord": "Jupiter"},
+                "planets": {
+                    "Saturn": {
+                        "sign": "Capricorn",
+                        "house": 11,
+                        "status": "Own Sign",
+                    }
+                },
+            },
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 31, "11": 36}},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "moderate"}],
+                    "summary": "Dhana检测：共1个格局",
+                }
+            },
+        },
+        "external_truth": {"avayogi_planet": "Saturn"},
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+    assert strict["present_evidence"]["avayogi_risk"] is None
+    assert strict["event_judgement"]["score"] == 95
+    assert "avayogi_active" not in strict["event_judgement"]["secondary_context"]
+
+
+def test_collect_strict_evidence_finance_does_not_add_avayogi_without_external_truth() -> None:
+    result = {
+        "modules": {
+            "chart": {
+                "ascendant": {"sign": "Pisces", "lord": "Jupiter"},
+                "planets": {
+                    "Saturn": {
+                        "sign": "Aries",
+                        "house": 11,
+                        "status": "Debilitated",
+                    }
+                },
+            },
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 31, "11": 36}},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "yogas_doshas": {
+                "dhana_yogas": {
+                    "yogas": [{"type": "Dhana Yoga", "strength": "moderate"}],
+                    "summary": "Dhana检测：共1个格局",
+                }
+            },
+        },
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+    assert strict["present_evidence"].get("avayogi_risk") is None
+    assert strict["event_judgement"]["score"] == 95
+    assert "avayogi_active" not in strict["event_judgement"]["secondary_context"]
