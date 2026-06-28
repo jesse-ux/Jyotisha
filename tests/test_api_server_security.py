@@ -86,6 +86,28 @@ class _HealthCaptureHandler(JyotishAPIHandler):
         return json.loads(self.wfile.getvalue().decode('utf-8'))
 
 
+class _VedAstroStatusCaptureHandler(JyotishAPIHandler):
+    def __init__(self) -> None:
+        self.headers = _FakeHeaders()
+        self.server = _FakeServer()
+        self.path = '/api/vedastro/status'
+        self.wfile = BytesIO()
+        self.status_code = None
+        self.response_headers = []
+
+    def send_response(self, code, message=None):  # noqa: ANN001
+        self.status_code = code
+
+    def send_header(self, key, value):  # noqa: ANN001
+        self.response_headers.append((key, value))
+
+    def end_headers(self):
+        return None
+
+    def payload(self) -> dict:
+        return json.loads(self.wfile.getvalue().decode('utf-8'))
+
+
 def test_default_cors_origins_are_local_only() -> None:
     assert 'http://localhost:3456' in DEFAULT_ALLOWED_ORIGINS
     assert '*' not in DEFAULT_ALLOWED_ORIGINS
@@ -123,6 +145,25 @@ def test_health_endpoint_exposes_runtime_accuracy_metadata() -> None:
     assert payload['ayanamsa_default'] == 'lahiri'
     assert 'swisseph_available' in payload
     assert 'swisseph_version' in payload
+
+
+def test_vedastro_status_endpoint_exposes_safe_adapter_state(monkeypatch) -> None:
+    monkeypatch.setenv('VEDASTRO_API_ENDPOINT', 'https://vedastro.example.test/secret/path')
+    monkeypatch.delenv('VEDASTRO_ENABLE_NETWORK', raising=False)
+    handler = _VedAstroStatusCaptureHandler()
+
+    handler.do_GET()
+
+    assert handler.status_code == 200
+    payload = handler.payload()
+    assert payload['adapter'] == 'vedastro_service_adapter'
+    assert payload['configured'] is True
+    assert payload['network_enabled'] is False
+    assert payload['status'] == 'network_execution_disabled'
+    assert payload['endpoint_host'] == 'vedastro.example.test'
+    assert 'secret/path' not in json.dumps(payload)
+    assert payload['required_env']['endpoint'] == 'VEDASTRO_API_ENDPOINT'
+    assert payload['live_profile'] == 'vedastro-live'
 
 
 @pytest.mark.parametrize(

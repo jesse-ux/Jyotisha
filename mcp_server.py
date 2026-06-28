@@ -413,8 +413,22 @@ def _derive_jaimini_marriage_support(present: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _derive_external_activation_support(modules: Dict[str, Any], domain: str) -> Dict[str, Any]:
+def _external_activation_ledger(modules: Dict[str, Any]) -> tuple[Any, Dict[str, Any]]:
     ledger = _safe_get(modules, "external_activation", "evidence_ledger")
+    if isinstance(ledger, list):
+        activation = modules.get("external_activation") if isinstance(modules, dict) else {}
+        metadata = activation.get("source_metadata") if isinstance(activation, dict) else {}
+        return ledger, metadata if isinstance(metadata, dict) else {}
+    adapter_result = modules.get("vedastro_range_scan_result") if isinstance(modules, dict) else {}
+    if isinstance(adapter_result, dict) and adapter_result.get("backend") == "vedastro_service_adapter_candidate":
+        ledger = adapter_result.get("evidence_ledger")
+        metadata = adapter_result.get("source_metadata")
+        return ledger, metadata if isinstance(metadata, dict) else {}
+    return None, {}
+
+
+def _derive_external_activation_support(modules: Dict[str, Any], domain: str) -> Dict[str, Any]:
+    ledger, provenance = _external_activation_ledger(modules)
     if not isinstance(ledger, list):
         return {
             "level": "missing_required_external_radar",
@@ -457,6 +471,7 @@ def _derive_external_activation_support(modules: Dict[str, Any], domain: str) ->
         "required": True,
         "operation": "range_scan",
         "external_calculation_coverage": "VedAstro 596+/600+ calculation nodes",
+        "provenance": provenance,
     }
 
 

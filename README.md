@@ -83,6 +83,7 @@ Static demo / PWA 发布要求：必须保留 `static_demo_boundary_visible` 说
 - browser：完整浏览器守门，覆盖 runtime smoke 与真实浏览器用户路径：`python3 scripts/run_quality_gate.py --profile browser`
 - release：发布前守门，包含关键产品文件未跟踪检查、慢速 golden cases、真实案例复验与 Yoga 逻辑报告：`python3 scripts/run_quality_gate.py --profile release`
 - accuracy：本地准确率守门，跳过浏览器点击重活，但强制运行真实案例复验、Dasha/Oracle 审计、Yoga 逻辑对照和本地准确率总报告：`python3 scripts/run_quality_gate.py --profile accuracy`
+- vedastro-live：外部 VedAstro 雷达守门，只跑可选 live smoke，默认不依赖网络；只有配置 `VEDASTRO_API_ENDPOINT` 与 `VEDASTRO_ENABLE_NETWORK=1` 时才真正出网：`python3 scripts/run_quality_gate.py --profile vedastro-live`
 
 ### 真实案例复验与准确率边界
 

@@ -228,6 +228,10 @@ async function getCapabilityAudit() {
   throw lastError || new Error(buildAPIRecoveryMessage('/api/capability_audit', '能力审计接口不可用'));
 }
 
+async function getVedAstroStatus() {
+  return fetchJson('/api/vedastro/status');
+}
+
 async function getTechniqueCatalog() {
   let lastError = null;
   for (const base of getApiBases(true)) {
@@ -450,6 +454,7 @@ window.JyotishAPI = {
   computeThematicReport,
   getAPIHealth,
   getCapabilityAudit,
+  getVedAstroStatus,
   getTechniqueCatalog,
   runTechniqueExample,
   computeAnnual,

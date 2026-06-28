@@ -9,12 +9,15 @@ workspace can evolve from research notes to an executable adapter contract.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import socket
+import time
 from pathlib import Path
 from typing import Any
 from urllib import request, error
+from urllib.parse import urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -195,12 +198,14 @@ RANGE_SCAN_SIGNAL_METADATA = {
 }
 DEFAULT_TIMEOUT_SECONDS = 120
 TIMEOUT_ENV = "VEDASTRO_TIMEOUT_SECONDS"
+BACKOFF_ENV = "VEDASTRO_RETRY_BACKOFF_SECONDS"
 RETRY_POLICY = {
     "max_attempts": 2,
     "backoff_seconds": 1,
     "retry_on": ["timeout", "429", "502", "503", "504"],
 }
 ALLOW_NETWORK_ENV = "VEDASTRO_ENABLE_NETWORK"
+ARTIFACT_DIR = ROOT / "scratch" / "local" / "vedastro_adapter"
 
 
 def _timeout_seconds() -> float:
@@ -211,6 +216,57 @@ def _timeout_seconds() -> float:
         return float(raw)
     except ValueError:
         return DEFAULT_TIMEOUT_SECONDS
+
+
+def _backoff_seconds() -> float:
+    raw = os.environ.get(BACKOFF_ENV, "").strip()
+    if not raw:
+        return float(RETRY_POLICY["backoff_seconds"])
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return float(RETRY_POLICY["backoff_seconds"])
+
+
+def _json_bytes(payload: dict[str, Any]) -> bytes:
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def _hash_payload(payload: dict[str, Any]) -> str:
+    return hashlib.sha256(_json_bytes(payload)).hexdigest()
+
+
+def _utc_timestamp() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _endpoint_host(endpoint: str) -> str:
+    parsed = urlparse(endpoint)
+    return parsed.netloc or endpoint
+
+
+def _artifact_path(operation: str, request_hash: str, response_hash: str) -> Path:
+    ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+    filename = f"{operation}-{request_hash[:12]}-{response_hash[:12]}.json"
+    return ARTIFACT_DIR / filename
+
+
+def _repo_relative(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def _write_artifact(result: dict[str, Any]) -> str:
+    metadata = result.get("source_metadata") or {}
+    artifact = _artifact_path(
+        str(metadata.get("operation") or result.get("operation") or "calculation"),
+        str(metadata.get("request_hash") or "no-request-hash"),
+        str(metadata.get("response_hash") or "no-response-hash"),
+    )
+    artifact.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+    return _repo_relative(artifact)
 
 
 def schema() -> dict[str, Any]:
@@ -321,10 +377,15 @@ def schema() -> dict[str, Any]:
             "external_service": True,
             "required_fields": [
                 "endpoint",
+                "endpoint_host",
                 "transport",
                 "provenance_mode",
                 "retry_policy",
                 "timeout_seconds",
+                "request_hash",
+                "response_hash",
+                "called_at",
+                "artifact_path",
             ],
         },
     }
@@ -382,8 +443,44 @@ def _external_technique_preview(
     }
 
 
-def _normalize_success(payload: dict[str, Any], endpoint: str) -> dict[str, Any]:
+def _base_live_metadata(
+    endpoint: str,
+    request_preview: dict[str, Any],
+    payload: dict[str, Any],
+    operation: str,
+    attempt_count: int = 1,
+    retry_error_codes: list[int] | None = None,
+) -> dict[str, Any]:
     return {
+        "transport": "http_json_service_boundary",
+        "endpoint": endpoint,
+        "endpoint_host": _endpoint_host(endpoint),
+        "method": "POST",
+        "operation": operation,
+        "provenance_mode": "external_service_candidate",
+        "timeout_seconds": _timeout_seconds(),
+        "retry_policy": {**RETRY_POLICY, "backoff_seconds": _backoff_seconds()},
+        "network_execution_env": ALLOW_NETWORK_ENV,
+        "called_at": _utc_timestamp(),
+        "request_hash": _hash_payload(request_preview),
+        "response_hash": _hash_payload(payload),
+        "attempt_count": attempt_count,
+        "retry_error_codes": retry_error_codes or [],
+    }
+
+
+def _normalize_success(
+    payload: dict[str, Any],
+    endpoint: str,
+    request_preview: dict[str, Any],
+    attempt_count: int = 1,
+    retry_error_codes: list[int] | None = None,
+) -> dict[str, Any]:
+    metadata = {
+        **_base_live_metadata(endpoint, request_preview, payload, "calculation", attempt_count, retry_error_codes),
+        **(payload.get("source_metadata") or {}),
+    }
+    result = {
         "backend": "vedastro_service_adapter_candidate",
         "available": True,
         "status": "ok",
@@ -391,15 +488,10 @@ def _normalize_success(payload: dict[str, Any], endpoint: str) -> dict[str, Any]
         "node_policy": payload.get("node_policy"),
         "body_list": payload.get("body_list"),
         "bodies": payload.get("bodies"),
-        "source_metadata": {
-            "transport": "http_json_service_boundary",
-            "endpoint": endpoint,
-            "provenance_mode": "external_service_candidate",
-            "timeout_seconds": _timeout_seconds(),
-            "retry_policy": RETRY_POLICY,
-            **(payload.get("source_metadata") or {}),
-        },
+        "source_metadata": metadata,
     }
+    result["source_metadata"]["artifact_path"] = _write_artifact(result)
+    return result
 
 
 def _normalize_external_technique_success(
@@ -445,6 +537,8 @@ def _normalize_range_scan_success(
     payload: dict[str, Any],
     endpoint: str,
     request_preview: dict[str, Any],
+    attempt_count: int = 1,
+    retry_error_codes: list[int] | None = None,
 ) -> dict[str, Any]:
     # Handle actual VedAstro response format: {"Status": "Pass", "Payload": [...]}
     if payload.get("Status") == "Pass":
@@ -461,6 +555,7 @@ def _normalize_range_scan_success(
     allowed_ids = allowlist.get("event_ids", set())
     allowed_tags = allowlist.get("tags", set())
 
+    original_event_count = len(events)
     evidence_ledger = []
     for index, event in enumerate(events, start=1):
         if not isinstance(event, dict):
@@ -508,7 +603,16 @@ def _normalize_range_scan_success(
             "tags": top.get("tags") or [],
         }
 
-    return {
+    metadata = {
+        **_base_live_metadata(endpoint, request_preview, payload, "range_scan", attempt_count, retry_error_codes),
+        "vedastro_event_method": request_preview.get("vedastro_event_method"),
+        "allowlist_domain": domain,
+        "allowlist_event_count": len(evidence_ledger),
+        "filtered_event_count": len(evidence_ledger),
+        "raw_event_count": original_event_count,
+        **(payload.get("source_metadata") or {}),
+    }
+    result = {
         "backend": "vedastro_service_adapter_candidate",
         "available": True,
         "status": "ok",
@@ -518,15 +622,10 @@ def _normalize_range_scan_success(
         "event_count": len(evidence_ledger),
         "top_event": top_event,
         "evidence_ledger": evidence_ledger,
-        "source_metadata": {
-            "transport": "http_json_service_boundary",
-            "endpoint": endpoint,
-            "provenance_mode": "external_service_candidate",
-            "timeout_seconds": _timeout_seconds(),
-            "retry_policy": RETRY_POLICY,
-            **(payload.get("source_metadata") or {}),
-        },
+        "source_metadata": metadata,
     }
+    result["source_metadata"]["artifact_path"] = _write_artifact(result)
+    return result
 
 
 def _source_metadata(endpoint: str) -> dict[str, Any]:
@@ -551,6 +650,35 @@ def _post_json(endpoint: str, request_preview: dict[str, Any]) -> dict[str, Any]
     with request.urlopen(req, timeout=_timeout_seconds()) as resp:
         raw = resp.read().decode("utf-8")
         return json.loads(raw)
+
+
+def _retry_status_codes() -> set[int]:
+    codes = set()
+    for value in RETRY_POLICY.get("retry_on", []):
+        try:
+            codes.add(int(str(value)))
+        except ValueError:
+            continue
+    return codes
+
+
+def _post_json_with_retry(endpoint: str, request_preview: dict[str, Any]) -> tuple[dict[str, Any], int, list[int]]:
+    retry_codes = _retry_status_codes()
+    retry_error_codes: list[int] = []
+    max_attempts = int(RETRY_POLICY["max_attempts"])
+    for attempt in range(1, max_attempts + 1):
+        try:
+            payload = _post_json(endpoint, request_preview)
+            if not isinstance(payload, dict):
+                return {}, attempt, retry_error_codes
+            return payload, attempt, retry_error_codes
+        except error.HTTPError as exc:
+            if attempt >= max_attempts or exc.code not in retry_codes:
+                raise
+            retry_error_codes.append(exc.code)
+            if _backoff_seconds():
+                time.sleep(_backoff_seconds())
+    return {}, max_attempts, retry_error_codes
 
 
 def run_case(case_id: str) -> dict[str, Any]:
@@ -578,7 +706,7 @@ def run_case(case_id: str) -> dict[str, Any]:
             "source_metadata": _source_metadata(endpoint),
         }
     try:
-        payload = _post_json(endpoint, request_preview)
+        payload, attempt_count, retry_error_codes = _post_json_with_retry(endpoint, request_preview)
     except error.HTTPError as exc:
         return {
             "backend": "vedastro_service_adapter_candidate",
@@ -616,7 +744,7 @@ def run_case(case_id: str) -> dict[str, Any]:
             "source_metadata": _source_metadata(endpoint),
         }
 
-    return _normalize_success(payload, endpoint)
+    return _normalize_success(payload, endpoint, request_preview)
 
 
 def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) -> dict[str, Any]:
@@ -655,7 +783,7 @@ def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) ->
         }
 
     try:
-        payload = _post_json(endpoint, request_preview)
+        payload, attempt_count, retry_error_codes = _post_json_with_retry(endpoint, request_preview)
     except error.HTTPError as exc:
         return {
             "backend": "vedastro_service_adapter_candidate",
@@ -693,7 +821,7 @@ def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) ->
             "source_metadata": _source_metadata(endpoint),
         }
 
-    return _normalize_range_scan_success(payload, endpoint, request_preview)
+    return _normalize_range_scan_success(payload, endpoint, request_preview, attempt_count, retry_error_codes)
 
 
 def run_external_technique(case_id: str, domain: str, method: str, api_endpoint: str) -> dict[str, Any]:

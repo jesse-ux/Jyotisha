@@ -348,6 +348,161 @@ def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> No
     assert report["source_metadata"]["endpoint"].startswith("http://127.0.0.1:")
 
 
+def test_vedastro_range_scan_records_hashes_and_artifact_path() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            response = {
+                "events": [
+                    {
+                        "id": "GocharJupiterIn7th",
+                        "name": "Jupiter enters 7th house",
+                        "start": "2026-05-01",
+                        "end": "2026-06-01",
+                        "score": 72,
+                        "tags": ["marriage", "transit"],
+                    }
+                ],
+                "source_metadata": {
+                    "service": "mock-vedastro",
+                    "version": "artifact-test",
+                },
+            }
+            body = json.dumps(response).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/vedastro"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "scripts/vedastro_service_adapter.py",
+                "--range-scan",
+                "--domain",
+                "marriage",
+                "--case",
+                "beijing_first_use_demo",
+                "--start-date",
+                "2026-01-01",
+                "--end-date",
+                "2031-01-01",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    metadata = report["source_metadata"]
+    assert len(metadata["request_hash"]) == 64
+    assert len(metadata["response_hash"]) == 64
+    assert metadata["method"] == "POST"
+    assert metadata["operation"] == "range_scan"
+    assert metadata["vedastro_event_method"] == "SearchEvents"
+    assert metadata["allowlist_domain"] == "marriage"
+    assert metadata["allowlist_event_count"] == 1
+    assert metadata["filtered_event_count"] == 1
+    assert metadata["attempt_count"] == 1
+    artifact_path = ROOT / metadata["artifact_path"]
+    assert artifact_path.exists()
+    artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    assert artifact["source_metadata"]["request_hash"] == metadata["request_hash"]
+    assert artifact["source_metadata"]["response_hash"] == metadata["response_hash"]
+    assert artifact["evidence_ledger"][0]["event_id"] == "GocharJupiterIn7th"
+
+
+def test_vedastro_range_scan_retries_transient_http_error() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        attempts = 0
+
+        def do_POST(self) -> None:  # noqa: N802
+            Handler.attempts += 1
+            if Handler.attempts == 1:
+                self.send_response(503)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                return
+            response = {
+                "events": [
+                    {
+                        "id": "GocharJupiterIn7th",
+                        "name": "Jupiter enters 7th house",
+                        "start": "2026-05-01",
+                        "end": "2026-06-01",
+                        "score": 72,
+                        "tags": ["marriage", "transit"],
+                    }
+                ]
+            }
+            body = json.dumps(response).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/vedastro"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        env["VEDASTRO_RETRY_BACKOFF_SECONDS"] = "0"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "scripts/vedastro_service_adapter.py",
+                "--range-scan",
+                "--domain",
+                "marriage",
+                "--case",
+                "beijing_first_use_demo",
+                "--start-date",
+                "2026-01-01",
+                "--end-date",
+                "2031-01-01",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["status"] == "ok"
+    assert report["event_count"] == 1
+    assert report["source_metadata"]["attempt_count"] == 2
+    assert report["source_metadata"]["retry_error_codes"] == [503]
+
+
 def test_vedastro_service_adapter_applies_domain_allowlist_to_range_scan_noise() -> None:
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:  # noqa: N802

@@ -144,3 +144,59 @@ def test_life_event_graph_is_returned_from_strict_relationship_evidence() -> Non
     assert strict["life_event_graph"]["route"] == "relationship"
     assert strict["life_event_graph"]["dominant_label"] == "legal_marriage"
     assert any(node["kind"] == "external_window" for node in strict["life_event_graph"]["event_nodes"])
+
+
+def test_strict_workflow_accepts_adapter_range_scan_result_without_manual_repackaging() -> None:
+    result = {
+        "modules": {
+            "varga_full": {"D9_Navamsa": {"summary": "ok"}},
+            "special_lagnas": {"Upapada_Lagna": {"sign": "Libra", "lord": "Venus"}},
+            "jaimini": {
+                "darakaraka": {"planet": "Venus", "house": 7},
+                "marriage_support": {"dk_7h_link": True},
+            },
+            "vivah_saham": {"sign": "Taurus", "house": 7},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Moon"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Libra", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "marriage_partnership": {"convergence_level": "L4", "probability": "70-85%"}
+                }
+            },
+            "vedastro_range_scan_result": {
+                "backend": "vedastro_service_adapter_candidate",
+                "available": True,
+                "status": "ok",
+                "operation": "range_scan",
+                "domain": "marriage",
+                "evidence_ledger": [
+                    {
+                        "source": "vedastro_service_adapter_candidate",
+                        "operation": "range_scan",
+                        "domain": "marriage",
+                        "event_id": "GocharJupiterIn7th",
+                        "signal_key": "gochar_jupiter_7th_marriage",
+                        "signal_label": "Jupiter in 7th marriage window",
+                        "signal_family": "marriage_trigger",
+                        "score": 72,
+                        "start": "2026-05-01",
+                        "end": "2026-06-01",
+                        "tags": ["marriage", "transit"],
+                    }
+                ],
+                "source_metadata": {
+                    "request_hash": "a" * 64,
+                    "response_hash": "b" * 64,
+                    "artifact_path": "scratch/local/vedastro_adapter/range.json",
+                },
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    external = strict["present_evidence"]["external_activation"]
+    assert external["level"] == "moderate"
+    assert external["source"] == "vedastro_service_adapter_candidate"
+    assert external["provenance"]["request_hash"] == "a" * 64
+    assert any(node["kind"] == "external_window" for node in strict["life_event_graph"]["event_nodes"])

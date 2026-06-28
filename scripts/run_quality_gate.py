@@ -98,6 +98,7 @@ QUALITY_GATE_PROFILES = {
         "skip_dasha_audit": True,
         "skip_oracle_audit": True,
         "skip_local_accuracy_report": True,
+        "skip_vedastro_live": True,
     },
     "browser": {
         "skip_slow": True,
@@ -110,6 +111,7 @@ QUALITY_GATE_PROFILES = {
         "skip_dasha_audit": True,
         "skip_oracle_audit": True,
         "skip_local_accuracy_report": True,
+        "skip_vedastro_live": True,
     },
     "release": {
         "skip_slow": False,
@@ -122,6 +124,7 @@ QUALITY_GATE_PROFILES = {
         "skip_dasha_audit": False,
         "skip_oracle_audit": False,
         "skip_local_accuracy_report": False,
+        "skip_vedastro_live": True,
     },
     "accuracy": {
         "skip_slow": True,
@@ -134,6 +137,20 @@ QUALITY_GATE_PROFILES = {
         "skip_dasha_audit": False,
         "skip_oracle_audit": False,
         "skip_local_accuracy_report": False,
+        "skip_vedastro_live": True,
+    },
+    "vedastro-live": {
+        "skip_slow": True,
+        "skip_yoga_logic": True,
+        "skip_frontend_runtime": True,
+        "skip_frontend_click": True,
+        "frontend_click_mode": "core",
+        "check_release_hygiene": False,
+        "skip_real_cases": True,
+        "skip_dasha_audit": True,
+        "skip_oracle_audit": True,
+        "skip_local_accuracy_report": True,
+        "skip_vedastro_live": False,
     },
 }
 
@@ -341,6 +358,36 @@ def release_hygiene_check() -> None:
     print("release_hygiene_check ok: no release-critical product files are untracked")
 
 
+def run_vedastro_live_smoke() -> None:
+    print("\n== VedAstro live adapter smoke ==")
+    endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
+    network_enabled = os.environ.get("VEDASTRO_ENABLE_NETWORK", "").strip().lower() in {"1", "true", "yes"}
+    if not endpoint or not network_enabled:
+        print(json.dumps({
+            "status": "blocked",
+            "reason": "vedastro_live_endpoint_or_network_flag_missing",
+            "required_env": {
+                "endpoint": "VEDASTRO_API_ENDPOINT",
+                "network": "VEDASTRO_ENABLE_NETWORK",
+            },
+            "boundary": "Default CI stays deterministic; configure both env vars to run a real VedAstro live smoke.",
+        }, ensure_ascii=False, indent=2))
+        return
+    run([
+        PYTHON,
+        "scripts/vedastro_service_adapter.py",
+        "--range-scan",
+        "--domain",
+        "career",
+        "--case",
+        "beijing_first_use_demo",
+        "--start-date",
+        "2026-01-01",
+        "--end-date",
+        "2026-12-31",
+    ])
+
+
 def compile_targets() -> None:
     print("\n== Compile core Python files ==")
     targets: list[Path] = []
@@ -386,6 +433,7 @@ def run_profile(args: argparse.Namespace) -> dict:
         "skip_dasha_audit",
         "skip_oracle_audit",
         "skip_local_accuracy_report",
+        "skip_vedastro_live",
     ]:
         if getattr(args, key):
             profile[key] = True
@@ -396,7 +444,7 @@ def run_profile(args: argparse.Namespace) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Jyotish skill quality gate")
-    parser.add_argument("--profile", choices=["quick", "browser", "release", "accuracy"], default="browser", help="Quality gate profile: quick, browser, release, or accuracy")
+    parser.add_argument("--profile", choices=["quick", "browser", "release", "accuracy", "vedastro-live"], default="browser", help="Quality gate profile: quick, browser, release, accuracy, or vedastro-live")
     parser.add_argument("--skip-slow", action="store_true", help="Skip slow golden-case regressions")
     parser.add_argument("--skip-yoga-logic", action="store_true", help="Skip Yoga logic comparison report refresh")
     parser.add_argument("--skip-frontend-runtime", action="store_true", help="Skip frontend build and runtime smoke")
@@ -405,6 +453,7 @@ def main() -> int:
     parser.add_argument("--skip-dasha-audit", action="store_true", help="Skip Dasha reference-drift audit")
     parser.add_argument("--skip-oracle-audit", action="store_true", help="Skip combined Dasha/Shadbala external oracle boundary audit")
     parser.add_argument("--skip-local-accuracy-report", action="store_true", help="Skip consolidated local accuracy report")
+    parser.add_argument("--skip-vedastro-live", action="store_true", help="Skip optional VedAstro live endpoint smoke")
     parser.add_argument("--frontend-click-mode", choices=["core", "mobile", "offline", "pdf", "workspace", "mobile-trust", "import-files", "all"], default=None, help="Browser click smoke mode for browser/release profiles")
     parser.add_argument("--frontend-click-timeout", type=int, default=240, help="Timeout seconds for browser click smoke")
     parser.add_argument("--all-tests", action="store_true", help="Run every pytest file, including optional-dependency suites")
@@ -449,6 +498,8 @@ def main() -> int:
         run([PYTHON, "scripts/validate_logic_v2.py"], optional=True)
     if not profile["skip_local_accuracy_report"]:
         run([PYTHON, "scripts/local_accuracy_report.py", "--format", "json"])
+    if not profile["skip_vedastro_live"]:
+        run_vedastro_live_smoke()
     print("\nQuality gate passed.")
     return 0
 

@@ -891,13 +891,15 @@ def test_quality_gate_declares_fast_browser_release_profiles() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     for token in [
         "--profile",
-        "choices=[\"quick\", \"browser\", \"release\", \"accuracy\"]",
+        "choices=[\"quick\", \"browser\", \"release\", \"accuracy\", \"vedastro-live\"]",
         "QUALITY_GATE_PROFILES",
         "quick",
         "browser",
         "release",
         "accuracy",
+        "vedastro-live",
         "skip_local_accuracy_report",
+        "skip_vedastro_live",
         "scripts/local_accuracy_report.py",
         "skip_slow",
         "skip_yoga_logic",
@@ -917,10 +919,12 @@ def test_quality_gate_declares_fast_browser_release_profiles() -> None:
         "browser：完整浏览器守门",
         "release：发布前守门",
         "accuracy：本地准确率守门",
+        "vedastro-live：外部 VedAstro 雷达守门",
         "python3 scripts/run_quality_gate.py --profile quick",
         "python3 scripts/run_quality_gate.py --profile browser",
         "python3 scripts/run_quality_gate.py --profile release",
         "python3 scripts/run_quality_gate.py --profile accuracy",
+        "python3 scripts/run_quality_gate.py --profile vedastro-live",
     ]:
         assert token in readme
 
@@ -954,6 +958,33 @@ def test_accuracy_quality_gate_runs_local_accuracy_report_without_frontend_click
     assert profile["skip_oracle_audit"] is False
     assert profile["skip_yoga_logic"] is False
     assert profile["skip_local_accuracy_report"] is False
+
+
+def test_vedastro_live_quality_gate_is_optional_and_network_gated() -> None:
+    quality_gate = load_quality_gate_module()
+    quality_gate_text = (ROOT / "scripts" / "run_quality_gate.py").read_text(encoding="utf-8")
+
+    profile = quality_gate.QUALITY_GATE_PROFILES["vedastro-live"]
+    assert profile["skip_frontend_click"] is True
+    assert profile["skip_frontend_runtime"] is True
+    assert profile["skip_vedastro_live"] is False
+    assert "VEDASTRO_API_ENDPOINT" in quality_gate_text
+    assert "VEDASTRO_ENABLE_NETWORK" in quality_gate_text
+    assert "scripts/vedastro_service_adapter.py" in quality_gate_text
+    assert '"vedastro-live"' in quality_gate_text
+
+
+def test_trust_center_surfaces_vedastro_adapter_status_without_endpoint_secret() -> None:
+    main = (ROOT / "jyotish-app" / "main.js").read_text(encoding="utf-8")
+    api_bridge = (ROOT / "jyotish-app" / "api-bridge.js").read_text(encoding="utf-8")
+
+    assert "renderVedAstroStatus" in main
+    assert "getVedAstroStatus" in main
+    assert "/api/vedastro/status" in api_bridge
+    assert "VedAstro 外部雷达" in main
+    assert "VEDASTRO_API_ENDPOINT" in main
+    assert "endpoint_host" in main
+    assert "secret/path" not in main
 
 
 def test_github_release_quality_gate_runs_browser_release_profile() -> None:
