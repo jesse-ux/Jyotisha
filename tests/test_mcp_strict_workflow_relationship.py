@@ -167,6 +167,34 @@ def test_relationship_synastry_bridge_cannot_lift_label_when_core_marriage_layer
     assert "upapada_lagna" in strict["missing_evidence"]
 
 
+def test_relationship_synastry_bridge_understands_nested_bad_constellations_and_exception_mitigation() -> None:
+    result = _base_relationship_result()
+    result["modules"]["synastry"] = {
+        "total_score": 18.0,
+        "max_score": 36.0,
+        "is_approved": True,
+        "exceptions": ["Nadi Dosha mitigated by good Bhakoot and Rajju."],
+        "additional_kutas": {
+            "Mahendra": "good",
+            "StreeDeergha": "good",
+            "Vedha": "good",
+            "Rajju": {"result": "good", "group": None, "effect": ""},
+            "BadConstellations": {"result": "good", "issues": []},
+        },
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["synastry_relationship_support"] == {
+        "level": "moderate",
+        "source": "synastry_relationship_bridge_v1",
+        "signals": ["ashtakoot_approved", "exception_mitigated_match", "kuta_exception_clean"],
+        "total_score": 18.0,
+        "approved": True,
+    }
+    assert "synastry_support" in strict["event_judgement"]["secondary_context"]
+
+
 def test_relationship_dignity_guardrail_ignores_non_relevant_planets() -> None:
     result = _base_relationship_result()
     result["modules"]["chart"] = {

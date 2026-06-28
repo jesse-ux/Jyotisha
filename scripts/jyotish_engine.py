@@ -893,6 +893,8 @@ def _build_technique_audit_table(functional_layer, oracle_progress, modules):
             'note': (
                 f"关键功能吉星={functional_layer.get('functional_benefics', [])}; "
                 f"关键功能凶星={functional_layer.get('functional_malefics', [])}; "
+                f"功能中性星={functional_layer.get('functional_neutrals', [])}; "
+                f"Yogakaraka={functional_layer.get('yogakarakas', [])}; "
                 f"{functional_layer.get('effect_on_confidence', '高严谨模式缺少功能性吉凶星判定。')}"
             ),
         },

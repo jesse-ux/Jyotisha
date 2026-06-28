@@ -10,6 +10,19 @@
 - Round 25 副手任务已发布，扫描时已看到部分 `antigravity_round25_*` 报告开始生成，但未满 18+ 前不能视为完成。
 - Ashtakoot 结论边界：Round 24 “全 0/瞎编”属于需纠正的过强说法；当前 `scripts/ashtakoot.py` 有非零本地规则，但外部 oracle 仍 0/5，不能声称与 JHora/AstroSage/VedAstro 完全一致。
 
+## 2026-06-28 全仓工作流遗漏扫描结论
+
+- 当前排除 venv/build/dist/cache 后仍有约 1528 个文件；主风险区是 `docs/`、`references/`、`scripts/`、`tests/`、`jyotish-app/` 与 `scratch/`。
+- `python3 scripts/audit_fragments.py --strict` 当前返回 `valid: true`、`problem_count: 0`，注册表 89 技法均有引擎/API/前端/测试/脚本中的至少一种产品表面；这说明“registry 声称但完全无入口”的大类问题暂未发现。
+- 扫描发现真实遗漏：Functional Benefic/Malefic 后端和 MCP 已接入，但前端 `Technique Audit Table`/Skill Map 一度缺少可见审计行；已通过 `tests/test_frontend_productization.py::test_skill_map_surfaces_functional_benefic_malefic_audit_row` 守门。
+- `audit_fragments` 仍标记 3 个脚本候选碎片：`oracle_functional_benefics.py`、`patch_api_tz.py`、`patch_engine_tz.py`。其中 `oracle_functional_benefics.py` 是功能性吉凶 CLI 包装器，应决定是否纳入 registry/quality gate；`patch_api_tz.py` 与 `patch_engine_tz.py` 是会改源码的一次性补丁脚本，不应作为产品工作流留在 `scripts/` 默认面。
+- 当前 Git 未跟踪残留 11 个：个人/临时输出 `full_chart_data.json`、`test_dasha.json`、`test_output.json`、`scratch_extract.py`、`scratch_mcp_eval.py`；一次性补丁 `scripts/patch_api_tz.py`、`scripts/patch_engine_tz.py`；个人同步工具 `scripts/sync_to_workbuddy.sh`；测试候选 `tests/test_dasha_raman_truth.py`；测试/研究 artifact `tests/verify-results-v6.1.json` 与 `tests/印度占星实战案例综合验证报告-v6.1-2026-05-03.md`。
+- `docs/research/ACTIVE_FRONTS.md` 当前仍列出未闭合项：Vimsopaka semantic mapping for `NEECHA_BHANGA / GREAT_FRIEND / GREAT_ENEMY`，以及 functional role 的 Technique Audit Table rendering 跟进。
+- `docs/research/vedastro_parity_matrix_latest.md` 当前 13 行中 `partial=8`、`covered=4`、`missing=1`。P0 未闭合集中在 Tajika Annual、Ayanamsa parity、Report Rendering、MCP/API VedAstro live adapter smoke、Ashtakavarga/Shadbala parity、EventsAtRange/Life Event Graph；Numerology/Non-Jyotish Tools 为 P2 adjacent missing，不属于 Jyotish 主工作流。
+- 验证命令：`python3 scripts/run_quality_gate.py --profile quick --skip-frontend-runtime` 通过；`npm run build` 通过；`python3 -m pytest tests/ -q` 通过；`git diff --check` 通过。
+- 后续收口结论：`oracle_functional_benefics.py` 已通过 CLI JSON 合同测试进入正式测试表面；`patch_api_tz.py`、`patch_engine_tz.py` 与个人 scratch/output 已归入 ignored `scratch/local`；v6.1 婚恋验证资产已转入 `docs/benchmark/legacy-marriage-v6.1/`；Raman Dasha 草稿保留为 benchmark draft，不再伪装成 pytest。
+- 新发现的真实遗漏：relationship strict bridge 原先只识别字符串 `"BadConstellations": "good"`，不识别 nested dict 形态，也不读取 `exceptions` mitigation 文本；已补 `exception_mitigated_match` 与 nested Kuta 归一化，避免 Synastry/Ashtakoot 资产被浅层解析吞掉。
+
 ## 开源与本地基线
 
 - `references/open-source-jyotish-scan-2026.md` 已记录可直接复用/对标项目：dashaflow、jyotishganit、panchanga_api、jaimini-tropical、VedicAstro、KPAstroDashboard、vedic_astro_npm、PyJHora、VedAstro、xalen-ephemeris。

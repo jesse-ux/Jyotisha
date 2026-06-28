@@ -20,6 +20,8 @@ def test_real_reading_quality_checklist_exists_and_covers_structural_gaps() -> N
         "covered",
         "complete",
         "Functional Benefic/Malefic",
+        "Yogakaraka",
+        "functional neutrals",
         "Vimshottari + Narayana",
         "production_tuning_allowed",
         "Technique Audit Table",

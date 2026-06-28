@@ -494,10 +494,21 @@ def _derive_synastry_relationship_support(modules: Dict[str, Any]) -> Dict[str, 
         signals.append("ashtakoot_approved")
     if total_score is not None and total_score >= 27:
         signals.append("ashtakoot_high_score")
+    exceptions = synastry.get("exceptions")
+    if isinstance(exceptions, list):
+        exception_text = " ".join(str(item).lower() for item in exceptions)
+        if "mitigat" in exception_text or "exception" in exception_text:
+            signals.append("exception_mitigated_match")
     additional_kutas = synastry.get("additional_kutas")
     if isinstance(additional_kutas, dict):
-        vedha_good = additional_kutas.get("Vedha") == "good"
-        bad_constellations_good = additional_kutas.get("BadConstellations") == "good"
+        def _kuta_result(value: Any) -> str | None:
+            if isinstance(value, dict):
+                result = value.get("result")
+                return str(result).lower() if result is not None else None
+            return str(value).lower() if value is not None else None
+
+        vedha_good = _kuta_result(additional_kutas.get("Vedha")) == "good"
+        bad_constellations_good = _kuta_result(additional_kutas.get("BadConstellations")) == "good"
         rajju = additional_kutas.get("Rajju")
         rajju_good = isinstance(rajju, dict) and rajju.get("result") == "good"
         if vedha_good and bad_constellations_good and rajju_good:

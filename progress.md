@@ -405,3 +405,21 @@
 - 更新 `docs/research/ACTIVE_FRONTS.md` 的 Oracle Closure 入口，要求后续修改 oracle-dependent adjudicator 或 benchmark claims 前先运行 `python3 scripts/oracle_benchmark_inventory.py --format json`。
 - 收口上一轮遗留的 finance Shadbala 组件审计：`mcp_server.py` 对 `shadbala.planets` 要求 `sthana/dig/kala/chesta/naisargika/drik` 六分量，缺失时 `confidence_cap = low` 且进入 `secondary_context += ["shadbala_component_gap"]`；补文档 `docs/research/shadbala_component_confidence_cap_v1_2026_06_28.md`。
 - 验证：`python3 -m pytest tests/test_oracle_benchmark_inventory.py -q` 通过；`python3 -m pytest tests/test_mcp_strict_workflow_finance.py -q` 24 项通过；`python3 -m json.tool docs/research/oracle_benchmark_inventory_latest.json` 通过。
+## 2026-06-28T18:27:42+08:00 - 全仓工作流遗漏扫描
+
+- 读取并恢复 `task_plan.md`、`findings.md`、`progress.md`，确认当前已有“整机与 Git 云端地毯式遗漏审计”上下文。
+- 执行仓库规模扫描：排除 venv/build/dist/cache 后约 1528 个文件，重点检查 docs/references/scripts/tests/jyotish-app/scratch。
+- 执行 `python3 scripts/audit_fragments.py --strict`：注册表 89 技法的产品表面审计通过，问题数 0；候选碎片仍为 `oracle_functional_benefics.py`、`patch_api_tz.py`、`patch_engine_tz.py`。
+- 执行 quick quality gate 时发现 `test_skill_map_surfaces_functional_benefic_malefic_audit_row` 红灯，根因为功能性吉凶层未在前端 Skill Map / Technique Audit Table 可见化；补齐后聚焦测试通过。
+- 分类未跟踪残留 11 个，其中多数为 scratch/个人输出；`tests/test_dasha_raman_truth.py` 是未纳入 CI 的测试候选；`tests/verify-results-v6.1.json` 和中文报告应移出 tests 或明确接入测试。
+- 复核 `ACTIVE_FRONTS.md` 与 `vedastro_parity_matrix_latest.md`：仍有 Vimsopaka 高阶语义映射、Functional role 审计表渲染后续、VedAstro adapter endpoint smoke、Life Event Graph、报告渲染等未闭合工作。
+- 验证：`python3 scripts/run_quality_gate.py --profile quick --skip-frontend-runtime` 通过；`npm run build` 通过；`python3 -m pytest tests/ -q` 通过；`git diff --check` 通过。
+
+## 2026-06-28T18:58:00+08:00 - 碎片残留与 Functional/Synastry 桥接收口
+
+- 将散落在根目录和 `scripts/` 的临时输出、scratch 脚本、一次性 timezone patch 脚本移动到 ignored `scratch/local/...`，不再污染产品脚本面。
+- 将旧 `tests/verify-results-v6.1.json` 与中文婚恋验证报告移动到 `docs/benchmark/legacy-marriage-v6.1/`，新增 README 标明它们是历史 benchmark evidence，不是 pytest。
+- 将未成熟的 Raman Dasha oracle pytest 草稿改写为 `benchmarks/jyotish/reports/drafts/raman_dasha_oracle_draft_2026_06_28.md`，保留目标日期但明确 promotion boundary，避免被误纳入 CI。
+- `oracle_functional_benefics.py` 新增 CLI JSON 合同测试；`python3 scripts/audit_fragments.py --strict` 显示 candidate_count 从 3 降到 0。
+- Functional Benefic/Malefic 的 `Technique Audit Table` 与 real-reading checklist 现在显式要求/输出 `functional_neutrals` 与 `yogakarakas`。
+- 合婚 strict bridge 修复 `additional_kutas.BadConstellations` 的 nested dict 形态，并把 mitigation exceptions 折叠成 `exception_mitigated_match`，防止已有 Ashtakoot 细节资产在 relationship adjudicator 中被吞掉。

@@ -26,33 +26,34 @@
 
 11. 是否显式给出 `Functional Benefic/Malefic`？
 12. 是否区分了自然属性、功能属性、题目域角色、当前激活结果？
-13. 对 `Saturn / Mars / Rahu / Ketu` 是否避免了“天然负面”式偷懒断法？
+13. 是否显式列出 `functional neutrals` 与 `Yogakaraka`，避免它们在最终报告中被折叠丢失？
+14. 对 `Saturn / Mars / Rahu / Ketu` 是否避免了“天然负面”式偷懒断法？
 
 ## E. 分盘层
 
-14. 婚恋是否至少展开 `D9 / UL / DK`？
-15. 事业是否至少展开 `D10 / A10 / AmK/Karakamsha`？
-16. 财富是否至少展开 `D2/D11`，并回看 D1/D9/D10 的变现链？
-17. 若使用 `D30 / D60`，是否明确说明这是高敏后置层而非主裁判？
+15. 婚恋是否至少展开 `D9 / UL / DK`？
+16. 事业是否至少展开 `D10 / A10 / AmK/Karakamsha`？
+17. 财富是否至少展开 `D2/D11`，并回看 D1/D9/D10 的变现链？
+18. 若使用 `D30 / D60`，是否明确说明这是高敏后置层而非主裁判？
 
 ## F. Timing 层
 
-18. 是否至少执行 `Vimshottari + Narayana` 双轨交叉？
-19. 若做具体事件判断，是否加入 `Transit / Double Transit / annual / KP or Chara support`？
-20. 如果 timing 只做到窗口级，而不是日期级，是否说清了边界？
+19. 是否至少执行 `Vimshottari + Narayana` 双轨交叉？
+20. 若做具体事件判断，是否加入 `Transit / Double Transit / annual / KP or Chara support`？
+21. 如果 timing 只做到窗口级，而不是日期级，是否说清了边界？
 
 ## G. 外部真值与诚信边界
 
-21. 是否清楚声明 `production_tuning_allowed` 的当前状态？
-22. 是否把外部 oracle 未闭环的前线（Dasha boundary / Shadbala absolute / Tajika annual）说清楚？
-23. 是否避免把内部一致性伪装成传统软件级真值冻结？
+22. 是否清楚声明 `production_tuning_allowed` 的当前状态？
+23. 是否把外部 oracle 未闭环的前线（Dasha boundary / Shadbala absolute / Tajika annual）说清楚？
+24. 是否避免把内部一致性伪装成传统软件级真值冻结？
 
 ## H. 输出层
 
-24. 是否输出 `Technique Audit Table` 或等价审计表？
-25. 是否给出 `used / partial / blocked / not used` 级别说明？
-26. 是否给出置信度，而不是只给断语？
-27. 是否把 must-not-overclaim 边界说清楚？
+25. 是否输出 `Technique Audit Table` 或等价审计表？
+26. 是否给出 `used / partial / blocked / not used` 级别说明？
+27. 是否给出置信度，而不是只给断语？
+28. 是否把 must-not-overclaim 边界说清楚？
 
 ## 一句话用法
 

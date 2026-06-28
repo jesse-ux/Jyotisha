@@ -3,6 +3,10 @@
 
 from __future__ import annotations
 
+import json
+import subprocess
+import sys
+
 from mcp_server import _collect_strict_evidence
 from scripts.functional_benefics import derive_functional_benefic_malefic
 
@@ -74,3 +78,27 @@ def test_relationship_functional_layer_uses_ascendant_even_when_planets_missing(
     assert "Sun" in functional["functional_benefics"]
     assert "Venus" in functional["functional_malefics"]
     assert "functional_benefic_malefic_used" in strict["event_judgement"]["secondary_context"]
+
+
+def test_oracle_functional_benefics_cli_exposes_json_contract() -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/oracle_functional_benefics.py",
+            "--ascendant",
+            "Leo",
+            "--format",
+            "json",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    report = json.loads(completed.stdout)
+
+    assert report["status"] == "used"
+    assert report["ascendant"] == "Leo"
+    assert "Sun" in report["functional_benefics"]
+    assert "Venus" in report["functional_malefics"]
+    assert "Mars" in report["yogakarakas"]
+    assert report["source"] == "strict_functional_benefic_malefic_v1"

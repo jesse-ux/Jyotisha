@@ -428,6 +428,15 @@ AI不应该凭空假设一个时间，而应该通过结构化互动帮助用户
 
 在使用下方意图路由表之前，先读取 `strict-workflow-router.md`。凡涉及事业、婚恋、财务、事件应期、历史回测、技法可靠性或高级分析，必须选择对应 strict route，并在最终输出附 Technique Audit Table。
 
+在 Technique Audit Table 中，`Functional Benefic/Malefic` 不得只写“已使用”。必须显式列出：
+- functional benefics
+- functional malefics
+- functional neutrals
+- yogakarakas
+- 对结论置信度的影响
+
+若缺少其中任一层，不得伪装成高严谨完成态，应降级置信度或标记 `blocked`。
+
 | 用户意图 | Strict route | 必须额外完成 |
 |----------|-------------|-------------|
 | 事业机会/职业方向/项目落地 | `career-timing-strict` | D1+D9+D10+Vimshottari+Jaimini+AmK/Karakamsha+AL/A10+Shadbala+AV+Argala |
