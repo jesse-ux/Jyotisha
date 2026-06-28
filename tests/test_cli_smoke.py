@@ -376,6 +376,18 @@ def test_full_reading_uses_d9_context_for_vimsopaka_navamsa_dignity() -> None:
     assert navamsa["dignity"] == "Enemy"
 
 
+def test_full_reading_maps_advanced_dignity_labels_into_vimsopaka_scores() -> None:
+    result = run_engine("full-reading", *BASE_BIRTH_ARGS)
+
+    jupiter_d9 = result["modules"]["d9_navamsa_expanded"]["Jupiter"]
+    assert jupiter_d9["dignity"] == "NEECHA_BHANGA"
+
+    jupiter_navamsa = result["modules"]["vimsopaka"]["Jupiter"]["varga_scores"]["Navamsa"]
+    assert jupiter_navamsa["dignity"] == "Neecha Bhanga"
+    assert isinstance(jupiter_navamsa["virupas"], (int, float))
+    assert jupiter_navamsa["virupas"] > 2.0
+
+
 def test_varga_cli_outputs_d9_and_d10() -> None:
     result = run_engine("varga", *BASE_BIRTH_ARGS, "--d9", "--d10")
     charts = result.get("divisional_charts", {})

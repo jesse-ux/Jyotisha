@@ -128,6 +128,26 @@ class TestDignityLevel(unittest.TestCase):
             'DEBILITATED',
         )
 
+    def test_vimsopaka_calculator_supports_advanced_dignity_levels(self):
+        from vimsopaka_calculator import DignityLevel, VargaType, VimsopakaBalaCalculator
+
+        calculator = VimsopakaBalaCalculator(mode="shodasavarga")
+        results = calculator.calculate_vimsopaka_bala({
+            'Jupiter': {
+                VargaType.D9: DignityLevel.NEECHA_BHANGA,
+                VargaType.D1: DignityLevel.GREAT_FRIEND,
+                VargaType.D10: DignityLevel.GREAT_ENEMY,
+            }
+        })
+
+        jupiter = results['Jupiter']
+        assert jupiter['varga_scores']['Navamsa']['dignity'] == 'Neecha Bhanga'
+        assert jupiter['varga_scores']['Navamsa']['virupas'] == 9.0
+        assert jupiter['varga_scores']['Rashi']['dignity'] == 'Great Friend'
+        assert jupiter['varga_scores']['Rashi']['virupas'] == 12.5
+        assert jupiter['varga_scores']['Dasamsa']['dignity'] == 'Great Enemy'
+        assert jupiter['varga_scores']['Dasamsa']['virupas'] == 3.5
+
 
 class TestDashaCalculation(unittest.TestCase):
     """测试 Dasha 时间线计算"""

@@ -3938,9 +3938,10 @@ def cmd_full_reading(args):
         # 需要转为: {planet: {VargaType: DignityLevel}}
         dignity_map = {
             'EXALTED': DignityLevel.EXALTED, 'MOOLATRIKONA': DignityLevel.MOOLATRIKONA,
-            'OWN_SIGN': DignityLevel.OWN_SIGN, 'FRIEND': DignityLevel.FRIEND,
-            'NEUTRAL': DignityLevel.NEUTRAL, 'ENEMY': DignityLevel.ENEMY,
-            'DEBILITATED': DignityLevel.DEBILITATED,
+            'OWN_SIGN': DignityLevel.OWN_SIGN, 'GREAT_FRIEND': DignityLevel.GREAT_FRIEND,
+            'FRIEND': DignityLevel.FRIEND, 'NEUTRAL': DignityLevel.NEUTRAL,
+            'ENEMY': DignityLevel.ENEMY, 'GREAT_ENEMY': DignityLevel.GREAT_ENEMY,
+            'DEBILITATED': DignityLevel.DEBILITATED, 'NEECHA_BHANGA': DignityLevel.NEECHA_BHANGA,
         }
         # 建立 VargaType → varga_result key 的映射（修复：每个分盘独立计算尊贵）
         _vt_div = {VimsVargaType.D1:1, VimsVargaType.D2:2, VimsVargaType.D3:3,

@@ -42,10 +42,13 @@ class DignityLevel(Enum):
     EXALTED = "Exalted"           # 入庙（最高）
     MOOLATRIKONA = "Moolatrikona" # 根本三角
     OWN_SIGN = "Own Sign"         # 自己的星座
+    GREAT_FRIEND = "Great Friend" # 极友
     FRIEND = "Friend"             # 友好星座
     NEUTRAL = "Neutral"           # 中性星座
     ENEMY = "Enemy"               # 敌对星座
+    GREAT_ENEMY = "Great Enemy"   # 极敌
     DEBILITATED = "Debilitated"   # 落陷（最低）
+    NEECHA_BHANGA = "Neecha Bhanga" # 落陷取消
 
 class VimsopakaBalaCalculator:
     """Vimsopaka Bala计算器"""
@@ -89,10 +92,13 @@ class VimsopakaBalaCalculator:
         DignityLevel.EXALTED: 20.0,
         DignityLevel.MOOLATRIKONA: 18.0,
         DignityLevel.OWN_SIGN: 15.0,
+        DignityLevel.GREAT_FRIEND: 12.5,
         DignityLevel.FRIEND: 10.0,
         DignityLevel.NEUTRAL: 7.5,
         DignityLevel.ENEMY: 5.0,
-        DignityLevel.DEBILITATED: 2.0
+        DignityLevel.GREAT_ENEMY: 3.5,
+        DignityLevel.DEBILITATED: 2.0,
+        DignityLevel.NEECHA_BHANGA: 9.0,
     }
     
     # 力量等级分类（基于总分）
