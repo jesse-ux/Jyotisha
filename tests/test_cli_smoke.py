@@ -398,6 +398,37 @@ def test_varga_cli_outputs_d9_and_d10() -> None:
     assert "Moon" in charts["D9_Navamsa"]
 
 
+def test_varga_full_cli_divisions_supports_high_vargas() -> None:
+    result = run_engine(
+        "varga-full",
+        *BASE_BIRTH_ARGS,
+        "--divisions",
+        "D9,D60,D81,D108,D144",
+    )
+
+    assert "D81_Navamsa-Navamsa" in result
+    assert "D108_Dwadasamsa-Navamsa" in result
+    assert "D144_Dwadasamsa-Dwadasamsa" in result
+    assert result["D144_Dwadasamsa-Dwadasamsa"]["planets"]["Moon"]["house"] in range(1, 13)
+
+
+def test_muhurta_cli_scan_days_outputs_panchanga_without_tuple_crash() -> None:
+    output = run_engine_text(
+        "muhurta",
+        "--date",
+        "2026-06-28",
+        "--activity",
+        "business",
+        "--scan-days",
+        "2",
+    )
+
+    assert "Muhurta" in output
+    assert "Panchanga" in output
+    assert "2026-06-28" in output
+    assert "unsupported operand type" not in output
+
+
 def test_ashtakavarga_cli_keeps_sav_invariant() -> None:
     result = run_engine("ashtakavarga", *BASE_BIRTH_ARGS)
     assert result["sav"]["total"] == 337

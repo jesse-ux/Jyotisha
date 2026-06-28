@@ -6,6 +6,9 @@ __pycache__/
 .agents/
 venv_vedastro/
 scratch/local/
+scratch/test_*.json
+scratch/test_*.txt
+test_hooks.json
 hermes_memory.db/
 *.egg-info/
 dist/

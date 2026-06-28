@@ -423,3 +423,23 @@
 - `oracle_functional_benefics.py` 新增 CLI JSON 合同测试；`python3 scripts/audit_fragments.py --strict` 显示 candidate_count 从 3 降到 0。
 - Functional Benefic/Malefic 的 `Technique Audit Table` 与 real-reading checklist 现在显式要求/输出 `functional_neutrals` 与 `yogakarakas`。
 - 合婚 strict bridge 修复 `additional_kutas.BadConstellations` 的 nested dict 形态，并把 mitigation exceptions 折叠成 `exception_mitigated_match`，防止已有 Ashtakoot 细节资产在 relationship adjudicator 中被吞掉。
+
+## 2026-06-28T20:05:00+08:00 - REDACTED_YEAR REDACTED_PLACE真实用户全功能 QA
+
+- 按用户要求以 `REDACTED_DATE REDACTED_TIME`、中国河北REDACTED_PLACEREDACTED_PLACE矿区近似坐标 `lat=36.4467 lon=114.2 tz=8` 跑真实用户全功能验收；scratch 产物放在 `scratch/local/sample_user_qa_2026_06_28/`。
+- CLI 矩阵覆盖 30 条出生盘/事件/合盘/问事/年运/分盘命令，28 条通过；失败为 `varga-full --divisions` 高分盘 D81/D108/D144 路由旧实现、`muhurta` CLI tuple longitude 崩溃。
+- API 矩阵覆盖 42 个请求，40 个通过；`/api/remedies` 对数值型 Shadbala 简写返回 500，官方 catalog payload 可通过；`/api/technique_example` 用 catalog example payload 通过，普通出生资料直打 400 归类为合同边界。
+- 前端真实浏览器 `python3 tests/run_frontend_click_smoke.py --mode all --timeout 420` 通过，覆盖 core/mobile/offline/pdf/workspace/mobile-trust/import-files；`npm run build` 通过。
+- 工程守门通过：`python3 scripts/audit_capabilities.py --mode validate` 有效；`python3 scripts/audit_fragments.py --strict` 有效且 candidate_count=0；`python3 scripts/run_quality_gate.py --profile quick --skip-frontend-runtime` 通过，配置内 283 项 pytest 通过。
+- 新增正式报告 `docs/research/sample_user_full_function_qa_REDACTED_YEAR_redacted_place_2026_06_28.md`，下一步优先修复 `muhurta` CLI、`varga-full --divisions` 高分盘合同、`/api/remedies` 输入硬化，并单独处理当前 dirty worktree/scratch 残留。
+
+## 2026-06-28T21:25:00+08:00 - VedAstro 596+/Events 高频雷达强制合同
+
+- 用户明确要求必须使用外部 VedAstro 596+ 高频流年 API；本轮不把它误解成要本地硬复刻 596 个函数，而是把 VedAstro 作为外部高频 timing radar 接入 strict workflow 边界。
+- 复核官方公开面：`APIBuilder.html` 对应通用 calculator surface；`EventsChartAPIBuilder.html` 元数据写明 `SearchEvents / GetEventTiming / ListEventTypes`、400+ pre-defined events，并有 `Scan precision (hours)`；PyPI `vedastro` 当前观测版本为 `1.23.25`。
+- `scripts/vedastro_service_adapter.py --print-schema` 新增 `vedastro_calculation_coverage`，记录 `596+` Python calculations、`600+` API Builder calculators、`400+` Events Builder events、三事件方法，以及 `high_frequency_life_event_radar` 用途。
+- VedAstro range-scan preview 现在显式包含 `vedastro_event_method = SearchEvents`，并继续通过 `VEDASTRO_API_ENDPOINT` 与 `VEDASTRO_ENABLE_NETWORK` 做外部服务边界控制。
+- `mcp_server.py` 中 `career / relationship / finance` 的 strict workflow 现在把 `external_activation` 视为必需 VedAstro 外部雷达槽；缺失时输出 `missing_required_external_radar`、`vedastro_range_scan_missing` 和 `Technique Audit` blocked 行；有事件时输出 `used` 行和 event_count。
+- 守住边界：VedAstro 事件证据不直接替代本地双重大运、分盘、Shadbala/Ashtakavarga/Jaimini/Functional role，也不直接设置 `dominant_label / payout_label`；缺本地 promise 时仍受原评分上限约束。
+- 新增审计文档 `docs/research/vedastro_required_high_frequency_radar_contract_2026_06_28.md`。
+- 验证：`python3 -m pytest tests/test_vedastro_service_adapter_executor.py tests/test_vedastro_external_technique_evidence.py tests/test_vedastro_parity_matrix.py tests/test_vedastro_adapter_candidate_guard.py -q` 通过；`python3 -m pytest tests/test_mcp_strict_workflow_finance.py tests/test_mcp_strict_workflow_relationship.py tests/test_mcp_strict_workflow_career.py tests/test_life_event_graph_v1.py -q` 通过。

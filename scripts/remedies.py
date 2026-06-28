@@ -104,7 +104,12 @@ def recommend_remedies(shadbala_results: Dict, planet_dignities: Dict = None,
     evidence_chain = []
 
     for planet, data in shadbala_results.items():
-        rupas = data.get('total_rupas', data.get('rupas', 1.0))
+        if isinstance(data, (int, float)) and not isinstance(data, bool):
+            rupas = float(data)
+        elif isinstance(data, dict):
+            rupas = data.get('total_rupas', data.get('rupas', 1.0))
+        else:
+            rupas = 1.0
         if rupas < STRENGTH_THRESHOLDS['weak']:
             weak_planets.append(planet)
             evidence_chain.append({

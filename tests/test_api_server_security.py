@@ -368,6 +368,19 @@ def test_remedies_accepts_api_rupas_shape() -> None:
     assert result['recommendations']['mantras']
 
 
+def test_remedies_endpoint_accepts_numeric_shadbala_shorthand() -> None:
+    handler = _handler()
+    result = handler._compute_remedies({
+        'shadbala': {'Sun': 0.42, 'Moon': 0.68},
+        'dasha_lord': 'Saturn',
+        'doshas': ['Mangal Dosha'],
+    })
+
+    assert result['weak_planets'] == ['Sun']
+    assert 'Moon' in result['moderate_planets']
+    assert any(item['source'] == 'shadbala' and item['planet'] == 'Sun' for item in result['evidence_chain'])
+
+
 def test_import_chart_accepts_plain_text() -> None:
     handler = _handler()
     result = handler._import_chart_text({

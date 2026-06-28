@@ -28,13 +28,18 @@ def _weekday_to_vara(py_weekday: int) -> int:
 def _get_sun_moon_lons(year: int, month: int, day: int,
                        hour: int = 12, ayanamsa_name: str = 'lahiri') -> tuple:
     """获取太阳/月亮恒星黄经。优先 swisseph，退化为近似算法。"""
+    def _primary_longitude(value):
+        if isinstance(value, (list, tuple)):
+            return float(value[0])
+        return float(value)
+
     try:
         import swisseph as swe
         jd_ut = swe.julday(year, month, day, hour)
         flags = sidereal_flags(swe, ayanamsa_name)
         sun_res = swe.calc_ut(jd_ut, swe.SUN, flags)
         moon_res = swe.calc_ut(jd_ut, swe.MOON, flags)
-        return sun_res[0], moon_res[0], True
+        return _primary_longitude(sun_res[0]), _primary_longitude(moon_res[0]), True
     except Exception:
         pass
     # 近似算法

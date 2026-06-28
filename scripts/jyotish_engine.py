@@ -2962,6 +2962,23 @@ def cmd_varga_full(args):
                 result[pn] = calc.calc_varga_with_variant(lon, divisions[0], variant)
             return result
 
+    try:
+        sys.path.insert(0, SCRIPT_DIR)
+        from divisional_charts_extended import DivisionalChartsCalculator, VargaType
+        extended_available = {varga.division: varga for varga in VargaType}
+        if any(division not in {2, 3, 4, 7, 9, 10, 12, 16, 20, 24, 27, 30, 40, 45, 60} for division in (divisions or [])):
+            calc = DivisionalChartsCalculator()
+            selected = [extended_available[division] for division in divisions]
+            result = {}
+            for varga in selected:
+                key = f'D{varga.division}_{varga.varga_name}'
+                result[key] = calc._calculate_single_varga(varga, planet_lons, asc_deg)
+            return result
+    except KeyError as e:
+        return {"error": f"不支持的D{e.args[0]}。请使用 --custom N 计算任意D-N分盘。"}
+    except ImportError:
+        pass
+
     return calc_all_vargas(planet_lons, asc_deg, divisions)
 
 
