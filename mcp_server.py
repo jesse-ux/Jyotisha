@@ -112,36 +112,56 @@ def _derive_wealth_promise_strength(modules: Dict[str, Any]) -> Optional[Dict[st
     yogas_doshas = modules.get("yogas_doshas") if isinstance(modules, dict) else {}
     dhana = yogas_doshas.get("dhana_yogas") if isinstance(yogas_doshas, dict) else {}
     yogas = dhana.get("yogas") if isinstance(dhana, dict) else None
-    if not isinstance(yogas, list) or not yogas:
+
+    has_dhana = False
+    has_lakshmi = False
+    dhana_level = "weak"
+    lakshmi_level = "weak"
+
+    sources = set()
+    if isinstance(yogas, list) and yogas:
+        for row in yogas:
+            if not isinstance(row, dict):
+                continue
+            lvl = str(row.get("strength", "")).lower()
+            row_type = str(row.get("type", "")).lower()
+            if "lakshmi" in row_type:
+                sources.add("lakshmi")
+                has_lakshmi = True
+                if lvl == "strong" or (lvl == "moderate" and lakshmi_level == "weak"):
+                    lakshmi_level = lvl
+            elif "dhana" in row_type:
+                sources.add("dhana")
+                has_dhana = True
+                if lvl == "strong" or (lvl == "moderate" and dhana_level == "weak"):
+                    dhana_level = lvl
+
+    if not has_dhana and not has_lakshmi:
         return None
 
-    strengths = []
-    sources = set()
-    for row in yogas:
-        if not isinstance(row, dict):
-            continue
-        strengths.append(str(row.get("strength", "")).lower())
-        row_type = str(row.get("type", "")).lower()
-        if "lakshmi" in row_type:
-            sources.add("lakshmi")
-        elif "dhana" in row_type:
-            sources.add("dhana")
+    supporting_sources = sorted(sources)
 
-    if any(level == "strong" for level in strengths):
-        level = "strong"
-    elif any(level == "moderate" for level in strengths):
-        level = "moderate"
+    if has_dhana and has_lakshmi:
+        primary_source = "dhana_lakshmi_hooks"
+    elif has_dhana:
+        primary_source = "dhana_yogas"
     else:
-        level = "weak"
+        primary_source = "lakshmi_hooks"
 
-    supporting_sources = sorted(sources) or ["dhana"]
-    primary_source = "dhana_lakshmi_hooks" if len(supporting_sources) > 1 else "dhana_yogas"
+    if dhana_level == "strong" or lakshmi_level == "strong":
+        final_level = "strong"
+    elif dhana_level == "moderate" or lakshmi_level == "moderate":
+        final_level = "moderate"
+    else:
+        final_level = "weak"
+
     return {
-        "level": level,
+        "level": final_level,
         "primary_source": primary_source,
         "supporting_sources": supporting_sources,
-        "count": len(yogas),
+        "count": len(yogas) if isinstance(yogas, list) else 0,
         "source_diversity": len(supporting_sources),
+        "yogi_support": None,
     }
 
 
@@ -405,7 +425,8 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         else:
             confidence_cap = "medium-low"
         event_judgement = _derive_event_judgement(route, present, missing)
-        if yogi_promise and event_judgement.get("dominant_label") and "yogi_active" not in event_judgement.get("secondary_context", []):
+        promise = present.get("wealth_promise_strength") or {}
+        if yogi_promise and "yogi" in promise.get("supporting_sources", []) and event_judgement.get("dominant_label") and "yogi_active" not in event_judgement.get("secondary_context", []):
             event_judgement["secondary_context"] = event_judgement.get("secondary_context", []) + ["yogi_active"]
         return {
             "question_type": route,

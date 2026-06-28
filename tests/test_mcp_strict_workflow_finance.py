@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from mcp_server import _collect_strict_evidence, _derive_event_judgement
+from mcp_server import _collect_strict_evidence, _derive_event_judgement, _derive_wealth_promise_strength
 
 
 def test_finance_public_wealth_label_requires_at_least_moderate_window() -> None:
@@ -174,6 +174,7 @@ def test_collect_strict_evidence_finance_derives_wealth_promise_from_dhana_yogas
         "count": 2,
         "source_diversity": 1,
         "supporting_sources": ["dhana"],
+        "yogi_support": None,
     }
     assert strict["event_judgement"]["score"] == 100
     assert strict["event_judgement"]["verdict"] == "moderate_probability_window"
@@ -214,7 +215,69 @@ def test_collect_strict_evidence_finance_combines_dhana_and_lakshmi_hooks() -> N
         "count": 2,
         "source_diversity": 2,
         "supporting_sources": ["dhana", "lakshmi"],
+        "yogi_support": None,
     }
+
+
+def test_wealth_folding_dhana_does_not_self_infer_yogi_without_external_truth() -> None:
+    modules = {
+        "yogas_doshas": {
+            "dhana_yogas": {
+                "yogas": [{"type": "dhana", "strength": "strong"}]
+            }
+        },
+        "chart": {
+            "ascendant": {"degree_raw": 133.0},
+            "planets": {
+                "Sun": {"degree_raw": 20.0},
+                "Moon": {"degree_raw": 20.0},
+                "Venus": {"house": 11, "sign": "Gemini"},
+            }
+        }
+    }
+    res = _derive_wealth_promise_strength(modules)
+    assert res["primary_source"] == "dhana_yogas"
+    assert res["source_diversity"] == 1
+    assert res["supporting_sources"] == ["dhana"]
+    assert res["level"] == "strong"
+    assert res["yogi_support"] is None
+
+
+def test_wealth_folding_dhana_lakshmi_does_not_self_infer_yogi_without_external_truth() -> None:
+    modules = {
+        "yogas_doshas": {
+            "dhana_yogas": {
+                "yogas": [{"type": "dhana", "strength": "moderate"}, {"type": "lakshmi", "strength": "moderate"}]
+            }
+        },
+        "chart": {
+            "ascendant": {"degree_raw": 133.0},
+            "planets": {
+                "Sun": {"degree_raw": 20.0},
+                "Moon": {"degree_raw": 20.0},
+                "Venus": {"house": 11, "sign": "Gemini"},
+            }
+        }
+    }
+    res = _derive_wealth_promise_strength(modules)
+    assert res["primary_source"] == "dhana_lakshmi_hooks"
+    assert res["source_diversity"] == 2
+    assert res["level"] == "moderate"
+    assert res["yogi_support"] is None
+
+
+def test_wealth_folding_yogi_only_is_blocked_without_external_truth() -> None:
+    modules = {
+        "chart": {
+            "ascendant": {"degree_raw": 133.0},
+            "planets": {
+                "Sun": {"degree_raw": 20.0},
+                "Moon": {"degree_raw": 20.0},
+                "Venus": {"house": 11, "sign": "Gemini"},
+            }
+        }
+    }
+    assert _derive_wealth_promise_strength(modules) is None
 
 
 def test_collect_strict_evidence_finance_adds_yogi_hook_only_when_external_truth_is_present() -> None:
@@ -253,12 +316,19 @@ def test_collect_strict_evidence_finance_adds_yogi_hook_only_when_external_truth
     }
 
     strict = _collect_strict_evidence("finance", result)
+    assert strict["present_evidence"]["yogi_promise"] == {
+        "planet": "Venus",
+        "house": 10,
+        "status": "入友(Friendly Sign)",
+        "source": "external_yogi_planet",
+    }
     assert strict["present_evidence"]["wealth_promise_strength"] == {
         "level": "moderate",
         "primary_source": "dhana_yogi_hooks",
         "count": 2,
         "source_diversity": 2,
         "supporting_sources": ["dhana", "yogi"],
+        "yogi_support": None,
     }
     assert "yogi_active" in strict["event_judgement"]["secondary_context"]
 
@@ -306,5 +376,6 @@ def test_collect_strict_evidence_finance_does_not_promote_yogi_outside_kendra_tr
         "count": 1,
         "source_diversity": 1,
         "supporting_sources": ["dhana"],
+        "yogi_support": None,
     }
     assert "yogi_active" not in strict["event_judgement"]["secondary_context"]
