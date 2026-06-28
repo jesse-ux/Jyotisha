@@ -59,6 +59,7 @@ PARITY_CASES = {
     },
 }
 
+SUPPORTED_RANGE_SCAN_DOMAINS = {"marriage", "wealth", "career"}
 DEFAULT_TIMEOUT_SECONDS = 8
 TIMEOUT_ENV = "VEDASTRO_TIMEOUT_SECONDS"
 RETRY_POLICY = {
@@ -117,6 +118,32 @@ def schema() -> dict[str, Any]:
             "bodies",
             "source_metadata",
         ],
+        "range_scan_request_contract": [
+            "operation",
+            "domain",
+            "start_date",
+            "end_date",
+            "year",
+            "month",
+            "day",
+            "hour",
+            "minute",
+            "lat",
+            "lon",
+            "tz",
+            "ayanamsa_policy",
+            "node_policy",
+            "event_model",
+        ],
+        "range_scan_response_contract": [
+            "backend",
+            "available",
+            "status",
+            "operation",
+            "domain",
+            "evidence_ledger",
+            "source_metadata",
+        ],
         "request_example": request_example,
         "provenance_contract": {
             "external_service": True,
@@ -155,6 +182,17 @@ def _request_preview(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _range_scan_preview(case: dict[str, Any], domain: str, start_date: str, end_date: str) -> dict[str, Any]:
+    return {
+        "operation": "range_scan",
+        "domain": domain,
+        "start_date": start_date,
+        "end_date": end_date,
+        "event_model": "vedastro_events_at_range_candidate",
+        **case,
+    }
+
+
 def _normalize_success(payload: dict[str, Any], endpoint: str) -> dict[str, Any]:
     return {
         "backend": "vedastro_service_adapter_candidate",
@@ -173,6 +211,75 @@ def _normalize_success(payload: dict[str, Any], endpoint: str) -> dict[str, Any]
             **(payload.get("source_metadata") or {}),
         },
     }
+
+
+def _normalize_range_scan_success(
+    payload: dict[str, Any],
+    endpoint: str,
+    request_preview: dict[str, Any],
+) -> dict[str, Any]:
+    events = payload.get("events")
+    if not isinstance(events, list):
+        events = []
+
+    evidence_ledger = []
+    for index, event in enumerate(events, start=1):
+        if not isinstance(event, dict):
+            continue
+        evidence_ledger.append(
+            {
+                "source": "vedastro_service_adapter_candidate",
+                "operation": "range_scan",
+                "domain": request_preview["domain"],
+                "event_id": event.get("id") or event.get("name") or f"event_{index}",
+                "start": event.get("start") or event.get("start_time") or event.get("start_date"),
+                "end": event.get("end") or event.get("end_time") or event.get("end_date"),
+                "score": event.get("score") if event.get("score") is not None else event.get("strength"),
+                "tags": event.get("tags") or [],
+                "raw": event,
+            }
+        )
+
+    return {
+        "backend": "vedastro_service_adapter_candidate",
+        "available": True,
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": request_preview["domain"],
+        "request_preview": request_preview,
+        "evidence_ledger": evidence_ledger,
+        "source_metadata": {
+            "transport": "http_json_service_boundary",
+            "endpoint": endpoint,
+            "provenance_mode": "external_service_candidate",
+            "timeout_seconds": _timeout_seconds(),
+            "retry_policy": RETRY_POLICY,
+            **(payload.get("source_metadata") or {}),
+        },
+    }
+
+
+def _source_metadata(endpoint: str) -> dict[str, Any]:
+    return {
+        "transport": "http_json_service_boundary",
+        "endpoint": endpoint,
+        "provenance_mode": "external_service_candidate",
+        "timeout_seconds": _timeout_seconds(),
+        "retry_policy": RETRY_POLICY,
+        "network_execution_env": ALLOW_NETWORK_ENV,
+    }
+
+
+def _post_json(endpoint: str, request_preview: dict[str, Any]) -> dict[str, Any] | str:
+    req = request.Request(
+        endpoint,
+        data=json.dumps(request_preview).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with request.urlopen(req, timeout=_timeout_seconds()) as resp:
+        raw = resp.read().decode("utf-8")
+        return json.loads(raw)
 
 
 def run_case(case_id: str) -> dict[str, Any]:
@@ -197,25 +304,10 @@ def run_case(case_id: str) -> dict[str, Any]:
             "status": "network_execution_disabled",
             "reason": f"{ALLOW_NETWORK_ENV} is not enabled; adapter stops after building request/provenance metadata.",
             "request_preview": request_preview,
-            "source_metadata": {
-                "transport": "http_json_service_boundary",
-                "endpoint": endpoint,
-                "provenance_mode": "external_service_candidate",
-                "timeout_seconds": _timeout_seconds(),
-                "retry_policy": RETRY_POLICY,
-                "network_execution_env": ALLOW_NETWORK_ENV,
-            },
+            "source_metadata": _source_metadata(endpoint),
         }
     try:
-        req = request.Request(
-            endpoint,
-            data=json.dumps(request_preview).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with request.urlopen(req, timeout=_timeout_seconds()) as resp:
-            raw = resp.read().decode("utf-8")
-            payload = json.loads(raw)
+        payload = _post_json(endpoint, request_preview)
     except error.HTTPError as exc:
         return {
             "backend": "vedastro_service_adapter_candidate",
@@ -223,14 +315,7 @@ def run_case(case_id: str) -> dict[str, Any]:
             "status": "http_error",
             "reason": f"VedAstro adapter HTTP error: {exc.code}",
             "request_preview": request_preview,
-            "source_metadata": {
-                "transport": "http_json_service_boundary",
-                "endpoint": endpoint,
-                "provenance_mode": "external_service_candidate",
-                "timeout_seconds": _timeout_seconds(),
-                "retry_policy": RETRY_POLICY,
-                "network_execution_env": ALLOW_NETWORK_ENV,
-            },
+            "source_metadata": _source_metadata(endpoint),
         }
     except error.URLError as exc:
         return {
@@ -239,14 +324,7 @@ def run_case(case_id: str) -> dict[str, Any]:
             "status": "network_error",
             "reason": f"VedAstro adapter network error: {exc.reason}",
             "request_preview": request_preview,
-            "source_metadata": {
-                "transport": "http_json_service_boundary",
-                "endpoint": endpoint,
-                "provenance_mode": "external_service_candidate",
-                "timeout_seconds": _timeout_seconds(),
-                "retry_policy": RETRY_POLICY,
-                "network_execution_env": ALLOW_NETWORK_ENV,
-            },
+            "source_metadata": _source_metadata(endpoint),
         }
     except (TimeoutError, socket.timeout):
         return {
@@ -255,14 +333,7 @@ def run_case(case_id: str) -> dict[str, Any]:
             "status": "timeout",
             "reason": "VedAstro adapter timed out",
             "request_preview": request_preview,
-            "source_metadata": {
-                "transport": "http_json_service_boundary",
-                "endpoint": endpoint,
-                "provenance_mode": "external_service_candidate",
-                "timeout_seconds": _timeout_seconds(),
-                "retry_policy": RETRY_POLICY,
-                "network_execution_env": ALLOW_NETWORK_ENV,
-            },
+            "source_metadata": _source_metadata(endpoint),
         }
     except json.JSONDecodeError:
         return {
@@ -271,26 +342,101 @@ def run_case(case_id: str) -> dict[str, Any]:
             "status": "invalid_json",
             "reason": "VedAstro adapter received non-JSON response",
             "request_preview": request_preview,
-            "source_metadata": {
-                "transport": "http_json_service_boundary",
-                "endpoint": endpoint,
-                "provenance_mode": "external_service_candidate",
-                "timeout_seconds": _timeout_seconds(),
-                "retry_policy": RETRY_POLICY,
-                "network_execution_env": ALLOW_NETWORK_ENV,
-            },
+            "source_metadata": _source_metadata(endpoint),
         }
 
     return _normalize_success(payload, endpoint)
+
+
+def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) -> dict[str, Any]:
+    if case_id not in PARITY_CASES:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "unknown_case_id",
+            "reason": f"Unknown parity case: {case_id}",
+        }
+    if domain not in SUPPORTED_RANGE_SCAN_DOMAINS:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "unsupported_range_scan_domain",
+            "reason": f"Unsupported range scan domain: {domain}",
+        }
+
+    endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
+    if not endpoint:
+        return _unconfigured("VEDASTRO_API_ENDPOINT is not configured; range scan stops before network access.")
+
+    request_preview = _range_scan_preview(PARITY_CASES[case_id], domain, start_date, end_date)
+    if os.environ.get(ALLOW_NETWORK_ENV, "").strip().lower() not in {"1", "true", "yes"}:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "network_execution_disabled",
+            "reason": f"{ALLOW_NETWORK_ENV} is not enabled; range scan stops after building request/provenance metadata.",
+            "request_preview": request_preview,
+            "source_metadata": _source_metadata(endpoint),
+        }
+
+    try:
+        payload = _post_json(endpoint, request_preview)
+    except error.HTTPError as exc:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "http_error",
+            "reason": f"VedAstro range scan HTTP error: {exc.code}",
+            "request_preview": request_preview,
+            "source_metadata": _source_metadata(endpoint),
+        }
+    except error.URLError as exc:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "network_error",
+            "reason": f"VedAstro range scan network error: {exc.reason}",
+            "request_preview": request_preview,
+            "source_metadata": _source_metadata(endpoint),
+        }
+    except (TimeoutError, socket.timeout):
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "timeout",
+            "reason": "VedAstro range scan timed out",
+            "request_preview": request_preview,
+            "source_metadata": _source_metadata(endpoint),
+        }
+    except json.JSONDecodeError:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "invalid_json",
+            "reason": "VedAstro range scan received non-JSON response",
+            "request_preview": request_preview,
+            "source_metadata": _source_metadata(endpoint),
+        }
+
+    return _normalize_range_scan_success(payload, endpoint, request_preview)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="VedAstro service adapter skeleton")
     parser.add_argument("--print-schema", action="store_true")
     parser.add_argument("--case", default="beijing_first_use_demo")
+    parser.add_argument("--range-scan", action="store_true")
+    parser.add_argument("--domain", choices=sorted(SUPPORTED_RANGE_SCAN_DOMAINS), default="marriage")
+    parser.add_argument("--start-date", default="2026-01-01")
+    parser.add_argument("--end-date", default="2031-01-01")
     args = parser.parse_args()
 
-    result = schema() if args.print_schema else run_case(args.case)
+    if args.print_schema:
+        result = schema()
+    elif args.range_scan:
+        result = run_range_scan(args.case, args.domain, args.start_date, args.end_date)
+    else:
+        result = run_case(args.case)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 

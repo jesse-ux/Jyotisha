@@ -36,6 +36,11 @@ def test_vedastro_service_adapter_executor_schema_is_declared() -> None:
     assert "request_example" in report
     assert report["provenance_contract"]["external_service"] is True
     assert "endpoint" in report["provenance_contract"]["required_fields"]
+    assert "range_scan_request_contract" in report
+    assert "domain" in report["range_scan_request_contract"]
+    assert "start_date" in report["range_scan_request_contract"]
+    assert "range_scan_response_contract" in report
+    assert "evidence_ledger" in report["range_scan_response_contract"]
 
 
 def test_vedastro_service_adapter_returns_controlled_unconfigured_status() -> None:
@@ -101,6 +106,44 @@ def test_vedastro_service_adapter_builds_request_preview_before_real_network_use
     assert report["source_metadata"]["provenance_mode"] == "external_service_candidate"
 
 
+def test_vedastro_service_adapter_builds_range_scan_preview_before_real_network_use() -> None:
+    env = os.environ.copy()
+    env["VEDASTRO_API_ENDPOINT"] = "https://example.invalid/vedastro"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/vedastro_service_adapter.py",
+            "--range-scan",
+            "--domain",
+            "marriage",
+            "--case",
+            "beijing_first_use_demo",
+            "--start-date",
+            "2026-01-01",
+            "--end-date",
+            "2031-01-01",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=120,
+        check=False,
+        env=env,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["backend"] == "vedastro_service_adapter_candidate"
+    assert report["status"] == "network_execution_disabled"
+    assert report["request_preview"]["operation"] == "range_scan"
+    assert report["request_preview"]["domain"] == "marriage"
+    assert report["request_preview"]["start_date"] == "2026-01-01"
+    assert report["request_preview"]["end_date"] == "2031-01-01"
+    assert report["request_preview"]["event_model"] == "vedastro_events_at_range_candidate"
+    assert report["source_metadata"]["endpoint"] == "https://example.invalid/vedastro"
+
+
 def test_vedastro_service_adapter_can_normalize_mock_http_response() -> None:
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:  # noqa: N802
@@ -161,6 +204,86 @@ def test_vedastro_service_adapter_can_normalize_mock_http_response() -> None:
     assert report["ayanamsa_value"] == 23.717413
     assert report["bodies"]["Sun"]["sign"] == "Sagittarius"
     assert report["source_metadata"]["transport"] == "http_json_service_boundary"
+    assert report["source_metadata"]["endpoint"].startswith("http://127.0.0.1:")
+
+
+def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            length = int(self.headers.get("Content-Length", "0"))
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            assert payload["operation"] == "range_scan"
+            assert payload["domain"] == "marriage"
+            assert payload["start_date"] == "2026-01-01"
+            response = {
+                "events": [
+                    {
+                        "id": "jupiter_7h_window",
+                        "name": "Jupiter supports marriage axis",
+                        "start": "2026-05-01",
+                        "end": "2026-06-01",
+                        "score": 72,
+                        "tags": ["marriage", "transit"],
+                    }
+                ],
+                "source_metadata": {
+                    "service": "mock-vedastro",
+                    "version": "range-test",
+                },
+            }
+            body = json.dumps(response).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/vedastro"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "scripts/vedastro_service_adapter.py",
+                "--range-scan",
+                "--domain",
+                "marriage",
+                "--case",
+                "beijing_first_use_demo",
+                "--start-date",
+                "2026-01-01",
+                "--end-date",
+                "2031-01-01",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["backend"] == "vedastro_service_adapter_candidate"
+    assert report["available"] is True
+    assert report["status"] == "ok"
+    assert report["operation"] == "range_scan"
+    assert report["domain"] == "marriage"
+    assert report["evidence_ledger"][0]["event_id"] == "jupiter_7h_window"
+    assert report["evidence_ledger"][0]["domain"] == "marriage"
+    assert report["evidence_ledger"][0]["score"] == 72
+    assert report["evidence_ledger"][0]["raw"]["name"] == "Jupiter supports marriage axis"
     assert report["source_metadata"]["endpoint"].startswith("http://127.0.0.1:")
 
 
