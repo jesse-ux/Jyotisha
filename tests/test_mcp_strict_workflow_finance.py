@@ -224,6 +224,75 @@ def test_collect_strict_evidence_finance_combines_dhana_and_lakshmi_hooks() -> N
     }
 
 
+def test_collect_strict_evidence_finance_collects_vedastro_range_scan_as_external_activation_context() -> None:
+    result = {
+        "modules": {
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 31, "11": 36}},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    "career_status": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "external_activation": {
+                "evidence_ledger": [
+                    {
+                        "source": "vedastro_service_adapter_candidate",
+                        "operation": "range_scan",
+                        "domain": "wealth",
+                        "event_id": "jupiter_2h_11h_window",
+                        "score": 76,
+                    }
+                ]
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+
+    assert strict["present_evidence"]["external_activation"]["level"] == "moderate"
+    assert strict["present_evidence"]["external_activation"]["source"] == "vedastro_service_adapter_candidate"
+    assert "external_activation_support" in strict["event_judgement"]["secondary_context"]
+
+
+def test_collect_strict_evidence_finance_ignores_non_matching_external_activation_domains() -> None:
+    result = {
+        "modules": {
+            "varga_full": {"D2_Hora": {"summary": "ok"}, "D10_Dasamsa": {"summary": "ok"}},
+            "shadbala": {"planets": {"Venus": {"total_rupa": 8.2}}},
+            "ashtakavarga": {"house_scores": {"2": 31, "11": 36}},
+            "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+            "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+            "dasa_convergence": {
+                "domain_activations": {
+                    "wealth_family": {"convergence_level": "L1", "probability": "+15-20%"},
+                }
+            },
+            "external_activation": {
+                "evidence_ledger": [
+                    {
+                        "source": "vedastro_service_adapter_candidate",
+                        "operation": "range_scan",
+                        "domain": "marriage",
+                        "event_id": "relationship_window",
+                        "score": 95,
+                    }
+                ]
+            },
+        }
+    }
+
+    strict = _collect_strict_evidence("finance", result)
+
+    assert strict["present_evidence"]["external_activation"]["level"] == "none"
+    assert "external_activation_support" not in strict["event_judgement"]["secondary_context"]
+
+
 def test_derive_yogi_wealth_support_detects_strong_native_hook() -> None:
     modules = {
         "chart": {

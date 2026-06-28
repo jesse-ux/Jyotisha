@@ -411,6 +411,43 @@ def _derive_jaimini_marriage_support(present: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _derive_external_activation_support(modules: Dict[str, Any], domain: str) -> Dict[str, Any]:
+    ledger = _safe_get(modules, "external_activation", "evidence_ledger")
+    if not isinstance(ledger, list):
+        return {
+            "level": "none",
+            "source": None,
+            "signals": [],
+            "events": [],
+        }
+
+    events: List[Dict[str, Any]] = []
+    for event in ledger:
+        if not isinstance(event, dict):
+            continue
+        if event.get("operation") != "range_scan":
+            continue
+        if event.get("domain") != domain:
+            continue
+        if event.get("source") != "vedastro_service_adapter_candidate":
+            continue
+        events.append(event)
+
+    if not events:
+        level = "none"
+    elif any((event.get("score") or 0) >= 70 for event in events):
+        level = "moderate"
+    else:
+        level = "weak"
+
+    return {
+        "level": level,
+        "source": "vedastro_service_adapter_candidate" if events else None,
+        "signals": ["vedastro_range_scan"] if events else [],
+        "events": events,
+    }
+
+
 def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[str]) -> Dict[str, Any]:
     if route == "relationship":
         score = 0
@@ -453,6 +490,9 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("jaimini_support")
         if present.get("upapada_lagna"):
             secondary_context.append("ul_support")
+        external_activation = present.get("external_activation") or {}
+        if external_activation.get("level") == "moderate":
+            secondary_context.append("external_activation_support")
 
         hard_gate_missing = any(
             key in missing for key in (
@@ -563,6 +603,9 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
                 secondary_context.append("gains_wishes")
         if isinstance(avayogi_risk, dict) and avayogi_risk.get("risk_level") == "moderate":
             secondary_context.append("avayogi_active")
+        external_activation = present.get("external_activation") or {}
+        if external_activation.get("level") == "moderate":
+            secondary_context.append("external_activation_support")
         return {
             "event_family": "finance",
             "score": score,
@@ -616,9 +659,10 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         }
         present["jaimini_timing_support"] = _safe_get(modules, "jaimini", "marriage_timing_support")
         present["jaimini_marriage_support"] = _derive_jaimini_marriage_support(present)
+        present["external_activation"] = _derive_external_activation_support(modules, "marriage")
         missing = [
             key for key, value in present.items()
-            if key not in {"chart", "jaimini_marriage_support", "jaimini_timing_support"}
+            if key not in {"chart", "external_activation", "jaimini_marriage_support", "jaimini_timing_support"}
             and value in (None, {}, [], "")
         ]
         convergence = present["marriage_convergence"] or {}
@@ -671,8 +715,9 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             "wealth_promise_strength": _derive_wealth_promise_strength(modules),
             "avayogi_risk": avayogi_risk,
         }
+        present["external_activation"] = _derive_external_activation_support(modules, "wealth")
         missing = [key for key, value in present.items() if key not in {
-            "chart", "gains_convergence", "career_convergence", "avayogi_risk"
+            "chart", "external_activation", "gains_convergence", "career_convergence", "avayogi_risk"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [

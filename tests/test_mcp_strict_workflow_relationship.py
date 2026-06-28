@@ -60,3 +60,24 @@ def test_relationship_jaimini_bridge_stays_context_only_when_d9_missing() -> Non
         "jaimini_support",
         "ul_support",
     ]
+
+
+def test_relationship_collects_vedastro_range_scan_as_external_activation_context() -> None:
+    result = _base_relationship_result()
+    result["modules"]["external_activation"] = {
+        "evidence_ledger": [
+            {
+                "source": "vedastro_service_adapter_candidate",
+                "operation": "range_scan",
+                "domain": "marriage",
+                "event_id": "jupiter_7h_window",
+                "score": 72,
+            }
+        ]
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["external_activation"]["level"] == "moderate"
+    assert strict["present_evidence"]["external_activation"]["source"] == "vedastro_service_adapter_candidate"
+    assert "external_activation_support" in strict["event_judgement"]["secondary_context"]
