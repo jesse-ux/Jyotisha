@@ -48,12 +48,12 @@ def test_oracle_closure_master_dashboard_aggregates_all_hard_fronts() -> None:
     assert report["fronts"]["dasha"]["external_verified_tasks"] == 3
     assert report["fronts"]["dasha"]["first_priority"] is None
     assert report["fronts"]["shadbala"]["external_verified_tasks"] == 4
-    assert report["fronts"]["shadbala"]["first_priority"]["case_id"] == "template_redacted_place_shadbala_raman"
+    assert report["fronts"]["shadbala"]["open_tasks"] == 0
+    assert report["fronts"]["shadbala"]["first_priority"] is None
     assert report["fronts"]["tajika_sahams"]["external_verified_tasks"] == 1
     assert report["fronts"]["tajika_sahams"]["open_tasks"] == 4
     assert report["fronts"]["tajika_sahams"]["first_priority"]["case_id"] == "template_einstein_varshaphala_1905_lahiri"
     assert report["fronts"]["tajika_sahams"]["first_priority"]["missing_groups"]["target"]["count"] == 10
-    assert report["fronts"]["shadbala"]["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 55
     assert report["next_action_order"][0]["front"] == "tajika_sahams"
     assert len(report["next_action_order"]) == 1
 
@@ -69,7 +69,7 @@ def test_oracle_closure_master_dashboard_markdown_can_be_written(tmp_path: Path)
     assert "total_tasks: `12`" in markdown
     assert "can_claim_global_oracle_closure: `false`" in markdown
     assert "`dasha` | 3 | 3 | `complete`" in markdown
-    assert "template_redacted_place_shadbala_raman" in markdown
+    assert "`shadbala` | 4 | 4 | `complete`" in markdown
     assert "template_einstein_varshaphala_1905_lahiri" in markdown
     assert "manual entries" in markdown
     assert "metadata missing" in markdown

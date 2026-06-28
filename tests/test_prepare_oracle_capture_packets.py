@@ -32,12 +32,12 @@ def test_prepare_oracle_capture_packets_writes_packets_manifest_and_next_steps(t
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
     assert report["scope"] == "external_oracle_capture_packet_preparation"
-    assert report["packet_count"] == 5
-    assert report["validator_summary"]["valid_packets"] == 0
-    assert report["validator_summary"]["ready_for_calibration"] == 0
-    assert report["first_priority_packet"].endswith("external_template_steve_jobs_dasha_lahiri.json")
+    assert report["packet_count"] == 6
+    assert report["validator_summary"]["valid_packets"] == 4
+    assert report["validator_summary"]["ready_for_calibration"] == 4
+    assert report["first_priority_packet"].endswith("external_template_historical_epoch_lahiri.json")
 
-    packet = tmp_path / "external_template_steve_jobs_dasha_lahiri.json"
+    packet = tmp_path / "external_template_historical_epoch_lahiri.json"
     manifest = tmp_path / "capture_manifest.json"
     next_steps = tmp_path / "OPERATOR_NEXT_STEPS.md"
     assert packet.exists()
@@ -45,17 +45,17 @@ def test_prepare_oracle_capture_packets_writes_packets_manifest_and_next_steps(t
     assert next_steps.exists()
 
     packet_data = json.loads(packet.read_text(encoding="utf-8"))
-    assert packet_data["status"] == "draft"
-    assert packet_data["metadata"]["source_artifact"] == "references/oracle/artifacts/"
-    assert packet_data["target_placeholders"]["target.vimshottari_start_date"] is None
+    assert packet_data["status"] == "external_verified"
+    assert packet_data["metadata"]["source_artifact"].startswith("references/oracle/artifacts/")
+    assert packet_data["target_placeholders"]["target.sun_sidereal_longitude_deg"] is None
 
     manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
     assert manifest_data["scope"] == "external_oracle_capture_packet_manifest"
-    assert manifest_data["packet_count"] == 5
+    assert manifest_data["packet_count"] == 6
     assert packet.name in manifest_data["packets"]
 
     guide = next_steps.read_text(encoding="utf-8")
-    assert "external_template_steve_jobs_dasha_lahiri.json" in guide
+    assert "external_template_historical_epoch_lahiri.json" in guide
     assert "oracle_evidence_validator.py" in guide
     assert "--apply-packet" in guide
     assert "不得把本仓库本地输出当作 external oracle" in guide

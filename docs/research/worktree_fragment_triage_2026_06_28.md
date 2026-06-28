@@ -56,8 +56,8 @@ Only promote this report later if a stable human-facing archive is needed.
   - Disposition: useful boundary values were promoted into `/Users/wuyongnaren/Documents/印度占星/references/oracle/dasha_shadbala_oracle_cases.json` as `template_bv_raman_vimshottari_boundary_series`.
   - Follow-up: collect source artifact metadata before promoting beyond `template_only`.
 - `/Users/wuyongnaren/Documents/印度占星/tests/test_yoga_benchmark_cases.py`
-  - Current state: smoke-style test ending in `assert True`.
-  - Better path: replace with concrete yoga names and expected detections before promotion.
+  - Disposition: promoted into a real benchmark with concrete `rule_id` expectations and metadata contract checks.
+  - See `/Users/wuyongnaren/Documents/印度占星/docs/research/yoga_benchmark_case_promotion_audit_2026_06_28.md`.
 
 ### Superseded or Needs Review
 

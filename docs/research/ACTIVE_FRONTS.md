@@ -7,6 +7,7 @@ This file is the small index for the current engineering fronts that still drive
 - Before touching strict workflow or adjudicator logic, check:
   - `/Users/wuyongnaren/Documents/印度占星/docs/research/high_value_fragment_source_map_2026_06_28.md`
   - `/Users/wuyongnaren/Documents/印度占星/docs/research/worktree_fragment_triage_2026_06_28.md`
+  - `/Users/wuyongnaren/Documents/印度占星/docs/research/yoga_benchmark_case_promotion_audit_2026_06_28.md`
 - Treat repo truth as authoritative.
 - Treat `docs/research/local_drafts`, Gemini brain notes, Codex attachments, and WorkBuddy copies as candidate sources only.
 

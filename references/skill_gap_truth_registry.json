@@ -132,7 +132,7 @@
       "id": "covered_is_not_complete",
       "wrong_pattern": "Using covered and complete as if they meant the same thing.",
       "corrected_truth": "Covered means there is a stable entry or usable layer; complete requires mature workflow, tests, boundary text and, where needed, external oracle closure.",
-      "source_ref": "docs/research/current_skill_core_gap_rerank_2026_06_26.md"
+      "source_ref": "docs/research/local_drafts/2026-06/current_skill_core_gap_rerank_2026_06_26.md"
     },
     {
       "id": "single_factor_reading_risk",
@@ -150,7 +150,7 @@
       "id": "jaimini_kp_tajika_not_absent",
       "wrong_pattern": "Describing Chara Dasha, KP/Prashna or Tajika/Sahams as absent.",
       "corrected_truth": "These fronts have usable structures; the hard work is tail-difference closure, traditional workflow deepening and external sample validation.",
-      "source_ref": "docs/research/three_fronts_skill_depth_audit_2026_06_26.md"
+      "source_ref": "docs/research/local_drafts/2026-06/three_fronts_skill_depth_audit_2026_06_26.md"
     }
   ],
   "must_not_overclaim": [

@@ -19,9 +19,6 @@ from oracle_collection_queue import build_queue, write_evidence_packets  # noqa:
 from oracle_evidence_validator import build_report  # noqa: E402
 
 
-FIRST_PRIORITY_CAPTURE_ID = "external_template_steve_jobs_dasha_lahiri"
-
-
 def _resolve(path: str) -> Path:
     candidate = Path(path)
     if candidate.is_absolute():
@@ -41,6 +38,26 @@ def _write_json(path: Path, value: dict[str, Any]) -> None:
         fh.write("\n")
 
 
+def _first_priority_packet(queue: dict[str, Any], validator_report: dict[str, Any], output_path: Path) -> Path:
+    by_capture_id = {
+        packet.get("capture_id"): packet
+        for task in queue.get("tasks", [])
+        if isinstance((packet := task.get("evidence_packet", {})), dict)
+    }
+    for packet_result in validator_report.get("packets", []):
+        if packet_result.get("valid") is True:
+            continue
+        capture_id = packet_result.get("capture_id")
+        if not capture_id or capture_id not in by_capture_id:
+            continue
+        return output_path / f"{capture_id}.json"
+
+    packets = sorted(path for path in output_path.glob("external_*.json"))
+    if not packets:
+        return output_path / "external_oracle_packet.json"
+    return packets[0]
+
+
 def _write_next_steps(path: Path, oracle_file: str, output_dir: str, first_packet: str) -> None:
     text = f"""# External Oracle Capture Next Steps
 
@@ -53,8 +70,8 @@ First priority packet:
 1. Open JHora, PyJHora, VedAstro, or another documented external source.
 2. Use the exact birth data, ayanamsa, node mode, timezone, and settings in the packet.
 3. Save a redacted screenshot or stdout snippet under `references/oracle/artifacts/`.
-4. Fill all metadata fields and all `target_placeholders`.
-5. Set `status` to `external_verified` only after the artifact and target values are filled.
+4. Fill missing metadata fields and missing `target_placeholders`.
+5. Set or keep `status` as `external_verified` only after the artifact and target values are filled.
 
 不得把本仓库本地输出当作 external oracle。
 
@@ -78,7 +95,7 @@ python3 scripts/oracle_evidence_validator.py \\
   --queue-file /tmp/jyotish_oracle_queue_filled.json
 ```
 
-Draft packets in `{output_dir}` must remain `valid_packets: 0` until real external evidence is filled.
+Packets in `{output_dir}` must not become valid until real external evidence is filled.
 """
     path.write_text(text, encoding="utf-8")
 
@@ -92,8 +109,7 @@ def prepare_packets(oracle_file: str, output_dir: str) -> dict[str, Any]:
     validator_report = build_report(queue)
 
     packets = sorted(path.name for path in output_path.glob("external_*.json"))
-    first_priority = output_path / f"{FIRST_PRIORITY_CAPTURE_ID}.json"
-    first_priority_path = first_priority if first_priority.exists() else output_path / packets[0]
+    first_priority_path = _first_priority_packet(queue, validator_report, output_path)
 
     manifest = {
         "scope": "external_oracle_capture_packet_manifest",
