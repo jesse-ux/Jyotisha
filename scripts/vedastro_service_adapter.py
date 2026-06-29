@@ -91,6 +91,20 @@ OFFICIAL_FULL_SNAPSHOT_PROFILE_VERSION = "official_full_snapshot_v1"
 OFFICIAL_METHOD_CATALOG_URL = "https://vedastro.org/Complete-List-VedAstro-API-Methods-Calculators.html"
 OFFICIAL_FULL_SNAPSHOT_METHODS = [
     {
+        "section": "events_overview",
+        "endpoint_path": OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH,
+        "calculator_name": "SearchEvents",
+        "role": "life_event_raw_evidence",
+        "description": "Official event radar using SearchEvents for career, marriage and wealth tags.",
+    },
+    {
+        "section": "dasha_all",
+        "endpoint_path": "/Calculate/DasaAtRange",
+        "calculator_name": "DasaAtRange",
+        "role": "all_dasha_raw_evidence",
+        "description": "Official dasha timeline snapshot where available.",
+    },
+    {
         "section": "chart_core",
         "endpoint_path": "/Calculate/AllPlanetData",
         "calculator_name": "AllPlanetData",
@@ -105,20 +119,6 @@ OFFICIAL_FULL_SNAPSHOT_METHODS = [
         "role": "core_house_raw_evidence",
         "description": "Official house data snapshot when supported by the official service.",
         "fanout": "houseName",
-    },
-    {
-        "section": "dasha_all",
-        "endpoint_path": "/Calculate/DasaAtRange",
-        "calculator_name": "DasaAtRange",
-        "role": "all_dasha_raw_evidence",
-        "description": "Official dasha timeline snapshot where available.",
-    },
-    {
-        "section": "events_overview",
-        "endpoint_path": OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH,
-        "calculator_name": "SearchEvents",
-        "role": "life_event_raw_evidence",
-        "description": "Official event radar using SearchEvents for career, marriage and wealth tags.",
     },
 ]
 OFFICIAL_FULL_SNAPSHOT_BACKLOG_SECTIONS = [

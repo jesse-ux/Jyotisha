@@ -116,6 +116,34 @@ def test_official_full_snapshot_dasha_request_uses_official_range_contract(monke
     assert "time" not in body
 
 
+def test_official_full_snapshot_prioritizes_timing_sections_before_heavy_fanout(monkeypatch) -> None:
+    from scripts import vedastro_service_adapter as adapter
+
+    monkeypatch.delenv("VEDASTRO_API_ENDPOINT", raising=False)
+    monkeypatch.delenv("VEDASTRO_ENABLE_NETWORK", raising=False)
+
+    report = adapter.run_official_full_snapshot_for_case(
+        {
+            "year": REDACTED_YEAR,
+            "month": 4,
+            "day": 17,
+            "hour": 14,
+            "minute": 49,
+            "lat": 36.42,
+            "lon": 114.2,
+            "tz": 8,
+            "reference_date": "2026-06-29",
+        },
+        case_id="unit_timing_first",
+    )
+
+    order = [item["section"] for item in report["request_manifest"]["requests"]]
+
+    assert order[:2] == ["events_overview", "dasha_all"]
+    assert order.index("events_overview") < order.index("chart_core")
+    assert order.index("dasha_all") < order.index("house_core")
+
+
 def test_official_full_snapshot_marks_semantic_rate_limit_payloads(monkeypatch) -> None:
     from scripts import vedastro_service_adapter as adapter
 
