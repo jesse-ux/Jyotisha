@@ -190,6 +190,18 @@ def test_vedastro_status_endpoint_exposes_safe_adapter_state(monkeypatch) -> Non
     assert payload['live_profile'] == 'vedastro-live'
 
 
+def test_vedastro_status_endpoint_honors_explicit_network_disable_even_when_local_env_exists(monkeypatch) -> None:
+    monkeypatch.setenv('VEDASTRO_API_ENDPOINT', 'https://vedastro.example.test/secret/path')
+    monkeypatch.setenv('VEDASTRO_ENABLE_NETWORK', '0')
+    handler = _VedAstroStatusCaptureHandler()
+
+    handler.do_GET()
+
+    payload = handler.payload()
+    assert payload['network_enabled'] is False
+    assert payload['status'] == 'network_execution_disabled'
+
+
 def test_vedastro_range_scan_endpoint_uses_user_birth_and_returns_controlled_blocked_state(monkeypatch) -> None:
     monkeypatch.delenv('VEDASTRO_API_ENDPOINT', raising=False)
     monkeypatch.delenv('VEDASTRO_ENABLE_NETWORK', raising=False)
@@ -576,6 +588,59 @@ def test_report_artifact_can_render_functional_benefic_malefic_summary() -> None
     assert 'Yogakarakas' in html
     assert 'Functional Neutrals' in html
     assert '高严谨模式下必须叠加功能性吉凶星。' in html
+
+
+def test_report_artifact_can_render_vimsopaka_semantic_summary() -> None:
+    handler = _handler()
+    result = handler._compute_report_artifact({
+        'format': 'html',
+        'name': 'vimsopaka-semantic-report',
+        'html': '<!doctype html><html><body><h1>Jyotish</h1></body></html>',
+        'vimsopaka_semantic_summary': {
+            'status': 'used',
+            'highlights': ['Sun: 极友(Great Friend)', 'Moon: 落陷取消(Neecha Bhanga)'],
+            'warnings': ['Mars: 极敌(Great Enemy)'],
+        },
+    })
+
+    assert result['success'] is True
+    html = Path(result['html_path']).read_text(encoding='utf-8')
+    assert 'Vimsopaka Semantic Summary' in html
+    assert 'Great Friend' in html
+    assert 'Neecha Bhanga' in html
+    assert 'Great Enemy' in html
+
+
+def test_report_artifact_can_render_vedastro_external_overview() -> None:
+    handler = _handler()
+    result = handler._compute_report_artifact({
+        'format': 'html',
+        'name': 'vedastro-overview-report',
+        'html': '<!doctype html><html><body><h1>Jyotish</h1></body></html>',
+        'vedastro_overview': {
+            'status': 'ok',
+            'source': 'vedastro_service_adapter_candidate',
+            'ingestion_profile': 'main_entry_overview',
+            'search_scope': 'single_day_overview',
+            'reference_date': '2026-06-29',
+            'event_count': 5,
+            'domain_statuses': {'career': 'ok', 'marriage': 'ok', 'wealth': 'ok'},
+            'top_events_by_domain': {
+                'marriage': {'signal_label': 'Jupiter in 7th marriage window', 'start': '2026-06-29'},
+                'career': {'signal_label': 'Jupiter in 10th career window', 'start': '2026-06-29'},
+            },
+            'boundary_note': 'This is overview only and does not replace explicit long-range scans.',
+        },
+    })
+
+    assert result['success'] is True
+    html = Path(result['html_path']).read_text(encoding='utf-8')
+    assert 'VedAstro External Overview' in html
+    assert 'main_entry_overview' in html
+    assert 'single_day_overview' in html
+    assert '2026-06-29' in html
+    assert 'Jupiter in 7th marriage window' in html
+    assert 'overview only' in html
 
 
 def test_report_artifact_can_render_relationship_strict_narrative_summary() -> None:
@@ -1534,6 +1599,36 @@ def test_chart_ai_prompt_pack_exposes_functional_benefic_malefic_layer() -> None
     assert isinstance(functional['functional_benefics'], list)
     assert isinstance(functional['functional_malefics'], list)
     assert functional['effect_on_confidence']
+    vedastro = prompt_pack['evidence_snapshot']['vedastro_overview']
+    assert vedastro['source'] == 'vedastro_service_adapter_candidate'
+    assert vedastro['ingestion_profile'] == 'main_entry_overview'
+    assert vedastro['visibility'] == 'user_visible_overview_only'
+
+
+def test_chart_auto_attaches_vedastro_main_entry_boundary(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://example.invalid/api")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "0")
+    monkeypatch.setenv("JYOTISH_SKIP_LOCAL_ENV", "1")
+
+    handler = _handler()
+    result = handler._compute_chart({
+        'year': 1990,
+        'month': 6,
+        'day': 15,
+        'hour': 12,
+        'minute': 0,
+        'lat': 39.9,
+        'lon': 116.4,
+        'tz': 8,
+    })
+
+    assert "modules" in result
+    vedastro = result["modules"]["vedastro_range_scan_result"]
+    assert vedastro["backend"] == "vedastro_service_adapter_candidate"
+    assert vedastro["status"] == "network_execution_disabled"
+    assert vedastro["source_metadata"]["ingestion_profile"] == "main_entry_overview"
+    assert vedastro["source_metadata"]["reference_date"]
+    assert sorted(vedastro["source_metadata"]["domain_statuses"]) == ["career", "marriage", "wealth"]
 
 
 def test_yogas_endpoint_returns_summary_counts() -> None:

@@ -14,13 +14,20 @@ import io
 import json, sys, os, math
 import importlib.util
 import re
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 
+try:
+    from scripts.local_env import load_local_env
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from local_env import load_local_env
+
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPTS_DIR, '..'))
 sys.path.insert(0, SCRIPTS_DIR)
+load_local_env(REPO_ROOT)
 _LOCAL_MODULE_CACHE = {}
 
 
@@ -37,6 +44,158 @@ def _load_local_module(module_name):
     spec.loader.exec_module(module)
     _LOCAL_MODULE_CACHE[module_name] = module
     return module
+
+
+def _attach_vedastro_main_entry_overview(chart_result, birth_payload):
+    if not isinstance(chart_result, dict):
+        return chart_result
+    modules = chart_result.setdefault('modules', {})
+    if not isinstance(modules, dict):
+        modules = {}
+        chart_result['modules'] = modules
+    if modules.get('vedastro_range_scan_result'):
+        return chart_result
+
+    try:
+        adapter = _load_local_module('vedastro_service_adapter')
+    except Exception:
+        return chart_result
+
+    reference_date = str(
+        birth_payload.get('transit_date')
+        or birth_payload.get('today')
+        or datetime.utcnow().strftime('%Y-%m-%d')
+    )[:10]
+    start_date = datetime.strptime(reference_date, '%Y-%m-%d').date()
+    end_date = start_date
+    case = {
+        'year': birth_payload.get('year'),
+        'month': birth_payload.get('month'),
+        'day': birth_payload.get('day'),
+        'hour': birth_payload.get('hour'),
+        'minute': birth_payload.get('minute'),
+        'second': birth_payload.get('second', 0),
+        'lat': birth_payload.get('lat'),
+        'lon': birth_payload.get('lon'),
+        'tz': birth_payload.get('tz'),
+        'ayanamsa_policy': birth_payload.get('ayanamsa') or 'lahiri',
+        'node_policy': birth_payload.get('node_mode') or birth_payload.get('nodeMode') or 'mean',
+    }
+
+    def _scan_domain(domain: str):
+        return domain, adapter.run_range_scan_for_case(
+            case,
+            domain=domain,
+            start_date=start_date.isoformat(),
+            end_date=end_date.isoformat(),
+            case_id=f"api_chart_{domain}",
+        )
+
+    domain_reports = {}
+    combined_events = []
+    domain_statuses = {}
+    top_events = {}
+    failure_reason = None
+    availability = True
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        for domain, domain_report in executor.map(_scan_domain, ('career', 'marriage', 'wealth')):
+            domain_reports[domain] = domain_report
+    for domain in ('career', 'marriage', 'wealth'):
+        domain_report = domain_reports[domain]
+        domain_statuses[domain] = domain_report.get('status')
+        availability = availability and bool(domain_report.get('available', False))
+        if domain_report.get('status') != 'ok' and failure_reason is None:
+            failure_reason = domain_report.get('reason')
+        for event in domain_report.get('evidence_ledger') or []:
+            if isinstance(event, dict):
+                combined_events.append(event)
+        top_event = domain_report.get('top_event')
+        if isinstance(top_event, dict):
+            top_events[domain] = top_event
+
+    primary_status = next(
+        (
+            domain_reports[domain].get('status')
+            for domain in ('career', 'marriage', 'wealth')
+            if domain_reports.get(domain, {}).get('status') == 'ok'
+        ),
+        domain_reports.get('marriage', {}).get('status') or 'blocked',
+    )
+    source_metadata = {
+        'ingestion_profile': 'main_entry_overview',
+        'search_scope': 'single_day_overview',
+        'reference_date': reference_date,
+        'scan_window': {'start': start_date.isoformat(), 'end': end_date.isoformat()},
+        'domain_statuses': domain_statuses,
+        'domain_event_counts': {
+            domain: int((domain_reports.get(domain, {}) or {}).get('event_count', 0) or 0)
+            for domain in ('career', 'marriage', 'wealth')
+        },
+    }
+    for domain in ('career', 'marriage', 'wealth'):
+        metadata = domain_reports.get(domain, {}).get('source_metadata')
+        if isinstance(metadata, dict):
+            for key in (
+                'endpoint',
+                'endpoint_host',
+                'transport',
+                'provenance_mode',
+                'timeout_seconds',
+                'retry_policy',
+            ):
+                if key in metadata and key not in source_metadata:
+                    source_metadata[key] = metadata[key]
+
+    modules['vedastro_range_scan_result'] = {
+        'backend': 'vedastro_service_adapter_candidate',
+        'available': availability,
+        'status': primary_status,
+        'operation': 'range_scan',
+        'domain': 'overview',
+        'event_count': len(combined_events),
+        'top_event': top_events.get('marriage') or next(iter(top_events.values()), None),
+        'top_events_by_domain': top_events,
+        'evidence_ledger': combined_events,
+        'source_metadata': source_metadata,
+        'reason': failure_reason,
+        'domain_reports': domain_reports,
+    }
+    return chart_result
+
+
+def _build_vedastro_overview_payload_from_chart(chart):
+    modules = chart.get('modules') if isinstance(chart, dict) else {}
+    overview = modules.get('vedastro_range_scan_result') if isinstance(modules, dict) else {}
+    if not isinstance(overview, dict):
+        return {
+            'status': 'blocked',
+            'source': 'vedastro_service_adapter_candidate',
+            'ingestion_profile': None,
+            'search_scope': None,
+            'reference_date': None,
+            'event_count': 0,
+            'domain_statuses': {},
+            'top_events_by_domain': {},
+            'boundary_note': 'VedAstro main-entry overview was not attached.',
+            'visibility': 'user_visible_overview_only',
+        }
+    metadata = overview.get('source_metadata') if isinstance(overview.get('source_metadata'), dict) else {}
+    return {
+        'status': overview.get('status') or 'blocked',
+        'source': overview.get('backend') or 'vedastro_service_adapter_candidate',
+        'ingestion_profile': metadata.get('ingestion_profile'),
+        'search_scope': metadata.get('search_scope'),
+        'reference_date': metadata.get('reference_date'),
+        'event_count': int(overview.get('event_count', 0) or 0),
+        'domain_statuses': metadata.get('domain_statuses') or {},
+        'top_events_by_domain': overview.get('top_events_by_domain') or {},
+        'boundary_note': (
+            overview.get('reason')
+            or 'This is overview only and does not replace explicit long-range VedAstro scans.'
+        ),
+        'visibility': 'user_visible_overview_only',
+    }
 
 SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
          'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -533,6 +692,39 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             return html[:body_close.start()] + summary + html[body_close.start():]
         return html + summary
 
+    def _inject_vimsopaka_semantic_summary(self, html, snapshot):
+        if not isinstance(snapshot, dict):
+            return html
+        if snapshot.get('status') in {None, 'blocked'}:
+            return html
+        highlights = snapshot.get('highlights') if isinstance(snapshot.get('highlights'), list) else []
+        warnings = snapshot.get('warnings') if isinstance(snapshot.get('warnings'), list) else []
+        if not highlights and not warnings:
+            return html
+
+        def _escape(value):
+            return html_lib.escape(str(value or ''))
+
+        def _line_items(items):
+            return ''.join(f'<li>{_escape(item)}</li>' for item in items) or '<li>None</li>'
+
+        summary = (
+            '<section data-vimsopaka-semantic-summary="true" '
+            'style="margin:24px 0;padding:16px;border:1px solid #d9dde8;border-radius:8px;'
+            'background:#f7f9fc;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">'
+            '<h2 style="margin:0 0 12px;font-size:20px;">Vimsopaka Semantic Summary</h2>'
+            f'<p style="margin:0 0 8px;"><strong>Status:</strong> {_escape(snapshot.get("status"))}</p>'
+            '<p style="margin:0 0 8px;"><strong>Highlights:</strong></p>'
+            f'<ul style="margin:0 0 8px 18px;padding:0;">{_line_items(highlights)}</ul>'
+            '<p style="margin:0 0 8px;"><strong>Warnings:</strong></p>'
+            f'<ul style="margin:0 0 8px 18px;padding:0;">{_line_items(warnings)}</ul>'
+            '</section>'
+        )
+        body_close = re.search(r'</body\s*>', html, re.IGNORECASE)
+        if body_close:
+            return html[:body_close.start()] + summary + html[body_close.start():]
+        return html + summary
+
     def _inject_relationship_narrative_summary(self, html, narrative):
         if not isinstance(narrative, dict):
             return html
@@ -585,6 +777,49 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '<div><strong>Boundaries</strong><ul style="margin:8px 0 0 18px;padding:0;">'
             f'{_list_html(narrative.get("boundaries"))}</ul></div>'
             '</div>'
+            '</section>'
+        )
+        body_close = re.search(r'</body\s*>', html, re.IGNORECASE)
+        if body_close:
+            return html[:body_close.start()] + summary + html[body_close.start():]
+        return html + summary
+
+    def _inject_vedastro_overview_summary(self, html, overview):
+        if not isinstance(overview, dict):
+            return html
+        if not overview.get('status'):
+            return html
+
+        def _escape(value):
+            return html_lib.escape(str(value or ''))
+
+        domain_statuses = overview.get('domain_statuses') if isinstance(overview.get('domain_statuses'), dict) else {}
+        top_events = overview.get('top_events_by_domain') if isinstance(overview.get('top_events_by_domain'), dict) else {}
+        domain_lines = ''.join(
+            f'<li><strong>{_escape(domain)}:</strong> {_escape(status)}</li>'
+            for domain, status in domain_statuses.items()
+        ) or '<li>None</li>'
+        top_event_lines = ''.join(
+            f'<li><strong>{_escape(domain)}:</strong> {_escape((payload or {}).get("signal_label") or (payload or {}).get("event_id") or "-")} · {_escape((payload or {}).get("start") or "-")}</li>'
+            for domain, payload in top_events.items()
+            if isinstance(payload, dict)
+        ) or '<li>None</li>'
+
+        summary = (
+            '<section data-vedastro-overview-summary="true" '
+            'style="margin:24px 0;padding:16px;border:1px solid #d9dde8;border-radius:8px;'
+            'background:#f7f9fc;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">'
+            '<h2 style="margin:0 0 12px;font-size:20px;">VedAstro External Overview</h2>'
+            f'<p style="margin:0 0 8px;"><strong>Status:</strong> {_escape(overview.get("status"))}</p>'
+            f'<p style="margin:0 0 8px;"><strong>Ingestion Profile:</strong> {_escape(overview.get("ingestion_profile"))}</p>'
+            f'<p style="margin:0 0 8px;"><strong>Search Scope:</strong> {_escape(overview.get("search_scope"))}</p>'
+            f'<p style="margin:0 0 8px;"><strong>Reference Date:</strong> {_escape(overview.get("reference_date"))}</p>'
+            f'<p style="margin:0 0 8px;"><strong>Event Count:</strong> {_escape(overview.get("event_count"))}</p>'
+            '<p style="margin:0 0 8px;"><strong>Domain Statuses:</strong></p>'
+            f'<ul style="margin:0 0 8px 18px;padding:0;">{domain_lines}</ul>'
+            '<p style="margin:0 0 8px;"><strong>Top Events By Domain:</strong></p>'
+            f'<ul style="margin:0 0 8px 18px;padding:0;">{top_event_lines}</ul>'
+            f'<p style="margin:0;color:#5b6472;font-size:13px;"><strong>Boundary:</strong> {_escape(overview.get("boundary_note"))}</p>'
             '</section>'
         )
         body_close = re.search(r'</body\s*>', html, re.IGNORECASE)
@@ -727,9 +962,17 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             html,
             body.get('functional_benefic_malefic'),
         )
+        html = self._inject_vimsopaka_semantic_summary(
+            html,
+            body.get('vimsopaka_semantic_summary'),
+        )
         html = self._inject_relationship_narrative_summary(
             html,
             body.get('relationship_narrative'),
+        )
+        html = self._inject_vedastro_overview_summary(
+            html,
+            body.get('vedastro_overview'),
         )
         fmt = body.get('format', 'html')
         if fmt not in {'html', 'pdf'}:
@@ -1999,6 +2242,31 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'available_dashas': dasha_list,
                 'dasha_count': len(dasha_list),
             }
+            result['modules'] = {
+                'chart': {
+                    'planets': result['planets'],
+                    'ascendant': result['ascendant'],
+                    'houses': result['houses'],
+                    'birth_info': result['birth'],
+                },
+                'dasha': result['dasha'],
+                'shadbala': {'planets': sb.get('planets', {})} if 'sb' in locals() and isinstance(sb, dict) else {},
+            }
+            _attach_vedastro_main_entry_overview(result, {
+                'year': year,
+                'month': month,
+                'day': day,
+                'hour': int(hour),
+                'minute': int(minute),
+                'second': int(second),
+                'lat': lat,
+                'lon': lon,
+                'tz': tz,
+                'ayanamsa': ayanamsa_name,
+                'node_mode': body.get('node_mode', body.get('nodeMode', 'mean')),
+                'today': body.get('today') or body.get('current_date'),
+                'transit_date': body.get('transit_date'),
+            })
             result['ai_prompt_pack'] = self._build_chart_prompt_pack(result)
             return result
         except ImportError:
@@ -2059,6 +2327,29 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'special_lagnas': special_lagnas,
             'available_dashas': [], 'dasha_count': 0,
         }
+        result['modules'] = {
+            'chart': {
+                'planets': result['planets'],
+                'ascendant': result['ascendant'],
+                'houses': result['houses'],
+                'birth_info': result['birth'],
+            },
+            'dasha': result['dasha'],
+            'shadbala': {},
+        }
+        _attach_vedastro_main_entry_overview(result, {
+            'year': year,
+            'month': month,
+            'day': day,
+            'hour': int(hour),
+            'minute': int(minute),
+            'second': int(second),
+            'lat': lat,
+            'lon': lon,
+            'tz': tz,
+            'ayanamsa': 'lahiri',
+            'node_mode': 'mean',
+        })
         result['ai_prompt_pack'] = self._build_chart_prompt_pack(result)
         return result
 
@@ -2069,6 +2360,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         dasha = chart.get('dasha') or {}
         shadbala = chart.get('shadbala') or {}
         functional_layer = self._functional_benefic_malefic_snapshot(planets, ascendant)
+        vedastro_overview = _build_vedastro_overview_payload_from_chart(chart)
         top_strength = sorted(
             [
                 {
@@ -2138,6 +2430,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'shadbala_ranking': top_strength,
                 },
                 'functional_benefic_malefic': functional_layer,
+                'vedastro_overview': vedastro_overview,
                 'quality_boundary': {
                     'external_oracle_status': 'D1/D9/VedAstro longitude boundary covered; Dasha/Shadbala external absolute calibration still requires multi-source oracle expansion.',
                 },

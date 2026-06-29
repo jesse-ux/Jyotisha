@@ -1931,7 +1931,24 @@ def test_provenance_panchanga_workspace_panel_is_productized() -> None:
     assert "_relationshipStrictNarrativeSection" in export_js
     assert "relationship_report" in export_js
     assert "relationship_narrative" in export_js
+    assert "vimsopaka_semantic_summary" in export_js
+    assert "functional_benefic_malefic" in export_js
+    assert "vedastro_overview" in export_js
+    assert "technique_audit_table" in export_js
     assert "relationship_narrative" in main
+    assert "vimsopaka_semantic_summary" in main
+    assert "functional_benefic_malefic:" in main
+    assert "vedastro_overview:" in main
+    assert "technique_audit_table:" in main
+    assert "_functionalRoleSummarySection" in export_js
+    assert "_techniqueAuditTableSection" in export_js
+    assert "_vimsopakaSemanticSummarySection" in export_js
+    assert "Functional Benefic/Malefic" in export_js
+    assert "Technique Audit Table" in export_js
+    assert "Vimsopaka 语义摘要" in export_js
+    assert "highlights" in export_js
+    assert "warnings" in export_js
+    assert "vimsopaka_semantic_summary:" in main
     assert "strictNarrative" in main
     assert "relationship-deliverable" in export_js
     assert "relationship-evidence-grid" in export_js

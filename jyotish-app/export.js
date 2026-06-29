@@ -175,6 +175,16 @@ export function exportJSON(chartData, extras = {}) {
     payload.modules.workflows = extras.workflows;
   }
 
+  // ── 17. Vimsopaka Semantic Summary ──
+  if (extras.vimsopaka_semantic_summary) {
+    payload.modules = payload.modules || {};
+    payload.modules.vimsopaka_semantic_summary = extras.vimsopaka_semantic_summary;
+  }
+  if (extras.vedastro_overview) {
+    payload.modules = payload.modules || {};
+    payload.modules.vedastro_overview = extras.vedastro_overview;
+  }
+
   downloadFile(
     JSON.stringify(payload, null, 2),
     `jyotish-chart-${birth_info?.date || 'export'}.json`,
@@ -395,6 +405,10 @@ function _buildHTMLReport(chartData, extras) {
   const audit = extras.audit || {};
   const workflows = extras.workflows || chartData._client_workflows || {};
   const relationshipNarrative = extras.relationship_narrative || chartData?.ai_prompt_pack?.evidence_snapshot?.relationship_narrative || chartData?.relationship_narrative || null;
+  const vimsopakaSemanticSummary = extras.vimsopaka_semantic_summary || chartData?.ai_prompt_pack?.evidence_snapshot?.vimsopaka_semantic_summary || chartData?.vimsopaka_semantic_summary || null;
+  const functionalBeneficMalefic = extras.functional_benefic_malefic || chartData?.ai_prompt_pack?.evidence_snapshot?.functional_benefic_malefic || chartData?.functional_benefic_malefic || null;
+  const vedastroOverview = extras.vedastro_overview || chartData?.ai_prompt_pack?.evidence_snapshot?.vedastro_overview || chartData?.vedastro_overview || null;
+  const techniqueAuditTable = extras.technique_audit_table || chartData?.ai_prompt_pack?.evidence_snapshot?.technique_audit_table || chartData?.technique_audit_table || null;
   const generatedAt = new Date().toLocaleString('zh-CN');
 
   return `<!doctype html>
@@ -589,6 +603,12 @@ function _buildHTMLReport(chartData, extras) {
     </table>` : '<p>当前导出未附带 Dasha 时间线。</p>'}
   </section>
 
+  ${_functionalRoleSummarySection(functionalBeneficMalefic)}
+
+  ${_vimsopakaSemanticSummarySection(vimsopakaSemanticSummary)}
+
+  ${_techniqueAuditTableSection(techniqueAuditTable)}
+
   ${_relationshipStrictNarrativeSection(relationshipNarrative)}
 
   ${_workflowReportSection(workflows)}
@@ -616,6 +636,60 @@ function _buildHTMLReport(chartData, extras) {
 </main>
 </body>
 </html>`;
+}
+
+function _functionalRoleSummarySection(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') return '';
+  if (snapshot.status === 'blocked' || snapshot.status === 'not_used') return '';
+  const benefics = Array.isArray(snapshot.functional_benefics) ? snapshot.functional_benefics : [];
+  const malefics = Array.isArray(snapshot.functional_malefics) ? snapshot.functional_malefics : [];
+  const neutrals = Array.isArray(snapshot.functional_neutrals) ? snapshot.functional_neutrals : [];
+  const yogakarakas = Array.isArray(snapshot.yogakarakas) ? snapshot.yogakarakas : [];
+  return `<section class="functional-role-summary">
+    <h2>Functional Benefic/Malefic</h2>
+    <div class="note relationship-deliverable">
+      ${_table([
+        ['状态', snapshot.status || 'used'],
+        ['Ascendant', snapshot.ascendant || snapshot.asc_sign || '-'],
+        ['Functional Benefics', benefics.join('、') || '—'],
+        ['Functional Malefics', malefics.join('、') || '—'],
+        ['Functional Neutrals', neutrals.join('、') || '—'],
+        ['Yogakarakas', yogakarakas.join('、') || '—'],
+        ['Confidence Impact', snapshot.effect_on_confidence || '已进入高严谨裁决链。'],
+      ])}
+    </div>
+  </section>`;
+}
+
+function _vimsopakaSemanticSummarySection(summary) {
+  if (!summary || typeof summary !== 'object') return '';
+  const highlights = Array.isArray(summary.highlights) ? summary.highlights : [];
+  const warnings = Array.isArray(summary.warnings) ? summary.warnings : [];
+  const status = summary.status || 'blocked';
+  return `<section class="vimsopaka-semantic-summary">
+    <h2>Vimsopaka 语义摘要</h2>
+    <div class="note relationship-deliverable">
+      <p>将 Vimsopaka dignity 结果转成用户可见语义，避免只剩分数没有解释边界。</p>
+      ${_table([
+        ['状态', status],
+        ['积极语义', highlights.length ? highlights.join('；') : '—'],
+        ['风险语义', warnings.length ? warnings.join('；') : '—'],
+      ])}
+    </div>
+  </section>`;
+}
+
+function _techniqueAuditTableSection(rows) {
+  if (!Array.isArray(rows) || !rows.length) return '';
+  const formattedRows = rows.map(row => ([
+    row.technique || '-',
+    row.status || '-',
+    row.note || '-',
+  ]));
+  return `<section class="technique-audit-table">
+    <h2>Technique Audit Table</h2>
+    ${_table([['Technique', 'Status', 'Note'], ...formattedRows])}
+  </section>`;
 }
 
 function _relationshipStrictNarrativeSection(narrative) {

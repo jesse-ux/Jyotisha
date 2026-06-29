@@ -313,6 +313,10 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert relationship_narrative["markdown"]
     assert "D9" in "".join(relationship_narrative["boundaries"])
     assert "dual dasha" in relationship_narrative["markdown"]
+    vimsopaka_summary = prompt_pack["evidence_snapshot"]["vimsopaka_semantic_summary"]
+    assert vimsopaka_summary["status"] == "used"
+    assert isinstance(vimsopaka_summary["highlights"], list)
+    assert isinstance(vimsopaka_summary["warnings"], list)
     oracle_progress = prompt_pack["evidence_snapshot"]["oracle_progress"]
     assert oracle_progress["scope"] == "external_oracle_evidence_validation"
     assert oracle_progress["valid_packets"] >= 4
@@ -320,6 +324,49 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert oracle_progress["production_tuning_allowed"] is False
     assert oracle_progress["artifact_policy"] == "references/oracle/artifacts/"
     assert "external_verified" in oracle_progress["promotion_rule"]
+    vedastro_overview = prompt_pack["evidence_snapshot"]["vedastro_overview"]
+    assert vedastro_overview["status"] in {"ok", "network_execution_disabled", "service_endpoint_not_configured"}
+    assert vedastro_overview["source"] == "vedastro_service_adapter_candidate"
+    assert vedastro_overview["ingestion_profile"] == "main_entry_overview"
+    assert vedastro_overview["visibility"] == "user_visible_overview_only"
+    vedastro_rows = [row for row in audit_table if row["technique"] == "VedAstro Main Entry Overview"]
+    assert vedastro_rows
+    assert vedastro_rows[0]["status"] in {"used", "blocked"}
+    assert "overview only" in vedastro_rows[0]["note"]
+    assert "domain_statuses" in vedastro_rows[0]["note"]
+
+
+def test_full_reading_auto_attaches_vedastro_main_entry_boundary() -> None:
+    env = dict(**__import__("os").environ)
+    env["VEDASTRO_API_ENDPOINT"] = "https://example.invalid/api"
+    env["VEDASTRO_ENABLE_NETWORK"] = "0"
+    env["JYOTISH_SKIP_LOCAL_ENV"] = "1"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(ENGINE),
+            "full-reading",
+            *BASE_BIRTH_ARGS,
+            "--today",
+            "2026-06-29",
+            "--transit-date",
+            "2026-06-29",
+        ],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    result = json.loads(completed.stdout)
+
+    vedastro = result["modules"]["vedastro_range_scan_result"]
+    assert vedastro["backend"] == "vedastro_service_adapter_candidate"
+    assert vedastro["status"] == "network_execution_disabled"
+    assert vedastro["source_metadata"]["ingestion_profile"] == "main_entry_overview"
+    assert vedastro["source_metadata"]["reference_date"] == "2026-06-29"
+    assert sorted(vedastro["source_metadata"]["domain_statuses"]) == ["career", "marriage", "wealth"]
 
 
 def test_full_reading_exposes_sensitive_point_modules() -> None:

@@ -7481,6 +7481,18 @@ function buildExportExtras(sourceChart) {
     || sourceChart?.relationship_narrative
     || sourceChart?.modules?.relationship_strict_evidence?.user_narrative
     || null;
+  const vimsopakaSemanticSummary = sourceChart?.ai_prompt_pack?.evidence_snapshot?.vimsopaka_semantic_summary
+    || sourceChart?.vimsopaka_semantic_summary
+    || null;
+  const functionalBeneficMalefic = sourceChart?.ai_prompt_pack?.evidence_snapshot?.functional_benefic_malefic
+    || sourceChart?.functional_benefic_malefic
+    || null;
+  const vedastroOverview = sourceChart?.ai_prompt_pack?.evidence_snapshot?.vedastro_overview
+    || sourceChart?.vedastro_overview
+    || null;
+  const techniqueAuditTable = sourceChart?.ai_prompt_pack?.evidence_snapshot?.technique_audit_table
+    || sourceChart?.technique_audit_table
+    || null;
 
   return {
     dasha, yogas, vargas, aspects, jaimini,
@@ -7488,6 +7500,10 @@ function buildExportExtras(sourceChart) {
     shadbala: sb, ashtakavarga: _buildAVModule(av),
     panchanga, validation, audit, actionableContext,
     relationship_narrative: relationshipNarrative,
+    vimsopaka_semantic_summary: vimsopakaSemanticSummary,
+    functional_benefic_malefic: functionalBeneficMalefic,
+    vedastro_overview: vedastroOverview,
+    technique_audit_table: techniqueAuditTable,
     provenance: sourceChart._client_audit?.provenance,
     workflows: buildWorkflowExportExtras(sourceChart),
   };

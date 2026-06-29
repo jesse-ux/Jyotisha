@@ -43,6 +43,7 @@ import csv
 import math
 import sqlite3
 import importlib.util
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from typing import Dict, List
 from tabulate import tabulate
@@ -66,6 +67,13 @@ CLAW_DIR = os.path.join(HOME_DIR, 'WorkBuddy', 'Claw')
 DB_PATH = os.path.join(CLAW_DIR, 'vedic_astrology_validation.db')
 PERSON_CSV = os.path.join(CLAW_DIR, 'vedastro_data', 'PersonList-15k.csv')
 TRANSIT_JSON = os.path.join(CLAW_DIR, '月运过境配置-2026-2028.json')
+
+try:
+    from local_env import load_local_env
+except ModuleNotFoundError:  # pragma: no cover - compatibility when imported as package
+    from scripts.local_env import load_local_env
+
+load_local_env(ROOT_DIR)
 
 try:
     import swisseph as swe
@@ -140,6 +148,29 @@ DIGNITY_LABELS = {
     'DEBILITATED': '落陷(Debilitated)',
     'NEECHA_BHANGA': '落陷取消(Neecha Bhanga)',
 }
+
+
+def _build_vimsopaka_semantic_summary(vimsopaka: dict | None) -> dict:
+    if not isinstance(vimsopaka, dict):
+        return {"status": "blocked", "highlights": [], "warnings": []}
+
+    highlights = []
+    warnings = []
+    for planet, payload in vimsopaka.items():
+        if not isinstance(payload, dict):
+            continue
+        dignity = payload.get('dignity')
+        label = DIGNITY_LABELS.get(dignity)
+        if dignity in {'GREAT_FRIEND', 'NEECHA_BHANGA'} and label:
+            highlights.append(f"{planet}: {label}")
+        elif dignity == 'GREAT_ENEMY' and label:
+            warnings.append(f"{planet}: {label}")
+
+    return {
+        "status": "used",
+        "highlights": highlights,
+        "warnings": warnings,
+    }
 PUSHKARA_NAVAMSA_RANGES = {
     'fire': [(6 + 40/60, 10), (23 + 20/60, 26 + 40/60)],
     'earth': [(3 + 20/60, 6 + 40/60), (16 + 40/60, 20)],
@@ -888,6 +919,7 @@ def _build_technique_audit_table(functional_layer, oracle_progress, modules):
     vimsopaka = modules.get('vimsopaka') if isinstance(modules, dict) else {}
     dasa_convergence = modules.get('dasa_convergence') if isinstance(modules, dict) else {}
     relationship = modules.get('relationship_strict_evidence') if isinstance(modules, dict) else {}
+    vedastro_overview = modules.get('vedastro_range_scan_result') if isinstance(modules, dict) else {}
 
     rows = [
         {
@@ -957,6 +989,17 @@ def _build_technique_audit_table(functional_layer, oracle_progress, modules):
             "protective kuta support 表示防护型 Kuta 清洁度支持；"
             "若 dual dasha / external timing / marriage convergence 冲突，"
             "不得把这些支持越权解释成 legal marriage 的高置信度落地。"
+        ),
+    })
+    vedastro_meta = vedastro_overview.get('source_metadata') if isinstance(vedastro_overview, dict) else {}
+    rows.append({
+        'technique': 'VedAstro Main Entry Overview',
+        'status': 'used' if isinstance(vedastro_overview, dict) and vedastro_overview.get('status') == 'ok' else 'blocked',
+        'source': 'modules.vedastro_range_scan_result',
+        'note': (
+            f"overview only; status={vedastro_overview.get('status') if isinstance(vedastro_overview, dict) else None}; "
+            f"domain_statuses={vedastro_meta.get('domain_statuses') if isinstance(vedastro_meta, dict) else None}; "
+            f"reference_date={vedastro_meta.get('reference_date') if isinstance(vedastro_meta, dict) else None}."
         ),
     })
     return rows
@@ -1068,6 +1111,39 @@ def _build_relationship_narrative_payload(relationship_strict):
     }
 
 
+def _build_vedastro_overview_payload(modules):
+    overview = modules.get('vedastro_range_scan_result') if isinstance(modules, dict) else {}
+    if not isinstance(overview, dict):
+        return {
+            'status': 'blocked',
+            'source': 'vedastro_service_adapter_candidate',
+            'ingestion_profile': None,
+            'search_scope': None,
+            'reference_date': None,
+            'event_count': 0,
+            'domain_statuses': {},
+            'top_events_by_domain': {},
+            'boundary_note': 'VedAstro main-entry overview was not attached.',
+            'visibility': 'user_visible_overview_only',
+        }
+    metadata = overview.get('source_metadata') if isinstance(overview.get('source_metadata'), dict) else {}
+    return {
+        'status': overview.get('status') or 'blocked',
+        'source': overview.get('backend') or 'vedastro_service_adapter_candidate',
+        'ingestion_profile': metadata.get('ingestion_profile'),
+        'search_scope': metadata.get('search_scope'),
+        'reference_date': metadata.get('reference_date'),
+        'event_count': int(overview.get('event_count', 0) or 0),
+        'domain_statuses': metadata.get('domain_statuses') or {},
+        'top_events_by_domain': overview.get('top_events_by_domain') or {},
+        'boundary_note': (
+            overview.get('reason')
+            or 'This is overview only and does not replace explicit long-range VedAstro scans.'
+        ),
+        'visibility': 'user_visible_overview_only',
+    }
+
+
 def _build_ai_prompt_pack(report):
     """Build a compact, evidence-first prompt pack for downstream AI/RAG reading."""
     modules = report.get('modules', {}) if isinstance(report, dict) else {}
@@ -1087,6 +1163,8 @@ def _build_ai_prompt_pack(report):
     oracle_progress = _oracle_progress_snapshot()
     technique_audit_table = _build_technique_audit_table(functional_layer, oracle_progress, modules)
     relationship_narrative = _build_relationship_narrative_payload(modules.get('relationship_strict_evidence'))
+    vimsopaka_semantic_summary = _build_vimsopaka_semantic_summary(modules.get('vimsopaka'))
+    vedastro_overview = _build_vedastro_overview_payload(modules)
 
     shadbala_ranking = []
     for planet_name, pdata in sorted(
@@ -1157,8 +1235,10 @@ def _build_ai_prompt_pack(report):
         },
         'oracle_progress': oracle_progress,
         'functional_benefic_malefic': functional_layer,
+        'vedastro_overview': vedastro_overview,
         'technique_audit_table': technique_audit_table,
         'relationship_narrative': relationship_narrative,
+        'vimsopaka_semantic_summary': vimsopaka_semantic_summary,
     }
 
     prompt_lines = [
@@ -1169,6 +1249,7 @@ def _build_ai_prompt_pack(report):
         "必须显式标注置信度和边界：Dasha/PDF 起点差异、Shadbala 外部绝对值 oracle 尚未完成时，不得声称已经完全校准。",
         "输出结构建议：参数声明、核心星盘、关系/事业/财富/健康分主题、当前时机、证据表、风险边界、可行动建议。",
         "若引用经典法则，请优先检索 retrieval_plan.local_reference_docs；需要外部断语时再做 web/source verification。",
+        "若 evidence_snapshot.vedastro_overview.status 为 ok，请把它作为用户可见外部概览证据明确写出，但不要把 overview-only 结果误当作长周期精扫结论。",
     ]
 
     return {
@@ -1194,6 +1275,133 @@ def _build_ai_prompt_pack(report):
             ],
         },
     }
+
+
+def _overview_vedastro_reference_date(args) -> str:
+    candidate = (
+        getattr(args, 'transit_date', None)
+        or getattr(args, 'today', None)
+        or datetime.now().strftime('%Y-%m-%d')
+    )
+    return str(candidate)[:10]
+
+
+def _overview_vedastro_scan_window(reference_date: str) -> tuple[str, str]:
+    start = datetime.strptime(reference_date, '%Y-%m-%d').date()
+    return start.isoformat(), start.isoformat()
+
+
+def _attach_vedastro_main_entry_overview(report, args):
+    if not isinstance(report, dict):
+        return report
+    modules = report.setdefault('modules', {})
+    if not isinstance(modules, dict):
+        return report
+    if modules.get('vedastro_range_scan_result'):
+        return report
+
+    try:
+        from vedastro_service_adapter import run_range_scan_for_case
+    except Exception as exc:  # pragma: no cover - import guard
+        report.setdefault('warnings', []).append(f"vedastro-main-entry-import: {exc}")
+        return report
+
+    reference_date = _overview_vedastro_reference_date(args)
+    start_date, end_date = _overview_vedastro_scan_window(reference_date)
+    case = {
+        'year': getattr(args, 'year', None),
+        'month': getattr(args, 'month', None),
+        'day': getattr(args, 'day', None),
+        'hour': getattr(args, 'hour', None),
+        'minute': getattr(args, 'minute', None),
+        'second': _arg_second(args),
+        'lat': getattr(args, 'lat', None),
+        'lon': getattr(args, 'lon', None),
+        'tz': getattr(args, 'tz', None),
+        'ayanamsa_policy': getattr(args, 'ayanamsa', None) or _current_ayanamsa_name(args),
+        'node_policy': getattr(args, 'node_mode', 'mean'),
+    }
+
+    def _scan_domain(domain: str):
+        return domain, run_range_scan_for_case(
+            case,
+            domain=domain,
+            start_date=start_date,
+            end_date=end_date,
+            case_id=f"main_entry_{domain}",
+        )
+
+    domain_reports = {}
+    combined_events = []
+    domain_statuses = {}
+    top_events = {}
+    failure_reason = None
+    availability = True
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        for domain, domain_report in executor.map(_scan_domain, ('career', 'marriage', 'wealth')):
+            domain_reports[domain] = domain_report
+    for domain in ('career', 'marriage', 'wealth'):
+        domain_report = domain_reports[domain]
+        domain_statuses[domain] = domain_report.get('status')
+        availability = availability and bool(domain_report.get('available', False))
+        if domain_report.get('status') != 'ok' and failure_reason is None:
+            failure_reason = domain_report.get('reason')
+        for event in domain_report.get('evidence_ledger') or []:
+            if isinstance(event, dict):
+                combined_events.append(event)
+        top_event = domain_report.get('top_event')
+        if isinstance(top_event, dict):
+            top_events[domain] = top_event
+
+    primary_status = next(
+        (
+            domain_reports[domain].get('status')
+            for domain in ('career', 'marriage', 'wealth')
+            if domain_reports.get(domain, {}).get('status') == 'ok'
+        ),
+        domain_reports.get('marriage', {}).get('status') or 'blocked',
+    )
+    source_metadata = {
+        'ingestion_profile': 'main_entry_overview',
+        'search_scope': 'single_day_overview',
+        'reference_date': reference_date,
+        'scan_window': {'start': start_date, 'end': end_date},
+        'domain_statuses': domain_statuses,
+        'domain_event_counts': {
+            domain: int((domain_reports.get(domain, {}) or {}).get('event_count', 0) or 0)
+            for domain in ('career', 'marriage', 'wealth')
+        },
+    }
+    for domain in ('career', 'marriage', 'wealth'):
+        metadata = domain_reports.get(domain, {}).get('source_metadata')
+        if isinstance(metadata, dict):
+            for key in (
+                'endpoint',
+                'endpoint_host',
+                'transport',
+                'provenance_mode',
+                'timeout_seconds',
+                'retry_policy',
+            ):
+                if key in metadata and key not in source_metadata:
+                    source_metadata[key] = metadata[key]
+
+    modules['vedastro_range_scan_result'] = {
+        'backend': 'vedastro_service_adapter_candidate',
+        'available': availability,
+        'status': primary_status,
+        'operation': 'range_scan',
+        'domain': 'overview',
+        'event_count': len(combined_events),
+        'top_event': top_events.get('marriage') or next(iter(top_events.values()), None),
+        'top_events_by_domain': top_events,
+        'evidence_ledger': combined_events,
+        'source_metadata': source_metadata,
+        'reason': failure_reason,
+        'domain_reports': domain_reports,
+    }
+    return report
 
 
 def _load_relationship_strict_collector():
@@ -4916,6 +5124,11 @@ def cmd_full_reading(args):
         )
     except Exception as e:
         report['errors'].append(f"relationship-strict-evidence: {e}")
+
+    try:
+        _attach_vedastro_main_entry_overview(report, args)
+    except Exception as e:
+        report['warnings'].append(f"vedastro-main-entry-overview: {e}")
 
     report['ai_prompt_pack'] = _build_ai_prompt_pack(report)
 
