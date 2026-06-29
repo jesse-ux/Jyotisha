@@ -57,7 +57,7 @@ import { computeTajika } from './tajika.js';
 import { computeNakshatraAdvanced, computeCharaDasha, computeKarakamsha } from './jyotish-advanced.js';
 import { computeValidation, computeAudit, computeActionableContext } from './jyotish-export-modules.js';
 import { initTooltip, bindTerms, setGlossaryTerminologyMode } from './glossary.js';
-import { initAIChat, aiChatSetChartData } from './ai-chat.js';
+import { initAIChat, aiChatSetChartData, openAIChatWithPrompt } from './ai-chat.js';
 import { initAuth } from './auth.js';
 import { initSubscription } from './subscription.js';
 import { renderRectificationTab, initRectification } from './rectification.js';
@@ -863,6 +863,7 @@ function renderCompleteReadingTab({ ascendant, moonP, allYogas, dashaData, extra
   const extraDashaCount = Object.keys(extraDasas || {}).length;
   const apiDashaCount = chartData?._extended?.dasha_count || chartData?.available_dashas?.length || 0;
   const dashaCount = Math.max(apiDashaCount, extraDashaCount, dashaData ? 1 : 0);
+  renderGuidedTopicDiscovery(chartData);
   renderSkillCoverage($('skill-coverage-section'), {
     ascendant: ascendant?.sign ? `${ascendant.sign} · ${signName(ascendant.sign)}` : '-',
     moonNakshatra: formatMoonNakshatra(moonP) || '-',
@@ -873,6 +874,93 @@ function renderCompleteReadingTab({ ascendant, moonP, allYogas, dashaData, extra
   });
   const mevg = buildMEVGAudit({ ascendant, moonP, allYogas, dashaData, chartData, validation, audit });
   renderMEVGAudit($('mevg-audit-section'), mevg);
+}
+
+function renderGuidedTopicDiscovery(chartData) {
+  const host = $('guided-topic-discovery-panel');
+  if (!host) return;
+  const topics = Array.isArray(chartData?.modules?.guided_topics)
+    ? chartData.modules.guided_topics
+    : Array.isArray(chartData?.ai_prompt_pack?.evidence_snapshot?.guided_topics)
+      ? chartData.ai_prompt_pack.evidence_snapshot.guided_topics
+      : [];
+  if (!topics.length) {
+    host.innerHTML = '';
+    return;
+  }
+
+  host.innerHTML = `
+    <section class="guided-topic-discovery">
+      <div class="guided-topic-discovery-head">
+        <div>
+          <span>继续深入</span>
+          <strong>系统根据真实证据建议的下一步主题</strong>
+        </div>
+        <small>不是随机建议，只读取 full-reading 已算出的 guided_topics</small>
+      </div>
+      <div class="guided-topic-grid">
+        ${topics.map(topic => renderGuidedTopicCard(topic)).join('')}
+      </div>
+    </section>
+  `;
+  host.querySelectorAll('[data-guided-topic-question]').forEach(button => {
+    button.addEventListener('click', () => {
+      const question = button.getAttribute('data-guided-topic-question') || '';
+      openAIChatWithPrompt(question);
+    });
+  });
+}
+
+function renderGuidedTopicCard(topic) {
+  const evidence = Array.isArray(topic?.evidence) ? topic.evidence : [];
+  const questions = Array.isArray(topic?.suggested_questions) ? topic.suggested_questions : [];
+  const vedastro = topic?.vedastro || {};
+  const confidenceLabel = topic?.confidence === 'high'
+    ? '高'
+    : topic?.confidence === 'low'
+      ? '低'
+      : '中';
+  const statusLabel = vedastro?.status === 'used'
+    ? '已接入'
+    : vedastro?.status === 'blocked'
+      ? '受阻'
+      : '未接入';
+
+  return `
+    <article class="guided-topic-card">
+      <div class="guided-topic-card-head">
+        <div>
+          <strong>${escapeHtml(topic?.title || '-')}</strong>
+          <p>${escapeHtml(topic?.reality_value || '')}</p>
+        </div>
+        <span class="guided-topic-confidence">置信度：${escapeHtml(confidenceLabel)}</span>
+      </div>
+      <div class="guided-topic-why">${escapeHtml(topic?.why_worth_exploring || '')}</div>
+      <div class="guided-topic-evidence">
+        <span class="guided-topic-subtitle">数据依据</span>
+        ${evidence.slice(0, 4).map(row => `
+          <div class="guided-topic-evidence-row">
+            <strong>${escapeHtml(row?.label || '-')}</strong>
+            <span>${escapeHtml(row?.value || '-')}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="guided-topic-questions">
+        <span class="guided-topic-subtitle">适合继续问</span>
+        <div class="guided-topic-question-list">
+          ${questions.slice(0, 3).map(question => `
+            <button type="button" class="guided-topic-question" data-guided-topic-question="${escapeAttr(question)}">
+              ${escapeHtml(question)}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+      <div class="guided-topic-footer">
+        <span>VedAstro：${escapeHtml(statusLabel)}</span>
+        <span>${escapeHtml(topic?.answer_mode || 'tap_or_ask')}</span>
+      </div>
+    </article>
+  `;
 }
 
 function renderAIPromptPackPanel(cd) {

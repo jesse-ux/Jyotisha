@@ -41,6 +41,18 @@ export function aiChatSetChartData(cd) {
   }
 }
 
+export function openAIChatWithPrompt(prompt) {
+  const text = String(prompt || '').trim();
+  if (!text) return;
+  if (_panelEl && !_panelEl.classList.contains('open')) {
+    _panelEl.classList.add('open');
+  }
+  const input = _panelEl?.querySelector('#ai-input');
+  if (!input) return;
+  input.value = text;
+  input.focus();
+}
+
 // ============================================================================
 // 认证状态同步（由 auth.js 调用）
 // ============================================================================

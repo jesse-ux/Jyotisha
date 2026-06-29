@@ -2348,6 +2348,33 @@ def test_static_demo_has_user_visible_capability_boundary() -> None:
     assert "Vercel / Netlify / GitHub Pages" in readme
 
 
+def test_complete_reading_surfaces_guided_topic_discovery() -> None:
+    """After chart generation, users should see evidence-backed next topics."""
+    html = read("index.html")
+    main = read("main.js")
+    style = read("style.css")
+
+    assert 'id="guided-topic-discovery-panel"' in html
+    assert "renderGuidedTopicDiscovery(chartData)" in main
+    assert "function renderGuidedTopicDiscovery" in main
+    assert "guided_topics" in main
+    assert "继续深入" in main
+    assert "数据依据" in main
+    assert "适合继续问" in main
+    assert "data-guided-topic-question" in main
+    assert ".guided-topic-discovery" in style
+    assert ".guided-topic-card" in style
+
+
+def test_guided_topic_questions_reuse_ai_chat_entry() -> None:
+    main = read("main.js")
+    ai_chat = read("ai-chat.js")
+
+    assert "openAIChatWithPrompt" in ai_chat
+    assert "data-guided-topic-question" in main
+    assert "openAIChatWithPrompt(question)" in main
+
+
 def test_real_case_revalidation_is_release_gate_and_accuracy_boundary() -> None:
     runner_path = ROOT / "tests" / "run_real_case_revalidation.py"
     assert runner_path.exists()
