@@ -607,6 +607,8 @@ function _buildHTMLReport(chartData, extras) {
 
   ${_vimsopakaSemanticSummarySection(vimsopakaSemanticSummary)}
 
+  ${_vedastroOverviewSection(vedastroOverview)}
+
   ${_techniqueAuditTableSection(techniqueAuditTable)}
 
   ${_relationshipStrictNarrativeSection(relationshipNarrative)}
@@ -689,6 +691,37 @@ function _techniqueAuditTableSection(rows) {
   return `<section class="technique-audit-table">
     <h2>Technique Audit Table</h2>
     ${_table([['Technique', 'Status', 'Note'], ...formattedRows])}
+  </section>`;
+}
+
+function _vedastroOverviewSection(overview) {
+  if (!overview || typeof overview !== 'object') return '';
+  const domainStatuses = overview.domain_statuses && typeof overview.domain_statuses === 'object'
+    ? Object.entries(overview.domain_statuses).map(([domain, status]) => `${domain}:${status}`).join('；')
+    : '—';
+  const topEvents = overview.top_events_by_domain && typeof overview.top_events_by_domain === 'object'
+    ? Object.entries(overview.top_events_by_domain).map(([domain, payload]) => {
+      const signal = payload?.signal_label || payload?.event_id || '—';
+      const start = payload?.start || '—';
+      return `${domain}:${signal} @ ${start}`;
+    }).join('；')
+    : '—';
+  return `<section class="vedastro-overview-section">
+    <h2>VedAstro 概览证据</h2>
+    <div class="note relationship-deliverable">
+      <p>这是主入口自动附带的 VedAstro 单日概览，用来补充外部雷达视角；它是 overview only，不替代长周期精扫。</p>
+      ${_table([
+        ['状态', overview.status || 'blocked'],
+        ['Source', overview.source || 'vedastro_service_adapter_candidate'],
+        ['Ingestion', overview.ingestion_profile || '-'],
+        ['Scope', overview.search_scope || 'single_day_overview'],
+        ['Reference Date', overview.reference_date || '-'],
+        ['Event Count', overview.event_count == null ? '0' : String(overview.event_count)],
+        ['Domain Statuses', domainStatuses || '—'],
+        ['Top Events', topEvents || '—'],
+        ['Boundary', overview.boundary_note || 'overview only；不替代长周期精扫。'],
+      ])}
+    </div>
   </section>`;
 }
 

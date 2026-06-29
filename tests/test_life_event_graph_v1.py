@@ -212,3 +212,53 @@ def test_strict_workflow_accepts_adapter_range_scan_result_without_manual_repack
     assert external["source"] == "vedastro_service_adapter_candidate"
     assert external["provenance"]["request_hash"] == "a" * 64
     assert any(node["kind"] == "external_window" for node in strict["life_event_graph"]["event_nodes"])
+
+
+def test_life_event_graph_surfaces_main_entry_overview_boundary_node() -> None:
+    strict = {
+        "event_judgement": {
+            "event_family": "relationship",
+            "score": 74,
+            "verdict": "moderate_probability_window",
+            "dominant_label": "legal_marriage",
+            "secondary_context": ["external_activation_support"],
+        },
+        "present_evidence": {
+            "external_activation": {
+                "level": "moderate",
+                "source": "vedastro_service_adapter_candidate",
+                "signals": ["vedastro_range_scan"],
+                "events": [
+                    {
+                        "event_id": "GocharJupiterIn7th",
+                        "signal_key": "gochar_jupiter_7th_marriage",
+                        "signal_label": "Jupiter in 7th marriage window",
+                        "signal_family": "marriage_trigger",
+                        "score": 72,
+                        "start": "2026-06-29",
+                        "end": "2026-06-29",
+                        "tags": ["marriage", "transit"],
+                    }
+                ],
+                "provenance": {
+                    "ingestion_profile": "main_entry_overview",
+                    "search_scope": "single_day_overview",
+                    "reference_date": "2026-06-29",
+                },
+            }
+        },
+        "confidence_cap": "medium",
+        "missing_evidence": [],
+        "blocked": False,
+    }
+
+    graph = _build_life_event_graph("relationship", strict)
+
+    assert {
+        "kind": "external_overview",
+        "label": "VedAstro main-entry overview",
+        "ingestion_profile": "main_entry_overview",
+        "search_scope": "single_day_overview",
+        "reference_date": "2026-06-29",
+        "source": "vedastro_service_adapter_candidate",
+    } in graph["event_nodes"]

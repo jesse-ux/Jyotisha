@@ -1943,9 +1943,13 @@ def test_provenance_panchanga_workspace_panel_is_productized() -> None:
     assert "_functionalRoleSummarySection" in export_js
     assert "_techniqueAuditTableSection" in export_js
     assert "_vimsopakaSemanticSummarySection" in export_js
+    assert "_vedastroOverviewSection" in export_js
     assert "Functional Benefic/Malefic" in export_js
     assert "Technique Audit Table" in export_js
     assert "Vimsopaka 语义摘要" in export_js
+    assert "VedAstro 概览证据" in export_js
+    assert "single_day_overview" in export_js
+    assert "不替代长周期精扫" in export_js
     assert "highlights" in export_js
     assert "warnings" in export_js
     assert "vimsopaka_semantic_summary:" in main

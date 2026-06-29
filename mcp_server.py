@@ -27,14 +27,20 @@ import os
 import json
 import subprocess
 import asyncio
+from copy import deepcopy
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 
 # Add scripts dir to path so imports work
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(SCRIPT_DIR, "scripts"))
 
+from local_env import load_local_env
+
 from mcp.server.fastmcp import FastMCP
 from functional_benefics import derive_functional_benefic_malefic
+
+load_local_env(SCRIPT_DIR)
 
 # ============================================================================
 # MCP Server
@@ -144,6 +150,11 @@ _NAKSHATRA_LORDS = [
 _WEALTH_HOUSES = {2, 5, 9, 10, 11}
 _NAKSHATRA_SPAN = 360.0 / 27.0
 _SHADBALA_REQUIRED_COMPONENTS = ["sthana", "dig", "kala", "chesta", "naisargika", "drik"]
+_VEDASTRO_ROUTE_DOMAIN = {
+    "career": "career",
+    "relationship": "marriage",
+    "finance": "wealth",
+}
 
 
 def _normalize_longitude(value: Any) -> Optional[float]:
@@ -438,6 +449,7 @@ def _derive_external_activation_support(modules: Dict[str, Any], domain: str) ->
             "required": True,
             "operation": "range_scan",
             "external_calculation_coverage": "VedAstro 596+/600+ calculation nodes",
+            "provenance": provenance,
             "reason": (
                 "VedAstro EventsAtRange / FindLifeEvents-style high-frequency radar "
                 "was not provided; keep timing confidence bounded."
@@ -902,6 +914,8 @@ def _lord_for_house_from_lagna(asc_sign: Optional[str], house_num: int) -> Optio
 def _extract_dignity_code(status: str) -> Optional[str]:
     if "Neecha Bhanga" in status or "落陷取消" in status:
         return "NEECHA_BHANGA"
+    if "Great Friend" in status or "极友" in status:
+        return "GREAT_FRIEND"
     if "Great Enemy" in status or "极敌" in status:
         return "GREAT_ENEMY"
     return None
@@ -957,6 +971,7 @@ def _derive_dignity_guardrail(route: str, present: Dict[str, Any]) -> Dict[str, 
         return base
 
     supportive_hits: List[str] = []
+    supportive_friend_hits: List[str] = []
     friction_hits: List[str] = []
 
     for planet_name, pdata in planets.items():
@@ -974,6 +989,7 @@ def _derive_dignity_guardrail(route: str, present: Dict[str, Any]) -> Dict[str, 
         dignity_code = _extract_dignity_code(status)
         effect = (
             "supportive_recovery" if dignity_code == "NEECHA_BHANGA"
+            else "supportive_friendship" if dignity_code == "GREAT_FRIEND"
             else "high_friction" if dignity_code == "GREAT_ENEMY"
             else "none"
         )
@@ -986,6 +1002,8 @@ def _derive_dignity_guardrail(route: str, present: Dict[str, Any]) -> Dict[str, 
         })
         if dignity_code == "NEECHA_BHANGA":
             supportive_hits.append(planet_name)
+        elif dignity_code == "GREAT_FRIEND":
+            supportive_friend_hits.append(planet_name)
         elif dignity_code == "GREAT_ENEMY":
             friction_hits.append(planet_name)
 
@@ -999,6 +1017,16 @@ def _derive_dignity_guardrail(route: str, present: Dict[str, Any]) -> Dict[str, 
     elif supportive_hits:
         base["status"] = "caution"
         base["score_delta"] = 5
+    elif supportive_friend_hits and friction_hits:
+        base["status"] = "conflict"
+        base["conflict_flags"] = [
+            "great_friend_on_key_significator",
+            "great_enemy_on_key_significator",
+        ]
+        base["score_delta"] = 0
+    elif supportive_friend_hits:
+        base["status"] = "caution"
+        base["score_delta"] = 3
     elif friction_hits:
         base["status"] = "caution"
         base["score_delta"] = -5
@@ -1196,6 +1224,8 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("dignity_conflict")
         elif dignity_guardrail.get("score_delta") == 5:
             secondary_context.append("dignity_supportive_recovery")
+        elif dignity_guardrail.get("score_delta") == 3:
+            secondary_context.append("dignity_supportive_friendship")
         elif dignity_guardrail.get("score_delta") == -5:
             secondary_context.append("dignity_high_friction")
 
@@ -1354,6 +1384,8 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("dignity_conflict")
         elif dignity_guardrail.get("score_delta") == 5:
             secondary_context.append("dignity_supportive_recovery")
+        elif dignity_guardrail.get("score_delta") == 3:
+            secondary_context.append("dignity_supportive_friendship")
         elif dignity_guardrail.get("score_delta") == -5:
             secondary_context.append("dignity_high_friction")
         return {
@@ -1456,6 +1488,18 @@ def _build_life_event_graph(route: str, strict: Dict[str, Any]) -> Dict[str, Any
 
     external_activation = present.get("external_activation")
     if isinstance(external_activation, dict):
+        provenance = external_activation.get("provenance")
+        if isinstance(provenance, dict) and provenance.get("ingestion_profile") == "main_entry_overview":
+            nodes.append(
+                {
+                    "kind": "external_overview",
+                    "label": "VedAstro main-entry overview",
+                    "ingestion_profile": provenance.get("ingestion_profile"),
+                    "search_scope": provenance.get("search_scope"),
+                    "reference_date": provenance.get("reference_date"),
+                    "source": external_activation.get("source"),
+                }
+            )
         for event in external_activation.get("events") or []:
             if not isinstance(event, dict):
                 continue
@@ -1745,6 +1789,95 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         "event_judgement": _derive_event_judgement(route, {}, []),
         "reason": "Route-specific strict evidence audit is currently implemented for relationship and finance timing.",
     })
+
+
+def _default_vedastro_scan_window(transit_date: str) -> tuple[str, str]:
+    try:
+        start = datetime.strptime(str(transit_date), "%Y-%m-%d").date()
+    except ValueError:
+        return str(transit_date), str(transit_date)
+    end = start + timedelta(days=180)
+    return start.isoformat(), end.isoformat()
+
+
+def _maybe_attach_vedastro_evidence(
+    route: str,
+    result: Dict[str, Any],
+    *,
+    year: int,
+    month: int,
+    day: int,
+    hour: int,
+    minute: int,
+    lat: float,
+    lon: float,
+    tz: float,
+    transit_date: str,
+    node_mode: str,
+) -> Dict[str, Any]:
+    if not isinstance(result, dict) or result.get("error"):
+        return result
+
+    modules = result.get("modules")
+    if not isinstance(modules, dict):
+        return result
+
+    vedastro_domain = _VEDASTRO_ROUTE_DOMAIN.get(route)
+    if not vedastro_domain:
+        return result
+
+    if modules.get("vedastro_range_scan_result") or _safe_get(modules, "external_activation", "evidence_ledger"):
+        return result
+
+    try:
+        from vedastro_service_adapter import run_range_scan_for_case
+    except Exception:
+        return result
+
+    start_date, end_date = _default_vedastro_scan_window(transit_date)
+    case = {
+        "year": year,
+        "month": month,
+        "day": day,
+        "hour": hour,
+        "minute": minute,
+        "second": 0,
+        "lat": lat,
+        "lon": lon,
+        "tz": tz,
+        "ayanamsa_policy": (
+            _safe_get(result, "meta", "ayanamsa")
+            or _safe_get(result, "chart", "ayanamsa")
+            or "lahiri"
+        ),
+        "node_policy": node_mode or "mean",
+    }
+    scan_result = run_range_scan_for_case(
+        case,
+        vedastro_domain,
+        start_date,
+        end_date,
+        case_id=f"strict_workflow_{route}",
+    )
+    if not isinstance(scan_result, dict):
+        return result
+
+    attached_scan = deepcopy(scan_result)
+    metadata = attached_scan.get("source_metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+    metadata.setdefault("auto_ingested_by", "strict_workflow")
+    metadata.setdefault("strict_route", route)
+    metadata.setdefault("scan_window", {"start_date": start_date, "end_date": end_date})
+    metadata.setdefault("adapter_status", attached_scan.get("status"))
+    if attached_scan.get("reason"):
+        metadata.setdefault("adapter_reason", attached_scan.get("reason"))
+    attached_scan["source_metadata"] = metadata
+
+    enriched = dict(result)
+    enriched["modules"] = dict(modules)
+    enriched["modules"]["vedastro_range_scan_result"] = attached_scan
+    return enriched
 
 
 # ============================================================================
@@ -2240,6 +2373,20 @@ def strict_workflow(
     })
 
     if isinstance(result, dict) and "error" not in result:
+        result = _maybe_attach_vedastro_evidence(
+            route,
+            result,
+            year=year,
+            month=month,
+            day=day,
+            hour=hour,
+            minute=minute,
+            lat=lat,
+            lon=lon,
+            tz=tz,
+            transit_date=transit_date,
+            node_mode=node_mode,
+        )
         strict_evidence = _collect_strict_evidence(route, result)
         result["routing"] = {
             "question_type": route,
