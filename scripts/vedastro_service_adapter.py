@@ -15,6 +15,7 @@ import json
 import os
 import socket
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib import request, error
@@ -86,6 +87,62 @@ SUPPORTED_EXTERNAL_TECHNIQUE_DOMAINS = {"marriage", "wealth", "career", "general
 OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH = "/Calculate/SearchEvents"
 OFFICIAL_SEARCH_EVENTS_METHOD = "POST"
 OFFICIAL_SEARCH_EVENTS_PROFILE_VERSION = "official_builder_search_events_v1"
+OFFICIAL_FULL_SNAPSHOT_PROFILE_VERSION = "official_full_snapshot_v1"
+OFFICIAL_METHOD_CATALOG_URL = "https://vedastro.org/Complete-List-VedAstro-API-Methods-Calculators.html"
+OFFICIAL_FULL_SNAPSHOT_METHODS = [
+    {
+        "section": "chart_core",
+        "endpoint_path": "/Calculate/AllPlanetData",
+        "calculator_name": "AllPlanetData",
+        "role": "core_chart_raw_evidence",
+        "description": "Core planet, ascendant, house, nakshatra, ayanamsa and node-mode evidence when supported by the official service.",
+        "fanout": "planetName",
+    },
+    {
+        "section": "house_core",
+        "endpoint_path": "/Calculate/AllHouseData",
+        "calculator_name": "AllHouseData",
+        "role": "core_house_raw_evidence",
+        "description": "Official house data snapshot when supported by the official service.",
+        "fanout": "houseName",
+    },
+    {
+        "section": "dasha_all",
+        "endpoint_path": "/Calculate/DasaAtRange",
+        "calculator_name": "DasaAtRange",
+        "role": "all_dasha_raw_evidence",
+        "description": "Official dasha timeline snapshot where available.",
+    },
+    {
+        "section": "events_overview",
+        "endpoint_path": OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH,
+        "calculator_name": "SearchEvents",
+        "role": "life_event_raw_evidence",
+        "description": "Official event radar using SearchEvents for career, marriage and wealth tags.",
+    },
+]
+OFFICIAL_FULL_SNAPSHOT_BACKLOG_SECTIONS = [
+    {
+        "section": "varga_all",
+        "role": "all_varga_raw_evidence",
+        "status": "catalog_pending",
+        "description": "Awaiting official method mapping for all divisional charts; local varga remains fallback until mapped.",
+    },
+    {
+        "section": "shadbala",
+        "role": "strength_raw_evidence",
+        "status": "catalog_pending",
+        "description": "Awaiting official method mapping for Shadbala; local Shadbala remains fallback until mapped.",
+    },
+    {
+        "section": "ashtakavarga",
+        "role": "ashtakavarga_raw_evidence",
+        "status": "catalog_pending",
+        "description": "Awaiting official method mapping for Ashtakavarga; local Ashtakavarga remains fallback until mapped.",
+    },
+]
+OFFICIAL_SNAPSHOT_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu", "Ascendant"]
+OFFICIAL_SNAPSHOT_HOUSES = [f"House{i}" for i in range(1, 13)]
 OFFICIAL_RANGE_SCAN_EVENT_TAGS = {
     "marriage": ["Marriage", "Personal", "General"],
     "wealth": ["LendingMoney", "BorrowingMoney", "BuyingSelling", "General"],
@@ -418,7 +475,40 @@ def schema() -> dict[str, Any]:
                 "AtTime | StartTime + EndTime + PrecisionHours",
             ],
         },
+        "official_full_snapshot_request_contract": {
+            "profile_version": OFFICIAL_FULL_SNAPSHOT_PROFILE_VERSION,
+            "primary_source": "vedastro_official",
+            "method_catalog_url": OFFICIAL_METHOD_CATALOG_URL,
+            "strategy": "fetch_official_raw_sections_first_then_local_crosscheck",
+            "common_body_fields": [
+                "BirthTime",
+                "Ayanamsa",
+                "NodeMode",
+                "CalculationPreferences",
+            ],
+            "request_sections": [
+                {
+                    "section": item["section"],
+                    "endpoint_path": item["endpoint_path"],
+                    "calculator_name": item.get("calculator_name"),
+                    "role": item["role"],
+                }
+                for item in OFFICIAL_FULL_SNAPSHOT_METHODS
+            ],
+            "backlog_sections": OFFICIAL_FULL_SNAPSHOT_BACKLOG_SECTIONS,
+            "user_visibility": "backend_raw_evidence_not_direct_user_report",
+        },
         "vedastro_calculation_coverage": VEDASTRO_CALCULATION_COVERAGE,
+        "official_full_snapshot_response_contract": [
+            "backend",
+            "available",
+            "status",
+            "operation",
+            "primary_source",
+            "snapshot_sections",
+            "request_manifest",
+            "source_metadata",
+        ],
         "external_technique_request_contract": [
             "operation",
             "role",
@@ -515,9 +605,20 @@ def _format_std_time(date_text: str, hour: Any, minute: Any, tz: Any) -> str:
     return f"{hour_int:02d}:{minute_int:02d} {day}/{month}/{year} {tz}"
 
 
-def _time_json_from_case(case: dict[str, Any], date_text: str) -> dict[str, Any]:
+def _time_json_from_case(
+    case: dict[str, Any],
+    date_text: str,
+    *,
+    hour: Any | None = None,
+    minute: Any | None = None,
+) -> dict[str, Any]:
     return {
-        "StdTime": _format_std_time(date_text, case.get("hour", 0), case.get("minute", 0), case.get("tz", "+00:00")),
+        "StdTime": _format_std_time(
+            date_text,
+            case.get("hour", 0) if hour is None else hour,
+            case.get("minute", 0) if minute is None else minute,
+            case.get("tz", "+00:00"),
+        ),
         "Location": {
             "Name": case.get("case_id") or "UserLocation",
             "Latitude": case.get("lat"),
@@ -587,6 +688,108 @@ def _build_live_sampling_search_events_profile(request_preview: dict[str, Any]) 
         "method": OFFICIAL_SEARCH_EVENTS_METHOD,
         "headers": headers,
         "body": body,
+    }
+
+
+def _official_common_body(case: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(case)
+    normalized["tz"] = _normalize_tz(normalized)
+    return {
+        "time": _time_json_from_case(
+            normalized,
+            f"{int(normalized['year']):04d}-{int(normalized['month']):02d}-{int(normalized['day']):02d}",
+        ),
+        "Ayanamsa": str(normalized.get("ayanamsa_policy") or "lahiri"),
+        "NodeMode": str(normalized.get("node_policy") or "mean"),
+        "CalculationPreferences": {
+            "scope": "all_supported_official_calculations",
+            "user_visibility": "backend_raw_evidence_not_direct_user_report",
+        },
+    }
+
+
+def _official_snapshot_reference_date(case: dict[str, Any]) -> str:
+    for key in ("reference_date", "today", "transit_date", "current_date"):
+        value = case.get(key)
+        if not value:
+            continue
+        raw = str(value)[:10]
+        try:
+            datetime.strptime(raw, "%Y-%m-%d")
+            return raw
+        except ValueError:
+            continue
+    return datetime.utcnow().strftime("%Y-%m-%d")
+
+
+def _official_dasha_range_body(case: dict[str, Any], common_body: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(case)
+    normalized["tz"] = _normalize_tz(normalized)
+    reference = datetime.strptime(_official_snapshot_reference_date(normalized), "%Y-%m-%d").date()
+    start_date = reference.replace(month=1, day=1)
+    end_date = reference.replace(month=12, day=31)
+    return {
+        "birthTime": common_body["time"],
+        "startTime": _time_json_from_case(normalized, start_date.isoformat(), hour=0, minute=0),
+        "endTime": _time_json_from_case(normalized, end_date.isoformat(), hour=23, minute=59),
+        "levels": int(normalized.get("dasha_levels") or 3),
+        "precisionHours": int(normalized.get("dasha_precision_hours") or 100),
+        "Ayanamsa": common_body["Ayanamsa"],
+    }
+
+
+def _official_full_snapshot_manifest(case: dict[str, Any], case_id: str = "user_chart") -> dict[str, Any]:
+    common_body = _official_common_body(case)
+    reference_date = _official_snapshot_reference_date(case)
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    api_key = os.environ.get("VEDASTRO_API_KEY", "").strip()
+    if api_key:
+        headers["x-api-key"] = api_key
+    requests = []
+    for item in OFFICIAL_FULL_SNAPSHOT_METHODS:
+        body = dict(common_body)
+        if item["section"] == "events_overview":
+            body = {
+                "BirthTime": common_body["time"],
+                "Ayanamsa": common_body["Ayanamsa"],
+                "EventTagList": sorted({tag for tags in OFFICIAL_RANGE_SCAN_EVENT_TAGS.values() for tag in tags}),
+                "AtTime": common_body["time"],
+            }
+        if item["section"] == "dasha_all":
+            body = _official_dasha_range_body(case, common_body)
+        fanout_values = []
+        if item.get("fanout") == "planetName":
+            fanout_values = OFFICIAL_SNAPSHOT_PLANETS
+        elif item.get("fanout") == "houseName":
+            fanout_values = OFFICIAL_SNAPSHOT_HOUSES
+        requests.append(
+            {
+                "section": item["section"],
+                "role": item["role"],
+                "calculator_name": item.get("calculator_name"),
+                "endpoint_path": item["endpoint_path"],
+                "method": "POST",
+                "headers": headers,
+                "body": body,
+                "fanout_parameter": item.get("fanout"),
+                "fanout_values": fanout_values,
+                "description": item["description"],
+            }
+        )
+    return {
+        "operation": "official_full_snapshot",
+        "profile_version": OFFICIAL_FULL_SNAPSHOT_PROFILE_VERSION,
+        "source_role": "primary_official_raw_evidence",
+        "primary_source": "vedastro_official",
+        "case_id": case_id,
+        "reference_date": reference_date,
+        "method_catalog": {
+            "url": OFFICIAL_METHOD_CATALOG_URL,
+            "declared_coverage": VEDASTRO_CALCULATION_COVERAGE,
+            "catalog_role": "all_supported_method_reference_not_user_visible_output",
+            "backlog_sections": OFFICIAL_FULL_SNAPSHOT_BACKLOG_SECTIONS,
+        },
+        "requests": requests,
     }
 
 
@@ -1114,6 +1317,385 @@ def run_case(case_id: str) -> dict[str, Any]:
     return _normalize_success(payload, endpoint, request_preview)
 
 
+def _official_full_snapshot_metadata(endpoint: str | None, manifest: dict[str, Any]) -> dict[str, Any]:
+    metadata = {
+        "transport": "http_json_service_boundary",
+        "operation": "official_full_snapshot",
+        "primary_source": "vedastro_official",
+        "provenance_mode": "vedastro_official_primary_candidate",
+        "timeout_seconds": _timeout_seconds(),
+        "retry_policy": {**RETRY_POLICY, "backoff_seconds": _backoff_seconds()},
+        "network_execution_env": ALLOW_NETWORK_ENV,
+        "method_catalog_url": OFFICIAL_METHOD_CATALOG_URL,
+        "reference_date": manifest.get("reference_date"),
+        "request_hash": _hash_payload(manifest),
+    }
+    if endpoint:
+        metadata["endpoint"] = endpoint
+        metadata["endpoint_host"] = _endpoint_host(endpoint)
+    return metadata
+
+
+def _payload_status(payload: dict[str, Any]) -> str:
+    if not isinstance(payload, dict):
+        return "invalid"
+    if str(payload.get("Status") or "").lower() == "fail":
+        failure_text = json.dumps(payload.get("Payload"), ensure_ascii=False).lower()
+        if "rate limit" in failure_text or "calls/minute" in failure_text or "too many requests" in failure_text:
+            return "rate_limited"
+    return "ok" if payload.get("Status") == "Pass" else "fail"
+
+
+def _aggregate_section_status(statuses: list[str]) -> str:
+    if statuses and all(status == "ok" for status in statuses):
+        return "ok"
+    if any(status == "rate_limited" for status in statuses):
+        return "rate_limited"
+    return "partial"
+
+
+def _degrees_from_sign_payload(value: Any) -> float | None:
+    if not isinstance(value, dict):
+        return None
+    degrees = value.get("DegreesIn") if isinstance(value.get("DegreesIn"), dict) else {}
+    raw = degrees.get("TotalDegrees")
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def _sign_position(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    sign = value.get("Name")
+    degree = _degrees_from_sign_payload(value)
+    if not sign:
+        return None
+    return {
+        "sign": sign,
+        "degree_in_sign": degree,
+    }
+
+
+def _extract_all_planet_data(payload: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    body = payload.get("Payload") if isinstance(payload.get("Payload"), dict) else {}
+    data = body.get("AllPlanetData") if isinstance(body.get("AllPlanetData"), dict) else {}
+    return data if isinstance(data, dict) else {}
+
+
+def _extract_all_house_data(payload: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    body = payload.get("Payload") if isinstance(payload.get("Payload"), dict) else {}
+    data = body.get("AllHouseData") if isinstance(body.get("AllHouseData"), dict) else {}
+    return data if isinstance(data, dict) else {}
+
+
+def _official_planet_snapshot(planet_name: str, data: dict[str, Any]) -> dict[str, Any]:
+    d1 = _sign_position(data.get("PlanetRasiD1Sign")) or {}
+    raw_lon = None
+    nirayana = data.get("PlanetNirayanaLongitude")
+    if isinstance(nirayana, dict):
+        try:
+            raw_lon = float(nirayana.get("TotalDegrees"))
+        except (TypeError, ValueError):
+            raw_lon = None
+    house_text = data.get("HousePlanetOccupiesBasedOnSign") or data.get("HousePlanetOccupiesBasedOnLongitudes")
+    house = None
+    if isinstance(house_text, str) and house_text.lower().startswith("house"):
+        try:
+            house = int("".join(ch for ch in house_text if ch.isdigit()))
+        except ValueError:
+            house = None
+    return {
+        "source": "vedastro_official",
+        "name": planet_name,
+        "sign": d1.get("sign"),
+        "degree_in_sign": d1.get("degree_in_sign"),
+        "degree": raw_lon,
+        "lon": raw_lon,
+        "house": house,
+        "vargas": {
+            "D1": d1,
+            "D2": _sign_position(data.get("PlanetHoraD2Signs")),
+            "D3": _sign_position(data.get("PlanetDrekkanaD3Sign")),
+            "D4": _sign_position(data.get("PlanetChaturthamshaD4Sign")),
+            "D7": _sign_position(data.get("PlanetSaptamshaD7Sign")),
+            "D9": _sign_position(data.get("PlanetNavamshaD9Sign")),
+            "D10": _sign_position(data.get("PlanetDashamamshaD10Sign")),
+            "D12": _sign_position(data.get("PlanetDwadashamshaD12Sign")),
+            "D16": _sign_position(data.get("PlanetShodashamshaD16Sign")),
+            "D20": _sign_position(data.get("PlanetVimshamshaD20Sign")),
+            "D24": _sign_position(data.get("PlanetChaturvimshamshaD24Sign")),
+            "D27": _sign_position(data.get("PlanetBhamshaD27Sign")),
+            "D30": _sign_position(data.get("PlanetTrimshamshaD30Sign")),
+            "D40": _sign_position(data.get("PlanetKhavedamshaD40Sign")),
+            "D45": _sign_position(data.get("PlanetAkshavedamshaD45Sign")),
+            "D60": _sign_position(data.get("PlanetShashtyamshaD60Sign")),
+        },
+        "nakshatra": data.get("PlanetConstellation"),
+        "raw_source_keys": sorted(data.keys()),
+    }
+
+
+def _official_house_snapshot(house_name: str, data: dict[str, Any]) -> dict[str, Any]:
+    d1 = _sign_position(data.get("HouseRasiD1Sign") or data.get("HouseBhavaChalitSign")) or {}
+    return {
+        "source": "vedastro_official",
+        "name": house_name,
+        "sign": d1.get("sign"),
+        "degree_in_sign": d1.get("degree_in_sign"),
+        "vargas": {
+            "D1": d1,
+            "D2": _sign_position(data.get("HouseHoraD2Sign") or data.get("HouseHoraD2Signs")),
+            "D3": _sign_position(data.get("HouseDrekkanaD3Sign")),
+            "D4": _sign_position(data.get("HouseChaturthamshaD4Sign")),
+            "D7": _sign_position(data.get("HouseSaptamshaD7Sign")),
+            "D9": _sign_position(data.get("HouseNavamshaD9Sign") or data.get("HouseNavamsaD9Sign")),
+            "D10": _sign_position(data.get("HouseDashamamshaD10Sign")),
+            "D12": _sign_position(data.get("HouseDwadashamshaD12Sign")),
+            "D16": _sign_position(data.get("HouseShodashamshaD16Sign")),
+            "D20": _sign_position(data.get("HouseVimshamshaD20Sign")),
+            "D24": _sign_position(data.get("HouseChaturvimshamshaD24Sign")),
+            "D27": _sign_position(data.get("HouseBhamshaD27Sign")),
+            "D30": _sign_position(data.get("HouseTrimshamshaD30Sign")),
+            "D40": _sign_position(data.get("HouseKhavedamshaD40Sign")),
+            "D45": _sign_position(data.get("HouseAkshavedamshaD45Sign")),
+            "D60": _sign_position(data.get("HouseShashtyamshaD60Sign")),
+        },
+        "nakshatra": data.get("HouseConstellation"),
+        "raw_source_keys": sorted(data.keys()),
+    }
+
+
+def _build_official_chart_from_snapshot(sections: dict[str, Any]) -> dict[str, Any]:
+    chart_core = sections.get("chart_core") if isinstance(sections.get("chart_core"), dict) else {}
+    house_core = sections.get("house_core") if isinstance(sections.get("house_core"), dict) else {}
+    planets: dict[str, Any] = {}
+    for planet_name, payload in chart_core.items():
+        data = _extract_all_planet_data(payload)
+        if data:
+            planets[planet_name] = _official_planet_snapshot(planet_name, data)
+    houses: dict[str, Any] = {}
+    for house_name, payload in house_core.items():
+        data = _extract_all_house_data(payload)
+        if data:
+            houses[house_name] = _official_house_snapshot(house_name, data)
+    ascendant = houses.get("House1") or {}
+    return {
+        "source": "vedastro_official",
+        "primary_source": "vedastro_official",
+        "planets": planets,
+        "houses": houses,
+        "ascendant": ascendant,
+        "coverage": {
+            "planet_count": len(planets),
+            "house_count": len(houses),
+            "varga_keys": ["D1", "D2", "D3", "D4", "D7", "D9", "D10", "D12", "D16", "D20", "D24", "D27", "D30", "D40", "D45", "D60"],
+        },
+    }
+
+
+def _post_official_snapshot_section(endpoint: str, request_item: dict[str, Any]) -> tuple[dict[str, Any], int, list[int]]:
+    body = dict(request_item["body"])
+    fanout_parameter = request_item.get("fanout_parameter")
+    fanout_value = request_item.get("fanout_value")
+    if fanout_parameter and fanout_value is not None:
+        if fanout_parameter == "planetName":
+            body[fanout_parameter] = {"Name": str(fanout_value)}
+        else:
+            body[fanout_parameter] = str(fanout_value)
+    section_preview = {
+        "operation": "official_full_snapshot",
+        "section": request_item["section"],
+        "official_request_profile": {
+            "profile_version": OFFICIAL_FULL_SNAPSHOT_PROFILE_VERSION,
+            "endpoint_path": request_item["endpoint_path"],
+            "method": request_item["method"],
+            "headers": request_item["headers"],
+            "body": body,
+        },
+    }
+    return _post_json_with_retry(endpoint, section_preview)
+
+
+def _normalize_official_full_snapshot_success(
+    endpoint: str,
+    manifest: dict[str, Any],
+    sections: dict[str, Any],
+    section_statuses: dict[str, str],
+    attempt_count: int,
+    retry_error_codes: list[int],
+) -> dict[str, Any]:
+    primary_sections = [item["section"] for item in manifest["requests"]]
+    ok_count = sum(1 for section in primary_sections if section_statuses.get(section) == "ok")
+    status = "ok" if ok_count == len(primary_sections) else "partial"
+    rate_limited_sections = [
+        section
+        for section in primary_sections
+        if section_statuses.get(section) == "rate_limited"
+    ]
+    metadata = {
+        **_official_full_snapshot_metadata(endpoint, manifest),
+        "called_at": _utc_timestamp(),
+        "section_statuses": section_statuses,
+        "section_count": len(primary_sections),
+        "section_ok_count": ok_count,
+        "rate_limited_sections": rate_limited_sections,
+        "attempt_count": attempt_count,
+        "retry_error_codes": retry_error_codes,
+        "response_hash": _hash_payload({"sections": sections, "section_statuses": section_statuses}),
+    }
+    if rate_limited_sections:
+        metadata["production_hint"] = "configure_vedastro_api_key_or_self_host_official_api"
+    result = {
+        "backend": "vedastro_service_adapter_candidate",
+        "available": ok_count > 0,
+        "status": status,
+        "operation": "official_full_snapshot",
+        "primary_source": "vedastro_official",
+        "snapshot_sections": sections,
+        "official_chart": _build_official_chart_from_snapshot(sections),
+        "section_statuses": section_statuses,
+        "request_manifest": manifest,
+        "user_visibility": "backend_raw_evidence_not_direct_user_report",
+        "source_metadata": metadata,
+    }
+    result["source_metadata"]["artifact_path"] = _write_artifact(result)
+    return result
+
+
+def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_chart") -> dict[str, Any]:
+    user_case = {
+        "case_id": case_id,
+        "year": case.get("year"),
+        "month": case.get("month"),
+        "day": case.get("day"),
+        "hour": case.get("hour"),
+        "minute": case.get("minute"),
+        "second": case.get("second", 0),
+        "lat": case.get("lat"),
+        "lon": case.get("lon"),
+        "tz": case.get("tz"),
+        "ayanamsa_policy": case.get("ayanamsa_policy") or case.get("ayanamsa") or "lahiri",
+        "node_policy": case.get("node_policy") or case.get("node_mode") or "mean",
+        "reference_date": case.get("reference_date") or case.get("today") or case.get("transit_date") or case.get("current_date"),
+        "dasha_levels": case.get("dasha_levels"),
+        "dasha_precision_hours": case.get("dasha_precision_hours"),
+    }
+    manifest = _official_full_snapshot_manifest(user_case, case_id)
+    endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
+    if not endpoint:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "service_endpoint_not_configured",
+            "operation": "official_full_snapshot",
+            "primary_source": "vedastro_official",
+            "reason": "VEDASTRO_API_ENDPOINT is not configured; official full snapshot stops before network access.",
+            "snapshot_sections": {},
+            "request_manifest": manifest,
+            "user_visibility": "backend_raw_evidence_not_direct_user_report",
+            "source_metadata": _official_full_snapshot_metadata(None, manifest),
+        }
+
+    if os.environ.get(ALLOW_NETWORK_ENV, "").strip().lower() not in {"1", "true", "yes"}:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "network_execution_disabled",
+            "operation": "official_full_snapshot",
+            "primary_source": "vedastro_official",
+            "reason": f"{ALLOW_NETWORK_ENV} is not enabled; official full snapshot stops after building request manifest.",
+            "snapshot_sections": {},
+            "request_manifest": manifest,
+            "user_visibility": "backend_raw_evidence_not_direct_user_report",
+            "source_metadata": _official_full_snapshot_metadata(endpoint, manifest),
+        }
+
+    sections: dict[str, Any] = {}
+    section_statuses: dict[str, str] = {}
+    attempt_count = 0
+    retry_error_codes: list[int] = []
+    for request_item in manifest["requests"]:
+        section = request_item["section"]
+        fanout_values = request_item.get("fanout_values") if isinstance(request_item.get("fanout_values"), list) else []
+        if fanout_values:
+            section_payloads: dict[str, Any] = {}
+            fanout_statuses: dict[str, str] = {}
+            for value in fanout_values:
+                fanout_request = {**request_item, "fanout_value": value}
+                try:
+                    payload, attempts, retries = _post_official_snapshot_section(endpoint, fanout_request)
+                    section_payloads[str(value)] = payload
+                    fanout_statuses[str(value)] = _payload_status(payload)
+                    attempt_count += attempts
+                    retry_error_codes.extend(retries)
+                except error.HTTPError as exc:
+                    fanout_statuses[str(value)] = f"http_error:{exc.code}"
+                except (error.URLError, http.client.RemoteDisconnected) as exc:
+                    fanout_statuses[str(value)] = f"network_error:{getattr(exc, 'reason', str(exc))}"
+                except (TimeoutError, socket.timeout):
+                    fanout_statuses[str(value)] = "timeout"
+                except json.JSONDecodeError:
+                    fanout_statuses[str(value)] = "invalid_json"
+            sections[section] = section_payloads
+            section_statuses[section] = _aggregate_section_status(list(fanout_statuses.values()))
+            section_statuses[f"{section}_fanout"] = fanout_statuses
+            continue
+
+        try:
+            payload, attempts, retries = _post_official_snapshot_section(endpoint, request_item)
+            sections[section] = payload
+            section_statuses[section] = _payload_status(payload)
+            attempt_count += attempts
+            retry_error_codes.extend(retries)
+        except error.HTTPError as exc:
+            section_statuses[section] = f"http_error:{exc.code}"
+        except (error.URLError, http.client.RemoteDisconnected) as exc:
+            section_statuses[section] = f"network_error:{getattr(exc, 'reason', str(exc))}"
+        except (TimeoutError, socket.timeout):
+            section_statuses[section] = "timeout"
+        except json.JSONDecodeError:
+            section_statuses[section] = "invalid_json"
+
+    return _normalize_official_full_snapshot_success(
+        endpoint,
+        manifest,
+        sections,
+        section_statuses,
+        attempt_count or 1,
+        retry_error_codes,
+    )
+
+
+def run_official_full_snapshot(case_id: str, reference_date: str | None = None) -> dict[str, Any]:
+    if case_id not in PARITY_CASES:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "unknown_case_id",
+            "operation": "official_full_snapshot",
+            "primary_source": "vedastro_official",
+            "reason": f"Unknown parity case: {case_id}",
+        }
+    case = dict(PARITY_CASES[case_id])
+    if reference_date:
+        case["reference_date"] = reference_date
+    return _run_official_full_snapshot_case(case, case_id=case_id)
+
+
+def run_official_full_snapshot_for_case(
+    case: dict[str, Any],
+    *,
+    case_id: str = "user_chart",
+) -> dict[str, Any]:
+    return _run_official_full_snapshot_case(case, case_id=case_id)
+
+
 def _run_range_scan_case(case: dict[str, Any], domain: str, start_date: str, end_date: str) -> dict[str, Any]:
     if domain not in SUPPORTED_RANGE_SCAN_DOMAINS:
         return {
@@ -1330,9 +1912,11 @@ def main() -> int:
     parser.add_argument("--print-schema", action="store_true")
     parser.add_argument("--case", default="beijing_first_use_demo")
     parser.add_argument("--range-scan", action="store_true")
+    parser.add_argument("--official-full-snapshot", action="store_true")
     parser.add_argument("--domain", choices=sorted(SUPPORTED_EXTERNAL_TECHNIQUE_DOMAINS), default="marriage")
     parser.add_argument("--start-date", default="2026-01-01")
     parser.add_argument("--end-date", default="2031-01-01")
+    parser.add_argument("--reference-date", default=None)
     parser.add_argument("--external-technique", action="store_true")
     parser.add_argument("--method", default="")
     parser.add_argument("--api-endpoint", default="")
@@ -1340,6 +1924,8 @@ def main() -> int:
 
     if args.print_schema:
         result = schema()
+    elif args.official_full_snapshot:
+        result = run_official_full_snapshot(args.case, reference_date=args.reference_date)
     elif args.external_technique:
         result = run_external_technique(args.case, args.domain, args.method, args.api_endpoint)
     elif args.range_scan:

@@ -2439,7 +2439,7 @@ function renderVedAstroRangeScanResult(state = getVedAstroScanState()) {
       VedAstro Range Scan：${escapeHtml(status)} · ${escapeHtml(String(eventCount))} events · ${escapeHtml(state.start_date || '-')}/${escapeHtml(state.end_date || '-')}
     </div>
     <div class="calculation-settings-note">
-      ${escapeHtml(result.reason || state.result?.boundary || '外部雷达结果已挂到 chartData.modules.vedastro_range_scan_result；本地 Jyotish gates 仍为主判断。')}
+      ${escapeHtml(result.reason || state.result?.boundary || 'VedAstro official snapshot 为主证据；range scan 是外部事件雷达，本地 Jyotish gates 作为补充与官方 blocked 时的 fallback。')}
       ${metadata.artifact_path ? ` artifact: ${escapeHtml(metadata.artifact_path)}` : ''}
     </div>
     ${events.length ? `

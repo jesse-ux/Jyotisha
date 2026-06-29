@@ -14,10 +14,15 @@ from typing import Any
 try:
     from scripts.vedastro_service_adapter import (
         VEDASTRO_CALCULATION_COVERAGE,
+        run_official_full_snapshot_for_case,
         run_range_scan_for_case,
     )
 except ModuleNotFoundError:  # pragma: no cover - script execution path
-    from vedastro_service_adapter import VEDASTRO_CALCULATION_COVERAGE, run_range_scan_for_case
+    from vedastro_service_adapter import (
+        VEDASTRO_CALCULATION_COVERAGE,
+        run_official_full_snapshot_for_case,
+        run_range_scan_for_case,
+    )
 
 
 ROUTE_DOMAIN_MAP = {
@@ -75,6 +80,7 @@ def orchestrate_vedastro_evidence(
     domains = ROUTE_DOMAIN_MAP.get(route, ROUTE_DOMAIN_MAP["general"])
     window_start, window_end = (start_date, end_date) if start_date and end_date else _default_window(reference_date)
     case = _normalize_case(birth_payload)
+    case["reference_date"] = str(reference_date or window_start)[:10]
     domain_reports: dict[str, Any] = {}
     evidence_ledger: list[dict[str, Any]] = []
     top_events_by_domain: dict[str, Any] = {}
@@ -82,6 +88,10 @@ def orchestrate_vedastro_evidence(
     domain_event_counts: dict[str, int] = {}
     available = False
     first_reason = None
+    official_full_snapshot = run_official_full_snapshot_for_case(
+        case,
+        case_id=f"{case_id}_official_full_snapshot",
+    )
 
     for domain in domains:
         report = run_range_scan_for_case(
@@ -115,11 +125,13 @@ def orchestrate_vedastro_evidence(
         "top_events_by_domain": top_events_by_domain,
         "evidence_ledger": evidence_ledger,
         "reason": None if status == "ok" else first_reason,
+        "official_full_snapshot": official_full_snapshot,
         "domain_reports": domain_reports,
         "source_metadata": {
             "auto_ingested_by": "VedAstroEvidenceOrchestrator",
-            "strategy": "minimal_route_scoped_orchestration",
+            "strategy": "official_full_snapshot_first_then_route_scoped_range_scan",
             "node_coverage": {
+                "official_full_snapshot_first": True,
                 "strategy": "domain_scoped_range_scan",
                 "official_calculation_coverage": VEDASTRO_CALCULATION_COVERAGE,
                 "selected_domains": domains,

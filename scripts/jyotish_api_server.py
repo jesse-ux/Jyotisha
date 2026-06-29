@@ -57,6 +57,7 @@ def _attach_vedastro_main_entry_overview(chart_result, birth_payload):
 
     try:
         orchestrator = _load_local_module('vedastro_evidence_orchestrator')
+        priority = _load_local_module('vedastro_priority')
     except Exception:
         return chart_result
 
@@ -65,7 +66,7 @@ def _attach_vedastro_main_entry_overview(chart_result, birth_payload):
         or birth_payload.get('today')
         or datetime.utcnow().strftime('%Y-%m-%d')
     )[:10]
-    modules['vedastro_range_scan_result'] = orchestrator.orchestrate_vedastro_evidence({
+    vedastro_evidence = orchestrator.orchestrate_vedastro_evidence({
         'year': birth_payload.get('year'),
         'month': birth_payload.get('month'),
         'day': birth_payload.get('day'),
@@ -78,6 +79,17 @@ def _attach_vedastro_main_entry_overview(chart_result, birth_payload):
         'ayanamsa_policy': birth_payload.get('ayanamsa') or 'lahiri',
         'node_policy': birth_payload.get('node_mode') or birth_payload.get('nodeMode') or 'mean',
     }, route='overview', reference_date=reference_date, case_id='api_chart')
+    if isinstance(vedastro_evidence, dict):
+        metadata = vedastro_evidence.get('source_metadata')
+        if not isinstance(metadata, dict):
+            metadata = {}
+        metadata.setdefault('ingestion_profile', 'main_entry_overview')
+        metadata.setdefault('reference_date', reference_date)
+        vedastro_evidence['source_metadata'] = metadata
+    modules['vedastro_range_scan_result'] = vedastro_evidence
+    official_snapshot = vedastro_evidence.get('official_full_snapshot') if isinstance(vedastro_evidence, dict) else None
+    if isinstance(official_snapshot, dict):
+        priority.apply_vedastro_source_priority(chart_result, official_snapshot=official_snapshot)
     return chart_result
 
 
@@ -132,6 +144,39 @@ def _build_vedastro_overview_payload_from_chart(chart):
             or 'This is overview only and does not replace explicit long-range VedAstro scans.'
         ),
         'visibility': 'user_visible_overview_only',
+    }
+
+
+def _build_vedastro_official_full_snapshot_payload_from_chart(chart):
+    modules = chart.get('modules') if isinstance(chart, dict) else {}
+    snapshot = modules.get('vedastro_official_full_snapshot') if isinstance(modules, dict) else {}
+    if not isinstance(snapshot, dict) or not snapshot:
+        return {
+            'status': 'blocked',
+            'available': False,
+            'operation': 'official_full_snapshot',
+            'primary_source': 'vedastro_official',
+            'boundary_note': 'VedAstro official full snapshot is not attached.',
+        }
+    manifest = snapshot.get('request_manifest') if isinstance(snapshot.get('request_manifest'), dict) else {}
+    requests = manifest.get('requests') if isinstance(manifest.get('requests'), list) else []
+    sections = snapshot.get('snapshot_sections') if isinstance(snapshot.get('snapshot_sections'), dict) else {}
+    return {
+        'status': snapshot.get('status') or 'blocked',
+        'available': bool(snapshot.get('available')),
+        'operation': snapshot.get('operation') or 'official_full_snapshot',
+        'primary_source': snapshot.get('primary_source') or 'vedastro_official',
+        'section_statuses': snapshot.get('section_statuses') or {},
+        'snapshot_section_keys': sorted(sections.keys()),
+        'request_section_count': len(requests),
+        'request_sections': [item.get('section') for item in requests if isinstance(item, dict)],
+        'method_catalog': manifest.get('method_catalog') or {},
+        'user_visibility': snapshot.get('user_visibility') or 'backend_raw_evidence_not_direct_user_report',
+        'source_metadata': snapshot.get('source_metadata') or {},
+        'boundary_note': (
+            snapshot.get('reason')
+            or 'VedAstro official full snapshot is the primary raw evidence layer; user reports consume selected slices only.'
+        ),
     }
 
 SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
@@ -2300,6 +2345,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         shadbala = chart.get('shadbala') or {}
         functional_layer = self._functional_benefic_malefic_snapshot(planets, ascendant)
         vedastro_overview = _build_vedastro_overview_payload_from_chart(chart)
+        vedastro_official_full_snapshot = _build_vedastro_official_full_snapshot_payload_from_chart(chart)
         _attach_guided_topics(chart)
         modules = chart.get('modules') if isinstance(chart.get('modules'), dict) else {}
         guided_topics = modules.get('guided_topics') if isinstance(modules.get('guided_topics'), list) else []
@@ -2328,10 +2374,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         )[:7]
         core_planets = {
             planet: {
+                'source': pdata.get('source'),
                 'sign': pdata.get('sign'),
                 'degree': pdata.get('degree'),
+                'degree_in_sign': pdata.get('degree_in_sign'),
                 'house': pdata.get('house'),
                 'lon': pdata.get('lon'),
+                'vargas': pdata.get('vargas'),
             }
             for planet, pdata in planets.items()
             if planet in {'Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'}
@@ -2345,6 +2394,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             f'本盘使用 {ayanamsa_display} ayanamsa，节点口径为 {node_mode}。',
             '不要仅凭单一配置下结论；核心判断至少交叉 D1、D9、Dasha、Shadbala/Ashtakavarga 或 Transit 中的两个证据层。',
             '必须显式标注置信度和边界：Dasha/PDF 起点差异、Shadbala 外部绝对值 oracle 尚未完成时，不得声称已经完全校准。',
+            'VedAstro 官方全量快照是第一原始证据层；若该层 blocked，必须把本地结果标记为 fallback。',
         ]
         oracle_progress = {
             'scope': 'external_oracle_evidence_validation',
@@ -2382,6 +2432,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'shadbala_ranking': top_strength,
                 },
                 'functional_benefic_malefic': functional_layer,
+                'vedastro_official_full_snapshot': vedastro_official_full_snapshot,
                 'vedastro_overview': vedastro_overview,
                 'guided_topics': guided_topics,
                 'capability_evidence_pool': capability_evidence_pool,

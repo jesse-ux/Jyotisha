@@ -198,6 +198,45 @@ def test_strict_workflow_requires_vedastro_range_scan_boundary_for_timing_routes
     } in strict["technique_audit"]
 
 
+def test_strict_workflow_exposes_official_snapshot_as_primary_evidence_layer() -> None:
+    modules = _finance_modules()
+    modules["vedastro_official_full_snapshot"] = {
+        "status": "partial",
+        "available": True,
+        "operation": "official_full_snapshot",
+        "primary_source": "vedastro_official",
+        "official_chart": {
+            "source": "vedastro_official",
+            "planets": {"Sun": {"source": "vedastro_official", "sign": "Aries"}},
+            "ascendant": {"source": "vedastro_official", "sign": "Leo"},
+        },
+    }
+    modules["source_priority"] = {
+        "mode": "vedastro_official_primary",
+        "priority": [
+            "vedastro_official_snapshot",
+            "local_supplemental_modules",
+            "local_engine_fallback_when_official_blocked",
+        ],
+        "local_engine_role": "supplemental_crosscheck_or_fallback",
+        "official_snapshot_status": "partial",
+    }
+
+    strict = _collect_strict_evidence("finance", {"modules": modules})
+
+    official = strict["present_evidence"]["vedastro_official_snapshot"]
+    assert official["level"] == "primary"
+    assert official["source"] == "vedastro_official"
+    assert official["status"] == "partial"
+    assert strict["present_evidence"]["source_priority"]["mode"] == "vedastro_official_primary"
+    assert any(
+        row["technique"] == "VedAstro Official Full Snapshot"
+        and row["status"] == "used"
+        and row["role"] == "primary_raw_evidence"
+        for row in strict["technique_audit"]
+    )
+
+
 def test_strict_workflow_marks_vedastro_range_scan_used_without_score_or_label_override() -> None:
     base_result = {"modules": _finance_modules()}
     with_range_scan = {"modules": deepcopy(base_result["modules"])}

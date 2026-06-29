@@ -822,10 +822,14 @@ def _planet_snapshot(planets, planet_name):
     if not isinstance(pdata, dict):
         return {}
     return {
+        'source': pdata.get('source'),
         'sign': pdata.get('sign'),
         'sign_cn': pdata.get('sign_cn'),
         'house': pdata.get('house'),
+        'degree': pdata.get('degree'),
+        'lon': pdata.get('lon'),
         'degree_in_sign': pdata.get('degree_in_sign'),
+        'vargas': pdata.get('vargas'),
         'nakshatra': pdata.get('nakshatra'),
         'nakshatra_pada': pdata.get('nakshatra_pada'),
         'status': pdata.get('status'),
@@ -1146,6 +1150,38 @@ def _build_vedastro_overview_payload(modules):
     }
 
 
+def _build_vedastro_official_full_snapshot_payload(modules):
+    snapshot = modules.get('vedastro_official_full_snapshot') if isinstance(modules, dict) else {}
+    if not isinstance(snapshot, dict) or not snapshot:
+        return {
+            'status': 'blocked',
+            'available': False,
+            'operation': 'official_full_snapshot',
+            'primary_source': 'vedastro_official',
+            'boundary_note': 'VedAstro official full snapshot is not attached.',
+        }
+    manifest = snapshot.get('request_manifest') if isinstance(snapshot.get('request_manifest'), dict) else {}
+    requests = manifest.get('requests') if isinstance(manifest.get('requests'), list) else []
+    snapshot_sections = snapshot.get('snapshot_sections') if isinstance(snapshot.get('snapshot_sections'), dict) else {}
+    return {
+        'status': snapshot.get('status') or 'blocked',
+        'available': bool(snapshot.get('available')),
+        'operation': snapshot.get('operation') or 'official_full_snapshot',
+        'primary_source': snapshot.get('primary_source') or 'vedastro_official',
+        'section_statuses': snapshot.get('section_statuses') or {},
+        'snapshot_section_keys': sorted(snapshot_sections.keys()),
+        'request_section_count': len(requests),
+        'request_sections': [item.get('section') for item in requests if isinstance(item, dict)],
+        'method_catalog': manifest.get('method_catalog') or {},
+        'user_visibility': snapshot.get('user_visibility') or 'backend_raw_evidence_not_direct_user_report',
+        'source_metadata': snapshot.get('source_metadata') or {},
+        'boundary_note': (
+            snapshot.get('reason')
+            or 'VedAstro official full snapshot is the primary raw evidence layer; user reports consume selected slices only.'
+        ),
+    }
+
+
 def _build_ai_prompt_pack(report):
     """Build a compact, evidence-first prompt pack for downstream AI/RAG reading."""
     modules = report.get('modules', {}) if isinstance(report, dict) else {}
@@ -1167,6 +1203,7 @@ def _build_ai_prompt_pack(report):
     relationship_narrative = _build_relationship_narrative_payload(modules.get('relationship_strict_evidence'))
     vimsopaka_semantic_summary = _build_vimsopaka_semantic_summary(modules.get('vimsopaka'))
     vedastro_overview = _build_vedastro_overview_payload(modules)
+    vedastro_official_full_snapshot = _build_vedastro_official_full_snapshot_payload(modules)
     guided_topics = modules.get('guided_topics') if isinstance(modules.get('guided_topics'), list) else build_guided_topics(report)
     capability_evidence_pool = build_capability_evidence_pool_summary()
 
@@ -1239,6 +1276,7 @@ def _build_ai_prompt_pack(report):
         },
         'oracle_progress': oracle_progress,
         'functional_benefic_malefic': functional_layer,
+        'vedastro_official_full_snapshot': vedastro_official_full_snapshot,
         'vedastro_overview': vedastro_overview,
         'guided_topics': guided_topics,
         'capability_evidence_pool': capability_evidence_pool,
@@ -1256,6 +1294,7 @@ def _build_ai_prompt_pack(report):
         "输出结构建议：参数声明、核心星盘、关系/事业/财富/健康分主题、当前时机、证据表、风险边界、可行动建议。",
         "若引用经典法则，请优先检索 retrieval_plan.local_reference_docs；需要外部断语时再做 web/source verification。",
         "若 evidence_snapshot.vedastro_overview.status 为 ok，请把它作为用户可见外部概览证据明确写出，但不要把 overview-only 结果误当作长周期精扫结论。",
+        "VedAstro 官方全量快照是第一原始证据层；若 evidence_snapshot.vedastro_official_full_snapshot.status 不是 ok/partial，必须说明官方全量资料 blocked，并把本地结果标记为 fallback。",
         "若 evidence_snapshot.capability_evidence_pool 存在，请把 89 项视为后台备选证据池；不要把所有能力条目平铺成结论，也不要让 audit_only/alias 条目影响占星判断。",
     ]
 
@@ -1327,6 +1366,11 @@ def _attach_vedastro_main_entry_overview(report, args):
         'tz': getattr(args, 'tz', None),
         'ayanamsa_policy': getattr(args, 'ayanamsa', None) or _current_ayanamsa_name(args),
         'node_policy': getattr(args, 'node_mode', 'mean'),
+        'reference_date': (
+            getattr(args, 'transit_date', None)
+            or getattr(args, 'today', None)
+            or datetime.now().strftime('%Y-%m-%d')
+        ),
     }
 
     def _scan_domain(domain: str):
@@ -1408,6 +1452,51 @@ def _attach_vedastro_main_entry_overview(report, args):
         'reason': failure_reason,
         'domain_reports': domain_reports,
     }
+    return report
+
+
+def _attach_vedastro_official_full_snapshot(report, args):
+    if not isinstance(report, dict):
+        return report
+    modules = report.setdefault('modules', {})
+    if not isinstance(modules, dict):
+        return report
+    if modules.get('vedastro_official_full_snapshot'):
+        return report
+
+    try:
+        from vedastro_service_adapter import run_official_full_snapshot_for_case
+        from vedastro_priority import apply_vedastro_source_priority
+    except Exception as exc:  # pragma: no cover - import guard
+        report.setdefault('warnings', []).append(f"vedastro-official-full-snapshot-import: {exc}")
+        return report
+
+    case = {
+        'year': getattr(args, 'year', None),
+        'month': getattr(args, 'month', None),
+        'day': getattr(args, 'day', None),
+        'hour': getattr(args, 'hour', None),
+        'minute': getattr(args, 'minute', None),
+        'second': _arg_second(args),
+        'lat': getattr(args, 'lat', None),
+        'lon': getattr(args, 'lon', None),
+        'tz': getattr(args, 'tz', None),
+        'ayanamsa_policy': getattr(args, 'ayanamsa', None) or _current_ayanamsa_name(args),
+        'node_policy': getattr(args, 'node_mode', 'mean'),
+        'reference_date': (
+            getattr(args, 'transit_date', None)
+            or getattr(args, 'today', None)
+            or datetime.now().strftime('%Y-%m-%d')
+        ),
+    }
+    modules['vedastro_official_full_snapshot'] = run_official_full_snapshot_for_case(
+        case,
+        case_id='full_reading_official_primary',
+    )
+    apply_vedastro_source_priority(
+        report,
+        official_snapshot=modules['vedastro_official_full_snapshot'],
+    )
     return report
 
 
@@ -5131,6 +5220,11 @@ def cmd_full_reading(args):
         )
     except Exception as e:
         report['errors'].append(f"relationship-strict-evidence: {e}")
+
+    try:
+        _attach_vedastro_official_full_snapshot(report, args)
+    except Exception as e:
+        report['warnings'].append(f"vedastro-official-full-snapshot: {e}")
 
     try:
         _attach_vedastro_main_entry_overview(report, args)

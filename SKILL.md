@@ -64,6 +64,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 2. **阶段一**（仅B）：PDF/图片提取 + Quality Gate
 3. **阶段二**：意图识别 → 路由目标宫位（无明确意图→Level 2综合解盘）
 4. **阶段二点五**：若 `full-reading` 或网页/API 返回 `ai_prompt_pack`，必须优先读取 `prompt_zh`、`evidence_snapshot`、`retrieval_plan` 作为 AI/RAG 主上下文；若没有该字段，再退回传统 JSON 摘要。
+4.1 **VedAstro 官方优先级**：用户给出生信息后，网页、Skill、MCP 都必须默认走同一条数据优先级：`VedAstro official snapshot -> local supplemental modules -> local fallback only when official blocked`。用户不需要主动要求“调用 VedAstro”。若 `evidence_snapshot.vedastro_official_full_snapshot.status` 为 `ok/partial` 且官方 chart 可用，D1/分盘/官方返回的原始字段以 VedAstro 为主；本地引擎只做补充、交叉检查或官方 blocked 时 fallback。
 4. **阶段三**：静态分析10步（宫位→承诺→Yoga→Argala→逆行→NK→Shadbala→AV→Ketu→分盘）
 5. **阶段四**：动态推运7步（Dasha→五系统Convergence→Transit→Double Transit→Jaimini→KP→Varshaphala）
 6. **阶段五**：应期输出（五层验证→时间窗口→Actionable Output+案例检索）

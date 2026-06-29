@@ -39,6 +39,7 @@ from local_env import load_local_env
 
 from mcp.server.fastmcp import FastMCP
 from functional_benefics import derive_functional_benefic_malefic
+from vedastro_priority import official_snapshot_evidence
 
 load_local_env(SCRIPT_DIR)
 
@@ -512,6 +513,29 @@ def _external_activation_audit(external_activation: Any) -> List[Dict[str, Any]]
                 }
             ]
     return []
+
+
+def _official_snapshot_audit(official_snapshot: Any) -> List[Dict[str, Any]]:
+    if not isinstance(official_snapshot, dict):
+        return []
+    if official_snapshot.get("level") == "primary":
+        return [
+            {
+                "technique": "VedAstro Official Full Snapshot",
+                "status": "used",
+                "role": "primary_raw_evidence",
+                "effect": "chart_and_varga_values_take_priority_over_local_engine",
+            }
+        ]
+    return [
+        {
+            "technique": "VedAstro Official Full Snapshot",
+            "status": "blocked",
+            "role": "primary_raw_evidence",
+            "effect": "local_engine_fallback_only_with_boundary",
+            "reason": official_snapshot.get("reason") or official_snapshot.get("status"),
+        }
+    ]
 
 
 def _derive_external_technique_evidence(modules: Dict[str, Any], domain: str) -> Dict[str, Any]:
@@ -1581,9 +1605,11 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["argala_support"] = _derive_argala_support(modules, 10)
         present["external_activation"] = _derive_external_activation_support(modules, "career")
         present["external_technique_evidence"] = _derive_external_technique_evidence(modules, "career")
+        present["vedastro_official_snapshot"] = official_snapshot_evidence(modules)
+        present["source_priority"] = modules.get("source_priority") if isinstance(modules.get("source_priority"), dict) else {}
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
         missing = [key for key, value in present.items() if key not in {
-            "external_activation", "external_technique_evidence", "argala_support", "shadbala", "shadbala_component_audit", "kakshya_career_support", "functional_benefic_malefic"
+            "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "argala_support", "shadbala", "shadbala_component_audit", "kakshya_career_support", "functional_benefic_malefic"
         } and value in (None, {}, [], "")]
         convergence = present["career_convergence"] or {}
         confidence_cap = "medium"
@@ -1612,7 +1638,8 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             ),
         }
         audit = (
-            _external_activation_audit(present.get("external_activation"))
+            _official_snapshot_audit(present.get("vedastro_official_snapshot"))
+            + _external_activation_audit(present.get("external_activation"))
             + _external_technique_audit(present.get("external_technique_evidence"))
         )
         if audit:
@@ -1647,11 +1674,13 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["argala_support"] = _derive_argala_support(modules, 7)
         present["external_activation"] = _derive_external_activation_support(modules, "marriage")
         present["external_technique_evidence"] = _derive_external_technique_evidence(modules, "marriage")
+        present["vedastro_official_snapshot"] = official_snapshot_evidence(modules)
+        present["source_priority"] = modules.get("source_priority") if isinstance(modules.get("source_priority"), dict) else {}
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
         missing = [
             key for key, value in present.items()
-            if key not in {"chart", "external_activation", "external_technique_evidence", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support", "synastry_relationship_support", "argala_support", "shadbala", "shadbala_component_audit", "functional_benefic_malefic"}
+            if key not in {"chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support", "synastry_relationship_support", "argala_support", "shadbala", "shadbala_component_audit", "functional_benefic_malefic"}
             and value in (None, {}, [], "")
         ]
         convergence = present["marriage_convergence"] or {}
@@ -1683,7 +1712,8 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             ),
         }
         audit = (
-            _external_activation_audit(present.get("external_activation"))
+            _official_snapshot_audit(present.get("vedastro_official_snapshot"))
+            + _external_activation_audit(present.get("external_activation"))
             + _external_technique_audit(present.get("external_technique_evidence"))
         )
         if audit:
@@ -1728,10 +1758,12 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["kakshya_finance_support"] = _derive_kakshya_finance_support(_safe_get(modules, "kakshya"))
         present["external_activation"] = _derive_external_activation_support(modules, "wealth")
         present["external_technique_evidence"] = _derive_external_technique_evidence(modules, "wealth")
+        present["vedastro_official_snapshot"] = official_snapshot_evidence(modules)
+        present["source_priority"] = modules.get("source_priority") if isinstance(modules.get("source_priority"), dict) else {}
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
         missing = [key for key, value in present.items() if key not in {
-            "chart", "external_activation", "external_technique_evidence", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support", "shadbala_component_audit", "asc_sign", "pav_finance_support", "sodhita_finance_support", "kakshya_finance_support", "functional_benefic_malefic"
+            "chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support", "shadbala_component_audit", "asc_sign", "pav_finance_support", "sodhita_finance_support", "kakshya_finance_support", "functional_benefic_malefic"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [
@@ -1772,7 +1804,8 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
             ),
         }
         audit = (
-            _external_activation_audit(present.get("external_activation"))
+            _official_snapshot_audit(present.get("vedastro_official_snapshot"))
+            + _external_activation_audit(present.get("external_activation"))
             + _external_technique_audit(present.get("external_technique_evidence"))
         )
         if audit:
@@ -1876,6 +1909,14 @@ def _maybe_attach_vedastro_evidence(
     enriched = dict(result)
     enriched["modules"] = dict(modules)
     enriched["modules"]["vedastro_range_scan_result"] = attached_scan
+    official_snapshot = attached_scan.get("official_full_snapshot")
+    if isinstance(official_snapshot, dict):
+        try:
+            from vedastro_priority import apply_vedastro_source_priority
+
+            apply_vedastro_source_priority(enriched, official_snapshot=official_snapshot)
+        except Exception:
+            enriched["modules"]["vedastro_official_full_snapshot"] = official_snapshot
     return enriched
 
 
