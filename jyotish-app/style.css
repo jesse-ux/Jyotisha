@@ -4626,6 +4626,97 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
 .rect-config-row { display: flex; gap: 16px; flex-wrap: wrap; }
 .rect-config-row .form-group { flex: 1; min-width: 140px; }
 
+.rect-interview { margin-bottom: 16px; }
+.rect-interview-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.rect-interview-head p {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.rect-interview-head span {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.rect-interview-list { display: grid; gap: 8px; }
+.rect-interview-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+.rect-interview-copy strong {
+  display: block;
+  color: var(--text-heading);
+  font-size: 13px;
+}
+.rect-interview-copy span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
+.rect-answer-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rect-answer-group button,
+.rect-secondary-btn {
+  padding: 6px 10px;
+  border: 1px solid var(--border-card);
+  border-radius: 6px;
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 12px;
+}
+.rect-answer-group button.active,
+.rect-answer-group button:hover,
+.rect-secondary-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-heading);
+}
+.rect-answer-detail {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 8px;
+}
+.rect-answer-detail input {
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 6px;
+  background: var(--bg-white);
+  color: var(--text-heading);
+  font-family: var(--font-body);
+  font-size: 12px;
+}
+.rect-interview-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.rect-interview-actions span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
 .rect-events { margin-bottom: 16px; }
 .rect-count { font-size: 12px; color: var(--text-secondary); font-weight: 400; }
 .rect-hint { font-size: 12px; color: var(--text-secondary); margin: 4px 0 12px; }

@@ -55,6 +55,11 @@ def test_vedastro_service_adapter_executor_schema_is_declared() -> None:
 
 
 def test_vedastro_service_adapter_returns_controlled_unconfigured_status() -> None:
+    env = os.environ.copy()
+    env.pop("VEDASTRO_API_ENDPOINT", None)
+    env.pop("VEDASTRO_ENABLE_NETWORK", None)
+    env["JYOTISH_SKIP_LOCAL_ENV"] = "1"
+
     completed = subprocess.run(
         [sys.executable, "scripts/vedastro_service_adapter.py", "--case", "beijing_first_use_demo"],
         cwd=ROOT,
@@ -62,6 +67,7 @@ def test_vedastro_service_adapter_returns_controlled_unconfigured_status() -> No
         capture_output=True,
         timeout=120,
         check=False,
+        env=env,
     )
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
@@ -76,6 +82,11 @@ def test_vedastro_service_adapter_returns_controlled_unconfigured_status() -> No
 
 
 def test_ephemeris_adapter_contract_can_call_vedastro_candidate_stub() -> None:
+    env = os.environ.copy()
+    env.pop("VEDASTRO_API_ENDPOINT", None)
+    env.pop("VEDASTRO_ENABLE_NETWORK", None)
+    env["JYOTISH_SKIP_LOCAL_ENV"] = "1"
+
     completed = subprocess.run(
         [sys.executable, "scripts/ephemeris_adapter_contract.py", "vedastro_service_adapter_candidate"],
         cwd=ROOT,
@@ -83,6 +94,7 @@ def test_ephemeris_adapter_contract_can_call_vedastro_candidate_stub() -> None:
         capture_output=True,
         timeout=120,
         check=False,
+        env=env,
     )
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
@@ -96,6 +108,8 @@ def test_ephemeris_adapter_contract_can_call_vedastro_candidate_stub() -> None:
 def test_vedastro_service_adapter_builds_request_preview_before_real_network_use() -> None:
     env = os.environ.copy()
     env["VEDASTRO_API_ENDPOINT"] = "https://example.invalid/vedastro"
+    env.pop("VEDASTRO_ENABLE_NETWORK", None)
+    env["JYOTISH_SKIP_LOCAL_ENV"] = "1"
 
     completed = subprocess.run(
         [sys.executable, "scripts/vedastro_service_adapter.py", "--case", "beijing_first_use_demo"],
@@ -120,6 +134,8 @@ def test_vedastro_service_adapter_builds_request_preview_before_real_network_use
 def test_vedastro_service_adapter_builds_range_scan_preview_before_real_network_use() -> None:
     env = os.environ.copy()
     env["VEDASTRO_API_ENDPOINT"] = "https://example.invalid/vedastro"
+    env.pop("VEDASTRO_ENABLE_NETWORK", None)
+    env["JYOTISH_SKIP_LOCAL_ENV"] = "1"
 
     completed = subprocess.run(
         [
@@ -160,6 +176,7 @@ def test_vedastro_range_scan_unconfigured_still_returns_official_search_events_p
     env = os.environ.copy()
     env.pop("VEDASTRO_API_ENDPOINT", None)
     env.pop("VEDASTRO_ENABLE_NETWORK", None)
+    env["JYOTISH_SKIP_LOCAL_ENV"] = "1"
 
     completed = subprocess.run(
         [
@@ -198,6 +215,7 @@ def test_vedastro_range_scan_unconfigured_still_returns_official_search_events_p
     assert report["request_preview"]["official_request_profile"]["body"]["StartTime"]["StdTime"] == "12:00 01/01/2026 +08:00"
     assert report["request_preview"]["official_request_profile"]["body"]["EndTime"]["StdTime"] == "12:00 01/01/2031 +08:00"
     assert report["request_preview"]["official_request_profile"]["body"]["PrecisionHours"] == 100
+    assert report["request_preview"]["live_sampling_request_profile"]["body"]["AtTime"]["StdTime"] == "12:00 01/01/2026 +08:00"
 
 
 def test_vedastro_schema_declares_official_search_events_live_contract() -> None:
@@ -364,6 +382,8 @@ def test_vedastro_service_adapter_can_normalize_mock_http_response() -> None:
 
 
 def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> None:
+    seen_at_times: list[str] = []
+
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:  # noqa: N802
             length = int(self.headers.get("Content-Length", "0"))
@@ -371,9 +391,7 @@ def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> No
             assert payload["Ayanamsa"] == "lahiri"
             assert payload["EventTagList"] == ["Marriage", "Personal", "General"]
             assert payload["BirthTime"]["StdTime"] == "12:00 01/01/1990 +08:00"
-            assert payload["StartTime"]["StdTime"] == "12:00 01/01/2026 +08:00"
-            assert payload["EndTime"]["StdTime"] == "12:00 01/01/2031 +08:00"
-            assert payload["PrecisionHours"] == 100
+            seen_at_times.append(payload["AtTime"]["StdTime"])
             response = {
                 "events": [
                     {
@@ -458,6 +476,10 @@ def test_vedastro_service_adapter_can_normalize_mock_range_scan_response() -> No
     assert report["evidence_ledger"][0]["score"] == 72
     assert report["evidence_ledger"][0]["raw"]["name"] == "Jupiter supports marriage axis"
     assert report["source_metadata"]["endpoint"].startswith("http://127.0.0.1:")
+    assert report["source_metadata"]["sampling_mode"] == "at_time_sweep"
+    assert report["source_metadata"]["sample_count"] >= 2
+    assert seen_at_times[0] == "12:00 01/01/2026 +08:00"
+    assert len(set(seen_at_times)) >= 2
 
 
 def test_vedastro_range_scan_records_hashes_and_artifact_path() -> None:
@@ -536,7 +558,9 @@ def test_vedastro_range_scan_records_hashes_and_artifact_path() -> None:
     assert metadata["allowlist_domain"] == "marriage"
     assert metadata["allowlist_event_count"] == 1
     assert metadata["filtered_event_count"] == 1
-    assert metadata["attempt_count"] == 1
+    assert metadata["attempt_count"] >= 1
+    assert metadata["sample_count"] >= 1
+    assert metadata["sampling_mode"] == "at_time_sweep"
     artifact_path = ROOT / metadata["artifact_path"]
     assert artifact_path.exists()
     artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
@@ -615,8 +639,9 @@ def test_vedastro_range_scan_retries_transient_http_error() -> None:
     report = json.loads(completed.stdout)
     assert report["status"] == "ok"
     assert report["event_count"] == 1
-    assert report["source_metadata"]["attempt_count"] == 2
-    assert report["source_metadata"]["retry_error_codes"] == [503]
+    assert report["source_metadata"]["attempt_count"] >= 2
+    assert 503 in report["source_metadata"]["retry_error_codes"]
+    assert report["source_metadata"]["sampling_mode"] == "at_time_sweep"
 
 
 def test_vedastro_service_adapter_applies_domain_allowlist_to_range_scan_noise() -> None:

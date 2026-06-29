@@ -481,3 +481,14 @@
 - 实测真相：官方公共 MCP `initialize` 与 `tools/list` 已通过真实 HTTP 返回；Python bridge 的 `DasaAtTime` 通过 positional args 已成功返回 Vimshottari 快照；`GetCharaDasaAtTime` 的 bound-method 形状已进一步探明，其真实桥接仍需按 positional contract 单独收口，但不再属于“完全未知调用面”。
 - 本地主线真相同步：补齐 `references/event_judgment_career.md`，并将其挂入 `SKILL.md`、`references/quick-reference-guide.md` 与 `docs/research/ACTIVE_FRONTS.md`。这意味着 career 线不再缺“专用裁决骨架”，后续尾巴集中在裁决细化、报告渲染与 oracle 闭环，而非入口缺失。
 - Fresh oracle status re-check：`python3 scripts/oracle_closure_master_dashboard.py --format json` 当前显示 `12` 个总任务中 `8` 个已 external_verified、`4` 个未闭合；未闭合核心已收缩到 `tajika_sahams` 前线，而非 Dasha/Shadbala 主前线。`python3 scripts/public_benchmark_dashboard.py --format json` 当前显示 `valid_packets=5`、`ready_for_calibration=5`、`production_tuning_allowed=false`，因此仍不能宣称全局 oracle 已封顶。
+
+## 2026-06-29T08:20:00+08:00 - 项目进度深度检测
+
+- 按用户要求深度检测当前印度占星项目进度；读取 `task_plan.md`、`findings.md`、`progress.md`、`ACTIVE_FRONTS.md`、VedAstro parity/fast-path 文档与 oracle benchmark inventory。
+- Git 状态确认：当前分支 `codex/release-hygiene-ci` 与远端同步，HEAD 为 `d0af9f4 Productize VedAstro user range scan entry`，工作区无未提交 diff。
+- 能力面确认：`python3 scripts/audit_capabilities.py --mode validate` 通过，注册表 `89` 个技法中 `10 complete / 79 covered / 0 missing / 0 partial / 0 not-integrated`。
+- 碎片面确认：`python3 scripts/audit_fragments.py --strict` 通过，`engine_command_count=37`、`api_endpoint_count=43`、`candidate_count=0`、`untracked_count=0`。
+- Oracle 面确认：`oracle_closure_master_dashboard` 显示 `12` 个任务中 `8` 个 external_verified、`4` 个 open；Dasha 与 Shadbala 当前可声明对应 front closure，但全局 oracle closure 仍为 false，生产调参仍不允许。
+- VedAstro 面确认：当前已进入可点击用户入口和 adapter/provenance 阶段；官方 MCP/Python bridge 有真实可达记录，REST range scan 的官方 endpoint smoke 仍依赖 `VEDASTRO_API_ENDPOINT` 与 `VEDASTRO_ENABLE_NETWORK=1`。
+- 质量门确认：`python3 scripts/run_quality_gate.py --profile quick --skip-frontend-runtime` 通过，聚焦集合 `297 passed`；`env -u VEDASTRO_API_ENDPOINT -u VEDASTRO_ENABLE_NETWORK python3 scripts/run_quality_gate.py --profile vedastro-live` 通过但返回受控 `blocked`，不得宣称官方实网 VedAstro range scan 已闭环。
+- 当前最值钱下一步：继续推进 VedAstro range scan 的官方样本调参和 EventTagList 映射质量，同时补 Tajika/Sahams 4 个未闭合外部 oracle 任务；之后再处理 Vimsopaka 高阶语义映射、Life Event Graph v1 产品化和报告渲染 polish。

@@ -2,6 +2,20 @@
 
 This file is the small index for the current engineering fronts that still drive code changes.
 
+## Shortest-Path Closure Order (2026-06-29)
+
+To avoid scope drift, current work stays inside these four closure lanes only:
+
+1. Relationship adjudicator closure
+2. Vimsopaka + functional-role closure
+3. Oracle closure batch
+4. VedAstro strict ingestion
+
+Reference plan:
+- `/Users/wuyongnaren/Documents/印度占星/docs/superpowers/plans/2026-06-29-shortest-path-closure-plan.md`
+
+Do not open new product surfaces before at least one of these four lanes is closed.
+
 ## Fragment Discipline
 
 - Before touching strict workflow or adjudicator logic, check:

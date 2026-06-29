@@ -9,6 +9,7 @@ workspace can evolve from research notes to an executable adapter contract.
 from __future__ import annotations
 
 import argparse
+import http.client
 import hashlib
 import json
 import os
@@ -19,8 +20,14 @@ from typing import Any
 from urllib import request, error
 from urllib.parse import urlparse
 
+try:
+    from scripts.local_env import load_local_env
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from local_env import load_local_env
+
 
 ROOT = Path(__file__).resolve().parents[1]
+load_local_env(ROOT)
 
 
 PARITY_CASES = {
@@ -493,9 +500,11 @@ def _range_scan_preview(case: dict[str, Any], domain: str, start_date: str, end_
         "start_date": start_date,
         "end_date": end_date,
         "event_model": "vedastro_events_at_range_candidate",
+        "search_mode": "single_point",
         **case,
     }
     preview["official_request_profile"] = _build_official_search_events_profile(preview)
+    preview["live_sampling_request_profile"] = _build_live_sampling_search_events_profile(preview)
     return preview
 
 
@@ -552,6 +561,28 @@ def _build_official_search_events_profile(request_preview: dict[str, Any]) -> di
         headers["x-api-key"] = api_key
     return {
         "profile_version": OFFICIAL_SEARCH_EVENTS_PROFILE_VERSION,
+        "endpoint_path": OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH,
+        "method": OFFICIAL_SEARCH_EVENTS_METHOD,
+        "headers": headers,
+        "body": body,
+    }
+
+
+def _build_live_sampling_search_events_profile(request_preview: dict[str, Any]) -> dict[str, Any]:
+    case = dict(request_preview)
+    case["tz"] = _normalize_tz(case)
+    body = {
+        "BirthTime": _time_json_from_case(case, f"{case['year']:04d}-{case['month']:02d}-{case['day']:02d}"),
+        "Ayanamsa": str(case.get("ayanamsa_policy") or "lahiri"),
+        "EventTagList": OFFICIAL_RANGE_SCAN_EVENT_TAGS.get(str(request_preview.get("domain") or ""), ["General"]),
+        "AtTime": _time_json_from_case(case, str(request_preview["start_date"])),
+    }
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    api_key = os.environ.get("VEDASTRO_API_KEY", "").strip()
+    if api_key:
+        headers["x-api-key"] = api_key
+    return {
+        "profile_version": f"{OFFICIAL_SEARCH_EVENTS_PROFILE_VERSION}_live_sampling",
         "endpoint_path": OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH,
         "method": OFFICIAL_SEARCH_EVENTS_METHOD,
         "headers": headers,
@@ -685,9 +716,15 @@ def _normalize_range_scan_success(
     attempt_count: int = 1,
     retry_error_codes: list[int] | None = None,
 ) -> dict[str, Any]:
-    # Handle actual VedAstro response format: {"Status": "Pass", "Payload": [...]}
+    # Handle actual VedAstro response formats:
+    # {"Status": "Pass", "Payload": {"SearchEvents": [...]}}
+    # {"Status": "Pass", "Payload": [...]}
     if payload.get("Status") == "Pass":
-        events = payload.get("Payload", [])
+        payload_body = payload.get("Payload", [])
+        if isinstance(payload_body, dict):
+            events = payload_body.get("SearchEvents", [])
+        else:
+            events = payload_body
     else:
         # Fallback to local stub format if not VedAstro format
         events = payload.get("events", [])
@@ -716,10 +753,12 @@ def _normalize_range_scan_success(
     for index, event in enumerate(events, start=1):
         if not isinstance(event, dict):
             continue
-        # VedAstro uses "Name" for event id, and "EventTags" for tags
+        # VedAstro uses "Name" for event id, and may expose tags as EventTags, tags, or Tag.
         event_id = event.get("Name") or event.get("id") or event.get("name") or f"event_{index}"
-        tags = event.get("EventTags") or event.get("tags") or []
-        if not isinstance(tags, list):
+        tags = event.get("EventTags") or event.get("tags") or event.get("Tag") or []
+        if isinstance(tags, str):
+            tags = [part.strip() for part in tags.split(",") if part.strip()]
+        elif not isinstance(tags, list):
             tags = []
         tag_set = {str(tag) for tag in tags}
         matched_by = "rejected"
@@ -865,7 +904,12 @@ def _source_metadata(endpoint: str) -> dict[str, Any]:
 
 
 def _post_json(endpoint: str, request_preview: dict[str, Any]) -> dict[str, Any] | str:
-    official_request_profile = request_preview.get("official_request_profile") if isinstance(request_preview, dict) else None
+    official_request_profile = None
+    if isinstance(request_preview, dict):
+        official_request_profile = (
+            request_preview.get("live_sampling_request_profile")
+            or request_preview.get("official_request_profile")
+        )
     request_url = endpoint
     headers = {"Content-Type": "application/json"}
     vedastro_payload = request_preview
@@ -911,6 +955,97 @@ def _post_json_with_retry(endpoint: str, request_preview: dict[str, Any]) -> tup
             if _backoff_seconds():
                 time.sleep(_backoff_seconds())
     return {}, max_attempts, retry_error_codes
+
+
+def _iter_sample_dates(start_date: str, end_date: str) -> list[str]:
+    from datetime import datetime, timedelta
+
+    start = datetime.strptime(start_date, "%Y-%m-%d").date()
+    end = datetime.strptime(end_date, "%Y-%m-%d").date()
+    if end <= start:
+        return [start_date]
+    span_days = max((end - start).days, 1)
+    step_days = max(1, span_days // 11)
+    dates: list[str] = []
+    current = start
+    while current <= end:
+        dates.append(current.isoformat())
+        current += timedelta(days=step_days)
+    if dates[-1] != end.isoformat():
+        dates.append(end.isoformat())
+    return dates
+
+
+def _merge_range_scan_reports(
+    reports: list[dict[str, Any]],
+    endpoint: str,
+    base_preview: dict[str, Any],
+) -> dict[str, Any]:
+    if not reports:
+        return _normalize_range_scan_success({"Status": "Pass", "Payload": []}, endpoint, base_preview)
+
+    deduped: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for report in reports:
+        for item in report.get("evidence_ledger", []):
+            key = (
+                str(item.get("event_id") or ""),
+                str(item.get("start") or ""),
+                str(item.get("end") or ""),
+            )
+            existing = deduped.get(key)
+            existing_score = existing.get("signal_lift", 0) if existing else -1
+            score = item.get("signal_lift", 0)
+            if existing is None or score > existing_score:
+                deduped[key] = item
+
+    evidence_ledger = list(deduped.values())
+    top_event = None
+    if evidence_ledger:
+        top = max(
+            evidence_ledger,
+            key=lambda item: (
+                item.get("signal_lift") if isinstance(item.get("signal_lift"), (int, float)) else 0,
+                item.get("confidence") == "high",
+            ),
+        )
+        top_event = {
+            "event_id": top.get("event_id"),
+            "signal_key": top.get("signal_key"),
+            "signal_label": top.get("signal_label"),
+            "signal_family": top.get("signal_family"),
+            "score": top.get("score"),
+            "start": top.get("start"),
+            "end": top.get("end"),
+            "tags": top.get("tags") or [],
+        }
+
+    metadata = dict(reports[-1].get("source_metadata") or {})
+    metadata["sampling_mode"] = "at_time_sweep"
+    metadata["sample_dates"] = [report.get("request_preview", {}).get("start_date") for report in reports]
+    metadata["sample_count"] = len(reports)
+    metadata["raw_event_count"] = sum(int((report.get("source_metadata") or {}).get("raw_event_count", 0)) for report in reports)
+    metadata["filtered_event_count"] = len(evidence_ledger)
+    metadata["allowlist_event_count"] = len(evidence_ledger)
+    metadata["attempt_count"] = sum(int((report.get("source_metadata") or {}).get("attempt_count", 1)) for report in reports)
+    retry_codes: list[int] = []
+    for report in reports:
+        retry_codes.extend(list((report.get("source_metadata") or {}).get("retry_error_codes") or []))
+    metadata["retry_error_codes"] = retry_codes
+
+    result = {
+        "backend": "vedastro_service_adapter_candidate",
+        "available": True,
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": base_preview.get("domain"),
+        "request_preview": base_preview,
+        "event_count": len(evidence_ledger),
+        "top_event": top_event,
+        "evidence_ledger": evidence_ledger,
+        "source_metadata": metadata,
+    }
+    result["source_metadata"]["artifact_path"] = _write_artifact(result)
+    return result
 
 
 def run_case(case_id: str) -> dict[str, Any]:
@@ -1007,46 +1142,55 @@ def _run_range_scan_case(case: dict[str, Any], domain: str, start_date: str, end
             "source_metadata": _source_metadata(endpoint),
         }
 
-    try:
-        payload, attempt_count, retry_error_codes = _post_json_with_retry(endpoint, request_preview)
-    except error.HTTPError as exc:
-        return {
-            "backend": "vedastro_service_adapter_candidate",
-            "available": False,
-            "status": "http_error",
-            "reason": f"VedAstro range scan HTTP error: {exc.code}",
-            "request_preview": request_preview,
-            "source_metadata": _source_metadata(endpoint),
-        }
-    except error.URLError as exc:
-        return {
-            "backend": "vedastro_service_adapter_candidate",
-            "available": False,
-            "status": "network_error",
-            "reason": f"VedAstro range scan network error: {exc.reason}",
-            "request_preview": request_preview,
-            "source_metadata": _source_metadata(endpoint),
-        }
-    except (TimeoutError, socket.timeout):
-        return {
-            "backend": "vedastro_service_adapter_candidate",
-            "available": False,
-            "status": "timeout",
-            "reason": "VedAstro range scan timed out",
-            "request_preview": request_preview,
-            "source_metadata": _source_metadata(endpoint),
-        }
-    except json.JSONDecodeError:
-        return {
-            "backend": "vedastro_service_adapter_candidate",
-            "available": False,
-            "status": "invalid_json",
-            "reason": "VedAstro range scan received non-JSON response",
-            "request_preview": request_preview,
-            "source_metadata": _source_metadata(endpoint),
-        }
+    sample_dates = _iter_sample_dates(start_date, end_date)
+    reports: list[dict[str, Any]] = []
+    for sample_date in sample_dates:
+        sample_preview = dict(request_preview)
+        sample_preview["start_date"] = sample_date
+        sample_preview["end_date"] = sample_date
+        sample_preview["official_request_profile"] = _build_official_search_events_profile(sample_preview)
+        sample_preview["live_sampling_request_profile"] = _build_live_sampling_search_events_profile(sample_preview)
+        try:
+            payload, attempt_count, retry_error_codes = _post_json_with_retry(endpoint, sample_preview)
+        except error.HTTPError as exc:
+            return {
+                "backend": "vedastro_service_adapter_candidate",
+                "available": False,
+                "status": "http_error",
+                "reason": f"VedAstro range scan HTTP error: {exc.code}",
+                "request_preview": sample_preview,
+                "source_metadata": _source_metadata(endpoint),
+            }
+        except (error.URLError, http.client.RemoteDisconnected) as exc:
+            return {
+                "backend": "vedastro_service_adapter_candidate",
+                "available": False,
+                "status": "network_error",
+                "reason": f"VedAstro range scan network error: {getattr(exc, 'reason', str(exc))}",
+                "request_preview": sample_preview,
+                "source_metadata": _source_metadata(endpoint),
+            }
+        except (TimeoutError, socket.timeout):
+            return {
+                "backend": "vedastro_service_adapter_candidate",
+                "available": False,
+                "status": "timeout",
+                "reason": "VedAstro range scan timed out",
+                "request_preview": sample_preview,
+                "source_metadata": _source_metadata(endpoint),
+            }
+        except json.JSONDecodeError:
+            return {
+                "backend": "vedastro_service_adapter_candidate",
+                "available": False,
+                "status": "invalid_json",
+                "reason": "VedAstro range scan received non-JSON response",
+                "request_preview": sample_preview,
+                "source_metadata": _source_metadata(endpoint),
+            }
+        reports.append(_normalize_range_scan_success(payload, endpoint, sample_preview, attempt_count, retry_error_codes))
 
-    return _normalize_range_scan_success(payload, endpoint, request_preview, attempt_count, retry_error_codes)
+    return _merge_range_scan_reports(reports, endpoint, request_preview)
 
 
 def run_range_scan(case_id: str, domain: str, start_date: str, end_date: str) -> dict[str, Any]:

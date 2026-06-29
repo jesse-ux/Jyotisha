@@ -14,7 +14,6 @@ import io
 import json, sys, os, math
 import importlib.util
 import re
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
@@ -57,7 +56,7 @@ def _attach_vedastro_main_entry_overview(chart_result, birth_payload):
         return chart_result
 
     try:
-        adapter = _load_local_module('vedastro_service_adapter')
+        orchestrator = _load_local_module('vedastro_evidence_orchestrator')
     except Exception:
         return chart_result
 
@@ -66,9 +65,7 @@ def _attach_vedastro_main_entry_overview(chart_result, birth_payload):
         or birth_payload.get('today')
         or datetime.utcnow().strftime('%Y-%m-%d')
     )[:10]
-    start_date = datetime.strptime(reference_date, '%Y-%m-%d').date()
-    end_date = start_date
-    case = {
+    modules['vedastro_range_scan_result'] = orchestrator.orchestrate_vedastro_evidence({
         'year': birth_payload.get('year'),
         'month': birth_payload.get('month'),
         'day': birth_payload.get('day'),
@@ -80,87 +77,7 @@ def _attach_vedastro_main_entry_overview(chart_result, birth_payload):
         'tz': birth_payload.get('tz'),
         'ayanamsa_policy': birth_payload.get('ayanamsa') or 'lahiri',
         'node_policy': birth_payload.get('node_mode') or birth_payload.get('nodeMode') or 'mean',
-    }
-
-    def _scan_domain(domain: str):
-        return domain, adapter.run_range_scan_for_case(
-            case,
-            domain=domain,
-            start_date=start_date.isoformat(),
-            end_date=end_date.isoformat(),
-            case_id=f"api_chart_{domain}",
-        )
-
-    domain_reports = {}
-    combined_events = []
-    domain_statuses = {}
-    top_events = {}
-    failure_reason = None
-    availability = True
-
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        for domain, domain_report in executor.map(_scan_domain, ('career', 'marriage', 'wealth')):
-            domain_reports[domain] = domain_report
-    for domain in ('career', 'marriage', 'wealth'):
-        domain_report = domain_reports[domain]
-        domain_statuses[domain] = domain_report.get('status')
-        availability = availability and bool(domain_report.get('available', False))
-        if domain_report.get('status') != 'ok' and failure_reason is None:
-            failure_reason = domain_report.get('reason')
-        for event in domain_report.get('evidence_ledger') or []:
-            if isinstance(event, dict):
-                combined_events.append(event)
-        top_event = domain_report.get('top_event')
-        if isinstance(top_event, dict):
-            top_events[domain] = top_event
-
-    primary_status = next(
-        (
-            domain_reports[domain].get('status')
-            for domain in ('career', 'marriage', 'wealth')
-            if domain_reports.get(domain, {}).get('status') == 'ok'
-        ),
-        domain_reports.get('marriage', {}).get('status') or 'blocked',
-    )
-    source_metadata = {
-        'ingestion_profile': 'main_entry_overview',
-        'search_scope': 'single_day_overview',
-        'reference_date': reference_date,
-        'scan_window': {'start': start_date.isoformat(), 'end': end_date.isoformat()},
-        'domain_statuses': domain_statuses,
-        'domain_event_counts': {
-            domain: int((domain_reports.get(domain, {}) or {}).get('event_count', 0) or 0)
-            for domain in ('career', 'marriage', 'wealth')
-        },
-    }
-    for domain in ('career', 'marriage', 'wealth'):
-        metadata = domain_reports.get(domain, {}).get('source_metadata')
-        if isinstance(metadata, dict):
-            for key in (
-                'endpoint',
-                'endpoint_host',
-                'transport',
-                'provenance_mode',
-                'timeout_seconds',
-                'retry_policy',
-            ):
-                if key in metadata and key not in source_metadata:
-                    source_metadata[key] = metadata[key]
-
-    modules['vedastro_range_scan_result'] = {
-        'backend': 'vedastro_service_adapter_candidate',
-        'available': availability,
-        'status': primary_status,
-        'operation': 'range_scan',
-        'domain': 'overview',
-        'event_count': len(combined_events),
-        'top_event': top_events.get('marriage') or next(iter(top_events.values()), None),
-        'top_events_by_domain': top_events,
-        'evidence_ledger': combined_events,
-        'source_metadata': source_metadata,
-        'reason': failure_reason,
-        'domain_reports': domain_reports,
-    }
+    }, route='overview', reference_date=reference_date, case_id='api_chart')
     return chart_result
 
 

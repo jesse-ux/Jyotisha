@@ -251,6 +251,41 @@ function buildRectificationDecisionPlan(events) {
   };
 }
 
+export function buildRectificationInterviewQuestions() {
+  return EVENT_COLLECTION_GUIDE.map(group => {
+    const category = group.categories.find(key => EVENT_CATEGORIES[key]) || group.categories[0];
+    const cat = EVENT_CATEGORIES[category] || {};
+    return {
+      id: `guided_rectification_interview_${group.key}`,
+      group: group.key,
+      category,
+      varga: cat.varga || 'D1',
+      label_cn: group.cn,
+      label_en: group.en,
+      question_cn: `你的人生中是否发生过日期比较明确的${group.cn}？`,
+      question_en: `Have you had a dated ${group.en} event?`,
+      examples_cn: group.categories
+        .map(key => EVENT_CATEGORIES[key]?.cn)
+        .filter(Boolean)
+        .slice(0, 4),
+    };
+  });
+}
+
+export function rectificationInterviewAnswersToEvents(answers) {
+  return (answers || [])
+    .filter(answer => answer?.answer === 'yes' && answer.date && EVENT_CATEGORIES[answer.category])
+    .map(answer => {
+      const cat = EVENT_CATEGORIES[answer.category];
+      return {
+        date: answer.date,
+        category: answer.category,
+        desc: (answer.note || '').trim() || cat.cn,
+        source: 'guided_rectification_interview',
+      };
+    });
+}
+
 function buildRectificationAudit(best, results, events) {
   const second = results[1] || null;
   const coverage = summarizeEventCoverage(events);

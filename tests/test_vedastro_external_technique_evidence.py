@@ -9,7 +9,9 @@ import subprocess
 import sys
 from copy import deepcopy
 from pathlib import Path
+from unittest import mock
 
+import mcp_server
 from mcp_server import _collect_strict_evidence
 
 
@@ -44,7 +46,8 @@ def test_vedastro_adapter_declares_external_technique_evidence_policy() -> None:
 def test_vedastro_adapter_builds_external_technique_preview_without_network() -> None:
     env = os.environ.copy()
     env["VEDASTRO_API_ENDPOINT"] = "https://example.invalid/vedastro"
-    env.pop("VEDASTRO_ENABLE_NETWORK", None)
+    env["VEDASTRO_ENABLE_NETWORK"] = "0"
+    env["JYOTISH_SKIP_LOCAL_ENV"] = "1"
 
     completed = subprocess.run(
         [
@@ -228,3 +231,114 @@ def test_strict_workflow_marks_vedastro_range_scan_used_without_score_or_label_o
     assert strict["event_judgement"]["score"] == base["event_judgement"]["score"]
     assert strict["event_judgement"]["dominant_label"] == base["event_judgement"]["dominant_label"]
     assert strict["event_judgement"]["payout_label"] == base["event_judgement"]["payout_label"]
+
+
+def test_strict_workflow_auto_ingests_live_vedastro_range_scan_for_finance_route() -> None:
+    fake_range_scan = {
+        "backend": "vedastro_service_adapter_candidate",
+        "available": True,
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "wealth",
+        "event_count": 1,
+        "evidence_ledger": [
+            {
+                "source": "vedastro_service_adapter_candidate",
+                "operation": "range_scan",
+                "domain": "wealth",
+                "event_id": "GocharJupiterIn11th",
+                "signal_label": "Jupiter in 11th gains window",
+                "score": 76,
+                "tags": ["wealth", "transit"],
+            }
+        ],
+        "source_metadata": {"sampling_mode": "at_time_sweep"},
+    }
+
+    with mock.patch.object(mcp_server, "_run_engine") as run_engine, mock.patch.object(
+        mcp_server,
+        "_maybe_attach_vedastro_evidence",
+    ) as attach_vedastro:
+        run_engine.return_value = {"modules": _finance_modules()}
+        attach_vedastro.return_value = {
+            "modules": {
+                **_finance_modules(),
+                "vedastro_range_scan_result": fake_range_scan,
+            }
+        }
+
+        result = mcp_server.strict_workflow(
+            question="今年的财富机会怎么样？",
+            year=REDACTED_YEAR,
+            month=4,
+            day=17,
+            hour=14,
+            minute=49,
+            lat=36.42,
+            lon=114.2,
+            tz=8.0,
+            age=33,
+            transit_date="2026-06-29",
+            node_mode="mean",
+        )
+
+    strict = result["strict_workflow"]
+    attach_vedastro.assert_called_once()
+    assert strict["present_evidence"]["external_activation"]["level"] == "moderate"
+    assert "external_activation_support" in strict["event_judgement"]["secondary_context"]
+    assert "vedastro_range_scan_missing" not in strict["event_judgement"]["secondary_context"]
+
+
+def test_strict_workflow_auto_ingests_live_vedastro_external_technique_as_context_only() -> None:
+    fake_external_technique = {
+        "backend": "vedastro_service_adapter_candidate",
+        "available": True,
+        "status": "ok",
+        "operation": "calculation_method",
+        "role": "external_technique_evidence",
+        "domain": "wealth",
+        "evidence_ledger": [
+            {
+                "source": "vedastro_service_adapter_candidate",
+                "operation": "calculation_method",
+                "role": "external_technique_evidence",
+                "domain": "wealth",
+                "method": "CalculateShadbala",
+                "api_endpoint": "Calculate/Shadbala",
+                "status": "ok",
+                "summary": "VedAstro Shadbala node returned as external evidence.",
+            }
+        ],
+    }
+
+    with mock.patch.object(mcp_server, "_run_engine") as run_engine, mock.patch.object(
+        mcp_server,
+        "_maybe_attach_vedastro_evidence",
+    ) as attach_vedastro:
+        run_engine.return_value = {"modules": _finance_modules()}
+        attach_vedastro.return_value = {
+            "modules": {
+                **_finance_modules(),
+                "external_technique_evidence": fake_external_technique,
+            }
+        }
+
+        result = mcp_server.strict_workflow(
+            question="我的财务今年如何？",
+            year=REDACTED_YEAR,
+            month=4,
+            day=17,
+            hour=14,
+            minute=49,
+            lat=36.42,
+            lon=114.2,
+            tz=8.0,
+            age=33,
+            transit_date="2026-06-29",
+            node_mode="mean",
+        )
+
+    strict = result["strict_workflow"]
+    assert strict["present_evidence"]["external_technique_evidence"]["level"] == "context_only"
+    assert strict["present_evidence"]["external_technique_evidence"]["methods"] == ["CalculateShadbala"]
+    assert "external_technique_evidence" in strict["event_judgement"]["secondary_context"]

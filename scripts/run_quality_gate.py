@@ -13,6 +13,10 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from local_env import load_local_env
+
+load_local_env(ROOT)
 APP = ROOT / "jyotish-app"
 PYTHON = sys.executable
 

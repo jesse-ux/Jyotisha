@@ -5,6 +5,7 @@
 import { SIGNS, PLANET_CN, SIGN_LORDS } from './jyotish-engine.js';
 import {
   EVENT_CATEGORIES, EVENT_COLLECTION_GUIDE, VARGA_SENSITIVITY, runRectification,
+  buildRectificationInterviewQuestions, rectificationInterviewAnswersToEvents,
   getHouseLord, fmtTime, dateToJD
 } from './rectification-engine.js';
 import { t, getLang, signName, planetName } from './i18n.js';
@@ -13,6 +14,7 @@ import { escapeHtml, escapeAttr } from './security.js';
 function fmtOffset(m) { return m === 0 ? t('rect.baseline') : `${m > 0 ? '+' : ''}${m}min`; }
 
 let rectEvents = [];
+let rectInterviewAnswers = {};
 
 export function renderRectificationTab(container) {
   const lang = getLang();
@@ -25,6 +27,8 @@ export function renderRectificationTab(container) {
     <div class="rect-config card">
       <h4 class="sub-title">${t('rect.config')}</h4>
       <div class="rect-config-row">
+        <div class="form-group"><label>出生时间区间开始</label><input type="time" id="rect-window-start" step="60"></div>
+        <div class="form-group"><label>出生时间区间结束</label><input type="time" id="rect-window-end" step="60"></div>
         <div class="form-group"><label>${t('rect.range')}</label>
           <select id="rect-range">
             <option value="5">${t('rect.range.5')}</option>
@@ -50,6 +54,22 @@ export function renderRectificationTab(container) {
           ).join('')}</tbody>
         </table>
       </details>
+    </div>
+    <div class="rect-interview card">
+      <div class="rect-interview-head">
+        <div>
+          <h4 class="sub-title">快速事件访谈</h4>
+          <p>只回答是/否；选“是”时补一个大概日期，系统会自动转成生命事件。</p>
+        </div>
+        <span>guided_rectification_interview</span>
+      </div>
+      <div class="rect-interview-list">
+        ${buildRectificationInterviewQuestions().map(question => renderInterviewQuestion(question, lang)).join('')}
+      </div>
+      <div class="rect-interview-actions">
+        <button type="button" class="rect-secondary-btn" id="rect-import-interview">把“是”的回答加入事件</button>
+        <span id="rect-interview-status" aria-live="polite"></span>
+      </div>
     </div>
     <div class="rect-events card">
       <h4 class="sub-title">${t('rect.events')} <span class="rect-count" id="rect-event-count">0 ${t('rect.event.count')}</span></h4>
@@ -90,6 +110,7 @@ function pctStyle(value) {
 
 function bindEvents(container) {
   const q = s => container.querySelector(s);
+  bindInterviewEvents(container);
   q('#rect-add-btn').addEventListener('click', () => {
     const dEl = q('#rect-event-date'), cEl = q('#rect-event-cat'), descEl = q('#rect-event-desc');
     if (!dEl.value) { dEl.focus(); return; }
@@ -98,6 +119,68 @@ function bindEvents(container) {
     renderEventList(container);
   });
   q('#rect-run-btn').addEventListener('click', function () { handleRun(container, this); });
+}
+
+function renderInterviewQuestion(question, lang) {
+  const prompt = lang === 'en' ? question.question_en : question.question_cn;
+  const label = lang === 'en' ? question.label_en : question.label_cn;
+  const examples = (question.examples_cn || []).join(' / ');
+  return `<div class="rect-interview-item" data-question-id="${escapeAttr(question.id)}" data-category="${escapeAttr(question.category)}">
+    <div class="rect-interview-copy">
+      <strong>${escapeHtml(prompt)}</strong>
+      <span>${escapeHtml(label)} · ${escapeHtml(question.varga)}${examples ? ` · ${escapeHtml(examples)}` : ''}</span>
+    </div>
+    <div class="rect-answer-group" role="group" aria-label="${escapeAttr(prompt)}">
+      <button type="button" data-rect-answer="yes">是</button>
+      <button type="button" data-rect-answer="no">否</button>
+      <button type="button" data-rect-answer="other">其他</button>
+    </div>
+    <div class="rect-answer-detail hidden">
+      <input type="date" class="rect-answer-date" aria-label="事件日期">
+      <input type="text" class="rect-answer-note" placeholder="补充说明，可选">
+    </div>
+  </div>`;
+}
+
+function bindInterviewEvents(container) {
+  container.querySelectorAll('.rect-interview-item').forEach(item => {
+    item.querySelectorAll('[data-rect-answer]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const answer = btn.dataset.rectAnswer;
+        item.querySelectorAll('[data-rect-answer]').forEach(other => other.classList.toggle('active', other === btn));
+        item.querySelector('.rect-answer-detail')?.classList.toggle('hidden', answer !== 'yes' && answer !== 'other');
+        rectInterviewAnswers[item.dataset.questionId] = {
+          answer,
+          category: item.dataset.category,
+        };
+      });
+    });
+  });
+  container.querySelector('#rect-import-interview')?.addEventListener('click', () => {
+    const events = collectInterviewEvents(container);
+    if (!events.length) {
+      const status = container.querySelector('#rect-interview-status');
+      if (status) status.textContent = '还没有可导入的“是”回答。';
+      return;
+    }
+    rectEvents = [...rectEvents, ...events];
+    renderEventList(container);
+    const status = container.querySelector('#rect-interview-status');
+    if (status) status.textContent = `已加入 ${events.length} 个事件。`;
+  });
+}
+
+function collectInterviewEvents(container) {
+  const answers = [...container.querySelectorAll('.rect-interview-item')].map(item => {
+    const saved = rectInterviewAnswers[item.dataset.questionId] || {};
+    return {
+      ...saved,
+      category: saved.category || item.dataset.category,
+      date: item.querySelector('.rect-answer-date')?.value || '',
+      note: item.querySelector('.rect-answer-note')?.value || '',
+    };
+  });
+  return rectificationInterviewAnswersToEvents(answers);
 }
 
 function renderEventList(container) {
@@ -400,4 +483,4 @@ function showOffsetDetail(container, r, base) {
   det.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-export function initRectification() { rectEvents = []; }
+export function initRectification() { rectEvents = []; rectInterviewAnswers = {}; }

@@ -8,6 +8,18 @@
 - 阶段：用户端信任层与运行可用性
 - 本轮最高优先级：在已完成首次使用引导、真实浏览器首跑冒烟、AI/API key 安全提示、导出失败恢复后，推进星历后端抽象可行性，把 SwissEph/WASM/xalen/VedAstro/PyJHora 的替换边界变成可检测资产。
 
+## 最短路径封口方案（2026-06-29）
+
+后续不再扩新功能，优先只做 4 条封口线：
+
+1. `relationship adjudicator` 回归闭环
+2. `Vimsopaka + Functional Role` 闭环
+3. `Shadbala / Dasha / JHora` oracle 批处理闭环
+4. `VedAstro strict ingestion` 最小诚实接入
+
+执行顺序与任务拆分见：
+- `/Users/wuyongnaren/Documents/印度占星/docs/superpowers/plans/2026-06-29-shortest-path-closure-plan.md`
+
 ## 执行原则
 
 1. 每次实现前先扫描本地碎片、`references/open_source_sources/*`、现有测试与产品差距矩阵。

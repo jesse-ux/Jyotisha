@@ -64,6 +64,17 @@ This is a **Vedic (Jyotish) astrology analysis system** designed for deep, audit
 4. 如果只安装 PWA：PWA 安装壳只包装网页服务，本地 API 服务仍需单独启动；无 API 时网页会保留基础浏览器 fallback，但 PDF/高级技法需要本地 API 服务。
 5. 开发者做完整自检时运行：`python3 scripts/run_quality_gate.py --frontend-click-timeout 240`。
 
+如需把网页里的 `VedAstro Range Scan` 按钮切到真实外部响应模式，可在仓库根目录创建本机私有配置文件 `.env.local`：
+
+```bash
+VEDASTRO_API_ENDPOINT=https://api.vedastro.org/api
+VEDASTRO_ENABLE_NETWORK=1
+# 可选
+# VEDASTRO_API_KEY=sk_live_xxx
+```
+
+该文件已被 `.gitignore` 忽略；`scripts/jyotish_api_server.py`、`scripts/vedastro_service_adapter.py`、`scripts/run_quality_gate.py` 会自动加载它。注意：当前网页按钮走的是官方 `SearchEvents` 的真实 live 采样扫描桥接，不会让 VedAstro 越权改本地 adjudicator 的 `score / dominant_label / payout_label`。
+
 ### 普通用户交付形态
 
 | 形态 | 入口 | 命令 | 能力边界 |

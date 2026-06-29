@@ -18,6 +18,8 @@ jyotish-app/dist/
 brain/
 COVERAGE_AUDIT_REPORT.md
 *.tmp
+.env.local
+.jyotish.local.env
 .coverage
 coverage.xml
 htmlcov/

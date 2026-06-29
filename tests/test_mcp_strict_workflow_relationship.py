@@ -544,6 +544,24 @@ def test_relationship_dignity_guardrail_uses_relevant_planets_only() -> None:
     assert "dignity_supportive_recovery" in strict["event_judgement"]["secondary_context"]
 
 
+def test_relationship_dignity_guardrail_treats_great_friend_on_relevant_planet_as_supportive_context() -> None:
+    result = _base_relationship_result()
+    result["modules"]["chart"] = {
+        "ascendant": {"sign": "Leo"},
+        "planets": {
+            "Venus": {"status": "极友(Great Friend)"},
+            "Jupiter": {"status": "中性(Neutral)"},
+            "Saturn": {"status": "中性(Neutral)"},
+        },
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["present_evidence"]["dignity_guardrail"]["status"] == "caution"
+    assert strict["present_evidence"]["dignity_guardrail"]["score_delta"] == 3
+    assert "dignity_supportive_friendship" in strict["event_judgement"]["secondary_context"]
+
+
 def test_relationship_caps_confidence_when_provided_shadbala_components_are_incomplete() -> None:
     result = _base_relationship_result()
     result["modules"]["dasa_convergence"]["domain_activations"]["marriage_partnership"] = {

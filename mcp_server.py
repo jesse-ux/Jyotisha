@@ -1830,33 +1830,32 @@ def _maybe_attach_vedastro_evidence(
         return result
 
     try:
-        from vedastro_service_adapter import run_range_scan_for_case
+        from vedastro_evidence_orchestrator import orchestrate_vedastro_evidence
     except Exception:
         return result
 
     start_date, end_date = _default_vedastro_scan_window(transit_date)
-    case = {
-        "year": year,
-        "month": month,
-        "day": day,
-        "hour": hour,
-        "minute": minute,
-        "second": 0,
-        "lat": lat,
-        "lon": lon,
-        "tz": tz,
-        "ayanamsa_policy": (
-            _safe_get(result, "meta", "ayanamsa")
-            or _safe_get(result, "chart", "ayanamsa")
-            or "lahiri"
-        ),
-        "node_policy": node_mode or "mean",
-    }
-    scan_result = run_range_scan_for_case(
-        case,
-        vedastro_domain,
-        start_date,
-        end_date,
+    scan_result = orchestrate_vedastro_evidence(
+        {
+            "year": year,
+            "month": month,
+            "day": day,
+            "hour": hour,
+            "minute": minute,
+            "second": 0,
+            "lat": lat,
+            "lon": lon,
+            "tz": tz,
+            "ayanamsa_policy": (
+                _safe_get(result, "meta", "ayanamsa")
+                or _safe_get(result, "chart", "ayanamsa")
+                or "lahiri"
+            ),
+            "node_policy": node_mode or "mean",
+        },
+        route=route,
+        start_date=start_date,
+        end_date=end_date,
         case_id=f"strict_workflow_{route}",
     )
     if not isinstance(scan_result, dict):

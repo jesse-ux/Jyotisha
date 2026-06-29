@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest import mock
 
 from scripts import vedastro_service_adapter
 
@@ -73,3 +74,74 @@ def test_replay_stats_track_zero_event_domain_and_rejected_alias_noise() -> None
     assert replay["zero_event_domains"] == ["wealth"]
     assert replay["match_counts"]["rejected"] == 1
     assert replay["recommended_allowlist_candidates"] == []
+
+
+def test_normalize_official_live_payload_supports_nested_searchevents_and_tag_string() -> None:
+    payload = {
+        "Status": "Pass",
+        "Payload": {
+            "SearchEvents": [
+                {
+                    "Name": "BadLunarMonthForBuilding",
+                    "Nature": "Bad",
+                    "Description": "Building work should be avoided in this lunar month.",
+                    "StartTime": {"StdTime": "12:00 01/01/2026 +08:00"},
+                    "EndTime": {"StdTime": "12:00 01/01/2026 +08:00"},
+                    "Tag": "Building,General",
+                }
+            ]
+        },
+    }
+
+    report = vedastro_service_adapter._normalize_range_scan_success(  # noqa: SLF001
+        payload,
+        "https://api.vedastro.org/api",
+        _request_preview("career"),
+    )
+
+    assert report["event_count"] == 1
+    assert report["evidence_ledger"][0]["event_id"] == "BadLunarMonthForBuilding"
+    assert report["evidence_ledger"][0]["matched_by"] == "official_tag"
+    assert report["evidence_ledger"][0]["matched_terms"] == ["Building"]
+    assert report["evidence_ledger"][0]["tags"] == ["Building", "General"]
+
+
+def test_run_range_scan_case_refreshes_live_sampling_request_profile_for_each_sample_date() -> None:
+    case = vedastro_service_adapter.PARITY_CASES["beijing_first_use_demo"]
+    captured_at_times: list[str] = []
+
+    def fake_post_json_with_retry(endpoint: str, request_preview: dict[str, object]):
+        live_profile = request_preview.get("live_sampling_request_profile") or {}
+        body = live_profile.get("body") if isinstance(live_profile, dict) else {}
+        at_time = body.get("AtTime") if isinstance(body, dict) else {}
+        std_time = at_time.get("StdTime") if isinstance(at_time, dict) else None
+        captured_at_times.append(std_time)
+        return {"Status": "Pass", "Payload": {"SearchEvents": []}}, 1, []
+
+    with mock.patch.dict(
+        vedastro_service_adapter.os.environ,
+        {
+            "VEDASTRO_API_ENDPOINT": "https://api.vedastro.org/api",
+            "VEDASTRO_ENABLE_NETWORK": "1",
+        },
+        clear=False,
+    ), mock.patch.object(
+        vedastro_service_adapter,
+        "_iter_sample_dates",
+        return_value=["2026-01-01", "2026-03-01"],
+    ), mock.patch.object(
+        vedastro_service_adapter,
+        "_post_json_with_retry",
+        side_effect=fake_post_json_with_retry,
+    ):
+        vedastro_service_adapter._run_range_scan_case(  # noqa: SLF001
+            case,
+            "wealth",
+            "2026-01-01",
+            "2026-12-31",
+        )
+
+    assert captured_at_times == [
+        "12:00 01/01/2026 +08:00",
+        "12:00 01/03/2026 +08:00",
+    ]
