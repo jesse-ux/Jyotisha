@@ -336,6 +336,41 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert "domain_statuses" in vedastro_rows[0]["note"]
 
 
+def test_full_reading_generates_guided_topics_from_real_evidence() -> None:
+    result = run_engine(
+        "full-reading",
+        "--year", "REDACTED_YEAR",
+        "--month", "4",
+        "--day", "17",
+        "--hour", "14",
+        "--minute", "49",
+        "--lat", "36.42",
+        "--lon", "114.2",
+        "--tz", "8",
+        "--today", "2026-06-09",
+        "--transit-date", "2026-06-09",
+    )
+
+    topics = result["modules"]["guided_topics"]
+    assert len(topics) >= 3
+    assert result["ai_prompt_pack"]["evidence_snapshot"]["guided_topics"] == topics
+
+    for topic in topics[:3]:
+        assert topic["id"]
+        assert topic["title"]
+        assert topic["reality_value"]
+        assert topic["why_worth_exploring"]
+        assert topic["evidence"]
+        assert topic["confidence"] in {"high", "medium", "low"}
+        assert topic["vedastro"]["status"] in {"used", "blocked", "not_available"}
+        assert topic["suggested_questions"]
+        assert topic["answer_mode"] in {"tap_or_ask", "yes_no_or_free_text"}
+
+    assert any(topic["id"] == "relationship_partnership" for topic in topics)
+    assert any(topic["id"] == "career_direction" for topic in topics)
+    assert any(topic["id"] == "birth_time_rectification" for topic in topics)
+
+
 def test_full_reading_auto_attaches_vedastro_main_entry_boundary() -> None:
     env = dict(**__import__("os").environ)
     env["VEDASTRO_API_ENDPOINT"] = "https://example.invalid/api"
