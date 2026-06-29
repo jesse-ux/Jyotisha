@@ -5580,6 +5580,11 @@ function buildRelationshipReportTemplate(data = {}, deep = null) {
   const spouseStatus = deep?.spouseStatus || null;
   const ulDkTiming = deep?.ulDkTiming || null;
   const strictNarrative = data.ai_prompt_pack?.evidence_snapshot?.relationship_narrative || data.relationship_narrative || deep?.relationshipNarrative || null;
+  const vedastroOverview = data.ai_prompt_pack?.evidence_snapshot?.vedastro_overview
+    || data.vedastro_overview
+    || deep?.vedastroOverview
+    || null;
+  const lifeEventGraph = data.life_event_graph || deep?.lifeEventGraph || null;
   const strictMarkdown = typeof strictNarrative?.markdown === 'string' ? strictNarrative.markdown : '';
   const strictSecondaryContext = strictMarkdown.includes('public_formalization_candidate')
     || (Array.isArray(strictNarrative?.strengths) && strictNarrative.strengths.some(item => String(item).includes('public_formalization_candidate')))
@@ -5626,6 +5631,8 @@ function buildRelationshipReportTemplate(data = {}, deep = null) {
   if (hasPublicFormalizationCandidate) {
     strengths.push('public_formalization_candidate 说明当前更偏向公开化/关系可见度候选，而不是法律婚姻本身。');
   }
+  const vedastroNarrative = buildVedAstroOverviewNarrative(vedastroOverview);
+  if (vedastroNarrative) strengths.push(vedastroNarrative);
   if (!strengths.length) strengths.push('尚未出现足够稳定的强项，建议先补完整出生盘与 D9 复核。');
   const risks = weakKutas.map(item => `${item.name} ${item.score}/${item.max}：需重点观察${relationshipKutaMeaning(item.name)}。`);
   if (kuja?.verdict === 'hard' || kuja?.verdict === 'watch') risks.push(kuja.note || kuja.label);
@@ -5636,6 +5643,9 @@ function buildRelationshipReportTemplate(data = {}, deep = null) {
   if (Array.isArray(strictNarrative?.risks)) strictNarrative.risks.forEach(item => risks.push(item));
   if (hasPublicFormalizationCandidate) {
     risks.push('当前即便存在合盘支持与公开化候选，也不能误读成接近结婚；若 weak core promise、dual dasha 或 external timing 未收敛，仍应保持保守。');
+  }
+  if (vedastroOverview?.status === 'ok') {
+    risks.push('VedAstro 概览提示只代表单日外部雷达快照，overview only，不替代长周期精扫与本地主裁决。');
   }
   if (!hasDeep) risks.push('当前只完成基础 Ashtakoot，缺少 D9、Kuja Dosha 与 Dasha 同步证据。');
   if (!risks.length) risks.push('未见明显红旗，但仍需结合双方完整星盘与现实互动。');
@@ -5661,6 +5671,7 @@ function buildRelationshipReportTemplate(data = {}, deep = null) {
       '先确认双方出生时间精度，再复核 D9 与 7宫/7主。',
       '把低分 Kuta 对应到现实互动议题，不用单一分数替代沟通。',
       '若 Kuja 或 Dasha 出现压力，优先安排边界、节奏和冲突处理观察期。',
+      ...(vedastroOverview?.status === 'ok' ? ['先把 VedAstro 概览提示当作外部补证，再决定是否值得做长周期精扫。'] : []),
       ...(hasPublicFormalizationCandidate ? [
         '若当前更偏向 public_formalization_candidate，请把它理解为关系公开化候选，而不是婚姻逼近。',
         '先不要把高 Ashtakoot 分数翻译成婚姻逼近，应先复核 promise、dual dasha 与 external timing。',
@@ -5669,10 +5680,21 @@ function buildRelationshipReportTemplate(data = {}, deep = null) {
     boundaries: [
       '合盘报告只提供传统 Jyotish 证据，不替代个人选择。',
       '总分通过不等于关系必然稳定；总分偏低也不等于关系不可经营。',
+      ...(vedastroOverview?.status === 'ok' ? ['VedAstro 概览提示属于 main-entry overview only，不替代长周期精扫，也不得越权改写主标签。'] : []),
       ...(hasPublicFormalizationCandidate ? ['public_formalization_candidate 只表示公开化候选，不得越权抬升 legal_marriage，也不能误读成接近结婚。'] : []),
       ...((Array.isArray(strictNarrative?.boundaries) ? strictNarrative.boundaries : [])),
     ].slice(0, 5),
+    vedastroOverview,
+    lifeEventGraph,
   };
+}
+
+function buildVedAstroOverviewNarrative(overview) {
+  if (!overview || typeof overview !== 'object' || overview.status !== 'ok') return '';
+  const marriage = overview.top_events_by_domain?.marriage || null;
+  const label = marriage?.signal_label || marriage?.event_id || '外部婚恋窗口';
+  const when = marriage?.start || overview.reference_date || '-';
+  return `VedAstro 概览提示：${label}（${when}）；这是 main-entry overview only，不替代长周期精扫。`;
 }
 
 function collectSpouseStatusStrengths(spouseStatus) {
@@ -6188,6 +6210,7 @@ function renderRelationshipReport(report = {}) {
           </div>
         `).join('')}
       </div>
+      ${renderLifeEventGraphSummary(report.lifeEventGraph, report.vedastroOverview)}
       <div class="relationship-report-sections">
         ${renderRelationshipReportList('支持证据', report.strengths)}
         ${renderRelationshipReportList('需要观察', report.risks)}
@@ -6196,6 +6219,28 @@ function renderRelationshipReport(report = {}) {
       <div class="relationship-report-boundary">
         ${(report.boundaries || []).map(item => `<span>${escapeHtml(item)}</span>`).join('')}
       </div>
+    </div>
+  `;
+}
+
+function renderLifeEventGraphSummary(graph, vedastroOverview) {
+  const nodes = Array.isArray(graph?.event_nodes) ? graph.event_nodes : [];
+  const overviewNode = nodes.find(node => node?.kind === 'external_overview');
+  const externalWindow = nodes.find(node => node?.kind === 'external_window');
+  if (!overviewNode && !externalWindow && vedastroOverview?.status !== 'ok') return '';
+  const items = [];
+  if (overviewNode) {
+    items.push(`VedAstro main-entry overview · ${overviewNode.search_scope || 'single_day_overview'} · ${overviewNode.reference_date || '-'}`);
+  } else if (vedastroOverview?.status === 'ok') {
+    items.push(`VedAstro main-entry overview · ${vedastroOverview.search_scope || 'single_day_overview'} · ${vedastroOverview.reference_date || '-'}`);
+  }
+  if (externalWindow) {
+    items.push(`${externalWindow.label || 'external_window'} · ${externalWindow.start || '-'}`);
+  }
+  return `
+    <div class="relationship-boundary relationship-life-graph-summary">
+      <strong>Life Event Graph 摘要</strong>
+      ${(items.length ? items : ['external_overview']).map(item => `<span>${escapeHtml(item)}</span>`).join('')}
     </div>
   `;
 }

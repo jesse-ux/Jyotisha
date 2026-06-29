@@ -1011,6 +1011,21 @@ def test_trust_center_exposes_user_runnable_vedastro_range_scan() -> None:
         assert token in main
 
 
+def test_main_relationship_report_and_life_graph_surface_vedastro_overview_tokens() -> None:
+    main = read("main.js")
+
+    for token in [
+        "VedAstro 概览提示",
+        "overview only，不替代长周期精扫",
+        "buildVedAstroOverviewNarrative",
+        "renderLifeEventGraphSummary",
+        "VedAstro main-entry overview",
+        "single_day_overview",
+        "external_overview",
+    ]:
+        assert token in main
+
+
 def test_github_release_quality_gate_runs_browser_release_profile() -> None:
     workflow = (ROOT / ".github" / "workflows" / "release-quality-gate.yml").read_text(encoding="utf-8")
     for token in [
@@ -1452,6 +1467,31 @@ def test_rectification_ui_exposes_decision_plan_and_execution_order() -> None:
     assert "selected_theme_vargas" in rect_engine
     assert "分盘调用顺序" in rect_ui
     assert "rect-plan" in rect_ui
+
+
+def test_rectification_ui_guides_yes_no_interview_from_existing_event_assets() -> None:
+    rect_engine = read("rectification-engine.js")
+    rect_ui = read("rectification.js")
+
+    for token in [
+        "buildRectificationInterviewQuestions",
+        "rectificationInterviewAnswersToEvents",
+        "EVENT_COLLECTION_GUIDE",
+        "EVENT_CATEGORIES",
+        "guided_rectification_interview",
+    ]:
+        assert token in rect_engine
+
+    for token in [
+        "rect-interview",
+        'data-rect-answer="yes"',
+        'data-rect-answer="no"',
+        'data-rect-answer="other"',
+        "collectInterviewEvents",
+        "rect-window-start",
+        "rect-window-end",
+    ]:
+        assert token in rect_ui
 
 
 def test_remedies_ui_keeps_evidence_boundary_and_hidden_json() -> None:
