@@ -302,6 +302,10 @@ def test_ai_prompt_pack_panel_exposes_copyable_audit_context() -> None:
     assert "setupAIPromptPackActions" in main
     assert "copyAIPromptPackSection" in main
     assert "AI Prompt Pack 审计上下文已复制" in main
+    assert "vedastro_overview" in main
+    assert "renderVedAstroOverviewPromptCard" in main
+    assert "VedAstro Overview" in main
+    assert "overview only，不替代长周期精扫" in main
     assert ".ai-prompt-pack-actions" in style
     assert ".ayanamsa-runtime-status" in style
 

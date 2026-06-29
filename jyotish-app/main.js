@@ -884,6 +884,7 @@ function renderAIPromptPackPanel(cd) {
   const core = evidence.core || {};
   const timing = evidence.timing || {};
   const strength = evidence.strength || {};
+  const vedastroOverview = evidence.vedastro_overview || {};
   const docs = pack.retrieval_plan?.local_reference_docs || [];
   const tags = pack.retrieval_plan?.retrieval_tags || [];
   const ranking = Array.isArray(strength.shadbala_ranking) ? strength.shadbala_ranking : [];
@@ -917,6 +918,7 @@ function renderAIPromptPackPanel(cd) {
           <strong>${escapeHtml(timing.current_mahadasha || cd?.dasha?.current_md || '-')}</strong>
           <small>${escapeHtml(timing.current_antardasha ? `AD ${timing.current_antardasha}` : timing.start_date || '')}</small>
         </div>
+        ${renderVedAstroOverviewPromptCard(vedastroOverview)}
       </div>
       <div class="ai-prompt-pack-body">
         <div>
@@ -951,6 +953,23 @@ function renderAIPromptPackPanel(cd) {
     </section>
   `;
   setupAIPromptPackActions(host, cd, pack);
+}
+
+function renderVedAstroOverviewPromptCard(overview = {}) {
+  if (!overview || typeof overview !== 'object') return '';
+  const status = overview.status || 'blocked';
+  const label = overview.top_events_by_domain?.marriage?.signal_label
+    || overview.top_events_by_domain?.career?.signal_label
+    || overview.top_events_by_domain?.wealth?.signal_label
+    || overview.source
+    || '-';
+  return `
+    <div class="ai-prompt-pack-card">
+      <span>VedAstro Overview</span>
+      <strong>${escapeHtml(status)}</strong>
+      <small>${escapeHtml(`${label} · ${overview.search_scope || 'single_day_overview'} · overview only，不替代长周期精扫`)}</small>
+    </div>
+  `;
 }
 
 function renderAyanamsaRuntimeStatus(cd, pack) {
