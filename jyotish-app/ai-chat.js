@@ -289,11 +289,21 @@ async function sendMessage() {
 function buildChartContext(cd) {
   if (!cd?.planets || !cd?.ascendant) return t('ai.no.data');
   if (cd.ai_prompt_pack?.prompt_zh && cd.ai_prompt_pack?.evidence_snapshot) {
+    const vedastroOverview = cd.ai_prompt_pack.evidence_snapshot.vedastro_overview || {};
+    const vedastroBoundary = vedastroOverview && typeof vedastroOverview === 'object'
+      ? [
+          '【VedAstro Overview Boundary】',
+          `status=${vedastroOverview.status || 'blocked'} · scope=${vedastroOverview.search_scope || 'single_day_overview'} · source=${vedastroOverview.source || 'vedastro_service_adapter_candidate'}`,
+          'overview only，不替代长周期精扫。',
+        ].join('\n')
+      : '';
     return [
       '【AI Prompt Pack】',
       cd.ai_prompt_pack.prompt_zh,
       '',
       DASHA_SHADBALA_AI_CALIBRATION_BOUNDARY,
+      '',
+      vedastroBoundary,
       '',
       '【evidence_snapshot】',
       JSON.stringify(cd.ai_prompt_pack.evidence_snapshot, null, 2),

@@ -290,6 +290,9 @@ def test_ai_chat_prefers_backend_prompt_pack_context() -> None:
     assert "JSON.stringify(cd.ai_prompt_pack.evidence_snapshot" in ai_chat
     assert "JSON.stringify(cd.ai_prompt_pack.retrieval_plan" in ai_chat
     assert "AI Prompt Pack 已作为上下文入口" in ai_chat
+    assert "【VedAstro Overview Boundary】" in ai_chat
+    assert "overview only，不替代长周期精扫" in ai_chat
+    assert "single_day_overview" in ai_chat
 
 
 def test_ai_prompt_pack_panel_exposes_copyable_audit_context() -> None:
