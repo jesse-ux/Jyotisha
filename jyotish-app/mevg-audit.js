@@ -131,14 +131,49 @@ function confidenceProfile({ validation, allYogas, dashaData, chartData }) {
   };
 }
 
+function buildVedAstroOverviewHighlights(chartData = {}) {
+  const overview = chartData?.ai_prompt_pack?.evidence_snapshot?.vedastro_overview
+    || chartData?.modules?.vedastro_range_scan_result
+    || chartData?.vedastro_overview
+    || null;
+  if (!overview || typeof overview !== 'object' || overview.status !== 'ok') return [];
+
+  const topEvents = overview.top_events_by_domain || {};
+  const highlights = [];
+  const career = topEvents.career || null;
+  const wealth = topEvents.wealth || topEvents.finance || null;
+
+  if (career) {
+    highlights.push({
+      label: 'Career VedAstro overview',
+      detail: `${career.signal_label || career.event_id || 'career window'} · ${career.start || overview.reference_date || '-'} · single_day_overview`,
+    });
+  }
+  if (wealth) {
+    highlights.push({
+      label: 'Wealth VedAstro overview',
+      detail: `${wealth.signal_label || wealth.event_id || 'wealth window'} · ${wealth.start || overview.reference_date || '-'} · single_day_overview`,
+    });
+  }
+  if (!highlights.length && overview.reference_date) {
+    highlights.push({
+      label: 'VedAstro main_entry_overview',
+      detail: `${overview.reference_date} · single_day_overview · vedastro_overview`,
+    });
+  }
+  return highlights;
+}
+
 export function buildMEVGAudit(input) {
   const claims = buildClaims(input);
   const internalChecks = buildInternalChecks(input);
   const profile = confidenceProfile(input);
+  const vedastroHighlights = buildVedAstroOverviewHighlights(input.chartData);
   return {
     profile,
     internalChecks,
     claims,
+    vedastroHighlights,
     sourceTiers: SOURCE_TIERS,
     boundaries: BOUNDARIES,
     stats: {
@@ -181,6 +216,12 @@ export function renderMEVGAudit(container, audit) {
       <span>${escapeHtml(detail)}</span>
     </div>
   `).join('');
+  const vedastroHtml = (audit.vedastroHighlights || []).map(item => `
+    <div class="mevg-source">
+      <strong>${escapeHtml(item.label)}</strong>
+      <span>${escapeHtml(item.detail)}</span>
+    </div>
+  `).join('');
   container.innerHTML = `
     <section class="mevg-panel">
       <div class="mevg-head">
@@ -212,6 +253,14 @@ export function renderMEVGAudit(container, audit) {
         <h4>来源优先级</h4>
         <div class="mevg-sources">${sourceHtml}</div>
       </div>
+
+      ${vedastroHtml ? `
+        <div class="mevg-section">
+          <h4>VedAstro 概览提示</h4>
+          <div class="mevg-sources">${vedastroHtml}</div>
+          <p class="mevg-cap">这些提示来自 main_entry_overview / single_day_overview；用于事业/财富外部补证，不替代长周期精扫。</p>
+        </div>
+      ` : ''}
 
       <div class="mevg-section">
         <h4>预测边界</h4>

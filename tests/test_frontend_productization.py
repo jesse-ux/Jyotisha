@@ -1026,6 +1026,21 @@ def test_main_relationship_report_and_life_graph_surface_vedastro_overview_token
         assert token in main
 
 
+def test_complete_reading_and_ai_prompt_pack_surface_career_wealth_vedastro_overview_tokens() -> None:
+    main = read("main.js")
+    mevg = (APP / "mevg-audit.js").read_text(encoding="utf-8")
+
+    for token in [
+        "buildVedAstroOverviewHighlights",
+        "Career VedAstro overview",
+        "Wealth VedAstro overview",
+        "vedastro_overview",
+        "main_entry_overview",
+        "single_day_overview",
+    ]:
+        assert token in main or token in mevg
+
+
 def test_github_release_quality_gate_runs_browser_release_profile() -> None:
     workflow = (ROOT / ".github" / "workflows" / "release-quality-gate.yml").read_text(encoding="utf-8")
     for token in [
