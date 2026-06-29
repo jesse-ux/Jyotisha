@@ -334,6 +334,11 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert vedastro_rows[0]["status"] in {"used", "blocked"}
     assert "overview only" in vedastro_rows[0]["note"]
     assert "domain_statuses" in vedastro_rows[0]["note"]
+    capability_pool = prompt_pack["evidence_snapshot"]["capability_evidence_pool"]
+    assert capability_pool["scope"] == "backend_capability_evidence_pool"
+    assert capability_pool["total_entries"] == 89
+    assert capability_pool["conclusion_policy"]["all_89_entries_must_not_be_flattened_into_conclusions"] is True
+    assert "后台备选证据池" in prompt_pack["prompt_zh"]
 
 
 def test_full_reading_generates_guided_topics_from_real_evidence() -> None:

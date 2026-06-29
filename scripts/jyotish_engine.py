@@ -48,6 +48,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List
 from tabulate import tabulate
 from life_stage_hook import generate_life_stage_hooks
+from capability_evidence_pool import build_capability_evidence_pool_summary
+from guided_topic_discovery import build_guided_topics
 
 from ayanamsa_utils import (
     AYANAMSA_DISPLAY_NAMES,
@@ -1165,6 +1167,8 @@ def _build_ai_prompt_pack(report):
     relationship_narrative = _build_relationship_narrative_payload(modules.get('relationship_strict_evidence'))
     vimsopaka_semantic_summary = _build_vimsopaka_semantic_summary(modules.get('vimsopaka'))
     vedastro_overview = _build_vedastro_overview_payload(modules)
+    guided_topics = modules.get('guided_topics') if isinstance(modules.get('guided_topics'), list) else build_guided_topics(report)
+    capability_evidence_pool = build_capability_evidence_pool_summary()
 
     shadbala_ranking = []
     for planet_name, pdata in sorted(
@@ -1236,6 +1240,8 @@ def _build_ai_prompt_pack(report):
         'oracle_progress': oracle_progress,
         'functional_benefic_malefic': functional_layer,
         'vedastro_overview': vedastro_overview,
+        'guided_topics': guided_topics,
+        'capability_evidence_pool': capability_evidence_pool,
         'technique_audit_table': technique_audit_table,
         'relationship_narrative': relationship_narrative,
         'vimsopaka_semantic_summary': vimsopaka_semantic_summary,
@@ -1250,6 +1256,7 @@ def _build_ai_prompt_pack(report):
         "输出结构建议：参数声明、核心星盘、关系/事业/财富/健康分主题、当前时机、证据表、风险边界、可行动建议。",
         "若引用经典法则，请优先检索 retrieval_plan.local_reference_docs；需要外部断语时再做 web/source verification。",
         "若 evidence_snapshot.vedastro_overview.status 为 ok，请把它作为用户可见外部概览证据明确写出，但不要把 overview-only 结果误当作长周期精扫结论。",
+        "若 evidence_snapshot.capability_evidence_pool 存在，请把 89 项视为后台备选证据池；不要把所有能力条目平铺成结论，也不要让 audit_only/alias 条目影响占星判断。",
     ]
 
     return {
@@ -5129,6 +5136,12 @@ def cmd_full_reading(args):
         _attach_vedastro_main_entry_overview(report, args)
     except Exception as e:
         report['warnings'].append(f"vedastro-main-entry-overview: {e}")
+
+    try:
+        report['modules']['guided_topics'] = build_guided_topics(report)
+    except Exception as e:
+        report['warnings'].append(f"guided-topics: {e}")
+        report['modules']['guided_topics'] = []
 
     report['ai_prompt_pack'] = _build_ai_prompt_pack(report)
 

@@ -27,7 +27,7 @@ def test_readme_badges_match_technique_registry_counts() -> None:
     counts = Counter(item["status"] for item in techniques)
     total = len(registry["techniques"])
 
-    assert _readme_badge_value("Techniques") == total
+    assert _readme_badge_value("Capabilities") == total
     assert _readme_badge_value("Covered") == counts["covered"]
     assert _readme_badge_value("Complete") == counts["complete"]
     assert _readme_badge_value("Partial") == counts["partial"]

@@ -81,6 +81,26 @@ def _attach_vedastro_main_entry_overview(chart_result, birth_payload):
     return chart_result
 
 
+def _attach_guided_topics(chart_result):
+    if not isinstance(chart_result, dict):
+        return chart_result
+    modules = chart_result.setdefault('modules', {})
+    if not isinstance(modules, dict):
+        modules = {}
+        chart_result['modules'] = modules
+    if isinstance(modules.get('guided_topics'), list):
+        return chart_result
+    try:
+        builder = _load_local_module('guided_topic_discovery').build_guided_topics
+        modules['guided_topics'] = builder(chart_result)
+    except Exception as exc:
+        modules['guided_topics'] = []
+        warnings = chart_result.setdefault('warnings', [])
+        if isinstance(warnings, list):
+            warnings.append(f'guided-topics: {exc}')
+    return chart_result
+
+
 def _build_vedastro_overview_payload_from_chart(chart):
     modules = chart.get('modules') if isinstance(chart, dict) else {}
     overview = modules.get('vedastro_range_scan_result') if isinstance(modules, dict) else {}
@@ -2184,6 +2204,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'today': body.get('today') or body.get('current_date'),
                 'transit_date': body.get('transit_date'),
             })
+            _attach_guided_topics(result)
             result['ai_prompt_pack'] = self._build_chart_prompt_pack(result)
             return result
         except ImportError:
@@ -2267,6 +2288,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'ayanamsa': 'lahiri',
             'node_mode': 'mean',
         })
+        _attach_guided_topics(result)
         result['ai_prompt_pack'] = self._build_chart_prompt_pack(result)
         return result
 
@@ -2278,6 +2300,19 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         shadbala = chart.get('shadbala') or {}
         functional_layer = self._functional_benefic_malefic_snapshot(planets, ascendant)
         vedastro_overview = _build_vedastro_overview_payload_from_chart(chart)
+        _attach_guided_topics(chart)
+        modules = chart.get('modules') if isinstance(chart.get('modules'), dict) else {}
+        guided_topics = modules.get('guided_topics') if isinstance(modules.get('guided_topics'), list) else []
+        try:
+            capability_evidence_pool = _load_local_module('capability_evidence_pool').build_capability_evidence_pool_summary()
+        except Exception:
+            capability_evidence_pool = {
+                'scope': 'backend_capability_evidence_pool',
+                'total_entries': 0,
+                'conclusion_policy': {
+                    'all_89_entries_must_not_be_flattened_into_conclusions': True,
+                },
+            }
         top_strength = sorted(
             [
                 {
@@ -2348,6 +2383,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 },
                 'functional_benefic_malefic': functional_layer,
                 'vedastro_overview': vedastro_overview,
+                'guided_topics': guided_topics,
+                'capability_evidence_pool': capability_evidence_pool,
                 'quality_boundary': {
                     'external_oracle_status': 'D1/D9/VedAstro longitude boundary covered; Dasha/Shadbala external absolute calibration still requires multi-source oracle expansion.',
                 },
