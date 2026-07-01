@@ -708,3 +708,11 @@
 - `scripts/guided_topic_discovery.py` 已把 `official_day_signal_summary` 压进每条 guided topic；`jyotish-app/main.js` 的 guided topic 卡片会直接显示最重要的官方日期提示；`jyotish-app/ai-chat.js` 也会把这层塞进 guided topic chat payload，后续追问不再丢失。
 - 新增并跑通的定点回归：
   - `python3 -m pytest tests/test_mcp_strict_workflow_career.py::test_career_external_activation_derives_user_readable_day_signals tests/test_mcp_strict_workflow_relationship.py::test_relationship_external_activation_derives_progress_day_signals tests/test_mcp_strict_workflow_finance.py::test_finance_external_activation_derives_wealth_day_signals tests/test_cli_smoke.py::test_full_reading_guided_topics_can_carry_official_day_signal_summary tests/test_frontend_productization.py::test_guided_topic_questions_reuse_ai_chat_entry -q`
+
+## 2026-07-01T19:40:00+08:00 - 外部官方细算 sanity / 三方 oracle 闭环账本
+
+- 新增 `scripts/external_oracle_sanity_closure.py`：把 VedAstro official precision sanity、PyJHora black-box artifact ledger、jyotishganit MIT reference layer 统一成可审计 JSON/Markdown 账本。
+- 当前三方状态：PyJHora `ok`（12 artifacts / 8 packets）、jyotishganit `ok`（MIT source + benchmark available）、VedAstro `blocked`（longitude sanity 通过，但 official full snapshot 细算仍返回 `official_snapshot_budget_exhausted`，不能宣称 fully closed）。
+- 新增 `tests/test_external_oracle_sanity_closure.py`，并将 sanity closure 纳入 `scripts/run_quality_gate.py` 的 oracle audit 链路；README 增加总控命令。
+- 生成 `docs/benchmark/external_official_sanity_oracle_closure.{md,json}` 作为当前快照；诚实边界为 `can_claim_fully_closed=false`、`can_claim_high_rigor_with_blocks=true`。
+- 为避免质量门被 VedAstro 免费层节流长时间阻塞，sanity closure 默认只跑非阻塞官方证据审计；真实 official full snapshot 细算保留为显式 `--live-official-full-snapshot` 开关。

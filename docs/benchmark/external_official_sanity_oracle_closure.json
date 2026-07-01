@@ -1,0 +1,217 @@
+{
+  "scope": "external_official_sanity_oracle_closure",
+  "schema_version": 1,
+  "generated_at": "2026-07-01T12:03:22.602473+00:00",
+  "summary": {
+    "required_oracles": [
+      "VedAstro",
+      "PyJHora",
+      "jyotishganit"
+    ],
+    "ok_count": 2,
+    "partial_count": 0,
+    "blocked_count": 1,
+    "ok_oracles": [
+      "pyjhora",
+      "jyotishganit"
+    ],
+    "partial_oracles": [],
+    "blocked_oracles": [
+      "vedastro"
+    ],
+    "external_verified_tasks": 12,
+    "total_tasks": 12,
+    "open_tasks": 0,
+    "live_official_full_snapshot": false
+  },
+  "oracle_ledger": {
+    "vedastro": {
+      "name": "VedAstro",
+      "role": "official_precision_sanity",
+      "status": "blocked",
+      "verdict": "official_longitude_sanity_passed_but_full_snapshot_blocked",
+      "live_official_full_snapshot": false,
+      "fine_calc_blocked": true,
+      "longitude_case_count": 1,
+      "longitude_cases_within_threshold": 1,
+      "max_abs_delta_arcsec": 26.2254,
+      "snapshot_status": "not_run_default_non_blocking",
+      "official_chart_available": false,
+      "official_python_bundle_status": "not_run_default_non_blocking",
+      "evidence_paths": [
+        "references/oracle/dasha_shadbala_oracle_cases.json",
+        "scripts/oracle_boundary_audit.py",
+        "scripts/vedastro_service_adapter.py"
+      ],
+      "blocked_reason": "Official fine snapshot is not a stable ok chart, or only longitude sanity is currently closed."
+    },
+    "pyjhora": {
+      "name": "PyJHora",
+      "role": "black_box_external_oracle",
+      "status": "ok",
+      "verdict": "black_box_artifact_ledger_available",
+      "artifact_count": 12,
+      "packet_count": 8,
+      "fronts": {
+        "dasha": {
+          "artifact_count": 3,
+          "packet_count": 3,
+          "artifacts": [
+            "pyjhora_historical_epoch_dasha_stdout_20260627.txt",
+            "pyjhora_steve_jobs_dasha_stdout_20260627.txt",
+            "pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt"
+          ],
+          "pending_packets": [
+            "external_template_extreme_latitude_kp_pyjhora_20260627.json",
+            "external_template_historical_epoch_lahiri_pyjhora_20260627.json",
+            "external_template_steve_jobs_dasha_lahiri_pyjhora_20260627.json"
+          ]
+        },
+        "shadbala": {
+          "artifact_count": 4,
+          "packet_count": 4,
+          "artifacts": [
+            "pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
+            "pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
+            "pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+            "pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt"
+          ],
+          "pending_packets": [
+            "external_template_redacted_place_shadbala_raman_pyjhora_20260627.json",
+            "external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json",
+            "external_template_user_REDACTED_YEAR_moon_longitude_lahiri_pyjhora_20260627.json",
+            "external_template_user_REDACTED_YEAR_shadbala_lahiri_pyjhora_20260627.json"
+          ]
+        },
+        "tajika_sahams": {
+          "artifact_count": 5,
+          "packet_count": 1,
+          "artifacts": [
+            "pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt",
+            "pyjhora_historical_dst_london_varshaphala_1943_lahiri_20260629.txt",
+            "pyjhora_marilyn_monroe_varshaphala_1962_lahiri_20260629.txt",
+            "pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+            "pyjhora_synthetic_extreme_latitude_varshaphala_kp_20260629.txt"
+          ],
+          "pending_packets": [
+            "external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json"
+          ]
+        }
+      },
+      "license_boundary": "black_box_artifacts_only_no_agpl_code_import",
+      "evidence_paths": [
+        "references/oracle/artifacts/pyjhora_oracle_artifact_manifest.json"
+      ]
+    },
+    "jyotishganit": {
+      "name": "jyotishganit",
+      "role": "mit_reference_layer",
+      "status": "ok",
+      "verdict": "mit_reference_source_available",
+      "license": "MIT",
+      "source_available": true,
+      "import_spec_available": true,
+      "import_error": null,
+      "benchmark_available": true,
+      "evidence_paths": [
+        "references/open_source_sources/jyotishganit",
+        "references/jyotishganit_benchmark.md"
+      ],
+      "boundary": "MIT reference layer and local comparison asset; not a complete second runtime oracle for every request."
+    }
+  },
+  "master_oracle_dashboard": {
+    "summary": {
+      "total_tasks": 12,
+      "external_verified_tasks": 12,
+      "open_tasks": 0,
+      "can_claim_global_oracle_closure": true,
+      "production_tuning_allowed": false
+    },
+    "fronts": {
+      "dasha": {
+        "front": "dasha",
+        "task_count": 3,
+        "external_verified_tasks": 3,
+        "open_tasks": 0,
+        "can_claim_closure": true,
+        "production_tuning_allowed": false,
+        "first_priority": null
+      },
+      "shadbala": {
+        "front": "shadbala",
+        "task_count": 4,
+        "external_verified_tasks": 4,
+        "open_tasks": 0,
+        "can_claim_closure": true,
+        "production_tuning_allowed": false,
+        "first_priority": null
+      },
+      "tajika_sahams": {
+        "front": "tajika_sahams",
+        "task_count": 5,
+        "external_verified_tasks": 5,
+        "open_tasks": 0,
+        "can_claim_closure": true,
+        "production_tuning_allowed": false,
+        "first_priority": {
+          "case_id": "template_einstein_varshaphala_1905_lahiri",
+          "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
+          "packet_path": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
+          "missing_field_count": 0,
+          "missing_fields": [],
+          "missing_groups": {
+            "metadata": {
+              "count": 0,
+              "fields": []
+            },
+            "target": {
+              "count": 0,
+              "fields": []
+            }
+          },
+          "prefilled_fields": {
+            "status": "external_verified",
+            "promotion_status_after_fill": "external_verified",
+            "metadata": {
+              "tool_name": "PyJHora",
+              "tool_version_or_url": "PyJHora 4.8.6 isolated workbuddy black-box run",
+              "capture_date": "2026-06-29",
+              "source_artifact": "references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt",
+              "ayanamsa": "lahiri",
+              "node_mode": "mean",
+              "timezone": "UTC+00:53",
+              "annual_system": "Varshaphala/Tajika",
+              "target_year": 1905,
+              "operator_note": "Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain."
+            },
+            "settings": {
+              "ayanamsa": "lahiri",
+              "node_mode": "mean",
+              "annual_system": "varshaphala",
+              "target_year": 1905
+            }
+          },
+          "manual_fill_plan": {
+            "status_value": "external_verified",
+            "manual_entry_count": 0,
+            "remaining_manual_fields": []
+          },
+          "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json",
+          "validate_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --format json && python3 scripts/tajika_annual_benchmark_dashboard.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --format json"
+        }
+      }
+    }
+  },
+  "honesty_boundary": {
+    "can_claim_fully_closed": false,
+    "can_claim_high_rigor_with_blocks": true,
+    "blocked_reason": "At least one official precision/oracle layer is partial or blocked; report must expose blocked rows instead of claiming full closure.",
+    "license_boundary": "PyJHora is black-box evidence only; jyotishganit MIT assets may be referenced/reused within existing project policy."
+  },
+  "next_actions": [
+    "Run --live-official-full-snapshot when foreground VedAstro budget/network credentials are available, then promote VedAstro only if the full official chart is stable.",
+    "Keep PyJHora as artifact-backed oracle evidence; do not import AGPL implementation code.",
+    "If a report needs full closure language, require all oracle ledger rows to be ok and the master oracle dashboard open_tasks to be 0."
+  ]
+}

@@ -29,6 +29,7 @@ EXTRA_COMPILE_TARGETS = [
     ROOT / "mcp_server.py",
     ROOT / "scripts" / "audit_fragments.py",
     ROOT / "scripts" / "dasha_reference_audit.py",
+    ROOT / "scripts" / "external_oracle_sanity_closure.py",
     ROOT / "scripts" / "oracle_boundary_audit.py",
     ROOT / "scripts" / "oracle_collection_queue.py",
     ROOT / "scripts" / "oracle_evidence_validator.py",
@@ -47,6 +48,7 @@ CORE_PYTEST_TARGETS = [
     "tests/test_transit_trigger.py",
     "tests/test_oracle_collection_queue.py",
     "tests/test_oracle_evidence_validator.py",
+    "tests/test_external_oracle_sanity_closure.py",
 ]
 
 RELEASE_CRITICAL_UNTRACKED_PATHS = [
@@ -190,6 +192,13 @@ ORACLE_BOUNDARY_AUDIT_CMD = [
     "scripts/oracle_boundary_audit.py",
     "--oracle-file",
     "references/oracle/dasha_shadbala_oracle_cases.json",
+]
+
+EXTERNAL_ORACLE_SANITY_CLOSURE_CMD = [
+    PYTHON,
+    "scripts/external_oracle_sanity_closure.py",
+    "--format",
+    "json",
 ]
 
 ORACLE_COLLECTION_QUEUE_CMD = [
@@ -497,6 +506,7 @@ def main() -> int:
         run(DASHA_REFERENCE_AUDIT_CMD)
     if not profile["skip_oracle_audit"]:
         run(ORACLE_BOUNDARY_AUDIT_CMD)
+        run(EXTERNAL_ORACLE_SANITY_CLOSURE_CMD)
         run_oracle_collection_queue_and_validator()
     if not profile["skip_yoga_logic"]:
         run([PYTHON, "scripts/validate_logic_v2.py"], optional=True)

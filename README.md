@@ -142,6 +142,14 @@ python3 scripts/oracle_boundary_audit.py \
 
 该报告会明确标出 `production_tuning_recommended: false`：Dasha 当前只有单份 PDF 起点差异样本；VedAstro SDK 黄经样本已纳入 `longitude_cases`，当前用户盘最大差异约 26.23 角秒、D1/D9 落点一致，但这只能说明基础黄经接近；Shadbala 还缺 Sthana/Dig/Kala/Chesta/Naisargika/Drik 分量级外部目标值，因此不能声称 Dasha/Shadbala 已完成外部绝对值校准。
 
+三方官方/外部 oracle sanity 总控命令：
+
+```bash
+python3 scripts/external_oracle_sanity_closure.py --format markdown
+```
+
+该报告同时检查 VedAstro official precision sanity、PyJHora black-box artifacts、jyotishganit MIT reference layer。默认命令为非阻塞 sanity，总控质量门可运行；需要真实触发 VedAstro official full snapshot 细算时，加 `--live-official-full-snapshot`。当前允许声明的是“高严谨带 blocked 行”：PyJHora 黑盒证据与 jyotishganit 参考层可审计；VedAstro 黄经 sanity 通过但 official full snapshot 细算仍需显式 live probe 且可能因前台预算或官方快照合同 blocked，不能声称三方 fully closed。
+
 外部真值采集队列用于把缺失目标值拆成可执行任务，而不是直接调生产参数：
 
 ```bash
