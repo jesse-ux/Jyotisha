@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -29,6 +30,7 @@ LOCAL_DRAFTS_DIR = ROOT / "docs" / "research" / "local_drafts" / "2026-06"
 EXTERNAL_WORK_BRAIN_DIR = Path("/Users/wuyongnaren/.gemini/antigravity-ide/brain")
 DISTRIBUTION_MIRROR_DIR = Path("/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology")
 ORACLE_FILE = ROOT / "references" / "oracle" / "dasha_shadbala_oracle_cases.json"
+REPO_CLEANUP_MAP = ROOT / "docs" / "research" / "repo_cleanup_promotion_map_2026_07_01.md"
 
 
 def _read_text(path: Path) -> str:
@@ -66,6 +68,7 @@ def _list_files(base: Path, patterns: tuple[str, ...]) -> list[str]:
 def _summarize_local_drafts() -> list[dict[str, Any]]:
     if not LOCAL_DRAFTS_DIR.exists():
         return []
+    promoted_names = _promoted_draft_names()
     preferred_tokens = (
         "reuse_audit",
         "three_fronts",
@@ -80,6 +83,8 @@ def _summarize_local_drafts() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for path in sorted(LOCAL_DRAFTS_DIR.glob("*.md")):
         name = path.name
+        if name in promoted_names:
+            continue
         if not any(token in name for token in preferred_tokens):
             continue
         rows.append(
@@ -90,6 +95,15 @@ def _summarize_local_drafts() -> list[dict[str, Any]]:
             }
         )
     return rows[:12]
+
+
+def _promoted_draft_names() -> set[str]:
+    docs_dir = ROOT / "docs" / "research"
+    names: set[str] = set()
+    for path in docs_dir.glob("*repo_truth_pack_2026_07_01.md"):
+        text = _read_text(path)
+        names.update(re.findall(r"`([^`]+\.md)`", text))
+    return names
 
 
 def _summarize_external_work_brain() -> list[dict[str, Any]]:
@@ -277,6 +291,15 @@ def build_report() -> dict[str, Any]:
         },
         "real_capability_risks": real_capability_risks,
         "cleanup_priorities": cleanup_priorities,
+        "cleanup_map": {
+            "path": str(REPO_CLEANUP_MAP),
+            "exists": REPO_CLEANUP_MAP.exists(),
+            "focus_layers": [
+                "docs/research/local_drafts/2026-06",
+                "/Users/wuyongnaren/.gemini/antigravity-ide/brain",
+                "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology",
+            ],
+        },
         "boundary": (
             "Run this preflight scan before major work so drafts, mirrors, and external-work-brain "
             "fragments are reviewed deliberately, and so engineering-surface success is not mistaken "

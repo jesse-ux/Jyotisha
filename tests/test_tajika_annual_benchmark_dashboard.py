@@ -38,11 +38,11 @@ def test_tajika_annual_dashboard_outputs_stable_json_summary() -> None:
     assert report["scope"] == "tajika_sahams_annual_benchmark_dashboard"
     assert report["schema_version"] == 1
     assert report["summary"]["total_tasks"] == 5
-    assert report["summary"]["ready_for_calibration"] == 1
+    assert report["summary"]["ready_for_calibration"] == 5
     assert report["summary"]["production_tuning_allowed"] is False
-    assert report["annual_claim"]["can_claim_tajika_sahams_closure"] is False
-    assert "Solar return" in report["remaining_gap"]
-    assert "Sahams" in report["remaining_gap"]
+    assert report["annual_claim"]["can_claim_tajika_sahams_closure"] is True
+    assert "target set is closed" in report["remaining_gap"]
+    assert "predictive claim" in report["remaining_gap"]
 
 
 def test_tajika_annual_dashboard_outputs_markdown_and_can_write_file(tmp_path: Path) -> None:
@@ -53,5 +53,5 @@ def test_tajika_annual_dashboard_outputs_markdown_and_can_write_file(tmp_path: P
     assert output.exists()
     markdown = output.read_text(encoding="utf-8")
     assert "# Tajika/Sahams Annual Benchmark Dashboard" in markdown
-    assert "can_claim_tajika_sahams_closure: `false`" in markdown
+    assert "can_claim_tajika_sahams_closure: `true`" in markdown
     assert "production_tuning_allowed: `false`" in markdown

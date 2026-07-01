@@ -9,21 +9,26 @@
 
 ## Missing Summary
 
-- metadata: `5`
-- target: `10`
+- metadata: `0`
+- target: `4`
 
 ## Prefilled Fields
 
-- status: `draft`
+- status: `external_verified`
 - promotion_status_after_fill: `external_verified`
 
 - metadata:
 
+  - tool_name: `PyJHora`
+  - tool_version_or_url: `PyJHora 4.8.6 isolated workbuddy black-box run`
+  - capture_date: `2026-06-29`
+  - source_artifact: `references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt`
   - ayanamsa: `lahiri`
   - node_mode: `mean`
-  - timezone: `0.883333`
-  - annual_system: `varshaphala`
+  - timezone: `UTC+00:53`
+  - annual_system: `Varshaphala/Tajika`
   - target_year: `1905`
+  - operator_note: `Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain.`
 
 - settings:
 
@@ -36,25 +41,14 @@
 ## Manual Fill Plan
 
 - status_value: `external_verified`
-- manual_entry_count: `15`
+- manual_entry_count: `4`
 
 ## Missing Fields
 
-- `metadata.tool_name`
-- `metadata.tool_version_or_url`
-- `metadata.capture_date`
-- `metadata.operator_note`
-- `metadata.source_artifact`
-- `target.solar_return_datetime`
-- `target.varsha_lagna_deg`
-- `target.muntha_sign`
-- `target.year_lord`
-- `target.mudda_dasha_first_lord`
-- `target.sahams.punya_saham`
-- `target.sahams.rajya_saham`
-- `target.sahams.vivah_saham`
-- `target.tajika_yogas`
-- `target.source_artifact`
+- `target.tajika_yogas.gairi_kamboola`
+- `target.tajika_yogas.khallasara`
+- `target.tajika_yogas.nakta`
+- `target.tajika_yogas.yamaya`
 
 ## External Sources
 

@@ -198,6 +198,29 @@ def build_report(front: str) -> dict[str, Any]:
     config = FRONTS[front]
     status = _run_json(config["status_command"])
     packet = json.loads((ROOT / config["packet_template"]).read_text(encoding="utf-8"))
+    status_first = status.get("first_priority")
+    if status_first is None:
+        return {
+            "scope": "first_external_oracle_packet_assistant",
+            "schema_version": 1,
+            "front": front,
+            "case_id": packet.get("case_id"),
+            "capture_id": packet.get("capture_id"),
+            "operator_card": config["operator_card"],
+            "packet_template": config["packet_template"],
+            "missing_fields": [],
+            "missing_groups": _group_missing_fields([]),
+            "prefilled_fields": _prefilled_fields(packet, []),
+            "manual_fill_plan": _manual_fill_plan(packet, []),
+            "ready_to_apply": True,
+            "external_sources": config["external_sources"],
+            "apply_command": "",
+            "validate_command": "",
+            "boundary": (
+                "This assistant only reports what to fill. The current target set for this front is already "
+                "closed, so this entry now acts as a historical operator reference rather than an active fill task."
+            ),
+        }
     first = status.get("first_priority") or {
         "case_id": packet.get("case_id"),
         "capture_id": packet.get("capture_id"),
@@ -205,9 +228,14 @@ def build_report(front: str) -> dict[str, Any]:
         "validate_command": _fallback_validate_command(config),
         "packet_path": config["packet_template"],
     }
-    packet_missing = _packet_missing(config["packet_template"])
+    packet_template = first.get("packet_path") or config["packet_template"]
+    if not Path(packet_template).is_absolute():
+        packet_path = str(ROOT / packet_template)
+    else:
+        packet_path = packet_template
+    packet_missing = _packet_missing(str(Path(packet_path).relative_to(ROOT)))
     missing_groups = _group_missing_fields(packet_missing)
-    apply_command = first["apply_command"].replace(first["packet_path"], config["packet_template"]) if first.get("apply_command") else ""
+    apply_command = first.get("apply_command") or _fallback_apply_command(config)
     return {
         "scope": "first_external_oracle_packet_assistant",
         "schema_version": 1,
@@ -215,11 +243,11 @@ def build_report(front: str) -> dict[str, Any]:
         "case_id": first["case_id"],
         "capture_id": first["capture_id"],
         "operator_card": config["operator_card"],
-        "packet_template": config["packet_template"],
+        "packet_template": str(Path(packet_path).relative_to(ROOT)),
         "missing_fields": packet_missing,
         "missing_groups": missing_groups,
-        "prefilled_fields": _prefilled_fields(packet, packet_missing),
-        "manual_fill_plan": _manual_fill_plan(packet, packet_missing),
+        "prefilled_fields": _prefilled_fields(json.loads(Path(packet_path).read_text(encoding="utf-8")), packet_missing),
+        "manual_fill_plan": _manual_fill_plan(json.loads(Path(packet_path).read_text(encoding="utf-8")), packet_missing),
         "ready_to_apply": not packet_missing,
         "external_sources": config["external_sources"],
         "apply_command": apply_command,

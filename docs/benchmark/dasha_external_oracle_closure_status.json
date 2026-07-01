@@ -3,97 +3,14 @@
   "schema_version": 1,
   "summary": {
     "dasha_task_count": 3,
-    "external_verified_dasha_tasks": 0,
-    "can_claim_dasha_oracle_closure": false,
+    "external_verified_dasha_tasks": 3,
+    "can_claim_dasha_oracle_closure": true,
     "production_tuning_allowed": false
   },
-  "first_priority": {
-    "case_id": "template_steve_jobs_dasha_lahiri",
-    "capture_id": "external_template_steve_jobs_dasha_lahiri",
-    "packet_path": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json",
-    "birth": {
-      "year": 1955,
-      "month": 2,
-      "day": 24,
-      "hour": 19,
-      "minute": 15,
-      "second": 0,
-      "lat": 37.7749,
-      "lon": -122.4194,
-      "tz": -8
-    },
-    "settings": {
-      "ayanamsa": "lahiri",
-      "node_mode": "true"
-    },
-    "required_target_fields": [
-      "target.vimshottari_start_date"
-    ],
-    "missing_fields": [
-      "metadata.tool_name",
-      "metadata.tool_version_or_url",
-      "metadata.capture_date",
-      "metadata.operator_note",
-      "metadata.source_artifact",
-      "target.vimshottari_start_date"
-    ],
-    "missing_groups": {
-      "metadata": {
-        "count": 5,
-        "fields": [
-          "metadata.tool_name",
-          "metadata.tool_version_or_url",
-          "metadata.capture_date",
-          "metadata.operator_note",
-          "metadata.source_artifact"
-        ]
-      },
-      "target": {
-        "count": 1,
-        "fields": [
-          "target.vimshottari_start_date"
-        ]
-      }
-    },
-    "prefilled_fields": {
-      "status": "draft",
-      "promotion_status_after_fill": "external_verified",
-      "metadata": {
-        "ayanamsa": "Lahiri",
-        "node_mode": "true node",
-        "timezone": "UTC-08:00"
-      },
-      "settings": {
-        "ayanamsa": "lahiri",
-        "node_mode": "true"
-      }
-    },
-    "manual_fill_plan": {
-      "status_value": "external_verified",
-      "manual_entry_count": 6,
-      "remaining_manual_fields": [
-        "metadata.tool_name",
-        "metadata.tool_version_or_url",
-        "metadata.capture_date",
-        "metadata.operator_note",
-        "metadata.source_artifact",
-        "target.vimshottari_start_date"
-      ]
-    },
-    "external_sources": [
-      "JHora Vimshottari Dasha screenshot",
-      "PyJHora black-box dasha output",
-      "documented printed/software example"
-    ],
-    "artifact_policy": "Save redacted screenshots or stdout snippets under references/oracle/artifacts/.",
-    "apply_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json --format json",
-    "validate_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --format json > /tmp/jyotish_oracle_queue_filled.json && python3 scripts/oracle_evidence_validator.py --queue-file /tmp/jyotish_oracle_queue_filled.json"
-  },
+  "first_priority": null,
   "next_actions": [
-    "Open the first priority packet and fill metadata from an external oracle.",
-    "Fill target.vimshottari_start_date only from JHora/PyJHora/book example, not from this repository.",
-    "Set status to external_verified after the artifact path and Dasha target are filled.",
-    "Apply the packet, regenerate the queue, and run oracle_evidence_validator.py."
+    "Dasha-only external oracle closure is complete for the current target set.",
+    "Keep global calibration blocked until Shadbala and other non-Dasha oracle packets pass validation."
   ],
   "boundary": "This board isolates the Dasha shortest path. Shadbala remains a separate absolute-value closure task and must not block collecting the first Dasha boundary date."
 }

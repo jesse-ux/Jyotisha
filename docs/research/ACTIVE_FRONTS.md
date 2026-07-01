@@ -22,6 +22,10 @@ Do not open new product surfaces before at least one of these four lanes is clos
   - `/Users/wuyongnaren/Documents/印度占星/docs/research/high_value_fragment_source_map_2026_06_28.md`
   - `/Users/wuyongnaren/Documents/印度占星/docs/research/worktree_fragment_triage_2026_06_28.md`
   - `/Users/wuyongnaren/Documents/印度占星/docs/research/yoga_benchmark_case_promotion_audit_2026_06_28.md`
+  - `/Users/wuyongnaren/Documents/印度占星/docs/research/promote_first_repo_truth_pack_2026_07_01.md`
+  - `/Users/wuyongnaren/Documents/印度占星/docs/research/promote_second_repo_truth_pack_2026_07_01.md`
+  - `/Users/wuyongnaren/Documents/印度占星/docs/research/promote_third_repo_truth_pack_2026_07_01.md`
+  - `/Users/wuyongnaren/Documents/印度占星/docs/research/promote_fourth_repo_truth_pack_2026_07_01.md`
 - Treat repo truth as authoritative.
 - Treat `docs/research/local_drafts`, Gemini brain notes, Codex attachments, and WorkBuddy copies as candidate sources only.
 
@@ -52,6 +56,7 @@ Do not open new product surfaces before at least one of these four lanes is clos
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/wealth_adjudicator_sixth_pass_avayogi_boundary_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/wealth_adjudicator_seventh_pass_ashtakavarga_bridge_2026_06_28.md`
 - `/Users/wuyongnaren/Documents/印度占星/references/event_judgment_wealth.md`
+- `/Users/wuyongnaren/Documents/印度占星/references/yogi-asc-tight-orb-wealth-freeze-guide.md`
 
 ## Oracle Closure
 
@@ -60,7 +65,13 @@ Do not open new product surfaces before at least one of these four lanes is clos
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_closure_master_dashboard_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/public_benchmark_dashboard_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/shadbala_absolute_oracle_comparison_audit_2026_06_28.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/promote_first_repo_truth_pack_2026_07_01.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/promote_second_repo_truth_pack_2026_07_01.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/promote_third_repo_truth_pack_2026_07_01.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/promote_fourth_repo_truth_pack_2026_07_01.md`
 - `/Users/wuyongnaren/Documents/印度占星/docs/research/raman_dasha_boundary_series_oracle_seed_2026_06_28.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/tajika_annual_closure_status_latest.md`
+- `/Users/wuyongnaren/Documents/印度占星/docs/research/tajika_annual_benchmark_dashboard_latest.md`
 - `/Users/wuyongnaren/Documents/印度占星/scripts/shadbala_oracle_comparison.py`
 - `/Users/wuyongnaren/Documents/印度占星/references/oracle/`
 - Before changing oracle-dependent adjudicator or benchmark claims, run:

@@ -37,8 +37,8 @@ def test_tajika_annual_closure_status_identifies_first_annual_packet() -> None:
     assert report["scope"] == "tajika_sahams_annual_closure_status"
     assert report["schema_version"] == 1
     assert report["summary"]["annual_task_count"] == 5
-    assert report["summary"]["external_verified_annual_tasks"] == 1
-    assert report["summary"]["can_claim_tajika_sahams_closure"] is False
+    assert report["summary"]["external_verified_annual_tasks"] == 5
+    assert report["summary"]["can_claim_tajika_sahams_closure"] is True
     from scripts import tajika_annual_closure_status as module
     assert module.FIRST_PRIORITY_CASE_ID == "template_einstein_varshaphala_1905_lahiri"
     assert module.FIRST_PRIORITY_TEMPLATE_PATH.endswith("external_template_einstein_varshaphala_1905_lahiri.json")
@@ -56,23 +56,22 @@ def test_tajika_annual_closure_status_identifies_first_annual_packet() -> None:
         "target.tajika_yogas",
         "target.source_artifact",
     ]
-    assert "metadata.tool_name" in report["first_priority"]["missing_fields"]
-    assert "target.solar_return_datetime" in report["first_priority"]["missing_fields"]
-    assert "target.sahams.punya_saham" in report["first_priority"]["missing_fields"]
-    assert report["first_priority"]["missing_groups"]["metadata"]["count"] == 5
-    assert report["first_priority"]["missing_groups"]["target"]["count"] == 10
-    assert report["first_priority"]["prefilled_fields"]["metadata"]["annual_system"] == "varshaphala"
+    assert report["first_priority"]["missing_fields"] == []
+    assert report["first_priority"]["missing_groups"]["metadata"]["count"] == 0
+    assert report["first_priority"]["missing_groups"]["target"]["count"] == 0
+    assert report["first_priority"]["prefilled_fields"]["metadata"]["tool_name"] == "PyJHora"
+    assert report["first_priority"]["prefilled_fields"]["metadata"]["annual_system"] == "Varshaphala/Tajika"
     assert report["first_priority"]["prefilled_fields"]["metadata"]["target_year"] == 1905
     assert report["first_priority"]["prefilled_fields"]["settings"]["node_mode"] == "mean"
     assert report["first_priority"]["manual_fill_plan"]["status_value"] == "external_verified"
-    assert report["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 15
+    assert report["first_priority"]["manual_fill_plan"]["manual_entry_count"] == 0
     assert report["first_priority"]["validate_command"]
     packet_path = ROOT / report["first_priority"]["packet_path"]
     assert packet_path.exists(), report["first_priority"]["packet_path"]
     packet = json.loads(packet_path.read_text(encoding="utf-8"))
     assert packet["capture_id"] == "external_template_einstein_varshaphala_1905_lahiri"
-    assert packet["status"] == "draft"
-    assert packet["target_placeholders"]["target.solar_return_datetime"] is None
+    assert packet["status"] == "external_verified"
+    assert packet["target_placeholders"]["target.solar_return_datetime"] == "1905-03-15T03:44:51+00:53"
 
 
 def test_tajika_annual_closure_status_markdown_can_be_written(tmp_path: Path) -> None:
@@ -83,9 +82,8 @@ def test_tajika_annual_closure_status_markdown_can_be_written(tmp_path: Path) ->
     assert output.exists()
     markdown = output.read_text(encoding="utf-8")
     assert "# Tajika/Sahams Annual Closure Status" in markdown
-    assert "can_claim_tajika_sahams_closure: `false`" in markdown
+    assert "can_claim_tajika_sahams_closure: `true`" in markdown
     assert "external_template_einstein_varshaphala_1905_lahiri" in markdown
-    assert "target.sahams.punya_saham" in markdown
     assert "## Missing Summary" in markdown
     assert "## Prefilled Fields" in markdown
     assert "## Manual Fill Plan" in markdown

@@ -50,7 +50,7 @@ def test_public_benchmark_dashboard_outputs_stable_json_summary() -> None:
     assert report["pyjhora_blackbox_assets"]["fronts"]["tajika_sahams"]["artifact_count"] >= 1
     assert "Dasha-only external oracle readiness is 3/3" in report["global_first_gap"]
     assert "Shadbala external absolute-value readiness is 4/4" in report["global_first_gap"]
-    assert "PyJHora black-box assets are 8 artifacts / 8 packets" in report["global_first_gap"]
+    assert "PyJHora black-box assets are 12 artifacts / 8 packets" in report["global_first_gap"]
     assert report["public_claim"]["can_claim_global_first"] is False
     assert report["public_claim"]["reason"]
 

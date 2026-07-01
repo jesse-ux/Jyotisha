@@ -199,12 +199,21 @@ def build_status(oracle_file: str) -> dict[str, Any]:
             "apply_command": _apply_command(packet_path, oracle_file),
             "validate_command": _validate_command(oracle_file),
         },
-        "next_actions": [
-            "Fill solar return datetime, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, three Sahams and Tajika Yogas from an external annual source.",
-            "Document timezone/DST and solar-return convention before promoting the row.",
-            "Set the row to external_verified only after target.source_artifact and metadata.source_artifact point to reviewable evidence.",
-            "Regenerate the annual queue and benchmark dashboard.",
-        ],
+        "next_actions": (
+            [
+                "Keep the current annual packet set in active_target_set_closed status and avoid overstating it as full predictive closure.",
+                "Use this board as a reference packet only; the remaining work is second-wave sample breadth, day/night reversal edges and deeper judgment templates.",
+                "Regenerate the annual queue and benchmark dashboard after new external rows or broader tolerance checks are added.",
+                "Do not treat local scripts/varshaphala.py output as oracle evidence even though the present packet set is closed.",
+            ]
+            if annual_tasks and len(external_verified) == len(annual_tasks)
+            else [
+                "Fill solar return datetime, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, three Sahams and Tajika Yogas from an external annual source.",
+                "Document timezone/DST and solar-return convention before promoting the row.",
+                "Set the row to external_verified only after target.source_artifact and metadata.source_artifact point to reviewable evidence.",
+                "Regenerate the annual queue and benchmark dashboard.",
+            ]
+        ),
         "boundary": (
             "This board isolates Tajika/Sahams annual closure. Local scripts/varshaphala.py output is not an "
             "external oracle and must not be used as production tuning evidence."

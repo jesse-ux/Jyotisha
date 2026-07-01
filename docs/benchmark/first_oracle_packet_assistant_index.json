@@ -1,7 +1,7 @@
 {
   "scope": "first_oracle_packet_assistant_index",
   "schema_version": 1,
-  "generated_at": "2026-06-27T07:17:37.465984+00:00",
+  "generated_at": "2026-07-01T12:10:01.504983+00:00",
   "summary": {
     "front_count": 3,
     "all_ready_to_apply": false
@@ -12,8 +12,8 @@
       "capture_id": "external_template_steve_jobs_dasha_lahiri",
       "operator_card": "docs/benchmark/dasha_steve_jobs_first_packet_operator_card.md",
       "packet_template": "references/oracle/evidence_packet_templates/dasha_steve_jobs_lahiri_first_packet_only.json",
-      "missing_field_count": 6,
-      "ready_to_apply": false,
+      "missing_field_count": 0,
+      "ready_to_apply": true,
       "apply_command": ""
     },
     "tajika_sahams": {
@@ -21,7 +21,7 @@
       "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
       "operator_card": "docs/benchmark/tajika_einstein_1905_first_packet_operator_card.md",
       "packet_template": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
-      "missing_field_count": 15,
+      "missing_field_count": 4,
       "ready_to_apply": false,
       "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json"
     },
@@ -30,31 +30,31 @@
       "capture_id": "external_template_redacted_place_shadbala_raman",
       "operator_card": "docs/benchmark/shadbala_redacted_place_raman_first_packet_operator_card.md",
       "packet_template": "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json",
-      "missing_field_count": 55,
-      "ready_to_apply": false,
-      "apply_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json --format json"
+      "missing_field_count": 0,
+      "ready_to_apply": true,
+      "apply_command": ""
     }
   },
   "recommended_order": [
-    {
-      "front": "dasha",
-      "case_id": "template_steve_jobs_dasha_lahiri",
-      "capture_id": "external_template_steve_jobs_dasha_lahiri",
-      "operator_card": "docs/benchmark/dasha_steve_jobs_first_packet_operator_card.md",
-      "packet_template": "references/oracle/evidence_packet_templates/dasha_steve_jobs_lahiri_first_packet_only.json",
-      "missing_field_count": 6,
-      "ready_to_apply": false,
-      "apply_command": ""
-    },
     {
       "front": "tajika_sahams",
       "case_id": "template_einstein_varshaphala_1905_lahiri",
       "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
       "operator_card": "docs/benchmark/tajika_einstein_1905_first_packet_operator_card.md",
       "packet_template": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
-      "missing_field_count": 15,
+      "missing_field_count": 4,
       "ready_to_apply": false,
       "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json"
+    },
+    {
+      "front": "dasha",
+      "case_id": "template_steve_jobs_dasha_lahiri",
+      "capture_id": "external_template_steve_jobs_dasha_lahiri",
+      "operator_card": "docs/benchmark/dasha_steve_jobs_first_packet_operator_card.md",
+      "packet_template": "references/oracle/evidence_packet_templates/dasha_steve_jobs_lahiri_first_packet_only.json",
+      "missing_field_count": 0,
+      "ready_to_apply": true,
+      "apply_command": ""
     },
     {
       "front": "shadbala",
@@ -62,9 +62,9 @@
       "capture_id": "external_template_redacted_place_shadbala_raman",
       "operator_card": "docs/benchmark/shadbala_redacted_place_raman_first_packet_operator_card.md",
       "packet_template": "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json",
-      "missing_field_count": 55,
-      "ready_to_apply": false,
-      "apply_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json --format json"
+      "missing_field_count": 0,
+      "ready_to_apply": true,
+      "apply_command": ""
     }
   ],
   "boundary": "This index aggregates packet assistants only. It does not create oracle values, does not validate packets by itself, and does not change oracle files."

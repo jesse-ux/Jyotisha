@@ -36,20 +36,15 @@ def test_oracle_packet_assistant_index_aggregates_three_fronts() -> None:
     assert report["schema_version"] == 1
     assert report["summary"]["front_count"] == 3
     assert report["summary"]["all_ready_to_apply"] is False
-    assert report["fronts"]["dasha"]["missing_field_count"] == 6
-    assert report["fronts"]["tajika_sahams"]["missing_field_count"] == 15
-    assert report["fronts"]["shadbala"]["missing_field_count"] == 55
+    assert report["fronts"]["dasha"]["missing_field_count"] == 0
+    assert report["fronts"]["tajika_sahams"]["missing_field_count"] == 4
+    assert report["fronts"]["shadbala"]["missing_field_count"] == 0
     assert report["fronts"]["tajika_sahams"]["case_id"] == "template_einstein_varshaphala_1905_lahiri"
     assert report["fronts"]["tajika_sahams"]["operator_card"].endswith("tajika_einstein_1905_first_packet_operator_card.md")
     assert report["fronts"]["tajika_sahams"]["packet_template"].endswith("external_template_einstein_varshaphala_1905_lahiri.json")
-    assert report["fronts"]["dasha"]["apply_command"] == (
-        "python3 scripts/oracle_collection_queue.py "
-        "--oracle-file references/oracle/dasha_shadbala_oracle_cases.json "
-        "--apply-packet references/oracle/evidence_packet_templates/"
-        "dasha_steve_jobs_lahiri_first_packet_only.json --format json"
-    )
-    assert report["recommended_order"][0]["front"] == "dasha"
-    assert report["recommended_order"][1]["front"] == "tajika_sahams"
+    assert report["fronts"]["dasha"]["apply_command"] == ""
+    assert report["recommended_order"][0]["front"] == "tajika_sahams"
+    assert report["recommended_order"][1]["front"] == "dasha"
     assert report["recommended_order"][2]["front"] == "shadbala"
 
 
@@ -64,6 +59,6 @@ def test_oracle_packet_assistant_index_markdown_can_be_written(tmp_path: Path) -
     assert "dasha" in markdown
     assert "tajika_sahams" in markdown
     assert "shadbala" in markdown
-    assert "6" in markdown
-    assert "15" in markdown
-    assert "55" in markdown
+    assert "0" in markdown
+    assert "4" in markdown
+    assert "0" in markdown

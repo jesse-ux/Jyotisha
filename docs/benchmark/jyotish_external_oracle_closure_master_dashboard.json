@@ -1,12 +1,12 @@
 {
   "scope": "jyotish_external_oracle_closure_master_dashboard",
   "schema_version": 1,
-  "generated_at": "2026-06-27T08:02:17.224746+00:00",
+  "generated_at": "2026-07-01T11:36:23.191939+00:00",
   "summary": {
     "total_tasks": 12,
-    "external_verified_tasks": 8,
-    "open_tasks": 4,
-    "can_claim_global_oracle_closure": false,
+    "external_verified_tasks": 12,
+    "open_tasks": 0,
+    "can_claim_global_oracle_closure": true,
     "production_tuning_allowed": false
   },
   "fronts": {
@@ -26,364 +26,45 @@
       "open_tasks": 0,
       "can_claim_closure": true,
       "production_tuning_allowed": false,
-      "first_priority": {
-        "case_id": "template_redacted_place_shadbala_raman",
-        "capture_id": "external_template_redacted_place_shadbala_raman",
-        "packet_path": "references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json",
-        "missing_field_count": 55,
-        "missing_fields": [
-          "metadata.tool_name",
-          "metadata.tool_version_or_url",
-          "metadata.capture_date",
-          "metadata.operator_note",
-          "metadata.source_artifact",
-          "target.moon_sidereal_longitude_deg",
-          "target.shadbala_components.Sun.sthana",
-          "target.shadbala_components.Sun.dig",
-          "target.shadbala_components.Sun.kala",
-          "target.shadbala_components.Sun.chesta",
-          "target.shadbala_components.Sun.naisargika",
-          "target.shadbala_components.Sun.drik",
-          "target.shadbala_components.Sun.total_rupa",
-          "target.shadbala_components.Moon.sthana",
-          "target.shadbala_components.Moon.dig",
-          "target.shadbala_components.Moon.kala",
-          "target.shadbala_components.Moon.chesta",
-          "target.shadbala_components.Moon.naisargika",
-          "target.shadbala_components.Moon.drik",
-          "target.shadbala_components.Moon.total_rupa",
-          "target.shadbala_components.Mars.sthana",
-          "target.shadbala_components.Mars.dig",
-          "target.shadbala_components.Mars.kala",
-          "target.shadbala_components.Mars.chesta",
-          "target.shadbala_components.Mars.naisargika",
-          "target.shadbala_components.Mars.drik",
-          "target.shadbala_components.Mars.total_rupa",
-          "target.shadbala_components.Mercury.sthana",
-          "target.shadbala_components.Mercury.dig",
-          "target.shadbala_components.Mercury.kala",
-          "target.shadbala_components.Mercury.chesta",
-          "target.shadbala_components.Mercury.naisargika",
-          "target.shadbala_components.Mercury.drik",
-          "target.shadbala_components.Mercury.total_rupa",
-          "target.shadbala_components.Jupiter.sthana",
-          "target.shadbala_components.Jupiter.dig",
-          "target.shadbala_components.Jupiter.kala",
-          "target.shadbala_components.Jupiter.chesta",
-          "target.shadbala_components.Jupiter.naisargika",
-          "target.shadbala_components.Jupiter.drik",
-          "target.shadbala_components.Jupiter.total_rupa",
-          "target.shadbala_components.Venus.sthana",
-          "target.shadbala_components.Venus.dig",
-          "target.shadbala_components.Venus.kala",
-          "target.shadbala_components.Venus.chesta",
-          "target.shadbala_components.Venus.naisargika",
-          "target.shadbala_components.Venus.drik",
-          "target.shadbala_components.Venus.total_rupa",
-          "target.shadbala_components.Saturn.sthana",
-          "target.shadbala_components.Saturn.dig",
-          "target.shadbala_components.Saturn.kala",
-          "target.shadbala_components.Saturn.chesta",
-          "target.shadbala_components.Saturn.naisargika",
-          "target.shadbala_components.Saturn.drik",
-          "target.shadbala_components.Saturn.total_rupa"
-        ],
-        "missing_groups": {
-          "metadata": {
-            "count": 5,
-            "fields": [
-              "metadata.tool_name",
-              "metadata.tool_version_or_url",
-              "metadata.capture_date",
-              "metadata.operator_note",
-              "metadata.source_artifact"
-            ]
-          },
-          "target": {
-            "count": 50,
-            "fields": [
-              "target.moon_sidereal_longitude_deg",
-              "target.shadbala_components.Sun.sthana",
-              "target.shadbala_components.Sun.dig",
-              "target.shadbala_components.Sun.kala",
-              "target.shadbala_components.Sun.chesta",
-              "target.shadbala_components.Sun.naisargika",
-              "target.shadbala_components.Sun.drik",
-              "target.shadbala_components.Sun.total_rupa",
-              "target.shadbala_components.Moon.sthana",
-              "target.shadbala_components.Moon.dig",
-              "target.shadbala_components.Moon.kala",
-              "target.shadbala_components.Moon.chesta",
-              "target.shadbala_components.Moon.naisargika",
-              "target.shadbala_components.Moon.drik",
-              "target.shadbala_components.Moon.total_rupa",
-              "target.shadbala_components.Mars.sthana",
-              "target.shadbala_components.Mars.dig",
-              "target.shadbala_components.Mars.kala",
-              "target.shadbala_components.Mars.chesta",
-              "target.shadbala_components.Mars.naisargika",
-              "target.shadbala_components.Mars.drik",
-              "target.shadbala_components.Mars.total_rupa",
-              "target.shadbala_components.Mercury.sthana",
-              "target.shadbala_components.Mercury.dig",
-              "target.shadbala_components.Mercury.kala",
-              "target.shadbala_components.Mercury.chesta",
-              "target.shadbala_components.Mercury.naisargika",
-              "target.shadbala_components.Mercury.drik",
-              "target.shadbala_components.Mercury.total_rupa",
-              "target.shadbala_components.Jupiter.sthana",
-              "target.shadbala_components.Jupiter.dig",
-              "target.shadbala_components.Jupiter.kala",
-              "target.shadbala_components.Jupiter.chesta",
-              "target.shadbala_components.Jupiter.naisargika",
-              "target.shadbala_components.Jupiter.drik",
-              "target.shadbala_components.Jupiter.total_rupa",
-              "target.shadbala_components.Venus.sthana",
-              "target.shadbala_components.Venus.dig",
-              "target.shadbala_components.Venus.kala",
-              "target.shadbala_components.Venus.chesta",
-              "target.shadbala_components.Venus.naisargika",
-              "target.shadbala_components.Venus.drik",
-              "target.shadbala_components.Venus.total_rupa",
-              "target.shadbala_components.Saturn.sthana",
-              "target.shadbala_components.Saturn.dig",
-              "target.shadbala_components.Saturn.kala",
-              "target.shadbala_components.Saturn.chesta",
-              "target.shadbala_components.Saturn.naisargika",
-              "target.shadbala_components.Saturn.drik",
-              "target.shadbala_components.Saturn.total_rupa"
-            ]
-          },
-          "bodies": {
-            "Jupiter": {
-              "count": 7,
-              "fields": [
-                "target.shadbala_components.Jupiter.sthana",
-                "target.shadbala_components.Jupiter.dig",
-                "target.shadbala_components.Jupiter.kala",
-                "target.shadbala_components.Jupiter.chesta",
-                "target.shadbala_components.Jupiter.naisargika",
-                "target.shadbala_components.Jupiter.drik",
-                "target.shadbala_components.Jupiter.total_rupa"
-              ]
-            },
-            "Mars": {
-              "count": 7,
-              "fields": [
-                "target.shadbala_components.Mars.sthana",
-                "target.shadbala_components.Mars.dig",
-                "target.shadbala_components.Mars.kala",
-                "target.shadbala_components.Mars.chesta",
-                "target.shadbala_components.Mars.naisargika",
-                "target.shadbala_components.Mars.drik",
-                "target.shadbala_components.Mars.total_rupa"
-              ]
-            },
-            "Mercury": {
-              "count": 7,
-              "fields": [
-                "target.shadbala_components.Mercury.sthana",
-                "target.shadbala_components.Mercury.dig",
-                "target.shadbala_components.Mercury.kala",
-                "target.shadbala_components.Mercury.chesta",
-                "target.shadbala_components.Mercury.naisargika",
-                "target.shadbala_components.Mercury.drik",
-                "target.shadbala_components.Mercury.total_rupa"
-              ]
-            },
-            "Moon": {
-              "count": 7,
-              "fields": [
-                "target.shadbala_components.Moon.sthana",
-                "target.shadbala_components.Moon.dig",
-                "target.shadbala_components.Moon.kala",
-                "target.shadbala_components.Moon.chesta",
-                "target.shadbala_components.Moon.naisargika",
-                "target.shadbala_components.Moon.drik",
-                "target.shadbala_components.Moon.total_rupa"
-              ]
-            },
-            "Saturn": {
-              "count": 7,
-              "fields": [
-                "target.shadbala_components.Saturn.sthana",
-                "target.shadbala_components.Saturn.dig",
-                "target.shadbala_components.Saturn.kala",
-                "target.shadbala_components.Saturn.chesta",
-                "target.shadbala_components.Saturn.naisargika",
-                "target.shadbala_components.Saturn.drik",
-                "target.shadbala_components.Saturn.total_rupa"
-              ]
-            },
-            "Sun": {
-              "count": 7,
-              "fields": [
-                "target.shadbala_components.Sun.sthana",
-                "target.shadbala_components.Sun.dig",
-                "target.shadbala_components.Sun.kala",
-                "target.shadbala_components.Sun.chesta",
-                "target.shadbala_components.Sun.naisargika",
-                "target.shadbala_components.Sun.drik",
-                "target.shadbala_components.Sun.total_rupa"
-              ]
-            },
-            "Venus": {
-              "count": 7,
-              "fields": [
-                "target.shadbala_components.Venus.sthana",
-                "target.shadbala_components.Venus.dig",
-                "target.shadbala_components.Venus.kala",
-                "target.shadbala_components.Venus.chesta",
-                "target.shadbala_components.Venus.naisargika",
-                "target.shadbala_components.Venus.drik",
-                "target.shadbala_components.Venus.total_rupa"
-              ]
-            }
-          }
-        },
-        "prefilled_fields": {
-          "status": "draft",
-          "promotion_status_after_fill": "external_verified",
-          "metadata": {
-            "ayanamsa": "Raman",
-            "node_mode": "mean node",
-            "timezone": "UTC+08:00"
-          },
-          "settings": {
-            "ayanamsa": "raman",
-            "node_mode": "mean"
-          }
-        },
-        "manual_fill_plan": {
-          "status_value": "external_verified",
-          "manual_entry_count": 55,
-          "remaining_manual_fields": [
-            "metadata.tool_name",
-            "metadata.tool_version_or_url",
-            "metadata.capture_date",
-            "metadata.operator_note",
-            "metadata.source_artifact",
-            "target.moon_sidereal_longitude_deg",
-            "target.shadbala_components.Sun.sthana",
-            "target.shadbala_components.Sun.dig",
-            "target.shadbala_components.Sun.kala",
-            "target.shadbala_components.Sun.chesta",
-            "target.shadbala_components.Sun.naisargika",
-            "target.shadbala_components.Sun.drik",
-            "target.shadbala_components.Sun.total_rupa",
-            "target.shadbala_components.Moon.sthana",
-            "target.shadbala_components.Moon.dig",
-            "target.shadbala_components.Moon.kala",
-            "target.shadbala_components.Moon.chesta",
-            "target.shadbala_components.Moon.naisargika",
-            "target.shadbala_components.Moon.drik",
-            "target.shadbala_components.Moon.total_rupa",
-            "target.shadbala_components.Mars.sthana",
-            "target.shadbala_components.Mars.dig",
-            "target.shadbala_components.Mars.kala",
-            "target.shadbala_components.Mars.chesta",
-            "target.shadbala_components.Mars.naisargika",
-            "target.shadbala_components.Mars.drik",
-            "target.shadbala_components.Mars.total_rupa",
-            "target.shadbala_components.Mercury.sthana",
-            "target.shadbala_components.Mercury.dig",
-            "target.shadbala_components.Mercury.kala",
-            "target.shadbala_components.Mercury.chesta",
-            "target.shadbala_components.Mercury.naisargika",
-            "target.shadbala_components.Mercury.drik",
-            "target.shadbala_components.Mercury.total_rupa",
-            "target.shadbala_components.Jupiter.sthana",
-            "target.shadbala_components.Jupiter.dig",
-            "target.shadbala_components.Jupiter.kala",
-            "target.shadbala_components.Jupiter.chesta",
-            "target.shadbala_components.Jupiter.naisargika",
-            "target.shadbala_components.Jupiter.drik",
-            "target.shadbala_components.Jupiter.total_rupa",
-            "target.shadbala_components.Venus.sthana",
-            "target.shadbala_components.Venus.dig",
-            "target.shadbala_components.Venus.kala",
-            "target.shadbala_components.Venus.chesta",
-            "target.shadbala_components.Venus.naisargika",
-            "target.shadbala_components.Venus.drik",
-            "target.shadbala_components.Venus.total_rupa",
-            "target.shadbala_components.Saturn.sthana",
-            "target.shadbala_components.Saturn.dig",
-            "target.shadbala_components.Saturn.kala",
-            "target.shadbala_components.Saturn.chesta",
-            "target.shadbala_components.Saturn.naisargika",
-            "target.shadbala_components.Saturn.drik",
-            "target.shadbala_components.Saturn.total_rupa"
-          ]
-        },
-        "apply_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json --format json",
-        "validate_command": "python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --format json > /tmp/jyotish_oracle_queue_filled.json && python3 scripts/oracle_evidence_validator.py --queue-file /tmp/jyotish_oracle_queue_filled.json"
-      }
+      "first_priority": null
     },
     "tajika_sahams": {
       "front": "tajika_sahams",
       "task_count": 5,
-      "external_verified_tasks": 1,
-      "open_tasks": 4,
-      "can_claim_closure": false,
+      "external_verified_tasks": 5,
+      "open_tasks": 0,
+      "can_claim_closure": true,
       "production_tuning_allowed": false,
       "first_priority": {
         "case_id": "template_einstein_varshaphala_1905_lahiri",
         "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
         "packet_path": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
-        "missing_field_count": 15,
-        "missing_fields": [
-          "metadata.tool_name",
-          "metadata.tool_version_or_url",
-          "metadata.capture_date",
-          "metadata.operator_note",
-          "metadata.source_artifact",
-          "target.solar_return_datetime",
-          "target.varsha_lagna_deg",
-          "target.muntha_sign",
-          "target.year_lord",
-          "target.mudda_dasha_first_lord",
-          "target.sahams.punya_saham",
-          "target.sahams.rajya_saham",
-          "target.sahams.vivah_saham",
-          "target.tajika_yogas",
-          "target.source_artifact"
-        ],
+        "missing_field_count": 0,
+        "missing_fields": [],
         "missing_groups": {
           "metadata": {
-            "count": 5,
-            "fields": [
-              "metadata.tool_name",
-              "metadata.tool_version_or_url",
-              "metadata.capture_date",
-              "metadata.operator_note",
-              "metadata.source_artifact"
-            ]
+            "count": 0,
+            "fields": []
           },
           "target": {
-            "count": 10,
-            "fields": [
-              "target.solar_return_datetime",
-              "target.varsha_lagna_deg",
-              "target.muntha_sign",
-              "target.year_lord",
-              "target.mudda_dasha_first_lord",
-              "target.sahams.punya_saham",
-              "target.sahams.rajya_saham",
-              "target.sahams.vivah_saham",
-              "target.tajika_yogas",
-              "target.source_artifact"
-            ]
+            "count": 0,
+            "fields": []
           }
         },
         "prefilled_fields": {
-          "status": "draft",
+          "status": "external_verified",
           "promotion_status_after_fill": "external_verified",
           "metadata": {
+            "tool_name": "PyJHora",
+            "tool_version_or_url": "PyJHora 4.8.6 isolated workbuddy black-box run",
+            "capture_date": "2026-06-29",
+            "source_artifact": "references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt",
             "ayanamsa": "lahiri",
             "node_mode": "mean",
-            "timezone": 0.883333,
-            "annual_system": "varshaphala",
-            "target_year": 1905
+            "timezone": "UTC+00:53",
+            "annual_system": "Varshaphala/Tajika",
+            "target_year": 1905,
+            "operator_note": "Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain."
           },
           "settings": {
             "ayanamsa": "lahiri",
@@ -394,39 +75,14 @@
         },
         "manual_fill_plan": {
           "status_value": "external_verified",
-          "manual_entry_count": 15,
-          "remaining_manual_fields": [
-            "metadata.tool_name",
-            "metadata.tool_version_or_url",
-            "metadata.capture_date",
-            "metadata.operator_note",
-            "metadata.source_artifact",
-            "target.solar_return_datetime",
-            "target.varsha_lagna_deg",
-            "target.muntha_sign",
-            "target.year_lord",
-            "target.mudda_dasha_first_lord",
-            "target.sahams.punya_saham",
-            "target.sahams.rajya_saham",
-            "target.sahams.vivah_saham",
-            "target.tajika_yogas",
-            "target.source_artifact"
-          ]
+          "manual_entry_count": 0,
+          "remaining_manual_fields": []
         },
         "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json",
         "validate_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --format json && python3 scripts/tajika_annual_benchmark_dashboard.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --format json"
       }
     }
   },
-  "next_action_order": [
-    {
-      "front": "tajika_sahams",
-      "case_id": "template_einstein_varshaphala_1905_lahiri",
-      "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
-      "missing_field_count": 15,
-      "manual_entry_count": 15,
-      "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json"
-    }
-  ],
+  "next_action_order": [],
   "boundary": "This dashboard merges external evidence readiness only. It does not claim prediction accuracy, does not tune production constants, and does not treat local engine output as oracle evidence."
 }

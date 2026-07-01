@@ -1,6 +1,6 @@
 # Public Jyotish Benchmark Dashboard
 
-Generated: `2026-06-28T23:44:26.816376+00:00`
+Generated: `2026-07-01T11:37:25.105482+00:00`
 
 ## Capability Registry
 
@@ -21,11 +21,11 @@ Generated: `2026-06-28T23:44:26.816376+00:00`
 
 ## PyJHora Black-Box Assets
 
-- artifact_count: `8`
+- artifact_count: `12`
 - packet_count: `8`
 - dasha_artifacts: `3`
 - shadbala_artifacts: `4`
-- tajika_sahams_artifacts: `1`
+- tajika_sahams_artifacts: `5`
 
 ## Boundary Audit
 
@@ -40,11 +40,11 @@ Generated: `2026-06-28T23:44:26.816376+00:00`
 
 ## Remaining Gap
 
-Dasha-only external oracle readiness is 3/3; Shadbala external absolute-value readiness is 4/4; PyJHora black-box assets are 8 artifacts / 8 packets; public long-term benchmark history is not yet comparable to the strongest global open-source projects.
+Dasha-only external oracle readiness is 3/3; Shadbala external absolute-value readiness is 4/4; PyJHora black-box assets are 12 artifacts / 8 packets; public long-term benchmark history is not yet comparable to the strongest global open-source projects.
 
 ## Next Actions
 
-- Fill the next open Tajika/Sahams or Shadbala external packet under references/oracle/artifacts/pending_packets.
-- Run oracle_evidence_validator.py until at least one packet is valid.
+- Expand public benchmark history instead of over-claiming from the current closed target set.
 - Run oracle_boundary_audit.py to inspect Dasha/Shadbala deltas without tuning constants.
-- Publish this dashboard after each validated sample batch.
+- Regenerate Tajika/Dasha/Shadbala status boards after each new external packet batch.
+- Publish this dashboard after each validated sample batch so public claim boundaries stay conservative.

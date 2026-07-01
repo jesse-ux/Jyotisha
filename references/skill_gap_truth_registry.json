@@ -54,8 +54,8 @@
     "tajika_sahams_annual_closure": {
       "title": "Tajika / Sahams annual closure",
       "priority": "P0",
-      "status": "active_gap",
-      "current_truth": "Varshaphala, Muntha, Year Lord, Mudda Dasha and Sahams have local structure, and the first annual external packet is now accepted at 1/5 for Steve Jobs 1984 Lahiri via PyJHora 4.8.7 black-box artifact; annual judgment depth, Einstein 1905 and the remaining external sample set are still incomplete.",
+      "status": "active_target_set_closed",
+      "current_truth": "Varshaphala, Muntha, Year Lord, Mudda Dasha and Sahams have local structure, and the current annual external oracle target set is closed at 5/5 packets. This closes the present packet set, but annual judgment depth, broader public sample breadth, and stronger interpretation closure are still incomplete.",
       "completion_standard": [
         "External annual packets include solar return time, Varsha Lagna, Muntha, Year Lord, Mudda Dasha, key Sahams and Tajika Yogas.",
         "Annual interpretation templates distinguish calculation evidence from judgment confidence.",
@@ -67,9 +67,9 @@
         "Local Varshaphala output alone is external oracle evidence"
       ],
       "next_actions": [
-        "Use scripts/tajika_annual_closure_status.py to fill the next annual packet: template_einstein_varshaphala_1905_lahiri.",
-        "Freeze the annual judgment template around Muntha, Year Lord, Mudda Dasha and Sahams without treating one annual sample as predictive closure.",
-        "Add public benchmark rows only after external annual evidence exists and scripts/tajika_annual_benchmark_dashboard.py reports readiness."
+        "Keep scripts/tajika_annual_closure_status.py and scripts/tajika_annual_benchmark_dashboard.py as the canonical annual closure monitors for future packet expansion.",
+        "Freeze the annual judgment template around Muntha, Year Lord, Mudda Dasha and Sahams without treating target-set closure as full predictive closure.",
+        "Add broader public benchmark rows and multi-case annual interpretation comparisons before raising annual confidence claims."
       ]
     },
     "article_template_industrialization": {

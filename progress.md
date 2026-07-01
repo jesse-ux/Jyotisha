@@ -716,3 +716,11 @@
 - 新增 `tests/test_external_oracle_sanity_closure.py`，并将 sanity closure 纳入 `scripts/run_quality_gate.py` 的 oracle audit 链路；README 增加总控命令。
 - 生成 `docs/benchmark/external_official_sanity_oracle_closure.{md,json}` 作为当前快照；诚实边界为 `can_claim_fully_closed=false`、`can_claim_high_rigor_with_blocks=true`。
 - 为避免质量门被 VedAstro 免费层节流长时间阻塞，sanity closure 默认只跑非阻塞官方证据审计；真实 official full snapshot 细算保留为显式 `--live-official-full-snapshot` 开关。
+
+## 2026-07-01T20:35:00+08:00 - 第四批 repo truth 升格包
+
+- 新增 `docs/research/promote_fourth_repo_truth_pack_2026_07_01.md`，把 5 份高价值草稿锚回主仓真源：Round40 whole-machine fragment shortlist、Dasha accuracy closure status、Dasha code-only priority rerank、skill fragment source-of-truth map、skill truth conflict matrix。
+- 将第四批挂入 `docs/research/repo_cleanup_promotion_map_2026_07_01.md` 与 `docs/research/ACTIVE_FRONTS.md`，避免后续只看到前三批升格包。
+- 新增治理守门：`tests/test_research_governance_docs.py` 检查第四批 pack 的关键锚点，`tests/test_preflight_fragment_scan.py` 检查第四批 5 份草稿不再出现在 high-value unpromoted pool。
+- TDD 红灯确认：第四批 pack 缺失时治理测试失败，preflight 仍列出第四批草稿；补齐后两条测试通过。
+- `python3 scripts/preflight_fragment_scan.py` 当前显示 `high_value_unpromoted_count=16`，已从第三批后的 `21` 下降 5 项；剩余主要是 skill/cloud sync 草稿和 Gemini recovery-only VedAstro artifacts。

@@ -1,26 +1,26 @@
 # Tajika/Sahams Annual Benchmark Dashboard
 
-Generated: `2026-06-26T09:27:55.462154+00:00`
+Generated: `2026-07-01T12:45:56.750917+00:00`
 
 ## Annual Oracle Readiness
 
 - total_tasks: `5`
-- ready_for_collection: `5`
-- ready_for_calibration: `0`
+- ready_for_collection: `0`
+- ready_for_calibration: `5`
 - production_tuning_allowed: `false`
 
 ## Annual Closure Claim
 
-- can_claim_tajika_sahams_closure: `false`
-- reason: Do not claim annual-chart closure until every template row is promoted to external_verified with human-reviewable artifacts.
+- can_claim_tajika_sahams_closure: `true`
+- reason: The current packet set is externally closed, but that only closes the present annual evidence target set. Broader annual judgment maturity still remains open.
 
 ## Remaining Gap
 
-Solar return exact time, Varsha Lagna, Muntha, Year Lord, Mudda Dasha first lord, Sahams and Tajika Yogas still need external JHora/PyJHora/book-example evidence before the Jyotish skill can claim Tajika/Sahams annual closure.
+The current annual external-oracle target set is closed. The remaining gap is broader public sample breadth, stronger Year Lord/Muntha/Mudda Dasha/Sahams judgment templates, and multi-year annual interpretation comparisons before any traditional-software-grade predictive claim.
 
 ## Next Actions
 
-- Fill one Steve Jobs annual evidence packet from JHora or PyJHora.
-- Add solar return datetime and Varsha Lagna tolerance checks after the first external row exists.
-- Add Saham-specific tolerance checks for Punya, Rajya and Vivah Saham.
-- Expand the annual benchmark with at least one printed Varshaphala example.
+- Keep Tajika/Sahams annual closure in active_target_set_closed status instead of overstating it as full predictive closure.
+- Freeze deeper annual judgment templates around Muntha, Year Lord, Mudda Dasha and Sahams.
+- Add broader public benchmark rows, especially multi-year printed Varshaphala examples and second-wave edge cases.
+- Do not treat local annual output alone as permission for production tuning or hard annual prediction claims.

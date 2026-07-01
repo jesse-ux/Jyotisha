@@ -134,10 +134,10 @@ def build_dashboard(oracle_file: str) -> dict[str, Any]:
         },
         "global_first_gap": global_first_gap,
         "next_actions": [
-            "Fill the next open Tajika/Sahams or Shadbala external packet under references/oracle/artifacts/pending_packets.",
-            "Run oracle_evidence_validator.py until at least one packet is valid.",
+            "Expand public benchmark history instead of over-claiming from the current closed target set.",
             "Run oracle_boundary_audit.py to inspect Dasha/Shadbala deltas without tuning constants.",
-            "Publish this dashboard after each validated sample batch.",
+            "Regenerate Tajika/Dasha/Shadbala status boards after each new external packet batch.",
+            "Publish this dashboard after each validated sample batch so public claim boundaries stay conservative.",
         ],
     }
 

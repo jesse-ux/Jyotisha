@@ -1,8 +1,8 @@
 # Tajika/Sahams Annual Closure Status
 
 - annual_task_count: `5`
-- external_verified_annual_tasks: `1`
-- can_claim_tajika_sahams_closure: `false`
+- external_verified_annual_tasks: `5`
+- can_claim_tajika_sahams_closure: `true`
 - production_tuning_allowed: `false`
 
 ## First Priority Packet
@@ -14,21 +14,26 @@
 
 ## Missing Summary
 
-- metadata: `5`
-- target: `10`
+- metadata: `0`
+- target: `0`
 
 ## Prefilled Fields
 
-- status: `draft`
+- status: `external_verified`
 - promotion_status_after_fill: `external_verified`
 
 - metadata:
 
+  - tool_name: `PyJHora`
+  - tool_version_or_url: `PyJHora 4.8.6 isolated workbuddy black-box run`
+  - capture_date: `2026-06-29`
+  - source_artifact: `references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt`
   - ayanamsa: `lahiri`
   - node_mode: `mean`
-  - timezone: `0.883333`
-  - annual_system: `varshaphala`
+  - timezone: `UTC+00:53`
+  - annual_system: `Varshaphala/Tajika`
   - target_year: `1905`
+  - operator_note: `Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain.`
 
 - settings:
 
@@ -40,25 +45,10 @@
 ## Manual Fill Plan
 
 - status_value: `external_verified`
-- manual_entry_count: `15`
+- manual_entry_count: `0`
 
 ## Missing Fields
 
-- `metadata.tool_name`
-- `metadata.tool_version_or_url`
-- `metadata.capture_date`
-- `metadata.operator_note`
-- `metadata.source_artifact`
-- `target.solar_return_datetime`
-- `target.varsha_lagna_deg`
-- `target.muntha_sign`
-- `target.year_lord`
-- `target.mudda_dasha_first_lord`
-- `target.sahams.punya_saham`
-- `target.sahams.rajya_saham`
-- `target.sahams.vivah_saham`
-- `target.tajika_yogas`
-- `target.source_artifact`
 ## Commands
 
 ```bash
@@ -71,10 +61,10 @@ python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/ta
 
 ## Next Actions
 
-- Fill solar return datetime, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, three Sahams and Tajika Yogas from an external annual source.
-- Document timezone/DST and solar-return convention before promoting the row.
-- Set the row to external_verified only after target.source_artifact and metadata.source_artifact point to reviewable evidence.
-- Regenerate the annual queue and benchmark dashboard.
+- Keep the current annual packet set in active_target_set_closed status and avoid overstating it as full predictive closure.
+- Use this board as a reference packet only; the remaining work is second-wave sample breadth, day/night reversal edges and deeper judgment templates.
+- Regenerate the annual queue and benchmark dashboard after new external rows or broader tolerance checks are added.
+- Do not treat local scripts/varshaphala.py output as oracle evidence even though the present packet set is closed.
 
 ## Boundary
 

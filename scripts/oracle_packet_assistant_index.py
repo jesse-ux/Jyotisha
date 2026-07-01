@@ -46,7 +46,7 @@ def build_index() -> dict[str, Any]:
         }
     recommended_order = sorted(
         [{"front": front, **fronts[front]} for front in FRONTS],
-        key=lambda item: item["missing_field_count"],
+        key=lambda item: (item["ready_to_apply"], item["missing_field_count"]),
     )
     return {
         "scope": "first_oracle_packet_assistant_index",

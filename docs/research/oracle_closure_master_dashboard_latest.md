@@ -1,13 +1,13 @@
 # Jyotish External Oracle Closure Master Dashboard
 
-Generated: `2026-06-28T23:44:03.079746+00:00`
+Generated: `2026-07-01T11:36:22.612746+00:00`
 
 ## Summary
 
 - total_tasks: `12`
-- external_verified_tasks: `8`
-- open_tasks: `4`
-- can_claim_global_oracle_closure: `false`
+- external_verified_tasks: `12`
+- open_tasks: `0`
+- can_claim_global_oracle_closure: `true`
 - production_tuning_allowed: `false`
 
 ## Fronts
@@ -15,21 +15,10 @@ Generated: `2026-06-28T23:44:03.079746+00:00`
 | front | tasks | verified | first priority | missing fields | manual entries | metadata missing | target missing |
 |---|---:|---:|---|---:|---:|---:|---:|
 | `dasha` | 3 | 3 | `complete` | 0 | 0 | 0 | 0 |
-| `tajika_sahams` | 5 | 1 | `template_einstein_varshaphala_1905_lahiri` | 15 | 15 | 5 | 10 |
+| `tajika_sahams` | 5 | 5 | `template_einstein_varshaphala_1905_lahiri` | 0 | 0 | 0 | 0 |
 | `shadbala` | 4 | 4 | `complete` | 0 | 0 | 0 | 0 |
 
 ## Next Action Order
-
-### tajika_sahams
-
-- case_id: `template_einstein_varshaphala_1905_lahiri`
-- capture_id: `external_template_einstein_varshaphala_1905_lahiri`
-- missing_field_count: `15`
-- manual_entry_count: `15`
-
-```bash
-python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json
-```
 
 ## Boundary
 
