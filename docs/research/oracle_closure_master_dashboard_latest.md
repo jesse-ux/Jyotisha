@@ -1,13 +1,14 @@
 # Jyotish External Oracle Closure Master Dashboard
 
-Generated: `2026-07-01T11:36:22.612746+00:00`
+Generated: `2026-07-01T17:18:16.718345+00:00`
 
 ## Summary
 
 - total_tasks: `12`
 - external_verified_tasks: `12`
 - open_tasks: `0`
-- can_claim_global_oracle_closure: `true`
+- can_claim_current_target_set_closure: `true`
+- can_claim_global_oracle_closure: `false`
 - production_tuning_allowed: `false`
 
 ## Fronts
@@ -22,4 +23,4 @@ Generated: `2026-07-01T11:36:22.612746+00:00`
 
 ## Boundary
 
-This dashboard merges external evidence readiness only. It does not claim prediction accuracy, does not tune production constants, and does not treat local engine output as oracle evidence.
+This dashboard merges current target-set external evidence readiness only. A closed target set does not claim global oracle closure, does not claim prediction accuracy, does not tune production constants, and does not treat local engine output as oracle evidence.

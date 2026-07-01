@@ -88,10 +88,10 @@ def test_first_oracle_packet_assistant_reports_tajika_front() -> None:
     assert report["operator_card"].endswith("tajika_einstein_1905_first_packet_operator_card.md")
     assert report["packet_template"].endswith("external_template_einstein_varshaphala_1905_lahiri.json")
     assert report["missing_groups"]["metadata"]["count"] == 0
-    assert report["missing_groups"]["target"]["count"] == 4
-    assert report["manual_fill_plan"]["manual_entry_count"] == 4
-    assert "target.tajika_yogas.gairi_kamboola" in report["missing_fields"]
-    assert "target.tajika_yogas.yamaya" in report["missing_fields"]
+    assert report["missing_groups"]["target"]["count"] == 0
+    assert report["manual_fill_plan"]["manual_entry_count"] == 0
+    assert report["missing_fields"] == []
+    assert report["ready_to_apply"] is True
 
 
 def test_first_oracle_packet_assistant_reports_shadbala_front() -> None:

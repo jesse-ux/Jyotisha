@@ -104,7 +104,7 @@ def generate_blank_oracle_kit(output_dir: str) -> dict[str, Any]:
             "validate_command": report["validate_command"],
         }
 
-    recommended_front_order = sorted(FRONTS, key=lambda front: fronts[front]["missing_field_count"])
+    recommended_front_order = list(FRONTS)
     manifest = {
         "scope": "first_oracle_blank_kit_manifest",
         "front_count": len(FRONTS),

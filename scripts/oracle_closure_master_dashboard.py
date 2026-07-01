@@ -119,6 +119,7 @@ def build_dashboard(dasha_oracle_file: str, tajika_oracle_file: str) -> dict[str
     }
     total_tasks = sum(front["task_count"] for front in fronts.values())
     verified_tasks = sum(front["external_verified_tasks"] for front in fronts.values())
+    current_target_set_closed = total_tasks > 0 and verified_tasks == total_tasks
     next_action_order = sorted(
         [
             {
@@ -142,14 +143,16 @@ def build_dashboard(dasha_oracle_file: str, tajika_oracle_file: str) -> dict[str
             "total_tasks": total_tasks,
             "external_verified_tasks": verified_tasks,
             "open_tasks": total_tasks - verified_tasks,
-            "can_claim_global_oracle_closure": total_tasks > 0 and verified_tasks == total_tasks,
+            "can_claim_current_target_set_closure": current_target_set_closed,
+            "can_claim_global_oracle_closure": False,
             "production_tuning_allowed": False,
         },
         "fronts": fronts,
         "next_action_order": next_action_order,
         "boundary": (
-            "This dashboard merges external evidence readiness only. It does not claim prediction accuracy, "
-            "does not tune production constants, and does not treat local engine output as oracle evidence."
+            "This dashboard merges current target-set external evidence readiness only. A closed target set does not "
+            "claim global oracle closure, does not claim prediction accuracy, does not tune production constants, "
+            "and does not treat local engine output as oracle evidence."
         ),
     }
 
@@ -166,6 +169,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- total_tasks: `{summary['total_tasks']}`",
         f"- external_verified_tasks: `{summary['external_verified_tasks']}`",
         f"- open_tasks: `{summary['open_tasks']}`",
+        f"- can_claim_current_target_set_closure: `{str(summary['can_claim_current_target_set_closure']).lower()}`",
         f"- can_claim_global_oracle_closure: `{str(summary['can_claim_global_oracle_closure']).lower()}`",
         f"- production_tuning_allowed: `{str(summary['production_tuning_allowed']).lower()}`",
         "",

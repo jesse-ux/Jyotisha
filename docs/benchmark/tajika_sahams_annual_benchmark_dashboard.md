@@ -1,6 +1,6 @@
 # Tajika/Sahams Annual Benchmark Dashboard
 
-Generated: `2026-07-01T12:45:56.750917+00:00`
+Generated: `2026-07-01T17:18:15.278189+00:00`
 
 ## Annual Oracle Readiness
 

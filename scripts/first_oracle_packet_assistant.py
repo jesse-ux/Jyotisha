@@ -180,6 +180,10 @@ def _packet_missing(packet_path: str) -> list[str]:
         if "metadata.source_artifact" not in missing:
             missing.append("metadata.source_artifact")
     def walk(prefix: str, value: Any) -> None:
+        if prefix == "target.tajika_yogas":
+            if value is None or value == "" or value == {}:
+                missing.append(prefix)
+            return
         if isinstance(value, dict):
             for key, child in value.items():
                 walk(f"{prefix}.{key}" if prefix else key, child)

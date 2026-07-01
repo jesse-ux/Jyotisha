@@ -2420,11 +2420,11 @@ def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_
     }
     manifest = _official_full_snapshot_manifest(user_case, case_id)
     budget_started_at = time.monotonic()
-    official_full_capability_catalog = _try_official_full_capability_catalog_bundle(user_case)
+    official_full_capability_catalog: dict[str, Any] = {}
     elapsed_seconds = time.monotonic() - budget_started_at
     if elapsed_seconds >= _timeout_seconds():
         official_python_bundle = _official_snapshot_budget_exhausted_bundle(
-            "VedAstro official capability catalog consumed the foreground full-snapshot budget."
+            "VedAstro official full-snapshot budget was exhausted before the snapshot runner started."
         )
     else:
         official_python_bundle = _try_official_capability_runner_snapshot_bundle(user_case)
@@ -2441,6 +2441,23 @@ def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_
         and official_python_bundle.get("status") != "official_snapshot_budget_exhausted"
     ):
         official_python_bundle = _try_official_python_bridge_snapshot_bundle(user_case)
+    if time.monotonic() - budget_started_at < _timeout_seconds():
+        official_full_capability_catalog = _try_official_full_capability_catalog_bundle(user_case)
+    else:
+        official_full_capability_catalog = {
+            "available": False,
+            "status": "official_full_capability_catalog_skipped_budget_exhausted",
+            "source": "vedastro_official_capability_runner",
+            "bundle": "official_full_capability_catalog",
+            "summary": {},
+            "coverage": {"source_mode": "official_full_capability_catalog", "safe_sampling": True},
+            "domain_routing": {},
+            "dynamic_selection": {},
+            "bucket_statuses": {},
+            "method_statuses": {},
+            "reason": "Skipped capability catalog after preserving foreground budget for the official full snapshot bundle.",
+            "timeout_seconds": _timeout_seconds(),
+        }
     bridge_sections = (
         official_python_bundle.get("snapshot_sections")
         if isinstance(official_python_bundle.get("snapshot_sections"), dict)

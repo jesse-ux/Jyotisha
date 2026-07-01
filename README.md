@@ -140,7 +140,7 @@ python3 scripts/oracle_boundary_audit.py \
   --oracle-file references/oracle/dasha_shadbala_oracle_cases.json
 ```
 
-该报告会明确标出 `production_tuning_recommended: false`：Dasha 当前只有单份 PDF 起点差异样本；VedAstro SDK 黄经样本已纳入 `longitude_cases`，当前用户盘最大差异约 26.23 角秒、D1/D9 落点一致，但这只能说明基础黄经接近；Shadbala 还缺 Sthana/Dig/Kala/Chesta/Naisargika/Drik 分量级外部目标值，因此不能声称 Dasha/Shadbala 已完成外部绝对值校准。
+该报告会明确标出 `production_tuning_recommended: false`：当前目标集已有外部验证行，但差异审计仍会拒绝单样本或全局倍率调参；VedAstro SDK 黄经样本已纳入 `longitude_cases`，用户盘最大差异约 26.23 角秒、D1/D9 落点一致，但这只能说明基础黄经接近，不能把当前目标集闭合夸大成生产级全局校准。
 
 三方官方/外部 oracle sanity 总控命令：
 
@@ -174,7 +174,7 @@ python3 scripts/prepare_oracle_capture_packets.py \
   --output-dir references/oracle/artifacts/pending_packets
 ```
 
-该命令会生成 `capture_manifest.json`、`OPERATOR_NEXT_STEPS.md` 和 5 个 `external_*.json`，并在输出中确认 draft 队列仍是 `valid_packets: 0` / `ready_for_calibration: 0`。
+该命令会生成 `capture_manifest.json`、`OPERATOR_NEXT_STEPS.md` 和 5 个 `external_*.json`。这些导出包只是人工复核/再采集入口；当前主 oracle 文件的目标集状态以 closure dashboard 和 validator 输出为准。
 
 如果只想优先准备当前最短闭环链路的三条首包，而不是一次性导出整批 pending packets，可直接生成统一 blank kit：
 
@@ -196,7 +196,7 @@ python3 scripts/oracle_collection_queue.py \
 
 这一步只负责把人工填写的外部证据写回 `template_cases`；它不会自动认可证据，也不会允许生产调参。合并后仍必须重新生成 queue 并运行 validator。
 
-该 JSON 的 scope 是 `external_oracle_collection_queue`。当前队列有 5 个 `template_only` 任务、`ready_for_calibration: 0`、`production_tuning_allowed: false`，说明只能继续采集 JHora/PyJHora/VedAstro 等外部黑盒目标值；在模板字段未填充、状态未升为 `external_verified` 前，不能用这些样本做 Dasha/Shadbala 生产调参。
+该 JSON 的 scope 是 `external_oracle_collection_queue`。当前目标集可以出现 `external_verified` 与 `ready_for_calibration` 已闭合的状态，但 `production_tuning_allowed` 仍保持 `false`；这表示只能把外部黑盒目标值作为审计证据，不能直接用这些样本做 Dasha/Shadbala 生产调参。
 
 Ashtakoot 外部合婚 oracle 使用同一个队列生成器，但独立样本文件是 `references/oracle/ashtakoot_oracle_cases.json`：
 
@@ -223,7 +223,7 @@ python3 scripts/oracle_evidence_validator.py \
   --queue-file /path/to/filled_external_oracle_collection_queue.json
 ```
 
-该验证器输出 `external_oracle_evidence_validation`，会检查 `evidence_packet` 必填元数据、`target_placeholders` 是否已填、是否覆盖 `target_fields`、是否包含外部 artifact，以及是否错误使用本仓库本地引擎输出。当前 draft 队列会保持 `valid_packets: 0` / `ready_for_calibration: 0`；只有状态为 `external_verified` 且证据完整的包才会进入可复核状态。
+该验证器输出 `external_oracle_evidence_validation`，会检查 `evidence_packet` 必填元数据、`target_placeholders` 是否已填、是否覆盖 `target_fields`、是否包含外部 artifact，以及是否错误使用本仓库本地引擎输出。只有状态为 `external_verified` 且证据完整的包才会进入可复核状态；通过 validator 不等于允许生产调参。
 
 证据包通过 validator 之后，再运行边界差异审计，比较本地引擎与外部 Dasha/Shadbala 目标值：
 
@@ -255,7 +255,7 @@ python3 scripts/oracle_closure_master_dashboard.py \
   --output docs/benchmark/jyotish_external_oracle_closure_master_dashboard.md
 ```
 
-当前总控看板固定输出 `total_tasks: 12`、`external_verified_tasks: 0`、`can_claim_global_oracle_closure: false`。推荐执行顺序是先填 Dasha 第一条 6 个字段，再填 Tajika/Sahams 第一条 15 个字段，最后填 Shadbala 第一条 55 个字段。
+当前总控看板输出 `total_tasks: 12`、`external_verified_tasks: 12`、`can_claim_current_target_set_closure: true`，但 `can_claim_global_oracle_closure: false` 与 `production_tuning_allowed: false` 仍保持锁定。含义是当前目标集已闭合，不能夸大成全球 oracle、预测准确率或生产调参闭环。
 
 Dasha 外部 oracle 最短闭环状态板用于把“大运外部真值”从 Shadbala 绝对值大包中拆出来，优先推进第一条可验证边界日期：
 

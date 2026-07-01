@@ -1,12 +1,13 @@
 # Jyotish External Oracle Closure Master Dashboard
 
-Generated: `2026-06-27T08:02:16.707529+00:00`
+Generated: `2026-07-01T17:18:16.113511+00:00`
 
 ## Summary
 
 - total_tasks: `12`
-- external_verified_tasks: `8`
-- open_tasks: `4`
+- external_verified_tasks: `12`
+- open_tasks: `0`
+- can_claim_current_target_set_closure: `true`
 - can_claim_global_oracle_closure: `false`
 - production_tuning_allowed: `false`
 
@@ -15,22 +16,11 @@ Generated: `2026-06-27T08:02:16.707529+00:00`
 | front | tasks | verified | first priority | missing fields | manual entries | metadata missing | target missing |
 |---|---:|---:|---|---:|---:|---:|---:|
 | `dasha` | 3 | 3 | `complete` | 0 | 0 | 0 | 0 |
-| `tajika_sahams` | 5 | 1 | `template_einstein_varshaphala_1905_lahiri` | 15 | 15 | 5 | 10 |
-| `shadbala` | 4 | 4 | `template_redacted_place_shadbala_raman` | 55 | 55 | 5 | 50 |
+| `tajika_sahams` | 5 | 5 | `template_einstein_varshaphala_1905_lahiri` | 0 | 0 | 0 | 0 |
+| `shadbala` | 4 | 4 | `complete` | 0 | 0 | 0 | 0 |
 
 ## Next Action Order
 
-### tajika_sahams
-
-- case_id: `template_einstein_varshaphala_1905_lahiri`
-- capture_id: `external_template_einstein_varshaphala_1905_lahiri`
-- missing_field_count: `15`
-- manual_entry_count: `15`
-
-```bash
-python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json
-```
-
 ## Boundary
 
-This dashboard merges external evidence readiness only. It does not claim prediction accuracy, does not tune production constants, and does not treat local engine output as oracle evidence.
+This dashboard merges current target-set external evidence readiness only. A closed target set does not claim global oracle closure, does not claim prediction accuracy, does not tune production constants, and does not treat local engine output as oracle evidence.

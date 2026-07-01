@@ -32,7 +32,8 @@ def test_tajika_annual_queue_outputs_collection_tasks() -> None:
     assert queue["scope"] == "tajika_sahams_annual_oracle_collection_queue"
     assert queue["schema_version"] == 1
     assert queue["summary"]["total_tasks"] == 5
-    assert queue["summary"]["ready_for_calibration"] == 1
+    assert queue["summary"]["ready_for_calibration"] == 5
+    assert queue["summary"]["current_target_set_closed"] is True
     assert queue["summary"]["production_tuning_allowed"] is False
     assert "solar return" in queue["boundary"].lower()
 
@@ -64,8 +65,9 @@ def test_tajika_annual_queue_outputs_collection_tasks() -> None:
 
     second = queue["tasks"][1]
     assert second["case_id"] == "template_einstein_varshaphala_1905_lahiri"
-    assert second["ready_for_collection"] is True
-    assert "target.sahams.punya_saham" in second["missing_target_fields"]
+    assert second["ready_for_collection"] is False
+    assert second["ready_for_calibration"] is True
+    assert second["missing_target_fields"] == []
 
 
 def test_tajika_annual_queue_markdown_lists_sahams_and_yogas() -> None:

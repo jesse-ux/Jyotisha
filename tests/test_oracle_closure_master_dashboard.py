@@ -39,8 +39,9 @@ def test_oracle_closure_master_dashboard_aggregates_all_hard_fronts() -> None:
     assert report["scope"] == "jyotish_external_oracle_closure_master_dashboard"
     assert report["schema_version"] == 1
     assert report["summary"]["total_tasks"] == 12
-    assert report["summary"]["external_verified_tasks"] == 8
-    assert report["summary"]["open_tasks"] == 4
+    assert report["summary"]["external_verified_tasks"] == 12
+    assert report["summary"]["open_tasks"] == 0
+    assert report["summary"]["can_claim_current_target_set_closure"] is True
     assert report["summary"]["can_claim_global_oracle_closure"] is False
     assert report["fronts"]["dasha"]["task_count"] == 3
     assert report["fronts"]["shadbala"]["task_count"] == 4
@@ -50,12 +51,11 @@ def test_oracle_closure_master_dashboard_aggregates_all_hard_fronts() -> None:
     assert report["fronts"]["shadbala"]["external_verified_tasks"] == 4
     assert report["fronts"]["shadbala"]["open_tasks"] == 0
     assert report["fronts"]["shadbala"]["first_priority"] is None
-    assert report["fronts"]["tajika_sahams"]["external_verified_tasks"] == 1
-    assert report["fronts"]["tajika_sahams"]["open_tasks"] == 4
+    assert report["fronts"]["tajika_sahams"]["external_verified_tasks"] == 5
+    assert report["fronts"]["tajika_sahams"]["open_tasks"] == 0
     assert report["fronts"]["tajika_sahams"]["first_priority"]["case_id"] == "template_einstein_varshaphala_1905_lahiri"
-    assert report["fronts"]["tajika_sahams"]["first_priority"]["missing_groups"]["target"]["count"] == 10
-    assert report["next_action_order"][0]["front"] == "tajika_sahams"
-    assert len(report["next_action_order"]) == 1
+    assert report["fronts"]["tajika_sahams"]["first_priority"]["missing_groups"]["target"]["count"] == 0
+    assert report["next_action_order"] == []
 
 
 def test_oracle_closure_master_dashboard_markdown_can_be_written(tmp_path: Path) -> None:
@@ -67,6 +67,7 @@ def test_oracle_closure_master_dashboard_markdown_can_be_written(tmp_path: Path)
     markdown = output.read_text(encoding="utf-8")
     assert "# Jyotish External Oracle Closure Master Dashboard" in markdown
     assert "total_tasks: `12`" in markdown
+    assert "can_claim_current_target_set_closure: `true`" in markdown
     assert "can_claim_global_oracle_closure: `false`" in markdown
     assert "`dasha` | 3 | 3 | `complete`" in markdown
     assert "`shadbala` | 4 | 4 | `complete`" in markdown

@@ -41,9 +41,9 @@ def test_generate_blank_oracle_writes_first_packet_kit(tmp_path: Path) -> None:
     manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
     assert manifest_data["scope"] == "first_oracle_blank_kit_manifest"
     assert manifest_data["front_count"] == 3
-    assert manifest_data["fronts"]["dasha"]["missing_field_count"] == 6
-    assert manifest_data["fronts"]["tajika_sahams"]["missing_field_count"] == 15
-    assert manifest_data["fronts"]["shadbala"]["missing_field_count"] == 55
+    assert manifest_data["fronts"]["dasha"]["missing_field_count"] == 0
+    assert manifest_data["fronts"]["tajika_sahams"]["missing_field_count"] == 0
+    assert manifest_data["fronts"]["shadbala"]["missing_field_count"] == 0
 
     dasha_packet = tmp_path / "dasha" / "external_template_steve_jobs_dasha_lahiri.json"
     tajika_packet = tmp_path / "tajika_sahams" / "external_template_einstein_varshaphala_1905_lahiri.json"

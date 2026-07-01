@@ -31,9 +31,9 @@ def test_tajika_first_packet_template_contains_only_annual_targets() -> None:
     packet = json.loads(PACKET.read_text(encoding="utf-8"))
 
     assert packet["capture_id"] == "external_template_einstein_varshaphala_1905_lahiri"
-    assert packet["status"] == "draft"
+    assert packet["status"] == "external_verified"
     assert packet["case_id"] == "template_einstein_varshaphala_1905_lahiri"
-    assert packet["metadata"]["source_artifact"] == "references/oracle/artifacts/"
+    assert packet["metadata"]["source_artifact"] == "references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt"
     assert packet["settings"]["target_year"] == 1905
     assert set(packet["target_placeholders"]) == {
         "target.solar_return_datetime",

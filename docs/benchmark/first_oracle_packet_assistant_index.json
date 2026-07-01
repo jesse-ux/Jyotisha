@@ -1,10 +1,10 @@
 {
   "scope": "first_oracle_packet_assistant_index",
   "schema_version": 1,
-  "generated_at": "2026-07-01T12:10:01.504983+00:00",
+  "generated_at": "2026-07-01T17:18:16.004689+00:00",
   "summary": {
     "front_count": 3,
-    "all_ready_to_apply": false
+    "all_ready_to_apply": true
   },
   "fronts": {
     "dasha": {
@@ -21,8 +21,8 @@
       "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
       "operator_card": "docs/benchmark/tajika_einstein_1905_first_packet_operator_card.md",
       "packet_template": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
-      "missing_field_count": 4,
-      "ready_to_apply": false,
+      "missing_field_count": 0,
+      "ready_to_apply": true,
       "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json"
     },
     "shadbala": {
@@ -37,16 +37,6 @@
   },
   "recommended_order": [
     {
-      "front": "tajika_sahams",
-      "case_id": "template_einstein_varshaphala_1905_lahiri",
-      "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
-      "operator_card": "docs/benchmark/tajika_einstein_1905_first_packet_operator_card.md",
-      "packet_template": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
-      "missing_field_count": 4,
-      "ready_to_apply": false,
-      "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json"
-    },
-    {
       "front": "dasha",
       "case_id": "template_steve_jobs_dasha_lahiri",
       "capture_id": "external_template_steve_jobs_dasha_lahiri",
@@ -55,6 +45,16 @@
       "missing_field_count": 0,
       "ready_to_apply": true,
       "apply_command": ""
+    },
+    {
+      "front": "tajika_sahams",
+      "case_id": "template_einstein_varshaphala_1905_lahiri",
+      "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
+      "operator_card": "docs/benchmark/tajika_einstein_1905_first_packet_operator_card.md",
+      "packet_template": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
+      "missing_field_count": 0,
+      "ready_to_apply": true,
+      "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json"
     },
     {
       "front": "shadbala",
