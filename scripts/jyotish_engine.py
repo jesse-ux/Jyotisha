@@ -4722,6 +4722,17 @@ def cmd_full_reading(args):
                 }
         if d1_data:
             varga_result["D1_Rashi"] = d1_data
+        if "D11_Rudramsa" not in varga_result:
+            try:
+                from divisional_charts_extended import DivisionalChartsCalculator, VargaType
+                dc_calc_for_d11 = DivisionalChartsCalculator()
+                varga_result["D11_Rudramsa"] = dc_calc_for_d11._calculate_single_varga(
+                    VargaType.D11,
+                    planet_lons,
+                    asc_deg,
+                )
+            except Exception as d11_error:
+                varga_result["D11_Rudramsa"] = {"error": str(d11_error)}
         report['modules']['varga_full'] = varga_result
 
         # v6.1.7: Re-run Yoga with D9/D60 context after varga-full is available.

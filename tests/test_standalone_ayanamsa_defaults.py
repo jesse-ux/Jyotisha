@@ -19,6 +19,7 @@ from cmd_muhurta import _get_sun_moon_lons
 from jyotish_engine import _apply_ayanamsa
 from muhurta import _swisseph_sun_moon_lon
 from solar_return import _get_sun_lon_jd
+from solar_return import _datetime_to_jd_ut, _jd_to_datetime
 from transit_trigger import _datetime_to_jd, _get_planet_lon_swe
 
 
@@ -63,6 +64,19 @@ def test_solar_return_sun_helper_defaults_to_lahiri_after_global_raman_switch():
     actual = _get_sun_lon_jd(jd)
 
     assert _angular_diff(actual, expected_lahiri) < 1e-9
+
+
+def test_solar_return_julian_datetime_helpers_work_without_greg_flag_constant():
+    dt = datetime(2026, 4, 17, 6, 30, 0)
+
+    jd = _datetime_to_jd_ut(dt)
+    roundtrip = _jd_to_datetime(jd)
+
+    assert roundtrip.year == 2026
+    assert roundtrip.month == 4
+    assert roundtrip.day == 17
+    assert roundtrip.hour == 6
+    assert roundtrip.minute == 30
 
 
 def test_muhurta_sun_moon_helper_defaults_to_lahiri_after_global_raman_switch():

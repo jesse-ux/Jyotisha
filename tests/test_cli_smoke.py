@@ -724,6 +724,21 @@ def test_varga_full_cli_divisions_supports_high_vargas() -> None:
     assert result["D144_Dwadasamsa-Dwadasamsa"]["planets"]["Moon"]["house"] in range(1, 13)
 
 
+def test_full_reading_exposes_d11_for_wealth_strict_workflow() -> None:
+    result = run_engine(
+        "full-reading",
+        *BASE_BIRTH_ARGS,
+        "--today",
+        "2026-07-01",
+        "--target-year",
+        "2026",
+    )
+
+    varga_full = result["modules"]["varga_full"]
+    assert "D11_Rudramsa" in varga_full
+    assert varga_full["D11_Rudramsa"]["planets"]["Moon"]["house"] in range(1, 13)
+
+
 def test_muhurta_cli_scan_days_outputs_panchanga_without_tuple_crash() -> None:
     output = run_engine_text(
         "muhurta",

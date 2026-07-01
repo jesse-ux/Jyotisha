@@ -29,6 +29,11 @@ try:
 except ImportError:
     HAS_SWE = False
 
+
+def _gregorian_calendar_flag() -> int:
+    """Return the Gregorian calendar flag across swisseph builds."""
+    return int(getattr(swe, 'GREG_FLAG', 1)) if HAS_SWE else 1
+
 # ── 常量 ──────────────────────────────────────────────────────────
 SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
          'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -74,8 +79,22 @@ def _jd_to_datetime(jd_ut: float) -> datetime:
     # 使用 swisseph 的辅助函数，或手动转换
     if HAS_SWE:
         # swe.revjul 返回 (year, month, day, hour, minute, second)
-        y, m, d, h, mn, s = swe.revjul(jd_ut, swe.GREG_FLAG)
-        return datetime(y, m, d, h, int(mn), int(s))
+        rev = swe.revjul(jd_ut, _gregorian_calendar_flag())
+        if len(rev) == 4:
+            y, m, d, hour_decimal = rev
+            h = int(hour_decimal)
+            minute_decimal = (hour_decimal - h) * 60.0
+            mn = int(minute_decimal)
+            s = int(round((minute_decimal - mn) * 60.0))
+            if s >= 60:
+                s -= 60
+                mn += 1
+            if mn >= 60:
+                mn -= 60
+                h += 1
+        else:
+            y, m, d, h, mn, s = rev
+        return datetime(y, m, d, int(h), int(mn), int(s))
     else:
         # 近似：JD 2440587.5 = 1970-01-01 00:00:00 UT
         jd_unix = jd_ut - 2440587.5
@@ -88,7 +107,7 @@ def _datetime_to_jd_ut(dt: datetime) -> float:
     if HAS_SWE:
         return swe.julday(dt.year, dt.month, dt.day,
                          dt.hour + dt.minute/60.0 + dt.second/3600.0,
-                         swe.GREG_FLAG)
+                         _gregorian_calendar_flag())
     else:
         # 近似
         unix_sec = int((dt - datetime(1970, 1, 1)).total_seconds())
@@ -315,7 +334,8 @@ def calc_solar_return_chart(
         if birth_chart is None:
             return {'error': '出生盘计算失败（swisseph问题）'}
 
-        birth_sun_lon = birth_chart.get('planets', {}).get('Sun', {}).get('degree', 0)
+        sun_data = birth_chart.get('planets', {}).get('Sun', {})
+        birth_sun_lon = sun_data.get('degree_raw', sun_data.get('degree', 0))
         birth_jd_ut = birth_jd
 
         # Step 2: 计算太阳返照精确时刻
