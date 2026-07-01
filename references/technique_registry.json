@@ -2707,6 +2707,7 @@
       "knowledge_refs": [],
       "commands": [
         "thematic-report",
+        "high-rigor-workflow",
         "full-reading"
       ],
       "output_paths": [

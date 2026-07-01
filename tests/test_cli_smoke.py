@@ -310,9 +310,19 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert isinstance(relationship_narrative["strengths"], list)
     assert isinstance(relationship_narrative["risks"], list)
     assert isinstance(relationship_narrative["boundaries"], list)
+    assert relationship_narrative["monthly_frame"]["primary_state"]["value"]
+    assert relationship_narrative["monthly_frame"]["manifestation_mode"]["value"]
+    assert relationship_narrative["monthly_frame"]["friction_source"]["value"]
+    assert relationship_narrative["monthly_frame"]["time_confidence"]["value"]
     assert relationship_narrative["markdown"]
     assert "D9" in "".join(relationship_narrative["boundaries"])
     assert "dual dasha" in relationship_narrative["markdown"]
+    career_narrative = prompt_pack["evidence_snapshot"]["career_narrative"]
+    finance_narrative = prompt_pack["evidence_snapshot"]["finance_narrative"]
+    assert career_narrative["headline"]
+    assert finance_narrative["headline"]
+    assert career_narrative["monthly_frame"]["primary_state"]["value"]
+    assert finance_narrative["monthly_frame"]["primary_state"]["value"]
     vimsopaka_summary = prompt_pack["evidence_snapshot"]["vimsopaka_semantic_summary"]
     assert vimsopaka_summary["status"] == "used"
     assert isinstance(vimsopaka_summary["highlights"], list)
@@ -329,6 +339,22 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert vedastro_overview["source"] == "vedastro_service_adapter_candidate"
     assert vedastro_overview["ingestion_profile"] == "main_entry_overview"
     assert vedastro_overview["visibility"] == "user_visible_overview_only"
+    vedastro_official_snapshot = prompt_pack["evidence_snapshot"]["vedastro_official_full_snapshot"]
+    assert "official_primary_evidence" in vedastro_official_snapshot
+    assert "local_supplemental_evidence" in vedastro_official_snapshot
+    assert "fallback_used" in vedastro_official_snapshot
+    assert "blocked_items" in vedastro_official_snapshot
+    assert "conflicts" in vedastro_official_snapshot
+    assert "strict_workflow_contracts" in vedastro_official_snapshot
+    assert "strict_workflow_routes_available" in vedastro_official_snapshot
+    assert "relationship" in vedastro_official_snapshot["strict_workflow_contracts"]
+    assert "career" in vedastro_official_snapshot["strict_workflow_contracts"]
+    assert "finance" in vedastro_official_snapshot["strict_workflow_contracts"]
+    career_contract = vedastro_official_snapshot["strict_workflow_contracts"]["career"]
+    assert "adjudication_stages" in career_contract
+    assert "multi_reference_reading_summary" in career_contract
+    assert "modifier_frame" in career_contract["multi_reference_reading_summary"]
+    assert vedastro_official_snapshot["strict_workflow_primary_route"] in {"relationship", "career", "finance", None}
     vedastro_rows = [row for row in audit_table if row["technique"] == "VedAstro Main Entry Overview"]
     assert vedastro_rows
     assert vedastro_rows[0]["status"] in {"used", "blocked"}
@@ -339,6 +365,79 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert capability_pool["total_entries"] == 89
     assert capability_pool["conclusion_policy"]["all_89_entries_must_not_be_flattened_into_conclusions"] is True
     assert "后台备选证据池" in prompt_pack["prompt_zh"]
+
+
+def test_full_reading_summary_exposes_stage_timing_contract() -> None:
+    result = run_engine(
+        "full-reading",
+        "--year", "1990",
+        "--month", "1",
+        "--day", "1",
+        "--hour", "12",
+        "--minute", "0",
+        "--lat", "39.9",
+        "--lon", "116.4",
+        "--tz", "8",
+        "--today", "2026-01-01",
+        "--transit-date", "2026-01-01",
+    )
+
+    summary = result["summary"]
+    assert "stage_timings" in summary
+    assert isinstance(summary["stage_timings"], list)
+    assert summary["stage_timings"]
+    first = summary["stage_timings"][0]
+    assert "stage" in first
+    assert "elapsed_seconds" in first
+    assert "status" in first
+    assert isinstance(first["elapsed_seconds"], (int, float))
+    assert "slowest_stages" in summary
+    assert isinstance(summary["slowest_stages"], list)
+    assert summary["stage_timing_enabled"] is True
+
+
+def test_full_reading_summary_exposes_unified_stage_groups() -> None:
+    result = run_engine(
+        "full-reading",
+        "--year", "1990",
+        "--month", "1",
+        "--day", "1",
+        "--hour", "12",
+        "--minute", "0",
+        "--lat", "39.9",
+        "--lon", "116.4",
+        "--tz", "8",
+        "--today", "2026-01-01",
+        "--transit-date", "2026-01-01",
+    )
+
+    summary = result["summary"]
+    assert summary["stage_contract_version"] == 1
+    assert isinstance(summary["stage_groups"], list)
+    assert any(group["group"] == "official_evidence" for group in summary["stage_groups"])
+    assert summary["cache_recommendations"]["api_chart_response"] == "recommended"
+    assert summary["async_recommendations"]["chart_async_optional"] is True
+
+
+def test_full_reading_prompt_pack_carries_compact_technique_audit_summary() -> None:
+    result = run_engine(
+        "full-reading",
+        "--year", "REDACTED_YEAR",
+        "--month", "4",
+        "--day", "17",
+        "--hour", "14",
+        "--minute", "49",
+        "--lat", "36.42",
+        "--lon", "114.2",
+        "--tz", "8",
+        "--today", "2026-06-09",
+        "--transit-date", "2026-06-09",
+    )
+
+    career = result["ai_prompt_pack"]["evidence_snapshot"]["strict_workflow_contracts"]["career"]
+    assert "technique_audit_summary" in career
+    assert career["technique_audit_summary"]["functional_benefic_malefic"]["gate"] == "hard"
+    assert "audit_gate_frame" in career["multi_reference_reading_summary"]
 
 
 def test_full_reading_generates_guided_topics_from_real_evidence() -> None:
@@ -358,6 +457,7 @@ def test_full_reading_generates_guided_topics_from_real_evidence() -> None:
 
     topics = result["modules"]["guided_topics"]
     assert len(topics) >= 3
+    assert result["summary"]["guided_topics"] == topics
     assert result["ai_prompt_pack"]["evidence_snapshot"]["guided_topics"] == topics
 
     for topic in topics[:3]:
@@ -366,6 +466,10 @@ def test_full_reading_generates_guided_topics_from_real_evidence() -> None:
         assert topic["reality_value"]
         assert topic["why_worth_exploring"]
         assert topic["evidence"]
+        assert "strict_audit_gate" in topic
+        assert topic["strict_audit_gate"]["functional_benefic_malefic"]["gate"] == "hard"
+        assert topic["strict_audit_gate"]["relevant_vargas"]["gate"] == "hard"
+        assert topic["strict_audit_gate"]["vimshottari_narayana_crosscheck"]["gate"] == "hard"
         assert topic["confidence"] in {"high", "medium", "low"}
         assert topic["vedastro"]["status"] in {"used", "blocked", "not_available"}
         assert topic["suggested_questions"]
@@ -374,6 +478,113 @@ def test_full_reading_generates_guided_topics_from_real_evidence() -> None:
     assert any(topic["id"] == "relationship_partnership" for topic in topics)
     assert any(topic["id"] == "career_direction" for topic in topics)
     assert any(topic["id"] == "birth_time_rectification" for topic in topics)
+
+
+def test_full_reading_guided_topics_can_carry_official_day_signal_summary() -> None:
+    result = {
+        "modules": {
+            "dasha": {
+                "current_dasha": {
+                    "lord": "Mercury",
+                    "antardasha": {"lord": "Sun"},
+                    "start": "2026-01-01",
+                    "end": "2026-12-31",
+                }
+            },
+            "dasa_convergence": {
+                "domain_activations": {
+                    "career_status": {"convergence_level": "L2"},
+                    "marriage_partnership": {"convergence_level": "L1"},
+                }
+            },
+            "chart": {"planets": {"Ketu": {"house": 10}}},
+            "functional_benefic_malefic": {
+                "status": "used",
+                "functional_benefics": ["Mars", "Jupiter", "Sun"],
+                "functional_malefics": ["Venus", "Mercury", "Saturn"],
+            },
+            "career_strict_evidence": {
+                "technique_audit_summary": {
+                    "functional_benefic_malefic": {"gate": "hard", "used": True},
+                    "relevant_vargas": {"gate": "hard", "present_keys": ["d10_dasamsa", "a10_karma_pada"]},
+                    "vimshottari_narayana_crosscheck": {"gate": "hard", "used": True},
+                    "source_priority_boundary": {"gate": "boundary", "official": {}, "local": {}, "fallback_used": [], "blocked_items": [], "conflicts": []},
+                },
+                "monthly_adjudication_summary": {
+                    "route": "career",
+                    "primary_state": {"value": "推进"},
+                    "manifestation_mode": {"value": "项目/合作推进"},
+                    "friction_source": {"value": "结构调整"},
+                    "time_confidence": {"value": "day_supported"},
+                    "supporting_days": [
+                        {"date": "2026-07-18", "summary": "事业机会进入日", "confidence": "high"}
+                    ],
+                },
+                "present_evidence": {
+                    "external_activation": {
+                        "official_day_signals": [
+                            {"date": "2026-07-18", "day_type": "opportunity_entry", "summary": "事业机会进入日", "confidence": "high"}
+                        ]
+                    }
+                },
+            },
+            "relationship_strict_evidence": {
+                "technique_audit_summary": {
+                    "functional_benefic_malefic": {"gate": "hard", "used": True},
+                    "relevant_vargas": {"gate": "hard", "present_keys": ["d9_navamsa", "upapada_lagna"]},
+                    "vimshottari_narayana_crosscheck": {"gate": "hard", "used": True},
+                    "source_priority_boundary": {"gate": "boundary", "official": {}, "local": {}, "fallback_used": [], "blocked_items": [], "conflicts": []},
+                },
+            },
+            "finance_strict_evidence": {
+                "technique_audit_summary": {
+                    "functional_benefic_malefic": {"gate": "hard", "used": True},
+                    "relevant_vargas": {"gate": "hard", "present_keys": ["d2_hora"]},
+                    "vimshottari_narayana_crosscheck": {"gate": "hard", "used": True},
+                    "source_priority_boundary": {"gate": "boundary", "official": {}, "local": {}, "fallback_used": [], "blocked_items": [], "conflicts": []},
+                },
+            },
+            "vedastro_range_scan_result": {
+                "status": "ok",
+                "source_metadata": {"domain_statuses": {"career": "ok", "marriage": "blocked", "wealth": "blocked"}, "domain_event_counts": {"career": 1}},
+                "top_events_by_domain": {},
+            },
+        },
+        "chart": {"planets": {"Ketu": {"house": 10}}},
+        "ai_prompt_pack": {"evidence_snapshot": {"strict_workflow_contracts": {}}},
+        "birth_info": {"time": "REDACTED_TIME"},
+    }
+
+    from guided_topic_discovery import build_guided_topics
+
+    topics = build_guided_topics(result)
+    career = next(topic for topic in topics if topic["id"] == "career_direction")
+    assert career["official_day_signal_summary"]["top_day"]["date"] == "2026-07-18"
+    assert career["official_day_signal_summary"]["top_day"]["summary"] == "事业机会进入日"
+    assert career["monthly_adjudication_summary"]["primary_state"]["value"] == "推进"
+    assert career["monthly_adjudication_summary"]["supporting_days"][0]["date"] == "2026-07-18"
+    assert career["strict_adjudication_bundle"]["monthly_adjudication_summary"] == career["monthly_adjudication_summary"]
+    assert career["strict_adjudication_bundle"]["strict_audit_gate"] == career["strict_audit_gate"]
+
+
+def test_full_reading_preserves_official_daily_window_fields_in_range_scan_result() -> None:
+    result = run_engine(
+        "full-reading",
+        "--year", "REDACTED_YEAR",
+        "--month", "4",
+        "--day", "17",
+        "--hour", "14",
+        "--minute", "49",
+        "--lat", "36.42",
+        "--lon", "114.2",
+        "--tz", "8",
+        "--today", "2026-06-30",
+        "--transit-date", "2026-06-30",
+    )
+
+    vedastro = result["modules"]["vedastro_range_scan_result"]
+    assert "daily_windows" in vedastro
+    assert "top_daily_window" in vedastro
 
 
 def test_full_reading_auto_attaches_vedastro_main_entry_boundary() -> None:

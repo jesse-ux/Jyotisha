@@ -1,0 +1,29 @@
+{
+  "status": "external_verified",
+  "metadata": {
+    "tool_name": "PyJHora",
+    "tool_version_or_url": "PyJHora <version> isolated /tmp black-box run",
+    "capture_date": "2026-06-29",
+    "source_artifact": "references/oracle/artifacts/<artifact-file>",
+    "ayanamsa": "lahiri",
+    "node_mode": "mean",
+    "timezone": "UTC+00:53",
+    "annual_system": "Varshaphala/Tajika",
+    "target_year": 1905,
+    "operator_note": "Black-box annual output from <tool/source>. External evidence only; local annual engine output not used. Solar-return convention: <fill>. Timezone/DST handling: <fill>. <optional workaround note>"
+  },
+  "target_placeholders": {
+    "target.solar_return_datetime": "<copy exact timestamp with offset>",
+    "target.varsha_lagna_deg": <absolute zodiac degree>,
+    "target.muntha_sign": "<sign name>",
+    "target.year_lord": "<planet name>",
+    "target.mudda_dasha_first_lord": "<planet name>",
+    "target.sahams.punya_saham": <absolute zodiac degree>,
+    "target.sahams.rajya_saham": <absolute zodiac degree>,
+    "target.sahams.vivah_saham": <absolute zodiac degree>,
+    "target.tajika_yogas": {
+      "<copy exact yoga labels from external source>": null
+    },
+    "target.source_artifact": "references/oracle/artifacts/<artifact-file>"
+  }
+}

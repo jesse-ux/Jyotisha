@@ -145,3 +145,100 @@ def test_run_range_scan_case_refreshes_live_sampling_request_profile_for_each_sa
         "12:00 01/01/2026 +08:00",
         "12:00 01/03/2026 +08:00",
     ]
+
+
+def test_run_range_scan_case_reuses_request_cache_across_case_ids(monkeypatch, tmp_path) -> None:
+    case = vedastro_service_adapter.PARITY_CASES["beijing_first_use_demo"]
+    calls = {"count": 0}
+
+    def fake_post_json(endpoint: str, request_preview: dict[str, object]):
+        calls["count"] += 1
+        live_profile = request_preview.get("live_sampling_request_profile") or {}
+        body = live_profile.get("body") if isinstance(live_profile, dict) else {}
+        birth_time = body.get("BirthTime") if isinstance(body, dict) else {}
+        at_time = body.get("AtTime") if isinstance(body, dict) else {}
+        birth_location = birth_time.get("Location") if isinstance(birth_time, dict) else {}
+        at_location = at_time.get("Location") if isinstance(at_time, dict) else {}
+        assert birth_location.get("Name") == "UserLocation"
+        assert at_location.get("Name") == "UserLocation"
+        return {"Status": "Pass", "Payload": {"SearchEvents": []}}
+
+    monkeypatch.setattr(vedastro_service_adapter, "ARTIFACT_DIR", tmp_path)
+    monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://api.vedastro.org/api")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    monkeypatch.setenv("VEDASTRO_CACHE_TTL_SECONDS", "600")
+    monkeypatch.setattr(
+        vedastro_service_adapter,
+        "_iter_sample_dates",
+        lambda start_date, end_date: ["2026-07-01"],
+    )
+    monkeypatch.setattr(
+        vedastro_service_adapter,
+        "_acquire_free_tier_slot",
+        lambda request_url: {
+            "mode": "test",
+            "queue_active": False,
+            "waited_seconds": 0.0,
+            "window_seconds": 60.0,
+            "max_requests": 5,
+        },
+    )
+    monkeypatch.setattr(vedastro_service_adapter, "_post_json", fake_post_json)
+
+    first = vedastro_service_adapter.run_range_scan_for_case(
+        case,
+        "career",
+        "2026-07-01",
+        "2026-07-01",
+        case_id="api_chart_career",
+    )
+    second = vedastro_service_adapter.run_range_scan_for_case(
+        case,
+        "career",
+        "2026-07-01",
+        "2026-07-01",
+        case_id="main_entry_career",
+    )
+
+    assert calls["count"] == 1
+    assert first["source_metadata"]["cache_hit"] is False
+    assert second["source_metadata"]["cache_hit"] is True
+
+
+def test_range_scan_builds_ranked_daily_windows_from_same_day_events() -> None:
+    payload = {
+        "Status": "Pass",
+        "Payload": [
+            {
+                "Name": "GocharJupiterAspect10th",
+                "Description": "Career support transit.",
+                "StartTime": "2026-07-18",
+                "EndTime": "2026-07-18",
+                "EventTags": ["Travel", "General"],
+            },
+            {
+                "Name": "CareerExpansionWindow",
+                "Description": "Strong career expansion signal.",
+                "StartTime": "2026-07-18",
+                "EndTime": "2026-07-18",
+                "EventTags": ["career", "transit"],
+            },
+            {
+                "Name": "GocharJupiterAspect10th",
+                "Description": "Career support transit.",
+                "StartTime": "2026-07-26",
+                "EndTime": "2026-07-26",
+                "EventTags": ["Travel", "General"],
+            },
+        ],
+    }
+
+    report = vedastro_service_adapter._normalize_range_scan_success(  # noqa: SLF001
+        payload,
+        "https://api.vedastro.org/api",
+        _request_preview("career"),
+    )
+
+    assert report["daily_windows"][0]["date"] == "2026-07-18"
+    assert report["daily_windows"][0]["event_count"] == 2
+    assert report["top_daily_window"]["date"] == "2026-07-18"

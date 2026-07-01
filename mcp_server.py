@@ -10,16 +10,19 @@ Install:
 Run:
   python3 mcp_server.py
 
-Add to ~/.workbuddy/mcp.json:
+MCP client config should point at this repository path, for example:
   {
     "mcpServers": {
       "jyotish": {
-        "command": "/Users/wuyongnaren/.workbuddy/binaries/python/versions/3.13.12/bin/python3",
-        "args": ["/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/mcp_server.py"],
+        "command": "python3",
+        "args": ["/Users/wuyongnaren/Documents/印度占星/mcp_server.py"],
         "env": {}
       }
     }
   }
+
+The `.workbuddy` copy is a distribution mirror / historical reference only;
+it is not the runtime source of truth for this server.
 """
 
 import sys
@@ -40,6 +43,7 @@ from local_env import load_local_env
 from mcp.server.fastmcp import FastMCP
 from functional_benefics import derive_functional_benefic_malefic
 from vedastro_priority import official_snapshot_evidence
+from unified_consultation_orchestrator import UnifiedConsultationOrchestrator
 
 load_local_env(SCRIPT_DIR)
 
@@ -57,6 +61,8 @@ mcp = FastMCP(
         "and should NOT be used as sole evidence for high-stakes predictions."
     ),
 )
+
+_UNIFIED_CONSULTATION_ORCHESTRATOR = UnifiedConsultationOrchestrator()
 
 # ============================================================================
 # Helpers
@@ -97,6 +103,48 @@ def _audit_status() -> Dict[str, Any]:
         return json.loads(result.stdout)
     except Exception:
         return {"valid": False, "raw": result.stdout}
+
+
+def _execute_mcp_consultation_workflow(
+    *,
+    question: str,
+    year: int,
+    month: int,
+    day: int,
+    hour: int,
+    minute: int,
+    lat: float,
+    lon: float,
+    tz: float,
+    transit_date: str,
+    node_mode: str,
+    entry_mode: str = "direct_chart",
+    theme: list[str] | None = None,
+    events: list[dict[str, Any]] | None = None,
+) -> Dict[str, Any]:
+    from jyotish_api_server import JyotishAPIHandler, execute_consultation_workflow
+
+    handler = JyotishAPIHandler.__new__(JyotishAPIHandler)
+    return execute_consultation_workflow(
+        handler,
+        body={
+            "question": question,
+            "year": year,
+            "month": month,
+            "day": day,
+            "hour": hour,
+            "minute": minute,
+            "lat": lat,
+            "lon": lon,
+            "tz": tz,
+            "transit_date": transit_date,
+            "node_mode": node_mode,
+            "entry_mode": entry_mode,
+            "theme": theme or [],
+            "events": events or [],
+        },
+        surface="skill_mcp",
+    )
 
 
 def _safe_get(data: Dict[str, Any], *path: str) -> Any:
@@ -441,12 +489,21 @@ def _external_activation_ledger(modules: Dict[str, Any]) -> tuple[Any, Dict[str,
 
 def _derive_external_activation_support(modules: Dict[str, Any], domain: str) -> Dict[str, Any]:
     ledger, provenance = _external_activation_ledger(modules)
+    adapter_result = modules.get("vedastro_range_scan_result") if isinstance(modules, dict) else {}
+    if not isinstance(adapter_result, dict):
+        adapter_result = {}
+    daily_windows = adapter_result.get("daily_windows") if isinstance(adapter_result.get("daily_windows"), list) else []
+    top_daily_window = adapter_result.get("top_daily_window") if isinstance(adapter_result.get("top_daily_window"), dict) else None
+    official_day_signals = _derive_official_day_signals(domain, daily_windows)
     if not isinstance(ledger, list):
         return {
             "level": "missing_required_external_radar",
             "source": "vedastro_service_adapter_candidate",
             "signals": [],
             "events": [],
+            "daily_windows": daily_windows,
+            "top_daily_window": top_daily_window,
+            "official_day_signals": official_day_signals,
             "required": True,
             "operation": "range_scan",
             "external_calculation_coverage": "VedAstro 596+/600+ calculation nodes",
@@ -470,7 +527,11 @@ def _derive_external_activation_support(modules: Dict[str, Any], domain: str) ->
         events.append(event)
 
     if not events:
-        level = "none"
+        if official_day_signals:
+            top_signal = official_day_signals[0]
+            level = "moderate" if top_signal.get("confidence") == "high" else "weak"
+        else:
+            level = "none"
     elif any((event.get("score") or 0) >= 70 for event in events):
         level = "moderate"
     else:
@@ -478,14 +539,107 @@ def _derive_external_activation_support(modules: Dict[str, Any], domain: str) ->
 
     return {
         "level": level,
-        "source": "vedastro_service_adapter_candidate" if events else None,
-        "signals": ["vedastro_range_scan"] if events else [],
+        "source": "vedastro_service_adapter_candidate" if events or official_day_signals else None,
+        "signals": ["vedastro_range_scan"] if events or official_day_signals else [],
         "events": events,
+        "daily_windows": daily_windows,
+        "top_daily_window": top_daily_window,
+        "official_day_signals": official_day_signals,
         "required": True,
         "operation": "range_scan",
         "external_calculation_coverage": "VedAstro 596+/600+ calculation nodes",
         "provenance": provenance,
     }
+
+
+def _derive_official_day_signals(domain: str, daily_windows: Any) -> List[Dict[str, Any]]:
+    if not isinstance(daily_windows, list):
+        return []
+    positive_families = {
+        "career": {"career_trigger"},
+        "marriage": {"marriage_trigger"},
+        "wealth": {"wealth_trigger", "gains_trigger"},
+    }
+    negative_families = {
+        "career": {"career_pressure"},
+        "marriage": {"relationship_pressure"},
+        "wealth": {"wealth_pressure"},
+    }
+    label_map = {
+        "career": {
+            "opportunity_entry": ("opportunity_entry", "事业机会进入日"),
+            "pressure_opportunity": ("pressure_opportunity", "事业压力机会日"),
+            "relocation_motion": ("relocation_motion", "事业迁移动作日"),
+            "closure_risk": ("closure_risk", "事业真正收尾风险日"),
+            "mixed": ("mixed", "事业混合日"),
+        },
+        "marriage": {
+            "positive": ("progress", "婚恋推进日"),
+            "negative": ("risk", "婚恋风险日"),
+            "mixed": ("mixed", "婚恋混合日"),
+        },
+        "wealth": {
+            "positive": ("opportunity", "财富机会日"),
+            "negative": ("risk", "财富风险日"),
+            "mixed": ("mixed", "财富混合日"),
+        },
+    }
+    positive_tokens = ("good", "support", "expansion", "gain", "auspicious", "lending", "borrowing")
+    negative_tokens = ("bad", "pressure", "dosha", "obstruction", "affliction", "risk")
+    route_labels = label_map.get(domain, label_map["career"])
+    signals: List[Dict[str, Any]] = []
+    for window in daily_windows:
+        if not isinstance(window, dict):
+            continue
+        families = {
+            str(item)
+            for item in (window.get("signal_families") or [])
+            if isinstance(item, str) and item
+        }
+        label_text = str(window.get("top_signal_label") or "").lower()
+        event_ids = list(window.get("event_ids") or [])
+        combined_text = " ".join(
+            [label_text] + [str(item).lower() for item in event_ids if isinstance(item, str)]
+        )
+        positive = bool(families.intersection(positive_families.get(domain, set()))) or any(token in combined_text for token in positive_tokens)
+        negative = bool(families.intersection(negative_families.get(domain, set()))) or any(token in combined_text for token in negative_tokens)
+        if domain == "career":
+            travel_hit = "travel" in combined_text
+            building_hit = "building" in combined_text
+            selling_hit = "selling" in combined_text or "sell" in combined_text
+            saturn_hit = "saturn" in combined_text
+            if positive and travel_hit and not negative:
+                day_type, summary = route_labels["relocation_motion"]
+            elif positive and not negative:
+                day_type, summary = route_labels["opportunity_entry"]
+            elif negative and (positive or saturn_hit or building_hit or travel_hit) and not selling_hit:
+                day_type, summary = route_labels["pressure_opportunity"]
+            elif negative and not positive:
+                day_type, summary = route_labels["closure_risk"]
+            else:
+                day_type, summary = route_labels["mixed"]
+        elif positive and not negative:
+            day_type, summary = route_labels["positive"]
+        elif negative and not positive:
+            day_type, summary = route_labels["negative"]
+        else:
+            day_type, summary = route_labels["mixed"]
+        signals.append(
+            {
+                "date": window.get("date"),
+                "domain": window.get("domain") or domain,
+                "day_type": day_type,
+                "summary": summary,
+                "confidence": window.get("confidence"),
+                "score": window.get("score"),
+                "event_count": window.get("event_count"),
+                "top_signal_label": window.get("top_signal_label"),
+                "signal_families": list(window.get("signal_families") or []),
+                "event_ids": event_ids,
+                "source": "vedastro_official_day_windows",
+            }
+        )
+    return signals
 
 
 def _external_activation_audit(external_activation: Any) -> List[Dict[str, Any]]:
@@ -502,17 +656,241 @@ def _external_activation_audit(external_activation: Any) -> List[Dict[str, Any]]
         ]
     if external_activation.get("source") == "vedastro_service_adapter_candidate":
         events = external_activation.get("events") or []
-        if isinstance(events, list) and events:
+        official_day_signals = external_activation.get("official_day_signals") or []
+        if (isinstance(events, list) and events) or (isinstance(official_day_signals, list) and official_day_signals):
             return [
                 {
                     "technique": "VedAstro EventsAtRange / 596+ Calculator Radar",
                     "status": "used",
                     "role": "external_timing_evidence",
                     "event_count": len(events),
+                    "day_signal_count": len(official_day_signals) if isinstance(official_day_signals, list) else 0,
                     "effect": "activation_context_only_guarded_score_bump",
                 }
             ]
     return []
+
+
+def _build_official_day_signal_summary(external_activation: Any) -> Dict[str, Any]:
+    if not isinstance(external_activation, dict):
+        return {"available": False, "signal_count": 0, "top_day": None, "days": []}
+    signals = external_activation.get("official_day_signals")
+    if not isinstance(signals, list) or not signals:
+        return {"available": False, "signal_count": 0, "top_day": None, "days": []}
+    return {
+        "available": True,
+        "signal_count": len(signals),
+        "top_day": signals[0] if isinstance(signals[0], dict) else None,
+        "days": [item for item in signals[:3] if isinstance(item, dict)],
+        "source": "present_evidence.external_activation.official_day_signals",
+    }
+
+
+def _official_day_signal_rows(external_activation: Any) -> List[Dict[str, Any]]:
+    if not isinstance(external_activation, dict):
+        return []
+    signals = external_activation.get("official_day_signals")
+    if not isinstance(signals, list):
+        return []
+    return [item for item in signals if isinstance(item, dict)]
+
+
+def _supporting_day_rows(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for item in signals[:3]:
+        rows.append(
+            {
+                "date": item.get("date"),
+                "summary": item.get("summary"),
+                "confidence": item.get("confidence"),
+                "day_type": item.get("day_type"),
+                "source": item.get("source") or "vedastro_official_day_windows",
+            }
+        )
+    return rows
+
+
+def _signal_day_types(signals: List[Dict[str, Any]]) -> set[str]:
+    return {
+        str(item.get("day_type"))
+        for item in signals
+        if isinstance(item, dict) and item.get("day_type")
+    }
+
+
+def _signal_text_has(signals: List[Dict[str, Any]], *tokens: str) -> bool:
+    normalized = tuple(str(token).lower() for token in tokens if token)
+    for item in signals:
+        if not isinstance(item, dict):
+            continue
+        parts = [str(item.get("summary") or "").lower(), str(item.get("top_signal_label") or "").lower()]
+        parts.extend(str(value).lower() for value in (item.get("event_ids") or []) if isinstance(value, str))
+        combined = " ".join(parts)
+        if any(token in combined for token in normalized):
+            return True
+    return False
+
+
+def _monthly_state_for_route(route: str, strict: Dict[str, Any], signals: List[Dict[str, Any]]) -> Dict[str, Any]:
+    event_judgement = strict.get("event_judgement") if isinstance(strict.get("event_judgement"), dict) else {}
+    stages = strict.get("adjudication_stages") if isinstance(strict.get("adjudication_stages"), dict) else {}
+    secondary_context = set(event_judgement.get("secondary_context") or [])
+    dominant_label = event_judgement.get("dominant_label")
+    day_types = _signal_day_types(signals)
+    activation_status = _safe_get(stages, "activation", "status")
+    promise_status = _safe_get(stages, "promise", "status")
+
+    if route == "career":
+        if "closure_risk" in day_types and not day_types.intersection({"opportunity_entry", "relocation_motion"}):
+            return {"value": "收束", "reason_codes": ["closure_risk_day_cluster"], "source": "official_day_signals"}
+        if day_types.intersection({"pressure_opportunity"}) or secondary_context.intersection({"dignity_conflict", "dignity_high_friction"}):
+            return {"value": "重组", "reason_codes": ["pressure_opportunity_or_dignity_friction"], "source": "strict_adjudication"}
+        if day_types.intersection({"opportunity_entry", "relocation_motion"}) or dominant_label == "career_status":
+            return {"value": "推进", "reason_codes": ["career_activation_with_manifestation"], "source": "strict_adjudication"}
+        if promise_status == "present" and activation_status == "present":
+            return {"value": "启动", "reason_codes": ["promise_and_activation_present"], "source": "strict_adjudication"}
+        return {"value": "观察", "reason_codes": ["insufficient_monthly_activation"], "source": "strict_adjudication"}
+
+    if route == "relationship":
+        if "risk" in day_types and "progress" not in day_types and not dominant_label:
+            return {"value": "收束", "reason_codes": ["risk_without_progress"], "source": "official_day_signals"}
+        if dominant_label == "legal_marriage":
+            return {"value": "推进", "reason_codes": ["legal_marriage_label_present"], "source": "strict_adjudication"}
+        if "public_formalization_candidate" in secondary_context:
+            return {"value": "筛选", "reason_codes": ["public_formalization_without_marriage_label"], "source": "strict_adjudication"}
+        if "progress" in day_types and activation_status == "present":
+            return {"value": "推进", "reason_codes": ["relationship_progress_day_supported"], "source": "official_day_signals"}
+        if promise_status == "present" and activation_status == "present":
+            return {"value": "启动", "reason_codes": ["relationship_promise_and_activation_present"], "source": "strict_adjudication"}
+        return {"value": "观察", "reason_codes": ["insufficient_relationship_activation"], "source": "strict_adjudication"}
+
+    if route == "finance":
+        if "risk" in day_types and "opportunity" not in day_types and not dominant_label:
+            return {"value": "收束", "reason_codes": ["risk_without_finance_support"], "source": "official_day_signals"}
+        if dominant_label in {"income_growth", "public_wealth_status"} and "opportunity" in day_types:
+            return {"value": "推进", "reason_codes": ["finance_label_plus_positive_day"], "source": "strict_adjudication"}
+        if secondary_context.intersection({"avayogi_active", "ashtakavarga_wealth_friction", "sodhita_wealth_friction"}):
+            return {"value": "整固", "reason_codes": ["finance_friction_requires_consolidation"], "source": "strict_adjudication"}
+        if promise_status == "present" and activation_status == "present":
+            return {"value": "启动", "reason_codes": ["finance_promise_and_activation_present"], "source": "strict_adjudication"}
+        return {"value": "观察", "reason_codes": ["insufficient_finance_activation"], "source": "strict_adjudication"}
+
+    return {"value": "观察", "reason_codes": ["route_not_supported"], "source": "strict_adjudication"}
+
+
+def _monthly_manifestation_for_route(route: str, strict: Dict[str, Any], signals: List[Dict[str, Any]]) -> Dict[str, Any]:
+    event_judgement = strict.get("event_judgement") if isinstance(strict.get("event_judgement"), dict) else {}
+    secondary_context = set(event_judgement.get("secondary_context") or [])
+    dominant_label = event_judgement.get("dominant_label")
+    day_types = _signal_day_types(signals)
+
+    if route == "career":
+        if "relocation_motion" in day_types or _signal_text_has(signals, "travel"):
+            return {"value": "迁移/异地/差旅动作", "reason_codes": ["relocation_motion_day"], "source": "official_day_signals"}
+        if "opportunity_entry" in day_types:
+            if secondary_context.intersection({"a10_active", "amk_active"}):
+                return {"value": "项目/合作推进", "reason_codes": ["a10_or_amk_with_positive_day"], "source": "strict_adjudication"}
+            return {"value": "职责/职位推进", "reason_codes": ["career_positive_day"], "source": "official_day_signals"}
+        if "pressure_opportunity" in day_types:
+            return {"value": "岗位/项目重组", "reason_codes": ["pressure_opportunity_day"], "source": "official_day_signals"}
+        if dominant_label == "career_status":
+            return {"value": "职业定位推进", "reason_codes": ["career_status_label"], "source": "strict_adjudication"}
+        return {"value": "职业观察窗口", "reason_codes": ["no_manifestation_lift"], "source": "strict_adjudication"}
+
+    if route == "relationship":
+        if dominant_label == "legal_marriage":
+            return {"value": "长期关系/承诺推进", "reason_codes": ["legal_marriage_label"], "source": "strict_adjudication"}
+        if "public_formalization_candidate" in secondary_context:
+            return {"value": "关系公开化/可见度提升", "reason_codes": ["public_formalization_candidate"], "source": "strict_adjudication"}
+        if "progress" in day_types:
+            return {"value": "认识/互动推进", "reason_codes": ["progress_day"], "source": "official_day_signals"}
+        if "risk" in day_types:
+            return {"value": "关系现实面测试", "reason_codes": ["risk_day"], "source": "official_day_signals"}
+        return {"value": "关系观察/筛选", "reason_codes": ["no_manifestation_lift"], "source": "strict_adjudication"}
+
+    if route == "finance":
+        if dominant_label == "income_growth":
+            return {"value": "收入增长/入账机会", "reason_codes": ["income_growth_label"], "source": "strict_adjudication"}
+        if dominant_label == "public_wealth_status":
+            return {"value": "项目回款/对外收入状态", "reason_codes": ["public_wealth_status_label"], "source": "strict_adjudication"}
+        if _signal_text_has(signals, "borrowing", "lending", "business"):
+            return {"value": "资金调度/合作现金流", "reason_codes": ["wealth_signal_text_cashflow"], "source": "official_day_signals"}
+        if "risk" in day_types:
+            return {"value": "支出/交易收口", "reason_codes": ["risk_day"], "source": "official_day_signals"}
+        return {"value": "现金流结构观察", "reason_codes": ["no_manifestation_lift"], "source": "strict_adjudication"}
+
+    return {"value": "观察", "reason_codes": ["route_not_supported"], "source": "strict_adjudication"}
+
+
+def _monthly_friction_for_route(route: str, strict: Dict[str, Any], signals: List[Dict[str, Any]]) -> Dict[str, Any]:
+    event_judgement = strict.get("event_judgement") if isinstance(strict.get("event_judgement"), dict) else {}
+    secondary_context = set(event_judgement.get("secondary_context") or [])
+    blocked_items = strict.get("blocked_items") if isinstance(strict.get("blocked_items"), list) else []
+    day_types = _signal_day_types(signals)
+
+    if route == "career":
+        if secondary_context.intersection({"dignity_conflict", "dignity_high_friction"}):
+            return {"value": "权责与结构摩擦", "reason_codes": ["dignity_conflict"], "source": "strict_adjudication"}
+        if secondary_context.intersection({"virodhargala_obstruction", "kakshya_career_friction"}) or "pressure_opportunity" in day_types:
+            return {"value": "执行压力伴随机会", "reason_codes": ["argala_or_kakshya_friction"], "source": "strict_adjudication"}
+        if blocked_items or "vedastro_range_scan_missing" in secondary_context:
+            return {"value": "时间证据不足", "reason_codes": ["external_timing_gap"], "source": "strict_adjudication"}
+        return {"value": "可控结构压力", "reason_codes": ["default_career_friction"], "source": "strict_adjudication"}
+
+    if route == "relationship":
+        if secondary_context.intersection({"dignity_conflict", "dignity_high_friction"}) or "risk" in day_types:
+            return {"value": "现实条件与节奏压力", "reason_codes": ["relationship_risk_or_dignity"], "source": "strict_adjudication"}
+        if "virodhargala_obstruction" in secondary_context:
+            return {"value": "关系推进阻力", "reason_codes": ["argala_obstruction"], "source": "strict_adjudication"}
+        if "public_formalization_candidate" in secondary_context:
+            return {"value": "公开化快于承诺", "reason_codes": ["public_formalization_mismatch"], "source": "strict_adjudication"}
+        if blocked_items or "vedastro_range_scan_missing" in secondary_context:
+            return {"value": "时间证据不足", "reason_codes": ["external_timing_gap"], "source": "strict_adjudication"}
+        return {"value": "筛选与磨合成本", "reason_codes": ["default_relationship_friction"], "source": "strict_adjudication"}
+
+    if route == "finance":
+        if secondary_context.intersection({"avayogi_active", "ashtakavarga_wealth_friction", "sodhita_wealth_friction"}):
+            return {"value": "现金流波动/错误决策风险", "reason_codes": ["finance_friction_signals"], "source": "strict_adjudication"}
+        if "risk" in day_types:
+            return {"value": "交易/回款节奏压力", "reason_codes": ["finance_risk_day"], "source": "official_day_signals"}
+        if blocked_items or "vedastro_range_scan_missing" in secondary_context:
+            return {"value": "时间证据不足", "reason_codes": ["external_timing_gap"], "source": "strict_adjudication"}
+        return {"value": "兑现节奏与支出管理", "reason_codes": ["default_finance_friction"], "source": "strict_adjudication"}
+
+    return {"value": "证据不足", "reason_codes": ["route_not_supported"], "source": "strict_adjudication"}
+
+
+def _monthly_time_confidence(strict: Dict[str, Any], signals: List[Dict[str, Any]]) -> Dict[str, Any]:
+    stages = strict.get("adjudication_stages") if isinstance(strict.get("adjudication_stages"), dict) else {}
+    promise_status = _safe_get(stages, "promise", "status")
+    activation_status = _safe_get(stages, "activation", "status")
+    if signals and activation_status == "present":
+        return {"value": "day_supported", "reason_codes": ["official_day_signal_plus_dual_dasha"], "source": "strict_adjudication"}
+    if activation_status == "present":
+        return {"value": "month_supported", "reason_codes": ["dual_dasha_without_day_signal"], "source": "strict_adjudication"}
+    if promise_status == "present":
+        return {"value": "month_only", "reason_codes": ["promise_without_activation"], "source": "strict_adjudication"}
+    return {"value": "blocked", "reason_codes": ["missing_promise_and_activation"], "source": "strict_adjudication"}
+
+
+def _build_monthly_adjudication_summary(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    present = strict.get("present_evidence") if isinstance(strict, dict) else {}
+    if not isinstance(present, dict):
+        present = {}
+    external_activation = present.get("external_activation")
+    signals = _official_day_signal_rows(external_activation)
+    return {
+        "route": route,
+        "primary_state": _monthly_state_for_route(route, strict, signals),
+        "manifestation_mode": _monthly_manifestation_for_route(route, strict, signals),
+        "friction_source": _monthly_friction_for_route(route, strict, signals),
+        "time_confidence": _monthly_time_confidence(strict, signals),
+        "supporting_days": _supporting_day_rows(signals),
+        "confidence_cap": strict.get("confidence_cap"),
+        "blocked_items": strict.get("blocked_items") or [],
+        "conflicts": strict.get("conflicts") or [],
+        "source": "strict_workflow_monthly_adjudication_v1",
+    }
 
 
 def _official_snapshot_audit(official_snapshot: Any) -> List[Dict[str, Any]]:
@@ -536,6 +914,165 @@ def _official_snapshot_audit(official_snapshot: Any) -> List[Dict[str, Any]]:
             "reason": official_snapshot.get("reason") or official_snapshot.get("status"),
         }
     ]
+
+
+def _evidence_present(value: Any) -> bool:
+    if value in (None, {}, [], ""):
+        return False
+    if isinstance(value, dict):
+        if value.get("status") in {"blocked", "missing", "none"}:
+            return False
+        if value.get("level") in {"blocked", "missing", "none"}:
+            return False
+    return True
+
+
+def _official_section_status(snapshot: Dict[str, Any], *keys: str) -> str:
+    if not isinstance(snapshot, dict):
+        return "blocked"
+    statuses = snapshot.get("section_statuses") if isinstance(snapshot.get("section_statuses"), dict) else {}
+    for key in keys:
+        value = statuses.get(key)
+        if value:
+            return str(value)
+    if snapshot.get("level") == "primary":
+        return "unknown"
+    return str(snapshot.get("status") or "blocked")
+
+
+def _build_official_primary_evidence(route: str, present: Dict[str, Any]) -> Dict[str, Any]:
+    snapshot = present.get("vedastro_official_snapshot") if isinstance(present, dict) else {}
+    event_status = _official_section_status(snapshot, "events_overview")
+    external_activation = present.get("external_activation") if isinstance(present, dict) else {}
+    if isinstance(external_activation, dict) and external_activation.get("level") == "moderate":
+        event_status = "ok"
+
+    evidence = {
+        "chart_core": {
+            "source": "vedastro_official",
+            "role": "official_primary",
+            "status": _official_section_status(snapshot, "chart_core"),
+        },
+        "dasha": {
+            "source": "vedastro_official",
+            "role": "official_primary",
+            "status": _official_section_status(snapshot, "dasha_all"),
+        },
+        "event_radar": {
+            "source": "vedastro_official",
+            "role": "official_primary",
+            "status": event_status,
+        },
+    }
+    if route == "relationship":
+        evidence["d9"] = {
+            "source": "vedastro_official",
+            "role": "official_primary",
+            "status": _official_section_status(snapshot, "varga_d9", "varga_all"),
+        }
+    elif route == "career":
+        evidence["d10"] = {
+            "source": "vedastro_official",
+            "role": "official_primary",
+            "status": _official_section_status(snapshot, "varga_d10", "varga_all"),
+        }
+    elif route == "finance":
+        evidence["d2_d11"] = {
+            "source": "vedastro_official",
+            "role": "official_primary",
+            "status": _official_section_status(snapshot, "varga_d2_d11", "varga_all"),
+        }
+    return evidence
+
+
+def _build_local_supplemental_evidence(route: str, present: Dict[str, Any]) -> Dict[str, Any]:
+    if route == "relationship":
+        keys = ("upapada_lagna", "darakaraka", "narayana_current", "functional_benefic_malefic")
+    elif route == "career":
+        keys = ("a10_karma_pada", "amatyakaraka", "karakamsha", "narayana_current", "functional_benefic_malefic")
+    elif route == "finance":
+        keys = ("wealth_promise_strength", "narayana_current", "functional_benefic_malefic")
+    else:
+        keys = ()
+    return {
+        key: {
+            "source": "local_module",
+            "role": "required_local_supplement",
+            "present": _evidence_present(present.get(key)),
+        }
+        for key in keys
+    }
+
+
+def _dedupe_ordered(items: List[str]) -> List[str]:
+    seen = set()
+    result: List[str] = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        result.append(item)
+    return result
+
+
+def _build_fallback_and_blocked(
+    route: str,
+    present: Dict[str, Any],
+    missing: List[str],
+    official_primary_evidence: Dict[str, Any],
+) -> tuple[List[str], List[str]]:
+    fallback_used: List[str] = []
+    blocked_items: List[str] = []
+    snapshot = present.get("vedastro_official_snapshot") if isinstance(present, dict) else {}
+    source_priority = present.get("source_priority") if isinstance(present, dict) else {}
+
+    if not isinstance(snapshot, dict) or snapshot.get("level") != "primary":
+        blocked_items.append("official_primary_chart_blocked")
+        fallback_used.append("local_chart_fallback")
+    if isinstance(source_priority, dict) and source_priority.get("mode") == "local_fallback_official_blocked":
+        fallback_used.append("source_priority_local_fallback")
+
+    event_status = ((official_primary_evidence.get("event_radar") or {}).get("status"))
+    if event_status == "partial":
+        blocked_items.append("official_event_radar_partial")
+    elif event_status in {"blocked", "missing", "service_endpoint_not_configured", "network_execution_disabled"}:
+        blocked_items.append("official_event_radar_blocked")
+
+    for key in missing:
+        blocked_items.append(f"missing_required_{key}")
+
+    return _dedupe_ordered(fallback_used), _dedupe_ordered(blocked_items)
+
+
+def _build_conflicts(route: str, present: Dict[str, Any], official_primary_evidence: Dict[str, Any]) -> List[Dict[str, Any]]:
+    conflicts: List[Dict[str, Any]] = []
+    dignity_guardrail = present.get("dignity_guardrail") if isinstance(present, dict) else {}
+    if isinstance(dignity_guardrail, dict) and dignity_guardrail.get("status") == "conflict":
+        conflicts.append(
+            {
+                "type": "official_local_divisional_conflict",
+                "primary_source": "vedastro_official",
+                "supplemental_source": "local_module",
+                "impact": "interpretation",
+                "resolution": "keep_official_primary_and_downgrade_confidence",
+                "details": {"dignity_guardrail": dignity_guardrail},
+            }
+        )
+
+    event_status = ((official_primary_evidence.get("event_radar") or {}).get("status"))
+    if event_status == "partial":
+        conflicts.append(
+            {
+                "type": "official_event_radar_missing_or_partial",
+                "primary_source": "vedastro_official",
+                "supplemental_source": "local_module",
+                "impact": "timing",
+                "resolution": "keep_official_primary_and_downgrade_confidence",
+                "details": {"event_radar_status": event_status, "route": route},
+            }
+        )
+
+    return conflicts
 
 
 def _derive_external_technique_evidence(modules: Dict[str, Any], domain: str) -> Dict[str, Any]:
@@ -977,6 +1514,34 @@ def _derive_dignity_guardrail(route: str, present: Dict[str, Any]) -> Dict[str, 
         darakaraka = present.get("darakaraka")
         if isinstance(darakaraka, dict) and darakaraka.get("planet"):
             relevant_roles[darakaraka["planet"]] = "darakaraka"
+    elif route == "career":
+        lord_10 = _lord_for_house_from_lagna(asc_sign, 10)
+        if not lord_10:
+            return base
+        relevant_roles[lord_10] = "10l"
+        a10 = present.get("a10_karma_pada")
+        if isinstance(a10, dict) and a10.get("lord"):
+            relevant_roles[str(a10["lord"])] = "a10_lord"
+        amatyakaraka = present.get("amatyakaraka")
+        if isinstance(amatyakaraka, dict) and amatyakaraka.get("planet"):
+            relevant_roles[str(amatyakaraka["planet"])] = "amatyakaraka"
+        karakamsha = present.get("karakamsha")
+        if isinstance(karakamsha, dict) and karakamsha.get("karakamsha_lord"):
+            relevant_roles[str(karakamsha["karakamsha_lord"])] = "karakamsha_lord"
+        vimshottari = present.get("vimshottari_current")
+        if isinstance(vimshottari, dict):
+            if vimshottari.get("mahadasha"):
+                relevant_roles[str(vimshottari["mahadasha"])] = "mahadasha_lord"
+            antardasha = vimshottari.get("antardasha")
+            if isinstance(antardasha, dict) and antardasha.get("lord"):
+                relevant_roles[str(antardasha["lord"])] = "antardasha_lord"
+            elif isinstance(antardasha, str) and antardasha:
+                relevant_roles[antardasha] = "antardasha_lord"
+            elif vimshottari.get("lord"):
+                relevant_roles[str(vimshottari["lord"])] = "mahadasha_lord"
+        narayana = present.get("narayana_current")
+        if isinstance(narayana, dict) and narayana.get("lord"):
+            relevant_roles[str(narayana["lord"])] = "narayana_lord"
     elif route == "finance":
         lord_2 = _lord_for_house_from_lagna(asc_sign, 2)
         lord_11 = _lord_for_house_from_lagna(asc_sign, 11)
@@ -1071,6 +1636,8 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         score += 10 if present.get("vimshottari_current") else 0
         score += 10 if present.get("narayana_current") else 0
         score += _convergence_score(present.get("career_convergence"))
+        dignity_guardrail = present.get("dignity_guardrail") or {}
+        score += dignity_guardrail.get("score_delta", 0)
         kakshya_career_support = present.get("kakshya_career_support") or {}
         if kakshya_career_support.get("level") == "supportive":
             score += 2
@@ -1127,6 +1694,14 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
         external_technique = present.get("external_technique_evidence") or {}
         if external_technique.get("level") == "context_only":
             secondary_context.append("external_technique_evidence")
+        if dignity_guardrail.get("status") == "conflict":
+            secondary_context.append("dignity_conflict")
+        elif dignity_guardrail.get("score_delta") == 5:
+            secondary_context.append("dignity_supportive_recovery")
+        elif dignity_guardrail.get("score_delta") == 3:
+            secondary_context.append("dignity_supportive_friendship")
+        elif dignity_guardrail.get("score_delta") == -5:
+            secondary_context.append("dignity_high_friction")
 
         hard_gate_missing = any(
             key in missing for key in (
@@ -1439,6 +2014,327 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
     }
 
 
+def _has_promise_evidence(route: str, present: Dict[str, Any]) -> bool:
+    if route == "career":
+        return bool(
+            present.get("d10_dasamsa")
+            or present.get("a10_karma_pada")
+            or present.get("amatyakaraka")
+            or present.get("karakamsha")
+        )
+    if route == "relationship":
+        return bool(
+            present.get("d9_navamsa")
+            or present.get("upapada_lagna")
+            or present.get("darakaraka")
+            or present.get("vivah_saham")
+        )
+    if route == "finance":
+        return bool(
+            present.get("d2_hora")
+            or present.get("d10_dasamsa")
+            or present.get("wealth_promise_strength")
+            or present.get("ashtakavarga_house_scores")
+        )
+    return False
+
+
+def _has_activation_evidence(route: str, present: Dict[str, Any]) -> bool:
+    if route == "career":
+        return bool(
+            present.get("vimshottari_current")
+            and present.get("narayana_current")
+            and present.get("career_convergence")
+        )
+    if route == "relationship":
+        return bool(
+            present.get("vimshottari_current")
+            and present.get("narayana_current")
+            and (
+                present.get("marriage_convergence")
+                or (present.get("external_activation") or {}).get("level") == "moderate"
+            )
+        )
+    if route == "finance":
+        return bool(
+            present.get("vimshottari_current")
+            and present.get("narayana_current")
+            and (
+                present.get("wealth_convergence")
+                or present.get("gains_convergence")
+                or present.get("career_convergence")
+            )
+        )
+    return False
+
+
+def _promise_drivers(route: str, present: Dict[str, Any]) -> List[str]:
+    by_route = {
+        "career": ("d10_dasamsa", "a10_karma_pada", "amatyakaraka", "karakamsha"),
+        "relationship": ("d9_navamsa", "upapada_lagna", "darakaraka", "vivah_saham"),
+        "finance": ("d2_hora", "d10_dasamsa", "wealth_promise_strength", "ashtakavarga_house_scores"),
+    }
+    return [key for key in by_route.get(route, ()) if present.get(key)]
+
+
+def _activation_drivers(route: str, present: Dict[str, Any]) -> List[str]:
+    by_route = {
+        "career": ("vimshottari_current", "narayana_current", "career_convergence", "external_activation"),
+        "relationship": ("vimshottari_current", "narayana_current", "marriage_convergence", "external_activation"),
+        "finance": ("vimshottari_current", "narayana_current", "wealth_convergence", "gains_convergence", "career_convergence", "external_activation"),
+    }
+    return [key for key in by_route.get(route, ()) if present.get(key)]
+
+
+def _summary_root_frame(route: str, present: Dict[str, Any]) -> Dict[str, Any]:
+    if route == "career":
+        return {
+            "promise_drivers": [key for key in ("a10_karma_pada", "amatyakaraka", "karakamsha") if present.get(key)],
+        }
+    if route == "relationship":
+        return {
+            "promise_drivers": [key for key in ("upapada_lagna", "darakaraka", "vivah_saham") if present.get(key)],
+        }
+    if route == "finance":
+        return {
+            "promise_drivers": [key for key in ("wealth_promise_strength", "d2_hora", "ashtakavarga_house_scores") if present.get(key)],
+        }
+    return {}
+
+
+def _summary_divisional_frame(route: str, present: Dict[str, Any]) -> Dict[str, Any]:
+    if route == "career":
+        return {"d10_dasamsa": present.get("d10_dasamsa")}
+    if route == "relationship":
+        return {"d9_navamsa": present.get("d9_navamsa")}
+    if route == "finance":
+        return {
+            "d2_hora": present.get("d2_hora"),
+            "d10_dasamsa": present.get("d10_dasamsa"),
+        }
+    return {}
+
+
+def _summary_visibility_frame(route: str, present: Dict[str, Any]) -> Dict[str, Any]:
+    if route == "career":
+        return {"a10_karma_pada": present.get("a10_karma_pada")}
+    if route == "relationship":
+        return {"upapada_lagna": present.get("upapada_lagna")}
+    if route == "finance":
+        return {"wealth_promise_strength": present.get("wealth_promise_strength")}
+    return {}
+
+
+def _summary_karaka_frame(route: str, present: Dict[str, Any]) -> Dict[str, Any]:
+    if route == "career":
+        return {
+            "amatyakaraka": present.get("amatyakaraka"),
+            "karakamsha": present.get("karakamsha"),
+        }
+    if route == "relationship":
+        return {
+            "darakaraka": present.get("darakaraka"),
+        }
+    return {}
+
+
+def _summary_timing_frame(route: str, present: Dict[str, Any]) -> Dict[str, Any]:
+    frame = {
+        "vimshottari_current": present.get("vimshottari_current"),
+        "narayana_current": present.get("narayana_current"),
+    }
+    if route == "career":
+        frame["domain_convergence"] = present.get("career_convergence")
+    elif route == "relationship":
+        frame["domain_convergence"] = present.get("marriage_convergence")
+    elif route == "finance":
+        frame["domain_convergence"] = {
+            "wealth_convergence": present.get("wealth_convergence"),
+            "gains_convergence": present.get("gains_convergence"),
+            "career_convergence": present.get("career_convergence"),
+        }
+    if present.get("external_activation"):
+        frame["external_activation"] = present.get("external_activation")
+    return frame
+
+
+def _summary_modifier_frame(route: str, present: Dict[str, Any]) -> Dict[str, Any]:
+    frame: Dict[str, Any] = {
+        "functional_benefic_malefic": present.get("functional_benefic_malefic"),
+        "shadbala_component_audit": present.get("shadbala_component_audit"),
+        "argala_support": present.get("argala_support"),
+    }
+    if route == "career":
+        frame["kakshya_career_support"] = present.get("kakshya_career_support")
+    elif route == "relationship":
+        frame["manifestation_split"] = {
+            "role": "modifier_only",
+            "signals": [
+                "relationship_formation",
+                "legal_marriage",
+                "public_formalization",
+            ],
+        }
+        frame["synastry_relationship_support"] = present.get("synastry_relationship_support")
+        frame["dignity_guardrail"] = present.get("dignity_guardrail")
+    elif route == "finance":
+        frame["ashtakavarga_finance_support"] = present.get("ashtakavarga_finance_support")
+        frame["pav_finance_support"] = present.get("pav_finance_support")
+        frame["sodhita_finance_support"] = present.get("sodhita_finance_support")
+        frame["kakshya_finance_support"] = present.get("kakshya_finance_support")
+        frame["yogi_support"] = {
+            "role": "modifier_only",
+            "value": present.get("wealth_promise_strength"),
+        }
+        frame["dignity_guardrail"] = present.get("dignity_guardrail")
+    return frame
+
+
+def _route_varga_gate_keys(route: str) -> List[str]:
+    if route == "career":
+        return ["d10_dasamsa", "a10_karma_pada", "amatyakaraka", "karakamsha"]
+    if route == "relationship":
+        return ["d9_navamsa", "upapada_lagna", "darakaraka", "vivah_saham"]
+    if route == "finance":
+        return ["d2_hora", "d10_dasamsa", "shadbala", "ashtakavarga_house_scores"]
+    return []
+
+
+def _build_technique_audit_summary(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    present = strict.get("present_evidence") if isinstance(strict, dict) else {}
+    official = strict.get("official_primary_evidence") if isinstance(strict, dict) else {}
+    local = strict.get("local_supplemental_evidence") if isinstance(strict, dict) else {}
+    fallback_used = strict.get("fallback_used") if isinstance(strict, dict) else []
+    blocked_items = strict.get("blocked_items") if isinstance(strict, dict) else []
+    conflicts = strict.get("conflicts") if isinstance(strict, dict) else []
+    if not isinstance(present, dict):
+        present = {}
+    if not isinstance(official, dict):
+        official = {}
+    if not isinstance(local, dict):
+        local = {}
+    if not isinstance(fallback_used, list):
+        fallback_used = []
+    if not isinstance(blocked_items, list):
+        blocked_items = []
+    if not isinstance(conflicts, list):
+        conflicts = []
+
+    varga_keys = _route_varga_gate_keys(route)
+    functional_layer = present.get("functional_benefic_malefic")
+    return {
+        "functional_benefic_malefic": {
+            "gate": "hard",
+            "used": bool(isinstance(functional_layer, dict) and functional_layer.get("status") == "used"),
+            "status": functional_layer.get("status") if isinstance(functional_layer, dict) else "blocked",
+            "note": (
+                functional_layer.get("effect_on_confidence")
+                if isinstance(functional_layer, dict)
+                else "Functional benefic/malefic layer unavailable."
+            ),
+        },
+        "relevant_vargas": {
+            "gate": "hard",
+            "required_keys": varga_keys,
+            "present_keys": [key for key in varga_keys if present.get(key)],
+        },
+        "vimshottari_narayana_crosscheck": {
+            "gate": "hard",
+            "used": bool(present.get("vimshottari_current")) and bool(present.get("narayana_current")),
+            "required_timing_systems": ["Vimshottari", "Narayana"],
+        },
+        "source_priority_boundary": {
+            "gate": "boundary",
+            "official": official,
+            "local": local,
+            "fallback_used": fallback_used,
+            "blocked_items": blocked_items,
+            "conflicts": conflicts,
+        },
+    }
+
+
+def _build_adjudication_stages(route: str, present: Dict[str, Any], event_judgement: Dict[str, Any]) -> Dict[str, Any]:
+    dominant_label = event_judgement.get("dominant_label")
+    manifestation_drivers = list(event_judgement.get("secondary_context") or [])
+    if route == "finance":
+        manifestation_bridge_modifiers = [
+            key
+            for key in (
+                "ashtakavarga_finance_support",
+                "pav_finance_support",
+                "sodhita_finance_support",
+                "kakshya_finance_support",
+            )
+            if present.get(key)
+        ]
+    elif route == "relationship":
+        manifestation_bridge_modifiers = [
+            key
+            for key in ("synastry_relationship_support", "jaimini_marriage_support", "argala_support")
+            if present.get(key)
+        ]
+    else:
+        manifestation_bridge_modifiers = [
+            key for key in ("argala_support", "kakshya_career_support", "external_activation") if present.get(key)
+        ]
+    return {
+        "promise": {
+            "status": "present" if _has_promise_evidence(route, present) else "weak",
+            "drivers": _promise_drivers(route, present),
+        },
+        "activation": {
+            "status": "present" if _has_activation_evidence(route, present) else "weak",
+            "required_timing_systems": ["Vimshottari", "Narayana"],
+            "drivers": _activation_drivers(route, present),
+        },
+        "manifestation": {
+            "status": "present" if dominant_label else "weak",
+            "drivers": manifestation_drivers,
+            "bridge_modifiers": manifestation_bridge_modifiers,
+        },
+        "label": {
+            "status": "present" if dominant_label else "missing",
+            "value": dominant_label,
+            "verdict": event_judgement.get("verdict"),
+        },
+    }
+
+
+def _build_multi_reference_reading_summary(route: str, present: Dict[str, Any], strict: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "root_frame": _summary_root_frame(route, present),
+        "divisional_frame": _summary_divisional_frame(route, present),
+        "visibility_frame": _summary_visibility_frame(route, present),
+        "karaka_frame": _summary_karaka_frame(route, present),
+        "timing_frame": _summary_timing_frame(route, present),
+        "modifier_frame": _summary_modifier_frame(route, present),
+        "audit_gate_frame": strict.get("technique_audit_summary") or {},
+        "conflict_frame": {
+            "conflicts": strict.get("conflicts") or [],
+            "confidence_cap": strict.get("confidence_cap"),
+        },
+    }
+
+
+def _attach_top_reader_contract(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    present = strict.get("present_evidence") if isinstance(strict, dict) else {}
+    event_judgement = strict.get("event_judgement") if isinstance(strict, dict) else {}
+    if not isinstance(present, dict):
+        present = {}
+    if not isinstance(event_judgement, dict):
+        event_judgement = {}
+    strict["technique_audit_summary"] = _build_technique_audit_summary(route, strict)
+    strict["adjudication_stages"] = _build_adjudication_stages(route, present, event_judgement)
+    strict["multi_reference_reading_summary"] = _build_multi_reference_reading_summary(route, present, strict)
+    strict["official_day_signal_summary"] = _build_official_day_signal_summary(present.get("external_activation"))
+    strict["monthly_adjudication_summary"] = _build_monthly_adjudication_summary(route, strict)
+    strict["verdict"] = event_judgement.get("verdict")
+    strict["dominant_label"] = event_judgement.get("dominant_label")
+    strict["main_conflicts"] = strict.get("conflicts") or []
+    return strict
+
+
 def _build_life_event_graph(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
     event_judgement = strict.get("event_judgement") if isinstance(strict, dict) else {}
     present = strict.get("present_evidence") if isinstance(strict, dict) else {}
@@ -1541,6 +2437,23 @@ def _build_life_event_graph(route: str, strict: Dict[str, Any]) -> Dict[str, Any
                     "source": event.get("source") or external_activation.get("source"),
                 }
             )
+        for window in external_activation.get("daily_windows") or []:
+            if not isinstance(window, dict):
+                continue
+            nodes.append(
+                {
+                    "kind": "official_day_window",
+                    "date": window.get("date"),
+                    "domain": window.get("domain"),
+                    "score": window.get("score"),
+                    "confidence": window.get("confidence"),
+                    "event_count": window.get("event_count"),
+                    "top_signal_label": window.get("top_signal_label"),
+                    "signal_families": window.get("signal_families") or [],
+                    "event_ids": window.get("event_ids") or [],
+                    "source": external_activation.get("source"),
+                }
+            )
 
     for label in event_judgement.get("secondary_context") or []:
         if not isinstance(label, str):
@@ -1607,13 +2520,17 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["external_technique_evidence"] = _derive_external_technique_evidence(modules, "career")
         present["vedastro_official_snapshot"] = official_snapshot_evidence(modules)
         present["source_priority"] = modules.get("source_priority") if isinstance(modules.get("source_priority"), dict) else {}
+        present["chart"] = _safe_get(modules, "chart")
+        present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
         missing = [key for key, value in present.items() if key not in {
-            "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "argala_support", "shadbala", "shadbala_component_audit", "kakshya_career_support", "functional_benefic_malefic"
+            "chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "dignity_guardrail", "argala_support", "shadbala", "shadbala_component_audit", "kakshya_career_support", "functional_benefic_malefic"
         } and value in (None, {}, [], "")]
         convergence = present["career_convergence"] or {}
         confidence_cap = "medium"
         if missing:
+            confidence_cap = "low"
+        elif present["dignity_guardrail"].get("status") == "conflict":
             confidence_cap = "low"
         elif (present.get("shadbala_component_audit") or {}).get("status") in {"blocked", "incomplete"}:
             confidence_cap = "low"
@@ -1637,6 +2554,15 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
                 "plus dual dasha and career convergence support."
             ),
         }
+        strict["official_primary_evidence"] = _build_official_primary_evidence(route, present)
+        strict["local_supplemental_evidence"] = _build_local_supplemental_evidence(route, present)
+        strict["fallback_used"], strict["blocked_items"] = _build_fallback_and_blocked(
+            route,
+            present,
+            missing,
+            strict["official_primary_evidence"],
+        )
+        strict["conflicts"] = _build_conflicts(route, present, strict["official_primary_evidence"])
         audit = (
             _official_snapshot_audit(present.get("vedastro_official_snapshot"))
             + _external_activation_audit(present.get("external_activation"))
@@ -1644,6 +2570,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         )
         if audit:
             strict["technique_audit"] = audit
+        strict = _attach_top_reader_contract(route, strict)
         return _with_life_event_graph(route, strict)
 
     if route == "relationship":
@@ -1711,6 +2638,15 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
                 "and convergence support; missing links cap confidence."
             ),
         }
+        strict["official_primary_evidence"] = _build_official_primary_evidence(route, present)
+        strict["local_supplemental_evidence"] = _build_local_supplemental_evidence(route, present)
+        strict["fallback_used"], strict["blocked_items"] = _build_fallback_and_blocked(
+            route,
+            present,
+            missing,
+            strict["official_primary_evidence"],
+        )
+        strict["conflicts"] = _build_conflicts(route, present, strict["official_primary_evidence"])
         audit = (
             _official_snapshot_audit(present.get("vedastro_official_snapshot"))
             + _external_activation_audit(present.get("external_activation"))
@@ -1718,6 +2654,7 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         )
         if audit:
             strict["technique_audit"] = audit
+        strict = _attach_top_reader_contract(route, strict)
         return _with_life_event_graph(route, strict)
 
     if route == "finance":
@@ -1803,6 +2740,15 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
                 "plus at least one wealth-related convergence domain."
             ),
         }
+        strict["official_primary_evidence"] = _build_official_primary_evidence(route, present)
+        strict["local_supplemental_evidence"] = _build_local_supplemental_evidence(route, present)
+        strict["fallback_used"], strict["blocked_items"] = _build_fallback_and_blocked(
+            route,
+            present,
+            missing,
+            strict["official_primary_evidence"],
+        )
+        strict["conflicts"] = _build_conflicts(route, present, strict["official_primary_evidence"])
         audit = (
             _official_snapshot_audit(present.get("vedastro_official_snapshot"))
             + _external_activation_audit(present.get("external_activation"))
@@ -1810,9 +2756,10 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         )
         if audit:
             strict["technique_audit"] = audit
+        strict = _attach_top_reader_contract(route, strict)
         return _with_life_event_graph(route, strict)
 
-    return _with_life_event_graph(route, {
+    strict = {
         "question_type": route,
         "required_evidence": [],
         "present_evidence": {},
@@ -1821,7 +2768,9 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         "blocked": False,
         "event_judgement": _derive_event_judgement(route, {}, []),
         "reason": "Route-specific strict evidence audit is currently implemented for relationship and finance timing.",
-    })
+    }
+    strict = _attach_top_reader_contract(route, strict)
+    return _with_life_event_graph(route, strict)
 
 
 def _default_vedastro_scan_window(transit_date: str) -> tuple[str, str]:
@@ -2387,35 +3336,30 @@ def strict_workflow(
     Returns:
         JSON with routed analysis and confidence level
     """
-    q = question.lower()
-    if any(k in q for k in ("career", "job", "work", "promotion", "business", "profession", "事业", "工作", "升职", "生意")):
-        route = "career"
-        focus_techniques = ["D10", "Dasha", "Shadbala", "Transit", "Narayana Dasha"]
-    elif any(k in q for k in ("marriage", "married", "wedding", "relationship", "love", "spouse", "partner", "divorce", "婚恋", "婚姻", "感情", "配偶", "恋爱", "结婚")):
-        route = "relationship"
-        focus_techniques = ["D9", "UL Upapada", "Dasha", "Nakshatra", "Vivah Saham"]
-    elif any(k in q for k in ("money", "wealth", "finance", "investment", "property", "income", "财务", "财富", "投资", "房产", "收入")):
-        route = "finance"
-        focus_techniques = ["D2", "D11", "Dasha", "Shadbala", "Ashtakavarga"]
-    elif any(k in q for k in ("when", "timing", "event", "prediction", "future", "应期", "预测", "何时", "将来")):
-        route = "timing"
-        focus_techniques = ["Dasha", "Transit", "Double Transit", "Gochara"]
-    else:
-        route = "general"
-        focus_techniques = ["D1", "D9", "Dasha", "Yoga", "Shadbala", "Ashtakavarga"]
+    route_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.resolve_route(question, None)
+    normalized_themes = _UNIFIED_CONSULTATION_ORCHESTRATOR.normalize_themes(route_packet["primary_theme"])
 
-    result = _run_engine("full-reading", {
-        "year": year, "month": month, "day": day,
-        "hour": hour, "minute": minute,
-        "lat": lat, "lon": lon, "tz": tz,
-        "age": age, "transit_date": transit_date,
-        "node_mode": node_mode,
-    })
-
-    if isinstance(result, dict) and "error" not in result:
-        result = _maybe_attach_vedastro_evidence(
+    result = _execute_mcp_consultation_workflow(
+        question=question,
+        year=year,
+        month=month,
+        day=day,
+        hour=hour,
+        minute=minute,
+        lat=lat,
+        lon=lon,
+        tz=tz,
+        transit_date=transit_date,
+        node_mode=node_mode,
+        entry_mode="direct_chart",
+        theme=normalized_themes,
+    )
+    chart = result.get("chart") if isinstance(result, dict) else {}
+    route = _safe_get(result, "routing", "question_type") or route_packet["question_type"] or "general"
+    if isinstance(chart, dict) and "error" not in chart:
+        chart = _maybe_attach_vedastro_evidence(
             route,
-            result,
+            chart,
             year=year,
             month=month,
             day=day,
@@ -2427,17 +3371,8 @@ def strict_workflow(
             transit_date=transit_date,
             node_mode=node_mode,
         )
-        strict_evidence = _collect_strict_evidence(route, result)
-        result["routing"] = {
-            "question_type": route,
-            "focus_techniques": focus_techniques,
-            "note": (
-                f"Routed to '{route}' path. Focus on the listed techniques "
-                f"for higher-confidence answers. Full reading included for context, "
-                f"and strict evidence audit now reports confidence cap and missing links."
-            ),
-        }
-        result["strict_workflow"] = strict_evidence
+        result["chart"] = chart
+        result["strict_workflow"] = _collect_strict_evidence(route, chart)
     return result
 
 

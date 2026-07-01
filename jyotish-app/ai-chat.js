@@ -21,6 +21,7 @@ let _panelEl = null;
 let _fabEl = null;
 let _authToken = null;
 let _authUser = null;
+let _guidedTopicContext = null;
 
 // ============================================================================
 // 初始化
@@ -41,9 +42,12 @@ export function aiChatSetChartData(cd) {
   }
 }
 
-export function openAIChatWithPrompt(prompt) {
+export function openAIChatWithPrompt(prompt, guidedTopicContext = null) {
   const text = String(prompt || '').trim();
   if (!text) return;
+  _guidedTopicContext = guidedTopicContext && typeof guidedTopicContext === 'object'
+    ? guidedTopicContext
+    : null;
   if (_panelEl && !_panelEl.classList.contains('open')) {
     _panelEl.classList.add('open');
   }
@@ -286,7 +290,7 @@ async function sendMessage() {
   }
 
   // 构建星盘摘要上下文
-  const context = buildChartContext(cd);
+  const context = buildChartContext(cd, _guidedTopicContext);
 
   // 调用 AI 对话
   try {
@@ -298,10 +302,45 @@ async function sendMessage() {
   sendBtn.disabled = false;
 }
 
-function buildChartContext(cd) {
+function buildChartContext(cd, guidedTopicContext = null) {
   if (!cd?.planets || !cd?.ascendant) return t('ai.no.data');
   if (cd.ai_prompt_pack?.prompt_zh && cd.ai_prompt_pack?.evidence_snapshot) {
+    const workflow = cd._consultationWorkflow || {};
+    const runtimePlanner = workflow.runtime_planner || {};
+    const officialSnapshot = cd.ai_prompt_pack.evidence_snapshot.vedastro_official_full_snapshot || {};
     const vedastroOverview = cd.ai_prompt_pack.evidence_snapshot.vedastro_overview || {};
+    const strictContracts = officialSnapshot.strict_workflow_contracts || {};
+    const primaryRoute = officialSnapshot.strict_workflow_primary_route || Object.keys(strictContracts)[0] || '';
+    const topReaderContract = primaryRoute ? (strictContracts[primaryRoute] || {}) : {};
+    const adjudicationStages = topReaderContract.adjudication_stages || {};
+    const multiReferenceSummary = topReaderContract.multi_reference_reading_summary || {};
+    const techniqueAuditSummary = topReaderContract.technique_audit_summary || {};
+    const runtimePlannerBoundary = runtimePlanner && typeof runtimePlanner === 'object' && Object.keys(runtimePlanner).length
+      ? [
+          '【Runtime Planner】',
+          `planner=${runtimePlanner.planner_name || 'UnifiedConsultationRuntimePlanner'} · entry=${runtimePlanner.entry_mode || workflow.entry_mode || '-'} · route=${runtimePlanner.route?.question_type || workflow.routing?.question_type || '-'}`,
+          `sync_steps=${(runtimePlanner.sync_steps || []).join(' -> ') || '-'}`,
+          `async_candidates=${(runtimePlanner.async_candidates || []).join(' / ') || '-'}`,
+        ].join('\n')
+      : '';
+    const officialBoundary = officialSnapshot && typeof officialSnapshot === 'object'
+      ? [
+          '【VedAstro Official Snapshot Boundary】',
+          `status=${officialSnapshot.status || 'blocked'} · source=${officialSnapshot.primary_source || 'vedastro_official'} · official_python_path=${officialSnapshot.official_python_path || '-'}`,
+          `bundle=${officialSnapshot.official_bundle_status || 'blocked'} · chart_available=${officialSnapshot.official_chart_available ? 'yes' : 'no'}`,
+          `full_catalog=${officialSnapshot.official_full_capability_catalog_status || 'blocked'} · executed=${officialSnapshot.official_full_capability_catalog_summary?.executed_method_count || 0}/${officialSnapshot.official_full_capability_catalog_summary?.catalog_method_count || 0} · sample_limit=${officialSnapshot.official_full_capability_catalog_summary?.sample_limit || 0}`,
+        ].join('\n')
+      : '';
+    const topReaderBoundary = topReaderContract && typeof topReaderContract === 'object' && Object.keys(topReaderContract).length
+      ? [
+          '【Top Reader Contract】',
+          `route=${primaryRoute || '-'} · verdict=${topReaderContract.verdict || '-'} · dominant_label=${topReaderContract.dominant_label || '-'}`,
+          `adjudication_stages.promise=${adjudicationStages.promise?.status || 'missing'} · activation=${adjudicationStages.activation?.status || 'missing'} · manifestation=${adjudicationStages.manifestation?.status || 'missing'} · label=${adjudicationStages.label?.value || topReaderContract.dominant_label || '-'}`,
+          `technique_audit_summary.functional=${techniqueAuditSummary.functional_benefic_malefic?.gate || 'none'}/${techniqueAuditSummary.functional_benefic_malefic?.used ? 'used' : 'blocked'} · vargas=${(techniqueAuditSummary.relevant_vargas?.present_keys || []).join('/') || 'none'} · dual_dasha=${techniqueAuditSummary.vimshottari_narayana_crosscheck?.used ? 'used' : 'blocked'}`,
+          `multi_reference_reading_summary.root_frame=${Object.keys(multiReferenceSummary.root_frame || {}).join('/') || 'none'} · modifier_frame=${Object.keys(multiReferenceSummary.modifier_frame || {}).join('/') || 'none'}`,
+          `main_conflicts=${(topReaderContract.main_conflicts || []).map(item => item?.type).filter(Boolean).join('/') || 'none'}`,
+        ].join('\n')
+      : '';
     const vedastroBoundary = vedastroOverview && typeof vedastroOverview === 'object'
       ? [
           '【VedAstro Overview Boundary】',
@@ -309,11 +348,29 @@ function buildChartContext(cd) {
           'overview only，不替代长周期精扫。',
         ].join('\n')
       : '';
+    const guidedTopicBoundary = guidedTopicContext && typeof guidedTopicContext === 'object'
+      ? [
+          '【Guided Topic Context】',
+          `topic_id=${guidedTopicContext.id || '-'} · title=${guidedTopicContext.title || '-'} · confidence=${guidedTopicContext.confidence || '-'}`,
+          `guided_topic_context.functional=${(guidedTopicContext.strict_adjudication_bundle?.strict_audit_gate || guidedTopicContext.strict_audit_gate)?.functional_benefic_malefic?.gate || 'none'}/${(guidedTopicContext.strict_adjudication_bundle?.strict_audit_gate || guidedTopicContext.strict_audit_gate)?.functional_benefic_malefic?.used ? 'used' : 'blocked'} · vargas=${((guidedTopicContext.strict_adjudication_bundle?.strict_audit_gate || guidedTopicContext.strict_audit_gate)?.relevant_vargas?.present_keys || []).join('/') || 'none'} · dual_dasha=${(guidedTopicContext.strict_adjudication_bundle?.strict_audit_gate || guidedTopicContext.strict_audit_gate)?.vimshottari_narayana_crosscheck?.used ? 'used' : 'blocked'}`,
+          `monthly_adjudication_summary=${(guidedTopicContext.strict_adjudication_bundle?.monthly_adjudication_summary || guidedTopicContext.monthly_adjudication_summary)?.primary_state?.value ? `${(guidedTopicContext.strict_adjudication_bundle?.monthly_adjudication_summary || guidedTopicContext.monthly_adjudication_summary).primary_state.value} / ${(guidedTopicContext.strict_adjudication_bundle?.monthly_adjudication_summary || guidedTopicContext.monthly_adjudication_summary).manifestation_mode?.value || '-'} / ${(guidedTopicContext.strict_adjudication_bundle?.monthly_adjudication_summary || guidedTopicContext.monthly_adjudication_summary).friction_source?.value || '-'} / ${(guidedTopicContext.strict_adjudication_bundle?.monthly_adjudication_summary || guidedTopicContext.monthly_adjudication_summary).time_confidence?.value || '-'}` : 'none'}`,
+          `official_day_signal_summary=${(guidedTopicContext.strict_adjudication_bundle?.official_day_signal_summary || guidedTopicContext.official_day_signal_summary)?.top_day ? `${(guidedTopicContext.strict_adjudication_bundle?.official_day_signal_summary || guidedTopicContext.official_day_signal_summary).top_day.date || '-'} / ${(guidedTopicContext.strict_adjudication_bundle?.official_day_signal_summary || guidedTopicContext.official_day_signal_summary).top_day.summary || '-'} / ${(guidedTopicContext.strict_adjudication_bundle?.official_day_signal_summary || guidedTopicContext.official_day_signal_summary).top_day.confidence || '-'}` : 'none'}`,
+          `why=${guidedTopicContext.why_worth_exploring || '-'}`,
+        ].join('\n')
+      : '';
     return [
       '【AI Prompt Pack】',
       cd.ai_prompt_pack.prompt_zh,
       '',
       DASHA_SHADBALA_AI_CALIBRATION_BOUNDARY,
+      '',
+      runtimePlannerBoundary,
+      '',
+      officialBoundary,
+      '',
+      topReaderBoundary,
+      '',
+      guidedTopicBoundary,
       '',
       vedastroBoundary,
       '',
@@ -371,6 +428,7 @@ async function callAI(userMessage, chartContext) {
           message: userMessage,
           chart_context: chartContext,
           chart_data: cd,
+          guided_topic_context: _guidedTopicContext,
         }),
       });
       const data = await parseAIResponse(resp);

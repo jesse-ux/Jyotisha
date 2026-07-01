@@ -29,6 +29,10 @@ def test_vedastro_python_bridge_schema_is_declared() -> None:
     assert "status" in report["response_contract"]
     assert report["high_value_methods"]["event_tag_catalog"]["maps_to"] == "GetAllEventDataGroupedByTag"
     assert report["high_value_methods"]["vimshottari_snapshot"]["maps_to"] == "DasaAtTime"
+    assert report["high_value_methods"]["official_full_snapshot_bundle"]["maps_to"] == (
+        "AllPlanetData + AllHouseData + DasaAtRange + DasaAtTime + GetCharaDasaAtTime + "
+        "AllPlanetStrength + AshtakvargaLifeMap"
+    )
 
 
 def test_vedastro_python_bridge_returns_controlled_missing_package_status() -> None:

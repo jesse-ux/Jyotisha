@@ -3,12 +3,23 @@
 
 from __future__ import annotations
 
+import jyotish_engine
+
 from mcp_server import _collect_strict_evidence
 
 
 def _base_career_result() -> dict:
     return {
         "modules": {
+            "chart": {
+                "ascendant": {"sign": "Leo"},
+                "planets": {
+                    "Moon": {"status": "中性(Neutral)"},
+                    "Venus": {"status": "中性(Neutral)"},
+                    "Saturn": {"status": "中性(Neutral)"},
+                    "Sun": {"status": "中性(Neutral)"},
+                },
+            },
             "varga_full": {"D10_Dasamsa": {"summary": "career varga present"}},
             "special_lagnas": {"A10_Karma_Pada": {"sign": "Capricorn", "lord": "Saturn"}},
             "jaimini": {
@@ -55,6 +66,7 @@ def test_career_collects_a10_amk_karakamsha_as_strict_evidence() -> None:
         "a10_active",
         "amk_active",
         "karakamsha_context",
+        "functional_benefic_malefic_used",
         "argala_support",
         "vedastro_range_scan_missing",
     ]
@@ -73,9 +85,48 @@ def test_career_blocks_label_when_d10_is_missing_but_preserves_jaimini_context()
         "a10_active",
         "amk_active",
         "karakamsha_context",
+        "functional_benefic_malefic_used",
         "argala_support",
         "vedastro_range_scan_missing",
     ]
+
+
+def test_career_dignity_guardrail_uses_career_relevant_planets_only() -> None:
+    result = _base_career_result()
+    result["modules"]["chart"] = {
+        "ascendant": {"sign": "Leo"},
+        "planets": {
+            "Venus": {"status": "落陷取消(Neecha Bhanga)"},
+            "Saturn": {"status": "中性(Neutral)"},
+            "Moon": {"status": "中性(Neutral)"},
+            "Mars": {"status": "极敌(Great Enemy)"},
+        },
+    }
+
+    strict = _collect_strict_evidence("career", result)
+
+    assert strict["present_evidence"]["dignity_guardrail"]["status"] == "caution"
+    assert strict["present_evidence"]["dignity_guardrail"]["score_delta"] == 5
+    assert "dignity_supportive_recovery" in strict["event_judgement"]["secondary_context"]
+    assert "dignity_high_friction" not in strict["event_judgement"]["secondary_context"]
+
+
+def test_career_dignity_guardrail_detects_conflict_across_career_significators() -> None:
+    result = _base_career_result()
+    result["modules"]["chart"] = {
+        "ascendant": {"sign": "Leo"},
+        "planets": {
+            "Venus": {"status": "落陷取消(Neecha Bhanga)"},
+            "Saturn": {"status": "极敌(Great Enemy)"},
+            "Moon": {"status": "中性(Neutral)"},
+        },
+    }
+
+    strict = _collect_strict_evidence("career", result)
+
+    assert strict["present_evidence"]["dignity_guardrail"]["status"] == "conflict"
+    assert strict["present_evidence"]["dignity_guardrail"]["score_delta"] == 0
+    assert "dignity_conflict" in strict["event_judgement"]["secondary_context"]
 
 
 def test_career_argala_bridge_uses_tenth_house_as_modifier_only() -> None:
@@ -175,3 +226,253 @@ def test_career_accepts_complete_shadbala_components_without_cap_penalty() -> No
     assert strict["present_evidence"]["shadbala_component_audit"]["status"] == "complete"
     assert strict["confidence_cap"] == "medium-high"
     assert "shadbala_component_gap" not in strict["event_judgement"]["secondary_context"]
+
+
+def test_career_strict_contract_marks_a10_as_local_supplement_to_official_primary() -> None:
+    result = _base_career_result()
+    result["modules"]["source_priority"] = {"mode": "vedastro_official_primary"}
+    result["modules"]["vedastro_official_full_snapshot"] = {
+        "status": "partial",
+        "available": True,
+        "official_chart": {"planets": {"Sun": {}}, "ascendant": {"sign": "Leo"}},
+        "section_statuses": {"chart_core": "ok", "dasha_all": "ok"},
+    }
+
+    strict = _collect_strict_evidence("career", result)
+
+    assert strict["official_primary_evidence"]["chart_core"]["status"] == "ok"
+    assert strict["official_primary_evidence"]["dasha"]["status"] == "ok"
+    assert strict["local_supplemental_evidence"]["a10_karma_pada"]["role"] == "required_local_supplement"
+    assert strict["local_supplemental_evidence"]["narayana_current"]["role"] == "required_local_supplement"
+
+
+def test_career_strict_contract_exposes_adjudication_stages_and_multi_reference_summary() -> None:
+    strict = _collect_strict_evidence("career", _base_career_result())
+
+    assert strict["adjudication_stages"]["promise"]["status"] in {"present", "weak", "missing"}
+    assert strict["adjudication_stages"]["activation"]["required_timing_systems"] == ["Vimshottari", "Narayana"]
+    assert strict["adjudication_stages"]["label"]["value"] == strict["event_judgement"]["dominant_label"]
+    assert "multi_reference_reading_summary" in strict
+    summary = strict["multi_reference_reading_summary"]
+    assert "root_frame" in summary
+    assert "divisional_frame" in summary
+    assert "visibility_frame" in summary
+    assert "karaka_frame" in summary
+    assert "timing_frame" in summary
+    assert "modifier_frame" in summary
+    assert "conflict_frame" in summary
+
+
+def test_career_strict_contract_exposes_monthly_adjudication_summary() -> None:
+    result = _base_career_result()
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "career",
+        "evidence_ledger": [],
+        "daily_windows": [
+            {
+                "date": "2026-07-18",
+                "domain": "career",
+                "score": 5,
+                "confidence": "high",
+                "event_count": 2,
+                "signal_families": ["career_trigger"],
+                "event_ids": ["GocharJupiterAspect10th", "CareerExpansionWindow"],
+                "top_signal_label": "Career expansion window",
+            },
+            {
+                "date": "2026-07-28",
+                "domain": "career",
+                "score": 6,
+                "confidence": "high",
+                "event_count": 2,
+                "signal_families": ["career_trigger"],
+                "event_ids": ["TravelForWork", "GocharJupiterAspect10th"],
+                "top_signal_label": "Travel for work expansion window",
+            },
+        ],
+        "top_daily_window": {
+            "date": "2026-07-28",
+            "domain": "career",
+            "score": 6,
+            "confidence": "high",
+            "event_count": 2,
+            "signal_families": ["career_trigger"],
+            "event_ids": ["TravelForWork", "GocharJupiterAspect10th"],
+            "top_signal_label": "Travel for work expansion window",
+        },
+        "source_metadata": {},
+    }
+
+    strict = _collect_strict_evidence("career", result)
+
+    summary = strict["monthly_adjudication_summary"]
+    assert summary["route"] == "career"
+    assert summary["primary_state"]["value"] in {"推进", "启动", "重组", "收束", "观察"}
+    assert summary["manifestation_mode"]["value"]
+    assert summary["friction_source"]["value"]
+    assert summary["time_confidence"]["value"] in {"day_supported", "month_supported", "month_only", "blocked"}
+    assert isinstance(summary["supporting_days"], list)
+    assert summary["supporting_days"][0]["date"] == "2026-07-18"
+
+
+def test_career_strict_contract_exposes_compact_technique_audit_summary() -> None:
+    strict = _collect_strict_evidence("career", _base_career_result())
+
+    audit = strict["technique_audit_summary"]
+    assert audit["functional_benefic_malefic"]["gate"] == "hard"
+    assert audit["relevant_vargas"]["gate"] == "hard"
+    assert audit["vimshottari_narayana_crosscheck"]["gate"] == "hard"
+    assert audit["source_priority_boundary"]["fallback_used"] == strict["fallback_used"]
+
+
+def test_career_external_activation_derives_user_readable_day_signals() -> None:
+    result = _base_career_result()
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "career",
+        "evidence_ledger": [],
+        "daily_windows": [
+            {
+                "date": "2026-07-18",
+                "domain": "career",
+                "score": 5,
+                "confidence": "high",
+                "event_count": 2,
+                "signal_families": ["career_trigger"],
+                "event_ids": ["GocharJupiterAspect10th", "CareerExpansionWindow"],
+                "top_signal_label": "Career expansion window",
+            },
+            {
+                "date": "2026-07-26",
+                "domain": "career",
+                "score": 2,
+                "confidence": "medium",
+                "event_count": 1,
+                "signal_families": ["career_pressure"],
+                "event_ids": ["SaturnIn10thCareerWindow"],
+                "top_signal_label": "Saturn in 10th career window",
+            },
+        ],
+        "top_daily_window": {
+            "date": "2026-07-18",
+            "domain": "career",
+            "score": 5,
+            "confidence": "high",
+            "event_count": 2,
+            "signal_families": ["career_trigger"],
+            "event_ids": ["GocharJupiterAspect10th", "CareerExpansionWindow"],
+            "top_signal_label": "Career expansion window",
+        },
+        "source_metadata": {},
+    }
+
+    strict = _collect_strict_evidence("career", result)
+    external = strict["present_evidence"]["external_activation"]
+
+    assert external["official_day_signals"][0]["date"] == "2026-07-18"
+    assert external["official_day_signals"][0]["day_type"] == "opportunity_entry"
+    assert external["official_day_signals"][0]["summary"] == "事业机会进入日"
+    assert external["official_day_signals"][1]["day_type"] == "pressure_opportunity"
+
+
+def test_career_official_day_signals_distinguish_motion_and_closure_risk() -> None:
+    result = _base_career_result()
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "career",
+        "evidence_ledger": [],
+        "daily_windows": [
+            {
+                "date": "2026-07-28",
+                "domain": "career",
+                "score": 6,
+                "confidence": "high",
+                "event_count": 2,
+                "signal_families": [],
+                "event_ids": ["GoodLunarDayForTravel", "GoodSunSignForBuilding"],
+                "top_signal_label": "Good lunar day for travel",
+            },
+            {
+                "date": "2025-02-28",
+                "domain": "career",
+                "score": 4,
+                "confidence": "medium",
+                "event_count": 2,
+                "signal_families": [],
+                "event_ids": ["BadLunarDayForTravel", "BadForSellingForProfit"],
+                "top_signal_label": "Bad lunar day for travel",
+            },
+        ],
+        "top_daily_window": {
+            "date": "2026-07-28",
+            "domain": "career",
+            "score": 6,
+            "confidence": "high",
+            "event_count": 2,
+            "signal_families": [],
+            "event_ids": ["GoodLunarDayForTravel", "GoodSunSignForBuilding"],
+            "top_signal_label": "Good lunar day for travel",
+        },
+        "source_metadata": {},
+    }
+
+    strict = _collect_strict_evidence("career", result)
+    signals = strict["present_evidence"]["external_activation"]["official_day_signals"]
+
+    assert signals[0]["day_type"] == "relocation_motion"
+    assert signals[0]["summary"] == "事业迁移动作日"
+    assert signals[1]["day_type"] == "closure_risk"
+    assert signals[1]["summary"] == "事业真正收尾风险日"
+
+
+def test_career_narrative_payload_forces_monthly_adjudication_layers_into_final_chinese_conclusion() -> None:
+    result = _base_career_result()
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "career",
+        "evidence_ledger": [],
+        "daily_windows": [
+            {
+                "date": "2026-07-18",
+                "domain": "career",
+                "score": 5,
+                "confidence": "high",
+                "event_count": 2,
+                "signal_families": ["career_trigger"],
+                "event_ids": ["GocharJupiterAspect10th", "CareerExpansionWindow"],
+                "top_signal_label": "Career expansion window",
+            }
+        ],
+        "top_daily_window": {
+            "date": "2026-07-18",
+            "domain": "career",
+            "score": 5,
+            "confidence": "high",
+            "event_count": 2,
+            "signal_families": ["career_trigger"],
+            "event_ids": ["GocharJupiterAspect10th", "CareerExpansionWindow"],
+            "top_signal_label": "Career expansion window",
+        },
+        "source_metadata": {},
+    }
+
+    strict = _collect_strict_evidence("career", result)
+    payload = jyotish_engine._build_career_narrative_payload(strict)
+
+    assert "事业" in payload["headline"]
+    assert payload["monthly_frame"]["primary_state"]["value"]
+    assert payload["monthly_frame"]["manifestation_mode"]["value"]
+    assert payload["monthly_frame"]["friction_source"]["value"]
+    assert payload["monthly_frame"]["time_confidence"]["value"]
+    assert any("月度主状态" in item for item in payload["strengths"])
+    assert any("阻力来源" in item for item in payload["risks"])
+    assert "时间置信度" in payload["markdown"]

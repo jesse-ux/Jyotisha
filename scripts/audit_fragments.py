@@ -60,6 +60,7 @@ API_COMMAND_MAP = {
     "transit-trigger": "/api/transit",
     "audit-capabilities": "/api/capability_audit",
     "thematic-report": "/api/thematic_report",
+    "high-rigor-workflow": "/api/high_rigor_workflow",
     "report-artifact": "/api/report_artifact",
 }
 

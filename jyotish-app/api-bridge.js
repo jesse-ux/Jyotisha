@@ -128,6 +128,10 @@ async function computeWithPython(birthData) {
   return null;
 }
 
+async function computeConsultationWorkflow(payload) {
+  return postJson('/api/consultation_workflow', payload);
+}
+
 async function computeSynastry(payload) {
   return postJson('/api/synastry', payload);
 }
@@ -442,6 +446,7 @@ window.JyotishAPI = {
   aiKeyPolicy: 'server_side_only',
   // 计算
   computeWithPython,
+  computeConsultationWorkflow,
   computeSynastry,
   computePrashna,
   computeKP,

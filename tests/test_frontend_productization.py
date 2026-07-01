@@ -307,10 +307,34 @@ def test_ai_prompt_pack_panel_exposes_copyable_audit_context() -> None:
     assert "AI Prompt Pack 审计上下文已复制" in main
     assert "vedastro_overview" in main
     assert "renderVedAstroOverviewPromptCard" in main
+    assert "renderStrictWorkflowContractPanel" in main
+    assert "renderStrictWorkflowContractCard" in main
+    assert "strict_workflow_contracts" in main
+    assert "strict_workflow_routes_available" in main
+    assert "Official-first Strict Contract" in main
+    assert "primary route" in main
     assert "VedAstro Overview" in main
     assert "overview only，不替代长周期精扫" in main
     assert ".ai-prompt-pack-actions" in style
     assert ".ayanamsa-runtime-status" in style
+    assert ".ai-prompt-pack-contracts" in style
+
+
+def test_frontend_consumes_top_reader_contract_in_prompt_pack_and_ai_chat() -> None:
+    main = read("main.js")
+    ai_chat = read("ai-chat.js")
+    style = read("style.css")
+
+    assert "adjudication_stages" in main
+    assert "multi_reference_reading_summary" in main
+    assert "technique_audit_summary" in main
+    assert "main_conflicts" in main
+    assert "Top-reader adjudication" in main
+    assert "multi_reference_reading_summary" in ai_chat
+    assert "adjudication_stages" in ai_chat
+    assert "technique_audit_summary" in ai_chat
+    assert "【Top Reader Contract】" in ai_chat
+    assert ".ai-prompt-pack-contract-card" in style
 
 
 def test_api_bridge_variants_prefer_backend_prompt_pack_context() -> None:
@@ -1039,6 +1063,17 @@ def test_complete_reading_and_ai_prompt_pack_surface_career_wealth_vedastro_over
 
     for token in [
         "buildVedAstroOverviewHighlights",
+        "renderVedAstroOfficialSnapshotPromptCard",
+        "renderStrictWorkflowContractPanel",
+        "VedAstro Official Snapshot",
+        "official_python_path",
+        "official_bundle_status",
+        "official_chart_available",
+        "official_full_capability_catalog_status",
+        "official_full_capability_catalog_summary",
+        "strict_workflow_contracts",
+        "strict_workflow_primary_route",
+        "strict_workflow_routes_available",
         "Career VedAstro overview",
         "Wealth VedAstro overview",
         "vedastro_overview",
@@ -1501,11 +1536,15 @@ def test_rectification_ui_guides_yes_no_interview_from_existing_event_assets() -
         "EVENT_COLLECTION_GUIDE",
         "EVENT_CATEGORIES",
         "guided_rectification_interview",
+        "buildRecommendedRectificationQuestions",
+        "RECTIFICATION_RECOMMENDED_EVENT_QUESTION_MAP",
     ]:
         assert token in rect_engine
 
     for token in [
         "rect-interview",
+        "renderRectificationInterview",
+        "recommended_events",
         'data-rect-answer="yes"',
         'data-rect-answer="no"',
         'data-rect-answer="other"',
@@ -1514,6 +1553,61 @@ def test_rectification_ui_guides_yes_no_interview_from_existing_event_assets() -
         "rect-window-end",
     ]:
         assert token in rect_ui
+
+
+def test_web_entry_prefers_unified_consultation_workflow() -> None:
+    bridge = read("api-bridge.js")
+    public_bridge = read("public/api-bridge.js")
+    main = read("main.js")
+
+    for source in (bridge, public_bridge):
+        assert "computeConsultationWorkflow" in source
+        assert "/api/consultation_workflow" in source
+
+    assert "entryMode = options.entryMode || 'direct_chart'" in main
+    assert "entryMode: 'rectification'" in main
+
+
+def test_result_page_surfaces_workflow_summary_and_provenance_detail() -> None:
+    main = read("main.js")
+    style = read("style.css")
+    html = read("index.html")
+
+    for token in [
+        "workflow-summary-panel",
+        "renderWorkflowSummaryPanel",
+        "renderWorkflowSummaryCard",
+        "renderWorkflowProvenancePanel",
+        "runtime_planner",
+        "renderRuntimePlannerPills",
+        "UnifiedConsultationRuntimePlanner",
+        "Workflow Provenance",
+        "本次解读工作流",
+        "VedAstro official",
+        "local supplemental",
+        "fallback",
+        "routing.focus_techniques",
+        "unified_orchestrator",
+        "source_priority",
+    ]:
+        assert token in main
+
+    for token in [
+        'id="workflow-summary-panel"',
+        'id="chart-summary"',
+        'id="provenance-panel"',
+    ]:
+        assert token in html
+
+    for token in [
+        ".workflow-summary-panel",
+        ".workflow-summary-card",
+        ".workflow-summary-grid",
+        ".workflow-summary-pill",
+        ".workflow-provenance-panel",
+        ".workflow-provenance-list",
+    ]:
+        assert token in style
 
 
 def test_remedies_ui_keeps_evidence_boundary_and_hidden_json() -> None:
@@ -1532,6 +1626,21 @@ def test_remedies_ui_keeps_evidence_boundary_and_hidden_json() -> None:
         assert token in main or token in style
 
     assert "不能替代医疗、法律、投资或心理咨询" in main
+
+
+def test_ai_chat_context_carries_runtime_planner_summary() -> None:
+    ai_chat = read("ai-chat.js")
+    main = read("main.js")
+
+    for token in [
+        "_consultationWorkflow",
+        "runtime_planner",
+        "【Runtime Planner】",
+        "UnifiedConsultationRuntimePlanner",
+        "sync_steps",
+        "async_candidates",
+    ]:
+        assert token in ai_chat
     assert "低风险优先" in main
     assert "需要谨慎确认" in main
 
@@ -1992,12 +2101,16 @@ def test_provenance_panchanga_workspace_panel_is_productized() -> None:
     assert "_relationshipBoundary" in export_js
     assert "_relationshipStrictNarrativeSection" in export_js
     assert "relationship_report" in export_js
+    assert "career_narrative" in export_js
+    assert "finance_narrative" in export_js
     assert "relationship_narrative" in export_js
     assert "vimsopaka_semantic_summary" in export_js
     assert "functional_benefic_malefic" in export_js
     assert "vedastro_overview" in export_js
     assert "technique_audit_table" in export_js
     assert "relationship_narrative" in main
+    assert "career_narrative" in main
+    assert "finance_narrative" in main
     assert "vimsopaka_semantic_summary" in main
     assert "functional_benefic_malefic:" in main
     assert "vedastro_overview:" in main
@@ -2096,6 +2209,12 @@ def test_synastry_relationship_report_template_keeps_public_formalization_candid
     assert "/api/report_artifact" in read("api-bridge.js")
     assert "_exportInProgress" in main
     assert "setExportBusy" in main
+    assert "const careerNarrative = extras.career_narrative" in export_js
+    assert "const financeNarrative = extras.finance_narrative" in export_js
+    assert "sourceChart?.ai_prompt_pack?.evidence_snapshot?.career_narrative" in main
+    assert "sourceChart?.ai_prompt_pack?.evidence_snapshot?.finance_narrative" in main
+    assert "career_narrative: careerNarrative" in main
+    assert "finance_narrative: financeNarrative" in main
 
     for token in [
         "TERMINOLOGY_MODE_LABELS",
@@ -2358,8 +2477,10 @@ def test_complete_reading_surfaces_guided_topic_discovery() -> None:
     assert "renderGuidedTopicDiscovery(chartData)" in main
     assert "function renderGuidedTopicDiscovery" in main
     assert "guided_topics" in main
+    assert "strict_audit_gate" in main
     assert "继续深入" in main
     assert "数据依据" in main
+    assert "严谨门槛" in main
     assert "适合继续问" in main
     assert "data-guided-topic-question" in main
     assert ".guided-topic-discovery" in style
@@ -2373,6 +2494,37 @@ def test_guided_topic_questions_reuse_ai_chat_entry() -> None:
     assert "openAIChatWithPrompt" in ai_chat
     assert "data-guided-topic-question" in main
     assert "openAIChatWithPrompt(question)" in main
+    assert "strict_adjudication_bundle" in main
+    assert "strict_audit_gate" in main
+    assert "guided_topic_context" in ai_chat
+    assert "strict_adjudication_bundle" in ai_chat
+    assert "official_day_signal_summary" in main
+    assert "official_day_signal_summary" in ai_chat
+    assert "monthly_adjudication_summary" in main
+    assert "monthly_adjudication_summary" in ai_chat
+
+
+def test_complete_reading_surfaces_career_quick_questions() -> None:
+    main = read("main.js")
+    style = read("style.css")
+
+    for token in [
+        "renderCareerQuickQuestions",
+        "career-quick-questions",
+        "career-quick-question",
+        "事业先看这几个",
+        "我现在适合换方向还是继续深耕？",
+        "2026 年事业吉利在哪里，不利在哪里？",
+        "哪些月份适合推进项目、发布产品或谈合作？",
+    ]:
+        assert token in main
+
+    for token in [
+        ".career-quick-questions",
+        ".career-quick-question-list",
+        ".career-quick-question",
+    ]:
+        assert token in style
 
 
 def test_real_case_revalidation_is_release_gate_and_accuracy_boundary() -> None:

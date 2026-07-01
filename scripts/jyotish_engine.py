@@ -41,6 +41,7 @@ import sys
 import os
 import csv
 import math
+import time
 import sqlite3
 import importlib.util
 from concurrent.futures import ThreadPoolExecutor
@@ -1020,6 +1021,12 @@ def _build_relationship_narrative_payload(relationship_strict):
             'boundaries': [
                 '未完成 D1 + D9 + UL + dual dasha 交叉前，不得把单一关系信号写成高置信度婚姻结论。',
             ],
+            'monthly_frame': {
+                'primary_state': {'value': 'blocked'},
+                'manifestation_mode': {'value': 'blocked'},
+                'friction_source': {'value': 'blocked'},
+                'time_confidence': {'value': 'blocked'},
+            },
             'markdown': (
                 "### 婚恋严格裁决\n"
                 "- 当前缺少 relationship strict evidence，无法生成高严谨婚恋 narrative。\n"
@@ -1034,6 +1041,8 @@ def _build_relationship_narrative_payload(relationship_strict):
     secondary_context = secondary_context if isinstance(secondary_context, list) else []
     confidence_cap = relationship_strict.get('confidence_cap') or event_judgement.get('confidence_cap') or 'unknown'
     dominant_label = event_judgement.get('dominant_label') if isinstance(event_judgement, dict) else None
+    monthly_frame = relationship_strict.get('monthly_adjudication_summary') if isinstance(relationship_strict, dict) else {}
+    monthly_frame = monthly_frame if isinstance(monthly_frame, dict) else {}
     synastry = present.get('synastry_relationship_support') if isinstance(present, dict) else {}
     synastry_signals = synastry.get('signals') if isinstance(synastry, dict) else []
     synastry_signals = synastry_signals if isinstance(synastry_signals, list) else []
@@ -1061,6 +1070,10 @@ def _build_relationship_narrative_payload(relationship_strict):
         strengths.append('protective kuta support 已被识别，可作为关系稳定性的次级支持语义。')
     if 'synastry_exception_mitigated' in secondary_context:
         strengths.append('存在 exception mitigation，说明部分 Dosha/不利匹配在传统规则里有缓解条件。')
+    if monthly_frame.get('primary_state', {}).get('value'):
+        strengths.append(f"月度主状态：{monthly_frame.get('primary_state', {}).get('value')}。")
+    if monthly_frame.get('manifestation_mode', {}).get('value'):
+        strengths.append(f"落地形式：{monthly_frame.get('manifestation_mode', {}).get('value')}。")
 
     if confidence_cap in {'low', 'blocked'}:
         risks.append('当前 confidence cap 偏低，dual dasha / external timing / marriage convergence 至少有一层存在冲突或不足。')
@@ -1074,10 +1087,14 @@ def _build_relationship_narrative_payload(relationship_strict):
         risks.append('相关婚恋行星尊贵度摩擦较高，关系推进时更容易出现磨损与反复确认。')
     if 'shadbala_component_gap' in secondary_context:
         risks.append('Shadbala 六分量还存在缺口，关系强弱结论需继续保守处理。')
+    if monthly_frame.get('friction_source', {}).get('value'):
+        risks.append(f"阻力来源：{monthly_frame.get('friction_source', {}).get('value')}。")
 
     boundaries.append('婚恋高严谨模式至少需要 D1、D9、UL、Vimshottari 与 Narayana dual dasha 同时在场。')
     boundaries.append('protective kuta support、Mahendra、Stree Deergha 等合盘细信号只能辅助，不得越权抬升 legal_marriage。')
     boundaries.append('若 dual dasha、external timing 或 marriage convergence 冲突，必须明确降置信度，而不是把关系窗口包装成婚姻必然落地。')
+    if monthly_frame.get('time_confidence', {}).get('value'):
+        boundaries.append(f"时间置信度：{monthly_frame.get('time_confidence', {}).get('value')}。")
     if 'public_formalization_candidate' in secondary_context:
         boundaries.append('public_formalization_candidate 只表示公开化候选，不等于法律婚姻，不能越权替代 legal_marriage。')
     if synastry_signals:
@@ -1100,6 +1117,10 @@ def _build_relationship_narrative_payload(relationship_strict):
         f"- dominant_label: {dominant_label or 'none'}",
         f"- confidence_cap: {confidence_cap}",
         f"- secondary_context: {secondary_context}",
+        f"- 月度主状态: {monthly_frame.get('primary_state', {}).get('value') or 'blocked'}",
+        f"- 落地形式: {monthly_frame.get('manifestation_mode', {}).get('value') or 'blocked'}",
+        f"- 阻力来源: {monthly_frame.get('friction_source', {}).get('value') or 'blocked'}",
+        f"- 时间置信度: {monthly_frame.get('time_confidence', {}).get('value') or 'blocked'}",
         '- strengths:',
         *[f"  - {item}" for item in strengths],
         '- risks:',
@@ -1113,8 +1134,153 @@ def _build_relationship_narrative_payload(relationship_strict):
         'strengths': strengths,
         'risks': risks,
         'boundaries': boundaries,
+        'monthly_frame': {
+            'primary_state': monthly_frame.get('primary_state') or {'value': 'blocked'},
+            'manifestation_mode': monthly_frame.get('manifestation_mode') or {'value': 'blocked'},
+            'friction_source': monthly_frame.get('friction_source') or {'value': 'blocked'},
+            'time_confidence': monthly_frame.get('time_confidence') or {'value': 'blocked'},
+        },
         'markdown': "\n".join(markdown_lines),
     }
+
+
+def _base_strict_narrative_payload(route_label, strict, *, fallback_headline, strengths, risks, boundaries):
+    monthly_frame = strict.get('monthly_adjudication_summary') if isinstance(strict, dict) else {}
+    monthly_frame = monthly_frame if isinstance(monthly_frame, dict) else {}
+    event_judgement = strict.get('event_judgement') if isinstance(strict, dict) else {}
+    confidence_cap = strict.get('confidence_cap') or event_judgement.get('confidence_cap') or 'unknown'
+    dominant_label = event_judgement.get('dominant_label') if isinstance(event_judgement, dict) else None
+
+    if monthly_frame.get('primary_state', {}).get('value'):
+        strengths = list(strengths) + [f"月度主状态：{monthly_frame.get('primary_state', {}).get('value')}。"]
+    if monthly_frame.get('manifestation_mode', {}).get('value'):
+        strengths = list(strengths) + [f"落地形式：{monthly_frame.get('manifestation_mode', {}).get('value')}。"]
+    if monthly_frame.get('friction_source', {}).get('value'):
+        risks = list(risks) + [f"阻力来源：{monthly_frame.get('friction_source', {}).get('value')}。"]
+    if monthly_frame.get('time_confidence', {}).get('value'):
+        boundaries = list(boundaries) + [f"时间置信度：{monthly_frame.get('time_confidence', {}).get('value')}。"]
+
+    markdown_lines = [
+        f"### {route_label}严格裁决",
+        f"- headline: {fallback_headline}",
+        f"- dominant_label: {dominant_label or 'none'}",
+        f"- confidence_cap: {confidence_cap}",
+        f"- 月度主状态: {monthly_frame.get('primary_state', {}).get('value') or 'blocked'}",
+        f"- 落地形式: {monthly_frame.get('manifestation_mode', {}).get('value') or 'blocked'}",
+        f"- 阻力来源: {monthly_frame.get('friction_source', {}).get('value') or 'blocked'}",
+        f"- 时间置信度: {monthly_frame.get('time_confidence', {}).get('value') or 'blocked'}",
+        '- strengths:',
+        *[f"  - {item}" for item in strengths],
+        '- risks:',
+        *[f"  - {item}" for item in risks],
+        '- boundaries:',
+        *[f"  - {item}" for item in boundaries],
+    ]
+    return {
+        'headline': fallback_headline,
+        'strengths': list(strengths),
+        'risks': list(risks),
+        'boundaries': list(boundaries),
+        'monthly_frame': {
+            'primary_state': monthly_frame.get('primary_state') or {'value': 'blocked'},
+            'manifestation_mode': monthly_frame.get('manifestation_mode') or {'value': 'blocked'},
+            'friction_source': monthly_frame.get('friction_source') or {'value': 'blocked'},
+            'time_confidence': monthly_frame.get('time_confidence') or {'value': 'blocked'},
+        },
+        'markdown': "\n".join(markdown_lines),
+    }
+
+
+def _build_career_narrative_payload(career_strict):
+    if not isinstance(career_strict, dict) or not career_strict:
+        return _base_strict_narrative_payload(
+            '事业',
+            {},
+            fallback_headline='事业严格裁决证据尚未完成，当前不能生成高严谨事业叙事。',
+            strengths=[],
+            risks=['缺少 career strict workflow 的核心证据，事业正文需降级。'],
+            boundaries=['未完成 D1、D10、A10、Vimshottari 与 Narayana 交叉前，不得把单一事业信号写成高置信度结论。'],
+        )
+    event_judgement = career_strict.get('event_judgement') if isinstance(career_strict, dict) else {}
+    secondary_context = event_judgement.get('secondary_context') if isinstance(event_judgement, dict) else []
+    secondary_context = secondary_context if isinstance(secondary_context, list) else []
+    missing = career_strict.get('missing_evidence') or []
+    strengths = []
+    risks = []
+    boundaries = [
+        '事业高严谨模式至少需要 D1、D10、A10、Functional Benefic/Malefic、Vimshottari 与 Narayana dual dasha 同时在场。',
+        'VedAstro 官方事件日可以给时间支撑，但不得越权改写本命 promise 与 strict workflow 的边界。',
+    ]
+    if event_judgement.get('dominant_label') == 'career_status':
+        strengths.append('事业 strict workflow 已形成主裁决标签，说明职业主题不是泛泛活跃，而是进入可判读窗口。')
+    if 'a10_active' in secondary_context:
+        strengths.append('A10/Karma Pada 已进入主链，说明事业结果会更偏向社会角色、职责承接或可见产出。')
+    if 'amk_active' in secondary_context:
+        strengths.append('Amatyakaraka 已进入主链，说明职业能力、上级关系或专业角色承担被明显放大。')
+    if 'karakamsha_context' in secondary_context:
+        strengths.append('Karakamsha 已提供职业志向语义，适合用来判断方向感而不只是短期机会。')
+    if missing:
+        risks.append(f"仍缺少关键层：{', '.join(str(item) for item in missing[:4])}。")
+    if 'virodhargala_obstruction' in secondary_context:
+        risks.append('事业主轴存在 Argala 阻滞，推进通常伴随现实牵制、流程卡顿或资源不顺。')
+    if 'dignity_high_friction' in secondary_context:
+        risks.append('相关事业行星尊贵度摩擦较高，机会不一定消失，但落地成本会明显上升。')
+    if 'shadbala_component_gap' in secondary_context:
+        risks.append('Shadbala 六分量仍有缺口，强弱结论需继续保守。')
+    headline = '事业严格裁决已接入主链，当前结论将强制引用本命 promise、双重大运、官方时间窗与结构阻力。'
+    return _base_strict_narrative_payload(
+        '事业',
+        career_strict,
+        fallback_headline=headline,
+        strengths=strengths,
+        risks=risks,
+        boundaries=boundaries,
+    )
+
+
+def _build_finance_narrative_payload(finance_strict):
+    if not isinstance(finance_strict, dict) or not finance_strict:
+        return _base_strict_narrative_payload(
+            '财富',
+            {},
+            fallback_headline='财富严格裁决证据尚未完成，当前不能生成高严谨财富叙事。',
+            strengths=[],
+            risks=['缺少 finance strict workflow 的核心证据，财富正文需降级。'],
+            boundaries=['未完成 D2/D11、财富 promise、Vimshottari 与 Narayana 交叉前，不得把单一财富信号写成高置信度结论。'],
+        )
+    event_judgement = finance_strict.get('event_judgement') if isinstance(finance_strict, dict) else {}
+    secondary_context = event_judgement.get('secondary_context') if isinstance(event_judgement, dict) else []
+    secondary_context = secondary_context if isinstance(secondary_context, list) else []
+    missing = finance_strict.get('missing_evidence') or []
+    strengths = []
+    risks = []
+    boundaries = [
+        '财富高严谨模式至少需要 D2/D11 或等价财富 promise 层、Functional Benefic/Malefic、Vimshottari 与 Narayana dual dasha 同时在场。',
+        '官方财富日窗口只能帮助判断回款/交易/现金流节奏，不能单独替代本命财富 promise。',
+    ]
+    if event_judgement.get('dominant_label') == 'income_growth':
+        strengths.append('财富 strict workflow 已判到 income_growth，说明更偏向真实入账增长，而不是空泛的财运变好。')
+    if event_judgement.get('dominant_label') == 'public_wealth_status':
+        strengths.append('财富 strict workflow 已判到 public_wealth_status，说明更像项目回款、公开收入状态或外部可见的收益变化。')
+    if 'ashtakavarga_wealth_support' in secondary_context:
+        strengths.append('Ashtakavarga 财富桥接已进入主链，可作为兑现能力的次级支持。')
+    if missing:
+        risks.append(f"仍缺少关键层：{', '.join(str(item) for item in missing[:4])}。")
+    if 'avayogi_active' in secondary_context:
+        risks.append('Avayogi 风险已触发，说明某些看似有钱流动的窗口也可能伴随高代价或错误决策。')
+    if 'sodhita_wealth_friction' in secondary_context or 'ashtakavarga_wealth_friction' in secondary_context:
+        risks.append('财富桥接层已提示兑现摩擦，现金流并不等于可自由留存。')
+    if 'shadbala_component_gap' in secondary_context:
+        risks.append('Shadbala 六分量仍有缺口，财富强弱结论需继续保守。')
+    headline = '财富严格裁决已接入主链，当前结论会强制区分收入兑现、现金流动作与风险摩擦。'
+    return _base_strict_narrative_payload(
+        '财富',
+        finance_strict,
+        fallback_headline=headline,
+        strengths=strengths,
+        risks=risks,
+        boundaries=boundaries,
+    )
 
 
 def _build_vedastro_overview_payload(modules):
@@ -1150,19 +1316,167 @@ def _build_vedastro_overview_payload(modules):
     }
 
 
+def _full_reading_profiler_enabled(args) -> bool:
+    if bool(getattr(args, 'profile_stages', False)):
+        return True
+    env_value = os.environ.get('JYOTISH_PROFILE_STAGES', '').strip().lower()
+    return env_value in {'1', 'true', 'yes', 'on'}
+
+
+def _record_stage_timing(stage_timings, stage, started_at, *, enabled=False, status='ok', details=None):
+    elapsed = round(time.perf_counter() - started_at, 4)
+    entry = {
+        'stage': stage,
+        'elapsed_seconds': elapsed,
+        'status': status,
+    }
+    if details:
+        entry['details'] = details
+    stage_timings.append(entry)
+    if enabled:
+        print(f"[full-reading stage] {stage}: {elapsed:.4f}s ({status})", file=sys.stderr)
+    return entry
+
+
+def _build_unified_stage_contract(stage_timings):
+    groups = {
+        'local_core': [
+            'core_chart_and_setup',
+            'dasha_and_core_varga_stack',
+            'advanced_interpretation_and_timing_layers',
+            'dynamic_hooks',
+        ],
+        'official_evidence': [
+            'vedastro_official_snapshot',
+            'vedastro_main_entry_overview',
+        ],
+        'contract_and_prompt': [
+            'strict_contracts',
+            'guided_topics',
+            'ai_prompt_pack',
+        ],
+    }
+    grouped_rows = []
+    for group_name, stage_names in groups.items():
+        matched = [row for row in stage_timings if row.get('stage') in stage_names]
+        grouped_rows.append({
+            'group': group_name,
+            'stages': [row.get('stage') for row in matched],
+            'elapsed_seconds': round(
+                sum(float(row.get('elapsed_seconds', 0) or 0) for row in matched),
+                4,
+            ),
+            'execution_mode': (
+                'sync_remote_heavy' if group_name == 'official_evidence'
+                else 'sync_structuring' if group_name == 'contract_and_prompt'
+                else 'sync_local'
+            ),
+        })
+    return {
+        'stage_contract_version': 1,
+        'stage_groups': grouped_rows,
+        'cache_recommendations': {
+            'api_chart_response': 'recommended',
+            'official_full_snapshot_semantic': 'recommended',
+        },
+        'async_recommendations': {
+            'chart_async_optional': True,
+            'high_rigor_async_recommended': True,
+        },
+    }
+
+
+STRICT_WORKFLOW_MODULE_MAP = {
+    'relationship': 'relationship_strict_evidence',
+    'career': 'career_strict_evidence',
+    'finance': 'finance_strict_evidence',
+}
+
+
+def _compact_strict_workflow_contract(strict):
+    if not isinstance(strict, dict) or not strict:
+        return None
+    return {
+        'question_type': strict.get('question_type'),
+        'confidence_cap': strict.get('confidence_cap'),
+        'blocked': bool(strict.get('blocked')),
+        'reason': strict.get('reason'),
+        'required_evidence': strict.get('required_evidence') or [],
+        'missing_evidence': strict.get('missing_evidence') or [],
+        'official_primary_evidence': strict.get('official_primary_evidence') or {},
+        'local_supplemental_evidence': strict.get('local_supplemental_evidence') or {},
+        'fallback_used': strict.get('fallback_used') or [],
+        'blocked_items': strict.get('blocked_items') or [],
+        'conflicts': strict.get('conflicts') or [],
+        'technique_audit_summary': strict.get('technique_audit_summary') or {},
+        'adjudication_stages': strict.get('adjudication_stages') or {},
+        'multi_reference_reading_summary': strict.get('multi_reference_reading_summary') or {},
+        'monthly_adjudication_summary': strict.get('monthly_adjudication_summary') or {},
+        'official_day_signal_summary': strict.get('official_day_signal_summary') or {},
+        'strict_adjudication_bundle': strict.get('strict_adjudication_bundle') or {},
+        'verdict': strict.get('verdict'),
+        'dominant_label': strict.get('dominant_label'),
+        'main_conflicts': strict.get('main_conflicts') or [],
+    }
+
+
+def _extract_strict_workflow_contracts(modules):
+    contracts = {}
+    if not isinstance(modules, dict):
+        return contracts
+    for route, module_name in STRICT_WORKFLOW_MODULE_MAP.items():
+        contract = _compact_strict_workflow_contract(modules.get(module_name))
+        if contract:
+            contracts[route] = contract
+    return contracts
+
+
+def _preferred_strict_workflow_contract(contracts):
+    if not isinstance(contracts, dict):
+        return None, {}
+    for route in ('relationship', 'career', 'finance'):
+        contract = contracts.get(route)
+        if isinstance(contract, dict) and contract:
+            return route, contract
+    return None, {}
+
+
 def _build_vedastro_official_full_snapshot_payload(modules):
     snapshot = modules.get('vedastro_official_full_snapshot') if isinstance(modules, dict) else {}
+    strict_workflow_contracts = _extract_strict_workflow_contracts(modules)
+    primary_route, primary_contract = _preferred_strict_workflow_contract(strict_workflow_contracts)
+    official_primary_evidence = primary_contract.get('official_primary_evidence') if isinstance(primary_contract, dict) else {}
+    local_supplemental_evidence = primary_contract.get('local_supplemental_evidence') if isinstance(primary_contract, dict) else {}
+    fallback_used = primary_contract.get('fallback_used') if isinstance(primary_contract, dict) else []
+    blocked_items = primary_contract.get('blocked_items') if isinstance(primary_contract, dict) else []
+    conflicts = primary_contract.get('conflicts') if isinstance(primary_contract, dict) else []
     if not isinstance(snapshot, dict) or not snapshot:
         return {
             'status': 'blocked',
             'available': False,
             'operation': 'official_full_snapshot',
             'primary_source': 'vedastro_official',
+            'strict_workflow_primary_route': primary_route,
+            'strict_workflow_routes_available': list(strict_workflow_contracts.keys()),
+            'strict_workflow_contracts': strict_workflow_contracts,
+            'official_primary_evidence': official_primary_evidence or {},
+            'local_supplemental_evidence': local_supplemental_evidence or {},
+            'fallback_used': fallback_used or [],
+            'blocked_items': blocked_items or [],
+            'conflicts': conflicts or [],
             'boundary_note': 'VedAstro official full snapshot is not attached.',
         }
     manifest = snapshot.get('request_manifest') if isinstance(snapshot.get('request_manifest'), dict) else {}
     requests = manifest.get('requests') if isinstance(manifest.get('requests'), list) else []
     snapshot_sections = snapshot.get('snapshot_sections') if isinstance(snapshot.get('snapshot_sections'), dict) else {}
+    metadata = snapshot.get('source_metadata') if isinstance(snapshot.get('source_metadata'), dict) else {}
+    full_catalog = metadata.get('official_full_capability_catalog') if isinstance(metadata.get('official_full_capability_catalog'), dict) else {}
+    dynamic_selection = full_catalog.get('dynamic_selection') if isinstance(full_catalog.get('dynamic_selection'), dict) else {}
+    report_references = {
+        theme: selection.get('report_reference')
+        for theme, selection in dynamic_selection.items()
+        if isinstance(selection, dict) and isinstance(selection.get('report_reference'), dict)
+    }
     return {
         'status': snapshot.get('status') or 'blocked',
         'available': bool(snapshot.get('available')),
@@ -1173,8 +1487,22 @@ def _build_vedastro_official_full_snapshot_payload(modules):
         'request_section_count': len(requests),
         'request_sections': [item.get('section') for item in requests if isinstance(item, dict)],
         'method_catalog': manifest.get('method_catalog') or {},
+        'official_full_capability_catalog_status': full_catalog.get('status'),
+        'official_full_capability_catalog_summary': full_catalog.get('summary') or {},
+        'official_full_capability_catalog_coverage': full_catalog.get('coverage') or {},
+        'official_full_capability_domain_routing': full_catalog.get('domain_routing') or {},
+        'official_full_capability_dynamic_selection': dynamic_selection,
+        'official_report_references': report_references,
         'user_visibility': snapshot.get('user_visibility') or 'backend_raw_evidence_not_direct_user_report',
         'source_metadata': snapshot.get('source_metadata') or {},
+        'strict_workflow_primary_route': primary_route,
+        'strict_workflow_routes_available': list(strict_workflow_contracts.keys()),
+        'strict_workflow_contracts': strict_workflow_contracts,
+        'official_primary_evidence': official_primary_evidence or {},
+        'local_supplemental_evidence': local_supplemental_evidence or {},
+        'fallback_used': fallback_used or [],
+        'blocked_items': blocked_items or [],
+        'conflicts': conflicts or [],
         'boundary_note': (
             snapshot.get('reason')
             or 'VedAstro official full snapshot is the primary raw evidence layer; user reports consume selected slices only.'
@@ -1201,9 +1529,13 @@ def _build_ai_prompt_pack(report):
     oracle_progress = _oracle_progress_snapshot()
     technique_audit_table = _build_technique_audit_table(functional_layer, oracle_progress, modules)
     relationship_narrative = _build_relationship_narrative_payload(modules.get('relationship_strict_evidence'))
+    career_narrative = _build_career_narrative_payload(modules.get('career_strict_evidence'))
+    finance_narrative = _build_finance_narrative_payload(modules.get('finance_strict_evidence'))
     vimsopaka_semantic_summary = _build_vimsopaka_semantic_summary(modules.get('vimsopaka'))
     vedastro_overview = _build_vedastro_overview_payload(modules)
     vedastro_official_full_snapshot = _build_vedastro_official_full_snapshot_payload(modules)
+    strict_workflow_contracts = _extract_strict_workflow_contracts(modules)
+    strict_workflow_primary_route, primary_strict_contract = _preferred_strict_workflow_contract(strict_workflow_contracts)
     guided_topics = modules.get('guided_topics') if isinstance(modules.get('guided_topics'), list) else build_guided_topics(report)
     capability_evidence_pool = build_capability_evidence_pool_summary()
 
@@ -1276,12 +1608,22 @@ def _build_ai_prompt_pack(report):
         },
         'oracle_progress': oracle_progress,
         'functional_benefic_malefic': functional_layer,
+        'strict_workflow_primary_route': strict_workflow_primary_route,
+        'strict_workflow_routes_available': list(strict_workflow_contracts.keys()),
+        'strict_workflow_contracts': strict_workflow_contracts,
+        'official_primary_evidence': primary_strict_contract.get('official_primary_evidence') if isinstance(primary_strict_contract, dict) else {},
+        'local_supplemental_evidence': primary_strict_contract.get('local_supplemental_evidence') if isinstance(primary_strict_contract, dict) else {},
+        'fallback_used': primary_strict_contract.get('fallback_used') if isinstance(primary_strict_contract, dict) else [],
+        'blocked_items': primary_strict_contract.get('blocked_items') if isinstance(primary_strict_contract, dict) else [],
+        'conflicts': primary_strict_contract.get('conflicts') if isinstance(primary_strict_contract, dict) else [],
         'vedastro_official_full_snapshot': vedastro_official_full_snapshot,
         'vedastro_overview': vedastro_overview,
         'guided_topics': guided_topics,
         'capability_evidence_pool': capability_evidence_pool,
         'technique_audit_table': technique_audit_table,
+        'career_narrative': career_narrative,
         'relationship_narrative': relationship_narrative,
+        'finance_narrative': finance_narrative,
         'vimsopaka_semantic_summary': vimsopaka_semantic_summary,
     }
 
@@ -1386,6 +1728,8 @@ def _attach_vedastro_main_entry_overview(report, args):
     combined_events = []
     domain_statuses = {}
     top_events = {}
+    daily_windows_by_domain = {}
+    top_daily_window_by_domain = {}
     failure_reason = None
     availability = True
 
@@ -1404,6 +1748,12 @@ def _attach_vedastro_main_entry_overview(report, args):
         top_event = domain_report.get('top_event')
         if isinstance(top_event, dict):
             top_events[domain] = top_event
+        daily_windows = domain_report.get('daily_windows')
+        if isinstance(daily_windows, list):
+            daily_windows_by_domain[domain] = daily_windows
+        top_daily_window = domain_report.get('top_daily_window')
+        if isinstance(top_daily_window, dict):
+            top_daily_window_by_domain[domain] = top_daily_window
 
     primary_status = next(
         (
@@ -1447,6 +1797,18 @@ def _attach_vedastro_main_entry_overview(report, args):
         'event_count': len(combined_events),
         'top_event': top_events.get('marriage') or next(iter(top_events.values()), None),
         'top_events_by_domain': top_events,
+        'daily_windows': [
+            item
+            for domain in ('career', 'marriage', 'wealth')
+            for item in (daily_windows_by_domain.get(domain) or [])
+            if isinstance(item, dict)
+        ],
+        'top_daily_window': (
+            top_daily_window_by_domain.get('marriage')
+            or next(iter(top_daily_window_by_domain.values()), None)
+        ),
+        'daily_windows_by_domain': daily_windows_by_domain,
+        'top_daily_window_by_domain': top_daily_window_by_domain,
         'evidence_ledger': combined_events,
         'source_metadata': source_metadata,
         'reason': failure_reason,
@@ -1500,7 +1862,7 @@ def _attach_vedastro_official_full_snapshot(report, args):
     return report
 
 
-def _load_relationship_strict_collector():
+def _load_strict_evidence_collector():
     try:
         from mcp_server import _collect_strict_evidence as collector
         return collector
@@ -1988,6 +2350,12 @@ def _past_event_verify(chart: Dict, asc_idx: int, args) -> Dict:
 # ============================================================================
 def cmd_varga(args):
     if not HAS_SWE: return {"error": "swisseph未安装"}
+    try:
+        sys.path.insert(0, SCRIPT_DIR)
+        from varga import calc_varga
+    except ImportError as e:
+        return {"error": f"varga模块导入失败: {e}"}
+
     swe.set_ephe_path('')
     hd = _birth_hour_decimal(args.hour, args.minute, _arg_second(args)) - args.tz
     jd = swe.julday(args.year, args.month, args.day, hd)
@@ -2001,31 +2369,18 @@ def cmd_varga(args):
     if 'Rahu' in natal: natal['Ketu'] = (natal['Rahu'] + 180) % 360
     asc_lon, _ = swe.houses(jd, args.lat, args.lon, b'A'); asc_deg = (asc_lon[0] - ayanamsa) % 360  # 恒星黄道
 
-    def navamsa(lon):
-        si = int(lon / 30); d = lon - si * 30; ni = int(d / (30/9))
-        # BPHS: movable(0,3,6,9)=same, fixed(1,4,7,10)=+4, dual(2,5,8,11)=+8
-        if si % 3 == 0:  # movable: 0,3,6,9
-            start = si
-        elif si % 3 == 1:  # fixed: 1,4,7,10
-            start = (si + 4) % 12
-        else:  # dual: 2,5,8,11
-            start = (si + 8) % 12
-        return SIGNS[(start + ni) % 12]
-
-    def dasamsa(lon):
-        si = int(lon / 30); d = lon - si * 30; di = int(d / 3)
-        # BPHS: odd signs(0,2,4,6,8,10)=same, even signs(1,3,5,7,9,11)=+8 (9th)
-        start = si if si % 2 == 0 else (si + 8) % 12
-        return SIGNS[(start + di) % 12]
+    def short_varga_row(lon, div):
+        row = calc_varga(lon, div)
+        return {"sign": row["sign"], "sign_cn": SIGNS_CN[row["sign"]]}
 
     result = {"birth_info": f"{args.year}-{args.month:02d}-{args.day:02d} {_birth_time_string(args.hour, args.minute, _arg_second(args))}", "divisional_charts": {}}
     if args.d9 or args.all:
-        d9 = {"ascendant": navamsa(asc_deg)}
-        for p, l in natal.items(): d9[p] = {"sign": navamsa(l), "sign_cn": SIGNS_CN[navamsa(l)]}
+        d9 = {"ascendant": calc_varga(asc_deg, 9)["sign"]}
+        for p, l in natal.items(): d9[p] = short_varga_row(l, 9)
         result["divisional_charts"]["D9_Navamsa"] = d9
     if args.d10 or args.all:
-        d10 = {"ascendant": dasamsa(asc_deg)}
-        for p, l in natal.items(): d10[p] = {"sign": dasamsa(l), "sign_cn": SIGNS_CN[dasamsa(l)]}
+        d10 = {"ascendant": calc_varga(asc_deg, 10)["sign"]}
+        for p, l in natal.items(): d10[p] = short_varga_row(l, 10)
         result["divisional_charts"]["D10_Dasamsa"] = d10
     if not result["divisional_charts"]: result["note"] = "请指定 --d9, --d10 或 --all"
     return result
@@ -4166,7 +4521,9 @@ def cmd_full_reading(args):
     → 综合报告输出
     """
     import time
-    t0 = time.time()
+    t0 = time.perf_counter()
+    stage_timings = []
+    profile_stages = _full_reading_profiler_enabled(args)
 
     def _build_whole_sign_houses(asc_index, planets_data):
         """Build a compatibility house map for add-on modules.
@@ -4223,6 +4580,7 @@ def cmd_full_reading(args):
     }
 
     # ── Step 1: 核心星盘 ──
+    stage_started = time.perf_counter()
     chart, asc_idx, jd, ayanamsa = _compute_chart_from_args(args)
     if chart is None:
         return {"error": "swisseph未安装，无法计算星盘"}
@@ -4249,8 +4607,16 @@ def cmd_full_reading(args):
     for pn, pd in planets.items():
         if isinstance(pd, dict) and 'sign' in pd:
             planet_sign_indices[pn] = SIGNS.index(pd['sign']) if pd['sign'] in SIGNS else 0
+    _record_stage_timing(
+        stage_timings,
+        'core_chart_and_setup',
+        stage_started,
+        enabled=profile_stages,
+        details={'modules': ['chart', 'house_map']},
+    )
 
     # ── Step 1.5: Special Lagnas 特殊上升点 (v4.4.0) ──
+    stage_started = time.perf_counter()
     try:
         sys.path.insert(0, SCRIPT_DIR)
         from special_lagnas import SpecialLagnasCalculator
@@ -4768,8 +5134,17 @@ def cmd_full_reading(args):
         report['modules']['narayana_dasha'] = narayana_result
     except Exception as e:
         report['errors'].append(f"narayana-dasha: {e}")
+    _record_stage_timing(
+        stage_timings,
+        'dasha_and_core_varga_stack',
+        stage_started,
+        enabled=profile_stages,
+        status='error' if any(err.startswith(('special-lagnas:', 'dasha:', 'yoga:', 'varga-full:', 'vimsopaka:', 'varga-extended:', 'dispositor-chain+inter-chart:', 'tajika-yogas+sahams:', 'yogas-doshas:', 'tithi-lord:', 'pancha-pakshi:', 'rashi-tulya-navamsa:', 'marriage-counting:', 'bhrigu-pada-dasha:', 'muntha:', 'trimshamsa-d30:', 'prashna:', 'solar-return:', 'narayana-dasha:')) for err in report['errors']) else 'ok',
+        details={'through_step': '4.13'},
+    )
 
     # ── Step 5: 精确相位 ──
+    stage_started = time.perf_counter()
     try:
         from aspects import calc_all_aspects
         aspects_result = calc_all_aspects(planet_lons, asc_deg)
@@ -5185,12 +5560,17 @@ def cmd_full_reading(args):
             report['modules']['d9_navamsa_expanded'] = d9_expanded
     except Exception as e:
         report['errors'].append(f"d9-expanded: {e}")
+    _record_stage_timing(
+        stage_timings,
+        'advanced_interpretation_and_timing_layers',
+        stage_started,
+        enabled=profile_stages,
+        status='error' if any(err.startswith(('aspects:', 'jaimini:', 'nakshatra-adv:', 'nakshatra-dasha:', 'argala:', 'tajika:', 'shadbala:', 'remedies:', 'avasthas:', 'ashtakavarga:', 'validate:', 'audit:', 'actionable-context:', 'congregation:', 'vivah-saham:', 'transit-multi-ref:', 'dasa-convergence:', 'd9-expanded:')) for err in report['errors']) else 'ok',
+        details={'through_step': '19'},
+    )
 
     # ── 汇总 ──
-    elapsed = round(time.time() - t0, 2)
-    module_count = len(report['modules'])
-    error_count = len(report['errors'])
-
+    stage_started = time.perf_counter()
     # ── 生成动态引导 (Dynamic Hooks) ──
     try:
         report['dynamic_hooks'] = generate_life_stage_hooks(
@@ -5203,41 +5583,107 @@ def cmd_full_reading(args):
     except Exception as e:
         report['dynamic_hooks'] = []
         report['errors'].append(f"hook_engine: {e}")
+    _record_stage_timing(
+        stage_timings,
+        'dynamic_hooks',
+        stage_started,
+        enabled=profile_stages,
+        status='error' if any(err.startswith('hook_engine:') for err in report['errors']) else 'ok',
+    )
 
-    report['summary'] = {
-        'elapsed_seconds': elapsed,
-        'modules_computed': module_count,
-        'errors': error_count,
-        'status': 'complete' if error_count == 0 else f'{error_count} errors',
-        'next_step': '⭐ v6.1.6: full-reading 已输出 transit_multi_reference(四参考点) + dasa_convergence(五系统交叉) + yogini_dasha + ashtottari_dasha + kalachakra_dasha + d9_navamsa_expanded。AI必须使用四参考点分析Transit，Dasa预测必须标注多系统收敛等级。',
-    }
+    report['summary'] = {}
 
-    try:
-        relationship_strict_collector = _load_relationship_strict_collector()
-        report['modules']['relationship_strict_evidence'] = relationship_strict_collector('relationship', report)
-        report['modules']['relationship_strict_evidence']['user_narrative'] = _build_relationship_narrative_payload(
-            report['modules']['relationship_strict_evidence']
-        )
-    except Exception as e:
-        report['errors'].append(f"relationship-strict-evidence: {e}")
-
+    stage_started = time.perf_counter()
     try:
         _attach_vedastro_official_full_snapshot(report, args)
     except Exception as e:
         report['warnings'].append(f"vedastro-official-full-snapshot: {e}")
+    _record_stage_timing(
+        stage_timings,
+        'vedastro_official_snapshot',
+        stage_started,
+        enabled=profile_stages,
+        status='warning' if any(warn.startswith('vedastro-official-full-snapshot:') for warn in report['warnings']) else 'ok',
+    )
 
+    stage_started = time.perf_counter()
+    try:
+        strict_evidence_collector = _load_strict_evidence_collector()
+        for route in ('relationship', 'career', 'finance'):
+            module_name = STRICT_WORKFLOW_MODULE_MAP[route]
+            report['modules'][module_name] = strict_evidence_collector(route, report)
+        report['modules']['career_strict_evidence']['user_narrative'] = _build_career_narrative_payload(
+            report['modules']['career_strict_evidence']
+        )
+        report['modules']['relationship_strict_evidence']['user_narrative'] = _build_relationship_narrative_payload(
+            report['modules']['relationship_strict_evidence']
+        )
+        report['modules']['finance_strict_evidence']['user_narrative'] = _build_finance_narrative_payload(
+            report['modules']['finance_strict_evidence']
+        )
+    except Exception as e:
+        report['errors'].append(f"strict-evidence-collector: {e}")
+    _record_stage_timing(
+        stage_timings,
+        'strict_contracts',
+        stage_started,
+        enabled=profile_stages,
+        status='error' if any(err.startswith('strict-evidence-collector:') for err in report['errors']) else 'ok',
+    )
+
+    stage_started = time.perf_counter()
     try:
         _attach_vedastro_main_entry_overview(report, args)
     except Exception as e:
         report['warnings'].append(f"vedastro-main-entry-overview: {e}")
+    _record_stage_timing(
+        stage_timings,
+        'vedastro_main_entry_overview',
+        stage_started,
+        enabled=profile_stages,
+        status='warning' if any(warn.startswith('vedastro-main-entry-overview:') for warn in report['warnings']) else 'ok',
+    )
 
+    stage_started = time.perf_counter()
     try:
         report['modules']['guided_topics'] = build_guided_topics(report)
     except Exception as e:
         report['warnings'].append(f"guided-topics: {e}")
         report['modules']['guided_topics'] = []
+    _record_stage_timing(
+        stage_timings,
+        'guided_topics',
+        stage_started,
+        enabled=profile_stages,
+        status='warning' if any(warn.startswith('guided-topics:') for warn in report['warnings']) else 'ok',
+    )
 
+    stage_started = time.perf_counter()
     report['ai_prompt_pack'] = _build_ai_prompt_pack(report)
+    _record_stage_timing(
+        stage_timings,
+        'ai_prompt_pack',
+        stage_started,
+        enabled=profile_stages,
+    )
+
+    elapsed = round(time.perf_counter() - t0, 4)
+    module_count = len(report['modules'])
+    error_count = len(report['errors'])
+    slowest_stages = sorted(stage_timings, key=lambda item: item.get('elapsed_seconds', 0), reverse=True)[:5]
+    unified_stage_contract = _build_unified_stage_contract(stage_timings)
+    report['summary'] = {
+        'elapsed_seconds': elapsed,
+        'modules_computed': module_count,
+        'errors': error_count,
+        'status': 'complete' if error_count == 0 else f'{error_count} errors',
+        'stage_timing_enabled': True,
+        'stage_timings': stage_timings,
+        'slowest_stages': slowest_stages,
+        'guided_topics': report['modules'].get('guided_topics', []),
+        **unified_stage_contract,
+        'next_step': '⭐ v6.1.6: full-reading 已输出 transit_multi_reference(四参考点) + dasa_convergence(五系统交叉) + yogini_dasha + ashtottari_dasha + kalachakra_dasha + d9_navamsa_expanded。AI必须使用四参考点分析Transit，Dasa预测必须标注多系统收敛等级。',
+    }
 
     return report
 
@@ -5549,6 +5995,7 @@ def main():
     p.add_argument('--today', default=None, help='Dasha/Sandhi参考日期 YYYY-MM-DD（默认今天）')
     p.add_argument('--transit-date', default=None, help='Transit真实过境参考日期 YYYY-MM-DD（默认跟随--today或今天）')
     p.add_argument('--target-year', type=int, default=None, help='太阳返照盘目标年份（默认不计算 Varshaphala）')
+    p.add_argument('--profile-stages', action='store_true', help='输出 full-reading 粗粒度阶段耗时，并在 summary 中附带 stage timings')
 
     # 23. prashna (v3.9新增)
     p = sub.add_parser('prashna', help='Prashna问事占星（提问时刻星盘+Arudha+Sphuta+Sahams）')

@@ -60,7 +60,7 @@ import { initTooltip, bindTerms, setGlossaryTerminologyMode } from './glossary.j
 import { initAIChat, aiChatSetChartData, openAIChatWithPrompt } from './ai-chat.js';
 import { initAuth } from './auth.js';
 import { initSubscription } from './subscription.js';
-import { renderRectificationTab, initRectification } from './rectification.js';
+import { renderRectificationTab, initRectification, setRectificationRecommendedEvents } from './rectification.js';
 import { t, getLang, initI18N, onLangChange, signName, planetName, statusName, houseLabel, houseAreaName, yearsLabel } from './i18n.js';
 import { escapeHtml, escapeAttr, safeNumber } from './security.js';
 import { renderSkillCoverage } from './skill-map.js';
@@ -473,6 +473,35 @@ async function computeChartForBirth(birth) {
   return fallbackChart;
 }
 
+async function computeConsultationForBirth(birth, options = {}) {
+  const entryMode = options.entryMode || 'direct_chart';
+  const payload = {
+    ...birth,
+    entry_mode: entryMode,
+    question: options.question || '',
+    theme: options.theme || ['career', 'marriage', 'wealth'],
+  };
+  if (Array.isArray(options.events)) payload.events = options.events;
+  try {
+    const workflow = await window.JyotishAPI?.computeConsultationWorkflow?.(payload);
+    const chart = workflow?.chart;
+    if (workflow?.success && chart?.success) {
+      chart._consultationWorkflow = workflow;
+      return chart;
+    }
+  } catch (error) {
+    console.warn('[Jyotish] consultation workflow unavailable, fallback to chart:', error?.message || error);
+  }
+  const fallbackChart = await computeChartForBirth(birth);
+  fallbackChart._consultationWorkflow = {
+    success: false,
+    endpoint: 'consultation_workflow',
+    entry_mode: entryMode,
+    boundary: 'consultation_workflow_blocked_fallback_to_local_chart',
+  };
+  return fallbackChart;
+}
+
 function buildChartComputeRecoveryMessage(error) {
   const message = error?.message || error || '本地 API 未连接';
   return `计算失败：${message}。请到 Trust Center 运行健康检查；如本地 API 未连接，请按 README 的普通用户启动路径启动网页服务和本地 API 服务后重试。`;
@@ -514,7 +543,10 @@ function setupForm() {
     setChartComputeStatus('正在计算星盘...', 'warn');
     try {
       // v6.9.4: 计算层 — 优先本地 API 服务, 回退JS引擎
-      chartData = await computeChartForBirth({ year, month, day, hour, minute, second, lat, lon, tz });
+      chartData = await computeConsultationForBirth(
+        { year, month, day, hour, minute, second, lat, lon, tz },
+        { entryMode: 'direct_chart' },
+      );
     } catch (e) {
       console.error('[Jyotish] 计算失败:', e);
       setChartComputeStatus(buildChartComputeRecoveryMessage(e), 'error');
@@ -653,7 +685,7 @@ async function applyRectifiedBirth(birth) {
   if (!birth) return;
   try {
     fillBirthFormFromData(birth);
-    chartData = await computeChartForBirth(birth);
+    chartData = await computeConsultationForBirth(birth, { entryMode: 'rectification' });
     window.__jyotishBirth = birth;
     renderAll();
     showPage('chart');
@@ -713,6 +745,7 @@ function renderAll() {
         if (rectOverlay) rectOverlay.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
         initRectification();
+        setRectificationRecommendedEvents(getRectificationRecommendedEvents(chartData));
         renderRectificationTab($('rect-content'));
       });
       $('rect-panel-close').addEventListener('click', () => {
@@ -829,6 +862,7 @@ function renderAll() {
   renderSpecialLagnaReport(arudha, ascendant, birth_info, chartData.special_lagnas);
   renderCompleteReadingTab({ ascendant, moonP, allYogas, dashaData, extraDasas, chartData, validation, audit });
   renderAIPromptPackPanel(chartData);
+  renderWorkflowSummaryPanel(chartData);
   renderProvenancePanel({
     chartData,
     panchanga: ty,
@@ -856,6 +890,109 @@ function renderAll() {
   setTimeout(() => bindTerms(document.querySelector('#page-chart')), 800);
 }
 
+function getConsultationWorkflow(chartRecord) {
+  return chartRecord?._consultationWorkflow && typeof chartRecord._consultationWorkflow === 'object'
+    ? chartRecord._consultationWorkflow
+    : {};
+}
+
+function getRuntimePlanner(chartRecord) {
+  const workflow = getConsultationWorkflow(chartRecord);
+  return workflow?.runtime_planner && typeof workflow.runtime_planner === 'object'
+    ? workflow.runtime_planner
+    : {};
+}
+
+function formatWorkflowEntryMode(value) {
+  if (value === 'rectification') return '生时校正';
+  if (value === 'direct_chart') return '直接排盘';
+  return value || '-';
+}
+
+function formatWorkflowRouteLabel(route = {}) {
+  const mapping = {
+    career: '事业',
+    relationship: '婚恋',
+    finance: '财富',
+    timing: '时间应期',
+    general: '综合',
+  };
+  return mapping[route?.question_type] || route?.question_type || '-';
+}
+
+function renderRuntimePlannerPills(runtimePlanner = {}) {
+  const syncSteps = Array.isArray(runtimePlanner.sync_steps) ? runtimePlanner.sync_steps : [];
+  const asyncCandidates = Array.isArray(runtimePlanner.async_candidates) ? runtimePlanner.async_candidates : [];
+  const sourcePriority = runtimePlanner.source_priority?.priority || [];
+  return `
+    <div class="workflow-summary-grid">
+      <div class="workflow-summary-pill">
+        <strong>入口</strong>
+        <span>${escapeHtml(formatWorkflowEntryMode(runtimePlanner.entry_mode))}</span>
+      </div>
+      <div class="workflow-summary-pill">
+        <strong>主问题路由</strong>
+        <span>${escapeHtml(formatWorkflowRouteLabel(runtimePlanner.route))}</span>
+      </div>
+      <div class="workflow-summary-pill">
+        <strong>证据优先级</strong>
+        <span>${escapeHtml(sourcePriority.length ? 'VedAstro official -> local supplemental -> fallback' : 'fallback')}</span>
+      </div>
+      <div class="workflow-summary-pill">
+        <strong>同步主链</strong>
+        <span>${escapeHtml(syncSteps.join(' -> ') || '-')}</span>
+      </div>
+      <div class="workflow-summary-pill">
+        <strong>异步候选</strong>
+        <span>${escapeHtml(asyncCandidates.join(' / ') || '-')}</span>
+      </div>
+      <div class="workflow-summary-pill">
+        <strong>Planner</strong>
+        <span>${escapeHtml(runtimePlanner.planner_name || 'UnifiedConsultationRuntimePlanner')}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderWorkflowSummaryCard(workflow = {}) {
+  const runtimePlanner = workflow?.runtime_planner || {};
+  const unified = workflow?.unified_orchestrator || {};
+  const sourcePriority = workflow?.source_priority?.priority || unified?.source_priority?.priority || [];
+  const compactSource = sourcePriority.length
+    ? sourcePriority.join(' -> ')
+    : 'VedAstro official / local supplemental / fallback';
+  return `
+    <section class="workflow-summary-card">
+      <div class="provenance-head">
+        <span>本次解读工作流</span>
+        <strong>${escapeHtml(formatWorkflowRouteLabel(runtimePlanner.route || workflow?.routing || {}))}</strong>
+      </div>
+      <p class="workflow-summary-copy">${escapeHtml(`入口 ${formatWorkflowEntryMode(workflow?.entry_mode || runtimePlanner.entry_mode)}；主链优先读取 VedAstro official 证据，再由 local supplemental 补充，最后才 fallback。`)}</p>
+      ${renderRuntimePlannerPills({
+        ...runtimePlanner,
+        entry_mode: runtimePlanner.entry_mode || workflow?.entry_mode,
+        route: runtimePlanner.route || workflow?.routing || {},
+        source_priority: runtimePlanner.source_priority || workflow?.source_priority || unified?.source_priority || {},
+      })}
+      <div class="workflow-summary-pill" style="margin-top:8px">
+        <strong>source_priority</strong>
+        <span>${escapeHtml(compactSource)}</span>
+      </div>
+    </section>
+  `;
+}
+
+function renderWorkflowSummaryPanel(chartRecord) {
+  const host = $('workflow-summary-panel');
+  if (!host) return;
+  const workflow = getConsultationWorkflow(chartRecord);
+  if (!Object.keys(workflow).length) {
+    host.innerHTML = '';
+    return;
+  }
+  host.innerHTML = renderWorkflowSummaryCard(workflow);
+}
+
 // ============================================================================
 // 完整解盘 Tab：承接 Skill 全能力路线
 // ============================================================================
@@ -864,6 +1001,7 @@ function renderCompleteReadingTab({ ascendant, moonP, allYogas, dashaData, extra
   const apiDashaCount = chartData?._extended?.dasha_count || chartData?.available_dashas?.length || 0;
   const dashaCount = Math.max(apiDashaCount, extraDashaCount, dashaData ? 1 : 0);
   renderGuidedTopicDiscovery(chartData);
+  renderCareerQuickQuestions(chartData);
   renderSkillCoverage($('skill-coverage-section'), {
     ascendant: ascendant?.sign ? `${ascendant.sign} · ${signName(ascendant.sign)}` : '-',
     moonNakshatra: formatMoonNakshatra(moonP) || '-',
@@ -874,6 +1012,54 @@ function renderCompleteReadingTab({ ascendant, moonP, allYogas, dashaData, extra
   });
   const mevg = buildMEVGAudit({ ascendant, moonP, allYogas, dashaData, chartData, validation, audit });
   renderMEVGAudit($('mevg-audit-section'), mevg);
+}
+
+function getRectificationRecommendedEvents(chartRecord) {
+  const workflow = getConsultationWorkflow(chartRecord);
+  const rectification = workflow?.rectification || {};
+  const recommended = rectification?.summary?.recommended_events;
+  return Array.isArray(recommended) ? recommended : [];
+}
+
+function renderCareerQuickQuestions(chartRecord) {
+  const host = $('skill-coverage-section');
+  if (!host) return;
+  const topic = (((chartRecord?.modules || {}).guided_topics) || []).find(row => row?.id === 'career_direction');
+  const defaultQuestions = [
+    '我现在适合换方向还是继续深耕？',
+    '2026 年事业吉利在哪里，不利在哪里？',
+    '哪些月份适合推进项目、发布产品或谈合作？',
+  ];
+  const questions = Array.isArray(topic?.suggested_questions) && topic.suggested_questions.length
+    ? topic.suggested_questions.slice(0, 3)
+    : defaultQuestions;
+  const card = document.createElement('section');
+  card.className = 'career-quick-questions guided-topic-discovery';
+  card.innerHTML = `
+    <div class="guided-topic-discovery-head">
+      <div>
+        <span>事业互动问答</span>
+        <strong>事业先看这几个</strong>
+      </div>
+      <small>不需要用户自己组织问题，点一下就进入互动问答。</small>
+    </div>
+    <div class="career-quick-question-list guided-topic-question-list">
+      ${questions.map(question => `
+        <button type="button" class="career-quick-question guided-topic-question" data-career-quick-question="${escapeAttr(question)}">
+          ${escapeHtml(question)}
+        </button>
+      `).join('')}
+    </div>
+  `;
+  const old = host.querySelector('.career-quick-questions');
+  if (old) old.remove();
+  host.prepend(card);
+  card.querySelectorAll('[data-career-quick-question]').forEach(button => {
+    button.addEventListener('click', () => {
+      const question = button.getAttribute('data-career-quick-question') || '';
+      openAIChatWithPrompt(question);
+    });
+  });
 }
 
 function renderGuidedTopicDiscovery(chartData) {
@@ -906,7 +1092,9 @@ function renderGuidedTopicDiscovery(chartData) {
   host.querySelectorAll('[data-guided-topic-question]').forEach(button => {
     button.addEventListener('click', () => {
       const question = button.getAttribute('data-guided-topic-question') || '';
-      openAIChatWithPrompt(question);
+      const topicId = button.getAttribute('data-guided-topic-id') || '';
+      const topic = topics.find(item => item?.id === topicId) || null;
+      openAIChatWithPrompt(question, topic);
     });
   });
 }
@@ -915,6 +1103,18 @@ function renderGuidedTopicCard(topic) {
   const evidence = Array.isArray(topic?.evidence) ? topic.evidence : [];
   const questions = Array.isArray(topic?.suggested_questions) ? topic.suggested_questions : [];
   const vedastro = topic?.vedastro || {};
+  const strictAdjudicationBundle = topic?.strict_adjudication_bundle || {};
+  const auditGate = strictAdjudicationBundle?.strict_audit_gate || topic?.strict_audit_gate || {};
+  const monthly_adjudication_summary = strictAdjudicationBundle?.monthly_adjudication_summary || topic?.monthly_adjudication_summary || {};
+  const official_day_signal_summary = strictAdjudicationBundle?.official_day_signal_summary || topic?.official_day_signal_summary || {};
+  const topOfficialDay = official_day_signal_summary?.top_day || null;
+  const primaryState = monthly_adjudication_summary?.primary_state?.value || null;
+  const manifestationMode = monthly_adjudication_summary?.manifestation_mode?.value || null;
+  const frictionSource = monthly_adjudication_summary?.friction_source?.value || null;
+  const timeConfidence = monthly_adjudication_summary?.time_confidence?.value || null;
+  const functionalGate = auditGate?.functional_benefic_malefic || {};
+  const vargaGate = auditGate?.relevant_vargas || {};
+  const dashaGate = auditGate?.vimshottari_narayana_crosscheck || {};
   const confidenceLabel = topic?.confidence === 'high'
     ? '高'
     : topic?.confidence === 'low'
@@ -944,12 +1144,57 @@ function renderGuidedTopicCard(topic) {
             <span>${escapeHtml(row?.value || '-')}</span>
           </div>
         `).join('')}
+        ${topOfficialDay ? `
+          <div class="guided-topic-evidence-row">
+            <strong>官方日期</strong>
+            <span>${escapeHtml(`${topOfficialDay.date || '-'} · ${topOfficialDay.summary || '-'} · ${topOfficialDay.confidence || '-'}`)}</span>
+          </div>
+        ` : ''}
+        ${primaryState ? `
+          <div class="guided-topic-evidence-row">
+            <strong>月度主状态</strong>
+            <span>${escapeHtml(primaryState)}</span>
+          </div>
+        ` : ''}
+        ${manifestationMode ? `
+          <div class="guided-topic-evidence-row">
+            <strong>落地形式</strong>
+            <span>${escapeHtml(manifestationMode)}</span>
+          </div>
+        ` : ''}
+        ${frictionSource ? `
+          <div class="guided-topic-evidence-row">
+            <strong>阻力来源</strong>
+            <span>${escapeHtml(frictionSource)}</span>
+          </div>
+        ` : ''}
+        ${timeConfidence ? `
+          <div class="guided-topic-evidence-row">
+            <strong>时间置信度</strong>
+            <span>${escapeHtml(timeConfidence)}</span>
+          </div>
+        ` : ''}
+      </div>
+      <div class="guided-topic-evidence">
+        <span class="guided-topic-subtitle">严谨门槛</span>
+        <div class="guided-topic-evidence-row">
+          <strong>functional</strong>
+          <span>${escapeHtml(`${functionalGate.gate || 'none'} / ${functionalGate.used ? 'used' : 'blocked'}`)}</span>
+        </div>
+        <div class="guided-topic-evidence-row">
+          <strong>vargas</strong>
+          <span>${escapeHtml((vargaGate.present_keys || []).join(' / ') || 'none')}</span>
+        </div>
+        <div class="guided-topic-evidence-row">
+          <strong>dual dasha</strong>
+          <span>${escapeHtml(`${dashaGate.gate || 'none'} / ${dashaGate.used ? 'used' : 'blocked'}`)}</span>
+        </div>
       </div>
       <div class="guided-topic-questions">
         <span class="guided-topic-subtitle">适合继续问</span>
         <div class="guided-topic-question-list">
           ${questions.slice(0, 3).map(question => `
-            <button type="button" class="guided-topic-question" data-guided-topic-question="${escapeAttr(question)}">
+            <button type="button" class="guided-topic-question" data-guided-topic-id="${escapeAttr(topic?.id || '')}" data-guided-topic-question="${escapeAttr(question)}">
               ${escapeHtml(question)}
             </button>
           `).join('')}
@@ -972,6 +1217,7 @@ function renderAIPromptPackPanel(cd) {
   const core = evidence.core || {};
   const timing = evidence.timing || {};
   const strength = evidence.strength || {};
+  const vedastroOfficial = evidence.vedastro_official_full_snapshot || {};
   const vedastroOverview = evidence.vedastro_overview || {};
   const docs = pack.retrieval_plan?.local_reference_docs || [];
   const tags = pack.retrieval_plan?.retrieval_tags || [];
@@ -1006,6 +1252,7 @@ function renderAIPromptPackPanel(cd) {
           <strong>${escapeHtml(timing.current_mahadasha || cd?.dasha?.current_md || '-')}</strong>
           <small>${escapeHtml(timing.current_antardasha ? `AD ${timing.current_antardasha}` : timing.start_date || '')}</small>
         </div>
+        ${renderVedAstroOfficialSnapshotPromptCard(vedastroOfficial)}
         ${renderVedAstroOverviewPromptCard(vedastroOverview)}
       </div>
       <div class="ai-prompt-pack-body">
@@ -1026,6 +1273,7 @@ function renderAIPromptPackPanel(cd) {
               ${ranking.slice(0, 5).map(item => `<span>${escapeHtml(item.planet || '-')} ${escapeHtml(String(item.total_rupas ?? item.rupas ?? '-'))}</span>`).join('')}
             </div>
           ` : ''}
+          ${renderStrictWorkflowContractPanel(vedastroOfficial)}
         </div>
       </div>
       <div class="ai-prompt-pack-foot">
@@ -1041,6 +1289,127 @@ function renderAIPromptPackPanel(cd) {
     </section>
   `;
   setupAIPromptPackActions(host, cd, pack);
+}
+
+function renderVedAstroOfficialSnapshotPromptCard(snapshot = {}) {
+  if (!snapshot || typeof snapshot !== 'object') return '';
+  const status = snapshot.status || 'blocked';
+  const pythonPath = snapshot.official_python_path || snapshot.primary_source || 'vedastro_official';
+  const bundleStatus = snapshot.official_bundle_status || 'blocked';
+  const chartState = snapshot.official_chart_available ? 'official chart ready' : 'official chart partial';
+  const catalogStatus = snapshot.official_full_capability_catalog_status || 'blocked';
+  const catalogSummary = snapshot.official_full_capability_catalog_summary || {};
+  const catalogHint = catalogSummary.catalog_method_count
+    ? ` · catalog=${catalogStatus} ${catalogSummary.executed_method_count || 0}/${catalogSummary.catalog_method_count}`
+    : '';
+  const sectionHint = Array.isArray(snapshot.official_primary_sections_ok)
+    ? snapshot.official_primary_sections_ok.slice(0, 4).join(', ')
+    : '';
+  const contractRoutes = Array.isArray(snapshot.strict_workflow_routes_available)
+    ? snapshot.strict_workflow_routes_available
+    : [];
+  const primaryRoute = snapshot.strict_workflow_primary_route || contractRoutes[0] || '-';
+  const contractHint = contractRoutes.length
+    ? ` · contract=${primaryRoute} [${contractRoutes.join('/')}]`
+    : '';
+  return `
+    <div class="ai-prompt-pack-card">
+      <span>VedAstro Official Snapshot</span>
+      <strong>${escapeHtml(status)}</strong>
+      <small>${escapeHtml(`${pythonPath} · bundle=${bundleStatus} · ${chartState}${catalogHint}${contractHint}${sectionHint ? ` · ${sectionHint}` : ''}`)}</small>
+    </div>
+  `;
+}
+
+function renderStrictWorkflowContractPanel(snapshot = {}) {
+  if (!snapshot || typeof snapshot !== 'object') return '';
+  const contracts = snapshot.strict_workflow_contracts;
+  if (!contracts || typeof contracts !== 'object' || !Object.keys(contracts).length) return '';
+  const primaryRoute = snapshot.strict_workflow_primary_route || Object.keys(contracts)[0];
+  return `
+    <div class="ai-prompt-pack-contracts">
+      <h4>Official-first Strict Contract</h4>
+      <div class="ai-prompt-pack-contract-list">
+        ${Object.entries(contracts).map(([route, contract]) => renderStrictWorkflowContractCard(route, contract, route === primaryRoute)).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderStrictWorkflowContractCard(route, contract = {}, isPrimary = false) {
+  const official = contract.official_primary_evidence || {};
+  const local = contract.local_supplemental_evidence || {};
+  const adjudicationStages = contract.adjudication_stages || {};
+  const multiReferenceSummary = contract.multi_reference_reading_summary || {};
+  const monthlyAdjudicationSummary = contract.monthly_adjudication_summary || {};
+  const techniqueAuditSummary = contract.technique_audit_summary || {};
+  const promiseStatus = adjudicationStages.promise?.status || 'missing';
+  const activationStatus = adjudicationStages.activation?.status || 'missing';
+  const manifestationStatus = adjudicationStages.manifestation?.status || 'missing';
+  const labelValue = adjudicationStages.label?.value || contract.dominant_label || '—';
+  const monthlyPrimaryState = monthlyAdjudicationSummary.primary_state?.value || '—';
+  const monthlyManifestation = monthlyAdjudicationSummary.manifestation_mode?.value || '—';
+  const monthlyFriction = monthlyAdjudicationSummary.friction_source?.value || '—';
+  const monthlyTiming = monthlyAdjudicationSummary.time_confidence?.value || '—';
+  const rootFrameKeys = Object.keys(multiReferenceSummary.root_frame || {});
+  const modifierFrameKeys = Object.keys(multiReferenceSummary.modifier_frame || {});
+  const auditKeys = Object.keys(techniqueAuditSummary || {});
+  const auditFunctional = techniqueAuditSummary.functional_benefic_malefic || {};
+  const auditVarga = techniqueAuditSummary.relevant_vargas || {};
+  const auditDasha = techniqueAuditSummary.vimshottari_narayana_crosscheck || {};
+  const officialStatuses = Object.entries(official)
+    .map(([key, value]) => `${key}:${value?.status || 'blocked'}`)
+    .join(' · ');
+  const localStatuses = Object.entries(local)
+    .map(([key, value]) => `${key}:${value?.present ? 'present' : 'missing'}`)
+    .join(' · ');
+  const fallback = Array.isArray(contract.fallback_used) && contract.fallback_used.length
+    ? contract.fallback_used.join(' / ')
+    : 'none';
+  const blocked = Array.isArray(contract.blocked_items) && contract.blocked_items.length
+    ? contract.blocked_items.join(' / ')
+    : 'none';
+  const conflicts = Array.isArray(contract.conflicts)
+    ? contract.conflicts.map(item => item?.type).filter(Boolean)
+    : [];
+  const mainConflicts = Array.isArray(contract.main_conflicts)
+    ? contract.main_conflicts.map(item => item?.type).filter(Boolean)
+    : [];
+  return `
+    <article class="ai-prompt-pack-contract-card${isPrimary ? ' is-primary' : ''}">
+      <div class="ai-prompt-pack-contract-head">
+        <strong>${escapeHtml(route)}</strong>
+        <span>${escapeHtml(isPrimary ? 'primary route' : (contract.confidence_cap || 'supplemental route'))}</span>
+      </div>
+      <div class="ai-prompt-pack-contract-grid">
+        <span>official: ${escapeHtml(officialStatuses || '—')}</span>
+        <span>local: ${escapeHtml(localStatuses || '—')}</span>
+        <span>fallback: ${escapeHtml(fallback)}</span>
+        <span>blocked: ${escapeHtml(blocked)}</span>
+        <span>conflicts: ${escapeHtml(conflicts.length ? conflicts.join(' / ') : 'none')}</span>
+      </div>
+      <div class="ai-prompt-pack-contract-grid">
+        <span>Top-reader adjudication: promise=${escapeHtml(promiseStatus)} · activation=${escapeHtml(activationStatus)} · manifestation=${escapeHtml(manifestationStatus)}</span>
+        <span>label: ${escapeHtml(labelValue)}</span>
+        <span>monthly_adjudication_summary.primary_state: ${escapeHtml(monthlyPrimaryState)}</span>
+        <span>monthly_adjudication_summary.manifestation_mode: ${escapeHtml(monthlyManifestation)}</span>
+        <span>monthly_adjudication_summary.friction_source: ${escapeHtml(monthlyFriction)}</span>
+        <span>monthly_adjudication_summary.time_confidence: ${escapeHtml(monthlyTiming)}</span>
+      </div>
+      <div class="ai-prompt-pack-contract-grid">
+        <span>technique_audit_summary: ${escapeHtml(auditKeys.length ? auditKeys.join(' / ') : 'none')}</span>
+        <span>functional gate: ${escapeHtml(`${auditFunctional.gate || 'none'} / ${auditFunctional.used ? 'used' : 'blocked'}`)}</span>
+        <span>varga gate: ${escapeHtml(`${auditVarga.gate || 'none'} / ${(auditVarga.present_keys || []).join(' / ') || 'none'}`)}</span>
+        <span>dual dasha gate: ${escapeHtml(`${auditDasha.gate || 'none'} / ${auditDasha.used ? 'used' : 'blocked'}`)}</span>
+      </div>
+      <div class="ai-prompt-pack-contract-grid">
+        <span>multi_reference_reading_summary.root_frame: ${escapeHtml(rootFrameKeys.length ? rootFrameKeys.join(' / ') : 'none')}</span>
+        <span>multi_reference_reading_summary.modifier_frame: ${escapeHtml(modifierFrameKeys.length ? modifierFrameKeys.join(' / ') : 'none')}</span>
+        <span>main_conflicts: ${escapeHtml(mainConflicts.length ? mainConflicts.join(' / ') : 'none')}</span>
+      </div>
+      <small>${escapeHtml(contract.reason || '')}</small>
+    </article>
+  `;
 }
 
 function renderVedAstroOverviewPromptCard(overview = {}) {
@@ -1608,9 +1977,11 @@ function renderProvenancePanel({ chartData, panchanga, provenance, validation, a
     ['下一步 P1', '星历抽象', '评估 SwissEph、VedAstro、Xalen 等底座替换边界，避免算法假切换'],
     ['守门检查', 'Packaging preflight', '运行 scripts/desktop_packaging_preflight.py 检查 manifest、service worker、loopback API 与 Trust Center'],
   ];
+  const workflowProvenance = renderWorkflowProvenancePanel(chartData);
 
   container.innerHTML = `
     <div class="provenance-grid">
+      ${workflowProvenance}
       <section class="provenance-card provenance-card-wide">
         <div class="provenance-head">
           <span>Calculation Provenance</span>
@@ -1761,6 +2132,49 @@ function renderProvenancePanel({ chartData, panchanga, provenance, validation, a
     </div>
   `;
   bindProvenanceActions();
+}
+
+function renderWorkflowProvenancePanel(chartRecord) {
+  const workflow = getConsultationWorkflow(chartRecord);
+  const runtimePlanner = getRuntimePlanner(chartRecord);
+  if (!Object.keys(workflow).length && !Object.keys(runtimePlanner).length) return '';
+  const route = runtimePlanner.route || workflow.routing || {};
+  const unified = workflow.unified_orchestrator || {};
+  const sourcePriority = workflow.source_priority || unified.source_priority || runtimePlanner.source_priority || {};
+  const focusTechniques = Array.isArray(route.focus_techniques) ? route.focus_techniques : [];
+  const syncSteps = Array.isArray(runtimePlanner.sync_steps) ? runtimePlanner.sync_steps : [];
+  const asyncCandidates = Array.isArray(runtimePlanner.async_candidates) ? runtimePlanner.async_candidates : [];
+  return `
+    <section class="provenance-card provenance-card-wide workflow-provenance-panel">
+      <div class="provenance-head">
+        <span>Workflow Provenance</span>
+        <strong>${escapeHtml(runtimePlanner.planner_name || 'UnifiedConsultationRuntimePlanner')}</strong>
+      </div>
+      <div class="workflow-provenance-list">
+        <div class="provenance-list-row">
+          <span>unified_orchestrator</span>
+          <strong>${escapeHtml(unified.name || 'UnifiedConsultationOrchestrator')}</strong>
+          <small>${escapeHtml(`${unified.surface || runtimePlanner.surface || '-'} · ${formatWorkflowEntryMode(unified.entry_mode || workflow.entry_mode || runtimePlanner.entry_mode)}`)}</small>
+        </div>
+        <div class="provenance-list-row">
+          <span>routing.focus_techniques</span>
+          <strong>${escapeHtml(formatWorkflowRouteLabel(route))}</strong>
+          <small>${escapeHtml(focusTechniques.join(' / ') || '-')}</small>
+        </div>
+        <div class="provenance-list-row">
+          <span>source_priority</span>
+          <strong>${escapeHtml(sourcePriority.mode || 'vedastro_official_snapshot_first')}</strong>
+          <small>${escapeHtml((sourcePriority.priority || []).join(' -> ') || 'VedAstro official -> local supplemental -> fallback')}</small>
+        </div>
+        <div class="provenance-list-row">
+          <span>runtime planner</span>
+          <strong>${escapeHtml(syncSteps.join(' -> ') || '-')}</strong>
+          <small>${escapeHtml(`async: ${asyncCandidates.join(' / ') || 'none'}`)}</small>
+          <code>${escapeHtml(runtimePlanner.boundary || workflow.boundary || '')}</code>
+        </div>
+      </div>
+    </section>
+  `;
 }
 
 function renderKV(label, value) {
@@ -7633,6 +8047,14 @@ function buildExportExtras(sourceChart) {
     || sourceChart?.relationship_narrative
     || sourceChart?.modules?.relationship_strict_evidence?.user_narrative
     || null;
+  const careerNarrative = sourceChart?.ai_prompt_pack?.evidence_snapshot?.career_narrative
+    || sourceChart?.career_narrative
+    || sourceChart?.modules?.career_strict_evidence?.user_narrative
+    || null;
+  const financeNarrative = sourceChart?.ai_prompt_pack?.evidence_snapshot?.finance_narrative
+    || sourceChart?.finance_narrative
+    || sourceChart?.modules?.finance_strict_evidence?.user_narrative
+    || null;
   const vimsopakaSemanticSummary = sourceChart?.ai_prompt_pack?.evidence_snapshot?.vimsopaka_semantic_summary
     || sourceChart?.vimsopaka_semantic_summary
     || null;
@@ -7652,6 +8074,8 @@ function buildExportExtras(sourceChart) {
     shadbala: sb, ashtakavarga: _buildAVModule(av),
     panchanga, validation, audit, actionableContext,
     relationship_narrative: relationshipNarrative,
+    career_narrative: careerNarrative,
+    finance_narrative: financeNarrative,
     vimsopaka_semantic_summary: vimsopakaSemanticSummary,
     functional_benefic_malefic: functionalBeneficMalefic,
     vedastro_overview: vedastroOverview,

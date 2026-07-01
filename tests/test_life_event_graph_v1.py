@@ -262,3 +262,34 @@ def test_life_event_graph_surfaces_main_entry_overview_boundary_node() -> None:
         "reference_date": "2026-06-29",
         "source": "vedastro_service_adapter_candidate",
     } in graph["event_nodes"]
+
+
+def test_life_event_graph_surfaces_ranked_official_day_window_nodes() -> None:
+    strict = {
+        "event_judgement": {"event_family": "career", "verdict": "moderate_probability_window", "score": 74},
+        "present_evidence": {
+            "external_activation": {
+                "level": "moderate",
+                "source": "vedastro_service_adapter_candidate",
+                "daily_windows": [
+                    {
+                        "date": "2026-07-18",
+                        "domain": "career",
+                        "score": 5,
+                        "confidence": "medium_high",
+                        "event_count": 2,
+                        "signal_families": ["career_trigger"],
+                        "event_ids": ["GocharJupiterAspect10th", "CareerExpansionWindow"],
+                        "top_signal_label": "Career expansion window",
+                    }
+                ],
+            }
+        },
+        "confidence_cap": "medium",
+        "missing_evidence": [],
+        "blocked": False,
+    }
+
+    graph = _build_life_event_graph("career", strict)
+
+    assert any(node["kind"] == "official_day_window" and node["date"] == "2026-07-18" for node in graph["event_nodes"])

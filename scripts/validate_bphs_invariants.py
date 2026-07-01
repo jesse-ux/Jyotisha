@@ -14,6 +14,11 @@ BPHS 分盘与 Ashtakavarga 独立验证脚本
 
 import sys
 import json
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
          'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -24,52 +29,12 @@ def sign_idx(name): return SIGNS.index(name) if name in SIGNS else -1
 # =============================================================================
 # 1. Navamsa (D9) 验证 - BPHS Chapter 6
 # =============================================================================
-# BPHS 标准：
+# 本仓采用的 JHora/BPHS Navamsa 口径：
 # - Movable signs (白羊0, 巨蟹3, 天秤6, 摩羯9): 从本星座开始
-# - Fixed signs (金牛1, 狮子4, 天蝎7, 水瓶10): 从第5星座开始 (+4)
-# - Dual signs (双子2, 处女5, 射手8, 双鱼11): 从第9星座开始 (+8)
+# - Fixed signs (金牛1, 狮子4, 天蝎7, 水瓶10): 从第9星座开始 (+8)
+# - Dual signs (双子2, 处女5, 射手8, 双鱼11): 从第5星座开始 (+4)
 # 每份 = 30/9 = 3.333... 度
 
-NAVAMSA_TEST_CASES = [
-    # (description, longitude, expected_sign)
-    # Movable signs
-    ("Aries 0° (movable, part 0)", 0.0, "Aries"),
-    ("Aries 3.33° (movable, part 1)", 3.3333, "Taurus"),
-    ("Aries 10° (movable, part 3)", 10.0, "Cancer"),
-    ("Aries 16.67° (movable, part 5)", 16.6667, "Virgo"),
-    ("Aries 23.33° (movable, part 7)", 23.3333, "Scorpio"),
-    ("Aries 28° (movable, part 8)", 28.0, "Sagittarius"),
-    ("Cancer 5° (movable, part 1)", 90 + 5, "Leo"),
-    ("Libra 15° (movable, part 4)", 180 + 15, "Capricorn"),
-    ("Capricorn 20° (movable, part 6)", 270 + 20, "Pisces"),
-    
-    # Fixed signs
-    ("Taurus 0° (fixed, part 0)", 30 + 0, "Virgo"),      # start=1+4=5=Virgo
-    ("Taurus 5° (fixed, part 1)", 30 + 5, "Libra"),      # start=5, part=1 → 6=Libra
-    ("Taurus 10° (fixed, part 2)", 30 + 10, "Scorpio"),  # start=5, part=2 → 7=Scorpio
-    ("Leo 0° (fixed, part 0)", 120 + 0, "Sagittarius"),  # start=4+4=8=Sagittarius
-    ("Leo 15° (fixed, part 4)", 120 + 15, "Aries"),      # start=8, part=4 → 0=Aries
-    ("Scorpio 10° (fixed, part 2)", 210 + 10, "Capricorn"), # start=7+4=11, part=2 → 1=Aquarius? wait
-    # Let me recalculate: Scorpio=7, start=7+4=11=Aquarius, part=int(10/3.333)=3, result=(11+3)%12=2=Gemini
-    # Hmm wait, 10/3.333 = 3.0, so part=3. (11+3)%12=2=Gemini. But my test case says part 2. Let me fix.
-    ("Scorpio 6° (fixed, part 1)", 210 + 6, "Pisces"),    # start=11, part=1 → 0=Aries... wait
-    # 6/3.333 = 1.8, int=1. (11+1)%12=0=Aries. Let me recalculate.
-    # Actually let me be more careful.
-    ("Aquarius 5° (fixed, part 1)", 300 + 5, "Gemini"),   # start=10+4=14%12=2=Gemini, part=1 → 3=Cancer
-    # 5/3.333=1.5, int=1. (2+1)%12=3=Cancer
-    
-    # Dual signs
-    ("Gemini 0° (dual, part 0)", 60 + 0, "Aquarius"),    # start=2+8=10=Aquarius
-    ("Gemini 5° (dual, part 1)", 60 + 5, "Pisces"),      # start=10, part=1 → 11=Pisces
-    ("Virgo 10° (dual, part 2)", 150 + 10, "Cancer"),    # start=5+8=13%12=1=Taurus, part=3 → 4=Leo
-    # 10/3.333=3.0, int=3. (1+3)%12=4=Leo. Hmm test case says part 2. Let me fix.
-    ("Sagittarius 15° (dual, part 4)", 240 + 15, "Libra"), # start=8+8=16%12=4=Leo, part=4 → 8=Sagittarius
-    # 15/3.333=4.5, int=4. (4+4)%12=8=Sagittarius
-    ("Pisces 20° (dual, part 6)", 330 + 20, "Leo"),       # start=11+8=19%12=7=Libra, part=6 → 1=Taurus
-    # 20/3.333=6.0, int=6. (7+6)%12=1=Taurus
-]
-
-# Let me rewrite the test cases more carefully
 def calc_navamsa_ref(lon):
     """BPHS标准navamsa - 参考实现"""
     si = int(lon / 30)
@@ -78,9 +43,9 @@ def calc_navamsa_ref(lon):
     if si % 3 == 0:  # movable
         start = si
     elif si % 3 == 1:  # fixed
-        start = (si + 4) % 12
-    else:  # dual
         start = (si + 8) % 12
+    else:  # dual
+        start = (si + 4) % 12
     return (start + ni) % 12
 
 NAVAMSA_TEST_CASES = [
@@ -94,24 +59,17 @@ NAVAMSA_TEST_CASES = [
     ("Cancer 5° → Leo (movable, part 1)", 90 + 5, 4),
     ("Libra 15° → Capricorn (movable, part 4)", 180 + 15, 9),
     ("Capricorn 20° → Pisces (movable, part 6)", 270 + 20, 11),
-    
-    # Fixed signs (si % 3 == 1): start = (si + 4) % 12
-    ("Taurus 0° → Virgo (fixed, part 0, start=5)", 30 + 0, 5),
-    ("Taurus 5° → Libra (fixed, part 1, start=5)", 30 + 5, 6),
-    ("Taurus 10° → Scorpio (fixed, part 2, start=5)", 30 + 10, 7),
-    ("Taurus 20° → Capricorn (fixed, part 6, start=5)", 30 + 20, 11),  # 20/3.333=6
-    ("Leo 0° → Sagittarius (fixed, part 0, start=8)", 120 + 0, 8),
-    ("Leo 15° → Aries (fixed, part 4, start=8)", 120 + 15, 0),  # 15/3.333=4.5→4, (8+4)%12=0
-    ("Scorpio 6° → Aquarius (fixed, part 1, start=11)", 210 + 6, 0),  # 6/3.333=1.8→1, (11+1)%12=0=Aries... wait
-    # Let me recalculate: Scorpio=7, start=(7+4)%12=11=Aquarius. 6°/(30/9)=6/3.333=1.8, int=1. (11+1)%12=0=Aries
-    # Hmm my expected was Aquarius. Let me trace more carefully.
-    # Actually I think I made an error. Let me recalculate:
-    # Scorpio = sign 7 (210-240°). 6° into Scorpio = 216° total.
-    # part = int(6 / 3.333) = int(1.8) = 1
-    # start = (7 + 4) % 12 = 11 = Aquarius
-    # result = (11 + 1) % 12 = 0 = Aries
-    
-    # So my expected value was wrong. Let me fix all the test cases by computing them properly.
+
+    # Fixed signs (si % 3 == 1): start = 9th from sign (+8)
+    ("Taurus 0° → Capricorn (fixed, part 0, start=9)", 30 + 0, 9),
+    ("Taurus 5° → Aquarius (fixed, part 1, start=9)", 30 + 5, 10),
+    ("Taurus 10° → Pisces (fixed, part 3, start=9)", 30 + 10, 0),
+    ("Leo 0° → Aries (fixed, part 0, start=0)", 120 + 0, 0),
+
+    # Dual signs (si % 3 == 2): start = 5th from sign (+4)
+    ("Gemini 0° → Libra (dual, part 0, start=6)", 60 + 0, 6),
+    ("Gemini 5° → Scorpio (dual, part 1, start=6)", 60 + 5, 7),
+    ("Virgo 10° → Leo (dual, part 3, start=1)", 150 + 10, 4),
 ]
 
 # I'll generate test cases programmatically to avoid manual errors
@@ -147,12 +105,11 @@ def navamsa_ref(lon):
     d = lon - si * 30
     ni = int(d / (30 / 9))
     if si % 3 == 0: start = si
-    elif si % 3 == 1: start = (si + 4) % 12
-    else: start = (si + 8) % 12
+    elif si % 3 == 1: start = (si + 8) % 12
+    else: start = (si + 4) % 12
     return (start + ni) % 12
 
-# 从 varga.py 导入
-sys.path.insert(0, '/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/scripts')
+# 从本仓 scripts/varga.py 导入
 from varga import calc_varga
 
 # 全面测试：每个星座的 0°, 5°, 10°, 15°, 20°, 25°
@@ -237,8 +194,8 @@ SIGNS_JE = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
 def navamsa_je(lon):
     si = int(lon / 30); d = lon - si * 30; ni = int(d / (30/9))
     if si % 3 == 0: start = si
-    elif si % 3 == 1: start = (si + 4) % 12
-    else: start = (si + 8) % 12
+    elif si % 3 == 1: start = (si + 8) % 12
+    else: start = (si + 4) % 12
     return SIGNS_JE[(start + ni) % 12]
 
 def dasamsa_je(lon):

@@ -14,6 +14,7 @@ separate. It stays deliberately thin:
 from __future__ import annotations
 
 import argparse
+import inspect
 import importlib.util
 import json
 import os
@@ -228,6 +229,116 @@ if __name__ == "__main__":
 """
 
 
+CAPABILITY_RUNNER = r"""
+import contextlib
+import importlib
+import inspect
+import io
+import json
+
+MODULE_CANDIDATES = ("vedastro", "VedAstro")
+
+
+def _import_module():
+    for name in MODULE_CANDIDATES:
+        with contextlib.redirect_stdout(io.StringIO()):
+            try:
+                return name, importlib.import_module(name)
+            except ModuleNotFoundError:
+                continue
+    return None, None
+
+
+def _bucket(parameter_names, signature_text):
+    lowered = [name.lower() for name in parameter_names]
+    if not lowered:
+        return "zero_arg"
+    if lowered == ["time"]:
+        return "time_only"
+    if lowered == ["birthtime"]:
+        return "birth_time_only"
+    if lowered == ["planetname", "time"]:
+        return "planet_time"
+    if lowered == ["housename", "time"]:
+        return "house_name_time"
+    if lowered == ["housenumber", "time"]:
+        return "house_number_time"
+    if lowered == ["planet", "time"]:
+        return "planet_alias_time"
+    if lowered == ["birthtime", "checktime", "levels"]:
+        return "dasha_at_time"
+    if lowered == ["birthtime", "starttime", "endtime", "levels", "precisionhours"]:
+        return "dasha_at_range"
+    return signature_text.strip() or "unknown_signature"
+
+
+def main():
+    module_name, module = _import_module()
+    if module is None:
+        print(json.dumps({
+            "available": False,
+            "status": "python_package_not_installed",
+            "source": "vedastro_python_bridge_child",
+        }))
+        return
+
+    calculate = getattr(module, "Calculate", None)
+    if calculate is None:
+        print(json.dumps({
+            "available": False,
+            "status": "calculate_namespace_missing",
+            "module_name": module_name,
+            "source": "vedastro_python_bridge_child",
+        }))
+        return
+
+    capabilities = []
+    buckets = {}
+    for name in sorted(dir(calculate)):
+        if name.startswith("_"):
+            continue
+        obj = getattr(calculate, name)
+        if not callable(obj):
+            continue
+        try:
+            sig = inspect.signature(obj)
+            signature_text = str(sig)
+            parameter_names = [param.name for param in sig.parameters.values()]
+        except Exception:
+            signature_text = "<unknown>"
+            parameter_names = []
+        bucket = _bucket(parameter_names, signature_text)
+        capabilities.append({
+            "method": name,
+            "signature": signature_text,
+            "bucket": bucket,
+            "parameter_names": parameter_names,
+            "callable": True,
+        })
+        entry = buckets.setdefault(bucket, {"count": 0, "examples": []})
+        entry["count"] += 1
+        if len(entry["examples"]) < 10:
+            entry["examples"].append(name)
+
+    print(json.dumps({
+        "available": True,
+        "status": "ok",
+        "module_name": module_name,
+        "capabilities": capabilities,
+        "summary": {
+            "total_callable": len(capabilities),
+            "signature_bucket_count": len(buckets),
+        },
+        "buckets": buckets,
+        "source": "vedastro_python_bridge",
+    }))
+
+
+if __name__ == "__main__":
+    main()
+"""
+
+
 def _package_available() -> bool:
     if os.environ.get(FORCE_UNAVAILABLE_ENV, "").strip().lower() in {"1", "true", "yes"}:
         return False
@@ -327,13 +438,44 @@ def _call_via_child_python(python_bin: str, method: str, params: dict[str, Any])
     return payload
 
 
+def _list_capabilities_via_child_python(python_bin: str) -> dict[str, Any]:
+    completed = subprocess.run(
+        [python_bin, "-c", CAPABILITY_RUNNER],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=240,
+        env=os.environ.copy(),
+    )
+    if completed.returncode != 0:
+        return {
+            "available": False,
+            "status": "bridge_runtime_error",
+            "stderr": (completed.stderr or "").strip(),
+            "stdout_excerpt": (completed.stdout or "").strip()[:500],
+            "source": "vedastro_python_bridge",
+        }
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return {
+            "available": False,
+            "status": "bridge_invalid_json",
+            "stdout_excerpt": (completed.stdout or "").strip()[:500],
+            "stderr": (completed.stderr or "").strip()[:500],
+            "source": "vedastro_python_bridge",
+        }
+    payload["python_bin"] = python_bin
+    return payload
+
+
 def schema() -> dict[str, Any]:
     return {
         "bridge": "vedastro_python_bridge",
         "package_name": PACKAGE_NAME,
         "module_candidates": list(MODULE_CANDIDATES),
         "intended_role": "python_sdk_bulk_calculation_bridge",
-        "operations": ["call_method"],
+        "operations": ["call_method", "list_capabilities"],
         "request_contract": ["method", "params_json"],
         "typed_param_contract": {
             "enum": {"__vedastro_enum__": "PlanetName", "value": "Sun"},
@@ -401,6 +543,15 @@ def call_method(method: str, params: dict[str, Any]) -> dict[str, Any]:
     return _call_via_child_python(python_bin, method, params)
 
 
+def list_capabilities() -> dict[str, Any]:
+    if os.environ.get(FORCE_UNAVAILABLE_ENV, "").strip().lower() in {"1", "true", "yes"}:
+        return _missing_package_result("list_capabilities")
+    python_bin = _select_python_bin()
+    if not python_bin:
+        return _missing_package_result("list_capabilities")
+    return _list_capabilities_via_child_python(python_bin)
+
+
 def call_high_value(method_key: str, payload: dict[str, Any]) -> dict[str, Any]:
     if method_key == "event_tag_catalog":
         return call_method("GetAllEventDataGroupedByTag", {})
@@ -429,6 +580,119 @@ def call_high_value(method_key: str, payload: dict[str, Any]) -> dict[str, Any]:
         check_time = payload["check_time"]
         return call_method("GetCharaDasaAtTime", {"args": [birth_time, check_time]})
 
+    if method_key == "official_full_snapshot_bundle":
+        birth_time = payload["birth_time"]
+        check_time = payload["check_time"]
+        start_time = payload["start_time"]
+        end_time = payload["end_time"]
+        levels = int(payload.get("levels", 3))
+        precision_hours = int(payload.get("precision_hours", 100))
+        planets = list(payload.get("planets") or [])
+        houses = list(payload.get("houses") or [])
+
+        chart_core: dict[str, Any] = {}
+        house_core: dict[str, Any] = {}
+        section_statuses: dict[str, str] = {}
+
+        for planet in planets:
+            report = call_method(
+                "AllPlanetData",
+                {
+                    "args": [
+                        {"__vedastro_enum__": "PlanetName", "value": str(planet)},
+                        birth_time,
+                    ]
+                },
+            )
+            chart_core[str(planet)] = {
+                "Status": "Pass" if report.get("status") == "ok" else "Fail",
+                "Payload": {"AllPlanetData": report.get("result")} if report.get("status") == "ok" else report,
+            }
+        if chart_core:
+            section_statuses["chart_core"] = "ok"
+
+        for house in houses:
+            report = call_method(
+                "AllHouseData",
+                {
+                    "args": [
+                        {"__vedastro_enum__": "HouseName", "value": str(house)},
+                        birth_time,
+                    ]
+                },
+            )
+            house_core[str(house)] = {
+                "Status": "Pass" if report.get("status") == "ok" else "Fail",
+                "Payload": {"AllHouseData": report.get("result")} if report.get("status") == "ok" else report,
+            }
+        if house_core:
+            section_statuses["house_core"] = "ok"
+
+        dasha_report = call_method(
+            "DasaAtRange",
+            {"args": [birth_time, start_time, end_time, levels, precision_hours]},
+        )
+        vimshottari_report = call_method(
+            "DasaAtTime",
+            {"args": [birth_time, check_time, levels]},
+        )
+        chara_report = call_method(
+            "GetCharaDasaAtTime",
+            {"args": [birth_time, check_time]},
+        )
+        strength_report = call_method("AllPlanetStrength", {"args": [birth_time]})
+        ashtakavarga_report = call_method("AshtakvargaLifeMap", {"args": [birth_time]})
+
+        snapshot_sections = {
+            "chart_core": chart_core,
+            "house_core": house_core,
+            "dasha_all": {
+                "Status": "Pass" if dasha_report.get("status") == "ok" else "Fail",
+                "Payload": {"DasaAtRange": dasha_report.get("result")} if dasha_report.get("status") == "ok" else dasha_report,
+            },
+            "vimshottari_now": {
+                "Status": "Pass" if vimshottari_report.get("status") == "ok" else "Fail",
+                "Payload": {"DasaAtTime": vimshottari_report.get("result")} if vimshottari_report.get("status") == "ok" else vimshottari_report,
+            },
+            "chara_dasha_now": {
+                "Status": "Pass" if chara_report.get("status") == "ok" else "Fail",
+                "Payload": {"GetCharaDasaAtTime": chara_report.get("result")} if chara_report.get("status") == "ok" else chara_report,
+            },
+            "shadbala": {
+                "Status": "Pass" if strength_report.get("status") == "ok" else "Fail",
+                "Payload": {"AllPlanetStrength": strength_report.get("result")} if strength_report.get("status") == "ok" else strength_report,
+            },
+            "ashtakavarga": {
+                "Status": "Pass" if ashtakavarga_report.get("status") == "ok" else "Fail",
+                "Payload": {"AshtakvargaLifeMap": ashtakavarga_report.get("result")} if ashtakavarga_report.get("status") == "ok" else ashtakavarga_report,
+            },
+        }
+
+        for section_name in ("dasha_all", "vimshottari_now", "chara_dasha_now", "shadbala", "ashtakavarga"):
+            section_statuses[section_name] = "ok" if snapshot_sections[section_name]["Status"] == "Pass" else "fail"
+
+        filled_sections = [name for name, status in section_statuses.items() if status == "ok"]
+        overall_status = "ok" if filled_sections else "blocked"
+        if filled_sections and len(filled_sections) != len(section_statuses):
+            overall_status = "partial"
+
+        return {
+            "available": bool(filled_sections),
+            "status": overall_status,
+            "method": "official_full_snapshot_bundle",
+            "result": {
+                "snapshot_sections": snapshot_sections,
+                "section_statuses": section_statuses,
+                "coverage": {
+                    "source_mode": "official_python_bridge_bundle",
+                    "filled_sections": filled_sections,
+                    "planet_count": len(chart_core),
+                    "house_count": len(house_core),
+                },
+            },
+            "source": "vedastro_python_bridge",
+        }
+
     return {
         "available": False,
         "status": "unsupported_high_value_method",
@@ -443,6 +707,7 @@ def main() -> int:
     parser.add_argument("--method", default="")
     parser.add_argument("--params-json", default="{}")
     parser.add_argument("--high-value", default="")
+    parser.add_argument("--list-capabilities", action="store_true")
     args = parser.parse_args()
 
     if args.print_schema:
@@ -464,7 +729,25 @@ def main() -> int:
                 "maps_to": "GetCharaDasaAtTime",
                 "request_contract": ["birth_time", "check_time"],
             },
+            "official_full_snapshot_bundle": {
+                "maps_to": (
+                    "AllPlanetData + AllHouseData + DasaAtRange + DasaAtTime + "
+                    "GetCharaDasaAtTime + AllPlanetStrength + AshtakvargaLifeMap"
+                ),
+                "request_contract": [
+                    "birth_time",
+                    "check_time",
+                    "start_time",
+                    "end_time",
+                    "levels?",
+                    "precision_hours?",
+                    "planets[]",
+                    "houses[]",
+                ],
+            },
         }
+    elif args.list_capabilities:
+        result = list_capabilities()
     elif args.high_value:
         params = json.loads(args.params_json or "{}")
         result = call_high_value(args.high_value, params)

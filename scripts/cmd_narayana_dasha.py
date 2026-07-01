@@ -87,6 +87,10 @@ def cmd_narayana_dasha(args, chart_data):
     if ad:
         lines.append(f"  Antardasha: {ad['sign']}（{ad['lord']}）{ad['years']}年")
 
+    pd = curr.get('pd')
+    if pd:
+        lines.append(f"  Pratyantardasha: {pd['sign']}（{pd['lord']}）{pd['years']}年")
+
     lines.append("")
     for line in result.get('interpretation', []):
         lines.append(f"  {line}")

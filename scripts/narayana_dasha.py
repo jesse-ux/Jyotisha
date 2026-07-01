@@ -134,27 +134,95 @@ def calc_narayana_antardasha(
     if md is None:
         return []
 
-    total_years = md['years']
+    return _subdivide_narayana_period(
+        mahadasha_periods=mahadasha_periods,
+        parent_period=md,
+        start_sign_idx=md_sign_idx,
+        parent_key='parent_md',
+        parent_name=SIGNS[md_sign_idx],
+    )
+
+
+def calc_narayana_pratyantardasha(
+    mahadasha_periods: List[Dict],
+    antardasha_period: Dict,
+) -> List[Dict]:
+    """
+    计算给定 Antardasha 的 Pratyantardasha 子周期。
+
+    返回的 start_age / end_age 与 Mahadasha、Antardasha 使用同一条绝对年龄轴，
+    方便 get_current_narayana_dasha 直接定位当前周期。
+    """
+    if not antardasha_period:
+        return []
+
+    sign_idx = antardasha_period.get('sign_idx')
+    if sign_idx is None:
+        return []
+
+    return _subdivide_narayana_period(
+        mahadasha_periods=mahadasha_periods,
+        parent_period=antardasha_period,
+        start_sign_idx=sign_idx,
+        parent_key='parent_ad',
+        parent_name=antardasha_period.get('sign', SIGNS[sign_idx]),
+    )
+
+
+def _subdivide_narayana_period(
+    mahadasha_periods: List[Dict],
+    parent_period: Dict,
+    start_sign_idx: int,
+    parent_key: str,
+    parent_name: str,
+) -> List[Dict]:
+    """按 Narayana 星座年数权重切分父周期，返回绝对年龄轴上的子周期。"""
+    if not mahadasha_periods:
+        return []
+
+    period_by_sign = {p['sign_idx']: p for p in mahadasha_periods}
+    denominator = sum(float(p.get('years', 0)) for p in mahadasha_periods)
+    if denominator <= 0:
+        return []
+
+    total_years = float(parent_period.get('years', 0))
+    parent_start = float(parent_period.get('start_age', 0))
+    parent_end = float(parent_period.get('end_age', parent_start + total_years))
+    if len(period_by_sign) == 12:
+        weighted_sequence = [period_by_sign[(start_sign_idx + i) % 12] for i in range(12)]
+    else:
+        start_pos = next(
+            (i for i, p in enumerate(mahadasha_periods) if p.get('sign_idx') == start_sign_idx),
+            0,
+        )
+        weighted_sequence = mahadasha_periods[start_pos:] + mahadasha_periods[:start_pos]
+
     sub_periods = []
-    cum = md['start_age']
+    cum = parent_start
+    sequence_len = len(weighted_sequence)
 
-    # Antardasha 从 MD 星座开始，按黄道序推进
-    for i in range(12):
-        sign_idx = (md_sign_idx + i) % 12
-        lord_sign = mahadasha_periods[0]['lord_in_sign']  # placeholder
-        sub_years_ratio = mahadasha_periods[i]['years'] / sum(p['years'] for p in mahadasha_periods)
-        sub_years = round(total_years * sub_years_ratio, 2)
+    for i, weighted_period in enumerate(weighted_sequence):
+        sign_idx = weighted_period['sign_idx']
 
+        if i == sequence_len - 1:
+            end_age = parent_end
+        else:
+            sub_years_raw = total_years * float(weighted_period.get('years', 0)) / denominator
+            end_age = cum + sub_years_raw
+
+        start_age = cum
+        years = max(0.0, end_age - start_age)
         sub_periods.append({
             'sign': SIGNS[sign_idx],
             'sign_idx': sign_idx,
             'lord': SIGN_LORDS[SIGNS[sign_idx]],
-            'years': sub_years,
-            'start_age': round(cum, 2),
-            'end_age': round(cum + sub_years, 2),
-            'parent_md': SIGNS[md_sign_idx],
+            'years': round(years, 4),
+            'start_age': round(start_age, 4),
+            'end_age': round(end_age, 4),
+            parent_key: parent_name,
+            'sequence_index': i,
         })
-        cum += sub_years
+        cum = end_age
 
     return sub_periods
 
@@ -181,7 +249,8 @@ def get_current_narayana_dasha(
     if total_cycle == 0:
         return result
 
-    age_in_cycle = current_age % total_cycle
+    cycle_start = min(float(p.get('start_age', 0)) for p in mahadasha_periods)
+    age_in_cycle = ((current_age - cycle_start) % total_cycle) + cycle_start
 
     # 找当前 MD
     for p in mahadasha_periods:
@@ -198,17 +267,28 @@ def get_current_narayana_dasha(
 
             # 计算 AD
             ads = calc_narayana_antardasha(mahadasha_periods, p['sign_idx'])
-            elapsed_in_md = age_in_cycle - p['start_age']
             for ad in ads:
-                if ad['start_age'] <= elapsed_in_md < ad['end_age']:
+                if ad['start_age'] <= age_in_cycle < ad['end_age']:
                     result['ad'] = {
                         'sign': ad['sign'],
                         'sign_idx': ad['sign_idx'],
                         'lord': ad['lord'],
                         'years': ad['years'],
-                        'start_age': round(p['start_age'] + ad['start_age'], 2),
-                        'end_age': round(p['start_age'] + ad['end_age'], 2),
+                        'start_age': ad['start_age'],
+                        'end_age': ad['end_age'],
                     }
+                    pds = calc_narayana_pratyantardasha(mahadasha_periods, ad)
+                    for pd in pds:
+                        if pd['start_age'] <= age_in_cycle < pd['end_age']:
+                            result['pd'] = {
+                                'sign': pd['sign'],
+                                'sign_idx': pd['sign_idx'],
+                                'lord': pd['lord'],
+                                'years': pd['years'],
+                                'start_age': pd['start_age'],
+                                'end_age': pd['end_age'],
+                            }
+                            break
                     break
             break
 

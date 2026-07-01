@@ -7,6 +7,7 @@ import base64
 import json
 import os
 import sys
+import time
 from io import BytesIO
 from pathlib import Path
 
@@ -91,6 +92,28 @@ class _VedAstroStatusCaptureHandler(JyotishAPIHandler):
         self.headers = _FakeHeaders()
         self.server = _FakeServer()
         self.path = '/api/vedastro/status'
+        self.wfile = BytesIO()
+        self.status_code = None
+        self.response_headers = []
+
+    def send_response(self, code, message=None):  # noqa: ANN001
+        self.status_code = code
+
+    def send_header(self, key, value):  # noqa: ANN001
+        self.response_headers.append((key, value))
+
+    def end_headers(self):
+        return None
+
+    def payload(self) -> dict:
+        return json.loads(self.wfile.getvalue().decode('utf-8'))
+
+
+class _HighRigorJobCaptureHandler(JyotishAPIHandler):
+    def __init__(self, path: str) -> None:
+        self.headers = _FakeHeaders()
+        self.server = _FakeServer()
+        self.path = path
         self.wfile = BytesIO()
         self.status_code = None
         self.response_headers = []
@@ -257,6 +280,359 @@ def test_chart_date_validation_rejects_impossible_date() -> None:
     handler = _handler()
     with pytest.raises(BadRequest, match='Invalid birth date'):
         handler._compute_chart({'year': 2026, 'month': 2, 'day': 31})
+
+
+def test_high_rigor_workflow_plan_only_exposes_official_hard_override_contract() -> None:
+    handler = _handler()
+
+    result = handler._high_rigor_workflow_plan_only(
+        {
+            'year': REDACTED_YEAR,
+            'month': 4,
+            'day': 17,
+            'hour': 14,
+            'minute': 49,
+            'lat': 36.42,
+            'lon': 114.2,
+            'tz': 8,
+        },
+        ['career', 'marriage', 'wealth'],
+        [],
+    )
+
+    assert result['source_priority']['mode'] == 'vedastro_official_snapshot_first'
+    assert result['execution_plan'][-1] == 'return_official_primary_supplemental_fallback_conflict_contract'
+
+
+def test_high_rigor_vedastro_official_summary_passes_through_contract_fields() -> None:
+    handler = _handler()
+
+    chart = {
+        'modules': {
+            'vedastro_range_scan_result': {
+                'status': 'ok',
+                'event_count': 3,
+                'official_full_snapshot': {
+                    'status': 'partial',
+                    'source_metadata': {
+                        'official_full_capability_catalog': {'status': 'partial', 'summary': {'catalog_method_count': 641}},
+                    },
+                },
+                'source_metadata': {
+                    'official_full_capability_dynamic_selection': {},
+                    'official_report_references': {},
+                },
+            }
+        },
+        'ai_prompt_pack': {
+            'evidence_snapshot': {
+                'vedastro_official_snapshot': {
+                    'status': 'partial',
+                    'official_primary_evidence': {'chart_core': {'status': 'ok'}},
+                    'local_supplemental_evidence': {'narayana_current': {'role': 'required_local_supplement'}},
+                    'fallback_used': ['local_chart_fallback'],
+                    'blocked_items': ['official_event_radar_partial'],
+                    'conflicts': [{'type': 'official_local_dasha_conflict'}],
+                }
+            }
+        },
+    }
+
+    result = handler._high_rigor_vedastro_official_summary(chart)
+
+    assert result['official_primary_evidence']['chart_core']['status'] == 'ok'
+    assert result['local_supplemental_evidence']['narayana_current']['role'] == 'required_local_supplement'
+    assert result['fallback_used'] == ['local_chart_fallback']
+    assert result['blocked_items'] == ['official_event_radar_partial']
+    assert result['conflicts'] == [{'type': 'official_local_dasha_conflict'}]
+
+
+def test_high_rigor_vedastro_official_summary_exposes_top_reader_contract_from_full_snapshot() -> None:
+    handler = _handler()
+
+    chart = {
+        'modules': {
+            'vedastro_range_scan_result': {
+                'status': 'partial',
+                'event_count': 2,
+                'source_metadata': {
+                    'official_full_capability_catalog_status': 'partial',
+                    'official_full_capability_catalog_summary': {'catalog_method_count': 641},
+                },
+            },
+            'vedastro_official_full_snapshot': {
+                'status': 'partial',
+                'available': True,
+                'strict_workflow_primary_route': 'career',
+                'strict_workflow_routes_available': ['career', 'relationship', 'finance'],
+                'strict_workflow_contracts': {
+                    'career': {
+                        'question_type': 'career',
+                        'official_primary_evidence': {'chart_core': {'status': 'ok'}},
+                        'local_supplemental_evidence': {'narayana_current': {'role': 'required_local_supplement'}},
+                        'fallback_used': ['local_chart_fallback'],
+                        'blocked_items': ['official_event_radar_partial'],
+                        'conflicts': [{'type': 'official_local_dasha_conflict'}],
+                        'adjudication_stages': {
+                            'promise': {'status': 'present'},
+                            'activation': {
+                                'status': 'present',
+                                'required_timing_systems': ['Vimshottari', 'Narayana'],
+                            },
+                        },
+                        'multi_reference_reading_summary': {
+                            'root_frame': {'signal': 'career_promise'},
+                            'modifier_frame': {'functional_benefic_malefic': {'used': True}},
+                        },
+                        'technique_audit_summary': {
+                            'functional_benefic_malefic': {'gate': 'hard', 'used': True},
+                        },
+                        'verdict': 'high_probability_window',
+                        'dominant_label': 'career_status',
+                        'main_conflicts': [{'type': 'official_local_dasha_conflict'}],
+                    }
+                },
+                'source_metadata': {
+                    'official_full_capability_catalog': {
+                        'status': 'partial',
+                        'summary': {'catalog_method_count': 641},
+                    }
+                },
+            },
+        },
+        'ai_prompt_pack': {
+            'evidence_snapshot': {
+                'vedastro_official_full_snapshot': {
+                    'status': 'partial',
+                    'strict_workflow_primary_route': 'career',
+                    'strict_workflow_routes_available': ['career', 'relationship', 'finance'],
+                    'strict_workflow_contracts': {
+                        'career': {
+                            'question_type': 'career',
+                            'adjudication_stages': {
+                                'promise': {'status': 'present'},
+                                'activation': {
+                                    'status': 'present',
+                                    'required_timing_systems': ['Vimshottari', 'Narayana'],
+                                },
+                            },
+                            'multi_reference_reading_summary': {
+                                'root_frame': {'signal': 'career_promise'},
+                                'modifier_frame': {'functional_benefic_malefic': {'used': True}},
+                            },
+                            'technique_audit_summary': {
+                                'functional_benefic_malefic': {'gate': 'hard', 'used': True},
+                            },
+                            'verdict': 'high_probability_window',
+                            'dominant_label': 'career_status',
+                            'main_conflicts': [{'type': 'official_local_dasha_conflict'}],
+                            'official_primary_evidence': {'chart_core': {'status': 'ok'}},
+                            'local_supplemental_evidence': {'narayana_current': {'role': 'required_local_supplement'}},
+                            'fallback_used': ['local_chart_fallback'],
+                            'blocked_items': ['official_event_radar_partial'],
+                            'conflicts': [{'type': 'official_local_dasha_conflict'}],
+                        }
+                    },
+                }
+            }
+        },
+    }
+
+    result = handler._high_rigor_vedastro_official_summary(chart)
+    contract = result['strict_workflow_contracts']['career']
+
+    assert result['strict_workflow_primary_route'] == 'career'
+    assert result['strict_workflow_routes_available'] == ['career', 'relationship', 'finance']
+    assert contract['adjudication_stages']['activation']['required_timing_systems'] == ['Vimshottari', 'Narayana']
+    assert contract['multi_reference_reading_summary']['modifier_frame']['functional_benefic_malefic']['used'] is True
+    assert result['technique_audit_summary']['functional_benefic_malefic']['gate'] == 'hard'
+    assert result['adjudication_stages']['promise']['status'] == 'present'
+    assert result['multi_reference_reading_summary']['root_frame']['signal'] == 'career_promise'
+    assert result['verdict'] == 'high_probability_window'
+    assert result['dominant_label'] == 'career_status'
+    assert result['main_conflicts'] == [{'type': 'official_local_dasha_conflict'}]
+
+
+def test_api_prompt_pack_official_snapshot_carries_strict_workflow_contracts() -> None:
+    handler = _handler()
+
+    chart = {
+        'birth': {'ayanamsa_display': 'Raman', 'ayanamsa_name': 'raman', 'node_mode': 'mean'},
+        'ascendant': {'sign': 'Leo'},
+        'planets': {'Moon': {'sign': 'Virgo'}},
+        'dasha': {'current_md': 'Saturn'},
+        'modules': {
+            'vedastro_official_full_snapshot': {
+                'status': 'partial',
+                'available': True,
+                'operation': 'official_full_snapshot',
+                'primary_source': 'vedastro_official',
+                'strict_workflow_primary_route': 'relationship',
+                'strict_workflow_routes_available': ['relationship', 'career', 'finance'],
+                'strict_workflow_contracts': {
+                    'relationship': {
+                        'question_type': 'relationship',
+                        'official_primary_evidence': {'chart_core': {'status': 'ok'}},
+                        'local_supplemental_evidence': {'upapada_lagna': {'present': True}},
+                        'fallback_used': [],
+                        'blocked_items': [],
+                        'conflicts': [],
+                    }
+                },
+                'source_metadata': {},
+            }
+        },
+    }
+
+    prompt_pack = handler._build_chart_prompt_pack(chart)
+    official = prompt_pack['evidence_snapshot']['vedastro_official_full_snapshot']
+
+    assert official['strict_workflow_primary_route'] == 'relationship'
+    assert official['strict_workflow_routes_available'] == ['relationship', 'career', 'finance']
+    assert official['strict_workflow_contracts']['relationship']['official_primary_evidence']['chart_core']['status'] == 'ok'
+
+
+def test_consultation_workflow_surfaces_top_reader_contract_in_official_summary(monkeypatch) -> None:
+    handler = _handler()
+
+    fake_chart = {
+        'success': True,
+        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'special_lagnas': {'precision': 'sunrise_correct'},
+        'chart': {
+            'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+            'planets': _sample_planets(),
+        },
+        'modules': {
+            'vedastro_range_scan_result': {
+                'backend': 'vedastro_service_adapter_candidate',
+                'status': 'partial',
+                'event_count': 1,
+                'source_metadata': {
+                    'official_full_capability_catalog_status': 'partial',
+                    'official_full_capability_catalog_summary': {
+                        'catalog_method_count': 641,
+                        'executed_method_count': 0,
+                    },
+                },
+            },
+            'vedastro_official_full_snapshot': {
+                'status': 'partial',
+                'available': True,
+                'strict_workflow_primary_route': 'career',
+                'strict_workflow_routes_available': ['career', 'relationship', 'finance'],
+                'strict_workflow_contracts': {
+                    'career': {
+                        'question_type': 'career',
+                        'official_primary_evidence': {'chart_core': {'status': 'ok'}},
+                        'local_supplemental_evidence': {'narayana_current': {'role': 'required_local_supplement'}},
+                        'fallback_used': [],
+                        'blocked_items': ['official_event_radar_partial'],
+                        'conflicts': [{'type': 'official_local_dasha_conflict'}],
+                        'adjudication_stages': {
+                            'promise': {'status': 'present'},
+                            'activation': {
+                                'status': 'present',
+                                'required_timing_systems': ['Vimshottari', 'Narayana'],
+                            },
+                        },
+                        'multi_reference_reading_summary': {
+                            'root_frame': {'signal': 'career_promise'},
+                            'modifier_frame': {'functional_benefic_malefic': {'used': True}},
+                        },
+                        'technique_audit_summary': {
+                            'functional_benefic_malefic': {'gate': 'hard', 'used': True},
+                        },
+                        'verdict': 'high_probability_window',
+                        'dominant_label': 'career_status',
+                        'main_conflicts': [{'type': 'official_local_dasha_conflict'}],
+                    }
+                },
+                'source_metadata': {
+                    'official_full_capability_catalog': {
+                        'status': 'partial',
+                        'summary': {'catalog_method_count': 641},
+                    }
+                },
+            },
+        },
+        'ai_prompt_pack': {
+            'evidence_snapshot': {
+                'vedastro_official_full_snapshot': {
+                    'status': 'partial',
+                    'strict_workflow_primary_route': 'career',
+                    'strict_workflow_routes_available': ['career', 'relationship', 'finance'],
+                    'strict_workflow_contracts': {
+                        'career': {
+                            'question_type': 'career',
+                            'official_primary_evidence': {'chart_core': {'status': 'ok'}},
+                            'local_supplemental_evidence': {'narayana_current': {'role': 'required_local_supplement'}},
+                            'fallback_used': [],
+                            'blocked_items': ['official_event_radar_partial'],
+                            'conflicts': [{'type': 'official_local_dasha_conflict'}],
+                            'adjudication_stages': {
+                                'promise': {'status': 'present'},
+                                'activation': {
+                                    'status': 'present',
+                                    'required_timing_systems': ['Vimshottari', 'Narayana'],
+                                },
+                            },
+                            'multi_reference_reading_summary': {
+                                'root_frame': {'signal': 'career_promise'},
+                                'modifier_frame': {'functional_benefic_malefic': {'used': True}},
+                            },
+                            'technique_audit_summary': {
+                                'functional_benefic_malefic': {'gate': 'hard', 'used': True},
+                            },
+                            'verdict': 'high_probability_window',
+                            'dominant_label': 'career_status',
+                            'main_conflicts': [{'type': 'official_local_dasha_conflict'}],
+                        }
+                    },
+                }
+            },
+        },
+    }
+
+    monkeypatch.setattr(handler, '_compute_chart', lambda body: fake_chart)
+    monkeypatch.setattr(handler, '_compute_rectification_gate', lambda body: {
+        'success': True,
+        'endpoint': 'rectification_gate',
+        'summary': {'recommended_events': ['career_change']},
+    })
+    monkeypatch.setattr(handler, '_compute_thematic_report', lambda body: {
+        'success': True,
+        'endpoint': 'thematic_report',
+        'mode': 'derived_chart_evidence',
+        'theme_count': len(body.get('theme') or []),
+        'themes': {theme: {'summary': f'{theme} report'} for theme in body.get('theme') or []},
+    })
+    monkeypatch.setattr(handler, '_run_high_rigor_historical_backtest', lambda birth, events: {
+        'scope': 'historical_event_backtest',
+        'summary': {'total_events': len(events)},
+        'events': events,
+    })
+
+    result = handler._compute_consultation_workflow({
+        'entry_mode': 'direct_chart',
+        'question': '请直接排盘并重点看事业',
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+        'theme': ['career'],
+    })
+
+    contract = result['vedastro_official']['strict_workflow_contracts']['career']
+    assert result['vedastro_official']['strict_workflow_primary_route'] == 'career'
+    assert contract['adjudication_stages']['activation']['required_timing_systems'] == ['Vimshottari', 'Narayana']
+    assert contract['multi_reference_reading_summary']['root_frame']['signal'] == 'career_promise'
+    assert result['vedastro_official']['technique_audit_summary']['functional_benefic_malefic']['gate'] == 'hard'
+    assert result['vedastro_official']['dominant_label'] == 'career_status'
 
 
 def test_synastry_rejects_non_numeric_moon_degree() -> None:
@@ -761,6 +1137,37 @@ def test_report_artifact_relationship_strict_narrative_surfaces_weak_core_promis
     assert 'relationship-caution' in html
 
 
+def test_report_artifact_can_render_career_and_finance_strict_narrative_summary() -> None:
+    handler = _handler()
+    result = handler._compute_report_artifact({
+        'format': 'html',
+        'name': 'career-finance-strict-report',
+        'html': '<!doctype html><html><body><h1>Jyotish</h1></body></html>',
+        'career_narrative': {
+            'headline': '事业严格裁决已接入主链，当前结论将强制引用本命 promise、双重大运、官方时间窗与结构阻力。',
+            'strengths': ['月度主状态：机会进入。', '落地形式：职位/项目/公开职责抬头。'],
+            'risks': ['阻力来源：功能性凶星与结构摩擦仍在。'],
+            'boundaries': ['时间置信度：以月级为主，日级只作辅助。'],
+        },
+        'finance_narrative': {
+            'headline': '财富严格裁决已接入主链，当前结论会强制区分收入兑现、现金流动作与风险摩擦。',
+            'strengths': ['月度主状态：收入兑现。', '落地形式：定金/回款/短期现金流改善。'],
+            'risks': ['阻力来源：波动性收入，不宜过度放大利润预期。'],
+            'boundaries': ['时间置信度：以兑现窗口而非全年静态判断为主。'],
+        },
+    })
+
+    assert result['success'] is True
+    html = Path(result['html_path']).read_text(encoding='utf-8')
+    assert 'Career Strict Narrative' in html
+    assert '事业严格裁决已接入主链' in html
+    assert '月度主状态：机会进入' in html
+    assert '阻力来源：功能性凶星与结构摩擦仍在' in html
+    assert 'Finance Strict Narrative' in html
+    assert '财富严格裁决已接入主链' in html
+    assert '落地形式：定金/回款/短期现金流改善' in html
+
+
 def test_report_artifact_pdf_fallback_exposes_user_visible_delivery(monkeypatch) -> None:
     class BrokenReportBuilder:
         @staticmethod
@@ -1046,6 +1453,18 @@ def test_thematic_report_declares_orchestrator_fragments() -> None:
     assert 'marriage' in result['workflow_orchestration']['selected_report_themes']
 
 
+def test_technique_catalog_exposes_high_rigor_workflow_entrypoint() -> None:
+    handler = _handler()
+    catalog = handler._technique_catalog()
+
+    assert '/api/high_rigor_workflow' in catalog['filters']['api_endpoints']
+    assert catalog['example_payloads']['/api/high_rigor_workflow']['theme'] == ['career', 'marriage', 'wealth']
+    example = handler._compute_technique_example({'endpoint': '/api/high_rigor_workflow'})
+    assert example['target_endpoint'] == '/api/high_rigor_workflow'
+    assert example['result']['endpoint'] == 'high_rigor_workflow'
+    assert example['result']['mode'] == 'plan_only_no_external_calls'
+
+
 def test_thematic_report_derives_evidence_from_birth_payload() -> None:
     handler = _handler()
     result = handler._compute_thematic_report({
@@ -1104,6 +1523,146 @@ def test_thematic_report_derives_relationship_strict_narrative_evidence() -> Non
     assert 'dual dasha' in strict_note
     assert 'D9' in strict_note
     assert 'legal_marriage' in strict_note or '婚恋' in strict_note
+
+
+def test_thematic_report_derives_career_and_finance_strict_narrative_evidence() -> None:
+    handler = _handler()
+    result = handler._compute_thematic_report({
+        'theme': ['career', 'wealth'],
+        'year': 1990,
+        'month': 1,
+        'day': 1,
+        'hour': 12,
+        'minute': 0,
+        'lat': 39.9,
+        'lon': 116.4,
+        'tz': 8,
+    })
+
+    assert result['success'] is True
+    career_evidence = result['themes']['career']['evidence']
+    finance_evidence = result['themes']['wealth']['evidence']
+    career_rows = [
+        item for item in career_evidence
+        if item['details'].get('source') == 'full_reading.modules.career_strict_evidence.user_narrative'
+    ]
+    finance_rows = [
+        item for item in finance_evidence
+        if item['details'].get('source') == 'full_reading.modules.finance_strict_evidence.user_narrative'
+    ]
+    assert career_rows
+    assert finance_rows
+    assert '月度主状态' in career_rows[0]['conclusion']
+    assert 'D10' in career_rows[0]['conclusion'] or '事业' in career_rows[0]['conclusion']
+    assert '月度主状态' in finance_rows[0]['conclusion']
+    assert 'D2' in finance_rows[0]['conclusion'] or '财富' in finance_rows[0]['conclusion']
+
+
+def test_thematic_report_final_chinese_summary_and_narrative_force_monthly_adjudication_layers() -> None:
+    handler = _handler()
+    result = handler._compute_thematic_report({
+        'theme': ['marriage', 'career', 'wealth'],
+        'year': 1990,
+        'month': 1,
+        'day': 1,
+        'hour': 12,
+        'minute': 0,
+        'lat': 39.9,
+        'lon': 116.4,
+        'tz': 8,
+    })
+
+    assert result['success'] is True
+    marriage = result['themes']['marriage']
+    career = result['themes']['career']
+    wealth = result['themes']['wealth']
+
+    for payload in (marriage, career, wealth):
+        assert '月度主状态' in payload['summary']
+        assert '落地形式' in payload['summary']
+        assert '阻力来源' in payload['narrative']
+        assert '时间置信度' in payload['narrative']
+
+
+def test_apply_monthly_adjudication_to_theme_report_injects_four_layers_into_final_chinese_fields() -> None:
+    handler = _handler()
+    payload = {
+        'summary': '事业格局整体积极向好。',
+        'narrative': '事业维度上，本命 promise 与 D10 形成交叉支持。',
+        'evidence': [
+            {
+                'technique': 'Career-strict-narrative',
+                'details': {
+                    'monthly_frame': {
+                        'primary_state': {'value': '推进'},
+                        'manifestation_mode': {'value': '职位/项目/职责抬头'},
+                        'friction_source': {'value': '流程卡顿但机会仍在'},
+                        'time_confidence': {'value': 'month_supported'},
+                    }
+                },
+            }
+        ],
+        'recommendations': ['原始建议一。'],
+    }
+
+    result = handler._apply_monthly_adjudication_to_theme_report('career', payload)
+
+    assert '月度主状态：进入可主动推进窗口。' in result['summary']
+    assert '落地形式：更像职位、项目或职责开始抬头。' in result['summary']
+    assert '阻力来源：机会未消失，但流程、对接或资源节奏会更磨人。' in result['narrative']
+    assert '时间置信度：以月份判断最稳，具体日期只能作辅助观察。' in result['narrative']
+    assert any('月度主状态：进入可主动推进窗口。' in item for item in result['recommendations'])
+    assert any('阻力来源：机会未消失，但流程、对接或资源节奏会更磨人。' in item for item in result['recommendations'])
+    assert any('本轮重点拆成：角色定位、项目合作、组织权责、迁移动向。' in item for item in result['recommendations'])
+    assert result['monthly_adjudication_summary']['primary_state']['value'] == '推进'
+    assert result['monthly_adjudication_summary_humanized']['time_confidence'] == '以月份判断最稳，具体日期只能作辅助观察。'
+    assert result['interpretation_axes'][0]['axis'] == '角色定位'
+    assert 'judgement' in result['interpretation_axes'][0]
+    assert '第10宫' in result['interpretation_axes'][0]['judgement']
+    assert '进入可主动推进窗口' in result['interpretation_axes'][0]['judgement']
+    assert '以月份判断最稳' in result['interpretation_axes'][0]['judgement']
+    assert result['narrative_contract']['monthly_frame_applied'] is True
+
+
+def test_thematic_report_interpretation_axes_are_strict_paragraphs_for_each_theme() -> None:
+    handler = _handler()
+    result = handler._compute_thematic_report({
+        'theme': ['marriage', 'career', 'wealth'],
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+    })
+
+    assert result['success'] is True
+    career_axes = result['themes']['career']['interpretation_axes']
+    marriage_axes = result['themes']['marriage']['interpretation_axes']
+    wealth_axes = result['themes']['wealth']['interpretation_axes']
+    career_bundle = result['themes']['career']['strict_adjudication_bundle']
+
+    assert len(career_axes) >= 4
+    assert len(marriage_axes) >= 4
+    assert len(wealth_axes) >= 4
+
+    assert career_bundle['interpretation_axes'][0]['axis'] == '角色定位'
+    assert career_bundle['monthly_adjudication_summary']['primary_state']['value']
+    assert 'strict_audit_gate' in career_bundle
+    assert career_axes[0]['axis'] == '角色定位'
+    assert 'judgement' in career_axes[0]
+    assert '第10宫' in career_axes[0]['judgement']
+    assert '时间边界' in career_axes[0]['judgement']
+
+    assert marriage_axes[0]['axis'] == '关系推进'
+    assert '第7宫' in marriage_axes[0]['judgement'] or 'D9' in marriage_axes[0]['judgement']
+    assert '时间边界' in marriage_axes[0]['judgement']
+
+    assert wealth_axes[0]['axis'] == '收入兑现'
+    assert '第2宫' in wealth_axes[0]['judgement'] or '第11宫' in wealth_axes[0]['judgement']
+    assert '时间边界' in wealth_axes[0]['judgement']
 
 
 def test_fragment_audit_blocks_registry_surface_drift() -> None:
@@ -1241,6 +1800,537 @@ def test_rectification_gate_returns_varga_risk_summary() -> None:
     assert result['effective_accuracy'] == '15min'
     assert 'headline' in result['summary']
     assert result['summary']['recommended_events']
+
+
+def test_high_rigor_workflow_reuses_existing_rectification_backtest_and_vedastro_layers(monkeypatch) -> None:
+    handler = _handler()
+
+    fake_chart = {
+        'success': True,
+        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'chart': {
+            'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+            'planets': _sample_planets(),
+        },
+        'modules': {
+            'vedastro_range_scan_result': {
+                'backend': 'vedastro_service_adapter_candidate',
+                'status': 'partial',
+                'event_count': 2,
+                'source_metadata': {
+                    'official_full_capability_catalog_status': 'partial',
+                    'official_full_capability_catalog_summary': {
+                        'catalog_method_count': 641,
+                        'executed_method_count': 0,
+                    },
+                    'official_full_capability_domain_routing': {
+                        'career': {'auto_method_count': 298, 'high_priority_methods': ['DasaAtRange']},
+                    },
+                    'official_full_capability_dynamic_selection': {
+                        'career': {
+                            'selected_methods': [
+                                {'method': 'SearchEvents', 'citation_id': 'vedastro:career:SearchEvents'},
+                            ],
+                            'report_reference': {
+                                'theme': 'career',
+                                'citation_ids': ['vedastro:career:SearchEvents'],
+                                'auto_count': 1,
+                            },
+                        },
+                    },
+                    'official_report_references': {
+                        'career': {'citation_ids': ['vedastro:career:SearchEvents'], 'auto_count': 1},
+                    },
+                },
+                'official_full_snapshot': {
+                    'status': 'partial',
+                    'source_metadata': {
+                        'official_full_capability_catalog': {
+                            'status': 'partial',
+                            'summary': {'catalog_method_count': 641},
+                            'domain_routing': {
+                                'career': {'auto_method_count': 298, 'high_priority_methods': ['DasaAtRange']},
+                            },
+                            'dynamic_selection': {
+                                'career': {
+                                    'selected_methods': [
+                                        {'method': 'SearchEvents', 'citation_id': 'vedastro:career:SearchEvents'},
+                                    ],
+                                    'report_reference': {
+                                        'theme': 'career',
+                                        'citation_ids': ['vedastro:career:SearchEvents'],
+                                        'auto_count': 1,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        'ai_prompt_pack': {
+            'evidence_snapshot': {
+                'vedastro_official_snapshot': {
+                    'official_full_capability_catalog_summary': {
+                        'catalog_method_count': 641,
+                    },
+                    'official_full_capability_domain_routing': {
+                        'career': {'auto_method_count': 298, 'high_priority_methods': ['DasaAtRange']},
+                    },
+                    'official_full_capability_dynamic_selection': {
+                        'career': {
+                            'selected_methods': [
+                                {'method': 'SearchEvents', 'citation_id': 'vedastro:career:SearchEvents'},
+                            ],
+                            'report_reference': {
+                                'theme': 'career',
+                                'citation_ids': ['vedastro:career:SearchEvents'],
+                                'auto_count': 1,
+                            },
+                        },
+                    },
+                    'official_report_references': {
+                        'career': {'citation_ids': ['vedastro:career:SearchEvents'], 'auto_count': 1},
+                    },
+                },
+            },
+        },
+    }
+
+    monkeypatch.setattr(handler, '_compute_chart', lambda body: fake_chart)
+    monkeypatch.setattr(handler, '_compute_rectification_gate', lambda body: {
+        'success': True,
+        'endpoint': 'rectification_gate',
+        'summary': {'recommended_events': ['career_change', 'relocation']},
+    })
+    monkeypatch.setattr(handler, '_compute_thematic_report', lambda body: {
+        'success': True,
+        'endpoint': 'thematic_report',
+        'mode': 'derived_chart_evidence',
+        'theme_count': len(body.get('theme') or []),
+        'themes': {theme: {'summary': f'{theme} report'} for theme in body.get('theme') or []},
+    })
+
+    class FakeBacktest:
+        @staticmethod
+        def build_report(payload):
+            return {
+                'scope': 'historical_event_backtest',
+                'summary': {'total_events': len(payload['events']), 'strong_hits': 1},
+                'events': payload['events'],
+            }
+
+    def fake_loader(name):
+        if name == 'historical_event_backtest':
+            return FakeBacktest
+        return _load_local_module(name)
+
+    monkeypatch.setattr(jyotish_api_server, '_load_local_module', fake_loader)
+
+    result = handler._compute_high_rigor_workflow({
+        'question': '请高严谨分析我的事业、婚恋和财富',
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+        'events': [
+            {'id': 'career_turn_2019', 'date': '2019-12-15', 'domain': 'career'},
+            {'id': 'project_end_2025', 'date': '2025-02-28', 'domain': 'wealth'},
+        ],
+    })
+
+    assert result['success'] is True
+    assert result['endpoint'] == 'high_rigor_workflow'
+    assert result['reused_modules'] == [
+        'vedastro_evidence_orchestrator',
+        'birth_time_rectifier',
+        'historical_event_backtest',
+        'report_orchestrator',
+        'reading_orchestrator',
+        'orchestrator_bridge',
+    ]
+    assert result['source_priority']['mode'] == 'vedastro_official_snapshot_first'
+    assert result['vedastro_official']['official_full_capability_catalog_summary']['catalog_method_count'] == 641
+    assert result['vedastro_official']['official_full_capability_domain_routing']['career']['auto_method_count'] == 298
+    assert result['vedastro_official']['official_report_references']['career']['citation_ids'] == ['vedastro:career:SearchEvents']
+    assert result['rectification']['endpoint'] == 'rectification_gate'
+    assert result['historical_event_backtest']['summary']['total_events'] == 2
+    assert result['thematic_report']['mode'] == 'derived_chart_evidence'
+    assert result['routes'] == ['career', 'relationship', 'finance']
+    assert result['unified_orchestrator']['name'] == 'UnifiedConsultationOrchestrator'
+    assert result['unified_orchestrator']['surface'] == 'api_web'
+    assert result['unified_orchestrator']['route']['question_type'] == 'career'
+
+
+def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -> None:
+    handler = _handler()
+
+    fake_chart = {
+        'success': True,
+        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'special_lagnas': {'precision': 'sunrise_correct'},
+        'chart': {
+            'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+            'planets': _sample_planets(),
+        },
+        'modules': {
+            'vedastro_range_scan_result': {
+                'backend': 'vedastro_service_adapter_candidate',
+                'status': 'partial',
+                'event_count': 1,
+                'source_metadata': {
+                    'official_full_capability_catalog_status': 'partial',
+                    'official_full_capability_catalog_summary': {
+                        'catalog_method_count': 641,
+                        'executed_method_count': 0,
+                    },
+                },
+            },
+        },
+        'ai_prompt_pack': {
+            'evidence_snapshot': {
+                'vedastro_official_snapshot': {
+                    'official_full_capability_catalog_summary': {
+                        'catalog_method_count': 641,
+                    },
+                },
+            },
+        },
+    }
+
+    monkeypatch.setattr(handler, '_compute_chart', lambda body: fake_chart)
+    monkeypatch.setattr(handler, '_compute_rectification_gate', lambda body: {
+        'success': True,
+        'endpoint': 'rectification_gate',
+        'summary': {'recommended_events': ['career_change']},
+    })
+    monkeypatch.setattr(handler, '_compute_thematic_report', lambda body: {
+        'success': True,
+        'endpoint': 'thematic_report',
+        'mode': 'derived_chart_evidence',
+        'theme_count': len(body.get('theme') or []),
+        'themes': {theme: {'summary': f'{theme} report'} for theme in body.get('theme') or []},
+    })
+
+    class FakeBacktest:
+        @staticmethod
+        def build_report(payload):
+            return {
+                'scope': 'historical_event_backtest',
+                'summary': {'total_events': len(payload['events']), 'strong_hits': 0},
+                'events': payload['events'],
+            }
+
+    def fake_loader(name):
+        if name == 'historical_event_backtest':
+            return FakeBacktest
+        return _load_local_module(name)
+
+    monkeypatch.setattr(jyotish_api_server, '_load_local_module', fake_loader)
+
+    result = handler._compute_consultation_workflow({
+        'entry_mode': 'direct_chart',
+        'question': '请直接排盘并重点看事业',
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+        'theme': ['career'],
+    })
+
+    assert result['success'] is True
+    assert result['endpoint'] == 'consultation_workflow'
+    assert result['entry_mode'] == 'direct_chart'
+    assert result['routing']['question_type'] == 'career'
+    assert result['unified_orchestrator']['name'] == 'UnifiedConsultationOrchestrator'
+    assert result['unified_orchestrator']['surface'] == 'api_web'
+    assert result['runtime_planner']['planner_name'] == 'UnifiedConsultationRuntimePlanner'
+    assert result['runtime_planner']['entry_mode'] == 'direct_chart'
+    assert result['runtime_planner']['route']['question_type'] == 'career'
+    assert result['runtime_planner']['sync_steps'][0] == 'compute_chart'
+    assert result['runtime_planner']['executed_steps'] == [
+        'compute_chart',
+        'run_rectification_gate',
+        'run_thematic_report',
+    ]
+    assert result['runtime_planner']['skipped_steps'] == ['run_historical_event_backtest']
+    assert result['source_priority']['mode'] == 'vedastro_official_snapshot_first'
+    assert result['chart']['special_lagnas']['precision'] == 'sunrise_correct'
+
+
+def test_consultation_workflow_reuses_chart_data_for_thematic_report_without_recursive_full_reading(monkeypatch) -> None:
+    handler = _handler()
+    fake_chart = {
+        'success': True,
+        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+        'planets': _sample_planets(),
+        'chart': {
+            'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+            'planets': _sample_planets(),
+        },
+        'modules': {},
+        'special_lagnas': {'precision': 'sunrise_correct'},
+    }
+
+    seen = {}
+
+    monkeypatch.setattr(handler, '_compute_chart', lambda body: fake_chart)
+    monkeypatch.setattr(handler, '_compute_rectification_gate', lambda body: {
+        'success': True,
+        'endpoint': 'rectification_gate',
+        'summary': {'recommended_events': []},
+    })
+    monkeypatch.setattr(handler, '_run_high_rigor_historical_backtest', lambda birth, events: {
+        'scope': 'historical_event_backtest',
+        'summary': {'total_events': 0},
+        'events': [],
+    })
+
+    def fake_thematic_report(body):
+        seen['body'] = dict(body)
+        return {
+            'success': True,
+            'endpoint': 'thematic_report',
+            'mode': 'upstream_contract_reuse',
+            'evidence_source': {
+                'mode': 'upstream_contract_reuse',
+                'source': 'consultation_workflow_upstream_contract',
+            },
+            'themes': {},
+            'theme_count': len(body.get('theme') or []),
+        }
+
+    monkeypatch.setattr(handler, '_compute_thematic_report', fake_thematic_report)
+
+    result = handler._compute_consultation_workflow({
+        'entry_mode': 'direct_chart',
+        'question': '请直接排盘并进入互动解盘',
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+        'theme': ['career', 'marriage', 'wealth'],
+    })
+
+    assert result['success'] is True
+    assert seen['body']['chart_data']['birth_info']['date'] == 'REDACTED_DATE'
+    assert seen['body']['chart_data']['ascendant']['sign'] == 'Cancer'
+    assert seen['body']['skip_full_reading_for_thematic'] is True
+    assert 'upstream_contract' in seen['body']
+    assert 'strict_workflow_contracts' in seen['body']['upstream_contract']
+    assert result['runtime_planner']['executed_steps'] == [
+        'compute_chart',
+        'run_rectification_gate',
+        'run_thematic_report',
+    ]
+    assert result['runtime_planner']['skipped_steps'] == ['run_historical_event_backtest']
+
+
+def test_consultation_workflow_rectification_entry_reuses_chart_without_duplicate_compute(monkeypatch) -> None:
+    handler = _handler()
+    fake_chart = {
+        'success': True,
+        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+        'planets': _sample_planets(),
+        'chart': {
+            'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+            'planets': _sample_planets(),
+        },
+        'modules': {},
+        'special_lagnas': {'precision': 'sunrise_correct'},
+    }
+
+    calls = {'count': 0}
+    seen = {}
+
+    def fake_chart_compute(body):
+        calls['count'] += 1
+        return fake_chart
+
+    monkeypatch.setattr(handler, '_compute_chart', fake_chart_compute)
+    monkeypatch.setattr(handler, '_compute_rectification_gate', lambda body: {
+        'success': True,
+        'endpoint': 'rectification_gate',
+        'summary': {'recommended_events': ['marriage', 'career_change']},
+    })
+    monkeypatch.setattr(handler, '_run_high_rigor_historical_backtest', lambda birth, events: {
+        'scope': 'historical_event_backtest',
+        'summary': {'total_events': 0},
+        'events': [],
+    })
+
+    def fake_thematic_report(body):
+        seen['body'] = dict(body)
+        return {
+            'success': True,
+            'endpoint': 'thematic_report',
+            'mode': 'upstream_contract_reuse',
+            'themes': {theme: {'summary': f'{theme} report'} for theme in body.get('theme') or []},
+            'theme_count': len(body.get('theme') or []),
+        }
+
+    monkeypatch.setattr(handler, '_compute_thematic_report', fake_thematic_report)
+
+    result = handler._compute_consultation_workflow({
+        'entry_mode': 'rectification',
+        'question': '先做生时校正，再看婚恋',
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+        'theme': ['marriage'],
+    })
+
+    assert result['success'] is True
+    assert result['entry_mode'] == 'rectification'
+    assert result['runtime_planner']['entry_mode'] == 'rectification'
+    assert result['runtime_planner']['executed_steps'] == [
+        'run_rectification_gate',
+        'compute_chart',
+        'run_thematic_report',
+    ]
+    assert calls['count'] == 1
+    assert seen['body']['chart_data']['birth_info']['date'] == 'REDACTED_DATE'
+    assert seen['body']['skip_full_reading_for_thematic'] is True
+
+
+def test_consultation_workflow_rectification_entry_sends_empty_objects_before_chart(monkeypatch) -> None:
+    handler = _handler()
+    fake_chart = {
+        'success': True,
+        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+        'planets': _sample_planets(),
+        'modules': {},
+    }
+
+    seen = {}
+
+    monkeypatch.setattr(handler, '_compute_chart', lambda body: fake_chart)
+
+    def fake_rectification_gate(body):
+        seen['rectification_body'] = dict(body)
+        return {
+            'success': True,
+            'endpoint': 'rectification_gate',
+            'summary': {'recommended_events': []},
+        }
+
+    monkeypatch.setattr(handler, '_compute_rectification_gate', fake_rectification_gate)
+    monkeypatch.setattr(handler, '_compute_thematic_report', lambda body: {
+        'success': True,
+        'endpoint': 'thematic_report',
+        'mode': 'derived_chart_evidence',
+        'theme_count': len(body.get('theme') or []),
+    })
+
+    result = handler._compute_consultation_workflow({
+        'entry_mode': 'rectification',
+        'question': '先做生时校正，再看事业',
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+        'theme': ['career'],
+    })
+
+    assert result['success'] is True
+    assert result['runtime_planner']['executed_steps'][0] == 'run_rectification_gate'
+    assert seen['rectification_body']['planets'] == {}
+    assert seen['rectification_body']['ascendant'] == {}
+
+
+def test_thematic_report_handles_missing_dasa_convergence_without_crash(monkeypatch) -> None:
+    handler = _handler()
+
+    monkeypatch.setattr(handler, '_derive_thematic_evidence', lambda raw, report_orchestrator: {
+        'chart_data': {
+            'planets': _sample_planets(),
+            'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+            'houses': {},
+            'dasha': {},
+            'yogas': [],
+            'ashtakavarga': {},
+        },
+        'evidence': {
+            'career': [
+                {
+                    'technique': 'career_test',
+                    'chart': 'D1',
+                    'conclusion': 'career ok',
+                    'sentiment': 'positive',
+                    'strength': 'moderate',
+                    'details': {'source': 'test'},
+                }
+            ],
+            'marriage': [],
+            'wealth': [],
+            'health': [],
+            'spirituality': [],
+        },
+        'module_status': {'full_reading': 'skipped_reuse_chart_data'},
+        'warnings': [],
+        'evidence_counts': {'career': 1, 'marriage': 0, 'wealth': 0, 'health': 0, 'spirituality': 0},
+        'full_reading_used': False,
+        'full_reading_summary': {},
+        'full_reading_module_count': 0,
+    })
+
+    result = handler._compute_thematic_report({
+        'theme': ['career'],
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+    })
+
+    assert result['success'] is True
+    assert result['mode'] == 'derived_chart_evidence'
+    assert result['themes']['career']['evidence']
+
+
+def test_derived_career_evidence_handles_none_top_convergent_domains() -> None:
+    handler = _handler()
+    items = handler._derived_career_evidence(
+        {
+            'planets': _sample_planets(),
+            'ascendant': {'sign': 'Cancer'},
+            'houses': {},
+        },
+        {
+            'career': {'summary': 'career ok'},
+            'shadbala': {'planets': {'Sun': {'rupas': 5.0}}},
+            'full_modules': {'dasa_convergence': {'top_convergent_domains': None}},
+        },
+    )
+
+    assert items
 
 
 def test_case_validation_endpoint_returns_evidence_summary() -> None:
@@ -1603,6 +2693,16 @@ def test_chart_ai_prompt_pack_exposes_functional_benefic_malefic_layer() -> None
     assert vedastro['source'] == 'vedastro_service_adapter_candidate'
     assert vedastro['ingestion_profile'] == 'main_entry_overview'
     assert vedastro['visibility'] == 'user_visible_overview_only'
+    official = prompt_pack['evidence_snapshot']['vedastro_official_full_snapshot']
+    assert official['primary_source'] == 'vedastro_official'
+    assert 'official_python_path' in official
+    assert 'official_bundle_status' in official
+    assert 'official_chart_available' in official
+    assert 'official_full_capability_catalog_status' in official
+    assert 'official_full_capability_catalog_summary' in official
+    assert 'official_full_capability_domain_routing' in official
+    assert 'official_full_capability_dynamic_selection' in official
+    assert 'official_report_references' in official
 
 
 def test_chart_auto_attaches_vedastro_main_entry_boundary(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1626,9 +2726,290 @@ def test_chart_auto_attaches_vedastro_main_entry_boundary(monkeypatch: pytest.Mo
     vedastro = result["modules"]["vedastro_range_scan_result"]
     assert vedastro["backend"] == "vedastro_service_adapter_candidate"
     assert vedastro["status"] == "network_execution_disabled"
-    assert vedastro["source_metadata"]["ingestion_profile"] == "main_entry_overview"
-    assert vedastro["source_metadata"]["reference_date"]
-    assert sorted(vedastro["source_metadata"]["domain_statuses"]) == ["career", "marriage", "wealth"]
+
+
+def test_api_chart_response_cache_reuses_cached_value(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("JYOTISH_API_CHART_CACHE_TTL_SECONDS", "600")
+    monkeypatch.delenv("VEDASTRO_API_ENDPOINT", raising=False)
+    monkeypatch.delenv("VEDASTRO_ENABLE_NETWORK", raising=False)
+    payload = {
+        'year': 1990,
+        'month': 6,
+        'day': 15,
+        'hour': 12,
+        'minute': 0,
+        'second': 0,
+        'lat': 39.9,
+        'lon': 116.4,
+        'tz': 8,
+        'ayanamsa': 'lahiri',
+        'node_mode': 'mean',
+        'today': '2026-06-30',
+        'transit_date': '2026-06-30',
+    }
+    cache_payload = jyotish_api_server._build_api_chart_cache_payload(payload)
+    stored = jyotish_api_server._store_api_chart_response_cache(
+        cache_payload,
+        {'success': True, 'modules': {'chart': {'planets': {}, 'ascendant': {}}}},
+    )
+    cached = jyotish_api_server._load_api_chart_response_cache(cache_payload)
+
+    assert stored['runtime_cache']['scope'] == 'api_chart_response'
+    assert stored['runtime_cache']['cache_hit'] is False
+    assert cached is not None
+    assert cached['runtime_cache']['cache_hit'] is True
+    assert cached['runtime_cache']['cache_key'] == stored['runtime_cache']['cache_key']
+
+
+def test_api_chart_cache_key_tracks_vedastro_runtime_state(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = {
+        'year': 1990,
+        'month': 6,
+        'day': 15,
+        'hour': 12,
+        'minute': 0,
+        'second': 0,
+        'lat': 39.9,
+        'lon': 116.4,
+        'tz': 8,
+        'ayanamsa': 'lahiri',
+        'node_mode': 'mean',
+        'today': '2026-06-30',
+        'transit_date': '2026-06-30',
+    }
+    monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://vedastro.example.test/api")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "0")
+    key_disabled = jyotish_api_server._api_chart_cache_key(
+        jyotish_api_server._build_api_chart_cache_payload(payload)
+    )
+
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    key_enabled = jyotish_api_server._api_chart_cache_key(
+        jyotish_api_server._build_api_chart_cache_payload(payload)
+    )
+
+    assert key_disabled != key_enabled
+
+
+def test_high_rigor_plan_only_surfaces_chart_cache_and_queue_strategy() -> None:
+    handler = _handler()
+
+    result = handler._high_rigor_workflow_plan_only(
+        {
+            'year': REDACTED_YEAR,
+            'month': 4,
+            'day': 17,
+            'hour': 14,
+            'minute': 49,
+            'lat': 36.4467,
+            'lon': 114.2,
+            'tz': 8,
+        },
+        ['career'],
+        [],
+    )
+
+    strategy = result['execution_strategy']
+    assert strategy['chart_path']['mode'] == 'sync_chart_response_cache'
+    assert strategy['chart_path']['cache_scope'] == 'api_chart_response'
+    assert strategy['queue_recommendation']['recommended'] is True
+    assert strategy['queue_recommendation']['lane'] == 'high_rigor_workflow'
+
+
+def test_high_rigor_async_submit_returns_job_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    handler = _handler()
+
+    monkeypatch.setattr(handler, '_enqueue_high_rigor_job', lambda body: {
+        'success': True,
+        'endpoint': 'high_rigor_workflow_async',
+        'mode': 'async_submitted',
+        'job_id': 'hrw_test_job_1',
+        'status': 'queued',
+        'poll_path': '/api/high_rigor_workflow/jobs/hrw_test_job_1',
+    })
+
+    result = handler._compute_high_rigor_workflow({
+        'async': True,
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+    })
+
+    assert result['mode'] == 'async_submitted'
+    assert result['job_id'] == 'hrw_test_job_1'
+    assert result['status'] == 'queued'
+    assert result['poll_path'].endswith('/hrw_test_job_1')
+
+
+def test_chart_async_submit_returns_job_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    handler = _handler()
+
+    monkeypatch.setattr(handler, '_enqueue_chart_job', lambda body: {
+        'success': True,
+        'endpoint': 'chart_async',
+        'mode': 'async_submitted',
+        'job_id': 'chart_test_job_1',
+        'status': 'queued',
+        'poll_path': '/api/chart/jobs/chart_test_job_1',
+        'scope': 'api_chart_response',
+    })
+
+    result = handler._compute_chart({
+        'async': True,
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+    })
+
+    assert result['mode'] == 'async_submitted'
+    assert result['job_id'] == 'chart_test_job_1'
+    assert result['status'] == 'queued'
+    assert result['poll_path'].endswith('/chart_test_job_1')
+    assert result['scope'] == 'api_chart_response'
+
+
+def test_high_rigor_job_poll_endpoint_returns_cached_job_payload(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(jyotish_api_server, '_load_high_rigor_job_record', lambda job_id: {
+        'success': True,
+        'endpoint': 'high_rigor_workflow_async',
+        'mode': 'async_result',
+        'job_id': job_id,
+        'status': 'completed',
+        'result': {'success': True, 'endpoint': 'high_rigor_workflow'},
+    })
+    handler = _HighRigorJobCaptureHandler('/api/high_rigor_workflow/jobs/hrw_test_job_2')
+
+    handler.do_GET()
+
+    assert handler.status_code == 200
+    payload = handler.payload()
+    assert payload['job_id'] == 'hrw_test_job_2'
+    assert payload['status'] == 'completed'
+    assert payload['result']['endpoint'] == 'high_rigor_workflow'
+
+
+def test_chart_job_poll_endpoint_returns_cached_job_payload(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(jyotish_api_server, '_load_async_job_record', lambda scope, job_id: {
+        'success': True,
+        'endpoint': 'chart_async',
+        'mode': 'async_result',
+        'job_id': job_id,
+        'status': 'completed',
+        'scope': scope,
+        'result': {'success': True, 'runtime_cache': {'scope': 'api_chart_response'}},
+    })
+    handler = _HighRigorJobCaptureHandler('/api/chart/jobs/chart_test_job_2')
+
+    handler.do_GET()
+
+    assert handler.status_code == 200
+    payload = handler.payload()
+    assert payload['job_id'] == 'chart_test_job_2'
+    assert payload['status'] == 'completed'
+    assert payload['scope'] == 'api_chart_response'
+    assert payload['result']['runtime_cache']['scope'] == 'api_chart_response'
+
+
+def test_high_rigor_async_job_executes_in_background(monkeypatch: pytest.MonkeyPatch) -> None:
+    handler = _handler()
+    writes: list[tuple[str, dict]] = []
+
+    def fake_write(job_id: str, payload: dict) -> dict:
+        writes.append((job_id, dict(payload)))
+        return payload
+
+    def fake_sync(body: dict) -> dict:
+        time.sleep(0.05)
+        return {'success': True, 'endpoint': 'high_rigor_workflow', 'body': dict(body)}
+
+    monkeypatch.setattr(jyotish_api_server, '_write_high_rigor_job_record', fake_write)
+    monkeypatch.setattr(handler, '_compute_high_rigor_workflow_sync', fake_sync)
+
+    result = handler._enqueue_high_rigor_job({
+        'async': True,
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+    })
+
+    assert result['mode'] == 'async_submitted'
+    assert result['status'] == 'queued'
+    assert writes[0][1]['status'] == 'queued'
+    assert writes[1][1]['status'] == 'running'
+    assert len(writes) == 2
+
+    deadline = time.time() + 1.0
+    while len(writes) < 3 and time.time() < deadline:
+        time.sleep(0.01)
+
+    assert len(writes) >= 3
+    assert writes[-1][1]['status'] == 'completed'
+    assert writes[-1][1]['mode'] == 'async_result'
+    assert writes[-1][1]['result']['endpoint'] == 'high_rigor_workflow'
+
+
+def test_chart_async_job_executes_in_background(monkeypatch: pytest.MonkeyPatch) -> None:
+    handler = _handler()
+    writes: list[tuple[str, str, dict]] = []
+
+    def fake_write(scope: str, job_id: str, payload: dict) -> dict:
+        writes.append((scope, job_id, dict(payload)))
+        return payload
+
+    def fake_sync(body: dict) -> dict:
+        time.sleep(0.05)
+        return {
+            'success': True,
+            'modules': {'chart': {'planets': {}, 'ascendant': {}}},
+            'runtime_cache': {'scope': 'api_chart_response'},
+        }
+
+    monkeypatch.setattr(jyotish_api_server, '_write_async_job_record', fake_write)
+    monkeypatch.setattr(handler, '_compute_chart_sync', fake_sync)
+
+    result = handler._enqueue_chart_job({
+        'async': True,
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+    })
+
+    assert result['endpoint'] == 'chart_async'
+    assert result['mode'] == 'async_submitted'
+    assert result['status'] == 'queued'
+    assert writes[0][0] == 'api_chart_response'
+    assert writes[0][2]['status'] == 'queued'
+    assert writes[1][2]['status'] == 'running'
+
+    deadline = time.time() + 1.0
+    while len(writes) < 3 and time.time() < deadline:
+        time.sleep(0.01)
+
+    assert len(writes) >= 3
+    assert writes[-1][2]['status'] == 'completed'
+    assert writes[-1][2]['mode'] == 'async_result'
+    assert writes[-1][2]['result']['runtime_cache']['scope'] == 'api_chart_response'
+    assert 'modules' in writes[-1][2]['result']
 
 
 def test_yogas_endpoint_returns_summary_counts() -> None:

@@ -33,6 +33,15 @@ VARGA_META = {
 def _si(lon): return int(lon/30)%12
 def _sn(i): return SIGNS[i%12]
 def _odd(si): return si%2==0  # Aries(0)=odd
+def _modality(si):
+    if si % 3 == 0:
+        return 'movable'
+    if si % 3 == 1:
+        return 'fixed'
+    return 'dual'
+
+def _element(si):
+    return si % 4
 
 def _d30_map(si, pi):
     if _odd(si):
@@ -73,9 +82,68 @@ def varga_map(si, pi, div):
     if div==60: return (si+pi)%12 if o else (si+1+pi)%12
     raise ValueError(f"不支持的D{div}")
 
-def calc_varga(lon, div):
+
+def _d30_map_vedastro(si, pi):
+    if _odd(si):
+        if pi < 5: return 7
+        if pi < 10: return 10
+        if pi < 18: return 8
+        if pi < 25: return 2
+        return 6
+    else:
+        if pi < 5: return 1
+        if pi < 12: return 2
+        if pi < 20: return 8
+        if pi < 25: return 9
+        return 7
+
+
+def varga_map_vedastro(si, pi, div):
+    """VedAstro-compatible varga sign mapping.
+
+    This mode is calibrated against VedAstro official AllPlanetData /
+    AllHouseData outputs. It intentionally lives beside the historical local
+    mapping so older research workflows can still audit classical variants.
+    """
+    if div == 2:
+        return (si + pi * 4) % 12
+    if div == 4:
+        return (si + pi * 3) % 12
+    if div == 7:
+        return (si + pi) % 12
+    if div == 16:
+        start = {'movable': 0, 'fixed': 4, 'dual': 8}[_modality(si)]
+        return (start + pi) % 12
+    if div == 20:
+        start = {'movable': 0, 'fixed': 8, 'dual': 4}[_modality(si)]
+        return (start + pi) % 12
+    if div == 27:
+        start = {0: 0, 1: 3, 2: 6, 3: 9}[_element(si)]
+        return (start + pi) % 12
+    if div == 30:
+        return _d30_map_vedastro(si, pi)
+    if div == 45:
+        start = {'movable': 0, 'fixed': 4, 'dual': 8}[_modality(si)]
+        return (start + pi) % 12
+    if div == 60:
+        return (si + pi) % 12
+    return varga_map(si, pi, div)
+
+def calc_varga(lon, div, mode='classical_local'):
     """计算行星在指定分盘的位置（星座+精确度数+尊贵状态）"""
-    si=_si(lon); d=lon-si*30; ps=30.0/div; pi=int(d/ps)
+    si=_si(lon); d=lon-si*30
+    if mode == 'vedastro' and div == 2:
+        ps = 10.0
+        pi = int(d / ps)
+        dp = (d - pi * ps) * 3
+        dp_display = round(dp, 4)
+        if dp_display >= 30:
+            dp_display = 0.0
+        vsi = varga_map_vedastro(si, pi, div)
+        r={'sign':_sn(vsi),'sign_idx':vsi,'degree_in_sign':dp_display,
+           'part_index':pi,'lord':SIGN_LORDS.get(_sn(vsi),'')}
+        return r
+    ps=30.0/div; pi=int(d/ps)
     # For all vargas, degree within divisional sign is scaled to 0-30 degrees.
     dp=(d-pi*ps)*div
     # Keep the displayed divisional degree inside [0, 30). Values such as
@@ -84,7 +152,7 @@ def calc_varga(lon, div):
     dp_display = round(dp, 4)
     if dp_display >= 30:
         dp_display = 0.0
-    vsi=varga_map(si,pi,div)
+    vsi=varga_map_vedastro(si,pi,div) if mode == 'vedastro' else varga_map(si,pi,div)
     r={'sign':_sn(vsi),'sign_idx':vsi,'degree_in_sign':dp_display,
        'part_index':pi,'lord':SIGN_LORDS.get(_sn(vsi),'')}
     if div==9: r['pada']=pi+1
@@ -173,7 +241,7 @@ def dignity(planet, sign_idx):
     if planet in OWN_SIGNS and sign_idx in OWN_SIGNS[planet]: return 'Own Sign'
     return 'Neutral'
 
-def calc_all_vargas(planet_lons, asc_lon, divisions=None):
+def calc_all_vargas(planet_lons, asc_lon, divisions=None, mode='classical_local'):
     """批量计算所有指定分盘"""
     if divisions is None:
         divisions=[2,3,4,7,9,10,12,16,20,24,27,30,40,45,60]
@@ -183,9 +251,9 @@ def calc_all_vargas(planet_lons, asc_lon, divisions=None):
         key=f"D{div}_{m.get('name',f'D{div}')}"
         vd={'_meta':{'div':div,'name':m.get('name',''),'cn':m.get('cn',''),
                       'area':m.get('area',''),'part_size':30.0/div}}
-        vd['Ascendant']=calc_varga(asc_lon,div)
+        vd['Ascendant']=calc_varga(asc_lon,div,mode=mode)
         for pn,lon in planet_lons.items():
-            vd[pn]=calc_varga(lon,div)
+            vd[pn]=calc_varga(lon,div,mode=mode)
         # 尊贵状态
         vd['_dignity']={pn:dignity(pn,pd['sign_idx'])
             for pn,pd in vd.items() if pn not in ('Ascendant','_meta') and isinstance(pd,dict) and 'sign_idx' in pd}

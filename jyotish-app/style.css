@@ -4730,6 +4730,17 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
 .guided-topic-question:hover {
   border-color: var(--accent);
 }
+.career-quick-questions {
+  margin-bottom: 16px;
+}
+.career-quick-question-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.career-quick-question {
+  min-height: 38px;
+}
 .guided-topic-footer {
   display: flex;
   justify-content: space-between;
@@ -5428,6 +5439,54 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
 .provenance-card-wide {
   grid-column: 1 / -1;
 }
+.workflow-summary-panel {
+  margin: 0 0 12px;
+}
+.workflow-summary-card {
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+}
+.workflow-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.workflow-summary-pill {
+  min-width: 0;
+  padding: 8px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.workflow-summary-pill strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text-heading);
+  font-size: 12px;
+}
+.workflow-provenance-panel {
+  margin-top: 12px;
+}
+.workflow-provenance-list {
+  display: grid;
+  gap: 8px;
+}
+.workflow-provenance-list code {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .ai-prompt-pack-panel {
   margin: 0 0 12px;
   padding: 16px;
@@ -5583,6 +5642,57 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
 }
 .ai-prompt-pack-strength {
   margin-top: 8px;
+}
+.ai-prompt-pack-contracts {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+}
+.ai-prompt-pack-contracts h4 {
+  margin: 0 0 8px;
+  color: var(--text-heading);
+  font-size: 13px;
+}
+.ai-prompt-pack-contract-list {
+  display: grid;
+  gap: 8px;
+}
+.ai-prompt-pack-contract-card {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+.ai-prompt-pack-contract-card.is-primary {
+  border-color: rgba(32, 111, 83, 0.3);
+  background: rgba(32, 111, 83, 0.04);
+}
+.ai-prompt-pack-contract-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.ai-prompt-pack-contract-head strong {
+  color: var(--text-heading);
+  font-size: 12px;
+}
+.ai-prompt-pack-contract-head span,
+.ai-prompt-pack-contract-card small {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.ai-prompt-pack-contract-grid {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+.ai-prompt-pack-contract-grid span {
+  color: var(--text-body);
+  font-size: 11px;
+  overflow-wrap: anywhere;
 }
 .ai-prompt-pack-foot {
   margin-top: 12px;
@@ -6833,6 +6943,7 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   .technique-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .provenance-grid,
   .provenance-kv-grid,
+  .workflow-summary-grid,
   .roadmap-grid { grid-template-columns: 1fr; }
   .panchanga-range-controls,
   .panchanga-condition-options,

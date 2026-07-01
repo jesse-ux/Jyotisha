@@ -15,6 +15,7 @@ from shadbala import (
     NAISARGIKA_BALA, MIN_REQUIRED, DIG_BALA_HOUSE,
     EXALTATION_DEG, DEBILITATION_DEG, FRIENDSHIP, SHADBALA_CONSTANTS_PATH,
 )
+from scripts.shadbala_oracle_comparison import compare_case
 
 # Standard test chart data
 def _sample_planets():
@@ -70,6 +71,16 @@ class TestSthanaBala:
         result = calc_sthana_bala('Sun', 5.0, 'Aries', 1)
         assert result['drekkana_bala'] in (0, 15)
 
+    def test_sapta_d3_exaltation_branch_is_capped_below_d1_exaltation(self):
+        result = calc_sthana_bala('Sun', 0.0, 'Aries', 1)
+        assert result['sapta_d1'] == 50.0
+        assert result['sapta_d3'] == 45.0
+
+    def test_sapta_d3_own_sign_branch_is_capped_below_d1_own_sign(self):
+        result = calc_sthana_bala('Venus', 30.0, 'Taurus', 2)
+        assert result['sapta_d1'] == 45.0
+        assert result['sapta_d3'] == 30.0
+
     def test_total_positive(self):
         result = calc_sthana_bala('Jupiter', 105.0, 'Cancer', 5)
         assert result['total'] > 0
@@ -123,6 +134,12 @@ class TestDigBala:
 
     def test_midrange_positive(self):
         assert 0 < calc_dig_bala('Sun', 7) < 60
+
+    def test_dig_bala_jupiter_redacted_place_case_needs_better_than_house_only_linear_model(self):
+        comparison = compare_case("references/oracle/dasha_shadbala_oracle_cases.json", "template_redacted_place_shadbala_raman")
+        jupiter_dig_gap = comparison["comparison"]["Jupiter"]["components"]["dig"]["abs_diff_rupa"]
+
+        assert jupiter_dig_gap < 3.6348
 
 
 # ── Kala Bala Tests ─────────────────────────────────────────────────

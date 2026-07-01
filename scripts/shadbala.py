@@ -330,9 +330,9 @@ def calc_sthana_bala(pname: str, lon: float, sign: str, house: int) -> Dict:
     d3_sign_idx = varga_map(sign_idx, d3_part, 3)
     d3_sign = VARGA_SIGNS[d3_sign_idx]
     if pname == VARGA_SIGN_LORDS.get(d3_sign, ''):
-        d3_score = 45.0
+        d3_score = 30.0
     elif d3_sign == exalt_sign:
-        d3_score = 50.0
+        d3_score = 45.0
     elif d3_sign == debilit_sign:
         d3_score = 5.0
     else:

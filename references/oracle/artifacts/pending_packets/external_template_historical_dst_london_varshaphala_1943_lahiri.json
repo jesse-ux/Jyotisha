@@ -1,6 +1,6 @@
 {
   "capture_id": "external_template_historical_dst_london_varshaphala_1943_lahiri",
-  "status": "draft",
+  "status": "external_verified",
   "case_id": "template_historical_dst_london_varshaphala_1943_lahiri",
   "birth": {
     "year": 1910,
@@ -32,28 +32,119 @@
     "operator_note"
   ],
   "metadata": {
-    "tool_name": "",
-    "tool_version_or_url": "",
-    "capture_date": "",
-    "source_artifact": "references/oracle/artifacts/",
+    "tool_name": "PyJHora",
+    "tool_version_or_url": "PyJHora 4.8.6 isolated workbuddy black-box run",
+    "capture_date": "2026-06-29",
+    "source_artifact": "references/oracle/artifacts/pyjhora_historical_dst_london_varshaphala_1943_lahiri_20260629.txt",
     "ayanamsa": "lahiri",
-    "node_mode": "mean",
-    "timezone": 0,
-    "annual_system": "varshaphala",
+    "node_mode": "PyJHora default",
+    "timezone": "UTC+00:00",
+    "annual_system": "Varshaphala/Tajika",
     "target_year": 1943,
-    "operator_note": ""
+    "operator_note": "Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain. This synthetic row is retained specifically to document the historical timezone/DST boundary."
   },
   "target_placeholders": {
-    "target.solar_return_datetime": null,
-    "target.varsha_lagna_deg": null,
-    "target.muntha_sign": null,
-    "target.year_lord": null,
-    "target.mudda_dasha_first_lord": null,
-    "target.sahams.punya_saham": null,
-    "target.sahams.rajya_saham": null,
-    "target.sahams.vivah_saham": null,
-    "target.tajika_yogas": null,
-    "target.source_artifact": null
+    "target.solar_return_datetime": "1943-04-15T22:55:52+00:00",
+    "target.varsha_lagna_deg": 224.724,
+    "target.muntha_sign": "♍︎Virgo",
+    "target.year_lord": "Mars♂",
+    "target.mudda_dasha_first_lord": "Saturn♄",
+    "target.sahams.punya_saham": 21.1202,
+    "target.sahams.rajya_saham": 299.2177,
+    "target.sahams.vivah_saham": 215.2774,
+    "target.tajika_yogas": {
+      "eesarpha": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "gairi_kamboola": null,
+      "ithasala": [
+        [
+          0,
+          2,
+          1
+        ],
+        [
+          1,
+          3,
+          1
+        ],
+        [
+          1,
+          6,
+          1
+        ],
+        [
+          3,
+          6,
+          1
+        ]
+      ],
+      "kamboola": [
+        true,
+        [
+          [
+            1,
+            3
+          ],
+          [
+            1,
+            6
+          ]
+        ],
+        [
+          [
+            1,
+            3
+          ],
+          [
+            3,
+            6
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            3,
+            6
+          ]
+        ]
+      ],
+      "khallasara": null,
+      "manahoo": [
+        [
+          0,
+          2,
+          0
+        ]
+      ],
+      "nakta": [],
+      "yamaya": []
+    },
+    "target.source_artifact": "references/oracle/artifacts/pyjhora_historical_dst_london_varshaphala_1943_lahiri_20260629.txt"
   },
   "integrity_checks": {
     "must_not_come_from_local_engine": true,

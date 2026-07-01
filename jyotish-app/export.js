@@ -405,6 +405,8 @@ function _buildHTMLReport(chartData, extras) {
   const audit = extras.audit || {};
   const workflows = extras.workflows || chartData._client_workflows || {};
   const relationshipNarrative = extras.relationship_narrative || chartData?.ai_prompt_pack?.evidence_snapshot?.relationship_narrative || chartData?.relationship_narrative || null;
+  const careerNarrative = extras.career_narrative || chartData?.ai_prompt_pack?.evidence_snapshot?.career_narrative || chartData?.career_narrative || null;
+  const financeNarrative = extras.finance_narrative || chartData?.ai_prompt_pack?.evidence_snapshot?.finance_narrative || chartData?.finance_narrative || null;
   const vimsopakaSemanticSummary = extras.vimsopaka_semantic_summary || chartData?.ai_prompt_pack?.evidence_snapshot?.vimsopaka_semantic_summary || chartData?.vimsopaka_semantic_summary || null;
   const functionalBeneficMalefic = extras.functional_benefic_malefic || chartData?.ai_prompt_pack?.evidence_snapshot?.functional_benefic_malefic || chartData?.functional_benefic_malefic || null;
   const vedastroOverview = extras.vedastro_overview || chartData?.ai_prompt_pack?.evidence_snapshot?.vedastro_overview || chartData?.vedastro_overview || null;
@@ -611,6 +613,10 @@ function _buildHTMLReport(chartData, extras) {
 
   ${_techniqueAuditTableSection(techniqueAuditTable)}
 
+  ${_strictNarrativeSection('事业严格裁决', 'career', careerNarrative, '本段直接消费 career strict evidence，把本命 promise、dual dasha、官方时间窗与结构阻力写进用户可见正文。')}
+
+  ${_strictNarrativeSection('财富严格裁决', 'finance', financeNarrative, '本段直接消费 finance strict evidence，把收入兑现、现金流动作、结构摩擦与时间边界写进用户可见正文。')}
+
   ${_relationshipStrictNarrativeSection(relationshipNarrative)}
 
   ${_workflowReportSection(workflows)}
@@ -750,6 +756,35 @@ function _relationshipStrictNarrativeSection(narrative) {
       <div class="relationship-status">strict narrative</div>
     </div>
     ${showCaution ? `<div class="relationship-caution"><strong>防误判提示</strong><span>当前公开化/关系可见度候选不能被误读成接近法律婚姻；若 core marriage promise、dual dasha 或 external timing 仍未收敛，必须继续降置信度并保持 context-only 解释。</span></div>` : ''}
+    <div class="relationship-columns">
+      ${_relationshipReportList('支持证据', strengths)}
+      ${_relationshipReportList('需要观察', risks)}
+      ${_relationshipReportList('边界条件', boundaries)}
+    </div>
+    ${compactMarkdown ? `<div class="relationship-boundary"><span>${_h(compactMarkdown)}</span></div>` : ''}
+  </section>`;
+}
+
+function _strictNarrativeSection(title, domainClass, narrative, subtitle) {
+  if (!narrative || typeof narrative !== 'object') return '';
+  const strengths = Array.isArray(narrative.strengths) ? narrative.strengths : [];
+  const risks = Array.isArray(narrative.risks) ? narrative.risks : [];
+  const boundaries = Array.isArray(narrative.boundaries) ? narrative.boundaries : [];
+  const markdown = typeof narrative.markdown === 'string' ? narrative.markdown : '';
+  const compactMarkdown = markdown
+    .replace(/^###\s+/gm, '')
+    .replace(/^\-\s+/gm, '')
+    .replace(/\n+/g, ' ')
+    .trim();
+  return `<section class="${domainClass}-strict-narrative relationship-strict-narrative">
+    <h2>${_h(title)}</h2>
+    <div class="relationship-hero">
+      <div>
+        <strong>${_h(narrative.headline || `${title}已接入导出主链。`)}</strong>
+        <span>${_h(subtitle || 'strict narrative 已接入导出主链。')}</span>
+      </div>
+      <div class="relationship-status">strict narrative</div>
+    </div>
     <div class="relationship-columns">
       ${_relationshipReportList('支持证据', strengths)}
       ${_relationshipReportList('需要观察', risks)}

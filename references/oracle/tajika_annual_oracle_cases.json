@@ -137,7 +137,7 @@
     },
     {
       "id": "template_einstein_varshaphala_1905_lahiri",
-      "status": "template_only",
+      "status": "external_verified",
       "source": "JHora Varshaphala screenshot / PyJHora black-box annual output / printed example",
       "privacy": "public_figure_template",
       "birth": {
@@ -158,24 +158,133 @@
         "target_year": 1905
       },
       "target": {
-        "solar_return_datetime": null,
-        "varsha_lagna_deg": null,
-        "muntha_sign": null,
-        "year_lord": null,
-        "mudda_dasha_first_lord": null,
+        "solar_return_datetime": "1905-03-15T03:44:51+00:53",
+        "varsha_lagna_deg": 262.4183,
+        "muntha_sign": "Virgo",
+        "year_lord": "Mercury",
+        "mudda_dasha_first_lord": "Rahu",
         "sahams": {
-          "punya_saham": null,
-          "rajya_saham": null,
-          "vivah_saham": null
+          "punya_saham": 31.2991,
+          "rajya_saham": 235.5875,
+          "vivah_saham": 1.9612
         },
-        "tajika_yogas": null,
-        "source_artifact": null
+        "tajika_yogas": {
+          "eesarpha": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
+            ],
+            [
+              1,
+              6
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "gairi_kamboola": null,
+          "ithasala": [
+            [
+              0,
+              4,
+              1
+            ],
+            [
+              0,
+              6,
+              1
+            ],
+            [
+              1,
+              5,
+              1
+            ],
+            [
+              3,
+              4,
+              1
+            ]
+          ],
+          "kamboola": [
+            true,
+            [
+              [
+                1,
+                5
+              ]
+            ],
+            [
+              [
+                1,
+                5
+              ]
+            ]
+          ],
+          "khallasara": null,
+          "manahoo": [
+            [
+              0,
+              4,
+              11
+            ],
+            [
+              0,
+              6,
+              11
+            ],
+            [
+              3,
+              4,
+              11
+            ]
+          ],
+          "nakta": [],
+          "yamaya": []
+        },
+        "source_artifact": "references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt"
       },
-      "verification_note": "Historical timezone and source convention must be documented beside the external annual output."
+      "verification_note": "Historical timezone and source convention must be documented beside the external annual output.",
+      "evidence_packet": {
+        "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
+        "status": "external_verified",
+        "metadata": {
+          "tool_name": "PyJHora",
+          "tool_version_or_url": "PyJHora 4.8.6 isolated workbuddy black-box run",
+          "capture_date": "2026-06-29",
+          "source_artifact": "references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt",
+          "ayanamsa": "lahiri",
+          "node_mode": "mean",
+          "timezone": "UTC+00:53",
+          "annual_system": "Varshaphala/Tajika",
+          "target_year": 1905,
+          "operator_note": "Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain."
+        }
+      }
     },
     {
       "id": "template_marilyn_monroe_varshaphala_1962_lahiri",
-      "status": "template_only",
+      "status": "external_verified",
       "source": "JHora Varshaphala screenshot / PyJHora black-box annual output / printed example",
       "privacy": "public_figure_template",
       "birth": {
@@ -196,24 +305,226 @@
         "target_year": 1962
       },
       "target": {
-        "solar_return_datetime": null,
-        "varsha_lagna_deg": null,
-        "muntha_sign": null,
-        "year_lord": null,
-        "mudda_dasha_first_lord": null,
+        "solar_return_datetime": "1962-06-01T14:20:25-08:00",
+        "varsha_lagna_deg": 169.9089,
+        "muntha_sign": "♎︎Libra",
+        "year_lord": "Mercury☿",
+        "mudda_dasha_first_lord": "Raagu☊",
         "sahams": {
-          "punya_saham": null,
-          "rajya_saham": null,
-          "vivah_saham": null
+          "punya_saham": 161.7196,
+          "rajya_saham": 50.2812,
+          "vivah_saham": 350.4075
         },
-        "tajika_yogas": null,
-        "source_artifact": null
+        "tajika_yogas": {
+          "eesarpha": [
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              0,
+              5
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              5
+            ]
+          ],
+          "gairi_kamboola": null,
+          "ithasala": [
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              4,
+              2
+            ],
+            [
+              0,
+              6,
+              2
+            ],
+            [
+              1,
+              2,
+              2
+            ],
+            [
+              1,
+              4,
+              1
+            ],
+            [
+              1,
+              6,
+              1
+            ],
+            [
+              2,
+              4,
+              3
+            ],
+            [
+              2,
+              6,
+              3
+            ],
+            [
+              4,
+              6,
+              2
+            ]
+          ],
+          "kamboola": [
+            true,
+            [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                1,
+                6
+              ]
+            ],
+            [
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                4
+              ],
+              [
+                2,
+                6
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                2,
+                4
+              ],
+              [
+                4,
+                6
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                2,
+                6
+              ],
+              [
+                4,
+                6
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                0,
+                6
+              ]
+            ]
+          ],
+          "khallasara": null,
+          "manahoo": [
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              4,
+              1
+            ],
+            [
+              0,
+              6,
+              1
+            ],
+            [
+              1,
+              2,
+              1
+            ],
+            [
+              1,
+              4,
+              1
+            ],
+            [
+              1,
+              6,
+              1
+            ]
+          ],
+          "nakta": [],
+          "yamaya": []
+        },
+        "source_artifact": "references/oracle/artifacts/pyjhora_marilyn_monroe_varshaphala_1962_lahiri_20260629.txt"
       },
       "verification_note": "Annual reading evidence must include exact solar return convention and visible source metadata."
+      ,
+      "evidence_packet": {
+        "capture_id": "external_template_marilyn_monroe_varshaphala_1962_lahiri",
+        "status": "external_verified",
+        "metadata": {
+          "tool_name": "PyJHora",
+          "tool_version_or_url": "PyJHora 4.8.6 isolated workbuddy black-box run",
+          "capture_date": "2026-06-29",
+          "source_artifact": "references/oracle/artifacts/pyjhora_marilyn_monroe_varshaphala_1962_lahiri_20260629.txt",
+          "ayanamsa": "lahiri",
+          "node_mode": "PyJHora default",
+          "timezone": "UTC-08:00",
+          "annual_system": "Varshaphala/Tajika",
+          "target_year": 1962,
+          "operator_note": "Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain."
+        }
+      }
     },
     {
       "id": "template_historical_dst_london_varshaphala_1943_lahiri",
-      "status": "template_only",
+      "status": "external_verified",
       "source": "JHora Varshaphala screenshot / PyJHora black-box annual output / printed example",
       "privacy": "synthetic_historical_dst_template",
       "birth": {
@@ -234,24 +545,131 @@
         "target_year": 1943
       },
       "target": {
-        "solar_return_datetime": null,
-        "varsha_lagna_deg": null,
-        "muntha_sign": null,
-        "year_lord": null,
-        "mudda_dasha_first_lord": null,
+        "solar_return_datetime": "1943-04-15T22:55:52+00:00",
+        "varsha_lagna_deg": 224.724,
+        "muntha_sign": "♍︎Virgo",
+        "year_lord": "Mars♂",
+        "mudda_dasha_first_lord": "Saturn♄",
         "sahams": {
-          "punya_saham": null,
-          "rajya_saham": null,
-          "vivah_saham": null
+          "punya_saham": 21.1202,
+          "rajya_saham": 299.2177,
+          "vivah_saham": 215.2774
         },
-        "tajika_yogas": null,
-        "source_artifact": null
+        "tajika_yogas": {
+          "eesarpha": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              5
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              4,
+              6
+            ]
+          ],
+          "gairi_kamboola": null,
+          "ithasala": [
+            [
+              0,
+              2,
+              1
+            ],
+            [
+              1,
+              3,
+              1
+            ],
+            [
+              1,
+              6,
+              1
+            ],
+            [
+              3,
+              6,
+              1
+            ]
+          ],
+          "kamboola": [
+            true,
+            [
+              [
+                1,
+                3
+              ],
+              [
+                1,
+                6
+              ]
+            ],
+            [
+              [
+                1,
+                3
+              ],
+              [
+                3,
+                6
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                3,
+                6
+              ]
+            ]
+          ],
+          "khallasara": null,
+          "manahoo": [
+            [
+              0,
+              2,
+              0
+            ]
+          ],
+          "nakta": [],
+          "yamaya": []
+        },
+        "source_artifact": "references/oracle/artifacts/pyjhora_historical_dst_london_varshaphala_1943_lahiri_20260629.txt"
       },
-      "verification_note": "This row exists to force historical DST documentation before annual-chart accuracy claims."
+      "verification_note": "This row exists to force historical DST documentation before annual-chart accuracy claims.",
+      "evidence_packet": {
+        "capture_id": "external_template_historical_dst_london_varshaphala_1943_lahiri",
+        "status": "external_verified",
+        "metadata": {
+          "tool_name": "PyJHora",
+          "tool_version_or_url": "PyJHora 4.8.6 isolated workbuddy black-box run",
+          "capture_date": "2026-06-29",
+          "source_artifact": "references/oracle/artifacts/pyjhora_historical_dst_london_varshaphala_1943_lahiri_20260629.txt",
+          "ayanamsa": "lahiri",
+          "node_mode": "PyJHora default",
+          "timezone": "UTC+00:00",
+          "annual_system": "Varshaphala/Tajika",
+          "target_year": 1943,
+          "operator_note": "Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain. This synthetic row is retained specifically to document the historical timezone/DST boundary."
+        }
+      }
     },
     {
       "id": "template_synthetic_extreme_latitude_varshaphala_kp",
-      "status": "template_only",
+      "status": "external_verified",
       "source": "JHora Varshaphala screenshot / PyJHora black-box annual output / printed example",
       "privacy": "synthetic_extreme_latitude_template",
       "birth": {
@@ -272,20 +690,132 @@
         "target_year": 2024
       },
       "target": {
-        "solar_return_datetime": null,
-        "varsha_lagna_deg": null,
-        "muntha_sign": null,
-        "year_lord": null,
-        "mudda_dasha_first_lord": null,
+        "solar_return_datetime": "2024-06-21T02:48:16+01:00",
+        "varsha_lagna_deg": 80.1445,
+        "muntha_sign": "♋︎Cancer",
+        "year_lord": "Mercury☿",
+        "mudda_dasha_first_lord": "Venus♀",
         "sahams": {
-          "punya_saham": null,
-          "rajya_saham": null,
-          "vivah_saham": null
+          "punya_saham": 278.0196,
+          "rajya_saham": 9.3073,
+          "vivah_saham": 185.4734
         },
-        "tajika_yogas": null,
-        "source_artifact": null
+        "tajika_yogas": {
+          "eesarpha": [
+            [
+              0,
+              3
+            ],
+            [
+              0,
+              5
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              3,
+              5
+            ]
+          ],
+          "gairi_kamboola": null,
+          "ithasala": [
+            [
+              0,
+              2,
+              3
+            ],
+            [
+              0,
+              4,
+              1
+            ],
+            [
+              1,
+              6,
+              1
+            ],
+            [
+              2,
+              3,
+              2
+            ],
+            [
+              2,
+              5,
+              1
+            ],
+            [
+              4,
+              5,
+              1
+            ]
+          ],
+          "kamboola": [
+            true,
+            [
+              [
+                1,
+                6
+              ]
+            ],
+            [
+              [
+                1,
+                6
+              ]
+            ]
+          ],
+          "khallasara": null,
+          "manahoo": [
+            [
+              0,
+              2,
+              2
+            ],
+            [
+              0,
+              4,
+              2
+            ],
+            [
+              2,
+              5,
+              2
+            ],
+            [
+              4,
+              5,
+              2
+            ]
+          ],
+          "nakta": [],
+          "yamaya": []
+        },
+        "source_artifact": "references/oracle/artifacts/pyjhora_synthetic_extreme_latitude_varshaphala_kp_20260629.txt"
       },
-      "verification_note": "High-latitude annual chart row; external source must document house and ascendant assumptions."
+      "verification_note": "High-latitude annual chart row; external source must document house and ascendant assumptions.",
+      "evidence_packet": {
+        "capture_id": "external_template_synthetic_extreme_latitude_varshaphala_kp",
+        "status": "external_verified",
+        "metadata": {
+          "tool_name": "PyJHora",
+          "tool_version_or_url": "PyJHora 4.8.6 isolated workbuddy black-box run",
+          "capture_date": "2026-06-29",
+          "source_artifact": "references/oracle/artifacts/pyjhora_synthetic_extreme_latitude_varshaphala_kp_20260629.txt",
+          "ayanamsa": "kp",
+          "node_mode": "PyJHora default",
+          "timezone": "UTC+01:00",
+          "annual_system": "Varshaphala/Tajika",
+          "target_year": 2024,
+          "operator_note": "Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain. KP ayanamsa was explicitly forced to match the template boundary."
+        }
+      }
     }
   ]
 }

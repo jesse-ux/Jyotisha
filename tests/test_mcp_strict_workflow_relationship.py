@@ -176,6 +176,187 @@ def test_relationship_collects_vedastro_range_scan_as_external_activation_contex
     assert "external_activation_support" in strict["event_judgement"]["secondary_context"]
 
 
+def test_relationship_external_activation_exposes_top_daily_window() -> None:
+    result = _base_relationship_result()
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "marriage",
+        "evidence_ledger": [],
+        "daily_windows": [{"date": "2026-08-02", "domain": "marriage", "score": 5, "event_count": 2}],
+        "top_daily_window": {"date": "2026-08-02", "domain": "marriage", "score": 5, "event_count": 2},
+        "source_metadata": {},
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+    external = strict["present_evidence"]["external_activation"]
+
+    assert external["top_daily_window"]["date"] == "2026-08-02"
+    assert external["daily_windows"][0]["score"] == 5
+
+
+def test_relationship_external_activation_derives_progress_day_signals() -> None:
+    result = _base_relationship_result()
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "marriage",
+        "evidence_ledger": [],
+        "daily_windows": [
+            {
+                "date": "2026-08-02",
+                "domain": "marriage",
+                "score": 5,
+                "confidence": "high",
+                "event_count": 2,
+                "signal_families": ["marriage_trigger"],
+                "event_ids": ["GocharJupiterIn7th", "JupiterSupportsMarriageAxis"],
+                "top_signal_label": "Jupiter in 7th marriage window",
+            },
+            {
+                "date": "2026-08-19",
+                "domain": "marriage",
+                "score": 2,
+                "confidence": "medium",
+                "event_count": 1,
+                "signal_families": ["relationship_pressure"],
+                "event_ids": ["SaturnAspect7thRelationshipWindow"],
+                "top_signal_label": "Saturn aspecting 7th relationship window",
+            },
+        ],
+        "top_daily_window": {
+            "date": "2026-08-02",
+            "domain": "marriage",
+            "score": 5,
+            "confidence": "high",
+            "event_count": 2,
+            "signal_families": ["marriage_trigger"],
+            "event_ids": ["GocharJupiterIn7th", "JupiterSupportsMarriageAxis"],
+            "top_signal_label": "Jupiter in 7th marriage window",
+        },
+        "source_metadata": {},
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+    external = strict["present_evidence"]["external_activation"]
+
+    assert external["official_day_signals"][0]["date"] == "2026-08-02"
+    assert external["official_day_signals"][0]["day_type"] == "progress"
+    assert external["official_day_signals"][0]["summary"] == "婚恋推进日"
+    assert external["official_day_signals"][1]["day_type"] == "risk"
+
+
+def test_relationship_strict_contract_exposes_official_primary_and_local_supplemental_layers() -> None:
+    result = _base_relationship_result()
+    result["modules"]["source_priority"] = {"mode": "vedastro_official_primary"}
+    result["modules"]["vedastro_official_full_snapshot"] = {
+        "status": "partial",
+        "available": True,
+        "official_chart": {"planets": {"Sun": {}}, "ascendant": {"sign": "Leo"}},
+        "section_statuses": {"chart_core": "ok", "dasha_all": "ok", "events_overview": "partial"},
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    assert strict["official_primary_evidence"]["chart_core"]["status"] == "ok"
+    assert strict["official_primary_evidence"]["dasha"]["status"] == "ok"
+    assert strict["local_supplemental_evidence"]["upapada_lagna"]["role"] == "required_local_supplement"
+    assert strict["local_supplemental_evidence"]["darakaraka"]["role"] == "required_local_supplement"
+    assert isinstance(strict["fallback_used"], list)
+    assert isinstance(strict["blocked_items"], list)
+    assert isinstance(strict["conflicts"], list)
+
+
+def test_relationship_strict_contract_exposes_adjudication_stages_and_multi_reference_summary() -> None:
+    strict = _collect_strict_evidence("relationship", _base_relationship_result())
+
+    assert strict["adjudication_stages"]["promise"]["status"] in {"present", "weak", "missing"}
+    assert strict["adjudication_stages"]["activation"]["required_timing_systems"] == ["Vimshottari", "Narayana"]
+    assert strict["adjudication_stages"]["label"]["value"] == strict["event_judgement"]["dominant_label"]
+    summary = strict["multi_reference_reading_summary"]
+    assert "root_frame" in summary
+    assert "divisional_frame" in summary
+    assert "visibility_frame" in summary
+    assert "karaka_frame" in summary
+    assert "timing_frame" in summary
+    assert "modifier_frame" in summary
+    assert "conflict_frame" in summary
+
+
+def test_relationship_strict_contract_exposes_monthly_adjudication_summary() -> None:
+    result = _base_relationship_result()
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "marriage",
+        "evidence_ledger": [],
+        "daily_windows": [
+            {
+                "date": "2026-08-02",
+                "domain": "marriage",
+                "score": 5,
+                "confidence": "high",
+                "event_count": 2,
+                "signal_families": ["marriage_trigger"],
+                "event_ids": ["GocharJupiterIn7th", "JupiterSupportsMarriageAxis"],
+                "top_signal_label": "Jupiter in 7th marriage window",
+            },
+            {
+                "date": "2026-08-19",
+                "domain": "marriage",
+                "score": 2,
+                "confidence": "medium",
+                "event_count": 1,
+                "signal_families": ["relationship_pressure"],
+                "event_ids": ["SaturnAspect7thRelationshipWindow"],
+                "top_signal_label": "Saturn aspecting 7th relationship window",
+            },
+        ],
+        "top_daily_window": {
+            "date": "2026-08-02",
+            "domain": "marriage",
+            "score": 5,
+            "confidence": "high",
+            "event_count": 2,
+            "signal_families": ["marriage_trigger"],
+            "event_ids": ["GocharJupiterIn7th", "JupiterSupportsMarriageAxis"],
+            "top_signal_label": "Jupiter in 7th marriage window",
+        },
+        "source_metadata": {},
+    }
+
+    strict = _collect_strict_evidence("relationship", result)
+
+    summary = strict["monthly_adjudication_summary"]
+    assert summary["route"] == "relationship"
+    assert summary["primary_state"]["value"] in {"推进", "启动", "筛选", "收束", "观察"}
+    assert summary["manifestation_mode"]["value"]
+    assert summary["friction_source"]["value"]
+    assert summary["time_confidence"]["value"] in {"day_supported", "month_supported", "month_only", "blocked"}
+    assert isinstance(summary["supporting_days"], list)
+    assert summary["supporting_days"][0]["date"] == "2026-08-02"
+
+
+def test_relationship_summary_modifier_frame_surfaces_label_lift_related_modifiers() -> None:
+    strict = _collect_strict_evidence("relationship", _base_relationship_result())
+
+    modifier = strict["multi_reference_reading_summary"]["modifier_frame"]
+    assert "functional_benefic_malefic" in modifier
+    assert modifier["manifestation_split"]["role"] == "modifier_only"
+    assert "legal_marriage" in modifier["manifestation_split"]["signals"]
+
+
+def test_relationship_multi_reference_summary_carries_audit_gate_frame() -> None:
+    strict = _collect_strict_evidence("relationship", _base_relationship_result())
+
+    frame = strict["multi_reference_reading_summary"]["audit_gate_frame"]
+    assert frame["functional_benefic_malefic"]["used"] in {True, False}
+    assert frame["source_priority_boundary"]["blocked_items"] == strict["blocked_items"]
+
+
 def test_relationship_synastry_bridge_adds_context_and_small_score_bump_without_overriding_label_gate() -> None:
     base = _collect_strict_evidence("relationship", _base_relationship_result())
     result = _base_relationship_result()
@@ -425,11 +606,19 @@ def test_relationship_narrative_payload_turns_synastry_taxonomy_into_user_readab
 
     payload = jyotish_engine._build_relationship_narrative_payload(strict)
 
+    assert payload["monthly_frame"]["primary_state"]["value"]
+    assert payload["monthly_frame"]["manifestation_mode"]["value"]
+    assert payload["monthly_frame"]["friction_source"]["value"]
+    assert payload["monthly_frame"]["time_confidence"]["value"]
     assert "婚恋" in payload["headline"]
     assert any("合盘" in item for item in payload["strengths"])
     assert any("protective kuta" in item.lower() for item in payload["strengths"])
     assert any("dual dasha" in item.lower() for item in payload["risks"])
     assert any("legal_marriage" in item for item in payload["boundaries"])
+    assert "月度主状态" in payload["markdown"]
+    assert "落地形式" in payload["markdown"]
+    assert "阻力来源" in payload["markdown"]
+    assert "时间置信度" in payload["markdown"]
     assert "D9" in payload["markdown"]
     assert "dual dasha" in payload["markdown"]
 

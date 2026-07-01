@@ -13,21 +13,191 @@ import html as html_lib
 import io
 import json, sys, os, math
 import importlib.util
+import hashlib
 import re
+import threading
+import time
 from datetime import datetime, timedelta
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from pathlib import Path
 from urllib.parse import urlparse
 
 try:
     from scripts.local_env import load_local_env
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from local_env import load_local_env
+try:
+    from scripts.unified_consultation_orchestrator import UnifiedConsultationOrchestrator
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from unified_consultation_orchestrator import UnifiedConsultationOrchestrator
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPTS_DIR, '..'))
 sys.path.insert(0, SCRIPTS_DIR)
 load_local_env(REPO_ROOT)
 _LOCAL_MODULE_CACHE = {}
+_API_CHART_CACHE_SCOPE = 'api_chart_response'
+_HIGH_RIGOR_JOB_SCOPE = 'high_rigor_workflow'
+_UNIFIED_CONSULTATION_ORCHESTRATOR = UnifiedConsultationOrchestrator()
+
+
+def execute_consultation_workflow(
+    handler,
+    *,
+    body: dict,
+    surface: str = 'api_web',
+    chart_override: dict | None = None,
+) -> dict:
+    birth_payload = handler._high_rigor_birth_payload(body)
+    themes = handler._high_rigor_requested_themes(body)
+    events = handler._high_rigor_events(body)
+    question = body.get('question') or ''
+    entry_mode = body.get('entry_mode', 'direct_chart')
+    high_rigor = bool(body.get('return_high_rigor_shape'))
+    route_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.resolve_route(question, themes)
+    unified_contract = _UNIFIED_CONSULTATION_ORCHESTRATOR.shared_contract(
+        entry_mode=entry_mode,
+        question=question,
+        themes=themes,
+        route_packet=route_packet,
+        surface=surface,
+    )
+    runtime_planner = _UNIFIED_CONSULTATION_ORCHESTRATOR.runtime_planner(
+        entry_mode=entry_mode,
+        question=question,
+        themes=themes,
+        route_packet=route_packet,
+        events=events,
+        surface=surface,
+        high_rigor=high_rigor,
+    )
+    executed_steps = []
+    known_steps = [
+        'compute_chart',
+        'run_rectification_gate',
+        'run_historical_event_backtest',
+        'run_thematic_report',
+    ]
+    if body.get('dry_run') or body.get('plan_only'):
+        result = handler._high_rigor_workflow_plan_only(birth_payload, themes, events)
+        result['endpoint'] = 'consultation_workflow'
+        result['entry_mode'] = entry_mode
+        result['routing'] = route_packet
+        result['unified_orchestrator'] = unified_contract
+        result['runtime_planner'] = {
+            **runtime_planner,
+            'executed_steps': [],
+            'skipped_steps': known_steps,
+        }
+        if body.get('return_high_rigor_shape'):
+            result['endpoint'] = 'high_rigor_workflow'
+        return result
+
+    chart = dict(chart_override) if isinstance(chart_override, dict) else {}
+    rectification = {}
+    computed_chart = bool(chart)
+
+    for step in runtime_planner.get('sync_steps', []):
+        if step == 'run_rectification_gate':
+            chart_planets = chart.get('planets') if isinstance(chart, dict) else {}
+            chart_ascendant = chart.get('ascendant') if isinstance(chart, dict) else {}
+            rectification = handler._compute_rectification_gate({
+                **birth_payload,
+                'planets': chart_planets if isinstance(chart_planets, dict) else {},
+                'ascendant': chart_ascendant if isinstance(chart_ascendant, dict) else {},
+                'declared_accuracy': body.get('declared_accuracy', body.get('accuracy', 'minute')),
+                'time_source': body.get('time_source', 'family_clear'),
+            })
+            executed_steps.append('run_rectification_gate')
+        elif step == 'compute_chart':
+            if not computed_chart:
+                chart = handler._compute_chart(birth_payload)
+                computed_chart = True
+            executed_steps.append('compute_chart')
+
+    historical_backtest = {}
+    if 'run_historical_event_backtest' in runtime_planner.get('sync_steps', []):
+        historical_backtest = handler._run_high_rigor_historical_backtest(birth_payload, events)
+        executed_steps.append('run_historical_event_backtest')
+
+    chart_for_theme = dict(chart) if isinstance(chart, dict) else {}
+    if isinstance(chart_for_theme.get('modules'), dict):
+        chart_for_theme.update(chart_for_theme.get('modules', {}).get('chart') or {})
+
+    modules = chart.get('modules') if isinstance(chart.get('modules'), dict) else {}
+    prompt_snapshot = (((chart.get('ai_prompt_pack') or {}).get('evidence_snapshot')) or {}) if isinstance(chart, dict) else {}
+    strict_workflow_contracts = prompt_snapshot.get('strict_workflow_contracts') if isinstance(prompt_snapshot.get('strict_workflow_contracts'), dict) else {}
+    chart_guided_topics = modules.get('guided_topics') if isinstance(modules.get('guided_topics'), list) else []
+
+    thematic_report = {}
+    if 'run_thematic_report' in runtime_planner.get('sync_steps', []):
+        thematic_report = handler._compute_thematic_report({
+            **birth_payload,
+            **chart_for_theme,
+            'chart_data': {
+                **chart_for_theme,
+                'skip_full_reading_for_thematic': True,
+            },
+            'theme': themes,
+            'skip_full_reading_for_thematic': True,
+            'upstream_contract': {
+                'chart': chart_for_theme,
+                'strict_workflow_contracts': strict_workflow_contracts,
+                'guided_topics': chart_guided_topics,
+            },
+        })
+        executed_steps.append('run_thematic_report')
+
+    vedastro_official = handler._high_rigor_vedastro_official_summary(chart)
+    skipped_steps = [step for step in known_steps if step not in executed_steps]
+
+    result = {
+        'success': True,
+        'endpoint': 'consultation_workflow',
+        'mode': 'vedastro_official_first_existing_modules_reused',
+        'entry_mode': entry_mode,
+        'question': question,
+        'routes': ['career', 'relationship', 'finance'],
+        'themes': themes,
+        'routing': route_packet,
+        'unified_orchestrator': unified_contract,
+        'runtime_planner': {
+            **runtime_planner,
+            'executed_steps': executed_steps,
+            'skipped_steps': skipped_steps,
+        },
+        'source_priority': {
+            'mode': 'vedastro_official_snapshot_first',
+            'priority': [
+                'vedastro_official_snapshot',
+                'local_supplemental_modules',
+                'local_fallback_only_when_official_blocked',
+            ],
+            'boundary': 'Official VedAstro raw evidence is preferred; local modules supplement, cross-check, and fallback when official calls are blocked.',
+        },
+        'reused_modules': [
+            'vedastro_evidence_orchestrator',
+            'birth_time_rectifier',
+            'historical_event_backtest',
+            'report_orchestrator',
+            'reading_orchestrator',
+            'orchestrator_bridge',
+        ],
+        'chart': chart,
+        'rectification': rectification,
+        'historical_event_backtest': historical_backtest,
+        'thematic_report': thematic_report,
+        'vedastro_official': vedastro_official,
+        'next_questions': handler._high_rigor_next_questions(rectification, historical_backtest),
+        'boundary': (
+            'This endpoint composes existing project workflows. It does not claim that every VedAstro callable '
+            'is executed for every chart; the official capability catalog is carried as evidence metadata and '
+            'domain-relevant routes execute according to the configured sample/network limits.'
+        ),
+    }
+    if body.get('return_high_rigor_shape'):
+        result['endpoint'] = 'high_rigor_workflow'
+    return result
 
 
 def _load_local_module(module_name):
@@ -43,6 +213,177 @@ def _load_local_module(module_name):
     spec.loader.exec_module(module)
     _LOCAL_MODULE_CACHE[module_name] = module
     return module
+
+
+def _api_chart_cache_dir() -> Path:
+    path = Path(REPO_ROOT) / 'scratch' / 'local' / 'api_chart_cache'
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _high_rigor_job_dir() -> Path:
+    path = Path(REPO_ROOT) / 'scratch' / 'local' / 'high_rigor_jobs'
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _async_job_dir(scope: str) -> Path:
+    if scope == _HIGH_RIGOR_JOB_SCOPE:
+        return _high_rigor_job_dir()
+    path = Path(REPO_ROOT) / 'scratch' / 'local' / f'{scope}_jobs'
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _api_chart_cache_ttl_seconds() -> float:
+    raw = str(os.environ.get('JYOTISH_API_CHART_CACHE_TTL_SECONDS', '900')).strip()
+    try:
+        ttl = float(raw)
+    except ValueError:
+        ttl = 900.0
+    return max(ttl, 0.0)
+
+
+def _vedastro_runtime_fingerprint() -> dict:
+    endpoint = os.environ.get('VEDASTRO_API_ENDPOINT', '').strip()
+    return {
+        'endpoint_host': (urlparse(endpoint).netloc or '').lower(),
+        'network_enabled': str(os.environ.get('VEDASTRO_ENABLE_NETWORK', '')).strip().lower() in {'1', 'true', 'yes'},
+        'has_api_key': bool(os.environ.get('VEDASTRO_API_KEY', '').strip()),
+    }
+
+
+def _build_api_chart_cache_payload(body: dict) -> dict:
+    return {
+        'birth': {
+            'year': body.get('year'),
+            'month': body.get('month'),
+            'day': body.get('day'),
+            'hour': body.get('hour'),
+            'minute': body.get('minute'),
+            'second': body.get('second', 0),
+            'lat': body.get('lat'),
+            'lon': body.get('lon'),
+            'tz': body.get('tz'),
+        },
+        'calculation': {
+            'ayanamsa': body.get('ayanamsa', 'lahiri'),
+            'node_mode': body.get('node_mode', body.get('nodeMode', 'mean')),
+            'today': body.get('today') or body.get('current_date'),
+            'transit_date': body.get('transit_date'),
+        },
+        'vedastro_runtime': _vedastro_runtime_fingerprint(),
+    }
+
+
+def _api_chart_cache_key(cache_payload: dict) -> str:
+    canonical = json.dumps(cache_payload, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+
+
+def _api_chart_cache_path(cache_key: str) -> Path:
+    return _api_chart_cache_dir() / f'{cache_key}.json'
+
+
+def _attach_api_chart_runtime_cache(payload: dict, *, cache_key: str, created_at_unix: float, cache_hit: bool) -> dict:
+    payload_copy = json.loads(json.dumps(payload))
+    ttl_seconds = _api_chart_cache_ttl_seconds()
+    created_at = datetime.utcfromtimestamp(created_at_unix).strftime('%Y-%m-%dT%H:%M:%SZ')
+    expires_at = datetime.utcfromtimestamp(created_at_unix + ttl_seconds).strftime('%Y-%m-%dT%H:%M:%SZ')
+    payload_copy['runtime_cache'] = {
+        'scope': _API_CHART_CACHE_SCOPE,
+        'cache_hit': cache_hit,
+        'cache_key': cache_key,
+        'cache_created_at': created_at,
+        'cache_expires_at': expires_at,
+        'cache_ttl_seconds': ttl_seconds,
+    }
+    return payload_copy
+
+
+def _load_api_chart_response_cache(cache_payload: dict) -> dict | None:
+    ttl_seconds = _api_chart_cache_ttl_seconds()
+    if ttl_seconds <= 0:
+        return None
+    cache_key = _api_chart_cache_key(cache_payload)
+    cache_path = _api_chart_cache_path(cache_key)
+    if not cache_path.exists():
+        return None
+    try:
+        record = json.loads(cache_path.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(record, dict):
+        return None
+    created_at_unix = record.get('created_at')
+    payload = record.get('payload')
+    if not isinstance(created_at_unix, (int, float)) or not isinstance(payload, dict):
+        return None
+    if time.time() - float(created_at_unix) > ttl_seconds:
+        return None
+    return _attach_api_chart_runtime_cache(
+        payload,
+        cache_key=cache_key,
+        created_at_unix=float(created_at_unix),
+        cache_hit=True,
+    )
+
+
+def _store_api_chart_response_cache(cache_payload: dict, payload: dict) -> dict:
+    cache_key = _api_chart_cache_key(cache_payload)
+    created_at_unix = time.time()
+    payload_with_cache = _attach_api_chart_runtime_cache(
+        payload,
+        cache_key=cache_key,
+        created_at_unix=created_at_unix,
+        cache_hit=False,
+    )
+    ttl_seconds = _api_chart_cache_ttl_seconds()
+    if ttl_seconds > 0:
+        record = {
+            'cache_key': cache_key,
+            'created_at': created_at_unix,
+            'payload': payload_with_cache,
+        }
+        _api_chart_cache_path(cache_key).write_text(
+            json.dumps(record, ensure_ascii=False, sort_keys=True),
+            encoding='utf-8',
+        )
+    return payload_with_cache
+
+
+def _high_rigor_job_path(job_id: str) -> Path:
+    return _high_rigor_job_dir() / f'{job_id}.json'
+
+
+def _async_job_path(scope: str, job_id: str) -> Path:
+    return _async_job_dir(scope) / f'{job_id}.json'
+
+
+def _load_high_rigor_job_record(job_id: str) -> dict | None:
+    return _load_async_job_record(_HIGH_RIGOR_JOB_SCOPE, job_id)
+
+
+def _write_high_rigor_job_record(job_id: str, payload: dict) -> dict:
+    return _write_async_job_record(_HIGH_RIGOR_JOB_SCOPE, job_id, payload)
+
+
+def _load_async_job_record(scope: str, job_id: str) -> dict | None:
+    path = _async_job_path(scope, job_id)
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _write_async_job_record(scope: str, job_id: str, payload: dict) -> dict:
+    _async_job_path(scope, job_id).write_text(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True),
+        encoding='utf-8',
+    )
+    return payload
 
 
 def _attach_vedastro_main_entry_overview(chart_result, birth_payload):
@@ -150,22 +491,52 @@ def _build_vedastro_overview_payload_from_chart(chart):
 def _build_vedastro_official_full_snapshot_payload_from_chart(chart):
     modules = chart.get('modules') if isinstance(chart, dict) else {}
     snapshot = modules.get('vedastro_official_full_snapshot') if isinstance(modules, dict) else {}
+    strict_workflow_contracts = snapshot.get('strict_workflow_contracts') if isinstance(snapshot, dict) else {}
+    if not isinstance(strict_workflow_contracts, dict):
+        strict_workflow_contracts = {}
     if not isinstance(snapshot, dict) or not snapshot:
         return {
             'status': 'blocked',
             'available': False,
             'operation': 'official_full_snapshot',
             'primary_source': 'vedastro_official',
+            'strict_workflow_primary_route': None,
+            'strict_workflow_routes_available': [],
+            'strict_workflow_contracts': {},
             'boundary_note': 'VedAstro official full snapshot is not attached.',
         }
     manifest = snapshot.get('request_manifest') if isinstance(snapshot.get('request_manifest'), dict) else {}
     requests = manifest.get('requests') if isinstance(manifest.get('requests'), list) else []
     sections = snapshot.get('snapshot_sections') if isinstance(snapshot.get('snapshot_sections'), dict) else {}
+    metadata = snapshot.get('source_metadata') if isinstance(snapshot.get('source_metadata'), dict) else {}
+    official_bundle = metadata.get('official_python_bundle') if isinstance(metadata.get('official_python_bundle'), dict) else {}
+    full_catalog = metadata.get('official_full_capability_catalog') if isinstance(metadata.get('official_full_capability_catalog'), dict) else {}
+    coverage = official_bundle.get('coverage') if isinstance(official_bundle.get('coverage'), dict) else {}
+    official_chart = snapshot.get('official_chart') if isinstance(snapshot.get('official_chart'), dict) else {}
+    dynamic_selection = full_catalog.get('dynamic_selection') if isinstance(full_catalog.get('dynamic_selection'), dict) else {}
+    report_references = {
+        theme: selection.get('report_reference')
+        for theme, selection in dynamic_selection.items()
+        if isinstance(selection, dict) and isinstance(selection.get('report_reference'), dict)
+    }
     return {
         'status': snapshot.get('status') or 'blocked',
         'available': bool(snapshot.get('available')),
         'operation': snapshot.get('operation') or 'official_full_snapshot',
         'primary_source': snapshot.get('primary_source') or 'vedastro_official',
+        'official_python_path': metadata.get('official_python_path'),
+        'official_bundle_status': official_bundle.get('status'),
+        'official_primary_sections_ok': coverage.get('filled_sections') or [],
+        'official_chart_available': bool(official_chart.get('planets')) and bool(official_chart.get('ascendant')),
+        'official_full_capability_catalog_status': full_catalog.get('status'),
+        'official_full_capability_catalog_summary': full_catalog.get('summary') or {},
+        'official_full_capability_catalog_coverage': full_catalog.get('coverage') or {},
+        'official_full_capability_domain_routing': full_catalog.get('domain_routing') or {},
+        'official_full_capability_dynamic_selection': dynamic_selection,
+        'official_report_references': report_references,
+        'strict_workflow_primary_route': snapshot.get('strict_workflow_primary_route'),
+        'strict_workflow_routes_available': snapshot.get('strict_workflow_routes_available') or list(strict_workflow_contracts.keys()),
+        'strict_workflow_contracts': strict_workflow_contracts,
         'section_statuses': snapshot.get('section_statuses') or {},
         'snapshot_section_keys': sorted(sections.keys()),
         'request_section_count': len(requests),
@@ -178,6 +549,32 @@ def _build_vedastro_official_full_snapshot_payload_from_chart(chart):
             or 'VedAstro official full snapshot is the primary raw evidence layer; user reports consume selected slices only.'
         ),
     }
+
+
+def _preferred_strict_contract(strict_workflow_contracts, primary_route=None):
+    if not isinstance(strict_workflow_contracts, dict) or not strict_workflow_contracts:
+        return None, {}
+    route = primary_route if primary_route in strict_workflow_contracts else next(iter(strict_workflow_contracts.keys()))
+    contract = strict_workflow_contracts.get(route)
+    return route, contract if isinstance(contract, dict) else {}
+
+
+def _strict_adjudication_bundle_from_contract(contract, *, interpretation_axes=None, monthly_humanized=None):
+    if not isinstance(contract, dict) or not contract:
+        return {}
+    bundle = {
+        'question_type': contract.get('question_type'),
+        'confidence_cap': contract.get('confidence_cap'),
+        'blocked': bool(contract.get('blocked')),
+        'reason': contract.get('reason'),
+        'strict_audit_gate': contract.get('technique_audit_summary') or {},
+        'monthly_adjudication_summary': contract.get('monthly_adjudication_summary') or {},
+        'official_day_signal_summary': contract.get('official_day_signal_summary') or {},
+        'interpretation_axes': interpretation_axes or contract.get('interpretation_axes') or [],
+        'monthly_adjudication_summary_humanized': monthly_humanized or contract.get('monthly_adjudication_summary_humanized') or {},
+        'narrative_contract': contract.get('narrative_contract') or {},
+    }
+    return bundle
 
 SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
          'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -233,6 +630,8 @@ API_COMMAND_MAP = {
     'transit-trigger': '/api/transit',
     'audit-capabilities': '/api/capability_audit',
     'thematic-report': '/api/thematic_report',
+    'consultation-workflow': '/api/consultation_workflow',
+    'high-rigor-workflow': '/api/high_rigor_workflow',
     'report-artifact': '/api/report_artifact',
 }
 
@@ -260,6 +659,8 @@ TECHNIQUE_EXAMPLE_ENDPOINTS = {
     '/api/shadbala',
     '/api/sudarshana',
     '/api/synastry',
+    '/api/consultation_workflow',
+    '/api/high_rigor_workflow',
     '/api/thematic_report',
     '/api/transit',
     '/api/varga_full',
@@ -400,6 +801,20 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(self._technique_catalog())
             elif path == '/api/vedastro/status':
                 self._json(self._vedastro_status())
+            elif path.startswith('/api/chart/jobs/'):
+                job_id = path.rsplit('/', 1)[-1]
+                result = self._get_chart_job(job_id)
+                if result is None:
+                    self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._json(result)
+            elif path.startswith('/api/high_rigor_workflow/jobs/'):
+                job_id = path.rsplit('/', 1)[-1]
+                result = self._get_high_rigor_job(job_id)
+                if result is None:
+                    self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._json(result)
             elif path == '/api/real_case_revalidation':
                 self._json(self._real_case_revalidation())
             else:
@@ -520,6 +935,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             elif path == '/api/thematic_report':
                 result = self._compute_thematic_report(body)
+                self._json(result)
+            elif path == '/api/high_rigor_workflow':
+                result = self._compute_high_rigor_workflow(body)
+                self._json(result)
+            elif path == '/api/consultation_workflow':
+                result = self._compute_consultation_workflow(body)
                 self._json(result)
             elif path == '/api/technique_example':
                 result = self._compute_technique_example(body)
@@ -766,6 +1187,43 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             return html[:body_close.start()] + summary + html[body_close.start():]
         return html + summary
 
+    def _inject_generic_strict_narrative_summary(self, html, narrative, *, title, section_key, subtitle):
+        if not isinstance(narrative, dict):
+            return html
+        headline = narrative.get('headline')
+        if not headline:
+            return html
+
+        def _escape(value):
+            return html_lib.escape(str(value or ''))
+
+        def _list_html(items):
+            if not isinstance(items, list) or not items:
+                return '<li>暂无补充。</li>'
+            return ''.join(f'<li>{_escape(item)}</li>' for item in items[:6])
+
+        summary = (
+            f'<section data-{section_key}="true" '
+            'style="margin:24px 0;padding:16px;border:1px solid #d9dde8;border-radius:8px;'
+            'background:#fbfcff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">'
+            f'<h2 style="margin:0 0 12px;font-size:20px;">{_escape(title)}</h2>'
+            f'<p style="margin:0 0 8px;font-size:13px;color:#5b6472;">{_escape(subtitle)}</p>'
+            f'<p style="margin:0 0 12px;">{_escape(headline)}</p>'
+            '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">'
+            '<div><strong>Strengths</strong><ul style="margin:8px 0 0 18px;padding:0;">'
+            f'{_list_html(narrative.get("strengths"))}</ul></div>'
+            '<div><strong>Risks</strong><ul style="margin:8px 0 0 18px;padding:0;">'
+            f'{_list_html(narrative.get("risks"))}</ul></div>'
+            '<div><strong>Boundaries</strong><ul style="margin:8px 0 0 18px;padding:0;">'
+            f'{_list_html(narrative.get("boundaries"))}</ul></div>'
+            '</div>'
+            '</section>'
+        )
+        body_close = re.search(r'</body\s*>', html, re.IGNORECASE)
+        if body_close:
+            return html[:body_close.start()] + summary + html[body_close.start():]
+        return html + summary
+
     def _inject_vedastro_overview_summary(self, html, overview):
         if not isinstance(overview, dict):
             return html
@@ -952,6 +1410,20 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             html,
             body.get('relationship_narrative'),
         )
+        html = self._inject_generic_strict_narrative_summary(
+            html,
+            body.get('career_narrative'),
+            title='Career Strict Narrative',
+            section_key='career-strict-narrative',
+            subtitle='事业严格裁决正文，要求显式引用月度主状态、落地形式、阻力来源与时间置信度。',
+        )
+        html = self._inject_generic_strict_narrative_summary(
+            html,
+            body.get('finance_narrative'),
+            title='Finance Strict Narrative',
+            section_key='finance-strict-narrative',
+            subtitle='财富严格裁决正文，要求显式区分收入兑现、现金流动作、摩擦来源与时间边界。',
+        )
         html = self._inject_vedastro_overview_summary(
             html,
             body.get('vedastro_overview'),
@@ -1057,11 +1529,14 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         reading_orchestrator = _load_local_module('reading_orchestrator')
         orchestrator_bridge = _load_local_module('orchestrator_bridge')
         chart_data = body.get('chart_data') if isinstance(body.get('chart_data'), dict) else body
+        upstream_contract = body.get('upstream_contract') if isinstance(body.get('upstream_contract'), dict) else {}
 
         custom_evidence = body.get('evidence')
         has_custom_evidence = isinstance(custom_evidence, dict) and bool(custom_evidence)
         derived_context = None
-        if not has_custom_evidence and self._can_derive_thematic_evidence(chart_data):
+        strict_workflow_contracts = upstream_contract.get('strict_workflow_contracts') if isinstance(upstream_contract.get('strict_workflow_contracts'), dict) else {}
+        upstream_guided_topics = upstream_contract.get('guided_topics') if isinstance(upstream_contract.get('guided_topics'), list) else []
+        if not has_custom_evidence and not strict_workflow_contracts and self._can_derive_thematic_evidence(chart_data):
             derived_context = self._derive_thematic_evidence(chart_data, report_orchestrator)
 
         if derived_context:
@@ -1076,6 +1551,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         elif derived_context and derived_context.get('evidence'):
             self._inject_thematic_evidence(orchestrator, derived_context['evidence'], report_orchestrator)
             mode = 'derived_chart_evidence'
+        elif strict_workflow_contracts:
+            mode = 'upstream_contract_reuse'
         else:
             self._inject_sample_thematic_evidence(orchestrator, report_orchestrator)
             mode = 'sample_evidence'
@@ -1084,7 +1561,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         reports = {}
         for theme in theme_values:
             report = orchestrator.generate_report(theme)
-            reports[theme.value] = report.to_dict()
+            reports[theme.value] = self._apply_monthly_adjudication_to_theme_report(
+                theme.value,
+                report.to_dict(),
+            )
 
         return {
             'success': True,
@@ -1102,12 +1582,455 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 theme_values,
             ),
             'mode': mode,
-            'evidence_source': self._thematic_evidence_source(mode, derived_context, has_custom_evidence),
+            'evidence_source': (
+                {
+                    'mode': 'upstream_contract_reuse',
+                    'source': 'consultation_workflow_upstream_contract',
+                    'sample_fallback': False,
+                    'strict_workflow_routes_available': list(strict_workflow_contracts.keys()),
+                    'guided_topic_count': len(upstream_guided_topics),
+                }
+                if mode == 'upstream_contract_reuse'
+                else self._thematic_evidence_source(mode, derived_context, has_custom_evidence)
+            ),
             'themes': reports,
             'theme_count': len(reports),
             'available_themes': [theme.value for theme in report_orchestrator.ThemeName],
             'boundary': '主题化报告用于组织证据、裁决冲突和生成叙事；具体预测仍需本命承诺、Dasha、Transit 与案例验证共同收敛。',
         }
+
+    def _compute_high_rigor_workflow(self, body):
+        if body.get('async') or body.get('enqueue'):
+            return self._enqueue_high_rigor_job(body)
+        return self._compute_consultation_workflow({
+            **dict(body or {}),
+            'surface': 'api_web',
+            'return_high_rigor_shape': True,
+        })
+
+    def _compute_consultation_workflow(self, body):
+        return execute_consultation_workflow(
+            self,
+            body=dict(body or {}),
+            surface=body.get('surface', 'api_web'),
+        )
+
+    def _compute_high_rigor_workflow_sync(self, body):
+        body_copy = dict(body or {})
+        body_copy.pop('async', None)
+        body_copy.pop('enqueue', None)
+        return self._compute_high_rigor_workflow(body_copy)
+
+    def _high_rigor_workflow_plan_only(self, birth_payload, themes, events):
+        return {
+            'success': True,
+            'endpoint': 'high_rigor_workflow',
+            'mode': 'plan_only_no_external_calls',
+            'routes': ['career', 'relationship', 'finance'],
+            'themes': themes,
+            'event_count': len(events),
+            'source_priority': {
+                'mode': 'vedastro_official_snapshot_first',
+                'priority': [
+                    'vedastro_official_snapshot',
+                    'local_supplemental_modules',
+                    'local_fallback_only_when_official_blocked',
+                ],
+            },
+            'reused_modules': [
+                'vedastro_evidence_orchestrator',
+                'birth_time_rectifier',
+                'historical_event_backtest',
+                'report_orchestrator',
+                'reading_orchestrator',
+                'orchestrator_bridge',
+            ],
+            'execution_plan': [
+                'compute_chart_with_vedastro_main_entry_overview',
+                'run_rectification_gate',
+                'run_historical_event_backtest_when_events_exist',
+                'generate_thematic_report_for_selected_themes',
+                'return_official_primary_supplemental_fallback_conflict_contract',
+            ],
+            'contract': {
+                'official_primary_evidence': {},
+                'local_supplemental_evidence': {},
+                'fallback_used': [],
+                'blocked_items': [],
+                'conflicts': [],
+            },
+            'execution_strategy': {
+                'chart_path': {
+                    'mode': 'sync_chart_response_cache',
+                    'cache_scope': _API_CHART_CACHE_SCOPE,
+                    'cache_ttl_seconds': _api_chart_cache_ttl_seconds(),
+                    'note': '普通 chart 入口优先复用 API 级最终结果缓存，避免重复拉取官方快照与 prompt pack。',
+                },
+                'queue_recommendation': {
+                    'recommended': True,
+                    'lane': 'high_rigor_workflow',
+                    'reason': '高严谨链路会叠加 rectification/backtest/thematic report，适合后续进入异步/队列层，而不是始终阻塞同步用户请求。',
+                },
+            },
+            'boundary': 'Plan-only mode is used by API Explorer samples to avoid accidental heavy VedAstro calls. Remove dry_run/plan_only to execute the full workflow and return the official-primary evidence contract.',
+        }
+
+    def _enqueue_high_rigor_job(self, body):
+        job_id = f'hrw_{datetime.utcnow().strftime("%Y%m%d%H%M%S%f")}'
+        queued_at = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        poll_path = f'/api/high_rigor_workflow/jobs/{job_id}'
+        record = {
+            'success': True,
+            'endpoint': 'high_rigor_workflow_async',
+            'mode': 'async_submitted',
+            'job_id': job_id,
+            'status': 'queued',
+            'queued_at': queued_at,
+            'poll_path': poll_path,
+            'scope': _HIGH_RIGOR_JOB_SCOPE,
+        }
+        _write_high_rigor_job_record(job_id, record)
+
+        body_copy = dict(body or {})
+
+        def _run_job() -> None:
+            running = dict(record)
+            running['status'] = 'running'
+            running['started_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+            _write_high_rigor_job_record(job_id, running)
+            try:
+                result = self._compute_high_rigor_workflow_sync(body_copy)
+                completed = dict(running)
+                completed['status'] = 'completed'
+                completed['completed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+                completed['mode'] = 'async_result'
+                completed['result'] = result
+                _write_high_rigor_job_record(job_id, completed)
+            except Exception as exc:
+                failed = dict(running)
+                failed['status'] = 'failed'
+                failed['completed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+                failed['mode'] = 'async_result'
+                failed['error'] = str(exc)
+                _write_high_rigor_job_record(job_id, failed)
+
+        threading.Thread(
+            target=_run_job,
+            name=f'high-rigor-job-{job_id}',
+            daemon=True,
+        ).start()
+        return record
+
+    def _enqueue_async_job(self, *, scope, endpoint, job_prefix, poll_base, compute_fn):
+        job_id = f'{job_prefix}_{datetime.utcnow().strftime("%Y%m%d%H%M%S%f")}'
+        queued_at = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        poll_path = f'{poll_base}/{job_id}'
+        record = {
+            'success': True,
+            'endpoint': endpoint,
+            'mode': 'async_submitted',
+            'job_id': job_id,
+            'status': 'queued',
+            'queued_at': queued_at,
+            'poll_path': poll_path,
+            'scope': scope,
+        }
+        _write_async_job_record(scope, job_id, record)
+
+        def _run_job() -> None:
+            running = dict(record)
+            running['status'] = 'running'
+            running['started_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+            _write_async_job_record(scope, job_id, running)
+            try:
+                result = compute_fn()
+                completed = dict(running)
+                completed['status'] = 'completed'
+                completed['completed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+                completed['mode'] = 'async_result'
+                completed['result'] = result
+                _write_async_job_record(scope, job_id, completed)
+            except Exception as exc:
+                failed = dict(running)
+                failed['status'] = 'failed'
+                failed['completed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+                failed['mode'] = 'async_result'
+                failed['error'] = str(exc)
+                _write_async_job_record(scope, job_id, failed)
+
+        threading.Thread(
+            target=_run_job,
+            name=f'{job_prefix}-job-{job_id}',
+            daemon=True,
+        ).start()
+        return record
+
+    def _get_high_rigor_job(self, job_id):
+        return _load_high_rigor_job_record(job_id)
+
+    def _get_chart_job(self, job_id):
+        return _load_async_job_record(_API_CHART_CACHE_SCOPE, job_id)
+
+    def _high_rigor_birth_payload(self, body):
+        required = ('year', 'month', 'day', 'hour', 'minute', 'lat', 'lon')
+        missing = [key for key in required if body.get(key) is None]
+        if missing:
+            raise BadRequest(f'missing birth fields: {", ".join(missing)}')
+        year = self._get_int(body, 'year', 1990, 1800, 2400)
+        month = self._get_int(body, 'month', 1, 1, 12)
+        day = self._get_int(body, 'day', 1, 1, 31)
+        hour = self._get_float(body, 'hour', 12, 0, 23)
+        minute = self._get_float(body, 'minute', 0, 0, 59)
+        second = self._get_birth_second(body)
+        lat = self._get_float(body, 'lat', 0, -90, 90)
+        lon = self._get_float(body, 'lon', 0, -180, 180)
+        tz = self._parse_timezone(body, lat, lon, year, month, day, hour, minute, second)
+        return {
+            'year': year,
+            'month': month,
+            'day': day,
+            'hour': hour,
+            'minute': minute,
+            'second': second,
+            'lat': lat,
+            'lon': lon,
+            'tz': tz,
+            'ayanamsa': body.get('ayanamsa', 'lahiri'),
+            'node_mode': body.get('node_mode', body.get('nodeMode', 'mean')),
+            'today': body.get('today') or body.get('current_date'),
+            'transit_date': body.get('transit_date') or body.get('reference_date'),
+        }
+
+    def _high_rigor_requested_themes(self, body):
+        raw = body.get('themes', body.get('theme', ['career', 'marriage', 'wealth']))
+        try:
+            return _UNIFIED_CONSULTATION_ORCHESTRATOR.normalize_themes(raw)
+        except ValueError as exc:
+            message = str(exc)
+            if message.startswith('Unknown theme:'):
+                detail = message.split(':', 1)[1].strip()
+                raise BadRequest(f'Unknown high-rigor theme: {detail}') from exc
+            raise BadRequest('theme/themes must be a string, list, or all') from exc
+
+    def _high_rigor_events(self, body):
+        events = body.get('events') or body.get('historical_events') or []
+        if events is None:
+            return []
+        if not isinstance(events, list):
+            raise BadRequest('events must be an array')
+        normalized = []
+        aliases = {
+            'relationship': 'marriage',
+            'finance': 'wealth',
+            'money': 'wealth',
+            'job': 'career',
+            'work': 'career',
+            '事业': 'career',
+            '婚恋': 'marriage',
+            '财富': 'wealth',
+        }
+        for index, event in enumerate(events[:80]):
+            if not isinstance(event, dict):
+                raise BadRequest('event items must be objects')
+            date = event.get('date') or event.get('time') or event.get('event_date')
+            domain = event.get('domain') or event.get('category') or event.get('type')
+            if not date or not domain:
+                continue
+            domain_key = aliases.get(str(domain).strip().lower(), str(domain).strip().lower())
+            normalized.append({
+                **event,
+                'id': event.get('id') or f'event_{index + 1}',
+                'date': str(date)[:10],
+                'domain': domain_key,
+                'summary': event.get('summary') or event.get('desc') or event.get('description') or '',
+            })
+        return normalized
+
+    def _run_high_rigor_historical_backtest(self, birth_payload, events):
+        if not events:
+            return {
+                'scope': 'historical_event_backtest',
+                'summary': {
+                    'total_events': 0,
+                    'strong_hits': 0,
+                    'weak_hits': 0,
+                    'misses': 0,
+                    'blocked_events': 0,
+                    'unsupported_domain_events': 0,
+                },
+                'events': [],
+                'boundary': 'No historical events were supplied; rectification remains interview-guided only.',
+            }
+        module = _load_local_module('historical_event_backtest')
+        payload = {
+            'subject': {
+                'year': int(birth_payload['year']),
+                'month': int(birth_payload['month']),
+                'day': int(birth_payload['day']),
+                'hour': int(float(birth_payload['hour'])),
+                'minute': int(float(birth_payload['minute'])),
+                'lat': float(birth_payload['lat']),
+                'lon': float(birth_payload['lon']),
+                'tz': float(birth_payload['tz']),
+                'node_mode': birth_payload.get('node_mode', 'mean'),
+            },
+            'events': events,
+        }
+        return module.build_report(payload)
+
+    def _high_rigor_vedastro_official_summary(self, chart):
+        prompt_pack = chart.get('ai_prompt_pack') if isinstance(chart, dict) else {}
+        evidence_snapshot = prompt_pack.get('evidence_snapshot') if isinstance(prompt_pack, dict) else {}
+        prompt_official = evidence_snapshot.get('vedastro_official_snapshot') if isinstance(evidence_snapshot, dict) else {}
+        if not isinstance(prompt_official, dict):
+            prompt_official = {}
+        prompt_full_snapshot = evidence_snapshot.get('vedastro_official_full_snapshot') if isinstance(evidence_snapshot, dict) else {}
+        if not isinstance(prompt_full_snapshot, dict):
+            prompt_full_snapshot = {}
+        modules = chart.get('modules') if isinstance(chart, dict) else {}
+        range_scan = modules.get('vedastro_range_scan_result') if isinstance(modules, dict) else {}
+        if not isinstance(range_scan, dict):
+            range_scan = {}
+        full_snapshot_payload = _build_vedastro_official_full_snapshot_payload_from_chart(chart)
+        official_snapshot = range_scan.get('official_full_snapshot') if isinstance(range_scan, dict) else {}
+        if not isinstance(official_snapshot, dict):
+            official_snapshot = {}
+        metadata = official_snapshot.get('source_metadata') if isinstance(official_snapshot, dict) else {}
+        catalog = metadata.get('official_full_capability_catalog') if isinstance(metadata, dict) else {}
+        if not isinstance(catalog, dict):
+            catalog = {}
+        range_metadata = range_scan.get('source_metadata') if isinstance(range_scan, dict) else {}
+        if not isinstance(range_metadata, dict):
+            range_metadata = {}
+        strict_workflow_contracts = (
+            prompt_full_snapshot.get('strict_workflow_contracts')
+            or full_snapshot_payload.get('strict_workflow_contracts')
+            or {}
+        )
+        if not isinstance(strict_workflow_contracts, dict):
+            strict_workflow_contracts = {}
+        strict_workflow_primary_route = (
+            prompt_full_snapshot.get('strict_workflow_primary_route')
+            or full_snapshot_payload.get('strict_workflow_primary_route')
+        )
+        strict_workflow_routes_available = (
+            prompt_full_snapshot.get('strict_workflow_routes_available')
+            or full_snapshot_payload.get('strict_workflow_routes_available')
+            or list(strict_workflow_contracts.keys())
+        )
+        if not isinstance(strict_workflow_routes_available, list):
+            strict_workflow_routes_available = list(strict_workflow_contracts.keys())
+        _selected_route, primary_contract = _preferred_strict_contract(
+            strict_workflow_contracts,
+            strict_workflow_primary_route,
+        )
+        dynamic_selection = (
+            prompt_official.get('official_full_capability_dynamic_selection')
+            or catalog.get('dynamic_selection')
+            or prompt_full_snapshot.get('official_full_capability_dynamic_selection')
+            or full_snapshot_payload.get('official_full_capability_dynamic_selection')
+            or range_metadata.get('official_full_capability_dynamic_selection')
+            or {}
+        )
+        report_references = (
+            prompt_official.get('official_report_references')
+            or prompt_full_snapshot.get('official_report_references')
+            or full_snapshot_payload.get('official_report_references')
+            or range_metadata.get('official_report_references')
+            or {
+                theme: selection.get('report_reference')
+                for theme, selection in dynamic_selection.items()
+                if isinstance(selection, dict) and isinstance(selection.get('report_reference'), dict)
+            }
+        )
+        return {
+            'status': (
+                prompt_official.get('status')
+                or official_snapshot.get('status')
+                or range_scan.get('status')
+                or 'blocked'
+            ),
+            'range_scan_status': range_scan.get('status') if isinstance(range_scan, dict) else None,
+            'event_count': int(range_scan.get('event_count', 0) or 0) if isinstance(range_scan, dict) else 0,
+            'official_full_capability_catalog_status': (
+                prompt_official.get('official_full_capability_catalog_status')
+                or catalog.get('status')
+                or range_metadata.get('official_full_capability_catalog_status')
+            ),
+            'official_full_capability_catalog_summary': (
+                prompt_official.get('official_full_capability_catalog_summary')
+                or prompt_full_snapshot.get('official_full_capability_catalog_summary')
+                or full_snapshot_payload.get('official_full_capability_catalog_summary')
+                or catalog.get('summary')
+                or range_metadata.get('official_full_capability_catalog_summary')
+                or {}
+            ),
+            'official_full_capability_domain_routing': (
+                prompt_official.get('official_full_capability_domain_routing')
+                or prompt_full_snapshot.get('official_full_capability_domain_routing')
+                or full_snapshot_payload.get('official_full_capability_domain_routing')
+                or catalog.get('domain_routing')
+                or range_metadata.get('official_full_capability_domain_routing')
+                or {}
+            ),
+            'official_full_capability_dynamic_selection': dynamic_selection,
+            'official_report_references': report_references,
+            'strict_workflow_primary_route': strict_workflow_primary_route,
+            'strict_workflow_routes_available': strict_workflow_routes_available,
+            'strict_workflow_contracts': strict_workflow_contracts,
+            'official_primary_evidence': (
+                primary_contract.get('official_primary_evidence')
+                or prompt_official.get('official_primary_evidence')
+                or {}
+            ),
+            'local_supplemental_evidence': (
+                primary_contract.get('local_supplemental_evidence')
+                or prompt_official.get('local_supplemental_evidence')
+                or {}
+            ),
+            'fallback_used': (
+                primary_contract.get('fallback_used')
+                or prompt_official.get('fallback_used')
+                or []
+            ),
+            'blocked_items': (
+                primary_contract.get('blocked_items')
+                or prompt_official.get('blocked_items')
+                or []
+            ),
+            'conflicts': (
+                primary_contract.get('conflicts')
+                or prompt_official.get('conflicts')
+                or []
+            ),
+            'technique_audit_summary': primary_contract.get('technique_audit_summary') or {},
+            'adjudication_stages': primary_contract.get('adjudication_stages') or {},
+            'multi_reference_reading_summary': primary_contract.get('multi_reference_reading_summary') or {},
+            'verdict': primary_contract.get('verdict'),
+            'dominant_label': primary_contract.get('dominant_label'),
+            'main_conflicts': primary_contract.get('main_conflicts') or primary_contract.get('conflicts') or [],
+            'boundary': 'VedAstro official snapshot and capability catalog are consumed as primary evidence metadata; execution breadth depends on configured network and sample limits.',
+        }
+
+    def _high_rigor_next_questions(self, rectification, historical_backtest):
+        questions = []
+        summary = rectification.get('summary') if isinstance(rectification, dict) else {}
+        for item in summary.get('recommended_events') or []:
+            questions.append({
+                'type': 'yes_no_or_date',
+                'topic': item,
+                'question': f'你是否有日期较明确的 {item} 事件？如果有，请补年份/月/日。',
+            })
+        backtest_summary = historical_backtest.get('summary') if isinstance(historical_backtest, dict) else {}
+        if not isinstance(backtest_summary, dict):
+            backtest_summary = {}
+        if int(backtest_summary.get('total_events', 0) or 0) < 5:
+            questions.append({
+                'type': 'free_text',
+                'topic': 'event_sample_size',
+                'question': '目前历史事件少于5个。请补充搬家、升学、工作转折、家庭重大事件、奖项/收入变化等日期。',
+            })
+        return questions[:8]
 
     def _thematic_workflow_status(self, reading_orchestrator, orchestrator_bridge, report_orchestrator, theme_values):
         reading_themes = []
@@ -1277,7 +2200,14 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 return None
 
         has_birth = all(raw.get(key) is not None for key in ('year', 'month', 'day'))
-        full_reading = collect('full_reading', lambda: self._compute_full_reading_for_thematic(raw)) if has_birth else None
+        skip_full_reading = bool(raw.get('skip_full_reading_for_thematic'))
+        full_reading = (
+            collect('full_reading', lambda: self._compute_full_reading_for_thematic(raw))
+            if has_birth and not skip_full_reading
+            else None
+        )
+        if skip_full_reading:
+            module_status['full_reading'] = 'skipped_reuse_chart_data'
         full_modules = full_reading.get('modules', {}) if isinstance(full_reading, dict) else {}
         chart = None
         if full_reading:
@@ -1469,6 +2399,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'strengths': user_narrative.get('strengths', [])[:3],
                     'risks': user_narrative.get('risks', [])[:3],
                     'boundaries': user_narrative.get('boundaries', [])[:3],
+                    'monthly_frame': user_narrative.get('monthly_frame', {}),
                 },
             ))
         return items
@@ -1511,7 +2442,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 details=top_strength,
             ))
         convergence = full_modules.get('dasa_convergence') if isinstance(full_modules, dict) else {}
+        if not isinstance(convergence, dict):
+            convergence = {}
         top_domains = convergence.get('top_convergent_domains') if isinstance(convergence, dict) else []
+        if not isinstance(top_domains, list):
+            top_domains = []
         career_domain = next(
             (
                 row for row in top_domains
@@ -1533,6 +2468,24 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'strong' if career_domain.get('convergence_level') in {'L2', 'L3'} else 'moderate',
                 source='full_reading.modules.dasa_convergence',
                 details=career_domain,
+            ))
+        strict_career = full_modules.get('career_strict_evidence') if isinstance(full_modules, dict) else {}
+        user_narrative = strict_career.get('user_narrative') if isinstance(strict_career, dict) else {}
+        if isinstance(user_narrative, dict) and user_narrative.get('markdown'):
+            items.append(self._theme_evidence(
+                'Career-strict-narrative',
+                'Strict',
+                user_narrative.get('markdown'),
+                'neutral',
+                'strong',
+                source='full_reading.modules.career_strict_evidence.user_narrative',
+                details={
+                    'headline': user_narrative.get('headline'),
+                    'strengths': user_narrative.get('strengths', [])[:3],
+                    'risks': user_narrative.get('risks', [])[:3],
+                    'boundaries': user_narrative.get('boundaries', [])[:3],
+                    'monthly_frame': user_narrative.get('monthly_frame', {}),
+                },
             ))
         return items
 
@@ -1577,6 +2530,24 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'strong' if any(row.get('strength') == 'strong' for row in dhana_yogas if isinstance(row, dict)) else 'moderate',
                 source='full_reading.modules.yogas_doshas',
                 details={'yogas': dhana_yogas[:4]},
+            ))
+        strict_finance = full_modules.get('finance_strict_evidence') if isinstance(full_modules, dict) else {}
+        user_narrative = strict_finance.get('user_narrative') if isinstance(strict_finance, dict) else {}
+        if isinstance(user_narrative, dict) and user_narrative.get('markdown'):
+            items.append(self._theme_evidence(
+                'Finance-strict-narrative',
+                'Strict',
+                user_narrative.get('markdown'),
+                'neutral',
+                'strong',
+                source='full_reading.modules.finance_strict_evidence.user_narrative',
+                details={
+                    'headline': user_narrative.get('headline'),
+                    'strengths': user_narrative.get('strengths', [])[:3],
+                    'risks': user_narrative.get('risks', [])[:3],
+                    'boundaries': user_narrative.get('boundaries', [])[:3],
+                    'monthly_frame': user_narrative.get('monthly_frame', {}),
+                },
             ))
         return items
 
@@ -1703,6 +2674,518 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'derived': True,
             },
         }
+
+    def _strict_monthly_frame_from_theme_report(self, report_payload):
+        if not isinstance(report_payload, dict):
+            return {}
+        evidence = report_payload.get('evidence')
+        if not isinstance(evidence, list):
+            return {}
+        for item in evidence:
+            if not isinstance(item, dict):
+                continue
+            details = item.get('details')
+            if not isinstance(details, dict):
+                continue
+            monthly_frame = details.get('monthly_frame')
+            if isinstance(monthly_frame, dict) and monthly_frame:
+                return monthly_frame
+        return {}
+
+    def _humanize_monthly_adjudication(self, theme_name, primary_state, manifestation_mode, friction_source, time_confidence):
+        primary_map = {
+            '推进': '进入可主动推进窗口',
+            '启动': '进入新线索浮出的阶段',
+            '观察': '更适合观察与试探，不宜过早定性',
+            '筛选': '更适合边接触边筛选，先排除不合适的人或事',
+            '整固': '更像守成整固，而不是激进扩张',
+            '重组': '更像旧结构拆开重排，再决定下一步',
+            '收束': '更像阶段性收尾、定局或止损',
+        }
+        timing_map = {
+            'day_supported': '月份与少数关键日期都可参考，日期判断相对更实用。',
+            'month_supported': '以月份判断最稳，具体日期只能作辅助观察。',
+            'month_only': '只能判断月级趋势，暂时不宜把结论压到具体某一天。',
+            'blocked': '时间证据仍不足，当前只能保守看趋势，不宜下精确日期判断。',
+        }
+        manifestation_map = {
+            'career': {
+                '职业定位推进': '更像职业定位开始推进，适合明确方向、角色或赛道。',
+                '职位/项目/职责抬头': '更像职位、项目或职责开始抬头。',
+                '项目/合作推进': '更像项目、合作、签约或公开职责往前走。',
+            },
+            'marriage': {
+                '关系观察/筛选': '更像先接触、观察、筛选，再决定是否深入推进。',
+                '公开化/关系可见度上升': '更像关系可见度上升，或公开互动开始变多。',
+            },
+            'wealth': {
+                '现金流结构观察': '更像先看现金流结构与回款节奏，而不是立刻看到大额留存。',
+                '定金/回款/短期现金流改善': '更像定金、回款或短期现金流出现改善。',
+            },
+        }
+        friction_map = {
+            '流程卡顿但机会仍在': '机会未消失，但流程、对接或资源节奏会更磨人。',
+            '执行压力伴随机会': '机会和压力会一起出现，往往不是轻松拿下，而是边扛边推进。',
+            '时间证据不足': '时间证据还不够密，能看趋势，但不宜把结论说得过满。',
+        }
+
+        humanized = {
+            'primary_state': primary_map.get(primary_state, primary_state or ''),
+            'manifestation_mode': manifestation_map.get(theme_name, {}).get(manifestation_mode, manifestation_mode or ''),
+            'friction_source': friction_map.get(friction_source, friction_source or ''),
+            'time_confidence': timing_map.get(time_confidence, time_confidence or ''),
+        }
+        return humanized
+
+    @staticmethod
+    def _theme_evidence_lookup(report_payload):
+        if not isinstance(report_payload, dict):
+            return {}
+        evidence = report_payload.get('evidence')
+        if not isinstance(evidence, list):
+            return {}
+        lookup = {}
+        for item in evidence:
+            if not isinstance(item, dict):
+                continue
+            technique = str(item.get('technique') or '').strip()
+            if technique and technique not in lookup:
+                lookup[technique] = item
+        return lookup
+
+    @staticmethod
+    def _normalize_sentence(text):
+        value = str(text or '').replace('\n', ' ').strip()
+        if not value:
+            return ''
+        value = re.sub(r'\s+', ' ', value)
+        value = value.replace('。，', '。').replace('，。', '。').replace('..', '.')
+        if value[-1] not in '。！？!?':
+            value = value + '。'
+        return value.replace('。。', '。')
+
+    def _join_adjudication_parts(self, parts):
+        normalized = [self._normalize_sentence(part) for part in parts if str(part or '').strip()]
+        return " ".join(normalized).replace('。。', '。').strip()
+
+    @staticmethod
+    def _strip_humanized_prefix(text):
+        value = str(text or '').strip()
+        if value.startswith('更像'):
+            return value[2:].strip()
+        return value
+
+    def _join_brief_points(self, items):
+        cleaned = []
+        for item in items or []:
+            value = self._normalize_sentence(item)
+            if not value:
+                continue
+            cleaned.append(value.rstrip('。！？!?'))
+        return '；'.join(cleaned)
+
+    @staticmethod
+    def _matching_strict_lines(lines, keywords):
+        if not isinstance(lines, list):
+            return []
+        matches = []
+        for line in lines:
+            value = str(line or '').strip()
+            if value and any(keyword in value for keyword in keywords):
+                matches.append(value)
+        return matches
+
+    @staticmethod
+    def _extract_confidence_cap(strict_item):
+        if not isinstance(strict_item, dict):
+            return ''
+        conclusion = str(strict_item.get('conclusion') or '')
+        match = re.search(r'confidence_cap:\s*([a-z_]+)', conclusion)
+        if not match:
+            return ''
+        return match.group(1).strip().lower()
+
+    def _confidence_cap_cn(self, confidence_cap):
+        mapping = {
+            'high': '高',
+            'moderate': '中',
+            'low': '低',
+            'blocked': '阻塞',
+            'unknown': '未知',
+        }
+        return mapping.get(str(confidence_cap or '').strip().lower(), str(confidence_cap or '').strip())
+
+    def _strict_axis_payload_for_theme(self, theme_name, report_payload, humanized):
+        lookup = self._theme_evidence_lookup(report_payload)
+        strict_key_map = {
+            'career': 'Career-strict-narrative',
+            'marriage': 'Relationship-strict-narrative',
+            'wealth': 'Finance-strict-narrative',
+        }
+        strict_item = lookup.get(strict_key_map.get(theme_name, '')) or {}
+        strict_details = strict_item.get('details') if isinstance(strict_item.get('details'), dict) else {}
+        strengths = strict_details.get('strengths') if isinstance(strict_details.get('strengths'), list) else []
+        risks = strict_details.get('risks') if isinstance(strict_details.get('risks'), list) else []
+        boundaries = strict_details.get('boundaries') if isinstance(strict_details.get('boundaries'), list) else []
+        confidence_cap = self._extract_confidence_cap(strict_item)
+        return {
+            'lookup': lookup,
+            'strict_item': strict_item,
+            'strict_details': strict_details,
+            'strengths': strengths,
+            'risks': risks,
+            'boundaries': boundaries,
+            'confidence_cap': confidence_cap,
+            'humanized': humanized,
+        }
+
+    def _career_axis_judgements(self, report_payload, humanized):
+        payload = self._strict_axis_payload_for_theme('career', report_payload, humanized)
+        lookup = payload['lookup']
+        strengths = payload['strengths']
+        risks = payload['risks']
+        boundaries = payload['boundaries']
+        confidence_cap = payload['confidence_cap']
+
+        d10 = ((lookup.get('D1-10th-house') or {}).get('details') or {})
+        convergence = lookup.get('Dasa-convergence-career') or {}
+        shadbala = lookup.get('Shadbala-career-support') or {}
+        tenth_sign = d10.get('sign') or '未知'
+        tenth_planets = d10.get('planets_label') or '无'
+        role_supports = self._matching_strict_lines(strengths, ['A10', 'Amatyakaraka', 'Karakamsha'])
+        role_risks = self._matching_strict_lines(risks, ['Argala', '阻力', '卡顿'])
+        org_supports = self._matching_strict_lines(strengths, ['A10', 'Amatyakaraka'])
+        migration_boundary = self._matching_strict_lines(boundaries, ['VedAstro', '时间置信度', 'D10'])
+        convergence_text = str(convergence.get('conclusion') or convergence.get('details', {}).get('interpretation') or '').strip()
+        shadbala_text = str(shadbala.get('conclusion') or '').strip()
+        manifestation_core = self._strip_humanized_prefix(humanized.get('manifestation_mode'))
+        role_support_text = self._join_brief_points(role_supports[:3])
+        org_support_text = self._join_brief_points(org_supports[:2])
+
+        axes = [
+            {
+                'axis': '角色定位',
+                'judgement': self._join_adjudication_parts([
+                    f"角色定位这一轴，第10宫在{tenth_sign}，宫内{tenth_planets}，所以事业判断的主问题不是单看有没有机会，而是你会以什么角色、职责和公众面貌被看见。",
+                    f"当前严格链已经把这几层并入主裁决：{role_support_text}。" if role_support_text else '',
+                    f"这也是为什么本轮月度主状态不是静态守成，而是{humanized.get('primary_state')}；落地形式更偏{manifestation_core}。",
+                    role_risks[0] if role_risks else '',
+                    f"置信上限：{self._confidence_cap_cn(confidence_cap)}。" if confidence_cap else '',
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['D1-10th-house', 'Career-strict-narrative'],
+            },
+            {
+                'axis': '项目合作',
+                'judgement': self._join_adjudication_parts([
+                    "项目合作这一轴，当前不是完全空白，但也还没到可以直接写成长期稳定落袋的程度。",
+                    convergence_text or '多重时间系统已经触到事业域，但还需要更多现实确认。',
+                    f"所以更像先有合作入口、项目接触或职责试探，再决定是否真正推进到签约、常驻或长期绑定。",
+                    f"阻力层面，{humanized.get('friction_source')}",
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['Dasa-convergence-career', 'Career-strict-narrative'],
+            },
+            {
+                'axis': '组织权责',
+                'judgement': self._join_adjudication_parts([
+                    "组织权责这一轴，比起单纯换工作，更像权责结构、上级关系和专业角色承担被重新摆到台前。",
+                    f"严格链里最关键的支撑是这几层：{org_support_text}。" if org_support_text else '',
+                    shadbala_text,
+                    "这意味着你容易被要求承担更明确的职责、结果或对外可见任务，但通常不是轻松抬升，而是伴随现实压力同步出现。",
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['Career-strict-narrative', 'Shadbala-career-support'],
+            },
+            {
+                'axis': '迁移动向',
+                'judgement': self._join_adjudication_parts([
+                    "迁移动向这一轴，当前主链并没有把“异地定局”抬成事业主题的最强主轴。",
+                    f"现有证据更集中在第10宫职责触发与{manifestation_core}，而不是直接给出长期搬家、长期异地驻扎已经坐实的锚点。",
+                    migration_boundary[0] if migration_boundary else '如果后续官方日窗口或外部事件层补到 relocation / travel 命中，才适合进一步上调迁移判断。',
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['D1-10th-house', 'Career-strict-narrative'],
+            },
+        ]
+        return axes
+
+    def _marriage_axis_judgements(self, report_payload, humanized):
+        payload = self._strict_axis_payload_for_theme('marriage', report_payload, humanized)
+        lookup = payload['lookup']
+        strengths = payload['strengths']
+        risks = payload['risks']
+        boundaries = payload['boundaries']
+        confidence_cap = payload['confidence_cap']
+
+        seventh = ((lookup.get('D1-7th-house') or {}).get('details') or {})
+        timing = lookup.get('DK-UL-Dasha timing') or {}
+        counting = lookup.get('Marriage-counting') or {}
+        vivah = lookup.get('Vivah-saham') or {}
+
+        seventh_sign = seventh.get('sign') or '未知'
+        seventh_planets = seventh.get('planets_label') or '无'
+        d9_quality = (((counting.get('details') or {}).get('d9_marriage_quality')) or {})
+        timing_conclusion = str(timing.get('conclusion') or '').strip()
+        vivah_conclusion = str(vivah.get('conclusion') or '').strip()
+        manifestation_core = self._strip_humanized_prefix(humanized.get('manifestation_mode'))
+        ul_supports = self._matching_strict_lines(strengths, ['Upapada', 'UL'])
+        low_confidence = self._matching_strict_lines(risks, ['confidence cap', '冲突', '不足'])
+        boundary_focus = self._matching_strict_lines(boundaries, ['D1、D9、UL', 'legal_marriage', 'dual dasha'])
+
+        axes = [
+            {
+                'axis': '关系推进',
+                'judgement': self._join_adjudication_parts([
+                    f"关系推进这一轴，第7宫在{seventh_sign}，宫内{seventh_planets}，说明伴侣关系会成为需要正面面对的人生主轴，而不是轻描淡写带过的副题。",
+                    timing_conclusion,
+                    f"当前月度主状态是{humanized.get('primary_state')}，所以更像关系线索开始浮出，而不是已经进入婚约定局。",
+                    f"置信上限：{self._confidence_cap_cn(confidence_cap)}。" if confidence_cap else '',
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['D1-7th-house', 'DK-UL-Dasha timing', 'Relationship-strict-narrative'],
+            },
+            {
+                'axis': '对象筛选',
+                'judgement': self._join_adjudication_parts([
+                    "对象筛选这一轴，是当前婚恋判断里最不能跳过的一层。",
+                    f"严格链已经明确当前落地形式更偏{manifestation_core}，也就是说重点不是立刻确认关系，而是先看谁值得继续推进。",
+                    str(counting.get('conclusion') or ''),
+                    d9_quality.get('quality_rating') or '',
+                    "这类组合更像先识别重复的关系模式，再决定是否深入，而不是因为出现线索就直接抬升成结婚窗口。",
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['Marriage-counting', 'Relationship-strict-narrative'],
+            },
+            {
+                'axis': '公开化程度',
+                'judgement': self._join_adjudication_parts([
+                    "公开化程度这一轴，当前可以看见关系可见度会慢慢增加，但它和法律婚姻不是一回事。",
+                    ul_supports[0] if ul_supports else '',
+                    vivah_conclusion,
+                    "因此更合理的读法是：先有互动增加、公开接触增多或身边人开始知道，再看后续是否真的跨进更正式的承诺层。",
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['Relationship-strict-narrative', 'Vivah-saham'],
+            },
+            {
+                'axis': '承诺边界',
+                'judgement': self._join_adjudication_parts([
+                    "承诺边界这一轴，必须压住过度乐观的解读。",
+                    low_confidence[0] if low_confidence else '',
+                    boundary_focus[0] if boundary_focus else '在 D1、D9、UL 与 dual dasha 没有更完整闭环前，不能把当前关系窗口直接包装成结婚必然落地。',
+                    "所以这轮最严谨的结论是：婚恋线在动，但更像进入观察、筛选和校验阶段，而不是已经可以宣布承诺定局。",
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['Relationship-strict-narrative', 'DK-UL-Dasha timing'],
+            },
+        ]
+        return axes
+
+    def _wealth_axis_judgements(self, report_payload, humanized):
+        payload = self._strict_axis_payload_for_theme('wealth', report_payload, humanized)
+        lookup = payload['lookup']
+        risks = payload['risks']
+        boundaries = payload['boundaries']
+        confidence_cap = payload['confidence_cap']
+
+        houses = ((lookup.get('2nd-and-11th-house') or {}).get('details') or {})
+        second = houses.get('second') if isinstance(houses.get('second'), dict) else {}
+        eleventh = houses.get('eleventh') if isinstance(houses.get('eleventh'), dict) else {}
+        av = lookup.get('Ashtakavarga-wealth') or {}
+        dhana = lookup.get('Dhana-yoga-full-reading') or {}
+
+        second_label = second.get('planets_label') or '无'
+        second_sign = second.get('sign') or '未知'
+        eleventh_label = eleventh.get('planets_label') or '无'
+        eleventh_sign = eleventh.get('sign') or '未知'
+        manifestation_core = self._strip_humanized_prefix(humanized.get('manifestation_mode'))
+        dhana_yogas = (((dhana.get('details') or {}).get('yogas')) or [])
+        dhana_texts = [
+            str(row.get('interpretation') or '').strip()
+            for row in dhana_yogas
+            if isinstance(row, dict) and str(row.get('interpretation') or '').strip()
+        ]
+        risk_lines = self._matching_strict_lines(risks, ['wealth_convergence', 'Shadbala', '时间证据不足'])
+        boundary_lines = self._matching_strict_lines(boundaries, ['D2/D11', '官方财富日窗口', '时间置信度'])
+
+        axes = [
+            {
+                'axis': '收入兑现',
+                'judgement': self._join_adjudication_parts([
+                    f"收入兑现这一轴，要先看第2宫与第11宫：第2宫在{second_sign}且有{second_label}，第11宫在{eleventh_sign}且{eleventh_label}。",
+                    f"所以财富并不是纯抽象的“有财没财”，而是收入、积累与收益网络怎么落地的问题。",
+                    dhana_texts[0] if dhana_texts else '',
+                    f"当前月度主状态是{humanized.get('primary_state')}，说明线索在起，但还不是立刻把全年收入上限一次性坐实。",
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['2nd-and-11th-house', 'Dhana-yoga-full-reading', 'Finance-strict-narrative'],
+            },
+            {
+                'axis': '现金流节奏',
+                'judgement': self._join_adjudication_parts([
+                    "现金流节奏这一轴，比总资产量级更值得先看。",
+                    str(av.get('conclusion') or ''),
+                    f"严格链已经把当前落地形式定义成{manifestation_core}，所以这阶段更适合盯定金、回款、分期进账、项目进度款，而不是先幻想一次性大额沉淀。",
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['Ashtakavarga-wealth', 'Finance-strict-narrative'],
+            },
+            {
+                'axis': '合作分账',
+                'judgement': self._join_adjudication_parts([
+                    "合作分账这一轴，重点不在“有没有人给钱”，而在“钱以什么合作结构进来、最后能留下多少”。",
+                    dhana_texts[1] if len(dhana_texts) > 1 else (dhana_texts[0] if dhana_texts else ''),
+                    "这更像依托合作、技能输出、项目撮合或资源交换来形成收入，而不是完全脱离人脉与协作的独立孤立进账。",
+                    boundary_lines[1] if len(boundary_lines) > 1 else '',
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['Dhana-yoga-full-reading', 'Finance-strict-narrative'],
+            },
+            {
+                'axis': '风险留存',
+                'judgement': self._join_adjudication_parts([
+                    "风险留存这一轴，是当前财富判断必须保守的地方。",
+                    risk_lines[0] if risk_lines else '',
+                    risk_lines[1] if len(risk_lines) > 1 else '',
+                    f"置信上限：{self._confidence_cap_cn(confidence_cap)}。" if confidence_cap else '',
+                    "因此这轮更适合把财富理解为现金流和结构在动，而不是把它夸大成稳定高留存已经形成。",
+                    f"时间边界：{humanized.get('time_confidence')}",
+                ]),
+                'evidence_anchor': ['Finance-strict-narrative'],
+            },
+        ]
+        return axes
+
+    def _interpretation_axes_for_theme(self, theme_name):
+        mapping = {
+            'career': ['角色定位', '项目合作', '组织权责', '迁移动向'],
+            'marriage': ['关系推进', '对象筛选', '公开化程度', '承诺边界'],
+            'wealth': ['收入兑现', '现金流节奏', '合作分账', '风险留存'],
+        }
+        axes = mapping.get(theme_name, ['主轴判断', '次轴验证', '现实阻力', '时间边界'])
+        return [{'axis': axis} for axis in axes]
+
+    def _strict_interpretation_axes_for_theme(self, theme_name, report_payload, humanized):
+        builder_map = {
+            'career': self._career_axis_judgements,
+            'marriage': self._marriage_axis_judgements,
+            'wealth': self._wealth_axis_judgements,
+        }
+        builder = builder_map.get(theme_name)
+        if builder:
+            return builder(report_payload, humanized)
+        return self._interpretation_axes_for_theme(theme_name)
+
+    def _theme_strict_audit_gate(self, theme_name, report_payload):
+        if not isinstance(report_payload, dict):
+            return {}
+        direct = report_payload.get('technique_audit_summary')
+        if isinstance(direct, dict) and direct:
+            return direct
+        evidence = report_payload.get('evidence')
+        if not isinstance(evidence, list):
+            return {}
+        strict_prefix = {
+            'career': 'Career-strict-narrative',
+            'marriage': 'Relationship-strict-narrative',
+            'wealth': 'Finance-strict-narrative',
+        }.get(theme_name)
+        for item in evidence:
+            if not isinstance(item, dict):
+                continue
+            if strict_prefix and item.get('technique') != strict_prefix:
+                continue
+            details = item.get('details')
+            if isinstance(details, dict):
+                gate = details.get('technique_audit_summary')
+                if isinstance(gate, dict) and gate:
+                    return gate
+        return {}
+
+    def _apply_monthly_adjudication_to_theme_report(self, theme_name, report_payload):
+        if not isinstance(report_payload, dict):
+            return report_payload
+        monthly_frame = self._strict_monthly_frame_from_theme_report(report_payload)
+        if not monthly_frame:
+            return report_payload
+
+        primary_state = (monthly_frame.get('primary_state') or {}).get('value')
+        manifestation_mode = (monthly_frame.get('manifestation_mode') or {}).get('value')
+        friction_source = (monthly_frame.get('friction_source') or {}).get('value')
+        time_confidence = (monthly_frame.get('time_confidence') or {}).get('value')
+        humanized = self._humanize_monthly_adjudication(
+            theme_name,
+            primary_state,
+            manifestation_mode,
+            friction_source,
+            time_confidence,
+        )
+        axes = self._strict_interpretation_axes_for_theme(theme_name, report_payload, humanized)
+        strict_audit_gate = self._theme_strict_audit_gate(theme_name, report_payload)
+        narrative_contract = {
+            'theme': theme_name,
+            'monthly_frame_applied': True,
+        }
+        strict_bundle = {
+            'theme': theme_name,
+            'monthly_adjudication_summary': monthly_frame,
+            'monthly_adjudication_summary_humanized': humanized,
+            'strict_audit_gate': strict_audit_gate,
+            'interpretation_axes': axes,
+            'narrative_contract': narrative_contract,
+        }
+
+        summary = str(report_payload.get('summary') or '')
+        summary_parts = [summary] if summary else []
+        if humanized.get('primary_state'):
+            summary_parts.append(f"月度主状态：{humanized.get('primary_state')}。")
+        if humanized.get('manifestation_mode'):
+            summary_parts.append(f"落地形式：{humanized.get('manifestation_mode')}。")
+        report_payload['summary'] = " ".join(part for part in summary_parts if part).strip()
+
+        narrative = str(report_payload.get('narrative') or '')
+        narrative_parts = [narrative] if narrative else []
+        if humanized.get('friction_source'):
+            narrative_parts.append(f"阻力来源：{humanized.get('friction_source')}。")
+        if humanized.get('time_confidence'):
+            narrative_parts.append(f"时间置信度：{humanized.get('time_confidence')}。")
+        report_payload['narrative'] = " ".join(part for part in narrative_parts if part).strip()
+
+        recommendations = report_payload.get('recommendations')
+        if isinstance(recommendations, list):
+            enriched_recommendations = list(recommendations)
+            monthly_recommendation_parts = []
+            if humanized.get('primary_state'):
+                monthly_recommendation_parts.append(f"月度主状态：{humanized.get('primary_state')}。")
+            if humanized.get('manifestation_mode'):
+                monthly_recommendation_parts.append(f"落地形式：{humanized.get('manifestation_mode')}。")
+            if humanized.get('friction_source'):
+                monthly_recommendation_parts.append(f"阻力来源：{humanized.get('friction_source')}。")
+            if humanized.get('time_confidence'):
+                monthly_recommendation_parts.append(f"时间置信度：{humanized.get('time_confidence')}。")
+            if monthly_recommendation_parts:
+                enriched_recommendations.append(" ".join(monthly_recommendation_parts))
+            if axes:
+                enriched_recommendations.append(
+                    "本轮重点拆成：" + "、".join(str(item.get('axis')) for item in axes[:4]) + "。"
+                )
+            report_payload['recommendations'] = enriched_recommendations
+
+        report_payload['monthly_adjudication_summary'] = monthly_frame
+        report_payload['monthly_adjudication_summary_humanized'] = humanized
+        report_payload['interpretation_axes'] = axes
+        report_payload['strict_adjudication_bundle'] = strict_bundle
+        report_payload['strict_audit_gate'] = strict_audit_gate
+        report_payload['narrative_contract'] = narrative_contract
+        report_payload['summary'] = report_payload['summary'].replace('。。', '。')
+        report_payload['narrative'] = report_payload['narrative'].replace('。。', '。')
+        if isinstance(report_payload.get('recommendations'), list):
+            report_payload['recommendations'] = [
+                str(item).replace('。。', '。')
+                for item in report_payload['recommendations']
+            ]
+        return report_payload
 
     def _theme_house_snapshot(self, chart_data, house_num):
         houses = chart_data.get('houses') if isinstance(chart_data.get('houses'), dict) else {}
@@ -2039,7 +3522,29 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         return periods
 
     def _compute_chart(self, body):
+        if body.get('async') or body.get('enqueue'):
+            return self._enqueue_chart_job(body)
+        return self._compute_chart_sync(body)
+
+    def _enqueue_chart_job(self, body):
+        body_copy = dict(body or {})
+        body_copy.pop('async', None)
+        body_copy.pop('enqueue', None)
+        return self._enqueue_async_job(
+            scope=_API_CHART_CACHE_SCOPE,
+            endpoint='chart_async',
+            job_prefix='chart',
+            poll_base='/api/chart/jobs',
+            compute_fn=lambda: self._compute_chart_sync(body_copy),
+        )
+
+    def _compute_chart_sync(self, body):
         """完整星盘计算"""
+        cache_payload = _build_api_chart_cache_payload(body)
+        cached_result = _load_api_chart_response_cache(cache_payload)
+        if isinstance(cached_result, dict):
+            return cached_result
+
         year = self._get_int(body, 'year', 1990, 1800, 2400)
         month = self._get_int(body, 'month', 6, 1, 12)
         day = self._get_int(body, 'day', 15, 1, 31)
@@ -2251,9 +3756,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             })
             _attach_guided_topics(result)
             result['ai_prompt_pack'] = self._build_chart_prompt_pack(result)
-            return result
+            return _store_api_chart_response_cache(cache_payload, result)
         except ImportError:
-            return self._fallback_chart(year, month, day, hour, minute, second, lat, lon, tz)
+            fallback = self._fallback_chart(year, month, day, hour, minute, second, lat, lon, tz)
+            return _store_api_chart_response_cache(cache_payload, fallback)
 
     def _fallback_chart(self, year, month, day, hour, minute, second, lat, lon, tz):
         """无Swiss Ephemeris时的简化计算"""
@@ -4397,6 +5903,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         ]).lower()
         endpoint_keywords = [
             ('/api/thematic_report', ['thematic', '主题', 'report_orchestrator', 'reading', 'report']),
+            ('/api/high_rigor_workflow', ['high_rigor', '高严谨', 'rectification', 'backtest', 'vedastro']),
             ('/api/relationship', ['relationship', 'spouse', '婚姻', '感情']),
             ('/api/career', ['career', '事业']),
             ('/api/dasha', ['dasha', 'vimshottari']),
@@ -4495,6 +6002,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/shadbala': self._compute_shadbala,
             '/api/sudarshana': self._compute_sudarshana,
             '/api/synastry': self._compute_synastry,
+            '/api/consultation_workflow': self._compute_consultation_workflow,
+            '/api/high_rigor_workflow': self._compute_high_rigor_workflow,
             '/api/thematic_report': self._compute_thematic_report,
             '/api/transit': self._compute_transit_triggers,
             '/api/varga_full': self._compute_varga_full,
@@ -4617,6 +6126,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/shadbala': 'Compute Shadbala plus advanced evidence layer',
             '/api/sudarshana': 'Compute Sudarshana Chakra evidence',
             '/api/synastry': 'Compute 16-factor/Ashtakoot compatibility score',
+            '/api/consultation_workflow': 'Unified user consultation workflow for direct charting or rectification-first entry',
+            '/api/high_rigor_workflow': 'Compose VedAstro-first chart evidence, rectification gate, historical backtest, and thematic report',
             '/api/thematic_report': 'Generate thematic report with sample/custom/derived evidence',
             '/api/transit': 'Search transit trigger windows',
             '/api/varga_full': 'Compute divisional chart positions',
@@ -4627,6 +6138,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
     def _endpoint_method_notes(self, endpoint):
         notes = {
             '/api/thematic_report': '传 birth/chart payload 时会进入 derived_chart_evidence；只传 theme 时使用样例证据。',
+            '/api/consultation_workflow': '统一 direct_chart / rectification 入口；网页/app 与 skill/MCP 共用同一套问题路由和官方优先证据 contract。',
+            '/api/high_rigor_workflow': '复用 chart、rectification_gate、historical_event_backtest 与 thematic_report；不重写底层算法。',
             '/api/shadbala': 'advanced_layer 是证据补充，不覆盖主 Shadbala 总分。',
             '/api/yogas': 'curse_yogas 是高风险提示层，不能替代健康/法律/安全建议。',
             '/api/case_validation': 'MEVG 只读门控不运行外部子进程。',
@@ -4675,6 +6188,28 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/shadbala': {**base, **birth},
             '/api/sudarshana': base,
             '/api/synastry': {'male_moon': SAMPLE_PLANETS['Moon']['lon'], 'female_moon': 243.0},
+            '/api/high_rigor_workflow': {
+                **birth,
+                'lat': 36.42,
+                'lon': 114.2,
+                'tz': 8,
+                'dry_run': True,
+                'theme': ['career', 'marriage', 'wealth'],
+                'events': [
+                    {'date': '2019-12-15', 'domain': 'career', 'summary': '事业逐渐好转'},
+                    {'date': '2025-02-28', 'domain': 'wealth', 'summary': '项目结束与现金流变化'},
+                ],
+            },
+            '/api/consultation_workflow': {
+                **birth,
+                'lat': 36.42,
+                'lon': 114.2,
+                'tz': 8,
+                'dry_run': True,
+                'entry_mode': 'direct_chart',
+                'theme': ['career', 'marriage', 'wealth'],
+                'question': '请直接排盘并进入互动解盘',
+            },
             '/api/thematic_report': {'theme': 'marriage'},
             '/api/transit': {'natal_planets': SAMPLE_PLANETS, 'ascendant': SAMPLE_ASCENDANT, 'start': today, 'end': transit_end, 'planets_to_check': ['Saturn', 'Jupiter', 'Rahu', 'Ketu']},
             '/api/varga_full': {**base, 'divisions': ['D9', 'D10']},

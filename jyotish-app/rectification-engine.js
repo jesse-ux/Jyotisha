@@ -43,6 +43,59 @@ export const EVENT_COLLECTION_GUIDE = [
   { key: 'mobility', cn: '搬家/远行/移民', en: 'relocation, travel, migration', categories: ['travel'] },
 ];
 
+export const RECTIFICATION_RECOMMENDED_EVENT_QUESTION_MAP = {
+  career_change: {
+    id: 'recommended_career_change',
+    category: 'job_change',
+    varga: 'D10',
+    label_cn: '事业转折',
+    label_en: 'career change',
+    question_cn: '你是否有日期比较明确的换工作、项目解散、升职失败或职业转折？',
+    question_en: 'Have you had a dated job change, project ending, or career pivot?',
+    examples_cn: ['换工作', '项目解散', '升职/落选', '职业转向'],
+  },
+  education_end: {
+    id: 'recommended_education_end',
+    category: 'education',
+    varga: 'D24',
+    label_cn: '学业完成',
+    label_en: 'education completion',
+    question_cn: '你是否有日期比较明确的毕业、升学、艺考培训结束或重要考试结果？',
+    question_en: 'Have you had a dated graduation, admission, or important exam result?',
+    examples_cn: ['毕业', '升学', '艺考培训', '考试结果'],
+  },
+  relocation: {
+    id: 'recommended_relocation',
+    category: 'travel',
+    varga: 'D4',
+    label_cn: '迁移搬家',
+    label_en: 'relocation',
+    question_cn: '你是否有日期比较明确的搬家、长期异地、远行或迁移事件？',
+    question_en: 'Have you had a dated move, long-distance stay, or relocation?',
+    examples_cn: ['搬家', '异地求学', '外地工作', '迁移'],
+  },
+  marriage: {
+    id: 'recommended_marriage',
+    category: 'marriage',
+    varga: 'D9',
+    label_cn: '婚恋关系',
+    label_en: 'marriage relationship',
+    question_cn: '你是否有日期比较明确的恋爱开始、订婚、结婚或关系破裂？',
+    question_en: 'Have you had a dated romance, engagement, marriage, or breakup?',
+    examples_cn: ['恋爱开始', '订婚', '结婚', '分手'],
+  },
+  windfall: {
+    id: 'recommended_windfall',
+    category: 'finance_pos',
+    varga: 'D2',
+    label_cn: '收入起落',
+    label_en: 'income change',
+    question_cn: '你是否有日期比较明确的奖金、定金、收入明显增加或突然破财？',
+    question_en: 'Have you had a dated bonus, deposit, income jump, or sudden loss?',
+    examples_cn: ['奖金', '定金', '收入增长', '破财'],
+  },
+};
+
 const RECTIFICATION_THEME_VARGAS = {
   marriage: ['D9'],
   divorce: ['D9'],
@@ -270,6 +323,16 @@ export function buildRectificationInterviewQuestions() {
         .slice(0, 4),
     };
   });
+}
+
+export function buildRecommendedRectificationQuestions(recommendedEvents = []) {
+  const picked = [];
+  for (const key of recommendedEvents || []) {
+    const question = RECTIFICATION_RECOMMENDED_EVENT_QUESTION_MAP[key];
+    if (question && !picked.find(item => item.id === question.id)) picked.push(question);
+  }
+  if (picked.length) return picked;
+  return buildRectificationInterviewQuestions().slice(0, 3);
 }
 
 export function rectificationInterviewAnswersToEvents(answers) {

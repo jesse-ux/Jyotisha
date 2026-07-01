@@ -1,6 +1,6 @@
 {
   "capture_id": "external_template_einstein_varshaphala_1905_lahiri",
-  "status": "draft",
+  "status": "external_verified",
   "case_id": "template_einstein_varshaphala_1905_lahiri",
   "birth": {
     "year": 1879,
@@ -32,28 +32,121 @@
     "operator_note"
   ],
   "metadata": {
-    "tool_name": "",
-    "tool_version_or_url": "",
-    "capture_date": "",
-    "source_artifact": "references/oracle/artifacts/",
+    "tool_name": "PyJHora",
+    "tool_version_or_url": "PyJHora 4.8.6 isolated workbuddy black-box run",
+    "capture_date": "2026-06-29",
+    "source_artifact": "references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt",
     "ayanamsa": "lahiri",
     "node_mode": "mean",
-    "timezone": 0.883333,
-    "annual_system": "varshaphala",
+    "timezone": "UTC+00:53",
+    "annual_system": "Varshaphala/Tajika",
     "target_year": 1905,
-    "operator_note": ""
+    "operator_note": "Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain."
   },
   "target_placeholders": {
-    "target.solar_return_datetime": null,
-    "target.varsha_lagna_deg": null,
-    "target.muntha_sign": null,
-    "target.year_lord": null,
-    "target.mudda_dasha_first_lord": null,
-    "target.sahams.punya_saham": null,
-    "target.sahams.rajya_saham": null,
-    "target.sahams.vivah_saham": null,
-    "target.tajika_yogas": null,
-    "target.source_artifact": null
+    "target.solar_return_datetime": "1905-03-15T03:44:51+00:53",
+    "target.varsha_lagna_deg": 262.4183,
+    "target.muntha_sign": "Virgo",
+    "target.year_lord": "Mercury",
+    "target.mudda_dasha_first_lord": "Rahu",
+    "target.sahams.punya_saham": 31.2991,
+    "target.sahams.rajya_saham": 235.5875,
+    "target.sahams.vivah_saham": 1.9612,
+    "target.tajika_yogas": {
+      "eesarpha": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "gairi_kamboola": null,
+      "ithasala": [
+        [
+          0,
+          4,
+          1
+        ],
+        [
+          0,
+          6,
+          1
+        ],
+        [
+          1,
+          5,
+          1
+        ],
+        [
+          3,
+          4,
+          1
+        ]
+      ],
+      "kamboola": [
+        true,
+        [
+          [
+            1,
+            5
+          ]
+        ],
+        [
+          [
+            1,
+            5
+          ]
+        ]
+      ],
+      "khallasara": null,
+      "manahoo": [
+        [
+          0,
+          4,
+          11
+        ],
+        [
+          0,
+          6,
+          11
+        ],
+        [
+          3,
+          4,
+          11
+        ]
+      ],
+      "nakta": [],
+      "yamaya": []
+    },
+    "target.source_artifact": "references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt"
   },
   "integrity_checks": {
     "must_not_come_from_local_engine": true,

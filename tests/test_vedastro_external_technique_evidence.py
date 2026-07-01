@@ -381,3 +381,92 @@ def test_strict_workflow_auto_ingests_live_vedastro_external_technique_as_contex
     assert strict["present_evidence"]["external_technique_evidence"]["level"] == "context_only"
     assert strict["present_evidence"]["external_technique_evidence"]["methods"] == ["CalculateShadbala"]
     assert "external_technique_evidence" in strict["event_judgement"]["secondary_context"]
+
+
+def test_strict_workflow_reports_unified_orchestrator_metadata() -> None:
+    with mock.patch.object(mcp_server, "_run_engine") as run_engine, mock.patch.object(
+        mcp_server,
+        "_maybe_attach_vedastro_evidence",
+    ) as attach_vedastro:
+        run_engine.return_value = {"modules": _finance_modules()}
+        attach_vedastro.return_value = {"modules": _finance_modules()}
+
+        result = mcp_server.strict_workflow(
+            question="我的财务今年如何？",
+            year=REDACTED_YEAR,
+            month=4,
+            day=17,
+            hour=14,
+            minute=49,
+            lat=36.42,
+            lon=114.2,
+            tz=8.0,
+            age=33,
+            transit_date="2026-06-29",
+            node_mode="mean",
+        )
+
+    unified = result["unified_orchestrator"]
+    assert unified["name"] == "UnifiedConsultationOrchestrator"
+    assert unified["surface"] == "skill_mcp"
+    assert unified["route"]["question_type"] == "finance"
+    assert unified["source_priority"]["priority"][0] == "vedastro_official_snapshot"
+    planner = result["runtime_planner"]
+    assert planner["planner_name"] == "UnifiedConsultationRuntimePlanner"
+    assert planner["surface"] == "skill_mcp"
+    assert planner["route"]["question_type"] == "finance"
+    assert planner["sync_steps"][0] == "compute_chart"
+
+
+def test_strict_workflow_uses_shared_consultation_executor(monkeypatch) -> None:
+    fake_result = {
+        "success": True,
+        "endpoint": "consultation_workflow",
+        "entry_mode": "direct_chart",
+        "routing": {"question_type": "finance"},
+        "unified_orchestrator": {
+            "name": "UnifiedConsultationOrchestrator",
+            "surface": "skill_mcp",
+            "route": {"question_type": "finance"},
+        },
+        "runtime_planner": {
+            "planner_name": "UnifiedConsultationRuntimePlanner",
+            "surface": "skill_mcp",
+            "entry_mode": "direct_chart",
+            "route": {"question_type": "finance"},
+            "sync_steps": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
+            "executed_steps": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
+            "skipped_steps": ["run_historical_event_backtest"],
+        },
+        "chart": {"modules": _finance_modules()},
+        "rectification": {"success": True, "endpoint": "rectification_gate"},
+        "thematic_report": {"success": True, "endpoint": "thematic_report"},
+        "vedastro_official": {"available": True},
+    }
+    seen = {}
+
+    def fake_executor(**kwargs):
+        seen.update(kwargs)
+        return fake_result
+
+    monkeypatch.setattr(mcp_server, "_execute_mcp_consultation_workflow", fake_executor)
+
+    result = mcp_server.strict_workflow(
+        question="我的财务今年如何？",
+        year=REDACTED_YEAR,
+        month=4,
+        day=17,
+        hour=14,
+        minute=49,
+        lat=36.42,
+        lon=114.2,
+        tz=8.0,
+        age=33,
+        transit_date="2026-06-29",
+        node_mode="mean",
+    )
+
+    assert seen["entry_mode"] == "direct_chart"
+    assert seen["question"] == "我的财务今年如何？"
+    assert result["runtime_planner"]["surface"] == "skill_mcp"
+    assert result["routing"]["question_type"] == "finance"

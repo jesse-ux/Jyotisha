@@ -1,0 +1,8 @@
+CASE_ID template_marilyn_monroe_varshaphala_1962_lahiri
+TOOL PyJHora 4.8.6
+SOURCE_ENV /Users/wuyongnaren/.workbuddy/binaries/python/envs/pyjhora
+CAPTURE_DATE 2026-06-29
+NOTE External annual capture from PyJHora black-box environment. Local repository annual engine output was not used. This artifact records solar return datetime, varsha lagna, muntha, year lord, first mudda dasha lord, selected sahams, and the Tajika yoga block extracted from the PyJHora annual chart via jhora.horoscope.transit.tajaka_yoga.
+
+TAJIKA_ANNUAL_VALUES_JSON {"solar_return_datetime":"1962-06-01T14:20:25-08:00","varsha_lagna_deg":169.9089,"muntha_sign":"♎︎Libra","year_lord":"Mercury☿","mudda_dasha_first_lord":"Raagu☊","sahams":{"punya_saham":161.7196,"rajya_saham":50.2812,"vivah_saham":350.4075}}
+TAJIKA_YOGAS_JSON {"eesarpha":[[0,2],[0,3],[0,5],[3,4],[3,6],[4,5]],"gairi_kamboola":null,"ithasala":[[0,1,1],[0,4,2],[0,6,2],[1,2,2],[1,4,1],[1,6,1],[2,4,3],[2,6,3],[4,6,2]],"kamboola":[true,[[1,2],[1,4],[1,6]],[[1,2],[2,4],[2,6],[0,4],[1,4],[2,4],[4,6],[0,6],[1,6],[2,6],[4,6],[0,1],[0,4],[0,6]]],"khallasara":null,"manahoo":[[0,1,1],[0,4,1],[0,6,1],[1,2,1],[1,4,1],[1,6,1]],"nakta":[],"yamaya":[]}

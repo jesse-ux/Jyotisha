@@ -1,6 +1,6 @@
 {
   "capture_id": "external_template_synthetic_extreme_latitude_varshaphala_kp",
-  "status": "draft",
+  "status": "external_verified",
   "case_id": "template_synthetic_extreme_latitude_varshaphala_kp",
   "birth": {
     "year": 2000,
@@ -32,28 +32,124 @@
     "operator_note"
   ],
   "metadata": {
-    "tool_name": "",
-    "tool_version_or_url": "",
-    "capture_date": "",
-    "source_artifact": "references/oracle/artifacts/",
+    "tool_name": "PyJHora",
+    "tool_version_or_url": "PyJHora 4.8.6 isolated workbuddy black-box run",
+    "capture_date": "2026-06-29",
+    "source_artifact": "references/oracle/artifacts/pyjhora_synthetic_extreme_latitude_varshaphala_kp_20260629.txt",
     "ayanamsa": "kp",
-    "node_mode": "true",
-    "timezone": 1,
-    "annual_system": "varshaphala",
+    "node_mode": "PyJHora default",
+    "timezone": "UTC+01:00",
+    "annual_system": "Varshaphala/Tajika",
     "target_year": 2024,
-    "operator_note": ""
+    "operator_note": "Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain. KP ayanamsa was explicitly forced to match the template boundary."
   },
   "target_placeholders": {
-    "target.solar_return_datetime": null,
-    "target.varsha_lagna_deg": null,
-    "target.muntha_sign": null,
-    "target.year_lord": null,
-    "target.mudda_dasha_first_lord": null,
-    "target.sahams.punya_saham": null,
-    "target.sahams.rajya_saham": null,
-    "target.sahams.vivah_saham": null,
-    "target.tajika_yogas": null,
-    "target.source_artifact": null
+    "target.solar_return_datetime": "2024-06-21T02:48:16+01:00",
+    "target.varsha_lagna_deg": 80.1445,
+    "target.muntha_sign": "♋︎Cancer",
+    "target.year_lord": "Mercury☿",
+    "target.mudda_dasha_first_lord": "Venus♀",
+    "target.sahams.punya_saham": 278.0196,
+    "target.sahams.rajya_saham": 9.3073,
+    "target.sahams.vivah_saham": 185.4734,
+    "target.tajika_yogas": {
+      "eesarpha": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          5
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "gairi_kamboola": null,
+      "ithasala": [
+        [
+          0,
+          2,
+          3
+        ],
+        [
+          0,
+          4,
+          1
+        ],
+        [
+          1,
+          6,
+          1
+        ],
+        [
+          2,
+          3,
+          2
+        ],
+        [
+          2,
+          5,
+          1
+        ],
+        [
+          4,
+          5,
+          1
+        ]
+      ],
+      "kamboola": [
+        true,
+        [
+          [
+            1,
+            6
+          ]
+        ],
+        [
+          [
+            1,
+            6
+          ]
+        ]
+      ],
+      "khallasara": null,
+      "manahoo": [
+        [
+          0,
+          2,
+          2
+        ],
+        [
+          0,
+          4,
+          2
+        ],
+        [
+          2,
+          5,
+          2
+        ],
+        [
+          4,
+          5,
+          2
+        ]
+      ],
+      "nakta": [],
+      "yamaya": []
+    },
+    "target.source_artifact": "references/oracle/artifacts/pyjhora_synthetic_extreme_latitude_varshaphala_kp_20260629.txt"
   },
   "integrity_checks": {
     "must_not_come_from_local_engine": true,

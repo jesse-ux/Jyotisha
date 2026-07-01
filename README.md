@@ -75,6 +75,8 @@ VEDASTRO_ENABLE_NETWORK=1
 
 该文件已被 `.gitignore` 忽略；`scripts/jyotish_api_server.py`、`scripts/vedastro_service_adapter.py`、`scripts/run_quality_gate.py` 会自动加载它。注意：当前网页按钮走的是官方 `SearchEvents` 的真实 live 采样扫描桥接，不会让 VedAstro 越权改本地 adjudicator 的 `score / dominant_label / payout_label`。
 
+默认运行是快速模式：VedAstro official 证据层如果没有在前台预算内闭环，会诚实标记 `official_snapshot_budget_exhausted` 并退回本地 Swiss Ephemeris。要跑 official extended 模式，复制 `.env.official.example` 为 `.env.local` 并填好 endpoint/network/key；运行 `python3 scripts/diagnose_vedastro_mode.py` 可先确认当前是 `fast_local_fallback` 还是 `official_extended`。
+
 ### 普通用户交付形态
 
 | 形态 | 入口 | 命令 | 能力边界 |

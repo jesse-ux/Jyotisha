@@ -14,6 +14,8 @@ import hashlib
 import json
 import os
 import socket
+import subprocess
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -29,6 +31,9 @@ except ModuleNotFoundError:  # pragma: no cover - script execution path
 
 ROOT = Path(__file__).resolve().parents[1]
 load_local_env(ROOT)
+
+VEDASTRO_PYTHON_BRIDGE = ROOT / "scripts" / "vedastro_python_bridge.py"
+VEDASTRO_OFFICIAL_CAPABILITY_RUNNER = ROOT / "scripts" / "vedastro_official_capability_runner.py"
 
 
 PARITY_CASES = {
@@ -127,18 +132,6 @@ OFFICIAL_FULL_SNAPSHOT_BACKLOG_SECTIONS = [
         "role": "all_varga_raw_evidence",
         "status": "catalog_pending",
         "description": "Awaiting official method mapping for all divisional charts; local varga remains fallback until mapped.",
-    },
-    {
-        "section": "shadbala",
-        "role": "strength_raw_evidence",
-        "status": "catalog_pending",
-        "description": "Awaiting official method mapping for Shadbala; local Shadbala remains fallback until mapped.",
-    },
-    {
-        "section": "ashtakavarga",
-        "role": "ashtakavarga_raw_evidence",
-        "status": "catalog_pending",
-        "description": "Awaiting official method mapping for Ashtakavarga; local Ashtakavarga remains fallback until mapped.",
     },
 ]
 OFFICIAL_SNAPSHOT_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu", "Ascendant"]
@@ -313,8 +306,27 @@ MATCH_METADATA_BY_TYPE = {
     "alias": {"signal_lift": 1, "confidence": "low"},
     "rejected": {"signal_lift": 0, "confidence": "rejected"},
 }
+
+OFFICIAL_PYTHON_BUNDLE_SECTIONS = [
+    "chart_core",
+    "house_core",
+    "dasha_all",
+    "vimshottari_now",
+    "chara_dasha_now",
+    "shadbala",
+    "ashtakavarga",
+]
+OFFICIAL_FAST_PRIMARY_SECTIONS = {
+    "chart_core",
+    "house_core",
+    "dasha_all",
+    "vimshottari_now",
+    "chara_dasha_now",
+    "shadbala",
+    "ashtakavarga",
+}
 ALIAS_NEGATIVE_GUARD_TERMS = {"noise", "without", "generic", "irrelevant", "insignificance", "not"}
-DEFAULT_TIMEOUT_SECONDS = 120
+DEFAULT_TIMEOUT_SECONDS = 4
 TIMEOUT_ENV = "VEDASTRO_TIMEOUT_SECONDS"
 BACKOFF_ENV = "VEDASTRO_RETRY_BACKOFF_SECONDS"
 RETRY_POLICY = {
@@ -323,7 +335,15 @@ RETRY_POLICY = {
     "retry_on": ["timeout", "429", "502", "503", "504"],
 }
 ALLOW_NETWORK_ENV = "VEDASTRO_ENABLE_NETWORK"
+CACHE_TTL_ENV = "VEDASTRO_CACHE_TTL_SECONDS"
+FREE_TIER_MAX_REQUESTS_ENV = "VEDASTRO_FREE_TIER_MAX_REQUESTS"
+FREE_TIER_WINDOW_SECONDS_ENV = "VEDASTRO_FREE_TIER_WINDOW_SECONDS"
+DEFAULT_CACHE_TTL_SECONDS = 86400.0
+DEFAULT_FREE_TIER_MAX_REQUESTS = 5
+DEFAULT_FREE_TIER_WINDOW_SECONDS = 60.0
 ARTIFACT_DIR = ROOT / "scratch" / "local" / "vedastro_adapter"
+_FREE_TIER_REQUEST_TIMESTAMPS: list[float] = []
+_FREE_TIER_REQUEST_LOCK = threading.Lock()
 
 
 def _timeout_seconds() -> float:
@@ -369,6 +389,18 @@ def _artifact_path(operation: str, request_hash: str, response_hash: str) -> Pat
     return ARTIFACT_DIR / filename
 
 
+def _cache_dir() -> Path:
+    path = ARTIFACT_DIR / "response_cache"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _official_full_snapshot_cache_dir() -> Path:
+    path = ARTIFACT_DIR / "official_full_snapshot_cache"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def _repo_relative(path: Path) -> str:
     try:
         return str(path.relative_to(ROOT))
@@ -385,6 +417,48 @@ def _write_artifact(result: dict[str, Any]) -> str:
     )
     artifact.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
     return _repo_relative(artifact)
+
+
+def _cache_ttl_seconds() -> float:
+    raw = os.environ.get(CACHE_TTL_ENV, "").strip()
+    if not raw:
+        return DEFAULT_CACHE_TTL_SECONDS
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return DEFAULT_CACHE_TTL_SECONDS
+
+
+def _official_full_snapshot_cache_ttl_seconds() -> float:
+    raw = os.environ.get("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", "").strip()
+    if not raw:
+        raw = os.environ.get(CACHE_TTL_ENV, "").strip()
+    if not raw:
+        return 0.0
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return 0.0
+
+
+def _free_tier_max_requests() -> int:
+    raw = os.environ.get(FREE_TIER_MAX_REQUESTS_ENV, "").strip()
+    if not raw:
+        return DEFAULT_FREE_TIER_MAX_REQUESTS
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return DEFAULT_FREE_TIER_MAX_REQUESTS
+
+
+def _free_tier_window_seconds() -> float:
+    raw = os.environ.get(FREE_TIER_WINDOW_SECONDS_ENV, "").strip()
+    if not raw:
+        return DEFAULT_FREE_TIER_WINDOW_SECONDS
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return DEFAULT_FREE_TIER_WINDOW_SECONDS
 
 
 def schema() -> dict[str, Any]:
@@ -612,6 +686,12 @@ def _time_json_from_case(
     hour: Any | None = None,
     minute: Any | None = None,
 ) -> dict[str, Any]:
+    location_name = (
+        case.get("location_name")
+        or case.get("place_name")
+        or case.get("city")
+        or "UserLocation"
+    )
     return {
         "StdTime": _format_std_time(
             date_text,
@@ -620,10 +700,45 @@ def _time_json_from_case(
             case.get("tz", "+00:00"),
         ),
         "Location": {
-            "Name": case.get("case_id") or "UserLocation",
+            "Name": str(location_name),
             "Latitude": case.get("lat"),
             "Longitude": case.get("lon"),
         },
+    }
+
+
+def _bridge_geo_from_case(case: dict[str, Any]) -> dict[str, Any]:
+    location_name = (
+        case.get("location_name")
+        or case.get("place_name")
+        or case.get("city")
+        or "UserLocation"
+    )
+    return {
+        "__vedastro_type__": "GeoLocation",
+        "location_name": str(location_name),
+        "longitude": case.get("lon"),
+        "latitude": case.get("lat"),
+    }
+
+
+def _bridge_time_from_case(
+    case: dict[str, Any],
+    date_text: str,
+    *,
+    hour: Any | None = None,
+    minute: Any | None = None,
+) -> dict[str, Any]:
+    year, month, day = str(date_text).split("-")
+    return {
+        "__vedastro_type__": "Time",
+        "year": int(year),
+        "month": int(month),
+        "day": int(day),
+        "hour": int(float(case.get("hour", 0) if hour is None else hour)),
+        "minute": int(float(case.get("minute", 0) if minute is None else minute)),
+        "offset": case.get("tz", "+00:00"),
+        "geolocation": _bridge_geo_from_case(case),
     }
 
 
@@ -738,6 +853,14 @@ def _official_dasha_range_body(case: dict[str, Any], common_body: dict[str, Any]
     }
 
 
+def _official_dasha_range_dates(case: dict[str, Any]) -> tuple[str, str]:
+    normalized = dict(case)
+    reference = datetime.strptime(_official_snapshot_reference_date(normalized), "%Y-%m-%d").date()
+    start_date = reference.replace(month=1, day=1)
+    end_date = reference.replace(month=12, day=31)
+    return start_date.isoformat(), end_date.isoformat()
+
+
 def _official_full_snapshot_manifest(case: dict[str, Any], case_id: str = "user_chart") -> dict[str, Any]:
     common_body = _official_common_body(case)
     reference_date = _official_snapshot_reference_date(case)
@@ -793,6 +916,265 @@ def _official_full_snapshot_manifest(case: dict[str, Any], case_id: str = "user_
     }
 
 
+def _call_vedastro_python_bridge_high_value(method_key: str, payload: dict[str, Any]) -> dict[str, Any]:
+    if not VEDASTRO_PYTHON_BRIDGE.exists():
+        return {
+            "available": False,
+            "status": "python_bridge_missing",
+            "method": method_key,
+            "source": "vedastro_service_adapter_candidate",
+        }
+    try:
+        completed = subprocess.run(
+            [
+                os.environ.get("PYTHON_BIN", "") or "python3",
+                str(VEDASTRO_PYTHON_BRIDGE),
+                "--high-value",
+                method_key,
+                "--params-json",
+                json.dumps(payload, ensure_ascii=False),
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=_timeout_seconds(),
+            check=False,
+            env=os.environ.copy(),
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "available": False,
+            "status": "python_bridge_timeout",
+            "method": method_key,
+            "reason": "VedAstro official Python bridge timed out",
+            "timeout_seconds": _timeout_seconds(),
+            "source": "vedastro_service_adapter_candidate",
+        }
+    if completed.returncode != 0:
+        return {
+            "available": False,
+            "status": "python_bridge_runtime_error",
+            "method": method_key,
+            "stderr": (completed.stderr or "").strip(),
+            "stdout_excerpt": (completed.stdout or "").strip()[:500],
+            "source": "vedastro_service_adapter_candidate",
+        }
+    try:
+        return json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return {
+            "available": False,
+            "status": "python_bridge_invalid_json",
+            "method": method_key,
+            "stdout_excerpt": (completed.stdout or "").strip()[:500],
+            "source": "vedastro_service_adapter_candidate",
+        }
+
+
+def _try_official_python_bridge_snapshot_bundle(case: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(case)
+    normalized["tz"] = _normalize_tz(normalized)
+    birth_date = f"{int(normalized['year']):04d}-{int(normalized['month']):02d}-{int(normalized['day']):02d}"
+    reference_date = _official_snapshot_reference_date(normalized)
+    start_date, end_date = _official_dasha_range_dates(normalized)
+    payload = {
+        "birth_time": _bridge_time_from_case(normalized, birth_date),
+        "check_time": _bridge_time_from_case(normalized, reference_date),
+        "start_time": _bridge_time_from_case(normalized, start_date, hour=0, minute=0),
+        "end_time": _bridge_time_from_case(normalized, end_date, hour=23, minute=59),
+        "levels": int(normalized.get("dasha_levels") or 3),
+        "precision_hours": int(normalized.get("dasha_precision_hours") or 100),
+        "planets": OFFICIAL_SNAPSHOT_PLANETS,
+        "houses": OFFICIAL_SNAPSHOT_HOUSES,
+    }
+    report = _call_vedastro_python_bridge_high_value("official_full_snapshot_bundle", payload)
+    if report.get("status") != "ok":
+        return {
+            "available": bool(report.get("available")),
+            "status": report.get("status") or "blocked",
+            "source": report.get("source") or "vedastro_python_bridge",
+            "reason": report.get("reason"),
+            "snapshot_sections": {},
+            "section_statuses": {},
+            "coverage": {"source_mode": "official_python_bridge_bundle", "filled_sections": []},
+            "raw": report,
+        }
+    result = report.get("result") if isinstance(report.get("result"), dict) else {}
+    return {
+        "available": bool(report.get("available")),
+        "status": report.get("status") or "ok",
+        "source": report.get("source") or "vedastro_python_bridge",
+        "snapshot_sections": result.get("snapshot_sections") if isinstance(result.get("snapshot_sections"), dict) else {},
+        "section_statuses": result.get("section_statuses") if isinstance(result.get("section_statuses"), dict) else {},
+        "coverage": result.get("coverage") if isinstance(result.get("coverage"), dict) else {"source_mode": "official_python_bridge_bundle", "filled_sections": []},
+        "python_bin": report.get("python_bin"),
+        "module_name": report.get("module_name"),
+    }
+
+
+def _try_official_capability_runner_snapshot_bundle(case: dict[str, Any]) -> dict[str, Any]:
+    if not VEDASTRO_OFFICIAL_CAPABILITY_RUNNER.exists():
+        return {
+            "available": False,
+            "status": "official_capability_runner_missing",
+            "source": "vedastro_official_capability_runner",
+            "snapshot_sections": {},
+            "section_statuses": {},
+            "coverage": {"source_mode": "official_capability_runner_bundle", "filled_sections": []},
+        }
+    try:
+        completed = subprocess.run(
+            [
+                os.environ.get("PYTHON_BIN", "") or "python3",
+                str(VEDASTRO_OFFICIAL_CAPABILITY_RUNNER),
+                "--bundle",
+                "official_full_snapshot",
+                "--birth-json",
+                json.dumps(case, ensure_ascii=False),
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=_timeout_seconds(),
+            check=False,
+            env=os.environ.copy(),
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "available": False,
+            "status": "official_capability_runner_timeout",
+            "source": "vedastro_official_capability_runner",
+            "snapshot_sections": {},
+            "section_statuses": {},
+            "coverage": {"source_mode": "official_capability_runner_bundle", "filled_sections": []},
+            "reason": "VedAstro official capability runner timed out",
+            "timeout_seconds": _timeout_seconds(),
+        }
+    if completed.returncode != 0:
+        return {
+            "available": False,
+            "status": "official_capability_runner_runtime_error",
+            "source": "vedastro_official_capability_runner",
+            "snapshot_sections": {},
+            "section_statuses": {},
+            "coverage": {"source_mode": "official_capability_runner_bundle", "filled_sections": []},
+            "stderr": (completed.stderr or "").strip(),
+        }
+    try:
+        report = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return {
+            "available": False,
+            "status": "official_capability_runner_invalid_json",
+            "source": "vedastro_official_capability_runner",
+            "snapshot_sections": {},
+            "section_statuses": {},
+            "coverage": {"source_mode": "official_capability_runner_bundle", "filled_sections": []},
+            "stdout_excerpt": (completed.stdout or "").strip()[:500],
+        }
+    result = report.get("result") if isinstance(report.get("result"), dict) else {}
+    return {
+        "available": bool(report.get("available")),
+        "status": report.get("status") or "blocked",
+        "source": "vedastro_official_capability_runner",
+        "bundle": report.get("bundle") or "official_full_snapshot",
+        "summary": report.get("summary") if isinstance(report.get("summary"), dict) else {},
+        "snapshot_sections": result.get("snapshot_sections") if isinstance(result.get("snapshot_sections"), dict) else {},
+        "section_statuses": result.get("section_statuses") if isinstance(result.get("section_statuses"), dict) else {},
+        "coverage": result.get("coverage") if isinstance(result.get("coverage"), dict) else {"source_mode": "official_capability_runner_bundle", "filled_sections": []},
+    }
+
+
+def _try_official_full_capability_catalog_bundle(case: dict[str, Any]) -> dict[str, Any]:
+    if not VEDASTRO_OFFICIAL_CAPABILITY_RUNNER.exists():
+        return {
+            "available": False,
+            "status": "official_capability_runner_missing",
+            "source": "vedastro_official_capability_runner",
+            "bundle": "official_full_capability_catalog",
+            "summary": {},
+            "coverage": {"source_mode": "official_full_capability_catalog", "safe_sampling": True},
+            "domain_routing": {},
+            "dynamic_selection": {},
+            "bucket_statuses": {},
+            "method_statuses": {},
+        }
+    try:
+        completed = subprocess.run(
+            [
+                os.environ.get("PYTHON_BIN", "") or "python3",
+                str(VEDASTRO_OFFICIAL_CAPABILITY_RUNNER),
+                "--bundle",
+                "official_full_capability_catalog",
+                "--birth-json",
+                json.dumps(case, ensure_ascii=False),
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=_timeout_seconds(),
+            check=False,
+            env=os.environ.copy(),
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "available": False,
+            "status": "official_full_capability_catalog_timeout",
+            "source": "vedastro_official_capability_runner",
+            "bundle": "official_full_capability_catalog",
+            "summary": {},
+            "coverage": {"source_mode": "official_full_capability_catalog", "safe_sampling": True},
+            "domain_routing": {},
+            "dynamic_selection": {},
+            "bucket_statuses": {},
+            "method_statuses": {},
+            "reason": "VedAstro official capability catalog runner timed out",
+            "timeout_seconds": _timeout_seconds(),
+        }
+    if completed.returncode != 0:
+        return {
+            "available": False,
+            "status": "official_full_capability_catalog_runtime_error",
+            "source": "vedastro_official_capability_runner",
+            "bundle": "official_full_capability_catalog",
+            "summary": {},
+            "coverage": {"source_mode": "official_full_capability_catalog", "safe_sampling": True},
+            "domain_routing": {},
+            "dynamic_selection": {},
+            "bucket_statuses": {},
+            "method_statuses": {},
+            "stderr": (completed.stderr or "").strip(),
+        }
+    try:
+        report = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return {
+            "available": False,
+            "status": "official_full_capability_catalog_invalid_json",
+            "source": "vedastro_official_capability_runner",
+            "bundle": "official_full_capability_catalog",
+            "summary": {},
+            "coverage": {"source_mode": "official_full_capability_catalog", "safe_sampling": True},
+            "domain_routing": {},
+            "dynamic_selection": {},
+            "bucket_statuses": {},
+            "method_statuses": {},
+            "stdout_excerpt": (completed.stdout or "").strip()[:500],
+        }
+    return {
+        "available": bool(report.get("available")),
+        "status": report.get("status") or "blocked",
+        "source": "vedastro_official_capability_runner",
+        "bundle": report.get("bundle") or "official_full_capability_catalog",
+        "summary": report.get("summary") if isinstance(report.get("summary"), dict) else {},
+        "coverage": report.get("coverage") if isinstance(report.get("coverage"), dict) else {"source_mode": "official_full_capability_catalog", "safe_sampling": True},
+        "domain_routing": report.get("domain_routing") if isinstance(report.get("domain_routing"), dict) else {},
+        "dynamic_selection": report.get("dynamic_selection") if isinstance(report.get("dynamic_selection"), dict) else {},
+        "bucket_statuses": report.get("bucket_statuses") if isinstance(report.get("bucket_statuses"), dict) else {},
+        "method_statuses": report.get("method_statuses") if isinstance(report.get("method_statuses"), dict) else {},
+    }
+
+
 def _external_technique_preview(
     case: dict[str, Any],
     domain: str,
@@ -818,6 +1200,7 @@ def _base_live_metadata(
     retry_error_codes: list[int] | None = None,
 ) -> dict[str, Any]:
     official_request_profile = request_preview.get("official_request_profile") if isinstance(request_preview, dict) else None
+    transport_metadata = payload.get("source_metadata") if isinstance(payload, dict) else None
     metadata = {
         "transport": "http_json_service_boundary",
         "endpoint": endpoint,
@@ -845,6 +1228,17 @@ def _base_live_metadata(
         metadata["official_endpoint_path"] = official_request_profile.get("endpoint_path")
         metadata["official_request_profile"] = redacted_profile
         metadata["official_request_profile_hash"] = _hash_payload(redacted_profile)
+    if isinstance(transport_metadata, dict):
+        for key in (
+            "cache_hit",
+            "cache_key",
+            "cache_created_at",
+            "cache_expires_at",
+            "cache_ttl_seconds",
+            "free_tier_rate_limit",
+        ):
+            if key in transport_metadata:
+                metadata[key] = transport_metadata[key]
     return metadata
 
 
@@ -1060,6 +1454,7 @@ def _normalize_range_scan_success(
             "end": top.get("end"),
             "tags": top.get("tags") or [],
         }
+    daily_windows, top_daily_window = _build_daily_windows(domain, evidence_ledger)
 
     metadata = {
         **_base_live_metadata(endpoint, request_preview, payload, "range_scan", attempt_count, retry_error_codes),
@@ -1088,11 +1483,96 @@ def _normalize_range_scan_success(
         "request_preview": request_preview,
         "event_count": len(evidence_ledger),
         "top_event": top_event,
+        "daily_windows": daily_windows,
+        "top_daily_window": top_daily_window,
         "evidence_ledger": evidence_ledger,
         "source_metadata": metadata,
     }
     result["source_metadata"]["artifact_path"] = _write_artifact(result)
     return result
+
+
+def _event_date_text(value: Any) -> str | None:
+    if isinstance(value, dict):
+        std_time = value.get("StdTime")
+        if isinstance(std_time, str):
+            parts = std_time.split()
+            if len(parts) >= 2 and "/" in parts[1]:
+                day, month, year = parts[1].split("/")
+                return f"{year}-{month}-{day}"
+        return None
+    if isinstance(value, str):
+        raw = value.strip()
+        if len(raw) >= 10 and raw[4] == "-" and raw[7] == "-":
+            return raw[:10]
+    return None
+
+
+def _confidence_rank(value: str) -> int:
+    order = {
+        "high": 4,
+        "medium_high": 3,
+        "medium": 2,
+        "low": 1,
+        "rejected": 0,
+    }
+    return order.get(str(value or ""), 0)
+
+
+def _build_daily_windows(domain: str, evidence_ledger: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    grouped: dict[str, dict[str, Any]] = {}
+    for event in evidence_ledger:
+        if not isinstance(event, dict):
+            continue
+        event_date = _event_date_text(event.get("start")) or _event_date_text(event.get("end"))
+        if not event_date:
+            continue
+        bucket = grouped.setdefault(
+            event_date,
+            {
+                "date": event_date,
+                "domain": domain,
+                "score": 0,
+                "confidence": "low",
+                "event_count": 0,
+                "signal_families": set(),
+                "event_ids": [],
+                "top_signal_label": None,
+                "_top_conf_rank": -1,
+            },
+        )
+        bucket["event_count"] += 1
+        bucket["score"] += int(event.get("signal_lift") or 0)
+        family = event.get("signal_family")
+        if family:
+            bucket["signal_families"].add(str(family))
+        event_id = event.get("event_id")
+        if isinstance(event_id, str) and event_id and event_id not in bucket["event_ids"]:
+            bucket["event_ids"].append(event_id)
+        conf = str(event.get("confidence") or "low")
+        conf_rank = _confidence_rank(conf)
+        if conf_rank > bucket["_top_conf_rank"]:
+            bucket["_top_conf_rank"] = conf_rank
+            bucket["confidence"] = conf
+            bucket["top_signal_label"] = event.get("signal_label") or event.get("event_id")
+
+    windows: list[dict[str, Any]] = []
+    for date_text, bucket in grouped.items():
+        windows.append(
+            {
+                "date": date_text,
+                "domain": bucket["domain"],
+                "score": bucket["score"],
+                "confidence": bucket["confidence"],
+                "event_count": bucket["event_count"],
+                "signal_families": sorted(bucket["signal_families"]),
+                "event_ids": list(bucket["event_ids"]),
+                "top_signal_label": bucket["top_signal_label"],
+            }
+        )
+    windows.sort(key=lambda item: (-int(item.get("score") or 0), -int(item.get("event_count") or 0), str(item.get("date") or "")))
+    top = windows[0] if windows else None
+    return windows, top
 
 
 def _source_metadata(endpoint: str) -> dict[str, Any]:
@@ -1106,7 +1586,10 @@ def _source_metadata(endpoint: str) -> dict[str, Any]:
     }
 
 
-def _post_json(endpoint: str, request_preview: dict[str, Any]) -> dict[str, Any] | str:
+def _build_live_request(
+    endpoint: str,
+    request_preview: dict[str, Any],
+) -> tuple[str, dict[str, Any], dict[str, Any]]:
     official_request_profile = None
     if isinstance(request_preview, dict):
         official_request_profile = (
@@ -1120,6 +1603,294 @@ def _post_json(endpoint: str, request_preview: dict[str, Any]) -> dict[str, Any]
         request_url = f"{endpoint.rstrip('/')}{official_request_profile.get('endpoint_path', '')}"
         headers = dict(official_request_profile.get("headers") or headers)
         vedastro_payload = dict(official_request_profile.get("body") or {})
+    return request_url, headers, vedastro_payload
+
+
+def _cache_key_for_request(
+    request_url: str,
+    headers: dict[str, Any],
+    vedastro_payload: dict[str, Any],
+) -> str:
+    normalized_headers = dict(headers)
+    if "x-api-key" in normalized_headers:
+        normalized_headers["x-api-key"] = "[redacted]"
+    return _hash_payload(
+        {
+            "request_url": request_url,
+            "headers": normalized_headers,
+            "body": vedastro_payload,
+        }
+    )
+
+
+def _cache_path(cache_key: str) -> Path:
+    return _cache_dir() / f"{cache_key}.json"
+
+
+def _official_full_snapshot_cache_key(case: dict[str, Any], case_id: str) -> str:
+    return _hash_payload(
+        {
+            "scope": "official_full_snapshot",
+            "birth": {
+                "year": case.get("year"),
+                "month": case.get("month"),
+                "day": case.get("day"),
+                "hour": case.get("hour"),
+                "minute": case.get("minute"),
+                "second": case.get("second", 0),
+                "lat": case.get("lat"),
+                "lon": case.get("lon"),
+                "tz": case.get("tz"),
+            },
+            "policies": {
+                "ayanamsa_policy": case.get("ayanamsa_policy") or case.get("ayanamsa") or "lahiri",
+                "node_policy": case.get("node_policy") or case.get("node_mode") or "mean",
+                "reference_date": case.get("reference_date") or case.get("today") or case.get("transit_date") or case.get("current_date"),
+                "dasha_levels": case.get("dasha_levels"),
+                "dasha_precision_hours": case.get("dasha_precision_hours"),
+            },
+            "runtime": {
+                "endpoint": os.environ.get("VEDASTRO_API_ENDPOINT", "").strip(),
+                "network_enabled": os.environ.get(ALLOW_NETWORK_ENV, "").strip().lower() in {"1", "true", "yes"},
+                "api_key_present": bool(os.environ.get("VEDASTRO_API_KEY", "").strip()),
+                "profile_version": OFFICIAL_FULL_SNAPSHOT_PROFILE_VERSION,
+            },
+        }
+    )
+
+
+def _official_full_snapshot_cache_path(cache_key: str) -> Path:
+    return _official_full_snapshot_cache_dir() / f"{cache_key}.json"
+
+
+def _attach_official_full_snapshot_semantic_cache_metadata(
+    payload: dict[str, Any],
+    *,
+    cache_key: str,
+    created_at_unix: float,
+    cache_hit: bool,
+) -> dict[str, Any]:
+    payload_copy = json.loads(json.dumps(payload))
+    ttl_seconds = _official_full_snapshot_cache_ttl_seconds()
+    created_at = datetime.utcfromtimestamp(created_at_unix).strftime("%Y-%m-%dT%H:%M:%SZ")
+    expires_at = datetime.utcfromtimestamp(created_at_unix + ttl_seconds).strftime("%Y-%m-%dT%H:%M:%SZ")
+    metadata = dict(payload_copy.get("source_metadata") or {})
+    metadata["semantic_cache"] = {
+        "scope": "official_full_snapshot",
+        "cache_hit": cache_hit,
+        "cache_key": cache_key,
+        "cache_created_at": created_at,
+        "cache_expires_at": expires_at,
+        "cache_ttl_seconds": ttl_seconds,
+    }
+    payload_copy["source_metadata"] = metadata
+    return payload_copy
+
+
+def _rebind_official_full_snapshot_case_identity(payload: dict[str, Any], case_id: str) -> dict[str, Any]:
+    payload_copy = json.loads(json.dumps(payload))
+    manifest = payload_copy.get("request_manifest")
+    if isinstance(manifest, dict):
+        manifest["case_id"] = case_id
+    return payload_copy
+
+
+def _load_official_full_snapshot_semantic_cache(case: dict[str, Any], case_id: str) -> dict[str, Any] | None:
+    ttl_seconds = _official_full_snapshot_cache_ttl_seconds()
+    if ttl_seconds <= 0:
+        return None
+    cache_key = _official_full_snapshot_cache_key(case, case_id)
+    cache_path = _official_full_snapshot_cache_path(cache_key)
+    if not cache_path.exists():
+        return None
+    try:
+        record = json.loads(cache_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    if not isinstance(record, dict):
+        return None
+    created_at_raw = record.get("created_at")
+    payload = record.get("payload")
+    if not isinstance(created_at_raw, (int, float)) or not isinstance(payload, dict):
+        return None
+    if time.time() - float(created_at_raw) > ttl_seconds:
+        return None
+    rebound = _rebind_official_full_snapshot_case_identity(payload, case_id)
+    return _attach_official_full_snapshot_semantic_cache_metadata(
+        rebound,
+        cache_key=cache_key,
+        created_at_unix=float(created_at_raw),
+        cache_hit=True,
+    )
+
+
+def _store_official_full_snapshot_semantic_cache(case: dict[str, Any], case_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    cache_key = _official_full_snapshot_cache_key(case, case_id)
+    created_at_unix = time.time()
+    payload_copy = _attach_official_full_snapshot_semantic_cache_metadata(
+        payload,
+        cache_key=cache_key,
+        created_at_unix=created_at_unix,
+        cache_hit=False,
+    )
+    ttl_seconds = _official_full_snapshot_cache_ttl_seconds()
+    if ttl_seconds > 0:
+        record = {
+            "cache_key": cache_key,
+            "created_at": created_at_unix,
+            "payload": payload_copy,
+        }
+        _official_full_snapshot_cache_path(cache_key).write_text(
+            json.dumps(record, ensure_ascii=False, sort_keys=True),
+            encoding="utf-8",
+        )
+    return payload_copy
+
+
+def _is_official_public_endpoint(request_url: str) -> bool:
+    host = (urlparse(request_url).netloc or "").lower()
+    if not host:
+        return False
+    if host.startswith("127.0.0.1") or host.startswith("localhost"):
+        return False
+    if host.startswith("192.168.") or host.startswith("10.") or host.startswith("172.16."):
+        return False
+    return "vedastro" in host
+
+
+def _load_cached_payload(cache_key: str) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    ttl_seconds = _cache_ttl_seconds()
+    if ttl_seconds <= 0:
+        return None, None
+    cache_path = _cache_path(cache_key)
+    if not cache_path.exists():
+        return None, None
+    try:
+        record = json.loads(cache_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None, None
+    if not isinstance(record, dict):
+        return None, None
+    created_at_raw = record.get("created_at")
+    payload = record.get("payload")
+    if not isinstance(created_at_raw, (int, float)) or not isinstance(payload, dict):
+        return None, None
+    age_seconds = time.time() - float(created_at_raw)
+    if age_seconds > ttl_seconds:
+        return None, None
+    created_at = datetime.utcfromtimestamp(float(created_at_raw)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    expires_at = datetime.utcfromtimestamp(float(created_at_raw) + ttl_seconds).strftime("%Y-%m-%dT%H:%M:%SZ")
+    payload_copy = json.loads(json.dumps(payload))
+    metadata = dict(payload_copy.get("source_metadata") or {})
+    metadata.update(
+        {
+            "cache_hit": True,
+            "cache_key": cache_key,
+            "cache_created_at": created_at,
+            "cache_expires_at": expires_at,
+            "cache_ttl_seconds": ttl_seconds,
+        }
+    )
+    payload_copy["source_metadata"] = metadata
+    return payload_copy, metadata
+
+
+def _is_cacheable_payload(payload: dict[str, Any]) -> bool:
+    status = str(payload.get("Status") or "")
+    if status == "Pass":
+        return True
+    if isinstance(payload.get("events"), list):
+        return True
+    if status.lower() == "fail":
+        payload_text = json.dumps(payload.get("Payload"), ensure_ascii=False).lower()
+        if "rate limit" in payload_text or "calls/minute" in payload_text or "too many requests" in payload_text:
+            return False
+    return False
+
+
+def _store_cached_payload(cache_key: str, payload: dict[str, Any]) -> dict[str, Any]:
+    ttl_seconds = _cache_ttl_seconds()
+    payload_copy = json.loads(json.dumps(payload))
+    created_at_unix = time.time()
+    created_at = datetime.utcfromtimestamp(created_at_unix).strftime("%Y-%m-%dT%H:%M:%SZ")
+    expires_at = datetime.utcfromtimestamp(created_at_unix + ttl_seconds).strftime("%Y-%m-%dT%H:%M:%SZ")
+    metadata = dict(payload_copy.get("source_metadata") or {})
+    metadata.update(
+        {
+            "cache_hit": False,
+            "cache_key": cache_key,
+            "cache_created_at": created_at,
+            "cache_expires_at": expires_at,
+            "cache_ttl_seconds": ttl_seconds,
+        }
+    )
+    payload_copy["source_metadata"] = metadata
+    if ttl_seconds > 0 and _is_cacheable_payload(payload_copy):
+        cache_path = _cache_path(cache_key)
+        record = {
+            "cache_key": cache_key,
+            "created_at": created_at_unix,
+            "payload": payload_copy,
+        }
+        cache_path.write_text(json.dumps(record, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    return payload_copy
+
+
+def _acquire_free_tier_slot(request_url: str) -> dict[str, Any]:
+    if not _is_official_public_endpoint(request_url):
+        return {
+            "mode": "non_public_or_self_host_endpoint",
+            "queue_active": False,
+            "waited_seconds": 0.0,
+            "window_seconds": _free_tier_window_seconds(),
+            "max_requests": _free_tier_max_requests(),
+        }
+    if os.environ.get("VEDASTRO_API_KEY", "").strip():
+        return {
+            "mode": "api_key_present",
+            "queue_active": False,
+            "waited_seconds": 0.0,
+            "window_seconds": _free_tier_window_seconds(),
+            "max_requests": _free_tier_max_requests(),
+        }
+    max_requests = _free_tier_max_requests()
+    window_seconds = _free_tier_window_seconds()
+    if max_requests <= 0 or window_seconds <= 0:
+        return {
+            "mode": "free_tier_queue_disabled",
+            "queue_active": False,
+            "waited_seconds": 0.0,
+            "window_seconds": window_seconds,
+            "max_requests": max_requests,
+        }
+
+    waited_seconds = 0.0
+    with _FREE_TIER_REQUEST_LOCK:
+        while True:
+            now = time.monotonic()
+            _FREE_TIER_REQUEST_TIMESTAMPS[:] = [
+                ts for ts in _FREE_TIER_REQUEST_TIMESTAMPS if now - ts < window_seconds
+            ]
+            if len(_FREE_TIER_REQUEST_TIMESTAMPS) < max_requests:
+                _FREE_TIER_REQUEST_TIMESTAMPS.append(now)
+                break
+            sleep_seconds = max(window_seconds - (now - _FREE_TIER_REQUEST_TIMESTAMPS[0]), 0.0)
+            waited_seconds += sleep_seconds
+            if sleep_seconds > 0:
+                time.sleep(sleep_seconds)
+            else:
+                _FREE_TIER_REQUEST_TIMESTAMPS.pop(0)
+    return {
+        "mode": "free_tier_queue_active",
+        "queue_active": True,
+        "waited_seconds": round(waited_seconds, 6),
+        "window_seconds": window_seconds,
+        "max_requests": max_requests,
+    }
+
+
+def _post_json(endpoint: str, request_preview: dict[str, Any]) -> dict[str, Any] | str:
+    request_url, headers, vedastro_payload = _build_live_request(endpoint, request_preview)
     req = request.Request(
         request_url,
         data=json.dumps(vedastro_payload).encode("utf-8"),
@@ -1142,15 +1913,26 @@ def _retry_status_codes() -> set[int]:
 
 
 def _post_json_with_retry(endpoint: str, request_preview: dict[str, Any]) -> tuple[dict[str, Any], int, list[int]]:
+    request_url, headers, vedastro_payload = _build_live_request(endpoint, request_preview)
+    cache_key = _cache_key_for_request(request_url, headers, vedastro_payload)
+    cached_payload, _ = _load_cached_payload(cache_key)
+    if isinstance(cached_payload, dict):
+        return cached_payload, 1, []
+
     retry_codes = _retry_status_codes()
     retry_error_codes: list[int] = []
     max_attempts = int(RETRY_POLICY["max_attempts"])
     for attempt in range(1, max_attempts + 1):
         try:
+            rate_limit_metadata = _acquire_free_tier_slot(request_url)
             payload = _post_json(endpoint, request_preview)
             if not isinstance(payload, dict):
                 return {}, attempt, retry_error_codes
-            return payload, attempt, retry_error_codes
+            payload_copy = _store_cached_payload(cache_key, payload)
+            transport_metadata = dict(payload_copy.get("source_metadata") or {})
+            transport_metadata["free_tier_rate_limit"] = rate_limit_metadata
+            payload_copy["source_metadata"] = transport_metadata
+            return payload_copy, attempt, retry_error_codes
         except error.HTTPError as exc:
             if attempt >= max_attempts or exc.code not in retry_codes:
                 raise
@@ -1221,6 +2003,7 @@ def _merge_range_scan_reports(
             "end": top.get("end"),
             "tags": top.get("tags") or [],
         }
+    daily_windows, top_daily_window = _build_daily_windows(str(base_preview.get("domain") or ""), evidence_ledger)
 
     metadata = dict(reports[-1].get("source_metadata") or {})
     metadata["sampling_mode"] = "at_time_sweep"
@@ -1244,6 +2027,8 @@ def _merge_range_scan_reports(
         "request_preview": base_preview,
         "event_count": len(evidence_ledger),
         "top_event": top_event,
+        "daily_windows": daily_windows,
+        "top_daily_window": top_daily_window,
         "evidence_ledger": evidence_ledger,
         "source_metadata": metadata,
     }
@@ -1334,6 +2119,20 @@ def _official_full_snapshot_metadata(endpoint: str | None, manifest: dict[str, A
         metadata["endpoint"] = endpoint
         metadata["endpoint_host"] = _endpoint_host(endpoint)
     return metadata
+
+
+def _official_snapshot_budget_exhausted_bundle(reason: str) -> dict[str, Any]:
+    return {
+        "available": False,
+        "status": "official_snapshot_budget_exhausted",
+        "source": "vedastro_official_capability_runner",
+        "bundle": "official_full_snapshot",
+        "snapshot_sections": {},
+        "section_statuses": {},
+        "coverage": {"source_mode": "official_foreground_budget", "filled_sections": []},
+        "reason": reason,
+        "timeout_seconds": _timeout_seconds(),
+    }
 
 
 def _payload_status(payload: dict[str, Any]) -> str:
@@ -1529,10 +2328,18 @@ def _normalize_official_full_snapshot_success(
     section_statuses: dict[str, str],
     attempt_count: int,
     retry_error_codes: list[int],
+    official_python_bundle: dict[str, Any] | None = None,
+    official_full_capability_catalog: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     primary_sections = [item["section"] for item in manifest["requests"]]
     ok_count = sum(1 for section in primary_sections if section_statuses.get(section) == "ok")
+    fast_primary_present = OFFICIAL_FAST_PRIMARY_SECTIONS.intersection(set(section_statuses))
+    fast_primary_ok = bool(fast_primary_present) and all(
+        section_statuses.get(section) == "ok" for section in fast_primary_present
+    )
     status = "ok" if ok_count == len(primary_sections) else "partial"
+    if fast_primary_ok and len(fast_primary_present) >= 4:
+        status = "ok"
     rate_limited_sections = [
         section
         for section in primary_sections
@@ -1544,11 +2351,35 @@ def _normalize_official_full_snapshot_success(
         "section_statuses": section_statuses,
         "section_count": len(primary_sections),
         "section_ok_count": ok_count,
+        "fast_primary_sections": sorted(OFFICIAL_FAST_PRIMARY_SECTIONS),
+        "fast_primary_ok": fast_primary_ok,
         "rate_limited_sections": rate_limited_sections,
         "attempt_count": attempt_count,
         "retry_error_codes": retry_error_codes,
         "response_hash": _hash_payload({"sections": sections, "section_statuses": section_statuses}),
     }
+    if isinstance(official_python_bundle, dict):
+        metadata["official_python_bundle"] = {
+            "source": official_python_bundle.get("source"),
+            "status": official_python_bundle.get("status"),
+            "coverage": official_python_bundle.get("coverage"),
+            "bundle": official_python_bundle.get("bundle"),
+            "summary": official_python_bundle.get("summary"),
+            "python_bin": official_python_bundle.get("python_bin"),
+            "module_name": official_python_bundle.get("module_name"),
+        }
+        metadata["official_python_path"] = str(official_python_bundle.get("source") or "vedastro_python_bridge")
+        metadata["python_bridge"] = metadata["official_python_bundle"]
+    if isinstance(official_full_capability_catalog, dict):
+        metadata["official_full_capability_catalog"] = {
+            "source": official_full_capability_catalog.get("source"),
+            "status": official_full_capability_catalog.get("status"),
+            "bundle": official_full_capability_catalog.get("bundle"),
+            "summary": official_full_capability_catalog.get("summary"),
+            "coverage": official_full_capability_catalog.get("coverage"),
+            "domain_routing": official_full_capability_catalog.get("domain_routing") or {},
+            "dynamic_selection": official_full_capability_catalog.get("dynamic_selection") or {},
+        }
     if rate_limited_sections:
         metadata["production_hint"] = "configure_vedastro_api_key_or_self_host_official_api"
     result = {
@@ -1559,6 +2390,7 @@ def _normalize_official_full_snapshot_success(
         "primary_source": "vedastro_official",
         "snapshot_sections": sections,
         "official_chart": _build_official_chart_from_snapshot(sections),
+        "official_full_capability_catalog": official_full_capability_catalog or {},
         "section_statuses": section_statuses,
         "request_manifest": manifest,
         "user_visibility": "backend_raw_evidence_not_direct_user_report",
@@ -1587,9 +2419,89 @@ def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_
         "dasha_precision_hours": case.get("dasha_precision_hours"),
     }
     manifest = _official_full_snapshot_manifest(user_case, case_id)
+    budget_started_at = time.monotonic()
+    official_full_capability_catalog = _try_official_full_capability_catalog_bundle(user_case)
+    elapsed_seconds = time.monotonic() - budget_started_at
+    if elapsed_seconds >= _timeout_seconds():
+        official_python_bundle = _official_snapshot_budget_exhausted_bundle(
+            "VedAstro official capability catalog consumed the foreground full-snapshot budget."
+        )
+    else:
+        official_python_bundle = _try_official_capability_runner_snapshot_bundle(user_case)
+    if (
+        not official_python_bundle.get("snapshot_sections")
+        and official_python_bundle.get("status") != "official_snapshot_budget_exhausted"
+        and time.monotonic() - budget_started_at >= _timeout_seconds()
+    ):
+        official_python_bundle = _official_snapshot_budget_exhausted_bundle(
+            "VedAstro official snapshot runner consumed the foreground full-snapshot budget."
+        )
+    if (
+        not official_python_bundle.get("snapshot_sections")
+        and official_python_bundle.get("status") != "official_snapshot_budget_exhausted"
+    ):
+        official_python_bundle = _try_official_python_bridge_snapshot_bundle(user_case)
+    bridge_sections = (
+        official_python_bundle.get("snapshot_sections")
+        if isinstance(official_python_bundle.get("snapshot_sections"), dict)
+        else {}
+    )
+    bridge_section_statuses = (
+        official_python_bundle.get("section_statuses")
+        if isinstance(official_python_bundle.get("section_statuses"), dict)
+        else {}
+    )
     endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
+    network_enabled = os.environ.get(ALLOW_NETWORK_ENV, "").strip().lower() in {"1", "true", "yes"}
+    budget_exhausted = official_python_bundle.get("status") == "official_snapshot_budget_exhausted"
+    if budget_exhausted and endpoint and network_enabled and _is_official_public_endpoint(endpoint):
+        result = {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "official_snapshot_budget_exhausted",
+            "operation": "official_full_snapshot",
+            "primary_source": "vedastro_official",
+            "reason": official_python_bundle.get("reason"),
+            "snapshot_sections": {},
+            "official_full_capability_catalog": official_full_capability_catalog,
+            "request_manifest": manifest,
+            "user_visibility": "backend_raw_evidence_not_direct_user_report",
+            "source_metadata": _official_full_snapshot_metadata(endpoint or None, manifest),
+        }
+        result["source_metadata"]["official_full_capability_catalog"] = {
+            "source": official_full_capability_catalog.get("source"),
+            "status": official_full_capability_catalog.get("status"),
+            "bundle": official_full_capability_catalog.get("bundle"),
+            "summary": official_full_capability_catalog.get("summary"),
+            "coverage": official_full_capability_catalog.get("coverage"),
+            "domain_routing": official_full_capability_catalog.get("domain_routing") or {},
+            "dynamic_selection": official_full_capability_catalog.get("dynamic_selection") or {},
+        }
+        result["source_metadata"]["official_python_bundle"] = {
+            "source": official_python_bundle.get("source"),
+            "status": official_python_bundle.get("status"),
+            "coverage": official_python_bundle.get("coverage"),
+            "bundle": official_python_bundle.get("bundle"),
+            "summary": official_python_bundle.get("summary"),
+            "python_bin": official_python_bundle.get("python_bin"),
+            "module_name": official_python_bundle.get("module_name"),
+        }
+        result["source_metadata"]["official_python_path"] = str(official_python_bundle.get("source") or "vedastro_python_bridge")
+        result["source_metadata"]["python_bridge"] = result["source_metadata"]["official_python_bundle"]
+        return result
     if not endpoint:
-        return {
+        if bridge_sections:
+            return _normalize_official_full_snapshot_success(
+                "",
+                manifest,
+                bridge_sections,
+                bridge_section_statuses,
+                1,
+                [],
+                official_python_bundle=official_python_bundle,
+                official_full_capability_catalog=official_full_capability_catalog,
+            )
+        result = {
             "backend": "vedastro_service_adapter_candidate",
             "available": False,
             "status": "service_endpoint_not_configured",
@@ -1597,13 +2509,46 @@ def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_
             "primary_source": "vedastro_official",
             "reason": "VEDASTRO_API_ENDPOINT is not configured; official full snapshot stops before network access.",
             "snapshot_sections": {},
+            "official_full_capability_catalog": official_full_capability_catalog,
             "request_manifest": manifest,
             "user_visibility": "backend_raw_evidence_not_direct_user_report",
             "source_metadata": _official_full_snapshot_metadata(None, manifest),
         }
+        result["source_metadata"]["official_full_capability_catalog"] = {
+            "source": official_full_capability_catalog.get("source"),
+            "status": official_full_capability_catalog.get("status"),
+            "bundle": official_full_capability_catalog.get("bundle"),
+            "summary": official_full_capability_catalog.get("summary"),
+            "coverage": official_full_capability_catalog.get("coverage"),
+            "domain_routing": official_full_capability_catalog.get("domain_routing") or {},
+            "dynamic_selection": official_full_capability_catalog.get("dynamic_selection") or {},
+        }
+        result["source_metadata"]["official_python_bundle"] = {
+            "source": official_python_bundle.get("source"),
+            "status": official_python_bundle.get("status"),
+            "coverage": official_python_bundle.get("coverage"),
+            "bundle": official_python_bundle.get("bundle"),
+            "summary": official_python_bundle.get("summary"),
+            "python_bin": official_python_bundle.get("python_bin"),
+            "module_name": official_python_bundle.get("module_name"),
+        }
+        result["source_metadata"]["official_python_path"] = str(official_python_bundle.get("source") or "vedastro_python_bridge")
+        result["source_metadata"]["python_bridge"] = result["source_metadata"]["official_python_bundle"]
+        return result
 
-    if os.environ.get(ALLOW_NETWORK_ENV, "").strip().lower() not in {"1", "true", "yes"}:
-        return {
+    if not network_enabled:
+        if bridge_sections:
+            return _normalize_official_full_snapshot_success(
+                endpoint,
+                manifest,
+                bridge_sections,
+                bridge_section_statuses,
+                1,
+                [],
+                official_python_bundle=official_python_bundle,
+                official_full_capability_catalog=official_full_capability_catalog,
+            )
+        result = {
             "backend": "vedastro_service_adapter_candidate",
             "available": False,
             "status": "network_execution_disabled",
@@ -1611,17 +2556,41 @@ def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_
             "primary_source": "vedastro_official",
             "reason": f"{ALLOW_NETWORK_ENV} is not enabled; official full snapshot stops after building request manifest.",
             "snapshot_sections": {},
+            "official_full_capability_catalog": official_full_capability_catalog,
             "request_manifest": manifest,
             "user_visibility": "backend_raw_evidence_not_direct_user_report",
             "source_metadata": _official_full_snapshot_metadata(endpoint, manifest),
         }
+        result["source_metadata"]["official_full_capability_catalog"] = {
+            "source": official_full_capability_catalog.get("source"),
+            "status": official_full_capability_catalog.get("status"),
+            "bundle": official_full_capability_catalog.get("bundle"),
+            "summary": official_full_capability_catalog.get("summary"),
+            "coverage": official_full_capability_catalog.get("coverage"),
+            "domain_routing": official_full_capability_catalog.get("domain_routing") or {},
+            "dynamic_selection": official_full_capability_catalog.get("dynamic_selection") or {},
+        }
+        result["source_metadata"]["official_python_bundle"] = {
+            "source": official_python_bundle.get("source"),
+            "status": official_python_bundle.get("status"),
+            "coverage": official_python_bundle.get("coverage"),
+            "bundle": official_python_bundle.get("bundle"),
+            "summary": official_python_bundle.get("summary"),
+            "python_bin": official_python_bundle.get("python_bin"),
+            "module_name": official_python_bundle.get("module_name"),
+        }
+        result["source_metadata"]["official_python_path"] = str(official_python_bundle.get("source") or "vedastro_python_bridge")
+        result["source_metadata"]["python_bridge"] = result["source_metadata"]["official_python_bundle"]
+        return result
 
-    sections: dict[str, Any] = {}
-    section_statuses: dict[str, str] = {}
+    sections: dict[str, Any] = dict(bridge_sections)
+    section_statuses: dict[str, str] = dict(bridge_section_statuses)
     attempt_count = 0
     retry_error_codes: list[int] = []
     for request_item in manifest["requests"]:
         section = request_item["section"]
+        if section in sections and section_statuses.get(section) == "ok":
+            continue
         fanout_values = request_item.get("fanout_values") if isinstance(request_item.get("fanout_values"), list) else []
         if fanout_values:
             section_payloads: dict[str, Any] = {}
@@ -1669,6 +2638,8 @@ def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_
         section_statuses,
         attempt_count or 1,
         retry_error_codes,
+        official_python_bundle=official_python_bundle,
+        official_full_capability_catalog=official_full_capability_catalog,
     )
 
 
@@ -1693,7 +2664,13 @@ def run_official_full_snapshot_for_case(
     *,
     case_id: str = "user_chart",
 ) -> dict[str, Any]:
-    return _run_official_full_snapshot_case(case, case_id=case_id)
+    cached = _load_official_full_snapshot_semantic_cache(case, case_id)
+    if isinstance(cached, dict):
+        return cached
+    result = _run_official_full_snapshot_case(case, case_id=case_id)
+    if not isinstance(result, dict):
+        return result
+    return _store_official_full_snapshot_semantic_cache(case, case_id, result)
 
 
 def _run_range_scan_case(case: dict[str, Any], domain: str, start_date: str, end_date: str) -> dict[str, Any]:
@@ -1804,6 +2781,7 @@ def run_range_scan_for_case(
         "lat": case.get("lat"),
         "lon": case.get("lon"),
         "tz": case.get("tz"),
+        "location_name": case.get("location_name") or case.get("place_name") or case.get("city") or "UserLocation",
         "ayanamsa_policy": case.get("ayanamsa_policy") or case.get("ayanamsa") or "lahiri",
         "node_policy": case.get("node_policy") or case.get("node_mode") or "mean",
     }

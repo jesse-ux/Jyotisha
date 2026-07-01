@@ -5,7 +5,7 @@
 import { SIGNS, PLANET_CN, SIGN_LORDS } from './jyotish-engine.js';
 import {
   EVENT_CATEGORIES, EVENT_COLLECTION_GUIDE, VARGA_SENSITIVITY, runRectification,
-  buildRectificationInterviewQuestions, rectificationInterviewAnswersToEvents,
+  buildRectificationInterviewQuestions, buildRecommendedRectificationQuestions, rectificationInterviewAnswersToEvents,
   getHouseLord, fmtTime, dateToJD
 } from './rectification-engine.js';
 import { t, getLang, signName, planetName } from './i18n.js';
@@ -15,6 +15,7 @@ function fmtOffset(m) { return m === 0 ? t('rect.baseline') : `${m > 0 ? '+' : '
 
 let rectEvents = [];
 let rectInterviewAnswers = {};
+let rectRecommendedEvents = [];
 
 export function renderRectificationTab(container) {
   const lang = getLang();
@@ -56,18 +57,16 @@ export function renderRectificationTab(container) {
       </details>
     </div>
     <div class="rect-interview card">
-      <div class="rect-interview-head">
-        <div>
-          <h4 class="sub-title">快速事件访谈</h4>
-          <p>只回答是/否；选“是”时补一个大概日期，系统会自动转成生命事件。</p>
-        </div>
-        <span>guided_rectification_interview</span>
+    <div class="rect-interview-head">
+      <div>
+        <h4 class="sub-title">快速事件访谈</h4>
+        <p>只回答是/否；选“是”时补一个大概日期，系统会自动转成生命事件。</p>
       </div>
-      <div class="rect-interview-list">
-        ${buildRectificationInterviewQuestions().map(question => renderInterviewQuestion(question, lang)).join('')}
-      </div>
+      <span>guided_rectification_interview · recommended_events</span>
+    </div>
+      <div class="rect-interview-list">${renderRectificationInterview(lang)}</div>
       <div class="rect-interview-actions">
-        <button type="button" class="rect-secondary-btn" id="rect-import-interview">把“是”的回答加入事件</button>
+        <button type="button" class="rect-secondary-btn" id="rect-import-interview">把回答加入事件并开始校正</button>
         <span id="rect-interview-status" aria-live="polite"></span>
       </div>
     </div>
@@ -166,7 +165,8 @@ function bindInterviewEvents(container) {
     rectEvents = [...rectEvents, ...events];
     renderEventList(container);
     const status = container.querySelector('#rect-interview-status');
-    if (status) status.textContent = `已加入 ${events.length} 个事件。`;
+    if (status) status.textContent = `已加入 ${events.length} 个事件，正在准备校正。`;
+    container.querySelector('#rect-run-btn')?.click();
   });
 }
 
@@ -484,3 +484,15 @@ function showOffsetDetail(container, r, base) {
 }
 
 export function initRectification() { rectEvents = []; rectInterviewAnswers = {}; }
+
+export function setRectificationRecommendedEvents(recommendedEvents = []) {
+  rectRecommendedEvents = Array.isArray(recommendedEvents) ? recommendedEvents : [];
+}
+
+function renderRectificationInterview(lang) {
+  const recommended = buildRecommendedRectificationQuestions(rectRecommendedEvents);
+  const fallback = recommended.length ? [] : buildRectificationInterviewQuestions();
+  return [...recommended, ...fallback].slice(0, recommended.length ? recommended.length : 3)
+    .map(question => renderInterviewQuestion(question, lang))
+    .join('');
+}

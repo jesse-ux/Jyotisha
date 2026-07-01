@@ -1,15 +1,19 @@
 {
   "scope": "pyjhora_oracle_artifact_manifest",
-  "generated_at": "2026-06-28T23:44:26.808999+00:00",
-  "artifact_count": 8,
+  "generated_at": "2026-07-01T10:31:50.603970+00:00",
+  "artifact_count": 12,
   "packet_count": 8,
   "artifacts": [
+    "pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt",
     "pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
     "pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
+    "pyjhora_historical_dst_london_varshaphala_1943_lahiri_20260629.txt",
     "pyjhora_historical_epoch_dasha_stdout_20260627.txt",
+    "pyjhora_marilyn_monroe_varshaphala_1962_lahiri_20260629.txt",
     "pyjhora_steve_jobs_dasha_stdout_20260627.txt",
     "pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
     "pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+    "pyjhora_synthetic_extreme_latitude_varshaphala_kp_20260629.txt",
     "pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt",
     "pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt"
   ],
@@ -55,10 +59,14 @@
       ]
     },
     "tajika_sahams": {
-      "artifact_count": 1,
+      "artifact_count": 5,
       "packet_count": 1,
       "artifacts": [
-        "pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt"
+        "pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt",
+        "pyjhora_historical_dst_london_varshaphala_1943_lahiri_20260629.txt",
+        "pyjhora_marilyn_monroe_varshaphala_1962_lahiri_20260629.txt",
+        "pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+        "pyjhora_synthetic_extreme_latitude_varshaphala_kp_20260629.txt"
       ],
       "pending_packets": [
         "external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json"

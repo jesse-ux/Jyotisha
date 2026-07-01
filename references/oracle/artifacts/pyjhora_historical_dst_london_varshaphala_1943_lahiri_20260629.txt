@@ -1,0 +1,8 @@
+CASE_ID template_historical_dst_london_varshaphala_1943_lahiri
+TOOL PyJHora 4.8.6
+SOURCE_ENV /Users/wuyongnaren/.workbuddy/binaries/python/envs/pyjhora
+CAPTURE_DATE 2026-06-29
+NOTE External annual capture from PyJHora black-box environment. Local repository annual engine output was not used. This artifact records solar return datetime, varsha lagna, muntha, year lord, first mudda dasha lord, selected sahams, and the Tajika yoga block extracted from the PyJHora annual chart via jhora.horoscope.transit.tajaka_yoga. This synthetic row is retained to document the historical timezone/DST boundary explicitly.
+
+TAJIKA_ANNUAL_VALUES_JSON {"solar_return_datetime":"1943-04-15T22:55:52+00:00","varsha_lagna_deg":224.724,"muntha_sign":"♍︎Virgo","year_lord":"Mars♂","mudda_dasha_first_lord":"Saturn♄","sahams":{"punya_saham":21.1202,"rajya_saham":299.2177,"vivah_saham":215.2774}}
+TAJIKA_YOGAS_JSON {"eesarpha":[[0,1],[0,5],[1,2],[1,5],[2,5],[4,6]],"gairi_kamboola":null,"ithasala":[[0,2,1],[1,3,1],[1,6,1],[3,6,1]],"kamboola":[true,[[1,3],[1,6]],[[1,3],[3,6],[1,6],[3,6]]],"khallasara":null,"manahoo":[[0,2,0]],"nakta":[],"yamaya":[]}

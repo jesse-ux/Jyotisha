@@ -11,6 +11,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 from urllib import request
@@ -20,17 +22,19 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "scratch" / "local" / "vedastro_adapter" / "method_catalog_snapshot.json"
 OFFICIAL_TAG_CATALOG_URL = "https://api.vedastro.org/api/Calculate/GetAllEventDataGroupedByTag"
 STUB_ENV = "VEDASTRO_METHOD_CATALOG_STUB"
+PYTHON_BRIDGE = ROOT / "scripts" / "vedastro_python_bridge.py"
 
 
 def schema() -> dict[str, Any]:
     return {
         "sync": "vedastro_method_catalog_sync",
         "scope": "official_vedastro_method_catalog",
-        "operations": ["sync_tags", "write_snapshot"],
+        "operations": ["sync_tags", "sync_python_capabilities", "write_snapshot"],
         "sources": {
             "official_tag_catalog": OFFICIAL_TAG_CATALOG_URL,
+            "official_python_package": "vedastro.Calculate",
         },
-        "output_contract": ["source", "summary", "tag_groups"],
+        "output_contract": ["source", "summary", "tag_groups", "python_capabilities", "python_signature_buckets"],
     }
 
 
@@ -39,6 +43,39 @@ def _load_stubbed_catalog() -> dict[str, Any] | None:
     if not raw:
         return None
     return json.loads(raw)
+
+
+def _build_python_signature_buckets(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    buckets: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        bucket = str(row.get("bucket") or "unknown")
+        entry = buckets.setdefault(bucket, {"count": 0, "examples": []})
+        entry["count"] += 1
+        if len(entry["examples"]) < 10:
+            entry["examples"].append(row["method"])
+    return buckets
+
+
+def _scan_python_capabilities() -> list[dict[str, Any]]:
+    if not PYTHON_BRIDGE.exists():
+        return []
+    completed = subprocess.run(
+        [sys.executable, str(PYTHON_BRIDGE), "--list-capabilities"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=240,
+        check=False,
+        env=os.environ.copy(),
+    )
+    if completed.returncode != 0:
+        return []
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return []
+    capabilities = payload.get("capabilities")
+    return capabilities if isinstance(capabilities, list) else []
 
 
 def _fetch_official_tag_catalog() -> dict[str, Any]:
@@ -58,9 +95,22 @@ def build_catalog() -> dict[str, Any]:
     for events in tag_groups.values():
         if isinstance(events, list):
             method_count += len(events)
+    python_capabilities = catalog.get("python_capabilities")
+    if not isinstance(python_capabilities, list):
+        try:
+            python_capabilities = _scan_python_capabilities()
+        except Exception:
+            python_capabilities = []
+    python_signature_buckets = _build_python_signature_buckets(python_capabilities)
+    python_callable_count = sum(1 for row in python_capabilities if row.get("callable"))
+    catalog["python_capabilities"] = python_capabilities
+    catalog["python_signature_buckets"] = python_signature_buckets
     catalog["summary"] = {
         "tag_count": len(tag_groups),
         "method_count": method_count,
+        "python_capability_count": len(python_capabilities),
+        "python_callable_count": python_callable_count,
+        "python_signature_bucket_count": len(python_signature_buckets),
     }
     return catalog
 

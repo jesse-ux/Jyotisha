@@ -1,5 +1,176 @@
 # 印度占星产品化进度日志
 
+## 2026-06-30
+
+- 完成 VedAstro 官方事件层的“日窗口优先”第一轮落地：`scripts/vedastro_service_adapter.py` 现会从 allowlisted `evidence_ledger` 派生 `daily_windows` 与 `top_daily_window`，不再只停留在原始事件行。
+- `scripts/vedastro_evidence_orchestrator.py` 已透传：
+  - `daily_windows_by_domain`
+  - `top_daily_window_by_domain`
+- `mcp_server.py` 的 strict workflow `present_evidence.external_activation` 已可直接消费：
+  - `daily_windows`
+  - `top_daily_window`
+- `life_event_graph_v1` 已新增 `official_day_window` 节点，前端/问答后续不必重解析原始事件就能看见官方日窗口。
+- `scripts/jyotish_engine.py` 的 full-reading overview 汇总层已补齐：
+  - `daily_windows`
+  - `top_daily_window`
+  - `daily_windows_by_domain`
+  - `top_daily_window_by_domain`
+- 新增/更新的 focused verification：
+  - `python3 -m pytest tests/test_vedastro_range_scan_replay.py::test_range_scan_builds_ranked_daily_windows_from_same_day_events -q`
+  - `python3 -m pytest tests/test_vedastro_evidence_orchestrator.py::test_vedastro_orchestrator_surfaces_daily_windows_by_domain -q`
+  - `python3 -m pytest tests/test_mcp_strict_workflow_relationship.py::test_relationship_external_activation_exposes_top_daily_window -q`
+  - `python3 -m pytest tests/test_life_event_graph_v1.py::test_life_event_graph_surfaces_ranked_official_day_window_nodes -q`
+  - `python3 -m pytest tests/test_cli_smoke.py::test_full_reading_preserves_official_daily_window_fields_in_range_scan_result -q`
+  - 组合回归：以上 5 个测试同跑通过
+- 真实边界：
+  - 这轮完成的是“官方事件 -> 日窗口派生 -> strict workflow/graph/full-reading透传”。
+  - 还没完成的是把 day-window 再继续升级成“高质量事业/婚恋/财富日级裁决器”；目前窗口质量仍依赖 `SearchEvents` 实际返回与 allowlist/tag/alias 覆盖质量。
+
+- 完成 guided topic -> AI chat 上下文链路补强：`jyotish-app/main.js` 点击 guided topic 时会把整条 topic 作为 `guided_topic_context` 传给 `openAIChatWithPrompt()`，`jyotish-app/ai-chat.js` 会把这层上下文继续拼进 `chart_context`，并在后端 `/api/chat` 请求体中透传 `guided_topic_context`。
+- 这意味着 guided topic 后续追问不再只带自然语言问题，还会继续携带：
+  - `strict_audit_gate.functional_benefic_malefic`
+  - `strict_audit_gate.relevant_vargas`
+  - `strict_audit_gate.vimshottari_narayana_crosscheck`
+  - `strict_audit_gate.source_priority_boundary`
+- 新增/更新的 focused verification：
+  - `python3 -m pytest tests/test_frontend_productization.py::test_guided_topic_questions_reuse_ai_chat_entry -q`
+  - `python3 -m pytest tests/test_frontend_productization.py::test_complete_reading_surfaces_guided_topic_discovery tests/test_frontend_productization.py::test_guided_topic_questions_reuse_ai_chat_entry -q`
+- 真实边界：
+  - 这轮完成的是 guided topic 点击后的上下文透传，不是服务端 `/api/chat` 自己再基于 `guided_topic_context` 做专门的二次路由。
+
+- 完成 `guided_topics` 逐条结论压入 compact audit gate：`scripts/guided_topic_discovery.py` 现会从现有 strict contract 读取 `technique_audit_summary`，并把它作为 `strict_audit_gate` 挂到每一条 guided topic 上。
+- 这层 `strict_audit_gate` 目前已覆盖：
+  - `functional_benefic_malefic`
+  - `relevant_vargas`
+  - `vimshottari_narayana_crosscheck`
+  - `source_priority_boundary`
+- 前端 `jyotish-app/main.js` 的 guided topic 卡片现已消费 `strict_audit_gate`，会在“继续深入”卡片上显示：
+  - functional gate
+  - varga gate
+  - dual dasha gate
+- 新增/更新的 focused verification：
+  - `python3 -m pytest tests/test_cli_smoke.py::test_full_reading_generates_guided_topics_from_real_evidence -q`
+  - `python3 -m pytest tests/test_frontend_productization.py::test_complete_reading_surfaces_guided_topic_discovery -q`
+- 真实边界：
+  - 这轮是把 compact audit gate 压进 guided topics 逐条对象与前端卡片。
+  - 还没做的是把同层 gate 再继续压进 guided topic 触发的后续问答 payload，让每次点击追问时也自动携带这层 compact boundary。
+
+- 完成 `Technique Audit Table -> strict adjudication` 设计文档落库：`docs/superpowers/specs/2026-06-30-technique-audit-strict-adjudication-design.md`，明确现成审计表不再只是平行证据，而是默认事业/婚恋/财富结论的强制引用门槛。
+- 完成对应实现计划落库：`docs/superpowers/plans/2026-06-30-technique-audit-strict-adjudication.md`，约束为复用现有 strict workflow、prompt pack、API summary 和前端消费层，不新增第二套审计系统。
+- `mcp_server.py` 已新增 compact strict audit gate：
+  - `_route_varga_gate_keys`
+  - `_build_technique_audit_summary`
+  - `strict["technique_audit_summary"]`
+  - `multi_reference_reading_summary["audit_gate_frame"]`
+- compact strict audit gate 现强制覆盖 4 类默认裁决依据：
+  - `Functional Benefic/Malefic`
+  - `D1 + 对应分盘门槛`
+  - `Vimshottari + Narayana`
+  - `official / local / fallback / blocked / conflicts`
+- `scripts/jyotish_engine.py` 已把 `technique_audit_summary` 透传进 compact strict contract，并把以下字段直接抬到 `ai_prompt_pack.evidence_snapshot` 顶层，减少 skill / Codex / 网页端消费路径复杂度：
+  - `strict_workflow_primary_route`
+  - `strict_workflow_routes_available`
+  - `strict_workflow_contracts`
+  - `official_primary_evidence`
+  - `local_supplemental_evidence`
+  - `fallback_used`
+  - `blocked_items`
+  - `conflicts`
+- `scripts/jyotish_api_server.py::_high_rigor_vedastro_official_summary()` 现已透传 `technique_audit_summary`，高严谨摘要与 consultation 工作流不再只给 top-reader skeleton，也会同步给出 compact audit gate。
+- 前端 `jyotish-app/main.js` 与 `jyotish-app/ai-chat.js` 已消费 `technique_audit_summary`：
+  - Prompt Pack 合同卡会显示 functional gate / varga gate / dual dasha gate
+  - AI Chat `【Top Reader Contract】` 上下文会显式写出 `technique_audit_summary` 的关键门槛状态
+- 新增/更新的红绿测试：
+  - `tests/test_mcp_strict_workflow_career.py::test_career_strict_contract_exposes_compact_technique_audit_summary`
+  - `tests/test_mcp_strict_workflow_relationship.py::test_relationship_multi_reference_summary_carries_audit_gate_frame`
+  - `tests/test_mcp_strict_workflow_finance.py::test_finance_strict_contract_compact_audit_marks_dual_dasha_gate`
+  - `tests/test_cli_smoke.py::test_full_reading_prompt_pack_carries_compact_technique_audit_summary`
+  - `tests/test_api_server_security.py::test_high_rigor_vedastro_official_summary_exposes_top_reader_contract_from_full_snapshot`
+  - `tests/test_api_server_security.py::test_consultation_workflow_surfaces_top_reader_contract_in_official_summary`
+  - `tests/test_frontend_productization.py::test_frontend_consumes_top_reader_contract_in_prompt_pack_and_ai_chat`
+- 已确认通过的 focused verification：
+  - `python3 -m pytest tests/test_mcp_strict_workflow_career.py tests/test_mcp_strict_workflow_relationship.py tests/test_mcp_strict_workflow_finance.py -k "compact_technique_audit_summary or audit_gate_frame or dual_dasha_gate" -q`
+  - `python3 -m pytest tests/test_cli_smoke.py -k "compact_technique_audit_summary" -q`
+  - `python3 -m pytest tests/test_api_server_security.py::test_high_rigor_vedastro_official_summary_exposes_top_reader_contract_from_full_snapshot tests/test_api_server_security.py::test_consultation_workflow_surfaces_top_reader_contract_in_official_summary tests/test_frontend_productization.py::test_frontend_consumes_top_reader_contract_in_prompt_pack_and_ai_chat -q`
+- 真实边界：
+  - 这轮完成的是“现成审计表正式并入默认 strict adjudication 主裁决”。
+  - 还没完成的是把这份 compact audit gate 进一步压进 guided topic 级逐条结论对象，让每条主题建议也自带同层门槛摘要。
+
+- 完成 `chart async + unified stage contract` 设计文档落库：`docs/superpowers/specs/2026-06-30-chart-async-unified-stage-contract-design.md`，明确普通 `/api/chart` 也可选走轻量 `job_id + poll`，以及 `full-reading` 在现有阶段耗时之上补一层统一 stage contract。
+- 完成对应实现计划落库：`docs/superpowers/plans/2026-06-30-chart-async-unified-stage-contract.md`，约束为复用现有 high-rigor 文件队列、不新增 Redis/Celery、不改变同步默认行为。
+- `scripts/jyotish_engine.py` 已新增 `_build_unified_stage_contract(stage_timings)`，并把以下字段压入 `full-reading.summary`：
+  - `stage_contract_version`
+  - `stage_groups`
+  - `cache_recommendations`
+  - `async_recommendations`
+- `scripts/jyotish_api_server.py` 已抽出共享异步作业层：
+  - `_async_job_dir`
+  - `_async_job_path`
+  - `_load_async_job_record`
+  - `_write_async_job_record`
+  - `ChartAPIHandler._enqueue_async_job`
+- `scripts/jyotish_api_server.py` 已为普通排盘主链补上可选异步出口：
+  - `POST /api/chart` 支持 `async=true` / `enqueue=true`
+  - 新增 `/api/chart/jobs/{job_id}` poll
+  - 同步 `_compute_chart_sync` 仍保持原行为，完成态异步结果与同步 chart payload 对齐
+- 为兼容既有 monkeypatch 测试与主链，high-rigor async wrapper 保持原接口：
+  - `_enqueue_high_rigor_job`
+  - `_get_high_rigor_job`
+  - `_load_high_rigor_job_record`
+  - `_write_high_rigor_job_record`
+- 新增/更新的红绿测试：
+  - `tests/test_cli_smoke.py::test_full_reading_summary_exposes_unified_stage_groups`
+  - `tests/test_api_server_security.py::test_chart_async_submit_returns_job_id`
+  - `tests/test_api_server_security.py::test_chart_job_poll_endpoint_returns_cached_job_payload`
+  - `tests/test_api_server_security.py::test_chart_async_job_executes_in_background`
+- 已确认通过的 focused verification：
+  - `python3 -m pytest tests/test_cli_smoke.py::test_full_reading_summary_exposes_unified_stage_groups -q`
+  - `python3 -m pytest tests/test_api_server_security.py -k "chart_async_submit_returns_job_id or chart_job_poll_endpoint_returns_cached_job_payload or chart_async_job_executes_in_background" -q`
+  - `python3 -m pytest tests/test_api_server_security.py -k "high_rigor_async_submit_returns_job_id or high_rigor_job_poll_endpoint_returns_cached_job_payload or high_rigor_async_job_executes_in_background" -q`
+  - `python3 -m pytest tests/test_api_server_security.py -k "chart_async or high_rigor_async or chart_job_poll_endpoint_returns_cached_job_payload or runtime_cache" -q`
+- 真实边界：
+  - 这轮完成的是普通 chart / full-reading 的统一异步出口和阶段契约压实。
+  - 还没完成的是把这层继续完整前推到前端极简交互与更大一圈慢回归基线。
+
+- 完成 `VedAstro official -> local supplemental -> local fallback` 设计文档落库：`docs/superpowers/specs/2026-06-30-vedastro-official-hard-override-design.md`，明确婚恋/事业/财富三条默认工作流的官方优先、冲突暴露、`blocked` 和 `confidence_cap` 规则。
+- 完成对应实现计划落库：`docs/superpowers/plans/2026-06-30-vedastro-official-hard-override.md`，按 TDD 拆成 strict contract、orchestrator metadata、API/report 出口和验证四段。
+- `mcp_server.py` 已为 `relationship / career / finance` 三条 strict workflow 增加共享 contract：
+  - `official_primary_evidence`
+  - `local_supplemental_evidence`
+  - `fallback_used`
+  - `blocked_items`
+  - `conflicts`
+- `mcp_server.py` 新增共享 helper，避免三条主题各自偷偷拼 contract：
+  - `_build_official_primary_evidence`
+  - `_build_local_supplemental_evidence`
+  - `_build_fallback_and_blocked`
+  - `_build_conflicts`
+- `scripts/historical_event_backtest.py` 已透传 strict contract 的 `blocked_items` 与 `conflicts`，历史回测链不再只看到 `source_priority_mode/confidence_cap`。
+- `scripts/vedastro_evidence_orchestrator.py` 已把 `official_section_statuses` 与 `theme_requirements` 推入 `source_metadata`，为后续官方硬覆盖裁决提供统一 metadata。
+- `scripts/jyotish_api_server.py` 的 `high_rigor_workflow_plan_only` 已改为返回 `return_official_primary_supplemental_fallback_conflict_contract`，并在 plan-only 输出中显式声明这套 contract。
+- `scripts/jyotish_api_server.py::_high_rigor_vedastro_official_summary` 已透传：
+  - `official_primary_evidence`
+  - `local_supplemental_evidence`
+  - `fallback_used`
+  - `blocked_items`
+  - `conflicts`
+- `scripts/jyotish_engine.py::_build_vedastro_official_full_snapshot_payload` 已开始把 relationship strict contract 折叠进 `ai_prompt_pack.evidence_snapshot.vedastro_official_full_snapshot`，让 prompt/网页/AI 上下文看到官方主证据、补充、回退和冲突边界，而不只看到快照状态。
+- 新增/更新的红绿测试：
+  - `tests/test_mcp_strict_workflow_relationship.py`
+  - `tests/test_mcp_strict_workflow_career.py`
+  - `tests/test_mcp_strict_workflow_finance.py`
+  - `tests/test_historical_event_backtest.py`
+  - `tests/test_vedastro_evidence_orchestrator.py`
+  - `tests/test_api_server_security.py`
+  - `tests/test_cli_smoke.py`
+- 已确认通过的 focused verification：
+  - `python3 -m pytest tests/test_mcp_strict_workflow_relationship.py tests/test_mcp_strict_workflow_career.py tests/test_mcp_strict_workflow_finance.py tests/test_historical_event_backtest.py -k "strict_contract or conflicts_and_blocked_items" -q`
+  - `python3 -m pytest tests/test_vedastro_evidence_orchestrator.py -k official_section_statuses -q`
+  - `python3 -m pytest tests/test_api_server_security.py -k "hard_override_contract or vedastro_official_summary_passes_through_contract_fields" -q`
+- 真实边界：
+  - 这轮已把“官方硬覆盖 contract”压实到 strict workflow、historical backtest、orchestrator metadata 和高严谨 API summary。
+  - 还未完成的收尾是把同一 contract 更完整地消费到 full-reading / prompt pack / 前端展示层，并跑完更大一圈的慢回归验证。
+
 ## 2026-06-22
 
 - 恢复上下文：项目根目录此前没有 `task_plan.md`、`findings.md`、`progress.md`。
@@ -492,3 +663,48 @@
 - VedAstro 面确认：当前已进入可点击用户入口和 adapter/provenance 阶段；官方 MCP/Python bridge 有真实可达记录，REST range scan 的官方 endpoint smoke 仍依赖 `VEDASTRO_API_ENDPOINT` 与 `VEDASTRO_ENABLE_NETWORK=1`。
 - 质量门确认：`python3 scripts/run_quality_gate.py --profile quick --skip-frontend-runtime` 通过，聚焦集合 `297 passed`；`env -u VEDASTRO_API_ENDPOINT -u VEDASTRO_ENABLE_NETWORK python3 scripts/run_quality_gate.py --profile vedastro-live` 通过但返回受控 `blocked`，不得宣称官方实网 VedAstro range scan 已闭环。
 - 当前最值钱下一步：继续推进 VedAstro range scan 的官方样本调参和 EventTagList 映射质量，同时补 Tajika/Sahams 4 个未闭合外部 oracle 任务；之后再处理 Vimsopaka 高阶语义映射、Life Event Graph v1 产品化和报告渲染 polish。
+
+## 2026-06-29T23:57:36+08:00 - 高严谨默认入口复用接线
+
+- 按用户要求先做地毯式扫描：读取既有计划/发现/进度、运行 `preflight_fragment_scan.py`、`audit_fragments.py --strict`、`audit_capabilities.py --mode validate`，确认主仓已有校时、历史事件回测、主题推运、VedAstro 官方证据层，不需要重写算法。
+- 新增 `/api/high_rigor_workflow`：复用 `/api/chart` 的 VedAstro official-first 主入口、`/api/rectification_gate`、`scripts/historical_event_backtest.py`、`/api/thematic_report`，输出 source priority、reused modules、VedAstro catalog summary、rectification、historical backtest、thematic report。
+- 为 API Explorer 增加 `dry_run` plan-only 样例，避免目录页意外触发重型 VedAstro/full-reading 链路；真实用户请求不带 `dry_run` 才执行完整高严谨链路。
+- 将 `high-rigor-workflow` 挂到已有 `thematic_report_orchestrator` 注册表命令上，能力总数保持 89，不新增伪技能。
+- 验证：新增高严谨 workflow 合同测试通过；Technique Catalog 入口测试通过；相关 4 项 API 回归通过；`audit_capabilities.py --mode validate` 仍显示 `technique_count=89`、`10 complete / 79 covered / 0 missing`；`py_compile` 通过。
+
+## 2026-06-30T00:34:00+08:00 - VedAstro 641 项轻量映射表
+
+- 在 `scripts/vedastro_official_capability_runner.py` 给 `official_full_capability_catalog` 增加轻量路由元数据：每个官方方法返回 `domains`、`execution_policy`、`priority`，总报告返回 `domain_routing`。
+- 映射策略按方法名、签名、bucket 和参数名做保守分类：`career / marriage / wealth / rectification / timing / general`；`MatchReport` 等需要伴侣资料的方法保留为 `needs_user_context`，不进入自动高优先级列表。
+- 修正 `Dashamamsha` 字符串误判：D10 分盘类能力不再因为包含 `dasha` 字符串被归入 timing；真实 641 轻扫显示 `AllPlanetDashamamshaSign` 只归入 `career/marriage/wealth`。
+- 将 `domain_routing` 从 service adapter 透传到 `VedAstroEvidenceOrchestrator`、`jyotish_api_server.py` 和 `jyotish_engine.py` 的官方证据摘要，网页/Skill/MCP 共享入口可以消费同一张路由表。
+- 验证：官方 runner 映射测试、orchestrator 透传测试、full snapshot 透传测试、高严谨 API 摘要测试共 5 项通过；`py_compile` 通过；`audit_capabilities.py --mode validate` 仍为 `technique_count=89`、`10 complete / 79 covered / 0 missing`；`VEDASTRO_FULL_CATALOG_SAMPLE_LIMIT=0` 真实轻扫读到 `catalog_method_count=641`、`domain_routing_count=6`。
+
+## 2026-06-30T01:05:00+08:00 - VedAstro 动态选择器与报告引用层
+
+- 在 `official_full_capability_catalog` 返回中新增 `dynamic_selection`：按请求主题从 641 项官方能力里选择 Top N，保留 `selected_methods`、`needs_user_context_methods`、`needs_user_text_methods`、`needs_rectification_profile_methods`、`blocked_methods`。
+- 每个被选能力生成稳定引用 ID：`vedastro:<theme>:<method>`；每个主题生成 `report_reference`，包含 `citation_ids`、自动可用数量、需补资料数量和 blocked 数量。
+- 将 `dynamic_selection` 从 service adapter 透传到 `VedAstroEvidenceOrchestrator`、`jyotish_api_server.py` 和 `jyotish_engine.py`；高严谨入口和 prompt pack 现在能输出 `official_report_references`。
+- 真实 641 轻扫验证：`dynamic_selection_theme_count=5`；示例引用包括 `vedastro:career:EventsAtRange`、`vedastro:marriage:EventsAtRange`、`vedastro:timing:EventsAtRange`、`vedastro:timing:DasaAtRange`；婚恋主题标出 `marriage_needs_context=9`。
+- Fresh verification：6 个聚焦 pytest 通过；`py_compile` 通过；`audit_capabilities.py --mode validate` 仍为 89 项技能、0 problem、0 warning；`git diff --check` 通过。
+
+## 2026-06-30T02:30:00+08:00 - Top-reader adjudication contract 通贯
+
+- 在 `mcp_server.py` 的 career / relationship / finance strict workflow 上统一接入共享 `adjudication_stages`（promise -> activation -> manifestation -> label）与 `multi_reference_reading_summary`，并把 `verdict`、`dominant_label`、`main_conflicts` 作为轻量可消费合同输出。
+- `scripts/jyotish_engine.py` 的 prompt-pack 压缩层已透传上述合同，因此 `ai_prompt_pack.evidence_snapshot.vedastro_official_full_snapshot.strict_workflow_contracts[*]` 不再只包含官方/本地/blocked 元信息，也能给出顶层裁决骨架。
+- `scripts/jyotish_api_server.py::_high_rigor_vedastro_official_summary()` 现优先从 `vedastro_official_full_snapshot` 读取 strict contract，并把 `strict_workflow_primary_route`、`strict_workflow_contracts`、`adjudication_stages`、`multi_reference_reading_summary`、`verdict`、`dominant_label`、`main_conflicts` 直接暴露给 consultation/high-rigor 用户层摘要。
+- `scripts/historical_event_backtest.py` 现会把 strict contract 的 `adjudication_stages`、`multi_reference_reading_summary`、`main_conflicts` 继续写进每条事件 evidence，避免回测结果只看 hit/miss 却丢失裁决骨架。
+- 前端 `jyotish-app/main.js` 与 `jyotish-app/ai-chat.js` 已消费同一套合同：Prompt Pack 面板会显示 Top-reader adjudication 摘要与 multi-reference frame keys，AI Chat 上下文会附带 `【Top Reader Contract】` 边界，网页/app 与 skill 对话入口看到的是同一份官方优先证据结构。
+- Focused verification：
+  - `python3 -m pytest tests/test_mcp_strict_workflow_career.py tests/test_mcp_strict_workflow_relationship.py tests/test_mcp_strict_workflow_finance.py tests/test_cli_smoke.py::test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack tests/test_vedastro_official_full_snapshot.py::test_full_reading_prompt_pack_exposes_vedastro_official_snapshot_boundary tests/test_api_server_security.py tests/test_historical_event_backtest.py tests/test_frontend_productization.py -k "adjudication_stages or multi_reference_reading_summary or top_reader_contract or modifier_frame" -q` -> `9 passed`.
+- 完成“官方日窗口 -> 用户可读日期信号”最小翻译层接回默认主链：
+  - `mcp_server.py` 的 `external_activation` 现会基于 `daily_windows` 派生 `official_day_signals`
+  - 当前最小标签为：
+    - 事业：`事业机会日 / 事业风险日 / 事业混合日`
+    - 婚恋：`婚恋推进日 / 婚恋风险日 / 婚恋混合日`
+    - 财富：`财富机会日 / 财富风险日 / 财富混合日`
+  - 这层只复用已有 `signal_families + top_signal_label + confidence + score`，没有新造重推理器
+- strict workflow compact contract 现已保留 `official_day_signal_summary`，因此这层不会只存在于原始 `present_evidence.external_activation` 里。
+- `scripts/guided_topic_discovery.py` 已把 `official_day_signal_summary` 压进每条 guided topic；`jyotish-app/main.js` 的 guided topic 卡片会直接显示最重要的官方日期提示；`jyotish-app/ai-chat.js` 也会把这层塞进 guided topic chat payload，后续追问不再丢失。
+- 新增并跑通的定点回归：
+  - `python3 -m pytest tests/test_mcp_strict_workflow_career.py::test_career_external_activation_derives_user_readable_day_signals tests/test_mcp_strict_workflow_relationship.py::test_relationship_external_activation_derives_progress_day_signals tests/test_mcp_strict_workflow_finance.py::test_finance_external_activation_derives_wealth_day_signals tests/test_cli_smoke.py::test_full_reading_guided_topics_can_carry_official_day_signal_summary tests/test_frontend_productization.py::test_guided_topic_questions_reuse_ai_chat_entry -q`

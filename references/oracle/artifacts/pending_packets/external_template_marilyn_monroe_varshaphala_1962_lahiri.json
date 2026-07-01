@@ -1,6 +1,6 @@
 {
   "capture_id": "external_template_marilyn_monroe_varshaphala_1962_lahiri",
-  "status": "draft",
+  "status": "external_verified",
   "case_id": "template_marilyn_monroe_varshaphala_1962_lahiri",
   "birth": {
     "year": 1926,
@@ -32,28 +32,213 @@
     "operator_note"
   ],
   "metadata": {
-    "tool_name": "",
-    "tool_version_or_url": "",
-    "capture_date": "",
-    "source_artifact": "references/oracle/artifacts/",
+    "tool_name": "PyJHora",
+    "tool_version_or_url": "PyJHora 4.8.6 isolated workbuddy black-box run",
+    "capture_date": "2026-06-29",
+    "source_artifact": "references/oracle/artifacts/pyjhora_marilyn_monroe_varshaphala_1962_lahiri_20260629.txt",
     "ayanamsa": "lahiri",
-    "node_mode": "true",
-    "timezone": -8,
-    "annual_system": "varshaphala",
+    "node_mode": "PyJHora default",
+    "timezone": "UTC-08:00",
+    "annual_system": "Varshaphala/Tajika",
     "target_year": 1962,
-    "operator_note": ""
+    "operator_note": "Black-box annual output from workbuddy PyJHora 4.8.6 environment. External evidence only; local annual engine output was not used. Solar-return timestamp, Varsha Lagna, Muntha, Year Lord, first Mudda Dasha lord, selected Sahams, and Tajika Yogas were captured through the external PyJHora path via the annual chart and jhora.horoscope.transit.tajaka_yoga helper chain."
   },
   "target_placeholders": {
-    "target.solar_return_datetime": null,
-    "target.varsha_lagna_deg": null,
-    "target.muntha_sign": null,
-    "target.year_lord": null,
-    "target.mudda_dasha_first_lord": null,
-    "target.sahams.punya_saham": null,
-    "target.sahams.rajya_saham": null,
-    "target.sahams.vivah_saham": null,
-    "target.tajika_yogas": null,
-    "target.source_artifact": null
+    "target.solar_return_datetime": "1962-06-01T14:20:25-08:00",
+    "target.varsha_lagna_deg": 169.9089,
+    "target.muntha_sign": "♎︎Libra",
+    "target.year_lord": "Mercury☿",
+    "target.mudda_dasha_first_lord": "Raagu☊",
+    "target.sahams.punya_saham": 161.7196,
+    "target.sahams.rajya_saham": 50.2812,
+    "target.sahams.vivah_saham": 350.4075,
+    "target.tajika_yogas": {
+      "eesarpha": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          5
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "gairi_kamboola": null,
+      "ithasala": [
+        [
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          4,
+          2
+        ],
+        [
+          0,
+          6,
+          2
+        ],
+        [
+          1,
+          2,
+          2
+        ],
+        [
+          1,
+          4,
+          1
+        ],
+        [
+          1,
+          6,
+          1
+        ],
+        [
+          2,
+          4,
+          3
+        ],
+        [
+          2,
+          6,
+          3
+        ],
+        [
+          4,
+          6,
+          2
+        ]
+      ],
+      "kamboola": [
+        true,
+        [
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            4
+          ],
+          [
+            1,
+            6
+          ]
+        ],
+        [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            4
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            0,
+            4
+          ],
+          [
+            1,
+            4
+          ],
+          [
+            2,
+            4
+          ],
+          [
+            4,
+            6
+          ],
+          [
+            0,
+            6
+          ],
+          [
+            1,
+            6
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            4,
+            6
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            4
+          ],
+          [
+            0,
+            6
+          ]
+        ]
+      ],
+      "khallasara": null,
+      "manahoo": [
+        [
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          4,
+          1
+        ],
+        [
+          0,
+          6,
+          1
+        ],
+        [
+          1,
+          2,
+          1
+        ],
+        [
+          1,
+          4,
+          1
+        ],
+        [
+          1,
+          6,
+          1
+        ]
+      ],
+      "nakta": [],
+      "yamaya": []
+    },
+    "target.source_artifact": "references/oracle/artifacts/pyjhora_marilyn_monroe_varshaphala_1962_lahiri_20260629.txt"
   },
   "integrity_checks": {
     "must_not_come_from_local_engine": true,

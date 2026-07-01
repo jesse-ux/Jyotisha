@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import jyotish_engine
+
 from mcp_server import (
     _collect_strict_evidence,
     _derive_event_judgement,
@@ -142,6 +144,238 @@ def test_finance_source_diversity_adds_small_bump_without_changing_verdict_band(
     assert low_diversity["verdict"] == "moderate_probability_window"
     assert high_diversity["verdict"] == "moderate_probability_window"
     assert high_diversity["score"] == low_diversity["score"] + 5
+
+
+def test_finance_strict_contract_surfaces_official_block_and_local_fallback_usage() -> None:
+    strict = _collect_strict_evidence("finance", {"modules": {"source_priority": {"mode": "local_fallback_official_blocked"}}})
+
+    assert "official_primary_chart_blocked" in strict["blocked_items"]
+    assert isinstance(strict["fallback_used"], list)
+    assert isinstance(strict["conflicts"], list)
+
+
+def test_finance_strict_contract_exposes_adjudication_stages_and_multi_reference_summary() -> None:
+    strict = _collect_strict_evidence("finance", {"modules": {"source_priority": {"mode": "local_fallback_official_blocked"}}})
+
+    assert strict["adjudication_stages"]["promise"]["status"] in {"present", "weak", "missing"}
+    assert strict["adjudication_stages"]["activation"]["required_timing_systems"] == ["Vimshottari", "Narayana"]
+    assert "multi_reference_reading_summary" in strict
+    summary = strict["multi_reference_reading_summary"]
+    assert "root_frame" in summary
+    assert "divisional_frame" in summary
+    assert "visibility_frame" in summary
+    assert "karaka_frame" in summary
+    assert "timing_frame" in summary
+    assert "modifier_frame" in summary
+    assert "conflict_frame" in summary
+
+
+def test_finance_strict_contract_exposes_monthly_adjudication_summary() -> None:
+    strict = _collect_strict_evidence(
+        "finance",
+        {
+            "modules": {
+                "source_priority": {"mode": "vedastro_official_primary"},
+                "varga_full": {
+                    "D2_Hora": {"summary": "hora ready"},
+                    "D10_Dasamsa": {"summary": "dasamsa ready"},
+                },
+                "shadbala": {
+                    "planets": {
+                        "Venus": {
+                            "components": {
+                                "sthana": 1,
+                                "dig": 1,
+                                "kala": 1,
+                                "chesta": 1,
+                                "naisargika": 1,
+                                "drik": 1,
+                            }
+                        }
+                    }
+                },
+                "ashtakavarga": {"house_scores": {"2": {"sav_score": 33}, "11": {"sav_score": 35}}},
+                "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+                "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+                "dasa_convergence": {
+                    "domain_activations": {
+                        "wealth_family": {"convergence_level": "L2", "probability": "35-50%"},
+                        "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    }
+                },
+                "chart": {"ascendant": {"sign": "Leo"}},
+                "dhana_yogas": [{"name": "Dhana Yoga"}],
+                "lakshmi_yoga": {"present": True},
+                "vedastro_range_scan_result": {
+                    "backend": "vedastro_service_adapter_candidate",
+                    "status": "ok",
+                    "operation": "range_scan",
+                    "domain": "wealth",
+                    "evidence_ledger": [],
+                    "daily_windows": [
+                        {
+                            "date": "2026-10-04",
+                            "domain": "wealth",
+                            "score": 5,
+                            "confidence": "high",
+                            "event_count": 2,
+                            "signal_families": ["wealth_trigger"],
+                            "event_ids": ["GoodForBorrowingMoneyForBusiness", "GoodForLendingMoney"],
+                            "top_signal_label": "Good for borrowing money for business",
+                        },
+                        {
+                            "date": "2026-10-20",
+                            "domain": "wealth",
+                            "score": 2,
+                            "confidence": "medium",
+                            "event_count": 1,
+                            "signal_families": ["wealth_pressure"],
+                            "event_ids": ["BadForSellingForProfit"],
+                            "top_signal_label": "Bad for selling for profit",
+                        },
+                    ],
+                    "top_daily_window": {
+                        "date": "2026-10-04",
+                        "domain": "wealth",
+                        "score": 5,
+                        "confidence": "high",
+                        "event_count": 2,
+                        "signal_families": ["wealth_trigger"],
+                        "event_ids": ["GoodForBorrowingMoneyForBusiness", "GoodForLendingMoney"],
+                        "top_signal_label": "Good for borrowing money for business",
+                    },
+                    "source_metadata": {},
+                },
+            }
+        },
+    )
+
+    summary = strict["monthly_adjudication_summary"]
+    assert summary["route"] == "finance"
+    assert summary["primary_state"]["value"] in {"推进", "启动", "整固", "收束", "观察"}
+    assert summary["manifestation_mode"]["value"]
+    assert summary["friction_source"]["value"]
+    assert summary["time_confidence"]["value"] in {"day_supported", "month_supported", "month_only", "blocked"}
+    assert isinstance(summary["supporting_days"], list)
+    assert summary["supporting_days"][0]["date"] == "2026-10-04"
+
+
+def test_finance_summary_modifier_frame_includes_yogi_and_ashtakavarga_only_as_modifiers() -> None:
+    modules = {
+        "source_priority": {"mode": "vedastro_official_primary"},
+        "varga_full": {
+            "D2_Hora": {"summary": "hora ready"},
+            "D10_Dasamsa": {"summary": "dasamsa ready"},
+        },
+        "shadbala": {"planets": {"Venus": {"components": {"sthana": 1, "dig": 1, "kala": 1, "chesta": 1, "naisargika": 1, "drik": 1}}}},
+        "ashtakavarga": {"house_scores": {"2": {"sav_score": 33}, "11": {"sav_score": 35}}},
+        "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+        "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+        "dasa_convergence": {"domain_activations": {"wealth_family": {"convergence_level": "L1"}}},
+        "chart": {"ascendant": {"sign": "Leo"}},
+        "source_priority": {"mode": "vedastro_official_primary"},
+        "dhana_yogas": [{"name": "Dhana Yoga"}],
+        "lakshmi_yoga": {"present": True},
+    }
+    strict = _collect_strict_evidence("finance", {"modules": modules})
+
+    modifier = strict["multi_reference_reading_summary"]["modifier_frame"]
+    assert "functional_benefic_malefic" in modifier
+    assert modifier["ashtakavarga_finance_support"]["source"] == "ashtakavarga_house_scores_bridge_v1"
+    assert modifier["yogi_support"]["role"] == "modifier_only"
+
+
+def test_finance_strict_contract_compact_audit_marks_dual_dasha_gate() -> None:
+    strict = _collect_strict_evidence("finance", {"modules": {"source_priority": {"mode": "local_fallback_official_blocked"}}})
+
+    audit = strict["technique_audit_summary"]
+    assert audit["vimshottari_narayana_crosscheck"]["gate"] == "hard"
+    assert "official_primary_chart_blocked" in audit["source_priority_boundary"]["blocked_items"]
+
+
+def test_finance_external_activation_derives_wealth_day_signals() -> None:
+    strict = _collect_strict_evidence(
+        "finance",
+        {
+            "modules": {
+                "source_priority": {"mode": "vedastro_official_primary"},
+                "varga_full": {
+                    "D2_Hora": {"summary": "hora ready"},
+                    "D10_Dasamsa": {"summary": "dasamsa ready"},
+                },
+                "shadbala": {
+                    "planets": {
+                        "Venus": {
+                            "components": {
+                                "sthana": 1,
+                                "dig": 1,
+                                "kala": 1,
+                                "chesta": 1,
+                                "naisargika": 1,
+                                "drik": 1,
+                            }
+                        }
+                    }
+                },
+                "ashtakavarga": {"house_scores": {"2": {"sav_score": 33}, "11": {"sav_score": 35}}},
+                "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+                "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+                "dasa_convergence": {
+                    "domain_activations": {
+                        "wealth_family": {"convergence_level": "L2", "probability": "35-50%"},
+                        "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    }
+                },
+                "chart": {"ascendant": {"sign": "Leo"}},
+                "vedastro_range_scan_result": {
+                    "backend": "vedastro_service_adapter_candidate",
+                    "status": "ok",
+                    "operation": "range_scan",
+                    "domain": "wealth",
+                    "evidence_ledger": [],
+                    "daily_windows": [
+                        {
+                            "date": "2026-10-04",
+                            "domain": "wealth",
+                            "score": 5,
+                            "confidence": "high",
+                            "event_count": 2,
+                            "signal_families": ["wealth_trigger"],
+                            "event_ids": ["GoodForBorrowingMoneyForBusiness", "GoodForLendingMoney"],
+                            "top_signal_label": "Good for borrowing money for business",
+                        },
+                        {
+                            "date": "2026-10-20",
+                            "domain": "wealth",
+                            "score": 2,
+                            "confidence": "medium",
+                            "event_count": 1,
+                            "signal_families": ["wealth_pressure"],
+                            "event_ids": ["BadForSellingForProfit"],
+                            "top_signal_label": "Bad for selling for profit",
+                        },
+                    ],
+                    "top_daily_window": {
+                        "date": "2026-10-04",
+                        "domain": "wealth",
+                        "score": 5,
+                        "confidence": "high",
+                        "event_count": 2,
+                        "signal_families": ["wealth_trigger"],
+                        "event_ids": ["GoodForBorrowingMoneyForBusiness", "GoodForLendingMoney"],
+                        "top_signal_label": "Good for borrowing money for business",
+                    },
+                    "source_metadata": {},
+                },
+            }
+        },
+    )
+
+    external = strict["present_evidence"]["external_activation"]
+    assert external["official_day_signals"][0]["date"] == "2026-10-04"
+    assert external["official_day_signals"][0]["day_type"] == "opportunity"
+    assert external["official_day_signals"][0]["summary"] == "财富机会日"
+    assert external["official_day_signals"][1]["day_type"] == "risk"
 
 
 def test_finance_deep_ashtakavarga_supports_add_small_score_bump_without_label_override() -> None:
@@ -1164,3 +1398,85 @@ def test_collect_strict_evidence_finance_does_not_add_avayogi_without_external_t
     assert strict["present_evidence"].get("avayogi_risk") is None
     assert strict["event_judgement"]["score"] == 95
     assert "avayogi_active" not in strict["event_judgement"]["secondary_context"]
+
+
+def test_finance_narrative_payload_forces_monthly_adjudication_layers_into_final_chinese_conclusion() -> None:
+    strict = _collect_strict_evidence(
+        "finance",
+        {
+            "modules": {
+                "source_priority": {"mode": "vedastro_official_primary"},
+                "varga_full": {
+                    "D2_Hora": {"summary": "hora ready"},
+                    "D10_Dasamsa": {"summary": "dasamsa ready"},
+                },
+                "shadbala": {
+                    "planets": {
+                        "Venus": {
+                            "components": {
+                                "sthana": 1,
+                                "dig": 1,
+                                "kala": 1,
+                                "chesta": 1,
+                                "naisargika": 1,
+                                "drik": 1,
+                            }
+                        }
+                    }
+                },
+                "ashtakavarga": {"house_scores": {"2": {"sav_score": 33}, "11": {"sav_score": 35}}},
+                "dasha": {"current_dasha": {"mahadasha": "Venus", "antardasha": "Mercury"}},
+                "narayana_dasha": {"current_dasha": {"sign": "Taurus", "lord": "Venus"}},
+                "dasa_convergence": {
+                    "domain_activations": {
+                        "wealth_family": {"convergence_level": "L2", "probability": "35-50%"},
+                        "gains_wishes": {"convergence_level": "L1", "probability": "+15-20%"},
+                    }
+                },
+                "chart": {"ascendant": {"sign": "Leo"}},
+                "dhana_yogas": [{"name": "Dhana Yoga"}],
+                "lakshmi_yoga": {"present": True},
+                "vedastro_range_scan_result": {
+                    "backend": "vedastro_service_adapter_candidate",
+                    "status": "ok",
+                    "operation": "range_scan",
+                    "domain": "wealth",
+                    "evidence_ledger": [],
+                    "daily_windows": [
+                        {
+                            "date": "2026-10-04",
+                            "domain": "wealth",
+                            "score": 5,
+                            "confidence": "high",
+                            "event_count": 2,
+                            "signal_families": ["wealth_trigger"],
+                            "event_ids": ["GoodForBorrowingMoneyForBusiness", "GoodForLendingMoney"],
+                            "top_signal_label": "Good for borrowing money for business",
+                        }
+                    ],
+                    "top_daily_window": {
+                        "date": "2026-10-04",
+                        "domain": "wealth",
+                        "score": 5,
+                        "confidence": "high",
+                        "event_count": 2,
+                        "signal_families": ["wealth_trigger"],
+                        "event_ids": ["GoodForBorrowingMoneyForBusiness", "GoodForLendingMoney"],
+                        "top_signal_label": "Good for borrowing money for business",
+                    },
+                    "source_metadata": {},
+                },
+            }
+        },
+    )
+
+    payload = jyotish_engine._build_finance_narrative_payload(strict)
+
+    assert "财富" in payload["headline"]
+    assert payload["monthly_frame"]["primary_state"]["value"]
+    assert payload["monthly_frame"]["manifestation_mode"]["value"]
+    assert payload["monthly_frame"]["friction_source"]["value"]
+    assert payload["monthly_frame"]["time_confidence"]["value"]
+    assert any("月度主状态" in item for item in payload["strengths"])
+    assert any("阻力来源" in item for item in payload["risks"])
+    assert "时间置信度" in payload["markdown"]

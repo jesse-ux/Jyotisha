@@ -1,5 +1,30 @@
 # 印度占星产品化发现记录
 
+## 2026-06-30 VedAstro official hard-override 本轮发现
+
+- 真正需要补的，不是再证明一次“VedAstro 能调用”，而是把 `official -> supplemental -> fallback` 这条权威链压成统一 contract，并让婚恋/事业/财富三条默认工作流都吃同一套结构。
+- 本轮之前，`mcp_server.py` 的 strict workflow 已有 `source_priority` 和 `vedastro_official_snapshot`，但缺少用户可消费的：
+  - `official_primary_evidence`
+  - `local_supplemental_evidence`
+  - `fallback_used`
+  - `blocked_items`
+  - `conflicts`
+  因此容易出现“知道官方优先，但看不到究竟哪里官方、哪里本地、哪里冲突”的假闭环。
+- 本轮红测很干净，失败都集中在缺少上述字段，而不是旧模块逻辑崩坏。这说明主问题确实是 contract 暴露层，而不是三条主题判定器整体不可用。
+- `historical_event_backtest.py` 原先不会带出 `blocked_items` / `conflicts`，导致历史回测明明已触发 strict boundary，外层报告却看不见冲突类型。本轮已补透传。
+- `vedastro_evidence_orchestrator.py` 原先虽然拿到了 official full snapshot，但没有把 `section_statuses` 和 route/theme requirement 一起往外带，后续主题裁决无法稳定区分“官方 partial”与“完全 blocked”。本轮已补 `official_section_statuses` 与 `theme_requirements`。
+- `high_rigor_workflow_plan_only` 原先只声明 `return_vedastro_catalog_and_source_priority_metadata`，这不足以说明最终真实返回会包含官方主证据/补充/回退/冲突 contract。本轮已改成 `return_official_primary_supplemental_fallback_conflict_contract`。
+- `_high_rigor_vedastro_official_summary` 原先只汇总官方 catalog / dynamic selection / report references，不会透传 strict contract 的官方主证据、补充、回退和冲突。本轮已补齐。
+- `jyotish_engine.py::_build_vedastro_official_full_snapshot_payload` 原先只输出官方快照层本身，不会把 strict workflow 的 contract 信息带进 `ai_prompt_pack.evidence_snapshot`。这会导致网页/AI 平台虽然拿到官方 snapshot status，却看不到官方优先裁决的真实边界。本轮已开始补这层，至少 relationship strict contract 会被透传到 `vedastro_official_full_snapshot` 节点。
+- 本轮 focused verification 已说明：
+  - strict workflow contract 层是稳的；
+  - orchestrator metadata 层是稳的；
+  - high-rigor API summary 层是稳的。
+- 仍然存在的真实边界：
+  - 大而慢的长回归集合里有耗时测试，需要拆分后继续验证，不应把“慢”误说成“已全绿”；
+  - full-reading / prompt pack / 前端直接展示还没完全把三条主题 contract 全量消费完；
+  - 当前 `jyotish_engine.py` 透传 contract 时优先复用了 relationship strict evidence，career/wealth prompt/report 面还应继续统一。
+
 ## 2026-06-25 Round 25 地毯式碎片扫描前置结论
 
 - 已按用户要求在继续实现前进行整机/多窗口碎片扫描，并生成 `docs/research/whole_machine_fragment_sweep_round25_2026_06_25.md`。
@@ -170,3 +195,10 @@
 - VedAstro 强制雷达边界：官方 Events Builder 暴露 `SearchEvents / GetEventTiming / ListEventTypes` 三个事件端点、400+ 预定义事件和 `Scan precision (hours)`，API/Python surface 继续按 600+/596+ 计算节点理解。本项目不硬复刻 596 个函数，而是把 VedAstro range scan 作为 `career/relationship/finance` strict workflow 的必需外部高频 timing radar；缺失时进入 `vedastro_range_scan_missing` 和 Technique Audit blocked 行，不能再静默跳过。
 - VedAstro Adapter MVP 方案 A 结论：当前已完成工程闭环而非官方实网闭环。adapter range scan 会产出可审计 provenance（request/response SHA-256、called_at、endpoint_host、artifact_path、retry metadata、allowlist/raw/filtered event counts），`/api/vedastro/status` 与 Trust Center 能显示安全配置状态，`vedastro-live` profile 在未配置 endpoint 时受控 blocked 并通过默认 CI。只有配置 `VEDASTRO_API_ENDPOINT` 和 `VEDASTRO_ENABLE_NETWORK=1` 后，才能把状态从 `network_execution_disabled/service_endpoint_not_configured` 推进到真实 VedAstro live smoke；在此之前不得宣称官方 VedAstro 事件雷达已经实网验证。
 - VedAstro 普通用户入口结论：用户侧可用的定义不是“adapter 存在”，而是“生成星盘后能点击按钮、使用当前出生资料、选择领域/日期范围、看到返回状态和边界”。本轮已把这一层落在 Trust Center `VedAstro Range Scan` 面板和 `/api/vedastro/range_scan`；未配置 endpoint 时用户看到 blocked，配置官方 endpoint 与网络开关后同一按钮会走实网调用链。
+
+- 2026-06-29 高严谨默认入口复用结论：项目内已有可直接复用的生时校正、历史事件回测、主题推运和 VedAstro 官方证据层，不应重新造算法。关键资产包括 `scripts/birth_time_rectifier.py`、`jyotish-app/rectification-engine.js`、`scripts/historical_event_backtest.py`、`scripts/reading_orchestrator.py`、`scripts/report_orchestrator.py`、`scripts/orchestrator_bridge.py`、`scripts/vedastro_evidence_orchestrator.py`、`scripts/vedastro_official_capability_runner.py`。新增统一入口应做胶水层：VedAstro official snapshot/catalog first -> rectification gate -> historical event backtest -> thematic report，而不是把 641 callable 暴力全跑。
+- 2026-06-29 省算力边界：`/api/high_rigor_workflow` 的 Technique Explorer 样例必须使用 `dry_run`，否则目录页会触发重型 VedAstro/full-reading 链路。真实用户提交不带 `dry_run` 时才执行完整高严谨工作流。这个设计同时满足“用户可直接用”和“不要浪费算力”。
+- 2026-06-30 VedAstro 641 项轻量映射表结论：`official_full_capability_catalog` 现在为每个官方 callable 标注 `domains / execution_policy / priority`，并聚合出 `domain_routing`，覆盖 `career / marriage / wealth / rectification / timing / general` 六类。该层只做路由和审计，不把每个官方方法直接暴露给用户，也不声称已经完成深层语义断语。
+- 2026-06-30 轻量映射误判修复：`Dashamamsha` 等分盘名称曾因包含 `dasha` 字符串被误归入 timing。当前已改为按方法词元识别 `Dasa/Dasha` timing 方法，真实轻扫显示 `AllPlanetDashamamshaSign` 归入 `career/marriage/wealth`，不再进入 `timing`。
+- 2026-06-30 VedAstro 动态能力选择器结论：系统现在不只知道 641 项目录和主题归类，还会按用户主题生成 `dynamic_selection` 与 `official_report_references`。每个主题会列出自动可用能力、需要额外资料能力、blocked 能力和 `vedastro:<theme>:<method>` 引用 ID，供网页、Skill、MCP 和 Codex prompt pack 指向同一份官方证据层。
+- 2026-06-30 报告引用边界：`official_report_references` 是证据引用层，不等于每个引用都已执行成功。`execution_policy != auto` 或 `status != ok` 的能力只能作为“需要补资料/当前阻断”的报告说明，不得包装成已用于最终断语的数据。

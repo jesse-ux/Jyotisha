@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import threading
+import types
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -26,7 +27,7 @@ def test_vedastro_service_adapter_executor_schema_is_declared() -> None:
     report = json.loads(completed.stdout)
     assert report["adapter"] == "vedastro_service_adapter"
     assert report["transport"] == "http_json_service_boundary"
-    assert report["default_timeout_seconds"] >= 3
+    assert 3 <= report["default_timeout_seconds"] <= 5
     assert report["retry_policy"]["max_attempts"] >= 1
     assert report["retry_policy"]["backoff_seconds"] >= 0
     assert "endpoint" in report["required_env"]
@@ -52,6 +53,241 @@ def test_vedastro_service_adapter_executor_schema_is_declared() -> None:
     assert "evidence_ledger" in report["range_scan_response_contract"]
     assert report["range_scan_event_allowlist"]["marriage"]["event_ids"]
     assert "marriage" in report["range_scan_event_allowlist"]["marriage"]["tags"]
+
+
+def test_vedastro_official_subprocesses_use_adapter_timeout(monkeypatch) -> None:
+    from scripts import vedastro_service_adapter as adapter
+
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "7")
+    seen_timeouts = []
+
+    def fake_run(*args, **kwargs):
+        seen_timeouts.append(kwargs.get("timeout"))
+        return types.SimpleNamespace(returncode=1, stdout="", stderr="simulated failure")
+
+    monkeypatch.setattr(adapter.subprocess, "run", fake_run)
+    case = {
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 59,
+        "lat": 36.42,
+        "lon": 114.2,
+        "tz": 8,
+    }
+
+    bridge = adapter._call_vedastro_python_bridge_high_value("official_full_snapshot_bundle", {})
+    runner = adapter._try_official_capability_runner_snapshot_bundle(case)
+    catalog = adapter._try_official_full_capability_catalog_bundle(case)
+
+    assert seen_timeouts == [7.0, 7.0, 7.0]
+    assert bridge["status"] == "python_bridge_runtime_error"
+    assert runner["status"] == "official_capability_runner_runtime_error"
+    assert catalog["status"] == "official_full_capability_catalog_runtime_error"
+
+
+def test_vedastro_official_subprocess_timeouts_are_controlled(monkeypatch) -> None:
+    from scripts import vedastro_service_adapter as adapter
+
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "3")
+
+    def fake_timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=args[0], timeout=kwargs.get("timeout"))
+
+    monkeypatch.setattr(adapter.subprocess, "run", fake_timeout)
+    case = {
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 59,
+        "lat": 36.42,
+        "lon": 114.2,
+        "tz": 8,
+    }
+
+    bridge = adapter._call_vedastro_python_bridge_high_value("official_full_snapshot_bundle", {})
+    runner = adapter._try_official_capability_runner_snapshot_bundle(case)
+    catalog = adapter._try_official_full_capability_catalog_bundle(case)
+
+    assert bridge["status"] == "python_bridge_timeout"
+    assert runner["status"] == "official_capability_runner_timeout"
+    assert catalog["status"] == "official_full_capability_catalog_timeout"
+
+
+def test_vedastro_official_snapshot_stops_when_foreground_budget_is_exhausted(monkeypatch) -> None:
+    from scripts import vedastro_service_adapter as adapter
+
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "4")
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_full_capability_catalog_bundle",
+        lambda case: {
+            "available": False,
+            "status": "official_full_capability_catalog_timeout",
+            "source": "vedastro_official_capability_runner",
+            "bundle": "official_full_capability_catalog",
+            "summary": {},
+            "coverage": {},
+            "domain_routing": {},
+            "dynamic_selection": {},
+        },
+    )
+    runner_called = {"value": False}
+    bridge_called = {"value": False}
+
+    def fail_runner(case):
+        runner_called["value"] = True
+        raise AssertionError("snapshot runner should not run after foreground budget is exhausted")
+
+    def fail_bridge(case):
+        bridge_called["value"] = True
+        raise AssertionError("python bridge fallback should not run after foreground budget is exhausted")
+
+    monkeypatch.setattr(adapter, "_try_official_capability_runner_snapshot_bundle", fail_runner)
+    monkeypatch.setattr(adapter, "_try_official_python_bridge_snapshot_bundle", fail_bridge)
+
+    ticks = iter([100.0, 104.1])
+    monkeypatch.setattr(adapter.time, "monotonic", lambda: next(ticks))
+    result = adapter._run_official_full_snapshot_case({
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 59,
+        "lat": 36.42,
+        "lon": 114.2,
+        "tz": 8,
+    })
+
+    assert runner_called["value"] is False
+    assert bridge_called["value"] is False
+    assert result["status"] == "official_snapshot_budget_exhausted"
+    assert result["available"] is False
+    assert result["source_metadata"]["official_python_bundle"]["status"] == "official_snapshot_budget_exhausted"
+    assert result["source_metadata"]["official_full_capability_catalog"]["status"] == "official_full_capability_catalog_timeout"
+
+
+def test_vedastro_official_snapshot_skips_bridge_after_runner_consumes_budget(monkeypatch) -> None:
+    from scripts import vedastro_service_adapter as adapter
+
+    monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://api.vedastro.org/api")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "4")
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_full_capability_catalog_bundle",
+        lambda case: {
+            "available": True,
+            "status": "partial",
+            "source": "vedastro_official_capability_runner",
+            "bundle": "official_full_capability_catalog",
+            "summary": {"catalog_method_count": 641},
+            "coverage": {},
+            "domain_routing": {},
+            "dynamic_selection": {},
+        },
+    )
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_capability_runner_snapshot_bundle",
+        lambda case: {
+            "available": False,
+            "status": "official_capability_runner_timeout",
+            "source": "vedastro_official_capability_runner",
+            "bundle": "official_full_snapshot",
+            "snapshot_sections": {},
+            "section_statuses": {},
+            "coverage": {"source_mode": "official_capability_runner_bundle", "filled_sections": []},
+        },
+    )
+    bridge_called = {"value": False}
+
+    def fail_bridge(case):
+        bridge_called["value"] = True
+        raise AssertionError("python bridge fallback should not run after snapshot runner exhausts budget")
+
+    monkeypatch.setattr(adapter, "_try_official_python_bridge_snapshot_bundle", fail_bridge)
+
+    ticks = iter([100.0, 100.1, 104.2])
+    monkeypatch.setattr(adapter.time, "monotonic", lambda: next(ticks))
+    result = adapter._run_official_full_snapshot_case({
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 59,
+        "lat": 36.42,
+        "lon": 114.2,
+        "tz": 8,
+    })
+
+    assert bridge_called["value"] is False
+    assert result["status"] == "official_snapshot_budget_exhausted"
+    assert result["source_metadata"]["official_python_bundle"]["status"] == "official_snapshot_budget_exhausted"
+    assert result["source_metadata"]["official_full_capability_catalog"]["summary"]["catalog_method_count"] == 641
+
+
+def test_vedastro_official_snapshot_budget_does_not_mask_mock_rest_endpoint(monkeypatch) -> None:
+    from scripts import vedastro_service_adapter as adapter
+
+    monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "http://127.0.0.1:12345/api")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "4")
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_full_capability_catalog_bundle",
+        lambda case: {
+            "available": False,
+            "status": "official_full_capability_catalog_timeout",
+            "source": "vedastro_official_capability_runner",
+            "bundle": "official_full_capability_catalog",
+            "summary": {},
+            "coverage": {},
+            "domain_routing": {},
+            "dynamic_selection": {},
+        },
+    )
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_capability_runner_snapshot_bundle",
+        lambda case: {
+            "available": False,
+            "status": "official_capability_runner_timeout",
+            "source": "vedastro_official_capability_runner",
+            "bundle": "official_full_snapshot",
+            "snapshot_sections": {},
+            "section_statuses": {},
+            "coverage": {"source_mode": "official_capability_runner_bundle", "filled_sections": []},
+        },
+    )
+
+    calls = []
+
+    def fake_post(endpoint, request_item):
+        calls.append((endpoint, request_item["section"], request_item.get("fanout_value")))
+        return {"Status": "Pass", "Payload": {"ok": True}}, 1, []
+
+    monkeypatch.setattr(adapter, "_try_official_python_bridge_snapshot_bundle", lambda case: {"available": False, "status": "blocked", "snapshot_sections": {}, "section_statuses": {}, "coverage": {"source_mode": "official_python_bridge_bundle", "filled_sections": []}})
+    monkeypatch.setattr(adapter, "_post_official_snapshot_section", fake_post)
+    ticks = iter([100.0, 100.1, 104.2])
+    monkeypatch.setattr(adapter.time, "monotonic", lambda: next(ticks))
+
+    result = adapter._run_official_full_snapshot_case({
+        "year": REDACTED_YEAR,
+        "month": 4,
+        "day": 17,
+        "hour": 14,
+        "minute": 59,
+        "lat": 36.42,
+        "lon": 114.2,
+        "tz": 8,
+    })
+
+    assert calls
+    assert result["status"] in {"ok", "partial"}
+    assert result["source_metadata"]["official_python_bundle"]["status"] == "official_snapshot_budget_exhausted"
 
 
 def test_vedastro_service_adapter_returns_controlled_unconfigured_status() -> None:
@@ -642,6 +878,100 @@ def test_vedastro_range_scan_retries_transient_http_error() -> None:
     assert report["source_metadata"]["attempt_count"] >= 2
     assert 503 in report["source_metadata"]["retry_error_codes"]
     assert report["source_metadata"]["sampling_mode"] == "at_time_sweep"
+
+
+def test_vedastro_range_scan_reuses_cached_live_response() -> None:
+    class Handler(BaseHTTPRequestHandler):
+        calls = 0
+
+        def do_POST(self) -> None:  # noqa: N802
+            Handler.calls += 1
+            response = {
+                "events": [
+                    {
+                        "id": "GocharJupiterIn7th",
+                        "name": "Jupiter enters 7th house",
+                        "start": "2026-05-01",
+                        "end": "2026-06-01",
+                        "score": 72,
+                        "tags": ["marriage", "transit"],
+                    }
+                ]
+            }
+            body = json.dumps(response).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args) -> None:  # noqa: A003
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        env = os.environ.copy()
+        env["VEDASTRO_API_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}/vedastro"
+        env["VEDASTRO_ENABLE_NETWORK"] = "1"
+        env["VEDASTRO_CACHE_TTL_SECONDS"] = "600"
+        env["JYOTISH_SKIP_LOCAL_ENV"] = "1"
+
+        first = subprocess.run(
+            [
+                sys.executable,
+                "scripts/vedastro_service_adapter.py",
+                "--range-scan",
+                "--domain",
+                "marriage",
+                "--case",
+                "beijing_first_use_demo",
+                "--start-date",
+                "2026-01-01",
+                "--end-date",
+                "2026-01-01",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+        second = subprocess.run(
+            [
+                sys.executable,
+                "scripts/vedastro_service_adapter.py",
+                "--range-scan",
+                "--domain",
+                "marriage",
+                "--case",
+                "beijing_first_use_demo",
+                "--start-date",
+                "2026-01-01",
+                "--end-date",
+                "2026-01-01",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+            env=env,
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+    assert first.returncode == 0, first.stderr or first.stdout
+    assert second.returncode == 0, second.stderr or second.stdout
+    first_report = json.loads(first.stdout)
+    second_report = json.loads(second.stdout)
+    assert Handler.calls == 1
+    assert first_report["source_metadata"].get("cache_hit") is False
+    assert second_report["source_metadata"].get("cache_hit") is True
+    assert second_report["event_count"] == first_report["event_count"] == 1
 
 
 def test_vedastro_service_adapter_applies_domain_allowlist_to_range_scan_noise() -> None:

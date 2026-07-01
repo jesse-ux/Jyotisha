@@ -70,6 +70,49 @@ def _evidence_line(label: str, value: Any) -> dict[str, str]:
     return {"label": label, "value": str(value)}
 
 
+def _strict_contracts(report: dict[str, Any], modules: dict[str, Any]) -> dict[str, Any]:
+    snapshot = _as_dict(_as_dict(_as_dict(report.get("ai_prompt_pack")).get("evidence_snapshot")))
+    contracts = _as_dict(snapshot.get("strict_workflow_contracts"))
+    if contracts:
+        return contracts
+    mapping = {
+        "career": "career_strict_evidence",
+        "relationship": "relationship_strict_evidence",
+        "finance": "finance_strict_evidence",
+    }
+    compact: dict[str, Any] = {}
+    for route, key in mapping.items():
+        strict = _as_dict(modules.get(key))
+        if strict:
+            compact[route] = strict
+    return compact
+
+
+def _topic_audit_gate(contracts: dict[str, Any], route: str) -> dict[str, Any]:
+    contract = _as_dict(contracts.get(route))
+    bundle = _as_dict(contract.get("strict_adjudication_bundle"))
+    summary = _as_dict(bundle.get("strict_audit_gate")) or _as_dict(contract.get("technique_audit_summary"))
+    if summary:
+        return summary
+    return {
+        "functional_benefic_malefic": {"gate": "hard", "used": False, "status": "blocked"},
+        "relevant_vargas": {"gate": "hard", "required_keys": [], "present_keys": []},
+        "vimshottari_narayana_crosscheck": {
+            "gate": "hard",
+            "used": False,
+            "required_timing_systems": ["Vimshottari", "Narayana"],
+        },
+        "source_priority_boundary": {
+            "gate": "boundary",
+            "official": {},
+            "local": {},
+            "fallback_used": [],
+            "blocked_items": [],
+            "conflicts": [],
+        },
+    }
+
+
 def _topic(
     *,
     topic_id: str,
@@ -79,6 +122,9 @@ def _topic(
     evidence: list[dict[str, str]],
     confidence: str,
     vedastro: dict[str, Any],
+    strict_audit_gate: dict[str, Any],
+    monthly_adjudication_summary: dict[str, Any],
+    official_day_signal_summary: dict[str, Any],
     questions: list[str],
     answer_mode: str = "tap_or_ask",
     priority: int = 50,
@@ -91,14 +137,62 @@ def _topic(
         "evidence": evidence,
         "confidence": confidence,
         "vedastro": vedastro,
+        "strict_adjudication_bundle": {
+            "strict_audit_gate": strict_audit_gate,
+            "monthly_adjudication_summary": monthly_adjudication_summary,
+            "official_day_signal_summary": official_day_signal_summary,
+        },
+        "strict_audit_gate": strict_audit_gate,
+        "monthly_adjudication_summary": monthly_adjudication_summary,
+        "official_day_signal_summary": official_day_signal_summary,
         "suggested_questions": questions,
         "answer_mode": answer_mode,
         "priority": priority,
     }
 
 
+def _topic_official_day_signal_summary(contracts: dict[str, Any], modules: dict[str, Any], route: str) -> dict[str, Any]:
+    contract = _as_dict(contracts.get(route))
+    bundle = _as_dict(contract.get("strict_adjudication_bundle"))
+    summary = _as_dict(bundle.get("official_day_signal_summary")) or _as_dict(contract.get("official_day_signal_summary"))
+    if summary:
+        return summary
+    mapping = {
+        "career": "career_strict_evidence",
+        "relationship": "relationship_strict_evidence",
+        "finance": "finance_strict_evidence",
+    }
+    strict = _as_dict(modules.get(mapping.get(route, "")))
+    present = _as_dict(strict.get("present_evidence"))
+    external = _as_dict(present.get("external_activation"))
+    signals = _as_list(external.get("official_day_signals"))
+    return {
+        "available": bool(signals),
+        "signal_count": len(signals),
+        "top_day": _as_dict(signals[0]) if signals else None,
+        "days": [_as_dict(item) for item in signals[:3] if isinstance(item, dict)],
+        "source": "present_evidence.external_activation.official_day_signals" if signals else None,
+    }
+
+
+def _topic_monthly_adjudication_summary(contracts: dict[str, Any], modules: dict[str, Any], route: str) -> dict[str, Any]:
+    contract = _as_dict(contracts.get(route))
+    bundle = _as_dict(contract.get("strict_adjudication_bundle"))
+    summary = _as_dict(bundle.get("monthly_adjudication_summary")) or _as_dict(contract.get("monthly_adjudication_summary"))
+    if summary:
+        return summary
+    mapping = {
+        "career": "career_strict_evidence",
+        "relationship": "relationship_strict_evidence",
+        "finance": "finance_strict_evidence",
+    }
+    strict = _as_dict(modules.get(mapping.get(route, "")))
+    return _as_dict(strict.get("monthly_adjudication_summary"))
+
+
 def build_guided_topics(report: dict[str, Any]) -> list[dict[str, Any]]:
     modules = _as_dict(report.get("modules"))
+    contracts = _strict_contracts(report, modules)
     chart = _as_dict(report.get("chart") or modules.get("chart"))
     planets = _as_dict(chart.get("planets"))
     md, ad, md_start, md_end = _current_dasha(modules)
@@ -133,6 +227,9 @@ def build_guided_topics(report: dict[str, Any]) -> list[dict[str, Any]]:
             ],
             confidence="medium" if marriage_conv or relationship else "low",
             vedastro=_vedastro_snapshot(modules, "marriage"),
+            strict_audit_gate=_topic_audit_gate(contracts, "relationship"),
+            monthly_adjudication_summary=_topic_monthly_adjudication_summary(contracts, modules, "relationship"),
+            official_day_signal_summary=_topic_official_day_signal_summary(contracts, modules, "relationship"),
             questions=[
                 "我现在适合认真发展关系，还是更适合筛选和观察？",
                 "我的伴侣画像、认识场景和相处风险是什么？",
@@ -153,6 +250,9 @@ def build_guided_topics(report: dict[str, Any]) -> list[dict[str, Any]]:
             ],
             confidence="medium" if career_conv or ketu_house == 10 else "low",
             vedastro=_vedastro_snapshot(modules, "career"),
+            strict_audit_gate=_topic_audit_gate(contracts, "career"),
+            monthly_adjudication_summary=_topic_monthly_adjudication_summary(contracts, modules, "career"),
+            official_day_signal_summary=_topic_official_day_signal_summary(contracts, modules, "career"),
             questions=[
                 "我现在适合换方向还是继续深耕？",
                 "2026 年事业吉利在哪里，不利在哪里？",
@@ -172,6 +272,9 @@ def build_guided_topics(report: dict[str, Any]) -> list[dict[str, Any]]:
             ],
             confidence="medium",
             vedastro=_vedastro_snapshot(modules, "marriage"),
+            strict_audit_gate=_topic_audit_gate(contracts, "relationship"),
+            monthly_adjudication_summary=_topic_monthly_adjudication_summary(contracts, modules, "relationship"),
+            official_day_signal_summary=_topic_official_day_signal_summary(contracts, modules, "relationship"),
             questions=[
                 "我可以用过去事件校正出生时间吗？",
                 "哪些人生事件最适合用来校正出生时间？",
@@ -192,6 +295,9 @@ def build_guided_topics(report: dict[str, Any]) -> list[dict[str, Any]]:
             ],
             confidence="medium" if wealth_conv else "low",
             vedastro=_vedastro_snapshot(modules, "wealth"),
+            strict_audit_gate=_topic_audit_gate(contracts, "finance"),
+            monthly_adjudication_summary=_topic_monthly_adjudication_summary(contracts, modules, "finance"),
+            official_day_signal_summary=_topic_official_day_signal_summary(contracts, modules, "finance"),
             questions=[
                 "2026 年哪些钱可以赚，哪些钱要避险？",
                 "我适合靠项目、投资、合作还是长期积累赚钱？",
