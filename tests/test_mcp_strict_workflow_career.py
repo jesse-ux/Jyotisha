@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import jyotish_engine
 
-from mcp_server import _collect_strict_evidence
+from mcp_server import _collect_strict_evidence, _existing_interpretation_source_pack
 
 
 def _base_career_result() -> dict:
@@ -85,11 +85,39 @@ def test_career_strict_contract_attaches_existing_interpretation_source_pack() -
     assert source_pack["template_registry"]["template_count"] >= 11
     assert source_pack["frontend_planet_house_details"]["planet_count"] == 9
     assert source_pack["frontend_planet_house_details"]["house_count"] == 12
+    assert source_pack["interpretation_source_inventory"]["status"] == "used"
+    assert source_pack["frontend_interpretation_layer"]["status"] == "available"
+    assert source_pack["frontend_interpretation_layer"]["source_refs"] == [
+        "jyotish-app/interpretation.js",
+        "jyotish-app/analysis-deep.js",
+    ]
+    assert source_pack["yoga_rule_layer"]["status"] == "available"
+    assert "references/yoga_rules.json" in source_pack["yoga_rule_layer"]["source_refs"]
+    assert source_pack["reader_validation_layer"]["status"] == "available"
+    assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/validation_rules.md" in source_pack["reader_validation_layer"]["source_refs"]
 
     audit = strict["technique_audit_summary"]
     assert audit["interpretation_source_pack"]["used"] is True
     assert audit["mevg_global_web_evidence"]["status"] == "blocked"
     assert audit["real_case_calibration"]["status"] == "blocked"
+
+
+def test_interpretation_source_inventory_classifies_sources_without_promoting_drafts() -> None:
+    source_pack = _existing_interpretation_source_pack()
+    inventory = source_pack["interpretation_source_inventory"]
+
+    assert inventory["status"] == "used"
+    assert inventory["summary"]["primary_truth_count"] >= 4
+    assert inventory["summary"]["reference_layer_count"] >= 4
+    assert inventory["summary"]["quarantined_draft_count"] >= 1
+    assert "jyotish-app/interpretation.js" in inventory["layers"]["frontend_interpretation"]["source_refs"]
+    assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/qa_rules.md" in inventory["layers"]["qa_governance"]["source_refs"]
+    assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/validation_rules.md" in inventory["layers"]["reader_validation"]["source_refs"]
+    assert "references/yoga_rules.json" in inventory["layers"]["yoga_rules"]["source_refs"]
+
+    draft_refs = inventory["layers"]["quarantined_drafts"]["source_refs"]
+    assert any("docs/research/local_drafts/" in path for path in draft_refs)
+    assert all(path not in source_pack["source_refs"] for path in draft_refs)
 
 
 def test_career_blocks_label_when_d10_is_missing_but_preserves_jaimini_context() -> None:

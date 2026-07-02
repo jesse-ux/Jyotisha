@@ -116,20 +116,157 @@ def _load_json_file(path: str) -> Dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def _existing_paths(paths: List[str]) -> List[str]:
+    return [path for path in paths if _repo_relative_exists(path)]
+
+
+def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, Any]:
+    primary_truth = [
+        "references/interpretation_template_registry.json",
+        "references/raman-house-judgment-methodology.md",
+        "references/bphs-ch48-narayana-dasha.md",
+        "references/mandatory-verification-gate-protocol.md",
+        "references/real-reading-quality-checklist.md",
+    ]
+    frontend_interpretation = [
+        "jyotish-app/interpretation.js",
+        "jyotish-app/analysis-deep.js",
+        "jyotish-app/planet-house-details-a.js",
+        "jyotish-app/planet-house-details-b.js",
+        "jyotish-app/planet-house-details-c.js",
+    ]
+    qa_governance = [
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/qa_rules.md",
+    ]
+    reader_validation = [
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/chart_reading_rules.md",
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/validation_rules.md",
+    ]
+    yoga_rules = [
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/yogas.md",
+        "references/yoga_rules.json",
+        "jyotish-app/yoga-details-a.js",
+        "jyotish-app/yoga-details-b.js",
+        "jyotish-app/yoga-extended.js",
+        "jyotish-app/yoga-extended-b.js",
+    ]
+    saham_rules = [
+        "references/saham_rules.json",
+    ]
+    reference_layer = [
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md",
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/house_framework.md",
+        *frontend_interpretation,
+        *qa_governance,
+        *reader_validation,
+        *yoga_rules,
+        *saham_rules,
+    ]
+    quarantined_drafts = [
+        "docs/research/local_drafts/2026-06/skill_fragment_map_and_source_of_truth_2026_06_26.md",
+        "docs/research/local_drafts/2026-06/dasha_accuracy_closure_status_2026_06_26.md",
+        "docs/research/local_drafts/2026-06/dasha_code_only_priority_rerank_2026_06_26.md",
+    ]
+
+    layers = {
+        "primary_truth": {
+            "status": "available",
+            "promotion_status": "primary_truth",
+            "source_refs": _existing_paths(primary_truth),
+            "missing_refs": [path for path in primary_truth if not _repo_relative_exists(path)],
+        },
+        "frontend_interpretation": {
+            "status": "available",
+            "promotion_status": "reference_layer",
+            "source_refs": _existing_paths(frontend_interpretation),
+            "missing_refs": [path for path in frontend_interpretation if not _repo_relative_exists(path)],
+        },
+        "qa_governance": {
+            "status": "available",
+            "promotion_status": "reference_layer",
+            "source_refs": _existing_paths(qa_governance),
+            "missing_refs": [path for path in qa_governance if not _repo_relative_exists(path)],
+        },
+        "reader_validation": {
+            "status": "available",
+            "promotion_status": "reference_layer",
+            "source_refs": _existing_paths(reader_validation),
+            "missing_refs": [path for path in reader_validation if not _repo_relative_exists(path)],
+        },
+        "yoga_rules": {
+            "status": "available",
+            "promotion_status": "reference_layer",
+            "source_refs": _existing_paths(yoga_rules),
+            "missing_refs": [path for path in yoga_rules if not _repo_relative_exists(path)],
+        },
+        "saham_rules": {
+            "status": "available",
+            "promotion_status": "reference_layer",
+            "source_refs": _existing_paths(saham_rules),
+            "missing_refs": [path for path in saham_rules if not _repo_relative_exists(path)],
+        },
+        "quarantined_drafts": {
+            "status": "quarantined",
+            "promotion_status": "not_truth_source",
+            "source_refs": _existing_paths(quarantined_drafts),
+            "missing_refs": [path for path in quarantined_drafts if not _repo_relative_exists(path)],
+            "boundary": "Listed for awareness only; drafts are not promoted into runtime source_refs.",
+        },
+    }
+    missing_refs = [path for layer in layers.values() for path in layer["missing_refs"]]
+    quarantined_refs = set(layers["quarantined_drafts"]["source_refs"])
+    promoted_quarantined = sorted(quarantined_refs.intersection(source_refs))
+    status = "used" if not missing_refs and not promoted_quarantined else "partial"
+    return {
+        "status": status,
+        "source": "repo_interpretation_source_inventory_v1",
+        "layers": layers,
+        "summary": {
+            "primary_truth_count": len(layers["primary_truth"]["source_refs"]),
+            "reference_layer_count": len(_existing_paths(reference_layer)),
+            "quarantined_draft_count": len(layers["quarantined_drafts"]["source_refs"]),
+            "missing_ref_count": len(missing_refs),
+            "promoted_quarantined_count": len(promoted_quarantined),
+        },
+        "missing_refs": missing_refs,
+        "promoted_quarantined_refs": promoted_quarantined,
+        "boundary": "Inventory is explicit and conservative; local drafts are indexed but not treated as truth sources.",
+    }
+
+
 @lru_cache(maxsize=1)
 def _existing_interpretation_source_pack() -> Dict[str, Any]:
     """Return the existing repo interpretation/source layers as an explicit evidence pack."""
     template_path = "references/interpretation_template_registry.json"
     p1_p12_path = "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md"
     house_framework_path = "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/house_framework.md"
+    qa_rules_path = "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/qa_rules.md"
+    core_yogas_path = "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/yogas.md"
+    reader_chart_rules_path = "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/chart_reading_rules.md"
+    reader_validation_rules_path = "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/validation_rules.md"
     raman_path = "references/raman-house-judgment-methodology.md"
     bphs_narayana_path = "references/bphs-ch48-narayana-dasha.md"
     mevg_path = "references/mandatory-verification-gate-protocol.md"
     real_case_checklist_path = "references/real-reading-quality-checklist.md"
+    frontend_interpretation_paths = [
+        "jyotish-app/interpretation.js",
+        "jyotish-app/analysis-deep.js",
+    ]
     planet_house_paths = [
         "jyotish-app/planet-house-details-a.js",
         "jyotish-app/planet-house-details-b.js",
         "jyotish-app/planet-house-details-c.js",
+    ]
+    yoga_rule_paths = [
+        core_yogas_path,
+        "references/yoga_rules.json",
+        "jyotish-app/yoga-details-a.js",
+        "jyotish-app/yoga-details-b.js",
+        "jyotish-app/yoga-extended.js",
+        "jyotish-app/yoga-extended-b.js",
+    ]
+    saham_rule_paths = [
+        "references/saham_rules.json",
     ]
 
     template_ids: List[str] = []
@@ -151,14 +288,22 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
         bphs_narayana_path,
         mevg_path,
         real_case_checklist_path,
+        *frontend_interpretation_paths,
         *planet_house_paths,
+        qa_rules_path,
+        reader_chart_rules_path,
+        reader_validation_rules_path,
+        *yoga_rule_paths,
+        *saham_rule_paths,
     ]
     missing_refs = [path for path in source_refs if not _repo_relative_exists(path)]
+    inventory = _build_interpretation_source_inventory(source_refs)
     return {
-        "status": "used" if not missing_refs else "partial",
+        "status": "used" if not missing_refs and inventory.get("status") == "used" else "partial",
         "source": "repo_existing_interpretation_sources",
         "source_refs": source_refs,
         "missing_refs": missing_refs,
+        "interpretation_source_inventory": inventory,
         "template_registry": {
             "path": template_path,
             "template_count": template_count,
@@ -171,10 +316,20 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
             "bphs_narayana_dasha",
             "mevg_mandatory_external_verification",
             "real_case_quality_checklist",
+            "qa_governance_rules",
+            "reader_validation_rules",
+            "frontend_interpretation_layer",
+            "yoga_rule_layer",
+            "saham_rule_layer",
         ],
         "bphs_raman_layer": {
             "status": "available" if _repo_relative_exists(raman_path) and _repo_relative_exists(bphs_narayana_path) else "partial",
             "source_refs": [raman_path, bphs_narayana_path],
+        },
+        "frontend_interpretation_layer": {
+            "status": "available" if all(_repo_relative_exists(path) for path in frontend_interpretation_paths) else "partial",
+            "source_refs": frontend_interpretation_paths,
+            "promotion_status": "reference_layer",
         },
         "frontend_planet_house_details": {
             "status": "available" if all(_repo_relative_exists(path) for path in planet_house_paths) else "partial",
@@ -182,6 +337,26 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
             "planet_count": 9,
             "house_count": 12,
             "source_refs": planet_house_paths,
+        },
+        "qa_governance_layer": {
+            "status": "available" if _repo_relative_exists(qa_rules_path) else "partial",
+            "source_refs": [qa_rules_path],
+            "promotion_status": "reference_layer",
+        },
+        "reader_validation_layer": {
+            "status": "available" if all(_repo_relative_exists(path) for path in [reader_chart_rules_path, reader_validation_rules_path]) else "partial",
+            "source_refs": [reader_chart_rules_path, reader_validation_rules_path],
+            "promotion_status": "reference_layer",
+        },
+        "yoga_rule_layer": {
+            "status": "available" if all(_repo_relative_exists(path) for path in yoga_rule_paths) else "partial",
+            "source_refs": yoga_rule_paths,
+            "promotion_status": "reference_layer",
+        },
+        "saham_rule_layer": {
+            "status": "available" if all(_repo_relative_exists(path) for path in saham_rule_paths) else "partial",
+            "source_refs": saham_rule_paths,
+            "promotion_status": "reference_layer",
         },
         "mevg_gate": {
             "status": "blocked",

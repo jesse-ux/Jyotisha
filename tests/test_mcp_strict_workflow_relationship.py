@@ -72,6 +72,10 @@ def test_relationship_strict_contract_attaches_existing_interpretation_source_pa
     assert "p1_p12" in source_pack["frameworks"]
     assert "house_framework" in source_pack["frameworks"]
     assert "raman_functional_house_judgment" in source_pack["frameworks"]
+    assert source_pack["interpretation_source_inventory"]["status"] == "used"
+    assert source_pack["qa_governance_layer"]["status"] == "available"
+    assert source_pack["reader_validation_layer"]["status"] == "available"
+    assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/qa_rules.md" in source_pack["qa_governance_layer"]["source_refs"]
 
     audit = strict["technique_audit_summary"]
     assert audit["interpretation_source_pack"]["source"] == "repo_existing_interpretation_sources"

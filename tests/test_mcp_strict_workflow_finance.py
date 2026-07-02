@@ -43,6 +43,10 @@ def test_finance_strict_contract_attaches_existing_interpretation_source_pack() 
     assert "yogi_asc_tight_orb_wealth" in source_pack["template_registry"]["template_ids"]
     assert source_pack["bphs_raman_layer"]["status"] == "available"
     assert source_pack["frontend_planet_house_details"]["coverage"] == "9_planets_x_12_houses"
+    assert source_pack["interpretation_source_inventory"]["status"] == "used"
+    assert source_pack["frontend_interpretation_layer"]["status"] == "available"
+    assert source_pack["yoga_rule_layer"]["status"] == "available"
+    assert source_pack["qa_governance_layer"]["status"] == "available"
 
     audit = strict["technique_audit_summary"]
     assert audit["interpretation_source_pack"]["used"] is True
