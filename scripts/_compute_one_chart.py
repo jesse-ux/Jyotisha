@@ -86,15 +86,15 @@ def compute_yogas(chart):
             tz = tz_to_float(chart["tz"])
             place = Place(chart["city"], chart["lat"], chart["lon"], tz)
 
-            # 构造datetime，转正确UTC JD（修复：PyJHora的gregorian_to_jd返回正午JD，无视时间）
+            # PyJHora drik/chart APIs expect the local civil Julian day together
+            # with Place(timezone). Passing a UTC JD here shifts the ascendant.
             date_str = chart["date"] + " " + chart["time"]
             if date_str.count(':') == 1:
                 date_str += ":00"
             dt = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-            utc_hour = dt.hour - tz + dt.minute / 60.0 + dt.second / 3600.0
-            jd = swe.julday(dt.year, dt.month, dt.day, utc_hour)
             dob = drik.Date(dt.year, dt.month, dt.day)
             tob = (dt.hour, dt.minute, dt.second)
+            jd = utils.julian_day_number(dob, tob)
 
             # 计算 D1/Rasi Yoga。v2 逻辑正确性验证必须与 Skill 的 D1 Yoga 引擎逐层对齐；
             # 不能使用 get_yoga_details_for_all_charts()，否则会把 D2/D9/D10 等分盘 Yoga 混入，
