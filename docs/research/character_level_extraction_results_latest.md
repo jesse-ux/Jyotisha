@@ -2,28 +2,30 @@
 
 - status: pass
 - scope: extraction-results
-- generated_at: 2026-07-02T09:44:22.267617+00:00
+- generated_at: 2026-07-02T10:45:41.296864+00:00
 - total_files: 66
 - unhashed_files: 0
 - stored_text_payload_fields: 0
 - Heavy OCR: disabled
+- macos_vision_available: True
+- ocr_backend_policy: prefer_tesseract_else_macos_vision_else_blocked
 
 ## Result Counts
 
-- `ocr_blocked_missing_engine`: 53
-- `text_extracted`: 13
+- `text_empty`: 17
+- `text_extracted`: 49
 
 ## Method Counts
 
 - `docx`: 11
+- `macos_vision`: 53
 - `pdfplumber`: 2
-- `pytesseract`: 53
 
 ## Post-Extraction Classification Counts
 
-- `extracted_candidate_for_review`: 10
+- `extracted_candidate_for_review`: 44
 - `extracted_private_reference_only`: 3
-- `extracted_reference_only`: 53
+- `extracted_reference_only`: 19
 
 ## Boundary
 

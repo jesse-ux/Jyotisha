@@ -190,6 +190,7 @@ def test_extraction_results_extract_pdf_and_docx_without_storing_text() -> None:
     assert report["result_counts"].get("extraction_failed", 0) == 0
     assert report["method_counts"]["docx"] >= 10
     assert report["method_counts"]["pdfplumber"] + report["method_counts"].get("pypdf", 0) >= 2
+    assert report["mode"]["macos_vision_available"] in {True, False}
 
     for item in report["results"]:
         assert item["sha256"]
@@ -210,10 +211,12 @@ def test_extraction_results_extract_pdf_and_docx_without_storing_text() -> None:
                 "extracted_private_reference_only",
                 "extracted_candidate_for_review",
             }
-        if item["extraction_result"] == "ocr_blocked_missing_engine":
-            assert item["ocr_engine_available"] is False
+        if item["extraction_status"] == "image_ocr_queued":
             assert item["ocr_requested_languages"] == ["chi_sim", "eng"]
-            assert item["ocr_available_languages"] == []
+            assert item["ocr_backend"] in {"tesseract", "macos_vision", "none"}
+            if item["ocr_backend"] == "none":
+                assert item["extraction_result"] == "ocr_blocked_missing_engine"
+                assert item["ocr_engine_available"] is False
 
     json_path = ROOT / report["artifacts"]["json_report"]
     md_path = ROOT / report["artifacts"]["markdown_report"]

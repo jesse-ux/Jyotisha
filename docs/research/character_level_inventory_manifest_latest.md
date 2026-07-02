@@ -2,7 +2,7 @@
 
 - status: pass
 - scope: project
-- generated_at: 2026-07-02T09:43:08.434092+00:00
+- generated_at: 2026-07-02T10:44:17.758196+00:00
 - total_files: 1075
 - unhashed_files: 0
 - unclassified_files: 0
@@ -16,7 +16,7 @@
 | --- | ---: | ---: |
 | `AGENTS.md` | 1 | 3932 |
 | `SKILL.md` | 1 | 43187 |
-| `docs/research` | 538 | 2965145 |
+| `docs/research` | 538 | 2969221 |
 | `references` | 236 | 4008411 |
 | `references/open_source_sources` | 299 | 9365015 |
 

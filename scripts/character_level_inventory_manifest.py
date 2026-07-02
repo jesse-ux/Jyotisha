@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import shutil
+import subprocess
 import sys
 import zipfile
 from datetime import datetime, timezone
@@ -29,6 +30,47 @@ EXTRACTION_QUEUE_JSON = ROOT / "docs" / "research" / "character_level_extraction
 EXTRACTION_QUEUE_MD = ROOT / "docs" / "research" / "character_level_extraction_queue_latest.md"
 EXTRACTION_RESULTS_JSON = ROOT / "docs" / "research" / "character_level_extraction_results_latest.json"
 EXTRACTION_RESULTS_MD = ROOT / "docs" / "research" / "character_level_extraction_results_latest.md"
+VISION_OCR_SOURCE = r'''
+import Foundation
+import Vision
+import AppKit
+
+let args = CommandLine.arguments
+if args.count < 2 {
+    fputs("usage: vision_ocr image\n", stderr)
+    exit(2)
+}
+let url = URL(fileURLWithPath: args[1])
+guard let image = NSImage(contentsOf: url), let tiff = image.tiffRepresentation,
+      let bitmap = NSBitmapImageRep(data: tiff), let cgImage = bitmap.cgImage else {
+    fputs("cannot load image\n", stderr)
+    exit(3)
+}
+let request = VNRecognizeTextRequest { request, error in
+    if let error = error {
+        fputs("vision error: \(error)\n", stderr)
+        exit(4)
+    }
+    let observations = request.results as? [VNRecognizedTextObservation] ?? []
+    for obs in observations {
+        if let top = obs.topCandidates(1).first {
+            print(top.string)
+        }
+    }
+}
+request.recognitionLevel = .accurate
+request.usesLanguageCorrection = true
+if #available(macOS 11.0, *) {
+    request.recognitionLanguages = ["zh-Hans", "en-US"]
+}
+let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+do {
+    try handler.perform([request])
+} catch {
+    fputs("perform error: \(error)\n", stderr)
+    exit(5)
+}
+'''
 
 PROJECT_SCAN_ROOTS = [
     "references",
@@ -533,7 +575,7 @@ def _extract_pdf_text(path: Path) -> tuple[str, str, str | None]:
 
 def _extract_image_text(path: Path) -> tuple[str, str, str | None]:
     if not shutil.which("tesseract"):
-        return "", "pytesseract", "tesseract executable not found"
+        return _extract_image_text_with_vision(path)
     try:
         from PIL import Image
         import pytesseract
@@ -542,6 +584,99 @@ def _extract_image_text(path: Path) -> tuple[str, str, str | None]:
             return pytesseract.image_to_string(image, lang="+".join(_ocr_languages())), "pytesseract", None
     except Exception as exc:  # pragma: no cover - depends on local OCR install/languages.
         return "", "pytesseract", f"{type(exc).__name__}: {exc}"
+
+
+def _vision_ocr_binary() -> Path | None:
+    if sys.platform != "darwin" or not shutil.which("swiftc"):
+        return None
+    cache_dir = Path.home() / ".cache" / "jyotish-ocr"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    source = cache_dir / "vision_ocr.swift"
+    binary = cache_dir / "vision_ocr"
+    if binary.exists() and binary.stat().st_mtime >= source.stat().st_mtime if source.exists() else False:
+        return binary
+    source.write_text(VISION_OCR_SOURCE, encoding="utf-8")
+    completed = subprocess.run(
+        ["swiftc", str(source), "-o", str(binary)],
+        text=True,
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return None
+    return binary
+
+
+def _extract_image_text_with_vision(path: Path) -> tuple[str, str, str | None]:
+    binary = _vision_ocr_binary()
+    if not binary:
+        return "", "none", "no OCR backend available: tesseract missing and macOS Vision unavailable"
+    completed = subprocess.run(
+        [str(binary), str(path)],
+        text=True,
+        capture_output=True,
+        timeout=90,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return "", "macos_vision", completed.stderr.strip() or f"vision_ocr exit {completed.returncode}"
+    return completed.stdout, "macos_vision", None
+
+
+def _ocr_cache_path(item: dict[str, Any], method: str) -> Path:
+    cache_dir = Path.home() / ".cache" / "jyotish-ocr" / "results"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir / f"{item['sha256']}.{method}.json"
+
+
+def _load_ocr_cached_item(item: dict[str, Any]) -> dict[str, Any] | None:
+    for method in ["macos_vision", "pytesseract"]:
+        path = _ocr_cache_path(item, method)
+        if not path.exists():
+            continue
+        try:
+            cached = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if cached.get("source_sha256") != item.get("sha256"):
+            continue
+        return {
+            **item,
+            "extraction_result": cached["extraction_result"],
+            "extraction_method": cached["extraction_method"],
+            "blocked_reason": cached.get("blocked_reason"),
+            "extracted_character_count": cached["extracted_character_count"],
+            "extracted_line_count": cached["extracted_line_count"],
+            "text_sha256": cached.get("text_sha256"),
+            "post_extraction_classification": cached["post_extraction_classification"],
+            "ocr_engine_available": cached["ocr_engine_available"],
+            "ocr_requested_languages": cached["ocr_requested_languages"],
+            "ocr_available_languages": cached["ocr_available_languages"],
+            "ocr_backend": cached["ocr_backend"],
+            "ocr_cache_status": "hit",
+        }
+    return None
+
+
+def _write_ocr_cached_item(item: dict[str, Any]) -> None:
+    method = str(item.get("ocr_backend") or item.get("extraction_method") or "unknown")
+    path = _ocr_cache_path(item, method)
+    cache_payload = {
+        "source_sha256": item["sha256"],
+        "extraction_result": item["extraction_result"],
+        "extraction_method": item["extraction_method"],
+        "blocked_reason": item.get("blocked_reason"),
+        "extracted_character_count": item["extracted_character_count"],
+        "extracted_line_count": item["extracted_line_count"],
+        "text_sha256": item.get("text_sha256"),
+        "post_extraction_classification": item["post_extraction_classification"],
+        "ocr_engine_available": item.get("ocr_engine_available"),
+        "ocr_requested_languages": item.get("ocr_requested_languages", ["chi_sim", "eng"]),
+        "ocr_available_languages": item.get("ocr_available_languages", []),
+        "ocr_backend": item.get("ocr_backend", method),
+    }
+    path.write_text(json.dumps(cache_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _ocr_available_languages() -> list[str]:
@@ -580,9 +715,12 @@ def _extract_queued_item(item: dict[str, Any]) -> dict[str, Any]:
     elif status == "pdf_text_extraction_queued":
         text, method, error = _extract_pdf_text(path)
     elif status == "image_ocr_queued":
+        cached = _load_ocr_cached_item(item)
+        if cached:
+            return cached
         text, method, error = _extract_image_text(path)
-        if error and "tesseract executable not found" in error:
-            return {
+        if error and "no OCR backend available" in error:
+            blocked_item = {
                 **item,
                 "extraction_result": "ocr_blocked_missing_engine",
                 "extraction_method": method,
@@ -594,7 +732,11 @@ def _extract_queued_item(item: dict[str, Any]) -> dict[str, Any]:
                 "ocr_engine_available": False,
                 "ocr_requested_languages": ["chi_sim", "eng"],
                 "ocr_available_languages": [],
+                "ocr_backend": "none",
+                "ocr_cache_status": "miss",
             }
+            _write_ocr_cached_item(blocked_item)
+            return blocked_item
     else:
         text = ""
         method = "unsupported"
@@ -607,7 +749,7 @@ def _extract_queued_item(item: dict[str, Any]) -> dict[str, Any]:
         result = "text_extracted"
     else:
         result = "text_empty"
-    return {
+    result_item = {
         **item,
         "extraction_result": result,
         "extraction_method": method,
@@ -621,11 +763,16 @@ def _extract_queued_item(item: dict[str, Any]) -> dict[str, Any]:
                 "ocr_engine_available": shutil.which("tesseract") is not None,
                 "ocr_requested_languages": ["chi_sim", "eng"],
                 "ocr_available_languages": _ocr_available_languages(),
+                "ocr_backend": "tesseract" if method == "pytesseract" else method,
+                "ocr_cache_status": "miss",
             }
             if status == "image_ocr_queued"
             else {}
         ),
     }
+    if status == "image_ocr_queued":
+        _write_ocr_cached_item(result_item)
+    return result_item
 
 
 def build_extraction_results(*, write: bool = True) -> dict[str, Any]:
@@ -647,6 +794,8 @@ def build_extraction_results(*, write: bool = True) -> dict[str, Any]:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "mode": {
             "heavy_ocr": shutil.which("tesseract") is not None,
+            "macos_vision_available": _vision_ocr_binary() is not None,
+            "ocr_backend_policy": "prefer_tesseract_else_macos_vision_else_blocked",
             "whole_machine_scan": False,
             "external_high_relevance_scan": True,
             "semantic_promotion": False,
@@ -791,6 +940,8 @@ def _render_extraction_results_markdown(report: dict[str, Any]) -> str:
         f"- unhashed_files: {report['summary']['unhashed_files']}",
         f"- stored_text_payload_fields: {report['summary']['stored_text_payload_fields']}",
         f"- Heavy OCR: {'enabled' if report['mode']['heavy_ocr'] else 'disabled'}",
+        f"- macos_vision_available: {report['mode'].get('macos_vision_available', False)}",
+        f"- ocr_backend_policy: {report['mode'].get('ocr_backend_policy', 'unknown')}",
         "",
         "## Result Counts",
         "",

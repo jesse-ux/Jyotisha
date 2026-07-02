@@ -1,9 +1,11 @@
 {
   "scope": "extraction-results",
   "status": "pass",
-  "generated_at": "2026-07-02T09:44:22.267617+00:00",
+  "generated_at": "2026-07-02T10:45:41.296864+00:00",
   "mode": {
     "heavy_ocr": false,
+    "macos_vision_available": true,
+    "ocr_backend_policy": "prefer_tesseract_else_macos_vision_else_blocked",
     "whole_machine_scan": false,
     "external_high_relevance_scan": true,
     "semantic_promotion": false,
@@ -15,18 +17,18 @@
     "stored_text_payload_fields": 0
   },
   "result_counts": {
-    "ocr_blocked_missing_engine": 53,
-    "text_extracted": 13
+    "text_empty": 17,
+    "text_extracted": 49
   },
   "method_counts": {
     "docx": 11,
-    "pdfplumber": 2,
-    "pytesseract": 53
+    "macos_vision": 53,
+    "pdfplumber": 2
   },
   "post_extraction_classification_counts": {
-    "extracted_candidate_for_review": 10,
+    "extracted_candidate_for_review": 44,
     "extracted_private_reference_only": 3,
-    "extracted_reference_only": 53
+    "extracted_reference_only": 19
   },
   "results": [
     {
@@ -237,19 +239,21 @@
       "classification": "external_skill_fragment",
       "priority": "priority_1",
       "promotion_status": "external_candidate",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 6,
+      "extracted_line_count": 2,
+      "text_sha256": "6268f153a2dbec6a0294a2164eed3f4b3f38deb549fd55c856531a742f154d37",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -261,19 +265,21 @@
       "classification": "external_skill_fragment",
       "priority": "priority_1",
       "promotion_status": "external_candidate",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 11,
+      "extracted_line_count": 2,
+      "text_sha256": "15932d34d0d39cfb45324e59f76a8a7e6ed0751971570166f5402361885e83b8",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -285,19 +291,21 @@
       "classification": "external_skill_fragment",
       "priority": "priority_1",
       "promotion_status": "external_candidate",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 30,
+      "extracted_line_count": 6,
+      "text_sha256": "418fec26dc90172b495527a16d9054bd75ea188a64d568ffab959fb6223d0864",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -309,19 +317,21 @@
       "classification": "external_skill_fragment",
       "priority": "priority_1",
       "promotion_status": "external_candidate",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 24,
+      "extracted_line_count": 4,
+      "text_sha256": "cabb393532f5e24293c5fd0a59f0b423a2da2d7d6a261651e69032d45fac3d6f",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -333,19 +343,21 @@
       "classification": "external_historical_report",
       "priority": "priority_2",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 6,
+      "extracted_line_count": 2,
+      "text_sha256": "6268f153a2dbec6a0294a2164eed3f4b3f38deb549fd55c856531a742f154d37",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -357,19 +369,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 2396,
+      "extracted_line_count": 203,
+      "text_sha256": "022d397c72b950fe3780952b52004c166cb731fc04edc7530ac6cb2d84951097",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -381,19 +395,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 2931,
+      "extracted_line_count": 231,
+      "text_sha256": "468967a7cfdce5a6b0dc23e534ceae4776a6f9f415a9fcaa4a5bc34a4fb982cb",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -405,19 +421,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 3635,
+      "extracted_line_count": 329,
+      "text_sha256": "ae6ded6ec4433f6a75e29c91d551fa3033b381be765d22d97915b7bfc4e0cf0c",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -429,19 +447,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 4205,
+      "extracted_line_count": 513,
+      "text_sha256": "6e148836e7847c3a71e90536fbe52b3795fe2867a5d07dffc3a368d1aec0b92c",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -453,19 +473,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 4203,
+      "extracted_line_count": 513,
+      "text_sha256": "a76ecdaa8dd9b852186a157d7b7fd4c5fb7ddce598b7272a37df634762a32408",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -477,19 +499,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 4155,
+      "extracted_line_count": 547,
+      "text_sha256": "1a504051cf1d6573679d32968c51c84a767457e722cd42f60a942cde455e27c3",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -501,19 +525,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 3514,
+      "extracted_line_count": 472,
+      "text_sha256": "3e9f59c189e98d9fb07bba1524b7eea209fbf7cb3a7f5f83f66d5b80f660919f",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -525,19 +551,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 3080,
+      "extracted_line_count": 219,
+      "text_sha256": "848194fea9a0f4b8e05121f5b07261a12fa04351c76cb8cd6740b596050f60d0",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -549,19 +577,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 359,
+      "extracted_line_count": 97,
+      "text_sha256": "b90601cd0134a26f07f4cde1773aa6c6ec06a2285ae4ba6f9eba2dcb43ef5c05",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -573,19 +603,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 369,
+      "extracted_line_count": 88,
+      "text_sha256": "ec1f69ff40ea201baffcddb64a1c6ec6a8a4bd5179bf4cb74023b55710d69ee0",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -597,19 +629,21 @@
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
       "promotion_status": "external_index_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 340,
+      "extracted_line_count": 93,
+      "text_sha256": "324e69607b771ee1d20509fdf33ed7f144593495e48f16ac62f9224b44e84eb0",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -621,19 +655,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -645,19 +681,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 30,
+      "extracted_line_count": 3,
+      "text_sha256": "cc8b8423797e8914515dba9684ebfeba17a8fa329071b6ca4099276aac0a49b8",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -669,19 +707,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -693,19 +733,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 398,
+      "extracted_line_count": 36,
+      "text_sha256": "f91d33b01facb8e7a6adf9d924f5dfa216a04ff6e883526e4278ccc58b17ea11",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -717,19 +759,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -741,19 +785,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 1197,
+      "extracted_line_count": 80,
+      "text_sha256": "d64970b2ccc7be0c33de8e48e465193a62b32a0f231299c1c035f84fa22672df",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -765,19 +811,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 1080,
+      "extracted_line_count": 64,
+      "text_sha256": "5519193313ca62697b8a23a0f1296b66550a0341aa70c4e18305995e23389d52",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -789,19 +837,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 536,
+      "extracted_line_count": 46,
+      "text_sha256": "bb1d2bfb683260c25402d34a639025894a223fa5a33b80c30a1ef0f16df85067",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -813,19 +863,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 2,
+      "extracted_line_count": 2,
+      "text_sha256": "b26e110e558e62dc69d16888f8c6914fb96fccc843ebf0d30000cd8784728fc0",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -837,19 +889,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -861,19 +915,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 11,
+      "extracted_line_count": 3,
+      "text_sha256": "44899d783bdaad21e5a47d01ec9e73e3410703cfb0f68a6171ef7a0bc1f8d732",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -885,19 +941,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -909,19 +967,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -933,19 +993,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -957,19 +1019,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 14,
+      "extracted_line_count": 3,
+      "text_sha256": "cc9443af4ef850050043353a95499938590b234a85125c0c2ad99103d2d7c06f",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -981,19 +1045,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 7,
+      "extracted_line_count": 2,
+      "text_sha256": "c6b24a111d9fb03d1bf0d55030b0d9edfb65708e4feb8dc80892eca0a6a54f1d",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1005,19 +1071,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 14,
+      "extracted_line_count": 3,
+      "text_sha256": "08c157171909ced95edefb310fe369f66f04a1db897affcaa6945e3df3a3bf7e",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1029,19 +1097,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 160,
+      "extracted_line_count": 16,
+      "text_sha256": "193c01df41388ffd21c3c99c27c0f458af4537584fbb71253c8dcfd82c09cb2c",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1053,19 +1123,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1077,19 +1149,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1101,19 +1175,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1125,19 +1201,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1149,19 +1227,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1173,19 +1253,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1197,19 +1279,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1221,19 +1305,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1245,19 +1331,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1269,19 +1357,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
+      "extraction_result": "text_empty",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1293,19 +1383,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 766,
+      "extracted_line_count": 49,
+      "text_sha256": "4ff4d9180c050ef0ee7befcf09851a4c86f77ed6a3ff562935e70dec20545d79",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1317,19 +1409,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 763,
+      "extracted_line_count": 55,
+      "text_sha256": "433d35e43ad0d4e5c94144e4e5360e775d884b31a04a48567bd031d4af67c71a",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1341,19 +1435,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 442,
+      "extracted_line_count": 36,
+      "text_sha256": "2e79a0ceadfecd2a99f1c04ced05a9795dba285d789eb93cf30d682bcb887a91",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1365,19 +1461,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 1297,
+      "extracted_line_count": 57,
+      "text_sha256": "1ad3fce3afb8290f54caaa668462a9f6f2d197b98069cc0a03f7a63975dcacc5",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1389,19 +1487,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 482,
+      "extracted_line_count": 42,
+      "text_sha256": "9e95083cfc45527ebf8f9e120d4b94f59951d71a224162e8f6772b65f7f21c6b",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",
@@ -1413,19 +1513,21 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 714,
+      "extracted_line_count": 50,
+      "text_sha256": "f127c3f663c2ebaf5ca1dc069c3e0ceb0f10398be496407b1aa3b68d1e465268",
+      "post_extraction_classification": "extracted_candidate_for_review",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "project",
@@ -1437,19 +1539,21 @@
       "classification": "open_source_reference",
       "priority": "priority_2",
       "promotion_status": "reference_layer_candidate",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 11,
+      "extracted_line_count": 2,
+      "text_sha256": "15932d34d0d39cfb45324e59f76a8a7e6ed0751971570166f5402361885e83b8",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "project",
@@ -1461,19 +1565,21 @@
       "classification": "open_source_reference",
       "priority": "priority_1",
       "promotion_status": "reference_layer_candidate",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 30,
+      "extracted_line_count": 6,
+      "text_sha256": "418fec26dc90172b495527a16d9054bd75ea188a64d568ffab959fb6223d0864",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "project",
@@ -1485,19 +1591,21 @@
       "classification": "open_source_reference",
       "priority": "priority_1",
       "promotion_status": "reference_layer_candidate",
-      "extraction_result": "ocr_blocked_missing_engine",
-      "extraction_method": "pytesseract",
-      "blocked_reason": "tesseract executable not found",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "extraction_result": "text_extracted",
+      "extraction_method": "macos_vision",
+      "blocked_reason": null,
+      "extracted_character_count": 24,
+      "extracted_line_count": 4,
+      "text_sha256": "cabb393532f5e24293c5fd0a59f0b423a2da2d7d6a261651e69032d45fac3d6f",
       "post_extraction_classification": "extracted_reference_only",
       "ocr_engine_available": false,
       "ocr_requested_languages": [
         "chi_sim",
         "eng"
       ],
-      "ocr_available_languages": []
+      "ocr_available_languages": [],
+      "ocr_backend": "macos_vision",
+      "ocr_cache_status": "hit"
     },
     {
       "source_scope": "external",

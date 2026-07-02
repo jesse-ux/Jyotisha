@@ -836,3 +836,10 @@
 - 增强 `scripts/character_level_inventory_manifest.py --scope extraction-results`：图片 OCR 记录 `ocr_engine_available`、`ocr_requested_languages`、`ocr_available_languages`，便于安装 OCR 后复跑。
 - 为异常 DOCX 增加 `word/document.xml` 备用提取路径；`/Users/wuyongnaren/文件仓库/印度占星文章/4印度占星.docx` 已从 `extraction_failed` 转为 `text_extracted`，字符数 `19643`。
 - 当前提取结果更新为：`text_extracted=13`、`ocr_blocked_missing_engine=53`、`extraction_failed=0`；仍未保存正文，`stored_text_payload_fields=0`。
+
+## 2026-07-02T18:43:00+08:00 - Intel macOS 12 Vision OCR 完成
+
+- 机器确认：macOS `12.7.6`、Intel `x86_64`、Core i7-4980HQ；Homebrew 当前 tesseract 主程序没有可用 bottle，只能取源码 tarball，继续安装会拖入大规模依赖/源码构建。
+- 采用更适合本机的 macOS Vision OCR：脚本自动编译并缓存 `~/.cache/jyotish-ocr/vision_ocr`，不依赖 Homebrew tesseract。
+- `scripts/character_level_inventory_manifest.py --scope extraction-results` 新增 OCR cache；缓存只保存 OCR 文本 hash、字符数、行数、后端、状态，不保存 OCR 正文。
+- 53 张图片已用 `macos_vision` 复跑完成；当前结果：`text_extracted=49`、`text_empty=17`、`ocr_blocked_missing_engine=0`、`extraction_failed=0`、`stored_text_payload_fields=0`。
