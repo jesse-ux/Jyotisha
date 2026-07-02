@@ -58,6 +58,57 @@ Every Level 2+ chart reading must include `MEVG / Global Web Evidence` and
 
 ---
 
+## 0.7 User-Led Reading Calibration Gate
+
+This gate turns the user's follow-up interrogation into workflow control. It is
+not a personality preference; it prevents vague readings, memory-based
+anchoring, and weak case analogies.
+
+Trigger this gate when the user asks any of the following:
+
+- whether a technique, source layer, oracle, or divisional chart was omitted;
+- for a blind reading that excludes prior life events, feedback, or corrections;
+- for concrete time/event options instead of conceptual questions;
+- for real case comparison, global-web evidence, or a named analog case;
+- why a timing claim was made, especially when a case dasha differs from the
+  native's dasha.
+
+When active, the reading must complete or explicitly block these controls:
+
+1. `User Feedback Isolation`: if blind mode is requested, exclude prior
+   biographical feedback, rectification choices, and user corrections from the
+   interpretive reasoning. Use only birth inputs, current engine data, graded
+   source packs, MEVG packets, and real-case calibration records.
+2. `Concrete Time/Event Options`: for rectification, timing, opportunity, and
+   event prediction, output selectable date windows and concrete event options.
+   Do not ask vague subjective questions such as "does this feel like you?"
+3. `Evidence-First / Conclusion-Last`: show raw chart layers, strength layers,
+   dasha/transit/Tajika layers, MEVG, and real-case calibration before the final
+   fortune judgment.
+4. `Similarity-Weighted Case Calibration`: classify each real case by similarity
+   layer instead of treating same-topic cases as equal evidence.
+5. `Transferability Boundary`: state which part of an analog case transfers,
+   which part does not, and how the mismatch changes confidence.
+6. `Counterexample Handling`: mark counterexamples, user-excluded cases, and
+   obsolete cases explicitly. Do not silently remove inconvenient cases.
+
+### Similarity layers for real cases
+
+| Layer | Meaning | Use |
+|---|---|---|
+| L0 same-domain only | Same broad topic, but no proven chart or dasha similarity | Background only |
+| L1 D1 structure | Lagna, house lords, functional benefic/malefic roles, dignity, or house themes align | Weak support |
+| L2 divisional support | Relevant D9/D10/D2/D4/D7/D12 etc. supports the same theme | Theme confidence |
+| L3 functional dasha | Dasha periods play comparable functions even when the planets differ | Stage comparison |
+| L4 verified event mechanism | Public biography or benchmark record shows a concrete event mechanism | Event-shape calibration |
+| L5 material substrate | Income source, platform, institution, spouse/family support, or network structure is comparable | Required for material-outcome claims |
+
+Analog cases cannot be used as prophecy. They may calibrate mechanism and
+confidence only after the similarity layer and transferability boundary are
+declared.
+
+---
+
 ## 1. Question router
 
 | User intent | Route | Required depth |
@@ -235,6 +286,10 @@ Every Level 2+ output must include this table near the end.
 | Argala | Used / not used | ... | ... |
 | KP / Sub-lord | Used / not required / unavailable | ... | ... |
 | Historical verification | Used / not provided | ... | ... |
+| User Feedback Isolation | Used / not requested / blocked | Blind-mode exclusion of prior biography, rectification feedback, and user corrections | Required when user asks for blind reading; blocked if isolation cannot be guaranteed |
+| Concrete Time/Event Options | Used / not required / blocked | Date windows with selectable concrete event options | Required for rectification and timing calibration; lowers precision if omitted |
+| Similarity-Weighted Case Calibration | Used / blocked / case gap | L0-L5 similarity layer for each analog case | Same-topic cases alone cannot raise confidence |
+| Transferability Boundary | Used / blocked / not applicable | What transfers, what does not, and why | Prevents copying a celebrity or benchmark story into the native's forecast |
 | MEVG / Global Web Evidence | Used / blocked / exempt for pure calculation | Source tier, searches, conflict arbitration | Mandatory for all chart interpretation readings; blocked or downgraded if omitted |
 | Real Case Calibration | Used / blocked / case gap | Real case, benchmark case, or documented lack of matching cases | Cap confidence when no comparable case evidence is available |
 
