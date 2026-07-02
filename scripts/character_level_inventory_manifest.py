@@ -13,7 +13,9 @@ import hashlib
 import json
 import shutil
 import sys
+import zipfile
 from datetime import datetime, timezone
+from xml.etree import ElementTree
 from pathlib import Path
 from typing import Any
 
@@ -482,7 +484,25 @@ def _extract_docx_text(path: Path) -> tuple[str, str | None]:
                 table_text.append("\t".join(cell.text for cell in row.cells))
         return "\n".join(paragraphs + table_text), None
     except Exception as exc:  # pragma: no cover - exercised by real files.
-        return "", f"{type(exc).__name__}: {exc}"
+        fallback_text, fallback_error = _extract_docx_xml_text(path)
+        if fallback_text.strip():
+            return fallback_text, f"python-docx fallback used after {type(exc).__name__}: {exc}"
+        return "", fallback_error or f"{type(exc).__name__}: {exc}"
+
+
+def _extract_docx_xml_text(path: Path) -> tuple[str, str | None]:
+    try:
+        with zipfile.ZipFile(path) as archive:
+            xml_bytes = archive.read("word/document.xml")
+        root = ElementTree.fromstring(xml_bytes)
+        text_nodes = []
+        namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+        for node in root.iter(f"{namespace}t"):
+            if node.text:
+                text_nodes.append(node.text)
+        return "\n".join(text_nodes), None
+    except Exception as exc:
+        return "", f"docx_xml_fallback_failed {type(exc).__name__}: {exc}"
 
 
 def _extract_pdf_text(path: Path) -> tuple[str, str, str | None]:
@@ -519,9 +539,27 @@ def _extract_image_text(path: Path) -> tuple[str, str, str | None]:
         import pytesseract
 
         with Image.open(path) as image:
-            return pytesseract.image_to_string(image, lang="chi_sim+eng"), "pytesseract", None
+            return pytesseract.image_to_string(image, lang="+".join(_ocr_languages())), "pytesseract", None
     except Exception as exc:  # pragma: no cover - depends on local OCR install/languages.
         return "", "pytesseract", f"{type(exc).__name__}: {exc}"
+
+
+def _ocr_available_languages() -> list[str]:
+    if not shutil.which("tesseract"):
+        return []
+    try:
+        import pytesseract
+
+        return sorted(str(lang) for lang in pytesseract.get_languages(config=""))
+    except Exception:
+        return []
+
+
+def _ocr_languages() -> list[str]:
+    available = set(_ocr_available_languages())
+    preferred = ["chi_sim", "eng"]
+    selected = [lang for lang in preferred if lang in available]
+    return selected or (["eng"] if "eng" in available else preferred)
 
 
 def _post_extraction_classification(item: dict[str, Any]) -> str:
@@ -553,6 +591,9 @@ def _extract_queued_item(item: dict[str, Any]) -> dict[str, Any]:
                 "extracted_line_count": 0,
                 "text_sha256": None,
                 "post_extraction_classification": "extracted_reference_only",
+                "ocr_engine_available": False,
+                "ocr_requested_languages": ["chi_sim", "eng"],
+                "ocr_available_languages": [],
             }
     else:
         text = ""
@@ -575,6 +616,15 @@ def _extract_queued_item(item: dict[str, Any]) -> dict[str, Any]:
         "extracted_line_count": normalized.count("\n") + (1 if normalized else 0),
         "text_sha256": _hash_text(normalized) if normalized else None,
         "post_extraction_classification": _post_extraction_classification(item),
+        **(
+            {
+                "ocr_engine_available": shutil.which("tesseract") is not None,
+                "ocr_requested_languages": ["chi_sim", "eng"],
+                "ocr_available_languages": _ocr_available_languages(),
+            }
+            if status == "image_ocr_queued"
+            else {}
+        ),
     }
 
 

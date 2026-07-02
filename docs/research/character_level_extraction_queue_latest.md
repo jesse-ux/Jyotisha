@@ -2,7 +2,7 @@
 
 - status: pass
 - scope: extraction-queue
-- generated_at: 2026-07-02T09:24:04.124961+00:00
+- generated_at: 2026-07-02T09:43:43.085623+00:00
 - queued_files: 66
 - unhashed_files: 0
 - Heavy OCR: disabled

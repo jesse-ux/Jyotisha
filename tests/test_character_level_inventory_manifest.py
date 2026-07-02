@@ -186,7 +186,8 @@ def test_extraction_results_extract_pdf_and_docx_without_storing_text() -> None:
     assert report["summary"]["total_files"] >= 60
     assert report["summary"]["unhashed_files"] == 0
     assert report["summary"]["stored_text_payload_fields"] == 0
-    assert report["result_counts"]["text_extracted"] >= 10
+    assert report["result_counts"]["text_extracted"] >= 13
+    assert report["result_counts"].get("extraction_failed", 0) == 0
     assert report["method_counts"]["docx"] >= 10
     assert report["method_counts"]["pdfplumber"] + report["method_counts"].get("pypdf", 0) >= 2
 
@@ -209,6 +210,10 @@ def test_extraction_results_extract_pdf_and_docx_without_storing_text() -> None:
                 "extracted_private_reference_only",
                 "extracted_candidate_for_review",
             }
+        if item["extraction_result"] == "ocr_blocked_missing_engine":
+            assert item["ocr_engine_available"] is False
+            assert item["ocr_requested_languages"] == ["chi_sim", "eng"]
+            assert item["ocr_available_languages"] == []
 
     json_path = ROOT / report["artifacts"]["json_report"]
     md_path = ROOT / report["artifacts"]["markdown_report"]

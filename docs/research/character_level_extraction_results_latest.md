@@ -2,7 +2,7 @@
 
 - status: pass
 - scope: extraction-results
-- generated_at: 2026-07-02T09:25:00.613875+00:00
+- generated_at: 2026-07-02T09:44:22.267617+00:00
 - total_files: 66
 - unhashed_files: 0
 - stored_text_payload_fields: 0
@@ -10,9 +10,8 @@
 
 ## Result Counts
 
-- `extraction_failed`: 1
 - `ocr_blocked_missing_engine`: 53
-- `text_extracted`: 12
+- `text_extracted`: 13
 
 ## Method Counts
 

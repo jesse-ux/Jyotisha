@@ -829,3 +829,10 @@
 - 方法分布：`docx=11`、`pdfplumber=2`、`pytesseract=53`；系统当前没有 `tesseract` 可执行文件，因此图片 OCR 全部明确 blocked。
 - 失败项：`/Users/wuyongnaren/文件仓库/印度占星文章/4印度占星.docx`，`python-docx` 返回 `KeyError: "There is no item named 'NULL' in the archive"`；保留为 extraction_failed，不伪装为已提取。
 - 提取后分级：`extracted_candidate_for_review=10`、`extracted_private_reference_only=3`、`extracted_reference_only=53`；仍未进入 runtime truth chain。
+
+## 2026-07-02T17:32:00+08:00 - DOCX fallback 提取与 OCR 引擎审计
+
+- 尝试用 Homebrew 安装 `tesseract tesseract-lang`，但 Homebrew 在 macOS 12 上需要拉取/构建 60+ 依赖；为避免把本轮变成长安装任务，已中断安装。
+- 增强 `scripts/character_level_inventory_manifest.py --scope extraction-results`：图片 OCR 记录 `ocr_engine_available`、`ocr_requested_languages`、`ocr_available_languages`，便于安装 OCR 后复跑。
+- 为异常 DOCX 增加 `word/document.xml` 备用提取路径；`/Users/wuyongnaren/文件仓库/印度占星文章/4印度占星.docx` 已从 `extraction_failed` 转为 `text_extracted`，字符数 `19643`。
+- 当前提取结果更新为：`text_extracted=13`、`ocr_blocked_missing_engine=53`、`extraction_failed=0`；仍未保存正文，`stored_text_payload_fields=0`。

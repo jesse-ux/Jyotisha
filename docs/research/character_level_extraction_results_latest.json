@@ -1,7 +1,7 @@
 {
   "scope": "extraction-results",
   "status": "pass",
-  "generated_at": "2026-07-02T09:25:00.613875+00:00",
+  "generated_at": "2026-07-02T09:44:22.267617+00:00",
   "mode": {
     "heavy_ocr": false,
     "whole_machine_scan": false,
@@ -15,9 +15,8 @@
     "stored_text_payload_fields": 0
   },
   "result_counts": {
-    "extraction_failed": 1,
     "ocr_blocked_missing_engine": 53,
-    "text_extracted": 12
+    "text_extracted": 13
   },
   "method_counts": {
     "docx": 11,
@@ -166,12 +165,12 @@
       "classification": "external_book_or_document",
       "priority": "priority_1",
       "promotion_status": "external_reference_only",
-      "extraction_result": "extraction_failed",
+      "extraction_result": "text_extracted",
       "extraction_method": "docx",
-      "blocked_reason": "KeyError: \"There is no item named 'NULL' in the archive\"",
-      "extracted_character_count": 0,
-      "extracted_line_count": 0,
-      "text_sha256": null,
+      "blocked_reason": "python-docx fallback used after KeyError: \"There is no item named 'NULL' in the archive\"",
+      "extracted_character_count": 19643,
+      "extracted_line_count": 437,
+      "text_sha256": "f496ed4e54897fed05b7a5e4905787c36baf3008214d90336b6a1d4f2406940d",
       "post_extraction_classification": "extracted_candidate_for_review"
     },
     {
@@ -244,7 +243,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -262,7 +267,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -280,7 +291,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -298,7 +315,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -316,7 +339,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -334,7 +363,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -352,7 +387,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -370,7 +411,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -388,7 +435,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -406,7 +459,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -424,7 +483,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -442,7 +507,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -460,7 +531,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -478,7 +555,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -496,7 +579,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -514,7 +603,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -532,7 +627,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -550,7 +651,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -568,7 +675,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -586,7 +699,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -604,7 +723,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -622,7 +747,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -640,7 +771,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -658,7 +795,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -676,7 +819,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -694,7 +843,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -712,7 +867,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -730,7 +891,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -748,7 +915,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -766,7 +939,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -784,7 +963,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -802,7 +987,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -820,7 +1011,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -838,7 +1035,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -856,7 +1059,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -874,7 +1083,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -892,7 +1107,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -910,7 +1131,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -928,7 +1155,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -946,7 +1179,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -964,7 +1203,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -982,7 +1227,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -1000,7 +1251,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -1018,7 +1275,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -1036,7 +1299,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -1054,7 +1323,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -1072,7 +1347,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -1090,7 +1371,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -1108,7 +1395,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
@@ -1126,7 +1419,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "project",
@@ -1144,7 +1443,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "project",
@@ -1162,7 +1467,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "project",
@@ -1180,7 +1491,13 @@
       "extracted_character_count": 0,
       "extracted_line_count": 0,
       "text_sha256": null,
-      "post_extraction_classification": "extracted_reference_only"
+      "post_extraction_classification": "extracted_reference_only",
+      "ocr_engine_available": false,
+      "ocr_requested_languages": [
+        "chi_sim",
+        "eng"
+      ],
+      "ocr_available_languages": []
     },
     {
       "source_scope": "external",
