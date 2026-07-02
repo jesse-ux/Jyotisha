@@ -43,6 +43,14 @@ def test_interpretation_source_inventory_gate_reports_layered_source_pack() -> N
     assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/validation_rules.md" in layers["reader_validation"]["source_refs"]
     assert "references/yoga_rules.json" in layers["yoga_rules"]["source_refs"]
     assert "references/saham_rules.json" in layers["saham_rules"]["source_refs"]
+    assert layers["core_rule_sources"]["promotion_batch"] == "priority1_batch1_core5"
+    assert layers["core_rule_sources"]["source_refs"] == [
+        "references/prediction-boundary-protocol.md",
+        "references/event_judgment_skeleton.md",
+        "references/planetary-dignity-complete-reference.md",
+        "references/retrograde-combustion-war-guide.md",
+        "references/transit-multi-reference-guide.md",
+    ]
 
     draft_refs = layers["quarantined_drafts"]["source_refs"]
     source_refs = set(report["runtime_source_refs"])

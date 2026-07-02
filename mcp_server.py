@@ -120,6 +120,15 @@ def _existing_paths(paths: List[str]) -> List[str]:
     return [path for path in paths if _repo_relative_exists(path)]
 
 
+CORE_RULE_SOURCE_REFS = [
+    "references/prediction-boundary-protocol.md",
+    "references/event_judgment_skeleton.md",
+    "references/planetary-dignity-complete-reference.md",
+    "references/retrograde-combustion-war-guide.md",
+    "references/transit-multi-reference-guide.md",
+]
+
+
 def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, Any]:
     primary_truth = [
         "references/interpretation_template_registry.json",
@@ -156,6 +165,7 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
     reference_layer = [
         "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md",
         "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/house_framework.md",
+        *CORE_RULE_SOURCE_REFS,
         *frontend_interpretation,
         *qa_governance,
         *reader_validation,
@@ -205,6 +215,14 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
             "source_refs": _existing_paths(saham_rules),
             "missing_refs": [path for path in saham_rules if not _repo_relative_exists(path)],
         },
+        "core_rule_sources": {
+            "status": "available",
+            "promotion_status": "primary_truth_candidate",
+            "promotion_batch": "priority1_batch1_core5",
+            "source_refs": _existing_paths(CORE_RULE_SOURCE_REFS),
+            "missing_refs": [path for path in CORE_RULE_SOURCE_REFS if not _repo_relative_exists(path)],
+            "boundary": "First promoted core references; visible to strict workflows but still subject to conflict arbitration.",
+        },
         "quarantined_drafts": {
             "status": "quarantined",
             "promotion_status": "not_truth_source",
@@ -248,6 +266,7 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
     bphs_narayana_path = "references/bphs-ch48-narayana-dasha.md"
     mevg_path = "references/mandatory-verification-gate-protocol.md"
     real_case_checklist_path = "references/real-reading-quality-checklist.md"
+    core_rule_paths = CORE_RULE_SOURCE_REFS
     frontend_interpretation_paths = [
         "jyotish-app/interpretation.js",
         "jyotish-app/analysis-deep.js",
@@ -288,6 +307,7 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
         bphs_narayana_path,
         mevg_path,
         real_case_checklist_path,
+        *core_rule_paths,
         *frontend_interpretation_paths,
         *planet_house_paths,
         qa_rules_path,
@@ -316,6 +336,7 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
             "bphs_narayana_dasha",
             "mevg_mandatory_external_verification",
             "real_case_quality_checklist",
+            "priority1_batch1_core_rule_sources",
             "qa_governance_rules",
             "reader_validation_rules",
             "frontend_interpretation_layer",
@@ -325,6 +346,13 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
         "bphs_raman_layer": {
             "status": "available" if _repo_relative_exists(raman_path) and _repo_relative_exists(bphs_narayana_path) else "partial",
             "source_refs": [raman_path, bphs_narayana_path],
+        },
+        "core_rule_source_layer": {
+            "status": "available" if all(_repo_relative_exists(path) for path in core_rule_paths) else "partial",
+            "source_refs": core_rule_paths,
+            "promotion_status": "primary_truth_candidate",
+            "promotion_batch": "priority1_batch1_core5",
+            "boundary": "Audit-promoted core references; use as visible rule sources with conflict arbitration.",
         },
         "frontend_interpretation_layer": {
             "status": "available" if all(_repo_relative_exists(path) for path in frontend_interpretation_paths) else "partial",
@@ -2520,6 +2548,11 @@ def _build_technique_audit_summary(route: str, strict: Dict[str, Any]) -> Dict[s
             "status": interpretation_source_pack.get("status") or "blocked",
             "source": interpretation_source_pack.get("source") or "repo_existing_interpretation_sources",
             "source_refs": interpretation_source_pack.get("source_refs") or [],
+            "core_rule_source_refs": (
+                interpretation_source_pack.get("core_rule_source_layer", {}).get("source_refs")
+                if isinstance(interpretation_source_pack.get("core_rule_source_layer"), dict)
+                else []
+            ),
             "missing_refs": interpretation_source_pack.get("missing_refs") or [],
             "effect_on_confidence": (
                 "uses existing BPHS/Raman/frontend/template source layers; missing refs lower confidence"

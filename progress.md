@@ -760,3 +760,11 @@
 - 新增人读审计说明：`docs/research/interpretation_source_priority1_batch1_promotion_audit_2026_07_02.md`。
 - 当前处置：`promote=16`、`reference-only=6`、`obsolete=3`、`duplicate=3`、`quarantine=2`。
 - 明确边界：本批只做 audit-only 分级，不直接接入 runtime source pack；后续升格仍需调用链、冲突仲裁、可见性测试。
+
+## 2026-07-02T15:05:00+08:00 - priority_1 promote 核心 5 源头调用链接入
+
+- 将第一批 promote 中的 5 个全局核心源头显式接入 `_existing_interpretation_source_pack()`：`prediction-boundary-protocol`、`event_judgment_skeleton`、`planetary-dignity-complete-reference`、`retrograde-combustion-war-guide`、`transit-multi-reference-guide`。
+- 新增 `core_rule_source_layer` 与 inventory `core_rule_sources` 层，标记为 `priority1_batch1_core5` / `primary_truth_candidate`。
+- `technique_audit_summary.interpretation_source_pack` 现在直接暴露 `core_rule_source_refs`，career / relationship / finance strict workflow 都能看到同一组核心源头。
+- 新增 `tests/test_interpretation_source_core5_strict_visibility.py`；同时加固 `tests/test_interpretation_source_inventory_gate.py` 对核心层的断言。
+- 边界仍保留：核心 5 已进入调用链可见性层，但具体解释仍需冲突仲裁、MEVG、真实案例校准和领域分盘/大运证据。
