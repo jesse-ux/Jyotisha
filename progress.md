@@ -850,3 +850,11 @@
 - 新增 `docs/research/character_level_extraction_review_latest.json` 与 `.md`，当前 reviewed_files=`66`、runtime_promotions=`0`、stored_text_payload_fields=`0`。
 - 分级结果：`promote_review_candidate=38`、`private_reference_only=3`、`reference_only=8`、`asset_or_empty_reference_only=17`。
 - 后续若要升格，只能从 `promote_review_candidate` 里逐批人工 source grading + conflict arbitration + source-pack 测试，不能直接把 OCR/外部文档当主链真源。
+
+## 2026-07-02T19:06:00+08:00 - promote_review_candidate 第一批 source grading
+
+- 新增 `scripts/character_level_inventory_manifest.py --scope source-grading-batch1`，从 38 个 `promote_review_candidate` 中选取 12 个高信号候选做第一批分级。
+- 新增 `docs/research/character_level_source_grading_batch1_latest.json` 与 `.md`，当前 graded_files=`12`、runtime_promotions=`0`、stored_text_payload_fields=`0`。
+- 第一批结果：`promote_to_reference_pack_candidate=9`、`reference_only=3`；已完成 batch1 级别的 source-pack eligibility 仲裁。
+- 仲裁结论：`reference_pack_candidate=9`、`reference_only=3`、`runtime_truth_ready_count=0`；不允许直接进入 runtime truth。
+- 下一步必须做：把 9 个候选显式接入 interpretation source/source pack，并加 strict workflow visibility tests；内容级规则优先级仍不得压过核心主规则。

@@ -1,0 +1,332 @@
+{
+  "scope": "source-grading-batch1",
+  "status": "pass",
+  "generated_at": "2026-07-02T11:18:48.369587+00:00",
+  "mode": {
+    "runtime_truth_promotion": false,
+    "semantic_promotion": false,
+    "boundary": "Batch 1 grades extracted candidates only; no source enters runtime truth without a later source-pack test."
+  },
+  "summary": {
+    "total_review_candidates": 38,
+    "selected_count": 12,
+    "graded_files": 12,
+    "runtime_promotions": 0,
+    "stored_text_payload_fields": 0
+  },
+  "grade_counts": {
+    "promote_to_reference_pack_candidate": 9,
+    "reference_only": 3
+  },
+  "pack_decision_counts": {
+    "reference_only": 3,
+    "reference_pack_candidate": 9
+  },
+  "conflict_arbitration": {
+    "status": "batch1_arbitrated",
+    "scope": "source_pack_eligibility_only",
+    "runtime_truth_allowed": false,
+    "reference_pack_ready_count": 9,
+    "runtime_truth_ready_count": 0,
+    "reference_pack_next_steps": [
+      "wire selected candidates into interpretation_source_inventory/source pack",
+      "add strict workflow visibility tests",
+      "keep content-level precedence below core rules until line-level rule review exists"
+    ]
+  },
+  "graded_sources": [
+    {
+      "path": "/Users/wuyongnaren/Downloads/jyotish_training.agent.final.docx",
+      "source_scope": "external",
+      "suffix": ".docx",
+      "byte_count": 186879,
+      "sha256": "a0d83aa8a70f9966cbe79945c4416906e1382c9093998c23d73bd395b02f23fe",
+      "extraction_method": "docx",
+      "extracted_character_count": 145078,
+      "text_sha256": "9607ceaafa8a38abd5943037b7a66113db4fee6abb6d77a246924c7770242049",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "reference_only",
+      "grade_reason": "Training material can inform style/workflow but cannot outrank source rules.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_only",
+        "reason": "Kept as reference-only because the source is OCR-derived, training-oriented, private, or not first-order rule material.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_only",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/1印度占星.docx",
+      "source_scope": "external",
+      "suffix": ".docx",
+      "byte_count": 6142110,
+      "sha256": "210a09d764f8fe17ded6c908d5073648908892a99ae853f983e6f516ccc0164d",
+      "extraction_method": "docx",
+      "extracted_character_count": 30716,
+      "text_sha256": "9d02544ecab01e9dad012ec53336f0404ba316896e3ae5fd8efa7b2e7271330f",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "promote_to_reference_pack_candidate",
+      "grade_reason": "Source-like document; candidate for reference pack after conflict arbitration.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_pack_candidate",
+        "reason": "Document/PDF source lineage is clear enough for reference/source pack candidacy; still cannot enter runtime truth until source-pack visibility tests bind it explicitly.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_pack_candidate",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/2印度占星.docx",
+      "source_scope": "external",
+      "suffix": ".docx",
+      "byte_count": 3031411,
+      "sha256": "16979422e7621475243e2739fda00767d1a9dc367f7f10153fe36d8af6e15c6d",
+      "extraction_method": "docx",
+      "extracted_character_count": 17967,
+      "text_sha256": "91cfc9364387007753bce62360ee7d546aa6357935775a32dc867f2d3bf09dde",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "promote_to_reference_pack_candidate",
+      "grade_reason": "Source-like document; candidate for reference pack after conflict arbitration.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_pack_candidate",
+        "reason": "Document/PDF source lineage is clear enough for reference/source pack candidacy; still cannot enter runtime truth until source-pack visibility tests bind it explicitly.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_pack_candidate",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/3印度占星.docx",
+      "source_scope": "external",
+      "suffix": ".docx",
+      "byte_count": 2149772,
+      "sha256": "59ee274246547f4afb581ec26f5a4aad03ba2095309d66c40a60a51d1244df92",
+      "extraction_method": "docx",
+      "extracted_character_count": 29017,
+      "text_sha256": "47c4c9cfcfdc2bbd024d845c1c95eec9546d1d8c462fb25626e6b449d957d3cc",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "promote_to_reference_pack_candidate",
+      "grade_reason": "Source-like document; candidate for reference pack after conflict arbitration.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_pack_candidate",
+        "reason": "Document/PDF source lineage is clear enough for reference/source pack candidacy; still cannot enter runtime truth until source-pack visibility tests bind it explicitly.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_pack_candidate",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/4印度占星.docx",
+      "source_scope": "external",
+      "suffix": ".docx",
+      "byte_count": 5572637,
+      "sha256": "e789430dc1df6ab7054a5b28f0665da325e7c5eb2e6daac39f1f17ac29ba7629",
+      "extraction_method": "docx",
+      "extracted_character_count": 19643,
+      "text_sha256": "f496ed4e54897fed05b7a5e4905787c36baf3008214d90336b6a1d4f2406940d",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "promote_to_reference_pack_candidate",
+      "grade_reason": "Source-like document; candidate for reference pack after conflict arbitration.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_pack_candidate",
+        "reason": "Document/PDF source lineage is clear enough for reference/source pack candidacy; still cannot enter runtime truth until source-pack visibility tests bind it explicitly.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_pack_candidate",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/Tajika占星术是印度占星术体系之一.docx",
+      "source_scope": "external",
+      "suffix": ".docx",
+      "byte_count": 1338151,
+      "sha256": "254624594c26fc80ad5bfa9e9a880ac0cd81c9388b19721d5767dfa5c55e953c",
+      "extraction_method": "docx",
+      "extracted_character_count": 23606,
+      "text_sha256": "2f8b217e08b5c20afdfb328851bf5c719cd1ab98f2572d413ab359e6f16cef6f",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "promote_to_reference_pack_candidate",
+      "grade_reason": "Source-like document; candidate for reference pack after conflict arbitration.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_pack_candidate",
+        "reason": "Document/PDF source lineage is clear enough for reference/source pack candidacy; still cannot enter runtime truth until source-pack visibility tests bind it explicitly.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_pack_candidate",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/印度占星Jaimini系统的Darakaraka的理解和说明如何解释.docx",
+      "source_scope": "external",
+      "suffix": ".docx",
+      "byte_count": 44926,
+      "sha256": "f2db03d1c0392e2cdad66da9a731117c0ddf290cad7712b9c3de0d8234a17a29",
+      "extraction_method": "docx",
+      "extracted_character_count": 20085,
+      "text_sha256": "72bba68ca08007492181c01936290315500e052a21fc03562c03605eb0204048",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "promote_to_reference_pack_candidate",
+      "grade_reason": "Source-like document; candidate for reference pack after conflict arbitration.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_pack_candidate",
+        "reason": "Document/PDF source lineage is clear enough for reference/source pack candidacy; still cannot enter runtime truth until source-pack visibility tests bind it explicitly.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_pack_candidate",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/高地位配偶与婚后命运积极转变的占星规则与组合.docx",
+      "source_scope": "external",
+      "suffix": ".docx",
+      "byte_count": 1120887,
+      "sha256": "9cdd6996670ad46063c9582957c6d98269e069f96801ff340ce0c84de325d412",
+      "extraction_method": "docx",
+      "extracted_character_count": 4507,
+      "text_sha256": "1e620fb59e95ae4fe59b1181bc9fe34238115e1f138d1433f2e1b66c10051ed6",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "promote_to_reference_pack_candidate",
+      "grade_reason": "Source-like document; candidate for reference pack after conflict arbitration.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_pack_candidate",
+        "reason": "Document/PDF source lineage is clear enough for reference/source pack candidacy; still cannot enter runtime truth until source-pack visibility tests bind it explicitly.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_pack_candidate",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/Downloads/印度占星.pdf",
+      "source_scope": "external",
+      "suffix": ".pdf",
+      "byte_count": 135905,
+      "sha256": "121507cf1d0d66711bc30c18f589f36f2d3cce797ecb13cdf4427625e6ec8894",
+      "extraction_method": "pdfplumber",
+      "extracted_character_count": 31164,
+      "text_sha256": "e63b112988500a71704511d007c52cffdc71c300e518c438eb7f0cb71d732ede",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "promote_to_reference_pack_candidate",
+      "grade_reason": "Source-like document; candidate for reference pack after conflict arbitration.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_pack_candidate",
+        "reason": "Document/PDF source lineage is clear enough for reference/source pack candidacy; still cannot enter runtime truth until source-pack visibility tests bind it explicitly.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_pack_candidate",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/Downloads/印度占星1.pdf",
+      "source_scope": "external",
+      "suffix": ".pdf",
+      "byte_count": 132486,
+      "sha256": "92c9288c5d0011a869c545e3459f037ff09cd20f7508543bc0eb11b03079d930",
+      "extraction_method": "pdfplumber",
+      "extracted_character_count": 31321,
+      "text_sha256": "d93283239c33fab588747a9354a162049b263d18bd06463bbb7b02634704a1be",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "promote_to_reference_pack_candidate",
+      "grade_reason": "Source-like document; candidate for reference pack after conflict arbitration.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_pack_candidate",
+        "reason": "Document/PDF source lineage is clear enough for reference/source pack candidacy; still cannot enter runtime truth until source-pack visibility tests bind it explicitly.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_pack_candidate",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/Downloads/印度占星11页/IMG_3005.jpg",
+      "source_scope": "external",
+      "suffix": ".jpg",
+      "byte_count": 365592,
+      "sha256": "3743a89d6611dd8a3a344db2e9ca6877b6f1f610b48bd3cbb9486eb8a81f4195",
+      "extraction_method": "macos_vision",
+      "extracted_character_count": 2931,
+      "text_sha256": "468967a7cfdce5a6b0dc23e534ceae4776a6f9f415a9fcaa4a5bc34a4fb982cb",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "reference_only",
+      "grade_reason": "OCR text is high-signal but still requires manual verification against image.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_only",
+        "reason": "Kept as reference-only because the source is OCR-derived, training-oriented, private, or not first-order rule material.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_only",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    },
+    {
+      "path": "/Users/wuyongnaren/Downloads/印度占星11页/IMG_3006.jpg",
+      "source_scope": "external",
+      "suffix": ".jpg",
+      "byte_count": 387356,
+      "sha256": "03689b8775950267002cbbf9b96bf5038217c692c311188429ee99903beea285",
+      "extraction_method": "macos_vision",
+      "extracted_character_count": 3635,
+      "text_sha256": "ae6ded6ec4433f6a75e29c91d551fa3033b381be765d22d97915b7bfc4e0cf0c",
+      "review_decision": "promote_review_candidate",
+      "source_grade": "reference_only",
+      "grade_reason": "OCR text is high-signal but still requires manual verification against image.",
+      "conflict_arbitration": {
+        "status": "batch1_arbitrated",
+        "pack_decision": "reference_only",
+        "reason": "Kept as reference-only because the source is OCR-derived, training-oriented, private, or not first-order rule material.",
+        "runtime_truth_allowed": false,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth."
+      },
+      "pack_decision": "reference_only",
+      "requires_conflict_arbitration": false,
+      "requires_source_pack_visibility_test": true,
+      "runtime_truth_allowed": false
+    }
+  ],
+  "artifacts": {
+    "json_report": "docs/research/character_level_source_grading_batch1_latest.json",
+    "markdown_report": "docs/research/character_level_source_grading_batch1_latest.md"
+  },
+  "title": "Source Grading Batch 1 Manifest"
+}

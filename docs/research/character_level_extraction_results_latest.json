@@ -1,7 +1,7 @@
 {
   "scope": "extraction-results",
   "status": "pass",
-  "generated_at": "2026-07-02T10:55:01.179960+00:00",
+  "generated_at": "2026-07-02T11:16:59.606954+00:00",
   "mode": {
     "heavy_ocr": false,
     "macos_vision_available": true,

@@ -2,7 +2,7 @@
 
 - status: pass
 - scope: extraction-review
-- generated_at: 2026-07-02T10:56:07.354583+00:00
+- generated_at: 2026-07-02T11:17:16.341748+00:00
 - reviewed_files: 66
 - runtime_promotions: 0
 - stored_text_payload_fields: 0

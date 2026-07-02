@@ -255,3 +255,52 @@ def test_extraction_review_grades_extracted_sources_without_promoting_runtime_tr
     assert json_path.exists()
     assert md_path.exists()
     assert "Extraction Review Manifest" in md_path.read_text(encoding="utf-8")
+
+
+def test_source_grading_batch1_classifies_promote_review_candidates_without_runtime_promotion() -> None:
+    report = _run_manifest("--scope", "source-grading-batch1")
+
+    assert report["scope"] == "source-grading-batch1"
+    assert report["status"] == "pass"
+    assert report["summary"]["total_review_candidates"] == 38
+    assert report["summary"]["selected_count"] == 12
+    assert report["summary"]["graded_files"] == 12
+    assert report["summary"]["runtime_promotions"] == 0
+    assert report["summary"]["stored_text_payload_fields"] == 0
+    assert report["grade_counts"]["promote_to_reference_pack_candidate"] >= 4
+    assert report["grade_counts"]["reference_only"] >= 1
+    assert report["grade_counts"].get("quarantine_or_private", 0) == 0
+    assert report["conflict_arbitration"]["runtime_truth_allowed"] is False
+    assert report["conflict_arbitration"]["status"] == "batch1_arbitrated"
+    assert report["conflict_arbitration"]["reference_pack_ready_count"] == report["pack_decision_counts"]["reference_pack_candidate"]
+    assert report["conflict_arbitration"]["runtime_truth_ready_count"] == 0
+    assert report["pack_decision_counts"]["reference_pack_candidate"] == 9
+    assert report["pack_decision_counts"]["reference_only"] == 3
+    assert report["pack_decision_counts"].get("runtime_truth", 0) == 0
+
+    for item in report["graded_sources"]:
+        assert item["sha256"]
+        assert item["source_grade"] in {
+            "promote_to_reference_pack_candidate",
+            "reference_only",
+            "quarantine_or_private",
+            "ocr_low_confidence_reference_only",
+        }
+        assert item["runtime_truth_allowed"] is False
+        assert item["requires_conflict_arbitration"] is False
+        assert item["requires_source_pack_visibility_test"] is True
+        assert item["conflict_arbitration"]["status"] == "batch1_arbitrated"
+        assert item["conflict_arbitration"]["runtime_truth_allowed"] is False
+        assert item["pack_decision"] in {"reference_pack_candidate", "reference_only"}
+        if item["source_grade"] == "promote_to_reference_pack_candidate":
+            assert item["pack_decision"] == "reference_pack_candidate"
+        else:
+            assert item["pack_decision"] == "reference_only"
+        assert "text" not in item
+        assert "text_preview" not in item
+
+    json_path = ROOT / report["artifacts"]["json_report"]
+    md_path = ROOT / report["artifacts"]["markdown_report"]
+    assert json_path.exists()
+    assert md_path.exists()
+    assert "Source Grading Batch 1 Manifest" in md_path.read_text(encoding="utf-8")

@@ -32,6 +32,8 @@ EXTRACTION_RESULTS_JSON = ROOT / "docs" / "research" / "character_level_extracti
 EXTRACTION_RESULTS_MD = ROOT / "docs" / "research" / "character_level_extraction_results_latest.md"
 EXTRACTION_REVIEW_JSON = ROOT / "docs" / "research" / "character_level_extraction_review_latest.json"
 EXTRACTION_REVIEW_MD = ROOT / "docs" / "research" / "character_level_extraction_review_latest.md"
+SOURCE_GRADING_BATCH1_JSON = ROOT / "docs" / "research" / "character_level_source_grading_batch1_latest.json"
+SOURCE_GRADING_BATCH1_MD = ROOT / "docs" / "research" / "character_level_source_grading_batch1_latest.md"
 VISION_OCR_SOURCE = r'''
 import Foundation
 import Vision
@@ -478,6 +480,8 @@ def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, A
         return build_extraction_results(write=write)
     elif scope == "extraction-review":
         return build_extraction_review(write=write)
+    elif scope == "source-grading-batch1":
+        return build_source_grading_batch1(write=write)
     else:
         raise ValueError(f"Unsupported scope: {scope}")
 
@@ -511,6 +515,135 @@ def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, A
     }
     if write:
         _write_reports(report, json_report=json_report, markdown_report=markdown_report)
+    return report
+
+
+def _source_grading_batch1_items(reviews: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    candidates = [item for item in reviews if item["decision"] == "promote_review_candidate"]
+    doc_pdf = [
+        item
+        for item in candidates
+        if item["extraction_method"] in {"docx", "pdfplumber", "pypdf"}
+    ]
+    high_signal_ocr = [
+        item
+        for item in candidates
+        if item["extraction_method"] == "macos_vision" and item["extracted_character_count"] >= 2500
+    ]
+    selected = doc_pdf[:10] + high_signal_ocr[:2]
+    return selected[:12]
+
+
+def _source_grade(item: dict[str, Any]) -> tuple[str, str]:
+    path = str(item["path"])
+    if "/Desktop/" in path or "/WorkBuddy/" in path:
+        return "quarantine_or_private", "Private or historical personal report; keep out of reference pack."
+    if item["extraction_method"] == "macos_vision":
+        if item["extracted_character_count"] >= 2500:
+            return "reference_only", "OCR text is high-signal but still requires manual verification against image."
+        return "ocr_low_confidence_reference_only", "OCR text too short or noisy for promotion review."
+    if "jyotish_training" in path:
+        return "reference_only", "Training material can inform style/workflow but cannot outrank source rules."
+    if "/文件仓库/印度占星文章/" in path or path.endswith("印度占星.pdf") or path.endswith("印度占星1.pdf"):
+        return "promote_to_reference_pack_candidate", "Source-like document; candidate for reference pack after conflict arbitration."
+    return "reference_only", "Useful context, not first-order rule source."
+
+
+def _arbitrate_batch1_source(item: dict[str, Any], grade: str) -> dict[str, Any]:
+    if grade == "promote_to_reference_pack_candidate":
+        pack_decision = "reference_pack_candidate"
+        status = "batch1_arbitrated"
+        reason = (
+            "Document/PDF source lineage is clear enough for reference/source pack candidacy; "
+            "still cannot enter runtime truth until source-pack visibility tests bind it explicitly."
+        )
+    else:
+        pack_decision = "reference_only"
+        status = "batch1_arbitrated"
+        reason = "Kept as reference-only because the source is OCR-derived, training-oriented, private, or not first-order rule material."
+    return {
+        "status": status,
+        "pack_decision": pack_decision,
+        "reason": reason,
+        "runtime_truth_allowed": False,
+        "runtime_truth_reason": "Batch 1 arbitrates source-pack eligibility only; it does not promote runtime truth.",
+    }
+
+
+def build_source_grading_batch1(*, write: bool = True) -> dict[str, Any]:
+    review_report = build_extraction_review(write=False)
+    total_review_candidates = sum(1 for item in review_report["reviews"] if item["decision"] == "promote_review_candidate")
+    selected = _source_grading_batch1_items(review_report["reviews"])
+    graded_sources: list[dict[str, Any]] = []
+    for item in selected:
+        grade, reason = _source_grade(item)
+        arbitration = _arbitrate_batch1_source(item, grade)
+        graded_sources.append(
+            {
+                "path": item["path"],
+                "source_scope": item["source_scope"],
+                "suffix": item["suffix"],
+                "byte_count": item["byte_count"],
+                "sha256": item["sha256"],
+                "extraction_method": item["extraction_method"],
+                "extracted_character_count": item["extracted_character_count"],
+                "text_sha256": item.get("text_sha256"),
+                "review_decision": item["decision"],
+                "source_grade": grade,
+                "grade_reason": reason,
+                "conflict_arbitration": arbitration,
+                "pack_decision": arbitration["pack_decision"],
+                "requires_conflict_arbitration": False,
+                "requires_source_pack_visibility_test": True,
+                "runtime_truth_allowed": False,
+            }
+        )
+    grade_counts: dict[str, int] = {}
+    pack_decision_counts: dict[str, int] = {}
+    for item in graded_sources:
+        grade_counts[item["source_grade"]] = grade_counts.get(item["source_grade"], 0) + 1
+        pack_decision_counts[item["pack_decision"]] = pack_decision_counts.get(item["pack_decision"], 0) + 1
+    stored_text_payload_fields = sum(1 for item in graded_sources if "text" in item or "text_preview" in item)
+    reference_pack_ready_count = pack_decision_counts.get("reference_pack_candidate", 0)
+    report = {
+        "scope": "source-grading-batch1",
+        "status": "pass",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "mode": {
+            "runtime_truth_promotion": False,
+            "semantic_promotion": False,
+            "boundary": "Batch 1 grades extracted candidates only; no source enters runtime truth without a later source-pack test.",
+        },
+        "summary": {
+            "total_review_candidates": total_review_candidates,
+            "selected_count": len(graded_sources),
+            "graded_files": len(graded_sources),
+            "runtime_promotions": 0,
+            "stored_text_payload_fields": stored_text_payload_fields,
+        },
+        "grade_counts": dict(sorted(grade_counts.items())),
+        "pack_decision_counts": dict(sorted(pack_decision_counts.items())),
+        "conflict_arbitration": {
+            "status": "batch1_arbitrated",
+            "scope": "source_pack_eligibility_only",
+            "runtime_truth_allowed": False,
+            "reference_pack_ready_count": reference_pack_ready_count,
+            "runtime_truth_ready_count": 0,
+            "reference_pack_next_steps": [
+                "wire selected candidates into interpretation_source_inventory/source pack",
+                "add strict workflow visibility tests",
+                "keep content-level precedence below core rules until line-level rule review exists",
+            ],
+        },
+        "graded_sources": graded_sources,
+        "artifacts": {
+            "json_report": _relative(SOURCE_GRADING_BATCH1_JSON),
+            "markdown_report": _relative(SOURCE_GRADING_BATCH1_MD),
+        },
+        "title": "Source Grading Batch 1 Manifest",
+    }
+    if write:
+        _write_reports(report, json_report=SOURCE_GRADING_BATCH1_JSON, markdown_report=SOURCE_GRADING_BATCH1_MD)
     return report
 
 
@@ -964,6 +1097,8 @@ def _render_markdown(report: dict[str, Any]) -> str:
         return _render_extraction_results_markdown(report)
     if report["scope"] == "extraction-review":
         return _render_extraction_review_markdown(report)
+    if report["scope"] == "source-grading-batch1":
+        return _render_source_grading_batch1_markdown(report)
     lines = [
         f"# {report.get('title', 'Character-Level Inventory Manifest')}",
         "",
@@ -998,6 +1133,53 @@ def _render_markdown(report: dict[str, Any]) -> str:
             report["mode"]["boundary"],
             "",
             "This manifest proves indexing, hashing, and extraction-state classification. It does not by itself promote any source into the runtime truth chain.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _render_source_grading_batch1_markdown(report: dict[str, Any]) -> str:
+    lines = [
+        f"# {report.get('title', 'Source Grading Batch 1 Manifest')}",
+        "",
+        f"- status: {report['status']}",
+        f"- scope: {report['scope']}",
+        f"- generated_at: {report['generated_at']}",
+        f"- total_review_candidates: {report['summary']['total_review_candidates']}",
+        f"- selected_count: {report['summary']['selected_count']}",
+        f"- graded_files: {report['summary']['graded_files']}",
+        f"- runtime_promotions: {report['summary']['runtime_promotions']}",
+        f"- stored_text_payload_fields: {report['summary']['stored_text_payload_fields']}",
+        "",
+        "## Grade Counts",
+        "",
+    ]
+    for name, count in report["grade_counts"].items():
+        lines.append(f"- `{name}`: {count}")
+    lines.extend(
+        [
+            "",
+            "## Pack Decisions",
+            "",
+        ]
+    )
+    for name, count in report["pack_decision_counts"].items():
+        lines.append(f"- `{name}`: {count}")
+    lines.extend(
+        [
+            "",
+            "## Conflict Arbitration",
+            "",
+            f"- status: {report['conflict_arbitration']['status']}",
+            f"- scope: {report['conflict_arbitration']['scope']}",
+            f"- reference_pack_ready_count: {report['conflict_arbitration']['reference_pack_ready_count']}",
+            f"- runtime_truth_ready_count: {report['conflict_arbitration']['runtime_truth_ready_count']}",
+            f"- runtime_truth_allowed: {report['conflict_arbitration']['runtime_truth_allowed']}",
+            "",
+            "## Boundary",
+            "",
+            report["mode"]["boundary"],
             "",
         ]
     )
@@ -1120,7 +1302,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--scope",
         default="project",
-        choices=["project", "external", "extraction-queue", "extraction-results", "extraction-review"],
+        choices=[
+            "project",
+            "external",
+            "extraction-queue",
+            "extraction-results",
+            "extraction-review",
+            "source-grading-batch1",
+        ],
     )
     parser.add_argument("--no-write", action="store_true", help="Print the manifest without writing report artifacts.")
     parser.add_argument("--summary-only", action="store_true", help="Print only summary fields; still writes full artifacts unless --no-write is set.")
