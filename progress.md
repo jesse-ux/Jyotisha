@@ -752,3 +752,11 @@
 - 重点优先层已覆盖：`references/` -> reference_candidate，`references/real_case_studies/` -> real_case_calibration，`open_source_sources/rishi-ai-mcp` 与 `vedic-astro-skills` -> open_source_reference。
 - 普通研究流水账与本地草稿已降级：`docs/research` -> research_governance，`docs/research/local_drafts` -> quarantined_draft / not_truth_source。
 - 新增快照文档：`docs/research/interpretation_source_full_classification_2026_07_02.md`。
+
+## 2026-07-02T14:44:00+08:00 - priority_1 references 第一批升格审计
+
+- 从 `references/` 的 priority_1 `reference_candidate` 中挑出 30 个最像规则源头的文件，形成第一批升格审计包。
+- 新增机器可测审计 JSON：`docs/research/interpretation_source_priority1_batch1_promotion_audit_2026_07_02.json`。
+- 新增人读审计说明：`docs/research/interpretation_source_priority1_batch1_promotion_audit_2026_07_02.md`。
+- 当前处置：`promote=16`、`reference-only=6`、`obsolete=3`、`duplicate=3`、`quarantine=2`。
+- 明确边界：本批只做 audit-only 分级，不直接接入 runtime source pack；后续升格仍需调用链、冲突仲裁、可见性测试。

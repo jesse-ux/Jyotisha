@@ -1,0 +1,352 @@
+{
+  "scope": "interpretation_source_priority1_batch1_promotion_audit",
+  "status": "triaged",
+  "created_at": "2026-07-02",
+  "source_inventory_baseline": "docs/research/interpretation_source_full_classification_2026_07_02.md",
+  "runtime_effect": "none_audit_only",
+  "boundary": "This audit classifies a first batch of priority_1 references candidates. It does not directly promote files into the runtime source pack; promotion still requires source review, conflict arbitration, and focused tests.",
+  "summary": {
+    "batch_size": 30,
+    "disposition_counts": {
+      "promote": 16,
+      "reference-only": 6,
+      "obsolete": 3,
+      "duplicate": 3,
+      "quarantine": 2
+    },
+    "selection_rule": "Picked 30 files from references/ that look closest to rule-source material, while deliberately including duplicate, obsolete, and privacy-sensitive traps.",
+    "next_gate": "Only promote entries after mapping each file to a source-pack layer and adding workflow visibility tests."
+  },
+  "entries": [
+    {
+      "path": "references/argala-complete-guide.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Jaimini Argala",
+      "reason": "Contains structured Argala/Virodha Argala rules and evaluation order; this is closer to a technique rule source than a research note.",
+      "source_caution": "Mixed classical/traditional/modern source label; require conflict notes before treating scoring details as authoritative.",
+      "next_action": "Promote as a Jaimini reference layer with a source-caution field and smoke test that strict workflows can see the layer."
+    },
+    {
+      "path": "references/ashtakavarga-complete-system.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Ashtakavarga",
+      "reason": "Provides BAV/SAV concepts, scoring thresholds, and usage rules needed by timing and transit interpretation.",
+      "source_caution": "Do not override existing calibrated Ashtakavarga code or oracle artifacts without parity evidence.",
+      "next_action": "Promote as a reference layer only after linking it to existing Ashtakavarga calculation outputs."
+    },
+    {
+      "path": "references/badhaka-obstacle-planet-guide.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Badhaka",
+      "reason": "Contains ascendant-based Badhaka lord rules and interpretive constraints that are currently underrepresented in the source pack.",
+      "source_caution": "Needs functional benefic/malefic arbitration when Badhaka lord also owns auspicious houses.",
+      "next_action": "Promote behind a Badhaka source layer and add a test requiring the layer in high-rigor audits."
+    },
+    {
+      "path": "references/condition-dasha-complete.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Conditional Dashas",
+      "reason": "Catalogs conditional Dasha applicability, which is important for avoiding single-system timing claims.",
+      "source_caution": "Applicability conditions must be machine-checked before the rule is used in interpretation.",
+      "next_action": "Promote as a conditional Dasha reference; keep runtime use gated by explicit condition checks."
+    },
+    {
+      "path": "references/divisional-chart-deep-reading.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "primary_truth_candidate",
+      "technique_area": "Varga / Divisional Charts",
+      "reason": "Defines domain-specific divisional chart reading logic and directly supports D10/D2/D11/D9 high-rigor requirements.",
+      "source_caution": "Must be reconciled with existing frontend varga summaries before becoming a single truth source.",
+      "next_action": "Promote as the primary divisional-chart methodology candidate, then map quick references as duplicate/reference-only."
+    },
+    {
+      "path": "references/event_judgment_skeleton.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "primary_truth_candidate",
+      "technique_area": "Event Judgment Workflow",
+      "reason": "Matches the current strict-workflow direction: promise, activation, evidence ledger, MEVG, and confidence downgrade boundaries.",
+      "source_caution": "Workflow source only; it does not itself supply classical rule content.",
+      "next_action": "Promote as a primary workflow source after adding tests that fortune workflows expose this layer."
+    },
+    {
+      "path": "references/jaimini-complete-system.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Jaimini",
+      "reason": "Contains Karaka, Karakamsha, Chara Dasha, and Jaimini aspect material needed for non-Vimshottari cross-checks.",
+      "source_caution": "Document itself states Chara Dasha timing is partial and needs KN Rao/PVN Rao/Iranganti regression validation.",
+      "next_action": "Promote with a partial-timing boundary; do not use it to claim Chara Dasha closure."
+    },
+    {
+      "path": "references/kp-astrology-complete-system.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "KP Astrology",
+      "reason": "A complete KP system reference is useful for event timing cross-checks and source-pack awareness.",
+      "source_caution": "KP is a separate school; it must be labeled as KP reference, not silently merged into Parashari/Jaimini logic.",
+      "next_action": "Promote as a separate KP reference layer with school-boundary metadata."
+    },
+    {
+      "path": "references/planetary-dignity-complete-reference.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "primary_truth_candidate",
+      "technique_area": "Planetary Dignity",
+      "reason": "Contains core dignity, exaltation/debilitation, moolatrikona, and friendship rules used across all interpretive domains.",
+      "source_caution": "Disputed dignity ranges must be represented as conflicts rather than flattened.",
+      "next_action": "Promote as a core rule-source candidate with conflict metadata for disputed traditions."
+    },
+    {
+      "path": "references/pratyantar-calculation-guide.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Sub-period Dashas",
+      "reason": "Gives calculation logic for Pratyantar/Sookshma/Prana layers needed for month-level or event-level timing checks.",
+      "source_caution": "Calculation formulas must defer to tested code and oracle parity; this file is explanatory until validated.",
+      "next_action": "Promote as a calculation reference and link to Dasha calculator tests."
+    },
+    {
+      "path": "references/retrograde-combustion-war-guide.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "primary_truth_candidate",
+      "technique_area": "Planetary Conditions",
+      "reason": "Retrograde, combustion, and planetary war rules are cross-domain modifiers and should be visible to every serious interpretation workflow.",
+      "source_caution": "Combustion thresholds vary by tradition; rule output must preserve threshold source.",
+      "next_action": "Promote as a planetary-condition source after adding source-pack exposure tests."
+    },
+    {
+      "path": "references/shadbala-complete-methodology.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Shadbala",
+      "reason": "Provides Shadbala dimensions and interpretive boundaries needed for high-rigor raw-data delivery.",
+      "source_caution": "The file itself marks absolute calibration as partial; use as methodology, not as proof of numeric closure.",
+      "next_action": "Promote with an explicit calibration-boundary field and pair with oracle evidence."
+    },
+    {
+      "path": "references/tajika-yoga-complete-guide.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Tajika / Varshaphala",
+      "reason": "A complete Tajika yoga reference is needed for annual prediction work and 2027-2030 year-window analysis.",
+      "source_caution": "Current Tajika implementation remains target-set closed rather than full traditional annual prediction closure.",
+      "next_action": "Promote as a Tajika reference layer without claiming annual prediction closure."
+    },
+    {
+      "path": "references/transit-multi-reference-guide.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "primary_truth_candidate",
+      "technique_area": "Transit",
+      "reason": "Codifies multi-reference transit evaluation from Lagna, Moon, AL, and divisional anchors, preventing single-anchor transit claims.",
+      "source_caution": "Transit interpretation still needs MEVG and real-case calibration for outcome language.",
+      "next_action": "Promote as a primary transit methodology source and wire into technique audit visibility."
+    },
+    {
+      "path": "references/vimshottari_dasha_guide.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "primary_truth_candidate",
+      "technique_area": "Vimshottari Dasha",
+      "reason": "Core Vimshottari Dasha guide; required for timing baseline and for explaining Dasha boundaries.",
+      "source_caution": "Must not be used alone for high-rigor timing; pair with Narayana/Jaimini where required.",
+      "next_action": "Promote as a primary Dasha methodology source with dual-Dasha boundary text."
+    },
+    {
+      "path": "references/prediction-boundary-protocol.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "promote",
+      "promotion_layer": "primary_truth_candidate",
+      "technique_area": "Prediction Boundaries",
+      "reason": "Provides explicit promise-vs-activation, confidence, and precision boundaries that should govern user-facing forecasts.",
+      "source_caution": "Modern synthesis; it is a governance boundary, not a classical rule source.",
+      "next_action": "Promote as a boundary/governance source and require audit tables to reference it when downgrading claims."
+    },
+    {
+      "path": "references/dasa-convergence-methodology.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "reference-only",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Dasha Convergence",
+      "reason": "Useful methodology, but parts are older than the current strict dual-Dasha and oracle-closure direction.",
+      "source_caution": "Contains historical statements about Narayana/PDF/software availability that require reconciliation.",
+      "next_action": "Keep as reference-only until reconciled against current multi-Dasha convergence protocol and Narayana status."
+    },
+    {
+      "path": "references/dasha-transit-method.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "reference-only",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Dasha + Transit",
+      "reason": "Good explanatory bridge between Dasha and transit, but it overlaps newer event-judgment and transit multi-reference sources.",
+      "source_caution": "Examples and wording may predate MEVG and real-case calibration gates.",
+      "next_action": "Use as supporting reference after primary workflow sources are promoted."
+    },
+    {
+      "path": "references/multi-dasha-convergence-protocol.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "reference-only",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Multi-Dasha Convergence",
+      "reason": "Valuable modern convergence framework, but it is explicitly derived and should not outrank classical or validated engine outputs.",
+      "source_caution": "Treat as a governance method; do not treat weighted scores as traditional authority.",
+      "next_action": "Keep as reference-only until score weights are backed by benchmark tests."
+    },
+    {
+      "path": "references/varga-divisional-charts-quick-reference.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "reference-only",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Varga Quick Reference",
+      "reason": "Useful quick map of divisional chart domains, but less source-like than the deeper divisional reading guide.",
+      "source_caution": "Quick references can omit conflict conditions and should not be the sole truth layer.",
+      "next_action": "Keep as operator-facing reference after the deep divisional guide is promoted."
+    },
+    {
+      "path": "references/yoga-strength-scoring-system.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "reference-only",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Yoga Scoring",
+      "reason": "The scoring framework is useful for consistency, but it is a modern derived layer rather than a primary textual authority.",
+      "source_caution": "Scores need benchmark calibration and must not overwrite named-yoga detection rules.",
+      "next_action": "Keep as reference-only until benchmark-backed weights exist."
+    },
+    {
+      "path": "references/comprehensive-reading-workflow.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "reference-only",
+      "promotion_layer": "reference_layer_candidate",
+      "technique_area": "Reading Workflow",
+      "reason": "Broad workflow document that can guide reader structure, but it is not itself a rule-source file.",
+      "source_caution": "May duplicate newer strict workflow and event judgment skeleton requirements.",
+      "next_action": "Keep as reference-only; extract only non-duplicative checklist items in a later batch."
+    },
+    {
+      "path": "references/varga-system-quick-reference.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "duplicate",
+      "promotion_layer": "not_truth_source",
+      "technique_area": "Varga Quick Reference",
+      "reason": "Overlaps the deeper divisional chart guide and the other varga quick reference.",
+      "source_caution": "Duplicate quick references are high-risk for inconsistent domain maps.",
+      "next_action": "Do not promote; compare against the deep divisional guide and merge only unique deltas."
+    },
+    {
+      "path": "references/yoga-list-chinese.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "duplicate",
+      "promotion_layer": "not_truth_source",
+      "technique_area": "Yoga List",
+      "reason": "A Chinese yoga list duplicates existing yoga rule assets and frontend yoga detail files.",
+      "source_caution": "List-only material can drift from machine-readable yoga rules.",
+      "next_action": "Use only as translation/reference comparison after `references/yoga_rules.json` remains canonical."
+    },
+    {
+      "path": "references/analysis-full-reading-v4.0.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "duplicate",
+      "promotion_layer": "not_truth_source",
+      "technique_area": "Full Reading Workflow",
+      "reason": "Historical full-reading workflow overlaps the current source-pack and strict workflow architecture.",
+      "source_caution": "Versioned reading docs can silently reintroduce old output standards.",
+      "next_action": "Do not promote directly; compare only for missing checklist deltas."
+    },
+    {
+      "path": "references/analysis-full-reading-v1.8-review.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "obsolete",
+      "promotion_layer": "not_truth_source",
+      "technique_area": "Historical Review",
+      "reason": "Older review document superseded by later workflow and strict source-pack governance.",
+      "source_caution": "Using it as truth could roll back MEVG/source-pack improvements.",
+      "next_action": "Keep as historical context only."
+    },
+    {
+      "path": "references/audit-skill-full-test-2026-05-04.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "obsolete",
+      "promotion_layer": "not_truth_source",
+      "technique_area": "Historical Audit",
+      "reason": "Test/audit snapshot from an earlier skill state; it is evidence history rather than a rule source.",
+      "source_caution": "Historical pass/fail claims can conflict with current July source inventory.",
+      "next_action": "Archive as audit history; do not expose in interpretation source pack."
+    },
+    {
+      "path": "references/feature-gap-matrix-2026.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "obsolete",
+      "promotion_layer": "not_truth_source",
+      "technique_area": "Gap Matrix",
+      "reason": "A gap matrix is useful planning history but is not a stable rule or interpretive source.",
+      "source_caution": "Older gap claims may already be closed by later commits.",
+      "next_action": "Use only when researching historical priorities."
+    },
+    {
+      "path": "references/kp-practical-event-timing.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "quarantine",
+      "promotion_layer": "not_truth_source",
+      "technique_area": "KP Event Timing",
+      "reason": "The file is a privacy-protected placeholder whose substantive content was removed.",
+      "source_caution": "Do not infer rules from removed private consultation material.",
+      "next_action": "Keep quarantined; rebuild KP event timing only from public sources or synthetic smoke cases."
+    },
+    {
+      "path": "references/consultation-case-library.md",
+      "inventory_priority": "priority_1",
+      "inventory_classification": "reference_candidate",
+      "disposition": "quarantine",
+      "promotion_layer": "not_truth_source",
+      "technique_area": "Consultation Cases",
+      "reason": "A case-library index can support real-case calibration, but it is not a rules source and may contain sourced-case/privacy boundaries.",
+      "source_caution": "Requires source licensing, privacy review, and MEVG evidence grading before any runtime use.",
+      "next_action": "Keep outside source pack; later classify under real-case calibration rather than interpretation truth."
+    }
+  ]
+}
