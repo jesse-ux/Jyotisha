@@ -190,3 +190,70 @@ def test_vedastro_orchestrator_surfaces_daily_windows_by_domain(monkeypatch) -> 
 
     assert result["daily_windows_by_domain"]["career"][0]["date"] == "2026-07-18"
     assert result["top_daily_window_by_domain"]["career"]["score"] == 5
+
+
+def test_vedastro_orchestrator_passes_non_core_themes_to_official_catalog(monkeypatch) -> None:
+    from scripts import vedastro_evidence_orchestrator as orchestrator
+
+    seen_snapshot_cases = []
+    seen_scan_domains = []
+
+    def fake_snapshot(case, *, case_id="user_chart"):
+        seen_snapshot_cases.append(case)
+        return {
+            "status": "partial",
+            "available": True,
+            "section_statuses": {},
+            "source_metadata": {
+                "official_full_capability_catalog": {
+                    "status": "partial",
+                    "summary": {"catalog_method_count": 641, "unknown_method_count": 0},
+                    "domain_routing": {
+                        "health": {"method_count": 3, "auto_method_count": 1, "high_priority_methods": ["HealthProblemEvent"]},
+                    },
+                    "dynamic_selection": {
+                        "health": {
+                            "requested_theme": "health",
+                            "selected_methods": [
+                                {
+                                    "method": "HealthProblemEvent",
+                                    "citation_id": "vedastro:health:HealthProblemEvent",
+                                    "execution_policy": "auto",
+                                }
+                            ],
+                            "report_reference": {
+                                "theme": "health",
+                                "citation_ids": ["vedastro:health:HealthProblemEvent"],
+                                "auto_count": 1,
+                            },
+                        }
+                    },
+                },
+            },
+        }
+
+    def fake_scan(case, domain, start_date, end_date, case_id):
+        seen_scan_domains.append(domain)
+        return {
+            "status": "unsupported_range_scan_domain",
+            "available": False,
+            "reason": f"Unsupported range scan domain: {domain}",
+            "event_count": 0,
+            "evidence_ledger": [],
+        }
+
+    monkeypatch.setattr(orchestrator, "run_official_full_snapshot_for_case", fake_snapshot)
+    monkeypatch.setattr(orchestrator, "run_range_scan_for_case", fake_scan)
+
+    result = orchestrator.orchestrate_vedastro_evidence(
+        {"year": REDACTED_YEAR, "month": 4, "day": 17, "hour": 14, "minute": 49, "lat": 36.42, "lon": 114.2, "tz": 8},
+        route="health",
+        reference_date="2026-06-30",
+    )
+
+    assert seen_snapshot_cases[0]["themes"] == ["health"]
+    assert seen_scan_domains == ["health"]
+    assert result["source_metadata"]["official_report_references"]["health"]["citation_ids"] == [
+        "vedastro:health:HealthProblemEvent"
+    ]
+    assert result["source_metadata"]["domain_statuses"]["health"] == "unsupported_range_scan_domain"

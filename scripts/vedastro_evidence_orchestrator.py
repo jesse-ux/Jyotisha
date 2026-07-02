@@ -31,6 +31,12 @@ ROUTE_DOMAIN_MAP = {
     "career": ["career"],
     "finance": ["wealth"],
     "wealth": ["wealth"],
+    "health": ["health"],
+    "education": ["education"],
+    "property": ["property"],
+    "children": ["children"],
+    "migration": ["migration"],
+    "prashna": ["prashna"],
     "rectification": ["marriage", "career", "wealth"],
     "timing": ["career", "marriage", "wealth"],
     "general": ["career", "marriage", "wealth"],
@@ -63,6 +69,36 @@ ROUTE_THEME_REQUIREMENTS = {
         "route": "finance",
         "requires_dual_dasha": True,
         "required_local_supplements": ["wealth_structure_explainer", "narayana_dasha", "functional_benefic_malefic"],
+    },
+    "health": {
+        "route": "health",
+        "requires_dual_dasha": True,
+        "required_local_supplements": ["d30_health_axis", "sixth_eighth_twelfth_houses", "functional_benefic_malefic"],
+    },
+    "education": {
+        "route": "education",
+        "requires_dual_dasha": True,
+        "required_local_supplements": ["d24_learning_axis", "fifth_ninth_houses", "functional_benefic_malefic"],
+    },
+    "property": {
+        "route": "property",
+        "requires_dual_dasha": True,
+        "required_local_supplements": ["d4_property_axis", "fourth_house", "functional_benefic_malefic"],
+    },
+    "children": {
+        "route": "children",
+        "requires_dual_dasha": True,
+        "required_local_supplements": ["d7_children_axis", "fifth_house", "functional_benefic_malefic"],
+    },
+    "migration": {
+        "route": "migration",
+        "requires_dual_dasha": True,
+        "required_local_supplements": ["d4_d9_foreign_axis", "ninth_twelfth_houses", "functional_benefic_malefic"],
+    },
+    "prashna": {
+        "route": "prashna",
+        "requires_dual_dasha": False,
+        "required_local_supplements": ["prashna_chart", "question_context_required", "functional_benefic_malefic"],
     },
     "overview": {
         "route": "overview",
@@ -120,6 +156,7 @@ def orchestrate_vedastro_evidence(
     window_start, window_end = (start_date, end_date) if start_date and end_date else _default_window(reference_date)
     case = _normalize_case(birth_payload)
     case["reference_date"] = str(reference_date or window_start)[:10]
+    case["themes"] = list(domains)
     domain_reports: dict[str, Any] = {}
     evidence_ledger: list[dict[str, Any]] = []
     top_events_by_domain: dict[str, Any] = {}

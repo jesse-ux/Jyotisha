@@ -2417,6 +2417,7 @@ def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_
         "reference_date": case.get("reference_date") or case.get("today") or case.get("transit_date") or case.get("current_date"),
         "dasha_levels": case.get("dasha_levels"),
         "dasha_precision_hours": case.get("dasha_precision_hours"),
+        "themes": case.get("themes") or case.get("theme"),
     }
     manifest = _official_full_snapshot_manifest(user_case, case_id)
     budget_started_at = time.monotonic()
@@ -2441,7 +2442,8 @@ def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_
         and official_python_bundle.get("status") != "official_snapshot_budget_exhausted"
     ):
         official_python_bundle = _try_official_python_bridge_snapshot_bundle(user_case)
-    if time.monotonic() - budget_started_at < _timeout_seconds():
+    budget_exhausted = official_python_bundle.get("status") == "official_snapshot_budget_exhausted"
+    if not budget_exhausted and time.monotonic() - budget_started_at < _timeout_seconds():
         official_full_capability_catalog = _try_official_full_capability_catalog_bundle(user_case)
     else:
         official_full_capability_catalog = {
@@ -2470,7 +2472,6 @@ def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_
     )
     endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
     network_enabled = os.environ.get(ALLOW_NETWORK_ENV, "").strip().lower() in {"1", "true", "yes"}
-    budget_exhausted = official_python_bundle.get("status") == "official_snapshot_budget_exhausted"
     if budget_exhausted and endpoint and network_enabled and _is_official_public_endpoint(endpoint):
         result = {
             "backend": "vedastro_service_adapter_candidate",

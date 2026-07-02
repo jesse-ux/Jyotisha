@@ -22,7 +22,21 @@ CATALOG_STUB_ENV = "VEDASTRO_OFFICIAL_CAPABILITY_CATALOG_STUB"
 PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu", "Ascendant"]
 HOUSES = [f"House{i}" for i in range(1, 13)]
 DEFAULT_SIGIL_SAMPLE_LIMIT = int(os.environ.get("VEDASTRO_FULL_CATALOG_SAMPLE_LIMIT", "0") or 0)
-DOMAIN_ORDER = ["career", "marriage", "wealth", "rectification", "timing", "general"]
+DOMAIN_ORDER = [
+    "career",
+    "marriage",
+    "wealth",
+    "health",
+    "education",
+    "property",
+    "children",
+    "migration",
+    "prashna",
+    "rectification",
+    "timing",
+    "general",
+    "unknown",
+]
 DEFAULT_DYNAMIC_THEMES = ["career", "marriage", "wealth", "rectification", "timing"]
 POLICY_BUCKETS = {
     "needs_user_context": "needs_user_context_methods",
@@ -74,7 +88,25 @@ def _domain_routing_for_method(method: str, capability: dict[str, Any], paramete
     if any(token in text for token in ("wealth", "money", "finance", "income", "gain", "house2", "house11", "ashtakvarga")):
         domains.add("wealth")
         priority = "high" if priority == "low" else priority
-    if any(token in text for token in ("birth", "rectification", "appearance", "body", "height", "shape", "complexion")):
+    if any(token in text for token in ("health", "illness", "disease", "medical", "medicine", "hospital", "accident", "injury", "surgery")):
+        domains.add("health")
+        priority = "high" if any(token in text for token in ("health", "disease", "illness", "accident")) else priority
+    if any(token in text for token in ("education", "school", "college", "degree", "study", "studies", "learning", "exam")):
+        domains.add("education")
+        priority = "high" if any(token in text for token in ("education", "degree", "exam")) else priority
+    if any(token in text for token in ("property", "vehicle", "home", "house4", "house 4", "land", "realestate", "real estate", "residence")):
+        domains.add("property")
+        priority = "high" if any(token in text for token in ("property", "vehicle", "land")) else priority
+    if any(token in text for token in ("children", "child", "progeny", "putra", "pregnancy", "fertility")):
+        domains.add("children")
+        priority = "high" if any(token in text for token in ("children", "progeny", "pregnancy")) else priority
+    if any(token in text for token in ("foreign", "travel", "migration", "relocation", "abroad", "immigration", "journey")):
+        domains.add("migration")
+        priority = "high" if any(token in text for token in ("migration", "relocation", "abroad")) else priority
+    if any(token in text for token in ("prashna", "horary", "questiontext", "question text", "muhurta")):
+        domains.add("prashna")
+        priority = "high" if any(token in text for token in ("prashna", "horary")) else priority
+    if any(token in text for token in ("rectification", "appearance", "body", "height", "shape", "complexion")):
         domains.add("rectification")
         if priority == "low":
             priority = "medium"
@@ -82,9 +114,6 @@ def _domain_routing_for_method(method: str, capability: dict[str, Any], paramete
         domains.update({"career", "marriage", "wealth"})
         if priority == "low":
             priority = "medium"
-
-    if not domains:
-        domains.add("general")
 
     if parameter_strategy in {"requires_user_context", "requires_user_text", "requires_rectification_profile"}:
         execution_policy = {
@@ -97,12 +126,44 @@ def _domain_routing_for_method(method: str, capability: dict[str, Any], paramete
     else:
         execution_policy = "auto"
 
+    if not domains:
+        domains.add("unknown" if execution_policy == "blocked" else "general")
+
+    blocked_reason = None
+    if execution_policy == "blocked":
+        blocked_reason = parameter_strategy
+    elif execution_policy == "needs_user_context":
+        blocked_reason = "requires_additional_user_context"
+    elif execution_policy == "needs_user_text":
+        blocked_reason = "requires_user_text_or_question"
+    elif execution_policy == "needs_rectification_profile":
+        blocked_reason = "requires_rectification_profile"
+
     ordered_domains = [domain for domain in DOMAIN_ORDER if domain in domains]
     return {
         "domains": ordered_domains,
         "execution_policy": execution_policy,
         "priority": priority,
+        "adjudicator_use": _adjudicator_use(execution_policy, priority),
+        "confidence_role": _confidence_role(execution_policy, priority),
+        "blocked_reason": blocked_reason,
     }
+
+
+def _adjudicator_use(execution_policy: str, priority: str) -> str:
+    if execution_policy == "auto":
+        return "primary_candidate" if priority == "high" else "secondary_context"
+    if execution_policy in {"needs_user_context", "needs_user_text", "needs_rectification_profile"}:
+        return "secondary_context"
+    return "not_used"
+
+
+def _confidence_role(execution_policy: str, priority: str) -> str:
+    if execution_policy == "auto":
+        return "confidence_support" if priority == "high" else "background_reference"
+    if execution_policy in {"needs_user_context", "needs_user_text", "needs_rectification_profile"}:
+        return "confidence_cap_until_context_available"
+    return "blocked"
 
 
 def _build_domain_routing(method_statuses: dict[str, Any]) -> dict[str, Any]:
@@ -161,6 +222,13 @@ def _requested_dynamic_themes(payload: dict[str, Any]) -> list[str]:
         "婚恋": "marriage",
         "婚姻": "marriage",
         "财富": "wealth",
+        "健康": "health",
+        "教育": "education",
+        "房产": "property",
+        "子女": "children",
+        "迁移": "migration",
+        "问卜": "prashna",
+        "卜卦": "prashna",
         "校时": "rectification",
         "应期": "timing",
     }
@@ -217,6 +285,9 @@ def _capability_reference(method: str, status: dict[str, Any], theme: str) -> di
         "status": status.get("status"),
         "execution_policy": status.get("execution_policy"),
         "priority": status.get("priority"),
+        "adjudicator_use": status.get("adjudicator_use"),
+        "confidence_role": status.get("confidence_role"),
+        "blocked_reason": status.get("blocked_reason"),
         "domains": status.get("domains") or [],
         "bucket": status.get("bucket"),
         "signature": status.get("signature"),
@@ -537,7 +608,7 @@ def _full_catalog_method_payload(method: str, capability: dict[str, Any], case: 
         return None, "requires_user_context"
     if any(name in lowered for name in ("bodyheight", "bodyshape", "hair", "lips", "nose", "complexion", "faceshape", "constitution", "personality")):
         return None, "requires_rectification_profile"
-    if any(name in lowered for name in ("rawtextdata", "birthdatarawtext", "inputtext", "textinput", "query", "fullname", "personfullname", "address", "locationname", "ipaddress")):
+    if any(name in lowered for name in ("rawtextdata", "birthdatarawtext", "inputtext", "textinput", "query", "questiontext", "question", "fullname", "personfullname", "address", "locationname", "ipaddress")):
         return None, "requires_user_text"
     return None, "unsupported_signature"
 
@@ -624,6 +695,18 @@ def run_full_capability_catalog(birth_payload: dict[str, Any]) -> dict[str, Any]
     domain_routing = _build_domain_routing(method_statuses)
     requested_themes = _requested_dynamic_themes(birth_payload)
     dynamic_selection = _build_dynamic_selection(method_statuses, domain_routing, requested_themes)
+    unknown_method_count = sum(
+        1
+        for status in method_statuses.values()
+        if isinstance(status, dict) and status.get("domains") == ["unknown"]
+    )
+    misrouted_general_method_count = sum(
+        1
+        for status in method_statuses.values()
+        if isinstance(status, dict)
+        and "general" in (status.get("domains") or [])
+        and len(status.get("domains") or []) > 1
+    )
 
     return {
         "runner": "vedastro_official_capability_runner",
@@ -639,6 +722,8 @@ def run_full_capability_catalog(birth_payload: dict[str, Any]) -> dict[str, Any]
             "ok_method_count": ok_count,
             "unsupported_method_count": unsupported_count,
             "blocked_method_count": blocked_count,
+            "unknown_method_count": unknown_method_count,
+            "misrouted_general_method_count": misrouted_general_method_count,
             "sample_limit": sample_limit,
             "domain_routing_count": len(domain_routing),
             "dynamic_selection_theme_count": len(dynamic_selection),

@@ -166,7 +166,7 @@ def test_vedastro_official_snapshot_stops_when_foreground_budget_is_exhausted(mo
     assert result["status"] == "official_snapshot_budget_exhausted"
     assert result["available"] is False
     assert result["source_metadata"]["official_python_bundle"]["status"] == "official_snapshot_budget_exhausted"
-    assert result["source_metadata"]["official_full_capability_catalog"]["status"] == "official_full_capability_catalog_timeout"
+    assert result["source_metadata"]["official_full_capability_catalog"]["status"] == "official_full_capability_catalog_skipped_budget_exhausted"
 
 
 def test_vedastro_official_snapshot_skips_bridge_after_runner_consumes_budget(monkeypatch) -> None:
@@ -226,7 +226,7 @@ def test_vedastro_official_snapshot_skips_bridge_after_runner_consumes_budget(mo
     assert bridge_called["value"] is False
     assert result["status"] == "official_snapshot_budget_exhausted"
     assert result["source_metadata"]["official_python_bundle"]["status"] == "official_snapshot_budget_exhausted"
-    assert result["source_metadata"]["official_full_capability_catalog"]["summary"]["catalog_method_count"] == 641
+    assert result["source_metadata"]["official_full_capability_catalog"]["status"] == "official_full_capability_catalog_skipped_budget_exhausted"
 
 
 def test_vedastro_official_snapshot_budget_does_not_mask_mock_rest_endpoint(monkeypatch) -> None:
