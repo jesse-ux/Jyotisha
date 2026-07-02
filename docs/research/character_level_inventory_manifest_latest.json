@@ -1,7 +1,7 @@
 {
   "scope": "project",
   "status": "pass",
-  "generated_at": "2026-07-02T09:11:51.839696+00:00",
+  "generated_at": "2026-07-02T09:23:01.280161+00:00",
   "mode": {
     "heavy_ocr": false,
     "whole_machine_scan": false,
@@ -17,7 +17,7 @@
     "AGENTS.md"
   ],
   "summary": {
-    "total_files": 1073,
+    "total_files": 1075,
     "unhashed_files": 0,
     "unclassified_files": 0,
     "unknown_extraction_status": 0,
@@ -28,12 +28,12 @@
       "quarantined_draft": 93,
       "real_case_calibration": 5,
       "reference_candidate": 180,
-      "research_governance": 443
+      "research_governance": 445
     },
     "extraction_status_counts": {
       "binary_indexed": 34,
       "image_ocr_queued": 3,
-      "text_indexed": 1036
+      "text_indexed": 1038
     }
   },
   "root_summary": {
@@ -46,8 +46,8 @@
       "bytes": 43187
     },
     "docs/research": {
-      "files": 536,
-      "bytes": 2901473
+      "files": 538,
+      "bytes": 2955810
     },
     "references": {
       "files": 236,
@@ -5173,7 +5173,7 @@
       "path": "docs/research/character_level_external_manifest_latest.json",
       "suffix": ".json",
       "byte_count": 666472,
-      "sha256": "244465beREDACTED_TIMEe81a2c8b3abac4f41e28bd55ce9f42f3f203d6574c52617dcfd9",
+      "sha256": "eb5243158ce7a2fbfbdedddf4cdaea2fb5ad867042b6492f5ed5449a65abb6ca",
       "extraction_status": "text_indexed",
       "character_count": 661666,
       "line_count": 12446,
@@ -5187,7 +5187,7 @@
       "path": "docs/research/character_level_external_manifest_latest.md",
       "suffix": ".md",
       "byte_count": 1280,
-      "sha256": "71cc5b027ea056c23ce1d5d1cda8921eeade065a8cb003910ea44d2a1165e642",
+      "sha256": "3a371858f58ddf1f040e161bb63fd764ae079a1a46d931baab9fbb4478ca64a3",
       "extraction_status": "text_indexed",
       "character_count": 1272,
       "line_count": 47,
@@ -5201,7 +5201,7 @@
       "path": "docs/research/character_level_extraction_queue_latest.json",
       "suffix": ".json",
       "byte_count": 31649,
-      "sha256": "cbfc03eee31d16cc3c796728cf34504c6eaa0722c5e42dd2f7d2ec1da966c5ef",
+      "sha256": "41fd28ba9ef0df29fbeb017830e2e81fbe7d86e6e2e53090c0d873cbab51d823",
       "extraction_status": "text_indexed",
       "character_count": 30151,
       "line_count": 758,
@@ -5215,10 +5215,38 @@
       "path": "docs/research/character_level_extraction_queue_latest.md",
       "suffix": ".md",
       "byte_count": 633,
-      "sha256": "6a45bb22f9f44d248c6e8ff71d74949180eb3eba537cb42080d15fef88395725",
+      "sha256": "21c0bf36f66edda5f1a7b941ea12c508d0851ebf79a24cd882332e71d73ae750",
       "extraction_status": "text_indexed",
       "character_count": 633,
       "line_count": 27,
+      "decode_replacement_count": 0,
+      "classification": "research_governance",
+      "priority": "priority_3",
+      "promotion_status": "governance_or_history",
+      "reason": "Research history or governance record; index separately from rule truth."
+    },
+    "docs/research/character_level_extraction_results_latest.json": {
+      "path": "docs/research/character_level_extraction_results_latest.json",
+      "suffix": ".json",
+      "byte_count": 53548,
+      "sha256": "bda3e585b7cb3e9ca0147b97e7186d56a8adf64ed4c46cc78d7a0d4b2b0f4acb",
+      "extraction_status": "text_indexed",
+      "character_count": 52050,
+      "line_count": 1227,
+      "decode_replacement_count": 0,
+      "classification": "research_governance",
+      "priority": "priority_3",
+      "promotion_status": "governance_or_history",
+      "reason": "Research history or governance record; index separately from rule truth."
+    },
+    "docs/research/character_level_extraction_results_latest.md": {
+      "path": "docs/research/character_level_extraction_results_latest.md",
+      "suffix": ".md",
+      "byte_count": 789,
+      "sha256": "d0169690fb8b8d5f4438d1628b93b5cf86f76f2af97987eb3a4649370093d1c4",
+      "extraction_status": "text_indexed",
+      "character_count": 789,
+      "line_count": 34,
       "decode_replacement_count": 0,
       "classification": "research_governance",
       "priority": "priority_3",
@@ -5229,7 +5257,7 @@
       "path": "docs/research/character_level_inventory_manifest_latest.json",
       "suffix": ".json",
       "byte_count": 721667,
-      "sha256": "aba3169d10fe86f02dfed264b150afb84473994225b2a62a36b720f485ad1a41",
+      "sha256": "de2aac78f33cb27575bac5e9f6f0a04e1655b8655b851fff397a8641ebc96c71",
       "extraction_status": "text_indexed",
       "character_count": 721117,
       "line_count": 15090,
@@ -5243,7 +5271,7 @@
       "path": "docs/research/character_level_inventory_manifest_latest.md",
       "suffix": ".md",
       "byte_count": 1090,
-      "sha256": "d088bb6312805a0f78506af37c2d32098e97af635eb3eed707a4943b75dae2ae",
+      "sha256": "e63d29e5ef20dab395ea86d4dddc4e41edab6e8e3019caef4b3fd31197e46a72",
       "extraction_status": "text_indexed",
       "character_count": 1090,
       "line_count": 44,

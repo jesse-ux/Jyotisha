@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,6 +25,8 @@ EXTERNAL_REPORT_JSON = ROOT / "docs" / "research" / "character_level_external_ma
 EXTERNAL_REPORT_MD = ROOT / "docs" / "research" / "character_level_external_manifest_latest.md"
 EXTRACTION_QUEUE_JSON = ROOT / "docs" / "research" / "character_level_extraction_queue_latest.json"
 EXTRACTION_QUEUE_MD = ROOT / "docs" / "research" / "character_level_extraction_queue_latest.md"
+EXTRACTION_RESULTS_JSON = ROOT / "docs" / "research" / "character_level_extraction_results_latest.json"
+EXTRACTION_RESULTS_MD = ROOT / "docs" / "research" / "character_level_extraction_results_latest.md"
 
 PROJECT_SCAN_ROOTS = [
     "references",
@@ -425,6 +428,8 @@ def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, A
         }
     elif scope == "extraction-queue":
         return build_extraction_queue(write=write)
+    elif scope == "extraction-results":
+        return build_extraction_results(write=write)
     else:
         raise ValueError(f"Unsupported scope: {scope}")
 
@@ -458,6 +463,162 @@ def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, A
     }
     if write:
         _write_reports(report, json_report=json_report, markdown_report=markdown_report)
+    return report
+
+
+def _hash_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _extract_docx_text(path: Path) -> tuple[str, str | None]:
+    try:
+        from docx import Document
+
+        document = Document(str(path))
+        paragraphs = [paragraph.text for paragraph in document.paragraphs]
+        table_text: list[str] = []
+        for table in document.tables:
+            for row in table.rows:
+                table_text.append("\t".join(cell.text for cell in row.cells))
+        return "\n".join(paragraphs + table_text), None
+    except Exception as exc:  # pragma: no cover - exercised by real files.
+        return "", f"{type(exc).__name__}: {exc}"
+
+
+def _extract_pdf_text(path: Path) -> tuple[str, str, str | None]:
+    try:
+        import pdfplumber
+
+        parts: list[str] = []
+        with pdfplumber.open(str(path)) as pdf:
+            for page in pdf.pages:
+                parts.append(page.extract_text() or "")
+        text = "\n".join(parts)
+        if text.strip():
+            return text, "pdfplumber", None
+    except Exception as exc:
+        pdfplumber_error = f"{type(exc).__name__}: {exc}"
+    else:
+        pdfplumber_error = None
+    try:
+        from pypdf import PdfReader
+
+        reader = PdfReader(str(path))
+        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        return text, "pypdf", None
+    except Exception as exc:  # pragma: no cover - depends on local PDF shape.
+        errors = "; ".join(error for error in [pdfplumber_error, f"{type(exc).__name__}: {exc}"] if error)
+        return "", "pypdf", errors
+
+
+def _extract_image_text(path: Path) -> tuple[str, str, str | None]:
+    if not shutil.which("tesseract"):
+        return "", "pytesseract", "tesseract executable not found"
+    try:
+        from PIL import Image
+        import pytesseract
+
+        with Image.open(path) as image:
+            return pytesseract.image_to_string(image, lang="chi_sim+eng"), "pytesseract", None
+    except Exception as exc:  # pragma: no cover - depends on local OCR install/languages.
+        return "", "pytesseract", f"{type(exc).__name__}: {exc}"
+
+
+def _post_extraction_classification(item: dict[str, Any]) -> str:
+    path = str(item["path"])
+    if "/Desktop/" in path or "/WorkBuddy/" in path:
+        return "extracted_private_reference_only"
+    if item["classification"] in {"external_book_or_document", "reference_candidate"}:
+        return "extracted_candidate_for_review"
+    return "extracted_reference_only"
+
+
+def _extract_queued_item(item: dict[str, Any]) -> dict[str, Any]:
+    path = Path(item["path"])
+    status = item["extraction_status"]
+    if status == "document_text_extraction_queued" and path.suffix.lower() == ".docx":
+        text, error = _extract_docx_text(path)
+        method = "docx"
+    elif status == "pdf_text_extraction_queued":
+        text, method, error = _extract_pdf_text(path)
+    elif status == "image_ocr_queued":
+        text, method, error = _extract_image_text(path)
+        if error and "tesseract executable not found" in error:
+            return {
+                **item,
+                "extraction_result": "ocr_blocked_missing_engine",
+                "extraction_method": method,
+                "blocked_reason": error,
+                "extracted_character_count": 0,
+                "extracted_line_count": 0,
+                "text_sha256": None,
+                "post_extraction_classification": "extracted_reference_only",
+            }
+    else:
+        text = ""
+        method = "unsupported"
+        error = "unsupported extraction target"
+
+    normalized = text or ""
+    if error and not normalized.strip():
+        result = "extraction_failed"
+    elif normalized.strip():
+        result = "text_extracted"
+    else:
+        result = "text_empty"
+    return {
+        **item,
+        "extraction_result": result,
+        "extraction_method": method,
+        "blocked_reason": error,
+        "extracted_character_count": len(normalized),
+        "extracted_line_count": normalized.count("\n") + (1 if normalized else 0),
+        "text_sha256": _hash_text(normalized) if normalized else None,
+        "post_extraction_classification": _post_extraction_classification(item),
+    }
+
+
+def build_extraction_results(*, write: bool = True) -> dict[str, Any]:
+    queue_report = build_extraction_queue(write=False)
+    results = [_extract_queued_item(item) for item in queue_report["queue"]]
+    result_counts: dict[str, int] = {}
+    method_counts: dict[str, int] = {}
+    classification_counts: dict[str, int] = {}
+    for item in results:
+        result_counts[item["extraction_result"]] = result_counts.get(item["extraction_result"], 0) + 1
+        method_counts[item["extraction_method"]] = method_counts.get(item["extraction_method"], 0) + 1
+        classification_counts[item["post_extraction_classification"]] = (
+            classification_counts.get(item["post_extraction_classification"], 0) + 1
+        )
+    stored_text_payload_fields = sum(1 for item in results if "text" in item or "text_preview" in item)
+    report = {
+        "scope": "extraction-results",
+        "status": "pass",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "mode": {
+            "heavy_ocr": shutil.which("tesseract") is not None,
+            "whole_machine_scan": False,
+            "external_high_relevance_scan": True,
+            "semantic_promotion": False,
+            "boundary": "Extraction results store text hashes and counts only. Extracted private text is not copied into the repo truth chain.",
+        },
+        "summary": {
+            "total_files": len(results),
+            "unhashed_files": sum(1 for item in results if not item.get("sha256")),
+            "stored_text_payload_fields": stored_text_payload_fields,
+        },
+        "result_counts": dict(sorted(result_counts.items())),
+        "method_counts": dict(sorted(method_counts.items())),
+        "post_extraction_classification_counts": dict(sorted(classification_counts.items())),
+        "results": results,
+        "artifacts": {
+            "json_report": _relative(EXTRACTION_RESULTS_JSON),
+            "markdown_report": _relative(EXTRACTION_RESULTS_MD),
+        },
+        "title": "Extraction Results Manifest",
+    }
+    if write:
+        _write_reports(report, json_report=EXTRACTION_RESULTS_JSON, markdown_report=EXTRACTION_RESULTS_MD)
     return report
 
 
@@ -527,6 +688,8 @@ def _render_markdown(report: dict[str, Any]) -> str:
     summary = report["summary"]
     if report["scope"] == "extraction-queue":
         return _render_extraction_queue_markdown(report)
+    if report["scope"] == "extraction-results":
+        return _render_extraction_results_markdown(report)
     lines = [
         f"# {report.get('title', 'Character-Level Inventory Manifest')}",
         "",
@@ -561,6 +724,43 @@ def _render_markdown(report: dict[str, Any]) -> str:
             report["mode"]["boundary"],
             "",
             "This manifest proves indexing, hashing, and extraction-state classification. It does not by itself promote any source into the runtime truth chain.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _render_extraction_results_markdown(report: dict[str, Any]) -> str:
+    lines = [
+        f"# {report.get('title', 'Extraction Results Manifest')}",
+        "",
+        f"- status: {report['status']}",
+        f"- scope: {report['scope']}",
+        f"- generated_at: {report['generated_at']}",
+        f"- total_files: {report['summary']['total_files']}",
+        f"- unhashed_files: {report['summary']['unhashed_files']}",
+        f"- stored_text_payload_fields: {report['summary']['stored_text_payload_fields']}",
+        f"- Heavy OCR: {'enabled' if report['mode']['heavy_ocr'] else 'disabled'}",
+        "",
+        "## Result Counts",
+        "",
+    ]
+    for name, count in report["result_counts"].items():
+        lines.append(f"- `{name}`: {count}")
+    lines.extend(["", "## Method Counts", ""])
+    for name, count in report["method_counts"].items():
+        lines.append(f"- `{name}`: {count}")
+    lines.extend(["", "## Post-Extraction Classification Counts", ""])
+    for name, count in report["post_extraction_classification_counts"].items():
+        lines.append(f"- `{name}`: {count}")
+    lines.extend(
+        [
+            "",
+            "## Boundary",
+            "",
+            report["mode"]["boundary"],
+            "",
+            "No extracted text or OCR text is stored in this report; only hashes, counts, methods, and statuses are persisted.",
             "",
         ]
     )
@@ -611,7 +811,11 @@ def _summary_view(report: dict[str, Any]) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scope", default="project", choices=["project", "external", "extraction-queue"])
+    parser.add_argument(
+        "--scope",
+        default="project",
+        choices=["project", "external", "extraction-queue", "extraction-results"],
+    )
     parser.add_argument("--no-write", action="store_true", help="Print the manifest without writing report artifacts.")
     parser.add_argument("--summary-only", action="store_true", help="Print only summary fields; still writes full artifacts unless --no-write is set.")
     args = parser.parse_args(argv)

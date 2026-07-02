@@ -176,3 +176,42 @@ def test_extraction_queue_report_combines_project_and_external_binary_work() -> 
     assert json_path.exists()
     assert md_path.exists()
     assert "Extraction Queue Manifest" in md_path.read_text(encoding="utf-8")
+
+
+def test_extraction_results_extract_pdf_and_docx_without_storing_text() -> None:
+    report = _run_manifest("--scope", "extraction-results")
+
+    assert report["scope"] == "extraction-results"
+    assert report["status"] == "pass"
+    assert report["summary"]["total_files"] >= 60
+    assert report["summary"]["unhashed_files"] == 0
+    assert report["summary"]["stored_text_payload_fields"] == 0
+    assert report["result_counts"]["text_extracted"] >= 10
+    assert report["method_counts"]["docx"] >= 10
+    assert report["method_counts"]["pdfplumber"] + report["method_counts"].get("pypdf", 0) >= 2
+
+    for item in report["results"]:
+        assert item["sha256"]
+        assert item["source_scope"] in {"project", "external"}
+        assert item["extraction_result"] in {
+            "text_extracted",
+            "text_empty",
+            "ocr_blocked_missing_engine",
+            "extraction_failed",
+        }
+        assert "text" not in item
+        assert "text_preview" not in item
+        if item["extraction_result"] == "text_extracted":
+            assert item["extracted_character_count"] > 0
+            assert item["text_sha256"]
+            assert item["post_extraction_classification"] in {
+                "extracted_reference_only",
+                "extracted_private_reference_only",
+                "extracted_candidate_for_review",
+            }
+
+    json_path = ROOT / report["artifacts"]["json_report"]
+    md_path = ROOT / report["artifacts"]["markdown_report"]
+    assert json_path.exists()
+    assert md_path.exists()
+    assert "Extraction Results Manifest" in md_path.read_text(encoding="utf-8")

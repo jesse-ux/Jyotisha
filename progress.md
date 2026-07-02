@@ -820,3 +820,12 @@
 - 新增 `docs/research/character_level_extraction_queue_latest.json` 与 `.md`，当前 queued_files=`66`、`unhashed_files=0`。
 - 队列构成：`image_ocr_queued=53`、`document_text_extraction_queued=11`、`pdf_text_extraction_queued=2`；来源为 `external=63`、`project=3`。
 - 边界：本轮只做提取队列，不跑重 OCR，不把外部私人资料正文写进仓库，也不升格为 runtime truth。
+
+## 2026-07-02T17:22:00+08:00 - PDF/DOCX 提取结果与 OCR blocked 分级
+
+- 新增 `scripts/character_level_inventory_manifest.py --scope extraction-results`，对 extraction queue 做实际提取，但只保存文本 hash、字符数、行数、方法、状态和分级，不保存正文。
+- 新增 `docs/research/character_level_extraction_results_latest.json` 与 `.md`，当前 total_files=`66`、`unhashed_files=0`、`stored_text_payload_fields=0`。
+- 提取结果：`text_extracted=12`、`ocr_blocked_missing_engine=53`、`extraction_failed=1`。
+- 方法分布：`docx=11`、`pdfplumber=2`、`pytesseract=53`；系统当前没有 `tesseract` 可执行文件，因此图片 OCR 全部明确 blocked。
+- 失败项：`/Users/wuyongnaren/文件仓库/印度占星文章/4印度占星.docx`，`python-docx` 返回 `KeyError: "There is no item named 'NULL' in the archive"`；保留为 extraction_failed，不伪装为已提取。
+- 提取后分级：`extracted_candidate_for_review=10`、`extracted_private_reference_only=3`、`extracted_reference_only=53`；仍未进入 runtime truth chain。

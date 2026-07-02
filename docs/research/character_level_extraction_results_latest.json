@@ -1,28 +1,35 @@
 {
-  "scope": "extraction-queue",
+  "scope": "extraction-results",
   "status": "pass",
-  "generated_at": "2026-07-02T09:24:04.124961+00:00",
+  "generated_at": "2026-07-02T09:25:00.613875+00:00",
   "mode": {
     "heavy_ocr": false,
     "whole_machine_scan": false,
     "external_high_relevance_scan": true,
     "semantic_promotion": false,
-    "boundary": "Queue only. It identifies PDF/image/document extraction work without performing OCR or promoting extracted text."
+    "boundary": "Extraction results store text hashes and counts only. Extracted private text is not copied into the repo truth chain."
   },
   "summary": {
-    "queued_files": 66,
+    "total_files": 66,
     "unhashed_files": 0,
-    "source_counts": {
-      "external": 63,
-      "project": 3
-    }
+    "stored_text_payload_fields": 0
   },
-  "queue_counts": {
-    "document_text_extraction_queued": 11,
-    "image_ocr_queued": 53,
-    "pdf_text_extraction_queued": 2
+  "result_counts": {
+    "extraction_failed": 1,
+    "ocr_blocked_missing_engine": 53,
+    "text_extracted": 12
   },
-  "queue": [
+  "method_counts": {
+    "docx": 11,
+    "pdfplumber": 2,
+    "pytesseract": 53
+  },
+  "post_extraction_classification_counts": {
+    "extracted_candidate_for_review": 10,
+    "extracted_private_reference_only": 3,
+    "extracted_reference_only": 53
+  },
+  "results": [
     {
       "source_scope": "external",
       "path": "/Users/wuyongnaren/Desktop/一楠印度占星 Level 3 综合解盘.docx",
@@ -32,7 +39,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_historical_report",
       "priority": "priority_2",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "docx",
+      "blocked_reason": null,
+      "extracted_character_count": 6369,
+      "extracted_line_count": 152,
+      "text_sha256": "1f03273efddcafd345cdfe542a118d5eacee5da554bded430dbfe4cb3b6e8571",
+      "post_extraction_classification": "extracted_private_reference_only"
     },
     {
       "source_scope": "external",
@@ -43,7 +57,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_historical_report",
       "priority": "priority_2",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "docx",
+      "blocked_reason": null,
+      "extracted_character_count": 7753,
+      "extracted_line_count": 446,
+      "text_sha256": "dafb672b74f9aa3b05ecaa5118ae5a72f612f96750640d2396e1c654dcb29dfb",
+      "post_extraction_classification": "extracted_private_reference_only"
     },
     {
       "source_scope": "external",
@@ -54,7 +75,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "docx",
+      "blocked_reason": null,
+      "extracted_character_count": 145078,
+      "extracted_line_count": 1203,
+      "text_sha256": "9607ceaafa8a38abd5943037b7a66113db4fee6abb6d77a246924c7770242049",
+      "post_extraction_classification": "extracted_candidate_for_review"
     },
     {
       "source_scope": "external",
@@ -65,7 +93,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_historical_report",
       "priority": "priority_2",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "docx",
+      "blocked_reason": null,
+      "extracted_character_count": 145078,
+      "extracted_line_count": 1203,
+      "text_sha256": "9607ceaafa8a38abd5943037b7a66113db4fee6abb6d77a246924c7770242049",
+      "post_extraction_classification": "extracted_private_reference_only"
     },
     {
       "source_scope": "external",
@@ -76,7 +111,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "docx",
+      "blocked_reason": null,
+      "extracted_character_count": 30716,
+      "extracted_line_count": 711,
+      "text_sha256": "9d02544ecab01e9dad012ec53336f0404ba316896e3ae5fd8efa7b2e7271330f",
+      "post_extraction_classification": "extracted_candidate_for_review"
     },
     {
       "source_scope": "external",
@@ -87,7 +129,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "docx",
+      "blocked_reason": null,
+      "extracted_character_count": 17967,
+      "extracted_line_count": 362,
+      "text_sha256": "91cfc9364387007753bce62360ee7d546aa6357935775a32dc867f2d3bf09dde",
+      "post_extraction_classification": "extracted_candidate_for_review"
     },
     {
       "source_scope": "external",
@@ -98,7 +147,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "docx",
+      "blocked_reason": null,
+      "extracted_character_count": 29017,
+      "extracted_line_count": 954,
+      "text_sha256": "47c4c9cfcfdc2bbd024d845c1c95eec9546d1d8c462fb25626e6b449d957d3cc",
+      "post_extraction_classification": "extracted_candidate_for_review"
     },
     {
       "source_scope": "external",
@@ -109,7 +165,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "extraction_failed",
+      "extraction_method": "docx",
+      "blocked_reason": "KeyError: \"There is no item named 'NULL' in the archive\"",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_candidate_for_review"
     },
     {
       "source_scope": "external",
@@ -120,7 +183,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "docx",
+      "blocked_reason": null,
+      "extracted_character_count": 23606,
+      "extracted_line_count": 577,
+      "text_sha256": "2f8b217e08b5c20afdfb328851bf5c719cd1ab98f2572d413ab359e6f16cef6f",
+      "post_extraction_classification": "extracted_candidate_for_review"
     },
     {
       "source_scope": "external",
@@ -131,7 +201,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "docx",
+      "blocked_reason": null,
+      "extracted_character_count": 20085,
+      "extracted_line_count": 600,
+      "text_sha256": "72bba68ca08007492181c01936290315500e052a21fc03562c03605eb0204048",
+      "post_extraction_classification": "extracted_candidate_for_review"
     },
     {
       "source_scope": "external",
@@ -142,7 +219,14 @@
       "extraction_status": "document_text_extraction_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "docx",
+      "blocked_reason": null,
+      "extracted_character_count": 4507,
+      "extracted_line_count": 144,
+      "text_sha256": "1e620fb59e95ae4fe59b1181bc9fe34238115e1f138d1433f2e1b66c10051ed6",
+      "post_extraction_classification": "extracted_candidate_for_review"
     },
     {
       "source_scope": "external",
@@ -153,7 +237,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_skill_fragment",
       "priority": "priority_1",
-      "promotion_status": "external_candidate"
+      "promotion_status": "external_candidate",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -164,7 +255,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_skill_fragment",
       "priority": "priority_1",
-      "promotion_status": "external_candidate"
+      "promotion_status": "external_candidate",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -175,7 +273,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_skill_fragment",
       "priority": "priority_1",
-      "promotion_status": "external_candidate"
+      "promotion_status": "external_candidate",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -186,7 +291,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_skill_fragment",
       "priority": "priority_1",
-      "promotion_status": "external_candidate"
+      "promotion_status": "external_candidate",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -197,7 +309,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_historical_report",
       "priority": "priority_2",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -208,7 +327,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -219,7 +345,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -230,7 +363,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -241,7 +381,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -252,7 +399,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -263,7 +417,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -274,7 +435,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -285,7 +453,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -296,7 +471,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -307,7 +489,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -318,7 +507,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_archive_or_binary",
       "priority": "priority_3",
-      "promotion_status": "external_index_only"
+      "promotion_status": "external_index_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -329,7 +525,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -340,7 +543,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -351,7 +561,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -362,7 +579,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -373,7 +597,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -384,7 +615,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -395,7 +633,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -406,7 +651,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -417,7 +669,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -428,7 +687,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -439,7 +705,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -450,7 +723,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -461,7 +741,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -472,7 +759,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -483,7 +777,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -494,7 +795,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -505,7 +813,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -516,7 +831,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -527,7 +849,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -538,7 +867,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -549,7 +885,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -560,7 +903,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -571,7 +921,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -582,7 +939,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -593,7 +957,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -604,7 +975,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -615,7 +993,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -626,7 +1011,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -637,7 +1029,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -648,7 +1047,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -659,7 +1065,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -670,7 +1083,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -681,7 +1101,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -692,7 +1119,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "project",
@@ -703,7 +1137,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "open_source_reference",
       "priority": "priority_2",
-      "promotion_status": "reference_layer_candidate"
+      "promotion_status": "reference_layer_candidate",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "project",
@@ -714,7 +1155,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "open_source_reference",
       "priority": "priority_1",
-      "promotion_status": "reference_layer_candidate"
+      "promotion_status": "reference_layer_candidate",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "project",
@@ -725,7 +1173,14 @@
       "extraction_status": "image_ocr_queued",
       "classification": "open_source_reference",
       "priority": "priority_1",
-      "promotion_status": "reference_layer_candidate"
+      "promotion_status": "reference_layer_candidate",
+      "extraction_result": "ocr_blocked_missing_engine",
+      "extraction_method": "pytesseract",
+      "blocked_reason": "tesseract executable not found",
+      "extracted_character_count": 0,
+      "extracted_line_count": 0,
+      "text_sha256": null,
+      "post_extraction_classification": "extracted_reference_only"
     },
     {
       "source_scope": "external",
@@ -736,7 +1191,14 @@
       "extraction_status": "pdf_text_extraction_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "pdfplumber",
+      "blocked_reason": null,
+      "extracted_character_count": 31164,
+      "extracted_line_count": 605,
+      "text_sha256": "e63b112988500a71704511d007c52cffdc71c300e518c438eb7f0cb71d732ede",
+      "post_extraction_classification": "extracted_candidate_for_review"
     },
     {
       "source_scope": "external",
@@ -747,12 +1209,19 @@
       "extraction_status": "pdf_text_extraction_queued",
       "classification": "external_book_or_document",
       "priority": "priority_1",
-      "promotion_status": "external_reference_only"
+      "promotion_status": "external_reference_only",
+      "extraction_result": "text_extracted",
+      "extraction_method": "pdfplumber",
+      "blocked_reason": null,
+      "extracted_character_count": 31321,
+      "extracted_line_count": 645,
+      "text_sha256": "d93283239c33fab588747a9354a162049b263d18bd06463bbb7b02634704a1be",
+      "post_extraction_classification": "extracted_candidate_for_review"
     }
   ],
   "artifacts": {
-    "json_report": "docs/research/character_level_extraction_queue_latest.json",
-    "markdown_report": "docs/research/character_level_extraction_queue_latest.md"
+    "json_report": "docs/research/character_level_extraction_results_latest.json",
+    "markdown_report": "docs/research/character_level_extraction_results_latest.md"
   },
-  "title": "Extraction Queue Manifest"
+  "title": "Extraction Results Manifest"
 }
