@@ -266,6 +266,10 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert "Raman" in prompt_pack["prompt_zh"]
     assert "不要仅凭单一配置下结论" in prompt_pack["prompt_zh"]
     assert "references/ai-reading-workflow-prompt.md" in prompt_pack["retrieval_plan"]["local_reference_docs"]
+    assert "references/interpretation_template_registry.json" in prompt_pack["retrieval_plan"]["local_reference_docs"]
+    assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md" in prompt_pack["retrieval_plan"]["local_reference_docs"]
+    assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/house_framework.md" in prompt_pack["retrieval_plan"]["local_reference_docs"]
+    assert "references/mandatory-verification-gate-protocol.md" in prompt_pack["retrieval_plan"]["local_reference_docs"]
     assert prompt_pack["evidence_snapshot"]["ayanamsa"]["name"] == "raman"
     assert prompt_pack["evidence_snapshot"]["core"]["ascendant"]["sign"] == result["chart"]["ascendant"]["sign"]
     timing = prompt_pack["evidence_snapshot"]["timing"]
@@ -279,6 +283,9 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert isinstance(functional["functional_malefics"], list)
     audit_table = prompt_pack["evidence_snapshot"]["technique_audit_table"]
     assert isinstance(audit_table, list)
+    assert any(row["technique"] == "MEVG / Global Web Evidence" for row in audit_table)
+    assert any(row["technique"] == "Real Case Calibration" for row in audit_table)
+    assert any(row["technique"] == "Interpretation Source Pack" for row in audit_table)
     functional_rows = [row for row in audit_table if row["technique"] == "Functional Benefic/Malefic"]
     assert functional_rows
     assert functional_rows[0]["status"] == "used"
@@ -437,6 +444,9 @@ def test_full_reading_prompt_pack_carries_compact_technique_audit_summary() -> N
     career = result["ai_prompt_pack"]["evidence_snapshot"]["strict_workflow_contracts"]["career"]
     assert "technique_audit_summary" in career
     assert career["technique_audit_summary"]["functional_benefic_malefic"]["gate"] == "hard"
+    assert career["technique_audit_summary"]["interpretation_source_pack"]["used"] is True
+    assert career["technique_audit_summary"]["mevg_global_web_evidence"]["status"] == "blocked"
+    assert career["technique_audit_summary"]["real_case_calibration"]["status"] == "blocked"
     assert "audit_gate_frame" in career["multi_reference_reading_summary"]
 
 

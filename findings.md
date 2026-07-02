@@ -202,3 +202,14 @@
 - 2026-06-30 轻量映射误判修复：`Dashamamsha` 等分盘名称曾因包含 `dasha` 字符串被误归入 timing。当前已改为按方法词元识别 `Dasa/Dasha` timing 方法，真实轻扫显示 `AllPlanetDashamamshaSign` 归入 `career/marriage/wealth`，不再进入 `timing`。
 - 2026-06-30 VedAstro 动态能力选择器结论：系统现在不只知道 641 项目录和主题归类，还会按用户主题生成 `dynamic_selection` 与 `official_report_references`。每个主题会列出自动可用能力、需要额外资料能力、blocked 能力和 `vedastro:<theme>:<method>` 引用 ID，供网页、Skill、MCP 和 Codex prompt pack 指向同一份官方证据层。
 - 2026-06-30 报告引用边界：`official_report_references` 是证据引用层，不等于每个引用都已执行成功。`execution_policy != auto` 或 `status != ok` 的能力只能作为“需要补资料/当前阻断”的报告说明，不得包装成已用于最终断语的数据。
+
+## 2026-07-02 解释资料层调用链审计前置结论
+
+- 用户要求在补“调用链显式接入 + 测试”前，先地毯式检查当前项目、历史工作区、技能副本、资料库、Downloads/Desktop 和云端 Git refs，确认是否因不同应用/窗口遗漏资料碎片。
+- 当前主仓内已经存在截图所示“行星落十二宫”前端资料层：`jyotish-app/planet-house-details-a.js`、`planet-house-details-b.js`、`planet-house-details-c.js`；与 `.workbuddy/skills/jyotish-vedic-astrology` 旧副本 SHA256 完全一致。
+- 当前主仓内已有文章级解释模板注册表：`references/interpretation_template_registry.json`，`scripts/validate_interpretation_templates.py --format json` 返回 `valid=true`、`template_count=11`、`problem_count=0`。
+- 当前主仓内已有 P1-P12 与宫位框架资料层：`references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md` 与 `house_framework.md`；它们包含宫主身份、凶宫主大运禁止美化、Dasha 事件模板、VRY 孤立性、SAV/BAV 交叉等严格解读规则。
+- 当前主仓内已有 Raman/BPHS 层：`references/raman-house-judgment-methodology.md`、`references/bphs-ch48-narayana-dasha.md`、`references/yoga_rules.json`、`scripts/validate_bphs_invariants.py`；更完整书籍 PDF 位于资料库路径 `/Users/wuyongnaren/文件仓库/中外🔮占星/国外占星/印度占星书/`。
+- `python3 scripts/audit_capabilities.py --mode validate` 通过，显示 `technique_count=89`、`problem_count=0`；`python3 scripts/audit_fragments.py --strict` 通过，显示当前仓 `candidate_count=0`、`untracked_count=0`。
+- 云端 HTTPS refs 已确认：本地 `codex/release-hygiene-ci@767a5c6` 与远端 `refs/heads/codex/release-hygiene-ci@767a5c6` 对齐。
+- 根因不是“项目没有资料”，而是现有测试多守文档/注册表存在性，没有守 `mcp_server.py::_collect_strict_evidence`、AI prompt pack 和用户可见 strict contract 必须显式携带这些资料层。下一步应只补显式调用链与测试，不重写规则体系。

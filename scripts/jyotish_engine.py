@@ -951,6 +951,28 @@ def _build_technique_audit_table(functional_layer, oracle_progress, modules):
                 f"production_tuning_allowed={oracle_progress.get('production_tuning_allowed', False)}。"
             ),
         },
+        {
+            'technique': 'Interpretation Source Pack',
+            'status': 'used',
+            'source': 'repo_existing_interpretation_sources',
+            'note': (
+                '已显式索引 interpretation_template_registry、P1-P12、house_framework、'
+                'Raman/BPHS 与前端 planet-house-details；这些资料只作为本地解释源，'
+                '不替代 MEVG 外部采集和真实案例校正。'
+            ),
+        },
+        {
+            'technique': 'MEVG / Global Web Evidence',
+            'status': 'blocked',
+            'source': 'references/mandatory-verification-gate-protocol.md',
+            'note': '所有星盘运势/推运解释必须执行全球/全网外部资料采集；未执行时解释声明需降级。',
+        },
+        {
+            'technique': 'Real Case Calibration',
+            'status': 'blocked',
+            'source': 'references/real-reading-quality-checklist.md',
+            'note': '所有星盘运势/推运解释必须参考真实案例或公开 benchmark；无匹配案例时置信度封顶。',
+        },
     ]
 
     rows.append({
@@ -1653,6 +1675,15 @@ def _build_ai_prompt_pack(report):
                 'references/dasa-convergence-methodology.md',
                 'references/shadbala-interpretation-methodology.md',
                 'references/navamsa-d9-interpretation-template.md',
+                'references/interpretation_template_registry.json',
+                'references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md',
+                'references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/house_framework.md',
+                'references/raman-house-judgment-methodology.md',
+                'references/mandatory-verification-gate-protocol.md',
+                'references/real-reading-quality-checklist.md',
+                'jyotish-app/planet-house-details-a.js',
+                'jyotish-app/planet-house-details-b.js',
+                'jyotish-app/planet-house-details-c.js',
             ],
             'retrieval_tags': [
                 'no_single_factor_conclusion',
@@ -1660,6 +1691,9 @@ def _build_ai_prompt_pack(report):
                 'oracle_boundary_visible',
                 'external_oracle_evidence_validation',
                 'confidence_labeled_reading',
+                'interpretation_source_pack',
+                'mevg_global_web_evidence_required',
+                'real_case_calibration_required',
             ],
         },
     }

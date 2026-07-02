@@ -62,6 +62,23 @@ def test_relationship_jaimini_bridge_lifts_legal_marriage_label() -> None:
     ]
 
 
+def test_relationship_strict_contract_attaches_existing_interpretation_source_pack() -> None:
+    strict = _collect_strict_evidence("relationship", _base_relationship_result())
+
+    source_pack = strict["present_evidence"]["interpretation_source_pack"]
+    assert source_pack["status"] == "used"
+    assert "darakaraka_ul_spouse_depth" in source_pack["template_registry"]["template_ids"]
+    assert "rtn_high_order_d9" in source_pack["template_registry"]["template_ids"]
+    assert "p1_p12" in source_pack["frameworks"]
+    assert "house_framework" in source_pack["frameworks"]
+    assert "raman_functional_house_judgment" in source_pack["frameworks"]
+
+    audit = strict["technique_audit_summary"]
+    assert audit["interpretation_source_pack"]["source"] == "repo_existing_interpretation_sources"
+    assert audit["mevg_global_web_evidence"]["required"] is True
+    assert audit["real_case_calibration"]["required"] is True
+
+
 def test_relationship_jaimini_bridge_stays_context_only_when_d9_missing() -> None:
     result = _base_relationship_result()
     del result["modules"]["varga_full"]["D9_Navamsa"]

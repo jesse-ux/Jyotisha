@@ -34,6 +34,22 @@ def test_finance_public_wealth_label_requires_at_least_moderate_window() -> None
     assert judgement["secondary_context"] == []
 
 
+def test_finance_strict_contract_attaches_existing_interpretation_source_pack() -> None:
+    strict = _collect_strict_evidence("finance", {"modules": {}})
+
+    source_pack = strict["present_evidence"]["interpretation_source_pack"]
+    assert source_pack["status"] == "used"
+    assert "lakshmi_dhana_activation_chain" in source_pack["template_registry"]["template_ids"]
+    assert "yogi_asc_tight_orb_wealth" in source_pack["template_registry"]["template_ids"]
+    assert source_pack["bphs_raman_layer"]["status"] == "available"
+    assert source_pack["frontend_planet_house_details"]["coverage"] == "9_planets_x_12_houses"
+
+    audit = strict["technique_audit_summary"]
+    assert audit["interpretation_source_pack"]["used"] is True
+    assert audit["mevg_global_web_evidence"]["effect_on_confidence"] == "blocks_or_downgrades_interpretive_claims_until_completed"
+    assert audit["real_case_calibration"]["effect_on_confidence"] == "caps_confidence_without_matching_cases"
+
+
 def test_finance_public_wealth_label_can_lift_visible_wealth_cases() -> None:
     judgement = _derive_event_judgement(
         "finance",

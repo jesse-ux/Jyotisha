@@ -72,6 +72,26 @@ def test_career_collects_a10_amk_karakamsha_as_strict_evidence() -> None:
     ]
 
 
+def test_career_strict_contract_attaches_existing_interpretation_source_pack() -> None:
+    strict = _collect_strict_evidence("career", _base_career_result())
+
+    source_pack = strict["present_evidence"]["interpretation_source_pack"]
+    assert source_pack["status"] == "used"
+    assert "references/interpretation_template_registry.json" in source_pack["source_refs"]
+    assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md" in source_pack["source_refs"]
+    assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/house_framework.md" in source_pack["source_refs"]
+    assert "references/raman-house-judgment-methodology.md" in source_pack["source_refs"]
+    assert "jyotish-app/planet-house-details-a.js" in source_pack["source_refs"]
+    assert source_pack["template_registry"]["template_count"] >= 11
+    assert source_pack["frontend_planet_house_details"]["planet_count"] == 9
+    assert source_pack["frontend_planet_house_details"]["house_count"] == 12
+
+    audit = strict["technique_audit_summary"]
+    assert audit["interpretation_source_pack"]["used"] is True
+    assert audit["mevg_global_web_evidence"]["status"] == "blocked"
+    assert audit["real_case_calibration"]["status"] == "blocked"
+
+
 def test_career_blocks_label_when_d10_is_missing_but_preserves_jaimini_context() -> None:
     result = _base_career_result()
     del result["modules"]["varga_full"]["D10_Dasamsa"]

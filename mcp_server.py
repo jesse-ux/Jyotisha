@@ -32,6 +32,7 @@ import subprocess
 import asyncio
 from copy import deepcopy
 from datetime import datetime, timedelta
+from functools import lru_cache
 from typing import Dict, Any, Optional, List
 
 # Add scripts dir to path so imports work
@@ -103,6 +104,102 @@ def _audit_status() -> Dict[str, Any]:
         return json.loads(result.stdout)
     except Exception:
         return {"valid": False, "raw": result.stdout}
+
+
+def _repo_relative_exists(path: str) -> bool:
+    return os.path.exists(os.path.join(SCRIPT_DIR, path))
+
+
+def _load_json_file(path: str) -> Dict[str, Any]:
+    with open(os.path.join(SCRIPT_DIR, path), "r", encoding="utf-8") as handle:
+        data = json.load(handle)
+    return data if isinstance(data, dict) else {}
+
+
+@lru_cache(maxsize=1)
+def _existing_interpretation_source_pack() -> Dict[str, Any]:
+    """Return the existing repo interpretation/source layers as an explicit evidence pack."""
+    template_path = "references/interpretation_template_registry.json"
+    p1_p12_path = "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md"
+    house_framework_path = "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/house_framework.md"
+    raman_path = "references/raman-house-judgment-methodology.md"
+    bphs_narayana_path = "references/bphs-ch48-narayana-dasha.md"
+    mevg_path = "references/mandatory-verification-gate-protocol.md"
+    real_case_checklist_path = "references/real-reading-quality-checklist.md"
+    planet_house_paths = [
+        "jyotish-app/planet-house-details-a.js",
+        "jyotish-app/planet-house-details-b.js",
+        "jyotish-app/planet-house-details-c.js",
+    ]
+
+    template_ids: List[str] = []
+    template_count = 0
+    try:
+        registry = _load_json_file(template_path)
+        templates = registry.get("templates") if isinstance(registry.get("templates"), dict) else {}
+        template_ids = sorted(templates.keys())
+        template_count = len(template_ids)
+    except Exception:
+        template_ids = []
+        template_count = 0
+
+    source_refs = [
+        template_path,
+        p1_p12_path,
+        house_framework_path,
+        raman_path,
+        bphs_narayana_path,
+        mevg_path,
+        real_case_checklist_path,
+        *planet_house_paths,
+    ]
+    missing_refs = [path for path in source_refs if not _repo_relative_exists(path)]
+    return {
+        "status": "used" if not missing_refs else "partial",
+        "source": "repo_existing_interpretation_sources",
+        "source_refs": source_refs,
+        "missing_refs": missing_refs,
+        "template_registry": {
+            "path": template_path,
+            "template_count": template_count,
+            "template_ids": template_ids,
+        },
+        "frameworks": [
+            "p1_p12",
+            "house_framework",
+            "raman_functional_house_judgment",
+            "bphs_narayana_dasha",
+            "mevg_mandatory_external_verification",
+            "real_case_quality_checklist",
+        ],
+        "bphs_raman_layer": {
+            "status": "available" if _repo_relative_exists(raman_path) and _repo_relative_exists(bphs_narayana_path) else "partial",
+            "source_refs": [raman_path, bphs_narayana_path],
+        },
+        "frontend_planet_house_details": {
+            "status": "available" if all(_repo_relative_exists(path) for path in planet_house_paths) else "partial",
+            "coverage": "9_planets_x_12_houses",
+            "planet_count": 9,
+            "house_count": 12,
+            "source_refs": planet_house_paths,
+        },
+        "mevg_gate": {
+            "status": "blocked",
+            "required": True,
+            "source_ref": mevg_path,
+            "effect_on_confidence": "blocks_or_downgrades_interpretive_claims_until_completed",
+        },
+        "real_case_calibration": {
+            "status": "blocked",
+            "required": True,
+            "source_ref": real_case_checklist_path,
+            "effect_on_confidence": "caps_confidence_without_matching_cases",
+        },
+        "boundary": (
+            "This pack exposes existing local interpretation sources. It does not replace live MEVG web "
+            "collection, real-case calibration, chart calculation, or oracle closure."
+        ),
+    }
 
 
 def _execute_mcp_consultation_workflow(
@@ -2222,6 +2319,15 @@ def _build_technique_audit_summary(route: str, strict: Dict[str, Any]) -> Dict[s
 
     varga_keys = _route_varga_gate_keys(route)
     functional_layer = present.get("functional_benefic_malefic")
+    interpretation_source_pack = present.get("interpretation_source_pack")
+    if not isinstance(interpretation_source_pack, dict):
+        interpretation_source_pack = {}
+    mevg_gate = interpretation_source_pack.get("mevg_gate") if isinstance(interpretation_source_pack.get("mevg_gate"), dict) else {}
+    real_case_calibration = (
+        interpretation_source_pack.get("real_case_calibration")
+        if isinstance(interpretation_source_pack.get("real_case_calibration"), dict)
+        else {}
+    )
     return {
         "functional_benefic_malefic": {
             "gate": "hard",
@@ -2231,6 +2337,37 @@ def _build_technique_audit_summary(route: str, strict: Dict[str, Any]) -> Dict[s
                 functional_layer.get("effect_on_confidence")
                 if isinstance(functional_layer, dict)
                 else "Functional benefic/malefic layer unavailable."
+            ),
+        },
+        "interpretation_source_pack": {
+            "gate": "hard",
+            "used": bool(interpretation_source_pack.get("status") in {"used", "partial"}),
+            "status": interpretation_source_pack.get("status") or "blocked",
+            "source": interpretation_source_pack.get("source") or "repo_existing_interpretation_sources",
+            "source_refs": interpretation_source_pack.get("source_refs") or [],
+            "missing_refs": interpretation_source_pack.get("missing_refs") or [],
+            "effect_on_confidence": (
+                "uses existing BPHS/Raman/frontend/template source layers; missing refs lower confidence"
+            ),
+        },
+        "mevg_global_web_evidence": {
+            "gate": "hard",
+            "required": True,
+            "status": mevg_gate.get("status") or "blocked",
+            "source_ref": mevg_gate.get("source_ref") or "references/mandatory-verification-gate-protocol.md",
+            "effect_on_confidence": (
+                mevg_gate.get("effect_on_confidence")
+                or "blocks_or_downgrades_interpretive_claims_until_completed"
+            ),
+        },
+        "real_case_calibration": {
+            "gate": "hard",
+            "required": True,
+            "status": real_case_calibration.get("status") or "blocked",
+            "source_ref": real_case_calibration.get("source_ref") or "references/real-reading-quality-checklist.md",
+            "effect_on_confidence": (
+                real_case_calibration.get("effect_on_confidence")
+                or "caps_confidence_without_matching_cases"
             ),
         },
         "relevant_vargas": {
@@ -2523,8 +2660,9 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["chart"] = _safe_get(modules, "chart")
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
+        present["interpretation_source_pack"] = _existing_interpretation_source_pack()
         missing = [key for key, value in present.items() if key not in {
-            "chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "dignity_guardrail", "argala_support", "shadbala", "shadbala_component_audit", "kakshya_career_support", "functional_benefic_malefic"
+            "chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "dignity_guardrail", "argala_support", "shadbala", "shadbala_component_audit", "kakshya_career_support", "functional_benefic_malefic", "interpretation_source_pack"
         } and value in (None, {}, [], "")]
         convergence = present["career_convergence"] or {}
         confidence_cap = "medium"
@@ -2605,9 +2743,10 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["source_priority"] = modules.get("source_priority") if isinstance(modules.get("source_priority"), dict) else {}
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
+        present["interpretation_source_pack"] = _existing_interpretation_source_pack()
         missing = [
             key for key, value in present.items()
-            if key not in {"chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support", "synastry_relationship_support", "argala_support", "shadbala", "shadbala_component_audit", "functional_benefic_malefic"}
+            if key not in {"chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "dignity_guardrail", "jaimini_marriage_support", "jaimini_timing_support", "synastry_relationship_support", "argala_support", "shadbala", "shadbala_component_audit", "functional_benefic_malefic", "interpretation_source_pack"}
             and value in (None, {}, [], "")
         ]
         convergence = present["marriage_convergence"] or {}
@@ -2699,8 +2838,9 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["source_priority"] = modules.get("source_priority") if isinstance(modules.get("source_priority"), dict) else {}
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
+        present["interpretation_source_pack"] = _existing_interpretation_source_pack()
         missing = [key for key, value in present.items() if key not in {
-            "chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support", "shadbala_component_audit", "asc_sign", "pav_finance_support", "sodhita_finance_support", "kakshya_finance_support", "functional_benefic_malefic"
+            "chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "dignity_guardrail", "gains_convergence", "career_convergence", "avayogi_risk", "ashtakavarga_finance_support", "shadbala_component_audit", "asc_sign", "pav_finance_support", "sodhita_finance_support", "kakshya_finance_support", "functional_benefic_malefic", "interpretation_source_pack"
         } and value in (None, {}, [], "")]
         convergence_hits: List[Dict[str, Any]] = [
             item for item in [

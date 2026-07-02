@@ -724,3 +724,17 @@
 - 新增治理守门：`tests/test_research_governance_docs.py` 检查第四批 pack 的关键锚点，`tests/test_preflight_fragment_scan.py` 检查第四批 5 份草稿不再出现在 high-value unpromoted pool。
 - TDD 红灯确认：第四批 pack 缺失时治理测试失败，preflight 仍列出第四批草稿；补齐后两条测试通过。
 - `python3 scripts/preflight_fragment_scan.py` 当前显示 `high_value_unpromoted_count=16`，已从第三批后的 `21` 下降 5 项；剩余主要是 skill/cloud sync 草稿和 Gemini recovery-only VedAstro artifacts。
+
+## 2026-07-02T11:26:34+08:00 - 解释资料层调用链审计启动
+
+- 按用户要求，在任何实现前先做只读地毯式探索：读取 `AGENTS.md`、`SKILL.md`、`task_plan.md`、`findings.md`、`progress.md`、strict router、MEVG、event skeleton、解释模板注册表、P1-P12、house framework 与现有 strict workflow 代码。
+- 当前主仓验证：`validate_interpretation_templates.py --format json` 通过；`audit_capabilities.py --mode validate` 通过；`audit_fragments.py --strict` 通过。
+- 跨目录验证：当前主仓和 `.workbuddy/skills/jyotish-vedic-astrology` 的 `planet-house-details-a/b/c.js` SHA256 一致；资料库中存在 BPHS/Raman PDF；云端 HTTPS refs 显示本地与远端 `codex/release-hygiene-ci` HEAD 对齐。
+- 根因假设冻结：资料和规则本来存在，但 strict workflow / prompt pack 缺少“解释资料源包 + MEVG/真实案例门控行”的显式 evidence contract 与红灯测试；下一步按 TDD 只补调用链和测试。
+
+## 2026-07-02T11:31:43+08:00 - 解释资料层显式调用链接入
+
+- TDD 红灯：新增 career/relationship/finance 三条 strict workflow 测试，均因 `present_evidence.interpretation_source_pack` 缺失失败；新增 CLI prompt pack 检索文档断言，因未列出解释资料层失败。
+- 最小实现：`mcp_server.py` 新增 `_existing_interpretation_source_pack()`，把现有 `interpretation_template_registry`、P1-P12、house framework、Raman/BPHS、MEVG、真实案例 checklist、前端 planet-house-details 作为只读 evidence pack 挂入 career/relationship/finance strict workflow；`technique_audit_summary` 新增 `interpretation_source_pack`、`mevg_global_web_evidence`、`real_case_calibration` 三行。
+- Prompt pack：`scripts/jyotish_engine.py` 的 `technique_audit_table` 新增 `Interpretation Source Pack`、`MEVG / Global Web Evidence`、`Real Case Calibration`；`retrieval_plan.local_reference_docs` 显式列出对应本地资料路径。
+- 红绿验证：5 条新增/修改聚焦测试通过；随后 `tests/test_mcp_strict_workflow_career.py tests/test_mcp_strict_workflow_relationship.py tests/test_mcp_strict_workflow_finance.py tests/test_mcp_strict_workflow_functional_layer.py -q` 通过，合计 86 项；`validate_interpretation_templates.py --format json` 仍为 `valid=true`、`template_count=11`。
