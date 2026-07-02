@@ -304,6 +304,22 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
         "manifestation",
         "label",
     ]
+    domain_layers = prompt_pack["evidence_snapshot"]["domain_invocation_layers"]
+    assert domain_layers["dasha_timing"]["source_refs"] == [
+        "references/vimshottari_dasha_guide.md",
+        "references/pratyantar-calculation-guide.md",
+        "references/condition-dasha-complete.md",
+    ]
+    assert domain_layers["varga_strength"]["source_refs"] == [
+        "references/divisional-chart-deep-reading.md",
+        "references/shadbala-complete-methodology.md",
+        "references/ashtakavarga-complete-system.md",
+    ]
+    assert prompt_pack["evidence_snapshot"]["output_template_contract"]["required_sections"][-1] == "confidence_boundary"
+    assert prompt_pack["evidence_snapshot"]["mevg_collection_queue"]["status"] == "queued"
+    assert prompt_pack["evidence_snapshot"]["real_case_calibration_layer"]["status"] == "queued"
+    assert prompt_pack["evidence_snapshot"]["technical_debt_contract"]["tajika"]["status"] == "partial"
+    assert prompt_pack["evidence_snapshot"]["remaining_priority1_batch_queue"]["next_batches"][0] == "real_case_studies_batch1"
     functional_rows = [row for row in audit_table if row["technique"] == "Functional Benefic/Malefic"]
     assert functional_rows
     assert functional_rows[0]["status"] == "used"

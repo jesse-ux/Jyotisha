@@ -337,6 +337,11 @@ def test_frontend_consumes_top_reader_contract_in_prompt_pack_and_ai_chat() -> N
     assert "unverified_claim_policy" in ai_chat
     assert "technique_audit_summary" in ai_chat
     assert "【Top Reader Contract】" in ai_chat
+    assert "renderInterpretationSourceGovernancePanel" in main
+    assert "Source Governance" in main
+    assert "reference-only" in main
+    assert "blocked non-runtime" in main
+    assert "confidence downgrade" in main
     assert ".ai-prompt-pack-contract-card" in style
 
 

@@ -3987,6 +3987,69 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                         'unverified_claim_policy': 'downgrade_or_block',
                     },
                 },
+                'domain_invocation_layers': {
+                    'dasha_timing': {
+                        'status': 'fallback_prompt_pack_only',
+                        'source_refs': [
+                            'references/vimshottari_dasha_guide.md',
+                            'references/pratyantar-calculation-guide.md',
+                            'references/condition-dasha-complete.md',
+                        ],
+                    },
+                    'varga_strength': {
+                        'status': 'fallback_prompt_pack_only',
+                        'source_refs': [
+                            'references/divisional-chart-deep-reading.md',
+                            'references/shadbala-complete-methodology.md',
+                            'references/ashtakavarga-complete-system.md',
+                        ],
+                    },
+                    'annual_special': {
+                        'status': 'fallback_prompt_pack_only',
+                        'source_refs': [
+                            'references/tajika-yoga-complete-guide.md',
+                            'references/jaimini-complete-system.md',
+                            'references/kp-astrology-complete-system.md',
+                        ],
+                    },
+                    'modifier_obstacle': {
+                        'status': 'fallback_prompt_pack_only',
+                        'source_refs': [
+                            'references/argala-complete-guide.md',
+                            'references/badhaka-obstacle-planet-guide.md',
+                        ],
+                    },
+                },
+                'output_template_contract': {
+                    'status': 'fallback_prompt_pack_only',
+                    'language': 'zh',
+                    'required_sections': ['promise', 'activation', 'manifestation', 'label', 'confidence_boundary'],
+                    'golden_test_status': 'required',
+                },
+                'mevg_collection_queue': {
+                    'status': 'queued',
+                    'trigger': 'fortune_question_strict_workflow',
+                    'required_jobs': ['global_web_evidence', 'source_grading', 'conflict_arbitration'],
+                },
+                'real_case_calibration_layer': {
+                    'status': 'queued',
+                    'domain_buckets': ['career', 'finance', 'relationship', 'health', 'rectification', 'timing'],
+                    'source_roots': ['references/real_case_studies', 'docs/benchmark'],
+                },
+                'technical_debt_contract': {
+                    'status': 'tracked',
+                    'narayana': {'status': 'partial', 'open_items': ['antardasha_pratyantar_oracle_parity']},
+                    'tajika': {'status': 'partial', 'open_items': ['solar_return_precision', 'muntha_placeholder_audit']},
+                },
+                'remaining_priority1_batch_queue': {
+                    'status': 'queued',
+                    'next_batches': [
+                        'real_case_studies_batch1',
+                        'rishi_ai_mcp_batch1',
+                        'vedic_astro_skills_batch1',
+                        'references_batch2',
+                    ],
+                },
                 'vedastro_official_full_snapshot': vedastro_official_full_snapshot,
                 'vedastro_overview': vedastro_overview,
                 'guided_topics': guided_topics,

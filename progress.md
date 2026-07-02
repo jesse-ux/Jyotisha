@@ -777,3 +777,13 @@
 - duplicate / obsolete / quarantine 8 个文件已列入 `blocked_non_runtime_layer`，并由 inventory gate 检查不进入 runtime source refs；重点包括 `kp-practical-event-timing.md` 与 `consultation-case-library.md`。
 - Prompt Pack / API fallback / AI Chat 已同步 `prediction_boundary_contract`、核心 5、第二批 11、reference-only 3；AI Chat 上下文新增 `【Prediction Boundary Contract】` 段落。
 - 真实 full-reading 回归确认：REDACTED_DATE REDACTED_TIME REDACTED_PLACE矿区样例中 relationship / career / finance 三条 strict contract 均带 prediction boundary，且 MEVG 与真实案例校准仍为 blocked。
+
+## 2026-07-02T16:12:00+08:00 - 第二批领域调用层与后续队列合同
+
+- 第二批 11 个 promote 源头已拆成四个领域调用层：`dasha_timing`、`varga_strength`、`annual_special`、`modifier_obstacle`；career / relationship / finance strict workflow 均暴露 `domain_invocation_contract`。
+- 新增 `output_template_contract`，要求最终中文输出按 `promise / activation / manifestation / label / confidence_boundary` 组织；当前以合同和测试约束为主，后续可继续做 golden narrative snapshot。
+- 新增 `mevg_collection_queue`，fortune strict workflow 会生成外部采集队列合同：global web evidence、real case search、source grading、conflict arbitration、unverified downgrade。
+- 新增 `real_case_calibration_layer`，按 career / finance / relationship / health / rectification / timing 六个桶连接 `references/real_case_studies` 与 `docs/benchmark`。
+- 新增 `technical_debt_contract`，诚实标记 Narayana 与 Tajika 仍为 `partial`：Narayana 需 Antardasha/Pratyantar oracle parity，Tajika 需 solar return precision、Muntha placeholder audit 与 annual yoga oracle parity。
+- 前端 AI Prompt Pack 新增 `Source Governance` 面板，显示 core sources、reference-only、blocked non-runtime、confidence downgrade、MEVG queue、case calibration、Narayana/Tajika debt 与 next batches。
+- 剩余 priority_1 队列明确为：`real_case_studies_batch1`、`rishi_ai_mcp_batch1`、`vedic_astro_skills_batch1`、`references_batch2`。

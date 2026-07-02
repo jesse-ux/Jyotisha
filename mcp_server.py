@@ -142,6 +142,29 @@ PROMOTE_BATCH2_TOPIC_SOURCE_REFS = [
     "references/condition-dasha-complete.md",
 ]
 
+DASHA_TIMING_SOURCE_REFS = [
+    "references/vimshottari_dasha_guide.md",
+    "references/pratyantar-calculation-guide.md",
+    "references/condition-dasha-complete.md",
+]
+
+VARGA_STRENGTH_SOURCE_REFS = [
+    "references/divisional-chart-deep-reading.md",
+    "references/shadbala-complete-methodology.md",
+    "references/ashtakavarga-complete-system.md",
+]
+
+ANNUAL_SPECIAL_SOURCE_REFS = [
+    "references/tajika-yoga-complete-guide.md",
+    "references/jaimini-complete-system.md",
+    "references/kp-astrology-complete-system.md",
+]
+
+MODIFIER_OBSTACLE_SOURCE_REFS = [
+    "references/argala-complete-guide.md",
+    "references/badhaka-obstacle-planet-guide.md",
+]
+
 REFERENCE_ONLY_CONFLICT_SOURCE_REFS = [
     "references/dasa-convergence-methodology.md",
     "references/multi-dasha-convergence-protocol.md",
@@ -158,6 +181,42 @@ BLOCKED_NON_RUNTIME_SOURCE_REFS = [
     "references/kp-practical-event-timing.md",
     "references/consultation-case-library.md",
 ]
+
+REMAINING_PRIORITY1_BATCH_QUEUE = [
+    "real_case_studies_batch1",
+    "rishi_ai_mcp_batch1",
+    "vedic_astro_skills_batch1",
+    "references_batch2",
+]
+
+
+def _domain_invocation_layers() -> Dict[str, Any]:
+    return {
+        "dasha_timing": {
+            "status": "available",
+            "source_refs": DASHA_TIMING_SOURCE_REFS,
+            "required_in_routes": ["career", "relationship", "finance"],
+            "contract": "timing must cite Vimshottari/Narayana cross-check and sub-period boundaries when used.",
+        },
+        "varga_strength": {
+            "status": "available",
+            "source_refs": VARGA_STRENGTH_SOURCE_REFS,
+            "required_in_routes": ["career", "relationship", "finance"],
+            "contract": "domain conclusions must include relevant varga and strength/ashtakavarga boundaries.",
+        },
+        "annual_special": {
+            "status": "available",
+            "source_refs": ANNUAL_SPECIAL_SOURCE_REFS,
+            "required_in_routes": ["career", "relationship", "finance"],
+            "contract": "annual/special systems are supporting layers until oracle parity is closed.",
+        },
+        "modifier_obstacle": {
+            "status": "available",
+            "source_refs": MODIFIER_OBSTACLE_SOURCE_REFS,
+            "required_in_routes": ["career", "relationship", "finance"],
+            "contract": "Argala and Badhaka are modifiers/obstacle indicators, not standalone event guarantees.",
+        },
+    }
 
 
 def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, Any]:
@@ -439,6 +498,12 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
             "source_refs": blocked_non_runtime_paths,
             "promotion_status": "not_truth_source",
             "boundary": "Duplicate, obsolete, and quarantined files are deliberately excluded from runtime source_refs.",
+        },
+        "domain_invocation_layers": _domain_invocation_layers(),
+        "remaining_priority1_batch_queue": {
+            "status": "queued",
+            "next_batches": REMAINING_PRIORITY1_BATCH_QUEUE,
+            "boundary": "Future batches remain audit-only until classified and tested.",
         },
         "frontend_interpretation_layer": {
             "status": "available" if all(_repo_relative_exists(path) for path in frontend_interpretation_paths) else "partial",
@@ -2783,6 +2848,94 @@ def _build_prediction_boundary_contract(route: str, strict: Dict[str, Any]) -> D
     }
 
 
+def _build_domain_invocation_contract(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    layers = _domain_invocation_layers()
+    return {
+        key: {
+            **value,
+            "route": route,
+            "used": True,
+        }
+        for key, value in layers.items()
+    }
+
+
+def _build_output_template_contract(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "status": "used",
+        "route": route,
+        "language": "zh",
+        "required_sections": ["promise", "activation", "manifestation", "label", "confidence_boundary"],
+        "golden_test_status": "required",
+        "source_refs": [
+            "references/prediction-boundary-protocol.md",
+            "references/event_judgment_skeleton.md",
+        ],
+        "instruction": "Final Chinese fortune output must map claims to promise/activation/manifestation/label and show confidence boundaries.",
+    }
+
+
+def _build_mevg_collection_queue(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "status": "queued",
+        "trigger": "fortune_question_strict_workflow",
+        "route": route,
+        "required_jobs": [
+            "global_web_evidence",
+            "real_case_reference_search",
+            "source_grading",
+            "conflict_arbitration",
+            "unverified_claim_downgrade",
+        ],
+        "cache_policy": "reuse_official_snapshot_and_external_evidence_cache_before_live_fetch",
+        "source_ref": "references/mandatory-verification-gate-protocol.md",
+    }
+
+
+def _build_real_case_calibration_layer(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "status": "queued",
+        "route": route,
+        "domain_buckets": ["career", "finance", "relationship", "health", "rectification", "timing"],
+        "source_roots": ["references/real_case_studies", "docs/benchmark"],
+        "retrieval_policy": "domain_bucket_first_then_case_quality_gate",
+        "confidence_effect": "caps_confidence_until_matching_cases_are_attached",
+    }
+
+
+def _build_technical_debt_contract(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "status": "tracked",
+        "route": route,
+        "narayana": {
+            "status": "partial",
+            "source_refs": ["references/bphs-ch48-narayana-dasha.md", "references/condition-dasha-complete.md"],
+            "open_items": [
+                "antardasha_pratyantar_oracle_parity",
+                "subperiod_boundary_regression",
+                "external_engine_crosscheck",
+            ],
+        },
+        "tajika": {
+            "status": "partial",
+            "source_refs": ["references/tajika-yoga-complete-guide.md"],
+            "open_items": [
+                "solar_return_precision",
+                "muntha_placeholder_audit",
+                "annual_yoga_oracle_parity",
+            ],
+        },
+    }
+
+
+def _build_remaining_priority1_batch_queue() -> Dict[str, Any]:
+    return {
+        "status": "queued",
+        "next_batches": REMAINING_PRIORITY1_BATCH_QUEUE,
+        "boundary": "Do not promote remaining priority_1 materials without batch audit and tests.",
+    }
+
+
 def _build_multi_reference_reading_summary(route: str, present: Dict[str, Any], strict: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "root_frame": _summary_root_frame(route, present),
@@ -2809,6 +2962,12 @@ def _attach_top_reader_contract(route: str, strict: Dict[str, Any]) -> Dict[str,
     strict["technique_audit_summary"] = _build_technique_audit_summary(route, strict)
     strict["adjudication_stages"] = _build_adjudication_stages(route, present, event_judgement)
     strict["prediction_boundary_contract"] = _build_prediction_boundary_contract(route, strict)
+    strict["domain_invocation_contract"] = _build_domain_invocation_contract(route, strict)
+    strict["output_template_contract"] = _build_output_template_contract(route, strict)
+    strict["mevg_collection_queue"] = _build_mevg_collection_queue(route, strict)
+    strict["real_case_calibration_layer"] = _build_real_case_calibration_layer(route, strict)
+    strict["technical_debt_contract"] = _build_technical_debt_contract(route, strict)
+    strict["remaining_priority1_batch_queue"] = _build_remaining_priority1_batch_queue()
     strict["multi_reference_reading_summary"] = _build_multi_reference_reading_summary(route, present, strict)
     strict["official_day_signal_summary"] = _build_official_day_signal_summary(present.get("external_activation"))
     strict["monthly_adjudication_summary"] = _build_monthly_adjudication_summary(route, strict)

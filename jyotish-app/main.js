@@ -1274,6 +1274,7 @@ function renderAIPromptPackPanel(cd) {
             </div>
           ` : ''}
           ${renderStrictWorkflowContractPanel(vedastroOfficial)}
+          ${renderInterpretationSourceGovernancePanel(evidence)}
         </div>
       </div>
       <div class="ai-prompt-pack-foot">
@@ -1409,6 +1410,34 @@ function renderStrictWorkflowContractCard(route, contract = {}, isPrimary = fals
       </div>
       <small>${escapeHtml(contract.reason || '')}</small>
     </article>
+  `;
+}
+
+function renderInterpretationSourceGovernancePanel(evidence = {}) {
+  const sourcePack = evidence.interpretation_source_pack || {};
+  const boundary = evidence.prediction_boundary_contract || {};
+  const mevg = evidence.mevg_collection_queue || {};
+  const cases = evidence.real_case_calibration_layer || {};
+  const debt = evidence.technical_debt_contract || {};
+  const remaining = evidence.remaining_priority1_batch_queue || {};
+  const coreRefs = sourcePack.core_rule_source_refs || [];
+  const referenceOnly = sourcePack.reference_only_source_refs || [];
+  const blockedPolicy = boundary.confidence_boundary?.unverified_claim_policy || 'downgrade_or_block';
+  return `
+    <div class="ai-prompt-pack-contracts">
+      <h4>Source Governance</h4>
+      <div class="ai-prompt-pack-contract-grid">
+        <span>core sources: ${escapeHtml(coreRefs.length ? String(coreRefs.length) : 'none')}</span>
+        <span>reference-only: ${escapeHtml(referenceOnly.length ? String(referenceOnly.length) : 'none')}</span>
+        <span>blocked non-runtime: duplicate / obsolete / quarantine</span>
+        <span>confidence downgrade: ${escapeHtml(blockedPolicy)}</span>
+        <span>MEVG queue: ${escapeHtml(mevg.status || 'blocked')}</span>
+        <span>case calibration: ${escapeHtml(cases.status || 'blocked')}</span>
+        <span>Narayana debt: ${escapeHtml(debt.narayana?.status || 'unknown')}</span>
+        <span>Tajika debt: ${escapeHtml(debt.tajika?.status || 'unknown')}</span>
+        <span>next batches: ${escapeHtml((remaining.next_batches || []).join(' / ') || 'none')}</span>
+      </div>
+    </div>
   `;
 }
 

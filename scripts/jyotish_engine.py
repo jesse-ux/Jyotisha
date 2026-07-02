@@ -1433,6 +1433,12 @@ def _compact_strict_workflow_contract(strict):
         'technique_audit_summary': strict.get('technique_audit_summary') or {},
         'adjudication_stages': strict.get('adjudication_stages') or {},
         'prediction_boundary_contract': strict.get('prediction_boundary_contract') or {},
+        'domain_invocation_contract': strict.get('domain_invocation_contract') or {},
+        'output_template_contract': strict.get('output_template_contract') or {},
+        'mevg_collection_queue': strict.get('mevg_collection_queue') or {},
+        'real_case_calibration_layer': strict.get('real_case_calibration_layer') or {},
+        'technical_debt_contract': strict.get('technical_debt_contract') or {},
+        'remaining_priority1_batch_queue': strict.get('remaining_priority1_batch_queue') or {},
         'multi_reference_reading_summary': strict.get('multi_reference_reading_summary') or {},
         'monthly_adjudication_summary': strict.get('monthly_adjudication_summary') or {},
         'official_day_signal_summary': strict.get('official_day_signal_summary') or {},
@@ -1564,6 +1570,36 @@ def _build_ai_prompt_pack(report):
         if isinstance(primary_strict_contract, dict)
         else {}
     )
+    primary_domain_invocation_layers = (
+        primary_strict_contract.get('domain_invocation_contract')
+        if isinstance(primary_strict_contract, dict)
+        else {}
+    )
+    primary_output_template_contract = (
+        primary_strict_contract.get('output_template_contract')
+        if isinstance(primary_strict_contract, dict)
+        else {}
+    )
+    primary_mevg_collection_queue = (
+        primary_strict_contract.get('mevg_collection_queue')
+        if isinstance(primary_strict_contract, dict)
+        else {}
+    )
+    primary_real_case_calibration_layer = (
+        primary_strict_contract.get('real_case_calibration_layer')
+        if isinstance(primary_strict_contract, dict)
+        else {}
+    )
+    primary_technical_debt_contract = (
+        primary_strict_contract.get('technical_debt_contract')
+        if isinstance(primary_strict_contract, dict)
+        else {}
+    )
+    primary_remaining_priority1_batch_queue = (
+        primary_strict_contract.get('remaining_priority1_batch_queue')
+        if isinstance(primary_strict_contract, dict)
+        else {}
+    )
     primary_audit = (
         primary_strict_contract.get('technique_audit_summary')
         if isinstance(primary_strict_contract, dict)
@@ -1655,6 +1691,12 @@ def _build_ai_prompt_pack(report):
             'missing_refs': interpretation_source_audit.get('missing_refs') or [],
         },
         'prediction_boundary_contract': primary_prediction_boundary_contract or {},
+        'domain_invocation_layers': primary_domain_invocation_layers or {},
+        'output_template_contract': primary_output_template_contract or {},
+        'mevg_collection_queue': primary_mevg_collection_queue or {},
+        'real_case_calibration_layer': primary_real_case_calibration_layer or {},
+        'technical_debt_contract': primary_technical_debt_contract or {},
+        'remaining_priority1_batch_queue': primary_remaining_priority1_batch_queue or {},
         'strict_workflow_primary_route': strict_workflow_primary_route,
         'strict_workflow_routes_available': list(strict_workflow_contracts.keys()),
         'strict_workflow_contracts': strict_workflow_contracts,
