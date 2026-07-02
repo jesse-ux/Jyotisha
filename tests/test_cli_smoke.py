@@ -628,6 +628,13 @@ def test_full_reading_auto_attaches_vedastro_main_entry_boundary() -> None:
     assert vedastro["source_metadata"]["ingestion_profile"] == "main_entry_overview"
     assert vedastro["source_metadata"]["reference_date"] == "2026-06-29"
     assert sorted(vedastro["source_metadata"]["domain_statuses"]) == ["career", "marriage", "wealth"]
+    career_contract = result["modules"]["career_strict_evidence"]
+    assert "vedastro_range_scan_missing" not in career_contract["event_judgement"]["secondary_context"]
+    assert career_contract["present_evidence"]["external_activation"]["level"] == "none"
+    assert (
+        career_contract["present_evidence"]["external_activation"]["provenance"]["domain_statuses"]["career"]
+        == "network_execution_disabled"
+    )
 
 
 def test_full_reading_exposes_sensitive_point_modules() -> None:

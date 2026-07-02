@@ -5653,6 +5653,19 @@ def cmd_full_reading(args):
 
     stage_started = time.perf_counter()
     try:
+        _attach_vedastro_main_entry_overview(report, args)
+    except Exception as e:
+        report['warnings'].append(f"vedastro-main-entry-overview: {e}")
+    _record_stage_timing(
+        stage_timings,
+        'vedastro_main_entry_overview',
+        stage_started,
+        enabled=profile_stages,
+        status='warning' if any(warn.startswith('vedastro-main-entry-overview:') for warn in report['warnings']) else 'ok',
+    )
+
+    stage_started = time.perf_counter()
+    try:
         strict_evidence_collector = _load_strict_evidence_collector()
         for route in ('relationship', 'career', 'finance'):
             module_name = STRICT_WORKFLOW_MODULE_MAP[route]
@@ -5674,19 +5687,6 @@ def cmd_full_reading(args):
         stage_started,
         enabled=profile_stages,
         status='error' if any(err.startswith('strict-evidence-collector:') for err in report['errors']) else 'ok',
-    )
-
-    stage_started = time.perf_counter()
-    try:
-        _attach_vedastro_main_entry_overview(report, args)
-    except Exception as e:
-        report['warnings'].append(f"vedastro-main-entry-overview: {e}")
-    _record_stage_timing(
-        stage_timings,
-        'vedastro_main_entry_overview',
-        stage_started,
-        enabled=profile_stages,
-        status='warning' if any(warn.startswith('vedastro-main-entry-overview:') for warn in report['warnings']) else 'ok',
     )
 
     stage_started = time.perf_counter()
