@@ -4038,8 +4038,27 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 },
                 'technical_debt_contract': {
                     'status': 'tracked',
-                    'narayana': {'status': 'partial', 'open_items': ['antardasha_pratyantar_oracle_parity']},
-                    'tajika': {'status': 'partial', 'open_items': ['solar_return_precision', 'muntha_placeholder_audit']},
+                    'narayana': {
+                        'status': 'partial',
+                        'status_breakdown': {
+                            'closed': ['mahadasha_present'],
+                            'blocked': ['external_oracle_parity_not_closed'],
+                        },
+                        'open_items': ['antardasha_pratyantar_oracle_parity'],
+                    },
+                    'tajika': {
+                        'status': 'partial',
+                        'status_breakdown': {
+                            'closed': ['tajika_yoga_reference_layer_visible'],
+                            'blocked': ['precise_solar_return_and_muntha_oracle_not_closed'],
+                        },
+                        'open_items': ['solar_return_precision', 'muntha_placeholder_audit'],
+                    },
+                    'oracle_parity': {
+                        'status': 'blocked',
+                        'required_systems': ['VedAstro', 'PyJHora', 'jyotishganit'],
+                        'priority_domains': ['Dasha', 'Shadbala', 'Tajika', 'Narayana'],
+                    },
                 },
                 'remaining_priority1_batch_queue': {
                     'status': 'queued',
@@ -4049,6 +4068,22 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                         'vedic_astro_skills_batch1',
                         'references_batch2',
                     ],
+                    'batch_statuses': {
+                        'real_case_studies_batch1': 'next',
+                        'rishi_ai_mcp_batch1': 'pending',
+                        'vedic_astro_skills_batch1': 'pending',
+                        'references_batch2': 'pending',
+                    },
+                },
+                'oracle_parity_queue': {
+                    'status': 'queued',
+                    'systems': ['VedAstro', 'PyJHora', 'jyotishganit'],
+                    'priority_domains': ['Dasha', 'Shadbala', 'Tajika', 'Narayana'],
+                },
+                'release_hygiene_plan': {
+                    'status': 'tracked',
+                    'git_sync_required': True,
+                    'gc_log_policy': 'separate_safe_cleanup_plan_required',
                 },
                 'vedastro_official_full_snapshot': vedastro_official_full_snapshot,
                 'vedastro_overview': vedastro_overview,

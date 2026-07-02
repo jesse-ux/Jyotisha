@@ -1057,6 +1057,9 @@ def _build_relationship_narrative_payload(relationship_strict):
         }
 
     event_judgement = relationship_strict.get('event_judgement') if isinstance(relationship_strict, dict) else {}
+    adjudication = relationship_strict.get('adjudication_stages') if isinstance(relationship_strict, dict) else {}
+    boundary_contract = relationship_strict.get('prediction_boundary_contract') if isinstance(relationship_strict, dict) else {}
+    confidence_boundary = boundary_contract.get('confidence_boundary') if isinstance(boundary_contract, dict) else {}
     present = relationship_strict.get('present_evidence') if isinstance(relationship_strict, dict) else {}
     missing = relationship_strict.get('missing_evidence') or []
     secondary_context = event_judgement.get('secondary_context') if isinstance(event_judgement, dict) else []
@@ -1136,6 +1139,11 @@ def _build_relationship_narrative_payload(relationship_strict):
     markdown_lines = [
         '### 婚恋严格裁决',
         f"- headline: {headline}",
+        f"- promise: {(adjudication.get('promise') or {}).get('status') or 'missing'} / drivers={(adjudication.get('promise') or {}).get('drivers') or []}",
+        f"- activation: {(adjudication.get('activation') or {}).get('status') or 'missing'} / drivers={(adjudication.get('activation') or {}).get('drivers') or []}",
+        f"- manifestation: {(adjudication.get('manifestation') or {}).get('status') or 'missing'} / drivers={(adjudication.get('manifestation') or {}).get('drivers') or []}",
+        f"- label: {(adjudication.get('label') or {}).get('value') or dominant_label or 'none'}",
+        f"- confidence_boundary: MEVG={confidence_boundary.get('mevg_status') or 'blocked'}; Real Case Calibration={confidence_boundary.get('real_case_calibration_status') or 'blocked'}; policy={confidence_boundary.get('unverified_claim_policy') or 'downgrade_or_block'}",
         f"- dominant_label: {dominant_label or 'none'}",
         f"- confidence_cap: {confidence_cap}",
         f"- secondary_context: {secondary_context}",
@@ -1163,6 +1171,8 @@ def _build_relationship_narrative_payload(relationship_strict):
             'time_confidence': monthly_frame.get('time_confidence') or {'value': 'blocked'},
         },
         'markdown': "\n".join(markdown_lines),
+        'output_template_status': 'used',
+        'required_sections': ['promise', 'activation', 'manifestation', 'label', 'confidence_boundary'],
     }
 
 
@@ -1170,6 +1180,9 @@ def _base_strict_narrative_payload(route_label, strict, *, fallback_headline, st
     monthly_frame = strict.get('monthly_adjudication_summary') if isinstance(strict, dict) else {}
     monthly_frame = monthly_frame if isinstance(monthly_frame, dict) else {}
     event_judgement = strict.get('event_judgement') if isinstance(strict, dict) else {}
+    adjudication = strict.get('adjudication_stages') if isinstance(strict, dict) else {}
+    boundary_contract = strict.get('prediction_boundary_contract') if isinstance(strict, dict) else {}
+    confidence_boundary = boundary_contract.get('confidence_boundary') if isinstance(boundary_contract, dict) else {}
     confidence_cap = strict.get('confidence_cap') or event_judgement.get('confidence_cap') or 'unknown'
     dominant_label = event_judgement.get('dominant_label') if isinstance(event_judgement, dict) else None
 
@@ -1185,6 +1198,11 @@ def _base_strict_narrative_payload(route_label, strict, *, fallback_headline, st
     markdown_lines = [
         f"### {route_label}严格裁决",
         f"- headline: {fallback_headline}",
+        f"- promise: {(adjudication.get('promise') or {}).get('status') or 'missing'} / drivers={(adjudication.get('promise') or {}).get('drivers') or []}",
+        f"- activation: {(adjudication.get('activation') or {}).get('status') or 'missing'} / drivers={(adjudication.get('activation') or {}).get('drivers') or []}",
+        f"- manifestation: {(adjudication.get('manifestation') or {}).get('status') or 'missing'} / drivers={(adjudication.get('manifestation') or {}).get('drivers') or []}",
+        f"- label: {(adjudication.get('label') or {}).get('value') or dominant_label or 'none'}",
+        f"- confidence_boundary: MEVG={confidence_boundary.get('mevg_status') or 'blocked'}; Real Case Calibration={confidence_boundary.get('real_case_calibration_status') or 'blocked'}; policy={confidence_boundary.get('unverified_claim_policy') or 'downgrade_or_block'}",
         f"- dominant_label: {dominant_label or 'none'}",
         f"- confidence_cap: {confidence_cap}",
         f"- 月度主状态: {monthly_frame.get('primary_state', {}).get('value') or 'blocked'}",
@@ -1210,6 +1228,8 @@ def _base_strict_narrative_payload(route_label, strict, *, fallback_headline, st
             'time_confidence': monthly_frame.get('time_confidence') or {'value': 'blocked'},
         },
         'markdown': "\n".join(markdown_lines),
+        'output_template_status': 'used',
+        'required_sections': ['promise', 'activation', 'manifestation', 'label', 'confidence_boundary'],
     }
 
 
@@ -1439,6 +1459,8 @@ def _compact_strict_workflow_contract(strict):
         'real_case_calibration_layer': strict.get('real_case_calibration_layer') or {},
         'technical_debt_contract': strict.get('technical_debt_contract') or {},
         'remaining_priority1_batch_queue': strict.get('remaining_priority1_batch_queue') or {},
+        'oracle_parity_queue': strict.get('oracle_parity_queue') or {},
+        'release_hygiene_plan': strict.get('release_hygiene_plan') or {},
         'multi_reference_reading_summary': strict.get('multi_reference_reading_summary') or {},
         'monthly_adjudication_summary': strict.get('monthly_adjudication_summary') or {},
         'official_day_signal_summary': strict.get('official_day_signal_summary') or {},
@@ -1600,6 +1622,16 @@ def _build_ai_prompt_pack(report):
         if isinstance(primary_strict_contract, dict)
         else {}
     )
+    primary_oracle_parity_queue = (
+        primary_strict_contract.get('oracle_parity_queue')
+        if isinstance(primary_strict_contract, dict)
+        else {}
+    )
+    primary_release_hygiene_plan = (
+        primary_strict_contract.get('release_hygiene_plan')
+        if isinstance(primary_strict_contract, dict)
+        else {}
+    )
     primary_audit = (
         primary_strict_contract.get('technique_audit_summary')
         if isinstance(primary_strict_contract, dict)
@@ -1697,6 +1729,8 @@ def _build_ai_prompt_pack(report):
         'real_case_calibration_layer': primary_real_case_calibration_layer or {},
         'technical_debt_contract': primary_technical_debt_contract or {},
         'remaining_priority1_batch_queue': primary_remaining_priority1_batch_queue or {},
+        'oracle_parity_queue': primary_oracle_parity_queue or {},
+        'release_hygiene_plan': primary_release_hygiene_plan or {},
         'strict_workflow_primary_route': strict_workflow_primary_route,
         'strict_workflow_routes_available': list(strict_workflow_contracts.keys()),
         'strict_workflow_contracts': strict_workflow_contracts,

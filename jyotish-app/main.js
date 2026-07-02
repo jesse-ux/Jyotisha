@@ -1427,14 +1427,18 @@ function renderInterpretationSourceGovernancePanel(evidence = {}) {
     <div class="ai-prompt-pack-contracts">
       <h4>Source Governance</h4>
       <div class="ai-prompt-pack-contract-grid">
+        <span>core source refs: ${escapeHtml(coreRefs.length ? String(coreRefs.length) : 'none')}</span>
         <span>core sources: ${escapeHtml(coreRefs.length ? String(coreRefs.length) : 'none')}</span>
         <span>reference-only: ${escapeHtml(referenceOnly.length ? String(referenceOnly.length) : 'none')}</span>
         <span>blocked non-runtime: duplicate / obsolete / quarantine</span>
+        <span>why confidence downgraded: ${escapeHtml(blockedPolicy)}</span>
         <span>confidence downgrade: ${escapeHtml(blockedPolicy)}</span>
         <span>MEVG queue: ${escapeHtml(mevg.status || 'blocked')}</span>
         <span>case calibration: ${escapeHtml(cases.status || 'blocked')}</span>
         <span>Narayana debt: ${escapeHtml(debt.narayana?.status || 'unknown')}</span>
         <span>Tajika debt: ${escapeHtml(debt.tajika?.status || 'unknown')}</span>
+        <span>next batch queue: ${escapeHtml((remaining.next_batches || []).join(' / ') || 'none')}</span>
+        <span>oracle parity: ${escapeHtml((evidence.oracle_parity_queue?.priority_domains || []).join(' / ') || 'blocked')}</span>
         <span>next batches: ${escapeHtml((remaining.next_batches || []).join(' / ') || 'none')}</span>
       </div>
     </div>

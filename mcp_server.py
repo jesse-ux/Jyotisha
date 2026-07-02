@@ -2153,6 +2153,12 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("dignity_supportive_friendship")
         elif dignity_guardrail.get("score_delta") == -5:
             secondary_context.append("dignity_high_friction")
+        secondary_context.extend([
+            "dasha_timing_layer_used",
+            "varga_strength_layer_used",
+            "annual_special_layer_context",
+            "modifier_obstacle_layer_used",
+        ])
 
         hard_gate_missing = any(
             key in missing for key in (
@@ -2278,6 +2284,12 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("dignity_supportive_friendship")
         elif dignity_guardrail.get("score_delta") == -5:
             secondary_context.append("dignity_high_friction")
+        secondary_context.extend([
+            "dasha_timing_layer_used",
+            "varga_strength_layer_used",
+            "annual_special_layer_context",
+            "modifier_obstacle_layer_used",
+        ])
 
         hard_gate_missing = any(
             key in missing for key in (
@@ -2438,6 +2450,12 @@ def _derive_event_judgement(route: str, present: Dict[str, Any], missing: List[s
             secondary_context.append("dignity_supportive_friendship")
         elif dignity_guardrail.get("score_delta") == -5:
             secondary_context.append("dignity_high_friction")
+        secondary_context.extend([
+            "dasha_timing_layer_used",
+            "varga_strength_layer_used",
+            "annual_special_layer_context",
+            "modifier_obstacle_layer_used",
+        ])
         return {
             "event_family": "finance",
             "score": score,
@@ -2876,10 +2894,13 @@ def _build_output_template_contract(route: str, strict: Dict[str, Any]) -> Dict[
 
 
 def _build_mevg_collection_queue(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    packet_id = f"mevg:{route}:strict_workflow"
     return {
         "status": "queued",
         "trigger": "fortune_question_strict_workflow",
         "route": route,
+        "execution_mode": "cache_ttl_free_tier_queue",
+        "cache_ttl_hours": 72,
         "required_jobs": [
             "global_web_evidence",
             "real_case_reference_search",
@@ -2889,17 +2910,64 @@ def _build_mevg_collection_queue(route: str, strict: Dict[str, Any]) -> Dict[str
         ],
         "cache_policy": "reuse_official_snapshot_and_external_evidence_cache_before_live_fetch",
         "source_ref": "references/mandatory-verification-gate-protocol.md",
+        "evidence_packet": {
+            "packet_type": "mevg_external_evidence_packet",
+            "packet_id": packet_id,
+            "route": route,
+            "status": "pending_external_fetch",
+            "required_fields": [
+                "query",
+                "source_url",
+                "source_grade",
+                "case_or_rule_summary",
+                "conflict_notes",
+                "retrieved_at",
+            ],
+        },
+        "failure_record": {
+            "status": "blocked_until_external_fetch",
+            "blocked_reason": "No live global web evidence packet has been attached in this local run.",
+            "confidence_effect": "downgrade_or_block",
+        },
     }
 
 
 def _build_real_case_calibration_layer(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    case_index_by_domain = {
+        "career": [
+            "references/real_case_studies/vedicka/career-success-poverty-prosperity.md",
+            "references/real_case_studies/印度占星修正版研究结论v3-高压基建后的反转兑现模型.md",
+        ],
+        "finance": [
+            "references/real_case_studies/vedicka/career-success-poverty-prosperity.md",
+            "docs/benchmark/public_jyotish_benchmark_dashboard.json",
+        ],
+        "relationship": [
+            "docs/benchmark/legacy-marriage-v6.1/verify-results-v6.1.json",
+            "docs/benchmark/legacy-marriage-v6.1/印度占星实战案例综合验证报告-v6.1-2026-05-03.md",
+        ],
+        "health": [
+            "references/real_case_studies/印度占星解盘与推运误区反思报告-2026-04-22.md",
+        ],
+        "rectification": [
+            "references/birth-time-rectification-cases.md",
+        ],
+        "timing": [
+            "docs/benchmark/dasha_external_oracle_closure_status.json",
+            "docs/benchmark/tajika_sahams_annual_closure_status.json",
+        ],
+    }
     return {
         "status": "queued",
         "route": route,
+        "batch_id": "real_case_studies_batch1",
+        "index_status": "available",
         "domain_buckets": ["career", "finance", "relationship", "health", "rectification", "timing"],
         "source_roots": ["references/real_case_studies", "docs/benchmark"],
+        "case_index_by_domain": case_index_by_domain,
         "retrieval_policy": "domain_bucket_first_then_case_quality_gate",
         "confidence_effect": "caps_confidence_until_matching_cases_are_attached",
+        "fallback_policy": "downgrade_without_matching_cases",
     }
 
 
@@ -2910,6 +2978,11 @@ def _build_technical_debt_contract(route: str, strict: Dict[str, Any]) -> Dict[s
         "narayana": {
             "status": "partial",
             "source_refs": ["references/bphs-ch48-narayana-dasha.md", "references/condition-dasha-complete.md"],
+            "status_breakdown": {
+                "closed": ["mahadasha_present", "antardasha_pratyantar_structure_present"],
+                "partial": ["current_period_boundary_needs_more_regression"],
+                "blocked": ["external_oracle_parity_not_closed"],
+            },
             "open_items": [
                 "antardasha_pratyantar_oracle_parity",
                 "subperiod_boundary_regression",
@@ -2919,11 +2992,21 @@ def _build_technical_debt_contract(route: str, strict: Dict[str, Any]) -> Dict[s
         "tajika": {
             "status": "partial",
             "source_refs": ["references/tajika-yoga-complete-guide.md"],
+            "status_breakdown": {
+                "closed": ["tajika_yoga_reference_layer_visible", "annual_strength_contract_visible"],
+                "partial": ["target_set_benchmark_closed_not_full_traditional_prediction"],
+                "blocked": ["precise_solar_return_and_muntha_oracle_not_closed"],
+            },
             "open_items": [
                 "solar_return_precision",
                 "muntha_placeholder_audit",
                 "annual_yoga_oracle_parity",
             ],
+        },
+        "oracle_parity": {
+            "status": "blocked",
+            "required_systems": ["VedAstro", "PyJHora", "jyotishganit"],
+            "priority_domains": ["Dasha", "Shadbala", "Tajika", "Narayana"],
         },
     }
 
@@ -2932,7 +3015,36 @@ def _build_remaining_priority1_batch_queue() -> Dict[str, Any]:
     return {
         "status": "queued",
         "next_batches": REMAINING_PRIORITY1_BATCH_QUEUE,
+        "batch_statuses": {
+            "real_case_studies_batch1": "next",
+            "rishi_ai_mcp_batch1": "pending",
+            "vedic_astro_skills_batch1": "pending",
+            "references_batch2": "pending",
+        },
         "boundary": "Do not promote remaining priority_1 materials without batch audit and tests.",
+    }
+
+
+def _build_oracle_parity_queue() -> Dict[str, Any]:
+    return {
+        "status": "queued",
+        "systems": ["VedAstro", "PyJHora", "jyotishganit"],
+        "priority_domains": ["Dasha", "Shadbala", "Tajika", "Narayana"],
+        "policy": "report_closed_partial_blocked_per_domain",
+    }
+
+
+def _build_release_hygiene_plan() -> Dict[str, Any]:
+    return {
+        "status": "tracked",
+        "git_sync_required": True,
+        "required_regressions": [
+            "strict_workflow",
+            "prompt_pack",
+            "frontend_productization",
+            "inventory_gate",
+        ],
+        "gc_log_policy": "separate_safe_cleanup_plan_required",
     }
 
 
@@ -2968,6 +3080,8 @@ def _attach_top_reader_contract(route: str, strict: Dict[str, Any]) -> Dict[str,
     strict["real_case_calibration_layer"] = _build_real_case_calibration_layer(route, strict)
     strict["technical_debt_contract"] = _build_technical_debt_contract(route, strict)
     strict["remaining_priority1_batch_queue"] = _build_remaining_priority1_batch_queue()
+    strict["oracle_parity_queue"] = _build_oracle_parity_queue()
+    strict["release_hygiene_plan"] = _build_release_hygiene_plan()
     strict["multi_reference_reading_summary"] = _build_multi_reference_reading_summary(route, present, strict)
     strict["official_day_signal_summary"] = _build_official_day_signal_summary(present.get("external_activation"))
     strict["monthly_adjudication_summary"] = _build_monthly_adjudication_summary(route, strict)

@@ -787,3 +787,13 @@
 - 新增 `technical_debt_contract`，诚实标记 Narayana 与 Tajika 仍为 `partial`：Narayana 需 Antardasha/Pratyantar oracle parity，Tajika 需 solar return precision、Muntha placeholder audit 与 annual yoga oracle parity。
 - 前端 AI Prompt Pack 新增 `Source Governance` 面板，显示 core sources、reference-only、blocked non-runtime、confidence downgrade、MEVG queue、case calibration、Narayana/Tajika debt 与 next batches。
 - 剩余 priority_1 队列明确为：`real_case_studies_batch1`、`rishi_ai_mcp_batch1`、`vedic_astro_skills_batch1`、`references_batch2`。
+
+## 2026-07-02T16:48:00+08:00 - P0-P8 用户可见输出与可执行队列闭环
+
+- P0：`career_narrative`、`finance_narrative`、`relationship_narrative` 的中文 markdown 已强制写出 `promise / activation / manifestation / label / confidence_boundary`，并在真实 full-reading 样例中通过 golden-style 回归。
+- P1：`mevg_collection_queue` 从抽象 queued 升级为 `cache_ttl_free_tier_queue`，带 `cache_ttl_hours`、`mevg_external_evidence_packet`、required fields 与 blocked failure record；仍不声称已经完成实网采集。
+- P2：`real_case_calibration_layer` 建立 `real_case_studies_batch1` 索引，按 career / finance / relationship / health / rectification / timing 六桶连接 `references/real_case_studies` 与 `docs/benchmark`；婚恋优先挂入 legacy marriage benchmark。
+- P3：第二批领域调用层不再只作为 source refs，已进入 `event_judgement.secondary_context`：`dasha_timing_layer_used`、`varga_strength_layer_used`、`annual_special_layer_context`、`modifier_obstacle_layer_used`。
+- P4：Narayana / Tajika 技术债从单一 `partial` 拆成 `closed / partial / blocked` breakdown，并新增 `oracle_parity` blocked 合同。
+- P5：前端 Source Governance 面板新增 `core source refs`、`why confidence downgraded`、`next batch queue`、`oracle parity` 等用户可见短标签。
+- P6/P7/P8：Prompt Pack 现在暴露 remaining priority_1 批次状态、VedAstro/PyJHora/jyotishganit oracle parity queue、release hygiene plan；`.git/gc.log` 仍标记为单独安全清理计划，不随本轮 prune。
