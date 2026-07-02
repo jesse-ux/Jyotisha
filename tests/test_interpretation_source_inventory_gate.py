@@ -51,6 +51,14 @@ def test_interpretation_source_inventory_gate_reports_layered_source_pack() -> N
         "references/retrograde-combustion-war-guide.md",
         "references/transit-multi-reference-guide.md",
     ]
+    assert layers["promote_batch2_topic_sources"]["promotion_batch"] == "priority1_batch1_remaining_promote_11"
+    assert "references/vimshottari_dasha_guide.md" in layers["promote_batch2_topic_sources"]["source_refs"]
+    assert "references/condition-dasha-complete.md" in layers["promote_batch2_topic_sources"]["source_refs"]
+    assert layers["reference_only_conflict_sources"]["promotion_status"] == "reference_only"
+    assert "references/multi-dasha-convergence-protocol.md" in layers["reference_only_conflict_sources"]["source_refs"]
+    assert layers["blocked_non_runtime_sources"]["promotion_status"] == "not_truth_source"
+    assert "references/kp-practical-event-timing.md" in layers["blocked_non_runtime_sources"]["source_refs"]
+    assert report["summary"]["blocked_non_runtime_count"] >= 8
 
     draft_refs = layers["quarantined_drafts"]["source_refs"]
     source_refs = set(report["runtime_source_refs"])

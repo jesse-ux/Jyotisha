@@ -286,6 +286,24 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert any(row["technique"] == "MEVG / Global Web Evidence" for row in audit_table)
     assert any(row["technique"] == "Real Case Calibration" for row in audit_table)
     assert any(row["technique"] == "Interpretation Source Pack" for row in audit_table)
+    interpretation_source_pack = prompt_pack["evidence_snapshot"]["interpretation_source_pack"]
+    assert interpretation_source_pack["core_rule_source_refs"] == [
+        "references/prediction-boundary-protocol.md",
+        "references/event_judgment_skeleton.md",
+        "references/planetary-dignity-complete-reference.md",
+        "references/retrograde-combustion-war-guide.md",
+        "references/transit-multi-reference-guide.md",
+    ]
+    assert "references/vimshottari_dasha_guide.md" in interpretation_source_pack["promote_batch2_source_refs"]
+    assert "references/yoga-strength-scoring-system.md" in interpretation_source_pack["reference_only_source_refs"]
+    prediction_boundary = prompt_pack["evidence_snapshot"]["prediction_boundary_contract"]
+    assert prediction_boundary["confidence_boundary"]["unverified_claim_policy"] == "downgrade_or_block"
+    assert prediction_boundary["event_judgment_skeleton"]["required_sections"] == [
+        "promise",
+        "activation",
+        "manifestation",
+        "label",
+    ]
     functional_rows = [row for row in audit_table if row["technique"] == "Functional Benefic/Malefic"]
     assert functional_rows
     assert functional_rows[0]["status"] == "used"
@@ -359,6 +377,7 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert "finance" in vedastro_official_snapshot["strict_workflow_contracts"]
     career_contract = vedastro_official_snapshot["strict_workflow_contracts"]["career"]
     assert "adjudication_stages" in career_contract
+    assert "prediction_boundary_contract" in career_contract
     assert "multi_reference_reading_summary" in career_contract
     assert "modifier_frame" in career_contract["multi_reference_reading_summary"]
     assert vedastro_official_snapshot["strict_workflow_primary_route"] in {"relationship", "career", "finance", None}

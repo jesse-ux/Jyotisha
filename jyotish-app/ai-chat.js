@@ -313,6 +313,7 @@ function buildChartContext(cd, guidedTopicContext = null) {
     const primaryRoute = officialSnapshot.strict_workflow_primary_route || Object.keys(strictContracts)[0] || '';
     const topReaderContract = primaryRoute ? (strictContracts[primaryRoute] || {}) : {};
     const adjudicationStages = topReaderContract.adjudication_stages || {};
+    const predictionBoundaryContract = topReaderContract.prediction_boundary_contract || cd.ai_prompt_pack.evidence_snapshot.prediction_boundary_contract || {};
     const multiReferenceSummary = topReaderContract.multi_reference_reading_summary || {};
     const techniqueAuditSummary = topReaderContract.technique_audit_summary || {};
     const runtimePlannerBoundary = runtimePlanner && typeof runtimePlanner === 'object' && Object.keys(runtimePlanner).length
@@ -339,6 +340,14 @@ function buildChartContext(cd, guidedTopicContext = null) {
           `technique_audit_summary.functional=${techniqueAuditSummary.functional_benefic_malefic?.gate || 'none'}/${techniqueAuditSummary.functional_benefic_malefic?.used ? 'used' : 'blocked'} · vargas=${(techniqueAuditSummary.relevant_vargas?.present_keys || []).join('/') || 'none'} · dual_dasha=${techniqueAuditSummary.vimshottari_narayana_crosscheck?.used ? 'used' : 'blocked'}`,
           `multi_reference_reading_summary.root_frame=${Object.keys(multiReferenceSummary.root_frame || {}).join('/') || 'none'} · modifier_frame=${Object.keys(multiReferenceSummary.modifier_frame || {}).join('/') || 'none'}`,
           `main_conflicts=${(topReaderContract.main_conflicts || []).map(item => item?.type).filter(Boolean).join('/') || 'none'}`,
+        ].join('\n')
+      : '';
+    const predictionBoundary = predictionBoundaryContract && typeof predictionBoundaryContract === 'object' && Object.keys(predictionBoundaryContract).length
+      ? [
+          '【Prediction Boundary Contract】',
+          `source_refs=${(predictionBoundaryContract.source_refs || []).join(' / ') || '-'}`,
+          `promise=${predictionBoundaryContract.promise?.status || adjudicationStages.promise?.status || 'missing'} · activation=${predictionBoundaryContract.activation?.status || adjudicationStages.activation?.status || 'missing'} · manifestation=${predictionBoundaryContract.manifestation?.status || adjudicationStages.manifestation?.status || 'missing'} · label=${predictionBoundaryContract.label?.value || topReaderContract.dominant_label || '-'}`,
+          `mevg=${predictionBoundaryContract.confidence_boundary?.mevg_status || 'blocked'} · real_case=${predictionBoundaryContract.confidence_boundary?.real_case_calibration_status || 'blocked'} · policy=${predictionBoundaryContract.confidence_boundary?.unverified_claim_policy || 'downgrade_or_block'}`,
         ].join('\n')
       : '';
     const vedastroBoundary = vedastroOverview && typeof vedastroOverview === 'object'
@@ -369,6 +378,8 @@ function buildChartContext(cd, guidedTopicContext = null) {
       officialBoundary,
       '',
       topReaderBoundary,
+      '',
+      predictionBoundary,
       '',
       guidedTopicBoundary,
       '',

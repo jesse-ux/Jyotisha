@@ -1432,6 +1432,7 @@ def _compact_strict_workflow_contract(strict):
         'conflicts': strict.get('conflicts') or [],
         'technique_audit_summary': strict.get('technique_audit_summary') or {},
         'adjudication_stages': strict.get('adjudication_stages') or {},
+        'prediction_boundary_contract': strict.get('prediction_boundary_contract') or {},
         'multi_reference_reading_summary': strict.get('multi_reference_reading_summary') or {},
         'monthly_adjudication_summary': strict.get('monthly_adjudication_summary') or {},
         'official_day_signal_summary': strict.get('official_day_signal_summary') or {},
@@ -1558,6 +1559,21 @@ def _build_ai_prompt_pack(report):
     vedastro_official_full_snapshot = _build_vedastro_official_full_snapshot_payload(modules)
     strict_workflow_contracts = _extract_strict_workflow_contracts(modules)
     strict_workflow_primary_route, primary_strict_contract = _preferred_strict_workflow_contract(strict_workflow_contracts)
+    primary_prediction_boundary_contract = (
+        primary_strict_contract.get('prediction_boundary_contract')
+        if isinstance(primary_strict_contract, dict)
+        else {}
+    )
+    primary_audit = (
+        primary_strict_contract.get('technique_audit_summary')
+        if isinstance(primary_strict_contract, dict)
+        else {}
+    )
+    interpretation_source_audit = (
+        primary_audit.get('interpretation_source_pack')
+        if isinstance(primary_audit, dict) and isinstance(primary_audit.get('interpretation_source_pack'), dict)
+        else {}
+    )
     guided_topics = modules.get('guided_topics') if isinstance(modules.get('guided_topics'), list) else build_guided_topics(report)
     capability_evidence_pool = build_capability_evidence_pool_summary()
 
@@ -1630,6 +1646,15 @@ def _build_ai_prompt_pack(report):
         },
         'oracle_progress': oracle_progress,
         'functional_benefic_malefic': functional_layer,
+        'interpretation_source_pack': {
+            'status': interpretation_source_audit.get('status') or 'blocked',
+            'source': interpretation_source_audit.get('source') or 'repo_existing_interpretation_sources',
+            'core_rule_source_refs': interpretation_source_audit.get('core_rule_source_refs') or [],
+            'promote_batch2_source_refs': interpretation_source_audit.get('promote_batch2_source_refs') or [],
+            'reference_only_source_refs': interpretation_source_audit.get('reference_only_source_refs') or [],
+            'missing_refs': interpretation_source_audit.get('missing_refs') or [],
+        },
+        'prediction_boundary_contract': primary_prediction_boundary_contract or {},
         'strict_workflow_primary_route': strict_workflow_primary_route,
         'strict_workflow_routes_available': list(strict_workflow_contracts.keys()),
         'strict_workflow_contracts': strict_workflow_contracts,
@@ -1660,6 +1685,8 @@ def _build_ai_prompt_pack(report):
         "若 evidence_snapshot.vedastro_overview.status 为 ok，请把它作为用户可见外部概览证据明确写出，但不要把 overview-only 结果误当作长周期精扫结论。",
         "VedAstro 官方全量快照是第一原始证据层；若 evidence_snapshot.vedastro_official_full_snapshot.status 不是 ok/partial，必须说明官方全量资料 blocked，并把本地结果标记为 fallback。",
         "若 evidence_snapshot.capability_evidence_pool 存在，请把 89 项视为后台备选证据池；不要把所有能力条目平铺成结论，也不要让 audit_only/alias 条目影响占星判断。",
+        "必须按 promise → activation → manifestation → label 输出；每个判断都要说明属于承诺、激活、落地形式还是标签层。",
+        "未完成 MEVG / Real Case Calibration 时必须降级或标 blocked，不得把内部一致性写成已验证结论。",
     ]
 
     return {
@@ -1672,7 +1699,24 @@ def _build_ai_prompt_pack(report):
                 'references/ai-reading-workflow-prompt.md',
                 'references/comprehensive-reading-workflow.md',
                 'references/prediction-boundary-protocol.md',
+                'references/event_judgment_skeleton.md',
+                'references/planetary-dignity-complete-reference.md',
+                'references/retrograde-combustion-war-guide.md',
+                'references/transit-multi-reference-guide.md',
+                'references/vimshottari_dasha_guide.md',
+                'references/pratyantar-calculation-guide.md',
+                'references/divisional-chart-deep-reading.md',
+                'references/shadbala-complete-methodology.md',
+                'references/ashtakavarga-complete-system.md',
+                'references/tajika-yoga-complete-guide.md',
+                'references/jaimini-complete-system.md',
+                'references/kp-astrology-complete-system.md',
+                'references/argala-complete-guide.md',
+                'references/badhaka-obstacle-planet-guide.md',
+                'references/condition-dasha-complete.md',
                 'references/dasa-convergence-methodology.md',
+                'references/multi-dasha-convergence-protocol.md',
+                'references/yoga-strength-scoring-system.md',
                 'references/shadbala-interpretation-methodology.md',
                 'references/navamsa-d9-interpretation-template.md',
                 'references/interpretation_template_registry.json',

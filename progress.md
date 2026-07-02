@@ -768,3 +768,12 @@
 - `technique_audit_summary.interpretation_source_pack` 现在直接暴露 `core_rule_source_refs`，career / relationship / finance strict workflow 都能看到同一组核心源头。
 - 新增 `tests/test_interpretation_source_core5_strict_visibility.py`；同时加固 `tests/test_interpretation_source_inventory_gate.py` 对核心层的断言。
 - 边界仍保留：核心 5 已进入调用链可见性层，但具体解释仍需冲突仲裁、MEVG、真实案例校准和领域分盘/大运证据。
+
+## 2026-07-02T15:42:00+08:00 - 核心 5 内容级调用与第二批资料层闭环
+
+- 核心 5 不再只是可见：career / relationship / finance strict workflow 现在生成 `prediction_boundary_contract`，强制绑定 `promise -> activation -> manifestation -> label`、MEVG blocked、Real Case Calibration blocked 与核心 5 source refs。
+- 第二批 promote 11 个专题源头已接成 `promote_batch2_topic_layer`：Vimshottari、Pratyantar、分盘深读、Shadbala、Ashtakavarga、Tajika、Jaimini、KP、Argala、Badhaka、Condition Dasha。
+- `reference-only` 3 个源头已接成 `reference_only_conflict_layer`，只允许作为冲突/参考材料：`dasa-convergence-methodology`、`multi-dasha-convergence-protocol`、`yoga-strength-scoring-system`。
+- duplicate / obsolete / quarantine 8 个文件已列入 `blocked_non_runtime_layer`，并由 inventory gate 检查不进入 runtime source refs；重点包括 `kp-practical-event-timing.md` 与 `consultation-case-library.md`。
+- Prompt Pack / API fallback / AI Chat 已同步 `prediction_boundary_contract`、核心 5、第二批 11、reference-only 3；AI Chat 上下文新增 `【Prediction Boundary Contract】` 段落。
+- 真实 full-reading 回归确认：REDACTED_DATE REDACTED_TIME REDACTED_PLACE矿区样例中 relationship / career / finance 三条 strict contract 均带 prediction boundary，且 MEVG 与真实案例校准仍为 blocked。

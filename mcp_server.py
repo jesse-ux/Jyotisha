@@ -128,6 +128,37 @@ CORE_RULE_SOURCE_REFS = [
     "references/transit-multi-reference-guide.md",
 ]
 
+PROMOTE_BATCH2_TOPIC_SOURCE_REFS = [
+    "references/vimshottari_dasha_guide.md",
+    "references/pratyantar-calculation-guide.md",
+    "references/divisional-chart-deep-reading.md",
+    "references/shadbala-complete-methodology.md",
+    "references/ashtakavarga-complete-system.md",
+    "references/tajika-yoga-complete-guide.md",
+    "references/jaimini-complete-system.md",
+    "references/kp-astrology-complete-system.md",
+    "references/argala-complete-guide.md",
+    "references/badhaka-obstacle-planet-guide.md",
+    "references/condition-dasha-complete.md",
+]
+
+REFERENCE_ONLY_CONFLICT_SOURCE_REFS = [
+    "references/dasa-convergence-methodology.md",
+    "references/multi-dasha-convergence-protocol.md",
+    "references/yoga-strength-scoring-system.md",
+]
+
+BLOCKED_NON_RUNTIME_SOURCE_REFS = [
+    "references/varga-system-quick-reference.md",
+    "references/yoga-list-chinese.md",
+    "references/analysis-full-reading-v4.0.md",
+    "references/analysis-full-reading-v1.8-review.md",
+    "references/audit-skill-full-test-2026-05-04.md",
+    "references/feature-gap-matrix-2026.md",
+    "references/kp-practical-event-timing.md",
+    "references/consultation-case-library.md",
+]
+
 
 def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, Any]:
     primary_truth = [
@@ -166,6 +197,8 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
         "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md",
         "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/house_framework.md",
         *CORE_RULE_SOURCE_REFS,
+        *PROMOTE_BATCH2_TOPIC_SOURCE_REFS,
+        *REFERENCE_ONLY_CONFLICT_SOURCE_REFS,
         *frontend_interpretation,
         *qa_governance,
         *reader_validation,
@@ -223,6 +256,28 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
             "missing_refs": [path for path in CORE_RULE_SOURCE_REFS if not _repo_relative_exists(path)],
             "boundary": "First promoted core references; visible to strict workflows but still subject to conflict arbitration.",
         },
+        "promote_batch2_topic_sources": {
+            "status": "available",
+            "promotion_status": "reference_layer_candidate",
+            "promotion_batch": "priority1_batch1_remaining_promote_11",
+            "source_refs": _existing_paths(PROMOTE_BATCH2_TOPIC_SOURCE_REFS),
+            "missing_refs": [path for path in PROMOTE_BATCH2_TOPIC_SOURCE_REFS if not _repo_relative_exists(path)],
+            "boundary": "Topic-specific promoted references; visible as supporting layers, not all-at-once primary truth.",
+        },
+        "reference_only_conflict_sources": {
+            "status": "available",
+            "promotion_status": "reference_only",
+            "source_refs": _existing_paths(REFERENCE_ONLY_CONFLICT_SOURCE_REFS),
+            "missing_refs": [path for path in REFERENCE_ONLY_CONFLICT_SOURCE_REFS if not _repo_relative_exists(path)],
+            "boundary": "Useful conflict/reference material; must not outrank primary rule sources or tested contracts.",
+        },
+        "blocked_non_runtime_sources": {
+            "status": "blocked",
+            "promotion_status": "not_truth_source",
+            "source_refs": _existing_paths(BLOCKED_NON_RUNTIME_SOURCE_REFS),
+            "missing_refs": [path for path in BLOCKED_NON_RUNTIME_SOURCE_REFS if not _repo_relative_exists(path)],
+            "boundary": "Duplicate, obsolete, or quarantined files; never expose through runtime source_refs.",
+        },
         "quarantined_drafts": {
             "status": "quarantined",
             "promotion_status": "not_truth_source",
@@ -233,8 +288,10 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
     }
     missing_refs = [path for layer in layers.values() for path in layer["missing_refs"]]
     quarantined_refs = set(layers["quarantined_drafts"]["source_refs"])
+    blocked_non_runtime_refs = set(layers["blocked_non_runtime_sources"]["source_refs"])
     promoted_quarantined = sorted(quarantined_refs.intersection(source_refs))
-    status = "used" if not missing_refs and not promoted_quarantined else "partial"
+    promoted_blocked_non_runtime = sorted(blocked_non_runtime_refs.intersection(source_refs))
+    status = "used" if not missing_refs and not promoted_quarantined and not promoted_blocked_non_runtime else "partial"
     return {
         "status": status,
         "source": "repo_interpretation_source_inventory_v1",
@@ -243,11 +300,14 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
             "primary_truth_count": len(layers["primary_truth"]["source_refs"]),
             "reference_layer_count": len(_existing_paths(reference_layer)),
             "quarantined_draft_count": len(layers["quarantined_drafts"]["source_refs"]),
+            "blocked_non_runtime_count": len(layers["blocked_non_runtime_sources"]["source_refs"]),
             "missing_ref_count": len(missing_refs),
             "promoted_quarantined_count": len(promoted_quarantined),
+            "promoted_blocked_non_runtime_count": len(promoted_blocked_non_runtime),
         },
         "missing_refs": missing_refs,
         "promoted_quarantined_refs": promoted_quarantined,
+        "promoted_blocked_non_runtime_refs": promoted_blocked_non_runtime,
         "boundary": "Inventory is explicit and conservative; local drafts are indexed but not treated as truth sources.",
     }
 
@@ -267,6 +327,9 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
     mevg_path = "references/mandatory-verification-gate-protocol.md"
     real_case_checklist_path = "references/real-reading-quality-checklist.md"
     core_rule_paths = CORE_RULE_SOURCE_REFS
+    promote_batch2_paths = PROMOTE_BATCH2_TOPIC_SOURCE_REFS
+    reference_only_paths = REFERENCE_ONLY_CONFLICT_SOURCE_REFS
+    blocked_non_runtime_paths = BLOCKED_NON_RUNTIME_SOURCE_REFS
     frontend_interpretation_paths = [
         "jyotish-app/interpretation.js",
         "jyotish-app/analysis-deep.js",
@@ -308,6 +371,8 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
         mevg_path,
         real_case_checklist_path,
         *core_rule_paths,
+        *promote_batch2_paths,
+        *reference_only_paths,
         *frontend_interpretation_paths,
         *planet_house_paths,
         qa_rules_path,
@@ -337,6 +402,8 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
             "mevg_mandatory_external_verification",
             "real_case_quality_checklist",
             "priority1_batch1_core_rule_sources",
+            "priority1_batch1_promote_topic_sources",
+            "reference_only_conflict_sources",
             "qa_governance_rules",
             "reader_validation_rules",
             "frontend_interpretation_layer",
@@ -353,6 +420,25 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
             "promotion_status": "primary_truth_candidate",
             "promotion_batch": "priority1_batch1_core5",
             "boundary": "Audit-promoted core references; use as visible rule sources with conflict arbitration.",
+        },
+        "promote_batch2_topic_layer": {
+            "status": "available" if all(_repo_relative_exists(path) for path in promote_batch2_paths) else "partial",
+            "source_refs": promote_batch2_paths,
+            "promotion_status": "reference_layer_candidate",
+            "promotion_batch": "priority1_batch1_remaining_promote_11",
+            "boundary": "Topic-specific promoted references; wire by domain and do not flatten into primary truth.",
+        },
+        "reference_only_conflict_layer": {
+            "status": "available" if all(_repo_relative_exists(path) for path in reference_only_paths) else "partial",
+            "source_refs": reference_only_paths,
+            "promotion_status": "reference_only",
+            "boundary": "Reference-only sources can explain conflicts but cannot override primary rule sources.",
+        },
+        "blocked_non_runtime_layer": {
+            "status": "blocked",
+            "source_refs": blocked_non_runtime_paths,
+            "promotion_status": "not_truth_source",
+            "boundary": "Duplicate, obsolete, and quarantined files are deliberately excluded from runtime source_refs.",
         },
         "frontend_interpretation_layer": {
             "status": "available" if all(_repo_relative_exists(path) for path in frontend_interpretation_paths) else "partial",
@@ -2553,6 +2639,16 @@ def _build_technique_audit_summary(route: str, strict: Dict[str, Any]) -> Dict[s
                 if isinstance(interpretation_source_pack.get("core_rule_source_layer"), dict)
                 else []
             ),
+            "promote_batch2_source_refs": (
+                interpretation_source_pack.get("promote_batch2_topic_layer", {}).get("source_refs")
+                if isinstance(interpretation_source_pack.get("promote_batch2_topic_layer"), dict)
+                else []
+            ),
+            "reference_only_source_refs": (
+                interpretation_source_pack.get("reference_only_conflict_layer", {}).get("source_refs")
+                if isinstance(interpretation_source_pack.get("reference_only_conflict_layer"), dict)
+                else []
+            ),
             "missing_refs": interpretation_source_pack.get("missing_refs") or [],
             "effect_on_confidence": (
                 "uses existing BPHS/Raman/frontend/template source layers; missing refs lower confidence"
@@ -2646,6 +2742,47 @@ def _build_adjudication_stages(route: str, present: Dict[str, Any], event_judgem
     }
 
 
+def _build_prediction_boundary_contract(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
+    stages = strict.get("adjudication_stages") if isinstance(strict.get("adjudication_stages"), dict) else {}
+    audit = strict.get("technique_audit_summary") if isinstance(strict.get("technique_audit_summary"), dict) else {}
+    mevg = audit.get("mevg_global_web_evidence") if isinstance(audit.get("mevg_global_web_evidence"), dict) else {}
+    real_case = audit.get("real_case_calibration") if isinstance(audit.get("real_case_calibration"), dict) else {}
+    interpretation_source_pack = (
+        audit.get("interpretation_source_pack")
+        if isinstance(audit.get("interpretation_source_pack"), dict)
+        else {}
+    )
+    return {
+        "route": route,
+        "status": "used",
+        "source_refs": interpretation_source_pack.get("core_rule_source_refs") or CORE_RULE_SOURCE_REFS,
+        "event_judgment_skeleton": {
+            "status": "used",
+            "required_sections": ["promise", "activation", "manifestation", "label"],
+            "source_ref": "references/event_judgment_skeleton.md",
+        },
+        "promise": stages.get("promise") or {},
+        "activation": stages.get("activation") or {},
+        "manifestation": stages.get("manifestation") or {},
+        "label": stages.get("label") or {},
+        "confidence_boundary": {
+            "status": "used",
+            "source_ref": "references/prediction-boundary-protocol.md",
+            "confidence_cap": strict.get("confidence_cap"),
+            "blocked": bool(strict.get("blocked")),
+            "mevg_status": mevg.get("status") or "blocked",
+            "real_case_calibration_status": real_case.get("status") or "blocked",
+            "unverified_claim_policy": "downgrade_or_block",
+            "precision_policy": "timing_window_not_guaranteed_event_form",
+        },
+        "modifier_rule_sources": {
+            "dignity": "references/planetary-dignity-complete-reference.md",
+            "planetary_conditions": "references/retrograde-combustion-war-guide.md",
+            "transit": "references/transit-multi-reference-guide.md",
+        },
+    }
+
+
 def _build_multi_reference_reading_summary(route: str, present: Dict[str, Any], strict: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "root_frame": _summary_root_frame(route, present),
@@ -2671,6 +2808,7 @@ def _attach_top_reader_contract(route: str, strict: Dict[str, Any]) -> Dict[str,
         event_judgement = {}
     strict["technique_audit_summary"] = _build_technique_audit_summary(route, strict)
     strict["adjudication_stages"] = _build_adjudication_stages(route, present, event_judgement)
+    strict["prediction_boundary_contract"] = _build_prediction_boundary_contract(route, strict)
     strict["multi_reference_reading_summary"] = _build_multi_reference_reading_summary(route, present, strict)
     strict["official_day_signal_summary"] = _build_official_day_signal_summary(present.get("external_activation"))
     strict["monthly_adjudication_summary"] = _build_monthly_adjudication_summary(route, strict)

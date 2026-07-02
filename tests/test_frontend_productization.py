@@ -332,6 +332,9 @@ def test_frontend_consumes_top_reader_contract_in_prompt_pack_and_ai_chat() -> N
     assert "Top-reader adjudication" in main
     assert "multi_reference_reading_summary" in ai_chat
     assert "adjudication_stages" in ai_chat
+    assert "prediction_boundary_contract" in ai_chat
+    assert "【Prediction Boundary Contract】" in ai_chat
+    assert "unverified_claim_policy" in ai_chat
     assert "technique_audit_summary" in ai_chat
     assert "【Top Reader Contract】" in ai_chat
     assert ".ai-prompt-pack-contract-card" in style
