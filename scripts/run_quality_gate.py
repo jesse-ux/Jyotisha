@@ -28,6 +28,7 @@ COMPILE_DIRS = [
 EXTRA_COMPILE_TARGETS = [
     ROOT / "mcp_server.py",
     ROOT / "scripts" / "audit_fragments.py",
+    ROOT / "scripts" / "character_level_inventory_manifest.py",
     ROOT / "scripts" / "dasha_reference_audit.py",
     ROOT / "scripts" / "external_oracle_sanity_closure.py",
     ROOT / "scripts" / "interpretation_source_inventory_gate.py",
@@ -482,6 +483,7 @@ def main() -> int:
     run([PYTHON, "scripts/audit_capabilities.py", "--mode", "validate"])
     run([PYTHON, "scripts/audit_fragments.py", "--strict"])
     run([PYTHON, "scripts/interpretation_source_inventory_gate.py"])
+    run([PYTHON, "scripts/character_level_inventory_manifest.py", "--scope", "project", "--no-write", "--summary-only"])
     run([PYTHON, "scripts/deployment_preflight.py"])
     if profile["check_release_hygiene"]:
         release_hygiene_check()

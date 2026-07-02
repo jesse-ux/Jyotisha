@@ -797,3 +797,11 @@
 - P4：Narayana / Tajika 技术债从单一 `partial` 拆成 `closed / partial / blocked` breakdown，并新增 `oracle_parity` blocked 合同。
 - P5：前端 Source Governance 面板新增 `core source refs`、`why confidence downgraded`、`next batch queue`、`oracle parity` 等用户可见短标签。
 - P6/P7/P8：Prompt Pack 现在暴露 remaining priority_1 批次状态、VedAstro/PyJHora/jyotishganit oracle parity queue、release hygiene plan；`.git/gc.log` 仍标记为单独安全清理计划，不随本轮 prune。
+
+## 2026-07-02T16:42:00+08:00 - 字符级资料 manifest 第一阶段
+
+- 新增 `scripts/character_level_inventory_manifest.py`，对项目内重点资料层做轻量字符级索引：`references/`、`references/open_source_sources/`、`docs/research/`、`SKILL.md`、`AGENTS.md`。
+- 生成 `docs/research/character_level_inventory_manifest_latest.json` 与 `.md`，当前覆盖 `1069` 个文件：`unhashed_files=0`、`unclassified_files=0`、`unknown_extraction_status=0`。
+- 当前分类计数：`open_source_reference=299`、`reference_candidate=180`、`research_governance=439`、`quarantined_draft=93`、`real_case_calibration=5`、`oracle_artifact=51`、`project_governance=2`。
+- 当前提取状态：`text_indexed=1032`、`binary_indexed=34`、`image_ocr_queued=3`；本轮为省算力模式，未跑重 OCR，也未跑全机器长扫描。
+- 新增 `tests/test_character_level_inventory_manifest.py`，并把 manifest gate 接入 `scripts/run_quality_gate.py`；质量门使用 `--no-write --summary-only`，避免 CI 反复刷新报告或打印全量 `by_path`。
