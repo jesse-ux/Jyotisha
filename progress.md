@@ -738,3 +738,17 @@
 - 最小实现：`mcp_server.py` 新增 `_existing_interpretation_source_pack()`，把现有 `interpretation_template_registry`、P1-P12、house framework、Raman/BPHS、MEVG、真实案例 checklist、前端 planet-house-details 作为只读 evidence pack 挂入 career/relationship/finance strict workflow；`technique_audit_summary` 新增 `interpretation_source_pack`、`mevg_global_web_evidence`、`real_case_calibration` 三行。
 - Prompt pack：`scripts/jyotish_engine.py` 的 `technique_audit_table` 新增 `Interpretation Source Pack`、`MEVG / Global Web Evidence`、`Real Case Calibration`；`retrieval_plan.local_reference_docs` 显式列出对应本地资料路径。
 - 红绿验证：5 条新增/修改聚焦测试通过；随后 `tests/test_mcp_strict_workflow_career.py tests/test_mcp_strict_workflow_relationship.py tests/test_mcp_strict_workflow_finance.py tests/test_mcp_strict_workflow_functional_layer.py -q` 通过，合计 86 项；`validate_interpretation_templates.py --format json` 仍为 `valid=true`、`template_count=11`。
+
+## 2026-07-02T14:05:00+08:00 - 全量解释资料分级审计启动
+
+- 用户要求把此前机器审计发现的 922 个未分级候选资料逐批分类。
+- 范围优先级：先处理 references/、references/real_case_studies/、references/open_source_sources/rishi-ai-mcp、references/open_source_sources/vedic-astro-skills；普通 docs/research 流水账只分桶，不升格。
+- 实施策略：扩展 interpretation_source_inventory_gate，生成可复现 full_classification 报告；用测试确保重点层被分级、local_drafts/research 流水账不会误进 primary truth。
+
+## 2026-07-02T14:18:00+08:00 - 全量解释资料分级审计完成第一版
+
+- 扩展 `scripts/interpretation_source_inventory_gate.py`：现在输出 `full_classification`，对解释/规则/案例/模板/证据候选逐项给出 classification、priority、promotion_status 与 reason。
+- 当前候选池 `candidate_count=947`，`unclassified_candidate_count=0`；其中 runtime 25、priority_1 264、priority_2 101、priority_3 557。
+- 重点优先层已覆盖：`references/` -> reference_candidate，`references/real_case_studies/` -> real_case_calibration，`open_source_sources/rishi-ai-mcp` 与 `vedic-astro-skills` -> open_source_reference。
+- 普通研究流水账与本地草稿已降级：`docs/research` -> research_governance，`docs/research/local_drafts` -> quarantined_draft / not_truth_source。
+- 新增快照文档：`docs/research/interpretation_source_full_classification_2026_07_02.md`。

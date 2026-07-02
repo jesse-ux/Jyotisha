@@ -55,3 +55,40 @@ def test_quality_gate_runs_interpretation_source_inventory_gate() -> None:
 
     assert '"scripts/interpretation_source_inventory_gate.py"' in quality_gate
     assert '[PYTHON, "scripts/interpretation_source_inventory_gate.py"]' in quality_gate
+
+
+def test_interpretation_source_inventory_gate_classifies_full_candidate_pool() -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/interpretation_source_inventory_gate.py",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=120,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    classification = report["full_classification"]
+
+    assert classification["status"] == "classified"
+    assert classification["candidate_count"] >= 900
+    assert classification["unclassified_candidate_count"] == 0
+    assert classification["priority_bucket_counts"]["priority_1"] >= 50
+    assert classification["priority_bucket_counts"]["priority_2"] >= 50
+    assert classification["priority_bucket_counts"]["priority_3"] >= 100
+
+    by_path = classification["by_path"]
+    assert by_path["references/real_case_studies/vedicka/career-success-poverty-prosperity.md"]["classification"] == "real_case_calibration"
+    assert by_path["references/open_source_sources/rishi-ai-mcp/.agents/skills/career-analysis/SKILL.md"]["classification"] == "open_source_reference"
+    assert by_path["references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/qa_rules.md"]["classification"] == "runtime_reference_layer"
+    assert by_path["references/advanced-techniques.md"]["classification"] == "reference_candidate"
+    assert by_path["docs/research/local_drafts/2026-06/antigravity_round31_api_completion_top50_2026_06_26.md"]["classification"] == "quarantined_draft"
+    assert by_path["docs/research/ACTIVE_FRONTS.md"]["classification"] == "research_governance"
+
+    assert by_path["references/open_source_sources/rishi-ai-mcp/.agents/skills/career-analysis/SKILL.md"]["priority"] == "priority_1"
+    assert by_path["references/real_case_studies/vedicka/career-success-poverty-prosperity.md"]["priority"] == "priority_1"
+    assert by_path["docs/research/local_drafts/2026-06/antigravity_round31_api_completion_top50_2026_06_26.md"]["promotion_status"] == "not_truth_source"
