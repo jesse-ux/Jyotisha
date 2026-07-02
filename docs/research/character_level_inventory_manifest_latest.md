@@ -2,8 +2,8 @@
 
 - status: pass
 - scope: project
-- generated_at: 2026-07-02T08:50:52.465261+00:00
-- total_files: 1069
+- generated_at: 2026-07-02T09:11:51.839696+00:00
+- total_files: 1073
 - unhashed_files: 0
 - unclassified_files: 0
 - unknown_extraction_status: 0
@@ -16,7 +16,7 @@
 | --- | ---: | ---: |
 | `AGENTS.md` | 1 | 3932 |
 | `SKILL.md` | 1 | 43187 |
-| `docs/research` | 532 | 2198779 |
+| `docs/research` | 536 | 2901473 |
 | `references` | 236 | 4008411 |
 | `references/open_source_sources` | 299 | 9365015 |
 
@@ -24,7 +24,7 @@
 
 - `binary_indexed`: 34
 - `image_ocr_queued`: 3
-- `text_indexed`: 1032
+- `text_indexed`: 1036
 
 ## Classification Counts
 
@@ -34,7 +34,7 @@
 - `quarantined_draft`: 93
 - `real_case_calibration`: 5
 - `reference_candidate`: 180
-- `research_governance`: 439
+- `research_governance`: 443
 
 ## Boundary
 

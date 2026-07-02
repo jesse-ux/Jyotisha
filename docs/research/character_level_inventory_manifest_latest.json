@@ -1,10 +1,11 @@
 {
   "scope": "project",
   "status": "pass",
-  "generated_at": "2026-07-02T08:50:52.465261+00:00",
+  "generated_at": "2026-07-02T09:11:51.839696+00:00",
   "mode": {
     "heavy_ocr": false,
     "whole_machine_scan": false,
+    "external_high_relevance_scan": false,
     "semantic_promotion": false,
     "boundary": "Fast manifest only: hashes and cheap text stats now; heavy OCR and whole-machine scan are queued."
   },
@@ -16,7 +17,7 @@
     "AGENTS.md"
   ],
   "summary": {
-    "total_files": 1069,
+    "total_files": 1073,
     "unhashed_files": 0,
     "unclassified_files": 0,
     "unknown_extraction_status": 0,
@@ -27,12 +28,12 @@
       "quarantined_draft": 93,
       "real_case_calibration": 5,
       "reference_candidate": 180,
-      "research_governance": 439
+      "research_governance": 443
     },
     "extraction_status_counts": {
       "binary_indexed": 34,
       "image_ocr_queued": 3,
-      "text_indexed": 1032
+      "text_indexed": 1036
     }
   },
   "root_summary": {
@@ -45,8 +46,8 @@
       "bytes": 43187
     },
     "docs/research": {
-      "files": 532,
-      "bytes": 2198779
+      "files": 536,
+      "bytes": 2901473
     },
     "references": {
       "files": 236,
@@ -5168,14 +5169,70 @@
       "promotion_status": "governance_or_history",
       "reason": "Research history or governance record; index separately from rule truth."
     },
+    "docs/research/character_level_external_manifest_latest.json": {
+      "path": "docs/research/character_level_external_manifest_latest.json",
+      "suffix": ".json",
+      "byte_count": 666472,
+      "sha256": "244465beREDACTED_TIMEe81a2c8b3abac4f41e28bd55ce9f42f3f203d6574c52617dcfd9",
+      "extraction_status": "text_indexed",
+      "character_count": 661666,
+      "line_count": 12446,
+      "decode_replacement_count": 0,
+      "classification": "research_governance",
+      "priority": "priority_3",
+      "promotion_status": "governance_or_history",
+      "reason": "Research history or governance record; index separately from rule truth."
+    },
+    "docs/research/character_level_external_manifest_latest.md": {
+      "path": "docs/research/character_level_external_manifest_latest.md",
+      "suffix": ".md",
+      "byte_count": 1280,
+      "sha256": "71cc5b027ea056c23ce1d5d1cda8921eeade065a8cb003910ea44d2a1165e642",
+      "extraction_status": "text_indexed",
+      "character_count": 1272,
+      "line_count": 47,
+      "decode_replacement_count": 0,
+      "classification": "research_governance",
+      "priority": "priority_3",
+      "promotion_status": "governance_or_history",
+      "reason": "Research history or governance record; index separately from rule truth."
+    },
+    "docs/research/character_level_extraction_queue_latest.json": {
+      "path": "docs/research/character_level_extraction_queue_latest.json",
+      "suffix": ".json",
+      "byte_count": 31649,
+      "sha256": "cbfc03eee31d16cc3c796728cf34504c6eaa0722c5e42dd2f7d2ec1da966c5ef",
+      "extraction_status": "text_indexed",
+      "character_count": 30151,
+      "line_count": 758,
+      "decode_replacement_count": 0,
+      "classification": "research_governance",
+      "priority": "priority_3",
+      "promotion_status": "governance_or_history",
+      "reason": "Research history or governance record; index separately from rule truth."
+    },
+    "docs/research/character_level_extraction_queue_latest.md": {
+      "path": "docs/research/character_level_extraction_queue_latest.md",
+      "suffix": ".md",
+      "byte_count": 633,
+      "sha256": "6a45bb22f9f44d248c6e8ff71d74949180eb3eba537cb42080d15fef88395725",
+      "extraction_status": "text_indexed",
+      "character_count": 633,
+      "line_count": 27,
+      "decode_replacement_count": 0,
+      "classification": "research_governance",
+      "priority": "priority_3",
+      "promotion_status": "governance_or_history",
+      "reason": "Research history or governance record; index separately from rule truth."
+    },
     "docs/research/character_level_inventory_manifest_latest.json": {
       "path": "docs/research/character_level_inventory_manifest_latest.json",
       "suffix": ".json",
-      "byte_count": 719007,
-      "sha256": "b838192193044fda5ff7684778e26006c53be9892b9fafa70d7398641fbc2eed",
+      "byte_count": 721667,
+      "sha256": "aba3169d10fe86f02dfed264b150afb84473994225b2a62a36b720f485ad1a41",
       "extraction_status": "text_indexed",
-      "character_count": 718457,
-      "line_count": 15032,
+      "character_count": 721117,
+      "line_count": 15090,
       "decode_replacement_count": 0,
       "classification": "research_governance",
       "priority": "priority_3",
@@ -5186,7 +5243,7 @@
       "path": "docs/research/character_level_inventory_manifest_latest.md",
       "suffix": ".md",
       "byte_count": 1090,
-      "sha256": "19fb031f612b0747384eb3801abc1d19088a233fb662dde690817b5d686aa342",
+      "sha256": "d088bb6312805a0f78506af37c2d32098e97af635eb3eed707a4943b75dae2ae",
       "extraction_status": "text_indexed",
       "character_count": 1090,
       "line_count": 44,
@@ -15028,5 +15085,6 @@
   "artifacts": {
     "json_report": "docs/research/character_level_inventory_manifest_latest.json",
     "markdown_report": "docs/research/character_level_inventory_manifest_latest.md"
-  }
+  },
+  "title": "Character-Level Inventory Manifest"
 }

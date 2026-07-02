@@ -805,3 +805,18 @@
 - 当前分类计数：`open_source_reference=299`、`reference_candidate=180`、`research_governance=439`、`quarantined_draft=93`、`real_case_calibration=5`、`oracle_artifact=51`、`project_governance=2`。
 - 当前提取状态：`text_indexed=1032`、`binary_indexed=34`、`image_ocr_queued=3`；本轮为省算力模式，未跑重 OCR，也未跑全机器长扫描。
 - 新增 `tests/test_character_level_inventory_manifest.py`，并把 manifest gate 接入 `scripts/run_quality_gate.py`；质量门使用 `--no-write --summary-only`，避免 CI 反复刷新报告或打印全量 `by_path`。
+
+## 2026-07-02T17:08:00+08:00 - 外部高相关资料 manifest 第一阶段
+
+- 扩展 `scripts/character_level_inventory_manifest.py --scope external`，只扫高相关外部路径，不做全机器深扫，不复制私人正文进仓库。
+- 新增 `docs/research/character_level_external_manifest_latest.json` 与 `.md`，当前覆盖 `883` 个外部高相关文件：`unhashed_files=0`、`unclassified_files=0`、`unknown_extraction_status=0`。
+- 外部来源桶：`~/.workbuddy=767`、`~/文件仓库=43`、`~/WorkBuddy=36`、`~/Downloads=15`、`~/Documents/ObsidianVault=11`、`~/engines-repo=6`、`~/Desktop=5`。
+- 外部提取状态：`text_indexed=735`、`text_decode_lossy=2`、`pdf_text_extraction_queued=2`、`document_text_extraction_queued=11`、`image_ocr_queued=50`、`binary_indexed=83`。
+- 外部分级：`external_skill_fragment=767`、`external_book_or_document=46`、`external_historical_report=37`、`external_engine_fragment=10`、`external_archive_or_binary=23`；均为 index/reference 阶段，不进入 runtime truth chain。
+
+## 2026-07-02T17:11:00+08:00 - PDF/图片/文档提取队列 manifest
+
+- 新增 `scripts/character_level_inventory_manifest.py --scope extraction-queue`，把项目内与外部 manifest 中的 PDF / 图片 / Office 文档待提取项合并为单独队列。
+- 新增 `docs/research/character_level_extraction_queue_latest.json` 与 `.md`，当前 queued_files=`66`、`unhashed_files=0`。
+- 队列构成：`image_ocr_queued=53`、`document_text_extraction_queued=11`、`pdf_text_extraction_queued=2`；来源为 `external=63`、`project=3`。
+- 边界：本轮只做提取队列，不跑重 OCR，不把外部私人资料正文写进仓库，也不升格为 runtime truth。

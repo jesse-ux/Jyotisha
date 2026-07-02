@@ -20,6 +20,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 REPORT_JSON = ROOT / "docs" / "research" / "character_level_inventory_manifest_latest.json"
 REPORT_MD = ROOT / "docs" / "research" / "character_level_inventory_manifest_latest.md"
+EXTERNAL_REPORT_JSON = ROOT / "docs" / "research" / "character_level_external_manifest_latest.json"
+EXTERNAL_REPORT_MD = ROOT / "docs" / "research" / "character_level_external_manifest_latest.md"
+EXTRACTION_QUEUE_JSON = ROOT / "docs" / "research" / "character_level_extraction_queue_latest.json"
+EXTRACTION_QUEUE_MD = ROOT / "docs" / "research" / "character_level_extraction_queue_latest.md"
 
 PROJECT_SCAN_ROOTS = [
     "references",
@@ -27,6 +31,36 @@ PROJECT_SCAN_ROOTS = [
     "docs/research",
     "SKILL.md",
     "AGENTS.md",
+]
+
+EXTERNAL_SCAN_ROOTS = [
+    Path.home() / "Downloads",
+    Path.home() / "Desktop",
+    Path.home() / "文件仓库" / "印度占星文章",
+    Path.home() / ".workbuddy" / "skills" / "jyotish-vedic-astrology",
+    Path.home() / "WorkBuddy" / "2026-06-09-20-03-34" / "jyotish-fragments",
+    Path.home() / "WorkBuddy" / "2026-06-10-21-30-47",
+    Path.home() / "WorkBuddy" / "2026-06-12-15-22-12",
+    Path.home() / "WorkBuddy" / "20260422235041",
+    Path.home() / "WorkBuddy" / "20260503121822",
+    Path.home() / "WorkBuddy" / "engines-repo" / "jyotish",
+    Path.home() / "engines-repo" / "jyotish",
+    Path.home() / "Documents" / "ObsidianVault" / "03_研究_术数占星",
+]
+
+EXTERNAL_KEYWORDS = [
+    "印度占星",
+    "占星",
+    "jyotish",
+    "vedic",
+    "astrology",
+    "jhora",
+    "pyjhora",
+    "vedastro",
+    "dasha",
+    "shadbala",
+    "tajika",
+    "jaimini",
 ]
 
 EXCLUDED_PARTS = {
@@ -65,6 +99,11 @@ TEXT_EXTENSIONS = {
 PDF_EXTENSIONS = {".pdf"}
 IMAGE_EXTENSIONS = {".bmp", ".gif", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
 DOCUMENT_EXTENSIONS = {".doc", ".docx", ".epub", ".mobi", ".pages", ".ppt", ".pptx", ".rtf", ".xls", ".xlsx"}
+QUEUED_EXTRACTION_STATUSES = {
+    "pdf_text_extraction_queued",
+    "image_ocr_queued",
+    "document_text_extraction_queued",
+}
 
 
 def _relative(path: Path) -> str:
@@ -89,6 +128,26 @@ def _iter_project_files() -> list[Path]:
             files.add(root)
         else:
             files.update(path for path in root.rglob("*") if path.is_file() and not _should_skip(path))
+    return sorted(files)
+
+
+def _is_external_relevant(path: Path) -> bool:
+    lowered = str(path).lower()
+    return any(keyword.lower() in lowered for keyword in EXTERNAL_KEYWORDS)
+
+
+def _iter_external_files() -> list[Path]:
+    files: set[Path] = set()
+    for root in EXTERNAL_SCAN_ROOTS:
+        if not root.exists() or _should_skip(root):
+            continue
+        if root.is_file():
+            if _is_external_relevant(root):
+                files.add(root)
+            continue
+        for path in root.rglob("*"):
+            if path.is_file() and not _should_skip(path) and _is_external_relevant(path):
+                files.add(path)
     return sorted(files)
 
 
@@ -220,10 +279,74 @@ def _root_bucket(path: str) -> str:
     return path.split("/", 1)[0]
 
 
-def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, Any]:
-    if scope != "project":
-        raise ValueError("Only --scope project is supported by the lightweight manifest.")
+def _external_path(path: Path) -> str:
+    return str(path)
 
+
+def _classify_external_path(path: str) -> dict[str, str]:
+    suffix = Path(path).suffix.lower()
+    if "/.workbuddy/skills/jyotish-vedic-astrology/" in path:
+        return {
+            "classification": "external_skill_fragment",
+            "priority": "priority_1",
+            "promotion_status": "external_candidate",
+            "reason": "External Jyotish skill copy; index only until diffed against repo truth.",
+        }
+    if "/engines-repo/jyotish/" in path or "/WorkBuddy/engines-repo/jyotish/" in path:
+        return {
+            "classification": "external_engine_fragment",
+            "priority": "priority_1",
+            "promotion_status": "external_candidate",
+            "reason": "External engine fragment; requires source diff and license boundary review.",
+        }
+    if "/WorkBuddy/" in path or "/Desktop/" in path:
+        return {
+            "classification": "external_historical_report",
+            "priority": "priority_2",
+            "promotion_status": "external_reference_only",
+            "reason": "Historical report or work artifact; do not promote without privacy review.",
+        }
+    if suffix in PDF_EXTENSIONS or suffix in DOCUMENT_EXTENSIONS or "/文件仓库/印度占星文章/" in path:
+        return {
+            "classification": "external_book_or_document",
+            "priority": "priority_1",
+            "promotion_status": "external_reference_only",
+            "reason": "External book/document source; requires extraction and source grading before use.",
+        }
+    return {
+        "classification": "external_archive_or_binary",
+        "priority": "priority_3",
+        "promotion_status": "external_index_only",
+        "reason": "External relevant asset; indexed without content promotion.",
+    }
+
+
+def _external_root_bucket(path: str) -> str:
+    home = str(Path.home())
+    if path.startswith(home + "/Downloads/"):
+        return "~/Downloads"
+    if path.startswith(home + "/Desktop/"):
+        return "~/Desktop"
+    if path.startswith(home + "/文件仓库/"):
+        return "~/文件仓库"
+    if path.startswith(home + "/.workbuddy/"):
+        return "~/.workbuddy"
+    if path.startswith(home + "/WorkBuddy/"):
+        return "~/WorkBuddy"
+    if path.startswith(home + "/engines-repo/"):
+        return "~/engines-repo"
+    if path.startswith(home + "/Documents/ObsidianVault/"):
+        return "~/Documents/ObsidianVault"
+    return path
+
+
+def _build_index(
+    *,
+    files: list[Path],
+    path_label,
+    classify,
+    root_bucket,
+) -> tuple[dict[str, dict[str, Any]], dict[str, Any], dict[str, dict[str, int]]]:
     by_path: dict[str, dict[str, Any]] = {}
     classification_counts: dict[str, int] = {}
     extraction_counts: dict[str, int] = {}
@@ -231,9 +354,9 @@ def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, A
     unclassified_files = 0
     unknown_extraction_status = 0
 
-    for file_path in _iter_project_files():
-        rel = _relative(file_path)
-        file_class = _classify_path(rel)
+    for file_path in files:
+        rel = path_label(file_path)
+        file_class = classify(rel)
         extraction = _extraction_status(file_path)
         if not file_class.get("classification"):
             unclassified_files += 1
@@ -251,7 +374,7 @@ def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, A
         by_path[rel] = item
         classification_counts[item["classification"]] = classification_counts.get(item["classification"], 0) + 1
         extraction_counts[item["extraction_status"]] = extraction_counts.get(item["extraction_status"], 0) + 1
-        bucket = _root_bucket(rel)
+        bucket = root_bucket(rel)
         root_summary.setdefault(bucket, {"files": 0, "bytes": 0})
         root_summary[bucket]["files"] += 1
         root_summary[bucket]["bytes"] += byte_count
@@ -264,41 +387,148 @@ def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, A
         "classification_counts": dict(sorted(classification_counts.items())),
         "extraction_status_counts": dict(sorted(extraction_counts.items())),
     }
-    status = "pass" if summary["unhashed_files"] == 0 and unclassified_files == 0 and unknown_extraction_status == 0 else "fail"
+    return by_path, summary, dict(sorted(root_summary.items()))
+
+
+def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, Any]:
+    if scope == "project":
+        files = _iter_project_files()
+        path_label = _relative
+        classify = _classify_path
+        root_bucket = _root_bucket
+        scan_roots = PROJECT_SCAN_ROOTS
+        json_report = REPORT_JSON
+        markdown_report = REPORT_MD
+        title = "Character-Level Inventory Manifest"
+        mode = {
+            "heavy_ocr": False,
+            "whole_machine_scan": False,
+            "external_high_relevance_scan": False,
+            "semantic_promotion": False,
+            "boundary": "Fast manifest only: hashes and cheap text stats now; heavy OCR and whole-machine scan are queued.",
+        }
+    elif scope == "external":
+        files = _iter_external_files()
+        path_label = _external_path
+        classify = _classify_external_path
+        root_bucket = _external_root_bucket
+        scan_roots = [str(path) for path in EXTERNAL_SCAN_ROOTS]
+        json_report = EXTERNAL_REPORT_JSON
+        markdown_report = EXTERNAL_REPORT_MD
+        title = "External High-Relevance Inventory Manifest"
+        mode = {
+            "heavy_ocr": False,
+            "whole_machine_scan": False,
+            "external_high_relevance_scan": True,
+            "semantic_promotion": False,
+            "boundary": "External scan is high-relevance only. It records hashes and extraction states without copying private source text into repo truth.",
+        }
+    elif scope == "extraction-queue":
+        return build_extraction_queue(write=write)
+    else:
+        raise ValueError(f"Unsupported scope: {scope}")
+
+    by_path, summary, root_summary = _build_index(
+        files=files,
+        path_label=path_label,
+        classify=classify,
+        root_bucket=root_bucket,
+    )
+    status = (
+        "pass"
+        if summary["unhashed_files"] == 0
+        and summary["unclassified_files"] == 0
+        and summary["unknown_extraction_status"] == 0
+        else "fail"
+    )
     report = {
         "scope": scope,
         "status": status,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "mode": {
-            "heavy_ocr": False,
-            "whole_machine_scan": False,
-            "semantic_promotion": False,
-            "boundary": "Fast manifest only: hashes and cheap text stats now; heavy OCR and whole-machine scan are queued.",
-        },
-        "scan_roots": PROJECT_SCAN_ROOTS,
+        "mode": mode,
+        "scan_roots": scan_roots,
         "summary": summary,
-        "root_summary": dict(sorted(root_summary.items())),
+        "root_summary": root_summary,
         "by_path": by_path,
         "artifacts": {
-            "json_report": _relative(REPORT_JSON),
-            "markdown_report": _relative(REPORT_MD),
+            "json_report": _relative(json_report),
+            "markdown_report": _relative(markdown_report),
         },
+        "title": title,
     }
     if write:
-        _write_reports(report)
+        _write_reports(report, json_report=json_report, markdown_report=markdown_report)
     return report
 
 
-def _write_reports(report: dict[str, Any]) -> None:
-    REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    REPORT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    REPORT_MD.write_text(_render_markdown(report), encoding="utf-8")
+def build_extraction_queue(*, write: bool = True) -> dict[str, Any]:
+    project = build_manifest(scope="project", write=False)
+    external = build_manifest(scope="external", write=False)
+    queue: list[dict[str, Any]] = []
+    for source_scope, manifest in [("project", project), ("external", external)]:
+        for item in manifest["by_path"].values():
+            if item["extraction_status"] not in QUEUED_EXTRACTION_STATUSES:
+                continue
+            queue.append(
+                {
+                    "source_scope": source_scope,
+                    "path": item["path"],
+                    "suffix": item["suffix"],
+                    "byte_count": item["byte_count"],
+                    "sha256": item["sha256"],
+                    "extraction_status": item["extraction_status"],
+                    "classification": item["classification"],
+                    "priority": item["priority"],
+                    "promotion_status": item["promotion_status"],
+                }
+            )
+    queue.sort(key=lambda item: (item["extraction_status"], item["source_scope"], item["path"]))
+    queue_counts: dict[str, int] = {}
+    source_counts: dict[str, int] = {}
+    for item in queue:
+        queue_counts[item["extraction_status"]] = queue_counts.get(item["extraction_status"], 0) + 1
+        source_counts[item["source_scope"]] = source_counts.get(item["source_scope"], 0) + 1
+    report = {
+        "scope": "extraction-queue",
+        "status": "pass",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "mode": {
+            "heavy_ocr": False,
+            "whole_machine_scan": False,
+            "external_high_relevance_scan": True,
+            "semantic_promotion": False,
+            "boundary": "Queue only. It identifies PDF/image/document extraction work without performing OCR or promoting extracted text.",
+        },
+        "summary": {
+            "queued_files": len(queue),
+            "unhashed_files": sum(1 for item in queue if not item.get("sha256")),
+            "source_counts": dict(sorted(source_counts.items())),
+        },
+        "queue_counts": dict(sorted(queue_counts.items())),
+        "queue": queue,
+        "artifacts": {
+            "json_report": _relative(EXTRACTION_QUEUE_JSON),
+            "markdown_report": _relative(EXTRACTION_QUEUE_MD),
+        },
+        "title": "Extraction Queue Manifest",
+    }
+    if write:
+        _write_reports(report, json_report=EXTRACTION_QUEUE_JSON, markdown_report=EXTRACTION_QUEUE_MD)
+    return report
+
+
+def _write_reports(report: dict[str, Any], *, json_report: Path, markdown_report: Path) -> None:
+    json_report.parent.mkdir(parents=True, exist_ok=True)
+    json_report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    markdown_report.write_text(_render_markdown(report), encoding="utf-8")
 
 
 def _render_markdown(report: dict[str, Any]) -> str:
     summary = report["summary"]
+    if report["scope"] == "extraction-queue":
+        return _render_extraction_queue_markdown(report)
     lines = [
-        "# Character-Level Inventory Manifest",
+        f"# {report.get('title', 'Character-Level Inventory Manifest')}",
         "",
         f"- status: {report['status']}",
         f"- scope: {report['scope']}",
@@ -337,6 +567,40 @@ def _render_markdown(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _render_extraction_queue_markdown(report: dict[str, Any]) -> str:
+    lines = [
+        f"# {report.get('title', 'Extraction Queue Manifest')}",
+        "",
+        f"- status: {report['status']}",
+        f"- scope: {report['scope']}",
+        f"- generated_at: {report['generated_at']}",
+        f"- queued_files: {report['summary']['queued_files']}",
+        f"- unhashed_files: {report['summary']['unhashed_files']}",
+        f"- Heavy OCR: {'enabled' if report['mode']['heavy_ocr'] else 'disabled'}",
+        f"- Whole-machine scan: {'enabled' if report['mode']['whole_machine_scan'] else 'disabled'}",
+        "",
+        "## Queue Counts",
+        "",
+    ]
+    for name, count in report["queue_counts"].items():
+        lines.append(f"- `{name}`: {count}")
+    lines.extend(["", "## Source Counts", ""])
+    for name, count in report["summary"]["source_counts"].items():
+        lines.append(f"- `{name}`: {count}")
+    lines.extend(
+        [
+            "",
+            "## Boundary",
+            "",
+            report["mode"]["boundary"],
+            "",
+            "Queued files are indexed by path, size, hash, and extraction status only. Private source text is not copied into this report.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def _summary_view(report: dict[str, Any]) -> dict[str, Any]:
     return {
         key: value
@@ -347,7 +611,7 @@ def _summary_view(report: dict[str, Any]) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scope", default="project", choices=["project"])
+    parser.add_argument("--scope", default="project", choices=["project", "external", "extraction-queue"])
     parser.add_argument("--no-write", action="store_true", help="Print the manifest without writing report artifacts.")
     parser.add_argument("--summary-only", action="store_true", help="Print only summary fields; still writes full artifacts unless --no-write is set.")
     args = parser.parse_args(argv)

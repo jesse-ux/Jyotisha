@@ -99,3 +99,80 @@ def test_quality_gate_runs_character_level_manifest_without_writing_reports() ->
         '[PYTHON, "scripts/character_level_inventory_manifest.py", "--scope", "project", "--no-write", "--summary-only"]'
         in quality_gate
     )
+
+
+def test_external_manifest_indexes_high_relevance_machine_fragments_without_copying_text() -> None:
+    report = _run_manifest("--scope", "external", "--no-write")
+
+    assert report["scope"] == "external"
+    assert report["status"] == "pass"
+    assert report["mode"]["whole_machine_scan"] is False
+    assert report["mode"]["external_high_relevance_scan"] is True
+    assert report["summary"]["total_files"] >= 10
+    assert report["summary"]["unhashed_files"] == 0
+    assert report["summary"]["unclassified_files"] == 0
+    assert report["summary"]["unknown_extraction_status"] == 0
+
+    paths = set(report["by_path"])
+    assert any(path.endswith("/Downloads/印度占星.pdf") for path in paths)
+    assert any("/文件仓库/印度占星文章/" in path for path in paths)
+    assert any("/WorkBuddy/" in path for path in paths)
+    assert any("/.workbuddy/skills/jyotish-vedic-astrology/" in path for path in paths)
+
+    extraction_counts = report["summary"]["extraction_status_counts"]
+    assert extraction_counts["pdf_text_extraction_queued"] >= 1
+    assert extraction_counts["document_text_extraction_queued"] >= 1
+
+    for path, item in report["by_path"].items():
+        assert path.startswith("/Users/wuyongnaren/")
+        assert item["sha256"]
+        assert item["classification"] in {
+            "external_book_or_document",
+            "external_engine_fragment",
+            "external_historical_report",
+            "external_skill_fragment",
+            "external_archive_or_binary",
+        }
+        assert "text_preview" not in item
+
+
+def test_external_manifest_writes_separate_reports() -> None:
+    report = _run_manifest("--scope", "external", "--summary-only")
+
+    assert "by_path" not in report
+    assert report["artifacts"]["json_report"] == "docs/research/character_level_external_manifest_latest.json"
+    assert report["artifacts"]["markdown_report"] == "docs/research/character_level_external_manifest_latest.md"
+
+    json_path = ROOT / report["artifacts"]["json_report"]
+    md_path = ROOT / report["artifacts"]["markdown_report"]
+    assert json_path.exists()
+    assert md_path.exists()
+    assert "External High-Relevance Inventory Manifest" in md_path.read_text(encoding="utf-8")
+
+
+def test_extraction_queue_report_combines_project_and_external_binary_work() -> None:
+    report = _run_manifest("--scope", "extraction-queue")
+
+    assert report["scope"] == "extraction-queue"
+    assert report["status"] == "pass"
+    assert report["summary"]["queued_files"] >= 60
+    assert report["summary"]["unhashed_files"] == 0
+    assert report["queue_counts"]["pdf_text_extraction_queued"] >= 2
+    assert report["queue_counts"]["document_text_extraction_queued"] >= 10
+    assert report["queue_counts"]["image_ocr_queued"] >= 50
+
+    for item in report["queue"]:
+        assert item["sha256"]
+        assert item["source_scope"] in {"project", "external"}
+        assert item["extraction_status"] in {
+            "pdf_text_extraction_queued",
+            "image_ocr_queued",
+            "document_text_extraction_queued",
+        }
+        assert "text_preview" not in item
+
+    json_path = ROOT / report["artifacts"]["json_report"]
+    md_path = ROOT / report["artifacts"]["markdown_report"]
+    assert json_path.exists()
+    assert md_path.exists()
+    assert "Extraction Queue Manifest" in md_path.read_text(encoding="utf-8")
