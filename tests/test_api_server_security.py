@@ -261,6 +261,89 @@ def test_vedastro_range_scan_endpoint_uses_user_birth_and_returns_controlled_blo
     assert payload['boundary'] == 'VedAstro range scan is optional external timing evidence; local Jyotish gates remain authoritative.'
 
 
+def test_vedastro_gateway_status_route_is_cn_safe(monkeypatch) -> None:
+    monkeypatch.setenv('VEDASTRO_GATEWAY_MODE', 'cn_gateway')
+    handler = _handler()
+
+    result = handler._compute_vedastro_gateway_status()
+
+    assert result['scope'] == 'vedastro_gateway'
+    assert result['mode'] == 'cn_gateway'
+    assert result['direct_browser_access_allowed'] is False
+    assert result['frontend_secret_safe'] is True
+
+
+def test_vedastro_gateway_run_route_returns_gateway_packet(monkeypatch) -> None:
+    monkeypatch.setenv('JYOTISH_SKIP_LOCAL_ENV', '1')
+    monkeypatch.setenv('VEDASTRO_GATEWAY_MODE', 'cn_gateway')
+    monkeypatch.setenv('VEDASTRO_CACHE_TTL_SECONDS', '604800')
+    monkeypatch.setenv('VEDASTRO_FULL_CATALOG_SAMPLE_LIMIT', '0')
+    handler = _handler()
+
+    result = handler._compute_vedastro_gateway_run({
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'second': 0,
+        'lat': 36.4467,
+        'lon': 114.2,
+        'tz': 8,
+        'question': '事业机会什么时候出现',
+        'themes': ['career', 'health'],
+        'reference_date': '2026-07-02',
+    })
+
+    assert result['scope'] == 'vedastro_gateway_run'
+    assert result['gateway_status']['mode'] == 'cn_gateway'
+    assert result['honesty_boundary']['all_641_methods_executed'] is False
+    assert result['user_visibility']['mainland_cn_safe'] is True
+
+
+def test_professional_reading_composes_high_rigor_and_gateway(monkeypatch) -> None:
+    handler = _handler()
+
+    def fake_high_rigor(body):
+        return {
+            'success': True,
+            'endpoint': 'high_rigor_workflow',
+            'body': dict(body),
+            'technique_audit': [{'technique': 'MEVG / Global Web Evidence', 'status': 'queued'}],
+        }
+
+    def fake_gateway(body):
+        return {
+            'scope': 'vedastro_gateway_run',
+            'status': 'local_fallback',
+            'user_visibility': {'boundary': 'VedAstro Gateway Boundary'},
+            'honesty_boundary': {'all_641_methods_executed': False},
+        }
+
+    monkeypatch.setattr(handler, '_compute_high_rigor_workflow', fake_high_rigor)
+    monkeypatch.setattr(handler, '_compute_vedastro_gateway_run', fake_gateway)
+
+    result = handler._compute_professional_reading({
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.4467,
+        'lon': 114.2,
+        'tz': 8,
+        'question': '盲推事业',
+        'themes': ['career', 'health'],
+        'blind_mode': True,
+    })
+
+    assert result['endpoint'] == 'professional_reading'
+    assert result['professional_reading']['high_rigor_workflow']['endpoint'] == 'high_rigor_workflow'
+    assert result['professional_reading']['vedastro_gateway']['scope'] == 'vedastro_gateway_run'
+    assert result['professional_reading']['user_led_calibration_controls']['blind_mode'] is True
+    assert result['professional_reading']['visibility_contract']['requires_technique_audit_table'] is True
+
+
 @pytest.mark.parametrize(
     ('key', 'value', 'minimum', 'maximum'),
     [

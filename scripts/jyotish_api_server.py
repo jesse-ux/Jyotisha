@@ -801,6 +801,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(self._technique_catalog())
             elif path == '/api/vedastro/status':
                 self._json(self._vedastro_status())
+            elif path == '/api/vedastro_gateway/status':
+                self._json(self._compute_vedastro_gateway_status())
             elif path.startswith('/api/chart/jobs/'):
                 job_id = path.rsplit('/', 1)[-1]
                 result = self._get_chart_job(job_id)
@@ -863,6 +865,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             elif path == '/api/vedastro/range_scan':
                 result = self._compute_vedastro_range_scan(body)
+                self._json(result)
+            elif path == '/api/vedastro_gateway/run':
+                result = self._compute_vedastro_gateway_run(body)
+                self._json(result)
+            elif path == '/api/professional_reading':
+                result = self._compute_professional_reading(body)
                 self._json(result)
             elif path == '/api/import_chart':
                 result = self._import_chart_text(body)
@@ -1620,6 +1628,79 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         body_copy.pop('async', None)
         body_copy.pop('enqueue', None)
         return self._compute_high_rigor_workflow(body_copy)
+
+    def _compute_vedastro_gateway_status(self):
+        from scripts.vedastro_gateway import gateway_status
+
+        return gateway_status()
+
+    def _compute_vedastro_gateway_run(self, body):
+        from scripts.vedastro_gateway import run_gateway_packet
+
+        payload = dict(body or {})
+        birth_payload = self._high_rigor_birth_payload(payload)
+        themes = self._high_rigor_requested_themes(payload)
+        reference_date = (
+            payload.get('reference_date')
+            or payload.get('transit_date')
+            or payload.get('today')
+            or payload.get('current_date')
+            or datetime.now().strftime('%Y-%m-%d')
+        )
+        return run_gateway_packet(
+            birth_payload,
+            question=str(payload.get('question') or payload.get('query') or ''),
+            themes=themes,
+            reference_date=str(reference_date),
+        )
+
+    def _compute_professional_reading(self, body):
+        payload = dict(body or {})
+        high_rigor_payload = {
+            **payload,
+            'surface': payload.get('surface') or 'professional_reading_web',
+            'return_high_rigor_shape': True,
+        }
+        high_rigor_payload.pop('async', None)
+        high_rigor_payload.pop('enqueue', None)
+        high_rigor = self._compute_high_rigor_workflow(high_rigor_payload)
+        gateway = self._compute_vedastro_gateway_run(payload)
+        return {
+            'success': True,
+            'endpoint': 'professional_reading',
+            'schema_version': 1,
+            'professional_reading': {
+                'input': {
+                    'question': payload.get('question') or payload.get('query') or '',
+                    'themes': self._high_rigor_requested_themes(payload),
+                    'blind_mode': bool(payload.get('blind_mode')),
+                    'reference_date': payload.get('reference_date')
+                    or payload.get('transit_date')
+                    or payload.get('today')
+                    or payload.get('current_date'),
+                },
+                'high_rigor_workflow': high_rigor,
+                'vedastro_gateway': gateway,
+                'technique_audit_table_required_rows': [
+                    'Functional Benefic/Malefic',
+                    'MEVG / Global Web Evidence',
+                    'Real Case Calibration',
+                    'VedAstro Gateway Boundary',
+                ],
+                'visibility_contract': {
+                    'requires_technique_audit_table': True,
+                    'requires_source_governance': True,
+                    'requires_confidence_boundary': True,
+                    'requires_user_visible_blocked_reasons': True,
+                },
+                'user_led_calibration_controls': {
+                    'blind_mode': bool(payload.get('blind_mode')),
+                    'disable_life_event_feedback': bool(payload.get('disable_life_event_feedback') or payload.get('blind_mode')),
+                    'allow_user_event_selection': bool(payload.get('allow_user_event_selection', True)),
+                    'note': 'User feedback must stay explicit and option-based; do not infer from prior chat memory in blind mode.',
+                },
+            },
+        }
 
     def _high_rigor_workflow_plan_only(self, birth_payload, themes, events):
         return {
