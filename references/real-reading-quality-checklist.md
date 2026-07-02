@@ -48,14 +48,22 @@
 23. 是否把外部 oracle 未闭环的前线（Dasha boundary / Shadbala absolute / Tajika annual）说清楚？
 24. 是否避免把内部一致性伪装成传统软件级真值冻结？
 
-## H. 输出层
+## H. MEVG 与真实案例层
 
-25. 是否输出 `Technique Audit Table` 或等价审计表？
-26. 是否给出 `used / partial / blocked / not used` 级别说明？
-27. 是否给出置信度，而不是只给断语？
-28. 是否把 must-not-overclaim 边界说清楚？
+25. 是否执行 `MEVG / Global Web Evidence`，即全球 / 全网外部资料采集？
+26. 是否给出 `Real Case Calibration`，即真实案例参考、公开 benchmark case，或明确 case gap？
+27. 是否标出 source tier，而不是把论坛、博客、经典文本、开源项目和黑盒 oracle 混成同一权重？
+28. 若来源冲突，是否做了 conflict arbitration，并说明哪条结论被降级？
+29. 是否正确使用 pure calculation exemption：只在纯计算、纯代码、纯项目维护或未解释运势意义的原始数据输出时豁免？
+
+## I. 输出层
+
+30. 是否输出 `Technique Audit Table` 或等价审计表？
+31. 是否给出 `used / partial / blocked / not used` 级别说明？
+32. 是否给出置信度，而不是只给断语？
+33. 是否把 must-not-overclaim 边界说清楚？
 
 ## 一句话用法
 
 只要这张表里有 3-4 项没过，就不要把输出包装成“高严谨结论”。  
-只要 `参数层 + 承诺层 + 分盘层 + timing 层 + 外部真值边界` 没一起过，就不能把 skill 说成“已经无疏漏封顶”。
+只要 `参数层 + 承诺层 + 分盘层 + timing 层 + 外部真值边界 + MEVG 与真实案例层` 没一起过，就不能把 skill 说成“已经无疏漏封顶”。

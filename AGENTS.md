@@ -41,7 +41,30 @@
    - 关键功能凶星
    - 对结论置信度的影响
 
-## 3. Honesty Boundary
+## 3. Existing MEVG Invocation Hard Constraint
+
+**强制执行既有 MEVG 规则，不得把它当成可选增强项。**
+
+本节不是新增一套验证系统，而是把 `SKILL.md` 与
+`references/mandatory-verification-gate-protocol.md` 中已经存在的 MEVG
+外部验证门控提升为协作代理硬约束。
+
+执行要求：
+
+1. 对用户提出的 **所有星盘运势类问题**、**所有有关印度占星推运的问题**，包括命盘解读、事业、财富、婚恋、健康、流年、流月、应期、事件预测、出生时间校正辅助和技法可靠性判断，必须执行 MEVG。
+2. MEVG 必须包含：
+   - 全球 / 全网外部资料采集
+   - 真实案例参考
+   - 来源分级
+   - 冲突仲裁
+   - 未验证声明降级
+3. 输出的 Technique Audit Table 必须出现以下两行：
+   - `MEVG / Global Web Evidence`
+   - `Real Case Calibration`
+4. 若无法完成外部资料采集、无法找到真实案例、网络/工具不可用、或来源之间出现重大冲突，必须写成 `blocked` 或降级置信度，不得静默跳过。
+5. 只有 **纯计算 / 纯代码 / 纯项目维护** 可以豁免 MEVG，例如运行测试、检查 Git 状态、修复代码、输出未解释的原始度数或 Dasha 边界。一旦开始解释“这代表什么运势”，豁免立即失效。
+
+## 4. Honesty Boundary
 
 以下情况必须明确写成 `blocked` 或降级置信度：
 
@@ -50,5 +73,6 @@
 - 缺少分盘、Ayanamsa、Node mode 或出生精度
 - 功能性吉凶星层未完成
 - 双重大运或多系统结果发生实质冲突
+- MEVG / Global Web Evidence 或 Real Case Calibration 未完成
 
 禁止把内部一致性伪装成“已经全球顶级精度”。

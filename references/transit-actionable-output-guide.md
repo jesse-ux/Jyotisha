@@ -57,6 +57,18 @@
 
 当动态预测（被发现/合作/破圈/关键事件型）时，**必须先执行案例检索**：
 
+本节是 `references/mandatory-verification-gate-protocol.md` 的推运执行入口之一。
+所有 Transit / Dasha / 年运 / 月运 / 具体事件型推运结论，都必须在最终
+Technique Audit Table 中出现：
+
+- `MEVG / Global Web Evidence`：记录全网外部资料采集、source tier 与
+  conflict arbitration。
+- `Real Case Calibration`：记录真实案例参考、公开 benchmark case，或明确
+  case gap。
+
+pure calculation exemption 只适用于纯计算、纯代码、纯项目维护或不解释运势意义的
+原始数据输出；一旦解释 Transit 或 Dasha 对运势的意义，必须执行 MEVG 与真实案例校正。
+
 ### Step 1：检索同类行星配置真实案例
 
 ```bash

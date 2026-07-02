@@ -31,6 +31,33 @@ If any of the above cannot be completed because of missing birth precision, exte
 
 ---
 
+## 0.6 Existing MEVG Invocation Gate
+
+This router reuses the existing MEVG source of truth in
+`references/mandatory-verification-gate-protocol.md`; it does not create a
+second verification system.
+
+For **all chart interpretation readings**, including natal interpretation,
+career, wealth, relationship, health, annual/monthly timing, event prediction,
+rectification support, and technique reliability questions, the reading must
+complete or explicitly block:
+
+1. `MEVG / Global Web Evidence`: global web evidence collection, source tiering,
+   and conflict arbitration.
+2. `Real Case Calibration`: real case reference, benchmark case reference, or a
+   clear case-gap statement with confidence downgrade.
+
+The only exemption is: pure calculation / code / project-maintenance tasks are exempt
+when they do not interpret chart meaning. Examples: running tests, checking Git
+status, fixing code, or returning raw degrees / Dasha boundaries without any
+fortune interpretation. Once the answer explains what the chart means, the
+exemption no longer applies.
+
+Every Level 2+ chart reading must include `MEVG / Global Web Evidence` and
+`Real Case Calibration` in the Technique Audit Table.
+
+---
+
 ## 1. Question router
 
 | User intent | Route | Required depth |
@@ -58,7 +85,8 @@ For every Level 2+ reading, complete or explicitly mark unavailable:
 - Transit: Saturn/Jupiter/Rahu-Ketu, plus Moon trigger for month/day-level timing.
 - Functional benefic/malefic status by Lagna.
 - Shadbala and Ashtakavarga when a claim depends on planetary strength or transit strength.
-- MEVG external verification for non-obvious interpretive claims.
+- MEVG external verification for all interpretive chart-reading claims.
+- Real case calibration or a clearly marked case-evidence gap.
 - Confidence label: A/B/C/insufficient.
 
 ---
@@ -207,6 +235,8 @@ Every Level 2+ output must include this table near the end.
 | Argala | Used / not used | ... | ... |
 | KP / Sub-lord | Used / not required / unavailable | ... | ... |
 | Historical verification | Used / not provided | ... | ... |
+| MEVG / Global Web Evidence | Used / blocked / exempt for pure calculation | Source tier, searches, conflict arbitration | Mandatory for all chart interpretation readings; blocked or downgraded if omitted |
+| Real Case Calibration | Used / blocked / case gap | Real case, benchmark case, or documented lack of matching cases | Cap confidence when no comparable case evidence is available |
 
 Never omit unavailable techniques silently. Mark them as unavailable or not integrated.
 When Functional Benefic/Malefic is used, explicitly surface the functional neutrals and yogakarakas instead of collapsing them into a generic summary.

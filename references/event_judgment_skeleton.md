@@ -66,6 +66,17 @@
 - `node_mode`
 - `maturity`
 
+所有涉及印度占星推运、运势解读、事件预测、流年流月、健康、搬迁、考试、
+出行、出生时间校正辅助或技法可靠性判断的问题，都必须复用既有
+`references/mandatory-verification-gate-protocol.md`：
+
+- `MEVG / Global Web Evidence`：记录全球 / 全网外部资料采集、source tier、
+  conflict arbitration 和未验证声明的降级。
+- `Real Case Calibration`：记录真实案例参考、公开 benchmark case，或明确
+  case gap。
+- pure calculation exemption 只适用于纯计算、纯代码、纯项目维护或不解释运势意义的
+  原始数据输出；一旦解释推运或运势意义，必须执行 MEVG 与真实案例校正。
+
 ---
 
 ## 3. Adjudication
@@ -124,6 +135,8 @@
 3. `conflicts`
 4. `Technique Audit Table`
 5. `raw evidence`
+6. `MEVG / Global Web Evidence`
+7. `Real Case Calibration`
 
 最小 JSON 形态：
 
@@ -151,3 +164,5 @@
 - 题目域分盘未展开（relationship -> D9/UL；career -> D10/A10；wealth -> D2/D11）
 - 外部 oracle 未闭环却假装全局封顶
 - 缺少 `Technique Audit Table`
+- 缺少 `MEVG / Global Web Evidence`
+- 缺少 `Real Case Calibration`

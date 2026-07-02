@@ -25,6 +25,12 @@ def test_real_reading_quality_checklist_exists_and_covers_structural_gaps() -> N
         "Vimshottari + Narayana",
         "production_tuning_allowed",
         "Technique Audit Table",
+        "MEVG / Global Web Evidence",
+        "Real Case Calibration",
+        "全球 / 全网外部资料采集",
+        "真实案例参考",
+        "source tier",
+        "conflict arbitration",
     ]:
         assert token in text
 

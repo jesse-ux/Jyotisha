@@ -38,6 +38,8 @@
 - `Transit / Double Transit`
 - `Vivah Saham`
 - `Functional Benefic/Malefic`
+- `MEVG / Global Web Evidence`
+- `Real Case Calibration`
 
 若用户要求高严谨，还应尽量加：
 
@@ -133,6 +135,18 @@
 3. `main conflicts`
 4. `Technique Audit Table`
 5. `raw evidence`
+6. `MEVG / Global Web Evidence`
+7. `Real Case Calibration`
+
+`MEVG / Global Web Evidence` 必须复用
+`references/mandatory-verification-gate-protocol.md`，至少说明 source tier、
+global web evidence collection、conflict arbitration 和未验证声明如何降级。
+
+`Real Case Calibration` 必须给出真实案例参考、公开 benchmark case，或明确的
+case gap。没有可比案例时不得假装完成，应降低置信度。
+
+pure calculation exemption 只适用于纯计算、纯代码、纯项目维护或不解释运势意义的原始
+数据输出；一旦解释婚恋运势、关系窗口或婚期，必须执行 MEVG 与真实案例校正。
 
 示例 verdict：
 
@@ -154,3 +168,5 @@
 - 只看单一文章规则
 - 未说明 birth time precision
 - 未说明 `Ayanamsa / Node mode`
+- 未完成 `MEVG / Global Web Evidence`
+- 未完成 `Real Case Calibration`
