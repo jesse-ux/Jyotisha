@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+from types import SimpleNamespace
 from typing import Any
 
 
@@ -67,4 +68,93 @@ def gateway_status() -> dict[str, Any]:
         "direct_browser_access_allowed": False,
         "frontend_secret_safe": True,
         "boundary": BOUNDARY_TEXT,
+    }
+
+
+def _entrypoint_args(
+    case: dict[str, Any],
+    question: str,
+    themes: list[str] | tuple[str, ...] | None,
+    reference_date: str,
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        year=int(case.get("year", 0)),
+        month=int(case.get("month", 0)),
+        day=int(case.get("day", 0)),
+        hour=int(case.get("hour", 0)),
+        minute=int(case.get("minute", 0)),
+        second=int(case.get("second", 0)),
+        lat=float(case.get("lat", 0.0)),
+        lon=float(case.get("lon", 0.0)),
+        tz=float(case.get("tz", 0.0)),
+        question=question or "",
+        themes=",".join(str(item) for item in (themes or []) if str(item).strip()) or "career,marriage,wealth",
+        reference_date=reference_date,
+        ayanamsa=str(case.get("ayanamsa_policy") or case.get("ayanamsa") or "lahiri"),
+        node_mode=str(case.get("node_policy") or case.get("node_mode") or "mean"),
+    )
+
+
+def _status_from_report(gateway: dict[str, Any], report: dict[str, Any]) -> str:
+    catalog = report.get("official_capability_catalog") if isinstance(report, dict) else {}
+    catalog_status = str((catalog or {}).get("status") or "").lower()
+    active_backend = gateway.get("active_backend") or "local_fallback"
+    if active_backend == "queue":
+        return "queued"
+    if active_backend == "cache":
+        return "cached"
+    if active_backend == "local_fallback":
+        return "local_fallback"
+    if (catalog or {}).get("available"):
+        return "ok"
+    if "budget" in catalog_status or "queue" in catalog_status:
+        return "queued"
+    if catalog_status:
+        return "partial"
+    return "blocked"
+
+
+def run_gateway_packet(
+    case: dict[str, Any],
+    question: str = "",
+    themes: list[str] | tuple[str, ...] | None = None,
+    reference_date: str = "",
+) -> dict[str, Any]:
+    from scripts.vedastro_user_entrypoint import build_report
+
+    gateway = gateway_status()
+    args = _entrypoint_args(case, question, themes, reference_date)
+    report = build_report(args)
+    catalog = report.get("official_capability_catalog") or {}
+    return {
+        "scope": "vedastro_gateway_run",
+        "schema_version": 1,
+        "status": _status_from_report(gateway, report),
+        "gateway_status": gateway,
+        "input": report.get("input") or {},
+        "runtime_mode": report.get("runtime_mode") or {},
+        "official_capability_catalog": {
+            "status": catalog.get("status") or "blocked",
+            "available": bool(catalog.get("available")),
+            "summary": catalog.get("summary") or {"catalog_method_count": 0},
+            "coverage": catalog.get("coverage") or {},
+            "domain_routing": catalog.get("domain_routing") or {},
+            "dynamic_selection": catalog.get("dynamic_selection") or {},
+        },
+        "cache_and_queue": report.get("cache_and_queue") or {},
+        "strict_workflow": report.get("strict_workflow") or {},
+        "honesty_boundary": {
+            **(report.get("honesty_boundary") or {}),
+            "all_641_methods_executed": False,
+            "gateway_rule": (
+                "Gateway may use self-hosted VedAstro, official VedAstro, cache, queue, or local fallback; "
+                "it never implies all official methods ran for this question."
+            ),
+        },
+        "user_visibility": {
+            "mainland_cn_safe": True,
+            "direct_browser_access_allowed": False,
+            "frontend_secret_safe": True,
+            "boundary": BOUNDARY_TEXT,
+        },
     }

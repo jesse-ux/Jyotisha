@@ -37,3 +37,37 @@ def test_gateway_status_reports_cn_gateway_self_host(monkeypatch):
     assert status["active_backend"] == "self_host"
     assert status["cache_ttl_seconds"] == 604800
     assert status["queue_enabled"] is True
+
+
+def test_gateway_run_packet_uses_user_entrypoint_and_marks_not_all_641(monkeypatch):
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv("JYOTISH_SKIP_LOCAL_ENV", "1")
+    monkeypatch.setenv("VEDASTRO_GATEWAY_MODE", "cn_gateway")
+    monkeypatch.setenv("VEDASTRO_CACHE_TTL_SECONDS", "604800")
+    monkeypatch.setenv("VEDASTRO_GATEWAY_QUEUE_ENABLED", "1")
+    monkeypatch.setenv("VEDASTRO_FULL_CATALOG_SAMPLE_LIMIT", "0")
+
+    packet = vedastro_gateway.run_gateway_packet(
+        {
+            "year": REDACTED_YEAR,
+            "month": 4,
+            "day": 17,
+            "hour": 14,
+            "minute": 49,
+            "second": 0,
+            "lat": 36.42,
+            "lon": 114.2,
+            "tz": 8,
+        },
+        question="事业机会什么时候出现",
+        themes=["career", "health"],
+        reference_date="2026-07-02",
+    )
+
+    assert packet["scope"] == "vedastro_gateway_run"
+    assert packet["status"] in {"ok", "partial", "queued", "blocked", "cached", "local_fallback"}
+    assert packet["gateway_status"]["mode"] == "cn_gateway"
+    assert packet["official_capability_catalog"]["summary"]["catalog_method_count"] >= 0
+    assert packet["honesty_boundary"]["all_641_methods_executed"] is False
+    assert packet["user_visibility"]["mainland_cn_safe"] is True
