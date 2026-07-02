@@ -843,3 +843,10 @@
 - 采用更适合本机的 macOS Vision OCR：脚本自动编译并缓存 `~/.cache/jyotish-ocr/vision_ocr`，不依赖 Homebrew tesseract。
 - `scripts/character_level_inventory_manifest.py --scope extraction-results` 新增 OCR cache；缓存只保存 OCR 文本 hash、字符数、行数、后端、状态，不保存 OCR 正文。
 - 53 张图片已用 `macos_vision` 复跑完成；当前结果：`text_extracted=49`、`text_empty=17`、`ocr_blocked_missing_engine=0`、`extraction_failed=0`、`stored_text_payload_fields=0`。
+
+## 2026-07-02T18:52:00+08:00 - 提取后分级 review manifest
+
+- 新增 `scripts/character_level_inventory_manifest.py --scope extraction-review`，对 66 个提取结果做治理分级，不保存正文，不进入 runtime truth。
+- 新增 `docs/research/character_level_extraction_review_latest.json` 与 `.md`，当前 reviewed_files=`66`、runtime_promotions=`0`、stored_text_payload_fields=`0`。
+- 分级结果：`promote_review_candidate=38`、`private_reference_only=3`、`reference_only=8`、`asset_or_empty_reference_only=17`。
+- 后续若要升格，只能从 `promote_review_candidate` 里逐批人工 source grading + conflict arbitration + source-pack 测试，不能直接把 OCR/外部文档当主链真源。

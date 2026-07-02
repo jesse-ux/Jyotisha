@@ -1,7 +1,7 @@
 {
   "scope": "project",
   "status": "pass",
-  "generated_at": "2026-07-02T10:44:17.758196+00:00",
+  "generated_at": "2026-07-02T10:52:27.980901+00:00",
   "mode": {
     "heavy_ocr": false,
     "whole_machine_scan": false,
@@ -17,7 +17,7 @@
     "AGENTS.md"
   ],
   "summary": {
-    "total_files": 1075,
+    "total_files": 1077,
     "unhashed_files": 0,
     "unclassified_files": 0,
     "unknown_extraction_status": 0,
@@ -28,12 +28,12 @@
       "quarantined_draft": 93,
       "real_case_calibration": 5,
       "reference_candidate": 180,
-      "research_governance": 445
+      "research_governance": 447
     },
     "extraction_status_counts": {
       "binary_indexed": 34,
       "image_ocr_queued": 3,
-      "text_indexed": 1038
+      "text_indexed": 1040
     }
   },
   "root_summary": {
@@ -46,8 +46,8 @@
       "bytes": 43187
     },
     "docs/research": {
-      "files": 538,
-      "bytes": 2969221
+      "files": 540,
+      "bytes": 3019398
     },
     "references": {
       "files": 236,
@@ -5173,7 +5173,7 @@
       "path": "docs/research/character_level_external_manifest_latest.json",
       "suffix": ".json",
       "byte_count": 666472,
-      "sha256": "e7a98a44b5ad6c2582bddb9482bf7d980a93784d74a5a448b6aee51c358269fd",
+      "sha256": "e14c5b310be0a108b40857a463e2d7657bf911083d12a8639de845e60af9d415",
       "extraction_status": "text_indexed",
       "character_count": 661666,
       "line_count": 12446,
@@ -5187,7 +5187,7 @@
       "path": "docs/research/character_level_external_manifest_latest.md",
       "suffix": ".md",
       "byte_count": 1280,
-      "sha256": "dd2c84a86dc7e691d5bd9088829ba2088ff32ad305f8eb8e7d492f6eb40ab9f4",
+      "sha256": "416e1e27c89232f580e18eb75fdf89f90509a19f4ad02b3d0df351d4a693acbd",
       "extraction_status": "text_indexed",
       "character_count": 1272,
       "line_count": 47,
@@ -5201,7 +5201,7 @@
       "path": "docs/research/character_level_extraction_queue_latest.json",
       "suffix": ".json",
       "byte_count": 31649,
-      "sha256": "4946bd810c6b312bae1fc9bb7a78bc34f886a4a5c7532d74732399fe7f612cdb",
+      "sha256": "2564e16627c5326880827500e6c8cf4d7d671773bf942308b6e5e47d517a936f",
       "extraction_status": "text_indexed",
       "character_count": 30151,
       "line_count": 758,
@@ -5215,7 +5215,7 @@
       "path": "docs/research/character_level_extraction_queue_latest.md",
       "suffix": ".md",
       "byte_count": 633,
-      "sha256": "8baea40e157fca6adc9228988561253f0803eb719b7392bc74ef4e64145394b6",
+      "sha256": "0ee514b7288f7e54b076d2e791798053dba6d8c79b19fad80652f376d8edd40d",
       "extraction_status": "text_indexed",
       "character_count": 633,
       "line_count": 27,
@@ -5228,11 +5228,11 @@
     "docs/research/character_level_extraction_results_latest.json": {
       "path": "docs/research/character_level_extraction_results_latest.json",
       "suffix": ".json",
-      "byte_count": 65711,
-      "sha256": "a06874a9c54148891373069cd3933b3be51e3b045e51bd8b121c751f9dcf83ac",
+      "byte_count": 65824,
+      "sha256": "7460624396860dddc58e65c04487cbd5aa102d55c28c807fc2100399d2acd6e8",
       "extraction_status": "text_indexed",
-      "character_count": 64213,
-      "line_count": 1650,
+      "character_count": 64326,
+      "line_count": 1652,
       "decode_replacement_count": 0,
       "classification": "research_governance",
       "priority": "priority_3",
@@ -5242,11 +5242,39 @@
     "docs/research/character_level_extraction_results_latest.md": {
       "path": "docs/research/character_level_extraction_results_latest.md",
       "suffix": ".md",
-      "byte_count": 749,
-      "sha256": "6f7d1e04b3bbb0a977e44b2cd6ddc6a71fe7b97b016a76b6e7d3dc0da37b32af",
+      "byte_count": 850,
+      "sha256": "d185c4239f0d3d66ad61bfb3f2f928581358c471883d07259772f445057f2cd5",
       "extraction_status": "text_indexed",
-      "character_count": 749,
-      "line_count": 33,
+      "character_count": 850,
+      "line_count": 35,
+      "decode_replacement_count": 0,
+      "classification": "research_governance",
+      "priority": "priority_3",
+      "promotion_status": "governance_or_history",
+      "reason": "Research history or governance record; index separately from rule truth."
+    },
+    "docs/research/character_level_extraction_review_latest.json": {
+      "path": "docs/research/character_level_extraction_review_latest.json",
+      "suffix": ".json",
+      "byte_count": 49397,
+      "sha256": "510ff3d55c71ad376cf2b89a09c81394b6d2de02e2367168733ce00940d77537",
+      "extraction_status": "text_indexed",
+      "character_count": 47899,
+      "line_count": 1019,
+      "decode_replacement_count": 0,
+      "classification": "research_governance",
+      "priority": "priority_3",
+      "promotion_status": "governance_or_history",
+      "reason": "Research history or governance record; index separately from rule truth."
+    },
+    "docs/research/character_level_extraction_review_latest.md": {
+      "path": "docs/research/character_level_extraction_review_latest.md",
+      "suffix": ".md",
+      "byte_count": 566,
+      "sha256": "cabf37aea044f1ff82e5a98226d37e0f37ce2b4b293ab1b518ae8fec2fc9bb08",
+      "extraction_status": "text_indexed",
+      "character_count": 566,
+      "line_count": 22,
       "decode_replacement_count": 0,
       "classification": "research_governance",
       "priority": "priority_3",
@@ -5257,7 +5285,7 @@
       "path": "docs/research/character_level_inventory_manifest_latest.json",
       "suffix": ".json",
       "byte_count": 722955,
-      "sha256": "4fcf6ce8815022fbe308fca4d725c50a481ce2f1383397c3617f08bb138cc3fc",
+      "sha256": "414fc9d24a8d6662935442aedd37c0820da186227dbd9dc461d498c43044df48",
       "extraction_status": "text_indexed",
       "character_count": 722405,
       "line_count": 15118,
@@ -5271,7 +5299,7 @@
       "path": "docs/research/character_level_inventory_manifest_latest.md",
       "suffix": ".md",
       "byte_count": 1090,
-      "sha256": "547a1e4ec8187636e39dbb09551541a0d2296cb798ee1895804feaca2612e1c1",
+      "sha256": "1e1c58e9f1fa954fb179640f61f3de86f6ec3d3c9d9cf830ec9454444d9923b4",
       "extraction_status": "text_indexed",
       "character_count": 1090,
       "line_count": 44,

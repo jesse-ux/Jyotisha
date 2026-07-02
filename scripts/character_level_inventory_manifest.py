@@ -30,6 +30,8 @@ EXTRACTION_QUEUE_JSON = ROOT / "docs" / "research" / "character_level_extraction
 EXTRACTION_QUEUE_MD = ROOT / "docs" / "research" / "character_level_extraction_queue_latest.md"
 EXTRACTION_RESULTS_JSON = ROOT / "docs" / "research" / "character_level_extraction_results_latest.json"
 EXTRACTION_RESULTS_MD = ROOT / "docs" / "research" / "character_level_extraction_results_latest.md"
+EXTRACTION_REVIEW_JSON = ROOT / "docs" / "research" / "character_level_extraction_review_latest.json"
+EXTRACTION_REVIEW_MD = ROOT / "docs" / "research" / "character_level_extraction_review_latest.md"
 VISION_OCR_SOURCE = r'''
 import Foundation
 import Vision
@@ -474,6 +476,8 @@ def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, A
         return build_extraction_queue(write=write)
     elif scope == "extraction-results":
         return build_extraction_results(write=write)
+    elif scope == "extraction-review":
+        return build_extraction_review(write=write)
     else:
         raise ValueError(f"Unsupported scope: {scope}")
 
@@ -507,6 +511,75 @@ def build_manifest(*, scope: str = "project", write: bool = True) -> dict[str, A
     }
     if write:
         _write_reports(report, json_report=json_report, markdown_report=markdown_report)
+    return report
+
+
+def _review_decision(item: dict[str, Any]) -> tuple[str, str]:
+    path = str(item["path"])
+    if item["extraction_result"] == "extraction_failed":
+        return "blocked_extraction_failure", "Extraction failed; keep blocked until repaired."
+    if item["post_extraction_classification"] == "extracted_private_reference_only":
+        return "private_reference_only", "Private or historical personal report; do not promote into runtime truth."
+    if item["extraction_result"] == "text_empty":
+        return "asset_or_empty_reference_only", "OCR/extraction produced empty text; keep as indexed asset only."
+    if "/文件仓库/印度占星文章/" in path or "/Downloads/" in path:
+        return "promote_review_candidate", "Extracted source-like material; requires human source grading before promotion."
+    if item["post_extraction_classification"] == "extracted_candidate_for_review":
+        return "promote_review_candidate", "Candidate text extracted; requires conflict arbitration and source grading."
+    return "reference_only", "Useful as context or asset evidence, not direct runtime truth."
+
+
+def build_extraction_review(*, write: bool = True) -> dict[str, Any]:
+    results_report = build_extraction_results(write=False)
+    reviews: list[dict[str, Any]] = []
+    for item in results_report["results"]:
+        decision, reason = _review_decision(item)
+        reviews.append(
+            {
+                "path": item["path"],
+                "source_scope": item["source_scope"],
+                "suffix": item["suffix"],
+                "byte_count": item["byte_count"],
+                "sha256": item["sha256"],
+                "extraction_result": item["extraction_result"],
+                "extraction_method": item["extraction_method"],
+                "extracted_character_count": item["extracted_character_count"],
+                "text_sha256": item.get("text_sha256"),
+                "post_extraction_classification": item["post_extraction_classification"],
+                "decision": decision,
+                "decision_reason": reason,
+                "runtime_truth_allowed": False,
+            }
+        )
+    decision_counts: dict[str, int] = {}
+    for item in reviews:
+        decision_counts[item["decision"]] = decision_counts.get(item["decision"], 0) + 1
+    stored_text_payload_fields = sum(1 for item in reviews if "text" in item or "text_preview" in item)
+    report = {
+        "scope": "extraction-review",
+        "status": "pass",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "mode": {
+            "whole_machine_scan": False,
+            "semantic_promotion": False,
+            "runtime_truth_promotion": False,
+            "boundary": "Review decisions are governance labels only. No extracted source is promoted to runtime truth here.",
+        },
+        "summary": {
+            "reviewed_files": len(reviews),
+            "runtime_promotions": 0,
+            "stored_text_payload_fields": stored_text_payload_fields,
+        },
+        "decision_counts": dict(sorted(decision_counts.items())),
+        "reviews": reviews,
+        "artifacts": {
+            "json_report": _relative(EXTRACTION_REVIEW_JSON),
+            "markdown_report": _relative(EXTRACTION_REVIEW_MD),
+        },
+        "title": "Extraction Review Manifest",
+    }
+    if write:
+        _write_reports(report, json_report=EXTRACTION_REVIEW_JSON, markdown_report=EXTRACTION_REVIEW_MD)
     return report
 
 
@@ -889,6 +962,8 @@ def _render_markdown(report: dict[str, Any]) -> str:
         return _render_extraction_queue_markdown(report)
     if report["scope"] == "extraction-results":
         return _render_extraction_results_markdown(report)
+    if report["scope"] == "extraction-review":
+        return _render_extraction_review_markdown(report)
     lines = [
         f"# {report.get('title', 'Character-Level Inventory Manifest')}",
         "",
@@ -923,6 +998,36 @@ def _render_markdown(report: dict[str, Any]) -> str:
             report["mode"]["boundary"],
             "",
             "This manifest proves indexing, hashing, and extraction-state classification. It does not by itself promote any source into the runtime truth chain.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _render_extraction_review_markdown(report: dict[str, Any]) -> str:
+    lines = [
+        f"# {report.get('title', 'Extraction Review Manifest')}",
+        "",
+        f"- status: {report['status']}",
+        f"- scope: {report['scope']}",
+        f"- generated_at: {report['generated_at']}",
+        f"- reviewed_files: {report['summary']['reviewed_files']}",
+        f"- runtime_promotions: {report['summary']['runtime_promotions']}",
+        f"- stored_text_payload_fields: {report['summary']['stored_text_payload_fields']}",
+        "",
+        "## Decision Counts",
+        "",
+    ]
+    for name, count in report["decision_counts"].items():
+        lines.append(f"- `{name}`: {count}")
+    lines.extend(
+        [
+            "",
+            "## Boundary",
+            "",
+            report["mode"]["boundary"],
+            "",
+            "Promotion still requires human review, source grading, conflict arbitration, and explicit source-pack tests.",
             "",
         ]
     )
@@ -1015,7 +1120,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--scope",
         default="project",
-        choices=["project", "external", "extraction-queue", "extraction-results"],
+        choices=["project", "external", "extraction-queue", "extraction-results", "extraction-review"],
     )
     parser.add_argument("--no-write", action="store_true", help="Print the manifest without writing report artifacts.")
     parser.add_argument("--summary-only", action="store_true", help="Print only summary fields; still writes full artifacts unless --no-write is set.")

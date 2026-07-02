@@ -223,3 +223,35 @@ def test_extraction_results_extract_pdf_and_docx_without_storing_text() -> None:
     assert json_path.exists()
     assert md_path.exists()
     assert "Extraction Results Manifest" in md_path.read_text(encoding="utf-8")
+
+
+def test_extraction_review_grades_extracted_sources_without_promoting_runtime_truth() -> None:
+    report = _run_manifest("--scope", "extraction-review")
+
+    assert report["scope"] == "extraction-review"
+    assert report["status"] == "pass"
+    assert report["summary"]["reviewed_files"] >= 60
+    assert report["summary"]["runtime_promotions"] == 0
+    assert report["summary"]["stored_text_payload_fields"] == 0
+    assert report["decision_counts"]["promote_review_candidate"] >= 5
+    assert report["decision_counts"]["private_reference_only"] >= 1
+    assert report["decision_counts"]["asset_or_empty_reference_only"] >= 1
+
+    for item in report["reviews"]:
+        assert item["sha256"]
+        assert item["decision"] in {
+            "promote_review_candidate",
+            "private_reference_only",
+            "reference_only",
+            "asset_or_empty_reference_only",
+            "blocked_extraction_failure",
+        }
+        assert item["runtime_truth_allowed"] is False
+        assert "text" not in item
+        assert "text_preview" not in item
+
+    json_path = ROOT / report["artifacts"]["json_report"]
+    md_path = ROOT / report["artifacts"]["markdown_report"]
+    assert json_path.exists()
+    assert md_path.exists()
+    assert "Extraction Review Manifest" in md_path.read_text(encoding="utf-8")
