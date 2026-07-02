@@ -77,6 +77,62 @@ VEDASTRO_ENABLE_NETWORK=1
 
 默认运行是快速模式：VedAstro official 证据层如果没有在前台预算内闭环，会诚实标记 `official_snapshot_budget_exhausted` 并退回本地 Swiss Ephemeris。要跑 official extended 模式，复制 `.env.official.example` 为 `.env.local` 并填好 endpoint/network/key；运行 `python3 scripts/diagnose_vedastro_mode.py` 可先确认当前是 `fast_local_fallback` 还是 `official_extended`。
 
+### Codex 用户级 VedAstro + strict workflow 入口
+
+如果用户在 Codex 窗口从云端 Git 仓库拉取本项目，推荐先走这一条稳定入口，而不是手动拼多个底层脚本：
+
+```bash
+python3 scripts/vedastro_user_entrypoint.py \
+  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 49 \
+  --lat 36.42 --lon 114.2 --tz 8 \
+  --question "事业机会什么时候出现" \
+  --themes career,marriage,wealth \
+  --reference-date 2026-07-02 \
+  --format markdown
+```
+
+机器读取或交给后续 agent 处理时使用 JSON：
+
+```bash
+python3 scripts/vedastro_user_entrypoint.py \
+  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 49 \
+  --lat 36.42 --lon 114.2 --tz 8 \
+  --question "事业机会什么时候出现" \
+  --themes career,health,education,property,children,migration,prashna \
+  --reference-date 2026-07-02 \
+  --format json
+```
+
+这个入口会自动做四件事：
+
+1. 读取 `.env.local` 并诊断当前是 `official_extended` 还是 `fast_local_fallback`。
+2. 启动 `official_full_capability_catalog`，给 VedAstro 官方能力目录生成 `domain / execution_policy / adjudicator_use / confidence_role / blocked_reason`。
+3. 按 `--themes` 做动态选择，避免把健康、教育、房产、子女、迁移、Prashna 等非三大主题塞进 `general`。
+4. 触发 strict workflow 合同摘要，输出 primary route、可用 route、cache/TTL/free-tier queue 策略和 honesty boundary。
+
+边界必须保留：这个入口**不会把 641 项全部当作已执行**。它先做官方能力目录分类和主题选择；能自动执行的进入证据层，需要第二人资料、用户文本、校时画像或官方网络预算的方法会保持 `needs_user_context`、`needs_user_text`、`needs_rectification_profile` 或 `blocked`。
+
+推荐的 official extended `.env.local` 示例：
+
+```bash
+VEDASTRO_API_ENDPOINT=https://api.vedastro.org/api
+VEDASTRO_ENABLE_NETWORK=1
+VEDASTRO_TIMEOUT_SECONDS=20
+VEDASTRO_CACHE_TTL_SECONDS=600
+VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS=600
+VEDASTRO_FREE_TIER_QUEUE=1
+# 可选
+# VEDASTRO_API_KEY=sk_live_xxx
+```
+
+先运行：
+
+```bash
+python3 scripts/diagnose_vedastro_mode.py
+```
+
+若仍显示 `fast_local_fallback`，用户级入口仍可运行，但解盘必须把 VedAstro official 证据写成 blocked/降级，不能声称 official extended 已闭环。
+
 ### 普通用户交付形态
 
 | 形态 | 入口 | 命令 | 能力边界 |
