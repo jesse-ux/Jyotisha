@@ -240,6 +240,18 @@ async function runVedAstroRangeScan(payload) {
   return postJson('/api/vedastro/range_scan', payload);
 }
 
+async function getVedAstroGatewayStatus() {
+  return fetchJson('/api/vedastro_gateway/status');
+}
+
+async function runVedAstroGateway(payload) {
+  return postJson('/api/vedastro_gateway/run', payload);
+}
+
+async function runProfessionalReading(payload) {
+  return postJson('/api/professional_reading', payload);
+}
+
 async function getTechniqueCatalog() {
   let lastError = null;
   for (const base of getApiBases(true)) {
@@ -465,6 +477,9 @@ window.JyotishAPI = {
   getCapabilityAudit,
   getVedAstroStatus,
   runVedAstroRangeScan,
+  getVedAstroGatewayStatus,
+  runVedAstroGateway,
+  runProfessionalReading,
   getTechniqueCatalog,
   runTechniqueExample,
   computeAnnual,

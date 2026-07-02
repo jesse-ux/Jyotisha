@@ -66,6 +66,10 @@ import { escapeHtml, escapeAttr, safeNumber } from './security.js';
 import { renderSkillCoverage } from './skill-map.js';
 import { initChartImport } from './import-chart.js';
 import { buildMEVGAudit, renderMEVGAudit } from './mevg-audit.js';
+import {
+  buildProfessionalReadingPayload,
+  renderProfessionalReadingPanel,
+} from './professional-reading.js';
 
 // 合并所有 Yoga 定义
 const ALL_YOGA_DEFS = [...YOGA_DEFINITIONS, ...YOGA_EXTENDED_A, ...YOGA_EXTENDED_B];
@@ -93,6 +97,7 @@ const PANCHANGA_CONDITIONS = [
   ['avoid_new_start', '不宜新开始'],
   ['good_choghadiya', '有吉利 Choghadiya'],
 ];
+let professionalReadingState = {};
 const PANCHANGA_CONDITION_GUIDE = {
   all: '显示范围内所有日期。',
   has_vrata: '当天存在 vrata、lunar observance 或节日候选标签。',
@@ -2361,6 +2366,9 @@ function renderTrustCenterPanel() {
       </div>
       ${renderRuntimeHealthPanel(runtime)}
       ${renderVedAstroUserScanPanel()}
+      <div id="professional-reading-host">
+        ${renderProfessionalReadingPanel(professionalReadingState)}
+      </div>
       ${renderValidationTransparencyPanel()}
       ${renderDashaShadbalaCalibrationPanel()}
       ${renderOracleEvidenceIntakePanel()}
@@ -3244,6 +3252,52 @@ async function runVedAstroRangeScanFromPanel(panel) {
   renderAll();
 }
 
+async function refreshProfessionalReadingGatewayStatus() {
+  const status = $('professional-reading-status') || $('trust-center-status');
+  professionalReadingState = { ...professionalReadingState, message: '正在刷新 VedAstro Gateway...' };
+  if (status) status.textContent = professionalReadingState.message;
+  try {
+    const gatewayStatus = await window.JyotishAPI.getVedAstroGatewayStatus();
+    professionalReadingState = {
+      ...professionalReadingState,
+      gatewayStatus,
+      message: 'VedAstro Gateway 状态已刷新。',
+    };
+  } catch (error) {
+    professionalReadingState = {
+      ...professionalReadingState,
+      message: `VedAstro Gateway 状态未完成：${error?.message || '本地 API 未连接'}`,
+    };
+  }
+  renderAll();
+}
+
+async function runProfessionalReadingFromPanel() {
+  const status = $('professional-reading-status') || $('trust-center-status');
+  professionalReadingState = { ...professionalReadingState, message: '正在运行专业解盘代理...' };
+  if (status) status.textContent = professionalReadingState.message;
+  try {
+    const payload = buildProfessionalReadingPayload(chartData || {});
+    const result = await window.JyotishAPI.runProfessionalReading(payload);
+    professionalReadingState = {
+      ...professionalReadingState,
+      result,
+      gatewayStatus: result?.professional_reading?.vedastro_gateway?.gateway_status || professionalReadingState.gatewayStatus || {},
+      message: '专业解盘包已生成。',
+    };
+    if (chartData) {
+      chartData.professional_reading = result?.professional_reading || result;
+      window.__jyotishProfessionalReading = result;
+    }
+  } catch (error) {
+    professionalReadingState = {
+      ...professionalReadingState,
+      message: `专业解盘未完成：${error?.message || '本地 API 未连接'}`,
+    };
+  }
+  renderAll();
+}
+
 async function promptPWAInstall() {
   const status = $('trust-center-status');
   const prompt = window.__jyotishDeferredInstallPrompt;
@@ -3796,6 +3850,12 @@ function bindProvenanceActions() {
     }
     if (btn.dataset.action === 'vedastro-run-range-scan') {
       runVedAstroRangeScanFromPanel(panel);
+    }
+    if (btn.dataset.action === 'professional-reading-gateway') {
+      refreshProfessionalReadingGatewayStatus();
+    }
+    if (btn.dataset.action === 'professional-reading-run') {
+      runProfessionalReadingFromPanel();
     }
     if (btn.dataset.action === 'pwa-install') {
       promptPWAInstall();

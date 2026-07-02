@@ -77,6 +77,33 @@ VEDASTRO_ENABLE_NETWORK=1
 
 默认运行是快速模式：VedAstro official 证据层如果没有在前台预算内闭环，会诚实标记 `official_snapshot_budget_exhausted` 并退回本地 Swiss Ephemeris。要跑 official extended 模式，复制 `.env.official.example` 为 `.env.local` 并填好 endpoint/network/key；运行 `python3 scripts/diagnose_vedastro_mode.py` 可先确认当前是 `fast_local_fallback` 还是 `official_extended`。
 
+### 中国大陆用户：VedAstro Gateway 模式
+
+普通中国大陆用户不需要、也不应该让浏览器直连 VedAstro。推荐部署方式是：网页只访问你自己的本地或云端后端；后端通过 `VedAstro Gateway` 统一管理 self-host、official upstream、TTL/cache、free-tier queue 和 local fallback。
+
+最短配置：
+
+```bash
+cp .env.cn.example .env.local
+python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200
+cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173
+```
+
+网页侧使用：
+
+- `Trust Center -> Web Professional Reading v1`
+- `/api/vedastro_gateway/status` 查看当前后端策略
+- `/api/vedastro_gateway/run` 生成 VedAstro-compatible evidence packet
+- `/api/professional_reading` 生成网页专业解盘包
+
+关键边界：
+
+- 不要让浏览器直连 VedAstro，也不要把 `VEDASTRO_API_KEY` 放进前端。
+- `VEDASTRO_CACHE_TTL_SECONDS` 和 `VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS` 用于缓存官方或自建服务结果。
+- `VEDASTRO_GATEWAY_QUEUE_ENABLED=1` / `VEDASTRO_FREE_TIER_QUEUE=1` 用于把昂贵或被限流的外部请求排队。
+- 如果 VedAstro 官方或自建服务不可达，`VEDASTRO_FAIL_OPEN_LOCAL=1` 会保持本地 Jyotish 引擎继续输出，并在 Technique Audit Table 里降级标注。
+- Gateway 不会默认声称跑完 641 项；它只把 capability catalog、dynamic selection、cache/queue/fallback 状态作为证据边界交给 strict workflow。
+
 ### Codex 用户级 VedAstro + strict workflow 入口
 
 如果用户在 Codex 窗口从云端 Git 仓库拉取本项目，推荐先走这一条稳定入口，而不是手动拼多个底层脚本：

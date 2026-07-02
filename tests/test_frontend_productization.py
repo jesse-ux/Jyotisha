@@ -1170,6 +1170,56 @@ def test_api_bridge_failures_have_recovery_guidance() -> None:
     assert "const data = await resp.json();" not in public_bridge
 
 
+def test_professional_reading_web_surface_uses_gateway_and_backend_agent() -> None:
+    bridge = read("api-bridge.js")
+    public_bridge = read("public/api-bridge.js")
+    main = read("main.js")
+    professional = read("professional-reading.js")
+
+    assert bridge == public_bridge
+    assert "getVedAstroGatewayStatus" in bridge
+    assert "postJson('/api/vedastro_gateway/run'" in bridge
+    assert "postJson('/api/professional_reading'" in bridge
+    assert "renderProfessionalReadingPanel" in professional
+    assert "Technique Audit Table" in professional
+    assert "MEVG / Global Web Evidence" in professional
+    assert "Real Case Calibration" in professional
+    assert "VedAstro Gateway Boundary" in professional
+    assert "renderProfessionalReadingPanel" in main
+
+
+def test_ai_chat_consumes_professional_reading_packet() -> None:
+    ai_chat = read("ai-chat.js")
+    assert "【Professional Reading Packet】" in ai_chat
+    assert "professional_reading" in ai_chat
+    assert "user_led_calibration_controls" in ai_chat
+    assert "VedAstro Gateway Boundary" in ai_chat
+
+
+def test_cn_gateway_docs_and_env_example_exist() -> None:
+    env = (ROOT / ".env.cn.example").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    for token in [
+        "VEDASTRO_GATEWAY_MODE=cn_gateway",
+        "VEDASTRO_SELF_HOST_ENDPOINT",
+        "VEDASTRO_CACHE_TTL_SECONDS",
+        "VEDASTRO_GATEWAY_QUEUE_ENABLED=1",
+        "VEDASTRO_FAIL_OPEN_LOCAL=1",
+    ]:
+        assert token in env
+    for token in [
+        "中国大陆用户",
+        "VedAstro Gateway",
+        "不要让浏览器直连 VedAstro",
+        "/api/vedastro_gateway/status",
+        "/api/professional_reading",
+        "TTL/cache",
+        "free-tier queue",
+    ]:
+        assert token in readme
+
+
 def test_chart_compute_failures_have_visible_recovery_guidance() -> None:
     html = read("index.html")
     main = read("main.js")

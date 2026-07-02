@@ -304,6 +304,7 @@ async function sendMessage() {
 
 function buildChartContext(cd, guidedTopicContext = null) {
   if (!cd?.planets || !cd?.ascendant) return t('ai.no.data');
+  const professionalReadingContext = buildProfessionalReadingContext(cd);
   if (cd.ai_prompt_pack?.prompt_zh && cd.ai_prompt_pack?.evidence_snapshot) {
     const workflow = cd._consultationWorkflow || {};
     const runtimePlanner = workflow.runtime_planner || {};
@@ -368,6 +369,8 @@ function buildChartContext(cd, guidedTopicContext = null) {
         ].join('\n')
       : '';
     return [
+      professionalReadingContext,
+      '',
       '【AI Prompt Pack】',
       cd.ai_prompt_pack.prompt_zh,
       '',
@@ -401,7 +404,30 @@ function buildChartContext(cd, guidedTopicContext = null) {
     if (!p || p.error) continue;
     ctx += `${planetName(pn)}: ${signName(p.sign)} ${p.degree_in_sign?.toFixed(2) || ''}° H${p.house} ${p.status || ''} ${p.retrograde ? 'R' : ''} ${p.nakshatra || ''}\n`;
   }
-  return `${ctx}\n${DASHA_SHADBALA_AI_CALIBRATION_BOUNDARY}`;
+  return `${professionalReadingContext}\n\n${ctx}\n${DASHA_SHADBALA_AI_CALIBRATION_BOUNDARY}`;
+}
+
+function buildProfessionalReadingContext(cd) {
+  const packet = cd?.professional_reading || window.__jyotishProfessionalReading?.professional_reading || null;
+  if (!packet || typeof packet !== 'object') {
+    return [
+      '【Professional Reading Packet】',
+      'status=not_loaded',
+      'professional_reading: absent',
+      'VedAstro Gateway Boundary: not_loaded',
+      'user_led_calibration_controls: absent',
+    ].join('\n');
+  }
+  const gateway = packet.vedastro_gateway || {};
+  const controls = packet.user_led_calibration_controls || {};
+  const requiredRows = packet.technique_audit_table_required_rows || [];
+  return [
+    '【Professional Reading Packet】',
+    `status=${gateway.status || 'unknown'} · professional_reading=loaded`,
+    `VedAstro Gateway Boundary: ${gateway.user_visibility?.boundary || gateway.gateway_status?.boundary || 'blocked_or_not_reported'}`,
+    `user_led_calibration_controls: blind_mode=${Boolean(controls.blind_mode)} · disable_life_event_feedback=${Boolean(controls.disable_life_event_feedback)}`,
+    `required_audit_rows=${requiredRows.join(' / ') || 'Functional Benefic/Malefic / MEVG / Real Case Calibration / VedAstro Gateway Boundary'}`,
+  ].join('\n');
 }
 
 function buildAISetupGuidance() {
