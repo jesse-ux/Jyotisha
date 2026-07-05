@@ -151,14 +151,23 @@ def _strict_workflow_summary(route: str, catalog: dict[str, Any]) -> dict[str, A
 
 
 def _cache_and_queue_report() -> dict[str, Any]:
+    queue_enabled = (
+        _bool_env("VEDASTRO_FREE_TIER_QUEUE")
+        or _bool_env("VEDASTRO_FREE_TIER_QUEUE_ENABLED")
+        or _bool_env("VEDASTRO_ENABLE_FREE_TIER_QUEUE")
+    )
+    using_free_tier = not bool(os.environ.get("VEDASTRO_API_KEY", "").strip())
     return {
         "official_full_snapshot_cache_scope": "official_full_snapshot_semantic_cache",
         "official_full_snapshot_cache_ttl_seconds": _int_env("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", 0),
         "range_scan_cache_scope": "vedastro_range_scan_request_cache",
         "range_scan_cache_ttl_seconds": _int_env("VEDASTRO_CACHE_TTL_SECONDS", 0),
-        "free_tier_queue_enabled": _bool_env("VEDASTRO_FREE_TIER_QUEUE")
-        or _bool_env("VEDASTRO_FREE_TIER_QUEUE_ENABLED")
-        or _bool_env("VEDASTRO_ENABLE_FREE_TIER_QUEUE"),
+        "free_tier_queue_enabled": queue_enabled,
+        "free_tier_strategy": {
+            "using_free_tier": using_free_tier,
+            "queue_enabled": queue_enabled,
+            "guard_status": "within_free_tier_strategy" if using_free_tier else "premium_key_present",
+        },
         "sample_limit": _int_env("VEDASTRO_FULL_CATALOG_SAMPLE_LIMIT", 0),
         "artifact_root": "scratch/local/vedastro_adapter",
     }

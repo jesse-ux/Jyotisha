@@ -218,6 +218,31 @@ def calc_upapada(asc_sign_idx: int, planet_longitudes: Dict[str, float]) -> Opti
     return result
 
 
+def calc_darapada(asc_sign_idx: int, planet_longitudes: Dict[str, float]) -> Optional[Dict]:
+    """计算Darapada/A7（第7宫Arudha），用于伴侣外显画像与关系维持审计。"""
+    seventh_house_idx = (asc_sign_idx + 6) % 12
+    result = calc_arudha_pada_for_house(seventh_house_idx, planet_longitudes)
+    if not result:
+        return None
+    result = dict(result)
+    second_idx = (result['sign_idx'] + 1) % 12
+    eighth_idx = (result['sign_idx'] + 7) % 12
+    result.update({
+        'house_num': 7,
+        'source_house_num': 7,
+        'name': 'Darapada (A7)',
+        'second_from_a7': _sign_name(second_idx),
+        'second_from_a7_lord': SIGN_LORDS[_sign_name(second_idx)],
+        'eighth_from_a7': _sign_name(eighth_idx),
+        'eighth_from_a7_lord': SIGN_LORDS[_sign_name(eighth_idx)],
+        'description': (
+            f"A7在{result['sign']}，第二宫为{_sign_name(second_idx)}，"
+            f"第八宫为{_sign_name(eighth_idx)}，用于伴侣外显画像与关系维持压力审计。"
+        ),
+    })
+    return result
+
+
 def calc_graha_padas(planet_longitudes: Dict[str, float]) -> Dict:
     """计算行星Graha Pada：行星位置通过其宫主映射出的外显影像。"""
     results = {}

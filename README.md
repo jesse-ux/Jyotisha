@@ -77,6 +77,8 @@ VEDASTRO_ENABLE_NETWORK=1
 
 默认运行是快速模式：VedAstro official 证据层如果没有在前台预算内闭环，会诚实标记 `official_snapshot_budget_exhausted` 并退回本地 Swiss Ephemeris。要跑 official extended 模式，复制 `.env.official.example` 为 `.env.local` 并填好 endpoint/network/key；运行 `python3 scripts/diagnose_vedastro_mode.py` 可先确认当前是 `fast_local_fallback` 还是 `official_extended`。
 
+AI/vibe coding 推荐入口：Cline 接本仓 MCP，Aider 负责低成本小改，Dyad 只做前端原型。运行 `python3 scripts/print_cline_mcp_config.py` 生成 Cline MCP 配置；详情见 `docs/vibe_coding_setup.md`。
+
 ### 中国大陆用户：VedAstro Gateway 模式
 
 普通中国大陆用户不需要、也不应该让浏览器直连 VedAstro。推荐部署方式是：网页只访问你自己的本地或云端后端；后端通过 `VedAstro Gateway` 统一管理 self-host、official upstream、TTL/cache、free-tier queue 和 local fallback。
@@ -138,6 +140,68 @@ python3 scripts/vedastro_user_entrypoint.py \
 4. 触发 strict workflow 合同摘要，输出 primary route、可用 route、cache/TTL/free-tier queue 策略和 honesty boundary。
 
 边界必须保留：这个入口**不会把 641 项全部当作已执行**。它先做官方能力目录分类和主题选择；能自动执行的进入证据层，需要第二人资料、用户文本、校时画像或官方网络预算的方法会保持 `needs_user_context`、`needs_user_text`、`needs_rectification_profile` 或 `blocked`。
+
+#### 作为 Codex 本地插件安装
+
+本仓现在带了最小插件包装：`.codex-plugin/plugin.json`。它复用现有 `skills/` 与根目录 `mcp_server.py`，适合你把当前仓直接装进 Codex 本机环境。
+
+1. 先把本仓登记到个人 marketplace：
+
+```bash
+python3 /Users/wuyongnaren/.codex/skills/.system/plugin-creator/scripts/create_basic_plugin.py \
+  jyotish-vedic-astrology \
+  --path ~/.codex/plugins \
+  --marketplace-path ~/.agents/plugins/marketplace.json \
+  --marketplace-name personal \
+  --with-marketplace
+```
+
+上面是 Codex 官方脚本的标准 marketplace 流。如果你要让 **当前仓本身** 被安装，关键不是用 scaffold 目录跑能力，而是让 `~/.agents/plugins/marketplace.json` 里的 `jyotish-vedic-astrology` 条目最终指向当前仓路径。
+
+最少要确认这一条存在：
+
+```json
+{
+  "name": "jyotish-vedic-astrology",
+  "source": {
+    "source": "local",
+    "path": "/Users/wuyongnaren/Documents/印度占星"
+  }
+}
+```
+
+2. 若本机还没把 personal marketplace 接进 Codex：
+
+```bash
+codex plugin marketplace add ~/.agents/plugins/marketplace.json
+```
+
+3. 安装插件：
+
+```bash
+codex plugin add jyotish-vedic-astrology@personal
+```
+
+4. 检查是否已被识别：
+
+```bash
+codex plugin list
+```
+
+5. 开一个**新线程**再测试。Codex 只会在新线程里重新拾取新装的 skills / MCP。
+
+#### 本地更新 / 重装
+
+当你改了 `.codex-plugin/plugin.json`、`skills/` 或 `mcp_server.py`：
+
+```bash
+python3 /Users/wuyongnaren/.codex/skills/.system/plugin-creator/scripts/update_plugin_cachebuster.py \
+  /Users/wuyongnaren/Documents/印度占星
+
+codex plugin add jyotish-vedic-astrology@personal
+```
+
+然后重新开新线程验证。
 
 推荐的 official extended `.env.local` 示例：
 

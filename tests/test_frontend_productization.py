@@ -1617,6 +1617,7 @@ def test_web_entry_prefers_unified_consultation_workflow() -> None:
     bridge = read("api-bridge.js")
     public_bridge = read("public/api-bridge.js")
     main = read("main.js")
+    html = read("index.html")
 
     for source in (bridge, public_bridge):
         assert "computeConsultationWorkflow" in source
@@ -1624,6 +1625,10 @@ def test_web_entry_prefers_unified_consultation_workflow() -> None:
 
     assert "entryMode = options.entryMode || 'direct_chart'" in main
     assert "entryMode: 'rectification'" in main
+    assert "entryMode: 'prashna'" in main
+    assert "run_muhurta_panchanga" in main
+    for token in ('id="entry-direct-chart"', 'id="entry-rectification"', 'id="entry-prashna"'):
+        assert token in html
 
 
 def test_result_page_surfaces_workflow_summary_and_provenance_detail() -> None:
@@ -1636,6 +1641,12 @@ def test_result_page_surfaces_workflow_summary_and_provenance_detail() -> None:
         "renderWorkflowSummaryPanel",
         "renderWorkflowSummaryCard",
         "renderWorkflowProvenancePanel",
+        "runtime_truth",
+        "interpretation_source_runtime_coverage",
+        "official_execution_layers",
+        "runtime_visibility_status",
+        "VedAstro Runtime Truth",
+        "Interpretation Source Coverage",
         "runtime_planner",
         "renderRuntimePlannerPills",
         "UnifiedConsultationRuntimePlanner",
@@ -2940,3 +2951,27 @@ def test_local_frontend_and_api_runtime_smoke() -> None:
     finally:
         stop_process(web)
         stop_process(api)
+
+
+def test_unified_prashna_and_audited_remedies_are_rendered_from_consultation_workflow() -> None:
+    main = read("main.js")
+    for token in (
+        "renderWorkflowSidecarsSummary",
+        "workflow-sidecars-summary",
+        "bindWorkflowSummaryActions",
+        "data-open-tab",
+        "data-scroll-target",
+        "switchToTab(tabName)",
+        "switchToTab('prashna')",
+        "switchToTab('remedies')",
+        "switchToTab('provenance')",
+        "workflow?.audited_remedies",
+        "workflow?.prashna",
+        "workflow?.muhurta_panchanga",
+        "Muhurta / Panchanga",
+        "Prashna 问事",
+        "补救建议",
+        "renderPrashnaResult(workflow.prashna",
+        "strict_audit_gate",
+    ):
+        assert token in main

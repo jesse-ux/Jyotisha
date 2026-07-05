@@ -13,6 +13,7 @@ from muhurta import (
     calc_vara, calc_hora, calc_abhijit_muhurta, calc_panchanga,
     check_activity_muhurta, muhurta_full_report, calc_daytime_inauspicious_periods,
     panchanga_range_report, muhurta_range_search, calc_sunrise_sunset_local, calc_panchanga_end_times,
+    build_muhurta_sidecar,
     classify_vrata_tags, classify_panchanga_condition_tags, calc_choghadiya_windows, calc_hora_windows,
     TITHI_NAMES, TITHI_QUALITY, NAKSHATRAS, NAKSHATRA_TYPE,
     YOGA_NAMES, YOGA_QUALITY, KARANA_NAMES, KARANA_QUALITY,
@@ -410,3 +411,21 @@ class TestMuhurtaRangeSearch:
         assert {'date', 'score', 'quality', 'activity_verdict', 'recommended_windows', 'evidence'} <= set(first)
         assert first['recommended_windows']
         assert first['evidence']['panchanga']
+
+
+class TestMuhurtaSidecar:
+    def test_build_muhurta_sidecar_returns_compact_workflow_shape(self):
+        result = build_muhurta_sidecar(
+            date_str='2026-07-08',
+            activity='business',
+            lat=36.42,
+            lon=114.2,
+            tz=8,
+        )
+        assert result['status'] == 'ok'
+        assert result['source'] == 'local_muhurta.py'
+        assert result['activity'] == 'business'
+        assert result['report_mode'] == 'muhurta_date_range_solver'
+        assert result['panchanga']['query_date'] == '2026-07-08'
+        assert result['best_windows']
+        assert 'next_action' in result

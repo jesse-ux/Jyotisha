@@ -180,6 +180,48 @@ def _is_candidate(path: Path) -> bool:
 
 
 def _classify_candidate(path: str, runtime_source_refs: set[str], layer_refs: set[str]) -> dict[str, Any]:
+    if path in runtime_source_refs and path in {
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md",
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/house_framework.md",
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/qa_rules.md",
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/yogas.md",
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/chart_reading_rules.md",
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/validation_rules.md",
+    }:
+        return {
+            "classification": "runtime_reference_layer",
+            "priority": "runtime",
+            "promotion_status": "already_wired",
+            "reason": "Already exposed through interpretation_source_pack.source_refs.",
+        }
+    if path.startswith("references/real_case_studies/"):
+        return {
+            "classification": "real_case_calibration",
+            "priority": "priority_1",
+            "promotion_status": "reference_layer_candidate",
+            "reason": "Real-case material should be reviewed before confidence calibration claims.",
+        }
+    if path.startswith("references/open_source_sources/rishi-ai-mcp/"):
+        return {
+            "classification": "open_source_reference",
+            "priority": "priority_1",
+            "promotion_status": "already_wired" if path in runtime_source_refs else "reference_layer_candidate",
+            "reason": "User-prioritized open-source skill/workflow corpus; must remain license-aware.",
+        }
+    if path.startswith("references/open_source_sources/vedic-astro-skills/"):
+        return {
+            "classification": "open_source_reference",
+            "priority": "priority_1",
+            "promotion_status": "already_wired" if path in runtime_source_refs else "reference_layer_candidate",
+            "reason": "User-prioritized open-source Jyotish skills corpus; classify before selective reuse.",
+        }
+    if path.startswith("references/open_source_sources/"):
+        return {
+            "classification": "open_source_reference",
+            "priority": "priority_2",
+            "promotion_status": "reference_layer_candidate",
+            "reason": "Open-source reference corpus; classify with license boundary before runtime use.",
+        }
     if path in runtime_source_refs:
         return {
             "classification": "runtime_reference_layer",
@@ -193,34 +235,6 @@ def _classify_candidate(path: str, runtime_source_refs: set[str], layer_refs: se
             "priority": "runtime",
             "promotion_status": "indexed",
             "reason": "Indexed by the interpretation source inventory.",
-        }
-    if path.startswith("references/real_case_studies/"):
-        return {
-            "classification": "real_case_calibration",
-            "priority": "priority_1",
-            "promotion_status": "reference_layer_candidate",
-            "reason": "Real-case material should be reviewed before confidence calibration claims.",
-        }
-    if path.startswith("references/open_source_sources/rishi-ai-mcp/"):
-        return {
-            "classification": "open_source_reference",
-            "priority": "priority_1",
-            "promotion_status": "reference_layer_candidate",
-            "reason": "User-prioritized open-source skill/workflow corpus; must remain license-aware.",
-        }
-    if path.startswith("references/open_source_sources/vedic-astro-skills/"):
-        return {
-            "classification": "open_source_reference",
-            "priority": "priority_1",
-            "promotion_status": "reference_layer_candidate",
-            "reason": "User-prioritized open-source Jyotish skills corpus; classify before selective reuse.",
-        }
-    if path.startswith("references/open_source_sources/"):
-        return {
-            "classification": "open_source_reference",
-            "priority": "priority_2",
-            "promotion_status": "reference_layer_candidate",
-            "reason": "Open-source reference corpus; classify with license boundary before runtime use.",
         }
     if path.startswith("references/oracle/"):
         return {

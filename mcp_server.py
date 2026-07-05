@@ -183,11 +183,96 @@ BLOCKED_NON_RUNTIME_SOURCE_REFS = [
 ]
 
 REMAINING_PRIORITY1_BATCH_QUEUE = [
-    "real_case_studies_batch1",
-    "rishi_ai_mcp_batch1",
-    "vedic_astro_skills_batch1",
     "references_batch2",
+    "vedastro_official_default_closure",
+    "external_oracle_parity_batch",
+    "install_usage_path_slimming",
 ]
+REAL_CASE_STUDIES_BATCH1_INDEX = {
+    "career": [
+        "references/real_case_studies/vedicka/career-success-poverty-prosperity.md",
+        "references/real_case_studies/印度占星修正版研究结论v3-高压基建后的反转兑现模型.md",
+    ],
+    "finance": [
+        "references/real_case_studies/vedicka/career-success-poverty-prosperity.md",
+        "docs/benchmark/public_jyotish_benchmark_dashboard.json",
+    ],
+    "relationship": [
+        "docs/benchmark/legacy-marriage-v6.1/verify-results-v6.1.json",
+        "docs/benchmark/legacy-marriage-v6.1/印度占星实战案例综合验证报告-v6.1-2026-05-03.md",
+    ],
+    "health": [
+        "references/real_case_studies/印度占星解盘与推运误区反思报告-2026-04-22.md",
+    ],
+    "rectification": [
+        "references/birth-time-rectification-cases.md",
+    ],
+    "timing": [
+        "docs/benchmark/dasha_external_oracle_closure_status.json",
+        "docs/benchmark/tajika_sahams_annual_closure_status.json",
+    ],
+}
+REAL_CASE_STUDIES_BATCH1_SOURCE_REFS = sorted(
+    {path for paths in REAL_CASE_STUDIES_BATCH1_INDEX.values() for path in paths}
+)
+RISHI_AI_MCP_BATCH1_DOMAIN_MAP = {
+    "career": [
+        "references/open_source_sources/rishi-ai-mcp/.agents/skills/career-analysis/SKILL.md",
+        "references/open_source_sources/rishi-ai-mcp/.agents/workflows/career-analysis.md",
+    ],
+    "finance": [
+        "references/open_source_sources/rishi-ai-mcp/.agents/skills/finance-analysis/SKILL.md",
+        "references/open_source_sources/rishi-ai-mcp/.agents/workflows/finance-analysis.md",
+    ],
+    "relationship": [
+        "references/open_source_sources/rishi-ai-mcp/.agents/skills/relationship-analysis/SKILL.md",
+        "references/open_source_sources/rishi-ai-mcp/.agents/skills/marriage-analysis/SKILL.md",
+        "references/open_source_sources/rishi-ai-mcp/.agents/skills/spouse-profiling/SKILL.md",
+        "references/open_source_sources/rishi-ai-mcp/.agents/workflows/relationship-analysis.md",
+        "references/open_source_sources/rishi-ai-mcp/.agents/workflows/marriage-analysis.md",
+    ],
+    "children": [
+        "references/open_source_sources/rishi-ai-mcp/.agents/skills/children-analysis/SKILL.md",
+        "references/open_source_sources/rishi-ai-mcp/.agents/workflows/children-analysis.md",
+    ],
+    "health": [
+        "references/open_source_sources/rishi-ai-mcp/.agents/skills/health-analysis/SKILL.md",
+        "references/open_source_sources/rishi-ai-mcp/.agents/workflows/health-analysis.md",
+    ],
+    "full_reading": [
+        "references/open_source_sources/rishi-ai-mcp/.agents/skills/full-reading/SKILL.md",
+        "references/open_source_sources/rishi-ai-mcp/.agents/workflows/full-reading.md",
+        "references/open_source_sources/rishi-ai-mcp/.agents/rules/rishi-ai.md",
+    ],
+}
+RISHI_AI_MCP_BATCH1_SOURCE_REFS = sorted(
+    {path for paths in RISHI_AI_MCP_BATCH1_DOMAIN_MAP.values() for path in paths}
+)
+VEDIC_ASTRO_SKILLS_BATCH1_DOMAIN_MAP = {
+    "core": [
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/SKILL.md",
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/report_rules.md",
+    ],
+    "reader_validation": [
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/SKILL.md",
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/data_contract.md",
+    ],
+    "career": [
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-career/SKILL.md",
+    ],
+    "relationship": [
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-love/SKILL.md",
+    ],
+    "rectification": [
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-rectifier/SKILL.md",
+    ],
+    "calculator": [
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-calculator/SKILL.md",
+    ],
+}
+VEDIC_ASTRO_SKILLS_BATCH1_SOURCE_REFS = sorted(
+    {path for paths in VEDIC_ASTRO_SKILLS_BATCH1_DOMAIN_MAP.values() for path in paths}
+)
 
 
 def _domain_invocation_layers() -> Dict[str, Any]:
@@ -432,6 +517,9 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
         *core_rule_paths,
         *promote_batch2_paths,
         *reference_only_paths,
+        *REAL_CASE_STUDIES_BATCH1_SOURCE_REFS,
+        *RISHI_AI_MCP_BATCH1_SOURCE_REFS,
+        *VEDIC_ASTRO_SKILLS_BATCH1_SOURCE_REFS,
         *frontend_interpretation_paths,
         *planet_house_paths,
         qa_rules_path,
@@ -493,6 +581,58 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
             "promotion_status": "reference_only",
             "boundary": "Reference-only sources can explain conflicts but cannot override primary rule sources.",
         },
+        "real_case_calibration_layer": {
+            "status": "queued",
+            "batch_id": "real_case_studies_batch1",
+            "index_status": "available"
+            if all(_repo_relative_exists(path) for path in REAL_CASE_STUDIES_BATCH1_SOURCE_REFS)
+            else "partial",
+            "domain_buckets": list(REAL_CASE_STUDIES_BATCH1_INDEX.keys()),
+            "source_refs": REAL_CASE_STUDIES_BATCH1_SOURCE_REFS,
+            "case_index_by_domain": REAL_CASE_STUDIES_BATCH1_INDEX,
+            "retrieval_policy": "domain_bucket_first_then_case_quality_gate",
+            "promotion_status": "local_case_retrieval_layer",
+            "boundary": "Local case index is callable for calibration; matching-case attachment remains required before lifting confidence.",
+        },
+        "rishi_ai_mcp_batch1_layer": {
+            "status": "available"
+            if all(_repo_relative_exists(path) for path in RISHI_AI_MCP_BATCH1_SOURCE_REFS)
+            else "partial",
+            "batch_id": "rishi_ai_mcp_batch1",
+            "domain_map": RISHI_AI_MCP_BATCH1_DOMAIN_MAP,
+            "source_refs": RISHI_AI_MCP_BATCH1_SOURCE_REFS,
+            "promotion_status": "open_source_reference_layer",
+            "runtime_truth_status": "not_primary_truth",
+            "boundary": "Use as workflow/reference guidance only; do not override local strict rules or oracle-calibrated calculations.",
+        },
+        "vedic_astro_skills_batch1_layer": {
+            "status": "available"
+            if all(_repo_relative_exists(path) for path in VEDIC_ASTRO_SKILLS_BATCH1_SOURCE_REFS)
+            else "partial",
+            "batch_id": "vedic_astro_skills_batch1",
+            "domain_map": VEDIC_ASTRO_SKILLS_BATCH1_DOMAIN_MAP,
+            "source_refs": VEDIC_ASTRO_SKILLS_BATCH1_SOURCE_REFS,
+            "promotion_status": "external_skill_reference_layer",
+            "runtime_truth_status": "not_primary_truth",
+            "boundary": "Use as external skill-corpus reference only; already-wired QA/Yoga/reader files remain separately governed.",
+        },
+        "external_closure_gap_layer": {
+            "vedastro_official": {
+                "status": "blocked",
+                "reason": "official full snapshot/default closure is not yet guaranteed for every strict workflow route.",
+                "next_action": "stabilize official snapshot cache TTL/free-tier queue and route-level fallback reporting.",
+            },
+            "oracle_parity": {
+                "status": "blocked",
+                "systems": ["VedAstro", "PyJHora", "jyotishganit"],
+                "priority_domains": ["Dasha", "Shadbala", "Tajika", "Narayana"],
+                "next_action": "expand external oracle parity packets without treating unmatched outputs as truth.",
+            },
+            "install_usage_path": {
+                "status": "needs_slimming",
+                "next_action": "keep one stable user entry command with official extended env, cache/TTL, free-tier queue, and strict workflow defaults.",
+            },
+        },
         "blocked_non_runtime_layer": {
             "status": "blocked",
             "source_refs": blocked_non_runtime_paths,
@@ -547,6 +687,9 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
             "status": "blocked",
             "required": True,
             "source_ref": real_case_checklist_path,
+            "local_index_status": "available",
+            "local_batch_id": "real_case_studies_batch1",
+            "local_case_source_refs": REAL_CASE_STUDIES_BATCH1_SOURCE_REFS,
             "effect_on_confidence": "caps_confidence_without_matching_cases",
         },
         "boundary": (
@@ -2933,38 +3076,15 @@ def _build_mevg_collection_queue(route: str, strict: Dict[str, Any]) -> Dict[str
 
 
 def _build_real_case_calibration_layer(route: str, strict: Dict[str, Any]) -> Dict[str, Any]:
-    case_index_by_domain = {
-        "career": [
-            "references/real_case_studies/vedicka/career-success-poverty-prosperity.md",
-            "references/real_case_studies/印度占星修正版研究结论v3-高压基建后的反转兑现模型.md",
-        ],
-        "finance": [
-            "references/real_case_studies/vedicka/career-success-poverty-prosperity.md",
-            "docs/benchmark/public_jyotish_benchmark_dashboard.json",
-        ],
-        "relationship": [
-            "docs/benchmark/legacy-marriage-v6.1/verify-results-v6.1.json",
-            "docs/benchmark/legacy-marriage-v6.1/印度占星实战案例综合验证报告-v6.1-2026-05-03.md",
-        ],
-        "health": [
-            "references/real_case_studies/印度占星解盘与推运误区反思报告-2026-04-22.md",
-        ],
-        "rectification": [
-            "references/birth-time-rectification-cases.md",
-        ],
-        "timing": [
-            "docs/benchmark/dasha_external_oracle_closure_status.json",
-            "docs/benchmark/tajika_sahams_annual_closure_status.json",
-        ],
-    }
     return {
         "status": "queued",
         "route": route,
         "batch_id": "real_case_studies_batch1",
         "index_status": "available",
-        "domain_buckets": ["career", "finance", "relationship", "health", "rectification", "timing"],
+        "domain_buckets": list(REAL_CASE_STUDIES_BATCH1_INDEX.keys()),
         "source_roots": ["references/real_case_studies", "docs/benchmark"],
-        "case_index_by_domain": case_index_by_domain,
+        "case_index_by_domain": REAL_CASE_STUDIES_BATCH1_INDEX,
+        "source_refs": REAL_CASE_STUDIES_BATCH1_SOURCE_REFS,
         "retrieval_policy": "domain_bucket_first_then_case_quality_gate",
         "confidence_effect": "caps_confidence_until_matching_cases_are_attached",
         "fallback_policy": "downgrade_without_matching_cases",
@@ -4132,6 +4252,41 @@ def strict_workflow(
         )
         result["chart"] = chart
         result["strict_workflow"] = _collect_strict_evidence(route, chart)
+        try:
+            from jyotish_api_server import JyotishAPIHandler
+
+            handler = JyotishAPIHandler.__new__(JyotishAPIHandler)
+            vedastro_official = handler._high_rigor_vedastro_official_summary(chart)
+            interpretation_coverage = handler._interpretation_source_runtime_coverage(chart)
+            machine_evidence_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.machine_evidence_packet(
+                chart=chart,
+                route_packet=result.get("routing") if isinstance(result.get("routing"), dict) else route_packet,
+                vedastro_official=vedastro_official,
+            )
+            real_case_calibration = _UNIFIED_CONSULTATION_ORCHESTRATOR.real_case_calibration_catalog(
+                route_packet=result.get("routing") if isinstance(result.get("routing"), dict) else route_packet,
+                machine_evidence_packet=machine_evidence_packet,
+            )
+            planner = result.get("runtime_planner") if isinstance(result.get("runtime_planner"), dict) else {}
+            result["vedastro_official"] = vedastro_official
+            result["runtime_truth"] = vedastro_official.get("runtime_truth", {})
+            result["interpretation_source_runtime_coverage"] = interpretation_coverage
+            result["machine_evidence_packet"] = machine_evidence_packet
+            result["real_case_calibration"] = real_case_calibration
+            result["runtime_evidence_log"] = _UNIFIED_CONSULTATION_ORCHESTRATOR.runtime_evidence_log(
+                surface="skill_mcp",
+                entry_mode=result.get("entry_mode", "direct_chart"),
+                route_packet=result.get("routing") if isinstance(result.get("routing"), dict) else route_packet,
+                executed_steps=planner.get("executed_steps", []),
+                skipped_steps=planner.get("skipped_steps", []),
+                vedastro_official=vedastro_official,
+                interpretation_source_runtime_coverage=interpretation_coverage,
+                machine_evidence_packet=machine_evidence_packet,
+                real_case_calibration=real_case_calibration,
+                blind=False,
+            )
+        except Exception:
+            pass
     return result
 
 

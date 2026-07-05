@@ -12,6 +12,18 @@ from mcp_server import (
     _derive_yogi_wealth_support,
 )
 
+SOURCE_LAYER_CONTEXT = {
+    "dasha_timing_layer_used",
+    "varga_strength_layer_used",
+    "annual_special_layer_context",
+    "modifier_obstacle_layer_used",
+}
+
+
+def _assert_context_contains(context: list[str], expected: set[str]) -> None:
+    assert expected <= set(context)
+    assert SOURCE_LAYER_CONTEXT <= set(context)
+
 
 def test_finance_public_wealth_label_requires_at_least_moderate_window() -> None:
     judgement = _derive_event_judgement(
@@ -31,7 +43,7 @@ def test_finance_public_wealth_label_requires_at_least_moderate_window() -> None
     assert judgement["verdict"] == "weak_window_needs_confirmation"
     assert judgement["payout_label"] is None
     assert judgement["dominant_label"] is None
-    assert judgement["secondary_context"] == []
+    assert set(judgement["secondary_context"]) == SOURCE_LAYER_CONTEXT
 
 
 def test_finance_strict_contract_attaches_existing_interpretation_source_pack() -> None:
@@ -72,7 +84,7 @@ def test_finance_public_wealth_label_can_lift_visible_wealth_cases() -> None:
     assert judgement["verdict"] == "moderate_probability_window"
     assert judgement["payout_label"] == "public_wealth_status"
     assert judgement["dominant_label"] == "public_wealth_status"
-    assert judgement["secondary_context"] == ["career_status", "gains_wishes"]
+    _assert_context_contains(judgement["secondary_context"], {"career_status", "gains_wishes"})
 
 
 def test_finance_prefers_income_growth_when_gains_outrun_public_status_signals() -> None:
@@ -92,7 +104,7 @@ def test_finance_prefers_income_growth_when_gains_outrun_public_status_signals()
     assert judgement["verdict"] == "moderate_probability_window"
     assert judgement["payout_label"] == "income_growth"
     assert judgement["dominant_label"] == "income_growth"
-    assert judgement["secondary_context"] == ["wealth_family"]
+    _assert_context_contains(judgement["secondary_context"], {"wealth_family"})
 
 
 def test_finance_strong_wealth_promise_can_unlock_public_wealth_status() -> None:
@@ -120,7 +132,7 @@ def test_finance_strong_wealth_promise_can_unlock_public_wealth_status() -> None
     assert judgement["verdict"] == "moderate_probability_window"
     assert judgement["payout_label"] == "public_wealth_status"
     assert judgement["dominant_label"] == "public_wealth_status"
-    assert judgement["secondary_context"] == ["career_status", "gains_wishes"]
+    _assert_context_contains(judgement["secondary_context"], {"career_status", "gains_wishes"})
 
 
 def test_finance_source_diversity_adds_small_bump_without_changing_verdict_band() -> None:

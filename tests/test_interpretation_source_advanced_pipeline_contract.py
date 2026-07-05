@@ -178,10 +178,10 @@ def test_prompt_pack_frontend_and_remaining_batch_queue_expose_next_stage_contra
     assert snapshot["real_case_calibration_layer"]["status"] == "queued"
     assert snapshot["technical_debt_contract"]["tajika"]["status"] == "partial"
     assert snapshot["remaining_priority1_batch_queue"]["next_batches"] == [
-        "real_case_studies_batch1",
-        "rishi_ai_mcp_batch1",
-        "vedic_astro_skills_batch1",
         "references_batch2",
+        "vedastro_official_default_closure",
+        "external_oracle_parity_batch",
+        "install_usage_path_slimming",
     ]
 
     main_js = (ROOT / "jyotish-app" / "main.js").read_text(encoding="utf-8")

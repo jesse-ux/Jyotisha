@@ -7,8 +7,16 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+@pytest.fixture(autouse=True)
+def _disable_official_full_snapshot_semantic_cache(monkeypatch):
+    monkeypatch.setenv("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", "0")
+
 
 
 def _run_adapter(*args: str, env: dict[str, str] | None = None) -> dict:
@@ -187,6 +195,7 @@ def test_official_full_snapshot_marks_semantic_rate_limit_payloads(monkeypatch) 
 
     monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://example.invalid/api")
     monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    monkeypatch.setenv("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", "0")
     monkeypatch.setattr(adapter, "_post_official_snapshot_section", fake_post)
 
     result = adapter.run_official_full_snapshot_for_case(
@@ -207,6 +216,10 @@ def test_official_full_snapshot_marks_semantic_rate_limit_payloads(monkeypatch) 
     assert ("chart_core", "Mars") in calls
     assert result["section_statuses"]["chart_core"] == "rate_limited"
     assert result["section_statuses"]["chart_core_fanout"]["Mars"] == "rate_limited"
+    assert result["raw_response"]["source"] == "vedastro_official_full_snapshot"
+    assert result["raw_response"]["sections"]["chart_core"]["Mars"]["Status"] == "Fail"
+    assert result["raw_response"]["section_statuses"]["chart_core"] == "rate_limited"
+    assert result["raw_response"]["request_manifest"]["source_role"] == "primary_official_raw_evidence"
     assert result["source_metadata"]["rate_limited_sections"] == ["chart_core"]
     assert result["source_metadata"]["production_hint"] == "configure_vedastro_api_key_or_self_host_official_api"
 
@@ -547,6 +560,7 @@ def test_official_full_snapshot_can_use_python_bridge_bundle_without_rest_endpoi
 
     monkeypatch.delenv("VEDASTRO_API_ENDPOINT", raising=False)
     monkeypatch.delenv("VEDASTRO_ENABLE_NETWORK", raising=False)
+    monkeypatch.setenv("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", "0")
     monkeypatch.setattr(
         adapter,
         "_try_official_capability_runner_snapshot_bundle",
@@ -652,6 +666,8 @@ def test_official_full_snapshot_can_use_python_bridge_bundle_without_rest_endpoi
 def test_official_full_snapshot_prefers_official_capability_runner_bundle(monkeypatch) -> None:
     from scripts import vedastro_service_adapter as adapter
 
+    monkeypatch.setenv("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", "0")
+
     monkeypatch.delenv("VEDASTRO_API_ENDPOINT", raising=False)
     monkeypatch.delenv("VEDASTRO_ENABLE_NETWORK", raising=False)
 
@@ -742,6 +758,8 @@ def test_official_full_snapshot_prefers_official_capability_runner_bundle(monkey
 
 def test_official_full_snapshot_attaches_full_capability_catalog_summary(monkeypatch) -> None:
     from scripts import vedastro_service_adapter as adapter
+
+    monkeypatch.setenv("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", "0")
 
     monkeypatch.delenv("VEDASTRO_API_ENDPOINT", raising=False)
     monkeypatch.delenv("VEDASTRO_ENABLE_NETWORK", raising=False)
@@ -859,6 +877,8 @@ def test_official_full_snapshot_attaches_full_capability_catalog_summary(monkeyp
 def test_official_full_snapshot_marks_ok_when_fast_primary_sections_are_filled(monkeypatch) -> None:
     from scripts import vedastro_service_adapter as adapter
 
+    monkeypatch.setenv("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", "0")
+
     monkeypatch.delenv("VEDASTRO_API_ENDPOINT", raising=False)
     monkeypatch.delenv("VEDASTRO_ENABLE_NETWORK", raising=False)
     monkeypatch.setattr(
@@ -935,6 +955,8 @@ def test_official_full_snapshot_marks_ok_when_fast_primary_sections_are_filled(m
 
 def test_official_full_snapshot_skips_rest_sections_already_filled_by_python_bundle(monkeypatch) -> None:
     from scripts import vedastro_service_adapter as adapter
+
+    monkeypatch.setenv("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", "0")
 
     rest_calls: list[tuple[str, object]] = []
     monkeypatch.setattr(

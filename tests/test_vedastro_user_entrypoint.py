@@ -120,6 +120,11 @@ def test_user_entrypoint_runs_catalog_and_strict_workflow_contract() -> None:
     assert report["cache_and_queue"]["official_full_snapshot_cache_ttl_seconds"] == 600
     assert report["cache_and_queue"]["range_scan_cache_ttl_seconds"] == 600
     assert report["cache_and_queue"]["free_tier_queue_enabled"] is True
+    assert report["runtime_mode"]["free_tier_possible_with_cache_queue"] is True
+    assert report["runtime_mode"]["readiness_blockers"] == ["premium_key_missing"]
+    assert report["cache_and_queue"]["free_tier_strategy"]["using_free_tier"] is True
+    assert report["cache_and_queue"]["free_tier_strategy"]["queue_enabled"] is True
+    assert report["cache_and_queue"]["free_tier_strategy"]["guard_status"] == "within_free_tier_strategy"
     assert report["strict_workflow"]["triggered"] is True
     assert report["strict_workflow"]["primary_route"] == "career"
     assert "career" in report["strict_workflow"]["routes_available"]

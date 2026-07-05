@@ -1,0 +1,47 @@
+{
+  "name": "jyotish-vedic-astrology",
+  "version": "6.9.14",
+  "description": "Jyotish local Codex plugin wrapper for Vedic astrology skills and MCP tools.",
+  "author": {
+    "name": "wuyongnaren",
+    "url": "https://github.com/732642856/yinduzhanxing"
+  },
+  "homepage": "https://github.com/732642856/yinduzhanxing",
+  "repository": "https://github.com/732642856/yinduzhanxing",
+  "license": "MIT",
+  "keywords": [
+    "jyotish",
+    "vedic-astrology",
+    "mcp",
+    "skills",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "mcpServers": {
+    "jyotish": {
+      "command": "python3",
+      "args": [
+        "./mcp_server.py"
+      ]
+    }
+  },
+  "interface": {
+    "displayName": "印度占星",
+    "shortDescription": "Jyotish 技能 + MCP 本地插件包装",
+    "longDescription": "Use the existing Jyotish repo skills and MCP server inside Codex for chart reading, rectification, timing, prashna, and remedies workflows.",
+    "developerName": "wuyongnaren",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/732642856/yinduzhanxing",
+    "defaultPrompt": [
+      "用印度占星项目分析这个出生信息。",
+      "先做生时校正，再看婚恋与事业。",
+      "调用 Jyotish MCP 工具输出严格工作流结果。"
+    ],
+    "brandColor": "#7C3AED"
+  }
+}

@@ -387,7 +387,10 @@ def test_high_rigor_workflow_plan_only_exposes_official_hard_override_contract()
     assert result['execution_plan'][-1] == 'return_official_primary_supplemental_fallback_conflict_contract'
 
 
-def test_high_rigor_vedastro_official_summary_passes_through_contract_fields() -> None:
+def test_high_rigor_vedastro_official_summary_passes_through_contract_fields(monkeypatch) -> None:
+    monkeypatch.delenv('VEDASTRO_FREE_TIER_QUEUE', raising=False)
+    monkeypatch.delenv('VEDASTRO_FREE_TIER_QUEUE_ENABLED', raising=False)
+    monkeypatch.delenv('VEDASTRO_ENABLE_FREE_TIER_QUEUE', raising=False)
     handler = _handler()
 
     chart = {
@@ -428,6 +431,17 @@ def test_high_rigor_vedastro_official_summary_passes_through_contract_fields() -
     assert result['fallback_used'] == ['local_chart_fallback']
     assert result['blocked_items'] == ['official_event_radar_partial']
     assert result['conflicts'] == [{'type': 'official_local_dasha_conflict'}]
+    runtime_truth = result['runtime_truth']
+    assert runtime_truth['catalog_boundary'] == 'catalog_recognized_not_full_runtime_execution'
+    assert runtime_truth['official_execution_layers']['chart_core'] == 'ok'
+    assert runtime_truth['official_execution_layers']['event_radar'] == 'partial'
+    assert runtime_truth['official_execution_layers']['catalog_status'] == 'partial'
+    assert runtime_truth['fallback_active'] is True
+    assert runtime_truth['blocked_items'] == ['official_event_radar_partial']
+    assert runtime_truth['free_tier_strategy']['using_free_tier'] is True
+    assert runtime_truth['free_tier_strategy']['queue_enabled'] is False
+    assert runtime_truth['free_tier_strategy']['cache_hit'] is False
+    assert runtime_truth['free_tier_strategy']['guard_status'] == 'degraded_or_partial'
 
 
 def test_high_rigor_vedastro_official_summary_exposes_top_reader_contract_from_full_snapshot() -> None:
@@ -481,6 +495,7 @@ def test_high_rigor_vedastro_official_summary_exposes_top_reader_contract_from_f
                         'summary': {'catalog_method_count': 641},
                     }
                 },
+                'raw_response': {'official': 'raw'},
             },
         },
         'ai_prompt_pack': {
@@ -534,6 +549,49 @@ def test_high_rigor_vedastro_official_summary_exposes_top_reader_contract_from_f
     assert result['verdict'] == 'high_probability_window'
     assert result['dominant_label'] == 'career_status'
     assert result['main_conflicts'] == [{'type': 'official_local_dasha_conflict'}]
+    assert result['runtime_truth']['primary_route'] == 'career'
+    assert result['runtime_truth']['routes_available'] == ['career', 'relationship', 'finance']
+    assert result['raw_response'] == {'official': 'raw'}
+
+
+def test_high_rigor_vedastro_official_summary_uses_module_snapshot_cache_truth_when_range_scan_snapshot_missing() -> None:
+    handler = _handler()
+    chart = {
+        'birth': {'ayanamsa_display': 'Lahiri', 'ayanamsa_name': 'lahiri', 'node_mode': 'mean'},
+        'modules': {
+            'vedastro_range_scan_result': {
+                'status': 'ok',
+                'source_metadata': {},
+            },
+            'vedastro_official_full_snapshot': {
+                'status': 'official_snapshot_budget_exhausted',
+                'strict_workflow_primary_route': 'career',
+                'strict_workflow_routes_available': ['career'],
+                'strict_workflow_contracts': {
+                    'career': {
+                        'official_primary_evidence': {'chart_core': {'status': 'ok'}},
+                    },
+                },
+                'source_metadata': {
+                    'semantic_cache': {
+                        'cache_hit': True,
+                    },
+                },
+            },
+        },
+        'ai_prompt_pack': {
+            'evidence_snapshot': {
+                'vedastro_official_snapshot': {
+                    'status': 'official_snapshot_budget_exhausted',
+                },
+            },
+        },
+    }
+
+    result = handler._high_rigor_vedastro_official_summary(chart)
+
+    assert result['status'] == 'official_snapshot_budget_exhausted'
+    assert result['runtime_truth']['free_tier_strategy']['cache_hit'] is True
 
 
 def test_api_prompt_pack_official_snapshot_carries_strict_workflow_contracts() -> None:
@@ -708,6 +766,7 @@ def test_consultation_workflow_surfaces_top_reader_contract_in_official_summary(
         'lon': 114.2,
         'tz': 8,
         'theme': ['career'],
+        'blind': True,
     })
 
     contract = result['vedastro_official']['strict_workflow_contracts']['career']
@@ -2127,6 +2186,7 @@ def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -
         'lon': 114.2,
         'tz': 8,
         'theme': ['career'],
+        'blind': True,
     })
 
     assert result['success'] is True
@@ -2144,8 +2204,24 @@ def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -
         'run_rectification_gate',
         'run_thematic_report',
     ]
-    assert result['runtime_planner']['skipped_steps'] == ['run_historical_event_backtest']
+    assert 'run_historical_event_backtest' in result['runtime_planner']['skipped_steps']
     assert result['source_priority']['mode'] == 'vedastro_official_snapshot_first'
+    assert result['runtime_evidence_log']['surface'] == 'api_web'
+    assert result['runtime_evidence_log']['route']['question_type'] == 'career'
+    assert result['runtime_evidence_log']['vedastro_cloud_state'] in {
+        'official_verified',
+        'official_blocked',
+        'local_fallback',
+    }
+    assert result['runtime_evidence_log']['quality_gate']['technique_audit_table_required'] is True
+    assert result['runtime_evidence_log']['quality_gate']['technique_audit_table'][0]['technique'] == 'VedAstro Cloud State'
+    assert result['machine_evidence_packet']['status'] == 'partial'
+    assert result['real_case_calibration']['status'] == 'partial_scored'
+    assert result['real_case_calibration']['batch_id'] == 'real_case_studies_batch1'
+    assert result['runtime_evidence_log']['evidence_packet_contract']['status'] == 'partial'
+    assert result['runtime_evidence_log']['real_case_calibration']['status'] == 'partial_scored'
+    assert result['runtime_evidence_log']['blind_technical_mode']['enabled'] is True
+    assert 'conversation_feedback' in result['runtime_evidence_log']['blind_technical_mode']['disallowed_sources']
     assert result['chart']['special_lagnas']['precision'] == 'sunrise_correct'
 
 
@@ -2343,6 +2419,183 @@ def test_consultation_workflow_rectification_entry_sends_empty_objects_before_ch
     assert result['runtime_planner']['executed_steps'][0] == 'run_rectification_gate'
     assert seen['rectification_body']['planets'] == {}
     assert seen['rectification_body']['ascendant'] == {}
+
+
+def test_consultation_workflow_prashna_entry_uses_prashna_without_compute_chart(monkeypatch) -> None:
+    handler = _handler()
+    calls = {'chart': 0, 'prashna': 0}
+    seen = {}
+
+    def fake_chart_compute(body):
+        calls['chart'] += 1
+        return {'success': True, 'modules': {}}
+
+    def fake_prashna(body):
+        calls['prashna'] += 1
+        seen['prashna_body'] = dict(body)
+        return {
+            'success': True,
+            'endpoint': 'prashna',
+            'question': body.get('question'),
+            'timing': {'recommendation': '可以进行Prashna分析'},
+            'judgement': {'summary': '可问'},
+        }
+
+    def fake_thematic_report(body):
+        seen['theme_body'] = dict(body)
+        return {
+            'success': True,
+            'endpoint': 'thematic_report',
+            'mode': 'upstream_contract_reuse',
+            'report': {'sections': []},
+        }
+
+    monkeypatch.setattr(handler, '_compute_chart', fake_chart_compute)
+    monkeypatch.setattr(handler, '_compute_prashna', fake_prashna)
+    monkeypatch.setattr(handler, '_compute_thematic_report', fake_thematic_report)
+    monkeypatch.setattr(handler, '_compute_rectification_gate', lambda body: {'success': True, 'summary': {'recommended_events': []}})
+
+    result = handler._compute_consultation_workflow({
+        'entry_mode': 'prashna',
+        'question': '这个合作能成吗',
+        'question_text': '这个合作能成吗',
+        'theme': ['wealth'],
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+    })
+
+    assert result['success'] is True
+    assert result['entry_mode'] == 'prashna'
+    assert result['runtime_planner']['entry_mode'] == 'prashna'
+    assert result['runtime_planner']['executed_steps'] == ['run_prashna', 'run_thematic_report']
+    assert calls['chart'] == 0
+    assert calls['prashna'] == 1
+    assert seen['prashna_body']['question'] == '这个合作能成吗'
+
+
+def test_consultation_workflow_builds_audited_remedies_from_guided_topic_gate(monkeypatch) -> None:
+    handler = _handler()
+
+    fake_chart = {
+        'success': True,
+        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+        'planets': _sample_planets(),
+        'chart': {
+            'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+            'planets': _sample_planets(),
+        },
+        'modules': {
+            'guided_topics': [
+                {
+                    'id': 'career',
+                    'title': '事业',
+                    'strict_audit_gate': {
+                        'topic': 'career',
+                        'primary_planets': ['Saturn'],
+                        'active_dasha_lord': 'Saturn',
+                        'strength_context': {
+                            'Saturn': {'total_rupas': 0.42, 'strength_level': 'weak'},
+                        },
+                        'dosha_context': ['delay_signature'],
+                    },
+                },
+            ],
+        },
+        'special_lagnas': {'precision': 'sunrise_correct'},
+    }
+
+    monkeypatch.setattr(handler, '_compute_chart', lambda body: fake_chart)
+    monkeypatch.setattr(handler, '_compute_rectification_gate', lambda body: {'success': True, 'summary': {'recommended_events': []}})
+    monkeypatch.setattr(handler, '_compute_thematic_report', lambda body: {'success': True, 'endpoint': 'thematic_report', 'report': {'sections': []}})
+
+    result = handler._compute_consultation_workflow({
+        'entry_mode': 'direct_chart',
+        'question': '请直接排盘并看事业',
+        'theme': ['career'],
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+    })
+    remedies = result.get('audited_remedies') or {}
+    assert remedies['status'] == 'ok'
+    assert remedies['source'] == 'strict_audit_gate'
+    assert remedies['topic'] == 'career'
+    assert remedies['active_dasha_lord'] == 'Saturn'
+
+
+def test_consultation_workflow_timing_route_builds_muhurta_panchanga_sidecar(monkeypatch) -> None:
+    handler = _handler()
+    fake_chart = {
+        'success': True,
+        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+        'planets': _sample_planets(),
+        'chart': {
+            'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+            'planets': _sample_planets(),
+        },
+        'modules': {},
+        'special_lagnas': {'precision': 'sunrise_correct'},
+    }
+    seen = {}
+
+    monkeypatch.setattr(handler, '_compute_chart', lambda body: fake_chart)
+    monkeypatch.setattr(handler, '_compute_rectification_gate', lambda body: {
+        'success': True,
+        'endpoint': 'rectification_gate',
+        'summary': {'recommended_events': []},
+    })
+    monkeypatch.setattr(handler, '_compute_thematic_report', lambda body: {
+        'success': True,
+        'endpoint': 'thematic_report',
+        'mode': 'derived_chart_evidence',
+        'theme_count': len(body.get('theme') or []),
+    })
+
+    def fake_muhurta(body):
+        seen['muhurta_body'] = dict(body)
+        return {
+            'status': 'ok',
+            'source': 'local_muhurta.py',
+            'activity': 'business',
+            'report_mode': 'muhurta_date_range_solver',
+            'panchanga': {'query_date': '2026-07-08'},
+            'best_windows': [{'date': '2026-07-08'}],
+        }
+
+    monkeypatch.setattr(handler, '_compute_muhurta_panchanga', fake_muhurta)
+
+    result = handler._compute_consultation_workflow({
+        'entry_mode': 'direct_chart',
+        'question': '2026年何时适合谈合作和推进项目的应期',
+        'year': REDACTED_YEAR,
+        'month': 4,
+        'day': 17,
+        'hour': 14,
+        'minute': 49,
+        'lat': 36.42,
+        'lon': 114.2,
+        'tz': 8,
+        'reference_date': '2026-07-08',
+        'theme': ['career'],
+    })
+    assert result['success'] is True
+    assert 'run_muhurta_panchanga' in result['runtime_planner']['executed_steps']
+    assert result['muhurta_panchanga']['status'] == 'ok'
+    assert result['muhurta_panchanga']['activity'] == 'business'
+    assert seen['muhurta_body']['reference_date'] == '2026-07-08'
 
 
 def test_thematic_report_handles_missing_dasa_convergence_without_crash(monkeypatch) -> None:

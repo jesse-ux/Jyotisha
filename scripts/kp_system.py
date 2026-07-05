@@ -10,6 +10,7 @@ KP (Krishnamurti Paddhati) 占星系统模块
 3. House Significator ABCD体系
 """
 
+from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
 
 SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
@@ -33,6 +34,7 @@ NAKSHATRAS = [
 VIMSHOTTARI_DURATION = [7, 20, 6, 10, 7, 18, 16, 19, 17]
 KP_LORDS = ["Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury"]
 STAR_LORDS = KP_LORDS * 3  # 27 Nakshatras = 3 cycles of 9 lords
+VIMSHOTTARI_YEARS = dict(zip(KP_LORDS, VIMSHOTTARI_DURATION))
 
 NAKSHATRA_SPAN = 360.0 / 27.0  # 13.333... degrees
 
@@ -257,4 +259,103 @@ def calc_kp_analysis(planet_positions: Dict, asc_sign: str = 'Aries') -> Dict:
                     for pname, data in kp_planets.items()},
         'houses': {h['house']: {'sign': h['sign'], 'kp_lords': h['kp_lords'], 'significators': house_sig.get(h['house'], {})}
                    for h in houses},
+    }
+
+
+def _kp_next_lords(start_lord: str) -> List[str]:
+    idx = KP_LORDS.index(start_lord)
+    return KP_LORDS[idx:] + KP_LORDS[:idx]
+
+
+def _kp_years_to_days(years: float) -> float:
+    return years * 365.2425
+
+
+def _kp_birth_star_balance(moon_longitude: float) -> Tuple[str, float]:
+    moon_longitude = moon_longitude % 360.0
+    nak_idx = int(moon_longitude // NAKSHATRA_SPAN) % 27
+    star_lord = STAR_LORDS[nak_idx]
+    elapsed = (moon_longitude % NAKSHATRA_SPAN) / NAKSHATRA_SPAN
+    return star_lord, max(0.0, min(1.0, 1.0 - elapsed))
+
+
+def _kp_period_score(lords: List[str], planet_house_significators: Optional[Dict[str, Dict]] = None) -> Dict:
+    supportive_houses = {2, 5, 7, 11}
+    blocking_houses = {1, 6, 8, 10, 12}
+    supportive = 0
+    blocking = 0
+    details = {}
+    for lord in lords:
+        sig = (planet_house_significators or {}).get(lord, {})
+        houses = set()
+        for value in sig.values():
+            if isinstance(value, int):
+                houses.add(value)
+            elif isinstance(value, list):
+                houses.update(v for v in value if isinstance(v, int))
+        support_hits = sorted(houses & supportive_houses)
+        block_hits = sorted(houses & blocking_houses)
+        supportive += len(support_hits)
+        blocking += len(block_hits)
+        details[lord] = {'supportive_houses': support_hits, 'blocking_houses': block_hits}
+    score = supportive - blocking
+    if score >= 2:
+        judgement = 'supportive'
+    elif score <= -2:
+        judgement = 'blocking'
+    else:
+        judgement = 'mixed'
+    return {
+        'marriage_score': score,
+        'supportive_hits': supportive,
+        'blocking_hits': blocking,
+        'judgement': judgement,
+        'lord_details': details,
+    }
+
+
+def calc_kp_dba_timeline(
+    birth_datetime: datetime,
+    moon_longitude: float,
+    target_start: datetime,
+    target_end: datetime,
+    planet_house_significators: Optional[Dict[str, Dict]] = None,
+) -> Dict:
+    """Build Vimshottari MD/AD/PD windows for KP-style marriage timing review."""
+    birth_star_lord, balance = _kp_birth_star_balance(moon_longitude)
+    periods = []
+    md_start = birth_datetime
+    for md_i, md_lord in enumerate(_kp_next_lords(birth_star_lord) * 3):
+        md_years = VIMSHOTTARI_YEARS[md_lord] * (balance if md_i == 0 else 1.0)
+        md_end = md_start + timedelta(days=_kp_years_to_days(md_years))
+        ad_start = md_start
+        for ad_lord in _kp_next_lords(md_lord):
+            ad_years = md_years * VIMSHOTTARI_YEARS[ad_lord] / 120.0
+            ad_end = ad_start + timedelta(days=_kp_years_to_days(ad_years))
+            pd_start = ad_start
+            for pd_lord in _kp_next_lords(ad_lord):
+                pd_years = ad_years * VIMSHOTTARI_YEARS[pd_lord] / 120.0
+                pd_end = pd_start + timedelta(days=_kp_years_to_days(pd_years))
+                if pd_end >= target_start and pd_start <= target_end:
+                    scored = _kp_period_score([md_lord, ad_lord, pd_lord], planet_house_significators)
+                    periods.append({
+                        'md_lord': md_lord,
+                        'ad_lord': ad_lord,
+                        'pd_lord': pd_lord,
+                        'start': pd_start.isoformat(),
+                        'end': pd_end.isoformat(),
+                        **scored,
+                    })
+                pd_start = pd_end
+            ad_start = ad_end
+        md_start = md_end
+        if md_start > target_end:
+            break
+    return {
+        'method': 'KP DBA timeline (Vimshottari MD/AD/PD)',
+        'birth_star_lord': birth_star_lord,
+        'birth_star_balance_fraction': balance,
+        'target_start': target_start.isoformat(),
+        'target_end': target_end.isoformat(),
+        'periods': periods,
     }

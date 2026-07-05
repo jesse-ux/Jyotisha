@@ -31,6 +31,9 @@ EXTERNAL_WORK_BRAIN_DIR = Path("/Users/wuyongnaren/.gemini/antigravity-ide/brain
 DISTRIBUTION_MIRROR_DIR = Path("/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology")
 ORACLE_FILE = ROOT / "references" / "oracle" / "dasha_shadbala_oracle_cases.json"
 REPO_CLEANUP_MAP = ROOT / "docs" / "research" / "repo_cleanup_promotion_map_2026_07_01.md"
+ERROR_LEDGER = ROOT / "docs" / "research" / "pre_work_error_ledger.md"
+LATEST_SWEEP = ROOT / "docs" / "research" / "whole_machine_fragment_sweep_2026_07_05.md"
+ROUND25_SWEEP = ROOT / "docs" / "research" / "whole_machine_fragment_sweep_round25_2026_06_25.md"
 
 
 def _read_text(path: Path) -> str:
@@ -299,6 +302,26 @@ def build_report() -> dict[str, Any]:
                 "/Users/wuyongnaren/.gemini/antigravity-ide/brain",
                 "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology",
             ],
+        },
+        "governance": {
+            "pre_work_error_ledger": {
+                "path": str(ERROR_LEDGER),
+                "exists": ERROR_LEDGER.exists(),
+            },
+            "latest_fragment_sweep": {
+                "path": str(LATEST_SWEEP),
+                "exists": LATEST_SWEEP.exists(),
+                "remote_ref_parity": "blocked_until_git_ls_remote_succeeds",
+            },
+            "prior_fragment_sweep": {
+                "path": str(ROUND25_SWEEP),
+                "exists": ROUND25_SWEEP.exists(),
+            },
+            "acceptance_command": (
+                "python3 -m pytest -q tests/test_runtime_import_boundaries.py "
+                "tests/test_project_fragment_governance.py tests/test_preflight_fragment_scan.py "
+                "tests/test_remote_repo_visibility_check.py tests/test_pre_work_check.py"
+            ),
         },
         "boundary": (
             "Run this preflight scan before major work so drafts, mirrors, and external-work-brain "

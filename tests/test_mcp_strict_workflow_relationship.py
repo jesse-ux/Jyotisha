@@ -14,6 +14,19 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import jyotish_engine  # noqa: E402
 
 
+SOURCE_LAYER_CONTEXT = {
+    "dasha_timing_layer_used",
+    "varga_strength_layer_used",
+    "annual_special_layer_context",
+    "modifier_obstacle_layer_used",
+}
+
+
+def _assert_context_contains(context: list[str], expected: set[str]) -> None:
+    assert expected <= set(context)
+    assert SOURCE_LAYER_CONTEXT <= set(context)
+
+
 def _base_relationship_result() -> dict:
     return {
         "modules": {
@@ -53,13 +66,16 @@ def test_relationship_jaimini_bridge_lifts_legal_marriage_label() -> None:
         "source": "jaimini_bridge_v1",
     }
     assert strict["event_judgement"]["dominant_label"] == "legal_marriage"
-    assert strict["event_judgement"]["secondary_context"] == [
-        "darakaraka_active",
-        "jaimini_support",
-        "ul_support",
-        "virodhargala_obstruction",
-        "vedastro_range_scan_missing",
-    ]
+    _assert_context_contains(
+        strict["event_judgement"]["secondary_context"],
+        {
+            "darakaraka_active",
+            "jaimini_support",
+            "ul_support",
+            "virodhargala_obstruction",
+            "vedastro_range_scan_missing",
+        },
+    )
 
 
 def test_relationship_strict_contract_attaches_existing_interpretation_source_pack() -> None:
@@ -95,13 +111,16 @@ def test_relationship_jaimini_bridge_stays_context_only_when_d9_missing() -> Non
         "source": "jaimini_bridge_v1",
     }
     assert strict["event_judgement"]["dominant_label"] is None
-    assert strict["event_judgement"]["secondary_context"] == [
-        "darakaraka_active",
-        "jaimini_support",
-        "ul_support",
-        "virodhargala_obstruction",
-        "vedastro_range_scan_missing",
-    ]
+    _assert_context_contains(
+        strict["event_judgement"]["secondary_context"],
+        {
+            "darakaraka_active",
+            "jaimini_support",
+            "ul_support",
+            "virodhargala_obstruction",
+            "vedastro_range_scan_missing",
+        },
+    )
 
 
 def test_relationship_jaimini_bridge_cannot_lift_legal_marriage_when_narayana_is_missing() -> None:

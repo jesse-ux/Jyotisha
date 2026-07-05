@@ -1507,6 +1507,60 @@ def muhurta_range_search(
     }
 
 
+def build_muhurta_sidecar(
+    *,
+    date_str: str,
+    activity: str = 'business',
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    tz: Optional[float] = None,
+    ayanamsa_name: str = 'lahiri',
+) -> Dict:
+    """Compact Muhurta/Panchanga packet for unified workflow consumers."""
+    activity = activity if activity in ACTIVITY_RULES else 'business'
+    search = muhurta_range_search(
+        date_str,
+        date_str,
+        activity=activity,
+        limit=3,
+        lat=lat,
+        lon=lon,
+        tz=tz,
+        ayanamsa_name=ayanamsa_name,
+    )
+    calendar = panchanga_range_report(
+        date_str,
+        date_str,
+        activity=activity,
+        lat=lat,
+        lon=lon,
+        tz=tz,
+        ayanamsa_name=ayanamsa_name,
+    )
+    days = calendar.get('days') or []
+    first_day = days[0] if days else {}
+    return {
+        'status': 'ok',
+        'source': 'local_muhurta.py',
+        'date': date_str,
+        'activity': activity,
+        'activity_label': ACTIVITY_RULES[activity]['name'],
+        'report_mode': search.get('mode', 'muhurta_date_range_solver'),
+        'panchanga': {
+            'query_date': first_day.get('query_date', date_str),
+            'summary': first_day.get('summary') or {},
+            'panchanga': first_day.get('panchanga') or {},
+            'inauspicious_periods': first_day.get('inauspicious_periods') or [],
+            'choghadiya': first_day.get('choghadiya') or [],
+            'hora_windows': first_day.get('hora_windows') or [],
+            'condition_tags': first_day.get('condition_tags') or [],
+        },
+        'best_windows': search.get('best_windows') or [],
+        'calculation_policy': calendar.get('calculation_policy') or search.get('calculation_policy') or {},
+        'next_action': search.get('next_action') or 'Use as timing sidecar only; final judgement still needs chart-based workflow.',
+    }
+
+
 def _build_muhurta_candidate(row: Dict, activity: str, avoid_inauspicious_periods: bool) -> Dict:
     summary = row.get('summary') or {}
     panchanga = row.get('panchanga') or {}

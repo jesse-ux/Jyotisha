@@ -4,8 +4,21 @@
 from __future__ import annotations
 
 import jyotish_engine
+import mcp_server
 
 from mcp_server import _collect_strict_evidence, _existing_interpretation_source_pack
+
+SOURCE_LAYER_CONTEXT = {
+    "dasha_timing_layer_used",
+    "varga_strength_layer_used",
+    "annual_special_layer_context",
+    "modifier_obstacle_layer_used",
+}
+
+
+def _assert_context_contains(context: list[str], expected: set[str]) -> None:
+    assert expected <= set(context)
+    assert SOURCE_LAYER_CONTEXT <= set(context)
 
 
 def _base_career_result() -> dict:
@@ -62,14 +75,17 @@ def test_career_collects_a10_amk_karakamsha_as_strict_evidence() -> None:
     }
     assert strict["event_judgement"]["event_family"] == "career"
     assert strict["event_judgement"]["dominant_label"] == "career_status"
-    assert strict["event_judgement"]["secondary_context"] == [
-        "a10_active",
-        "amk_active",
-        "karakamsha_context",
-        "functional_benefic_malefic_used",
-        "argala_support",
-        "vedastro_range_scan_missing",
-    ]
+    _assert_context_contains(
+        strict["event_judgement"]["secondary_context"],
+        {
+            "a10_active",
+            "amk_active",
+            "karakamsha_context",
+            "functional_benefic_malefic_used",
+            "argala_support",
+            "vedastro_range_scan_missing",
+        },
+    )
 
 
 def test_career_strict_contract_attaches_existing_interpretation_source_pack() -> None:
@@ -120,6 +136,54 @@ def test_interpretation_source_inventory_classifies_sources_without_promoting_dr
     assert all(path not in source_pack["source_refs"] for path in draft_refs)
 
 
+def test_mcp_strict_workflow_returns_runtime_evidence_log(monkeypatch) -> None:
+    def fake_execute(**kwargs):
+        return {
+            "chart": {
+                "modules": {},
+                "ai_prompt_pack": {
+                    "evidence_snapshot": {
+                        "vedastro_official_snapshot": {
+                            "status": "ok",
+                            "official_primary_evidence": {"chart_core": {"status": "ok"}},
+                        }
+                    }
+                },
+            },
+            "routing": {"question_type": "career", "primary_theme": "career"},
+            "entry_mode": "direct_chart",
+            "runtime_planner": {"executed_steps": ["compute_chart"], "skipped_steps": []},
+        }
+
+    monkeypatch.setattr(mcp_server, "_execute_mcp_consultation_workflow", fake_execute)
+    monkeypatch.setattr(mcp_server, "_maybe_attach_vedastro_evidence", lambda route, chart, **kwargs: chart)
+    monkeypatch.setattr(mcp_server, "_collect_strict_evidence", lambda route, chart: {"question_type": route})
+
+    result = mcp_server.strict_workflow(
+        question="career timing",
+        year=REDACTED_YEAR,
+        month=4,
+        day=17,
+        hour=14,
+        minute=49,
+        lat=36.42,
+        lon=114.2,
+        tz=8,
+        age=33,
+        transit_date="2026-07-05",
+    )
+
+    assert result["runtime_evidence_log"]["surface"] == "skill_mcp"
+    assert result["runtime_evidence_log"]["route"]["question_type"] == "career"
+    assert result["runtime_evidence_log"]["vedastro_cloud_state"] == "official_verified"
+    assert result["machine_evidence_packet"]["status"] == "partial"
+    assert result["real_case_calibration"]["status"] == "partial_scored"
+    assert result["runtime_evidence_log"]["evidence_packet_contract"]["status"] == "partial"
+    assert result["runtime_evidence_log"]["real_case_calibration"]["status"] == "partial_scored"
+    assert result["runtime_evidence_log"]["quality_gate"]["technique_audit_table_required"] is True
+    assert result["runtime_evidence_log"]["quality_gate"]["technique_audit_table"][0]["technique"] == "VedAstro Cloud State"
+
+
 def test_career_blocks_label_when_d10_is_missing_but_preserves_jaimini_context() -> None:
     result = _base_career_result()
     del result["modules"]["varga_full"]["D10_Dasamsa"]
@@ -129,14 +193,17 @@ def test_career_blocks_label_when_d10_is_missing_but_preserves_jaimini_context()
     assert "d10_dasamsa" in strict["missing_evidence"]
     assert strict["blocked"] is True
     assert strict["event_judgement"]["dominant_label"] is None
-    assert strict["event_judgement"]["secondary_context"] == [
-        "a10_active",
-        "amk_active",
-        "karakamsha_context",
-        "functional_benefic_malefic_used",
-        "argala_support",
-        "vedastro_range_scan_missing",
-    ]
+    _assert_context_contains(
+        strict["event_judgement"]["secondary_context"],
+        {
+            "a10_active",
+            "amk_active",
+            "karakamsha_context",
+            "functional_benefic_malefic_used",
+            "argala_support",
+            "vedastro_range_scan_missing",
+        },
+    )
 
 
 def test_career_dignity_guardrail_uses_career_relevant_planets_only() -> None:

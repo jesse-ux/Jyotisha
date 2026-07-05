@@ -213,3 +213,23 @@
 - `python3 scripts/audit_capabilities.py --mode validate` 通过，显示 `technique_count=89`、`problem_count=0`；`python3 scripts/audit_fragments.py --strict` 通过，显示当前仓 `candidate_count=0`、`untracked_count=0`。
 - 云端 HTTPS refs 已确认：本地 `codex/release-hygiene-ci@767a5c6` 与远端 `refs/heads/codex/release-hygiene-ci@767a5c6` 对齐。
 - 根因不是“项目没有资料”，而是现有测试多守文档/注册表存在性，没有守 `mcp_server.py::_collect_strict_evidence`、AI prompt pack 和用户可见 strict contract 必须显式携带这些资料层。下一步应只补显式调用链与测试，不重写规则体系。
+
+## 2026-07-02 6月20日后算力消耗升高排查结论
+
+- Codex 本地 `session_index.jsonl` 显示 2026-06-20 开始新增/更新 9 个线程，包括 `开发 flomo App 并上架 App Store`、`优化印度占星项目`、`继续优化星轨talk项目`、`梳理 StarCanvas 进度`、`梳理印度占星项目进度` 等；这不是印度占星单项目单点故障，而是多项目长线程同时启动。
+- `.codex/archived_sessions` 中 2026-06-21/22 出现多个 100MB 级长会话：`019eed29...` 约 127MB、`019ee916...` 约 139MB、`019eef04...` 约 58MB。会话统计显示大量 `exec_command` / `apply_patch` / `write_stdin`，并反复产生 `compacted` 记录，说明工具输出和压缩上下文被不断带入模型请求。
+- archived session 的 `token_count` 元数据按 last usage 聚合：2026-06-21 约 124.6M total tokens，2026-06-22 约 556.6M，2026-06-23 约 580.5M，2026-06-24 约 366.3M，2026-06-28 约 322.6M。最大线程 `019eed29...` 约 821.6M total tokens，其中大部分为 cached input，但仍会造成显著算力/上下文消耗。
+- 直接触发 token 放大的模式是“大范围读取 + 长输出 + 长线程自动压缩”：例如同一回合并行 `sed -n` 读取 README/SKILL/index/API server/多份 reference，每个命令允许 8k-22k 输出 token；后续继续在同一线程中工作，使 cached input 和 compacted 摘要持续变大。
+- 代码仓层面，2026-06-21 commit `11bdee3` 把 CI/质量门从轻量 Python 检查升级为安装 Node/npm、`npm ci`、全 pytest、quick quality gate、前端 build、Python package build；后续 `scripts/run_quality_gate.py` 又加入 runtime smoke、browser/release profile、artifact 诊断、manifest gate、oracle gate。这解释了本地/云端 CPU 与 CI 时间增加，但不是模型 token 暴涨的唯一来源。
+- 当前本机进程快照显示仍有高负载后台项：Codex app-server 约 60%+ CPU，WorkBuddy renderer/GPU 约 50%/20%+ CPU，一个 Next dev server 占用约 45% CPU 和 27% 内存；这些会造成“电脑算力”体感升高，但和模型 token 账单应分开看。
+- `.env.local` 当前开启 `VEDASTRO_ENABLE_NETWORK=1` 且有 endpoint；质量门默认 `skip_vedastro_live=true`，但 strict workflow / VedAstro evidence orchestrator 在真实高严谨工作流中具备出网条件。它是外部 API/网络成本风险点，不是 6月20 起 token 暴涨的主因。
+- 根因判断：没有发现占星计算核心的死循环 bug；主要 bug/设计问题是代理工作流缺少“省算力护栏”，包括过宽的文件读取输出、长线程持续携带历史、release/browser gate 被过频触发、多项目 dev server 残留，以及 VedAstro live 配置默认在本地可用时缺少显式预算提示。
+
+## 2026-07-02 省算力开源工具选型与落地
+
+- 全网对比后，最贴合本次根因的直接止血工具是 `squeez`：它是面向 Claude Code、Copilot CLI、OpenCode、Gemini CLI、Codex CLI 的 hook-based token compressor，重点压缩 bash/tool output、代码读取签名和重复上下文，正好对应 6月20 日后“长工具输出 + 长线程压缩摘要膨胀”的问题。
+- 已安装并验证 `squeez 1.34.4`，Codex 侧配置位于 `~/.codex/squeez/config.ini`，hooks 位于 `~/.codex/squeez/hooks/`；当前配置 `enabled=true`、`persona=ultra`、`max_lines=120`、`read_max_lines=300`、`grep_max_results=100`、`context_cache_enabled=true`、`redundancy_cache_enabled=true`。
+- 已启用 Hermes fallback 插件：`hermes plugins enable squeez-fallback` 返回成功；Codex/Hermes 下一次新 session 或重启后生效。
+- `ccusage` 更适合做用量可视化和日/项目维度追踪，已用 `npx --yes ccusage@latest --version` 验证可运行，版本 `20.0.14`；本轮未做全局安装，避免增加长期依赖。
+- `Repomix` 适合后续把仓库打包给 AI 前做 token counting 和 include/exclude 控制；它不是本次长线程工具输出膨胀的第一止血点。
+- `LiteLLM`、`Langfuse`、`Helicone` 更适合自建 API gateway、OpenAI/VedAstro/多模型调用预算和日志治理；对当前 Codex 本地 agent 会话膨胀不是最短路径，暂不接入。

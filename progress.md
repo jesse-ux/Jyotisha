@@ -858,3 +858,21 @@
 - 第一批结果：`promote_to_reference_pack_candidate=9`、`reference_only=3`；已完成 batch1 级别的 source-pack eligibility 仲裁。
 - 仲裁结论：`reference_pack_candidate=9`、`reference_only=3`、`runtime_truth_ready_count=0`；不允许直接进入 runtime truth。
 - 下一步必须做：把 9 个候选显式接入 interpretation source/source pack，并加 strict workflow visibility tests；内容级规则优先级仍不得压过核心主规则。
+
+## 2026-07-02T23:30:00+08:00 - 6月20日后算力消耗升高排查
+
+- 用户要求检查“6月20日开始为什么算力消耗增高，是什么 bug”。
+- 已按系统化调试排查：Git 变更、质量门/CI、Codex 本地 session/token metadata、WorkBuddy trace 元数据、当前进程负载、VedAstro live 配置。
+- 关键证据：Codex `session_index.jsonl` 从 2026-06-20 起出现多项目长线程；`.codex/archived_sessions` 里 2026-06-21/22 有 139MB、127MB、58MB 等大 session；`token_count` 聚合显示 2026-06-22/23 单日 archived sessions last total tokens 分别约 556.6M/580.5M。
+- 排查结论已写入 `findings.md`：主因不是占星核心计算死循环，而是代理工作流/上下文管理设计导致的大范围读取、长工具输出、压缩摘要膨胀、质量门变重、多项目 dev server 残留。
+- 未改代码或配置；后续若要止血，优先加省算力 profile、限制工具输出、拆短线程、关闭残留 dev server，并把 `VEDASTRO_ENABLE_NETWORK` 改成显式按需开启。
+
+## 2026-07-02T23:42:00+08:00 - 全网省算力开源工具安装
+
+- 用户要求直接全网寻找最合适的省算力开源项目并解决问题。
+- 对比 `squeez`、`ccusage`、`Repomix`、`LiteLLM` 等项目后，优先选择 `squeez`，因为本次根因是 Codex/Agent 工具输出和长上下文膨胀，而不是单纯 API gateway 计费问题。
+- 已通过官方安装脚本安装 `squeez 1.34.4`；Codex 配置与 hooks 已写入 `~/.codex/squeez/`。
+- 已验证本地二进制：`~/.claude/squeez/bin/squeez --version` 输出 `squeez 1.34.4`。
+- 已启用 Hermes fallback 插件：`hermes plugins enable squeez-fallback` 成功，提示下一 session 生效。
+- 已验证 `ccusage` 可通过 `npx` 临时运行，版本 `20.0.14`；本轮未全局安装。
+- 仍需用户重启 Codex/相关 CLI，让已安装 hooks 在新 session 中生效。

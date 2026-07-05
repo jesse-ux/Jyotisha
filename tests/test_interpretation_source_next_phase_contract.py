@@ -199,3 +199,68 @@ def test_prompt_pack_and_real_reading_regression_expose_content_contracts() -> N
         assert audit["mevg_global_web_evidence"]["status"] == "blocked"
         assert audit["real_case_calibration"]["status"] == "blocked"
         assert audit["interpretation_source_pack"]["core_rule_source_refs"] == CORE5
+
+
+def test_real_case_studies_batch1_is_exposed_as_local_retrieval_layer() -> None:
+    source_pack = _existing_interpretation_source_pack()
+    case_layer = source_pack["real_case_calibration_layer"]
+    assert case_layer["batch_id"] == "real_case_studies_batch1"
+    assert case_layer["index_status"] == "available"
+    assert case_layer["status"] == "queued"
+    assert "career" in case_layer["case_index_by_domain"]
+    assert "finance" in case_layer["case_index_by_domain"]
+    assert "relationship" in case_layer["case_index_by_domain"]
+    assert (
+        "references/real_case_studies/vedicka/career-success-poverty-prosperity.md"
+        in case_layer["case_index_by_domain"]["career"]
+    )
+    assert (
+        "docs/benchmark/legacy-marriage-v6.1/verify-results-v6.1.json"
+        in case_layer["case_index_by_domain"]["relationship"]
+    )
+    assert (
+        "references/real_case_studies/vedicka/career-success-poverty-prosperity.md"
+        in source_pack["source_refs"]
+    )
+    assert source_pack["real_case_calibration"]["local_index_status"] == "available"
+    assert source_pack["real_case_calibration"]["status"] == "blocked"
+
+
+def test_open_source_batches_and_external_gaps_are_visible_without_polluting_truth() -> None:
+    source_pack = _existing_interpretation_source_pack()
+
+    rishi_layer = source_pack["rishi_ai_mcp_batch1_layer"]
+    assert rishi_layer["status"] == "available"
+    assert rishi_layer["promotion_status"] == "open_source_reference_layer"
+    assert rishi_layer["runtime_truth_status"] == "not_primary_truth"
+    assert "career" in rishi_layer["domain_map"]
+    assert "relationship" in rishi_layer["domain_map"]
+    assert "references/open_source_sources/rishi-ai-mcp/.agents/rules/rishi-ai.md" in rishi_layer["source_refs"]
+    assert (
+        "references/open_source_sources/rishi-ai-mcp/.agents/workflows/career-analysis.md"
+        in rishi_layer["domain_map"]["career"]
+    )
+
+    vedic_layer = source_pack["vedic_astro_skills_batch1_layer"]
+    assert vedic_layer["status"] == "available"
+    assert vedic_layer["promotion_status"] == "external_skill_reference_layer"
+    assert vedic_layer["runtime_truth_status"] == "not_primary_truth"
+    assert "calculator" in vedic_layer["domain_map"]
+    assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/SKILL.md" in vedic_layer["source_refs"]
+    assert (
+        "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/data_contract.md"
+        in vedic_layer["domain_map"]["reader_validation"]
+    )
+
+    external_gaps = source_pack["external_closure_gap_layer"]
+    assert external_gaps["vedastro_official"]["status"] == "blocked"
+    assert external_gaps["oracle_parity"]["status"] == "blocked"
+    assert external_gaps["install_usage_path"]["status"] == "needs_slimming"
+
+    queue = source_pack["remaining_priority1_batch_queue"]
+    assert queue["next_batches"] == [
+        "references_batch2",
+        "vedastro_official_default_closure",
+        "external_oracle_parity_batch",
+        "install_usage_path_slimming",
+    ]

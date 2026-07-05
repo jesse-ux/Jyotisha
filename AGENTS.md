@@ -76,3 +76,29 @@
 - MEVG / Global Web Evidence 或 Real Case Calibration 未完成
 
 禁止把内部一致性伪装成“已经全球顶级精度”。
+
+## 5. Pre-Work Error Ledger Hard Constraint
+
+为避免多窗口、多应用、多文件夹碎片导致重复误判，开工前 / 进行任何实质项目工作前必须读取：
+
+- `docs/research/pre_work_error_ledger.md`
+
+若任务涉及运行入口、镜像边界、外部 oracle、远端同步、适配器、测试验收或大规模资料治理，还必须读取：
+
+- `docs/research/whole_machine_fragment_sweep_2026_07_05.md`
+- `docs/research/whole_machine_fragment_sweep_round25_2026_06_25.md`
+
+同时必须运行：
+
+- `python3 scripts/pre_work_check.py --remote-timeout 8 --command-timeout 45`
+
+该预检必须包含：
+
+- `scripts/diagnose_external_engine_adapters.py --json`
+
+执行要求：
+
+1. 不得把 `.workbuddy` 镜像当作运行主仓。
+2. 不得在 `git ls-remote` / fetch / push 等远端验证失败时声称云端已同步。
+3. 不得在未查看当前 `git status --short --branch` 时覆盖或重置本地变更。
+4. 新发现的重复错误、阻塞、碎片目录、远端验证失败，必须追加到错误台账或当轮 sweep 文档。

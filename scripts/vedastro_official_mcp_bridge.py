@@ -98,12 +98,44 @@ def _tools_list(endpoint: str) -> dict[str, Any]:
     }
 
 
+def _call_tool(endpoint: str, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    init = _initialize(endpoint)
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {"name": tool_name, "arguments": arguments},
+    }
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/event-stream",
+    }
+    if init.get("session_id"):
+        headers["Mcp-Session-Id"] = str(init["session_id"])
+    req = urllib.request.Request(endpoint, data=body, method="POST", headers=headers)
+    with urllib.request.urlopen(req, timeout=DEFAULT_TIMEOUT_SECONDS) as resp:
+        raw = resp.read().decode("utf-8")
+        response_headers = {key.lower(): value for key, value in resp.headers.items()}
+    result = json.loads(raw)
+    return {
+        "endpoint": endpoint,
+        "available": True,
+        "status": "ok",
+        "operation": "call_tool",
+        "tool_name": tool_name,
+        "session_id": init.get("session_id") or response_headers.get("mcp-session-id"),
+        "result": result.get("result") or result,
+        "source": "official_public_mcp",
+    }
+
+
 def schema() -> dict[str, Any]:
     return {
         "bridge": "vedastro_official_mcp_bridge",
         "role": "official_public_mcp_thin_bridge",
         "endpoint": DEFAULT_ENDPOINT,
-        "operations": ["initialize", "tools_list"],
+        "operations": ["initialize", "tools_list", "call_tool"],
         "response_contract": [
             "endpoint",
             "available",
@@ -113,7 +145,7 @@ def schema() -> dict[str, Any]:
             "source",
         ],
         "boundaries": [
-            "Use for official MCP reachability and tool discovery.",
+            "Use for official MCP reachability, tool discovery, and targeted tool calls.",
             "Do not let raw MCP results directly override local score/dominant_label/payout_label.",
             "Promote only through explicit local contracts and tests.",
         ],
@@ -138,7 +170,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Official public VedAstro MCP bridge")
     parser.add_argument("--print-schema", action="store_true")
     parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
-    parser.add_argument("--operation", choices=["initialize", "tools_list"], default="tools_list")
+    parser.add_argument("--operation", choices=["initialize", "tools_list", "call_tool"], default="tools_list")
+    parser.add_argument("--tool")
+    parser.add_argument("--arguments-json", default="{}")
     args = parser.parse_args()
 
     if args.print_schema:
@@ -147,6 +181,13 @@ def main() -> int:
         try:
             if args.operation == "initialize":
                 result = _initialize(args.endpoint)
+            elif args.operation == "call_tool":
+                if not args.tool:
+                    raise ValueError("--tool is required when --operation call_tool")
+                arguments = json.loads(args.arguments_json)
+                if not isinstance(arguments, dict):
+                    raise ValueError("--arguments-json must decode to an object")
+                result = _call_tool(args.endpoint, args.tool, arguments)
             else:
                 result = _tools_list(args.endpoint)
         except Exception as exc:  # noqa: BLE001

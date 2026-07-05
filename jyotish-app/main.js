@@ -484,6 +484,7 @@ async function computeConsultationForBirth(birth, options = {}) {
     ...birth,
     entry_mode: entryMode,
     question: options.question || '',
+    question_text: options.questionText || options.question || '',
     theme: options.theme || ['career', 'marriage', 'wealth'],
   };
   if (Array.isArray(options.events)) payload.events = options.events;
@@ -532,6 +533,32 @@ function setChartComputeStatus(message = '', tone = 'warn') {
 function setupForm() {
   const form = $('birth-form'), btn = $('btn-calculate');
   const btnText = btn.querySelector('.btn-text'), btnLoading = btn.querySelector('.btn-loading');
+  let selectedEntryMode = 'direct_chart';
+  const entryButtons = {
+    direct_chart: $('entry-direct-chart'),
+    rectification: $('entry-rectification'),
+    prashna: $('entry-prashna'),
+  };
+  const prashnaQuestionGroup = $('prashna-question-group');
+  const prashnaQuestionInput = $('prashna-question-text');
+  const syncEntryModeUI = () => {
+    Object.entries(entryButtons).forEach(([mode, el]) => {
+      if (!el) return;
+      el.classList.toggle('active', mode === selectedEntryMode);
+    });
+    if (prashnaQuestionGroup) {
+      prashnaQuestionGroup.style.display = selectedEntryMode === 'prashna' ? '' : 'none';
+    }
+  };
+  Object.entries(entryButtons).forEach(([mode, el]) => {
+    if (!el) return;
+    el.addEventListener('click', () => {
+      selectedEntryMode = mode;
+      syncEntryModeUI();
+    });
+  });
+  $('entry-prashna')?.addEventListener('dblclick', () => computeConsultationForBirth(window.__jyotishBirth || {}, { entryMode: 'prashna' }));
+  syncEntryModeUI();
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const year = parseInt($('birth-year').value);
@@ -543,6 +570,10 @@ function setupForm() {
     const tz = resolveTimezoneValue($('birth-tz').value);
     if (!year || !month || !day || !timeVal) { alert(t('alert.date')); return; }
     if (isNaN(lat) || isNaN(lon)) { alert(t('alert.city')); return; }
+    if (selectedEntryMode === 'prashna' && !(prashnaQuestionInput?.value || '').trim()) {
+      alert('请输入问事问题');
+      return;
+    }
     const [hour, minute, second = 0] = timeVal.split(':').map(Number);
     btnText.classList.add('hidden'); btnLoading.classList.remove('hidden'); btn.disabled = true;
     setChartComputeStatus('正在计算星盘...', 'warn');
@@ -550,7 +581,11 @@ function setupForm() {
       // v6.9.4: 计算层 — 优先本地 API 服务, 回退JS引擎
       chartData = await computeConsultationForBirth(
         { year, month, day, hour, minute, second, lat, lon, tz },
-        { entryMode: 'direct_chart' },
+        {
+          entryMode: selectedEntryMode,
+          question: selectedEntryMode === 'prashna' ? (prashnaQuestionInput?.value || '').trim() : '',
+          questionText: selectedEntryMode === 'prashna' ? (prashnaQuestionInput?.value || '').trim() : '',
+        },
       );
     } catch (e) {
       console.error('[Jyotish] 计算失败:', e);
@@ -746,6 +781,8 @@ function renderAll() {
     if (!rectPrompt.dataset.bound) {
       rectPrompt.dataset.bound = 'true';
       $('rect-prompt-btn').addEventListener('click', () => {
+        selectedEntryMode = 'rectification';
+        syncEntryModeUI();
         rectPanel.classList.remove('hidden');
         if (rectOverlay) rectOverlay.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -963,6 +1000,7 @@ function renderWorkflowSummaryCard(workflow = {}) {
   const runtimePlanner = workflow?.runtime_planner || {};
   const unified = workflow?.unified_orchestrator || {};
   const sourcePriority = workflow?.source_priority?.priority || unified?.source_priority?.priority || [];
+  const muhurtaSidecar = workflow?.muhurta_panchanga;
   const compactSource = sourcePriority.length
     ? sourcePriority.join(' -> ')
     : 'VedAstro official / local supplemental / fallback';
@@ -983,8 +1021,111 @@ function renderWorkflowSummaryCard(workflow = {}) {
         <strong>source_priority</strong>
         <span>${escapeHtml(compactSource)}</span>
       </div>
+      <div class="workflow-summary-pill" style="margin-top:8px">
+        <strong>timing_sidecar</strong>
+        <span>${escapeHtml(muhurtaSidecar?.status === 'ok'
+          ? `run_muhurta_panchanga · ${muhurtaSidecar.activity || 'business'} · ${muhurtaSidecar.panchanga?.query_date || '-'}`
+          : 'not_used')}</span>
+      </div>
+      ${renderWorkflowSidecarsSummary(workflow)}
     </section>
   `;
+}
+
+function renderWorkflowSidecarsSummary(workflow = {}) {
+  const muhurta = workflow?.muhurta_panchanga || {};
+  const prashna = workflow?.prashna || {};
+  const remedies = workflow?.audited_remedies || {};
+  const muhurtaSummary = muhurta?.panchanga?.summary || {};
+  const muhurtaWindows = Array.isArray(muhurta?.best_windows) ? muhurta.best_windows : [];
+  const topWindow = muhurtaWindows[0] || null;
+  const prashnaConclusion = prashna?.summary?.conclusion || prashna?.kp_answer_v2?.kp_answer || prashna?.kp_answer?.kp_answer || '';
+  const prashnaConfidence = prashna?.summary?.confidence || prashna?.kp_answer_v2?.confidence || prashna?.kp_answer?.confidence || '';
+  const remedyRecommendations = remedies?.raw?.recommendations || remedies?.raw || {};
+  const remedyCount = ['gems', 'mantras', 'donations', 'fasting', 'lifestyle', 'dosha_remedies']
+    .reduce((total, key) => total + (Array.isArray(remedyRecommendations?.[key]) ? remedyRecommendations[key].length : 0), 0);
+  const sidecars = [
+    `
+      <div class="provenance-card">
+        <div class="provenance-head">
+          <span>Muhurta / Panchanga</span>
+          <strong>${escapeHtml(muhurta?.status === 'ok' ? (muhurta.activity_label || muhurta.activity || '-') : '未启用')}</strong>
+        </div>
+        <p>${escapeHtml(muhurta?.status === 'ok'
+          ? `${muhurta?.panchanga?.query_date || muhurta?.date || '-'} · ${muhurtaSummary?.quality || '待判定'}`
+          : '当前问题未调用时间择日侧链。')}</p>
+        <div class="workflow-summary-pill">
+          <strong>建议窗口</strong>
+          <span>${escapeHtml(topWindow ? `${topWindow.start || '-'}-${topWindow.end || '-'} · ${topWindow.quality || 'window'}` : '暂无明确吉时窗口')}</span>
+        </div>
+        <div class="workflow-summary-pill" style="margin-top:8px">
+          <strong>避开时段</strong>
+          <span>${escapeHtml([muhurta?.panchanga?.inauspicious_periods?.rahu_kala, muhurta?.panchanga?.inauspicious_periods?.yamaganda].filter(Boolean).join(' · ') || '未返回')}</span>
+        </div>
+        <button class="sidecar-jump-btn" data-open-tab="provenance" data-scroll-target="#provenance-panel" ${muhurta?.status === 'ok' ? '' : 'disabled'}>查看参数/日历证据</button>
+      </div>
+    `,
+    `
+      <div class="provenance-card">
+        <div class="provenance-head">
+          <span>Prashna 问事</span>
+          <strong>${escapeHtml(prashnaConclusion || '未启用')}</strong>
+        </div>
+        <p>${escapeHtml(workflow?.question || prashna?.question || '当前流程没有附带问事问题。')}</p>
+        <div class="workflow-summary-pill">
+          <strong>置信度</strong>
+          <span>${escapeHtml(prashnaConfidence || '未返回')}</span>
+        </div>
+        <div class="workflow-summary-pill" style="margin-top:8px">
+          <strong>问题宫 / 主星</strong>
+          <span>${escapeHtml(`${prashna?.summary?.primary_house || prashna?.kp_answer_v2?.primary_house || prashna?.kp_answer?.primary_house || '-'}宫 · ${prashna?.summary?.question_lord || prashna?.kp_answer_v2?.question_lord || prashna?.kp_answer?.question_lord || '-'}`)}</span>
+        </div>
+        <button class="sidecar-jump-btn" data-open-tab="prashna" data-scroll-target="#prashna-result" ${prashnaConclusion ? '' : 'disabled'}>查看问事细节</button>
+      </div>
+    `,
+    `
+      <div class="provenance-card">
+        <div class="provenance-head">
+          <span>补救建议</span>
+          <strong>${escapeHtml(remedies?.status === 'ok' ? (remedies?.topic || 'general') : '未启用')}</strong>
+        </div>
+        <p>${escapeHtml(remedies?.status === 'ok'
+          ? `来源 ${remedies?.source || 'strict_audit_gate'} · 当前主运 ${remedies?.active_dasha_lord || '-'}`
+          : '当前流程没有生成严格门控后的补救建议。')}</p>
+        <div class="workflow-summary-pill">
+          <strong>行动数量</strong>
+          <span>${escapeHtml(remedies?.status === 'ok' ? `${remedyCount} 条` : '0 条')}</span>
+        </div>
+        <div class="workflow-summary-pill" style="margin-top:8px">
+          <strong>门控来源</strong>
+          <span>${escapeHtml(remedies?.status === 'ok' ? 'strict_audit_gate' : 'not_used')}</span>
+        </div>
+        <button class="sidecar-jump-btn" data-open-tab="remedies" data-scroll-target="#remedies-section" ${remedies?.status === 'ok' ? '' : 'disabled'}>查看补救细节</button>
+      </div>
+    `,
+  ];
+  return `<div class="workflow-sidecars-summary provenance-grid">${sidecars.join('')}</div>`;
+}
+
+function bindWorkflowSummaryActions(host) {
+  if (!host || host.dataset.boundWorkflowSidecars === 'true') return;
+  host.dataset.boundWorkflowSidecars = 'true';
+  host.addEventListener('click', event => {
+    const btn = event.target.closest('[data-open-tab]');
+    if (!btn || btn.disabled) return;
+    const tabName = btn.dataset.openTab;
+    const scrollTarget = btn.dataset.scrollTarget;
+    if (tabName === 'prashna') switchToTab('prashna');
+    else if (tabName === 'remedies') switchToTab('remedies');
+    else if (tabName === 'provenance') switchToTab('provenance');
+    else switchToTab(tabName);
+    if (scrollTarget) {
+      setTimeout(() => {
+        const target = document.querySelector(scrollTarget);
+        target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+    }
+  });
 }
 
 function renderWorkflowSummaryPanel(chartRecord) {
@@ -996,6 +1137,7 @@ function renderWorkflowSummaryPanel(chartRecord) {
     return;
   }
   host.innerHTML = renderWorkflowSummaryCard(workflow);
+  bindWorkflowSummaryActions(host);
 }
 
 // ============================================================================
@@ -2175,6 +2317,8 @@ function renderProvenancePanel({ chartData, panchanga, provenance, validation, a
 function renderWorkflowProvenancePanel(chartRecord) {
   const workflow = getConsultationWorkflow(chartRecord);
   const runtimePlanner = getRuntimePlanner(chartRecord);
+  const runtimeTruth = workflow.runtime_truth || {};
+  const sourceCoverage = workflow.interpretation_source_runtime_coverage || {};
   if (!Object.keys(workflow).length && !Object.keys(runtimePlanner).length) return '';
   const route = runtimePlanner.route || workflow.routing || {};
   const unified = workflow.unified_orchestrator || {};
@@ -2209,6 +2353,23 @@ function renderWorkflowProvenancePanel(chartRecord) {
           <strong>${escapeHtml(syncSteps.join(' -> ') || '-')}</strong>
           <small>${escapeHtml(`async: ${asyncCandidates.join(' / ') || 'none'}`)}</small>
           <code>${escapeHtml(runtimePlanner.boundary || workflow.boundary || '')}</code>
+        </div>
+        <div class="provenance-list-row">
+          <span>VedAstro Runtime Truth</span>
+          <strong>${escapeHtml(runtimeTruth.catalog_boundary || '-')}</strong>
+          <small>${escapeHtml([
+            `chart_core:${runtimeTruth.official_execution_layers?.chart_core || '-'}`,
+            `event_radar:${runtimeTruth.official_execution_layers?.event_radar || '-'}`,
+            `catalog:${runtimeTruth.official_execution_layers?.catalog_status || '-'}`,
+          ].join(' · '))}</small>
+        </div>
+        <div class="provenance-list-row">
+          <span>Interpretation Source Coverage</span>
+          <strong>${escapeHtml(sourceCoverage.source_pack_status || '-')}</strong>
+          <small>${escapeHtml([
+            `runtime_visibility_status:${sourceCoverage.runtime_visibility_status || '-'}`,
+            `markers:${(sourceCoverage.proven_runtime_markers || []).join(' / ') || '-'}`,
+          ].join(' · '))}</small>
         </div>
       </div>
     </section>
@@ -5429,7 +5590,21 @@ function renderVimshottariAnalysisBlock(analysis) {
 function renderRemediesTab(chartData) {
   const sec = document.getElementById('remedies-section');
   if (!sec) return;
-  const remedies = chartData?.remedies || chartData?._extended?.remedies;
+  const workflow = chartData?._consultationWorkflow;
+  const auditedRemedies = workflow?.audited_remedies;
+  const remedies = chartData?.remedies || chartData?._extended?.remedies || (
+    auditedRemedies?.status === 'ok'
+      ? {
+          recommendations: auditedRemedies.raw?.recommendations || auditedRemedies.raw || {},
+          evidence_chain: {
+            source: auditedRemedies.source || 'strict_audit_gate',
+            topic: auditedRemedies.topic || 'general',
+            active_dasha_lord: auditedRemedies.active_dasha_lord || '',
+            gate: 'strict_audit_gate',
+          },
+        }
+      : null
+  );
   if (!remedies) {
     sec.innerHTML = `
       <div class="remedies-empty">
@@ -5452,6 +5627,9 @@ function renderRemediesTab(chartData) {
   const primaryDonation = donations[0];
   const primaryLifestyle = lifestyle[0];
   const totalActions = gems.length + mantras.length + donations.length + fasting.length + lifestyle.length + doshaRemedies.length;
+  const auditedHeader = auditedRemedies?.status === 'ok'
+    ? `<div class="workflow-summary-card"><strong>统一主链补救</strong><p>来源 ${escapeHtml(auditedRemedies.source || 'strict_audit_gate')} · 主题 ${escapeHtml(auditedRemedies.topic || 'general')} · 当前主运 ${escapeHtml(auditedRemedies.active_dasha_lord || '-')}</p></div>`
+    : '';
 
   const renderActionCards = (items, mapper) => items.map(item => {
     const mapped = mapper(item);
@@ -5516,6 +5694,7 @@ function renderRemediesTab(chartData) {
   `).join('');
 
   sec.innerHTML = `
+    ${auditedHeader}
     <div class="remedies-dashboard">
       <div class="remedies-hero">
         <div>
@@ -7015,8 +7194,13 @@ function renderPrashnaTab(chartData) {
   const result = $('prashna-result');
   const runBtn = $('btn-run-prashna');
   if (!category || !question || !result || !runBtn) return;
+  const workflow = chartData?._consultationWorkflow;
   renderPrashnaCaseWorkspace();
   setupPrashnaCaseActions();
+  if (workflow?.prashna) {
+    result.innerHTML = renderPrashnaResult(workflow.prashna, workflow.prashna.question || workflow.question || '');
+    bindTerms(result);
+  }
 
   if (!runBtn.dataset.bound) {
     runBtn.dataset.bound = 'true';

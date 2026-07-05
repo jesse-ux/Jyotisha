@@ -71,6 +71,19 @@ def test_quality_gate_runs_interpretation_source_inventory_gate() -> None:
 
     assert '"scripts/interpretation_source_inventory_gate.py"' in quality_gate
     assert '[PYTHON, "scripts/interpretation_source_inventory_gate.py"]' in quality_gate
+    assert '"scripts/sync_final_evidence_packet_status.py"' in quality_gate
+    assert '[PYTHON, "scripts/sync_final_evidence_packet_status.py"]' in quality_gate
+    assert '"scripts/diagnose_external_engine_adapters.py"' in quality_gate
+    assert '[PYTHON, "scripts/diagnose_external_engine_adapters.py", "--json"]' in quality_gate
+    assert '"runtime-truth"' in quality_gate
+    assert "tests/test_interpretation_source_runtime_coverage.py" in quality_gate
+    assert "tests/test_final_jhora_evidence_packet_acceptance.py" in quality_gate
+    assert (
+        'elif args.profile == "runtime-truth":\n'
+        "        pytest_targets = RUNTIME_TRUTH_PYTEST_TARGETS\n"
+        "    else:\n"
+        "        pytest_targets = CORE_PYTEST_TARGETS"
+    ) in quality_gate
 
 
 def test_interpretation_source_inventory_gate_classifies_full_candidate_pool() -> None:

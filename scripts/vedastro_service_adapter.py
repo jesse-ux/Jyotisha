@@ -2389,6 +2389,13 @@ def _normalize_official_full_snapshot_success(
         "operation": "official_full_snapshot",
         "primary_source": "vedastro_official",
         "snapshot_sections": sections,
+        "raw_response": {
+            "source": "vedastro_official_full_snapshot",
+            "sections": sections,
+            "section_statuses": section_statuses,
+            "request_manifest": manifest,
+            "response_hash": metadata["response_hash"],
+        },
         "official_chart": _build_official_chart_from_snapshot(sections),
         "official_full_capability_catalog": official_full_capability_catalog or {},
         "section_statuses": section_statuses,

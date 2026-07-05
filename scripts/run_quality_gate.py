@@ -35,6 +35,7 @@ EXTRA_COMPILE_TARGETS = [
     ROOT / "scripts" / "oracle_boundary_audit.py",
     ROOT / "scripts" / "oracle_collection_queue.py",
     ROOT / "scripts" / "oracle_evidence_validator.py",
+    ROOT / "scripts" / "sync_final_evidence_packet_status.py",
     ROOT / "scripts" / "deployment_preflight.py",
     ROOT / "tests" / "run_golden_cases.py",
     ROOT / "tests" / "run_real_case_revalidation.py",
@@ -51,6 +52,17 @@ CORE_PYTEST_TARGETS = [
     "tests/test_oracle_collection_queue.py",
     "tests/test_oracle_evidence_validator.py",
     "tests/test_external_oracle_sanity_closure.py",
+]
+
+RUNTIME_TRUTH_PYTEST_TARGETS = [
+    "tests/test_api_server_security.py::test_high_rigor_vedastro_official_summary_passes_through_contract_fields",
+    "tests/test_api_server_security.py::test_high_rigor_vedastro_official_summary_exposes_top_reader_contract_from_full_snapshot",
+    "tests/test_vedastro_external_technique_evidence.py::test_strict_workflow_uses_shared_consultation_executor",
+    "tests/test_vedastro_runtime_mode_diagnostics.py",
+    "tests/test_interpretation_source_inventory_gate.py::test_quality_gate_runs_interpretation_source_inventory_gate",
+    "tests/test_interpretation_source_runtime_coverage.py",
+    "tests/test_final_jhora_evidence_packet_acceptance.py",
+    "tests/test_frontend_productization.py::test_result_page_surfaces_workflow_summary_and_provenance_detail",
 ]
 
 RELEASE_CRITICAL_UNTRACKED_PATHS = [
@@ -159,6 +171,19 @@ QUALITY_GATE_PROFILES = {
         "skip_oracle_audit": True,
         "skip_local_accuracy_report": True,
         "skip_vedastro_live": False,
+    },
+    "runtime-truth": {
+        "skip_slow": True,
+        "skip_yoga_logic": True,
+        "skip_frontend_runtime": True,
+        "skip_frontend_click": True,
+        "frontend_click_mode": "core",
+        "check_release_hygiene": False,
+        "skip_real_cases": True,
+        "skip_dasha_audit": True,
+        "skip_oracle_audit": True,
+        "skip_local_accuracy_report": True,
+        "skip_vedastro_live": True,
     },
 }
 
@@ -287,18 +312,14 @@ def format_failure_summary(
 def run(cmd: list[str], *, optional: bool = False, step: str | None = None, cwd: Path = ROOT) -> bool:
     label = step or " ".join(cmd[:2])
     print(f"\n$ {' '.join(cmd)}")
-    completed = subprocess.run(cmd, cwd=cwd, text=True, capture_output=True)
-    if completed.stdout:
-        print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n")
-    if completed.stderr:
-        print(completed.stderr, end="" if completed.stderr.endswith("\n") else "\n", file=sys.stderr)
+    completed = subprocess.run(cmd, cwd=cwd, text=True)
     if completed.returncode == 0:
         return True
     if optional:
         print(f"Optional step failed with exit code {completed.returncode}; continuing.")
         return False
     print(
-        format_failure_summary(label, cmd, completed.returncode, stdout=completed.stdout, stderr=completed.stderr, cwd=cwd),
+        format_failure_summary(label, cmd, completed.returncode, stdout="", stderr="", cwd=cwd),
         file=sys.stderr,
     )
     raise SystemExit(completed.returncode)
@@ -459,7 +480,7 @@ def run_profile(args: argparse.Namespace) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Jyotish skill quality gate")
-    parser.add_argument("--profile", choices=["quick", "browser", "release", "accuracy", "vedastro-live"], default="browser", help="Quality gate profile: quick, browser, release, accuracy, or vedastro-live")
+    parser.add_argument("--profile", choices=["quick", "browser", "release", "accuracy", "vedastro-live", "runtime-truth"], default="browser", help="Quality gate profile: quick, browser, release, accuracy, vedastro-live, or runtime-truth")
     parser.add_argument("--skip-slow", action="store_true", help="Skip slow golden-case regressions")
     parser.add_argument("--skip-yoga-logic", action="store_true", help="Skip Yoga logic comparison report refresh")
     parser.add_argument("--skip-frontend-runtime", action="store_true", help="Skip frontend build and runtime smoke")
@@ -478,17 +499,37 @@ def main() -> int:
     os.environ.setdefault("PYTHONPATH", str(ROOT / "scripts"))
     print(f"\n== Quality gate profile: {args.profile} ==")
     print(json.dumps(profile, ensure_ascii=False, indent=2))
-    compile_targets()
-    validate_json_files()
-    run([PYTHON, "scripts/audit_capabilities.py", "--mode", "validate"])
-    run([PYTHON, "scripts/audit_fragments.py", "--strict"])
-    run([PYTHON, "scripts/interpretation_source_inventory_gate.py"])
-    run([PYTHON, "scripts/character_level_inventory_manifest.py", "--scope", "project", "--no-write", "--summary-only"])
-    run([PYTHON, "scripts/deployment_preflight.py"])
-    if profile["check_release_hygiene"]:
-        release_hygiene_check()
-    run([PYTHON, "scripts/validate_bphs_invariants.py"])
-    pytest_targets = ["tests"] if args.all_tests else CORE_PYTEST_TARGETS
+    if args.profile == "runtime-truth":
+        for target in [
+            ROOT / "scripts" / "jyotish_api_server.py",
+            ROOT / "scripts" / "diagnose_vedastro_mode.py",
+            ROOT / "scripts" / "diagnose_external_engine_adapters.py",
+            ROOT / "scripts" / "interpretation_source_runtime_coverage.py",
+            ROOT / "scripts" / "sync_final_evidence_packet_status.py",
+        ]:
+            py_compile.compile(str(target), doraise=True)
+            print(f"compiled {target.relative_to(ROOT)}")
+        run([PYTHON, "scripts/sync_final_evidence_packet_status.py"])
+        run([PYTHON, "scripts/interpretation_source_inventory_gate.py"])
+        run([PYTHON, "scripts/diagnose_vedastro_mode.py", "--json"])
+        run([PYTHON, "scripts/diagnose_external_engine_adapters.py", "--json"])
+    else:
+        compile_targets()
+        validate_json_files()
+        run([PYTHON, "scripts/audit_capabilities.py", "--mode", "validate"])
+        run([PYTHON, "scripts/audit_fragments.py", "--strict"])
+        run([PYTHON, "scripts/interpretation_source_inventory_gate.py"])
+        run([PYTHON, "scripts/character_level_inventory_manifest.py", "--scope", "project", "--no-write", "--summary-only"])
+        run([PYTHON, "scripts/deployment_preflight.py"])
+        if profile["check_release_hygiene"]:
+            release_hygiene_check()
+        run([PYTHON, "scripts/validate_bphs_invariants.py"])
+    if args.all_tests:
+        pytest_targets = ["tests"]
+    elif args.profile == "runtime-truth":
+        pytest_targets = RUNTIME_TRUTH_PYTEST_TARGETS
+    else:
+        pytest_targets = CORE_PYTEST_TARGETS
     run([PYTHON, "-m", "pytest", *pytest_targets])
     if not profile["skip_frontend_runtime"]:
         run(["npm", "run", "build"], optional=False, cwd=APP)

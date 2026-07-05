@@ -73,8 +73,10 @@ def execute_consultation_workflow(
     )
     executed_steps = []
     known_steps = [
+        'run_prashna',
         'compute_chart',
         'run_rectification_gate',
+        'run_muhurta_panchanga',
         'run_historical_event_backtest',
         'run_thematic_report',
     ]
@@ -89,16 +91,45 @@ def execute_consultation_workflow(
             'executed_steps': [],
             'skipped_steps': known_steps,
         }
+        result['runtime_evidence_log'] = _UNIFIED_CONSULTATION_ORCHESTRATOR.runtime_evidence_log(
+            surface=surface,
+            entry_mode=entry_mode,
+            route_packet=route_packet,
+            executed_steps=[],
+            skipped_steps=known_steps,
+            blind=bool(body.get('blind') or body.get('blind_technical_mode')),
+        )
         if body.get('return_high_rigor_shape'):
             result['endpoint'] = 'high_rigor_workflow'
         return result
 
     chart = dict(chart_override) if isinstance(chart_override, dict) else {}
+    prashna = {}
     rectification = {}
+    muhurta_panchanga = {}
     computed_chart = bool(chart)
 
     for step in runtime_planner.get('sync_steps', []):
-        if step == 'run_rectification_gate':
+        if step == 'run_prashna':
+            prashna = handler._compute_prashna({
+                **birth_payload,
+                'question': body.get('question', 'general'),
+                'question_text': body.get('question_text', ''),
+                'horary_number': body.get('horary_number'),
+                'planets': body.get('planets', {}),
+                'asc_degree': body.get('asc_degree', 15.5),
+            })
+            executed_steps.append('run_prashna')
+        elif step == 'run_muhurta_panchanga':
+            muhurta_panchanga = handler._compute_muhurta_panchanga({
+                **birth_payload,
+                'reference_date': body.get('reference_date') or body.get('transit_date') or body.get('today') or body.get('current_date'),
+                'question': question,
+                'themes': themes,
+                'activity': body.get('muhurta_activity'),
+            })
+            executed_steps.append('run_muhurta_panchanga')
+        elif step == 'run_rectification_gate':
             chart_planets = chart.get('planets') if isinstance(chart, dict) else {}
             chart_ascendant = chart.get('ascendant') if isinstance(chart, dict) else {}
             rectification = handler._compute_rectification_gate({
@@ -121,6 +152,8 @@ def execute_consultation_workflow(
         executed_steps.append('run_historical_event_backtest')
 
     chart_for_theme = dict(chart) if isinstance(chart, dict) else {}
+    if entry_mode == 'prashna' and isinstance(prashna, dict):
+        chart_for_theme.setdefault('prashna', prashna)
     if isinstance(chart_for_theme.get('modules'), dict):
         chart_for_theme.update(chart_for_theme.get('modules', {}).get('chart') or {})
 
@@ -128,6 +161,7 @@ def execute_consultation_workflow(
     prompt_snapshot = (((chart.get('ai_prompt_pack') or {}).get('evidence_snapshot')) or {}) if isinstance(chart, dict) else {}
     strict_workflow_contracts = prompt_snapshot.get('strict_workflow_contracts') if isinstance(prompt_snapshot.get('strict_workflow_contracts'), dict) else {}
     chart_guided_topics = modules.get('guided_topics') if isinstance(modules.get('guided_topics'), list) else []
+    audited_remedies = handler._build_audited_remedies_from_guided_topics(chart_guided_topics)
 
     thematic_report = {}
     if 'run_thematic_report' in runtime_planner.get('sync_steps', []):
@@ -149,7 +183,30 @@ def execute_consultation_workflow(
         executed_steps.append('run_thematic_report')
 
     vedastro_official = handler._high_rigor_vedastro_official_summary(chart)
+    runtime_truth = vedastro_official.get('runtime_truth') if isinstance(vedastro_official.get('runtime_truth'), dict) else {}
+    interpretation_source_runtime_coverage = handler._interpretation_source_runtime_coverage(chart)
     skipped_steps = [step for step in known_steps if step not in executed_steps]
+    machine_evidence_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.machine_evidence_packet(
+        chart=chart,
+        route_packet=route_packet,
+        vedastro_official=vedastro_official,
+    )
+    real_case_calibration = _UNIFIED_CONSULTATION_ORCHESTRATOR.real_case_calibration_catalog(
+        route_packet=route_packet,
+        machine_evidence_packet=machine_evidence_packet,
+    )
+    runtime_evidence_log = _UNIFIED_CONSULTATION_ORCHESTRATOR.runtime_evidence_log(
+        surface=surface,
+        entry_mode=entry_mode,
+        route_packet=route_packet,
+        executed_steps=executed_steps,
+        skipped_steps=skipped_steps,
+        vedastro_official=vedastro_official,
+        interpretation_source_runtime_coverage=interpretation_source_runtime_coverage,
+        machine_evidence_packet=machine_evidence_packet,
+        real_case_calibration=real_case_calibration,
+        blind=bool(body.get('blind') or body.get('blind_technical_mode')),
+    )
 
     result = {
         'success': True,
@@ -187,7 +244,15 @@ def execute_consultation_workflow(
         'rectification': rectification,
         'historical_event_backtest': historical_backtest,
         'thematic_report': thematic_report,
+        'prashna': prashna,
+        'muhurta_panchanga': muhurta_panchanga,
+        'audited_remedies': audited_remedies,
         'vedastro_official': vedastro_official,
+        'runtime_truth': runtime_truth,
+        'interpretation_source_runtime_coverage': interpretation_source_runtime_coverage,
+        'machine_evidence_packet': machine_evidence_packet,
+        'real_case_calibration': real_case_calibration,
+        'runtime_evidence_log': runtime_evidence_log,
         'next_questions': handler._high_rigor_next_questions(rectification, historical_backtest),
         'boundary': (
             'This endpoint composes existing project workflows. It does not claim that every VedAstro callable '
@@ -242,6 +307,15 @@ def _api_chart_cache_ttl_seconds() -> float:
     except ValueError:
         ttl = 900.0
     return max(ttl, 0.0)
+
+
+def _free_tier_queue_enabled_env() -> bool:
+    raw_values = [
+        str(os.environ.get("VEDASTRO_FREE_TIER_QUEUE", "")).strip().lower(),
+        str(os.environ.get("VEDASTRO_FREE_TIER_QUEUE_ENABLED", "")).strip().lower(),
+        str(os.environ.get("VEDASTRO_ENABLE_FREE_TIER_QUEUE", "")).strip().lower(),
+    ]
+    return any(value in {"1", "true", "yes", "on"} for value in raw_values)
 
 
 def _vedastro_runtime_fingerprint() -> dict:
@@ -1623,6 +1697,47 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             surface=body.get('surface', 'api_web'),
         )
 
+    def _build_audited_remedies_from_guided_topics(self, guided_topics):
+        if not isinstance(guided_topics, list):
+            return {'status': 'blocked', 'reason': 'guided_topics_missing'}
+        selected_gate = None
+        selected_topic = None
+        for topic in guided_topics:
+            if not isinstance(topic, dict):
+                continue
+            gate = topic.get('strict_audit_gate')
+            if isinstance(gate, dict):
+                selected_gate = gate
+                selected_topic = topic
+                break
+        if not isinstance(selected_gate, dict):
+            return {'status': 'blocked', 'reason': 'strict_audit_gate_missing'}
+        strength_context = selected_gate.get('strength_context') if isinstance(selected_gate.get('strength_context'), dict) else {}
+        dosha_context = selected_gate.get('dosha_context') if isinstance(selected_gate.get('dosha_context'), list) else []
+        active_dasha_lord = selected_gate.get('active_dasha_lord') if isinstance(selected_gate.get('active_dasha_lord'), str) else ''
+        if not strength_context:
+            return {'status': 'blocked', 'reason': 'strength_context_missing', 'source': 'strict_audit_gate'}
+        payload = self._compute_remedies({
+            'shadbala': strength_context,
+            'doshas': dosha_context,
+            'dasha_lord': active_dasha_lord,
+        })
+        if not isinstance(payload, dict):
+            payload = {'recommendations': payload}
+        return {
+            'status': 'ok',
+            'source': 'strict_audit_gate',
+            'topic': (
+                selected_gate.get('topic')
+                or selected_topic.get('id')
+                or selected_topic.get('title')
+                or 'general'
+            ),
+            'active_dasha_lord': active_dasha_lord,
+            'recommendations': payload.get('recommendations') or payload,
+            'raw': payload,
+        }
+
     def _compute_high_rigor_workflow_sync(self, body):
         body_copy = dict(body or {})
         body_copy.pop('async', None)
@@ -1969,6 +2084,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if not isinstance(prompt_full_snapshot, dict):
             prompt_full_snapshot = {}
         modules = chart.get('modules') if isinstance(chart, dict) else {}
+        if not isinstance(modules, dict):
+            modules = {}
         range_scan = modules.get('vedastro_range_scan_result') if isinstance(modules, dict) else {}
         if not isinstance(range_scan, dict):
             range_scan = {}
@@ -1976,6 +2093,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         official_snapshot = range_scan.get('official_full_snapshot') if isinstance(range_scan, dict) else {}
         if not isinstance(official_snapshot, dict):
             official_snapshot = {}
+        if not official_snapshot and isinstance(modules.get('vedastro_official_full_snapshot'), dict):
+            official_snapshot = modules.get('vedastro_official_full_snapshot') or {}
         metadata = official_snapshot.get('source_metadata') if isinstance(official_snapshot, dict) else {}
         catalog = metadata.get('official_full_capability_catalog') if isinstance(metadata, dict) else {}
         if not isinstance(catalog, dict):
@@ -2024,13 +2143,94 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 if isinstance(selection, dict) and isinstance(selection.get('report_reference'), dict)
             }
         )
-        return {
-            'status': (
-                prompt_official.get('status')
-                or official_snapshot.get('status')
-                or range_scan.get('status')
-                or 'blocked'
+        status = (
+            prompt_official.get('status')
+            or official_snapshot.get('status')
+            or range_scan.get('status')
+            or 'blocked'
+        )
+        chart_core_status = 'blocked'
+        official_primary_evidence = (
+            primary_contract.get('official_primary_evidence')
+            or prompt_official.get('official_primary_evidence')
+            or {}
+        )
+        if not isinstance(official_primary_evidence, dict):
+            official_primary_evidence = {}
+        chart_core = official_primary_evidence.get('chart_core')
+        if isinstance(chart_core, dict) and chart_core.get('status'):
+            chart_core_status = chart_core.get('status')
+        elif full_snapshot_payload.get('available'):
+            chart_core_status = 'ok'
+        event_radar_status = 'blocked'
+        if (
+            prompt_official.get('blocked_items')
+            or prompt_official.get('fallback_used')
+            or prompt_official.get('conflicts')
+        ):
+            event_radar_status = 'partial'
+        elif range_scan.get('status') == 'ok':
+            event_radar_status = 'ok'
+        elif range_scan.get('status'):
+            event_radar_status = 'partial'
+        runtime_truth = {
+            'status': status,
+            'catalog_boundary': 'catalog_recognized_not_full_runtime_execution',
+            'primary_route': strict_workflow_primary_route or _selected_route,
+            'routes_available': strict_workflow_routes_available,
+            'official_execution_layers': {
+                'chart_core': chart_core_status,
+                'event_radar': event_radar_status,
+                'catalog_status': (
+                    prompt_official.get('official_full_capability_catalog_status')
+                    or catalog.get('status')
+                    or range_metadata.get('official_full_capability_catalog_status')
+                    or official_snapshot.get('status')
+                    or 'blocked'
+                ),
+            },
+            'fallback_active': bool(
+                primary_contract.get('fallback_used')
+                or prompt_official.get('fallback_used')
             ),
+            'blocked_items': (
+                primary_contract.get('blocked_items')
+                or prompt_official.get('blocked_items')
+                or []
+            ),
+            'conflicts': (
+                primary_contract.get('conflicts')
+                or prompt_official.get('conflicts')
+                or []
+            ),
+            'free_tier_strategy': {
+                'using_free_tier': not bool(os.environ.get('VEDASTRO_API_KEY', '').strip()),
+                'queue_enabled': _free_tier_queue_enabled_env(),
+                'cache_hit': bool(
+                    (((official_snapshot.get('source_metadata') or {}).get('semantic_cache') or {}).get('cache_hit'))
+                    if isinstance(official_snapshot, dict)
+                    else False
+                ),
+                'guard_status': (
+                    'degraded_or_partial'
+                    if status in {'partial', 'blocked', 'official_snapshot_budget_exhausted'}
+                    or bool(prompt_official.get('blocked_items'))
+                    else 'within_free_tier_strategy'
+                ),
+            },
+        }
+        raw_response = (
+            official_snapshot.get('raw_response')
+            or official_snapshot.get('official_raw_response')
+            or official_snapshot.get('raw_payload')
+            or official_snapshot.get('raw')
+            or prompt_full_snapshot.get('raw_response')
+            or prompt_full_snapshot.get('official_raw_response')
+            or prompt_full_snapshot.get('raw_payload')
+            or prompt_full_snapshot.get('raw')
+        )
+        return {
+            'status': status,
             'range_scan_status': range_scan.get('status') if isinstance(range_scan, dict) else None,
             'event_count': int(range_scan.get('event_count', 0) or 0) if isinstance(range_scan, dict) else 0,
             'official_full_capability_catalog_status': (
@@ -2090,12 +2290,58 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'verdict': primary_contract.get('verdict'),
             'dominant_label': primary_contract.get('dominant_label'),
             'main_conflicts': primary_contract.get('main_conflicts') or primary_contract.get('conflicts') or [],
+            'runtime_truth': runtime_truth,
+            'raw_response': raw_response,
             'boundary': 'VedAstro official snapshot and capability catalog are consumed as primary evidence metadata; execution breadth depends on configured network and sample limits.',
+        }
+
+    def _interpretation_source_runtime_coverage(self, chart):
+        modules = chart.get('modules') if isinstance(chart, dict) else {}
+        if not isinstance(modules, dict):
+            modules = {}
+        prompt_pack = chart.get('ai_prompt_pack') if isinstance(chart, dict) else {}
+        evidence_snapshot = prompt_pack.get('evidence_snapshot') if isinstance(prompt_pack, dict) else {}
+        interpretation_pack = evidence_snapshot.get('interpretation_source_pack') if isinstance(evidence_snapshot.get('interpretation_source_pack'), dict) else {}
+        candidates = {
+            'dasha_timing_layer_used',
+            'varga_strength_layer_used',
+            'annual_special_layer_context',
+            'modifier_obstacle_layer_used',
+        }
+        proven_markers = []
+        guided_topics = modules.get('guided_topics') if isinstance(modules.get('guided_topics'), list) else []
+        for topic in guided_topics:
+            if not isinstance(topic, dict):
+                continue
+            strict_gate = topic.get('strict_audit_gate')
+            if not isinstance(strict_gate, dict):
+                continue
+            secondary = strict_gate.get('secondary_context')
+            if not isinstance(secondary, list):
+                continue
+            for item in secondary:
+                if isinstance(item, str) and item in candidates and item not in proven_markers:
+                    proven_markers.append(item)
+        return {
+            'source_pack_status': interpretation_pack.get('status') or 'used',
+            'proven_runtime_markers': proven_markers,
+            'runtime_visibility_status': 'partial' if proven_markers else 'blocked',
+            'not_fully_closed': [
+                'references/open_source_sources/jyotishganit',
+                'references/open_source_sources/jaimini-tropical',
+                'references/open_source_sources/VedicAstro',
+                'references/open_source_sources/rishi-ai-mcp',
+                'references/open_source_sources/vedic-astro-skills',
+                'references/open_source_sources/dashaflow',
+            ],
+            'boundary': 'Inventory/grading exists, but full runtime invocation is only proven for surfaced strict-workflow markers, not every local source asset.',
         }
 
     def _high_rigor_next_questions(self, rectification, historical_backtest):
         questions = []
         summary = rectification.get('summary') if isinstance(rectification, dict) else {}
+        if not isinstance(summary, dict):
+            summary = {}
         for item in summary.get('recommended_events') or []:
             questions.append({
                 'type': 'yes_no_or_date',
@@ -5423,6 +5669,42 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         except ValueError as e:
             raise BadRequest(str(e)) from e
         return {'success': True, 'endpoint': 'panchanga_range', 'report': report}
+
+    def _compute_muhurta_panchanga(self, body):
+        reference_date = body.get('reference_date') or body.get('transit_date') or body.get('today') or datetime.now().strftime('%Y-%m-%d')
+        if not isinstance(reference_date, str):
+            raise BadRequest('reference_date must be a string')
+        date_str = reference_date[:10]
+        try:
+            datetime.strptime(date_str, '%Y-%m-%d')
+        except ValueError as e:
+            raise BadRequest('reference_date must be YYYY-MM-DD') from e
+        raw_activity = body.get('activity')
+        if raw_activity is not None and not isinstance(raw_activity, str):
+            raise BadRequest('activity must be a string')
+        activity = (raw_activity or '').strip().lower()
+        question_text = str(body.get('question') or '')
+        themes = body.get('themes') if isinstance(body.get('themes'), list) else []
+        if activity not in {'marriage', 'business', 'travel', 'medical', 'education'}:
+            if 'marriage' in themes or any(token in question_text for token in ('婚', '恋', 'marry', 'wedding', 'relationship')):
+                activity = 'marriage'
+            elif any(token in question_text for token in ('travel', '迁移', '搬家', '出行')):
+                activity = 'travel'
+            elif any(token in question_text for token in ('medical', '手术', '治疗', '健康')):
+                activity = 'medical'
+            elif any(token in question_text for token in ('education', '学习', '考试', '申请')):
+                activity = 'education'
+            else:
+                activity = 'business'
+        muhurta = _load_local_module('muhurta')
+        return muhurta.build_muhurta_sidecar(
+            date_str=date_str,
+            activity=activity,
+            lat=self._get_float(body, 'lat', 0, -90, 90),
+            lon=self._get_float(body, 'lon', 0, -180, 180),
+            tz=self._get_float(body, 'tz', 0, -14, 14),
+            ayanamsa_name=body.get('ayanamsa', 'lahiri'),
+        )
 
     def _compute_rectification_gate(self, body):
         asc_lon = self._asc_lon_from_body(body)

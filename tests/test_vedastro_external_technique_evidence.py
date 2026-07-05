@@ -442,6 +442,15 @@ def test_strict_workflow_uses_shared_consultation_executor(monkeypatch) -> None:
         "rectification": {"success": True, "endpoint": "rectification_gate"},
         "thematic_report": {"success": True, "endpoint": "thematic_report"},
         "vedastro_official": {"available": True},
+        "runtime_truth": {
+            "catalog_boundary": "catalog_recognized_not_full_runtime_execution",
+            "official_execution_layers": {"chart_core": "ok", "event_radar": "partial"},
+        },
+        "interpretation_source_runtime_coverage": {
+            "source_pack_status": "used",
+            "proven_runtime_markers": ["dasha_timing_layer_used"],
+            "runtime_visibility_status": "partial",
+        },
     }
     seen = {}
 
@@ -468,5 +477,8 @@ def test_strict_workflow_uses_shared_consultation_executor(monkeypatch) -> None:
 
     assert seen["entry_mode"] == "direct_chart"
     assert seen["question"] == "我的财务今年如何？"
+    assert result["runtime_truth"]["official_execution_layers"]["chart_core"] == "ok"
+    assert result["interpretation_source_runtime_coverage"]["source_pack_status"] == "used"
+    assert result["interpretation_source_runtime_coverage"]["runtime_visibility_status"] == "partial"
     assert result["runtime_planner"]["surface"] == "skill_mcp"
     assert result["routing"]["question_type"] == "finance"
