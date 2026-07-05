@@ -54,6 +54,28 @@ This is a **Vedic (Jyotish) astrology analysis system** designed for deep, audit
 
 ## Quick Start
 
+### 用户不知道问什么时
+
+不要让用户自己组织提示词。用户只给出生信息时，AI 应用应默认执行：
+
+1. 调用统一入口：`/api/consultation_workflow` 或 MCP `strict_workflow`。
+2. 先生成 `evidence_packet`、`guided_topics`、`Technique Audit Table`。
+3. 把 `guided_topics` 里的建议主题展示给用户，按优先级给出可直接点击/复制的问题。
+4. 用户选题后再进入 `strict_workflow` 做事业、婚恋、财富、健康或 timing 专题。
+
+默认引导话术：
+
+```text
+你不用先想问题。我会先根据出生信息运行统一主链，生成证据包和系统建议主题。
+然后我会列出最值得继续看的 3-5 个方向，每个方向附数据依据、置信度和可直接提问的问题。
+```
+
+如果 AI 应用只能调用一个入口，优先用：
+
+```bash
+python3 scripts/vedastro_user_entrypoint.py --year YYYY --month MM --day DD --hour HH --minute mm --lat LAT --lon LON --tz TZ --question "请先生成 guided_topics 并推荐我最值得看的问题" --themes career,marriage,wealth --format markdown
+```
+
 ### 普通用户启动路径
 
 如果只是打开网页/app，请按同一条路径走，不要在多个入口之间猜：

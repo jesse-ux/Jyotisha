@@ -38,9 +38,10 @@
     ],
     "websiteURL": "https://github.com/732642856/yinduzhanxing",
     "defaultPrompt": [
-      "用印度占星项目分析这个出生信息。",
-      "先做生时校正，再看婚恋与事业。",
-      "调用 Jyotish MCP 工具输出严格工作流结果。"
+      "用户如果只提供出生信息、没有具体问题，请不要要求用户自己想问题。",
+      "先调用 Jyotish MCP / unified consultation workflow，生成 evidence packet、guided_topics 和 Technique Audit Table。",
+      "把 guided_topics 里的建议主题按优先级展示给用户，并提供可直接点击/复制的问题；用户选择后再进入 strict_workflow。",
+      "VedAstro 没有 raw_response 时必须标 official_blocked 或 local_fallback，不要声称云端闭环。"
     ],
     "brandColor": "#7C3AED"
   }

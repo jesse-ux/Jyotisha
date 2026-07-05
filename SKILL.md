@@ -56,6 +56,20 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 | **B：PDF/文字星盘** | PDF/详细文字描述 | 提取数据+Quality Gate → `references/pdf-chart-reading-guide.md` |
 | **C：时间不明确** | "不知道几点出生" | 互动式出生时间矫正 → 确认后走路径A |
 
+### 用户不会提问时的默认行为
+
+用户只给出生信息、没有具体问题时，不要反问“你想看什么”，也不要只输出模板解读。
+默认先运行统一主链生成 `evidence_packet`、`guided_topics` 与 `Technique Audit Table`，再把 `guided_topics`
+按优先级展示为可直接选择的问题。
+
+执行顺序：
+
+1. MCP/Skill 环境优先调用 `strict_workflow` 或统一 consultation workflow。
+2. `question` 可先填：`请先生成 guided_topics 并推荐我最值得看的问题`。
+3. 输出 3-5 个系统建议主题，每个主题必须带：数据依据、置信度、blocked/partial 项、可直接继续问的问题。
+4. 用户选择主题后，再按 career / relationship / wealth / health / timing strict workflow 进入专题。
+5. VedAstro 没有 `raw_response` 时，只能标 `official_blocked` 或 `local_fallback`，不得声称云端闭环。
+
 **强制工作流**（完整规范 → `references/ai-reading-workflow-prompt.md` v5.1.0）：
 
 0. **阶段负一**：问题类型路由（事业/婚恋/财务/应期/历史验证/综合解盘）→ 必须先读 `references/strict-workflow-router.md`，按对应 strict checklist 执行；用户不需要主动点名高级技法。
