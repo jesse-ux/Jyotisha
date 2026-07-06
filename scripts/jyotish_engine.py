@@ -47,7 +47,15 @@ import importlib.util
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from typing import Dict, List
-from tabulate import tabulate
+try:
+    from tabulate import tabulate
+except ModuleNotFoundError:  # pragma: no cover - minimal environments
+    def tabulate(rows, headers=(), tablefmt=None):
+        lines = []
+        if headers:
+            lines.append(" | ".join(str(item) for item in headers))
+        lines.extend(" | ".join(str(item) for item in row) for row in rows)
+        return "\n".join(lines)
 from life_stage_hook import generate_life_stage_hooks
 from capability_evidence_pool import build_capability_evidence_pool_summary
 from guided_topic_discovery import build_guided_topics
