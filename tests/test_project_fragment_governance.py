@@ -17,11 +17,14 @@ def test_pre_work_error_ledger_exists_and_names_repeat_failures() -> None:
         "ERR-009",
         "ERR-017",
         "ERR-018",
+        "ERR-019",
         "tests/test_runtime_import_boundaries.py",
         "tests/test_project_fragment_governance.py",
+        "tests/test_user_invocation_acceptance_contract.py",
         "docs/research/whole_machine_fragment_sweep_round25_2026_06_25.md",
         "scripts/diagnose_external_engine_adapters.py --json",
         "docs/research/external_engine_blocker_research_2026_07_05.md",
+        "docs/research/user_invocation_acceptance_error_log_2026_07_06.md",
     ]
     missing = [item for item in required if item not in text]
     assert missing == []

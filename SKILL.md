@@ -70,6 +70,14 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 4. 用户选择主题后，再按 career / relationship / wealth / health / timing strict workflow 进入专题。
 5. VedAstro 没有 `raw_response` 时，只能标 `official_blocked` 或 `local_fallback`，不得声称云端闭环。
 
+普通用户 / AI 应用调用前，先运行：
+
+```bash
+python3 scripts/user_invocation_acceptance_check.py
+```
+
+该命令必须返回 `"status": "pass"`，并显式列出 VedAstro / PyJHora-JHora / jyotishganit 的可用、partial 或 blocked 状态；否则不得声称云端 Git 仓库调用已可高质量使用。
+
 **强制工作流**（完整规范 → `references/ai-reading-workflow-prompt.md` v5.1.0）：
 
 0. **阶段负一**：问题类型路由（事业/婚恋/财务/应期/历史验证/综合解盘）→ 必须先读 `references/strict-workflow-router.md`，按对应 strict checklist 执行；用户不需要主动点名高级技法。
@@ -218,7 +226,7 @@ description: 印度占星（Jyotish）专业解盘与推运系统。核心能力
 
 **普通用户解释时必须显式区分基础排盘高可信与高阶绝对值待外部校准。**
 
-- Dasha-only 外部证据当前目标集已闭环：`dasha_external_oracle_evidence_validation.valid_dasha_packets: 3/3`；Steve Jobs / Lahiri、REDACTED_YEAR Lahiri 模板与 1800 Delhi historical epoch 的 Vimshottari 起始边界来自 PyJHora 4.8.7 隔离黑盒 stdout artifact。
+- Dasha-only 外部证据当前目标集已闭环：`dasha_external_oracle_evidence_validation.valid_dasha_packets: 3/3`；Steve Jobs / Lahiri、synthetic Lahiri template 与 1800 Delhi historical epoch 的 Vimshottari 起始边界来自 PyJHora 4.8.7 隔离黑盒 stdout artifact。
 - 全局 Dasha/Shadbala Calibration Status 仍未完成：`external_oracle_evidence_validation.valid_packets: 4`，`ready_for_calibration: 4`；Shadbala 外部绝对值当前目标集已通过 4/4，Raman 扩展样本与非 Dasha 靶点尚未封顶。
 - 历史 UI 静态门禁仍保留旧提示 `ready_for_calibration: 0` 作为“不得过度宣称”的保守文案；实际进度必须以当前 `oracle_collection_queue.py` / `oracle_evidence_validator.py` 输出为准。
 - Tajika/Sahams 年运外部样本已开始闭环：`tajika_sahams_annual_benchmark_dashboard.ready_for_calibration: 1/5`；Steve Jobs 1984 Varshaphala/Lahiri 的 solar return、Varsha Lagna、Muntha、Year Lord、Mudda Dasha 首主、三项 Sahams 与 Tajika Yogas 已由 PyJHora 4.8.7 隔离黑盒 artifact 验证，下一优先级为 Einstein 1905。仍不得声称 Tajika/Sahams 年运体系已全局封顶。

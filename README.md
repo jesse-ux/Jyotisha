@@ -76,6 +76,15 @@ This is a **Vedic (Jyotish) astrology analysis system** designed for deep, audit
 python3 scripts/vedastro_user_entrypoint.py --year YYYY --month MM --day DD --hour HH --minute mm --lat LAT --lon LON --tz TZ --question "请先生成 guided_topics 并推荐我最值得看的问题" --themes career,marriage,wealth --format markdown
 ```
 
+普通用户 / AI 应用从云端仓库加载后，先跑这一条验收：
+
+```bash
+python3 scripts/user_invocation_acceptance_check.py
+```
+
+只有输出 `"status": "pass"` 且外部引擎状态被明确标为 `available` / `partial` / `missing_dependency` 时，才继续做高严谨解盘。`VedAstro` 没有官方 `raw_response` 或 API key 时，必须保留 `official_blocked` / `local_fallback` 边界。
+```
+
 ### 普通用户启动路径
 
 如果只是打开网页/app，请按同一条路径走，不要在多个入口之间猜：
@@ -134,8 +143,8 @@ cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173
 
 ```bash
 python3 scripts/vedastro_user_entrypoint.py \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 49 \
-  --lat 36.42 --lon 114.2 --tz 8 \
+  --year YYYY --month MM --day DD --hour HH --minute mm \
+  --lat LAT --lon LON --tz TZ \
   --question "事业机会什么时候出现" \
   --themes career,marriage,wealth \
   --reference-date 2026-07-02 \
@@ -146,8 +155,8 @@ python3 scripts/vedastro_user_entrypoint.py \
 
 ```bash
 python3 scripts/vedastro_user_entrypoint.py \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 49 \
-  --lat 36.42 --lon 114.2 --tz 8 \
+  --year YYYY --month MM --day DD --hour HH --minute mm \
+  --lat LAT --lon LON --tz TZ \
   --question "事业机会什么时候出现" \
   --themes career,health,education,property,children,migration,prashna \
   --reference-date 2026-07-02 \
@@ -293,11 +302,11 @@ python3 scripts/local_accuracy_report.py --format json
 
 ```bash
 python3 scripts/dasha_reference_audit.py \
-  --year REDACTED_YEAR --month 4 --day 17 \
-  --hour 14 --minute 45 --second 20 \
-  --lat 36.466667 --lon 114.2 --tz 8 \
+  --year YYYY --month MM --day DD \
+  --hour HH --minute mm --second ss \
+  --lat LAT --lon LON --tz TZ \
   --target-start-date 1986-05-18 \
-  --target-source 印度占星1.pdf
+  --target-source third_party_chart.pdf
 ```
 
 该工具会输出当前 Vimshottari 起点、秒级出生时间敏感性、年长常数敏感性，以及对齐目标日期所需的 Moon sidereal longitude 偏移量。不要为单份 PDF 直接调生产常数；应先建立更大的 oracle 样本集，比较 ayanamsa、Moon sidereal longitude、Nakshatra 边界与 Vimshottari 起算口径。

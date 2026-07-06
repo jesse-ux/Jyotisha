@@ -49,6 +49,7 @@ For large architecture or release work, also read:
 | ERR-016 | Full `tests/test_api_server_security.py` can exceed the desktop outer timeout. | observed 2026-07-05 | Use focused API test slices during development; reserve full API file run for longer verification windows. |
 | ERR-017 | Pre-work gate could pass without checking the older Round 25 fragment sweep or aggregate external-engine adapter diagnostics. | mitigated 2026-07-05 | `scripts/pre_work_check.py` must require both whole-machine sweep docs and run `scripts/diagnose_external_engine_adapters.py --json` before substantial work. |
 | ERR-018 | External engine blockers can be described verbally but not carried into diagnostics. | mitigated 2026-07-05 | `diagnose_external_engine_adapters.py` must expose VedAstro closure plan and PyJHora/JHora install/license/ephemeris boundary; keep `docs/research/external_engine_blocker_research_2026_07_05.md` current. |
+| ERR-019 | WorkBuddy/cloud/local acceptance summaries can invent pass counts, stale asset counts, non-existent error docs, or wrong dasha windows. | mitigated 2026-07-06 | Read `docs/research/user_invocation_acceptance_error_log_2026_07_06.md`; run `scripts/user_invocation_acceptance_check.py` and `tests/test_user_invocation_acceptance_contract.py` before accepting ordinary-user skill invocation validation claims. |
 
 ## Fragment Sweep Command Set
 
