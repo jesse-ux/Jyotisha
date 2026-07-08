@@ -65,10 +65,10 @@ def test_dasha_accepts_birth_datetime_without_explicit_nakshatra() -> None:
 
 def test_dasha_accepts_second_for_auto_nakshatra_birth_datetime() -> None:
     birth_args = [
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
-        "--hour", "14",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
+        "--hour", "19",
         "--minute", "45",
         "--second", "20",
         "--lat", "37.7749",
@@ -79,8 +79,8 @@ def test_dasha_accepts_second_for_auto_nakshatra_birth_datetime() -> None:
     result = run_engine("dasha", *birth_args, "--today", "2026-06-24")
 
     assert result["birth_date"] == "1955-02-24"
-    assert result["birth_time"] == "19:15:00"
-    assert result["birth_datetime"] == "public sample birth datetime"
+    assert result["birth_time"] == "19:45:20"
+    assert result["birth_datetime"] == "1955-02-24 19:45:20"
 
 
 def test_dasha_timeline_uses_full_birth_clock_for_audit_datetimes() -> None:
@@ -88,9 +88,9 @@ def test_dasha_timeline_uses_full_birth_clock_for_audit_datetimes() -> None:
     base_args = [
         "dasha",
         "--moon-lon", moon_lon,
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
         "--lat", "37.7749",
         "--lon", "-122.4194",
         "--tz", "8",
@@ -100,18 +100,18 @@ def test_dasha_timeline_uses_full_birth_clock_for_audit_datetimes() -> None:
     midnight = run_engine(*base_args, "--hour", "0", "--minute", "0", "--second", "0")
     late = run_engine(*base_args, "--hour", "23", "--minute", "59", "--second", "59")
 
-    assert midnight["timeline"][0]["start_datetime"].startswith("1986-05-23T07:59:50")
-    assert late["timeline"][0]["start_datetime"].startswith("1986-05-24T07:59:49")
+    assert midnight["timeline"][0]["start_datetime"].startswith("1948-03-31T07:59:50")
+    assert late["timeline"][0]["start_datetime"].startswith("1948-04-01T07:59:49")
     assert midnight["timeline"][0]["start_datetime"] != late["timeline"][0]["start_datetime"]
     assert late["birth_datetime"] == "1955-02-24 23:59:59"
 
 
 def test_chart_accepts_second_and_preserves_birth_time_precision() -> None:
     birth_args = [
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
-        "--hour", "14",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
+        "--hour", "19",
         "--minute", "45",
         "--lat", "37.7749",
         "--lon", "-122.4194",
@@ -121,7 +121,7 @@ def test_chart_accepts_second_and_preserves_birth_time_precision() -> None:
     without_seconds = run_engine("chart", *birth_args)
     with_seconds = run_engine("chart", *birth_args, "--second", "20")
 
-    assert with_seconds["birth_info"]["time"] == "19:15:00"
+    assert with_seconds["birth_info"]["time"] == "19:45:20"
     assert with_seconds["birth_info"]["second"] == 20
     assert with_seconds["birth_info"]["julian_day"] > without_seconds["birth_info"]["julian_day"]
 
@@ -129,10 +129,10 @@ def test_chart_accepts_second_and_preserves_birth_time_precision() -> None:
 def test_chart_reports_richer_d1_dignity_labels_for_user_case() -> None:
     result = run_engine(
         "chart",
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
-        "--hour", "14",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
+        "--hour", "19",
         "--minute", "45",
         "--second", "20",
         "--lat", "37.7749",
@@ -140,7 +140,7 @@ def test_chart_reports_richer_d1_dignity_labels_for_user_case() -> None:
         "--tz", "8",
     )
 
-    assert result["planets"]["Jupiter"]["sign"] == "Virgo"
+    assert result["planets"]["Jupiter"]["sign"] == "Gemini"
     assert result["planets"]["Jupiter"]["status"] == "极敌(Great Enemy)"
 
 
@@ -218,10 +218,10 @@ def test_ashtakoot_table_mode_prints_readable_ascii_table() -> None:
 def test_full_reading_accepts_second_and_preserves_birth_time_precision() -> None:
     result = run_engine(
         "full-reading",
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
-        "--hour", "14",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
+        "--hour", "19",
         "--minute", "45",
         "--second", "20",
         "--lat", "37.7749",
@@ -241,10 +241,10 @@ def test_full_reading_accepts_second_and_preserves_birth_time_precision() -> Non
 def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     result = run_engine(
         "full-reading",
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
-        "--hour", "14",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
+        "--hour", "19",
         "--minute", "45",
         "--second", "20",
         "--lat", "37.7749",
@@ -464,12 +464,12 @@ def test_full_reading_summary_exposes_unified_stage_groups() -> None:
 def test_full_reading_prompt_pack_carries_compact_technique_audit_summary() -> None:
     result = run_engine(
         "full-reading",
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
-        "--hour", "14",
-        "--minute", "49",
-        "--lat", "36.42",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
+        "--hour", "19",
+        "--minute", "15",
+        "--lat", "37.7749",
         "--lon", "-122.4194",
         "--tz", "8",
         "--today", "2026-06-09",
@@ -488,12 +488,12 @@ def test_full_reading_prompt_pack_carries_compact_technique_audit_summary() -> N
 def test_full_reading_generates_guided_topics_from_real_evidence() -> None:
     result = run_engine(
         "full-reading",
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
-        "--hour", "14",
-        "--minute", "49",
-        "--lat", "36.42",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
+        "--hour", "19",
+        "--minute", "15",
+        "--lat", "37.7749",
         "--lon", "-122.4194",
         "--tz", "8",
         "--today", "2026-06-09",
@@ -615,12 +615,12 @@ def test_full_reading_guided_topics_can_carry_official_day_signal_summary() -> N
 def test_full_reading_preserves_official_daily_window_fields_in_range_scan_result() -> None:
     result = run_engine(
         "full-reading",
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
-        "--hour", "14",
-        "--minute", "49",
-        "--lat", "36.42",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
+        "--hour", "19",
+        "--minute", "15",
+        "--lat", "37.7749",
         "--lon", "-122.4194",
         "--tz", "8",
         "--today", "2026-06-30",
@@ -675,10 +675,10 @@ def test_full_reading_auto_attaches_vedastro_main_entry_boundary() -> None:
 def test_full_reading_exposes_sensitive_point_modules() -> None:
     result = run_engine(
         "full-reading",
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
-        "--hour", "14",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
+        "--hour", "19",
         "--minute", "45",
         "--second", "20",
         "--lat", "37.7749",

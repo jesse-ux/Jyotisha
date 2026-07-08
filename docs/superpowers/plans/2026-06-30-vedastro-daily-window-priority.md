@@ -134,7 +134,7 @@ def test_vedastro_orchestrator_surfaces_daily_windows_by_domain(monkeypatch) -> 
     )
 
     result = orchestrator.orchestrate_vedastro_evidence(
-        {"year": REDACTED_YEAR, "month": 4, "day": 17, "hour": 14, "minute": 49, "lat": 36.42, "lon": 114.2, "tz": 8},
+        {"year": 1955, "month": 2, "day": 24, "hour": 19, "minute": 15, "lat": 37.7749, "lon": -122.4194, "tz": 8},
         route="career",
         reference_date="2026-06-30",
     )
@@ -343,13 +343,13 @@ git commit -m "feat: show official vedastro day windows in life event graph"
 def test_full_reading_preserves_official_daily_window_fields_in_range_scan_result() -> None:
     result = run_engine(
         "full-reading",
-        "--year", "REDACTED_YEAR",
-        "--month", "4",
-        "--day", "17",
-        "--hour", "14",
-        "--minute", "49",
-        "--lat", "36.42",
-        "--lon", "114.2",
+        "--year", "1955",
+        "--month", "2",
+        "--day", "24",
+        "--hour", "19",
+        "--minute", "15",
+        "--lat", "37.7749",
+        "--lon", "-122.4194",
         "--tz", "8",
         "--today", "2026-06-30",
         "--transit-date", "2026-06-30",

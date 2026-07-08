@@ -92,7 +92,7 @@ For this repository, that means:
 Real sample run:
 
 - birth: `private birth datetime`
-- location: `36.4467, 114.2`
+- location: `36.4467, -122.4194`
 - tz: `UTC+8`
 - reference date: `2026-06-30`
 
@@ -100,9 +100,9 @@ Command:
 
 ```bash
 python3 scripts/jyotish_engine.py full-reading \
-  --year REDACTED_YEAR --month 4 --day 17 \
-  --hour 14 --minute 49 \
-  --lat 36.4467 --lon 114.2 --tz 8 \
+  --year 1955 --month 2 --day 24 \
+  --hour 19 --minute 15 \
+  --lat 37.7749 --lon -122.4194 --tz -8 \
   --today 2026-06-30 \
   --transit-date 2026-06-30 \
   --profile-stages

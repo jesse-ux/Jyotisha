@@ -153,7 +153,7 @@ def test_chart_async_submit_returns_job_id(monkeypatch: pytest.MonkeyPatch) -> N
         'scope': 'api_chart_response',
     })
 
-    result = handler._compute_chart({'async': True, 'year': REDACTED_YEAR, 'month': 4, 'day': 17, 'hour': 14, 'minute': 49, 'lat': 36.42, 'lon': 114.2, 'tz': 8})
+    result = handler._compute_chart({'async': True, 'year': 1955, 'month': 2, 'day': 24, 'hour': 19, 'minute': 15, 'lat': 37.7749, 'lon': -122.4194, 'tz': 8})
 
     assert result['mode'] == 'async_submitted'
     assert result['job_id'] == 'chart_test_job_1'
@@ -258,7 +258,7 @@ def test_chart_async_job_executes_in_background(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr(jyotish_api_server, '_write_async_job_record', fake_write)
     monkeypatch.setattr(handler, '_compute_chart_sync', fake_sync)
 
-    result = handler._enqueue_chart_job({'async': True, 'year': REDACTED_YEAR, 'month': 4, 'day': 17, 'hour': 14, 'minute': 49, 'lat': 36.42, 'lon': 114.2, 'tz': 8})
+    result = handler._enqueue_chart_job({'async': True, 'year': 1955, 'month': 2, 'day': 24, 'hour': 19, 'minute': 15, 'lat': 37.7749, 'lon': -122.4194, 'tz': 8})
 
     assert result['endpoint'] == 'chart_async'
     assert result['status'] == 'queued'

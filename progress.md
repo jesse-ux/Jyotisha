@@ -522,7 +522,7 @@
 - 完成导出报告校准边界同步：`jyotish-app/export.js` 新增 `DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS`，JSON 导出在 `meta.calibration_status` 与 `modules.calibration_status.dasha_shadbala` 携带 `ready_for_calibration: 0`、`valid_packets: 0`、`production_tuning_allowed: false`；HTML 报告新增“高级技法校准状态”区块。
 - TDD/验证完成：`test_provenance_panchanga_workspace_panel_is_productized` 先因导出模块缺 `DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS` 红灯，修复后转绿；相关 10 项 pytest 通过；`npm run build --prefix jyotish-app` 通过；`oracle_collection_queue.py` + `oracle_evidence_validator.py` 复验仍保持 `valid_packets: 0` / `production_tuning_allowed: false`。
 - 当前下一最高优先级：发布 Round 12 副手任务，复核导出 HTML/JSON 校准边界，并推进“外部真值采集表单化 / 手工 JHora 证据包录入模板”。
-- 完成 Oracle Evidence Intake 用户端闭环第一层：Trust Center 新增 5 个外部真值 Evidence Packet 下载卡，覆盖 `template_private_oracle_redacted`、`template_steve_jobs_dasha_lahiri`、`template_redacted_place_shadbala_raman`、`template_extreme_latitude_kp`、`template_historical_epoch_lahiri`，目标字段与 `oracle_collection_queue.py` 当前队列对齐。
+- 完成 Oracle Evidence Intake 用户端闭环第一层：Trust Center 新增 5 个外部真值 Evidence Packet 下载卡，覆盖 `template_private_oracle_redacted`、`template_steve_jobs_dasha_lahiri`、`template_synthetic_north_china_shadbala_raman`、`template_extreme_latitude_kp`、`template_historical_epoch_lahiri`，目标字段与 `oracle_collection_queue.py` 当前队列对齐。
 - 完成 Evidence Packet 导入判卷：前端可导入填写后的 JSON，调用后端 `/api/oracle_evidence`，并展示 `valid_packets`、`ready_for_calibration`、`production_tuning_allowed` 与每个 packet 的 `problems`；后端复用 `oracle_collection_queue` 和 `oracle_evidence_validator` 规则，本地输出、空字段与 `draft` 仍被拒绝。
 - 完成副手任务升级：新增 Round 13/14/15 工作单；Round 15 改为 6 个并行包，覆盖 Evidence 判卷闭环、Shadbala 六分量、Dasha 边界日期、高需求技法、外部截图存档规范与下一轮 Codex 任务建议。
 - 验证完成：`python3 -B -m pytest tests/test_frontend_productization.py::test_trust_center_exposes_oracle_evidence_intake_cards tests/test_frontend_productization.py::test_trust_center_and_ai_expose_dasha_shadbala_calibration_status tests/test_frontend_productization.py::test_provenance_panchanga_workspace_panel_is_productized tests/test_api_server_security.py::test_oracle_evidence_api_validates_uploaded_packets tests/test_oracle_collection_queue.py tests/test_oracle_evidence_validator.py -q` 通过；`python3 scripts/oracle_collection_queue.py ...` + `python3 scripts/oracle_evidence_validator.py ...` 仍显示 `valid_packets: 0` / `ready_for_calibration: 0`；`npm run build --prefix jyotish-app` 通过；`git diff --check` 通过。
@@ -602,7 +602,7 @@
 - API 矩阵覆盖 42 个请求，40 个通过；`/api/remedies` 对数值型 Shadbala 简写返回 500，官方 catalog payload 可通过；`/api/technique_example` 用 catalog example payload 通过，普通出生资料直打 400 归类为合同边界。
 - 前端真实浏览器 `python3 tests/run_frontend_click_smoke.py --mode all --timeout 420` 通过，覆盖 core/mobile/offline/pdf/workspace/mobile-trust/import-files；`npm run build` 通过。
 - 工程守门通过：`python3 scripts/audit_capabilities.py --mode validate` 有效；`python3 scripts/audit_fragments.py --strict` 有效且 candidate_count=0；`python3 scripts/run_quality_gate.py --profile quick --skip-frontend-runtime` 通过，配置内 283 项 pytest 通过。
-- 新增正式报告 `docs/research/sample_user_full_function_qa_REDACTED_YEAR_redacted_place_2026_06_28.md`，下一步优先修复 `muhurta` CLI、`varga-full --divisions` 高分盘合同、`/api/remedies` 输入硬化，并单独处理当前 dirty worktree/scratch 残留。
+- 新增正式报告 `docs/research/sample_user_full_function_qa_REDACTED_YEAR_synthetic_north_china_2026_06_28.md`，下一步优先修复 `muhurta` CLI、`varga-full --divisions` 高分盘合同、`/api/remedies` 输入硬化，并单独处理当前 dirty worktree/scratch 残留。
 
 ## 2026-06-28T21:25:00+08:00 - VedAstro 596+/Events 高频雷达强制合同
 

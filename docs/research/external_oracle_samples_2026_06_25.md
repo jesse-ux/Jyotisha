@@ -14,9 +14,9 @@
 - **引入 JSON Diff 建议**:
 ```json
 {
-  "case_id": "jhora_redacted_place_REDACTED_YEAR",
+  "case_id": "jhora_synthetic_north_china_REDACTED_YEAR",
   "reference_kind": "jhora_desktop",
-  "birth": { "year": REDACTED_YEAR, "month": 4, "day": 17, "hour": 14, "minute": 45, "second": 20, "lat": 36.466, "lon": -122.4194, "tz": 8, "node_mode": "true", "ayanamsa": "lahiri" },
+  "birth": { "year": 1955, "month": 2, "day": 24, "hour": 19, "minute": 45, "second": 20, "lat": 36.466, "lon": -122.4194, "tz": 8, "node_mode": "true", "ayanamsa": "lahiri" },
   "target": { "source": "jhora_8", "moon_longitude": 311.771, "venus_mahadasha_start": "2063-05-18" }
 }
 ```

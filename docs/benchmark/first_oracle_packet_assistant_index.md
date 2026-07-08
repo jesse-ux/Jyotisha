@@ -8,7 +8,7 @@ Generated: `2026-07-01T17:18:16.817728+00:00`
 |---|---|---:|---|
 | `dasha` | `template_steve_jobs_dasha_lahiri` | 0 | `true` |
 | `tajika_sahams` | `template_einstein_varshaphala_1905_lahiri` | 0 | `true` |
-| `shadbala` | `template_redacted_place_shadbala_raman` | 0 | `true` |
+| `shadbala` | `template_synthetic_north_china_shadbala_raman` | 0 | `true` |
 
 ## Recommended Order
 
@@ -34,9 +34,9 @@ python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/ta
 
 ### shadbala
 
-- case_id: `template_redacted_place_shadbala_raman`
+- case_id: `template_synthetic_north_china_shadbala_raman`
 - missing_field_count: `0`
-- operator_card: `docs/benchmark/shadbala_redacted_place_raman_first_packet_operator_card.md`
+- operator_card: `docs/benchmark/shadbala_synthetic_north_china_raman_first_packet_operator_card.md`
 
 ```bash
 

@@ -127,10 +127,10 @@ def sample_birth_payload() -> dict:
 
 def sample_second_precision_payload() -> dict:
     return {
-        "year": REDACTED_YEAR,
-        "month": 4,
-        "day": 17,
-        "hour": 14,
+        "year": 1955,
+        "month": 2,
+        "day": 24,
+        "hour": 19,
         "minute": 45,
         "second": 20,
         "lat": 37.7749,
@@ -676,7 +676,7 @@ def test_trust_center_exposes_oracle_evidence_intake_cards() -> None:
         "missing_shadbala_component",
         "template_steve_jobs_dasha_lahiri",
         "template_steve_jobs_dasha_lahiri",
-        "template_redacted_place_shadbala_raman",
+        "template_synthetic_north_china_shadbala_raman",
         "template_extreme_latitude_kp",
         "template_historical_epoch_lahiri",
         "moon_sidereal_longitude_deg",

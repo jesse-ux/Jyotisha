@@ -69,7 +69,7 @@ def test_kp_dba_timeline_scores_marriage_houses():
     }
 
     timeline = calc_kp_dba_timeline(
-        datetime(REDACTED_YEAR, 4, 17, 14, 49),
+        datetime(1955, 2, 24, 19, 15),
         311.8041666666667,
         datetime(2027, 1, 1),
         datetime(2029, 12, 31),

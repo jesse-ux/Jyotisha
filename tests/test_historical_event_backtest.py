@@ -9,13 +9,13 @@ from scripts import historical_event_backtest as backtest
 def _payload(events: list[dict]) -> dict:
     return {
         "subject": {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
-            "lon": 114.2,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
+            "lon": -122.4194,
             "tz": 8.0,
             "node_mode": "mean",
         },

@@ -106,12 +106,12 @@ def test_official_full_snapshot_dasha_request_uses_official_range_contract(monke
 
     report = adapter.run_official_full_snapshot_for_case(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
             "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
@@ -146,12 +146,12 @@ def test_official_full_snapshot_prioritizes_timing_sections_before_heavy_fanout(
 
     report = adapter.run_official_full_snapshot_for_case(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
             "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
@@ -200,12 +200,12 @@ def test_official_full_snapshot_marks_semantic_rate_limit_payloads(monkeypatch) 
 
     result = adapter.run_official_full_snapshot_for_case(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
             "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
@@ -301,12 +301,12 @@ def test_orchestrator_attaches_official_full_snapshot_before_range_scan(monkeypa
 
     result = orchestrator.orchestrate_vedastro_evidence(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
             "lon": -122.4194,
             "tz": 8.0,
         },
@@ -396,17 +396,17 @@ def test_full_reading_prompt_pack_exposes_vedastro_official_snapshot_boundary() 
             "scripts/jyotish_engine.py",
             "full-reading",
             "--year",
-            "REDACTED_YEAR",
+            "1955",
             "--month",
-            "4",
+            "2",
             "--day",
-            "17",
+            "24",
             "--hour",
-            "14",
+            "19",
             "--minute",
-            "49",
+            "15",
             "--lat",
-            "36.42",
+            "37.7749",
             "--lon",
             "-122.4194",
             "--tz",
@@ -463,14 +463,14 @@ def test_full_reading_official_snapshot_uses_requested_reference_date(monkeypatc
     monkeypatch.setitem(sys.modules, "vedastro_priority", fake_priority)
 
     class Args:
-        year = REDACTED_YEAR
-        month = 4
-        day = 17
-        hour = 14
-        minute = 49
-        lat = 36.42
+        year = 1955
+        month = 2
+        day = 24
+        hour = 19
+        minute = 15
+        lat = 37.7749
         lon = -122.4194
-        tz = 8
+        tz = -8
         ayanamsa = "lahiri"
         node_mode = "mean"
         today = "2026-06-09"
@@ -526,12 +526,12 @@ def test_official_full_snapshot_extracts_official_chart_and_varga_from_pass_payl
 
     result = adapter.run_official_full_snapshot_for_case(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
             "lon": -122.4194,
             "tz": 8,
         },
@@ -575,7 +575,7 @@ def test_official_full_snapshot_can_use_python_bridge_bundle_without_rest_endpoi
     )
 
     def fake_bundle(case: dict[str, object]) -> dict[str, object]:
-        assert case["year"] == REDACTED_YEAR
+        assert case["year"] == 1955
         assert case["reference_date"] == "2026-06-29"
         return {
             "available": True,
@@ -639,12 +639,12 @@ def test_official_full_snapshot_can_use_python_bridge_bundle_without_rest_endpoi
 
     result = adapter.run_official_full_snapshot_for_case(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
             "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
@@ -736,12 +736,12 @@ def test_official_full_snapshot_prefers_official_capability_runner_bundle(monkey
 
     result = adapter.run_official_full_snapshot_for_case(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
             "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
@@ -852,12 +852,12 @@ def test_official_full_snapshot_attaches_full_capability_catalog_summary(monkeyp
 
     result = adapter.run_official_full_snapshot_for_case(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
             "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
@@ -936,12 +936,12 @@ def test_official_full_snapshot_marks_ok_when_fast_primary_sections_are_filled(m
 
     result = adapter.run_official_full_snapshot_for_case(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
             "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
@@ -1020,12 +1020,12 @@ def test_official_full_snapshot_skips_rest_sections_already_filled_by_python_bun
 
     result = adapter.run_official_full_snapshot_for_case(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
             "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
@@ -1068,12 +1068,12 @@ def test_official_full_snapshot_semantic_cache_reuses_full_bundle(monkeypatch, t
     monkeypatch.setattr(adapter, "ARTIFACT_DIR", tmp_path)
 
     payload = {
-        "year": REDACTED_YEAR,
-        "month": 4,
-        "day": 17,
-        "hour": 14,
-        "minute": 49,
-        "lat": 36.42,
+        "year": 1955,
+        "month": 2,
+        "day": 24,
+        "hour": 19,
+        "minute": 15,
+        "lat": 37.7749,
         "lon": -122.4194,
         "tz": 8,
         "reference_date": "2026-06-30",
@@ -1115,12 +1115,12 @@ def test_official_full_snapshot_semantic_cache_reuses_bundle_across_case_ids(mon
     monkeypatch.setattr(adapter, "ARTIFACT_DIR", tmp_path)
 
     payload = {
-        "year": REDACTED_YEAR,
-        "month": 4,
-        "day": 17,
-        "hour": 14,
-        "minute": 49,
-        "lat": 36.42,
+        "year": 1955,
+        "month": 2,
+        "day": 24,
+        "hour": 19,
+        "minute": 15,
+        "lat": 37.7749,
         "lon": -122.4194,
         "tz": 8,
         "reference_date": "2026-06-30",

@@ -62,8 +62,8 @@ FRONTS = {
             "--format",
             "json",
         ],
-        "operator_card": "docs/benchmark/shadbala_redacted_place_raman_first_packet_operator_card.md",
-        "packet_template": "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json",
+        "operator_card": "docs/benchmark/shadbala_synthetic_north_china_raman_first_packet_operator_card.md",
+        "packet_template": "references/oracle/evidence_packet_templates/shadbala_synthetic_north_china_raman_first_packet.json",
         "oracle_file": "references/oracle/dasha_shadbala_oracle_cases.json",
         "apply_script": "scripts/oracle_collection_queue.py",
         "external_sources": [

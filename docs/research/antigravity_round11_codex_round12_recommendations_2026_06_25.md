@@ -14,7 +14,7 @@
 
 ## 任务 3：录入首批 JHora 真实截图数据
 - **执行路径**：人工脱离自动化系统操作。
-- **动作**：在一台干净且无 GPL 污染的独立机器上，启动闭源 JHora。按照 `dasha_shadbala_oracle_cases.json` 中的 `template_steve_jobs_dasha_lahiri` 与 `template_redacted_place_shadbala_raman` 参数排盘。将得到的截图作为 Artifact 存入系统，并将读数写入 JSON 靶标。
+- **动作**：在一台干净且无 GPL 污染的独立机器上，启动闭源 JHora。按照 `dasha_shadbala_oracle_cases.json` 中的 `template_steve_jobs_dasha_lahiri` 与 `template_synthetic_north_china_shadbala_raman` 参数排盘。将得到的截图作为 Artifact 存入系统，并将读数写入 JSON 靶标。
 - **验收命令**：
   ```bash
   python3 scripts/oracle_collection_queue.py --oracle-file references/oracle/dasha_shadbala_oracle_cases.json --format json > /tmp/queue.json

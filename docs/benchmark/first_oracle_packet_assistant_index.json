@@ -26,10 +26,10 @@
       "apply_command": "python3 scripts/tajika_annual_oracle_queue.py --oracle-file references/oracle/tajika_annual_oracle_cases.json --apply-packet references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json --format json"
     },
     "shadbala": {
-      "case_id": "template_redacted_place_shadbala_raman",
-      "capture_id": "external_template_redacted_place_shadbala_raman",
-      "operator_card": "docs/benchmark/shadbala_redacted_place_raman_first_packet_operator_card.md",
-      "packet_template": "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json",
+      "case_id": "template_synthetic_north_china_shadbala_raman",
+      "capture_id": "external_template_synthetic_north_china_shadbala_raman",
+      "operator_card": "docs/benchmark/shadbala_synthetic_north_china_raman_first_packet_operator_card.md",
+      "packet_template": "references/oracle/evidence_packet_templates/shadbala_synthetic_north_china_raman_first_packet.json",
       "missing_field_count": 0,
       "ready_to_apply": true,
       "apply_command": ""
@@ -58,10 +58,10 @@
     },
     {
       "front": "shadbala",
-      "case_id": "template_redacted_place_shadbala_raman",
-      "capture_id": "external_template_redacted_place_shadbala_raman",
-      "operator_card": "docs/benchmark/shadbala_redacted_place_raman_first_packet_operator_card.md",
-      "packet_template": "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json",
+      "case_id": "template_synthetic_north_china_shadbala_raman",
+      "capture_id": "external_template_synthetic_north_china_shadbala_raman",
+      "operator_card": "docs/benchmark/shadbala_synthetic_north_china_raman_first_packet_operator_card.md",
+      "packet_template": "references/oracle/evidence_packet_templates/shadbala_synthetic_north_china_raman_first_packet.json",
       "missing_field_count": 0,
       "ready_to_apply": true,
       "apply_command": ""

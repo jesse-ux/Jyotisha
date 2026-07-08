@@ -136,11 +136,11 @@ def test_vedastro_python_bridge_supports_typed_enum_and_time_arguments() -> None
         "kwargs": {
             "time": {
                 "__vedastro_type__": "Time",
-                "year": REDACTED_YEAR,
-                "month": 4,
-                "day": 17,
-                "hour": 14,
-                "minute": 49,
+                "year": 1955,
+                "month": 2,
+                "day": 24,
+                "hour": 19,
+                "minute": 15,
                 "offset": 8,
                 "geolocation": {
                     "__vedastro_type__": "GeoLocation",
@@ -223,11 +223,11 @@ def test_vedastro_python_bridge_high_value_vimshottari_snapshot_uses_positional_
     payload = {
         "birth_time": {
             "__vedastro_type__": "Time",
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
             "offset": 8,
             "geolocation": {
                 "__vedastro_type__": "GeoLocation",
@@ -284,11 +284,11 @@ def test_vedastro_python_bridge_high_value_chara_snapshot_uses_positional_args()
     payload = {
         "birth_time": {
             "__vedastro_type__": "Time",
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
             "offset": 8,
             "geolocation": {
                 "__vedastro_type__": "GeoLocation",

@@ -26,15 +26,15 @@ def test_shadbala_d3_branch_audit_after_d3_exaltation_cap_retargets_to_own_branc
     assert "direct_exaltation_branch" not in report["branch_hotspots"]
 
 
-def test_shadbala_d3_exaltation_cap_reduces_sun_sthana_gap_for_redacted_place_case() -> None:
-    comparison = compare_case("references/oracle/dasha_shadbala_oracle_cases.json", "template_redacted_place_shadbala_raman")
+def test_shadbala_d3_exaltation_cap_reduces_sun_sthana_gap_for_synthetic_north_china_case() -> None:
+    comparison = compare_case("references/oracle/dasha_shadbala_oracle_cases.json", "template_synthetic_north_china_shadbala_raman")
     sun_sthana_gap = comparison["comparison"]["Sun"]["components"]["sthana"]["abs_diff_rupa"]
 
     assert sun_sthana_gap < 3.5207
 
 
-def test_shadbala_d3_own_sign_cap_reduces_venus_sthana_gap_for_redacted_place_case() -> None:
-    comparison = compare_case("references/oracle/dasha_shadbala_oracle_cases.json", "template_redacted_place_shadbala_raman")
+def test_shadbala_d3_own_sign_cap_reduces_venus_sthana_gap_for_synthetic_north_china_case() -> None:
+    comparison = compare_case("references/oracle/dasha_shadbala_oracle_cases.json", "template_synthetic_north_china_shadbala_raman")
     venus_sthana_gap = comparison["comparison"]["Venus"]["components"]["sthana"]["abs_diff_rupa"]
 
     assert venus_sthana_gap < 1.7084

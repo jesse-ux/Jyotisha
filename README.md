@@ -483,7 +483,7 @@ python3 scripts/shadbala_oracle_closure_status.py \
   --output docs/benchmark/shadbala_external_absolute_value_closure_status.md
 ```
 
-当前第一优先级是 `external_template_redacted_place_shadbala_raman`。除了同一 oracle 行里的 `target.moon_sidereal_longitude_deg`，还必须填写 Sun/Moon/Mars/Mercury/Jupiter/Venus/Saturn 的 `sthana`、`dig`、`kala`、`chesta`、`naisargika`、`drik`、`total_rupa`；验证器会检查分量和总分，不允许用一个全局倍率把本地输出硬缩放成外部值。
+当前第一优先级是 `external_template_synthetic_north_china_shadbala_raman`。除了同一 oracle 行里的 `target.moon_sidereal_longitude_deg`，还必须填写 Sun/Moon/Mars/Mercury/Jupiter/Venus/Saturn 的 `sthana`、`dig`、`kala`、`chesta`、`naisargika`、`drik`、`total_rupa`；验证器会检查分量和总分，不允许用一个全局倍率把本地输出硬缩放成外部值。
 
 Tajika/Sahams 年运系统使用独立的外部 oracle 队列，专门追踪 Varshaphala、太阳回归、Muntha、Year Lord、Mudda Dasha、Sahams 与 Tajika Yogas 的外部验证状态：
 

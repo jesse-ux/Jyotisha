@@ -7185,8 +7185,8 @@
       "promotion_status": "governance_or_history",
       "reason": "Research history or governance record; index separately from rule truth."
     },
-    "docs/research/sample_user_full_function_qa_REDACTED_YEAR_redacted_place_2026_06_28.md": {
-      "path": "docs/research/sample_user_full_function_qa_REDACTED_YEAR_redacted_place_2026_06_28.md",
+    "docs/research/sample_user_full_function_qa_REDACTED_YEAR_synthetic_north_china_2026_06_28.md": {
+      "path": "docs/research/sample_user_full_function_qa_REDACTED_YEAR_synthetic_north_china_2026_06_28.md",
       "suffix": ".md",
       "byte_count": 6952,
       "sha256": "d6787703b8bb199085de6b49744ba57ee0c16c77c28f0521c5ee4184f3b3a170",
@@ -13191,8 +13191,8 @@
       "promotion_status": "oracle_evidence_only",
       "reason": "Oracle artifact; use for parity evidence, not interpretive rules."
     },
-    "references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json": {
-      "path": "references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json",
+    "references/oracle/artifacts/pending_packets/external_template_synthetic_north_china_shadbala_raman.json": {
+      "path": "references/oracle/artifacts/pending_packets/external_template_synthetic_north_china_shadbala_raman.json",
       "suffix": ".json",
       "byte_count": 2563,
       "sha256": "2163eeecb9aef353d39c42ae6b02f2bf45cf1df758c6399a8feaf1c1bb0896b0",
@@ -13205,8 +13205,8 @@
       "promotion_status": "oracle_evidence_only",
       "reason": "Oracle artifact; use for parity evidence, not interpretive rules."
     },
-    "references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman_pyjhora_20260627.json": {
-      "path": "references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman_pyjhora_20260627.json",
+    "references/oracle/artifacts/pending_packets/external_template_synthetic_north_china_shadbala_raman_pyjhora_20260627.json": {
+      "path": "references/oracle/artifacts/pending_packets/external_template_synthetic_north_china_shadbala_raman_pyjhora_20260627.json",
       "suffix": ".json",
       "byte_count": 3173,
       "sha256": "ad12f03527ccde0435a954dc13bf6456c9cef674bdbe4fd67e6db6a9d9e5a5b7",
@@ -13429,8 +13429,8 @@
       "promotion_status": "oracle_evidence_only",
       "reason": "Oracle artifact; use for parity evidence, not interpretive rules."
     },
-    "references/oracle/artifacts/pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt": {
-      "path": "references/oracle/artifacts/pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
+    "references/oracle/artifacts/pyjhora_synthetic_north_china_shadbala_raman_stdout_20260627.txt": {
+      "path": "references/oracle/artifacts/pyjhora_synthetic_north_china_shadbala_raman_stdout_20260627.txt",
       "suffix": ".txt",
       "byte_count": 2994,
       "sha256": "8c16ecfb4fc31475b0931afadace19be5cd2de7f3a98e7d13dc65395b4965d99",
@@ -13765,8 +13765,8 @@
       "promotion_status": "oracle_evidence_only",
       "reason": "Oracle artifact; use for parity evidence, not interpretive rules."
     },
-    "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json": {
-      "path": "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json",
+    "references/oracle/evidence_packet_templates/shadbala_synthetic_north_china_raman_first_packet.json": {
+      "path": "references/oracle/evidence_packet_templates/shadbala_synthetic_north_china_raman_first_packet.json",
       "suffix": ".json",
       "byte_count": 2695,
       "sha256": "778e2fd2248d3a7c10088167147baaf501f145f7ed797fa229a1edbf5492d23c",

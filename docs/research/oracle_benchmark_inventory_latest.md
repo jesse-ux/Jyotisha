@@ -37,8 +37,8 @@ Generated: `2026-06-28T07:20:42.378403+00:00`
 - `references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json` (tajika_sahams, status: `draft`, case: `template_einstein_varshaphala_1905_lahiri`)
 - `references/oracle/artifacts/pending_packets/external_template_extreme_latitude_kp.json` (general, status: `draft`, case: `template_extreme_latitude_kp`)
 - `references/oracle/artifacts/pending_packets/external_template_extreme_latitude_kp_pyjhora_20260627.json` (general, status: `external_verified`, case: `template_extreme_latitude_kp`)
-- `references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman.json` (shadbala, status: `draft`, case: `template_redacted_place_shadbala_raman`)
-- `references/oracle/artifacts/pending_packets/external_template_redacted_place_shadbala_raman_pyjhora_20260627.json` (shadbala, status: `external_verified`, case: `template_redacted_place_shadbala_raman`)
+- `references/oracle/artifacts/pending_packets/external_template_synthetic_north_china_shadbala_raman.json` (shadbala, status: `draft`, case: `template_synthetic_north_china_shadbala_raman`)
+- `references/oracle/artifacts/pending_packets/external_template_synthetic_north_china_shadbala_raman_pyjhora_20260627.json` (shadbala, status: `external_verified`, case: `template_synthetic_north_china_shadbala_raman`)
 - `references/oracle/artifacts/pending_packets/external_template_historical_dst_london_varshaphala_1943_lahiri.json` (tajika_sahams, status: `draft`, case: `template_historical_dst_london_varshaphala_1943_lahiri`)
 - `references/oracle/artifacts/pending_packets/external_template_historical_epoch_lahiri.json` (dasha, status: `draft`, case: `template_historical_epoch_lahiri`)
 - `references/oracle/artifacts/pending_packets/external_template_historical_epoch_lahiri_pyjhora_20260627.json` (dasha, status: `external_verified`, case: `template_historical_epoch_lahiri`)
@@ -56,7 +56,7 @@ Generated: `2026-06-28T07:20:42.378403+00:00`
 ## PyJHora Black-Box Assets
 
 - `references/oracle/artifacts/pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt` (shadbala)
-- `references/oracle/artifacts/pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt` (shadbala)
+- `references/oracle/artifacts/pyjhora_synthetic_north_china_shadbala_raman_stdout_20260627.txt` (shadbala)
 - `references/oracle/artifacts/pyjhora_historical_epoch_dasha_stdout_20260627.txt` (dasha)
 - `references/oracle/artifacts/pyjhora_steve_jobs_dasha_stdout_20260627.txt` (dasha)
 - `references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt` (shadbala)

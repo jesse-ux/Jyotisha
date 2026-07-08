@@ -8,15 +8,15 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CARD = ROOT / "docs" / "benchmark" / "shadbala_redacted_place_raman_first_packet_operator_card.md"
-PACKET = ROOT / "references" / "oracle" / "evidence_packet_templates" / "shadbala_redacted_place_raman_first_packet.json"
+CARD = ROOT / "docs" / "benchmark" / "shadbala_synthetic_north_china_raman_first_packet_operator_card.md"
+PACKET = ROOT / "references" / "oracle" / "evidence_packet_templates" / "shadbala_synthetic_north_china_raman_first_packet.json"
 
 
 def test_shadbala_first_packet_operator_card_is_actionable() -> None:
     text = CARD.read_text(encoding="utf-8")
 
     assert "# First Shadbala Absolute-Value Oracle Packet Operator Card" in text
-    assert "template_redacted_place_shadbala_raman" in text
+    assert "template_synthetic_north_china_shadbala_raman" in text
     assert "target.shadbala_components.Sun.sthana" in text
     assert "target.shadbala_components.Saturn.total_rupa" in text
     assert "target.moon_sidereal_longitude_deg" in text
@@ -29,9 +29,9 @@ def test_shadbala_first_packet_operator_card_is_actionable() -> None:
 def test_shadbala_first_packet_template_contains_complete_component_matrix() -> None:
     packet = json.loads(PACKET.read_text(encoding="utf-8"))
 
-    assert packet["capture_id"] == "external_template_redacted_place_shadbala_raman"
+    assert packet["capture_id"] == "external_template_synthetic_north_china_shadbala_raman"
     assert packet["status"] == "draft"
-    assert packet["case_id"] == "template_redacted_place_shadbala_raman"
+    assert packet["case_id"] == "template_synthetic_north_china_shadbala_raman"
     assert packet["metadata"]["source_artifact"] == "references/oracle/artifacts/"
     assert packet["settings"]["ayanamsa"] == "raman"
     assert packet["target_placeholders"]["target.moon_sidereal_longitude_deg"] is None

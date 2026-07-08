@@ -50,14 +50,14 @@ def test_gateway_run_packet_uses_user_entrypoint_and_marks_not_all_641(monkeypat
 
     packet = vedastro_gateway.run_gateway_packet(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
             "second": 0,
-            "lat": 36.42,
-            "lon": 114.2,
+            "lat": 37.7749,
+            "lon": -122.4194,
             "tz": 8,
         },
         question="事业机会什么时候出现",

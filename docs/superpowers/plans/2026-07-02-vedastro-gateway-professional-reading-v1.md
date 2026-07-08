@@ -243,14 +243,14 @@ def test_gateway_run_packet_uses_user_entrypoint_and_marks_not_all_641(monkeypat
 
     packet = vedastro_gateway.run_gateway_packet(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
             "second": 0,
-            "lat": 36.42,
-            "lon": 114.2,
+            "lat": 37.7749,
+            "lon": -122.4194,
             "tz": 8,
         },
         question="事业机会什么时候出现",
@@ -383,13 +383,13 @@ def test_vedastro_gateway_run_route_returns_gateway_packet(monkeypatch):
     monkeypatch.setenv("VEDASTRO_GATEWAY_MODE", "cn_gateway")
 
     result = handler._compute_vedastro_gateway_run({
-        "year": REDACTED_YEAR,
-        "month": 4,
-        "day": 17,
-        "hour": 14,
-        "minute": 49,
-        "lat": 36.42,
-        "lon": 114.2,
+        "year": 1955,
+        "month": 2,
+        "day": 24,
+        "hour": 19,
+        "minute": 15,
+        "lat": 37.7749,
+        "lon": -122.4194,
         "tz": 8,
         "question": "事业机会什么时候出现",
         "themes": ["career"],
@@ -499,13 +499,13 @@ def test_professional_reading_endpoint_reuses_existing_high_rigor_layers(monkeyp
     })
 
     result = handler._compute_professional_reading({
-        "year": REDACTED_YEAR,
-        "month": 4,
-        "day": 17,
-        "hour": 14,
-        "minute": 49,
-        "lat": 36.42,
-        "lon": 114.2,
+        "year": 1955,
+        "month": 2,
+        "day": 24,
+        "hour": 19,
+        "minute": 15,
+        "lat": 37.7749,
+        "lon": -122.4194,
         "tz": 8,
         "question": "事业机会什么时候出现",
         "theme": ["career"],
@@ -976,8 +976,8 @@ Run:
 
 ```bash
 python3 scripts/vedastro_user_entrypoint.py \
-  --year REDACTED_YEAR --month 4 --day 17 --hour 14 --minute 49 \
-  --lat 36.42 --lon 114.2 --tz 8 \
+  --year 1955 --month 2 --day 24 --hour 19 --minute 15 \
+  --lat 37.7749 --lon -122.4194 --tz -8 \
   --question "事业机会什么时候出现" \
   --themes career,marriage,wealth \
   --reference-date 2026-07-02 \

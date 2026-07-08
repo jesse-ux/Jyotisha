@@ -114,9 +114,9 @@ def test_first_oracle_packet_assistant_reports_shadbala_front() -> None:
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
     assert report["front"] == "shadbala"
-    assert report["case_id"] == "template_redacted_place_shadbala_raman"
-    assert report["operator_card"].endswith("shadbala_redacted_place_raman_first_packet_operator_card.md")
-    assert report["packet_template"].endswith("shadbala_redacted_place_raman_first_packet.json")
+    assert report["case_id"] == "template_synthetic_north_china_shadbala_raman"
+    assert report["operator_card"].endswith("shadbala_synthetic_north_china_raman_first_packet_operator_card.md")
+    assert report["packet_template"].endswith("shadbala_synthetic_north_china_raman_first_packet.json")
     assert report["missing_groups"]["metadata"]["count"] == 0
     assert report["missing_groups"]["target"]["count"] == 0
     assert report["missing_groups"]["bodies"] == {}

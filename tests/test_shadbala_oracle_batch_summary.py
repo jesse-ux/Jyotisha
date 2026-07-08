@@ -14,5 +14,5 @@ def test_shadbala_oracle_batch_summary_reuses_all_external_verified_cases() -> N
     assert report["summary"]["external_verified_case_count"] >= 4
     assert report["summary"]["fully_within_tolerance_case_count"] <= report["summary"]["external_verified_case_count"]
     assert any(row["case_id"] == "template_steve_jobs_dasha_lahiri" for row in report["rows"])
-    assert any(row["case_id"] == "template_redacted_place_shadbala_raman" for row in report["rows"])
+    assert any(row["case_id"] == "template_synthetic_north_china_shadbala_raman" for row in report["rows"])
     assert report["summary"]["global_closure_blocked"] is True

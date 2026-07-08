@@ -487,11 +487,11 @@ def schema() -> dict[str, Any]:
             },
             "time": {
                 "__vedastro_type__": "Time",
-                "year": REDACTED_YEAR,
-                "month": 4,
-                "day": 17,
-                "hour": 14,
-                "minute": 49,
+                "year": 1955,
+                "month": 2,
+                "day": 24,
+                "hour": 19,
+                "minute": 15,
                 "offset": 8,
                 "geolocation": {
                     "__vedastro_type__": "GeoLocation",

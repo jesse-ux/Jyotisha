@@ -244,7 +244,7 @@ def test_vedastro_orchestrator_surfaces_official_section_statuses_and_theme_requ
         "evidence_ledger": [],
     })
 
-    result = orchestrator.orchestrate_vedastro_evidence({"year": REDACTED_YEAR, "month": 4, "day": 17, "hour": 14, "minute": 49, "lat": 36.42, "lon": 114.2, "tz": 8}, route="relationship", reference_date="2026-06-29")
+    result = orchestrator.orchestrate_vedastro_evidence({"year": 1955, "month": 2, "day": 24, "hour": 19, "minute": 15, "lat": 37.7749, "lon": -122.4194, "tz": 8}, route="relationship", reference_date="2026-06-29")
     assert result["source_metadata"]["official_section_statuses"]["dasha_all"] == "ok"
     assert result["source_metadata"]["theme_requirements"]["route"] == "relationship"
 ```
@@ -294,7 +294,7 @@ Expected: PASS for the new metadata contract.
 def test_high_rigor_workflow_plan_only_exposes_official_hard_override_contract() -> None:
     handler = _handler()
     result = handler._high_rigor_workflow_plan_only(
-        {"year": REDACTED_YEAR, "month": 4, "day": 17, "hour": 14, "minute": 49, "lat": 36.42, "lon": 114.2, "tz": 8},
+        {"year": 1955, "month": 2, "day": 24, "hour": 19, "minute": 15, "lat": 37.7749, "lon": -122.4194, "tz": 8},
         ["career", "marriage", "wealth"],
         [],
     )

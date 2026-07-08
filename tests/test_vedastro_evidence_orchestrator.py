@@ -78,13 +78,13 @@ def test_vedastro_evidence_orchestrator_routes_to_minimal_domain_set(monkeypatch
 
     result = orchestrator.orchestrate_vedastro_evidence(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
-            "lon": 114.2,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
+            "lon": -122.4194,
             "tz": 8.0,
         },
         route="relationship",
@@ -143,13 +143,13 @@ def test_vedastro_orchestrator_surfaces_official_section_statuses_and_theme_requ
 
     result = orchestrator.orchestrate_vedastro_evidence(
         {
-            "year": REDACTED_YEAR,
-            "month": 4,
-            "day": 17,
-            "hour": 14,
-            "minute": 49,
-            "lat": 36.42,
-            "lon": 114.2,
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
+            "lon": -122.4194,
             "tz": 8,
         },
         route="relationship",
@@ -183,7 +183,7 @@ def test_vedastro_orchestrator_surfaces_daily_windows_by_domain(monkeypatch) -> 
     )
 
     result = orchestrator.orchestrate_vedastro_evidence(
-        {"year": REDACTED_YEAR, "month": 4, "day": 17, "hour": 14, "minute": 49, "lat": 36.42, "lon": 114.2, "tz": 8},
+        {"year": 1955, "month": 2, "day": 24, "hour": 19, "minute": 15, "lat": 37.7749, "lon": -122.4194, "tz": 8},
         route="career",
         reference_date="2026-06-30",
     )
@@ -246,7 +246,7 @@ def test_vedastro_orchestrator_passes_non_core_themes_to_official_catalog(monkey
     monkeypatch.setattr(orchestrator, "run_range_scan_for_case", fake_scan)
 
     result = orchestrator.orchestrate_vedastro_evidence(
-        {"year": REDACTED_YEAR, "month": 4, "day": 17, "hour": 14, "minute": 49, "lat": 36.42, "lon": 114.2, "tz": 8},
+        {"year": 1955, "month": 2, "day": 24, "hour": 19, "minute": 15, "lat": 37.7749, "lon": -122.4194, "tz": 8},
         route="health",
         reference_date="2026-06-30",
     )

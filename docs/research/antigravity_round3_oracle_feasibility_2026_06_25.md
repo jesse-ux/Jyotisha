@@ -15,14 +15,14 @@
     "status": "template_only",
     "source": "JHora/PyJHora/VedAstro/Manual screenshot",
     "birth": {
-      "year": REDACTED_YEAR,
-      "month": 4,
-      "day": 17,
-      "hour": 14,
+      "year": 1955,
+      "month": 2,
+      "day": 24,
+      "hour": 19,
       "minute": 45,
       "second": 20,
-      "lat": 36.466667,
-      "lon": 114.2,
+      "lat": 37.7749,
+      "lon": -122.4194,
       "tz": 8
     },
     "settings": {
@@ -62,7 +62,7 @@
     "verification_note": "Verify Dasha boundaries."
   },
   {
-    "id": "template_redacted_place_shadbala_raman",
+    "id": "template_synthetic_north_china_shadbala_raman",
     "status": "template_only",
     "source": "VedAstro API",
     "birth": {
@@ -72,8 +72,8 @@
       "hour": 12,
       "minute": 0,
       "second": 0,
-      "lat": 36.466667,
-      "lon": 114.2,
+      "lat": 37.7749,
+      "lon": -122.4194,
       "tz": 8
     },
     "settings": {

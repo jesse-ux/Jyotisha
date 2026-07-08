@@ -15,7 +15,7 @@ PACKET_RE = re.compile(r"\.v(\d+)\.json$")
 
 def latest_packet() -> tuple[int, Path]:
     packets: list[tuple[int, Path]] = []
-    for path in WORK_DIR.glob("jhora_master_evidence_packet_REDACTED_DATE_REDACTED_TIME.v*.json"):
+    for path in WORK_DIR.glob("jhora_master_evidence_packet_public_sample_19550224_1915.v*.json"):
         match = PACKET_RE.search(path.name)
         if match:
             packets.append((int(match.group(1)), path))
@@ -45,11 +45,11 @@ def main() -> int:
     if changed:
         path.write_text(json.dumps(packet, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    ledger = WORK_DIR / "evidence_packet_status_ledger_REDACTED_DATE_REDACTED_TIME.md"
+    ledger = WORK_DIR / "evidence_packet_status_ledger_public_sample_19550224_1915.md"
     if ledger.exists():
         text = ledger.read_text(encoding="utf-8")
         line_re = re.compile(
-            r"\| Master evidence packet \| `jhora_master_evidence_packet_REDACTED_DATE_REDACTED_TIME\.v\d+\.json` \| active \| Current canonical structured packet\. \|"
+            r"\| Master evidence packet \| `jhora_master_evidence_packet_public_sample_19550224_1915\.v\d+\.json` \| active \| Current canonical structured packet\. \|"
         )
         wanted_line = f"| Master evidence packet | `{path.name}` | active | Current canonical structured packet. |"
         new_text = line_re.sub(wanted_line, text, count=1)

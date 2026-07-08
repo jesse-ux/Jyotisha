@@ -308,13 +308,13 @@ def test_strict_workflow_auto_ingests_live_vedastro_range_scan_for_finance_route
 
         result = mcp_server.strict_workflow(
             question="今年的财富机会怎么样？",
-            year=REDACTED_YEAR,
-            month=4,
-            day=17,
-            hour=14,
-            minute=49,
-            lat=36.42,
-            lon=114.2,
+            year=1955,
+            month=2,
+            day=24,
+            hour=19,
+            minute=15,
+            lat=37.7749,
+            lon=-122.4194,
             tz=8.0,
             age=33,
             transit_date="2026-06-29",
@@ -364,13 +364,13 @@ def test_strict_workflow_auto_ingests_live_vedastro_external_technique_as_contex
 
         result = mcp_server.strict_workflow(
             question="我的财务今年如何？",
-            year=REDACTED_YEAR,
-            month=4,
-            day=17,
-            hour=14,
-            minute=49,
-            lat=36.42,
-            lon=114.2,
+            year=1955,
+            month=2,
+            day=24,
+            hour=19,
+            minute=15,
+            lat=37.7749,
+            lon=-122.4194,
             tz=8.0,
             age=33,
             transit_date="2026-06-29",
@@ -393,13 +393,13 @@ def test_strict_workflow_reports_unified_orchestrator_metadata() -> None:
 
         result = mcp_server.strict_workflow(
             question="我的财务今年如何？",
-            year=REDACTED_YEAR,
-            month=4,
-            day=17,
-            hour=14,
-            minute=49,
-            lat=36.42,
-            lon=114.2,
+            year=1955,
+            month=2,
+            day=24,
+            hour=19,
+            minute=15,
+            lat=37.7749,
+            lon=-122.4194,
             tz=8.0,
             age=33,
             transit_date="2026-06-29",
@@ -462,13 +462,13 @@ def test_strict_workflow_uses_shared_consultation_executor(monkeypatch) -> None:
 
     result = mcp_server.strict_workflow(
         question="我的财务今年如何？",
-        year=REDACTED_YEAR,
-        month=4,
-        day=17,
-        hour=14,
-        minute=49,
-        lat=36.42,
-        lon=114.2,
+        year=1955,
+        month=2,
+        day=24,
+        hour=19,
+        minute=15,
+        lat=37.7749,
+        lon=-122.4194,
         tz=8.0,
         age=33,
         transit_date="2026-06-29",
@@ -477,8 +477,10 @@ def test_strict_workflow_uses_shared_consultation_executor(monkeypatch) -> None:
 
     assert seen["entry_mode"] == "direct_chart"
     assert seen["question"] == "我的财务今年如何？"
-    assert result["runtime_truth"]["official_execution_layers"]["chart_core"] == "ok"
+    # strict_workflow recomputes the official summary from chart evidence; a
+    # shared executor cannot upgrade missing raw official evidence to ok.
+    assert result["runtime_truth"]["official_execution_layers"]["chart_core"] == "blocked"
     assert result["interpretation_source_runtime_coverage"]["source_pack_status"] == "used"
-    assert result["interpretation_source_runtime_coverage"]["runtime_visibility_status"] == "partial"
+    assert result["interpretation_source_runtime_coverage"]["runtime_visibility_status"] == "blocked"
     assert result["runtime_planner"]["surface"] == "skill_mcp"
     assert result["routing"]["question_type"] == "finance"

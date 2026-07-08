@@ -99,8 +99,8 @@ export function computeVimsopaka(planets) {
 }
 
 // ===== 3. Vaiseshikamsas =====
-const V_DASA = [{min:0,max:2,l:1,n:'Kim'},{min:2,max:3,l:2,n:'Paarijaata'},{min:3,max:4,l:3,n:'Uttama'},{min:4,max:5,l:4,n:'Gopura'},{min:5,max:6,l:5,n:'Simhasana/Kanduka'},{min:6,max:7,l:6,n:'Kerala'},{min:7,max:8,l:7,n:'Kalpavriksha'},{min:8,max:99,l:8,n:'Credacted_placeaVana'}];
-const V_SHO = [{min:0,max:4,l:1,n:'Kim'},{min:4,max:6,l:2,n:'Paarijaata'},{min:6,max:8,l:3,n:'Uttama'},{min:8,max:10,l:4,n:'Gopura'},{min:10,max:12,l:5,n:'Kanduka'},{min:12,max:14,l:6,n:'Kerala'},{min:14,max:16,l:7,n:'Kalpavriksha'},{min:16,max:99,l:8,n:'Credacted_placeaVana'}];
+const V_DASA = [{min:0,max:2,l:1,n:'Kim'},{min:2,max:3,l:2,n:'Paarijaata'},{min:3,max:4,l:3,n:'Uttama'},{min:4,max:5,l:4,n:'Gopura'},{min:5,max:6,l:5,n:'Simhasana/Kanduka'},{min:6,max:7,l:6,n:'Kerala'},{min:7,max:8,l:7,n:'Kalpavriksha'},{min:8,max:99,l:8,n:'Csynthetic_north_chinaaVana'}];
+const V_SHO = [{min:0,max:4,l:1,n:'Kim'},{min:4,max:6,l:2,n:'Paarijaata'},{min:6,max:8,l:3,n:'Uttama'},{min:8,max:10,l:4,n:'Gopura'},{min:10,max:12,l:5,n:'Kanduka'},{min:12,max:14,l:6,n:'Kerala'},{min:14,max:16,l:7,n:'Kalpavriksha'},{min:16,max:99,l:8,n:'Csynthetic_north_chinaaVana'}];
 
 export function computeVaiseshikamsas(vim) {
   const PL = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn','Rahu','Ketu'];

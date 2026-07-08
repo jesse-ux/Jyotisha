@@ -191,7 +191,6 @@ REMAINING_PRIORITY1_BATCH_QUEUE = [
 REAL_CASE_STUDIES_BATCH1_INDEX = {
     "career": [
         "references/real_case_studies/vedicka/career-success-poverty-prosperity.md",
-        "references/real_case_studies/印度占星修正版研究结论v3-高压基建后的反转兑现模型.md",
     ],
     "finance": [
         "references/real_case_studies/vedicka/career-success-poverty-prosperity.md",
@@ -201,9 +200,7 @@ REAL_CASE_STUDIES_BATCH1_INDEX = {
         "docs/benchmark/legacy-marriage-v6.1/verify-results-v6.1.json",
         "docs/benchmark/legacy-marriage-v6.1/印度占星实战案例综合验证报告-v6.1-2026-05-03.md",
     ],
-    "health": [
-        "references/real_case_studies/印度占星解盘与推运误区反思报告-2026-04-22.md",
-    ],
+    "health": [],
     "rectification": [
         "references/birth-time-rectification-cases.md",
     ],
@@ -4269,7 +4266,11 @@ def strict_workflow(
             )
             planner = result.get("runtime_planner") if isinstance(result.get("runtime_planner"), dict) else {}
             result["vedastro_official"] = vedastro_official
-            result["runtime_truth"] = vedastro_official.get("runtime_truth", {})
+            result["runtime_truth"] = (
+                vedastro_official.get("runtime_truth")
+                if isinstance(vedastro_official.get("runtime_truth"), dict)
+                else result.get("runtime_truth", {})
+            )
             result["interpretation_source_runtime_coverage"] = interpretation_coverage
             result["machine_evidence_packet"] = machine_evidence_packet
             result["real_case_calibration"] = real_case_calibration

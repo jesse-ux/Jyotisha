@@ -135,8 +135,8 @@ class TestDigBala:
     def test_midrange_positive(self):
         assert 0 < calc_dig_bala('Sun', 7) < 60
 
-    def test_dig_bala_jupiter_redacted_place_case_needs_better_than_house_only_linear_model(self):
-        comparison = compare_case("references/oracle/dasha_shadbala_oracle_cases.json", "template_redacted_place_shadbala_raman")
+    def test_dig_bala_jupiter_synthetic_north_china_case_needs_better_than_house_only_linear_model(self):
+        comparison = compare_case("references/oracle/dasha_shadbala_oracle_cases.json", "template_synthetic_north_china_shadbala_raman")
         jupiter_dig_gap = comparison["comparison"]["Jupiter"]["components"]["dig"]["abs_diff_rupa"]
 
         assert jupiter_dig_gap < 3.6348

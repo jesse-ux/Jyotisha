@@ -13,8 +13,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
-FIRST_PRIORITY_CASE_ID = "template_redacted_place_shadbala_raman"
-FIRST_PRIORITY_TEMPLATE_PATH = "references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json"
+FIRST_PRIORITY_CASE_ID = "template_synthetic_north_china_shadbala_raman"
+FIRST_PRIORITY_TEMPLATE_PATH = "references/oracle/evidence_packet_templates/shadbala_synthetic_north_china_raman_first_packet.json"
 SHADBALA_TARGET_FIELD = "target.shadbala_components"
 SUPPORTING_TARGET_FIELDS = ["target.moon_sidereal_longitude_deg"]
 REQUIRED_PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]

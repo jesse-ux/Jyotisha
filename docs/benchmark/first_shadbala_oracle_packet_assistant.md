@@ -1,11 +1,11 @@
 # First External Oracle Packet Assistant
 
 - front: `shadbala`
-- case_id: `template_redacted_place_shadbala_raman`
-- capture_id: `external_template_redacted_place_shadbala_raman`
+- case_id: `template_synthetic_north_china_shadbala_raman`
+- capture_id: `external_template_synthetic_north_china_shadbala_raman`
 - ready_to_apply: `true`
-- operator_card: `docs/benchmark/shadbala_redacted_place_raman_first_packet_operator_card.md`
-- packet_template: `references/oracle/evidence_packet_templates/shadbala_redacted_place_raman_first_packet.json`
+- operator_card: `docs/benchmark/shadbala_synthetic_north_china_raman_first_packet_operator_card.md`
+- packet_template: `references/oracle/evidence_packet_templates/shadbala_synthetic_north_china_raman_first_packet.json`
 
 ## Missing Summary
 
