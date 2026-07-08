@@ -224,6 +224,9 @@ def run_gateway_job(job_id: str) -> dict[str, Any] | None:
 
 
 def gateway_status() -> dict[str, Any]:
+    from scripts.diagnose_vedastro_mode import build_report as build_vedastro_mode_report
+
+    readiness = build_vedastro_mode_report()
     config = build_gateway_config()
     return {
         "scope": "vedastro_gateway",
@@ -235,6 +238,13 @@ def gateway_status() -> dict[str, Any]:
         "cache_ttl_seconds": config["cache_ttl_seconds"],
         "queue_enabled": config["queue_enabled"],
         "fail_open_local": config["fail_open_local"],
+        "official_readiness": {
+            "official_ready": bool(readiness.get("official_ready")),
+            "mode": readiness.get("mode"),
+            "readiness_blockers": list(readiness.get("readiness_blockers") or []),
+            "free_tier_possible_with_cache_queue": bool(readiness.get("free_tier_possible_with_cache_queue")),
+            "official_closure_plan": readiness.get("official_closure_plan") or {},
+        },
         "direct_browser_access_allowed": False,
         "frontend_secret_safe": True,
         "boundary": BOUNDARY_TEXT,
@@ -284,6 +294,16 @@ def _status_from_report(gateway: dict[str, Any], report: dict[str, Any]) -> str:
     return "blocked"
 
 
+def _official_closure_state_from_report(gateway: dict[str, Any], report: dict[str, Any]) -> str:
+    catalog = report.get("official_capability_catalog") if isinstance(report, dict) else {}
+    active_backend = gateway.get("active_backend") or "local_fallback"
+    if active_backend == "local_fallback":
+        return "local_fallback"
+    if (catalog or {}).get("available"):
+        return "official_verified"
+    return "official_blocked"
+
+
 def run_gateway_packet(
     case: dict[str, Any],
     question: str = "",
@@ -300,6 +320,7 @@ def run_gateway_packet(
         "scope": "vedastro_gateway_run",
         "schema_version": 1,
         "status": _status_from_report(gateway, report),
+        "official_closure_state": _official_closure_state_from_report(gateway, report),
         "gateway_status": gateway,
         "input": report.get("input") or {},
         "runtime_mode": report.get("runtime_mode") or {},

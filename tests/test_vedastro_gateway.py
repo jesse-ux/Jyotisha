@@ -5,6 +5,7 @@ def test_gateway_status_defaults_to_local_first_cn_safe(monkeypatch):
     from scripts import vedastro_gateway
 
     monkeypatch.delenv("VEDASTRO_GATEWAY_MODE", raising=False)
+    monkeypatch.setenv("JYOTISH_SKIP_LOCAL_ENV", "1")
     monkeypatch.delenv("VEDASTRO_SELF_HOST_ENDPOINT", raising=False)
     monkeypatch.delenv("VEDASTRO_API_ENDPOINT", raising=False)
     monkeypatch.delenv("VEDASTRO_CACHE_TTL_SECONDS", raising=False)
@@ -19,6 +20,8 @@ def test_gateway_status_defaults_to_local_first_cn_safe(monkeypatch):
     assert status["frontend_secret_safe"] is True
     assert status["backend_priority"] == ["self_host", "official", "cache", "queue", "local_fallback"]
     assert status["active_backend"] == "local_fallback"
+    assert status["official_readiness"]["official_ready"] is False
+    assert "missing_endpoint" in status["official_readiness"]["readiness_blockers"]
     assert status["boundary"] == "Users never call VedAstro directly; backend gateway owns cache, queue, and fallback."
 
 
@@ -37,6 +40,22 @@ def test_gateway_status_reports_cn_gateway_self_host(monkeypatch):
     assert status["active_backend"] == "self_host"
     assert status["cache_ttl_seconds"] == 604800
     assert status["queue_enabled"] is True
+
+
+def test_gateway_status_exposes_official_readiness_gate(monkeypatch):
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://api.vedastro.org/api")
+    monkeypatch.setenv("JYOTISH_SKIP_LOCAL_ENV", "1")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "20")
+    monkeypatch.setenv("VEDASTRO_FREE_TIER_QUEUE", "1")
+
+    status = vedastro_gateway.gateway_status()
+
+    assert status["official_configured"] is True
+    assert status["official_readiness"]["official_ready"] is True
+    assert status["official_readiness"]["free_tier_possible_with_cache_queue"] is True
 
 
 def test_gateway_run_packet_uses_user_entrypoint_and_marks_not_all_641(monkeypatch):
@@ -67,6 +86,7 @@ def test_gateway_run_packet_uses_user_entrypoint_and_marks_not_all_641(monkeypat
 
     assert packet["scope"] == "vedastro_gateway_run"
     assert packet["status"] in {"ok", "partial", "queued", "blocked", "cached", "local_fallback"}
+    assert packet["official_closure_state"] in {"official_verified", "official_blocked", "local_fallback"}
     assert packet["gateway_status"]["mode"] == "cn_gateway"
     assert packet["official_capability_catalog"]["summary"]["catalog_method_count"] >= 0
     assert packet["honesty_boundary"]["all_641_methods_executed"] is False

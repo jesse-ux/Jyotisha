@@ -54,6 +54,7 @@ For large architecture or release work, also read:
 | ERR-021 | VedAstro raw archive manifests can exist outside the high-rigor evidence packet, leaving final reports unable to prove whether official raw evidence was archived. | mitigated 2026-07-08 | Keep `vedastro_official_raw_archive_manifest` in `machine_evidence_packet.sections` for API and MCP strict workflows. |
 | ERR-022 | Technique Audit Table can show VedAstro cloud state but omit whether archived official raw evidence is actually auditable. | mitigated 2026-07-08 | Keep `VedAstro Raw Archive Manifest` as a first-class Technique Audit Table row immediately after `VedAstro Cloud State`. |
 | ERR-023 | `professional_reading` can require a Technique Audit Table while omitting the user-visible VedAstro raw archive row. | mitigated 2026-07-08 | Keep `VedAstro Raw Archive Manifest` in `professional_reading.technique_audit_table_required_rows`. |
+| ERR-024 | VedAstro gateway status can choose `local_fallback` before `.env` is loaded, even when official endpoint/network settings are present. | mitigated 2026-07-08 | `gateway_status()` must load official readiness before resolving active backend; `run_gateway_packet()` must expose `official_closure_state` separately from legacy `status`. |
 
 ## Fragment Sweep Command Set
 
