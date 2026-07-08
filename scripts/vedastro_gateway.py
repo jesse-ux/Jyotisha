@@ -128,6 +128,36 @@ def get_gateway_job(job_id: str) -> dict[str, Any] | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _official_raw_response(result: dict[str, Any]) -> Any:
+    raw = result.get("official_raw_response")
+    if raw:
+        return raw
+    raw = result.get("raw_response")
+    if isinstance(raw, dict) and raw.get("source") == "vedastro_official":
+        return raw
+    return None
+
+
+def _raw_response_archive(job_id: str, result: dict[str, Any]) -> dict[str, Any]:
+    raw = _official_raw_response(result)
+    if not raw:
+        return {
+            "status": "stored_gateway_packet_not_official_raw",
+            "official_raw_response_available": False,
+            "boundary": "Gateway packet was archived; VedAstro official raw response is still separate evidence.",
+        }
+    archive_rel = f"{job_id}.official_raw_response.json"
+    archive_path = _queue_dir() / archive_rel
+    archive_path.parent.mkdir(parents=True, exist_ok=True)
+    archive_path.write_text(json.dumps(raw, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+    return {
+        "status": "official_raw_response_archived",
+        "official_raw_response_available": True,
+        "official_raw_response_path": archive_rel,
+        "boundary": "VedAstro official raw response archived separately from the gateway summary packet.",
+    }
+
+
 def complete_gateway_job(job_id: str, result: dict[str, Any]) -> dict[str, Any]:
     job = get_gateway_job(job_id)
     if job is None:
@@ -135,11 +165,7 @@ def complete_gateway_job(job_id: str, result: dict[str, Any]) -> dict[str, Any]:
     job["status"] = "completed"
     job["updated_at"] = _now_iso()
     job["result"] = dict(result or {})
-    job["raw_response_archive"] = {
-        "status": "stored_gateway_packet_not_official_raw",
-        "official_raw_response_available": False,
-        "boundary": "Gateway packet was archived; VedAstro official raw response is still separate evidence.",
-    }
+    job["raw_response_archive"] = _raw_response_archive(job_id, job["result"])
     return _write_job(job)
 
 
