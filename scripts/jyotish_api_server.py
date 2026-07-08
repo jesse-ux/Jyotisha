@@ -953,6 +953,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             elif path == '/api/vedastro_gateway/enqueue':
                 result = self._compute_vedastro_gateway_enqueue(body)
                 self._json(result)
+            elif path.startswith('/api/vedastro_gateway/jobs/') and path.endswith('/run'):
+                job_id = path.split('/')[-2]
+                result = self._compute_vedastro_gateway_run_job(job_id)
+                if result is None:
+                    self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._json(result)
             elif path == '/api/professional_reading':
                 result = self._compute_professional_reading(body)
                 self._json(result)
@@ -1783,6 +1790,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             themes=themes,
             reference_date=str(reference_date),
         )
+
+    def _compute_vedastro_gateway_run_job(self, job_id):
+        from scripts.vedastro_gateway import run_gateway_job
+
+        return run_gateway_job(str(job_id))
 
     def _compute_vedastro_gateway_run(self, body):
         from scripts.vedastro_gateway import run_gateway_packet

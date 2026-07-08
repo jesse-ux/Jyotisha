@@ -347,6 +347,32 @@ def test_vedastro_gateway_poll_rejects_invalid_job_id(monkeypatch, tmp_path) -> 
     assert poller.payload()['error_code'] == 'ERR_NOT_FOUND'
 
 
+def test_vedastro_gateway_job_run_route_executes_worker(monkeypatch, tmp_path) -> None:
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv('VEDASTRO_GATEWAY_QUEUE_DIR', str(tmp_path))
+    job = vedastro_gateway.enqueue_gateway_job(
+        {'year': 1955, 'month': 2, 'day': 24, 'hour': 19, 'minute': 15, 'lat': 37.7749, 'lon': -122.4194, 'tz': 8},
+        question='事业机会什么时候出现',
+        themes=['career'],
+        reference_date='2026-07-02',
+    )
+
+    monkeypatch.setattr(
+        vedastro_gateway,
+        'run_gateway_packet',
+        lambda *args, **kwargs: {'scope': 'vedastro_gateway_run', 'status': 'local_fallback'},
+    )
+    runner = _PostCaptureHandler(f"/api/vedastro_gateway/jobs/{job['job_id']}/run", {})
+
+    runner.do_POST()
+
+    assert runner.status_code == 200
+    payload = runner.payload()
+    assert payload['status'] == 'completed'
+    assert payload['result']['status'] == 'local_fallback'
+
+
 def test_professional_reading_composes_high_rigor_and_gateway(monkeypatch) -> None:
     handler = _handler()
 

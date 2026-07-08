@@ -143,6 +143,31 @@ def complete_gateway_job(job_id: str, result: dict[str, Any]) -> dict[str, Any]:
     return _write_job(job)
 
 
+def run_gateway_job(job_id: str) -> dict[str, Any] | None:
+    job = get_gateway_job(job_id)
+    if job is None:
+        return None
+    if job.get("status") == "completed":
+        return job
+    job["status"] = "running"
+    job["updated_at"] = _now_iso()
+    _write_job(job)
+    request = job.get("request") if isinstance(job.get("request"), dict) else {}
+    try:
+        result = run_gateway_packet(
+            request.get("case") if isinstance(request.get("case"), dict) else {},
+            question=str(request.get("question") or ""),
+            themes=request.get("themes") if isinstance(request.get("themes"), list) else [],
+            reference_date=str(request.get("reference_date") or ""),
+        )
+    except Exception as exc:
+        job["status"] = "failed"
+        job["updated_at"] = _now_iso()
+        job["error"] = {"type": exc.__class__.__name__, "message": str(exc)}
+        return _write_job(job)
+    return complete_gateway_job(job_id, result)
+
+
 def gateway_status() -> dict[str, Any]:
     config = build_gateway_config()
     return {

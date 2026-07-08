@@ -111,3 +111,46 @@ def test_gateway_queue_lifecycle_uses_file_job_store(monkeypatch, tmp_path):
     polled = vedastro_gateway.get_gateway_job(job["job_id"])
     assert polled["result"]["status"] == "local_fallback"
     assert polled["raw_response_archive"]["status"] == "stored_gateway_packet_not_official_raw"
+
+
+def test_gateway_run_job_executes_queued_request(monkeypatch, tmp_path):
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv("VEDASTRO_GATEWAY_QUEUE_DIR", str(tmp_path))
+    job = vedastro_gateway.enqueue_gateway_job(
+        {"year": 1955, "month": 2, "day": 24, "hour": 19, "minute": 15, "lat": 37.7749, "lon": -122.4194, "tz": 8},
+        question="事业机会什么时候出现",
+        themes=["career"],
+        reference_date="2026-07-02",
+    )
+    seen = {}
+
+    def fake_run(case, question="", themes=None, reference_date=""):
+        seen.update({"case": case, "question": question, "themes": themes, "reference_date": reference_date})
+        return {"scope": "vedastro_gateway_run", "status": "local_fallback"}
+
+    monkeypatch.setattr(vedastro_gateway, "run_gateway_packet", fake_run)
+    result = vedastro_gateway.run_gateway_job(job["job_id"])
+
+    assert result["status"] == "completed"
+    assert result["result"]["status"] == "local_fallback"
+    assert seen["case"]["year"] == 1955
+    assert seen["question"] == "事业机会什么时候出现"
+    assert seen["themes"] == ["career"]
+    assert seen["reference_date"] == "2026-07-02"
+
+
+def test_gateway_run_job_records_worker_failure(monkeypatch, tmp_path):
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv("VEDASTRO_GATEWAY_QUEUE_DIR", str(tmp_path))
+    job = vedastro_gateway.enqueue_gateway_job({"year": 1955}, question="x")
+
+    def broken_run(*_args, **_kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(vedastro_gateway, "run_gateway_packet", broken_run)
+    result = vedastro_gateway.run_gateway_job(job["job_id"])
+
+    assert result["status"] == "failed"
+    assert result["error"] == {"type": "RuntimeError", "message": "boom"}
