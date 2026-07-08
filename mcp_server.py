@@ -4254,11 +4254,13 @@ def strict_workflow(
 
             handler = JyotishAPIHandler.__new__(JyotishAPIHandler)
             vedastro_official = handler._high_rigor_vedastro_official_summary(chart)
+            vedastro_archive_manifest = handler._compute_vedastro_gateway_archives()
             interpretation_coverage = handler._interpretation_source_runtime_coverage(chart)
             machine_evidence_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.machine_evidence_packet(
                 chart=chart,
                 route_packet=result.get("routing") if isinstance(result.get("routing"), dict) else route_packet,
                 vedastro_official=vedastro_official,
+                vedastro_archive_manifest=vedastro_archive_manifest,
             )
             real_case_calibration = _UNIFIED_CONSULTATION_ORCHESTRATOR.real_case_calibration_catalog(
                 route_packet=result.get("routing") if isinstance(result.get("routing"), dict) else route_packet,

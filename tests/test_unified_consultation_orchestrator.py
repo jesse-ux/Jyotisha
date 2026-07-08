@@ -311,3 +311,20 @@ def test_real_case_calibration_catalog_exposes_local_sources_without_claiming_ma
     assert catalog["scored_candidates"][0]["event_trigger_match"]["checks"]["recorded_trigger_keywords"]
     assert catalog["scored_candidates"][0]["outcome_validation"]["status"] == "local_outcome_recorded_trigger_not_replayed"
     assert "D9" in catalog["scored_candidates"][0]["similarities"]["evidence_section_overlap"]
+
+
+def test_machine_evidence_packet_carries_vedastro_raw_archive_manifest() -> None:
+    orchestrator = UnifiedConsultationOrchestrator()
+    packet = orchestrator.machine_evidence_packet(
+        chart={"chart": {"ascendant": {"sign": "Leo"}, "planets": {"Sun": {"sign": "Aquarius"}}}},
+        route_packet={"question_type": "career", "primary_theme": "career"},
+        vedastro_archive_manifest={
+            "scope": "vedastro_official_raw_response_archive_manifest",
+            "archive_count": 1,
+            "archives": [{"job_id": "job_1955", "official_raw_response_available": True}],
+        },
+    )
+
+    section = packet["sections"]["vedastro_official_raw_archive_manifest"]
+    assert section["status"] == "used"
+    assert section["source_path"] == "vedastro_gateway.archives"

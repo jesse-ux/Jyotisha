@@ -183,6 +183,7 @@ def execute_consultation_workflow(
         executed_steps.append('run_thematic_report')
 
     vedastro_official = handler._high_rigor_vedastro_official_summary(chart)
+    vedastro_archive_manifest = handler._compute_vedastro_gateway_archives()
     runtime_truth = vedastro_official.get('runtime_truth') if isinstance(vedastro_official.get('runtime_truth'), dict) else {}
     interpretation_source_runtime_coverage = handler._interpretation_source_runtime_coverage(chart)
     skipped_steps = [step for step in known_steps if step not in executed_steps]
@@ -190,6 +191,7 @@ def execute_consultation_workflow(
         chart=chart,
         route_packet=route_packet,
         vedastro_official=vedastro_official,
+        vedastro_archive_manifest=vedastro_archive_manifest,
     )
     real_case_calibration = _UNIFIED_CONSULTATION_ORCHESTRATOR.real_case_calibration_catalog(
         route_packet=route_packet,

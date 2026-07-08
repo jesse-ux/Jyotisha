@@ -66,6 +66,7 @@ class UnifiedConsultationOrchestrator:
         "KP_cusp",
         "external_oracle_status",
         "vedastro_official_raw_response",
+        "vedastro_official_raw_archive_manifest",
     ]
     _THEME_ALIASES = {
         "relationship": "marriage",
@@ -368,6 +369,7 @@ class UnifiedConsultationOrchestrator:
         chart: dict[str, Any] | None,
         route_packet: dict[str, Any],
         vedastro_official: dict[str, Any] | None = None,
+        vedastro_archive_manifest: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         chart_data = chart if isinstance(chart, dict) else {}
         modules = chart_data.get("modules") if isinstance(chart_data.get("modules"), dict) else {}
@@ -383,6 +385,7 @@ class UnifiedConsultationOrchestrator:
         ascendant_sign = ascendant.get("sign") if isinstance(ascendant, dict) else None
         functional_layer = derive_functional_benefic_malefic(ascendant_sign)
         official = vedastro_official if isinstance(vedastro_official, dict) else {}
+        archive_manifest = vedastro_archive_manifest if isinstance(vedastro_archive_manifest, dict) else {}
         raw_response = (
             official.get("raw_response")
             or official.get("official_raw_response")
@@ -417,6 +420,10 @@ class UnifiedConsultationOrchestrator:
                 "source_path": "vedastro_official.runtime_truth",
             },
             "vedastro_official_raw_response": self._section(raw_response, "vedastro_official.raw_response"),
+            "vedastro_official_raw_archive_manifest": self._section(
+                archive_manifest if archive_manifest.get("archive_count") else None,
+                "vedastro_gateway.archives",
+            ),
         }
         missing = [name for name, section in sections.items() if section.get("status") == "missing"]
         return {

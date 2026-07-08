@@ -177,6 +177,7 @@ def test_mcp_strict_workflow_returns_runtime_evidence_log(monkeypatch) -> None:
     assert result["runtime_evidence_log"]["route"]["question_type"] == "career"
     assert result["runtime_evidence_log"]["vedastro_cloud_state"] == "official_verified"
     assert result["machine_evidence_packet"]["status"] == "partial"
+    assert "vedastro_official_raw_archive_manifest" in result["machine_evidence_packet"]["sections"]
     assert result["real_case_calibration"]["status"] == "partial_scored"
     assert result["runtime_evidence_log"]["evidence_packet_contract"]["status"] == "partial"
     assert result["runtime_evidence_log"]["real_case_calibration"]["status"] == "partial_scored"

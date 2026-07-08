@@ -51,6 +51,7 @@ For large architecture or release work, also read:
 | ERR-018 | External engine blockers can be described verbally but not carried into diagnostics. | mitigated 2026-07-05 | `diagnose_external_engine_adapters.py` must expose VedAstro closure plan and PyJHora/JHora install/license/ephemeris boundary; keep `docs/research/external_engine_blocker_research_2026_07_05.md` current. |
 | ERR-019 | WorkBuddy/cloud/local acceptance summaries can invent pass counts, stale asset counts, non-existent error docs, or wrong dasha windows. | mitigated 2026-07-06 | Read `docs/research/user_invocation_acceptance_error_log_2026_07_06.md`; run `scripts/user_invocation_acceptance_check.py` and `tests/test_user_invocation_acceptance_contract.py` before accepting ordinary-user skill invocation validation claims. |
 | ERR-020 | VedAstro official raw responses can be archived but hard to audit if no manifest/API listing exposes them. | mitigated 2026-07-08 | Keep `list_official_raw_response_archives()` and `GET /api/vedastro_gateway/archives`; tests must prove archived official raw responses are enumerable. |
+| ERR-021 | VedAstro raw archive manifests can exist outside the high-rigor evidence packet, leaving final reports unable to prove whether official raw evidence was archived. | mitigated 2026-07-08 | Keep `vedastro_official_raw_archive_manifest` in `machine_evidence_packet.sections` for API and MCP strict workflows. |
 
 ## Fragment Sweep Command Set
 

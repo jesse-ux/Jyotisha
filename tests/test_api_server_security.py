@@ -2161,6 +2161,11 @@ def test_high_rigor_workflow_reuses_existing_rectification_backtest_and_vedastro
         return _load_local_module(name)
 
     monkeypatch.setattr(jyotish_api_server, '_load_local_module', fake_loader)
+    monkeypatch.setattr(handler, '_compute_vedastro_gateway_archives', lambda: {
+        'scope': 'vedastro_official_raw_response_archive_manifest',
+        'archive_count': 1,
+        'archives': [{'job_id': 'job_1955', 'official_raw_response_available': True}],
+    })
 
     result = handler._compute_high_rigor_workflow({
         'question': '请高严谨分析我的事业、婚恋和财富',
@@ -2199,6 +2204,7 @@ def test_high_rigor_workflow_reuses_existing_rectification_backtest_and_vedastro
     assert result['unified_orchestrator']['name'] == 'UnifiedConsultationOrchestrator'
     assert result['unified_orchestrator']['surface'] == 'api_web'
     assert result['unified_orchestrator']['route']['question_type'] == 'career'
+    assert result['machine_evidence_packet']['sections']['vedastro_official_raw_archive_manifest']['status'] == 'used'
 
 
 def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -> None:
