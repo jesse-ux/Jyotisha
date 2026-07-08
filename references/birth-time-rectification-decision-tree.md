@@ -31,6 +31,34 @@
 - [jyotish-app/rectification-engine.js](<repo>/jyotish-app/rectification-engine.js)
 - [references/varga-system-quick-reference.md](<repo>/references/varga-system-quick-reference.md)
 
+## 1.1 产品化问询原则
+
+生时校正不应默认要求用户先列出 8-15 个事件。普通用户路径优先采用主动问询：
+
+```text
+候选时间扫描
+→ 分盘 / Arudha / KP cusp / Dasha 敏感差异提取
+→ 生成高信息量选择题
+→ 用户回答 A/B/C/D
+→ 动态缩小候选时间簇
+→ 进入下一轮追问
+```
+
+用户只需回答：
+
+```text
+A. 明确有，且时间大致吻合
+B. 有类似，但时间略偏或不够重大
+C. 没有明显发生
+D. 不确定 / 不记得
+```
+
+机器可审计入口：
+
+```bash
+python3 scripts/active_rectification_questions.py --birth-time "1955-02-24 19:15" --uncertainty-minutes 30 --pretty
+```
+
 ## 2. 第一层：主引擎
 
 ### Dasha + dated events

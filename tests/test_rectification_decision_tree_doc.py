@@ -21,6 +21,8 @@ def test_rectification_decision_tree_doc_exists_and_covers_priority_layers() -> 
     assert "D60" in text
     assert "不是所有分盘一股脑上" in text
     assert "Dasha 定框，D9/D10 定核心" in text
+    assert "主动问询" in text
+    assert "scripts/active_rectification_questions.py" in text
 
 
 def test_rectification_decision_tree_doc_maps_event_groups_to_vargas() -> None:
