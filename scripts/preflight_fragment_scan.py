@@ -27,8 +27,8 @@ import oracle_boundary_audit  # noqa: E402
 
 
 LOCAL_DRAFTS_DIR = ROOT / "docs" / "research" / "local_drafts" / "2026-06"
-EXTERNAL_WORK_BRAIN_DIR = Path("/Users/wuyongnaren/.gemini/antigravity-ide/brain")
-DISTRIBUTION_MIRROR_DIR = Path("/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology")
+EXTERNAL_WORK_BRAIN_DIR = Path("<home>/.gemini/antigravity-ide/brain")
+DISTRIBUTION_MIRROR_DIR = Path("<home>/.workbuddy/skills/jyotish-vedic-astrology")
 ORACLE_FILE = ROOT / "references" / "oracle" / "dasha_shadbala_oracle_cases.json"
 REPO_CLEANUP_MAP = ROOT / "docs" / "research" / "repo_cleanup_promotion_map_2026_07_01.md"
 ERROR_LEDGER = ROOT / "docs" / "research" / "pre_work_error_ledger.md"
@@ -299,8 +299,8 @@ def build_report() -> dict[str, Any]:
             "exists": REPO_CLEANUP_MAP.exists(),
             "focus_layers": [
                 "docs/research/local_drafts/2026-06",
-                "/Users/wuyongnaren/.gemini/antigravity-ide/brain",
-                "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology",
+                "<home>/.gemini/antigravity-ide/brain",
+                "<home>/.workbuddy/skills/jyotish-vedic-astrology",
             ],
         },
         "governance": {

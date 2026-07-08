@@ -56,8 +56,8 @@ def test_repo_cleanup_promotion_map_records_three_cleanup_layers() -> None:
 
     required_tokens = [
         "docs/research/local_drafts/2026-06",
-        "/Users/wuyongnaren/.gemini/antigravity-ide/brain",
-        "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology",
+        "<home>/.gemini/antigravity-ide/brain",
+        "<home>/.workbuddy/skills/jyotish-vedic-astrology",
         "recovery-only",
         "distribution mirror",
         "not runtime truth",

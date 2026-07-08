@@ -15,9 +15,9 @@ related_skills: [jyotish-full-reading-integration, jyotish-vedic-astrology]
 
 当前项目的唯一对外真源以以下文件为准：
 
-1. `/Users/wuyongnaren/Documents/印度占星/SKILL.md`
-2. `/Users/wuyongnaren/Documents/印度占星/references/technique_registry.json`
-3. `/Users/wuyongnaren/Documents/印度占星/references/strict-workflow-router.md`
+1. `<repo>/SKILL.md`
+2. `<repo>/references/technique_registry.json`
+3. `<repo>/references/strict-workflow-router.md`
 
 本文件不得单独作为“当前能力完整性”依据；若与主 skill 描述冲突，以主 skill 与 registry 为准。
 

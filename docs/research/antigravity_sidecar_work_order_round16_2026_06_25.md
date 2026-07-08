@@ -129,7 +129,7 @@ npm run build --prefix jyotish-app
 
 - `docs/research/antigravity_round16_first_jhora_sample_checklist_2026_06_25.md`
 
-请把 `template_user_REDACTED_YEAR_moon_longitude_lahiri` 转成手工操作清单：
+请把 `template_private_oracle_redacted` 转成手工操作清单：
 
 1. JHora 输入项。
 2. 需要截图的页面。
@@ -178,7 +178,7 @@ npm run build --prefix jyotish-app
 
 1. 将 artifacts 存档规范接入 README 和 Evidence Packet 下载文案。
 2. 将 Shadbala 六分量强校验接入后端 `/api/oracle_evidence`。
-3. 生成第一条 `template_user_REDACTED_YEAR_moon_longitude_lahiri` 的外部样本填表说明。
+3. 生成第一条 `template_private_oracle_redacted` 的外部样本填表说明。
 4. 增加 Dasha/Shadbala 真实进度仪表盘。
 5. 将 Ashtakoot 合婚纳入下一批 oracle 样本。
 

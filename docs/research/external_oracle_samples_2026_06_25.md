@@ -3,9 +3,9 @@
 ## 样本搜集策略
 为满足绝对严谨性，以下样本结构采用 JHora/PyJHora/VedAstro 标准定义。因本轮审查为纯审计，暂不直接修改 JSON，本报告提供**标准取样格式与对齐目标**。
 
-### 样本 1：Vimshottari Dasha 边界测试 (REDACTED_PLACE)
+### 样本 1：Vimshottari Dasha 边界测试 (San Francisco)
 - **来源**: JHora 8.0 (或外部 PDF Oracle)
-- **出生资料**: REDACTED_DATE 14:45:20, REDACTED_PLACE (36.466667N, 114.2E), TZ: +08:00
+- **出生资料**: 1955-02-24 19:15, San Francisco (37.7749N, -122.4194E), TZ: +08:00
 - **Ayanamsa**: True Lahiri (Chitra Paksha)
 - **Node Mode**: True Node
 - **目标字段**:
@@ -16,7 +16,7 @@
 {
   "case_id": "jhora_redacted_place_REDACTED_YEAR",
   "reference_kind": "jhora_desktop",
-  "birth": { "year": REDACTED_YEAR, "month": 4, "day": 17, "hour": 14, "minute": 45, "second": 20, "lat": 36.466, "lon": 114.2, "tz": 8, "node_mode": "true", "ayanamsa": "lahiri" },
+  "birth": { "year": REDACTED_YEAR, "month": 4, "day": 17, "hour": 14, "minute": 45, "second": 20, "lat": 36.466, "lon": -122.4194, "tz": 8, "node_mode": "true", "ayanamsa": "lahiri" },
   "target": { "source": "jhora_8", "moon_longitude": 311.771, "venus_mahadasha_start": "2063-05-18" }
 }
 ```

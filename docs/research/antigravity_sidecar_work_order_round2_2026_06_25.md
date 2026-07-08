@@ -73,7 +73,7 @@ Antigravity AI 作为副手，只做外部验证、浏览器黑盒复验、文�
 1. 启动本地 API：`python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200`
 2. 启动前端：`cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173`
 3. 浏览器打开 `http://127.0.0.1:5173`
-4. 填入样本：REDACTED_DATE 14:45:20，lat 36.466667，lon 114.2，tz 8。
+4. 填入样本：private birth datetime，lat 36.466667，lon 114.2，tz 8。
 5. 在参数页保存 Raman 或 KP Ayanamsa，重新排盘。
 6. 检查：
    - API payload 是否含 `ayanamsa` 和 `second`。

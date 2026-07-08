@@ -2,7 +2,7 @@
 自动化 Yoga 测试运行器 — 从 yoga_test_suite.json 加载用例并批量验证
 """
 import json, sys, os
-SKILL_DIR = '/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology'
+SKILL_DIR = '<home>/.workbuddy/skills/jyotish-vedic-astrology'
 sys.path.insert(0, os.path.join(SKILL_DIR, 'scripts'))
 RULES_PATH = os.path.join(SKILL_DIR, 'references', 'yoga_rules.json')
 from yoga_engine import YogaEngine

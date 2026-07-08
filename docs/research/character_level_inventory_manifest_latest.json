@@ -13359,8 +13359,8 @@
       "promotion_status": "oracle_evidence_only",
       "reason": "Oracle artifact; use for parity evidence, not interpretive rules."
     },
-    "references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_moon_longitude_lahiri.json": {
-      "path": "references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_moon_longitude_lahiri.json",
+    "references/oracle/artifacts/pending_packets/external_template_private_oracle_redacted.json": {
+      "path": "references/oracle/artifacts/pending_packets/external_template_private_oracle_redacted.json",
       "suffix": ".json",
       "byte_count": 2631,
       "sha256": "9fc3dbb44bc1813fe04ae22b896b889c58cd80cef5cab8536934f20cd05123a8",
@@ -13373,8 +13373,8 @@
       "promotion_status": "oracle_evidence_only",
       "reason": "Oracle artifact; use for parity evidence, not interpretive rules."
     },
-    "references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_moon_longitude_lahiri_pyjhora_20260627.json": {
-      "path": "references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_moon_longitude_lahiri_pyjhora_20260627.json",
+    "references/oracle/artifacts/pending_packets/external_template_private_oracle_redacted_pyjhora_20260627.json": {
+      "path": "references/oracle/artifacts/pending_packets/external_template_private_oracle_redacted_pyjhora_20260627.json",
       "suffix": ".json",
       "byte_count": 1562,
       "sha256": "04e9f3c0a5069e32393afd9c3a19ef1c171c7df9c6b16689c56d63a10659c927",
@@ -13387,8 +13387,8 @@
       "promotion_status": "oracle_evidence_only",
       "reason": "Oracle artifact; use for parity evidence, not interpretive rules."
     },
-    "references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_shadbala_lahiri_pyjhora_20260627.json": {
-      "path": "references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_shadbala_lahiri_pyjhora_20260627.json",
+    "references/oracle/artifacts/pending_packets/external_template_private_oracle_shadbala_redacted.json": {
+      "path": "references/oracle/artifacts/pending_packets/external_template_private_oracle_shadbala_redacted.json",
       "suffix": ".json",
       "byte_count": 3275,
       "sha256": "841bd71a78fb4d0ca6b0eba800eaddc9cbee8bd9cbadd60cc4357bcc5b91e21a",
@@ -13555,8 +13555,8 @@
       "promotion_status": "oracle_evidence_only",
       "reason": "Oracle artifact; use for parity evidence, not interpretive rules."
     },
-    "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt": {
-      "path": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt",
+    "references/oracle/artifacts/private_oracle_redacted_dasha_stdout.txt": {
+      "path": "references/oracle/artifacts/private_oracle_redacted_dasha_stdout.txt",
       "suffix": ".txt",
       "byte_count": 6224,
       "sha256": "26d9a7163c473dbf1494e1660016fb1b5c9252e1ac5e2e75f6a1e31bb9cc21fb",
@@ -13569,8 +13569,8 @@
       "promotion_status": "oracle_evidence_only",
       "reason": "Oracle artifact; use for parity evidence, not interpretive rules."
     },
-    "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt": {
-      "path": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt",
+    "references/oracle/artifacts/private_oracle_redacted_shadbala_stdout.txt": {
+      "path": "references/oracle/artifacts/private_oracle_redacted_shadbala_stdout.txt",
       "suffix": ".txt",
       "byte_count": 3018,
       "sha256": "753df29516c93b538d1164cbdc349c158be66dac6a9b2379409058749ab9d892",
@@ -13709,8 +13709,8 @@
       "promotion_status": "oracle_evidence_only",
       "reason": "Oracle artifact; use for parity evidence, not interpretive rules."
     },
-    "references/oracle/cases/yinan_video_truth_2026_06_28.json": {
-      "path": "references/oracle/cases/yinan_video_truth_2026_06_28.json",
+    "references/oracle/cases/private_case_redacted.json": {
+      "path": "references/oracle/cases/private_case_redacted.json",
       "suffix": ".json",
       "byte_count": 1970,
       "sha256": "480edffc6e7f3f63bacf92913acb686d7f5792e985a7a187a0dbd9c3ff4be942",
@@ -14157,8 +14157,8 @@
       "promotion_status": "reference_layer_candidate",
       "reason": "Real-case material for calibration; not direct rule truth."
     },
-    "references/real_case_studies/一楠 · 印度占星完整解盘报告 v2（MEVG验证版）.html": {
-      "path": "references/real_case_studies/一楠 · 印度占星完整解盘报告 v2（MEVG验证版）.html",
+    "references/real_case_studies/PRIVATE_REDACTED_CASE · 印度占星完整解盘报告 v2（MEVG验证版）.html": {
+      "path": "references/real_case_studies/PRIVATE_REDACTED_CASE · 印度占星完整解盘报告 v2（MEVG验证版）.html",
       "suffix": ".html",
       "byte_count": 46397,
       "sha256": "6dcc8e9717902657f2c65021c219de366f8b762a445eca521690ae46723e983d",

@@ -544,7 +544,7 @@ def _source_grade(item: dict[str, Any]) -> tuple[str, str]:
         return "ocr_low_confidence_reference_only", "OCR text too short or noisy for promotion review."
     if "jyotish_training" in path:
         return "reference_only", "Training material can inform style/workflow but cannot outrank source rules."
-    if "/文件仓库/印度占星文章/" in path or path.endswith("印度占星.pdf") or path.endswith("印度占星1.pdf"):
+    if "/文件仓库/印度占星文章/" in path or path.endswith("印度占星.pdf") or path.endswith("private_chart_reference.pdf"):
         return "promote_to_reference_pack_candidate", "Source-like document; candidate for reference pack after conflict arbitration."
     return "reference_only", "Useful context, not first-order rule source."
 

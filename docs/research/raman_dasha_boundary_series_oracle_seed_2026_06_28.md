@@ -20,7 +20,7 @@ The useful fragment was not the mocked `xfail` test. The valuable part was the B
 Added a new template row:
 
 - `template_bv_raman_vimshottari_boundary_series`
-- file: `/Users/wuyongnaren/Documents/印度占星/references/oracle/dasha_shadbala_oracle_cases.json`
+- file: `<repo>/references/oracle/dasha_shadbala_oracle_cases.json`
 
 The oracle queue now recognizes:
 
@@ -40,4 +40,4 @@ The untracked `tests/test_dasha_raman_truth.py` used mocked calculation and ende
 
 ## Regression Coverage
 
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_oracle_collection_queue.py`
+- `<repo>/tests/test_oracle_collection_queue.py`

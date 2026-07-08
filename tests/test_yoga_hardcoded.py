@@ -2,7 +2,7 @@
 PyJHora 风格硬编码 Yoga True/False 测试
 """
 import sys, os
-SKILL_DIR = '/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology'
+SKILL_DIR = '<home>/.workbuddy/skills/jyotish-vedic-astrology'
 sys.path.insert(0, os.path.join(SKILL_DIR, 'scripts'))
 RULES_PATH = os.path.join(SKILL_DIR, 'references', 'yoga_rules.json')
 from yoga_engine import YogaEngine

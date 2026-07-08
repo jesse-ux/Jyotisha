@@ -24,10 +24,10 @@
 ### Task 1: Add the shared adjudication contract builder in `mcp_server.py`
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_career.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_relationship.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py`
+- Modify: `<repo>/mcp_server.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_career.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_relationship.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_finance.py`
 
 **Interfaces:**
 - Consumes:
@@ -141,10 +141,10 @@ git commit -m "feat: add shared top-reader adjudication contract"
 ### Task 2: Promote selected bridge layers into the shared modifier frame
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_relationship.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_functional_layer.py`
+- Modify: `<repo>/mcp_server.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_finance.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_relationship.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_functional_layer.py`
 
 **Interfaces:**
 - Consumes:
@@ -239,9 +239,9 @@ git commit -m "feat: promote selected bridge layers into shared modifiers"
 ### Task 3: Compact and expose the new contract through `jyotish_engine.py`
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_engine.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_cli_smoke.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_vedastro_official_full_snapshot.py`
+- Modify: `<repo>/scripts/jyotish_engine.py`
+- Test: `<repo>/tests/test_cli_smoke.py`
+- Test: `<repo>/tests/test_vedastro_official_full_snapshot.py`
 
 **Interfaces:**
 - Consumes:
@@ -317,9 +317,9 @@ git commit -m "feat: expose top-reader contract in prompt pack"
 ### Task 4: Surface the reshaped contract in API outputs with no extra heavy recompute
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_api_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_api_server_security.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_historical_event_backtest.py`
+- Modify: `<repo>/scripts/jyotish_api_server.py`
+- Test: `<repo>/tests/test_api_server_security.py`
+- Test: `<repo>/tests/test_historical_event_backtest.py`
 
 **Interfaces:**
 - Consumes:
@@ -397,9 +397,9 @@ git commit -m "feat: surface top-reader adjudication contract in api outputs"
 ### Task 5: Keep the frontend and user-facing surfaces simple while consuming the richer contract
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/jyotish-app/main.js`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/jyotish-app/ai-chat.js`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_frontend_productization.py`
+- Modify: `<repo>/jyotish-app/main.js`
+- Modify: `<repo>/jyotish-app/ai-chat.js`
+- Test: `<repo>/tests/test_frontend_productization.py`
 
 **Interfaces:**
 - Consumes:
@@ -472,7 +472,7 @@ git commit -m "feat: consume top-reader adjudication contract in frontend"
 ### Task 6: Run the focused regression bundle and then the broader verification pass
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/progress.md`
+- Modify: `<repo>/progress.md`
 
 **Interfaces:**
 - Consumes:

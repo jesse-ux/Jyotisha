@@ -3,7 +3,7 @@
   "version": "6.9.14",
   "description": "Jyotish local Codex plugin wrapper for Vedic astrology skills and MCP tools.",
   "author": {
-    "name": "wuyongnaren",
+    "name": "jyotish-skill",
     "url": "https://github.com/732642856/yinduzhanxing"
   },
   "homepage": "https://github.com/732642856/yinduzhanxing",
@@ -29,7 +29,7 @@
     "displayName": "印度占星",
     "shortDescription": "Jyotish 技能 + MCP 本地插件包装",
     "longDescription": "Use the existing Jyotish repo skills and MCP server inside Codex for chart reading, rectification, timing, prashna, and remedies workflows.",
-    "developerName": "wuyongnaren",
+    "developerName": "jyotish-skill",
     "category": "Developer Tools",
     "capabilities": [
       "Interactive",

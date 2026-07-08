@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Follow `/Users/wuyongnaren/Documents/印度占星/docs/superpowers/specs/2026-06-28-dignity-guardrail-v1-design.md` exactly.
+- Follow `<repo>/docs/superpowers/specs/2026-06-28-dignity-guardrail-v1-design.md` exactly.
 - Do not use D9, D10, Vimsopaka, or any divisional dignity in v1.
 - Do not let dignity logic change `dominant_label`, `primary_drivers`, `wealth_promise_strength`, `jaimini_marriage_support`, or `avayogi_risk`.
 - Keep dignity score impact bounded to a single `-5 | 0 | +5`.
@@ -23,12 +23,12 @@
 ### Task 1: Freeze The Fragment Source Map
 
 **Files:**
-- Create: `/Users/wuyongnaren/Documents/印度占星/docs/research/high_value_fragment_source_map_2026_06_28.md`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/docs/research/ACTIVE_FRONTS.md`
+- Create: `<repo>/docs/research/high_value_fragment_source_map_2026_06_28.md`
+- Modify: `<repo>/docs/research/ACTIVE_FRONTS.md`
 - Test: none
 
 **Interfaces:**
-- Consumes: current repo research docs, `/Users/wuyongnaren/.gemini/antigravity-ide/brain/*`, `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology`, and existing sweep/audit reports
+- Consumes: current repo research docs, `<home>/.gemini/antigravity-ide/brain/*`, `<home>/.workbuddy/skills/jyotish-vedic-astrology`, and existing sweep/audit reports
 - Produces: a documented source hierarchy with four buckets: `main_repo_truth`, `repo_local_drafts`, `external_work_brain`, `synced_distribution_copy`
 
 - [ ] **Step 1: Write the fragment map document**
@@ -44,34 +44,34 @@ Prevent high-value Jyotish research and implementation notes from remaining scat
 
 ### 1. Main Repo Truth
 
-- `/Users/wuyongnaren/Documents/印度占星/SKILL.md`
-- `/Users/wuyongnaren/Documents/印度占星/AGENTS.md`
-- `/Users/wuyongnaren/Documents/印度占星/references/`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/`
-- `/Users/wuyongnaren/Documents/印度占星/tests/`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/` (committed reports only)
+- `<repo>/SKILL.md`
+- `<repo>/AGENTS.md`
+- `<repo>/references/`
+- `<repo>/scripts/`
+- `<repo>/tests/`
+- `<repo>/docs/research/` (committed reports only)
 
 Rule:
 - This is the only layer allowed to define current product truth.
 
 ### 2. Repo Local Drafts
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/local_drafts/2026-06/`
+- `<repo>/docs/research/local_drafts/2026-06/`
 
 Rule:
 - High-value but draft-only. Must be promoted deliberately into committed docs or code.
 
 ### 3. External Work Brain
 
-- `/Users/wuyongnaren/.gemini/antigravity-ide/brain/*`
-- `/Users/wuyongnaren/.codex/attachments/*`
+- `<home>/.gemini/antigravity-ide/brain/*`
+- `<home>/.codex/attachments/*`
 
 Rule:
 - Useful for recovery, comparison, and archaeology. Never authoritative by default.
 
 ### 4. Synced Distribution Copy
 
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology`
 
 Rule:
 - Distribution target only. Must never be reverse-copied over repo truth.
@@ -101,7 +101,7 @@ Then record whether any high-value fragment needs promotion.
 ## Fragment Discipline
 
 - Before touching strict workflow or adjudicator logic, check the fragment source map:
-  - `/Users/wuyongnaren/Documents/印度占星/docs/research/high_value_fragment_source_map_2026_06_28.md`
+  - `<repo>/docs/research/high_value_fragment_source_map_2026_06_28.md`
 - Treat repo truth as authoritative.
 - Treat `docs/research/local_drafts`, Gemini brain notes, and WorkBuddy copies as candidate sources only.
 ```
@@ -109,8 +109,8 @@ Then record whether any high-value fragment needs promotion.
 - [ ] **Step 3: Review the new doc for contradictions**
 
 Run a manual read of:
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/high_value_fragment_source_map_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/ACTIVE_FRONTS.md`
+- `<repo>/docs/research/high_value_fragment_source_map_2026_06_28.md`
+- `<repo>/docs/research/ACTIVE_FRONTS.md`
 
 Expected:
 - The authority tiers do not conflict with the existing sweep/audit reports.
@@ -118,15 +118,15 @@ Expected:
 - [ ] **Step 4: Commit the fragment-map task**
 
 ```bash
-git add /Users/wuyongnaren/Documents/印度占星/docs/research/high_value_fragment_source_map_2026_06_28.md /Users/wuyongnaren/Documents/印度占星/docs/research/ACTIVE_FRONTS.md
+git add <repo>/docs/research/high_value_fragment_source_map_2026_06_28.md <repo>/docs/research/ACTIVE_FRONTS.md
 git commit -m "Document high-value fragment source map"
 ```
 
 ### Task 2: Add Failing Tests For Dignity Guardrail Boundaries
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_relationship.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py`
+- Modify: `<repo>/tests/test_mcp_strict_workflow_relationship.py`
+- Modify: `<repo>/tests/test_mcp_strict_workflow_finance.py`
 - Test: same files
 
 **Interfaces:**
@@ -222,16 +222,16 @@ Expected:
 - [ ] **Step 5: Commit failing tests**
 
 ```bash
-git add /Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_relationship.py /Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py
+git add <repo>/tests/test_mcp_strict_workflow_relationship.py <repo>/tests/test_mcp_strict_workflow_finance.py
 git commit -m "Add dignity guardrail boundary tests"
 ```
 
 ### Task 3: Implement `_derive_dignity_guardrail`
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_relationship.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py`
+- Modify: `<repo>/mcp_server.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_relationship.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_finance.py`
 
 **Interfaces:**
 - Consumes: route string, `present` evidence, D1 chart status
@@ -333,16 +333,16 @@ Expected:
 - [ ] **Step 7: Commit helper implementation**
 
 ```bash
-git add /Users/wuyongnaren/Documents/印度占星/mcp_server.py
+git add <repo>/mcp_server.py
 git commit -m "Add dignity guardrail helper"
 ```
 
 ### Task 4: Wire `dignity_guardrail` Into Strict Evidence And Judgement
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_relationship.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py`
+- Modify: `<repo>/mcp_server.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_relationship.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_finance.py`
 
 **Interfaces:**
 - Consumes: `present["dignity_guardrail"]`
@@ -403,15 +403,15 @@ Expected:
 - [ ] **Step 8: Commit the route integration**
 
 ```bash
-git add /Users/wuyongnaren/Documents/印度占星/mcp_server.py /Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_relationship.py /Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py
+git add <repo>/mcp_server.py <repo>/tests/test_mcp_strict_workflow_relationship.py <repo>/tests/test_mcp_strict_workflow_finance.py
 git commit -m "Wire dignity guardrail into strict workflows"
 ```
 
 ### Task 5: Verify Engine Boundary And Record Follow-Up
 
 **Files:**
-- Create: `/Users/wuyongnaren/Documents/印度占星/docs/research/dignity_guardrail_v1_boundary_audit_2026_06_28.md`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/docs/research/ACTIVE_FRONTS.md`
+- Create: `<repo>/docs/research/dignity_guardrail_v1_boundary_audit_2026_06_28.md`
+- Modify: `<repo>/docs/research/ACTIVE_FRONTS.md`
 - Test: optional targeted engine sanity commands
 
 **Interfaces:**
@@ -461,6 +461,6 @@ Expected:
 - [ ] **Step 4: Commit the audit**
 
 ```bash
-git add /Users/wuyongnaren/Documents/印度占星/docs/research/dignity_guardrail_v1_boundary_audit_2026_06_28.md /Users/wuyongnaren/Documents/印度占星/docs/research/ACTIVE_FRONTS.md
+git add <repo>/docs/research/dignity_guardrail_v1_boundary_audit_2026_06_28.md <repo>/docs/research/ACTIVE_FRONTS.md
 git commit -m "Audit dignity guardrail v1 boundary"
 ```

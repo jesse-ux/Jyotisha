@@ -36,5 +36,5 @@ It also verifies that the metadata contract remains useful:
 
 ## Regression Coverage
 
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_yoga_benchmark_cases.py`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_yoga_rules_integrity.py`
+- `<repo>/tests/test_yoga_benchmark_cases.py`
+- `<repo>/tests/test_yoga_rules_integrity.py`

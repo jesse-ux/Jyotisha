@@ -4,9 +4,9 @@
 
 本记录复核 Antigravity 中临时安装 `vedastro` Python SDK 后得到的外部对照结果。样本使用用户提供的 PDF 参考盘：
 
-- PDF：`/Users/wuyongnaren/Downloads/印度占星1.pdf`
-- 出生资料：`REDACTED_DATE 14:45:20`，`UTC+8`，纬度 `36.466667`，经度 `114.2`
-- 当前本地项目路径：`/Users/wuyongnaren/Documents/印度占星`
+- PDF：`<home>/Downloads/private_chart_reference.pdf`
+- 出生资料：`private birth datetime`，`UTC+8`，纬度 `36.466667`，经度 `114.2`
+- 当前本地项目路径：`<repo>`
 
 本记录只用于计算边界和外部 oracle 对照，不代表人生事件预测准确率。
 
@@ -58,7 +58,7 @@ python3 scripts/dasha_reference_audit.py \
   --hour 14 --minute 45 --second 20 \
   --lat 36.466667 --lon 114.2 --tz 8 \
   --target-start-date 1986-05-18 \
-  --target-source 印度占星1.pdf
+  --target-source private_chart_reference.pdf
 ```
 
 关键结果：

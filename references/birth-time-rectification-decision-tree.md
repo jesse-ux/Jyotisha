@@ -28,8 +28,8 @@
 
 对应实现见：
 
-- [jyotish-app/rectification-engine.js](/Users/wuyongnaren/Documents/印度占星/jyotish-app/rectification-engine.js)
-- [references/varga-system-quick-reference.md](/Users/wuyongnaren/Documents/印度占星/references/varga-system-quick-reference.md)
+- [jyotish-app/rectification-engine.js](<repo>/jyotish-app/rectification-engine.js)
+- [references/varga-system-quick-reference.md](<repo>/references/varga-system-quick-reference.md)
 
 ## 2. 第一层：主引擎
 

@@ -17,8 +17,8 @@ This file is for practical day-to-day use during multi-window work.
 Three layers need active discipline:
 
 1. `docs/research/local_drafts/2026-06`
-2. external Gemini work-brain scratch under `/Users/wuyongnaren/.gemini/antigravity-ide/brain`
-3. WorkBuddy mirror under `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology`
+2. external Gemini work-brain scratch under `<home>/.gemini/antigravity-ide/brain`
+3. WorkBuddy mirror under `<home>/.workbuddy/skills/jyotish-vedic-astrology`
 
 The repo runtime truth remains:
 
@@ -39,7 +39,7 @@ Status:
 
 Current governance source:
 
-- [local_drafts_2026_06_disposition.md](/Users/wuyongnaren/Documents/印度占星/docs/research/local_drafts_2026_06_disposition.md)
+- [local_drafts_2026_06_disposition.md](<repo>/docs/research/local_drafts_2026_06_disposition.md)
 
 ### Promote First
 
@@ -64,10 +64,10 @@ When promoted, they should end up in one of four canonical forms only:
 
 Current promoted packs:
 
-- [promote_first_repo_truth_pack_2026_07_01.md](/Users/wuyongnaren/Documents/印度占星/docs/research/promote_first_repo_truth_pack_2026_07_01.md)
-- [promote_second_repo_truth_pack_2026_07_01.md](/Users/wuyongnaren/Documents/印度占星/docs/research/promote_second_repo_truth_pack_2026_07_01.md)
-- [promote_third_repo_truth_pack_2026_07_01.md](/Users/wuyongnaren/Documents/印度占星/docs/research/promote_third_repo_truth_pack_2026_07_01.md)
-- [promote_fourth_repo_truth_pack_2026_07_01.md](/Users/wuyongnaren/Documents/印度占星/docs/research/promote_fourth_repo_truth_pack_2026_07_01.md)
+- [promote_first_repo_truth_pack_2026_07_01.md](<repo>/docs/research/promote_first_repo_truth_pack_2026_07_01.md)
+- [promote_second_repo_truth_pack_2026_07_01.md](<repo>/docs/research/promote_second_repo_truth_pack_2026_07_01.md)
+- [promote_third_repo_truth_pack_2026_07_01.md](<repo>/docs/research/promote_third_repo_truth_pack_2026_07_01.md)
+- [promote_fourth_repo_truth_pack_2026_07_01.md](<repo>/docs/research/promote_fourth_repo_truth_pack_2026_07_01.md)
 
 ### Do Not Do
 
@@ -121,8 +121,8 @@ Status:
 
 Canonical boundary sources:
 
-- [unique_main_chain_map_2026_07_01.md](/Users/wuyongnaren/Documents/印度占星/docs/research/unique_main_chain_map_2026_07_01.md)
-- [whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md](/Users/wuyongnaren/Documents/印度占星/docs/research/whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md)
+- [unique_main_chain_map_2026_07_01.md](<repo>/docs/research/unique_main_chain_map_2026_07_01.md)
+- [whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md](<repo>/docs/research/whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md)
 
 ### Allowed Use
 

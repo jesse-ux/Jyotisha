@@ -63,16 +63,16 @@ git ls-remote ssh://git@ssh.github.com:443/732642856/yinduzhanxing.git \
 
 ```bash
 for base in \
-  /Users/wuyongnaren/Documents \
-  /Users/wuyongnaren/Downloads \
-  /Users/wuyongnaren/Desktop \
-  /Users/wuyongnaren/Projects \
-  /Users/wuyongnaren/WorkBuddy \
-  /Users/wuyongnaren/.workbuddy \
-  /Users/wuyongnaren/.codex \
-  /Users/wuyongnaren/.gemini \
-  /Users/wuyongnaren/engines-repo \
-  /Users/wuyongnaren/文件仓库
+  <home>/Documents \
+  <home>/Downloads \
+  <home>/Desktop \
+  <home>/Projects \
+  <home>/WorkBuddy \
+  <home>/.workbuddy \
+  <home>/.codex \
+  <home>/.gemini \
+  <home>/engines-repo \
+  <home>/文件仓库
 do
   [ -e "$base" ] || continue
   echo "### $base"
@@ -92,7 +92,7 @@ done
 ### 4. 本地同项目 Git 副本扫描
 
 ```bash
-find /Users/wuyongnaren -type d -name .git \
+find <home> -type d -name .git \
   \( -path '*/node_modules/*' -o -path '*/Library/*' -o -path '*/.Trash/*' \) -prune \
   -o -type d -name .git -print 2>/dev/null \
   | sed 's#/.git$##' > /tmp/all_git_repos_round10.txt
@@ -167,7 +167,7 @@ rg "ready_for_calibration|Dasha/Shadbala|external_oracle_evidence_validation|cal
 
 至少覆盖：
 
-- 当前主仓 `/Users/wuyongnaren/Documents/印度占星`
+- 当前主仓 `<repo>`
 - `.workbuddy/skills/jyotish-vedic-astrology`
 - `.gemini/antigravity-ide/.../scratch`
 - `Downloads/印度占星*.pdf`

@@ -13,9 +13,9 @@
 
 相关现状依据:
 
-- 主链地图: [docs/research/unique_main_chain_map_2026_07_01.md](/Users/wuyongnaren/Documents/印度占星/docs/research/unique_main_chain_map_2026_07_01.md)
-- 开源参考层已挂载说明: [docs/research/open_source_batches_runtime_reference_audit_2026_07_03.md](/Users/wuyongnaren/Documents/印度占星/docs/research/open_source_batches_runtime_reference_audit_2026_07_03.md)
-- 已接入 smoke test: [tests/test_open_source_integrations.py](/Users/wuyongnaren/Documents/印度占星/tests/test_open_source_integrations.py)
+- 主链地图: [docs/research/unique_main_chain_map_2026_07_01.md](<repo>/docs/research/unique_main_chain_map_2026_07_01.md)
+- 开源参考层已挂载说明: [docs/research/open_source_batches_runtime_reference_audit_2026_07_03.md](<repo>/docs/research/open_source_batches_runtime_reference_audit_2026_07_03.md)
+- 已接入 smoke test: [tests/test_open_source_integrations.py](<repo>/tests/test_open_source_integrations.py)
 
 ## 状态定义
 
@@ -43,13 +43,13 @@
 
 仓内文件:
 
-- [references/open_source_sources/panchanga_api/README.md](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/panchanga_api/README.md)
-- [references/open_source_sources/panchanga_api/MCP.md](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/panchanga_api/MCP.md)
-- [references/open_source_sources/panchanga_api/SKILL.md](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/panchanga_api/SKILL.md)
+- [references/open_source_sources/panchanga_api/README.md](<repo>/references/open_source_sources/panchanga_api/README.md)
+- [references/open_source_sources/panchanga_api/MCP.md](<repo>/references/open_source_sources/panchanga_api/MCP.md)
+- [references/open_source_sources/panchanga_api/SKILL.md](<repo>/references/open_source_sources/panchanga_api/SKILL.md)
 
 为什么优先:
 
-- 你现在已经有 [scripts/prashna.py](/Users/wuyongnaren/Documents/印度占星/scripts/prashna.py)、[scripts/remedies.py](/Users/wuyongnaren/Documents/印度占星/scripts/remedies.py)、统一入口 [scripts/unified_consultation_orchestrator.py](/Users/wuyongnaren/Documents/印度占星/scripts/unified_consultation_orchestrator.py)。
+- 你现在已经有 [scripts/prashna.py](<repo>/scripts/prashna.py)、[scripts/remedies.py](<repo>/scripts/remedies.py)、统一入口 [scripts/unified_consultation_orchestrator.py](<repo>/scripts/unified_consultation_orchestrator.py)。
 - 缺的不是“再发明一套 Prashna/Remedies”，而是把现有入口压得更完整。
 - `panchanga_api` 文档本身就覆盖 `prashna`、`muhurta`、`vrata`、`remedies`，跟你当前三入口结构天然贴合。
 
@@ -63,9 +63,9 @@
 
 仓内文件:
 
-- [scripts/vedastro_service_adapter.py](/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_service_adapter.py)
-- [scripts/vedastro_official_mcp_bridge.py](/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_official_mcp_bridge.py)
-- [scripts/diagnose_vedastro_mode.py](/Users/wuyongnaren/Documents/印度占星/scripts/diagnose_vedastro_mode.py)
+- [scripts/vedastro_service_adapter.py](<repo>/scripts/vedastro_service_adapter.py)
+- [scripts/vedastro_official_mcp_bridge.py](<repo>/scripts/vedastro_official_mcp_bridge.py)
+- [scripts/diagnose_vedastro_mode.py](<repo>/scripts/diagnose_vedastro_mode.py)
 
 为什么优先:
 
@@ -83,8 +83,8 @@
 
 仓内文件:
 
-- [references/oracle/artifacts/pyjhora_oracle_artifact_manifest.json](/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pyjhora_oracle_artifact_manifest.json)
-- [scripts/generate_pyjhora_oracle_artifact_manifest.py](/Users/wuyongnaren/Documents/印度占星/scripts/generate_pyjhora_oracle_artifact_manifest.py)
+- [references/oracle/artifacts/pyjhora_oracle_artifact_manifest.json](<repo>/references/oracle/artifacts/pyjhora_oracle_artifact_manifest.json)
+- [scripts/generate_pyjhora_oracle_artifact_manifest.py](<repo>/scripts/generate_pyjhora_oracle_artifact_manifest.py)
 - 多个 `references/oracle/artifacts/pyjhora_*.txt`
 
 当前定位:
@@ -102,14 +102,14 @@
 
 仓内文件:
 
-- [references/open_source_sources/jyotishganit/README.md](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/jyotishganit/README.md)
-- [references/open_source_sources/jyotishganit/LICENSE](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/jyotishganit/LICENSE)
+- [references/open_source_sources/jyotishganit/README.md](<repo>/references/open_source_sources/jyotishganit/README.md)
+- [references/open_source_sources/jyotishganit/LICENSE](<repo>/references/open_source_sources/jyotishganit/LICENSE)
 - 已接痕迹:
-  - [scripts/bhava_bala.py](/Users/wuyongnaren/Documents/印度占星/scripts/bhava_bala.py)
-  - [scripts/shadbala.py](/Users/wuyongnaren/Documents/印度占星/scripts/shadbala.py)
-  - [scripts/shadbala_advanced.py](/Users/wuyongnaren/Documents/印度占星/scripts/shadbala_advanced.py)
-  - [scripts/trimshamsa_d30.py](/Users/wuyongnaren/Documents/印度占星/scripts/trimshamsa_d30.py)
-  - [scripts/constants/mit_imported_constants.py](/Users/wuyongnaren/Documents/印度占星/scripts/constants/mit_imported_constants.py)
+  - [scripts/bhava_bala.py](<repo>/scripts/bhava_bala.py)
+  - [scripts/shadbala.py](<repo>/scripts/shadbala.py)
+  - [scripts/shadbala_advanced.py](<repo>/scripts/shadbala_advanced.py)
+  - [scripts/trimshamsa_d30.py](<repo>/scripts/trimshamsa_d30.py)
+  - [scripts/constants/mit_imported_constants.py](<repo>/scripts/constants/mit_imported_constants.py)
 
 为什么适合继续接:
 
@@ -121,14 +121,14 @@
 
 仓内文件:
 
-- [references/open_source_sources/jaimini-tropical/README.md](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/jaimini-tropical/README.md)
-- [references/open_source_sources/jaimini-tropical/LICENSE](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/jaimini-tropical/LICENSE)
-- [references/open_source_sources/dashaflow/](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/dashaflow)
-- 已接证明: [tests/test_open_source_integrations.py](/Users/wuyongnaren/Documents/印度占星/tests/test_open_source_integrations.py)
+- [references/open_source_sources/jaimini-tropical/README.md](<repo>/references/open_source_sources/jaimini-tropical/README.md)
+- [references/open_source_sources/jaimini-tropical/LICENSE](<repo>/references/open_source_sources/jaimini-tropical/LICENSE)
+- [references/open_source_sources/dashaflow/](<repo>/references/open_source_sources/dashaflow)
+- 已接证明: [tests/test_open_source_integrations.py](<repo>/tests/test_open_source_integrations.py)
 - 当前脚本:
-  - [scripts/jaimini.py](/Users/wuyongnaren/Documents/印度占星/scripts/jaimini.py)
-  - [scripts/argala.py](/Users/wuyongnaren/Documents/印度占星/scripts/argala.py)
-  - [scripts/synastry.py](/Users/wuyongnaren/Documents/印度占星/scripts/synastry.py)
+  - [scripts/jaimini.py](<repo>/scripts/jaimini.py)
+  - [scripts/argala.py](<repo>/scripts/argala.py)
+  - [scripts/synastry.py](<repo>/scripts/synastry.py)
 
 为什么不是 P0:
 
@@ -144,25 +144,25 @@
 
 仓内文件:
 
-- [references/open_source_sources/VedicAstro/README.md](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/VedicAstro/README.md)
-- [references/open_source_sources/VedicAstro/vedicastro/horary_chart.py](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/VedicAstro/vedicastro/horary_chart.py)
-- [references/open_source_sources/VedicAstro/test_suite/horary_functions_test.py](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/VedicAstro/test_suite/horary_functions_test.py)
+- [references/open_source_sources/VedicAstro/README.md](<repo>/references/open_source_sources/VedicAstro/README.md)
+- [references/open_source_sources/VedicAstro/vedicastro/horary_chart.py](<repo>/references/open_source_sources/VedicAstro/vedicastro/horary_chart.py)
+- [references/open_source_sources/VedicAstro/test_suite/horary_functions_test.py](<repo>/references/open_source_sources/VedicAstro/test_suite/horary_functions_test.py)
 
 为什么排 P1:
 
-- 你仓里已有 [scripts/prashna.py](/Users/wuyongnaren/Documents/印度占星/scripts/prashna.py) 和 [scripts/kp_system.py](/Users/wuyongnaren/Documents/印度占星/scripts/kp_system.py)。
+- 你仓里已有 [scripts/prashna.py](<repo>/scripts/prashna.py) 和 [scripts/kp_system.py](<repo>/scripts/kp_system.py)。
 - 所以更值钱的是拿它校一遍 Horary/KP 边界，不是整包搬迁。
 
 ### 7. `vedic-astro-skills` / `rishi-ai-mcp` → 继续留在参考层，别冒充真值层
 
 仓内文件:
 
-- [references/open_source_sources/vedic-astro-skills/README.md](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/vedic-astro-skills/README.md)
-- [references/open_source_sources/rishi-ai-mcp/README.md](/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/rishi-ai-mcp/README.md)
+- [references/open_source_sources/vedic-astro-skills/README.md](<repo>/references/open_source_sources/vedic-astro-skills/README.md)
+- [references/open_source_sources/rishi-ai-mcp/README.md](<repo>/references/open_source_sources/rishi-ai-mcp/README.md)
 
 当前已接现状:
 
-- 参考层已挂进 [mcp_server.py](/Users/wuyongnaren/Documents/印度占星/mcp_server.py) 的 `interpretation_source_pack`
+- 参考层已挂进 [mcp_server.py](<repo>/mcp_server.py) 的 `interpretation_source_pack`
 - 研究文档已明确它们是 `not_primary_truth`
 
 为什么不该抢前排:

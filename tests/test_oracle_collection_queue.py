@@ -52,20 +52,19 @@ def test_oracle_collection_queue_outputs_executable_json_tasks() -> None:
     report = json.loads(completed.stdout)
 
     assert report["scope"] == "external_oracle_collection_queue"
-    assert report["summary"]["total_tasks"] == 6
-    assert report["summary"]["ready_for_calibration"] == 5
+    assert report["summary"]["total_tasks"] == 4
+    assert report["summary"]["ready_for_calibration"] == 3
     assert report["summary"]["ready_for_collection"] == 1
-    assert report["summary"]["by_status"]["external_verified"] == 5
+    assert report["summary"]["by_status"]["external_verified"] == 3
     assert report["summary"]["by_status"]["template_only"] == 1
     assert report["summary"]["production_tuning_allowed"] is False
 
     first = report["tasks"][0]
-    assert first["case_id"] == "template_user_REDACTED_YEAR_moon_longitude_lahiri"
+    assert first["case_id"] == "template_steve_jobs_dasha_lahiri"
     assert first["status"] == "external_verified"
     assert first["ready_for_collection"] is False
     assert first["ready_for_calibration"] is True
     assert first["missing_target_fields"] == []
-    assert "longitude" in first["target_modules"]
     assert "dasha" in first["target_modules"]
     assert "shadbala" in first["target_modules"]
     assert any("JHora" in source for source in first["preferred_sources"])
@@ -74,7 +73,7 @@ def test_oracle_collection_queue_outputs_executable_json_tasks() -> None:
     assert first["do_not_tune_production"] is False
 
     packet = first["evidence_packet"]
-    assert packet["capture_id"] == "external_template_user_REDACTED_YEAR_moon_longitude_lahiri"
+    assert packet["capture_id"] == "external_template_steve_jobs_dasha_lahiri"
     assert packet["status"] == "external_verified"
     assert packet["case_id"] == first["case_id"]
     assert packet["birth"] == first["birth"]
@@ -83,8 +82,6 @@ def test_oracle_collection_queue_outputs_executable_json_tasks() -> None:
     assert "tool_version_or_url" in packet["required_metadata_fields"]
     assert "capture_date" in packet["required_metadata_fields"]
     assert "source_artifact" in packet["required_metadata_fields"]
-    assert "target.moon_sidereal_longitude_deg" in packet["target_placeholders"]
-    assert packet["target_placeholders"]["target.moon_sidereal_longitude_deg"] == 311.774424
     assert packet["integrity_checks"]["must_not_come_from_local_engine"] is True
     assert packet["integrity_checks"]["requires_external_artifact"] is True
 
@@ -112,7 +109,7 @@ def test_oracle_collection_queue_outputs_markdown_table() -> None:
 
     assert "# Dasha/Shadbala External Oracle Collection Queue" in markdown
     assert "| task_id | case_id | status | missing fields | preferred sources |" in markdown
-    assert "collect_template_user_REDACTED_YEAR_moon_longitude_lahiri" in markdown
+    assert "collect_template_steve_jobs_dasha_lahiri" in markdown
     assert "`external_verified`" in markdown
     assert "collect_template_bv_raman_vimshottari_boundary_series" in markdown
     assert "template_only" in markdown
@@ -127,7 +124,7 @@ def test_oracle_collection_queue_can_write_draft_evidence_packets(tmp_path: Path
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["written_evidence_packets"] == 6
+    assert report["summary"]["written_evidence_packets"] == 4
 
     packet_path = tmp_path / "external_template_steve_jobs_dasha_lahiri.json"
     assert packet_path.exists()
@@ -282,7 +279,7 @@ def test_oracle_collection_queue_preserves_external_verified_evidence(tmp_path: 
             "tool_name": "JHora",
             "tool_version_or_url": "manual-screenshot-v1",
             "capture_date": "2026-06-25",
-            "source_artifact": "docs/research/oracle_artifacts/manual_jhora_user_REDACTED_YEAR.png",
+            "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
             "ayanamsa": "lahiri",
             "node_mode": "mean",
             "timezone": "UTC+08:00",
@@ -302,7 +299,7 @@ def test_oracle_collection_queue_preserves_external_verified_evidence(tmp_path: 
     assert first["ready_for_collection"] is False
     assert first["ready_for_calibration"] is True
     assert first["do_not_tune_production"] is False
-    assert report["summary"]["ready_for_calibration"] == 5
+    assert report["summary"]["ready_for_calibration"] == 3
     assert report["summary"]["production_tuning_allowed"] is False
 
     packet = first["evidence_packet"]

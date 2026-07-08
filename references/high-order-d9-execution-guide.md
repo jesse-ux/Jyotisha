@@ -21,7 +21,7 @@
 - `reading_orchestrator.py`
 - `orchestrator_bridge.py`
 - 参考文件：
-  - `/Users/wuyongnaren/Documents/印度占星/references/rashi-tulya-navamsa-root-impulse.md`
+  - `<repo>/references/rashi-tulya-navamsa-root-impulse.md`
 
 ## 二、这三者各自最适合做什么
 

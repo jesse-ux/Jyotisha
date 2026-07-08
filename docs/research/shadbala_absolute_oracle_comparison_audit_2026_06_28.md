@@ -6,7 +6,7 @@ This pass promotes the local Shadbala absolute-value comparison helper from an u
 
 ## New Entrypoint
 
-- `/Users/wuyongnaren/Documents/印度占星/scripts/shadbala_oracle_comparison.py`
+- `<repo>/scripts/shadbala_oracle_comparison.py`
 - Primary function: `compare_case(oracle_file, case_id)`
 - CLI example:
 
@@ -49,4 +49,4 @@ This is useful enough to keep in the main repo, but not sufficient to claim Shad
 
 ## Regression Coverage
 
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_shadbala_oracle_comparison.py`
+- `<repo>/tests/test_shadbala_oracle_comparison.py`

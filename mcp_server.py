@@ -15,7 +15,7 @@ MCP client config should point at this repository path, for example:
     "mcpServers": {
       "jyotish": {
         "command": "python3",
-        "args": ["/Users/wuyongnaren/Documents/印度占星/mcp_server.py"],
+        "args": ["<repo>/mcp_server.py"],
         "env": {}
       }
     }

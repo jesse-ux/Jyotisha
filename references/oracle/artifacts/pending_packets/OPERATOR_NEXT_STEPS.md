@@ -19,7 +19,7 @@ First priority packet:
 ```bash
 python3 scripts/oracle_collection_queue.py \
   --oracle-file references/oracle/dasha_shadbala_oracle_cases.json \
-  --apply-packet /Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json \
+  --apply-packet <repo>/references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json \
   --format json
 ```
 

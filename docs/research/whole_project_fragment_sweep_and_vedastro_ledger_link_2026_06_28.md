@@ -4,10 +4,10 @@
 
 The current `SKILL.md` and `AGENTS.md` match the installed WorkBuddy skill copy:
 
-- `/Users/wuyongnaren/Documents/印度占星/SKILL.md`
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/SKILL.md`
-- `/Users/wuyongnaren/Documents/印度占星/AGENTS.md`
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/AGENTS.md`
+- `<repo>/SKILL.md`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology/SKILL.md`
+- `<repo>/AGENTS.md`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology/AGENTS.md`
 
 No instruction-layer skill drift was found.
 

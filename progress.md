@@ -522,7 +522,7 @@
 - 完成导出报告校准边界同步：`jyotish-app/export.js` 新增 `DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS`，JSON 导出在 `meta.calibration_status` 与 `modules.calibration_status.dasha_shadbala` 携带 `ready_for_calibration: 0`、`valid_packets: 0`、`production_tuning_allowed: false`；HTML 报告新增“高级技法校准状态”区块。
 - TDD/验证完成：`test_provenance_panchanga_workspace_panel_is_productized` 先因导出模块缺 `DASHA_SHADBALA_EXPORT_CALIBRATION_STATUS` 红灯，修复后转绿；相关 10 项 pytest 通过；`npm run build --prefix jyotish-app` 通过；`oracle_collection_queue.py` + `oracle_evidence_validator.py` 复验仍保持 `valid_packets: 0` / `production_tuning_allowed: false`。
 - 当前下一最高优先级：发布 Round 12 副手任务，复核导出 HTML/JSON 校准边界，并推进“外部真值采集表单化 / 手工 JHora 证据包录入模板”。
-- 完成 Oracle Evidence Intake 用户端闭环第一层：Trust Center 新增 5 个外部真值 Evidence Packet 下载卡，覆盖 `template_user_REDACTED_YEAR_moon_longitude_lahiri`、`template_steve_jobs_dasha_lahiri`、`template_redacted_place_shadbala_raman`、`template_extreme_latitude_kp`、`template_historical_epoch_lahiri`，目标字段与 `oracle_collection_queue.py` 当前队列对齐。
+- 完成 Oracle Evidence Intake 用户端闭环第一层：Trust Center 新增 5 个外部真值 Evidence Packet 下载卡，覆盖 `template_private_oracle_redacted`、`template_steve_jobs_dasha_lahiri`、`template_redacted_place_shadbala_raman`、`template_extreme_latitude_kp`、`template_historical_epoch_lahiri`，目标字段与 `oracle_collection_queue.py` 当前队列对齐。
 - 完成 Evidence Packet 导入判卷：前端可导入填写后的 JSON，调用后端 `/api/oracle_evidence`，并展示 `valid_packets`、`ready_for_calibration`、`production_tuning_allowed` 与每个 packet 的 `problems`；后端复用 `oracle_collection_queue` 和 `oracle_evidence_validator` 规则，本地输出、空字段与 `draft` 仍被拒绝。
 - 完成副手任务升级：新增 Round 13/14/15 工作单；Round 15 改为 6 个并行包，覆盖 Evidence 判卷闭环、Shadbala 六分量、Dasha 边界日期、高需求技法、外部截图存档规范与下一轮 Codex 任务建议。
 - 验证完成：`python3 -B -m pytest tests/test_frontend_productization.py::test_trust_center_exposes_oracle_evidence_intake_cards tests/test_frontend_productization.py::test_trust_center_and_ai_expose_dasha_shadbala_calibration_status tests/test_frontend_productization.py::test_provenance_panchanga_workspace_panel_is_productized tests/test_api_server_security.py::test_oracle_evidence_api_validates_uploaded_packets tests/test_oracle_collection_queue.py tests/test_oracle_evidence_validator.py -q` 通过；`python3 scripts/oracle_collection_queue.py ...` + `python3 scripts/oracle_evidence_validator.py ...` 仍显示 `valid_packets: 0` / `ready_for_calibration: 0`；`npm run build --prefix jyotish-app` 通过；`git diff --check` 通过。
@@ -595,9 +595,9 @@
 - Functional Benefic/Malefic 的 `Technique Audit Table` 与 real-reading checklist 现在显式要求/输出 `functional_neutrals` 与 `yogakarakas`。
 - 合婚 strict bridge 修复 `additional_kutas.BadConstellations` 的 nested dict 形态，并把 mitigation exceptions 折叠成 `exception_mitigated_match`，防止已有 Ashtakoot 细节资产在 relationship adjudicator 中被吞掉。
 
-## 2026-06-28T20:05:00+08:00 - REDACTED_YEAR REDACTED_PLACE真实用户全功能 QA
+## 2026-06-28T20:05:00+08:00 - Private redacted full-function QA
 
-- 按用户要求以 `REDACTED_DATE REDACTED_TIME`、中国河北REDACTED_PLACEREDACTED_PLACE矿区近似坐标 `lat=36.4467 lon=114.2 tz=8` 跑真实用户全功能验收；scratch 产物放在 `scratch/local/sample_user_qa_2026_06_28/`。
+- 按用户要求以 `public sample birth datetime`、中国private birthplace近似坐标 `lat=36.4467 lon=-122.4194 tz=8` 跑真实用户全功能验收；scratch 产物放在 `scratch/local/sample_user_qa_2026_06_28/`。
 - CLI 矩阵覆盖 30 条出生盘/事件/合盘/问事/年运/分盘命令，28 条通过；失败为 `varga-full --divisions` 高分盘 D81/D108/D144 路由旧实现、`muhurta` CLI tuple longitude 崩溃。
 - API 矩阵覆盖 42 个请求，40 个通过；`/api/remedies` 对数值型 Shadbala 简写返回 500，官方 catalog payload 可通过；`/api/technique_example` 用 catalog example payload 通过，普通出生资料直打 400 归类为合同边界。
 - 前端真实浏览器 `python3 tests/run_frontend_click_smoke.py --mode all --timeout 420` 通过，覆盖 core/mobile/offline/pdf/workspace/mobile-trust/import-files；`npm run build` 通过。
@@ -631,13 +631,13 @@
 - 新增 `docs/superpowers/specs/2026-06-29-vedastro-user-range-scan-design.md` 与 `docs/superpowers/plans/2026-06-29-vedastro-user-range-scan.md`，约束 UI 必须使用当前星盘出生资料，不跑硬编码 demo case。
 - 后端新增 `/api/vedastro/range_scan`：支持 `career / relationship / finance` UI domain，映射到 adapter 的 `career / marriage / wealth`；验证出生资料、日期范围、坐标、时区后调用 `vedastro_service_adapter.run_range_scan_for_case()`。
 - 前端新增 `window.JyotishAPI.runVedAstroRangeScan()`，Trust Center 增加 `VedAstro Range Scan` 面板，用户生成星盘后可选择领域与日期范围点击“运行 VedAstro 外部雷达扫描”；结果会显示 status/event count/artifact 或 blocked reason，并写入 `chartData.modules.vedastro_range_scan_result`。
-- 实测 HTTP：未配置 `VEDASTRO_API_ENDPOINT` / `VEDASTRO_ENABLE_NETWORK` 时，`POST /api/vedastro/range_scan` 返回 `success=true`、`ui_domain=relationship`、`adapter_domain=marriage`、`result.status=service_endpoint_not_configured`，且 request_preview 使用用户 `REDACTED_DATE REDACTED_TIME`、REDACTED_PLACE坐标与 Lahiri/mean node。
+- 实测 HTTP：未配置 `VEDASTRO_API_ENDPOINT` / `VEDASTRO_ENABLE_NETWORK` 时，`POST /api/vedastro/range_scan` 返回 `success=true`、`ui_domain=relationship`、`adapter_domain=marriage`、`result.status=service_endpoint_not_configured`，且 request_preview 使用用户 `public sample birth datetime`、private coordinates与 Lahiri/mean node。
 - Fresh verification：新增后端红灯测试先 404 后转绿；新增前端静态红灯测试先缺 bridge 后转绿；VedAstro/API/frontend 聚焦 19 项通过；`npm run build --prefix jyotish-app` 通过；`python3 scripts/run_quality_gate.py --profile quick --skip-frontend-runtime` 通过，当前 quick 集合 297 项 pytest 通过；`git diff --check` 与 `py_compile` 通过。
 - 剩余诚实边界：普通用户现在可以点击使用 VedAstro 入口，但在服务端未配置官方 endpoint 和网络开关前，产品显示的是 blocked 边界；要看到真实 VedAstro 事件结果仍需配置 `VEDASTRO_API_ENDPOINT` 与 `VEDASTRO_ENABLE_NETWORK=1`。
 
 ## 2026-06-29T07:20:00+08:00 - VedAstro 596+ 最快路径矩阵收口
 
-- 新增 `scripts/vedastro_python_bridge.py`：自动发现 `venv_vedastro`，兼容官方实际模块名 `vedastro`，并可通过 typed params 直接调用 `Calculate.*` 方法；live smoke 已验证 `PlanetNirayanaLongitude(Sun, REDACTED_DATE REDACTED_TIME, REDACTED_PLACE)` 返回官方结果。
+- 新增 `scripts/vedastro_python_bridge.py`：自动发现 `venv_vedastro`，兼容官方实际模块名 `vedastro`，并可通过 typed params 直接调用 `Calculate.*` 方法；live smoke 已验证 `PlanetNirayanaLongitude(Sun, 1955-02-24 19:15, San Francisco)` 返回官方结果。
 - 新增 `scripts/vedastro_method_catalog_sync.py`：真实从官方 `GetAllEventDataGroupedByTag` 拉取 catalog 并写入 `scratch/local/vedastro_adapter/method_catalog_snapshot.json`；当前快照统计为 `tag_count=46`、`method_count=2258`。
 - 扩展 `scripts/vedastro_parity_matrix.py` 与 latest 文档：新增 `fastest_path_lane` / `route_notes`，把高价值能力明确分流到 `official_mcp`、`official_python_bridge`、`rest_adapter`、`local_native_preferred`、`hybrid_router`、`external_evidence_only` 六条执行车道。
 - 新增 `scripts/vedastro_fast_path_checklist.py` 与 `docs/research/vedastro_fast_path_checklist_latest.{md,json}`，正式沉淀“VedAstro 596+ 节点接入实施清单（按最快路径）”。
@@ -776,7 +776,7 @@
 - `reference-only` 3 个源头已接成 `reference_only_conflict_layer`，只允许作为冲突/参考材料：`dasa-convergence-methodology`、`multi-dasha-convergence-protocol`、`yoga-strength-scoring-system`。
 - duplicate / obsolete / quarantine 8 个文件已列入 `blocked_non_runtime_layer`，并由 inventory gate 检查不进入 runtime source refs；重点包括 `kp-practical-event-timing.md` 与 `consultation-case-library.md`。
 - Prompt Pack / API fallback / AI Chat 已同步 `prediction_boundary_contract`、核心 5、第二批 11、reference-only 3；AI Chat 上下文新增 `【Prediction Boundary Contract】` 段落。
-- 真实 full-reading 回归确认：REDACTED_DATE REDACTED_TIME REDACTED_PLACE矿区样例中 relationship / career / finance 三条 strict contract 均带 prediction boundary，且 MEVG 与真实案例校准仍为 blocked。
+- 真实 full-reading 回归确认：public sample birth datetime private birthplace样例中 relationship / career / finance 三条 strict contract 均带 prediction boundary，且 MEVG 与真实案例校准仍为 blocked。
 
 ## 2026-07-02T16:12:00+08:00 - 第二批领域调用层与后续队列合同
 
@@ -827,14 +827,14 @@
 - 新增 `docs/research/character_level_extraction_results_latest.json` 与 `.md`，当前 total_files=`66`、`unhashed_files=0`、`stored_text_payload_fields=0`。
 - 提取结果：`text_extracted=12`、`ocr_blocked_missing_engine=53`、`extraction_failed=1`。
 - 方法分布：`docx=11`、`pdfplumber=2`、`pytesseract=53`；系统当前没有 `tesseract` 可执行文件，因此图片 OCR 全部明确 blocked。
-- 失败项：`/Users/wuyongnaren/文件仓库/印度占星文章/4印度占星.docx`，`python-docx` 返回 `KeyError: "There is no item named 'NULL' in the archive"`；保留为 extraction_failed，不伪装为已提取。
+- 失败项：`<home>/文件仓库/印度占星文章/4印度占星.docx`，`python-docx` 返回 `KeyError: "There is no item named 'NULL' in the archive"`；保留为 extraction_failed，不伪装为已提取。
 - 提取后分级：`extracted_candidate_for_review=10`、`extracted_private_reference_only=3`、`extracted_reference_only=53`；仍未进入 runtime truth chain。
 
 ## 2026-07-02T17:32:00+08:00 - DOCX fallback 提取与 OCR 引擎审计
 
 - 尝试用 Homebrew 安装 `tesseract tesseract-lang`，但 Homebrew 在 macOS 12 上需要拉取/构建 60+ 依赖；为避免把本轮变成长安装任务，已中断安装。
 - 增强 `scripts/character_level_inventory_manifest.py --scope extraction-results`：图片 OCR 记录 `ocr_engine_available`、`ocr_requested_languages`、`ocr_available_languages`，便于安装 OCR 后复跑。
-- 为异常 DOCX 增加 `word/document.xml` 备用提取路径；`/Users/wuyongnaren/文件仓库/印度占星文章/4印度占星.docx` 已从 `extraction_failed` 转为 `text_extracted`，字符数 `19643`。
+- 为异常 DOCX 增加 `word/document.xml` 备用提取路径；`<home>/文件仓库/印度占星文章/4印度占星.docx` 已从 `extraction_failed` 转为 `text_extracted`，字符数 `19643`。
 - 当前提取结果更新为：`text_extracted=13`、`ocr_blocked_missing_engine=53`、`extraction_failed=0`；仍未保存正文，`stored_text_payload_fields=0`。
 
 ## 2026-07-02T18:43:00+08:00 - Intel macOS 12 Vision OCR 完成

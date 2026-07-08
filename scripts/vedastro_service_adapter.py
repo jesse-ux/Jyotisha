@@ -37,15 +37,15 @@ VEDASTRO_OFFICIAL_CAPABILITY_RUNNER = ROOT / "scripts" / "vedastro_official_capa
 
 
 PARITY_CASES = {
-    "user_REDACTED_YEAR_test": {
-        "year": REDACTED_YEAR,
-        "month": 4,
-        "day": 17,
-        "hour": 14,
-        "minute": 49,
-        "lat": 36.42,
-        "lon": 114.2,
-        "tz": 8.0,
+    "steve_jobs_public_aa": {
+        "year": 1955,
+        "month": 2,
+        "day": 24,
+        "hour": 19,
+        "minute": 15,
+        "lat": 37.7749,
+        "lon": -122.4194,
+        "tz": -8.0,
         "ayanamsa_policy": "lahiri",
         "node_policy": "mean",
     },

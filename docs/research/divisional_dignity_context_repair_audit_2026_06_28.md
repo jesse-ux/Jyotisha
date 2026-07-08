@@ -2,7 +2,7 @@
 
 ## What Landed
 
-This pass repairs a specific boundary bug in `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_engine.py`:
+This pass repairs a specific boundary bug in `<repo>/scripts/jyotish_engine.py`:
 
 - `full-reading.modules.d9_navamsa_expanded[*].dignity`
 - `full-reading.modules.jaimini.darakaraka.d9_dignity`
@@ -77,9 +77,9 @@ Before fix:
 
 ## Tests Added / Updated
 
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_dasha.py`
+- `<repo>/tests/test_dasha.py`
   - helper-level context-sensitive dignity regression tests
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_cli_smoke.py`
+- `<repo>/tests/test_cli_smoke.py`
   - D9 expanded dignity regression
   - Darakaraka D9 dignity regression
   - Vimsopaka Navamsa dignity regression
@@ -116,6 +116,6 @@ This pass **does not fix**:
 
 This repair closes one concrete slice of the earlier audit trail in:
 
-- `/Users/wuyongnaren/Documents/印度占星/references/audit-deep-data-audit-2026-05-04.md`
+- `<repo>/references/audit-deep-data-audit-2026-05-04.md`
 
 where Vimsopaka and divisional dignity context leakage had already been identified as a high-severity trust issue.

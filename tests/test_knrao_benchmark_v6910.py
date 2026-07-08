@@ -20,7 +20,7 @@ from jaimini import (
     _get_planet_house, _sign_is_even_footed,
 )
 
-PYTHON = '/Users/wuyongnaren/.workbuddy/binaries/python/envs/default/bin/python3'
+PYTHON = '<home>/.workbuddy/binaries/python/envs/default/bin/python3'
 
 # ============================================================
 # Section 1: PyJHora 120-pair 基准对比

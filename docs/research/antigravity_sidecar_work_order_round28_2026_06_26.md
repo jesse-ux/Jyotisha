@@ -56,9 +56,9 @@ python3 scripts/audit_capabilities.py --mode validate
 python3 scripts/local_accuracy_report.py --format json
 python3 scripts/local_accuracy_report.py --format markdown
 find . -maxdepth 3 -type f \( -name 'SKILL.md' -o -path './references/technique_registry.json' -o -path './references/strict-workflow-router.md' -o -path './skills/*/SKILL.md' \) | sort
-find /Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology -maxdepth 3 -type f \( -name 'SKILL.md' -o -path '*/references/technique_registry.json' -o -path '*/references/strict-workflow-router.md' -o -path '*/skills/*/SKILL.md' \) 2>/dev/null | sort
+find <home>/.workbuddy/skills/jyotish-vedic-astrology -maxdepth 3 -type f \( -name 'SKILL.md' -o -path '*/references/technique_registry.json' -o -path '*/references/strict-workflow-router.md' -o -path '*/skills/*/SKILL.md' \) 2>/dev/null | sort
 rg -n "Dasha|dasha|Panchanga|Muhurta|Ashtakoot|Porutham|Shadbala|Avastha|Jaimini|KP|Prashna|Remedies|Saham|Pancha Pakshi|D60|D300|Yoga|Dosha|rectification" SKILL.md README.md references scripts tests docs/research
-rg -n "MIT|Apache|BSD|ISC|CC0|GPL|AGPL|LGPL|License|license|benchmark_only|copy_allowed|do_not_use" references/open_source_sources docs/research /Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/references 2>/dev/null
+rg -n "MIT|Apache|BSD|ISC|CC0|GPL|AGPL|LGPL|License|license|benchmark_only|copy_allowed|do_not_use" references/open_source_sources docs/research <home>/.workbuddy/skills/jyotish-vedic-astrology/references 2>/dev/null
 git diff --check
 ```
 

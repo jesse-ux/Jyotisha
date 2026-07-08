@@ -124,7 +124,7 @@ def test_external_manifest_indexes_high_relevance_machine_fragments_without_copy
     assert extraction_counts["document_text_extraction_queued"] >= 1
 
     for path, item in report["by_path"].items():
-        assert path.startswith("/Users/wuyongnaren/")
+        assert path.startswith("<home>/")
         assert item["sha256"]
         assert item["classification"] in {
             "external_book_or_document",

@@ -6,12 +6,12 @@
 
 | 类别 | 路径 | 状态 | 是否应同步到主仓 | 理由 |
 |---|---|---|---|---|
-| **核心主仓** | `/Users/wuyongnaren/Documents/印度占星` | 包含若干未跟踪文档 | **是** | 这是当前工作区的基准点，除了 `output_report.txt` 等临时输出外，其它的研究报告都应当被 Commit 并推送。 |
-| **工作区副本** | `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology` | 可能为某次历史拉取版本 | **否** | 仅做差异参考或备份，如果主仓已经覆盖其进度，则直接废弃避免冲突。 |
-| **临时草稿** | `/Users/wuyongnaren/.gemini/antigravity-ide/brain/*/scratch` | 各种 `vedastro_test.py` 等单文件脚本 | **否** | 此为 Antigravity 的临时实验和验证场，不代表正式提交级的代码。 |
-| **引擎存根** | `/Users/wuyongnaren/engines-repo/jyotish` | 含有 `jyotishganit-runner.py` | **否** | 这是早期或并行的适配器存根，若主仓已合并核心引擎就不应再合并此孤岛文件，以免造成逻辑回退。 |
-| **文档与书** | `/Users/wuyongnaren/文件仓库/中外占星/国外占星/...` | 海量 PDF 电子书与翻译文稿 | **否** | 涉及第三方版权，严禁作为原始文件塞进代码仓库，仅作为本地知识库查阅。 |
-| **下载压缩包** | `/Users/wuyongnaren/Downloads/yinduzhanxing-5-new-modules.tar.gz` 等 | 下载留存 | **否** | 若模块代码已被解压合并至主仓，压缩包本身为垃圾文件无需同步。 |
+| **核心主仓** | `<repo>` | 包含若干未跟踪文档 | **是** | 这是当前工作区的基准点，除了 `output_report.txt` 等临时输出外，其它的研究报告都应当被 Commit 并推送。 |
+| **工作区副本** | `<home>/.workbuddy/skills/jyotish-vedic-astrology` | 可能为某次历史拉取版本 | **否** | 仅做差异参考或备份，如果主仓已经覆盖其进度，则直接废弃避免冲突。 |
+| **临时草稿** | `<home>/.gemini/antigravity-ide/brain/*/scratch` | 各种 `vedastro_test.py` 等单文件脚本 | **否** | 此为 Antigravity 的临时实验和验证场，不代表正式提交级的代码。 |
+| **引擎存根** | `<home>/engines-repo/jyotish` | 含有 `jyotishganit-runner.py` | **否** | 这是早期或并行的适配器存根，若主仓已合并核心引擎就不应再合并此孤岛文件，以免造成逻辑回退。 |
+| **文档与书** | `<home>/文件仓库/中外占星/国外占星/...` | 海量 PDF 电子书与翻译文稿 | **否** | 涉及第三方版权，严禁作为原始文件塞进代码仓库，仅作为本地知识库查阅。 |
+| **下载压缩包** | `<home>/Downloads/yinduzhanxing-5-new-modules.tar.gz` 等 | 下载留存 | **否** | 若模块代码已被解压合并至主仓，压缩包本身为垃圾文件无需同步。 |
 | **隐私文件** | 各处的私人星盘报告（如带有具体出生时间、名字的文件） | - | **绝对否** | 保障隐私与仓库数据纯净。 |
 
 ## 结论

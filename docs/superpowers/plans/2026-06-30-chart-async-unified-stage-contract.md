@@ -21,8 +21,8 @@
 ### Task 1: Promote full-reading stage timings into a unified stage contract
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_engine.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_cli_smoke.py`
+- Modify: `<repo>/scripts/jyotish_engine.py`
+- Test: `<repo>/tests/test_cli_smoke.py`
 
 **Interfaces:**
 - Consumes:
@@ -124,8 +124,8 @@ Expected: PASS
 ### Task 2: Generalize the file-backed async job runner for chart and high-rigor scopes
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_api_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_api_server_security.py`
+- Modify: `<repo>/scripts/jyotish_api_server.py`
+- Test: `<repo>/tests/test_api_server_security.py`
 
 **Interfaces:**
 - Consumes:
@@ -229,8 +229,8 @@ Expected: PASS
 ### Task 3: Make chart async completion return the normal chart payload unchanged
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_api_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_api_server_security.py`
+- Modify: `<repo>/scripts/jyotish_api_server.py`
+- Test: `<repo>/tests/test_api_server_security.py`
 
 **Interfaces:**
 - Consumes:
@@ -315,8 +315,8 @@ Expected: PASS
 ### Task 4: Keep existing high-rigor async path working on top of the shared helper
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_api_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_api_server_security.py`
+- Modify: `<repo>/scripts/jyotish_api_server.py`
+- Test: `<repo>/tests/test_api_server_security.py`
 
 **Interfaces:**
 - Consumes:
@@ -365,7 +365,7 @@ Expected: PASS
 ### Task 5: Run focused regression bundle and update progress
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/progress.md`
+- Modify: `<repo>/progress.md`
 
 **Interfaces:**
 - Consumes:

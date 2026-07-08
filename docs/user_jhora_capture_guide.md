@@ -10,7 +10,7 @@ reports into this repository.
 Start with one of these public or synthetic tasks:
 
 - `template_steve_jobs_dasha_lahiri`: public-figure Dasha boundary sample.
-- `template_user_REDACTED_YEAR_moon_longitude_lahiri`: user-template sample; use only if
+- `template_private_oracle_redacted`: user-template sample; use only if
   the screenshot is heavily redacted.
 
 Avoid private client material for the first pass. If a private screenshot is
@@ -58,7 +58,7 @@ Capture enough external evidence to fill every requested target field.
 
 ### Moon sidereal longitude
 
-Required for `template_user_REDACTED_YEAR_moon_longitude_lahiri`.
+Required for `template_private_oracle_redacted`.
 
 - Capture Moon sidereal longitude in absolute 0-360 degrees if available.
 - Also capture sign-local degrees/minutes/seconds when the tool shows it.
@@ -66,7 +66,7 @@ Required for `template_user_REDACTED_YEAR_moon_longitude_lahiri`.
 
 ### Vimshottari start date
 
-Required for `template_user_REDACTED_YEAR_moon_longitude_lahiri`,
+Required for `template_private_oracle_redacted`,
 `template_steve_jobs_dasha_lahiri`, and
 `template_historical_epoch_lahiri`.
 
@@ -111,7 +111,7 @@ Use short, stable names:
 - `references/oracle/artifacts/jhora_steve_jobs_lahiri_dasha_v1.png`
 - `references/oracle/artifacts/jhora_steve_jobs_lahiri_shadbala_v1.png`
 - `references/oracle/artifacts/pyjhora_steve_jobs_lahiri_stdout_v1.txt`
-- `references/oracle/artifacts/jhora_user_REDACTED_YEAR_lahiri_redacted_v1.png`
+- `references/oracle/artifacts/private_oracle_redacted.png`
 
 If a screenshot is corrected, keep the old artifact only if it is already
 referenced by a packet; otherwise replace the draft before review.

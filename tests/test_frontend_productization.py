@@ -133,8 +133,8 @@ def sample_second_precision_payload() -> dict:
         "hour": 14,
         "minute": 45,
         "second": 20,
-        "lat": 36.466667,
-        "lon": 114.2,
+        "lat": 37.7749,
+        "lon": -122.4194,
         "tz": 8,
     }
 
@@ -674,7 +674,7 @@ def test_trust_center_exposes_oracle_evidence_intake_cards() -> None:
         "references/oracle/artifacts/",
         "必须打码",
         "missing_shadbala_component",
-        "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "template_steve_jobs_dasha_lahiri",
         "template_steve_jobs_dasha_lahiri",
         "template_redacted_place_shadbala_raman",
         "template_extreme_latitude_kp",
@@ -752,7 +752,7 @@ def test_first_jhora_capture_guide_is_actionable() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     for token in [
-        "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+        "template_steve_jobs_dasha_lahiri",
         "template_steve_jobs_dasha_lahiri",
         "Lahiri",
         "Raman",
@@ -2683,7 +2683,7 @@ def test_dasha_reference_audit_is_documented_and_gated() -> None:
         '"references/oracle/dasha_shadbala_oracle_cases.json"',
         "--target-start-date",
         "--oracle-file",
-        "印度占星1.pdf",
+        "private_chart_reference.pdf",
         "skip_oracle_audit",
         "ORACLE_COLLECTION_QUEUE_CMD",
         "ORACLE_EVIDENCE_VALIDATOR_CMD",
@@ -2848,12 +2848,12 @@ def test_api_birth_seconds_are_preserved_in_user_facing_flows() -> None:
     payload = sample_second_precision_payload()
 
     birth_dt = handler._parse_birth_datetime(payload)
-    assert birth_dt.isoformat() == "REDACTED_DATET14:45:20"
+    assert birth_dt.isoformat() == "1955-02-24T19:15:00"
 
     without_seconds = handler._compute_chart({**payload, "second": 0})
     with_seconds = handler._compute_chart(payload)
     assert with_seconds["success"] is True
-    assert with_seconds["birth"]["time"] == "14:45:20"
+    assert with_seconds["birth"]["time"] == "19:15:00"
     assert with_seconds["birth"]["second"] == 20
     assert with_seconds["birth"]["julian_day"] > without_seconds["birth"]["julian_day"]
 
@@ -2867,9 +2867,9 @@ def test_api_birth_seconds_are_preserved_in_user_facing_flows() -> None:
     assert with_seconds["shadbala"]["Sun"]["rupas"] == round(expected_shadbala["planets"]["Sun"]["total_rupas"], 2)
 
     full_reading = handler._compute_full_reading_for_thematic(payload)
-    assert full_reading["birth_info"]["time"] == "14:45:20"
+    assert full_reading["birth_info"]["time"] == "19:15:00"
     assert full_reading["birth_info"]["second"] == 20
-    assert full_reading["modules"]["chart"]["birth_info"]["time"] == "14:45:20"
+    assert full_reading["modules"]["chart"]["birth_info"]["time"] == "19:15:00"
 
 
 def test_local_frontend_and_api_runtime_smoke() -> None:

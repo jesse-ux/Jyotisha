@@ -91,7 +91,7 @@ For this repository, that means:
 
 Real sample run:
 
-- birth: `REDACTED_DATE REDACTED_TIME`
+- birth: `private birth datetime`
 - location: `36.4467, 114.2`
 - tz: `UTC+8`
 - reference date: `2026-06-30`

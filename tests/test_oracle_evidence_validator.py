@@ -89,12 +89,12 @@ def test_validator_accepts_current_external_packets_but_rejects_remaining_drafts
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
     assert report["scope"] == "external_oracle_evidence_validation"
-    assert report["summary"]["total_packets"] == 6
-    assert report["summary"]["valid_packets"] == 5
-    assert report["summary"]["ready_for_calibration"] == 5
+    assert report["summary"]["total_packets"] == 4
+    assert report["summary"]["valid_packets"] == 3
+    assert report["summary"]["ready_for_calibration"] == 3
     assert report["summary"]["all_packets_external_verified"] is False
     first = report["packets"][0]
-    assert first["capture_id"] == "external_template_user_REDACTED_YEAR_moon_longitude_lahiri"
+    assert first["capture_id"] == "external_template_steve_jobs_dasha_lahiri"
     assert first["valid"] is True
     assert first["problems"] == []
     remaining_invalid = [packet for packet in report["packets"] if not packet["valid"]]
@@ -126,7 +126,7 @@ def test_validator_accepts_filled_external_packet_but_not_whole_queue(tmp_path: 
         "tool_name": "JHora",
         "tool_version_or_url": "manual-screenshot-v1",
         "capture_date": "2026-06-25",
-        "source_artifact": "docs/research/oracle_artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
         "ayanamsa": "lahiri",
         "node_mode": "mean",
         "timezone": "UTC+08:00",
@@ -134,7 +134,6 @@ def test_validator_accepts_filled_external_packet_but_not_whole_queue(tmp_path: 
     }
     packet["metadata"] = metadata
     packet["target_placeholders"] = {
-        "target.moon_sidereal_longitude_deg": 311.7897,
         "target.vimshottari_start_date": "1986-05-18",
         "target.shadbala_components": complete_shadbala_components(),
     }
@@ -146,8 +145,8 @@ def test_validator_accepts_filled_external_packet_but_not_whole_queue(tmp_path: 
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["valid_packets"] == 5
-    assert report["summary"]["ready_for_calibration"] == 5
+    assert report["summary"]["valid_packets"] == 3
+    assert report["summary"]["ready_for_calibration"] == 3
     assert report["summary"]["all_packets_external_verified"] is False
     first = report["packets"][0]
     assert first["valid"] is True
@@ -161,14 +160,13 @@ def test_validator_rejects_incomplete_shadbala_component_rows(tmp_path: Path) ->
         "tool_name": "JHora",
         "tool_version_or_url": "manual-screenshot-v1",
         "capture_date": "2026-06-25",
-        "source_artifact": "references/oracle/artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "source_artifact": "references/oracle/artifacts/manual_jhora_public_sample.png",
         "ayanamsa": "lahiri",
         "node_mode": "mean",
         "timezone": "UTC+08:00",
         "operator_note": "Manual external screenshot; values typed from JHora screen.",
     }
     packet["target_placeholders"] = {
-        "target.moon_sidereal_longitude_deg": 311.7897,
         "target.vimshottari_start_date": "1986-05-18",
         "target.shadbala_components": {
             "Sun": {
@@ -204,14 +202,13 @@ def test_validator_rejects_non_numeric_or_negative_shadbala_components(tmp_path:
         "tool_name": "JHora",
         "tool_version_or_url": "manual-screenshot-v1",
         "capture_date": "2026-06-25",
-        "source_artifact": "references/oracle/artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "source_artifact": "references/oracle/artifacts/manual_jhora_public_sample.png",
         "ayanamsa": "lahiri",
         "node_mode": "mean",
         "timezone": "UTC+08:00",
         "operator_note": "Manual external screenshot; values typed from JHora screen.",
     }
     packet["target_placeholders"] = {
-        "target.moon_sidereal_longitude_deg": 311.7897,
         "target.vimshottari_start_date": "1986-05-18",
         "target.shadbala_components": shadbala,
     }
@@ -239,14 +236,13 @@ def test_validator_accepts_negative_drik_bala_when_component_sum_matches(tmp_pat
         "tool_name": "PyJHora",
         "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
         "capture_date": "2026-06-27",
-        "source_artifact": "references/oracle/artifacts/pyjhora_shadbala_stdout.txt",
+        "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
         "ayanamsa": "raman",
         "node_mode": "PyJHora default",
         "timezone": "UTC+08:00",
         "operator_note": "Black-box external stdout; Drik Bala can be negative.",
     }
     packet["target_placeholders"] = {
-        "target.moon_sidereal_longitude_deg": 311.7897,
         "target.vimshottari_start_date": "1986-05-18",
         "target.shadbala_components": shadbala,
     }
@@ -278,14 +274,13 @@ def test_validator_accepts_pyjhora_negative_dig_and_drik_values(tmp_path: Path) 
         "tool_name": "PyJHora",
         "tool_version_or_url": "PyJHora 4.8.7 isolated /tmp black-box run",
         "capture_date": "2026-06-27",
-        "source_artifact": "references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt",
+        "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
         "ayanamsa": "lahiri",
         "node_mode": "PyJHora default",
         "timezone": "UTC+08:00",
         "operator_note": "Black-box external stdout; PyJHora can emit negative Dig and Drik Bala values.",
     }
     packet["target_placeholders"] = {
-        "target.moon_sidereal_longitude_deg": 311.774424,
         "target.vimshottari_start_date": "1986-05-25",
         "target.shadbala_components": shadbala,
     }
@@ -311,14 +306,13 @@ def test_validator_rejects_missing_shadbala_total_rupa(tmp_path: Path) -> None:
         "tool_name": "JHora",
         "tool_version_or_url": "manual-screenshot-v1",
         "capture_date": "2026-06-25",
-        "source_artifact": "references/oracle/artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "source_artifact": "references/oracle/artifacts/manual_jhora_public_sample.png",
         "ayanamsa": "lahiri",
         "node_mode": "mean",
         "timezone": "UTC+08:00",
         "operator_note": "Manual external screenshot; values typed from JHora screen.",
     }
     packet["target_placeholders"] = {
-        "target.moon_sidereal_longitude_deg": 311.7897,
         "target.vimshottari_start_date": "1986-05-18",
         "target.shadbala_components": shadbala,
     }
@@ -345,14 +339,13 @@ def test_validator_rejects_shadbala_component_values_above_20_rupas(tmp_path: Pa
         "tool_name": "JHora",
         "tool_version_or_url": "manual-screenshot-v1",
         "capture_date": "2026-06-25",
-        "source_artifact": "references/oracle/artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "source_artifact": "references/oracle/artifacts/manual_jhora_public_sample.png",
         "ayanamsa": "lahiri",
         "node_mode": "mean",
         "timezone": "UTC+08:00",
         "operator_note": "Manual external screenshot; values typed from JHora screen.",
     }
     packet["target_placeholders"] = {
-        "target.moon_sidereal_longitude_deg": 311.7897,
         "target.vimshottari_start_date": "1986-05-18",
         "target.shadbala_components": shadbala,
     }
@@ -378,14 +371,13 @@ def test_validator_rejects_shadbala_total_rupa_sum_mismatch(tmp_path: Path) -> N
         "tool_name": "JHora",
         "tool_version_or_url": "manual-screenshot-v1",
         "capture_date": "2026-06-25",
-        "source_artifact": "references/oracle/artifacts/manual_jhora_user_REDACTED_YEAR.png",
+        "source_artifact": "references/oracle/artifacts/manual_jhora_public_sample.png",
         "ayanamsa": "lahiri",
         "node_mode": "mean",
         "timezone": "UTC+08:00",
         "operator_note": "Manual external screenshot; values typed from JHora screen.",
     }
     packet["target_placeholders"] = {
-        "target.moon_sidereal_longitude_deg": 311.7897,
         "target.vimshottari_start_date": "1986-05-18",
         "target.shadbala_components": shadbala,
     }
@@ -562,7 +554,7 @@ def test_validator_accepts_external_verified_packet_generated_from_oracle_file(t
             "tool_name": "JHora",
             "tool_version_or_url": "manual-screenshot-v1",
             "capture_date": "2026-06-25",
-            "source_artifact": "docs/research/oracle_artifacts/manual_jhora_user_REDACTED_YEAR.png",
+            "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
             "ayanamsa": "lahiri",
             "node_mode": "mean",
             "timezone": "UTC+08:00",
@@ -579,8 +571,8 @@ def test_validator_accepts_external_verified_packet_generated_from_oracle_file(t
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["valid_packets"] == 5
-    assert report["summary"]["ready_for_calibration"] == 5
+    assert report["summary"]["valid_packets"] == 3
+    assert report["summary"]["ready_for_calibration"] == 3
     assert report["summary"]["production_tuning_allowed"] is False
     assert report["packets"][0]["valid"] is True
     assert report["packets"][0]["problems"] == []

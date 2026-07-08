@@ -25,15 +25,15 @@
 
 ### Task 2: Implement route-aware monthly adjudication
 
-- [ ] Add helper builders in `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`.
+- [ ] Add helper builders in `<repo>/mcp_server.py`.
 - [ ] Attach `monthly_adjudication_summary` to strict workflow contracts.
 - [ ] Keep `official_day_signal_summary` unchanged for compatibility.
 
 ### Task 3: Surface the contract through consumers
 
-- [ ] Add `monthly_adjudication_summary` to compact prompt-pack contracts in `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_engine.py`.
-- [ ] Add it to guided topics in `/Users/wuyongnaren/Documents/印度占星/scripts/guided_topic_discovery.py`.
-- [ ] Expose it in `/Users/wuyongnaren/Documents/印度占星/jyotish-app/main.js` and `/Users/wuyongnaren/Documents/印度占星/jyotish-app/ai-chat.js`.
+- [ ] Add `monthly_adjudication_summary` to compact prompt-pack contracts in `<repo>/scripts/jyotish_engine.py`.
+- [ ] Add it to guided topics in `<repo>/scripts/guided_topic_discovery.py`.
+- [ ] Expose it in `<repo>/jyotish-app/main.js` and `<repo>/jyotish-app/ai-chat.js`.
 
 ### Task 4: Verify targeted regressions
 

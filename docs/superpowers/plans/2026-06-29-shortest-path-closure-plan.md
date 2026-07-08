@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Must obey `/Users/wuyongnaren/Documents/印度占星/AGENTS.md` high-rigor rules.
+- Must obey `<repo>/AGENTS.md` high-rigor rules.
 - Timing/event/outcome work must use `Vimshottari + Narayana Dasha` and relationship work must include `D9 + UL`.
 - Functional Benefic/Malefic must remain explicit in high-rigor evidence and user-visible audit surfaces.
 - Prefer existing repo-native code and reusable open-source references over new standalone implementations.
@@ -22,13 +22,13 @@
 ### Task 1: Freeze the closure board and stop scope drift
 
 **Files:**
-- Create: `/Users/wuyongnaren/Documents/印度占星/docs/research/shortest_path_closure_board_2026_06_29.md`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/docs/research/ACTIVE_FRONTS.md`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/task_plan.md`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_skill_gap_truth_audit.py`
+- Create: `<repo>/docs/research/shortest_path_closure_board_2026_06_29.md`
+- Modify: `<repo>/docs/research/ACTIVE_FRONTS.md`
+- Modify: `<repo>/task_plan.md`
+- Test: `<repo>/tests/test_skill_gap_truth_audit.py`
 
 **Interfaces:**
-- Consumes: `/Users/wuyongnaren/Documents/印度占星/docs/research/ACTIVE_FRONTS.md`, `/Users/wuyongnaren/Documents/印度占星/task_plan.md`
+- Consumes: `<repo>/docs/research/ACTIVE_FRONTS.md`, `<repo>/task_plan.md`
 - Produces: `shortest_path_closure_board_2026_06_29.md` with four closure lanes (`relationship`, `vimsopaka_functional_role`, `oracle`, `vedastro_ingestion`) and a fixed task order
 
 - [ ] **Step 1: Write the failing test**
@@ -91,12 +91,12 @@ git commit -m "docs: freeze shortest-path closure board"
 ### Task 2: Close the relationship adjudicator regression pack
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_engine.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/jyotish-app/main.js`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_relationship.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_frontend_productization.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_api_server_security.py`
+- Modify: `<repo>/mcp_server.py`
+- Modify: `<repo>/scripts/jyotish_engine.py`
+- Modify: `<repo>/jyotish-app/main.js`
+- Modify: `<repo>/tests/test_mcp_strict_workflow_relationship.py`
+- Modify: `<repo>/tests/test_frontend_productization.py`
+- Modify: `<repo>/tests/test_api_server_security.py`
 
 **Interfaces:**
 - Consumes: `event_judgement.dominant_label`, `event_judgement.secondary_context`, `present_evidence.jaimini_marriage_support`
@@ -156,12 +156,12 @@ git commit -m "test: lock relationship public formalization boundaries"
 ### Task 3: Close Vimsopaka semantic mapping and functional-role rendering
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_api_server.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/jyotish-app/skill-map.js`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/references/strict-workflow-router.md`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_frontend_productization.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_api_server_security.py`
+- Modify: `<repo>/mcp_server.py`
+- Modify: `<repo>/scripts/jyotish_api_server.py`
+- Modify: `<repo>/jyotish-app/skill-map.js`
+- Modify: `<repo>/references/strict-workflow-router.md`
+- Modify: `<repo>/tests/test_frontend_productization.py`
+- Modify: `<repo>/tests/test_api_server_security.py`
 
 **Interfaces:**
 - Consumes: existing dignity guardrail output and functional benefic/malefic evidence
@@ -208,11 +208,11 @@ git commit -m "feat: close functional role and vimsopaka rendering gaps"
 ### Task 4: Batch the oracle closure work into one comparison pack
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/shadbala_oracle_comparison.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/oracle_benchmark_inventory.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/references/oracle/dasha_shadbala_oracle_cases.json`
-- Create: `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_batch_closure_pack_2026_06_29.md`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_dasha_oracle_closure_status.py`
+- Modify: `<repo>/scripts/shadbala_oracle_comparison.py`
+- Modify: `<repo>/scripts/oracle_benchmark_inventory.py`
+- Modify: `<repo>/references/oracle/dasha_shadbala_oracle_cases.json`
+- Create: `<repo>/docs/research/oracle_batch_closure_pack_2026_06_29.md`
+- Modify: `<repo>/tests/test_dasha_oracle_closure_status.py`
 
 **Interfaces:**
 - Consumes: external oracle packets, current shadbala comparison script, oracle benchmark inventory
@@ -257,10 +257,10 @@ git commit -m "feat: batch oracle closure comparison pack"
 ### Task 5: Keep VedAstro ingestion minimal and honest
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_service_adapter.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/run_quality_gate.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_life_event_graph_v1.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_vedastro_service_adapter_executor.py`
+- Modify: `<repo>/scripts/vedastro_service_adapter.py`
+- Modify: `<repo>/scripts/run_quality_gate.py`
+- Modify: `<repo>/tests/test_life_event_graph_v1.py`
+- Modify: `<repo>/tests/test_vedastro_service_adapter_executor.py`
 
 **Interfaces:**
 - Consumes: current `external_window` payload contract and allowlist audit

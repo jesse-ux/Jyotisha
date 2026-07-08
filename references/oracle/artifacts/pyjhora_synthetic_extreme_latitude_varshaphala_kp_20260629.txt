@@ -1,6 +1,6 @@
 CASE_ID template_synthetic_extreme_latitude_varshaphala_kp
 TOOL PyJHora 4.8.6
-SOURCE_ENV /Users/wuyongnaren/.workbuddy/binaries/python/envs/pyjhora
+SOURCE_ENV <home>/.workbuddy/binaries/python/envs/pyjhora
 CAPTURE_DATE 2026-06-29
 NOTE External annual capture from PyJHora black-box environment. Local repository annual engine output was not used. This artifact records solar return datetime, varsha lagna, muntha, year lord, first mudda dasha lord, selected sahams, and the Tajika yoga block extracted from the PyJHora annual chart via jhora.horoscope.transit.tajaka_yoga. KP ayanamsa was explicitly forced through drik.set_ayanamsa_mode('KP') before calculation to match the template row boundary.
 

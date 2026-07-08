@@ -75,7 +75,7 @@ Codex 已完成以下主线修复，Antigravity 本轮要复验这些修复是�
 
 ```json
 {
-  "id": "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+  "id": "template_private_oracle_redacted",
   "status": "template_only",
   "source": "JHora/PyJHora/VedAstro/Manual screenshot",
   "birth": {
@@ -118,7 +118,7 @@ Codex 已完成以下主线修复，Antigravity 本轮要复验这些修复是�
 1. 启动本地 API：`python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200`
 2. 启动前端：`cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173`
 3. 浏览器打开 `http://127.0.0.1:5173`
-4. 填入用户样本：REDACTED_DATE 14:45:20，lat 36.466667，lon 114.2，tz 8。
+4. 填入用户样本：private birth datetime，lat 36.466667，lon 114.2，tz 8。
 5. 在参数页分别保存 Lahiri、Raman、KP，重新排盘。
 6. 检查 Network payload 是否包含 `ayanamsa`、`second`、`node_mode`。
 7. 检查 API response 是否包含 `birth.ayanamsa_name`、`birth.ayanamsa_display`、`birth.node_mode`、`ai_prompt_pack`。

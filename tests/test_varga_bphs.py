@@ -75,7 +75,7 @@ def test_varga_map_boundary_examples() -> None:
 
 
 def test_navamsa_matches_user_jhora_pdf_reference_chart() -> None:
-    """Regression from 印度占星1.pdf: JHora-style D9 table for REDACTED_DATE 14:45:20 Fengfeng."""
+    """Regression from private_chart_reference.pdf: JHora-style D9 table for public sample birth datetime San Francisco."""
     expected = {
         132.355025: "Cancer",      # Ascendant 12 Leo 21'18.09"
         3.5226611111111112: "Taurus",

@@ -21,8 +21,8 @@
 ### Task 1: Add failing adapter tests for daily-window aggregation
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_vedastro_range_scan_replay.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_vedastro_range_scan_replay.py`
+- Modify: `<repo>/tests/test_vedastro_range_scan_replay.py`
+- Test: `<repo>/tests/test_vedastro_range_scan_replay.py`
 
 **Interfaces:**
 - Consumes: `scripts.vedastro_service_adapter._normalize_range_scan_success(payload, endpoint, request_preview, attempt_count=1, retry_error_codes=None) -> dict`
@@ -103,9 +103,9 @@ git commit -m "feat: add vedastro daily window aggregation"
 ### Task 2: Propagate daily windows through orchestrator
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/vedastro_evidence_orchestrator.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_vedastro_evidence_orchestrator.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_vedastro_evidence_orchestrator.py`
+- Modify: `<repo>/scripts/vedastro_evidence_orchestrator.py`
+- Modify: `<repo>/tests/test_vedastro_evidence_orchestrator.py`
+- Test: `<repo>/tests/test_vedastro_evidence_orchestrator.py`
 
 **Interfaces:**
 - Consumes: `run_range_scan_for_case(...) -> dict` with `daily_windows` and `top_daily_window`
@@ -177,10 +177,10 @@ git commit -m "feat: propagate vedastro daily windows through orchestrator"
 ### Task 3: Promote daily windows into strict workflow external activation
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_career.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_relationship.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py`
+- Modify: `<repo>/mcp_server.py`
+- Modify: `<repo>/tests/test_mcp_strict_workflow_career.py`
+- Modify: `<repo>/tests/test_mcp_strict_workflow_relationship.py`
+- Modify: `<repo>/tests/test_mcp_strict_workflow_finance.py`
 - Test: same files
 
 **Interfaces:**
@@ -246,9 +246,9 @@ git commit -m "feat: expose vedastro daily windows in strict workflow"
 ### Task 4: Surface official day windows in life event graph
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_life_event_graph_v1.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_life_event_graph_v1.py`
+- Modify: `<repo>/mcp_server.py`
+- Modify: `<repo>/tests/test_life_event_graph_v1.py`
+- Test: `<repo>/tests/test_life_event_graph_v1.py`
 
 **Interfaces:**
 - Consumes: `present_evidence.external_activation.daily_windows`
@@ -329,9 +329,9 @@ git commit -m "feat: show official vedastro day windows in life event graph"
 ### Task 5: Attach daily-window expansion to full-reading and verify output contract
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_engine.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_cli_smoke.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_cli_smoke.py`
+- Modify: `<repo>/scripts/jyotish_engine.py`
+- Modify: `<repo>/tests/test_cli_smoke.py`
+- Test: `<repo>/tests/test_cli_smoke.py`
 
 **Interfaces:**
 - Consumes: existing `modules.vedastro_range_scan_result`

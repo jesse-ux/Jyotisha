@@ -8,7 +8,7 @@ Read-only sweep for project source, local mirrors, Codex work folders, WorkBuddy
 
 Current workspace:
 
-- Path: `/Users/wuyongnaren/Documents/印度占星`
+- Path: `<repo>`
 - Branch: `codex/release-hygiene-ci`
 - Upstream: `origin/codex/release-hygiene-ci`
 - Remote fetch: `git@github.com:732642856/yinduzhanxing.git`
@@ -32,31 +32,31 @@ Conclusion: cloud repo exists and is browser-readable, but terminal ref parity i
 
 Relevant candidates from bounded split scan:
 
-- `/Users/wuyongnaren/Documents/印度占星` — current main workspace; only implementation target.
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology` — dirty historical/distribution mirror; read-only reference.
-- `/Users/wuyongnaren/.workbuddy/skills` — WorkBuddy skills container.
-- `/Users/wuyongnaren/Documents/星轨talk` — adjacent talk engine repo with Jyotish adapters.
-- `/Users/wuyongnaren/Documents/Codex/2026-06-20/732642856-talk-https-github-com-732642856/work/talk-active` — older Codex talk worktree.
-- `/Users/wuyongnaren/Documents/Codex/2026-06-20/732642856-talk-https-github-com-732642856/work/talk` — older Codex talk worktree.
-- `/Users/wuyongnaren/Documents/Codex/2026-06-18/new-chat-4/work/starcanvas` — adjacent astrology/canvas project.
-- `/Users/wuyongnaren/Documents/Codex/2026-06-18/new-chat-4/work/starcanvas-active` — adjacent astrology/canvas project.
-- `/Users/wuyongnaren/Documents/星轨画布` — adjacent astrology/canvas project.
-- `/Users/wuyongnaren/WorkBuddy` and dated WorkBuddy folders — historical/reference material.
+- `<repo>` — current main workspace; only implementation target.
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology` — dirty historical/distribution mirror; read-only reference.
+- `<home>/.workbuddy/skills` — WorkBuddy skills container.
+- `<home>/Documents/星轨talk` — adjacent talk engine repo with Jyotish adapters.
+- `<home>/Documents/Codex/2026-06-20/732642856-talk-https-github-com-732642856/work/talk-active` — older Codex talk worktree.
+- `<home>/Documents/Codex/2026-06-20/732642856-talk-https-github-com-732642856/work/talk` — older Codex talk worktree.
+- `<home>/Documents/Codex/2026-06-18/new-chat-4/work/starcanvas` — adjacent astrology/canvas project.
+- `<home>/Documents/Codex/2026-06-18/new-chat-4/work/starcanvas-active` — adjacent astrology/canvas project.
+- `<home>/Documents/星轨画布` — adjacent astrology/canvas project.
+- `<home>/WorkBuddy` and dated WorkBuddy folders — historical/reference material.
 
 ## High-Value Fragment Files
 
 Keep these in mind before adapter/oracle/skill work:
 
-- `/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish/jyotish-adapter.js`
-- `/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish/vedic-calc-runner.py`
-- `/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish/jyotishganit-adapter.js`
-- `/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish/jyotishganit-runner.py`
-- `/Users/wuyongnaren/Documents/星轨talk/engines-repo/local-jyotish-reference-audit.js`
-- `/Users/wuyongnaren/Documents/星轨talk/reports/local-jyotish-reference-audit.md`
-- `/Users/wuyongnaren/Documents/ObsidianVault/03_研究_术数占星/印度占星 Jyotish.md`
-- `/Users/wuyongnaren/Documents/ObsidianVault/03_研究_术数占星/印度占星研究结论 v3.md`
-- `/Users/wuyongnaren/Documents/ObsidianVault/03_研究_术数占星/一楠 · 印度占星完整解盘报告 v2.md`
-- `/Users/wuyongnaren/Documents/Codex/2026-06-20/732642856-yinduzhanxing-https-github-com-732642856/outputs/yinduzhanxing_local_audit_2026-06-20.md`
+- `<home>/Documents/星轨talk/engines-repo/jyotish/jyotish-adapter.js`
+- `<home>/Documents/星轨talk/engines-repo/jyotish/vedic-calc-runner.py`
+- `<home>/Documents/星轨talk/engines-repo/jyotish/jyotishganit-adapter.js`
+- `<home>/Documents/星轨talk/engines-repo/jyotish/jyotishganit-runner.py`
+- `<home>/Documents/星轨talk/engines-repo/local-jyotish-reference-audit.js`
+- `<home>/Documents/星轨talk/reports/local-jyotish-reference-audit.md`
+- `<home>/Documents/ObsidianVault/03_研究_术数占星/印度占星 Jyotish.md`
+- `<home>/Documents/ObsidianVault/03_研究_术数占星/印度占星研究结论 v3.md`
+- `<home>/Documents/ObsidianVault/03_研究_术数占星/PRIVATE_REDACTED_CASE · 印度占星完整解盘报告 v2.md`
+- `<home>/Documents/Codex/2026-06-20/732642856-yinduzhanxing-https-github-com-732642856/outputs/yinduzhanxing_local_audit_2026-06-20.md`
 
 ## Boundaries
 

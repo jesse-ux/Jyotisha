@@ -11,7 +11,7 @@
 ```json
 [
   {
-    "id": "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+    "id": "template_private_oracle_redacted",
     "status": "template_only",
     "source": "JHora/PyJHora/VedAstro/Manual screenshot",
     "birth": {

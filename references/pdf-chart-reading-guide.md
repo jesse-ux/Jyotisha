@@ -243,7 +243,7 @@
   "birth_info": {
     "date": "1990-01-01",
     "time": "12:00:19",
-    "location": "REDACTED_PLACE",
+    "location": "San Francisco",
     "latitude": 36.6,
     "longitude": 115.5,
     "timezone": "UTC+8",

@@ -21,10 +21,10 @@
 ### Task 1: Add compact technique audit summary to strict workflow contracts
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_career.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_relationship.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py`
+- Modify: `<repo>/mcp_server.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_career.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_relationship.py`
+- Test: `<repo>/tests/test_mcp_strict_workflow_finance.py`
 
 **Interfaces:**
 - Consumes:
@@ -139,8 +139,8 @@ Expected: PASS
 ### Task 2: Compact and expose the audit summary through full-reading and prompt pack
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_engine.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_cli_smoke.py`
+- Modify: `<repo>/scripts/jyotish_engine.py`
+- Test: `<repo>/tests/test_cli_smoke.py`
 
 **Interfaces:**
 - Consumes:
@@ -192,8 +192,8 @@ Expected: PASS
 ### Task 3: Surface the same compact audit summary in API outputs
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_api_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_api_server_security.py`
+- Modify: `<repo>/scripts/jyotish_api_server.py`
+- Test: `<repo>/tests/test_api_server_security.py`
 
 **Interfaces:**
 - Consumes:
@@ -248,9 +248,9 @@ Expected: PASS
 ### Task 4: Make frontend and AI chat consume the compact audit summary
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/jyotish-app/main.js`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/jyotish-app/ai-chat.js`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_frontend_productization.py`
+- Modify: `<repo>/jyotish-app/main.js`
+- Modify: `<repo>/jyotish-app/ai-chat.js`
+- Test: `<repo>/tests/test_frontend_productization.py`
 
 **Interfaces:**
 - Consumes:
@@ -301,7 +301,7 @@ Expected: PASS
 ### Task 5: Run focused regression and update progress
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/progress.md`
+- Modify: `<repo>/progress.md`
 
 **Interfaces:**
 - Consumes:

@@ -21,9 +21,9 @@
 ### Task 1: Lock the unified runtime and adjudication bundle contract in tests
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_api_server_security.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_cli_smoke.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_frontend_productization.py`
+- Modify: `<repo>/tests/test_api_server_security.py`
+- Modify: `<repo>/tests/test_cli_smoke.py`
+- Modify: `<repo>/tests/test_frontend_productization.py`
 
 **Interfaces:**
 - Consumes: `_compute_consultation_workflow(...)`, `_compute_thematic_report(...)`, `build_guided_topics(...)`
@@ -85,9 +85,9 @@ git commit -m "test: lock unified consultation runtime contract"
 ### Task 2: Make runtime_planner a real executor and make thematic report prefer upstream unified contracts
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/unified_consultation_orchestrator.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_api_server.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_api_server_security.py`
+- Modify: `<repo>/scripts/unified_consultation_orchestrator.py`
+- Modify: `<repo>/scripts/jyotish_api_server.py`
+- Test: `<repo>/tests/test_api_server_security.py`
 
 **Interfaces:**
 - Consumes: `UnifiedConsultationOrchestrator.runtime_planner(...)`, `_compute_consultation_workflow(...)`
@@ -105,7 +105,7 @@ assert planner["reuse_contract"]["thematic_report"] == "thematic_report"
 
 - [ ] **Step 2: Implement runtime executed/skipped step recording**
 
-In `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_api_server.py`, refactor `_compute_consultation_workflow(...)` so it:
+In `<repo>/scripts/jyotish_api_server.py`, refactor `_compute_consultation_workflow(...)` so it:
 - initializes `executed_steps = []`, `skipped_steps = []`
 - runs only steps listed in `runtime_planner["sync_steps"]`
 - appends actual executed step names
@@ -154,11 +154,11 @@ git commit -m "feat: execute unified consultation runtime steps"
 ### Task 3: Collapse monthly adjudication, audit gate, and axes into one canonical strict adjudication bundle
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_api_server.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/guided_topic_discovery.py`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_engine.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_api_server_security.py`
-- Test: `/Users/wuyongnaren/Documents/印度占星/tests/test_cli_smoke.py`
+- Modify: `<repo>/scripts/jyotish_api_server.py`
+- Modify: `<repo>/scripts/guided_topic_discovery.py`
+- Modify: `<repo>/scripts/jyotish_engine.py`
+- Test: `<repo>/tests/test_api_server_security.py`
+- Test: `<repo>/tests/test_cli_smoke.py`
 
 **Interfaces:**
 - Consumes: strict workflow contracts, `monthly_adjudication_summary`, `technique_audit_summary`, `interpretation_axes`
@@ -171,7 +171,7 @@ git commit -m "feat: execute unified consultation runtime steps"
 
 - [ ] **Step 1: Add bundle builder in API server**
 
-Create a helper in `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_api_server.py` that returns:
+Create a helper in `<repo>/scripts/jyotish_api_server.py` that returns:
 
 ```python
 {
@@ -196,7 +196,7 @@ while keeping legacy top-level fields for compatibility.
 
 - [ ] **Step 3: Make guided topics read only the bundle first**
 
-In `/Users/wuyongnaren/Documents/印度占星/scripts/guided_topic_discovery.py`, replace separate contract lookups with:
+In `<repo>/scripts/guided_topic_discovery.py`, replace separate contract lookups with:
 
 ```python
 bundle = _as_dict(contract.get("strict_adjudication_bundle"))
@@ -209,7 +209,7 @@ and populate:
 
 - [ ] **Step 4: Make prompt pack carry the bundle through**
 
-In `/Users/wuyongnaren/Documents/印度占星/scripts/jyotish_engine.py`, ensure each strict workflow contract already exported into `ai_prompt_pack.evidence_snapshot.strict_workflow_contracts` includes `strict_adjudication_bundle`.
+In `<repo>/scripts/jyotish_engine.py`, ensure each strict workflow contract already exported into `ai_prompt_pack.evidence_snapshot.strict_workflow_contracts` includes `strict_adjudication_bundle`.
 
 - [ ] **Step 5: Run backend/shared contract tests**
 
@@ -227,9 +227,9 @@ git commit -m "feat: unify strict adjudication bundle"
 ### Task 4: Make frontend and AI consume the single shared bundle
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/jyotish-app/main.js`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/jyotish-app/ai-chat.js`
-- Modify: `/Users/wuyongnaren/Documents/印度占星/tests/test_frontend_productization.py`
+- Modify: `<repo>/jyotish-app/main.js`
+- Modify: `<repo>/jyotish-app/ai-chat.js`
+- Modify: `<repo>/tests/test_frontend_productization.py`
 
 **Interfaces:**
 - Consumes: `strict_adjudication_bundle`
@@ -248,7 +248,7 @@ and keep legacy checks for compatibility.
 
 - [ ] **Step 2: Update guided topic card rendering**
 
-In `/Users/wuyongnaren/Documents/印度占星/jyotish-app/main.js`, read:
+In `<repo>/jyotish-app/main.js`, read:
 
 ```javascript
 const bundle = topic?.strict_adjudication_bundle || {};
@@ -263,7 +263,7 @@ from the bundle first.
 
 - [ ] **Step 3: Update AI chat payload construction**
 
-In `/Users/wuyongnaren/Documents/印度占星/jyotish-app/ai-chat.js`, include:
+In `<repo>/jyotish-app/ai-chat.js`, include:
 
 ```javascript
 guidedTopicContext.strict_adjudication_bundle
@@ -287,11 +287,11 @@ git commit -m "feat: make frontend consume strict adjudication bundle"
 ### Task 5: Run the smallest real regressions and inspect real-user output
 
 **Files:**
-- Modify: `/Users/wuyongnaren/Documents/印度占星/progress.md` (only if you are already tracking this thread there)
+- Modify: `<repo>/progress.md` (only if you are already tracking this thread there)
 
 **Interfaces:**
 - Consumes: completed runtime/thematic/bundle/frontend flow
-- Produces: verified real output for the REDACTED_DATE REDACTED_TIME REDACTED_PLACE case
+- Produces: verified real output for the private birth datetime case
 
 - [ ] **Step 1: Run focused regression suite**
 
@@ -311,7 +311,7 @@ Expected: all PASS.
 - [ ] **Step 2: Run real consultation workflow sample**
 
 Run a local Python one-off calling `_compute_consultation_workflow(...)` with:
-- `REDACTED_DATE REDACTED_TIME`
+- `private birth datetime`
 - `lat=36.42`
 - `lon=114.2`
 - `tz=8`

@@ -41,9 +41,9 @@ def test_agents_requires_pre_work_error_ledger() -> None:
 def test_fragment_sweep_records_main_mirror_and_remote_boundaries() -> None:
     text = SWEEP.read_text(encoding="utf-8")
     required = [
-        "/Users/wuyongnaren/Documents/印度占星",
-        "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology",
-        "/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish",
+        "<repo>",
+        "<home>/.workbuddy/skills/jyotish-vedic-astrology",
+        "<home>/Documents/星轨talk/engines-repo/jyotish",
         "github.com:732642856/yinduzhanxing.git",
         "SSL_ERROR_SYSCALL",
         "terminal ref parity is `blocked`",
@@ -56,4 +56,4 @@ def test_error_ledger_contains_split_scan_commands_not_unbounded_home_scan() -> 
     text = ERROR_LEDGER.read_text(encoding="utf-8")
     assert "-maxdepth 6" in text
     assert "-maxdepth 7" in text
-    assert "find /Users/wuyongnaren -type" not in text
+    assert "find <home> -type" not in text

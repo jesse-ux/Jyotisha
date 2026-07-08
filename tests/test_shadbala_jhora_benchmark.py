@@ -44,16 +44,6 @@ TEST_CASES = [
         },
         "expected": {}
     },
-    {
-        "name": "一楠 (本地测试)",
-        "data": {
-            "year": REDACTED_YEAR, "month": 4, "day": 17,
-            "hour": 14, "minute": 45, "second": 20,
-            "lat": 36.42, "lon": 114.2,  # 河北REDACTED_PLACE
-            "tz": 8.0,
-        },
-        "expected": {}
-    },
 ]
 
 # ============================================================================
@@ -226,7 +216,7 @@ def verify_shadbala_for_chart(planets, asc_sign, birth_hour, sun_lon, moon_lon,
 
 
 if __name__ == "__main__":
-    # 使用一楠的出生数据运行验证
+    # 使用PRIVATE_REDACTED_CASE的出生数据运行验证
     planets = {
         'Sun': {'sign': 'Aries', 'degree': 27.5, 'house': 9, 'retrograde': False, 'speed': 0.98},
         'Moon': {'sign': 'Aquarius', 'degree': 10.0, 'house': 7, 'retrograde': False, 'speed': 13.5},
@@ -240,5 +230,5 @@ if __name__ == "__main__":
     verify_shadbala_for_chart(
         planets, 'Leo', 14.75, 27.5, 310.0,
         birth_minute=45,
-        chart_name="一楠 (REDACTED_DATE 14:45 河北REDACTED_PLACE)"
+        chart_name="PRIVATE_REDACTED_CASE (public sample birth datetime public sample)"
     )

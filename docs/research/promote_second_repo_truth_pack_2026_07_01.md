@@ -27,9 +27,9 @@ article-technique arbitration, and packet-assistant drift.
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/skill_single_source_of_truth_2026_06_26.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/unique_main_chain_map_2026_07_01.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/repo_cleanup_promotion_map_2026_07_01.md`
+- `<repo>/docs/research/skill_single_source_of_truth_2026_06_26.md`
+- `<repo>/docs/research/unique_main_chain_map_2026_07_01.md`
+- `<repo>/docs/research/repo_cleanup_promotion_map_2026_07_01.md`
 
 Durable truth retained:
 
@@ -46,10 +46,10 @@ What was half-finished before this promotion:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/high_value_fragment_source_map_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/worktree_fragment_triage_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/preflight_fragment_scan.py`
+- `<repo>/docs/research/high_value_fragment_source_map_2026_06_28.md`
+- `<repo>/docs/research/worktree_fragment_triage_2026_06_28.md`
+- `<repo>/docs/research/whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md`
+- `<repo>/scripts/preflight_fragment_scan.py`
 
 Durable truth retained:
 
@@ -61,10 +61,10 @@ Durable truth retained:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/public_benchmark_dashboard_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/skill_gap_truth_audit_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_benchmark_inventory_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/references/precision-benchmark-dashboard.md`
+- `<repo>/docs/research/public_benchmark_dashboard_latest.md`
+- `<repo>/docs/research/skill_gap_truth_audit_latest.md`
+- `<repo>/docs/research/oracle_benchmark_inventory_latest.md`
+- `<repo>/references/precision-benchmark-dashboard.md`
 
 Durable truth retained:
 
@@ -76,10 +76,10 @@ Durable truth retained:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/scripts/first_oracle_packet_assistant.py`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/oracle_packet_assistant_index.py`
-- `/Users/wuyongnaren/Documents/印度占星/docs/benchmark/first_oracle_packet_assistant_index.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/benchmark/first_oracle_packet_assistant_index.json`
+- `<repo>/scripts/first_oracle_packet_assistant.py`
+- `<repo>/scripts/oracle_packet_assistant_index.py`
+- `<repo>/docs/benchmark/first_oracle_packet_assistant_index.md`
+- `<repo>/docs/benchmark/first_oracle_packet_assistant_index.json`
 
 Durable truth retained:
 
@@ -96,10 +96,10 @@ Boundary correction:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/references/interpretation_template_registry.json`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/skill_gap_truth_audit_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/high_granularity_technique_deepening_backlog_2026_06_26.md`
-- `/Users/wuyongnaren/Documents/印度占星/SKILL.md`
+- `<repo>/references/interpretation_template_registry.json`
+- `<repo>/docs/research/skill_gap_truth_audit_latest.md`
+- `<repo>/docs/research/high_granularity_technique_deepening_backlog_2026_06_26.md`
+- `<repo>/SKILL.md`
 
 Durable truth retained:
 
@@ -116,8 +116,8 @@ Durable truth retained:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/references/skill_gap_truth_registry.json`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/skill_gap_truth_audit_latest.md`
+- `<repo>/references/skill_gap_truth_registry.json`
+- `<repo>/docs/research/skill_gap_truth_audit_latest.md`
 
 Durable truth retained:
 

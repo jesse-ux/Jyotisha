@@ -1,5 +1,5 @@
-panchanga /Users/wuyongnaren added to system path ['', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python311.zip', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/lib-dynload', '/private/tmp/jyotish_pyjhora_blackbox/lib/python3.11/site-packages', '/Users/wuyongnaren']
-/Users added to system path ['', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python311.zip', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/lib-dynload', '/private/tmp/jyotish_pyjhora_blackbox/lib/python3.11/site-packages', '/Users/wuyongnaren', '/Users']
+panchanga <home> added to system path ['', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python311.zip', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/lib-dynload', '/private/tmp/jyotish_pyjhora_blackbox/lib/python3.11/site-packages', '<home>']
+/Users added to system path ['', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python311.zip', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11', '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/lib-dynload', '/private/tmp/jyotish_pyjhora_blackbox/lib/python3.11/site-packages', '<home>', '/Users']
 PYJHORA_BLACKBOX_VERSION 4.8.7
 CASE_ID template_historical_epoch_lahiri
 DOB (1800, 1, 1)

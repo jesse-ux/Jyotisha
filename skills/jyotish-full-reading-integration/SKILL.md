@@ -13,9 +13,9 @@ related_skills: [jyotish-engine-modules, jyotish-vedic-astrology]
 
 当前项目的唯一对外真源以以下文件为准：
 
-1. `/Users/wuyongnaren/Documents/印度占星/SKILL.md`
-2. `/Users/wuyongnaren/Documents/印度占星/references/technique_registry.json`
-3. `/Users/wuyongnaren/Documents/印度占星/references/strict-workflow-router.md`
+1. `<repo>/SKILL.md`
+2. `<repo>/references/technique_registry.json`
+3. `<repo>/references/strict-workflow-router.md`
 
 如果本文件与主 skill/registry 的成熟度、边界或步骤定义不一致，必须以后者为准。
 

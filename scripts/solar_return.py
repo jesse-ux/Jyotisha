@@ -630,7 +630,7 @@ if __name__ == '__main__':
     print(f"  swisseph可用: {HAS_SWE}")
     print()
 
-    # 测试：REDACTED_DATE 14:45 +8 的出生盘，计算 2026 年太阳返照
+    # 测试：private birth datetime +8 的出生盘，计算 2026 年太阳返照
     test_birth_year, test_birth_month, test_birth_day = REDACTED_YEAR, 4, 17
     test_birth_hour, test_birth_minute = 14, 45
     test_lat, test_lon, test_tz = 36.4667, 114.2, 8.0

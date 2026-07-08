@@ -4,7 +4,7 @@
 
 This pass does not invent a new finance scoring path.
 
-It locks an already-landed bridge in `/Users/wuyongnaren/Documents/印度占星/mcp_server.py` with an explicit regression test and puts it back into the audit trail.
+It locks an already-landed bridge in `<repo>/mcp_server.py` with an explicit regression test and puts it back into the audit trail.
 
 The bridge is:
 
@@ -62,7 +62,7 @@ And the finance event judgement can add:
 
 Test file:
 
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py`
+- `<repo>/tests/test_mcp_strict_workflow_finance.py`
 
 Locked case:
 

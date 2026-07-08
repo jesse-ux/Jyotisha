@@ -2,9 +2,9 @@
 
 ## 输入来源
 
-- 附件：`/Users/wuyongnaren/.codex/attachments/83deacc4-729c-4405-b51f-57170e05f5de/pasted-text.txt`
-- 盘主资料：`REDACTED_DATE 14:45`，中国河北REDACTED_PLACEREDACTED_PLACE矿区，女
-- 本地复验命令使用秒级资料：`REDACTED_DATE 14:45:20`，`lat=36.466667`，`lon=114.2`，`tz=8`
+- 附件：`<home>/.codex/attachments/83deacc4-729c-4405-b51f-57170e05f5de/pasted-text.txt`
+- 盘主资料：`private birth datetime`，中国private birthplace，女
+- 本地复验命令使用秒级资料：`private birth datetime`，`lat=36.466667`，`lon=114.2`，`tz=8`
 
 本审计只核验“外部解盘文本里的可计算声明”，不评价主观心理叙事，也不把占星解释视为事件预测准确率。
 

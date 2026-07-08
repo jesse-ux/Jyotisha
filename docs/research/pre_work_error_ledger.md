@@ -56,13 +56,13 @@ For large architecture or release work, also read:
 Use split scans, not one unbounded full-home command:
 
 ```bash
-for d in /Users/wuyongnaren/Documents /Users/wuyongnaren/WorkBuddy /Users/wuyongnaren/.workbuddy /Users/wuyongnaren/Downloads /Users/wuyongnaren/Desktop /Users/wuyongnaren/.codex/attachments; do
+for d in <home>/Documents <home>/WorkBuddy <home>/.workbuddy <home>/Downloads <home>/Desktop <home>/.codex/attachments; do
   [ -d "$d" ] && find "$d" -maxdepth 6 -type d -name .git 2>/dev/null | sed 's#/.git$##'
 done | rg -i '印度|jyotish|vedic|astro|yinduzhanxing|workbuddy|星轨|codex|talk' | sort
 ```
 
 ```bash
-for d in /Users/wuyongnaren/Documents /Users/wuyongnaren/WorkBuddy /Users/wuyongnaren/.workbuddy /Users/wuyongnaren/Downloads /Users/wuyongnaren/Desktop /Users/wuyongnaren/.codex/attachments; do
+for d in <home>/Documents <home>/WorkBuddy <home>/.workbuddy <home>/Downloads <home>/Desktop <home>/.codex/attachments; do
   [ -d "$d" ] && find "$d" -maxdepth 7 -type f \( -iname '*jyotish*' -o -iname '*vedic*' -o -iname '*jhora*' -o -iname '*shadbala*' -o -iname '*ashtakoot*' -o -iname '*印度占星*' -o -iname '*yinduzhanxing*' \) 2>/dev/null
 done
 ```

@@ -307,7 +307,7 @@ Step 0.5: Karaka 系统识别与声明
 **示例输入**：
 - "1990年1月1日 12:00（示例） 示例城市"
 - "我出生于 1990-08-15 早上6:30 北京"
-- "April 17, REDACTED_YEAR, 2:45 PM, REDACTED_PLACE, China (36.6N, 114.5E)"
+- "April 17, REDACTED_YEAR, 2:45 PM, San Francisco, China (36.6N, 114.5E)"
 
 **执行指令**（一条命令搞定所有计算）：
 

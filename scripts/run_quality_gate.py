@@ -211,7 +211,7 @@ DASHA_REFERENCE_AUDIT_CMD = [
     "--target-start-date",
     "1986-05-18",
     "--target-source",
-    "印度占星1.pdf",
+    "private_chart_reference.pdf",
 ]
 
 ORACLE_BOUNDARY_AUDIT_CMD = [

@@ -50,7 +50,7 @@ def test_official_full_snapshot_unconfigured_builds_full_request_manifest() -> N
     env.pop("VEDASTRO_ENABLE_NETWORK", None)
     env["JYOTISH_SKIP_LOCAL_ENV"] = "1"
 
-    report = _run_adapter("--official-full-snapshot", "--case", "user_REDACTED_YEAR_test", env=env)
+    report = _run_adapter("--official-full-snapshot", "--case", "steve_jobs_public_aa", env=env)
 
     assert report["backend"] == "vedastro_service_adapter_candidate"
     assert report["operation"] == "official_full_snapshot"
@@ -112,7 +112,7 @@ def test_official_full_snapshot_dasha_request_uses_official_range_contract(monke
             "hour": 14,
             "minute": 49,
             "lat": 36.42,
-            "lon": 114.2,
+            "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
         },
@@ -127,7 +127,7 @@ def test_official_full_snapshot_dasha_request_uses_official_range_contract(monke
     assert report["request_manifest"]["reference_date"] == "2026-06-29"
     assert report["source_metadata"]["reference_date"] == "2026-06-29"
     assert dasha_request["calculator_name"] == "DasaAtRange"
-    assert body["birthTime"]["StdTime"] == "REDACTED_TIME 17/04/REDACTED_YEAR +08:00"
+    assert body["birthTime"]["StdTime"] == "19:15 24/02/1955 +08:00"
     assert body["startTime"]["StdTime"] == "00:00 01/01/2026 +08:00"
     assert body["endTime"]["StdTime"] == "23:59 31/12/2026 +08:00"
     assert body["levels"] == 3
@@ -152,7 +152,7 @@ def test_official_full_snapshot_prioritizes_timing_sections_before_heavy_fanout(
             "hour": 14,
             "minute": 49,
             "lat": 36.42,
-            "lon": 114.2,
+            "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
         },
@@ -206,7 +206,7 @@ def test_official_full_snapshot_marks_semantic_rate_limit_payloads(monkeypatch) 
             "hour": 14,
             "minute": 49,
             "lat": 36.42,
-            "lon": 114.2,
+            "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
         },
@@ -307,7 +307,7 @@ def test_orchestrator_attaches_official_full_snapshot_before_range_scan(monkeypa
             "hour": 14,
             "minute": 49,
             "lat": 36.42,
-            "lon": 114.2,
+            "lon": -122.4194,
             "tz": 8.0,
         },
         route="overview",
@@ -327,7 +327,7 @@ def test_shared_priority_promotes_official_chart_and_keeps_local_as_supplemental
         "planets": {"Sun": {"sign": "Cancer"}},
         "ascendant": {"sign": "Virgo"},
         "houses": {"House1": {"sign": "Virgo"}},
-        "birth_info": {"date": "REDACTED_DATE"},
+        "birth_info": {"date": "1955-02-24"},
     }
     report = {"chart": local_chart, "modules": {"chart": local_chart}}
     official_snapshot = {
@@ -408,7 +408,7 @@ def test_full_reading_prompt_pack_exposes_vedastro_official_snapshot_boundary() 
             "--lat",
             "36.42",
             "--lon",
-            "114.2",
+            "-122.4194",
             "--tz",
             "8",
             "--today",
@@ -469,7 +469,7 @@ def test_full_reading_official_snapshot_uses_requested_reference_date(monkeypatc
         hour = 14
         minute = 49
         lat = 36.42
-        lon = 114.2
+        lon = -122.4194
         tz = 8
         ayanamsa = "lahiri"
         node_mode = "mean"
@@ -532,7 +532,7 @@ def test_official_full_snapshot_extracts_official_chart_and_varga_from_pass_payl
             "hour": 14,
             "minute": 49,
             "lat": 36.42,
-            "lon": 114.2,
+            "lon": -122.4194,
             "tz": 8,
         },
         case_id="unit",
@@ -645,7 +645,7 @@ def test_official_full_snapshot_can_use_python_bridge_bundle_without_rest_endpoi
             "hour": 14,
             "minute": 49,
             "lat": 36.42,
-            "lon": 114.2,
+            "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
         },
@@ -742,7 +742,7 @@ def test_official_full_snapshot_prefers_official_capability_runner_bundle(monkey
             "hour": 14,
             "minute": 49,
             "lat": 36.42,
-            "lon": 114.2,
+            "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
         },
@@ -858,7 +858,7 @@ def test_official_full_snapshot_attaches_full_capability_catalog_summary(monkeyp
             "hour": 14,
             "minute": 49,
             "lat": 36.42,
-            "lon": 114.2,
+            "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
         },
@@ -942,7 +942,7 @@ def test_official_full_snapshot_marks_ok_when_fast_primary_sections_are_filled(m
             "hour": 14,
             "minute": 49,
             "lat": 36.42,
-            "lon": 114.2,
+            "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
         },
@@ -1026,7 +1026,7 @@ def test_official_full_snapshot_skips_rest_sections_already_filled_by_python_bun
             "hour": 14,
             "minute": 49,
             "lat": 36.42,
-            "lon": 114.2,
+            "lon": -122.4194,
             "tz": 8,
             "reference_date": "2026-06-29",
         },
@@ -1074,7 +1074,7 @@ def test_official_full_snapshot_semantic_cache_reuses_full_bundle(monkeypatch, t
         "hour": 14,
         "minute": 49,
         "lat": 36.42,
-        "lon": 114.2,
+        "lon": -122.4194,
         "tz": 8,
         "reference_date": "2026-06-30",
     }
@@ -1121,7 +1121,7 @@ def test_official_full_snapshot_semantic_cache_reuses_bundle_across_case_ids(mon
         "hour": 14,
         "minute": 49,
         "lat": 36.42,
-        "lon": 114.2,
+        "lon": -122.4194,
         "tz": 8,
         "reference_date": "2026-06-30",
     }

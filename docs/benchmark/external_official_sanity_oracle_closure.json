@@ -59,7 +59,7 @@
           "artifacts": [
             "pyjhora_historical_epoch_dasha_stdout_20260627.txt",
             "pyjhora_steve_jobs_dasha_stdout_20260627.txt",
-            "pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt"
+            "private_oracle_redacted_dasha_stdout.txt"
           ],
           "pending_packets": [
             "external_template_extreme_latitude_kp_pyjhora_20260627.json",
@@ -74,13 +74,13 @@
             "pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
             "pyjhora_redacted_place_shadbala_raman_stdout_20260627.txt",
             "pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
-            "pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt"
+            "private_oracle_redacted_shadbala_stdout.txt"
           ],
           "pending_packets": [
             "external_template_redacted_place_shadbala_raman_pyjhora_20260627.json",
             "external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json",
-            "external_template_user_REDACTED_YEAR_moon_longitude_lahiri_pyjhora_20260627.json",
-            "external_template_user_REDACTED_YEAR_shadbala_lahiri_pyjhora_20260627.json"
+            "external_template_private_oracle_redacted_pyjhora_20260627.json",
+            "external_template_private_oracle_shadbala_redacted.json"
           ]
         },
         "tajika_sahams": {

@@ -23,11 +23,11 @@ and it fixes one real stale canonical lane that was still describing pre-closure
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/references/yogi-asc-tight-orb-wealth-freeze-guide.md`
-- `/Users/wuyongnaren/Documents/印度占星/references/interpretation_template_registry.json`
-- `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/wealth_adjudicator_sixth_pass_avayogi_boundary_2026_06_28.md`
+- `<repo>/references/yogi-asc-tight-orb-wealth-freeze-guide.md`
+- `<repo>/references/interpretation_template_registry.json`
+- `<repo>/mcp_server.py`
+- `<repo>/tests/test_mcp_strict_workflow_finance.py`
+- `<repo>/docs/research/wealth_adjudicator_sixth_pass_avayogi_boundary_2026_06_28.md`
 
 Durable truth retained:
 
@@ -44,11 +44,11 @@ Boundary correction:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/scripts/tajika_annual_closure_status.py`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/tajika_annual_benchmark_dashboard.py`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/tajika_annual_closure_status_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/tajika_annual_benchmark_dashboard_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/references/skill_gap_truth_registry.json`
+- `<repo>/scripts/tajika_annual_closure_status.py`
+- `<repo>/scripts/tajika_annual_benchmark_dashboard.py`
+- `<repo>/docs/research/tajika_annual_closure_status_latest.md`
+- `<repo>/docs/research/tajika_annual_benchmark_dashboard_latest.md`
+- `<repo>/references/skill_gap_truth_registry.json`
 
 Durable truth retained:
 
@@ -65,11 +65,11 @@ Half-finished canonical asset fixed in this pass:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/high_value_fragment_source_map_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/worktree_fragment_triage_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/references/tithi-lord-freeze-execution-guide.md`
-- `/Users/wuyongnaren/Documents/印度占星/references/bhrigu-pada-all-event-freeze-execution-guide.md`
+- `<repo>/docs/research/high_value_fragment_source_map_2026_06_28.md`
+- `<repo>/docs/research/worktree_fragment_triage_2026_06_28.md`
+- `<repo>/docs/research/whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md`
+- `<repo>/references/tithi-lord-freeze-execution-guide.md`
+- `<repo>/references/bhrigu-pada-all-event-freeze-execution-guide.md`
 
 Durable truth retained:
 
@@ -81,11 +81,11 @@ Durable truth retained:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/shadbala_absolute_oracle_comparison_audit_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/shadbala_component_cap_all_routes_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/shadbala_oracle_comparison.py`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/shadbala_oracle_closure_status.py`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/oracle_boundary_audit.py`
+- `<repo>/docs/research/shadbala_absolute_oracle_comparison_audit_2026_06_28.md`
+- `<repo>/docs/research/shadbala_component_cap_all_routes_2026_06_28.md`
+- `<repo>/scripts/shadbala_oracle_comparison.py`
+- `<repo>/scripts/shadbala_oracle_closure_status.py`
+- `<repo>/scripts/oracle_boundary_audit.py`
 
 Durable truth retained:
 
@@ -97,12 +97,12 @@ Durable truth retained:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/references/skill_gap_truth_registry.json`
-- `/Users/wuyongnaren/Documents/印度占星/references/sahams-execution-guide.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/high_granularity_technique_deepening_backlog_2026_06_26.md`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/tajika.py`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/muntha.py`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_tajika.py`
+- `<repo>/references/skill_gap_truth_registry.json`
+- `<repo>/references/sahams-execution-guide.md`
+- `<repo>/docs/research/high_granularity_technique_deepening_backlog_2026_06_26.md`
+- `<repo>/scripts/tajika.py`
+- `<repo>/scripts/muntha.py`
+- `<repo>/tests/test_tajika.py`
 
 Durable truth retained:
 

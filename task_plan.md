@@ -18,7 +18,7 @@
 4. `VedAstro strict ingestion` 最小诚实接入
 
 执行顺序与任务拆分见：
-- `/Users/wuyongnaren/Documents/印度占星/docs/superpowers/plans/2026-06-29-shortest-path-closure-plan.md`
+- `<repo>/docs/superpowers/plans/2026-06-29-shortest-path-closure-plan.md`
 
 ## 执行原则
 

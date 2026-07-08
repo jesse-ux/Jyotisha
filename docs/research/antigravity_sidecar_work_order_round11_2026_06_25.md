@@ -110,16 +110,16 @@ npm run build --prefix jyotish-app
 
 ```bash
 for base in \
-  /Users/wuyongnaren/Documents \
-  /Users/wuyongnaren/Downloads \
-  /Users/wuyongnaren/Desktop \
-  /Users/wuyongnaren/Projects \
-  /Users/wuyongnaren/WorkBuddy \
-  /Users/wuyongnaren/.workbuddy \
-  /Users/wuyongnaren/.codex \
-  /Users/wuyongnaren/.gemini \
-  /Users/wuyongnaren/engines-repo \
-  /Users/wuyongnaren/文件仓库
+  <home>/Documents \
+  <home>/Downloads \
+  <home>/Desktop \
+  <home>/Projects \
+  <home>/WorkBuddy \
+  <home>/.workbuddy \
+  <home>/.codex \
+  <home>/.gemini \
+  <home>/engines-repo \
+  <home>/文件仓库
 do
   [ -e "$base" ] || continue
   echo "### $base"

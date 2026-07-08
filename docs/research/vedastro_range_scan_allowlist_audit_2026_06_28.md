@@ -45,4 +45,4 @@ This prevents future agents from treating the filtering layer as hidden behavior
 
 ## Regression Coverage
 
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_vedastro_service_adapter_executor.py`
+- `<repo>/tests/test_vedastro_service_adapter_executor.py`

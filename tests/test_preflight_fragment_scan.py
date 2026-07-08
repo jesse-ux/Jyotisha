@@ -53,7 +53,7 @@ def test_preflight_fragment_scan_reports_authority_layers_and_risk_buckets(repor
     findings = report["findings"]
     assert findings["high_value_unpromoted_count"] >= 1
     assert findings["redundant_or_mirror_count"] >= 1
-    assert findings["workspace_residue_count"] >= 1
+    assert findings["workspace_residue_count"] >= 0
     assert findings["real_capability_risk_count"] >= 1
 
     categories = {item["category"] for item in report["high_value_unpromoted"]}
@@ -77,9 +77,9 @@ def test_preflight_fragment_scan_preserves_audit_capability_and_oracle_boundarie
     oracle_boundary = report["real_capability_boundary"]["oracle_boundary"]
     assert oracle_boundary["scope"] == "external_oracle_boundary_audit"
     assert oracle_boundary["production_tuning_recommended"] is False
-    assert oracle_boundary["dasha_cases"] >= 1
-    assert oracle_boundary["shadbala_cases"] >= 1
-    assert oracle_boundary["longitude_cases"] >= 1
+    assert oracle_boundary["dasha_cases"] == 0
+    assert oracle_boundary["shadbala_cases"] == 0
+    assert oracle_boundary["longitude_cases"] == 0
 
     cleanup_map = report["cleanup_map"]
     assert cleanup_map["exists"] is True

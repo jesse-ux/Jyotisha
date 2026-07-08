@@ -6,8 +6,8 @@ This pass turns the v6.1 marriage verification dataset from a large historical J
 
 ## Entrypoint
 
-- `/Users/wuyongnaren/Documents/印度占星/scripts/marriage_benchmark_summary.py`
-- Source dataset: `/Users/wuyongnaren/Documents/印度占星/tests/test-data/verify-results-v6.1.json`
+- `<repo>/scripts/marriage_benchmark_summary.py`
+- Source dataset: `<repo>/tests/test-data/verify-results-v6.1.json`
 
 ## Why This Was Needed
 
@@ -56,4 +56,4 @@ These are high-signal calibration targets for future relationship adjudicator wo
 
 ## Regression Coverage
 
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_marriage_benchmark_summary.py`
+- `<repo>/tests/test_marriage_benchmark_summary.py`

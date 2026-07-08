@@ -179,7 +179,7 @@ python3 scripts/vedastro_user_entrypoint.py \
 1. 先把本仓登记到个人 marketplace：
 
 ```bash
-python3 /Users/wuyongnaren/.codex/skills/.system/plugin-creator/scripts/create_basic_plugin.py \
+python3 <home>/.codex/skills/.system/plugin-creator/scripts/create_basic_plugin.py \
   jyotish-vedic-astrology \
   --path ~/.codex/plugins \
   --marketplace-path ~/.agents/plugins/marketplace.json \
@@ -196,7 +196,7 @@ python3 /Users/wuyongnaren/.codex/skills/.system/plugin-creator/scripts/create_b
   "name": "jyotish-vedic-astrology",
   "source": {
     "source": "local",
-    "path": "/Users/wuyongnaren/Documents/印度占星"
+    "path": "<repo>"
   }
 }
 ```
@@ -226,8 +226,8 @@ codex plugin list
 当你改了 `.codex-plugin/plugin.json`、`skills/` 或 `mcp_server.py`：
 
 ```bash
-python3 /Users/wuyongnaren/.codex/skills/.system/plugin-creator/scripts/update_plugin_cachebuster.py \
-  /Users/wuyongnaren/Documents/印度占星
+python3 <home>/.codex/skills/.system/plugin-creator/scripts/update_plugin_cachebuster.py \
+  <repo>
 
 codex plugin add jyotish-vedic-astrology@personal
 ```

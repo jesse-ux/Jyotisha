@@ -205,7 +205,7 @@ rg -n "Shadbala|Dasha|external_oracle|ai_prompt_pack|Ayanamsa|Oracle Evidence|re
 
 请检查是否已有可公开给志愿者的教程，并判断：
 
-- 输入项是否与 `template_user_REDACTED_YEAR_moon_longitude_lahiri` 一致。
+- 输入项是否与 `template_private_oracle_redacted` 一致。
 - 是否明确 JHora 只做黑盒取数，不复制实现。
 - 是否说明要截哪些页面、摘哪些字段。
 - 是否说明如何填写 `source_artifact`、Moon longitude、Vimshottari start date、Shadbala 六分量。

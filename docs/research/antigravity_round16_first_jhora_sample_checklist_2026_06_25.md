@@ -1,6 +1,6 @@
 # Antigravity AI 第一条真实 JHora 样本准备清单 (Round 16)
 
-此清单旨在指导测试人员（或 Codex 本尊）如何纯手工、零污染地完成 `template_user_REDACTED_YEAR_moon_longitude_lahiri` 的举证：
+此清单旨在指导测试人员（或 Codex 本尊）如何纯手工、零污染地完成 `template_private_oracle_redacted` 的举证：
 
 ## 1. JHora 输入项
 - **生辰信息**：REDACTED_YEAR-01-01 12:00:00，经度 0.0，纬度 0.0（格林威治无夏令时，或随意设定一个高辨识度的虚拟极地坐标）。

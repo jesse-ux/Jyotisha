@@ -10,8 +10,8 @@ Commands used:
 find . -maxdepth 2 \( -name 'task_plan.md' -o -name 'findings.md' -o -name 'progress.md' -o -path './.planning/*' \) -print | sort
 git remote -v && git branch -a --verbose --no-abbrev
 git ls-remote https://github.com/732642856/yinduzhanxing.git 'refs/heads/*' 'refs/tags/*' | sort
-find /Users/wuyongnaren/Documents /Users/wuyongnaren/Projects /Users/wuyongnaren/WorkBuddy /Users/wuyongnaren/.workbuddy /Users/wuyongnaren/Downloads /Users/wuyongnaren/.codex/attachments -type d -name .git 2>/dev/null | sed 's#/.git$##' | rg -i '印度|jyotish|vedic|astro|talk|yinduzhanxing|星轨|codex|workbuddy' | sort
-find /Users/wuyongnaren/Documents /Users/wuyongnaren/Downloads /Users/wuyongnaren/.codex/attachments -type f \( -iname '*印度*' -o -iname '*jyotish*' -o -iname '*jhora*' -o -iname '*vedic*' -o -iname '*ashtakoot*' -o -iname '*shadbala*' -o -iname '*antigravity*' \) 2>/dev/null
+find <home>/Documents <home>/Projects <home>/WorkBuddy <home>/.workbuddy <home>/Downloads <home>/.codex/attachments -type d -name .git 2>/dev/null | sed 's#/.git$##' | rg -i '印度|jyotish|vedic|astro|talk|yinduzhanxing|星轨|codex|workbuddy' | sort
+find <home>/Documents <home>/Downloads <home>/.codex/attachments -type f \( -iname '*印度*' -o -iname '*jyotish*' -o -iname '*jhora*' -o -iname '*vedic*' -o -iname '*ashtakoot*' -o -iname '*shadbala*' -o -iname '*antigravity*' \) 2>/dev/null
 ```
 
 ## Planning Files
@@ -42,20 +42,20 @@ SSH push/fetch over port 22 timed out during this sweep. Local branch was ahead 
 
 ### Current Main Workspace
 
-- `/Users/wuyongnaren/Documents/印度占星`
+- `<repo>`
 - Contains current web/app, API, tests, oracle queues, benchmarks, Antigravity reports, local accuracy report, and planning files.
 - This is the only write target for implementation.
 
 ### Older Skill Copy
 
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology`
 - Previously identified as an older skill/benchmark copy on `main@4ff6248`.
 - Use as read-only historical comparison only. Do not overwrite current project from this copy.
 
 ### Talk Engine Copies
 
-- `/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish`
-- `/Users/wuyongnaren/Documents/Codex/2026-06-20/732642856-talk-https-github-com-732642856/work/talk-active/engines-repo/jyotish`
+- `<home>/Documents/星轨talk/engines-repo/jyotish`
+- `<home>/Documents/Codex/2026-06-20/732642856-talk-https-github-com-732642856/work/talk-active/engines-repo/jyotish`
 
 Potentially useful files:
 
@@ -70,18 +70,18 @@ Action: read before changing engine adapter or external-reference audit paths.
 
 ### Obsidian Notes
 
-- `/Users/wuyongnaren/Documents/ObsidianVault/03_研究_术数占星/印度占星 Jyotish.md`
-- `/Users/wuyongnaren/Documents/ObsidianVault/03_研究_术数占星/印度占星研究结论 v3.md`
-- `/Users/wuyongnaren/Documents/ObsidianVault/03_研究_术数占星/一楠 · 印度占星完整解盘报告 v2.md`
+- `<home>/Documents/ObsidianVault/03_研究_术数占星/印度占星 Jyotish.md`
+- `<home>/Documents/ObsidianVault/03_研究_术数占星/印度占星研究结论 v3.md`
+- `<home>/Documents/ObsidianVault/03_研究_术数占星/PRIVATE_REDACTED_CASE · 印度占星完整解盘报告 v2.md`
 
 Boundary: these may contain private or interpretive material. Use for gap discovery only; do not quote or commit private birth data.
 
 ### Downloads / Private Artifacts
 
-- `/Users/wuyongnaren/Downloads/印度占星.pdf`
-- `/Users/wuyongnaren/Downloads/印度占星1.pdf`
-- `/Users/wuyongnaren/Downloads/Kimi_Agent_高维印度占星师.zip`
-- `/Users/wuyongnaren/Downloads/jyotish_training.agent.final.docx`
+- `<home>/Downloads/印度占星.pdf`
+- `<home>/Downloads/private_chart_reference.pdf`
+- `<home>/Downloads/Kimi_Agent_高维印度占星师.zip`
+- `<home>/Downloads/jyotish_training.agent.final.docx`
 
 Boundary: treat as private/user-provided. Do not commit full contents or derived private reports. Extract only high-level requirements when needed.
 

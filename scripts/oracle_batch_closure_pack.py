@@ -12,7 +12,7 @@ from scripts.shadbala_oracle_comparison import compare_case as compare_shadbala_
 
 
 SHADBALA_CASE_IDS = [
-    "template_user_REDACTED_YEAR_moon_longitude_lahiri",
+    "template_steve_jobs_dasha_lahiri",
     "template_steve_jobs_dasha_lahiri",
 ]
 

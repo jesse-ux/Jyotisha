@@ -3,7 +3,7 @@
 ## 验证步骤执行情况
 
 1. **启动服务**：成功拉起最新版的本地 API（`jyotish_api_server.py`，端口 5200）和前端开发服务（端口 5173 / 3456）。（**注意**：在复验初期，发现旧版 API 进程仍残留，导致 `/api/chart` 依然返回过时数据。通过 `kill` 终止旧进程并拉起新进程后恢复正常。）
-2. **排盘输入**：以 `REDACTED_DATE 14:45:20, lat 36.466667, lon 114.2, tz 8` 为样本进行测试。
+2. **排盘输入**：以 `private birth datetime, lat 36.466667, lon 114.2, tz 8` 为样本进行测试。
 3. **网络参数捕获**：经网络请求审计，前端确实通过 `applyCalculationSettingsToPayload` 向后端传递了 `ayanamsa`、`node_mode` 和新增的 `second` 参数。
 4. **API 响应检查**：API 正常返回 `success: true`，且其 `birth` 对象中成功带有 `ayanamsa_name`、`ayanamsa_display` 及 `node_mode`。根级别 JSON 同时挂载了完整的 `ai_prompt_pack` 结构（包含 `prompt_zh`、`evidence_snapshot` 等）。
 5. **前端界面 UI 检查**：

@@ -144,7 +144,7 @@ def test_vedastro_python_bridge_supports_typed_enum_and_time_arguments() -> None
                 "offset": 8,
                 "geolocation": {
                     "__vedastro_type__": "GeoLocation",
-                    "location_name": "REDACTED_PLACE",
+                    "location_name": "San Francisco",
                     "longitude": 114.46,
                     "latitude": 36.6,
                 },
@@ -231,7 +231,7 @@ def test_vedastro_python_bridge_high_value_vimshottari_snapshot_uses_positional_
             "offset": 8,
             "geolocation": {
                 "__vedastro_type__": "GeoLocation",
-                "location_name": "REDACTED_PLACE",
+                "location_name": "San Francisco",
                 "longitude": 114.46,
                 "latitude": 36.6,
             },
@@ -246,7 +246,7 @@ def test_vedastro_python_bridge_high_value_vimshottari_snapshot_uses_positional_
             "offset": 8,
             "geolocation": {
                 "__vedastro_type__": "GeoLocation",
-                "location_name": "REDACTED_PLACE",
+                "location_name": "San Francisco",
                 "longitude": 114.46,
                 "latitude": 36.6,
             },
@@ -292,7 +292,7 @@ def test_vedastro_python_bridge_high_value_chara_snapshot_uses_positional_args()
             "offset": 8,
             "geolocation": {
                 "__vedastro_type__": "GeoLocation",
-                "location_name": "REDACTED_PLACE",
+                "location_name": "San Francisco",
                 "longitude": 114.46,
                 "latitude": 36.6,
             },
@@ -307,7 +307,7 @@ def test_vedastro_python_bridge_high_value_chara_snapshot_uses_positional_args()
             "offset": 8,
             "geolocation": {
                 "__vedastro_type__": "GeoLocation",
-                "location_name": "REDACTED_PLACE",
+                "location_name": "San Francisco",
                 "longitude": 114.46,
                 "latitude": 36.6,
             },

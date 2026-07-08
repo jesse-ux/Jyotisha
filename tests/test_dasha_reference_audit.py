@@ -38,7 +38,7 @@ def test_dasha_reference_audit_quantifies_pdf_boundary_gap() -> None:
             "--target-start-date",
             "1986-05-18",
             "--target-source",
-            "印度占星1.pdf",
+            "private_chart_reference.pdf",
         ],
         cwd=ROOT,
         text=True,
@@ -55,7 +55,7 @@ def test_dasha_reference_audit_quantifies_pdf_boundary_gap() -> None:
     assert report["engine"]["nakshatra"] == "Shatabhisha"
     assert report["engine"]["start_lord"] == "Rahu"
     assert report["engine"]["start_datetime"].startswith("1986-05-23T22:45:10")
-    assert report["target_reference"]["source"] == "印度占星1.pdf"
+    assert report["target_reference"]["source"] == "private_chart_reference.pdf"
     assert report["target_reference"]["date_delta_days"] == 5
 
     clock = report["clock_precision_sensitivity"]

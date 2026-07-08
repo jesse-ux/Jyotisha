@@ -481,7 +481,7 @@ def schema() -> dict[str, Any]:
             "enum": {"__vedastro_enum__": "PlanetName", "value": "Sun"},
             "geo": {
                 "__vedastro_type__": "GeoLocation",
-                "location_name": "REDACTED_PLACE",
+                "location_name": "San Francisco",
                 "longitude": 114.46,
                 "latitude": 36.6,
             },
@@ -495,7 +495,7 @@ def schema() -> dict[str, Any]:
                 "offset": 8,
                 "geolocation": {
                     "__vedastro_type__": "GeoLocation",
-                    "location_name": "REDACTED_PLACE",
+                    "location_name": "San Francisco",
                     "longitude": 114.46,
                     "latitude": 36.6,
                 },

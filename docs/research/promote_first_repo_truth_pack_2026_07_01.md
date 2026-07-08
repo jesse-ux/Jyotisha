@@ -23,10 +23,10 @@ same fragment pack.
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/tajika_annual_closure_status_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/tajika_annual_benchmark_dashboard_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_closure_master_dashboard_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/references/oracle/`
+- `<repo>/docs/research/tajika_annual_closure_status_latest.md`
+- `<repo>/docs/research/tajika_annual_benchmark_dashboard_latest.md`
+- `<repo>/docs/research/oracle_closure_master_dashboard_latest.md`
+- `<repo>/references/oracle/`
 
 Durable truth retained:
 
@@ -45,10 +45,10 @@ Current repo-truth status:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_closure_master_dashboard_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/public_benchmark_dashboard_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/skill_gap_truth_audit_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/references/oracle/dasha_shadbala_oracle_cases.json`
+- `<repo>/docs/research/oracle_closure_master_dashboard_latest.md`
+- `<repo>/docs/research/public_benchmark_dashboard_latest.md`
+- `<repo>/docs/research/skill_gap_truth_audit_latest.md`
+- `<repo>/references/oracle/dasha_shadbala_oracle_cases.json`
 
 Durable truth retained:
 
@@ -66,10 +66,10 @@ Current repo-truth status:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/shadbala_absolute_oracle_comparison_audit_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_closure_master_dashboard_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/public_benchmark_dashboard_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/skill_gap_truth_audit_latest.md`
+- `<repo>/docs/research/shadbala_absolute_oracle_comparison_audit_2026_06_28.md`
+- `<repo>/docs/research/oracle_closure_master_dashboard_latest.md`
+- `<repo>/docs/research/public_benchmark_dashboard_latest.md`
+- `<repo>/docs/research/skill_gap_truth_audit_latest.md`
 
 Durable truth retained:
 
@@ -87,9 +87,9 @@ Current repo-truth status:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/wealth_adjudicator_sixth_pass_avayogi_boundary_2026_06_28.md`
+- `<repo>/mcp_server.py`
+- `<repo>/tests/test_mcp_strict_workflow_finance.py`
+- `<repo>/docs/research/wealth_adjudicator_sixth_pass_avayogi_boundary_2026_06_28.md`
 - this promotion pack, which records the boundary correction
 
 Durable truth retained:
@@ -108,8 +108,8 @@ Boundary correction:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/skill_gap_truth_audit_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/ACTIVE_FRONTS.md`
+- `<repo>/docs/research/skill_gap_truth_audit_latest.md`
+- `<repo>/docs/research/ACTIVE_FRONTS.md`
 
 Durable truth retained:
 

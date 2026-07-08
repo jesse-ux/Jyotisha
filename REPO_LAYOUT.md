@@ -4,27 +4,27 @@ This repository mixes product code, astrology research, oracle artifacts, and lo
 
 ## Core Areas
 
-- `/Users/wuyongnaren/Documents/印度占星/mcp_server.py`
+- `<repo>/mcp_server.py`
   - adjudicator-facing MCP entrypoint
-- `/Users/wuyongnaren/Documents/印度占星/scripts/`
+- `<repo>/scripts/`
   - reusable project code and maintained tooling
-- `/Users/wuyongnaren/Documents/印度占星/tests/`
+- `<repo>/tests/`
   - maintained regression and contract tests
-- `/Users/wuyongnaren/Documents/印度占星/references/`
+- `<repo>/references/`
   - durable knowledge assets, oracle cases, and frozen methodology
 
 ## Research
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/`
+- `<repo>/docs/research/`
   - active research and current audits
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/archive/`
+- `<repo>/docs/research/archive/`
   - historical round notes and local draft research
 
 ## Local Scratch
 
-- `/Users/wuyongnaren/Documents/印度占星/scratch/local/scripts/`
+- `<repo>/scratch/local/scripts/`
   - one-off debugging scripts, temporary probes, ad hoc runners
-- `/Users/wuyongnaren/Documents/印度占星/scratch/local/outputs/`
+- `<repo>/scratch/local/outputs/`
   - local generated JSON, text dumps, temporary reports
 
 These paths are local-only and ignored by git.
@@ -33,9 +33,9 @@ These paths are local-only and ignored by git.
 
 The following should stay out of normal versioned work:
 
-- `/Users/wuyongnaren/Documents/印度占星/.agents/`
-- `/Users/wuyongnaren/Documents/印度占星/venv_vedastro/`
-- `/Users/wuyongnaren/Documents/印度占星/scratch/local/`
+- `<repo>/.agents/`
+- `<repo>/venv_vedastro/`
+- `<repo>/scratch/local/`
 
 ## Practical Rule
 

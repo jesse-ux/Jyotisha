@@ -89,7 +89,7 @@ def _vedastro_ledger(oracle_file: str, *, live_official_full_snapshot: bool = Fa
             "scripts/vedastro_service_adapter.py",
             "--official-full-snapshot",
             "--case",
-            "user_REDACTED_YEAR_test",
+            "steve_jobs_public_aa",
         ])
     else:
         snapshot = {

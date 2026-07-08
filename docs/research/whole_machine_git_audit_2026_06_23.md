@@ -96,18 +96,18 @@ Cloud branch diff against `origin/main`:
 
 High-signal local sources found outside the current project:
 
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology`
-- `/Users/wuyongnaren/Projects/星轨资料恢复/17-Skills技能库/jyotish-vedic-astrology`
-- `/Users/wuyongnaren/Projects/星轨资料恢复/25-相关Skills补充/jyotish-vedic-astrology`
-- `/Users/wuyongnaren/engines-repo/jyotish`
-- `/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish`
-- `/Users/wuyongnaren/WorkBuddy/engines-repo/jyotish`
-- `/Users/wuyongnaren/WorkBuddy/2026-06-09-20-03-34/jyotish-fragments`
-- `/Users/wuyongnaren/WorkBuddy/2026-06-10-21-30-47`
-- `/Users/wuyongnaren/WorkBuddy/2026-06-12-15-22-12`
-- `/Users/wuyongnaren/.workbuddy/brain`
-- `/Users/wuyongnaren/文件仓库/印度占星文章`
-- `/Users/wuyongnaren/文件仓库/中外🔮占星/国外占星/印度占星书`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology`
+- `<home>/Projects/星轨资料恢复/17-Skills技能库/jyotish-vedic-astrology`
+- `<home>/Projects/星轨资料恢复/25-相关Skills补充/jyotish-vedic-astrology`
+- `<home>/engines-repo/jyotish`
+- `<home>/Documents/星轨talk/engines-repo/jyotish`
+- `<home>/WorkBuddy/engines-repo/jyotish`
+- `<home>/WorkBuddy/2026-06-09-20-03-34/jyotish-fragments`
+- `<home>/WorkBuddy/2026-06-10-21-30-47`
+- `<home>/WorkBuddy/2026-06-12-15-22-12`
+- `<home>/.workbuddy/brain`
+- `<home>/文件仓库/印度占星文章`
+- `<home>/文件仓库/中外🔮占星/国外占星/印度占星书`
 
 Important historical reports found:
 

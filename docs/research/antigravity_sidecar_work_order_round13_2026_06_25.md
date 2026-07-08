@@ -53,7 +53,7 @@ rg -n "ORACLE_EVIDENCE_INTAKE_TASKS|ORACLE_EVIDENCE_PACKET_REQUIRED_METADATA|ren
 ```
 
 ```bash
-rg -n "template_user_REDACTED_YEAR_moon_longitude_lahiri|template_steve_jobs_dasha_lahiri|template_redacted_place_shadbala_raman|template_extreme_latitude_kp|template_historical_epoch_lahiri|moon_sidereal_longitude_deg|vimshottari_start_date|shadbala_components|tool_name|tool_version_or_url|capture_date|source_artifact|operator_note" \
+rg -n "template_private_oracle_redacted|template_steve_jobs_dasha_lahiri|template_redacted_place_shadbala_raman|template_extreme_latitude_kp|template_historical_epoch_lahiri|moon_sidereal_longitude_deg|vimshottari_start_date|shadbala_components|tool_name|tool_version_or_url|capture_date|source_artifact|operator_note" \
   jyotish-app/main.js \
   tests/test_frontend_productization.py
 ```

@@ -135,7 +135,7 @@ const CASE_RELATION_PRESETS = [
 ];
 
 const $ = id => document.getElementById(id);
-const PRODUCT_GAP_DOC = '/Users/wuyongnaren/Documents/印度占星/docs/research/product_gap_matrix_2026_06_22.md';
+const PRODUCT_GAP_DOC = '<repo>/docs/research/product_gap_matrix_2026_06_22.md';
 const CHART_LIBRARY_KEY = 'jyotish_chart_library';
 const SYNASTRY_PAIR_LIBRARY_KEY = 'jyotish_synastry_pair_library';
 const PRASHNA_CASE_LIBRARY_KEY = 'jyotish_prashna_case_library';
@@ -2577,28 +2577,12 @@ const ORACLE_EVIDENCE_PACKET_REQUIRED_METADATA = [
 
 const ORACLE_EVIDENCE_INTAKE_TASKS = [
   {
-    caseId: 'template_user_REDACTED_YEAR_moon_longitude_lahiri',
-    title: 'REDACTED_YEAR 用户盘 · Lahiri 月亮/大运',
-    birth: 'REDACTED_DATE 14:45:20 · REDACTED_PLACE · 36.466667, 114.2 · TZ +08:00',
-    settings: 'ayanamsa=lahiri · node_mode=mean',
-    preferredSources: 'JHora screenshot / PyJHora stdout / VedAstro HTTP',
-    targetFields: ['moon_sidereal_longitude_deg', 'vimshottari_start_date', 'shadbala_components'],
-  },
-  {
     caseId: 'template_steve_jobs_dasha_lahiri',
     title: 'Steve Jobs · Dasha 边界样本',
     birth: '1955-02-24 19:15 · San Francisco · 37.7749, -122.4194 · TZ -08:00',
     settings: 'ayanamsa=lahiri · node_mode=mean',
     preferredSources: 'JHora / PyJHora 黑盒输出',
     targetFields: ['vimshottari_start_date', 'shadbala_components'],
-  },
-  {
-    caseId: 'template_redacted_place_shadbala_raman',
-    title: 'REDACTED_PLACE样本 · Raman Shadbala',
-    birth: 'REDACTED_DATE 14:45:20 · REDACTED_PLACE · 36.466667, 114.2 · TZ +08:00',
-    settings: 'ayanamsa=raman · node_mode=mean',
-    preferredSources: 'JHora Shadbala table screenshot',
-    targetFields: ['shadbala_components'],
   },
   {
     caseId: 'template_extreme_latitude_kp',

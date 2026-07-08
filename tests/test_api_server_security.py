@@ -239,7 +239,7 @@ def test_vedastro_range_scan_endpoint_uses_user_birth_and_returns_controlled_blo
         'minute': 49,
         'second': 0,
         'lat': 36.4467,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
         'ayanamsa_policy': 'lahiri',
         'node_policy': 'mean',
@@ -288,7 +288,7 @@ def test_vedastro_gateway_run_route_returns_gateway_packet(monkeypatch) -> None:
         'minute': 49,
         'second': 0,
         'lat': 36.4467,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
         'question': '事业机会什么时候出现',
         'themes': ['career', 'health'],
@@ -330,7 +330,7 @@ def test_professional_reading_composes_high_rigor_and_gateway(monkeypatch) -> No
         'hour': 14,
         'minute': 49,
         'lat': 36.4467,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
         'question': '盲推事业',
         'themes': ['career', 'health'],
@@ -376,7 +376,7 @@ def test_high_rigor_workflow_plan_only_exposes_official_hard_override_contract()
             'hour': 14,
             'minute': 49,
             'lat': 36.42,
-            'lon': 114.2,
+            'lon': -122.4194,
             'tz': 8,
         },
         ['career', 'marriage', 'wealth'],
@@ -638,7 +638,7 @@ def test_consultation_workflow_surfaces_top_reader_contract_in_official_summary(
 
     fake_chart = {
         'success': True,
-        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'birth_info': {'date': '1955-02-24', 'time': '19:15', 'tz': 8},
         'special_lagnas': {'precision': 'sunrise_correct'},
         'chart': {
             'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
@@ -763,7 +763,7 @@ def test_consultation_workflow_surfaces_top_reader_contract_in_official_summary(
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
         'theme': ['career'],
         'blind': True,
@@ -1366,7 +1366,7 @@ def test_report_artifact_rejects_active_html(html: str) -> None:
 def test_oracle_evidence_api_validates_uploaded_packets() -> None:
     handler = _handler()
     draft_packet = {
-        'case_id': 'template_user_REDACTED_YEAR_moon_longitude_lahiri',
+        'case_id': 'template_steve_jobs_dasha_lahiri',
         'status': 'draft',
         'evidence_packet': {
             'status': 'draft',
@@ -1776,7 +1776,7 @@ def test_thematic_report_interpretation_axes_are_strict_paragraphs_for_each_them
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
     })
 
@@ -1949,7 +1949,7 @@ def test_high_rigor_workflow_reuses_existing_rectification_backtest_and_vedastro
 
     fake_chart = {
         'success': True,
-        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'birth_info': {'date': '1955-02-24', 'time': '19:15', 'tz': 8},
         'chart': {
             'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
             'planets': _sample_planets(),
@@ -2077,7 +2077,7 @@ def test_high_rigor_workflow_reuses_existing_rectification_backtest_and_vedastro
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
         'events': [
             {'id': 'career_turn_2019', 'date': '2019-12-15', 'domain': 'career'},
@@ -2113,7 +2113,7 @@ def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -
 
     fake_chart = {
         'success': True,
-        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'birth_info': {'date': '1955-02-24', 'time': '19:15', 'tz': 8},
         'special_lagnas': {'precision': 'sunrise_correct'},
         'chart': {
             'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
@@ -2183,7 +2183,7 @@ def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
         'theme': ['career'],
         'blind': True,
@@ -2229,7 +2229,7 @@ def test_consultation_workflow_reuses_chart_data_for_thematic_report_without_rec
     handler = _handler()
     fake_chart = {
         'success': True,
-        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'birth_info': {'date': '1955-02-24', 'time': '19:15', 'tz': 8},
         'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
         'planets': _sample_planets(),
         'chart': {
@@ -2279,13 +2279,13 @@ def test_consultation_workflow_reuses_chart_data_for_thematic_report_without_rec
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
         'theme': ['career', 'marriage', 'wealth'],
     })
 
     assert result['success'] is True
-    assert seen['body']['chart_data']['birth_info']['date'] == 'REDACTED_DATE'
+    assert seen['body']['chart_data']['birth_info']['date'] == '1955-02-24'
     assert seen['body']['chart_data']['ascendant']['sign'] == 'Cancer'
     assert seen['body']['skip_full_reading_for_thematic'] is True
     assert 'upstream_contract' in seen['body']
@@ -2302,7 +2302,7 @@ def test_consultation_workflow_rectification_entry_reuses_chart_without_duplicat
     handler = _handler()
     fake_chart = {
         'success': True,
-        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'birth_info': {'date': '1955-02-24', 'time': '19:15', 'tz': 8},
         'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
         'planets': _sample_planets(),
         'chart': {
@@ -2353,7 +2353,7 @@ def test_consultation_workflow_rectification_entry_reuses_chart_without_duplicat
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
         'theme': ['marriage'],
     })
@@ -2367,7 +2367,7 @@ def test_consultation_workflow_rectification_entry_reuses_chart_without_duplicat
         'run_thematic_report',
     ]
     assert calls['count'] == 1
-    assert seen['body']['chart_data']['birth_info']['date'] == 'REDACTED_DATE'
+    assert seen['body']['chart_data']['birth_info']['date'] == '1955-02-24'
     assert seen['body']['skip_full_reading_for_thematic'] is True
 
 
@@ -2375,7 +2375,7 @@ def test_consultation_workflow_rectification_entry_sends_empty_objects_before_ch
     handler = _handler()
     fake_chart = {
         'success': True,
-        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'birth_info': {'date': '1955-02-24', 'time': '19:15', 'tz': 8},
         'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
         'planets': _sample_planets(),
         'modules': {},
@@ -2410,7 +2410,7 @@ def test_consultation_workflow_rectification_entry_sends_empty_objects_before_ch
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
         'theme': ['career'],
     })
@@ -2466,7 +2466,7 @@ def test_consultation_workflow_prashna_entry_uses_prashna_without_compute_chart(
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
     })
 
@@ -2484,7 +2484,7 @@ def test_consultation_workflow_builds_audited_remedies_from_guided_topic_gate(mo
 
     fake_chart = {
         'success': True,
-        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'birth_info': {'date': '1955-02-24', 'time': '19:15', 'tz': 8},
         'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
         'planets': _sample_planets(),
         'chart': {
@@ -2525,7 +2525,7 @@ def test_consultation_workflow_builds_audited_remedies_from_guided_topic_gate(mo
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
     })
     remedies = result.get('audited_remedies') or {}
@@ -2539,7 +2539,7 @@ def test_consultation_workflow_timing_route_builds_muhurta_panchanga_sidecar(mon
     handler = _handler()
     fake_chart = {
         'success': True,
-        'birth_info': {'date': 'REDACTED_DATE', 'time': 'REDACTED_TIME', 'tz': 8},
+        'birth_info': {'date': '1955-02-24', 'time': '19:15', 'tz': 8},
         'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
         'planets': _sample_planets(),
         'chart': {
@@ -2586,7 +2586,7 @@ def test_consultation_workflow_timing_route_builds_muhurta_panchanga_sidecar(mon
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
         'reference_date': '2026-07-08',
         'theme': ['career'],
@@ -2642,7 +2642,7 @@ def test_thematic_report_handles_missing_dasa_convergence_without_crash(monkeypa
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
     })
 
@@ -3138,7 +3138,7 @@ def test_high_rigor_plan_only_surfaces_chart_cache_and_queue_strategy() -> None:
             'hour': 14,
             'minute': 49,
             'lat': 36.4467,
-            'lon': 114.2,
+            'lon': -122.4194,
             'tz': 8,
         },
         ['career'],
@@ -3172,7 +3172,7 @@ def test_high_rigor_async_submit_returns_job_id(monkeypatch: pytest.MonkeyPatch)
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
     })
 
@@ -3203,7 +3203,7 @@ def test_chart_async_submit_returns_job_id(monkeypatch: pytest.MonkeyPatch) -> N
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
     })
 
@@ -3279,7 +3279,7 @@ def test_high_rigor_async_job_executes_in_background(monkeypatch: pytest.MonkeyP
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
     })
 
@@ -3326,7 +3326,7 @@ def test_chart_async_job_executes_in_background(monkeypatch: pytest.MonkeyPatch)
         'hour': 14,
         'minute': 49,
         'lat': 36.42,
-        'lon': 114.2,
+        'lon': -122.4194,
         'tz': 8,
     })
 

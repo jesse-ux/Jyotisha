@@ -34,10 +34,10 @@ python3 scripts/audit_capabilities.py --mode validate
 python3 scripts/local_accuracy_report.py --format json
 python3 scripts/run_quality_gate.py --profile quick --skip-yoga-logic
 find . -maxdepth 4 -type f \( -name 'SKILL.md' -o -path './references/technique_registry.json' -o -path './references/strict-workflow-router.md' -o -path './skills/*/SKILL.md' \) | sort
-find /Users/wuyongnaren/.workbuddy -maxdepth 5 -type f \( -name 'SKILL.md' -o -path '*/technique_registry.json' -o -path '*/strict-workflow-router.md' \) 2>/dev/null | sort
-find /Users/wuyongnaren -maxdepth 6 -type f \( -name 'SKILL.md' -o -name 'technique_registry.json' -o -name 'strict-workflow-router.md' \) 2>/dev/null | rg "jyotish|vedic|占星|印度占星|workbuddy|skill"
+find <home>/.workbuddy -maxdepth 5 -type f \( -name 'SKILL.md' -o -path '*/technique_registry.json' -o -path '*/strict-workflow-router.md' \) 2>/dev/null | sort
+find <home> -maxdepth 6 -type f \( -name 'SKILL.md' -o -name 'technique_registry.json' -o -name 'strict-workflow-router.md' \) 2>/dev/null | rg "jyotish|vedic|占星|印度占星|workbuddy|skill"
 rg -n "Tajika|Varshaphala|Jaimini|Chara Dasha|Narayana|Kalachakra|KP|Prashna|Shadbala|Bhava Bala|Ashtakavarga|Yoga Pinda|Panchanga|Muhurta|Porutham|Synastry|Ayanamsa|oracle|external_verified|artifacts|table|tabulate" SKILL.md README.md references scripts tests jyotish-app docs/research
-rg -n "MIT|Apache|BSD|ISC|CC0|GPL|AGPL|LGPL|license|License|quarantine|copy_allowed|benchmark_only" references/open_source_sources docs/research /Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/references 2>/dev/null
+rg -n "MIT|Apache|BSD|ISC|CC0|GPL|AGPL|LGPL|license|License|quarantine|copy_allowed|benchmark_only" references/open_source_sources docs/research <home>/.workbuddy/skills/jyotish-vedic-astrology/references 2>/dev/null
 git diff --check
 ```
 

@@ -29,7 +29,7 @@
 
 - 已按用户要求在继续实现前进行整机/多窗口碎片扫描，并生成 `docs/research/whole_machine_fragment_sweep_round25_2026_06_25.md`。
 - 当前必须作为实现前置读取的规划文件仍是 `task_plan.md`、`findings.md`、`progress.md`。
-- 高价值 Jyotish 资料源不只当前主仓：还包括 `.workbuddy/skills/jyotish-vedic-astrology` 旧 skill 副本、`Documents/星轨talk/engines-repo/jyotish`、`Documents/Codex/2026-06-20/.../engines-repo/jyotish`、Obsidian Jyotish 研究笔记、Downloads 中的 `印度占星.pdf/印度占星1.pdf/Kimi_Agent_高维印度占星师.zip/jyotish_training.agent.final.docx`、以及当前 repo 内 `references/open_source_sources` 和 `benchmarks/jyotish`。
+- 高价值 Jyotish 资料源不只当前主仓：还包括 `.workbuddy/skills/jyotish-vedic-astrology` 旧 skill 副本、`Documents/星轨talk/engines-repo/jyotish`、`Documents/Codex/2026-06-20/.../engines-repo/jyotish`、Obsidian Jyotish 研究笔记、Downloads 中的 `印度占星.pdf/private_chart_reference.pdf/Kimi_Agent_高维印度占星师.zip/jyotish_training.agent.final.docx`、以及当前 repo 内 `references/open_source_sources` 和 `benchmarks/jyotish`。
 - 隐私边界：Downloads/Obsidian/私人 PDF/完整解盘报告仅作为需求和差距发现来源，默认不提交原文、不复制私人出生资料、不上传完整报告。
 - 远端状态：HTTPS `git ls-remote` 可达，`origin/codex/release-hygiene-ci` 远端仍停在 `6338cf5`；本地 `bac3748` docs commit 因 SSH 22 超时尚未确认推送成功。后续需使用 SSH-443 或其他可达方式同步。
 - Round 25 副手任务已发布，扫描时已看到部分 `antigravity_round25_*` 报告开始生成，但未满 18+ 前不能视为完成。
@@ -148,7 +148,7 @@
 - 启动路径结论：普通用户不应同时面对“npm run web / npm run dev / python API / PWA / Pake / Tauri”多套入口。当前 README 和质量门失败摘要已统一为“先网页、再本地 API、然后 Trust Center 健康检查”，并明确 PWA 只包装网页壳。
 - 术语一致性结论：可复制命令属于 README/质量门摘要，应用内恢复文案属于普通用户语言。界面只给“普通用户启动路径 / 网页服务 / 本地 API 服务 / PWA 安装壳 / Trust Center”，避免把用户推回开发者命令细节；真实浏览器 mobile-trust smoke 已验证新 Trust Center 成功文案可见。
 - 下一风险：质量门已经覆盖真实浏览器全链路，但默认 full click smoke 成本较高。需要把 fast/default/release 三层验证写清楚，确保主动迭代时不跳过核心路径，发布前仍跑 `--mode all`。
-- 整机初扫发现：当前项目并非唯一资料源。高相关目录包括 `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology`、`/Users/wuyongnaren/Projects/星轨资料恢复/17-Skills技能库/jyotish-vedic-astrology`、`/Users/wuyongnaren/Projects/星轨资料恢复/25-相关Skills补充/jyotish-vedic-astrology`、`/Users/wuyongnaren/engines-repo/jyotish`、`/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish`、`/Users/wuyongnaren/WorkBuddy/2026-06-09-20-03-34/jyotish-fragments`、`/Users/wuyongnaren/文件仓库/印度占星文章`、`/Users/wuyongnaren/文件仓库/中外🔮占星/国外占星/印度占星书`。
+- 整机初扫发现：当前项目并非唯一资料源。高相关目录包括 `<home>/.workbuddy/skills/jyotish-vedic-astrology`、`<home>/Projects/星轨资料恢复/17-Skills技能库/jyotish-vedic-astrology`、`<home>/Projects/星轨资料恢复/25-相关Skills补充/jyotish-vedic-astrology`、`<home>/engines-repo/jyotish`、`<home>/Documents/星轨talk/engines-repo/jyotish`、`<home>/WorkBuddy/2026-06-09-20-03-34/jyotish-fragments`、`<home>/文件仓库/印度占星文章`、`<home>/文件仓库/中外🔮占星/国外占星/印度占星书`。
 - 整机初扫还发现多份可能包含遗漏结论的历史报告：`.workbuddy/brain/*/印度占星Skill全面审计与能力评估报告-v3.0.md`、`.workbuddy/brain/*/jyotish_improvement_plan.md`、`WorkBuddy/2026-06-10-21-30-47/印度占星Skill_真实Bug与遗漏清单_v6.1.11.md`、`WorkBuddy/2026-06-10-21-30-47/开源印度占星项目搜索报告.md`、`WorkBuddy/2026-06-12-15-22-12/vedic-astrology-open-source-research.md`。
 - 云端探测结论：SSH `git ls-remote` 因 22 端口连接超时失败；HTTPS `git ls-remote https://github.com/732642856/yinduzhanxing.git` 成功，远端 refs 包含 `refs/heads/main`、`refs/heads/codex/release-hygiene-ci`、tags `v6.0.47` 至 `v6.0.52`。GitHub REST API 匿名访问被 rate limit，因此云端字符级审计应使用 HTTPS git mirror。
 - 历史遗漏报告共识：旧报告反复指出的非表层缺口不是 UI，而是专业技法深度和 benchmark：Ashtakavarga PAV/Prashtara/Kakshya/Yoga Pinda、Bhava Bala、Navatara/Tara Bala、Kantaka Shani、Pushkar Navamsa、Ishta/Kashta Phala、36 Sahams、Tajika 强度体系、KP Horary/Prashna 裁决、Muhurta 求解器、Vimshottari 多起算点、精微分盘 D24/D30/D60 深度解读。
@@ -189,7 +189,7 @@
 - Round 7 后续审计发现：如果未来人工把 oracle JSON 某条 case 升级为 `external_verified`，旧队列生成器会重新生成 draft evidence packet，导致“已填外部真值仍过不了 validator”。已修为保留 `evidence_packet.status/metadata`，并用 `target_fields` 固定目标字段集合。
 - 对标差距结论：相对 VedAstro/PyJHora/JHora，当前最实质缺口不是基础 D1/D9，而是 Dasha/Shadbala 外部真值样本库、合婚/Koota/Panchanga 的 API/产品深度、以及普通用户一键使用/校准状态可视化。PyJHora 因 AGPL 只能黑盒参照，JHora 因闭源只能截图级人工采集。
 - 2026-06-26 Round 28/29 接力结论：Round 28 的 30 份研究报告已回到主仓待归档区，覆盖全球开源排名、PyJHora/JHora 广度差距、MIT 可复制资产、Dasha/Panchanga/Muhurta/Synastry/Shadbala/Jaimini/KP/Varga/Yoga 深度路线、skill 同步缺口、真新增技法最小集与 Round29 Top100；同时新增 `docs/research/antigravity_sidecar_work_order_round29_2026_06_26.md`，将副手任务继续加压到 skill 全量补齐差距、API/CLI/前端隐藏能力、整机碎片复用第二轮、云端同步白名单、外部 oracle 精度闭环与 Round30 Top120。
-- 2026-06-28 真实用户全功能 QA：使用 `REDACTED_DATE REDACTED_TIME`、河北REDACTED_PLACEREDACTED_PLACE矿区近似坐标 `36.4467,114.2` 跑完 CLI/API/前端点击/质量门矩阵。能力注册表 89 项有效、碎片审计 37 CLI + 41 API 无未注册高价值候选、前端 `--mode all` 浏览器点击通过、quick quality gate 通过；正式报告见 `docs/research/sample_user_full_function_qa_REDACTED_YEAR_redacted_place_2026_06_28.md`。
+- 2026-06-28 真实用户全功能 QA：使用 `private birth datetime`、private birthplace近似坐标 `36.4467,114.2` 跑完 CLI/API/前端点击/质量门矩阵。能力注册表 89 项有效、碎片审计 37 CLI + 41 API 无未注册高价值候选、前端 `--mode all` 浏览器点击通过、quick quality gate 通过；正式报告见 `docs/research/sample_user_full_function_qa_REDACTED_YEAR_redacted_place_2026_06_28.md`。
 - 本轮 QA 真 bug：`jyotish_engine.py muhurta` CLI 因 Sun/Moon tuple 进入 `calc_tithi` 崩溃；`varga-full --divisions ... D81/D108/D144` 仍走旧 `scripts/varga.py` 而失败，尽管 `--custom 81` 可算；`/api/remedies` 对数值型 Shadbala 简写会 500，应归一化或返回 400。
 - 本轮 QA 边界结论：`/api/technique_example` 用目录官方 example payload 可 200，普通出生资料直打 400 是合同误用而非后端坏；`db-stats` 返回数据库不存在，说明入口可用但本机 celebrity/validation DB 数据源缺席；外部 JHora/PyJHora/VedAstro oracle 精度仍未因此闭环。
 - VedAstro 强制雷达边界：官方 Events Builder 暴露 `SearchEvents / GetEventTiming / ListEventTypes` 三个事件端点、400+ 预定义事件和 `Scan precision (hours)`，API/Python surface 继续按 600+/596+ 计算节点理解。本项目不硬复刻 596 个函数，而是把 VedAstro range scan 作为 `career/relationship/finance` strict workflow 的必需外部高频 timing radar；缺失时进入 `vedastro_range_scan_missing` 和 Technique Audit blocked 行，不能再静默跳过。
@@ -209,7 +209,7 @@
 - 当前主仓内已经存在截图所示“行星落十二宫”前端资料层：`jyotish-app/planet-house-details-a.js`、`planet-house-details-b.js`、`planet-house-details-c.js`；与 `.workbuddy/skills/jyotish-vedic-astrology` 旧副本 SHA256 完全一致。
 - 当前主仓内已有文章级解释模板注册表：`references/interpretation_template_registry.json`，`scripts/validate_interpretation_templates.py --format json` 返回 `valid=true`、`template_count=11`、`problem_count=0`。
 - 当前主仓内已有 P1-P12 与宫位框架资料层：`references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md` 与 `house_framework.md`；它们包含宫主身份、凶宫主大运禁止美化、Dasha 事件模板、VRY 孤立性、SAV/BAV 交叉等严格解读规则。
-- 当前主仓内已有 Raman/BPHS 层：`references/raman-house-judgment-methodology.md`、`references/bphs-ch48-narayana-dasha.md`、`references/yoga_rules.json`、`scripts/validate_bphs_invariants.py`；更完整书籍 PDF 位于资料库路径 `/Users/wuyongnaren/文件仓库/中外🔮占星/国外占星/印度占星书/`。
+- 当前主仓内已有 Raman/BPHS 层：`references/raman-house-judgment-methodology.md`、`references/bphs-ch48-narayana-dasha.md`、`references/yoga_rules.json`、`scripts/validate_bphs_invariants.py`；更完整书籍 PDF 位于资料库路径 `<home>/文件仓库/中外🔮占星/国外占星/印度占星书/`。
 - `python3 scripts/audit_capabilities.py --mode validate` 通过，显示 `technique_count=89`、`problem_count=0`；`python3 scripts/audit_fragments.py --strict` 通过，显示当前仓 `candidate_count=0`、`untracked_count=0`。
 - 云端 HTTPS refs 已确认：本地 `codex/release-hygiene-ci@767a5c6` 与远端 `refs/heads/codex/release-hygiene-ci@767a5c6` 对齐。
 - 根因不是“项目没有资料”，而是现有测试多守文档/注册表存在性，没有守 `mcp_server.py::_collect_strict_evidence`、AI prompt pack 和用户可见 strict contract 必须显式携带这些资料层。下一步应只补显式调用链与测试，不重写规则体系。

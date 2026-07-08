@@ -22,11 +22,11 @@ accuracy, Dasha code-only priority, fragment reuse discipline, and WorkBuddy/ski
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/scripts/preflight_fragment_scan.py`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/high_value_fragment_source_map_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/worktree_fragment_triage_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/repo_cleanup_promotion_map_2026_07_01.md`
+- `<repo>/scripts/preflight_fragment_scan.py`
+- `<repo>/docs/research/high_value_fragment_source_map_2026_06_28.md`
+- `<repo>/docs/research/worktree_fragment_triage_2026_06_28.md`
+- `<repo>/docs/research/whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md`
+- `<repo>/docs/research/repo_cleanup_promotion_map_2026_07_01.md`
 
 Durable truth retained:
 
@@ -43,12 +43,12 @@ Boundary correction:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/scripts/dasha_reference_audit.py`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/oracle_boundary_audit.py`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/oracle_closure_master_dashboard.py`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/external_oracle_sanity_closure.py`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/oracle_closure_master_dashboard_latest.md`
-- `/Users/wuyongnaren/Documents/印度占星/docs/benchmark/external_official_sanity_oracle_closure.md`
+- `<repo>/scripts/dasha_reference_audit.py`
+- `<repo>/scripts/oracle_boundary_audit.py`
+- `<repo>/scripts/oracle_closure_master_dashboard.py`
+- `<repo>/scripts/external_oracle_sanity_closure.py`
+- `<repo>/docs/research/oracle_closure_master_dashboard_latest.md`
+- `<repo>/docs/benchmark/external_official_sanity_oracle_closure.md`
 
 Durable truth retained:
 
@@ -66,14 +66,14 @@ Boundary correction:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/scripts/jaimini.py`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/kalachakra_dasha.py`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/narayana_dasha.py`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_jaimini.py`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_chara_dasha_dignity.py`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_knrao_benchmark_v6910.py`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_narayana_dasha.py`
-- `/Users/wuyongnaren/Documents/印度占星/SKILL.md`
+- `<repo>/scripts/jaimini.py`
+- `<repo>/scripts/kalachakra_dasha.py`
+- `<repo>/scripts/narayana_dasha.py`
+- `<repo>/tests/test_jaimini.py`
+- `<repo>/tests/test_chara_dasha_dignity.py`
+- `<repo>/tests/test_knrao_benchmark_v6910.py`
+- `<repo>/tests/test_narayana_dasha.py`
+- `<repo>/SKILL.md`
 
 Durable truth retained:
 
@@ -90,13 +90,13 @@ Boundary correction:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/unique_main_chain_map_2026_07_01.md`
-- `/Users/wuyongnaren/Documents/印度占星/SKILL.md`
-- `/Users/wuyongnaren/Documents/印度占星/AGENTS.md`
-- `/Users/wuyongnaren/Documents/印度占星/references/technique_registry.json`
-- `/Users/wuyongnaren/Documents/印度占星/references/strict-workflow-router.md`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_runtime_import_boundaries.py`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_skill_truth_sync_scripts.py`
+- `<repo>/docs/research/unique_main_chain_map_2026_07_01.md`
+- `<repo>/SKILL.md`
+- `<repo>/AGENTS.md`
+- `<repo>/references/technique_registry.json`
+- `<repo>/references/strict-workflow-router.md`
+- `<repo>/tests/test_runtime_import_boundaries.py`
+- `<repo>/tests/test_skill_truth_sync_scripts.py`
 
 Durable truth retained:
 
@@ -113,11 +113,11 @@ Boundary correction:
 
 Promoted into canonical truth through:
 
-- `/Users/wuyongnaren/Documents/印度占星/scripts/sync_skill_truth_to_workbuddy.sh`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/sync_skill_truth_whitelist.sh`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/stage_skill_truth_whitelist.sh`
-- `/Users/wuyongnaren/Documents/印度占星/tests/test_skill_truth_sync_scripts.py`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/unique_main_chain_map_2026_07_01.md`
+- `<repo>/scripts/sync_skill_truth_to_workbuddy.sh`
+- `<repo>/scripts/sync_skill_truth_whitelist.sh`
+- `<repo>/scripts/stage_skill_truth_whitelist.sh`
+- `<repo>/tests/test_skill_truth_sync_scripts.py`
+- `<repo>/docs/research/unique_main_chain_map_2026_07_01.md`
 
 Durable truth retained:
 

@@ -1,7 +1,7 @@
 # 开源印度占星项目整合报告
 
 **日期**: 2026-06-11
-**目标目录**: `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/references/open_source_sources/`
+**目标目录**: `<home>/.workbuddy/skills/jyotish-vedic-astrology/references/open_source_sources/`
 
 ---
 

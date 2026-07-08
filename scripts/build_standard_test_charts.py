@@ -2,7 +2,7 @@
 """生成标准验证星盘数据集 - 60张名人星盘 + PyJhora D1/Rasi Yoga验证结果"""
 import json, os, subprocess, sys
 
-PYJHORA = "/Users/wuyongnaren/.workbuddy/binaries/python/envs/pyjhora-benchmark/bin/python"
+PYJHORA = "<home>/.workbuddy/binaries/python/envs/pyjhora-benchmark/bin/python"
 HELPER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_compute_one_chart.py")
 
 CELEBRITY_CHARTS = [

@@ -122,7 +122,7 @@ export const CITIES = [
   {name:"上海",en:"Shanghai",lat:31.2,lon:121.5,tz:8},
   {name:"广州",en:"Guangzhou",lat:23.1,lon:113.3,tz:8},
   {name:"深圳",en:"Shenzhen",lat:22.5,lon:114.1,tz:8},
-  {name:"REDACTED_PLACE",en:"REDACTED_PLACE",lat:36.6,lon:114.5,tz:8},
+  {name:"公开样本城市",en:"San Francisco",lat:36.6,lon:114.5,tz:8},
   {name:"成都",en:"Chengdu",lat:30.6,lon:104.1,tz:8},
   {name:"杭州",en:"Hangzhou",lat:30.3,lon:120.2,tz:8},
   {name:"南京",en:"Nanjing",lat:32.1,lon:118.8,tz:8},
@@ -171,7 +171,7 @@ export const CITIES = [
   {name:"银川",en:"Yinchuan",lat:38.5,lon:106.3,tz:8},
   {name:"西宁",en:"Xining",lat:36.6,lon:101.8,tz:8},
   // 港澳台
-  {name:"香港",en:"Hong Kong",lat:22.3,lon:114.2,tz:8},
+  {name:"香港",en:"Hong Kong",lat:22.3,lon:-122.4194,tz:8},
   {name:"澳门",en:"Macau",lat:22.2,lon:113.5,tz:8},
   {name:"台北",en:"Taipei",lat:25.0,lon:121.5,tz:8},
   {name:"高雄",en:"Kaohsiung",lat:22.6,lon:120.3,tz:8},
@@ -687,14 +687,14 @@ export function searchCities(query) {
     const enLow = (c.en || '').toLowerCase();
     const combined = nameLow + ' ' + enLow;
 
-    // 1. 整体包含（如输入"REDACTED_PLACE"直接匹配）
+    // 1. 整体包含（如输入"公开样本城市"直接匹配）
     if (nameLow.includes(fullQ) || enLow.includes(fullQ)) return true;
 
-    // 2. 拆词 AND 匹配（如"中国 REDACTED_PLACE"→每个词都须命中）
+    // 2. 拆词 AND 匹配（如"中国 公开样本城市"→每个词都须命中）
     if (words.length > 1 && words.every(w => combined.includes(w))) return true;
 
     // 3. 模糊匹配：城市名包含输入的子串，或输入包含城市名
-    //    支持"中国REDACTED_PLACE"匹配"REDACTED_PLACE"、"REDACTED_PLACE市"匹配"REDACTED_PLACE"等
+    //    支持"中国公开样本城市"匹配"公开样本城市"、"公开样本城市市"匹配"公开样本城市"等
     if (nameLow.length >= 2 && (fullQ.includes(nameLow) || nameLow.includes(fullQ))) return true;
     if (enLow.length >= 2 && (fullQ.includes(enLow) || enLow.includes(fullQ))) return true;
 

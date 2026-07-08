@@ -29,7 +29,7 @@ Generated: `2026-06-28T07:20:42.378403+00:00`
 - `references/oracle/cases/marilyn_monroe.json` (general)
 - `references/oracle/cases/polar_reykjavik.json` (general)
 - `references/oracle/cases/steve_jobs.json` (general)
-- `references/oracle/cases/yinan_video_truth_2026_06_28.json` (general)
+- `references/oracle/cases/private_case_redacted.json` (general)
 
 ## Pending Evidence Packets
 
@@ -49,9 +49,9 @@ Generated: `2026-06-28T07:20:42.378403+00:00`
 - `references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json` (tajika_sahams, status: `external_verified`, case: `template_steve_jobs_varshaphala_1984_lahiri`)
 - `references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json` (tajika_sahams, status: `external_verified`, case: `template_steve_jobs_varshaphala_1984_lahiri`)
 - `references/oracle/artifacts/pending_packets/external_template_synthetic_extreme_latitude_varshaphala_kp.json` (tajika_sahams, status: `draft`, case: `template_synthetic_extreme_latitude_varshaphala_kp`)
-- `references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_moon_longitude_lahiri.json` (shadbala, status: `draft`, case: `template_user_REDACTED_YEAR_moon_longitude_lahiri`)
-- `references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_moon_longitude_lahiri_pyjhora_20260627.json` (shadbala, status: `external_verified`, case: `template_user_REDACTED_YEAR_moon_longitude_lahiri`)
-- `references/oracle/artifacts/pending_packets/external_template_user_REDACTED_YEAR_shadbala_lahiri_pyjhora_20260627.json` (shadbala, status: `external_verified`, case: `template_user_REDACTED_YEAR_moon_longitude_lahiri`)
+- `references/oracle/artifacts/pending_packets/external_template_private_oracle_redacted.json` (shadbala, status: `draft`, case: `template_private_oracle_redacted`)
+- `references/oracle/artifacts/pending_packets/external_template_private_oracle_redacted_pyjhora_20260627.json` (shadbala, status: `external_verified`, case: `template_private_oracle_redacted`)
+- `references/oracle/artifacts/pending_packets/external_template_private_oracle_shadbala_redacted.json` (shadbala, status: `external_verified`, case: `template_private_oracle_redacted`)
 
 ## PyJHora Black-Box Assets
 
@@ -61,8 +61,8 @@ Generated: `2026-06-28T07:20:42.378403+00:00`
 - `references/oracle/artifacts/pyjhora_steve_jobs_dasha_stdout_20260627.txt` (dasha)
 - `references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt` (shadbala)
 - `references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt` (tajika_sahams)
-- `references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_dasha_stdout_20260627.txt` (dasha)
-- `references/oracle/artifacts/pyjhora_user_REDACTED_YEAR_shadbala_lahiri_stdout_20260627.txt` (shadbala)
+- `references/oracle/artifacts/private_oracle_redacted_dasha_stdout.txt` (dasha)
+- `references/oracle/artifacts/private_oracle_redacted_shadbala_stdout.txt` (shadbala)
 
 Manifest: `references/oracle/artifacts/pyjhora_oracle_artifact_manifest.json`
 

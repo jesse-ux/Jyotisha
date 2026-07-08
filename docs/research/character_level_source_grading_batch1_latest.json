@@ -36,7 +36,7 @@
   },
   "graded_sources": [
     {
-      "path": "/Users/wuyongnaren/Downloads/jyotish_training.agent.final.docx",
+      "path": "<home>/Downloads/jyotish_training.agent.final.docx",
       "source_scope": "external",
       "suffix": ".docx",
       "byte_count": 186879,
@@ -60,7 +60,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/1印度占星.docx",
+      "path": "<home>/文件仓库/印度占星文章/1印度占星.docx",
       "source_scope": "external",
       "suffix": ".docx",
       "byte_count": 6142110,
@@ -84,7 +84,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/2印度占星.docx",
+      "path": "<home>/文件仓库/印度占星文章/2印度占星.docx",
       "source_scope": "external",
       "suffix": ".docx",
       "byte_count": 3031411,
@@ -108,7 +108,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/3印度占星.docx",
+      "path": "<home>/文件仓库/印度占星文章/3印度占星.docx",
       "source_scope": "external",
       "suffix": ".docx",
       "byte_count": 2149772,
@@ -132,7 +132,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/4印度占星.docx",
+      "path": "<home>/文件仓库/印度占星文章/4印度占星.docx",
       "source_scope": "external",
       "suffix": ".docx",
       "byte_count": 5572637,
@@ -156,7 +156,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/Tajika占星术是印度占星术体系之一.docx",
+      "path": "<home>/文件仓库/印度占星文章/Tajika占星术是印度占星术体系之一.docx",
       "source_scope": "external",
       "suffix": ".docx",
       "byte_count": 1338151,
@@ -180,7 +180,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/印度占星Jaimini系统的Darakaraka的理解和说明如何解释.docx",
+      "path": "<home>/文件仓库/印度占星文章/印度占星Jaimini系统的Darakaraka的理解和说明如何解释.docx",
       "source_scope": "external",
       "suffix": ".docx",
       "byte_count": 44926,
@@ -204,7 +204,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/文件仓库/印度占星文章/高地位配偶与婚后命运积极转变的占星规则与组合.docx",
+      "path": "<home>/文件仓库/印度占星文章/高地位配偶与婚后命运积极转变的占星规则与组合.docx",
       "source_scope": "external",
       "suffix": ".docx",
       "byte_count": 1120887,
@@ -228,7 +228,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/Downloads/印度占星.pdf",
+      "path": "<home>/Downloads/印度占星.pdf",
       "source_scope": "external",
       "suffix": ".pdf",
       "byte_count": 135905,
@@ -252,7 +252,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/Downloads/印度占星1.pdf",
+      "path": "<home>/Downloads/private_chart_reference.pdf",
       "source_scope": "external",
       "suffix": ".pdf",
       "byte_count": 132486,
@@ -276,7 +276,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/Downloads/印度占星11页/IMG_3005.jpg",
+      "path": "<home>/Downloads/印度占星11页/IMG_3005.jpg",
       "source_scope": "external",
       "suffix": ".jpg",
       "byte_count": 365592,
@@ -300,7 +300,7 @@
       "runtime_truth_allowed": false
     },
     {
-      "path": "/Users/wuyongnaren/Downloads/印度占星11页/IMG_3006.jpg",
+      "path": "<home>/Downloads/印度占星11页/IMG_3006.jpg",
       "source_scope": "external",
       "suffix": ".jpg",
       "byte_count": 387356,

@@ -28,14 +28,14 @@ Without an explicit source hierarchy, valuable materials can be:
 
 These are the only sources allowed to define current product truth by default:
 
-- `/Users/wuyongnaren/Documents/印度占星/SKILL.md`
-- `/Users/wuyongnaren/Documents/印度占星/AGENTS.md`
-- `/Users/wuyongnaren/Documents/印度占星/references/`
-- `/Users/wuyongnaren/Documents/印度占星/scripts/`
-- `/Users/wuyongnaren/Documents/印度占星/tests/`
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/` (committed reports only)
-- `/Users/wuyongnaren/Documents/印度占星/docs/superpowers/specs/`
-- `/Users/wuyongnaren/Documents/印度占星/docs/superpowers/plans/`
+- `<repo>/SKILL.md`
+- `<repo>/AGENTS.md`
+- `<repo>/references/`
+- `<repo>/scripts/`
+- `<repo>/tests/`
+- `<repo>/docs/research/` (committed reports only)
+- `<repo>/docs/superpowers/specs/`
+- `<repo>/docs/superpowers/plans/`
 
 Rule:
 
@@ -45,8 +45,8 @@ Rule:
 
 These are high-value but non-authoritative draft materials inside the repo:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/local_drafts/2026-06/`
-- `/Users/wuyongnaren/Documents/印度占星/scratch/local/`
+- `<repo>/docs/research/local_drafts/2026-06/`
+- `<repo>/scratch/local/`
 
 Rule:
 
@@ -58,8 +58,8 @@ Rule:
 
 These are high-signal recovery surfaces outside the repo:
 
-- `/Users/wuyongnaren/.gemini/antigravity-ide/brain/`
-- `/Users/wuyongnaren/.codex/attachments/`
+- `<home>/.gemini/antigravity-ide/brain/`
+- `<home>/.codex/attachments/`
 
 Observed high-value examples include:
 
@@ -78,7 +78,7 @@ Rule:
 
 These are mirrored deployment/sync targets:
 
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology`
 
 Rule:
 
@@ -92,7 +92,7 @@ Rule:
 
 Most important current draft cluster:
 
-- `/Users/wuyongnaren/Documents/印度占星/docs/research/local_drafts/2026-06/`
+- `<repo>/docs/research/local_drafts/2026-06/`
 
 Especially notable:
 
@@ -112,9 +112,9 @@ Value:
 
 Observed high-value items:
 
-- `/Users/wuyongnaren/.gemini/antigravity-ide/brain/c4e5264f-9865-4c70-93be-14776faa339e/vedastro_capability_gap_analysis.md`
-- `/Users/wuyongnaren/.gemini/antigravity-ide/brain/f6d8f2e4-10d0-45ab-809a-edf24dd7285e/skill_deep_audit_report.md`
-- `/Users/wuyongnaren/.gemini/antigravity-ide/brain/f6d8f2e4-10d0-45ab-809a-edf24dd7285e/vedastro_raw_reading.md`
+- `<home>/.gemini/antigravity-ide/brain/c4e5264f-9865-4c70-93be-14776faa339e/vedastro_capability_gap_analysis.md`
+- `<home>/.gemini/antigravity-ide/brain/f6d8f2e4-10d0-45ab-809a-edf24dd7285e/skill_deep_audit_report.md`
+- `<home>/.gemini/antigravity-ide/brain/f6d8f2e4-10d0-45ab-809a-edf24dd7285e/vedastro_raw_reading.md`
 - task/walkthrough/implementation files across multiple brain session directories
 
 Value:
@@ -125,10 +125,10 @@ Value:
 
 Observed high-value WorkBuddy mirror paths:
 
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/references/quick-reference-guide.md`
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/references/yogi-avayogi-system.md`
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/references/verified-patterns-marriage-timing-v6.md`
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology/tests/test_knrao_benchmark_v6910.py`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology/references/quick-reference-guide.md`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology/references/yogi-avayogi-system.md`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology/references/verified-patterns-marriage-timing-v6.md`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology/tests/test_knrao_benchmark_v6910.py`
 
 Value:
 
@@ -139,8 +139,8 @@ Value:
 
 High-value unresolved asset pool:
 
-- `/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/`
-- `/Users/wuyongnaren/Documents/印度占星/references/oracle/cases/`
+- `<repo>/references/oracle/artifacts/pending_packets/`
+- `<repo>/references/oracle/cases/`
 
 Value:
 

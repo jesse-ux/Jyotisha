@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="/Users/wuyongnaren/Documents/印度占星"
-WB="/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology"
+ROOT="<repo>"
+WB="<home>/.workbuddy/skills/jyotish-vedic-astrology"
 
 mkdir -p "$WB/references"
 mkdir -p "$WB/skills/jyotish-engine-modules"

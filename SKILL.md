@@ -123,10 +123,10 @@ python3 scripts/user_invocation_acceptance_check.py
 
 详细执行文档：
 
-- [`references/event_judgment_skeleton.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_skeleton.md)
-- [`references/event_judgment_marriage.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_marriage.md)
-- [`references/event_judgment_wealth.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_wealth.md)
-- [`references/event_judgment_career.md`](/Users/wuyongnaren/Documents/印度占星/references/event_judgment_career.md)
+- [`references/event_judgment_skeleton.md`](<repo>/references/event_judgment_skeleton.md)
+- [`references/event_judgment_marriage.md`](<repo>/references/event_judgment_marriage.md)
+- [`references/event_judgment_wealth.md`](<repo>/references/event_judgment_wealth.md)
+- [`references/event_judgment_career.md`](<repo>/references/event_judgment_career.md)
 
 ## 五层硬约束（全球前三引擎强制调用）
 
@@ -267,7 +267,7 @@ python3 scripts/user_invocation_acceptance_check.py
   - JHora（闭源）
   - `hora-prakash`（AGPL）
 - 本仓已落地的 MIT 复用点包括：`kp_system.py`、`synastry.py`、`muhurtha_election.py`、`bhava_bala.py`、`dasha_calculator_enhanced.py`、`jaimini.py`、`constants/mit_imported_constants.py`
-- 继续扩 skill 前，先查 `/Users/wuyongnaren/Documents/印度占星/docs/research/reuse_license_whitelist_for_skill_2026_06_26.md`，避免重复造轮子或踩许可证边界。
+- 继续扩 skill 前，先查 `<repo>/docs/research/reuse_license_whitelist_for_skill_2026_06_26.md`，避免重复造轮子或踩许可证边界。
 
 ### Transit 真实过境冻结（v6.0.10-true-transit）
 
@@ -363,7 +363,7 @@ python3 scripts/validate_interpretation_templates.py --format markdown
 8. **高阶解释层整合**
    - `Pushkara / Vargottama / Avastha / RTN / Inter-chart linkage` 已存在，但还未形成传统高手式稳定裁决层
 
-完整排序见 `/Users/wuyongnaren/Documents/印度占星/docs/research/current_skill_core_gap_rerank_2026_06_26.md`。
+完整排序见 `<repo>/docs/research/current_skill_core_gap_rerank_2026_06_26.md`。
 
 ### Skill Gap Truth Audit（严禁过度声明）
 
@@ -405,7 +405,7 @@ python3 scripts/skill_gap_truth_audit.py --format markdown
 3. **VedicAstro / jyotishganit / jaimini-tropical / dashaflow**
    - 价值：MIT，可直接作为继续补深的合法资产来源
 
-完整定位分析见 `/Users/wuyongnaren/Documents/印度占星/docs/research/global_open_source_positioning_of_skill_2026_06_26.md`。
+完整定位分析见 `<repo>/docs/research/global_open_source_positioning_of_skill_2026_06_26.md`。
 
 ## 冲顶路线
 

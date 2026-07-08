@@ -14,7 +14,7 @@
 - **验收标准**：当 `targetFields` 有 `shadbala_components` 且缺失 `sthana` 等键时，返回红灯。
 - **人工提供外部截图**：否，纯代码防线。
 
-## 3. 生成第一条 `template_user_REDACTED_YEAR` 的 JHora 样本指南
+## 3. 生成第一条 `template_private_oracle_redacted` 的 JHora 样本指南
 - **文件路径**：`docs/user_jhora_capture_guide.md`
 - **测试命令**：无
 - **验收标准**：将本轮报告 C 中的输入项与要求转化为一份能公开发布的 markdown 教程。

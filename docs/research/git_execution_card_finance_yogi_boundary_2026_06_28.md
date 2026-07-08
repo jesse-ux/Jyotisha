@@ -14,8 +14,8 @@
 ### Step 1 - 确认暂存范围
 
 ```bash
-git -C /Users/wuyongnaren/Documents/印度占星 reset
-git -C /Users/wuyongnaren/Documents/印度占星 add -- \
+git -C <repo> reset
+git -C <repo> add -- \
   mcp_server.py \
   tests/test_mcp_strict_workflow_finance.py \
   docs/research/wealth_adjudicator_fifth_pass_external_truth_boundary_2026_06_28.md
@@ -24,9 +24,9 @@ git -C /Users/wuyongnaren/Documents/印度占星 add -- \
 ### Step 2 - 检查暂存区
 
 ```bash
-git -C /Users/wuyongnaren/Documents/印度占星 diff --cached --name-only
-git -C /Users/wuyongnaren/Documents/印度占星 diff --cached --stat
-git -C /Users/wuyongnaren/Documents/印度占星 diff --cached --check
+git -C <repo> diff --cached --name-only
+git -C <repo> diff --cached --stat
+git -C <repo> diff --cached --check
 ```
 
 预期：只看到上述 3 个文件。
@@ -34,7 +34,7 @@ git -C /Users/wuyongnaren/Documents/印度占星 diff --cached --check
 ### Step 3 - 回归验证
 
 ```bash
-python3 -m pytest /Users/wuyongnaren/Documents/印度占星/tests/test_mcp_strict_workflow_finance.py -q
+python3 -m pytest <repo>/tests/test_mcp_strict_workflow_finance.py -q
 ```
 
 预期：
@@ -46,13 +46,13 @@ python3 -m pytest /Users/wuyongnaren/Documents/印度占星/tests/test_mcp_stric
 建议提交语义：
 
 ```bash
-git -C /Users/wuyongnaren/Documents/印度占星 commit -m "Enforce external-truth Yogi finance boundary"
+git -C <repo> commit -m "Enforce external-truth Yogi finance boundary"
 ```
 
 ### Step 5 - 推送当前分支
 
 ```bash
-git -C /Users/wuyongnaren/Documents/印度占星 push origin codex/release-hygiene-ci
+git -C <repo> push origin codex/release-hygiene-ci
 ```
 
 ## 禁止事项

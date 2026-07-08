@@ -14,7 +14,7 @@
   },
   "official_catalog": {
     "available": true,
-    "path": "/Users/wuyongnaren/Documents/印度占星/scratch/local/vedastro_adapter/method_catalog_snapshot.json",
+    "path": "<repo>/scratch/local/vedastro_adapter/method_catalog_snapshot.json",
     "tag_count": 46,
     "method_count": 2258
   },

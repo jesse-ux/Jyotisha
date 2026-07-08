@@ -7,10 +7,10 @@ from jyotish_engine import compute_chart_data, _apply_ayanamsa
 
 class TestAyanamsaSwitching(unittest.TestCase):
     def test_ayanamsa_differences(self):
-        # REDACTED_DATE 14:45, REDACTED_PLACE
+        # 1955-02-24 19:15, San Francisco
         year, month, day = REDACTED_YEAR, 4, 17
         hour, minute, second = 14, 45, 20
-        lat, lon, tz = 36.466667, 114.2, 8
+        lat, lon, tz = 37.7749, -122.4194, 8
 
         # 1. Lahiri
         _apply_ayanamsa('lahiri')
@@ -37,7 +37,7 @@ class TestAyanamsaSwitching(unittest.TestCase):
     def test_compute_chart_data_accepts_direct_ayanamsa_name(self):
         year, month, day = REDACTED_YEAR, 4, 17
         hour, minute, second = 14, 45, 20
-        lat, lon, tz = 36.466667, 114.2, 8
+        lat, lon, tz = 37.7749, -122.4194, 8
 
         chart_lahiri = compute_chart_data(
             year, month, day, hour, minute, lat, lon, tz,

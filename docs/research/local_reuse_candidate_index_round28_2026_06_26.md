@@ -39,7 +39,7 @@ For every future core Jyotish feature, use this order:
 
 ## Older WorkBuddy Skill Reuse
 
-The older copy at `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology` is a high-value source, but it must not blindly overwrite current files.
+The older copy at `<home>/.workbuddy/skills/jyotish-vedic-astrology` is a high-value source, but it must not blindly overwrite current files.
 
 | Area | Useful files | Reuse action |
 |---|---|---|
@@ -83,9 +83,9 @@ These must not be copied into this repo:
 
 This index was generated after scanning:
 
-- `/Users/wuyongnaren/Documents/印度占星`
-- `/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology`
-- `/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish`
-- `/Users/wuyongnaren/Documents/Codex/2026-06-20`
+- `<repo>`
+- `<home>/.workbuddy/skills/jyotish-vedic-astrology`
+- `<home>/Documents/星轨talk/engines-repo/jyotish`
+- `<home>/Documents/Codex/2026-06-20`
 
 The scan confirms the main issue is not absence of techniques. The issue is fragmented reuse, incomplete product exposure, incomplete external oracle calibration, and uneven frontend/API integration.
