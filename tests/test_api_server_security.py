@@ -435,6 +435,7 @@ def test_professional_reading_composes_high_rigor_and_gateway(monkeypatch) -> No
     assert result['professional_reading']['vedastro_gateway']['scope'] == 'vedastro_gateway_run'
     assert result['professional_reading']['user_led_calibration_controls']['blind_mode'] is True
     assert result['professional_reading']['visibility_contract']['requires_technique_audit_table'] is True
+    assert 'VedAstro Raw Archive Manifest' in result['professional_reading']['technique_audit_table_required_rows']
 
 
 @pytest.mark.parametrize(

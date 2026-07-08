@@ -53,6 +53,7 @@ For large architecture or release work, also read:
 | ERR-020 | VedAstro official raw responses can be archived but hard to audit if no manifest/API listing exposes them. | mitigated 2026-07-08 | Keep `list_official_raw_response_archives()` and `GET /api/vedastro_gateway/archives`; tests must prove archived official raw responses are enumerable. |
 | ERR-021 | VedAstro raw archive manifests can exist outside the high-rigor evidence packet, leaving final reports unable to prove whether official raw evidence was archived. | mitigated 2026-07-08 | Keep `vedastro_official_raw_archive_manifest` in `machine_evidence_packet.sections` for API and MCP strict workflows. |
 | ERR-022 | Technique Audit Table can show VedAstro cloud state but omit whether archived official raw evidence is actually auditable. | mitigated 2026-07-08 | Keep `VedAstro Raw Archive Manifest` as a first-class Technique Audit Table row immediately after `VedAstro Cloud State`. |
+| ERR-023 | `professional_reading` can require a Technique Audit Table while omitting the user-visible VedAstro raw archive row. | mitigated 2026-07-08 | Keep `VedAstro Raw Archive Manifest` in `professional_reading.technique_audit_table_required_rows`. |
 
 ## Fragment Sweep Command Set
 

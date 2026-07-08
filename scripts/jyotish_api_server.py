@@ -1857,6 +1857,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'MEVG / Global Web Evidence',
                     'Real Case Calibration',
                     'VedAstro Gateway Boundary',
+                    'VedAstro Raw Archive Manifest',
                 ],
                 'visibility_contract': {
                     'requires_technique_audit_table': True,
