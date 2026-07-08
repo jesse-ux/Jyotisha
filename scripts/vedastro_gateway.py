@@ -169,6 +169,35 @@ def complete_gateway_job(job_id: str, result: dict[str, Any]) -> dict[str, Any]:
     return _write_job(job)
 
 
+def list_official_raw_response_archives() -> dict[str, Any]:
+    archives: list[dict[str, Any]] = []
+    queue_dir = _queue_dir()
+    if queue_dir.exists():
+        for path in sorted(queue_dir.glob("*.json")):
+            if path.name.endswith(".official_raw_response.json"):
+                continue
+            try:
+                job = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            archive = job.get("raw_response_archive") if isinstance(job, dict) else {}
+            if not isinstance(archive, dict) or not archive.get("official_raw_response_available"):
+                continue
+            archives.append(
+                {
+                    "job_id": job.get("job_id"),
+                    "status": archive.get("status"),
+                    "official_raw_response_available": True,
+                    "official_raw_response_path": archive.get("official_raw_response_path"),
+                }
+            )
+    return {
+        "scope": "vedastro_official_raw_response_archive_manifest",
+        "archive_count": len(archives),
+        "archives": archives,
+    }
+
+
 def run_gateway_job(job_id: str) -> dict[str, Any] | None:
     job = get_gateway_job(job_id)
     if job is None:

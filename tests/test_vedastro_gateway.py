@@ -138,6 +138,26 @@ def test_gateway_completion_archives_official_raw_response(monkeypatch, tmp_path
     assert '"vedastro_official"' in path.read_text(encoding="utf-8")
 
 
+def test_gateway_lists_official_raw_response_archives(monkeypatch, tmp_path):
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv("VEDASTRO_GATEWAY_QUEUE_DIR", str(tmp_path))
+    empty = vedastro_gateway.list_official_raw_response_archives()
+    assert empty["archive_count"] == 0
+
+    job = vedastro_gateway.enqueue_gateway_job({"year": 1955}, question="x")
+    vedastro_gateway.complete_gateway_job(
+        job["job_id"],
+        {"status": "ok", "official_raw_response": {"source": "vedastro_official"}},
+    )
+    manifest = vedastro_gateway.list_official_raw_response_archives()
+
+    assert manifest["scope"] == "vedastro_official_raw_response_archive_manifest"
+    assert manifest["archive_count"] == 1
+    assert manifest["archives"][0]["job_id"] == job["job_id"]
+    assert manifest["archives"][0]["official_raw_response_available"] is True
+
+
 def test_gateway_run_job_executes_queued_request(monkeypatch, tmp_path):
     from scripts import vedastro_gateway
 

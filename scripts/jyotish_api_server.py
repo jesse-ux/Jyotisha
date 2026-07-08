@@ -877,6 +877,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(self._vedastro_status())
             elif path == '/api/vedastro_gateway/status':
                 self._json(self._compute_vedastro_gateway_status())
+            elif path == '/api/vedastro_gateway/archives':
+                self._json(self._compute_vedastro_gateway_archives())
             elif path.startswith('/api/vedastro_gateway/jobs/'):
                 job_id = path.rsplit('/', 1)[-1]
                 result = self._compute_vedastro_gateway_job(job_id)
@@ -1765,6 +1767,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         from scripts.vedastro_gateway import gateway_status
 
         return gateway_status()
+
+    def _compute_vedastro_gateway_archives(self):
+        from scripts.vedastro_gateway import list_official_raw_response_archives
+
+        return list_official_raw_response_archives()
 
     def _compute_vedastro_gateway_job(self, job_id):
         from scripts.vedastro_gateway import get_gateway_job

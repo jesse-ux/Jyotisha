@@ -347,6 +347,27 @@ def test_vedastro_gateway_poll_rejects_invalid_job_id(monkeypatch, tmp_path) -> 
     assert poller.payload()['error_code'] == 'ERR_NOT_FOUND'
 
 
+def test_vedastro_gateway_archive_manifest_route(monkeypatch, tmp_path) -> None:
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv('VEDASTRO_GATEWAY_QUEUE_DIR', str(tmp_path))
+    job = vedastro_gateway.enqueue_gateway_job({'year': 1955}, question='x')
+    vedastro_gateway.complete_gateway_job(
+        job['job_id'],
+        {'status': 'ok', 'official_raw_response': {'source': 'vedastro_official'}},
+    )
+
+    reader = _ResponseCaptureHandler()
+    reader.path = '/api/vedastro_gateway/archives'
+    reader.do_GET()
+
+    assert reader.status_code == 200
+    payload = reader.payload()
+    assert payload['scope'] == 'vedastro_official_raw_response_archive_manifest'
+    assert payload['archive_count'] == 1
+    assert payload['archives'][0]['job_id'] == job['job_id']
+
+
 def test_vedastro_gateway_job_run_route_executes_worker(monkeypatch, tmp_path) -> None:
     from scripts import vedastro_gateway
 
