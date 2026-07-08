@@ -88,6 +88,30 @@
 
 若 `Vimshottari` 与 `Narayana` 明显相反，标记 `mixed` 或 `blocked`。
 
+### 4.2.1 Non-Standard Proxy Activation
+
+不要把婚期只限缩到 `Venus / Jupiter / Saturn`。
+
+公开案例显示，`Mercury / Moon / Rahu / Ketu` 等非典型大运、小运也可能给出婚姻事件，但必须满足：
+
+```text
+active_lord not in {Venus, Jupiter, Saturn}
+AND active_lord linked to any of {2H, 7H, 8H, 11H, 7L, Venus, Jupiter, DK, UL, A7, D9_7H, D9_7L}
+AND supported by at least one of {PD/PrAD, Chara/Narayana, Transit/Double Transit, D9, UL/A7}
+```
+
+解释边界：
+
+- `Rahu/Ketu` 型：更常见非常规、突然、异地/异文化、秘密性、压力或强吸引。
+- `Mercury` 型：更常见网络、学习、工作协作、朋友介绍、沟通、文书渠道。
+- `Moon` 型：更常见家庭、安全感、同居、情绪依赖、照顾与生活稳定。
+
+机器可审计资料见：
+
+```bash
+python3 scripts/non_standard_marriage_trigger_audit.py --pretty
+```
+
 ### 4.3 Manifestation
 
 这一层专门防止“有窗口但没落地”。

@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "scope": "non_standard_marriage_trigger_case_rules",
+  "boundary": "Public web case notes for marriage timing adjudication. Use as MEVG calibration, not as proof of deterministic prediction.",
+  "standard_marriage_lords": ["Venus", "Jupiter", "Saturn"],
+  "marriage_network_factors": [
+    "2H",
+    "7H",
+    "8H",
+    "11H",
+    "7L",
+    "Venus",
+    "Jupiter",
+    "DK",
+    "UL",
+    "A7",
+    "D9_7H",
+    "D9_7L"
+  ],
+  "rules": [
+    {
+      "id": "non_standard_proxy_trigger",
+      "description": "A marriage event can occur outside Venus/Jupiter/Saturn-led periods when the active dasha lord is tied to the marriage network and is confirmed by subperiod, Jaimini/Narayana or transit support.",
+      "required": ["active_lord_not_standard", "marriage_network_link"],
+      "confirmers": ["PD/PrAD", "Chara/Narayana", "Transit/Double Transit", "D9", "UL/A7"]
+    },
+    {
+      "id": "rahu_ketu_nontraditional_trigger",
+      "description": "Rahu/Ketu can trigger marriage when connected to 7H/7L/Venus/Jupiter/DK/UL/D9, often with nontraditional, sudden, cross-cultural, secretive or pressured relationship texture.",
+      "required": ["Rahu_or_Ketu_active", "marriage_network_link"],
+      "confirmers": ["D9", "UL", "PD/PrAD", "Transit/Double Transit"]
+    },
+    {
+      "id": "mercury_channel_trigger",
+      "description": "Mercury can act as a marriage proxy when it owns, occupies, aspects or disposits marriage factors; channel often appears through communication, study, work, friends, documents or online contact.",
+      "required": ["Mercury_active", "marriage_network_link"],
+      "confirmers": ["7L", "D9", "UL/A7", "PD/PrAD"]
+    },
+    {
+      "id": "moon_family_emotional_trigger",
+      "description": "Moon can act as a marriage proxy when it links to 7L/7H/D9/UL; manifestation often comes through family, cohabitation, emotional dependence or domestic security.",
+      "required": ["Moon_active", "marriage_network_link"],
+      "confirmers": ["D9", "UL", "Transit/Double Transit"]
+    }
+  ],
+  "cases": [
+    {
+      "id": "lal_bahadur_shastri_1928_marriage",
+      "source": "Journal of Astrology",
+      "url": "https://www.journalofastrology.com/article.php?article_id=357",
+      "event": "marriage",
+      "event_date": "1928-05-16",
+      "reported_dasha": ["Rahu", "Moon", "Mercury"],
+      "non_standard_lords": ["Rahu", "Moon", "Mercury"],
+      "marriage_network_links": ["7L", "DK", "D9", "Jaimini"],
+      "lesson": "Rahu/Moon/Mercury can still time marriage when Mercury functions as 7L and Jaimini/D9 support the marriage axis."
+    },
+    {
+      "id": "joa_woman_lawyer_1986_marriage",
+      "source": "Journal of Astrology",
+      "url": "https://www.journalofastrology.com/article.php?article_id=149",
+      "event": "marriage",
+      "event_date": "1986-12",
+      "reported_dasha": ["Ketu", "Saturn", "Mercury"],
+      "non_standard_lords": ["Ketu", "Mercury"],
+      "marriage_network_links": ["Venus", "7L", "D9", "Jaimini"],
+      "lesson": "Ketu period is not automatically anti-marriage; if Ketu is Venus-colored and Mercury is 7L, it can deliver marriage."
+    },
+    {
+      "id": "astrological_musings_early_marriage_2001",
+      "source": "Astrological Musings",
+      "url": "https://astrologicalmusings.com/astrological-yogas-for-an-early-marriage-ii/",
+      "event": "marriage",
+      "event_date": "2001",
+      "reported_dasha": ["Rahu", "Saturn"],
+      "non_standard_lords": ["Rahu"],
+      "marriage_network_links": ["D9_7L", "Venus", "7H_from_Venus"],
+      "lesson": "Rahu can deliver marriage when D9 and Venus-derived relationship houses are directly involved."
+    },
+    {
+      "id": "lova_forum_marriage_1992",
+      "source": "LightOnVedicAstrology forum",
+      "url": "https://phpbb.lightonvedicastrology.com/viewtopic.php?t=10569",
+      "event": "marriage",
+      "event_date": "1992-12-01",
+      "reported_dasha": ["Moon", "Mercury"],
+      "non_standard_lords": ["Moon", "Mercury"],
+      "marriage_network_links": ["7H", "Jupiter", "D9"],
+      "lesson": "Moon/Mercury periods can coincide with marriage when the natal relationship promise is strong and Mercury/Moon connect to the marriage field."
+    },
+    {
+      "id": "shubham_alock_marriage_timing_case",
+      "source": "Shubham Alock",
+      "url": "https://shubhamalock.wordpress.com/2016/05/18/timing-of-marriage-using-vimshottari-and-narayan-dasha-other-aspects-of-marital-life/",
+      "event": "marriage",
+      "event_date": "case_article",
+      "reported_dasha": ["Mercury", "Jupiter", "Mars", "Mercury", "Rahu"],
+      "non_standard_lords": ["Mercury", "Rahu"],
+      "marriage_network_links": ["7L", "D9", "A7", "Narayana"],
+      "lesson": "Mercury/Rahu can be decisive when Vimshottari subperiods and Narayana Dasha both route through marriage significators."
+    }
+  ]
+}

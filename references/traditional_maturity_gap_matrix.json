@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "scope": "traditional_jyotish_maturity_gap_matrix",
+  "boundary": "covered means a stable local entrypoint or usable layer exists; it does not mean expert adjudication, external oracle parity, public-case replay, or frontend/API exposure is complete.",
+  "execution_phases": [
+    {
+      "id": "phase_1_truth_boundary",
+      "name": "Truth Boundary",
+      "work": ["skill gap truth audit", "maturity dashboard", "covered-vs-complete guard"]
+    },
+    {
+      "id": "phase_2_oracle_expansion",
+      "name": "Dasha / Shadbala / Tajika oracle expansion",
+      "work": ["external samples", "benchmark reports", "accepted/mismatch/blocked labels"]
+    },
+    {
+      "id": "phase_3_event_adjudication",
+      "name": "Event adjudication skeletons",
+      "work": ["career event judgment", "KP event judgment", "Prashna branch workflows", "annual event judgment"]
+    },
+    {
+      "id": "phase_4_expert_modifiers",
+      "name": "Expert interpretation modifiers",
+      "work": ["dispositor chain", "inter-chart linkage", "avastha/pushkara/vargottama modifiers"]
+    }
+  ],
+  "priorities": [
+    {
+      "id": "p0_dasha_boundary_closure",
+      "priority": "P0",
+      "rank": 1,
+      "area": "Dasha boundary closure",
+      "available_layers": ["Vimshottari MD/AD", "PD/PrAD proportional expansion", "Narayana", "Chara", "Yogini", "Kalachakra"],
+      "missing_closure": ["global start-balance parity", "AD/PD/Prana boundary expansion", "multi-dasha family parity", "JHora/PyJHora/book-example expansion"],
+      "impact": "date-level event timing confidence"
+    },
+    {
+      "id": "p0_strength_absolute_parity",
+      "priority": "P0",
+      "rank": 2,
+      "area": "Strength systems",
+      "available_layers": ["Shadbala", "Bhava Bala", "Vimsopaka Bala"],
+      "missing_closure": ["absolute component parity", "Raman/JHora/PyJHora sample expansion", "Ishta/Kashta integration", "report/frontend display"],
+      "impact": "planet and house strength statements"
+    },
+    {
+      "id": "p0_public_benchmark_history",
+      "priority": "P0",
+      "rank": 3,
+      "area": "Long-running public benchmark",
+      "available_layers": ["public_oracle_replay", "oracle artifacts", "marriage benchmark summary"],
+      "missing_closure": ["versioned replay history", "domain-level pass/fail statistics", "expected oracle fields for all major techniques"],
+      "impact": "credible global-rank claims"
+    },
+    {
+      "id": "p0_tajika_sahams_annual_templates",
+      "priority": "P0",
+      "rank": 4,
+      "area": "Tajika / Varshaphala / Sahams annual event templates",
+      "available_layers": ["Muntha", "Year Lord", "Mudda Dasha", "Sahams", "Tajika Yogas"],
+      "missing_closure": ["annual marriage/career/wealth/health templates", "Saham + Muntha + D9/UL/A10 integration", "public annual event replay"],
+      "impact": "annual event adjudication confidence"
+    },
+    {
+      "id": "p1_kp_event_adjudication",
+      "priority": "P1",
+      "rank": 5,
+      "area": "KP event adjudication",
+      "available_layers": ["sub-lord", "sub-sub-lord", "ABCD significator"],
+      "missing_closure": ["Placidus cusp longitude parity", "1-249 sub-lord end-to-end table audit", "ruling planets", "horary/event judgment workflows", "real event replay"],
+      "impact": "professional KP-style timing"
+    },
+    {
+      "id": "p1_prashna_branch_workflows",
+      "priority": "P1",
+      "rank": 6,
+      "area": "Prashna branch workflows",
+      "available_layers": ["Prashna chart entrypoint", "AL/Sphuta/Sahams references"],
+      "missing_closure": ["marriage/career/lost-object/transaction/health/travel branch templates", "question-time location policy", "ruling planet integration", "case replay"],
+      "impact": "question-specific adjudication"
+    },
+    {
+      "id": "p1_career_a10_karakamsha_amk_chain",
+      "priority": "P1",
+      "rank": 7,
+      "area": "Career A10 / Karakamsha / AmK adjudication",
+      "available_layers": ["D10", "A10 references", "Chara Karaka", "Argala references", "dispositor chain"],
+      "missing_closure": ["career event skeleton", "A10/AmK/Karakamsha weighting", "10L from Lagna/Moon/D10 integration", "public career event replay"],
+      "impact": "traditional career-event judgment"
+    },
+    {
+      "id": "p1_flying_star_chain",
+      "priority": "P1",
+      "rank": 8,
+      "area": "Flying-star / motion / chain techniques",
+      "available_layers": ["flying_star_audit", "BCP reference", "Tajika Muntha", "Sudarshana"],
+      "missing_closure": ["UL-specific chain adapter", "Nadi-style machine adjudicator", "domain score integration", "public-case replay lift statistics"],
+      "impact": "secondary convergence layer"
+    },
+    {
+      "id": "p2_avastha_high_varga_integration",
+      "priority": "P2",
+      "rank": 9,
+      "area": "Avastha and high-varga integration",
+      "available_layers": ["Baladi", "Lajjitadi", "Deep Varga Avastha", "Sayanadi references"],
+      "missing_closure": ["D9/D10/D30/D60 integration rules", "interpretation vs event-weight policy", "case validation"],
+      "impact": "interpretive nuance and risk grading"
+    },
+    {
+      "id": "p2_article_template_industrialization",
+      "priority": "P2",
+      "rank": 10,
+      "area": "Article-level rule industrialization",
+      "available_layers": ["interpretation_template_registry", "validation templates", "technique registry"],
+      "missing_closure": ["single-factor-warning rules", "domain-specific confidence ceilings", "case replay links"],
+      "impact": "prevents course/article-style overclaiming"
+    }
+  ]
+}

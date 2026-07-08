@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "scope": "public_birth_case_replay_seed",
+  "boundary": "Public birth data seeds for engine replay. These are not private user data and are not sufficient by themselves to prove predictive accuracy.",
+  "cases": [
+    {
+      "id": "einstein_1879_aa",
+      "name": "Albert Einstein",
+      "source_quality": "public_astro_databank_aa",
+      "sources": [
+        "https://www.astro.com/astro-databank/Einstein,_Albert",
+        "https://vedastro.org/AstroDataBank/Person/Albert_Einstein"
+      ],
+      "birth": {
+        "year": 1879,
+        "month": 3,
+        "day": 14,
+        "hour": 11,
+        "minute": 30,
+        "second": 0,
+        "lat": 48.4,
+        "lon": 9.983333,
+        "tz": 0.883333
+      },
+      "expected_oracles": {
+        "pyjhora": {
+          "tajika_varshaphala_1905": {
+            "status": "partial_artifact_available",
+            "artifact": "references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt",
+            "packet": "references/oracle/artifacts/pending_packets/external_template_einstein_varshaphala_1905_lahiri.json",
+            "expected_fields_status": "pending_external_capture"
+          }
+        },
+        "jhora": {"status": "pending_external_capture"},
+        "vedastro": {"status": "pending_raw_response"}
+      },
+      "notes": "Ulm local mean time converted as +00:53. Use only as a public replay seed unless an external oracle output is attached."
+    },
+    {
+      "id": "steve_jobs_1955_aa",
+      "name": "Steve Jobs",
+      "source_quality": "public_astro_databank_aa",
+      "sources": [
+        "https://www.astro.com/astro-databank/Jobs,_Steve",
+        "https://vedastro.org/AstroDataBank/Person/Steve_Jobs"
+      ],
+      "birth": {
+        "year": 1955,
+        "month": 2,
+        "day": 24,
+        "hour": 19,
+        "minute": 15,
+        "second": 0,
+        "lat": 37.7749,
+        "lon": -122.4194,
+        "tz": -8
+      },
+      "expected_oracles": {
+        "pyjhora": {
+          "vimshottari_start_date": {
+            "status": "external_verified",
+            "artifact": "references/oracle/artifacts/pyjhora_steve_jobs_dasha_stdout_20260627.txt",
+            "packet": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri_pyjhora_20260627.json",
+            "expected": {"vimshottari_start_date": "1939-03-22"}
+          },
+          "shadbala_components": {
+            "status": "external_verified",
+            "artifact": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+            "packet": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json",
+            "expected_fields_status": "packet_contains_target_shadbala_components"
+          },
+          "tajika_varshaphala_1984": {
+            "status": "external_verified",
+            "artifact": "references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+            "packet": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json"
+          }
+        },
+        "jhora": {"status": "pending_external_capture"},
+        "vedastro": {"status": "pending_raw_response"}
+      }
+    },
+    {
+      "id": "barack_obama_1961_aa",
+      "name": "Barack Obama",
+      "source_quality": "public_birth_certificate",
+      "sources": [
+        "https://www.astro.com/astro-databank/Obama,_Barack",
+        "https://vedastro.org/AstroDataBank/Person/Barack_Obama"
+      ],
+      "birth": {
+        "year": 1961,
+        "month": 8,
+        "day": 4,
+        "hour": 19,
+        "minute": 24,
+        "second": 0,
+        "lat": 21.3069,
+        "lon": -157.8583,
+        "tz": -10
+      },
+      "expected_oracles": {
+        "pyjhora": {"status": "pending_external_capture"},
+        "jhora": {"status": "pending_external_capture"},
+        "vedastro": {"status": "pending_raw_response"}
+      }
+    }
+  ]
+}
