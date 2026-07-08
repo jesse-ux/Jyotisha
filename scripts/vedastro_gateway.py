@@ -295,13 +295,32 @@ def _status_from_report(gateway: dict[str, Any], report: dict[str, Any]) -> str:
 
 
 def _official_closure_state_from_report(gateway: dict[str, Any], report: dict[str, Any]) -> str:
-    catalog = report.get("official_capability_catalog") if isinstance(report, dict) else {}
     active_backend = gateway.get("active_backend") or "local_fallback"
     if active_backend == "local_fallback":
         return "local_fallback"
-    if (catalog or {}).get("available"):
+    if _official_raw_response_from_report(report):
         return "official_verified"
     return "official_blocked"
+
+
+def _official_raw_response_from_report(report: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(report, dict):
+        return {}
+    raw = (
+        report.get("official_raw_response")
+        or report.get("raw_response")
+        or report.get("vedastro_official_raw_response")
+    )
+    return raw if isinstance(raw, dict) else {}
+
+
+def _official_closure_reason_from_report(gateway: dict[str, Any], report: dict[str, Any]) -> str:
+    active_backend = gateway.get("active_backend") or "local_fallback"
+    if active_backend == "local_fallback":
+        return "local_fallback_backend"
+    if _official_raw_response_from_report(report):
+        return "official_raw_response_present"
+    return "official_raw_response_missing"
 
 
 def run_gateway_packet(
@@ -316,11 +335,14 @@ def run_gateway_packet(
     args = _entrypoint_args(case, question, themes, reference_date)
     report = build_report(args)
     catalog = report.get("official_capability_catalog") or {}
+    official_raw_response = _official_raw_response_from_report(report)
     return {
         "scope": "vedastro_gateway_run",
         "schema_version": 1,
         "status": _status_from_report(gateway, report),
         "official_closure_state": _official_closure_state_from_report(gateway, report),
+        "official_closure_reason": _official_closure_reason_from_report(gateway, report),
+        **({"official_raw_response": official_raw_response} if official_raw_response else {}),
         "gateway_status": gateway,
         "input": report.get("input") or {},
         "runtime_mode": report.get("runtime_mode") or {},

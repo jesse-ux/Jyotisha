@@ -93,6 +93,57 @@ def test_gateway_run_packet_uses_user_entrypoint_and_marks_not_all_641(monkeypat
     assert packet["user_visibility"]["mainland_cn_safe"] is True
 
 
+def test_gateway_official_closure_requires_raw_response(monkeypatch):
+    from scripts import vedastro_gateway, vedastro_user_entrypoint
+
+    monkeypatch.setenv("JYOTISH_SKIP_LOCAL_ENV", "1")
+    monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://api.vedastro.org/api")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "20")
+
+    def fake_report(_args):
+        return {
+            "input": {},
+            "runtime_mode": {},
+            "official_capability_catalog": {"status": "partial", "available": True, "summary": {"catalog_method_count": 641}},
+            "cache_and_queue": {},
+            "strict_workflow": {},
+            "honesty_boundary": {},
+        }
+
+    monkeypatch.setattr(vedastro_user_entrypoint, "build_report", fake_report)
+    packet = vedastro_gateway.run_gateway_packet({"year": 1955}, question="x")
+
+    assert packet["official_closure_state"] == "official_blocked"
+    assert packet["official_closure_reason"] == "official_raw_response_missing"
+
+
+def test_gateway_official_closure_verified_when_raw_response_present(monkeypatch):
+    from scripts import vedastro_gateway, vedastro_user_entrypoint
+
+    monkeypatch.setenv("JYOTISH_SKIP_LOCAL_ENV", "1")
+    monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://api.vedastro.org/api")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "20")
+
+    def fake_report(_args):
+        return {
+            "input": {},
+            "runtime_mode": {},
+            "official_capability_catalog": {"status": "partial", "available": True, "summary": {"catalog_method_count": 641}},
+            "official_raw_response": {"Status": "Pass"},
+            "cache_and_queue": {},
+            "strict_workflow": {},
+            "honesty_boundary": {},
+        }
+
+    monkeypatch.setattr(vedastro_user_entrypoint, "build_report", fake_report)
+    packet = vedastro_gateway.run_gateway_packet({"year": 1955}, question="x")
+
+    assert packet["official_closure_state"] == "official_verified"
+    assert packet["official_raw_response"] == {"Status": "Pass"}
+
+
 def test_gateway_queue_lifecycle_uses_file_job_store(monkeypatch, tmp_path):
     from scripts import vedastro_gateway
 
