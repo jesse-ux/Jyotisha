@@ -877,6 +877,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(self._vedastro_status())
             elif path == '/api/vedastro_gateway/status':
                 self._json(self._compute_vedastro_gateway_status())
+            elif path.startswith('/api/vedastro_gateway/jobs/'):
+                job_id = path.rsplit('/', 1)[-1]
+                result = self._compute_vedastro_gateway_job(job_id)
+                if result is None:
+                    self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._json(result)
             elif path.startswith('/api/chart/jobs/'):
                 job_id = path.rsplit('/', 1)[-1]
                 result = self._get_chart_job(job_id)
@@ -942,6 +949,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             elif path == '/api/vedastro_gateway/run':
                 result = self._compute_vedastro_gateway_run(body)
+                self._json(result)
+            elif path == '/api/vedastro_gateway/enqueue':
+                result = self._compute_vedastro_gateway_enqueue(body)
                 self._json(result)
             elif path == '/api/professional_reading':
                 result = self._compute_professional_reading(body)
@@ -1748,6 +1758,31 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         from scripts.vedastro_gateway import gateway_status
 
         return gateway_status()
+
+    def _compute_vedastro_gateway_job(self, job_id):
+        from scripts.vedastro_gateway import get_gateway_job
+
+        return get_gateway_job(str(job_id))
+
+    def _compute_vedastro_gateway_enqueue(self, body):
+        from scripts.vedastro_gateway import enqueue_gateway_job
+
+        payload = dict(body or {})
+        birth_payload = self._high_rigor_birth_payload(payload)
+        themes = self._high_rigor_requested_themes(payload)
+        reference_date = (
+            payload.get('reference_date')
+            or payload.get('transit_date')
+            or payload.get('today')
+            or payload.get('current_date')
+            or datetime.now().strftime('%Y-%m-%d')
+        )
+        return enqueue_gateway_job(
+            birth_payload,
+            question=str(payload.get('question') or payload.get('query') or ''),
+            themes=themes,
+            reference_date=str(reference_date),
+        )
 
     def _compute_vedastro_gateway_run(self, body):
         from scripts.vedastro_gateway import run_gateway_packet

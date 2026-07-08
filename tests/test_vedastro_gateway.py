@@ -71,3 +71,43 @@ def test_gateway_run_packet_uses_user_entrypoint_and_marks_not_all_641(monkeypat
     assert packet["official_capability_catalog"]["summary"]["catalog_method_count"] >= 0
     assert packet["honesty_boundary"]["all_641_methods_executed"] is False
     assert packet["user_visibility"]["mainland_cn_safe"] is True
+
+
+def test_gateway_queue_lifecycle_uses_file_job_store(monkeypatch, tmp_path):
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv("VEDASTRO_GATEWAY_QUEUE_DIR", str(tmp_path))
+    job = vedastro_gateway.enqueue_gateway_job(
+        {
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "second": 0,
+            "lat": 37.7749,
+            "lon": -122.4194,
+            "tz": 8,
+        },
+        question="事业机会什么时候出现",
+        themes=["career"],
+        reference_date="2026-07-02",
+    )
+
+    assert job["status"] == "queued"
+    assert job["poll_path"].startswith("/api/vedastro_gateway/jobs/")
+
+    stored = vedastro_gateway.get_gateway_job(job["job_id"])
+    assert stored["status"] == "queued"
+    assert stored["raw_response_archive"]["status"] == "pending"
+    assert stored["raw_response_archive"]["official_raw_response_available"] is False
+
+    completed = vedastro_gateway.complete_gateway_job(
+        job["job_id"],
+        {"scope": "vedastro_gateway_run", "status": "local_fallback"},
+    )
+    assert completed["status"] == "completed"
+
+    polled = vedastro_gateway.get_gateway_job(job["job_id"])
+    assert polled["result"]["status"] == "local_fallback"
+    assert polled["raw_response_archive"]["status"] == "stored_gateway_packet_not_official_raw"

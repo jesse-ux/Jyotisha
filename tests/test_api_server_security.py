@@ -301,6 +301,52 @@ def test_vedastro_gateway_run_route_returns_gateway_packet(monkeypatch) -> None:
     assert result['user_visibility']['mainland_cn_safe'] is True
 
 
+def test_vedastro_gateway_enqueue_and_poll_routes(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv('VEDASTRO_GATEWAY_QUEUE_DIR', str(tmp_path))
+    handler = _PostCaptureHandler('/api/vedastro_gateway/enqueue', {
+        'year': 1955,
+        'month': 2,
+        'day': 24,
+        'hour': 19,
+        'minute': 15,
+        'second': 0,
+        'lat': 37.7749,
+        'lon': -122.4194,
+        'tz': 8,
+        'question': '事业机会什么时候出现',
+        'themes': ['career'],
+        'reference_date': '2026-07-02',
+    })
+
+    handler.do_POST()
+
+    assert handler.status_code == 200
+    queued = handler.payload()
+    assert queued['status'] == 'queued'
+    assert queued['poll_path'].startswith('/api/vedastro_gateway/jobs/')
+
+    poller = _ResponseCaptureHandler()
+    poller.path = queued['poll_path']
+    poller.do_GET()
+
+    assert poller.status_code == 200
+    payload = poller.payload()
+    assert payload['job_id'] == queued['job_id']
+    assert payload['status'] == 'queued'
+    assert payload['raw_response_archive']['official_raw_response_available'] is False
+
+
+def test_vedastro_gateway_poll_rejects_invalid_job_id(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv('VEDASTRO_GATEWAY_QUEUE_DIR', str(tmp_path))
+    poller = _ResponseCaptureHandler()
+    poller.path = '/api/vedastro_gateway/jobs/../../secret'
+
+    poller.do_GET()
+
+    assert poller.status_code == 404
+    assert poller.payload()['error_code'] == 'ERR_NOT_FOUND'
+
+
 def test_professional_reading_composes_high_rigor_and_gateway(monkeypatch) -> None:
     handler = _handler()
 

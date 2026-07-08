@@ -3,13 +3,18 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
+from datetime import datetime, timezone
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 
 BACKEND_PRIORITY = ["self_host", "official", "cache", "queue", "local_fallback"]
 BOUNDARY_TEXT = "Users never call VedAstro directly; backend gateway owns cache, queue, and fallback."
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _bool_env(name: str) -> bool:
@@ -51,6 +56,91 @@ def _active_backend(config: dict[str, Any]) -> str:
     if config["queue_enabled"]:
         return "queue"
     return "local_fallback"
+
+
+def _queue_dir() -> Path:
+    raw = os.environ.get("VEDASTRO_GATEWAY_QUEUE_DIR", "").strip()
+    return Path(raw).expanduser() if raw else ROOT / "scratch" / "local" / "vedastro_gateway_jobs"
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _job_path(job_id: str) -> Path:
+    allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+    if not job_id or any(ch not in allowed for ch in job_id):
+        raise ValueError("invalid VedAstro gateway job id")
+    return _queue_dir() / f"{job_id}.json"
+
+
+def _write_job(job: dict[str, Any]) -> dict[str, Any]:
+    path = _job_path(str(job["job_id"]))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(job, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+    return job
+
+
+def enqueue_gateway_job(
+    case: dict[str, Any],
+    question: str = "",
+    themes: list[str] | tuple[str, ...] | None = None,
+    reference_date: str = "",
+) -> dict[str, Any]:
+    created_at = _now_iso()
+    request = {
+        "case": dict(case or {}),
+        "question": question or "",
+        "themes": list(themes or []),
+        "reference_date": reference_date or "",
+    }
+    digest = hashlib.sha256(
+        json.dumps({"created_at": created_at, "request": request}, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:20]
+    job_id = f"vgw_{digest}"
+    return _write_job(
+        {
+            "scope": "vedastro_gateway_job",
+            "schema_version": 1,
+            "job_id": job_id,
+            "status": "queued",
+            "created_at": created_at,
+            "updated_at": created_at,
+            "poll_path": f"/api/vedastro_gateway/jobs/{job_id}",
+            "request": request,
+            "result": None,
+            "raw_response_archive": {
+                "status": "pending",
+                "official_raw_response_available": False,
+                "boundary": "Queued jobs do not prove VedAstro official raw response availability.",
+            },
+        }
+    )
+
+
+def get_gateway_job(job_id: str) -> dict[str, Any] | None:
+    try:
+        path = _job_path(job_id)
+    except ValueError:
+        return None
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def complete_gateway_job(job_id: str, result: dict[str, Any]) -> dict[str, Any]:
+    job = get_gateway_job(job_id)
+    if job is None:
+        raise FileNotFoundError(job_id)
+    job["status"] = "completed"
+    job["updated_at"] = _now_iso()
+    job["result"] = dict(result or {})
+    job["raw_response_archive"] = {
+        "status": "stored_gateway_packet_not_official_raw",
+        "official_raw_response_available": False,
+        "boundary": "Gateway packet was archived; VedAstro official raw response is still separate evidence.",
+    }
+    return _write_job(job)
 
 
 def gateway_status() -> dict[str, Any]:
