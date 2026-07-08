@@ -191,6 +191,7 @@ def test_runtime_evidence_log_exposes_blind_packet_case_and_quality_gate_contrac
     assert log["quality_gate"]["technique_audit_table_required"] is True
     assert [row["technique"] for row in log["quality_gate"]["technique_audit_table"]] == [
         "VedAstro Cloud State",
+        "VedAstro Raw Archive Manifest",
         "External Engine Cross-Validation",
         "Evidence Packet",
         "Blind Technical Mode",
@@ -216,6 +217,11 @@ def test_runtime_evidence_log_exposes_blind_packet_case_and_quality_gate_contrac
     packet = orchestrator.machine_evidence_packet(
         chart={"chart": {"planets": {"Sun": {}}, "ascendant": {"sign": "Leo"}}},
         route_packet={"question_type": "career", "primary_theme": "career"},
+        vedastro_archive_manifest={
+            "scope": "vedastro_official_raw_response_archive_manifest",
+            "archive_count": 1,
+            "archives": [{"job_id": "job_1955", "official_raw_response_available": True}],
+        },
     )
     log_with_functional = orchestrator.runtime_evidence_log(
         surface="api_web",
@@ -229,6 +235,10 @@ def test_runtime_evidence_log_exposes_blind_packet_case_and_quality_gate_contrac
     assert functional_row["technique"] == "Functional Benefic/Malefic"
     assert functional_row["status"] == "used"
     assert "Mars" in functional_row["yogakarakas"]
+    archive_row = log_with_functional["quality_gate"]["technique_audit_table"][1]
+    assert archive_row["technique"] == "VedAstro Raw Archive Manifest"
+    assert archive_row["status"] == "used"
+    assert archive_row["used"] is True
 
 
 def test_machine_evidence_packet_materializes_required_section_statuses() -> None:

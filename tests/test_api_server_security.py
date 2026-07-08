@@ -2205,6 +2205,8 @@ def test_high_rigor_workflow_reuses_existing_rectification_backtest_and_vedastro
     assert result['unified_orchestrator']['surface'] == 'api_web'
     assert result['unified_orchestrator']['route']['question_type'] == 'career'
     assert result['machine_evidence_packet']['sections']['vedastro_official_raw_archive_manifest']['status'] == 'used'
+    assert result['runtime_evidence_log']['quality_gate']['technique_audit_table'][1]['technique'] == 'VedAstro Raw Archive Manifest'
+    assert result['runtime_evidence_log']['quality_gate']['technique_audit_table'][1]['status'] == 'used'
 
 
 def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -> None:

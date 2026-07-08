@@ -552,10 +552,19 @@ class UnifiedConsultationOrchestrator:
             blocked_items.append("external_engine_cross_validation_partial")
         packet = machine_evidence_packet if isinstance(machine_evidence_packet, dict) else {}
         packet_status = packet.get("status") or "required_not_satisfied"
+        packet_sections = packet.get("sections") if isinstance(packet.get("sections"), dict) else {}
+        archive_section = packet_sections.get("vedastro_official_raw_archive_manifest")
+        archive_status = (
+            archive_section.get("status")
+            if isinstance(archive_section, dict)
+            else "required_not_satisfied"
+        )
         if not packet:
             blocked_items.append("machine_evidence_packet_not_yet_materialized")
         elif packet_status != "complete":
             blocked_items.append("machine_evidence_packet_partial")
+        if archive_status != "used":
+            blocked_items.append("vedastro_official_raw_archive_manifest_missing")
         case_packet = real_case_calibration if isinstance(real_case_calibration, dict) else {}
         case_status = case_packet.get("status") or "required_not_satisfied"
         functional_packet = packet.get("functional_benefic_malefic") if isinstance(packet.get("functional_benefic_malefic"), dict) else {}
@@ -575,6 +584,16 @@ class UnifiedConsultationOrchestrator:
                     "official_cloud_evidence_available"
                     if vedastro_state == "official_verified"
                     else "confidence_capped_without_verified_official_cloud"
+                ),
+            },
+            {
+                "technique": "VedAstro Raw Archive Manifest",
+                "status": archive_status,
+                "used": archive_status == "used",
+                "effect_on_confidence": (
+                    "official_raw_archive_is_auditable"
+                    if archive_status == "used"
+                    else "official_raw_archive_not_auditable_for_this_run"
                 ),
             },
             {

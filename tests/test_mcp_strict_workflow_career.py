@@ -183,6 +183,7 @@ def test_mcp_strict_workflow_returns_runtime_evidence_log(monkeypatch) -> None:
     assert result["runtime_evidence_log"]["real_case_calibration"]["status"] == "partial_scored"
     assert result["runtime_evidence_log"]["quality_gate"]["technique_audit_table_required"] is True
     assert result["runtime_evidence_log"]["quality_gate"]["technique_audit_table"][0]["technique"] == "VedAstro Cloud State"
+    assert result["runtime_evidence_log"]["quality_gate"]["technique_audit_table"][1]["technique"] == "VedAstro Raw Archive Manifest"
 
 
 def test_career_blocks_label_when_d10_is_missing_but_preserves_jaimini_context() -> None:
