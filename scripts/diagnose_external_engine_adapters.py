@@ -16,6 +16,50 @@ except Exception:  # pragma: no cover - import path varies in tests/CLI
     from scripts.diagnose_jyotishganit_adapter import build_report as build_jyotishganit_report
 
 
+REQUIRED_PARITY_OUTPUTS = ["D1", "D9", "D10", "D2", "D4", "Vimshottari", "Shadbala", "Ashtakavarga"]
+
+
+def _same_chart_parity_contract(engines: dict) -> dict:
+    engine_states = {}
+    for name, engine in engines.items():
+        available = engine["status"] == "available"
+        engine_states[name] = {
+            "available": available,
+            "tested": False,
+            "blocked": not available,
+            "blocking_reason": "" if available else engine["status"],
+        }
+    return {
+        "status": "ready" if all(state["available"] for state in engine_states.values()) else "blocked",
+        "required_outputs": REQUIRED_PARITY_OUTPUTS,
+        "expected_oracle_fields": {
+            "VedAstro": [
+                "official_raw_response",
+                "official_chart",
+                "section_statuses",
+                "request_manifest",
+                "source_metadata.artifact_path",
+            ],
+            "PyJHora/JHora": [
+                "raw_output_path",
+                "settings.ayanamsa",
+                "settings.node_mode",
+                "D1",
+                "D9",
+                "D10",
+                "D2",
+                "D4",
+                "Vimshottari",
+                "Shadbala",
+                "Ashtakavarga",
+            ],
+            "jyotishganit": ["raw_output_path", "panchanga", "tithi", "nakshatra", "yoga", "karana"],
+        },
+        "engine_states": engine_states,
+        "boundary": "This is a parity contract, not proof that the same-chart comparison has run.",
+    }
+
+
 def build_report() -> dict:
     vedastro = build_vedastro_report()
     pyjhora = build_pyjhora_report()
@@ -45,6 +89,7 @@ def build_report() -> dict:
         "scope": "external_engine_adapter_diagnostics",
         "status": "complete" if all(engine["status"] == "available" for engine in engines.values()) else "partial",
         "engines": engines,
+        "same_chart_parity_contract": _same_chart_parity_contract(engines),
         "boundary": "Readiness diagnostics only; this does not run a three-engine consultation comparison.",
     }
 

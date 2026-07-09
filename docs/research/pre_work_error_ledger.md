@@ -57,6 +57,7 @@ For large architecture or release work, also read:
 | ERR-024 | VedAstro gateway status can choose `local_fallback` before `.env` is loaded, even when official endpoint/network settings are present. | mitigated 2026-07-08 | `gateway_status()` must load official readiness before resolving active backend; `run_gateway_packet()` must expose `official_closure_state` separately from legacy `status`. |
 | ERR-025 | VedAstro gateway can report legacy `status=ok` from catalog availability even when no official raw response is present. | mitigated 2026-07-08 | `official_closure_state=official_verified` requires `official_raw_response`; otherwise expose `official_closure_reason=official_raw_response_missing`. |
 | ERR-026 | VedAstro service adapter can obtain an official full-snapshot raw response while the user entrypoint drops it, leaving gateway official closure permanently blocked. | mitigated 2026-07-09 | `vedastro_user_entrypoint` must expose `vedastro_official_full_snapshot.raw_response_available` and root `official_raw_response` when explicitly requested; gateway tests must prove raw propagation reaches `official_verified`. |
+| ERR-027 | External engine readiness diagnostics can be mistaken for a completed same-chart parity comparison. | mitigated 2026-07-09 | `diagnose_external_engine_adapters.py` must expose `same_chart_parity_contract.required_outputs`, per-engine expected oracle fields, and `tested=false` until a real same-chart comparison runs. |
 
 ## Fragment Sweep Command Set
 

@@ -30,4 +30,11 @@ def test_external_engine_adapter_diagnostics_aggregates_three_engines() -> None:
     assert report["engines"]["PyJHora/JHora"]["install_hint"]["package"] == "PyJHora"
     assert report["engines"]["PyJHora/JHora"]["license_boundary"].startswith("AGPL external benchmark")
     assert report["engines"]["jyotishganit"]["license"] == "MIT"
+    contract = report["same_chart_parity_contract"]
+    assert contract["status"] in {"ready", "blocked"}
+    assert contract["required_outputs"] == ["D1", "D9", "D10", "D2", "D4", "Vimshottari", "Shadbala", "Ashtakavarga"]
+    assert "official_raw_response" in contract["expected_oracle_fields"]["VedAstro"]
+    assert "raw_output_path" in contract["expected_oracle_fields"]["PyJHora/JHora"]
+    assert contract["engine_states"]["jyotishganit"]["available"] is True
+    assert contract["engine_states"]["PyJHora/JHora"]["tested"] is False
     assert report["status"] in {"complete", "partial"}
