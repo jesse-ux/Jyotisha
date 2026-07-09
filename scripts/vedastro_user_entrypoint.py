@@ -134,6 +134,66 @@ def _run_capability_catalog(case: dict[str, Any]) -> dict[str, Any]:
         }
 
 
+def _official_raw_requested(args: argparse.Namespace) -> bool:
+    return (
+        bool(getattr(args, "require_official_raw_response", False))
+        or _bool_env("VEDASTRO_REQUIRE_OFFICIAL_RAW_RESPONSE")
+        or _bool_env("VEDASTRO_GATEWAY_REQUIRE_OFFICIAL_RAW_RESPONSE")
+    )
+
+
+def _run_official_full_snapshot(case: dict[str, Any]) -> dict[str, Any]:
+    stub = os.environ.get("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_STUB", "").strip()
+    if stub:
+        try:
+            parsed = json.loads(stub)
+        except json.JSONDecodeError as exc:
+            return {
+                "available": False,
+                "status": "official_full_snapshot_stub_invalid_json",
+                "error": {"type": type(exc).__name__, "message": str(exc)},
+            }
+        return parsed if isinstance(parsed, dict) else {"available": False, "status": "official_full_snapshot_stub_not_object"}
+
+    try:
+        from scripts.vedastro_service_adapter import run_official_full_snapshot_for_case
+    except ModuleNotFoundError:  # pragma: no cover - direct script execution
+        from vedastro_service_adapter import run_official_full_snapshot_for_case
+
+    try:
+        result = run_official_full_snapshot_for_case(case, case_id="user_chart")
+    except Exception as exc:  # pragma: no cover - runtime boundary
+        return {
+            "available": False,
+            "status": "official_full_snapshot_runtime_error",
+            "error": {"type": type(exc).__name__, "message": str(exc)},
+        }
+    return result if isinstance(result, dict) else {"available": False, "status": "official_full_snapshot_invalid_result"}
+
+
+def _extract_official_raw_response(snapshot: dict[str, Any]) -> dict[str, Any]:
+    raw = (
+        snapshot.get("official_raw_response")
+        or snapshot.get("raw_response")
+        or snapshot.get("vedastro_official_raw_response")
+    )
+    return raw if isinstance(raw, dict) else {}
+
+
+def _snapshot_summary(snapshot: dict[str, Any], raw_response: dict[str, Any]) -> dict[str, Any]:
+    metadata = snapshot.get("source_metadata") if isinstance(snapshot.get("source_metadata"), dict) else {}
+    return {
+        "status": snapshot.get("status") or "not_requested",
+        "available": bool(snapshot.get("available")) or bool(raw_response),
+        "operation": snapshot.get("operation") or "official_full_snapshot",
+        "raw_response_available": bool(raw_response),
+        "artifact_path": metadata.get("artifact_path"),
+        "reason": snapshot.get("reason"),
+        "error": snapshot.get("error") if isinstance(snapshot.get("error"), dict) else {},
+        "boundary": "official_raw_response must be present before claiming VedAstro official cloud closure.",
+    }
+
+
 def _strict_workflow_summary(route: str, catalog: dict[str, Any]) -> dict[str, Any]:
     dynamic_selection = catalog.get("dynamic_selection") if isinstance(catalog.get("dynamic_selection"), dict) else {}
     theme_for_route = {"relationship": "marriage", "finance": "wealth"}.get(route, route)
@@ -179,8 +239,10 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     case = _case_from_args(args, themes)
     runtime = build_runtime_mode_report()
     catalog = _run_capability_catalog(case)
+    snapshot = _run_official_full_snapshot(case) if _official_raw_requested(args) else {"status": "not_requested"}
+    raw_response = _extract_official_raw_response(snapshot)
     route = _primary_route(args.question, themes)
-    return {
+    report = {
         "scope": "vedastro_user_entrypoint",
         "schema_version": 1,
         "input": {
@@ -190,6 +252,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "reference_date": args.reference_date,
         },
         "runtime_mode": runtime,
+        "vedastro_official_full_snapshot": _snapshot_summary(snapshot, raw_response),
         "official_capability_catalog": {
             "status": catalog.get("status") or "blocked",
             "available": bool(catalog.get("available")),
@@ -213,8 +276,9 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "json": (
                 "python3 scripts/vedastro_user_entrypoint.py --year YYYY --month MM --day DD "
                 "--hour HH --minute MM --lat LAT --lon LON --tz TZ --question '...' "
-                "--themes career,marriage,wealth --reference-date YYYY-MM-DD --format json "
-                "# includes official_full_capability_catalog"
+                "--themes career,marriage,wealth --reference-date YYYY-MM-DD "
+                "--require-official-raw-response --format json "
+                "# includes official_full_capability_catalog and official_raw_response when verified"
             ),
             "markdown": (
                 "python3 scripts/vedastro_user_entrypoint.py --year YYYY --month MM --day DD "
@@ -222,10 +286,14 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             ),
         },
     }
+    if raw_response:
+        report["official_raw_response"] = raw_response
+    return report
 
 
 def render_markdown(report: dict[str, Any]) -> str:
     runtime = report["runtime_mode"]
+    snapshot = report.get("vedastro_official_full_snapshot") or {}
     catalog = report["official_capability_catalog"]
     cache = report["cache_and_queue"]
     strict = report["strict_workflow"]
@@ -234,6 +302,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "# VedAstro 用户级入口",
         "",
         f"- runtime_mode: `{runtime.get('mode')}`",
+        f"- official_full_snapshot: `{snapshot.get('status')}`",
+        f"- official_raw_response_available: `{str(bool(snapshot.get('raw_response_available'))).lower()}`",
         f"- official_ready: `{str(runtime.get('official_ready')).lower()}`",
         f"- catalog_status: `{catalog.get('status')}`",
         f"- catalog_method_count: `{summary.get('catalog_method_count', 0)}`",
@@ -273,6 +343,7 @@ def main() -> int:
     parser.add_argument("--reference-date", required=True)
     parser.add_argument("--ayanamsa", default="lahiri")
     parser.add_argument("--node-mode", default="mean")
+    parser.add_argument("--require-official-raw-response", action="store_true")
     parser.add_argument("--format", choices=["json", "markdown"], default="markdown")
     args = parser.parse_args()
 

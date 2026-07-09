@@ -144,6 +144,45 @@ def test_gateway_official_closure_verified_when_raw_response_present(monkeypatch
     assert packet["official_raw_response"] == {"Status": "Pass"}
 
 
+def test_gateway_requires_and_propagates_entrypoint_official_raw_response(monkeypatch):
+    from scripts import vedastro_gateway, vedastro_user_entrypoint
+
+    raw_response = {
+        "source": "vedastro_official_full_snapshot",
+        "sections": {"chart_core": {"Status": "Pass"}},
+    }
+    monkeypatch.setenv("JYOTISH_SKIP_LOCAL_ENV", "1")
+    monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://api.vedastro.org/api")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    monkeypatch.setenv("VEDASTRO_GATEWAY_REQUIRE_OFFICIAL_RAW_RESPONSE", "1")
+    monkeypatch.setattr(
+        vedastro_user_entrypoint,
+        "build_runtime_mode_report",
+        lambda: {"mode": "official_extended", "official_ready": True, "readiness_blockers": []},
+    )
+    monkeypatch.setattr(
+        vedastro_user_entrypoint,
+        "_run_capability_catalog",
+        lambda _case: {"status": "ok", "available": True, "summary": {"catalog_method_count": 1}},
+    )
+    monkeypatch.setattr(
+        vedastro_user_entrypoint,
+        "_run_official_full_snapshot",
+        lambda _case: {"status": "ok", "available": True, "raw_response": raw_response},
+    )
+
+    packet = vedastro_gateway.run_gateway_packet(
+        {"year": 1955, "month": 2, "day": 24, "hour": 19, "minute": 15, "lat": 37.7749, "lon": -122.4194, "tz": 8},
+        question="事业机会什么时候出现",
+        themes=["career"],
+        reference_date="2026-07-02",
+    )
+
+    assert packet["official_closure_state"] == "official_verified"
+    assert packet["official_closure_reason"] == "official_raw_response_present"
+    assert packet["official_raw_response"] == raw_response
+
+
 def test_gateway_queue_lifecycle_uses_file_job_store(monkeypatch, tmp_path):
     from scripts import vedastro_gateway
 

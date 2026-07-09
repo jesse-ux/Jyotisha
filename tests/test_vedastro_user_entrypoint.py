@@ -132,6 +132,87 @@ def test_user_entrypoint_runs_catalog_and_strict_workflow_contract() -> None:
     assert "official_full_capability_catalog" in report["user_commands"]["json"]
 
 
+def test_user_entrypoint_emits_official_raw_response_when_requested() -> None:
+    catalog_stub = {
+        "available": True,
+        "status": "ok",
+        "capabilities": [
+            {
+                "method": "AllPlanetData",
+                "signature": "(birthTime)",
+                "bucket": "chart_core",
+                "parameter_names": ["birthTime"],
+                "callable": True,
+            }
+        ],
+        "buckets": {"chart_core": {"count": 1, "examples": ["AllPlanetData"]}},
+    }
+    raw_response = {
+        "source": "vedastro_official_full_snapshot",
+        "sections": {"chart_core": {"Status": "Pass"}},
+        "section_statuses": {"chart_core": "ok"},
+    }
+    snapshot_stub = {
+        "status": "ok",
+        "available": True,
+        "operation": "official_full_snapshot",
+        "raw_response": raw_response,
+        "source_metadata": {"artifact_path": "scratch/local/vedastro_adapter/stub.json"},
+    }
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/vedastro_user_entrypoint.py",
+            "--year",
+            "1955",
+            "--month",
+            "2",
+            "--day",
+            "24",
+            "--hour",
+            "19",
+            "--minute",
+            "15",
+            "--lat",
+            "37.7749",
+            "--lon",
+            "-122.4194",
+            "--tz",
+            "8",
+            "--question",
+            "事业机会什么时候出现",
+            "--themes",
+            "career",
+            "--reference-date",
+            "2026-07-02",
+            "--require-official-raw-response",
+            "--format",
+            "json",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        timeout=120,
+        check=False,
+        env={
+            **os.environ,
+            "JYOTISH_SKIP_LOCAL_ENV": "1",
+            "VEDASTRO_API_ENDPOINT": "https://api.vedastro.org/api",
+            "VEDASTRO_ENABLE_NETWORK": "1",
+            "VEDASTRO_TIMEOUT_SECONDS": "20",
+            "VEDASTRO_OFFICIAL_CAPABILITY_CATALOG_STUB": json.dumps(catalog_stub),
+            "VEDASTRO_OFFICIAL_FULL_SNAPSHOT_STUB": json.dumps(snapshot_stub),
+        },
+    )
+
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    report = json.loads(completed.stdout)
+    assert report["vedastro_official_full_snapshot"]["status"] == "ok"
+    assert report["vedastro_official_full_snapshot"]["raw_response_available"] is True
+    assert report["official_raw_response"] == raw_response
+
+
 def test_user_entrypoint_markdown_documents_boundaries() -> None:
     completed = subprocess.run(
         [
