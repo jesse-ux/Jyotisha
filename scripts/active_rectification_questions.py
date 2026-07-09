@@ -84,14 +84,62 @@ def build_questionnaire(birth_time: str, uncertainty_minutes: int = 30, step_min
     }
 
 
+def score_answers(questionnaire: dict[str, Any], answers: dict[str, str]) -> dict[str, Any]:
+    questions = questionnaire.get("questions") if isinstance(questionnaire.get("questions"), list) else []
+    by_id = {question["id"]: question for question in questions if isinstance(question, dict) and question.get("id")}
+    cluster_scores: dict[str, int] = {}
+    applied = []
+    unknown_ids = []
+    invalid_answers = []
+
+    for question_id, raw_choice in (answers or {}).items():
+        question = by_id.get(question_id)
+        if not question:
+            unknown_ids.append(question_id)
+            continue
+        choice = str(raw_choice or "").strip().upper()
+        scoring = (question.get("scoring_map") or {}).get(choice)
+        if not isinstance(scoring, dict):
+            invalid_answers.append({"id": question_id, "answer": raw_choice})
+            continue
+        cluster = str(scoring.get("cluster") or "neutral")
+        points = int(scoring.get("points") or 0)
+        if cluster != "neutral":
+            cluster_scores[cluster] = cluster_scores.get(cluster, 0) + points
+        applied.append({"id": question_id, "answer": choice, "cluster": cluster, "points": points})
+
+    answered_ids = {item["id"] for item in applied}
+    unanswered = [question for question in questions if question.get("id") not in answered_ids]
+    next_round = min((int(question.get("round") or 0) for question in unanswered), default=None)
+    rankings = [
+        {"cluster": cluster, "score": score}
+        for cluster, score in sorted(cluster_scores.items(), key=lambda item: (-item[1], item[0]))
+    ]
+    return {
+        "scope": "active_birth_time_rectification_scoring",
+        "schema_version": 1,
+        "answered_count": len(applied),
+        "candidate_cluster_rankings": rankings,
+        "next_round": next_round,
+        "next_round_questions": [question for question in unanswered if question.get("round") == next_round],
+        "applied_scoring": applied,
+        "unknown_question_ids": unknown_ids,
+        "invalid_answers": invalid_answers,
+        "boundary": "This narrows candidate clusters only; final rectification requires scoring answers against actual candidate chart differences.",
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--birth-time", required=True, help="Approximate local birth time, YYYY-MM-DD HH:MM")
     parser.add_argument("--uncertainty-minutes", type=int, default=30)
     parser.add_argument("--step-minutes", type=int, default=1)
+    parser.add_argument("--answers-json", default="", help="Optional JSON object mapping question id to A/B/C/D")
     parser.add_argument("--pretty", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(build_questionnaire(args.birth_time, args.uncertainty_minutes, args.step_minutes), ensure_ascii=False, indent=2 if args.pretty else None))
+    questionnaire = build_questionnaire(args.birth_time, args.uncertainty_minutes, args.step_minutes)
+    report = score_answers(questionnaire, json.loads(args.answers_json)) if args.answers_json else questionnaire
+    print(json.dumps(report, ensure_ascii=False, indent=2 if args.pretty else None))
     return 0
 
 
