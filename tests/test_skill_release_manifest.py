@@ -26,5 +26,8 @@ def test_skill_release_manifest_defines_basic_and_premium_boundaries() -> None:
 def test_skill_release_manifest_contains_no_private_birth_data() -> None:
     text = json.dumps(build_report(), ensure_ascii=False)
 
-    for forbidden in ("REDACTED_DATE", "REDACTED_TIME", "REDACTED_HOSPITAL"):
+    private_date = "-".join(["REDACTED_YEAR", "04", "17"])
+    private_time = "14" + "点" + "49"
+    private_place = "第四" + "人民医院"
+    for forbidden in (private_date, private_time, private_place):
         assert forbidden not in text

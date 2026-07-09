@@ -60,6 +60,7 @@ For large architecture or release work, also read:
 | ERR-027 | External engine readiness diagnostics can be mistaken for a completed same-chart parity comparison. | mitigated 2026-07-09 | `diagnose_external_engine_adapters.py` must expose `same_chart_parity_contract.required_outputs`, per-engine expected oracle fields, and `tested=false` until a real same-chart comparison runs. |
 | ERR-028 | Active birth-time rectification can stop at question generation and never narrow candidate clusters from user answers. | mitigated 2026-07-09 | `active_rectification_questions.score_answers()` must turn A/B/C/D answers into cluster rankings, next-round questions, and an explicit boundary that final rectification still needs candidate chart differences. |
 | ERR-029 | Basic git and premium cloud-drive skill packages can blur contents, privacy exclusions, and external-engine promises. | mitigated 2026-07-09 | `scripts/skill_release_manifest.py` must define edition contents, excluded private material, acceptance commands, and external-engine runtime boundaries before packaging. |
+| ERR-030 | Release packaging can misread non-ASCII tracked filenames when parsing quoted `git ls-files` output. | mitigated 2026-07-09 | Package builders must use `git ls-files -z` and decode NUL-separated paths before writing zip archives. |
 
 ## Fragment Sweep Command Set
 
