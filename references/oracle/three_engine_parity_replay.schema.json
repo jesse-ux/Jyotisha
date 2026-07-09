@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Three Engine Same-Chart Parity Replay",
+  "type": "object",
+  "required": [
+    "case_id",
+    "birth_data_policy",
+    "engines",
+    "comparison_rows",
+    "status"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "birth_data_policy": {
+      "type": "string",
+      "enum": [
+        "public_case_only",
+        "anonymized_private_case",
+        "operator_local_only"
+      ]
+    },
+    "engines": {
+      "type": "object",
+      "properties": {
+        "VedAstro": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "official_raw_response_path": {
+              "type": "string"
+            },
+            "artifact_hash": {
+              "type": "string"
+            }
+          }
+        },
+        "PyJHora_JHora": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "raw_output_path": {
+              "type": "string"
+            },
+            "settings": {
+              "type": "object"
+            }
+          }
+        },
+        "jyotishganit": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "raw_output_path": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "comparison_rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "section",
+          "field",
+          "local_value",
+          "oracle_values",
+          "status"
+        ],
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "local_value": {},
+          "oracle_values": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "match",
+              "mismatch",
+              "blocked",
+              "not_comparable"
+            ]
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "blocked",
+        "partial",
+        "complete"
+      ]
+    },
+    "blocked_reason": {
+      "type": "string"
+    }
+  }
+}

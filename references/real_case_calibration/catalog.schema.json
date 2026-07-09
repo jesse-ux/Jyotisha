@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Real Case Calibration Catalog",
+  "type": "object",
+  "required": [
+    "case_id",
+    "source",
+    "chart_signature",
+    "event_outcomes",
+    "similarity",
+    "replay"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "url",
+        "source_grade",
+        "license_or_quote_boundary"
+      ],
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "source_grade": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "verified_secondary",
+            "forum_claim",
+            "unverified"
+          ]
+        },
+        "license_or_quote_boundary": {
+          "type": "string"
+        }
+      }
+    },
+    "chart_signature": {
+      "type": "object",
+      "properties": {
+        "lagna": {
+          "type": "string"
+        },
+        "moon_sign": {
+          "type": "string"
+        },
+        "d9_lagna": {
+          "type": "string"
+        },
+        "ul": {
+          "type": "string"
+        },
+        "a7": {
+          "type": "string"
+        },
+        "a10": {
+          "type": "string"
+        },
+        "notable_yogas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "event_outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "event_type",
+          "event_date",
+          "outcome"
+        ],
+        "properties": {
+          "event_type": {
+            "type": "string"
+          },
+          "event_date": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "source_excerpt_note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "similarity": {
+      "type": "object",
+      "properties": {
+        "score": {
+          "type": "number"
+        },
+        "matching_factors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dissimilar_factors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "replay": {
+      "type": "object",
+      "properties": {
+        "outcome_replay_status": {
+          "type": "string",
+          "enum": [
+            "not_started",
+            "blocked",
+            "partial",
+            "complete"
+          ]
+        },
+        "conflict_notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "do_not_use_for_prediction": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

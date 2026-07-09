@@ -29,4 +29,12 @@ def test_skill_release_package_can_write_zip(tmp_path) -> None:
         names = set(archive.namelist())
     assert "SKILL.md" in names
     assert "scripts/skill_release_manifest.py" in names
+    assert "INSTALL.md" in names
+    assert "USER_PROMPTS.md" in names
     assert ".env.local" not in names
+    with zipfile.ZipFile(target) as archive:
+        install = archive.read("INSTALL.md").decode("utf-8")
+        prompts = archive.read("USER_PROMPTS.md").decode("utf-8")
+    assert "python3 scripts/user_invocation_acceptance_check.py" in install
+    assert "guided_topics" in prompts
+    assert "official_blocked" in prompts

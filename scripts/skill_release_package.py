@@ -21,6 +21,34 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution
 ROOT = Path(__file__).resolve().parents[1]
 SKIP_PREFIXES = ("scratch/", "references/open_source_sources/", ".git/", "__pycache__/")
 SKIP_NAMES = {".env", ".env.local"}
+GENERATED_DOCS = {
+    "INSTALL.md": """# Jyotish Skill Install
+
+1. Unzip this package into a local folder.
+2. Run `python3 scripts/public_release_privacy_scan.py`.
+3. Run `python3 scripts/user_invocation_acceptance_check.py`.
+4. If the check passes, load this folder as a Codex skill/plugin or call `mcp_server.py`.
+5. VedAstro cloud evidence is optional. Without `official_raw_response`, reports must say `official_blocked` or `local_fallback`.
+
+Do not add private birth data, API keys, or desktop oracle screenshots to this package.
+""",
+    "USER_PROMPTS.md": """# User Prompts
+
+## User Has No Question
+
+请根据我的出生信息先运行统一主链，生成 evidence_packet、guided_topics 和 Technique Audit Table。
+不要反问我想看什么；请先给出 3-5 个最值得继续看的方向，并附可直接复制的问题。
+
+## High-Rigor Reading
+
+请使用 strict_workflow，并在输出中标明 VedAstro / PyJHora-JHora / jyotishganit / Real Case Calibration 的状态。
+如果没有 VedAstro official_raw_response，请标记 official_blocked 或 local_fallback。
+
+## Birth-Time Rectification
+
+请使用主动问询式校时：先生成候选时间扫描和选择题，我只回答 A/B/C/D。
+""",
+}
 
 
 def _git_files() -> list[str]:
@@ -59,6 +87,7 @@ def build_package_plan(edition: str = "premium_cloud_drive") -> dict[str, Any]:
         "privacy_scan_status": privacy["status"],
         "file_count": len(files),
         "files": files,
+        "generated_files": sorted(GENERATED_DOCS),
         "boundary": "Dry-run plan only; use --write-zip to create a local zip, then upload manually if desired.",
     }
 
@@ -71,6 +100,8 @@ def write_zip(edition: str, output: Path) -> dict[str, Any]:
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for rel in plan["files"]:
             archive.write(ROOT / rel, rel)
+        for rel, text in GENERATED_DOCS.items():
+            archive.writestr(rel, text)
     return {**plan, "mode": "write_zip", "zip_path": str(output)}
 
 

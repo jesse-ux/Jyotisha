@@ -61,6 +61,7 @@ For large architecture or release work, also read:
 | ERR-028 | Active birth-time rectification can stop at question generation and never narrow candidate clusters from user answers. | mitigated 2026-07-09 | `active_rectification_questions.score_answers()` must turn A/B/C/D answers into cluster rankings, next-round questions, and an explicit boundary that final rectification still needs candidate chart differences. |
 | ERR-029 | Basic git and premium cloud-drive skill packages can blur contents, privacy exclusions, and external-engine promises. | mitigated 2026-07-09 | `scripts/skill_release_manifest.py` must define edition contents, excluded private material, acceptance commands, and external-engine runtime boundaries before packaging. |
 | ERR-030 | Release packaging can misread non-ASCII tracked filenames when parsing quoted `git ls-files` output. | mitigated 2026-07-09 | Package builders must use `git ls-files -z` and decode NUL-separated paths before writing zip archives. |
+| ERR-031 | Premium skill zip can ship without user install prompts or replay schemas, leaving users and future oracle imports without a contract. | mitigated 2026-07-09 | `skill_release_package.py` must inject `INSTALL.md` and `USER_PROMPTS.md`; replay contracts must live in `references/real_case_calibration/` and `references/oracle/`. |
 
 ## Fragment Sweep Command Set
 
