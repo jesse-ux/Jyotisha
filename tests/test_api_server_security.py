@@ -2327,6 +2327,66 @@ def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -
     assert result['chart']['special_lagnas']['precision'] == 'sunrise_correct'
 
 
+def test_consultation_workflow_accepts_western_oracle_payload(monkeypatch) -> None:
+    handler = _handler()
+    fake_chart = {
+        'success': True,
+        'birth_info': {'date': '1955-02-24', 'time': '19:15', 'tz': 8},
+        'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+        'planets': _sample_planets(),
+        'chart': {
+            'ascendant': {'lon': 92.0, 'sign': 'Cancer'},
+            'planets': _sample_planets(),
+        },
+        'modules': {},
+        'cross_system_signals': [
+            {
+                'theme': 'career_relocation',
+                'claim': 'career_triggered_relocation',
+                'timing': '2026-07',
+                'source': 'jyotish_runtime_signal',
+            }
+        ],
+    }
+
+    monkeypatch.setattr(handler, '_compute_chart', lambda body: fake_chart)
+    monkeypatch.setattr(handler, '_compute_rectification_gate', lambda body: {'endpoint': 'rectification_gate'})
+    monkeypatch.setattr(handler, '_compute_thematic_report', lambda body: {'endpoint': 'thematic_report'})
+
+    result = handler._compute_consultation_workflow({
+        'entry_mode': 'direct_chart',
+        'question': 'career relocation timing',
+        'year': 1955,
+        'month': 2,
+        'day': 24,
+        'hour': 19,
+        'minute': 15,
+        'lat': 37.7749,
+        'lon': -122.4194,
+        'tz': 8,
+        'theme': ['career'],
+        'western_oracle_payload': {
+            'source_engine': 'kerykeion_external_json',
+            'natal': {'ascendant': 'Virgo', 'mc': 'Gemini'},
+            'timing_techniques': {'transits': [{'date': '2026-07'}]},
+            'aspects': [
+                {
+                    'date': '2026-07',
+                    'planet': 'Uranus',
+                    'aspect': 'conjunction',
+                    'target': 'MC',
+                }
+            ],
+        },
+    })
+
+    assert result['western_evidence_packet']['source_engine'] == 'kerykeion_external_json'
+    assert result['runtime_evidence_log']['cross_system_arbitration']['status'] == 'used'
+    assert result['runtime_evidence_log']['cross_system_arbitration']['shared_signals'][0]['claim'] == 'career_triggered_relocation'
+    audit = result['runtime_evidence_log']['quality_gate']['technique_audit_table']
+    assert any(row['technique'] == 'Western Cross-Validation' and row['used'] is True for row in audit)
+
+
 def test_consultation_workflow_reuses_chart_data_for_thematic_report_without_recursive_full_reading(monkeypatch) -> None:
     handler = _handler()
     fake_chart = {

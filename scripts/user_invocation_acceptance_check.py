@@ -158,7 +158,8 @@ def main() -> int:
         if cursor in (None, [], ""):
             errors.append(f"missing_entrypoint_{'_'.join(path)}")
 
-    if adapter_report.get("status") not in {"pass", "partial"}:
+    usable_adapter_statuses = {"pass", "partial", "complete"}
+    if adapter_report.get("status") not in usable_adapter_statuses:
         errors.append("external_adapter_status_unusable")
 
     result = {
@@ -168,7 +169,7 @@ def main() -> int:
         "checks": {
             "user_invocation_tests": pytest_check["returncode"] == 0,
             "guided_topics_entrypoint": entrypoint["returncode"] == 0 and not any(e.startswith("missing_entrypoint_") for e in errors),
-            "external_adapter_diagnostics": adapter_report.get("status") in {"pass", "partial"},
+            "external_adapter_diagnostics": adapter_report.get("status") in usable_adapter_statuses,
         },
         "entrypoint_runtime_mode": _runtime_summary(entrypoint_report),
         "entrypoint_strict_workflow": _strict_summary(entrypoint_report),

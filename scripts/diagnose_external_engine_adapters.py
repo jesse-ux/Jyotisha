@@ -10,10 +10,12 @@ try:
     from diagnose_vedastro_mode import build_report as build_vedastro_report
     from diagnose_pyjhora_adapter import build_report as build_pyjhora_report
     from diagnose_jyotishganit_adapter import build_report as build_jyotishganit_report
+    from three_engine_parity_replay_validator import validate_manifest as validate_parity_replay_manifest
 except Exception:  # pragma: no cover - import path varies in tests/CLI
     from scripts.diagnose_vedastro_mode import build_report as build_vedastro_report
     from scripts.diagnose_pyjhora_adapter import build_report as build_pyjhora_report
     from scripts.diagnose_jyotishganit_adapter import build_report as build_jyotishganit_report
+    from scripts.three_engine_parity_replay_validator import validate_manifest as validate_parity_replay_manifest
 
 
 REQUIRED_PARITY_OUTPUTS = ["D1", "D9", "D10", "D2", "D4", "Vimshottari", "Shadbala", "Ashtakavarga"]
@@ -29,6 +31,7 @@ def _same_chart_parity_contract(engines: dict) -> dict:
             "blocked": not available,
             "blocking_reason": "" if available else engine["status"],
         }
+    replay_manifest = validate_parity_replay_manifest("references/oracle/three_engine_parity_replay_manifest.json")
     return {
         "status": "ready" if all(state["available"] for state in engine_states.values()) else "blocked",
         "required_outputs": REQUIRED_PARITY_OUTPUTS,
@@ -56,6 +59,7 @@ def _same_chart_parity_contract(engines: dict) -> dict:
             "jyotishganit": ["raw_output_path", "panchanga", "tithi", "nakshatra", "yoga", "karana"],
         },
         "engine_states": engine_states,
+        "replay_manifest": replay_manifest,
         "boundary": "This is a parity contract, not proof that the same-chart comparison has run.",
     }
 

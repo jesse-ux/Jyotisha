@@ -1,0 +1,25 @@
+{
+  "case_id": "contract_ready_no_same_chart_rows",
+  "birth_data_policy": "operator_local_only",
+  "status": "not_started",
+  "engines": {
+    "VedAstro": {
+      "status": "blocked",
+      "official_raw_response_path": "",
+      "artifact_hash": ""
+    },
+    "PyJHora_JHora": {
+      "status": "blocked",
+      "raw_output_path": "",
+      "settings": {}
+    },
+    "jyotishganit": {
+      "status": "blocked",
+      "raw_output_path": "",
+      "settings": {}
+    }
+  },
+  "comparison_rows": [],
+  "blocked_reason": "no_same_chart_oracle_rows_imported",
+  "runtime_boundary": "This manifest defines the same-chart parity replay contract only. It does not prove VedAstro/PyJHora/JHora/jyotishganit parity until raw oracle rows are imported."
+}

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -40,28 +41,38 @@ TEXT_SUFFIXES = {
     ".yml",
 }
 
-DENY_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
-    ("private_exact_iso_birth_date", re.compile(r"REDACTED_DATE")),
-    ("private_compact_birth_datetime", re.compile(r"REDACTED_DATE[_-]?REDACTED_TIME")),
-    ("private_slug_birth_date", re.compile(r"REDACTED_YEAR[_-]04[_-]17")),
-    ("private_birth_time_literal", re.compile(r"REDACTED_YEAR.{0,120}\bREDACTED_TIME\b|\bREDACTED_TIME\b.{0,120}REDACTED_YEAR|REDACTED_TIME")),
-    ("private_place_han", re.compile(r"REDACTED_PLACE|REDACTED_PLACE|REDACTED_HOSPITAL")),
-    ("private_case_slug", re.compile(r"user_REDACTED_YEAR|redacted_place", re.IGNORECASE)),
-    (
-        "private_birth_dict_tuple",
-        re.compile(
-            r"(?s)(?:year|--year|datetime\()\D*REDACTED_YEAR.{0,220}"
-            r"(?:month|--month|,\s*)\D*4.{0,220}"
-            r"(?:day|--day|,\s*)\D*17.{0,220}"
-            r"(?:hour|--hour|,\s*)\D*14.{0,220}"
-            r"(?:minute|--minute|,\s*)\D*49"
-        ),
-    ),
-]
+LOCAL_DENY_PATTERN_FILE = Path("scratch/local/public_release_deny_patterns.txt")
+ENV_DENY_PATTERNS = "PUBLIC_RELEASE_DENY_PATTERNS"
 
 
-def _is_skipped(path: Path) -> bool:
-    rel = path.relative_to(ROOT).as_posix()
+def _literal_patterns(values: Iterable[str], prefix: str) -> list[tuple[str, re.Pattern[str]]]:
+    patterns: list[tuple[str, re.Pattern[str]]] = []
+    for index, value in enumerate(values, start=1):
+        value = value.strip()
+        if not value or value.startswith("#"):
+            continue
+        patterns.append((f"{prefix}_{index:02d}", re.compile(re.escape(value), re.IGNORECASE)))
+    return patterns
+
+
+def deny_patterns(root: Path = ROOT) -> list[tuple[str, re.Pattern[str]]]:
+    patterns = _literal_patterns(os.environ.get(ENV_DENY_PATTERNS, "").splitlines(), "private_env_pattern")
+    local_file = root / LOCAL_DENY_PATTERN_FILE
+    if local_file.is_file():
+        patterns.extend(
+            _literal_patterns(
+                local_file.read_text(encoding="utf-8", errors="ignore").splitlines(),
+                "private_local_pattern",
+            )
+        )
+    return patterns
+
+
+def _is_skipped(path: Path, root: Path = ROOT) -> bool:
+    try:
+        rel = path.relative_to(root).as_posix()
+    except ValueError:
+        rel = path.as_posix()
     if rel in SKIP_FILES:
         return True
     return any(rel == item or rel.startswith(f"{item}/") for item in SKIP_DIRS)
@@ -73,23 +84,30 @@ def iter_release_files(root: Path = ROOT) -> Iterable[Path]:
         cwd=root,
         text=True,
         capture_output=True,
-        check=True,
+        check=False,
     )
-    for line in completed.stdout.splitlines():
-        path = root / line
-        if not path.is_file() or _is_skipped(path):
+    if completed.returncode == 0:
+        candidates = (root / line for line in completed.stdout.splitlines())
+    else:
+        candidates = (path for path in root.rglob("*") if path.is_file())
+    for path in candidates:
+        if not path.is_file() or _is_skipped(path, root):
             continue
         if path.suffix.lower() in TEXT_SUFFIXES:
             yield path
 
 
-def scan_text(path: Path, text: str) -> list[dict[str, object]]:
+def scan_text(
+    path: Path,
+    text: str,
+    patterns: Iterable[tuple[str, re.Pattern[str]]] | None = None,
+) -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
     try:
         display_path = path.relative_to(ROOT).as_posix()
     except ValueError:
         display_path = path.as_posix()
-    for rule_id, pattern in DENY_PATTERNS:
+    for rule_id, pattern in (patterns if patterns is not None else deny_patterns()):
         for match in pattern.finditer(text):
             line = text.count("\n", 0, match.start()) + 1
             findings.append(
@@ -105,13 +123,14 @@ def scan_text(path: Path, text: str) -> list[dict[str, object]]:
 def build_report(root: Path = ROOT) -> dict[str, object]:
     findings: list[dict[str, object]] = []
     scanned = 0
+    patterns = deny_patterns(root)
     for path in iter_release_files(root):
         try:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             text = path.read_text(encoding="utf-8", errors="ignore")
         scanned += 1
-        findings.extend(scan_text(path, text))
+        findings.extend(scan_text(path, text, patterns))
     return {
         "scope": "public_release_privacy_scan",
         "scanned_files": scanned,

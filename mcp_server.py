@@ -712,6 +712,8 @@ def _execute_mcp_consultation_workflow(
     entry_mode: str = "direct_chart",
     theme: list[str] | None = None,
     events: list[dict[str, Any]] | None = None,
+    western_evidence_packet: dict[str, Any] | None = None,
+    western_oracle_payload: dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     from jyotish_api_server import JyotishAPIHandler, execute_consultation_workflow
 
@@ -733,6 +735,8 @@ def _execute_mcp_consultation_workflow(
             "entry_mode": entry_mode,
             "theme": theme or [],
             "events": events or [],
+            **({"western_evidence_packet": western_evidence_packet} if isinstance(western_evidence_packet, dict) else {}),
+            **({"western_oracle_payload": western_oracle_payload} if isinstance(western_oracle_payload, dict) else {}),
         },
         surface="skill_mcp",
     )
@@ -4186,6 +4190,8 @@ def strict_workflow(
     age: int,
     transit_date: str,
     node_mode: str = "mean",
+    western_evidence_packet: Optional[Dict[str, Any]] = None,
+    western_oracle_payload: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Strict workflow router: routes question to the correct analysis path.
@@ -4208,6 +4214,8 @@ def strict_workflow(
         age: Current age
         transit_date: Transit date for prediction (YYYY-MM-DD)
         node_mode: 'mean' or 'true'
+        western_evidence_packet: Optional pre-normalized Western evidence packet
+        western_oracle_payload: Optional external Western oracle JSON export
 
     Returns:
         JSON with routed analysis and confidence level
@@ -4229,6 +4237,8 @@ def strict_workflow(
         node_mode=node_mode,
         entry_mode="direct_chart",
         theme=normalized_themes,
+        western_evidence_packet=western_evidence_packet,
+        western_oracle_payload=western_oracle_payload,
     )
     chart = result.get("chart") if isinstance(result, dict) else {}
     route = _safe_get(result, "routing", "question_type") or route_packet["question_type"] or "general"
@@ -4276,6 +4286,9 @@ def strict_workflow(
             result["interpretation_source_runtime_coverage"] = interpretation_coverage
             result["machine_evidence_packet"] = machine_evidence_packet
             result["real_case_calibration"] = real_case_calibration
+            western_packet = result.get("western_evidence_packet")
+            if not isinstance(western_packet, dict) or not western_packet:
+                western_packet = western_evidence_packet if isinstance(western_evidence_packet, dict) else None
             result["runtime_evidence_log"] = _UNIFIED_CONSULTATION_ORCHESTRATOR.runtime_evidence_log(
                 surface="skill_mcp",
                 entry_mode=result.get("entry_mode", "direct_chart"),
@@ -4286,6 +4299,7 @@ def strict_workflow(
                 interpretation_source_runtime_coverage=interpretation_coverage,
                 machine_evidence_packet=machine_evidence_packet,
                 real_case_calibration=real_case_calibration,
+                western_evidence_packet=western_packet,
                 blind=False,
             )
         except Exception:

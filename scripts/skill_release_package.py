@@ -24,11 +24,14 @@ SKIP_NAMES = {".env", ".env.local"}
 GENERATED_DOCS = {
     "INSTALL.md": """# Jyotish Skill Install
 
+Basic Git version: https://github.com/732642856/yinduzhanxing
+
 1. Unzip this package into a local folder.
 2. Run `python3 scripts/public_release_privacy_scan.py`.
 3. Run `python3 scripts/user_invocation_acceptance_check.py`.
-4. If the check passes, load this folder as a Codex skill/plugin or call `mcp_server.py`.
-5. VedAstro cloud evidence is optional. Without `official_raw_response`, reports must say `official_blocked` or `local_fallback`.
+4. Run `python3 scripts/skill_release_package.py --edition premium_cloud_drive`.
+5. If the checks pass, load this folder as a Codex skill/plugin or call `mcp_server.py`.
+6. VedAstro cloud evidence is optional. Without `official_raw_response`, reports must say `official_blocked` or `local_fallback`.
 
 Do not add private birth data, API keys, or desktop oracle screenshots to this package.
 """,
@@ -43,12 +46,25 @@ Do not add private birth data, API keys, or desktop oracle screenshots to this p
 
 请使用 strict_workflow，并在输出中标明 VedAstro / PyJHora-JHora / jyotishganit / Real Case Calibration 的状态。
 如果没有 VedAstro official_raw_response，请标记 official_blocked 或 local_fallback。
+如果我提供西方占星导出，请作为 western_oracle_payload 进入统一主链，不要把单边西占信号说成双系统互证。
+
+## Highest Quality Mode
+
+请走高级版最高品质流程：direct_chart 或 rectification 入口 → evidence_packet → Technique Audit Table → VedAstro 三态 → 三引擎 parity replay 状态 → Real Case outcome replay 状态 → guided_topics。
 
 ## Birth-Time Rectification
 
 请使用主动问询式校时：先生成候选时间扫描和选择题，我只回答 A/B/C/D。
 """,
 }
+
+REQUIRED_CONTRACTS = [
+    "references/real_case_calibration/replay_manifest.json",
+    "references/oracle/three_engine_parity_replay_manifest.json",
+    "references/oracle/western_oracle_adapter_contract.md",
+    "scripts/user_invocation_acceptance_check.py",
+    "scripts/diagnose_external_engine_adapters.py",
+]
 
 
 def _git_files() -> list[str]:
@@ -70,15 +86,49 @@ def _edition_files(edition: str) -> list[str]:
     if edition not in manifest["editions"]:
         raise ValueError(f"unknown edition: {edition}")
     files = _git_files()
+    files = sorted(set(files) | {path for path in REQUIRED_CONTRACTS if (ROOT / path).is_file()})
     if edition == "basic_git":
         keep = ("SKILL.md", "README.md", "mcp_server.py", ".codex-plugin/", "scripts/", "tests/")
         files = [path for path in files if path in keep or any(path.startswith(prefix) for prefix in keep if prefix.endswith("/"))]
     return [path for path in files if _allowed(path)]
 
 
+def _required_contracts() -> dict[str, bool]:
+    return {path: (ROOT / path).is_file() for path in REQUIRED_CONTRACTS}
+
+
+def _package_acceptance(edition: str, privacy: dict[str, Any], files: list[str]) -> dict[str, Any]:
+    contracts = _required_contracts()
+    return {
+        "scope": "skill_release_package_acceptance",
+        "schema_version": 1,
+        "edition": edition,
+        "status": "pass" if privacy["status"] == "pass" and all(contracts.values()) else "blocked",
+        "privacy_scan_status": privacy["status"],
+        "file_count": len(files),
+        "required_contracts": contracts,
+        "acceptance_commands": release_manifest()["acceptance_commands"],
+        "boundary": (
+            "Package acceptance proves release hygiene and contracts only; it does not prove external oracle raw "
+            "closure or same-chart parity until replay manifests contain imported rows."
+        ),
+    }
+
+
+def _generated_docs(edition: str, privacy: dict[str, Any], files: list[str]) -> dict[str, str]:
+    manifest = release_manifest()
+    acceptance = _package_acceptance(edition, privacy, files)
+    docs = dict(GENERATED_DOCS)
+    docs["RELEASE_MANIFEST.json"] = json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    docs["PACKAGE_ACCEPTANCE.json"] = json.dumps(acceptance, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    return docs
+
+
 def build_package_plan(edition: str = "premium_cloud_drive") -> dict[str, Any]:
     privacy = privacy_scan()
     files = _edition_files(edition)
+    generated_docs = _generated_docs(edition, privacy, files)
+    acceptance = _package_acceptance(edition, privacy, files)
     return {
         "scope": "skill_release_package",
         "schema_version": 1,
@@ -87,7 +137,9 @@ def build_package_plan(edition: str = "premium_cloud_drive") -> dict[str, Any]:
         "privacy_scan_status": privacy["status"],
         "file_count": len(files),
         "files": files,
-        "generated_files": sorted(GENERATED_DOCS),
+        "generated_files": sorted(generated_docs),
+        "required_contracts": acceptance["required_contracts"],
+        "package_acceptance_status": acceptance["status"],
         "boundary": "Dry-run plan only; use --write-zip to create a local zip, then upload manually if desired.",
     }
 
@@ -100,7 +152,8 @@ def write_zip(edition: str, output: Path) -> dict[str, Any]:
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for rel in plan["files"]:
             archive.write(ROOT / rel, rel)
-        for rel, text in GENERATED_DOCS.items():
+        privacy = privacy_scan()
+        for rel, text in _generated_docs(edition, privacy, plan["files"]).items():
             archive.writestr(rel, text)
     return {**plan, "mode": "write_zip", "zip_path": str(output)}
 

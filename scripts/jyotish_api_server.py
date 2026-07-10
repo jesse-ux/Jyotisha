@@ -30,6 +30,10 @@ try:
     from scripts.unified_consultation_orchestrator import UnifiedConsultationOrchestrator
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from unified_consultation_orchestrator import UnifiedConsultationOrchestrator
+try:
+    from scripts.western_oracle_adapter import build_packet_from_oracle_payload
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from western_oracle_adapter import build_packet_from_oracle_payload
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPTS_DIR, '..'))
@@ -39,6 +43,27 @@ _LOCAL_MODULE_CACHE = {}
 _API_CHART_CACHE_SCOPE = 'api_chart_response'
 _HIGH_RIGOR_JOB_SCOPE = 'high_rigor_workflow'
 _UNIFIED_CONSULTATION_ORCHESTRATOR = UnifiedConsultationOrchestrator()
+
+
+def _western_evidence_packet_from_body(body: dict, route_packet: dict) -> dict | None:
+    explicit_packet = body.get('western_evidence_packet')
+    if isinstance(explicit_packet, dict):
+        return explicit_packet
+    oracle_payload = body.get('western_oracle_payload') or body.get('western_astrology_oracle')
+    if not isinstance(oracle_payload, dict):
+        return None
+    try:
+        return build_packet_from_oracle_payload(oracle_payload, route_packet=route_packet)
+    except Exception as exc:  # pragma: no cover - defensive contract boundary
+        return {
+            'system': 'western_astrology',
+            'status': 'blocked',
+            'route': dict(route_packet),
+            'signals': [],
+            'missing_sections': ['western_oracle_payload'],
+            'adapter_error': exc.__class__.__name__,
+            'boundary': 'Western oracle payload was supplied but could not be normalized.',
+        }
 
 
 def execute_consultation_workflow(
@@ -55,6 +80,7 @@ def execute_consultation_workflow(
     entry_mode = body.get('entry_mode', 'direct_chart')
     high_rigor = bool(body.get('return_high_rigor_shape'))
     route_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.resolve_route(question, themes)
+    western_evidence_packet = _western_evidence_packet_from_body(body, route_packet)
     unified_contract = _UNIFIED_CONSULTATION_ORCHESTRATOR.shared_contract(
         entry_mode=entry_mode,
         question=question,
@@ -97,8 +123,11 @@ def execute_consultation_workflow(
             route_packet=route_packet,
             executed_steps=[],
             skipped_steps=known_steps,
+            western_evidence_packet=western_evidence_packet,
             blind=bool(body.get('blind') or body.get('blind_technical_mode')),
         )
+        if western_evidence_packet:
+            result['western_evidence_packet'] = western_evidence_packet
         if body.get('return_high_rigor_shape'):
             result['endpoint'] = 'high_rigor_workflow'
         return result
@@ -207,6 +236,7 @@ def execute_consultation_workflow(
         interpretation_source_runtime_coverage=interpretation_source_runtime_coverage,
         machine_evidence_packet=machine_evidence_packet,
         real_case_calibration=real_case_calibration,
+        western_evidence_packet=western_evidence_packet,
         blind=bool(body.get('blind') or body.get('blind_technical_mode')),
     )
 
@@ -253,6 +283,7 @@ def execute_consultation_workflow(
         'runtime_truth': runtime_truth,
         'interpretation_source_runtime_coverage': interpretation_source_runtime_coverage,
         'machine_evidence_packet': machine_evidence_packet,
+        'western_evidence_packet': western_evidence_packet or {},
         'real_case_calibration': real_case_calibration,
         'runtime_evidence_log': runtime_evidence_log,
         'next_questions': handler._high_rigor_next_questions(rectification, historical_backtest),

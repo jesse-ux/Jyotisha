@@ -876,3 +876,72 @@
 - 已启用 Hermes fallback 插件：`hermes plugins enable squeez-fallback` 成功，提示下一 session 生效。
 - 已验证 `ccusage` 可通过 `npx` 临时运行，版本 `20.0.14`；本轮未全局安装。
 - 仍需用户重启 Codex/相关 CLI，让已安装 hooks 在新 session 中生效。
+
+## 2026-07-10T00:00:00+08:00 - 西占/印占协同仲裁层 MVP
+
+- 用户要求按规划执行“印度占星主链 + 西方占星交叉验证”的高级版能力。
+- 新增 `scripts/western_evidence_packet.py`：定义西占证据包最小合同，只接收已生成的本命/时序/信号证据，不内置 Kerykeion、pyswisseph、Flatlib、Immanuel 等外部项目源码。
+- 新增 `scripts/cross_system_arbitrator.py`：比较 Jyotish 与 Western evidence signals，输出 shared signals、conflicts、blocked items 和 Technique Audit rows。
+- `scripts/unified_consultation_orchestrator.py` 的 `runtime_evidence_log()` 新增可选 `western_evidence_packet`，并把 `Western Cross-Validation`、`Cross-System Arbitration` 纳入 Technique Audit Table 与 required rows。
+- 新增测试：`tests/test_western_evidence_packet.py`、`tests/test_cross_system_arbitrator.py`，并扩展 `tests/test_unified_consultation_orchestrator.py`。
+- 验证：`python3 -m pytest -q tests/test_western_evidence_packet.py tests/test_cross_system_arbitrator.py tests/test_unified_consultation_orchestrator.py tests/test_mcp_strict_workflow_career.py tests/test_vedastro_external_technique_evidence.py::test_vedastro_adapter_declares_external_technique_evidence_policy tests/test_vedastro_external_technique_evidence.py::test_vedastro_adapter_builds_external_technique_preview_without_network` 通过，39 passed；`python3 scripts/pre_work_check.py --remote-timeout 8 --command-timeout 45` 通过。
+- 边界：本轮不声称已完成西占排盘引擎内置或真实案例 replay complete；外部西占项目仍按 license boundary 作为 oracle/adapters，不直接复制进高级闭源包。
+
+## 2026-07-10T00:00:00+08:00 - 西占外部 oracle JSON adapter
+
+- 新增 `scripts/western_oracle_adapter.py`：读取外部西占 JSON，输出标准 `western_evidence_packet`。
+- 支持两种输入：显式 `signals` 直通；或从 `aspects` 派生少量可审计 signals。
+- 当前派生规则只覆盖三类高价值 career signals：Uranus 合 MC、Jupiter 拱/六合 Mercury/Venus/MC、Saturn 合 Sun/Mercury/Venus。
+- 新增 `references/oracle/western_oracle_adapter_contract.md`，说明输入格式、CLI、派生规则和许可证边界。
+- 新增 `tests/test_western_oracle_adapter.py`。
+- 验证：`python3 -m pytest -q tests/test_western_oracle_adapter.py tests/test_western_evidence_packet.py tests/test_cross_system_arbitrator.py tests/test_unified_consultation_orchestrator.py` 通过，22 passed；MCP/外部证据 focused 20 passed。
+- 边界：adapter 不执行西占排盘，不内置 Kerykeion/Flatlib/Immanuel/pyswisseph；这些仍作为外部 oracle 或用户导出 JSON 来源。
+
+## 2026-07-10T00:00:00+08:00 - 西占 oracle 入口闭环
+
+- API 共享执行器 `execute_consultation_workflow(...)` 现在接受 `western_evidence_packet` 或 `western_oracle_payload`，会把外部西占导出 JSON 标准化后传入 `runtime_evidence_log()`。
+- MCP `strict_workflow(...)` 现在也可透传同样的西占证据包/外部 oracle payload，并在二次 strict adjudication 后保留 `Western Cross-Validation` 与 `Cross-System Arbitration` audit。
+- `machine_evidence_packet()` 现在保留上游已生成的 `cross_system_signals`，只做证据透传，不自行生成解释性结论。
+- `references/oracle/western_oracle_adapter_contract.md` 已补 API/MCP 入口字段说明。
+- 新增入口测试：`test_consultation_workflow_accepts_western_oracle_payload`、`test_mcp_strict_workflow_preserves_western_evidence_packet`。
+- 验证：`python3 -m pytest -q tests/test_api_server_security.py::test_consultation_workflow_accepts_western_oracle_payload tests/test_mcp_strict_workflow_career.py::test_mcp_strict_workflow_preserves_western_evidence_packet tests/test_western_oracle_adapter.py tests/test_western_evidence_packet.py tests/test_cross_system_arbitrator.py tests/test_unified_consultation_orchestrator.py` 通过，24 passed；扩展 MCP/API focused 回归通过，24 passed。
+- 边界：若 Jyotish 侧没有生成同主题 `cross_system_signals`，cross-system arbitration 仍会诚实显示 `partial`，不会把单边西占信号伪装成双系统互证。
+
+## 2026-07-10T00:00:00+08:00 - 真实案例 outcome replay manifest 守门
+
+- 新增 `references/real_case_calibration/replay_manifest.json`：先固定真实案例 outcome replay 导入合同；当前 `cases=[]`，状态明确 blocked，不伪装为 complete。
+- 新增 `scripts/real_case_replay_validator.py`：无第三方依赖，检查 case/source/event/replay 必填字段，输出 `case_count`、`replay_ready_count`、`blocked_reason` 和结构错误列表。
+- `real_case_calibration_catalog()` 现在暴露 `required_replay_schema` 与 `outcome_replay_manifest`，让 runtime evidence 能显示真实案例 replay 是否真的完成。
+- 新增测试：`tests/test_real_case_replay_validator.py`。
+- 验证：`python3 -m pytest -q tests/test_real_case_replay_validator.py tests/test_calibration_replay_schemas.py tests/test_unified_consultation_orchestrator.py tests/test_western_oracle_adapter.py tests/test_cross_system_arbitrator.py tests/test_api_server_security.py::test_consultation_workflow_accepts_western_oracle_payload tests/test_mcp_strict_workflow_career.py::test_mcp_strict_workflow_preserves_western_evidence_packet` 通过，27 passed。
+- 边界：本轮只完成 replay 合同与机器守门；尚未导入全球真实案例 raw/outcome 数据，因此 `Real Case Calibration` 仍应保持 partial/blocked 置信边界。
+
+## 2026-07-10T00:00:00+08:00 - 三引擎 parity replay manifest 守门
+
+- 新增 `references/oracle/three_engine_parity_replay_manifest.json`：固定 VedAstro / PyJHora-JHora / jyotishganit 同盘 replay 导入合同；当前无 comparison rows，明确 blocked。
+- 新增 `scripts/three_engine_parity_replay_validator.py`：无第三方依赖，校验 required engines、comparison rows、row status，输出 `tested`、match/mismatch/blocked counts 和 `blocked_reason`。
+- `scripts/diagnose_external_engine_adapters.py` 的 `same_chart_parity_contract` 现在包含 `replay_manifest`，避免把 readiness 误读成真实同盘 parity 已测试。
+- 新增测试：`tests/test_three_engine_parity_replay_validator.py`，并扩展 `tests/test_external_engine_adapter_diagnostics.py`。
+- 验证：`python3 -m pytest -q tests/test_unified_consultation_orchestrator.py tests/test_western_oracle_adapter.py tests/test_cross_system_arbitrator.py tests/test_api_server_security.py::test_consultation_workflow_accepts_western_oracle_payload tests/test_mcp_strict_workflow_career.py::test_mcp_strict_workflow_preserves_western_evidence_packet tests/test_external_engine_adapter_diagnostics.py tests/test_three_engine_parity_replay_validator.py tests/test_real_case_replay_validator.py` 通过，28 passed。
+- 边界：本轮只完成 parity replay 合同与诊断守门；未安装/调用外部专业软件，不声称 VedAstro/PyJHora/JHora/jyotishganit 已完成同盘比对。
+
+## 2026-07-10T00:00:00+08:00 - 高级版 Skill 打包最终验收
+
+- `scripts/skill_release_package.py` 现在会生成 `RELEASE_MANIFEST.json` 和 `PACKAGE_ACCEPTANCE.json`，并把 acceptance 状态写入 dry-run/zip plan。
+- `INSTALL.md` 生成内容已补基础 Git 地址 `https://github.com/732642856/yinduzhanxing`、普通用户验收命令和 VedAstro official raw 边界。
+- `USER_PROMPTS.md` 生成内容已补最高品质调用模板：统一主链、Technique Audit Table、三引擎 parity replay、真实案例 replay、`western_oracle_payload` 边界。
+- 高级版 zip 会强制包含三类合同：`references/real_case_calibration/replay_manifest.json`、`references/oracle/three_engine_parity_replay_manifest.json`、`references/oracle/western_oracle_adapter_contract.md`，即使这些合同是当前工作区新文件。
+- 修复 `scripts/user_invocation_acceptance_check.py`：外部引擎诊断 `status=complete` 现在视为可用状态，不再误报 `external_adapter_status_unusable`。
+- 已生成本地验收产物：`scratch/local/releases/jyotish-premium-skill.zip`，大小约 20 MB，`PACKAGE_ACCEPTANCE.json.status=pass`，关键文件缺失列表为空。
+- 验证：`python3 -m pytest -q tests/test_skill_release_package.py tests/test_skill_release_manifest.py tests/test_user_invocation_acceptance_contract.py tests/test_external_engine_adapter_diagnostics.py tests/test_three_engine_parity_replay_validator.py tests/test_real_case_replay_validator.py` 通过，14 passed；`git diff --check` 通过；`python3 scripts/pre_work_check.py --remote-timeout 8 --command-timeout 45` 通过。
+- 边界：zip 产物只在本地 scratch，尚未提交或推送；外部 official raw/parity rows 未导入，包内 acceptance 只证明 release hygiene 和合同齐备。
+
+## 2026-07-10T00:00:00+08:00 - 高级版 Skill 干净目录解压试用验收
+
+- 新增 `tests/test_skill_release_clean_trial.py`：测试会生成高级版 zip、解压到 pytest 临时干净目录，再在解压目录中运行隐私扫描和普通用户调用验收。
+- 修复 `scripts/public_release_privacy_scan.py`：当目录没有 `.git` 或 `git ls-files` 不可用时，自动退回目录遍历；这覆盖云盘 zip 解压后的真实用户环境。
+- 新增 `test_public_release_privacy_scan_supports_unpacked_zip_without_git`，防止隐私扫描再次只适配源码仓。
+- 手工 clean trial 已跑过：`scratch/local/clean_skill_trial` 关键文件缺失列表为空，`public_release_privacy_scan.py` 0 findings，`diagnose_external_engine_adapters.py --json` 返回 `status=complete`，`user_invocation_acceptance_check.py` 返回 `status=pass`。
+- 已用修复后的脚本重新生成 `scratch/local/releases/jyotish-premium-skill.zip`；并在仓外 `/tmp/jyotish-clean-trial.MvZWWX` 解压验证，确认无 `.git` 环境下 `public_release_privacy_scan.py`、`diagnose_external_engine_adapters.py --json`、`user_invocation_acceptance_check.py` 均可运行，用户调用验收 `status=pass`。
+- 验证：`python3 -m pytest -q tests/test_public_release_privacy_scan.py tests/test_skill_release_clean_trial.py` 通过，4 passed；release 组合回归 `python3 -m pytest -q tests/test_skill_release_clean_trial.py tests/test_skill_release_package.py tests/test_skill_release_manifest.py tests/test_user_invocation_acceptance_contract.py tests/test_external_engine_adapter_diagnostics.py tests/test_three_engine_parity_replay_validator.py tests/test_real_case_replay_validator.py tests/test_public_release_privacy_scan.py` 通过，18 passed。
+- 边界：这是本地 macOS/Python 干净目录验收，不代表 VedAstro official raw、PyJHora/JHora 或真实案例 replay 已完成外部数据闭环。

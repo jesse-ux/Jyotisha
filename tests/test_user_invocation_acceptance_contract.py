@@ -149,4 +149,4 @@ def test_one_command_user_invocation_acceptance_check() -> None:
     assert report["checks"]["user_invocation_tests"] is True
     assert report["checks"]["guided_topics_entrypoint"] is True
     assert report["checks"]["external_adapter_diagnostics"] is True
-    assert report["external_adapter_status"] in {"pass", "partial"}
+    assert report["external_adapter_status"] in {"pass", "partial", "complete"}

@@ -186,6 +186,74 @@ def test_mcp_strict_workflow_returns_runtime_evidence_log(monkeypatch) -> None:
     assert result["runtime_evidence_log"]["quality_gate"]["technique_audit_table"][1]["technique"] == "VedAstro Raw Archive Manifest"
 
 
+def test_mcp_strict_workflow_preserves_western_evidence_packet(monkeypatch) -> None:
+    seen = {}
+
+    def fake_execute(**kwargs):
+        seen.update(kwargs)
+        return {
+            "chart": {
+                "modules": {},
+                "cross_system_signals": [
+                    {
+                        "theme": "career_relocation",
+                        "claim": "career_triggered_relocation",
+                        "timing": "2026-07",
+                        "source": "jyotish_runtime_signal",
+                    }
+                ],
+                "ai_prompt_pack": {
+                    "evidence_snapshot": {
+                        "vedastro_official_snapshot": {
+                            "status": "ok",
+                            "official_primary_evidence": {"chart_core": {"status": "ok"}},
+                        }
+                    }
+                },
+            },
+            "routing": {"question_type": "career", "primary_theme": "career"},
+            "entry_mode": "direct_chart",
+            "runtime_planner": {"executed_steps": ["compute_chart"], "skipped_steps": []},
+            "western_evidence_packet": kwargs["western_evidence_packet"],
+        }
+
+    western_packet = {
+        "system": "western_astrology",
+        "status": "complete",
+        "signals": [
+            {
+                "theme": "career_relocation",
+                "claim": "career_triggered_relocation",
+                "timing": "2026-07",
+                "source": "western_oracle_signal",
+            }
+        ],
+    }
+
+    monkeypatch.setattr(mcp_server, "_execute_mcp_consultation_workflow", fake_execute)
+    monkeypatch.setattr(mcp_server, "_maybe_attach_vedastro_evidence", lambda route, chart, **kwargs: chart)
+    monkeypatch.setattr(mcp_server, "_collect_strict_evidence", lambda route, chart: {"question_type": route})
+
+    result = mcp_server.strict_workflow(
+        question="career relocation timing",
+        year=1955,
+        month=2,
+        day=24,
+        hour=19,
+        minute=15,
+        lat=37.7749,
+        lon=-122.4194,
+        tz=8,
+        age=33,
+        transit_date="2026-07-05",
+        western_evidence_packet=western_packet,
+    )
+
+    assert seen["western_evidence_packet"] == western_packet
+    assert result["runtime_evidence_log"]["cross_system_arbitration"]["status"] == "used"
+    assert result["runtime_evidence_log"]["cross_system_arbitration"]["shared_signals"][0]["claim"] == "career_triggered_relocation"
+
+
 def test_career_blocks_label_when_d10_is_missing_but_preserves_jaimini_context() -> None:
     result = _base_career_result()
     del result["modules"]["varga_full"]["D10_Dasamsa"]

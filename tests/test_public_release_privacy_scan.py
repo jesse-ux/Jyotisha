@@ -2,20 +2,30 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scripts.public_release_privacy_scan import build_report, scan_text
+from scripts.public_release_privacy_scan import build_report, deny_patterns, iter_release_files, scan_text
 
 
-def test_public_release_privacy_scan_finds_private_birth_tuple() -> None:
+def test_public_release_privacy_scan_finds_private_configured_pattern(monkeypatch) -> None:
+    monkeypatch.setenv("PUBLIC_RELEASE_DENY_PATTERNS", "SECRET_BIRTH_TOKEN")
     findings = scan_text(
         Path("sample.py"),
-        '{"year": REDACTED_YEAR, "month": 4, "day": 17, "hour": 14, "minute": 49}',
+        "safe text SECRET_BIRTH_TOKEN",
+        deny_patterns(),
     )
-
-    assert {item["rule_id"] for item in findings} >= {"private_birth_dict_tuple"}
+    assert {item["rule_id"] for item in findings} == {"private_env_pattern_01"}
 
 
 def test_public_release_privacy_scan_has_no_release_findings() -> None:
     report = build_report()
-
     assert report["status"] == "pass", report["findings"][:20]
     assert report["finding_count"] == 0
+
+
+def test_public_release_privacy_scan_supports_unpacked_zip_without_git(tmp_path: Path) -> None:
+    (tmp_path / "INSTALL.md").write_text("safe install text\n", encoding="utf-8")
+    (tmp_path / "scratch").mkdir()
+    (tmp_path / "scratch" / "ignored.md").write_text("SECRET_BIRTH_TOKEN\n", encoding="utf-8")
+
+    assert [path.name for path in iter_release_files(tmp_path)] == ["INSTALL.md"]
+    report = build_report(tmp_path)
+    assert report["status"] == "pass", report["findings"]

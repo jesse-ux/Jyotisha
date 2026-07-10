@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from scripts.western_evidence_packet import build_western_evidence_packet
 from scripts.unified_consultation_orchestrator import UnifiedConsultationOrchestrator
 
 
@@ -193,6 +194,8 @@ def test_runtime_evidence_log_exposes_blind_packet_case_and_quality_gate_contrac
         "VedAstro Cloud State",
         "VedAstro Raw Archive Manifest",
         "External Engine Cross-Validation",
+        "Western Cross-Validation",
+        "Cross-System Arbitration",
         "Evidence Packet",
         "Blind Technical Mode",
         "MEVG / Global Web Evidence",
@@ -212,7 +215,53 @@ def test_runtime_evidence_log_exposes_blind_packet_case_and_quality_gate_contrac
     assert engines["jyotishganit"]["adapter_status"] == "available"
     assert engines["jyotishganit"]["license"] == "MIT"
     assert log["external_engine_cross_validation"]["status"] == "partial"
+    assert log["cross_system_arbitration"]["status"] == "blocked"
+    assert "western_evidence_packet_missing" in log["cross_system_arbitration"]["blocked_items"]
     assert log["quality_gate"]["blocked_items"]
+
+
+def test_runtime_evidence_log_uses_cross_system_shared_signal_when_packets_align() -> None:
+    orchestrator = UnifiedConsultationOrchestrator()
+    western_packet = build_western_evidence_packet(
+        route_packet={"question_type": "career", "primary_theme": "career"},
+        natal={"ascendant": "Virgo", "mc": "Gemini"},
+        timing_techniques={"transits": [{"aspect": "Uranus conjunct MC"}]},
+        signals=[
+            {
+                "theme": "career_relocation",
+                "claim": "career_triggered_relocation",
+                "timing": "2026-08-24..2026-09-28",
+                "source": "Uranus conjunct MC opposite IC",
+            }
+        ],
+    )
+    log = orchestrator.runtime_evidence_log(
+        surface="api_web",
+        entry_mode="direct_chart",
+        route_packet={"question_type": "career", "primary_theme": "career"},
+        executed_steps=["compute_chart"],
+        skipped_steps=[],
+        machine_evidence_packet={
+            "status": "complete",
+            "sections": {"vedastro_official_raw_archive_manifest": {"status": "used"}},
+            "functional_benefic_malefic": {"status": "used"},
+            "signals": [
+                {
+                    "theme": "career_relocation",
+                    "claim": "career_triggered_relocation",
+                    "timing": "2026-08-24..2026-09-28",
+                    "source": "Saturn/Ketu + Rahu 4H/10H axis",
+                }
+            ],
+        },
+        western_evidence_packet=western_packet,
+    )
+
+    assert log["cross_system_arbitration"]["status"] == "used"
+    assert log["cross_system_arbitration"]["shared_signals"][0]["claim"] == "career_triggered_relocation"
+    audit = {row["technique"]: row for row in log["quality_gate"]["technique_audit_table"]}
+    assert audit["Western Cross-Validation"]["used"] is True
+    assert audit["Cross-System Arbitration"]["used"] is True
 
     packet = orchestrator.machine_evidence_packet(
         chart={"chart": {"planets": {"Sun": {}}, "ascendant": {"sign": "Leo"}}},

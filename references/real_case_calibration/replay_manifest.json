@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0",
+  "status": "contract_ready_no_cases",
+  "case_schema": "references/real_case_calibration/catalog.schema.json",
+  "cases": [],
+  "blocked_reason": "no_structured_outcome_replay_cases_imported",
+  "runtime_boundary": "This manifest defines the replay import contract only. No real-case outcome replay is complete until structured cases are imported and validated."
+}

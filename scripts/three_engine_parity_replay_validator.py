@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Validate same-chart three-engine parity replay manifests."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+REQUIRED_ENGINES = {"VedAstro", "PyJHora_JHora", "jyotishganit"}
+REQUIRED_ROW_FIELDS = {"section", "field", "local_value", "oracle_values", "status"}
+VALID_ROW_STATUSES = {"match", "mismatch", "blocked", "not_comparable"}
+
+
+def _row_errors(row: Any, index: int) -> list[dict[str, Any]]:
+    if not isinstance(row, dict):
+        return [{"row_index": index, "field": "row", "error": "not_object"}]
+    errors: list[dict[str, Any]] = []
+    for field in sorted(REQUIRED_ROW_FIELDS - set(row)):
+        errors.append({"row_index": index, "field": field, "error": "missing"})
+    if row.get("status") not in VALID_ROW_STATUSES:
+        errors.append({"row_index": index, "field": "status", "error": "invalid"})
+    if "oracle_values" in row and not isinstance(row.get("oracle_values"), dict):
+        errors.append({"row_index": index, "field": "oracle_values", "error": "not_object"})
+    return errors
+
+
+def validate_manifest(path: str | Path) -> dict[str, Any]:
+    manifest_path = Path(path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    engines = manifest.get("engines") if isinstance(manifest.get("engines"), dict) else {}
+    rows = manifest.get("comparison_rows")
+    errors: list[dict[str, Any]] = []
+
+    missing_engines = sorted(REQUIRED_ENGINES - set(engines))
+    for engine in missing_engines:
+        errors.append({"field": f"engines.{engine}", "error": "missing"})
+
+    if not isinstance(rows, list):
+        rows = []
+        errors.append({"field": "comparison_rows", "error": "not_array"})
+
+    for index, row in enumerate(rows):
+        errors.extend(_row_errors(row, index))
+
+    counts = {"match": 0, "mismatch": 0, "blocked": 0, "not_comparable": 0}
+    for row in rows:
+        if isinstance(row, dict) and row.get("status") in counts:
+            counts[row["status"]] += 1
+
+    if errors:
+        status = "invalid"
+        blocked_reason = "parity_manifest_contract_errors"
+    elif not rows:
+        status = "blocked"
+        blocked_reason = manifest.get("blocked_reason") or "no_same_chart_oracle_rows_imported"
+    elif counts["mismatch"]:
+        status = "mismatch"
+        blocked_reason = None
+    elif counts["blocked"]:
+        status = "partial"
+        blocked_reason = "some_comparison_rows_blocked"
+    else:
+        status = "pass"
+        blocked_reason = None
+
+    return {
+        "status": status,
+        "tested": status in {"pass", "mismatch", "partial"},
+        "manifest_path": str(manifest_path),
+        "case_id": manifest.get("case_id"),
+        "birth_data_policy": manifest.get("birth_data_policy"),
+        "engine_count": len(engines),
+        "required_engines": sorted(REQUIRED_ENGINES),
+        "missing_engines": missing_engines,
+        "comparison_row_count": len(rows),
+        "match_count": counts["match"],
+        "mismatch_count": counts["mismatch"],
+        "blocked_row_count": counts["blocked"],
+        "not_comparable_count": counts["not_comparable"],
+        "blocked_reason": blocked_reason,
+        "errors": errors,
+        "runtime_boundary": manifest.get("runtime_boundary", ""),
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("manifest", nargs="?", default="references/oracle/three_engine_parity_replay_manifest.json")
+    args = parser.parse_args(argv)
+    print(json.dumps(validate_manifest(args.manifest), ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

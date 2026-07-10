@@ -19,9 +19,19 @@ except Exception:  # pragma: no cover - import path varies in tests/CLI
     from scripts.diagnose_jyotishganit_adapter import build_report as build_jyotishganit_adapter_report
 
 try:
+    from cross_system_arbitrator import build_cross_system_arbitration
+except Exception:  # pragma: no cover - import path varies in tests/CLI
+    from scripts.cross_system_arbitrator import build_cross_system_arbitration
+
+try:
     from functional_benefics import derive_functional_benefic_malefic
 except Exception:  # pragma: no cover - import path varies in tests/CLI
     from scripts.functional_benefics import derive_functional_benefic_malefic
+
+try:
+    from real_case_replay_validator import validate_manifest as validate_real_case_replay_manifest
+except Exception:  # pragma: no cover - import path varies in tests/CLI
+    from scripts.real_case_replay_validator import validate_manifest as validate_real_case_replay_manifest
 
 
 @dataclass(frozen=True)
@@ -426,12 +436,16 @@ class UnifiedConsultationOrchestrator:
             ),
         }
         missing = [name for name, section in sections.items() if section.get("status") == "missing"]
+        signals = chart_data.get("cross_system_signals")
+        if not isinstance(signals, list):
+            signals = modules.get("cross_system_signals") if isinstance(modules.get("cross_system_signals"), list) else []
         return {
             "status": "complete" if not missing else "partial",
             "route": dict(route_packet),
             "required_sections": list(self.EVIDENCE_PACKET_REQUIRED_SECTIONS),
             "sections": sections,
             "functional_benefic_malefic": functional_layer,
+            "signals": [item for item in signals if isinstance(item, dict)],
             "missing_sections": missing,
         }
 
@@ -463,6 +477,8 @@ class UnifiedConsultationOrchestrator:
                 "event_trigger_keywords": ["UL", "Darapada", "7th lord", "DK"],
             },
         }
+        replay_manifest_path = Path(__file__).resolve().parents[1] / "references/real_case_calibration/replay_manifest.json"
+        replay_manifest = validate_real_case_replay_manifest(replay_manifest_path)
         candidate_refs = case_index_by_domain.get(route, [])
         packet = machine_evidence_packet if isinstance(machine_evidence_packet, dict) else {}
         sections = packet.get("sections") if isinstance(packet.get("sections"), dict) else {}
@@ -518,6 +534,8 @@ class UnifiedConsultationOrchestrator:
             "route": route,
             "source_roots": ["references/real_case_studies", "docs/benchmark"],
             "case_index_by_domain": case_index_by_domain,
+            "required_replay_schema": "references/real_case_calibration/catalog.schema.json",
+            "outcome_replay_manifest": replay_manifest,
             "candidate_refs": list(candidate_refs),
             "scored_candidates": scored_candidates,
             "reference_grade": scored_candidates[0]["reference_grade"] if scored_candidates else "ungraded_until_similarity_scored",
@@ -539,6 +557,7 @@ class UnifiedConsultationOrchestrator:
         interpretation_source_runtime_coverage: dict[str, Any] | None = None,
         machine_evidence_packet: dict[str, Any] | None = None,
         real_case_calibration: dict[str, Any] | None = None,
+        western_evidence_packet: dict[str, Any] | None = None,
         blind: bool = False,
     ) -> dict[str, Any]:
         official = vedastro_official if isinstance(vedastro_official, dict) else {}
@@ -575,6 +594,13 @@ class UnifiedConsultationOrchestrator:
             blocked_items.append("real_case_calibration_not_yet_materialized")
         elif case_status != "complete":
             blocked_items.append("real_case_calibration_partial")
+        cross_system_arbitration = build_cross_system_arbitration(
+            route_packet=route_packet,
+            jyotish_evidence=packet,
+            western_evidence=western_evidence_packet,
+        )
+        if cross_system_arbitration["status"] != "used":
+            blocked_items.append("cross_system_arbitration_not_complete")
         technique_audit_table = [
             {
                 "technique": "VedAstro Cloud State",
@@ -606,6 +632,7 @@ class UnifiedConsultationOrchestrator:
                     else "claims_capped_until_pyjhora_jhora_jyotishganit_are_invoked_for_this_run"
                 ),
             },
+            *cross_system_arbitration["technique_audit_rows"],
             {
                 "technique": "Evidence Packet",
                 "status": packet_status,
@@ -653,6 +680,7 @@ class UnifiedConsultationOrchestrator:
             "vedastro_cloud_state": vedastro_state,
             "vedastro_runtime_truth": dict(runtime_truth),
             "external_engine_cross_validation": external_cross_validation,
+            "cross_system_arbitration": cross_system_arbitration,
             "source_priority": {
                 "mode": self.SOURCE_PRIORITY["mode"],
                 "priority": list(self.SOURCE_PRIORITY["priority"]),
@@ -691,7 +719,10 @@ class UnifiedConsultationOrchestrator:
                 "technique_audit_table": technique_audit_table,
                 "required_rows": [
                     "VedAstro Cloud State",
+                    "VedAstro Raw Archive Manifest",
                     "External Engine Cross-Validation",
+                    "Western Cross-Validation",
+                    "Cross-System Arbitration",
                     "Evidence Packet",
                     "Blind Technical Mode",
                     "MEVG / Global Web Evidence",
