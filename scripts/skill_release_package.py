@@ -56,6 +56,52 @@ Do not add private birth data, API keys, or desktop oracle screenshots to this p
 
 请使用主动问询式校时：先生成候选时间扫描和选择题，我只回答 A/B/C/D。
 """,
+    "SALES_PACKAGE.md": """# Premium Skill Sales Package
+
+Edition: premium_cloud_drive
+
+## What This Package Includes
+
+- Unified Jyotish runtime entrypoints for skill, MCP, API, and local scripts.
+- Evidence packet workflow for D1/D9/D10/D2/D4, dasha boundaries, audit rows, and external oracle status.
+- Guided topic entrypoint for users who do not know what to ask.
+- Strict workflow prompts for high-rigor readings.
+- Release hygiene checks for privacy, clean unzip usage, and user invocation acceptance.
+
+## What This Package Does Not Include
+
+- Private birth data, private case reports, API keys, or desktop oracle screenshots.
+- Guaranteed VedAstro cloud closure without `official_raw_response`.
+- Completed PyJHora/JHora parity rows unless the operator imports external raw oracle outputs.
+- Completed real case replay unless structured case outcomes are imported.
+
+Do not include private birth data in this package. Users provide their own birth data at runtime.
+""",
+    "GUIDED_ENTRYPOINT.md": """# Guided Entrypoint
+
+Use this when the user loads the skill but does not know how to ask.
+
+## Default Flow
+
+1. Ask for birth date, exact or approximate birth time, birthplace, and question language.
+2. Run `direct_chart` when birth time is reliable; run `rectification` when birth time is uncertain.
+3. Generate `evidence_packet`, `guided_topics`, and `Technique Audit Table` before interpretation.
+4. Use `blind=true` when prior personal feedback must not influence the reading.
+5. Mark VedAstro as `official_verified`, `official_blocked`, or `local_fallback`.
+6. Mark PyJHora/JHora, jyotishganit, Western oracle, and Real Case Calibration as `used`, `partial`, or `blocked`.
+
+## User-Facing Starter
+
+请提供出生日期、出生时间、出生地点和想看的语言。
+如果你不知道该问什么，我会先运行 evidence packet，然后给出 3-5 个最值得继续看的主题。
+
+## Output Requirements
+
+- Start from evidence, not story.
+- Show blocked or partial techniques.
+- Never claim official cloud evidence without raw official evidence.
+- Keep `guided_topics` available for the next turn.
+""",
 }
 
 REQUIRED_CONTRACTS = [

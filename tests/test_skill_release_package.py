@@ -20,6 +20,8 @@ def test_skill_release_package_dry_run_uses_safe_tracked_files() -> None:
     assert not any("private" in path.lower() for path in plan["files"])
     assert "RELEASE_MANIFEST.json" in plan["generated_files"]
     assert "PACKAGE_ACCEPTANCE.json" in plan["generated_files"]
+    assert "SALES_PACKAGE.md" in plan["generated_files"]
+    assert "GUIDED_ENTRYPOINT.md" in plan["generated_files"]
     assert plan["required_contracts"]["references/real_case_calibration/replay_manifest.json"] is True
     assert plan["required_contracts"]["references/oracle/three_engine_parity_replay_manifest.json"] is True
     assert "references/real_case_calibration/replay_manifest.json" in plan["files"]
@@ -41,6 +43,8 @@ def test_skill_release_package_can_write_zip(tmp_path) -> None:
     assert "USER_PROMPTS.md" in names
     assert "RELEASE_MANIFEST.json" in names
     assert "PACKAGE_ACCEPTANCE.json" in names
+    assert "SALES_PACKAGE.md" in names
+    assert "GUIDED_ENTRYPOINT.md" in names
     assert "references/real_case_calibration/replay_manifest.json" in names
     assert "references/oracle/three_engine_parity_replay_manifest.json" in names
     assert "references/oracle/western_oracle_adapter_contract.md" in names
@@ -48,11 +52,18 @@ def test_skill_release_package_can_write_zip(tmp_path) -> None:
     with zipfile.ZipFile(target) as archive:
         install = archive.read("INSTALL.md").decode("utf-8")
         prompts = archive.read("USER_PROMPTS.md").decode("utf-8")
+        sales = archive.read("SALES_PACKAGE.md").decode("utf-8")
+        guided = archive.read("GUIDED_ENTRYPOINT.md").decode("utf-8")
         acceptance = json.loads(archive.read("PACKAGE_ACCEPTANCE.json").decode("utf-8"))
     assert "python3 scripts/user_invocation_acceptance_check.py" in install
     assert "https://github.com/732642856/yinduzhanxing" in install
     assert "guided_topics" in prompts
     assert "official_blocked" in prompts
     assert "western_oracle_payload" in prompts
+    assert "premium_cloud_drive" in sales
+    assert "Do not include private birth data" in sales
+    assert "blind=true" in guided
+    assert "Technique Audit Table" in guided
+    assert "guided_topics" in guided
     assert acceptance["status"] in {"pass", "blocked"}
     assert acceptance["required_contracts"]["references/oracle/three_engine_parity_replay_manifest.json"] is True

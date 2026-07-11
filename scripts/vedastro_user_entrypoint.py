@@ -96,22 +96,31 @@ def _case_from_args(args: argparse.Namespace, themes: list[str]) -> dict[str, An
 
 
 def _run_capability_catalog(case: dict[str, Any]) -> dict[str, Any]:
-    completed = subprocess.run(
-        [
-            sys.executable,
-            str(RUNNER),
-            "--bundle",
-            "official_full_capability_catalog",
-            "--birth-json",
-            json.dumps(case, ensure_ascii=False),
-        ],
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-        timeout=max(5.0, float(os.environ.get("VEDASTRO_TIMEOUT_SECONDS", "5") or 5)),
-        check=False,
-        env=os.environ.copy(),
-    )
+    try:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(RUNNER),
+                "--bundle",
+                "official_full_capability_catalog",
+                "--birth-json",
+                json.dumps(case, ensure_ascii=False),
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            timeout=max(5.0, float(os.environ.get("VEDASTRO_TIMEOUT_SECONDS", "5") or 5)),
+            check=False,
+            env=os.environ.copy(),
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "available": False,
+            "status": "official_full_capability_catalog_timeout",
+            "summary": {},
+            "domain_routing": {},
+            "sample_outputs": {},
+        }
     if completed.returncode != 0:
         return {
             "available": False,

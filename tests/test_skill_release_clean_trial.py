@@ -36,6 +36,8 @@ def test_premium_skill_zip_runs_from_clean_directory(tmp_path: Path) -> None:
     required = [
         "INSTALL.md",
         "USER_PROMPTS.md",
+        "SALES_PACKAGE.md",
+        "GUIDED_ENTRYPOINT.md",
         "PACKAGE_ACCEPTANCE.json",
         "references/real_case_calibration/replay_manifest.json",
         "references/oracle/three_engine_parity_replay_manifest.json",

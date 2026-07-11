@@ -6,8 +6,23 @@ import subprocess
 import sys
 from pathlib import Path
 
+from scripts import vedastro_user_entrypoint
+
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_capability_catalog_timeout_degrades_to_blocked(monkeypatch) -> None:
+    def timeout_run(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=args[0], timeout=kwargs.get("timeout"))
+
+    monkeypatch.setattr(vedastro_user_entrypoint.subprocess, "run", timeout_run)
+
+    report = vedastro_user_entrypoint._run_capability_catalog({"year": 2000})
+
+    assert report["available"] is False
+    assert report["status"] == "official_full_capability_catalog_timeout"
+    assert report["summary"] == {}
 
 
 def test_user_entrypoint_runs_catalog_and_strict_workflow_contract() -> None:
