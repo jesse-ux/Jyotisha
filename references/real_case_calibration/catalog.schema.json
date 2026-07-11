@@ -2,138 +2,86 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Real Case Calibration Catalog",
   "type": "object",
-  "required": [
-    "case_id",
-    "source",
-    "chart_signature",
-    "event_outcomes",
-    "similarity",
-    "replay"
-  ],
+  "required": ["case_id", "subject", "source", "chart_signature", "event_outcomes", "similarity", "replay"],
   "properties": {
-    "case_id": {
-      "type": "string"
-    },
-    "source": {
+    "case_id": {"type": "string"},
+    "subject": {
       "type": "object",
-      "required": [
-        "url",
-        "source_grade",
-        "license_or_quote_boundary"
-      ],
+      "required": ["name", "year", "month", "day", "hour", "minute", "lat", "lon", "tz", "node_mode", "birth_source"],
       "properties": {
-        "url": {
-          "type": "string"
-        },
-        "source_grade": {
-          "type": "string",
-          "enum": [
-            "primary",
-            "verified_secondary",
-            "forum_claim",
-            "unverified"
-          ]
-        },
-        "license_or_quote_boundary": {
-          "type": "string"
-        }
-      }
-    },
-    "chart_signature": {
-      "type": "object",
-      "properties": {
-        "lagna": {
-          "type": "string"
-        },
-        "moon_sign": {
-          "type": "string"
-        },
-        "d9_lagna": {
-          "type": "string"
-        },
-        "ul": {
-          "type": "string"
-        },
-        "a7": {
-          "type": "string"
-        },
-        "a10": {
-          "type": "string"
-        },
-        "notable_yogas": {
-          "type": "array",
-          "items": {
-            "type": "string"
+        "name": {"type": "string"},
+        "year": {"type": "integer"},
+        "month": {"type": "integer", "minimum": 1, "maximum": 12},
+        "day": {"type": "integer", "minimum": 1, "maximum": 31},
+        "hour": {"type": "integer", "minimum": 0, "maximum": 23},
+        "minute": {"type": "integer", "minimum": 0, "maximum": 59},
+        "lat": {"type": "number"},
+        "lon": {"type": "number"},
+        "tz": {"type": "number"},
+        "node_mode": {"enum": ["mean", "true"]},
+        "birth_source": {
+          "type": "object",
+          "required": ["url", "source_grade", "time_accuracy_rating", "evidence_basis"],
+          "properties": {
+            "url": {"type": "string"},
+            "source_grade": {"enum": ["primary", "verified_secondary"]},
+            "time_accuracy_rating": {"enum": ["A", "AA"]},
+            "evidence_basis": {"type": "string"}
           }
         }
       }
     },
+    "source": {
+      "type": "object",
+      "required": ["url", "source_grade", "license_or_quote_boundary"],
+      "properties": {
+        "url": {"type": "string"},
+        "source_grade": {"enum": ["primary", "verified_secondary", "forum_claim", "unverified"]},
+        "license_or_quote_boundary": {"type": "string"}
+      }
+    },
+    "chart_signature": {"type": "object"},
     "event_outcomes": {
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "object",
-        "required": [
-          "event_type",
-          "event_date",
-          "outcome"
-        ],
+        "required": ["event_type", "event_date", "domain", "expected_label", "outcome", "source"],
         "properties": {
-          "event_type": {
-            "type": "string"
-          },
-          "event_date": {
-            "type": "string"
-          },
-          "outcome": {
-            "type": "string"
-          },
-          "source_excerpt_note": {
-            "type": "string"
+          "event_type": {"type": "string"},
+          "event_date": {"type": "string"},
+          "domain": {"enum": ["career", "marriage"]},
+          "expected_label": {"enum": ["career_status", "legal_marriage"]},
+          "outcome": {"type": "string"},
+          "source_excerpt_note": {"type": "string"},
+          "source": {
+            "type": "object",
+            "required": ["url", "source_grade"],
+            "properties": {
+              "url": {"type": "string"},
+              "source_grade": {"enum": ["primary", "verified_secondary"]}
+            }
           }
         }
       }
     },
     "similarity": {
       "type": "object",
+      "required": ["score", "matching_factors", "dissimilar_factors"],
       "properties": {
-        "score": {
-          "type": "number"
-        },
-        "matching_factors": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "dissimilar_factors": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
+        "score": {"type": "number"},
+        "matching_factors": {"type": "array", "items": {"type": "string"}},
+        "dissimilar_factors": {"type": "array", "items": {"type": "string"}}
       }
     },
     "replay": {
       "type": "object",
+      "required": ["outcome_replay_status", "do_not_use_for_prediction"],
       "properties": {
-        "outcome_replay_status": {
-          "type": "string",
-          "enum": [
-            "not_started",
-            "blocked",
-            "partial",
-            "complete"
-          ]
-        },
-        "conflict_notes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "do_not_use_for_prediction": {
-          "type": "boolean"
-        }
+        "outcome_replay_status": {"enum": ["pending", "replayed", "blocked"]},
+        "do_not_use_for_prediction": {"type": "boolean"},
+        "report_path": {"type": "string"},
+        "conflict_notes": {"type": "array", "items": {"type": "string"}}
       }
     }
   }

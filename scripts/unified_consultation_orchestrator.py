@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -479,6 +480,109 @@ class UnifiedConsultationOrchestrator:
         }
         replay_manifest_path = Path(__file__).resolve().parents[1] / "references/real_case_calibration/replay_manifest.json"
         replay_manifest = validate_real_case_replay_manifest(replay_manifest_path)
+        holdout_manifest_path = Path(__file__).resolve().parents[1] / "references/real_case_calibration/replay_manifest_holdout_v2.json"
+        holdout_manifest = validate_real_case_replay_manifest(holdout_manifest_path)
+        benchmark_path = Path(__file__).resolve().parents[1] / "docs/benchmark/public_real_case_20_case_closure_2026_07_11.json"
+        if benchmark_path.exists():
+            benchmark_payload = json.loads(benchmark_path.read_text(encoding="utf-8"))
+            public_outcome_benchmark = {
+                "status": "used",
+                "path": "docs/benchmark/public_real_case_20_case_closure_2026_07_11.json",
+                "summary": benchmark_payload.get("summary") or {},
+                "method": benchmark_payload.get("method") or {},
+                "strict_workflow_batch": benchmark_payload.get("strict_workflow_batch") or {},
+                "holdout_promotion": benchmark_payload.get("holdout_promotion") or {},
+                "technique_debt": benchmark_payload.get("technique_debt") or {},
+            }
+        else:
+            public_outcome_benchmark = {
+                "status": "blocked",
+                "path": "docs/benchmark/public_real_case_20_case_closure_2026_07_11.json",
+                "blocked_reason": "public_outcome_benchmark_missing",
+            }
+        supplemental_path = Path(__file__).resolve().parents[1] / "docs/benchmark/public_real_case_probe3_v2_2026_07_11.json"
+        combined_observation_path = Path(__file__).resolve().parents[1] / "docs/benchmark/public_real_case_23_case_observation_2026_07_11.json"
+        if supplemental_path.exists() and combined_observation_path.exists():
+            supplemental_payload = json.loads(supplemental_path.read_text(encoding="utf-8"))
+            combined_payload = json.loads(combined_observation_path.read_text(encoding="utf-8"))
+            supplemental_public_probe = {
+                "status": "used",
+                "path": "docs/benchmark/public_real_case_probe3_v2_2026_07_11.json",
+                "summary": supplemental_payload.get("summary") or {},
+                "combined_observation": combined_payload.get("summary") or {},
+                "boundary": "Three-case independent probe is contradictory generalization evidence, not a promotion or accuracy estimate.",
+            }
+        else:
+            supplemental_public_probe = {
+                "status": "blocked",
+                "blocked_reason": "supplemental_public_probe_missing",
+            }
+        corrected_v21_path = Path(__file__).resolve().parents[1] / "docs/benchmark/public_real_case_23_case_v21_corrected_observation_2026_07_11.json"
+        if corrected_v21_path.exists():
+            corrected_payload = json.loads(corrected_v21_path.read_text(encoding="utf-8"))
+            corrected_v21_observation = {
+                "status": "used",
+                "path": "docs/benchmark/public_real_case_23_case_v21_corrected_observation_2026_07_11.json",
+                "summary": corrected_payload.get("summary") or {},
+                "domain_summaries": corrected_payload.get("domain_summaries") or {},
+                "ashtakavarga_audit_status": corrected_payload.get("ashtakavarga_audit_status"),
+                "ashtakavarga_descriptive": corrected_payload.get("ashtakavarga_descriptive") or {},
+                "boundary": corrected_payload.get("boundary"),
+            }
+        else:
+            corrected_v21_observation = {
+                "status": "blocked",
+                "blocked_reason": "corrected_v21_observation_missing",
+            }
+        negative_control_path = Path(__file__).resolve().parents[1] / "docs/benchmark/public_real_case_negative_control_pilot_2026_07_11.json"
+        if negative_control_path.exists():
+            negative_payload = json.loads(negative_control_path.read_text(encoding="utf-8"))
+            negative_summary = negative_payload.get("summary") or {}
+            negative_control_pilot = {
+                "status": "used",
+                "path": "docs/benchmark/public_real_case_negative_control_pilot_2026_07_11.json",
+                "summary": negative_summary,
+                "boundary": negative_payload.get("boundary"),
+            }
+        else:
+            negative_control_pilot = {
+                "status": "blocked",
+                "blocked_reason": "negative_control_pilot_missing",
+            }
+            negative_summary = {}
+        annual_control_path = Path(__file__).resolve().parents[1] / "docs/benchmark/public_real_case_annual_control_pilot_2026_07_11.json"
+        if annual_control_path.exists():
+            annual_payload = json.loads(annual_control_path.read_text(encoding="utf-8"))
+            annual_control_pilot = {
+                "status": "used",
+                "path": "docs/benchmark/public_real_case_annual_control_pilot_2026_07_11.json",
+                "summary": annual_payload.get("summary") or {},
+                "boundary": annual_payload.get("boundary"),
+            }
+        else:
+            annual_control_pilot = {
+                "status": "blocked",
+                "blocked_reason": "annual_control_pilot_missing",
+            }
+        if negative_control_pilot.get("status") == "used" and annual_control_pilot.get("status") == "used":
+            timing_precision_gate = {
+                "status": "blocked",
+                "maximum_supported_precision": "unvalidated_broad_window",
+                "blocked_claims": ["exact_day", "exact_month_from_current_replay_score"],
+                "domain_support": {"career": "blocked", "marriage": "partial_candidate"},
+                "reason": "near_and_annual_control_rankings_below_gate",
+                "observed_positive_top_1_rate": negative_summary.get("positive_top_1_rate"),
+                "observed_positive_top_3_rate": negative_summary.get("positive_top_3_rate"),
+                "annual_positive_top_1_rate": (annual_control_pilot.get("summary") or {}).get("positive_top_1_rate"),
+            }
+        else:
+            timing_precision_gate = {
+                "status": "blocked",
+                "maximum_supported_precision": "unvalidated_broad_window",
+                "blocked_claims": ["exact_day", "exact_month_from_current_replay_score"],
+                "domain_support": {"career": "blocked", "marriage": "partial_candidate"},
+                "reason": "control_pilot_missing",
+            }
         candidate_refs = case_index_by_domain.get(route, [])
         packet = machine_evidence_packet if isinstance(machine_evidence_packet, dict) else {}
         sections = packet.get("sections") if isinstance(packet.get("sections"), dict) else {}
@@ -532,16 +636,24 @@ class UnifiedConsultationOrchestrator:
             "status": "partial_scored" if scored_candidates else "catalog_available_matching_not_run",
             "batch_id": "real_case_studies_batch1",
             "route": route,
-            "source_roots": ["references/real_case_studies", "docs/benchmark"],
+            "source_roots": ["references/real_case_studies", "references/real_case_calibration", "docs/benchmark"],
             "case_index_by_domain": case_index_by_domain,
             "required_replay_schema": "references/real_case_calibration/catalog.schema.json",
             "outcome_replay_manifest": replay_manifest,
+            "holdout_replay_manifest": holdout_manifest,
+            "public_outcome_benchmark": public_outcome_benchmark,
+            "supplemental_public_probe": supplemental_public_probe,
+            "corrected_v21_observation": corrected_v21_observation,
+            "negative_control_pilot": negative_control_pilot,
+            "annual_control_pilot": annual_control_pilot,
+            "timing_precision_gate": timing_precision_gate,
             "candidate_refs": list(candidate_refs),
             "scored_candidates": scored_candidates,
             "reference_grade": scored_candidates[0]["reference_grade"] if scored_candidates else "ungraded_until_similarity_scored",
             "boundary": (
-                "Local case catalog has route, evidence-section, and timing-evidence scoring only; concrete event "
-                "outcome matching must run before a case can be used as complete calibration evidence."
+                "The public benchmark replays twenty dated outcomes, including a frozen ten-case holdout, but it contains positive events only. It can "
+                "measure activation recall, not specificity or scientific predictive accuracy; user-chart "
+                "similarity still requires separate structured matching."
             ),
         }
 
@@ -586,6 +698,8 @@ class UnifiedConsultationOrchestrator:
             blocked_items.append("vedastro_official_raw_archive_manifest_missing")
         case_packet = real_case_calibration if isinstance(real_case_calibration, dict) else {}
         case_status = case_packet.get("status") or "required_not_satisfied"
+        timing_precision = case_packet.get("timing_precision_gate") if isinstance(case_packet.get("timing_precision_gate"), dict) else {}
+        timing_precision_status = timing_precision.get("status") or "blocked"
         functional_packet = packet.get("functional_benefic_malefic") if isinstance(packet.get("functional_benefic_malefic"), dict) else {}
         functional_status = functional_packet.get("status") or "blocked"
         if functional_status != "used":
@@ -594,6 +708,8 @@ class UnifiedConsultationOrchestrator:
             blocked_items.append("real_case_calibration_not_yet_materialized")
         elif case_status != "complete":
             blocked_items.append("real_case_calibration_partial")
+        if timing_precision_status != "pass":
+            blocked_items.append("timing_precision_gate_blocked")
         cross_system_arbitration = build_cross_system_arbitration(
             route_packet=route_packet,
             jyotish_evidence=packet,
@@ -656,6 +772,15 @@ class UnifiedConsultationOrchestrator:
                 "status": case_status,
                 "used": bool(case_packet),
                 "effect_on_confidence": "partial_reference_only_until_outcome_replay" if case_status != "complete" else "supports_calibration",
+            },
+            {
+                "technique": "Timing Precision Gate",
+                "status": timing_precision_status,
+                "used": bool(timing_precision),
+                "maximum_supported_precision": timing_precision.get("maximum_supported_precision", "unvalidated_broad_window"),
+                "blocked_claims": timing_precision.get("blocked_claims", ["exact_day", "exact_month_from_current_replay_score"]),
+                "domain_support": timing_precision.get("domain_support", {}),
+                "effect_on_confidence": "blocks_false_precision_until_control_date_rankings_pass",
             },
             {
                 "technique": "Functional Benefic/Malefic",
@@ -727,6 +852,7 @@ class UnifiedConsultationOrchestrator:
                     "Blind Technical Mode",
                     "MEVG / Global Web Evidence",
                     "Real Case Calibration",
+                    "Timing Precision Gate",
                     "Functional Benefic/Malefic",
                 ],
                 "status": "blocked" if blocked_items else "pass",

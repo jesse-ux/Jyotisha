@@ -11,6 +11,7 @@ from typing import Any
 
 CASE_REQUIRED_FIELDS = {
     "case_id",
+    "subject",
     "source",
     "chart_signature",
     "event_outcomes",
@@ -18,7 +19,18 @@ CASE_REQUIRED_FIELDS = {
     "replay",
 }
 SOURCE_REQUIRED_FIELDS = {"url", "source_grade", "license_or_quote_boundary"}
-EVENT_REQUIRED_FIELDS = {"event_type", "event_date", "outcome"}
+SUBJECT_REQUIRED_FIELDS = {
+    "name", "year", "month", "day", "hour", "minute", "lat", "lon", "tz",
+    "node_mode", "birth_source",
+}
+BIRTH_SOURCE_REQUIRED_FIELDS = {
+    "url", "source_grade", "time_accuracy_rating", "evidence_basis",
+}
+EVENT_REQUIRED_FIELDS = {
+    "event_type", "event_date", "domain", "expected_label", "outcome", "source",
+}
+EVENT_SOURCE_REQUIRED_FIELDS = {"url", "source_grade"}
+ALLOWED_BIRTH_TIME_RATINGS = {"A", "AA"}
 
 
 def _missing(mapping: dict[str, Any], required: set[str]) -> list[str]:
@@ -40,6 +52,26 @@ def _case_errors(case: Any, index: int) -> list[dict[str, Any]]:
     elif "source" in case:
         errors.append({"case_id": case.get("case_id"), "field": "source", "error": "not_object"})
 
+    subject = case.get("subject")
+    if isinstance(subject, dict):
+        for field in _missing(subject, SUBJECT_REQUIRED_FIELDS):
+            errors.append({"case_id": case.get("case_id"), "field": f"subject.{field}", "error": "missing"})
+        birth_source = subject.get("birth_source")
+        if isinstance(birth_source, dict):
+            for field in _missing(birth_source, BIRTH_SOURCE_REQUIRED_FIELDS):
+                errors.append({"case_id": case.get("case_id"), "field": f"subject.birth_source.{field}", "error": "missing"})
+            rating = birth_source.get("time_accuracy_rating")
+            if rating not in ALLOWED_BIRTH_TIME_RATINGS:
+                errors.append({
+                    "case_id": case.get("case_id"),
+                    "field": "subject.birth_source.time_accuracy_rating",
+                    "error": "birth_time_rating_below_A",
+                })
+        elif "birth_source" in subject:
+            errors.append({"case_id": case.get("case_id"), "field": "subject.birth_source", "error": "not_object"})
+    elif "subject" in case:
+        errors.append({"case_id": case.get("case_id"), "field": "subject", "error": "not_object"})
+
     events = case.get("event_outcomes")
     if isinstance(events, list):
         if not events:
@@ -50,6 +82,12 @@ def _case_errors(case: Any, index: int) -> list[dict[str, Any]]:
                 continue
             for field in _missing(event, EVENT_REQUIRED_FIELDS):
                 errors.append({"case_id": case.get("case_id"), "field": f"event_outcomes[{event_index}].{field}", "error": "missing"})
+            event_source = event.get("source")
+            if isinstance(event_source, dict):
+                for field in _missing(event_source, EVENT_SOURCE_REQUIRED_FIELDS):
+                    errors.append({"case_id": case.get("case_id"), "field": f"event_outcomes[{event_index}].source.{field}", "error": "missing"})
+            elif "source" in event:
+                errors.append({"case_id": case.get("case_id"), "field": f"event_outcomes[{event_index}].source", "error": "not_object"})
     elif "event_outcomes" in case:
         errors.append({"case_id": case.get("case_id"), "field": "event_outcomes", "error": "not_array"})
 
@@ -72,12 +110,24 @@ def validate_manifest(path: str | Path) -> dict[str, Any]:
 
     errors: list[dict[str, Any]] = []
     replay_ready_count = 0
+    domain_counts: dict[str, int] = {}
+    birth_time_ratings: dict[str, int] = {}
     for index, case in enumerate(cases):
         case_errors = _case_errors(case, index)
         errors.extend(case_errors)
         replay = case.get("replay") if isinstance(case, dict) else {}
         if not case_errors and isinstance(replay, dict) and replay.get("outcome_replay_status") == "replayed":
             replay_ready_count += 1
+        if isinstance(case, dict):
+            subject = case.get("subject") or {}
+            birth_source = subject.get("birth_source") if isinstance(subject, dict) else {}
+            rating = birth_source.get("time_accuracy_rating") if isinstance(birth_source, dict) else None
+            if isinstance(rating, str):
+                birth_time_ratings[rating] = birth_time_ratings.get(rating, 0) + 1
+            for event in case.get("event_outcomes") or []:
+                if isinstance(event, dict) and isinstance(event.get("domain"), str):
+                    domain = event["domain"]
+                    domain_counts[domain] = domain_counts.get(domain, 0) + 1
 
     if errors:
         status = "invalid"
@@ -99,6 +149,8 @@ def validate_manifest(path: str | Path) -> dict[str, Any]:
         "case_schema": manifest.get("case_schema"),
         "case_count": len(cases),
         "replay_ready_count": replay_ready_count,
+        "domain_counts": dict(sorted(domain_counts.items())),
+        "birth_time_ratings": dict(sorted(birth_time_ratings.items())),
         "blocked_reason": blocked_reason,
         "errors": errors,
         "runtime_boundary": manifest.get("runtime_boundary", ""),
