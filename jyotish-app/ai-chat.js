@@ -444,7 +444,6 @@ function buildAISetupGuidance() {
 function getApiBase() {
   if (window.JYOTISH_API_BASE) return window.JYOTISH_API_BASE;
   if (import.meta.env?.VITE_JYOTISH_API_BASE) return import.meta.env.VITE_JYOTISH_API_BASE;
-  if (window.Capacitor?.isNativePlatform?.()) return localStorage.getItem('jyotish_api_base') || '';
   return '';  // 同域部署
 }
 

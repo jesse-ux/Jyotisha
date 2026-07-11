@@ -134,7 +134,10 @@ class _HighRigorJobCaptureHandler(JyotishAPIHandler):
 class _PostCaptureHandler(JyotishAPIHandler):
     def __init__(self, path: str, payload: dict) -> None:
         raw = json.dumps(payload).encode('utf-8')
-        self.headers = _FakeHeaders({'Content-Length': str(len(raw))})
+        self.headers = _FakeHeaders({
+            'Content-Length': str(len(raw)),
+            'Content-Type': 'application/json',
+        })
         self.server = _FakeServer()
         self.path = path
         self.rfile = BytesIO(raw)
@@ -3377,7 +3380,7 @@ def test_chart_async_submit_returns_job_id(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 def test_high_rigor_job_poll_endpoint_returns_cached_job_payload(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(jyotish_api_server, '_load_high_rigor_job_record', lambda job_id: {
+    monkeypatch.setattr(jyotish_api_server, '_load_high_rigor_job_record', lambda job_id, **_kwargs: {
         'success': True,
         'endpoint': 'high_rigor_workflow_async',
         'mode': 'async_result',
@@ -3397,7 +3400,7 @@ def test_high_rigor_job_poll_endpoint_returns_cached_job_payload(monkeypatch: py
 
 
 def test_chart_job_poll_endpoint_returns_cached_job_payload(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(jyotish_api_server, '_load_async_job_record', lambda scope, job_id: {
+    monkeypatch.setattr(jyotish_api_server, '_load_async_job_record', lambda scope, job_id, **_kwargs: {
         'success': True,
         'endpoint': 'chart_async',
         'mode': 'async_result',

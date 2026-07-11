@@ -3,6 +3,7 @@
 
 # 核心：Swiss Ephemeris 天文计算库（必需）
 pyswisseph
+timezonefinder>=6.5
 
 # 以下为标准库，无需安装（仅供参考）：
 # argparse, json, sys, os, csv, math, sqlite3
