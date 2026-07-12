@@ -1308,10 +1308,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             elif path == '/api/rectification/questionnaire':
                 self._json(build_rectification_questionnaire(body))
             elif path == '/api/rectification/sensitivity_scan':
+                uncertainty = int(body.get('time_uncertainty_minutes') or 30)
+                step_minutes = int(body.get('step_minutes') or (5 if uncertainty > 15 else 1))
                 self._json(scan_candidate_times(
                     body,
-                    uncertainty_minutes=int(body.get('time_uncertainty_minutes') or 30),
-                    step_minutes=int(body.get('step_minutes') or 1),
+                    uncertainty_minutes=uncertainty,
+                    step_minutes=step_minutes,
                 ))
             elif path == '/api/rectification/answers':
                 questionnaire = body.get('questionnaire')

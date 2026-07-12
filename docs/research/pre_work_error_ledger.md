@@ -79,6 +79,7 @@ For large architecture or release work, also read:
 | ERR-046 | Report-renderer SSRF/file PoC could not run because the Playwright Chromium binary was absent and installation exceeded the desktop outer timeout. | blocked environment | Keep route/JS-denial tests; rerun isolated HTTP/file PoC only after a verified Chromium installation, then update this ledger with the measured request count. |
 | ERR-047 | Initial `slow` marker partition for `test_api_server_security.py` still exceeded the 120-second desktop budget; heavy paths extend beyond VedAstro/high-rigor prefix groups. | active profiling blocker | Profile test node IDs in bounded subprocess batches, mark only measured heavy tests, and keep fast-security acceptance separate from long CI integration coverage. |
 | ERR-048 | Candidate-time scanner assumed all documented D4/D24/D30 divisions were exposed by `jyotish_engine.py varga`; actual `--d4` failed at runtime. | mitigated 2026-07-12 | Candidate scans must record unsupported Varga flags as `unavailable_vargas`; only successfully computed D1/D9/D10 fields may drive local sensitivity output until a unified Varga contract exists. |
+| ERR-049 | PyJHora benchmark runner executed on `--help`, used a wrong repository-root path in `run_skill_baseline.py`, and failed when reused without pre-created output directories. | mitigated 2026-07-12 | Keep `tests/test_pyjhora_compare_cli.py`; require explicit `--build-local`, safe argparse help, correct repo root, and directory creation inside `run_sample()`. |
 
 ## Fragment Sweep Command Set
 

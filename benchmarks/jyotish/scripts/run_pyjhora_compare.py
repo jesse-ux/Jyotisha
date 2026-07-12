@@ -3,6 +3,7 @@
 # or JYOTISH_SKILL_SCRIPT is provided. Raw output directories are generated locally
 # and are intentionally not committed.
 #!/usr/bin/env python3
+import argparse
 import csv
 import json
 import os
@@ -99,7 +100,7 @@ def tuple_to_date(t):
     return f'{int(y):04d}-{int(m):02d}-{int(d):02d}'
 
 
-def build_pyjhora_sample(sample):
+def build_pyjhora_sample(sample, *, node_mode='mean'):
     swe = patch_swisseph()
     from jhora import utils, const
     from jhora.panchanga import drik
@@ -109,6 +110,8 @@ def build_pyjhora_sample(sample):
     # Align benchmark口径: Lahiri + mean sidereal year. PyJHora default is TRUE_PUSHYA.
     const._DEFAULT_AYANAMSA_MODE = 'LAHIRI'
     drik.set_ayanamsa_mode('LAHIRI')
+    const.set_node_mode(node_mode == 'true')
+    drik.set_planet_list(set_rahu_ketu_as_true_nodes=(node_mode == 'true'))
     try:
         const.dhasa_year_duration_default = const.DHASA_YEAR_DURATION.MEAN_SIDEREAL_YEAR
     except Exception:
@@ -162,6 +165,7 @@ def build_pyjhora_sample(sample):
         dasha['error'] = f'{type(exc).__name__}: {exc}'
 
     return {
+        'settings': {'ayanamsa': 'lahiri', 'node_mode': node_mode},
         'sample_id': sample['id'],
         'engine': 'PyJHora_4_8_6_lahiri_patched',
         'parameters': {
@@ -320,14 +324,36 @@ def write_report(samples, rows):
     return '\n'.join(lines)
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='Compare public benchmark samples against PyJHora.')
+    parser.add_argument('--sample-id', action='append', default=[], help='Run only a named benchmark sample; repeatable.')
+    parser.add_argument('--build-local', action='store_true', help='Explicitly generate missing local canonical baselines.')
+    parser.add_argument('--node-mode', choices=['mean', 'true'], default='mean', help='Match the node convention before comparing.')
+    args = parser.parse_args(argv)
     PYJHORA_OUT.mkdir(parents=True, exist_ok=True)
     samples = json.loads(DATA.read_text())
+    if args.sample_id:
+        requested = set(args.sample_id)
+        samples = [sample for sample in samples if sample['id'] in requested]
+        missing = requested - {sample['id'] for sample in samples}
+        if missing:
+            parser.error(f'unknown sample id(s): {", ".join(sorted(missing))}')
     all_rows = []
     for sample in samples:
-        pyjhora = build_pyjhora_sample(sample)
+        local_path = LOCAL_CANON / f"{sample['id']}.canonical.json"
+        if not local_path.exists() and args.build_local:
+            from run_skill_baseline import run_sample
+            baseline = run_sample(sample)
+            if not baseline.get('ok'):
+                parser.error(f'failed to build local baseline for {sample["id"]}: {baseline.get("error", "unknown error")}')
+        if not local_path.exists():
+            parser.error(
+                f'missing local canonical baseline for {sample["id"]}; '
+                'run with --build-local or run_skill_baseline.py first'
+            )
+        pyjhora = build_pyjhora_sample(sample, node_mode=args.node_mode)
         (PYJHORA_OUT / f"{sample['id']}.pyjhora.json").write_text(json.dumps(pyjhora, ensure_ascii=False, indent=2))
-        local = json.loads((LOCAL_CANON / f"{sample['id']}.canonical.json").read_text())
+        local = json.loads(local_path.read_text())
         all_rows.extend(compare_one(sample['id'], local, pyjhora))
 
     matrix = OUT / 'pyjhora_comparison_matrix.csv'

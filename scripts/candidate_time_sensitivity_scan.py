@@ -39,6 +39,21 @@ def _varga_ascendant(payload: dict[str, Any], varga: str) -> str | None:
     return None
 
 
+def _all_varga_ascendants(payload: dict[str, Any]) -> dict[str, str | None]:
+    values = {varga.upper(): None for varga in _VARGAS}
+    try:
+        raw = _engine_json("varga", {**payload, "varga": "all"})
+    except subprocess.CalledProcessError:
+        return values
+    for name, chart in (raw.get("divisional_charts") or {}).items():
+        if not isinstance(chart, dict):
+            continue
+        for varga in _VARGAS:
+            if name.startswith(varga.upper() + "_"):
+                values[varga.upper()] = chart.get("ascendant")
+    return values
+
+
 def scan_candidate_times(payload: dict[str, Any], *, uncertainty_minutes: int = 30, step_minutes: int = 1) -> dict[str, Any]:
     required = ("year", "month", "day", "hour", "minute", "lat", "lon", "tz")
     missing = [key for key in required if payload.get(key) is None]
@@ -53,7 +68,7 @@ def scan_candidate_times(payload: dict[str, Any], *, uncertainty_minutes: int = 
         point = {**payload, "year": moment.year, "month": moment.month, "day": moment.day, "hour": moment.hour, "minute": moment.minute}
         chart = _engine_json("chart", point)
         asc = chart.get("ascendant", {})
-        divisional = {varga.upper(): _varga_ascendant(point, varga) for varga in _VARGAS}
+        divisional = _all_varga_ascendants(point)
         rows.append({
             "time": moment.strftime("%Y-%m-%d %H:%M"),
             "offset_minutes": offset,
@@ -62,6 +77,8 @@ def scan_candidate_times(payload: dict[str, Any], *, uncertainty_minutes: int = 
             "divisional_ascendants": divisional,
         })
     signatures = [tuple([row["d1_ascendant"], *row["divisional_ascendants"].values()]) for row in rows]
+    unavailable_vargas = [varga.upper() for varga in _VARGAS if all(row["divisional_ascendants"][varga.upper()] is None for row in rows)]
+    supported_vargas = [varga.lower() for varga in _VARGAS if varga.upper() not in unavailable_vargas]
     modal = Counter(signatures).most_common(1)[0][0]
     for row, signature in zip(rows, signatures):
         row["sensitivity_count"] = sum(left != right for left, right in zip(signature, modal))
@@ -69,7 +86,6 @@ def scan_candidate_times(payload: dict[str, Any], *, uncertainty_minutes: int = 
             name for name, current, typical in zip(("D1", "D4", "D9", "D10", "D24", "D30"), signature, modal)
             if current != typical
         ]
-    unavailable_vargas = [varga.upper() for varga in _VARGAS if all(row["divisional_ascendants"][varga.upper()] is None for row in rows)]
     transitions = []
     for previous, current in zip(rows, rows[1:]):
         changed = [name for name in ("d1_ascendant", "divisional_ascendants") if previous[name] != current[name]]
@@ -85,6 +101,7 @@ def scan_candidate_times(payload: dict[str, Any], *, uncertainty_minutes: int = 
         "step_minutes": step_minutes,
         "rows": rows,
         "transitions": transitions,
+        "supported_vargas": [varga.upper() for varga in supported_vargas],
         "unavailable_vargas": unavailable_vargas,
         "pending_layers": ["UL", "A7", "A10", "KP_cusp"],
         "boundary": "Actual local D1/Varga differences only. Unsupported Varga CLI flags are explicitly unavailable. Event answers still require an explicit event-to-candidate adjudication model before minute-level rectification.",

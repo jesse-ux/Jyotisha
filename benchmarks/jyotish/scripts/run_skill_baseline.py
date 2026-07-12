@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_SCRIPT = Path(__file__).resolve().parents[2] / 'scripts' / 'jyotish_engine.py'
+SKILL_SCRIPT = Path(__file__).resolve().parents[3] / 'scripts' / 'jyotish_engine.py'
 PYTHON = Path(__import__('sys').executable)
 DATA = ROOT / 'data/benchmark_samples.json'
 OUT = ROOT / 'outputs'
@@ -31,6 +31,8 @@ def safe_get(obj, *keys, default=None):
 
 
 def run_sample(sample):
+    RAW.mkdir(parents=True, exist_ok=True)
+    CANON.mkdir(parents=True, exist_ok=True)
     birth = sample['birth']
     cmd = [
         str(PYTHON), str(SKILL_SCRIPT), 'full-reading',
