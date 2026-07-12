@@ -45,6 +45,7 @@ from mcp.server.fastmcp import FastMCP
 from functional_benefics import derive_functional_benefic_malefic
 from vedastro_priority import official_snapshot_evidence
 from unified_consultation_orchestrator import UnifiedConsultationOrchestrator
+from skill_experience import build_skill_doctor, build_skill_onboarding, summarize_execution_status
 
 load_local_env(SCRIPT_DIR)
 
@@ -718,7 +719,7 @@ def _execute_mcp_consultation_workflow(
     from jyotish_api_server import JyotishAPIHandler, execute_consultation_workflow
 
     handler = JyotishAPIHandler.__new__(JyotishAPIHandler)
-    return execute_consultation_workflow(
+    result = execute_consultation_workflow(
         handler,
         body={
             "question": question,
@@ -740,6 +741,9 @@ def _execute_mcp_consultation_workflow(
         },
         surface="skill_mcp",
     )
+    if isinstance(result, dict):
+        result["execution_status"] = summarize_execution_status(result)
+    return result
 
 
 def _safe_get(data: Dict[str, Any], *path: str) -> Any:
@@ -4351,6 +4355,21 @@ def life_event_graph(
         "life_event_graph": _build_life_event_graph(route, strict if isinstance(strict, dict) else {}),
         "strict_workflow": strict,
     }
+
+
+# ============================================================================
+# Skill experience tools
+
+@mcp.tool()
+def skill_onboarding(payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Return the minimal next input or active rectification question set."""
+    return build_skill_onboarding(payload)
+
+
+@mcp.tool()
+def skill_doctor() -> Dict[str, Any]:
+    """Check local Skill assets and external adapter readiness."""
+    return build_skill_doctor()
 
 
 # ============================================================================

@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>主动问询式生时校正</title>
+<style>body{margin:0;background:#f5f7f8;color:#17212b;font:15px system-ui,-apple-system,"PingFang SC",sans-serif}main{max-width:860px;margin:auto;padding:28px 16px}form,.question,#result{background:#fff;border:1px solid #dce3e5;border-radius:6px;padding:16px;margin:12px 0}input,button{padding:9px;font:inherit;border:1px solid #b6c1c6;border-radius:4px}button{background:#006b6b;color:#fff;border-color:#006b6b}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.question label{display:block;padding:5px 0}pre{white-space:pre-wrap;word-break:break-word}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style>
+<main><h1>主动问询式生时校正</h1><p>先扫描候选时间，再回答选择题。结果只缩小候选簇，不宣称已经精确到分钟。</p>
+<form id="birth"><div class="grid"><input name="year" placeholder="出生年" required><input name="month" placeholder="月" required><input name="day" placeholder="日" required><input name="hour" placeholder="时" required><input name="minute" placeholder="分" required><input name="time_uncertainty_minutes" value="30" placeholder="误差分钟"></div><p><button>生成第一轮问题</button></p></form><div id="questions"></div><div id="result"></div></main>
+<script>
+let questionnaire;
+const asObject=f=>Object.fromEntries(new FormData(f).entries());
+document.querySelector('#birth').onsubmit=async e=>{e.preventDefault();const p=asObject(e.target);for(const k of Object.keys(p))p[k]=Number(p[k]);const r=await fetch('/api/rectification/questionnaire',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});questionnaire=await r.json();render(questionnaire.questions||[])};
+function render(qs){const root=document.querySelector('#questions');root.innerHTML=qs.map(q=>`<section class="question"><strong>${q.prompt}</strong>${q.options.map(o=>`<label><input type="radio" name="${q.id}" value="${o.key}"> ${o.key}. ${o.label}</label>`).join('')}</section>`).join('')+'<button id="score">提交本轮答案</button>';document.querySelector('#score').onclick=score}
+async function score(){const answers={};document.querySelectorAll('#questions input:checked').forEach(e=>answers[e.name]=e.value);const r=await fetch('/api/rectification/answers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({questionnaire,answers})});const d=await r.json();document.querySelector('#result').innerHTML=`<h2>候选簇排序</h2><pre>${JSON.stringify({candidate_cluster_rankings:d.candidate_cluster_rankings,next_round:d.next_round,boundary:d.boundary},null,2)}</pre>`}
+</script></html>

@@ -33,6 +33,18 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from unified_consultation_orchestrator import UnifiedConsultationOrchestrator
 try:
+    from scripts.skill_experience import (
+        build_rectification_questionnaire,
+        score_rectification_answers,
+        summarize_execution_status,
+    )
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from skill_experience import (
+        build_rectification_questionnaire,
+        score_rectification_answers,
+        summarize_execution_status,
+    )
+try:
     from scripts.western_oracle_adapter import build_packet_from_oracle_payload
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from western_oracle_adapter import build_packet_from_oracle_payload
@@ -52,6 +64,22 @@ _ASYNC_JOB_EXECUTOR = ThreadPoolExecutor(
     thread_name_prefix='jyotish-job',
 )
 _ASYNC_JOB_CAPACITY = threading.BoundedSemaphore(_ASYNC_JOB_WORKERS + _ASYNC_JOB_QUEUE_SIZE)
+
+
+def build_evidence_packet_view(job_record: dict | None) -> dict:
+    """Public, token-protected job view. Excludes prompt internals and raw input."""
+    job_record = job_record or {}
+    result = job_record.get('result')
+    result = result if isinstance(result, dict) else {}
+    return {
+        'scope': 'evidence_packet_view',
+        'job_id': job_record.get('job_id'),
+        'status': job_record.get('status', 'unknown'),
+        'execution_status': summarize_execution_status(result),
+        'machine_evidence_packet': result.get('machine_evidence_packet') or {},
+        'technique_audit': result.get('technique_audit') or result.get('technique_audit_table') or [],
+        'warnings': result.get('warnings') or [],
+    }
 
 
 def _submit_background_job(callback):
@@ -900,6 +928,17 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
     def _error_json(self, message, status=500, error_code='ERR_INTERNAL'):
         self._json({'success': False, 'error': message, 'error_code': error_code}, status)
 
+    def _html(self, content, status=200):
+        encoded = content.encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self._send_cors_headers()
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('Content-Length', str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
     def _send_cors_headers(self):
         origin = self.headers.get('Origin')
         allowed = getattr(self.server, 'allowed_origins', DEFAULT_ALLOWED_ORIGINS)
@@ -979,7 +1018,19 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             self._enforce_request_security()
-            if path == '/api/health':
+            if path == '/evidence':
+                page = Path(REPO_ROOT) / 'web' / 'evidence_packet.html'
+                if not page.is_file():
+                    self._error_json('Evidence Packet page unavailable', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._html(page.read_text(encoding='utf-8'))
+            elif path == '/rectification':
+                page = Path(REPO_ROOT) / 'web' / 'rectification.html'
+                if not page.is_file():
+                    self._error_json('Rectification page unavailable', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._html(page.read_text(encoding='utf-8'))
+            elif path == '/api/health':
                 swisseph_available = False
                 swisseph_version = None
                 try:
@@ -1030,6 +1081,20 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     self._error_json('Not found', 404, 'ERR_NOT_FOUND')
                 else:
                     self._json(result)
+            elif path.startswith('/api/evidence_packet/chart/'):
+                job_id = path.rsplit('/', 1)[-1]
+                result = self._get_chart_job(job_id)
+                if result is None:
+                    self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._json(build_evidence_packet_view(result))
+            elif path.startswith('/api/evidence_packet/high_rigor_workflow/'):
+                job_id = path.rsplit('/', 1)[-1]
+                result = self._get_high_rigor_job(job_id)
+                if result is None:
+                    self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._json(build_evidence_packet_view(result))
             elif path == '/api/real_case_revalidation':
                 self._json(self._real_case_revalidation())
             else:
@@ -1146,6 +1211,14 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             elif path == '/api/aspects':
                 result = self._compute_aspects(body)
                 self._json(result)
+            elif path == '/api/rectification/questionnaire':
+                self._json(build_rectification_questionnaire(body))
+            elif path == '/api/rectification/answers':
+                questionnaire = body.get('questionnaire')
+                answers = body.get('answers')
+                if not isinstance(questionnaire, dict) or not isinstance(answers, dict):
+                    raise BadRequest('questionnaire and answers must be JSON objects')
+                self._json(score_rectification_answers(questionnaire, answers))
             elif path == '/api/rectification_gate':
                 result = self._compute_rectification_gate(body)
                 self._json(result)
