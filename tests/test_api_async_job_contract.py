@@ -91,3 +91,15 @@ def test_rate_limit_is_configurable_and_rejects_over_budget(monkeypatch):
     api.enforce_rate_limit("test-client", now=0)
     with pytest.raises(api.RateLimited):
         api.enforce_rate_limit("test-client", now=1)
+
+
+def test_sqlite_async_job_backend_preserves_token_and_ttl(monkeypatch, tmp_path):
+    monkeypatch.setenv("JYOTISH_ASYNC_JOB_BACKEND", "sqlite")
+    monkeypatch.setattr(api, "_sqlite_job_db_path", lambda: tmp_path / "jobs.sqlite3")
+    record = {"job_id": "job_sqlite", "access_token_hash": api._access_token_hash("secret"), "expires_at_unix": time.time() + 60}
+
+    api._write_async_job_record("test_scope", "job_sqlite", record)
+
+    assert api._load_async_job_record("test_scope", "job_sqlite", access_token="secret")["job_id"] == "job_sqlite"
+    with pytest.raises(api.JobAccessDenied):
+        api._load_async_job_record("test_scope", "job_sqlite", access_token="wrong")

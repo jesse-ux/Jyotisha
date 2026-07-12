@@ -94,6 +94,12 @@ adapter available 解释为已完成 VedAstro、PyJHora/JHora 或 jyotishganit r
 - `official_blocked`：官方请求失败、额度/网络/超时受阻；
 - `local_fallback`：本地计算继续可用，但不能称为官方云端闭环。
 
+### Web/API 任务存储
+
+默认 `JYOTISH_ASYNC_JOB_BACKEND=file` 使用本机受限权限的临时任务文件。单机部署可设
+`JYOTISH_ASYNC_JOB_BACKEND=sqlite`，使用 `scratch/local/async_jobs.sqlite3` 保存 token-hash
+与 TTL 任务记录。两种后端都不是 Redis、多节点队列或跨主机 worker；不得把它们描述为分布式恢复能力。
+
 **强制工作流**（完整规范 → `references/ai-reading-workflow-prompt.md` v5.1.0）：
 
 0. **阶段负一**：问题类型路由（事业/婚恋/财务/应期/历史验证/综合解盘）→ 必须先读 `references/strict-workflow-router.md`，按对应 strict checklist 执行；用户不需要主动点名高级技法。

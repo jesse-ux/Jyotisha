@@ -16,6 +16,7 @@ import importlib.util
 import hashlib
 import re
 import secrets
+import sqlite3
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -112,18 +113,28 @@ def enforce_rate_limit(client_id: str, *, now: float | None = None) -> None:
 
 def async_job_runtime_status() -> dict:
     scopes = (_HIGH_RIGOR_JOB_SCOPE, _API_CHART_CACHE_SCOPE)
-    return {
-        'scope': 'async_job_runtime_status',
-        'storage': 'local_file_single_host',
-        'worker_count': _ASYNC_JOB_WORKERS,
-        'queue_size': _ASYNC_JOB_QUEUE_SIZE,
-        'ttl_seconds': _async_job_ttl_seconds(),
-        'record_counts': {
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            counts = {
+                scope: connection.execute("SELECT COUNT(*) FROM async_jobs WHERE scope = ?", (scope,)).fetchone()[0]
+                for scope in scopes
+            }
+        storage = "sqlite_single_host"
+    else:
+        counts = {
             scope: len(list(_async_job_dir(scope).glob('*.json')))
             if _async_job_dir(scope).is_dir() else 0
             for scope in scopes
-        },
-        'boundary': 'No cross-process queue, restart recovery, or distributed worker guarantee.',
+        }
+        storage = "local_file_single_host"
+    return {
+        'scope': 'async_job_runtime_status',
+        'storage': storage,
+        'worker_count': _ASYNC_JOB_WORKERS,
+        'queue_size': _ASYNC_JOB_QUEUE_SIZE,
+        'ttl_seconds': _async_job_ttl_seconds(),
+        'record_counts': counts,
+        'boundary': 'SQLite supports single-host persistence. No distributed queue or multi-node worker guarantee.',
     }
 
 
@@ -569,10 +580,39 @@ def _async_job_ttl_seconds() -> float:
         return 3600.0
 
 
+def _async_job_backend() -> str:
+    return "sqlite" if os.environ.get("JYOTISH_ASYNC_JOB_BACKEND", "file").strip().lower() == "sqlite" else "file"
+
+
+def _sqlite_job_db_path() -> Path:
+    return Path(REPO_ROOT) / "scratch" / "local" / "async_jobs.sqlite3"
+
+
+def _sqlite_job_connection() -> sqlite3.Connection:
+    path = _sqlite_job_db_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(path, timeout=10)
+    connection.execute(
+        "CREATE TABLE IF NOT EXISTS async_jobs (scope TEXT NOT NULL, job_id TEXT NOT NULL, expires_at REAL, payload TEXT NOT NULL, PRIMARY KEY (scope, job_id))"
+    )
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+    return connection
+
+
 def prune_expired_async_jobs() -> dict:
     """Best-effort startup cleanup for local job records; never reads payloads."""
     removed = 0
     scanned = 0
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            scanned = connection.execute("SELECT COUNT(*) FROM async_jobs").fetchone()[0]
+            removed = connection.execute(
+                "DELETE FROM async_jobs WHERE expires_at IS NOT NULL AND expires_at <= ?", (time.time(),)
+            ).rowcount
+        return {'scope': 'async_job_cleanup', 'scanned': scanned, 'removed': removed}
     for scope in (_HIGH_RIGOR_JOB_SCOPE, _API_CHART_CACHE_SCOPE):
         directory = _async_job_dir(scope)
         if not directory.is_dir():
@@ -614,19 +654,36 @@ def _write_high_rigor_job_record(job_id: str, payload: dict) -> dict:
 
 
 def _load_async_job_record(scope: str, job_id: str, *, access_token: str = '') -> dict | None:
-    path = _async_job_path(scope, job_id)
-    if not path.exists():
-        return None
-    try:
-        record = json.loads(path.read_text(encoding='utf-8'))
-    except (OSError, json.JSONDecodeError):
-        return None
+    path = None
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            row = connection.execute(
+                "SELECT payload FROM async_jobs WHERE scope = ? AND job_id = ?", (scope, job_id)
+            ).fetchone()
+        if row is None:
+            return None
+        try:
+            record = json.loads(row[0])
+        except json.JSONDecodeError:
+            return None
+    else:
+        path = _async_job_path(scope, job_id)
+        if not path.exists():
+            return None
+        try:
+            record = json.loads(path.read_text(encoding='utf-8'))
+        except (OSError, json.JSONDecodeError):
+            return None
     expires_at = record.get('expires_at_unix')
     if isinstance(expires_at, (int, float)) and time.time() >= float(expires_at):
-        try:
-            path.unlink()
-        except OSError:
-            pass
+        if _async_job_backend() == "sqlite":
+            with _sqlite_job_connection() as connection:
+                connection.execute("DELETE FROM async_jobs WHERE scope = ? AND job_id = ?", (scope, job_id))
+        elif path is not None:
+            try:
+                path.unlink()
+            except OSError:
+                pass
         return None
     expected = record.get('access_token_hash')
     if not isinstance(expected, str) or not access_token:
@@ -637,6 +694,13 @@ def _load_async_job_record(scope: str, job_id: str, *, access_token: str = '') -
 
 
 def _write_async_job_record(scope: str, job_id: str, payload: dict) -> dict:
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            connection.execute(
+                "INSERT OR REPLACE INTO async_jobs (scope, job_id, expires_at, payload) VALUES (?, ?, ?, ?)",
+                (scope, job_id, payload.get("expires_at_unix"), json.dumps(payload, ensure_ascii=False, sort_keys=True)),
+            )
+        return payload
     path = _async_job_path(scope, job_id)
     temp_path = path.with_suffix(f'.{secrets.token_hex(8)}.tmp')
     temp_path.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True), encoding='utf-8')
