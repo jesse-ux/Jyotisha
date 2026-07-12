@@ -810,10 +810,15 @@ def _planet_lon(planet_lons: Dict, planet: str, default: float = 0.0) -> float:
     return _norm(planet_lons.get(planet, default))
 
 
+class GulikaUnavailableError(RuntimeError):
+    """Raised when a caller asks for the retired approximate Gulika value."""
+
+
 def calc_gulika_simple(asc_lon: float, sun_lon: float = 0.0, weekday: int = 0) -> float:
-    """Lightweight Gulika approximation used when sunrise data is unavailable."""
-    weekday_offsets = [210, 180, 150, 120, 90, 60, 30]
-    return _norm((sun_lon or asc_lon) + weekday_offsets[weekday % 7])
+    """Retired: exact Gulika needs sunrise, sunset, weekday and birth segment."""
+    raise GulikaUnavailableError(
+        "approximate_gulika_removed_exact_day_segment_calculation_required"
+    )
 
 
 def calc_arudha(asc_lon: float, planet_lons: Dict) -> Dict:
@@ -862,7 +867,13 @@ def calc_sphutas(planet_lons: Dict, asc_lon: float = 0.0) -> Dict:
 
 
 def calc_life_sphutas(asc_lon: float, moon_lon: float, sun_lon: float, gulika_lon: float = 0.0) -> Dict:
-    gulika = _norm(gulika_lon or calc_gulika_simple(asc_lon, sun_lon))
+    if not gulika_lon:
+        return {
+            "status": "blocked",
+            "reason": "exact_gulika_longitude_required_for_life_sphutas",
+            "blocked_layers": ["Gulika", "Prana", "Deha", "Mrityu"],
+        }
+    gulika = _norm(gulika_lon)
     prana = _norm(asc_lon * 5 + gulika)
     deha = _norm(moon_lon * 8 + gulika)
     mrityu = _norm(gulika * 7 + sun_lon)
