@@ -1,0 +1,21 @@
+{
+  "scope": "pyjhora_same_chart_parity_public_smoke",
+  "status": "partial_verified",
+  "tested": true,
+  "birth_data_policy": "public_synthetic_smoke_only",
+  "settings": {
+    "ayanamsa": "lahiri",
+    "node_mode": "mean"
+  },
+  "sample_count": 10,
+  "comparison_rows": {
+    "total": 840,
+    "match": 836,
+    "boundary_sensitive": 4,
+    "mismatch": 0
+  },
+  "covered_outputs": ["D1", "D9", "D10", "Vimshottari"],
+  "missing_required_outputs": ["D2", "D4", "Shadbala", "Ashtakavarga"],
+  "source_report": "docs/research/pyjhora_same_chart_parity_2026_07_12.md",
+  "boundary": "Partial PyJHora verification only. It is not JHora desktop verification, VedAstro official raw closure, jyotishganit full-chart parity, or global predictive validation."
+}

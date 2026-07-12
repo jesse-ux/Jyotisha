@@ -329,6 +329,7 @@ def main(argv=None):
     parser.add_argument('--sample-id', action='append', default=[], help='Run only a named benchmark sample; repeatable.')
     parser.add_argument('--build-local', action='store_true', help='Explicitly generate missing local canonical baselines.')
     parser.add_argument('--node-mode', choices=['mean', 'true'], default='mean', help='Match the node convention before comparing.')
+    parser.add_argument('--output-prefix', default='', help='Optional filename prefix for resumable batch artifacts.')
     args = parser.parse_args(argv)
     PYJHORA_OUT.mkdir(parents=True, exist_ok=True)
     samples = json.loads(DATA.read_text())
@@ -356,13 +357,14 @@ def main(argv=None):
         local = json.loads(local_path.read_text())
         all_rows.extend(compare_one(sample['id'], local, pyjhora))
 
-    matrix = OUT / 'pyjhora_comparison_matrix.csv'
+    prefix = f"{args.output_prefix}_" if args.output_prefix else ''
+    matrix = OUT / f'{prefix}pyjhora_comparison_matrix.csv'
     with matrix.open('w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=['sample_id', 'section', 'body', 'field', 'local_skill', 'pyjhora', 'delta', 'status'])
         writer.writeheader()
         writer.writerows(all_rows)
 
-    report = OUT / 'jyotish_benchmark_round3_pyjhora_compare.md'
+    report = OUT / f'{prefix}jyotish_benchmark_round3_pyjhora_compare.md'
     report.write_text(write_report(samples, all_rows))
     print(json.dumps({'report': str(report), 'matrix': str(matrix), 'samples': len(samples), 'fields': len(all_rows)}, ensure_ascii=False, indent=2))
 

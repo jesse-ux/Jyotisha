@@ -14,4 +14,5 @@ def test_pyjhora_compare_help_is_non_executing():
 
     assert result.returncode == 0
     assert "--build-local" in result.stdout
+    assert "--output-prefix" in result.stdout
     assert "FileNotFoundError" not in result.stderr

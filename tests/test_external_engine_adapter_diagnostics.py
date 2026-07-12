@@ -36,7 +36,10 @@ def test_external_engine_adapter_diagnostics_aggregates_three_engines() -> None:
     assert "official_raw_response" in contract["expected_oracle_fields"]["VedAstro"]
     assert "raw_output_path" in contract["expected_oracle_fields"]["PyJHora/JHora"]
     assert contract["engine_states"]["jyotishganit"]["available"] is True
-    assert contract["engine_states"]["PyJHora/JHora"]["tested"] is False
+    assert contract["engine_states"]["PyJHora/JHora"]["tested"] is True
+    pyjhora = contract["partial_verifications"]["PyJHora/JHora"]
+    assert pyjhora["status"] == "partial_verified"
+    assert pyjhora["missing_required_outputs"] == ["D2", "D4", "Shadbala", "Ashtakavarga"]
     assert contract["replay_manifest"]["tested"] is False
     assert contract["replay_manifest"]["blocked_reason"] == "no_same_chart_oracle_rows_imported"
     assert report["status"] in {"complete", "partial"}
