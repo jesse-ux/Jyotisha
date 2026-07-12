@@ -45,6 +45,10 @@ except ModuleNotFoundError:  # pragma: no cover - script execution path
         summarize_execution_status,
     )
 try:
+    from scripts.candidate_time_sensitivity_scan import scan_candidate_times
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from candidate_time_sensitivity_scan import scan_candidate_times
+try:
     from scripts.western_oracle_adapter import build_packet_from_oracle_payload
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from western_oracle_adapter import build_packet_from_oracle_payload
@@ -64,6 +68,8 @@ _ASYNC_JOB_EXECUTOR = ThreadPoolExecutor(
     thread_name_prefix='jyotish-job',
 )
 _ASYNC_JOB_CAPACITY = threading.BoundedSemaphore(_ASYNC_JOB_WORKERS + _ASYNC_JOB_QUEUE_SIZE)
+_RATE_LIMIT_LOCK = threading.Lock()
+_RATE_LIMIT_BUCKETS: dict[str, tuple[float, int]] = {}
 
 
 def build_evidence_packet_view(job_record: dict | None) -> dict:
@@ -79,6 +85,45 @@ def build_evidence_packet_view(job_record: dict | None) -> dict:
         'machine_evidence_packet': result.get('machine_evidence_packet') or {},
         'technique_audit': result.get('technique_audit') or result.get('technique_audit_table') or [],
         'warnings': result.get('warnings') or [],
+    }
+
+
+def _rate_limit_per_minute() -> int:
+    raw = str(os.environ.get('JYOTISH_API_RATE_LIMIT_PER_MINUTE', '120')).strip()
+    try:
+        return max(int(raw), 0)
+    except ValueError:
+        return 120
+
+
+def enforce_rate_limit(client_id: str, *, now: float | None = None) -> None:
+    limit = _rate_limit_per_minute()
+    if limit == 0:
+        return
+    now = time.time() if now is None else now
+    with _RATE_LIMIT_LOCK:
+        window, count = _RATE_LIMIT_BUCKETS.get(client_id, (now, 0))
+        if now - window >= 60:
+            window, count = now, 0
+        if count >= limit:
+            raise RateLimited('Rate limit exceeded')
+        _RATE_LIMIT_BUCKETS[client_id] = (window, count + 1)
+
+
+def async_job_runtime_status() -> dict:
+    scopes = (_HIGH_RIGOR_JOB_SCOPE, _API_CHART_CACHE_SCOPE)
+    return {
+        'scope': 'async_job_runtime_status',
+        'storage': 'local_file_single_host',
+        'worker_count': _ASYNC_JOB_WORKERS,
+        'queue_size': _ASYNC_JOB_QUEUE_SIZE,
+        'ttl_seconds': _async_job_ttl_seconds(),
+        'record_counts': {
+            scope: len(list(_async_job_dir(scope).glob('*.json')))
+            if _async_job_dir(scope).is_dir() else 0
+            for scope in scopes
+        },
+        'boundary': 'No cross-process queue, restart recovery, or distributed worker guarantee.',
     }
 
 
@@ -524,6 +569,27 @@ def _async_job_ttl_seconds() -> float:
         return 3600.0
 
 
+def prune_expired_async_jobs() -> dict:
+    """Best-effort startup cleanup for local job records; never reads payloads."""
+    removed = 0
+    scanned = 0
+    for scope in (_HIGH_RIGOR_JOB_SCOPE, _API_CHART_CACHE_SCOPE):
+        directory = _async_job_dir(scope)
+        if not directory.is_dir():
+            continue
+        for path in directory.glob('*.json'):
+            scanned += 1
+            try:
+                record = json.loads(path.read_text(encoding='utf-8'))
+                expires_at = record.get('expires_at_unix') if isinstance(record, dict) else None
+                if isinstance(expires_at, (int, float)) and time.time() >= float(expires_at):
+                    path.unlink()
+                    removed += 1
+            except (OSError, json.JSONDecodeError):
+                continue
+    return {'scope': 'async_job_cleanup', 'scanned': scanned, 'removed': removed}
+
+
 def _new_async_job_identity(prefix: str) -> dict:
     return {
         'job_id': f'{prefix}_{secrets.token_hex(16)}',
@@ -911,6 +977,10 @@ class JobQueueFull(RuntimeError):
     """Bounded async worker queue has no remaining capacity."""
 
 
+class RateLimited(RuntimeError):
+    """Client exceeded the local fixed-window request budget."""
+
+
 class JyotishAPIHandler(BaseHTTPRequestHandler):
     server_version = 'JyotishAPI/6.9.14'
 
@@ -957,6 +1027,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             content_type = (self.headers.get('Content-Type') or '').split(';', 1)[0].strip().lower()
             if content_type != 'application/json':
                 raise UnsupportedMediaType('Content-Type must be application/json')
+        if urlparse(self.path).path.startswith('/api/'):
+            client = getattr(self, 'client_address', ('unknown',))[0]
+            enforce_rate_limit(str(client))
 
     def _job_access_token(self):
         authorization = self.headers.get('Authorization') or ''
@@ -1011,6 +1084,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         try:
             self._enforce_request_security()
             self._json({})
+        except RateLimited as exc:
+            self._error_json(str(exc), 429, 'ERR_RATE_LIMITED')
         except Forbidden as exc:
             self._error_json(str(exc), 403, 'ERR_FORBIDDEN')
 
@@ -1018,7 +1093,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             self._enforce_request_security()
-            if path == '/evidence':
+            if path == '/':
+                page = Path(REPO_ROOT) / 'web' / 'index.html'
+                if not page.is_file():
+                    self._error_json('Home page unavailable', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._html(page.read_text(encoding='utf-8'))
+            elif path == '/evidence':
                 page = Path(REPO_ROOT) / 'web' / 'evidence_packet.html'
                 if not page.is_file():
                     self._error_json('Evidence Packet page unavailable', 404, 'ERR_NOT_FOUND')
@@ -1047,6 +1128,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'swisseph_version': swisseph_version,
                     'ayanamsa_default': 'lahiri',
                     'modules': 'Chart/KP/Synastry/Prashna/Remedies/Dasha/Varga/Jaimini/Ashtakavarga/Shadbala/Yoga/Aspects/Tajika/Muhurta/BhavaChalit/BhavaBala/Sudarshana/Nakshatra/Transit/RectificationGate/CaseValidation/DivisionalYoga/Kakshya',
+                    'async_job_runtime': async_job_runtime_status(),
                 })
             elif path == '/api/cities':
                 self._json(list(CITY_DB.keys()))
@@ -1099,6 +1181,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(self._real_case_revalidation())
             else:
                 self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+        except RateLimited as exc:
+            self._error_json(str(exc), 429, 'ERR_RATE_LIMITED')
         except (Forbidden, JobAccessDenied) as exc:
             self._error_json(str(exc), 403, 'ERR_FORBIDDEN')
         except Exception:
@@ -1111,7 +1195,17 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         try:
             self._enforce_request_security(require_json=True)
             body = self._read_json_body()
-            if path == '/api/chart':
+            if path == '/api/location/resolve':
+                city = str(body.get('city') or '').strip()
+                city_aliases = {'beijing': '北京', 'shanghai': '上海', 'guangzhou': '广州', 'shenzhen': '深圳'}
+                query = city_aliases.get(city.casefold(), city)
+                matched = next((name for name in CITY_DB if name.casefold() == query.casefold()), None)
+                if not matched:
+                    self._error_json('City not found in local city database', 404, 'ERR_CITY_NOT_FOUND')
+                else:
+                    lat, lon, tz = CITY_DB[matched]
+                    self._json({'status': 'local_city_match', 'city': matched, 'lat': lat, 'lon': lon, 'tz': tz})
+            elif path == '/api/chart':
                 result = self._compute_chart(body)
                 self._json(result)
             elif path == '/api/remedies':
@@ -1213,6 +1307,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             elif path == '/api/rectification/questionnaire':
                 self._json(build_rectification_questionnaire(body))
+            elif path == '/api/rectification/sensitivity_scan':
+                self._json(scan_candidate_times(
+                    body,
+                    uncertainty_minutes=int(body.get('time_uncertainty_minutes') or 30),
+                    step_minutes=int(body.get('step_minutes') or 1),
+                ))
             elif path == '/api/rectification/answers':
                 questionnaire = body.get('questionnaire')
                 answers = body.get('answers')
@@ -1254,6 +1354,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             else:
                 self._error_json(f'Unknown endpoint: {path}', 404, 'ERR_NOT_FOUND')
+        except RateLimited as exc:
+            self._error_json(str(exc), 429, 'ERR_RATE_LIMITED')
         except BadRequest as e:
             self._error_json(str(e), 400, 'ERR_BAD_REQUEST')
         except Forbidden as exc:
@@ -7641,10 +7743,12 @@ def _parse_allowed_origins(value):
 
 
 def start_server(port=5200, host='127.0.0.1', allowed_origins=None):
+    cleanup = prune_expired_async_jobs()
     server = ThreadingHTTPServer((host, port), JyotishAPIHandler)
     server.daemon_threads = True
     server.allowed_origins = allowed_origins or DEFAULT_ALLOWED_ORIGINS
     print(f'Jyotish API v6.9.14 running on http://{host}:{port}')
+    print(f"  Async job cleanup: scanned={cleanup['scanned']}, removed={cleanup['removed']}")
     print(f'  CORS origins: {", ".join(sorted(server.allowed_origins))}')
     print(f'  POST /api/chart — 完整星盘计算')
     print(f'  POST /api/remedies — 补救建议')

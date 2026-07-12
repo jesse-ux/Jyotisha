@@ -1,5 +1,8 @@
 import json
+import time
 from pathlib import Path
+
+import pytest
 
 from scripts import jyotish_api_server as api
 
@@ -57,3 +60,34 @@ def test_rectification_page_uses_choice_questionnaire_contract():
     assert "/api/rectification/questionnaire" in source
     assert "/api/rectification/answers" in source
     assert "候选簇排序" in source
+
+
+def test_home_page_keeps_location_confirmation_local():
+    page = Path(api.REPO_ROOT) / "web" / "index.html"
+    source = page.read_text(encoding="utf-8")
+
+    assert "/api/location/resolve" in source
+    assert "第三方地理服务" in source
+
+
+def test_startup_cleanup_removes_only_expired_job_records(monkeypatch, tmp_path):
+    expired = tmp_path / "expired.json"
+    active = tmp_path / "active.json"
+    expired.write_text(json.dumps({"expires_at_unix": time.time() - 1}), encoding="utf-8")
+    active.write_text(json.dumps({"expires_at_unix": time.time() + 60}), encoding="utf-8")
+    monkeypatch.setattr(api, "_async_job_dir", lambda scope: tmp_path)
+
+    result = api.prune_expired_async_jobs()
+
+    assert result["removed"] == 1
+    assert not expired.exists()
+    assert active.exists()
+
+
+def test_rate_limit_is_configurable_and_rejects_over_budget(monkeypatch):
+    api._RATE_LIMIT_BUCKETS.clear()
+    monkeypatch.setenv("JYOTISH_API_RATE_LIMIT_PER_MINUTE", "1")
+
+    api.enforce_rate_limit("test-client", now=0)
+    with pytest.raises(api.RateLimited):
+        api.enforce_rate_limit("test-client", now=1)
