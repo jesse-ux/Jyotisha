@@ -4944,6 +4944,27 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         return calc_kp_analysis(planets, SIGNS[asc_idx])
 
     def _compute_prashna(self, body):
+        try:
+            from prashna_context import PrashnaContextError, build_prashna_context
+        except ModuleNotFoundError:  # pragma: no cover - package import path
+            from scripts.prashna_context import PrashnaContextError, build_prashna_context
+        if "planets" in body or "asc_degree" in body:
+            raise BadRequest("Prashna planets and ascendant are backend-computed; client values are forbidden")
+        try:
+            context = build_prashna_context(body)
+        except PrashnaContextError as exc:
+            raise BadRequest(str(exc)) from exc
+        return {
+            "success": True,
+            "status": "computed",
+            "prashna_context": context,
+            "verdict": {
+                "status": "blocked",
+                "reason": "Prashna adjudication is disabled until Tajika/Saham/Sphuta kernels pass classic golden cases.",
+            },
+        }
+
+        # Legacy client-supplied-chart pipeline below is unreachable pending deletion.
         question_type = body.get('question', 'general')
         if not isinstance(question_type, str):
             raise BadRequest('question must be a string')

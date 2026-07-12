@@ -420,7 +420,7 @@
         "upagraha",
         "event"
       ],
-      "status": "covered",
+      "status": "blocked",
       "knowledge_refs": [
         "references/prashna-complete-guide.md"
       ],
@@ -452,7 +452,7 @@
         "timing",
         "life"
       ],
-      "status": "covered",
+      "status": "blocked",
       "knowledge_refs": [
         "references/prashna-complete-guide.md",
         "references/single-event-inquiry-protocol.md"
@@ -1136,7 +1136,7 @@
         "event",
         "yoga"
       ],
-      "status": "complete",
+      "status": "partial",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -1147,7 +1147,7 @@
       "audit_label": "Tajika Yogas",
       "missing_impact": "Tajika year-chart yoga detection incomplete; annual timing confidence capped.",
       "version": "7.0",
-      "note": "v7.0 — 10种年度Yoga完整检测(Itasala/Ishkavala/Vasala/Tambira/Kambira/Dakshina/Vama/Ubhaya/Vedha/Kuta)+Radda+Tajika容许度+Vedha敏感点表+经典相位规则",
+      "note": "Production partial: legacy Tajika kernel is under replacement; no event verdict until seven-planet applying/separating and Deeptamsa golden cases pass.",
       "entry_type": "supporting_indicator",
       "evidence_role": "secondary",
       "user_visibility": "expert_audit",
@@ -1166,7 +1166,7 @@
         "event",
         "tajika"
       ],
-      "status": "covered",
+      "status": "partial",
       "knowledge_refs": [],
       "commands": [
         "full-reading"
@@ -1175,10 +1175,10 @@
         "modules.sahams"
       ],
       "audit_label": "Sahams",
-      "missing_impact": "Sahams 已有输出，但 Tajika/事件定时里的解释层仍应作为辅助证据，不能单独承担精确落点结论。",
-      "limitation": "Sahams 当前已扩展到 36 个常见点位，但解释层、权重口径与传统软件黑盒一致性仍未完成系统外部对标，不宜单独作为精确事件定位依据。",
+      "missing_impact": "Sahams 仅在后端提供真实提问时刻与地点、并经 Swiss 日出日落判定时可计算；仍不能单独承担精确落点结论。",
+      "limitation": "历史无地点/太阳落宫昼夜代理已阻断。公式级 +30 度例外、去重与传统软件 oracle 对标未完成，因此保持 partial。",
       "version": "6.9.3",
-      "note": "v6.9.3 — tajika.py 从 7 扩展到 36 种 Saham（含 Putra/Jnana/Moksha/Dhan/Maya 等），但解释成熟度仍以 covered 管理",
+      "note": "仅允许带时间地点的 Swiss 日出日落上下文；公式例外与 oracle 对标未完成。",
       "entry_type": "supporting_indicator",
       "evidence_role": "secondary",
       "user_visibility": "expert_audit",
@@ -1188,6 +1188,23 @@
         "prediction": "support_only"
       },
       "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+    },
+    "panchavargiya_bala": {
+      "name": "Panchavargiya Bala / 五分盘力量",
+      "domains": ["tajika", "strength", "varga"],
+      "status": "blocked",
+      "knowledge_refs": [],
+      "commands": ["full-reading"],
+      "output_paths": ["modules.tajika_strength"],
+      "audit_label": "Panchavargiya Bala",
+      "missing_impact": "私有分盘代理已禁用；在统一 varga-full 核心与外部 golden oracle 完成前，不提供 Panchavargiya 或混合强度结论。",
+      "version": "7.0",
+      "note": "blocked pending unified Varga core and oracle parity",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
+      "user_visibility": "expert_audit",
+      "verification_level": {"calculation": "blocked", "rule": "blocked", "prediction": "blocked"},
+      "conclusion_policy": "Do not render a strength verdict."
     },
     "darakaraka": {
       "name": "Darakaraka (DK) / 配偶星",
@@ -1863,7 +1880,7 @@
         "standalone",
         "full_reading_integration"
       ],
-      "status": "complete",
+      "status": "blocked",
       "knowledge_refs": [],
       "commands": [
         "full-reading",
@@ -1875,7 +1892,7 @@
       "audit_label": "Prashna Integration",
       "missing_impact": "Prashna 已接入 full-reading，但问事分支的传统判断链、时机裁决与外部实盘闭环仍不均匀。",
       "version": "7.0",
-      "note": "v7.0 — KP Sublord完整3层判定(Star/Sub/Sub-Sub)+Nadi Prashna(Moon-Jupiter角度)+Sphuta(Gulika/Yamaghantaka)+时机评分系统+dashaflow/jyotishganit参考对齐",
+      "note": "Production blocked: question-moment Swiss chart is available, but classical adjudication is disabled pending kernel and golden-case validation.",
       "entry_type": "composite_adjudicator",
       "evidence_role": "context",
       "user_visibility": "ordinary_topic_router",
@@ -2188,9 +2205,9 @@
       "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
     },
     "prashna": {
-      "status": "covered",
+      "status": "blocked",
       "version": "6.9.3",
-      "note": "prashna.py — KP sublord答案+Arudha+12问事分类",
+      "note": "Production blocked pending validated Prashna kernel; only backend-computed question-moment context is available.",
       "name": "prashna.py",
       "domains": [
         "prashna"

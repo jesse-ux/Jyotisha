@@ -5879,6 +5879,33 @@ def cmd_full_reading(args):
 def cmd_prashna(args):
     """Prashna 问事占星：基于提问时刻的即时星盘分析"""
     try:
+        from prashna_context import PrashnaContextError, build_prashna_context
+    except ImportError:
+        from scripts.prashna_context import PrashnaContextError, build_prashna_context
+    try:
+        context = build_prashna_context({
+            "question_text": args.question_text,
+            "question_timestamp": args.datetime,
+            "lat": args.lat,
+            "lon": args.lon,
+            "timezone": args.timezone,
+            "ayanamsa": args.ayanamsa,
+            "node_mode": args.node_mode,
+            "location_convention": args.location_convention,
+        })
+    except PrashnaContextError as exc:
+        return {"scope": "prashna_context", "status": "blocked", "reason": str(exc)}
+    if args.mode != "chart":
+        return {
+            "scope": "prashna",
+            "status": "blocked",
+            "reason": f"{args.mode} is blocked pending validated Prashna kernel implementation",
+            "prashna_context": context,
+        }
+    return context
+
+    # Legacy fallback below is intentionally unreachable until removed after migration.
+    try:
         from prashna import cast_prashna, calc_arudha, calc_sphutas, calc_life_sphutas, calc_sahams, analyze_lost_item, kunda_verify, calc_gulika_simple
     except ImportError:
         # 尝试从同目录导入
@@ -6184,9 +6211,14 @@ def main():
 
     # 23. prashna (v3.9新增)
     p = sub.add_parser('prashna', help='Prashna问事占星（提问时刻星盘+Arudha+Sphuta+Sahams）')
-    p.add_argument('--datetime', required=True, help='提问时间 YYYY-MM-DD HH:MM')
+    p.add_argument('--datetime', required=True, help='提问时间 ISO-8601，例如 2026-07-12T12:00:00+08:00')
+    p.add_argument('--question-text', required=True, help='用户原始问事文本')
     p.add_argument('--lat', type=float, required=True, help='纬度')
     p.add_argument('--lon', type=float, required=True, help='经度')
+    p.add_argument('--timezone', required=True, help='UTC offset，例如 8 或 +08:00')
+    p.add_argument('--ayanamsa', default='lahiri')
+    p.add_argument('--node-mode', default='mean', choices=['mean', 'true'])
+    p.add_argument('--location-convention', default='wgs84', choices=['wgs84'])
     p.add_argument('--mode', default='chart', choices=['chart','arudha','sphutas','sahams','lost-item','life','kunda'], help='分析模式')
 
     # 24. double-transit-pac (v3.9新增)

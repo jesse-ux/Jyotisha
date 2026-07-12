@@ -836,6 +836,14 @@ def calc_arudha(asc_lon: float, planet_lons: Dict) -> Dict:
 
 
 def calc_sphutas(planet_lons: Dict, asc_lon: float = 0.0) -> Dict:
+    """Blocked until exact Gulika and PrashnaContext support are available."""
+    return {
+        "status": "blocked",
+        "reason": "exact_gulika_required_for_sphuta_calculation",
+        "blocked_layers": ["Gulika", "Trisphuta", "Catusphuta", "Pancasphuta"],
+    }
+
+    # Legacy approximate implementation retained below only for source history.
     sun = _planet_lon(planet_lons, "Sun")
     moon = _planet_lon(planet_lons, "Moon")
     rahu = _planet_lon(planet_lons, "Rahu")
@@ -875,6 +883,14 @@ def calc_life_sphutas(asc_lon: float, moon_lon: float, sun_lon: float, gulika_lo
 
 
 def calc_sahams(planet_lons: Dict, asc_lon: float) -> Dict:
+    """Blocked legacy entry: it lacks question time and location."""
+    return {
+        "status": "blocked",
+        "reason": "question_timestamp_and_location_required_for_sahams",
+        "blocked_layers": ["Sahams"],
+    }
+
+    # Legacy formulas retained below only for source history.
     sun = _planet_lon(planet_lons, "Sun")
     moon = _planet_lon(planet_lons, "Moon")
     mars = _planet_lon(planet_lons, "Mars")
@@ -943,6 +959,14 @@ def analyze_lost_item(planet_lons: Dict, asc_lon: float) -> Dict:
 
 
 def kunda_verify(asc_lon: float) -> Dict:
+    """Blocked until the documented Lagna-arc x 81 calculation is implemented."""
+    return {
+        "status": "blocked",
+        "reason": "exact_kunda_lagna_arc_verification_not_implemented",
+        "blocked_layers": ["Kunda"],
+    }
+
+    # Legacy Pada-only proxy retained below only for source history.
     nak_idx = int(_norm(asc_lon) / NAK_SPAN) % 27
     pada = int((_norm(asc_lon) % NAK_SPAN) / (NAK_SPAN / 4)) + 1
     strength = "清晰" if pada in (2, 3) else "需复核"
@@ -956,7 +980,14 @@ def kunda_verify(asc_lon: float) -> Dict:
 
 
 def cast_prashna(question_datetime: str, lat: float = 0.0, lon: float = 0.0) -> Dict:
-    """Dependency-free fallback Prashna chart for legacy CLI paths."""
+    """Blocked legacy fallback; production callers must use PrashnaContext."""
+    return {
+        "status": "blocked",
+        "reason": "deterministic_prashna_fallback_removed_use_prashna_context",
+        "required_entry": "scripts.prashna_context.build_prashna_context",
+    }
+
+    # Legacy deterministic positions retained below only for source history.
     try:
         dt = datetime.fromisoformat(str(question_datetime).replace(" ", "T"))
     except ValueError:

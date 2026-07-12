@@ -951,13 +951,13 @@ def test_prashna_advanced_legacy_functions_exist() -> None:
         'Rahu': 300,
         'Ketu': 120,
     }
-    assert prashna.cast_prashna('2026-06-22 12:00', 28.6, 77.2)['ascendant']
+    assert prashna.cast_prashna('2026-06-22 12:00', 28.6, 77.2)['status'] == 'blocked'
     assert prashna.calc_arudha(15.5, planet_lons)['arudha_house']
-    assert prashna.calc_sphutas(planet_lons, 15.5)['trisphuta']
+    assert prashna.calc_sphutas(planet_lons, 15.5)['status'] == 'blocked'
     assert prashna.calc_life_sphutas(15.5, 70, 10)['signal']
-    assert prashna.calc_sahams(planet_lons, 15.5)['count'] >= 5
+    assert prashna.calc_sahams(planet_lons, 15.5)['status'] == 'blocked'
     assert prashna.analyze_lost_item(planet_lons, 15.5)['summary']
-    assert prashna.kunda_verify(15.5)['nakshatra']
+    assert prashna.kunda_verify(15.5)['status'] == 'blocked'
 
 
 def test_dasha_system_rejects_unknown_key() -> None:
