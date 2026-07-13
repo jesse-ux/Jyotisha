@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -18,12 +19,19 @@ def test_three_engine_parity_manifest_blocks_without_oracle_rows() -> None:
 
 
 def test_three_engine_parity_validator_accepts_one_same_chart_row(tmp_path: Path) -> None:
+    raw = tmp_path / "vedastro.json"
+    raw.write_text('{"source":"official"}', encoding="utf-8")
     manifest = {
         "case_id": "public_same_chart_001",
         "birth_data_policy": "public_case_only",
         "status": "tested",
         "engines": {
-            "VedAstro": {"status": "official_verified", "official_raw_response_path": "references/oracle/artifacts/vedastro.json"},
+                "VedAstro": {
+                    "status": "official_verified",
+                    "official_raw_response_path": "vedastro.json",
+                    "artifact_hash": hashlib.sha256(raw.read_bytes()).hexdigest(),
+                    "settings": {"ayanamsa": "lahiri"},
+                },
             "PyJHora_JHora": {"status": "tested", "raw_output_path": "references/oracle/artifacts/pyjhora.txt"},
             "jyotishganit": {"status": "tested", "raw_output_path": "references/oracle/artifacts/jyotishganit.json"},
         },
