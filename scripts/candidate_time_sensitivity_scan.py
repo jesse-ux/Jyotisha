@@ -14,43 +14,31 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "scripts" / "jyotish_engine.py"
-_VARGAS = ("d4", "d9", "d10", "d24", "d30")
+_VARGAS = ("D4", "D9", "D10", "D24", "D30")
 
 
 def _engine_json(command: str, payload: dict[str, Any], *, timeout: int = 20) -> dict[str, Any]:
     args = ["python3", str(ENGINE), command]
     for key in ("year", "month", "day", "hour", "minute", "lat", "lon", "tz"):
         args.extend([f"--{key}", str(payload[key])])
-    if command == "varga":
-        args.append(f"--{payload['varga']}")
+    if command == "varga-full":
+        args.extend(["--divisions", ",".join(_VARGAS)])
     completed = subprocess.run(args, cwd=ROOT, capture_output=True, text=True, timeout=timeout, check=True)
     return json.loads(completed.stdout)
 
 
-def _varga_ascendant(payload: dict[str, Any], varga: str) -> str | None:
-    try:
-        raw = _engine_json("varga", {**payload, "varga": varga})
-    except subprocess.CalledProcessError:
-        return None
-    charts = raw.get("divisional_charts", {})
-    for chart in charts.values():
-        if isinstance(chart, dict):
-            return chart.get("ascendant")
-    return None
-
-
 def _all_varga_ascendants(payload: dict[str, Any]) -> dict[str, str | None]:
-    values = {varga.upper(): None for varga in _VARGAS}
+    values = {varga: None for varga in _VARGAS}
     try:
-        raw = _engine_json("varga", {**payload, "varga": "all"})
+        raw = _engine_json("varga-full", payload)
     except subprocess.CalledProcessError:
         return values
-    for name, chart in (raw.get("divisional_charts") or {}).items():
+    for name, chart in raw.items():
         if not isinstance(chart, dict):
             continue
         for varga in _VARGAS:
-            if name.startswith(varga.upper() + "_"):
-                values[varga.upper()] = chart.get("ascendant")
+            if name.startswith(varga + "_"):
+                values[varga] = (chart.get("Ascendant") or {}).get("sign")
     return values
 
 

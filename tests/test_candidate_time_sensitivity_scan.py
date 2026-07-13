@@ -8,10 +8,11 @@ def test_scanner_reports_real_divisional_transitions(monkeypatch):
             return {"ascendant": {"sign": "Leo", "degree_in_sign": 10 + minute / 100}}
         ascendant = "Aries" if minute % 2 else "Taurus"
         return {
-            "divisional_charts": {
-                "D9_Navamsa": {"ascendant": ascendant},
-                "D10_Dasamsa": {"ascendant": ascendant},
-            }
+            "D4_Turyamsa": {"Ascendant": {"sign": ascendant}},
+            "D9_Navamsa": {"Ascendant": {"sign": ascendant}},
+            "D10_Dasamsa": {"Ascendant": {"sign": ascendant}},
+            "D24_Siddhamsa": {"Ascendant": {"sign": ascendant}},
+            "D30_Trimsamsa": {"Ascendant": {"sign": ascendant}},
         }
 
     monkeypatch.setattr(scanner, "_engine_json", fake_engine)
