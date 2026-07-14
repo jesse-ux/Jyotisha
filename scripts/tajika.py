@@ -256,12 +256,44 @@ def calc_tajika_strength_layers(
     year_lord: Optional[str] = None,
 ) -> Dict:
     """Block the legacy private-Varga strength proxy pending parity evidence."""
+    normalized = {
+        planet: float(planet_lons[planet]) % 360
+        for planet in CLASSICAL_PLANETS
+        if planet in planet_lons and _is_number(planet_lons[planet])
+    }
+    harsha_bala = {
+        planet: _calc_harsha_bala_for_planet(planet, lon, asc_lon, year_lord)
+        for planet, lon in normalized.items()
+    }
+    panchavargiya_bala = {
+        planet: {
+            'status': 'blocked',
+            'reason': 'unified_varga_core_and_golden_oracle_parity_required',
+        }
+        for planet in normalized
+    }
     return {
         'status': 'blocked',
         'method': 'Tajika Harsha/Panchavargiya Bala',
         'reason': 'panchavargiya_requires_unified_varga_core_and_golden_oracle_parity',
         'blocked_layers': ['Panchavargiya Bala', 'combined Tajika strength'],
-        'available_planets': len(planet_lons or {}),
+        'available_planets': len(normalized),
+        'harsha_bala': harsha_bala,
+        'panchavargiya_bala': panchavargiya_bala,
+        'combined_strength': {
+            planet: {
+                'status': 'blocked',
+                'reason': 'panchavargiya_component_unverified',
+                'score': harsha_bala[planet]['score'],
+                'max_score': harsha_bala[planet]['max_score'],
+                'grade': 'blocked',
+                'components': {'harsha_bala': harsha_bala[planet]['score']},
+            }
+            for planet in normalized
+        },
+        'summary': {
+            'next_action': 'Import unified varga-full output and external golden-oracle evidence before rendering Tajika strength.',
+        },
     }
 
     # Legacy local Varga proxy retained below only for source history.

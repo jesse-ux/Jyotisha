@@ -130,7 +130,8 @@ class TestTajikaStrengthLayers:
         for planet in ('Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'):
             assert planet in result['harsha_bala']
             assert planet in result['panchavargiya_bala']
-            assert {'score', 'max_score', 'grade', 'components'} <= set(result['combined_strength'][planet])
+            assert result['panchavargiya_bala'][planet]['status'] == 'blocked'
+            assert result['combined_strength'][planet]['status'] == 'blocked'
             assert result['combined_strength'][planet]['max_score'] > 0
 
 

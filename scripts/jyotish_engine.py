@@ -5098,7 +5098,7 @@ def cmd_full_reading(args):
         report['modules']['tajika_yogas'] = tc_yogas
 
         # Sahams（特殊点）—— 需要出生时间
-        birth_dt = getattr(args, 'birth_datetime', None)
+        birth_dt = _birth_datetime_from_args(args)
         if birth_dt and planet_lons:
             sahams_result = calc_all_sahams(
                 planet_lons,
