@@ -452,7 +452,7 @@
         "timing",
         "life"
       ],
-      "status": "blocked",
+      "status": "partial",
       "knowledge_refs": [
         "references/prashna-complete-guide.md",
         "references/single-event-inquiry-protocol.md"
@@ -463,18 +463,16 @@
         "scripts/jyotish_engine.py --mode life"
       ],
       "output_paths": [
-        "scripts/prashna.py:calc_sphutas",
-        "scripts/prashna.py:calc_life_sphutas",
-        "kp_horary.sphutas"
+        "prashna_context.supporting_indicators.sphuta"
       ],
       "audit_label": "Sphuta/Trisphuta",
-      "missing_impact": "Prashna energy convergence and life-sensitivity markers are absent, leaving horary and life-risk reading thinner than classical toolchains.",
+      "missing_impact": "Formula-only Trisphuta/Catusphuta/Pancasphuta evidence is available from exact Gulika. Life-sensitive Sphutas, external numeric parity and all verdict use remain unavailable.",
       "entry_type": "supporting_indicator",
       "evidence_role": "secondary",
       "user_visibility": "expert_audit",
       "verification_level": {
-        "calculation": "verified",
-        "rule": "verified",
+        "calculation": "partial",
+        "rule": "partial",
         "prediction": "support_only"
       },
       "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."

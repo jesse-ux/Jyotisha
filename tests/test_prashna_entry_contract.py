@@ -22,7 +22,8 @@ def test_cli_prashna_uses_question_moment_swiss_context_only():
     assert payload["status"] == "computed"
     assert payload["chart_source"] == "swiss_ephemeris_backend"
     assert payload["supporting_indicators"]["gulika"]["status"] == "partial"
-    assert "Trisphuta" in payload["blocked_layers"]
+    assert payload["supporting_indicators"]["sphuta"]["status"] == "partial"
+    assert "Kunda" in payload["blocked_layers"]
 
 
 def test_cli_prashna_blocks_legacy_approximation_modes():

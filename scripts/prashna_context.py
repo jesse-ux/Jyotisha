@@ -13,6 +13,10 @@ try:
     from scripts.gulika import calculate_gulika
 except ModuleNotFoundError:  # pragma: no cover - CLI execution path
     from gulika import calculate_gulika
+try:
+    from scripts.prashna_sphuta import calculate_sphuta_evidence
+except ModuleNotFoundError:  # pragma: no cover - CLI execution path
+    from prashna_sphuta import calculate_sphuta_evidence
 
 
 class PrashnaContextError(ValueError):
@@ -69,6 +73,19 @@ def build_prashna_context(payload: dict[str, Any]) -> dict[str, Any]:
             "status": "blocked",
             "reason": f"gulika_supporting_indicator_failed:{type(exc).__name__}",
         }
+    if gulika.get("status") == "partial":
+        longitudes = {
+            name: item.get("degree_raw", item.get("lon"))
+            for name, item in chart["planets"].items()
+            if isinstance(item, dict)
+        }
+        sphuta = calculate_sphuta_evidence(
+            ascendant_longitude=chart["ascendant"].get("degree_raw", chart["ascendant"].get("lon")),
+            planet_longitudes=longitudes,
+            gulika_longitude=gulika["longitude"],
+        )
+    else:
+        sphuta = {"status": "blocked", "reason": "gulika_supporting_indicator_unavailable"}
     return {
         "scope": "prashna_context",
         "status": "computed",
@@ -82,7 +99,7 @@ def build_prashna_context(payload: dict[str, Any]) -> dict[str, Any]:
         "planets": chart["planets"],
         "calculation_contract": chart["calculation_contract"],
         "result_hash": chart["result_hash"],
-        "supporting_indicators": {"gulika": gulika},
-        "blocked_layers": ["Trisphuta", "Kunda", "Prashna verdict"],
-        "boundary": "No client-supplied planets or ascendant are accepted. Gulika is supporting-only pending external numeric parity; Sphuta and verdict layers remain blocked.",
+        "supporting_indicators": {"gulika": gulika, "sphuta": sphuta},
+        "blocked_layers": ["Kunda", "Prashna verdict"],
+        "boundary": "No client-supplied planets or ascendant are accepted. Gulika and formula-only Sphuta are supporting-only pending external numeric parity; verdict layers remain blocked.",
     }
