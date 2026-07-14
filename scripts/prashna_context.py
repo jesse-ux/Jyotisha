@@ -9,6 +9,10 @@ try:
     from scripts.domain_calculation_service import CalculationError, compute_chart
 except ModuleNotFoundError:  # pragma: no cover - CLI execution path
     from domain_calculation_service import CalculationError, compute_chart
+try:
+    from scripts.gulika import calculate_gulika
+except ModuleNotFoundError:  # pragma: no cover - CLI execution path
+    from gulika import calculate_gulika
 
 
 class PrashnaContextError(ValueError):
@@ -58,6 +62,13 @@ def build_prashna_context(payload: dict[str, Any]) -> dict[str, Any]:
         })
     except (CalculationError, ValueError, TypeError) as exc:
         raise PrashnaContextError(f"Swiss Prashna chart blocked: {exc}") from exc
+    try:
+        gulika = calculate_gulika(moment, lat=float(payload["lat"]), lon=float(payload["lon"]), tz=tz)
+    except Exception as exc:
+        gulika = {
+            "status": "blocked",
+            "reason": f"gulika_supporting_indicator_failed:{type(exc).__name__}",
+        }
     return {
         "scope": "prashna_context",
         "status": "computed",
@@ -71,6 +82,7 @@ def build_prashna_context(payload: dict[str, Any]) -> dict[str, Any]:
         "planets": chart["planets"],
         "calculation_contract": chart["calculation_contract"],
         "result_hash": chart["result_hash"],
-        "blocked_layers": ["Gulika", "Trisphuta", "Kunda", "Prashna verdict"],
-        "boundary": "No client-supplied planets or ascendant are accepted. Approximate Prashna layers are blocked pending validated implementations.",
+        "supporting_indicators": {"gulika": gulika},
+        "blocked_layers": ["Trisphuta", "Kunda", "Prashna verdict"],
+        "boundary": "No client-supplied planets or ascendant are accepted. Gulika is supporting-only pending external numeric parity; Sphuta and verdict layers remain blocked.",
     }

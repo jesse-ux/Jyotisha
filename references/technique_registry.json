@@ -430,7 +430,8 @@
         "full-reading"
       ],
       "output_paths": [
-        "scripts/gulika.py:calculate_gulika"
+        "scripts/gulika.py:calculate_gulika",
+        "prashna_context.supporting_indicators.gulika"
       ],
       "audit_label": "Upagraha/Gulika/Maandi",
       "missing_impact": "Swiss day/night and Prasna Marga Ghatika Gulika are available as supporting evidence; Maandi, other Upagrahas and external numeric parity remain unavailable.",
