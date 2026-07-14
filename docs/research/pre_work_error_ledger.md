@@ -85,6 +85,7 @@ For large architecture or release work, also read:
 | ERR-052 | Text-only privacy scanning cannot distinguish a harmless quoted placeholder from a bare Python identifier that will fail at runtime. | mitigated 2026-07-13 | `public_release_privacy_scan.py` parses shipped Python files and rejects executable `REDACTED_*` names; keep the AST regression test. |
 | ERR-053 | A parity manifest could label an external engine `official_verified` without a raw artifact, hash, or calculation settings, making claimed oracle closure unverifiable. | mitigated 2026-07-13 | `three_engine_parity_replay_validator.py` requires raw artifact existence, SHA-256 and settings for verified/imported external engines; otherwise parity is `invalid`. |
 | ERR-054 | Candidate-time sensitivity scanning used the legacy `varga` CLI, so D4/D24/D30 could appear unavailable despite being supported by `varga-full`. | resolved 2026-07-13 | Scanner calls `varga-full --divisions D4,D9,D10,D24,D30` once per candidate and reads its canonical `Ascendant.sign` fields. |
+| ERR-055 | The full-reading path called `calc_all_sahams()` without lat/lon/tz, so an otherwise computable Swiss day/night context was silently blocked. | resolved 2026-07-14 | Pass the calculation arguments' lat/lon/tz into the Saham layer; keep Saham formula maturity `partial` until oracle parity exists. |
 
 ## Fragment Sweep Command Set
 

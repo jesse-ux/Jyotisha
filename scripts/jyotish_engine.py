@@ -5100,7 +5100,14 @@ def cmd_full_reading(args):
         # Sahams（特殊点）—— 需要出生时间
         birth_dt = getattr(args, 'birth_datetime', None)
         if birth_dt and planet_lons:
-            sahams_result = calc_all_sahams(planet_lons, asc_deg, birth_dt)
+            sahams_result = calc_all_sahams(
+                planet_lons,
+                asc_deg,
+                birth_dt,
+                lat=getattr(args, 'lat', None),
+                lon=getattr(args, 'lon', None),
+                tz=getattr(args, 'tz', None),
+            )
             report['modules']['sahams'] = sahams_result
         else:
             report['modules']['sahams'] = {'warning': 'birth_datetime or planet_lons missing, skip saham calc'}
