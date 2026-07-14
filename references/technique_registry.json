@@ -420,7 +420,7 @@
         "upagraha",
         "event"
       ],
-      "status": "blocked",
+      "status": "partial",
       "knowledge_refs": [
         "references/prashna-complete-guide.md"
       ],
@@ -430,17 +430,16 @@
         "full-reading"
       ],
       "output_paths": [
-        "modules.chart.upagraha",
-        "scripts/prashna.py:calc_gulika_simple"
+        "scripts/gulika.py:calculate_gulika"
       ],
       "audit_label": "Upagraha/Gulika/Maandi",
-      "missing_impact": "Sensitive malefic shadow points are unavailable, weakening pressure, delay and vulnerability interpretation.",
+      "missing_impact": "Swiss day/night and Prasna Marga Ghatika Gulika are available as supporting evidence; Maandi, other Upagrahas and external numeric parity remain unavailable.",
       "entry_type": "supporting_indicator",
       "evidence_role": "secondary",
       "user_visibility": "expert_audit",
       "verification_level": {
-        "calculation": "verified",
-        "rule": "verified",
+        "calculation": "partial",
+        "rule": "partial",
         "prediction": "support_only"
       },
       "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."

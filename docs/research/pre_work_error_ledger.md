@@ -89,6 +89,7 @@ For large architecture or release work, also read:
 | ERR-056 | A WorkBuddy checkout of the same remote diverged substantially from the active source branch and can be mistaken for a mergeable mirror. | active | Read `whole_machine_fragment_sweep_2026_07_14.md`; do not copy or merge it without explicit commit-level review on a separate branch. |
 | ERR-057 | The release quality profile checked untracked files but did not execute the privacy AST scan or the real Chromium report-isolation probe. | mitigated 2026-07-14 | `release_hygiene_check()` now requires `public_release_privacy_scan.py --json` and `report_renderer_isolation_poc.py --strict`; parity manifest validation also runs as a contract check. |
 | ERR-058 | Formula-based Sahams used the day/night operand rules but omitted the documented zodiacal-order `+30°` exception. | mitigated 2026-07-14 | `_calc_formula_saham()` applies the `references/saham_rules.json` forward-arc condition and one-sign correction; keep external numeric oracle parity as a separate `partial` requirement. |
+| ERR-059 | Gulika was either an approximate fallback or falsely implied as a chart module output. | mitigated 2026-07-14 | `scripts/gulika.py` computes Prasna Marga Ghatika segment Ascendant with Swiss sunrise/sunset and Lahiri sidereal houses; registry is `partial` and exposes only the actual calculator until external numeric parity and chart integration are complete. |
 
 ## Fragment Sweep Command Set
 
