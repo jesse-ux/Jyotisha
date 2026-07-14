@@ -76,6 +76,25 @@ def test_workflow_does_not_auto_attach_natal_western_data_to_prashna() -> None:
     assert packet is None
 
 
+def test_workflow_adds_only_explicit_western_timing_layers() -> None:
+    packet = _western_evidence_packet_from_body(
+        {
+            "entry_mode": "direct_chart",
+            "western_timing": {"transit_date": "2026-07-09", "solar_return_year": 2026},
+        },
+        {"primary_theme": "career"},
+        birth_payload={
+            "year": 1993, "month": 4, "day": 17, "hour": 14, "minute": 49,
+            "second": 0, "lat": 36.683333, "lon": 114.35, "tz": 8,
+        },
+    )
+
+    assert set(packet["timing_techniques"]) == {"transits", "solar_return"}
+    assert packet["sections"]["timing_techniques"]["status"] == "used"
+
+
 def test_release_editions_include_native_western_calculator() -> None:
     assert "scripts/western_chart_engine.py" in _edition_files("basic_git")
     assert "scripts/western_chart_engine.py" in _edition_files("premium_cloud_drive")
+    assert "scripts/western_timing_engine.py" in _edition_files("basic_git")
+    assert "scripts/western_timing_engine.py" in _edition_files("premium_cloud_drive")

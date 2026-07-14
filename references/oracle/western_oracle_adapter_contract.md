@@ -18,11 +18,30 @@ Placidus houses, ASC/MC/DC/IC, major aspects with explicit orb limits,
 element/mode distribution, and traditional house-ruler chains.
 
 The native result is deliberately `partial`: it does **not** calculate
-transits, secondary progressions, solar arcs, returns, synastry, or
+secondary progressions, solar arcs, non-solar returns, synastry, or
 interpretive signals. `prashna` does not receive a natal Western packet by
 default. Set `western_mode` to `external_only` or `off` to suppress automatic
 calculation. Explicit `western_evidence_packet` and `western_oracle_payload`
 always take precedence.
+
+### Optional Timing Input
+
+To add only requested native time evidence, pass:
+
+```json
+{
+  "western_timing": {
+    "transit_date": "2026-07-09",
+    "solar_return_year": 2026
+  }
+}
+```
+
+`transit_date` produces a local-date transit-to-natal major-aspect snapshot.
+`solar_return_year` locates the exact tropical solar return and calculates its
+return chart at the supplied birthplace/location. Both are calculation data,
+not event verdicts. Secondary progressions and solar arcs remain unavailable
+until separately implemented and tested.
 
 ## Accepted Input
 

@@ -52,9 +52,11 @@ except ModuleNotFoundError:  # pragma: no cover - script execution path
 try:
     from scripts.western_oracle_adapter import build_packet_from_oracle_payload
     from scripts.western_chart_engine import build_tropical_western_evidence_packet
+    from scripts.western_timing_engine import build_timing_techniques
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from western_oracle_adapter import build_packet_from_oracle_payload
     from western_chart_engine import build_tropical_western_evidence_packet
+    from western_timing_engine import build_timing_techniques
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPTS_DIR, '..'))
@@ -179,7 +181,7 @@ def _western_evidence_packet_from_body(
     if automatic in {False, 'off', 'external_only'} or body.get('entry_mode') == 'prashna' or not isinstance(birth_payload, dict):
         return None
     try:
-        return build_tropical_western_evidence_packet(
+        packet = build_tropical_western_evidence_packet(
             route_packet=route_packet,
             year=int(birth_payload['year']), month=int(birth_payload['month']), day=int(birth_payload['day']),
             hour=int(birth_payload['hour']), minute=int(birth_payload['minute']), second=int(birth_payload.get('second', 0)),
@@ -187,6 +189,29 @@ def _western_evidence_packet_from_body(
             timezone=body.get('western_timezone') or birth_payload['tz'],
             house_system=str(body.get('western_house_system', 'P')),
         )
+        timing_request = body.get('western_timing')
+        if isinstance(timing_request, dict):
+            birth = {
+                'year': int(birth_payload['year']), 'month': int(birth_payload['month']), 'day': int(birth_payload['day']),
+                'hour': int(birth_payload['hour']), 'minute': int(birth_payload['minute']), 'second': int(birth_payload.get('second', 0)),
+                'latitude': float(birth_payload['lat']), 'longitude': float(birth_payload['lon']),
+                'timezone': body.get('western_timezone') or birth_payload['tz'],
+                'house_system': str(body.get('western_house_system', 'P')),
+            }
+            timing = build_timing_techniques(
+                **birth,
+                transit_date=timing_request.get('transit_date'),
+                solar_return_year=timing_request.get('solar_return_year'),
+            )
+            if timing:
+                packet['timing_techniques'] = timing
+                packet['sections']['timing_techniques'] = {'status': 'used', 'source_path': 'western.native_timing'}
+                packet['missing_sections'] = [item for item in packet['missing_sections'] if item != 'timing_techniques']
+                packet['boundary'] = (
+                    'Native calculations include only requested transit snapshots and/or exact solar-return charts; '
+                    'they do not infer duration, outcomes, progressions, solar arcs, returns beyond solar, or interpretation.'
+                )
+        return packet
     except Exception as exc:  # pragma: no cover - defensive boundary
         return {
             'system': 'western_astrology',
