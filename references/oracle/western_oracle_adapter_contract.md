@@ -8,6 +8,22 @@ This contract defines how external Western astrology outputs enter the high-rigo
 
 It is an evidence adapter, not a bundled Western astrology engine.
 
+## Native Tropical Natal Layer
+
+`scripts/western_chart_engine.py` uses the existing Swiss Ephemeris binding to
+calculate a tropical natal chart from birth data. For `direct_chart` and
+`rectification`, the unified workflow defaults to `western_mode: "auto"` when
+no external payload is supplied. It records planetary longitude/speed,
+Placidus houses, ASC/MC/DC/IC, major aspects with explicit orb limits,
+element/mode distribution, and traditional house-ruler chains.
+
+The native result is deliberately `partial`: it does **not** calculate
+transits, secondary progressions, solar arcs, returns, synastry, or
+interpretive signals. `prashna` does not receive a natal Western packet by
+default. Set `western_mode` to `external_only` or `off` to suppress automatic
+calculation. Explicit `western_evidence_packet` and `western_oracle_payload`
+always take precedence.
+
 ## Accepted Input
 
 ```json
@@ -53,6 +69,7 @@ API and MCP callers may pass either field:
 
 - `western_oracle_payload`: raw external Western astrology JSON export; the project normalizes it with `western_oracle_adapter`.
 - `western_evidence_packet`: pre-normalized packet; the project carries it directly into `runtime_evidence_log`.
+- `western_mode`: `auto` (default for non-Prashna birth-chart entries), `external_only`, or `off`.
 
 When Jyotish evidence also carries matching `cross_system_signals`, `Cross-System Arbitration` can become `used`. If only Western evidence is present, arbitration stays `partial` or `blocked`.
 

@@ -51,8 +51,10 @@ except ModuleNotFoundError:  # pragma: no cover - script execution path
     from candidate_time_sensitivity_scan import scan_candidate_times
 try:
     from scripts.western_oracle_adapter import build_packet_from_oracle_payload
+    from scripts.western_chart_engine import build_tropical_western_evidence_packet
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from western_oracle_adapter import build_packet_from_oracle_payload
+    from western_chart_engine import build_tropical_western_evidence_packet
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPTS_DIR, '..'))
@@ -150,24 +152,50 @@ def _submit_background_job(callback):
     return future
 
 
-def _western_evidence_packet_from_body(body: dict, route_packet: dict) -> dict | None:
+def _western_evidence_packet_from_body(
+    body: dict,
+    route_packet: dict,
+    *,
+    birth_payload: dict | None = None,
+) -> dict | None:
     explicit_packet = body.get('western_evidence_packet')
     if isinstance(explicit_packet, dict):
         return explicit_packet
     oracle_payload = body.get('western_oracle_payload') or body.get('western_astrology_oracle')
-    if not isinstance(oracle_payload, dict):
+    if isinstance(oracle_payload, dict):
+        try:
+            return build_packet_from_oracle_payload(oracle_payload, route_packet=route_packet)
+        except Exception as exc:  # pragma: no cover - defensive contract boundary
+            return {
+                'system': 'western_astrology',
+                'status': 'blocked',
+                'route': dict(route_packet),
+                'signals': [],
+                'missing_sections': ['western_oracle_payload'],
+                'adapter_error': exc.__class__.__name__,
+                'boundary': 'Western oracle payload was supplied but could not be normalized.',
+            }
+    automatic = body.get('western_mode', body.get('western_auto_compute', 'auto'))
+    if automatic in {False, 'off', 'external_only'} or body.get('entry_mode') == 'prashna' or not isinstance(birth_payload, dict):
         return None
     try:
-        return build_packet_from_oracle_payload(oracle_payload, route_packet=route_packet)
-    except Exception as exc:  # pragma: no cover - defensive contract boundary
+        return build_tropical_western_evidence_packet(
+            route_packet=route_packet,
+            year=int(birth_payload['year']), month=int(birth_payload['month']), day=int(birth_payload['day']),
+            hour=int(birth_payload['hour']), minute=int(birth_payload['minute']), second=int(birth_payload.get('second', 0)),
+            latitude=float(birth_payload['lat']), longitude=float(birth_payload['lon']),
+            timezone=body.get('western_timezone') or birth_payload['tz'],
+            house_system=str(body.get('western_house_system', 'P')),
+        )
+    except Exception as exc:  # pragma: no cover - defensive boundary
         return {
             'system': 'western_astrology',
             'status': 'blocked',
             'route': dict(route_packet),
             'signals': [],
-            'missing_sections': ['western_oracle_payload'],
+            'missing_sections': ['native_tropical_calculation'],
             'adapter_error': exc.__class__.__name__,
-            'boundary': 'Western oracle payload was supplied but could not be normalized.',
+            'boundary': 'Native Western natal calculation could not be materialized.',
         }
 
 
@@ -192,7 +220,7 @@ def execute_consultation_workflow(
         Path(__file__).resolve().parents[1] / 'references/oracle/three_engine_parity_replay_manifest.json'
     )
     route_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.resolve_route(question, themes)
-    western_evidence_packet = _western_evidence_packet_from_body(body, route_packet)
+    western_evidence_packet = _western_evidence_packet_from_body(body, route_packet, birth_payload=birth_payload)
     unified_contract = _UNIFIED_CONSULTATION_ORCHESTRATOR.shared_contract(
         entry_mode=entry_mode,
         question=question,
