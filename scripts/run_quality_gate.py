@@ -378,7 +378,7 @@ def git_untracked_files() -> set[str]:
     return {line.strip() for line in completed.stdout.splitlines() if line.strip()}
 
 
-def release_hygiene_check() -> None:
+def release_hygiene_check(require_external_parity: bool = False) -> None:
     print("\n== Release hygiene check ==")
     untracked = git_untracked_files()
     critical = [path for path in RELEASE_CRITICAL_UNTRACKED_PATHS if path in untracked]
@@ -393,7 +393,10 @@ def release_hygiene_check() -> None:
         raise SystemExit(1)
     run([PYTHON, "scripts/public_release_privacy_scan.py", "--json"])
     run([PYTHON, "scripts/report_renderer_isolation_poc.py", "--strict"])
-    run([PYTHON, "scripts/three_engine_parity_replay_validator.py", "references/oracle/three_engine_parity_replay_manifest.json"])
+    parity_command = [PYTHON, "scripts/three_engine_parity_replay_validator.py", "references/oracle/three_engine_parity_replay_manifest.json"]
+    if require_external_parity:
+        parity_command.append("--require-pass")
+    run(parity_command)
     print("release_hygiene_check ok: no release-critical product files are untracked")
 
 
@@ -496,6 +499,7 @@ def main() -> int:
     parser.add_argument("--frontend-click-mode", choices=["core", "mobile", "offline", "pdf", "workspace", "mobile-trust", "import-files", "all"], default=None, help="Browser click smoke mode for browser/release profiles")
     parser.add_argument("--frontend-click-timeout", type=int, default=240, help="Timeout seconds for browser click smoke")
     parser.add_argument("--all-tests", action="store_true", help="Run every pytest file, including optional-dependency suites")
+    parser.add_argument("--require-external-parity", action="store_true", help="Fail the release gate unless the three-engine raw parity manifest passes.")
     args = parser.parse_args()
     profile = run_profile(args)
 
@@ -525,7 +529,7 @@ def main() -> int:
         run([PYTHON, "scripts/character_level_inventory_manifest.py", "--scope", "project", "--no-write", "--summary-only"])
         run([PYTHON, "scripts/deployment_preflight.py"])
         if profile["check_release_hygiene"]:
-            release_hygiene_check()
+            release_hygiene_check(require_external_parity=args.require_external_parity)
         run([PYTHON, "scripts/validate_bphs_invariants.py"])
     if args.all_tests:
         pytest_targets = ["tests"]

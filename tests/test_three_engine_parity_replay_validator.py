@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
+import sys
+from pathlib import Path
 from pathlib import Path
 
 from scripts.three_engine_parity_replay_validator import validate_manifest
@@ -54,3 +57,15 @@ def test_three_engine_parity_validator_accepts_one_same_chart_row(tmp_path: Path
     assert result["tested"] is True
     assert result["comparison_row_count"] == 1
     assert result["match_count"] == 1
+
+
+def test_validator_require_pass_rejects_blocked_manifest() -> None:
+    root = Path(__file__).resolve().parents[1]
+    completed = subprocess.run(
+        [sys.executable, "scripts/three_engine_parity_replay_validator.py", "--require-pass"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 1

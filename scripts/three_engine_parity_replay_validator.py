@@ -119,9 +119,11 @@ def validate_manifest(path: str | Path) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", nargs="?", default="references/oracle/three_engine_parity_replay_manifest.json")
+    parser.add_argument("--require-pass", action="store_true", help="Return nonzero unless all comparison rows pass.")
     args = parser.parse_args(argv)
-    print(json.dumps(validate_manifest(args.manifest), ensure_ascii=False, indent=2, sort_keys=True))
-    return 0
+    report = validate_manifest(args.manifest)
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0 if not args.require_pass or report["status"] == "pass" else 1
 
 
 if __name__ == "__main__":
