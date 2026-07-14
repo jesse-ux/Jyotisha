@@ -5904,51 +5904,6 @@ def cmd_prashna(args):
         }
     return context
 
-    # Legacy fallback below is intentionally unreachable until removed after migration.
-    try:
-        from prashna import cast_prashna, calc_arudha, calc_sphutas, calc_life_sphutas, calc_sahams, analyze_lost_item, kunda_verify, calc_gulika_simple
-    except ImportError:
-        # 尝试从同目录导入
-        import importlib.util, os
-        spec = importlib.util.spec_from_file_location("prashna", os.path.join(os.path.dirname(__file__), "prashna.py"))
-        prashna_mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(prashna_mod)
-        cast_prashna = prashna_mod.cast_prashna
-        calc_arudha = prashna_mod.calc_arudha
-        calc_sphutas = prashna_mod.calc_sphutas
-        calc_life_sphutas = prashna_mod.calc_life_sphutas
-        calc_sahams = prashna_mod.calc_sahams
-        analyze_lost_item = prashna_mod.analyze_lost_item
-        kunda_verify = prashna_mod.kunda_verify
-        calc_gulika_simple = prashna_mod.calc_gulika_simple
-
-    if args.mode == 'chart':
-        return cast_prashna(args.datetime, args.lat, args.lon)
-
-    # 其他模式需要先铸盘获取行星位置
-    chart = cast_prashna(args.datetime, args.lat, args.lon)
-    if 'error' in chart:
-        return chart
-
-    asc_lon = chart['ascendant']['lon']
-    p_lons = {n: d['lon'] for n, d in chart['planets'].items()}
-
-    if args.mode == 'arudha':
-        return {'arudha_lagna': calc_arudha(asc_lon, p_lons),
-                'ascendant': chart['ascendant']}
-    elif args.mode == 'sphutas':
-        return calc_sphutas(p_lons, 0)
-    elif args.mode == 'sahams':
-        return calc_sahams(p_lons, asc_lon)
-    elif args.mode == 'lost-item':
-        return analyze_lost_item(p_lons, asc_lon)
-    elif args.mode == 'life':
-        return calc_life_sphutas(asc_lon, p_lons.get('Moon',0), p_lons.get('Sun',0), 0)
-    elif args.mode == 'kunda':
-        return kunda_verify(asc_lon)
-    else:
-        return cast_prashna(args.datetime, args.lat, args.lon)
-
 
 # ============================================================================
 # Sudarshana Chakra (v6.9.14新增)
