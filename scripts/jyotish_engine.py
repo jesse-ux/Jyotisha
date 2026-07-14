@@ -5093,8 +5093,13 @@ def cmd_full_reading(args):
     try:
         from tajika import calc_tajika_yogas, calc_all_sahams
 
-        # Tajika Yogas（用本命盘行星经度）
-        tc_yogas = calc_tajika_yogas(planet_lons)
+        # Seven-planet Tajika candidates require actual instantaneous speed.
+        tajika_planets = {
+            name: {"longitude": item.get("degree_raw", item.get("lon")), "speed": item.get("speed")}
+            for name, item in planets.items()
+            if isinstance(item, dict) and name in {"Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"}
+        }
+        tc_yogas = calc_tajika_yogas(tajika_planets)
         report['modules']['tajika_yogas'] = tc_yogas
 
         # Sahams（特殊点）—— 需要出生时间

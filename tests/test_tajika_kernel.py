@@ -16,6 +16,9 @@ def test_kernel_detects_cross_sign_aspect_and_excludes_nodes():
     pair = next(row for row in result["interactions"] if row["planets"] == ["Sun", "Moon"])
     assert pair["aspect"] == 60.0
     assert pair["motion"] == "applying"
+    candidate = next(row for row in result["candidate_yogas"] if row["planets"] == ["Sun", "Moon"])
+    assert candidate["name"] == "Ithasala_candidate"
+    assert candidate["status"] == "partial"
     assert result["nodes_excluded"] is True
     assert all("Rahu" not in row["planets"] for row in result["interactions"])
 

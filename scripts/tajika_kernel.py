@@ -61,6 +61,19 @@ def calculate_tajika_interactions(planets: dict[str, dict[str, Any]]) -> dict[st
         "status": "partial",
         "nodes_excluded": True,
         "interactions": interactions,
-        "blocked_named_yogas": ["Nakta", "Yamaya", "Manahoo", "Ithasala chain"],
-        "boundary": "Only aspect/applying evidence is computed. Named Tajika yoga chains and verdicts remain blocked pending classic golden cases.",
+        "candidate_yogas": [
+            {
+                "name": "Ithasala_candidate" if row["motion"] == "applying" else "Easarapha_candidate",
+                "planets": row["planets"],
+                "aspect": row["aspect"],
+                "residual": row["residual"],
+                "average_deeptamsa": row["average_deeptamsa"],
+                "motion": row["motion"],
+                "rule_source": "references/tajika-yoga-complete-guide.md#2.1-2.2",
+                "status": "partial",
+            }
+            for row in interactions
+        ],
+        "blocked_named_yogas": ["Nakta", "Yamaya", "Manahoo", "Kamboola", "Ithasala/Easarapha adjudication"],
+        "boundary": "Candidate labels are derived only from seven-planet aspect, Deeptamsa and applying/separating evidence. Full named-yoga chains and event verdicts remain blocked pending classic golden cases.",
     }
