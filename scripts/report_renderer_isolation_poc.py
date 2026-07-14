@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import argparse
 import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -78,4 +79,9 @@ def run_poc() -> dict[str, Any]:
 
 
 if __name__ == "__main__":
-    print(json.dumps(run_poc(), ensure_ascii=False, sort_keys=True))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--strict", action="store_true", help="Return nonzero unless the isolation probe passes.")
+    args = parser.parse_args()
+    result = run_poc()
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    raise SystemExit(0 if not args.strict or result["status"] == "pass" else 1)

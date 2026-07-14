@@ -391,6 +391,9 @@ def release_hygiene_check() -> None:
         }
         print(json.dumps(payload, ensure_ascii=False, indent=2), file=sys.stderr)
         raise SystemExit(1)
+    run([PYTHON, "scripts/public_release_privacy_scan.py", "--json"])
+    run([PYTHON, "scripts/report_renderer_isolation_poc.py", "--strict"])
+    run([PYTHON, "scripts/three_engine_parity_replay_validator.py", "references/oracle/three_engine_parity_replay_manifest.json"])
     print("release_hygiene_check ok: no release-critical product files are untracked")
 
 
