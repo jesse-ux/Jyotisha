@@ -64,7 +64,15 @@ def _calc_formula_saham(
     first = _resolve_saham_operand(formula[0], planet_lons, asc_lon, computed)
     second = _resolve_saham_operand(formula[1], planet_lons, asc_lon, computed)
     third = _resolve_saham_operand(formula[2], planet_lons, asc_lon, computed)
-    return (third + (first - second)) % 360
+    result = (third + (first - second)) % 360
+    # references/saham_rules.json: add one sign when Ascendant is not on the
+    # forward zodiacal arc from the first formula point to the second.
+    ascendant_between_points = (
+        first <= asc_lon <= second
+        if first <= second
+        else asc_lon >= first or asc_lon <= second
+    )
+    return result if ascendant_between_points else (result + 30.0) % 360
 
 
 def calc_muntha(birth_asc_idx: int, age: int) -> Dict:

@@ -262,6 +262,19 @@ class TestSahams:
         result = calc_all_sahams(planet_lons, asc, datetime(1990, 6, 15, 12, 0), lat=39.9042, lon=116.4074, tz=8)
         assert abs(result['karma_saham']['longitude'] - expected) < 0.01
 
+    def test_formula_saham_applies_reference_add_30_exception(self):
+        from tajika import _calc_formula_saham
+
+        # Asc 50 is outside the forward 100 -> 200 zodiacal arc.
+        result = _calc_formula_saham(
+            'Punya_Saham',
+            {'Sun': 200.0, 'Moon': 100.0},
+            50.0,
+            True,
+            {},
+        )
+        assert result == 340.0
+
     def test_is_faster_moon_vs_sun(self):
         assert _is_faster('Moon', 'Sun')
         assert _is_faster('Mercury', 'Jupiter')
