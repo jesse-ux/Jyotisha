@@ -184,6 +184,13 @@ def execute_consultation_workflow(
     question = body.get('question') or ''
     entry_mode = body.get('entry_mode', 'direct_chart')
     high_rigor = bool(body.get('return_high_rigor_shape'))
+    try:
+        from scripts.three_engine_parity_replay_validator import validate_manifest
+    except ModuleNotFoundError:  # pragma: no cover - direct script execution
+        from three_engine_parity_replay_validator import validate_manifest
+    external_parity_gate = validate_manifest(
+        Path(__file__).resolve().parents[1] / 'references/oracle/three_engine_parity_replay_manifest.json'
+    )
     route_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.resolve_route(question, themes)
     western_evidence_packet = _western_evidence_packet_from_body(body, route_packet)
     unified_contract = _UNIFIED_CONSULTATION_ORCHESTRATOR.shared_contract(
@@ -235,6 +242,15 @@ def execute_consultation_workflow(
             result['western_evidence_packet'] = western_evidence_packet
         if body.get('return_high_rigor_shape'):
             result['endpoint'] = 'high_rigor_workflow'
+            result['high_rigor_external_parity'] = {
+                'status': 'pass' if external_parity_gate.get('status') == 'pass' else 'blocked',
+                'parity_status': external_parity_gate.get('status'),
+                'reason': external_parity_gate.get('blocked_reason') or 'three_engine_parity_not_passed',
+                'require_external_parity': bool(body.get('require_external_parity')),
+            }
+            if body.get('require_external_parity') and external_parity_gate.get('status') != 'pass':
+                result['success'] = False
+                result['blocked_reason'] = 'external_parity_not_passed'
         return result
 
     chart = dict(chart_override) if isinstance(chart_override, dict) else {}
@@ -386,6 +402,7 @@ def execute_consultation_workflow(
         'audited_remedies': audited_remedies,
         'vedastro_official': vedastro_official,
         'runtime_truth': runtime_truth,
+        'external_parity_gate': external_parity_gate,
         'interpretation_source_runtime_coverage': interpretation_source_runtime_coverage,
         'machine_evidence_packet': machine_evidence_packet,
         'western_evidence_packet': western_evidence_packet or {},
@@ -398,6 +415,16 @@ def execute_consultation_workflow(
             'domain-relevant routes execute according to the configured sample/network limits.'
         ),
     }
+    if high_rigor:
+        result['high_rigor_external_parity'] = {
+            'status': 'pass' if external_parity_gate.get('status') == 'pass' else 'blocked',
+            'parity_status': external_parity_gate.get('status'),
+            'reason': external_parity_gate.get('blocked_reason') or 'three_engine_parity_not_passed',
+            'require_external_parity': bool(body.get('require_external_parity')),
+        }
+        if body.get('require_external_parity') and external_parity_gate.get('status') != 'pass':
+            result['success'] = False
+            result['blocked_reason'] = 'external_parity_not_passed'
     if body.get('return_high_rigor_shape'):
         result['endpoint'] = 'high_rigor_workflow'
     return result
