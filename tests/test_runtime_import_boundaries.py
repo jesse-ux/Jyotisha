@@ -43,3 +43,17 @@ def test_mcp_docstring_marks_workbuddy_as_distribution_mirror_not_runtime_source
     assert "/.workbuddy/skills/jyotish-vedic-astrology/mcp_server.py" not in text
     assert "distribution mirror" in text
     assert "reference only" in text
+
+
+def test_engine_does_not_import_mcp_server_for_strict_evidence() -> None:
+    text = (ROOT / "scripts" / "jyotish_engine.py").read_text(encoding="utf-8", errors="ignore")
+    assert "from mcp_server import" not in text
+    assert "mcp_server.py" not in text
+    assert "strict_evidence_service" in text
+
+
+def test_mcp_server_does_not_instantiate_api_handler_directly() -> None:
+    text = (ROOT / "mcp_server.py").read_text(encoding="utf-8", errors="ignore")
+    assert "from jyotish_api_server import" not in text
+    assert "JyotishAPIHandler" not in text
+    assert "consultation_workflow_service" in text

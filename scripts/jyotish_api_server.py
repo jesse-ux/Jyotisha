@@ -204,6 +204,13 @@ def _western_evidence_packet_from_body(
                 solar_return_year=timing_request.get('solar_return_year'),
                 secondary_progression_date=timing_request.get('secondary_progression_date'),
                 solar_arc_date=timing_request.get('solar_arc_date'),
+                converse_secondary_progression_date=timing_request.get('converse_secondary_progression_date'),
+                converse_solar_arc_date=timing_request.get('converse_solar_arc_date'),
+                midpoint_date=timing_request.get('midpoint_date'),
+                lunar_return_start_date=timing_request.get('lunar_return_start_date'),
+                duration_scan_start_date=timing_request.get('duration_scan_start_date'),
+                duration_scan_end_date=timing_request.get('duration_scan_end_date'),
+                parans_date=timing_request.get('parans_date'),
             )
             if timing:
                 packet['timing_techniques'] = timing
@@ -211,7 +218,8 @@ def _western_evidence_packet_from_body(
                 packet['missing_sections'] = [item for item in packet['missing_sections'] if item != 'timing_techniques']
                 packet['boundary'] = (
                     'Native calculations include only explicitly requested transit, solar-return, secondary-progression, '
-                    'and solar-arc layers; they do not infer duration, outcomes, or interpretation.'
+                    'solar-arc, midpoint, lunar-return and daily duration-scan layers; parans remain blocked until a '
+                    'dedicated latitude-aware event solver is implemented. Outputs do not infer outcomes or interpretation.'
                 )
         return packet
     except Exception as exc:  # pragma: no cover - defensive boundary

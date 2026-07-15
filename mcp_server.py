@@ -716,12 +716,10 @@ def _execute_mcp_consultation_workflow(
     western_evidence_packet: dict[str, Any] | None = None,
     western_oracle_payload: dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
-    from jyotish_api_server import JyotishAPIHandler, execute_consultation_workflow
+    from consultation_workflow_service import execute_consultation_workflow
 
-    handler = JyotishAPIHandler.__new__(JyotishAPIHandler)
     result = execute_consultation_workflow(
-        handler,
-        body={
+        {
             "question": question,
             "year": year,
             "month": month,
@@ -4264,12 +4262,12 @@ def strict_workflow(
         result["chart"] = chart
         result["strict_workflow"] = _collect_strict_evidence(route, chart)
         try:
-            from jyotish_api_server import JyotishAPIHandler
+            from consultation_workflow_service import build_runtime_evidence_helpers
 
-            handler = JyotishAPIHandler.__new__(JyotishAPIHandler)
-            vedastro_official = handler._high_rigor_vedastro_official_summary(chart)
-            vedastro_archive_manifest = handler._compute_vedastro_gateway_archives()
-            interpretation_coverage = handler._interpretation_source_runtime_coverage(chart)
+            runtime_helpers = build_runtime_evidence_helpers(chart)
+            vedastro_official = runtime_helpers["vedastro_official"]
+            vedastro_archive_manifest = runtime_helpers["vedastro_archive_manifest"]
+            interpretation_coverage = runtime_helpers["interpretation_coverage"]
             machine_evidence_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.machine_evidence_packet(
                 chart=chart,
                 route_packet=result.get("routing") if isinstance(result.get("routing"), dict) else route_packet,

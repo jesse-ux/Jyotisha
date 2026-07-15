@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from mcp_server import _existing_interpretation_source_pack  # noqa: E402
+from scripts.strict_evidence_service import existing_interpretation_source_pack  # noqa: E402
 
 
 REQUIRED_LAYERS = [
@@ -100,7 +100,7 @@ CANDIDATE_KEYWORDS = [
 
 
 def build_report() -> dict[str, Any]:
-    source_pack = _existing_interpretation_source_pack()
+    source_pack = existing_interpretation_source_pack()
     inventory = source_pack.get("interpretation_source_inventory") if isinstance(source_pack, dict) else {}
     if not isinstance(inventory, dict):
         inventory = {}

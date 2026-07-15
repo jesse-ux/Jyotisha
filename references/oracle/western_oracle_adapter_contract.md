@@ -34,7 +34,14 @@ To add only requested native time evidence, pass:
     "transit_date": "2026-07-09",
     "solar_return_year": 2026,
     "secondary_progression_date": "2026-07-09",
-    "solar_arc_date": "2026-07-09"
+    "solar_arc_date": "2026-07-09",
+    "converse_secondary_progression_date": "2026-07-09",
+    "converse_solar_arc_date": "2026-07-09",
+    "midpoint_date": "2026-07-09",
+    "lunar_return_start_date": "2026-07-01",
+    "duration_scan_start_date": "2026-07-01",
+    "duration_scan_end_date": "2026-07-31",
+    "parans_date": "2026-07-09"
   }
 }
 ```
@@ -44,9 +51,16 @@ To add only requested native time evidence, pass:
 return chart at the supplied birthplace/location. Both are calculation data,
 not event verdicts. `secondary_progression_date` uses one ephemeris day per
 tropical year for progressed planets. `solar_arc_date` applies the true
-secondary-progressed-Sun arc to natal planets/ASC/MC. Both remain `partial`:
-progressed angles, converses, parans, midpoints, duration, and interpretation
-are not asserted.
+secondary-progressed-Sun arc to natal planets/ASC/MC.
+`converse_secondary_progression_date` and `converse_solar_arc_date` add the
+matching backward-progressed layers. `midpoint_date` emits natal midpoint
+geometry and transit midpoint conjunction/opposition hits. `lunar_return_start_date`
+finds the next exact tropical lunar return. `duration_scan_start_date` plus
+`duration_scan_end_date` groups daily transit-to-natal aspect windows.
+These remain evidence layers, not event verdicts. Progressed angles are marked
+blocked until a method is selected; `parans_date` currently returns a structured
+`blocked` state because a latitude-aware rising/setting/culminating solver is
+not yet implemented.
 
 ## Accepted Input
 

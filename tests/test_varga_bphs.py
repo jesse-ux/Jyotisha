@@ -44,6 +44,13 @@ def drekkana_ref(lon: float) -> int:
     return (sign_index + part_index * 4) % 12
 
 
+def chaturthamsa_ref(lon: float) -> int:
+    sign_index = int((lon % 360) / 30) % 12
+    degree_in_sign = (lon % 360) - sign_index * 30
+    part_index = int(degree_in_sign / (30 / 4))
+    return (sign_index + part_index * 3) % 12
+
+
 @given(st.floats(min_value=0, max_value=359.999999, allow_nan=False, allow_infinity=False))
 def test_navamsa_matches_bphs_reference(lon: float) -> None:
     result = calc_varga(lon, 9)
@@ -64,6 +71,20 @@ def test_dasamsa_matches_bphs_reference(lon: float) -> None:
 def test_drekkana_uses_same_plus_four_plus_eight(lon: float) -> None:
     result = calc_varga(lon, 3)
     assert result["sign_idx"] == drekkana_ref(lon)
+
+
+@given(st.floats(min_value=0, max_value=359.999999, allow_nan=False, allow_infinity=False))
+def test_chaturthamsa_matches_pyjhora_parashara_reference(lon: float) -> None:
+    result = calc_varga(lon, 4)
+    assert result["sign_idx"] == chaturthamsa_ref(lon)
+    assert result["sign"] == SIGNS[chaturthamsa_ref(lon)]
+    assert 0 <= result["degree_in_sign"] < 30
+
+
+def test_chaturthamsa_reference_boundary_examples() -> None:
+    assert [varga_map(0, part, 4) for part in range(4)] == [0, 3, 6, 9]
+    assert [varga_map(8, part, 4) for part in range(4)] == [8, 11, 2, 5]
+    assert [varga_map(11, part, 4) for part in range(4)] == [11, 2, 5, 8]
 
 
 def test_varga_map_boundary_examples() -> None:

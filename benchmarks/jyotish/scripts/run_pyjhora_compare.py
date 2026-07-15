@@ -105,7 +105,7 @@ def build_pyjhora_sample(sample, *, node_mode='mean'):
     swe = patch_swisseph()
     from jhora import utils, const
     from jhora.panchanga import drik
-    from jhora.horoscope.chart import charts
+    from jhora.horoscope.chart import ashtakavarga, charts, strength
     from jhora.horoscope.dhasa.graha import vimsottari
 
     # Align benchmark口径: Lahiri + mean sidereal year. PyJHora default is TRUE_PUSHYA.
@@ -126,8 +126,14 @@ def build_pyjhora_sample(sample, *, node_mode='mean'):
     current_jd = utils.julian_day_number((ty, tm, td), (0, 0, 0))
 
     rasi = parse_chart_positions(charts.rasi_chart(jd, place))
+    rasi_rows = charts.rasi_chart(jd, place)
+    d2 = parse_chart_positions(charts.hora_chart(rasi_rows, chart_method=2))
+    d4 = parse_chart_positions(charts.chaturthamsa_chart(rasi_rows, chart_method=1))
     d9 = parse_chart_positions(charts.divisional_chart(jd, place, divisional_chart_factor=9, chart_method=1))
     d10 = parse_chart_positions(charts.divisional_chart(jd, place, divisional_chart_factor=10, chart_method=1))
+    house_to_planets = utils.get_house_planet_list_from_planet_positions(rasi_rows)
+    bav, sav, _prastara = ashtakavarga.get_ashtaka_varga(house_to_planets)
+    shadbala = strength.shad_bala(jd, place)
 
     asc = rasi.get('Ascendant') or {}
     planets = {}
@@ -174,6 +180,8 @@ def build_pyjhora_sample(sample, *, node_mode='mean'):
             'ayanamsa': 'LAHIRI',
             'd9_method': 'PyJHora divisional_chart chart_method=1',
             'd10_method': 'PyJHora divisional_chart chart_method=1',
+            'd2_method': 'PyJHora hora_chart chart_method=2 traditional_parasara',
+            'd4_method': 'PyJHora chaturthamsa_chart chart_method=1 traditional_parasara',
             'dasha_year': 'mean sidereal year',
             'compat': 'monkeypatch swisseph keyword API + missing constants; dummy timezonefinder only for import',
             'license_note': 'PyJHora is AGPL-3.0; used only as external benchmark, not vendored into skill.'
@@ -183,7 +191,12 @@ def build_pyjhora_sample(sample, *, node_mode='mean'):
             'degree_in_sign': asc.get('degree_in_sign'),
         },
         'planets': planets,
-        'varga': {'D9': d9, 'D10': d10},
+        'varga': {'D2': d2, 'D4': d4, 'D9': d9, 'D10': d10},
+        'ashtakavarga': {
+            'bav': {name: list(bav[index]) for index, name in enumerate(['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Lagna'])},
+            'sav': list(sav),
+        },
+        'shadbala': {name: float(shadbala[6][index]) for index, name in enumerate(['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'])},
         'dasha': dasha,
     }
 
@@ -234,7 +247,7 @@ def compare_one(sample_id, local, pyjhora):
         for field in ['sign', 'nakshatra', 'nakshatra_pada']:
             compare_scalar(rows, sample_id, 'planet', p, field, l.get(field), y.get(field))
         compare_scalar(rows, sample_id, 'planet', p, 'degree_in_sign', l.get('degree_in_sign'), y.get('degree_in_sign'), tolerance=0.15)
-    for varga_name in ['D9', 'D10']:
+    for varga_name in ['D2', 'D4', 'D9', 'D10']:
         for body in ['Ascendant'] + PLANETS:
             l = (local['varga'].get(varga_name) or {}).get(body) or {}
             y = (pyjhora['varga'].get(varga_name) or {}).get(body) or {}
@@ -245,6 +258,24 @@ def compare_one(sample_id, local, pyjhora):
                 pass
             compare_scalar(rows, sample_id, varga_name, body, 'sign', l.get('sign'), y.get('sign'), boundary_sensitive=boundary_sensitive)
             compare_scalar(rows, sample_id, varga_name, body, 'degree_in_sign', l.get('degree_in_sign'), y.get('degree_in_sign'), tolerance=0.2, boundary_sensitive=boundary_sensitive)
+    for planet in ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Lagna']:
+        for sign_idx, sign in enumerate(SIGNS):
+            compare_scalar(
+                rows, sample_id, 'Ashtakavarga_BAV', planet, sign,
+                (local.get('ashtakavarga', {}).get('bav', {}).get(planet) or [None] * 12)[sign_idx],
+                (pyjhora.get('ashtakavarga', {}).get('bav', {}).get(planet) or [None] * 12)[sign_idx],
+            )
+    for sign_idx, sign in enumerate(SIGNS):
+        compare_scalar(
+            rows, sample_id, 'Ashtakavarga_SAV', 'SAV', sign,
+            (local.get('ashtakavarga', {}).get('sav') or [None] * 12)[sign_idx],
+            (pyjhora.get('ashtakavarga', {}).get('sav') or [None] * 12)[sign_idx],
+        )
+    for planet in ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']:
+        compare_scalar(
+            rows, sample_id, 'Shadbala', planet, 'total_virupas',
+            local.get('shadbala', {}).get(planet), pyjhora.get('shadbala', {}).get(planet), tolerance=0.5,
+        )
     # PyJHora dasha is useful as external signal, but currently has different default starting convention/seed in some cases.
     # Keep fields in matrix, with generous date tolerance; differences are classified below in report.
     for field in ['mahadasha_lord', 'antardasha_lord']:
@@ -330,6 +361,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='Compare public benchmark samples against PyJHora.')
     parser.add_argument('--sample-id', action='append', default=[], help='Run only a named benchmark sample; repeatable.')
     parser.add_argument('--build-local', action='store_true', help='Explicitly generate missing local canonical baselines.')
+    parser.add_argument('--refresh-local', action='store_true', help='Explicitly rebuild selected local canonical baselines.')
     parser.add_argument('--node-mode', choices=['mean', 'true'], default='mean', help='Match the node convention before comparing.')
     parser.add_argument('--output-prefix', default='', help='Optional filename prefix for resumable batch artifacts.')
     args = parser.parse_args(argv)
@@ -344,7 +376,7 @@ def main(argv=None):
     all_rows = []
     for sample in samples:
         local_path = LOCAL_CANON / f"{sample['id']}.canonical.json"
-        if not local_path.exists() and args.build_local:
+        if (not local_path.exists() and args.build_local) or args.refresh_local:
             from run_skill_baseline import run_sample
             baseline = run_sample(sample)
             if not baseline.get('ok'):
