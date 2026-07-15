@@ -8,6 +8,7 @@ import csv
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from datetime import datetime
 from pathlib import Path
 
@@ -253,7 +254,7 @@ def compare_one(sample_id, local, pyjhora):
     return rows
 
 
-def write_report(samples, rows):
+def write_report(samples, rows, *, generated_at=None):
     total = len(rows)
     counts = {}
     by_section = {}
@@ -272,7 +273,8 @@ def write_report(samples, rows):
     lines = []
     lines.append('# Jyotish benchmark 第三轮：PyJHora 对比报告')
     lines.append('')
-    lines.append('生成时间：2026-06-03')
+    generated_at = generated_at or datetime.now(timezone.utc)
+    lines.append(f'生成时间：{generated_at.isoformat()}')
     lines.append('')
     lines.append('## 1. 本轮范围')
     lines.append('')
