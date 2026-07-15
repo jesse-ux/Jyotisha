@@ -14,8 +14,12 @@ separate. It stays deliberately thin:
 from __future__ import annotations
 
 import argparse
+import contextlib
+import enum
 import inspect
+import importlib
 import importlib.util
+import io
 import json
 import os
 import subprocess
@@ -339,6 +343,148 @@ if __name__ == "__main__":
 """
 
 
+def _offset_to_string(offset: Any) -> str:
+    if isinstance(offset, str):
+        raw = offset.strip()
+        if not raw:
+            return "+00:00"
+        if raw[0] in "+-" and ":" in raw:
+            return raw
+        try:
+            offset = float(raw)
+        except ValueError:
+            return raw
+    if isinstance(offset, (int, float)):
+        sign = "+" if offset >= 0 else "-"
+        absolute = abs(float(offset))
+        hours = int(absolute)
+        minutes = int(round((absolute - hours) * 60))
+        if minutes == 60:
+            hours += 1
+            minutes = 0
+        return f"{sign}{hours:02d}:{minutes:02d}"
+    return "+00:00"
+
+
+def _import_runtime_module() -> tuple[str | None, Any | None]:
+    for name in MODULE_CANDIDATES:
+        with contextlib.redirect_stdout(io.StringIO()):
+            try:
+                return name, importlib.import_module(name)
+            except ModuleNotFoundError:
+                continue
+    return None, None
+
+
+def _coerce_runtime_value(module: Any, value: Any) -> Any:
+    if isinstance(value, list):
+        return [_coerce_runtime_value(module, item) for item in value]
+    if isinstance(value, dict):
+        enum_name = value.get("__vedastro_enum__")
+        if enum_name:
+            return getattr(getattr(module, enum_name), value["value"])
+        type_name = value.get("__vedastro_type__")
+        if type_name == "GeoLocation":
+            return module.GeoLocation(value["location_name"], value["longitude"], value["latitude"])
+        if type_name == "Time":
+            geolocation = _coerce_runtime_value(module, value["geolocation"]) if value.get("geolocation") else None
+            if value.get("time_string") is not None:
+                return module.Time(value["time_string"], geolocation)
+            time_string = (
+                f"{int(value['hour']):02d}:{int(value['minute']):02d} "
+                f"{int(value['day']):02d}/{int(value['month']):02d}/{int(value['year'])} "
+                f"{_offset_to_string(value.get('offset', '+00:00'))}"
+            )
+            return module.Time(time_string, geolocation)
+        if type_name:
+            target = getattr(module, type_name)
+            args = [_coerce_runtime_value(module, item) for item in value.get("args", [])]
+            kwargs = {key: _coerce_runtime_value(module, item) for key, item in value.get("kwargs", {}).items()}
+            if args or kwargs:
+                return target(*args, **kwargs)
+            payload = {key: _coerce_runtime_value(module, item) for key, item in value.items() if not key.startswith("__")}
+            return target(**payload)
+        return {key: _coerce_runtime_value(module, item) for key, item in value.items()}
+    return value
+
+
+def _serialize_runtime_value(value: Any) -> Any:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, enum.Enum):
+        return {"type": type(value).__name__, "name": value.name, "value": value.value}
+    if isinstance(value, (list, tuple, set)):
+        return [_serialize_runtime_value(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): _serialize_runtime_value(item) for key, item in value.items()}
+    if hasattr(value, "to_json"):
+        try:
+            payload = value.to_json()
+            if isinstance(payload, str):
+                try:
+                    return json.loads(payload)
+                except json.JSONDecodeError:
+                    return payload
+            return _serialize_runtime_value(payload)
+        except Exception:
+            pass
+    if hasattr(value, "__dict__"):
+        return {key: _serialize_runtime_value(item) for key, item in vars(value).items() if not key.startswith("_")}
+    return str(value)
+
+
+def _resolve_runtime_callable(module: Any, method_name: str) -> Any:
+    parts = [part for part in method_name.split(".") if part]
+    if not parts:
+        raise AttributeError("empty_method_name")
+    if len(parts) == 1:
+        return getattr(module.Calculate, parts[0])
+    current = module
+    for part in parts:
+        current = getattr(current, part)
+    return current
+
+
+def _call_in_current_python(method: str, params: dict[str, Any]) -> dict[str, Any]:
+    module_name, module = _import_runtime_module()
+    if module is None:
+        return _missing_package_result(method)
+    try:
+        target = _resolve_runtime_callable(module, method)
+        args: list[Any] = []
+        kwargs: dict[str, Any] = {}
+        if isinstance(params, dict) and ("args" in params or "kwargs" in params):
+            args = [_coerce_runtime_value(module, item) for item in params.get("args", [])]
+            kwargs = {key: _coerce_runtime_value(module, item) for key, item in params.get("kwargs", {}).items()}
+        elif isinstance(params, dict):
+            kwargs = {key: _coerce_runtime_value(module, item) for key, item in params.items()}
+        elif isinstance(params, list):
+            args = [_coerce_runtime_value(module, item) for item in params]
+        elif params is not None:
+            args = [_coerce_runtime_value(module, params)]
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = target(*args, **kwargs)
+        return {
+            "available": True,
+            "status": "ok",
+            "method": method,
+            "module_name": module_name,
+            "result": _serialize_runtime_value(result),
+            "python_bin": sys.executable,
+            "source": "vedastro_python_bridge",
+        }
+    except Exception as exc:
+        return {
+            "available": False,
+            "status": "bridge_runtime_error",
+            "method": method,
+            "module_name": module_name,
+            "python_bin": sys.executable,
+            "error": {"type": type(exc).__name__, "message": str(exc)},
+            "source": "vedastro_python_bridge",
+        }
+
+
 def _package_available() -> bool:
     if os.environ.get(FORCE_UNAVAILABLE_ENV, "").strip().lower() in {"1", "true", "yes"}:
         return False
@@ -536,6 +682,9 @@ def call_method(method: str, params: dict[str, Any]) -> dict[str, Any]:
 
     if os.environ.get(FORCE_UNAVAILABLE_ENV, "").strip().lower() in {"1", "true", "yes"}:
         return _missing_package_result(method)
+
+    if _package_available():
+        return _call_in_current_python(method, params)
 
     python_bin = _select_python_bin()
     if not python_bin:

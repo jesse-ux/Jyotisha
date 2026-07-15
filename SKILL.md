@@ -1,7 +1,7 @@
 ---
 name: jyotish-vedic-astrology
 version: 6.9.14
-description: 印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。35种Dasha、405+Yoga规则、KP系统、Prashna卜卦、16因子合盘、Remedies补救、Sahams部分覆盖、Sudarshana三参考点、PMC完整检测、Tajika年度星盘、案例验证+误区纠正。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga。GitHub: https://github.com/732642856/yinduzhanxing
+description: "印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。35种Dasha、405+Yoga规则、KP系统、Prashna卜卦、16因子合盘、Remedies补救、Sahams部分覆盖、Sudarshana三参考点、PMC完整检测、Tajika年度星盘、案例验证+误区纠正。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga。GitHub: https://github.com/732642856/yinduzhanxing"
 ---
 
 # 印度占星专业解盘与推运系统

@@ -2442,8 +2442,8 @@ def test_desktop_packaging_spike_is_documented_and_checkable() -> None:
     assert "desktop_packaging_preflight.py" in readme
     assert "tests/run_frontend_click_smoke.py --mode all" in readme
     assert "普通用户启动路径" in readme
-    assert "先启动网页服务：cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173" in readme
-    assert "再启动本地 API 服务：python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200" in readme
+    assert "先启动本地 API 服务：`.venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200`" in readme
+    assert "再启动网页服务：`cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173`" in readme
     assert "打开 Trust Center，点击运行健康检查" in readme
     assert "PWA 安装壳只包装网页服务，本地 API 服务仍需单独启动" in readme
     assert "安装后首次打开" in spike
@@ -2458,7 +2458,7 @@ def test_desktop_packaging_spike_is_documented_and_checkable() -> None:
     quality_gate = (ROOT / "scripts" / "run_quality_gate.py").read_text(encoding="utf-8")
     assert "普通用户启动路径" in quality_gate
     assert "cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173" in quality_gate
-    assert "python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200" in quality_gate
+    assert ".venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200" in quality_gate
 
 
 def test_user_delivery_matrix_is_documented_and_checkable() -> None:
@@ -2477,7 +2477,7 @@ def test_user_delivery_matrix_is_documented_and_checkable() -> None:
         "desktop-shell",
         "public demo shell",
         "api_required",
-        "python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200",
+        ".venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200",
         "npm run preview -- --host 127.0.0.1 --port 4173",
         "http://localhost:5300",
     ]:
@@ -2755,7 +2755,7 @@ def test_user_startup_labels_are_consistent_across_recovery_surfaces() -> None:
         assert token in app_text
     for command in [
         "cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173",
-        "python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200",
+        ".venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200",
     ]:
         assert command in readme
         assert command in quality_gate

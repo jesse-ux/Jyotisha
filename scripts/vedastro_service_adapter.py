@@ -15,6 +15,7 @@ import json
 import os
 import socket
 import subprocess
+import sys
 import threading
 import time
 from datetime import datetime
@@ -34,6 +35,15 @@ load_local_env(ROOT)
 
 VEDASTRO_PYTHON_BRIDGE = ROOT / "scripts" / "vedastro_python_bridge.py"
 VEDASTRO_OFFICIAL_CAPABILITY_RUNNER = ROOT / "scripts" / "vedastro_official_capability_runner.py"
+
+
+def _vedastro_python_bin() -> str:
+    """Run VedAstro child processes in the active backend interpreter by default."""
+    return (
+        os.environ.get("VEDASTRO_PYTHON_BIN", "").strip()
+        or os.environ.get("PYTHON_BIN", "").strip()
+        or sys.executable
+    )
 
 
 PARITY_CASES = {
@@ -927,7 +937,7 @@ def _call_vedastro_python_bridge_high_value(method_key: str, payload: dict[str, 
     try:
         completed = subprocess.run(
             [
-                os.environ.get("PYTHON_BIN", "") or "python3",
+                _vedastro_python_bin(),
                 str(VEDASTRO_PYTHON_BRIDGE),
                 "--high-value",
                 method_key,
@@ -1025,7 +1035,7 @@ def _try_official_capability_runner_snapshot_bundle(case: dict[str, Any]) -> dic
     try:
         completed = subprocess.run(
             [
-                os.environ.get("PYTHON_BIN", "") or "python3",
+                _vedastro_python_bin(),
                 str(VEDASTRO_OFFICIAL_CAPABILITY_RUNNER),
                 "--bundle",
                 "official_full_snapshot",
@@ -1102,7 +1112,7 @@ def _try_official_full_capability_catalog_bundle(case: dict[str, Any]) -> dict[s
     try:
         completed = subprocess.run(
             [
-                os.environ.get("PYTHON_BIN", "") or "python3",
+                _vedastro_python_bin(),
                 str(VEDASTRO_OFFICIAL_CAPABILITY_RUNNER),
                 "--bundle",
                 "official_full_capability_catalog",
@@ -2479,6 +2489,18 @@ def _run_official_full_snapshot_case(case: dict[str, Any], case_id: str = "user_
     )
     endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
     network_enabled = os.environ.get(ALLOW_NETWORK_ENV, "").strip().lower() in {"1", "true", "yes"}
+    fanout_enabled = os.environ.get("VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED", "1").strip().lower() in {"1", "true", "yes", "on"}
+    if bridge_sections and not fanout_enabled:
+        return _normalize_official_full_snapshot_success(
+            endpoint,
+            manifest,
+            bridge_sections,
+            bridge_section_statuses,
+            1,
+            [],
+            official_python_bundle=official_python_bundle,
+            official_full_capability_catalog=official_full_capability_catalog,
+        )
     if budget_exhausted and endpoint and network_enabled and _is_official_public_endpoint(endpoint):
         result = {
             "backend": "vedastro_service_adapter_candidate",
@@ -2722,6 +2744,17 @@ def _run_range_scan_case(case: dict[str, Any], domain: str, start_date: str, end
             "available": False,
             "status": "network_execution_disabled",
             "reason": f"{ALLOW_NETWORK_ENV} is not enabled; range scan stops after building request/provenance metadata.",
+            "request_preview": request_preview,
+            "source_metadata": _source_metadata(endpoint),
+        }
+
+    range_scan_enabled = os.environ.get("VEDASTRO_RANGE_SCAN_NETWORK_ENABLED", "1").strip().lower() in {"1", "true", "yes", "on"}
+    if not range_scan_enabled:
+        return {
+            "backend": "vedastro_service_adapter_candidate",
+            "available": False,
+            "status": "network_execution_disabled",
+            "reason": "VEDASTRO_RANGE_SCAN_NETWORK_ENABLED is disabled for the interactive chat path.",
             "request_preview": request_preview,
             "source_metadata": _source_metadata(endpoint),
         }

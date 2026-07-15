@@ -27,8 +27,8 @@ def delivery_matrix() -> list[dict]:
             "label": "Local dev",
             "user_url": "http://127.0.0.1:5173",
             "commands": [
+                ".venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200",
                 "cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173",
-                "python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200",
             ],
             "api_required": True,
             "scope": "Full web/app user experience with local API.",

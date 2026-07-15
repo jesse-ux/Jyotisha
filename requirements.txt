@@ -4,6 +4,12 @@
 # 核心：Swiss Ephemeris 天文计算库（必需）
 pyswisseph
 
+# VedAstro 官方 Python SDK（官方快照与交叉验证）
+vedastro==1.23.25
+
+# 严格证据收集器通过 mcp_server 复用（API 运行时必需）
+mcp>=1.0
+
 # 以下为标准库，无需安装（仅供参考）：
 # argparse, json, sys, os, csv, math, sqlite3
 # datetime, typing, hashlib, re, subprocess

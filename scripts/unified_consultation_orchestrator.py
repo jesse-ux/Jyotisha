@@ -391,6 +391,15 @@ class UnifiedConsultationOrchestrator:
             if isinstance(chart_data.get("special_lagnas"), dict)
             else modules.get("special_lagnas") if isinstance(modules.get("special_lagnas"), dict) else {}
         )
+        arudha_padas = (
+            chart_data.get("arudha_padas")
+            if isinstance(chart_data.get("arudha_padas"), dict)
+            else modules.get("arudha_padas") if isinstance(modules.get("arudha_padas"), dict) else {}
+        )
+        if not arudha_padas and isinstance(modules.get("jaimini"), dict):
+            jaimini_arudha = modules["jaimini"].get("arudha_padas")
+            arudha_padas = jaimini_arudha if isinstance(jaimini_arudha, dict) else {}
+        pada_map = arudha_padas.get("padas") if isinstance(arudha_padas.get("padas"), dict) else arudha_padas
         ascendant = base_chart.get("ascendant") if isinstance(base_chart.get("ascendant"), dict) else {}
         ascendant_sign = ascendant.get("sign") if isinstance(ascendant, dict) else None
         functional_layer = derive_functional_benefic_malefic(ascendant_sign)
@@ -401,6 +410,15 @@ class UnifiedConsultationOrchestrator:
             or official.get("official_raw_response")
             or official.get("raw_payload")
             or official.get("raw")
+        )
+        official_state = self._vedastro_cloud_state(vedastro_official)
+        raw_response_section = (
+            self._section(raw_response, "vedastro_official.raw_response")
+            if official_state == "official_verified"
+            else {
+                "status": "received_unverified" if raw_response else "missing",
+                "source_path": "vedastro_official.raw_response",
+            }
         )
         sections = {
             "D1": self._section(
@@ -414,22 +432,35 @@ class UnifiedConsultationOrchestrator:
             "planet_degrees": self._section(base_chart.get("planets"), "chart.planets"),
             "house_degrees": self._section(base_chart.get("houses") or chart_data.get("houses"), "chart.houses"),
             "dasha_boundaries": self._section(modules.get("dasha") or chart_data.get("dasha"), "modules.dasha"),
+            "narayana_dasha": self._section(modules.get("narayana_dasha"), "modules.narayana_dasha"),
             "shadbala": self._section(modules.get("shadbala") or chart_data.get("shadbala"), "modules.shadbala"),
             "ashtakavarga": self._section(modules.get("ashtakavarga") or chart_data.get("ashtakavarga"), "modules.ashtakavarga"),
             "yogas": self._section(modules.get("yogas") or chart_data.get("yogas"), "modules.yogas"),
-            "UL": self._section(special_lagnas.get("UL") or special_lagnas.get("Upapada_Lagna"), "special_lagnas.UL"),
-            "A7": self._section(special_lagnas.get("A7") or special_lagnas.get("Darapada"), "special_lagnas.A7"),
-            "A10": self._section(special_lagnas.get("A10") or special_lagnas.get("A10_Karma_Pada"), "special_lagnas.A10"),
+            "UL": self._section(
+                pada_map.get("UL")
+                or arudha_padas.get("upapada")
+                or special_lagnas.get("UL")
+                or special_lagnas.get("Upapada_Lagna"),
+                "modules.arudha_padas.UL",
+            ),
+            "A7": self._section(
+                pada_map.get("A7") or special_lagnas.get("A7") or special_lagnas.get("Darapada"),
+                "modules.arudha_padas.A7",
+            ),
+            "A10": self._section(
+                pada_map.get("A10") or special_lagnas.get("A10") or special_lagnas.get("A10_Karma_Pada"),
+                "modules.arudha_padas.A10",
+            ),
             "KP_cusp": self._section(modules.get("kp") or modules.get("kp_cusps") or chart_data.get("kp_cusps"), "modules.kp_cusps"),
             "functional_benefic_malefic": self._section(
                 functional_layer if functional_layer.get("status") == "used" else None,
                 "chart.ascendant.sign -> scripts.functional_benefics",
             ),
             "external_oracle_status": {
-                "status": self._vedastro_cloud_state(vedastro_official),
+                "status": official_state,
                 "source_path": "vedastro_official.runtime_truth",
             },
-            "vedastro_official_raw_response": self._section(raw_response, "vedastro_official.raw_response"),
+            "vedastro_official_raw_response": raw_response_section,
             "vedastro_official_raw_archive_manifest": self._section(
                 archive_manifest if archive_manifest.get("archive_count") else None,
                 "vedastro_gateway.archives",

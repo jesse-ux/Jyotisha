@@ -13,6 +13,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.vedastro_python_bridge import call_method as call_bridge_method
+    from scripts.vedastro_python_bridge import list_capabilities as list_bridge_capabilities
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from vedastro_python_bridge import call_method as call_bridge_method
+    from vedastro_python_bridge import list_capabilities as list_bridge_capabilities
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
@@ -22,6 +29,7 @@ CATALOG_STUB_ENV = "VEDASTRO_OFFICIAL_CAPABILITY_CATALOG_STUB"
 PLANETS = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu", "Ascendant"]
 HOUSES = [f"House{i}" for i in range(1, 13)]
 DEFAULT_SIGIL_SAMPLE_LIMIT = int(os.environ.get("VEDASTRO_FULL_CATALOG_SAMPLE_LIMIT", "0") or 0)
+SNAPSHOT_FANOUT_ENABLED = os.environ.get("VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED", "1").strip().lower() in {"1", "true", "yes", "on"}
 DOMAIN_ORDER = [
     "career",
     "marriage",
@@ -434,18 +442,7 @@ def _method_payload_for_instance(method: str, case: dict[str, Any], identity: st
 
 
 def _call_bridge(method: str, payload: dict[str, Any]) -> dict[str, Any]:
-    completed = subprocess.run(
-        [PYTHON, str(BRIDGE), "--method", method, "--params-json", json.dumps(payload, ensure_ascii=False)],
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-        timeout=240,
-        check=False,
-        env=os.environ.copy(),
-    )
-    if completed.returncode != 0:
-        return {"available": False, "status": "bridge_runtime_error", "stderr": (completed.stderr or "").strip()}
-    return json.loads(completed.stdout)
+    return call_bridge_method(method, payload)
 
 
 def _list_official_capabilities() -> dict[str, Any]:
@@ -454,36 +451,7 @@ def _list_official_capabilities() -> dict[str, Any]:
         payload = json.loads(stub_raw)
         payload.setdefault("source", "stubbed_official_capability_catalog")
         return payload
-
-    completed = subprocess.run(
-        [PYTHON, str(BRIDGE), "--list-capabilities"],
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-        timeout=240,
-        check=False,
-        env=os.environ.copy(),
-    )
-    if completed.returncode != 0:
-        return {
-            "available": False,
-            "status": "bridge_runtime_error",
-            "capabilities": [],
-            "buckets": {},
-            "stderr": (completed.stderr or "").strip(),
-            "source": "vedastro_official_capability_runner",
-        }
-    try:
-        return json.loads(completed.stdout)
-    except json.JSONDecodeError:
-        return {
-            "available": False,
-            "status": "bridge_invalid_json",
-            "capabilities": [],
-            "buckets": {},
-            "stdout_excerpt": (completed.stdout or "").strip()[:500],
-            "source": "vedastro_official_capability_runner",
-        }
+    return list_bridge_capabilities()
 
 
 def run_selected_methods(methods: list[str], birth_payload: dict[str, Any]) -> dict[str, Any]:
@@ -769,7 +737,7 @@ def run_snapshot_bundle(bundle: str, birth_payload: dict[str, Any]) -> dict[str,
 
     chart_core: dict[str, Any] = {}
     planet_statuses: dict[str, str] = {}
-    for planet in PLANETS:
+    for planet in PLANETS if SNAPSHOT_FANOUT_ENABLED else []:
         stub_key = f"AllPlanetData:{planet}"
         if stub_key in stub_map:
             report = stub_map[stub_key]
@@ -797,7 +765,7 @@ def run_snapshot_bundle(bundle: str, birth_payload: dict[str, Any]) -> dict[str,
 
     house_core: dict[str, Any] = {}
     house_statuses: dict[str, str] = {}
-    for house in HOUSES:
+    for house in HOUSES if SNAPSHOT_FANOUT_ENABLED else []:
         stub_key = f"AllHouseData:{house}"
         if stub_key in stub_map:
             report = stub_map[stub_key]
@@ -861,10 +829,11 @@ def run_snapshot_bundle(bundle: str, birth_payload: dict[str, Any]) -> dict[str,
         "available": bool(coverage_sections),
         "status": overall_status,
         "summary": {
-            "requested_method_count": len(PLANETS) + len(HOUSES) + len(scalar_methods),
-            "executed_method_count": len(PLANETS) + len(HOUSES) + len(scalar_methods),
+            "requested_method_count": (len(PLANETS) + len(HOUSES) if SNAPSHOT_FANOUT_ENABLED else 0) + len(scalar_methods),
+            "executed_method_count": (len(PLANETS) + len(HOUSES) if SNAPSHOT_FANOUT_ENABLED else 0) + len(scalar_methods),
             "ok_count": ok_count,
             "skipped_count": skipped_count,
+            "fanout_enabled": SNAPSHOT_FANOUT_ENABLED,
         },
         "result": {
             "snapshot_sections": snapshot_sections,
@@ -874,6 +843,7 @@ def run_snapshot_bundle(bundle: str, birth_payload: dict[str, Any]) -> dict[str,
                 "filled_sections": coverage_sections,
                 "planet_count": len(chart_core),
                 "house_count": len(house_core),
+                "fanout_enabled": SNAPSHOT_FANOUT_ENABLED,
             },
         },
     }

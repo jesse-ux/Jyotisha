@@ -22,6 +22,17 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse
 
+# This file is intentionally runnable as ``python scripts/jyotish_api_server.py``.
+# In that mode Python adds ``scripts/`` (not the repository root) to sys.path,
+# so later lazy imports such as ``from scripts.vedastro_gateway import ...``
+# otherwise fail during a real consultation request.
+SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.abspath(os.path.join(SCRIPTS_DIR, '..'))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+if SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, SCRIPTS_DIR)
+
 try:
     from scripts.local_env import load_local_env
 except ModuleNotFoundError:  # pragma: no cover - script execution path
@@ -35,9 +46,6 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from western_oracle_adapter import build_packet_from_oracle_payload
 
-SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.abspath(os.path.join(SCRIPTS_DIR, '..'))
-sys.path.insert(0, SCRIPTS_DIR)
 load_local_env(REPO_ROOT)
 _LOCAL_MODULE_CACHE = {}
 _API_CHART_CACHE_SCOPE = 'api_chart_response'
@@ -64,6 +72,209 @@ def _western_evidence_packet_from_body(body: dict, route_packet: dict) -> dict |
             'adapter_error': exc.__class__.__name__,
             'boundary': 'Western oracle payload was supplied but could not be normalized.',
         }
+
+
+def _consultation_reference_date(body: dict) -> datetime:
+    raw = (
+        body.get('reference_date')
+        or body.get('transit_date')
+        or body.get('today')
+        or body.get('current_date')
+    )
+    if isinstance(raw, str) and raw.strip():
+        try:
+            return datetime.fromisoformat(raw.strip().replace('Z', '+00:00'))
+        except ValueError:
+            pass
+    return datetime.now()
+
+
+def _consultation_current_age(birth_payload: dict, body: dict) -> float:
+    try:
+        born = datetime(
+            int(birth_payload['year']),
+            int(birth_payload['month']),
+            int(birth_payload['day']),
+            int(float(birth_payload.get('hour', 0))),
+            int(float(birth_payload.get('minute', 0))),
+        )
+    except (KeyError, TypeError, ValueError):
+        return 0.0
+    reference = _consultation_reference_date(body)
+    return max(0.0, (reference.replace(tzinfo=None) - born).total_seconds() / (365.2425 * 86400))
+
+
+def _attach_local_consultation_layers(handler, chart: dict, birth_payload: dict, body: dict) -> dict:
+    """Attach locally-computable consultation layers before reports/evidence are assembled.
+
+    VedAstro is an optional external cross-check for the web chat. D9/D10, Arudha
+    padas (including A10/UL), and Narayana Dasha are available in this repository
+    and must not be reported as missing merely because the external provider is
+    not configured.
+    """
+    if not isinstance(chart, dict) or not chart.get('success', True):
+        return chart
+
+    modules = chart.get('modules') if isinstance(chart.get('modules'), dict) else {}
+    chart['modules'] = modules
+    planets = chart.get('planets') if isinstance(chart.get('planets'), dict) else {}
+    ascendant = chart.get('ascendant') if isinstance(chart.get('ascendant'), dict) else {}
+    diagnostics = []
+
+    if planets and ascendant and not isinstance(modules.get('varga_full'), dict):
+        try:
+            varga_response = handler._compute_varga_full({
+                'planets': planets,
+                'ascendant': ascendant,
+                'divisions': ['D2', 'D4', 'D9', 'D10', 'D11'],
+            })
+            varga_result = varga_response.get('result') if isinstance(varga_response, dict) else None
+            if isinstance(varga_result, dict):
+                modules['varga_full'] = varga_result
+        except Exception as exc:  # optional local layer; preserve core D1 result
+            diagnostics.append({'layer': 'varga_full', 'status': 'unavailable', 'reason': exc.__class__.__name__})
+
+    if planets and ascendant and not isinstance(modules.get('arudha_padas'), dict):
+        try:
+            jaimini = _load_local_module('jaimini')
+            planet_lons = {
+                name: float(data.get('lon'))
+                for name, data in planets.items()
+                if isinstance(data, dict) and data.get('lon') is not None
+            }
+            asc_sign_idx = int(ascendant.get('sign_idx', int(float(ascendant.get('lon', 0))) // 30)) % 12
+            arudha_padas = jaimini.calc_arudha_padas(asc_sign_idx, planet_lons)
+            if isinstance(arudha_padas, dict):
+                modules['arudha_padas'] = arudha_padas
+                modules.setdefault('jaimini', {})['arudha_padas'] = arudha_padas
+                chart['arudha_padas'] = arudha_padas
+        except Exception as exc:
+            diagnostics.append({'layer': 'arudha_padas', 'status': 'unavailable', 'reason': exc.__class__.__name__})
+
+    if planets and ascendant and not isinstance(modules.get('narayana_dasha'), dict):
+        try:
+            narayana = _load_local_module('narayana_dasha')
+            planet_lons = {
+                name: float(data.get('lon'))
+                for name, data in planets.items()
+                if isinstance(data, dict) and data.get('lon') is not None
+            }
+            asc_sign_idx = int(ascendant.get('sign_idx', int(float(ascendant.get('lon', 0))) // 30)) % 12
+            narayana_result = narayana.narayana_dasha_full_report(
+                lagna_sign_idx=asc_sign_idx,
+                planet_lons=planet_lons,
+                current_age=_consultation_current_age(birth_payload, body),
+                birth_year=int(birth_payload.get('year', 0) or 0),
+            )
+            if isinstance(narayana_result, dict):
+                modules['narayana_dasha'] = narayana_result
+        except Exception as exc:
+            diagnostics.append({'layer': 'narayana_dasha', 'status': 'unavailable', 'reason': exc.__class__.__name__})
+
+    chart['local_consultation_layers'] = {
+        'status': 'ready' if not diagnostics else 'partial',
+        'source': 'repository_local_engines',
+        'available': [
+            name
+            for name in ('varga_full', 'arudha_padas', 'narayana_dasha')
+            if isinstance(modules.get(name), dict) and modules.get(name)
+        ],
+        'diagnostics': diagnostics,
+    }
+    return chart
+
+
+def _build_consumer_context(
+    *,
+    question: str,
+    route_packet: dict,
+    chart: dict,
+    rectification: dict,
+    machine_evidence_packet: dict,
+    vedastro_official: dict,
+) -> dict:
+    """Build a chat-facing truth contract without exposing provider noise as a fatal error."""
+    sections = (
+        machine_evidence_packet.get('sections')
+        if isinstance(machine_evidence_packet.get('sections'), dict)
+        else {}
+    )
+    route = str(route_packet.get('question_type') or route_packet.get('primary_theme') or 'general')
+    route_requirements = {
+        'career': ['D1', 'D10', 'A10', 'dasha_boundaries', 'narayana_dasha'],
+        'relationship': ['D1', 'D9', 'UL', 'dasha_boundaries'],
+        'finance': ['D1', 'D2', 'dasha_boundaries'],
+        'timing': ['D1', 'dasha_boundaries', 'narayana_dasha'],
+        'general': ['D1', 'D9', 'dasha_boundaries'],
+    }
+    required = route_requirements.get(route, route_requirements['general'])
+    available_layers = sorted(
+        name for name, section in sections.items()
+        if isinstance(section, dict) and section.get('status') == 'used'
+    )
+    missing_route_layers = [
+        name for name in required
+        if not isinstance(sections.get(name), dict) or sections[name].get('status') != 'used'
+    ]
+    d1_ready = 'D1' in available_layers and bool(chart.get('success', True))
+    hard_blockers = [] if d1_ready else ['core_chart_unavailable']
+
+    official_state = (
+        sections.get('external_oracle_status', {}).get('status')
+        if isinstance(sections.get('external_oracle_status'), dict)
+        else 'official_blocked'
+    )
+    optional_unavailable = []
+    if official_state != 'official_verified':
+        optional_unavailable.append({
+            'layer': 'vedastro_official_cross_check',
+            'status': official_state,
+            'impact': 'external_cross_validation_only',
+        })
+
+    rect_summary = rectification.get('summary') if isinstance(rectification.get('summary'), dict) else {}
+    warned_vargas = rect_summary.get('warned') if isinstance(rect_summary.get('warned'), list) else []
+    disabled_vargas = rect_summary.get('disabled') if isinstance(rect_summary.get('disabled'), list) else []
+    relevant_warned_vargas = [name for name in warned_vargas if name in required]
+    precise_timing_requested = route == 'timing' or bool(re.search(r'(具体|精确|哪一|几月|月份|日期|何时|什么时候|时间点|年份)', question or ''))
+    timing_layers_ready = all(name not in missing_route_layers for name in ('dasha_boundaries', 'narayana_dasha'))
+    precision_allows_timing = not any(name in disabled_vargas for name in ('D9', 'D10'))
+    can_answer_precise_timing = d1_ready and timing_layers_ready and precision_allows_timing and not missing_route_layers
+
+    limitation_parts = []
+    if missing_route_layers:
+        limitation_parts.append(f"当前问题仍缺少 {', '.join(missing_route_layers)}")
+    if relevant_warned_vargas:
+        limitation_parts.append(f"{', '.join(relevant_warned_vargas)} 对出生时间精度敏感")
+
+    return {
+        'core_status': 'blocked' if hard_blockers else ('degraded' if missing_route_layers else 'ready'),
+        'calculation_source': 'repository_local_engine',
+        'route': route,
+        'available_layers': available_layers,
+        'missing_route_layers': missing_route_layers,
+        'optional_unavailable_layers': optional_unavailable,
+        'hard_blockers': hard_blockers,
+        'precision': {
+            'warned_layers': warned_vargas,
+            'disabled_layers': disabled_vargas,
+            'summary': rect_summary.get('headline'),
+        },
+        'answer_policy': {
+            'can_answer_direction': d1_ready,
+            'can_answer_chart_interpretation': d1_ready,
+            'can_answer_precise_timing': can_answer_precise_timing,
+            'precise_timing_requested': precise_timing_requested,
+            'should_lead_with_limitations': bool(hard_blockers) or (precise_timing_requested and not can_answer_precise_timing),
+            'provider_unavailable_is_fatal': False,
+        },
+        'user_facing_limitation': '；'.join(limitation_parts) if limitation_parts else None,
+        'provider_status': {
+            'vedastro': official_state,
+            'role': 'optional_external_cross_check',
+            'runtime_status': vedastro_official.get('status') if isinstance(vedastro_official, dict) else None,
+        },
+    }
 
 
 def execute_consultation_workflow(
@@ -175,6 +386,8 @@ def execute_consultation_workflow(
                 computed_chart = True
             executed_steps.append('compute_chart')
 
+    chart = _attach_local_consultation_layers(handler, chart, birth_payload, body)
+
     historical_backtest = {}
     if 'run_historical_event_backtest' in runtime_planner.get('sync_steps', []):
         historical_backtest = handler._run_high_rigor_historical_backtest(birth_payload, events)
@@ -221,6 +434,14 @@ def execute_consultation_workflow(
         route_packet=route_packet,
         vedastro_official=vedastro_official,
         vedastro_archive_manifest=vedastro_archive_manifest,
+    )
+    consumer_context = _build_consumer_context(
+        question=question,
+        route_packet=route_packet,
+        chart=chart,
+        rectification=rectification,
+        machine_evidence_packet=machine_evidence_packet,
+        vedastro_official=vedastro_official,
     )
     real_case_calibration = _UNIFIED_CONSULTATION_ORCHESTRATOR.real_case_calibration_catalog(
         route_packet=route_packet,
@@ -283,6 +504,7 @@ def execute_consultation_workflow(
         'runtime_truth': runtime_truth,
         'interpretation_source_runtime_coverage': interpretation_source_runtime_coverage,
         'machine_evidence_packet': machine_evidence_packet,
+        'consumer_context': consumer_context,
         'western_evidence_packet': western_evidence_packet or {},
         'real_case_calibration': real_case_calibration,
         'runtime_evidence_log': runtime_evidence_log,
@@ -2623,7 +2845,15 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         )
         if skip_full_reading:
             module_status['full_reading'] = 'skipped_reuse_chart_data'
-        full_modules = full_reading.get('modules', {}) if isinstance(full_reading, dict) else {}
+        # Consultation workflow already computed and attached the local modules to
+        # ``chart_data`` before asking for a thematic report.  When the caller
+        # explicitly skips a second full-reading pass, reuse those modules rather
+        # than silently discarding D9/D10, Arudha padas and Narayana Dasha.
+        chart_modules = raw.get('modules') if isinstance(raw.get('modules'), dict) else {}
+        computed_modules = full_reading.get('modules', {}) if isinstance(full_reading, dict) else {}
+        full_modules = {**chart_modules, **computed_modules}
+        if chart_modules:
+            module_status['chart_modules'] = 'reused'
         chart = None
         if full_reading:
             chart = self._chart_from_full_reading(full_reading)
@@ -2671,6 +2901,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'periods': (dasha or {}).get('periods') or (dasha or {}).get('timeline') or [],
             'yogas': chart.get('yogas') or [],
             'ashtakavarga': ashtakavarga or {},
+            'modules': full_modules,
         }
         if yogas and isinstance(yogas.get('result'), dict):
             enriched['yogas'] = list(enriched['yogas']) + (yogas['result'].get('extended_yogas') or [])
@@ -2697,6 +2928,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'warnings': warnings,
             'evidence_counts': {theme: len(items) for theme, items in evidence.items()},
             'full_reading_used': bool(full_reading),
+            'chart_modules_reused': bool(chart_modules),
             'full_reading_summary': full_reading.get('summary', {}) if isinstance(full_reading, dict) else {},
             'full_reading_module_count': len(full_modules) if isinstance(full_modules, dict) else 0,
         }
@@ -2704,11 +2936,19 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
     def _thematic_evidence_source(self, mode, derived_context, has_custom_evidence):
         if mode == 'derived_chart_evidence' and derived_context:
             full_reading_used = bool(derived_context.get('full_reading_used'))
+            chart_modules_reused = bool(derived_context.get('chart_modules_reused'))
             return {
                 'mode': mode,
-                'source': 'full_reading_modules' if full_reading_used else 'birth_or_chart_payload',
+                'source': (
+                    'full_reading_modules'
+                    if full_reading_used
+                    else 'reused_chart_modules'
+                    if chart_modules_reused
+                    else 'birth_or_chart_payload'
+                ),
                 'sample_fallback': False,
                 'full_reading_used': full_reading_used,
+                'chart_modules_reused': chart_modules_reused,
                 'full_reading_module_count': derived_context.get('full_reading_module_count', 0),
                 'full_reading_summary': derived_context.get('full_reading_summary', {}),
                 'module_status': derived_context.get('module_status', {}),
@@ -2856,6 +3096,66 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 source='shadbala',
                 details=top_strength,
             ))
+
+        varga = full_modules.get('varga_full') if isinstance(full_modules.get('varga_full'), dict) else {}
+        d10 = varga.get('D10_Dasamsa') or varga.get('D10')
+        if isinstance(d10, dict) and d10:
+            ascendant = d10.get('ascendant') or d10.get('Ascendant') or {}
+            d10_planets = d10.get('planets') if isinstance(d10.get('planets'), dict) else {}
+            house_chart = d10.get('house_chart') if isinstance(d10.get('house_chart'), list) else []
+            tenth_house = house_chart[9] if len(house_chart) >= 10 and isinstance(house_chart[9], list) else []
+            asc_sign = ascendant.get('sign_cn') or ascendant.get('sign') or '未知'
+            tenth_label = '、'.join(str(name) for name in tenth_house) if tenth_house else '无行星直接落入'
+            items.append(self._theme_evidence(
+                'D10-Dashamsha-local',
+                'D10',
+                f'D10 事业分盘已完成：上升落 {asc_sign}，第10宫为{tenth_label}；用于校验职业角色、执行方式与社会位置。',
+                'neutral',
+                'strong',
+                source='chart.modules.varga_full.D10_Dasamsa',
+                details={
+                    'ascendant': ascendant,
+                    'tenth_house_planets': tenth_house,
+                    'planet_count': len(d10_planets),
+                },
+            ))
+
+        arudha = full_modules.get('arudha_padas') if isinstance(full_modules.get('arudha_padas'), dict) else {}
+        if not arudha and isinstance(full_modules.get('jaimini'), dict):
+            candidate = full_modules['jaimini'].get('arudha_padas')
+            arudha = candidate if isinstance(candidate, dict) else {}
+        padas = arudha.get('padas') if isinstance(arudha.get('padas'), dict) else arudha
+        a10 = padas.get('A10') if isinstance(padas, dict) else None
+        if isinstance(a10, dict) and a10:
+            sign = a10.get('sign_cn') or a10.get('sign') or '未知'
+            lord = a10.get('lord') or '未知'
+            items.append(self._theme_evidence(
+                'A10-Karma-Pada-local',
+                'A10',
+                f'A10（事业形象点）落 {sign}，主星为 {lord}；用于观察职业品牌、可见度与外界如何识别你的事业角色。',
+                'neutral',
+                'strong',
+                source='chart.modules.arudha_padas.A10',
+                details=a10,
+            ))
+
+        narayana = full_modules.get('narayana_dasha') if isinstance(full_modules.get('narayana_dasha'), dict) else {}
+        current_narayana = narayana.get('current_dasha') if isinstance(narayana.get('current_dasha'), dict) else {}
+        current_md = current_narayana.get('md') if isinstance(current_narayana.get('md'), dict) else {}
+        current_ad = current_narayana.get('ad') if isinstance(current_narayana.get('ad'), dict) else {}
+        if current_md:
+            md_sign = current_md.get('sign_cn') or current_md.get('sign') or '未知'
+            ad_sign = current_ad.get('sign_cn') or current_ad.get('sign') or '未知'
+            items.append(self._theme_evidence(
+                'Narayana-Dasha-local',
+                'Narayana',
+                f'Narayana Dasha 已完成：当前主周期为 {md_sign}，子周期为 {ad_sign}；可与行星大运交叉判断事业阶段。',
+                'neutral',
+                'moderate',
+                source='chart.modules.narayana_dasha.current_dasha',
+                details={'current_dasha': current_narayana},
+            ))
+
         convergence = full_modules.get('dasa_convergence') if isinstance(full_modules, dict) else {}
         if not isinstance(convergence, dict):
             convergence = {}

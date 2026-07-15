@@ -1188,9 +1188,13 @@ def _base_strict_narrative_payload(route_label, strict, *, fallback_headline, st
     monthly_frame = strict.get('monthly_adjudication_summary') if isinstance(strict, dict) else {}
     monthly_frame = monthly_frame if isinstance(monthly_frame, dict) else {}
     event_judgement = strict.get('event_judgement') if isinstance(strict, dict) else {}
+    event_judgement = event_judgement if isinstance(event_judgement, dict) else {}
     adjudication = strict.get('adjudication_stages') if isinstance(strict, dict) else {}
+    adjudication = adjudication if isinstance(adjudication, dict) else {}
     boundary_contract = strict.get('prediction_boundary_contract') if isinstance(strict, dict) else {}
+    boundary_contract = boundary_contract if isinstance(boundary_contract, dict) else {}
     confidence_boundary = boundary_contract.get('confidence_boundary') if isinstance(boundary_contract, dict) else {}
+    confidence_boundary = confidence_boundary if isinstance(confidence_boundary, dict) else {}
     confidence_cap = strict.get('confidence_cap') or event_judgement.get('confidence_cap') or 'unknown'
     dominant_label = event_judgement.get('dominant_label') if isinstance(event_judgement, dict) else None
 

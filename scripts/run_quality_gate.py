@@ -299,8 +299,8 @@ def format_failure_summary(
         lines.append(f"stderr tail:\n{tail_text(stderr)}")
     lines.extend([
         "普通用户启动路径:",
-        "1. 网页服务：cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173",
-        "2. 本地 API 服务：python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200",
+        "1. 本地 API 服务：.venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200",
+        "2. 网页服务：cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173",
         "3. Open http://127.0.0.1:5173, then open Trust Center and run the health check.",
         "4. PWA 安装壳只包装网页服务，本地 API 服务仍需单独启动。",
         "Next action: Run the focused command above, add --keep-logs for browser click smoke, then compare the app state with the startup path above.",

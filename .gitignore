@@ -32,3 +32,14 @@ output_report.txt
 results_extracted.md
 runtime-smoke-report-*.html
 jyotish-app/runtime-smoke-report-*.html
+
+# Local Python runtime for the API server
+.venv/
+
+# Local Supabase CLI link/cache state
+supabase/.temp/
+
+# Local review artifacts and unused package-manager state
+frontend/.omo/
+frontend/pnpm-lock.yaml
+frontend/pnpm-workspace.yaml

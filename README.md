@@ -11,6 +11,24 @@
 
 ---
 
+## Product service layout
+
+```text
+frontend/                         Next.js + Mastra chat product
+scripts/jyotish_api_server.py     Python API entrypoint
+jyotish_vedic/                    Python calculation package
+skills/ + references/ + assets/   Agent skill and calculation evidence
+supabase/                         Auth, profile, session, credits migrations
+deploy/                           Railway web/api Dockerfiles
+```
+
+Railway runs two services from the same repository:
+
+- `web`: `deploy/railway-web.Dockerfile`
+- `api`: `deploy/railway-api.Dockerfile`
+
+Deployment variables and private-network wiring are documented in `deploy/README.md`.
+
 ## Table of Contents
 
 - [What Is This](#what-is-this)
@@ -85,28 +103,81 @@ python3 scripts/user_invocation_acceptance_check.py
 只有输出 `"status": "pass"` 且外部引擎状态被明确标为 `available` / `partial` / `missing_dependency` 时，才继续做高严谨解盘。`VedAstro` 没有官方 `raw_response` 或 API key 时，必须保留 `official_blocked` / `local_fallback` 边界。
 ```
 
+### 本地 Python 环境（首次一次）
+
+本地 API 需要 **Python 3.11 或 3.12**，并且必须从项目自己的虚拟环境启动；`pyswisseph` 安装在该环境中。不要使用 macOS/Xcode 自带的 Python 3.9，否则会因不兼容的类型语法或缺少 `swisseph` 导致服务降级或启动失败。
+
+在仓库根目录执行：
+
+```bash
+# 将 python3.12 替换为本机可用的 Python 3.11 / 3.12
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+之后所有需要计算星盘的本地 API，均使用 `.venv/bin/python` 启动；不要混用系统 `python3`。服务启动后可用 `curl http://127.0.0.1:5200/api/health` 验证 `swisseph_available` 是否为 `true`。
+
+若看到 `No module named swisseph`，说明 API 没有使用这个虚拟环境；重新执行上面的安装命令，再用 `.venv/bin/python` 启动。脚本入口已支持其内部 `scripts.*` 包导入，不需要通过修改 `PYTHONPATH` 绕过错误。
+
 ### 普通用户启动路径
 
 如果只是打开网页/app，请按同一条路径走，不要在多个入口之间猜：
 
-1. 先启动网页服务：cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173
-2. 再启动本地 API 服务：python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200
+1. 先启动本地 API 服务：`.venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200`
+2. 再启动网页服务：`cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173`
 3. 打开 Trust Center，点击运行健康检查；页面地址是 `http://127.0.0.1:5173`。
 4. 如果只安装 PWA：PWA 安装壳只包装网页服务，本地 API 服务仍需单独启动；无 API 时网页会保留基础浏览器 fallback，但 PDF/高级技法需要本地 API 服务。
-5. 开发者做完整自检时运行：`python3 scripts/run_quality_gate.py --frontend-click-timeout 240`。
+5. 开发者做完整自检时运行：`.venv/bin/python scripts/run_quality_gate.py --frontend-click-timeout 240`。
 
-如需把网页里的 `VedAstro Range Scan` 按钮切到真实外部响应模式，可在仓库根目录创建本机私有配置文件 `.env.local`：
+### VedAstro：聊天产品推荐配置
+
+项目当前固定使用官方 Python SDK `vedastro==1.23.25`。首次安装依赖时必须安装到项目虚拟环境，并用同一个解释器启动后端，避免子进程落到系统 Python 后出现 `No module named vedastro`：
 
 ```bash
-VEDASTRO_API_ENDPOINT=https://api.vedastro.org/api
-VEDASTRO_ENABLE_NETWORK=1
-# 可选
-# VEDASTRO_API_KEY=sk_live_xxx
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200
 ```
 
-该文件已被 `.gitignore` 忽略；`scripts/jyotish_api_server.py`、`scripts/vedastro_service_adapter.py`、`scripts/run_quality_gate.py` 会自动加载它。注意：当前网页按钮走的是官方 `SearchEvents` 的真实 live 采样扫描桥接，不会让 VedAstro 越权改本地 adjudicator 的 `score / dominant_label / payout_label`。
+在仓库根目录创建本机私有配置文件 `.env.local`。聊天场景推荐先使用下面的快速官方证据模式：
 
-默认运行是快速模式：VedAstro official 证据层如果没有在前台预算内闭环，会诚实标记 `official_snapshot_budget_exhausted` 并退回本地 Swiss Ephemeris。要跑 official extended 模式，复制 `.env.official.example` 为 `.env.local` 并填好 endpoint/network/key；运行 `python3 scripts/diagnose_vedastro_mode.py` 可先确认当前是 `fast_local_fallback` 还是 `official_extended`。
+```dotenv
+VEDASTRO_API_ENDPOINT=https://api.vedastro.org/api
+VEDASTRO_ENABLE_NETWORK=1
+VEDASTRO_TIMEOUT_SECONDS=20
+VEDASTRO_GATEWAY_REQUIRE_OFFICIAL_RAW_RESPONSE=1
+
+# 聊天快速模式：保留 Dasha / Chara Dasha / Shadbala / Ashtakavarga，
+# 不执行 10 行星 + 12 宫位的逐项 fan-out。
+VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED=0
+
+# 免费公共模式下 SearchEvents 范围扫描耗时长且容易限流，
+# 聊天请求中默认关闭，避免同步阻塞流式回复。
+VEDASTRO_RANGE_SCAN_NETWORK_ENABLED=0
+
+VEDASTRO_CACHE_TTL_SECONDS=604800
+VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS=604800
+VEDASTRO_GATEWAY_QUEUE_ENABLED=1
+VEDASTRO_FREE_TIER_QUEUE=1
+VEDASTRO_FAIL_OPEN_LOCAL=1
+VEDASTRO_FULL_CATALOG_SAMPLE_LIMIT=0
+
+# 没有 key 时可先使用官方公共/免费模式；不要把 key 放到前端。
+# VEDASTRO_API_KEY=your_vedastro_key
+```
+
+该文件已被 `.gitignore` 忽略；`scripts/jyotish_api_server.py`、`scripts/vedastro_service_adapter.py`、`scripts/run_quality_gate.py` 会自动加载它。VedAstro 子进程默认复用启动后端的 `sys.executable`；如需指定独立解释器，可设置 `VEDASTRO_PYTHON_BIN=/absolute/path/to/python`。
+
+快速模式仍会取得 VedAstro 官方原始响应，并让 Gateway 在存在 `official_raw_response` 时闭合为 `official_verified`；D1/D9 等基础盘继续由本地 Swiss Ephemeris 负责。它只关闭高延迟 fan-out 与 `SearchEvents` 范围扫描，不等于关闭 VedAstro。
+
+获得稳定 API key，或把 Gateway 指向自建 VedAstro 服务后，可开启完整模式：
+
+```dotenv
+VEDASTRO_API_KEY=your_vedastro_key
+VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED=1
+VEDASTRO_RANGE_SCAN_NETWORK_ENABLED=1
+```
+
+完整模式会增加外部请求数量和首包等待时间，更适合后台任务、预计算或非实时专业解盘，不建议直接放在聊天首轮的同步关键路径。运行 `.venv/bin/python scripts/diagnose_vedastro_mode.py` 可检查当前模式；通过 `/api/vedastro_gateway/status` 查看 Gateway 的实际配置和 readiness。
 
 AI/vibe coding 推荐入口：Cline 接本仓 MCP，Aider 负责低成本小改，Dyad 只做前端原型。运行 `python3 scripts/print_cline_mcp_config.py` 生成 Cline MCP 配置；详情见 `docs/vibe_coding_setup.md`。
 
@@ -118,7 +189,7 @@ AI/vibe coding 推荐入口：Cline 接本仓 MCP，Aider 负责低成本小改�
 
 ```bash
 cp .env.cn.example .env.local
-python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200
+.venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200
 cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
@@ -259,7 +330,7 @@ python3 scripts/diagnose_vedastro_mode.py
 
 | 形态 | 入口 | 命令 | 能力边界 |
 |------|------|------|----------|
-| Local dev | `http://127.0.0.1:5173` | `cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173` + `python3 scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200` | 完整网页/app 用户端，适合本机普通用户试用。 |
+| Local dev | `http://127.0.0.1:5173` | `.venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200` + `cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173` | 完整网页/app 用户端，适合本机普通用户试用。 |
 | Docker Compose | `http://localhost:5300` | `docker compose up -d` | 同时启动 Web shell 与本地 API，适合低门槛本机部署。 |
 | Static demo / PWA | 静态站点 URL | `cd jyotish-app && npm run build` | 公开演示环境只能完整展示静态壳；完整高级技法需要本地 API 服务。 |
 | Desktop shell | PWA / Pake / Tauri | `python3 scripts/desktop_packaging_preflight.py` | PWA/Pake 当前可用；Tauri sidecar 需等 API 生命周期、签名和权限策略固定。 |
