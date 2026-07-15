@@ -7,9 +7,9 @@ from hypothesis import given
 from hypothesis import strategies as st
 from varga import (
     SIGNS,
-    calc_bhrigu_bindu,
     calc_22nd_drekkana,
     calc_64th_navamsa,
+    calc_bhrigu_bindu,
     calc_sarpa_drekkana,
     calc_varga,
     varga_map,

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import py_compile
@@ -14,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from local_env import load_local_env
+from local_env import load_local_env  # noqa: E402
 
 load_local_env(ROOT)
 APP = ROOT / "jyotish-app"
@@ -351,10 +352,8 @@ def run_oracle_collection_queue_and_validator() -> None:
         validator_cmd = [part if part != "{queue_file}" else str(queue_path) for part in ORACLE_EVIDENCE_VALIDATOR_CMD]
         run(validator_cmd, step="oracle_evidence_validator")
     finally:
-        try:
+        with contextlib.suppress(FileNotFoundError):
             queue_path.unlink()
-        except FileNotFoundError:
-            pass
 
 
 def git_untracked_files() -> set[str]:
