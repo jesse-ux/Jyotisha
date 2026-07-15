@@ -99,6 +99,7 @@ For large architecture or release work, also read:
 | ERR-066 | The pre-work fragment sweep invoked a retired `audit-capabilities --mode strict` contract, so governance tests and the mandatory preflight failed before real checks ran. | mitigated 2026-07-14 | Invoke the supported `--mode validate`; `tests/test_preflight_fragment_scan.py` and `pre_work_check.py` must remain green before substantive work. |
 | ERR-067 | A generic “Western timing” label can imply techniques that have not been computed. | mitigated 2026-07-15 | Native timing requires explicit transit, solar-return, secondary-progression, or solar-arc fields; boundaries still name unavailable progressed angles, converse, parans, midpoints, duration, and interpretation. |
 | ERR-068 | PyJHora comparison reports hard-coded `2026-06-03` as generation time, making fresh external benchmark artifacts appear stale and weakening audit traceability. | mitigated 2026-07-15 | `write_report()` records an injected-or-current UTC ISO timestamp; keep the deterministic timestamp regression. |
+| ERR-069 | Yoga validation tests and helper runner still imported rules from a `.workbuddy` mirror, so full pytest could fail or silently validate a divergent checkout. | mitigated 2026-07-15 | Resolve repo root from each file location; retain runtime-boundary and focused Yoga regressions. |
 
 ## Fragment Sweep Command Set
 

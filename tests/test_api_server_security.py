@@ -908,33 +908,19 @@ def test_prashna_rejects_non_string_question() -> None:
         handler._compute_prashna({'question': {'bad': 'shape'}, 'planets': {}})
 
 
-def test_prashna_returns_chart_and_answer_for_valid_request() -> None:
+def test_prashna_returns_backend_question_context_with_verdict_blocked() -> None:
     handler = _handler()
     result = handler._compute_prashna({
         'question': 'career',
         'question_text': '这个工作机会是否值得争取？',
-        'horary_number': 140,
-        'planets': {'Saturn': {'sign': 'Pisces'}, 'Moon': {'sign': 'Scorpio'}},
+        'question_timestamp': '2026-07-15T10:00:00+08:00',
+        'lat': 39.9042,
+        'lon': 116.4074,
+        'timezone': 8,
     })
-    assert 'prashna_chart' in result
-    assert 'kp_answer' in result
-    assert result['kp_answer']['question_type'] == 'career'
-    assert result['kp_answer_v2']['primary_house'] == 10
-    assert 'arudha' in result
-    assert 'sphutas' in result
-    assert 'sahams' in result
-    assert 'lost_item' in result
-    assert 'kunda' in result
-    kp_horary = result['kp_horary']
-    assert kp_horary['method'] == 'KP Horary'
-    assert kp_horary['horary_number'] == 140
-    assert kp_horary['question_houses']['primary'] == 10
-    assert kp_horary['ruling_planets']['ascendant_lord']
-    assert kp_horary['ruling_planets']['moon_star_lord']
-    assert kp_horary['cuspal_sub_lord']['house'] == 10
-    assert kp_horary['cuspal_sub_lord']['kp_lords']['sub_lord']
-    assert kp_horary['house_significators']['10']
-    assert kp_horary['judgement_matrix']
+    assert result['status'] == 'computed'
+    assert result['prashna_context']['chart_source'] == 'swiss_ephemeris_backend'
+    assert result['verdict']['status'] == 'blocked'
 
 
 def test_prashna_advanced_legacy_functions_exist() -> None:

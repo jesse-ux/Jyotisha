@@ -5030,6 +5030,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             from prashna_context import PrashnaContextError, build_prashna_context
         except ModuleNotFoundError:  # pragma: no cover - package import path
             from scripts.prashna_context import PrashnaContextError, build_prashna_context
+        if "question" in body and not isinstance(body["question"], str):
+            raise BadRequest('question must be a string')
+        if "question_text" in body and not isinstance(body["question_text"], str):
+            raise BadRequest('question_text must be a string')
         if "planets" in body or "asc_degree" in body:
             raise BadRequest("Prashna planets and ascendant are backend-computed; client values are forbidden")
         try:
