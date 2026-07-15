@@ -113,10 +113,86 @@ def calculate_solar_return(*, target_year: int, **birth: Any) -> dict[str, Any]:
     }
 
 
+def _birth_jd(**birth: Any) -> float:
+    zone, _ = _birth_zone(birth["timezone"])
+    local = datetime(
+        int(birth["year"]), int(birth["month"]), int(birth["day"]),
+        int(birth["hour"]), int(birth["minute"]), int(birth.get("second", 0)), tzinfo=zone,
+    )
+    utc = local.astimezone(ZoneInfo("UTC"))
+    return swe.julday(utc.year, utc.month, utc.day, utc.hour + utc.minute / 60 + utc.second / 3600)
+
+
+def _progressed_planets(progressed_jd: float) -> dict[str, dict[str, Any]]:
+    flags = swe.FLG_SWIEPH | swe.FLG_SPEED
+    planets: dict[str, dict[str, Any]] = {}
+    for name, planet_id in _PLANETS.items():
+        values, _ = swe.calc_ut(progressed_jd, planet_id, flags)
+        planets[name] = _point(values[0], speed=values[3])
+    return planets
+
+
+def calculate_secondary_progressions(*, target_date: str, **birth: Any) -> dict[str, Any]:
+    """Calculate progressed planets using one ephemeris day per tropical year."""
+    natal_chart = build_tropical_natal_chart(**birth)
+    target_jd, local = _target_jd(target_date, birth["timezone"])
+    birth_jd = _birth_jd(**birth)
+    elapsed_years = (target_jd - birth_jd) / 365.242189
+    progressed_jd = birth_jd + elapsed_years
+    planets = _progressed_planets(progressed_jd)
+    natal_points = {
+        **natal_chart["natal"]["planets"],
+        "ascendant": natal_chart["natal"]["angles"]["ascendant"],
+        "mc": natal_chart["natal"]["angles"]["mc"],
+    }
+    return {
+        "technique": "secondary_progressions",
+        "status": "partial",
+        "method": "one_ephemeris_day_per_tropical_year",
+        "target_date": target_date,
+        "target_local_time": local.isoformat(),
+        "elapsed_tropical_years": round(elapsed_years, 8),
+        "progressed_julian_day_ut": round(progressed_jd, 8),
+        "natal_sun_longitude": natal_chart["natal"]["planets"]["sun"]["longitude"],
+        "progressed_planets": planets,
+        "aspects": _cross_aspects(planets, natal_points),
+        "boundary": "Progressed planets only. Progressed angles, lunar phases, stations, duration, and interpretation remain separate audited layers.",
+    }
+
+
+def calculate_solar_arc_directions(*, target_date: str, **birth: Any) -> dict[str, Any]:
+    """Direct natal points by the true arc of the secondary progressed Sun."""
+    natal_chart = build_tropical_natal_chart(**birth)
+    progressions = calculate_secondary_progressions(target_date=target_date, **birth)
+    natal_sun = natal_chart["natal"]["planets"]["sun"]["longitude"]
+    progressed_sun = progressions["progressed_planets"]["sun"]["longitude"]
+    arc = _longitude(progressed_sun - natal_sun)
+    natal_points = {
+        **natal_chart["natal"]["planets"],
+        "ascendant": natal_chart["natal"]["angles"]["ascendant"],
+        "mc": natal_chart["natal"]["angles"]["mc"],
+    }
+    directed = {name: _point(point["longitude"] + arc) for name, point in natal_points.items()}
+    return {
+        "technique": "solar_arc_directions",
+        "status": "partial",
+        "method": "secondary_progressed_sun_arc",
+        "target_date": target_date,
+        "natal_sun_longitude": natal_sun,
+        "progressed_sun_longitude": progressed_sun,
+        "solar_arc_degrees": round(arc, 8),
+        "directed_points": directed,
+        "aspects": _cross_aspects(directed, natal_points),
+        "boundary": "True secondary-progressed-Sun arc applied to natal planets/ASC/MC. Directional converse, latitude, parans, midpoint, duration, and event interpretation are not inferred.",
+    }
+
+
 def build_timing_techniques(
     *,
     transit_date: str | None = None,
     solar_return_year: int | None = None,
+    secondary_progression_date: str | None = None,
+    solar_arc_date: str | None = None,
     **birth: Any,
 ) -> dict[str, Any]:
     """Materialize only the requested, independently auditable timing layers."""
@@ -125,4 +201,10 @@ def build_timing_techniques(
         techniques["transits"] = calculate_transit_to_natal(target_date=transit_date, **birth)
     if solar_return_year is not None:
         techniques["solar_return"] = calculate_solar_return(target_year=int(solar_return_year), **birth)
+    if secondary_progression_date:
+        techniques["secondary_progressions"] = calculate_secondary_progressions(
+            target_date=secondary_progression_date, **birth
+        )
+    if solar_arc_date:
+        techniques["solar_arc_directions"] = calculate_solar_arc_directions(target_date=solar_arc_date, **birth)
     return techniques

@@ -202,14 +202,16 @@ def _western_evidence_packet_from_body(
                 **birth,
                 transit_date=timing_request.get('transit_date'),
                 solar_return_year=timing_request.get('solar_return_year'),
+                secondary_progression_date=timing_request.get('secondary_progression_date'),
+                solar_arc_date=timing_request.get('solar_arc_date'),
             )
             if timing:
                 packet['timing_techniques'] = timing
                 packet['sections']['timing_techniques'] = {'status': 'used', 'source_path': 'western.native_timing'}
                 packet['missing_sections'] = [item for item in packet['missing_sections'] if item != 'timing_techniques']
                 packet['boundary'] = (
-                    'Native calculations include only requested transit snapshots and/or exact solar-return charts; '
-                    'they do not infer duration, outcomes, progressions, solar arcs, returns beyond solar, or interpretation.'
+                    'Native calculations include only explicitly requested transit, solar-return, secondary-progression, '
+                    'and solar-arc layers; they do not infer duration, outcomes, or interpretation.'
                 )
         return packet
     except Exception as exc:  # pragma: no cover - defensive boundary

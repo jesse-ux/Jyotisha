@@ -32,7 +32,9 @@ To add only requested native time evidence, pass:
 {
   "western_timing": {
     "transit_date": "2026-07-09",
-    "solar_return_year": 2026
+    "solar_return_year": 2026,
+    "secondary_progression_date": "2026-07-09",
+    "solar_arc_date": "2026-07-09"
   }
 }
 ```
@@ -40,8 +42,11 @@ To add only requested native time evidence, pass:
 `transit_date` produces a local-date transit-to-natal major-aspect snapshot.
 `solar_return_year` locates the exact tropical solar return and calculates its
 return chart at the supplied birthplace/location. Both are calculation data,
-not event verdicts. Secondary progressions and solar arcs remain unavailable
-until separately implemented and tested.
+not event verdicts. `secondary_progression_date` uses one ephemeris day per
+tropical year for progressed planets. `solar_arc_date` applies the true
+secondary-progressed-Sun arc to natal planets/ASC/MC. Both remain `partial`:
+progressed angles, converses, parans, midpoints, duration, and interpretation
+are not asserted.
 
 ## Accepted Input
 

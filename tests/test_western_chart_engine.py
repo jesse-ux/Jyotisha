@@ -80,7 +80,12 @@ def test_workflow_adds_only_explicit_western_timing_layers() -> None:
     packet = _western_evidence_packet_from_body(
         {
             "entry_mode": "direct_chart",
-            "western_timing": {"transit_date": "2026-07-09", "solar_return_year": 2026},
+            "western_timing": {
+                "transit_date": "2026-07-09",
+                "solar_return_year": 2026,
+                "secondary_progression_date": "2026-07-09",
+                "solar_arc_date": "2026-07-09",
+            },
         },
         {"primary_theme": "career"},
         birth_payload={
@@ -89,7 +94,9 @@ def test_workflow_adds_only_explicit_western_timing_layers() -> None:
         },
     )
 
-    assert set(packet["timing_techniques"]) == {"transits", "solar_return"}
+    assert set(packet["timing_techniques"]) == {
+        "transits", "solar_return", "secondary_progressions", "solar_arc_directions",
+    }
     assert packet["sections"]["timing_techniques"]["status"] == "used"
 
 
