@@ -1858,7 +1858,7 @@
       "commands": [
         "full-reading"
       ],
-      "conclusion_policy": "Use Harsha Bala as supporting context only; Panchavargiya and combined strength remain guarded until oracle parity passes.",
+      "conclusion_policy": "Use Harsha Bala as supporting context only; Panchavargiya and combined strength remain blocked until oracle parity passes.",
       "domains": [
         "tajika",
         "strength",
@@ -1869,7 +1869,7 @@
       "knowledge_refs": [],
       "missing_impact": "私有分盘代理已禁用；在统一 varga-full 核心与外部 golden oracle 完成前，不提供 Panchavargiya 或混合强度结论。",
       "name": "Panchavargiya Bala / 五分盘力量",
-      "note": "Harsha Bala layer is usable; Panchavargiya Bala component remains blocked pending unified Varga core and golden oracle parity. Combined Tajika strength is guarded and cannot drive verdicts.",
+      "note": "Harsha Bala layer is usable; Panchavargiya Bala and combined Tajika strength remain blocked pending unified Varga core and golden oracle parity.",
       "output_paths": [
         "modules.tajika_strength"
       ],
@@ -1953,10 +1953,10 @@
       "entry_type": "composite_adjudicator",
       "evidence_role": "context",
       "knowledge_refs": [],
+      "limitation": "Context only; it cannot change score, verdict, dominant label, confidence cap, or primary drivers, and classical Prashna adjudication remains blocked.",
       "missing_impact": "Prashna 已接入 full-reading，但问事分支的传统判断链、时机裁决与外部实盘闭环仍不均匀。",
       "name": "Prashna Integration / 问事占星接入",
       "note": "Prashna context is integrated as guarded question-moment evidence in strict career workflow Technique Audit; final prediction remains support-only and cannot override domain primary adjudication.",
-      "limitation": "Context only; it cannot change score, verdict, dominant label, confidence cap, or primary drivers, and classical Prashna adjudication remains blocked.",
       "output_paths": [
         "modules.prashna"
       ],
@@ -2741,6 +2741,7 @@
       "knowledge_refs": [
         "references/prashna-complete-guide.md"
       ],
+      "limitation": "Gulika is exposed only as a supporting risk indicator; Maandi and a complete adjudication layer remain unavailable.",
       "missing_impact": "Swiss day/night and Prasna Marga Ghatika Gulika are available as supporting evidence; Maandi, other Upagrahas and external numeric parity remain unavailable.",
       "name": "Upagraha / Gulika / Maandi",
       "note": "Gulika/Maandi is exposed through Prashna context as a strict workflow risk supporting indicator; it is not a primary judgement layer and cannot set final verdict.",
@@ -2749,7 +2750,6 @@
         "prashna_context.supporting_indicators.gulika"
       ],
       "status": "partial",
-      "limitation": "Gulika is exposed only as a supporting risk indicator; Maandi and a complete adjudication layer remain unavailable.",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "partial",
