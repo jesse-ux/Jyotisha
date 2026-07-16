@@ -50,7 +50,9 @@ def test_active_rectification_questions_api_accepts_location_for_true_recast() -
     summary = result["candidate_scan"]["sensitivity_summary"]
     assert "true_varga_recast" in summary["computed_layers"]
     assert "true_arudha_recast" in summary["computed_layers"]
+    assert "true_kp_cusp_recast" in summary["computed_layers"]
     assert "true_varga_recast" not in summary["blocked_layers"]
+    assert "true_kp_cusp_recast" not in summary["blocked_layers"]
 
 
 def test_active_rectification_score_api_returns_rankings_and_next_questions() -> None:
