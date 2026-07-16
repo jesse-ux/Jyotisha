@@ -34,13 +34,48 @@ def _parse_time(value: str) -> datetime:
 def _candidate_scan(center: datetime, uncertainty_minutes: int, step_minutes: int) -> dict[str, Any]:
     start = center - timedelta(minutes=uncertainty_minutes)
     end = center + timedelta(minutes=uncertainty_minutes)
+    total_minutes = int((end - start).total_seconds() // 60)
+    candidate_count = total_minutes // step_minutes + 1
+    sample_offsets = sorted({-uncertainty_minutes, 0, uncertainty_minutes})
+    samples = []
+    for offset in sample_offsets:
+        candidate = center + timedelta(minutes=offset)
+        if offset < 0:
+            cluster = "early_candidate_cluster"
+        elif offset > 0:
+            cluster = "late_candidate_cluster"
+        else:
+            cluster = "middle_candidate_cluster"
+        samples.append({
+            "time": candidate.strftime("%Y-%m-%d %H:%M"),
+            "offset_minutes": offset,
+            "cluster": cluster,
+            "sensitivity_flags": _sensitivity_flags(abs(offset)),
+        })
     return {
         "start": start.strftime("%Y-%m-%d %H:%M"),
         "end": end.strftime("%Y-%m-%d %H:%M"),
         "step_minutes": step_minutes,
-        "candidate_count": int((end - start).total_seconds() // 60 // step_minutes) + 1,
+        "candidate_count": candidate_count,
         "cluster_labels": ["early_candidate_cluster", "middle_candidate_cluster", "late_candidate_cluster"],
+        "samples": samples,
+        "sensitivity_summary": {
+            "method": "range_bucket_scan_v1",
+            "high_value_layers": ["D9", "D10", "D24", "D30", "D60", "UL", "A7", "A10", "KP_cusp"],
+            "computed_layers": ["time_range", "candidate_cluster", "question_sensitivity_map"],
+            "blocked_layers": ["true_varga_recast", "true_kp_cusp_recast", "true_arudha_recast"],
+            "boundary": "This is a candidate-question scan. True chart-difference recast is the next gate.",
+        },
     }
+
+
+def _sensitivity_flags(abs_offset_minutes: int) -> list[str]:
+    flags = ["D9", "D10", "D24", "A10"]
+    if abs_offset_minutes >= 10:
+        flags.extend(["D30", "UL", "A7"])
+    if abs_offset_minutes >= 20:
+        flags.extend(["D60", "KP_cusp"])
+    return flags
 
 
 def build_questionnaire(birth_time: str, uncertainty_minutes: int = 30, step_minutes: int = 1) -> dict[str, Any]:
