@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "privacy_scope": "public_synthetic_only",
+  "fixtures": [
+    {
+      "id": "public_synthetic_delhi_1990_noon_mean_lahiri",
+      "birth": {"synthetic": true, "year": 1990, "month": 1, "day": 1, "hour": 12, "minute": 0, "second": 0, "lat": 28.6139, "lon": 77.209, "tz": 5.5},
+      "effective": {"ayanamsa": "lahiri", "node_mode": "mean", "timezone_offset": 5.5},
+      "compatibility_hash": "257042461fe303aa3bff5a8333f65090832ce8a2be395f038523838d724b474b"
+    }
+  ]
+}
