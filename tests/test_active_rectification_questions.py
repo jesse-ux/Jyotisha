@@ -16,6 +16,13 @@ def test_active_rectification_questions_generate_choice_based_workflow() -> None
     assert {q["round"] for q in report["questions"]} == {1, 2, 3}
     assert all({option["key"] for option in q["options"]} == {"A", "B", "C", "D"} for q in report["questions"])
     assert all("scoring_map" in q for q in report["questions"])
+    assert report["candidate_scan"]["samples"]
+    assert report["candidate_scan"]["sensitivity_summary"]
+    assert {"D9", "D10", "D24", "D30", "UL", "A10", "KP_cusp"} <= set(
+        report["candidate_scan"]["sensitivity_summary"]["high_value_layers"]
+    )
+    assert report["candidate_scan"]["samples"][0]["cluster"] == "early_candidate_cluster"
+    assert report["candidate_scan"]["samples"][-1]["cluster"] == "late_candidate_cluster"
 
 
 def test_active_rectification_scores_answers_and_selects_next_round() -> None:
