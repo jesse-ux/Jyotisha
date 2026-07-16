@@ -37,7 +37,7 @@ services:
     image: caddy:2-alpine
     restart: unless-stopped
     environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:-http://103.117.123.53}
+      SITE_ADDRESS: ${SITE_ADDRESS:-https://jyotisha.chat}
     ports:
       - "80:80"
       - "443:443"

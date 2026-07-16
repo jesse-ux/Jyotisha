@@ -1,4 +1,8 @@
-{$SITE_ADDRESS:http://103.117.123.53} {
+{$SITE_ADDRESS:https://jyotisha.chat} {
     encode zstd gzip
     reverse_proxy web:3000
+}
+
+www.jyotisha.chat {
+    redir https://jyotisha.chat{uri} permanent
 }
