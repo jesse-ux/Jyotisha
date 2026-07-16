@@ -19,9 +19,17 @@ from jyotish_engine import compute_chart_data
 
 PLANETS = ("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu")
 REQUIRED_LEDGER_FIELDS = {
-    "source_repository", "source_commit", "target_repository", "target_commit",
-    "change_class", "copied_files", "dependency_delta", "privacy_review",
-    "focused_tests", "hash_contract_result", "rollback",
+    "source_repository",
+    "source_commit",
+    "target_repository",
+    "target_commit",
+    "change_class",
+    "copied_files",
+    "dependency_delta",
+    "privacy_review",
+    "focused_tests",
+    "hash_contract_result",
+    "rollback",
 }
 
 
@@ -69,8 +77,15 @@ def compatibility_payload(chart: dict[str, Any], fixture: dict[str, Any]) -> dic
     return {
         "fixture_id": fixture["id"],
         "birth": {key: value for key, value in fixture["birth"].items() if key != "synthetic"},
-        "effective": fixture["effective"],
-        "ascendant": {"sign": chart["ascendant"]["sign"], "lon": _longitude(chart["ascendant"])},
+        "effective": {
+            "ayanamsa": fixture["effective"]["ayanamsa"],
+            "node_mode": fixture["effective"]["node_mode"],
+            "timezone_offset": fixture["effective"]["timezone_offset"],
+        },
+        "ascendant": {
+            "sign": chart["ascendant"]["sign"],
+            "lon": _longitude(chart["ascendant"]),
+        },
         "planets": {
             planet: {"sign": chart["planets"][planet]["sign"], "lon": _longitude(chart["planets"][planet])}
             for planet in PLANETS
@@ -79,7 +94,9 @@ def compatibility_payload(chart: dict[str, Any], fixture: dict[str, Any]) -> dic
 
 
 def compatibility_hash(chart: dict[str, Any], fixture: dict[str, Any]) -> str:
-    encoded = json.dumps(compatibility_payload(chart, fixture), ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    encoded = json.dumps(
+        compatibility_payload(chart, fixture), ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 
@@ -90,13 +107,24 @@ def evaluate_manifest(path: Path) -> dict[str, Any]:
         chart = _calculate_fixture_chart(fixture)
         actual = compatibility_hash(chart, fixture)
         expected = fixture["compatibility_hash"]
-        fixtures.append({"id": fixture["id"], "expected_compatibility_hash": expected, "actual_compatibility_hash": actual, "matches": actual == expected})
+        fixtures.append(
+            {
+                "id": fixture["id"],
+                "expected_compatibility_hash": expected,
+                "actual_compatibility_hash": actual,
+                "matches": actual == expected,
+            }
+        )
     return {"schema_version": 1, "manifest": str(path), "fixtures": fixtures, "matches": all(row["matches"] for row in fixtures)}
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--manifest", type=Path, default=ROOT / "references" / "cross_project_contract" / "fixture_manifest.v1.json")
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=ROOT / "references" / "cross_project_contract" / "fixture_manifest.v1.json",
+    )
     parser.add_argument("--format", choices=("text", "json"), default="text")
     parser.add_argument("--require-match", action="store_true")
     args = parser.parse_args(argv)
