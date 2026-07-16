@@ -281,12 +281,16 @@ def calc_tajika_strength_layers(
         for planet in normalized
     }
     return {
-        'status': 'blocked',
+        'status': 'partial',
         'method': 'Tajika Harsha/Panchavargiya Bala',
         'reason': 'panchavargiya_requires_unified_varga_core_and_golden_oracle_parity',
+        'usable_layers': ['Harsha Bala'],
         'blocked_layers': ['Panchavargiya Bala', 'combined Tajika strength'],
         'available_planets': len(normalized),
-        'harsha_bala': harsha_bala,
+        'harsha_bala': {
+            planet: {**data, 'status': 'usable'}
+            for planet, data in harsha_bala.items()
+        },
         'panchavargiya_bala': panchavargiya_bala,
         'combined_strength': {
             planet: {

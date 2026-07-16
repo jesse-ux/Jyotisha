@@ -122,13 +122,15 @@ class TestTajikaStrengthLayers:
 
         result = calc_tajika_strength_layers(planet_lons, asc_lon=15.0, year_lord='Jupiter')
 
-        assert result['status'] == 'blocked'
+        assert result['status'] == 'partial'
         assert result['method'] == 'Tajika Harsha/Panchavargiya Bala'
         assert 'Panchavargiya Bala' in result['blocked_layers']
+        assert result['usable_layers'] == ['Harsha Bala']
         assert result['summary']['next_action']
 
         for planet in ('Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'):
             assert planet in result['harsha_bala']
+            assert result['harsha_bala'][planet]['status'] == 'usable'
             assert planet in result['panchavargiya_bala']
             assert result['panchavargiya_bala'][planet]['status'] == 'blocked'
             assert result['combined_strength'][planet]['status'] == 'blocked'
