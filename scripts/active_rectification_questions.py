@@ -31,7 +31,16 @@ def _parse_time(value: str) -> datetime:
     return datetime.strptime(value, "%Y-%m-%d %H:%M")
 
 
-def _candidate_scan(center: datetime, uncertainty_minutes: int, step_minutes: int) -> dict[str, Any]:
+def _candidate_scan(
+    center: datetime,
+    uncertainty_minutes: int,
+    step_minutes: int,
+    *,
+    lat: float | None = None,
+    lon: float | None = None,
+    tz: float | None = None,
+    ayanamsa: str = "lahiri",
+) -> dict[str, Any]:
     start = center - timedelta(minutes=uncertainty_minutes)
     end = center + timedelta(minutes=uncertainty_minutes)
     total_minutes = int((end - start).total_seconds() // 60)
@@ -46,12 +55,22 @@ def _candidate_scan(center: datetime, uncertainty_minutes: int, step_minutes: in
             cluster = "late_candidate_cluster"
         else:
             cluster = "middle_candidate_cluster"
-        samples.append({
+        sample = {
             "time": candidate.strftime("%Y-%m-%d %H:%M"),
             "offset_minutes": offset,
             "cluster": cluster,
             "sensitivity_flags": _sensitivity_flags(abs(offset)),
-        })
+        }
+        recast = _candidate_recast(candidate, lat=lat, lon=lon, tz=tz, ayanamsa=ayanamsa)
+        if recast:
+            sample.update(recast)
+        samples.append(sample)
+    has_true_recast = all("varga_lagna" in sample for sample in samples)
+    computed_layers = ["time_range", "candidate_cluster", "question_sensitivity_map"]
+    blocked_layers = ["true_varga_recast", "true_kp_cusp_recast", "true_arudha_recast"]
+    if has_true_recast:
+        computed_layers.extend(["true_varga_recast", "true_arudha_recast"])
+        blocked_layers = ["true_kp_cusp_recast"]
     return {
         "start": start.strftime("%Y-%m-%d %H:%M"),
         "end": end.strftime("%Y-%m-%d %H:%M"),
@@ -62,9 +81,9 @@ def _candidate_scan(center: datetime, uncertainty_minutes: int, step_minutes: in
         "sensitivity_summary": {
             "method": "range_bucket_scan_v1",
             "high_value_layers": ["D9", "D10", "D24", "D30", "D60", "UL", "A7", "A10", "KP_cusp"],
-            "computed_layers": ["time_range", "candidate_cluster", "question_sensitivity_map"],
-            "blocked_layers": ["true_varga_recast", "true_kp_cusp_recast", "true_arudha_recast"],
-            "boundary": "This is a candidate-question scan. True chart-difference recast is the next gate.",
+            "computed_layers": computed_layers,
+            "blocked_layers": blocked_layers,
+            "boundary": "KP cusp recast remains blocked until a validated KP cusp engine is wired into this workflow.",
         },
     }
 
@@ -78,7 +97,70 @@ def _sensitivity_flags(abs_offset_minutes: int) -> list[str]:
     return flags
 
 
-def build_questionnaire(birth_time: str, uncertainty_minutes: int = 30, step_minutes: int = 1) -> dict[str, Any]:
+def _candidate_recast(
+    candidate: datetime,
+    *,
+    lat: float | None,
+    lon: float | None,
+    tz: float | None,
+    ayanamsa: str,
+) -> dict[str, Any] | None:
+    if lat is None or lon is None or tz is None:
+        return None
+    import domain_calculation_service
+    import jaimini
+    import varga
+
+    chart = domain_calculation_service.compute_chart({
+        "year": candidate.year,
+        "month": candidate.month,
+        "day": candidate.day,
+        "hour": candidate.hour,
+        "minute": candidate.minute,
+        "second": candidate.second,
+        "lat": lat,
+        "lon": lon,
+        "tz": tz,
+        "ayanamsa": ayanamsa,
+    })
+    planet_lons = {
+        name: data["lon"]
+        for name, data in chart.get("planets", {}).items()
+        if name in {"Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"}
+    }
+    asc_lon = chart["ascendant"]["lon"]
+    vargas = varga.calc_all_vargas(planet_lons, asc_lon, divisions=[9, 10, 24, 30, 60])
+    arudha = jaimini.calc_arudha_padas(int(asc_lon // 30), planet_lons)
+    padas = arudha.get("padas", {})
+    upapada = arudha.get("upapada", {})
+    return {
+        "ascendant": {
+            "lon": round(asc_lon, 6),
+            "sign": chart["ascendant"].get("sign"),
+            "degree_in_sign": chart["ascendant"].get("degree_in_sign"),
+        },
+        "varga_lagna": {
+            key: value.get("Ascendant", {})
+            for key, value in vargas.items()
+        },
+        "arudha": {
+            "A7": padas.get("A7", {}),
+            "A10": padas.get("A10", {}),
+            "UL": upapada,
+        },
+    }
+
+
+def build_questionnaire(
+    birth_time: str,
+    uncertainty_minutes: int = 30,
+    step_minutes: int = 1,
+    *,
+    lat: float | None = None,
+    lon: float | None = None,
+    tz: float | None = None,
+    ayanamsa: str = "lahiri",
+) -> dict[str, Any]:
     questions = []
     for qid, round_id, domain, sensitivity, window, prompt, yes_bias, no_bias in QUESTION_TEMPLATES:
         questions.append({
@@ -99,7 +181,15 @@ def build_questionnaire(birth_time: str, uncertainty_minutes: int = 30, step_min
     return {
         "scope": "active_birth_time_rectification_questionnaire",
         "schema_version": 1,
-        "candidate_scan": _candidate_scan(_parse_time(birth_time), uncertainty_minutes, step_minutes),
+        "candidate_scan": _candidate_scan(
+            _parse_time(birth_time),
+            uncertainty_minutes,
+            step_minutes,
+            lat=lat,
+            lon=lon,
+            tz=tz,
+            ayanamsa=ayanamsa,
+        ),
         "workflow": [
             "candidate_time_scan",
             "varga_arudha_kp_sensitivity_diff",

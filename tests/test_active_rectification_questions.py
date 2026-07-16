@@ -44,3 +44,24 @@ def test_active_rectification_scores_answers_and_selects_next_round() -> None:
     assert scored["next_round_questions"]
     assert scored["candidate_cluster_rankings"][0]["score"] > scored["candidate_cluster_rankings"][-1]["score"]
     assert "final rectification requires scoring answers against actual candidate chart differences" in scored["boundary"]
+
+
+def test_active_rectification_recasts_candidate_vargas_when_location_is_available() -> None:
+    report = build_questionnaire(
+        "1993-04-17 14:49",
+        uncertainty_minutes=30,
+        lat=36.683333,
+        lon=114.35,
+        tz=8,
+    )
+    summary = report["candidate_scan"]["sensitivity_summary"]
+    assert "true_varga_recast" in summary["computed_layers"]
+    assert "true_arudha_recast" in summary["computed_layers"]
+    assert "true_kp_cusp_recast" in summary["blocked_layers"]
+    assert "true_varga_recast" not in summary["blocked_layers"]
+    sample = report["candidate_scan"]["samples"][1]
+    assert sample["varga_lagna"]["D9_Navamsa"]["sign"]
+    assert sample["varga_lagna"]["D10_Dasamsa"]["sign"]
+    assert sample["arudha"]["A7"]["sign"]
+    assert sample["arudha"]["A10"]["sign"]
+    assert sample["arudha"]["UL"]["sign"]

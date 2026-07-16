@@ -6228,12 +6228,24 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         step_minutes = self._get_int(body, 'step_minutes', 1)
         if not 1 <= step_minutes <= 30:
             raise BadRequest('step_minutes must be between 1 and 30')
+        lat = lon = tz = None
+        if any(key in body for key in ('lat', 'lon', 'tz')):
+            lat = self._get_float(body, 'lat', 0, -90, 90)
+            lon = self._get_float(body, 'lon', 0, -180, 180)
+            tz = self._get_float(body, 'tz', 0, -14, 14)
+        ayanamsa = body.get('ayanamsa', 'lahiri')
+        if not isinstance(ayanamsa, str):
+            raise BadRequest('ayanamsa must be a string')
         try:
             module = _load_local_module('active_rectification_questions')
             result = module.build_questionnaire(
                 birth_time.strip(),
                 uncertainty_minutes=uncertainty_minutes,
                 step_minutes=step_minutes,
+                lat=lat,
+                lon=lon,
+                tz=tz,
+                ayanamsa=ayanamsa,
             )
         except ValueError as e:
             raise BadRequest('birth_time must be YYYY-MM-DD HH:MM') from e

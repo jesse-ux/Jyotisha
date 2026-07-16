@@ -36,6 +36,23 @@ def test_active_rectification_questions_api_builds_choice_workflow() -> None:
     assert "dynamic_candidate_cluster_scoring" in result["workflow"]
 
 
+def test_active_rectification_questions_api_accepts_location_for_true_recast() -> None:
+    result = _handler()._compute_active_rectification_questions(
+        {
+            "birth_time": "1993-04-17 14:49",
+            "uncertainty_minutes": 30,
+            "lat": 36.683333,
+            "lon": 114.35,
+            "tz": 8,
+        }
+    )
+
+    summary = result["candidate_scan"]["sensitivity_summary"]
+    assert "true_varga_recast" in summary["computed_layers"]
+    assert "true_arudha_recast" in summary["computed_layers"]
+    assert "true_varga_recast" not in summary["blocked_layers"]
+
+
 def test_active_rectification_score_api_returns_rankings_and_next_questions() -> None:
     questionnaire = _handler()._compute_active_rectification_questions(
         {"birth_time": "1993-04-17 14:49", "uncertainty_minutes": 30}
