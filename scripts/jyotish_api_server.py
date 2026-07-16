@@ -45,6 +45,12 @@ try:
     from scripts.western_oracle_adapter import build_packet_from_oracle_payload
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from western_oracle_adapter import build_packet_from_oracle_payload
+try:
+    from scripts.western_chart_engine import build_tropical_western_evidence_packet
+    from scripts.western_timing_engine import build_timing_techniques
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from western_chart_engine import build_tropical_western_evidence_packet
+    from western_timing_engine import build_timing_techniques
 
 load_local_env(REPO_ROOT)
 _LOCAL_MODULE_CACHE = {}
@@ -53,27 +59,84 @@ _HIGH_RIGOR_JOB_SCOPE = 'high_rigor_workflow'
 _UNIFIED_CONSULTATION_ORCHESTRATOR = UnifiedConsultationOrchestrator()
 
 
-def _western_evidence_packet_from_body(body: dict, route_packet: dict) -> dict | None:
+def _western_evidence_packet_from_body(
+    body: dict,
+    route_packet: dict,
+    *,
+    birth_payload: dict | None = None,
+) -> dict | None:
     explicit_packet = body.get('western_evidence_packet')
     if isinstance(explicit_packet, dict):
         return explicit_packet
     oracle_payload = body.get('western_oracle_payload') or body.get('western_astrology_oracle')
-    if not isinstance(oracle_payload, dict):
+    if isinstance(oracle_payload, dict):
+        try:
+            return build_packet_from_oracle_payload(oracle_payload, route_packet=route_packet)
+        except Exception as exc:  # pragma: no cover - defensive contract boundary
+            return {
+                'system': 'western_astrology',
+                'status': 'blocked',
+                'route': dict(route_packet),
+                'signals': [],
+                'missing_sections': ['western_oracle_payload'],
+                'adapter_error': exc.__class__.__name__,
+                'boundary': 'Western oracle payload was supplied but could not be normalized.',
+            }
+    automatic = body.get('western_mode', body.get('western_auto_compute', 'auto'))
+    if automatic in {False, 'off', 'external_only'} or body.get('entry_mode') == 'prashna' or not isinstance(birth_payload, dict):
         return None
     try:
-        return build_packet_from_oracle_payload(oracle_payload, route_packet=route_packet)
-    except Exception as exc:  # pragma: no cover - defensive contract boundary
+        packet = build_tropical_western_evidence_packet(
+            route_packet=route_packet,
+            year=int(birth_payload['year']), month=int(birth_payload['month']), day=int(birth_payload['day']),
+            hour=int(birth_payload['hour']), minute=int(birth_payload['minute']), second=int(birth_payload.get('second', 0)),
+            latitude=float(birth_payload['lat']), longitude=float(birth_payload['lon']),
+            timezone=body.get('western_timezone') or birth_payload['tz'],
+            house_system=str(body.get('western_house_system', 'P')),
+        )
+        timing_request = body.get('western_timing')
+        if isinstance(timing_request, dict):
+            birth = {
+                'year': int(birth_payload['year']), 'month': int(birth_payload['month']), 'day': int(birth_payload['day']),
+                'hour': int(birth_payload['hour']), 'minute': int(birth_payload['minute']), 'second': int(birth_payload.get('second', 0)),
+                'latitude': float(birth_payload['lat']), 'longitude': float(birth_payload['lon']),
+                'timezone': body.get('western_timezone') or birth_payload['tz'],
+                'house_system': str(body.get('western_house_system', 'P')),
+            }
+            timing = build_timing_techniques(
+                **birth,
+                transit_date=timing_request.get('transit_date'),
+                solar_return_year=timing_request.get('solar_return_year'),
+                secondary_progression_date=timing_request.get('secondary_progression_date'),
+                solar_arc_date=timing_request.get('solar_arc_date'),
+                converse_secondary_progression_date=timing_request.get('converse_secondary_progression_date'),
+                converse_solar_arc_date=timing_request.get('converse_solar_arc_date'),
+                midpoint_date=timing_request.get('midpoint_date'),
+                lunar_return_start_date=timing_request.get('lunar_return_start_date'),
+                duration_scan_start_date=timing_request.get('duration_scan_start_date'),
+                duration_scan_end_date=timing_request.get('duration_scan_end_date'),
+                parans_date=timing_request.get('parans_date'),
+            )
+            if timing:
+                packet['timing_techniques'] = timing
+                packet['sections']['timing_techniques'] = {'status': 'used', 'source_path': 'western.native_timing'}
+                packet['missing_sections'] = [item for item in packet['missing_sections'] if item != 'timing_techniques']
+                packet['boundary'] = (
+                    'Native calculations include only explicitly requested transit, solar-return, secondary-progression, '
+                    'solar-arc, midpoint, lunar-return and daily duration-scan layers; parans remain blocked until a '
+                    'dedicated latitude-aware event solver is implemented. Outputs do not infer outcomes or interpretation.'
+                )
+        return packet
+    except Exception as exc:  # pragma: no cover - defensive boundary
         return {
             'system': 'western_astrology',
             'status': 'blocked',
             'route': dict(route_packet),
             'signals': [],
-            'missing_sections': ['western_oracle_payload'],
+            'missing_sections': ['native_tropical_calculation'],
             'adapter_error': exc.__class__.__name__,
-            'boundary': 'Western oracle payload was supplied but could not be normalized.',
+            'boundary': 'Native Western natal calculation could not be materialized.',
         }
-
-
 def _consultation_reference_date(body: dict) -> datetime:
     raw = (
         body.get('reference_date')
