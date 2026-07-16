@@ -66,11 +66,15 @@ def _candidate_scan(
             sample.update(recast)
         samples.append(sample)
     has_true_recast = all("varga_lagna" in sample for sample in samples)
+    has_kp_recast = all("kp_cusps" in sample for sample in samples)
     computed_layers = ["time_range", "candidate_cluster", "question_sensitivity_map"]
     blocked_layers = ["true_varga_recast", "true_kp_cusp_recast", "true_arudha_recast"]
     if has_true_recast:
         computed_layers.extend(["true_varga_recast", "true_arudha_recast"])
         blocked_layers = ["true_kp_cusp_recast"]
+    if has_kp_recast:
+        computed_layers.append("true_kp_cusp_recast")
+        blocked_layers = [layer for layer in blocked_layers if layer != "true_kp_cusp_recast"]
     return {
         "start": start.strftime("%Y-%m-%d %H:%M"),
         "end": end.strftime("%Y-%m-%d %H:%M"),
@@ -83,7 +87,7 @@ def _candidate_scan(
             "high_value_layers": ["D9", "D10", "D24", "D30", "D60", "UL", "A7", "A10", "KP_cusp"],
             "computed_layers": computed_layers,
             "blocked_layers": blocked_layers,
-            "boundary": "KP cusp recast remains blocked until a validated KP cusp engine is wired into this workflow.",
+            "boundary": "Candidate Varga, Arudha and KP cusp recasts are computed from the local domain chart; external oracle parity remains a separate gate.",
         },
     }
 
@@ -109,6 +113,7 @@ def _candidate_recast(
         return None
     import domain_calculation_service
     import jaimini
+    import kp_system
     import varga
 
     chart = domain_calculation_service.compute_chart({
@@ -148,7 +153,30 @@ def _candidate_recast(
             "A10": padas.get("A10", {}),
             "UL": upapada,
         },
+        "kp_cusps": _kp_cusp_snapshot(chart),
     }
+
+
+def _kp_cusp_snapshot(chart: dict[str, Any]) -> dict[str, Any]:
+    import kp_system
+
+    snapshot = {}
+    for house_key in ("house_1", "house_4", "house_7", "house_10"):
+        house = chart.get("houses", {}).get(house_key, {})
+        degree = house.get("cusp_degree")
+        if degree is None:
+            continue
+        lords = kp_system.get_kp_lords(float(degree))
+        snapshot[house_key] = {
+            "cusp_degree": round(float(degree) % 360, 6),
+            "sign": lords.get("sign"),
+            "rasi_lord": lords.get("rasi_lord"),
+            "nakshatra": lords.get("nakshatra"),
+            "nakshatra_lord": lords.get("nakshatra_lord"),
+            "sub_lord": lords.get("sub_lord"),
+            "sub_sub_lord": lords.get("sub_sub_lord"),
+        }
+    return snapshot
 
 
 def build_questionnaire(
