@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "created": "2026-07-16",
+  "sources": [
+    {
+      "id": "uploaded_screenshots_20260716",
+      "kind": "user_uploaded_screenshots",
+      "paths": [
+        "/Users/wuyongnaren/文件仓库/印度占星文章/260716/IMG_3502.PNG",
+        "/Users/wuyongnaren/文件仓库/印度占星文章/260716/IMG_3503.PNG",
+        "/Users/wuyongnaren/文件仓库/印度占星文章/260716/IMG_3504.PNG",
+        "/Users/wuyongnaren/文件仓库/印度占星文章/260716/IMG_3505.PNG",
+        "/Users/wuyongnaren/文件仓库/印度占星文章/260716/IMG_3506.PNG",
+        "/Users/wuyongnaren/文件仓库/印度占星文章/260716/IMG_3507.PNG"
+      ],
+      "sha256": {
+        "IMG_3502.PNG": "1cf628c3f5dfac372c719eba442f0cc8325114fabea4cc01855e00247bc9c031",
+        "IMG_3503.PNG": "f3c1f3c67a3add9c6c586e60e18186e86549ca4a5b5a1e6a6c07cc4fe223e1de",
+        "IMG_3504.PNG": "6c884011b1fe458da2f23a4e3e5acaf48c6ea72cd402b51b2942b3a28cee5de1",
+        "IMG_3505.PNG": "16af004f553fde2c1ab5d0bc7968deba46040a02e7726f735f174523e6bdccee",
+        "IMG_3506.PNG": "a8732bc73767983130683152079eb44697d4686435452e71d2e742f8b16ed888",
+        "IMG_3507.PNG": "1ff2bbc69a3fe1dab17d742437000d9938d9b5bb5e818831dafc9bf0e05a152e"
+      },
+      "license": "user_private_reference",
+      "privacy": "private",
+      "runtime_use": "reference_only_until_formula_verified",
+      "extraction_status": "located_and_hashed_ocr_blocked_tesseract_missing"
+    },
+    {
+      "id": "local_article_warehouse_20260716",
+      "kind": "local_research_archive",
+      "path": "/Users/wuyongnaren/文件仓库/印度占星文章",
+      "license": "unknown",
+      "privacy": "local_research",
+      "runtime_use": "manifest_only_until_hash_and_license_review"
+    },
+    {
+      "id": "kimi_agent_archive_20260716",
+      "kind": "local_training_archive",
+      "path": "/Users/wuyongnaren/Downloads/_整理候选/安装包与压缩包/Kimi_Agent_高维印度占星师.zip",
+      "license": "unknown",
+      "privacy": "local_research",
+      "runtime_use": "reference_only_until_license_review"
+    },
+    {
+      "id": "vedastro_official",
+      "kind": "external_oracle",
+      "url": "https://github.com/VedAstro/VedAstro",
+      "license": "MIT",
+      "privacy": "public",
+      "runtime_use": "oracle_raw_reference"
+    },
+    {
+      "id": "pyjhora_official",
+      "kind": "external_oracle",
+      "url": "https://github.com/naturalstupid/PyJHora",
+      "license": "AGPL-3.0",
+      "privacy": "public",
+      "runtime_use": "isolated_external_process_only"
+    },
+    {
+      "id": "jyotishganit_official",
+      "kind": "external_oracle",
+      "url": "https://github.com/northtara/jyotishganit",
+      "license": "MIT",
+      "privacy": "public",
+      "runtime_use": "oracle_raw_reference"
+    },
+    {
+      "id": "dashaflow_official",
+      "kind": "external_formula_reference",
+      "url": "https://github.com/adarshj322/dashaflow",
+      "license": "MIT",
+      "privacy": "public",
+      "runtime_use": "formula_reference_only"
+    }
+  ],
+  "validation_ladder": [
+    "transcribed",
+    "source_verified",
+    "golden_verified",
+    "engine_cross_checked",
+    "case_calibrated",
+    "adjudication_enabled",
+    "blocked"
+  ],
+  "rules": [
+    {
+      "id": "rangacharya_core_arudha",
+      "label": "Rangacharya Arudha core counting",
+      "source_ids": ["uploaded_screenshots_20260716"],
+      "status": "transcribed",
+      "adjudication_enabled": false
+    },
+    {
+      "id": "active_effective_lagna",
+      "label": "Active Lagna and Effective Lagna",
+      "source_ids": ["uploaded_screenshots_20260716"],
+      "status": "transcribed",
+      "adjudication_enabled": false
+    },
+    {
+      "id": "rangacharya_special_mappings",
+      "label": "Krishnamisra/Somanatha Navamsa, Parivritti/Somanatha Drekkana, Pancansa Graha, Graha Chakra",
+      "source_ids": ["uploaded_screenshots_20260716"],
+      "status": "blocked",
+      "adjudication_enabled": false,
+      "blocked_reason": "needs formula-level source cards before runtime use"
+    },
+    {
+      "id": "rangacharya_named_yogas",
+      "label": "Dhana/Nirdhana/Kemadruma and other named yogas",
+      "source_ids": ["uploaded_screenshots_20260716"],
+      "status": "blocked",
+      "adjudication_enabled": false,
+      "blocked_reason": "needs formula-level source cards before runtime use"
+    },
+    {
+      "id": "article_warehouse_future_tracks",
+      "label": "Tithi Lord, Panchapakshi, Rashi Tulya Navamsa, Bhrigu Pada Dasha, Tajika, Darakaraka, spouse rules",
+      "source_ids": ["local_article_warehouse_20260716"],
+      "status": "blocked",
+      "adjudication_enabled": false,
+      "blocked_reason": "registered for later source governance; out of Rangacharya Phase 1 runtime scope"
+    }
+  ]
+}

@@ -481,7 +481,17 @@ class UnifiedConsultationOrchestrator:
         replay_manifest_path = Path(__file__).resolve().parents[1] / "references/real_case_calibration/replay_manifest.json"
         replay_manifest = validate_real_case_replay_manifest(replay_manifest_path)
         holdout_manifest_path = Path(__file__).resolve().parents[1] / "references/real_case_calibration/replay_manifest_holdout_v2.json"
-        holdout_manifest = validate_real_case_replay_manifest(holdout_manifest_path)
+        holdout_manifest = (
+            validate_real_case_replay_manifest(holdout_manifest_path)
+            if holdout_manifest_path.exists()
+            else {
+                "status": "blocked",
+                "case_count": 0,
+                "replay_ready_count": 0,
+                "blocked_reason": "holdout_replay_manifest_missing",
+                "path": "references/real_case_calibration/replay_manifest_holdout_v2.json",
+            }
+        )
         benchmark_path = Path(__file__).resolve().parents[1] / "docs/benchmark/public_real_case_20_case_closure_2026_07_11.json"
         if benchmark_path.exists():
             benchmark_payload = json.loads(benchmark_path.read_text(encoding="utf-8"))
