@@ -1,8 +1,144 @@
 {
-  "schema_version": "1.0",
-  "status": "contract_ready_no_cases",
+  "schema_version": "2.0",
+  "status": "ready",
   "case_schema": "references/real_case_calibration/catalog.schema.json",
-  "cases": [],
-  "blocked_reason": "no_structured_outcome_replay_cases_imported",
-  "runtime_boundary": "This manifest defines the replay import contract only. No real-case outcome replay is complete until structured cases are imported and validated."
+  "selection_policy": {
+    "birth_time_minimum": "Rodden A",
+    "event_source_minimum": "verified_secondary",
+    "domains": {"career": 5, "marriage": 5},
+    "privacy": "public_figures_only_no_user_birth_data"
+  },
+  "cases": [
+    {
+      "case_id": "jobs_iphone_2007",
+      "subject": {
+        "name": "Steve Jobs", "year": 1955, "month": 2, "day": 24, "hour": 19, "minute": 15,
+        "lat": 37.7833, "lon": -122.4167, "tz": -8.0, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_02_24.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_02_24.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_outcome_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "career_breakthrough", "event_date": "2007-01-09", "domain": "career", "expected_label": "career_status", "outcome": "Apple publicly introduced the iPhone", "source_excerpt_note": "Apple Newsroom dates the announcement to 9 January 2007.", "source": {"url": "https://www.apple.com/newsroom/2007/01/09Apple-Reinvents-the-Phone-with-iPhone/", "source_grade": "primary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_benchmark_2026_07_11.json"}
+    },
+    {
+      "case_id": "obama_election_2008",
+      "subject": {
+        "name": "Barack Obama", "year": 1961, "month": 8, "day": 4, "hour": 19, "minute": 24,
+        "lat": 21.3, "lon": -157.8667, "tz": -10.0, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_08_04.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_08_04.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_outcome_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "career_status", "event_date": "2008-11-04", "domain": "career", "expected_label": "career_status", "outcome": "Won the United States presidential election", "source_excerpt_note": "Federal Elections 2008 records the presidential general election.", "source": {"url": "https://www.fec.gov/introduction-campaign-finance/election-results-and-voting-information/federal-elections-2008/", "source_grade": "primary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_benchmark_2026_07_11.json"}
+    },
+    {
+      "case_id": "schwarzenegger_governor_2003",
+      "subject": {
+        "name": "Arnold Schwarzenegger", "year": 1947, "month": 7, "day": 30, "hour": 4, "minute": 10,
+        "lat": 47.0833, "lon": 15.45, "tz": 2.0, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_07_30.htm", "source_grade": "verified_secondary", "time_accuracy_rating": "A", "evidence_basis": "from memory"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_07_30.htm", "source_grade": "verified_secondary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_outcome_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "career_status", "event_date": "2003-10-07", "domain": "career", "expected_label": "career_status", "outcome": "Won the California gubernatorial recall election", "source_excerpt_note": "California Secretary of State Statement of Vote dates the election to 7 October 2003.", "source": {"url": "https://elections.cdn.sos.ca.gov/sov/2003-special/sov-complete.pdf", "source_grade": "primary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_benchmark_2026_07_11.json"}
+    },
+    {
+      "case_id": "streep_oscar_1983",
+      "subject": {
+        "name": "Meryl Streep", "year": 1949, "month": 6, "day": 22, "hour": 8, "minute": 5,
+        "lat": 40.7333, "lon": -74.3667, "tz": -4.0, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_06_22.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_06_22.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_outcome_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "career_award", "event_date": "1983-04-11", "domain": "career", "expected_label": "career_status", "outcome": "Won Best Actress for Sophie's Choice", "source_excerpt_note": "The 55th Academy Awards ceremony occurred on 11 April 1983.", "source": {"url": "https://www.oscars.org/oscars/ceremonies/1983", "source_grade": "primary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_benchmark_2026_07_11.json"}
+    },
+    {
+      "case_id": "aniston_emmy_2002",
+      "subject": {
+        "name": "Jennifer Aniston", "year": 1969, "month": 2, "day": 11, "hour": 22, "minute": 22,
+        "lat": 34.05, "lon": -118.25, "tz": -8.0, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_02_11.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "quoted BC/BR"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_02_11.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_outcome_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "career_award", "event_date": "2002-09-22", "domain": "career", "expected_label": "career_status", "outcome": "Won the Primetime Emmy for lead actress in a comedy series", "source_excerpt_note": "Television Academy lists the 2002 category result.", "source": {"url": "https://www.televisionacademy.com/awards/nominees-winners/2002/outstanding-lead-actress-in-a-comedy-series", "source_grade": "primary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_benchmark_2026_07_11.json"}
+    },
+    {
+      "case_id": "william_marriage_2011",
+      "subject": {
+        "name": "William, Prince of Wales", "year": 1982, "month": 6, "day": 21, "hour": 21, "minute": 3,
+        "lat": 51.5333, "lon": -0.2, "tz": 1.0, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_06_21.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_06_21.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_outcome_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "legal_marriage", "event_date": "2011-04-29", "domain": "marriage", "expected_label": "legal_marriage", "outcome": "Married Catherine Middleton", "source_excerpt_note": "Royal Family records the wedding on 29 April 2011.", "source": {"url": "https://www.royal.uk/wedding-prince-william-and-miss-catherine-middleton", "source_grade": "primary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_benchmark_2026_07_11.json"}
+    },
+    {
+      "case_id": "jolie_marriage_2014",
+      "subject": {
+        "name": "Angelina Jolie", "year": 1975, "month": 6, "day": 4, "hour": 9, "minute": 9,
+        "lat": 34.0961, "lon": -118.2944, "tz": -7.0, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_06_04.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "quoted BC/BR"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_06_04.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_outcome_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "legal_marriage", "event_date": "2014-08-23", "domain": "marriage", "expected_label": "legal_marriage", "outcome": "Married Brad Pitt", "source_excerpt_note": "Public biography records the private wedding on 23 August 2014.", "source": {"url": "https://en.wikipedia.org/wiki/Angelina_Jolie", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_benchmark_2026_07_11.json"}
+    },
+    {
+      "case_id": "kahlo_marriage_1929",
+      "subject": {
+        "name": "Frida Kahlo", "year": 1907, "month": 7, "day": 6, "hour": 8, "minute": 30,
+        "lat": 19.3333, "lon": -99.1667, "tz": -6.6111, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_07_06.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_07_06.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_outcome_replay", "external_oracle_status": "pending", "timezone_note": "Astro-Databank LMT m99w10"},
+      "event_outcomes": [{"event_type": "legal_marriage", "event_date": "1929-08-21", "domain": "marriage", "expected_label": "legal_marriage", "outcome": "Married Diego Rivera in a civil ceremony", "source_excerpt_note": "Biography cites the Coyoacan civil ceremony on 21 August 1929.", "source": {"url": "https://en.wikipedia.org/wiki/Frida_Kahlo", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_benchmark_2026_07_11.json"}
+    },
+    {
+      "case_id": "snoop_marriage_1997",
+      "subject": {
+        "name": "Snoop Dogg", "year": 1971, "month": 10, "day": 20, "hour": 18, "minute": 20,
+        "lat": 33.7667, "lon": -118.1833, "tz": -7.0, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_10_20.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_10_20.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_outcome_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "legal_marriage", "event_date": "1997-06-14", "domain": "marriage", "expected_label": "legal_marriage", "outcome": "Married Shante Taylor", "source_excerpt_note": "Public biography records the marriage on 14 June 1997.", "source": {"url": "https://en.wikipedia.org/wiki/Snoop_Dogg", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_benchmark_2026_07_11.json"}
+    },
+    {
+      "case_id": "disney_marriage_1925",
+      "subject": {
+        "name": "Walt Disney", "year": 1901, "month": 12, "day": 5, "hour": 0, "minute": 35,
+        "lat": 41.85, "lon": -87.65, "tz": -6.0, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_12_05.htm", "source_grade": "verified_secondary", "time_accuracy_rating": "A", "evidence_basis": "from memory"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_12_05.htm", "source_grade": "verified_secondary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_outcome_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "legal_marriage", "event_date": "1925-07-13", "domain": "marriage", "expected_label": "legal_marriage", "outcome": "Married Lillian Bounds", "source_excerpt_note": "Walt Disney Family Museum dates the marriage to 13 July 1925.", "source": {"url": "https://www.waltdisney.org/blog/who-did-walt-disney-marry", "source_grade": "primary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_benchmark_2026_07_11.json"}
+    }
+  ],
+  "runtime_boundary": "Positive-event replay only. It measures technical activation recall on known dated events; it does not establish specificity, causal validity, or scientific predictive accuracy. External JHora/PyJHora/VedAstro raw parity remains separately audited."
 }
