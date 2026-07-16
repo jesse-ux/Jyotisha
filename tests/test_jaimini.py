@@ -185,7 +185,7 @@ class TestSpecialLagnas:
 
     def test_precise_special_lagnas_include_varnada_crosscheck(self):
         result = calc_special_lagnas_precise(
-            4, REDACTED_YEAR, 4, 17, 14, 45, lat=36.466667, lon=114.2, tz_offset=8
+            4, 1990, 4, 17, 14, 45, lat=36.466667, lon=114.2, tz_offset=8
         )
         assert result['VL']['sign_idx'] == (4 * 3) % 12
         assert 'vl_from_hl' in result['VL']
@@ -208,10 +208,10 @@ class TestSpecialLagnas:
 
     def test_precise_special_lagnas_preserve_fractional_minutes(self):
         minute_only = calc_special_lagnas_precise(
-            4, REDACTED_YEAR, 4, 17, 14, 45, lat=36.466667, lon=114.2, tz_offset=8
+            4, 1990, 4, 17, 14, 45, lat=36.466667, lon=114.2, tz_offset=8
         )
         with_seconds = calc_special_lagnas_precise(
-            4, REDACTED_YEAR, 4, 17, 14, 45 + 20 / 60.0, lat=36.466667, lon=114.2, tz_offset=8
+            4, 1990, 4, 17, 14, 45 + 20 / 60.0, lat=36.466667, lon=114.2, tz_offset=8
         )
         assert with_seconds['birth_utc_hours'] > minute_only['birth_utc_hours']
         assert with_seconds['ghatis_elapsed_from_sunrise'] > minute_only['ghatis_elapsed_from_sunrise']

@@ -642,13 +642,13 @@ CELEBRITY_CASES = [
      'marriages':[
          {'spouse':'Lisa Marie Presley','date':(1994,5,26),'divorce':(1996,1,18)},
          {'spouse':'Debbie Rowe','date':(1996,11,14),'divorce':(1999,10,1)}],
-     'events':[('Jackson 5 debut',1969,8,1),('Thriller',1982,11,30),('Grammy 8',1984,1,27),('Allegations',REDACTED_YEAR,8,24),('Death',2009,6,25)]},
+     'events':[('Jackson 5 debut',1969,8,1),('Thriller',1982,11,30),('Grammy 8',1984,1,27),('Allegations',1993,8,24),('Death',2009,6,25)]},
     {'name':'Nelson Mandela','birth':(1918,7,18,0.9,-31.9,27.0),'gender':'M','rating':'A','expected_asc':'Taurus',
      'marriages':[
          {'spouse':'Evelyn Mase','date':(1944,10,5),'divorce':(1958,1,1)},
          {'spouse':'Winnie Madikizela','date':(1958,6,14),'divorce':(1996,3,19)},
          {'spouse':'Graca Machel','date':(1998,7,18)}],
-     'events':[('Join ANC',1944,1,1),('Rivonia trial',1964,6,12),('Released',1990,2,11),('Nobel',REDACTED_YEAR,12,10),('President',1994,5,10),('Death',2013,12,5)]},
+     'events':[('Join ANC',1944,1,1),('Rivonia trial',1964,6,12),('Released',1990,2,11),('Nobel',1993,12,10),('President',1994,5,10),('Death',2013,12,5)]},
     {'name':'Tom Cruise','birth':(1962,7,3,19.25,43.05,-76.15),'gender':'M','rating':'AA','expected_asc':'Libra',
      'marriages':[
          {'spouse':'Mimi Rogers','date':(1987,5,9),'divorce':(1990,2,4)},
@@ -667,7 +667,7 @@ CELEBRITY_CASES = [
      'marriages':[{'spouse':'Meghan Markle','date':(2018,5,19),'ongoing':True}],
      'events':[('Military',2005,5,1),('Invictus Games',2014,9,10),('Royal exit',2020,1,8)]},
     {'name':'Jeff Bezos','birth':(1964,1,12,9.63,25.78,-80.19),'gender':'M','rating':'A','expected_asc':'Scorpio',
-     'marriages':[{'spouse':'MacKenzie Scott','date':(REDACTED_YEAR,1,1),'divorce':(2019,7,5)}],
+     'marriages':[{'spouse':'MacKenzie Scott','date':(1993,1,1),'divorce':(2019,7,5)}],
      'events':[('Found Amazon',1994,7,5),('IPO',1997,5,15),('Blue Origin',2021,7,20)]},
     {'name':'Priyanka Chopra','birth':(1982,7,18,10.5,23.57,87.19),'gender':'F','rating':'A','expected_asc':'Scorpio',
      'marriages':[{'spouse':'Nick Jonas','date':(2018,12,1),'ongoing':True}],
