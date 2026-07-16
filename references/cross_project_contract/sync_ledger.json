@@ -85,6 +85,26 @@
       ],
       "hash_contract_result": "pass: API Rahu/Ketu true-node visible longitudes match domain_calculation_service",
       "rollback": "git revert 73e0ff7"
+    },
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "9d5e909d7b5af2d034b87f617d124ec6853e53f7",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "09387d82ffe9aa59d81a2af6c66ea34d47850ed9",
+      "change_class": "calculation_contract",
+      "copied_files": [
+        "scripts/jyotish_api_server.py",
+        "tests/test_commercial_domain_calculation_contract.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: no secrets or user data; Sade Sati now follows domain true Saturn transit",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_commercial_domain_calculation_contract.py tests/test_cross_project_contract.py tests/test_cross_project_sync_status.py",
+        "python3 scripts/cross_project_contract.py --require-match --format json",
+        "python3 scripts/public_release_privacy_scan.py --json"
+      ],
+      "hash_contract_result": "pass: API Sade Sati transit Saturn provenance matches domain_calculation_service",
+      "rollback": "git revert 09387d8"
     }
   ]
 }
