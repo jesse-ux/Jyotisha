@@ -66,7 +66,10 @@ def test_compatibility_payload_normalizes_engine_degree_field() -> None:
 def test_sync_ledger_requires_provenance_privacy_tests_hash_and_rollback() -> None:
     ledger = contract.load_ledger(LEDGER)
 
-    assert ledger == {"schema_version": 1, "entries": []}
+    assert ledger["schema_version"] == 1
+    assert len(ledger["entries"]) == 1
+    assert contract.validate_ledger_entry(ledger["entries"][0]) == []
+    assert ledger["entries"][0]["privacy_review"].startswith("pass:")
     missing = contract.validate_ledger_entry({"source_repository": "x"})
     assert "target_commit" in missing
     assert "privacy_review" in missing
