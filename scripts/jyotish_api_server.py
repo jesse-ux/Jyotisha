@@ -1035,6 +1035,8 @@ API_COMMAND_MAP = {
     'yoga': '/api/yogas',
     'aspects': '/api/aspects',
     'rectification': '/api/rectification_gate',
+    'active-rectification-questions': '/api/active_rectification_questions',
+    'active-rectification-score': '/api/active_rectification_score',
     'case-validation': '/api/case_validation',
     'divisional-yoga': '/api/divisional_yoga',
     'deep-varga-avastha': '/api/deep_varga_avastha',
@@ -1066,6 +1068,8 @@ TECHNIQUE_EXAMPLE_ENDPOINTS = {
     '/api/pancha_mahapurusha',
     '/api/prashna',
     '/api/rectification_gate',
+    '/api/active_rectification_questions',
+    '/api/active_rectification_score',
     '/api/relationship',
     '/api/remedies',
     '/api/sade_sati',
@@ -1477,6 +1481,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(score_rectification_answers(questionnaire, answers))
             elif path == '/api/rectification_gate':
                 result = self._compute_rectification_gate(body)
+                self._json(result)
+            elif path == '/api/active_rectification_questions':
+                result = self._compute_active_rectification_questions(body)
+                self._json(result)
+            elif path == '/api/active_rectification_score':
+                result = self._compute_active_rectification_score(body)
                 self._json(result)
             elif path == '/api/case_validation':
                 result = self._compute_case_validation(body)
@@ -6327,6 +6337,46 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             },
         }
 
+    def _compute_active_rectification_questions(self, body):
+        birth_time = body.get('birth_time')
+        if not isinstance(birth_time, str) or not birth_time.strip():
+            raise BadRequest('birth_time must be a string')
+        uncertainty_minutes = self._get_int(body, 'uncertainty_minutes', 30)
+        if not 1 <= uncertainty_minutes <= 180:
+            raise BadRequest('uncertainty_minutes must be between 1 and 180')
+        step_minutes = self._get_int(body, 'step_minutes', 1)
+        if not 1 <= step_minutes <= 30:
+            raise BadRequest('step_minutes must be between 1 and 30')
+        try:
+            module = _load_local_module('active_rectification_questions')
+            result = module.build_questionnaire(
+                birth_time.strip(),
+                uncertainty_minutes=uncertainty_minutes,
+                step_minutes=step_minutes,
+            )
+        except ValueError as e:
+            raise BadRequest('birth_time must be YYYY-MM-DD HH:MM') from e
+        return {
+            'success': True,
+            'endpoint': 'active_rectification_questions',
+            **result,
+        }
+
+    def _compute_active_rectification_score(self, body):
+        questionnaire = body.get('questionnaire')
+        if not isinstance(questionnaire, dict):
+            raise BadRequest('questionnaire must be an object')
+        answers = body.get('answers')
+        if not isinstance(answers, dict):
+            raise BadRequest('answers must be an object')
+        module = _load_local_module('active_rectification_questions')
+        result = module.score_answers(questionnaire, answers)
+        return {
+            'success': True,
+            'endpoint': 'active_rectification_score',
+            **result,
+        }
+
     def _compute_case_validation(self, body):
         planets, _, _ = self._normalized_planets_from_body(body)
         current_md = body.get('current_md', body.get('dasha_lord', ''))
@@ -7087,6 +7137,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/pancha_mahapurusha': self._compute_pmc,
             '/api/prashna': self._compute_prashna,
             '/api/rectification_gate': self._compute_rectification_gate,
+            '/api/active_rectification_questions': self._compute_active_rectification_questions,
+            '/api/active_rectification_score': self._compute_active_rectification_score,
             '/api/relationship': self._compute_relationship,
             '/api/remedies': self._compute_remedies,
             '/api/sade_sati': self._compute_sade_sati,

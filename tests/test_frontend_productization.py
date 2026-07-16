@@ -1397,6 +1397,8 @@ def test_api_bridge_exports_productized_backend_actions() -> None:
         "computeYogas",
         "computeAspects",
         "computeRectificationGate",
+        "computeActiveRectificationQuestions",
+        "computeActiveRectificationScore",
         "computeCaseValidation",
         "computeDivisionalYoga",
         "computeKakshya",

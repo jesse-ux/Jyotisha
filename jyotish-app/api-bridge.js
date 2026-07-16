@@ -344,6 +344,14 @@ async function computeRectificationGate(payload) {
   return postJson('/api/rectification_gate', payload);
 }
 
+async function computeActiveRectificationQuestions(payload) {
+  return postJson('/api/active_rectification_questions', payload);
+}
+
+async function computeActiveRectificationScore(payload) {
+  return postJson('/api/active_rectification_score', payload);
+}
+
 async function computeCaseValidation(payload) {
   return postJson('/api/case_validation', payload);
 }
@@ -512,6 +520,8 @@ window.JyotishAPI = {
   computeYogas,
   computeAspects,
   computeRectificationGate,
+  computeActiveRectificationQuestions,
+  computeActiveRectificationScore,
   computeCaseValidation,
   getRealCaseRevalidation,
   computeDivisionalYoga,
