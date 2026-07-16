@@ -16,6 +16,9 @@ function fmtOffset(m) { return m === 0 ? t('rect.baseline') : `${m > 0 ? '+' : '
 let rectEvents = [];
 let rectInterviewAnswers = {};
 let rectRecommendedEvents = [];
+let activeRectificationQuestionnaire = null;
+let activeRectificationAnswers = {};
+let activeRectificationScore = null;
 
 export function renderRectificationTab(container) {
   const lang = getLang();
@@ -55,6 +58,27 @@ export function renderRectificationTab(container) {
           ).join('')}</tbody>
         </table>
       </details>
+    </div>
+    <div class="rect-active-wizard card" data-active-rectification-wizard>
+      <div class="rect-interview-head">
+        <div>
+          <h4 class="sub-title">主动问询式校时</h4>
+          <p>系统先按出生时间误差生成高信息量选择题；你只需点选答案，再进入下一轮收敛。</p>
+        </div>
+        <span>active_rectification_questions · candidate_cluster_scoring</span>
+      </div>
+      <div class="rect-add-row">
+        <div class="form-group"><label>出生时间中心</label><input type="datetime-local" id="rect-active-birth-time" step="60"></div>
+        <div class="form-group"><label>误差分钟</label><input type="number" id="rect-active-uncertainty" min="1" max="180" value="30"></div>
+        <div class="form-group"><label>扫描步长</label><input type="number" id="rect-active-step" min="1" max="30" value="1"></div>
+        <button type="button" class="rect-secondary-btn" id="rect-active-load">生成问题</button>
+      </div>
+      <div id="rect-active-status" class="rect-hint" aria-live="polite"></div>
+      <div id="rect-active-questions" class="rect-interview-list"></div>
+      <div class="rect-interview-actions">
+        <button type="button" class="rect-secondary-btn" id="rect-active-score">提交答案并收敛候选</button>
+      </div>
+      <div id="rect-active-score-result"></div>
     </div>
     <div class="rect-interview card">
     <div class="rect-interview-head">
@@ -110,6 +134,7 @@ function pctStyle(value) {
 function bindEvents(container) {
   const q = s => container.querySelector(s);
   bindInterviewEvents(container);
+  bindActiveRectificationWizard(container);
   q('#rect-add-btn').addEventListener('click', () => {
     const dEl = q('#rect-event-date'), cEl = q('#rect-event-cat'), descEl = q('#rect-event-desc');
     if (!dEl.value) { dEl.focus(); return; }
@@ -167,6 +192,107 @@ function bindInterviewEvents(container) {
     const status = container.querySelector('#rect-interview-status');
     if (status) status.textContent = `已加入 ${events.length} 个事件，正在准备校正。`;
     container.querySelector('#rect-run-btn')?.click();
+  });
+}
+
+function toApiBirthTime(value) {
+  return value ? value.replace('T', ' ').slice(0, 16) : '';
+}
+
+function renderActiveRectificationQuestions(container) {
+  const target = container.querySelector('#rect-active-questions');
+  if (!target || !activeRectificationQuestionnaire) return;
+  target.innerHTML = (activeRectificationQuestionnaire.questions || []).map(question => `
+    <div class="rect-interview-item" data-active-question-id="${escapeAttr(question.id)}">
+      <div class="rect-interview-copy">
+        <strong>${escapeHtml(question.prompt)}</strong>
+        <span>${escapeHtml((question.sensitivity || []).join(' / '))} · ${escapeHtml(question.window || '')}</span>
+      </div>
+      <div class="rect-interview-actions">
+        ${(question.options || []).map(option => `
+          <button type="button" data-active-answer="${escapeAttr(option.key)}">${escapeHtml(option.key)}. ${escapeHtml(option.label)}</button>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+  target.querySelectorAll('[data-active-answer]').forEach(button => {
+    button.addEventListener('click', () => {
+      const item = button.closest('[data-active-question-id]');
+      if (!item) return;
+      activeRectificationAnswers[item.dataset.activeQuestionId] = button.dataset.activeAnswer;
+      item.querySelectorAll('[data-active-answer]').forEach(btn => btn.classList.remove('selected'));
+      button.classList.add('selected');
+    });
+  });
+}
+
+function renderActiveRectificationScore(container) {
+  const target = container.querySelector('#rect-active-score-result');
+  if (!target || !activeRectificationScore) return;
+  const rankings = activeRectificationScore.candidate_cluster_rankings || [];
+  const nextQuestions = activeRectificationScore.next_round_questions || [];
+  target.innerHTML = `
+    <div class="rect-result-summary">
+      <h5 class="rect-sub">候选时间簇</h5>
+      <div class="rect-changes">${rankings.map(row => `
+        <div class="rect-change-item"><strong>${escapeHtml(row.cluster)}</strong><span>${escapeHtml(String(row.score))}</span></div>
+      `).join('') || '<span>暂无评分</span>'}</div>
+      <h5 class="rect-sub">下一轮优先问题</h5>
+      <div class="rect-changes">${nextQuestions.map(q => `
+        <div class="rect-change-item"><strong>${escapeHtml(q.domain || q.id)}</strong><span>${escapeHtml(q.prompt || '')}</span></div>
+      `).join('') || '<span>暂无下一轮问题</span>'}</div>
+    </div>
+  `;
+}
+
+function bindActiveRectificationWizard(container) {
+  const status = container.querySelector('#rect-active-status');
+  container.querySelector('#rect-active-load')?.addEventListener('click', async () => {
+    const birthTime = toApiBirthTime(container.querySelector('#rect-active-birth-time')?.value || '');
+    if (!birthTime) {
+      if (status) status.textContent = '请先填写出生时间中心。';
+      return;
+    }
+    if (!window.JyotishAPI?.computeActiveRectificationQuestions) {
+      if (status) status.textContent = '本地 API 尚未加载主动问询能力。';
+      return;
+    }
+    try {
+      if (status) status.textContent = '正在生成高信息量问题…';
+      activeRectificationQuestionnaire = await window.JyotishAPI.computeActiveRectificationQuestions({
+        birth_time: birthTime,
+        uncertainty_minutes: Number(container.querySelector('#rect-active-uncertainty')?.value || 30),
+        step_minutes: Number(container.querySelector('#rect-active-step')?.value || 1),
+      });
+      activeRectificationAnswers = {};
+      activeRectificationScore = null;
+      renderActiveRectificationQuestions(container);
+      renderActiveRectificationScore(container);
+      if (status) status.textContent = `已生成 ${(activeRectificationQuestionnaire.questions || []).length} 个选择题。`;
+    } catch (error) {
+      if (status) status.textContent = error.message || '主动问询生成失败';
+    }
+  });
+  container.querySelector('#rect-active-score')?.addEventListener('click', async () => {
+    if (!activeRectificationQuestionnaire) {
+      if (status) status.textContent = '请先生成问题。';
+      return;
+    }
+    if (!window.JyotishAPI?.computeActiveRectificationScore) {
+      if (status) status.textContent = '本地 API 尚未加载主动问询评分能力。';
+      return;
+    }
+    try {
+      if (status) status.textContent = '正在评分并收敛候选…';
+      activeRectificationScore = await window.JyotishAPI.computeActiveRectificationScore({
+        questionnaire: activeRectificationQuestionnaire,
+        answers: activeRectificationAnswers,
+      });
+      renderActiveRectificationScore(container);
+      if (status) status.textContent = `已评分 ${activeRectificationScore.answered_count || 0} 个回答。`;
+    } catch (error) {
+      if (status) status.textContent = error.message || '主动问询评分失败';
+    }
   });
 }
 
