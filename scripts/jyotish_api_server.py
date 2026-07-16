@@ -4482,10 +4482,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 },
                 'planets': planets_data, 'houses': houses, 'shadbala': shadbala_summary,
                 'dasha': {
-                    'current_md': md_lord,
-                    'remaining_years': round(remaining, 2),
+                    'current_md': canonical_dasha['birth_balance']['lord'],
+                    'remaining_years': canonical_dasha['birth_balance']['remaining_years'],
                     'total_years': total_years,
-                    'start_date': dasha_start.isoformat() if hasattr(dasha_start, 'isoformat') else str(dasha_start),
+                    'start_date': canonical_dasha['periods'][0]['start'],
                     'periods': canonical_dasha['periods'],
                     'birth_balance': canonical_dasha['birth_balance'],
                     'calculation_contract': canonical_dasha['calculation_contract'],

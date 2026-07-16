@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -104,3 +105,28 @@ def test_api_sade_sati_uses_domain_true_saturn_transit(monkeypatch: pytest.Monke
     )
     assert rest["sade_sati"]["provenance"]["data_layer"] == "true_transit_positions"
     assert rest["sade_sati"]["calculation_contract"]["algorithm"] == "sade_sati_true_saturn_transit"
+
+
+def test_api_dasha_boundary_comes_from_domain_service(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("JYOTISH_API_CHART_CACHE_TTL_SECONDS", "0")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "0")
+    monkeypatch.setattr(
+        jyotish_api_server,
+        "_attach_vedastro_main_entry_overview",
+        lambda result, _birth: result,
+    )
+    request = {**BIRTH, "node_mode": "true", "transit_date": "2026-07-11"}
+    chart = calculation_service.compute_chart(request)
+    expected = calculation_service.compute_vimshottari_timeline(
+        birth_dt=datetime(1990, 1, 1, 12, 0),
+        moon_lon=chart["planets"]["Moon"]["lon"],
+    )
+
+    rest = JyotishAPIHandler.__new__(JyotishAPIHandler)._compute_chart_sync(request)
+
+    assert rest["dasha"]["current_md"] == expected["birth_balance"]["lord"]
+    assert rest["dasha"]["remaining_years"] == pytest.approx(
+        expected["birth_balance"]["remaining_years"], abs=1e-8
+    )
+    assert rest["dasha"]["start_date"] == expected["periods"][0]["start"]
+    assert rest["dasha"]["result_hash"] == expected["result_hash"]
