@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jyotish Evidence Packet</title>
+<style>
+body{margin:0;background:#f5f7f8;color:#17212b;font:15px system-ui,-apple-system,"PingFang SC",sans-serif}
+main{max-width:960px;margin:0 auto;padding:28px 18px 56px}.bar{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin:18px 0}
+input,button{font:inherit;padding:10px;border:1px solid #b6c1c6;border-radius:4px}button{background:#006b6b;color:white;border-color:#006b6b;cursor:pointer}
+section{background:white;border:1px solid #dce3e5;border-radius:6px;padding:18px;margin:14px 0}h1,h2{margin:0 0 10px}h1{font-size:24px}h2{font-size:17px}pre{white-space:pre-wrap;word-break:break-word;margin:0}.badge{display:inline-block;padding:3px 8px;border-radius:99px;background:#e1f2f0;color:#075d5a}
+@media(max-width:640px){.bar{grid-template-columns:1fr}main{padding:20px 12px}}
+</style>
+<main>
+  <h1>Evidence Packet</h1>
+  <p>仅显示已完成任务的可审计计算状态、证据包和技法审计。不会展示内部提示词或原始出生输入。</p>
+  <div class="bar"><input id="url" placeholder="/api/evidence_packet/high_rigor_workflow/{job_id}"><input id="token" placeholder="access token"><button id="load">加载</button></div>
+  <section><h2>运行状态</h2><div id="status">等待加载</div></section>
+  <section><h2>Technique Audit</h2><pre id="audit">-</pre></section>
+  <section><h2>Machine Evidence Packet</h2><pre id="packet">-</pre></section>
+  <section><h2>Warnings</h2><pre id="warnings">-</pre></section>
+</main>
+<script>
+const show=(id,value)=>document.getElementById(id).textContent=JSON.stringify(value,null,2);
+document.getElementById('load').onclick=async()=>{const url=document.getElementById('url').value.trim(),token=document.getElementById('token').value.trim();if(!url||!token)return alert('需要 job URL 与 access token');const r=await fetch(url,{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();if(!r.ok){show('status',d);return}const s=d.execution_status||{};document.getElementById('status').innerHTML=`<span class="badge">${s.official_evidence_status||'unknown'}</span><pre>${JSON.stringify(s,null,2)}</pre>`;show('audit',d.technique_audit||[]);show('packet',d.machine_evidence_packet||{});show('warnings',d.warnings||[])};
+</script>
+</html>

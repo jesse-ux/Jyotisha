@@ -15,10 +15,13 @@ import json, sys, os, math
 import importlib.util
 import hashlib
 import re
+import sqlite3
+import secrets
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -57,6 +60,75 @@ _LOCAL_MODULE_CACHE = {}
 _API_CHART_CACHE_SCOPE = 'api_chart_response'
 _HIGH_RIGOR_JOB_SCOPE = 'high_rigor_workflow'
 _UNIFIED_CONSULTATION_ORCHESTRATOR = UnifiedConsultationOrchestrator()
+_ASYNC_JOB_WORKERS = max(int(os.environ.get('JYOTISH_ASYNC_JOB_WORKERS', '2')), 1)
+_ASYNC_JOB_QUEUE_SIZE = max(int(os.environ.get('JYOTISH_ASYNC_JOB_QUEUE_SIZE', '8')), 0)
+_ASYNC_JOB_EXECUTOR = ThreadPoolExecutor(
+    max_workers=_ASYNC_JOB_WORKERS,
+    thread_name_prefix='jyotish-job',
+)
+_ASYNC_JOB_CAPACITY = threading.BoundedSemaphore(_ASYNC_JOB_WORKERS + _ASYNC_JOB_QUEUE_SIZE)
+_RATE_LIMIT_LOCK = threading.Lock()
+_RATE_LIMIT_BUCKETS: dict[str, tuple[float, int]] = {}
+
+
+def summarize_execution_status(result: dict | None) -> dict:
+    result = result if isinstance(result, dict) else {}
+    fallback = str(result.get('fallback_reason') or '')
+    official = 'official_blocked' if 'VedAstro official snapshot blocked' in fallback else result.get('official_evidence_status', 'unknown')
+    return {
+        'official_evidence_status': official,
+        'fallback_reason': result.get('fallback_reason'),
+    }
+
+
+def build_evidence_packet_view(job_record: dict | None) -> dict:
+    """Public, token-protected job view. Excludes prompt internals and raw input."""
+    job_record = job_record or {}
+    result = job_record.get('result')
+    result = result if isinstance(result, dict) else {}
+    return {
+        'scope': 'evidence_packet_view',
+        'job_id': job_record.get('job_id'),
+        'status': job_record.get('status', 'unknown'),
+        'execution_status': summarize_execution_status(result),
+        'machine_evidence_packet': result.get('machine_evidence_packet') or {},
+        'technique_audit': result.get('technique_audit') or result.get('technique_audit_table') or [],
+        'warnings': result.get('warnings') or [],
+    }
+
+
+def _submit_background_job(callback):
+    if not _ASYNC_JOB_CAPACITY.acquire(blocking=False):
+        raise JobQueueFull('Async job queue is full')
+    try:
+        future = _ASYNC_JOB_EXECUTOR.submit(callback)
+    except Exception:
+        _ASYNC_JOB_CAPACITY.release()
+        raise
+    future.add_done_callback(lambda _future: _ASYNC_JOB_CAPACITY.release())
+    return future
+
+
+def _rate_limit_per_minute() -> int:
+    raw = str(os.environ.get('JYOTISH_API_RATE_LIMIT_PER_MINUTE', '120')).strip()
+    try:
+        return max(int(raw), 0)
+    except ValueError:
+        return 120
+
+
+def enforce_rate_limit(client_id: str, *, now: float | None = None) -> None:
+    limit = _rate_limit_per_minute()
+    if limit == 0:
+        return
+    now = time.time() if now is None else now
+    with _RATE_LIMIT_LOCK:
+        window, count = _RATE_LIMIT_BUCKETS.get(client_id, (now, 0))
+        if now - window >= 60:
+            window, count = now, 0
+        if count >= limit:
+            raise RateLimited('Rate limit exceeded')
+        _RATE_LIMIT_BUCKETS[client_id] = (window, count + 1)
 
 
 def _western_evidence_packet_from_body(
@@ -752,29 +824,140 @@ def _async_job_path(scope: str, job_id: str) -> Path:
     return _async_job_dir(scope) / f'{job_id}.json'
 
 
-def _load_high_rigor_job_record(job_id: str) -> dict | None:
-    return _load_async_job_record(_HIGH_RIGOR_JOB_SCOPE, job_id)
+def _async_job_ttl_seconds() -> float:
+    raw = str(os.environ.get('JYOTISH_ASYNC_JOB_TTL_SECONDS', '3600')).strip()
+    try:
+        return max(float(raw), 1.0)
+    except ValueError:
+        return 3600.0
+
+
+def _async_job_backend() -> str:
+    return "sqlite" if os.environ.get("JYOTISH_ASYNC_JOB_BACKEND", "file").strip().lower() == "sqlite" else "file"
+
+
+def _sqlite_job_db_path() -> Path:
+    return Path(REPO_ROOT) / "scratch" / "local" / "async_jobs.sqlite3"
+
+
+def _sqlite_job_connection() -> sqlite3.Connection:
+    path = _sqlite_job_db_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(path, timeout=10)
+    connection.execute(
+        "CREATE TABLE IF NOT EXISTS async_jobs (scope TEXT NOT NULL, job_id TEXT NOT NULL, expires_at REAL, payload TEXT NOT NULL, PRIMARY KEY (scope, job_id))"
+    )
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+    return connection
+
+
+def prune_expired_async_jobs() -> dict:
+    """Best-effort startup cleanup for local job records; never reads payloads."""
+    removed = 0
+    scanned = 0
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            scanned = connection.execute("SELECT COUNT(*) FROM async_jobs").fetchone()[0]
+            removed = connection.execute(
+                "DELETE FROM async_jobs WHERE expires_at IS NOT NULL AND expires_at <= ?", (time.time(),)
+            ).rowcount
+        return {'scope': 'async_job_cleanup', 'scanned': scanned, 'removed': removed}
+    for scope in (_HIGH_RIGOR_JOB_SCOPE, _API_CHART_CACHE_SCOPE):
+        directory = _async_job_dir(scope)
+        if not directory.is_dir():
+            continue
+        for path in directory.glob('*.json'):
+            scanned += 1
+            try:
+                record = json.loads(path.read_text(encoding='utf-8'))
+                expires_at = record.get('expires_at_unix') if isinstance(record, dict) else None
+                if isinstance(expires_at, (int, float)) and time.time() >= float(expires_at):
+                    path.unlink()
+                    removed += 1
+            except (OSError, json.JSONDecodeError):
+                continue
+    return {'scope': 'async_job_cleanup', 'scanned': scanned, 'removed': removed}
+
+
+def _new_async_job_identity(prefix: str) -> dict:
+    return {
+        'job_id': f'{prefix}_{secrets.token_hex(16)}',
+        'access_token': secrets.token_urlsafe(32),
+    }
+
+
+def _access_token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode('utf-8')).hexdigest()
+
+
+def _load_high_rigor_job_record(job_id: str, *, access_token: str = '') -> dict | None:
+    return _load_async_job_record(
+        _HIGH_RIGOR_JOB_SCOPE,
+        job_id,
+        access_token=access_token,
+    )
 
 
 def _write_high_rigor_job_record(job_id: str, payload: dict) -> dict:
     return _write_async_job_record(_HIGH_RIGOR_JOB_SCOPE, job_id, payload)
 
 
-def _load_async_job_record(scope: str, job_id: str) -> dict | None:
-    path = _async_job_path(scope, job_id)
-    if not path.exists():
+def _load_async_job_record(scope: str, job_id: str, *, access_token: str = '') -> dict | None:
+    path = None
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            row = connection.execute(
+                "SELECT payload FROM async_jobs WHERE scope = ? AND job_id = ?", (scope, job_id)
+            ).fetchone()
+        if row is None:
+            return None
+        try:
+            record = json.loads(row[0])
+        except json.JSONDecodeError:
+            return None
+    else:
+        path = _async_job_path(scope, job_id)
+        if not path.exists():
+            return None
+        try:
+            record = json.loads(path.read_text(encoding='utf-8'))
+        except (OSError, json.JSONDecodeError):
+            return None
+    expires_at = record.get('expires_at_unix')
+    if isinstance(expires_at, (int, float)) and time.time() >= float(expires_at):
+        if _async_job_backend() == "sqlite":
+            with _sqlite_job_connection() as connection:
+                connection.execute("DELETE FROM async_jobs WHERE scope = ? AND job_id = ?", (scope, job_id))
+        elif path is not None:
+            try:
+                path.unlink()
+            except OSError:
+                pass
         return None
-    try:
-        return json.loads(path.read_text(encoding='utf-8'))
-    except (OSError, json.JSONDecodeError):
-        return None
+    expected = record.get('access_token_hash')
+    if not isinstance(expected, str) or not access_token:
+        raise JobAccessDenied('Async job access token required')
+    if not secrets.compare_digest(expected, _access_token_hash(access_token)):
+        raise JobAccessDenied('Async job access token invalid')
+    return record
 
 
 def _write_async_job_record(scope: str, job_id: str, payload: dict) -> dict:
-    _async_job_path(scope, job_id).write_text(
-        json.dumps(payload, ensure_ascii=False, sort_keys=True),
-        encoding='utf-8',
-    )
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            connection.execute(
+                "INSERT OR REPLACE INTO async_jobs (scope, job_id, expires_at, payload) VALUES (?, ?, ?, ?)",
+                (scope, job_id, payload.get("expires_at_unix"), json.dumps(payload, ensure_ascii=False, sort_keys=True)),
+            )
+        return payload
+    path = _async_job_path(scope, job_id)
+    temp_path = path.with_suffix(f'.{secrets.token_hex(8)}.tmp')
+    temp_path.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True), encoding='utf-8')
+    os.chmod(temp_path, 0o600)
+    os.replace(temp_path, path)
     return payload
 
 
@@ -1098,6 +1281,26 @@ class BadRequest(ValueError):
     """Client-side request validation failed."""
 
 
+class Forbidden(PermissionError):
+    """Request failed the local API trust boundary."""
+
+
+class UnsupportedMediaType(ValueError):
+    """Request body media type is not supported."""
+
+
+class JobAccessDenied(PermissionError):
+    """Async job capability token is missing or invalid."""
+
+
+class JobQueueFull(RuntimeError):
+    """Bounded async worker queue has no remaining capacity."""
+
+
+class RateLimited(RuntimeError):
+    """Client exceeded the local fixed-window request budget."""
+
+
 class JyotishAPIHandler(BaseHTTPRequestHandler):
     server_version = 'JyotishAPI/6.9.14'
 
@@ -1120,6 +1323,19 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         allowed = getattr(self.server, 'allowed_origins', DEFAULT_ALLOWED_ORIGINS)
         if origin in allowed:
             self.send_header('Access-Control-Allow-Origin', origin)
+
+    def _enforce_request_security(self, *, require_json=False):
+        origin = self.headers.get('Origin')
+        allowed = getattr(self.server, 'allowed_origins', DEFAULT_ALLOWED_ORIGINS)
+        if origin and origin not in allowed:
+            raise Forbidden('Origin is not allowed')
+        host = (self.headers.get('Host') or '').split(':', 1)[0].strip('[]').lower()
+        if host and host not in {'localhost', '127.0.0.1', '::1'}:
+            raise Forbidden('Host is not allowed')
+        if require_json:
+            content_type = (self.headers.get('Content-Type') or '').split(';', 1)[0].strip().lower()
+            if content_type != 'application/json':
+                raise UnsupportedMediaType('Content-Type must be application/json')
 
     def _vedastro_status(self):
         adapter = _load_local_module('vedastro_service_adapter')
@@ -1234,6 +1450,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urlparse(self.path).path
         try:
+            self._enforce_request_security(require_json=True)
             body = self._read_json_body()
             if path == '/api/chart':
                 result = self._compute_chart(body)
@@ -1378,6 +1595,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._error_json(f'Unknown endpoint: {path}', 404, 'ERR_NOT_FOUND')
         except BadRequest as e:
             self._error_json(str(e), 400, 'ERR_BAD_REQUEST')
+        except Forbidden as e:
+            self._error_json(str(e), 403, 'ERR_FORBIDDEN')
+        except UnsupportedMediaType as e:
+            self._error_json(str(e), 415, 'ERR_UNSUPPORTED_MEDIA_TYPE')
         except Exception:
             import logging
             logging.exception("[api_server] request failed for %s", path)

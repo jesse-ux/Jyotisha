@@ -29,6 +29,7 @@ import sys
 import re
 import glob
 import argparse
+from urllib.parse import urlparse
 
 try:
     import markdown
@@ -321,6 +322,13 @@ def build_cover(name, lagna, gender, status, pkg, desc, lang="cn"):
     <div><dt>{L[7]}</dt><dd>Shadbala (covered, calibration-capped), Ashtakavarga v2.1 (SAV/BAV), D9 Navamsha</dd></div>
   </div></div>
 </div>"""
+
+
+def is_allowed_report_resource_url(url, *, report_url):
+    if url == report_url:
+        return True
+    parsed = urlparse(url)
+    return parsed.scheme in {'data', 'about', 'blob'}
 
 
 def build_toc(sections, lang="cn"):
