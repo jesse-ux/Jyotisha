@@ -5947,6 +5947,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         allowed_modes = {'all', 'karaka', 'dasha', 'karakamsha', 'arudha', 'special'}
         if mode not in allowed_modes:
             raise BadRequest(f'mode must be one of: {", ".join(sorted(allowed_modes))}')
+        variant = body.get('variant', 'current')
+        if not isinstance(variant, str):
+            raise BadRequest('variant must be a string')
+        variant = variant.strip().lower() or 'current'
+        allowed_variants = {'current', 'rangacharya', 'all'}
+        if variant not in allowed_variants:
+            raise BadRequest(f'variant must be one of: {", ".join(sorted(allowed_variants))}')
         antardasha = bool(body.get('antardasha', False))
         year = self._get_int(body, 'year', datetime.now().year, 1800, 2400)
         month = self._get_int(body, 'month', 1, 1, 12)
@@ -5976,6 +5983,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if mode in ('all', 'arudha'):
             result['arudha_padas'] = jaimini.calc_arudha_padas(asc_sign_idx, planet_lons)
             result['graha_padas'] = jaimini.calc_graha_padas(planet_lons)
+        if variant in ('rangacharya', 'all'):
+            rangacharya = _load_local_module('rangacharya')
+            rangacharya_result = rangacharya.calc_rangacharya_variant(asc_sign_idx, planet_lons)
+            result['rangacharya'] = rangacharya_result
+            current_arudha = result.get('arudha_padas') or jaimini.calc_arudha_padas(asc_sign_idx, planet_lons)
+            result['rangacharya_diff'] = rangacharya.diff_current_vs_rangacharya(current_arudha, rangacharya_result)
         if mode in ('all', 'special'):
             result['special_lagnas'] = jaimini.calc_special_lagnas(asc_sign_idx, hour, minute + second / 60.0)
         return {
