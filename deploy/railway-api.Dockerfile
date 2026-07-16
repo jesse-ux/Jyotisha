@@ -5,7 +5,11 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 COPY requirements.txt ./
-RUN python -m pip install -r requirements.txt
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential \
+    && python -m pip install -r requirements.txt \
+    && apt-get purge -y --auto-remove build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY SKILL.md mcp_server.py ./
 COPY assets ./assets
