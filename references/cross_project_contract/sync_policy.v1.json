@@ -29,6 +29,7 @@
     "references/cross_project_contract/sync_ledger.json",
     "references/cross_project_contract/sync_policy.v1.json",
     "scripts/cross_project_contract.py",
+    "scripts/domain_calculation_service.py",
     "scripts/cross_project_sync_status.py",
     "tests/test_cross_project_contract.py",
     "tests/test_cross_project_sync_status.py"
