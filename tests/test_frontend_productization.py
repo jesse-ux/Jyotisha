@@ -1615,6 +1615,33 @@ def test_rectification_ui_guides_yes_no_interview_from_existing_event_assets() -
         assert token in rect_ui
 
 
+def test_rectification_ui_exposes_active_questionnaire_api_wizard() -> None:
+    rect_ui = read("rectification.js")
+    bridge = read("api-bridge.js")
+    public_bridge = read("public/api-bridge.js")
+    for token in [
+        "rect-active-wizard",
+        "data-active-rectification-wizard",
+        "rect-active-birth-time",
+        "rect-active-uncertainty",
+        "rect-active-load",
+        "rect-active-score",
+        "computeActiveRectificationQuestions",
+        "computeActiveRectificationScore",
+        "active_rectification_questions",
+        "candidate_cluster_rankings",
+        "next_round_questions",
+        "data-active-answer",
+        "activeRectificationAnswers",
+    ]:
+        assert token in rect_ui
+    for source in (bridge, public_bridge):
+        assert "computeActiveRectificationQuestions" in source
+        assert "computeActiveRectificationScore" in source
+        assert "/api/active_rectification_questions" in source
+        assert "/api/active_rectification_score" in source
+
+
 def test_web_entry_prefers_unified_consultation_workflow() -> None:
     bridge = read("api-bridge.js")
     public_bridge = read("public/api-bridge.js")
