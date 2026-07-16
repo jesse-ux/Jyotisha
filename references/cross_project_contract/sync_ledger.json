@@ -43,6 +43,28 @@
       ],
       "hash_contract_result": "pass: shared file sha256 comparison returned status=pass",
       "rollback": "git revert 2507063 / git revert b6d292a"
+    },
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "b206cc297022a82f90881bdbcc09b1fcb7b65a08",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "61655fe060577011d91b74ad1fc671bace1bd689",
+      "change_class": "calculation_contract",
+      "copied_files": [
+        "scripts/domain_calculation_service.py",
+        "references/cross_project_contract/sync_policy.v1.json",
+        "tests/test_commercial_domain_calculation_contract.py",
+        "scripts/jyotish_api_server.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: no secrets or user data; VedAstro key not written to repository",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_commercial_domain_calculation_contract.py tests/test_cross_project_contract.py tests/test_cross_project_sync_status.py",
+        "python3 scripts/cross_project_contract.py --require-match --format json",
+        "python3 scripts/public_release_privacy_scan.py --json"
+      ],
+      "hash_contract_result": "pass: commercial API result_hash matches domain_calculation_service.compute_chart",
+      "rollback": "git revert b206cc2 / git revert 61655fe"
     }
   ]
 }
