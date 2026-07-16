@@ -1858,7 +1858,7 @@
       "commands": [
         "full-reading"
       ],
-      "conclusion_policy": "Use Harsha Bala as supporting context only; Panchavargiya and combined strength remain blocked until oracle parity passes.",
+      "conclusion_policy": "Use Harsha Bala as supporting context only; Panchavargiya and combined strength remain guarded until oracle parity passes.",
       "domains": [
         "tajika",
         "strength",
@@ -1869,11 +1869,11 @@
       "knowledge_refs": [],
       "missing_impact": "私有分盘代理已禁用；在统一 varga-full 核心与外部 golden oracle 完成前，不提供 Panchavargiya 或混合强度结论。",
       "name": "Panchavargiya Bala / 五分盘力量",
-      "note": "Harsha Bala layer is usable; Panchavargiya Bala and combined Tajika strength remain blocked pending unified Varga core and golden oracle parity.",
+      "note": "Harsha Bala layer is usable; Panchavargiya Bala component remains blocked pending unified Varga core and golden oracle parity. Combined Tajika strength is guarded and cannot drive verdicts.",
       "output_paths": [
         "modules.tajika_strength"
       ],
-      "status": "blocked",
+      "status": "guarded",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "partial",
@@ -1929,7 +1929,7 @@
         "scripts/prashna_context.py",
         "modules.prashna_context"
       ],
-      "status": "blocked",
+      "status": "guarded",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
@@ -1960,12 +1960,12 @@
       "output_paths": [
         "modules.prashna"
       ],
-      "status": "partial",
+      "status": "guarded",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
-        "calculation": "verified",
+        "calculation": "partial",
         "prediction": "support_only",
-        "rule": "context_only"
+        "rule": "partial"
       },
       "version": "7.0"
     },
@@ -2054,7 +2054,7 @@
         "result.rangacharya",
         "result.rangacharya_diff"
       ],
-      "status": "knowledge-only",
+      "status": "comparison-only",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "experimental",
@@ -2749,7 +2749,7 @@
         "scripts/gulika.py:calculate_gulika",
         "prashna_context.supporting_indicators.gulika"
       ],
-      "status": "partial",
+      "status": "guarded",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "partial",
