@@ -945,3 +945,30 @@
 - 已用修复后的脚本重新生成 `scratch/local/releases/jyotish-premium-skill.zip`；并在仓外 `/tmp/jyotish-clean-trial.MvZWWX` 解压验证，确认无 `.git` 环境下 `public_release_privacy_scan.py`、`diagnose_external_engine_adapters.py --json`、`user_invocation_acceptance_check.py` 均可运行，用户调用验收 `status=pass`。
 - 验证：`python3 -m pytest -q tests/test_public_release_privacy_scan.py tests/test_skill_release_clean_trial.py` 通过，4 passed；release 组合回归 `python3 -m pytest -q tests/test_skill_release_clean_trial.py tests/test_skill_release_package.py tests/test_skill_release_manifest.py tests/test_user_invocation_acceptance_contract.py tests/test_external_engine_adapter_diagnostics.py tests/test_three_engine_parity_replay_validator.py tests/test_real_case_replay_validator.py tests/test_public_release_privacy_scan.py` 通过，18 passed。
 - 边界：这是本地 macOS/Python 干净目录验收，不代表 VedAstro official raw、PyJHora/JHora 或真实案例 replay 已完成外部数据闭环。
+
+## 2026-07-11T11:40:00+08:00 - 10 例公开真实案例 benchmark 启动
+
+- 开工纪律已读：`AGENTS.md`、错误台账、2026-07-05 与 Round25 整机碎片扫描、根规划文件。
+- 当前 replay manifest 仍为 `contract_ready_no_cases`；缺口真实存在。
+- Astro-Databank 公开页核实候选均为 Rodden A/AA；计划使用 5 个事业事件与 5 个婚姻事件。
+- 首次调用 `historical_event_backtest.build_report()` 单例超过 120 秒并被 `squeez` 超时终止；严格主链不适合直接串行跑 10 例。改用同仓轻量证据回放器，并把 strict workflow 超时作为阻塞记录，不伪装成已完成 high-rigor official 闭环。
+- Serena Python language server 因本机缺少 `uv/uvx` 无法初始化；继续使用仓内 `rg`、CLI 与 pytest，`.serena/` 保持未跟踪且不提交。
+- 10 例轻量回放完成：positive-event recall `0.8`、exact-label `0.3`、strong `3`、weak `5`、miss `2`、blocked `0`；balanced accuracy 因无负样本保持 `null`。
+- 领域差异：marriage `5/5` 命中；career `3/5`，Obama/Schwarzenegger 公共身份事件漏判，提示 D10 10L/A10/AmK/node dispositor/annual chart 缺口。
+- VedAstro official raw 探针返回 `official_snapshot_budget_exhausted`；PyJHora compare 因缺 canonical fixture 崩溃；jyotishganit 仅 readiness available。均未伪装为外部 parity complete。
+- 验证：replay/schema/orchestrator/Skill clean trial 聚焦回归 `12 passed`；补充 schema/report 测试 `7 passed`；隐私扫描 `0 findings`；`git diff --check` 通过；一键预检退出码 `0`、`status=pass`、`must_not_claim_synced=false`。
+
+## 2026-07-11T14:00:00+08:00 - 第二批真实案例 holdout 启动
+
+- 用户批准继续增加 10 例并完成 20 例技法补漏。
+- 冻结设计：batch1 仅用于发现缺口；v2 规则先写死；batch2 为不重复 holdout；不得按 holdout 结果改阈值。
+- 开工预检退出码 `0`、`status=pass`、`must_not_claim_synced=false`；当前工作树保留上一轮未提交改动，禁止重置。
+- 2026-07-11：新增 10 个公开 A/AA holdout 案例，总案例数增至 20；V2 在未见样本把正事件激活召回从 0.70 提升到 0.80，精确标签率保持 0.30，满足预注册升级门槛。
+- 2026-07-11：生成 batch1/holdout V1-V2 对比及 20 案例合并 JSON；orchestrator 已读取合并报告和 holdout promotion。
+- 2026-07-11：修复 `scripts/muntha.py` 的 `List` 导入错误；比较模式改为读取预计算报告，避免重复引擎回放触发 120 秒超时。
+- 2026-07-11：完成 3 个新增 AA 公众案例 V2 检测，生成独立 probe 与 23 案例观察报告；orchestrator 增加 supplemental probe 披露，不用小样本反向调参。
+- 2026-07-11：完成 V2.1：去重 MD/AD 同星计分、纠正指标命名、23 案例接入 SAV/BAV 非评分审计、根级忽略 scratch/.serena，并把校正观察接入 orchestrator。
+- 2026-07-11：完成首个负样本日期排序 pilot；orchestrator 新增 timing precision gate，基于 Top-1/Top-3 均为 0 的结果阻断当前评分器的精确月日声明。
+- 2026-07-11：补跑年度尺度控制日期；主链 timing gate 降级为 `unvalidated_broad_window`，并按领域标记 career blocked、marriage partial candidate。
+- 2026-07-16：Prashna guarded evidence、Rangacharya knowledge-only/source gates 与 clean-checkout governance 已提交；主域 score/verdict 不受 Prashna context 影响。
+- 2026-07-16：VedAstro preview/metadata 已移除认证 header，实际 HTTP 发送前才注入 API key；此前暴露的 key 必须轮换。

@@ -1,0 +1,106 @@
+{
+  "schema_version": "2.0",
+  "status": "ready",
+  "case_schema": "references/real_case_calibration/catalog.schema.json",
+  "selection_policy": {
+    "batch_role": "holdout_not_used_for_v2_rule_design",
+    "birth_time_minimum": "Rodden A",
+    "event_source_minimum": "verified_secondary",
+    "domains": {"career": 5, "marriage": 5},
+    "frozen_rule_version": "v2",
+    "privacy": "public_figures_only_no_user_birth_data"
+  },
+  "cases": [
+    {
+      "case_id": "albert_ii_accession_2005",
+      "subject": {"name": "Albert II, Prince of Monaco", "year": 1958, "month": 3, "day": 14, "hour": 10, "minute": 50, "lat": 43.75, "lon": 7.4167, "tz": 1.0, "node_mode": "mean", "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_03_14.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "quoted BC/BR"}},
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_03_14.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_holdout_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "career_status", "event_date": "2005-04-06", "domain": "career", "expected_label": "career_status", "outcome": "Began reign as Prince of Monaco", "source_excerpt_note": "Official palace biography and public record date the reign from 6 April 2005.", "source": {"url": "https://www.palais.mc/en/princely-family/h-s-h-prince-albert-ii/biography-1-9.html", "source_grade": "primary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["holdout_case"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_holdout_v2_2026_07_11.json"}
+    },
+    {
+      "case_id": "boy_george_grammy_1984",
+      "subject": {"name": "Boy George", "year": 1961, "month": 6, "day": 14, "hour": 2, "minute": 50, "lat": 51.4333, "lon": 0.1667, "tz": 1.0, "node_mode": "mean", "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_06_14.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "quoted BC/BR"}},
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_06_14.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_holdout_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "career_award", "event_date": "1984-02-28", "domain": "career", "expected_label": "career_status", "outcome": "Culture Club won the Grammy for Best New Artist", "source_excerpt_note": "The 26th Grammy ceremony was held on 28 February 1984 and records Culture Club as Best New Artist.", "source": {"url": "https://en.wikipedia.org/wiki/26th_Annual_Grammy_Awards", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["holdout_case"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_holdout_v2_2026_07_11.json"}
+    },
+    {
+      "case_id": "bergman_oscar_1945",
+      "subject": {"name": "Ingrid Bergman", "year": 1915, "month": 8, "day": 29, "hour": 3, "minute": 30, "lat": 59.3333, "lon": 18.05, "tz": 1.0, "node_mode": "mean", "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_08_29.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}},
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_08_29.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_holdout_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "career_award", "event_date": "1945-03-15", "domain": "career", "expected_label": "career_status", "outcome": "Won Best Actress for Gaslight", "source_excerpt_note": "The 17th Academy Awards occurred on 15 March 1945.", "source": {"url": "https://www.oscars.org/oscars/ceremonies/1945", "source_grade": "primary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["holdout_case"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_holdout_v2_2026_07_11.json"}
+    },
+    {
+      "case_id": "morissette_grammy_1996",
+      "subject": {"name": "Alanis Morissette", "year": 1974, "month": 6, "day": 1, "hour": 9, "minute": 51, "lat": 45.4167, "lon": -75.7, "tz": -4.0, "node_mode": "mean", "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_06_01.htm", "source_grade": "verified_secondary", "time_accuracy_rating": "A", "evidence_basis": "from memory"}},
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_06_01.htm", "source_grade": "verified_secondary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_holdout_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "career_award", "event_date": "1996-02-28", "domain": "career", "expected_label": "career_status", "outcome": "Won four Grammy awards", "source_excerpt_note": "The 38th Grammy ceremony was held on 28 February 1996 and records four wins.", "source": {"url": "https://en.wikipedia.org/wiki/38th_Annual_Grammy_Awards", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["holdout_case"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_holdout_v2_2026_07_11.json"}
+    },
+    {
+      "case_id": "dion_eurovision_1988",
+      "subject": {"name": "Celine Dion", "year": 1968, "month": 3, "day": 30, "hour": 12, "minute": 15, "lat": 45.7167, "lon": -73.4833, "tz": -5.0, "node_mode": "mean", "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_03_30.htm", "source_grade": "verified_secondary", "time_accuracy_rating": "A", "evidence_basis": "from memory"}},
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_03_30.htm", "source_grade": "verified_secondary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_holdout_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "career_award", "event_date": "1988-04-30", "domain": "career", "expected_label": "career_status", "outcome": "Won the Eurovision Song Contest for Switzerland", "source_excerpt_note": "The 1988 final occurred on 30 April and records Celine Dion as winner.", "source": {"url": "https://eurovision.tv/event/dublin-1988", "source_grade": "primary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["holdout_case"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_holdout_v2_2026_07_11.json"}
+    },
+    {
+      "case_id": "mccartney_marriage_1969",
+      "subject": {"name": "Paul McCartney", "year": 1942, "month": 6, "day": 18, "hour": 14, "minute": 0, "lat": 53.4167, "lon": -2.9167, "tz": 2.0, "node_mode": "mean", "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_06_18.htm", "source_grade": "verified_secondary", "time_accuracy_rating": "A", "evidence_basis": "from memory"}},
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_06_18.htm", "source_grade": "verified_secondary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_holdout_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "legal_marriage", "event_date": "1969-03-12", "domain": "marriage", "expected_label": "legal_marriage", "outcome": "Married Linda Eastman", "source_excerpt_note": "Public relationship history dates the marriage to 12 March 1969.", "source": {"url": "https://en.wikipedia.org/wiki/Personal_relationships_of_Paul_McCartney", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["holdout_case"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_holdout_v2_2026_07_11.json"}
+    },
+    {
+      "case_id": "depp_marriage_2015",
+      "subject": {"name": "Johnny Depp", "year": 1963, "month": 6, "day": 9, "hour": 8, "minute": 44, "lat": 37.7667, "lon": -87.1167, "tz": -5.0, "node_mode": "mean", "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_06_09.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}},
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_06_09.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_holdout_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "legal_marriage", "event_date": "2015-02-03", "domain": "marriage", "expected_label": "legal_marriage", "outcome": "Married Amber Heard in a civil ceremony", "source_excerpt_note": "Variety's relationship timeline records the civil ceremony on 3 February 2015.", "source": {"url": "https://variety.com/2016/biz/news/johnny-depp-amber-heard-divorce-settlement-1201837685/", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["holdout_case"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_holdout_v2_2026_07_11.json"}
+    },
+    {
+      "case_id": "kidman_marriage_2006",
+      "subject": {"name": "Nicole Kidman", "year": 1967, "month": 6, "day": 20, "hour": 15, "minute": 15, "lat": 21.3, "lon": -157.8667, "tz": -10.0, "node_mode": "mean", "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_06_20.htm", "source_grade": "verified_secondary", "time_accuracy_rating": "A", "evidence_basis": "from memory"}},
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_06_20.htm", "source_grade": "verified_secondary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_holdout_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "legal_marriage", "event_date": "2006-06-25", "domain": "marriage", "expected_label": "legal_marriage", "outcome": "Married Keith Urban", "source_excerpt_note": "Public biography records the Sydney marriage on 25 June 2006.", "source": {"url": "https://en.wikipedia.org/wiki/Nicole_Kidman", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["holdout_case"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_holdout_v2_2026_07_11.json"}
+    },
+    {
+      "case_id": "demi_moore_marriage_1987",
+      "subject": {"name": "Demi Moore", "year": 1962, "month": 11, "day": 11, "hour": 14, "minute": 16, "lat": 33.4, "lon": -104.5167, "tz": -7.0, "node_mode": "mean", "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_11_11.htm", "source_grade": "verified_secondary", "time_accuracy_rating": "A", "evidence_basis": "from memory"}},
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_11_11.htm", "source_grade": "verified_secondary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_holdout_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "legal_marriage", "event_date": "1987-11-21", "domain": "marriage", "expected_label": "legal_marriage", "outcome": "Married Bruce Willis", "source_excerpt_note": "Public biography records the marriage on 21 November 1987.", "source": {"url": "https://en.wikipedia.org/wiki/Demi_Moore", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["holdout_case"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_holdout_v2_2026_07_11.json"}
+    },
+    {
+      "case_id": "chelsea_clinton_marriage_2010",
+      "subject": {"name": "Chelsea Clinton", "year": 1980, "month": 2, "day": 27, "hour": 23, "minute": 24, "lat": 34.75, "lon": -92.2833, "tz": -6.0, "node_mode": "mean", "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_02_27.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}},
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_02_27.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "blind_holdout_replay", "external_oracle_status": "pending"},
+      "event_outcomes": [{"event_type": "legal_marriage", "event_date": "2010-07-31", "domain": "marriage", "expected_label": "legal_marriage", "outcome": "Married Marc Mezvinsky", "source_excerpt_note": "Public biography records the wedding on 31 July 2010.", "source": {"url": "https://en.wikipedia.org/wiki/Chelsea_Clinton", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["holdout_case"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": false, "report_path": "docs/benchmark/public_real_case_holdout_v2_2026_07_11.json"}
+    }
+  ],
+  "runtime_boundary": "Blind holdout batch. V2 rules and thresholds were frozen before results. Positive-event replay cannot establish specificity or scientific predictive accuracy."
+}

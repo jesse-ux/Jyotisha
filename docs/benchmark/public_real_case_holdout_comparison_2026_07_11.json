@@ -1,0 +1,137 @@
+{
+  "benchmark_id": "public_real_case_holdout_comparison_2026_07_11",
+  "boundary": "Blind positive-event holdout comparison; no negative controls and no scientific accuracy claim.",
+  "case_deltas": [
+    {
+      "added_signals": [],
+      "case_id": "albert_ii_accession_2005",
+      "score_delta": 0,
+      "v1_result_class": "strong_hit",
+      "v1_score": 9,
+      "v2_result_class": "strong_hit",
+      "v2_score": 9
+    },
+    {
+      "added_signals": [
+        "active_dasha_matches_D10_Lagna_lord:Sun"
+      ],
+      "case_id": "bergman_oscar_1945",
+      "score_delta": 1,
+      "v1_result_class": "strong_hit",
+      "v1_score": 7,
+      "v2_result_class": "strong_hit",
+      "v2_score": 8
+    },
+    {
+      "added_signals": [
+        "active_dasha_matches_D10_Lagna_lord:Venus"
+      ],
+      "case_id": "boy_george_grammy_1984",
+      "score_delta": 1,
+      "v1_result_class": "weak_hit",
+      "v1_score": 5,
+      "v2_result_class": "weak_hit",
+      "v2_score": 6
+    },
+    {
+      "added_signals": [
+        "active_dasha_matches_D9_7L:Venus"
+      ],
+      "case_id": "chelsea_clinton_marriage_2010",
+      "score_delta": 1,
+      "v1_result_class": "weak_hit",
+      "v1_score": 4,
+      "v2_result_class": "weak_hit",
+      "v2_score": 5
+    },
+    {
+      "added_signals": [],
+      "case_id": "demi_moore_marriage_1987",
+      "score_delta": 0,
+      "v1_result_class": "miss",
+      "v1_score": 0,
+      "v2_result_class": "miss",
+      "v2_score": 0
+    },
+    {
+      "added_signals": [
+        "active_dasha_matches_D9_7L:Jupiter"
+      ],
+      "case_id": "depp_marriage_2015",
+      "score_delta": 1,
+      "v1_result_class": "weak_hit",
+      "v1_score": 5,
+      "v2_result_class": "weak_hit",
+      "v2_score": 6
+    },
+    {
+      "added_signals": [
+        "active_dasha_matches_Amatyakaraka:Mercury",
+        "active_dasha_matches_D10_Lagna_lord:Mercury"
+      ],
+      "case_id": "dion_eurovision_1988",
+      "score_delta": 2,
+      "v1_result_class": "miss",
+      "v1_score": 3,
+      "v2_result_class": "weak_hit",
+      "v2_score": 5
+    },
+    {
+      "added_signals": [],
+      "case_id": "kidman_marriage_2006",
+      "score_delta": 0,
+      "v1_result_class": "miss",
+      "v1_score": 3,
+      "v2_result_class": "miss",
+      "v2_score": 3
+    },
+    {
+      "added_signals": [],
+      "case_id": "mccartney_marriage_1969",
+      "score_delta": 0,
+      "v1_result_class": "strong_hit",
+      "v1_score": 7,
+      "v2_result_class": "strong_hit",
+      "v2_score": 7
+    },
+    {
+      "added_signals": [],
+      "case_id": "morissette_grammy_1996",
+      "score_delta": 0,
+      "v1_result_class": "weak_hit",
+      "v1_score": 4,
+      "v2_result_class": "weak_hit",
+      "v2_score": 4
+    }
+  ],
+  "promotion": {
+    "promote": true,
+    "reason": "holdout_metrics_improved"
+  },
+  "v1_summary": {
+    "balanced_accuracy": null,
+    "balanced_accuracy_blocked_reason": "no_verified_negative_control_dates",
+    "blocked_events": 0,
+    "blocked_rate": 0.0,
+    "evaluated_events": 10,
+    "exact_label_rate": 0.3,
+    "misses": 3,
+    "positive_event_recall": 0.7,
+    "strong_hits": 3,
+    "total_events": 10,
+    "weak_hits": 4
+  },
+  "v2_summary": {
+    "balanced_accuracy": null,
+    "balanced_accuracy_blocked_reason": "no_verified_negative_control_dates",
+    "blocked_events": 0,
+    "blocked_rate": 0.0,
+    "evaluated_events": 10,
+    "exact_label_rate": 0.3,
+    "misses": 2,
+    "positive_event_recall": 0.8,
+    "strong_hits": 3,
+    "total_events": 10,
+    "weak_hits": 5
+  }
+}
