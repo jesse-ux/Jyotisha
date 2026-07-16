@@ -50,3 +50,13 @@ LLM_MODEL=...
 1. Add the generated `web` domain to Supabase Auth **Site URL** and **Redirect URLs**.
 2. Open `/login`, sign in with an address listed in `ADMIN_EMAILS`, then verify `/admin/codes`.
 3. Keep `api` private; verify its `/api/health` from Railway logs or the `web` service.
+
+## Small VPS deployment
+
+For a single low-traffic server, keep Supabase managed and run only the Web and API services:
+
+```bash
+docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build
+```
+
+Set `SITE_ADDRESS=http://SERVER_IP` for initial HTTP testing. Replace it with the production domain after DNS resolves; Caddy will then provision HTTPS automatically.

@@ -1,0 +1,4 @@
+{$SITE_ADDRESS:http://103.117.123.53} {
+    encode zstd gzip
+    reverse_proxy web:3000
+}
