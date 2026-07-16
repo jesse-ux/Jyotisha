@@ -65,6 +65,26 @@
       ],
       "hash_contract_result": "pass: commercial API result_hash matches domain_calculation_service.compute_chart",
       "rollback": "git revert b206cc2 / git revert 61655fe"
+    },
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "d1d09b9432f383963d10f6604a3bb0ffe2951eb9",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "73e0ff724d70a234a3fc02b207468377bf709997",
+      "change_class": "calculation_contract",
+      "copied_files": [
+        "scripts/jyotish_api_server.py",
+        "tests/test_commercial_domain_calculation_contract.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: no secrets or user data; visible chart values now follow domain service",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_commercial_domain_calculation_contract.py tests/test_cross_project_contract.py tests/test_cross_project_sync_status.py",
+        "python3 scripts/cross_project_contract.py --require-match --format json",
+        "python3 scripts/public_release_privacy_scan.py --json"
+      ],
+      "hash_contract_result": "pass: API Rahu/Ketu true-node visible longitudes match domain_calculation_service",
+      "rollback": "git revert 73e0ff7"
     }
   ]
 }
