@@ -22,6 +22,7 @@ Deployment safety rules:
 3. Keep Supabase Auth Site URL and redirect URLs aligned with `https://jyotisha.chat`.
 4. After deployment, verify `/login`, logged-out `/api/account` = `401`, internal `/api/health` = `200`, and `swisseph_available = true`.
 5. Never expose port `5200`, `SUPABASE_SERVICE_ROLE_KEY`, model keys, user JWTs, passwords, or SSH private keys.
+6. Pushes to `main` deploy automatically only after `Jyotish Skill CI` succeeds; the production workflow and required secret are documented in `deploy/README.md`.
 
 ## 1. High-Rigor Override
 

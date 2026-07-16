@@ -1,0 +1,68 @@
+name: Deploy production
+
+on:
+  workflow_run:
+    workflows: ["Jyotish Skill CI"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+env:
+  DEPLOY_HOST: 103.117.123.53
+  DEPLOY_PORT: "22000"
+  DEPLOY_USER: root
+  DEPLOY_PATH: /opt/jyotisha-app
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout tested revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/jyotisha-production
+          chmod 600 ~/.ssh/jyotisha-production
+          printf '%s\n' '[103.117.123.53]:22000 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHQJvN2Mo3Yq8e6ZIK4P2blJ5Vjj0HbknEuk7TyjhMbO' > ~/.ssh/known_hosts
+
+      - name: Sync and rebuild
+        run: |
+          RSYNC_SSH="ssh -i $HOME/.ssh/jyotisha-production -p $DEPLOY_PORT"
+          rsync -az --delete \
+            --exclude='.git/' \
+            --exclude='.env.production' \
+            --exclude='frontend/node_modules/' \
+            --exclude='frontend/.next/' \
+            --exclude='jyotish-app/node_modules/' \
+            --exclude='jyotish-app/dist/' \
+            -e "$RSYNC_SSH" \
+            ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
+
+          ssh -i ~/.ssh/jyotisha-production -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
+
+      - name: Verify production
+        run: |
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 https://jyotisha.chat/login >/dev/null
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' https://jyotisha.chat/api/account)" = "401"
+          ssh -i ~/.ssh/jyotisha-production -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && docker compose --env-file .env.production -f deploy/docker-compose.server.yml exec -T web node -e 'fetch(\"http://api:5200/api/health\").then(async r => { const body = await r.json(); if (!r.ok || body.status !== \"ok\" || body.swisseph_available !== true) process.exit(1); console.log(JSON.stringify(body)); })'"

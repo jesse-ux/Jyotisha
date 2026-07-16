@@ -102,20 +102,39 @@ docker stats --no-stream
 
 The server has a persistent 2 GB `/swapfile`. UFW permits only SSH `22000/tcp`, HTTP `80/tcp`, HTTPS `443/tcp`, and the pre-existing WireGuard `51820/udp` rule.
 
-## Deploy an update from the maintainer Mac
+## Automatic deployment
 
-The GitHub repository is private and the VPS does not currently have a GitHub deploy key. Deploy the tracked tree without copying local secrets:
+A successful `Jyotish Skill CI` run for a push to `main` triggers `.github/workflows/deploy-production.yml`. The workflow syncs the tested revision with `rsync`, preserves `/opt/jyotisha-app/.env.production`, rebuilds both Docker services, and verifies the public login route, logged-out account response, and private Python health endpoint.
+
+Required GitHub Actions secret:
+
+```text
+PRODUCTION_SSH_PRIVATE_KEY = dedicated production deploy private key
+```
+
+The workflow pins the VPS Ed25519 host key and serializes deployments with the `production` concurrency group. It can also be run manually from GitHub Actions.
+
+## Manual deployment fallback
+
+If GitHub Actions is unavailable, deploy the tracked tree without copying local secrets:
 
 ```bash
 cd /Users/jesse/Downloads/Copse/astrology/yinduzhanxing
 git status --short --branch
-git archive --format=tar.gz --output=/tmp/jyotisha.tar.gz HEAD
-scp -P 22000 /tmp/jyotisha.tar.gz root@103.117.123.53:/tmp/jyotisha.tar.gz
+rsync -az --delete \
+  --exclude='.git/' \
+  --exclude='.env.production' \
+  --exclude='frontend/node_modules/' \
+  --exclude='frontend/.next/' \
+  --exclude='jyotish-app/node_modules/' \
+  --exclude='jyotish-app/dist/' \
+  -e 'ssh -p 22000' \
+  ./ root@103.117.123.53:/opt/jyotisha-app/
 ssh -p 22000 root@103.117.123.53 \
-  'cd /opt/jyotisha-app && tar -xzf /tmp/jyotisha.tar.gz && rm -f /tmp/jyotisha.tar.gz && docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build'
+  'cd /opt/jyotisha-app && docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build --remove-orphans'
 ```
 
-`git archive` does not include ignored `.env` files. Extraction preserves `/opt/jyotisha-app/.env.production`.
+The excluded `.env.production` remains only on the VPS.
 
 ## Verification
 
