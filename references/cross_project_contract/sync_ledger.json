@@ -105,6 +105,26 @@
       ],
       "hash_contract_result": "pass: API Sade Sati transit Saturn provenance matches domain_calculation_service",
       "rollback": "git revert 09387d8"
+    },
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "5070952ecf57568092a82b97a2142e21ebeef4e7",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "e8a8ff62b0fa86f9e24be5a0ac2604afa575dd8c",
+      "change_class": "calculation_contract",
+      "copied_files": [
+        "scripts/jyotish_api_server.py",
+        "tests/test_commercial_domain_calculation_contract.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: no secrets or user data; dasha boundary now follows domain service",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_commercial_domain_calculation_contract.py tests/test_cross_project_contract.py tests/test_cross_project_sync_status.py",
+        "python3 scripts/cross_project_contract.py --require-match --format json",
+        "python3 scripts/public_release_privacy_scan.py --json"
+      ],
+      "hash_contract_result": "pass: API dasha start_date/current_md/remaining_years/result_hash match domain_calculation_service",
+      "rollback": "git revert e8a8ff6"
     }
   ]
 }
