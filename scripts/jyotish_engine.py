@@ -735,12 +735,24 @@ def _birth_datetime_from_args(args):
 
 
 def _compute_chart_from_args(args):
-    return compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'),
-        second=_arg_second(args),
-        ayanamsa_name=_current_ayanamsa_name(args),
-    )
+    from domain_calculation_service import compute_chart
+
+    result = compute_chart({
+        'year': args.year,
+        'month': args.month,
+        'day': args.day,
+        'hour': args.hour,
+        'minute': args.minute,
+        'second': _arg_second(args),
+        'lat': args.lat,
+        'lon': args.lon,
+        'tz': args.tz,
+        'node_mode': getattr(args, 'node_mode', 'mean'),
+        'ayanamsa': _current_ayanamsa_name(args),
+    })
+    asc_idx = SIGNS.index(result['ascendant']['sign'])
+    birth = result['birth_info']
+    return result, asc_idx, birth['julian_day'], birth['ayanamsa']
 
 
 def _current_ayanamsa_name(args=None):
