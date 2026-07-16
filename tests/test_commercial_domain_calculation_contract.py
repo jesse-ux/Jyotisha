@@ -77,3 +77,30 @@ def test_api_visible_chart_values_come_from_domain_service(monkeypatch: pytest.M
         assert rest["planets"][planet]["lon"] == pytest.approx(
             expected["planets"][planet]["lon"], abs=1e-8
         )
+
+
+def test_api_sade_sati_uses_domain_true_saturn_transit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("JYOTISH_API_CHART_CACHE_TTL_SECONDS", "0")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "0")
+    monkeypatch.setattr(
+        jyotish_api_server,
+        "_attach_vedastro_main_entry_overview",
+        lambda result, _birth: result,
+    )
+    request = {**BIRTH, "node_mode": "true", "transit_date": "2026-07-11"}
+    chart = calculation_service.compute_chart(request)
+    expected = calculation_service.compute_sade_sati(
+        moon_degree=chart["planets"]["Moon"]["lon"],
+        asc_degree=chart["ascendant"]["lon"],
+        reference_date="2026-07-11",
+        tz=BIRTH["tz"],
+        ayanamsa=BIRTH["ayanamsa"],
+    )
+
+    rest = JyotishAPIHandler.__new__(JyotishAPIHandler)._compute_chart_sync(request)
+
+    assert rest["sade_sati"]["transit_saturn_lon"] == pytest.approx(
+        expected["transit_saturn_lon"], abs=1e-8
+    )
+    assert rest["sade_sati"]["provenance"]["data_layer"] == "true_transit_positions"
+    assert rest["sade_sati"]["calculation_contract"]["algorithm"] == "sade_sati_true_saturn_transit"

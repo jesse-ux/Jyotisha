@@ -4424,6 +4424,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 moon_lon=moon_lon,
                 current_date=datetime.utcnow(),
             )
+            sade_sati = calculation_service.compute_sade_sati(
+                moon_degree=canonical_chart['planets']['Moon']['lon'],
+                asc_degree=canonical_chart['ascendant']['lon'],
+                reference_date=body.get('transit_date') or body.get('today') or body.get('current_date') or datetime.utcnow().strftime('%Y-%m-%d'),
+                tz=tz,
+                ayanamsa=body.get('ayanamsa', 'lahiri'),
+            )
             canonical_planets = {}
             for planet_name, planet in canonical_chart.get('planets', {}).items():
                 if not isinstance(planet, dict):
