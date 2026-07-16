@@ -26,6 +26,7 @@ htmlcov/
 .mypy_cache/
 .hypothesis/
 .cline/
+.planning/
 benchmarks/jyotish/outputs/
 output_report.txt
 results_extracted.md
