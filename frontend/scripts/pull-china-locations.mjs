@@ -9,7 +9,7 @@ const outputPath = resolve(
 );
 
 const response = await fetch(SOURCE_URL, {
-  headers: { "user-agent": "Ayanam location-data refresh" },
+  headers: { "user-agent": "Jyotisha location-data refresh" },
 });
 
 if (!response.ok) {

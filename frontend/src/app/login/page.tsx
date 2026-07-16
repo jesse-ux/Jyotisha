@@ -71,10 +71,10 @@ export default function LoginPage() {
   return (
     <main className="standalone-page auth-page">
       <section className="auth-panel" aria-labelledby="login-title">
-        <div className="auth-brand"><span aria-hidden="true">अ</span><strong>Ayanam</strong></div>
-        <p className="page-eyebrow">邮箱登录</p>
-        <h1 id="login-title">继续你的占星对话</h1>
-        <p className="page-intro">我们会发送一次性登录验证码，新邮箱会自动创建账户。</p>
+        <div className="auth-brand"><span aria-hidden="true">अ</span><strong>Jyotisha</strong></div>
+        <p className="page-eyebrow">登录</p>
+        <h1 id="login-title">欢迎来到 Jyotisha</h1>
+        <p className="page-intro">使用邮箱验证码登录，新邮箱会自动创建账户。</p>
 
         {!sent ? (
           <form className="stack-form" onSubmit={sendOtp}>

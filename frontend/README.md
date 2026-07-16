@@ -1,6 +1,6 @@
-# Ayanam Web
+# Jyotisha Web
 
-Ayanam 是 `yinduzhanxing` 的聊天式消费者 Web 前端。它使用 Next.js App Router 提供用户与 Mastra Agent 的连续问答，同时继续复用仓库现有的 Python 印度占星计算工作流。它不生成固定报告。
+Jyotisha 是 `yinduzhanxing` 的聊天式消费者 Web 前端。它使用 Next.js App Router 提供用户与 Mastra Agent 的连续问答，同时继续复用仓库现有的 Python 印度占星计算工作流。它不生成固定报告。
 
 ## 架构
 

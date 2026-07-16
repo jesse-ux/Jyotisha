@@ -33,7 +33,7 @@ const themes: Array<{ id: Exclude<Theme, "general">; label: string; prompt: stri
   { id: "timing", label: "时运", prompt: "未来十二个月有哪些重要时间窗口？" },
 ];
 
-const presetOnboardingMessage = "你好，我是 Ayanam。开始前，我想先认识你。请问我该怎么称呼你？";
+const presetOnboardingMessage = "你好，我是 Jyotisha。开始前，我想先认识你。请问我该怎么称呼你？";
 
 const emptyProfile: Profile = {
   name: "",
@@ -276,7 +276,7 @@ function ProfileFields({ value, onChange }: { value: Profile; onChange: (profile
 function OnboardingChatMessage({ role, text, streaming = false, length = text.length }: { role: Message["role"]; text: string; streaming?: boolean; length?: number }) {
   const visibleText = streaming ? text.slice(0, length) : text;
   return (
-    <article className={`message message-${role} onboarding-message`} aria-label={role === "assistant" ? "Ayanam" : "你"}>
+    <article className={`message message-${role} onboarding-message`} aria-label={role === "assistant" ? "Jyotisha" : "你"}>
       <div className="message-content">
         <div className="message-bubble">
           {role === "assistant" ? (
@@ -330,6 +330,7 @@ export default function Home() {
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [profileDraft, setProfileDraft] = useState<Profile>(emptyProfile);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
   const [account, setAccount] = useState<Account | null>(null);
   const [accountError, setAccountError] = useState("");
@@ -355,6 +356,7 @@ export default function Home() {
   const [presetMessageLength, setPresetMessageLength] = useState(0);
   const conversationEnd = useRef<HTMLDivElement>(null);
   const accountTrigger = useRef<HTMLButtonElement>(null);
+  const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const redeemInput = useRef<HTMLInputElement>(null);
   const composerInput = useRef<HTMLTextAreaElement>(null);
@@ -363,6 +365,7 @@ export default function Home() {
   const activeError = requestError && requestError.sessionId === activeSession?.id ? requestError.message : "";
   const isLoading = pendingSessionId === activeSession?.id;
   const activeStreamingText = streamingReply && streamingReply.sessionId === activeSession?.id ? streamingReply.text : "";
+  const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
   const accountId = account?.user.id;
   const profileComplete = isProfileComplete(profile);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
@@ -503,6 +506,18 @@ export default function Home() {
   }, [onboardingStep, presetMessageFinished, profileComplete, profileOpen]);
 
   useEffect(() => {
+    if (!mobileSidebarOpen) return;
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileSidebarOpen(false);
+        window.requestAnimationFrame(() => mobileMenuTrigger.current?.focus());
+      }
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileSidebarOpen]);
+
+  useEffect(() => {
     if (!profileOpen) return;
     (redeemOpen ? redeemInput.current : closeButton.current)?.focus();
     const closeOnEscape = (event: globalThis.KeyboardEvent) => {
@@ -557,6 +572,7 @@ export default function Home() {
 
   async function startNewChat() {
     if (!account || creatingSession) return;
+    setMobileSidebarOpen(false);
     const nextSession = createSession();
     const previousSessionId = activeSession?.id ?? "";
     setCreatingSession(true);
@@ -884,9 +900,10 @@ export default function Home() {
   }
 
   return (
-    <main className="chat-app">
-      <aside className="sidebar" aria-label="对话导航">
-        <div className="brand-row"><span className="brand-mark" aria-hidden="true">अ</span><strong>Ayanam</strong></div>
+    <main className={`chat-app ${mobileSidebarOpen ? "sidebar-open" : ""}`}>
+      <button className="sidebar-backdrop" aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)} />
+      <aside className="sidebar" id="chat-sidebar" aria-label="对话导航">
+        <div className="brand-row"><span className="brand-mark" aria-hidden="true">अ</span><strong>Jyotisha</strong><button className="sidebar-close" aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)}>×</button></div>
         <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || creatingSession || Boolean(pendingSessionId)}><span aria-hidden="true">＋</span> {creatingSession ? "正在创建" : "新对话"}</button>
         <nav className="session-nav" aria-label="聊天记录">
           <span className="sidebar-label">聊天记录</span>
@@ -896,7 +913,7 @@ export default function Home() {
                 className={session.id === activeSession?.id ? "is-active" : ""}
                 key={session.id}
                 type="button"
-                onClick={() => { setActiveSessionId(session.id); setDraft(""); }}
+                onClick={() => { setActiveSessionId(session.id); setDraft(""); setMobileSidebarOpen(false); }}
                 aria-current={session.id === activeSession?.id ? "page" : undefined}
               >
                 <span>{session.title}</span>
@@ -908,7 +925,7 @@ export default function Home() {
         <div className="sidebar-footer">
           <button className="profile-trigger" ref={accountTrigger} type="button" onClick={() => openAccount()}>
             <span className="profile-initial" aria-hidden="true">{profile.name.trim().slice(0, 1) || account?.user.email?.slice(0, 1).toUpperCase() || "你"}</span>
-            <span><b>{profile.name.trim() || account?.user.email || "账户"}</b><small>{account ? `${account.credits} 点余额` : accountError || "正在读取账户"}</small></span>
+            <span><b>{profile.name.trim() || account?.user.email || "账户"}</b></span>
             <span className="chevron" aria-hidden="true">›</span>
           </button>
           <p>解读仅供自我探索，不替代医疗、法律或投资建议。</p>
@@ -917,12 +934,14 @@ export default function Home() {
 
       <section className="chat-panel">
         <header className="chat-header">
+          <button className="mobile-menu" ref={mobileMenuTrigger} aria-label="打开聊天记录" aria-controls="chat-sidebar" aria-expanded={mobileSidebarOpen} type="button" onClick={() => setMobileSidebarOpen(true)}><span aria-hidden="true">☰</span></button>
           <div>
             <strong>{activeSession?.title || "新对话"}</strong>
             <span><i className={`status ${isLoading ? "status-loading" : "status-idle"}`} />{isLoading ? (activeStreamingText ? "正在回答" : "正在核对星盘信息") : "基于星盘证据回答"}</span>
           </div>
-          <button className="credit-button" type="button" onClick={() => openAccount(account?.credits === 0)} aria-label="打开账户与兑换码">
-            {account ? `剩余 ${account.credits} 点` : accountError || "读取余额中"}
+          <button className="credit-button" type="button" onClick={() => openAccount(account?.credits === 0)} aria-label={account ? `余额 ${account.credits} 点，打开账户与兑换码` : accountError || "读取余额中"}>
+            <span className="credit-icon" aria-hidden="true" />
+            <span>{account ? account.credits : "—"}</span>
           </button>
         </header>
 
@@ -977,7 +996,7 @@ export default function Home() {
               {profileComplete && presetMessageFinished && (onboardingPending ? (
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
-                <div className="starter-list" aria-label="Ayanam 推荐的初始问题">
+                <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
                   {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item, index) => {
                     const theme = themes.find((candidate) => candidate.id === item.theme);
                     return (
@@ -995,25 +1014,18 @@ export default function Home() {
             </div>
           ) : (
             <div className="message-list" aria-busy={isLoading}>
-              <span className="sr-only" aria-live="polite">{isLoading ? "Ayanam 正在回答" : ""}</span>
+              <span className="sr-only" aria-live="polite">{isLoading ? "Jyotisha 正在回答" : ""}</span>
               {activeSession.messages.map((message, index) => (
-                <article className={`message message-${message.role}`} key={`${message.role}-${index}`} aria-label={message.role === "assistant" ? "Ayanam" : "你"}>
+                <article className={`message message-${message.role}`} key={`${message.role}-${index}`} aria-label={message.role === "assistant" ? "Jyotisha" : "你"}>
                   <div className="message-content">
                     <div className="message-bubble">
                       {message.role === "assistant" ? <ChatMessageContent text={message.text} /> : <p>{message.text}</p>}
                     </div>
-                    {message.role === "assistant" && index === activeSession.messages.length - 1 && message.suggestions && message.suggestions.length > 0 && (
-                      <div className="suggestion-list" aria-label="推荐继续提问">
-                        {message.suggestions.map((question) => (
-                          <button key={question} type="button" disabled={Boolean(pendingSessionId) || !account} onClick={() => void send(question)}>{question}<span aria-hidden="true">↗</span></button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </article>
               ))}
               {isLoading && (
-                <article className="message message-assistant" aria-label={activeStreamingText ? "Ayanam 正在回答" : "Ayanam 正在分析"}>
+                <article className="message message-assistant" aria-label={activeStreamingText ? "Jyotisha 正在回答" : "Jyotisha 正在分析"}>
                   <div className="message-content">
                     <div className="message-bubble">
                       {activeStreamingText ? <ChatMessageContent text={activeStreamingText} /> : <div className="thinking"><i /><i /><i /></div>}
@@ -1028,6 +1040,13 @@ export default function Home() {
         </div>
 
         <div className="composer-wrap">
+          {activeSuggestions.length > 0 && (
+            <div className="composer-suggestions" aria-label="推荐继续提问">
+              {activeSuggestions.map((question) => (
+                <button key={question} type="button" disabled={Boolean(pendingSessionId) || !account} onClick={() => void send(question)}>{question}</button>
+              ))}
+            </div>
+          )}
           <form className="composer" onSubmit={submit}>
             <textarea
               ref={composerInput}
@@ -1036,7 +1055,7 @@ export default function Home() {
                 ? "正在读取账户…"
                 : !profileComplete
                   ? onboardingStep === "name"
-                    ? presetMessageFinished ? "输入你的称呼" : "Ayanam 正在输入…"
+                    ? presetMessageFinished ? "输入你的称呼" : "Jyotisha 正在输入…"
                     : "请先完成上方资料"
                   : account.credits === 0
                     ? "余额不足，发送时将打开兑换码"
