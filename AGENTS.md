@@ -2,6 +2,27 @@
 
 本文件是当前项目给协作代理、自动化助手与派生工作流的硬约束补充。它不替代 `SKILL.md`，而是把最容易被偷懒、省略、或在多窗口工作时遗失的高严谨规则单独钉死。
 
+## 0. Production Maintenance Truth
+
+任何部署、线上故障、域名、登录或环境变量任务，先读取 `deploy/README.md`，不要重新猜测架构。
+
+- Production domain: `https://jyotisha.chat`
+- Source: `https://github.com/jesse-ux/Jyotisha.git`
+- Server: Hong Kong Ubuntu 22.04 VPS, `103.117.123.53`, SSH port `22000`
+- Runtime: `/opt/jyotisha-app`, Docker Compose file `deploy/docker-compose.server.yml`
+- Secrets: `/opt/jyotisha-app/.env.production`; never print, copy into chat, or commit
+- Public edge: Caddy only; Next.js `3000` and Python API `5200` stay Docker-private
+- Managed services: Spaceship DNS, Supabase project `vtvnfqmonbfuxmqkqdlc`, external model API
+- Capacity boundary: 1 vCPU / 2 GB RAM / 40 GB disk / 5 Mbps; demo and low concurrency only
+
+Deployment safety rules:
+
+1. Run `git status --short --branch` before packaging; do not overwrite unrelated dirty files.
+2. Verify `dig +short @launch1.spaceship.net A jyotisha.chat` returns `103.117.123.53` before troubleshooting Caddy certificate issuance.
+3. Keep Supabase Auth Site URL and redirect URLs aligned with `https://jyotisha.chat`.
+4. After deployment, verify `/login`, logged-out `/api/account` = `401`, internal `/api/health` = `200`, and `swisseph_available = true`.
+5. Never expose port `5200`, `SUPABASE_SERVICE_ROLE_KEY`, model keys, user JWTs, passwords, or SSH private keys.
+
 ## 1. High-Rigor Override
 
 当用户明确要求以下任一项时，必须进入高严谨模式：

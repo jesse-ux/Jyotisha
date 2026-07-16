@@ -216,7 +216,13 @@ supabase/migrations/20260715040000_agent_onboarding_cache.sql
 
 相同兑换码只能兑换一次；首次兑换后会永久记录兑换账户、邮箱和时间。新注册用户默认 0 点，因此即使 demo URL 被转发，也不能在没有兑换码的情况下调用 Agent。
 
-## Vercel + Supabase Demo 部署
+## 当前线上部署
+
+当前生产 Demo 使用 `https://jyotisha.chat`，Next.js、Mastra 和 Python API 通过 Docker Compose 部署在香港 VPS，Supabase 与模型 API 继续使用云服务。服务器、DNS、环境变量、更新和验收命令统一以 [`../deploy/README.md`](../deploy/README.md) 为准。
+
+## Vercel + Supabase 备选部署
+
+以下方案只作为无服务器备选，不是当前线上拓扑。
 
 ### Web 部署到 Vercel
 

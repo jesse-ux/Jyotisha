@@ -11,23 +11,32 @@
 
 ---
 
-## Product service layout
+## Production service layout
 
 ```text
-frontend/                         Next.js + Mastra chat product
-scripts/jyotish_api_server.py     Python API entrypoint
-jyotish_vedic/                    Python calculation package
-skills/ + references/ + assets/   Agent skill and calculation evidence
-supabase/                         Auth, profile, session, credits migrations
-deploy/                           Railway web/api Dockerfiles
+jyotisha.chat
+  -> Spaceship DNS
+  -> Caddy on Hong Kong VPS (80/443)
+     -> Next.js + Mastra web container (3000, private)
+        -> Python Jyotish API container (5200, private)
+           -> Swiss Ephemeris / local calculation engine
+           -> VedAstro gateway with local fallback
+  -> Supabase Cloud (Auth, Postgres, profiles, sessions, credits)
+  -> external OpenAI-compatible model API
 ```
 
-Railway runs two services from the same repository:
+Current production infrastructure:
 
-- `web`: `deploy/railway-web.Dockerfile`
-- `api`: `deploy/railway-api.Dockerfile`
+- Domain: `https://jyotisha.chat`
+- Server: Hong Kong, Ubuntu 22.04, `103.117.123.53`, SSH port `22000`
+- Capacity: 1 vCPU, 2 GB RAM, 40 GB disk, 5 Mbps; intended for demos and low concurrency
+- Runtime directory: `/opt/jyotisha-app`
+- Compose file: `deploy/docker-compose.server.yml`
+- Production environment: `/opt/jyotisha-app/.env.production` (`0600`, never commit)
+- Supabase project: `vtvnfqmonbfuxmqkqdlc`
+- Source repository: `https://github.com/jesse-ux/Jyotisha.git`
 
-Deployment variables and private-network wiring are documented in `deploy/README.md`.
+Deployment, recovery, DNS, HTTPS, update and verification commands are documented in [`deploy/README.md`](deploy/README.md). Railway/Vercel remain optional alternatives, not the current production topology.
 
 ## Table of Contents
 
