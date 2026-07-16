@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUp, ArrowUpRight, ChevronRight, Menu, Minus, Plus, Sparkles, X } from "lucide-react";
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import { ChatMessageContent } from "@/components/chat-message-content";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { chinaLocations, type ProvinceNode } from "@/data/china-locations";
+import { keepFocusWithin } from "@/lib/focus-trap";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 type Theme = "career" | "marriage" | "timing" | "general";
@@ -25,15 +29,58 @@ type Account = { user: { id: string; email: string | null }; credits: number; is
 type OnboardingSuggestion = { theme: Exclude<Theme, "general">; text: string };
 type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[] };
 type OnboardingStep = "name" | "birth" | "place";
+type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
 const china = chinaLocations.country;
 
 const themes: Array<{ id: Exclude<Theme, "general">; label: string; prompt: string }> = [
-  { id: "career", label: "事业", prompt: "未来一年，我的事业和收入最值得关注什么？" },
-  { id: "marriage", label: "关系", prompt: "我目前的感情模式和未来关系窗口是什么？" },
-  { id: "timing", label: "时运", prompt: "未来十二个月有哪些重要时间窗口？" },
+  { id: "career", label: "事业", prompt: "未来一年，事业和收入该关注什么？" },
+  { id: "marriage", label: "关系", prompt: "我的关系模式是什么？" },
+  { id: "timing", label: "时运", prompt: "未来哪些阶段值得把握？" },
 ];
 
-const presetOnboardingMessage = "你好，我是 Jyotisha。开始前，我想先认识你。请问我该怎么称呼你？";
+const presetOnboardingMessage = "你好，我是 Jyotisha。\n开始前，我想先认识你。\n请问我该怎么称呼你？";
+
+const greetingVariants: Record<GreetingPeriod, Array<(name: string) => string>> = {
+  morning: [
+    (name) => `早上好，${name}。今天最想先看什么？`,
+    (name) => `${name}，早安。今天最该关注哪件事？`,
+    (name) => `早上好，${name}。想从哪个问题开始？`,
+  ],
+  noon: [
+    (name) => `中午好，${name}。现在最想理清哪件事？`,
+    (name) => `${name}，中午好。什么问题最需要方向？`,
+    (name) => `午间好，${name}。事业、关系或选择，想先聊哪个？`,
+  ],
+  afternoon: [
+    (name) => `${name}，下午好。现在最想推进哪件事？`,
+    (name) => `下午好，${name}。今天想先理清什么？`,
+    (name) => `${name}，下午好。事业、关系或选择，想先聊哪个？`,
+  ],
+  evening: [
+    (name) => `晚上好，${name}。今天最挂心的是哪件事？`,
+    (name) => `${name}，晚上好。此刻最想聊哪件事？`,
+    (name) => `晚上好，${name}。把心里的问题告诉我吧。`,
+  ],
+  "late-night": [
+    (name) => `夜深了，${name}。此刻最想问什么？`,
+    (name) => `${name}，还没休息吗？想从哪件事说起？`,
+    (name) => `这么晚还醒着，${name}。直接说说最在意的问题吧。`,
+  ],
+};
+
+function greetingPeriod(hour: number): GreetingPeriod {
+  if (hour >= 5 && hour < 11) return "morning";
+  if (hour >= 11 && hour < 14) return "noon";
+  if (hour >= 14 && hour < 18) return "afternoon";
+  if (hour >= 18 && hour < 23) return "evening";
+  return "late-night";
+}
+
+function createStartGreeting(name: string, now = new Date()) {
+  const displayName = name.trim() || "你好";
+  const variants = greetingVariants[greetingPeriod(now.getHours())];
+  return variants[Math.floor(Math.random() * variants.length)](displayName);
+}
 
 const emptyProfile: Profile = {
   name: "",
@@ -104,10 +151,10 @@ function placeQuestion(profile: Profile) {
 }
 
 function completedOnboardingMessage(name: string) {
-  return `资料齐了，${name}。我们可以开始了。下面三个问题能帮你快速了解我能做什么，你也可以直接输入现在最想问的事。`;
+  return `${name}，我们可以开始了。你可以从下面三个方向选择，也可以直接告诉我现在最想问的事。`;
 }
 
-function completedOnboardingTranscript(profile: Profile): Message[] {
+function completedOnboardingTranscript(profile: Profile, greeting: string): Message[] {
   const name = profile.name.trim();
   const birthPlace = selectedBirthPlace(profile);
   if (!name || !profile.date || !profile.time || !birthPlace) return [];
@@ -119,7 +166,7 @@ function completedOnboardingTranscript(profile: Profile): Message[] {
     { role: "user", text: formatBirthMoment(profile) },
     { role: "assistant", text: placeQuestion(profile) },
     { role: "user", text: birthPlace.label },
-    { role: "assistant", text: completedOnboardingMessage(name) },
+    { role: "assistant", text: greeting || completedOnboardingMessage(name) },
   ];
 }
 
@@ -273,10 +320,15 @@ function ProfileFields({ value, onChange }: { value: Profile; onChange: (profile
   );
 }
 
+function AgentAvatar() {
+  return <span className="agent-avatar" aria-hidden="true" />;
+}
+
 function OnboardingChatMessage({ role, text, streaming = false, length = text.length }: { role: Message["role"]; text: string; streaming?: boolean; length?: number }) {
   const visibleText = streaming ? text.slice(0, length) : text;
   return (
     <article className={`message message-${role} onboarding-message`} aria-label={role === "assistant" ? "Jyotisha" : "你"}>
+      {role === "assistant" && <AgentAvatar />}
       <div className="message-content">
         <div className="message-bubble">
           {role === "assistant" ? (
@@ -353,13 +405,18 @@ export default function Home() {
   const [onboardingError, setOnboardingError] = useState("");
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("name");
   const [onboardingJustCompleted, setOnboardingJustCompleted] = useState(false);
+  const [startGreeting, setStartGreeting] = useState("");
   const [presetMessageLength, setPresetMessageLength] = useState(0);
   const conversationEnd = useRef<HTMLDivElement>(null);
   const accountTrigger = useRef<HTMLButtonElement>(null);
   const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
+  const sidebar = useRef<HTMLElement>(null);
+  const sidebarCloseButton = useRef<HTMLButtonElement>(null);
+  const profileDialog = useRef<HTMLElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const redeemInput = useRef<HTMLInputElement>(null);
   const composerInput = useRef<HTMLTextAreaElement>(null);
+  const uiPreview = useRef(false);
 
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
   const activeError = requestError && requestError.sessionId === activeSession?.id ? requestError.message : "";
@@ -370,7 +427,7 @@ export default function Home() {
   const profileComplete = isProfileComplete(profile);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
-    ? completedOnboardingMessage(profileDraft.name.trim())
+    ? startGreeting || completedOnboardingMessage(profileDraft.name.trim())
     : onboardingStep === "birth"
       ? birthQuestion(profileDraft.name.trim())
       : onboardingStep === "place"
@@ -381,12 +438,68 @@ export default function Home() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const supabase = createBrowserSupabaseClient();
+    const bootstrapTimeout = window.setTimeout(() => {
+      if (controller.signal.aborted) return;
+      controller.abort();
+      setAccountError("连接云端服务超时。请检查网络后重试，或返回登录页重新建立会话。");
+      setHydrated(true);
+    }, 8000);
 
     async function loadCloudData() {
       try {
+        const previewMode = process.env.NODE_ENV === "development"
+          ? new URLSearchParams(window.location.search).get("preview")
+          : null;
+        if (previewMode) {
+          uiPreview.current = true;
+          if (previewMode === "error") {
+            setAccountError("连接云端服务超时。请检查网络后重试，或返回登录页重新建立会话。");
+            setHydrated(true);
+            return;
+          }
+          const previewProfile: Profile = previewMode === "onboarding"
+            ? emptyProfile
+            : {
+              name: "林遥",
+              date: "1990-06-15",
+              time: "12:30",
+              countryCode: "CN",
+              provinceCode: "110000",
+              cityCode: "110000-city",
+              districtCode: "110101",
+            };
+          const previewMessages: Message[] = previewMode === "conversation"
+            ? [
+              { role: "user", text: "未来半年是否适合换工作？" },
+              { role: "assistant", text: "可以先看职业方向、关键时间。\n同时评估现实风险。\n此处只展示本地预览，\n不调用真实星盘。", suggestions: ["先看事业方向", "再看关键时间", "评估现实风险"] },
+            ]
+            : [];
+          const previewSession: ChatSession = {
+            id: "preview-session",
+            title: previewMessages.length > 0 ? "未来半年是否适合换工作" : "新对话",
+            theme: "career",
+            messages: previewMessages,
+            updatedAt: timestamp(),
+          };
+          setAccount({ user: { id: "preview-user", email: "preview@local.test" }, credits: 8, isAdmin: false });
+          setProfile(previewProfile);
+          setProfileDraft(previewProfile);
+          setOnboardingStep(missingProfileStep(previewProfile) ?? "name");
+          setSessions([previewSession]);
+          setActiveSessionId(previewSession.id);
+          const previewGreeting = previewProfile.name.trim() ? createStartGreeting(previewProfile.name) : "";
+          setStartGreeting(previewGreeting);
+          setOnboarding(previewMode === "onboarding"
+            ? null
+            : { greeting: previewGreeting, suggestions: themes.map(({ id, prompt }) => ({ theme: id, text: prompt })) });
+          setHydrated(true);
+          return;
+        }
+
+        const supabase = createBrowserSupabaseClient();
         const { data: authData, error: authError } = await supabase.auth.getSession();
         if (authError) throw authError;
+        if (controller.signal.aborted) return;
         if (!authData.session) {
           window.location.assign("/login");
           return;
@@ -398,10 +511,12 @@ export default function Home() {
             .from("profiles")
             .select("name,birth_date,birth_time,country_code,province_code,city_code,district_code")
             .eq("id", nextAccount.user.id)
+            .abortSignal(controller.signal)
             .maybeSingle(),
           supabase
             .from("chat_sessions")
             .select("id,title,theme,messages,updated_at")
+            .abortSignal(controller.signal)
             .order("updated_at", { ascending: false }),
         ]);
 
@@ -410,15 +525,19 @@ export default function Home() {
 
         let nextSessions = readSessions(sessionsResult.data);
         if (nextSessions.length === 0) {
+          if (controller.signal.aborted) return;
           const initialSession = createSession();
-          const { error } = await supabase.from("chat_sessions").insert({
-            id: initialSession.id,
-            user_id: nextAccount.user.id,
-            title: initialSession.title,
-            theme: initialSession.theme,
-            messages: initialSession.messages,
-            updated_at: new Date(initialSession.updatedAt).toISOString(),
-          });
+          const { error } = await supabase
+            .from("chat_sessions")
+            .insert({
+              id: initialSession.id,
+              user_id: nextAccount.user.id,
+              title: initialSession.title,
+              theme: initialSession.theme,
+              messages: initialSession.messages,
+              updated_at: new Date(initialSession.updatedAt).toISOString(),
+            })
+            .abortSignal(controller.signal);
           if (error) throw error;
           nextSessions = [initialSession];
         }
@@ -428,6 +547,7 @@ export default function Home() {
         setAccount(nextAccount);
         setProfile(nextProfile);
         setProfileDraft(nextProfile);
+        setStartGreeting(nextProfile.name.trim() ? createStartGreeting(nextProfile.name) : "");
         setOnboardingStep(missingProfileStep(nextProfile) ?? "name");
         setSessions(nextSessions);
         setActiveSessionId(nextSessions[0].id);
@@ -437,12 +557,16 @@ export default function Home() {
           setAccountError(friendlyError(caught instanceof Error ? caught.message : "暂时无法读取云端数据"));
         }
       } finally {
+        window.clearTimeout(bootstrapTimeout);
         if (!controller.signal.aborted) setHydrated(true);
       }
     }
 
     void loadCloudData();
-    return () => controller.abort();
+    return () => {
+      window.clearTimeout(bootstrapTimeout);
+      controller.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -466,6 +590,11 @@ export default function Home() {
   useEffect(() => {
     if (!hydrated || !accountId || !profileComplete || onboarding || onboardingError) return;
     const controller = new AbortController();
+    const onboardingTimeout = window.setTimeout(() => {
+      if (controller.signal.aborted) return;
+      controller.abort();
+      setOnboardingError("个性化入门问题准备超时");
+    }, 12000);
 
     async function loadOnboarding() {
       try {
@@ -482,7 +611,7 @@ export default function Home() {
         if (!response.ok) throw new Error(payloadMessage(payload, "暂时无法准备初始问题"));
         const content = readOnboarding(payload);
         if (!content) throw new Error("Agent 返回的初始问题格式不正确");
-        setOnboarding(content);
+        setOnboarding({ ...content, greeting: startGreeting || createStartGreeting(profile.name) });
         setOnboardingError("");
       } catch (caught) {
         if ((caught as Error).name !== "AbortError") {
@@ -492,26 +621,34 @@ export default function Home() {
     }
 
     void loadOnboarding();
-    return () => controller.abort();
-  }, [accountId, hydrated, onboarding, onboardingError, profileComplete]);
+    return () => {
+      window.clearTimeout(onboardingTimeout);
+      controller.abort();
+    };
+  }, [accountId, hydrated, onboarding, onboardingError, profile.name, profileComplete, startGreeting]);
 
   useEffect(() => {
-    conversationEnd.current?.scrollIntoView({ behavior: isLoading ? "auto" : "smooth", block: "end" });
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    conversationEnd.current?.scrollIntoView({ behavior: isLoading || reduceMotion ? "auto" : "smooth", block: "end" });
   }, [activeSessionId, activeSession?.messages.length, activeStreamingText, isLoading, onboardingPending, onboardingStep, presetMessageFinished, profileComplete]);
 
   useEffect(() => {
-    if (!profileComplete && onboardingStep === "name" && presetMessageFinished && !profileOpen) {
+    if (hydrated && accountId && !profileComplete && onboardingStep === "name" && presetMessageFinished && !profileOpen) {
       composerInput.current?.focus();
     }
-  }, [onboardingStep, presetMessageFinished, profileComplete, profileOpen]);
+  }, [accountId, hydrated, onboardingStep, presetMessageFinished, profileComplete, profileOpen]);
 
   useEffect(() => {
     if (!mobileSidebarOpen) return;
+    window.requestAnimationFrame(() => sidebarCloseButton.current?.focus());
     const closeOnEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
         setMobileSidebarOpen(false);
         window.requestAnimationFrame(() => mobileMenuTrigger.current?.focus());
+        return;
       }
+      const container = sidebar.current;
+      if (container) keepFocusWithin(event, container);
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
@@ -522,9 +659,11 @@ export default function Home() {
     (redeemOpen ? redeemInput.current : closeButton.current)?.focus();
     const closeOnEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
-        setProfileOpen(false);
-        window.requestAnimationFrame(() => accountTrigger.current?.focus());
+        closeAccount();
+        return;
       }
+      const container = profileDialog.current;
+      if (container) keepFocusWithin(event, container);
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
@@ -545,6 +684,7 @@ export default function Home() {
 
   async function persistSession(session: ChatSession) {
     if (!account) throw new Error("账户尚未加载完成");
+    if (process.env.NODE_ENV === "development" && uiPreview.current) return;
     const supabase = createBrowserSupabaseClient();
     const values = {
       title: session.title,
@@ -595,7 +735,8 @@ export default function Home() {
   }
 
   function openAccount(showRedeem = false) {
-    setProfileDraft(profile);
+    setMobileSidebarOpen(false);
+    if (profileComplete) setProfileDraft(profile);
     setProfileNotice("");
     setRedeemOpen(showRedeem);
     setRedeemError("");
@@ -605,11 +746,15 @@ export default function Home() {
 
   function closeAccount() {
     setProfileOpen(false);
-    window.requestAnimationFrame(() => accountTrigger.current?.focus());
+    const returnTarget = window.matchMedia("(max-width: 767px)").matches
+      ? mobileMenuTrigger.current
+      : accountTrigger.current;
+    window.requestAnimationFrame(() => returnTarget?.focus());
   }
 
   async function persistProfile(nextProfile: Profile) {
     if (!account) throw new Error("账户尚未加载完成");
+    if (process.env.NODE_ENV === "development" && uiPreview.current) return;
     const birthPlace = selectedBirthPlace(nextProfile);
     const { data, error } = await createBrowserSupabaseClient()
       .from("profiles")
@@ -660,6 +805,7 @@ export default function Home() {
       await persistProfile(nextProfile);
       setProfile(nextProfile);
       setProfileDraft(nextProfile);
+      setStartGreeting(createStartGreeting(nextProfile.name));
       setDraft("");
       setPresetMessageLength(0);
       const nextStep = missingProfileStep(nextProfile);
@@ -780,7 +926,7 @@ export default function Home() {
     const [hour, minute] = profile.time.split(":").map(Number);
 
     const preservedMessages = onboardingJustCompleted && currentSession.messages.length === 0
-      ? completedOnboardingTranscript(profile)
+      ? completedOnboardingTranscript(profile, startGreeting)
       : currentSession.messages;
     const userSession: ChatSession = {
       ...currentSession,
@@ -791,6 +937,22 @@ export default function Home() {
     };
     setRequestError(null);
     setPendingSessionId(sessionId);
+
+    if (process.env.NODE_ENV === "development" && uiPreview.current) {
+      const previewSession: ChatSession = {
+        ...userSession,
+        messages: [...userSession.messages, {
+          role: "assistant",
+          text: "这是本地交互预览。正式对话会结合你的星盘证据继续分析。",
+          suggestions: ["继续梳理方向", "查看时间窗口", "评估现实行动"],
+        }],
+        updatedAt: timestamp(),
+      };
+      updateSession(sessionId, () => previewSession);
+      setDraft("");
+      setPendingSessionId(null);
+      return;
+    }
 
     try {
       await persistSession(userSession);
@@ -871,10 +1033,9 @@ export default function Home() {
       }
       void refreshAccount();
     } catch (caught) {
-      setDraft(question);
       setRequestError({
         sessionId,
-        message: `${caught instanceof Error ? caught.message : "服务暂时不可用，请稍后重试。"} 输入内容已保留，可直接重新发送。`,
+        message: `${caught instanceof Error ? caught.message : "服务暂时不可用，请稍后重试。"} 本次提问已保留在对话中，可稍后重新提问。`,
       });
       void refreshAccount();
     } finally {
@@ -899,12 +1060,42 @@ export default function Home() {
     }
   }
 
+  if (!hydrated || (!account && !accountError)) {
+    return (
+      <main className="app-loading" aria-busy="true" aria-live="polite">
+        <div className="app-loading-content">
+          <div className="app-loading-symbol" aria-hidden="true">
+            <span className="app-loading-orbit" />
+            <span className="app-loading-mark" />
+          </div>
+          <strong>正在和星星对口供</strong>
+          <span>顺便同步你的账户与对话记录</span>
+        </div>
+      </main>
+    );
+  }
+
+  if (!account) {
+    return (
+      <main className="app-loading app-loading-error" aria-live="assertive">
+        <div className="app-loading-content">
+          <strong>暂时无法进入 Jyotisha</strong>
+          <span>{accountError}</span>
+          <div className="app-loading-actions">
+            <button className="button-primary" type="button" onClick={() => window.location.reload()}>重试</button>
+            <Link className="button-secondary" href="/login">返回登录</Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className={`chat-app ${mobileSidebarOpen ? "sidebar-open" : ""}`}>
-      <button className="sidebar-backdrop" aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)} />
-      <aside className="sidebar" id="chat-sidebar" aria-label="对话导航">
-        <div className="brand-row"><span className="brand-mark" aria-hidden="true">अ</span><strong>Jyotisha</strong><button className="sidebar-close" aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)}>×</button></div>
-        <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || creatingSession || Boolean(pendingSessionId)}><span aria-hidden="true">＋</span> {creatingSession ? "正在创建" : "新对话"}</button>
+      <button className="sidebar-backdrop" tabIndex={-1} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)} />
+      <aside className="sidebar" ref={sidebar} id="chat-sidebar" aria-label="对话导航" inert={profileOpen}>
+        <div className="brand-row"><span className="brand-mark" aria-hidden="true" /><strong>Jyotisha</strong><button className="sidebar-close" ref={sidebarCloseButton} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)}><X aria-hidden="true" /></button></div>
+        <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || creatingSession || Boolean(pendingSessionId)}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
         <nav className="session-nav" aria-label="聊天记录">
           <span className="sidebar-label">聊天记录</span>
           <div className="session-list">
@@ -926,21 +1117,20 @@ export default function Home() {
           <button className="profile-trigger" ref={accountTrigger} type="button" onClick={() => openAccount()}>
             <span className="profile-initial" aria-hidden="true">{profile.name.trim().slice(0, 1) || account?.user.email?.slice(0, 1).toUpperCase() || "你"}</span>
             <span><b>{profile.name.trim() || account?.user.email || "账户"}</b></span>
-            <span className="chevron" aria-hidden="true">›</span>
+            <ChevronRight className="chevron" aria-hidden="true" />
           </button>
-          <p>解读仅供自我探索，不替代医疗、法律或投资建议。</p>
         </div>
       </aside>
 
-      <section className="chat-panel">
+      <section className="chat-panel" inert={profileOpen || mobileSidebarOpen}>
         <header className="chat-header">
-          <button className="mobile-menu" ref={mobileMenuTrigger} aria-label="打开聊天记录" aria-controls="chat-sidebar" aria-expanded={mobileSidebarOpen} type="button" onClick={() => setMobileSidebarOpen(true)}><span aria-hidden="true">☰</span></button>
+          <button className="mobile-menu" ref={mobileMenuTrigger} aria-label="打开聊天记录" aria-controls="chat-sidebar" aria-expanded={mobileSidebarOpen} type="button" onClick={() => setMobileSidebarOpen(true)}><Menu aria-hidden="true" /></button>
           <div>
             <strong>{activeSession?.title || "新对话"}</strong>
             <span><i className={`status ${isLoading ? "status-loading" : "status-idle"}`} />{isLoading ? (activeStreamingText ? "正在回答" : "正在核对星盘信息") : "基于星盘证据回答"}</span>
           </div>
           <button className="credit-button" type="button" onClick={() => openAccount(account?.credits === 0)} aria-label={account ? `余额 ${account.credits} 点，打开账户与兑换码` : accountError || "读取余额中"}>
-            <span className="credit-icon" aria-hidden="true" />
+            <Sparkles className="credit-icon" aria-hidden="true" />
             <span>{account ? account.credits : "—"}</span>
           </button>
         </header>
@@ -961,8 +1151,8 @@ export default function Home() {
               ) : (
                 <OnboardingChatMessage role="assistant" text={onboarding?.greeting
                   || (onboardingPending
-                    ? `很高兴认识你，${profile.name.trim()}。我正在准备几个适合开始的问题。`
-                    : `很高兴认识你，${profile.name.trim()}。你的出生资料已经准备好，我们可以从你此刻最关心的事情开始。`)} />
+                    ? `${profile.name.trim()}，稍等一下，我正在准备几个适合开始的问题。`
+                    : startGreeting || `${profile.name.trim()}，从你此刻最关心的问题开始吧。`)} />
               )}
 
               {!profileComplete && onboardingStep === "birth" && presetMessageFinished && (
@@ -997,13 +1187,12 @@ export default function Home() {
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
                 <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
-                  {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item, index) => {
+                  {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
                     const theme = themes.find((candidate) => candidate.id === item.theme);
                     return (
                       <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || !account} onClick={() => void send(item.text, item.theme)}>
-                        <span className="starter-index">{String(index + 1).padStart(2, "0")}</span>
                         <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span></span>
-                        <span className="starter-arrow" aria-hidden="true">↗</span>
+                        <ArrowUpRight className="starter-arrow" aria-hidden="true" />
                       </button>
                     );
                   })}
@@ -1017,6 +1206,7 @@ export default function Home() {
               <span className="sr-only" aria-live="polite">{isLoading ? "Jyotisha 正在回答" : ""}</span>
               {activeSession.messages.map((message, index) => (
                 <article className={`message message-${message.role}`} key={`${message.role}-${index}`} aria-label={message.role === "assistant" ? "Jyotisha" : "你"}>
+                  {message.role === "assistant" && <AgentAvatar />}
                   <div className="message-content">
                     <div className="message-bubble">
                       {message.role === "assistant" ? <ChatMessageContent text={message.text} /> : <p>{message.text}</p>}
@@ -1026,6 +1216,7 @@ export default function Home() {
               ))}
               {isLoading && (
                 <article className="message message-assistant" aria-label={activeStreamingText ? "Jyotisha 正在回答" : "Jyotisha 正在分析"}>
+                  <AgentAvatar />
                   <div className="message-content">
                     <div className="message-bubble">
                       {activeStreamingText ? <ChatMessageContent text={activeStreamingText} /> : <div className="thinking"><i /><i /><i /></div>}
@@ -1048,7 +1239,7 @@ export default function Home() {
             </div>
           )}
           <form className="composer" onSubmit={submit}>
-            <textarea
+            <Textarea
               ref={composerInput}
               aria-label={!profileComplete && onboardingStep === "name" ? "输入你的称呼" : "输入你的问题"}
               placeholder={!account
@@ -1067,17 +1258,19 @@ export default function Home() {
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={handleComposerKeyDown}
             />
-            <button aria-label={!profileComplete ? "确认称呼" : "发送"} disabled={!draft.trim() || Boolean(pendingSessionId) || !hydrated || !account || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))} type="submit">↑</button>
+            <Button aria-label={!profileComplete ? "确认称呼" : "发送"} disabled={!draft.trim() || Boolean(pendingSessionId) || !account || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))} size="icon" type="submit">
+              <ArrowUp aria-hidden="true" />
+            </Button>
           </form>
           <p>{!profileComplete && onboardingStep === "name" ? "Enter 确认称呼" : "Enter 发送 · Shift + Enter 换行"}</p>
         </div>
       </section>
 
       <div className={`profile-overlay ${profileOpen ? "is-open" : ""}`} aria-hidden={!profileOpen} inert={!profileOpen} onMouseDown={closeAccount}>
-        <section className="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-title" onMouseDown={(event) => event.stopPropagation()}>
+        <section className="profile-dialog" ref={profileDialog} role="dialog" aria-modal="true" aria-labelledby="profile-title" onMouseDown={(event) => event.stopPropagation()}>
           <header>
-            <div><span className="dialog-eyebrow">账户</span><h2 id="profile-title">账户与出生资料</h2></div>
-            <button className="dialog-close" ref={closeButton} aria-label="关闭" type="button" onClick={closeAccount}>×</button>
+            <h2 id="profile-title">账户与出生资料</h2>
+            <button className="dialog-close" ref={closeButton} aria-label="关闭" type="button" onClick={closeAccount}><X aria-hidden="true" /></button>
           </header>
 
           <section className="account-summary" aria-label="账户信息">
@@ -1088,7 +1281,7 @@ export default function Home() {
 
           <section className="sheet-section">
             <button className="section-toggle" type="button" aria-expanded={redeemOpen} onClick={() => setRedeemOpen((current) => !current)}>
-              <span><b>兑换点数</b><small>输入兑换码后余额会立即更新</small></span><span aria-hidden="true">{redeemOpen ? "−" : "+"}</span>
+              <span><b>兑换点数</b><small>输入兑换码后余额会立即更新</small></span>{redeemOpen ? <Minus aria-hidden="true" /> : <Plus aria-hidden="true" />}
             </button>
             {redeemOpen && (
               <form className="redeem-form" onSubmit={redeem}>

@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 const repositoryRoot = path.join(process.cwd(), "..");
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   turbopack: { root: repositoryRoot },
   outputFileTracingRoot: repositoryRoot,
   outputFileTracingIncludes: {

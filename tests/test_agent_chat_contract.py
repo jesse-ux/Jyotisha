@@ -38,7 +38,7 @@ def test_onboarding_and_agent_suggestion_contract() -> None:
     assert "onboarding?.suggestions" in page
     assert "parseAgentReply(answer, theme)" in page
     assert "suggestions: reply.suggestions" in page
-    assert "message.suggestions.map" in page
+    assert "activeSuggestions.map" in page
 
     assert "export const onboardingAgent" in agent
     assert "skills: [jyotishSkillPath]" in agent

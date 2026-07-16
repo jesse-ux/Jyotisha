@@ -136,7 +136,7 @@ This is onboarding, not a chart reading: do not calculate, infer, or claim place
 Return valid JSON only. Do not use Markdown fences, commentary, or hidden fields.
 The JSON shape must be:
 {"greeting":"一句自然、克制的简体中文欢迎语","suggestions":[{"theme":"career","text":"问题"},{"theme":"marriage","text":"问题"},{"theme":"timing","text":"问题"}]}
-The greeting should sound human and calm, acknowledge that the birth profile is ready, and invite the user to begin. Do not overpraise, sound mystical, or use marketing slogans.
+The greeting should sound human and calm, and directly invite the user to begin with what matters to them. Never mention birth data, profile readiness, setup completion, or system processing. Do not overpraise, sound mystical, or use marketing slogans.
 Generate exactly three concise questions, one for each required theme in the given order. They must help a first-time user understand the product's abilities, use everyday Simplified Chinese, and be answerable through the skill. Avoid jargon, fear, deterministic promises, medical/legal/investment claims, and unsupported precision.`,
   skills: [jyotishSkillPath],
 });

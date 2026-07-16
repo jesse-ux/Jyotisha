@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 type CodeRecord = {
   id: string;
@@ -15,6 +15,18 @@ type CodeRecord = {
   createdAt: string;
 };
 type GeneratedCode = { code: string; credits: number; expiresAt: string | null };
+
+const previewCodes: CodeRecord[] = [
+  { id: "preview-1", mask: "JYOT-••••-7Q9K", credits: 12, expiresAt: "2026-12-31T15:59:00.000Z", redeemedBy: null, redeemedEmail: null, redeemedAt: null, note: "秋季体验", createdAt: "2026-07-16T02:20:00.000Z" },
+  { id: "preview-2", mask: "JYOT-••••-2M8A", credits: 6, expiresAt: null, redeemedBy: "preview-user", redeemedEmail: "linyao@example.com", redeemedAt: "2026-07-15T08:30:00.000Z", note: "访谈用户", createdAt: "2026-07-14T03:10:00.000Z" },
+  { id: "preview-3", mask: "JYOT-••••-4D1R", credits: 20, expiresAt: "2026-07-01T15:59:00.000Z", redeemedBy: null, redeemedEmail: null, redeemedAt: null, note: null, createdAt: "2026-06-10T06:45:00.000Z" },
+];
+
+const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "Asia/Taipei",
+});
 
 function apiMessage(payload: unknown, fallback: string) {
   if (!payload || typeof payload !== "object") return fallback;
@@ -34,7 +46,7 @@ function codeStatus(code: CodeRecord) {
 }
 
 function formatDate(value: string | null) {
-  return value ? new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—";
+  return value ? dateFormatter.format(new Date(value)) : "—";
 }
 
 export default function AdminCodesPage() {
@@ -46,10 +58,20 @@ export default function AdminCodesPage() {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const previewMode = useRef(false);
   const [error, setError] = useState("");
   const [copyNotice, setCopyNotice] = useState("");
 
   useEffect(() => {
+    if (process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).get("preview") === "admin") {
+      const previewFrame = window.requestAnimationFrame(() => {
+        previewMode.current = true;
+        setCodes(previewCodes);
+        setLoading(false);
+      });
+      return () => window.cancelAnimationFrame(previewFrame);
+    }
+
     const controller = new AbortController();
     void fetch("/api/admin/codes", { signal: controller.signal, cache: "no-store" })
       .then(async (response) => {
@@ -80,6 +102,15 @@ export default function AdminCodesPage() {
     setError("");
     setGenerated([]);
     setCopyNotice("");
+    if (process.env.NODE_ENV === "development" && previewMode.current) {
+      setGenerated(Array.from({ length: count }, (_, index) => ({
+        code: `PREVIEW-${String(index + 1).padStart(2, "0")}-JYOTISH`,
+        credits,
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+      })));
+      setCreating(false);
+      return;
+    }
     try {
       const response = await fetch("/api/admin/codes", {
         method: "POST",
@@ -115,13 +146,13 @@ export default function AdminCodesPage() {
   return (
     <main className="standalone-page admin-page">
       <header className="admin-header">
-        <div><p className="page-eyebrow">管理员</p><h1>兑换码</h1></div>
+        <h1>兑换码管理</h1>
         <Link className="button-secondary" href="/">返回对话</Link>
       </header>
 
       <div className="admin-scroll">
         <section className="admin-section" aria-labelledby="create-codes-title">
-          <div className="section-title"><div><h2 id="create-codes-title">生成兑换码</h2><p>完整兑换码只在本次生成结果中显示，请立即复制保存。</p></div></div>
+          <div className="section-title"><div><h2 id="create-codes-title">生成兑换码</h2><p>完整兑换码只在本次生成结果中显示，<span className="phrase-nowrap">请立即复制保存。</span></p></div></div>
           <form className="code-form" onSubmit={createCodes}>
             <label><span>每个点数</span><input type="number" min={1} required value={credits} onChange={(event) => setCredits(Number(event.target.value))} /></label>
             <label><span>生成数量</span><input type="number" min={1} max={100} required value={count} onChange={(event) => setCount(Number(event.target.value))} /></label>
