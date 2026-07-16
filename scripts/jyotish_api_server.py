@@ -4405,6 +4405,25 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 import logging
                 logging.warning(f"[api_server] yoga expansion detection failed: {e}")
+            calculation_service = _load_local_module('domain_calculation_service')
+            canonical_chart = calculation_service.compute_chart({
+                'year': year,
+                'month': month,
+                'day': day,
+                'hour': hour,
+                'minute': minute,
+                'second': second,
+                'lat': lat,
+                'lon': lon,
+                'tz': tz,
+                'ayanamsa': body.get('ayanamsa', 'lahiri'),
+                'node_mode': body.get('node_mode', body.get('nodeMode', 'mean')),
+            })
+            canonical_dasha = calculation_service.compute_vimshottari_timeline(
+                birth_dt=birth_dt,
+                moon_lon=moon_lon,
+                current_date=datetime.utcnow(),
+            )
             result = {
                 'success': True, 'version': '6.9.15',
                 'birth': {
@@ -4420,7 +4439,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'ayanamsa': round(ayanamsa, 4),
                     'ayanamsa_name': ayanamsa_name,
                     'ayanamsa_display': ayanamsa_display,
-                    'node_mode': body.get('node_mode', body.get('nodeMode', 'mean')),
+                    'node_mode': canonical_chart['calculation_contract']['effective']['node_mode'],
                 },
                 'ascendant': {
                     'sign': asc_sign,
@@ -4435,6 +4454,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'remaining_years': round(remaining, 2),
                     'total_years': total_years,
                     'start_date': dasha_start.isoformat() if hasattr(dasha_start, 'isoformat') else str(dasha_start),
+                    'periods': canonical_dasha['periods'],
+                    'birth_balance': canonical_dasha['birth_balance'],
+                    'calculation_contract': canonical_dasha['calculation_contract'],
+                    'result_hash': canonical_dasha['result_hash'],
                 },
                 'yogas': yogas,
                 'sade_sati': sade_sati,
@@ -4443,6 +4466,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'special_lagnas': special_lagnas,
                 'available_dashas': dasha_list,
                 'dasha_count': len(dasha_list),
+                'calculation_contract': canonical_chart['calculation_contract'],
+                'result_hash': canonical_chart['result_hash'],
             }
             result['modules'] = {
                 'chart': {
