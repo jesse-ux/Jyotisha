@@ -46,7 +46,8 @@ jobs:
 
       - name: Sync and rebuild
         run: |
-          RSYNC_SSH="ssh -i $HOME/.ssh/jyotisha-production -p $DEPLOY_PORT"
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-production -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          RSYNC_SSH="ssh $SSH_OPTIONS"
           rsync -az --delete \
             --exclude='.git/' \
             --exclude='.env.production' \
@@ -57,12 +58,14 @@ jobs:
             -e "$RSYNC_SSH" \
             ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
 
-          ssh -i ~/.ssh/jyotisha-production -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
             "cd '$DEPLOY_PATH' && docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
 
       - name: Verify production
         run: |
           curl --fail --silent --show-error --retry 12 --retry-delay 5 https://jyotisha.chat/login >/dev/null
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' https://jyotisha.chat/api/account)" = "401"
-          ssh -i ~/.ssh/jyotisha-production -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+          ssh -i ~/.ssh/jyotisha-production -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20 \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
             "cd '$DEPLOY_PATH' && docker compose --env-file .env.production -f deploy/docker-compose.server.yml exec -T web node -e 'fetch(\"http://api:5200/api/health\").then(async r => { const body = await r.json(); if (!r.ok || body.status !== \"ok\" || body.swisseph_available !== true) process.exit(1); console.log(JSON.stringify(body)); })'"
