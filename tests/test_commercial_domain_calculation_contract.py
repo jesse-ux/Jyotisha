@@ -56,3 +56,24 @@ def test_api_chart_response_uses_domain_contract_hash(monkeypatch: pytest.Monkey
     assert rest["result_hash"] == expected["result_hash"]
     assert rest["birth"]["node_mode"] == "true"
     assert rest["calculation_contract"]["effective"]["node_mode"] == "true"
+
+
+def test_api_visible_chart_values_come_from_domain_service(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("JYOTISH_API_CHART_CACHE_TTL_SECONDS", "0")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "0")
+    monkeypatch.setattr(
+        jyotish_api_server,
+        "_attach_vedastro_main_entry_overview",
+        lambda result, _birth: result,
+    )
+    request = {**BIRTH, "node_mode": "true", "transit_date": "2026-07-11"}
+    expected = calculation_service.compute_chart(request)
+
+    rest = JyotishAPIHandler.__new__(JyotishAPIHandler)._compute_chart_sync(request)
+
+    assert rest["ascendant"]["lon"] == pytest.approx(expected["ascendant"]["lon"], abs=1e-8)
+    for planet in ("Sun", "Moon", "Rahu", "Ketu"):
+        assert rest["planets"][planet]["sign"] == expected["planets"][planet]["sign"]
+        assert rest["planets"][planet]["lon"] == pytest.approx(
+            expected["planets"][planet]["lon"], abs=1e-8
+        )

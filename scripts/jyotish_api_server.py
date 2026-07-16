@@ -4424,6 +4424,31 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 moon_lon=moon_lon,
                 current_date=datetime.utcnow(),
             )
+            canonical_planets = {}
+            for planet_name, planet in canonical_chart.get('planets', {}).items():
+                if not isinstance(planet, dict):
+                    continue
+                normalized_planet = dict(planet)
+                normalized_planet['degree'] = normalized_planet.get(
+                    'degree_in_sign',
+                    normalized_planet.get('degree', normalized_planet.get('lon')),
+                )
+                if normalized_planet.get('sign') in SIGNS:
+                    normalized_planet['sign_idx'] = SIGNS.index(normalized_planet['sign'])
+                canonical_planets[planet_name] = normalized_planet
+            planets_data = canonical_planets or planets_data
+            ascendant_data = dict(canonical_chart.get('ascendant', {}))
+            if ascendant_data.get('sign') in SIGNS:
+                asc_sign = ascendant_data['sign']
+                asc_sign_idx = SIGNS.index(asc_sign)
+                asc_lon = float(ascendant_data.get('lon', asc_lon))
+            canonical_houses = canonical_chart.get('houses', {})
+            if isinstance(canonical_houses, dict) and canonical_houses:
+                houses = {}
+                for h in range(1, 13):
+                    house = canonical_houses.get(f'house_{h}', {})
+                    sign = house.get('cusp_sign', SIGNS[(asc_sign_idx + h - 1) % 12])
+                    houses[h] = {'sign': sign, 'sign_idx': SIGNS.index(sign)}
             result = {
                 'success': True, 'version': '6.9.15',
                 'birth': {
