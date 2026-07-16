@@ -12,13 +12,14 @@ from scripts.three_engine_parity_replay_validator import validate_manifest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_three_engine_parity_manifest_blocks_without_oracle_rows() -> None:
+def test_three_engine_parity_manifest_passes_d1_with_vedastro_and_pyjhora_raw() -> None:
     result = validate_manifest(ROOT / "references/oracle/three_engine_parity_replay_manifest.json")
 
-    assert result["status"] == "blocked"
-    assert result["comparison_row_count"] == 0
-    assert result["tested"] is False
-    assert result["blocked_reason"] == "no_same_chart_oracle_rows_imported"
+    assert result["status"] == "pass"
+    assert result["comparison_row_count"] == 15
+    assert result["match_count"] == 14
+    assert result["tested"] is True
+    assert result["blocked_reason"] is None
 
 
 def test_three_engine_parity_validator_accepts_one_same_chart_row(tmp_path: Path) -> None:
@@ -59,10 +60,34 @@ def test_three_engine_parity_validator_accepts_one_same_chart_row(tmp_path: Path
     assert result["match_count"] == 1
 
 
-def test_validator_require_pass_rejects_blocked_manifest() -> None:
+def test_validator_require_pass_rejects_blocked_manifest(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
+    manifest = tmp_path / "blocked_manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "case_id": "blocked_case",
+                "birth_data_policy": "public_case_only",
+                "engines": {
+                    "VedAstro": {"status": "blocked"},
+                    "PyJHora_JHora": {"status": "blocked"},
+                    "jyotishganit": {"status": "blocked"},
+                },
+                "comparison_rows": [
+                    {
+                        "section": "D1",
+                        "field": "Sun.longitude",
+                        "local_value": 1.0,
+                        "oracle_values": {},
+                        "status": "blocked",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
     completed = subprocess.run(
-        [sys.executable, "scripts/three_engine_parity_replay_validator.py", "--require-pass"],
+        [sys.executable, "scripts/three_engine_parity_replay_validator.py", str(manifest), "--require-pass"],
         cwd=root,
         capture_output=True,
         text=True,

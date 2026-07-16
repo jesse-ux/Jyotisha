@@ -1,9 +1,9 @@
 # VedAstro Parity Matrix
 
-- Generated: `2026-06-28T23:49:39.845848+00:00`
+- Generated: `2026-07-16T11:53:05.440396+00:00`
 - Rows: `13`
 - P0 rows: `11`
-- Local registry technique count: `89`
+- Local registry technique count: `91`
 
 ## Honesty Boundary
 

@@ -419,6 +419,34 @@ def _write_artifact(result: dict[str, Any]) -> str:
     return _repo_relative(artifact)
 
 
+def list_official_full_snapshot_artifacts() -> dict[str, Any]:
+    artifacts: list[dict[str, Any]] = []
+    if ARTIFACT_DIR.exists():
+        for path in sorted(ARTIFACT_DIR.glob("official_full_snapshot-*.json")):
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            raw = payload.get("official_raw_response") or payload.get("raw_response")
+            raw_source = str(raw.get("source") or "") if isinstance(raw, dict) else ""
+            official_raw_available = raw_source.startswith("vedastro_official")
+            artifacts.append(
+                {
+                    "path": _repo_relative(path),
+                    "status": payload.get("status"),
+                    "operation": payload.get("operation"),
+                    "official_raw_response_available": official_raw_available,
+                    "section_count": len(payload.get("snapshot_sections") or {}),
+                    "request_manifest_available": bool(payload.get("request_manifest")),
+                }
+            )
+    return {
+        "scope": "vedastro_official_full_snapshot_artifact_manifest",
+        "artifact_count": len(artifacts),
+        "artifacts": artifacts,
+    }
+
+
 def _cache_ttl_seconds() -> float:
     raw = os.environ.get(CACHE_TTL_ENV, "").strip()
     if not raw:
@@ -772,9 +800,6 @@ def _build_official_search_events_profile(request_preview: dict[str, Any]) -> di
         body["EndTime"] = end_time
         body["PrecisionHours"] = 100
     headers: dict[str, str] = {"Content-Type": "application/json"}
-    api_key = os.environ.get("VEDASTRO_API_KEY", "").strip()
-    if api_key:
-        headers["x-api-key"] = api_key
     return {
         "profile_version": OFFICIAL_SEARCH_EVENTS_PROFILE_VERSION,
         "endpoint_path": OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH,
@@ -794,9 +819,6 @@ def _build_live_sampling_search_events_profile(request_preview: dict[str, Any]) 
         "AtTime": _time_json_from_case(case, str(request_preview["start_date"])),
     }
     headers: dict[str, str] = {"Content-Type": "application/json"}
-    api_key = os.environ.get("VEDASTRO_API_KEY", "").strip()
-    if api_key:
-        headers["x-api-key"] = api_key
     return {
         "profile_version": f"{OFFICIAL_SEARCH_EVENTS_PROFILE_VERSION}_live_sampling",
         "endpoint_path": OFFICIAL_SEARCH_EVENTS_ENDPOINT_PATH,
@@ -865,9 +887,6 @@ def _official_full_snapshot_manifest(case: dict[str, Any], case_id: str = "user_
     common_body = _official_common_body(case)
     reference_date = _official_snapshot_reference_date(case)
     headers: dict[str, str] = {"Content-Type": "application/json"}
-    api_key = os.environ.get("VEDASTRO_API_KEY", "").strip()
-    if api_key:
-        headers["x-api-key"] = api_key
     requests = []
     for item in OFFICIAL_FULL_SNAPSHOT_METHODS:
         body = dict(common_body)
@@ -1603,6 +1622,9 @@ def _build_live_request(
         request_url = f"{endpoint.rstrip('/')}{official_request_profile.get('endpoint_path', '')}"
         headers = dict(official_request_profile.get("headers") or headers)
         vedastro_payload = dict(official_request_profile.get("body") or {})
+    api_key = os.environ.get("VEDASTRO_API_KEY", "").strip()
+    if api_key:
+        headers["x-api-key"] = api_key
     return request_url, headers, vedastro_payload
 
 

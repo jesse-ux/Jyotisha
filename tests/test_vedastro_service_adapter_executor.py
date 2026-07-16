@@ -67,7 +67,7 @@ def test_vedastro_official_subprocesses_use_adapter_timeout(monkeypatch) -> None
 
     monkeypatch.setattr(adapter.subprocess, "run", fake_run)
     case = {
-        "year": REDACTED_YEAR,
+        "year": 1990,
         "month": 4,
         "day": 17,
         "hour": 14,
@@ -97,7 +97,7 @@ def test_vedastro_official_subprocess_timeouts_are_controlled(monkeypatch) -> No
 
     monkeypatch.setattr(adapter.subprocess, "run", fake_timeout)
     case = {
-        "year": REDACTED_YEAR,
+        "year": 1990,
         "month": 4,
         "day": 17,
         "hour": 14,
@@ -151,7 +151,7 @@ def test_vedastro_official_snapshot_stops_when_foreground_budget_is_exhausted(mo
     ticks = iter([100.0, 104.1])
     monkeypatch.setattr(adapter.time, "monotonic", lambda: next(ticks))
     result = adapter._run_official_full_snapshot_case({
-        "year": REDACTED_YEAR,
+        "year": 1990,
         "month": 4,
         "day": 17,
         "hour": 14,
@@ -213,7 +213,7 @@ def test_vedastro_official_snapshot_skips_bridge_after_runner_consumes_budget(mo
     ticks = iter([100.0, 100.1, 104.2])
     monkeypatch.setattr(adapter.time, "monotonic", lambda: next(ticks))
     result = adapter._run_official_full_snapshot_case({
-        "year": REDACTED_YEAR,
+        "year": 1990,
         "month": 4,
         "day": 17,
         "hour": 14,
@@ -275,7 +275,7 @@ def test_vedastro_official_snapshot_budget_does_not_mask_mock_rest_endpoint(monk
     monkeypatch.setattr(adapter.time, "monotonic", lambda: next(ticks))
 
     result = adapter._run_official_full_snapshot_case({
-        "year": REDACTED_YEAR,
+        "year": 1990,
         "month": 4,
         "day": 17,
         "hour": 14,
@@ -549,7 +549,8 @@ def test_vedastro_service_adapter_posts_official_search_events_contract() -> Non
     assert report["source_metadata"]["endpoint"].endswith("/api")
     assert report["source_metadata"]["official_endpoint_path"] == "/Calculate/SearchEvents"
     assert report["source_metadata"]["official_request_profile"]["method"] == "POST"
-    assert report["source_metadata"]["official_request_profile"]["headers"]["x-api-key"] == "[redacted]"
+    metadata_headers = report["source_metadata"]["official_request_profile"]["headers"]
+    assert metadata_headers == {"Content-Type": "application/json"}
     assert report["source_metadata"]["official_request_profile_hash"]
     assert report["source_metadata"]["request_hash"] != report["source_metadata"]["official_request_profile_hash"]
 

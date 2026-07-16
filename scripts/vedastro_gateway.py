@@ -235,6 +235,7 @@ def gateway_status() -> dict[str, Any]:
         "active_backend": _active_backend(config),
         "self_host_configured": config["self_host_endpoint_configured"],
         "official_configured": config["official_endpoint_configured"],
+        "credential_configured": bool(os.environ.get("VEDASTRO_API_KEY", "").strip()),
         "cache_ttl_seconds": config["cache_ttl_seconds"],
         "queue_enabled": config["queue_enabled"],
         "fail_open_local": config["fail_open_local"],

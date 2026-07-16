@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 
 def test_gateway_status_defaults_to_local_first_cn_safe(monkeypatch):
     from scripts import vedastro_gateway
@@ -56,6 +58,17 @@ def test_gateway_status_exposes_official_readiness_gate(monkeypatch):
     assert status["official_configured"] is True
     assert status["official_readiness"]["official_ready"] is True
     assert status["official_readiness"]["free_tier_possible_with_cache_queue"] is True
+
+
+def test_gateway_status_never_exposes_vedastro_secret(monkeypatch):
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv("JYOTISH_SKIP_LOCAL_ENV", "1")
+    monkeypatch.setenv("VEDASTRO_API_KEY", "sk_live_test_secret")
+    status = vedastro_gateway.gateway_status()
+    text = json.dumps(status, sort_keys=True)
+    assert "sk_live_test_secret" not in text
+    assert status["credential_configured"] is True
 
 
 def test_gateway_run_packet_uses_user_entrypoint_and_marks_not_all_641(monkeypatch):

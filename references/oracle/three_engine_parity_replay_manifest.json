@@ -1,25 +1,222 @@
 {
-  "case_id": "contract_ready_no_same_chart_rows",
-  "birth_data_policy": "operator_local_only",
-  "status": "not_started",
-  "engines": {
-    "VedAstro": {
-      "status": "blocked",
-      "official_raw_response_path": "",
-      "artifact_hash": ""
+  "birth_data_policy": "public_case_only",
+  "blocked_reason": "none",
+  "case_id": "steve_jobs_public_1955_lahiri",
+  "comparison_rows": [
+    {
+      "field": "Sun.sign",
+      "local_value": "Aquarius",
+      "oracle_values": {
+        "PyJHora_JHora": "Aquarius",
+        "VedAstro": "Aquarius",
+        "jyotishganit": "Aquarius"
+      },
+      "section": "D1",
+      "status": "match"
     },
+    {
+      "field": "Sun.longitude",
+      "local_value": 312.51748591136726,
+      "oracle_values": {
+        "PyJHora_JHora": 312.51819523181405,
+        "VedAstro": 312.51222222222225,
+        "jyotishganit": 312.5241179806235
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Moon.sign",
+      "local_value": "Pisces",
+      "oracle_values": {
+        "PyJHora_JHora": "Pisces",
+        "VedAstro": "Pisces",
+        "jyotishganit": "Pisces"
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Moon.longitude",
+      "local_value": 344.5165209098362,
+      "oracle_values": {
+        "PyJHora_JHora": 344.51168181221095,
+        "VedAstro": 344.5113888888889,
+        "jyotishganit": 344.5244975534928
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Mars.sign",
+      "local_value": "Aries",
+      "oracle_values": {
+        "PyJHora_JHora": "Aries",
+        "VedAstro": "Aries",
+        "jyotishganit": "Aries"
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Mars.longitude",
+      "local_value": 5.8598225437926565,
+      "oracle_values": {
+        "PyJHora_JHora": 5.862334338243072,
+        "VedAstro": 5.854722222222223,
+        "jyotishganit": 5.866405267585137
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Mercury.sign",
+      "local_value": "Capricorn",
+      "oracle_values": {
+        "PyJHora_JHora": "Capricorn",
+        "VedAstro": "Capricorn",
+        "jyotishganit": "Capricorn"
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Mercury.longitude",
+      "local_value": 291.13107265785646,
+      "oracle_values": {
+        "PyJHora_JHora": 291.12589362817465,
+        "VedAstro": 291.12583333333333,
+        "jyotishganit": 291.1374137657774
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Jupiter.sign",
+      "local_value": "Gemini",
+      "oracle_values": {
+        "PyJHora_JHora": "Gemini",
+        "VedAstro": "Gemini",
+        "jyotishganit": "Gemini"
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Jupiter.longitude",
+      "local_value": 87.27723563442187,
+      "oracle_values": {
+        "PyJHora_JHora": 87.27055150216493,
+        "VedAstro": 87.27222222222223,
+        "jyotishganit": 87.28382648671735
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Venus.sign",
+      "local_value": "Sagittarius",
+      "oracle_values": {
+        "PyJHora_JHora": "Sagittarius",
+        "VedAstro": "Sagittarius",
+        "jyotishganit": "Sagittarius"
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Venus.longitude",
+      "local_value": 267.941228624149,
+      "oracle_values": {
+        "PyJHora_JHora": 267.94211928370015,
+        "VedAstro": 267.93611111111113,
+        "jyotishganit": 267.94779146740916
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Saturn.sign",
+      "local_value": "Libra",
+      "oracle_values": {
+        "PyJHora_JHora": "Libra",
+        "VedAstro": "Libra",
+        "jyotishganit": "Libra"
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "Saturn.longitude",
+      "local_value": 207.93204028705406,
+      "oracle_values": {
+        "PyJHora_JHora": 207.92738390514674,
+        "VedAstro": 207.92694444444444,
+        "jyotishganit": 207.93866866093018
+      },
+      "section": "D1",
+      "status": "match"
+    },
+    {
+      "field": "raw_capture",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": "structured_d1_captured",
+        "VedAstro": null,
+        "jyotishganit": "captured"
+      },
+      "reason": "three_engine_scope_does_not_share_this_normalized_field",
+      "section": "Panchanga",
+      "status": "not_comparable"
+    }
+  ],
+  "engines": {
     "PyJHora_JHora": {
-      "status": "blocked",
-      "raw_output_path": "",
-      "settings": {}
+      "artifact_hash": "07115ec1b5332b679259f14d8ca70964cc3ed394a31b40e994db6367d2da0ccf",
+      "raw_output_path": "scratch/local/three_engine_parity_live/pyjhora_structured_d1.json",
+      "settings": {
+        "ayanamsa": "LAHIRI",
+        "node_mode": "PyJHora default"
+      },
+      "status": "structured_captured"
+    },
+    "VedAstro": {
+      "artifact_hash": "84dbf7b2d7c4e13b8b26a4d42256f1ca5f8a76ffcaa0ab9695e14b646c77990b",
+      "official_raw_response_path": "/Users/wuyongnaren/Documents/印度占星/scratch/local/vedastro_adapter/official_full_snapshot-9581ff2b2603-8954c121bd0d.json",
+      "reason": "imported_latest_official_full_snapshot_artifact",
+      "settings": {
+        "ayanamsa": "lahiri",
+        "node_mode": "mean"
+      },
+      "status": "official_verified"
     },
     "jyotishganit": {
-      "status": "blocked",
-      "raw_output_path": "",
-      "settings": {}
+      "error": null,
+      "raw_output_path": "scratch/local/three_engine_parity_live/jyotishganit_raw.json",
+      "status": "raw_captured"
     }
   },
-  "comparison_rows": [],
-  "blocked_reason": "no_same_chart_oracle_rows_imported",
-  "runtime_boundary": "This manifest defines the same-chart parity replay contract only. It does not prove VedAstro/PyJHora/JHora/jyotishganit parity until raw oracle rows are imported."
+  "local": {
+    "calculation_contract": {
+      "algorithm": "sidereal_natal_chart",
+      "contract_version": "1.0.0",
+      "effective": {
+        "ayanamsa": "lahiri",
+        "ephemeris_flags_verified": false,
+        "ephemeris_source": "swisseph_calc_ut",
+        "node_mode": "mean",
+        "timezone_offset": -8.0,
+        "timezone_source": "explicit_offset"
+      },
+      "requested": {
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "timezone_offset": -8.0
+      }
+    },
+    "result_hash": "5e3b6ec860177ff29506820a3a80b962fae9bca957af8ffc8302d0e85c733a68"
+  },
+  "runtime_boundary": "This packet has real public raw artifacts and may include VedAstro official raw evidence, and normalized D1 planet sign/longitude parity is tested. Non-D1 scopes still require separate gates.",
+  "status": "pass",
+  "tested": true
 }

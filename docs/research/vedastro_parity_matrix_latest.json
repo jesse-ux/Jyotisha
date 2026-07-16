@@ -1,7 +1,7 @@
 {
   "scope": "vedastro_parity_matrix",
   "schema_version": 1,
-  "generated_at": "2026-06-28T23:49:39.845848+00:00",
+  "generated_at": "2026-07-16T11:53:05.440396+00:00",
   "summary": {
     "row_count": 13,
     "p0_count": 11,
@@ -24,7 +24,7 @@
       "rest_adapter": 2,
       "external_evidence_only": 1
     },
-    "local_registry_technique_count": 89
+    "local_registry_technique_count": 91
   },
   "boundary": {
     "not_a_clone_claim": true,
