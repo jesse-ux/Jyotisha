@@ -110,6 +110,10 @@ REQUIRED_CONTRACTS = [
     "references/oracle/western_oracle_adapter_contract.md",
     "scripts/user_invocation_acceptance_check.py",
     "scripts/diagnose_external_engine_adapters.py",
+    "scripts/external_oracle_raw_import.py",
+    "scripts/three_engine_parity_runner.py",
+    "scripts/three_engine_parity_replay_validator.py",
+    "scripts/pyjhora_parity_summary.py",
     "scripts/western_chart_engine.py",
     "scripts/western_timing_engine.py",
 ]
