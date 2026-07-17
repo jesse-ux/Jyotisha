@@ -6291,7 +6291,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             lon = self._get_float(body, 'lon', 0, -180, 180)
             tz = self._parse_timezone(body, lat, lon, year, month, day, birth_hour, birth_minute, birth_second)
             jd = swe.julday(year, month, day, birth_hour_decimal - tz)
-            context = shadbala_module.build_shadbala_context(jd, lat, lon, body.get('ayanamsa', 'lahiri'))
+            context = shadbala_module.build_shadbala_context(jd, lat, lon, body.get('ayanamsa', 'lahiri'), tz)
         result = shadbala_module.calc_shadbala(
             planets,
             SIGNS[asc_sign_idx],

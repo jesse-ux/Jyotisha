@@ -97,7 +97,7 @@
     {
       "id": "high_rigor_local_raw",
       "path": "references/oracle/artifacts/local_steve_jobs_high_rigor_raw.json",
-      "sha256": "8361cac2831404a005e6be5c927b9cd610cfc0787ca17a547e81ae9a4d601746",
+      "sha256": "87a0f176629403d2bc47e08fef28f7ce8118efa4786e11604bc7141af6724b38",
       "scope": "public same-chart local high-rigor raw output"
     },
     {
@@ -109,7 +109,7 @@
     {
       "id": "high_rigor_jyotishganit_raw",
       "path": "references/oracle/artifacts/jyotishganit_steve_jobs_high_rigor_raw.json",
-      "sha256": "5cbb85f6cd9210558d496c350b45aa1dc2785ab3f49a800a884b45c76c49e6a1",
+      "sha256": "b3a13f446ceacb2b57905692e7d2de629d9d3326929c73912a110e99deeca28e",
       "scope": "public same-chart jyotishganit high-rigor raw output"
     },
     {

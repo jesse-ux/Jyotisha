@@ -257,7 +257,7 @@
   "label": "Steve Jobs public AA",
   "module_health": {
     "empty_modules": [],
-    "module_count": 55,
+    "module_count": 56,
     "validation": {
       "checked": 11,
       "failed": 0,
@@ -418,70 +418,70 @@
   "privacy": "public",
   "sample_id": "steve_jobs_public_aa",
   "shadbala": {
-    "Jupiter": null,
-    "Mars": null,
-    "Mercury": null,
-    "Moon": null,
-    "Saturn": null,
-    "Sun": null,
-    "Venus": null
+    "Jupiter": 569.4,
+    "Mars": 456.19,
+    "Mercury": 365.28,
+    "Moon": 584.26,
+    "Saturn": 430.05,
+    "Sun": 480.62,
+    "Venus": 406.93
   },
   "shadbala_components": {
     "Jupiter": {
-      "chesta": null,
-      "dig": null,
-      "drik": null,
-      "kala": null,
-      "naisargika": null,
-      "sthana": null
+      "chesta": 46.49,
+      "dig": 80.59,
+      "drik": 6.9,
+      "kala": 199.32,
+      "naisargika": 34.29,
+      "sthana": 201.81
     },
     "Mars": {
-      "chesta": null,
-      "dig": null,
-      "drik": null,
-      "kala": null,
-      "naisargika": null,
-      "sthana": null
+      "chesta": 21.6,
+      "dig": 77.41,
+      "drik": 13.49,
+      "kala": 127.92,
+      "naisargika": 17.14,
+      "sthana": 198.63
     },
     "Mercury": {
-      "chesta": null,
-      "dig": null,
-      "drik": null,
-      "kala": null,
-      "naisargika": null,
-      "sthana": null
+      "chesta": 47.8,
+      "dig": 12.64,
+      "drik": -10.62,
+      "kala": 121.79,
+      "naisargika": 25.71,
+      "sthana": 167.96
     },
     "Moon": {
-      "chesta": null,
-      "dig": null,
-      "drik": null,
-      "kala": null,
-      "naisargika": null,
-      "sthana": null
+      "chesta": 21.34,
+      "dig": 95.48,
+      "drik": 20.06,
+      "kala": 149.61,
+      "naisargika": 51.43,
+      "sthana": 246.34
     },
     "Saturn": {
-      "chesta": null,
-      "dig": null,
-      "drik": null,
-      "kala": null,
-      "naisargika": null,
-      "sthana": null
+      "chesta": 36.99,
+      "dig": 19.63,
+      "drik": 9.49,
+      "kala": 136.76,
+      "naisargika": 8.57,
+      "sthana": 218.61
     },
     "Sun": {
-      "chesta": null,
-      "dig": null,
-      "drik": null,
-      "kala": null,
-      "naisargika": null,
-      "sthana": null
+      "chesta": 36.0,
+      "dig": 24.81,
+      "drik": 1.74,
+      "kala": 140.98,
+      "naisargika": 60.0,
+      "sthana": 217.09
     },
     "Venus": {
-      "chesta": null,
-      "dig": null,
-      "drik": null,
-      "kala": null,
-      "naisargika": null,
-      "sthana": null
+      "chesta": 29.36,
+      "dig": 69.95,
+      "drik": -2.75,
+      "kala": 113.45,
+      "naisargika": 42.86,
+      "sthana": 154.06
     }
   },
   "shadbala_method_variants": {

@@ -1,0 +1,29 @@
+{
+  "checks": {
+    "all_planet_longitude_is_nirayana": true,
+    "mit_license": true,
+    "offset_parse_exact": true,
+    "time_keeps_offset": true,
+    "zero_offset_auto_lookup": true
+  },
+  "deployment_identity_reason": "Remote responses expose neither library version nor source commit.",
+  "deployment_identity_status": "blocked",
+  "files": {
+    "Library/Data/Time.cs": "6cd9bbe98afd072b665ad85ad71bdd7be89baf45f9767cae4907b09377037da3",
+    "Library/Library.csproj": "d74bc184a225c77247c29ee74542f3ba4daf67912d32b587da7a30a3aa78a2b2",
+    "Library/Logic/Calculate/Core.cs": "105ee6d0caeb0cb02057193cf68d74cef756e4d111dfdfd82c62db5a0c76b187",
+    "Library/Logic/Tools.cs": "65fb680facaf3281b07ad73b523f10c347378d4a333be81fb2399a333100d668"
+  },
+  "library_version": "1.2.0",
+  "longitude_contract": {
+    "AllPlanetLongitude": "nirayana"
+  },
+  "source": "https://github.com/VedAstro/VedAstro",
+  "source_commit": "1f3a46482ab98eb414ab03fa44496a37d35a3a96",
+  "source_contract_status": "verified",
+  "timezone_contract": {
+    "conclusion": "+00:00 and the location's real offset may intentionally produce identical results.",
+    "negative_offset": "literal_offset",
+    "zero_offset": "auto_lookup_sentinel"
+  }
+}

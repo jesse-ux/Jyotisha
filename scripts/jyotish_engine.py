@@ -3364,7 +3364,7 @@ def cmd_shadbala(args):
     birth_hour = _birth_hour_decimal(args.hour, args.minute, _arg_second(args))
     sun_lon = planets.get("Sun", {}).get("degree", 0)
     moon_lon = planets.get("Moon", {}).get("degree", 0)
-    context = build_shadbala_context(jd, args.lat, args.lon, _current_ayanamsa_name(args))
+    context = build_shadbala_context(jd, args.lat, args.lon, _current_ayanamsa_name(args), args.tz)
     return calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon, context=context)
 
 
@@ -3757,7 +3757,7 @@ def cmd_audit(args):
         birth_hour = _birth_hour_decimal(args.hour, args.minute, _arg_second(args))
         sun_lon = planets.get('Sun', {}).get('degree', 0)
         moon_lon = planets.get('Moon', {}).get('degree', 0)
-        context = build_shadbala_context(jd, args.lat, args.lon, _current_ayanamsa_name(args))
+        context = build_shadbala_context(jd, args.lat, args.lon, _current_ayanamsa_name(args), args.tz)
         shadbala = calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon, context=context)
         report['audit']['P9_shadbala'] = {
             'summary': shadbala.get('summary', {}),
@@ -5522,10 +5522,11 @@ def cmd_full_reading(args):
 
     # ── Step 10: Shadbala六重力量 ──
     try:
-        from shadbala import calc_shadbala
+        from shadbala import build_shadbala_context, calc_shadbala
         birth_hour = _birth_hour_decimal(args.hour, args.minute, _arg_second(args))
         sun_lon = planet_lons.get('Sun', 0)
         moon_lon = planet_lons.get('Moon', 0)
+        context = build_shadbala_context(jd, args.lat, args.lon, _current_ayanamsa_name(args), args.tz)
         shadbala_result = calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon, context=context)
         # 添加顶层汇总
         if isinstance(shadbala_result, dict):
