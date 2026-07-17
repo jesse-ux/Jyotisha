@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "sync_model": "research_validates_commercial_receives_mature",
+  "repositories": {
+    "research": "732642856/yinduzhanxing",
+    "commercial": "jesse-ux/Jyotisha"
+  },
+  "directional_gates": {
+    "research_to_commercial": {
+      "source_required": "validated_in_research",
+      "target_required": "commercial_safe",
+      "required_checks": [
+        "privacy_review",
+        "focused_tests",
+        "hash_contract_result"
+      ]
+    },
+    "commercial_to_research": {
+      "source_required": "configuration_free_product_pattern",
+      "target_required": "local_test_double_or_no_secret",
+      "required_checks": [
+        "privacy_review",
+        "focused_tests"
+      ]
+    }
+  },
+  "shared_files": [
+    "references/cross_project_contract/fixture_manifest.v1.json",
+    "references/cross_project_contract/sync_ledger.json",
+    "references/cross_project_contract/sync_policy.v1.json",
+    "scripts/cross_project_contract.py",
+    "scripts/domain_calculation_service.py",
+    "scripts/cross_project_sync_status.py",
+    "tests/test_cross_project_contract.py",
+    "tests/test_cross_project_sync_status.py"
+  ]
+}

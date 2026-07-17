@@ -4275,78 +4275,69 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             raise BadRequest('Invalid birth date') from e
 
         try:
-            import swisseph as swe
-            swe.set_ephe_path(os.path.join(SCRIPTS_DIR, '..', 'swiss_ephemeris'))
+            calculation_service = _load_local_module('domain_calculation_service')
+            canonical_chart = calculation_service.compute_chart({
+                'year': year,
+                'month': month,
+                'day': day,
+                'hour': hour,
+                'minute': minute,
+                'second': second,
+                'lat': lat,
+                'lon': lon,
+                'tz': tz,
+                'ayanamsa': body.get('ayanamsa', 'lahiri'),
+                'node_mode': body.get('node_mode', body.get('nodeMode', 'mean')),
+            })
+            canonical_birth = canonical_chart['birth_info']
+            planets_data = canonical_chart['planets']
+            ascendant_data = canonical_chart['ascendant']
+            asc_lon = float(ascendant_data['lon'])
+            asc_sign = ascendant_data['sign']
+            asc_sign_idx = SIGNS.index(asc_sign)
             birth_hour_decimal = self._birth_hour_decimal(hour, minute, second)
-            hour_ut = birth_hour_decimal - tz
-            jd = swe.julday(year, month, day, hour_ut)
-            ayanamsa_name = body.get('ayanamsa', 'lahiri')
-            try:
-                from jyotish_engine import _apply_ayanamsa, _ayanamsa_display_name
-                _apply_ayanamsa(ayanamsa_name)
-                ayanamsa_display = _ayanamsa_display_name(ayanamsa_name)
-            except ImportError:
-                swe.set_sid_mode(swe.SIDM_LAHIRI, 0, 0)
-                ayanamsa_name = 'lahiri'
-                ayanamsa_display = 'Lahiri'
-            ayanamsa = swe.get_ayanamsa(jd)
+            jd = float(canonical_birth['julian_day'])
+            ayanamsa = float(canonical_birth['ayanamsa'])
+            ayanamsa_name = canonical_birth['ayanamsa_name']
+            ayanamsa_display = canonical_birth['ayanamsa_display']
 
-            planets_data = {}
-            planet_ids = {'Sun': 0, 'Moon': 1, 'Mars': 4, 'Mercury': 2, 'Jupiter': 5, 'Venus': 3, 'Saturn': 6, 'Rahu': 10, 'Ketu': 20}
-            planet_names_rev = {v: k for k, v in planet_ids.items()}
-
-            for pid, pname in planet_names_rev.items():
-                if pid == 20:
-                    rahu_result, _ = swe.calc_ut(jd, 10)
-                    planet_lon = (rahu_result[0] - ayanamsa + 180) % 360
-                else:
-                    result, _ = swe.calc_ut(jd, pid)
-                    planet_lon = (result[0] - ayanamsa) % 360
-                sign_idx = int(planet_lon / 30) % 12
-                planets_data[pname] = {'lon': planet_lon, 'sign_idx': sign_idx, 'sign': SIGNS[sign_idx], 'degree': planet_lon % 30}
-
-            # Ascendant
-            asc_tropical = swe.houses_ex(jd, lat, lon, b'E')[0][0] % 360
-            asc_lon = (asc_tropical - ayanamsa) % 360
-            asc_sign_idx = int(asc_lon / 30) % 12
-            asc_sign = SIGNS[asc_sign_idx]
-
-            # Houses
             houses = {}
             for h in range(1, 13):
-                s = (asc_sign_idx + h - 1) % 12
-                houses[h] = {'sign': SIGNS[s], 'sign_idx': s}
+                house = canonical_chart.get('houses', {}).get(f'house_{h}', {})
+                sign = house.get('cusp_sign', SIGNS[(asc_sign_idx + h - 1) % 12])
+                houses[h] = {
+                    'sign': sign,
+                    'sign_idx': SIGNS.index(sign),
+                    'cusp_degree': house.get('cusp_degree'),
+                }
 
-            # Planet houses
-            for pn, pd in planets_data.items():
-                pd['house'] = ((pd['sign_idx'] - asc_sign_idx) % 12) + 1
-
-            # Dasha (simplified Vimshottari)
-            moon_lon = planets_data['Moon']['lon']
-            nak_size = 360/27
-            nak_idx = int(moon_lon / nak_size)
-            dasha_lords = ['Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury']
-            dasha_years = [7,20,6,10,7,18,16,19,17]
-            nak_lord_idx = nak_idx % 9
-            md_lord = dasha_lords[nak_lord_idx]
-            total_years = dasha_years[nak_lord_idx]
-            elapsed = (moon_lon % nak_size) / nak_size * total_years
-            remaining = total_years - elapsed
-
+            moon_lon = float(planets_data['Moon']['lon'])
             birth_dt = datetime(year, month, day, int(hour), int(minute), int(second))
-            elapsed_days = elapsed * 365.25636
-            dasha_start = birth_dt - timedelta(days=elapsed_days) if elapsed_days < 365*120 else birth_dt
+            canonical_dasha = calculation_service.compute_vimshottari_timeline(
+                birth_dt=birth_dt,
+                moon_lon=moon_lon,
+                current_date=birth_dt,
+            )
+            dasha_balance = canonical_dasha['birth_balance']
+            md_lord = dasha_balance['lord']
+            remaining = dasha_balance['remaining_years']
+            total_years = canonical_dasha['periods'][0]['years']
+            dasha_start = datetime.strptime(canonical_dasha['periods'][0]['start'], '%Y-%m-%d')
 
-            # Yoga detection
             yogas = self._detect_yogas(planets_data, asc_sign_idx)
-
-            # Sade Sati
-            from sade_sati import calc_sade_sati_complete
-            # Transit Saturn (approximate)
-            saturn_year_progress = (year - 2026) * 12 / 30  # ~12 signs in 30 years
-            transit_saturn_sign = (planets_data['Saturn']['sign_idx'] + int(saturn_year_progress)) % 12
-            transit_saturn_lon = transit_saturn_sign * 30 + 15
-            sade_sati = calc_sade_sati_complete(moon_lon, asc_lon, transit_saturn_lon)
+            reference_date = (
+                body.get('transit_date')
+                or body.get('today')
+                or body.get('current_date')
+                or datetime.now().strftime('%Y-%m-%d')
+            )
+            sade_sati = calculation_service.compute_sade_sati(
+                moon_degree=moon_lon,
+                asc_degree=asc_lon,
+                reference_date=reference_date,
+                tz=tz,
+                ayanamsa=ayanamsa_name,
+            )
 
             # Dasha清单
             extended_dashas = _load_local_module('extended_dashas')
@@ -4420,7 +4411,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'ayanamsa': round(ayanamsa, 4),
                     'ayanamsa_name': ayanamsa_name,
                     'ayanamsa_display': ayanamsa_display,
-                    'node_mode': body.get('node_mode', body.get('nodeMode', 'mean')),
+                    'node_mode': canonical_chart['calculation_contract']['effective']['node_mode'],
                 },
                 'ascendant': {
                     'sign': asc_sign,
@@ -4435,6 +4426,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'remaining_years': round(remaining, 2),
                     'total_years': total_years,
                     'start_date': dasha_start.isoformat() if hasattr(dasha_start, 'isoformat') else str(dasha_start),
+                    'periods': canonical_dasha['periods'],
+                    'birth_balance': canonical_dasha['birth_balance'],
+                    'calculation_contract': canonical_dasha['calculation_contract'],
+                    'result_hash': canonical_dasha['result_hash'],
                 },
                 'yogas': yogas,
                 'sade_sati': sade_sati,
@@ -4443,6 +4438,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'special_lagnas': special_lagnas,
                 'available_dashas': dasha_list,
                 'dasha_count': len(dasha_list),
+                'calculation_contract': canonical_chart['calculation_contract'],
+                'result_hash': canonical_chart['result_hash'],
             }
             result['modules'] = {
                 'chart': {
@@ -4450,6 +4447,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'ascendant': result['ascendant'],
                     'houses': result['houses'],
                     'birth_info': result['birth'],
+                    'calculation_contract': result['calculation_contract'],
+                    'result_hash': result['result_hash'],
                 },
                 'dasha': result['dasha'],
                 'shadbala': {'planets': sb.get('planets', {})} if 'sb' in locals() and isinstance(sb, dict) else {},
