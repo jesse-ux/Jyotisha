@@ -113,6 +113,30 @@
 - [x] CI 失败 artifact 诊断：pytest 改为 `-vv --maxfail=1 --junitxml`，quick/release quality gate 输出 tee 到 artifact，避免云端只暴露 exit code。
 - [x] 云端 CI 收口：PR #6 head `925e73e` 的 `validate`、`test`、`release-quality-gate` 三条 GitHub Actions 检查均已通过。
 - [x] 准确率透明度页面：Trust Center 新增 Validation Transparency 面板，展示 Yoga logic benchmark 的 60 charts、82 comparable rules、Precision/Recall/F1、unmapped_pyjhora 与“不是个人事件预测准确率”的边界说明。
+
+## 2026-07-11 公开真实案例 benchmark
+
+- [x] 读取错误台账、两轮碎片扫描、现有 replay contract，运行开工预检。
+- [x] 冻结案例门槛：Astro-Databank Rodden A/AA；独立事件来源；5 career + 5 marriage。
+- [x] 扩展 replay schema/validator，拒绝低质量出生时间与无来源事件。
+- [x] 导入 10 个公开案例，不含用户个人资料。
+- [x] 建立轻量本地回放器：D1、D9/D10、UL/A10、Functional roles、Vimshottari、Narayana、Double Transit PAC。
+- [x] 实跑并生成可审计报告；准确率拆为 positive recall / exact-label / blocked，balanced accuracy 无负样本时必须为 null。
+- [x] 跑聚焦回归、预检、隐私扫描，记录性能/外部 oracle 阻塞。
+
+## 2026-07-11 第二批 holdout 与 20 例闭环
+
+- [x] 冻结 v2 设计与晋级条件，禁止按第二批结果调阈值。
+- [x] 新增 10 个不重复 Rodden A/AA 案例，5 career + 5 marriage。
+- [x] 同时跑 v1/v2，生成第二批与 20 例合并指标。
+- [x] 找出仍漏判的技法层；仅晋级通过 holdout 的通用规则。
+- [x] 接入 orchestrator，更新研究报告、错误台账和验收。
+- [x] 第二批 10 个 A/AA 公开案例作为冻结 holdout，完成 V1/V2 回放与升级裁决。
+- [x] 合并 20 案例，输出按领域指标、Technique Audit、四个 miss 与 V3 技法债。
+- [x] orchestrator 切换到 20 案例 V2 报告；修复 Muntha 独立导入崩溃。
+- [x] 新增 3 个不重复 AA 案例，使用冻结 V2 检测，并公开 23 案例合并观察值与事业泛化反证。
+- [x] V2.1 修复重复计分和误导性指标；23 案例加入 SAV/BAV 非评分审计；补 scratch/.serena 隐私防线。
+- [x] 建立负样本日期排序 pilot；用 24 个控制日期测误报和真实日排名；主链阻断伪精确月日输出。
 - [x] 普通用户交付形态：新增 deployment preflight 与 README 交付矩阵，明确 Local dev、Docker Compose、Static demo/PWA、Desktop shell 的入口、命令和 API 边界，并纳入 quick/release 守门。
 - [x] Antigravity/VedAstro 外部评审复核：确认 D1/D9 对齐，纠正 Shadbala/秒级输入过期结论，新增 Dasha 参考差异审计记录。
 - [x] Level 3 外部解盘审计：拆分可采纳解读与可计算错误，并修复 D1 尊严状态漏掉友敌标签的问题。

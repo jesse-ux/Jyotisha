@@ -27,7 +27,7 @@ CASES = [
     {'name':'Prince Harry','birth':(1984,9,15,15.33,51.5,-0.17),'gender':'M',
      'marriage1':(2018,5,19)},
     {'name':'Jeff Bezos','birth':(1964,1,12,9.63,25.78,-80.19),'gender':'M',
-     'marriage1':(REDACTED_YEAR,1,1)},
+     'marriage1':(1993,1,1)},
     {'name':'Priyanka Chopra','birth':(1982,7,18,10.5,23.57,87.19),'gender':'F',
      'marriage1':(2018,12,1)},
     {'name':'Shah Rukh Khan','birth':(1965,11,1,21.25,28.61,77.21),'gender':'M',

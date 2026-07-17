@@ -1,12 +1,14 @@
 """
 PyJHora 风格硬编码 Yoga True/False 测试
 """
-import sys, os
-SKILL_DIR = '<home>/.workbuddy/skills/jyotish-vedic-astrology'
-sys.path.insert(0, os.path.join(SKILL_DIR, 'scripts'))
-RULES_PATH = os.path.join(SKILL_DIR, 'references', 'yoga_rules.json')
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'scripts'))
+RULES_PATH = ROOT / 'references' / 'yoga_rules.json'
 from yoga_engine import YogaEngine
-engine = YogaEngine(RULES_PATH)
+engine = YogaEngine(str(RULES_PATH))
 
 def detect(rule_id, planets, ascendant, context=None):
     results = engine.detect(planets, ascendant, context=context)

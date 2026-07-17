@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,33 @@ from typing import Any
 REQUIRED_ENGINES = {"VedAstro", "PyJHora_JHora", "jyotishganit"}
 REQUIRED_ROW_FIELDS = {"section", "field", "local_value", "oracle_values", "status"}
 VALID_ROW_STATUSES = {"match", "mismatch", "blocked", "not_comparable"}
+RAW_VERIFIED_STATUSES = {"verified", "official_verified", "imported"}
+
+
+def _artifact_errors(engine: str, payload: Any, manifest_dir: Path) -> list[dict[str, Any]]:
+    if not isinstance(payload, dict):
+        return [{"field": f"engines.{engine}", "error": "not_object"}]
+    if payload.get("status") not in RAW_VERIFIED_STATUSES:
+        return []
+    raw_path = payload.get("official_raw_response_path") or payload.get("raw_output_path")
+    artifact_hash = payload.get("artifact_hash")
+    errors: list[dict[str, Any]] = []
+    if not isinstance(raw_path, str) or not raw_path:
+        errors.append({"field": f"engines.{engine}.raw_output_path", "error": "required_for_verified_status"})
+        return errors
+    if not isinstance(artifact_hash, str) or len(artifact_hash) != 64:
+        errors.append({"field": f"engines.{engine}.artifact_hash", "error": "sha256_required_for_verified_status"})
+        return errors
+    artifact_path = (manifest_dir / raw_path).resolve()
+    if not artifact_path.is_file():
+        errors.append({"field": f"engines.{engine}.raw_output_path", "error": "missing_artifact"})
+        return errors
+    actual_hash = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+    if actual_hash != artifact_hash:
+        errors.append({"field": f"engines.{engine}.artifact_hash", "error": "hash_mismatch"})
+    if not isinstance(payload.get("settings"), dict):
+        errors.append({"field": f"engines.{engine}.settings", "error": "required_for_verified_status"})
+    return errors
 
 
 def _row_errors(row: Any, index: int) -> list[dict[str, Any]]:
@@ -37,6 +65,8 @@ def validate_manifest(path: str | Path) -> dict[str, Any]:
     missing_engines = sorted(REQUIRED_ENGINES - set(engines))
     for engine in missing_engines:
         errors.append({"field": f"engines.{engine}", "error": "missing"})
+    for engine, payload in engines.items():
+        errors.extend(_artifact_errors(engine, payload, manifest_path.parent))
 
     if not isinstance(rows, list):
         rows = []
@@ -89,9 +119,11 @@ def validate_manifest(path: str | Path) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", nargs="?", default="references/oracle/three_engine_parity_replay_manifest.json")
+    parser.add_argument("--require-pass", action="store_true", help="Return nonzero unless all comparison rows pass.")
     args = parser.parse_args(argv)
-    print(json.dumps(validate_manifest(args.manifest), ensure_ascii=False, indent=2, sort_keys=True))
-    return 0
+    report = validate_manifest(args.manifest)
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0 if not args.require_pass or report["status"] == "pass" else 1
 
 
 if __name__ == "__main__":

@@ -29,6 +29,7 @@ import sys
 import re
 import glob
 import argparse
+from urllib.parse import urlparse
 
 try:
     import markdown
@@ -323,6 +324,13 @@ def build_cover(name, lagna, gender, status, pkg, desc, lang="cn"):
 </div>"""
 
 
+def is_allowed_report_resource_url(url, *, report_url):
+    if url == report_url:
+        return True
+    parsed = urlparse(url)
+    return parsed.scheme in {'data', 'about', 'blob'}
+
+
 def build_toc(sections, lang="cn"):
     """Generate table of contents HTML."""
     toc_title = "目录" if lang == "cn" else "Table of Contents"
@@ -352,6 +360,13 @@ def build_section(num, title, md_text):
 </div>"""
 
 
+def is_allowed_report_resource_url(url, *, report_url):
+    if url == report_url:
+        return True
+    parsed = urlparse(url)
+    return parsed.scheme in {'data', 'about', 'blob'}
+
+
 def _html_to_pdf(html_path, pdf_path):
     """Convert HTML to PDF using Playwright headless Chromium."""
     try:
@@ -364,14 +379,25 @@ def _html_to_pdf(html_path, pdf_path):
     print("  Launching headless Chromium...")
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        page.goto(f"file://{os.path.abspath(html_path)}", wait_until="networkidle")
+        context = browser.new_context(java_script_enabled=False)
+        page = context.new_page()
+        report_url = f"file://{os.path.abspath(html_path)}"
+        page.route(
+            "**/*",
+            lambda route: (
+                route.continue_()
+                if is_allowed_report_resource_url(route.request.url, report_url=report_url)
+                else route.abort()
+            ),
+        )
+        page.goto(report_url, wait_until="networkidle")
         page.pdf(
             path=pdf_path,
             format="A4",
             print_background=True,
             margin={"top": "22mm", "bottom": "24mm", "left": "20mm", "right": "20mm"},
         )
+        context.close()
         browser.close()
 
     size_kb = os.path.getsize(pdf_path) / 1024

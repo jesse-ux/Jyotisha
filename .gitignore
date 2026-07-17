@@ -5,9 +5,8 @@ __pycache__/
 *.sqlite
 .agents/
 venv_vedastro/
-scratch/local/
-scratch/test_*.json
-scratch/test_*.txt
+/scratch/
+/.serena/
 test_hooks.json
 hermes_memory.db/
 *.egg-info/
@@ -27,6 +26,7 @@ htmlcov/
 .mypy_cache/
 .hypothesis/
 .cline/
+.planning/
 benchmarks/jyotish/outputs/
 output_report.txt
 results_extracted.md

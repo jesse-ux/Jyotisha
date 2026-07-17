@@ -198,9 +198,10 @@ def test_runtime_evidence_log_exposes_blind_packet_case_and_quality_gate_contrac
         "Cross-System Arbitration",
         "Evidence Packet",
         "Blind Technical Mode",
-        "MEVG / Global Web Evidence",
-        "Real Case Calibration",
-        "Functional Benefic/Malefic",
+            "MEVG / Global Web Evidence",
+            "Real Case Calibration",
+            "Timing Precision Gate",
+            "Functional Benefic/Malefic",
     ]
     engines = log["external_engine_cross_validation"]["engines"]
     assert engines["VedAstro"]["status"] == "local_fallback"

@@ -8,6 +8,60 @@ This contract defines how external Western astrology outputs enter the high-rigo
 
 It is an evidence adapter, not a bundled Western astrology engine.
 
+## Native Tropical Natal Layer
+
+`scripts/western_chart_engine.py` uses the existing Swiss Ephemeris binding to
+calculate a tropical natal chart from birth data. For `direct_chart` and
+`rectification`, the unified workflow defaults to `western_mode: "auto"` when
+no external payload is supplied. It records planetary longitude/speed,
+Placidus houses, ASC/MC/DC/IC, major aspects with explicit orb limits,
+element/mode distribution, and traditional house-ruler chains.
+
+The native result is deliberately `partial`: it does **not** calculate
+secondary progressions, solar arcs, non-solar returns, synastry, or
+interpretive signals. `prashna` does not receive a natal Western packet by
+default. Set `western_mode` to `external_only` or `off` to suppress automatic
+calculation. Explicit `western_evidence_packet` and `western_oracle_payload`
+always take precedence.
+
+### Optional Timing Input
+
+To add only requested native time evidence, pass:
+
+```json
+{
+  "western_timing": {
+    "transit_date": "2026-07-09",
+    "solar_return_year": 2026,
+    "secondary_progression_date": "2026-07-09",
+    "solar_arc_date": "2026-07-09",
+    "converse_secondary_progression_date": "2026-07-09",
+    "converse_solar_arc_date": "2026-07-09",
+    "midpoint_date": "2026-07-09",
+    "lunar_return_start_date": "2026-07-01",
+    "duration_scan_start_date": "2026-07-01",
+    "duration_scan_end_date": "2026-07-31",
+    "parans_date": "2026-07-09"
+  }
+}
+```
+
+`transit_date` produces a local-date transit-to-natal major-aspect snapshot.
+`solar_return_year` locates the exact tropical solar return and calculates its
+return chart at the supplied birthplace/location. Both are calculation data,
+not event verdicts. `secondary_progression_date` uses one ephemeris day per
+tropical year for progressed planets. `solar_arc_date` applies the true
+secondary-progressed-Sun arc to natal planets/ASC/MC.
+`converse_secondary_progression_date` and `converse_solar_arc_date` add the
+matching backward-progressed layers. `midpoint_date` emits natal midpoint
+geometry and transit midpoint conjunction/opposition hits. `lunar_return_start_date`
+finds the next exact tropical lunar return. `duration_scan_start_date` plus
+`duration_scan_end_date` groups daily transit-to-natal aspect windows.
+These remain evidence layers, not event verdicts. Progressed angles are marked
+blocked until a method is selected; `parans_date` currently returns a structured
+`blocked` state because a latitude-aware rising/setting/culminating solver is
+not yet implemented.
+
 ## Accepted Input
 
 ```json
@@ -53,6 +107,7 @@ API and MCP callers may pass either field:
 
 - `western_oracle_payload`: raw external Western astrology JSON export; the project normalizes it with `western_oracle_adapter`.
 - `western_evidence_packet`: pre-normalized packet; the project carries it directly into `runtime_evidence_log`.
+- `western_mode`: `auto` (default for non-Prashna birth-chart entries), `external_only`, or `off`.
 
 When Jyotish evidence also carries matching `cross_system_signals`, `Cross-System Arbitration` can become `used`. If only Western evidence is present, arbitration stays `partial` or `blocked`.
 

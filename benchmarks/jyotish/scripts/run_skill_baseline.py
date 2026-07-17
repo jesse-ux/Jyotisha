@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_SCRIPT = Path(__file__).resolve().parents[2] / 'scripts' / 'jyotish_engine.py'
+SKILL_SCRIPT = Path(__file__).resolve().parents[3] / 'scripts' / 'jyotish_engine.py'
 PYTHON = Path(__import__('sys').executable)
 DATA = ROOT / 'data/benchmark_samples.json'
 OUT = ROOT / 'outputs'
@@ -31,6 +31,8 @@ def safe_get(obj, *keys, default=None):
 
 
 def run_sample(sample):
+    RAW.mkdir(parents=True, exist_ok=True)
+    CANON.mkdir(parents=True, exist_ok=True)
     birth = sample['birth']
     cmd = [
         str(PYTHON), str(SKILL_SCRIPT), 'full-reading',
@@ -78,6 +80,8 @@ def canonicalize(sample, data):
     planets = chart.get('planets', {})
     d9 = safe_get(modules, 'varga_full', 'D9_Navamsa', default={}) or {}
     d10 = safe_get(modules, 'varga_full', 'D10_Dasamsa', default={}) or {}
+    d2 = safe_get(modules, 'varga_full', 'D2_Hora', default={}) or {}
+    d4 = safe_get(modules, 'varga_full', 'D4_Turyamsa', default={}) or {}
     current = safe_get(modules, 'dasha', 'current_dasha', default={}) or {}
     ad = current.get('antardasha') or {}
     special = modules.get('special_lagnas', {}) or {}
@@ -97,9 +101,16 @@ def canonicalize(sample, data):
         'ascendant': chart.get('ascendant'),
         'planets': {},
         'varga': {
+            'D2': {k: d2.get(k) for k in ['Ascendant'] + PLANETS},
+            'D4': {k: d4.get(k) for k in ['Ascendant'] + PLANETS},
             'D9': {k: d9.get(k) for k in ['Ascendant'] + PLANETS},
             'D10': {k: d10.get(k) for k in ['Ascendant'] + PLANETS},
         },
+        'ashtakavarga': {
+            'bav': {name: safe_get(modules, 'ashtakavarga', 'bav', name, 'bindus', default=[]) for name in PLANETS[:7] + ['Lagna']},
+            'sav': [safe_get(modules, 'ashtakavarga', 'sav', 'scores', sign) for sign in ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']],
+        },
+        'shadbala': {name: safe_get(modules, 'shadbala', 'planets', name, 'total_virupas') for name in PLANETS[:7]},
         'dasha': {
             'mahadasha_lord': current.get('lord'),
             'mahadasha_start': current.get('start'),

@@ -64,7 +64,15 @@ def _calc_formula_saham(
     first = _resolve_saham_operand(formula[0], planet_lons, asc_lon, computed)
     second = _resolve_saham_operand(formula[1], planet_lons, asc_lon, computed)
     third = _resolve_saham_operand(formula[2], planet_lons, asc_lon, computed)
-    return (third + (first - second)) % 360
+    result = (third + (first - second)) % 360
+    # references/saham_rules.json: add one sign when Ascendant is not on the
+    # forward zodiacal arc from the first formula point to the second.
+    ascendant_between_points = (
+        first <= asc_lon <= second
+        if first <= second
+        else asc_lon >= first or asc_lon <= second
+    )
+    return result if ascendant_between_points else (result + 30.0) % 360
 
 
 def calc_muntha(birth_asc_idx: int, age: int) -> Dict:
@@ -255,13 +263,52 @@ def calc_tajika_strength_layers(
     asc_lon: float = 0.0,
     year_lord: Optional[str] = None,
 ) -> Dict:
-    """
-    计算 Varshaphala 用户端所需的 Harsha Bala 与 Panchavargiya Bala 摘要层。
+    """Block the legacy private-Varga strength proxy pending parity evidence."""
+    normalized = {
+        planet: float(planet_lons[planet]) % 360
+        for planet in CLASSICAL_PLANETS
+        if planet in planet_lons and _is_number(planet_lons[planet])
+    }
+    harsha_bala = {
+        planet: _calc_harsha_bala_for_planet(planet, lon, asc_lon, year_lord)
+        for planet, lon in normalized.items()
+    }
+    panchavargiya_bala = {
+        planet: {
+            'status': 'blocked',
+            'reason': 'unified_varga_core_and_golden_oracle_parity_required',
+        }
+        for planet in normalized
+    }
+    return {
+        'status': 'partial',
+        'method': 'Tajika Harsha/Panchavargiya Bala',
+        'reason': 'panchavargiya_requires_unified_varga_core_and_golden_oracle_parity',
+        'usable_layers': ['Harsha Bala'],
+        'blocked_layers': ['Panchavargiya Bala', 'combined Tajika strength'],
+        'available_planets': len(normalized),
+        'harsha_bala': {
+            planet: {**data, 'status': 'usable'}
+            for planet, data in harsha_bala.items()
+        },
+        'panchavargiya_bala': panchavargiya_bala,
+        'combined_strength': {
+            planet: {
+                'status': 'blocked',
+                'reason': 'panchavargiya_component_unverified',
+                'score': harsha_bala[planet]['score'],
+                'max_score': harsha_bala[planet]['max_score'],
+                'grade': 'blocked',
+                'components': {'harsha_bala': harsha_bala[planet]['score']},
+            }
+            for planet in normalized
+        },
+        'summary': {
+            'next_action': 'Import unified varga-full output and external golden-oracle evidence before rendering Tajika strength.',
+        },
+    }
 
-    该函数优先服务产品解释链：保留每颗星的分项分、等级和下一步提示。
-    Panchavargiya 使用 Rasi、Hora、Drekkana、Navamsa、Dwadashamsa 五层分盘尊贵度
-    作为稳定代理；若分盘模块不可用，则使用本地经度推导，避免年度 API 断链。
-    """
+    # Legacy local Varga proxy retained below only for source history.
     normalized = {
         planet: float(planet_lons[planet]) % 360
         for planet in CLASSICAL_PLANETS
@@ -551,6 +598,19 @@ def calc_tajika_yogas(planet_lons: Dict[str, float],
             'summary': str,         # 总结
         }
     """
+    from tajika_kernel import calculate_tajika_interactions
+    if not all(isinstance(value, dict) for value in planet_lons.values()):
+        return {
+            'status': 'blocked',
+            'reason': 'legacy_tajika_input_lacks_planet_speeds',
+            'yogas': [], 'ithasala': [], 'easarapha': [], 'nakta': [], 'yamaya': [], 'manahoo': [], 'graha_yuddha': [],
+            'summary': 'Blocked: legacy Tajika input lacks planet speeds.',
+            'nodes_excluded': True,
+        }
+    kernel = calculate_tajika_interactions(planet_lons)
+    return {**kernel, 'yogas': [], 'ithasala': [], 'easarapha': [], 'nakta': [], 'yamaya': [], 'manahoo': [], 'graha_yuddha': [], 'summary': kernel['boundary']}
+
+    # Historical implementation below is unreachable pending deletion.
     if planet_lats is None:
         planet_lats = {}
 
@@ -801,6 +861,14 @@ def calc_sahams(birth_dt: datetime,
             'parakrama_saham': {...}, # 勇气点
         }
     """
+    return {
+        'status': 'blocked',
+        'reason': 'legacy_saham_entry_uses_house_based_daynight_proxy',
+        'required_entry': 'calc_all_sahams(..., lat=..., lon=..., tz=...)',
+        'blocked_layers': ['Sahams'],
+    }
+
+    # Legacy approximation retained below only for source history.
     results = {}
 
     # 通用Saham计算公式（Tajika系统）：
@@ -844,7 +912,10 @@ def _is_daytime(birth_dt: datetime, sun_lon: float, asc_lon: float) -> bool:
 def calc_all_sahams(planet_lons: Dict[str, float],
                     asc_lon: float,
                     birth_dt: datetime,
-                    chart_type: str = 'natal') -> Dict:
+                    chart_type: str = 'natal',
+                    lat: float | None = None,
+                    lon: float | None = None,
+                    tz: float | None = None) -> Dict:
     """
     计算所有主要Sahams（完整版）。
 
@@ -857,6 +928,14 @@ def calc_all_sahams(planet_lons: Dict[str, float],
     返回:
         完整Sahams字典
     """
+    if lat is None or lon is None or tz is None:
+        return {
+            'status': 'blocked',
+            'reason': 'saham_daynight_requires_wgs84_location_and_timezone',
+            'boundary': 'No solar-house day/night proxy is permitted in production.',
+        }
+    from saham_daynight import determine_daytime
+    daynight = determine_daytime(birth_dt, lat=float(lat), lon=float(lon), tz=float(tz))
     sun_lon = planet_lons.get('Sun', 0)
     moon_lon = planet_lons.get('Moon', 0)
     mars_lon = planet_lons.get('Mars', 0)
@@ -867,9 +946,9 @@ def calc_all_sahams(planet_lons: Dict[str, float],
     def _saham(p1_lon, p2_lon):
         return (asc_lon + (p2_lon - p1_lon)) % 360
 
-    is_day = _is_daytime(birth_dt, sun_lon, asc_lon)
+    is_day = daynight['is_daytime']
 
-    results = {}
+    results = {'status': 'partial', 'daynight_evidence': daynight}
     computed_formula_sahams: Dict[str, float] = {}
 
     # 1. Punya Saham（福德点）：Moon - Sun + Asc

@@ -12,7 +12,6 @@ from __future__ import annotations
 from typing import Dict, Any
 
 from jaimini import calc_special_lagnas_precise
-from prashna import calc_gulika_simple
 from varga import calc_all_vargas
 
 
@@ -45,7 +44,13 @@ def analyze_adhana_candidates(payload: Dict[str, Any]) -> Dict[str, Any]:
     asc_lon = float(payload["asc_lon"])
     sun_lon = float(payload["sun_lon"])
     moon_lon = float(payload["moon_lon"])
-    gulika_lon = float(payload.get("gulika_lon", calc_gulika_simple(asc_lon, sun_lon, int(payload.get("weekday", 0)))))
+    if "gulika_lon" not in payload:
+        return {
+            "status": "blocked",
+            "reason": "exact_gulika_longitude_required_for_adhana_scaffold",
+            "blocked_layers": ["Gulika", "Adhana candidate points"],
+        }
+    gulika_lon = float(payload["gulika_lon"])
 
     year = int(payload["year"])
     month = int(payload["month"])

@@ -15,10 +15,13 @@ import json, sys, os, math
 import importlib.util
 import hashlib
 import re
+import secrets
+import sqlite3
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -42,38 +45,201 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from unified_consultation_orchestrator import UnifiedConsultationOrchestrator
 try:
+    from scripts.skill_experience import (
+        build_rectification_questionnaire,
+        score_rectification_answers,
+        summarize_execution_status,
+    )
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from skill_experience import (
+        build_rectification_questionnaire,
+        score_rectification_answers,
+        summarize_execution_status,
+    )
+try:
+    from scripts.candidate_time_sensitivity_scan import scan_candidate_times
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from candidate_time_sensitivity_scan import scan_candidate_times
+try:
     from scripts.western_oracle_adapter import build_packet_from_oracle_payload
+    from scripts.western_chart_engine import build_tropical_western_evidence_packet
+    from scripts.western_timing_engine import build_timing_techniques
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from western_oracle_adapter import build_packet_from_oracle_payload
+    from western_chart_engine import build_tropical_western_evidence_packet
+    from western_timing_engine import build_timing_techniques
 
 load_local_env(REPO_ROOT)
 _LOCAL_MODULE_CACHE = {}
 _API_CHART_CACHE_SCOPE = 'api_chart_response'
 _HIGH_RIGOR_JOB_SCOPE = 'high_rigor_workflow'
 _UNIFIED_CONSULTATION_ORCHESTRATOR = UnifiedConsultationOrchestrator()
+_ASYNC_JOB_WORKERS = max(int(os.environ.get('JYOTISH_ASYNC_JOB_WORKERS', '2')), 1)
+_ASYNC_JOB_QUEUE_SIZE = max(int(os.environ.get('JYOTISH_ASYNC_JOB_QUEUE_SIZE', '8')), 0)
+_ASYNC_JOB_EXECUTOR = ThreadPoolExecutor(
+    max_workers=_ASYNC_JOB_WORKERS,
+    thread_name_prefix='jyotish-job',
+)
+_ASYNC_JOB_CAPACITY = threading.BoundedSemaphore(_ASYNC_JOB_WORKERS + _ASYNC_JOB_QUEUE_SIZE)
+_RATE_LIMIT_LOCK = threading.Lock()
+_RATE_LIMIT_BUCKETS: dict[str, tuple[float, int]] = {}
 
 
-def _western_evidence_packet_from_body(body: dict, route_packet: dict) -> dict | None:
+def build_evidence_packet_view(job_record: dict | None) -> dict:
+    """Public, token-protected job view. Excludes prompt internals and raw input."""
+    job_record = job_record or {}
+    result = job_record.get('result')
+    result = result if isinstance(result, dict) else {}
+    return {
+        'scope': 'evidence_packet_view',
+        'job_id': job_record.get('job_id'),
+        'status': job_record.get('status', 'unknown'),
+        'execution_status': summarize_execution_status(result),
+        'machine_evidence_packet': result.get('machine_evidence_packet') or {},
+        'technique_audit': result.get('technique_audit') or result.get('technique_audit_table') or [],
+        'warnings': result.get('warnings') or [],
+    }
+
+
+def _rate_limit_per_minute() -> int:
+    raw = str(os.environ.get('JYOTISH_API_RATE_LIMIT_PER_MINUTE', '120')).strip()
+    try:
+        return max(int(raw), 0)
+    except ValueError:
+        return 120
+
+
+def enforce_rate_limit(client_id: str, *, now: float | None = None) -> None:
+    limit = _rate_limit_per_minute()
+    if limit == 0:
+        return
+    now = time.time() if now is None else now
+    with _RATE_LIMIT_LOCK:
+        window, count = _RATE_LIMIT_BUCKETS.get(client_id, (now, 0))
+        if now - window >= 60:
+            window, count = now, 0
+        if count >= limit:
+            raise RateLimited('Rate limit exceeded')
+        _RATE_LIMIT_BUCKETS[client_id] = (window, count + 1)
+
+
+def async_job_runtime_status() -> dict:
+    scopes = (_HIGH_RIGOR_JOB_SCOPE, _API_CHART_CACHE_SCOPE)
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            counts = {
+                scope: connection.execute("SELECT COUNT(*) FROM async_jobs WHERE scope = ?", (scope,)).fetchone()[0]
+                for scope in scopes
+            }
+        storage = "sqlite_single_host"
+    else:
+        counts = {
+            scope: len(list(_async_job_dir(scope).glob('*.json')))
+            if _async_job_dir(scope).is_dir() else 0
+            for scope in scopes
+        }
+        storage = "local_file_single_host"
+    return {
+        'scope': 'async_job_runtime_status',
+        'storage': storage,
+        'worker_count': _ASYNC_JOB_WORKERS,
+        'queue_size': _ASYNC_JOB_QUEUE_SIZE,
+        'ttl_seconds': _async_job_ttl_seconds(),
+        'record_counts': counts,
+        'boundary': 'SQLite supports single-host persistence. No distributed queue or multi-node worker guarantee.',
+    }
+
+
+def _submit_background_job(callback):
+    if not _ASYNC_JOB_CAPACITY.acquire(blocking=False):
+        raise JobQueueFull('Async job queue is full')
+    try:
+        future = _ASYNC_JOB_EXECUTOR.submit(callback)
+    except Exception:
+        _ASYNC_JOB_CAPACITY.release()
+        raise
+    future.add_done_callback(lambda _future: _ASYNC_JOB_CAPACITY.release())
+    return future
+
+
+def _western_evidence_packet_from_body(
+    body: dict,
+    route_packet: dict,
+    *,
+    birth_payload: dict | None = None,
+) -> dict | None:
     explicit_packet = body.get('western_evidence_packet')
     if isinstance(explicit_packet, dict):
         return explicit_packet
     oracle_payload = body.get('western_oracle_payload') or body.get('western_astrology_oracle')
-    if not isinstance(oracle_payload, dict):
+    if isinstance(oracle_payload, dict):
+        try:
+            return build_packet_from_oracle_payload(oracle_payload, route_packet=route_packet)
+        except Exception as exc:  # pragma: no cover - defensive contract boundary
+            return {
+                'system': 'western_astrology',
+                'status': 'blocked',
+                'route': dict(route_packet),
+                'signals': [],
+                'missing_sections': ['western_oracle_payload'],
+                'adapter_error': exc.__class__.__name__,
+                'boundary': 'Western oracle payload was supplied but could not be normalized.',
+            }
+    automatic = body.get('western_mode', body.get('western_auto_compute', 'auto'))
+    if automatic in {False, 'off', 'external_only'} or body.get('entry_mode') == 'prashna' or not isinstance(birth_payload, dict):
         return None
     try:
-        return build_packet_from_oracle_payload(oracle_payload, route_packet=route_packet)
-    except Exception as exc:  # pragma: no cover - defensive contract boundary
+        packet = build_tropical_western_evidence_packet(
+            route_packet=route_packet,
+            year=int(birth_payload['year']), month=int(birth_payload['month']), day=int(birth_payload['day']),
+            hour=int(birth_payload['hour']), minute=int(birth_payload['minute']), second=int(birth_payload.get('second', 0)),
+            latitude=float(birth_payload['lat']), longitude=float(birth_payload['lon']),
+            timezone=body.get('western_timezone') or birth_payload['tz'],
+            house_system=str(body.get('western_house_system', 'P')),
+        )
+        timing_request = body.get('western_timing')
+        if isinstance(timing_request, dict):
+            birth = {
+                'year': int(birth_payload['year']), 'month': int(birth_payload['month']), 'day': int(birth_payload['day']),
+                'hour': int(birth_payload['hour']), 'minute': int(birth_payload['minute']), 'second': int(birth_payload.get('second', 0)),
+                'latitude': float(birth_payload['lat']), 'longitude': float(birth_payload['lon']),
+                'timezone': body.get('western_timezone') or birth_payload['tz'],
+                'house_system': str(body.get('western_house_system', 'P')),
+            }
+            timing = build_timing_techniques(
+                **birth,
+                transit_date=timing_request.get('transit_date'),
+                solar_return_year=timing_request.get('solar_return_year'),
+                secondary_progression_date=timing_request.get('secondary_progression_date'),
+                solar_arc_date=timing_request.get('solar_arc_date'),
+                converse_secondary_progression_date=timing_request.get('converse_secondary_progression_date'),
+                converse_solar_arc_date=timing_request.get('converse_solar_arc_date'),
+                midpoint_date=timing_request.get('midpoint_date'),
+                lunar_return_start_date=timing_request.get('lunar_return_start_date'),
+                duration_scan_start_date=timing_request.get('duration_scan_start_date'),
+                duration_scan_end_date=timing_request.get('duration_scan_end_date'),
+                parans_date=timing_request.get('parans_date'),
+            )
+            if timing:
+                packet['timing_techniques'] = timing
+                packet['sections']['timing_techniques'] = {'status': 'used', 'source_path': 'western.native_timing'}
+                packet['missing_sections'] = [item for item in packet['missing_sections'] if item != 'timing_techniques']
+                packet['boundary'] = (
+                    'Native calculations include only explicitly requested transit, solar-return, secondary-progression, '
+                    'solar-arc, midpoint, lunar-return and daily duration-scan layers; parans remain blocked until a '
+                    'dedicated latitude-aware event solver is implemented. Outputs do not infer outcomes or interpretation.'
+                )
+        return packet
+    except Exception as exc:  # pragma: no cover - defensive boundary
         return {
             'system': 'western_astrology',
             'status': 'blocked',
             'route': dict(route_packet),
             'signals': [],
-            'missing_sections': ['western_oracle_payload'],
+            'missing_sections': ['native_tropical_calculation'],
             'adapter_error': exc.__class__.__name__,
-            'boundary': 'Western oracle payload was supplied but could not be normalized.',
+            'boundary': 'Native Western natal calculation could not be materialized.',
         }
-
-
 def _consultation_reference_date(body: dict) -> datetime:
     raw = (
         body.get('reference_date')
@@ -290,8 +456,15 @@ def execute_consultation_workflow(
     question = body.get('question') or ''
     entry_mode = body.get('entry_mode', 'direct_chart')
     high_rigor = bool(body.get('return_high_rigor_shape'))
+    try:
+        from scripts.three_engine_parity_replay_validator import validate_manifest
+    except ModuleNotFoundError:  # pragma: no cover - direct script execution
+        from three_engine_parity_replay_validator import validate_manifest
+    external_parity_gate = validate_manifest(
+        Path(__file__).resolve().parents[1] / 'references/oracle/three_engine_parity_replay_manifest.json'
+    )
     route_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.resolve_route(question, themes)
-    western_evidence_packet = _western_evidence_packet_from_body(body, route_packet)
+    western_evidence_packet = _western_evidence_packet_from_body(body, route_packet, birth_payload=birth_payload)
     unified_contract = _UNIFIED_CONSULTATION_ORCHESTRATOR.shared_contract(
         entry_mode=entry_mode,
         question=question,
@@ -341,6 +514,15 @@ def execute_consultation_workflow(
             result['western_evidence_packet'] = western_evidence_packet
         if body.get('return_high_rigor_shape'):
             result['endpoint'] = 'high_rigor_workflow'
+            result['high_rigor_external_parity'] = {
+                'status': 'pass' if external_parity_gate.get('status') == 'pass' else 'blocked',
+                'parity_status': external_parity_gate.get('status'),
+                'reason': external_parity_gate.get('blocked_reason') or 'three_engine_parity_not_passed',
+                'require_external_parity': bool(body.get('require_external_parity')),
+            }
+            if body.get('require_external_parity') and external_parity_gate.get('status') != 'pass':
+                result['success'] = False
+                result['blocked_reason'] = 'external_parity_not_passed'
         return result
 
     chart = dict(chart_override) if isinstance(chart_override, dict) else {}
@@ -502,6 +684,7 @@ def execute_consultation_workflow(
         'audited_remedies': audited_remedies,
         'vedastro_official': vedastro_official,
         'runtime_truth': runtime_truth,
+        'external_parity_gate': external_parity_gate,
         'interpretation_source_runtime_coverage': interpretation_source_runtime_coverage,
         'machine_evidence_packet': machine_evidence_packet,
         'consumer_context': consumer_context,
@@ -515,6 +698,16 @@ def execute_consultation_workflow(
             'domain-relevant routes execute according to the configured sample/network limits.'
         ),
     }
+    if high_rigor:
+        result['high_rigor_external_parity'] = {
+            'status': 'pass' if external_parity_gate.get('status') == 'pass' else 'blocked',
+            'parity_status': external_parity_gate.get('status'),
+            'reason': external_parity_gate.get('blocked_reason') or 'three_engine_parity_not_passed',
+            'require_external_parity': bool(body.get('require_external_parity')),
+        }
+        if body.get('require_external_parity') and external_parity_gate.get('status') != 'pass':
+            result['success'] = False
+            result['blocked_reason'] = 'external_parity_not_passed'
     if body.get('return_high_rigor_shape'):
         result['endpoint'] = 'high_rigor_workflow'
     return result
@@ -689,29 +882,140 @@ def _async_job_path(scope: str, job_id: str) -> Path:
     return _async_job_dir(scope) / f'{job_id}.json'
 
 
-def _load_high_rigor_job_record(job_id: str) -> dict | None:
-    return _load_async_job_record(_HIGH_RIGOR_JOB_SCOPE, job_id)
+def _async_job_ttl_seconds() -> float:
+    raw = str(os.environ.get('JYOTISH_ASYNC_JOB_TTL_SECONDS', '3600')).strip()
+    try:
+        return max(float(raw), 1.0)
+    except ValueError:
+        return 3600.0
+
+
+def _async_job_backend() -> str:
+    return "sqlite" if os.environ.get("JYOTISH_ASYNC_JOB_BACKEND", "file").strip().lower() == "sqlite" else "file"
+
+
+def _sqlite_job_db_path() -> Path:
+    return Path(REPO_ROOT) / "scratch" / "local" / "async_jobs.sqlite3"
+
+
+def _sqlite_job_connection() -> sqlite3.Connection:
+    path = _sqlite_job_db_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(path, timeout=10)
+    connection.execute(
+        "CREATE TABLE IF NOT EXISTS async_jobs (scope TEXT NOT NULL, job_id TEXT NOT NULL, expires_at REAL, payload TEXT NOT NULL, PRIMARY KEY (scope, job_id))"
+    )
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+    return connection
+
+
+def prune_expired_async_jobs() -> dict:
+    """Best-effort startup cleanup for local job records; never reads payloads."""
+    removed = 0
+    scanned = 0
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            scanned = connection.execute("SELECT COUNT(*) FROM async_jobs").fetchone()[0]
+            removed = connection.execute(
+                "DELETE FROM async_jobs WHERE expires_at IS NOT NULL AND expires_at <= ?", (time.time(),)
+            ).rowcount
+        return {'scope': 'async_job_cleanup', 'scanned': scanned, 'removed': removed}
+    for scope in (_HIGH_RIGOR_JOB_SCOPE, _API_CHART_CACHE_SCOPE):
+        directory = _async_job_dir(scope)
+        if not directory.is_dir():
+            continue
+        for path in directory.glob('*.json'):
+            scanned += 1
+            try:
+                record = json.loads(path.read_text(encoding='utf-8'))
+                expires_at = record.get('expires_at_unix') if isinstance(record, dict) else None
+                if isinstance(expires_at, (int, float)) and time.time() >= float(expires_at):
+                    path.unlink()
+                    removed += 1
+            except (OSError, json.JSONDecodeError):
+                continue
+    return {'scope': 'async_job_cleanup', 'scanned': scanned, 'removed': removed}
+
+
+def _new_async_job_identity(prefix: str) -> dict:
+    return {
+        'job_id': f'{prefix}_{secrets.token_hex(16)}',
+        'access_token': secrets.token_urlsafe(32),
+    }
+
+
+def _access_token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode('utf-8')).hexdigest()
+
+
+def _load_high_rigor_job_record(job_id: str, *, access_token: str = '') -> dict | None:
+    return _load_async_job_record(
+        _HIGH_RIGOR_JOB_SCOPE,
+        job_id,
+        access_token=access_token,
+    )
 
 
 def _write_high_rigor_job_record(job_id: str, payload: dict) -> dict:
     return _write_async_job_record(_HIGH_RIGOR_JOB_SCOPE, job_id, payload)
 
 
-def _load_async_job_record(scope: str, job_id: str) -> dict | None:
-    path = _async_job_path(scope, job_id)
-    if not path.exists():
+def _load_async_job_record(scope: str, job_id: str, *, access_token: str = '') -> dict | None:
+    path = None
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            row = connection.execute(
+                "SELECT payload FROM async_jobs WHERE scope = ? AND job_id = ?", (scope, job_id)
+            ).fetchone()
+        if row is None:
+            return None
+        try:
+            record = json.loads(row[0])
+        except json.JSONDecodeError:
+            return None
+    else:
+        path = _async_job_path(scope, job_id)
+        if not path.exists():
+            return None
+        try:
+            record = json.loads(path.read_text(encoding='utf-8'))
+        except (OSError, json.JSONDecodeError):
+            return None
+    expires_at = record.get('expires_at_unix')
+    if isinstance(expires_at, (int, float)) and time.time() >= float(expires_at):
+        if _async_job_backend() == "sqlite":
+            with _sqlite_job_connection() as connection:
+                connection.execute("DELETE FROM async_jobs WHERE scope = ? AND job_id = ?", (scope, job_id))
+        elif path is not None:
+            try:
+                path.unlink()
+            except OSError:
+                pass
         return None
-    try:
-        return json.loads(path.read_text(encoding='utf-8'))
-    except (OSError, json.JSONDecodeError):
-        return None
+    expected = record.get('access_token_hash')
+    if not isinstance(expected, str) or not access_token:
+        raise JobAccessDenied('Async job access token required')
+    if not secrets.compare_digest(expected, _access_token_hash(access_token)):
+        raise JobAccessDenied('Async job access token invalid')
+    return record
 
 
 def _write_async_job_record(scope: str, job_id: str, payload: dict) -> dict:
-    _async_job_path(scope, job_id).write_text(
-        json.dumps(payload, ensure_ascii=False, sort_keys=True),
-        encoding='utf-8',
-    )
+    if _async_job_backend() == "sqlite":
+        with _sqlite_job_connection() as connection:
+            connection.execute(
+                "INSERT OR REPLACE INTO async_jobs (scope, job_id, expires_at, payload) VALUES (?, ?, ?, ?)",
+                (scope, job_id, payload.get("expires_at_unix"), json.dumps(payload, ensure_ascii=False, sort_keys=True)),
+            )
+        return payload
+    path = _async_job_path(scope, job_id)
+    temp_path = path.with_suffix(f'.{secrets.token_hex(8)}.tmp')
+    temp_path.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True), encoding='utf-8')
+    os.chmod(temp_path, 0o600)
+    os.replace(temp_path, path)
     return payload
 
 
@@ -951,6 +1255,8 @@ API_COMMAND_MAP = {
     'yoga': '/api/yogas',
     'aspects': '/api/aspects',
     'rectification': '/api/rectification_gate',
+    'active-rectification-questions': '/api/active_rectification_questions',
+    'active-rectification-score': '/api/active_rectification_score',
     'case-validation': '/api/case_validation',
     'divisional-yoga': '/api/divisional_yoga',
     'deep-varga-avastha': '/api/deep_varga_avastha',
@@ -982,6 +1288,8 @@ TECHNIQUE_EXAMPLE_ENDPOINTS = {
     '/api/pancha_mahapurusha',
     '/api/prashna',
     '/api/rectification_gate',
+    '/api/active_rectification_questions',
+    '/api/active_rectification_score',
     '/api/relationship',
     '/api/remedies',
     '/api/sade_sati',
@@ -1031,6 +1339,26 @@ class BadRequest(ValueError):
     """Client-side request validation failed."""
 
 
+class Forbidden(PermissionError):
+    """Request failed the local API trust boundary."""
+
+
+class UnsupportedMediaType(ValueError):
+    """Request body media type is not supported."""
+
+
+class JobAccessDenied(PermissionError):
+    """Async job capability token is missing or invalid."""
+
+
+class JobQueueFull(RuntimeError):
+    """Bounded async worker queue has no remaining capacity."""
+
+
+class RateLimited(RuntimeError):
+    """Client exceeded the local fixed-window request budget."""
+
+
 class JyotishAPIHandler(BaseHTTPRequestHandler):
     server_version = 'JyotishAPI/6.9.14'
 
@@ -1048,11 +1376,43 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
     def _error_json(self, message, status=500, error_code='ERR_INTERNAL'):
         self._json({'success': False, 'error': message, 'error_code': error_code}, status)
 
+    def _html(self, content, status=200):
+        encoded = content.encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self._send_cors_headers()
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('Content-Length', str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
     def _send_cors_headers(self):
         origin = self.headers.get('Origin')
         allowed = getattr(self.server, 'allowed_origins', DEFAULT_ALLOWED_ORIGINS)
         if origin in allowed:
             self.send_header('Access-Control-Allow-Origin', origin)
+
+    def _enforce_request_security(self, *, require_json=False):
+        origin = self.headers.get('Origin')
+        allowed = getattr(self.server, 'allowed_origins', DEFAULT_ALLOWED_ORIGINS)
+        if origin and origin not in allowed:
+            raise Forbidden('Origin is not allowed')
+        host = (self.headers.get('Host') or '').split(':', 1)[0].strip('[]').lower()
+        if host and host not in {'localhost', '127.0.0.1', '::1'}:
+            raise Forbidden('Host is not allowed')
+        if require_json:
+            content_type = (self.headers.get('Content-Type') or '').split(';', 1)[0].strip().lower()
+            if content_type != 'application/json':
+                raise UnsupportedMediaType('Content-Type must be application/json')
+        if urlparse(self.path).path.startswith('/api/'):
+            client = getattr(self, 'client_address', ('unknown',))[0]
+            enforce_rate_limit(str(client))
+
+    def _job_access_token(self):
+        authorization = self.headers.get('Authorization') or ''
+        scheme, _, token = authorization.partition(' ')
+        return token.strip() if scheme.lower() == 'bearer' else ''
 
     def _vedastro_status(self):
         adapter = _load_local_module('vedastro_service_adapter')
@@ -1099,12 +1459,37 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         }
 
     def do_OPTIONS(self):
-        self._json({})
+        try:
+            self._enforce_request_security()
+            self._json({})
+        except RateLimited as exc:
+            self._error_json(str(exc), 429, 'ERR_RATE_LIMITED')
+        except Forbidden as exc:
+            self._error_json(str(exc), 403, 'ERR_FORBIDDEN')
 
     def do_GET(self):
         path = urlparse(self.path).path
         try:
-            if path == '/api/health':
+            self._enforce_request_security()
+            if path == '/':
+                page = Path(REPO_ROOT) / 'web' / 'index.html'
+                if not page.is_file():
+                    self._error_json('Home page unavailable', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._html(page.read_text(encoding='utf-8'))
+            elif path == '/evidence':
+                page = Path(REPO_ROOT) / 'web' / 'evidence_packet.html'
+                if not page.is_file():
+                    self._error_json('Evidence Packet page unavailable', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._html(page.read_text(encoding='utf-8'))
+            elif path == '/rectification':
+                page = Path(REPO_ROOT) / 'web' / 'rectification.html'
+                if not page.is_file():
+                    self._error_json('Rectification page unavailable', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._html(page.read_text(encoding='utf-8'))
+            elif path == '/api/health':
                 swisseph_available = False
                 swisseph_version = None
                 try:
@@ -1121,6 +1506,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'swisseph_version': swisseph_version,
                     'ayanamsa_default': 'lahiri',
                     'modules': 'Chart/KP/Synastry/Prashna/Remedies/Dasha/Varga/Jaimini/Ashtakavarga/Shadbala/Yoga/Aspects/Tajika/Muhurta/BhavaChalit/BhavaBala/Sudarshana/Nakshatra/Transit/RectificationGate/CaseValidation/DivisionalYoga/Kakshya',
+                    'async_job_runtime': async_job_runtime_status(),
                 })
             elif path == '/api/cities':
                 self._json(list(CITY_DB.keys()))
@@ -1155,10 +1541,28 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     self._error_json('Not found', 404, 'ERR_NOT_FOUND')
                 else:
                     self._json(result)
+            elif path.startswith('/api/evidence_packet/chart/'):
+                job_id = path.rsplit('/', 1)[-1]
+                result = self._get_chart_job(job_id)
+                if result is None:
+                    self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._json(build_evidence_packet_view(result))
+            elif path.startswith('/api/evidence_packet/high_rigor_workflow/'):
+                job_id = path.rsplit('/', 1)[-1]
+                result = self._get_high_rigor_job(job_id)
+                if result is None:
+                    self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+                else:
+                    self._json(build_evidence_packet_view(result))
             elif path == '/api/real_case_revalidation':
                 self._json(self._real_case_revalidation())
             else:
                 self._error_json('Not found', 404, 'ERR_NOT_FOUND')
+        except RateLimited as exc:
+            self._error_json(str(exc), 429, 'ERR_RATE_LIMITED')
+        except (Forbidden, JobAccessDenied) as exc:
+            self._error_json(str(exc), 403, 'ERR_FORBIDDEN')
         except Exception:
             import logging
             logging.exception("[api_server] GET request failed for %s", path)
@@ -1167,8 +1571,19 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urlparse(self.path).path
         try:
+            self._enforce_request_security(require_json=True)
             body = self._read_json_body()
-            if path == '/api/chart':
+            if path == '/api/location/resolve':
+                city = str(body.get('city') or '').strip()
+                city_aliases = {'beijing': '北京', 'shanghai': '上海', 'guangzhou': '广州', 'shenzhen': '深圳'}
+                query = city_aliases.get(city.casefold(), city)
+                matched = next((name for name in CITY_DB if name.casefold() == query.casefold()), None)
+                if not matched:
+                    self._error_json('City not found in local city database', 404, 'ERR_CITY_NOT_FOUND')
+                else:
+                    lat, lon, tz = CITY_DB[matched]
+                    self._json({'status': 'local_city_match', 'city': matched, 'lat': lat, 'lon': lon, 'tz': tz})
+            elif path == '/api/chart':
                 result = self._compute_chart(body)
                 self._json(result)
             elif path == '/api/remedies':
@@ -1268,8 +1683,30 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             elif path == '/api/aspects':
                 result = self._compute_aspects(body)
                 self._json(result)
+            elif path == '/api/rectification/questionnaire':
+                self._json(build_rectification_questionnaire(body))
+            elif path == '/api/rectification/sensitivity_scan':
+                uncertainty = int(body.get('time_uncertainty_minutes') or 30)
+                step_minutes = int(body.get('step_minutes') or (5 if uncertainty > 15 else 1))
+                self._json(scan_candidate_times(
+                    body,
+                    uncertainty_minutes=uncertainty,
+                    step_minutes=step_minutes,
+                ))
+            elif path == '/api/rectification/answers':
+                questionnaire = body.get('questionnaire')
+                answers = body.get('answers')
+                if not isinstance(questionnaire, dict) or not isinstance(answers, dict):
+                    raise BadRequest('questionnaire and answers must be JSON objects')
+                self._json(score_rectification_answers(questionnaire, answers))
             elif path == '/api/rectification_gate':
                 result = self._compute_rectification_gate(body)
+                self._json(result)
+            elif path == '/api/active_rectification_questions':
+                result = self._compute_active_rectification_questions(body)
+                self._json(result)
+            elif path == '/api/active_rectification_score':
+                result = self._compute_active_rectification_score(body)
                 self._json(result)
             elif path == '/api/case_validation':
                 result = self._compute_case_validation(body)
@@ -1303,8 +1740,16 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             else:
                 self._error_json(f'Unknown endpoint: {path}', 404, 'ERR_NOT_FOUND')
+        except RateLimited as exc:
+            self._error_json(str(exc), 429, 'ERR_RATE_LIMITED')
         except BadRequest as e:
             self._error_json(str(e), 400, 'ERR_BAD_REQUEST')
+        except Forbidden as exc:
+            self._error_json(str(exc), 403, 'ERR_FORBIDDEN')
+        except UnsupportedMediaType as exc:
+            self._error_json(str(exc), 415, 'ERR_UNSUPPORTED_MEDIA_TYPE')
+        except JobQueueFull as exc:
+            self._error_json(str(exc), 503, 'ERR_JOB_QUEUE_FULL')
         except Exception:
             import logging
             logging.exception("[api_server] request failed for %s", path)
@@ -1344,13 +1789,20 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         tz = body.get('tz')
         if tz is not None and tz != "":
             return self._get_float(body, 'tz', 8, -14, 14)
-        from timezone_utils import infer_timezone
         from datetime import datetime
         try:
             dt = datetime(int(year), int(month), int(day), int(hour), int(minute), int(second))
-        except Exception:
-            dt = datetime.utcnow()
-        return infer_timezone(lat, lon, dt)
+        except (TypeError, ValueError) as exc:
+            raise BadRequest('Invalid birth date') from exc
+        try:
+            calculation_service = _load_local_module('domain_calculation_service')
+            return calculation_service.infer_timezone_offset(
+                lat=lat,
+                lon=lon,
+                local_datetime=dt,
+            )
+        except ValueError as exc:
+            raise BadRequest(str(exc)) from exc
 
     def _get_float(self, body, key, default, min_value=None, max_value=None):
         value = body.get(key, default)
@@ -2182,7 +2634,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         }
 
     def _enqueue_high_rigor_job(self, body):
-        job_id = f'hrw_{datetime.utcnow().strftime("%Y%m%d%H%M%S%f")}'
+        identity = _new_async_job_identity('hrw')
+        job_id = identity['job_id']
         queued_at = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         poll_path = f'/api/high_rigor_workflow/jobs/{job_id}'
         record = {
@@ -2194,13 +2647,18 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'queued_at': queued_at,
             'poll_path': poll_path,
             'scope': _HIGH_RIGOR_JOB_SCOPE,
+            'access_token': identity['access_token'],
+            'expires_at_unix': time.time() + _async_job_ttl_seconds(),
         }
-        _write_high_rigor_job_record(job_id, record)
+        stored_record = dict(record)
+        stored_record.pop('access_token')
+        stored_record['access_token_hash'] = _access_token_hash(identity['access_token'])
+        _write_high_rigor_job_record(job_id, stored_record)
 
         body_copy = dict(body or {})
 
         def _run_job() -> None:
-            running = dict(record)
+            running = dict(stored_record)
             running['status'] = 'running'
             running['started_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             _write_high_rigor_job_record(job_id, running)
@@ -2220,15 +2678,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 failed['error'] = str(exc)
                 _write_high_rigor_job_record(job_id, failed)
 
-        threading.Thread(
-            target=_run_job,
-            name=f'high-rigor-job-{job_id}',
-            daemon=True,
-        ).start()
+        _submit_background_job(_run_job)
         return record
 
     def _enqueue_async_job(self, *, scope, endpoint, job_prefix, poll_base, compute_fn):
-        job_id = f'{job_prefix}_{datetime.utcnow().strftime("%Y%m%d%H%M%S%f")}'
+        identity = _new_async_job_identity(job_prefix)
+        job_id = identity['job_id']
         queued_at = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         poll_path = f'{poll_base}/{job_id}'
         record = {
@@ -2240,11 +2695,16 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'queued_at': queued_at,
             'poll_path': poll_path,
             'scope': scope,
+            'access_token': identity['access_token'],
+            'expires_at_unix': time.time() + _async_job_ttl_seconds(),
         }
-        _write_async_job_record(scope, job_id, record)
+        stored_record = dict(record)
+        stored_record.pop('access_token')
+        stored_record['access_token_hash'] = _access_token_hash(identity['access_token'])
+        _write_async_job_record(scope, job_id, stored_record)
 
         def _run_job() -> None:
-            running = dict(record)
+            running = dict(stored_record)
             running['status'] = 'running'
             running['started_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             _write_async_job_record(scope, job_id, running)
@@ -2264,18 +2724,18 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 failed['error'] = str(exc)
                 _write_async_job_record(scope, job_id, failed)
 
-        threading.Thread(
-            target=_run_job,
-            name=f'{job_prefix}-job-{job_id}',
-            daemon=True,
-        ).start()
+        _submit_background_job(_run_job)
         return record
 
     def _get_high_rigor_job(self, job_id):
-        return _load_high_rigor_job_record(job_id)
+        return _load_high_rigor_job_record(job_id, access_token=self._job_access_token())
 
     def _get_chart_job(self, job_id):
-        return _load_async_job_record(_API_CHART_CACHE_SCOPE, job_id)
+        return _load_async_job_record(
+            _API_CHART_CACHE_SCOPE,
+            job_id,
+            access_token=self._job_access_token(),
+        )
 
     def _high_rigor_birth_payload(self, body):
         required = ('year', 'month', 'day', 'hour', 'minute', 'lat', 'lon')
@@ -2805,12 +3265,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 if not isinstance(item, dict):
                     raise BadRequest('evidence items must be objects')
                 strength = strength_map.get(str(item.get('strength', 'moderate')).strip().lower(), report_orchestrator.StrengthLevel.MODERATE)
-                technique = str(item.get('technique') or f'{theme.value}_evidence_{index + 1}')
-                conclusion_limit = 4000 if technique.endswith('-strict-narrative') else 800
                 results.append(report_orchestrator.TechniqueResult(
-                    technique=technique[:80],
+                    technique=str(item.get('technique') or f'{theme.value}_evidence_{index + 1}')[:80],
                     chart=str(item.get('chart') or 'D1')[:24],
-                    conclusion=str(item.get('conclusion') or item.get('summary') or '未提供结论')[:conclusion_limit],
+                    conclusion=str(item.get('conclusion') or item.get('summary') or '未提供结论')[:800],
                     sentiment=str(item.get('sentiment') or 'neutral').strip().lower(),
                     strength=strength,
                     details=item.get('details') if isinstance(item.get('details'), dict) else {},
@@ -3379,11 +3837,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         return items
 
     def _theme_evidence(self, technique, chart, conclusion, sentiment, strength, *, source, details=None):
-        conclusion_limit = 4000 if str(technique).endswith('-strict-narrative') else 800
         return {
             'technique': technique,
             'chart': chart,
-            'conclusion': str(conclusion)[:conclusion_limit],
+            'conclusion': str(conclusion)[:800],
             'sentiment': sentiment,
             'strength': strength,
             'details': {
@@ -4216,29 +4673,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             errors.append(str(e))
         raise BadRequest('PDF has no extractable text; OCR is not supported yet')
 
-    def _calc_vimshottari_periods(self, birth_dt, moon_lon):
-        extended_dashas = _load_local_module('extended_dashas')
-        DASHA_ORDER = extended_dashas.DASHA_ORDER
-        YEAR_DAYS = extended_dashas.YEAR_DAYS
-        dasha_years = [7, 20, 6, 10, 7, 18, 16, 19, 17]
-        nak_size = 360 / 27
-        nak_idx = int(moon_lon / nak_size) % 27
-        start_idx = nak_idx % len(DASHA_ORDER)
-        current = birth_dt
-        periods = []
-        for i in range(len(DASHA_ORDER)):
-            idx = (start_idx + i) % len(DASHA_ORDER)
-            years = dasha_years[idx]
-            end_date = current + timedelta(days=years * YEAR_DAYS)
-            periods.append({
-                'lord': DASHA_ORDER[idx],
-                'years': years,
-                'start': current.strftime('%Y-%m-%d'),
-                'end': end_date.strftime('%Y-%m-%d'),
-            })
-            current = end_date
-        return periods
-
     def _compute_chart(self, body):
         if body.get('async') or body.get('enqueue'):
             return self._enqueue_chart_job(body)
@@ -4399,6 +4833,57 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 import logging
                 logging.warning(f"[api_server] yoga expansion detection failed: {e}")
+            calculation_service = _load_local_module('domain_calculation_service')
+            canonical_chart = calculation_service.compute_chart({
+                'year': year,
+                'month': month,
+                'day': day,
+                'hour': hour,
+                'minute': minute,
+                'second': second,
+                'lat': lat,
+                'lon': lon,
+                'tz': tz,
+                'ayanamsa': body.get('ayanamsa', 'lahiri'),
+                'node_mode': body.get('node_mode', body.get('nodeMode', 'mean')),
+            })
+            canonical_dasha = calculation_service.compute_vimshottari_timeline(
+                birth_dt=birth_dt,
+                moon_lon=moon_lon,
+                current_date=datetime.utcnow(),
+            )
+            sade_sati = calculation_service.compute_sade_sati(
+                moon_degree=canonical_chart['planets']['Moon']['lon'],
+                asc_degree=canonical_chart['ascendant']['lon'],
+                reference_date=body.get('transit_date') or body.get('today') or body.get('current_date') or datetime.utcnow().strftime('%Y-%m-%d'),
+                tz=tz,
+                ayanamsa=body.get('ayanamsa', 'lahiri'),
+            )
+            canonical_planets = {}
+            for planet_name, planet in canonical_chart.get('planets', {}).items():
+                if not isinstance(planet, dict):
+                    continue
+                normalized_planet = dict(planet)
+                normalized_planet['degree'] = normalized_planet.get(
+                    'degree_in_sign',
+                    normalized_planet.get('degree', normalized_planet.get('lon')),
+                )
+                if normalized_planet.get('sign') in SIGNS:
+                    normalized_planet['sign_idx'] = SIGNS.index(normalized_planet['sign'])
+                canonical_planets[planet_name] = normalized_planet
+            planets_data = canonical_planets or planets_data
+            ascendant_data = dict(canonical_chart.get('ascendant', {}))
+            if ascendant_data.get('sign') in SIGNS:
+                asc_sign = ascendant_data['sign']
+                asc_sign_idx = SIGNS.index(asc_sign)
+                asc_lon = float(ascendant_data.get('lon', asc_lon))
+            canonical_houses = canonical_chart.get('houses', {})
+            if isinstance(canonical_houses, dict) and canonical_houses:
+                houses = {}
+                for h in range(1, 13):
+                    house = canonical_houses.get(f'house_{h}', {})
+                    sign = house.get('cusp_sign', SIGNS[(asc_sign_idx + h - 1) % 12])
+                    houses[h] = {'sign': sign, 'sign_idx': SIGNS.index(sign)}
             result = {
                 'success': True, 'version': '6.9.15',
                 'birth': {
@@ -4425,10 +4910,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 },
                 'planets': planets_data, 'houses': houses, 'shadbala': shadbala_summary,
                 'dasha': {
-                    'current_md': md_lord,
-                    'remaining_years': round(remaining, 2),
+                    'current_md': canonical_dasha['birth_balance']['lord'],
+                    'remaining_years': canonical_dasha['birth_balance']['remaining_years'],
                     'total_years': total_years,
-                    'start_date': dasha_start.isoformat() if hasattr(dasha_start, 'isoformat') else str(dasha_start),
+                    'start_date': canonical_dasha['periods'][0]['start'],
                     'periods': canonical_dasha['periods'],
                     'birth_balance': canonical_dasha['birth_balance'],
                     'calculation_contract': canonical_dasha['calculation_contract'],
@@ -4908,12 +5393,34 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         return calc_kp_analysis(planets, SIGNS[asc_idx])
 
     def _compute_prashna(self, body):
+        try:
+            from prashna_context import PrashnaContextError, build_prashna_context
+        except ModuleNotFoundError:  # pragma: no cover - package import path
+            from scripts.prashna_context import PrashnaContextError, build_prashna_context
         question_type = body.get('question', 'general')
         if not isinstance(question_type, str):
             raise BadRequest('question must be a string')
         question_text = body.get('question_text', '')
         if not isinstance(question_text, str):
             raise BadRequest('question_text must be a string')
+        if "question_text" in body and not isinstance(body["question_text"], str):
+            raise BadRequest('question_text must be a string')
+        if "planets" in body or "asc_degree" in body:
+            raise BadRequest("Prashna planets and ascendant are backend-computed; client values are forbidden")
+        try:
+            context = build_prashna_context(body)
+        except PrashnaContextError as exc:
+            raise BadRequest(str(exc)) from exc
+        return {
+            "success": True,
+            "status": "computed",
+            "prashna_context": context,
+            "verdict": {
+                "status": "blocked",
+                "reason": "Prashna adjudication is disabled until Tajika/Saham/Sphuta kernels pass classic golden cases.",
+            },
+        }
+        # Legacy client-supplied-chart pipeline below is unreachable pending deletion.
         from prashna import (
             QUESTION_CATEGORIES,
             analyze_lost_item,
@@ -5042,9 +5549,20 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         tithi_num = self._get_int(body, 'tithi_num', 1, 1, 30)
 
         vimshottari_analysis = None
+        canonical_dasha = None
         if dasha_key == 'vimshottari':
-            periods = self._calc_vimshottari_periods(birth_dt, moon_lon)
-            precision = 'calculator'
+            calculation_service = _load_local_module('domain_calculation_service')
+            canonical_dasha = calculation_service.compute_vimshottari_timeline(
+                birth_dt=birth_dt,
+                moon_lon=moon_lon,
+                current_date=(
+                    self._parse_optional_date(body.get('today') or body.get('current_date'))
+                    if body.get('today') or body.get('current_date')
+                    else None
+                ),
+            )
+            periods = canonical_dasha['periods']
+            precision = 'canonical_birth_balance'
             vimshottari_analysis = self._compute_vimshottari_analysis_layer(
                 birth_dt,
                 moon_lon,
@@ -5080,6 +5598,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if vimshottari_analysis:
             result['vimshottari_analysis'] = vimshottari_analysis
             result['fragment_sources'] = ['dasha_analyzer.py', 'dasha_calculator_enhanced.py']
+        if canonical_dasha:
+            result['birth_balance'] = canonical_dasha['birth_balance']
+            result['calculation_contract'] = canonical_dasha['calculation_contract']
+            result['result_hash'] = canonical_dasha['result_hash']
         return result
 
     def _compute_vimshottari_analysis_layer(self, birth_dt, moon_lon, current_date=None):
@@ -5155,11 +5677,19 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         }
 
     def _compute_sade_sati(self, body):
-        from sade_sati import calc_sade_sati_complete
-        return calc_sade_sati_complete(
-            self._normalize_degree(body, 'moon_degree', 0),
-            self._normalize_degree(body, 'asc_degree', 0),
-            self._normalize_degree(body, 'saturn_degree', 0),
+        calculation_service = _load_local_module('domain_calculation_service')
+        reference_date = (
+            body.get('reference_date')
+            or body.get('transit_date')
+            or body.get('current_date')
+            or datetime.now().strftime('%Y-%m-%d')
+        )
+        return calculation_service.compute_sade_sati(
+            moon_degree=self._normalize_degree(body, 'moon_degree', 0),
+            asc_degree=self._normalize_degree(body, 'asc_degree', 0),
+            reference_date=reference_date,
+            tz=self._get_float(body, 'tz', 0, -14, 14),
+            ayanamsa=body.get('ayanamsa', 'lahiri'),
         )
 
     def _compute_pmc(self, body):
@@ -5576,6 +6106,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         allowed_modes = {'all', 'karaka', 'dasha', 'karakamsha', 'arudha', 'special'}
         if mode not in allowed_modes:
             raise BadRequest(f'mode must be one of: {", ".join(sorted(allowed_modes))}')
+        variant = body.get('variant', 'current')
+        if not isinstance(variant, str):
+            raise BadRequest('variant must be a string')
+        variant = variant.strip().lower() or 'current'
+        allowed_variants = {'current', 'rangacharya', 'all'}
+        if variant not in allowed_variants:
+            raise BadRequest(f'variant must be one of: {", ".join(sorted(allowed_variants))}')
         antardasha = bool(body.get('antardasha', False))
         year = self._get_int(body, 'year', datetime.now().year, 1800, 2400)
         month = self._get_int(body, 'month', 1, 1, 12)
@@ -5605,6 +6142,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if mode in ('all', 'arudha'):
             result['arudha_padas'] = jaimini.calc_arudha_padas(asc_sign_idx, planet_lons)
             result['graha_padas'] = jaimini.calc_graha_padas(planet_lons)
+        if variant in ('rangacharya', 'all'):
+            rangacharya = _load_local_module('rangacharya')
+            rangacharya_result = rangacharya.calc_rangacharya_variant(asc_sign_idx, planet_lons)
+            result['rangacharya'] = rangacharya_result
+            current_arudha = result.get('arudha_padas') or jaimini.calc_arudha_padas(asc_sign_idx, planet_lons)
+            result['rangacharya_diff'] = rangacharya.diff_current_vs_rangacharya(current_arudha, rangacharya_result)
         if mode in ('all', 'special'):
             result['special_lagnas'] = jaimini.calc_special_lagnas(asc_sign_idx, hour, minute + second / 60.0)
         return {
@@ -6151,6 +6694,58 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'recommended_events': recommended_events,
                 'next_action': next_action,
             },
+        }
+
+    def _compute_active_rectification_questions(self, body):
+        birth_time = body.get('birth_time')
+        if not isinstance(birth_time, str) or not birth_time.strip():
+            raise BadRequest('birth_time must be a string')
+        uncertainty_minutes = self._get_int(body, 'uncertainty_minutes', 30)
+        if not 1 <= uncertainty_minutes <= 180:
+            raise BadRequest('uncertainty_minutes must be between 1 and 180')
+        step_minutes = self._get_int(body, 'step_minutes', 1)
+        if not 1 <= step_minutes <= 30:
+            raise BadRequest('step_minutes must be between 1 and 30')
+        lat = lon = tz = None
+        if any(key in body for key in ('lat', 'lon', 'tz')):
+            lat = self._get_float(body, 'lat', 0, -90, 90)
+            lon = self._get_float(body, 'lon', 0, -180, 180)
+            tz = self._get_float(body, 'tz', 0, -14, 14)
+        ayanamsa = body.get('ayanamsa', 'lahiri')
+        if not isinstance(ayanamsa, str):
+            raise BadRequest('ayanamsa must be a string')
+        try:
+            module = _load_local_module('active_rectification_questions')
+            result = module.build_questionnaire(
+                birth_time.strip(),
+                uncertainty_minutes=uncertainty_minutes,
+                step_minutes=step_minutes,
+                lat=lat,
+                lon=lon,
+                tz=tz,
+                ayanamsa=ayanamsa,
+            )
+        except ValueError as e:
+            raise BadRequest('birth_time must be YYYY-MM-DD HH:MM') from e
+        return {
+            'success': True,
+            'endpoint': 'active_rectification_questions',
+            **result,
+        }
+
+    def _compute_active_rectification_score(self, body):
+        questionnaire = body.get('questionnaire')
+        if not isinstance(questionnaire, dict):
+            raise BadRequest('questionnaire must be an object')
+        answers = body.get('answers')
+        if not isinstance(answers, dict):
+            raise BadRequest('answers must be an object')
+        module = _load_local_module('active_rectification_questions')
+        result = module.score_answers(questionnaire, answers)
+        return {
+            'success': True,
+            'endpoint': 'active_rectification_score',
+            **result,
         }
 
     def _compute_case_validation(self, body):
@@ -6913,6 +7508,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/pancha_mahapurusha': self._compute_pmc,
             '/api/prashna': self._compute_prashna,
             '/api/rectification_gate': self._compute_rectification_gate,
+            '/api/active_rectification_questions': self._compute_active_rectification_questions,
+            '/api/active_rectification_score': self._compute_active_rectification_score,
             '/api/relationship': self._compute_relationship,
             '/api/remedies': self._compute_remedies,
             '/api/sade_sati': self._compute_sade_sati,
@@ -7750,9 +8347,12 @@ def _parse_allowed_origins(value):
 
 
 def start_server(port=5200, host='127.0.0.1', allowed_origins=None):
-    server = HTTPServer((host, port), JyotishAPIHandler)
+    cleanup = prune_expired_async_jobs()
+    server = ThreadingHTTPServer((host, port), JyotishAPIHandler)
+    server.daemon_threads = True
     server.allowed_origins = allowed_origins or DEFAULT_ALLOWED_ORIGINS
     print(f'Jyotish API v6.9.14 running on http://{host}:{port}')
+    print(f"  Async job cleanup: scanned={cleanup['scanned']}, removed={cleanup['removed']}")
     print(f'  CORS origins: {", ".join(sorted(server.allowed_origins))}')
     print(f'  POST /api/chart — 完整星盘计算')
     print(f'  POST /api/remedies — 补救建议')

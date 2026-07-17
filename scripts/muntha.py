@@ -15,7 +15,7 @@ Muntha 是 Tajika 年运盘（Varshaphala）中的核心指标，
 注意：不同流派对 Muntha 计算公式有微小差异。
 本实现采用最广泛接受的方法。
 """
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 
 

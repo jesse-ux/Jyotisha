@@ -12,7 +12,6 @@ import { escapeAttr, escapeHtml } from './security.js';
 const API_BASE = '';  // 同域部署，留空；Capacitor 打包时改为服务器地址
 const TOKEN_KEY = 'jyotish_auth_token';
 const USER_KEY = 'jyotish_auth_user';
-const API_BASE_KEY = 'jyotish_api_base';
 
 // ============================================================================
 // 状态
@@ -61,7 +60,7 @@ export function getUser() { return _user; }
 export function isLoggedIn() { return !!_token && !!_user; }
 
 export function getApiBase() {
-  return window.JYOTISH_API_BASE || import.meta.env?.VITE_JYOTISH_API_BASE || localStorage.getItem(API_BASE_KEY) || API_BASE;
+  return window.JYOTISH_API_BASE || import.meta.env?.VITE_JYOTISH_API_BASE || API_BASE;
 }
 
 export function onAuthChange(cb) { _onAuthChange = cb; }

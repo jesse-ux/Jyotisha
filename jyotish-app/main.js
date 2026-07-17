@@ -2585,6 +2585,14 @@ const ORACLE_EVIDENCE_INTAKE_TASKS = [
     targetFields: ['vimshottari_start_date', 'shadbala_components'],
   },
   {
+    caseId: 'template_synthetic_north_china_shadbala_raman',
+    title: '合成公开样本 · Raman Shadbala',
+    birth: '1980-01-01 12:00 · synthetic fixture · TZ +08:00',
+    settings: 'ayanamsa=raman · node_mode=mean',
+    preferredSources: 'JHora / PyJHora Shadbala 黑盒输出',
+    targetFields: ['moon_sidereal_longitude_deg', 'shadbala_components'],
+  },
+  {
     caseId: 'template_extreme_latitude_kp',
     title: '高纬样本 · KP/Ayanamsa 边界',
     birth: 'Extreme latitude fixture · local civil time retained',
@@ -2599,6 +2607,14 @@ const ORACLE_EVIDENCE_INTAKE_TASKS = [
     settings: 'ayanamsa=lahiri · node_mode=mean',
     preferredSources: 'JHora date policy screenshot',
     targetFields: ['sun_sidereal_longitude_deg', 'vimshottari_start_date'],
+  },
+  {
+    caseId: 'template_bv_raman_vimshottari_boundary_series',
+    title: 'B.V. Raman · Dasha 边界',
+    birth: '1912-08-08 19:43 · public reference chart · TZ +05:30',
+    settings: 'ayanamsa=raman · node_mode=unspecified',
+    preferredSources: 'Published example / JHora boundary verification',
+    targetFields: ['vimshottari_mahadasa_boundaries'],
   },
 ];
 
@@ -7177,6 +7193,10 @@ function renderPrashnaTab(chartData) {
   const question = $('prashna-question');
   const result = $('prashna-result');
   const runBtn = $('btn-run-prashna');
+  const timestamp = $('prashna-timestamp');
+  const lat = $('prashna-lat');
+  const lon = $('prashna-lon');
+  const timezone = $('prashna-timezone');
   if (!category || !question || !result || !runBtn) return;
   const workflow = chartData?._consultationWorkflow;
   renderPrashnaCaseWorkspace();
@@ -7191,6 +7211,14 @@ function renderPrashnaTab(chartData) {
     runBtn.addEventListener('click', async () => {
       const questionText = question.value.trim();
       const questionType = category.value || 'general';
+      if (!questionText) {
+        result.innerHTML = '<p class="prashna-error">请填写一个明确问题。</p>';
+        return;
+      }
+      if (!timestamp?.value || !lat?.value || !lon?.value || !timezone?.value) {
+        result.innerHTML = '<p class="prashna-error">请填写提问时刻、纬度、经度与 UTC 时区。</p>';
+        return;
+      }
       if (questionText.length > 120) {
         result.innerHTML = '<p class="prashna-error">问题请控制在 120 字以内。</p>';
         return;
@@ -7198,11 +7226,14 @@ function renderPrashnaTab(chartData) {
       result.innerHTML = '<p>正在铸造 Prashna 问事盘...</p>';
       try {
         const data = await window.JyotishAPI?.computePrashna?.({
-          question: questionType,
           question_text: questionText,
-          planets: chartData?.planets || {},
-          asc_degree: chartData?.ascendant?.lon ?? chartData?.ascendant?.degree ?? 15.5,
-          horary_number: chartData?.kp_horary?.horary_number || '',
+          question_timestamp: timestamp.value,
+          lat: Number(lat.value),
+          lon: Number(lon.value),
+          timezone: Number(timezone.value),
+          ayanamsa: 'lahiri',
+          node_mode: 'mean',
+          location_convention: 'wgs84',
         });
         if (!data) throw new Error('本地 API 未返回结果');
         recordPrashnaWorkflow(data, questionText, questionType);

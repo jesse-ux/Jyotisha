@@ -810,10 +810,15 @@ def _planet_lon(planet_lons: Dict, planet: str, default: float = 0.0) -> float:
     return _norm(planet_lons.get(planet, default))
 
 
+class GulikaUnavailableError(RuntimeError):
+    """Raised when a caller asks for the retired approximate Gulika value."""
+
+
 def calc_gulika_simple(asc_lon: float, sun_lon: float = 0.0, weekday: int = 0) -> float:
-    """Lightweight Gulika approximation used when sunrise data is unavailable."""
-    weekday_offsets = [210, 180, 150, 120, 90, 60, 30]
-    return _norm((sun_lon or asc_lon) + weekday_offsets[weekday % 7])
+    """Retired: exact Gulika needs sunrise, sunset, weekday and birth segment."""
+    raise GulikaUnavailableError(
+        "approximate_gulika_removed_exact_day_segment_calculation_required"
+    )
 
 
 def calc_arudha(asc_lon: float, planet_lons: Dict) -> Dict:
@@ -836,6 +841,14 @@ def calc_arudha(asc_lon: float, planet_lons: Dict) -> Dict:
 
 
 def calc_sphutas(planet_lons: Dict, asc_lon: float = 0.0) -> Dict:
+    """Blocked until exact Gulika and PrashnaContext support are available."""
+    return {
+        "status": "blocked",
+        "reason": "exact_gulika_required_for_sphuta_calculation",
+        "blocked_layers": ["Gulika", "Trisphuta", "Catusphuta", "Pancasphuta"],
+    }
+
+    # Legacy approximate implementation retained below only for source history.
     sun = _planet_lon(planet_lons, "Sun")
     moon = _planet_lon(planet_lons, "Moon")
     rahu = _planet_lon(planet_lons, "Rahu")
@@ -854,7 +867,13 @@ def calc_sphutas(planet_lons: Dict, asc_lon: float = 0.0) -> Dict:
 
 
 def calc_life_sphutas(asc_lon: float, moon_lon: float, sun_lon: float, gulika_lon: float = 0.0) -> Dict:
-    gulika = _norm(gulika_lon or calc_gulika_simple(asc_lon, sun_lon))
+    if not gulika_lon:
+        return {
+            "status": "blocked",
+            "reason": "exact_gulika_longitude_required_for_life_sphutas",
+            "blocked_layers": ["Gulika", "Prana", "Deha", "Mrityu"],
+        }
+    gulika = _norm(gulika_lon)
     prana = _norm(asc_lon * 5 + gulika)
     deha = _norm(moon_lon * 8 + gulika)
     mrityu = _norm(gulika * 7 + sun_lon)
@@ -875,6 +894,14 @@ def calc_life_sphutas(asc_lon: float, moon_lon: float, sun_lon: float, gulika_lo
 
 
 def calc_sahams(planet_lons: Dict, asc_lon: float) -> Dict:
+    """Blocked legacy entry: it lacks question time and location."""
+    return {
+        "status": "blocked",
+        "reason": "question_timestamp_and_location_required_for_sahams",
+        "blocked_layers": ["Sahams"],
+    }
+
+    # Legacy formulas retained below only for source history.
     sun = _planet_lon(planet_lons, "Sun")
     moon = _planet_lon(planet_lons, "Moon")
     mars = _planet_lon(planet_lons, "Mars")
@@ -943,6 +970,14 @@ def analyze_lost_item(planet_lons: Dict, asc_lon: float) -> Dict:
 
 
 def kunda_verify(asc_lon: float) -> Dict:
+    """Blocked until the documented Lagna-arc x 81 calculation is implemented."""
+    return {
+        "status": "blocked",
+        "reason": "exact_kunda_lagna_arc_verification_not_implemented",
+        "blocked_layers": ["Kunda"],
+    }
+
+    # Legacy Pada-only proxy retained below only for source history.
     nak_idx = int(_norm(asc_lon) / NAK_SPAN) % 27
     pada = int((_norm(asc_lon) % NAK_SPAN) / (NAK_SPAN / 4)) + 1
     strength = "清晰" if pada in (2, 3) else "需复核"
@@ -956,7 +991,14 @@ def kunda_verify(asc_lon: float) -> Dict:
 
 
 def cast_prashna(question_datetime: str, lat: float = 0.0, lon: float = 0.0) -> Dict:
-    """Dependency-free fallback Prashna chart for legacy CLI paths."""
+    """Blocked legacy fallback; production callers must use PrashnaContext."""
+    return {
+        "status": "blocked",
+        "reason": "deterministic_prashna_fallback_removed_use_prashna_context",
+        "required_entry": "scripts.prashna_context.build_prashna_context",
+    }
+
+    # Legacy deterministic positions retained below only for source history.
     try:
         dt = datetime.fromisoformat(str(question_datetime).replace(" ", "T"))
     except ValueError:

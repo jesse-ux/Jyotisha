@@ -675,7 +675,7 @@ def test_trust_center_exposes_oracle_evidence_intake_cards() -> None:
         "必须打码",
         "missing_shadbala_component",
         "template_steve_jobs_dasha_lahiri",
-        "template_steve_jobs_dasha_lahiri",
+        "template_bv_raman_vimshottari_boundary_series",
         "template_synthetic_north_china_shadbala_raman",
         "template_extreme_latitude_kp",
         "template_historical_epoch_lahiri",
@@ -691,6 +691,22 @@ def test_trust_center_exposes_oracle_evidence_intake_cards() -> None:
         "operator_note",
     ]:
         assert token in main
+
+    intake_block = re.search(
+        r"const ORACLE_EVIDENCE_INTAKE_TASKS = \[(.*?)\n\];",
+        main,
+        re.DOTALL,
+    )
+    assert intake_block is not None
+    intake_case_ids = re.findall(r"caseId: '([^']+)'", intake_block.group(1))
+    assert intake_case_ids == [
+        "template_steve_jobs_dasha_lahiri",
+        "template_synthetic_north_china_shadbala_raman",
+        "template_extreme_latitude_kp",
+        "template_historical_epoch_lahiri",
+        "template_bv_raman_vimshottari_boundary_series",
+    ]
+    assert len(set(intake_case_ids)) == 5
 
     assert "validateOracleEvidence" in api_bridge
     assert "postJson('/api/oracle_evidence'" in api_bridge
@@ -1397,6 +1413,8 @@ def test_api_bridge_exports_productized_backend_actions() -> None:
         "computeYogas",
         "computeAspects",
         "computeRectificationGate",
+        "computeActiveRectificationQuestions",
+        "computeActiveRectificationScore",
         "computeCaseValidation",
         "computeDivisionalYoga",
         "computeKakshya",
@@ -1611,6 +1629,33 @@ def test_rectification_ui_guides_yes_no_interview_from_existing_event_assets() -
         "rect-window-end",
     ]:
         assert token in rect_ui
+
+
+def test_rectification_ui_exposes_active_questionnaire_api_wizard() -> None:
+    rect_ui = read("rectification.js")
+    bridge = read("api-bridge.js")
+    public_bridge = read("public/api-bridge.js")
+    for token in [
+        "rect-active-wizard",
+        "data-active-rectification-wizard",
+        "rect-active-birth-time",
+        "rect-active-uncertainty",
+        "rect-active-load",
+        "rect-active-score",
+        "computeActiveRectificationQuestions",
+        "computeActiveRectificationScore",
+        "active_rectification_questions",
+        "candidate_cluster_rankings",
+        "next_round_questions",
+        "data-active-answer",
+        "activeRectificationAnswers",
+    ]:
+        assert token in rect_ui
+    for source in (bridge, public_bridge):
+        assert "computeActiveRectificationQuestions" in source
+        assert "computeActiveRectificationScore" in source
+        assert "/api/active_rectification_questions" in source
+        assert "/api/active_rectification_score" in source
 
 
 def test_web_entry_prefers_unified_consultation_workflow() -> None:

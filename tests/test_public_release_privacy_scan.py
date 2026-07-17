@@ -29,3 +29,16 @@ def test_public_release_privacy_scan_supports_unpacked_zip_without_git(tmp_path:
     assert [path.name for path in iter_release_files(tmp_path)] == ["INSTALL.md"]
     report = build_report(tmp_path)
     assert report["status"] == "pass", report["findings"]
+
+
+def test_public_release_privacy_scan_rejects_executable_redaction_placeholder(tmp_path: Path) -> None:
+    (tmp_path / "unsafe.py").write_text("year = REDACTED_YEAR\n", encoding="utf-8")
+    report = build_report(tmp_path)
+    assert report["status"] == "fail"
+    assert report["findings"][0]["rule_id"] == "executable_redaction_placeholder"
+
+
+def test_private_workspace_directories_are_gitignored() -> None:
+    gitignore = (Path(__file__).resolve().parents[1] / ".gitignore").read_text(encoding="utf-8").splitlines()
+    assert "/scratch/" in gitignore
+    assert "/.serena/" in gitignore

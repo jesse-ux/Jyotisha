@@ -23,6 +23,7 @@ ALLOWED_STATUS = {
     "covered",
     "complete",
     "partial",
+    "blocked",
     "knowledge-only",
     "workflow-only",
     "not-integrated",

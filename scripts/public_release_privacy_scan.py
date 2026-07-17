@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -120,6 +121,25 @@ def scan_text(
     return findings
 
 
+def scan_executable_redaction_names(path: Path, text: str) -> list[dict[str, object]]:
+    """Reject unquoted privacy placeholders that would raise at runtime."""
+    if path.suffix.lower() != ".py":
+        return []
+    try:
+        tree = ast.parse(text, filename=str(path))
+    except SyntaxError:
+        return []
+    try:
+        display_path = path.relative_to(ROOT).as_posix()
+    except ValueError:
+        display_path = path.as_posix()
+    return [
+        {"rule_id": "executable_redaction_placeholder", "path": display_path, "line": node.lineno}
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Name) and node.id.startswith("REDACTED_")
+    ]
+
+
 def build_report(root: Path = ROOT) -> dict[str, object]:
     findings: list[dict[str, object]] = []
     scanned = 0
@@ -131,6 +151,7 @@ def build_report(root: Path = ROOT) -> dict[str, object]:
             text = path.read_text(encoding="utf-8", errors="ignore")
         scanned += 1
         findings.extend(scan_text(path, text, patterns))
+        findings.extend(scan_executable_redaction_names(path, text))
     return {
         "scope": "public_release_privacy_scan",
         "scanned_files": scanned,
