@@ -316,6 +316,25 @@ function buildSynastryQuestion(selfProfile: Profile, partnerProfile: Profile) {
   ].join("\n");
 }
 
+function buildDailyStarlanguageQuestion(profile: Profile) {
+  const today = new Date().toISOString().slice(0, 10);
+  return [
+    `请生成今日星语：${today}，对象是${profile.name || "我"}。`,
+    `出生资料：${profile.date} ${profile.time}，${profilePlaceLabel(profile)}。`,
+    "请输出今日趋势、适合推进的事、需要避开的事、一个行动建议。",
+    "边界：这是探索性日提示，不是确定预测；若涉及精确事件日期，请标为候选触发，不要包装成必然结论。",
+  ].join("\n");
+}
+
+function buildBirthTimeRectificationQuestion(profile: Profile) {
+  return [
+    `请为${profile.name || "我"}做生时校正辅助。`,
+    `当前记录：${profile.date} ${profile.time || "时间不确定"}，${profilePlaceLabel(profile)}。`,
+    "请先列出需要我补充的关键人生事件，再给候选出生时间段、每段会影响的 Lagna/分盘/大运差异。",
+    "边界：候选出生时间段必须标为待验证，不能直接改写默认星盘；没有事件证据前不要声称校正完成。",
+  ].join("\n");
+}
+
 function missingProfileStep(profile: Profile): OnboardingStep | null {
   if (!profile.name.trim()) return "name";
   if (!profile.date || !profile.time) return "birth";
@@ -1325,6 +1344,14 @@ export default function Home() {
     window.requestAnimationFrame(() => composerInput.current?.focus());
   }
 
+  function draftDailyStarlanguageQuestion() {
+    chooseSuggestedQuestion(buildDailyStarlanguageQuestion(profile), "timing");
+  }
+
+  function draftBirthTimeRectificationQuestion() {
+    chooseSuggestedQuestion(buildBirthTimeRectificationQuestion(profile), "timing");
+  }
+
   async function draftSynastryQuestionFromChart(record: ChartLibraryRecord) {
     if (record.role !== "other") return;
     const baseQuestion = buildSynastryQuestion(profile, record.profile);
@@ -1925,6 +1952,16 @@ export default function Home() {
                     );
                   })}
                   {onboardingError && <p className="starter-note">Agent 的个性化入门问题暂时不可用，已显示安全的默认问题。</p>}
+                  <div className="product-entrypoints" aria-label="常用占星入口">
+                    <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftDailyStarlanguageQuestion}>
+                      <span><b>今日星语</b><small>基于默认星盘生成今日趋势；探索性日提示，不是确定预测。</small></span>
+                      <ArrowUpRight className="starter-arrow" aria-hidden="true" />
+                    </button>
+                    <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftBirthTimeRectificationQuestion}>
+                      <span><b>生时校正</b><small>收集事件证据并给候选出生时间段，不能直接改写默认星盘。</small></span>
+                      <ArrowUpRight className="starter-arrow" aria-hidden="true" />
+                    </button>
+                  </div>
                 </div>
               ))}
               <div ref={conversationEnd} />
