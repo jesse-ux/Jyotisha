@@ -130,11 +130,30 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 - **Timing:** use the browser's local hour: morning 05:00–10:59, noon 11:00–13:59, afternoon 14:00–17:59, evening 18:00–22:59, and late night 23:00–04:59.
 - **Variation:** each time band has three concise prompts; select one once per visit so re-renders do not change the sentence.
 
-### Account sheet
+### Account popover
 
-- **Structure:** title, account summary, redeem section, profile form, actions.
-- **Surface:** canvas sheet over warm scrim; the account summary and sections are separated by hairlines rather than dark cards.
-- **States:** closed, opening, open, validation error, success, saving.
+- **Structure:** identity header, profile action, redeem action with balance, administrator-only code-management link, divider, and logout action.
+- **Surface:** 280px elevated canvas popover anchored above the sidebar account trigger; warm hairline, existing elevated shadow, no nested cards.
+- **States:** closed, open, hover, focus-visible, administrator, and logout routing.
+- **Accessibility:** `aria-expanded`, `aria-controls`, menu semantics, 44px rows, outside-click and Escape dismissal, and focus return.
+
+### Profile dialog
+
+- **Structure:** profile title, existing profile fields, inline result, and save action.
+- **Width:** 560px desktop maximum with viewport-safe spacing and internal scrolling.
+- **States:** open, invalid, saving, success, and error.
+
+### Redeem dialog
+
+- **Structure:** current balance, redemption-code form, and inline result.
+- **Width:** 420px desktop maximum.
+- **States:** open, submitting, success, and error.
+
+### Logout dialog
+
+- **Structure:** confirmation title and explanation, cancel action, and destructive confirm action.
+- **Width:** 400px desktop maximum.
+- **States:** open, signing out, and error.
 
 ### Admin panel and data table
 

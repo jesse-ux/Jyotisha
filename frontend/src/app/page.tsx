@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUp, ArrowUpRight, ChevronRight, Menu, Minus, Plus, Sparkles, Square, X } from "lucide-react";
+import { ArrowUp, ArrowUpRight, ChevronRight, Gift, KeyRound, LogOut, Menu, Plus, Sparkles, Square, UserRound, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { ChatMessageContent } from "@/components/chat-message-content";
@@ -42,6 +42,7 @@ type OnboardingSuggestion = { theme: Exclude<Theme, "general">; text: string };
 type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[] };
 type OnboardingStep = "name" | "birth" | "place";
 type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
+type AccountDialog = "profile" | "redeem" | "logout";
 type SessionReadResult = { readonly sessions: ChatSession[]; readonly fallbackSessionIds: string[] };
 type PendingConsultation = {
   readonly requestId: string;
@@ -64,6 +65,18 @@ const themes: Array<{ id: Exclude<Theme, "general">; label: string; prompt: stri
   { id: "marriage", label: "关系", prompt: "我的关系模式是什么？" },
   { id: "timing", label: "时运", prompt: "未来哪些阶段值得把握？" },
 ];
+
+const accountDialogTitles = {
+  profile: "个人资料",
+  redeem: "兑换点数",
+  logout: "退出登录？",
+} as const satisfies Record<AccountDialog, string>;
+
+const accountDialogClasses = {
+  profile: "profile-modal",
+  redeem: "redeem-modal",
+  logout: "logout-modal",
+} as const satisfies Record<AccountDialog, string>;
 
 const previewModelCatalog = parsePublicModelCatalog({
   defaultModelId: "deepseek-pro",
@@ -428,12 +441,12 @@ async function fetchModelCatalog(signal?: AbortSignal) {
 export default function Home() {
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [profileDraft, setProfileDraft] = useState<Profile>(emptyProfile);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [activeAccountDialog, setActiveAccountDialog] = useState<AccountDialog | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
   const [account, setAccount] = useState<Account | null>(null);
   const [accountError, setAccountError] = useState("");
-  const [redeemOpen, setRedeemOpen] = useState(false);
   const [redeemCode, setRedeemCode] = useState("");
   const [redeemError, setRedeemError] = useState("");
   const [redeemMessage, setRedeemMessage] = useState("");
@@ -461,10 +474,13 @@ export default function Home() {
   const [presetMessageLength, setPresetMessageLength] = useState(0);
   const conversationEnd = useRef<HTMLDivElement>(null);
   const accountTrigger = useRef<HTMLButtonElement>(null);
+  const accountMenu = useRef<HTMLDivElement>(null);
+  const accountDialog = useRef<HTMLElement>(null);
+  const creditTrigger = useRef<HTMLButtonElement>(null);
+  const dialogReturnTarget = useRef<HTMLButtonElement | null>(null);
   const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
   const sidebar = useRef<HTMLElement>(null);
   const sidebarCloseButton = useRef<HTMLButtonElement>(null);
-  const profileDialog = useRef<HTMLElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const redeemInput = useRef<HTMLInputElement>(null);
   const composerInput = useRef<HTMLTextAreaElement>(null);
@@ -732,16 +748,17 @@ export default function Home() {
   }, [activeSessionId, activeSession?.messages.length, activeStreamingText, isLoading, onboardingPending, onboardingStep, presetMessageFinished, profileComplete]);
 
   useEffect(() => {
-    if (hydrated && accountId && !profileComplete && onboardingStep === "name" && presetMessageFinished && !profileOpen) {
+    if (hydrated && accountId && !profileComplete && onboardingStep === "name" && presetMessageFinished && activeAccountDialog === null) {
       composerInput.current?.focus();
     }
-  }, [accountId, hydrated, onboardingStep, presetMessageFinished, profileComplete, profileOpen]);
+  }, [accountId, activeAccountDialog, hydrated, onboardingStep, presetMessageFinished, profileComplete]);
 
   useEffect(() => {
     if (!mobileSidebarOpen) return;
     window.requestAnimationFrame(() => sidebarCloseButton.current?.focus());
     const closeOnEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (accountMenuOpen) return;
         setMobileSidebarOpen(false);
         window.requestAnimationFrame(() => mobileMenuTrigger.current?.focus());
         return;
@@ -751,22 +768,48 @@ export default function Home() {
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [mobileSidebarOpen]);
+  }, [accountMenuOpen, mobileSidebarOpen]);
 
   useEffect(() => {
-    if (!profileOpen) return;
-    (redeemOpen ? redeemInput.current : closeButton.current)?.focus();
+    if (!accountMenuOpen) return;
+    const dismissMenu = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Node && !accountMenu.current?.contains(target)) setAccountMenuOpen(false);
+    };
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setAccountMenuOpen(false);
+      window.requestAnimationFrame(() => accountTrigger.current?.focus());
+    };
+    document.addEventListener("mousedown", dismissMenu);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", dismissMenu);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [accountMenuOpen]);
+
+  useEffect(() => {
+    if (activeAccountDialog === null) return;
+    window.requestAnimationFrame(() => {
+      if (signingOut) return;
+      if (activeAccountDialog === "redeem") redeemInput.current?.focus();
+      else closeButton.current?.focus();
+    });
     const closeOnEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
-        closeAccount();
+        if (signingOut) return;
+        setActiveAccountDialog(null);
+        const returnTarget = dialogReturnTarget.current;
+        window.requestAnimationFrame(() => returnTarget?.focus());
         return;
       }
-      const container = profileDialog.current;
+      const container = accountDialog.current;
       if (container) keepFocusWithin(event, container);
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [profileOpen, redeemOpen]);
+  }, [activeAccountDialog, signingOut]);
 
   async function refreshAccount() {
     try {
@@ -888,21 +931,39 @@ export default function Home() {
     }
   }
 
-  function openAccount(showRedeem = false) {
-    setMobileSidebarOpen(false);
-    if (profileComplete) setProfileDraft(profile);
-    setProfileNotice("");
-    setRedeemOpen(showRedeem);
-    setRedeemError("");
-    setRedeemMessage("");
-    setProfileOpen(true);
+  function toggleAccountMenu() {
+    setActiveAccountDialog(null);
+    setAccountError("");
+    setAccountMenuOpen((current) => !current);
   }
 
-  function closeAccount() {
-    setProfileOpen(false);
-    const returnTarget = window.matchMedia("(max-width: 767px)").matches
-      ? mobileMenuTrigger.current
-      : accountTrigger.current;
+  function openAccountDialog(dialog: AccountDialog, returnTarget: HTMLButtonElement | null = accountTrigger.current) {
+    dialogReturnTarget.current = returnTarget ?? accountTrigger.current;
+    setAccountMenuOpen(false);
+    setAccountError("");
+    switch (dialog) {
+      case "profile":
+        setProfileDraft(profile);
+        setProfileNotice("");
+        break;
+      case "redeem":
+        setRedeemError("");
+        setRedeemMessage("");
+        break;
+      case "logout":
+        break;
+      default: {
+        const unreachable: never = dialog;
+        return unreachable;
+      }
+    }
+    setActiveAccountDialog(dialog);
+  }
+
+  function closeAccountDialog() {
+    if (signingOut) return;
+    setActiveAccountDialog(null);
+    const returnTarget = dialogReturnTarget.current;
     window.requestAnimationFrame(() => returnTarget?.focus());
   }
 
@@ -1184,15 +1245,13 @@ export default function Home() {
     if (!question || !activeSession || !modelCatalog || pendingSessionId || cancellationInFlight.current || pendingConsultation.current || !account) return;
 
     if (account.credits <= 0) {
-      openAccount(true);
+      openAccountDialog("redeem", creditTrigger.current);
       return;
     }
 
     if (!isProfileComplete(profile)) {
-      setProfileDraft(profile);
+      openAccountDialog("profile");
       setProfileNotice("请先补充出生资料，才能进行星盘计算。");
-      setRedeemOpen(false);
-      setProfileOpen(true);
       return;
     }
 
@@ -1324,7 +1383,7 @@ export default function Home() {
         const contentType = response.headers.get("content-type") ?? "";
         const errorPayload = contentType.includes("application/json") ? await response.json() : { message: await response.text() };
         if (response.status === 401) window.location.assign("/login");
-        if (response.status === 402) openAccount(true);
+        if (response.status === 402) openAccountDialog("redeem", creditTrigger.current);
         throw new Error(payloadMessage(errorPayload, "服务暂时不可用"));
       }
       if (!response.body) throw new Error("浏览器未收到可读取的回答流");
@@ -1489,9 +1548,9 @@ export default function Home() {
 
   return (
     <main className={`chat-app ${mobileSidebarOpen ? "sidebar-open" : ""}`}>
-      <button className="sidebar-backdrop" tabIndex={-1} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)} />
-      <aside className="sidebar" ref={sidebar} id="chat-sidebar" aria-label="对话导航" inert={profileOpen}>
-        <div className="brand-row"><span className="brand-mark" aria-hidden="true" /><strong>Jyotisha</strong><button className="sidebar-close" ref={sidebarCloseButton} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)}><X aria-hidden="true" /></button></div>
+      <button className="sidebar-backdrop" tabIndex={-1} aria-label="关闭聊天记录" type="button" onClick={() => { setAccountMenuOpen(false); setMobileSidebarOpen(false); }} />
+      <aside className="sidebar" ref={sidebar} id="chat-sidebar" aria-label="对话导航" inert={activeAccountDialog !== null}>
+        <div className="brand-row"><span className="brand-mark" aria-hidden="true" /><strong>Jyotisha</strong><button className="sidebar-close" ref={sidebarCloseButton} aria-label="关闭聊天记录" type="button" onClick={() => { setAccountMenuOpen(false); setMobileSidebarOpen(false); }}><X aria-hidden="true" /></button></div>
         <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || !modelCatalog || creatingSession || Boolean(pendingSessionId) || cancellationPending}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
         <nav className="session-nav" aria-label="聊天记录">
           <span className="sidebar-label">聊天记录</span>
@@ -1515,23 +1574,36 @@ export default function Home() {
             ))}
           </div>
         </nav>
-        <div className="sidebar-footer">
-          <button className="profile-trigger" ref={accountTrigger} type="button" onClick={() => openAccount()}>
+        <div className="sidebar-footer" ref={accountMenu}>
+          <button className="profile-trigger" ref={accountTrigger} type="button" aria-expanded={accountMenuOpen} aria-controls="account-menu" aria-haspopup="menu" onClick={toggleAccountMenu}>
             <span className="profile-initial" aria-hidden="true">{profile.name.trim().slice(0, 1) || account?.user.email?.slice(0, 1).toUpperCase() || "你"}</span>
             <span><b>{profile.name.trim() || account?.user.email || "账户"}</b></span>
-            <ChevronRight className="chevron" aria-hidden="true" />
+            <ChevronRight className={`chevron ${accountMenuOpen ? "is-open" : ""}`} aria-hidden="true" />
           </button>
+          {accountMenuOpen && (
+            <div className="account-menu" id="account-menu" role="menu" aria-label="账户菜单">
+              <div className="account-menu-identity">
+                <span className="account-menu-avatar" aria-hidden="true">{profile.name.trim().slice(0, 1) || account.user.email?.slice(0, 1).toUpperCase() || "你"}</span>
+                <span><b>{profile.name.trim() || "账户"}</b><small>{account.user.email || "尚未读取邮箱"}</small></span>
+              </div>
+              <button className="account-menu-item" role="menuitem" type="button" onClick={() => openAccountDialog("profile")}><UserRound aria-hidden="true" /><span>个人资料</span><ChevronRight aria-hidden="true" /></button>
+              <button className="account-menu-item" role="menuitem" type="button" onClick={() => openAccountDialog("redeem")}><Gift aria-hidden="true" /><span>兑换点数</span><small>{account.credits} 点</small></button>
+              {account?.isAdmin && <Link className="account-menu-item" href="/admin/codes" role="menuitem" onClick={() => setAccountMenuOpen(false)}><KeyRound aria-hidden="true" /><span>管理兑换码</span><ChevronRight aria-hidden="true" /></Link>}
+              <div className="account-menu-separator" role="separator" />
+              <button className="account-menu-item account-menu-danger" role="menuitem" type="button" onClick={() => openAccountDialog("logout")}><LogOut aria-hidden="true" /><span>退出登录</span></button>
+            </div>
+          )}
         </div>
       </aside>
 
-      <section className="chat-panel" inert={profileOpen || mobileSidebarOpen}>
+      <section className="chat-panel" inert={activeAccountDialog !== null || mobileSidebarOpen}>
         <header className="chat-header">
           <button className="mobile-menu" ref={mobileMenuTrigger} aria-label="打开聊天记录" aria-controls="chat-sidebar" aria-expanded={mobileSidebarOpen} type="button" onClick={() => setMobileSidebarOpen(true)}><Menu aria-hidden="true" /></button>
           <div>
             <strong>{activeSession?.title || "新对话"}</strong>
             <span><i className={`status ${isLoading ? "status-loading" : "status-idle"}`} />{isLoading ? (consultationPhase === "undo" ? "即将发送，可撤回" : activeStreamingText ? "正在回答" : "正在核对星盘信息") : "基于星盘证据回答"}</span>
           </div>
-          <button className="credit-button" type="button" onClick={() => openAccount(account?.credits === 0)} aria-label={account ? `余额 ${account.credits} 点，打开账户与兑换码` : accountError || "读取余额中"}>
+          <button className="credit-button" ref={creditTrigger} type="button" onClick={() => openAccountDialog("redeem", creditTrigger.current)} aria-label={account ? `余额 ${account.credits} 点，兑换点数` : accountError || "读取余额中"}>
             <Sparkles className="credit-icon" aria-hidden="true" />
             <span>{account ? account.credits : "—"}</span>
           </button>
@@ -1693,59 +1765,53 @@ export default function Home() {
         </div>
       </section>
 
-      <div className={`profile-overlay ${profileOpen ? "is-open" : ""}`} aria-hidden={!profileOpen} inert={!profileOpen} onMouseDown={closeAccount}>
-        <section className="profile-dialog" ref={profileDialog} role="dialog" aria-modal="true" aria-labelledby="profile-title" onMouseDown={(event) => event.stopPropagation()}>
-          <header>
-            <h2 id="profile-title">账户与出生资料</h2>
-            <button className="dialog-close" ref={closeButton} aria-label="关闭" type="button" onClick={closeAccount}><X aria-hidden="true" /></button>
-          </header>
+      {activeAccountDialog !== null && (
+        <div className="account-modal-overlay" onMouseDown={closeAccountDialog}>
+          <section className={`account-modal ${accountDialogClasses[activeAccountDialog]}`} ref={accountDialog} role="dialog" aria-modal="true" aria-labelledby="account-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
+            <header className="account-modal-header">
+              <h2 id="account-dialog-title">{accountDialogTitles[activeAccountDialog]}</h2>
+              <button className="dialog-close" ref={closeButton} aria-label="关闭" type="button" onClick={closeAccountDialog} disabled={signingOut}><X aria-hidden="true" /></button>
+            </header>
 
-          <section className="account-summary" aria-label="账户信息">
-            <div><span>邮箱</span><strong>{account?.user.email || "尚未读取"}</strong></div>
-            <div><span>剩余点数</span><strong>{account?.credits ?? "—"}</strong></div>
-          </section>
-          {accountError && <p className="form-error" role="alert">{accountError}</p>}
+            {activeAccountDialog === "profile" && (
+              <>
+                {accountError && <p className="form-error" role="alert">{accountError}</p>}
+                {profileNotice && <p className="form-success" role="status">{profileNotice}</p>}
+                <form className="profile-form" onSubmit={saveProfile}>
+                  <ProfileFields value={profileDraft} onChange={setProfileDraft} />
+                  <button className="button-primary save-profile" type="submit" disabled={profileSaving}>{profileSaving ? "保存中" : "保存出生资料"}</button>
+                </form>
+              </>
+            )}
 
-          <section className="sheet-section">
-            <button className="section-toggle" type="button" aria-expanded={redeemOpen} onClick={() => setRedeemOpen((current) => !current)}>
-              <span><b>兑换点数</b><small>输入兑换码后余额会立即更新</small></span>{redeemOpen ? <Minus aria-hidden="true" /> : <Plus aria-hidden="true" />}
-            </button>
-            {redeemOpen && (
-              <form className="redeem-form" onSubmit={redeem}>
-                <label htmlFor="redeem-code">兑换码</label>
-                <div>
-                  <input id="redeem-code" ref={redeemInput} autoComplete="off" value={redeemCode} onChange={(event) => { setRedeemCode(event.target.value); setRedeemError(""); setRedeemMessage(""); }} placeholder="输入完整兑换码" />
-                  <button className="button-primary" type="submit" disabled={!redeemCode.trim() || redeeming}>{redeeming ? "兑换中" : "兑换"}</button>
+            {activeAccountDialog === "redeem" && (
+              <>
+                <div className="redeem-balance"><span>当前余额</span><strong>{account.credits} 点</strong></div>
+                <form className="redeem-form account-redeem-form" onSubmit={redeem}>
+                  <label htmlFor="redeem-code">兑换码</label>
+                  <div>
+                    <input id="redeem-code" ref={redeemInput} autoComplete="off" value={redeemCode} onChange={(event) => { setRedeemCode(event.target.value); setRedeemError(""); setRedeemMessage(""); }} placeholder="输入完整兑换码" />
+                    <button className="button-primary" type="submit" disabled={!redeemCode.trim() || redeeming}>{redeeming ? "兑换中" : "兑换"}</button>
+                  </div>
+                  {redeemError && <p className="form-error" role="alert">{redeemError}</p>}
+                  {redeemMessage && <p className="form-success" role="status">{redeemMessage}</p>}
+                </form>
+              </>
+            )}
+
+            {activeAccountDialog === "logout" && (
+              <>
+                <p className="logout-copy">退出后，需要重新登录才能继续查看对话。</p>
+                {accountError && <p className="form-error" role="alert">{accountError}</p>}
+                <div className="dialog-actions">
+                  <button className="button-secondary" type="button" onClick={closeAccountDialog} disabled={signingOut}>取消</button>
+                  <button className="button-primary danger-primary" type="button" onClick={() => void signOut()} disabled={signingOut}>{signingOut ? "正在退出" : "确认退出"}</button>
                 </div>
-                {redeemError && <p className="form-error" role="alert">{redeemError}</p>}
-                {redeemMessage && <p className="form-success" role="status">{redeemMessage}</p>}
-              </form>
+              </>
             )}
           </section>
-
-          <section className="sheet-section birth-section">
-            <div className="section-heading"><b>出生资料</b><small>加密传输并保存到云端，用于此账号的所有对话</small></div>
-            <div className="default-chart-card" aria-label="当前默认星盘">
-              <div>
-                <span>当前默认星盘</span>
-                <strong>{profileDraft.name.trim() || "未命名"}</strong>
-                <small>角色：本人</small>
-              </div>
-              <button className="button-secondary" type="button" onClick={() => profileDialog.current?.querySelector<HTMLInputElement>("#profile-name")?.focus()}>管理星盘库</button>
-            </div>
-            {profileNotice && <p className="form-success" role="status">{profileNotice}</p>}
-            <form className="profile-form" onSubmit={saveProfile}>
-              <ProfileFields value={profileDraft} onChange={setProfileDraft} />
-              <button className="button-primary save-profile" type="submit" disabled={profileSaving || !account}>{profileSaving ? "保存中" : "保存出生资料"}</button>
-            </form>
-          </section>
-
-          <footer className="account-actions">
-            {account?.isAdmin && <Link className="button-secondary" href="/admin/codes">管理兑换码</Link>}
-            <button className="button-secondary danger-button" type="button" onClick={() => void signOut()} disabled={signingOut}>{signingOut ? "正在退出" : "退出登录"}</button>
-          </footer>
-        </section>
-      </div>
+        </div>
+      )}
     </main>
   );
 }

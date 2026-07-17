@@ -72,3 +72,30 @@ test("centers the credit value with its icon", () => {
   assert.match(creditValueStyles, /align-items:\s*center/);
   assert.match(creditValueStyles, /line-height:\s*1/);
 });
+
+test("routes account actions through a popover and focused dialogs", () => {
+  // Given: the account surface state and entry-point handlers.
+  // When: the page source is inspected for independent menu and dialog routes.
+  // Then: each account task has a focused destination instead of one combined sheet.
+  assert.match(pageSource, /const \[accountMenuOpen, setAccountMenuOpen\] = useState\(false\)/);
+  assert.match(pageSource, /const \[activeAccountDialog, setActiveAccountDialog\] = useState<AccountDialog \| null>\(null\)/);
+  assert.match(pageSource, /className="account-menu"/);
+  assert.match(pageSource, /openAccountDialog\("profile"/);
+  assert.match(pageSource, /openAccountDialog\("redeem"/);
+  assert.match(pageSource, /openAccountDialog\("logout"/);
+});
+
+test("removes the monolithic account sheet", () => {
+  // Given: the former sheet implementation names.
+  // When: the page and global styles are inspected.
+  // Then: no right-side account sheet remains.
+  assert.doesNotMatch(pageSource, /profile-overlay|profile-dialog|openAccount\(/);
+  assert.doesNotMatch(globalStyles, /\.profile-overlay|\.profile-dialog/);
+});
+
+test("keeps admin navigation separate from account task dialogs", () => {
+  // Given: the administrator-only route and the new account menu.
+  // When: their source relationship is inspected.
+  // Then: code management stays a guarded navigation action rather than a modal.
+  assert.match(pageSource, /account\?\.isAdmin\s*&&\s*<Link[^>]+href="\/admin\/codes"[^>]+role="menuitem"/);
+});
