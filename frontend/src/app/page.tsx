@@ -74,6 +74,13 @@ type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[]
 type OnboardingStep = "name" | "birth" | "place";
 type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
 type DailyStarlanguageCard = { trend: string; action: string; caution: string };
+type DailyStarlanguageApiResponse = {
+  status?: "ok";
+  card?: DailyStarlanguageCard;
+  source?: "calculation_lite";
+  claim_status?: "exploratory_unvalidated";
+  boundary?: "not_deterministic_prediction";
+};
 type SessionReadResult = { readonly sessions: ChatSession[]; readonly fallbackSessionIds: string[] };
 type PendingConsultation = {
   readonly requestId: string;
@@ -339,6 +346,18 @@ function buildDailyStarlanguageCard(profile: Profile) {
   const seed = `${today}-${profile.date}-${profile.time}-${profile.provinceCode}-${profile.cityCode}`;
   const index = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0) % dailyStarlanguageCards.length;
   return dailyStarlanguageCards[index];
+}
+
+async function fetchDailyStarlanguage(profile: Profile) {
+  const response = await fetch("/api/daily-starlanguage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile }),
+  });
+  if (!response.ok) throw new Error("daily_starlanguage_unavailable");
+  const payload = await response.json().catch(() => null) as DailyStarlanguageApiResponse | null;
+  if (payload?.status !== "ok" || !payload.card) throw new Error("daily_starlanguage_invalid");
+  return payload.card;
 }
 
 function buildBirthTimeRectificationQuestion(profile: Profile) {
@@ -617,6 +636,7 @@ export default function Home() {
   const [otherProfileDraft, setOtherProfileDraft] = useState<Profile>(emptyProfile);
   const [synastryReportCard, setSynastryReportCard] = useState<SynastryReportCard | null>(null);
   const [synastryHistory, setSynastryHistory] = useState<SynastryReportCard[]>([]);
+  const [dailyStarlanguageCard, setDailyStarlanguageCard] = useState<DailyStarlanguageCard | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
@@ -732,7 +752,7 @@ export default function Home() {
   }, [accountId, profile]);
 
   const profileComplete = isProfileComplete(profile);
-  const dailyStarlanguage = profileComplete ? buildDailyStarlanguageCard(profile) : null;
+  const dailyStarlanguage = dailyStarlanguageCard ?? (profileComplete ? buildDailyStarlanguageCard(profile) : null);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
     ? startGreeting || completedOnboardingMessage(profileDraft.name.trim())
@@ -966,6 +986,22 @@ export default function Home() {
       controller.abort();
     };
   }, [accountId, hydrated, onboarding, onboardingError, profile.name, profileComplete, startGreeting]);
+
+  useEffect(() => {
+    if (!hydrated || !profileComplete) return;
+    let cancelled = false;
+    setDailyStarlanguageCard(null);
+    void fetchDailyStarlanguage(profile)
+      .then((card) => {
+        if (!cancelled) setDailyStarlanguageCard(card);
+      })
+      .catch(() => {
+        if (!cancelled) setDailyStarlanguageCard(buildDailyStarlanguageCard(profile));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, profile.date, profile.time, profile.provinceCode, profile.cityCode, profileComplete]);
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
