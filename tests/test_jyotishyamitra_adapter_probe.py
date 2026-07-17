@@ -4,6 +4,7 @@ from scripts.jyotishyamitra_adapter_probe import (
     build_report,
     canonical_request,
     compare_with_existing_oracles,
+    extract_varga_signs,
     normalize_raw,
     schema_fingerprint,
 )
@@ -93,3 +94,16 @@ def test_jyotishyamitra_field_comparison_is_observation_not_promotion() -> None:
     assert comparison["match_counts"]["local"] == 1
     assert comparison["match_counts"]["xalen"] == 2
     assert comparison["promotion_allowed"] is False
+
+
+def test_extract_varga_signs_keeps_only_supported_planet_signs() -> None:
+    raw = {
+        "D1": {"planets": {"Sun": {"sign": "Aquarius"}, "Rahu": {"sign": "Saggitarius"}}},
+        "D9": {"planets": {"Moon": {"sign": "Cancer"}, "Mars": {"sign": None}}},
+        "Balas": {"Shadbala": {}},
+    }
+
+    assert extract_varga_signs(raw) == {
+        "D1": {"Sun": "Aquarius", "Rahu": "Sagittarius"},
+        "D9": {"Moon": "Cancer"},
+    }

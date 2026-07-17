@@ -18,6 +18,7 @@ VERSION = "1.4.0"
 COMMIT = "86f7eb610a66b06b3f0817d2c53355bec8b3bf8d"
 LICENSE = "MIT"
 RETURNVAL = "ASTRODATA_DICTIONARY"
+SIGN_ALIASES = {"Saggitarius": "Sagittarius"}
 
 
 def _sha256_bytes(data: bytes) -> str:
@@ -179,6 +180,20 @@ def extract_fields(raw: dict) -> dict:
         source = lowered.get(key.lower())
         if source is not None:
             out[key] = raw[source]
+    return out
+
+
+def extract_varga_signs(raw: dict) -> dict:
+    out = {}
+    for chart in ("D1", "D2", "D4", "D9", "D10"):
+        planets = (raw.get(chart) or {}).get("planets") or {}
+        signs = {
+            planet: SIGN_ALIASES.get(str(data["sign"]), str(data["sign"]))
+            for planet, data in planets.items()
+            if isinstance(data, dict) and isinstance(data.get("sign"), str) and data["sign"]
+        }
+        if signs:
+            out[chart] = signs
     return out
 
 
