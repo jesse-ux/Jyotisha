@@ -50,7 +50,11 @@ test("resolves configured models while returning sanitized public metadata", () 
   });
   assert.equal(JSON.stringify(catalog.publicModels).includes("secret"), false);
   assert.equal(JSON.stringify(catalog.publicModels).includes("baseURL"), false);
-  assert.equal(catalog.models[1]?.model, "openai/gpt-5-mini");
+  assert.deepEqual(catalog.models[1]?.model, {
+    providerId: "openai",
+    modelId: "gpt-5-mini",
+    apiKey: "openai-secret",
+  });
 });
 
 test("excludes an invalid catalog entry without leaking its secret", () => {

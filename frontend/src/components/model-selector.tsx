@@ -2,7 +2,7 @@
 
 import { Popover } from "@base-ui/react/popover";
 import { Check, ChevronDown } from "lucide-react";
-import { useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { PublicLanguageModel } from "@/lib/public-models";
 
@@ -21,7 +21,6 @@ export function ModelSelector({
 }: ModelSelectorProps) {
   const [open, setOpen] = useState(false);
   const groupName = useId();
-  const radioRefs = useRef<Array<HTMLInputElement | null>>([]);
   const selectedModel = models.find((model) => model.id === selectedModelId);
   const unavailable = models.length === 0;
 
@@ -38,7 +37,7 @@ export function ModelSelector({
     const nextModel = models[nextIndex];
     if (!nextModel) return;
     onSelect(nextModel.id);
-    window.requestAnimationFrame(() => radioRefs.current[nextIndex]?.focus());
+    setOpen(false);
   }
 
   return (
@@ -65,21 +64,23 @@ export function ModelSelector({
               {models.map((model, index) => (
                 <label className="model-selector-option" data-selected={model.id === selectedModelId ? "" : undefined} key={model.id}>
                   <input
-                    ref={(element) => { radioRefs.current[index] = element; }}
                     className="sr-only"
                     type="radio"
                     name={groupName}
                     value={model.id}
                     checked={model.id === selectedModelId}
                     onChange={() => onSelect(model.id)}
-                    onClick={() => setOpen(false)}
+                    onClick={() => {
+                      if (model.id === selectedModelId) onSelect(model.id);
+                      setOpen(false);
+                    }}
                     onKeyDown={(event) => moveRadioSelection(event, index)}
                   />
                   <span className="model-selector-copy">
                     <b>{model.label}</b>
                     <small>{model.description || "通用分析模型"}</small>
                   </span>
-                  <span className="model-selector-cost">{model.creditCost} 点</span>
+                  <span className="model-selector-cost">{model.creditCost} 点/次</span>
                   <Check className="model-selector-check" aria-hidden="true" />
                 </label>
               ))}

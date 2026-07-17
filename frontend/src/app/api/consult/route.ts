@@ -9,6 +9,7 @@ import {
 } from "@/mastra/model";
 import { blocksPromptExtraction } from "@/lib/consult-safety";
 import { CreditRpcError, runCreditRpc } from "@/lib/consultation-billing";
+import { reserveConsultationModel } from "@/lib/consultation-model-selection";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { streamTextResponse } from "@/lib/stream-text-response";
@@ -55,9 +56,10 @@ async function recordModelUsage(
       .eq("transaction_type", "reserve")
       .eq("request_id", requestId);
 
-    if (error) console.warn("[billing] unable to record model usage", error.message);
+    if (error) console.warn(`[billing] unable to record model usage request=${requestId} model=${modelId}`);
   } catch (error) {
-    console.warn("[billing] unable to read model usage", error);
+    const reason = error instanceof Error ? error.name : "UnknownError";
+    console.warn(`[billing] unable to read model usage request=${requestId} model=${modelId} reason=${reason}`);
   }
 }
 
@@ -103,26 +105,33 @@ export async function POST(request: Request) {
     );
   }
 
-  const selectedModel = resolveLanguageModel(parsed.data.modelId);
-  if (!selectedModel) {
+  const userId = user.id;
+  const requestId = parsed.data.requestId;
+  let modelSelection;
+  try {
+    modelSelection = await reserveConsultationModel(
+      parsed.data.modelId,
+      resolveLanguageModel,
+      () => runCreditRpc(accounting, "begin_consultation_credit", userId, requestId),
+    );
+  } catch (error) {
+    const reason = error instanceof Error ? error.name : "UnknownError";
+    console.error(`[billing] reservation failed request=${requestId} reason=${reason}`);
+    return NextResponse.json(
+      { error: "暂时无法确认咨询点数", message: "请稍后重试。" },
+      { status: 503 },
+    );
+  }
+
+  if (modelSelection.status === "unavailable") {
     return NextResponse.json(
       { error: "模型暂不可用", message: "请选择其他模型后重新发送，本次不会扣除点数。" },
       { status: 409 },
     );
   }
 
-  const userId = user.id;
-  const requestId = parsed.data.requestId;
-  let reserveResult;
-  try {
-    reserveResult = await runCreditRpc(accounting, "begin_consultation_credit", userId, requestId);
-  } catch (error) {
-    console.error(`[billing] reservation failed for ${requestId}`, error);
-    return NextResponse.json(
-      { error: "暂时无法确认咨询点数", message: "请稍后重试。" },
-      { status: 503 },
-    );
-  }
+  const selectedModel = modelSelection.model;
+  const reserveResult = modelSelection.reservation;
 
   if (!reserveResult.success) {
     const insufficient = reserveResult.error_code === "insufficient_credits";
@@ -139,7 +148,8 @@ export async function POST(request: Request) {
     try {
       await runCreditRpc(accounting, "cancel_consultation_credit", userId, requestId);
     } catch (error) {
-      console.error(`[billing] cancellation failed for ${requestId}`, error);
+      const reason = error instanceof Error ? error.name : "UnknownError";
+      console.error(`[billing] cancellation failed request=${requestId} reason=${reason}`);
     }
   }
 
@@ -175,7 +185,7 @@ export async function POST(request: Request) {
     ]);
     const completeAndRecordUsage = async () => {
       await complete();
-      void recordModelUsage(accounting, userId, requestId, selectedModel.id, result.totalUsage);
+      void recordModelUsage(accounting, userId, requestId, modelSelection.usageModelId, result.totalUsage);
     };
     const settleInterrupted = (emitted: boolean) => settle(emitted ? completeAndRecordUsage : cancel);
     return streamTextResponse(result.textStream, {
@@ -187,12 +197,13 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     await cancel();
-    const message = error instanceof Error ? error.message : "咨询服务暂时不可用";
+    const reason = error instanceof Error ? error.name : "UnknownError";
+    console.error(`[consult] generation failed request=${requestId} model=${modelSelection.usageModelId} reason=${reason}`);
     return NextResponse.json(
       {
         error: "暂时无法生成解读",
-        message,
-        recovery: `请确认 Python API 已运行，并检查 JYOTISH_API_BASE 与模型配置。${languageModelConfigurationMessage() ? ` ${languageModelConfigurationMessage()}` : ""}`,
+        message: "咨询服务暂时不可用，请稍后再试。",
+        recovery: languageModelConfigurationMessage() ? "当前没有可用的咨询模型，请联系管理员。" : "稍后重试，或换一个模型继续。",
       },
       { status: 503 },
     );

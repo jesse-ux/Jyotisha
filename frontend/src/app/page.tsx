@@ -12,6 +12,10 @@ import { chinaLocations, type ProvinceNode } from "@/data/china-locations";
 import { parseAgentReply, type ReplyTheme } from "@/lib/agent-reply";
 import { keepFocusWithin } from "@/lib/focus-trap";
 import {
+  SessionModelPersistenceQueue,
+  persistSessionModelSelection,
+} from "@/lib/session-model-persistence";
+import {
   parsePublicModelCatalog,
   resolveSessionModelId,
   type PublicLanguageModelCatalog,
@@ -470,6 +474,9 @@ export default function Home() {
   const cancellationInFlight = useRef(false);
   const stoppedRequestAwaitingSettlement = useRef<string | null>(null);
   const stoppedSessionPersistence = useRef(new Map<string, Promise<void>>());
+  const modelPersistence = useRef(new SessionModelPersistenceQueue());
+  const modelSyncFailures = useRef(new Set<string>());
+  const modelSelectionVersions = useRef(new Map<string, number>());
   const activeSessionIdRef = useRef("");
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
@@ -616,16 +623,6 @@ export default function Home() {
           nextSessions = [initialSession];
         }
 
-        if (nextModelCatalog && parsedSessions.fallbackSessionIds.length > 0) {
-          const { error } = await supabase
-            .from("chat_sessions")
-            .update({ model_id: nextModelCatalog.defaultModelId })
-            .eq("user_id", nextAccount.user.id)
-            .in("id", parsedSessions.fallbackSessionIds)
-            .abortSignal(controller.signal);
-          if (error) throw error;
-        }
-
         if (controller.signal.aborted) return;
         const nextProfile = readProfile(profileResult.data);
         setAccount(nextAccount);
@@ -642,6 +639,18 @@ export default function Home() {
           setComposerNotice("此前选择的模型已下线，已切换为默认模型。");
         }
         setAccountError("");
+
+        if (nextModelCatalog && parsedSessions.fallbackSessionIds.length > 0) {
+          const { error } = await supabase
+            .from("chat_sessions")
+            .update({ model_id: nextModelCatalog.defaultModelId })
+            .eq("user_id", nextAccount.user.id)
+            .in("id", parsedSessions.fallbackSessionIds)
+            .abortSignal(controller.signal);
+          if (error && !controller.signal.aborted) {
+            setComposerNotice("已在当前页面切换为默认模型，但云端同步失败；刷新后可能需要重新选择。");
+          }
+        }
       } catch (caught) {
         if ((caught as Error).name !== "AbortError" && !controller.signal.aborted) {
           setAccountError(friendlyError(caught instanceof Error ? caught.message : "暂时无法读取云端数据"));
@@ -828,23 +837,55 @@ export default function Home() {
   }
 
   async function selectSessionModel(modelId: string) {
-    if (!activeSession || !modelCatalog || pendingSessionId || cancellationPending || creatingSession) return;
+    const userId = account?.user.id;
+    if (!activeSession || !modelCatalog || !userId || pendingSessionId || cancellationPending || creatingSession) return;
     const selectedModel = modelCatalog.models.find((model) => model.id === modelId);
-    if (!selectedModel || activeSession.modelId === modelId) return;
+    const retryingFailedSync = activeSession.modelId === modelId && modelSyncFailures.current.has(activeSession.id);
+    if (!selectedModel || (activeSession.modelId === modelId && !retryingFailedSync)) return;
 
-    const nextSession: ChatSession = {
-      ...activeSession,
-      modelId,
-      updatedAt: timestamp(),
-    };
-    updateSession(activeSession.id, () => nextSession);
+    const nextSession: ChatSession = retryingFailedSync
+      ? activeSession
+      : { ...activeSession, modelId, updatedAt: timestamp() };
+    const selectionVersion = (modelSelectionVersions.current.get(nextSession.id) ?? 0) + 1;
+    modelSelectionVersions.current.set(nextSession.id, selectionVersion);
+    if (!retryingFailedSync) updateSession(activeSession.id, () => nextSession);
     setRequestError(null);
-    setComposerNotice(`已切换至 ${selectedModel.label}，只影响之后的问题。`);
+    setComposerNotice(retryingFailedSync
+      ? `正在重新同步 ${selectedModel.label}。`
+      : `已切换至 ${selectedModel.label}，只影响之后的问题。`);
 
     try {
-      await persistSession(nextSession);
+      await modelPersistence.current.enqueue(nextSession.id, () => persistSessionModelSelection(
+        async ({ values, sessionId, userId: ownerId }) => {
+          if (process.env.NODE_ENV === "development" && uiPreview.current) {
+            return { found: true, error: null };
+          }
+          const { data, error } = await createBrowserSupabaseClient()
+            .from("chat_sessions")
+            .update(values)
+            .eq("id", sessionId)
+            .eq("user_id", ownerId)
+            .select("id")
+            .maybeSingle();
+          return { found: Boolean(data), error: error?.message ?? null };
+        },
+        userId,
+        nextSession.id,
+        modelId,
+      ));
+      if (modelSelectionVersions.current.get(nextSession.id) !== selectionVersion) return;
+      modelSelectionVersions.current.delete(nextSession.id);
+      modelSyncFailures.current.delete(nextSession.id);
+      if (retryingFailedSync && activeSessionIdRef.current === nextSession.id) {
+        setComposerNotice(`已同步 ${selectedModel.label}。`);
+      }
     } catch (caught) {
-      setComposerNotice(`已在当前页面切换至 ${selectedModel.label}，但云端同步失败。`);
+      if (modelSelectionVersions.current.get(nextSession.id) !== selectionVersion) return;
+      modelSelectionVersions.current.delete(nextSession.id);
+      modelSyncFailures.current.add(nextSession.id);
+      if (activeSessionIdRef.current === nextSession.id) {
+        setComposerNotice(`已在当前页面选择 ${selectedModel.label}，但云端同步失败；再次选择当前模型即可重试。`);
+      }
       setRequestError({
         sessionId: nextSession.id,
         message: caught instanceof Error ? caught.message : "模型选择暂时无法同步到云端。",

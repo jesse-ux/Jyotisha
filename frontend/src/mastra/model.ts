@@ -80,7 +80,11 @@ function resolveCatalogEntry(
       return {
         ...shared,
         mode: "openai",
-        model: entry.model,
+        model: {
+          providerId: "openai",
+          modelId: entry.model.replace(/^openai\//, ""),
+          apiKey,
+        },
       };
     case "openai-compatible":
       return {
@@ -213,6 +217,10 @@ export function resolveLanguageModelCatalog(environment: Environment): LanguageM
 }
 
 export const languageModelCatalog = resolveLanguageModelCatalog(process.env);
+
+if (languageModelCatalog.issues.length > 0) {
+  console.warn(`[models] catalog configuration issues: ${languageModelCatalog.issues.join(",")}`);
+}
 
 export function resolveLanguageModelFromCatalog(catalog: LanguageModelCatalog, modelId: string) {
   return catalog.models.find((model) => model.id === modelId) ?? null;
