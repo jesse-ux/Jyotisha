@@ -111,6 +111,9 @@ For large architecture or release work, also read:
 | ERR-078 | On this macOS host, bare `python3` resolves to Python 3.9 without pytest, while the project uses PEP 604 annotations; rerunning with `.venv/bin/python` reaches the tests but `test_preflight_fragment_scan_reports_authority_layers_and_risk_buckets` has a stale `high_value_unpromoted_count >= 1` assertion even when the scanner correctly reports zero. | observed 2026-07-15 | Run the gate with the project venv on this host and do not claim the full pre-work gate passed until the fragment-governance assertion is reconciled with the valid zero-unpromoted state. |
 | ERR-079 | VedAstro hosted replay and fixed-commit self-host validation cannot run on this host when `VEDASTRO_API_ENDPOINT` / `VEDASTRO_API_KEY` are absent and neither a .NET runtime nor a reachable Docker daemon is available. | observed 2026-07-17 | Keep hosted closure `blocked`; run `vedastro_contract_probe.py --repeats 3` only after injecting credentials through the environment, and build the pinned source in a provisioned Windows/.NET or reachable container environment. Never persist credentials in artifacts or shell history. |
 
+## ERR-080 | Issue link was mistaken for benchmark provenance | mitigated 2026-07-18
+PyJHora issue #17 is a UI/encoding issue with a general mismatch report, not VP Jain calibration. The benchmark now pins `V4.8.7` / `ca22995709bd60e371e7820a1a5efc80ce4cf821` and the exact test function URL. Treat its AGPL numeric expectations as a candidate replay, never independent formula arbitration.
+
 ## Fragment Sweep Command Set
 
 Use split scans, not one unbounded full-home command:

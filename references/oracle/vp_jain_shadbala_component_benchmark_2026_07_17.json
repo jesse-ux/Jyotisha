@@ -7,9 +7,12 @@
     "ayanamsa": "Lahiri"
   },
   "source": {
-    "upstream": "PyJHora 4.8.7 pvr_tests.py::shadbala_VPJainBook_tests",
-    "upstream_issue": "https://github.com/naturalstupid/PyJHora/issues/17",
-    "license_boundary": "Numeric published-example expectations only; no AGPL implementation copied."
+    "upstream": "PyJHora V4.8.7 pvr_tests.py::shadbala_VPJainBook_tests",
+    "upstream_commit": "ca22995709bd60e371e7820a1a5efc80ce4cf821",
+    "upstream_url": "https://github.com/naturalstupid/PyJHora/blob/ca22995709bd60e371e7820a1a5efc80ce4cf821/src/jhora/tests/pvr_tests.py#L6853",
+    "upstream_issue": null,
+    "license_boundary": "AGPL-3.0 process-isolated numeric expectations only; no implementation copied.",
+    "truth_status": "candidate_published_example_replay_not_independent_arbitration"
   },
   "summary": {
     "row_count": 42,
