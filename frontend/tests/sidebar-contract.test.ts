@@ -85,3 +85,46 @@ test("documents the sidebar shell design contract", () => {
   assert.match(design, /Scroll ownership/);
   assert.match(design, /session-local/);
 });
+
+test("composes the Jyotisha app sidebar from the generic shell", () => {
+  assert.equal(existsSync(projectFile("src/components/app-sidebar.tsx")), true);
+  const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
+
+  for (const component of ["SidebarHeader", "SidebarContent", "SidebarFooter", "SidebarRail"]) {
+    assert.match(appSidebar, new RegExp(`<${component}\\b`));
+  }
+});
+
+test("uses one collapsed history action instead of icon-only session rows", () => {
+  const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
+  assert.match(appSidebar, /MessageSquareText/);
+  assert.match(appSidebar, /state === "collapsed" && !isMobile/);
+  assert.match(appSidebar, /sessions\.map/);
+  assert.doesNotMatch(appSidebar, /sessions\.map\([^)]*\)\s*=>\s*<[^>]+aria-label=/);
+});
+
+test("keeps session navigation independent of request state", () => {
+  const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
+  assert.match(appSidebar, /onSelectSession\(session\.id\)/);
+  assert.doesNotMatch(appSidebar, /pendingSession|isLoading|cancellationPending|requestPending/);
+});
+
+test("uses a portaled Base UI account popover with safe collision padding", () => {
+  const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
+  assert.match(appSidebar, /import \{ Popover \} from "@base-ui\/react\/popover"/);
+  assert.match(appSidebar, /<Popover\.Portal>/);
+  assert.match(appSidebar, /collisionPadding=\{12\}/);
+});
+
+test("closes an open account menu only when its sidebar placement changes", () => {
+  const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
+  assert.match(appSidebar, /previousPopoverPlacement/);
+  assert.match(appSidebar, /previousPopoverPlacement\.current !== popoverPlacement && accountMenuOpen/);
+});
+
+test("keeps app sidebar props as product data and callbacks", () => {
+  const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
+  assert.match(appSidebar, /export type AppSidebarProps/);
+  assert.match(appSidebar, /onSelectSession: \(sessionId: string\) => void/);
+  assert.doesNotMatch(appSidebar, /supabase|fetch\(|\/api\//i);
+});
