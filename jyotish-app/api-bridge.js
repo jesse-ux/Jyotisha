@@ -47,6 +47,7 @@ async function postJson(path, payload, { requireModernChart = false } = {}) {
         continue;
       }
       activeApiBase = base;
+      if (data?.mode === 'async_submitted') return pollAsyncJob(data, { base });
       return data;
     } catch (error) {
       lastAttempt = `${base}${path}`;
@@ -58,6 +59,22 @@ async function postJson(path, payload, { requireModernChart = false } = {}) {
     return firstSuccessful.data;
   }
   throw lastError || new Error(buildAPIRecoveryMessage(path, '本地 API 未连接', lastAttempt));
+}
+
+async function pollAsyncJob(job, { base = activeApiBase, timeoutMs = 120000, intervalMs = 500 } = {}) {
+  if (!job?.poll_path || !job?.access_token) throw new Error('Async job response missing poll capability');
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const resp = await fetch(`${base}${job.poll_path}`, {
+      headers: { Authorization: `Bearer ${job.access_token}` },
+    });
+    const data = await parseApiResponse(resp);
+    if (!resp.ok) throw new Error(buildAPIRecoveryMessage(job.poll_path, data?.error || `Job poll failed (${resp.status})`));
+    if (data.status === 'completed') return data.result || data;
+    if (data.status === 'failed') throw new Error(data.error || 'Async job failed');
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  }
+  throw new Error('Async job timed out');
 }
 
 async function fetchJson(path) {
@@ -327,6 +344,14 @@ async function computeRectificationGate(payload) {
   return postJson('/api/rectification_gate', payload);
 }
 
+async function computeActiveRectificationQuestions(payload) {
+  return postJson('/api/active_rectification_questions', payload);
+}
+
+async function computeActiveRectificationScore(payload) {
+  return postJson('/api/active_rectification_score', payload);
+}
+
 async function computeCaseValidation(payload) {
   return postJson('/api/case_validation', payload);
 }
@@ -495,12 +520,15 @@ window.JyotishAPI = {
   computeYogas,
   computeAspects,
   computeRectificationGate,
+  computeActiveRectificationQuestions,
+  computeActiveRectificationScore,
   computeCaseValidation,
   getRealCaseRevalidation,
   computeDivisionalYoga,
   computeKakshya,
   computeBhavaBala,
   computeTransitTriggers,
+  pollAsyncJob,
   // AI 解读
   aiReading,
   aiFullReading,

@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "created": "2026-07-16",
+  "cards": [
+    {
+      "id": "rangacharya_core_arudha",
+      "title": "Rangacharya Arudha core counting",
+      "status": "transcribed",
+      "adjudication_enabled": false,
+      "evidence": {
+        "source_ids": ["uploaded_screenshots_20260716"],
+        "formula_text": "Pending formula-level transcription and source verification.",
+        "notes": "Covers AL, A7, A10, UL, and A1-A12 variant counting."
+      }
+    },
+    {
+      "id": "active_effective_lagna",
+      "title": "Active Lagna and Effective Lagna",
+      "status": "transcribed",
+      "adjudication_enabled": false,
+      "evidence": {
+        "source_ids": ["uploaded_screenshots_20260716"],
+        "formula_text": "Pending formula-level transcription and source verification.",
+        "notes": "Runtime may report placeholder metadata only."
+      }
+    },
+    {
+      "id": "prakriti_sanmukha",
+      "title": "Prakriti Chakra and Sanmukha",
+      "status": "blocked",
+      "adjudication_enabled": false,
+      "blocked_reason": "formula direction and exception rules need source-card verification",
+      "evidence": {
+        "source_ids": ["uploaded_screenshots_20260716"],
+        "formula_text": "Blocked until rule text is verified.",
+        "notes": "No runtime calculation allowed yet."
+      }
+    },
+    {
+      "id": "rangacharya_special_mappings",
+      "title": "Special divisional and graha mappings",
+      "status": "blocked",
+      "adjudication_enabled": false,
+      "blocked_reason": "Krishnamisra/Somanatha Navamsa, Parivritti/Somanatha Drekkana, Pancansa, and Graha Chakra need separate fixtures",
+      "evidence": {
+        "source_ids": ["uploaded_screenshots_20260716"],
+        "formula_text": "Blocked until mapping tables are verified.",
+        "notes": "Raw descriptive output only after fixtures exist."
+      }
+    },
+    {
+      "id": "rangacharya_named_yogas",
+      "title": "Named Rangacharya yogas",
+      "status": "blocked",
+      "adjudication_enabled": false,
+      "blocked_reason": "named yogas need formula-level source cards and golden fixtures",
+      "evidence": {
+        "source_ids": ["uploaded_screenshots_20260716"],
+        "formula_text": "Blocked until each yoga has its own source card.",
+        "notes": "Includes Dhana, Nirdhana, Kemadruma, Vahana, Bandhana, Dustamarana, Saukhya, Buddhi, Raja, Manipravala, Amatya, Senadhipatya, Chandradhi/Lagnadhi, Karakamsa, Yogada, Kevala, and Aspecting Graha."
+      }
+    },
+    {
+      "id": "rangacharya_ul_family_rules",
+      "title": "UL relationship and family rules",
+      "status": "blocked",
+      "adjudication_enabled": false,
+      "blocked_reason": "relationship, child, miscarriage, and adoption claims need real-case calibration",
+      "evidence": {
+        "source_ids": ["uploaded_screenshots_20260716"],
+        "formula_text": "Blocked until source and case validation.",
+        "notes": "May only become rule-hit reporting before calibration."
+      }
+    },
+    {
+      "id": "article_warehouse_future_tracks",
+      "title": "Future article-warehouse tracks",
+      "status": "blocked",
+      "adjudication_enabled": false,
+      "blocked_reason": "registered only; out of Rangacharya runtime scope",
+      "evidence": {
+        "source_ids": ["local_article_warehouse_20260716"],
+        "formula_text": "Blocked until hash, license, and technique-level extraction.",
+        "notes": "Includes Tithi Lord, Panchapakshi, Rashi Tulya Navamsa, Bhrigu Pada Dasha, Tajika, Darakaraka, and spouse rules."
+      }
+    }
+  ]
+}

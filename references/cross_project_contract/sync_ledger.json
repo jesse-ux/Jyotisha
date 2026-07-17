@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "f4d8148fc031cfa581bce7f30410fcd63fc89202",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "fd06bdc2eefa5547ed09968a218a8590df484bf3",
+      "change_class": "calculation_contract",
+      "copied_files": [
+        "references/cross_project_contract/fixture_manifest.v1.json",
+        "references/cross_project_contract/sync_ledger.json",
+        "scripts/cross_project_contract.py",
+        "tests/test_cross_project_contract.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: public synthetic fixture only; no production configuration or user data",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_cross_project_contract.py",
+        "python3 scripts/cross_project_contract.py --require-match --format json",
+        "python3 scripts/public_release_privacy_scan.py --json"
+      ],
+      "hash_contract_result": "pass: 257042461fe303aa3bff5a8333f65090832ce8a2be395f038523838d724b474b",
+      "rollback": "git revert f4d8148 / git revert fd06bdc"
+    },
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "25070634e26162a2ed7a5734aa783a4e42b26546",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "b6d292a7cd1a5c50d4b920caeec11b462248c21d",
+      "change_class": "sync_governance",
+      "copied_files": [
+        "references/cross_project_contract/sync_policy.v1.json",
+        "scripts/cross_project_sync_status.py",
+        "tests/test_cross_project_sync_status.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: public sync policy and file hashes only; no production configuration or user data",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_cross_project_contract.py tests/test_cross_project_sync_status.py",
+        "python3 scripts/cross_project_sync_status.py --peer /tmp/Jyotisha-jesse-ux --format json",
+        "python3 scripts/public_release_privacy_scan.py --json"
+      ],
+      "hash_contract_result": "pass: shared file sha256 comparison returned status=pass",
+      "rollback": "git revert 2507063 / git revert b6d292a"
+    },
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "b206cc297022a82f90881bdbcc09b1fcb7b65a08",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "61655fe060577011d91b74ad1fc671bace1bd689",
+      "change_class": "calculation_contract",
+      "copied_files": [
+        "scripts/domain_calculation_service.py",
+        "references/cross_project_contract/sync_policy.v1.json",
+        "tests/test_commercial_domain_calculation_contract.py",
+        "scripts/jyotish_api_server.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: no secrets or user data; VedAstro key not written to repository",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_commercial_domain_calculation_contract.py tests/test_cross_project_contract.py tests/test_cross_project_sync_status.py",
+        "python3 scripts/cross_project_contract.py --require-match --format json",
+        "python3 scripts/public_release_privacy_scan.py --json"
+      ],
+      "hash_contract_result": "pass: commercial API result_hash matches domain_calculation_service.compute_chart",
+      "rollback": "git revert b206cc2 / git revert 61655fe"
+    },
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "d1d09b9432f383963d10f6604a3bb0ffe2951eb9",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "73e0ff724d70a234a3fc02b207468377bf709997",
+      "change_class": "calculation_contract",
+      "copied_files": [
+        "scripts/jyotish_api_server.py",
+        "tests/test_commercial_domain_calculation_contract.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: no secrets or user data; visible chart values now follow domain service",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_commercial_domain_calculation_contract.py tests/test_cross_project_contract.py tests/test_cross_project_sync_status.py",
+        "python3 scripts/cross_project_contract.py --require-match --format json",
+        "python3 scripts/public_release_privacy_scan.py --json"
+      ],
+      "hash_contract_result": "pass: API Rahu/Ketu true-node visible longitudes match domain_calculation_service",
+      "rollback": "git revert 73e0ff7"
+    },
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "9d5e909d7b5af2d034b87f617d124ec6853e53f7",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "09387d82ffe9aa59d81a2af6c66ea34d47850ed9",
+      "change_class": "calculation_contract",
+      "copied_files": [
+        "scripts/jyotish_api_server.py",
+        "tests/test_commercial_domain_calculation_contract.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: no secrets or user data; Sade Sati now follows domain true Saturn transit",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_commercial_domain_calculation_contract.py tests/test_cross_project_contract.py tests/test_cross_project_sync_status.py",
+        "python3 scripts/cross_project_contract.py --require-match --format json",
+        "python3 scripts/public_release_privacy_scan.py --json"
+      ],
+      "hash_contract_result": "pass: API Sade Sati transit Saturn provenance matches domain_calculation_service",
+      "rollback": "git revert 09387d8"
+    },
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "5070952ecf57568092a82b97a2142e21ebeef4e7",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "e8a8ff62b0fa86f9e24be5a0ac2604afa575dd8c",
+      "change_class": "calculation_contract",
+      "copied_files": [
+        "scripts/jyotish_api_server.py",
+        "tests/test_commercial_domain_calculation_contract.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: no secrets or user data; dasha boundary now follows domain service",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_commercial_domain_calculation_contract.py tests/test_cross_project_contract.py tests/test_cross_project_sync_status.py",
+        "python3 scripts/cross_project_contract.py --require-match --format json",
+        "python3 scripts/public_release_privacy_scan.py --json"
+      ],
+      "hash_contract_result": "pass: API dasha start_date/current_md/remaining_years/result_hash match domain_calculation_service",
+      "rollback": "git revert e8a8ff6"
+    }
+  ]
+}

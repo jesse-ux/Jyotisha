@@ -735,12 +735,24 @@ def _birth_datetime_from_args(args):
 
 
 def _compute_chart_from_args(args):
-    return compute_chart_data(
-        args.year, args.month, args.day, args.hour, args.minute,
-        args.lat, args.lon, args.tz, getattr(args, 'node_mode', 'mean'),
-        second=_arg_second(args),
-        ayanamsa_name=_current_ayanamsa_name(args),
-    )
+    from domain_calculation_service import compute_chart
+
+    result = compute_chart({
+        'year': args.year,
+        'month': args.month,
+        'day': args.day,
+        'hour': args.hour,
+        'minute': args.minute,
+        'second': _arg_second(args),
+        'lat': args.lat,
+        'lon': args.lon,
+        'tz': args.tz,
+        'node_mode': getattr(args, 'node_mode', 'mean'),
+        'ayanamsa': _current_ayanamsa_name(args),
+    })
+    asc_idx = SIGNS.index(result['ascendant']['sign'])
+    birth = result['birth_info']
+    return result, asc_idx, birth['julian_day'], birth['ayanamsa']
 
 
 def _current_ayanamsa_name(args=None):
@@ -5085,14 +5097,26 @@ def cmd_full_reading(args):
     try:
         from tajika import calc_tajika_yogas, calc_all_sahams
 
-        # Tajika Yogas（用本命盘行星经度）
-        tc_yogas = calc_tajika_yogas(planet_lons)
+        # Seven-planet Tajika candidates require actual instantaneous speed.
+        tajika_planets = {
+            name: {"longitude": item.get("degree_raw", item.get("lon")), "speed": item.get("speed")}
+            for name, item in planets.items()
+            if isinstance(item, dict) and name in {"Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"}
+        }
+        tc_yogas = calc_tajika_yogas(tajika_planets)
         report['modules']['tajika_yogas'] = tc_yogas
 
         # Sahams（特殊点）—— 需要出生时间
-        birth_dt = getattr(args, 'birth_datetime', None)
+        birth_dt = _birth_datetime_from_args(args)
         if birth_dt and planet_lons:
-            sahams_result = calc_all_sahams(planet_lons, asc_deg, birth_dt)
+            sahams_result = calc_all_sahams(
+                planet_lons,
+                asc_deg,
+                birth_dt,
+                lat=getattr(args, 'lat', None),
+                lon=getattr(args, 'lon', None),
+                tz=getattr(args, 'tz', None),
+            )
             report['modules']['sahams'] = sahams_result
         else:
             report['modules']['sahams'] = {'warning': 'birth_datetime or planet_lons missing, skip saham calc'}
@@ -5871,48 +5895,30 @@ def cmd_full_reading(args):
 def cmd_prashna(args):
     """Prashna 问事占星：基于提问时刻的即时星盘分析"""
     try:
-        from prashna import cast_prashna, calc_arudha, calc_sphutas, calc_life_sphutas, calc_sahams, analyze_lost_item, kunda_verify, calc_gulika_simple
+        from prashna_context import PrashnaContextError, build_prashna_context
     except ImportError:
-        # 尝试从同目录导入
-        import importlib.util, os
-        spec = importlib.util.spec_from_file_location("prashna", os.path.join(os.path.dirname(__file__), "prashna.py"))
-        prashna_mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(prashna_mod)
-        cast_prashna = prashna_mod.cast_prashna
-        calc_arudha = prashna_mod.calc_arudha
-        calc_sphutas = prashna_mod.calc_sphutas
-        calc_life_sphutas = prashna_mod.calc_life_sphutas
-        calc_sahams = prashna_mod.calc_sahams
-        analyze_lost_item = prashna_mod.analyze_lost_item
-        kunda_verify = prashna_mod.kunda_verify
-        calc_gulika_simple = prashna_mod.calc_gulika_simple
-
-    if args.mode == 'chart':
-        return cast_prashna(args.datetime, args.lat, args.lon)
-
-    # 其他模式需要先铸盘获取行星位置
-    chart = cast_prashna(args.datetime, args.lat, args.lon)
-    if 'error' in chart:
-        return chart
-
-    asc_lon = chart['ascendant']['lon']
-    p_lons = {n: d['lon'] for n, d in chart['planets'].items()}
-
-    if args.mode == 'arudha':
-        return {'arudha_lagna': calc_arudha(asc_lon, p_lons),
-                'ascendant': chart['ascendant']}
-    elif args.mode == 'sphutas':
-        return calc_sphutas(p_lons, 0)
-    elif args.mode == 'sahams':
-        return calc_sahams(p_lons, asc_lon)
-    elif args.mode == 'lost-item':
-        return analyze_lost_item(p_lons, asc_lon)
-    elif args.mode == 'life':
-        return calc_life_sphutas(asc_lon, p_lons.get('Moon',0), p_lons.get('Sun',0), 0)
-    elif args.mode == 'kunda':
-        return kunda_verify(asc_lon)
-    else:
-        return cast_prashna(args.datetime, args.lat, args.lon)
+        from scripts.prashna_context import PrashnaContextError, build_prashna_context
+    try:
+        context = build_prashna_context({
+            "question_text": args.question_text,
+            "question_timestamp": args.datetime,
+            "lat": args.lat,
+            "lon": args.lon,
+            "timezone": args.timezone,
+            "ayanamsa": args.ayanamsa,
+            "node_mode": args.node_mode,
+            "location_convention": args.location_convention,
+        })
+    except PrashnaContextError as exc:
+        return {"scope": "prashna_context", "status": "blocked", "reason": str(exc)}
+    if args.mode != "chart":
+        return {
+            "scope": "prashna",
+            "status": "blocked",
+            "reason": f"{args.mode} is blocked pending validated Prashna kernel implementation",
+            "prashna_context": context,
+        }
+    return context
 
 
 # ============================================================================
@@ -6176,9 +6182,14 @@ def main():
 
     # 23. prashna (v3.9新增)
     p = sub.add_parser('prashna', help='Prashna问事占星（提问时刻星盘+Arudha+Sphuta+Sahams）')
-    p.add_argument('--datetime', required=True, help='提问时间 YYYY-MM-DD HH:MM')
+    p.add_argument('--datetime', required=True, help='提问时间 ISO-8601，例如 2026-07-12T12:00:00+08:00')
+    p.add_argument('--question-text', required=True, help='用户原始问事文本')
     p.add_argument('--lat', type=float, required=True, help='纬度')
     p.add_argument('--lon', type=float, required=True, help='经度')
+    p.add_argument('--timezone', required=True, help='UTC offset，例如 8 或 +08:00')
+    p.add_argument('--ayanamsa', default='lahiri')
+    p.add_argument('--node-mode', default='mean', choices=['mean', 'true'])
+    p.add_argument('--location-convention', default='wgs84', choices=['wgs84'])
     p.add_argument('--mode', default='chart', choices=['chart','arudha','sphutas','sahams','lost-item','life','kunda'], help='分析模式')
 
     # 24. double-transit-pac (v3.9新增)

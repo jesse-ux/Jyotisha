@@ -1695,6 +1695,40 @@
       },
       "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
     },
+    "rangacharya_jaimini_variant": {
+      "audit_label": "Rangacharya Jaimini Variant",
+      "commands": [
+        "jaimini"
+      ],
+      "conclusion_policy": "Display current-vs-variant differences only; do not use for verdicts or timing.",
+      "domains": [
+        "jaimini",
+        "arudha",
+        "experimental",
+        "audit"
+      ],
+      "entry_type": "experimental_variant",
+      "evidence_role": "comparison_only",
+      "knowledge_refs": [
+        "references/rangacharya_source_manifest.json",
+        "references/rangacharya_source_cards.json",
+        "docs/superpowers/specs/2026-07-16-rangacharya-vedastro-design.md"
+      ],
+      "missing_impact": "Rangacharya-specific Arudha and named-yoga rules remain unavailable for adjudication until source cards, golden fixtures, oracle comparison, and case calibration pass.",
+      "name": "Rangacharya / Iranganti Jaimini Variant",
+      "note": "Rangacharya variant has a tested current-vs-variant diff path and API variant output, but adjudication remains disabled until source-card validation and golden fixtures pass.",
+      "output_paths": [
+        "result.rangacharya",
+        "result.rangacharya_diff"
+      ],
+      "status": "comparison-only",
+      "user_visibility": "expert_audit",
+      "verification_level": {
+        "calculation": "experimental",
+        "prediction": "blocked",
+        "rule": "blocked"
+      }
+    },
     "rashi_tulya_navamsa": {
       "name": "Rashi Tulya Navamsa / 本命对分盘分析",
       "domains": [
