@@ -2585,6 +2585,14 @@ const ORACLE_EVIDENCE_INTAKE_TASKS = [
     targetFields: ['vimshottari_start_date', 'shadbala_components'],
   },
   {
+    caseId: 'template_synthetic_north_china_shadbala_raman',
+    title: '合成公开样本 · Raman Shadbala',
+    birth: '1980-01-01 12:00 · synthetic fixture · TZ +08:00',
+    settings: 'ayanamsa=raman · node_mode=mean',
+    preferredSources: 'JHora / PyJHora Shadbala 黑盒输出',
+    targetFields: ['moon_sidereal_longitude_deg', 'shadbala_components'],
+  },
+  {
     caseId: 'template_extreme_latitude_kp',
     title: '高纬样本 · KP/Ayanamsa 边界',
     birth: 'Extreme latitude fixture · local civil time retained',
@@ -2599,6 +2607,14 @@ const ORACLE_EVIDENCE_INTAKE_TASKS = [
     settings: 'ayanamsa=lahiri · node_mode=mean',
     preferredSources: 'JHora date policy screenshot',
     targetFields: ['sun_sidereal_longitude_deg', 'vimshottari_start_date'],
+  },
+  {
+    caseId: 'template_bv_raman_vimshottari_boundary_series',
+    title: 'B.V. Raman · Dasha 边界',
+    birth: '1912-08-08 19:43 · public reference chart · TZ +05:30',
+    settings: 'ayanamsa=raman · node_mode=unspecified',
+    preferredSources: 'Published example / JHora boundary verification',
+    targetFields: ['vimshottari_mahadasa_boundaries'],
   },
 ];
 
