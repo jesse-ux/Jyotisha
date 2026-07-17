@@ -83,7 +83,8 @@ test("routes account actions through a popover and focused dialogs", () => {
   assert.match(pageSource, /openAccountDialog\("profile"/);
   assert.match(pageSource, /openAccountDialog\("redeem"/);
   assert.match(pageSource, /openAccountDialog\("logout"/);
-  assert.match(appSidebarSource, /className="account-menu"/);
+  assert.match(appSidebarSource, /<Popover\.Popup className="account-menu-popup"/);
+  assert.doesNotMatch(appSidebarSource, /<Popover\.Popup className="account-menu"/);
   assert.match(appSidebarSource, /<Popover\.Root open=\{accountMenuOpen\} onOpenChange=\{onAccountMenuOpenChange\}>/);
 });
 

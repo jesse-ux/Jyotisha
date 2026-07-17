@@ -114,10 +114,14 @@ test("uses a portaled Base UI account popover with safe collision padding", () =
   assert.match(appSidebar, /import \{ Popover \} from "@base-ui\/react\/popover"/);
   assert.match(appSidebar, /<Popover\.Portal>/);
   assert.match(appSidebar, /collisionPadding=\{12\}/);
+  assert.match(appSidebar, /<Popover\.Popup className="account-menu-popup"/);
+  assert.doesNotMatch(appSidebar, /<Popover\.Popup className="account-menu"/);
 });
 
-test("closes an open account menu only when its sidebar placement changes", () => {
+test("closes an open account menu when the sidebar viewport or state changes", () => {
   const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
+  assert.match(appSidebar, /const \{[^}]*\bviewport\b[^}]*\} = useSidebar\(\)/);
+  assert.match(appSidebar, /const popoverPlacement = `\$\{viewport\}:\$\{state\}`/);
   assert.match(appSidebar, /previousPopoverPlacement/);
   assert.match(appSidebar, /previousPopoverPlacement\.current !== popoverPlacement && accountMenuOpen/);
 });

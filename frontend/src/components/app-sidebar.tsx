@@ -73,12 +73,12 @@ export function AppSidebar({
   onOpenRedeem,
   onOpenLogout,
 }: AppSidebarProps) {
-  const { isMobile, setOpen, setOpenMobile, state } = useSidebar();
+  const { isMobile, setOpen, setOpenMobile, state, viewport } = useSidebar();
   const firstSessionRef = useRef<HTMLButtonElement>(null);
   const historyHeadingRef = useRef<HTMLHeadingElement>(null);
   const isCollapsedDesktop = state === "collapsed" && !isMobile;
   const showExpandedContent = !isCollapsedDesktop;
-  const popoverPlacement = `${isMobile}:${state}`;
+  const popoverPlacement = `${viewport}:${state}`;
   const previousPopoverPlacement = useRef(popoverPlacement);
 
   useEffect(() => {
@@ -192,7 +192,7 @@ export function AppSidebar({
               sideOffset={8}
               collisionPadding={12}
             >
-              <Popover.Popup className="account-menu" role="menu" aria-label="账户菜单">
+              <Popover.Popup className="account-menu-popup" role="menu" aria-label="账户菜单">
                 <div className="account-menu-identity">
                   <span className="account-menu-avatar" aria-hidden="true">{account.initial}</span>
                   <span><b>{account.name}</b><small>{account.email}</small></span>
