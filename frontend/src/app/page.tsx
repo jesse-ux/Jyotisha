@@ -58,6 +58,12 @@ type SynastryReportCard = {
   nextEvidence?: string[];
   createdAt: number;
 };
+type SynastryReportApiRecord = {
+  id: string;
+  partner_name?: string;
+  report?: SynastryReportCard;
+  created_at?: string;
+};
 type ChatSession = { id: string; title: string; theme: Theme; modelId: string; messages: Message[]; updatedAt: number };
 type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
@@ -227,6 +233,38 @@ function readSynastryHistory(accountId: string): SynastryReportCard[] {
   } catch {
     return [];
   }
+}
+
+function writeSynastryHistory(accountId: string, history: SynastryReportCard[]) {
+  localStorage.setItem(synastryHistoryStorageKey(accountId), JSON.stringify(history.slice(0, 10)));
+}
+
+function normalizeSynastryReportApiRecord(record: SynastryReportApiRecord): SynastryReportCard | null {
+  if (!record.report || typeof record.report !== "object") return null;
+  return {
+    ...record.report,
+    id: record.id,
+    partnerName: record.partner_name || record.report.partnerName || "对方",
+    createdAt: Date.parse(record.created_at || "") || record.report.createdAt || timestamp(),
+  };
+}
+
+async function fetchCloudSynastryHistory() {
+  const response = await fetch("/api/synastry-reports", { cache: "no-store" });
+  if (!response.ok) throw new Error("cloud_synastry_history_unavailable");
+  const payload = await response.json().catch(() => null) as { reports?: SynastryReportApiRecord[] } | null;
+  return (payload?.reports || []).map(normalizeSynastryReportApiRecord).filter(Boolean) as SynastryReportCard[];
+}
+
+async function saveCloudSynastryReport(report: SynastryReportCard) {
+  const response = await fetch("/api/synastry-reports", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ partnerName: report.partnerName, report }),
+  });
+  if (!response.ok) throw new Error("cloud_synastry_report_save_failed");
+  const payload = await response.json().catch(() => null) as { report?: SynastryReportApiRecord } | null;
+  return payload?.report ? normalizeSynastryReportApiRecord(payload.report) || report : report;
 }
 
 function normalizeChartLibraryApiRecord(record: ChartLibraryApiRecord): ChartLibraryRecord {
@@ -635,6 +673,18 @@ export default function Home() {
       })
       .catch(() => {
         // Cloud chart library is best-effort; local library remains usable.
+      });
+    void fetchCloudSynastryHistory()
+      .then((cloudHistory) => {
+        setSynastryHistory((current) => {
+          const byId = new Map([...current, ...cloudHistory].map((record) => [record.id, record] as const));
+          const next = [...byId.values()].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
+          writeSynastryHistory(accountId, next);
+          return next;
+        });
+      })
+      .catch(() => {
+        // Cloud synastry history is best-effort; local history remains usable.
       });
   }, [accountId, profile]);
 
@@ -1303,11 +1353,19 @@ export default function Home() {
           nextEvidence: payload.relationshipReport?.nextEvidence,
           createdAt: Date.now(),
         };
-        setSynastryReportCard(reportCard);
+        let savedReportCard = reportCard;
+        if (accountId) {
+          try {
+            savedReportCard = await saveCloudSynastryReport(reportCard);
+          } catch {
+            // Local history remains the fallback when cloud persistence is unavailable.
+          }
+        }
+        setSynastryReportCard(savedReportCard);
         if (accountId) {
           setSynastryHistory((current) => {
-            const next = [reportCard, ...current].slice(0, 10);
-            localStorage.setItem(synastryHistoryStorageKey(accountId), JSON.stringify(next));
+            const next = [savedReportCard, ...current.filter((item) => item.id !== savedReportCard.id)].slice(0, 10);
+            writeSynastryHistory(accountId, next);
             return next;
           });
         }

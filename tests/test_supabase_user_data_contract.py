@@ -30,10 +30,18 @@ CHART_PROFILE_MIGRATION = (
     / "migrations"
     / "20260717010000_chart_profiles.sql"
 )
+SYNASTRY_REPORT_MIGRATION = (
+    Path(__file__).resolve().parents[1]
+    / "frontend"
+    / "supabase"
+    / "migrations"
+    / "20260717020000_synastry_reports.sql"
+)
 PAGE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "page.tsx"
 CHART_PROFILE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "route.ts"
 CHART_PROFILE_DELETE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "[id]" / "route.ts"
 SYNASTRY_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "synastry" / "route.ts"
+SYNASTRY_REPORT_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "synastry-reports" / "route.ts"
 
 
 def _sql() -> str:
@@ -181,6 +189,46 @@ def test_synastry_route_orchestrates_python_chart_and_ashtakoot() -> None:
         'status: "blocked"',
     ):
         assert token in route
+
+
+def test_synastry_reports_are_cloud_persisted_per_user() -> None:
+    sql = re.sub(r"\s+", " ", SYNASTRY_REPORT_MIGRATION.read_text(encoding="utf-8").lower()).strip()
+    route = SYNASTRY_REPORT_ROUTE.read_text(encoding="utf-8")
+    page = PAGE.read_text(encoding="utf-8")
+
+    for token in (
+        "create table if not exists public.synastry_reports",
+        "user_id uuid not null references auth.users(id) on delete cascade",
+        "partner_name text not null default '对方'",
+        "report jsonb not null check (jsonb_typeof(report) = 'object')",
+        "alter table public.synastry_reports enable row level security",
+        "create policy synastry_reports_select_own on public.synastry_reports for select to authenticated using ((select auth.uid()) = user_id)",
+        "create policy synastry_reports_insert_own on public.synastry_reports for insert to authenticated with check ((select auth.uid()) = user_id)",
+        "create policy synastry_reports_delete_own on public.synastry_reports for delete to authenticated using ((select auth.uid()) = user_id)",
+        "grant select on table public.synastry_reports to authenticated",
+        "grant insert (id, user_id, partner_name, report, created_at) on table public.synastry_reports to authenticated",
+    ):
+        assert token in sql
+
+    for token in (
+        '.from("synastry_reports")',
+        '.select("id, partner_name, report, created_at")',
+        ".eq(\"user_id\", user.id)",
+        ".limit(10)",
+        "partner_name: partnerName",
+        "report: body.report",
+    ):
+        assert token in route
+
+    for token in (
+        "fetchCloudSynastryHistory",
+        "saveCloudSynastryReport",
+        'fetch("/api/synastry-reports"',
+        "writeSynastryHistory(accountId, next)",
+        "cloud_synastry_history_unavailable",
+        "cloud_synastry_report_save_failed",
+    ):
+        assert token in page
 
 
 def test_consultation_credit_lifecycle_is_idempotent_and_server_only() -> None:
