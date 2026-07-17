@@ -3356,7 +3356,7 @@ def cmd_shadbala(args):
         return {"error": "swisseph未安装"}
     try:
         sys.path.insert(0, SCRIPT_DIR)
-        from shadbala import calc_shadbala
+        from shadbala import build_shadbala_context, calc_shadbala
     except ImportError as e:
         return {"error": f"shadbala模块导入失败: {e}"}
     planets = chart.get("planets", {})
@@ -3364,7 +3364,8 @@ def cmd_shadbala(args):
     birth_hour = _birth_hour_decimal(args.hour, args.minute, _arg_second(args))
     sun_lon = planets.get("Sun", {}).get("degree", 0)
     moon_lon = planets.get("Moon", {}).get("degree", 0)
-    return calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon)
+    context = build_shadbala_context(jd, args.lat, args.lon, _current_ayanamsa_name(args))
+    return calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon, context=context)
 
 
 # ============================================================================
@@ -3752,11 +3753,12 @@ def cmd_audit(args):
     # P9 Shadbala（六重力量）
     try:
         sys.path.insert(0, SCRIPT_DIR)
-        from shadbala import calc_shadbala
+        from shadbala import build_shadbala_context, calc_shadbala
         birth_hour = _birth_hour_decimal(args.hour, args.minute, _arg_second(args))
         sun_lon = planets.get('Sun', {}).get('degree', 0)
         moon_lon = planets.get('Moon', {}).get('degree', 0)
-        shadbala = calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon)
+        context = build_shadbala_context(jd, args.lat, args.lon, _current_ayanamsa_name(args))
+        shadbala = calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon, context=context)
         report['audit']['P9_shadbala'] = {
             'summary': shadbala.get('summary', {}),
             'ishta_bala_ranking': shadbala.get('ishta_bala_ranking', []),
@@ -5524,7 +5526,7 @@ def cmd_full_reading(args):
         birth_hour = _birth_hour_decimal(args.hour, args.minute, _arg_second(args))
         sun_lon = planet_lons.get('Sun', 0)
         moon_lon = planet_lons.get('Moon', 0)
-        shadbala_result = calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon)
+        shadbala_result = calc_shadbala(planets, asc_sign, birth_hour, sun_lon, moon_lon, context=context)
         # 添加顶层汇总
         if isinstance(shadbala_result, dict):
             sb_planets = shadbala_result.get('planets', {})

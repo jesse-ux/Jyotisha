@@ -6281,12 +6281,25 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         birth_minute = self._get_float(body, 'birth_minute', body.get('minute', 0), 0, 59)
         birth_second = self._get_birth_second(body)
         birth_hour_decimal = self._birth_hour_decimal(birth_hour, birth_minute, birth_second)
-        result = _load_local_module('shadbala').calc_shadbala(
+        shadbala_module = _load_local_module('shadbala')
+        context = None
+        if all(key in body for key in ('year', 'month', 'day', 'lat', 'lon')):
+            year = self._get_int(body, 'year', 1990, 1800, 2400)
+            month = self._get_int(body, 'month', 6, 1, 12)
+            day = self._get_int(body, 'day', 15, 1, 31)
+            lat = self._get_float(body, 'lat', 0, -90, 90)
+            lon = self._get_float(body, 'lon', 0, -180, 180)
+            tz = self._parse_timezone(body, lat, lon, year, month, day, birth_hour, birth_minute, birth_second)
+            jd = swe.julday(year, month, day, birth_hour_decimal - tz)
+            context = shadbala_module.build_shadbala_context(jd, lat, lon, body.get('ayanamsa', 'lahiri'))
+        result = shadbala_module.calc_shadbala(
             planets,
             SIGNS[asc_sign_idx],
             birth_hour_decimal,
             planet_lons['Sun'],
             planet_lons['Moon'],
+            birth_minute,
+            context=context,
         )
         advanced = self._compute_shadbala_advanced_layer(body, planets, result)
         return {

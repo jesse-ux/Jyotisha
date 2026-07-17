@@ -93,6 +93,36 @@
       "path": "references/oracle/artifacts/vedastro_steve_jobs_contract_probe_run3.json",
       "sha256": "fb0e05704df9be5bece7bef3b42fc14e0cc4f254685f039b855b359da453c650",
       "scope": "third independent redacted VedAstro contract probe"
+    },
+    {
+      "id": "high_rigor_local_raw",
+      "path": "references/oracle/artifacts/local_steve_jobs_high_rigor_raw.json",
+      "sha256": "8361cac2831404a005e6be5c927b9cd610cfc0787ca17a547e81ae9a4d601746",
+      "scope": "public same-chart local high-rigor raw output"
+    },
+    {
+      "id": "high_rigor_pyjhora_raw",
+      "path": "references/oracle/artifacts/pyjhora_steve_jobs_high_rigor_raw.json",
+      "sha256": "a0374c77f7d4c435a473871ca8bbd0dff45f314eb2d68f5e9b3106478b986508",
+      "scope": "public same-chart PyJHora high-rigor raw output"
+    },
+    {
+      "id": "high_rigor_jyotishganit_raw",
+      "path": "references/oracle/artifacts/jyotishganit_steve_jobs_high_rigor_raw.json",
+      "sha256": "5cbb85f6cd9210558d496c350b45aa1dc2785ab3f49a800a884b45c76c49e6a1",
+      "scope": "public same-chart jyotishganit high-rigor raw output"
+    },
+    {
+      "id": "high_rigor_vedastro_divisional_raw",
+      "path": "references/oracle/artifacts/vedastro_steve_jobs_public_aa_divisional_raw.json",
+      "sha256": "75da3fa79463e22801b4602ec96d55267fc1dd0ef134ca0c96249317b0db9ef9",
+      "scope": "public VedAstro divisional and Shadbala raw evidence"
+    },
+    {
+      "id": "pyjhora_extended_public_smoke",
+      "path": "references/oracle/pyjhora_extended_parity_public_smoke_manifest.json",
+      "sha256": "c86315d8e16338608409b9277f835f647f8b739c207e4bcca177fd5ea0e2c0c4",
+      "scope": "public PyJHora extended parity smoke manifest"
     }
   ]
 }

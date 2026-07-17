@@ -15,34 +15,12 @@
       "status": "match"
     },
     {
-      "field": "Sun.longitude",
-      "local_value": 312.51748591136726,
-      "oracle_values": {
-        "PyJHora_JHora": 312.51819523181405,
-        "VedAstro": 312.51222222222225,
-        "jyotishganit": 312.5241179806235
-      },
-      "section": "D1",
-      "status": "match"
-    },
-    {
       "field": "Moon.sign",
       "local_value": "Pisces",
       "oracle_values": {
         "PyJHora_JHora": "Pisces",
         "VedAstro": "Pisces",
         "jyotishganit": "Pisces"
-      },
-      "section": "D1",
-      "status": "match"
-    },
-    {
-      "field": "Moon.longitude",
-      "local_value": 344.5165209098362,
-      "oracle_values": {
-        "PyJHora_JHora": 344.51168181221095,
-        "VedAstro": 344.5113888888889,
-        "jyotishganit": 344.5244975534928
       },
       "section": "D1",
       "status": "match"
@@ -59,34 +37,12 @@
       "status": "match"
     },
     {
-      "field": "Mars.longitude",
-      "local_value": 5.8598225437926565,
-      "oracle_values": {
-        "PyJHora_JHora": 5.862334338243072,
-        "VedAstro": 5.854722222222223,
-        "jyotishganit": 5.866405267585137
-      },
-      "section": "D1",
-      "status": "match"
-    },
-    {
       "field": "Mercury.sign",
       "local_value": "Capricorn",
       "oracle_values": {
         "PyJHora_JHora": "Capricorn",
         "VedAstro": "Capricorn",
         "jyotishganit": "Capricorn"
-      },
-      "section": "D1",
-      "status": "match"
-    },
-    {
-      "field": "Mercury.longitude",
-      "local_value": 291.13107265785646,
-      "oracle_values": {
-        "PyJHora_JHora": 291.12589362817465,
-        "VedAstro": 291.12583333333333,
-        "jyotishganit": 291.1374137657774
       },
       "section": "D1",
       "status": "match"
@@ -103,34 +59,12 @@
       "status": "match"
     },
     {
-      "field": "Jupiter.longitude",
-      "local_value": 87.27723563442187,
-      "oracle_values": {
-        "PyJHora_JHora": 87.27055150216493,
-        "VedAstro": 87.27222222222223,
-        "jyotishganit": 87.28382648671735
-      },
-      "section": "D1",
-      "status": "match"
-    },
-    {
       "field": "Venus.sign",
       "local_value": "Sagittarius",
       "oracle_values": {
         "PyJHora_JHora": "Sagittarius",
         "VedAstro": "Sagittarius",
         "jyotishganit": "Sagittarius"
-      },
-      "section": "D1",
-      "status": "match"
-    },
-    {
-      "field": "Venus.longitude",
-      "local_value": 267.941228624149,
-      "oracle_values": {
-        "PyJHora_JHora": 267.94211928370015,
-        "VedAstro": 267.93611111111113,
-        "jyotishganit": 267.94779146740916
       },
       "section": "D1",
       "status": "match"
@@ -147,76 +81,1423 @@
       "status": "match"
     },
     {
-      "field": "Saturn.longitude",
-      "local_value": 207.93204028705406,
+      "field": "Sun.sign",
+      "local_value": "Leo",
       "oracle_values": {
-        "PyJHora_JHora": 207.92738390514674,
-        "VedAstro": 207.92694444444444,
-        "jyotishganit": 207.93866866093018
+        "PyJHora_JHora": "Leo",
+        "VedAstro": "Gemini",
+        "jyotishganit": "Leo"
       },
-      "section": "D1",
+      "section": "D2",
+      "status": "mismatch"
+    },
+    {
+      "field": "Moon.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Pisces",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D2",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars.sign",
+      "local_value": "Leo",
+      "oracle_values": {
+        "PyJHora_JHora": "Leo",
+        "VedAstro": "Aries",
+        "jyotishganit": "Leo"
+      },
+      "section": "D2",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mercury.sign",
+      "local_value": "Leo",
+      "oracle_values": {
+        "PyJHora_JHora": "Leo",
+        "VedAstro": "Virgo",
+        "jyotishganit": "Leo"
+      },
+      "section": "D2",
+      "status": "mismatch"
+    },
+    {
+      "field": "Jupiter.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Aquarius",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D2",
+      "status": "mismatch"
+    },
+    {
+      "field": "Venus.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Leo",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D2",
+      "status": "mismatch"
+    },
+    {
+      "field": "Saturn.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Gemini",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D2",
+      "status": "mismatch"
+    },
+    {
+      "field": "Sun.sign",
+      "local_value": "Taurus",
+      "oracle_values": {
+        "PyJHora_JHora": "Taurus",
+        "VedAstro": "Taurus",
+        "jyotishganit": "Taurus"
+      },
+      "section": "D4",
       "status": "match"
     },
     {
-      "field": "raw_capture",
+      "field": "Moon.sign",
+      "local_value": "Gemini",
+      "oracle_values": {
+        "PyJHora_JHora": "Gemini",
+        "VedAstro": "Pisces",
+        "jyotishganit": "Gemini"
+      },
+      "section": "D4",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars.sign",
+      "local_value": "Aries",
+      "oracle_values": {
+        "PyJHora_JHora": "Aries",
+        "VedAstro": "Aries",
+        "jyotishganit": "Aries"
+      },
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "field": "Mercury.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Cancer",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "field": "Jupiter.sign",
+      "local_value": "Pisces",
+      "oracle_values": {
+        "PyJHora_JHora": "Pisces",
+        "VedAstro": "Pisces",
+        "jyotishganit": "Pisces"
+      },
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "field": "Venus.sign",
+      "local_value": "Virgo",
+      "oracle_values": {
+        "PyJHora_JHora": "Virgo",
+        "VedAstro": "Virgo",
+        "jyotishganit": "Virgo"
+      },
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "field": "Saturn.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Cancer",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "field": "Sun.sign",
+      "local_value": "Capricorn",
+      "oracle_values": {
+        "PyJHora_JHora": "Capricorn",
+        "VedAstro": "Capricorn",
+        "jyotishganit": "Capricorn"
+      },
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "field": "Moon.sign",
+      "local_value": "Scorpio",
+      "oracle_values": {
+        "PyJHora_JHora": "Scorpio",
+        "VedAstro": "Leo",
+        "jyotishganit": "Scorpio"
+      },
+      "section": "D9",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars.sign",
+      "local_value": "Taurus",
+      "oracle_values": {
+        "PyJHora_JHora": "Taurus",
+        "VedAstro": "Taurus",
+        "jyotishganit": "Taurus"
+      },
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "field": "Mercury.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Cancer",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "field": "Jupiter.sign",
+      "local_value": "Gemini",
+      "oracle_values": {
+        "PyJHora_JHora": "Gemini",
+        "VedAstro": "Gemini",
+        "jyotishganit": "Gemini"
+      },
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "field": "Venus.sign",
+      "local_value": "Sagittarius",
+      "oracle_values": {
+        "PyJHora_JHora": "Sagittarius",
+        "VedAstro": "Sagittarius",
+        "jyotishganit": "Sagittarius"
+      },
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "field": "Saturn.sign",
+      "local_value": "Gemini",
+      "oracle_values": {
+        "PyJHora_JHora": "Gemini",
+        "VedAstro": "Gemini",
+        "jyotishganit": "Gemini"
+      },
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "field": "Sun.sign",
+      "local_value": "Gemini",
+      "oracle_values": {
+        "PyJHora_JHora": "Gemini",
+        "VedAstro": "Gemini",
+        "jyotishganit": "Gemini"
+      },
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "field": "Moon.sign",
+      "local_value": "Pisces",
+      "oracle_values": {
+        "PyJHora_JHora": "Pisces",
+        "VedAstro": "Sagittarius",
+        "jyotishganit": "Pisces"
+      },
+      "section": "D10",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars.sign",
+      "local_value": "Taurus",
+      "oracle_values": {
+        "PyJHora_JHora": "Taurus",
+        "VedAstro": "Taurus",
+        "jyotishganit": "Taurus"
+      },
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "field": "Mercury.sign",
+      "local_value": "Aries",
+      "oracle_values": {
+        "PyJHora_JHora": "Aries",
+        "VedAstro": "Aries",
+        "jyotishganit": "Aries"
+      },
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "field": "Jupiter.sign",
+      "local_value": "Pisces",
+      "oracle_values": {
+        "PyJHora_JHora": "Pisces",
+        "VedAstro": "Pisces",
+        "jyotishganit": "Pisces"
+      },
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "field": "Venus.sign",
+      "local_value": "Virgo",
+      "oracle_values": {
+        "PyJHora_JHora": "Virgo",
+        "VedAstro": "Virgo",
+        "jyotishganit": "Virgo"
+      },
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "field": "Saturn.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Cancer",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "field": "Sun",
+      "local_value": [
+        3,
+        7,
+        4,
+        3,
+        3,
+        2,
+        6,
+        7,
+        4,
+        4,
+        3,
+        2
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          3,
+          7,
+          4,
+          3,
+          3,
+          2,
+          6,
+          7,
+          4,
+          4,
+          3,
+          2
+        ],
+        "VedAstro": [
+          3,
+          7,
+          3,
+          2,
+          3,
+          3,
+          6,
+          7,
+          4,
+          3,
+          4,
+          3
+        ],
+        "jyotishganit": [
+          3,
+          7,
+          4,
+          3,
+          3,
+          2,
+          6,
+          7,
+          4,
+          4,
+          3,
+          2
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "status": "mismatch"
+    },
+    {
+      "field": "Moon",
+      "local_value": [
+        4,
+        4,
+        4,
+        3,
+        6,
+        5,
+        3,
+        3,
+        4,
+        5,
+        3,
+        5
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          4,
+          4,
+          4,
+          3,
+          6,
+          5,
+          3,
+          3,
+          4,
+          5,
+          3,
+          5
+        ],
+        "VedAstro": [
+          4,
+          5,
+          3,
+          2,
+          6,
+          6,
+          3,
+          2,
+          5,
+          4,
+          4,
+          5
+        ],
+        "jyotishganit": [
+          4,
+          5,
+          4,
+          2,
+          6,
+          5,
+          3,
+          2,
+          5,
+          5,
+          3,
+          5
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars",
+      "local_value": [
+        4,
+        7,
+        4,
+        4,
+        3,
+        0,
+        4,
+        5,
+        1,
+        4,
+        1,
+        2
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          4,
+          7,
+          4,
+          4,
+          3,
+          0,
+          4,
+          5,
+          1,
+          4,
+          1,
+          2
+        ],
+        "VedAstro": [
+          4,
+          7,
+          3,
+          4,
+          2,
+          1,
+          4,
+          5,
+          2,
+          3,
+          2,
+          2
+        ],
+        "jyotishganit": [
+          4,
+          7,
+          4,
+          4,
+          3,
+          0,
+          4,
+          5,
+          1,
+          4,
+          1,
+          2
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mercury",
+      "local_value": [
+        5,
+        5,
+        5,
+        4,
+        4,
+        2,
+        6,
+        5,
+        5,
+        8,
+        2,
+        3
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          5,
+          5,
+          5,
+          4,
+          4,
+          2,
+          6,
+          5,
+          5,
+          8,
+          2,
+          3
+        ],
+        "VedAstro": [
+          5,
+          5,
+          4,
+          5,
+          3,
+          2,
+          7,
+          4,
+          6,
+          8,
+          2,
+          3
+        ],
+        "jyotishganit": [
+          5,
+          5,
+          5,
+          4,
+          4,
+          2,
+          6,
+          5,
+          5,
+          8,
+          2,
+          3
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "status": "mismatch"
+    },
+    {
+      "field": "Jupiter",
+      "local_value": [
+        7,
+        5,
+        3,
+        3,
+        4,
+        7,
+        4,
+        5,
+        4,
+        6,
+        5,
+        3
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          7,
+          5,
+          3,
+          3,
+          4,
+          7,
+          4,
+          5,
+          4,
+          6,
+          5,
+          3
+        ],
+        "VedAstro": [
+          7,
+          5,
+          3,
+          3,
+          4,
+          7,
+          5,
+          4,
+          4,
+          6,
+          4,
+          4
+        ],
+        "jyotishganit": [
+          7,
+          5,
+          3,
+          3,
+          4,
+          7,
+          4,
+          5,
+          4,
+          6,
+          5,
+          3
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "status": "mismatch"
+    },
+    {
+      "field": "Venus",
+      "local_value": [
+        4,
+        3,
+        5,
+        4,
+        3,
+        5,
+        4,
+        3,
+        5,
+        5,
+        5,
+        6
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          4,
+          3,
+          5,
+          4,
+          3,
+          5,
+          4,
+          3,
+          5,
+          5,
+          5,
+          6
+        ],
+        "VedAstro": [
+          4,
+          3,
+          4,
+          4,
+          4,
+          4,
+          4,
+          2,
+          5,
+          6,
+          6,
+          6
+        ],
+        "jyotishganit": [
+          4,
+          3,
+          5,
+          3,
+          4,
+          5,
+          4,
+          3,
+          5,
+          5,
+          5,
+          6
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "status": "mismatch"
+    },
+    {
+      "field": "Saturn",
+      "local_value": [
+        1,
+        5,
+        3,
+        0,
+        6,
+        3,
+        4,
+        5,
+        3,
+        3,
+        3,
+        3
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          1,
+          5,
+          3,
+          0,
+          6,
+          3,
+          4,
+          5,
+          3,
+          3,
+          3,
+          3
+        ],
+        "VedAstro": [
+          1,
+          5,
+          2,
+          0,
+          5,
+          4,
+          4,
+          4,
+          4,
+          2,
+          4,
+          4
+        ],
+        "jyotishganit": [
+          1,
+          5,
+          3,
+          0,
+          6,
+          3,
+          4,
+          5,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "status": "mismatch"
+    },
+    {
+      "field": "12_sign_scores",
+      "local_value": [
+        28,
+        36,
+        28,
+        21,
+        29,
+        24,
+        31,
+        33,
+        26,
+        35,
+        22,
+        24
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          28,
+          36,
+          28,
+          21,
+          29,
+          24,
+          31,
+          33,
+          26,
+          35,
+          22,
+          24
+        ],
+        "VedAstro": [
+          24,
+          28,
+          37,
+          28,
+          19,
+          30,
+          24,
+          31,
+          32,
+          27,
+          35,
+          22
+        ],
+        "jyotishganit": [
+          28,
+          37,
+          28,
+          19,
+          30,
+          24,
+          31,
+          32,
+          27,
+          35,
+          22,
+          24
+        ]
+      },
+      "section": "ashtakavarga_sav",
+      "status": "mismatch"
+    },
+    {
+      "field": "Sun",
       "local_value": null,
       "oracle_values": {
-        "PyJHora_JHora": "structured_d1_captured",
-        "VedAstro": null,
-        "jyotishganit": "captured"
+        "PyJHora_JHora": 444.63,
+        "VedAstro": 395.06,
+        "jyotishganit": 422.007
       },
-      "reason": "three_engine_scope_does_not_share_this_normalized_field",
-      "section": "Panchanga",
-      "status": "not_comparable"
+      "section": "shadbala_total",
+      "status": "mismatch"
+    },
+    {
+      "field": "Sun.sthana",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 217.09,
+        "VedAstro": 202.0874074074074,
+        "jyotishganit": 153.341
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Sun.kala",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 140.99,
+        "VedAstro": 128.0507461419753,
+        "jyotishganit": 148.893
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Sun.dig",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 24.81,
+        "VedAstro": 24.810925925925925,
+        "jyotishganit": 29.175
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Sun.chesta",
+      "local_value": null,
+      "method_conflict": "PyJHora unbounded; VedAstro/jyotishganit bounded; Sun/Moon treatment differs across engines.",
+      "oracle_values": {
+        "PyJHora_JHora": 0.0,
+        "VedAstro": 0.0,
+        "jyotishganit": 37.06
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Sun.naisargika",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 60.0,
+        "VedAstro": 60.0,
+        "jyotishganit": 60.0
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Sun.drik",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 1.74,
+        "VedAstro": -19.891041666666666,
+        "jyotishganit": -6.462
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Moon",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 562.89,
+        "VedAstro": 421.8,
+        "jyotishganit": 420.655
+      },
+      "section": "shadbala_total",
+      "status": "mismatch"
+    },
+    {
+      "field": "Moon.sthana",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 246.34,
+        "VedAstro": 236.69703703703703,
+        "jyotishganit": 141.341
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Moon.kala",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 149.58,
+        "VedAstro": 159.53537962962963,
+        "jyotishganit": 183.112
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Moon.dig",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 95.48,
+        "VedAstro": 52.26824074074074,
+        "jyotishganit": 20.159
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Moon.chesta",
+      "local_value": null,
+      "method_conflict": "PyJHora unbounded; VedAstro/jyotishganit bounded; Sun/Moon treatment differs across engines.",
+      "oracle_values": {
+        "PyJHora_JHora": 0.0,
+        "VedAstro": 0.0,
+        "jyotishganit": 10.667
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Moon.naisargika",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 51.43,
+        "VedAstro": 51.43,
+        "jyotishganit": 51.43
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Moon.drik",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 20.06,
+        "VedAstro": -18.131319444444447,
+        "jyotishganit": 13.946
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 533.18,
+        "VedAstro": 397.89,
+        "jyotishganit": 438.227
+      },
+      "section": "shadbala_total",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars.sthana",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 198.63,
+        "VedAstro": 221.28777777777776,
+        "jyotishganit": 232.378
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars.kala",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 127.93,
+        "VedAstro": 148.2544363425926,
+        "jyotishganit": 106.407
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars.dig",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 77.41,
+        "VedAstro": 2.3666666666666667,
+        "jyotishganit": 46.955
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars.chesta",
+      "local_value": null,
+      "method_conflict": "PyJHora unbounded; VedAstro/jyotishganit bounded; Sun/Moon treatment differs across engines.",
+      "oracle_values": {
+        "PyJHora_JHora": 98.58,
+        "VedAstro": 21.737741162570256,
+        "jyotishganit": 22.864
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars.naisargika",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 17.14,
+        "VedAstro": 17.14,
+        "jyotishganit": 17.14
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mars.drik",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 13.49,
+        "VedAstro": -12.978854166666672,
+        "jyotishganit": 12.483
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mercury",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 363.24,
+        "VedAstro": 376.04,
+        "jyotishganit": 241.84
+      },
+      "section": "shadbala_total",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mercury.sthana",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 167.96,
+        "VedAstro": 182.95805555555555,
+        "jyotishganit": 111.704
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mercury.kala",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 121.78,
+        "VedAstro": 126.59104166666665,
+        "jyotishganit": 72.089
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mercury.dig",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 12.64,
+        "VedAstro": 12.643148148148148,
+        "jyotishganit": 7.954
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mercury.chesta",
+      "local_value": null,
+      "method_conflict": "PyJHora unbounded; VedAstro/jyotishganit bounded; Sun/Moon treatment differs across engines.",
+      "oracle_values": {
+        "PyJHora_JHora": 45.78,
+        "VedAstro": 47.51070370816793,
+        "jyotishganit": 35.368
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mercury.naisargika",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 25.71,
+        "VedAstro": 25.7,
+        "jyotishganit": 25.71
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Mercury.drik",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": -10.63,
+        "VedAstro": -19.363888888888884,
+        "jyotishganit": -10.985
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Jupiter",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 596.89,
+        "VedAstro": 427.22,
+        "jyotishganit": 596.043
+      },
+      "section": "shadbala_total",
+      "status": "mismatch"
+    },
+    {
+      "field": "Jupiter.sthana",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 201.8,
+        "VedAstro": 213.06314814814814,
+        "jyotishganit": 226.178
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Jupiter.kala",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 199.31,
+        "VedAstro": 141.64764506172838,
+        "jyotishganit": 250.984
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Jupiter.dig",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 80.6,
+        "VedAstro": 6.773333333333333,
+        "jyotishganit": 44.095
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Jupiter.chesta",
+      "local_value": null,
+      "method_conflict": "PyJHora unbounded; VedAstro/jyotishganit bounded; Sun/Moon treatment differs across engines.",
+      "oracle_values": {
+        "PyJHora_JHora": 74.0,
+        "VedAstro": 46.05491068568356,
+        "jyotishganit": 36.424
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Jupiter.naisargika",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 34.29,
+        "VedAstro": 34.28,
+        "jyotishganit": 34.29
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Jupiter.drik",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 6.89,
+        "VedAstro": -14.818125000000006,
+        "jyotishganit": 4.072
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Venus",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 408.64,
+        "VedAstro": 402.56,
+        "jyotishganit": 306.501
+      },
+      "section": "shadbala_total",
+      "status": "mismatch"
+    },
+    {
+      "field": "Venus.sthana",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 154.06,
+        "VedAstro": 210.05953703703705,
+        "jyotishganit": 112.816
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Venus.kala",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 113.44,
+        "VedAstro": 97.43954166666667,
+        "jyotishganit": 63.186
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Venus.dig",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 69.95,
+        "VedAstro": 29.630740740740737,
+        "jyotishganit": 45.684
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Venus.chesta",
+      "local_value": null,
+      "method_conflict": "PyJHora unbounded; VedAstro/jyotishganit bounded; Sun/Moon treatment differs across engines.",
+      "oracle_values": {
+        "PyJHora_JHora": 31.08,
+        "VedAstro": 30.84685510809705,
+        "jyotishganit": 46.466
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Venus.naisargika",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 42.86,
+        "VedAstro": 42.85,
+        "jyotishganit": 42.86
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Venus.drik",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": -2.75,
+        "VedAstro": -8.51038194444445,
+        "jyotishganit": -4.511
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Saturn",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 429.42,
+        "VedAstro": 448.58,
+        "jyotishganit": 322.113
+      },
+      "section": "shadbala_total",
+      "status": "mismatch"
+    },
+    {
+      "field": "Saturn.sthana",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 218.61,
+        "VedAstro": 239.23268518518518,
+        "jyotishganit": 151.104
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Saturn.kala",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 136.77,
+        "VedAstro": 140.7160763888889,
+        "jyotishganit": 71.929
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Saturn.dig",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 19.62,
+        "VedAstro": 19.623796296296295,
+        "jyotishganit": 24.313
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Saturn.chesta",
+      "local_value": null,
+      "method_conflict": "PyJHora unbounded; VedAstro/jyotishganit bounded; Sun/Moon treatment differs across engines.",
+      "oracle_values": {
+        "PyJHora_JHora": 36.36,
+        "VedAstro": 39.438983295527784,
+        "jyotishganit": 58.137
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Saturn.naisargika",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 8.57,
+        "VedAstro": 8.57,
+        "jyotishganit": 8.57
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
+    },
+    {
+      "field": "Saturn.drik",
+      "local_value": null,
+      "oracle_values": {
+        "PyJHora_JHora": 9.49,
+        "VedAstro": 0.9979513888888878,
+        "jyotishganit": 8.06
+      },
+      "section": "shadbala_components",
+      "status": "mismatch"
     }
   ],
   "engines": {
     "PyJHora_JHora": {
-      "artifact_hash": "07115ec1b5332b679259f14d8ca70964cc3ed394a31b40e994db6367d2da0ccf",
-      "raw_output_path": "scratch/local/three_engine_parity_live/pyjhora_structured_d1.json",
-      "settings": {
-        "ayanamsa": "LAHIRI",
-        "node_mode": "PyJHora default"
-      },
-      "status": "structured_captured"
-    },
-    "VedAstro": {
-      "artifact_hash": "84dbf7b2d7c4e13b8b26a4d42256f1ca5f8a76ffcaa0ab9695e14b646c77990b",
-      "official_raw_response_path": "/Users/wuyongnaren/Documents/印度占星/scratch/local/vedastro_adapter/official_full_snapshot-9581ff2b2603-8954c121bd0d.json",
-      "reason": "imported_latest_official_full_snapshot_artifact",
+      "artifact_hash": "a0374c77f7d4c435a473871ca8bbd0dff45f314eb2d68f5e9b3106478b986508",
+      "raw_output_path": "artifacts/pyjhora_steve_jobs_high_rigor_raw.json",
       "settings": {
         "ayanamsa": "lahiri",
         "node_mode": "mean"
       },
+      "status": "imported"
+    },
+    "VedAstro": {
+      "artifact_hash": "75da3fa79463e22801b4602ec96d55267fc1dd0ef134ca0c96249317b0db9ef9",
+      "official_raw_response_path": "artifacts/vedastro_steve_jobs_public_aa_divisional_raw.json",
+      "settings": {
+        "ayanamsa_policy": "lahiri",
+        "birth": {
+          "day": 24,
+          "hour": 19,
+          "lat": 37.7749,
+          "lon": -122.4194,
+          "minute": 15,
+          "month": 2,
+          "second": null,
+          "tz": -8.0,
+          "year": 1955
+        },
+        "calculator": "AllPlanetData",
+        "case_id": "steve_jobs_public_aa",
+        "endpoint_host": "api.vedastro.org",
+        "node_policy": "mean",
+        "planets": [
+          "Sun",
+          "Moon",
+          "Mars",
+          "Mercury",
+          "Jupiter",
+          "Venus",
+          "Saturn"
+        ]
+      },
       "status": "official_verified"
     },
     "jyotishganit": {
-      "error": null,
-      "raw_output_path": "scratch/local/three_engine_parity_live/jyotishganit_raw.json",
-      "status": "raw_captured"
+      "artifact_hash": "5cbb85f6cd9210558d496c350b45aa1dc2785ab3f49a800a884b45c76c49e6a1",
+      "raw_output_path": "artifacts/jyotishganit_steve_jobs_high_rigor_raw.json",
+      "settings": {
+        "ayanamsa": {
+          "@type": "Ayanamsa",
+          "name": "True Chitra Paksha",
+          "value": 23.84554029153483
+        }
+      },
+      "status": "imported"
     }
   },
-  "local": {
-    "calculation_contract": {
-      "algorithm": "sidereal_natal_chart",
-      "contract_version": "1.0.0",
-      "effective": {
-        "ayanamsa": "lahiri",
-        "ephemeris_flags_verified": false,
-        "ephemeris_source": "swisseph_calc_ut",
-        "node_mode": "mean",
-        "timezone_offset": -8.0,
-        "timezone_source": "explicit_offset"
-      },
-      "requested": {
-        "ayanamsa": "lahiri",
-        "node_mode": "mean",
-        "timezone_offset": -8.0
-      }
-    },
-    "result_hash": "5e3b6ec860177ff29506820a3a80b962fae9bca957af8ffc8302d0e85c733a68"
+  "method_arbitration": {
+    "chesta": "blocked_cross_engine_method_conflict",
+    "chesta_local_variant": "bphs_bounded_surya_mean_motion_seeghrochcha",
+    "kala": "local_vs_PyJHora_7_of_7_within_0.05_virupa"
   },
-  "runtime_boundary": "This packet has real public raw artifacts and may include VedAstro official raw evidence, and normalized D1 planet sign/longitude parity is tested. Non-D1 scopes still require separate gates.",
-  "status": "pass",
-  "tested": true
+  "runtime_boundary": "Full same-case raw coverage; mismatches remain formula/method differences, not missing artifacts."
 }

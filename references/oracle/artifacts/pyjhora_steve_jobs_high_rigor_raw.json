@@ -1,0 +1,494 @@
+{
+  "ascendant": {
+    "degree_in_sign": 29.0556,
+    "sign": "Leo"
+  },
+  "ashtakavarga": {
+    "bav": {
+      "Jupiter": [
+        7,
+        5,
+        3,
+        3,
+        4,
+        7,
+        4,
+        5,
+        4,
+        6,
+        5,
+        3
+      ],
+      "Lagna": [
+        5,
+        3,
+        4,
+        4,
+        4,
+        2,
+        4,
+        3,
+        5,
+        7,
+        5,
+        3
+      ],
+      "Mars": [
+        4,
+        7,
+        4,
+        4,
+        3,
+        0,
+        4,
+        5,
+        1,
+        4,
+        1,
+        2
+      ],
+      "Mercury": [
+        5,
+        5,
+        5,
+        4,
+        4,
+        2,
+        6,
+        5,
+        5,
+        8,
+        2,
+        3
+      ],
+      "Moon": [
+        4,
+        4,
+        4,
+        3,
+        6,
+        5,
+        3,
+        3,
+        4,
+        5,
+        3,
+        5
+      ],
+      "Saturn": [
+        1,
+        5,
+        3,
+        0,
+        6,
+        3,
+        4,
+        5,
+        3,
+        3,
+        3,
+        3
+      ],
+      "Sun": [
+        3,
+        7,
+        4,
+        3,
+        3,
+        2,
+        6,
+        7,
+        4,
+        4,
+        3,
+        2
+      ],
+      "Venus": [
+        4,
+        3,
+        5,
+        4,
+        3,
+        5,
+        4,
+        3,
+        5,
+        5,
+        5,
+        6
+      ]
+    },
+    "sav": [
+      28,
+      36,
+      28,
+      21,
+      29,
+      24,
+      31,
+      33,
+      26,
+      35,
+      22,
+      24
+    ]
+  },
+  "dasha": {
+    "antardasha_end": "2027-12-03",
+    "antardasha_lord": "Rahu",
+    "antardasha_start": "2025-03-22",
+    "mahadasha_end": "2043-03-23",
+    "mahadasha_lord": "Rahu",
+    "mahadasha_start": "2025-03-22"
+  },
+  "engine": "PyJHora_4_8_6_lahiri_patched",
+  "parameters": {
+    "ayanamsa": "LAHIRI",
+    "compat": "monkeypatch swisseph keyword API + missing constants; dummy timezonefinder only for import",
+    "d10_method": "PyJHora divisional_chart chart_method=1",
+    "d2_method": "PyJHora hora_chart chart_method=2 traditional_parasara",
+    "d4_method": "PyJHora chaturthamsa_chart chart_method=1 traditional_parasara",
+    "d9_method": "PyJHora divisional_chart chart_method=1",
+    "dasha_year": "mean sidereal year",
+    "license_note": "PyJHora is AGPL-3.0; used only as external benchmark, not vendored into skill.",
+    "zodiac": "sidereal"
+  },
+  "planets": {
+    "Jupiter": {
+      "degree_in_sign": 27.2706,
+      "nakshatra": "Punarvasu",
+      "nakshatra_pada": 3,
+      "sign": "Gemini"
+    },
+    "Ketu": {
+      "degree_in_sign": 9.2693,
+      "nakshatra": "Ardra",
+      "nakshatra_pada": 1,
+      "sign": "Gemini"
+    },
+    "Mars": {
+      "degree_in_sign": 5.8623,
+      "nakshatra": "Ashwini",
+      "nakshatra_pada": 2,
+      "sign": "Aries"
+    },
+    "Mercury": {
+      "degree_in_sign": 21.1259,
+      "nakshatra": "Shravana",
+      "nakshatra_pada": 4,
+      "sign": "Capricorn"
+    },
+    "Moon": {
+      "degree_in_sign": 14.5117,
+      "nakshatra": "Uttara Bhadrapada",
+      "nakshatra_pada": 4,
+      "sign": "Pisces"
+    },
+    "Rahu": {
+      "degree_in_sign": 9.2693,
+      "nakshatra": "Mula",
+      "nakshatra_pada": 3,
+      "sign": "Sagittarius"
+    },
+    "Saturn": {
+      "degree_in_sign": 27.9274,
+      "nakshatra": "Vishakha",
+      "nakshatra_pada": 3,
+      "sign": "Libra"
+    },
+    "Sun": {
+      "degree_in_sign": 12.5182,
+      "nakshatra": "Shatabhisha",
+      "nakshatra_pada": 2,
+      "sign": "Aquarius"
+    },
+    "Venus": {
+      "degree_in_sign": 27.9421,
+      "nakshatra": "Uttara Ashadha",
+      "nakshatra_pada": 1,
+      "sign": "Sagittarius"
+    }
+  },
+  "sample_id": "steve_jobs_public_aa",
+  "settings": {
+    "ayanamsa": "lahiri",
+    "node_mode": "mean"
+  },
+  "shadbala": {
+    "Jupiter": 596.89,
+    "Mars": 533.18,
+    "Mercury": 363.24,
+    "Moon": 562.89,
+    "Saturn": 429.42,
+    "Sun": 444.63,
+    "Venus": 408.64
+  },
+  "shadbala_components": {
+    "Jupiter": {
+      "chesta": 74.0,
+      "dig": 80.6,
+      "drik": 6.89,
+      "kala": 199.31,
+      "naisargika": 34.29,
+      "sthana": 201.8
+    },
+    "Mars": {
+      "chesta": 98.58,
+      "dig": 77.41,
+      "drik": 13.49,
+      "kala": 127.93,
+      "naisargika": 17.14,
+      "sthana": 198.63
+    },
+    "Mercury": {
+      "chesta": 45.78,
+      "dig": 12.64,
+      "drik": -10.63,
+      "kala": 121.78,
+      "naisargika": 25.71,
+      "sthana": 167.96
+    },
+    "Moon": {
+      "chesta": 0.0,
+      "dig": 95.48,
+      "drik": 20.06,
+      "kala": 149.58,
+      "naisargika": 51.43,
+      "sthana": 246.34
+    },
+    "Saturn": {
+      "chesta": 36.36,
+      "dig": 19.62,
+      "drik": 9.49,
+      "kala": 136.77,
+      "naisargika": 8.57,
+      "sthana": 218.61
+    },
+    "Sun": {
+      "chesta": 0.0,
+      "dig": 24.81,
+      "drik": 1.74,
+      "kala": 140.99,
+      "naisargika": 60.0,
+      "sthana": 217.09
+    },
+    "Venus": {
+      "chesta": 31.08,
+      "dig": 69.95,
+      "drik": -2.75,
+      "kala": 113.44,
+      "naisargika": 42.86,
+      "sthana": 154.06
+    }
+  },
+  "varga": {
+    "D10": {
+      "Ascendant": {
+        "degree_in_sign": 20.5556,
+        "sign": "Taurus",
+        "sign_idx": 1
+      },
+      "Jupiter": {
+        "degree_in_sign": 2.7055,
+        "sign": "Pisces",
+        "sign_idx": 11
+      },
+      "Ketu": {
+        "degree_in_sign": 2.6925,
+        "sign": "Virgo",
+        "sign_idx": 5
+      },
+      "Mars": {
+        "degree_in_sign": 28.6233,
+        "sign": "Taurus",
+        "sign_idx": 1
+      },
+      "Mercury": {
+        "degree_in_sign": 1.2589,
+        "sign": "Aries",
+        "sign_idx": 0
+      },
+      "Moon": {
+        "degree_in_sign": 25.1168,
+        "sign": "Pisces",
+        "sign_idx": 11
+      },
+      "Rahu": {
+        "degree_in_sign": 2.6925,
+        "sign": "Pisces",
+        "sign_idx": 11
+      },
+      "Saturn": {
+        "degree_in_sign": 9.2738,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Sun": {
+        "degree_in_sign": 5.182,
+        "sign": "Gemini",
+        "sign_idx": 2
+      },
+      "Venus": {
+        "degree_in_sign": 9.4212,
+        "sign": "Virgo",
+        "sign_idx": 5
+      }
+    },
+    "D2": {
+      "Ascendant": {
+        "degree_in_sign": 28.1111,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Jupiter": {
+        "degree_in_sign": 24.5411,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Ketu": {
+        "degree_in_sign": 18.5385,
+        "sign": "Leo",
+        "sign_idx": 4
+      },
+      "Mars": {
+        "degree_in_sign": 11.7247,
+        "sign": "Leo",
+        "sign_idx": 4
+      },
+      "Mercury": {
+        "degree_in_sign": 12.2518,
+        "sign": "Leo",
+        "sign_idx": 4
+      },
+      "Moon": {
+        "degree_in_sign": 29.0234,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Rahu": {
+        "degree_in_sign": 18.5385,
+        "sign": "Leo",
+        "sign_idx": 4
+      },
+      "Saturn": {
+        "degree_in_sign": 25.8548,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Sun": {
+        "degree_in_sign": 25.0364,
+        "sign": "Leo",
+        "sign_idx": 4
+      },
+      "Venus": {
+        "degree_in_sign": 25.8842,
+        "sign": "Cancer",
+        "sign_idx": 3
+      }
+    },
+    "D4": {
+      "Ascendant": {
+        "degree_in_sign": 26.2222,
+        "sign": "Taurus",
+        "sign_idx": 1
+      },
+      "Jupiter": {
+        "degree_in_sign": 19.0822,
+        "sign": "Pisces",
+        "sign_idx": 11
+      },
+      "Ketu": {
+        "degree_in_sign": 7.077,
+        "sign": "Virgo",
+        "sign_idx": 5
+      },
+      "Mars": {
+        "degree_in_sign": 23.4493,
+        "sign": "Aries",
+        "sign_idx": 0
+      },
+      "Mercury": {
+        "degree_in_sign": 24.5036,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Moon": {
+        "degree_in_sign": 28.0467,
+        "sign": "Gemini",
+        "sign_idx": 2
+      },
+      "Rahu": {
+        "degree_in_sign": 7.077,
+        "sign": "Pisces",
+        "sign_idx": 11
+      },
+      "Saturn": {
+        "degree_in_sign": 21.7095,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Sun": {
+        "degree_in_sign": 20.0728,
+        "sign": "Taurus",
+        "sign_idx": 1
+      },
+      "Venus": {
+        "degree_in_sign": 21.7685,
+        "sign": "Virgo",
+        "sign_idx": 5
+      }
+    },
+    "D9": {
+      "Ascendant": {
+        "degree_in_sign": 21.5,
+        "sign": "Sagittarius",
+        "sign_idx": 8
+      },
+      "Jupiter": {
+        "degree_in_sign": 5.435,
+        "sign": "Gemini",
+        "sign_idx": 2
+      },
+      "Ketu": {
+        "degree_in_sign": 23.4233,
+        "sign": "Sagittarius",
+        "sign_idx": 8
+      },
+      "Mars": {
+        "degree_in_sign": 22.761,
+        "sign": "Taurus",
+        "sign_idx": 1
+      },
+      "Mercury": {
+        "degree_in_sign": 10.133,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Moon": {
+        "degree_in_sign": 10.6051,
+        "sign": "Scorpio",
+        "sign_idx": 7
+      },
+      "Rahu": {
+        "degree_in_sign": 23.4233,
+        "sign": "Gemini",
+        "sign_idx": 2
+      },
+      "Saturn": {
+        "degree_in_sign": 11.3465,
+        "sign": "Gemini",
+        "sign_idx": 2
+      },
+      "Sun": {
+        "degree_in_sign": 22.6638,
+        "sign": "Capricorn",
+        "sign_idx": 9
+      },
+      "Venus": {
+        "degree_in_sign": 11.4791,
+        "sign": "Sagittarius",
+        "sign_idx": 8
+      }
+    }
+  }
+}

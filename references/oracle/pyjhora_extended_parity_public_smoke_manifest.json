@@ -1,0 +1,31 @@
+{
+  "scope": "pyjhora_extended_parity_public_smoke",
+  "status": "partial_verified",
+  "tested": true,
+  "birth_data_policy": "public_synthetic_smoke_only",
+  "settings": {
+    "ayanamsa": "lahiri",
+    "node_mode": "mean"
+  },
+  "sample_count": 1,
+  "sample_ids": [
+    "smoke_beijing_1990_noon"
+  ],
+  "comparison_rows": {
+    "total": 239,
+    "match": 232,
+    "mismatch": 7
+  },
+  "covered_outputs": [
+    "D2",
+    "D4",
+    "D9",
+    "D10",
+    "Ashtakavarga"
+  ],
+  "partial_outputs": [
+    "Shadbala"
+  ],
+  "source_report": "docs/research/pyjhora_d2_d4_ashtakavarga_shadbala_parity_2026_07_15.md",
+  "boundary": "D2, D4, BAV and SAV match for one public synthetic chart. Shadbala total virupas mismatch for all seven planets and remains outside verified coverage."
+}
