@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { onboardingAgent } from "@/mastra";
-import { languageModelSettings } from "@/mastra/model";
+import { getOnboardingAgent } from "@/mastra";
+import { defaultLanguageModel } from "@/mastra/model";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -134,9 +134,10 @@ export async function POST() {
   let payload = fallbackPayload;
   let source: "agent" | "fallback" = "fallback";
 
-  if (languageModelSettings.configured) {
+  const onboardingModel = defaultLanguageModel();
+  if (onboardingModel) {
     try {
-      const result = await onboardingAgent.generate([
+      const result = await getOnboardingAgent(onboardingModel).generate([
         {
           role: "user",
           content: [

@@ -23,7 +23,25 @@ CONSULTATION_MIGRATION = (
     / "migrations"
     / "20260717000000_consultation_request_lifecycle.sql"
 )
+CHART_PROFILE_MIGRATION = (
+    Path(__file__).resolve().parents[1]
+    / "frontend"
+    / "supabase"
+    / "migrations"
+    / "20260717010000_chart_profiles.sql"
+)
+SYNASTRY_REPORT_MIGRATION = (
+    Path(__file__).resolve().parents[1]
+    / "frontend"
+    / "supabase"
+    / "migrations"
+    / "20260717020000_synastry_reports.sql"
+)
 PAGE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "page.tsx"
+CHART_PROFILE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "route.ts"
+CHART_PROFILE_DELETE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "[id]" / "route.ts"
+SYNASTRY_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "synastry" / "route.ts"
+SYNASTRY_REPORT_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "synastry-reports" / "route.ts"
 
 
 def _sql() -> str:
@@ -92,9 +110,125 @@ def test_chat_page_uses_authenticated_cloud_persistence() -> None:
     assert 'await persistSession(interruptedSession)' in source
     assert 'await persistence' in source
     assert 'disabled={Boolean(pendingSessionId) || cancellationPending}' in source
-    assert "localStorage" not in source
-    assert "ayanam-profile" not in source
-    assert "ayanam-sessions" not in source
+    assert 'localStorage.setItem(chartLibraryStorageKey(accountId)' in source
+    assert 'localStorage.setItem("chat_sessions"' not in source
+
+
+def test_chart_profile_library_has_cloud_table_api_and_local_fallback() -> None:
+    sql = re.sub(r"\s+", " ", CHART_PROFILE_MIGRATION.read_text(encoding="utf-8").lower()).strip()
+    route = CHART_PROFILE_ROUTE.read_text(encoding="utf-8")
+    delete_route = CHART_PROFILE_DELETE_ROUTE.read_text(encoding="utf-8")
+    page = PAGE.read_text(encoding="utf-8")
+
+    for token in (
+        "create table if not exists public.chart_profiles",
+        "user_id uuid not null references auth.users(id) on delete cascade",
+        "role text not null default 'other' check (role in ('self', 'other'))",
+        "profile jsonb not null check (jsonb_typeof(profile) = 'object')",
+        "create unique index if not exists chart_profiles_one_self_per_user_idx",
+        "alter table public.chart_profiles enable row level security",
+        "create policy chart_profiles_select_own",
+        "create policy chart_profiles_insert_own",
+        "create policy chart_profiles_update_own",
+        "create policy chart_profiles_delete_own",
+        "grant delete on table public.chart_profiles to authenticated",
+    ):
+        assert token in sql
+
+    for token in (
+        'from("chart_profiles")',
+        'eq("user_id", user.id)',
+        'eq("role", "self")',
+        'insert({ user_id: user.id, role, profile: body.profile',
+        'upsert(record, { onConflict: "id" })',
+    ):
+        assert token in route
+    assert 'eq("role", "other")' in delete_route
+
+    for token in (
+        "fetchCloudChartLibrary",
+        "saveCloudChartProfile",
+        "deleteCloudChartProfile",
+        "buildSynastryQuestion",
+        "draftSynastryQuestionFromChart",
+        "synastryReportCard",
+        "synastryHistory",
+        "synastryHistoryStorageKey",
+        "synastry-report-card",
+        "synastry-history-list",
+        'fetch("/api/synastry"',
+        "Ashtakoot",
+        "chartLibraryStorageKey",
+        "Cloud chart library is best-effort",
+        "星盘库",
+        "添加其他星盘",
+        "用于合盘",
+        "设为默认",
+    ):
+        assert token in page
+    assert "ayanam-profile" not in page
+    assert "ayanam-sessions" not in page
+
+
+def test_synastry_route_orchestrates_python_chart_and_ashtakoot() -> None:
+    route = SYNASTRY_ROUTE.read_text(encoding="utf-8")
+    for token in (
+        'const apiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200"',
+        'postPython("/api/chart", birthPayload(body.selfProfile))',
+        'postPython("/api/chart", birthPayload(body.partnerProfile))',
+        'postPython("/api/varga_full"',
+        'postPython("/api/synastry"',
+        "moonLongitude(selfChart)",
+        "moonSummary(selfChart)",
+        "d9Summary(selfD9)",
+        "relationshipReport",
+        "scoreBand",
+        "nextEvidence",
+        "ashtakoot_plus_moon_nakshatra_d9",
+        'evidenceLayers: ["ashtakoot", "moon_nakshatra", "d9_navamsa"]',
+        'status: "blocked"',
+    ):
+        assert token in route
+
+
+def test_synastry_reports_are_cloud_persisted_per_user() -> None:
+    sql = re.sub(r"\s+", " ", SYNASTRY_REPORT_MIGRATION.read_text(encoding="utf-8").lower()).strip()
+    route = SYNASTRY_REPORT_ROUTE.read_text(encoding="utf-8")
+    page = PAGE.read_text(encoding="utf-8")
+
+    for token in (
+        "create table if not exists public.synastry_reports",
+        "user_id uuid not null references auth.users(id) on delete cascade",
+        "partner_name text not null default '对方'",
+        "report jsonb not null check (jsonb_typeof(report) = 'object')",
+        "alter table public.synastry_reports enable row level security",
+        "create policy synastry_reports_select_own on public.synastry_reports for select to authenticated using ((select auth.uid()) = user_id)",
+        "create policy synastry_reports_insert_own on public.synastry_reports for insert to authenticated with check ((select auth.uid()) = user_id)",
+        "create policy synastry_reports_delete_own on public.synastry_reports for delete to authenticated using ((select auth.uid()) = user_id)",
+        "grant select on table public.synastry_reports to authenticated",
+        "grant insert (id, user_id, partner_name, report, created_at) on table public.synastry_reports to authenticated",
+    ):
+        assert token in sql
+
+    for token in (
+        '.from("synastry_reports")',
+        '.select("id, partner_name, report, created_at")',
+        ".eq(\"user_id\", user.id)",
+        ".limit(10)",
+        "partner_name: partnerName",
+        "report: body.report",
+    ):
+        assert token in route
+
+    for token in (
+        "fetchCloudSynastryHistory",
+        "saveCloudSynastryReport",
+        'fetch("/api/synastry-reports"',
+        "writeSynastryHistory(accountId, next)",
+        "cloud_synastry_history_unavailable",
+        "cloud_synastry_report_save_failed",
+    ):
+        assert token in page
 
 
 def test_consultation_credit_lifecycle_is_idempotent_and_server_only() -> None:

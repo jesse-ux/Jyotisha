@@ -43,5 +43,6 @@ frontend/pnpm-workspace.yaml
 /benchmarks/xalen_oracle/target/
 /benchmarks/vedastro_nuget_probe/bin/
 /benchmarks/vedastro_nuget_probe/obj/
-/benchmarks/vedastro_nuget_probe/bin/
-/benchmarks/vedastro_nuget_probe/obj/
+
+# Local isolated feature worktrees
+.worktrees/

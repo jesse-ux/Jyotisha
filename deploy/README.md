@@ -72,14 +72,20 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 ADMIN_EMAILS=...
 
-# Either OpenAI:
-OPENAI_API_KEY=...
-MASTRA_MODEL=...
+# Recommended multi-model catalog. The JSON references server-only keys.
+LLM_DEFAULT_MODEL_ID=deepseek-pro
+LLM_MODELS_JSON='[{"id":"deepseek-pro","label":"DeepSeek V4 Pro","description":"更适合复杂分析","provider":"openai-compatible","baseURL":"https://api.deepseek.com","apiKeyEnv":"DEEPSEEK_API_KEY","model":"deepseek-v4-pro","creditCost":1},{"id":"gpt-5-mini","label":"ChatGPT 5 Mini","description":"响应稳定、速度均衡","provider":"openai","apiKeyEnv":"OPENAI_API_KEY","model":"openai/gpt-5-mini","creditCost":1}]'
+DEEPSEEK_API_KEY=<server-secret>
+OPENAI_API_KEY=<server-secret>
 
-# Or an OpenAI-compatible provider:
-LLM_BASE_URL=...
-LLM_API_KEY=...
-LLM_MODEL=...
+# Legacy single-model OpenAI configuration remains supported:
+# OPENAI_API_KEY=<server-secret>
+# MASTRA_MODEL=openai/gpt-5-mini
+
+# Legacy single OpenAI-compatible provider remains supported:
+# LLM_BASE_URL=https://provider.example/v1
+# LLM_API_KEY=<server-secret>
+# LLM_MODEL=provider-model-id
 
 # Optional VedAstro official upstream; local fallback remains available:
 VEDASTRO_API_ENDPOINT=...
@@ -152,7 +158,7 @@ ssh -p 22000 root@103.117.123.53 \
 
 Expected: HTTP `200`, `"status": "ok"`, and `"swisseph_available": true`. Public access to `103.117.123.53:5200` must fail.
 
-Before deploying application code that depends on a new Supabase RPC, run `cd frontend && npx supabase db push --linked`; the GitHub deployment workflow does not apply database migrations. Then manually verify: OTP login, onboarding/profile persistence, chat-session persistence, code redemption, admin code generation, the 2.5-second free undo window, streaming response, one-credit charge, refund before the first output chunk, and charged stop with partial output preserved after streaming starts.
+Before deploying application code that depends on any new Supabase migration (columns, tables, grants, policies, or RPCs), run `cd frontend && npx supabase db push --linked`; the GitHub deployment workflow does not apply database migrations. Multi-model chat specifically requires `20260717010000_chat_session_model.sql` before the new web image is deployed. Then manually verify: OTP login, onboarding/profile persistence, per-session `model_id` persistence, code redemption, admin code generation, authenticated `/api/models` returns only sanitized public metadata, invalid model IDs are rejected before charging, each configured model can answer, the 2.5-second free undo window, streaming response, one-credit charge, refund before the first output chunk, and charged stop with partial output preserved after streaming starts.
 
 ## Common operations
 

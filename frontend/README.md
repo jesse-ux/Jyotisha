@@ -23,14 +23,15 @@ Browser
 
 - Node.js 20+
 - Python 3.11 或 3.12（主项目代码不兼容系统自带的 Python 3.9）
-- OpenAI 或兼容 OpenAI Chat Completions 的第三方模型 Key。未配置时仍可返回 Python 引擎摘要，但不会生成完整 AI 解读。
+- OpenAI 或兼容 OpenAI Chat Completions 的第三方模型 Key。至少要配置一个可用模型；未配置时咨询入口会明确提示模型服务不可用，不会扣点或返回伪造摘要。
 - Supabase 项目，用于邮箱 OTP 登录、咨询点数、一次性兑换码和账务流水。
 
 ## 配置
 
 ```bash
 cd /Users/jesse/Downloads/Copse/astrology/yinduzhanxing/frontend
-cp .env.example .env.local
+# 仓库不提供含占位密钥的 .env.example；请新建仅供本机使用的 .env.local
+$EDITOR .env.local
 ```
 
 `.env.local`：
@@ -39,24 +40,27 @@ cp .env.example .env.local
 # Python 占星计算服务
 JYOTISH_API_BASE=http://127.0.0.1:5200
 
-# 方案 A：默认 OpenAI
-OPENAI_API_KEY=sk-...
-MASTRA_MODEL=openai/gpt-5-mini
+# 推荐：多模型目录。目录只保存路由元数据，Key 由 apiKeyEnv 引用。
+LLM_DEFAULT_MODEL_ID=deepseek-pro
+LLM_MODELS_JSON='[{"id":"deepseek-pro","label":"DeepSeek V4 Pro","description":"更适合复杂分析","provider":"openai-compatible","baseURL":"https://api.deepseek.com","apiKeyEnv":"DEEPSEEK_API_KEY","model":"deepseek-v4-pro","creditCost":1},{"id":"gpt-5-mini","label":"ChatGPT 5 Mini","description":"响应稳定、速度均衡","provider":"openai","apiKeyEnv":"OPENAI_API_KEY","model":"openai/gpt-5-mini","creditCost":1}]'
+DEEPSEEK_API_KEY=<server-secret>
+OPENAI_API_KEY=<server-secret>
 
-# 方案 B：任意 OpenAI-compatible 第三方模型
-# 只要填写任一 LLM_* 项，应用便会优先使用本方案。
-# Base URL 通常填写到 /v1，不要填写完整 /chat/completions 地址。
-LLM_BASE_URL=https://your-provider.example/v1
-LLM_API_KEY=your-secret-key
-LLM_MODEL=your-model-id
-# 可选：只作为 Mastra 内部标签，不影响请求地址
-LLM_PROVIDER_ID=third-party
+# 兼容旧的单模型 OpenAI 配置
+# OPENAI_API_KEY=<server-secret>
+# MASTRA_MODEL=openai/gpt-5-mini
+
+# 兼容旧的单个 OpenAI-compatible 配置
+# LLM_BASE_URL=https://your-provider.example/v1
+# LLM_API_KEY=<server-secret>
+# LLM_MODEL=your-model-id
+# LLM_PROVIDER_ID=third-party
 
 # 可选：部署目录与本仓结构不同时，显式指定 Mastra Skill 目录
 # JYOTISH_SKILL_PATH=/absolute/path/to/yinduzhanxing/skills/jyotish-vedic-astrology
 ```
 
-第三方端点必须兼容 OpenAI 的 Chat Completions 调用方式，并支持工具调用（function calling），否则 Agent 无法稳定调用占星计算工具。密钥只放在 `.env.local`，**不要**加 `NEXT_PUBLIC_` 前缀，也不要提交到 Git。每次修改 `.env.local` 后重启 Next.js 开发服务器。
+第三方端点必须兼容 OpenAI 的 Chat Completions 调用方式，并支持工具调用（function calling），否则 Agent 无法稳定调用占星计算工具。`LLM_MODELS_JSON` 只能填写服务端认可的固定地址和模型；浏览器只会得到模型 ID、名称、说明和点数。密钥只放在 `.env.local`，**不要**加 `NEXT_PUBLIC_` 前缀，也不要提交到 Git。每次修改 `.env.local` 后重启 Next.js 开发服务器。
 
 ## Skill 如何触发
 
@@ -79,7 +83,7 @@ LLM_PROVIDER_ID=third-party
   -> Agent 流式组织聊天回答
 ```
 
-必须配置可用的模型 Key 才会进入这条链路。没有配置模型时，`/api/consult` 会直接返回 Python 引擎摘要，此时不会运行 Mastra Agent，也不会加载 Skill。可在浏览器 Network 中查看 `/api/consult` 响应头：`x-ayanam-mode: mastra` 表示请求进入了 Agent；`x-ayanam-mode: engine` 表示只运行了 Python 引擎。
+必须配置可用的模型 Key 才会进入这条链路。没有配置模型时，`/api/models` 返回 `503`，聊天框会停止发送；`/api/consult` 也会在预扣点数前拒绝未知或不可用模型。成功咨询始终由 Mastra Agent 生成流式回答。
 
 仓库根目录的主 `SKILL.md` 通过 `skills/jyotish-vedic-astrology/` 这个 Mastra 兼容目录加载。该目录名必须与 Skill frontmatter 中的 `name` 一致。生产部署时需确保 `SKILL.md`、`references/`、`scripts/` 和 `assets/` 一起存在；如果目录结构不同，请设置 `JYOTISH_SKILL_PATH`。
 
@@ -175,12 +179,13 @@ supabase/migrations/20260715020000_service_role_table_grants.sql
 supabase/migrations/20260715030000_user_profiles_chat_sessions.sql
 supabase/migrations/20260715040000_agent_onboarding_cache.sql
 supabase/migrations/20260717000000_consultation_request_lifecycle.sql
+supabase/migrations/20260717010000_chat_session_model.sql
 ```
 
 迁移会创建：
 
 - `profiles`：用户点数余额、称呼与出生档案。
-- `chat_sessions`：用户的聊天 Session、消息和最近更新时间。
+- `chat_sessions`：用户的聊天 Session、消息、每个 Session 选用的模型和最近更新时间。
 - `redemption_codes`：只保存兑换码 SHA-256 与掩码，不保存完整码。
 - `credit_transactions`：兑换、预扣、退款和模型 Token 用量流水。
 - `redeem_code`：一次性兑换，使用行锁保证同一码全局只成功一次，并记录兑换账户。
@@ -235,12 +240,14 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 ADMIN_EMAILS=...
+LLM_DEFAULT_MODEL_ID=deepseek-pro
+LLM_MODELS_JSON='[{"id":"deepseek-pro","label":"DeepSeek V4 Pro","description":"更适合复杂分析","provider":"openai-compatible","baseURL":"https://api.deepseek.com","apiKeyEnv":"DEEPSEEK_API_KEY","model":"deepseek-v4-pro","creditCost":1},{"id":"gpt-5-mini","label":"ChatGPT 5 Mini","description":"响应稳定、速度均衡","provider":"openai","apiKeyEnv":"OPENAI_API_KEY","model":"openai/gpt-5-mini","creditCost":1}]'
+DEEPSEEK_API_KEY=...
 OPENAI_API_KEY=...
-MASTRA_MODEL=openai/gpt-5-mini
 JYOTISH_API_BASE=https://your-python-api.example.com
 ```
 
-如果使用第三方模型，则用 `LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL` 替换 OpenAI 配置。所有服务端 Key 只配置在 Vercel，不要写进浏览器代码。
+多个模型优先使用 `LLM_MODELS_JSON`；旧的 `LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL` 单模型配置仍兼容。所有服务端 Key 只配置在 Vercel，不要写进浏览器代码。
 
 ### Python 服务必须单独部署
 
@@ -259,6 +266,8 @@ Vercel 上的 Next.js 不能访问你电脑的 `127.0.0.1:5200`。需要把仓�
 8. 用户在 2.5 秒撤回窗口内停止时不调用模型、不扣点
 9. 撤回窗口结束后、首个输出分片前取消时点数退回
 10. 用户已经收到输出后停止时保留已有内容并正常计费
+11. 登录后 `/api/models` 只返回模型 ID、名称、说明、点数和默认状态，不包含 Key、端点或环境变量名
+12. 不同 Session 能保存各自的模型选择；已下线模型会回退到默认模型
 ```
 
 ## Demo 防滥用边界

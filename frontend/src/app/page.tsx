@@ -5,11 +5,21 @@ import { ArrowUp, ArrowUpRight, ChevronRight, Menu, Minus, Plus, Sparkles, Squar
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { ChatMessageContent } from "@/components/chat-message-content";
+import { ModelSelector } from "@/components/model-selector";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { chinaLocations, type ProvinceNode } from "@/data/china-locations";
 import { parseAgentReply, type ReplyTheme } from "@/lib/agent-reply";
 import { keepFocusWithin } from "@/lib/focus-trap";
+import {
+  SessionModelPersistenceQueue,
+  persistSessionModelSelection,
+} from "@/lib/session-model-persistence";
+import {
+  parsePublicModelCatalog,
+  resolveSessionModelId,
+  type PublicLanguageModelCatalog,
+} from "@/lib/public-models";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 type Theme = ReplyTheme;
@@ -23,7 +33,38 @@ type Profile = {
   cityCode: string;
   districtCode: string;
 };
-type ChatSession = { id: string; title: string; theme: Theme; messages: Message[]; updatedAt: number };
+type ChartLibraryRecord = {
+  id: string;
+  role: "self" | "other";
+  profile: Profile;
+  updatedAt: number;
+};
+type ChartLibraryApiRecord = {
+  id: string;
+  role: "self" | "other";
+  profile: Profile;
+  updated_at?: string;
+};
+type SynastryReportCard = {
+  id: string;
+  partnerName: string;
+  score?: number;
+  maxScore?: number;
+  assessment?: string;
+  headline?: string;
+  scoreBand?: string;
+  strengths?: string[];
+  risks?: string[];
+  nextEvidence?: string[];
+  createdAt: number;
+};
+type SynastryReportApiRecord = {
+  id: string;
+  partner_name?: string;
+  report?: SynastryReportCard;
+  created_at?: string;
+};
+type ChatSession = { id: string; title: string; theme: Theme; modelId: string; messages: Message[]; updatedAt: number };
 type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
 type BirthPlace = { label: string; lat: number; lon: number; tz: number };
@@ -32,6 +73,7 @@ type OnboardingSuggestion = { theme: Exclude<Theme, "general">; text: string };
 type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[] };
 type OnboardingStep = "name" | "birth" | "place";
 type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
+type SessionReadResult = { readonly sessions: ChatSession[]; readonly fallbackSessionIds: string[] };
 type PendingConsultation = {
   readonly requestId: string;
   readonly sessionId: string;
@@ -53,6 +95,14 @@ const themes: Array<{ id: Exclude<Theme, "general">; label: string; prompt: stri
   { id: "marriage", label: "关系", prompt: "我的关系模式是什么？" },
   { id: "timing", label: "时运", prompt: "未来哪些阶段值得把握？" },
 ];
+
+const previewModelCatalog = parsePublicModelCatalog({
+  defaultModelId: "deepseek-pro",
+  models: [
+    { id: "deepseek-pro", label: "DeepSeek V4 Pro", description: "更适合复杂分析", creditCost: 1, isDefault: true },
+    { id: "gpt-5-mini", label: "ChatGPT 5 Mini", description: "响应稳定、速度均衡", creditCost: 1, isDefault: false },
+  ],
+});
 
 const presetOnboardingMessage = "你好，我是 Jyotisha。\n开始前，我想先认识你。\n请问我该怎么称呼你？";
 
@@ -112,11 +162,12 @@ function timestamp() {
   return Date.now();
 }
 
-function createSession(): ChatSession {
+function createSession(modelId: string): ChatSession {
   return {
     id: globalThis.crypto.randomUUID(),
     title: "新对话",
     theme: "general",
+    modelId,
     messages: [],
     updatedAt: timestamp(),
   };
@@ -144,6 +195,125 @@ function selectedBirthPlace(profile: Profile): BirthPlace | null {
     .join(" · ");
 
   return { label, lat: location.center[1], lon: location.center[0], tz: china.timezone };
+}
+
+function chartLibraryStorageKey(accountId: string) {
+  return `jyotisha_chart_library:${accountId}`;
+}
+function synastryHistoryStorageKey(accountId: string) {
+  return `jyotisha_synastry_history:${accountId}`;
+}
+
+function profileReadyForLibrary(profile: Profile) {
+  return !missingProfileStep(profile);
+}
+
+function buildSelfChartRecord(profile: Profile): ChartLibraryRecord {
+  return { id: "self", role: "self", profile, updatedAt: timestamp() };
+}
+
+function upsertSelfChart(library: ChartLibraryRecord[], profile: Profile) {
+  if (!profileReadyForLibrary(profile)) return library.filter((record) => record.role !== "self");
+  const others = library.filter((record) => record.role !== "self");
+  return [buildSelfChartRecord(profile), ...others];
+}
+
+function readChartLibrary(accountId: string): ChartLibraryRecord[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(chartLibraryStorageKey(accountId)) || "[]") as ChartLibraryRecord[];
+    return Array.isArray(parsed) ? parsed.filter((record) => record?.id && record?.profile) : [];
+  } catch {
+    return [];
+  }
+}
+function readSynastryHistory(accountId: string): SynastryReportCard[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(synastryHistoryStorageKey(accountId)) || "[]") as SynastryReportCard[];
+    return Array.isArray(parsed) ? parsed.filter((record) => record?.id && record?.partnerName).slice(0, 10) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSynastryHistory(accountId: string, history: SynastryReportCard[]) {
+  localStorage.setItem(synastryHistoryStorageKey(accountId), JSON.stringify(history.slice(0, 10)));
+}
+
+function normalizeSynastryReportApiRecord(record: SynastryReportApiRecord): SynastryReportCard | null {
+  if (!record.report || typeof record.report !== "object") return null;
+  return {
+    ...record.report,
+    id: record.id,
+    partnerName: record.partner_name || record.report.partnerName || "对方",
+    createdAt: Date.parse(record.created_at || "") || record.report.createdAt || timestamp(),
+  };
+}
+
+async function fetchCloudSynastryHistory() {
+  const response = await fetch("/api/synastry-reports", { cache: "no-store" });
+  if (!response.ok) throw new Error("cloud_synastry_history_unavailable");
+  const payload = await response.json().catch(() => null) as { reports?: SynastryReportApiRecord[] } | null;
+  return (payload?.reports || []).map(normalizeSynastryReportApiRecord).filter(Boolean) as SynastryReportCard[];
+}
+
+async function saveCloudSynastryReport(report: SynastryReportCard) {
+  const response = await fetch("/api/synastry-reports", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ partnerName: report.partnerName, report }),
+  });
+  if (!response.ok) throw new Error("cloud_synastry_report_save_failed");
+  const payload = await response.json().catch(() => null) as { report?: SynastryReportApiRecord } | null;
+  return payload?.report ? normalizeSynastryReportApiRecord(payload.report) || report : report;
+}
+
+function normalizeChartLibraryApiRecord(record: ChartLibraryApiRecord): ChartLibraryRecord {
+  return {
+    id: record.role === "self" ? "self" : record.id,
+    role: record.role,
+    profile: record.profile,
+    updatedAt: Date.parse(record.updated_at || "") || timestamp(),
+  };
+}
+
+async function fetchCloudChartLibrary() {
+  const response = await fetch("/api/chart-profiles", { cache: "no-store" });
+  if (!response.ok) throw new Error("cloud_chart_library_unavailable");
+  const payload = await response.json().catch(() => null) as { profiles?: ChartLibraryApiRecord[] } | null;
+  return (payload?.profiles || []).map(normalizeChartLibraryApiRecord);
+}
+
+async function saveCloudChartProfile(record: ChartLibraryRecord) {
+  const response = await fetch("/api/chart-profiles", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: record.role === "self" ? undefined : record.id,
+      role: record.role,
+      profile: record.profile,
+    }),
+  });
+  if (!response.ok) throw new Error("cloud_chart_profile_save_failed");
+  const payload = await response.json().catch(() => null) as { profile?: ChartLibraryApiRecord } | null;
+  return payload?.profile ? normalizeChartLibraryApiRecord(payload.profile) : record;
+}
+
+async function deleteCloudChartProfile(recordId: string) {
+  const response = await fetch(`/api/chart-profiles/${encodeURIComponent(recordId)}`, { method: "DELETE" });
+  if (!response.ok) throw new Error("cloud_chart_profile_delete_failed");
+}
+
+function profilePlaceLabel(profile: Profile) {
+  return selectedBirthPlace(profile)?.label || "地点未完整";
+}
+
+function buildSynastryQuestion(selfProfile: Profile, partnerProfile: Profile) {
+  return [
+    `请用印度占星合盘分析我和${partnerProfile.name || "对方"}的关系。`,
+    `我的资料：${selfProfile.name || "本人"}，${selfProfile.date} ${selfProfile.time}，${profilePlaceLabel(selfProfile)}。`,
+    `对方资料：${partnerProfile.name || "对方"}，${partnerProfile.date} ${partnerProfile.time}，${profilePlaceLabel(partnerProfile)}。`,
+    "请先说明会使用哪些证据层，再分析关系模式、冲突点、适合发展的方式和需要谨慎的时间窗口。",
+  ].join("\n");
 }
 
 function missingProfileStep(profile: Profile): OnboardingStep | null {
@@ -240,12 +410,13 @@ function readProfile(value: unknown): Profile {
   };
 }
 
-function readSessions(value: unknown): ChatSession[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
+function readSessions(value: unknown, catalog: PublicLanguageModelCatalog | null): SessionReadResult {
+  if (!Array.isArray(value)) return { sessions: [], fallbackSessionIds: [] };
+  const fallbackSessionIds: string[] = [];
+  const sessions = value.flatMap((item): ChatSession[] => {
     if (!item || typeof item !== "object") return [];
-    const session = item as Partial<ChatSession> & { updated_at?: unknown };
-    const messages = Array.isArray(session.messages)
+    const session = item as Partial<ChatSession> & { model_id?: unknown; updated_at?: unknown };
+    const messages: Message[] = Array.isArray(session.messages)
       ? session.messages.flatMap((message) => (
         message && typeof message === "object"
           && ((message as Message).role === "user" || (message as Message).role === "assistant")
@@ -259,20 +430,26 @@ function readSessions(value: unknown): ChatSession[] {
       ))
       : [];
 
-    return typeof session.id === "string"
-      ? [{
+    if (typeof session.id !== "string") return [];
+    const savedModelId = session.model_id ?? session.modelId;
+    const selection = catalog
+      ? resolveSessionModelId(savedModelId, catalog)
+      : { modelId: typeof savedModelId === "string" ? savedModelId : "", fellBack: false };
+    if (catalog && selection.fellBack) fallbackSessionIds.push(session.id);
+    return [{
         id: session.id,
         title: typeof session.title === "string" ? session.title.slice(0, 36) : "新对话",
         theme: session.theme === "career" || session.theme === "marriage" || session.theme === "timing" ? session.theme : "general",
+        modelId: selection.modelId,
         messages,
         updatedAt: typeof session.updatedAt === "number"
           ? session.updatedAt
           : typeof session.updated_at === "string"
             ? Date.parse(session.updated_at)
             : timestamp(),
-      }]
-      : [];
+      }];
   });
+  return { sessions, fallbackSessionIds };
 }
 
 function BirthMomentFields({ value, onChange }: { value: Profile; onChange: (profile: Profile) => void }) {
@@ -303,12 +480,12 @@ function BirthLocationFields({ value, onChange }: { value: Profile; onChange: (p
   );
 }
 
-function ProfileFields({ value, onChange }: { value: Profile; onChange: (profile: Profile) => void }) {
+function ProfileFields({ value, onChange, nameInputId }: { value: Profile; onChange: (profile: Profile) => void; nameInputId?: string }) {
   return (
     <>
       <label>
         <span>如何称呼你</span>
-        <input id="profile-name" required autoComplete="name" maxLength={80} placeholder="例如：林遥" value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} />
+        <input id={nameInputId} required autoComplete="name" maxLength={80} placeholder="例如：林遥" value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} />
       </label>
       <BirthMomentFields value={value} onChange={onChange} />
       <BirthLocationFields value={value} onChange={onChange} />
@@ -391,9 +568,21 @@ async function fetchAccount(signal?: AbortSignal): Promise<Account> {
   return payload as Account;
 }
 
+async function fetchModelCatalog(signal?: AbortSignal) {
+  const response = await fetch("/api/models", { signal, cache: "no-store" });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(payloadMessage(payload, "暂时无法读取可用模型"));
+  return parsePublicModelCatalog(payload);
+}
+
 export default function Home() {
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [profileDraft, setProfileDraft] = useState<Profile>(emptyProfile);
+  const [chartLibrary, setChartLibrary] = useState<ChartLibraryRecord[]>([]);
+  const [chartLibraryOpen, setChartLibraryOpen] = useState(false);
+  const [otherProfileDraft, setOtherProfileDraft] = useState<Profile>(emptyProfile);
+  const [synastryReportCard, setSynastryReportCard] = useState<SynastryReportCard | null>(null);
+  const [synastryHistory, setSynastryHistory] = useState<SynastryReportCard[]>([]);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
@@ -406,6 +595,7 @@ export default function Home() {
   const [redeeming, setRedeeming] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [modelCatalog, setModelCatalog] = useState<PublicLanguageModelCatalog | null>(null);
   const [activeSessionId, setActiveSessionId] = useState("");
   const [draft, setDraft] = useState("");
   const [draftTheme, setDraftTheme] = useState<Theme | null>(null);
@@ -439,7 +629,11 @@ export default function Home() {
   const cancellationInFlight = useRef(false);
   const stoppedRequestAwaitingSettlement = useRef<string | null>(null);
   const stoppedSessionPersistence = useRef(new Map<string, Promise<void>>());
+  const modelPersistence = useRef(new SessionModelPersistenceQueue());
+  const modelSyncFailures = useRef(new Set<string>());
+  const modelSelectionVersions = useRef(new Map<string, number>());
   const activeSessionIdRef = useRef("");
+  const chartLibraryLoadedAccount = useRef("");
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
 
@@ -453,6 +647,56 @@ export default function Home() {
   }, [activeSessionId]);
   const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
   const accountId = account?.user.id;
+
+  useEffect(() => {
+    if (!accountId) {
+      setChartLibrary([]);
+      setSynastryHistory([]);
+      chartLibraryLoadedAccount.current = "";
+      return;
+    }
+    if (chartLibraryLoadedAccount.current === accountId) return;
+    chartLibraryLoadedAccount.current = accountId;
+    setChartLibrary(upsertSelfChart(readChartLibrary(accountId), profile));
+    setSynastryHistory(readSynastryHistory(accountId));
+    void fetchCloudChartLibrary()
+      .then((cloudLibrary) => {
+        setChartLibrary((current) => {
+          const otherById = new Map([
+            ...current.filter((record) => record.role === "other").map((record) => [record.id, record] as const),
+            ...cloudLibrary.filter((record) => record.role === "other").map((record) => [record.id, record] as const),
+          ]);
+          const next = upsertSelfChart([...otherById.values()], profile);
+          localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+          return next;
+        });
+      })
+      .catch(() => {
+        // Cloud chart library is best-effort; local library remains usable.
+      });
+    void fetchCloudSynastryHistory()
+      .then((cloudHistory) => {
+        setSynastryHistory((current) => {
+          const byId = new Map([...current, ...cloudHistory].map((record) => [record.id, record] as const));
+          const next = [...byId.values()].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
+          writeSynastryHistory(accountId, next);
+          return next;
+        });
+      })
+      .catch(() => {
+        // Cloud synastry history is best-effort; local history remains usable.
+      });
+  }, [accountId, profile]);
+
+  useEffect(() => {
+    if (!accountId) return;
+    setChartLibrary((current) => {
+      const next = upsertSelfChart(current, profile);
+      localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+      return next;
+    });
+  }, [accountId, profile]);
+
   const profileComplete = isProfileComplete(profile);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
@@ -508,10 +752,12 @@ export default function Home() {
             id: "preview-session",
             title: previewMessages.length > 0 ? "未来半年是否适合换工作" : "新对话",
             theme: "career",
+            modelId: previewModelCatalog.defaultModelId,
             messages: previewMessages,
             updatedAt: timestamp(),
           };
           setAccount({ user: { id: "preview-user", email: "preview@local.test" }, credits: 8, isAdmin: false });
+          setModelCatalog(previewModelCatalog);
           setProfile(previewProfile);
           setProfileDraft(previewProfile);
           setOnboardingStep(missingProfileStep(previewProfile) ?? "name");
@@ -535,7 +781,16 @@ export default function Home() {
           return;
         }
 
-        const nextAccount = await fetchAccount(controller.signal);
+        const [nextAccount, modelCatalogResult] = await Promise.all([
+          fetchAccount(controller.signal),
+          fetchModelCatalog(controller.signal)
+            .then((catalog) => ({ catalog, unavailable: false }))
+            .catch((caught: unknown) => {
+              if (caught instanceof Error && caught.name === "AbortError") throw caught;
+              return { catalog: null, unavailable: true };
+            }),
+        ]);
+        const nextModelCatalog = modelCatalogResult.catalog;
         const [profileResult, sessionsResult] = await Promise.all([
           supabase
             .from("profiles")
@@ -545,7 +800,7 @@ export default function Home() {
             .maybeSingle(),
           supabase
             .from("chat_sessions")
-            .select("id,title,theme,messages,updated_at")
+            .select("id,title,theme,model_id,messages,updated_at")
             .abortSignal(controller.signal)
             .order("updated_at", { ascending: false }),
         ]);
@@ -553,10 +808,11 @@ export default function Home() {
         if (profileResult.error) throw profileResult.error;
         if (sessionsResult.error) throw sessionsResult.error;
 
-        let nextSessions = readSessions(sessionsResult.data);
+        const parsedSessions = readSessions(sessionsResult.data, nextModelCatalog);
+        let nextSessions = parsedSessions.sessions;
         if (nextSessions.length === 0) {
           if (controller.signal.aborted) return;
-          const initialSession = createSession();
+          const initialSession = createSession(nextModelCatalog?.defaultModelId ?? "");
           const { error } = await supabase
             .from("chat_sessions")
             .insert({
@@ -564,6 +820,7 @@ export default function Home() {
               user_id: nextAccount.user.id,
               title: initialSession.title,
               theme: initialSession.theme,
+              model_id: initialSession.modelId || null,
               messages: initialSession.messages,
               updated_at: new Date(initialSession.updatedAt).toISOString(),
             })
@@ -575,13 +832,31 @@ export default function Home() {
         if (controller.signal.aborted) return;
         const nextProfile = readProfile(profileResult.data);
         setAccount(nextAccount);
+        setModelCatalog(nextModelCatalog);
         setProfile(nextProfile);
         setProfileDraft(nextProfile);
         setStartGreeting(nextProfile.name.trim() ? createStartGreeting(nextProfile.name) : "");
         setOnboardingStep(missingProfileStep(nextProfile) ?? "name");
         setSessions(nextSessions);
         setActiveSessionId(nextSessions[0].id);
+        if (modelCatalogResult.unavailable) {
+          setComposerNotice("模型服务暂时不可用，当前无法发送问题。");
+        } else if (parsedSessions.fallbackSessionIds.length > 0) {
+          setComposerNotice("此前选择的模型已下线，已切换为默认模型。");
+        }
         setAccountError("");
+
+        if (nextModelCatalog && parsedSessions.fallbackSessionIds.length > 0) {
+          const { error } = await supabase
+            .from("chat_sessions")
+            .update({ model_id: nextModelCatalog.defaultModelId })
+            .eq("user_id", nextAccount.user.id)
+            .in("id", parsedSessions.fallbackSessionIds)
+            .abortSignal(controller.signal);
+          if (error && !controller.signal.aborted) {
+            setComposerNotice("已在当前页面切换为默认模型，但云端同步失败；刷新后可能需要重新选择。");
+          }
+        }
       } catch (caught) {
         if ((caught as Error).name !== "AbortError" && !controller.signal.aborted) {
           setAccountError(friendlyError(caught instanceof Error ? caught.message : "暂时无法读取云端数据"));
@@ -719,6 +994,7 @@ export default function Home() {
     const values = {
       title: session.title,
       theme: session.theme,
+      model_id: session.modelId,
       messages: session.messages,
       updated_at: new Date(session.updatedAt).toISOString(),
     };
@@ -741,9 +1017,9 @@ export default function Home() {
   }
 
   async function startNewChat() {
-    if (!account || creatingSession) return;
+    if (!account || !modelCatalog || creatingSession) return;
     setMobileSidebarOpen(false);
-    const nextSession = createSession();
+    const nextSession = createSession(modelCatalog.defaultModelId);
     const previousSessionId = activeSession?.id ?? "";
     setCreatingSession(true);
     setSessions((current) => [nextSession, ...current]);
@@ -763,6 +1039,58 @@ export default function Home() {
       });
     } finally {
       setCreatingSession(false);
+    }
+  }
+
+  async function selectSessionModel(modelId: string) {
+    const userId = account?.user.id;
+    if (!activeSession || !modelCatalog || !userId || pendingSessionId || cancellationPending || creatingSession) return;
+    const selectedModel = modelCatalog.models.find((model) => model.id === modelId);
+    const retryingFailedSync = activeSession.modelId === modelId && modelSyncFailures.current.has(activeSession.id);
+    if (!selectedModel || (activeSession.modelId === modelId && !retryingFailedSync)) return;
+
+    const nextSession: ChatSession = retryingFailedSync
+      ? activeSession
+      : { ...activeSession, modelId, updatedAt: timestamp() };
+    const selectionVersion = (modelSelectionVersions.current.get(nextSession.id) ?? 0) + 1;
+    modelSelectionVersions.current.set(nextSession.id, selectionVersion);
+    if (!retryingFailedSync) updateSession(activeSession.id, () => nextSession);
+    setRequestError(null);
+    setComposerNotice("");
+
+    try {
+      await modelPersistence.current.enqueue(nextSession.id, () => persistSessionModelSelection(
+        async ({ values, sessionId, userId: ownerId }) => {
+          if (process.env.NODE_ENV === "development" && uiPreview.current) {
+            return { found: true, error: null };
+          }
+          const { data, error } = await createBrowserSupabaseClient()
+            .from("chat_sessions")
+            .update(values)
+            .eq("id", sessionId)
+            .eq("user_id", ownerId)
+            .select("id")
+            .maybeSingle();
+          return { found: Boolean(data), error: error?.message ?? null };
+        },
+        userId,
+        nextSession.id,
+        modelId,
+      ));
+      if (modelSelectionVersions.current.get(nextSession.id) !== selectionVersion) return;
+      modelSelectionVersions.current.delete(nextSession.id);
+      modelSyncFailures.current.delete(nextSession.id);
+    } catch (caught) {
+      if (modelSelectionVersions.current.get(nextSession.id) !== selectionVersion) return;
+      modelSelectionVersions.current.delete(nextSession.id);
+      modelSyncFailures.current.add(nextSession.id);
+      if (activeSessionIdRef.current === nextSession.id) {
+        setComposerNotice(`已在当前页面选择 ${selectedModel.label}，但云端同步失败；再次选择当前模型即可重试。`);
+      }
+      setRequestError({
+        sessionId: nextSession.id,
+        message: caught instanceof Error ? caught.message : "模型选择暂时无法同步到云端。",
+      });
     }
   }
 
@@ -808,6 +1136,64 @@ export default function Home() {
       .maybeSingle();
     if (error) throw error;
     if (!data) throw new Error("账户档案不存在，请重新登录后再试。");
+    await saveCloudChartProfile({ ...buildSelfChartRecord(nextProfile), updatedAt: timestamp() }).catch(() => null);
+  }
+
+  async function saveOtherChart(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextProfile = { ...otherProfileDraft, name: otherProfileDraft.name.trim() };
+    if (missingProfileStep(nextProfile)) {
+      setAccountError("请补全其他星盘的称呼、出生时间和出生地点。");
+      return;
+    }
+    if (!accountId) return;
+    let record: ChartLibraryRecord = {
+      id: globalThis.crypto.randomUUID(),
+      role: "other",
+      profile: nextProfile,
+      updatedAt: timestamp(),
+    };
+    try {
+      record = await saveCloudChartProfile(record);
+    } catch {
+      // Keep local chart library usable when cloud sync is unavailable.
+    }
+    setChartLibrary((current) => {
+      const next = [...upsertSelfChart(current, profile), record];
+      localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+      return next;
+    });
+    setOtherProfileDraft(emptyProfile);
+    setAccountError("");
+    setProfileNotice("已添加到星盘库。");
+  }
+
+  function deleteOtherChart(recordId: string) {
+    if (!accountId) return;
+    void deleteCloudChartProfile(recordId).catch(() => {
+      // Local deletion should not be blocked by temporary cloud sync failures.
+    });
+    setChartLibrary((current) => {
+      const next = current.filter((record) => record.id !== recordId || record.role === "self");
+      localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+      return next;
+    });
+  }
+
+  async function makeDefaultChart(record: ChartLibraryRecord) {
+    if (record.role !== "other" || profileSaving) return;
+    setProfileSaving(true);
+    setAccountError("");
+    try {
+      await persistProfile(record.profile);
+      setProfile(record.profile);
+      setProfileDraft(record.profile);
+      setProfileNotice("已设为当前默认星盘。");
+    } catch (caught) {
+      setAccountError(friendlyError(caught instanceof Error ? caught.message : "默认星盘保存失败"));
+    } finally {
+      setProfileSaving(false);
+    }
   }
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
@@ -939,6 +1325,67 @@ export default function Home() {
     window.requestAnimationFrame(() => composerInput.current?.focus());
   }
 
+  async function draftSynastryQuestionFromChart(record: ChartLibraryRecord) {
+    if (record.role !== "other") return;
+    const baseQuestion = buildSynastryQuestion(profile, record.profile);
+    try {
+      const response = await fetch("/api/synastry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selfProfile: profile, partnerProfile: record.profile }),
+      });
+      const payload = await response.json().catch(() => null) as { status?: string; evidenceLayers?: string[]; synastry?: { total_score?: number; max_score?: number; assessment?: string }; relationshipReport?: { headline?: string; scoreBand?: string; strengths?: string[]; risks?: string[]; nextEvidence?: string[] } } | null;
+      if (response.ok && payload?.status === "ok") {
+        const score = payload.synastry?.total_score;
+        const max = payload.synastry?.max_score;
+        const assessment = payload.synastry?.assessment;
+        const layers = (payload.evidenceLayers || []).join(" / ") || "Ashtakoot / Moon / D9";
+        const reportCard: SynastryReportCard = {
+          id: `${record.id}-${Date.now()}`,
+          partnerName: record.profile.name || "对方",
+          score,
+          maxScore: max,
+          assessment,
+          headline: payload.relationshipReport?.headline,
+          scoreBand: payload.relationshipReport?.scoreBand,
+          strengths: payload.relationshipReport?.strengths,
+          risks: payload.relationshipReport?.risks,
+          nextEvidence: payload.relationshipReport?.nextEvidence,
+          createdAt: Date.now(),
+        };
+        let savedReportCard = reportCard;
+        if (accountId) {
+          try {
+            savedReportCard = await saveCloudSynastryReport(reportCard);
+          } catch {
+            // Local history remains the fallback when cloud persistence is unavailable.
+          }
+        }
+        setSynastryReportCard(savedReportCard);
+        if (accountId) {
+          setSynastryHistory((current) => {
+            const next = [savedReportCard, ...current.filter((item) => item.id !== savedReportCard.id)].slice(0, 10);
+            writeSynastryHistory(accountId, next);
+            return next;
+          });
+        }
+        chooseSuggestedQuestion([
+          baseQuestion,
+          "",
+          `已计算基础合盘证据：${layers}；Ashtakoot ${score ?? "?"}/${max ?? "?"}，初步评级：${assessment || "待解释"}。请基于这个证据包继续分析。`,
+          payload.relationshipReport?.headline ? `结构化摘要：${payload.relationshipReport.headline}` : "",
+        ].join("\n"), "marriage");
+      } else {
+        chooseSuggestedQuestion(baseQuestion, "marriage");
+        setComposerNotice(payload?.status === "blocked" ? "合盘计算暂时不可用，已先生成问题草稿。" : "已生成合盘问题草稿。");
+      }
+    } catch {
+      chooseSuggestedQuestion(baseQuestion, "marriage");
+      setComposerNotice("合盘计算暂时不可用，已先生成问题草稿。");
+    }
+    setProfileOpen(false);
+  }
+
   async function requestCancellation(requestId: string) {
     const existing = cancellationRequests.current.get(requestId);
     if (existing) return existing;
@@ -1059,7 +1506,7 @@ export default function Home() {
   async function send(text: string, requestedTheme?: Theme) {
     const originalQuestion = text;
     const question = text.trim();
-    if (!question || !activeSession || pendingSessionId || cancellationInFlight.current || pendingConsultation.current || !account) return;
+    if (!question || !activeSession || !modelCatalog || pendingSessionId || cancellationInFlight.current || pendingConsultation.current || !account) return;
 
     if (account.credits <= 0) {
       openAccount(true);
@@ -1178,6 +1625,7 @@ export default function Home() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           requestId,
+          modelId: currentSession.modelId,
           name: profile.name,
           year,
           month,
@@ -1369,7 +1817,7 @@ export default function Home() {
       <button className="sidebar-backdrop" tabIndex={-1} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)} />
       <aside className="sidebar" ref={sidebar} id="chat-sidebar" aria-label="对话导航" inert={profileOpen}>
         <div className="brand-row"><span className="brand-mark" aria-hidden="true" /><strong>Jyotisha</strong><button className="sidebar-close" ref={sidebarCloseButton} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)}><X aria-hidden="true" /></button></div>
-        <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || creatingSession || Boolean(pendingSessionId) || cancellationPending}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
+        <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || !modelCatalog || creatingSession || Boolean(pendingSessionId) || cancellationPending}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
         <nav className="session-nav" aria-label="聊天记录">
           <span className="sidebar-label">聊天记录</span>
           <div className="session-list">
@@ -1470,7 +1918,7 @@ export default function Home() {
                   {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
                     const theme = themes.find((candidate) => candidate.id === item.theme);
                     return (
-                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
+                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
                         <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span></span>
                         <ArrowUpRight className="starter-arrow" aria-hidden="true" />
                       </button>
@@ -1514,7 +1962,7 @@ export default function Home() {
           {activeSuggestions.length > 0 && !draft.trim() && !isLoading && !cancellationPending && (
             <div className="composer-suggestions" aria-label="推荐继续提问">
               {activeSuggestions.map((question) => (
-                <button key={question} type="button" disabled={!account || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>
+                <button key={question} type="button" disabled={!account || !modelCatalog || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>
               ))}
             </div>
           )}
@@ -1554,12 +2002,20 @@ export default function Home() {
                 <Square aria-hidden="true" />
               </Button>
             ) : (
-              <Button aria-label={!profileComplete ? "确认称呼" : "发送"} disabled={!draft.trim() || Boolean(pendingSessionId) || cancellationPending || !account || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))} size="icon" type="submit">
+              <Button aria-label={!profileComplete ? "确认称呼" : "发送"} disabled={!draft.trim() || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))} size="icon" type="submit">
                 <ArrowUp aria-hidden="true" />
               </Button>
             )}
           </form>
-          <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo" ? "已加入发送队列，2.5 秒内可免费撤回。" : !profileComplete && onboardingStep === "name" ? "Enter 确认称呼" : "Enter 发送 · Shift + Enter 换行")}</p>
+          <div className="composer-footer">
+            <ModelSelector
+              models={modelCatalog?.models ?? []}
+              selectedModelId={activeSession?.modelId ?? ""}
+              disabled={!activeSession || isLoading || cancellationPending || creatingSession}
+              onSelect={(modelId) => void selectSessionModel(modelId)}
+            />
+            <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo" ? "已加入发送队列，2.5 秒内可免费撤回。" : !profileComplete && onboardingStep === "name" ? "Enter 确认称呼" : "Enter 发送 · Shift + Enter 换行")}</p>
+          </div>
         </div>
       </section>
 
@@ -1601,11 +2057,78 @@ export default function Home() {
                 <strong>{profileDraft.name.trim() || "未命名"}</strong>
                 <small>角色：本人</small>
               </div>
-              <button className="button-secondary" type="button" onClick={() => profileDialog.current?.querySelector<HTMLInputElement>("#profile-name")?.focus()}>管理星盘库</button>
+              <button className="button-secondary" type="button" onClick={() => setChartLibraryOpen((current) => !current)}>管理星盘库</button>
             </div>
+            {chartLibraryOpen && (
+              <div className="chart-library-panel" aria-label="星盘库">
+                <div className="chart-library-group">
+                  <b>本人</b>
+                  {chartLibrary.filter((record) => record.role === "self").map((record) => (
+                    <article className="chart-library-item" key={record.id}>
+                      <div>
+                        <strong>{record.profile.name || "未命名"}</strong>
+                        <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
+                      </div>
+                      <span>当前默认</span>
+                    </article>
+                  ))}
+                </div>
+                <div className="chart-library-group">
+                  <b>其他</b>
+                  {chartLibrary.filter((record) => record.role === "other").length === 0 && <p className="empty-library-copy">还没有其他星盘。</p>}
+                  {chartLibrary.filter((record) => record.role === "other").map((record) => (
+                    <article className="chart-library-item" key={record.id}>
+                      <div>
+                        <strong>{record.profile.name || "未命名"}</strong>
+                        <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
+                      </div>
+                      <div className="chart-library-actions">
+                        <button className="button-secondary" type="button" onClick={() => void draftSynastryQuestionFromChart(record)}>用于合盘</button>
+                        <button className="button-secondary" type="button" onClick={() => void makeDefaultChart(record)} disabled={profileSaving}>设为默认</button>
+                        <button className="button-secondary danger-button" type="button" onClick={() => deleteOtherChart(record.id)}>删除</button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                {synastryReportCard && (
+                  <article className="synastry-report-card" aria-label="合盘结果摘要">
+                    <div>
+                      <span>合盘结果摘要</span>
+                      <strong>{synastryReportCard.partnerName}</strong>
+                      <small>Ashtakoot {synastryReportCard.score ?? "?"}/{synastryReportCard.maxScore ?? "?"} · {synastryReportCard.assessment || synastryReportCard.scoreBand || "待解释"}</small>
+                    </div>
+                    {synastryReportCard.headline && <p>{synastryReportCard.headline}</p>}
+                    <details>
+                      <summary>查看证据</summary>
+                      <ul>
+                        {(synastryReportCard.strengths || []).map((item) => <li key={item}>{item}</li>)}
+                        {(synastryReportCard.risks || []).map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                      <small>下一步证据：{(synastryReportCard.nextEvidence || []).join(" / ") || "双方 Dasha / UL-DK / D9 7宫"}</small>
+                    </details>
+                  </article>
+                )}
+                {synastryHistory.length > 0 && (
+                  <div className="synastry-history-list" aria-label="合盘历史">
+                    <b>合盘历史</b>
+                    {synastryHistory.slice(0, 5).map((item) => (
+                      <button key={item.id} type="button" className="synastry-history-item" onClick={() => setSynastryReportCard(item)}>
+                        <span>{item.partnerName}</span>
+                        <small>Ashtakoot {item.score ?? "?"}/{item.maxScore ?? "?"} · {item.assessment || item.scoreBand || "待解释"}</small>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <form className="profile-form chart-library-form" onSubmit={saveOtherChart}>
+                  <div className="section-heading"><b>添加其他星盘</b><small>用于合盘、亲友盘或客户盘。</small></div>
+                  <ProfileFields value={otherProfileDraft} onChange={setOtherProfileDraft} nameInputId="other-profile-name" />
+                  <button className="button-primary save-profile" type="submit" disabled={!account}>添加到星盘库</button>
+                </form>
+              </div>
+            )}
             {profileNotice && <p className="form-success" role="status">{profileNotice}</p>}
             <form className="profile-form" onSubmit={saveProfile}>
-              <ProfileFields value={profileDraft} onChange={setProfileDraft} />
+              <ProfileFields value={profileDraft} onChange={setProfileDraft} nameInputId="profile-name" />
               <button className="button-primary save-profile" type="submit" disabled={profileSaving || !account}>{profileSaving ? "保存中" : "保存出生资料"}</button>
             </form>
           </section>
