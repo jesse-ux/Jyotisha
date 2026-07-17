@@ -1507,7 +1507,6 @@ export default function Home() {
                   setComposerNotice("");
                   setMobileSidebarOpen(false);
                 }}
-                disabled={Boolean(pendingSessionId) || cancellationPending}
                 aria-current={session.id === activeSession?.id ? "page" : undefined}
               >
                 <span>{session.title}</span>
@@ -1586,7 +1585,7 @@ export default function Home() {
 
               {!profileComplete && onboardingStep === "name" && accountError && <p className="form-error onboarding-inline-error" role="alert">{accountError}</p>}
 
-              {profileComplete && presetMessageFinished && !draft.trim() && (onboardingPending ? (
+              {profileComplete && presetMessageFinished && (onboardingPending ? (
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
                 <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
@@ -1634,7 +1633,7 @@ export default function Home() {
         </div>
 
         <div className="composer-wrap">
-          {activeSuggestions.length > 0 && !draft.trim() && !isLoading && !cancellationPending && (
+          {activeSuggestions.length > 0 && !isLoading && !cancellationPending && (
             <div className="composer-suggestions" aria-label="推荐继续提问">
               {activeSuggestions.map((question) => (
                 <button key={question} type="button" disabled={!account || !modelCatalog || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>

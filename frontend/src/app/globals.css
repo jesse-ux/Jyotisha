@@ -108,7 +108,7 @@ button:disabled { cursor: default; opacity: .45; }
 .session-nav { min-height: 0; flex: 1; display: flex; flex-direction: column; }
 .chevron { width: 18px; height: 18px; color: var(--color-ink-tertiary); }
 .chat-header strong, .chat-header span { display: block; }
-.credit-button span { display: block; margin: 0; color: inherit; font-size: inherit; }
+.credit-button span { display: inline-flex; align-items: center; margin: 0; color: inherit; font-size: inherit; line-height: 1; }
 .credit-button .credit-icon { width: 16px; height: 16px; flex: 0 0 auto; }
 .welcome-mark { margin-bottom: 20px; }
 .welcome h1, .auth-panel h1, .admin-header h1 { margin: 0; font-size: clamp(30px, 4vw, 42px); font-weight: 600; letter-spacing: -.035em; line-height: 1.1; }
@@ -348,7 +348,7 @@ button:disabled { cursor: default; opacity: .45; }
 .model-selector-trigger svg { width: 16px; height: 16px; flex: 0 0 auto; color: var(--color-ink-tertiary); transition: transform 120ms ease-out; }
 .model-selector-trigger[data-popup-open] svg { transform: rotate(180deg); }
 .model-selector-positioner { z-index: 30; outline: 0; }
-.model-selector-popup { width: min(360px, calc(100vw - var(--space-6))); border: 1px solid var(--color-border); padding: var(--space-3); border-radius: var(--radius-lg); background: var(--color-canvas); box-shadow: var(--shadow-elevated); transform-origin: var(--transform-origin); transition: opacity 120ms ease-out, transform 120ms var(--ease-out); }
+.model-selector-popup { width: min(180px, calc(100vw - var(--space-6))); border: 1px solid var(--color-border); padding: var(--space-3); border-radius: var(--radius-lg); background: var(--color-canvas); box-shadow: var(--shadow-elevated); transform-origin: var(--transform-origin); transition: opacity 120ms ease-out, transform 120ms var(--ease-out); }
 .model-selector-popup[data-starting-style], .model-selector-popup[data-ending-style] { opacity: 0; transform: translateY(var(--space-1)); }
 .model-selector-title { margin: 0; color: var(--color-ink); font-family: var(--font-display); font-size: var(--type-title-sm); font-weight: 400; }
 .model-selector-options { display: grid; gap: var(--space-1); margin: var(--space-2) 0 0; padding: 0; border: 0; }

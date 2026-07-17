@@ -96,6 +96,7 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 ### Model selector
 
 - **Structure:** a compact text trigger sits below the composer and opens an upward popover aligned to its left edge. The trigger shows only the active model name; each option shows only its model name and radio selection state.
+- **Width:** the popover is capped at 180px with viewport collision protection.
 - **Surface:** canvas trigger with no card treatment; the popover uses the elevated canvas recipe, warm hairlines, and one selected-surface row. The action color is reserved for the selected indicator and focus ring.
 - **States:** closed, open, hover, focus-visible, selected, disabled, and unavailable catalog. Selecting a model closes the popover and only affects later messages in the current conversation.
 - **Accessibility:** the trigger and every option meet the 44px touch target; options are a native radio group, with a small roving-focus fallback so Tab, arrow keys, Space, and screen readers consistently expose the selected model inside the popover.
@@ -105,6 +106,7 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 
 - **Structure:** title, optional metadata, current-state marker.
 - **States:** default, hover, current, focus, disabled.
+- **Request behavior:** existing sessions remain selectable for reading while a request is active; creating or sending another request stays locked until the active request settles.
 - **Surface:** translucent warm-gray sidebar; current uses a white glass surface and deep-brown marker.
 
 ### Message
@@ -112,7 +114,7 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 - **Variants:** assistant editorial text on canvas; user text on warm card surface; streaming; error.
 - **Identity:** every assistant message carries the 32px Jyotisha logo avatar; user messages stay visually lighter and avatar-free.
 - **Typography:** assistant body 16px with serif subheadings; user body 14px.
-- **Suggestions:** keep follow-up actions compact, with 8px internal horizontal padding and a narrower 680px group width.
+- **Suggestions:** keep follow-up actions compact, with 8px internal horizontal padding and a narrower 680px group width. The current set remains visible while the user types or selects a suggestion and leaves only when that question is submitted.
 - **Motion:** new messages enter with a short opacity/translate transition only.
 
 ### Suggestion card
@@ -120,6 +122,7 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 - **Structure:** topic label, question, directional icon. Categories are not numbered because they have no required order. At tablet widths, the cards stack into one column so Chinese questions keep natural phrase boundaries beside the persistent sidebar.
 - **Surface:** warm light cards; the lead card uses the pale brown emphasis surface and border instead of a dark block.
 - **States:** default, hover, active, focus, disabled, loading, fallback notice.
+- **Visibility:** the three initial cards remain visible while the user types or chooses a question. They leave only after the question is submitted and the session receives its first user message.
 
 ### Start greeting
 
