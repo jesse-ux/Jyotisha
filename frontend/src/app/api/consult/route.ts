@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import {
   consultationInputSchema,
-  jyotishAgent,
-  runConsultationWorkflow,
+  getJyotishAgent,
 } from "@/mastra";
 import {
   languageModelConfigurationMessage,
-  languageModelSettings,
+  resolveLanguageModel,
 } from "@/mastra/model";
 import { blocksPromptExtraction } from "@/lib/consult-safety";
 import { CreditRpcError, runCreditRpc } from "@/lib/consultation-billing";
@@ -20,6 +19,7 @@ export const maxDuration = 60;
 
 const chatRequestSchema = consultationInputSchema.extend({
   requestId: z.string().uuid(),
+  modelId: z.string().trim().min(1).max(64),
   name: z.string().trim().max(80).optional().default(""),
   history: z.array(z.object({
     role: z.enum(["user", "assistant"]),
@@ -35,42 +35,11 @@ function currentTimeContext(now = new Date()) {
   return `服务端当前时间（权威）：${now.toISOString()}；中国标准时间（UTC+8）：${chinaTime}。涉及“现在、今天、今年、未来几个月”等相对时间时，以此为准。`;
 }
 
-async function* staticTextStream(text: string) {
-  yield text;
-}
-
-function engineSummary(data: Record<string, unknown>) {
-  const topics = Array.isArray(data.guided_topics) ? data.guided_topics : [];
-  const routing = data.routing && typeof data.routing === "object" ? data.routing : {};
-  const route = "primary_route" in routing ? String(routing.primary_route) : "统一咨询工作流";
-  const topicText = topics
-    .slice(0, 3)
-    .map((item) => {
-      if (!item || typeof item !== "object") return null;
-      const record = item as Record<string, unknown>;
-      return String(record.title || record.label || record.theme || "值得继续探索的主题");
-    })
-    .filter(Boolean);
-
-  return [
-    "星盘计算已完成，但当前没有配置 AI 模型，因此先返回引擎摘要。",
-    `本次路由：${route}。`,
-    topicText.length ? `建议继续查看：${topicText.join("、")}。` : "可继续查看事业、关系与年度时间窗口。",
-    "启动 AI 解读需配置模型；原始计算结果已保留。",
-  ].join("\n");
-}
-
-function configuredModelId() {
-  if (languageModelSettings.mode === "compatible") {
-    return process.env.LLM_MODEL?.trim() || "third-party";
-  }
-  return process.env.MASTRA_MODEL?.trim() || "openai/gpt-5-mini";
-}
-
 async function recordModelUsage(
   accounting: ReturnType<typeof createAdminSupabaseClient>,
   userId: string,
   requestId: string,
+  modelId: string,
   usage: Promise<{ inputTokens?: number; outputTokens?: number }>,
 ) {
   try {
@@ -78,7 +47,7 @@ async function recordModelUsage(
     const { error } = await accounting
       .from("credit_transactions")
       .update({
-        model: configuredModelId(),
+        model: modelId,
         input_tokens: Math.max(0, Math.trunc(resolved.inputTokens ?? 0)),
         output_tokens: Math.max(0, Math.trunc(resolved.outputTokens ?? 0)),
       })
@@ -134,6 +103,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const selectedModel = resolveLanguageModel(parsed.data.modelId);
+  if (!selectedModel) {
+    return NextResponse.json(
+      { error: "模型暂不可用", message: "请选择其他模型后重新发送，本次不会扣除点数。" },
+      { status: 409 },
+    );
+  }
+
   const userId = user.id;
   const requestId = parsed.data.requestId;
   let reserveResult;
@@ -181,18 +158,7 @@ export async function POST(request: Request) {
     const { history, name } = parsed.data;
     const toolInput = consultationInputSchema.parse(parsed.data);
 
-    if (!languageModelSettings.configured) {
-      const evidence = await runConsultationWorkflow(toolInput);
-      return streamTextResponse(staticTextStream(engineSummary(evidence)), {
-        mode: "engine",
-        requestId,
-        onComplete: () => settle(complete),
-        onError: (_error, emitted) => settle(emitted ? complete : cancel),
-        onCancel: (emitted) => settle(emitted ? complete : cancel),
-      });
-    }
-
-    const result = await jyotishAgent.stream([
+    const result = await getJyotishAgent(selectedModel).stream([
       ...history.map((message) => message.role === "user"
         ? { role: "user" as const, content: message.text }
         : { role: "assistant" as const, content: message.text }),
@@ -209,7 +175,7 @@ export async function POST(request: Request) {
     ]);
     const completeAndRecordUsage = async () => {
       await complete();
-      void recordModelUsage(accounting, userId, requestId, result.totalUsage);
+      void recordModelUsage(accounting, userId, requestId, selectedModel.id, result.totalUsage);
     };
     const settleInterrupted = (emitted: boolean) => settle(emitted ? completeAndRecordUsage : cancel);
     return streamTextResponse(result.textStream, {

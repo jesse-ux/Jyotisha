@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveLanguageModelCatalog } from "../src/mastra/model.ts";
+import {
+  resolveLanguageModelCatalog,
+  resolveLanguageModelFromCatalog,
+} from "../src/mastra/model.ts";
 
 const configuredModels = [
   {
@@ -124,4 +127,22 @@ test("reports an incomplete legacy provider without inventing a model", () => {
   assert.equal(catalog.models.length, 0);
   assert.equal(catalog.defaultModelId, null);
   assert.equal(catalog.issues.includes("legacy_compatible_incomplete"), true);
+});
+
+test("resolves only model ids declared by the server catalog", () => {
+  // Given
+  const catalog = resolveLanguageModelCatalog({
+    LLM_DEFAULT_MODEL_ID: "deepseek-pro",
+    LLM_MODELS_JSON: JSON.stringify(configuredModels),
+    DEEPSEEK_API_KEY: "deepseek-secret",
+    OPENAI_API_KEY: "openai-secret",
+  });
+
+  // When
+  const selected = resolveLanguageModelFromCatalog(catalog, "gpt-mini");
+  const unknown = resolveLanguageModelFromCatalog(catalog, "attacker-model");
+
+  // Then
+  assert.equal(selected?.id, "gpt-mini");
+  assert.equal(unknown, null);
 });

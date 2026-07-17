@@ -214,8 +214,12 @@ export function resolveLanguageModelCatalog(environment: Environment): LanguageM
 
 export const languageModelCatalog = resolveLanguageModelCatalog(process.env);
 
+export function resolveLanguageModelFromCatalog(catalog: LanguageModelCatalog, modelId: string) {
+  return catalog.models.find((model) => model.id === modelId) ?? null;
+}
+
 export function resolveLanguageModel(modelId: string) {
-  return languageModelCatalog.models.find((model) => model.id === modelId) ?? null;
+  return resolveLanguageModelFromCatalog(languageModelCatalog, modelId);
 }
 
 export function defaultLanguageModel() {
