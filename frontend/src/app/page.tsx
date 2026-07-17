@@ -46,6 +46,7 @@ type ChartLibraryApiRecord = {
   updated_at?: string;
 };
 type SynastryReportCard = {
+  id: string;
   partnerName: string;
   score?: number;
   maxScore?: number;
@@ -55,6 +56,7 @@ type SynastryReportCard = {
   strengths?: string[];
   risks?: string[];
   nextEvidence?: string[];
+  createdAt: number;
 };
 type ChatSession = { id: string; title: string; theme: Theme; modelId: string; messages: Message[]; updatedAt: number };
 type RequestError = { sessionId: string; message: string };
@@ -192,6 +194,9 @@ function selectedBirthPlace(profile: Profile): BirthPlace | null {
 function chartLibraryStorageKey(accountId: string) {
   return `jyotisha_chart_library:${accountId}`;
 }
+function synastryHistoryStorageKey(accountId: string) {
+  return `jyotisha_synastry_history:${accountId}`;
+}
 
 function profileReadyForLibrary(profile: Profile) {
   return !missingProfileStep(profile);
@@ -211,6 +216,14 @@ function readChartLibrary(accountId: string): ChartLibraryRecord[] {
   try {
     const parsed = JSON.parse(localStorage.getItem(chartLibraryStorageKey(accountId)) || "[]") as ChartLibraryRecord[];
     return Array.isArray(parsed) ? parsed.filter((record) => record?.id && record?.profile) : [];
+  } catch {
+    return [];
+  }
+}
+function readSynastryHistory(accountId: string): SynastryReportCard[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(synastryHistoryStorageKey(accountId)) || "[]") as SynastryReportCard[];
+    return Array.isArray(parsed) ? parsed.filter((record) => record?.id && record?.partnerName).slice(0, 10) : [];
   } catch {
     return [];
   }
@@ -531,6 +544,7 @@ export default function Home() {
   const [chartLibraryOpen, setChartLibraryOpen] = useState(false);
   const [otherProfileDraft, setOtherProfileDraft] = useState<Profile>(emptyProfile);
   const [synastryReportCard, setSynastryReportCard] = useState<SynastryReportCard | null>(null);
+  const [synastryHistory, setSynastryHistory] = useState<SynastryReportCard[]>([]);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
@@ -599,12 +613,14 @@ export default function Home() {
   useEffect(() => {
     if (!accountId) {
       setChartLibrary([]);
+      setSynastryHistory([]);
       chartLibraryLoadedAccount.current = "";
       return;
     }
     if (chartLibraryLoadedAccount.current === accountId) return;
     chartLibraryLoadedAccount.current = accountId;
     setChartLibrary(upsertSelfChart(readChartLibrary(accountId), profile));
+    setSynastryHistory(readSynastryHistory(accountId));
     void fetchCloudChartLibrary()
       .then((cloudLibrary) => {
         setChartLibrary((current) => {
@@ -1274,7 +1290,8 @@ export default function Home() {
         const max = payload.synastry?.max_score;
         const assessment = payload.synastry?.assessment;
         const layers = (payload.evidenceLayers || []).join(" / ") || "Ashtakoot / Moon / D9";
-        setSynastryReportCard({
+        const reportCard: SynastryReportCard = {
+          id: `${record.id}-${Date.now()}`,
           partnerName: record.profile.name || "对方",
           score,
           maxScore: max,
@@ -1284,7 +1301,16 @@ export default function Home() {
           strengths: payload.relationshipReport?.strengths,
           risks: payload.relationshipReport?.risks,
           nextEvidence: payload.relationshipReport?.nextEvidence,
-        });
+          createdAt: Date.now(),
+        };
+        setSynastryReportCard(reportCard);
+        if (accountId) {
+          setSynastryHistory((current) => {
+            const next = [reportCard, ...current].slice(0, 10);
+            localStorage.setItem(synastryHistoryStorageKey(accountId), JSON.stringify(next));
+            return next;
+          });
+        }
         chooseSuggestedQuestion([
           baseQuestion,
           "",
@@ -2023,6 +2049,17 @@ export default function Home() {
                       <small>下一步证据：{(synastryReportCard.nextEvidence || []).join(" / ") || "双方 Dasha / UL-DK / D9 7宫"}</small>
                     </details>
                   </article>
+                )}
+                {synastryHistory.length > 0 && (
+                  <div className="synastry-history-list" aria-label="合盘历史">
+                    <b>合盘历史</b>
+                    {synastryHistory.slice(0, 5).map((item) => (
+                      <button key={item.id} type="button" className="synastry-history-item" onClick={() => setSynastryReportCard(item)}>
+                        <span>{item.partnerName}</span>
+                        <small>Ashtakoot {item.score ?? "?"}/{item.maxScore ?? "?"} · {item.assessment || item.scoreBand || "待解释"}</small>
+                      </button>
+                    ))}
+                  </div>
                 )}
                 <form className="profile-form chart-library-form" onSubmit={saveOtherChart}>
                   <div className="section-heading"><b>添加其他星盘</b><small>用于合盘、亲友盘或客户盘。</small></div>
