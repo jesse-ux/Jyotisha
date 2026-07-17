@@ -48,7 +48,6 @@ export function ModelSelector({
         disabled={disabled || unavailable}
         aria-label={selectedModel ? `当前模型：${selectedModel.label}，点击切换` : "模型暂不可用"}
       >
-        <span>模型</span>
         <b>{selectedModel?.label ?? "暂不可用"}</b>
         <ChevronDown aria-hidden="true" />
       </Popover.Trigger>
@@ -56,9 +55,6 @@ export function ModelSelector({
         <Popover.Positioner className="model-selector-positioner" side="top" align="start" sideOffset={8} collisionPadding={12}>
           <Popover.Popup className="model-selector-popup">
             <Popover.Title className="model-selector-title">选择模型</Popover.Title>
-            <Popover.Description className="model-selector-description">
-              只影响之后发送的问题，每次消耗 1 点。
-            </Popover.Description>
             <fieldset className="model-selector-options">
               <legend className="sr-only">选择当前对话使用的模型</legend>
               {models.map((model, index) => (
@@ -78,9 +74,7 @@ export function ModelSelector({
                   />
                   <span className="model-selector-copy">
                     <b>{model.label}</b>
-                    <small>{model.description || "通用分析模型"}</small>
                   </span>
-                  <span className="model-selector-cost">{model.creditCost} 点/次</span>
                   <Check className="model-selector-check" aria-hidden="true" />
                 </label>
               ))}

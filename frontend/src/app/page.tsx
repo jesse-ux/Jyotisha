@@ -850,9 +850,7 @@ export default function Home() {
     modelSelectionVersions.current.set(nextSession.id, selectionVersion);
     if (!retryingFailedSync) updateSession(activeSession.id, () => nextSession);
     setRequestError(null);
-    setComposerNotice(retryingFailedSync
-      ? `正在重新同步 ${selectedModel.label}。`
-      : `已切换至 ${selectedModel.label}，只影响之后的问题。`);
+    setComposerNotice("");
 
     try {
       await modelPersistence.current.enqueue(nextSession.id, () => persistSessionModelSelection(
@@ -876,9 +874,6 @@ export default function Home() {
       if (modelSelectionVersions.current.get(nextSession.id) !== selectionVersion) return;
       modelSelectionVersions.current.delete(nextSession.id);
       modelSyncFailures.current.delete(nextSession.id);
-      if (retryingFailedSync && activeSessionIdRef.current === nextSession.id) {
-        setComposerNotice(`已同步 ${selectedModel.label}。`);
-      }
     } catch (caught) {
       if (modelSelectionVersions.current.get(nextSession.id) !== selectionVersion) return;
       modelSelectionVersions.current.delete(nextSession.id);
