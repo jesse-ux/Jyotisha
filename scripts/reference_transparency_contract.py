@@ -122,6 +122,24 @@ def _load_cases(manifest_path: Path) -> list[dict[str, Any]]:
     return [case for case in cases if isinstance(case, dict)] if isinstance(cases, list) else []
 
 
+def _coverage(cases: list[dict[str, Any]], themes: list[str]) -> dict[str, list[str]]:
+    domains: set[str] = set()
+    for case in cases:
+        replay = case.get("replay")
+        if not isinstance(replay, dict) or replay.get("outcome_replay_status") != "replayed":
+            continue
+        if replay.get("do_not_use_for_prediction") is True:
+            continue
+        for event in case.get("event_outcomes", []):
+            if isinstance(event, dict) and isinstance(event.get("domain"), str):
+                domains.add(event["domain"])
+    available = sorted(domains)
+    return {
+        "available_event_domains": available,
+        "requested_uncovered_domains": sorted(set(themes) - domains),
+    }
+
+
 def select_similar_public_cases(
     user_chart: dict[str, Any],
     themes: list[str],
@@ -172,6 +190,7 @@ def select_similar_public_cases(
         "manifest": "references/real_case_calibration/replay_manifest.json",
         "public_figures_only": True,
         "does_not_predict_user_outcome": True,
+        "coverage": _coverage(candidates, themes),
         "boundary": "公开案例用于比较与理解，不表示用户会复现该事件。",
     }
 

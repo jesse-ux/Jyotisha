@@ -7,5 +7,6 @@ test("passes transparent public-case references into the agent context", () => {
 
   assert.match(source, /reference_transparency:\s*record\(data\.reference_transparency\)/);
   assert.match(source, /high_similarity_public_references_available/);
+  assert.match(source, /requested_uncovered_domains/);
   assert.match(source, /exact_triggers as technical trigger points/);
 });

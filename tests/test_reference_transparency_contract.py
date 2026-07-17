@@ -53,6 +53,10 @@ def test_select_similar_cases_shares_only_high_similarity_same_domain() -> None:
     assert selected["cases"][0]["similarity"]["score"] == 1.0
     assert selected["cases"][0]["event_source"]["url"] == "https://example.com/event"
     assert selected["does_not_predict_user_outcome"] is True
+    assert selected["coverage"] == {
+        "available_event_domains": ["career", "marriage"],
+        "requested_uncovered_domains": [],
+    }
 
 
 def test_reference_contract_preserves_dates_and_discloses_parallel_methods() -> None:
@@ -67,6 +71,7 @@ def test_reference_contract_preserves_dates_and_discloses_parallel_methods() -> 
     assert contract["external_engine_observations"]["VedAstro hosted"]["deployment_identity"] == "not_publicly_proven"
     assert contract["method_variants"]["display"] == "show_parallel_methods_with_sources"
     assert contract["similar_public_cases"]["status"] == "no_high_similarity_public_reference"
+    assert contract["similar_public_cases"]["coverage"]["requested_uncovered_domains"] == ["career"]
 
 
 def test_default_public_manifest_can_surface_a_matching_replayed_case() -> None:
