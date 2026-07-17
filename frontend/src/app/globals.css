@@ -311,6 +311,10 @@ button:disabled { cursor: default; opacity: .45; }
 .starter-content b { color: var(--color-action); font-size: var(--type-overline); font-weight: 500; letter-spacing: 1.5px; }
 .starter-content span { overflow: hidden; color: var(--color-ink); font-family: var(--font-display); font-size: var(--type-title-md); line-height: 1.4; text-overflow: clip; text-wrap: pretty; white-space: normal; }
 .starter-arrow { width: 17px; height: 17px; color: var(--color-ink-secondary); }
+.product-entrypoints { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.product-entrypoints button { min-height: 84px; border: 1px solid var(--color-border); background: var(--color-canvas); }
+.product-entrypoints span { display: grid; gap: var(--space-2); }
+.product-entrypoints small { color: var(--color-ink-secondary); line-height: 1.45; font-size: var(--type-caption); }
 .starter-loading { color: var(--color-ink-secondary); margin-left: 0; padding: var(--space-5); border-radius: var(--radius-lg); background: var(--color-canvas-muted); font-size: 14px; }
 .starter-note { margin: 10px 0 0; color: var(--color-ink-secondary); line-height: 1.5; grid-column: 1 / -1; font-size: 13px; }
 
@@ -464,6 +468,7 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   .starter-list { grid-template-columns: 1fr; grid-template-rows: auto; }
   .starter-list button, .starter-list button:first-child { min-height: 92px; grid-row: auto; padding: var(--space-4); }
   .starter-list button:first-child { min-height: 112px; }
+  .product-entrypoints { grid-template-columns: 1fr; }
   .auth-shell { grid-template-columns: 1.2fr .8fr; }
   .auth-story, .auth-panel { padding: var(--space-8); }
   .auth-story h2 { font-size: var(--type-display-sm); }
@@ -480,6 +485,7 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   .starter-list { grid-template-columns: 1fr; grid-template-rows: auto; }
   .starter-list button, .starter-list button:first-child { min-height: 96px; grid-row: auto; padding: var(--space-4); }
   .starter-list button:first-child { min-height: 136px; }
+  .product-entrypoints { grid-template-columns: 1fr; }
   .message-list { width: 100%; padding: var(--space-5) var(--space-4) var(--space-12); }
   .message-content { max-width: 88%; }
   .composer-wrap { padding: var(--space-2) var(--space-3) max(var(--space-3), env(safe-area-inset-bottom)); }
