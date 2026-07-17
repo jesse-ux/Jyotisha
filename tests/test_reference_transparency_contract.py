@@ -106,6 +106,27 @@ def test_default_public_manifest_can_surface_a_matching_replayed_case() -> None:
     assert selected["cases"][0]["reference_only"] is True
 
 
+def test_same_event_date_compares_vimshottari_mahadasha() -> None:
+    from scripts.domain_calculation_service import compute_chart
+
+    jobs_chart = compute_chart({
+        "year": 1955, "month": 2, "day": 24, "hour": 19, "minute": 15,
+        "lat": 37.7833, "lon": -122.4167, "tz": -8.0,
+        "ayanamsa": "lahiri", "node_mode": "mean",
+    })
+
+    selected = select_similar_public_cases(
+        jobs_chart,
+        ["career"],
+        reference_date="2007-01-09",
+    )
+
+    similarity = selected["cases"][0]["similarity"]
+    assert "vimshottari_mahadasha" in similarity["matching_factors"]
+    assert similarity["timing_state"]["status"] == "matched"
+    assert "vimshottari_antardasha" in similarity["uncompared_layers"]
+
+
 def test_pending_health_case_is_context_only_not_calibration() -> None:
     user_chart = _chart("Leo", "Pisces", "Libra")
     cases = [{
@@ -203,3 +224,4 @@ def test_default_manifest_exposes_kahlo_health_as_context_only() -> None:
 def test_consultation_api_exposes_reference_transparency_contract() -> None:
     source = (ROOT / "scripts" / "jyotish_api_server.py").read_text(encoding="utf-8")
     assert "result['reference_transparency'] = build_reference_transparency_contract(" in source
+    assert "reference_date=_consultation_reference_date(body).date().isoformat()" in source

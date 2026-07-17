@@ -9,5 +9,6 @@ test("passes transparent public-case references into the agent context", () => {
   assert.match(source, /high_similarity_public_references_available/);
   assert.match(source, /requested_uncovered_domains/);
   assert.match(source, /public_context_only/);
+  assert.match(source, /timing_state/);
   assert.match(source, /exact_triggers as technical trigger points/);
 });

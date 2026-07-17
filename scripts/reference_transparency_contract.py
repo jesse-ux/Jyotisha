@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -14,11 +15,11 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 try:
-    from scripts.domain_calculation_service import compute_chart
+    from scripts.domain_calculation_service import compute_chart, compute_vimshottari_timeline
     from scripts.timing_precision_contract import build_timing_precision_contract
     from scripts.varga import SIGN_LORDS, calc_varga
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
-    from domain_calculation_service import compute_chart
+    from domain_calculation_service import compute_chart, compute_vimshottari_timeline
     from timing_precision_contract import build_timing_precision_contract
     from varga import SIGN_LORDS, calc_varga
 
@@ -41,6 +42,7 @@ FEATURE_WEIGHTS = {
     "d9_venus": 0.10,
     "d10_ascendant": 0.10,
     "d10_sun": 0.10,
+    "vimshottari_mahadasha": 0.15,
 }
 HIGH_SIMILARITY_THRESHOLD = 0.75
 
@@ -83,6 +85,43 @@ def _longitude(chart: dict[str, Any], key: str) -> float | None:
 def _varga_sign(chart: dict[str, Any], key: str, division: int) -> str | None:
     longitude = _longitude(chart, key)
     return calc_varga(longitude, division)["sign"] if longitude is not None else None
+
+
+def _birth_datetime(chart: dict[str, Any]) -> datetime | None:
+    birth = chart.get("birth_info") if isinstance(chart, dict) else None
+    if not isinstance(birth, dict):
+        birth = chart.get("birth") if isinstance(chart, dict) else None
+    if not isinstance(birth, dict) or not isinstance(birth.get("date"), str):
+        return None
+    raw_time = birth.get("time")
+    if not isinstance(raw_time, str):
+        raw_time = f"{int(birth.get('hour', 0)):02d}:{int(birth.get('minute', 0)):02d}:{int(birth.get('second', 0)):02d}"
+    try:
+        return datetime.fromisoformat(f"{birth['date']}T{raw_time}")
+    except ValueError:
+        return None
+
+
+def _vimshottari_mahadasha(chart: dict[str, Any], reference_date: str | None) -> str | None:
+    if not isinstance(reference_date, str):
+        return None
+    try:
+        target = datetime.fromisoformat(reference_date[:10])
+    except ValueError:
+        return None
+    birth_dt, moon_lon = _birth_datetime(chart), _longitude(chart, "Moon")
+    if birth_dt is None or moon_lon is None:
+        return None
+    try:
+        periods = compute_vimshottari_timeline(birth_dt=birth_dt, moon_lon=moon_lon)["periods"]
+        for period in periods:
+            start = datetime.fromisoformat(period["start"])
+            end = datetime.fromisoformat(period["end"])
+            if start <= target <= end:
+                return period["lord"]
+    except (KeyError, TypeError, ValueError):
+        return None
+    return None
 
 
 def _features(chart: dict[str, Any], domain: str) -> dict[str, Any]:
@@ -136,9 +175,26 @@ def _chart_for_case(case: dict[str, Any]) -> dict[str, Any] | None:
     )
 
 
-def _similarity(user_chart: dict[str, Any], case_chart: dict[str, Any], domain: str) -> dict[str, Any]:
+def _similarity(
+    user_chart: dict[str, Any], case_chart: dict[str, Any], domain: str,
+    *, reference_date: str | None = None, case_event_date: str | None = None,
+) -> dict[str, Any]:
     user = _features(user_chart, domain)
     candidate = _features(case_chart, domain)
+    user_md = _vimshottari_mahadasha(user_chart, reference_date)
+    case_md = _vimshottari_mahadasha(case_chart, case_event_date)
+    if user_md is not None and case_md is not None:
+        user["vimshottari_mahadasha"] = user_md
+        candidate["vimshottari_mahadasha"] = case_md
+        timing_state = {
+            "status": "matched" if user_md == case_md else "different",
+            "user_vimshottari_mahadasha": user_md,
+            "case_event_vimshottari_mahadasha": case_md,
+            "reference_date": reference_date,
+            "case_event_date": case_event_date,
+        }
+    else:
+        timing_state = {"status": "not_compared"}
     matching, dissimilar, total = [], [], 0.0
     for name, weight in FEATURE_WEIGHTS.items():
         if name not in user or name not in candidate:
@@ -156,7 +212,9 @@ def _similarity(user_chart: dict[str, Any], case_chart: dict[str, Any], domain: 
         compared_vargas.append("D9")
     if domain == "career" and all(user.get(name) is not None and candidate.get(name) is not None for name in ("d10_ascendant", "d10_sun")):
         compared_vargas.append("D10")
-    uncompared = ["dasha_event_state", "transit_event_state"]
+    uncompared = ["vimshottari_antardasha", "narayana_dasha", "transit_event_state"]
+    if timing_state["status"] == "not_compared":
+        uncompared.insert(0, "vimshottari_mahadasha")
     if domain == "marriage" and "D9" not in compared_vargas:
         uncompared.insert(0, "D9")
     if domain == "career" and "D10" not in compared_vargas:
@@ -165,8 +223,9 @@ def _similarity(user_chart: dict[str, Any], case_chart: dict[str, Any], domain: 
         "score": score,
         "matching_factors": matching,
         "dissimilar_factors": dissimilar,
-        "feature_scope": "D1 ascendant, Moon, theme-house lord, Rahu/Ketu axis" + (f", {'/'.join(compared_vargas)}" if compared_vargas else ""),
+        "feature_scope": "D1 ascendant, Moon, theme-house lord, Rahu/Ketu axis" + (f", {'/'.join(compared_vargas)}" if compared_vargas else "") + (", Vimshottari MD" if timing_state["status"] != "not_compared" else ""),
         "uncompared_layers": uncompared,
+        "timing_state": timing_state,
     }
 
 
@@ -207,6 +266,7 @@ def select_similar_public_cases(
     themes: list[str],
     *,
     cases: list[dict[str, Any]] | None = None,
+    reference_date: str | None = None,
     threshold: float = HIGH_SIMILARITY_THRESHOLD,
     max_cases: int = 3,
 ) -> dict[str, Any]:
@@ -231,7 +291,13 @@ def select_similar_public_cases(
         for event in case.get("event_outcomes", []):
             if not isinstance(event, dict) or event.get("domain") not in themes:
                 continue
-            similarity = _similarity(user_chart, case_chart, event["domain"])
+            similarity = _similarity(
+                user_chart,
+                case_chart,
+                event["domain"],
+                reference_date=reference_date,
+                case_event_date=event.get("event_date"),
+            )
             if similarity["score"] < threshold:
                 continue
             source = case.get("source") if isinstance(case.get("source"), dict) else {}
@@ -270,7 +336,7 @@ def select_similar_public_cases(
 
 def build_reference_transparency_contract(
     chart: dict[str, Any], themes: list[str], *, timing: dict[str, Any] | None = None,
-    cases: list[dict[str, Any]] | None = None,
+    cases: list[dict[str, Any]] | None = None, reference_date: str | None = None,
 ) -> dict[str, Any]:
     timing_contract = build_timing_precision_contract(timing)
     return {
@@ -296,5 +362,10 @@ def build_reference_transparency_contract(
             "source": "references/oracle/xalen_formula_unit_attribution_2026_07_17.json",
             "boundary": "流派/公式差异并列展示；不以单一引擎多数投票决定真值。",
         },
-        "similar_public_cases": select_similar_public_cases(chart, themes, cases=cases),
+        "similar_public_cases": select_similar_public_cases(
+            chart,
+            themes,
+            cases=cases,
+            reference_date=reference_date,
+        ),
     }

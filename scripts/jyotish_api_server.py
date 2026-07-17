@@ -720,6 +720,7 @@ def execute_consultation_workflow(
         chart,
         themes,
         timing=body.get('timing'),
+        reference_date=_consultation_reference_date(body).date().isoformat(),
     )
     return result
 
