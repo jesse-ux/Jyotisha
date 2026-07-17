@@ -68,6 +68,40 @@ function d9Summary(varga: Record<string, unknown>) {
   };
 }
 
+function planetSign(point: unknown) {
+  return point && typeof point === "object" && "sign" in point
+    ? String((point as Record<string, unknown>).sign || "unknown")
+    : "unknown";
+}
+
+function relationshipReport(synastry: Record<string, unknown>, selfD9: Record<string, unknown>, partnerD9: Record<string, unknown>) {
+  const total = Number(synastry.total_score ?? 0);
+  const max = Number(synastry.max_score ?? 36);
+  const ratio = max > 0 ? total / max : 0;
+  const band = ratio >= 0.72 ? "supportive" : ratio >= 0.5 ? "mixed" : "challenging";
+  const self = d9Summary(selfD9);
+  const partner = d9Summary(partnerD9);
+  return {
+    status: "evidence_summary",
+    scoreBand: band,
+    headline: band === "supportive"
+      ? "基础匹配度偏支持，但仍需结合现实互动与长期运势。"
+      : band === "mixed"
+        ? "基础匹配度中等，适合重点观察沟通节奏、价值观与关系承诺。"
+        : "基础匹配度偏谨慎，需要先处理冲突模式与现实条件。",
+    strengths: [
+      `Ashtakoot ${total}/${max}`,
+      `本人 D9 Moon：${planetSign(self.moon)}`,
+      `对方 D9 Moon：${planetSign(partner.moon)}`,
+    ],
+    risks: [
+      "这不是完整婚恋结论；尚未纳入双方 Dasha、UL/DK 与长期时机。",
+      `D9 Venus/Mars 需要继续解释：本人 ${planetSign(self.venus)}/${planetSign(self.mars)}，对方 ${planetSign(partner.venus)}/${planetSign(partner.mars)}。`,
+    ],
+    nextEvidence: ["双方 Dasha", "UL/DK", "D9 7宫/7主", "现实关系时间线"],
+  };
+}
+
 async function postPython(path: string, body: unknown) {
   const response = await fetch(`${apiBase}${path}`, {
     method: "POST",
@@ -113,6 +147,7 @@ export async function POST(request: Request) {
       selfChart: { moon: moonSummary(selfChart), d9: d9Summary(selfD9) },
       partnerChart: { moon: moonSummary(partnerChart), d9: d9Summary(partnerD9) },
       synastry,
+      relationshipReport: relationshipReport(synastry, selfD9, partnerD9),
     });
   } catch (error) {
     return NextResponse.json({
