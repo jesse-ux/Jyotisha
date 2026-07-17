@@ -355,6 +355,9 @@ button:disabled { cursor: default; opacity: .45; }
 .sheet-section { border-bottom: 1px solid var(--color-border); padding: var(--space-6) 0; border-color: var(--color-border); }
 .section-toggle b, .section-heading b { display: block; font-family: var(--font-display); font-size: var(--type-title-md); font-weight: 400; }
 .section-toggle small, .section-heading small { display: block; margin-top: 4px; color: var(--color-ink-secondary); font-weight: 400; font-size: var(--type-caption); }
+.default-chart-card { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-top: var(--space-5); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface-subtle); }
+.default-chart-card span, .default-chart-card small { display: block; color: var(--color-ink-secondary); font-size: var(--type-caption); }
+.default-chart-card strong { display: block; margin: 4px 0; color: var(--color-ink); font-size: var(--type-body); font-weight: 500; }
 
 input, select { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--color-border-strong); color: var(--color-ink); border-color: var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-canvas); font-size: 14px; }
 input:disabled, select:disabled { color: var(--color-ink-tertiary); background: var(--color-canvas-muted); }
