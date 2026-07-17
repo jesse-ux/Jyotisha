@@ -75,6 +75,12 @@
       "path": "docs/research/vedastro_fast_path_checklist_latest.md",
       "sha256": "7f5ff0242278eca7eacd15e005c15930d8bae6896c79c68547c3f0fbb9ba4a58",
       "scope": "human-readable VedAstro replay prerequisites"
+    },
+    {
+      "id": "vedastro_live_replay_conflict_2026_07_17",
+      "path": "docs/research/vedastro_live_replay_conflict_2026_07_17.md",
+      "sha256": "758d21d917f2b5e423afacc49e91653385e3329827ddb5ea7acaa43281e5e0c7",
+      "scope": "fresh official VedAstro same-chart replay conflict boundary"
     }
   ]
 }
