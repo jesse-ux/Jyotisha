@@ -81,6 +81,18 @@
       "path": "docs/research/vedastro_live_replay_conflict_2026_07_17.md",
       "sha256": "a41ecd84f60386213b0d7774d2181c1d8a1eea2bf720ee60791d6f6d0f59cd5c",
       "scope": "fresh official VedAstro same-chart replay conflict boundary"
+    },
+    {
+      "id": "vedastro_steve_jobs_contract_probe",
+      "path": "references/oracle/artifacts/vedastro_steve_jobs_contract_probe.json",
+      "sha256": "7eb83059747d1150062f0bba056ed892eb0dafd6a00e8f9f0a7b3fab2dc2cd70",
+      "scope": "redacted VedAstro time and longitude method contract probe"
+    },
+    {
+      "id": "vedastro_steve_jobs_contract_probe_run3",
+      "path": "references/oracle/artifacts/vedastro_steve_jobs_contract_probe_run3.json",
+      "sha256": "fb0e05704df9be5bece7bef3b42fc14e0cc4f254685f039b855b359da453c650",
+      "scope": "third independent redacted VedAstro contract probe"
     }
   ]
 }
