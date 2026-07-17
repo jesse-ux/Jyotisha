@@ -93,6 +93,15 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 - **States:** default, hover, focus with deep-brown ring, disabled, invalid, loading.
 - **Accessibility:** persistent label where practical; composer has an explicit accessible label.
 
+### Birth time intake
+
+- **Structure:** birth date, five radio choice rows for time knowledge, then only the time, uncertainty, period, or clue field required by the selected source.
+- **Surface:** choice rows use the warm canvas and hairline system; the selected row uses `--color-action-soft` with a deep-brown border, never a dark promotional card.
+- **States:** no source selected, source selected, source-specific details incomplete, ready to continue, assessing, rectifying, candidate saved, confirmed.
+- **Copy:** labels describe what the user actually knows. Candidate results explicitly distinguish a reported time, a candidate range, and an active chart time.
+- **Accessibility:** native radio inputs remain focusable, every conditional field has a persistent label, status text uses live regions, and the complete flow is keyboard operable.
+- **Motion:** source-dependent fields enter with the existing 180ms opacity/vertical reveal; reduced-motion removes the translation.
+
 ### Model selector
 
 - **Structure:** a compact text trigger sits below the composer and opens an upward popover aligned to its left edge. The trigger shows only the active model name; each option shows only its model name and radio selection state.

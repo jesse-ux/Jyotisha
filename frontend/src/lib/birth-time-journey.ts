@@ -61,29 +61,32 @@ export type ScanStability =
   | { readonly kind: "unavailable" }
   | { readonly kind: "not_required" };
 
-export type JourneySnapshot = {
-  readonly state: "rectifying" | "candidate" | "ready";
-  readonly assistantIntent:
-    | "confirm_stable_record"
-    | "explain_sensitive_boundary"
-    | "explain_assessment_unavailable"
-    | "start_light_rectification"
-    | "start_standard_rectification"
-    | "start_period_rectification"
-    | "collect_time_clues"
-    | "continue_rectification_questions"
-    | "present_saved_candidate_range";
-  readonly input: "none" | "rectification_questions" | "time_clue";
-  readonly route: "direct_chart" | "rectification";
-  readonly confidence: "high" | null;
-  readonly canApply: boolean;
-  readonly activeTime: string | null;
-  readonly reportedRange: {
-    readonly label: string;
-    readonly startTime: string | null;
-    readonly endTime: string | null;
-  };
-};
+export const journeySnapshotSchema = z.object({
+  state: z.enum(["rectifying", "candidate", "ready"]),
+  assistantIntent: z.enum([
+    "confirm_stable_record",
+    "explain_sensitive_boundary",
+    "explain_assessment_unavailable",
+    "start_light_rectification",
+    "start_standard_rectification",
+    "start_period_rectification",
+    "collect_time_clues",
+    "continue_rectification_questions",
+    "present_saved_candidate_range",
+  ]),
+  input: z.enum(["none", "rectification_questions", "time_clue"]),
+  route: z.enum(["direct_chart", "rectification"]),
+  confidence: z.literal("high").nullable(),
+  canApply: z.boolean(),
+  activeTime: z.string().nullable(),
+  reportedRange: z.object({
+    label: z.string(),
+    startTime: z.string().nullable(),
+    endTime: z.string().nullable(),
+  }).readonly(),
+}).readonly();
+
+export type JourneySnapshot = z.infer<typeof journeySnapshotSchema>;
 
 export type RectificationScoring = {
   readonly answeredCount: number;

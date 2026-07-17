@@ -8,40 +8,16 @@ import type {
   PersistedJourneyAssessment,
   StoredRectificationCase,
 } from "./birth-time-journey-service.ts";
-import type { JourneySnapshot } from "./birth-time-journey.ts";
-
-const assistantIntentSchema = z.enum([
-  "confirm_stable_record",
-  "explain_sensitive_boundary",
-  "explain_assessment_unavailable",
-  "start_light_rectification",
-  "start_standard_rectification",
-  "start_period_rectification",
-  "collect_time_clues",
-  "continue_rectification_questions",
-  "present_saved_candidate_range",
-]);
-
-const snapshotSchema = z.object({
-  state: z.enum(["rectifying", "candidate", "ready"]),
-  assistantIntent: assistantIntentSchema,
-  input: z.enum(["none", "rectification_questions", "time_clue"]),
-  route: z.enum(["direct_chart", "rectification"]),
-  confidence: z.literal("high").nullable(),
-  canApply: z.boolean(),
-  activeTime: z.string().nullable(),
-  reportedRange: z.object({
-    label: z.string(),
-    startTime: z.string().nullable(),
-    endTime: z.string().nullable(),
-  }),
-});
+import {
+  journeySnapshotSchema,
+  type JourneySnapshot,
+} from "./birth-time-journey.ts";
 
 const answerSchema = z.enum(["A", "B", "C", "D"]);
 const storedCaseSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
-  journey_snapshot: snapshotSchema,
+  journey_snapshot: journeySnapshotSchema,
   questionnaire: z.record(z.unknown()),
   answers: z.record(answerSchema),
   scoring_result: z.record(z.unknown()),
@@ -156,11 +132,14 @@ export function createSupabaseBirthTimeJourneyStore(
             raw: parsed.scoring_result,
           }
         : undefined;
+      const questionnaire = Object.keys(parsed.questionnaire).length > 0
+        ? parseRectificationQuestionnaire(parsed.questionnaire)
+        : null;
       return {
         id: parsed.id,
         userId: parsed.user_id,
         snapshot: parsed.journey_snapshot,
-        questionnaire: parseRectificationQuestionnaire(parsed.questionnaire),
+        questionnaire,
         answers: parsed.answers,
         ...(scoring ? { scoring } : {}),
       } satisfies StoredRectificationCase;

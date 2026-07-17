@@ -150,3 +150,67 @@ test("journey service accumulates answers while preserving the application gate"
   assert.equal(result.snapshot.canApply, false);
   assert.deepEqual(memory.savedCase()?.answers, scoredAnswers);
 });
+
+test("journey service resumes an owner-scoped unfinished case", async () => {
+  const questionnaire = scanWithSigns(["Cancer", "Leo"]).questionnaire;
+  const storedCase: StoredRectificationCase = {
+    id: "case-1",
+    userId: "user-1",
+    snapshot: {
+      state: "rectifying",
+      assistantIntent: "continue_rectification_questions",
+      input: "rectification_questions",
+      route: "rectification",
+      confidence: null,
+      canApply: false,
+      activeTime: null,
+      reportedRange: { label: "14:00—15:00", startTime: "14:00", endTime: "15:00" },
+    },
+    questionnaire,
+    answers: { education_environment_shift: "A" },
+  };
+  const service = createBirthTimeJourneyService({
+    store: memoryStore(storedCase).store,
+    engine: {
+      async scan() { throw new Error("not used"); },
+      async score() { throw new Error("not used"); },
+    },
+  });
+
+  const result = await service.resume("user-1", "case-1");
+
+  assert.equal(result.caseId, "case-1");
+  assert.deepEqual(result.answers, { education_environment_shift: "A" });
+  assert.equal(result.snapshot.canApply, false);
+});
+
+test("journey service resumes a fail-closed case without a questionnaire", async () => {
+  const storedCase: StoredRectificationCase = {
+    id: "case-2",
+    userId: "user-1",
+    snapshot: {
+      state: "rectifying",
+      assistantIntent: "explain_assessment_unavailable",
+      input: "rectification_questions",
+      route: "rectification",
+      confidence: null,
+      canApply: false,
+      activeTime: null,
+      reportedRange: { label: "08:14—08:18", startTime: "08:14", endTime: "08:18" },
+    },
+    questionnaire: null,
+    answers: {},
+  };
+  const service = createBirthTimeJourneyService({
+    store: memoryStore(storedCase).store,
+    engine: {
+      async scan() { throw new Error("not used"); },
+      async score() { throw new Error("not used"); },
+    },
+  });
+
+  const result = await service.resume("user-1", "case-2");
+
+  assert.equal(result.questionnaire, null);
+  assert.equal(result.snapshot.canApply, false);
+});

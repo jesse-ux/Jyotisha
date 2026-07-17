@@ -301,6 +301,43 @@ button:disabled { cursor: default; opacity: .45; }
 .onboarding-card { border: 1px solid var(--color-border); max-width: 680px; margin: var(--space-2) 0 var(--space-5); padding: var(--space-6); border-color: var(--color-border); border-radius: var(--radius-lg); background: var(--color-canvas-soft); }
 .onboarding-card-heading b { font-family: var(--font-display); font-size: var(--type-title-md); font-weight: 400; }
 .onboarding-card-heading small { color: var(--color-ink-secondary); line-height: 1.5; font-size: var(--type-caption); }
+.birth-time-intake { display: grid; gap: var(--space-4); }
+.birth-time-source-fieldset { margin: 0; padding: 0; border: 0; }
+.birth-time-source-fieldset legend { margin-bottom: var(--space-2); color: var(--color-ink-secondary); font-size: 11px; font-weight: 600; }
+.birth-time-source-list { display: grid; gap: var(--space-2); }
+.birth-time-source-option { min-height: 64px; display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-canvas); cursor: pointer; transition: border-color 120ms ease-out, background-color 120ms ease-out, transform 120ms ease-out; }
+.birth-time-source-option.is-selected { border-color: var(--color-action); background: var(--color-action-soft); }
+.birth-time-source-option input { width: 16px; height: 16px; margin: 0; accent-color: var(--color-action); }
+.birth-time-source-option > span { display: grid; gap: 3px; }
+.birth-time-source-option b { color: var(--color-ink); font-size: var(--type-body-sm); font-weight: 600; }
+.birth-time-source-option small, .birth-time-detail-note, .birth-time-legacy-note { margin: 0; color: var(--color-ink-secondary); font-size: var(--type-caption); line-height: 1.5; }
+.birth-time-detail-grid { display: grid; grid-template-columns: minmax(0, 180px) minmax(0, 1fr); align-items: end; gap: var(--space-3); }
+.birth-time-detail-grid > label { min-width: 0; }
+.birth-time-detail-note { padding-bottom: 12px; }
+.birth-time-legacy-note { padding: var(--space-3); border-left: 2px solid var(--color-warning); background: var(--color-canvas-muted); }
+.birth-time-rectification { max-width: 680px; display: grid; gap: var(--space-5); }
+.birth-time-assessment-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+.birth-time-assessment-heading > div { display: grid; gap: var(--space-1); }
+.birth-time-assessment-heading span { color: var(--color-action); font-size: var(--type-overline); font-weight: 600; letter-spacing: .08em; }
+.birth-time-assessment-heading h2 { margin: 0; font-family: var(--font-display); font-size: var(--type-title-lg); font-weight: 400; }
+.birth-time-status-badge { min-height: 30px; display: inline-flex; align-items: center; padding: 0 var(--space-3); border: 1px solid color-mix(in srgb, var(--color-warning) 46%, var(--color-border)); border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-warning) 10%, var(--color-canvas)); color: var(--color-ink-secondary) !important; font-size: 11px !important; letter-spacing: .04em !important; }
+.birth-time-range-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-border); }
+.birth-time-range-summary > div { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); background: var(--color-canvas); }
+.birth-time-range-summary dt { color: var(--color-ink-tertiary); font-size: 11px; }
+.birth-time-range-summary dd { margin: 0; color: var(--color-ink); font-size: var(--type-body-sm); font-variant-numeric: tabular-nums; }
+.birth-time-assistant-intent, .birth-time-assessment-unavailable { margin: 0; padding: var(--space-4); border-left: 2px solid var(--color-action); background: var(--color-action-soft); color: var(--color-ink); font-size: var(--type-body-sm); line-height: 1.6; }
+.birth-time-question-list { display: grid; gap: var(--space-4); }
+.birth-time-question-progress { display: flex; justify-content: space-between; color: var(--color-ink-secondary); font-size: var(--type-caption); }
+.birth-time-question { display: grid; gap: var(--space-3); margin: 0; padding: var(--space-4) 0 0; border: 0; border-top: 1px solid var(--color-border); }
+.birth-time-question legend { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--color-ink); font-size: var(--type-body-sm); font-weight: 600; line-height: 1.55; }
+.birth-time-question legend span { width: 24px; height: 24px; display: inline-grid; flex: 0 0 24px; place-items: center; border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); color: var(--color-ink-secondary); font-size: 11px; }
+.birth-time-answer-list { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.birth-time-answer-list button { min-height: 52px; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-canvas); cursor: pointer; text-align: left; font-size: var(--type-caption); line-height: 1.4; transition: border-color 120ms ease-out, background-color 120ms ease-out, transform 120ms ease-out; }
+.birth-time-answer-list button > span { color: var(--color-action); font-family: var(--font-mono); font-weight: 600; }
+.birth-time-answer-list button.is-selected { border-color: var(--color-action); background: var(--color-action-soft); }
+.birth-time-question > small { color: var(--color-ink-secondary); font-size: 11px; }
+.birth-time-retry-card { display: grid; justify-items: start; gap: var(--space-3); }
+.birth-time-retry-card p { margin: 0; color: var(--color-ink-secondary); font-size: var(--type-body-sm); line-height: 1.6; }
 
 .starter-list { border-top: 1px solid var(--color-border); display: grid; grid-template-columns: 1.08fr .92fr; grid-template-rows: 1fr 1fr; gap: var(--space-3); border: 0; }
 .starter-list button { width: 100%; display: grid; align-items: center; border-bottom: 1px solid var(--color-border); cursor: pointer; text-align: left; transition: background-color 120ms ease-out, transform 120ms ease-out; min-height: 92px; grid-template-columns: minmax(0, 1fr) 20px; gap: var(--space-3); padding: var(--space-5); border: 0; border-radius: var(--radius-lg); background: var(--color-canvas-muted); }
@@ -439,6 +476,7 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   .composer-suggestions button:not(:disabled):hover { border-color: var(--color-action); background: var(--color-canvas); color: var(--color-action-hover); }
   .button-secondary:not(:disabled):hover { background: var(--color-canvas-muted); }
   .section-toggle:not(:disabled):hover { color: var(--color-action-hover); }
+  .birth-time-source-option:hover, .birth-time-answer-list button:not(:disabled):hover { border-color: var(--color-action); }
 }
 
 @media (min-width: 768px) and (max-width: 900px) {
@@ -478,6 +516,7 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
 }
 
 @media (max-width: 480px) {
+  .birth-time-detail-grid, .birth-time-range-summary, .birth-time-answer-list { grid-template-columns: 1fr; }
   .welcome > .onboarding-message:first-child .message-bubble p { font-size: var(--type-title-lg); }
   .starter-content span { font-size: var(--type-title-sm); }
   .profile-dialog h2 { font-size: var(--type-display-sm); }

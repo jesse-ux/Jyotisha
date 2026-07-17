@@ -8,11 +8,13 @@ import {
 import {
   createBirthTimeJourneyService,
   RectificationCaseNotFoundError,
+  RectificationQuestionsUnavailableError,
 } from "@/lib/birth-time-journey-service";
 import {
   createSupabaseBirthTimeJourneyStore,
   BirthTimeJourneyStoreError,
 } from "@/lib/birth-time-journey-store";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigurationError } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -21,6 +23,7 @@ export const maxDuration = 60;
 
 const eventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("assess") }).strict(),
+  z.object({ type: z.literal("resume"), caseId: z.string().uuid() }).strict(),
   z.object({
     type: z.literal("answer_question"),
     caseId: z.string().uuid(),
@@ -40,8 +43,10 @@ async function requestPayload(request: Request): Promise<unknown> {
 
 export async function POST(request: Request) {
   let supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  let journeyStoreClient: ReturnType<typeof createAdminSupabaseClient>;
   try {
     supabase = await createServerSupabaseClient();
+    journeyStoreClient = createAdminSupabaseClient();
   } catch (error) {
     if (isSupabaseConfigurationError(error)) {
       return NextResponse.json(
@@ -69,7 +74,7 @@ export async function POST(request: Request) {
   }
 
   const service = createBirthTimeJourneyService({
-    store: createSupabaseBirthTimeJourneyStore(supabase),
+    store: createSupabaseBirthTimeJourneyStore(journeyStoreClient),
     engine: createJyotishBirthTimeJourneyEngine(),
   });
 
@@ -98,6 +103,8 @@ export async function POST(request: Request) {
           parsed.data.questionId,
           parsed.data.answer,
         ));
+      case "resume":
+        return NextResponse.json(await service.resume(user.id, parsed.data.caseId));
       default: {
         const exhaustive: never = parsed.data;
         return exhaustive;
@@ -114,6 +121,12 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "校正记录不存在", message: "请重新开始出生时间评估。" },
         { status: 404 },
+      );
+    }
+    if (error instanceof RectificationQuestionsUnavailableError) {
+      return NextResponse.json(
+        { error: "校正问题暂不可用", message: "当前资料已安全保留，请稍后重新评估。" },
+        { status: 409 },
       );
     }
     if (error instanceof BirthTimeJourneyStoreError || error instanceof BirthTimeJourneyEngineError) {

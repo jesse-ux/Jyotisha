@@ -57,7 +57,7 @@ export type StoredRectificationCase = {
   readonly id: string;
   readonly userId: string;
   readonly snapshot: JourneySnapshot;
-  readonly questionnaire: RectificationQuestionnaire;
+  readonly questionnaire: RectificationQuestionnaire | null;
   readonly answers: Readonly<Record<string, RectificationAnswer>>;
   readonly scoring?: RectificationScoring & { readonly raw: Readonly<Record<string, unknown>> };
 };
@@ -78,6 +78,7 @@ type JourneyResponse = {
   readonly snapshot: JourneySnapshot;
   readonly questionnaire: RectificationQuestionnaire | null;
   readonly scoring: (RectificationScoring & { readonly raw: Readonly<Record<string, unknown>> }) | null;
+  readonly answers: Readonly<Record<string, RectificationAnswer>>;
 };
 
 export class RectificationCaseNotFoundError extends Error {
@@ -90,8 +91,30 @@ export class RectificationCaseNotFoundError extends Error {
   }
 }
 
+export class RectificationQuestionsUnavailableError extends Error {
+  readonly name = "RectificationQuestionsUnavailableError";
+}
+
 function scanInput(assessment: BirthTimeAssessment): JourneyScanInput | null {
-  if (!("reportedTime" in assessment)) return null;
+  if (assessment.source === "unknown") return null;
+  if (assessment.source === "period_only") {
+    const periodScan = {
+      early_morning: { time: "06:00", uncertainty: 120 },
+      morning: { time: "10:00", uncertainty: 120 },
+      afternoon: { time: "15:00", uncertainty: 180 },
+      evening: { time: "20:30", uncertainty: 150 },
+      late_night: { time: "01:30", uncertainty: 150 },
+    } as const;
+    const scan = periodScan[assessment.period];
+    return {
+      birthTime: `${assessment.date} ${scan.time}`,
+      uncertaintyMinutes: scan.uncertainty,
+      lat: assessment.location.lat,
+      lon: assessment.location.lon,
+      tz: assessment.location.tz,
+      ayanamsa: "lahiri",
+    };
+  }
   return {
     birthTime: `${assessment.date} ${assessment.reportedTime}`,
     uncertaintyMinutes: Math.max(
@@ -148,7 +171,19 @@ export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
         candidateScan: scan.questionnaire,
       } satisfies PersistedJourneyAssessment;
       const caseId = await ports.store.saveAssessment(persisted);
-      return { caseId, snapshot, questionnaire: scan.questionnaire, scoring: null };
+      return { caseId, snapshot, questionnaire: scan.questionnaire, scoring: null, answers: {} };
+    },
+
+    async resume(userId: string, caseId: string): Promise<JourneyResponse> {
+      const stored = await ports.store.loadCase(userId, caseId);
+      if (!stored) throw new RectificationCaseNotFoundError(caseId);
+      return {
+        caseId,
+        snapshot: stored.snapshot,
+        questionnaire: stored.questionnaire,
+        scoring: stored.scoring ?? null,
+        answers: stored.answers,
+      };
     },
 
     async answerQuestion(
@@ -159,12 +194,13 @@ export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
     ): Promise<JourneyResponse> {
       const stored = await ports.store.loadCase(userId, caseId);
       if (!stored) throw new RectificationCaseNotFoundError(caseId);
+      if (!stored.questionnaire) throw new RectificationQuestionsUnavailableError();
       const answers = { ...stored.answers, [questionId]: answer };
       const scoring = await ports.engine.score({ questionnaire: stored.questionnaire, answers });
       const snapshot = withRectificationScoring(stored.snapshot, scoring);
       const updated = { ...stored, answers, scoring, snapshot } satisfies StoredRectificationCase;
       await ports.store.saveScoring(updated);
-      return { caseId, snapshot, questionnaire: stored.questionnaire, scoring };
+      return { caseId, snapshot, questionnaire: stored.questionnaire, scoring, answers };
     },
   };
 }

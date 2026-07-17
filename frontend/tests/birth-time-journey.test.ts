@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   assessBirthTime,
   birthTimeAssessmentSchema,
+  journeySnapshotSchema,
   withRectificationScoring,
 } from "../src/lib/birth-time-journey.ts";
 
@@ -25,6 +26,7 @@ test("birth time journey sends a stable hospital record directly to charting", (
   assert.equal(snapshot.canApply, true);
   assert.equal(snapshot.activeTime, "08:16");
   assert.equal(snapshot.assistantIntent, "confirm_stable_record");
+  assert.equal(journeySnapshotSchema.safeParse(snapshot).success, true);
 });
 
 test("birth time journey fails a sensitive hospital record closed into rectification", () => {

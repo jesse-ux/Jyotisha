@@ -9,6 +9,7 @@ MIGRATION = (
     / "migrations"
     / "20260717020000_birth_time_journey.sql"
 )
+FRONTEND = Path(__file__).resolve().parents[1] / "frontend"
 
 
 def _sql() -> str:
@@ -40,6 +41,12 @@ def test_birth_time_profile_contract_separates_reported_and_active_times() -> No
     assert "new.reported_birth_time is distinct from old.reported_birth_time" in sql
     assert "raise exception 'reported_birth_time_is_immutable'" in sql
     assert "new.birth_time := new.active_birth_time" in sql
+    assert "revoke update (birth_time) on table public.profiles from authenticated" in sql
+    client_grant = sql.split("grant update ( reported_birth_time", 1)[1]
+    client_grant = client_grant.split(") on table public.profiles to authenticated", 1)[0]
+    assert "active_birth_time" not in client_grant
+    assert "birth_time_status" not in client_grant
+    assert "rectification_case_id" not in client_grant
 
 
 def test_birth_time_profile_contract_constrains_deterministic_states() -> None:
@@ -92,3 +99,21 @@ def test_rectification_cases_are_owner_scoped_and_auditable() -> None:
     assert "grant insert" in sql
     assert "grant update" in sql
     assert "grant delete" not in sql
+
+
+def test_web_onboarding_uses_the_deterministic_free_journey() -> None:
+    page = (FRONTEND / "src" / "app" / "page.tsx").read_text(encoding="utf-8")
+    route = (
+        FRONTEND / "src" / "app" / "api" / "birth-time-journey" / "route.ts"
+    ).read_text(encoding="utf-8")
+    mastra = (FRONTEND / "src" / "mastra" / "index.ts").read_text(encoding="utf-8")
+
+    assert "<BirthTimeIntakeFields" in page
+    assert "requestBirthTimeAssessment" in page
+    assert "<BirthTimeRectification" in page
+    assert "reported_birth_time" in page
+    assert "active_birth_time" in page
+    assert "birthTimeStatus" in page
+    assert "consultation-billing" not in route
+    assert 'entry_mode: entryMode' in mastra
+    assert 'entry_mode: "direct_chart"' not in mastra

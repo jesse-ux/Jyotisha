@@ -195,17 +195,14 @@ grant update (
   updated_at
 ) on table public.birth_time_rectification_cases to authenticated;
 
+revoke update (birth_time) on table public.profiles from authenticated;
 grant update (
   reported_birth_time,
-  active_birth_time,
   birth_time_source,
   birth_time_period,
   birth_time_clue,
   uncertainty_before_minutes,
-  uncertainty_after_minutes,
-  birth_time_status,
-  rectification_confidence,
-  rectification_case_id
+  uncertainty_after_minutes
 ) on table public.profiles to authenticated;
 
 commit;
