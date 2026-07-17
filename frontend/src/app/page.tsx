@@ -1247,9 +1247,33 @@ export default function Home() {
     window.requestAnimationFrame(() => composerInput.current?.focus());
   }
 
-  function draftSynastryQuestionFromChart(record: ChartLibraryRecord) {
+  async function draftSynastryQuestionFromChart(record: ChartLibraryRecord) {
     if (record.role !== "other") return;
-    chooseSuggestedQuestion(buildSynastryQuestion(profile, record.profile), "marriage");
+    const baseQuestion = buildSynastryQuestion(profile, record.profile);
+    try {
+      const response = await fetch("/api/synastry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selfProfile: profile, partnerProfile: record.profile }),
+      });
+      const payload = await response.json().catch(() => null) as { status?: string; synastry?: { total_score?: number; max_score?: number; assessment?: string } } | null;
+      if (response.ok && payload?.status === "ok") {
+        const score = payload.synastry?.total_score;
+        const max = payload.synastry?.max_score;
+        const assessment = payload.synastry?.assessment;
+        chooseSuggestedQuestion([
+          baseQuestion,
+          "",
+          `已计算基础合盘证据：Ashtakoot ${score ?? "?"}/${max ?? "?"}，初步评级：${assessment || "待解释"}。请基于这个证据包继续分析。`,
+        ].join("\n"), "marriage");
+      } else {
+        chooseSuggestedQuestion(baseQuestion, "marriage");
+        setComposerNotice(payload?.status === "blocked" ? "合盘计算暂时不可用，已先生成问题草稿。" : "已生成合盘问题草稿。");
+      }
+    } catch {
+      chooseSuggestedQuestion(baseQuestion, "marriage");
+      setComposerNotice("合盘计算暂时不可用，已先生成问题草稿。");
+    }
     setProfileOpen(false);
   }
 
@@ -1950,7 +1974,7 @@ export default function Home() {
                         <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
                       </div>
                       <div className="chart-library-actions">
-                        <button className="button-secondary" type="button" onClick={() => draftSynastryQuestionFromChart(record)}>用于合盘</button>
+                        <button className="button-secondary" type="button" onClick={() => void draftSynastryQuestionFromChart(record)}>用于合盘</button>
                         <button className="button-secondary" type="button" onClick={() => void makeDefaultChart(record)} disabled={profileSaving}>设为默认</button>
                         <button className="button-secondary danger-button" type="button" onClick={() => deleteOtherChart(record.id)}>删除</button>
                       </div>

@@ -33,6 +33,7 @@ CHART_PROFILE_MIGRATION = (
 PAGE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "page.tsx"
 CHART_PROFILE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "route.ts"
 CHART_PROFILE_DELETE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "[id]" / "route.ts"
+SYNASTRY_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "synastry" / "route.ts"
 
 
 def _sql() -> str:
@@ -142,6 +143,8 @@ def test_chart_profile_library_has_cloud_table_api_and_local_fallback() -> None:
         "deleteCloudChartProfile",
         "buildSynastryQuestion",
         "draftSynastryQuestionFromChart",
+        'fetch("/api/synastry"',
+        "Ashtakoot",
         "chartLibraryStorageKey",
         "Cloud chart library is best-effort",
         "星盘库",
@@ -152,6 +155,20 @@ def test_chart_profile_library_has_cloud_table_api_and_local_fallback() -> None:
         assert token in page
     assert "ayanam-profile" not in page
     assert "ayanam-sessions" not in page
+
+
+def test_synastry_route_orchestrates_python_chart_and_ashtakoot() -> None:
+    route = SYNASTRY_ROUTE.read_text(encoding="utf-8")
+    for token in (
+        'const apiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200"',
+        'postPython("/api/chart", birthPayload(body.selfProfile))',
+        'postPython("/api/chart", birthPayload(body.partnerProfile))',
+        'postPython("/api/synastry"',
+        "moonLongitude(selfChart)",
+        "ashtakoot_from_computed_moon",
+        'status: "blocked"',
+    ):
+        assert token in route
 
 
 def test_consultation_credit_lifecycle_is_idempotent_and_server_only() -> None:
