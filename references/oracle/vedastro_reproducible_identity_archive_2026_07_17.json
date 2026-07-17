@@ -1,0 +1,67 @@
+{
+  "boundary": "This archive fixes a NuGet self-host candidate identity only; it does not prove the hosted API is running this package or the same method semantics.",
+  "catalog_commit_id": "c707690b-f7bd-4813-a2cb-876e943e9667",
+  "catalog_commit_timestamp": "2023-03-22T22:24:11.811524Z",
+  "dependencies": [
+    {
+      "id": "ByteSize",
+      "range": "[2.1.1, )",
+      "target_framework": "net7.0"
+    },
+    {
+      "id": "Google.Apis",
+      "range": "[1.51.0, )",
+      "target_framework": "net7.0"
+    },
+    {
+      "id": "Google.Apis.Auth",
+      "range": "[1.51.0, )",
+      "target_framework": "net7.0"
+    },
+    {
+      "id": "Google.Apis.Calendar.v3",
+      "range": "[1.51.0.2237, )",
+      "target_framework": "net7.0"
+    },
+    {
+      "id": "Google.Apis.Core",
+      "range": "[1.51.0, )",
+      "target_framework": "net7.0"
+    },
+    {
+      "id": "Microsoft.AspNetCore.Components.WebAssembly",
+      "range": "[6.0.11, )",
+      "target_framework": "net7.0"
+    },
+    {
+      "id": "Microsoft.Extensions.Caching.Memory",
+      "range": "[6.0.1, )",
+      "target_framework": "net7.0"
+    },
+    {
+      "id": "Microsoft.JSInterop",
+      "range": "[6.0.11, )",
+      "target_framework": "net7.0"
+    },
+    {
+      "id": "SwissEphNet",
+      "range": "[2.8.0.2, )",
+      "target_framework": "net7.0"
+    }
+  ],
+  "hosted_api_blocker": "api.vedastro.org does not expose a verified build commit, package hash, DLL hash, assembly version, container digest, or method-semantics contract.",
+  "hosted_api_status": "blocked",
+  "license": "MIT",
+  "nuget_catalog_url": "https://api.nuget.org/v3/catalog0/data/2023.03.22.22.24.11/vedastro.library.1.2.0.json",
+  "nuget_registration_url": "https://api.nuget.org/v3/registration5-semver1/vedastro.library/1.2.0.json",
+  "package": "VedAstro.Library",
+  "package_content_url": "https://api.nuget.org/v3-flatcontainer/vedastro.library/1.2.0/vedastro.library.1.2.0.nupkg",
+  "package_hash": "36gq1hggII7Ho27TSL2B85P0BQD1zsAE1xHoJgUrM9V5rnUJGXUZibDlutkXR9gJ+aMr8UCQa2771MfD6BAscA==",
+  "package_hash_algorithm": "SHA512",
+  "package_size": 230836,
+  "project_url": "https://vedastro.org/",
+  "published": "2023-03-22T22:22:01.81Z",
+  "scope": "vedastro_reproducible_identity_archive",
+  "self_host_candidate_status": "reproducible_package_identity_archived",
+  "version": "1.2.0"
+}

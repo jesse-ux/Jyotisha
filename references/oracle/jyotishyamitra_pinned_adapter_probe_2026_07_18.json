@@ -1,0 +1,61 @@
+{
+  "boundary": "Adapter calls the installed MIT package as an oracle; it does not copy implementation or promote conclusions.",
+  "canonical_request": {},
+  "comparison": {},
+  "isolated_subprocess": {
+    "returncode": null,
+    "stderr": null,
+    "temporary_install_path": null,
+    "used": false
+  },
+  "license": "MIT",
+  "normalization": {
+    "purpose": "remove run timestamp before replay comparison",
+    "volatile_paths": [
+      "$.Dashas.Vimshottari.current.date"
+    ]
+  },
+  "normalized_raw_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "oracle": "jyotishyamitra",
+  "package_metadata": {
+    "license": null,
+    "license_file_name": "jyotishyamitra-1.4.0.dist-info/licenses/LICENSE",
+    "license_file_sha256": "e0d415c60630a798080e2971315a085320c9759cdd8c564a39646c3be9c7bbb0",
+    "license_file_spdx_inferred": "MIT",
+    "metadata_name": "jyotishyamitra-1.4.0.dist-info/METADATA",
+    "metadata_sha256": "96fe0c3096a9e3eefbd3450efcce3619a09211a47733c3c49032029445fd0952",
+    "name": "jyotishyamitra",
+    "requires_python": ">=3.7",
+    "summary": "This package takes the birth data as input and computes indian vedic astrological data in a json file or python dictionary format",
+    "version": "1.4.0",
+    "wheel_name": "jyotishyamitra-1.4.0.dist-info/WHEEL",
+    "wheel_record_sha256": "ff309ddcdd65ebd02bc724dbf2bcc4a0ff53a5b61792a44548d383e4ebb19d3b",
+    "wheel_tags": [
+      "py3-none-any"
+    ]
+  },
+  "package_url": "https://pypi.org/project/jyotishyamitra/1.4.0/",
+  "promotion_allowed": false,
+  "python_runtime": {
+    "executable": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+    "version": "3.11.9",
+    "wheel_tags": [
+      "py3-none-any"
+    ]
+  },
+  "raw": {},
+  "raw_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "schema_fingerprint": {
+    "path_count": 0,
+    "sample_paths": [],
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "scope": "jyotishyamitra_pinned_adapter_probe",
+  "source_commit": "86f7eb610a66b06b3f0817d2c53355bec8b3bf8d",
+  "source_url": "https://github.com/VicharaVandana/jyotishyamitra/commit/86f7eb610a66b06b3f0817d2c53355bec8b3bf8d",
+  "status": "metadata_only_or_input_blocked",
+  "truth_policy": "independent_observation_not_truth",
+  "version": "1.4.0",
+  "wheel_path": "/tmp/jyotishyamitra_probe/jyotishyamitra-1.4.0-py3-none-any.whl",
+  "wheel_sha256": "4f1a16facfa86ef01cb44de505c6de2e66b2f8d2c8b5e125c090e3f8485c6a9d"
+}
