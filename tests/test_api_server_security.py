@@ -2033,6 +2033,10 @@ def test_panchanga_range_rejects_large_ranges() -> None:
 
 def test_rectification_gate_returns_varga_risk_summary() -> None:
     handler = _handler()
+    handler._compute_vedastro_gateway_run = lambda body: {  # type: ignore[method-assign]
+        'status': 'official_verified',
+        'official_raw_response': {'request_id': 'rectification-live-call'},
+    }
     result = handler._compute_rectification_gate({
         'planets': _sample_planets(),
         'ascendant': {'lon': 92.0},
@@ -2042,6 +2046,7 @@ def test_rectification_gate_returns_varga_risk_summary() -> None:
 
     assert result['success'] is True
     assert result['endpoint'] == 'rectification_gate'
+    assert result['vedastro_gateway']['official_raw_response']['request_id'] == 'rectification-live-call'
     assert result['effective_accuracy'] == '15min'
     assert 'headline' in result['summary']
     assert result['summary']['recommended_events']
@@ -2261,6 +2266,11 @@ def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -
         'endpoint': 'rectification_gate',
         'summary': {'recommended_events': ['career_change']},
     })
+    monkeypatch.setattr(handler, '_compute_vedastro_gateway_run', lambda body: {
+        'scope': 'vedastro_gateway_run',
+        'status': 'official_verified',
+        'official_raw_response': {'request_id': 'test-live-call'},
+    })
     monkeypatch.setattr(handler, '_compute_thematic_report', lambda body: {
         'success': True,
         'endpoint': 'thematic_report',
@@ -2324,6 +2334,8 @@ def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -
         'official_blocked',
         'local_fallback',
     }
+    assert result['vedastro_gateway']['status'] == 'official_verified'
+    assert result['vedastro_gateway']['official_raw_response']['request_id'] == 'test-live-call'
     assert result['runtime_evidence_log']['quality_gate']['technique_audit_table_required'] is True
     assert result['runtime_evidence_log']['quality_gate']['technique_audit_table'][0]['technique'] == 'VedAstro Cloud State'
     assert result['machine_evidence_packet']['status'] == 'partial'

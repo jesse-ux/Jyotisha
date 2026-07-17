@@ -88,6 +88,7 @@ export function toAgentConsultationContext(data: JsonRecord) {
       lagna_boundary: rectification.lagna_boundary,
     },
     thematic_evidence: selectedTheme,
+    vedastro_gateway: record(data.vedastro_gateway),
     reference_transparency: record(data.reference_transparency),
   };
 }
