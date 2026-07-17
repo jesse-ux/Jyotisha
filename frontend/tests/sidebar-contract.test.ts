@@ -4,6 +4,15 @@ import test from "node:test";
 
 const projectFile = (path: string) => new URL(`../${path}`, import.meta.url);
 const readProjectFile = (path: string) => readFileSync(projectFile(path), "utf8");
+const globalStyles = readProjectFile("src/app/globals.css");
+
+function cssBlock(selector: string) {
+  const start = globalStyles.indexOf(`${selector} {`);
+  assert.notEqual(start, -1, `missing CSS selector: ${selector}`);
+  const end = globalStyles.indexOf("}", start);
+  assert.notEqual(end, -1, `unterminated CSS selector: ${selector}`);
+  return globalStyles.slice(start, end);
+}
 
 test("provides the generic composable sidebar primitive", () => {
   assert.equal(existsSync(projectFile("src/components/ui/sidebar.tsx")), true);
@@ -174,4 +183,80 @@ test("keeps the page session selection callback free of request locks", () => {
   assert.match(selectSession[1], /setDraft\(""\)/);
   assert.match(selectSession[1], /setComposerNotice\(""\)/);
   assert.doesNotMatch(selectSession[1], /pendingSessionId|isLoading|cancellationPending|creatingSession/);
+});
+
+test("maps the sidebar semantic aliases and responsive dimensions", () => {
+  for (const declaration of [
+    "--sidebar-background: var(--color-sidebar);",
+    "--sidebar-solid: var(--color-sidebar-solid);",
+    "--sidebar-foreground: var(--color-ink);",
+    "--sidebar-muted-foreground: var(--color-ink-secondary);",
+    "--sidebar-accent: var(--color-selected);",
+    "--sidebar-accent-foreground: var(--color-ink);",
+    "--sidebar-border: var(--color-border);",
+    "--sidebar-ring: var(--color-focus);",
+    "--sidebar-primary: var(--color-surface-dark);",
+    "--sidebar-primary-foreground: var(--color-on-dark);",
+    "--sidebar-width-desktop: 288px;",
+    "--sidebar-width-tablet: 240px;",
+    "--sidebar-width-icon: 64px;",
+    "--sidebar-width-mobile: min(86vw, 320px);",
+  ]) {
+    assert.equal(globalStyles.includes(declaration), true, `missing ${declaration}`);
+  }
+});
+
+test("selects desktop and tablet shell widths from provider data", () => {
+  assert.match(globalStyles, /\.group\\\/sidebar-provider\[data-viewport\][^{]*\{[^}]*height:\s*100dvh/);
+  assert.match(globalStyles, /\[data-viewport="desktop"\]\[data-state="expanded"\]\s+\.chat-app\s*\{[^}]*grid-template-columns:\s*var\(--sidebar-width-desktop\)\s+minmax\(0,\s*1fr\)/);
+  assert.match(globalStyles, /\[data-viewport="tablet"\]\[data-state="expanded"\]\s+\.chat-app\s*\{[^}]*grid-template-columns:\s*var\(--sidebar-width-tablet\)\s+minmax\(0,\s*1fr\)/);
+  assert.match(globalStyles, /\[data-state="collapsed"\]\s+\.chat-app\s*\{[^}]*grid-template-columns:\s*var\(--sidebar-width-icon\)\s+minmax\(0,\s*1fr\)/);
+  assert.doesNotMatch(globalStyles, /transition:[^;}]*(?:width|grid-template-columns)/);
+});
+
+test("makes SidebarContent the only sidebar scroll owner", () => {
+  assert.match(cssBlock('[data-sidebar="header"]'), /flex:\s*0\s+0\s+auto/);
+  assert.match(cssBlock('[data-sidebar="content"]'), /min-height:\s*0/);
+  assert.match(cssBlock('[data-sidebar="content"]'), /overflow-y:\s*auto/);
+  assert.match(cssBlock('[data-sidebar="footer"]'), /flex:\s*0\s+0\s+auto/);
+  assert.doesNotMatch(cssBlock(".session-list"), /overflow(?:-y)?:\s*auto/);
+  assert.match(cssBlock(".session-list button > span"), /text-overflow:\s*ellipsis/);
+  assert.match(globalStyles, /\[data-active="true"\][^{]*\{[^}]*background:\s*var\(--sidebar-accent\)/);
+});
+
+test("styles the non-mobile collapsed rail without repeated session rows", () => {
+  assert.match(globalStyles, /@media\s*\(min-width:\s*768px\)[\s\S]*\[data-state="collapsed"\][^{]*\.brand-row/);
+  assert.match(globalStyles, /\[data-state="collapsed"\][^{]*\[data-sidebar="menu-button"\][^{]*\{[^}]*width:\s*44px/);
+  assert.match(globalStyles, /\[data-state="collapsed"\][^{]*\.profile-trigger[^{]*\{[^}]*width:\s*44px/);
+  assert.match(globalStyles, /\[data-sidebar="rail"\][^{]*\{[^}]*position:\s*absolute[^}]*width:\s*var\(--space-2\)/);
+  assert.match(globalStyles, /\[data-sidebar="rail"\]:focus-visible[^{]*\{[^}]*outline/);
+});
+
+test("uses provider attributes for the mobile drawer and scrim", () => {
+  assert.match(globalStyles, /@media\s*\(max-width:\s*767px\)[\s\S]*\.chat-app\s*\{[^}]*grid-template-columns:\s*1fr/);
+  assert.match(globalStyles, /\[data-sidebar="sidebar"\][^{]*\{[^}]*position:\s*fixed[^}]*width:\s*var\(--sidebar-width-mobile\)/);
+  assert.match(globalStyles, /\[data-sidebar="sidebar"\]\[data-mobile-open="false"\][^{]*\{[^}]*transform:\s*translateX\(-100%\)/);
+  assert.match(globalStyles, /\[data-sidebar="sidebar"\]\[data-mobile-open="true"\][^{]*\{[^}]*visibility:\s*visible[^}]*transform:\s*translateX\(0\)/);
+  assert.match(globalStyles, /\.sidebar-scrim\s*\{[^}]*position:\s*fixed[^}]*background:\s*var\(--color-scrim\)/);
+  assert.match(globalStyles, /\[data-sidebar="rail"\]\s*\{[^}]*display:\s*none/);
+});
+
+test("styles the portaled account popup and collapsed tooltips", () => {
+  assert.match(globalStyles, /:has\(>\s*\.account-menu-popup\)[^{]*\{[^}]*z-index:\s*30/);
+  assert.match(globalStyles, /\.account-menu-popup\s*\{[^}]*width:\s*min\(280px,\s*calc\(100vw\s*-\s*var\(--space-6\)\)\)[^}]*transform-origin:\s*var\(--transform-origin\)/);
+  assert.match(globalStyles, /\.account-menu-popup\[data-starting-style\][^{]*\.account-menu-popup\[data-ending-style\][^{]*\{[^}]*opacity:\s*0[^}]*translateY\(var\(--space-1\)\)/);
+  assert.match(globalStyles, /\[role="tooltip"\]\s*\{[^}]*pointer-events:\s*none[^}]*font-size:\s*var\(--type-caption\)/);
+  assert.match(globalStyles, /\[role="tooltip"\]\[data-starting-style\][^{]*\{[^}]*opacity:\s*0[^}]*translateX\(-?var\(--space-1\)\)/);
+});
+
+test("extends sidebar accessibility preference styles", () => {
+  assert.match(globalStyles, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*\.account-menu-popup\[data-starting-style\][^{]*\{[^}]*transform:\s*none/);
+  assert.match(globalStyles, /@media\s*\(prefers-reduced-transparency:\s*reduce\)[\s\S]*\.sidebar\s*\{[^}]*background:\s*var\(--sidebar-solid\)[^}]*backdrop-filter:\s*none/);
+  assert.match(globalStyles, /@media\s*\(prefers-contrast:\s*more\)[\s\S]*\[data-active="true"\]::before\s*\{[^}]*width:\s*var\(--space-1\)/);
+});
+
+test("removes class-owned drawer state and obsolete sidebar anchoring", () => {
+  assert.doesNotMatch(globalStyles, /\.(?:sidebar-backdrop|sidebar-close|mobile-menu|sidebar-open)\b/);
+  assert.doesNotMatch(globalStyles, /\.account-menu\s*\{/);
+  assert.doesNotMatch(globalStyles, /\.session-list\s*\{[^}]*overflow(?:-y)?:\s*auto/);
 });
