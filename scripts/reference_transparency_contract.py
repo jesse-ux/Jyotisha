@@ -18,10 +18,12 @@ try:
     from scripts.domain_calculation_service import compute_chart, compute_vimshottari_timeline
     from scripts.timing_precision_contract import build_timing_precision_contract
     from scripts.varga import SIGN_LORDS, calc_varga
+    from scripts.dasha_analyzer import build_antardasha
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
     from domain_calculation_service import compute_chart, compute_vimshottari_timeline
     from timing_precision_contract import build_timing_precision_contract
     from varga import SIGN_LORDS, calc_varga
+    from dasha_analyzer import build_antardasha
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +45,7 @@ FEATURE_WEIGHTS = {
     "d10_ascendant": 0.10,
     "d10_sun": 0.10,
     "vimshottari_mahadasha": 0.15,
+    "vimshottari_antardasha": 0.10,
 }
 HIGH_SIMILARITY_THRESHOLD = 0.75
 
@@ -102,7 +105,7 @@ def _birth_datetime(chart: dict[str, Any]) -> datetime | None:
         return None
 
 
-def _vimshottari_mahadasha(chart: dict[str, Any], reference_date: str | None) -> str | None:
+def _vimshottari_state(chart: dict[str, Any], reference_date: str | None) -> dict[str, str] | None:
     if not isinstance(reference_date, str):
         return None
     try:
@@ -118,7 +121,12 @@ def _vimshottari_mahadasha(chart: dict[str, Any], reference_date: str | None) ->
             start = datetime.fromisoformat(period["start"])
             end = datetime.fromisoformat(period["end"])
             if start <= target <= end:
-                return period["lord"]
+                antardashas = build_antardasha({"lord": period["lord"], "start": start, "end": end})
+                antardasha = next(
+                    (item["lord"] for item in antardashas if item["start"] <= target <= item["end"]),
+                    None,
+                )
+                return {"mahadasha": period["lord"], "antardasha": antardasha}
     except (KeyError, TypeError, ValueError):
         return None
     return None
@@ -181,15 +189,22 @@ def _similarity(
 ) -> dict[str, Any]:
     user = _features(user_chart, domain)
     candidate = _features(case_chart, domain)
-    user_md = _vimshottari_mahadasha(user_chart, reference_date)
-    case_md = _vimshottari_mahadasha(case_chart, case_event_date)
-    if user_md is not None and case_md is not None:
-        user["vimshottari_mahadasha"] = user_md
-        candidate["vimshottari_mahadasha"] = case_md
+    user_dasha = _vimshottari_state(user_chart, reference_date)
+    case_dasha = _vimshottari_state(case_chart, case_event_date)
+    if user_dasha is not None and case_dasha is not None:
+        user["vimshottari_mahadasha"] = user_dasha["mahadasha"]
+        candidate["vimshottari_mahadasha"] = case_dasha["mahadasha"]
+        if user_dasha.get("antardasha") is not None and case_dasha.get("antardasha") is not None:
+            user["vimshottari_antardasha"] = user_dasha["antardasha"]
+            candidate["vimshottari_antardasha"] = case_dasha["antardasha"]
+        md_matches = user_dasha["mahadasha"] == case_dasha["mahadasha"]
+        ad_matches = user_dasha.get("antardasha") == case_dasha.get("antardasha")
         timing_state = {
-            "status": "matched" if user_md == case_md else "different",
-            "user_vimshottari_mahadasha": user_md,
-            "case_event_vimshottari_mahadasha": case_md,
+            "status": "matched" if md_matches and ad_matches else "partial_match" if md_matches else "different",
+            "user_vimshottari_mahadasha": user_dasha["mahadasha"],
+            "case_event_vimshottari_mahadasha": case_dasha["mahadasha"],
+            "user_vimshottari_antardasha": user_dasha.get("antardasha"),
+            "case_event_vimshottari_antardasha": case_dasha.get("antardasha"),
             "reference_date": reference_date,
             "case_event_date": case_event_date,
         }
@@ -212,9 +227,10 @@ def _similarity(
         compared_vargas.append("D9")
     if domain == "career" and all(user.get(name) is not None and candidate.get(name) is not None for name in ("d10_ascendant", "d10_sun")):
         compared_vargas.append("D10")
-    uncompared = ["vimshottari_antardasha", "narayana_dasha", "transit_event_state"]
+    uncompared = ["narayana_dasha", "transit_event_state"]
     if timing_state["status"] == "not_compared":
         uncompared.insert(0, "vimshottari_mahadasha")
+        uncompared.insert(1, "vimshottari_antardasha")
     if domain == "marriage" and "D9" not in compared_vargas:
         uncompared.insert(0, "D9")
     if domain == "career" and "D10" not in compared_vargas:
@@ -223,7 +239,7 @@ def _similarity(
         "score": score,
         "matching_factors": matching,
         "dissimilar_factors": dissimilar,
-        "feature_scope": "D1 ascendant, Moon, theme-house lord, Rahu/Ketu axis" + (f", {'/'.join(compared_vargas)}" if compared_vargas else "") + (", Vimshottari MD" if timing_state["status"] != "not_compared" else ""),
+        "feature_scope": "D1 ascendant, Moon, theme-house lord, Rahu/Ketu axis" + (f", {'/'.join(compared_vargas)}" if compared_vargas else "") + (", Vimshottari MD/AD" if timing_state["status"] != "not_compared" else ""),
         "uncompared_layers": uncompared,
         "timing_state": timing_state,
     }
