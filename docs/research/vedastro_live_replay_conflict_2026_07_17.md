@@ -16,6 +16,8 @@ claims, production tuning, or a three-engine closure claim.
 - Fresh local raw artifact: `scratch/local/vedastro_adapter/official_full_snapshot-1ff276e8fdee-ab172556e932.json`
 - Fresh official raw response SHA-256: `ab172556e9327f55ce5a14d2a2da91c7736690c5181ba59627d0acbf0d1b0ef8`
 - Runner output: `scratch/local/three_engine_parity_vedastro_live/three_engine_parity_replay.json`
+- Independent repeat raw response SHA-256: `64c784ddfce22b83f2ba4a666983c1ca3a01f54c6f4d49dd1070167dbf850d54`
+- Repeat runner output: `scratch/local/three_engine_parity_vedastro_retry/three_engine_parity_replay.json`
 
 ## Fresh Result
 
@@ -29,14 +31,18 @@ claims, production tuning, or a three-engine closure claim.
 Mismatched fields: `Sun.longitude`, `Moon.longitude`, `Mars.longitude`,
 `Mercury.longitude`, `Venus.longitude`.
 
+The independent repeat used the same visible request body and produced the same
+five normalized mismatch values. The raw response hash differs, but the
+normalized external discrepancy is stable for this endpoint replay.
+
 ## Conflict Arbitration
 
 The prior commercial manifest referenced a research-local scratch artifact with
-the same visible birth-time request but a different official response hash. The
-fresh official response is authoritative for this run; its mismatch must remain
-visible until the VedAstro endpoint/version/method contract explains the drift.
-Do not replace the old packet with a pass result or tune local calculations to
-match either response.
+the same visible birth-time request but a different official response hash. Two
+fresh official responses converge on the same five normalized discrepancies.
+The mismatch must remain visible until the VedAstro endpoint/version/method
+contract explains the drift. Do not replace the old packet with a pass result
+or tune local calculations to match either response.
 
 ## Required Next Evidence
 
