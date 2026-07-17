@@ -42,6 +42,32 @@ function moonLongitude(chart: Record<string, unknown>) {
   return numeric;
 }
 
+function moonSummary(chart: Record<string, unknown>) {
+  const planets = chart.planets && typeof chart.planets === "object" ? chart.planets as Record<string, unknown> : {};
+  const moon = planets.Moon && typeof planets.Moon === "object" ? planets.Moon as Record<string, unknown> : {};
+  return {
+    sign: moon.sign,
+    nakshatra: moon.nakshatra,
+    pada: moon.nakshatra_pada,
+    lord: moon.nakshatra_lord,
+    longitude: moonLongitude(chart),
+  };
+}
+
+function d9Summary(varga: Record<string, unknown>) {
+  const result = varga.result && typeof varga.result === "object" ? varga.result as Record<string, unknown> : {};
+  const d9 = result.D9_Navamsa && typeof result.D9_Navamsa === "object" ? result.D9_Navamsa as Record<string, unknown> : {};
+  const ascendant = d9.ascendant && typeof d9.ascendant === "object" ? d9.ascendant as Record<string, unknown> : {};
+  const planets = d9.planets && typeof d9.planets === "object" ? d9.planets as Record<string, unknown> : {};
+  return {
+    ascendant,
+    moon: planets.Moon,
+    venus: planets.Venus,
+    mars: planets.Mars,
+    source: varga.source,
+  };
+}
+
 async function postPython(path: string, body: unknown) {
   const response = await fetch(`${apiBase}${path}`, {
     method: "POST",
@@ -64,15 +90,28 @@ export async function POST(request: Request) {
     }
     const selfChart = await postPython("/api/chart", birthPayload(body.selfProfile));
     const partnerChart = await postPython("/api/chart", birthPayload(body.partnerProfile));
+    const selfD9 = await postPython("/api/varga_full", {
+      ...birthPayload(body.selfProfile),
+      planets: selfChart.planets,
+      ascendant: selfChart.ascendant,
+      divisions: ["D9"],
+    });
+    const partnerD9 = await postPython("/api/varga_full", {
+      ...birthPayload(body.partnerProfile),
+      planets: partnerChart.planets,
+      ascendant: partnerChart.ascendant,
+      divisions: ["D9"],
+    });
     const synastry = await postPython("/api/synastry", {
       male_moon: moonLongitude(selfChart),
       female_moon: moonLongitude(partnerChart),
     });
     return NextResponse.json({
       status: "ok",
-      method: "ashtakoot_from_computed_moon",
-      selfChart: { moon: moonLongitude(selfChart) },
-      partnerChart: { moon: moonLongitude(partnerChart) },
+      method: "ashtakoot_plus_moon_nakshatra_d9",
+      evidenceLayers: ["ashtakoot", "moon_nakshatra", "d9_navamsa"],
+      selfChart: { moon: moonSummary(selfChart), d9: d9Summary(selfD9) },
+      partnerChart: { moon: moonSummary(partnerChart), d9: d9Summary(partnerD9) },
       synastry,
     });
   } catch (error) {

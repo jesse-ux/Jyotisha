@@ -163,9 +163,13 @@ def test_synastry_route_orchestrates_python_chart_and_ashtakoot() -> None:
         'const apiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200"',
         'postPython("/api/chart", birthPayload(body.selfProfile))',
         'postPython("/api/chart", birthPayload(body.partnerProfile))',
+        'postPython("/api/varga_full"',
         'postPython("/api/synastry"',
         "moonLongitude(selfChart)",
-        "ashtakoot_from_computed_moon",
+        "moonSummary(selfChart)",
+        "d9Summary(selfD9)",
+        "ashtakoot_plus_moon_nakshatra_d9",
+        'evidenceLayers: ["ashtakoot", "moon_nakshatra", "d9_navamsa"]',
         'status: "blocked"',
     ):
         assert token in route

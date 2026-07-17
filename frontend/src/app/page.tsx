@@ -1256,15 +1256,16 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ selfProfile: profile, partnerProfile: record.profile }),
       });
-      const payload = await response.json().catch(() => null) as { status?: string; synastry?: { total_score?: number; max_score?: number; assessment?: string } } | null;
+      const payload = await response.json().catch(() => null) as { status?: string; evidenceLayers?: string[]; synastry?: { total_score?: number; max_score?: number; assessment?: string } } | null;
       if (response.ok && payload?.status === "ok") {
         const score = payload.synastry?.total_score;
         const max = payload.synastry?.max_score;
         const assessment = payload.synastry?.assessment;
+        const layers = (payload.evidenceLayers || []).join(" / ") || "Ashtakoot / Moon / D9";
         chooseSuggestedQuestion([
           baseQuestion,
           "",
-          `已计算基础合盘证据：Ashtakoot ${score ?? "?"}/${max ?? "?"}，初步评级：${assessment || "待解释"}。请基于这个证据包继续分析。`,
+          `已计算基础合盘证据：${layers}；Ashtakoot ${score ?? "?"}/${max ?? "?"}，初步评级：${assessment || "待解释"}。请基于这个证据包继续分析。`,
         ].join("\n"), "marriage");
       } else {
         chooseSuggestedQuestion(baseQuestion, "marriage");
