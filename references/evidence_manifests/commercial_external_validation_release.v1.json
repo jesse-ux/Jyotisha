@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "artifact_id": "commercial_external_validation_release",
+  "release_scope": "public_research_evidence_snapshot",
+  "generated_at": "2026-07-17T00:00:00Z",
+  "engines": {
+    "PyJHora": {
+      "status": "available",
+      "boundary": "Public parity reports are integrity-verified here; each scoped comparison retains its own replay boundary."
+    },
+    "jyotishganit": {
+      "status": "available",
+      "boundary": "Local engine availability is not a claim of external outcome accuracy."
+    },
+    "VedAstro": {
+      "status": "blocked",
+      "boundary": "Official external replay closure remains unavailable in this public release; no production tuning is authorized."
+    },
+    "JHora": {
+      "status": "blocked",
+      "official_raw_status": "not_collected",
+      "boundary": "No redistributable JHora desktop raw evidence packet is versioned in this public release."
+    }
+  },
+  "release_boundaries": {
+    "external_oracle_closure": false,
+    "prediction_accuracy_verified": false,
+    "production_tuning_allowed": false
+  },
+  "assets": [
+    {
+      "id": "oracle_closure_master_dashboard",
+      "path": "docs/research/oracle_closure_master_dashboard_latest.md",
+      "sha256": "2c020f0f499abc48a037cd33cc8d2ff2ec3170527793dba9d42792782d7d3868",
+      "scope": "target-set oracle closure boundary"
+    },
+    {
+      "id": "public_benchmark_dashboard",
+      "path": "docs/research/public_benchmark_dashboard_latest.md",
+      "sha256": "5733b610d763836f3e44d4f7baad7915224322b725014656123db4ebf0c1c3db",
+      "scope": "public benchmark coverage summary"
+    },
+    {
+      "id": "pyjhora_same_chart_parity",
+      "path": "docs/research/pyjhora_same_chart_parity_2026_07_12.md",
+      "sha256": "c786c5c1fde22d58e029340f0e332a4665587a1000be074a0f625735d3907b84",
+      "scope": "same-chart PyJHora parity"
+    },
+    {
+      "id": "pyjhora_varga_ashtakavarga_shadbala_parity",
+      "path": "docs/research/pyjhora_d2_d4_ashtakavarga_shadbala_parity_2026_07_15.md",
+      "sha256": "ffdfa08ecb244e7ca751152ca2b18b6952f337e378099c68416b9e9e44a64890",
+      "scope": "D2/D4, Ashtakavarga, and Shadbala PyJHora parity"
+    },
+    {
+      "id": "vedastro_parity_matrix",
+      "path": "docs/research/vedastro_parity_matrix_latest.json",
+      "sha256": "7be19440e491b62500964fa17c22adb5fc15b0c53af02e14dcbf4940b60ac328",
+      "scope": "VedAstro closure status matrix"
+    },
+    {
+      "id": "vedastro_fast_path_checklist",
+      "path": "docs/research/vedastro_fast_path_checklist_latest.json",
+      "sha256": "fca4af90a32e990fe8c94804d776b55e57c87a2e26801c34f2528faa1abd10b3",
+      "scope": "VedAstro official replay prerequisites"
+    },
+    {
+      "id": "vedastro_parity_matrix_rendered",
+      "path": "docs/research/vedastro_parity_matrix_latest.md",
+      "sha256": "a0546572c4f9809167839d675672c5d343101c748d6b9a04fc1c55593fdeadbc",
+      "scope": "human-readable VedAstro closure status"
+    },
+    {
+      "id": "vedastro_fast_path_rendered",
+      "path": "docs/research/vedastro_fast_path_checklist_latest.md",
+      "sha256": "7f5ff0242278eca7eacd15e005c15930d8bae6896c79c68547c3f0fbb9ba4a58",
+      "scope": "human-readable VedAstro replay prerequisites"
+    }
+  ]
+}
