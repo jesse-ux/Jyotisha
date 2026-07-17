@@ -45,6 +45,13 @@ test("provides the mobile drawer closing surface", () => {
   assert.match(sidebar, /data-slot="sidebar-scrim"/);
   assert.match(sidebar, /aria-label="关闭聊天记录"/);
   assert.match(sidebar, /onClick=\{\(\) => setOpenMobile\(false\)\}/);
+  assert.match(sidebar, /if \(!isMobile \|\| !openMobile\) return sidebar;/);
+});
+
+test("cancels a stale mobile drawer focus frame", () => {
+  const sidebar = readProjectFile("src/components/ui/sidebar.tsx");
+  assert.match(sidebar, /const focusDrawer = window\.requestAnimationFrame/);
+  assert.match(sidebar, /return \(\) => window\.cancelAnimationFrame\(focusDrawer\);/);
 });
 
 test("uses the approved localized trigger actions", () => {

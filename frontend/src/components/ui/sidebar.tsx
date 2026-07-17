@@ -133,7 +133,11 @@ export function SidebarProvider({
   }, [escapeBlocked, isMobile, open, openMobile, setOpen, setOpenMobile]);
 
   useEffect(() => {
-    if (openMobile && !wasMobileOpen.current) window.requestAnimationFrame(() => sidebarTriggerRef.current?.focus());
+    if (openMobile && !wasMobileOpen.current) {
+      const focusDrawer = window.requestAnimationFrame(() => sidebarTriggerRef.current?.focus());
+      wasMobileOpen.current = true;
+      return () => window.cancelAnimationFrame(focusDrawer);
+    }
     if (!openMobile && wasMobileOpen.current) insetTriggerRef.current?.focus();
     wasMobileOpen.current = openMobile;
   }, [openMobile]);
@@ -173,9 +177,11 @@ export function SidebarProvider({
 
 export function Sidebar({ id, className, ...props }: ComponentProps<"aside">) {
   const { isMobile, open, openMobile, setOpenMobile } = useSidebar();
+  const sidebar = <aside id={id ?? "chat-sidebar"} data-sidebar="sidebar" data-slot="sidebar" data-state={open ? "expanded" : "collapsed"} data-mobile-open={openMobile} className={cn("flex min-h-0 shrink-0 flex-col", className)} {...props} />;
+  if (!isMobile || !openMobile) return sidebar;
   return <>
-    <button type="button" data-sidebar="scrim" data-slot="sidebar-scrim" data-mobile-open={isMobile && openMobile} aria-label="关闭聊天记录" aria-hidden={!isMobile || !openMobile} tabIndex={isMobile && openMobile ? 0 : -1} className="sidebar-scrim" onClick={() => setOpenMobile(false)} />
-    <aside id={id ?? "chat-sidebar"} data-sidebar="sidebar" data-slot="sidebar" data-state={open ? "expanded" : "collapsed"} data-mobile-open={openMobile} className={cn("flex min-h-0 shrink-0 flex-col", className)} {...props} />
+    <button type="button" data-sidebar="scrim" data-slot="sidebar-scrim" aria-label="关闭聊天记录" className="sidebar-scrim" onClick={() => setOpenMobile(false)} />
+    {sidebar}
   </>;
 }
 
