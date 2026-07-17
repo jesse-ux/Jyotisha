@@ -43,3 +43,6 @@ supabase/.temp/
 frontend/.omo/
 frontend/pnpm-lock.yaml
 frontend/pnpm-workspace.yaml
+
+# Local isolated feature worktrees
+.worktrees/
