@@ -13,6 +13,8 @@ import zipfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from scripts.xalen_oracle_comparison import RASHI
+
 
 VERSION = "1.4.0"
 COMMIT = "86f7eb610a66b06b3f0817d2c53355bec8b3bf8d"
@@ -197,6 +199,42 @@ def extract_varga_signs(raw: dict) -> dict:
     return out
 
 
+def extract_local_varga_signs(raw: dict) -> dict:
+    d1 = raw.get("planets") or {}
+    varga = raw.get("varga") or {}
+    surfaces = {"D1": d1, **varga}
+    return {
+        chart: {
+            planet: data["sign"]
+            for planet, data in planets.items()
+            if isinstance(data, dict) and isinstance(data.get("sign"), str) and data["sign"]
+        }
+        for chart, planets in surfaces.items()
+        if chart in {"D1", "D2", "D4", "D9", "D10"} and isinstance(planets, dict)
+    }
+
+
+def extract_xalen_varga_signs(raw: dict) -> dict:
+    varga = raw.get("varga") or {}
+    return {
+        chart: {
+            planet: RASHI.get(str(sign), str(sign))
+            for planet, sign in planets.items()
+            if isinstance(sign, str) and sign
+        }
+        for chart, planets in varga.items()
+        if chart in {"D1", "D2", "D4", "D9", "D10"} and isinstance(planets, dict)
+    }
+
+
+def build_varga_comparison(jyotishyamitra_raw: dict, local_raw: dict, xalen_raw: dict) -> dict:
+    return compare_with_existing_oracles(
+        extract_varga_signs(jyotishyamitra_raw),
+        extract_local_varga_signs(local_raw),
+        extract_xalen_varga_signs(xalen_raw.get("raw", xalen_raw)),
+    )
+
+
 def compare_with_existing_oracles(jyotishyamitra: dict, local: dict, xalen: dict) -> dict:
     rows = []
     counts = {"local": 0, "xalen": 0}
@@ -206,8 +244,8 @@ def compare_with_existing_oracles(jyotishyamitra: dict, local: dict, xalen: dict
         for field, value in fields.items():
             local_value = (local.get(section) or {}).get(field)
             xalen_value = (xalen.get(section) or {}).get(field)
-            local_match = value == local_value
-            xalen_match = value == xalen_value
+            local_match = local_value is not None and value == local_value
+            xalen_match = xalen_value is not None and value == xalen_value
             counts["local"] += int(local_match)
             counts["xalen"] += int(xalen_match)
             rows.append(
@@ -217,8 +255,8 @@ def compare_with_existing_oracles(jyotishyamitra: dict, local: dict, xalen: dict
                     "jyotishyamitra_value": value,
                     "local_value": local_value,
                     "xalen_value": xalen_value,
-                    "local_status": "match" if local_match else "mismatch",
-                    "xalen_status": "match" if xalen_match else "mismatch",
+                    "local_status": "not_comparable" if local_value is None else ("match" if local_match else "mismatch"),
+                    "xalen_status": "not_comparable" if xalen_value is None else ("match" if xalen_match else "mismatch"),
                 }
             )
     return {

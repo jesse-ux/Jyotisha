@@ -2,9 +2,12 @@ from pathlib import Path
 
 from scripts.jyotishyamitra_adapter_probe import (
     build_report,
+    build_varga_comparison,
     canonical_request,
     compare_with_existing_oracles,
+    extract_local_varga_signs,
     extract_varga_signs,
+    extract_xalen_varga_signs,
     normalize_raw,
     schema_fingerprint,
 )
@@ -107,3 +110,43 @@ def test_extract_varga_signs_keeps_only_supported_planet_signs() -> None:
         "D1": {"Sun": "Aquarius", "Rahu": "Sagittarius"},
         "D9": {"Moon": "Cancer"},
     }
+
+
+def test_existing_oracle_sign_adapters_share_the_same_surface() -> None:
+    local = {
+        "planets": {"Sun": {"sign": "Aquarius"}},
+        "varga": {"D9": {"Moon": {"sign": "Cancer"}}},
+    }
+    xalen = {"varga": {"D1": {"Sun": "Kumbha"}, "D9": {"Moon": "Karka"}}}
+
+    assert extract_local_varga_signs(local) == {
+        "D1": {"Sun": "Aquarius"},
+        "D9": {"Moon": "Cancer"},
+    }
+    assert extract_xalen_varga_signs(xalen) == {
+        "D1": {"Sun": "Aquarius"},
+        "D9": {"Moon": "Cancer"},
+    }
+
+
+def test_varga_comparison_never_promotes_the_new_oracle() -> None:
+    jyotishyamitra = {"D1": {"planets": {"Sun": {"sign": "Aquarius"}}}}
+    local = {"planets": {"Sun": {"sign": "Aquarius"}}}
+    xalen = {"varga": {"D1": {"Sun": "Kumbha"}}}
+
+    comparison = build_varga_comparison(jyotishyamitra, local, xalen)
+
+    assert comparison["row_count"] == 1
+    assert comparison["match_counts"] == {"local": 1, "xalen": 1}
+    assert comparison["promotion_allowed"] is False
+
+
+def test_varga_comparison_marks_missing_engine_fields_not_comparable() -> None:
+    comparison = compare_with_existing_oracles(
+        {"D1": {"Rahu": "Leo"}},
+        {"D1": {"Rahu": "Leo"}},
+        {"D1": {}},
+    )
+
+    assert comparison["rows"][0]["local_status"] == "match"
+    assert comparison["rows"][0]["xalen_status"] == "not_comparable"
