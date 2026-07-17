@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "scope": "public_context_references_only",
+  "boundary": "These public cases may be shown when natal similarity is high. They are not replayed calibration cases and cannot raise a prediction score or validate a timing claim.",
+  "case_schema": "references/real_case_calibration/catalog.schema.json",
+  "cases": [
+    {
+      "case_id": "kahlo_bus_injury_1925",
+      "subject": {
+        "name": "Frida Kahlo", "year": 1907, "month": 7, "day": 6, "hour": 8, "minute": 30,
+        "lat": 19.3333, "lon": -99.1667, "tz": -6.6111, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_07_06.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_07_06.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "public_context_reference", "external_oracle_status": "not_replayed", "timezone_note": "Astro-Databank LMT m99w10"},
+      "event_outcomes": [{"event_type": "serious_injury", "event_date": "1925", "domain": "health", "expected_label": "health_event", "outcome": "A bus accident at age 18 caused lifelong pain and medical problems.", "source_excerpt_note": "Public biography records the 1925 bus accident and its lasting health impact.", "source": {"url": "https://en.wikipedia.org/wiki/Frida_Kahlo", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "pending", "do_not_use_for_prediction": true, "report_path": "", "conflict_notes": ["Public context reference only; health-domain outcome replay has not been run."]}
+    }
+  ]
+}

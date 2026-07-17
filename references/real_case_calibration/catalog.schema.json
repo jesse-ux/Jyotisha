@@ -50,8 +50,8 @@
         "properties": {
           "event_type": {"type": "string"},
           "event_date": {"type": "string"},
-          "domain": {"enum": ["career", "marriage"]},
-          "expected_label": {"enum": ["career_status", "legal_marriage"]},
+          "domain": {"enum": ["career", "marriage", "wealth", "health"]},
+          "expected_label": {"enum": ["career_status", "legal_marriage", "wealth_event", "health_event"]},
           "outcome": {"type": "string"},
           "source_excerpt_note": {"type": "string"},
           "source": {

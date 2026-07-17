@@ -90,6 +90,44 @@ def test_default_public_manifest_can_surface_a_matching_replayed_case() -> None:
     assert selected["cases"][0]["reference_only"] is True
 
 
+def test_pending_health_case_is_context_only_not_calibration() -> None:
+    user_chart = _chart("Leo", "Pisces", "Libra")
+    cases = [{
+        "case_id": "public_health_context",
+        "subject": {"name": "Public Example"},
+        "chart": _chart("Leo", "Pisces", "Libra"),
+        "source": {"url": "https://example.com/birth", "source_grade": "primary"},
+        "event_outcomes": [{
+            "domain": "health", "event_type": "serious_injury", "event_date": "1925-09",
+            "outcome": "Public health event", "source": {"url": "https://example.com/event", "source_grade": "verified_secondary"},
+        }],
+        "replay": {"outcome_replay_status": "pending", "do_not_use_for_prediction": True},
+    }]
+
+    selected = select_similar_public_cases(user_chart, ["health"], cases=cases)
+
+    assert selected["status"] == "high_similarity_public_references_available"
+    assert selected["cases"][0]["reference_status"] == "public_context_only"
+    assert selected["cases"][0]["reference_only"] is True
+    assert selected["coverage"]["available_event_domains"] == ["health"]
+
+
+def test_default_manifest_exposes_kahlo_health_as_context_only() -> None:
+    from scripts.domain_calculation_service import compute_chart
+
+    kahlo_chart = compute_chart({
+        "year": 1907, "month": 7, "day": 6, "hour": 8, "minute": 30,
+        "lat": 19.3333, "lon": -99.1667, "tz": -6.6111,
+        "ayanamsa": "lahiri", "node_mode": "mean",
+    })
+
+    selected = select_similar_public_cases(kahlo_chart, ["health"])
+
+    assert [case["case_id"] for case in selected["cases"]] == ["kahlo_bus_injury_1925"]
+    assert selected["cases"][0]["reference_status"] == "public_context_only"
+    assert selected["coverage"]["available_event_domains"] == ["career", "health", "marriage"]
+
+
 def test_consultation_api_exposes_reference_transparency_contract() -> None:
     source = (ROOT / "scripts" / "jyotish_api_server.py").read_text(encoding="utf-8")
     assert "result['reference_transparency'] = build_reference_transparency_contract(" in source

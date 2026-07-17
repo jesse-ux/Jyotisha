@@ -23,6 +23,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = ROOT / "references" / "real_case_calibration" / "replay_manifest.json"
+DEFAULT_CONTEXT_MANIFEST = ROOT / "references" / "real_case_calibration" / "public_context_manifest.json"
 DOMAIN_HOUSES = {
     "career": "house_10",
     "marriage": "house_7",
@@ -126,9 +127,14 @@ def _coverage(cases: list[dict[str, Any]], themes: list[str]) -> dict[str, list[
     domains: set[str] = set()
     for case in cases:
         replay = case.get("replay")
-        if not isinstance(replay, dict) or replay.get("outcome_replay_status") != "replayed":
+        if not isinstance(replay, dict):
             continue
-        if replay.get("do_not_use_for_prediction") is True:
+        replay_status = replay.get("outcome_replay_status")
+        if replay_status == "replayed" and replay.get("do_not_use_for_prediction") is not True:
+            pass
+        elif replay_status == "pending" and replay.get("do_not_use_for_prediction") is True:
+            pass
+        else:
             continue
         for event in case.get("event_outcomes", []):
             if isinstance(event, dict) and isinstance(event.get("domain"), str):
@@ -148,13 +154,20 @@ def select_similar_public_cases(
     threshold: float = HIGH_SIMILARITY_THRESHOLD,
     max_cases: int = 3,
 ) -> dict[str, Any]:
-    candidates = cases if cases is not None else _load_cases(DEFAULT_MANIFEST)
+    candidates = cases if cases is not None else (
+        _load_cases(DEFAULT_MANIFEST) + _load_cases(DEFAULT_CONTEXT_MANIFEST)
+    )
     selected: list[dict[str, Any]] = []
     for case in candidates:
         replay = case.get("replay")
-        if not isinstance(replay, dict) or replay.get("outcome_replay_status") != "replayed":
+        if not isinstance(replay, dict):
             continue
-        if replay.get("do_not_use_for_prediction") is True:
+        replay_status = replay.get("outcome_replay_status")
+        if replay_status == "replayed" and replay.get("do_not_use_for_prediction") is not True:
+            reference_status = "calibration_replayed"
+        elif replay_status == "pending" and replay.get("do_not_use_for_prediction") is True:
+            reference_status = "public_context_only"
+        else:
             continue
         case_chart = _chart_for_case(case)
         if not isinstance(case_chart, dict):
@@ -179,6 +192,7 @@ def select_similar_public_cases(
                 "event_source": {"url": event_source.get("url"), "source_grade": event_source.get("source_grade")},
                 "similarity": similarity,
                 "reference_only": True,
+                "reference_status": reference_status,
                 "difference_notice": "相似仅限列出的 D1 特征；未比较层不得推断为相同。",
             })
     selected.sort(key=lambda item: (-item["similarity"]["score"], item["case_id"] or ""))
@@ -187,7 +201,10 @@ def select_similar_public_cases(
         "status": "high_similarity_public_references_available" if selected else "no_high_similarity_public_reference",
         "cases": selected,
         "threshold": threshold,
-        "manifest": "references/real_case_calibration/replay_manifest.json",
+        "manifest": [
+            "references/real_case_calibration/replay_manifest.json",
+            "references/real_case_calibration/public_context_manifest.json",
+        ],
         "public_figures_only": True,
         "does_not_predict_user_outcome": True,
         "coverage": _coverage(candidates, themes),

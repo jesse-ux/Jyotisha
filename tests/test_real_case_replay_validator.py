@@ -19,6 +19,14 @@ def test_real_case_replay_manifest_contains_ten_research_grade_cases() -> None:
     assert result["birth_time_ratings"] == {"A": 2, "AA": 8}
 
 
+def test_public_context_manifest_is_structured_but_not_replay_calibration() -> None:
+    result = validate_manifest(ROOT / "references/real_case_calibration/public_context_manifest.json")
+    assert result["status"] == "partial"
+    assert result["errors"] == []
+    assert result["replay_ready_count"] == 0
+    assert result["domain_counts"] == {"health": 1}
+
+
 def test_holdout_manifest_contains_ten_new_balanced_cases() -> None:
     batch1_path = ROOT / "references/real_case_calibration/replay_manifest.json"
     holdout_path = ROOT / "references/real_case_calibration/replay_manifest_holdout_v2.json"

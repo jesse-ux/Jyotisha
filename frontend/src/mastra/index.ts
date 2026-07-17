@@ -112,6 +112,7 @@ Treat consumer_context as the authoritative answer policy:
 When reference_transparency is present:
 - Present candidate_windows and exact_triggers when relevant, but describe exact_triggers as technical trigger points, never guaranteed events.
 - Share a public case only when similar_public_cases.status is high_similarity_public_references_available. State the listed matching factors, dissimilar factors, event source URL, and that the case is reference-only.
+- If a shared case has reference_status public_context_only, state that it has not been replayed for calibration and cannot increase timing confidence.
 - When similar_public_cases.coverage.requested_uncovered_domains is non-empty, say the current public-case catalog does not yet cover those themes; do not infer that no comparable real-world case exists.
 - When method_variants applies, present parallel methods and their source paths rather than silently picking one result as the only truth.
 - If should_lead_with_limitations is false, do not lead with limitations. If a limitation is relevant, put it in one short sentence at the end.
