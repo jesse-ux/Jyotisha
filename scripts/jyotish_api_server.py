@@ -9,6 +9,7 @@
 
 import argparse
 import base64
+import copy
 import html as html_lib
 import io
 import json, sys, os, math
@@ -450,6 +451,8 @@ def execute_consultation_workflow(
     surface: str = 'api_web',
     chart_override: dict | None = None,
 ) -> dict:
+    from scripts.timing_precision_contract import build_timing_precision_contract
+
     birth_payload = handler._high_rigor_birth_payload(body)
     themes = handler._high_rigor_requested_themes(body)
     events = handler._high_rigor_events(body)
@@ -523,6 +526,7 @@ def execute_consultation_workflow(
             if body.get('require_external_parity') and external_parity_gate.get('status') != 'pass':
                 result['success'] = False
                 result['blocked_reason'] = 'external_parity_not_passed'
+        result['timing_precision_contract'] = build_timing_precision_contract(body.get('timing'))
         return result
 
     chart = dict(chart_override) if isinstance(chart_override, dict) else {}
@@ -710,6 +714,7 @@ def execute_consultation_workflow(
             result['blocked_reason'] = 'external_parity_not_passed'
     if body.get('return_high_rigor_shape'):
         result['endpoint'] = 'high_rigor_workflow'
+    result['timing_precision_contract'] = build_timing_precision_contract(body.get('timing'))
     return result
 
 
@@ -777,6 +782,7 @@ def _vedastro_runtime_fingerprint() -> dict:
 
 def _build_api_chart_cache_payload(body: dict) -> dict:
     return {
+        'cache_schema_version': 3,
         'birth': {
             'year': body.get('year'),
             'month': body.get('month'),
@@ -1587,6 +1593,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     self._json({'status': 'local_city_match', 'city': matched, 'lat': lat, 'lon': lon, 'tz': tz})
             elif path == '/api/chart':
                 result = self._compute_chart(body)
+                self._json(result)
+            elif path == '/api/daily_guidance':
+                result = _load_local_module('daily_guidance_service').build_daily_guidance(body)
                 self._json(result)
             elif path == '/api/remedies':
                 result = self._compute_remedies(body)
@@ -3267,10 +3276,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 if not isinstance(item, dict):
                     raise BadRequest('evidence items must be objects')
                 strength = strength_map.get(str(item.get('strength', 'moderate')).strip().lower(), report_orchestrator.StrengthLevel.MODERATE)
+                technique = str(item.get('technique') or f'{theme.value}_evidence_{index + 1}')
+                conclusion_limit = 4000 if technique.endswith('-strict-narrative') else 800
                 results.append(report_orchestrator.TechniqueResult(
-                    technique=str(item.get('technique') or f'{theme.value}_evidence_{index + 1}')[:80],
+                    technique=technique[:80],
                     chart=str(item.get('chart') or 'D1')[:24],
-                    conclusion=str(item.get('conclusion') or item.get('summary') or '未提供结论')[:800],
+                    conclusion=str(item.get('conclusion') or item.get('summary') or '未提供结论')[:conclusion_limit],
                     sentiment=str(item.get('sentiment') or 'neutral').strip().lower(),
                     strength=strength,
                     details=item.get('details') if isinstance(item.get('details'), dict) else {},
@@ -3839,10 +3850,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         return items
 
     def _theme_evidence(self, technique, chart, conclusion, sentiment, strength, *, source, details=None):
+        conclusion_limit = 4000 if str(technique).endswith('-strict-narrative') else 800
         return {
             'technique': technique,
             'chart': chart,
-            'conclusion': str(conclusion)[:800],
+            'conclusion': str(conclusion)[:conclusion_limit],
             'sentiment': sentiment,
             'strength': strength,
             'details': {
@@ -4796,8 +4808,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             # Shadbala (v6.9.15: absolute component sum, no global 1200 downscaling)
             try:
                 from shadbala import calc_shadbala
+                shadbala_planets = copy.deepcopy(planets_data)
+                for planet_data in shadbala_planets.values():
+                    if isinstance(planet_data, dict) and planet_data.get('degree_in_sign') is not None:
+                        planet_data['degree'] = planet_data['degree_in_sign']
                 sb = calc_shadbala(
-                    planets_data,
+                    shadbala_planets,
                     asc_sign,
                     birth_hour_decimal,
                     planets_data.get('Sun',{}).get('lon',0),
@@ -6269,12 +6285,25 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         birth_minute = self._get_float(body, 'birth_minute', body.get('minute', 0), 0, 59)
         birth_second = self._get_birth_second(body)
         birth_hour_decimal = self._birth_hour_decimal(birth_hour, birth_minute, birth_second)
-        result = _load_local_module('shadbala').calc_shadbala(
+        shadbala_module = _load_local_module('shadbala')
+        context = None
+        if all(key in body for key in ('year', 'month', 'day', 'lat', 'lon')):
+            year = self._get_int(body, 'year', 1990, 1800, 2400)
+            month = self._get_int(body, 'month', 6, 1, 12)
+            day = self._get_int(body, 'day', 15, 1, 31)
+            lat = self._get_float(body, 'lat', 0, -90, 90)
+            lon = self._get_float(body, 'lon', 0, -180, 180)
+            tz = self._parse_timezone(body, lat, lon, year, month, day, birth_hour, birth_minute, birth_second)
+            jd = swe.julday(year, month, day, birth_hour_decimal - tz)
+            context = shadbala_module.build_shadbala_context(jd, lat, lon, body.get('ayanamsa', 'lahiri'), tz)
+        result = shadbala_module.calc_shadbala(
             planets,
             SIGNS[asc_sign_idx],
             birth_hour_decimal,
             planet_lons['Sun'],
             planet_lons['Moon'],
+            birth_minute,
+            context=context,
         )
         advanced = self._compute_shadbala_advanced_layer(body, planets, result)
         return {

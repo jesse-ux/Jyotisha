@@ -1,0 +1,3908 @@
+{
+  "benchmark_id": "public_real_case_negative_control_pilot_2026_07_11",
+  "boundary": "Controls are dates without the exact recorded target outcome. They may contain other life events. This pilot measures date ranking and false domain activation, not scientific causal validity.",
+  "cases": [
+    {
+      "case_id": "albert_ii_accession_2005",
+      "controls": [
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2005-02-05",
+          "result_class": "weak_hit",
+          "score": 6
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2005-03-07",
+          "result_class": "weak_hit",
+          "score": 6
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2005-05-06",
+          "result_class": "weak_hit",
+          "score": 6
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2005-06-05",
+          "result_class": "weak_hit",
+          "score": 6
+        }
+      ],
+      "domain": "career",
+      "name": "Albert II, Prince of Monaco",
+      "positive": {
+        "actual_label": "domain_activation",
+        "birth_time_rating": "AA",
+        "blocked": false,
+        "case_id": "albert_ii_accession_2005",
+        "domain": "career",
+        "event_date": "2005-04-06",
+        "evidence": {
+          "arudha_lord": "Venus",
+          "ascendant": {
+            "degree": 28.0929,
+            "degree_in_sign": 28.0929,
+            "degree_in_sign_raw": 58.0929006900906,
+            "degree_raw": 58.0929,
+            "lon": 58.0929,
+            "lord": "Venus",
+            "sign": "Taurus",
+            "sign_cn": "金牛座"
+          },
+          "ashtakavarga_audit": {
+            "all_bav_valid": true,
+            "boundary": "Audit evidence only. SAV/BAV does not change V2.1 event scores until a fresh holdout validates it.",
+            "event_house_sav": {
+              "10": {
+                "level": "极吉",
+                "sav_score": 31,
+                "sign": "Aquarius"
+              },
+              "11": {
+                "level": "吉利",
+                "sav_score": 29,
+                "sign": "Pisces"
+              },
+              "6": {
+                "level": "极吉",
+                "sav_score": 37,
+                "sign": "Libra"
+              },
+              "9": {
+                "level": "吉利",
+                "sav_score": 29,
+                "sign": "Capricorn"
+              }
+            },
+            "method": "Ashtakavarga八分法（BPHS/PVR书例校准v2.1）",
+            "sav_total": 337,
+            "sav_valid": true,
+            "scoring_effect": 0,
+            "settings": {
+              "ayanamsa": 23.9306,
+              "node_mode": "mean"
+            },
+            "status": "used_non_scoring",
+            "transit_support": {
+              "Jupiter": {
+                "bav": 3,
+                "sav": 24,
+                "sign": "Virgo"
+              },
+              "Saturn": {
+                "bav": 3,
+                "sav": 22,
+                "sign": "Gemini"
+              }
+            },
+            "version": "2.1"
+          },
+          "birth_source": {
+            "evidence_basis": "quoted BC/BR",
+            "source_grade": "primary",
+            "time_accuracy_rating": "AA",
+            "url": "https://www.astro.com/adbvip/adbvip_03_14.htm"
+          },
+          "domain_varga": {
+            "birth_info": "1958-03-14 10:50",
+            "divisional_charts": {
+              "D10_Dasamsa": {
+                "Jupiter": {
+                  "sign": "Sagittarius",
+                  "sign_cn": "射手座"
+                },
+                "Ketu": {
+                  "sign": "Cancer",
+                  "sign_cn": "巨蟹座"
+                },
+                "Mars": {
+                  "sign": "Libra",
+                  "sign_cn": "天秤座"
+                },
+                "Mercury": {
+                  "sign": "Aquarius",
+                  "sign_cn": "水瓶座"
+                },
+                "Moon": {
+                  "sign": "Cancer",
+                  "sign_cn": "巨蟹座"
+                },
+                "Rahu": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "Saturn": {
+                  "sign": "Sagittarius",
+                  "sign_cn": "射手座"
+                },
+                "Sun": {
+                  "sign": "Scorpio",
+                  "sign_cn": "天蝎座"
+                },
+                "Venus": {
+                  "sign": "Aquarius",
+                  "sign_cn": "水瓶座"
+                },
+                "ascendant": "Libra"
+              }
+            }
+          },
+          "double_transit_pac": {
+            "cl": {
+              "jupiter": {
+                "CL_10宫(Virgo)": [
+                  {
+                    "desc": "同宫(10宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(4.68°)",
+                    "type": "Conjunction"
+                  }
+                ]
+              },
+              "saturn": {
+                "CL_10宫(Virgo)": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "d1": {
+              "jupiter": {
+                "10宫(Aquarius)": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {
+                "Mars(对宫主)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "Venus(LL)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "d9": {
+              "jupiter": {
+                "D9_10宫(Gemini)": [
+                  {
+                    "desc": "同宫(1宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(4.68°)",
+                    "type": "Conjunction"
+                  }
+                ],
+                "Saturn_D9(Aries)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "Venus_D9(Gemini)": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {
+                "D9_10宫(Gemini)": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ],
+                "Saturn_D9(Aries)": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ],
+                "Venus_D9(Gemini)": [
+                  {
+                    "desc": "同宫(10宫)",
+                    "type": "Position"
+                  }
+                ]
+              }
+            },
+            "double_transit": [
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "同宫(1宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(4.68°)",
+                    "type": "Conjunction"
+                  }
+                ],
+                "layer": "D9",
+                "saturn_pac": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ],
+                "strength": "strong",
+                "target": "D9_10宫(Gemini)"
+              },
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "layer": "D9",
+                "saturn_pac": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ],
+                "strength": "strong",
+                "target": "Saturn_D9(Aries)"
+              },
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ],
+                "layer": "D9",
+                "saturn_pac": [
+                  {
+                    "desc": "同宫(10宫)",
+                    "type": "Position"
+                  }
+                ],
+                "strength": "strong",
+                "target": "Venus_D9(Gemini)"
+              },
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "同宫(10宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(4.68°)",
+                    "type": "Conjunction"
+                  }
+                ],
+                "layer": "CL",
+                "saturn_pac": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ],
+                "strength": "strong",
+                "target": "CL_10宫(Virgo)"
+              }
+            ],
+            "event_house": 10,
+            "stats": {
+              "chandra_lagna": "Sagittarius",
+              "cl_jupiter_targets": [
+                "CL_10宫(Virgo)"
+              ],
+              "cl_overlap": [
+                "CL_10宫(Virgo)"
+              ],
+              "cl_saturn_targets": [
+                "CL_10宫(Virgo)"
+              ],
+              "d1_jupiter_targets": [
+                "10宫(Aquarius)"
+              ],
+              "d1_overlap": [],
+              "d1_saturn_targets": [
+                "Mars(对宫主)",
+                "Venus(LL)"
+              ],
+              "d9_ascendant": "Virgo",
+              "d9_jupiter_targets": [
+                "D9_10宫(Gemini)",
+                "Saturn_D9(Aries)",
+                "Venus_D9(Gemini)"
+              ],
+              "d9_overlap": [
+                "D9_10宫(Gemini)",
+                "Saturn_D9(Aries)",
+                "Venus_D9(Gemini)"
+              ],
+              "d9_saturn_targets": [
+                "D9_10宫(Gemini)",
+                "Saturn_D9(Aries)",
+                "Venus_D9(Gemini)"
+              ],
+              "event_lord_d9_sign": "Aries"
+            },
+            "summary": "✅ Double Transit PAC 确认: D9+CL 多层激活10宫主题",
+            "transit_date": "2005-04-06"
+          },
+          "event_source": {
+            "source_grade": "primary",
+            "url": "https://www.palais.mc/en/princely-family/h-s-h-prince-albert-ii/biography-1-9.html"
+          },
+          "functional_benefic_malefic": {
+            "ascendant": "Taurus",
+            "effect_on_confidence": "高严谨模式下必须叠加功能性宫主吉凶与自然吉凶；若功能属性与自然属性冲突，应降低置信度或显式标记冲突。",
+            "functional_benefics": [
+              "Mercury",
+              "Saturn",
+              "Venus"
+            ],
+            "functional_malefics": [
+              "Jupiter",
+              "Mars",
+              "Moon"
+            ],
+            "functional_neutrals": [
+              "Sun"
+            ],
+            "owned_houses": {
+              "Jupiter": [
+                8,
+                11
+              ],
+              "Mars": [
+                7,
+                12
+              ],
+              "Mercury": [
+                2,
+                5
+              ],
+              "Moon": [
+                3
+              ],
+              "Saturn": [
+                9,
+                10
+              ],
+              "Sun": [
+                4
+              ],
+              "Venus": [
+                1,
+                6
+              ]
+            },
+            "source": "strict_functional_benefic_malefic_v1",
+            "status": "used",
+            "yogakarakas": [
+              "Saturn",
+              "Venus"
+            ]
+          },
+          "narayana": {
+            "ad": {
+              "end_age": 47.3563,
+              "lord": "Mercury",
+              "sign": "Gemini",
+              "sign_idx": 2,
+              "start_age": 46.3218,
+              "years": 1.0345
+            },
+            "md": {
+              "end_age": 50.0,
+              "lord": "Jupiter",
+              "sign": "Sagittarius",
+              "sign_idx": 8,
+              "start_age": 40.0,
+              "years": 10
+            },
+            "pd": {
+              "end_age": 47.0709,
+              "lord": "Saturn",
+              "sign": "Aquarius",
+              "sign_idx": 10,
+              "start_age": 46.952,
+              "years": 0.1189
+            },
+            "remaining_years": 2.94
+          },
+          "vimshottari": {
+            "antardasha": "Jupiter",
+            "mahadasha": "Jupiter"
+          }
+        },
+        "expected_label": "career_status",
+        "matched_expected_label": false,
+        "name": "Albert II, Prince of Monaco",
+        "outcome": "Began reign as Prince of Monaco",
+        "result_class": "weak_hit",
+        "rule_version": "v2_1",
+        "score": 6,
+        "signals": [
+          "Jupiter_owns_event_houses:[11]",
+          "Jupiter_occupies_event_house:6",
+          "narayana_lord_owns_event_house:Jupiter",
+          "double_transit_pac_strong"
+        ]
+      },
+      "positive_date": "2005-04-06",
+      "ranking": {
+        "candidate_count": 5,
+        "max_control_score": 6,
+        "positive_rank": 5,
+        "positive_score": 6,
+        "reciprocal_rank": 0.2,
+        "score_margin": 0,
+        "top_1": false,
+        "top_3": false
+      }
+    },
+    {
+      "case_id": "boy_george_grammy_1984",
+      "controls": [
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1983-12-30",
+          "result_class": "weak_hit",
+          "score": 6
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1984-01-29",
+          "result_class": "weak_hit",
+          "score": 6
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1984-03-29",
+          "result_class": "weak_hit",
+          "score": 6
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1984-04-28",
+          "result_class": "weak_hit",
+          "score": 6
+        }
+      ],
+      "domain": "career",
+      "name": "Boy George",
+      "positive": {
+        "actual_label": "domain_activation",
+        "birth_time_rating": "AA",
+        "blocked": false,
+        "case_id": "boy_george_grammy_1984",
+        "domain": "career",
+        "event_date": "1984-02-28",
+        "evidence": {
+          "arudha_lord": "Venus",
+          "ascendant": {
+            "degree": 19.5865,
+            "degree_in_sign": 19.5865,
+            "degree_in_sign_raw": 19.58652184346338,
+            "degree_raw": 19.5865,
+            "lon": 19.5865,
+            "lord": "Mars",
+            "sign": "Aries",
+            "sign_cn": "白羊座"
+          },
+          "ashtakavarga_audit": {
+            "all_bav_valid": true,
+            "boundary": "Audit evidence only. SAV/BAV does not change V2.1 event scores until a fresh holdout validates it.",
+            "event_house_sav": {
+              "10": {
+                "level": "中等",
+                "sav_score": 25,
+                "sign": "Capricorn"
+              },
+              "11": {
+                "level": "极吉",
+                "sav_score": 34,
+                "sign": "Aquarius"
+              },
+              "6": {
+                "level": "中等",
+                "sav_score": 25,
+                "sign": "Virgo"
+              },
+              "9": {
+                "level": "挑战",
+                "sav_score": 21,
+                "sign": "Sagittarius"
+              }
+            },
+            "method": "Ashtakavarga八分法（BPHS/PVR书例校准v2.1）",
+            "sav_total": 337,
+            "sav_valid": true,
+            "scoring_effect": 0,
+            "settings": {
+              "ayanamsa": 23.6358,
+              "node_mode": "mean"
+            },
+            "status": "used_non_scoring",
+            "transit_support": {
+              "Jupiter": {
+                "bav": 5,
+                "sav": 21,
+                "sign": "Sagittarius"
+              },
+              "Saturn": {
+                "bav": 0,
+                "sav": 27,
+                "sign": "Libra"
+              }
+            },
+            "version": "2.1"
+          },
+          "birth_source": {
+            "evidence_basis": "quoted BC/BR",
+            "source_grade": "primary",
+            "time_accuracy_rating": "AA",
+            "url": "https://www.astro.com/adbvip/adbvip_06_14.htm"
+          },
+          "domain_varga": {
+            "birth_info": "1961-06-14 02:50",
+            "divisional_charts": {
+              "D10_Dasamsa": {
+                "Jupiter": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "Ketu": {
+                  "sign": "Aries",
+                  "sign_cn": "白羊座"
+                },
+                "Mars": {
+                  "sign": "Sagittarius",
+                  "sign_cn": "射手座"
+                },
+                "Mercury": {
+                  "sign": "Scorpio",
+                  "sign_cn": "天蝎座"
+                },
+                "Moon": {
+                  "sign": "Virgo",
+                  "sign_cn": "处女座"
+                },
+                "Rahu": {
+                  "sign": "Libra",
+                  "sign_cn": "天秤座"
+                },
+                "Saturn": {
+                  "sign": "Libra",
+                  "sign_cn": "天秤座"
+                },
+                "Sun": {
+                  "sign": "Libra",
+                  "sign_cn": "天秤座"
+                },
+                "Venus": {
+                  "sign": "Leo",
+                  "sign_cn": "狮子座"
+                },
+                "ascendant": "Libra"
+              }
+            }
+          },
+          "double_transit_pac": {
+            "cl": {
+              "jupiter": {},
+              "saturn": {
+                "CL_Jupiter(宫主)": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "d1": {
+              "jupiter": {
+                "Mars(LL)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {
+                "10宫(Capricorn)": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ],
+                "Saturn(宫主)": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "d9": {
+              "jupiter": {
+                "D9_10宫(Gemini)": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {}
+            },
+            "double_transit": [],
+            "event_house": 10,
+            "stats": {
+              "chandra_lagna": "Gemini",
+              "cl_jupiter_targets": [],
+              "cl_overlap": [],
+              "cl_saturn_targets": [
+                "CL_Jupiter(宫主)"
+              ],
+              "d1_jupiter_targets": [
+                "Mars(LL)"
+              ],
+              "d1_overlap": [],
+              "d1_saturn_targets": [
+                "10宫(Capricorn)",
+                "Saturn(宫主)"
+              ],
+              "d9_ascendant": "Virgo",
+              "d9_jupiter_targets": [
+                "D9_10宫(Gemini)"
+              ],
+              "d9_overlap": [],
+              "d9_saturn_targets": [],
+              "event_lord_d9_sign": "Aquarius"
+            },
+            "summary": "❌ 无 Double Transit PAC 激活",
+            "transit_date": "1984-02-28"
+          },
+          "event_source": {
+            "source_grade": "verified_secondary",
+            "url": "https://en.wikipedia.org/wiki/26th_Annual_Grammy_Awards"
+          },
+          "functional_benefic_malefic": {
+            "ascendant": "Aries",
+            "effect_on_confidence": "高严谨模式下必须叠加功能性宫主吉凶与自然吉凶；若功能属性与自然属性冲突，应降低置信度或显式标记冲突。",
+            "functional_benefics": [
+              "Jupiter",
+              "Mars",
+              "Sun"
+            ],
+            "functional_malefics": [
+              "Mercury",
+              "Saturn"
+            ],
+            "functional_neutrals": [
+              "Moon",
+              "Venus"
+            ],
+            "owned_houses": {
+              "Jupiter": [
+                9,
+                12
+              ],
+              "Mars": [
+                1,
+                8
+              ],
+              "Mercury": [
+                3,
+                6
+              ],
+              "Moon": [
+                4
+              ],
+              "Saturn": [
+                10,
+                11
+              ],
+              "Sun": [
+                5
+              ],
+              "Venus": [
+                2,
+                7
+              ]
+            },
+            "source": "strict_functional_benefic_malefic_v1",
+            "status": "used",
+            "yogakarakas": [
+              "Mars"
+            ]
+          },
+          "narayana": {
+            "ad": {
+              "end_age": 23.2039,
+              "lord": "Saturn",
+              "sign": "Aquarius",
+              "sign_idx": 10,
+              "start_age": 21.9223,
+              "years": 1.2816
+            },
+            "md": {
+              "end_age": 26.0,
+              "lord": "Mercury",
+              "sign": "Gemini",
+              "sign_idx": 2,
+              "start_age": 14.0,
+              "years": 12
+            },
+            "pd": {
+              "end_age": 22.756,
+              "lord": "Sun",
+              "sign": "Leo",
+              "sign_idx": 4,
+              "start_age": 22.644,
+              "years": 0.112
+            },
+            "remaining_years": 3.29
+          },
+          "vimshottari": {
+            "antardasha": "Venus",
+            "mahadasha": "Jupiter"
+          }
+        },
+        "expected_label": "career_status",
+        "matched_expected_label": false,
+        "name": "Boy George",
+        "outcome": "Culture Club won the Grammy for Best New Artist",
+        "result_class": "weak_hit",
+        "rule_version": "v2_1",
+        "score": 6,
+        "signals": [
+          "Jupiter_owns_event_houses:[9]",
+          "Jupiter_occupies_event_house:10",
+          "active_dasha_matches_D10_Lagna_lord:Venus",
+          "active_dasha_matches_A10_lord:Venus",
+          "narayana_lord_owns_event_house:Mercury"
+        ]
+      },
+      "positive_date": "1984-02-28",
+      "ranking": {
+        "candidate_count": 5,
+        "max_control_score": 6,
+        "positive_rank": 5,
+        "positive_score": 6,
+        "reciprocal_rank": 0.2,
+        "score_margin": 0,
+        "top_1": false,
+        "top_3": false
+      }
+    },
+    {
+      "case_id": "bergman_oscar_1945",
+      "controls": [
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1945-01-14",
+          "result_class": "strong_hit",
+          "score": 8
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1945-02-13",
+          "result_class": "strong_hit",
+          "score": 8
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1945-04-14",
+          "result_class": "strong_hit",
+          "score": 8
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1945-05-14",
+          "result_class": "strong_hit",
+          "score": 8
+        }
+      ],
+      "domain": "career",
+      "name": "Ingrid Bergman",
+      "positive": {
+        "actual_label": "career_status",
+        "birth_time_rating": "AA",
+        "blocked": false,
+        "case_id": "bergman_oscar_1945",
+        "domain": "career",
+        "event_date": "1945-03-15",
+        "evidence": {
+          "arudha_lord": "Saturn",
+          "ascendant": {
+            "degree": 0.9464,
+            "degree_in_sign": 0.9464,
+            "degree_in_sign_raw": 120.94642922543406,
+            "degree_raw": 120.9464,
+            "lon": 120.9464,
+            "lord": "Sun",
+            "sign": "Leo",
+            "sign_cn": "狮子座"
+          },
+          "ashtakavarga_audit": {
+            "all_bav_valid": true,
+            "boundary": "Audit evidence only. SAV/BAV does not change V2.1 event scores until a fresh holdout validates it.",
+            "event_house_sav": {
+              "10": {
+                "level": "中等",
+                "sav_score": 26,
+                "sign": "Taurus"
+              },
+              "11": {
+                "level": "极吉",
+                "sav_score": 41,
+                "sign": "Gemini"
+              },
+              "6": {
+                "level": "极吉",
+                "sav_score": 37,
+                "sign": "Capricorn"
+              },
+              "9": {
+                "level": "极吉",
+                "sav_score": 31,
+                "sign": "Aries"
+              }
+            },
+            "method": "Ashtakavarga八分法（BPHS/PVR书例校准v2.1）",
+            "sav_total": 337,
+            "sav_valid": true,
+            "scoring_effect": 0,
+            "settings": {
+              "ayanamsa": 23.0917,
+              "node_mode": "mean"
+            },
+            "status": "used_non_scoring",
+            "transit_support": {
+              "Jupiter": {
+                "bav": 5,
+                "sav": 26,
+                "sign": "Leo"
+              },
+              "Saturn": {
+                "bav": 5,
+                "sav": 41,
+                "sign": "Gemini"
+              }
+            },
+            "version": "2.1"
+          },
+          "birth_source": {
+            "evidence_basis": "BC/BR in hand",
+            "source_grade": "primary",
+            "time_accuracy_rating": "AA",
+            "url": "https://www.astro.com/adbvip/adbvip_08_29.htm"
+          },
+          "domain_varga": {
+            "birth_info": "1915-08-29 03:30",
+            "divisional_charts": {
+              "D10_Dasamsa": {
+                "Jupiter": {
+                  "sign": "Sagittarius",
+                  "sign_cn": "射手座"
+                },
+                "Ketu": {
+                  "sign": "Libra",
+                  "sign_cn": "天秤座"
+                },
+                "Mars": {
+                  "sign": "Libra",
+                  "sign_cn": "天秤座"
+                },
+                "Mercury": {
+                  "sign": "Aries",
+                  "sign_cn": "白羊座"
+                },
+                "Moon": {
+                  "sign": "Aries",
+                  "sign_cn": "白羊座"
+                },
+                "Rahu": {
+                  "sign": "Aries",
+                  "sign_cn": "白羊座"
+                },
+                "Saturn": {
+                  "sign": "Sagittarius",
+                  "sign_cn": "射手座"
+                },
+                "Sun": {
+                  "sign": "Scorpio",
+                  "sign_cn": "天蝎座"
+                },
+                "Venus": {
+                  "sign": "Libra",
+                  "sign_cn": "天秤座"
+                },
+                "ascendant": "Leo"
+              }
+            }
+          },
+          "double_transit_pac": {
+            "cl": {
+              "jupiter": {
+                "CL_10宫(Capricorn)": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {
+                "CL_10宫(Capricorn)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "CL_Saturn(宫主)": [
+                  {
+                    "desc": "同宫(3宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(9.73°)",
+                    "type": "Conjunction"
+                  }
+                ]
+              }
+            },
+            "d1": {
+              "jupiter": {
+                "10宫(Taurus)": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ],
+                "Sun(LL)": [
+                  {
+                    "desc": "同宫(1宫)",
+                    "type": "Position"
+                  }
+                ],
+                "Venus(宫主)": [
+                  {
+                    "desc": "同宫(1宫)",
+                    "type": "Position"
+                  }
+                ]
+              },
+              "saturn": {
+                "Saturn(对宫主)": [
+                  {
+                    "desc": "同宫(11宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(9.73°)",
+                    "type": "Conjunction"
+                  }
+                ]
+              }
+            },
+            "d9": {
+              "jupiter": {},
+              "saturn": {
+                "D9_10宫(Capricorn)": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ],
+                "D9_Saturn(宫主)": [
+                  {
+                    "desc": "同宫(3宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(9.73°)",
+                    "type": "Conjunction"
+                  }
+                ],
+                "Venus_D9(Gemini)": [
+                  {
+                    "desc": "同宫(3宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(4.18°)",
+                    "type": "Conjunction"
+                  }
+                ]
+              }
+            },
+            "double_transit": [
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ],
+                "layer": "CL",
+                "saturn_pac": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "strength": "strong",
+                "target": "CL_10宫(Capricorn)"
+              },
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "同宫(1宫)",
+                    "type": "Position"
+                  }
+                ],
+                "layer": "D1+D9",
+                "saturn_pac": [
+                  {
+                    "desc": "同宫(3宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(4.18°)",
+                    "type": "Conjunction"
+                  }
+                ],
+                "strength": "moderate",
+                "target": "Jupiter(D1)Venus(宫主) + Saturn(D9)Venus_D9(Gemini)"
+              }
+            ],
+            "event_house": 10,
+            "stats": {
+              "chandra_lagna": "Aries",
+              "cl_jupiter_targets": [
+                "CL_10宫(Capricorn)"
+              ],
+              "cl_overlap": [
+                "CL_10宫(Capricorn)"
+              ],
+              "cl_saturn_targets": [
+                "CL_10宫(Capricorn)",
+                "CL_Saturn(宫主)"
+              ],
+              "d1_jupiter_targets": [
+                "10宫(Taurus)",
+                "Sun(LL)",
+                "Venus(宫主)"
+              ],
+              "d1_overlap": [],
+              "d1_saturn_targets": [
+                "Saturn(对宫主)"
+              ],
+              "d9_ascendant": "Aries",
+              "d9_jupiter_targets": [],
+              "d9_overlap": [],
+              "d9_saturn_targets": [
+                "D9_10宫(Capricorn)",
+                "D9_Saturn(宫主)",
+                "Venus_D9(Gemini)"
+              ],
+              "event_lord_d9_sign": "Gemini"
+            },
+            "summary": "⚠️ Chandra Lagna 层 Double Transit 激活，D1/D9 未确认",
+            "transit_date": "1945-03-15"
+          },
+          "event_source": {
+            "source_grade": "primary",
+            "url": "https://www.oscars.org/oscars/ceremonies/1945"
+          },
+          "functional_benefic_malefic": {
+            "ascendant": "Leo",
+            "effect_on_confidence": "高严谨模式下必须叠加功能性宫主吉凶与自然吉凶；若功能属性与自然属性冲突，应降低置信度或显式标记冲突。",
+            "functional_benefics": [
+              "Jupiter",
+              "Mars",
+              "Sun"
+            ],
+            "functional_malefics": [
+              "Mercury",
+              "Moon",
+              "Saturn",
+              "Venus"
+            ],
+            "functional_neutrals": [],
+            "owned_houses": {
+              "Jupiter": [
+                5,
+                8
+              ],
+              "Mars": [
+                4,
+                9
+              ],
+              "Mercury": [
+                2,
+                11
+              ],
+              "Moon": [
+                12
+              ],
+              "Saturn": [
+                6,
+                7
+              ],
+              "Sun": [
+                1
+              ],
+              "Venus": [
+                3,
+                10
+              ]
+            },
+            "source": "strict_functional_benefic_malefic_v1",
+            "status": "used",
+            "yogakarakas": [
+              "Mars"
+            ]
+          },
+          "narayana": {
+            "ad": {
+              "end_age": 30.125,
+              "lord": "Moon",
+              "sign": "Cancer",
+              "sign_idx": 3,
+              "start_age": 29.0,
+              "years": 1.125
+            },
+            "md": {
+              "end_age": 33.0,
+              "lord": "Venus",
+              "sign": "Libra",
+              "sign_idx": 6,
+              "start_age": 23.0,
+              "years": 10
+            },
+            "pd": {
+              "end_age": 29.5906,
+              "lord": "Venus",
+              "sign": "Libra",
+              "sign_idx": 6,
+              "start_age": 29.45,
+              "years": 0.1406
+            },
+            "remaining_years": 3.46
+          },
+          "vimshottari": {
+            "antardasha": "Mercury",
+            "mahadasha": "Sun"
+          }
+        },
+        "expected_label": "career_status",
+        "matched_expected_label": true,
+        "name": "Ingrid Bergman",
+        "outcome": "Won Best Actress for Gaslight",
+        "result_class": "strong_hit",
+        "rule_version": "v2_1",
+        "score": 8,
+        "signals": [
+          "Sun_domain_karaka",
+          "Mercury_owns_event_houses:[11]",
+          "Mercury_domain_karaka",
+          "active_dasha_matches_D10_Lagna_lord:Sun",
+          "narayana_lord_owns_event_house:Venus",
+          "double_transit_pac_strong"
+        ]
+      },
+      "positive_date": "1945-03-15",
+      "ranking": {
+        "candidate_count": 5,
+        "max_control_score": 8,
+        "positive_rank": 5,
+        "positive_score": 8,
+        "reciprocal_rank": 0.2,
+        "score_margin": 0,
+        "top_1": false,
+        "top_3": false
+      }
+    },
+    {
+      "case_id": "morissette_grammy_1996",
+      "controls": [
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1995-12-30",
+          "result_class": "weak_hit",
+          "score": 6
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1996-01-29",
+          "result_class": "weak_hit",
+          "score": 6
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1996-03-29",
+          "result_class": "weak_hit",
+          "score": 4
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1996-04-28",
+          "result_class": "weak_hit",
+          "score": 4
+        }
+      ],
+      "domain": "career",
+      "name": "Alanis Morissette",
+      "positive": {
+        "actual_label": "domain_activation",
+        "birth_time_rating": "A",
+        "blocked": false,
+        "case_id": "morissette_grammy_1996",
+        "domain": "career",
+        "event_date": "1996-02-28",
+        "evidence": {
+          "arudha_lord": "Saturn",
+          "ascendant": {
+            "degree": 15.1562,
+            "degree_in_sign": 15.1562,
+            "degree_in_sign_raw": 105.15618971934725,
+            "degree_raw": 105.1562,
+            "lon": 105.1562,
+            "lord": "Moon",
+            "sign": "Cancer",
+            "sign_cn": "巨蟹座"
+          },
+          "ashtakavarga_audit": {
+            "all_bav_valid": true,
+            "boundary": "Audit evidence only. SAV/BAV does not change V2.1 event scores until a fresh holdout validates it.",
+            "event_house_sav": {
+              "10": {
+                "level": "极吉",
+                "sav_score": 32,
+                "sign": "Aries"
+              },
+              "11": {
+                "level": "吉利",
+                "sav_score": 28,
+                "sign": "Taurus"
+              },
+              "6": {
+                "level": "极吉",
+                "sav_score": 34,
+                "sign": "Sagittarius"
+              },
+              "9": {
+                "level": "极吉",
+                "sav_score": 31,
+                "sign": "Pisces"
+              }
+            },
+            "method": "Ashtakavarga八分法（BPHS/PVR书例校准v2.1）",
+            "sav_total": 337,
+            "sav_valid": true,
+            "scoring_effect": 0,
+            "settings": {
+              "ayanamsa": 23.8034,
+              "node_mode": "mean"
+            },
+            "status": "used_non_scoring",
+            "transit_support": {
+              "Jupiter": {
+                "bav": 4,
+                "sav": 34,
+                "sign": "Sagittarius"
+              },
+              "Saturn": {
+                "bav": 4,
+                "sav": 31,
+                "sign": "Pisces"
+              }
+            },
+            "version": "2.1"
+          },
+          "birth_source": {
+            "evidence_basis": "from memory",
+            "source_grade": "verified_secondary",
+            "time_accuracy_rating": "A",
+            "url": "https://www.astro.com/adbvip/adbvip_06_01.htm"
+          },
+          "domain_varga": {
+            "birth_info": "1974-06-01 09:51",
+            "divisional_charts": {
+              "D10_Dasamsa": {
+                "Jupiter": {
+                  "sign": "Virgo",
+                  "sign_cn": "处女座"
+                },
+                "Ketu": {
+                  "sign": "Virgo",
+                  "sign_cn": "处女座"
+                },
+                "Mars": {
+                  "sign": "Pisces",
+                  "sign_cn": "双鱼座"
+                },
+                "Mercury": {
+                  "sign": "Virgo",
+                  "sign_cn": "处女座"
+                },
+                "Moon": {
+                  "sign": "Sagittarius",
+                  "sign_cn": "射手座"
+                },
+                "Rahu": {
+                  "sign": "Pisces",
+                  "sign_cn": "双鱼座"
+                },
+                "Saturn": {
+                  "sign": "Virgo",
+                  "sign_cn": "处女座"
+                },
+                "Sun": {
+                  "sign": "Gemini",
+                  "sign_cn": "双子座"
+                },
+                "Venus": {
+                  "sign": "Gemini",
+                  "sign_cn": "双子座"
+                },
+                "ascendant": "Leo"
+              }
+            }
+          },
+          "double_transit_pac": {
+            "cl": {
+              "jupiter": {
+                "CL_10宫(Cancer)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {
+                "CL_Moon(宫主)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "d1": {
+              "jupiter": {
+                "Mars(宫主)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {
+                "Moon(LL)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "Saturn(对宫主)": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "d9": {
+              "jupiter": {
+                "D9_Sun(宫主)": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ],
+                "Mars_D9(Cancer)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "Moon_D9(Sagittarius)": [
+                  {
+                    "desc": "同宫(2宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(2.71°)",
+                    "type": "Conjunction"
+                  }
+                ]
+              },
+              "saturn": {}
+            },
+            "double_transit": [],
+            "event_house": 10,
+            "stats": {
+              "chandra_lagna": "Libra",
+              "cl_jupiter_targets": [
+                "CL_10宫(Cancer)"
+              ],
+              "cl_overlap": [],
+              "cl_saturn_targets": [
+                "CL_Moon(宫主)"
+              ],
+              "d1_jupiter_targets": [
+                "Mars(宫主)"
+              ],
+              "d1_overlap": [],
+              "d1_saturn_targets": [
+                "Moon(LL)",
+                "Saturn(对宫主)"
+              ],
+              "d9_ascendant": "Scorpio",
+              "d9_jupiter_targets": [
+                "D9_Sun(宫主)",
+                "Mars_D9(Cancer)",
+                "Moon_D9(Sagittarius)"
+              ],
+              "d9_overlap": [],
+              "d9_saturn_targets": [],
+              "event_lord_d9_sign": "Cancer"
+            },
+            "summary": "❌ 无 Double Transit PAC 激活",
+            "transit_date": "1996-02-28"
+          },
+          "event_source": {
+            "source_grade": "verified_secondary",
+            "url": "https://en.wikipedia.org/wiki/38th_Annual_Grammy_Awards"
+          },
+          "functional_benefic_malefic": {
+            "ascendant": "Cancer",
+            "effect_on_confidence": "高严谨模式下必须叠加功能性宫主吉凶与自然吉凶；若功能属性与自然属性冲突，应降低置信度或显式标记冲突。",
+            "functional_benefics": [
+              "Jupiter",
+              "Mars",
+              "Moon"
+            ],
+            "functional_malefics": [
+              "Mercury",
+              "Saturn",
+              "Venus"
+            ],
+            "functional_neutrals": [
+              "Sun"
+            ],
+            "owned_houses": {
+              "Jupiter": [
+                6,
+                9
+              ],
+              "Mars": [
+                5,
+                10
+              ],
+              "Mercury": [
+                3,
+                12
+              ],
+              "Moon": [
+                1
+              ],
+              "Saturn": [
+                7,
+                8
+              ],
+              "Sun": [
+                2
+              ],
+              "Venus": [
+                4,
+                11
+              ]
+            },
+            "source": "strict_functional_benefic_malefic_v1",
+            "status": "used",
+            "yogakarakas": [
+              "Mars"
+            ]
+          },
+          "narayana": {
+            "ad": {
+              "end_age": 22.012,
+              "lord": "Mars",
+              "sign": "Scorpio",
+              "sign_idx": 7,
+              "start_age": 21.4337,
+              "years": 0.5783
+            },
+            "md": {
+              "end_age": 27.0,
+              "lord": "Venus",
+              "sign": "Libra",
+              "sign_idx": 6,
+              "start_age": 21.0,
+              "years": 6
+            },
+            "pd": {
+              "end_age": 21.8239,
+              "lord": "Mercury",
+              "sign": "Gemini",
+              "sign_idx": 2,
+              "start_age": 21.7403,
+              "years": 0.0836
+            },
+            "remaining_years": 5.26
+          },
+          "vimshottari": {
+            "antardasha": "Mercury",
+            "mahadasha": "Jupiter"
+          }
+        },
+        "expected_label": "career_status",
+        "matched_expected_label": false,
+        "name": "Alanis Morissette",
+        "outcome": "Won four Grammy awards",
+        "result_class": "weak_hit",
+        "rule_version": "v2_1",
+        "score": 4,
+        "signals": [
+          "Jupiter_owns_event_houses:[6, 9]",
+          "Mercury_domain_karaka",
+          "narayana_lord_owns_event_house:Venus"
+        ]
+      },
+      "positive_date": "1996-02-28",
+      "ranking": {
+        "candidate_count": 5,
+        "max_control_score": 6,
+        "positive_rank": 5,
+        "positive_score": 4,
+        "reciprocal_rank": 0.2,
+        "score_margin": -2,
+        "top_1": false,
+        "top_3": false
+      }
+    },
+    {
+      "case_id": "dion_eurovision_1988",
+      "controls": [
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1988-03-01",
+          "result_class": "weak_hit",
+          "score": 5
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1988-03-31",
+          "result_class": "weak_hit",
+          "score": 5
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1988-05-30",
+          "result_class": "weak_hit",
+          "score": 5
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1988-06-29",
+          "result_class": "weak_hit",
+          "score": 5
+        }
+      ],
+      "domain": "career",
+      "name": "Celine Dion",
+      "positive": {
+        "actual_label": "domain_activation",
+        "birth_time_rating": "A",
+        "blocked": false,
+        "case_id": "dion_eurovision_1988",
+        "domain": "career",
+        "event_date": "1988-04-30",
+        "evidence": {
+          "arudha_lord": "Saturn",
+          "ascendant": {
+            "degree": 9.1356,
+            "degree_in_sign": 9.1356,
+            "degree_in_sign_raw": 99.13557485171225,
+            "degree_raw": 99.1356,
+            "lon": 99.1356,
+            "lord": "Moon",
+            "sign": "Cancer",
+            "sign_cn": "巨蟹座"
+          },
+          "ashtakavarga_audit": {
+            "all_bav_valid": true,
+            "boundary": "Audit evidence only. SAV/BAV does not change V2.1 event scores until a fresh holdout validates it.",
+            "event_house_sav": {
+              "10": {
+                "level": "中等",
+                "sav_score": 27,
+                "sign": "Aries"
+              },
+              "11": {
+                "level": "极吉",
+                "sav_score": 31,
+                "sign": "Taurus"
+              },
+              "6": {
+                "level": "极吉",
+                "sav_score": 37,
+                "sign": "Sagittarius"
+              },
+              "9": {
+                "level": "挑战",
+                "sav_score": 19,
+                "sign": "Pisces"
+              }
+            },
+            "method": "Ashtakavarga八分法（BPHS/PVR书例校准v2.1）",
+            "sav_total": 337,
+            "sav_valid": true,
+            "scoring_effect": 0,
+            "settings": {
+              "ayanamsa": 23.6941,
+              "node_mode": "mean"
+            },
+            "status": "used_non_scoring",
+            "transit_support": {
+              "Jupiter": {
+                "bav": 3,
+                "sav": 27,
+                "sign": "Aries"
+              },
+              "Saturn": {
+                "bav": 5,
+                "sav": 37,
+                "sign": "Sagittarius"
+              }
+            },
+            "version": "2.1"
+          },
+          "birth_source": {
+            "evidence_basis": "from memory",
+            "source_grade": "verified_secondary",
+            "time_accuracy_rating": "A",
+            "url": "https://www.astro.com/adbvip/adbvip_03_30.htm"
+          },
+          "domain_varga": {
+            "birth_info": "1968-03-30 12:15",
+            "divisional_charts": {
+              "D10_Dasamsa": {
+                "Jupiter": {
+                  "sign": "Virgo",
+                  "sign_cn": "处女座"
+                },
+                "Ketu": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "Mars": {
+                  "sign": "Gemini",
+                  "sign_cn": "双子座"
+                },
+                "Mercury": {
+                  "sign": "Libra",
+                  "sign_cn": "天秤座"
+                },
+                "Moon": {
+                  "sign": "Gemini",
+                  "sign_cn": "双子座"
+                },
+                "Rahu": {
+                  "sign": "Cancer",
+                  "sign_cn": "巨蟹座"
+                },
+                "Saturn": {
+                  "sign": "Gemini",
+                  "sign_cn": "双子座"
+                },
+                "Sun": {
+                  "sign": "Aries",
+                  "sign_cn": "白羊座"
+                },
+                "Venus": {
+                  "sign": "Libra",
+                  "sign_cn": "天秤座"
+                },
+                "ascendant": "Gemini"
+              }
+            }
+          },
+          "double_transit_pac": {
+            "cl": {
+              "jupiter": {
+                "CL_10宫(Capricorn)": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {
+                "CL_Saturn(宫主)": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "d1": {
+              "jupiter": {
+                "10宫(Aries)": [
+                  {
+                    "desc": "同宫(10宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(3.45°)",
+                    "type": "Conjunction"
+                  }
+                ],
+                "Mars(宫主)": [
+                  {
+                    "desc": "同宫(10宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(9.85°)",
+                    "type": "Conjunction"
+                  }
+                ],
+                "Moon(LL)": [
+                  {
+                    "desc": "同宫(10宫)",
+                    "type": "Position"
+                  }
+                ]
+              },
+              "saturn": {
+                "Saturn(对宫主)": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "d9": {
+              "jupiter": {
+                "D9_10宫(Gemini)": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {}
+            },
+            "double_transit": [],
+            "event_house": 10,
+            "stats": {
+              "chandra_lagna": "Aries",
+              "cl_jupiter_targets": [
+                "CL_10宫(Capricorn)"
+              ],
+              "cl_overlap": [],
+              "cl_saturn_targets": [
+                "CL_Saturn(宫主)"
+              ],
+              "d1_jupiter_targets": [
+                "10宫(Aries)",
+                "Mars(宫主)",
+                "Moon(LL)"
+              ],
+              "d1_overlap": [],
+              "d1_saturn_targets": [
+                "Saturn(对宫主)"
+              ],
+              "d9_ascendant": "Virgo",
+              "d9_jupiter_targets": [
+                "D9_10宫(Gemini)"
+              ],
+              "d9_overlap": [],
+              "d9_saturn_targets": [],
+              "event_lord_d9_sign": "Gemini"
+            },
+            "summary": "❌ 无 Double Transit PAC 激活",
+            "transit_date": "1988-04-30"
+          },
+          "event_source": {
+            "source_grade": "primary",
+            "url": "https://eurovision.tv/event/dublin-1988"
+          },
+          "functional_benefic_malefic": {
+            "ascendant": "Cancer",
+            "effect_on_confidence": "高严谨模式下必须叠加功能性宫主吉凶与自然吉凶；若功能属性与自然属性冲突，应降低置信度或显式标记冲突。",
+            "functional_benefics": [
+              "Jupiter",
+              "Mars",
+              "Moon"
+            ],
+            "functional_malefics": [
+              "Mercury",
+              "Saturn",
+              "Venus"
+            ],
+            "functional_neutrals": [
+              "Sun"
+            ],
+            "owned_houses": {
+              "Jupiter": [
+                6,
+                9
+              ],
+              "Mars": [
+                5,
+                10
+              ],
+              "Mercury": [
+                3,
+                12
+              ],
+              "Moon": [
+                1
+              ],
+              "Saturn": [
+                7,
+                8
+              ],
+              "Sun": [
+                2
+              ],
+              "Venus": [
+                4,
+                11
+              ]
+            },
+            "source": "strict_functional_benefic_malefic_v1",
+            "status": "used",
+            "yogakarakas": [
+              "Mars"
+            ]
+          },
+          "narayana": {
+            "ad": {
+              "end_age": 20.5333,
+              "lord": "Moon",
+              "sign": "Cancer",
+              "sign_idx": 3,
+              "start_age": 19.9333,
+              "years": 0.6
+            },
+            "md": {
+              "end_age": 21.0,
+              "lord": "Mercury",
+              "sign": "Virgo",
+              "sign_idx": 5,
+              "start_age": 16.0,
+              "years": 5
+            },
+            "pd": {
+              "end_age": 20.1013,
+              "lord": "Mercury",
+              "sign": "Virgo",
+              "sign_idx": 5,
+              "start_age": 20.0613,
+              "years": 0.04
+            },
+            "remaining_years": 0.91
+          },
+          "vimshottari": {
+            "antardasha": "Mercury",
+            "mahadasha": "Venus"
+          }
+        },
+        "expected_label": "career_status",
+        "matched_expected_label": false,
+        "name": "Celine Dion",
+        "outcome": "Won the Eurovision Song Contest for Switzerland",
+        "result_class": "weak_hit",
+        "rule_version": "v2_1",
+        "score": 5,
+        "signals": [
+          "Venus_owns_event_houses:[11]",
+          "Mercury_domain_karaka",
+          "active_dasha_matches_D10_Lagna_lord:Mercury",
+          "active_dasha_matches_Amatyakaraka:Mercury"
+        ]
+      },
+      "positive_date": "1988-04-30",
+      "ranking": {
+        "candidate_count": 5,
+        "max_control_score": 5,
+        "positive_rank": 5,
+        "positive_score": 5,
+        "reciprocal_rank": 0.2,
+        "score_margin": 0,
+        "top_1": false,
+        "top_3": false
+      }
+    },
+    {
+      "case_id": "mccartney_marriage_1969",
+      "controls": [
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1969-01-11",
+          "result_class": "strong_hit",
+          "score": 9
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1969-02-10",
+          "result_class": "strong_hit",
+          "score": 9
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1969-04-11",
+          "result_class": "strong_hit",
+          "score": 7
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1969-05-11",
+          "result_class": "strong_hit",
+          "score": 7
+        }
+      ],
+      "domain": "marriage",
+      "name": "Paul McCartney",
+      "positive": {
+        "actual_label": "legal_marriage",
+        "birth_time_rating": "A",
+        "blocked": false,
+        "case_id": "mccartney_marriage_1969",
+        "domain": "marriage",
+        "event_date": "1969-03-12",
+        "evidence": {
+          "arudha_lord": "Mars",
+          "ascendant": {
+            "degree": 2.2532,
+            "degree_in_sign": 2.2532,
+            "degree_in_sign_raw": 152.25316730126025,
+            "degree_raw": 152.2532,
+            "lon": 152.2532,
+            "lord": "Mercury",
+            "sign": "Virgo",
+            "sign_cn": "处女座"
+          },
+          "ashtakavarga_audit": {
+            "all_bav_valid": true,
+            "boundary": "Audit evidence only. SAV/BAV does not change V2.1 event scores until a fresh holdout validates it.",
+            "event_house_sav": {
+              "11": {
+                "level": "极吉",
+                "sav_score": 30,
+                "sign": "Cancer"
+              },
+              "2": {
+                "level": "中等",
+                "sav_score": 26,
+                "sign": "Libra"
+              },
+              "5": {
+                "level": "吉利",
+                "sav_score": 29,
+                "sign": "Capricorn"
+              },
+              "7": {
+                "level": "极吉",
+                "sav_score": 32,
+                "sign": "Pisces"
+              }
+            },
+            "method": "Ashtakavarga八分法（BPHS/PVR书例校准v2.1）",
+            "sav_total": 337,
+            "sav_valid": true,
+            "scoring_effect": 0,
+            "settings": {
+              "ayanamsa": 23.4268,
+              "node_mode": "mean"
+            },
+            "status": "used_non_scoring",
+            "transit_support": {
+              "Jupiter": {
+                "bav": 6,
+                "sav": 32,
+                "sign": "Virgo"
+              },
+              "Saturn": {
+                "bav": 4,
+                "sav": 31,
+                "sign": "Aries"
+              }
+            },
+            "version": "2.1"
+          },
+          "birth_source": {
+            "evidence_basis": "from memory",
+            "source_grade": "verified_secondary",
+            "time_accuracy_rating": "A",
+            "url": "https://www.astro.com/adbvip/adbvip_06_18.htm"
+          },
+          "domain_varga": {
+            "birth_info": "1942-06-18 14:00",
+            "divisional_charts": {
+              "D9_Navamsa": {
+                "Jupiter": {
+                  "sign": "Sagittarius",
+                  "sign_cn": "射手座"
+                },
+                "Ketu": {
+                  "sign": "Aquarius",
+                  "sign_cn": "水瓶座"
+                },
+                "Mars": {
+                  "sign": "Virgo",
+                  "sign_cn": "处女座"
+                },
+                "Mercury": {
+                  "sign": "Leo",
+                  "sign_cn": "狮子座"
+                },
+                "Moon": {
+                  "sign": "Aquarius",
+                  "sign_cn": "水瓶座"
+                },
+                "Rahu": {
+                  "sign": "Leo",
+                  "sign_cn": "狮子座"
+                },
+                "Saturn": {
+                  "sign": "Aries",
+                  "sign_cn": "白羊座"
+                },
+                "Sun": {
+                  "sign": "Scorpio",
+                  "sign_cn": "天蝎座"
+                },
+                "Venus": {
+                  "sign": "Scorpio",
+                  "sign_cn": "天蝎座"
+                },
+                "ascendant": "Capricorn"
+              }
+            }
+          },
+          "double_transit_pac": {
+            "cl": {
+              "jupiter": {},
+              "saturn": {}
+            },
+            "d1": {
+              "jupiter": {
+                "Jupiter(宫主)": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ],
+                "Jupiter(对宫主)": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {}
+            },
+            "d9": {
+              "jupiter": {},
+              "saturn": {
+                "D9_Moon(宫主)": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "double_transit": [],
+            "event_house": 7,
+            "stats": {
+              "chandra_lagna": "Cancer",
+              "cl_jupiter_targets": [],
+              "cl_overlap": [],
+              "cl_saturn_targets": [],
+              "d1_jupiter_targets": [
+                "Jupiter(宫主)",
+                "Jupiter(对宫主)"
+              ],
+              "d1_overlap": [],
+              "d1_saturn_targets": [],
+              "d9_ascendant": "Capricorn",
+              "d9_jupiter_targets": [],
+              "d9_overlap": [],
+              "d9_saturn_targets": [
+                "D9_Moon(宫主)"
+              ],
+              "event_lord_d9_sign": "Sagittarius"
+            },
+            "summary": "❌ 无 Double Transit PAC 激活",
+            "transit_date": "1969-03-12"
+          },
+          "event_source": {
+            "source_grade": "verified_secondary",
+            "url": "https://en.wikipedia.org/wiki/Personal_relationships_of_Paul_McCartney"
+          },
+          "functional_benefic_malefic": {
+            "ascendant": "Virgo",
+            "effect_on_confidence": "高严谨模式下必须叠加功能性宫主吉凶与自然吉凶；若功能属性与自然属性冲突，应降低置信度或显式标记冲突。",
+            "functional_benefics": [
+              "Mercury",
+              "Saturn",
+              "Venus"
+            ],
+            "functional_malefics": [
+              "Mars",
+              "Moon",
+              "Sun"
+            ],
+            "functional_neutrals": [
+              "Jupiter"
+            ],
+            "owned_houses": {
+              "Jupiter": [
+                4,
+                7
+              ],
+              "Mars": [
+                3,
+                8
+              ],
+              "Mercury": [
+                1,
+                10
+              ],
+              "Moon": [
+                11
+              ],
+              "Saturn": [
+                5,
+                6
+              ],
+              "Sun": [
+                12
+              ],
+              "Venus": [
+                2,
+                9
+              ]
+            },
+            "source": "strict_functional_benefic_malefic_v1",
+            "status": "used",
+            "yogakarakas": [
+              "Mercury"
+            ]
+          },
+          "narayana": {
+            "ad": {
+              "end_age": 27.0118,
+              "lord": "Mercury",
+              "sign": "Virgo",
+              "sign_idx": 5,
+              "start_age": 26.4471,
+              "years": 0.5647
+            },
+            "md": {
+              "end_age": 28.0,
+              "lord": "Jupiter",
+              "sign": "Sagittarius",
+              "sign_idx": 8,
+              "start_age": 22.0,
+              "years": 6
+            },
+            "pd": {
+              "end_age": 26.7926,
+              "lord": "Venus",
+              "sign": "Taurus",
+              "sign_idx": 1,
+              "start_age": 26.7195,
+              "years": 0.0731
+            },
+            "remaining_years": 1.27
+          },
+          "vimshottari": {
+            "antardasha": "Jupiter",
+            "mahadasha": "Venus"
+          }
+        },
+        "expected_label": "legal_marriage",
+        "matched_expected_label": true,
+        "name": "Paul McCartney",
+        "outcome": "Married Linda Eastman",
+        "result_class": "strong_hit",
+        "rule_version": "v2_1",
+        "score": 7,
+        "signals": [
+          "Venus_owns_event_houses:[2]",
+          "Venus_domain_karaka",
+          "Jupiter_owns_event_houses:[7]",
+          "Jupiter_domain_karaka",
+          "narayana_lord_owns_event_house:Jupiter"
+        ]
+      },
+      "positive_date": "1969-03-12",
+      "ranking": {
+        "candidate_count": 5,
+        "max_control_score": 9,
+        "positive_rank": 5,
+        "positive_score": 7,
+        "reciprocal_rank": 0.2,
+        "score_margin": -2,
+        "top_1": false,
+        "top_3": false
+      }
+    },
+    {
+      "case_id": "depp_marriage_2015",
+      "controls": [
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2014-12-05",
+          "result_class": "weak_hit",
+          "score": 5
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2015-01-04",
+          "result_class": "weak_hit",
+          "score": 5
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2015-03-05",
+          "result_class": "weak_hit",
+          "score": 5
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2015-04-04",
+          "result_class": "weak_hit",
+          "score": 5
+        }
+      ],
+      "domain": "marriage",
+      "name": "Johnny Depp",
+      "positive": {
+        "actual_label": "domain_activation",
+        "birth_time_rating": "AA",
+        "blocked": false,
+        "case_id": "depp_marriage_2015",
+        "domain": "marriage",
+        "event_date": "2015-02-03",
+        "evidence": {
+          "arudha_lord": "Mars",
+          "ascendant": {
+            "degree": 6.9997,
+            "degree_in_sign": 6.9997,
+            "degree_in_sign_raw": 96.99973733317259,
+            "degree_raw": 96.9997,
+            "lon": 96.9997,
+            "lord": "Moon",
+            "sign": "Cancer",
+            "sign_cn": "巨蟹座"
+          },
+          "ashtakavarga_audit": {
+            "all_bav_valid": true,
+            "boundary": "Audit evidence only. SAV/BAV does not change V2.1 event scores until a fresh holdout validates it.",
+            "event_house_sav": {
+              "11": {
+                "level": "极吉",
+                "sav_score": 31,
+                "sign": "Taurus"
+              },
+              "2": {
+                "level": "中等",
+                "sav_score": 26,
+                "sign": "Leo"
+              },
+              "5": {
+                "level": "挑战",
+                "sav_score": 23,
+                "sign": "Scorpio"
+              },
+              "7": {
+                "level": "吉利",
+                "sav_score": 29,
+                "sign": "Capricorn"
+              }
+            },
+            "method": "Ashtakavarga八分法（BPHS/PVR书例校准v2.1）",
+            "sav_total": 337,
+            "sav_valid": true,
+            "scoring_effect": 0,
+            "settings": {
+              "ayanamsa": 24.0679,
+              "node_mode": "mean"
+            },
+            "status": "used_non_scoring",
+            "transit_support": {
+              "Jupiter": {
+                "bav": 2,
+                "sav": 26,
+                "sign": "Cancer"
+              },
+              "Saturn": {
+                "bav": 2,
+                "sav": 23,
+                "sign": "Scorpio"
+              }
+            },
+            "version": "2.1"
+          },
+          "birth_source": {
+            "evidence_basis": "BC/BR in hand",
+            "source_grade": "primary",
+            "time_accuracy_rating": "AA",
+            "url": "https://www.astro.com/adbvip/adbvip_06_09.htm"
+          },
+          "domain_varga": {
+            "birth_info": "1963-06-09 08:44",
+            "divisional_charts": {
+              "D9_Navamsa": {
+                "Jupiter": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "Ketu": {
+                  "sign": "Sagittarius",
+                  "sign_cn": "射手座"
+                },
+                "Mars": {
+                  "sign": "Gemini",
+                  "sign_cn": "双子座"
+                },
+                "Mercury": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "Moon": {
+                  "sign": "Virgo",
+                  "sign_cn": "处女座"
+                },
+                "Rahu": {
+                  "sign": "Gemini",
+                  "sign_cn": "双子座"
+                },
+                "Saturn": {
+                  "sign": "Virgo",
+                  "sign_cn": "处女座"
+                },
+                "Sun": {
+                  "sign": "Leo",
+                  "sign_cn": "狮子座"
+                },
+                "Venus": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "ascendant": "Virgo"
+              }
+            }
+          },
+          "double_transit_pac": {
+            "cl": {
+              "jupiter": {},
+              "saturn": {
+                "CL_7宫(Gemini)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "d1": {
+              "jupiter": {
+                "Moon(LL)": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {}
+            },
+            "d9": {
+              "jupiter": {},
+              "saturn": {
+                "D9_7宫(Pisces)": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ],
+                "Moon_D9(Virgo)": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ],
+                "Saturn_D9(Virgo)": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "double_transit": [],
+            "event_house": 7,
+            "stats": {
+              "chandra_lagna": "Sagittarius",
+              "cl_jupiter_targets": [],
+              "cl_overlap": [],
+              "cl_saturn_targets": [
+                "CL_7宫(Gemini)"
+              ],
+              "d1_jupiter_targets": [
+                "Moon(LL)"
+              ],
+              "d1_overlap": [],
+              "d1_saturn_targets": [],
+              "d9_ascendant": "Virgo",
+              "d9_jupiter_targets": [],
+              "d9_overlap": [],
+              "d9_saturn_targets": [
+                "D9_7宫(Pisces)",
+                "Moon_D9(Virgo)",
+                "Saturn_D9(Virgo)"
+              ],
+              "event_lord_d9_sign": "Virgo"
+            },
+            "summary": "❌ 无 Double Transit PAC 激活",
+            "transit_date": "2015-02-03"
+          },
+          "event_source": {
+            "source_grade": "verified_secondary",
+            "url": "https://variety.com/2016/biz/news/johnny-depp-amber-heard-divorce-settlement-1201837685/"
+          },
+          "functional_benefic_malefic": {
+            "ascendant": "Cancer",
+            "effect_on_confidence": "高严谨模式下必须叠加功能性宫主吉凶与自然吉凶；若功能属性与自然属性冲突，应降低置信度或显式标记冲突。",
+            "functional_benefics": [
+              "Jupiter",
+              "Mars",
+              "Moon"
+            ],
+            "functional_malefics": [
+              "Mercury",
+              "Saturn",
+              "Venus"
+            ],
+            "functional_neutrals": [
+              "Sun"
+            ],
+            "owned_houses": {
+              "Jupiter": [
+                6,
+                9
+              ],
+              "Mars": [
+                5,
+                10
+              ],
+              "Mercury": [
+                3,
+                12
+              ],
+              "Moon": [
+                1
+              ],
+              "Saturn": [
+                7,
+                8
+              ],
+              "Sun": [
+                2
+              ],
+              "Venus": [
+                4,
+                11
+              ]
+            },
+            "source": "strict_functional_benefic_malefic_v1",
+            "status": "used",
+            "yogakarakas": [
+              "Mars"
+            ]
+          },
+          "narayana": {
+            "ad": {
+              "end_age": 52.6505,
+              "lord": "Mars",
+              "sign": "Scorpio",
+              "sign_idx": 7,
+              "start_age": 51.6019,
+              "years": 1.0485
+            },
+            "md": {
+              "end_age": 53.0,
+              "lord": "Saturn",
+              "sign": "Capricorn",
+              "sign_idx": 9,
+              "start_age": 41.0,
+              "years": 12
+            },
+            "pd": {
+              "end_age": 51.6935,
+              "lord": "Mars",
+              "sign": "Scorpio",
+              "sign_idx": 7,
+              "start_age": 51.6019,
+              "years": 0.0916
+            },
+            "remaining_years": 1.34
+          },
+          "vimshottari": {
+            "antardasha": "Jupiter",
+            "mahadasha": "Jupiter"
+          }
+        },
+        "expected_label": "legal_marriage",
+        "matched_expected_label": false,
+        "name": "Johnny Depp",
+        "outcome": "Married Amber Heard in a civil ceremony",
+        "result_class": "weak_hit",
+        "rule_version": "v2_1",
+        "score": 5,
+        "signals": [
+          "Jupiter_domain_karaka",
+          "active_dasha_matches_D9_7L:Jupiter",
+          "narayana_activates_primary_event_sign:Capricorn",
+          "narayana_lord_owns_event_house:Saturn"
+        ]
+      },
+      "positive_date": "2015-02-03",
+      "ranking": {
+        "candidate_count": 5,
+        "max_control_score": 5,
+        "positive_rank": 5,
+        "positive_score": 5,
+        "reciprocal_rank": 0.2,
+        "score_margin": 0,
+        "top_1": false,
+        "top_3": false
+      }
+    },
+    {
+      "case_id": "kidman_marriage_2006",
+      "controls": [
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2006-04-26",
+          "result_class": "miss",
+          "score": 3
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2006-05-26",
+          "result_class": "miss",
+          "score": 3
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2006-07-25",
+          "result_class": "miss",
+          "score": 3
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2006-08-24",
+          "result_class": "miss",
+          "score": 3
+        }
+      ],
+      "domain": "marriage",
+      "name": "Nicole Kidman",
+      "positive": {
+        "actual_label": null,
+        "birth_time_rating": "A",
+        "blocked": false,
+        "case_id": "kidman_marriage_2006",
+        "domain": "marriage",
+        "event_date": "2006-06-25",
+        "evidence": {
+          "arudha_lord": "Mercury",
+          "ascendant": {
+            "degree": 12.9323,
+            "degree_in_sign": 12.9323,
+            "degree_in_sign_raw": 192.9322623333046,
+            "degree_raw": 192.9323,
+            "lon": 192.9323,
+            "lord": "Venus",
+            "sign": "Libra",
+            "sign_cn": "天秤座"
+          },
+          "ashtakavarga_audit": {
+            "all_bav_valid": true,
+            "boundary": "Audit evidence only. SAV/BAV does not change V2.1 event scores until a fresh holdout validates it.",
+            "event_house_sav": {
+              "11": {
+                "level": "吉利",
+                "sav_score": 28,
+                "sign": "Leo"
+              },
+              "2": {
+                "level": "吉利",
+                "sav_score": 28,
+                "sign": "Scorpio"
+              },
+              "5": {
+                "level": "挑战",
+                "sav_score": 23,
+                "sign": "Aquarius"
+              },
+              "7": {
+                "level": "极吉",
+                "sav_score": 33,
+                "sign": "Aries"
+              }
+            },
+            "method": "Ashtakavarga八分法（BPHS/PVR书例校准v2.1）",
+            "sav_total": 337,
+            "sav_valid": true,
+            "scoring_effect": 0,
+            "settings": {
+              "ayanamsa": 23.9476,
+              "node_mode": "mean"
+            },
+            "status": "used_non_scoring",
+            "transit_support": {
+              "Jupiter": {
+                "bav": 4,
+                "sav": 28,
+                "sign": "Libra"
+              },
+              "Saturn": {
+                "bav": 4,
+                "sav": 28,
+                "sign": "Cancer"
+              }
+            },
+            "version": "2.1"
+          },
+          "birth_source": {
+            "evidence_basis": "from memory",
+            "source_grade": "verified_secondary",
+            "time_accuracy_rating": "A",
+            "url": "https://www.astro.com/adbvip/adbvip_06_20.htm"
+          },
+          "domain_varga": {
+            "birth_info": "1967-06-20 15:15",
+            "divisional_charts": {
+              "D9_Navamsa": {
+                "Jupiter": {
+                  "sign": "Libra",
+                  "sign_cn": "天秤座"
+                },
+                "Ketu": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "Mars": {
+                  "sign": "Leo",
+                  "sign_cn": "狮子座"
+                },
+                "Mercury": {
+                  "sign": "Gemini",
+                  "sign_cn": "双子座"
+                },
+                "Moon": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "Rahu": {
+                  "sign": "Cancer",
+                  "sign_cn": "巨蟹座"
+                },
+                "Saturn": {
+                  "sign": "Sagittarius",
+                  "sign_cn": "射手座"
+                },
+                "Sun": {
+                  "sign": "Scorpio",
+                  "sign_cn": "天蝎座"
+                },
+                "Venus": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "ascendant": "Capricorn"
+              }
+            }
+          },
+          "double_transit_pac": {
+            "cl": {
+              "jupiter": {
+                "CL_7宫(Taurus)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "CL_Venus(宫主)": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {
+                "CL_7宫(Taurus)": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ],
+                "CL_Venus(宫主)": [
+                  {
+                    "desc": "同宫(9宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(5.32°)",
+                    "type": "Conjunction"
+                  }
+                ]
+              }
+            },
+            "d1": {
+              "jupiter": {
+                "Venus(LL)": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {
+                "Venus(LL)": [
+                  {
+                    "desc": "同宫(10宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(5.32°)",
+                    "type": "Conjunction"
+                  }
+                ]
+              }
+            },
+            "d9": {
+              "jupiter": {},
+              "saturn": {}
+            },
+            "double_transit": [
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ],
+                "layer": "D1",
+                "saturn_pac": [
+                  {
+                    "desc": "同宫(10宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(5.32°)",
+                    "type": "Conjunction"
+                  }
+                ],
+                "strength": "strong",
+                "target": "Venus(LL)"
+              },
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "9宫相位",
+                    "offset": 9,
+                    "type": "Aspect"
+                  }
+                ],
+                "layer": "CL",
+                "saturn_pac": [
+                  {
+                    "desc": "同宫(9宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(5.32°)",
+                    "type": "Conjunction"
+                  }
+                ],
+                "strength": "strong",
+                "target": "CL_Venus(宫主)"
+              },
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "layer": "CL",
+                "saturn_pac": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ],
+                "strength": "strong",
+                "target": "CL_7宫(Taurus)"
+              }
+            ],
+            "event_house": 7,
+            "stats": {
+              "chandra_lagna": "Scorpio",
+              "cl_jupiter_targets": [
+                "CL_7宫(Taurus)",
+                "CL_Venus(宫主)"
+              ],
+              "cl_overlap": [
+                "CL_7宫(Taurus)",
+                "CL_Venus(宫主)"
+              ],
+              "cl_saturn_targets": [
+                "CL_7宫(Taurus)",
+                "CL_Venus(宫主)"
+              ],
+              "d1_jupiter_targets": [
+                "Venus(LL)"
+              ],
+              "d1_overlap": [
+                "Venus(LL)"
+              ],
+              "d1_saturn_targets": [
+                "Venus(LL)"
+              ],
+              "d9_ascendant": "Capricorn",
+              "d9_jupiter_targets": [],
+              "d9_overlap": [],
+              "d9_saturn_targets": [],
+              "event_lord_d9_sign": "Leo"
+            },
+            "summary": "✅ Double Transit PAC 确认: D1+CL 多层激活7宫主题",
+            "transit_date": "2006-06-25"
+          },
+          "event_source": {
+            "source_grade": "verified_secondary",
+            "url": "https://en.wikipedia.org/wiki/Nicole_Kidman"
+          },
+          "functional_benefic_malefic": {
+            "ascendant": "Libra",
+            "effect_on_confidence": "高严谨模式下必须叠加功能性宫主吉凶与自然吉凶；若功能属性与自然属性冲突，应降低置信度或显式标记冲突。",
+            "functional_benefics": [
+              "Mercury",
+              "Saturn",
+              "Venus"
+            ],
+            "functional_malefics": [
+              "Jupiter",
+              "Sun"
+            ],
+            "functional_neutrals": [
+              "Mars",
+              "Moon"
+            ],
+            "owned_houses": {
+              "Jupiter": [
+                3,
+                6
+              ],
+              "Mars": [
+                2,
+                7
+              ],
+              "Mercury": [
+                9,
+                12
+              ],
+              "Moon": [
+                10
+              ],
+              "Saturn": [
+                4,
+                5
+              ],
+              "Sun": [
+                11
+              ],
+              "Venus": [
+                1,
+                8
+              ]
+            },
+            "source": "strict_functional_benefic_malefic_v1",
+            "status": "used",
+            "yogakarakas": [
+              "Saturn",
+              "Venus"
+            ]
+          },
+          "narayana": {
+            "ad": {
+              "end_age": 39.2267,
+              "lord": "Venus",
+              "sign": "Libra",
+              "sign_idx": 6,
+              "start_age": 38.9867,
+              "years": 0.24
+            },
+            "md": {
+              "end_age": 40.0,
+              "lord": "Venus",
+              "sign": "Taurus",
+              "sign_idx": 1,
+              "start_age": 38.0,
+              "years": 2
+            },
+            "pd": {
+              "end_age": 39.0155,
+              "lord": "Venus",
+              "sign": "Libra",
+              "sign_idx": 6,
+              "start_age": 38.9867,
+              "years": 0.0288
+            },
+            "remaining_years": 0.98
+          },
+          "vimshottari": {
+            "antardasha": "Ketu",
+            "mahadasha": "Venus"
+          }
+        },
+        "expected_label": "legal_marriage",
+        "matched_expected_label": false,
+        "name": "Nicole Kidman",
+        "outcome": "Married Keith Urban",
+        "result_class": "miss",
+        "rule_version": "v2_1",
+        "score": 3,
+        "signals": [
+          "Venus_domain_karaka",
+          "double_transit_pac_strong"
+        ]
+      },
+      "positive_date": "2006-06-25",
+      "ranking": {
+        "candidate_count": 5,
+        "max_control_score": 3,
+        "positive_rank": 5,
+        "positive_score": 3,
+        "reciprocal_rank": 0.2,
+        "score_margin": 0,
+        "top_1": false,
+        "top_3": false
+      }
+    },
+    {
+      "case_id": "demi_moore_marriage_1987",
+      "controls": [
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1987-09-22",
+          "result_class": "miss",
+          "score": 0
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1987-10-22",
+          "result_class": "miss",
+          "score": 0
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1987-12-21",
+          "result_class": "miss",
+          "score": 2
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "1988-01-20",
+          "result_class": "miss",
+          "score": 2
+        }
+      ],
+      "domain": "marriage",
+      "name": "Demi Moore",
+      "positive": {
+        "actual_label": null,
+        "birth_time_rating": "A",
+        "blocked": false,
+        "case_id": "demi_moore_marriage_1987",
+        "domain": "marriage",
+        "event_date": "1987-11-21",
+        "evidence": {
+          "arudha_lord": "Venus",
+          "ascendant": {
+            "degree": 29.0648,
+            "degree_in_sign": 29.0648,
+            "degree_in_sign_raw": 329.06483110736514,
+            "degree_raw": 329.0648,
+            "lon": 329.0648,
+            "lord": "Saturn",
+            "sign": "Aquarius",
+            "sign_cn": "水瓶座"
+          },
+          "ashtakavarga_audit": {
+            "all_bav_valid": true,
+            "boundary": "Audit evidence only. SAV/BAV does not change V2.1 event scores until a fresh holdout validates it.",
+            "event_house_sav": {
+              "11": {
+                "level": "极吉",
+                "sav_score": 32,
+                "sign": "Sagittarius"
+              },
+              "2": {
+                "level": "中等",
+                "sav_score": 26,
+                "sign": "Pisces"
+              },
+              "5": {
+                "level": "中等",
+                "sav_score": 27,
+                "sign": "Gemini"
+              },
+              "7": {
+                "level": "极吉",
+                "sav_score": 34,
+                "sign": "Leo"
+              }
+            },
+            "method": "Ashtakavarga八分法（BPHS/PVR书例校准v2.1）",
+            "sav_total": 337,
+            "sav_valid": true,
+            "scoring_effect": 0,
+            "settings": {
+              "ayanamsa": 23.6879,
+              "node_mode": "mean"
+            },
+            "status": "used_non_scoring",
+            "transit_support": {
+              "Jupiter": {
+                "bav": 5,
+                "sav": 26,
+                "sign": "Pisces"
+              },
+              "Saturn": {
+                "bav": 4,
+                "sav": 27,
+                "sign": "Scorpio"
+              }
+            },
+            "version": "2.1"
+          },
+          "birth_source": {
+            "evidence_basis": "from memory",
+            "source_grade": "verified_secondary",
+            "time_accuracy_rating": "A",
+            "url": "https://www.astro.com/adbvip/adbvip_11_11.htm"
+          },
+          "domain_varga": {
+            "birth_info": "1962-11-11 14:16",
+            "divisional_charts": {
+              "D9_Navamsa": {
+                "Jupiter": {
+                  "sign": "Sagittarius",
+                  "sign_cn": "射手座"
+                },
+                "Ketu": {
+                  "sign": "Pisces",
+                  "sign_cn": "双鱼座"
+                },
+                "Mars": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "Mercury": {
+                  "sign": "Pisces",
+                  "sign_cn": "双鱼座"
+                },
+                "Moon": {
+                  "sign": "Scorpio",
+                  "sign_cn": "天蝎座"
+                },
+                "Rahu": {
+                  "sign": "Virgo",
+                  "sign_cn": "处女座"
+                },
+                "Saturn": {
+                  "sign": "Aries",
+                  "sign_cn": "白羊座"
+                },
+                "Sun": {
+                  "sign": "Taurus",
+                  "sign_cn": "金牛座"
+                },
+                "Venus": {
+                  "sign": "Gemini",
+                  "sign_cn": "双子座"
+                },
+                "ascendant": "Gemini"
+              }
+            }
+          },
+          "double_transit_pac": {
+            "cl": {
+              "jupiter": {
+                "CL_7宫(Libra)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "CL_Venus(宫主)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {}
+            },
+            "d1": {
+              "jupiter": {
+                "7宫(Leo)": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ],
+                "Sun(宫主)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "Sun(对宫主)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ]
+              },
+              "saturn": {}
+            },
+            "d9": {
+              "jupiter": {},
+              "saturn": {
+                "D9_7宫(Sagittarius)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "D9_Jupiter(宫主)": [
+                  {
+                    "desc": "3宫相位",
+                    "offset": 3,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "double_transit": [],
+            "event_house": 7,
+            "stats": {
+              "chandra_lagna": "Aries",
+              "cl_jupiter_targets": [
+                "CL_7宫(Libra)",
+                "CL_Venus(宫主)"
+              ],
+              "cl_overlap": [],
+              "cl_saturn_targets": [],
+              "d1_jupiter_targets": [
+                "7宫(Leo)",
+                "Sun(宫主)",
+                "Sun(对宫主)"
+              ],
+              "d1_overlap": [],
+              "d1_saturn_targets": [],
+              "d9_ascendant": "Gemini",
+              "d9_jupiter_targets": [],
+              "d9_overlap": [],
+              "d9_saturn_targets": [
+                "D9_7宫(Sagittarius)",
+                "D9_Jupiter(宫主)"
+              ],
+              "event_lord_d9_sign": "Taurus"
+            },
+            "summary": "❌ 无 Double Transit PAC 激活",
+            "transit_date": "1987-11-21"
+          },
+          "event_source": {
+            "source_grade": "verified_secondary",
+            "url": "https://en.wikipedia.org/wiki/Demi_Moore"
+          },
+          "functional_benefic_malefic": {
+            "ascendant": "Aquarius",
+            "effect_on_confidence": "高严谨模式下必须叠加功能性宫主吉凶与自然吉凶；若功能属性与自然属性冲突，应降低置信度或显式标记冲突。",
+            "functional_benefics": [
+              "Mercury",
+              "Saturn",
+              "Venus"
+            ],
+            "functional_malefics": [
+              "Jupiter",
+              "Mars",
+              "Moon"
+            ],
+            "functional_neutrals": [
+              "Sun"
+            ],
+            "owned_houses": {
+              "Jupiter": [
+                2,
+                11
+              ],
+              "Mars": [
+                3,
+                10
+              ],
+              "Mercury": [
+                5,
+                8
+              ],
+              "Moon": [
+                6
+              ],
+              "Saturn": [
+                1,
+                12
+              ],
+              "Sun": [
+                7
+              ],
+              "Venus": [
+                4,
+                9
+              ]
+            },
+            "source": "strict_functional_benefic_malefic_v1",
+            "status": "used",
+            "yogakarakas": [
+              "Saturn",
+              "Venus"
+            ]
+          },
+          "narayana": {
+            "ad": {
+              "end_age": 25.3125,
+              "lord": "Venus",
+              "sign": "Taurus",
+              "sign_idx": 1,
+              "start_age": 25.0,
+              "years": 0.3125
+            },
+            "md": {
+              "end_age": 30.0,
+              "lord": "Venus",
+              "sign": "Taurus",
+              "sign_idx": 1,
+              "start_age": 25.0,
+              "years": 5
+            },
+            "pd": {
+              "end_age": 25.0352,
+              "lord": "Mercury",
+              "sign": "Gemini",
+              "sign_idx": 2,
+              "start_age": 25.0195,
+              "years": 0.0156
+            },
+            "remaining_years": 4.97
+          },
+          "vimshottari": {
+            "antardasha": "Moon",
+            "mahadasha": "Mars"
+          }
+        },
+        "expected_label": "legal_marriage",
+        "matched_expected_label": false,
+        "name": "Demi Moore",
+        "outcome": "Married Bruce Willis",
+        "result_class": "miss",
+        "rule_version": "v2_1",
+        "score": 0,
+        "signals": []
+      },
+      "positive_date": "1987-11-21",
+      "ranking": {
+        "candidate_count": 5,
+        "max_control_score": 2,
+        "positive_rank": 5,
+        "positive_score": 0,
+        "reciprocal_rank": 0.2,
+        "score_margin": -2,
+        "top_1": false,
+        "top_3": false
+      }
+    },
+    {
+      "case_id": "chelsea_clinton_marriage_2010",
+      "controls": [
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2010-06-01",
+          "result_class": "weak_hit",
+          "score": 5
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2010-07-01",
+          "result_class": "weak_hit",
+          "score": 5
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2010-08-30",
+          "result_class": "weak_hit",
+          "score": 5
+        },
+        {
+          "blocked": false,
+          "blocked_reason": null,
+          "date": "2010-09-29",
+          "result_class": "weak_hit",
+          "score": 5
+        }
+      ],
+      "domain": "marriage",
+      "name": "Chelsea Clinton",
+      "positive": {
+        "actual_label": "domain_activation",
+        "birth_time_rating": "AA",
+        "blocked": false,
+        "case_id": "chelsea_clinton_marriage_2010",
+        "domain": "marriage",
+        "event_date": "2010-07-31",
+        "evidence": {
+          "arudha_lord": "Moon",
+          "ascendant": {
+            "degree": 22.7703,
+            "degree_in_sign": 22.7703,
+            "degree_in_sign_raw": 202.7702714237087,
+            "degree_raw": 202.7703,
+            "lon": 202.7703,
+            "lord": "Venus",
+            "sign": "Libra",
+            "sign_cn": "天秤座"
+          },
+          "ashtakavarga_audit": {
+            "all_bav_valid": true,
+            "boundary": "Audit evidence only. SAV/BAV does not change V2.1 event scores until a fresh holdout validates it.",
+            "event_house_sav": {
+              "11": {
+                "level": "中等",
+                "sav_score": 26,
+                "sign": "Leo"
+              },
+              "2": {
+                "level": "极吉",
+                "sav_score": 30,
+                "sign": "Scorpio"
+              },
+              "5": {
+                "level": "挑战",
+                "sav_score": 22,
+                "sign": "Aquarius"
+              },
+              "7": {
+                "level": "挑战",
+                "sav_score": 24,
+                "sign": "Aries"
+              }
+            },
+            "method": "Ashtakavarga八分法（BPHS/PVR书例校准v2.1）",
+            "sav_total": 337,
+            "sav_valid": true,
+            "scoring_effect": 0,
+            "settings": {
+              "ayanamsa": 24.0049,
+              "node_mode": "mean"
+            },
+            "status": "used_non_scoring",
+            "transit_support": {
+              "Jupiter": {
+                "bav": 6,
+                "sav": 26,
+                "sign": "Pisces"
+              },
+              "Saturn": {
+                "bav": 3,
+                "sav": 25,
+                "sign": "Virgo"
+              }
+            },
+            "version": "2.1"
+          },
+          "birth_source": {
+            "evidence_basis": "BC/BR in hand",
+            "source_grade": "primary",
+            "time_accuracy_rating": "AA",
+            "url": "https://www.astro.com/adbvip/adbvip_02_27.htm"
+          },
+          "domain_varga": {
+            "birth_info": "1980-02-27 23:24",
+            "divisional_charts": {
+              "D9_Navamsa": {
+                "Jupiter": {
+                  "sign": "Cancer",
+                  "sign_cn": "巨蟹座"
+                },
+                "Ketu": {
+                  "sign": "Scorpio",
+                  "sign_cn": "天蝎座"
+                },
+                "Mars": {
+                  "sign": "Cancer",
+                  "sign_cn": "巨蟹座"
+                },
+                "Mercury": {
+                  "sign": "Gemini",
+                  "sign_cn": "双子座"
+                },
+                "Moon": {
+                  "sign": "Scorpio",
+                  "sign_cn": "天蝎座"
+                },
+                "Rahu": {
+                  "sign": "Taurus",
+                  "sign_cn": "金牛座"
+                },
+                "Saturn": {
+                  "sign": "Capricorn",
+                  "sign_cn": "摩羯座"
+                },
+                "Sun": {
+                  "sign": "Aquarius",
+                  "sign_cn": "水瓶座"
+                },
+                "Venus": {
+                  "sign": "Pisces",
+                  "sign_cn": "双鱼座"
+                },
+                "ascendant": "Aries"
+              }
+            }
+          },
+          "double_transit_pac": {
+            "cl": {
+              "jupiter": {},
+              "saturn": {
+                "CL_Saturn(宫主)": [
+                  {
+                    "desc": "同宫(3宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(5.63°)",
+                    "type": "Conjunction"
+                  }
+                ]
+              }
+            },
+            "d1": {
+              "jupiter": {
+                "Mars(宫主)": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ],
+                "Mars(对宫主)": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ],
+                "Venus(LL)": [
+                  {
+                    "desc": "同宫(6宫)",
+                    "type": "Position"
+                  }
+                ]
+              },
+              "saturn": {
+                "7宫(Aries)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "d9": {
+              "jupiter": {
+                "D9_Venus(宫主)": [
+                  {
+                    "desc": "同宫(12宫)",
+                    "type": "Position"
+                  }
+                ],
+                "Venus_D9(Pisces)": [
+                  {
+                    "desc": "同宫(12宫)",
+                    "type": "Position"
+                  },
+                  {
+                    "desc": "合相(5.71°)",
+                    "type": "Conjunction"
+                  }
+                ]
+              },
+              "saturn": {
+                "D9_7宫(Libra)": [
+                  {
+                    "desc": "7宫相位",
+                    "offset": 7,
+                    "type": "Aspect"
+                  }
+                ],
+                "Mars_D9(Cancer)": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ]
+              }
+            },
+            "double_transit": [
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ],
+                "layer": "D1+D9",
+                "saturn_pac": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ],
+                "strength": "moderate",
+                "target": "Jupiter(D1)Mars(宫主) + Saturn(D9)Mars_D9(Cancer)"
+              },
+              {
+                "jupiter_pac": [
+                  {
+                    "desc": "5宫相位",
+                    "offset": 5,
+                    "type": "Aspect"
+                  }
+                ],
+                "layer": "D1+D9",
+                "saturn_pac": [
+                  {
+                    "desc": "10宫相位",
+                    "offset": 10,
+                    "type": "Aspect"
+                  }
+                ],
+                "strength": "moderate",
+                "target": "Jupiter(D1)Mars(对宫主) + Saturn(D9)Mars_D9(Cancer)"
+              }
+            ],
+            "event_house": 7,
+            "stats": {
+              "chandra_lagna": "Cancer",
+              "cl_jupiter_targets": [],
+              "cl_overlap": [],
+              "cl_saturn_targets": [
+                "CL_Saturn(宫主)"
+              ],
+              "d1_jupiter_targets": [
+                "Mars(宫主)",
+                "Mars(对宫主)",
+                "Venus(LL)"
+              ],
+              "d1_overlap": [],
+              "d1_saturn_targets": [
+                "7宫(Aries)"
+              ],
+              "d9_ascendant": "Aries",
+              "d9_jupiter_targets": [
+                "D9_Venus(宫主)",
+                "Venus_D9(Pisces)"
+              ],
+              "d9_overlap": [],
+              "d9_saturn_targets": [
+                "D9_7宫(Libra)",
+                "Mars_D9(Cancer)"
+              ],
+              "event_lord_d9_sign": "Cancer"
+            },
+            "summary": "⚠️ 跨层间接 Double Transit (D1+D9)，需结合 Dasha 确认",
+            "transit_date": "2010-07-31"
+          },
+          "event_source": {
+            "source_grade": "verified_secondary",
+            "url": "https://en.wikipedia.org/wiki/Chelsea_Clinton"
+          },
+          "functional_benefic_malefic": {
+            "ascendant": "Libra",
+            "effect_on_confidence": "高严谨模式下必须叠加功能性宫主吉凶与自然吉凶；若功能属性与自然属性冲突，应降低置信度或显式标记冲突。",
+            "functional_benefics": [
+              "Mercury",
+              "Saturn",
+              "Venus"
+            ],
+            "functional_malefics": [
+              "Jupiter",
+              "Sun"
+            ],
+            "functional_neutrals": [
+              "Mars",
+              "Moon"
+            ],
+            "owned_houses": {
+              "Jupiter": [
+                3,
+                6
+              ],
+              "Mars": [
+                2,
+                7
+              ],
+              "Mercury": [
+                9,
+                12
+              ],
+              "Moon": [
+                10
+              ],
+              "Saturn": [
+                4,
+                5
+              ],
+              "Sun": [
+                11
+              ],
+              "Venus": [
+                1,
+                8
+              ]
+            },
+            "source": "strict_functional_benefic_malefic_v1",
+            "status": "used",
+            "yogakarakas": [
+              "Saturn",
+              "Venus"
+            ]
+          },
+          "narayana": {
+            "ad": {
+              "end_age": 30.5632,
+              "lord": "Saturn",
+              "sign": "Aquarius",
+              "sign_idx": 10,
+              "start_age": 30.0,
+              "years": 0.5632
+            },
+            "md": {
+              "end_age": 37.0,
+              "lord": "Saturn",
+              "sign": "Aquarius",
+              "sign_idx": 10,
+              "start_age": 30.0,
+              "years": 7
+            },
+            "pd": {
+              "end_age": 30.4596,
+              "lord": "Mars",
+              "sign": "Scorpio",
+              "sign_idx": 7,
+              "start_age": 30.4014,
+              "years": 0.0583
+            },
+            "remaining_years": 6.58
+          },
+          "vimshottari": {
+            "antardasha": "Moon",
+            "mahadasha": "Venus"
+          }
+        },
+        "expected_label": "legal_marriage",
+        "matched_expected_label": false,
+        "name": "Chelsea Clinton",
+        "outcome": "Married Marc Mezvinsky",
+        "result_class": "weak_hit",
+        "rule_version": "v2_1",
+        "score": 5,
+        "signals": [
+          "Venus_domain_karaka",
+          "active_dasha_matches_D9_7L:Venus",
+          "active_dasha_matches_UL_lord:Moon",
+          "narayana_lord_owns_event_house:Saturn",
+          "double_transit_pac_present"
+        ]
+      },
+      "positive_date": "2010-07-31",
+      "ranking": {
+        "candidate_count": 5,
+        "max_control_score": 5,
+        "positive_rank": 5,
+        "positive_score": 5,
+        "reciprocal_rank": 0.2,
+        "score_margin": 0,
+        "top_1": false,
+        "top_3": false
+      }
+    }
+  ],
+  "control_offsets_days": [
+    -60,
+    -30,
+    30,
+    60
+  ],
+  "rule_version": "v2_1",
+  "summary": {
+    "balanced_accuracy": null,
+    "balanced_accuracy_blocked_reason": "controls_are_non_target_dates_not_independently_adjudicated_all-domain_non_events",
+    "case_count": 10,
+    "control_activation_rate": 0.8,
+    "control_date_count": 40,
+    "control_strong_activation_rate": 0.2,
+    "mean_reciprocal_rank": 0.2,
+    "mean_score_margin": -0.6,
+    "positive_top_1_rate": 0.0,
+    "positive_top_3_rate": 0.0,
+    "ranked_case_count": 10,
+    "specificity_proxy": 0.19999999999999996,
+    "strong_specificity_proxy": 0.8,
+    "timing_precision_gate": {
+      "positive_top_3_minimum": 0.6,
+      "reason": "positive_dates_do_not_rank_above_controls_with_required_specificity",
+      "specificity_proxy_minimum": 0.6,
+      "status": "blocked"
+    }
+  }
+}

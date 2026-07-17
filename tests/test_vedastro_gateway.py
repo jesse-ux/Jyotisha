@@ -261,6 +261,19 @@ def test_gateway_completion_archives_official_raw_response(monkeypatch, tmp_path
     assert '"vedastro_official"' in path.read_text(encoding="utf-8")
 
 
+def test_gateway_archives_official_full_snapshot_raw_response(monkeypatch, tmp_path):
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv("VEDASTRO_GATEWAY_QUEUE_DIR", str(tmp_path))
+    job = vedastro_gateway.enqueue_gateway_job({"year": 1990}, question="public validation")
+    completed = vedastro_gateway.complete_gateway_job(
+        job["job_id"],
+        {"raw_response": {"source": "vedastro_official_full_snapshot", "response_hash": "public-demo"}},
+    )
+
+    assert completed["raw_response_archive"]["official_raw_response_available"] is True
+
+
 def test_gateway_lists_official_raw_response_archives(monkeypatch, tmp_path):
     from scripts import vedastro_gateway
 

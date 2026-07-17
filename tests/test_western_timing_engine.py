@@ -97,10 +97,12 @@ def test_transit_duration_scan_groups_daily_windows() -> None:
     assert isinstance(scan["windows"], list)
 
 
-def test_parans_are_explicitly_blocked_until_solver_exists() -> None:
+def test_parans_emit_latitude_aware_angular_events() -> None:
     parans = calculate_parans_status(**_BIRTH, target_date="2026-07-09")
     assert parans["technique"] == "parans"
-    assert parans["status"] == "blocked"
+    assert parans["status"] == "used"
+    assert parans["method"].startswith("Swiss Ephemeris rise_trans")
+    assert parans["event_count"] > 0
 
 
 def test_timing_builder_can_emit_advanced_layers() -> None:
@@ -122,3 +124,10 @@ def test_timing_builder_can_emit_advanced_layers() -> None:
         "transit_duration_scan",
         "parans",
     } <= set(timing)
+    progressed = build_timing_techniques(**_BIRTH, secondary_progression_date="2026-07-09")["secondary_progressions"]
+    assert progressed["progressed_angles"]["status"] == "used"
+    assert set(progressed["progressed_angles"]["angles"]) == {"ascendant", "mc", "descendant", "ic"}
+    parans = timing["parans"]
+    assert parans["status"] == "used"
+    assert parans["event_count"] > 0
+    assert all(row["separation_minutes"] <= 4 for row in parans["paran_pairs_within_4_minutes"])

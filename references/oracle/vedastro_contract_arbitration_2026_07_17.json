@@ -1,0 +1,38 @@
+{
+  "api_version_statuses": [
+    "blocked",
+    "blocked",
+    "blocked"
+  ],
+  "artifacts": [
+    {
+      "contract_status": "blocked",
+      "path": "references/oracle/artifacts/vedastro_steve_jobs_contract_probe_run2.json",
+      "sha256": "7eb83059747d1150062f0bba056ed892eb0dafd6a00e8f9f0a7b3fab2dc2cd70"
+    },
+    {
+      "contract_status": "blocked",
+      "path": "references/oracle/artifacts/vedastro_steve_jobs_contract_probe_run3.json",
+      "sha256": "fb0e05704df9be5bece7bef3b42fc14e0cc4f254685f039b855b359da453c650"
+    },
+    {
+      "contract_status": "blocked",
+      "path": "references/oracle/artifacts/vedastro_steve_jobs_contract_probe_run4.json",
+      "sha256": "df8245ea455e8fcbe1c6da9b1eedc03881332be06b0102700cdac99b80f66a6a"
+    }
+  ],
+  "cross_run_normalized_stable": false,
+  "field_statuses": {
+    "VedAstro.D1.longitude": "blocked"
+  },
+  "method_statuses": [
+    "blocked",
+    "resolved",
+    "blocked"
+  ],
+  "reason": "contract_version_or_method_semantics_not_stable_across_three_versioned_runs",
+  "run_count": 3,
+  "scope": "vedastro_contract_cross_run_arbitration",
+  "status": "blocked",
+  "time_contract_stable": false
+}

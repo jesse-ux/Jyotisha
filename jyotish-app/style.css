@@ -3957,6 +3957,29 @@ body { font-family: var(--font-body); background: var(--bg-page); color: var(--t
   padding: 16px 20px;
   display: flex; flex-direction: column; gap: 12px;
 }
+.daily-star-card {
+  align-self: stretch;
+  padding: 18px 18px 16px;
+  border: 1px solid #d7c3bb;
+  border-radius: 8px;
+  background: #f7e9e4;
+  color: var(--text-heading);
+}
+.daily-star-kicker {
+  margin-bottom: 10px;
+  color: #9b493e;
+  font-size: 13px;
+  font-weight: 700;
+}
+.daily-star-text {
+  font-size: 15px;
+  line-height: 1.65;
+}
+.daily-star-evidence {
+  margin-top: 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
 .ai-msg {
   max-width: 90%;
   padding: 10px 14px;

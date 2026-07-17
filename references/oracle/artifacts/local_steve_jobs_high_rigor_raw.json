@@ -1,0 +1,792 @@
+{
+  "advanced": {
+    "A10_Karma_Pada": {
+      "degree": 117.9412,
+      "distance_from_source": 7,
+      "exception_applied": false,
+      "formula": "A10: from house lord count the same distance from source house; apply 1/7 exception",
+      "house": 12,
+      "label": "A10_Karma_Pada",
+      "meaning": "A10/Karma Pada/Rajya Pada：事业名声、职业可见度、社会身份与公众层面的职业结果",
+      "sign": "Cancer",
+      "sign_degree": 27.9412,
+      "source_house": 10,
+      "source_lord_sign": "Sagittarius",
+      "source_sign": "Taurus"
+    },
+    "dasha_sandhi": {
+      "orb_days": 90,
+      "reference_date": "2026-07-17",
+      "sandhi_windows": []
+    },
+    "pushkara_true": {
+      "Jupiter": {
+        "degree_in_sign": 27.2772,
+        "pushkara_bhaga": false,
+        "pushkara_bhaga_meta": {
+          "delta": 3.2772,
+          "element": "air",
+          "orb": 1.0,
+          "target_degree": 24
+        },
+        "pushkara_navamsa": true,
+        "pushkara_navamsa_meta": {
+          "element": "air",
+          "range": [
+            26.6667,
+            30
+          ]
+        },
+        "sign": "Gemini",
+        "sign_cn": "双子座"
+      },
+      "Rahu": {
+        "degree_in_sign": 9.2743,
+        "pushkara_bhaga": false,
+        "pushkara_bhaga_meta": {
+          "delta": 11.7257,
+          "element": "fire",
+          "orb": 1.0,
+          "target_degree": 21
+        },
+        "pushkara_navamsa": true,
+        "pushkara_navamsa_meta": {
+          "element": "fire",
+          "range": [
+            6.6667,
+            10
+          ]
+        },
+        "sign": "Sagittarius",
+        "sign_cn": "射手座"
+      },
+      "Saturn": {
+        "degree_in_sign": 27.932,
+        "pushkara_bhaga": false,
+        "pushkara_bhaga_meta": {
+          "delta": 3.932,
+          "element": "air",
+          "orb": 1.0,
+          "target_degree": 24
+        },
+        "pushkara_navamsa": true,
+        "pushkara_navamsa_meta": {
+          "element": "air",
+          "range": [
+            26.6667,
+            30
+          ]
+        },
+        "sign": "Libra",
+        "sign_cn": "天秤座"
+      }
+    },
+    "vargottama_true": {
+      "Jupiter": {
+        "d1_sign": "Gemini",
+        "d9_sign": "Gemini",
+        "is_vargottama": true
+      },
+      "Venus": {
+        "d1_sign": "Sagittarius",
+        "d9_sign": "Sagittarius",
+        "is_vargottama": true
+      }
+    }
+  },
+  "ascendant": {
+    "degree": 29.0606,
+    "degree_in_sign": 29.0606,
+    "degree_in_sign_raw": 149.06059920521156,
+    "degree_raw": 149.0606,
+    "lon": 149.0606,
+    "lord": "Sun",
+    "sign": "Leo",
+    "sign_cn": "狮子座"
+  },
+  "ashtakavarga": {
+    "bav": {
+      "Jupiter": [
+        7,
+        5,
+        3,
+        3,
+        4,
+        7,
+        4,
+        5,
+        4,
+        6,
+        5,
+        3
+      ],
+      "Lagna": [
+        5,
+        3,
+        4,
+        4,
+        4,
+        2,
+        4,
+        3,
+        5,
+        7,
+        5,
+        3
+      ],
+      "Mars": [
+        4,
+        7,
+        4,
+        4,
+        3,
+        0,
+        4,
+        5,
+        1,
+        4,
+        1,
+        2
+      ],
+      "Mercury": [
+        5,
+        5,
+        5,
+        4,
+        4,
+        2,
+        6,
+        5,
+        5,
+        8,
+        2,
+        3
+      ],
+      "Moon": [
+        4,
+        4,
+        4,
+        3,
+        6,
+        5,
+        3,
+        3,
+        4,
+        5,
+        3,
+        5
+      ],
+      "Saturn": [
+        1,
+        5,
+        3,
+        0,
+        6,
+        3,
+        4,
+        5,
+        3,
+        3,
+        3,
+        3
+      ],
+      "Sun": [
+        3,
+        7,
+        4,
+        3,
+        3,
+        2,
+        6,
+        7,
+        4,
+        4,
+        3,
+        2
+      ],
+      "Venus": [
+        4,
+        3,
+        5,
+        4,
+        3,
+        5,
+        4,
+        3,
+        5,
+        5,
+        5,
+        6
+      ]
+    },
+    "sav": [
+      28,
+      36,
+      28,
+      21,
+      29,
+      24,
+      31,
+      33,
+      26,
+      35,
+      22,
+      24
+    ]
+  },
+  "birth": {
+    "day": 24,
+    "hour": 19,
+    "lat": 37.7749,
+    "lon": -122.4194,
+    "minute": 15,
+    "month": 2,
+    "tz": -8.0,
+    "year": 1955
+  },
+  "category": "public",
+  "dasha": {
+    "antardasha_end": "2027-11-30",
+    "antardasha_lord": "Rahu",
+    "antardasha_start": "2025-03-19",
+    "mahadasha_end": "2043-03-20",
+    "mahadasha_lord": "Rahu",
+    "mahadasha_start": "2025-03-19"
+  },
+  "engine": "local_jyotish_skill_v6_0_4",
+  "label": "Steve Jobs public AA",
+  "module_health": {
+    "empty_modules": [],
+    "module_count": 56,
+    "validation": {
+      "checked": 11,
+      "failed": 0,
+      "passed": 11,
+      "results": [
+        {
+          "detail": "SAV total = 337, expected 337",
+          "name": "SAV总和=337",
+          "passed": true,
+          "rule": "R1"
+        },
+        {
+          "detail": "Sun=48/48; Moon=49/49; Mars=39/39; Mercury=54/54; Jupiter=56/56; Venus=52/52; Saturn=39/39; Lagna=49/49",
+          "name": "BAV行常数校验",
+          "passed": true,
+          "rule": "R2"
+        },
+        {
+          "detail": "所有12星座 BAV列和 与 SAV分数一致 ✅",
+          "name": "BAV列→SAV列校验",
+          "passed": true,
+          "rule": "R2b"
+        },
+        {
+          "detail": "Mercury延伸角 = 21.39°, 阈值 28°",
+          "name": "水星延伸角≤28°",
+          "passed": true,
+          "rule": "R3"
+        },
+        {
+          "detail": "Venus延伸角 = 44.58°, 阈值 47°",
+          "name": "金星延伸角≤47°",
+          "passed": true,
+          "rule": "R4"
+        },
+        {
+          "detail": "Rahu=249.2743°, Ketu=69.2743°, 偏差=0.0000°",
+          "name": "Rahu-Ketu 180°对冲",
+          "passed": true,
+          "rule": "R5"
+        },
+        {
+          "detail": "所有行星逆行状态合法",
+          "name": "逆行合法性",
+          "passed": true,
+          "rule": "R6"
+        },
+        {
+          "detail": "Dasha year chain sum = 120",
+          "name": "Dasha年限总和=120",
+          "passed": true,
+          "rule": "R7"
+        },
+        {
+          "detail": "完整：9行星 + Ascendant",
+          "name": "行星完整性",
+          "passed": true,
+          "rule": "R8"
+        },
+        {
+          "detail": "所有行星度数在合法范围",
+          "name": "星座度数范围",
+          "passed": true,
+          "rule": "R9"
+        },
+        {
+          "detail": "1-12宫完整(12宫)",
+          "name": "宫位连续性",
+          "passed": true,
+          "rule": "R10"
+        }
+      ],
+      "skipped": 0,
+      "total_checks": 11,
+      "valid": true
+    }
+  },
+  "parameters": {
+    "ayanamsa": "lahiri_assumed_by_skill",
+    "house": "whole_sign_for_planet_house",
+    "today": "2026-07-17",
+    "zodiac": "sidereal"
+  },
+  "planets": {
+    "Jupiter": {
+      "degree_in_sign": 27.2772,
+      "house": 11,
+      "nakshatra": "Punarvasu",
+      "nakshatra_pada": 3,
+      "retrograde": true,
+      "sign": "Gemini"
+    },
+    "Ketu": {
+      "degree_in_sign": 9.2743,
+      "house": 11,
+      "nakshatra": "Ardra",
+      "nakshatra_pada": 1,
+      "retrograde": true,
+      "sign": "Gemini"
+    },
+    "Mars": {
+      "degree_in_sign": 5.8598,
+      "house": 9,
+      "nakshatra": "Ashwini",
+      "nakshatra_pada": 2,
+      "retrograde": false,
+      "sign": "Aries"
+    },
+    "Mercury": {
+      "degree_in_sign": 21.1311,
+      "house": 6,
+      "nakshatra": "Shravana",
+      "nakshatra_pada": 4,
+      "retrograde": true,
+      "sign": "Capricorn"
+    },
+    "Moon": {
+      "degree_in_sign": 14.5165,
+      "house": 8,
+      "nakshatra": "Uttara Bhadrapada",
+      "nakshatra_pada": 4,
+      "retrograde": false,
+      "sign": "Pisces"
+    },
+    "Rahu": {
+      "degree_in_sign": 9.2743,
+      "house": 5,
+      "nakshatra": "Mula",
+      "nakshatra_pada": 3,
+      "retrograde": true,
+      "sign": "Sagittarius"
+    },
+    "Saturn": {
+      "degree_in_sign": 27.932,
+      "house": 3,
+      "nakshatra": "Vishakha",
+      "nakshatra_pada": 3,
+      "retrograde": false,
+      "sign": "Libra"
+    },
+    "Sun": {
+      "degree_in_sign": 12.5175,
+      "house": 7,
+      "nakshatra": "Shatabhisha",
+      "nakshatra_pada": 2,
+      "retrograde": false,
+      "sign": "Aquarius"
+    },
+    "Venus": {
+      "degree_in_sign": 27.9412,
+      "house": 5,
+      "nakshatra": "Uttara Ashadha",
+      "nakshatra_pada": 1,
+      "retrograde": false,
+      "sign": "Sagittarius"
+    }
+  },
+  "privacy": "public",
+  "sample_id": "steve_jobs_public_aa",
+  "shadbala": {
+    "Jupiter": 569.4,
+    "Mars": 456.19,
+    "Mercury": 365.28,
+    "Moon": 584.26,
+    "Saturn": 430.05,
+    "Sun": 480.62,
+    "Venus": 406.93
+  },
+  "shadbala_components": {
+    "Jupiter": {
+      "chesta": 46.49,
+      "dig": 80.59,
+      "drik": 6.9,
+      "kala": 199.32,
+      "naisargika": 34.29,
+      "sthana": 201.81
+    },
+    "Mars": {
+      "chesta": 21.6,
+      "dig": 77.41,
+      "drik": 13.49,
+      "kala": 127.92,
+      "naisargika": 17.14,
+      "sthana": 198.63
+    },
+    "Mercury": {
+      "chesta": 47.8,
+      "dig": 12.64,
+      "drik": -10.62,
+      "kala": 121.79,
+      "naisargika": 25.71,
+      "sthana": 167.96
+    },
+    "Moon": {
+      "chesta": 21.34,
+      "dig": 95.48,
+      "drik": 20.06,
+      "kala": 149.61,
+      "naisargika": 51.43,
+      "sthana": 246.34
+    },
+    "Saturn": {
+      "chesta": 36.99,
+      "dig": 19.63,
+      "drik": 9.49,
+      "kala": 136.76,
+      "naisargika": 8.57,
+      "sthana": 218.61
+    },
+    "Sun": {
+      "chesta": 36.0,
+      "dig": 24.81,
+      "drik": 1.74,
+      "kala": 140.98,
+      "naisargika": 60.0,
+      "sthana": 217.09
+    },
+    "Venus": {
+      "chesta": 29.36,
+      "dig": 69.95,
+      "drik": -2.75,
+      "kala": 113.45,
+      "naisargika": 42.86,
+      "sthana": 154.06
+    }
+  },
+  "shadbala_method_variants": {
+    "chesta": "bphs_bounded_surya_mean_motion_seeghrochcha",
+    "chesta_source": "MIT jyotishganit structure plus public Surya Siddhanta revolution constants",
+    "kala": "bphs_local_solar_events_ahargana_declination"
+  },
+  "varga": {
+    "D10": {
+      "Ascendant": {
+        "degree_in_sign": 20.606,
+        "lord": "Venus",
+        "part_index": 9,
+        "sign": "Taurus",
+        "sign_idx": 1
+      },
+      "Jupiter": {
+        "degree_in_sign": 2.7724,
+        "lord": "Jupiter",
+        "part_index": 9,
+        "sign": "Pisces",
+        "sign_idx": 11
+      },
+      "Ketu": {
+        "degree_in_sign": 2.7429,
+        "lord": "Mercury",
+        "part_index": 3,
+        "sign": "Virgo",
+        "sign_idx": 5
+      },
+      "Mars": {
+        "degree_in_sign": 28.5982,
+        "lord": "Venus",
+        "part_index": 1,
+        "sign": "Taurus",
+        "sign_idx": 1
+      },
+      "Mercury": {
+        "degree_in_sign": 1.3107,
+        "lord": "Mars",
+        "part_index": 7,
+        "sign": "Aries",
+        "sign_idx": 0
+      },
+      "Moon": {
+        "degree_in_sign": 25.1652,
+        "lord": "Jupiter",
+        "part_index": 4,
+        "sign": "Pisces",
+        "sign_idx": 11
+      },
+      "Rahu": {
+        "degree_in_sign": 2.7429,
+        "lord": "Jupiter",
+        "part_index": 3,
+        "sign": "Pisces",
+        "sign_idx": 11
+      },
+      "Saturn": {
+        "degree_in_sign": 9.3204,
+        "lord": "Moon",
+        "part_index": 9,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Sun": {
+        "degree_in_sign": 5.1749,
+        "lord": "Mercury",
+        "part_index": 4,
+        "sign": "Gemini",
+        "sign_idx": 2
+      },
+      "Venus": {
+        "degree_in_sign": 9.4123,
+        "lord": "Mercury",
+        "part_index": 9,
+        "sign": "Virgo",
+        "sign_idx": 5
+      }
+    },
+    "D2": {
+      "Ascendant": {
+        "degree_in_sign": 28.1212,
+        "lord": "Moon",
+        "part_index": 1,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Jupiter": {
+        "degree_in_sign": 24.5545,
+        "lord": "Moon",
+        "part_index": 1,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Ketu": {
+        "degree_in_sign": 18.5486,
+        "lord": "Sun",
+        "part_index": 0,
+        "sign": "Leo",
+        "sign_idx": 4
+      },
+      "Mars": {
+        "degree_in_sign": 11.7196,
+        "lord": "Sun",
+        "part_index": 0,
+        "sign": "Leo",
+        "sign_idx": 4
+      },
+      "Mercury": {
+        "degree_in_sign": 12.2621,
+        "lord": "Sun",
+        "part_index": 1,
+        "sign": "Leo",
+        "sign_idx": 4
+      },
+      "Moon": {
+        "degree_in_sign": 29.033,
+        "lord": "Moon",
+        "part_index": 0,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Rahu": {
+        "degree_in_sign": 18.5486,
+        "lord": "Sun",
+        "part_index": 0,
+        "sign": "Leo",
+        "sign_idx": 4
+      },
+      "Saturn": {
+        "degree_in_sign": 25.8641,
+        "lord": "Moon",
+        "part_index": 1,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Sun": {
+        "degree_in_sign": 25.035,
+        "lord": "Sun",
+        "part_index": 0,
+        "sign": "Leo",
+        "sign_idx": 4
+      },
+      "Venus": {
+        "degree_in_sign": 25.8825,
+        "lord": "Moon",
+        "part_index": 1,
+        "sign": "Cancer",
+        "sign_idx": 3
+      }
+    },
+    "D4": {
+      "Ascendant": {
+        "degree_in_sign": 26.2424,
+        "lord": "Venus",
+        "part_index": 3,
+        "sign": "Taurus",
+        "sign_idx": 1
+      },
+      "Jupiter": {
+        "degree_in_sign": 19.1089,
+        "lord": "Jupiter",
+        "part_index": 3,
+        "sign": "Pisces",
+        "sign_idx": 11
+      },
+      "Ketu": {
+        "degree_in_sign": 7.0972,
+        "lord": "Mercury",
+        "part_index": 1,
+        "sign": "Virgo",
+        "sign_idx": 5
+      },
+      "Mars": {
+        "degree_in_sign": 23.4393,
+        "lord": "Mars",
+        "part_index": 0,
+        "sign": "Aries",
+        "sign_idx": 0
+      },
+      "Mercury": {
+        "degree_in_sign": 24.5243,
+        "lord": "Moon",
+        "part_index": 2,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Moon": {
+        "degree_in_sign": 28.0661,
+        "lord": "Mercury",
+        "part_index": 1,
+        "sign": "Gemini",
+        "sign_idx": 2
+      },
+      "Rahu": {
+        "degree_in_sign": 7.0972,
+        "lord": "Jupiter",
+        "part_index": 1,
+        "sign": "Pisces",
+        "sign_idx": 11
+      },
+      "Saturn": {
+        "degree_in_sign": 21.7282,
+        "lord": "Moon",
+        "part_index": 3,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Sun": {
+        "degree_in_sign": 20.0699,
+        "lord": "Venus",
+        "part_index": 1,
+        "sign": "Taurus",
+        "sign_idx": 1
+      },
+      "Venus": {
+        "degree_in_sign": 21.7649,
+        "lord": "Mercury",
+        "part_index": 3,
+        "sign": "Virgo",
+        "sign_idx": 5
+      }
+    },
+    "D9": {
+      "Ascendant": {
+        "degree_in_sign": 21.5454,
+        "lord": "Jupiter",
+        "pada": 9,
+        "part_index": 8,
+        "sign": "Sagittarius",
+        "sign_idx": 8
+      },
+      "Jupiter": {
+        "degree_in_sign": 5.4951,
+        "lord": "Mercury",
+        "pada": 9,
+        "part_index": 8,
+        "sign": "Gemini",
+        "sign_idx": 2
+      },
+      "Ketu": {
+        "degree_in_sign": 23.4686,
+        "lord": "Jupiter",
+        "pada": 3,
+        "part_index": 2,
+        "sign": "Sagittarius",
+        "sign_idx": 8
+      },
+      "Mars": {
+        "degree_in_sign": 22.7384,
+        "lord": "Venus",
+        "pada": 2,
+        "part_index": 1,
+        "sign": "Taurus",
+        "sign_idx": 1
+      },
+      "Mercury": {
+        "degree_in_sign": 10.1797,
+        "lord": "Moon",
+        "pada": 7,
+        "part_index": 6,
+        "sign": "Cancer",
+        "sign_idx": 3
+      },
+      "Moon": {
+        "degree_in_sign": 10.6487,
+        "lord": "Mars",
+        "pada": 5,
+        "part_index": 4,
+        "sign": "Scorpio",
+        "sign_idx": 7
+      },
+      "Rahu": {
+        "degree_in_sign": 23.4686,
+        "lord": "Mercury",
+        "pada": 3,
+        "part_index": 2,
+        "sign": "Gemini",
+        "sign_idx": 2
+      },
+      "Saturn": {
+        "degree_in_sign": 11.3884,
+        "lord": "Mercury",
+        "pada": 9,
+        "part_index": 8,
+        "sign": "Gemini",
+        "sign_idx": 2
+      },
+      "Sun": {
+        "degree_in_sign": 22.6574,
+        "lord": "Saturn",
+        "pada": 4,
+        "part_index": 3,
+        "sign": "Capricorn",
+        "sign_idx": 9
+      },
+      "Venus": {
+        "degree_in_sign": 11.4711,
+        "lord": "Jupiter",
+        "pada": 9,
+        "part_index": 8,
+        "sign": "Sagittarius",
+        "sign_idx": 8
+      }
+    }
+  }
+}

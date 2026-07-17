@@ -20,6 +20,7 @@ v6.9.12 修复：
 """
 
 import math
+import swisseph as swe
 import sys
 import os
 import json
@@ -118,11 +119,377 @@ SPECIAL_ASPECTS = {
 
 # Virupas → Rupas 转换（60 Virupas = 1 Rupa）
 VIRUPAS_PER_RUPA = 60.0
+_DIG_POWERLESS_HOUSE = {"Sun": 3, "Moon": 9, "Mars": 3, "Mercury": 6, "Jupiter": 6, "Venus": 9, "Saturn": 0}
+_MOOLATRIKONA = {
+    "Sun": (4, 0.0, 20.0), "Moon": (1, 4.0, 30.0), "Mars": (0, 0.0, 12.0),
+    "Mercury": (5, 16.0, 20.0), "Jupiter": (8, 0.0, 10.0),
+    "Venus": (6, 0.0, 15.0), "Saturn": (10, 0.0, 20.0),
+}
+_PLANET_INDEX = {name: index for index, name in enumerate(("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"))}
+_INDEX_PLANET = {index: name for name, index in _PLANET_INDEX.items()}
+_ABDA_WEEKDAY_PLANETS = ("Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Sun", "Moon")
+_HORA_ORDER = ("Saturn", "Jupiter", "Mars", "Sun", "Venus", "Mercury", "Moon")
+_SURYA_CIVIL_DAYS = 1_577_917_828
+_SURYA_REVOLUTIONS = {
+    "Sun": 4_320_000, "Mars": 2_296_832, "Mercury": 17_937_060,
+    "Jupiter": 364_220, "Venus": 7_022_376, "Saturn": 146_568,
+}
+_UJJAIN_LONGITUDE = 75.7885
+
+
+def _solar_event_local_hour(jd_ut: float, lat: float, lon: float, timezone: float, event: int) -> float:
+    local_jd = jd_ut + timezone / 24.0
+    year, month, day, _ = swe.revjul(local_jd, swe.GREG_CAL)
+    local_midnight = swe.julday(year, month, day, 0.0, swe.GREG_CAL)
+    utc_midnight = local_midnight - timezone / 24.0
+    _, times = swe.rise_trans(
+        utc_midnight,
+        swe.SUN,
+        event | swe.BIT_HINDU_RISING,
+        (float(lon), float(lat), 0.0),
+        0.0,
+        0.0,
+        swe.FLG_SWIEPH | swe.FLG_SIDEREAL | swe.FLG_NONUT,
+    )
+    return (times[0] + timezone / 24.0 - local_midnight) * 24.0
+
+
+def build_shadbala_context(jd_ut: float, lat: float, lon: float, ayanamsa: str = "lahiri", timezone: float = 0.0) -> Dict:
+    """Build precise sidereal house context from standard birth inputs."""
+    sid_mode = swe.SIDM_LAHIRI
+    if str(ayanamsa).lower() in {"raman"}:
+        sid_mode = swe.SIDM_RAMAN
+    elif str(ayanamsa).lower() in {"kp", "krishnamurti"}:
+        sid_mode = swe.SIDM_KRISHNAMURTI
+    swe.set_sid_mode(sid_mode)
+    cusps, _ = swe.houses_ex(float(jd_ut), float(lat), float(lon), b"P", swe.FLG_SIDEREAL)
+    local_jd = float(jd_ut) + float(timezone) / 24.0
+    year, month, day, local_hour = swe.revjul(local_jd, swe.GREG_CAL)
+    sunrise = _solar_event_local_hour(jd_ut, lat, lon, timezone, swe.CALC_RISE)
+    sunset = _solar_event_local_hour(jd_ut, lat, lon, timezone, swe.CALC_SET)
+    previous_sunset = _solar_event_local_hour(jd_ut - 1.0, lat, lon, timezone, swe.CALC_SET)
+    return {
+        "jd_ut": float(jd_ut), "jd_local": local_jd,
+        "lat": float(lat), "lon": float(lon), "timezone": float(timezone),
+        "year": int(year), "month": int(month), "day": int(day), "local_hour": float(local_hour),
+        "ayanamsa": str(ayanamsa), "ayanamsa_degrees": float(swe.get_ayanamsa_ut(float(jd_ut))),
+        "sunrise_hour": sunrise, "sunset_hour": sunset, "previous_sunset_hour": previous_sunset,
+        "house_midpoints": [float(value) % 360 for value in cusps],
+    }
+
+
+def calc_dig_bala_precise(pname: str, planet_lon: float, house_midpoints: list[float]) -> float:
+    """Classical directional strength from the powerless bhava midpoint."""
+    powerless = house_midpoints[_DIG_POWERLESS_HOUSE[pname]]
+    return round(abs(float(powerless) - (float(planet_lon) % 360)) / 3.0, 2)
+
+
+def _planet_longitude(name: str, planets: Dict) -> float:
+    data = planets[name]
+    degree = float(data.get("degree", 0.0))
+    if degree >= 30.0 or data.get("sign") not in SIGNS:
+        return degree % 360.0
+    return (SIGNS.index(data["sign"]) * 30.0 + degree) % 360.0
+
+
+def classify_drik_planets(planets: Dict) -> tuple[set[str], set[str]]:
+    """Classify the seven planets for Drik Bala from lunar phase and Mercury's company."""
+    benefics = {name for name in ("Jupiter", "Venus") if name in planets}
+    malefics = {name for name in ("Sun", "Mars", "Saturn") if name in planets}
+
+    if "Moon" in planets and "Sun" in planets:
+        target = benefics if (_planet_longitude("Moon", planets) - _planet_longitude("Sun", planets)) % 360.0 <= 180.0 else malefics
+        target.add("Moon")
+
+    if "Mercury" in planets:
+        mercury_lon = _planet_longitude("Mercury", planets)
+        mercury_sign = int(mercury_lon // 30)
+        companions = [
+            name for name in benefics | malefics
+            if name != "Mercury" and int(_planet_longitude(name, planets) // 30) == mercury_sign
+        ]
+        benefic_count = sum(name in benefics for name in companions)
+        malefic_count = sum(name in malefics for name in companions)
+        if benefic_count >= malefic_count and (benefic_count != malefic_count or not companions):
+            benefics.add("Mercury")
+        elif malefic_count > benefic_count:
+            malefics.add("Mercury")
+        else:
+            nearest = min(companions, key=lambda name: abs(_planet_longitude(name, planets) - mercury_lon))
+            (benefics if nearest in benefics else malefics).add("Mercury")
+
+    return benefics, malefics
+
+
+def _sphuta_drishti_virupas(angle: float, aspecting_planet: str) -> float:
+    angle = round(float(angle) % 360.0, 2)
+    if angle < 30.0:
+        strength = 0.0
+    elif angle < 60.0:
+        strength = (angle - 30.0) / 2.0
+    elif angle < 90.0:
+        strength = angle - 45.0 + (45.0 if aspecting_planet == "Saturn" else 0.0)
+    elif angle < 120.0:
+        strength = (120.0 - angle) / 2.0 + 30.0 + (15.0 if aspecting_planet == "Mars" else 0.0)
+    elif angle < 150.0:
+        strength = 150.0 - angle + (30.0 if aspecting_planet == "Jupiter" else 0.0)
+    elif angle < 180.0:
+        strength = 2.0 * (angle - 150.0)
+    elif angle < 300.0:
+        strength = (300.0 - angle) / 2.0
+        if aspecting_planet == "Mars" and 210.0 <= angle < 240.0:
+            strength += 15.0
+        elif aspecting_planet == "Jupiter" and 240.0 <= angle < 270.0:
+            strength += 30.0
+        elif aspecting_planet == "Saturn" and 270.0 <= angle < 300.0:
+            strength += 45.0
+    else:
+        strength = 0.0
+    return round(strength, 2)
+
+
+def calc_drik_bala_precise(pname: str, all_planets: Dict) -> float:
+    """Continuous Sphuta Drishti, quarter-weighted by natural benefic/malefic status."""
+    if pname not in all_planets:
+        return 0.0
+    benefics, malefics = classify_drik_planets(all_planets)
+    target_lon = _planet_longitude(pname, all_planets)
+    total = 0.0
+    for other_name in benefics | malefics:
+        if other_name == pname:
+            continue
+        strength = _sphuta_drishti_virupas(target_lon - _planet_longitude(other_name, all_planets), other_name)
+        total += strength if other_name in benefics else -strength
+    return round(total / 4.0, 2)
+
+
+def _d30_sign(sign_idx: int, degree: float) -> int:
+    ranges = (
+        ((5, 0), (10, 10), (18, 8), (25, 2), (30, 6))
+        if sign_idx % 2 == 0 else
+        ((5, 1), (12, 5), (20, 11), (25, 9), (30, 7))
+    )
+    return next(sign for upper, sign in ranges if degree <= upper)
+
+
+def _saptavarga_signs(planets: Dict) -> Dict[int, Dict[str, int]]:
+    result = {division: {} for division in (1, 2, 3, 7, 9, 12, 30)}
+    for name in set(planets) & set(_MOOLATRIKONA):
+        longitude = _planet_longitude(name, planets)
+        sign_idx, degree = int(longitude // 30), longitude % 30.0
+        result[1][name] = sign_idx
+        result[2][name] = (4 if sign_idx % 2 == 0 else 3) if degree < 15.0 else (3 if sign_idx % 2 == 0 else 4)
+        for division in (3, 7, 9, 12):
+            result[division][name] = varga_map(sign_idx, min(division - 1, int(degree / (30.0 / division))), division)
+        result[30][name] = _d30_sign(sign_idx, degree)
+    return result
+
+
+def _compound_relation_score(planet: str, owner: str, d1_signs: Dict[str, int]) -> float:
+    natural = "friend" if owner in FRIENDSHIP[planet]["friend"] else "enemy" if owner in FRIENDSHIP[planet]["enemy"] else "neutral"
+    separation = (d1_signs[owner] - d1_signs[planet]) % 12
+    temporary = "friend" if separation in {1, 2, 3, 9, 10, 11} else "enemy"
+    return {
+        ("friend", "friend"): 22.5,
+        ("neutral", "friend"): 15.0,
+        ("enemy", "friend"): 7.5,
+        ("friend", "enemy"): 7.5,
+        ("neutral", "enemy"): 3.75,
+        ("enemy", "enemy"): 1.875,
+    }[(natural, temporary)]
+
+
+def calc_sthana_bala_precise(pname: str, all_planets: Dict, house: int) -> Dict:
+    longitude = _planet_longitude(pname, all_planets)
+    degree = longitude % 30.0
+    vargas = _saptavarga_signs(all_planets)
+    scores = {}
+    for division, positions in vargas.items():
+        sign_idx = positions[pname]
+        owner = SIGN_LORDS[SIGNS[sign_idx]]
+        mt_sign, mt_start, mt_end = _MOOLATRIKONA[pname]
+        if division == 1 and sign_idx == mt_sign and mt_start <= degree < mt_end:
+            score = 45.0
+        elif owner == pname:
+            score = 30.0
+        else:
+            score = _compound_relation_score(pname, owner, vargas[1])
+        scores[f"sapta_d{division}"] = score
+
+    offset = (longitude - DEBILITATION_DEG[pname]) % 360.0
+    ucha_bala = round(min(offset, 360.0 - offset) / 3.0, 2)
+    wants_even = pname in {"Moon", "Venus"}
+    ojayugma = 15.0 * sum((vargas[division][pname] % 2 == 1) == wants_even for division in (1, 9))
+    kendra_bala = 60.0 if house in (1, 4, 7, 10) else 30.0 if house in (2, 5, 8, 11) else 15.0
+    drekkana_bala = 15.0 if (
+        (pname in {"Sun", "Mars", "Jupiter"} and degree < 10.0)
+        or (pname in {"Mercury", "Saturn"} and 10.0 <= degree < 20.0)
+        or (pname in {"Moon", "Venus"} and degree >= 20.0)
+    ) else 0.0
+    sapta_score = round(sum(scores.values()), 2)
+    return {
+        "ucha_bala": ucha_bala,
+        **scores,
+        "sapta_score": sapta_score,
+        "ojayugma_bala": ojayugma,
+        "kendra_bala": kendra_bala,
+        "drekkana_bala": drekkana_bala,
+        "total": round(ucha_bala + sapta_score + ojayugma + kendra_bala + drekkana_bala, 2),
+    }
+
+
+def _lagrange_interpolate(xs: tuple[float, ...], ys: tuple[float, ...], value: float) -> float:
+    total = 0.0
+    for i, x_i in enumerate(xs):
+        term = ys[i]
+        for j, x_j in enumerate(xs):
+            if i != j:
+                term *= (value - x_j) / (x_i - x_j)
+        total += term
+    return total
+
+
+def _ayana_bala(pname: str, longitude: float, ayanamsa: float) -> tuple[float, float]:
+    raw_tropical = longitude + ayanamsa
+    tropical = raw_tropical % 360.0
+    north = raw_tropical < 180.0
+    folded = tropical
+    if 90.0 < tropical < 180.0:
+        folded = 180.0 - tropical
+    elif 180.0 < tropical < 270.0:
+        folded = tropical - 180.0
+    elif tropical > 270.0:
+        folded = 360.0 - tropical
+    sign = 1.0
+    if north and pname in {"Moon", "Saturn"}:
+        sign = -1.0
+    elif not north and pname in {"Sun", "Mars", "Jupiter", "Venus"}:
+        sign = -1.0
+    if pname == "Mercury":
+        sign = 1.0
+    declination = sign * _lagrange_interpolate(
+        (0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0),
+        (0.0, 362 / 60.0, 703 / 60.0, 1002 / 60.0, 1238 / 60.0, 1388 / 60.0, 24.0),
+        round(folded, 2),
+    )
+    bala = round((24.0 + declination) * 1.25, 2)
+    if pname == "Sun":
+        bala = round(bala * 2.0, 2)
+    return bala, round(declination, 4)
+
+
+def _days_elapsed_since_base(year: int, base_year: int = 1951, base_days: int = 174) -> int:
+    years = year - base_year
+    leap_years = sum(1 for value in range(base_year + 1, year + 1) if value % 4 == 0 and (value % 100 != 0 or value % 400 == 0))
+    return base_days + leap_years * 366 + (years - leap_years) * 365
+
+
+def _calendar_lords(context: Dict) -> Dict[str, str]:
+    year, month, day = context["year"], context["month"], context["day"]
+    local_jd = context["jd_local"]
+    year_start = swe.julday(year, 1, 1, 0.0, swe.GREG_CAL)
+    elapsed = int(local_jd - year_start + 1.0)
+    ahargana = _days_elapsed_since_base(year - 1) + elapsed
+    abda = _ABDA_WEEKDAY_PLANETS[(int(ahargana // 360) * 3 + 1) % 7]
+    masa = _ABDA_WEEKDAY_PLANETS[(int(ahargana // 30) * 2 + 1) % 7]
+
+    vaara_ahargana = _days_elapsed_since_base(year - 1, 1827, 244) + elapsed
+    if context["local_hour"] < context["sunrise_hour"]:
+        vaara_ahargana -= 1
+    vaara = _ABDA_WEEKDAY_PLANETS[int(vaara_ahargana) % 7]
+
+    civil_weekday = int(math.ceil(local_jd + 1.0) % 7)
+    local_hour = context["local_hour"]
+    if local_hour < context["sunrise_hour"]:
+        civil_weekday = (civil_weekday - 1) % 7
+        local_hour += 24.0
+    hora_index = (int(local_hour - context["sunrise_hour"]) + civil_weekday + 1) % 7
+    return {"abda": abda, "masa": masa, "vaara": vaara, "hora": _HORA_ORDER[hora_index]}
+
+
+def calc_kala_bala_precise(pname: str, all_planets: Dict, context: Dict) -> Dict:
+    """Classical temporal strength from local solar events and calendar lords."""
+    local_hour = context["local_hour"]
+    midnight = (context["sunrise_hour"] + context["previous_sunset_hour"]) / 2.0
+    midnight = 12.0 - midnight if midnight < 12.0 else midnight - 12.0
+    unnata = (local_hour - midnight) * 5.0 if local_hour < 12.0 else (24.0 + midnight - local_hour) * 5.0
+    if pname == "Mercury":
+        nathonnata = 60.0
+    elif pname in {"Sun", "Jupiter", "Venus"}:
+        nathonnata = round(unnata, 2)
+    else:
+        nathonnata = round(60.0 - unnata, 2)
+
+    benefics, malefics = classify_drik_planets(all_planets)
+    phase = round(abs(_planet_longitude("Sun", all_planets) - _planet_longitude("Moon", all_planets)) / 3.0, 2)
+    paksha = phase if pname in benefics else round(60.0 - phase, 2) if pname in malefics else 0.0
+    if pname == "Moon":
+        paksha = round(paksha * 2.0, 2)
+
+    sunrise, sunset = context["sunrise_hour"], context["sunset_hour"]
+    day_length = sunset - sunrise
+    night_length = 24.0 - day_length
+    tribhaga_lord = None
+    if sunrise <= local_hour < sunset:
+        tribhaga_lord = ("Mercury", "Sun", "Saturn")[min(2, int((local_hour - sunrise) / (day_length / 3.0)))]
+    else:
+        since_sunset = (local_hour - sunset) % 24.0
+        tribhaga_lord = ("Moon", "Venus", "Mars")[min(2, int(since_sunset / (night_length / 3.0)))]
+    tribhaga = 60.0 if pname in {"Jupiter", tribhaga_lord} else 0.0
+
+    lords = _calendar_lords(context)
+    calendar = (15.0 if pname == lords["abda"] else 0.0) + (30.0 if pname == lords["masa"] else 0.0) + (45.0 if pname == lords["vaara"] else 0.0) + (60.0 if pname == lords["hora"] else 0.0)
+    ayana, declination = _ayana_bala(pname, _planet_longitude(pname, all_planets), context["ayanamsa_degrees"])
+    total = round(nathonnata + paksha + tribhaga + calendar + ayana, 2)
+    return {
+        "nathonnata": nathonnata, "paksha": paksha, "tribhaga": tribhaga,
+        "abda": 15.0 if pname == lords["abda"] else 0.0,
+        "masa": 30.0 if pname == lords["masa"] else 0.0,
+        "vaara": 45.0 if pname == lords["vaara"] else 0.0,
+        "hora": 60.0 if pname == lords["hora"] else 0.0,
+        "ayana": ayana, "declination": declination, "yuddha": 0.0,
+        "total": total,
+    }
+
+
+def _surya_mean_longitude(pname: str, context: Dict) -> float:
+    """Surya Siddhanta mean motion with desantara correction from Ujjain."""
+    local_jd = context["jd_local"]
+    kali_days = int(local_jd - 588_465.0)
+    weekday = int(math.ceil(local_jd + 1.0) % 7)
+    kali_days += weekday - 5 - kali_days % 7
+    daily_motion = round(_SURYA_REVOLUTIONS[pname] / _SURYA_CIVIL_DAYS * 360.0, 7)
+    mean_longitude = (kali_days * daily_motion) % 360.0
+    desantara = (_UJJAIN_LONGITUDE - context["lon"]) / 360.0 * daily_motion
+    return (mean_longitude + desantara) % 360.0
+
+
+def calc_chesta_bala_precise(pname: str, all_planets: Dict, kala: Dict, context: Dict) -> float:
+    """BPHS bounded Chesta Bala using mean motion and Seeghrochcha.
+
+    Mean-motion/Seeghrochcha structure and constants are adapted from the MIT
+    jyotishganit reference retained under references/open_source_sources.
+    """
+    if pname == "Sun":
+        return round(float(kala["ayana"]), 2)
+    if pname == "Moon":
+        return round(float(kala["paksha"]), 2)
+    sun_mean = _surya_mean_longitude("Sun", context)
+    planet_mean = _surya_mean_longitude(pname, context)
+    if pname in {"Mercury", "Venus"}:
+        seeghrochcha, mean_longitude = planet_mean, sun_mean
+    else:
+        seeghrochcha, mean_longitude = sun_mean, planet_mean
+    average_longitude = (_planet_longitude(pname, all_planets) + mean_longitude) / 2.0
+    chesta_kendra = abs(seeghrochcha - average_longitude)
+    if chesta_kendra > 180.0:
+        chesta_kendra = 360.0 - chesta_kendra
+    return round(max(0.0, chesta_kendra) / 3.0, 2)
 
 
 def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
                   sun_lon: float, moon_lon: float,
-                  birth_minute: float = 0.0) -> Dict:
+                  birth_minute: float = 0.0, context: Dict | None = None) -> Dict:
     """
     计算 Shadbala 相对强弱参考（covered；外部绝对值校准前保留置信度上限）
 
@@ -152,10 +519,10 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
         retro = p.get('retrograde', False)
         speed = p.get('speed', 1.0)
 
-        sthana = calc_sthana_bala(pname, lon, sign, house)
-        dig = calc_dig_bala(pname, house)
-        kala = calc_kala_bala(pname, is_night, sun_northern, sun_lon, moon_lon, birth_hour, birth_minute)
-        chesta = calc_chesta_bala(pname, retro, speed, sun_lon, moon_lon)
+        sthana = calc_sthana_bala_precise(pname, planets, house)
+        dig = calc_dig_bala_precise(pname, lon, context["house_midpoints"]) if context and context.get("house_midpoints") else calc_dig_bala(pname, house)
+        kala = calc_kala_bala_precise(pname, planets, context) if context else calc_kala_bala(pname, is_night, sun_northern, sun_lon, moon_lon, birth_hour, birth_minute)
+        chesta = calc_chesta_bala_precise(pname, planets, kala, context) if context else calc_chesta_bala(pname, retro, speed, sun_lon, moon_lon)
         naisargika = NAISARGIKA_BALA.get(pname, 30.0)
         drik = calc_drik_bala(pname, sign, house, planets)
 
@@ -176,10 +543,10 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
         retro = p.get('retrograde', False)
         speed = p.get('speed', 1.0)
 
-        sthana = calc_sthana_bala(pname, lon, sign, house)
-        dig = calc_dig_bala(pname, house)
-        kala = calc_kala_bala(pname, is_night, sun_northern, sun_lon, moon_lon, birth_hour, birth_minute)
-        chesta = calc_chesta_bala(pname, retro, speed, sun_lon, moon_lon)
+        sthana = calc_sthana_bala_precise(pname, planets, house)
+        dig = calc_dig_bala_precise(pname, lon, context["house_midpoints"]) if context and context.get("house_midpoints") else calc_dig_bala(pname, house)
+        kala = calc_kala_bala_precise(pname, planets, context) if context else calc_kala_bala(pname, is_night, sun_northern, sun_lon, moon_lon, birth_hour, birth_minute)
+        chesta = calc_chesta_bala_precise(pname, planets, kala, context) if context else calc_chesta_bala(pname, retro, speed, sun_lon, moon_lon)
         naisargika = NAISARGIKA_BALA.get(pname, 30.0)
         drik = calc_drik_bala(pname, sign, house, planets)
 
@@ -229,7 +596,12 @@ def calc_shadbala(planets: Dict, asc_sign: str, birth_hour: float,
     bhava_bala = calc_bhava_bala(planets, asc_sign)
 
     return {
-        'method': 'Shadbala六重力量（v6.9.15: absolute Rupas, Kendra三档+Bhava Bala+Hora Lord+Seeghrochcha Sun）',
+        'method': 'Shadbala六重力量（absolute Virupas; precise Sthana/Dig/Kala/Drik; bounded BPHS Chesta）',
+        'method_variants': {
+            'kala': 'bphs_local_solar_events_ahargana_declination' if context else 'legacy_approximation',
+            'chesta': 'bphs_bounded_surya_mean_motion_seeghrochcha' if context else 'legacy_speed_bands',
+        },
+        'external_parity_boundary': 'Chesta remains cross-engine method-conflicted; totals inherit that boundary.',
         'is_night_birth': is_night,
         'sun_uttarayana': sun_northern,
         'planets': results,
@@ -737,52 +1109,8 @@ def calc_yuddha_bala(planets: Dict) -> Dict:
 
 def calc_drik_bala(pname: str, sign: str, house: int,
                    all_planets: Dict) -> float:
-    """Drik Bala（相位力量），基于精确度数差(Sputa Drishti)计算。
-    v6.1.13: 升级为基于精确角距离的Sputa Drishti（替代简化宫位差）"""
-    drik = 0.0
-    p_sign_idx = SIGNS.index(sign) if sign in SIGNS else 0
-    p_degree_in_sign = (all_planets[pname].get('degree', 0) if pname in all_planets else 0) % 30
-    p_lon = p_sign_idx * 30 + p_degree_in_sign
-
-    for other_name, other_data in all_planets.items():
-        if other_name == pname or other_name == 'Rahu' or other_name == 'Ketu':
-            continue
-
-        other_sign = other_data.get('sign', '')
-        if other_sign not in SIGNS:
-            continue
-        other_sign_idx = SIGNS.index(other_sign)
-        other_deg_in_sign = other_data.get('degree', 0) % 30
-        other_lon = other_sign_idx * 30 + other_deg_in_sign
-
-        # 计算精确角度差
-        diff = abs(p_lon - other_lon)
-        if diff > 180:
-            diff = 360 - diff
-
-        # 检查传统相位规则（7宫=180°冲，特殊相位=Mars4/8, Jupiter5/9, Saturn3/10）
-        has_aspect = False
-        house_diff = (p_sign_idx - other_sign_idx) % 12 + 1
-        if house_diff == 7 or house_diff == 1:
-            has_aspect = True
-        if other_name in SPECIAL_ASPECTS:
-            if house_diff in SPECIAL_ASPECTS[other_name]:
-                has_aspect = True
-
-        if not has_aspect:
-            continue
-
-        # 使用Sputa Drishti计算相位力量 (0-1) → 缩放为0-60 Virupas
-        sputa_value = _get_sputa_drishti_value(diff, other_name)
-
-        if other_name in BENEFICS:
-            drik += sputa_value * 60.0
-        elif other_name in MALEFICS:
-            drik -= sputa_value * 60.0
-        else:
-            drik += sputa_value * 30.0  # 中性行星
-
-    return max(-60.0, min(60.0, drik))
+    """Compatibility wrapper for the continuous Sphuta Drishti calculation."""
+    return calc_drik_bala_precise(pname, all_planets)
 
 
 # ============================================================================

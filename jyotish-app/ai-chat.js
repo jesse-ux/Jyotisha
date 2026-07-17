@@ -116,6 +116,11 @@ function createPanel() {
       </div>
     </div>
     <div class="ai-messages" id="ai-messages">
+      <div class="daily-star-card" id="daily-star-card">
+        <div class="daily-star-kicker">今日星语</div>
+        <div class="daily-star-text">选择或保存星盘后，会根据本命盘与今日星象生成一句可追溯依据的开运建议。</div>
+        <div class="daily-star-evidence">依据：D1 · 当前大运 · 今日月亮过境</div>
+      </div>
       <div class="ai-msg system">${t('ai.welcome')}</div>
     </div>
     <div class="ai-input-area">
@@ -135,9 +140,11 @@ function createPanel() {
   });
   _panelEl.querySelector('#ai-chart-selector').addEventListener('change', e => {
     _selectedChartId = e.target.value;
+    refreshDailyStarCard();
   });
 
   refreshChartSelect();
+  refreshDailyStarCard();
 }
 
 function togglePanel() {
@@ -228,6 +235,44 @@ function getSelectedChartData() {
   const lib = getLibrary();
   const entry = lib.find(e => e.id === sel.value);
   return entry?.data || _currentChartData;
+}
+
+
+async function refreshDailyStarCard() {
+  const card = _panelEl?.querySelector('#daily-star-card');
+  if (!card) return;
+  const textEl = card.querySelector('.daily-star-text');
+  const evidenceEl = card.querySelector('.daily-star-evidence');
+  const chart = getSelectedChartData();
+  if (!chart) {
+    textEl.textContent = '选择或保存星盘后，会根据本命盘与今日星象生成一句可追溯依据的开运建议。';
+    evidenceEl.textContent = '依据：D1 · 当前大运 · 今日月亮过境';
+    return;
+  }
+  textEl.textContent = '正在读取今日星象...';
+  try {
+    const payload = { chart_data: chart, date: new Date().toISOString().slice(0, 10) };
+    const api = window.JyotishAPI;
+    let result = null;
+    if (api?.computeDailyGuidance) {
+      result = await api.computeDailyGuidance(payload);
+    } else {
+      const base = api?.apiBase || '';
+      const res = await fetch(`${base}/api/daily_guidance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      result = await res.json();
+    }
+    if (!result?.success) throw new Error(result?.error || 'daily guidance unavailable');
+    textEl.textContent = result.daily_star_words || '今日适合稳步推进，把重要事情拆小完成。';
+    const used = (result.evidence || []).filter(item => item.status === 'used').map(item => item.layer);
+    evidenceEl.textContent = `依据：${used.length ? used.join(' · ') : 'D1 · 今日过境'}`;
+  } catch (error) {
+    textEl.textContent = '今天适合先完成一件小事，再推进重要计划。把话说清、把事做稳，好运来自主动连接。';
+    evidenceEl.textContent = '依据：本命盘 · 今日过境（服务暂不可用，已降级）';
+  }
 }
 
 // ============================================================================

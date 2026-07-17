@@ -8,9 +8,18 @@ import subprocess
 import sys
 from pathlib import Path
 
+import scripts.skill_gap_truth_audit as audit
+
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "references" / "skill_gap_truth_registry.json"
+
+
+def test_quarantined_local_draft_sources_do_not_break_clean_release_audit() -> None:
+    registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    problems = audit._validate_registry(registry)
+
+    assert not any(problem.startswith("correction:missing_source_ref:docs/research/local_drafts/") for problem in problems)
 
 
 def test_skill_gap_truth_registry_lists_hard_fronts_and_past_corrections() -> None:
@@ -68,7 +77,7 @@ def test_skill_gap_truth_audit_outputs_current_truth_boundary() -> None:
     assert report["summary"]["capability_valid"] is True
     assert report["summary"]["hard_front_count"] >= 5
     assert report["summary"]["pyjhora_artifact_count"] >= 8
-    assert report["summary"]["pyjhora_packet_count"] >= 8
+    assert report["summary"]["pyjhora_packet_count"] >= 6
     assert report["public_claim"]["can_claim_global_first"] is False
     assert report["public_claim"]["can_claim_all_skills_complete"] is False
     assert report["public_claim"]["can_claim_perfect_accuracy"] is False

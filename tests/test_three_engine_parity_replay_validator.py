@@ -12,14 +12,16 @@ from scripts.three_engine_parity_replay_validator import validate_manifest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_three_engine_parity_manifest_passes_d1_with_vedastro_and_pyjhora_raw() -> None:
+def test_three_engine_parity_manifest_exposes_raw_coverage_and_formula_mismatches() -> None:
     result = validate_manifest(ROOT / "references/oracle/three_engine_parity_replay_manifest.json")
 
-    assert result["status"] == "pass"
-    assert result["comparison_row_count"] == 15
-    assert result["match_count"] == 14
+    assert result["status"] == "mismatch"
+    assert result["comparison_row_count"] == 92
+    assert result["match_count"] == 32
+    assert result["mismatch_count"] == 60
     assert result["tested"] is True
     assert result["blocked_reason"] is None
+    assert result["missing_high_rigor_sections"] == []
 
 
 def test_three_engine_parity_validator_accepts_one_same_chart_row(tmp_path: Path) -> None:
@@ -54,7 +56,8 @@ def test_three_engine_parity_validator_accepts_one_same_chart_row(tmp_path: Path
 
     result = validate_manifest(path)
 
-    assert result["status"] == "pass"
+    assert result["status"] == "partial"
+    assert result["blocked_reason"] == "missing_high_rigor_sections"
     assert result["tested"] is True
     assert result["comparison_row_count"] == 1
     assert result["match_count"] == 1

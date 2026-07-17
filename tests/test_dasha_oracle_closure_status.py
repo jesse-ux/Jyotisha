@@ -36,8 +36,8 @@ def test_dasha_oracle_closure_status_reports_current_dasha_closure() -> None:
     report = json.loads(completed.stdout)
     assert report["scope"] == "dasha_external_oracle_closure_status"
     assert report["schema_version"] == 1
-    assert report["summary"]["dasha_task_count"] == 3
-    assert report["summary"]["external_verified_dasha_tasks"] == 3
+    assert report["summary"]["dasha_task_count"] == 2
+    assert report["summary"]["external_verified_dasha_tasks"] == 2
     assert report["summary"]["can_claim_dasha_oracle_closure"] is True
     assert report["first_priority"] is None
 
@@ -91,7 +91,7 @@ def test_dasha_oracle_closure_status_advances_after_first_packet_is_filled(tmp_p
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["valid_dasha_packets"] == 3
+    assert report["summary"]["valid_dasha_packets"] == 2
     assert report["summary"]["all_dasha_packets_external_verified"] is True
 
 
@@ -100,7 +100,7 @@ def test_dasha_oracle_closure_status_has_no_first_priority_after_all_dasha_packe
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     report = json.loads(completed.stdout)
-    assert report["summary"]["external_verified_dasha_tasks"] == 3
+    assert report["summary"]["external_verified_dasha_tasks"] == 2
     assert report["summary"]["can_claim_dasha_oracle_closure"] is True
     assert report["first_priority"] is None
     assert report["next_actions"] == [

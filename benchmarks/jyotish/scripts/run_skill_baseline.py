@@ -111,6 +111,17 @@ def canonicalize(sample, data):
             'sav': [safe_get(modules, 'ashtakavarga', 'sav', 'scores', sign) for sign in ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']],
         },
         'shadbala': {name: safe_get(modules, 'shadbala', 'planets', name, 'total_virupas') for name in PLANETS[:7]},
+        'shadbala_components': {
+            name: {
+                'sthana': safe_get(modules, 'shadbala', 'planets', name, 'sthana_bala', 'total'),
+                'kala': safe_get(modules, 'shadbala', 'planets', name, 'kala_bala', 'total'),
+                'dig': safe_get(modules, 'shadbala', 'planets', name, 'dig_bala'),
+                'chesta': safe_get(modules, 'shadbala', 'planets', name, 'chesta_bala'),
+                'naisargika': safe_get(modules, 'shadbala', 'planets', name, 'naisargika_bala'),
+                'drik': safe_get(modules, 'shadbala', 'planets', name, 'drik_bala'),
+            }
+            for name in PLANETS[:7]
+        },
         'dasha': {
             'mahadasha_lord': current.get('lord'),
             'mahadasha_start': current.get('start'),

@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import argparse
+
 import json
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -75,12 +77,21 @@ def build_manifest() -> dict[str, Any]:
             "pending oracle packets without importing AGPL code into the local skill implementation."
         ),
     }
-    OUTPUT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return report
 
 
-def main() -> int:
-    print(json.dumps(build_manifest(), ensure_ascii=False, indent=2))
+def write_manifest(output_path: Path = OUTPUT_PATH) -> dict[str, Any]:
+    report = build_manifest()
+    output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return report
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--write", action="store_true", help="Write the tracked manifest after building it.")
+    args = parser.parse_args(argv)
+    report = write_manifest() if args.write else build_manifest()
+    print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0
 
 

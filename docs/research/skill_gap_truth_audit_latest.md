@@ -1,6 +1,6 @@
 # Jyotish Skill Gap Truth Audit
 
-Generated: `2026-07-01T11:37:25.807944+00:00`
+Generated: `2026-07-17T07:10:34.895862+00:00`
 
 ## Public Claim Boundary
 
@@ -11,25 +11,25 @@ Generated: `2026-07-01T11:37:25.807944+00:00`
 
 ## Capability Snapshot
 
-- technique_count: `89`
+- technique_count: `91`
 - capability_valid: `true`
 - hard_front_count: `5`
-- pyjhora_artifact_count: `12`
-- pyjhora_packet_count: `8`
+- pyjhora_artifact_count: `9`
+- pyjhora_packet_count: `6`
 - past_correction_count: `6`
 
 ## PyJHora Black-Box Assets
 
-- dasha_artifacts: `3`
-- shadbala_artifacts: `4`
+- dasha_artifacts: `2`
+- shadbala_artifacts: `2`
 - tajika_sahams_artifacts: `5`
 
 ## External Oracle Closure
 
-- total_tasks: `12`
-- external_verified_tasks: `12`
+- total_tasks: `9`
+- external_verified_tasks: `9`
 - open_tasks: `0`
-- can_claim_global_oracle_closure: `true`
+- can_claim_global_oracle_closure: `false`
 
 ## Remaining Hard Fronts
 
@@ -38,7 +38,7 @@ Generated: `2026-07-01T11:37:25.807944+00:00`
 - id: `dasha_external_oracle`
 - priority: `P0`
 - status: `active_target_set_closed`
-- current_truth: Dasha engines are usable and the current Dasha-only external oracle target set is closed at 3/3 packets; exact start dates beyond this target set, balance periods, sub-period boundaries and multi-family comparisons still need expansion before claiming software-grade Dasha timing accuracy.
+- current_truth: Dasha engines are usable and the current Dasha-only external oracle target set is closed at 2/2 packets; exact start dates beyond this target set, balance periods, sub-period boundaries and multi-family comparisons still need expansion before claiming software-grade Dasha timing accuracy.
 
 ### Long-term public benchmark
 
@@ -52,7 +52,7 @@ Generated: `2026-07-01T11:37:25.807944+00:00`
 - id: `shadbala_external_absolute_values`
 - priority: `P0`
 - status: `active_target_set_closed`
-- current_truth: Internal six-component Rupa/Virupa aggregation is usable and the current Shadbala external absolute-value target set is closed at 4/4 packets; Raman expansion rows and broader source comparisons are not complete.
+- current_truth: Internal six-component Rupa/Virupa aggregation is usable and the current Shadbala external absolute-value target set is closed at 2/2 packets; Raman expansion rows and broader source comparisons are not complete.
 
 ### Tajika / Sahams annual closure
 

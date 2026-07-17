@@ -1,0 +1,217 @@
+{
+  "assembly_informational_version": "1.2.0",
+  "assembly_version": "1.2.0.0",
+  "boundary": "The signed NuGet library is reproducible and pinned, but it is not an identity for api.vedastro.org and does not include hosted databases/routes.",
+  "container_base": "mcr.microsoft.com/dotnet/sdk:7.0@sha256:d32bd65cf5843f413e81f5d917057c82da99737cb1637e905a1a4bc2e7ec6c8d",
+  "hosted_api_identity_status": "blocked",
+  "library_dll_sha256": "e4ec61b07ac1c15fcc65d9ffdc54bc2d26497597760572e2888f1992fc7b1ca8",
+  "license": "MIT",
+  "package": "VedAstro.Library",
+  "package_sha256": "f753df4e76c75b9ad219c2f5a8fe4b17361065d6f4fa1198897cf117b7bc55d5",
+  "package_url": "https://api.nuget.org/v3-flatcontainer/vedastro.library/1.2.0/vedastro.library.1.2.0.nupkg",
+  "public_method_contracts": [
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetAllPlanetFixedLongitude",
+      "parameters": [
+        {
+          "Name": "time",
+          "type": "VedAstro.Library.Time"
+        }
+      ],
+      "returns": "System.Collections.Generic.List`1[[VedAstro.Library.PlanetLongitude, VedAstro.Library, Version=1.2.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetAllPlanetLongitude",
+      "parameters": [
+        {
+          "Name": "time",
+          "type": "VedAstro.Library.Time"
+        }
+      ],
+      "returns": "System.Collections.Generic.List`1[[VedAstro.Library.PlanetLongitude, VedAstro.Library, Version=1.2.0.0, Culture=neutral, PublicKeyToken=null]]"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetConstellationAtLongitude",
+      "parameters": [
+        {
+          "Name": "planetLongitude",
+          "type": "VedAstro.Library.Angle"
+        }
+      ],
+      "returns": "VedAstro.Library.PlanetConstellation"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetHouse1And10Longitudes",
+      "parameters": [
+        {
+          "Name": "time",
+          "type": "VedAstro.Library.Time"
+        }
+      ],
+      "returns": "System.Double[]"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetLongitudeAtZodiacSign",
+      "parameters": [
+        {
+          "Name": "zodiacSign",
+          "type": "VedAstro.Library.ZodiacSign"
+        }
+      ],
+      "returns": "VedAstro.Library.Angle"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetNavamsaSignNameFromLongitude",
+      "parameters": [
+        {
+          "Name": "longitude",
+          "type": "VedAstro.Library.Angle"
+        }
+      ],
+      "returns": "VedAstro.Library.ZodiacName"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetPlanetNirayanaLongitude",
+      "parameters": [
+        {
+          "Name": "time",
+          "type": "VedAstro.Library.Time"
+        },
+        {
+          "Name": "planetName",
+          "type": "VedAstro.Library.PlanetName"
+        }
+      ],
+      "returns": "VedAstro.Library.Angle"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetPlanetRasiSign",
+      "parameters": [
+        {
+          "Name": "planetName",
+          "type": "VedAstro.Library.PlanetName"
+        },
+        {
+          "Name": "time",
+          "type": "VedAstro.Library.Time"
+        }
+      ],
+      "returns": "VedAstro.Library.ZodiacSign"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetPlanetSayanaLongitude",
+      "parameters": [
+        {
+          "Name": "time",
+          "type": "VedAstro.Library.Time"
+        },
+        {
+          "Name": "planetName",
+          "type": "VedAstro.Library.PlanetName"
+        }
+      ],
+      "returns": "VedAstro.Library.Angle"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetPlanetShadbalaPinda",
+      "parameters": [
+        {
+          "Name": "planetName",
+          "type": "VedAstro.Library.PlanetName"
+        },
+        {
+          "Name": "time",
+          "type": "VedAstro.Library.Time"
+        }
+      ],
+      "returns": "VedAstro.Library.Shashtiamsa"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "GetZodiacSignAtLongitude",
+      "parameters": [
+        {
+          "Name": "longitude",
+          "type": "VedAstro.Library.Angle"
+        }
+      ],
+      "returns": "VedAstro.Library.ZodiacSign"
+    },
+    {
+      "declaring_type": "VedAstro.Library.MatchCalculator",
+      "name": "RasiKuta",
+      "parameters": [
+        {
+          "Name": "male",
+          "type": "VedAstro.Library.Person"
+        },
+        {
+          "Name": "female",
+          "type": "VedAstro.Library.Person"
+        }
+      ],
+      "returns": "VedAstro.Library.Compatibility.CompatibilityPrediction"
+    },
+    {
+      "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+      "name": "TimeToLongitude",
+      "parameters": [
+        {
+          "Name": "time",
+          "type": "System.TimeSpan"
+        }
+      ],
+      "returns": "VedAstro.Library.Angle"
+    },
+    {
+      "declaring_type": "VedAstro.Library.Time",
+      "name": "TimeToLongitude",
+      "parameters": [
+        {
+          "Name": "time",
+          "type": "System.TimeSpan"
+        }
+      ],
+      "returns": "VedAstro.Library.Angle"
+    }
+  ],
+  "public_methods": [
+    "GetAllPlanetFixedLongitude",
+    "GetAllPlanetLongitude",
+    "GetConstellationAtLongitude",
+    "GetHouse1And10Longitudes",
+    "GetLongitudeAtZodiacSign",
+    "GetNavamsaSignNameFromLongitude",
+    "GetPlanetNirayanaLongitude",
+    "GetPlanetRasiSign",
+    "GetPlanetSayanaLongitude",
+    "GetPlanetShadbalaPinda",
+    "GetZodiacSignAtLongitude",
+    "RasiKuta",
+    "TimeToLongitude"
+  ],
+  "repository": "https://github.com/VedAstro/VedAstro",
+  "runtime_image_digest": "sha256:d32bd65cf5843f413e81f5d917057c82da99737cb1637e905a1a4bc2e7ec6c8d",
+  "runtime_image_id": "sha256:ea4f5eec20952a885a89566fc35cf3295b3228375b715a0f1af9e5a3c0c2eebf",
+  "runtime_methods_verified": [
+    "GetAllPlanetLongitude",
+    "GetPlanetNirayanaLongitude",
+    "GetPlanetRasiSign",
+    "GetPlanetShadbalaPinda"
+  ],
+  "runtime_probe": "benchmarks/vedastro_nuget_probe",
+  "scope": "vedastro_reproducible_library_candidate",
+  "status": "reproducible_library_executable_verified",
+  "target_framework": "net7.0",
+  "version": "1.2.0"
+}

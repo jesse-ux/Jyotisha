@@ -41,7 +41,7 @@ def test_external_official_sanity_closure_reports_all_three_oracles() -> None:
     pyjhora = report["oracle_ledger"]["pyjhora"]
     assert pyjhora["role"] == "black_box_external_oracle"
     assert pyjhora["artifact_count"] >= 8
-    assert pyjhora["packet_count"] >= 8
+    assert pyjhora["packet_count"] >= 6
     assert pyjhora["license_boundary"] == "black_box_artifacts_only_no_agpl_code_import"
 
     jyotishganit = report["oracle_ledger"]["jyotishganit"]

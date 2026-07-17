@@ -2,9 +2,14 @@ from __future__ import annotations
 
 from scripts.public_real_case_negative_controls import (
     generate_control_dates,
+    parse_offsets,
     rank_positive_against_controls,
     summarize_negative_control_rows,
 )
+
+
+def test_parse_offsets_rejects_zero_and_deduplicates() -> None:
+    assert parse_offsets("-60,-30,0,30,60,-30") == (-60, -30, 30, 60)
 
 
 def test_generate_control_dates_uses_fixed_offsets_without_positive_date() -> None:
@@ -47,7 +52,10 @@ def test_negative_control_summary_reports_false_activations() -> None:
     assert summary["control_date_count"] == 4
     assert summary["control_activation_rate"] == 0.5
     assert summary["control_strong_activation_rate"] == 0.25
+    assert summary["specificity_proxy"] == 0.5
+    assert summary["strong_specificity_proxy"] == 0.75
     assert summary["positive_top_1_rate"] == 0.5
     assert summary["positive_top_3_rate"] == 1.0
     assert summary["mean_reciprocal_rank"] == 0.75
     assert summary["mean_score_margin"] == 0.5
+    assert summary["timing_precision_gate"]["status"] == "blocked"

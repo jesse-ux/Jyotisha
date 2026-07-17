@@ -38,19 +38,19 @@ def test_public_benchmark_dashboard_outputs_stable_json_summary() -> None:
     assert report["schema_version"] == 1
     assert report["summary"]["technique_count"] >= 60
     assert report["summary"]["capability_valid"] is True
-    assert report["oracle_readiness"]["total_packets"] == 6
-    assert report["oracle_readiness"]["valid_packets"] == 5
-    assert report["oracle_readiness"]["ready_for_calibration"] == 5
+    assert report["oracle_readiness"]["total_packets"] == 4
+    assert report["oracle_readiness"]["valid_packets"] == 3
+    assert report["oracle_readiness"]["ready_for_calibration"] == 3
     assert report["oracle_readiness"]["production_tuning_allowed"] is False
-    assert report["dasha_oracle_readiness"]["valid_dasha_packets"] == 3
-    assert report["dasha_oracle_readiness"]["total_dasha_packets"] == 3
+    assert report["dasha_oracle_readiness"]["valid_dasha_packets"] == 2
+    assert report["dasha_oracle_readiness"]["total_dasha_packets"] == 2
     assert report["boundary_audit"]["production_tuning_recommended"] is False
-    assert report["pyjhora_blackbox_assets"]["artifact_count"] >= 8
-    assert report["pyjhora_blackbox_assets"]["packet_count"] >= 8
+    assert report["pyjhora_blackbox_assets"]["artifact_count"] == 9
+    assert report["pyjhora_blackbox_assets"]["packet_count"] == 6
     assert report["pyjhora_blackbox_assets"]["fronts"]["tajika_sahams"]["artifact_count"] >= 1
-    assert "Dasha-only external oracle readiness is 3/3" in report["global_first_gap"]
-    assert "Shadbala external absolute-value readiness is 4/4" in report["global_first_gap"]
-    assert "PyJHora black-box assets are 12 artifacts / 8 packets" in report["global_first_gap"]
+    assert "Dasha-only external oracle readiness is 2/2" in report["global_first_gap"]
+    assert "Shadbala external absolute-value readiness is 2/2" in report["global_first_gap"]
+    assert "PyJHora black-box assets are 9 artifacts / 6 packets" in report["global_first_gap"]
     assert report["public_claim"]["can_claim_global_first"] is False
     assert report["public_claim"]["reason"]
 

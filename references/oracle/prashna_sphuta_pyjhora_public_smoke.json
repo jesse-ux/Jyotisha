@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "case_id": "synthetic_beijing_1990_noon_lahiri_mean",
+  "status": "local_parity_verified_single_case",
+  "birth_data_policy": "public_synthetic_smoke_only",
+  "engine": {
+    "name": "PyJHora",
+    "version": "4.8.7",
+    "license_boundary": "AGPL external benchmark only; no source code vendored"
+  },
+  "settings": {
+    "ayanamsa": "lahiri",
+    "node_mode": "mean",
+    "timezone": 8,
+    "latitude": 39.9042,
+    "longitude": 116.4074,
+    "date": "1990-01-01",
+    "time": "12:00:00"
+  },
+  "outputs": {
+    "gulika": {"sign_index": 0, "sign": "Aries", "degree_in_sign": 21.86746645438376},
+    "kunda_lagna": {"sign_index": 3, "sign": "Cancer", "degree_in_sign": 27.444477539207583},
+    "tri_sphuta": {"sign_index": 10, "sign": "Aquarius", "degree_in_sign": 15.052227332937264},
+    "chatur_sphuta": {"sign_index": 7, "sign": "Scorpio", "degree_in_sign": 1.8117419385885114},
+    "pancha_sphuta": {"sign_index": 4, "sign": "Leo", "degree_in_sign": 26.543675779058276}
+  },
+  "capture": {
+    "adapter": "PyJHora black-box calls via drik.gulika_longitude, drik.kunda_lagna and horoscope.chart.sphuta",
+    "captured_at": "2026-07-17",
+    "raw_response_available": true
+  },
+  "local_comparison": {
+    "tolerance_degrees": 0.5,
+    "status": "pass",
+    "gulika_local_longitude": 22.154273227231883,
+    "gulika_absolute_delta_degrees": 0.286806772848123,
+    "tri_sphuta_absolute_delta_degrees": 0.2931885210780365,
+    "chatur_sphuta_absolute_delta_degrees": 0.290688097340535,
+    "pancha_sphuta_absolute_delta_degrees": 0.29397742371492086
+  },
+  "boundary": "One public synthetic daytime case passes local numeric comparison within 0.5 degrees. Nighttime, weekday, latitude, and additional-location cases remain required before verdict or production tuning can be unlocked."
+}
