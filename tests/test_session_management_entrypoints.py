@@ -2,10 +2,11 @@ from pathlib import Path
 
 
 PAGE = Path("frontend/src/app/page.tsx")
+STYLES = Path("frontend/src/app/globals.css")
 
 
 def test_chat_history_management_actions_are_exposed() -> None:
-    source = PAGE.read_text(encoding="utf-8")
+    source = PAGE.read_text(encoding="utf-8") + STYLES.read_text(encoding="utf-8")
     for expected in (
         "renameSession",
         "deleteSession",
@@ -20,6 +21,7 @@ def test_chat_history_management_actions_are_exposed() -> None:
         'role="menu"',
         "closeSessionMenu",
         "Escape",
+        "focus-within",
         "置顶",
         "重命名",
         "归档",
