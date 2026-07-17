@@ -123,7 +123,7 @@ npm run build
 - 出生资料与称呼位于“账户与出生资料”面板，保存后可在同一账号的所有 Session 与其他设备间复用。
 - 账户、出生档案、聊天历史、点数和兑换记录均存储在 Supabase，并通过 RLS 限制为用户只能读取和修改自己的数据。
 - 出生地点支持中国的国家 / 省级 / 市级 / 县区四级选择，按行政区中心坐标进行星盘计算。
-- 没有每日提问次数限制。咨询开始前预扣 1 点；正常返回回答后保留该次扣点。Agent 或服务端发生同步/流式异常时会调用幂等退款；用户在首个输出分片前取消也会退款。用户在已经收到输出后主动中断，不自动退款。
+- 没有每日提问次数限制。点击发送后有 2.5 秒免费撤回窗口，此时尚未调用模型或预扣点数。窗口结束后咨询开始并预扣 1 点；首个输出分片前取消会幂等退款，已经收到输出后停止会保留现有内容并正常计费，避免部分回答被无限免费获取。
 - Agent 流式回答支持 Markdown 与 GFM 表格。
 - 首次进入空 Session 时，Agent 会在聊天区引导填写出生资料。保存后，Mastra 中的 onboarding Agent 会按照 `jyotish-vedic-astrology` Skill 生成欢迎语和事业、关系、时运三个入门问题；结果按版本缓存到 Supabase，同一用户不会在每次刷新时重复消耗模型。每次正式回答则在同一次咨询 Agent 调用中生成三个与当前解读相关的后续问题，并随 Session 保存到 Supabase。
 
@@ -174,6 +174,7 @@ supabase/migrations/20260715010000_harden_credit_rpcs.sql
 supabase/migrations/20260715020000_service_role_table_grants.sql
 supabase/migrations/20260715030000_user_profiles_chat_sessions.sql
 supabase/migrations/20260715040000_agent_onboarding_cache.sql
+supabase/migrations/20260717000000_consultation_request_lifecycle.sql
 ```
 
 迁移会创建：
@@ -183,7 +184,8 @@ supabase/migrations/20260715040000_agent_onboarding_cache.sql
 - `redemption_codes`：只保存兑换码 SHA-256 与掩码，不保存完整码。
 - `credit_transactions`：兑换、预扣、退款和模型 Token 用量流水。
 - `redeem_code`：一次性兑换，使用行锁保证同一码全局只成功一次，并记录兑换账户。
-- `reserve_credit` / `refund_credit`：仅允许服务端 `service_role` 调用，防止用户自行退款。
+- `consultation_requests`：保存每次咨询的 `reserved` / `completed` / `cancelled` 结算状态。
+- `begin_consultation_credit` / `complete_consultation_credit` / `cancel_consultation_credit`：仅允许服务端 `service_role` 调用，通过请求级事务锁保证预扣、完成与退款互斥且幂等。
 
 ### 3. 配置邮箱验证码模板
 
@@ -253,9 +255,10 @@ Vercel 上的 Next.js 不能访问你电脑的 `127.0.0.1:5200`。需要把仓�
 4. 普通账户只能兑换一次
 5. 余额为 0 时不能咨询
 6. 成功回答扣 1 点
-7. Agent/服务端发生同步或流式异常时点数退回
-8. 用户在首个输出分片前取消时点数退回
-9. 用户已经收到输出后主动取消时不自动退款
+7. Agent/服务端在首个输出前异常时点数退回；已有输出后异常会保留现有内容并正常计费
+8. 用户在 2.5 秒撤回窗口内停止时不调用模型、不扣点
+9. 撤回窗口结束后、首个输出分片前取消时点数退回
+10. 用户已经收到输出后停止时保留已有内容并正常计费
 ```
 
 ## Demo 防滥用边界

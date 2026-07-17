@@ -9,14 +9,17 @@ import {
   languageModelSettings,
 } from "@/mastra/model";
 import { blocksPromptExtraction } from "@/lib/consult-safety";
+import { CreditRpcError, runCreditRpc } from "@/lib/consultation-billing";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { streamTextResponse } from "@/lib/stream-text-response";
 import { z } from "zod";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const chatRequestSchema = consultationInputSchema.extend({
+  requestId: z.string().uuid(),
   name: z.string().trim().max(80).optional().default(""),
   history: z.array(z.object({
     role: z.enum(["user", "assistant"]),
@@ -24,82 +27,12 @@ const chatRequestSchema = consultationInputSchema.extend({
   })).max(20).default([]),
 });
 
-type StreamHooks = {
-  onComplete?: () => Promise<void>;
-  onError?: (error: unknown) => Promise<void>;
-};
-
-type CreditRpcResult = {
-  success?: boolean;
-  credits?: number;
-  error_code?: string;
-};
-
 function currentTimeContext(now = new Date()) {
   const chinaTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
     .toISOString()
     .replace("T", " ")
     .slice(0, 19);
   return `服务端当前时间（权威）：${now.toISOString()}；中国标准时间（UTC+8）：${chinaTime}。涉及“现在、今天、今年、未来几个月”等相对时间时，以此为准。`;
-}
-
-function streamTextResponse(
-  stream: AsyncIterable<string>,
-  mode: "engine" | "mastra",
-  hooks: StreamHooks = {},
-) {
-  const iterator = stream[Symbol.asyncIterator]();
-  const encoder = new TextEncoder();
-  let settled = false;
-  let emitted = false;
-
-  const body = new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      try {
-        const { done, value } = await iterator.next();
-        if (done) {
-          settled = true;
-          if (!emitted) {
-            const error = new Error("empty_stream");
-            await hooks.onError?.(error);
-            controller.error(error);
-            return;
-          }
-          await hooks.onComplete?.();
-          controller.close();
-          return;
-        }
-        if (/\S/.test(value)) emitted = true;
-        controller.enqueue(encoder.encode(value));
-      } catch (error) {
-        if (!settled) {
-          settled = true;
-          await hooks.onError?.(error);
-        }
-        controller.error(error);
-      }
-    },
-    async cancel() {
-      const refundBeforeOutput = !settled && !emitted;
-      settled = true;
-      try {
-        await iterator.return?.();
-      } finally {
-        if (refundBeforeOutput) {
-          await hooks.onError?.(new Error("stream_cancelled_before_output"));
-        }
-      }
-    },
-  });
-
-  return new Response(body, {
-    headers: {
-      "cache-control": "no-cache, no-transform",
-      "content-type": "text/plain; charset=utf-8",
-      "x-accel-buffering": "no",
-      "x-ayanam-mode": mode,
-    },
-  });
 }
 
 async function* staticTextStream(text: string) {
@@ -202,77 +135,14 @@ export async function POST(request: Request) {
   }
 
   const userId = user.id;
-  const requestId = crypto.randomUUID();
-  let refunded = false;
-  let refundInFlight: Promise<void> | null = null;
-
-  async function performRefund() {
-    if (refunded) return;
-    if (refundInFlight) return refundInFlight;
-
-    refundInFlight = (async () => {
-      let lastError = "unknown_refund_error";
-      for (let attempt = 1; attempt <= 3; attempt += 1) {
-        try {
-          const { data, error } = await accounting.rpc("refund_credit", {
-            p_user_id: userId,
-            p_request_id: requestId,
-          });
-          const result = Array.isArray(data) ? data[0] : data;
-          if (!error && result?.success) {
-            refunded = true;
-            return;
-          }
-          lastError = error?.message || result?.error_code || "refund_rejected";
-        } catch (error) {
-          lastError = error instanceof Error ? error.message : "refund_request_failed";
-        }
-
-        if (attempt < 3) {
-          await new Promise((resolve) => setTimeout(resolve, attempt * 150));
-        }
-      }
-      console.error(`[billing] refund failed for ${requestId}: ${lastError}`);
-    })();
-
-    try {
-      await refundInFlight;
-    } finally {
-      refundInFlight = null;
-    }
-  }
-
-  async function refund() {
-    await performRefund();
-  }
-
-  let reserveResult: CreditRpcResult | null = null;
-  let reserveErrorMessage = "";
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    try {
-      const { data, error } = await accounting.rpc("reserve_credit", {
-        p_user_id: userId,
-        p_request_id: requestId,
-      });
-      const result = (Array.isArray(data) ? data[0] : data) as CreditRpcResult | null;
-      if (!error && result) {
-        reserveResult = result;
-        break;
-      }
-      reserveErrorMessage = error?.message || "empty_reservation_response";
-    } catch (error) {
-      reserveErrorMessage = error instanceof Error ? error.message : "reservation_request_failed";
-    }
-
-    if (attempt < 3) {
-      await new Promise((resolve) => setTimeout(resolve, attempt * 150));
-    }
-  }
-
-  if (!reserveResult) {
-    await performRefund();
+  const requestId = parsed.data.requestId;
+  let reserveResult;
+  try {
+    reserveResult = await runCreditRpc(accounting, "begin_consultation_credit", userId, requestId);
+  } catch (error) {
+    console.error(`[billing] reservation failed for ${requestId}`, error);
     return NextResponse.json(
-      { error: "暂时无法确认咨询点数", message: reserveErrorMessage || "请稍后重试。" },
+      { error: "暂时无法确认咨询点数", message: "请稍后重试。" },
       { status: 503 },
     );
   }
@@ -288,13 +158,37 @@ export async function POST(request: Request) {
     );
   }
 
+  async function cancel() {
+    try {
+      await runCreditRpc(accounting, "cancel_consultation_credit", userId, requestId);
+    } catch (error) {
+      console.error(`[billing] cancellation failed for ${requestId}`, error);
+    }
+  }
+
+  async function complete() {
+    const result = await runCreditRpc(accounting, "complete_consultation_credit", userId, requestId);
+    if (!result.success) throw new CreditRpcError(result.error_code || "completion_rejected");
+  }
+
+  let settlement: Promise<void> | null = null;
+  function settle(action: () => Promise<void>) {
+    settlement ??= action();
+    return settlement;
+  }
+
   try {
-    const { history, name, ...toolInput } = parsed.data;
+    const { history, name } = parsed.data;
+    const toolInput = consultationInputSchema.parse(parsed.data);
 
     if (!languageModelSettings.configured) {
       const evidence = await runConsultationWorkflow(toolInput);
-      return streamTextResponse(staticTextStream(engineSummary(evidence)), "engine", {
-        onError: refund,
+      return streamTextResponse(staticTextStream(engineSummary(evidence)), {
+        mode: "engine",
+        requestId,
+        onComplete: () => settle(complete),
+        onError: (_error, emitted) => settle(emitted ? complete : cancel),
+        onCancel: (emitted) => settle(emitted ? complete : cancel),
       });
     }
 
@@ -313,12 +207,20 @@ export async function POST(request: Request) {
         ].filter(Boolean).join("\n"),
       },
     ]);
-    return streamTextResponse(result.textStream, "mastra", {
-      onComplete: () => recordModelUsage(accounting, userId, requestId, result.totalUsage),
-      onError: refund,
+    const completeAndRecordUsage = async () => {
+      await complete();
+      void recordModelUsage(accounting, userId, requestId, result.totalUsage);
+    };
+    const settleInterrupted = (emitted: boolean) => settle(emitted ? completeAndRecordUsage : cancel);
+    return streamTextResponse(result.textStream, {
+      mode: "mastra",
+      requestId,
+      onComplete: () => settle(completeAndRecordUsage),
+      onError: (_error, emitted) => settleInterrupted(emitted),
+      onCancel: settleInterrupted,
     });
   } catch (error) {
-    await refund();
+    await cancel();
     const message = error instanceof Error ? error.message : "咨询服务暂时不可用";
     return NextResponse.json(
       {

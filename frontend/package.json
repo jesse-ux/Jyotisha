@@ -2,10 +2,12 @@
   "name": "jyotish-web",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "node --test tests/*.test.ts",
     "lint": "eslint",
     "data:china": "node scripts/pull-china-locations.mjs"
   },

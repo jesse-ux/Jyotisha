@@ -16,6 +16,13 @@ COORDS_MIGRATION = (
     / "migrations"
     / "20260715050000_profile_coordinates.sql"
 )
+CONSULTATION_MIGRATION = (
+    Path(__file__).resolve().parents[1]
+    / "frontend"
+    / "supabase"
+    / "migrations"
+    / "20260717000000_consultation_request_lifecycle.sql"
+)
 PAGE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "page.tsx"
 
 
@@ -74,13 +81,40 @@ def test_chat_page_uses_authenticated_cloud_persistence() -> None:
     assert '.upsert(' not in source
     assert '.update(values)' in source
     assert '.insert({' in source
-    assert source.index('await persistSession(userSession)') < source.index('setOnboardingJustCompleted(false)')
-    assert source.index('await persistSession(userSession)') < source.index('updateSession(sessionId, () => userSession)')
-    assert 'function completedOnboardingTranscript(profile: Profile): Message[]' in source
+    assert 'await persistSession(userSession)' not in source
+    assert source.index('updateSession(sessionId, () => userSession)') < source.index('await persistSession(completedSession)')
+    assert 'function completedOnboardingTranscript(profile: Profile, greeting: string): Message[]' in source
     assert 'messages: [...preservedMessages, { role: "user", text: question }]' in source
+    assert 'await persistSession(completedSession)' in source
+    assert 'const stoppedRequestAwaitingSettlement = useRef<string | null>(null)' in source
+    assert 'const stoppedSessionPersistence = useRef(new Map<string, Promise<void>>())' in source
+    assert 'if (ownsInterface && !partialReply)' in source
+    assert 'await persistSession(interruptedSession)' in source
+    assert 'await persistence' in source
+    assert 'disabled={Boolean(pendingSessionId) || cancellationPending}' in source
     assert "localStorage" not in source
     assert "ayanam-profile" not in source
     assert "ayanam-sessions" not in source
+
+
+def test_consultation_credit_lifecycle_is_idempotent_and_server_only() -> None:
+    sql = re.sub(r"\s+", " ", CONSULTATION_MIGRATION.read_text(encoding="utf-8").lower()).strip()
+
+    assert "create table if not exists public.consultation_requests" in sql
+    assert "primary key (user_id, request_id)" in sql
+    assert "status in ('reserved', 'completed', 'cancelled')" in sql
+    for function_name in (
+        "begin_consultation_credit",
+        "complete_consultation_credit",
+        "cancel_consultation_credit",
+    ):
+        assert f"create or replace function public.{function_name}" in sql
+        assert f"grant execute on function public.{function_name}(uuid, text) to service_role" in sql
+        assert f"revoke all on function public.{function_name}(uuid, text) from public, anon, authenticated" in sql
+    assert "pg_advisory_xact_lock" in sql
+    assert "if v_status = 'completed'" in sql
+    assert "'request_completed'::text" in sql
+    assert "if v_status = 'cancelled'" in sql
 
 
 def test_profile_coordinates_are_persisted_with_database_bounds() -> None:
