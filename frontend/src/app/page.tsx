@@ -74,6 +74,20 @@ type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[]
 type OnboardingStep = "name" | "birth" | "place";
 type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
 type DailyStarlanguageCard = { trend: string; action: string; caution: string };
+type DailyStarlanguageApiResponse = {
+  status?: "ok";
+  card?: DailyStarlanguageCard;
+  source?: "calculation_lite";
+  claim_status?: "exploratory_unvalidated";
+  boundary?: "not_deterministic_prediction";
+};
+type BirthRectificationPreview = {
+  status?: "ok" | "blocked";
+  candidate_scan?: { start?: string; end?: string; candidate_count?: number };
+  question_count?: number;
+  boundary?: "not_auto_rectified";
+  source?: "active_rectification_questions" | "fallback_unavailable";
+};
 type SessionReadResult = { readonly sessions: ChatSession[]; readonly fallbackSessionIds: string[] };
 type PendingConsultation = {
   readonly requestId: string;
@@ -339,6 +353,28 @@ function buildDailyStarlanguageCard(profile: Profile) {
   const seed = `${today}-${profile.date}-${profile.time}-${profile.provinceCode}-${profile.cityCode}`;
   const index = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0) % dailyStarlanguageCards.length;
   return dailyStarlanguageCards[index];
+}
+
+async function fetchDailyStarlanguage(profile: Profile) {
+  const response = await fetch("/api/daily-starlanguage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile }),
+  });
+  if (!response.ok) throw new Error("daily_starlanguage_unavailable");
+  const payload = await response.json().catch(() => null) as DailyStarlanguageApiResponse | null;
+  if (payload?.status !== "ok" || !payload.card) throw new Error("daily_starlanguage_invalid");
+  return payload.card;
+}
+
+async function fetchBirthRectificationPreview(profile: Profile) {
+  const response = await fetch("/api/birth-rectification", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile }),
+  });
+  if (!response.ok) throw new Error("birth_rectification_preview_unavailable");
+  return await response.json().catch(() => null) as BirthRectificationPreview | null;
 }
 
 function buildBirthTimeRectificationQuestion(profile: Profile) {
@@ -617,6 +653,8 @@ export default function Home() {
   const [otherProfileDraft, setOtherProfileDraft] = useState<Profile>(emptyProfile);
   const [synastryReportCard, setSynastryReportCard] = useState<SynastryReportCard | null>(null);
   const [synastryHistory, setSynastryHistory] = useState<SynastryReportCard[]>([]);
+  const [dailyStarlanguageCard, setDailyStarlanguageCard] = useState<DailyStarlanguageCard | null>(null);
+  const [birthRectificationPreview, setBirthRectificationPreview] = useState<BirthRectificationPreview | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
@@ -629,6 +667,10 @@ export default function Home() {
   const [redeeming, setRedeeming] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [pinnedSessionIds, setPinnedSessionIds] = useState<string[]>([]);
+  const [archivedSessionIds, setArchivedSessionIds] = useState<string[]>([]);
+  const [showArchivedSessions, setShowArchivedSessions] = useState(false);
+  const [sessionMenuId, setSessionMenuId] = useState<string | null>(null);
   const [modelCatalog, setModelCatalog] = useState<PublicLanguageModelCatalog | null>(null);
   const [activeSessionId, setActiveSessionId] = useState("");
   const [draft, setDraft] = useState("");
@@ -672,16 +714,32 @@ export default function Home() {
   const uiPreviewMode = useRef<string | null>(null);
 
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
+  const visibleSessions = sessions
+    .filter((session) => showArchivedSessions ? archivedSessionIds.includes(session.id) : !archivedSessionIds.includes(session.id))
+    .sort((left, right) => Number(pinnedSessionIds.includes(right.id)) - Number(pinnedSessionIds.includes(left.id)));
   const activeError = requestError && requestError.sessionId === activeSession?.id ? requestError.message : "";
   const isLoading = pendingSessionId === activeSession?.id;
   const activeStreamingText = streamingReply && streamingReply.sessionId === activeSession?.id ? streamingReply.text : "";
+  const accountId = account?.user.id;
 
   useEffect(() => {
     activeSessionIdRef.current = activeSessionId;
   }, [activeSessionId]);
-  const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
-  const accountId = account?.user.id;
 
+  useEffect(() => {
+    if (!hydrated || !accountId) return;
+    const prefix = `jyotisha-session-controls:${accountId}:`;
+    setPinnedSessionIds(JSON.parse(localStorage.getItem(`${prefix}pinned`) || "[]"));
+    setArchivedSessionIds(JSON.parse(localStorage.getItem(`${prefix}archived`) || "[]"));
+  }, [accountId, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || !accountId) return;
+    const prefix = `jyotisha-session-controls:${accountId}:`;
+    localStorage.setItem(`${prefix}pinned`, JSON.stringify(pinnedSessionIds));
+    localStorage.setItem(`${prefix}archived`, JSON.stringify(archivedSessionIds));
+  }, [accountId, archivedSessionIds, hydrated, pinnedSessionIds]);
+  const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
   useEffect(() => {
     if (!accountId) {
       setChartLibrary([]);
@@ -732,7 +790,7 @@ export default function Home() {
   }, [accountId, profile]);
 
   const profileComplete = isProfileComplete(profile);
-  const dailyStarlanguage = profileComplete ? buildDailyStarlanguageCard(profile) : null;
+  const dailyStarlanguage = dailyStarlanguageCard ?? (profileComplete ? buildDailyStarlanguageCard(profile) : null);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
     ? startGreeting || completedOnboardingMessage(profileDraft.name.trim())
@@ -968,6 +1026,38 @@ export default function Home() {
   }, [accountId, hydrated, onboarding, onboardingError, profile.name, profileComplete, startGreeting]);
 
   useEffect(() => {
+    if (!hydrated || !profileComplete) return;
+    let cancelled = false;
+    setDailyStarlanguageCard(null);
+    void fetchDailyStarlanguage(profile)
+      .then((card) => {
+        if (!cancelled) setDailyStarlanguageCard(card);
+      })
+      .catch(() => {
+        if (!cancelled) setDailyStarlanguageCard(buildDailyStarlanguageCard(profile));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, profile.date, profile.time, profile.provinceCode, profile.cityCode, profileComplete]);
+
+  useEffect(() => {
+    if (!hydrated || !profileComplete) return;
+    let cancelled = false;
+    setBirthRectificationPreview(null);
+    void fetchBirthRectificationPreview(profile)
+      .then((preview) => {
+        if (!cancelled) setBirthRectificationPreview(preview);
+      })
+      .catch(() => {
+        if (!cancelled) setBirthRectificationPreview({ status: "blocked", boundary: "not_auto_rectified", source: "fallback_unavailable" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, profile.date, profile.time, profile.provinceCode, profile.cityCode, profileComplete]);
+
+  useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     conversationEnd.current?.scrollIntoView({ behavior: isLoading || reduceMotion ? "auto" : "smooth", block: "end" });
   }, [activeSessionId, activeSession?.messages.length, activeStreamingText, isLoading, onboardingPending, onboardingStep, presetMessageFinished, profileComplete]);
@@ -1049,6 +1139,70 @@ export default function Home() {
       ...values,
     });
     if (insertError) throw new Error(`云端同步失败：${insertError.message}`);
+  }
+
+  async function renameSession(session: ChatSession) {
+    const title = window.prompt("重命名聊天记录", session.title)?.trim();
+    if (!title || title === session.title) return;
+    const nextSession = { ...session, title, updatedAt: timestamp() };
+    updateSession(session.id, () => nextSession);
+    try {
+      await persistSession(nextSession);
+    } catch (caught) {
+      setComposerNotice(caught instanceof Error ? caught.message : "重命名同步失败");
+    }
+  }
+
+  async function deleteSession(session: ChatSession) {
+    if (!account || !window.confirm(`删除“${session.title}”？此操作不可恢复。`)) return;
+    const previousSessions = sessions;
+    const nextSessions = sessions.filter((item) => item.id !== session.id);
+    setSessions(nextSessions);
+    setPinnedSessionIds((current) => current.filter((id) => id !== session.id));
+    setArchivedSessionIds((current) => current.filter((id) => id !== session.id));
+    if (activeSessionId === session.id) setActiveSessionId(nextSessions[0]?.id ?? "");
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const { error } = await supabase.from("chat_sessions").delete().eq("id", session.id).eq("user_id", account.user.id);
+      if (error) throw error;
+    } catch (caught) {
+      setSessions(previousSessions);
+      setComposerNotice(caught instanceof Error ? `删除失败：${caught.message}` : "删除失败");
+    }
+  }
+
+  function togglePinnedSession(sessionId: string) {
+    setPinnedSessionIds((current) => current.includes(sessionId) ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
+  }
+
+  function toggleArchivedSession(sessionId: string) {
+    setArchivedSessionIds((current) => current.includes(sessionId) ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
+    if (activeSessionId === sessionId) setActiveSessionId(visibleSessions.find((session) => session.id !== sessionId)?.id ?? "");
+  }
+
+  async function shareSession(session: ChatSession) {
+    const sharePayload = {
+      share_payload_version: 1,
+      exported_at: new Date().toISOString(),
+      title: session.title,
+      theme: session.theme,
+      message_count: session.messages.length,
+      messages: session.messages.map((message) => ({ role: message.role, text: message.text })),
+    };
+    const transcript = [
+      `Jyotisha 对话：${session.title}`,
+      "",
+      ...session.messages.map((message) => `${message.role === "user" ? "我" : "Jyotisha"}：${message.text}`),
+      "",
+      "---- JSON 分享包 ----",
+      JSON.stringify(sharePayload, null, 2),
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(transcript);
+      setComposerNotice("已复制当前聊天，可粘贴转发。");
+    } catch {
+      setComposerNotice("无法访问剪贴板，请手动复制聊天内容。");
+    }
   }
 
   async function startNewChat() {
@@ -1862,25 +2016,48 @@ export default function Home() {
         <div className="brand-row"><span className="brand-mark" aria-hidden="true" /><strong>Jyotisha</strong><button className="sidebar-close" ref={sidebarCloseButton} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)}><X aria-hidden="true" /></button></div>
         <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || !modelCatalog || creatingSession || Boolean(pendingSessionId) || cancellationPending}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
         <nav className="session-nav" aria-label="聊天记录">
-          <span className="sidebar-label">聊天记录</span>
+          <div className="session-nav-header">
+            <span className="sidebar-label">{showArchivedSessions ? "归档记录" : "聊天记录"}</span>
+            <button type="button" onClick={() => { setShowArchivedSessions((current) => !current); setSessionMenuId(null); }}>
+              {showArchivedSessions ? "返回" : `归档 ${archivedSessionIds.length}`}
+            </button>
+          </div>
           <div className="session-list">
-            {sessions.map((session) => (
-              <button
-                className={session.id === activeSession?.id ? "is-active" : ""}
+            {visibleSessions.map((session) => (
+              <div
+                className={`session-row ${session.id === activeSession?.id ? "is-active" : ""}`}
                 key={session.id}
-                type="button"
-                onClick={() => {
-                  setActiveSessionId(session.id);
-                  setDraft("");
-                  setComposerNotice("");
-                  setMobileSidebarOpen(false);
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  setSessionMenuId(sessionMenuId === session.id ? null : session.id);
                 }}
-                disabled={Boolean(pendingSessionId) || cancellationPending}
-                aria-current={session.id === activeSession?.id ? "page" : undefined}
               >
-                <span>{session.title}</span>
-                {session.messages.length > 0 && <small>{session.messages.length} 条消息</small>}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSessionId(session.id);
+                    setDraft("");
+                    setComposerNotice("");
+                    setSessionMenuId(null);
+                    setMobileSidebarOpen(false);
+                  }}
+                  disabled={Boolean(pendingSessionId) || cancellationPending}
+                  aria-current={session.id === activeSession?.id ? "page" : undefined}
+                >
+                  <span>{pinnedSessionIds.includes(session.id) ? "★ " : ""}{session.title}</span>
+                  {session.messages.length > 0 && <small>{session.messages.length} 条消息</small>}
+                </button>
+                <button className="session-menu-trigger" type="button" aria-label={`${session.title} 更多操作`} aria-expanded={sessionMenuId === session.id} onClick={() => setSessionMenuId(sessionMenuId === session.id ? null : session.id)}>⋯</button>
+                {sessionMenuId === session.id && (
+                  <div className="session-actions" role="menu" aria-label={`${session.title} 操作`}>
+                    <button type="button" role="menuitem" onClick={() => { togglePinnedSession(session.id); setSessionMenuId(null); }}>{pinnedSessionIds.includes(session.id) ? "取消置顶" : "置顶"}</button>
+                    <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void renameSession(session); }}>重命名</button>
+                    <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void shareSession(session); }}>转发</button>
+                    <button type="button" role="menuitem" onClick={() => { toggleArchivedSession(session.id); setSessionMenuId(null); }}>{archivedSessionIds.includes(session.id) ? "恢复" : "归档"}</button>
+                    <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void deleteSession(session); }}>删除</button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </nav>
@@ -1958,16 +2135,6 @@ export default function Home() {
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
                 <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
-                  {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
-                    const theme = themes.find((candidate) => candidate.id === item.theme);
-                    return (
-                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
-                        <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span></span>
-                        <ArrowUpRight className="starter-arrow" aria-hidden="true" />
-                      </button>
-                    );
-                  })}
-                  {onboardingError && <p className="starter-note">Agent 的个性化入门问题暂时不可用，已显示安全的默认问题。</p>}
                   <div className="product-entrypoints" aria-label="常用占星入口">
                     <article className="daily-starlanguage-card" aria-label="今日星语">
                       <div className="daily-starlanguage-heading">
@@ -1981,11 +2148,29 @@ export default function Home() {
                       </dl>
                       <small>探索性日提示，不是确定预测。</small>
                     </article>
-                    <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftBirthTimeRectificationQuestion}>
-                      <span><b>生时校正</b><small>收集事件证据并给候选出生时间段，不能直接改写默认星盘。</small></span>
-                      <ArrowUpRight className="starter-arrow" aria-hidden="true" />
-                    </button>
+                    <article className="birth-rectification-card" aria-label="生时校正">
+                      <div className="daily-starlanguage-heading">
+                        <span>生时校正</span>
+                        <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftBirthTimeRectificationQuestion}>开始校正 <ArrowUpRight className="starter-arrow" aria-hidden="true" /></button>
+                      </div>
+                      <dl>
+                        <div><dt>候选出生时间段</dt><dd>{birthRectificationPreview?.candidate_scan?.start && birthRectificationPreview?.candidate_scan?.end ? `${birthRectificationPreview.candidate_scan.start} – ${birthRectificationPreview.candidate_scan.end}` : "默认先扫描前后 30 分钟"}</dd></div>
+                        <div><dt>候选点</dt><dd>{birthRectificationPreview?.candidate_scan?.candidate_count ? `${birthRectificationPreview.candidate_scan.candidate_count} 个` : "待后端生成"}</dd></div>
+                        <div><dt>问题数</dt><dd>{birthRectificationPreview?.question_count ? `${birthRectificationPreview.question_count} 个事件问题` : "需补关键人生事件"}</dd></div>
+                      </dl>
+                      <small>不能直接改写默认星盘；需事件证据验证。</small>
+                    </article>
                   </div>
+                  {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
+                    const theme = themes.find((candidate) => candidate.id === item.theme);
+                    return (
+                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
+                        <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span></span>
+                        <ArrowUpRight className="starter-arrow" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                  {onboardingError && <p className="starter-note">Agent 的个性化入门问题暂时不可用，已显示安全的默认问题。</p>}
                 </div>
               ))}
               <div ref={conversationEnd} />
