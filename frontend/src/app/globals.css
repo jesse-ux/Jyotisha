@@ -303,7 +303,7 @@ button:disabled { cursor: default; opacity: .45; }
 .onboarding-card-heading small { color: var(--color-ink-secondary); line-height: 1.5; font-size: var(--type-caption); }
 
 .starter-list { border-top: 1px solid var(--color-border); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); border: 0; }
-.starter-list button { width: 100%; display: grid; align-items: end; border-bottom: 1px solid var(--color-border); cursor: pointer; text-align: left; transition: background-color 120ms ease-out, transform 120ms ease-out; min-height: 156px; grid-template-columns: minmax(0, 1fr) 20px; gap: var(--space-3); padding: var(--space-5); border: 1px solid transparent; border-radius: var(--radius-lg); background: var(--color-canvas-muted); }
+.starter-list button { width: 100%; display: grid; align-items: end; border-bottom: 1px solid var(--color-border); cursor: pointer; text-align: left; transition: background-color 120ms ease-out, transform 120ms ease-out; min-height: 136px; grid-template-columns: minmax(0, 1fr) 20px; gap: var(--space-3); padding: var(--space-5); border: 1px solid transparent; border-radius: var(--radius-lg); background: var(--color-canvas-muted); }
 .starter-list button:first-child { border-color: color-mix(in srgb, var(--color-action) 18%, var(--color-border)); background: var(--color-action-soft); color: var(--color-ink); }
 .starter-list button:first-child .starter-content span { color: var(--color-ink); white-space: normal; }
 .starter-list button:first-child .starter-arrow { color: var(--color-action); }
@@ -311,7 +311,7 @@ button:disabled { cursor: default; opacity: .45; }
 .starter-content b { color: var(--color-action); font-size: var(--type-overline); font-weight: 500; letter-spacing: 1.5px; }
 .starter-content span { overflow: hidden; color: var(--color-ink); font-family: var(--font-display); font-size: var(--type-title-md); line-height: 1.4; text-overflow: clip; text-wrap: pretty; white-space: normal; }
 .starter-arrow { width: 17px; height: 17px; color: var(--color-ink-secondary); }
-.product-entrypoints { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.product-entrypoints { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: var(--space-3); }
 .product-entrypoints button { min-height: 132px; align-items: end; border: 1px solid var(--color-border); background: var(--color-canvas); }
 .product-entrypoints span { display: grid; gap: var(--space-2); }
 .product-entrypoints small { color: var(--color-ink-secondary); line-height: 1.45; font-size: var(--type-caption); }

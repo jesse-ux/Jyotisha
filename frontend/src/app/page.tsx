@@ -2028,16 +2028,6 @@ export default function Home() {
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
                 <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
-                  {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
-                    const theme = themes.find((candidate) => candidate.id === item.theme);
-                    return (
-                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
-                        <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span></span>
-                        <ArrowUpRight className="starter-arrow" aria-hidden="true" />
-                      </button>
-                    );
-                  })}
-                  {onboardingError && <p className="starter-note">Agent 的个性化入门问题暂时不可用，已显示安全的默认问题。</p>}
                   <div className="product-entrypoints" aria-label="常用占星入口">
                     <article className="daily-starlanguage-card" aria-label="今日星语">
                       <div className="daily-starlanguage-heading">
@@ -2064,6 +2054,16 @@ export default function Home() {
                       <small>不能直接改写默认星盘；需事件证据验证。</small>
                     </article>
                   </div>
+                  {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
+                    const theme = themes.find((candidate) => candidate.id === item.theme);
+                    return (
+                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
+                        <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span></span>
+                        <ArrowUpRight className="starter-arrow" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                  {onboardingError && <p className="starter-note">Agent 的个性化入门问题暂时不可用，已显示安全的默认问题。</p>}
                 </div>
               ))}
               <div ref={conversationEnd} />
