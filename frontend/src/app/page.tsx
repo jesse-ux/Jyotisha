@@ -669,6 +669,7 @@ export default function Home() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [pinnedSessionIds, setPinnedSessionIds] = useState<string[]>([]);
   const [archivedSessionIds, setArchivedSessionIds] = useState<string[]>([]);
+  const [showArchivedSessions, setShowArchivedSessions] = useState(false);
   const [sessionMenuId, setSessionMenuId] = useState<string | null>(null);
   const [modelCatalog, setModelCatalog] = useState<PublicLanguageModelCatalog | null>(null);
   const [activeSessionId, setActiveSessionId] = useState("");
@@ -714,7 +715,7 @@ export default function Home() {
 
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
   const visibleSessions = sessions
-    .filter((session) => !archivedSessionIds.includes(session.id))
+    .filter((session) => showArchivedSessions ? archivedSessionIds.includes(session.id) : !archivedSessionIds.includes(session.id))
     .sort((left, right) => Number(pinnedSessionIds.includes(right.id)) - Number(pinnedSessionIds.includes(left.id)));
   const activeError = requestError && requestError.sessionId === activeSession?.id ? requestError.message : "";
   const isLoading = pendingSessionId === activeSession?.id;
@@ -2004,7 +2005,12 @@ export default function Home() {
         <div className="brand-row"><span className="brand-mark" aria-hidden="true" /><strong>Jyotisha</strong><button className="sidebar-close" ref={sidebarCloseButton} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)}><X aria-hidden="true" /></button></div>
         <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || !modelCatalog || creatingSession || Boolean(pendingSessionId) || cancellationPending}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
         <nav className="session-nav" aria-label="聊天记录">
-          <span className="sidebar-label">聊天记录</span>
+          <div className="session-nav-header">
+            <span className="sidebar-label">{showArchivedSessions ? "归档记录" : "聊天记录"}</span>
+            <button type="button" onClick={() => { setShowArchivedSessions((current) => !current); setSessionMenuId(null); }}>
+              {showArchivedSessions ? "返回" : `归档 ${archivedSessionIds.length}`}
+            </button>
+          </div>
           <div className="session-list">
             {visibleSessions.map((session) => (
               <div
@@ -2036,7 +2042,7 @@ export default function Home() {
                     <button type="button" role="menuitem" onClick={() => { togglePinnedSession(session.id); setSessionMenuId(null); }}>{pinnedSessionIds.includes(session.id) ? "取消置顶" : "置顶"}</button>
                     <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void renameSession(session); }}>重命名</button>
                     <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void shareSession(session); }}>转发</button>
-                    <button type="button" role="menuitem" onClick={() => { toggleArchivedSession(session.id); setSessionMenuId(null); }}>归档</button>
+                    <button type="button" role="menuitem" onClick={() => { toggleArchivedSession(session.id); setSessionMenuId(null); }}>{archivedSessionIds.includes(session.id) ? "恢复" : "归档"}</button>
                     <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void deleteSession(session); }}>删除</button>
                   </div>
                 )}
