@@ -16,11 +16,11 @@ if str(SCRIPT_DIR) not in sys.path:
 try:
     from scripts.domain_calculation_service import compute_chart
     from scripts.timing_precision_contract import build_timing_precision_contract
-    from scripts.varga import calc_varga
+    from scripts.varga import SIGN_LORDS, calc_varga
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
     from domain_calculation_service import compute_chart
     from timing_precision_contract import build_timing_precision_contract
-    from varga import calc_varga
+    from varga import SIGN_LORDS, calc_varga
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -54,8 +54,15 @@ def _sign(chart: dict[str, Any], planet: str) -> str | None:
 def _domain_lord_sign(chart: dict[str, Any], domain: str) -> str | None:
     house = DOMAIN_HOUSES.get(domain)
     houses = chart.get("houses") if isinstance(chart, dict) else None
-    house_value = houses.get(house) if house and isinstance(houses, dict) else None
+    house_index = int(house.split("_", 1)[1]) if house else None
+    house_value = None
+    if isinstance(houses, dict) and house:
+        house_value = houses.get(house)
+        if house_value is None and house_index is not None:
+            house_value = houses.get(house_index) or houses.get(str(house_index))
     lord = house_value.get("lord") if isinstance(house_value, dict) else None
+    if not isinstance(lord, str) and isinstance(house_value, dict):
+        lord = SIGN_LORDS.get(house_value.get("sign") or house_value.get("cusp_sign"))
     return _sign(chart, lord) if isinstance(lord, str) else None
 
 

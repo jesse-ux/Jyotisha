@@ -166,6 +166,24 @@ def test_marriage_similarity_adds_d9_only_when_both_charts_have_longitudes() -> 
     assert "D9" not in similarity["uncompared_layers"]
 
 
+def test_api_house_shape_keeps_theme_lord_in_similarity() -> None:
+    chart = _varga_chart()
+    chart["houses"] = {10: {"sign": "Taurus", "sign_idx": 1}}
+    cases = [{
+        "case_id": "api_house_shape", "subject": {"name": "Public Example"}, "chart": chart,
+        "source": {"url": "https://example.com/birth", "source_grade": "primary"},
+        "event_outcomes": [{
+            "domain": "career", "event_type": "career_breakthrough", "event_date": "2007-01-09",
+            "outcome": "Public career event", "source": {"url": "https://example.com/event", "source_grade": "primary"},
+        }],
+        "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": False},
+    }]
+
+    selected = select_similar_public_cases(chart, ["career"], cases=cases)
+
+    assert "domain_lord_sign" in selected["cases"][0]["similarity"]["matching_factors"]
+
+
 def test_default_manifest_exposes_kahlo_health_as_context_only() -> None:
     from scripts.domain_calculation_service import compute_chart
 
