@@ -25,6 +25,18 @@ GHATIKA_END = {
     6: {"day": 26, "night": 10},
 }
 
+# Saturn's zero-based share in eight equal day/night parts. Python weekday:
+# Monday=0. This is the variant used by PyJHora's public black-box oracle.
+SATURN_PART_START = {
+    0: {"day": 5, "night": 1},
+    1: {"day": 4, "night": 0},
+    2: {"day": 3, "night": 6},
+    3: {"day": 2, "night": 5},
+    4: {"day": 1, "night": 4},
+    5: {"day": 0, "night": 3},
+    6: {"day": 6, "night": 2},
+}
+
 
 def _sidereal_ascendant(jd_ut: float, lat: float, lon: float) -> float:
     swe.set_sid_mode(swe.SIDM_LAHIRI)
@@ -38,17 +50,27 @@ def calculate_gulika(
     lat: float,
     lon: float,
     tz: float,
+    method: str = "saturn_part_start",
 ) -> dict[str, Any]:
     """Return Gulika from local moment/location using Swiss sunrise and sunset."""
     daynight = determine_daytime(moment, lat=lat, lon=lon, tz=tz)
     is_day = bool(daynight["is_daytime"])
     period = "day" if is_day else "night"
-    ghatika_end = GHATIKA_END[moment.weekday()][period]
     start_jd = daynight["sunrise_jd_ut"] if is_day else daynight["sunset_jd_ut"]
     end_jd = daynight["sunset_jd_ut"] if is_day else daynight["sunrise_jd_ut"] + 1.0
     if end_jd <= start_jd:
         end_jd += 1.0
-    segment_jd = start_jd + (end_jd - start_jd) * (ghatika_end / 30.0)
+    if method == "saturn_part_start":
+        part_index = SATURN_PART_START[moment.weekday()][period]
+        segment_fraction = part_index / 8.0
+        ghatika_end = None
+    elif method == "legacy_ghatika_end":
+        part_index = None
+        ghatika_end = GHATIKA_END[moment.weekday()][period]
+        segment_fraction = ghatika_end / 30.0
+    else:
+        raise ValueError("method must be saturn_part_start or legacy_ghatika_end")
+    segment_jd = start_jd + (end_jd - start_jd) * segment_fraction
     longitude = _sidereal_ascendant(segment_jd, float(lat), float(lon))
     return {
         "scope": "gulika_prasna_marga",
@@ -58,10 +80,13 @@ def calculate_gulika(
         "degree_in_sign": round(longitude % 30, 6),
         "period": period,
         "weekday": moment.weekday(),
+        "method": method,
+        "part_index": part_index,
+        "segment_fraction": segment_fraction,
         "ghatika_end": ghatika_end,
         "segment_jd_ut": segment_jd,
         "daynight_evidence": daynight,
         "ayanamsa": "lahiri",
         "rule_source": "references/prashna-complete-guide.md#3.5",
-        "boundary": "Formula is implemented from the local classical guide; external JHora/PyJHora numeric parity remains required before enabling Sphuta or verdict layers.",
+        "boundary": "PyJHora-aligned Saturn-part-start variant. Numeric parity is evidence only and does not enable Prashna verdict layers.",
     }

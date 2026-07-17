@@ -189,6 +189,24 @@
       "path": "references/real_case_calibration/day_level_holdout_v3_preregistration.json",
       "sha256": "d7f794630d3def6f9f7b5d94c4365bb508c60a8b44228f35a2d2d4548ea9f360",
       "scope": "independent-label day-level holdout preregistration"
+    },
+    {
+      "id": "prashna_sphuta_pyjhora_public_smoke",
+      "path": "references/oracle/prashna_sphuta_pyjhora_public_smoke.json",
+      "sha256": "d939a6abf5862bb5ebe600e09149e99042ddc46937fd585cf839f7596d3abaa2",
+      "scope": "public synthetic Prashna Sphuta PyJHora numeric smoke parity"
+    },
+    {
+      "id": "western_jobs_iphone_calibration",
+      "path": "docs/benchmark/western_jobs_iphone_2007_calibration.json",
+      "sha256": "16dda7b6fe4f4df18254edf97b400358a78e44370bc2ca13501084df87fa1a91",
+      "scope": "public Western progressed-angle and paran geometry replay"
+    },
+    {
+      "id": "month_nearest_negative_controls",
+      "path": "docs/benchmark/public_real_case_negative_controls_holdout_v2_month_nearest_20260717.json",
+      "sha256": "cef9e9c9dccb202ce8909d63d8fccf6c2699cf7a2c28e30b58c42e04b5e2ba2c",
+      "scope": "public month-nearest negative-control evidence, not tuning data"
     }
   ]
 }
