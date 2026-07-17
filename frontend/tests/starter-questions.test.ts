@@ -42,16 +42,15 @@ test("keeps follow-up suggestions visible while the user edits a draft", () => {
 });
 
 test("keeps session history clickable while another session is answering", () => {
-  // Given: the existing-session navigation block.
-  const sessionNavigation = sourceBetween(
-    pageSource,
-    '<div className="session-list">',
-    "</div>\n        </nav>",
-  );
+  // Given: the page-owned selection callback and the app sidebar session action.
+  const selectSession = pageSource.match(/function selectSession\(sessionId: string\) \{([\s\S]*?)\n  \}/);
 
   // When: request-time navigation constraints are inspected.
   // Then: pending request state cannot disable read-only session switching.
-  assert.doesNotMatch(sessionNavigation, /disabled=\{/);
+  assert.ok(selectSession);
+  assert.doesNotMatch(selectSession[1], /pendingSessionId|isLoading|cancellationPending|creatingSession/);
+  assert.match(appSidebarSource, /onSelectSession\(session\.id\)/);
+  assert.doesNotMatch(appSidebarSource, /pendingSession|isLoading|cancellationPending|requestPending/);
 });
 
 test("uses the compact model popup width", () => {

@@ -95,6 +95,12 @@ test("composes the Jyotisha app sidebar from the generic shell", () => {
   }
 });
 
+test("renders the mobile drawer close trigger in the app sidebar brand row", () => {
+  const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
+
+  assert.match(appSidebar, /<div className="brand-row">[\s\S]*<SidebarTrigger placement="sidebar" \/>[\s\S]*<\/div>/);
+});
+
 test("uses one collapsed history action instead of icon-only session rows", () => {
   const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
   assert.match(appSidebar, /MessageSquareText/);
@@ -131,4 +137,41 @@ test("keeps app sidebar props as product data and callbacks", () => {
   assert.match(appSidebar, /export type AppSidebarProps/);
   assert.match(appSidebar, /onSelectSession: \(sessionId: string\) => void/);
   assert.doesNotMatch(appSidebar, /supabase|fetch\(|\/api\//i);
+});
+
+test("composes the chat page with the app sidebar shell", () => {
+  const page = readProjectFile("src/app/page.tsx");
+
+  assert.match(page, /<SidebarProvider escapeBlocked=\{accountMenuOpen \|\| activeAccountDialog !== null\}>/);
+  assert.match(page, /<main className="chat-app">[\s\S]*<AppSidebar\b/);
+  assert.match(page, /<SidebarInset className="chat-panel" inert=\{activeAccountDialog !== null\}>/);
+  assert.match(page, /<SidebarTrigger placement="inset" \/>/);
+});
+
+test("removes page-local mobile sidebar ownership", () => {
+  const page = readProjectFile("src/app/page.tsx");
+
+  assert.doesNotMatch(page, /mobileSidebarOpen|setMobileSidebarOpen/);
+  assert.doesNotMatch(page, /className="sidebar-backdrop"/);
+  assert.doesNotMatch(page, /<aside className="sidebar"/);
+  assert.doesNotMatch(page, /className="mobile-menu"/);
+});
+
+test("blocks the provider mobile Escape action behind layered account UI", () => {
+  const page = readProjectFile("src/app/page.tsx");
+  const sidebar = readProjectFile("src/components/ui/sidebar.tsx");
+
+  assert.match(page, /escapeBlocked=\{accountMenuOpen \|\| activeAccountDialog !== null\}/);
+  assert.match(sidebar, /event\.key === "Escape" && isMobile && openMobile && !escapeBlocked/);
+});
+
+test("keeps the page session selection callback free of request locks", () => {
+  const page = readProjectFile("src/app/page.tsx");
+  const selectSession = page.match(/function selectSession\(sessionId: string\) \{([\s\S]*?)\n  \}/);
+
+  assert.ok(selectSession);
+  assert.match(selectSession[1], /setActiveSessionId\(sessionId\)/);
+  assert.match(selectSession[1], /setDraft\(""\)/);
+  assert.match(selectSession[1], /setComposerNotice\(""\)/);
+  assert.doesNotMatch(selectSession[1], /pendingSessionId|isLoading|cancellationPending|creatingSession/);
 });

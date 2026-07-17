@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUp, ArrowUpRight, ChevronRight, Gift, KeyRound, LogOut, Menu, Plus, Sparkles, Square, UserRound, X } from "lucide-react";
+import { ArrowUp, ArrowUpRight, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
+import { AppSidebar } from "@/components/app-sidebar";
 import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
 import { BirthTimeRectification } from "@/components/birth-time-rectification";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { ModelSelector } from "@/components/model-selector";
 import { Button } from "@/components/ui/button";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { chinaLocations, type ProvinceNode } from "@/data/china-locations";
 import { parseAgentReply, type ReplyTheme } from "@/lib/agent-reply";
@@ -516,7 +518,6 @@ export default function Home() {
   const [profileDraft, setProfileDraft] = useState<Profile>(emptyProfile);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [activeAccountDialog, setActiveAccountDialog] = useState<AccountDialog | null>(null);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
   const [account, setAccount] = useState<Account | null>(null);
   const [accountError, setAccountError] = useState("");
@@ -551,13 +552,9 @@ export default function Home() {
   const [presetMessageLength, setPresetMessageLength] = useState(0);
   const conversationEnd = useRef<HTMLDivElement>(null);
   const accountTrigger = useRef<HTMLButtonElement>(null);
-  const accountMenu = useRef<HTMLDivElement>(null);
   const accountDialog = useRef<HTMLElement>(null);
   const creditTrigger = useRef<HTMLButtonElement>(null);
   const dialogReturnTarget = useRef<HTMLButtonElement | null>(null);
-  const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
-  const sidebar = useRef<HTMLElement>(null);
-  const sidebarCloseButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const redeemInput = useRef<HTMLInputElement>(null);
   const composerInput = useRef<HTMLTextAreaElement>(null);
@@ -856,42 +853,6 @@ export default function Home() {
   }, [accountId, activeAccountDialog, hydrated, onboardingStep, presetMessageFinished, profileComplete]);
 
   useEffect(() => {
-    if (!mobileSidebarOpen) return;
-    window.requestAnimationFrame(() => sidebarCloseButton.current?.focus());
-    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (accountMenuOpen) return;
-        setMobileSidebarOpen(false);
-        window.requestAnimationFrame(() => mobileMenuTrigger.current?.focus());
-        return;
-      }
-      const container = sidebar.current;
-      if (container) keepFocusWithin(event, container);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [accountMenuOpen, mobileSidebarOpen]);
-
-  useEffect(() => {
-    if (!accountMenuOpen) return;
-    const dismissMenu = (event: MouseEvent) => {
-      const target = event.target;
-      if (target instanceof Node && !accountMenu.current?.contains(target)) setAccountMenuOpen(false);
-    };
-    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setAccountMenuOpen(false);
-      window.requestAnimationFrame(() => accountTrigger.current?.focus());
-    };
-    document.addEventListener("mousedown", dismissMenu);
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("mousedown", dismissMenu);
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [accountMenuOpen]);
-
-  useEffect(() => {
     if (activeAccountDialog === null) return;
     window.requestAnimationFrame(() => {
       if (signingOut) return;
@@ -957,7 +918,6 @@ export default function Home() {
 
   async function startNewChat() {
     if (!account || !modelCatalog || creatingSession) return;
-    setMobileSidebarOpen(false);
     const nextSession = createSession(modelCatalog.defaultModelId);
     const previousSessionId = activeSession?.id ?? "";
     setCreatingSession(true);
@@ -979,6 +939,12 @@ export default function Home() {
     } finally {
       setCreatingSession(false);
     }
+  }
+
+  function selectSession(sessionId: string) {
+    setActiveSessionId(sessionId);
+    setDraft("");
+    setComposerNotice("");
   }
 
   async function selectSessionModel(modelId: string) {
@@ -1031,12 +997,6 @@ export default function Home() {
         message: caught instanceof Error ? caught.message : "模型选择暂时无法同步到云端。",
       });
     }
-  }
-
-  function toggleAccountMenu() {
-    setActiveAccountDialog(null);
-    setAccountError("");
-    setAccountMenuOpen((current) => !current);
   }
 
   function openAccountDialog(dialog: AccountDialog, returnTarget: HTMLButtonElement | null = accountTrigger.current) {
@@ -1719,59 +1679,43 @@ export default function Home() {
     );
   }
 
-  return (
-    <main className={`chat-app ${mobileSidebarOpen ? "sidebar-open" : ""}`}>
-      <button className="sidebar-backdrop" tabIndex={-1} aria-label="关闭聊天记录" type="button" onClick={() => { setAccountMenuOpen(false); setMobileSidebarOpen(false); }} />
-      <aside className="sidebar" ref={sidebar} id="chat-sidebar" aria-label="对话导航" inert={activeAccountDialog !== null}>
-        <div className="brand-row"><span className="brand-mark" aria-hidden="true" /><strong>Jyotisha</strong><button className="sidebar-close" ref={sidebarCloseButton} aria-label="关闭聊天记录" type="button" onClick={() => { setAccountMenuOpen(false); setMobileSidebarOpen(false); }}><X aria-hidden="true" /></button></div>
-        <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || !modelCatalog || creatingSession || Boolean(pendingSessionId) || cancellationPending}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
-        <nav className="session-nav" aria-label="聊天记录">
-          <span className="sidebar-label">聊天记录</span>
-          <div className="session-list">
-            {sessions.map((session) => (
-              <button
-                className={session.id === activeSession?.id ? "is-active" : ""}
-                key={session.id}
-                type="button"
-                onClick={() => {
-                  setActiveSessionId(session.id);
-                  setDraft("");
-                  setComposerNotice("");
-                  setMobileSidebarOpen(false);
-                }}
-                aria-current={session.id === activeSession?.id ? "page" : undefined}
-              >
-                <span>{session.title}</span>
-                {session.messages.length > 0 && <small>{session.messages.length} 条消息</small>}
-              </button>
-            ))}
-          </div>
-        </nav>
-        <div className="sidebar-footer" ref={accountMenu}>
-          <button className="profile-trigger" ref={accountTrigger} type="button" aria-expanded={accountMenuOpen} aria-controls="account-menu" aria-haspopup="menu" onClick={toggleAccountMenu}>
-            <span className="profile-initial" aria-hidden="true">{profile.name.trim().slice(0, 1) || account?.user.email?.slice(0, 1).toUpperCase() || "你"}</span>
-            <span><b>{profile.name.trim() || account?.user.email || "账户"}</b></span>
-            <ChevronRight className={`chevron ${accountMenuOpen ? "is-open" : ""}`} aria-hidden="true" />
-          </button>
-          {accountMenuOpen && (
-            <div className="account-menu" id="account-menu" role="menu" aria-label="账户菜单">
-              <div className="account-menu-identity">
-                <span className="account-menu-avatar" aria-hidden="true">{profile.name.trim().slice(0, 1) || account.user.email?.slice(0, 1).toUpperCase() || "你"}</span>
-                <span><b>{profile.name.trim() || "账户"}</b><small>{account.user.email || "尚未读取邮箱"}</small></span>
-              </div>
-              <button className="account-menu-item" role="menuitem" type="button" onClick={() => openAccountDialog("profile")}><UserRound aria-hidden="true" /><span>个人资料</span><ChevronRight aria-hidden="true" /></button>
-              <button className="account-menu-item" role="menuitem" type="button" onClick={() => openAccountDialog("redeem")}><Gift aria-hidden="true" /><span>兑换点数</span><small>{account.credits} 点</small></button>
-              {account?.isAdmin && <Link className="account-menu-item" href="/admin/codes" role="menuitem" onClick={() => setAccountMenuOpen(false)}><KeyRound aria-hidden="true" /><span>管理兑换码</span><ChevronRight aria-hidden="true" /></Link>}
-              <div className="account-menu-separator" role="separator" />
-              <button className="account-menu-item account-menu-danger" role="menuitem" type="button" onClick={() => openAccountDialog("logout")}><LogOut aria-hidden="true" /><span>退出登录</span></button>
-            </div>
-          )}
-        </div>
-      </aside>
+  const sidebarAccount = {
+    name: profile.name.trim() || account.user.email || "账户",
+    email: account.user.email || "尚未读取邮箱",
+    credits: account.credits,
+    isAdmin: account.isAdmin,
+    initial: profile.name.trim().slice(0, 1)
+      || account.user.email?.slice(0, 1).toUpperCase()
+      || "你",
+  };
 
-      <section className="chat-panel" inert={activeAccountDialog !== null || mobileSidebarOpen}>
-        <header className="chat-header">
-          <button className="mobile-menu" ref={mobileMenuTrigger} aria-label="打开聊天记录" aria-controls="chat-sidebar" aria-expanded={mobileSidebarOpen} type="button" onClick={() => setMobileSidebarOpen(true)}><Menu aria-hidden="true" /></button>
+  const sidebarSessions = sessions.map((session) => ({
+    id: session.id,
+    title: session.title,
+    messageCount: session.messages.length,
+  }));
+
+  return (
+    <SidebarProvider escapeBlocked={accountMenuOpen || activeAccountDialog !== null}>
+      <main className="chat-app">
+        <AppSidebar
+          sessions={sidebarSessions}
+          activeSessionId={activeSession?.id ?? null}
+          account={sidebarAccount}
+          accountMenuOpen={accountMenuOpen}
+          accountTriggerRef={accountTrigger}
+          newChatDisabled={!hydrated || !modelCatalog || creatingSession || Boolean(pendingSessionId) || cancellationPending}
+          creatingSession={creatingSession}
+          onAccountMenuOpenChange={setAccountMenuOpen}
+          onNewChat={() => void startNewChat()}
+          onSelectSession={selectSession}
+          onOpenProfile={() => openAccountDialog("profile")}
+          onOpenRedeem={() => openAccountDialog("redeem")}
+          onOpenLogout={() => openAccountDialog("logout")}
+        />
+        <SidebarInset className="chat-panel" inert={activeAccountDialog !== null}>
+          <header className="chat-header">
+            <SidebarTrigger placement="inset" />
           <div>
             <strong>{activeSession?.title || "新对话"}</strong>
             <span><i className={`status ${isLoading ? "status-loading" : "status-idle"}`} />{isLoading
@@ -1784,7 +1728,7 @@ export default function Home() {
             <Sparkles className="credit-icon" aria-hidden="true" />
             <span>{account ? account.credits : "—"}</span>
           </button>
-        </header>
+          </header>
 
         <div className={`conversation ${activeSession?.messages.length ? "" : "is-empty"}`}>
           {!activeSession?.messages.length ? (
@@ -1968,7 +1912,7 @@ export default function Home() {
                 : "Enter 发送 · Shift + Enter 换行")}</p>
           </div>
         </div>
-      </section>
+        </SidebarInset>
 
       {activeAccountDialog !== null && (
         <div className="account-modal-overlay" onMouseDown={closeAccountDialog}>
@@ -2017,6 +1961,7 @@ export default function Home() {
           </section>
         </div>
       )}
-    </main>
+      </main>
+    </SidebarProvider>
   );
 }
