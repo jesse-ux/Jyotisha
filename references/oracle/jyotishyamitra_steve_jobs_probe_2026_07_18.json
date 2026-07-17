@@ -19,7 +19,427 @@
     "returnval": "ASTRODATA_DICTIONARY",
     "timezone": -8.0
   },
-  "comparison": {},
+  "comparison": {
+    "input_artifacts": {
+      "local": "artifacts/local_steve_jobs_high_rigor_raw.json",
+      "xalen": "artifacts/xalen_steve_jobs_high_rigor_raw.json"
+    },
+    "match_counts": {
+      "local": 38,
+      "xalen": 28
+    },
+    "promotion_allowed": false,
+    "row_count": 45,
+    "rows": [
+      {
+        "field": "Jupiter",
+        "jyotishyamitra_value": "Gemini",
+        "local_status": "match",
+        "local_value": "Gemini",
+        "section": "D1",
+        "xalen_status": "match",
+        "xalen_value": "Gemini"
+      },
+      {
+        "field": "Ketu",
+        "jyotishyamitra_value": "Gemini",
+        "local_status": "match",
+        "local_value": "Gemini",
+        "section": "D1",
+        "xalen_status": "not_comparable",
+        "xalen_value": null
+      },
+      {
+        "field": "Mars",
+        "jyotishyamitra_value": "Aries",
+        "local_status": "match",
+        "local_value": "Aries",
+        "section": "D1",
+        "xalen_status": "match",
+        "xalen_value": "Aries"
+      },
+      {
+        "field": "Mercury",
+        "jyotishyamitra_value": "Capricorn",
+        "local_status": "match",
+        "local_value": "Capricorn",
+        "section": "D1",
+        "xalen_status": "match",
+        "xalen_value": "Capricorn"
+      },
+      {
+        "field": "Moon",
+        "jyotishyamitra_value": "Pisces",
+        "local_status": "match",
+        "local_value": "Pisces",
+        "section": "D1",
+        "xalen_status": "match",
+        "xalen_value": "Pisces"
+      },
+      {
+        "field": "Rahu",
+        "jyotishyamitra_value": "Sagittarius",
+        "local_status": "match",
+        "local_value": "Sagittarius",
+        "section": "D1",
+        "xalen_status": "not_comparable",
+        "xalen_value": null
+      },
+      {
+        "field": "Saturn",
+        "jyotishyamitra_value": "Libra",
+        "local_status": "match",
+        "local_value": "Libra",
+        "section": "D1",
+        "xalen_status": "match",
+        "xalen_value": "Libra"
+      },
+      {
+        "field": "Sun",
+        "jyotishyamitra_value": "Aquarius",
+        "local_status": "match",
+        "local_value": "Aquarius",
+        "section": "D1",
+        "xalen_status": "match",
+        "xalen_value": "Aquarius"
+      },
+      {
+        "field": "Venus",
+        "jyotishyamitra_value": "Sagittarius",
+        "local_status": "match",
+        "local_value": "Sagittarius",
+        "section": "D1",
+        "xalen_status": "match",
+        "xalen_value": "Sagittarius"
+      },
+      {
+        "field": "Jupiter",
+        "jyotishyamitra_value": "Virgo",
+        "local_status": "mismatch",
+        "local_value": "Cancer",
+        "section": "D2",
+        "xalen_status": "mismatch",
+        "xalen_value": "Cancer"
+      },
+      {
+        "field": "Ketu",
+        "jyotishyamitra_value": "Leo",
+        "local_status": "match",
+        "local_value": "Leo",
+        "section": "D2",
+        "xalen_status": "not_comparable",
+        "xalen_value": null
+      },
+      {
+        "field": "Mars",
+        "jyotishyamitra_value": "Aries",
+        "local_status": "mismatch",
+        "local_value": "Leo",
+        "section": "D2",
+        "xalen_status": "mismatch",
+        "xalen_value": "Leo"
+      },
+      {
+        "field": "Mercury",
+        "jyotishyamitra_value": "Scorpio",
+        "local_status": "mismatch",
+        "local_value": "Leo",
+        "section": "D2",
+        "xalen_status": "mismatch",
+        "xalen_value": "Leo"
+      },
+      {
+        "field": "Moon",
+        "jyotishyamitra_value": "Aquarius",
+        "local_status": "mismatch",
+        "local_value": "Cancer",
+        "section": "D2",
+        "xalen_status": "mismatch",
+        "xalen_value": "Cancer"
+      },
+      {
+        "field": "Rahu",
+        "jyotishyamitra_value": "Leo",
+        "local_status": "match",
+        "local_value": "Leo",
+        "section": "D2",
+        "xalen_status": "not_comparable",
+        "xalen_value": null
+      },
+      {
+        "field": "Saturn",
+        "jyotishyamitra_value": "Taurus",
+        "local_status": "mismatch",
+        "local_value": "Cancer",
+        "section": "D2",
+        "xalen_status": "mismatch",
+        "xalen_value": "Cancer"
+      },
+      {
+        "field": "Sun",
+        "jyotishyamitra_value": "Sagittarius",
+        "local_status": "mismatch",
+        "local_value": "Leo",
+        "section": "D2",
+        "xalen_status": "mismatch",
+        "xalen_value": "Leo"
+      },
+      {
+        "field": "Venus",
+        "jyotishyamitra_value": "Virgo",
+        "local_status": "mismatch",
+        "local_value": "Cancer",
+        "section": "D2",
+        "xalen_status": "mismatch",
+        "xalen_value": "Cancer"
+      },
+      {
+        "field": "Jupiter",
+        "jyotishyamitra_value": "Pisces",
+        "local_status": "match",
+        "local_value": "Pisces",
+        "section": "D4",
+        "xalen_status": "match",
+        "xalen_value": "Pisces"
+      },
+      {
+        "field": "Ketu",
+        "jyotishyamitra_value": "Virgo",
+        "local_status": "match",
+        "local_value": "Virgo",
+        "section": "D4",
+        "xalen_status": "not_comparable",
+        "xalen_value": null
+      },
+      {
+        "field": "Mars",
+        "jyotishyamitra_value": "Aries",
+        "local_status": "match",
+        "local_value": "Aries",
+        "section": "D4",
+        "xalen_status": "match",
+        "xalen_value": "Aries"
+      },
+      {
+        "field": "Mercury",
+        "jyotishyamitra_value": "Cancer",
+        "local_status": "match",
+        "local_value": "Cancer",
+        "section": "D4",
+        "xalen_status": "match",
+        "xalen_value": "Cancer"
+      },
+      {
+        "field": "Moon",
+        "jyotishyamitra_value": "Gemini",
+        "local_status": "match",
+        "local_value": "Gemini",
+        "section": "D4",
+        "xalen_status": "match",
+        "xalen_value": "Gemini"
+      },
+      {
+        "field": "Rahu",
+        "jyotishyamitra_value": "Pisces",
+        "local_status": "match",
+        "local_value": "Pisces",
+        "section": "D4",
+        "xalen_status": "not_comparable",
+        "xalen_value": null
+      },
+      {
+        "field": "Saturn",
+        "jyotishyamitra_value": "Cancer",
+        "local_status": "match",
+        "local_value": "Cancer",
+        "section": "D4",
+        "xalen_status": "match",
+        "xalen_value": "Cancer"
+      },
+      {
+        "field": "Sun",
+        "jyotishyamitra_value": "Taurus",
+        "local_status": "match",
+        "local_value": "Taurus",
+        "section": "D4",
+        "xalen_status": "match",
+        "xalen_value": "Taurus"
+      },
+      {
+        "field": "Venus",
+        "jyotishyamitra_value": "Virgo",
+        "local_status": "match",
+        "local_value": "Virgo",
+        "section": "D4",
+        "xalen_status": "match",
+        "xalen_value": "Virgo"
+      },
+      {
+        "field": "Jupiter",
+        "jyotishyamitra_value": "Gemini",
+        "local_status": "match",
+        "local_value": "Gemini",
+        "section": "D9",
+        "xalen_status": "match",
+        "xalen_value": "Gemini"
+      },
+      {
+        "field": "Ketu",
+        "jyotishyamitra_value": "Sagittarius",
+        "local_status": "match",
+        "local_value": "Sagittarius",
+        "section": "D9",
+        "xalen_status": "not_comparable",
+        "xalen_value": null
+      },
+      {
+        "field": "Mars",
+        "jyotishyamitra_value": "Taurus",
+        "local_status": "match",
+        "local_value": "Taurus",
+        "section": "D9",
+        "xalen_status": "match",
+        "xalen_value": "Taurus"
+      },
+      {
+        "field": "Mercury",
+        "jyotishyamitra_value": "Cancer",
+        "local_status": "match",
+        "local_value": "Cancer",
+        "section": "D9",
+        "xalen_status": "match",
+        "xalen_value": "Cancer"
+      },
+      {
+        "field": "Moon",
+        "jyotishyamitra_value": "Scorpio",
+        "local_status": "match",
+        "local_value": "Scorpio",
+        "section": "D9",
+        "xalen_status": "match",
+        "xalen_value": "Scorpio"
+      },
+      {
+        "field": "Rahu",
+        "jyotishyamitra_value": "Gemini",
+        "local_status": "match",
+        "local_value": "Gemini",
+        "section": "D9",
+        "xalen_status": "not_comparable",
+        "xalen_value": null
+      },
+      {
+        "field": "Saturn",
+        "jyotishyamitra_value": "Gemini",
+        "local_status": "match",
+        "local_value": "Gemini",
+        "section": "D9",
+        "xalen_status": "match",
+        "xalen_value": "Gemini"
+      },
+      {
+        "field": "Sun",
+        "jyotishyamitra_value": "Capricorn",
+        "local_status": "match",
+        "local_value": "Capricorn",
+        "section": "D9",
+        "xalen_status": "match",
+        "xalen_value": "Capricorn"
+      },
+      {
+        "field": "Venus",
+        "jyotishyamitra_value": "Sagittarius",
+        "local_status": "match",
+        "local_value": "Sagittarius",
+        "section": "D9",
+        "xalen_status": "match",
+        "xalen_value": "Sagittarius"
+      },
+      {
+        "field": "Jupiter",
+        "jyotishyamitra_value": "Pisces",
+        "local_status": "match",
+        "local_value": "Pisces",
+        "section": "D10",
+        "xalen_status": "match",
+        "xalen_value": "Pisces"
+      },
+      {
+        "field": "Ketu",
+        "jyotishyamitra_value": "Virgo",
+        "local_status": "match",
+        "local_value": "Virgo",
+        "section": "D10",
+        "xalen_status": "not_comparable",
+        "xalen_value": null
+      },
+      {
+        "field": "Mars",
+        "jyotishyamitra_value": "Taurus",
+        "local_status": "match",
+        "local_value": "Taurus",
+        "section": "D10",
+        "xalen_status": "match",
+        "xalen_value": "Taurus"
+      },
+      {
+        "field": "Mercury",
+        "jyotishyamitra_value": "Aries",
+        "local_status": "match",
+        "local_value": "Aries",
+        "section": "D10",
+        "xalen_status": "match",
+        "xalen_value": "Aries"
+      },
+      {
+        "field": "Moon",
+        "jyotishyamitra_value": "Pisces",
+        "local_status": "match",
+        "local_value": "Pisces",
+        "section": "D10",
+        "xalen_status": "match",
+        "xalen_value": "Pisces"
+      },
+      {
+        "field": "Rahu",
+        "jyotishyamitra_value": "Pisces",
+        "local_status": "match",
+        "local_value": "Pisces",
+        "section": "D10",
+        "xalen_status": "not_comparable",
+        "xalen_value": null
+      },
+      {
+        "field": "Saturn",
+        "jyotishyamitra_value": "Cancer",
+        "local_status": "match",
+        "local_value": "Cancer",
+        "section": "D10",
+        "xalen_status": "match",
+        "xalen_value": "Cancer"
+      },
+      {
+        "field": "Sun",
+        "jyotishyamitra_value": "Gemini",
+        "local_status": "match",
+        "local_value": "Gemini",
+        "section": "D10",
+        "xalen_status": "match",
+        "xalen_value": "Gemini"
+      },
+      {
+        "field": "Venus",
+        "jyotishyamitra_value": "Virgo",
+        "local_status": "match",
+        "local_value": "Virgo",
+        "section": "D10",
+        "xalen_status": "match",
+        "xalen_value": "Virgo"
+      }
+    ],
+    "scope": "jyotishyamitra_field_comparison",
+    "truth_policy": "independent_observation_not_truth"
+  },
   "isolated_subprocess": {
     "returncode": 0,
     "stderr": "",

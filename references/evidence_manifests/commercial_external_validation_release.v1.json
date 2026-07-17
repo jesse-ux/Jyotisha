@@ -207,6 +207,18 @@
       "path": "docs/benchmark/public_real_case_negative_controls_holdout_v2_month_nearest_20260717.json",
       "sha256": "cef9e9c9dccb202ce8909d63d8fccf6c2699cf7a2c28e30b58c42e04b5e2ba2c",
       "scope": "public month-nearest negative-control evidence, not tuning data"
+    },
+    {
+      "id": "jyotishyamitra_pinned_metadata_probe",
+      "path": "references/oracle/jyotishyamitra_pinned_adapter_probe_2026_07_18.json",
+      "sha256": "f3dab8d1cdde64b4fdcd8c05bbe1b333d8aebe3822552781dbbe4b21f1f43898",
+      "scope": "pinned MIT Jyotishyamitra metadata-only observation contract"
+    },
+    {
+      "id": "jyotishyamitra_public_case_observation",
+      "path": "references/oracle/jyotishyamitra_steve_jobs_probe_2026_07_18.json",
+      "sha256": "c68b31525061111444cd61f1bd0bb444c5f0cccbb816119881c61751ad1ef527",
+      "scope": "pinned MIT Jyotishyamitra public-case observation; not truth-matrix promotion"
     }
   ]
 }
