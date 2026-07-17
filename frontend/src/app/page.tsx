@@ -245,6 +245,15 @@ function profilePlaceLabel(profile: Profile) {
   return selectedBirthPlace(profile)?.label || "地点未完整";
 }
 
+function buildSynastryQuestion(selfProfile: Profile, partnerProfile: Profile) {
+  return [
+    `请用印度占星合盘分析我和${partnerProfile.name || "对方"}的关系。`,
+    `我的资料：${selfProfile.name || "本人"}，${selfProfile.date} ${selfProfile.time}，${profilePlaceLabel(selfProfile)}。`,
+    `对方资料：${partnerProfile.name || "对方"}，${partnerProfile.date} ${partnerProfile.time}，${profilePlaceLabel(partnerProfile)}。`,
+    "请先说明会使用哪些证据层，再分析关系模式、冲突点、适合发展的方式和需要谨慎的时间窗口。",
+  ].join("\n");
+}
+
 function missingProfileStep(profile: Profile): OnboardingStep | null {
   if (!profile.name.trim()) return "name";
   if (!profile.date || !profile.time) return "birth";
@@ -1238,6 +1247,12 @@ export default function Home() {
     window.requestAnimationFrame(() => composerInput.current?.focus());
   }
 
+  function draftSynastryQuestionFromChart(record: ChartLibraryRecord) {
+    if (record.role !== "other") return;
+    chooseSuggestedQuestion(buildSynastryQuestion(profile, record.profile), "marriage");
+    setProfileOpen(false);
+  }
+
   async function requestCancellation(requestId: string) {
     const existing = cancellationRequests.current.get(requestId);
     if (existing) return existing;
@@ -1935,6 +1950,7 @@ export default function Home() {
                         <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
                       </div>
                       <div className="chart-library-actions">
+                        <button className="button-secondary" type="button" onClick={() => draftSynastryQuestionFromChart(record)}>用于合盘</button>
                         <button className="button-secondary" type="button" onClick={() => void makeDefaultChart(record)} disabled={profileSaving}>设为默认</button>
                         <button className="button-secondary danger-button" type="button" onClick={() => deleteOtherChart(record.id)}>删除</button>
                       </div>

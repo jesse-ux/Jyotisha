@@ -140,10 +140,13 @@ def test_chart_profile_library_has_cloud_table_api_and_local_fallback() -> None:
         "fetchCloudChartLibrary",
         "saveCloudChartProfile",
         "deleteCloudChartProfile",
+        "buildSynastryQuestion",
+        "draftSynastryQuestionFromChart",
         "chartLibraryStorageKey",
         "Cloud chart library is best-effort",
         "星盘库",
         "添加其他星盘",
+        "用于合盘",
         "设为默认",
     ):
         assert token in page
