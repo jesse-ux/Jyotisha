@@ -17,13 +17,15 @@ if str(SCRIPT_DIR) not in sys.path:
 try:
     from scripts.domain_calculation_service import compute_chart, compute_vimshottari_timeline
     from scripts.timing_precision_contract import build_timing_precision_contract
-    from scripts.varga import SIGN_LORDS, calc_varga
+    from scripts.varga import SIGNS, SIGN_LORDS, calc_varga
     from scripts.dasha_analyzer import build_antardasha
+    from scripts.narayana_dasha import narayana_dasha_full_report
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
     from domain_calculation_service import compute_chart, compute_vimshottari_timeline
     from timing_precision_contract import build_timing_precision_contract
-    from varga import SIGN_LORDS, calc_varga
+    from varga import SIGNS, SIGN_LORDS, calc_varga
     from dasha_analyzer import build_antardasha
+    from narayana_dasha import narayana_dasha_full_report
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,6 +48,8 @@ FEATURE_WEIGHTS = {
     "d10_sun": 0.10,
     "vimshottari_mahadasha": 0.15,
     "vimshottari_antardasha": 0.10,
+    "narayana_mahadasha_sign": 0.10,
+    "narayana_antardasha_sign": 0.10,
 }
 HIGH_SIMILARITY_THRESHOLD = 0.75
 
@@ -132,6 +136,40 @@ def _vimshottari_state(chart: dict[str, Any], reference_date: str | None) -> dic
     return None
 
 
+def _narayana_state(chart: dict[str, Any], reference_date: str | None) -> dict[str, str] | None:
+    if not isinstance(reference_date, str):
+        return None
+    try:
+        target = datetime.fromisoformat(reference_date[:10])
+    except ValueError:
+        return None
+    birth_dt = _birth_datetime(chart)
+    ascendant = chart.get("ascendant") if isinstance(chart, dict) else None
+    asc_sign = ascendant.get("sign") if isinstance(ascendant, dict) else None
+    planets = chart.get("planets") if isinstance(chart, dict) else None
+    if birth_dt is None or asc_sign not in SIGNS or not isinstance(planets, dict):
+        return None
+    try:
+        planet_lons = {name: float(value["lon"]) for name, value in planets.items() if isinstance(value, dict) and value.get("lon") is not None}
+        if not planet_lons:
+            return None
+        age = (target - birth_dt).total_seconds() / (365.25 * 86400)
+        if age <= 0:
+            return None
+        current = narayana_dasha_full_report(
+            lagna_sign_idx=SIGNS.index(asc_sign),
+            planet_lons=planet_lons,
+            current_age=age,
+            birth_year=birth_dt.year,
+        ).get("current_dasha", {})
+        md, ad = current.get("md"), current.get("ad")
+        if not isinstance(md, dict) or not isinstance(ad, dict):
+            return None
+        return {"mahadasha_sign": md.get("sign"), "antardasha_sign": ad.get("sign")}
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 def _features(chart: dict[str, Any], domain: str) -> dict[str, Any]:
     ascendant = chart.get("ascendant") if isinstance(chart, dict) else None
     rahu, ketu = _sign(chart, "Rahu"), _sign(chart, "Ketu")
@@ -191,6 +229,8 @@ def _similarity(
     candidate = _features(case_chart, domain)
     user_dasha = _vimshottari_state(user_chart, reference_date)
     case_dasha = _vimshottari_state(case_chart, case_event_date)
+    user_narayana = _narayana_state(user_chart, reference_date)
+    case_narayana = _narayana_state(case_chart, case_event_date)
     if user_dasha is not None and case_dasha is not None:
         user["vimshottari_mahadasha"] = user_dasha["mahadasha"]
         candidate["vimshottari_mahadasha"] = case_dasha["mahadasha"]
@@ -210,6 +250,22 @@ def _similarity(
         }
     else:
         timing_state = {"status": "not_compared"}
+    if user_narayana is not None and case_narayana is not None:
+        user["narayana_mahadasha_sign"] = user_narayana["mahadasha_sign"]
+        candidate["narayana_mahadasha_sign"] = case_narayana["mahadasha_sign"]
+        user["narayana_antardasha_sign"] = user_narayana["antardasha_sign"]
+        candidate["narayana_antardasha_sign"] = case_narayana["antardasha_sign"]
+        timing_state["narayana_status"] = (
+            "matched"
+            if user_narayana == case_narayana
+            else "partial_match"
+            if user_narayana["mahadasha_sign"] == case_narayana["mahadasha_sign"]
+            else "different"
+        )
+        timing_state["user_narayana"] = user_narayana
+        timing_state["case_event_narayana"] = case_narayana
+    else:
+        timing_state["narayana_status"] = "not_compared"
     matching, dissimilar, total = [], [], 0.0
     for name, weight in FEATURE_WEIGHTS.items():
         if name not in user or name not in candidate:
@@ -227,10 +283,12 @@ def _similarity(
         compared_vargas.append("D9")
     if domain == "career" and all(user.get(name) is not None and candidate.get(name) is not None for name in ("d10_ascendant", "d10_sun")):
         compared_vargas.append("D10")
-    uncompared = ["narayana_dasha", "transit_event_state"]
+    uncompared = ["transit_event_state"]
     if timing_state["status"] == "not_compared":
         uncompared.insert(0, "vimshottari_mahadasha")
         uncompared.insert(1, "vimshottari_antardasha")
+    if timing_state["narayana_status"] == "not_compared":
+        uncompared.insert(-1, "narayana_dasha")
     if domain == "marriage" and "D9" not in compared_vargas:
         uncompared.insert(0, "D9")
     if domain == "career" and "D10" not in compared_vargas:
@@ -239,7 +297,7 @@ def _similarity(
         "score": score,
         "matching_factors": matching,
         "dissimilar_factors": dissimilar,
-        "feature_scope": "D1 ascendant, Moon, theme-house lord, Rahu/Ketu axis" + (f", {'/'.join(compared_vargas)}" if compared_vargas else "") + (", Vimshottari MD/AD" if timing_state["status"] != "not_compared" else ""),
+        "feature_scope": "D1 ascendant, Moon, theme-house lord, Rahu/Ketu axis" + (f", {'/'.join(compared_vargas)}" if compared_vargas else "") + (", Vimshottari MD/AD" if timing_state["status"] != "not_compared" else "") + (", Narayana MD/AD" if timing_state["narayana_status"] != "not_compared" else ""),
         "uncompared_layers": uncompared,
         "timing_state": timing_state,
     }

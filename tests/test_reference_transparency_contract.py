@@ -122,9 +122,16 @@ def test_same_event_date_compares_vimshottari_mahadasha() -> None:
     )
 
     similarity = selected["cases"][0]["similarity"]
-    assert {"vimshottari_mahadasha", "vimshottari_antardasha"}.issubset(similarity["matching_factors"])
+    assert {
+        "vimshottari_mahadasha",
+        "vimshottari_antardasha",
+        "narayana_mahadasha_sign",
+        "narayana_antardasha_sign",
+    }.issubset(similarity["matching_factors"])
     assert similarity["timing_state"]["status"] == "matched"
+    assert similarity["timing_state"]["narayana_status"] == "matched"
     assert "vimshottari_antardasha" not in similarity["uncompared_layers"]
+    assert "narayana_dasha" not in similarity["uncompared_layers"]
 
 
 def test_pending_health_case_is_context_only_not_calibration() -> None:
