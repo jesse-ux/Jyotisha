@@ -109,7 +109,7 @@ def _run_capability_catalog(case: dict[str, Any]) -> dict[str, Any]:
             cwd=ROOT,
             text=True,
             capture_output=True,
-            timeout=max(5.0, float(os.environ.get("VEDASTRO_TIMEOUT_SECONDS", "5") or 5)),
+            timeout=max(5.0, float(os.environ.get("VEDASTRO_TIMEOUT_SECONDS", "20") or 20)),
             check=False,
             env=os.environ.copy(),
         )

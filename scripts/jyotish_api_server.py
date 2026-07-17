@@ -648,6 +648,18 @@ def execute_consultation_workflow(
         blind=bool(body.get('blind') or body.get('blind_technical_mode')),
     )
 
+    vedastro_gateway = rectification.get('vedastro_gateway') if isinstance(rectification, dict) else None
+    if not isinstance(vedastro_gateway, dict):
+        try:
+            vedastro_gateway = handler._compute_vedastro_gateway_run(body)
+        except Exception as exc:  # Gateway evidence must not block the local chart result.
+            vedastro_gateway = {
+                'scope': 'vedastro_gateway_run',
+                'status': 'official_blocked',
+                'official_closure_reason': 'gateway_invocation_error',
+                'error_type': type(exc).__name__,
+            }
+
     result = {
         'success': True,
         'endpoint': 'consultation_workflow',
@@ -688,6 +700,7 @@ def execute_consultation_workflow(
         'muhurta_panchanga': muhurta_panchanga,
         'audited_remedies': audited_remedies,
         'vedastro_official': vedastro_official,
+        'vedastro_gateway': vedastro_gateway,
         'runtime_truth': runtime_truth,
         'external_parity_gate': external_parity_gate,
         'interpretation_source_runtime_coverage': interpretation_source_runtime_coverage,
@@ -6707,9 +6720,19 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             headline = '出生时间风险较低，可进入完整解盘'
             next_action = '保留原始出生记录来源；重要预测仍建议用 Dasha/Transit/案例验证交叉确认。'
 
+        try:
+            vedastro_gateway = self._compute_vedastro_gateway_run(body)
+        except Exception as exc:  # Keep rectification available when the external observation is down.
+            vedastro_gateway = {
+                'scope': 'vedastro_gateway_run',
+                'status': 'official_blocked',
+                'official_closure_reason': 'gateway_invocation_error',
+                'error_type': type(exc).__name__,
+            }
         return {
             'success': True,
             'endpoint': 'rectification_gate',
+            'vedastro_gateway': vedastro_gateway,
             'ascendant': {
                 'lon': asc_lon,
                 'sign': SIGNS[int(asc_lon / 30) % 12],

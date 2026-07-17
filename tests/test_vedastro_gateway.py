@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 
-def test_gateway_status_defaults_to_local_first_cn_safe(monkeypatch):
+def test_gateway_status_defaults_to_official_first_cn_safe(monkeypatch):
     from scripts import vedastro_gateway
 
     monkeypatch.delenv("VEDASTRO_GATEWAY_MODE", raising=False)
@@ -17,13 +17,12 @@ def test_gateway_status_defaults_to_local_first_cn_safe(monkeypatch):
     status = vedastro_gateway.gateway_status()
 
     assert status["scope"] == "vedastro_gateway"
-    assert status["mode"] == "local_first"
+    assert status["mode"] == "official_first"
     assert status["direct_browser_access_allowed"] is False
     assert status["frontend_secret_safe"] is True
     assert status["backend_priority"] == ["self_host", "official", "cache", "queue", "local_fallback"]
-    assert status["active_backend"] == "local_fallback"
-    assert status["official_readiness"]["official_ready"] is False
-    assert "missing_endpoint" in status["official_readiness"]["readiness_blockers"]
+    assert status["active_backend"] == "official"
+    assert status["official_readiness"]["official_ready"] is True
     assert status["boundary"] == "Users never call VedAstro directly; backend gateway owns cache, queue, and fallback."
 
 

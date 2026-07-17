@@ -15,10 +15,15 @@ from typing import Any
 BACKEND_PRIORITY = ["self_host", "official", "cache", "queue", "local_fallback"]
 BOUNDARY_TEXT = "Users never call VedAstro directly; backend gateway owns cache, queue, and fallback."
 ROOT = Path(__file__).resolve().parents[1]
+OFFICIAL_ENDPOINT = "https://api.vedastro.org/api"
 
 
 def _bool_env(name: str) -> bool:
     return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _official_network_enabled() -> bool:
+    return os.environ.get("VEDASTRO_ENABLE_NETWORK", "1").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _int_env(name: str, default: int = 0) -> int:
@@ -32,9 +37,9 @@ def _int_env(name: str, default: int = 0) -> int:
 
 
 def build_gateway_config() -> dict[str, Any]:
-    mode = os.environ.get("VEDASTRO_GATEWAY_MODE", "local_first").strip() or "local_first"
+    mode = os.environ.get("VEDASTRO_GATEWAY_MODE", "official_first").strip() or "official_first"
     self_host = os.environ.get("VEDASTRO_SELF_HOST_ENDPOINT", "").strip()
-    official = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
+    official = os.environ.get("VEDASTRO_API_ENDPOINT", OFFICIAL_ENDPOINT).strip()
     return {
         "mode": mode,
         "self_host_endpoint_configured": bool(self_host),
@@ -49,7 +54,7 @@ def build_gateway_config() -> dict[str, Any]:
 def _active_backend(config: dict[str, Any]) -> str:
     if config["self_host_endpoint_configured"]:
         return "self_host"
-    if config["official_endpoint_configured"] and _bool_env("VEDASTRO_ENABLE_NETWORK"):
+    if config["official_endpoint_configured"] and _official_network_enabled():
         return "official"
     if config["cache_ttl_seconds"] > 0:
         return "cache"

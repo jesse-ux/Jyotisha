@@ -25,7 +25,7 @@ def _bool_env(name: str) -> bool:
 def _timeout_seconds() -> float:
     raw = os.environ.get("VEDASTRO_TIMEOUT_SECONDS", "").strip()
     if not raw:
-        return 4.0
+        return 20.0
     try:
         return float(raw)
     except ValueError:
@@ -34,8 +34,8 @@ def _timeout_seconds() -> float:
 
 def build_report() -> dict:
     load_local_env(ROOT)
-    endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "").strip()
-    network_enabled = _bool_env("VEDASTRO_ENABLE_NETWORK")
+    endpoint = os.environ.get("VEDASTRO_API_ENDPOINT", "https://api.vedastro.org/api").strip()
+    network_enabled = os.environ.get("VEDASTRO_ENABLE_NETWORK", "1").strip().lower() in {"1", "true", "yes", "on"}
     timeout_seconds = _timeout_seconds()
     has_api_key = bool(os.environ.get("VEDASTRO_API_KEY", "").strip())
     free_tier_queue_enabled = _bool_env("VEDASTRO_FREE_TIER_QUEUE") or _bool_env("VEDASTRO_FREE_TIER_QUEUE_ENABLED") or _bool_env("VEDASTRO_ENABLE_FREE_TIER_QUEUE")
