@@ -18,6 +18,8 @@ def test_chat_history_management_actions_are_exposed() -> None:
         "onContextMenu",
         "session-menu-trigger",
         'role="menu"',
+        "closeSessionMenu",
+        "Escape",
         "置顶",
         "重命名",
         "归档",

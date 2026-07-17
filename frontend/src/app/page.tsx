@@ -739,6 +739,21 @@ export default function Home() {
     localStorage.setItem(`${prefix}pinned`, JSON.stringify(pinnedSessionIds));
     localStorage.setItem(`${prefix}archived`, JSON.stringify(archivedSessionIds));
   }, [accountId, archivedSessionIds, hydrated, pinnedSessionIds]);
+
+  useEffect(() => {
+    if (!sessionMenuId) return;
+    function closeSessionMenu(event: Event) {
+      if (event instanceof globalThis.KeyboardEvent && event.key !== "Escape") return;
+      if (event instanceof MouseEvent && (event.target as Element | null)?.closest(".session-row")) return;
+      setSessionMenuId(null);
+    }
+    window.addEventListener("mousedown", closeSessionMenu);
+    window.addEventListener("keydown", closeSessionMenu);
+    return () => {
+      window.removeEventListener("mousedown", closeSessionMenu);
+      window.removeEventListener("keydown", closeSessionMenu);
+    };
+  }, [sessionMenuId]);
   const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
   useEffect(() => {
     if (!accountId) {
