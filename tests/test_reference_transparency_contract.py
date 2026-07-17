@@ -160,6 +160,13 @@ def test_pending_health_case_is_context_only_not_calibration() -> None:
     assert selected["coverage"]["available_event_domains"] == ["health"]
 
 
+def test_default_public_context_catalog_covers_wealth_as_reference_only() -> None:
+    selected = select_similar_public_cases(_chart("Leo", "Pisces", "Libra"), ["wealth"])
+
+    assert "wealth" in selected["coverage"]["available_event_domains"]
+    assert "wealth" not in selected["coverage"]["requested_uncovered_domains"]
+
+
 def test_career_similarity_adds_d10_only_when_both_charts_have_longitudes() -> None:
     chart = _varga_chart()
     cases = [{
@@ -229,7 +236,7 @@ def test_default_manifest_exposes_kahlo_health_as_context_only() -> None:
 
     assert [case["case_id"] for case in selected["cases"]] == ["kahlo_bus_injury_1925"]
     assert selected["cases"][0]["reference_status"] == "public_context_only"
-    assert selected["coverage"]["available_event_domains"] == ["career", "health", "marriage"]
+    assert selected["coverage"]["available_event_domains"] == ["career", "health", "marriage", "wealth"]
 
 
 def test_consultation_api_exposes_reference_transparency_contract() -> None:

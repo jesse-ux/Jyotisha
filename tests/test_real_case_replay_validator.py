@@ -24,7 +24,7 @@ def test_public_context_manifest_is_structured_but_not_replay_calibration() -> N
     assert result["status"] == "partial"
     assert result["errors"] == []
     assert result["replay_ready_count"] == 0
-    assert result["domain_counts"] == {"health": 1}
+    assert result["domain_counts"] == {"health": 1, "wealth": 1}
 
 
 def test_holdout_manifest_contains_ten_new_balanced_cases() -> None:
