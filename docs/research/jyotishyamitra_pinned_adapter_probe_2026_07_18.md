@@ -57,6 +57,10 @@ Replay stability:
 
 ## Next
 
-1. Extract D1/D2/D4/D9/D10, Shadbala/Balas, AshtakaVarga, and Vimshottari fields.
-2. Compare field-by-field against local, Xalen, PyJHora, and jyotishganit as independent observation only.
-3. Keep `promotion_allowed=false` unless external worked examples arbitrate method variants.
+The D1/D2/D4/D9/D10 sign surface now has 45 observation rows against archived local and Xalen raw:
+
+- local: `38/45` matches;
+- Xalen: `28/45` matches; Xalen's absent Rahu/Ketu rows are `not_comparable`, not mismatches;
+- D2 is a method-sensitive difference cluster and remains unarbitrated.
+
+Balas, AshtakaVarga, and Vimshottari remain raw-only until their units, schema, and method contracts are independently aligned. Keep `promotion_allowed=false` unless external worked examples arbitrate method variants.
