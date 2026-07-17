@@ -39,24 +39,27 @@ cp .env.example .env.local
 # Python 占星计算服务
 JYOTISH_API_BASE=http://127.0.0.1:5200
 
-# 方案 A：默认 OpenAI
-OPENAI_API_KEY=sk-...
-MASTRA_MODEL=openai/gpt-5-mini
+# 推荐：多模型目录。目录只保存路由元数据，Key 由 apiKeyEnv 引用。
+LLM_DEFAULT_MODEL_ID=deepseek-pro
+LLM_MODELS_JSON='[{"id":"deepseek-pro","label":"DeepSeek V4 Pro","description":"更适合复杂分析","provider":"openai-compatible","baseURL":"https://api.deepseek.com","apiKeyEnv":"DEEPSEEK_API_KEY","model":"deepseek-v4-pro","creditCost":1},{"id":"gpt-5-mini","label":"ChatGPT 5 Mini","description":"响应稳定、速度均衡","provider":"openai","apiKeyEnv":"OPENAI_API_KEY","model":"openai/gpt-5-mini","creditCost":1}]'
+DEEPSEEK_API_KEY=<server-secret>
+OPENAI_API_KEY=<server-secret>
 
-# 方案 B：任意 OpenAI-compatible 第三方模型
-# 只要填写任一 LLM_* 项，应用便会优先使用本方案。
-# Base URL 通常填写到 /v1，不要填写完整 /chat/completions 地址。
-LLM_BASE_URL=https://your-provider.example/v1
-LLM_API_KEY=your-secret-key
-LLM_MODEL=your-model-id
-# 可选：只作为 Mastra 内部标签，不影响请求地址
-LLM_PROVIDER_ID=third-party
+# 兼容旧的单模型 OpenAI 配置
+# OPENAI_API_KEY=<server-secret>
+# MASTRA_MODEL=openai/gpt-5-mini
+
+# 兼容旧的单个 OpenAI-compatible 配置
+# LLM_BASE_URL=https://your-provider.example/v1
+# LLM_API_KEY=<server-secret>
+# LLM_MODEL=your-model-id
+# LLM_PROVIDER_ID=third-party
 
 # 可选：部署目录与本仓结构不同时，显式指定 Mastra Skill 目录
 # JYOTISH_SKILL_PATH=/absolute/path/to/yinduzhanxing/skills/jyotish-vedic-astrology
 ```
 
-第三方端点必须兼容 OpenAI 的 Chat Completions 调用方式，并支持工具调用（function calling），否则 Agent 无法稳定调用占星计算工具。密钥只放在 `.env.local`，**不要**加 `NEXT_PUBLIC_` 前缀，也不要提交到 Git。每次修改 `.env.local` 后重启 Next.js 开发服务器。
+第三方端点必须兼容 OpenAI 的 Chat Completions 调用方式，并支持工具调用（function calling），否则 Agent 无法稳定调用占星计算工具。`LLM_MODELS_JSON` 只能填写服务端认可的固定地址和模型；浏览器只会得到模型 ID、名称、说明和点数。密钥只放在 `.env.local`，**不要**加 `NEXT_PUBLIC_` 前缀，也不要提交到 Git。每次修改 `.env.local` 后重启 Next.js 开发服务器。
 
 ## Skill 如何触发
 

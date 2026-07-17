@@ -27,7 +27,6 @@
 **Files:**
 - Modify: `frontend/src/mastra/model.ts`
 - Create: `frontend/tests/model-catalog.test.ts`
-- Modify: `frontend/.env.example`
 - Modify: `frontend/README.md`
 - Modify: `deploy/README.md`
 
@@ -132,12 +131,12 @@ Expected: all catalog tests PASS and TypeScript exits `0`.
 
 - [ ] **Step 5: Document configuration**
 
-Update `.env.example`, `frontend/README.md`, and `deploy/README.md` with `LLM_MODELS_JSON`, `LLM_DEFAULT_MODEL_ID`, one secret environment variable per provider, and the existing single-model fallback. Use redacted values only.
+Update `frontend/README.md` and `deploy/README.md` with `LLM_MODELS_JSON`, `LLM_DEFAULT_MODEL_ID`, one secret environment variable per provider, and the existing single-model fallback. Use redacted values only. Do not add `frontend/.env.example`: the repository intentionally ignores all `.env*` files.
 
 - [ ] **Step 6: Commit the catalog task**
 
 ```bash
-git add frontend/src/mastra/model.ts frontend/tests/model-catalog.test.ts frontend/.env.example frontend/README.md deploy/README.md
+git add frontend/src/mastra/model.ts frontend/tests/model-catalog.test.ts frontend/README.md deploy/README.md docs/superpowers/plans/2026-07-17-multi-model-chat-selection.md
 git commit -m "feat: add server model catalog"
 ```
 
