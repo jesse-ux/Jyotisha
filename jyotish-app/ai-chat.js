@@ -268,7 +268,6 @@ async function refreshDailyStarCard() {
     if (!result?.success) throw new Error(result?.error || 'daily guidance unavailable');
     textEl.textContent = result.daily_star_words || '今日适合稳步推进，把重要事情拆小完成。';
     const used = (result.evidence || []).filter(item => item.status === 'used').map(item => item.layer);
-    const used = (result.evidence || []).filter(item => item.status === 'used').map(item => item.layer);
     evidenceEl.textContent = `依据：${used.length ? used.join(' · ') : 'D1 · 今日过境'}`;
   } catch (error) {
     textEl.textContent = '今天适合先完成一件小事，再推进重要计划。把话说清、把事做稳，好运来自主动连接。';
