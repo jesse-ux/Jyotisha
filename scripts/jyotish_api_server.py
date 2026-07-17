@@ -451,6 +451,8 @@ def execute_consultation_workflow(
     surface: str = 'api_web',
     chart_override: dict | None = None,
 ) -> dict:
+    from scripts.timing_precision_contract import build_timing_precision_contract
+
     birth_payload = handler._high_rigor_birth_payload(body)
     themes = handler._high_rigor_requested_themes(body)
     events = handler._high_rigor_events(body)
@@ -524,6 +526,7 @@ def execute_consultation_workflow(
             if body.get('require_external_parity') and external_parity_gate.get('status') != 'pass':
                 result['success'] = False
                 result['blocked_reason'] = 'external_parity_not_passed'
+        result['timing_precision_contract'] = build_timing_precision_contract(body.get('timing'))
         return result
 
     chart = dict(chart_override) if isinstance(chart_override, dict) else {}
@@ -711,6 +714,7 @@ def execute_consultation_workflow(
             result['blocked_reason'] = 'external_parity_not_passed'
     if body.get('return_high_rigor_shape'):
         result['endpoint'] = 'high_rigor_workflow'
+    result['timing_precision_contract'] = build_timing_precision_contract(body.get('timing'))
     return result
 
 

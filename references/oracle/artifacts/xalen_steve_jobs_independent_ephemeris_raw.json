@@ -1,0 +1,285 @@
+{
+  "boundary": "Fourth observation only; no majority-vote truth promotion.",
+  "engine": "xalen-ephemeris",
+  "license": "Apache-2.0",
+  "raw": {
+    "ashtakavarga": {
+      "bav": {
+        "Jupiter": [
+          7,
+          5,
+          3,
+          3,
+          5,
+          7,
+          3,
+          5,
+          4,
+          6,
+          5,
+          3
+        ],
+        "Mars": [
+          4,
+          7,
+          4,
+          4,
+          3,
+          0,
+          4,
+          5,
+          1,
+          4,
+          1,
+          2
+        ],
+        "Mercury": [
+          5,
+          5,
+          5,
+          4,
+          4,
+          2,
+          6,
+          5,
+          5,
+          8,
+          2,
+          3
+        ],
+        "Moon": [
+          4,
+          5,
+          4,
+          2,
+          6,
+          5,
+          3,
+          2,
+          5,
+          5,
+          3,
+          5
+        ],
+        "Saturn": [
+          1,
+          5,
+          3,
+          0,
+          6,
+          3,
+          4,
+          5,
+          3,
+          3,
+          3,
+          3
+        ],
+        "Sun": [
+          3,
+          7,
+          4,
+          3,
+          3,
+          2,
+          6,
+          7,
+          4,
+          4,
+          3,
+          2
+        ],
+        "Venus": [
+          4,
+          3,
+          5,
+          3,
+          4,
+          5,
+          4,
+          3,
+          5,
+          5,
+          5,
+          6
+        ]
+      },
+      "sav": [
+        28,
+        37,
+        28,
+        19,
+        31,
+        24,
+        30,
+        32,
+        27,
+        35,
+        22,
+        24
+      ]
+    },
+    "commit": "cc6edbec1f748ebdc4950ae6198f575c5ada73fa",
+    "effective_positions": {
+      "Jupiter": {
+        "house": 11,
+        "longitude": 87.2723950733489,
+        "speed": -0.0630678786343745
+      },
+      "Mars": {
+        "house": 9,
+        "longitude": 5.854985381019798,
+        "speed": 0.7017965758751779
+      },
+      "Mercury": {
+        "house": 6,
+        "longitude": 291.1263406896849,
+        "speed": -0.03320556249180691
+      },
+      "Moon": {
+        "house": 8,
+        "longitude": 344.5112149434978,
+        "speed": 14.171843625587321
+      },
+      "Saturn": {
+        "house": 3,
+        "longitude": 207.92730802663004,
+        "speed": 0.007061113858520935
+      },
+      "Sun": {
+        "house": 7,
+        "longitude": 312.5127151568504,
+        "speed": 1.0060700539476224
+      },
+      "Venus": {
+        "house": 5,
+        "longitude": 267.9364873704055,
+        "speed": 1.1366728852527421
+      }
+    },
+    "engine": "xalen-ephemeris",
+    "ephemeris_mode": "independent_ephemeris",
+    "license": "Apache-2.0",
+    "shadbala": {
+      "Jupiter": {
+        "chesta": 60.0,
+        "dig": 40.00000000000001,
+        "drik": -3.75,
+        "kala": 94.41616659554913,
+        "naisargika": 34.29,
+        "rupas": 7.268838304777757,
+        "sthana": 211.17413169111632,
+        "total": 436.13029828666544
+      },
+      "Mars": {
+        "chesta": 15.0,
+        "dig": 50.0,
+        "drik": 15.0,
+        "kala": 85.58383340445087,
+        "naisargika": 17.14,
+        "rupas": 6.60592508240185,
+        "sthana": 213.6316715396601,
+        "total": 396.355504944111
+      },
+      "Mercury": {
+        "chesta": 60.0,
+        "dig": 9.999999999999998,
+        "drik": 0.0,
+        "kala": 85.66616659554914,
+        "naisargika": 25.71,
+        "rupas": 5.259734217205347,
+        "sthana": 134.2078864367717,
+        "total": 315.5840530323208
+      },
+      "Moon": {
+        "chesta": 30.0,
+        "dig": 20.000000000000004,
+        "drik": 18.75,
+        "kala": 106.91616659554914,
+        "naisargika": 51.43,
+        "rupas": 7.01555397072303,
+        "sthana": 193.8370716478326,
+        "total": 420.93323824338177
+      },
+      "Saturn": {
+        "chesta": 30.0,
+        "dig": 20.000000000000004,
+        "drik": 11.25,
+        "kala": 85.58383340445087,
+        "naisargika": 8.57,
+        "rupas": 5.921023289926237,
+        "sthana": 199.85756399112333,
+        "total": 355.2613973955742
+      },
+      "Sun": {
+        "chesta": 30.0,
+        "dig": 30.0,
+        "drik": 3.75,
+        "kala": 133.08383340445084,
+        "naisargika": 60.0,
+        "rupas": 8.211190085390017,
+        "sthana": 235.83757171895013,
+        "total": 492.671405123401
+      },
+      "Venus": {
+        "chesta": 15.0,
+        "dig": 50.0,
+        "drik": 0.0,
+        "kala": 109.41616659554913,
+        "naisargika": 42.86,
+        "rupas": 6.376472150872516,
+        "sthana": 165.31216245680181,
+        "total": 382.58832905235096
+      }
+    },
+    "varga": {
+      "D1": {
+        "Jupiter": "Mithuna",
+        "Mars": "Mesha",
+        "Mercury": "Makara",
+        "Moon": "Meena",
+        "Saturn": "Tula",
+        "Sun": "Kumbha",
+        "Venus": "Dhanu"
+      },
+      "D10": {
+        "Jupiter": "Meena",
+        "Mars": "Vrishabha",
+        "Mercury": "Mesha",
+        "Moon": "Meena",
+        "Saturn": "Karka",
+        "Sun": "Mithuna",
+        "Venus": "Kanya"
+      },
+      "D2": {
+        "Jupiter": "Karka",
+        "Mars": "Simha",
+        "Mercury": "Simha",
+        "Moon": "Karka",
+        "Saturn": "Karka",
+        "Sun": "Simha",
+        "Venus": "Karka"
+      },
+      "D4": {
+        "Jupiter": "Meena",
+        "Mars": "Mesha",
+        "Mercury": "Karka",
+        "Moon": "Mithuna",
+        "Saturn": "Karka",
+        "Sun": "Vrishabha",
+        "Venus": "Kanya"
+      },
+      "D9": {
+        "Jupiter": "Mithuna",
+        "Mars": "Vrishabha",
+        "Mercury": "Karka",
+        "Moon": "Vrishchika",
+        "Saturn": "Mithuna",
+        "Sun": "Makara",
+        "Venus": "Dhanu"
+      }
+    }
+  },
+  "source_commit": "cc6edbec1f748ebdc4950ae6198f575c5ada73fa",
+  "status": "raw_verified"
+}

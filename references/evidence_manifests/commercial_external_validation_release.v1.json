@@ -123,6 +123,72 @@
       "path": "references/oracle/pyjhora_extended_parity_public_smoke_manifest.json",
       "sha256": "c86315d8e16338608409b9277f835f647f8b739c207e4bcca177fd5ea0e2c0c4",
       "scope": "public PyJHora extended parity smoke manifest"
+    },
+    {
+      "id": "three_engine_mismatch_arbitration",
+      "path": "references/oracle/three_engine_mismatch_arbitration_2026_07_17.json",
+      "sha256": "4ae1ec50b38765fe379393bace3700c82f563589de3e7274bb5b13148afbf418",
+      "scope": "field-level three-engine mismatch attribution"
+    },
+    {
+      "id": "xalen_fourth_oracle_comparison",
+      "path": "references/oracle/xalen_fourth_oracle_comparison_2026_07_17.json",
+      "sha256": "d781eef14fb315d00eeac8a0375c6c0be6065591e77117976e245b52499e8c8f",
+      "scope": "pinned Xalen formula-isolation comparison"
+    },
+    {
+      "id": "xalen_formula_unit_attribution",
+      "path": "references/oracle/xalen_formula_unit_attribution_2026_07_17.json",
+      "sha256": "05594adda71f5cfaf2ac117cba742e275cf1ea7167c736ff732de0fed8eed235",
+      "scope": "Xalen component and unit-difference attribution"
+    },
+    {
+      "id": "xalen_ephemeris_mode_comparison",
+      "path": "references/oracle/xalen_ephemeris_mode_comparison_2026_07_17.json",
+      "sha256": "c9fde13d4aae1d9d3b45e4321be49dc00795bf378bd352fbe2714b11b05735b3",
+      "scope": "shared-input versus independent-ephemeris boundary"
+    },
+    {
+      "id": "xalen_shared_input_raw",
+      "path": "references/oracle/artifacts/xalen_steve_jobs_high_rigor_raw.json",
+      "sha256": "7aac3df194662ee2223e98d5ee84da6c0b75b5725740b4698de04cf3f5264136",
+      "scope": "public Xalen shared-input raw output"
+    },
+    {
+      "id": "xalen_independent_ephemeris_raw",
+      "path": "references/oracle/artifacts/xalen_steve_jobs_independent_ephemeris_raw.json",
+      "sha256": "6c721fd3f525d3dd887c1ed805182271fa797fdac988fafe7e82be39f267d02d",
+      "scope": "public Xalen independent-ephemeris raw output"
+    },
+    {
+      "id": "xalen_multi_case_shared_input_raw",
+      "path": "references/oracle/artifacts/xalen_multi_public_case_shared_input_2026_07_17.json",
+      "sha256": "49de149d4ec30f4532a658f29b6396cfd240fb1847654bb381220071ab958e84",
+      "scope": "public multi-case Xalen shared-input raw output"
+    },
+    {
+      "id": "xalen_multi_case_independent_ephemeris_raw",
+      "path": "references/oracle/artifacts/xalen_multi_public_case_independent_ephemeris_2026_07_17.json",
+      "sha256": "c7f4695de2b3299ed36975b1698bd063c43b2e621e8df126a488a29b21708642",
+      "scope": "public multi-case Xalen independent-ephemeris raw output"
+    },
+    {
+      "id": "vedastro_nuget_runtime_contract",
+      "path": "references/oracle/artifacts/vedastro_nuget_1_2_0_runtime_contract.json",
+      "sha256": "92feae14a961d8563f6b59dfef4441c03b7d322ab7650790a905798070bda4af",
+      "scope": "pinned VedAstro NuGet runtime-contract evidence, not hosted identity"
+    },
+    {
+      "id": "vedastro_nuget_candidate",
+      "path": "references/oracle/vedastro_nuget_candidate_1_2_0.json",
+      "sha256": "36912443e0a5d5f08959700fb3070bc648659727ed296ce502ce961ed23edf3f",
+      "scope": "VedAstro NuGet candidate identity boundary"
+    },
+    {
+      "id": "day_level_holdout_preregistration",
+      "path": "references/real_case_calibration/day_level_holdout_v3_preregistration.json",
+      "sha256": "d7f794630d3def6f9f7b5d94c4365bb508c60a8b44228f35a2d2d4548ea9f360",
+      "scope": "independent-label day-level holdout preregistration"
     }
   ]
 }

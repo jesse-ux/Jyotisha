@@ -6300,6 +6300,9 @@ def main():
         output_json(result)
         sys.exit(0 if result.get('valid', True) else 1)
     result = cmds[args.command](args)
+    if args.command in {'predict', 'full-reading'} and isinstance(result, dict):
+        from timing_precision_contract import build_timing_precision_contract
+        result['timing_precision_contract'] = build_timing_precision_contract(result.get('timing'))
     if getattr(args, 'table', False):
         output_table(args.command, result)
     else:

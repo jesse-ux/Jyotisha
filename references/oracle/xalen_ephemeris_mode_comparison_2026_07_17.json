@@ -1,0 +1,63 @@
+{
+  "ashtakavarga_difference_count": 0,
+  "boundary": "Independent mode recomputes seven planetary longitudes/speeds; house numbers remain shared input.",
+  "independent_engine": "Xalen Almanac.default_vedic VSOP87 analytical + Xalen Lahiri",
+  "independent_mode": "independent_ephemeris",
+  "maximum_absolute_longitude_delta_deg": 0.005305966338369217,
+  "positions": {
+    "Jupiter": {
+      "independent_longitude": 87.2723950733489,
+      "longitude_delta_deg": -0.004840561072967375,
+      "shared_longitude": 87.27723563442187,
+      "speed_delta_deg_per_day": 2.121365625495919e-06
+    },
+    "Mars": {
+      "independent_longitude": 5.854985381019798,
+      "longitude_delta_deg": -0.0048371627728442945,
+      "shared_longitude": 5.8598225437926565,
+      "speed_delta_deg_per_day": 5.758751778772719e-07
+    },
+    "Mercury": {
+      "independent_longitude": 291.1263406896849,
+      "longitude_delta_deg": -0.004731968171540757,
+      "shared_longitude": 291.13107265785646,
+      "speed_delta_deg_per_day": -0.0002285624918069093
+    },
+    "Moon": {
+      "independent_longitude": 344.5112149434978,
+      "longitude_delta_deg": -0.005305966338369217,
+      "shared_longitude": 344.5165209098362,
+      "speed_delta_deg_per_day": -0.003692374412677779
+    },
+    "Saturn": {
+      "independent_longitude": 207.92730802663004,
+      "longitude_delta_deg": -0.004732260424049173,
+      "shared_longitude": 207.9320402870541,
+      "speed_delta_deg_per_day": 1.1385852093526855e-07
+    },
+    "Sun": {
+      "independent_longitude": 312.5127151568504,
+      "longitude_delta_deg": -0.004770754516869147,
+      "shared_longitude": 312.51748591136726,
+      "speed_delta_deg_per_day": 1.0539476222870547e-06
+    },
+    "Venus": {
+      "independent_longitude": 267.9364873704055,
+      "longitude_delta_deg": -0.00474125374353207,
+      "shared_longitude": 267.941228624149,
+      "speed_delta_deg_per_day": -1.1147472578354467e-06
+    }
+  },
+  "scope": "xalen_ephemeris_mode_comparison",
+  "shadbala_total_delta_virupas": {
+    "Jupiter": -0.001791924298174763,
+    "Mars": 0.001790791531504965,
+    "Mercury": 0.0013989187833658434,
+    "Moon": -0.0019470593866230956,
+    "Saturn": 0.0017558240818971171,
+    "Sun": -0.0014118475651230256,
+    "Venus": -0.001758821855048609
+  },
+  "shared_mode": "shared_input",
+  "varga_difference_count": 0
+}
