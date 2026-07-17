@@ -178,10 +178,9 @@ export function SidebarProvider({
 export function Sidebar({ id, className, ...props }: ComponentProps<"aside">) {
   const { isMobile, open, openMobile, setOpenMobile } = useSidebar();
   const sidebar = <aside id={id ?? "chat-sidebar"} data-sidebar="sidebar" data-slot="sidebar" data-state={open ? "expanded" : "collapsed"} data-mobile-open={openMobile} className={cn("flex min-h-0 shrink-0 flex-col", className)} {...props} />;
-  if (!isMobile || !openMobile) return sidebar;
   return <>
-    <button type="button" data-sidebar="scrim" data-slot="sidebar-scrim" aria-label="关闭聊天记录" className="sidebar-scrim" onClick={() => setOpenMobile(false)} />
     {sidebar}
+    {isMobile && openMobile ? <button type="button" data-sidebar="scrim" data-slot="sidebar-scrim" aria-label="关闭聊天记录" className="sidebar-scrim" onClick={() => setOpenMobile(false)} /> : null}
   </>;
 }
 

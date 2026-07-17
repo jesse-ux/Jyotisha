@@ -45,7 +45,12 @@ test("provides the mobile drawer closing surface", () => {
   assert.match(sidebar, /data-slot="sidebar-scrim"/);
   assert.match(sidebar, /aria-label="关闭聊天记录"/);
   assert.match(sidebar, /onClick=\{\(\) => setOpenMobile\(false\)\}/);
-  assert.match(sidebar, /if \(!isMobile \|\| !openMobile\) return sidebar;/);
+  assert.match(sidebar, /isMobile && openMobile \? <button/);
+});
+
+test("keeps the sidebar subtree stable while toggling its mobile scrim", () => {
+  const sidebar = readProjectFile("src/components/ui/sidebar.tsx");
+  assert.match(sidebar, /return <>\s*\{sidebar\}\s*\{isMobile && openMobile \? <button/);
 });
 
 test("cancels a stale mobile drawer focus frame", () => {
