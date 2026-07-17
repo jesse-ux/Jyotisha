@@ -51,3 +51,22 @@ or tune local calculations to match either response.
 3. Publish a redacted, versioned public packet only after the response is stable.
 4. Require a fresh normalized 15-row comparison before changing
    `three_engine_parity_replay_manifest.json` from its current blocked boundary.
+
+## Contract Probe Resolution Attempt
+
+Research commit `c91eea2` executed three complete versioned contract probes.
+Each probe compared the negative-offset birth time with its UTC equivalent and
+a positive-offset control, then cross-checked `AllPlanetLongitude`,
+`AllPlanetData.PlanetRasiD1Sign`, and `PlanetNirayanaLongitude`.
+
+- Negative offset and UTC-equivalent inputs agreed.
+- Positive-offset behavior was not reliably distinct.
+- Cross-method results changed between runs; one run temporarily agreed while
+  the other two exposed different planet-level discrepancies.
+- The third probe also showed instability within its three baseline repeats.
+- The service returned `Server: Kestrel` but no explicit API version header.
+
+Therefore the requested contract evidence was attempted and did not resolve
+the conflict. `VedAstro.D1.longitude` remains field-level `blocked`. Separately
+validated VedAstro BAV, SAV, and Shadbala raw evidence is not invalidated by
+this longitude-method boundary.
