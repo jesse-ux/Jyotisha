@@ -63,6 +63,9 @@ jobs:
         run: npm run build --prefix jyotish-app
 
       - name: Validate production web
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
         run: |
           npm test --prefix frontend
           npm run lint --prefix frontend
