@@ -32,12 +32,39 @@ test("keeps sidebar behavior in the generic primitive", () => {
   assert.match(sidebar, /data-mobile-open/);
   assert.match(sidebar, /addEventListener\("keydown"/);
   assert.match(sidebar, /preventDefault\(\)/);
-  assert.match(sidebar, /const label = expanded \? "Close sidebar" : "Open sidebar"/);
-  assert.match(sidebar, /viewport === "mobile"\) return;[\s\S]*setOpenMobile\(false\)/);
+  assert.match(sidebar, /viewport === "mobile" \|\| !openMobile\) return;[\s\S]*setOpenMobile\(false\)/);
   assert.match(sidebar, /@base-ui\/react\/tooltip/);
   assert.doesNotMatch(sidebar, /Sheet/);
   assert.match(sidebar, /cn\(/);
   assert.doesNotMatch(sidebar, /#[0-9a-fA-F]{3,8}|hsl\(/);
+});
+
+test("provides the mobile drawer closing surface", () => {
+  const sidebar = readProjectFile("src/components/ui/sidebar.tsx");
+  assert.match(sidebar, /data-sidebar="scrim"/);
+  assert.match(sidebar, /data-slot="sidebar-scrim"/);
+  assert.match(sidebar, /aria-label="关闭聊天记录"/);
+  assert.match(sidebar, /onClick=\{\(\) => setOpenMobile\(false\)\}/);
+});
+
+test("uses the approved localized trigger actions", () => {
+  const sidebar = readProjectFile("src/components/ui/sidebar.tsx");
+  assert.match(sidebar, /"收起侧边栏"/);
+  assert.match(sidebar, /"展开侧边栏"/);
+  assert.match(sidebar, /"打开聊天记录"/);
+  assert.match(sidebar, /"关闭聊天记录"/);
+});
+
+test("keeps provider primitive defaults and consumer handlers composable", () => {
+  const sidebar = readProjectFile("src/components/ui/sidebar.tsx");
+  assert.match(sidebar, /id=\{id \?\? "chat-sidebar"\}/);
+  assert.match(sidebar, /if \(viewport === "mobile" \|\| !openMobile\) return;/);
+  assert.match(sidebar, /onClick\?\.\(event\);\s*if \(!event\.defaultPrevented\) setOpen\(!open\);/);
+});
+
+test("retains viewport state within an unchanged breakpoint", () => {
+  const viewportHook = readProjectFile("src/hooks/use-sidebar-viewport.ts");
+  assert.match(viewportHook, /previous\.ready && previous\.viewport === viewport \? previous : \{ viewport, ready: true \}/);
 });
 
 test("documents the sidebar shell design contract", () => {

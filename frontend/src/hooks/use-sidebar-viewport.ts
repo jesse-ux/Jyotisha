@@ -19,7 +19,8 @@ export function useSidebarViewport(): SidebarViewportState {
 
   useEffect(() => {
     const updateViewport = () => {
-      setState({ viewport: sidebarViewportForWidth(window.innerWidth), ready: true });
+      const viewport = sidebarViewportForWidth(window.innerWidth);
+      setState((previous) => previous.ready && previous.viewport === viewport ? previous : { viewport, ready: true });
     };
 
     updateViewport();

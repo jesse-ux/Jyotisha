@@ -81,6 +81,7 @@ export function SidebarProvider({
   const { viewport, ready } = useSidebarViewport();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const [openMobile, setOpenMobileState] = useState(false);
+  const openMobileRef = useRef(false);
   const userChangedDesktopState = useRef(false);
   const insetTriggerRef = useRef<HTMLButtonElement | null>(null);
   const sidebarTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -96,6 +97,8 @@ export function SidebarProvider({
   }, [isControlled, onOpenChange]);
 
   const setOpenMobile = useCallback((nextOpen: boolean) => {
+    if (openMobileRef.current === nextOpen) return;
+    openMobileRef.current = nextOpen;
     setOpenMobileState(nextOpen);
     onMobileOpenChange?.(nextOpen);
   }, [onMobileOpenChange]);
@@ -107,10 +110,10 @@ export function SidebarProvider({
   }, [isControlled, ready, viewport]);
 
   useEffect(() => {
-    if (viewport === "mobile") return;
+    if (viewport === "mobile" || !openMobile) return;
     const closeMobileDrawer = window.requestAnimationFrame(() => setOpenMobile(false));
     return () => window.cancelAnimationFrame(closeMobileDrawer);
-  }, [setOpenMobile, viewport]);
+  }, [openMobile, setOpenMobile, viewport]);
 
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
@@ -168,9 +171,12 @@ export function SidebarProvider({
   );
 }
 
-export function Sidebar({ className, ...props }: ComponentProps<"aside">) {
-  const { open, openMobile } = useSidebar();
-  return <aside data-sidebar="sidebar" data-slot="sidebar" data-state={open ? "expanded" : "collapsed"} data-mobile-open={openMobile} className={cn("flex min-h-0 shrink-0 flex-col", className)} {...props} />;
+export function Sidebar({ id, className, ...props }: ComponentProps<"aside">) {
+  const { isMobile, open, openMobile, setOpenMobile } = useSidebar();
+  return <>
+    <button type="button" data-sidebar="scrim" data-slot="sidebar-scrim" data-mobile-open={isMobile && openMobile} aria-label="关闭聊天记录" aria-hidden={!isMobile || !openMobile} tabIndex={isMobile && openMobile ? 0 : -1} className="sidebar-scrim" onClick={() => setOpenMobile(false)} />
+    <aside id={id ?? "chat-sidebar"} data-sidebar="sidebar" data-slot="sidebar" data-state={open ? "expanded" : "collapsed"} data-mobile-open={openMobile} className={cn("flex min-h-0 shrink-0 flex-col", className)} {...props} />
+  </>;
 }
 
 export function SidebarHeader({ className, ...props }: ComponentProps<"div">) {
@@ -230,7 +236,9 @@ export const SidebarTrigger = forwardRef<HTMLButtonElement, SidebarTriggerProps>
 }, ref) {
   const { isMobile, open, openMobile, setInsetTrigger, setSidebarTrigger, toggleSidebar } = useSidebarContext();
   const expanded = isMobile ? openMobile : open;
-  const label = expanded ? "Close sidebar" : "Open sidebar";
+  const label = isMobile
+    ? openMobile ? "关闭聊天记录" : "打开聊天记录"
+    : open ? "收起侧边栏" : "展开侧边栏";
   const register = (element: HTMLButtonElement | null) => {
     setRef(ref, element);
     if (placement === "inset") setInsetTrigger(element);
@@ -239,9 +247,9 @@ export const SidebarTrigger = forwardRef<HTMLButtonElement, SidebarTriggerProps>
   return <button ref={register} type="button" data-sidebar="trigger" data-slot="sidebar-trigger" aria-label={label} aria-expanded={expanded} className={cn("min-h-11 min-w-11", className)} onClick={(event) => { onClick?.(event); if (!event.defaultPrevented) toggleSidebar(); }} {...props} />;
 });
 
-export function SidebarRail({ className, ...props }: ComponentProps<"button">) {
+export function SidebarRail({ className, onClick, ...props }: ComponentProps<"button">) {
   const { isMobile, open, setOpen } = useSidebar();
   if (isMobile) return null;
   const label = open ? "Collapse sidebar" : "Expand sidebar";
-  return <button type="button" data-sidebar="rail" data-slot="sidebar-rail" aria-label={label} className={cn("min-h-11 min-w-11", className)} onClick={() => setOpen(!open)} {...props} />;
+  return <button type="button" data-sidebar="rail" data-slot="sidebar-rail" aria-label={label} className={cn("min-h-11 min-w-11", className)} onClick={(event) => { onClick?.(event); if (!event.defaultPrevented) setOpen(!open); }} {...props} />;
 }
