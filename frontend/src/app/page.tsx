@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUp, ArrowUpRight, ChevronRight, Menu, Minus, Plus, Sparkles, X } from "lucide-react";
-import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { ArrowUp, ArrowUpRight, ChevronRight, Menu, Minus, Plus, Sparkles, Square, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { chinaLocations, type ProvinceNode } from "@/data/china-locations";
+import { parseAgentReply, type ReplyTheme } from "@/lib/agent-reply";
 import { keepFocusWithin } from "@/lib/focus-trap";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
-type Theme = "career" | "marriage" | "timing" | "general";
+type Theme = ReplyTheme;
 type Message = { role: "user" | "assistant"; text: string; suggestions?: string[] };
 type Profile = {
   name: string;
@@ -30,6 +32,20 @@ type OnboardingSuggestion = { theme: Exclude<Theme, "general">; text: string };
 type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[] };
 type OnboardingStep = "name" | "birth" | "place";
 type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
+type PendingConsultation = {
+  readonly requestId: string;
+  readonly sessionId: string;
+  readonly question: string;
+  readonly theme: Theme;
+  readonly previousSession: ChatSession;
+  readonly optimisticSession: ChatSession;
+  readonly previousOnboardingState: boolean;
+  readonly controller: AbortController;
+  readonly cancelled: boolean;
+  readonly phase: "undo" | "streaming";
+  readonly partialReply: string;
+};
+const undoWindowMs = 2_500;
 const china = chinaLocations.country;
 
 const themes: Array<{ id: Exclude<Theme, "general">; label: string; prompt: string }> = [
@@ -197,26 +213,6 @@ function readOnboarding(value: unknown): OnboardingContent | null {
   return greeting.length >= 8 && suggestions.length === 3 ? { greeting, suggestions } : null;
 }
 
-function fallbackSuggestions(theme: Theme) {
-  if (theme === "career") return ["我更适合怎样的职业路径？", "未来一年事业上要避开什么？", "我该如何发挥自己的优势？"];
-  if (theme === "marriage") return ["我在关系里容易重复什么模式？", "怎样的伴侣更适合我？", "未来一年关系上要注意什么？"];
-  if (theme === "timing") return ["接下来最值得把握的阶段是什么？", "哪些时期更适合主动行动？", "我现在应该优先准备什么？"];
-  return themes.map((item) => item.prompt);
-}
-
-function parseAgentReply(value: string, theme: Theme) {
-  let suggestions: string[] = [];
-  const text = value.replace(/<!--AYANAM_SUGGESTIONS:(\[[\s\S]*?\])-->/g, (_, json: string) => {
-    try {
-      suggestions = readSuggestions(JSON.parse(json));
-    } catch {
-      suggestions = [];
-    }
-    return "";
-  }).trim();
-  return { text, suggestions: suggestions.length === 3 ? suggestions : fallbackSuggestions(theme) };
-}
-
 function readProfile(value: unknown): Profile {
   if (!value || typeof value !== "object") return emptyProfile;
   const profile = value as Partial<Profile> & {
@@ -345,11 +341,6 @@ function OnboardingChatMessage({ role, text, streaming = false, length = text.le
   );
 }
 
-function sessionTitle(question: string) {
-  const normalized = question.replace(/\s+/g, " ").trim();
-  return normalized.length > 22 ? `${normalized.slice(0, 22)}…` : normalized;
-}
-
 function isProfileComplete(profile: Profile) {
   return missingProfileStep(profile) === null;
 }
@@ -365,6 +356,28 @@ function payloadMessage(payload: unknown, fallback: string) {
   const data = payload as Record<string, unknown>;
   const message = [data.recovery, data.message, data.error].find((value) => typeof value === "string") as string | undefined;
   return friendlyError(message || fallback);
+}
+
+class CancellationResponseError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "CancellationResponseError";
+    this.status = status;
+  }
+}
+
+function waitForUndoWindow(signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const finish = () => {
+      window.clearTimeout(timer);
+      signal.removeEventListener("abort", finish);
+      resolve();
+    };
+    const timer = window.setTimeout(finish, undoWindowMs);
+    signal.addEventListener("abort", finish, { once: true });
+  });
 }
 
 async function fetchAccount(signal?: AbortSignal): Promise<Account> {
@@ -395,6 +408,10 @@ export default function Home() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState("");
   const [draft, setDraft] = useState("");
+  const [draftTheme, setDraftTheme] = useState<Theme | null>(null);
+  const [composerNotice, setComposerNotice] = useState("");
+  const [consultationPhase, setConsultationPhase] = useState<"undo" | "streaming" | null>(null);
+  const [cancellationPending, setCancellationPending] = useState(false);
   const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
   const [streamingReply, setStreamingReply] = useState<StreamingReply | null>(null);
   const [requestError, setRequestError] = useState<RequestError | null>(null);
@@ -416,12 +433,24 @@ export default function Home() {
   const closeButton = useRef<HTMLButtonElement>(null);
   const redeemInput = useRef<HTMLInputElement>(null);
   const composerInput = useRef<HTMLTextAreaElement>(null);
+  const pendingConsultation = useRef<PendingConsultation | null>(null);
+  const cancellationRequests = useRef(new Map<string, Promise<void>>());
+  const cancellationFeedbackRequest = useRef<string | null>(null);
+  const cancellationInFlight = useRef(false);
+  const stoppedRequestAwaitingSettlement = useRef<string | null>(null);
+  const stoppedSessionPersistence = useRef(new Map<string, Promise<void>>());
+  const activeSessionIdRef = useRef("");
   const uiPreview = useRef(false);
+  const uiPreviewMode = useRef<string | null>(null);
 
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
   const activeError = requestError && requestError.sessionId === activeSession?.id ? requestError.message : "";
   const isLoading = pendingSessionId === activeSession?.id;
   const activeStreamingText = streamingReply && streamingReply.sessionId === activeSession?.id ? streamingReply.text : "";
+
+  useEffect(() => {
+    activeSessionIdRef.current = activeSessionId;
+  }, [activeSessionId]);
   const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
   const accountId = account?.user.id;
   const profileComplete = isProfileComplete(profile);
@@ -452,6 +481,7 @@ export default function Home() {
           : null;
         if (previewMode) {
           uiPreview.current = true;
+          uiPreviewMode.current = previewMode;
           if (previewMode === "error") {
             setAccountError("连接云端服务超时。请检查网络后重试，或返回登录页重新建立会话。");
             setHydrated(true);
@@ -468,7 +498,7 @@ export default function Home() {
               cityCode: "110000-city",
               districtCode: "110101",
             };
-          const previewMessages: Message[] = previewMode === "conversation"
+          const previewMessages: Message[] = previewMode === "conversation" || previewMode === "streaming" || previewMode === "partial"
             ? [
               { role: "user", text: "未来半年是否适合换工作？" },
               { role: "assistant", text: "可以先看职业方向、关键时间。\n同时评估现实风险。\n此处只展示本地预览，\n不调用真实星盘。", suggestions: ["先看事业方向", "再看关键时间", "评估现实风险"] },
@@ -719,6 +749,8 @@ export default function Home() {
     setSessions((current) => [nextSession, ...current]);
     setActiveSessionId(nextSession.id);
     setDraft("");
+    setDraftTheme(null);
+    setComposerNotice("");
     setRequestError(null);
     try {
       await persistSession(nextSession);
@@ -899,9 +931,135 @@ export default function Home() {
     }
   }
 
+  function chooseSuggestedQuestion(question: string, theme?: Theme) {
+    if (pendingSessionId || cancellationInFlight.current) return;
+    setDraft(question);
+    setDraftTheme(theme ?? null);
+    setComposerNotice("");
+    window.requestAnimationFrame(() => composerInput.current?.focus());
+  }
+
+  async function requestCancellation(requestId: string) {
+    const existing = cancellationRequests.current.get(requestId);
+    if (existing) return existing;
+
+    const cancellation = (async () => {
+      const response = await fetch("/api/consult/cancel", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ requestId }),
+        keepalive: true,
+      });
+      const payload: unknown = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new CancellationResponseError(
+          response.status,
+          payloadMessage(payload, "暂时无法确认点数已退回"),
+        );
+      }
+      if (!payload || typeof payload !== "object") return;
+      const credits = "credits" in payload ? payload.credits : null;
+      if (typeof credits === "number") {
+        setAccount((current) => current ? { ...current, credits } : current);
+      }
+    })();
+    cancellationRequests.current.set(requestId, cancellation);
+    return cancellation;
+  }
+
+  async function confirmCancellation(requestId: string, sessionId: string, confirmedNotice: string) {
+    try {
+      await requestCancellation(requestId);
+      if (cancellationFeedbackRequest.current === requestId && activeSessionIdRef.current === sessionId) {
+        setComposerNotice(confirmedNotice);
+      }
+    } catch (error) {
+      if (cancellationFeedbackRequest.current === requestId && activeSessionIdRef.current === sessionId) {
+        setComposerNotice(error instanceof CancellationResponseError && error.status === 409
+          ? "回答已完成结算，本次已计费；问题仍保留在输入框。"
+          : "问题已放回输入框；暂时无法确认点数状态，请稍后在账户中核对。");
+        setRequestError((current) => current?.sessionId === sessionId ? current : {
+          sessionId,
+          message: error instanceof Error ? error.message : "暂时无法确认点数状态。",
+        });
+      }
+      void refreshAccount();
+    }
+  }
+
+  async function stopResponse() {
+    const pending = pendingConsultation.current;
+    if (!pending || pending.cancelled) return;
+
+    const isPreview = process.env.NODE_ENV === "development" && uiPreview.current;
+    if (pending.phase === "streaming" && !isPreview) {
+      stoppedRequestAwaitingSettlement.current = pending.requestId;
+      cancellationInFlight.current = true;
+      setCancellationPending(true);
+    }
+    pendingConsultation.current = { ...pending, cancelled: true };
+    pending.controller.abort();
+
+    if (pending.partialReply) {
+      const stoppedSession: ChatSession = {
+        ...pending.optimisticSession,
+        messages: [...pending.optimisticSession.messages, { role: "assistant", text: pending.partialReply }],
+        updatedAt: timestamp(),
+      };
+      updateSession(pending.sessionId, () => stoppedSession);
+      setStreamingReply(null);
+      setPendingSessionId(null);
+      setConsultationPhase(null);
+      setRequestError(null);
+      setComposerNotice("已停止回答。模型已开始生成，本次将计费，现有内容已保留。");
+      if (!isPreview) {
+        const persistence = persistSession(stoppedSession).catch((error) => {
+          setRequestError({
+            sessionId: pending.sessionId,
+            message: error instanceof Error ? error.message : "已停止的回答暂时无法同步。",
+          });
+        });
+        stoppedSessionPersistence.current.set(pending.requestId, persistence);
+      }
+      if (!isPreview) {
+        void refreshAccount();
+      } else if (pendingConsultation.current?.requestId === pending.requestId) {
+        pendingConsultation.current = null;
+      }
+      return;
+    }
+
+    updateSession(pending.sessionId, () => pending.previousSession);
+    setOnboardingJustCompleted(pending.previousOnboardingState);
+    setDraft(pending.question);
+    setDraftTheme(pending.theme);
+    setStreamingReply(null);
+    setPendingSessionId(null);
+    setConsultationPhase(null);
+    setRequestError(null);
+    cancellationFeedbackRequest.current = pending.requestId;
+    setComposerNotice("已停止，问题已放回输入框，正在确认点数…");
+    window.requestAnimationFrame(() => composerInput.current?.focus());
+
+    if (pending.phase === "undo" || isPreview) {
+      if (pendingConsultation.current?.requestId === pending.requestId) {
+        pendingConsultation.current = null;
+      }
+      setComposerNotice("已停止，问题已放回输入框，本次未扣点。");
+      return;
+    }
+
+    await confirmCancellation(
+      pending.requestId,
+      pending.sessionId,
+      "已停止，问题已放回输入框，本次未扣点。",
+    );
+  }
+
   async function send(text: string, requestedTheme?: Theme) {
+    const originalQuestion = text;
     const question = text.trim();
-    if (!question || !activeSession || pendingSessionId || !account) return;
+    if (!question || !activeSession || pendingSessionId || cancellationInFlight.current || pendingConsultation.current || !account) return;
 
     if (account.credits <= 0) {
       openAccount(true);
@@ -930,50 +1088,96 @@ export default function Home() {
       : currentSession.messages;
     const userSession: ChatSession = {
       ...currentSession,
-      title: currentSession.messages.length === 0 ? sessionTitle(question) : currentSession.title,
+      title: currentSession.title,
       theme,
       messages: [...preservedMessages, { role: "user", text: question }],
       updatedAt: timestamp(),
     };
+    const requestId = globalThis.crypto.randomUUID();
+    const controller = new AbortController();
+    const previousOnboardingState = onboardingJustCompleted;
+    cancellationFeedbackRequest.current = null;
     setRequestError(null);
+    setComposerNotice("");
     setPendingSessionId(sessionId);
+    setConsultationPhase("undo");
+    pendingConsultation.current = {
+      requestId,
+      sessionId,
+      question: originalQuestion,
+      theme,
+      previousSession: currentSession,
+      optimisticSession: userSession,
+      previousOnboardingState,
+      controller,
+      cancelled: false,
+      phase: "undo",
+      partialReply: "",
+    };
+    setOnboardingJustCompleted(false);
+    updateSession(sessionId, () => userSession);
+    setDraft("");
+    setDraftTheme(null);
 
     if (process.env.NODE_ENV === "development" && uiPreview.current) {
+      setStreamingReply({ sessionId, text: "" });
+      if (uiPreviewMode.current === "partial") {
+        const partialReply = "已开始查看事业方向与关键时间，先给你一个阶段性的判断。";
+        if (pendingConsultation.current?.requestId === requestId) {
+          pendingConsultation.current = {
+            ...pendingConsultation.current,
+            phase: "streaming",
+            partialReply,
+          };
+        }
+        setConsultationPhase("streaming");
+        setStreamingReply({ sessionId, text: partialReply });
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, uiPreviewMode.current === "streaming" || uiPreviewMode.current === "partial" ? 15_000 : 800));
+      if (controller.signal.aborted) {
+        if (pendingConsultation.current?.requestId === requestId) pendingConsultation.current = null;
+        return;
+      }
+      const previewReply = parseAgentReply([
+        "这是本地交互预览。正式对话会结合你的星盘证据继续分析。",
+        '<!--AYANAM_SUGGESTIONS:["继续梳理方向","查看时间窗口","评估现实行动"]-->',
+        "<!--AYANAM_TITLE:事业方向与时间选择-->",
+      ].join("\n"), theme);
       const previewSession: ChatSession = {
         ...userSession,
+        title: currentSession.messages.length === 0 && previewReply.title ? previewReply.title : userSession.title,
         messages: [...userSession.messages, {
           role: "assistant",
-          text: "这是本地交互预览。正式对话会结合你的星盘证据继续分析。",
-          suggestions: ["继续梳理方向", "查看时间窗口", "评估现实行动"],
+          text: previewReply.text,
+          suggestions: previewReply.suggestions,
         }],
         updatedAt: timestamp(),
       };
       updateSession(sessionId, () => previewSession);
-      setDraft("");
+      setStreamingReply(null);
       setPendingSessionId(null);
+      setConsultationPhase(null);
+      pendingConsultation.current = null;
       return;
     }
 
-    try {
-      await persistSession(userSession);
-    } catch (caught) {
-      setRequestError({
-        sessionId,
-        message: `${caught instanceof Error ? caught.message : "消息未能保存到云端。"} 输入内容已保留，可直接重新发送。`,
-      });
-      setPendingSessionId(null);
-      return;
+    await waitForUndoWindow(controller.signal);
+    if (controller.signal.aborted) return;
+    if (pendingConsultation.current?.requestId === requestId) {
+      pendingConsultation.current = {
+        ...pendingConsultation.current,
+        phase: "streaming",
+      };
+      setConsultationPhase("streaming");
     }
-
-    setOnboardingJustCompleted(false);
-    updateSession(sessionId, () => userSession);
-    setDraft("");
     setStreamingReply({ sessionId, text: "" });
+    let latestPartialReply = "";
     try {
       const response = await fetch("/api/consult", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          requestId,
           name: profile.name,
           year,
           month,
@@ -991,6 +1195,7 @@ export default function Home() {
             text: message.text.slice(0, 4000),
           })),
         }),
+        signal: controller.signal,
       });
       if (!response.ok) {
         const contentType = response.headers.get("content-type") ?? "";
@@ -1001,7 +1206,6 @@ export default function Home() {
       }
       if (!response.body) throw new Error("浏览器未收到可读取的回答流");
 
-      setAccount((current) => current ? { ...current, credits: Math.max(0, current.credits - 1) } : current);
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let answer = "";
@@ -1010,15 +1214,25 @@ export default function Home() {
         const { done, value } = await reader.read();
         if (done) break;
         answer += decoder.decode(value, { stream: true });
-        setStreamingReply({ sessionId, text: answer.split("<!--AYANAM_SUGGESTIONS:", 1)[0] });
+        const partialReply = parseAgentReply(answer, theme).text;
+        latestPartialReply = partialReply;
+        setStreamingReply({ sessionId, text: partialReply });
+        if (partialReply && pendingConsultation.current?.requestId === requestId) {
+          pendingConsultation.current = {
+            ...pendingConsultation.current,
+            partialReply,
+          };
+        }
       }
       answer += decoder.decode();
+      if (controller.signal.aborted) return;
       if (!answer.trim()) throw new Error("Agent 没有返回内容，请重试。");
       const reply = parseAgentReply(answer, theme);
       if (!reply.text) throw new Error("Agent 没有返回可显示的回答，请重试。");
 
       const completedSession: ChatSession = {
         ...userSession,
+        title: currentSession.messages.length === 0 && reply.title ? reply.title : userSession.title,
         messages: [...userSession.messages, { role: "assistant", text: reply.text, suggestions: reply.suggestions }],
         updatedAt: timestamp(),
       };
@@ -1033,14 +1247,74 @@ export default function Home() {
       }
       void refreshAccount();
     } catch (caught) {
-      setRequestError({
-        sessionId,
-        message: `${caught instanceof Error ? caught.message : "服务暂时不可用，请稍后重试。"} 本次提问已保留在对话中，可稍后重新提问。`,
-      });
-      void refreshAccount();
+      const cancelled = controller.signal.aborted;
+      const ownsInterface = pendingConsultation.current?.requestId === requestId;
+      const partialReply = latestPartialReply;
+      if (ownsInterface && !partialReply) {
+        updateSession(sessionId, () => currentSession);
+        setOnboardingJustCompleted(previousOnboardingState);
+        if (activeSessionIdRef.current === sessionId) {
+          setDraft(originalQuestion);
+          setDraftTheme(theme);
+        }
+        if (!cancelled) {
+          setRequestError({
+            sessionId,
+            message: `${caught instanceof Error ? caught.message : "服务暂时不可用，请稍后重试。"} 问题已放回输入框。`,
+          });
+          cancellationFeedbackRequest.current = requestId;
+          if (activeSessionIdRef.current === sessionId) {
+            setComposerNotice("问题已放回输入框，正在确认点数…");
+          }
+        }
+      }
+      if (ownsInterface && !partialReply) {
+        await confirmCancellation(
+          requestId,
+          sessionId,
+          "问题已放回输入框，本次未扣点。",
+        );
+      } else if (!cancelled && ownsInterface) {
+        const interruptedSession: ChatSession = {
+          ...userSession,
+          messages: [...userSession.messages, { role: "assistant", text: partialReply }],
+          updatedAt: timestamp(),
+        };
+        updateSession(sessionId, () => interruptedSession);
+        try {
+          await persistSession(interruptedSession);
+          setRequestError({
+            sessionId,
+            message: "回答中途断开，已保留生成内容；本次已开始生成并计费。",
+          });
+        } catch (persistError) {
+          setRequestError({
+            sessionId,
+            message: `${persistError instanceof Error ? persistError.message : "云端同步失败"} 已计费的部分回答仍保留在当前页面，请复制保存。`,
+          });
+        }
+        if (activeSessionIdRef.current === sessionId) {
+          setComposerNotice("回答中途断开，已保留现有内容，本次已计费。");
+        }
+      }
     } finally {
-      setStreamingReply(null);
-      setPendingSessionId(null);
+      cancellationRequests.current.delete(requestId);
+      if (pendingConsultation.current?.requestId === requestId) {
+        pendingConsultation.current = null;
+        setStreamingReply(null);
+        setPendingSessionId(null);
+        setConsultationPhase(null);
+      }
+      if (stoppedRequestAwaitingSettlement.current === requestId) {
+        const persistence = stoppedSessionPersistence.current.get(requestId);
+        if (persistence) {
+          await persistence;
+          stoppedSessionPersistence.current.delete(requestId);
+        }
+        stoppedRequestAwaitingSettlement.current = null;
+        cancellationInFlight.current = false;
+        setCancellationPending(false);
+      }
     }
   }
 
@@ -1050,7 +1324,7 @@ export default function Home() {
       if (onboardingStep === "name" && presetMessageFinished) void saveOnboardingName();
       return;
     }
-    void send(draft);
+    void send(draft, draftTheme ?? undefined);
   }
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -1095,7 +1369,7 @@ export default function Home() {
       <button className="sidebar-backdrop" tabIndex={-1} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)} />
       <aside className="sidebar" ref={sidebar} id="chat-sidebar" aria-label="对话导航" inert={profileOpen}>
         <div className="brand-row"><span className="brand-mark" aria-hidden="true" /><strong>Jyotisha</strong><button className="sidebar-close" ref={sidebarCloseButton} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)}><X aria-hidden="true" /></button></div>
-        <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || creatingSession || Boolean(pendingSessionId)}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
+        <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || creatingSession || Boolean(pendingSessionId) || cancellationPending}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
         <nav className="session-nav" aria-label="聊天记录">
           <span className="sidebar-label">聊天记录</span>
           <div className="session-list">
@@ -1104,7 +1378,13 @@ export default function Home() {
                 className={session.id === activeSession?.id ? "is-active" : ""}
                 key={session.id}
                 type="button"
-                onClick={() => { setActiveSessionId(session.id); setDraft(""); setMobileSidebarOpen(false); }}
+                onClick={() => {
+                  setActiveSessionId(session.id);
+                  setDraft("");
+                  setComposerNotice("");
+                  setMobileSidebarOpen(false);
+                }}
+                disabled={Boolean(pendingSessionId) || cancellationPending}
                 aria-current={session.id === activeSession?.id ? "page" : undefined}
               >
                 <span>{session.title}</span>
@@ -1127,7 +1407,7 @@ export default function Home() {
           <button className="mobile-menu" ref={mobileMenuTrigger} aria-label="打开聊天记录" aria-controls="chat-sidebar" aria-expanded={mobileSidebarOpen} type="button" onClick={() => setMobileSidebarOpen(true)}><Menu aria-hidden="true" /></button>
           <div>
             <strong>{activeSession?.title || "新对话"}</strong>
-            <span><i className={`status ${isLoading ? "status-loading" : "status-idle"}`} />{isLoading ? (activeStreamingText ? "正在回答" : "正在核对星盘信息") : "基于星盘证据回答"}</span>
+            <span><i className={`status ${isLoading ? "status-loading" : "status-idle"}`} />{isLoading ? (consultationPhase === "undo" ? "即将发送，可撤回" : activeStreamingText ? "正在回答" : "正在核对星盘信息") : "基于星盘证据回答"}</span>
           </div>
           <button className="credit-button" type="button" onClick={() => openAccount(account?.credits === 0)} aria-label={account ? `余额 ${account.credits} 点，打开账户与兑换码` : accountError || "读取余额中"}>
             <Sparkles className="credit-icon" aria-hidden="true" />
@@ -1183,14 +1463,14 @@ export default function Home() {
 
               {!profileComplete && onboardingStep === "name" && accountError && <p className="form-error onboarding-inline-error" role="alert">{accountError}</p>}
 
-              {profileComplete && presetMessageFinished && (onboardingPending ? (
+              {profileComplete && presetMessageFinished && !draft.trim() && (onboardingPending ? (
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
                 <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
                   {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
                     const theme = themes.find((candidate) => candidate.id === item.theme);
                     return (
-                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || !account} onClick={() => void send(item.text, item.theme)}>
+                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
                         <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span></span>
                         <ArrowUpRight className="starter-arrow" aria-hidden="true" />
                       </button>
@@ -1231,10 +1511,10 @@ export default function Home() {
         </div>
 
         <div className="composer-wrap">
-          {activeSuggestions.length > 0 && (
+          {activeSuggestions.length > 0 && !draft.trim() && !isLoading && !cancellationPending && (
             <div className="composer-suggestions" aria-label="推荐继续提问">
               {activeSuggestions.map((question) => (
-                <button key={question} type="button" disabled={Boolean(pendingSessionId) || !account} onClick={() => void send(question)}>{question}</button>
+                <button key={question} type="button" disabled={!account || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>
               ))}
             </div>
           )}
@@ -1253,16 +1533,33 @@ export default function Home() {
                     : "例如：未来半年是否适合换工作？"}
               rows={1}
               maxLength={!profileComplete && onboardingStep === "name" ? 80 : 500}
-              disabled={!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving)}
+              disabled={isLoading || cancellationPending || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))}
               value={draft}
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                setDraftTheme(null);
+                setComposerNotice("");
+              }}
               onKeyDown={handleComposerKeyDown}
             />
-            <Button aria-label={!profileComplete ? "确认称呼" : "发送"} disabled={!draft.trim() || Boolean(pendingSessionId) || !account || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))} size="icon" type="submit">
-              <ArrowUp aria-hidden="true" />
-            </Button>
+            {isLoading ? (
+              <Button
+                className="composer-stop"
+                aria-label={consultationPhase === "undo" ? "撤回发送，本次不扣点" : activeStreamingText ? "停止回答，保留已生成内容" : "停止回答并申请退回本次点数"}
+                title={consultationPhase === "undo" ? "撤回发送，本次不扣点" : activeStreamingText ? "停止回答，本次已开始计费" : "停止回答"}
+                size="icon"
+                type="button"
+                onClick={() => void stopResponse()}
+              >
+                <Square aria-hidden="true" />
+              </Button>
+            ) : (
+              <Button aria-label={!profileComplete ? "确认称呼" : "发送"} disabled={!draft.trim() || Boolean(pendingSessionId) || cancellationPending || !account || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))} size="icon" type="submit">
+                <ArrowUp aria-hidden="true" />
+              </Button>
+            )}
           </form>
-          <p>{!profileComplete && onboardingStep === "name" ? "Enter 确认称呼" : "Enter 发送 · Shift + Enter 换行"}</p>
+          <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo" ? "已加入发送队列，2.5 秒内可免费撤回。" : !profileComplete && onboardingStep === "name" ? "Enter 确认称呼" : "Enter 发送 · Shift + Enter 换行")}</p>
         </div>
       </section>
 

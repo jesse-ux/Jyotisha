@@ -152,7 +152,7 @@ ssh -p 22000 root@103.117.123.53 \
 
 Expected: HTTP `200`, `"status": "ok"`, and `"swisseph_available": true`. Public access to `103.117.123.53:5200` must fail.
 
-Then manually verify: OTP login, onboarding/profile persistence, chat-session persistence, code redemption, admin code generation, streaming response, one-credit charge, and refund on failure before the first output chunk.
+Before deploying application code that depends on a new Supabase RPC, run `cd frontend && npx supabase db push --linked`; the GitHub deployment workflow does not apply database migrations. Then manually verify: OTP login, onboarding/profile persistence, chat-session persistence, code redemption, admin code generation, the 2.5-second free undo window, streaming response, one-credit charge, refund before the first output chunk, and charged stop with partial output preserved after streaming starts.
 
 ## Common operations
 
