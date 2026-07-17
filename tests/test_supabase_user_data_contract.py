@@ -23,7 +23,16 @@ CONSULTATION_MIGRATION = (
     / "migrations"
     / "20260717000000_consultation_request_lifecycle.sql"
 )
+CHART_PROFILE_MIGRATION = (
+    Path(__file__).resolve().parents[1]
+    / "frontend"
+    / "supabase"
+    / "migrations"
+    / "20260717010000_chart_profiles.sql"
+)
 PAGE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "page.tsx"
+CHART_PROFILE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "route.ts"
+CHART_PROFILE_DELETE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "[id]" / "route.ts"
 
 
 def _sql() -> str:
@@ -92,9 +101,54 @@ def test_chat_page_uses_authenticated_cloud_persistence() -> None:
     assert 'await persistSession(interruptedSession)' in source
     assert 'await persistence' in source
     assert 'disabled={Boolean(pendingSessionId) || cancellationPending}' in source
-    assert "localStorage" not in source
-    assert "ayanam-profile" not in source
-    assert "ayanam-sessions" not in source
+    assert 'localStorage.setItem(chartLibraryStorageKey(accountId)' in source
+    assert 'localStorage.setItem("chat_sessions"' not in source
+
+
+def test_chart_profile_library_has_cloud_table_api_and_local_fallback() -> None:
+    sql = re.sub(r"\s+", " ", CHART_PROFILE_MIGRATION.read_text(encoding="utf-8").lower()).strip()
+    route = CHART_PROFILE_ROUTE.read_text(encoding="utf-8")
+    delete_route = CHART_PROFILE_DELETE_ROUTE.read_text(encoding="utf-8")
+    page = PAGE.read_text(encoding="utf-8")
+
+    for token in (
+        "create table if not exists public.chart_profiles",
+        "user_id uuid not null references auth.users(id) on delete cascade",
+        "role text not null default 'other' check (role in ('self', 'other'))",
+        "profile jsonb not null check (jsonb_typeof(profile) = 'object')",
+        "create unique index if not exists chart_profiles_one_self_per_user_idx",
+        "alter table public.chart_profiles enable row level security",
+        "create policy chart_profiles_select_own",
+        "create policy chart_profiles_insert_own",
+        "create policy chart_profiles_update_own",
+        "create policy chart_profiles_delete_own",
+        "grant delete on table public.chart_profiles to authenticated",
+    ):
+        assert token in sql
+
+    for token in (
+        'from("chart_profiles")',
+        'eq("user_id", user.id)',
+        'eq("role", "self")',
+        'insert({ user_id: user.id, role, profile: body.profile',
+        'upsert(record, { onConflict: "id" })',
+    ):
+        assert token in route
+    assert 'eq("role", "other")' in delete_route
+
+    for token in (
+        "fetchCloudChartLibrary",
+        "saveCloudChartProfile",
+        "deleteCloudChartProfile",
+        "chartLibraryStorageKey",
+        "Cloud chart library is best-effort",
+        "星盘库",
+        "添加其他星盘",
+        "设为默认",
+    ):
+        assert token in page
+    assert "ayanam-profile" not in page
+    assert "ayanam-sessions" not in page
 
 
 def test_consultation_credit_lifecycle_is_idempotent_and_server_only() -> None:

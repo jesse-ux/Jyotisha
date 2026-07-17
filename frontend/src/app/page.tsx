@@ -39,6 +39,12 @@ type ChartLibraryRecord = {
   profile: Profile;
   updatedAt: number;
 };
+type ChartLibraryApiRecord = {
+  id: string;
+  role: "self" | "other";
+  profile: Profile;
+  updated_at?: string;
+};
 type ChatSession = { id: string; title: string; theme: Theme; modelId: string; messages: Message[]; updatedAt: number };
 type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
@@ -197,6 +203,42 @@ function readChartLibrary(accountId: string): ChartLibraryRecord[] {
   } catch {
     return [];
   }
+}
+
+function normalizeChartLibraryApiRecord(record: ChartLibraryApiRecord): ChartLibraryRecord {
+  return {
+    id: record.role === "self" ? "self" : record.id,
+    role: record.role,
+    profile: record.profile,
+    updatedAt: Date.parse(record.updated_at || "") || timestamp(),
+  };
+}
+
+async function fetchCloudChartLibrary() {
+  const response = await fetch("/api/chart-profiles", { cache: "no-store" });
+  if (!response.ok) throw new Error("cloud_chart_library_unavailable");
+  const payload = await response.json().catch(() => null) as { profiles?: ChartLibraryApiRecord[] } | null;
+  return (payload?.profiles || []).map(normalizeChartLibraryApiRecord);
+}
+
+async function saveCloudChartProfile(record: ChartLibraryRecord) {
+  const response = await fetch("/api/chart-profiles", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: record.role === "self" ? undefined : record.id,
+      role: record.role,
+      profile: record.profile,
+    }),
+  });
+  if (!response.ok) throw new Error("cloud_chart_profile_save_failed");
+  const payload = await response.json().catch(() => null) as { profile?: ChartLibraryApiRecord } | null;
+  return payload?.profile ? normalizeChartLibraryApiRecord(payload.profile) : record;
+}
+
+async function deleteCloudChartProfile(recordId: string) {
+  const response = await fetch(`/api/chart-profiles/${encodeURIComponent(recordId)}`, { method: "DELETE" });
+  if (!response.ok) throw new Error("cloud_chart_profile_delete_failed");
 }
 
 function profilePlaceLabel(profile: Profile) {
@@ -518,6 +560,7 @@ export default function Home() {
   const modelSyncFailures = useRef(new Set<string>());
   const modelSelectionVersions = useRef(new Map<string, number>());
   const activeSessionIdRef = useRef("");
+  const chartLibraryLoadedAccount = useRef("");
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
 
@@ -535,9 +578,27 @@ export default function Home() {
   useEffect(() => {
     if (!accountId) {
       setChartLibrary([]);
+      chartLibraryLoadedAccount.current = "";
       return;
     }
+    if (chartLibraryLoadedAccount.current === accountId) return;
+    chartLibraryLoadedAccount.current = accountId;
     setChartLibrary(upsertSelfChart(readChartLibrary(accountId), profile));
+    void fetchCloudChartLibrary()
+      .then((cloudLibrary) => {
+        setChartLibrary((current) => {
+          const otherById = new Map([
+            ...current.filter((record) => record.role === "other").map((record) => [record.id, record] as const),
+            ...cloudLibrary.filter((record) => record.role === "other").map((record) => [record.id, record] as const),
+          ]);
+          const next = upsertSelfChart([...otherById.values()], profile);
+          localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+          return next;
+        });
+      })
+      .catch(() => {
+        // Cloud chart library is best-effort; local library remains usable.
+      });
   }, [accountId, profile]);
 
   useEffect(() => {
@@ -988,9 +1049,10 @@ export default function Home() {
       .maybeSingle();
     if (error) throw error;
     if (!data) throw new Error("账户档案不存在，请重新登录后再试。");
+    await saveCloudChartProfile({ ...buildSelfChartRecord(nextProfile), updatedAt: timestamp() }).catch(() => null);
   }
 
-  function saveOtherChart(event: FormEvent<HTMLFormElement>) {
+  async function saveOtherChart(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextProfile = { ...otherProfileDraft, name: otherProfileDraft.name.trim() };
     if (missingProfileStep(nextProfile)) {
@@ -998,12 +1060,17 @@ export default function Home() {
       return;
     }
     if (!accountId) return;
-    const record: ChartLibraryRecord = {
+    let record: ChartLibraryRecord = {
       id: globalThis.crypto.randomUUID(),
       role: "other",
       profile: nextProfile,
       updatedAt: timestamp(),
     };
+    try {
+      record = await saveCloudChartProfile(record);
+    } catch {
+      // Keep local chart library usable when cloud sync is unavailable.
+    }
     setChartLibrary((current) => {
       const next = [...upsertSelfChart(current, profile), record];
       localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
@@ -1016,6 +1083,9 @@ export default function Home() {
 
   function deleteOtherChart(recordId: string) {
     if (!accountId) return;
+    void deleteCloudChartProfile(recordId).catch(() => {
+      // Local deletion should not be blocked by temporary cloud sync failures.
+    });
     setChartLibrary((current) => {
       const next = current.filter((record) => record.id !== recordId || record.role === "self");
       localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
