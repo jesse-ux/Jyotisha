@@ -3,6 +3,7 @@
   "status": "awaiting_independent_labels",
   "frozen_rule_version": "v3_preregistered_not_tuned",
   "truth_policy": "independent_source_and_adjudicator_required",
+  "annotation_protocol": "docs/research/day_level_holdout_v3_annotation_protocol.md",
   "prohibited_tuning_data": [
     "docs/benchmark/public_real_case_negative_controls_holdout_v2_4controls_20260717.json",
     "docs/benchmark/public_real_case_negative_control_pilot_2026_07_11.json"
