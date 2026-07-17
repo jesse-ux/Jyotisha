@@ -946,7 +946,7 @@ def test_quality_gate_declares_fast_browser_release_profiles() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     for token in [
         "--profile",
-        "choices=[\"quick\", \"browser\", \"release\", \"accuracy\", \"vedastro-live\"]",
+        "choices=[\"quick\", \"browser\", \"release\", \"accuracy\", \"vedastro-live\", \"runtime-truth\"]",
         "QUALITY_GATE_PROFILES",
         "quick",
         "browser",
@@ -2893,12 +2893,12 @@ def test_api_birth_seconds_are_preserved_in_user_facing_flows() -> None:
     payload = sample_second_precision_payload()
 
     birth_dt = handler._parse_birth_datetime(payload)
-    assert birth_dt.isoformat() == "1955-02-24T19:15:00"
+    assert birth_dt.isoformat() == "1955-02-24T19:45:20"
 
     without_seconds = handler._compute_chart({**payload, "second": 0})
     with_seconds = handler._compute_chart(payload)
     assert with_seconds["success"] is True
-    assert with_seconds["birth"]["time"] == "19:15:00"
+    assert with_seconds["birth"]["time"] == "19:45:20"
     assert with_seconds["birth"]["second"] == 20
     assert with_seconds["birth"]["julian_day"] > without_seconds["birth"]["julian_day"]
 
@@ -2912,9 +2912,9 @@ def test_api_birth_seconds_are_preserved_in_user_facing_flows() -> None:
     assert with_seconds["shadbala"]["Sun"]["rupas"] == round(expected_shadbala["planets"]["Sun"]["total_rupas"], 2)
 
     full_reading = handler._compute_full_reading_for_thematic(payload)
-    assert full_reading["birth_info"]["time"] == "19:15:00"
+    assert full_reading["birth_info"]["time"] == "19:45:20"
     assert full_reading["birth_info"]["second"] == 20
-    assert full_reading["modules"]["chart"]["birth_info"]["time"] == "19:15:00"
+    assert full_reading["modules"]["chart"]["birth_info"]["time"] == "19:45:20"
 
 
 def test_local_frontend_and_api_runtime_smoke() -> None:

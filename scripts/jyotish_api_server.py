@@ -9,6 +9,7 @@
 
 import argparse
 import base64
+import copy
 import html as html_lib
 import io
 import json, sys, os, math
@@ -777,6 +778,7 @@ def _vedastro_runtime_fingerprint() -> dict:
 
 def _build_api_chart_cache_payload(body: dict) -> dict:
     return {
+        'cache_schema_version': 3,
         'birth': {
             'year': body.get('year'),
             'month': body.get('month'),
@@ -3270,10 +3272,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 if not isinstance(item, dict):
                     raise BadRequest('evidence items must be objects')
                 strength = strength_map.get(str(item.get('strength', 'moderate')).strip().lower(), report_orchestrator.StrengthLevel.MODERATE)
+                technique = str(item.get('technique') or f'{theme.value}_evidence_{index + 1}')
+                conclusion_limit = 4000 if technique.endswith('-strict-narrative') else 800
                 results.append(report_orchestrator.TechniqueResult(
-                    technique=str(item.get('technique') or f'{theme.value}_evidence_{index + 1}')[:80],
+                    technique=technique[:80],
                     chart=str(item.get('chart') or 'D1')[:24],
-                    conclusion=str(item.get('conclusion') or item.get('summary') or '未提供结论')[:800],
+                    conclusion=str(item.get('conclusion') or item.get('summary') or '未提供结论')[:conclusion_limit],
                     sentiment=str(item.get('sentiment') or 'neutral').strip().lower(),
                     strength=strength,
                     details=item.get('details') if isinstance(item.get('details'), dict) else {},
@@ -3842,10 +3846,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         return items
 
     def _theme_evidence(self, technique, chart, conclusion, sentiment, strength, *, source, details=None):
+        conclusion_limit = 4000 if str(technique).endswith('-strict-narrative') else 800
         return {
             'technique': technique,
             'chart': chart,
-            'conclusion': str(conclusion)[:800],
+            'conclusion': str(conclusion)[:conclusion_limit],
             'sentiment': sentiment,
             'strength': strength,
             'details': {
@@ -4799,8 +4804,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             # Shadbala (v6.9.15: absolute component sum, no global 1200 downscaling)
             try:
                 from shadbala import calc_shadbala
+                shadbala_planets = copy.deepcopy(planets_data)
+                for planet_data in shadbala_planets.values():
+                    if isinstance(planet_data, dict) and planet_data.get('degree_in_sign') is not None:
+                        planet_data['degree'] = planet_data['degree_in_sign']
                 sb = calc_shadbala(
-                    planets_data,
+                    shadbala_planets,
                     asc_sign,
                     birth_hour_decimal,
                     planets_data.get('Sun',{}).get('lon',0),
