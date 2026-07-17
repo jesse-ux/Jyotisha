@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from scripts.audit_capabilities import ALLOWED_STATUS
+
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "references" / "technique_registry.json"
@@ -21,3 +23,16 @@ def test_restricted_techniques_keep_canonical_status_boundaries() -> None:
         assert techniques[key]["verification_level"]["prediction"] == "support_only"
 
     assert techniques["rangacharya_jaimini_variant"]["verification_level"]["prediction"] == "blocked"
+
+
+def test_restricted_statuses_are_accepted_by_capability_audit() -> None:
+    techniques = json.loads(REGISTRY.read_text(encoding="utf-8"))["techniques"]
+    restricted_statuses = {
+        techniques["prashna"]["status"],
+        techniques["prashna_integration"]["status"],
+        techniques["upagraha_gulika_maandi"]["status"],
+        techniques["panchavargiya_bala"]["status"],
+        techniques["rangacharya_jaimini_variant"]["status"],
+    }
+
+    assert restricted_statuses <= ALLOWED_STATUS

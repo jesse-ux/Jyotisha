@@ -28,6 +28,8 @@ ALLOWED_STATUS = {
     "workflow-only",
     "not-integrated",
     "missing",
+    "guarded",
+    "comparison-only",
 }
 REQUIRED_TECHNIQUE_FIELDS = {
     "name": str,
