@@ -667,6 +667,8 @@ export default function Home() {
   const [redeeming, setRedeeming] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [pinnedSessionIds, setPinnedSessionIds] = useState<string[]>([]);
+  const [archivedSessionIds, setArchivedSessionIds] = useState<string[]>([]);
   const [modelCatalog, setModelCatalog] = useState<PublicLanguageModelCatalog | null>(null);
   const [activeSessionId, setActiveSessionId] = useState("");
   const [draft, setDraft] = useState("");
@@ -710,16 +712,32 @@ export default function Home() {
   const uiPreviewMode = useRef<string | null>(null);
 
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
+  const visibleSessions = sessions
+    .filter((session) => !archivedSessionIds.includes(session.id))
+    .sort((left, right) => Number(pinnedSessionIds.includes(right.id)) - Number(pinnedSessionIds.includes(left.id)));
   const activeError = requestError && requestError.sessionId === activeSession?.id ? requestError.message : "";
   const isLoading = pendingSessionId === activeSession?.id;
   const activeStreamingText = streamingReply && streamingReply.sessionId === activeSession?.id ? streamingReply.text : "";
+  const accountId = account?.user.id;
 
   useEffect(() => {
     activeSessionIdRef.current = activeSessionId;
   }, [activeSessionId]);
-  const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
-  const accountId = account?.user.id;
 
+  useEffect(() => {
+    if (!hydrated || !accountId) return;
+    const prefix = `jyotisha-session-controls:${accountId}:`;
+    setPinnedSessionIds(JSON.parse(localStorage.getItem(`${prefix}pinned`) || "[]"));
+    setArchivedSessionIds(JSON.parse(localStorage.getItem(`${prefix}archived`) || "[]"));
+  }, [accountId, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || !accountId) return;
+    const prefix = `jyotisha-session-controls:${accountId}:`;
+    localStorage.setItem(`${prefix}pinned`, JSON.stringify(pinnedSessionIds));
+    localStorage.setItem(`${prefix}archived`, JSON.stringify(archivedSessionIds));
+  }, [accountId, archivedSessionIds, hydrated, pinnedSessionIds]);
+  const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
   useEffect(() => {
     if (!accountId) {
       setChartLibrary([]);
@@ -1119,6 +1137,45 @@ export default function Home() {
       ...values,
     });
     if (insertError) throw new Error(`云端同步失败：${insertError.message}`);
+  }
+
+  async function renameSession(session: ChatSession) {
+    const title = window.prompt("重命名聊天记录", session.title)?.trim();
+    if (!title || title === session.title) return;
+    const nextSession = { ...session, title, updatedAt: timestamp() };
+    updateSession(session.id, () => nextSession);
+    try {
+      await persistSession(nextSession);
+    } catch (caught) {
+      setComposerNotice(caught instanceof Error ? caught.message : "重命名同步失败");
+    }
+  }
+
+  async function deleteSession(session: ChatSession) {
+    if (!account || !window.confirm(`删除“${session.title}”？此操作不可恢复。`)) return;
+    const previousSessions = sessions;
+    const nextSessions = sessions.filter((item) => item.id !== session.id);
+    setSessions(nextSessions);
+    setPinnedSessionIds((current) => current.filter((id) => id !== session.id));
+    setArchivedSessionIds((current) => current.filter((id) => id !== session.id));
+    if (activeSessionId === session.id) setActiveSessionId(nextSessions[0]?.id ?? "");
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const { error } = await supabase.from("chat_sessions").delete().eq("id", session.id).eq("user_id", account.user.id);
+      if (error) throw error;
+    } catch (caught) {
+      setSessions(previousSessions);
+      setComposerNotice(caught instanceof Error ? `删除失败：${caught.message}` : "删除失败");
+    }
+  }
+
+  function togglePinnedSession(sessionId: string) {
+    setPinnedSessionIds((current) => current.includes(sessionId) ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
+  }
+
+  function toggleArchivedSession(sessionId: string) {
+    setArchivedSessionIds((current) => current.includes(sessionId) ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
+    if (activeSessionId === sessionId) setActiveSessionId(visibleSessions.find((session) => session.id !== sessionId)?.id ?? "");
   }
 
   async function startNewChat() {
@@ -1934,23 +1991,29 @@ export default function Home() {
         <nav className="session-nav" aria-label="聊天记录">
           <span className="sidebar-label">聊天记录</span>
           <div className="session-list">
-            {sessions.map((session) => (
-              <button
-                className={session.id === activeSession?.id ? "is-active" : ""}
-                key={session.id}
-                type="button"
-                onClick={() => {
-                  setActiveSessionId(session.id);
-                  setDraft("");
-                  setComposerNotice("");
-                  setMobileSidebarOpen(false);
-                }}
-                disabled={Boolean(pendingSessionId) || cancellationPending}
-                aria-current={session.id === activeSession?.id ? "page" : undefined}
-              >
-                <span>{session.title}</span>
-                {session.messages.length > 0 && <small>{session.messages.length} 条消息</small>}
-              </button>
+            {visibleSessions.map((session) => (
+              <div className={`session-row ${session.id === activeSession?.id ? "is-active" : ""}`} key={session.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSessionId(session.id);
+                    setDraft("");
+                    setComposerNotice("");
+                    setMobileSidebarOpen(false);
+                  }}
+                  disabled={Boolean(pendingSessionId) || cancellationPending}
+                  aria-current={session.id === activeSession?.id ? "page" : undefined}
+                >
+                  <span>{pinnedSessionIds.includes(session.id) ? "★ " : ""}{session.title}</span>
+                  {session.messages.length > 0 && <small>{session.messages.length} 条消息</small>}
+                </button>
+                <div className="session-actions" aria-label={`${session.title} 操作`}>
+                  <button type="button" onClick={() => togglePinnedSession(session.id)}>{pinnedSessionIds.includes(session.id) ? "取消置顶" : "置顶"}</button>
+                  <button type="button" onClick={() => void renameSession(session)}>重命名</button>
+                  <button type="button" onClick={() => toggleArchivedSession(session.id)}>归档</button>
+                  <button type="button" onClick={() => void deleteSession(session)}>删除</button>
+                </div>
+              </div>
             ))}
           </div>
         </nav>
