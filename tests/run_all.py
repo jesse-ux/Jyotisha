@@ -262,7 +262,7 @@ def t48():
 def t49():
     from tajika import calc_all_sahams
     from datetime import datetime
-    r = calc_all_sahams({'Sun': 80, 'Moon': 105, 'Mars': 220, 'Mercury': 75, 'Jupiter': 310, 'Venus': 350, 'Saturn': 180, 'Rahu': 45, 'Ketu': 225}, 15.0, datetime(1990,6,15,12,0))
+    r = calc_all_sahams({'Sun': 80, 'Moon': 105, 'Mars': 220, 'Mercury': 75, 'Jupiter': 310, 'Venus': 350, 'Saturn': 180, 'Rahu': 45, 'Ketu': 225}, 15.0, datetime(1990,6,15,12,0), lat=39.9042, lon=116.4074, tz=8)
     assert len(r) >= 30
 
 @test("Chart renderer SVG")
