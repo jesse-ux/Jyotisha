@@ -125,6 +125,35 @@
       ],
       "hash_contract_result": "pass: API dasha start_date/current_md/remaining_years/result_hash match domain_calculation_service",
       "rollback": "git revert e8a8ff6"
+    },
+    {
+      "source_repository": "732642856/yinduzhanxing",
+      "source_commit": "18f8960b192c6c719f9c2fe7ac592d2d410015da",
+      "target_repository": "jesse-ux/Jyotisha",
+      "target_commit": "167934bfe95c21a14d276edb0ccdc028ec6ada4c",
+      "change_class": "calculation_contract",
+      "copied_files": [
+        "references/cross_project_contract/fixture_manifest.v1.json",
+        "references/cross_project_contract/sync_ledger.json",
+        "references/cross_project_contract/sync_policy.v1.json",
+        "scripts/cross_project_contract.py",
+        "scripts/cross_project_sync_status.py",
+        "scripts/domain_calculation_service.py",
+        "scripts/jyotish_api_server.py",
+        "tests/test_commercial_domain_calculation_contract.py",
+        "tests/test_cross_project_contract.py",
+        "tests/test_cross_project_sync_status.py"
+      ],
+      "dependency_delta": "none",
+      "privacy_review": "pass: public synthetic fixture only; no production configuration, secret, or user data",
+      "focused_tests": [
+        "python3 -m pytest -q tests/test_commercial_domain_calculation_contract.py tests/test_cross_project_contract.py tests/test_cross_project_sync_status.py",
+        "python3 scripts/cross_project_contract.py --require-match --format json",
+        "python3 scripts/public_release_privacy_scan.py --json",
+        "python3 scripts/cross_project_sync_status.py --peer <peer-repository> --format json"
+      ],
+      "hash_contract_result": "pass: commercial API and research engine share the canonical chart calculation contract and compatibility hash",
+      "rollback": "git revert 167934b"
     }
   ]
 }
