@@ -1455,6 +1455,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             if path == '/api/chart':
                 result = self._compute_chart(body)
                 self._json(result)
+            elif path == '/api/daily_guidance':
+                result = _load_local_module('daily_guidance_service').build_daily_guidance(body)
+                self._json(result)
             elif path == '/api/remedies':
                 result = self._compute_remedies(body)
                 self._json(result)
