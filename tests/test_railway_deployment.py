@@ -15,3 +15,17 @@ def test_railway_services_use_the_product_frontend_and_dynamic_ports() -> None:
     assert "COPY SKILL.md mcp_server.py" in api
     assert "--host 0.0.0.0" in api and "${PORT:-5200}" in api
     assert "http.server" not in api
+
+
+def test_web_image_copies_postcss_config_before_building_frontend() -> None:
+    web = (ROOT / "deploy" / "railway-web.Dockerfile").read_text(encoding="utf-8")
+    config_copy = "COPY frontend/next.config.ts frontend/postcss.config.mjs frontend/tsconfig.json ./"
+
+    assert config_copy in web
+    assert web.index(config_copy) < web.index("RUN npm run build")
+
+
+def test_server_compose_allows_only_the_internal_api_hostname() -> None:
+    compose = (ROOT / "deploy" / "docker-compose.server.yml").read_text(encoding="utf-8")
+
+    assert "JYOTISH_ALLOWED_HOSTS: localhost,127.0.0.1,::1,api" in compose

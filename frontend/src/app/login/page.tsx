@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
@@ -36,6 +37,7 @@ export default function LoginPage() {
       setSent(true);
       setNotice(`验证码已发送至 ${normalizedEmail}`);
     } catch (caught) {
+      if (!(caught instanceof Error)) throw caught;
       setError(authMessage(caught));
     } finally {
       setBusy(false);
@@ -56,6 +58,7 @@ export default function LoginPage() {
       if (otpError) throw otpError;
       window.location.assign("/");
     } catch (caught) {
+      if (!(caught instanceof Error)) throw caught;
       setError(authMessage(caught));
       setBusy(false);
     }
@@ -70,32 +73,46 @@ export default function LoginPage() {
 
   return (
     <main className="standalone-page auth-page">
-      <section className="auth-panel" aria-labelledby="login-title">
-        <div className="auth-brand"><span aria-hidden="true">अ</span><strong>Jyotisha</strong></div>
-        <p className="page-eyebrow">登录</p>
-        <h1 id="login-title">欢迎来到 Jyotisha</h1>
-        <p className="page-intro">使用邮箱验证码登录，新邮箱会自动创建账户。</p>
+      <div className="auth-shell">
+        <aside className="auth-story" aria-label="Jyotisha 简介">
+          <div className="auth-story-brand">
+            <Image src="/jyotish-logo.png" alt="" width={32} height={32} sizes="32px" />
+            <strong>Jyotisha</strong>
+          </div>
+          <div>
+            <p className="auth-kicker">Vedic astrology · 印度占星</p>
+            <h2>在星图与当下之间，<br />找到可以行动的<span className="phrase-nowrap">线索。</span></h2>
+            <p>以出生资料为起点，讨论事业、关系与时间窗口。每一次解读都保留证据，也保留你的选择。</p>
+          </div>
+          <p className="auth-footnote">私密对话 · 云端同步 · 随时继续</p>
+        </aside>
 
-        {!sent ? (
-          <form className="stack-form" onSubmit={sendOtp}>
-            <label htmlFor="login-email">邮箱</label>
-            <input id="login-email" type="email" autoComplete="email" inputMode="email" required autoFocus value={email} onChange={(event) => { setEmail(event.target.value); setError(""); setNotice(""); }} placeholder="you@example.com" />
-            <button className="button-primary" type="submit" disabled={!email.trim() || busy}>{busy ? "发送中" : "发送验证码"}</button>
-          </form>
-        ) : (
-          <form className="stack-form" onSubmit={verifyOtp}>
-            <label htmlFor="login-token">邮箱验证码</label>
-            <input id="login-token" className="otp-input" type="text" autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]*" minLength={6} maxLength={6} required autoFocus value={token} onChange={(event) => { setToken(event.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }} />
-            <button className="button-primary" type="submit" disabled={!token || busy}>{busy ? "验证中" : "验证并登录"}</button>
-            <div className="inline-actions">
-              <button type="button" disabled={busy} onClick={() => void sendOtp()}>{busy ? "发送中" : "重新发送验证码"}</button>
-              <button type="button" disabled={busy} onClick={changeEmail}>更换邮箱</button>
-            </div>
-          </form>
-        )}
-        {error && <p className="form-error" role="alert">{error}</p>}
-        {notice && <p className="form-success" role="status">{notice}</p>}
-      </section>
+        <section className="auth-panel" aria-labelledby="login-title">
+          <div className="auth-brand"><span aria-hidden="true" /><strong>Jyotisha</strong></div>
+          <h1 id="login-title">欢迎回来</h1>
+          <p className="page-intro">邮箱验证码登录，<span className="phrase-nowrap">新邮箱将自动创建账户。</span></p>
+
+          {!sent ? (
+            <form key="email" className="stack-form auth-step" onSubmit={sendOtp}>
+              <label htmlFor="login-email">邮箱</label>
+              <input id="login-email" type="email" autoComplete="email" inputMode="email" required autoFocus value={email} onChange={(event) => { setEmail(event.target.value); setError(""); setNotice(""); }} placeholder="you@example.com" />
+              <button className="button-primary" type="submit" disabled={!email.trim() || busy}>{busy ? "发送中" : "发送验证码"}</button>
+            </form>
+          ) : (
+            <form key="otp" className="stack-form auth-step" onSubmit={verifyOtp}>
+              <label htmlFor="login-token">邮箱验证码</label>
+              <input id="login-token" className="otp-input" type="text" autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]*" minLength={6} maxLength={6} required autoFocus value={token} onChange={(event) => { setToken(event.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }} />
+              <button className="button-primary" type="submit" disabled={!token || busy}>{busy ? "验证中" : "验证并登录"}</button>
+              <div className="inline-actions">
+                <button type="button" disabled={busy} onClick={() => void sendOtp()}>{busy ? "发送中" : "重新发送验证码"}</button>
+                <button type="button" disabled={busy} onClick={changeEmail}>更换邮箱</button>
+              </div>
+            </form>
+          )}
+          {error && <p className="form-error" role="alert">{error}</p>}
+          {notice && <p className="form-success" role="status">{notice}</p>}
+        </section>
+      </div>
     </main>
   );
 }

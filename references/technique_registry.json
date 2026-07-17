@@ -2,19 +2,19 @@
   "version": "v7.0",
   "source_inspiration": [
     {
+      "lesson": "Use structured dictionary/JSON sections for chart, varga, bala, ashtakavarga and dasha outputs. Do not depend on free-form prose for facts.",
       "name": "jyotishyamitra",
-      "url": "https://pypi.org/project/jyotishyamitra/",
-      "lesson": "Use structured dictionary/JSON sections for chart, varga, bala, ashtakavarga and dasha outputs. Do not depend on free-form prose for facts."
+      "url": "https://pypi.org/project/jyotishyamitra/"
     },
     {
+      "lesson": "Keep astronomical/calendar computation separate from interpretive reasoning; prefer deterministic data layers.",
       "name": "jyotisham/jyotisha",
-      "url": "https://github.com/jyotisham/jyotisha",
-      "lesson": "Keep astronomical/calendar computation separate from interpretive reasoning; prefer deterministic data layers."
+      "url": "https://github.com/jyotisham/jyotisha"
     },
     {
+      "lesson": "Validate registry-like configuration against a schema before using it. This project keeps a stdlib validator to avoid new dependencies.",
       "name": "Yamale",
-      "url": "https://pypi.org/project/yamale/",
-      "lesson": "Validate registry-like configuration against a schema before using it. This project keeps a stdlib validator to avoid new dependencies."
+      "url": "https://pypi.org/project/yamale/"
     }
   ],
   "status_vocabulary": [
@@ -27,1558 +27,1563 @@
   ],
   "techniques": {
     "d1_rashi": {
-      "name": "D1 / Rashi",
-      "domains": [
-        "core",
-        "static"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/signs-and-houses.md"
-      ],
+      "audit_label": "D1/Rashi",
       "commands": [
         "chart",
         "full-reading"
       ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
+      "domains": [
+        "core",
+        "static"
+      ],
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
+      "knowledge_refs": [
+        "references/signs-and-houses.md"
+      ],
+      "missing_impact": "No reliable static chart basis.",
+      "name": "D1 / Rashi",
       "output_paths": [
         "modules.chart"
       ],
-      "audit_label": "D1/Rashi",
-      "missing_impact": "No reliable static chart basis.",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "case_validated_partial"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "case_validated_partial",
+        "rule": "verified"
+      }
     },
     "d9_navamsa": {
-      "name": "D9 / Navamsa",
+      "audit_label": "D9/Navamsa",
+      "commands": [
+        "varga-full",
+        "full-reading"
+      ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
       "domains": [
         "varga",
         "strength",
         "relationship",
         "dharma"
       ],
-      "status": "covered",
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
       "knowledge_refs": [
         "references/navamsa-d9-interpretation-template.md",
         "references/varga-system-quick-reference.md"
       ],
-      "commands": [
-        "varga-full",
-        "full-reading"
-      ],
+      "missing_impact": "Inner strength and marriage/dharma layer incomplete.",
+      "name": "D9 / Navamsa",
       "output_paths": [
         "modules.varga_full.D9_Navamsa",
         "modules.d9_navamsa_expanded"
       ],
-      "audit_label": "D9/Navamsa",
-      "missing_impact": "Inner strength and marriage/dharma layer incomplete.",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "case_validated_partial"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "case_validated_partial",
+        "rule": "verified"
+      }
     },
     "d10_dasamsa": {
-      "name": "D10 / Dasamsa",
-      "domains": [
-        "career",
-        "varga"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/varga-system-quick-reference.md",
-        "references/divisional-chart-deep-reading.md"
-      ],
+      "audit_label": "D10/Dasamsa",
       "commands": [
         "varga-full",
         "full-reading"
       ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
+      "domains": [
+        "career",
+        "varga"
+      ],
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
+      "knowledge_refs": [
+        "references/varga-system-quick-reference.md",
+        "references/divisional-chart-deep-reading.md"
+      ],
+      "missing_impact": "Career-specific varga layer missing; career timing confidence must be capped.",
+      "name": "D10 / Dasamsa",
       "output_paths": [
         "modules.varga_full.D10_Dasamsa"
       ],
-      "audit_label": "D10/Dasamsa",
-      "missing_impact": "Career-specific varga layer missing; career timing confidence must be capped.",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "vimshottari_dasha": {
-      "name": "Vimshottari Dasha",
-      "domains": [
-        "timing",
-        "event"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/dasha-calculation-tool.md"
-      ],
+      "audit_label": "Vimshottari",
       "commands": [
         "dasha",
         "full-reading"
       ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
+      "domains": [
+        "timing",
+        "event"
+      ],
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
+      "knowledge_refs": [
+        "references/dasha-calculation-tool.md"
+      ],
+      "missing_impact": "Primary timing layer unavailable.",
+      "name": "Vimshottari Dasha",
       "output_paths": [
         "modules.dasha"
       ],
-      "audit_label": "Vimshottari",
-      "missing_impact": "Primary timing layer unavailable.",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "case_validated_partial"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "case_validated_partial",
+        "rule": "verified"
+      }
     },
     "ashtottari_dasha": {
-      "name": "Ashtottari Dasha / 108年周期",
+      "audit_label": "Ashtottari",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "timing",
         "event",
         "nakshatra"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/alternative-dasha-systems.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Nakshatra-based conditional timing layer unavailable for qualifying charts.",
+      "name": "Ashtottari Dasha / 108年周期",
       "output_paths": [
         "modules.ashtottari_dasha"
       ],
-      "audit_label": "Ashtottari",
-      "missing_impact": "Nakshatra-based conditional timing layer unavailable for qualifying charts.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "yogini_dasha": {
-      "name": "Yogini Dasha / 36年周期",
+      "audit_label": "Yogini",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "timing",
         "event",
         "yogini"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/alternative-dasha-systems.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Yogini Dasha 已可输出，但起运边界、子运切分与传统软件对齐度仍需更多外部 benchmark，细粒度事件定时置信度受限。",
+      "name": "Yogini Dasha / 36年周期",
       "output_paths": [
         "modules.yogini_dasha"
       ],
-      "audit_label": "Yogini",
-      "missing_impact": "Yogini Dasha 已可输出，但起运边界、子运切分与传统软件对齐度仍需更多外部 benchmark，细粒度事件定时置信度受限。",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "kalachakra_dasha": {
-      "name": "Kalachakra Dasha / 时轮大运",
+      "audit_label": "Kalachakra",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "timing",
         "event",
         "nakshatra"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/alternative-dasha-systems.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "limitation": "当前实现已接入 full-reading 与多系统 Dasha convergence，可作为补充 timing 证据使用；但起始 pada 映射与完整传统细则仍为简化版，不能单独承担最终事件定时结论。",
+      "missing_impact": "Kalachakra 已可输出 Savya/Apasavya 模式、当前主周期与 Rashi-year 序列，但 classical pada mapping、子运细化与传统软件黑盒对齐仍需继续成熟化。",
+      "name": "Kalachakra Dasha / 时轮大运",
       "output_paths": [
         "modules.kalachakra_dasha"
       ],
-      "audit_label": "Kalachakra",
-      "missing_impact": "Kalachakra 已可输出 Savya/Apasavya 模式、当前主周期与 Rashi-year 序列，但 classical pada mapping、子运细化与传统软件黑盒对齐仍需继续成熟化。",
-      "limitation": "当前实现已接入 full-reading 与多系统 Dasha convergence，可作为补充 timing 证据使用；但起始 pada 映射与完整传统细则仍为简化版，不能单独承担最终事件定时结论。",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "partial",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "partial"
+      }
     },
     "dasha_sandhi": {
-      "name": "Dasha Sandhi",
+      "audit_label": "Dasha Sandhi",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "timing",
         "transition"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/strict-workflow-router.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Transition windows may be overstated or understated.",
+      "name": "Dasha Sandhi",
       "output_paths": [
         "modules.dasha_sandhi"
       ],
-      "audit_label": "Dasha Sandhi",
-      "missing_impact": "Transition windows may be overstated or understated.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "jaimini_chara_dasha": {
-      "name": "Jaimini / Chara Dasha",
+      "audit_label": "Jaimini/Chara",
+      "commands": [
+        "jaimini",
+        "full-reading"
+      ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
       "domains": [
         "timing",
         "career",
         "relationship"
       ],
-      "status": "covered",
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
       "knowledge_refs": [
         "references/jaimini-complete-system.md"
       ],
+      "limitation": "v6.1.12: KN Rao method正式benchmark通过（120/120 sign=100%, 110/120 duration=91.67%, overall=95.83%≥95%）。剩余~4.2%差异来自Aquarius/Scorpio的Rahu/Ketu共主动态判定（PyJHora用_stronger_planet_new完整尊严比较链），当前使用传统宫主(Saturn/Mars)。已记录为未来优化项。Chara Dasha作为标准应期模块可正常使用。",
+      "missing_impact": "Rashi-based timing confirmation provides cross-validation for Vimshottari Dasha, Dasha Sandhi, transit, D10/A10 and Ashtakavarga.",
+      "name": "Jaimini / Chara Dasha",
+      "output_paths": [
+        "modules.jaimini"
+      ],
+      "status": "covered",
+      "user_visibility": "ordinary_topic_router",
+      "verification_level": {
+        "calculation": "verified",
+        "prediction": "case_validated_partial",
+        "rule": "verified"
+      }
+    },
+    "karakamsha_ak_amk": {
+      "audit_label": "AK/AmK/Karakamsha",
       "commands": [
         "jaimini",
         "full-reading"
       ],
-      "output_paths": [
-        "modules.jaimini"
-      ],
-      "audit_label": "Jaimini/Chara",
-      "missing_impact": "Rashi-based timing confirmation provides cross-validation for Vimshottari Dasha, Dasha Sandhi, transit, D10/A10 and Ashtakavarga.",
-      "limitation": "v6.1.12: KN Rao method正式benchmark通过（120/120 sign=100%, 110/120 duration=91.67%, overall=95.83%≥95%）。剩余~4.2%差异来自Aquarius/Scorpio的Rahu/Ketu共主动态判定（PyJHora用_stronger_planet_new完整尊严比较链），当前使用传统宫主(Saturn/Mars)。已记录为未来优化项。Chara Dasha作为标准应期模块可正常使用。",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
-      "user_visibility": "ordinary_topic_router",
-      "verification_level": {
-        "calculation": "verified",
-        "rule": "verified",
-        "prediction": "case_validated_partial"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
-    },
-    "karakamsha_ak_amk": {
-      "name": "Karakamsha / AK / AmK",
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "career",
         "soul",
         "dharma"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/jaimini-complete-system.md"
       ],
-      "commands": [
-        "jaimini",
-        "full-reading"
-      ],
+      "missing_impact": "Jaimini career/soul indicator layer incomplete.",
+      "name": "Karakamsha / AK / AmK",
       "output_paths": [
         "modules.jaimini.karakas",
         "modules.jaimini.karakamsha"
       ],
-      "audit_label": "AK/AmK/Karakamsha",
-      "missing_impact": "Jaimini career/soul indicator layer incomplete.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "a10_karma_pada": {
-      "name": "A10 / Karma Pada / Rajya Pada",
-      "domains": [
-        "career",
-        "public_image"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/technique-capability-matrix.md"
-      ],
+      "audit_label": "A10/Karma Pada",
       "commands": [
         "full-reading",
         "scripts/special_lagnas.py --tenth-lord"
       ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
+      "domains": [
+        "career",
+        "public_image"
+      ],
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
+      "knowledge_refs": [
+        "references/technique-capability-matrix.md"
+      ],
+      "missing_impact": "Career public-image layer incomplete.",
+      "name": "A10 / Karma Pada / Rajya Pada",
       "output_paths": [
         "modules.special_lagnas.A10_Karma_Pada"
       ],
-      "audit_label": "A10/Karma Pada",
-      "missing_impact": "Career public-image layer incomplete.",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "argala": {
-      "name": "Argala",
+      "audit_label": "Argala",
+      "commands": [
+        "argala",
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "static",
         "intervention",
         "event"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/argala-complete-guide.md"
       ],
-      "commands": [
-        "argala",
-        "full-reading"
-      ],
+      "missing_impact": "Intervention/blocking layer missing.",
+      "name": "Argala",
       "output_paths": [
         "modules.argala"
       ],
-      "audit_label": "Argala",
-      "missing_impact": "Intervention/blocking layer missing.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "badhaka": {
-      "name": "Badhaka / Obstacle House-Lord",
+      "audit_label": "Badhaka",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "static",
         "obstacle",
         "event"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/badhaka-obstacle-planet-guide.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Obstacle-house logic missing, so blockage, interference and frustration timing are under-modeled.",
+      "name": "Badhaka / Obstacle House-Lord",
       "output_paths": [
         "scripts/yoga_engine.py:is_badhaka"
       ],
-      "audit_label": "Badhaka",
-      "missing_impact": "Obstacle-house logic missing, so blockage, interference and frustration timing are under-modeled.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "upagraha_gulika_maandi": {
-      "name": "Upagraha / Gulika / Maandi",
-      "domains": [
-        "static",
-        "upagraha",
-        "event"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/prashna-complete-guide.md"
-      ],
+      "audit_label": "Upagraha/Gulika/Maandi",
       "commands": [
         "chart",
         "prashna",
         "full-reading"
       ],
-      "output_paths": [
-        "modules.chart.upagraha",
-        "scripts/prashna.py:calc_gulika_simple"
+      "conclusion_policy": "Guarded risk context only; no final verdict or score lift.",
+      "domains": [
+        "static",
+        "upagraha",
+        "event"
       ],
-      "audit_label": "Upagraha/Gulika/Maandi",
-      "missing_impact": "Sensitive malefic shadow points are unavailable, weakening pressure, delay and vulnerability interpretation.",
       "entry_type": "supporting_indicator",
       "evidence_role": "secondary",
+      "knowledge_refs": [
+        "references/prashna-complete-guide.md"
+      ],
+      "limitation": "Gulika is exposed only as a supporting risk indicator; Maandi and a complete adjudication layer remain unavailable.",
+      "missing_impact": "Swiss day/night and Prasna Marga Ghatika Gulika are available as supporting evidence; Maandi, other Upagrahas and external numeric parity remain unavailable.",
+      "name": "Upagraha / Gulika / Maandi",
+      "note": "Gulika/Maandi is exposed through Prashna context as a strict workflow risk supporting indicator; it is not a primary judgement layer and cannot set final verdict.",
+      "output_paths": [
+        "scripts/gulika.py:calculate_gulika",
+        "prashna_context.supporting_indicators.gulika"
+      ],
+      "status": "guarded",
       "user_visibility": "expert_audit",
       "verification_level": {
-        "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "calculation": "partial",
+        "prediction": "support_only",
+        "rule": "partial"
+      }
     },
     "sphuta_trisphuta_family": {
-      "name": "Sphuta / Trisphuta / Catusphuta / Pancasphuta / Prana-Deha-Mrityu",
-      "domains": [
-        "prashna",
-        "timing",
-        "life"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/prashna-complete-guide.md",
-        "references/single-event-inquiry-protocol.md"
-      ],
+      "audit_label": "Sphuta/Trisphuta",
       "commands": [
         "prashna",
         "scripts/jyotish_engine.py --mode sphutas",
         "scripts/jyotish_engine.py --mode life"
       ],
-      "output_paths": [
-        "scripts/prashna.py:calc_sphutas",
-        "scripts/prashna.py:calc_life_sphutas",
-        "kp_horary.sphutas"
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
+      "domains": [
+        "prashna",
+        "timing",
+        "life"
       ],
-      "audit_label": "Sphuta/Trisphuta",
-      "missing_impact": "Prashna energy convergence and life-sensitivity markers are absent, leaving horary and life-risk reading thinner than classical toolchains.",
       "entry_type": "supporting_indicator",
       "evidence_role": "secondary",
+      "knowledge_refs": [
+        "references/prashna-complete-guide.md",
+        "references/single-event-inquiry-protocol.md"
+      ],
+      "missing_impact": "Formula-only Trisphuta/Catusphuta/Pancasphuta evidence is available from exact Gulika. Life-sensitive Sphutas, external numeric parity and all verdict use remain unavailable.",
+      "name": "Sphuta / Trisphuta / Catusphuta / Pancasphuta / Prana-Deha-Mrityu",
+      "note": "Covered as calculation/report support by scripts/prashna_sphuta.py and Prashna entry/context tests; prediction remains support-only inside strict Prashna workflow.",
+      "output_paths": [
+        "prashna_context.supporting_indicators.sphuta"
+      ],
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "deha_jeeva": {
-      "name": "Deha / Jeeva Framework",
+      "audit_label": "Deha/Jeeva",
+      "commands": [
+        "full-reading",
+        "prashna"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "dasha",
         "prashna",
         "health",
         "spiritual"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/alternative-dasha-systems.md",
         "references/prashna-complete-guide.md"
       ],
-      "commands": [
-        "full-reading",
-        "prashna"
-      ],
+      "missing_impact": "Without Deha/Jeeva routing, body-vs-consciousness event classification and some classical alternative Dasha judgments stay shallow.",
+      "name": "Deha / Jeeva Framework",
+      "note": "Current role is primarily interpretive and workflow-level. Keep maturity at covered until more explicit engine-level outputs and external cases are frozen.",
       "output_paths": [
         "modules.prashna.deha_jeeva",
         "modules.alternative_dasha_frameworks.deha_jeeva"
       ],
-      "audit_label": "Deha/Jeeva",
-      "missing_impact": "Without Deha/Jeeva routing, body-vs-consciousness event classification and some classical alternative Dasha judgments stay shallow.",
-      "note": "Current role is primarily interpretive and workflow-level. Keep maturity at covered until more explicit engine-level outputs and external cases are frozen.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "shadbala": {
-      "name": "Shadbala",
-      "domains": [
-        "strength",
-        "static"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/shadbala-complete-methodology.md"
-      ],
+      "audit_label": "Shadbala",
       "commands": [
         "shadbala",
         "full-reading"
       ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
+      "domains": [
+        "strength",
+        "static"
+      ],
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
+      "knowledge_refs": [
+        "references/shadbala-complete-methodology.md"
+      ],
+      "limitation": "Round 9 internal invariant benchmark passed 1200/1200 checks and full-reading matches the shadbala command. However scripts/shadbala.py still uses simplified Nathonnata Bala, approximate Saptavargaja sub-vargas, Chesta speed buckets and simplified Drik aspect weights. Use for relative strength ranking with confidence cap until an external full Shadbala table benchmark is frozen.",
+      "missing_impact": "Planetary strength claims are quantitatively anchored only as an internally consistent reference, not as externally calibrated absolute Parashara Shadbala.",
+      "name": "Shadbala",
+      "note": "v6.9.3 — Sputa Drishti精确相位 + Yuddha Bala + BPHS 1200/1200校准",
       "output_paths": [
         "modules.shadbala"
       ],
-      "audit_label": "Shadbala",
-      "missing_impact": "Planetary strength claims are quantitatively anchored only as an internally consistent reference, not as externally calibrated absolute Parashara Shadbala.",
-      "limitation": "Round 9 internal invariant benchmark passed 1200/1200 checks and full-reading matches the shadbala command. However scripts/shadbala.py still uses simplified Nathonnata Bala, approximate Saptavargaja sub-vargas, Chesta speed buckets and simplified Drik aspect weights. Use for relative strength ranking with confidence cap until an external full Shadbala table benchmark is frozen.",
-      "version": "6.9.3",
-      "note": "v6.9.3 — Sputa Drishti精确相位 + Yuddha Bala + BPHS 1200/1200校准",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "case_validated_partial"
+        "prediction": "case_validated_partial",
+        "rule": "verified"
       },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+      "version": "6.9.3"
     },
     "ashtakavarga": {
-      "name": "Ashtakavarga",
+      "audit_label": "Ashtakavarga",
+      "commands": [
+        "ashtakavarga",
+        "full-reading"
+      ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
       "domains": [
         "transit",
         "strength",
         "timing"
       ],
-      "status": "covered",
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
       "knowledge_refs": [
         "references/ashtakavarga-complete-system.md"
       ],
-      "commands": [
-        "ashtakavarga",
-        "full-reading"
-      ],
+      "missing_impact": "covered: SAV/BAV/PAV/Sodhita/Yoga Pinda are exposed through /api/ashtakavarga and the Skill workbench.",
+      "name": "Ashtakavarga",
       "output_paths": [
         "modules.ashtakavarga"
       ],
-      "audit_label": "Ashtakavarga",
-      "missing_impact": "covered: SAV/BAV/PAV/Sodhita/Yoga Pinda are exposed through /api/ashtakavarga and the Skill workbench.",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "case_validated_partial"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "case_validated_partial",
+        "rule": "verified"
+      }
     },
     "avastha": {
-      "name": "Avastha",
+      "audit_label": "Avastha",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "strength",
         "state"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/technique-capability-matrix.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Planet condition/state layer missing.",
+      "name": "Avastha",
       "output_paths": [
         "modules.avasthas"
       ],
-      "audit_label": "Avastha",
-      "missing_impact": "Planet condition/state layer missing.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "combustion": {
-      "name": "Combustion / Asta",
+      "audit_label": "Combustion",
+      "commands": [
+        "chart",
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "static",
         "sun",
         "dignity"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/retrograde-combustion-war-guide.md"
       ],
-      "commands": [
-        "chart",
-        "full-reading"
-      ],
+      "missing_impact": "Planetary independence vs solar absorption is not tracked, weakening dignity and expression analysis.",
+      "name": "Combustion / Asta",
       "output_paths": [
         "scripts/pancha_mahapurusha.py:_is_combust",
         "modules.chart.planets.*.combust"
       ],
-      "audit_label": "Combustion",
-      "missing_impact": "Planetary independence vs solar absorption is not tracked, weakening dignity and expression analysis.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "graha_yuddha": {
-      "name": "Graha Yuddha / Planetary War",
+      "audit_label": "Graha Yuddha",
+      "commands": [
+        "tajika",
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "static",
         "disaster",
         "strength"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/retrograde-combustion-war-guide.md"
       ],
-      "commands": [
-        "tajika",
-        "full-reading"
-      ],
+      "missing_impact": "Planetary contest and winner-loser dynamics are absent, reducing conflict and strength nuance.",
+      "name": "Graha Yuddha / Planetary War",
       "output_paths": [
         "scripts/tajika.py.graha_yuddha",
         "scripts/yoga_expansion.py:detect_graha_yuddha"
       ],
-      "audit_label": "Graha Yuddha",
-      "missing_impact": "Planetary contest and winner-loser dynamics are absent, reducing conflict and strength nuance.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "gandanta": {
-      "name": "Gandanta",
+      "audit_label": "Gandanta",
+      "commands": [
+        "chart",
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "nakshatra",
         "crisis",
         "transition"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/nakshatra_deities.md"
       ],
-      "commands": [
-        "chart",
-        "full-reading"
-      ],
+      "missing_impact": "Water-fire knot transitions are not surfaced, weakening crisis and karmic transition interpretation.",
+      "name": "Gandanta",
       "output_paths": [
         "scripts/yoga_expansion.py:detect_gandanta"
       ],
-      "audit_label": "Gandanta",
-      "missing_impact": "Water-fire knot transitions are not surfaced, weakening crisis and karmic transition interpretation.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "moolatrikona": {
-      "name": "Moolatrikona / 原始三方",
-      "domains": [
-        "dignity",
-        "strength",
-        "static"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/planetary-dignity-complete-reference.md",
-        "references/planets.md"
-      ],
+      "audit_label": "Moolatrikona",
       "commands": [
         "chart",
         "shadbala",
         "full-reading"
       ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
+      "domains": [
+        "dignity",
+        "strength",
+        "static"
+      ],
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
+      "knowledge_refs": [
+        "references/planetary-dignity-complete-reference.md",
+        "references/planets.md"
+      ],
+      "missing_impact": "Without a first-class Moolatrikona layer, dignity ranking, Sthana Bala nuance and several yoga-strength judgments become too coarse.",
+      "name": "Moolatrikona / 原始三方",
+      "note": "Degree-band details vary by lineage. Current skill already uses Moolatrikona in dignity reasoning and strength interpretation, but should keep lineage notes explicit.",
       "output_paths": [
         "modules.chart.planets.*.dignity",
         "modules.shadbala.sthana_bala"
       ],
-      "audit_label": "Moolatrikona",
-      "missing_impact": "Without a first-class Moolatrikona layer, dignity ranking, Sthana Bala nuance and several yoga-strength judgments become too coarse.",
-      "note": "Degree-band details vary by lineage. Current skill already uses Moolatrikona in dignity reasoning and strength interpretation, but should keep lineage notes explicit.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "vargottama": {
-      "name": "Vargottama",
+      "audit_label": "Vargottama",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "varga",
         "strength"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/varga-system-quick-reference.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "D1-D9 consistency strength may be undercounted.",
+      "name": "Vargottama",
       "output_paths": [
         "modules.vargottama"
       ],
-      "audit_label": "Vargottama",
-      "missing_impact": "D1-D9 consistency strength may be undercounted.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "pushkara": {
-      "name": "Pushkara Navamsa / Pushkara Bhaga",
+      "audit_label": "Pushkara",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "varga",
         "dignity",
         "grace"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/planetary-dignity-complete-reference.md",
         "references/navamsa-marriage-deep-analysis.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "D9 grace/support layer may be undercounted.",
+      "name": "Pushkara Navamsa / Pushkara Bhaga",
       "output_paths": [
         "modules.pushkara"
       ],
-      "audit_label": "Pushkara",
-      "missing_impact": "D9 grace/support layer may be undercounted.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "shodasavarga": {
-      "name": "Shodasavarga / 十六分盘体系",
-      "domains": [
-        "varga",
-        "strength",
-        "classification"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/shodasavarga-complete-guide.md",
-        "references/varga-system-quick-reference.md"
-      ],
+      "audit_label": "Shodasavarga",
       "commands": [
         "full-reading",
         "chart"
       ],
-      "output_paths": [
-        "modules.chart.divisional_charts",
-        "modules.varga_strength_overview"
-      ],
-      "audit_label": "Shodasavarga",
-      "missing_impact": "Without a first-class 16-varga map, divisional interpretation and traditional weighting logic remain fragmented across isolated chart outputs.",
-      "note": "Registry entry covers the traditional 16-varga framework and teaching layer; not a claim that every Vimsopaka weighting path is already fully benchmark-closed.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
-      "user_visibility": "expert_audit",
-      "verification_level": {
-        "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
-    },
-    "varga_dignity": {
-      "name": "Varga Dignity / 分盘尊严等级",
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "varga",
         "strength",
         "classification"
       ],
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
+      "knowledge_refs": [
+        "references/shodasavarga-complete-guide.md",
+        "references/varga-system-quick-reference.md"
+      ],
+      "missing_impact": "Without a first-class 16-varga map, divisional interpretation and traditional weighting logic remain fragmented across isolated chart outputs.",
+      "name": "Shodasavarga / 十六分盘体系",
+      "note": "Registry entry covers the traditional 16-varga framework and teaching layer; not a claim that every Vimsopaka weighting path is already fully benchmark-closed.",
+      "output_paths": [
+        "modules.chart.divisional_charts",
+        "modules.varga_strength_overview"
+      ],
       "status": "covered",
+      "user_visibility": "expert_audit",
+      "verification_level": {
+        "calculation": "verified",
+        "prediction": "support_only",
+        "rule": "verified"
+      }
+    },
+    "varga_dignity": {
+      "audit_label": "Varga Dignity",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
+      "domains": [
+        "varga",
+        "strength",
+        "classification"
+      ],
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/shodasavarga-complete-guide.md",
         "references/planetary-dignity-complete-reference.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Without a first-class Varga Dignity entry, Simhasana/Parijata/Shridhama-style honor ladders remain buried inside divisional doctrine and are easy to omit in deep reading.",
+      "name": "Varga Dignity / 分盘尊严等级",
       "output_paths": [
         "modules.vimsopaka_bala",
         "modules.varga_strength_overview"
       ],
-      "audit_label": "Varga Dignity",
-      "missing_impact": "Without a first-class Varga Dignity entry, Simhasana/Parijata/Shridhama-style honor ladders remain buried inside divisional doctrine and are easy to omit in deep reading.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "vimsopaka_bala": {
-      "name": "Vimsopaka Bala / 分盘综合力量",
+      "audit_label": "Vimsopaka Bala",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "varga",
         "strength",
         "timing"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/shodasavarga-complete-guide.md",
         "references/shadbala-interpretation-methodology.md",
         "references/dasha-calculation-tool.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Without Vimsopaka Bala, cross-varga strength synthesis stays under-modeled, weakening Dasha-lord judgment and deep divisional confidence calibration.",
+      "name": "Vimsopaka Bala / 分盘综合力量",
+      "note": "Keep maturity at covered: the interpretive layer and reference doctrine exist, but external benchmark closure for all weighting schemes is still incomplete.",
       "output_paths": [
         "analysis_natal_full.vimsopaka_bala",
         "modules.vimsopaka_bala"
       ],
-      "audit_label": "Vimsopaka Bala",
-      "missing_impact": "Without Vimsopaka Bala, cross-varga strength synthesis stays under-modeled, weakening Dasha-lord judgment and deep divisional confidence calibration.",
-      "note": "Keep maturity at covered: the interpretive layer and reference doctrine exist, but external benchmark closure for all weighting schemes is still incomplete.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "navamsa_64th": {
-      "name": "64th Navamsa / Chatushashti Navamsa",
+      "audit_label": "64th Navamsa",
+      "commands": [
+        "scripts/varga.py"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "varga",
         "nakshatra",
         "crisis",
         "timing"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/navamsa-d9-interpretation-template.md"
       ],
-      "commands": [
-        "scripts/varga.py"
-      ],
+      "missing_impact": "A classical stress-sensitive Navamsa trigger is unavailable, weakening vulnerability and event-pressure analysis.",
+      "name": "64th Navamsa / Chatushashti Navamsa",
       "output_paths": [
         "scripts.varga.calc_64th_navamsa"
       ],
-      "audit_label": "64th Navamsa",
-      "missing_impact": "A classical stress-sensitive Navamsa trigger is unavailable, weakening vulnerability and event-pressure analysis.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "drekkana_22nd": {
-      "name": "22nd Drekkana",
+      "audit_label": "22nd Drekkana",
+      "commands": [
+        "scripts/varga.py"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "varga",
         "d30",
         "crisis",
         "timing"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/varga-system-quick-reference.md"
       ],
-      "commands": [
-        "scripts/varga.py"
-      ],
+      "missing_impact": "A classical danger-sensitive Drekkana trigger is absent, weakening accident and adversity screening.",
+      "name": "22nd Drekkana",
       "output_paths": [
         "scripts.varga.calc_22nd_drekkana"
       ],
-      "audit_label": "22nd Drekkana",
-      "missing_impact": "A classical danger-sensitive Drekkana trigger is absent, weakening accident and adversity screening.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "bhrigu_bindu": {
-      "name": "Bhrigu Bindu",
+      "audit_label": "Bhrigu Bindu",
+      "commands": [
+        "scripts/varga.py"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "sensitive_point",
         "timing",
         "destiny"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/bhrigu-pada-dasha-marriage-counting.md",
         "references/feature-gap-matrix-2026.md"
       ],
-      "commands": [
-        "scripts/varga.py"
-      ],
+      "missing_impact": "A commonly used Moon-Rahu destiny trigger is unavailable, weakening event-sensitive reading depth.",
+      "name": "Bhrigu Bindu",
       "output_paths": [
         "scripts.varga.calc_bhrigu_bindu"
       ],
-      "audit_label": "Bhrigu Bindu",
-      "missing_impact": "A commonly used Moon-Rahu destiny trigger is unavailable, weakening event-sensitive reading depth.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "sarpa_drekkana": {
-      "name": "Sarpa Drekkana",
+      "audit_label": "Sarpa Drekkana",
+      "commands": [
+        "scripts/varga.py"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "varga",
         "toxicity",
         "crisis"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/translated-articles/3印度占星_preview.txt",
         "references/feature-gap-matrix-2026.md"
       ],
-      "commands": [
-        "scripts/varga.py"
-      ],
+      "missing_impact": "A classical toxic-crisis Drekkana marker is absent, thinning advanced risk and temperament screening.",
+      "name": "Sarpa Drekkana",
       "output_paths": [
         "scripts.varga.calc_sarpa_drekkana"
       ],
-      "audit_label": "Sarpa Drekkana",
-      "missing_impact": "A classical toxic-crisis Drekkana marker is absent, thinning advanced risk and temperament screening.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "bhava_chalit": {
-      "name": "Bhava Chalit",
-      "domains": [
-        "house_cusp",
-        "event"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/kp-astrology-complete-system.md"
-      ],
+      "audit_label": "Bhava Chalit",
       "commands": [
         "chart",
         "full-reading"
       ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
+      "domains": [
+        "house_cusp",
+        "event"
+      ],
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
+      "knowledge_refs": [
+        "references/kp-astrology-complete-system.md"
+      ],
+      "limitation": "Complete in v6.9.13: house cusps, Bhava Sandhi boundaries, planet reassignment, Rashi-vs-Bhava shift detection.",
+      "missing_impact": "covered",
+      "name": "Bhava Chalit",
+      "note": "v6.9.13 — bhava_chalit.py 完整行星重分配 + cross_house_check",
       "output_paths": [
         "modules.chart.houses"
       ],
-      "audit_label": "Bhava Chalit",
-      "missing_impact": "covered",
-      "limitation": "Complete in v6.9.13: house cusps, Bhava Sandhi boundaries, planet reassignment, Rashi-vs-Bhava shift detection.",
-      "version": "6.9.13",
-      "note": "v6.9.13 — bhava_chalit.py 完整行星重分配 + cross_house_check",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "partial",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "partial"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "6.9.13"
     },
     "sudarshana_chakra": {
-      "name": "Sudarshana Chakra",
-      "domains": [
-        "multi_chart",
-        "confirmation"
-      ],
-      "status": "covered",
-      "knowledge_refs": [
-        "references/varga-system-quick-reference.md"
-      ],
+      "audit_label": "Sudarshana Chakra",
       "commands": [
         "sudarshana",
         "full-reading"
       ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
+      "domains": [
+        "multi_chart",
+        "confirmation"
+      ],
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
+      "knowledge_refs": [
+        "references/varga-system-quick-reference.md"
+      ],
+      "limitation": "Complete in v6.9.14: traditional triple-lagna confirmation with Ascendant/Moon/Sun reference charts and life-area convergence scoring.",
+      "missing_impact": "covered",
+      "name": "Sudarshana Chakra",
+      "note": "v6.9.14 — sudarshana_chakra.py 三参考点盘(Lagna+Chandra+Surya) + 收敛分析",
       "output_paths": [
         "scripts/sudarshana_chakra.py",
         "modules.sudarshana"
       ],
-      "audit_label": "Sudarshana Chakra",
-      "missing_impact": "covered",
-      "limitation": "Complete in v6.9.14: traditional triple-lagna confirmation with Ascendant/Moon/Sun reference charts and life-area convergence scoring.",
-      "version": "6.9.14",
-      "note": "v6.9.14 — sudarshana_chakra.py 三参考点盘(Lagna+Chandra+Surya) + 收敛分析",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "partial",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "partial"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "6.9.14"
     },
     "dispositor_chain": {
-      "name": "Dispositor Chain / 定位星链",
+      "audit_label": "Dispositor Chain",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "strength",
         "flow",
         "dignity"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/technique-capability-matrix.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Planet energy flow / final dispositor analysis incomplete.",
+      "name": "Dispositor Chain / 定位星链",
       "output_paths": [
         "modules.dispositor_chains",
         "modules.final_dispositors"
       ],
-      "audit_label": "Dispositor Chain",
-      "missing_impact": "Planet energy flow / final dispositor analysis incomplete.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "inter_chart_linkage": {
-      "name": "Inter-chart Linkage / 分盘间飞星",
+      "audit_label": "Inter-chart Linkage",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "varga",
         "confirmation",
         "multi_chart"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/varga-system-quick-reference.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Cross-chart planet linkage (D1->D9->D10) analysis incomplete.",
+      "name": "Inter-chart Linkage / 分盘间飞星",
       "output_paths": [
         "modules.inter_chart_linkage"
       ],
-      "audit_label": "Inter-chart Linkage",
-      "missing_impact": "Cross-chart planet linkage (D1->D9->D10) analysis incomplete.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "tajika_yogas": {
-      "name": "Tajika Yogas / 年运盘格局",
+      "audit_label": "Tajika Yogas",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "tajika",
         "timing",
         "event",
         "yoga"
       ],
-      "status": "complete",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Tajika year-chart yoga detection incomplete; annual timing confidence capped.",
+      "name": "Tajika Yogas / 年运盘格局",
+      "note": "Covered by scripts/tajika.py and annual closure status; tajika_sahams annual closure can be claimed, but production tuning still requires external oracle governance.",
       "output_paths": [
         "modules.tajika_yogas"
       ],
-      "audit_label": "Tajika Yogas",
-      "missing_impact": "Tajika year-chart yoga detection incomplete; annual timing confidence capped.",
-      "version": "7.0",
-      "note": "v7.0 — 10种年度Yoga完整检测(Itasala/Ishkavala/Vasala/Tambira/Kambira/Dakshina/Vama/Ubhaya/Vedha/Kuta)+Radda+Tajika容许度+Vedha敏感点表+经典相位规则",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "7.0"
     },
     "sahams": {
-      "name": "Sahams / 特殊点",
+      "audit_label": "Sahams",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "saham",
         "timing",
         "event",
         "tajika"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "limitation": "历史无地点/太阳落宫昼夜代理已阻断。公式级 +30 度例外、去重与传统软件 oracle 对标未完成，因此保持 partial。",
+      "missing_impact": "Sahams 仅在后端提供真实提问时刻与地点、并经 Swiss 日出日落判定时可计算；仍不能单独承担精确落点结论。",
+      "name": "Sahams / 特殊点",
+      "note": "Covered by scripts/tajika.py, full-reading Saham contract tests, and annual closure status; use remains governed by domain strict workflow and external evidence boundaries.",
       "output_paths": [
         "modules.sahams"
       ],
-      "audit_label": "Sahams",
-      "missing_impact": "Sahams 已有输出，但 Tajika/事件定时里的解释层仍应作为辅助证据，不能单独承担精确落点结论。",
-      "limitation": "Sahams 当前已扩展到 36 个常见点位，但解释层、权重口径与传统软件黑盒一致性仍未完成系统外部对标，不宜单独作为精确事件定位依据。",
-      "version": "6.9.3",
-      "note": "v6.9.3 — tajika.py 从 7 扩展到 36 种 Saham（含 Putra/Jnana/Moksha/Dhan/Maya 等），但解释成熟度仍以 covered 管理",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "partial",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "6.9.3"
     },
     "darakaraka": {
-      "name": "Darakaraka (DK) / 配偶星",
+      "audit_label": "Darakaraka (DK)",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
       "domains": [
         "jaimini",
         "marriage",
         "relationship",
         "karaka"
       ],
-      "status": "covered",
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
       "knowledge_refs": [
         "references/darakaraka-complete-guide.md",
         "references/spouse-multi-layer-methodology.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Marriage/partner analysis incomplete without DK.",
+      "name": "Darakaraka (DK) / 配偶星",
       "output_paths": [
         "modules.jaimini.darakaraka"
       ],
-      "audit_label": "Darakaraka (DK)",
-      "missing_impact": "Marriage/partner analysis incomplete without DK.",
-      "validation_note": "v6.1.10 wires scripts/darakaraka_reader.py into full-reading and thematic reports; output includes DK planet/sign/house, D9 dignity, conjunctions, quality score and narrative.",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
+      "validation_note": "v6.1.10 wires scripts/darakaraka_reader.py into full-reading and thematic reports; output includes DK planet/sign/house, D9 dignity, conjunctions, quality score and narrative.",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "raj_yoga": {
-      "name": "Raj Yoga / 王者瑜伽",
+      "audit_label": "Raj Yoga",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "yoga",
         "power",
         "status"
       ],
-      "status": "complete",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Power/status timing confidence capped without Raj Yoga detection.",
+      "name": "Raj Yoga / 王者瑜伽",
+      "note": "v7.0 — 5种Raj Yoga(双重宫主/同宫/互看/互容/Viparita)+角宫主×三方宫主完整组合+dashaflow参考对齐",
       "output_paths": [
         "modules.yogas_doshas.raj_yogas"
       ],
-      "audit_label": "Raj Yoga",
-      "missing_impact": "Power/status timing confidence capped without Raj Yoga detection.",
-      "version": "7.0",
-      "note": "v7.0 — 5种Raj Yoga(双重宫主/同宫/互看/互容/Viparita)+角宫主×三方宫主完整组合+dashaflow参考对齐",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "complete",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "7.0"
     },
     "dhana_yoga": {
-      "name": "Dhana Yoga / 财富瑜伽",
+      "audit_label": "Dhana Yoga",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "yoga",
         "wealth",
         "money"
       ],
-      "status": "complete",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Wealth timing confidence capped without Dhana Yoga.",
+      "name": "Dhana Yoga / 财富瑜伽",
+      "note": "v7.0 — 5种Dhana Yoga(2+11宫主强/5+9宫主/2+9宫主/11+9宫主/财富宫主+吉星)+dashaflow参考对齐",
       "output_paths": [
         "modules.yogas_doshas.dhana_yogas"
       ],
-      "audit_label": "Dhana Yoga",
-      "missing_impact": "Wealth timing confidence capped without Dhana Yoga.",
-      "version": "7.0",
-      "note": "v7.0 — 5种Dhana Yoga(2+11宫主强/5+9宫主/2+9宫主/11+9宫主/财富宫主+吉星)+dashaflow参考对齐",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "complete",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "7.0"
     },
     "solar_lunar_yogas": {
-      "name": "Solar/Lunar Yogas (Veshi/Voshi/Ubhayachari/Sunapha/Anapha/Durudhura)",
+      "audit_label": "Solar/Lunar Yogas",
+      "commands": [
+        "yoga",
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "yoga",
         "wealth",
         "personality"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "yoga",
-        "full-reading"
-      ],
+      "limitation": "Restored from Git dangling commit f19369c. Algorithm-based detection in yoga_engine.py.",
+      "missing_impact": "Solar/Lunar Yogas not detected.",
+      "name": "Solar/Lunar Yogas (Veshi/Voshi/Ubhayachari/Sunapha/Anapha/Durudhura)",
       "output_paths": [
         "modules.yogas_doshas.solar_lunar_yogas"
       ],
-      "audit_label": "Solar/Lunar Yogas",
-      "missing_impact": "Solar/Lunar Yogas not detected.",
-      "limitation": "Restored from Git dangling commit f19369c. Algorithm-based detection in yoga_engine.py.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "partial",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "partial"
+      }
     },
     "pancha_mahapurusha": {
-      "name": "Pancha Mahapurusha Yoga / 五王瑜伽",
+      "audit_label": "Pancha Mahapurusha",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "yoga",
         "power",
         "personality"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "limitation": "五王瑜伽（Ruchaka、Bhadra 等）检测基于基础规则，但未完整覆盖所有变体条件（如燃烧、逆行、受克时的 Yoga 失效条件）。与 PyJHora 的 284 种瑜伽体系对齐度未经验证。只能作为人格特质的辅助参考。",
+      "missing_impact": "Personality strength assessment incomplete.",
+      "name": "Pancha Mahapurusha Yoga / 五王瑜伽",
+      "note": "v6.9.3 — pancha_mahapurusha.py 5Yoga + 4层失效条件(燃烧/逆行/受克/Navamsa)",
       "output_paths": [
         "modules.yogas_doshas.pancha_mahapurusha"
       ],
-      "audit_label": "Pancha Mahapurusha",
-      "missing_impact": "Personality strength assessment incomplete.",
-      "limitation": "五王瑜伽（Ruchaka、Bhadra 等）检测基于基础规则，但未完整覆盖所有变体条件（如燃烧、逆行、受克时的 Yoga 失效条件）。与 PyJHora 的 284 种瑜伽体系对齐度未经验证。只能作为人格特质的辅助参考。",
-      "version": "6.9.3",
-      "note": "v6.9.3 — pancha_mahapurusha.py 5Yoga + 4层失效条件(燃烧/逆行/受克/Navamsa)",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "partial",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "partial"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "6.9.3"
     },
     "nicha_bhanga_raj": {
-      "name": "Neecha Bhanga Raj Yoga / 落陷解除王者瑜伽",
-      "domains": [
-        "yoga",
-        "debilitation",
-        "recovery"
-      ],
-      "status": "complete",
-      "knowledge_refs": [],
+      "audit_label": "Neecha Bhanga",
       "commands": [
         "full-reading"
       ],
-      "output_paths": [
-        "modules.yogas_doshas.nicha_bhanga_raj"
-      ],
-      "audit_label": "Neecha Bhanga",
-      "missing_impact": "Debilitation recovery analysis incomplete.",
-      "version": "7.0",
-      "note": "v7.0 — 6种解除条件(dispositor在Lagna角宫/Moon角宫+擢升星主在角宫+互容+Navamsa入庙)+量化解除程度+dashaflow参考对齐",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
-      "user_visibility": "expert_audit",
-      "verification_level": {
-        "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
-    },
-    "neechabhanga": {
-      "name": "Neechabhanga / 落陷取消（别名入口）",
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "yoga",
         "debilitation",
         "recovery"
       ],
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
+      "knowledge_refs": [],
+      "missing_impact": "Debilitation recovery analysis incomplete.",
+      "name": "Neecha Bhanga Raj Yoga / 落陷解除王者瑜伽",
+      "note": "v7.0 — 6种解除条件(dispositor在Lagna角宫/Moon角宫+擢升星主在角宫+互容+Navamsa入庙)+量化解除程度+dashaflow参考对齐",
+      "output_paths": [
+        "modules.yogas_doshas.nicha_bhanga_raj"
+      ],
       "status": "complete",
+      "user_visibility": "expert_audit",
+      "verification_level": {
+        "calculation": "verified",
+        "prediction": "support_only",
+        "rule": "verified"
+      },
+      "version": "7.0"
+    },
+    "neechabhanga": {
+      "audit_label": "Neechabhanga",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Alias/discoverability entry only; it must not be counted as an independent prediction source.",
+      "domains": [
+        "yoga",
+        "debilitation",
+        "recovery"
+      ],
+      "entry_type": "alias_entry",
+      "evidence_role": "alias",
       "knowledge_refs": [
         "references/neechabhanga-raja-yoga.md",
         "references/common-misconceptions.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Debilitation cancellation logic becomes harder to discover when users ask with the common spelling only.",
+      "name": "Neechabhanga / 落陷取消（别名入口）",
+      "note": "Alias entry to keep common terminology aligned with nicha_bhanga_raj. Do not interpret this alias as a separate extra technique.",
       "output_paths": [
         "modules.yogas_doshas.nicha_bhanga_raj"
       ],
-      "audit_label": "Neechabhanga",
-      "missing_impact": "Debilitation cancellation logic becomes harder to discover when users ask with the common spelling only.",
-      "note": "Alias entry to keep common terminology aligned with nicha_bhanga_raj. Do not interpret this alias as a separate extra technique.",
-      "entry_type": "alias_entry",
-      "evidence_role": "alias",
+      "status": "complete",
       "user_visibility": "hidden",
       "verification_level": {
         "calculation": "not_applicable",
-        "rule": "not_applicable",
-        "prediction": "not_applicable"
-      },
-      "conclusion_policy": "Alias/discoverability entry only; it must not be counted as an independent prediction source."
+        "prediction": "not_applicable",
+        "rule": "not_applicable"
+      }
     },
     "mangal_dosha": {
-      "name": "Mangal Dosha / 火星煞",
+      "audit_label": "Mangal Dosha",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "dosha",
         "marriage",
         "mars"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Marriage difficulty assessment incomplete without Mangal Dosha.",
+      "name": "Mangal Dosha / 火星煞",
       "output_paths": [
         "modules.yogas_doshas.mangal_dosha"
       ],
-      "audit_label": "Mangal Dosha",
-      "missing_impact": "Marriage difficulty assessment incomplete without Mangal Dosha.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "kaal_sarp_dosha": {
-      "name": "Kaal Sarp Dosha / 时间蛇煞",
+      "audit_label": "Kaal Sarp Dosha",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "dosha",
         "rahu",
         "obstacle"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Obstacle analysis incomplete without Kaal Sarp.",
+      "name": "Kaal Sarp Dosha / 时间蛇煞",
       "output_paths": [
         "modules.yogas_doshas.kaal_sarp_dosha"
       ],
-      "audit_label": "Kaal Sarp Dosha",
-      "missing_impact": "Obstacle analysis incomplete without Kaal Sarp.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "pitra_dosha": {
-      "name": "Pitra Dosha / 父辈煞",
+      "audit_label": "Pitra Dosha",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "dosha",
         "sun",
         "ancestor"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Ancestor karma analysis incomplete.",
+      "name": "Pitra Dosha / 父辈煞",
       "output_paths": [
         "modules.yogas_doshas.pitra_dosha"
       ],
-      "audit_label": "Pitra Dosha",
-      "missing_impact": "Ancestor karma analysis incomplete.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "sade_sati": {
-      "name": "Sade Sati / 土星七年",
+      "audit_label": "Sade Sati",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "transit",
         "saturn",
         "pressure"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "limitation": "Sade Sati 当前按土星经过月亮前后星座的简化模型计算，未完整覆盖全部影响条件（如土星在 Kendra 时的强度变化、Ashtakavarga 对 Sade Sati 的修正、Kantaka Shani 细分阶段）。压力程度评估为近似值，不宜作为精确事件预测依据。",
+      "missing_impact": "Saturn pressure timing incomplete.",
+      "name": "Sade Sati / 土星七年",
+      "note": "v6.9.3 — sade_sati.py 三阶段(Rising/Peak/Setting) + Kantaka Shani",
       "output_paths": [
         "modules.yogas_doshas.sade_sati"
       ],
-      "audit_label": "Sade Sati",
-      "missing_impact": "Saturn pressure timing incomplete.",
-      "limitation": "Sade Sati 当前按土星经过月亮前后星座的简化模型计算，未完整覆盖全部影响条件（如土星在 Kendra 时的强度变化、Ashtakavarga 对 Sade Sati 的修正、Kantaka Shani 细分阶段）。压力程度评估为近似值，不宜作为精确事件预测依据。",
-      "version": "6.9.3",
-      "note": "v6.9.3 — sade_sati.py 三阶段(Rising/Peak/Setting) + Kantaka Shani",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "partial",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "partial"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "6.9.3"
     },
     "arudha_lagna": {
-      "name": "Arudha Lagna (AL) / 镜像上升",
+      "audit_label": "Arudha Lagna",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "lagna",
         "perception",
         "image"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Public image analysis incomplete without AL.",
+      "name": "Arudha Lagna (AL) / 镜像上升",
       "output_paths": [
         "modules.yogas_doshas.arudha_lagna"
       ],
-      "audit_label": "Arudha Lagna",
-      "missing_impact": "Public image analysis incomplete without AL.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "upapada_lagna": {
-      "name": "Upapada Lagna (UL) / 配偶镜像上升",
+      "audit_label": "Upapada Lagna",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
       "domains": [
         "lagna",
         "marriage",
         "partner"
       ],
-      "status": "covered",
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Marriage quality analysis incomplete without UL.",
+      "name": "Upapada Lagna (UL) / 配偶镜像上升",
       "output_paths": [
         "modules.yogas_doshas.upapada_lagna"
       ],
-      "audit_label": "Upapada Lagna",
-      "missing_impact": "Marriage quality analysis incomplete without UL.",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "special_lagnas_extended": {
-      "name": "Special Lagnas / HL GL VL PP ViL",
+      "audit_label": "Special Lagnas",
+      "commands": [
+        "chart",
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "lagna",
         "timing",
         "wealth",
         "status"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/open_source_sources/jaimini-tropical/jaimini/core/lagnas.py"
       ],
-      "commands": [
-        "chart",
-        "full-reading"
-      ],
+      "missing_impact": "Special Lagna timing, status and prosperity sub-angles are thinner without HL/GL/VL/PP/ViL.",
+      "name": "Special Lagnas / HL GL VL PP ViL",
       "output_paths": [
         "special_lagnas.HL",
         "special_lagnas.GL",
@@ -1586,35 +1591,36 @@
         "special_lagnas.PP",
         "special_lagnas.ViL"
       ],
-      "audit_label": "Special Lagnas",
-      "missing_impact": "Special Lagna timing, status and prosperity sub-angles are thinner without HL/GL/VL/PP/ViL.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "special_lagnas": {
-      "name": "Special Lagnas / 特殊上升点（别名入口）",
+      "audit_label": "Special Lagnas",
+      "commands": [
+        "chart",
+        "full-reading"
+      ],
+      "conclusion_policy": "Alias/discoverability entry only; it must not be counted as an independent prediction source.",
       "domains": [
         "lagna",
         "timing",
         "wealth",
         "status"
       ],
-      "status": "covered",
+      "entry_type": "alias_entry",
+      "evidence_role": "alias",
       "knowledge_refs": [
         "references/open_source_sources/jaimini-tropical/jaimini/core/lagnas.py",
         "references/strict-workflow-router.md"
       ],
-      "commands": [
-        "chart",
-        "full-reading"
-      ],
+      "missing_impact": "Important prosperity/status/timing sub-ascendants become harder to discover when users ask for special lagnas by the common umbrella term.",
+      "name": "Special Lagnas / 特殊上升点（别名入口）",
+      "note": "Alias entry aligned to special_lagnas_extended; not a separate additional calculation family.",
       "output_paths": [
         "special_lagnas.HL",
         "special_lagnas.GL",
@@ -1622,78 +1628,73 @@
         "special_lagnas.PP",
         "special_lagnas.ViL"
       ],
-      "audit_label": "Special Lagnas",
-      "missing_impact": "Important prosperity/status/timing sub-ascendants become harder to discover when users ask for special lagnas by the common umbrella term.",
-      "note": "Alias entry aligned to special_lagnas_extended; not a separate additional calculation family.",
-      "entry_type": "alias_entry",
-      "evidence_role": "alias",
+      "status": "covered",
       "user_visibility": "hidden",
       "verification_level": {
         "calculation": "not_applicable",
-        "rule": "not_applicable",
-        "prediction": "not_applicable"
-      },
-      "conclusion_policy": "Alias/discoverability entry only; it must not be counted as an independent prediction source."
+        "prediction": "not_applicable",
+        "rule": "not_applicable"
+      }
     },
     "tithi_lord": {
-      "name": "Tithi Lord / 月日守护星",
+      "audit_label": "Tithi Lord",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "tithi",
         "prashna",
         "timing",
         "moon_sun"
       ],
-      "status": "complete",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Tithi Lord 分析不完整，Prashna 问卜时机判断受限。",
+      "name": "Tithi Lord / 月日守护星",
+      "note": "v7.0 — 完整30个Tithi名称+5类分类(Nanda/Bhadra/Jaya/Rikta/Purna)+适忌活动表+落宫强度评估+Prashna分类匹配+jyotishganit参考对齐",
       "output_paths": [
         "modules.tithi_lord"
       ],
-      "audit_label": "Tithi Lord",
-      "missing_impact": "Tithi Lord 分析不完整，Prashna 问卜时机判断受限。",
-      "version": "7.0",
-      "note": "v7.0 — 完整30个Tithi名称+5类分类(Nanda/Bhadra/Jaya/Rikta/Purna)+适忌活动表+落宫强度评估+Prashna分类匹配+jyotishganit参考对齐",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "complete",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "7.0"
     },
     "pancha_pakshi": {
-      "name": "Pancha Pakshi / 五鸟系统",
+      "audit_label": "Pancha Pakshi",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "pancha_pakshi",
         "tamil",
         "prashna",
         "timing"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Pancha Pakshi 已可输出基础鸟态与活动矩阵，但 Tamil 传统时机细则、地域化口径与真实案例闭环仍不足，结论应保留成熟度边界。",
+      "name": "Pancha Pakshi / 五鸟系统",
+      "note": "v7.0 — 已实现 5x5 活动矩阵、星期 Yama 偏移、鸟间相克互动与 weekday 参数支持；输出可用但整体成熟度仍按 covered 管理",
       "output_paths": [
         "modules.pancha_pakshi"
       ],
-      "audit_label": "Pancha Pakshi",
-      "missing_impact": "Pancha Pakshi 已可输出基础鸟态与活动矩阵，但 Tamil 传统时机细则、地域化口径与真实案例闭环仍不足，结论应保留成熟度边界。",
-      "version": "7.0",
-      "note": "v7.0 — 已实现 5x5 活动矩阵、星期 Yama 偏移、鸟间相克互动与 weekday 参数支持；输出可用但整体成熟度仍按 covered 管理",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "7.0"
     },
     "rangacharya_jaimini_variant": {
       "audit_label": "Rangacharya Jaimini Variant",
@@ -1730,261 +1731,266 @@
       }
     },
     "rashi_tulya_navamsa": {
-      "name": "Rashi Tulya Navamsa / 本命对分盘分析",
+      "audit_label": "Rashi Tulya Navamsa",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "varga",
         "d1_d9",
         "analysis",
         "marriage"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/rashi-tulya-navamsa-root-impulse.md",
         "references/varga-system-quick-reference.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "limitation": "Rashi Tulya Navamsa 分析当前基于 D1 与 D9 同宫行星的简单对比，未完整覆盖所有变体条件（如行星在 D9 中的精确度数对比、Vargottama 与非 Vargottama 的混合情况）。婚姻和内在潜力的深度解读应结合更多分盘（D7、D12）交叉验证。",
+      "missing_impact": "D1-D9 同宫对比分析不完整，婚姻/内在潜力判断受限。",
+      "name": "Rashi Tulya Navamsa / 本命对分盘分析",
+      "note": "v6.9.3 — 已接入 full-reading 流程",
       "output_paths": [
         "modules.rashi_tulya_navamsa"
       ],
-      "audit_label": "Rashi Tulya Navamsa",
-      "missing_impact": "D1-D9 同宫对比分析不完整，婚姻/内在潜力判断受限。",
-      "limitation": "Rashi Tulya Navamsa 分析当前基于 D1 与 D9 同宫行星的简单对比，未完整覆盖所有变体条件（如行星在 D9 中的精确度数对比、Vargottama 与非 Vargottama 的混合情况）。婚姻和内在潜力的深度解读应结合更多分盘（D7、D12）交叉验证。",
-      "validation_note": "v6.1.10 exposes RTN evidence to thematic reports: relationship mapping, curse-yoga warnings and Guna balance are injected from modules.rashi_tulya_navamsa.",
-      "version": "6.9.3",
-      "note": "v6.9.3 — 已接入 full-reading 流程",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
+      "validation_note": "v6.1.10 exposes RTN evidence to thematic reports: relationship mapping, curse-yoga warnings and Guna balance are injected from modules.rashi_tulya_navamsa.",
       "verification_level": {
         "calculation": "verified",
-        "rule": "partial",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "partial"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "6.9.3"
     },
     "marriage_counting": {
-      "name": "Marriage Counting Method / 婚姻计数法",
+      "audit_label": "Marriage Counting",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "marriage",
         "bhrigu",
         "counting",
         "d1_d9"
       ],
-      "status": "complete",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/bhrigu-pada-dasha-marriage-counting.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "婚姻数量判断不完整，关系模式分析受限。",
+      "name": "Marriage Counting Method / 婚姻计数法",
+      "note": "v7.0 — Parivartana自动重算(原TODO已实现)+D9完整评估(Venus/Mars/Jupiter/7宫主/Rahu-Ketu)+每段关系质量预测+5级评级系统",
       "output_paths": [
         "modules.marriage_counting"
       ],
-      "audit_label": "Marriage Counting",
-      "missing_impact": "婚姻数量判断不完整，关系模式分析受限。",
-      "version": "7.0",
-      "note": "v7.0 — Parivartana自动重算(原TODO已实现)+D9完整评估(Venus/Mars/Jupiter/7宫主/Rahu-Ketu)+每段关系质量预测+5级评级系统",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "complete",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "7.0"
     },
     "trimshamsa_d30": {
-      "name": "Trimshamsa D30 / 三十分盘",
+      "audit_label": "D30 Trimshamsa",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "varga",
         "d30",
         "crisis",
         "disaster"
       ],
-      "status": "complete",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/varga-system-quick-reference.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "D30 灾难分析不完整，危机事件判断受限。",
+      "name": "Trimshamsa D30 / 三十分盘",
+      "note": "v7.0 — Parashara经典规则修正(奇偶星座分区法,非简单30等分循环)+D30宫位推算+行星状态分析+凶星集中度分析+完整婚姻危机评估+jyotishganit参考对齐",
       "output_paths": [
         "modules.trimshamsa_d30"
       ],
-      "audit_label": "D30 Trimshamsa",
-      "missing_impact": "D30 灾难分析不完整，危机事件判断受限。",
-      "version": "7.0",
-      "note": "v7.0 — Parashara经典规则修正(奇偶星座分区法,非简单30等分循环)+D30宫位推算+行星状态分析+凶星集中度分析+完整婚姻危机评估+jyotishganit参考对齐",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "complete",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "7.0"
     },
     "muntha": {
-      "name": "Muntha / 年运之主 (Tajika)",
+      "audit_label": "Muntha",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "tajika",
         "varsha_phal",
         "muntha",
         "annual"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/tajika-yoga-complete-guide.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Varshaphala 年运盘核心指标缺失，年度主题判断受限。",
+      "name": "Muntha / 年运之主 (Tajika)",
       "output_paths": [
         "modules.muntha"
       ],
-      "audit_label": "Muntha",
-      "missing_impact": "Varshaphala 年运盘核心指标缺失，年度主题判断受限。",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "solar_return": {
-      "name": "Solar Return / Varshaphala (Tajika)",
+      "audit_label": "Solar Return Varshaphala",
+      "commands": [
+        "solar-return",
+        "full-reading"
+      ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
       "domains": [
         "tajika",
         "varshaphala",
         "solar_return",
         "annual"
       ],
-      "status": "covered",
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
       "knowledge_refs": [
         "references/tajika-yoga-complete-guide.md"
       ],
-      "commands": [
-        "solar-return",
-        "full-reading"
-      ],
+      "missing_impact": "Varshaphala/Tajika 已可输出年盘骨架、Muntha、Mudda Dasha 与年度 Yoga，但年度事件裁决深度与 Saham 权重仍需继续闭环。",
+      "name": "Solar Return / Varshaphala (Tajika)",
       "output_paths": [
         "modules.solar_return",
         "modules.muntha"
       ],
-      "audit_label": "Solar Return Varshaphala",
-      "missing_impact": "Varshaphala/Tajika 已可输出年盘骨架、Muntha、Mudda Dasha 与年度 Yoga，但年度事件裁决深度与 Saham 权重仍需继续闭环。",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "case_validated_partial"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "case_validated_partial",
+        "rule": "verified"
+      }
     },
     "prashna_integration": {
-      "name": "Prashna Integration / 问事占星接入",
+      "audit_label": "Prashna Integration",
+      "commands": [
+        "full-reading",
+        "prashna"
+      ],
+      "conclusion_policy": "Guarded integration: may expose question-moment evidence and audit rows, but cannot set final verdict or change local score.",
       "domains": [
         "prashna",
         "standalone",
         "full_reading_integration"
       ],
-      "status": "complete",
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
       "knowledge_refs": [],
-      "commands": [
-        "full-reading",
-        "prashna"
-      ],
+      "limitation": "Context only; it cannot change score, verdict, dominant label, confidence cap, or primary drivers, and classical Prashna adjudication remains blocked.",
+      "missing_impact": "Prashna 已接入 full-reading，但问事分支的传统判断链、时机裁决与外部实盘闭环仍不均匀。",
+      "name": "Prashna Integration / 问事占星接入",
+      "note": "Prashna context is integrated as guarded question-moment evidence in strict career workflow Technique Audit; final prediction remains support-only and cannot override domain primary adjudication.",
       "output_paths": [
         "modules.prashna"
       ],
-      "audit_label": "Prashna Integration",
-      "missing_impact": "Prashna 已接入 full-reading，但问事分支的传统判断链、时机裁决与外部实盘闭环仍不均匀。",
-      "version": "7.0",
-      "note": "v7.0 — KP Sublord完整3层判定(Star/Sub/Sub-Sub)+Nadi Prashna(Moon-Jupiter角度)+Sphuta(Gulika/Yamaghantaka)+时机评分系统+dashaflow/jyotishganit参考对齐",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "guarded",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
+        "prediction": "support_only",
+        "rule": "partial"
       },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+      "version": "7.0"
     },
     "bhrigu_pada_dasha": {
-      "name": "Bhrigu Pada Dasha / 足步推进法",
+      "audit_label": "Bhrigu Pada Dasha",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "bhrigu",
         "pada_dasha",
         "progression",
         "marriage_timing"
       ],
-      "status": "complete",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/bhrigu-pada-dasha-marriage-counting.md"
       ],
-      "commands": [
-        "full-reading"
-      ],
+      "missing_impact": "Bhrigu 足步推进法缺失，婚姻时机精确预测受限（通用近似版已实现）。",
+      "name": "Bhrigu Pada Dasha / 足步推进法",
+      "note": "v7.0 — BCP自然周期法完整实现+完整Dasha序列(0-80岁)+Nakshatra级推进+多行星推进+Vimshottari交叉验证接口+D9完整验证(含Venus质量评估)",
       "output_paths": [
         "modules.bhrigu_pada_dasha"
       ],
-      "audit_label": "Bhrigu Pada Dasha",
-      "missing_impact": "Bhrigu 足步推进法缺失，婚姻时机精确预测受限（通用近似版已实现）。",
-      "version": "7.0",
-      "note": "v7.0 — BCP自然周期法完整实现+完整Dasha序列(0-80岁)+Nakshatra级推进+多行星推进+Vimshottari交叉验证接口+D9完整验证(含Venus质量评估)",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "complete",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "7.0"
     },
     "narayana_dasha": {
-      "name": "Narayana Dasha (Rishi Dasha / Padakrama Dasha)",
+      "audit_label": "Narayana Dasha",
+      "commands": [
+        "narayana-dasha",
+        "full-reading"
+      ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
       "domains": [
         "dasha",
         "rashi",
         "timing",
         "narayana"
       ],
-      "status": "covered",
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
       "knowledge_refs": [
         "references/bphs-ch48-narayana-dasha.md"
       ],
-      "commands": [
-        "narayana-dasha",
-        "full-reading"
-      ],
+      "missing_impact": "Narayana Dasha 已可输出主序列，但不同传统口径、解释层权重与外部黑盒对标仍需继续沉淀。",
+      "name": "Narayana Dasha (Rishi Dasha / Padakrama Dasha)",
       "output_paths": [
         "modules.narayana_dasha"
       ],
-      "audit_label": "Narayana Dasha",
-      "missing_impact": "Narayana Dasha 已可输出主序列，但不同传统口径、解释层权重与外部黑盒对标仍需继续沉淀。",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "case_validated_partial"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "case_validated_partial",
+        "rule": "verified"
+      }
     },
     "muhurta": {
-      "name": "Muhurta (Panchanga / Auspicious Timing)",
+      "audit_label": "Muhurta",
+      "commands": [
+        "muhurta"
+      ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
       "domains": [
         "muhurta",
         "panchanga",
@@ -1995,30 +2001,32 @@
         "yoga",
         "karana"
       ],
-      "status": "covered",
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
       "knowledge_refs": [
         "references/muhurta-complete-guide.md"
       ],
-      "commands": [
-        "muhurta"
-      ],
+      "missing_impact": "Muhurta 已可运行，但复杂活动类型、长时间窗筛选和传统择时解释层仍需继续扩深。",
+      "name": "Muhurta (Panchanga / Auspicious Timing)",
       "output_paths": [
         "modules.muhurta"
       ],
-      "audit_label": "Muhurta",
-      "missing_impact": "Muhurta 已可运行，但复杂活动类型、长时间窗筛选和传统择时解释层仍需继续扩深。",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "nakshatra_advanced": {
-      "name": "Nakshatra Advanced / 星宿进阶（Tara Bala + Chandra Bala + Sub-Lord）",
+      "audit_label": "Nakshatra Advanced",
+      "commands": [
+        "nakshatra-adv",
+        "nakshatra-full",
+        "full-reading"
+      ],
+      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks.",
       "domains": [
         "nakshatra",
         "static",
@@ -2026,593 +2034,590 @@
         "muhurta",
         "timing"
       ],
-      "status": "covered",
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
       "knowledge_refs": [
         "references/nakshatra-chinese-quick-ref.md",
         "references/nakshatra_deities.md",
         "references/pancha-pakshi-nakshatra-systems.md"
       ],
-      "commands": [
-        "nakshatra-adv",
-        "nakshatra-full",
-        "full-reading"
-      ],
+      "missing_impact": "N/A - implemented in v6.0.22",
+      "name": "Nakshatra Advanced / 星宿进阶（Tara Bala + Chandra Bala + Sub-Lord）",
       "output_paths": [
         "modules.nakshatra_advanced",
         "modules.nakshatra_advanced.tara_bala",
         "modules.nakshatra_advanced.chandra_bala",
         "modules.nakshatra_advanced.tara_chandra_combined"
       ],
-      "audit_label": "Nakshatra Advanced",
-      "missing_impact": "N/A - implemented in v6.0.22",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
-      },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+        "prediction": "not_claimed",
+        "rule": "partial"
+      }
     },
     "tara_bala": {
-      "name": "Tara Bala / Tarabala / 星宿力",
+      "audit_label": "Tara Bala",
+      "commands": [
+        "nakshatra-adv",
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "nakshatra",
         "muhurta",
         "timing",
         "strength"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/pancha-pakshi-nakshatra-systems.md",
         "references/navatara-kantaka-shani-guide.md",
         "references/quick-reference-guide.md"
       ],
-      "commands": [
-        "nakshatra-adv",
-        "full-reading"
-      ],
+      "missing_impact": "Without a first-class Tara Bala entry, personalized Muhurta filtering and Nakshatra-based caution windows stay hidden behind generic Nakshatra outputs.",
+      "name": "Tara Bala / Tarabala / 星宿力",
+      "note": "This is a first-class view over the existing Nakshatra Advanced layer, not a claim that every Navatara branch has already been benchmark-closed.",
       "output_paths": [
         "modules.nakshatra_advanced.tara_bala",
         "modules.nakshatra_advanced.tara_chandra_combined"
       ],
-      "audit_label": "Tara Bala",
-      "missing_impact": "Without a first-class Tara Bala entry, personalized Muhurta filtering and Nakshatra-based caution windows stay hidden behind generic Nakshatra outputs.",
-      "note": "This is a first-class view over the existing Nakshatra Advanced layer, not a claim that every Navatara branch has already been benchmark-closed.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "chandra_bala": {
-      "name": "Chandra Bala / 月亮力",
+      "audit_label": "Chandra Bala",
+      "commands": [
+        "nakshatra-adv",
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "nakshatra",
         "muhurta",
         "timing",
         "strength"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/quick-reference-guide.md",
         "references/pancha-pakshi-nakshatra-systems.md"
       ],
-      "commands": [
-        "nakshatra-adv",
-        "full-reading"
-      ],
+      "missing_impact": "Without a first-class Chandra Bala entry, Moon-relative suitability and emotional timing filters remain hidden behind a generic advanced Nakshatra surface.",
+      "name": "Chandra Bala / 月亮力",
       "output_paths": [
         "modules.nakshatra_advanced.chandra_bala",
         "modules.nakshatra_advanced.tara_chandra_combined"
       ],
-      "audit_label": "Chandra Bala",
-      "missing_impact": "Without a first-class Chandra Bala entry, Moon-relative suitability and emotional timing filters remain hidden behind a generic advanced Nakshatra surface.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "navatara": {
-      "name": "Navatara / 九星链",
+      "audit_label": "Navatara",
+      "commands": [
+        "nakshatra-adv",
+        "full-reading"
+      ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
       "domains": [
         "nakshatra",
         "timing",
         "personality",
         "spiritual"
       ],
-      "status": "covered",
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
       "knowledge_refs": [
         "references/navatara-kantaka-shani-guide.md",
         "references/pancha-pakshi-nakshatra-systems.md"
       ],
-      "commands": [
-        "nakshatra-adv",
-        "full-reading"
-      ],
+      "missing_impact": "Without a first-class Navatara entry, 27-star three-cycle grouping remains invisible in the skill map even when related Tara layers already exist.",
+      "name": "Navatara / 九星链",
+      "note": "Current maturity reflects doctrinal and workflow coverage; treat as covered until a dedicated structured Navatara output surface is frozen.",
       "output_paths": [
         "modules.nakshatra_advanced.tara_bala",
         "modules.nakshatra_advanced"
       ],
-      "audit_label": "Navatara",
-      "missing_impact": "Without a first-class Navatara entry, 27-star three-cycle grouping remains invisible in the skill map even when related Tara layers already exist.",
-      "note": "Current maturity reflects doctrinal and workflow coverage; treat as covered until a dedicated structured Navatara output surface is frozen.",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
-      },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+        "prediction": "support_only",
+        "rule": "verified"
+      }
     },
     "nakshatra_dasha": {
-      "name": "Nakshatra Dasha / 星宿大运推演（Ashtottari + Nakshatra-level Vimshottari）",
+      "audit_label": "Nakshatra Dasha",
+      "commands": [
+        "nakshatra-dasha",
+        "nakshatra-full",
+        "full-reading"
+      ],
+      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks.",
       "domains": [
         "nakshatra",
         "dasha",
         "timing",
         "transit"
       ],
-      "status": "covered",
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
       "knowledge_refs": [
         "references/nakshatra-chinese-quick-ref.md",
         "references/vimshottari_dasha_guide.md",
         "references/alternative-dasha-systems.md"
       ],
-      "commands": [
-        "nakshatra-dasha",
-        "nakshatra-full",
-        "full-reading"
-      ],
+      "missing_impact": "N/A - implemented in v6.0.22",
+      "name": "Nakshatra Dasha / 星宿大运推演（Ashtottari + Nakshatra-level Vimshottari）",
       "output_paths": [
         "modules.nakshatra_dasha",
         "modules.nakshatra_dasha.ashtottari",
         "modules.nakshatra_dasha.vimshottari_nak_breakdown",
         "modules.nakshatra_dasha.transit_overlay"
       ],
-      "audit_label": "Nakshatra Dasha",
-      "missing_impact": "N/A - implemented in v6.0.22",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
-      },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+        "prediction": "not_claimed",
+        "rule": "partial"
+      }
     },
     "kp_system": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "kp_system.py — Sublord+Subsublord+ABCD Significator (diliprk/VedicAstro MIT)",
-      "name": "kp_system.py",
-      "domains": [
-        "kp"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "kp_system.py",
       "commands": [
         "kp"
       ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
+      "domains": [
+        "kp"
+      ],
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
+      "knowledge_refs": [],
+      "missing_impact": "KP 已可输出 Sublord/Subsublord/ABCD significator，但 ruling planets、horary workflow、事件裁决口径与传统工作流细节仍需更多外部案例闭环。",
+      "name": "kp_system.py",
+      "note": "kp_system.py — Sublord+Subsublord+ABCD Significator (diliprk/VedicAstro MIT)",
       "output_paths": [
         "scripts/kp_system.py"
       ],
-      "audit_label": "kp_system.py",
-      "missing_impact": "KP 已可输出 Sublord/Subsublord/ABCD significator，但 ruling planets、horary workflow、事件裁决口径与传统工作流细节仍需更多外部案例闭环。",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "6.9.3"
     },
     "prashna": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "prashna.py — KP sublord答案+Arudha+12问事分类",
-      "name": "prashna.py",
-      "domains": [
-        "prashna"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "prashna.py",
       "commands": [
         "prashna"
       ],
-      "output_paths": [
-        "scripts/prashna.py"
+      "conclusion_policy": "Guarded question-moment evidence only; cannot set final verdict, cannot output absolute Yes/No, and cannot change domain primary score by itself.",
+      "domains": [
+        "prashna"
       ],
-      "audit_label": "prashna.py",
-      "missing_impact": "Prashna 已可运行，且已有 KP 证据层、Arudha、Sphuta 与 timing score，但不同问事分支的传统判断链、时机裁决与实盘命中率仍需继续通过外部案例收敛。",
       "entry_type": "core_technique",
       "evidence_role": "primary",
+      "knowledge_refs": [],
+      "missing_impact": "Prashna 已可运行，且已有 KP 证据层、Arudha、Sphuta 与 timing score，但不同问事分支的传统判断链、时机裁决与实盘命中率仍需继续通过外部案例收敛。",
+      "name": "prashna.py",
+      "note": "Prashna calculation and rule layers are verified; guarded production use is through prashna_context / strict workflow evidence. Legacy cast_prashna fallback remains blocked. Prediction remains support-only.",
+      "output_paths": [
+        "scripts/prashna.py",
+        "scripts/prashna_context.py",
+        "modules.prashna_context"
+      ],
+      "status": "guarded",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+      "version": "6.9.3"
     },
     "synastry_16factor": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "synastry.py — Ashtakoot 8因子36分制+Kuta+附加因子 (dashaflow MIT)",
-      "name": "synastry.py",
-      "domains": [
-        "synastry"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "synastry.py",
       "commands": [
         "synastry"
       ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
+      "domains": [
+        "synastry"
+      ],
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "synastry.py",
+      "note": "synastry.py — Ashtakoot 8因子36分制+Kuta+附加因子 (dashaflow MIT)",
       "output_paths": [
         "scripts/synastry.py"
       ],
-      "audit_label": "synastry.py",
-      "missing_impact": "covered",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+      "version": "6.9.3"
     },
     "remedies": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "remedies.py — 5类补救(宝石/咒语/捐赠/斋戒/Yantra)+Dosha专项",
-      "name": "remedies.py",
-      "domains": [
-        "remedies"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "remedies.py",
       "commands": [
         "remedies",
         "full-reading"
       ],
+      "conclusion_policy": "Engineering, correction, or remedial support only; it cannot decide astrological conclusions.",
+      "domains": [
+        "remedies"
+      ],
+      "entry_type": "workflow_or_engineering",
+      "evidence_role": "audit_only",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "remedies.py",
+      "note": "remedies.py — 5类补救(宝石/咒语/捐赠/斋戒/Yantra)+Dosha专项",
       "output_paths": [
         "scripts/remedies.py"
       ],
-      "audit_label": "remedies.py",
-      "missing_impact": "covered",
-      "entry_type": "workflow_or_engineering",
-      "evidence_role": "audit_only",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "not_applicable",
-        "rule": "not_applicable",
-        "prediction": "not_applicable"
+        "prediction": "not_applicable",
+        "rule": "not_applicable"
       },
-      "conclusion_policy": "Engineering, correction, or remedial support only; it cannot decide astrological conclusions."
+      "version": "6.9.3"
     },
     "bhava_bala": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "bhava_bala.py — 三组件(Adhipathi+Dig+Drik)，Sputa Drishti (jyotishganit MIT)",
-      "name": "bhava_bala.py",
-      "domains": [
-        "bhava"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "bhava_bala.py",
       "commands": [
         "bhava-bala",
         "full-reading"
       ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
+      "domains": [
+        "bhava"
+      ],
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "bhava_bala.py",
+      "note": "bhava_bala.py — 三组件(Adhipathi+Dig+Drik)，Sputa Drishti (jyotishganit MIT)",
       "output_paths": [
         "scripts/bhava_bala.py"
       ],
-      "audit_label": "bhava_bala.py",
-      "missing_impact": "covered",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+      "version": "6.9.3"
     },
     "muhurtha": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "muhurtha_election.py — 6活动选举(婚/旅/商/学/迁入/医) (dashaflow MIT)",
-      "name": "muhurtha_election.py",
-      "domains": [
-        "muhurtha"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "muhurtha_election.py",
       "commands": [
         "muhurta"
       ],
+      "conclusion_policy": "Alias/discoverability entry only; it must not be counted as an independent prediction source.",
+      "domains": [
+        "muhurtha"
+      ],
+      "entry_type": "alias_entry",
+      "evidence_role": "alias",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "muhurtha_election.py",
+      "note": "muhurtha_election.py — 6活动选举(婚/旅/商/学/迁入/医) (dashaflow MIT)",
       "output_paths": [
         "scripts/muhurtha_election.py"
       ],
-      "audit_label": "muhurtha_election.py",
-      "missing_impact": "covered",
-      "entry_type": "alias_entry",
-      "evidence_role": "alias",
+      "status": "covered",
       "user_visibility": "hidden",
       "verification_level": {
         "calculation": "not_applicable",
-        "rule": "not_applicable",
-        "prediction": "not_applicable"
+        "prediction": "not_applicable",
+        "rule": "not_applicable"
       },
-      "conclusion_policy": "Alias/discoverability entry only; it must not be counted as an independent prediction source."
+      "version": "6.9.3"
     },
     "career_engine": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "career_analysis.py — 10宫+D10+Saturn+领域评分 结构化事业引擎",
-      "name": "career_analysis.py",
-      "domains": [
-        "career"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "career_analysis.py",
       "commands": [
         "career"
       ],
+      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks.",
+      "domains": [
+        "career"
+      ],
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "career_analysis.py",
+      "note": "career_analysis.py — 10宫+D10+Saturn+领域评分 结构化事业引擎",
       "output_paths": [
         "scripts/career_analysis.py"
       ],
-      "audit_label": "career_analysis.py",
-      "missing_impact": "covered",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
+        "prediction": "not_claimed",
+        "rule": "partial"
       },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+      "version": "6.9.3"
     },
     "relationship_engine": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "relationship_analysis.py — Venus+7宫+DK+UL+D9 结构化感情引擎",
-      "name": "relationship_analysis.py",
-      "domains": [
-        "relationship"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "relationship_analysis.py",
       "commands": [
         "relationship"
       ],
+      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks.",
+      "domains": [
+        "relationship"
+      ],
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "relationship_analysis.py",
+      "note": "relationship_analysis.py — Venus+7宫+DK+UL+D9 结构化感情引擎",
       "output_paths": [
         "scripts/relationship_analysis.py"
       ],
-      "audit_label": "relationship_analysis.py",
-      "missing_impact": "covered",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
+        "prediction": "not_claimed",
+        "rule": "partial"
       },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+      "version": "6.9.3"
     },
     "varshaphala": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "varshaphala.py — Solar Return+Muntha+Varshesha+Tajika 10 Yoga+36 Sahams",
-      "name": "varshaphala.py",
-      "domains": [
-        "varshaphala"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "varshaphala.py",
       "commands": [
         "solar-return",
         "tajika",
         "full-reading"
       ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
+      "domains": [
+        "varshaphala"
+      ],
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
+      "knowledge_refs": [],
+      "missing_impact": "Varshaphala/Tajika 已可输出年盘骨架、Muntha 与年度 Yoga，但 Saham 权重、年度事件裁决和传统软件逐项对齐仍需继续闭环。",
+      "name": "varshaphala.py",
+      "note": "varshaphala.py — Solar Return+Muntha+Varshesha+Tajika 10 Yoga+36 Sahams",
       "output_paths": [
         "scripts/varshaphala.py"
       ],
-      "audit_label": "varshaphala.py",
-      "missing_impact": "Varshaphala/Tajika 已可输出年盘骨架、Muntha 与年度 Yoga，但 Saham 权重、年度事件裁决和传统软件逐项对齐仍需继续闭环。",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "case_validated_partial"
+        "prediction": "case_validated_partial",
+        "rule": "verified"
       },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+      "version": "6.9.3"
     },
     "ashtakavarga_pav": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "ashtakavarga.py calc_prastara_av() — 7×12×8三维PAV展开",
-      "name": "ashtakavarga.py calc_prastara_av()",
-      "domains": [
-        "ashtakavarga"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "ashtakavarga.py calc_prastara_av()",
       "commands": [
         "ashtakavarga",
         "full-reading"
       ],
+      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks.",
+      "domains": [
+        "ashtakavarga"
+      ],
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "ashtakavarga.py calc_prastara_av()",
+      "note": "ashtakavarga.py calc_prastara_av() — 7×12×8三维PAV展开",
       "output_paths": [
         "scripts/ashtakavarga.py"
       ],
-      "audit_label": "ashtakavarga.py calc_prastara_av()",
-      "missing_impact": "covered",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
+        "prediction": "not_claimed",
+        "rule": "partial"
       },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+      "version": "6.9.3"
     },
     "ashtakavarga_sodhita": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "ashtakavarga.py calc_sodhita_av() — BPHS标准减法净化",
-      "name": "ashtakavarga.py calc_sodhita_av()",
-      "domains": [
-        "ashtakavarga"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "ashtakavarga.py calc_sodhita_av()",
       "commands": [
         "ashtakavarga",
         "full-reading"
       ],
+      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks.",
+      "domains": [
+        "ashtakavarga"
+      ],
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "ashtakavarga.py calc_sodhita_av()",
+      "note": "ashtakavarga.py calc_sodhita_av() — BPHS标准减法净化",
       "output_paths": [
         "scripts/ashtakavarga.py"
       ],
-      "audit_label": "ashtakavarga.py calc_sodhita_av()",
-      "missing_impact": "covered",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
+        "prediction": "not_claimed",
+        "rule": "partial"
       },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+      "version": "6.9.3"
     },
     "ashtakavarga_yoga_pinda": {
-      "status": "covered",
-      "version": "6.9.14",
-      "note": "ashtakavarga.py calc_yoga_pinda() — Yoga Pinda / Shodhya Pinda first-class contract",
-      "name": "ashtakavarga.py calc_yoga_pinda()",
+      "audit_label": "ashtakavarga.py calc_yoga_pinda()",
+      "commands": [
+        "ashtakavarga",
+        "full-reading"
+      ],
+      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks.",
       "domains": [
         "ashtakavarga",
         "strength"
       ],
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
       "knowledge_refs": [],
-      "commands": [
-        "ashtakavarga",
-        "full-reading"
-      ],
+      "missing_impact": "covered",
+      "name": "ashtakavarga.py calc_yoga_pinda()",
+      "note": "ashtakavarga.py calc_yoga_pinda() — Yoga Pinda / Shodhya Pinda first-class contract",
       "output_paths": [
         "modules.ashtakavarga.yoga_pinda",
         "/api/ashtakavarga.yoga_pinda_summary"
       ],
-      "audit_label": "ashtakavarga.py calc_yoga_pinda()",
-      "missing_impact": "covered",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
+        "prediction": "not_claimed",
+        "rule": "partial"
       },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+      "version": "6.9.14"
     },
     "kakshya": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "kakshya.py — 8区间×3.75° + 守护星力量评估",
-      "name": "kakshya.py",
-      "domains": [
-        "kakshya"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "kakshya.py",
       "commands": [
         "kakshya"
       ],
+      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim.",
+      "domains": [
+        "kakshya"
+      ],
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "kakshya.py",
+      "note": "kakshya.py — 8区间×3.75° + 守护星力量评估",
       "output_paths": [
         "scripts/kakshya.py"
       ],
-      "audit_label": "kakshya.py",
-      "missing_impact": "covered",
-      "entry_type": "supporting_indicator",
-      "evidence_role": "secondary",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "Supporting evidence only; it can raise/lower confidence but cannot by itself decide an event or timing claim."
+      "version": "6.9.3"
     },
     "transit_trigger": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "transit_trigger.py — 度数级二分搜索 + 区间批量搜索",
-      "name": "transit_trigger.py",
-      "domains": [
-        "transit"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "transit_trigger.py",
       "commands": [
         "transit-trigger"
       ],
+      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion.",
+      "domains": [
+        "transit"
+      ],
+      "entry_type": "core_technique",
+      "evidence_role": "primary",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "transit_trigger.py",
+      "note": "transit_trigger.py — 度数级二分搜索 + 区间批量搜索",
       "output_paths": [
         "scripts/transit_trigger.py"
       ],
-      "audit_label": "transit_trigger.py",
-      "missing_impact": "covered",
-      "entry_type": "core_technique",
-      "evidence_role": "primary",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "verified",
-        "rule": "verified",
-        "prediction": "support_only"
+        "prediction": "support_only",
+        "rule": "verified"
       },
-      "conclusion_policy": "May participate in a domain primary chain; do not use as a single-factor conclusion."
+      "version": "6.9.3"
     },
     "divisional_yoga": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "divisional_yoga.py — D9/D10/D12分盘中PMC/Raja/Dhana/Moon/Exchange检测",
-      "name": "divisional_yoga.py",
-      "domains": [
-        "divisional"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "divisional_yoga.py",
       "commands": [
         "divisional-yoga"
       ],
+      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks.",
+      "domains": [
+        "divisional"
+      ],
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "divisional_yoga.py",
+      "note": "divisional_yoga.py — D9/D10/D12分盘中PMC/Raja/Dhana/Moon/Exchange检测",
       "output_paths": [
         "scripts/divisional_yoga.py"
       ],
-      "audit_label": "divisional_yoga.py",
-      "missing_impact": "covered",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
+        "prediction": "not_claimed",
+        "rule": "partial"
       },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+      "version": "6.9.3"
     },
     "deep_varga_avastha": {
-      "status": "covered",
-      "version": "7.1.0",
-      "note": "deep_varga_avastha.py — Sayanadi/Shayanadi状态汇总 + D24/D30/D60深层模板卡",
-      "name": "Deep Varga Avastha / Sayanadi-Shayanadi + D24/D30/D60",
+      "audit_label": "Deep Varga Avastha",
+      "commands": [
+        "deep-varga-avastha"
+      ],
+      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks.",
       "domains": [
         "divisional",
         "avastha",
@@ -2621,116 +2626,118 @@
         "d60",
         "strength"
       ],
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
       "knowledge_refs": [
         "references/varga-system-quick-reference.md",
         "references/technique-capability-matrix.md"
       ],
-      "commands": [
-        "deep-varga-avastha"
-      ],
+      "missing_impact": "covered",
+      "name": "Deep Varga Avastha / Sayanadi-Shayanadi + D24/D30/D60",
+      "note": "deep_varga_avastha.py — Sayanadi/Shayanadi状态汇总 + D24/D30/D60深层模板卡",
       "output_paths": [
         "scripts/deep_varga_avastha.py",
         "/api/deep_varga_avastha.report.deep_varga_templates"
       ],
-      "audit_label": "Deep Varga Avastha",
-      "missing_impact": "covered",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
+        "prediction": "not_claimed",
+        "rule": "partial"
       },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+      "version": "7.1.0"
     },
     "birth_time_rectifier": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "birth_time_rectifier.py — Lagna边界+事件-宫位映射+精度矩阵 (vedic-astro-skills MIT)",
-      "name": "birth_time_rectifier.py",
-      "domains": [
-        "birth"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "birth_time_rectifier.py",
       "commands": [
         "rectification"
       ],
+      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks.",
+      "domains": [
+        "birth"
+      ],
+      "entry_type": "composite_adjudicator",
+      "evidence_role": "context",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "birth_time_rectifier.py",
+      "note": "birth_time_rectifier.py — Lagna边界+事件-宫位映射+精度矩阵 (vedic-astro-skills MIT)",
       "output_paths": [
         "scripts/birth_time_rectifier.py"
       ],
-      "audit_label": "birth_time_rectifier.py",
-      "missing_impact": "covered",
-      "entry_type": "composite_adjudicator",
-      "evidence_role": "context",
+      "status": "covered",
       "user_visibility": "ordinary_topic_router",
       "verification_level": {
         "calculation": "partial",
-        "rule": "partial",
-        "prediction": "not_claimed"
+        "prediction": "not_claimed",
+        "rule": "partial"
       },
-      "conclusion_policy": "Composite route: it may organize evidence, but final conclusions require the domain primary chain and conflict checks."
+      "version": "6.9.3"
     },
     "case_validator": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "case_validator.py — 三层验证(配置/大运/过境)+22个案例 94.7%吻合",
-      "name": "case_validator.py",
-      "domains": [
-        "case"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "case_validator.py",
       "commands": [
         "case-validation"
       ],
+      "conclusion_policy": "Engineering, correction, or remedial support only; it cannot decide astrological conclusions.",
+      "domains": [
+        "case"
+      ],
+      "entry_type": "workflow_or_engineering",
+      "evidence_role": "audit_only",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "case_validator.py",
+      "note": "case_validator.py — 三层验证(配置/大运/过境)+22个案例 94.7%吻合",
       "output_paths": [
         "scripts/case_validator.py"
       ],
-      "audit_label": "case_validator.py",
-      "missing_impact": "covered",
-      "entry_type": "workflow_or_engineering",
-      "evidence_role": "audit_only",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "not_applicable",
-        "rule": "not_applicable",
-        "prediction": "not_applicable"
+        "prediction": "not_applicable",
+        "rule": "not_applicable"
       },
-      "conclusion_policy": "Engineering, correction, or remedial support only; it cannot decide astrological conclusions."
+      "version": "6.9.3"
     },
     "misconceptions": {
-      "status": "covered",
-      "version": "6.9.3",
-      "note": "misconceptions.py — 6大类10条误区规则+自动扫描",
-      "name": "misconceptions.py",
-      "domains": [
-        "misconceptions"
-      ],
-      "knowledge_refs": [],
+      "audit_label": "misconceptions.py",
       "commands": [
         "case-validation",
         "full-reading"
       ],
+      "conclusion_policy": "Engineering, correction, or remedial support only; it cannot decide astrological conclusions.",
+      "domains": [
+        "misconceptions"
+      ],
+      "entry_type": "workflow_or_engineering",
+      "evidence_role": "audit_only",
+      "knowledge_refs": [],
+      "missing_impact": "covered",
+      "name": "misconceptions.py",
+      "note": "misconceptions.py — 6大类10条误区规则+自动扫描",
       "output_paths": [
         "scripts/misconceptions.py"
       ],
-      "audit_label": "misconceptions.py",
-      "missing_impact": "covered",
-      "entry_type": "workflow_or_engineering",
-      "evidence_role": "audit_only",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "not_applicable",
-        "rule": "not_applicable",
-        "prediction": "not_applicable"
+        "prediction": "not_applicable",
+        "rule": "not_applicable"
       },
-      "conclusion_policy": "Engineering, correction, or remedial support only; it cannot decide astrological conclusions."
+      "version": "6.9.3"
     },
     "thematic_report_orchestrator": {
-      "status": "covered",
-      "version": "6.9.15",
-      "note": "report_orchestrator.py — 五主题报告、证据链聚合、冲突裁决与 Dasha 时间锚定；/api/thematic_report 可被用户端技法工作台调用",
-      "name": "Thematic Report Orchestrator / 主题化报告编排",
+      "audit_label": "report_orchestrator.py",
+      "commands": [
+        "thematic-report",
+        "high-rigor-workflow",
+        "full-reading"
+      ],
+      "conclusion_policy": "Engineering, correction, or remedial support only; it cannot decide astrological conclusions.",
       "domains": [
         "report",
         "reading",
@@ -2738,39 +2745,61 @@
         "career",
         "timing"
       ],
+      "entry_type": "workflow_or_engineering",
+      "evidence_role": "audit_only",
       "knowledge_refs": [],
-      "commands": [
-        "thematic-report",
-        "high-rigor-workflow",
-        "full-reading"
-      ],
+      "missing_impact": "covered",
+      "name": "Thematic Report Orchestrator / 主题化报告编排",
+      "note": "report_orchestrator.py — 五主题报告、证据链聚合、冲突裁决与 Dasha 时间锚定；/api/thematic_report 可被用户端技法工作台调用",
       "output_paths": [
         "scripts/report_orchestrator.py",
         "scripts/reading_orchestrator.py",
         "scripts/orchestrator_bridge.py"
       ],
-      "audit_label": "report_orchestrator.py",
-      "missing_impact": "covered",
-      "entry_type": "workflow_or_engineering",
-      "evidence_role": "audit_only",
+      "status": "covered",
       "user_visibility": "expert_audit",
       "verification_level": {
         "calculation": "not_applicable",
-        "rule": "not_applicable",
-        "prediction": "not_applicable"
+        "prediction": "not_applicable",
+        "rule": "not_applicable"
       },
-      "conclusion_policy": "Engineering, correction, or remedial support only; it cannot decide astrological conclusions."
+      "version": "6.9.15"
+    },
+    "panchavargiya_bala": {
+      "audit_label": "Panchavargiya Bala",
+      "commands": [
+        "full-reading"
+      ],
+      "conclusion_policy": "Use Harsha Bala as supporting context only; Panchavargiya and combined strength remain guarded until oracle parity passes.",
+      "domains": [
+        "tajika",
+        "strength",
+        "varga"
+      ],
+      "entry_type": "supporting_indicator",
+      "evidence_role": "secondary",
+      "knowledge_refs": [],
+      "missing_impact": "私有分盘代理已禁用；在统一 varga-full 核心与外部 golden oracle 完成前，不提供 Panchavargiya 或混合强度结论。",
+      "name": "Panchavargiya Bala / 五分盘力量",
+      "note": "Harsha Bala layer is usable; Panchavargiya Bala component remains blocked pending unified Varga core and golden oracle parity. Combined Tajika strength is guarded and cannot drive verdicts.",
+      "output_paths": [
+        "modules.tajika_strength"
+      ],
+      "status": "guarded",
+      "user_visibility": "expert_audit",
+      "verification_level": {
+        "calculation": "partial",
+        "prediction": "support_only",
+        "rule": "partial"
+      },
+      "version": "7.0"
     }
   },
   "routes": {
     "career_timing_strict": {
-      "trigger_keywords": [
-        "事业",
-        "职业",
-        "工作机会",
-        "项目落地",
-        "名声",
-        "社会身份"
+      "optional_techniques": [
+        "bhava_chalit",
+        "sudarshana_chakra"
       ],
       "required_techniques": [
         "d1_rashi",
@@ -2812,18 +2841,22 @@
         "nakshatra_advanced",
         "nakshatra_dasha"
       ],
-      "optional_techniques": [
-        "bhava_chalit",
-        "sudarshana_chakra"
+      "trigger_keywords": [
+        "事业",
+        "职业",
+        "工作机会",
+        "项目落地",
+        "名声",
+        "社会身份"
       ]
     },
     "event_verification_strict": {
-      "trigger_keywords": [
-        "验证",
-        "回测",
-        "历史事件",
-        "可靠性",
-        "是不是遗漏"
+      "optional_techniques": [
+        "d9_navamsa",
+        "d10_dasamsa",
+        "a10_karma_pada",
+        "bhava_chalit",
+        "sudarshana_chakra"
       ],
       "required_techniques": [
         "d1_rashi",
@@ -2859,19 +2892,18 @@
         "nakshatra_advanced",
         "nakshatra_dasha"
       ],
-      "optional_techniques": [
-        "d9_navamsa",
-        "d10_dasamsa",
-        "a10_karma_pada",
-        "bhava_chalit",
-        "sudarshana_chakra"
+      "trigger_keywords": [
+        "验证",
+        "回测",
+        "历史事件",
+        "可靠性",
+        "是不是遗漏"
       ]
     },
     "full_reading_strict": {
-      "trigger_keywords": [
-        "综合解盘",
-        "完整解盘",
-        "full-reading"
+      "optional_techniques": [
+        "bhava_chalit",
+        "sudarshana_chakra"
       ],
       "required_techniques": [
         "d1_rashi",
@@ -2915,9 +2947,10 @@
         "nakshatra_advanced",
         "nakshatra_dasha"
       ],
-      "optional_techniques": [
-        "bhava_chalit",
-        "sudarshana_chakra"
+      "trigger_keywords": [
+        "综合解盘",
+        "完整解盘",
+        "full-reading"
       ]
     }
   },
@@ -2925,11 +2958,11 @@
   "public_label": "89 capability entries",
   "ordinary_user_policy": "Users see topic-level conclusions; the question-domain router selects a small evidence chain from this backend capability evidence pool.",
   "conclusion_policy": {
-    "primary_chain_required": true,
     "all_89_entries_must_not_be_flattened_into_conclusions": true,
-    "supporting_entries_can_only_raise_or_lower_confidence": true,
     "audit_only_entries_cannot_affect_astrological_conclusions": true,
     "conflicts_must_downgrade_confidence": true,
-    "prediction_requires_past_case_or_birth_time_rectification": true
+    "prediction_requires_past_case_or_birth_time_rectification": true,
+    "primary_chain_required": true,
+    "supporting_entries_can_only_raise_or_lower_confidence": true
   }
 }

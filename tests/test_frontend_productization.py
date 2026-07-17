@@ -675,7 +675,7 @@ def test_trust_center_exposes_oracle_evidence_intake_cards() -> None:
         "必须打码",
         "missing_shadbala_component",
         "template_steve_jobs_dasha_lahiri",
-        "template_steve_jobs_dasha_lahiri",
+        "template_bv_raman_vimshottari_boundary_series",
         "template_synthetic_north_china_shadbala_raman",
         "template_extreme_latitude_kp",
         "template_historical_epoch_lahiri",
@@ -691,6 +691,22 @@ def test_trust_center_exposes_oracle_evidence_intake_cards() -> None:
         "operator_note",
     ]:
         assert token in main
+
+    intake_block = re.search(
+        r"const ORACLE_EVIDENCE_INTAKE_TASKS = \[(.*?)\n\];",
+        main,
+        re.DOTALL,
+    )
+    assert intake_block is not None
+    intake_case_ids = re.findall(r"caseId: '([^']+)'", intake_block.group(1))
+    assert intake_case_ids == [
+        "template_steve_jobs_dasha_lahiri",
+        "template_synthetic_north_china_shadbala_raman",
+        "template_extreme_latitude_kp",
+        "template_historical_epoch_lahiri",
+        "template_bv_raman_vimshottari_boundary_series",
+    ]
+    assert len(set(intake_case_ids)) == 5
 
     assert "validateOracleEvidence" in api_bridge
     assert "postJson('/api/oracle_evidence'" in api_bridge

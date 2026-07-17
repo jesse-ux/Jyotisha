@@ -8,7 +8,7 @@ import { languageModelSettings } from "@/mastra/model";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const ONBOARDING_VERSION = "ayanam-onboarding-v2";
+const ONBOARDING_VERSION = "ayanam-onboarding-v3";
 const ONBOARDING_PENDING_VERSION = `${ONBOARDING_VERSION}:pending`;
 const ONBOARDING_CLAIM_TTL_MS = 2 * 60 * 1000;
 
@@ -24,7 +24,7 @@ const onboardingSchema = z.object({
 type OnboardingPayload = z.infer<typeof onboardingSchema>;
 
 const fallbackPayload: OnboardingPayload = {
-  greeting: "出生资料已经准备好了。你可以从下面三个方向开始，也可以直接告诉我现在最想问的事。",
+  greeting: "我们从你此刻最关心的事情开始。可以选择下面的方向，也可以直接说出你的问题。",
   suggestions: [
     { theme: "career", text: "我的事业优势更适合怎样发挥？" },
     { theme: "marriage", text: "我在关系里容易重复什么模式？" },
@@ -141,7 +141,7 @@ export async function POST() {
           role: "user",
           content: [
             profile.name ? `用户称呼：${String(profile.name).slice(0, 80)}` : "用户未填写称呼。",
-            "用户已经完成出生资料。请生成首次欢迎语和三个入门问题。",
+            "请生成首次欢迎语和三个入门问题。欢迎语直接邀请用户提问，不要提到出生资料、资料准备或系统处理过程。",
           ].join("\n"),
         },
       ]);
@@ -151,7 +151,8 @@ export async function POST() {
         source = "agent";
       }
     } catch (error) {
-      console.warn("[onboarding] agent generation failed; using safe fallback", error);
+      const message = error instanceof Error ? error.message : "unknown error";
+      console.warn("[onboarding] agent generation failed; using safe fallback", message);
     }
   }
 

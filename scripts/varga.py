@@ -62,7 +62,7 @@ def varga_map(si, pi, div):
     o = _odd(si)
     if div==2: return (4 if o else 3) if pi==0 else (3 if o else 4)
     if div==3: return (si+pi*4)%12  # Drekkana: same → +4 → +8, no odd/even distinction
-    if div==4: return (si+pi)%12 if o else (si+8+pi)%12
+    if div==4: return (si+pi*3)%12
     if div==7: return (si+pi)%12 if o else (si+6+pi)%12
     if div==9:
         # BPHS Navamsa: movable=same, fixed=9th from sign (+8), dual=5th from sign (+4)

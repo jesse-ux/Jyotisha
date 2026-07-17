@@ -1,20 +1,17 @@
 from __future__ import annotations
-
 import sys
 from datetime import datetime
 from pathlib import Path
-
 import pytest
 
-
-SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import domain_calculation_service as calculation_service  # noqa: E402
 import jyotish_api_server  # noqa: E402
 from jyotish_api_server import JyotishAPIHandler  # noqa: E402
-
 
 BIRTH = {
     "year": 1990,
@@ -27,8 +24,44 @@ BIRTH = {
     "lon": 77.2090,
     "tz": 5.5,
     "ayanamsa": "lahiri",
+    "node_mode": "true",
 }
 
+def test_domain_chart_exposes_effective_parameters_and_result_hash() -> None:
+    from domain_calculation_service import compute_chart
+
+    result = compute_chart(BIRTH)
+
+    assert result["calculation_contract"]["effective"]["node_mode"] == "true"
+    assert result["calculation_contract"]["effective"]["ayanamsa"] == "lahiri"
+    assert result["result_hash"]
+
+def test_api_chart_uses_same_domain_contract_and_preserves_shape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import domain_calculation_service
+    import jyotish_api_server
+    from jyotish_api_server import JyotishAPIHandler
+
+    monkeypatch.setenv("JYOTISH_API_CHART_CACHE_TTL_SECONDS", "0")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "0")
+    monkeypatch.setattr(
+        jyotish_api_server,
+        "_attach_vedastro_main_entry_overview",
+        lambda result, _birth: result,
+    )
+
+    expected = domain_calculation_service.compute_chart(BIRTH)
+    result = JyotishAPIHandler.__new__(JyotishAPIHandler)._compute_chart_sync(
+        {**BIRTH, "transit_date": "2026-07-11"}
+    )
+
+    assert result["result_hash"] == expected["result_hash"]
+    assert result["calculation_contract"] == expected["calculation_contract"]
+    assert result["birth"]["node_mode"] == "true"
+    assert result["planets"]
+    assert result["ascendant"]
+    assert "houses" in result
 
 def test_domain_chart_exposes_effective_params_and_result_hash() -> None:
     mean = calculation_service.compute_chart({**BIRTH, "node_mode": "mean"})
@@ -38,7 +71,6 @@ def test_domain_chart_exposes_effective_params_and_result_hash() -> None:
     assert true["calculation_contract"]["effective"]["node_mode"] == "true"
     assert mean["planets"]["Rahu"]["lon"] != pytest.approx(true["planets"]["Rahu"]["lon"], abs=1e-8)
     assert mean["result_hash"] != true["result_hash"]
-
 
 def test_api_chart_response_uses_domain_contract_hash(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("JYOTISH_API_CHART_CACHE_TTL_SECONDS", "0")
@@ -57,7 +89,6 @@ def test_api_chart_response_uses_domain_contract_hash(monkeypatch: pytest.Monkey
     assert rest["result_hash"] == expected["result_hash"]
     assert rest["birth"]["node_mode"] == "true"
     assert rest["calculation_contract"]["effective"]["node_mode"] == "true"
-
 
 def test_api_visible_chart_values_come_from_domain_service(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("JYOTISH_API_CHART_CACHE_TTL_SECONDS", "0")
@@ -78,7 +109,6 @@ def test_api_visible_chart_values_come_from_domain_service(monkeypatch: pytest.M
         assert rest["planets"][planet]["lon"] == pytest.approx(
             expected["planets"][planet]["lon"], abs=1e-8
         )
-
 
 def test_api_sade_sati_uses_domain_true_saturn_transit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("JYOTISH_API_CHART_CACHE_TTL_SECONDS", "0")
@@ -106,7 +136,6 @@ def test_api_sade_sati_uses_domain_true_saturn_transit(monkeypatch: pytest.Monke
     assert rest["sade_sati"]["provenance"]["data_layer"] == "true_transit_positions"
     assert rest["sade_sati"]["calculation_contract"]["algorithm"] == "sade_sati_true_saturn_transit"
 
-
 def test_api_dasha_boundary_comes_from_domain_service(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("JYOTISH_API_CHART_CACHE_TTL_SECONDS", "0")
     monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "0")
@@ -130,3 +159,4 @@ def test_api_dasha_boundary_comes_from_domain_service(monkeypatch: pytest.Monkey
     )
     assert rest["dasha"]["start_date"] == expected["periods"][0]["start"]
     assert rest["dasha"]["result_hash"] == expected["result_hash"]
+

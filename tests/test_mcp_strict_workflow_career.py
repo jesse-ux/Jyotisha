@@ -661,3 +661,169 @@ def test_career_narrative_payload_forces_monthly_adjudication_layers_into_final_
     assert any("月度主状态" in item for item in payload["strengths"])
     assert any("阻力来源" in item for item in payload["risks"])
     assert "时间置信度" in payload["markdown"]
+
+
+def test_career_vedastro_radar_audit_never_lifts_score_or_final_label() -> None:
+    result = _base_career_result()
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "career",
+        "evidence_ledger": [
+            {
+                "source": "vedastro_service_adapter_candidate",
+                "operation": "range_scan",
+                "domain": "career",
+                "event_id": "CareerExpansionWindow",
+                "score": 80,
+            }
+        ],
+        "adjudicator_policy": {"can_change_score": False, "can_set_dominant_label": False},
+    }
+
+    strict = _collect_strict_evidence("career", result)
+    radar_rows = [
+        row
+        for row in strict["technique_audit"]
+        if row.get("technique") == "VedAstro EventsAtRange / 596+ Calculator Radar"
+    ]
+
+    assert radar_rows
+    assert radar_rows[0]["status"] == "used"
+    assert radar_rows[0]["role"] == "external_timing_evidence"
+    assert radar_rows[0]["effect"] == "activation_context_only_no_score_or_label_lift"
+
+
+def test_career_vedastro_radar_audit_exposes_candidate_windows_for_report_display() -> None:
+    result = _base_career_result()
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "career",
+        "evidence_ledger": [],
+        "daily_windows": [
+            {
+                "date": "2026-08-12",
+                "domain": "career",
+                "score": 8,
+                "confidence": "high",
+                "event_ids": ["CareerExpansionWindow"],
+                "signal_families": ["career_trigger"],
+                "top_signal_label": "Career expansion window",
+            }
+        ],
+        "top_daily_window": {
+            "date": "2026-08-12",
+            "domain": "career",
+            "score": 8,
+            "confidence": "high",
+            "event_ids": ["CareerExpansionWindow"],
+            "signal_families": ["career_trigger"],
+            "top_signal_label": "Career expansion window",
+        },
+        "adjudicator_policy": {"can_change_score": False, "can_set_dominant_label": False},
+    }
+
+    strict = _collect_strict_evidence("career", result)
+    radar_row = next(
+        row
+        for row in strict["technique_audit"]
+        if row.get("technique") == "VedAstro EventsAtRange / 596+ Calculator Radar"
+    )
+
+    assert radar_row["candidate_windows"] == ["2026-08-12"]
+    assert radar_row["top_window"]["date"] == "2026-08-12"
+    assert radar_row["local_agreement"] == "pending_local_adjudication"
+
+
+def test_career_vedastro_radar_local_agreement_agrees_when_local_career_convergence_is_strong() -> None:
+    result = _base_career_result()
+    result["modules"]["dasa_convergence"]["domain_activations"]["career_status"] = {
+        "convergence_level": "L4",
+        "probability": "70-85%",
+    }
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "career",
+        "evidence_ledger": [
+            {
+                "source": "vedastro_service_adapter_candidate",
+                "operation": "range_scan",
+                "domain": "career",
+                "event_id": "CareerExpansionWindow",
+                "score": 80,
+            }
+        ],
+    }
+
+    strict = _collect_strict_evidence("career", result)
+    radar_row = next(
+        row
+        for row in strict["technique_audit"]
+        if row.get("technique") == "VedAstro EventsAtRange / 596+ Calculator Radar"
+    )
+
+    assert radar_row["local_agreement"] == "agree"
+
+
+def test_career_vedastro_radar_local_agreement_conflicts_when_local_career_convergence_is_weak() -> None:
+    result = _base_career_result()
+    result["modules"]["dasa_convergence"]["domain_activations"]["career_status"] = {
+        "convergence_level": "L1",
+        "probability": "0-20%",
+    }
+    result["modules"]["vedastro_range_scan_result"] = {
+        "backend": "vedastro_service_adapter_candidate",
+        "status": "ok",
+        "operation": "range_scan",
+        "domain": "career",
+        "evidence_ledger": [
+            {
+                "source": "vedastro_service_adapter_candidate",
+                "operation": "range_scan",
+                "domain": "career",
+                "event_id": "CareerExpansionWindow",
+                "score": 80,
+            }
+        ],
+    }
+
+    strict = _collect_strict_evidence("career", result)
+    radar_row = next(
+        row
+        for row in strict["technique_audit"]
+        if row.get("technique") == "VedAstro EventsAtRange / 596+ Calculator Radar"
+    )
+
+    assert radar_row["local_agreement"] == "conflict"
+
+
+def test_career_strict_workflow_exposes_prashna_context_as_guarded_evidence() -> None:
+    result = _base_career_result()
+    result["modules"]["prashna_context"] = {
+        "scope": "prashna_context",
+        "status": "ok",
+        "supporting_indicators": {
+            "gulika": {"status": "partial"},
+            "sphuta": {"status": "ok", "trisphuta": {"longitude": 123.4}},
+        },
+    }
+
+    strict = _collect_strict_evidence("career", result)
+    prashna = strict["present_evidence"]["prashna_context"]
+    rows = [row for row in strict["technique_audit"] if row.get("technique") == "Prashna Context"]
+    risk_rows = [row for row in strict["technique_audit"] if row.get("technique") == "Gulika/Maandi"]
+
+    assert prashna["status"] == "ok"
+    assert rows
+    assert rows[0]["status"] == "guarded"
+    assert rows[0]["role"] == "question_moment_evidence"
+    assert rows[0]["effect"] == "context_only_no_score_or_final_verdict"
+    assert risk_rows
+    assert risk_rows[0]["status"] == "partial"
+    assert risk_rows[0]["role"] == "risk_supporting_indicator"
+    assert risk_rows[0]["effect"] == "risk_context_only_no_final_verdict"

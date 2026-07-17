@@ -122,70 +122,70 @@ class TestTajikaStrengthLayers:
 
         result = calc_tajika_strength_layers(planet_lons, asc_lon=15.0, year_lord='Jupiter')
 
+        assert result['status'] == 'partial'
         assert result['method'] == 'Tajika Harsha/Panchavargiya Bala'
-        assert result['available_planets'] == 7
-        assert 'harsha_bala' in result
-        assert 'panchavargiya_bala' in result
-        assert 'combined_strength' in result
-        assert result['summary']['strongest_planets']
-        assert result['summary']['weakest_planets']
+        assert 'Panchavargiya Bala' in result['blocked_layers']
+        assert result['usable_layers'] == ['Harsha Bala']
         assert result['summary']['next_action']
 
         for planet in ('Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'):
             assert planet in result['harsha_bala']
+            assert result['harsha_bala'][planet]['status'] == 'usable'
             assert planet in result['panchavargiya_bala']
-            assert {'score', 'max_score', 'grade', 'components'} <= set(result['combined_strength'][planet])
+            assert result['panchavargiya_bala'][planet]['status'] == 'blocked'
+            assert result['combined_strength'][planet]['status'] == 'blocked'
             assert result['combined_strength'][planet]['max_score'] > 0
 
 
 # ── Tajika Yogas Tests ─────────────────────────────────────────────
 
 class TestTajikaYogas:
-    def test_ithasala_detected(self):
+    def test_legacy_adapter_blocks_without_speeds(self):
         # Moon(15.0) and Mercury(14.5) in same sign, close degrees
         planet_lons = {'Moon': 15.0, 'Mercury': 14.5, 'Sun': 45.0,
                        'Mars': 90.0, 'Jupiter': 180.0, 'Venus': 210.0, 'Saturn': 300.0}
         result = calc_tajika_yogas(planet_lons)
+        assert result['status'] == 'blocked'
+        assert result['ithasala'] == []
         assert len(result['ithasala']) >= 0  # May or may not detect based on rules
 
-    def test_graha_yuddha_detected(self):
+    def test_graha_yuddha_is_not_inferred_by_legacy_adapter(self):
         # Mercury and Venus very close
         planet_lons = {'Sun': 45.0, 'Moon': 120.0, 'Mars': 90.0,
                        'Mercury': 100.0, 'Venus': 100.5, 'Jupiter': 180.0, 'Saturn': 300.0}
         result = calc_tajika_yogas(planet_lons)
-        assert len(result['graha_yuddha']) >= 1
+        assert result['graha_yuddha'] == []
 
-    def test_nakta_yoga_sun_moon_same_sign(self):
+    def test_nakta_is_not_inferred_from_sun_moon_co_sign(self):
         planet_lons = {'Sun': 15.0, 'Moon': 18.0, 'Mars': 90.0,
                        'Mercury': 60.0, 'Jupiter': 180.0, 'Venus': 210.0, 'Saturn': 300.0}
         result = calc_tajika_yogas(planet_lons)
-        assert result['nakta'] is not None
+        assert result['nakta'] == []
 
     def test_summary_present(self):
         planet_lons = {'Sun': 45.0, 'Moon': 120.0, 'Mars': 90.0,
                        'Mercury': 60.0, 'Jupiter': 180.0, 'Venus': 210.0, 'Saturn': 300.0}
         result = calc_tajika_yogas(planet_lons)
         assert 'summary' in result
-        assert 'Tajika' in result['summary']
+        assert 'Blocked' in result['summary']
 
 
 class TestDetectTajikaYogas:
-    def test_10_yoga_types_detected(self):
+    def test_legacy_detector_is_not_a_golden_case_oracle(self):
         # Use close-degree planets to force Ithasala detection
         planets = {'Sun': 14.0, 'Moon': 15.0, 'Mars': 90.0,
                    'Mercury': 14.8, 'Jupiter': 180.0, 'Venus': 210.0, 'Saturn': 300.0}
         yogas = detect_tajika_yogas(planets)
         types = set(y['type'] for y in yogas)
-        # At least Itasala or other types should be detected
-        assert len(yogas) >= 0  # May be 0 if no valid pair, that's OK
+        assert isinstance(yogas, list)
 
-    def test_itasala_type_present(self):
+    def test_legacy_detector_does_not_prove_itasala(self):
         # Moon(15) fast, Sun(14) slow → same sign, close
         planets = {'Sun': 14.0, 'Moon': 15.0, 'Mars': 90.0,
                    'Mercury': 60.0, 'Jupiter': 180.0, 'Venus': 210.0, 'Saturn': 300.0}
         yogas = detect_tajika_yogas(planets)
         types = set(y['type'] for y in yogas)
-        assert 'Itasala' in types or len(yogas) >= 0
+        assert isinstance(types, set)
 
     def test_kuta_yoga_three_planets_same_sign(self):
         planets = {'Sun': 5.0, 'Moon': 8.0, 'Mars': 12.0,
@@ -216,6 +216,10 @@ class TestVedhaDetection:
 # ── Sahams Tests ────────────────────────────────────────────────────
 
 class TestSahams:
+    def test_sahams_block_without_location_context(self):
+        result = calc_all_sahams({'Sun': 45.0, 'Moon': 120.0}, 10.0, datetime(1990, 6, 15, 12, 0))
+        assert result['status'] == 'blocked'
+
     def test_tajika_module_exposes_saham_rules_reference_path(self):
         assert SAHAM_RULES_PATH.endswith('references/saham_rules.json')
         assert os.path.exists(SAHAM_RULES_PATH)
@@ -226,7 +230,7 @@ class TestSahams:
                        'Saturn': 300.0, 'Rahu': 150.0, 'Ketu': 330.0}
         asc_lon = 10.0
         birth_dt = datetime(1990, 6, 15, 10, 30)
-        result = calc_all_sahams(planet_lons, asc_lon, birth_dt)
+        result = calc_all_sahams(planet_lons, asc_lon, birth_dt, lat=39.9042, lon=116.4074, tz=8)
         assert 'punya_saham' in result
         assert 'karya_saham' in result
         assert 'vivah_saham' in result
@@ -247,7 +251,7 @@ class TestSahams:
         planet_lons = {'Sun': sun, 'Moon': moon, 'Mars': 90.0,
                        'Mercury': 60.0, 'Jupiter': 180.0, 'Venus': 210.0,
                        'Saturn': 300.0, 'Rahu': 150.0, 'Ketu': 330.0}
-        result = calc_all_sahams(planet_lons, asc, datetime(1990, 6, 15, 12, 0))
+        result = calc_all_sahams(planet_lons, asc, datetime(1990, 6, 15, 12, 0), lat=39.9042, lon=116.4074, tz=8)
         assert abs(result['punya_saham']['longitude'] - expected) < 0.01
 
     def test_karma_saham_uses_reference_json_day_formula(self):
@@ -257,8 +261,21 @@ class TestSahams:
                        'Mercury': 60.0, 'Jupiter': 180.0, 'Venus': 210.0,
                        'Saturn': 300.0, 'Rahu': 150.0, 'Ketu': 330.0}
         expected = (asc + (90.0 - 60.0)) % 360
-        result = calc_all_sahams(planet_lons, asc, datetime(1990, 6, 15, 12, 0))
+        result = calc_all_sahams(planet_lons, asc, datetime(1990, 6, 15, 12, 0), lat=39.9042, lon=116.4074, tz=8)
         assert abs(result['karma_saham']['longitude'] - expected) < 0.01
+
+    def test_formula_saham_applies_reference_add_30_exception(self):
+        from tajika import _calc_formula_saham
+
+        # Asc 50 is outside the forward 100 -> 200 zodiacal arc.
+        result = _calc_formula_saham(
+            'Punya_Saham',
+            {'Sun': 200.0, 'Moon': 100.0},
+            50.0,
+            True,
+            {},
+        )
+        assert result == 340.0
 
     def test_is_faster_moon_vs_sun(self):
         assert _is_faster('Moon', 'Sun')

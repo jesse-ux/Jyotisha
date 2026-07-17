@@ -27,6 +27,7 @@ def test_pre_work_check_runs_governance_test_set() -> None:
 def test_pre_work_check_requires_error_ledger_and_fragment_sweeps() -> None:
     assert "docs/research/pre_work_error_ledger.md" in PRE_WORK_DOCS
     assert "docs/research/whole_machine_fragment_sweep_2026_07_05.md" in PRE_WORK_DOCS
+    assert "docs/research/whole_machine_fragment_sweep_2026_07_14.md" in PRE_WORK_DOCS
     assert "docs/research/whole_machine_fragment_sweep_round25_2026_06_25.md" in PRE_WORK_DOCS
 
 

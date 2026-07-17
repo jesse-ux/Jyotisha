@@ -1,0 +1,166 @@
+{
+  "schema_version": "2.0",
+  "status": "ready",
+  "case_schema": "references/real_case_calibration/catalog.schema.json",
+  "selection_policy": {
+    "batch_role": "independent_three_case_probe_not_used_for_v2_design",
+    "birth_time_minimum": "Rodden AA",
+    "event_source_minimum": "primary",
+    "domains": {"career": 2, "marriage": 1},
+    "frozen_rule_version": "v2",
+    "privacy": "public_figures_only_no_user_birth_data"
+  },
+  "runtime_boundary": "Independent positive-event probe using frozen V2. Three cases are descriptive only and cannot estimate accuracy or justify rule tuning.",
+  "cases": [
+    {
+      "case_id": "trump_inauguration_2017",
+      "subject": {
+        "name": "Donald Trump",
+        "year": 1946,
+        "month": 6,
+        "day": 14,
+        "hour": 10,
+        "minute": 54,
+        "lat": 40.7,
+        "lon": -73.8164,
+        "tz": -4.0,
+        "node_mode": "mean",
+        "birth_source": {
+          "url": "https://www.astro.com/astro-databank/Trump,_Donald",
+          "source_grade": "primary",
+          "time_accuracy_rating": "AA",
+          "evidence_basis": "BC/BR in hand"
+        }
+      },
+      "source": {
+        "url": "https://www.astro.com/astro-databank/Trump,_Donald",
+        "source_grade": "primary",
+        "license_or_quote_boundary": "facts_and_short_summary_only"
+      },
+      "chart_signature": {
+        "benchmark_role": "independent_probe_public_power_event",
+        "external_oracle_status": "pending"
+      },
+      "event_outcomes": [
+        {
+          "event_type": "career_status",
+          "event_date": "2017-01-20",
+          "domain": "career",
+          "expected_label": "career_status",
+          "outcome": "Sworn in as President of the United States",
+          "source_excerpt_note": "The official 58th inaugural ceremonies record President Donald J. Trump on January 20, 2017.",
+          "source": {
+            "url": "https://www.inaugural.senate.gov/58th-inaugural-ceremonies/",
+            "source_grade": "primary"
+          }
+        }
+      ],
+      "similarity": {"score": 0.0, "matching_factors": ["independent_probe"], "dissimilar_factors": []},
+      "replay": {
+        "outcome_replay_status": "replayed",
+        "do_not_use_for_prediction": false,
+        "report_path": "docs/benchmark/public_real_case_probe3_v2_2026_07_11.json"
+      }
+    },
+    {
+      "case_id": "dicaprio_oscar_2016",
+      "subject": {
+        "name": "Leonardo DiCaprio",
+        "year": 1974,
+        "month": 11,
+        "day": 11,
+        "hour": 2,
+        "minute": 47,
+        "lat": 34.05,
+        "lon": -118.25,
+        "tz": -8.0,
+        "node_mode": "mean",
+        "birth_source": {
+          "url": "https://www.astro.com/astro-databank/DiCaprio,_Leonardo",
+          "source_grade": "primary",
+          "time_accuracy_rating": "AA",
+          "evidence_basis": "BC/BR in hand"
+        }
+      },
+      "source": {
+        "url": "https://www.astro.com/astro-databank/DiCaprio,_Leonardo",
+        "source_grade": "primary",
+        "license_or_quote_boundary": "facts_and_short_summary_only"
+      },
+      "chart_signature": {
+        "benchmark_role": "independent_probe_award_event",
+        "external_oracle_status": "pending"
+      },
+      "event_outcomes": [
+        {
+          "event_type": "career_status",
+          "event_date": "2016-02-28",
+          "domain": "career",
+          "expected_label": "career_status",
+          "outcome": "Won the Academy Award for Actor in a Leading Role",
+          "source_excerpt_note": "The Academy records Leonardo DiCaprio as the leading-actor winner at the ceremony on February 28, 2016.",
+          "source": {
+            "url": "https://www.oscars.org/oscars/ceremonies/2016",
+            "source_grade": "primary"
+          }
+        }
+      ],
+      "similarity": {"score": 0.0, "matching_factors": ["independent_probe"], "dissimilar_factors": []},
+      "replay": {
+        "outcome_replay_status": "replayed",
+        "do_not_use_for_prediction": false,
+        "report_path": "docs/benchmark/public_real_case_probe3_v2_2026_07_11.json"
+      }
+    },
+    {
+      "case_id": "markle_marriage_2018",
+      "subject": {
+        "name": "Meghan Markle",
+        "year": 1981,
+        "month": 8,
+        "day": 4,
+        "hour": 4,
+        "minute": 46,
+        "lat": 34.2,
+        "lon": -118.6,
+        "tz": -7.0,
+        "node_mode": "mean",
+        "birth_source": {
+          "url": "https://www.astro.com/astro-databank/Markle,_Meghan",
+          "source_grade": "primary",
+          "time_accuracy_rating": "AA",
+          "evidence_basis": "BC/BR in hand"
+        }
+      },
+      "source": {
+        "url": "https://www.astro.com/astro-databank/Markle,_Meghan",
+        "source_grade": "primary",
+        "license_or_quote_boundary": "facts_and_short_summary_only"
+      },
+      "chart_signature": {
+        "benchmark_role": "independent_probe_legal_marriage",
+        "external_oracle_status": "pending"
+      },
+      "event_outcomes": [
+        {
+          "event_type": "legal_marriage",
+          "event_date": "2018-05-19",
+          "domain": "marriage",
+          "expected_label": "legal_marriage",
+          "outcome": "Married Prince Harry at St George's Chapel",
+          "source_excerpt_note": "The Royal Family records the wedding of Prince Harry and Meghan Markle on 19 May 2018.",
+          "source": {
+            "url": "https://www.royal.uk/wedding-duke-and-duchess-sussex",
+            "source_grade": "primary"
+          }
+        }
+      ],
+      "similarity": {"score": 0.0, "matching_factors": ["independent_probe"], "dissimilar_factors": []},
+      "replay": {
+        "outcome_replay_status": "replayed",
+        "do_not_use_for_prediction": false,
+        "report_path": "docs/benchmark/public_real_case_probe3_v2_2026_07_11.json"
+      }
+    }
+  ]
+}

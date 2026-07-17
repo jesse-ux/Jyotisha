@@ -404,7 +404,7 @@ if __name__ == '__main__':
     print(f"行星经度: { {k: f'{v:.1f}' for k,v in test_planets.items()} }")
     print()
 
-    result = narayana_dasha_full_report(test_lagna, test_planets, test_age, REDACTED_YEAR)
+    result = narayana_dasha_full_report(test_lagna, test_planets, test_age, 1990)
 
     print("=== 大运序列 ===")
     for p in result['mahadasha_sequence']:

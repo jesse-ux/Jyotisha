@@ -1,8 +1,8 @@
 {
   "scope": "pyjhora_oracle_artifact_manifest",
-  "generated_at": "2026-07-01T10:31:50.603970+00:00",
+  "generated_at": "2026-07-16T10:24:25.190784+00:00",
   "artifact_count": 9,
-  "packet_count": 5,
+  "packet_count": 6,
   "artifacts": [
     "pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt",
     "pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
@@ -19,7 +19,8 @@
     "external_template_historical_epoch_lahiri_pyjhora_20260627.json",
     "external_template_steve_jobs_dasha_lahiri_pyjhora_20260627.json",
     "external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json",
-    "external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json"
+    "external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json",
+    "external_template_synthetic_north_china_shadbala_raman_pyjhora_20260627.json"
   ],
   "fronts": {
     "dasha": {
@@ -37,13 +38,14 @@
     },
     "shadbala": {
       "artifact_count": 2,
-      "packet_count": 1,
+      "packet_count": 2,
       "artifacts": [
         "pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
         "pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt"
       ],
       "pending_packets": [
-        "external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json"
+        "external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json",
+        "external_template_synthetic_north_china_shadbala_raman_pyjhora_20260627.json"
       ]
     },
     "tajika_sahams": {

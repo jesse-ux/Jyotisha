@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
 try:
     from diagnose_vedastro_mode import build_report as build_vedastro_report
@@ -21,13 +22,22 @@ except Exception:  # pragma: no cover - import path varies in tests/CLI
 REQUIRED_PARITY_OUTPUTS = ["D1", "D9", "D10", "D2", "D4", "Vimshottari", "Shadbala", "Ashtakavarga"]
 
 
+def _public_pyjhora_parity_manifest() -> dict:
+    path = Path("references/oracle/pyjhora_same_chart_parity_public_smoke_manifest.json")
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"status": "not_available", "tested": False}
+
+
 def _same_chart_parity_contract(engines: dict) -> dict:
+    pyjhora_public = _public_pyjhora_parity_manifest()
     engine_states = {}
     for name, engine in engines.items():
         available = engine["status"] == "available"
         engine_states[name] = {
             "available": available,
-            "tested": False,
+            "tested": bool(name == "PyJHora/JHora" and pyjhora_public.get("tested")),
             "blocked": not available,
             "blocking_reason": "" if available else engine["status"],
         }
@@ -60,7 +70,8 @@ def _same_chart_parity_contract(engines: dict) -> dict:
         },
         "engine_states": engine_states,
         "replay_manifest": replay_manifest,
-        "boundary": "This is a parity contract, not proof that the same-chart comparison has run.",
+        "partial_verifications": {"PyJHora/JHora": pyjhora_public},
+        "boundary": "This is a parity contract. Public PyJHora partial verification does not close missing outputs or other engine raw-oracle requirements.",
     }
 
 

@@ -423,12 +423,23 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
         "quarantined_drafts": {
             "status": "quarantined",
             "promotion_status": "not_truth_source",
-            "source_refs": _existing_paths(quarantined_drafts),
+            "source_refs": quarantined_drafts,
             "missing_refs": [path for path in quarantined_drafts if not _repo_relative_exists(path)],
             "boundary": "Listed for awareness only; drafts are not promoted into runtime source_refs.",
         },
     }
-    missing_refs = [path for layer in layers.values() for path in layer["missing_refs"]]
+    non_runtime_layers = {"blocked_non_runtime_sources", "quarantined_drafts"}
+    missing_refs = [
+        path
+        for name, layer in layers.items()
+        if name not in non_runtime_layers
+        for path in layer["missing_refs"]
+    ]
+    non_runtime_missing_refs = [
+        path
+        for name in non_runtime_layers
+        for path in layers[name]["missing_refs"]
+    ]
     quarantined_refs = set(layers["quarantined_drafts"]["source_refs"])
     blocked_non_runtime_refs = set(layers["blocked_non_runtime_sources"]["source_refs"])
     promoted_quarantined = sorted(quarantined_refs.intersection(source_refs))
@@ -444,10 +455,12 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
             "quarantined_draft_count": len(layers["quarantined_drafts"]["source_refs"]),
             "blocked_non_runtime_count": len(layers["blocked_non_runtime_sources"]["source_refs"]),
             "missing_ref_count": len(missing_refs),
+            "non_runtime_missing_ref_count": len(non_runtime_missing_refs),
             "promoted_quarantined_count": len(promoted_quarantined),
             "promoted_blocked_non_runtime_count": len(promoted_blocked_non_runtime),
         },
         "missing_refs": missing_refs,
+        "non_runtime_missing_refs": non_runtime_missing_refs,
         "promoted_quarantined_refs": promoted_quarantined,
         "promoted_blocked_non_runtime_refs": promoted_blocked_non_runtime,
         "boundary": "Inventory is explicit and conservative; local drafts are indexed but not treated as truth sources.",
@@ -716,12 +729,10 @@ def _execute_mcp_consultation_workflow(
     western_evidence_packet: dict[str, Any] | None = None,
     western_oracle_payload: dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
-    from jyotish_api_server import JyotishAPIHandler, execute_consultation_workflow
+    from consultation_workflow_service import execute_consultation_workflow
 
-    handler = JyotishAPIHandler.__new__(JyotishAPIHandler)
-    return execute_consultation_workflow(
-        handler,
-        body={
+    result = execute_consultation_workflow(
+        {
             "question": question,
             "year": year,
             "month": month,
@@ -741,6 +752,9 @@ def _execute_mcp_consultation_workflow(
         },
         surface="skill_mcp",
     )
+    if isinstance(result, dict):
+        result["execution_status"] = summarize_execution_status(result)
+    return result
 
 
 def _safe_get(data: Dict[str, Any], *path: str) -> Any:
@@ -1238,7 +1252,19 @@ def _derive_official_day_signals(domain: str, daily_windows: Any) -> List[Dict[s
     return signals
 
 
-def _external_activation_audit(external_activation: Any) -> List[Dict[str, Any]]:
+def _local_agreement_for_external_activation(route: str, present: Dict[str, Any]) -> str:
+    if route != "career":
+        return "pending_local_adjudication"
+    convergence = present.get("career_convergence") if isinstance(present, dict) else {}
+    level = convergence.get("convergence_level") if isinstance(convergence, dict) else None
+    if level in {"L4", "L5"}:
+        return "agree"
+    if level in {"L0", "L1"}:
+        return "conflict"
+    return "pending_local_adjudication"
+
+
+def _external_activation_audit(external_activation: Any, local_agreement: str = "pending_local_adjudication") -> List[Dict[str, Any]]:
     if not isinstance(external_activation, dict):
         return []
     if external_activation.get("level") == "missing_required_external_radar":
@@ -1254,6 +1280,14 @@ def _external_activation_audit(external_activation: Any) -> List[Dict[str, Any]]
         events = external_activation.get("events") or []
         official_day_signals = external_activation.get("official_day_signals") or []
         if (isinstance(events, list) and events) or (isinstance(official_day_signals, list) and official_day_signals):
+            top_window = external_activation.get("top_daily_window") if isinstance(external_activation.get("top_daily_window"), dict) else None
+            candidate_windows = [
+                item.get("date")
+                for item in (official_day_signals if isinstance(official_day_signals, list) else [])
+                if isinstance(item, dict) and item.get("date")
+            ]
+            if not candidate_windows and top_window and top_window.get("date"):
+                candidate_windows = [top_window["date"]]
             return [
                 {
                     "technique": "VedAstro EventsAtRange / 596+ Calculator Radar",
@@ -1261,7 +1295,10 @@ def _external_activation_audit(external_activation: Any) -> List[Dict[str, Any]]
                     "role": "external_timing_evidence",
                     "event_count": len(events),
                     "day_signal_count": len(official_day_signals) if isinstance(official_day_signals, list) else 0,
-                    "effect": "activation_context_only_guarded_score_bump",
+                    "effect": "activation_context_only_no_score_or_label_lift",
+                    "candidate_windows": candidate_windows,
+                    "top_window": top_window,
+                    "local_agreement": local_agreement,
                 }
             ]
     return []
@@ -1730,6 +1767,49 @@ def _external_technique_audit(external_technique: Any) -> List[Dict[str, Any]]:
             "role": "external_evidence_only",
             "methods": external_technique.get("methods") or [],
             "effect": "secondary_context_only_no_score_or_label_lift",
+        }
+    ]
+
+
+def _prashna_context_audit(prashna_context: Any) -> List[Dict[str, Any]]:
+    if not isinstance(prashna_context, dict) or not prashna_context:
+        return []
+    status = prashna_context.get("status", "unknown")
+    return [
+        {
+            "technique": "Prashna Context",
+            "status": "guarded" if status == "ok" else "blocked",
+            "role": "question_moment_evidence",
+            "effect": "context_only_no_score_or_final_verdict",
+            "calculation_status": status,
+            "prediction_policy": "support_only",
+        }
+    ]
+
+
+def _upagraha_gulika_maandi_audit(prashna_context: Any) -> List[Dict[str, Any]]:
+    if not isinstance(prashna_context, dict):
+        return []
+    indicators = prashna_context.get("supporting_indicators")
+    if not isinstance(indicators, dict):
+        return []
+    gulika = indicators.get("gulika")
+    maandi = indicators.get("maandi")
+    if not isinstance(gulika, dict) and not isinstance(maandi, dict):
+        return []
+    statuses = [
+        payload.get("status")
+        for payload in (gulika, maandi)
+        if isinstance(payload, dict) and payload.get("status")
+    ]
+    status = "partial" if "partial" in statuses or not statuses else "used"
+    return [
+        {
+            "technique": "Gulika/Maandi",
+            "status": status,
+            "role": "risk_supporting_indicator",
+            "effect": "risk_context_only_no_final_verdict",
+            "prediction_policy": "support_only",
         }
     ]
 
@@ -2923,6 +3003,93 @@ def _build_technique_audit_summary(route: str, strict: Dict[str, Any]) -> Dict[s
     }
 
 
+def _attach_prashna_guarded_evidence(
+    route: str,
+    strict: Dict[str, Any],
+    *,
+    question: str,
+    prashna_request: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Attach question-moment context after adjudication; never alter its result."""
+    present = strict.setdefault("present_evidence", {})
+    if not isinstance(present, dict):
+        present = {}
+        strict["present_evidence"] = present
+
+    integration: Dict[str, Any] = {
+        "status": "blocked",
+        "role": "context_only",
+        "adjudication_effect": "none",
+        "route": route,
+        "boundary": "Prashna context cannot change score, verdict, label, confidence cap, or primary drivers.",
+    }
+    request = prashna_request if isinstance(prashna_request, dict) else {}
+    forbidden = [key for key in ("planets", "asc_degree", "ascendant") if key in request]
+    required = ("question_timestamp", "lat", "lon", "timezone")
+    missing = [key for key in required if request.get(key) in (None, "")]
+
+    if forbidden:
+        integration["reason"] = f"client_supplied_prashna_chart_forbidden:{','.join(forbidden)}"
+    elif missing:
+        integration["reason"] = f"missing_prashna_fields:{','.join(missing)}"
+    else:
+        try:
+            from scripts.prashna_context import build_prashna_context
+
+            context = build_prashna_context(
+                {
+                    "question_text": question,
+                    "question_timestamp": request["question_timestamp"],
+                    "lat": request["lat"],
+                    "lon": request["lon"],
+                    "timezone": request["timezone"],
+                    "ayanamsa": request.get("ayanamsa", "lahiri"),
+                    "node_mode": request.get("node_mode", "mean"),
+                    "location_convention": "wgs84",
+                }
+            )
+        except Exception as exc:
+            integration["reason"] = f"prashna_context_blocked:{type(exc).__name__}:{exc}"
+        else:
+            present["prashna_context"] = context
+            integration.update(
+                {
+                    "status": "guarded_evidence",
+                    "used": True,
+                    "source": "scripts.prashna_context.build_prashna_context",
+                    "chart_source": context.get("chart_source"),
+                    "result_hash": context.get("result_hash"),
+                    "blocked_layers": context.get("blocked_layers") or ["Prashna verdict"],
+                }
+            )
+
+    integration.setdefault("used", False)
+    present["prashna_integration"] = integration
+    audit = strict.get("technique_audit")
+    if not isinstance(audit, list):
+        audit = []
+    strict["technique_audit"] = [
+        row for row in audit
+        if not isinstance(row, dict) or row.get("technique") != "Prashna Integration"
+    ] + [
+        {
+            "technique": "Prashna Integration",
+            "status": integration["status"],
+            "used": integration["used"],
+            "role": "context_only",
+            "effect_on_score": "none",
+            "effect_on_confidence": "none",
+            **({"reason": integration["reason"]} if integration.get("reason") else {}),
+        }
+    ]
+    summary = strict.get("technique_audit_summary")
+    if not isinstance(summary, dict):
+        summary = {}
+        strict["technique_audit_summary"] = summary
+    summary["prashna_integration"] = integration
+    return strict
+
+
 def _build_adjudication_stages(route: str, present: Dict[str, Any], event_judgement: Dict[str, Any]) -> Dict[str, Any]:
     dominant_label = event_judgement.get("dominant_label")
     manifestation_drivers = list(event_judgement.get("secondary_context") or [])
@@ -3397,13 +3564,14 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         present["external_activation"] = _derive_external_activation_support(modules, "career")
         present["external_technique_evidence"] = _derive_external_technique_evidence(modules, "career")
         present["vedastro_official_snapshot"] = official_snapshot_evidence(modules)
+        present["prashna_context"] = modules.get("prashna_context") if isinstance(modules.get("prashna_context"), dict) else {}
         present["source_priority"] = modules.get("source_priority") if isinstance(modules.get("source_priority"), dict) else {}
         present["chart"] = _safe_get(modules, "chart")
         present["dignity_guardrail"] = _derive_dignity_guardrail(route, present)
         present["functional_benefic_malefic"] = _derive_functional_benefic_malefic(modules)
         present["interpretation_source_pack"] = _existing_interpretation_source_pack()
         missing = [key for key, value in present.items() if key not in {
-            "chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "source_priority", "dignity_guardrail", "argala_support", "shadbala", "shadbala_component_audit", "kakshya_career_support", "functional_benefic_malefic", "interpretation_source_pack"
+            "chart", "external_activation", "external_technique_evidence", "vedastro_official_snapshot", "prashna_context", "source_priority", "dignity_guardrail", "argala_support", "shadbala", "shadbala_component_audit", "kakshya_career_support", "functional_benefic_malefic", "interpretation_source_pack"
         } and value in (None, {}, [], "")]
         convergence = present["career_convergence"] or {}
         confidence_cap = "medium"
@@ -3444,8 +3612,13 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         strict["conflicts"] = _build_conflicts(route, present, strict["official_primary_evidence"])
         audit = (
             _official_snapshot_audit(present.get("vedastro_official_snapshot"))
-            + _external_activation_audit(present.get("external_activation"))
+            + _external_activation_audit(
+                present.get("external_activation"),
+                _local_agreement_for_external_activation(route, present),
+            )
             + _external_technique_audit(present.get("external_technique_evidence"))
+            + _prashna_context_audit(present.get("prashna_context"))
+            + _upagraha_gulika_maandi_audit(present.get("prashna_context"))
         )
         if audit:
             strict["technique_audit"] = audit
@@ -3529,7 +3702,10 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         strict["conflicts"] = _build_conflicts(route, present, strict["official_primary_evidence"])
         audit = (
             _official_snapshot_audit(present.get("vedastro_official_snapshot"))
-            + _external_activation_audit(present.get("external_activation"))
+            + _external_activation_audit(
+                present.get("external_activation"),
+                _local_agreement_for_external_activation(route, present),
+            )
             + _external_technique_audit(present.get("external_technique_evidence"))
         )
         if audit:
@@ -3632,7 +3808,10 @@ def _collect_strict_evidence(route: str, result: Dict[str, Any]) -> Dict[str, An
         strict["conflicts"] = _build_conflicts(route, present, strict["official_primary_evidence"])
         audit = (
             _official_snapshot_audit(present.get("vedastro_official_snapshot"))
-            + _external_activation_audit(present.get("external_activation"))
+            + _external_activation_audit(
+                present.get("external_activation"),
+                _local_agreement_for_external_activation(route, present),
+            )
             + _external_technique_audit(present.get("external_technique_evidence"))
         )
         if audit:
@@ -4193,6 +4372,7 @@ def strict_workflow(
     node_mode: str = "mean",
     western_evidence_packet: Optional[Dict[str, Any]] = None,
     western_oracle_payload: Optional[Dict[str, Any]] = None,
+    prashna_request: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Strict workflow router: routes question to the correct analysis path.
@@ -4259,14 +4439,19 @@ def strict_workflow(
             node_mode=node_mode,
         )
         result["chart"] = chart
-        result["strict_workflow"] = _collect_strict_evidence(route, chart)
+        result["strict_workflow"] = _attach_prashna_guarded_evidence(
+            route,
+            _collect_strict_evidence(route, chart),
+            question=question,
+            prashna_request=prashna_request,
+        )
         try:
-            from jyotish_api_server import JyotishAPIHandler
+            from consultation_workflow_service import build_runtime_evidence_helpers
 
-            handler = JyotishAPIHandler.__new__(JyotishAPIHandler)
-            vedastro_official = handler._high_rigor_vedastro_official_summary(chart)
-            vedastro_archive_manifest = handler._compute_vedastro_gateway_archives()
-            interpretation_coverage = handler._interpretation_source_runtime_coverage(chart)
+            runtime_helpers = build_runtime_evidence_helpers(chart)
+            vedastro_official = runtime_helpers["vedastro_official"]
+            vedastro_archive_manifest = runtime_helpers["vedastro_archive_manifest"]
+            interpretation_coverage = runtime_helpers["interpretation_coverage"]
             machine_evidence_packet = _UNIFIED_CONSULTATION_ORCHESTRATOR.machine_evidence_packet(
                 chart=chart,
                 route_packet=result.get("routing") if isinstance(result.get("routing"), dict) else route_packet,

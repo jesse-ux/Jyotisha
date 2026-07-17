@@ -23,10 +23,13 @@ ALLOWED_STATUS = {
     "covered",
     "complete",
     "partial",
+    "blocked",
     "knowledge-only",
     "workflow-only",
     "not-integrated",
     "missing",
+    "guarded",
+    "comparison-only",
 }
 REQUIRED_TECHNIQUE_FIELDS = {
     "name": str,

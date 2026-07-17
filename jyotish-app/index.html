@@ -622,6 +622,18 @@
                   <input type="number" step="0.5" id="prashna-timezone" placeholder="UTC 时区，例如 8">
                 </div>
               </div>
+              <div class="form-group prashna-question">
+                <label>提问时刻（当地）</label>
+                <input type="datetime-local" id="prashna-timestamp">
+              </div>
+              <div class="form-group prashna-question">
+                <label>提问地点纬度 / 经度 / 时区</label>
+                <div class="form-row">
+                  <input type="number" step="0.0001" id="prashna-lat" placeholder="纬度">
+                  <input type="number" step="0.0001" id="prashna-lon" placeholder="经度">
+                  <input type="number" step="0.5" id="prashna-timezone" placeholder="UTC 时区，例如 8">
+                </div>
+              </div>
               <button class="btn-primary prashna-run" id="btn-run-prashna">问事分析</button>
             </div>
             <div id="prashna-result" class="prashna-result">

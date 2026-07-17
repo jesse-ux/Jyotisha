@@ -36,13 +36,15 @@ def test_shadbala_oracle_closure_status_identifies_first_absolute_value_packet()
     report = json.loads(completed.stdout)
     assert report["scope"] == "shadbala_external_absolute_value_closure_status"
     assert report["schema_version"] == 1
-    assert report["summary"]["shadbala_task_count"] == 4
-    assert report["summary"]["external_verified_shadbala_tasks"] == 4
-    assert report["summary"]["can_claim_shadbala_absolute_closure"] is True
+    assert report["summary"]["shadbala_task_count"] == 2
+    assert report["summary"]["external_verified_shadbala_tasks"] == 2
+    assert report["summary"]["external_packet_fields_complete"] is True
+    assert report["summary"]["same_chart_parity_status"] == "blocked"
+    assert report["summary"]["can_claim_shadbala_absolute_closure"] is False
     assert report["summary"]["required_planets"] == ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
     assert report["summary"]["required_components"] == ["sthana", "dig", "kala", "chesta", "naisargika", "drik", "total_rupa"]
     assert report["first_priority"] is None
-    assert report["next_actions"][0] == "Shadbala external absolute-value closure is complete for the current target set."
+    assert report["next_actions"][0] == "Reconcile Shadbala component-level formulas against PyJHora/JHora same-chart raw values."
 
 
 def test_shadbala_oracle_closure_status_markdown_can_be_written(tmp_path: Path) -> None:
@@ -53,5 +55,6 @@ def test_shadbala_oracle_closure_status_markdown_can_be_written(tmp_path: Path) 
     assert output.exists()
     markdown = output.read_text(encoding="utf-8")
     assert "# Shadbala External Absolute-Value Closure Status" in markdown
-    assert "can_claim_shadbala_absolute_closure: `true`" in markdown
-    assert "closure is complete for the current target set" in markdown
+    assert "same_chart_parity_status: `blocked`" in markdown
+    assert "can_claim_shadbala_absolute_closure: `false`" in markdown
+    assert "same-chart parity is still blocked" in markdown

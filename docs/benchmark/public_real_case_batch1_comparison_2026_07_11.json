@@ -1,0 +1,140 @@
+{
+  "benchmark_id": "public_real_case_holdout_comparison_2026_07_11",
+  "boundary": "Blind positive-event holdout comparison; no negative controls and no scientific accuracy claim.",
+  "case_deltas": [
+    {
+      "added_signals": [
+        "active_dasha_matches_Amatyakaraka:Moon",
+        "active_dasha_matches_D10_10L:Moon"
+      ],
+      "case_id": "aniston_emmy_2002",
+      "score_delta": 2,
+      "v1_result_class": "weak_hit",
+      "v1_score": 5,
+      "v2_result_class": "strong_hit",
+      "v2_score": 7
+    },
+    {
+      "added_signals": [
+        "Rahu_dispositor_Venus_occupies_event_house:5",
+        "Rahu_dispositor_Venus_owns_event_house"
+      ],
+      "case_id": "disney_marriage_1925",
+      "score_delta": 2,
+      "v1_result_class": "strong_hit",
+      "v1_score": 8,
+      "v2_result_class": "strong_hit",
+      "v2_score": 10
+    },
+    {
+      "added_signals": [
+        "Ketu_dispositor_Mercury_occupies_event_house:6",
+        "Ketu_dispositor_Mercury_owns_event_house"
+      ],
+      "case_id": "jobs_iphone_2007",
+      "score_delta": 2,
+      "v1_result_class": "weak_hit",
+      "v1_score": 5,
+      "v2_result_class": "strong_hit",
+      "v2_score": 7
+    },
+    {
+      "added_signals": [
+        "Ketu_dispositor_Venus_owns_event_house",
+        "active_dasha_matches_Darakaraka:Venus"
+      ],
+      "case_id": "jolie_marriage_2014",
+      "score_delta": 2,
+      "v1_result_class": "weak_hit",
+      "v1_score": 4,
+      "v2_result_class": "weak_hit",
+      "v2_score": 6
+    },
+    {
+      "added_signals": [],
+      "case_id": "kahlo_marriage_1929",
+      "score_delta": 0,
+      "v1_result_class": "strong_hit",
+      "v1_score": 7,
+      "v2_result_class": "strong_hit",
+      "v2_score": 7
+    },
+    {
+      "added_signals": [],
+      "case_id": "obama_election_2008",
+      "score_delta": 0,
+      "v1_result_class": "miss",
+      "v1_score": 1,
+      "v2_result_class": "miss",
+      "v2_score": 1
+    },
+    {
+      "added_signals": [],
+      "case_id": "schwarzenegger_governor_2003",
+      "score_delta": 0,
+      "v1_result_class": "miss",
+      "v1_score": 2,
+      "v2_result_class": "miss",
+      "v2_score": 2
+    },
+    {
+      "added_signals": [],
+      "case_id": "snoop_marriage_1997",
+      "score_delta": 0,
+      "v1_result_class": "strong_hit",
+      "v1_score": 10,
+      "v2_result_class": "strong_hit",
+      "v2_score": 10
+    },
+    {
+      "added_signals": [
+        "Rahu_dispositor_Jupiter_owns_event_house"
+      ],
+      "case_id": "streep_oscar_1983",
+      "score_delta": 1,
+      "v1_result_class": "weak_hit",
+      "v1_score": 5,
+      "v2_result_class": "weak_hit",
+      "v2_score": 6
+    },
+    {
+      "added_signals": [],
+      "case_id": "william_marriage_2011",
+      "score_delta": 0,
+      "v1_result_class": "weak_hit",
+      "v1_score": 6,
+      "v2_result_class": "weak_hit",
+      "v2_score": 6
+    }
+  ],
+  "promotion": {
+    "promote": true,
+    "reason": "holdout_metrics_improved"
+  },
+  "v1_summary": {
+    "balanced_accuracy": null,
+    "balanced_accuracy_blocked_reason": "no_verified_negative_control_dates",
+    "blocked_events": 0,
+    "blocked_rate": 0.0,
+    "evaluated_events": 10,
+    "exact_label_rate": 0.3,
+    "misses": 2,
+    "positive_event_recall": 0.8,
+    "strong_hits": 3,
+    "total_events": 10,
+    "weak_hits": 5
+  },
+  "v2_summary": {
+    "balanced_accuracy": null,
+    "balanced_accuracy_blocked_reason": "no_verified_negative_control_dates",
+    "blocked_events": 0,
+    "blocked_rate": 0.0,
+    "evaluated_events": 10,
+    "exact_label_rate": 0.5,
+    "misses": 2,
+    "positive_event_recall": 0.8,
+    "strong_hits": 5,
+    "total_events": 10,
+    "weak_hits": 3
+  }
+}

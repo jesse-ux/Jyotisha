@@ -28,6 +28,7 @@ classifiers = [
 keywords = ["jyotish", "vedic", "astrology", "astronomy", "dasha", "varga", "nakshatra", "shadbala", "panchanga", "horoscope", "birth-chart"]
 dependencies = [
     "pyswisseph>=2.8",
+    "timezonefinder>=6.5",
 ]
 
 [project.optional-dependencies]
