@@ -1181,10 +1181,21 @@ export default function Home() {
   }
 
   async function shareSession(session: ChatSession) {
+    const sharePayload = {
+      share_payload_version: 1,
+      exported_at: new Date().toISOString(),
+      title: session.title,
+      theme: session.theme,
+      message_count: session.messages.length,
+      messages: session.messages.map((message) => ({ role: message.role, text: message.text })),
+    };
     const transcript = [
       `Jyotisha 对话：${session.title}`,
       "",
       ...session.messages.map((message) => `${message.role === "user" ? "我" : "Jyotisha"}：${message.text}`),
+      "",
+      "---- JSON 分享包 ----",
+      JSON.stringify(sharePayload, null, 2),
     ].join("\n");
     try {
       await navigator.clipboard.writeText(transcript);

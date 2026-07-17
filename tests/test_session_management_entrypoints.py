@@ -13,6 +13,8 @@ def test_chat_history_management_actions_are_exposed() -> None:
         "toggleArchivedSession",
         "showArchivedSessions",
         "shareSession",
+        "share_payload_version",
+        "messages.map",
         "onContextMenu",
         "session-menu-trigger",
         'role="menu"',
