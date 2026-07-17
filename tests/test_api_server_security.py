@@ -19,10 +19,12 @@ if SCRIPTS not in sys.path:
 
 import jyotish_api_server  # noqa: E402
 from jyotish_api_server import (  # noqa: E402
+    DEFAULT_ALLOWED_HOSTS,
     DEFAULT_ALLOWED_ORIGINS,
     BadRequest,
     JyotishAPIHandler,
     _load_local_module,
+    _parse_allowed_hosts,
     _parse_allowed_origins,
 )
 
@@ -38,6 +40,7 @@ class _FakeHeaders(dict):
 
 class _FakeServer:
     allowed_origins = DEFAULT_ALLOWED_ORIGINS
+    allowed_hosts = DEFAULT_ALLOWED_HOSTS
 
 
 class _ResponseCaptureHandler(JyotishAPIHandler):
@@ -169,6 +172,23 @@ def test_env_cors_parser_ignores_empty_entries() -> None:
         'https://app.example.com',
         'http://localhost:3456',
     }
+
+
+def test_internal_docker_host_must_be_explicitly_allowed() -> None:
+    handler = _handler()
+    handler.headers = _FakeHeaders({'Host': 'api:5200'})
+    handler.path = '/health'
+    handler.server = _FakeServer()
+
+    with pytest.raises(jyotish_api_server.Forbidden, match='Host'):
+        handler._enforce_request_security()
+
+    handler.server.allowed_hosts = {'api'}
+    handler._enforce_request_security()
+
+
+def test_env_host_parser_normalizes_configured_hosts() -> None:
+    assert _parse_allowed_hosts('API, ,localhost') == {'api', 'localhost'}
 
 
 def test_get_internal_errors_are_json_wrapped() -> None:
