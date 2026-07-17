@@ -118,6 +118,17 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 - **Request behavior:** existing sessions remain selectable for reading while a request is active; creating or sending another request stays locked until the active request settles.
 - **Surface:** translucent warm-gray sidebar; current uses a white glass surface and deep-brown marker.
 
+### Sidebar shell
+
+- **Composition:** provider, fixed header, one scroll-owning content region, fixed footer, trigger, rail, and flexible chat inset.
+- **Desktop:** 288px expanded by default at 1024px and above; 64px collapsed icon rail.
+- **Tablet:** 64px collapsed by default from 768px through 1023px; 240px when expanded.
+- **Mobile:** no icon rail; an off-canvas drawer uses `min(86vw, 320px)` and closes through its scrim, trigger, or Escape.
+- **Collapsed content:** logo, new-chat action, one history expansion action, and account avatar. Individual sessions do not become indistinguishable repeated icons.
+- **Scroll ownership:** header and footer remain fixed; `SidebarContent` is the sole sidebar scroll owner.
+- **Accessibility:** Command/Control+B shortcut outside editable controls, contextual trigger labels, 44px targets, focus return, collapsed-only tooltips, reduced-motion, reduced-transparency, and increased-contrast support.
+- **State:** session-local; reload uses breakpoint defaults rather than cookie or local-storage persistence.
+
 ### Message
 
 - **Variants:** assistant editorial text on canvas; user text on warm card surface; streaming; error.
