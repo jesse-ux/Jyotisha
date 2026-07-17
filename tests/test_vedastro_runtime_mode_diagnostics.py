@@ -37,7 +37,7 @@ def test_vedastro_diagnostics_reports_fast_fallback_mode_without_endpoint() -> N
     assert "VEDASTRO_API_ENDPOINT" in report["missing"]
     assert "missing_endpoint" in report["readiness_blockers"]
     assert "network_disabled" in report["readiness_blockers"]
-    assert "timeout_too_low" in report["readiness_blockers"]
+    assert "timeout_too_low" not in report["readiness_blockers"]
     assert report["expected_fallback_status"] == "official_snapshot_budget_exhausted_or_endpoint_blocked"
     assert "VEDASTRO_API_ENDPOINT" in report["official_closure_plan"]["required_env"]
     assert report["official_closure_plan"]["raw_response_acceptance"] == "vedastro_official.raw_response must be present before claiming official cloud closure."

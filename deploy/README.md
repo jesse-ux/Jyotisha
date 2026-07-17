@@ -87,12 +87,22 @@ OPENAI_API_KEY=<server-secret>
 # LLM_API_KEY=<server-secret>
 # LLM_MODEL=provider-model-id
 
-# Optional VedAstro official upstream; local fallback remains available:
-VEDASTRO_API_ENDPOINT=...
-VEDASTRO_API_KEY=...
+# Required VedAstro server-side upstream for chart creation and rectification:
+VEDASTRO_GATEWAY_MODE=official_first
+VEDASTRO_API_ENDPOINT=https://api.vedastro.org/api
+VEDASTRO_ENABLE_NETWORK=1
+VEDASTRO_TIMEOUT_SECONDS=20
+VEDASTRO_API_KEY=<server-secret>
 ```
 
 Never commit `.env.production`, `SUPABASE_SERVICE_ROLE_KEY`, model keys, user JWTs, SSH private keys or passwords. `NEXT_PUBLIC_SUPABASE_ANON_KEY` is intentionally public; authorization is enforced by Supabase RLS and server-side checks.
+
+After changing VedAstro variables, restart the API and verify the configuration without printing credentials:
+```bash
+docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build api
+docker compose --env-file .env.production -f deploy/docker-compose.server.yml exec api python3 scripts/diagnose_vedastro_mode.py
+```
+The report must show `mode: official_extended` and `network_enabled: true`. A missing raw response remains an upstream response boundary, not a successful external verification.
 
 ## Connect and inspect
 
