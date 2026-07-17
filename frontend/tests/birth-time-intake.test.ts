@@ -4,7 +4,9 @@ import {
   assistantIntentCopy,
   birthTimePersistenceValues,
   describeBirthTimeDraft,
+  formatBirthDate,
   isBirthTimeDraftReady,
+  parseBirthDate,
   type BirthTimeDraft,
 } from "../src/lib/birth-time-intake-model.ts";
 
@@ -78,4 +80,20 @@ test("birth time intake describes uncertainty without claiming false precision",
     assistantIntentCopy("present_saved_candidate_range"),
     "目前只能保存候选范围，还没有足够证据应用到具体分钟。",
   );
+});
+
+test("birth date parsing preserves the local calendar day", () => {
+  const parsed = parseBirthDate("1993-04-17");
+
+  assert.equal(parsed?.getFullYear(), 1993);
+  assert.equal(parsed?.getMonth(), 3);
+  assert.equal(parsed?.getDate(), 17);
+});
+
+test("birth date values round trip leap days and reject invalid input", () => {
+  const leapDay = parseBirthDate("2000-02-29");
+
+  assert.equal(leapDay === undefined ? undefined : formatBirthDate(leapDay), "2000-02-29");
+  assert.equal(parseBirthDate(""), undefined);
+  assert.equal(parseBirthDate("2001-02-29"), undefined);
 });

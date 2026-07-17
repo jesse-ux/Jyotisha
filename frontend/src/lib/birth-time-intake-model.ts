@@ -1,4 +1,7 @@
+import { format, isValid, parse } from "date-fns";
 import type { JourneySnapshot } from "./birth-time-journey.ts";
+
+const birthDatePattern = "yyyy-MM-dd";
 
 export type BirthTimeSource =
   | ""
@@ -38,6 +41,17 @@ export type BirthTimeDraft = {
 };
 
 export type BirthTimeDraftPatch = Partial<BirthTimeDraft>;
+
+export function parseBirthDate(value: string): Date | undefined {
+  if (value === "") return undefined;
+  const parsed = parse(value, birthDatePattern, new Date(2000, 0, 1));
+  if (!isValid(parsed) || format(parsed, birthDatePattern) !== value) return undefined;
+  return parsed;
+}
+
+export function formatBirthDate(value: Date): string {
+  return format(value, birthDatePattern);
+}
 
 export const birthTimeSourceOptions = [
   { value: "hospital_record", label: "出生证明或医院记录", hint: "先检查前后两分钟是否稳定" },
