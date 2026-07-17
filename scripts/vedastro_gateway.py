@@ -133,7 +133,7 @@ def _official_raw_response(result: dict[str, Any]) -> Any:
     if raw:
         return raw
     raw = result.get("raw_response")
-    if isinstance(raw, dict) and raw.get("source") == "vedastro_official":
+    if isinstance(raw, dict) and str(raw.get("source") or "").startswith("vedastro_official"):
         return raw
     return None
 
