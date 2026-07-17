@@ -23,3 +23,9 @@ def test_web_image_copies_postcss_config_before_building_frontend() -> None:
 
     assert config_copy in web
     assert web.index(config_copy) < web.index("RUN npm run build")
+
+
+def test_server_compose_allows_only_the_internal_api_hostname() -> None:
+    compose = (ROOT / "deploy" / "docker-compose.server.yml").read_text(encoding="utf-8")
+
+    assert "JYOTISH_ALLOWED_HOSTS: localhost,127.0.0.1,::1,api" in compose

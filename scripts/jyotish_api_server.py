@@ -1220,6 +1220,7 @@ DEFAULT_ALLOWED_ORIGINS = {
     'http://localhost:5173',
     'http://127.0.0.1:5173',
 }
+DEFAULT_ALLOWED_HOSTS = {'localhost', '127.0.0.1', '::1'}
 MAX_REQUEST_BYTES = 2 * 1024 * 1024
 MAX_IMPORT_FILE_BYTES = 1536 * 1024
 MAX_IMPORT_TEXT_CHARS = 500_000
@@ -1399,7 +1400,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if origin and origin not in allowed:
             raise Forbidden('Origin is not allowed')
         host = (self.headers.get('Host') or '').split(':', 1)[0].strip('[]').lower()
-        if host and host not in {'localhost', '127.0.0.1', '::1'}:
+        allowed_hosts = getattr(self.server, 'allowed_hosts', DEFAULT_ALLOWED_HOSTS)
+        if host and host not in allowed_hosts:
             raise Forbidden('Host is not allowed')
         if require_json:
             content_type = (self.headers.get('Content-Type') or '').split(';', 1)[0].strip().lower()
@@ -8346,11 +8348,18 @@ def _parse_allowed_origins(value):
     return {item.strip() for item in value.split(',') if item.strip()}
 
 
-def start_server(port=5200, host='127.0.0.1', allowed_origins=None):
+def _parse_allowed_hosts(value):
+    if not value:
+        return DEFAULT_ALLOWED_HOSTS
+    return {item.strip().lower() for item in value.split(',') if item.strip()}
+
+
+def start_server(port=5200, host='127.0.0.1', allowed_origins=None, allowed_hosts=None):
     cleanup = prune_expired_async_jobs()
     server = ThreadingHTTPServer((host, port), JyotishAPIHandler)
     server.daemon_threads = True
     server.allowed_origins = allowed_origins or DEFAULT_ALLOWED_ORIGINS
+    server.allowed_hosts = allowed_hosts or DEFAULT_ALLOWED_HOSTS
     print(f'Jyotish API v6.9.14 running on http://{host}:{port}')
     print(f"  Async job cleanup: scanned={cleanup['scanned']}, removed={cleanup['removed']}")
     print(f'  CORS origins: {", ".join(sorted(server.allowed_origins))}')
@@ -8394,7 +8403,20 @@ if __name__ == '__main__':
         default=[],
         help='Allowed browser origin; may be repeated. Defaults to local Vite origins.',
     )
+    parser.add_argument(
+        '--allow-host',
+        action='append',
+        default=[],
+        help='Allowed HTTP Host name; may be repeated. Defaults to loopback hosts.',
+    )
     args = parser.parse_args()
     env_origins = _parse_allowed_origins(os.environ.get('JYOTISH_ALLOWED_ORIGINS'))
     cli_origins = set(args.allow_origin)
-    start_server(args.port, host=args.host, allowed_origins=cli_origins or env_origins)
+    env_hosts = _parse_allowed_hosts(os.environ.get('JYOTISH_ALLOWED_HOSTS'))
+    cli_hosts = {item.strip().lower() for item in args.allow_host if item.strip()}
+    start_server(
+        args.port,
+        host=args.host,
+        allowed_origins=cli_origins or env_origins,
+        allowed_hosts=cli_hosts or env_hosts,
+    )
