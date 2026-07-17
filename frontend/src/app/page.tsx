@@ -33,6 +33,12 @@ type Profile = {
   cityCode: string;
   districtCode: string;
 };
+type ChartLibraryRecord = {
+  id: string;
+  role: "self" | "other";
+  profile: Profile;
+  updatedAt: number;
+};
 type ChatSession = { id: string; title: string; theme: Theme; modelId: string; messages: Message[]; updatedAt: number };
 type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
@@ -164,6 +170,37 @@ function selectedBirthPlace(profile: Profile): BirthPlace | null {
     .join(" · ");
 
   return { label, lat: location.center[1], lon: location.center[0], tz: china.timezone };
+}
+
+function chartLibraryStorageKey(accountId: string) {
+  return `jyotisha_chart_library:${accountId}`;
+}
+
+function profileReadyForLibrary(profile: Profile) {
+  return !missingProfileStep(profile);
+}
+
+function buildSelfChartRecord(profile: Profile): ChartLibraryRecord {
+  return { id: "self", role: "self", profile, updatedAt: timestamp() };
+}
+
+function upsertSelfChart(library: ChartLibraryRecord[], profile: Profile) {
+  if (!profileReadyForLibrary(profile)) return library.filter((record) => record.role !== "self");
+  const others = library.filter((record) => record.role !== "self");
+  return [buildSelfChartRecord(profile), ...others];
+}
+
+function readChartLibrary(accountId: string): ChartLibraryRecord[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(chartLibraryStorageKey(accountId)) || "[]") as ChartLibraryRecord[];
+    return Array.isArray(parsed) ? parsed.filter((record) => record?.id && record?.profile) : [];
+  } catch {
+    return [];
+  }
+}
+
+function profilePlaceLabel(profile: Profile) {
+  return selectedBirthPlace(profile)?.label || "地点未完整";
 }
 
 function missingProfileStep(profile: Profile): OnboardingStep | null {
@@ -330,12 +367,12 @@ function BirthLocationFields({ value, onChange }: { value: Profile; onChange: (p
   );
 }
 
-function ProfileFields({ value, onChange }: { value: Profile; onChange: (profile: Profile) => void }) {
+function ProfileFields({ value, onChange, nameInputId }: { value: Profile; onChange: (profile: Profile) => void; nameInputId?: string }) {
   return (
     <>
       <label>
         <span>如何称呼你</span>
-        <input id="profile-name" required autoComplete="name" maxLength={80} placeholder="例如：林遥" value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} />
+        <input id={nameInputId} required autoComplete="name" maxLength={80} placeholder="例如：林遥" value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} />
       </label>
       <BirthMomentFields value={value} onChange={onChange} />
       <BirthLocationFields value={value} onChange={onChange} />
@@ -428,6 +465,9 @@ async function fetchModelCatalog(signal?: AbortSignal) {
 export default function Home() {
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [profileDraft, setProfileDraft] = useState<Profile>(emptyProfile);
+  const [chartLibrary, setChartLibrary] = useState<ChartLibraryRecord[]>([]);
+  const [chartLibraryOpen, setChartLibraryOpen] = useState(false);
+  const [otherProfileDraft, setOtherProfileDraft] = useState<Profile>(emptyProfile);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
@@ -491,6 +531,24 @@ export default function Home() {
   }, [activeSessionId]);
   const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
   const accountId = account?.user.id;
+
+  useEffect(() => {
+    if (!accountId) {
+      setChartLibrary([]);
+      return;
+    }
+    setChartLibrary(upsertSelfChart(readChartLibrary(accountId), profile));
+  }, [accountId, profile]);
+
+  useEffect(() => {
+    if (!accountId) return;
+    setChartLibrary((current) => {
+      const next = upsertSelfChart(current, profile);
+      localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+      return next;
+    });
+  }, [accountId, profile]);
+
   const profileComplete = isProfileComplete(profile);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
@@ -930,6 +988,55 @@ export default function Home() {
       .maybeSingle();
     if (error) throw error;
     if (!data) throw new Error("账户档案不存在，请重新登录后再试。");
+  }
+
+  function saveOtherChart(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextProfile = { ...otherProfileDraft, name: otherProfileDraft.name.trim() };
+    if (missingProfileStep(nextProfile)) {
+      setAccountError("请补全其他星盘的称呼、出生时间和出生地点。");
+      return;
+    }
+    if (!accountId) return;
+    const record: ChartLibraryRecord = {
+      id: globalThis.crypto.randomUUID(),
+      role: "other",
+      profile: nextProfile,
+      updatedAt: timestamp(),
+    };
+    setChartLibrary((current) => {
+      const next = [...upsertSelfChart(current, profile), record];
+      localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+      return next;
+    });
+    setOtherProfileDraft(emptyProfile);
+    setAccountError("");
+    setProfileNotice("已添加到星盘库。");
+  }
+
+  function deleteOtherChart(recordId: string) {
+    if (!accountId) return;
+    setChartLibrary((current) => {
+      const next = current.filter((record) => record.id !== recordId || record.role === "self");
+      localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+      return next;
+    });
+  }
+
+  async function makeDefaultChart(record: ChartLibraryRecord) {
+    if (record.role !== "other" || profileSaving) return;
+    setProfileSaving(true);
+    setAccountError("");
+    try {
+      await persistProfile(record.profile);
+      setProfile(record.profile);
+      setProfileDraft(record.profile);
+      setProfileNotice("已设为当前默认星盘。");
+    } catch (caught) {
+      setAccountError(friendlyError(caught instanceof Error ? caught.message : "默认星盘保存失败"));
+    } finally {
+      setProfileSaving(false);
+    }
   }
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
@@ -1732,11 +1839,48 @@ export default function Home() {
                 <strong>{profileDraft.name.trim() || "未命名"}</strong>
                 <small>角色：本人</small>
               </div>
-              <button className="button-secondary" type="button" onClick={() => profileDialog.current?.querySelector<HTMLInputElement>("#profile-name")?.focus()}>管理星盘库</button>
+              <button className="button-secondary" type="button" onClick={() => setChartLibraryOpen((current) => !current)}>管理星盘库</button>
             </div>
+            {chartLibraryOpen && (
+              <div className="chart-library-panel" aria-label="星盘库">
+                <div className="chart-library-group">
+                  <b>本人</b>
+                  {chartLibrary.filter((record) => record.role === "self").map((record) => (
+                    <article className="chart-library-item" key={record.id}>
+                      <div>
+                        <strong>{record.profile.name || "未命名"}</strong>
+                        <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
+                      </div>
+                      <span>当前默认</span>
+                    </article>
+                  ))}
+                </div>
+                <div className="chart-library-group">
+                  <b>其他</b>
+                  {chartLibrary.filter((record) => record.role === "other").length === 0 && <p className="empty-library-copy">还没有其他星盘。</p>}
+                  {chartLibrary.filter((record) => record.role === "other").map((record) => (
+                    <article className="chart-library-item" key={record.id}>
+                      <div>
+                        <strong>{record.profile.name || "未命名"}</strong>
+                        <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
+                      </div>
+                      <div className="chart-library-actions">
+                        <button className="button-secondary" type="button" onClick={() => void makeDefaultChart(record)} disabled={profileSaving}>设为默认</button>
+                        <button className="button-secondary danger-button" type="button" onClick={() => deleteOtherChart(record.id)}>删除</button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                <form className="profile-form chart-library-form" onSubmit={saveOtherChart}>
+                  <div className="section-heading"><b>添加其他星盘</b><small>用于合盘、亲友盘或客户盘。</small></div>
+                  <ProfileFields value={otherProfileDraft} onChange={setOtherProfileDraft} nameInputId="other-profile-name" />
+                  <button className="button-primary save-profile" type="submit" disabled={!account}>添加到星盘库</button>
+                </form>
+              </div>
+            )}
             {profileNotice && <p className="form-success" role="status">{profileNotice}</p>}
             <form className="profile-form" onSubmit={saveProfile}>
-              <ProfileFields value={profileDraft} onChange={setProfileDraft} />
+              <ProfileFields value={profileDraft} onChange={setProfileDraft} nameInputId="profile-name" />
               <button className="button-primary save-profile" type="submit" disabled={profileSaving || !account}>{profileSaving ? "保存中" : "保存出生资料"}</button>
             </form>
           </section>
