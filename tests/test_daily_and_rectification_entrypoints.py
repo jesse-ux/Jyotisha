@@ -22,6 +22,9 @@ def test_daily_starlanguage_entrypoint_is_productized() -> None:
 def test_daily_starlanguage_api_declares_honest_source_boundary() -> None:
     source = DAILY_ROUTE.read_text(encoding="utf-8")
     assert "status: \"ok\"" in source
+    assert "/api/chart" in source
+    assert "/api/transit" in source
+    assert "jyotish_api_transit_lite" in source
     assert "calculation_lite" in source
     assert "exploratory_unvalidated" in source
     assert "not_deterministic_prediction" in source

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { chinaLocations } from "@/data/china-locations";
 
 type Profile = {
   name?: string;
@@ -6,7 +7,10 @@ type Profile = {
   time?: string;
   provinceCode?: string;
   cityCode?: string;
+  districtCode?: string;
 };
+
+const jyotishApiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
 
 const cards = [
   { trend: "先收束，再推进。适合把一个悬而未决的问题拆小。", action: "选一件最重要的事，给它留出 45 分钟不被打断的时间。", caution: "避免在情绪最满时做承诺。" },
@@ -21,14 +25,90 @@ function pickCard(profile: Profile, today: string) {
   return cards[index];
 }
 
+function profilePayload(profile: Profile, today: string) {
+  if (!profile.date || !profile.time) return null;
+  const [year, month, day] = profile.date.split("-").map(Number);
+  const [hour, minute] = profile.time.split(":").map(Number);
+  const province = chinaLocations.country.provinces.find((item) => item.code === profile.provinceCode);
+  const city = province?.cities.find((item) => item.code === profile.cityCode);
+  const district = city?.districts.find((item) => item.code === profile.districtCode);
+  const location = district ?? city;
+  if (!year || !month || !day || Number.isNaN(hour) || Number.isNaN(minute) || !location) return null;
+  return {
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    lat: location.center[1],
+    lon: location.center[0],
+    tz: chinaLocations.country.timezone,
+    transit_date: today,
+    today,
+    ayanamsa: "lahiri",
+    node_mode: "mean",
+  };
+}
+
+function chartPoints(chart: Record<string, unknown>) {
+  const modules = chart.modules && typeof chart.modules === "object" ? chart.modules as Record<string, unknown> : {};
+  const chartModule = modules.chart && typeof modules.chart === "object" ? modules.chart as Record<string, unknown> : chart;
+  const planets = chartModule.planets && typeof chartModule.planets === "object" ? chartModule.planets : undefined;
+  const ascendant = chartModule.ascendant && typeof chartModule.ascendant === "object" ? chartModule.ascendant : undefined;
+  return planets && ascendant ? { planets, ascendant } : null;
+}
+
+async function fetchJson(path: string, body: Record<string, unknown>) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 2500);
+  try {
+    const response = await fetch(`${jyotishApiBase}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`jyotish_api_${response.status}`);
+    return await response.json() as Record<string, unknown>;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function transitBackedCard(profile: Profile, today: string) {
+  const payload = profilePayload(profile, today);
+  if (!payload) return null;
+  const chart = await fetchJson("/api/chart", payload);
+  const points = chartPoints(chart);
+  if (!points) return null;
+  const tomorrow = new Date(`${today}T00:00:00.000Z`);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  const transit = await fetchJson("/api/transit", {
+    natal_planets: points.planets,
+    ascendant: points.ascendant,
+    start: today,
+    end: tomorrow.toISOString().slice(0, 10),
+    planets_to_check: ["Saturn", "Jupiter", "Rahu", "Ketu"],
+  });
+  const summary = transit.summary && typeof transit.summary === "object" ? transit.summary as Record<string, unknown> : {};
+  const total = Number(summary.total_triggers ?? 0);
+  return {
+    trend: total > 0 ? `今日有 ${total} 个可观察过境触发点，适合把它当作时间窗口观察。` : "今日未发现强精确过境触发，适合按本命节奏稳步推进。",
+    action: "把今日计划压缩到一件主事，并记录实际发生的触发点。",
+    caution: "过境触发不能单独定事件，需与 Dasha、分盘和本命承诺交叉确认。",
+  };
+}
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as { profile?: Profile; today?: string } | null;
   const profile = body?.profile ?? {};
   const today = body?.today || new Date().toISOString().slice(0, 10);
+  const transitCard = await transitBackedCard(profile, today).catch(() => null);
   return NextResponse.json({
     status: "ok",
-    card: pickCard(profile, today),
-    source: "calculation_lite",
+    card: transitCard ?? pickCard(profile, today),
+    source: transitCard ? "jyotish_api_transit_lite" : "calculation_lite",
     claim_status: "exploratory_unvalidated",
     boundary: "not_deterministic_prediction",
   });
