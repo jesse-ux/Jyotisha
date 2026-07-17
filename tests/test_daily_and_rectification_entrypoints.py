@@ -3,6 +3,7 @@ from pathlib import Path
 
 PAGE = Path("frontend/src/app/page.tsx")
 DAILY_ROUTE = Path("frontend/src/app/api/daily-starlanguage/route.ts")
+RECTIFICATION_ROUTE = Path("frontend/src/app/api/birth-rectification/route.ts")
 
 
 def test_daily_starlanguage_entrypoint_is_productized() -> None:
@@ -33,6 +34,16 @@ def test_daily_starlanguage_api_declares_honest_source_boundary() -> None:
 def test_birth_time_rectification_entrypoint_is_productized() -> None:
     source = PAGE.read_text(encoding="utf-8")
     assert "生时校正" in source
+    assert "fetchBirthRectificationPreview" in source
+    assert "birth-rectification-card" in source
     assert "draftBirthTimeRectificationQuestion" in source
     assert "候选出生时间段" in source
     assert "不能直接改写默认星盘" in source
+
+
+def test_birth_rectification_api_proxies_active_questionnaire_with_boundary() -> None:
+    source = RECTIFICATION_ROUTE.read_text(encoding="utf-8")
+    assert "/api/active_rectification_questions" in source
+    assert "candidate_scan" in source
+    assert "question_count" in source
+    assert "not_auto_rectified" in source

@@ -81,6 +81,13 @@ type DailyStarlanguageApiResponse = {
   claim_status?: "exploratory_unvalidated";
   boundary?: "not_deterministic_prediction";
 };
+type BirthRectificationPreview = {
+  status?: "ok" | "blocked";
+  candidate_scan?: { start?: string; end?: string; candidate_count?: number };
+  question_count?: number;
+  boundary?: "not_auto_rectified";
+  source?: "active_rectification_questions" | "fallback_unavailable";
+};
 type SessionReadResult = { readonly sessions: ChatSession[]; readonly fallbackSessionIds: string[] };
 type PendingConsultation = {
   readonly requestId: string;
@@ -360,6 +367,16 @@ async function fetchDailyStarlanguage(profile: Profile) {
   return payload.card;
 }
 
+async function fetchBirthRectificationPreview(profile: Profile) {
+  const response = await fetch("/api/birth-rectification", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile }),
+  });
+  if (!response.ok) throw new Error("birth_rectification_preview_unavailable");
+  return await response.json().catch(() => null) as BirthRectificationPreview | null;
+}
+
 function buildBirthTimeRectificationQuestion(profile: Profile) {
   return [
     `请为${profile.name || "我"}做生时校正辅助。`,
@@ -637,6 +654,7 @@ export default function Home() {
   const [synastryReportCard, setSynastryReportCard] = useState<SynastryReportCard | null>(null);
   const [synastryHistory, setSynastryHistory] = useState<SynastryReportCard[]>([]);
   const [dailyStarlanguageCard, setDailyStarlanguageCard] = useState<DailyStarlanguageCard | null>(null);
+  const [birthRectificationPreview, setBirthRectificationPreview] = useState<BirthRectificationPreview | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
@@ -997,6 +1015,22 @@ export default function Home() {
       })
       .catch(() => {
         if (!cancelled) setDailyStarlanguageCard(buildDailyStarlanguageCard(profile));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, profile.date, profile.time, profile.provinceCode, profile.cityCode, profileComplete]);
+
+  useEffect(() => {
+    if (!hydrated || !profileComplete) return;
+    let cancelled = false;
+    setBirthRectificationPreview(null);
+    void fetchBirthRectificationPreview(profile)
+      .then((preview) => {
+        if (!cancelled) setBirthRectificationPreview(preview);
+      })
+      .catch(() => {
+        if (!cancelled) setBirthRectificationPreview({ status: "blocked", boundary: "not_auto_rectified", source: "fallback_unavailable" });
       });
     return () => {
       cancelled = true;
@@ -2017,10 +2051,18 @@ export default function Home() {
                       </dl>
                       <small>探索性日提示，不是确定预测。</small>
                     </article>
-                    <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftBirthTimeRectificationQuestion}>
-                      <span><b>生时校正</b><small>收集事件证据并给候选出生时间段，不能直接改写默认星盘。</small></span>
-                      <ArrowUpRight className="starter-arrow" aria-hidden="true" />
-                    </button>
+                    <article className="birth-rectification-card" aria-label="生时校正">
+                      <div className="daily-starlanguage-heading">
+                        <span>生时校正</span>
+                        <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftBirthTimeRectificationQuestion}>开始校正 <ArrowUpRight className="starter-arrow" aria-hidden="true" /></button>
+                      </div>
+                      <dl>
+                        <div><dt>候选出生时间段</dt><dd>{birthRectificationPreview?.candidate_scan?.start && birthRectificationPreview?.candidate_scan?.end ? `${birthRectificationPreview.candidate_scan.start} – ${birthRectificationPreview.candidate_scan.end}` : "默认先扫描前后 30 分钟"}</dd></div>
+                        <div><dt>候选点</dt><dd>{birthRectificationPreview?.candidate_scan?.candidate_count ? `${birthRectificationPreview.candidate_scan.candidate_count} 个` : "待后端生成"}</dd></div>
+                        <div><dt>问题数</dt><dd>{birthRectificationPreview?.question_count ? `${birthRectificationPreview.question_count} 个事件问题` : "需补关键人生事件"}</dd></div>
+                      </dl>
+                      <small>不能直接改写默认星盘；需事件证据验证。</small>
+                    </article>
                   </div>
                 </div>
               ))}

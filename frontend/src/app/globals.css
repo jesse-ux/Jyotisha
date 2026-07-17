@@ -315,14 +315,14 @@ button:disabled { cursor: default; opacity: .45; }
 .product-entrypoints button { min-height: 132px; align-items: end; border: 1px solid var(--color-border); background: var(--color-canvas); }
 .product-entrypoints span { display: grid; gap: var(--space-2); }
 .product-entrypoints small { color: var(--color-ink-secondary); line-height: 1.45; font-size: var(--type-caption); }
-.daily-starlanguage-card { min-height: 132px; display: grid; gap: var(--space-3); padding: var(--space-5); border: 1px solid color-mix(in srgb, var(--color-action) 16%, var(--color-border)); border-radius: var(--radius-lg); background: var(--color-canvas); }
+.daily-starlanguage-card, .birth-rectification-card { min-height: 132px; display: grid; gap: var(--space-3); padding: var(--space-5); border: 1px solid color-mix(in srgb, var(--color-action) 16%, var(--color-border)); border-radius: var(--radius-lg); background: var(--color-canvas); }
 .daily-starlanguage-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .daily-starlanguage-heading > span { color: var(--color-action); font-size: var(--type-overline); font-weight: 600; letter-spacing: 1.5px; }
 .daily-starlanguage-heading button { min-height: 36px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; color: var(--color-ink); font-size: var(--type-caption); }
-.daily-starlanguage-card dl { display: grid; gap: var(--space-2); margin: 0; }
-.daily-starlanguage-card div { display: grid; gap: 4px; }
-.daily-starlanguage-card dt { color: var(--color-ink-secondary); font-size: var(--type-caption); }
-.daily-starlanguage-card dd { margin: 0; color: var(--color-ink); line-height: 1.45; }
+.daily-starlanguage-card dl, .birth-rectification-card dl { display: grid; gap: var(--space-2); margin: 0; }
+.daily-starlanguage-card div, .birth-rectification-card div { display: grid; gap: 4px; }
+.daily-starlanguage-card dt, .birth-rectification-card dt { color: var(--color-ink-secondary); font-size: var(--type-caption); }
+.daily-starlanguage-card dd, .birth-rectification-card dd { margin: 0; color: var(--color-ink); line-height: 1.45; }
 .starter-loading { color: var(--color-ink-secondary); margin-left: 0; padding: var(--space-5); border-radius: var(--radius-lg); background: var(--color-canvas-muted); font-size: 14px; }
 .starter-note { margin: 10px 0 0; color: var(--color-ink-secondary); line-height: 1.5; grid-column: 1 / -1; font-size: 13px; }
 
