@@ -16,9 +16,11 @@ if str(SCRIPT_DIR) not in sys.path:
 try:
     from scripts.domain_calculation_service import compute_chart
     from scripts.timing_precision_contract import build_timing_precision_contract
+    from scripts.varga import calc_varga
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
     from domain_calculation_service import compute_chart
     from timing_precision_contract import build_timing_precision_contract
+    from varga import calc_varga
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +37,10 @@ FEATURE_WEIGHTS = {
     "moon_sign": 0.30,
     "domain_lord_sign": 0.25,
     "node_axis": 0.10,
+    "d9_ascendant": 0.10,
+    "d9_venus": 0.10,
+    "d10_ascendant": 0.10,
+    "d10_sun": 0.10,
 }
 HIGH_SIMILARITY_THRESHOLD = 0.75
 
@@ -53,14 +59,45 @@ def _domain_lord_sign(chart: dict[str, Any], domain: str) -> str | None:
     return _sign(chart, lord) if isinstance(lord, str) else None
 
 
+def _longitude(chart: dict[str, Any], key: str) -> float | None:
+    if key == "Ascendant":
+        value = chart.get("ascendant") if isinstance(chart, dict) else None
+    else:
+        planets = chart.get("planets") if isinstance(chart, dict) else None
+        value = planets.get(key) if isinstance(planets, dict) else None
+    if not isinstance(value, dict):
+        return None
+    try:
+        return float(value["lon"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _varga_sign(chart: dict[str, Any], key: str, division: int) -> str | None:
+    longitude = _longitude(chart, key)
+    return calc_varga(longitude, division)["sign"] if longitude is not None else None
+
+
 def _features(chart: dict[str, Any], domain: str) -> dict[str, Any]:
     ascendant = chart.get("ascendant") if isinstance(chart, dict) else None
-    return {
+    rahu, ketu = _sign(chart, "Rahu"), _sign(chart, "Ketu")
+    features = {
         "ascendant": ascendant.get("sign") if isinstance(ascendant, dict) else None,
         "moon_sign": _sign(chart, "Moon"),
         "domain_lord_sign": _domain_lord_sign(chart, domain),
-        "node_axis": (_sign(chart, "Rahu"), _sign(chart, "Ketu")),
+        "node_axis": (rahu, ketu) if rahu is not None and ketu is not None else None,
     }
+    if domain == "marriage":
+        features.update({
+            "d9_ascendant": _varga_sign(chart, "Ascendant", 9),
+            "d9_venus": _varga_sign(chart, "Venus", 9),
+        })
+    elif domain == "career":
+        features.update({
+            "d10_ascendant": _varga_sign(chart, "Ascendant", 10),
+            "d10_sun": _varga_sign(chart, "Sun", 10),
+        })
+    return features
 
 
 @lru_cache(maxsize=64)
@@ -97,6 +134,8 @@ def _similarity(user_chart: dict[str, Any], case_chart: dict[str, Any], domain: 
     candidate = _features(case_chart, domain)
     matching, dissimilar, total = [], [], 0.0
     for name, weight in FEATURE_WEIGHTS.items():
+        if name not in user or name not in candidate:
+            continue
         if user[name] is None or candidate[name] is None:
             continue
         total += weight
@@ -105,12 +144,22 @@ def _similarity(user_chart: dict[str, Any], case_chart: dict[str, Any], domain: 
         else:
             dissimilar.append(name)
     score = round(sum(FEATURE_WEIGHTS[name] for name in matching) / total, 3) if total else 0.0
+    compared_vargas = []
+    if domain == "marriage" and all(user.get(name) is not None and candidate.get(name) is not None for name in ("d9_ascendant", "d9_venus")):
+        compared_vargas.append("D9")
+    if domain == "career" and all(user.get(name) is not None and candidate.get(name) is not None for name in ("d10_ascendant", "d10_sun")):
+        compared_vargas.append("D10")
+    uncompared = ["dasha_event_state", "transit_event_state"]
+    if domain == "marriage" and "D9" not in compared_vargas:
+        uncompared.insert(0, "D9")
+    if domain == "career" and "D10" not in compared_vargas:
+        uncompared.insert(0, "D10")
     return {
         "score": score,
         "matching_factors": matching,
         "dissimilar_factors": dissimilar,
-        "feature_scope": "D1 ascendant, Moon, theme-house lord, and Rahu/Ketu axis only",
-        "uncompared_layers": ["D9", "D10", "dasha_event_state", "transit_event_state"],
+        "feature_scope": "D1 ascendant, Moon, theme-house lord, Rahu/Ketu axis" + (f", {'/'.join(compared_vargas)}" if compared_vargas else ""),
+        "uncompared_layers": uncompared,
     }
 
 

@@ -15,6 +15,21 @@ def _chart(ascendant: str, moon: str, domain_lord_sign: str) -> dict:
             "Moon": {"sign": moon},
             "Saturn": {"sign": domain_lord_sign},
         },
+        "houses": {"house_7": {"lord": "Venus"}, "house_10": {"lord": "Saturn"}},
+    }
+
+
+def _varga_chart() -> dict:
+    return {
+        "ascendant": {"sign": "Leo", "lon": 149.0634},
+        "planets": {
+            "Moon": {"sign": "Pisces", "lon": 344.5165},
+            "Saturn": {"sign": "Libra", "lon": 207.9320},
+            "Sun": {"sign": "Aquarius", "lon": 312.5175},
+            "Venus": {"sign": "Sagittarius", "lon": 267.9412},
+            "Rahu": {"sign": "Sagittarius", "lon": 249.2743},
+            "Ketu": {"sign": "Gemini", "lon": 69.2743},
+        },
         "houses": {"house_10": {"lord": "Saturn"}},
     }
 
@@ -51,6 +66,7 @@ def test_select_similar_cases_shares_only_high_similarity_same_domain() -> None:
     assert selected["status"] == "high_similarity_public_references_available"
     assert [case["case_id"] for case in selected["cases"]] == ["matching_career_case"]
     assert selected["cases"][0]["similarity"]["score"] == 1.0
+    assert "node_axis" not in selected["cases"][0]["similarity"]["matching_factors"]
     assert selected["cases"][0]["event_source"]["url"] == "https://example.com/event"
     assert selected["does_not_predict_user_outcome"] is True
     assert selected["coverage"] == {
@@ -110,6 +126,44 @@ def test_pending_health_case_is_context_only_not_calibration() -> None:
     assert selected["cases"][0]["reference_status"] == "public_context_only"
     assert selected["cases"][0]["reference_only"] is True
     assert selected["coverage"]["available_event_domains"] == ["health"]
+
+
+def test_career_similarity_adds_d10_only_when_both_charts_have_longitudes() -> None:
+    chart = _varga_chart()
+    cases = [{
+        "case_id": "d10_match", "subject": {"name": "Public Example"}, "chart": chart,
+        "source": {"url": "https://example.com/birth", "source_grade": "primary"},
+        "event_outcomes": [{
+            "domain": "career", "event_type": "career_breakthrough", "event_date": "2007-01-09",
+            "outcome": "Public career event", "source": {"url": "https://example.com/event", "source_grade": "primary"},
+        }],
+        "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": False},
+    }]
+
+    selected = select_similar_public_cases(chart, ["career"], cases=cases)
+
+    similarity = selected["cases"][0]["similarity"]
+    assert {"d10_ascendant", "d10_sun"}.issubset(similarity["matching_factors"])
+    assert "D10" not in similarity["uncompared_layers"]
+
+
+def test_marriage_similarity_adds_d9_only_when_both_charts_have_longitudes() -> None:
+    chart = _varga_chart()
+    cases = [{
+        "case_id": "d9_match", "subject": {"name": "Public Example"}, "chart": chart,
+        "source": {"url": "https://example.com/birth", "source_grade": "primary"},
+        "event_outcomes": [{
+            "domain": "marriage", "event_type": "legal_marriage", "event_date": "2011-04-29",
+            "outcome": "Public marriage event", "source": {"url": "https://example.com/event", "source_grade": "primary"},
+        }],
+        "replay": {"outcome_replay_status": "replayed", "do_not_use_for_prediction": False},
+    }]
+
+    selected = select_similar_public_cases(chart, ["marriage"], cases=cases)
+
+    similarity = selected["cases"][0]["similarity"]
+    assert {"d9_ascendant", "d9_venus"}.issubset(similarity["matching_factors"])
+    assert "D9" not in similarity["uncompared_layers"]
 
 
 def test_default_manifest_exposes_kahlo_health_as_context_only() -> None:
