@@ -93,6 +93,14 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 - **States:** default, hover, focus with deep-brown ring, disabled, invalid, loading.
 - **Accessibility:** persistent label where practical; composer has an explicit accessible label.
 
+### Model selector
+
+- **Structure:** a compact text trigger sits below the composer and opens an upward popover aligned to its left edge. The trigger names the active model; the popover gives each option a model name, short purpose, credit cost, and radio selection state.
+- **Surface:** canvas trigger with no card treatment; the popover uses the elevated canvas recipe, warm hairlines, and one selected-surface row. The action color is reserved for the selected indicator and focus ring.
+- **States:** closed, open, hover, focus-visible, selected, disabled, and unavailable catalog. Selecting a model closes the popover and only affects later messages in the current conversation.
+- **Accessibility:** the trigger and every option meet the 44px touch target; options are a native radio group, with a small roving-focus fallback so Tab, arrow keys, Space, and screen readers consistently expose the selected model inside the popover.
+- **Motion:** the popup enters over 120ms with opacity and a 4px vertical translation; reduced-motion removes the translation.
+
 ### Navigation item
 
 - **Structure:** title, optional metadata, current-state marker.

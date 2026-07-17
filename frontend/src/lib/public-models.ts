@@ -38,3 +38,14 @@ export type PublicLanguageModelCatalog = {
 export function parsePublicModelCatalog(value: unknown): PublicLanguageModelCatalog {
   return publicLanguageModelCatalogSchema.parse(value);
 }
+
+export function resolveSessionModelId(
+  savedModelId: unknown,
+  catalog: PublicLanguageModelCatalog,
+) {
+  const modelId = typeof savedModelId === "string" ? savedModelId : "";
+  const remainsAvailable = catalog.models.some((model) => model.id === modelId);
+  return remainsAvailable
+    ? { modelId, fellBack: false } as const
+    : { modelId: catalog.defaultModelId, fellBack: true } as const;
+}

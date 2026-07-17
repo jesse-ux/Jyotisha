@@ -5,11 +5,17 @@ import { ArrowUp, ArrowUpRight, ChevronRight, Menu, Minus, Plus, Sparkles, Squar
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { ChatMessageContent } from "@/components/chat-message-content";
+import { ModelSelector } from "@/components/model-selector";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { chinaLocations, type ProvinceNode } from "@/data/china-locations";
 import { parseAgentReply, type ReplyTheme } from "@/lib/agent-reply";
 import { keepFocusWithin } from "@/lib/focus-trap";
+import {
+  parsePublicModelCatalog,
+  resolveSessionModelId,
+  type PublicLanguageModelCatalog,
+} from "@/lib/public-models";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 type Theme = ReplyTheme;
@@ -23,7 +29,7 @@ type Profile = {
   cityCode: string;
   districtCode: string;
 };
-type ChatSession = { id: string; title: string; theme: Theme; messages: Message[]; updatedAt: number };
+type ChatSession = { id: string; title: string; theme: Theme; modelId: string; messages: Message[]; updatedAt: number };
 type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
 type BirthPlace = { label: string; lat: number; lon: number; tz: number };
@@ -32,6 +38,7 @@ type OnboardingSuggestion = { theme: Exclude<Theme, "general">; text: string };
 type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[] };
 type OnboardingStep = "name" | "birth" | "place";
 type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
+type SessionReadResult = { readonly sessions: ChatSession[]; readonly fallbackSessionIds: string[] };
 type PendingConsultation = {
   readonly requestId: string;
   readonly sessionId: string;
@@ -53,6 +60,14 @@ const themes: Array<{ id: Exclude<Theme, "general">; label: string; prompt: stri
   { id: "marriage", label: "关系", prompt: "我的关系模式是什么？" },
   { id: "timing", label: "时运", prompt: "未来哪些阶段值得把握？" },
 ];
+
+const previewModelCatalog = parsePublicModelCatalog({
+  defaultModelId: "deepseek-pro",
+  models: [
+    { id: "deepseek-pro", label: "DeepSeek V4 Pro", description: "更适合复杂分析", creditCost: 1, isDefault: true },
+    { id: "gpt-5-mini", label: "ChatGPT 5 Mini", description: "响应稳定、速度均衡", creditCost: 1, isDefault: false },
+  ],
+});
 
 const presetOnboardingMessage = "你好，我是 Jyotisha。\n开始前，我想先认识你。\n请问我该怎么称呼你？";
 
@@ -112,11 +127,12 @@ function timestamp() {
   return Date.now();
 }
 
-function createSession(): ChatSession {
+function createSession(modelId: string): ChatSession {
   return {
     id: globalThis.crypto.randomUUID(),
     title: "新对话",
     theme: "general",
+    modelId,
     messages: [],
     updatedAt: timestamp(),
   };
@@ -240,12 +256,13 @@ function readProfile(value: unknown): Profile {
   };
 }
 
-function readSessions(value: unknown): ChatSession[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
+function readSessions(value: unknown, catalog: PublicLanguageModelCatalog | null): SessionReadResult {
+  if (!Array.isArray(value)) return { sessions: [], fallbackSessionIds: [] };
+  const fallbackSessionIds: string[] = [];
+  const sessions = value.flatMap((item): ChatSession[] => {
     if (!item || typeof item !== "object") return [];
-    const session = item as Partial<ChatSession> & { updated_at?: unknown };
-    const messages = Array.isArray(session.messages)
+    const session = item as Partial<ChatSession> & { model_id?: unknown; updated_at?: unknown };
+    const messages: Message[] = Array.isArray(session.messages)
       ? session.messages.flatMap((message) => (
         message && typeof message === "object"
           && ((message as Message).role === "user" || (message as Message).role === "assistant")
@@ -259,20 +276,26 @@ function readSessions(value: unknown): ChatSession[] {
       ))
       : [];
 
-    return typeof session.id === "string"
-      ? [{
+    if (typeof session.id !== "string") return [];
+    const savedModelId = session.model_id ?? session.modelId;
+    const selection = catalog
+      ? resolveSessionModelId(savedModelId, catalog)
+      : { modelId: typeof savedModelId === "string" ? savedModelId : "", fellBack: false };
+    if (catalog && selection.fellBack) fallbackSessionIds.push(session.id);
+    return [{
         id: session.id,
         title: typeof session.title === "string" ? session.title.slice(0, 36) : "新对话",
         theme: session.theme === "career" || session.theme === "marriage" || session.theme === "timing" ? session.theme : "general",
+        modelId: selection.modelId,
         messages,
         updatedAt: typeof session.updatedAt === "number"
           ? session.updatedAt
           : typeof session.updated_at === "string"
             ? Date.parse(session.updated_at)
             : timestamp(),
-      }]
-      : [];
+      }];
   });
+  return { sessions, fallbackSessionIds };
 }
 
 function BirthMomentFields({ value, onChange }: { value: Profile; onChange: (profile: Profile) => void }) {
@@ -391,6 +414,13 @@ async function fetchAccount(signal?: AbortSignal): Promise<Account> {
   return payload as Account;
 }
 
+async function fetchModelCatalog(signal?: AbortSignal) {
+  const response = await fetch("/api/models", { signal, cache: "no-store" });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(payloadMessage(payload, "暂时无法读取可用模型"));
+  return parsePublicModelCatalog(payload);
+}
+
 export default function Home() {
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [profileDraft, setProfileDraft] = useState<Profile>(emptyProfile);
@@ -406,6 +436,7 @@ export default function Home() {
   const [redeeming, setRedeeming] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [modelCatalog, setModelCatalog] = useState<PublicLanguageModelCatalog | null>(null);
   const [activeSessionId, setActiveSessionId] = useState("");
   const [draft, setDraft] = useState("");
   const [draftTheme, setDraftTheme] = useState<Theme | null>(null);
@@ -508,10 +539,12 @@ export default function Home() {
             id: "preview-session",
             title: previewMessages.length > 0 ? "未来半年是否适合换工作" : "新对话",
             theme: "career",
+            modelId: previewModelCatalog.defaultModelId,
             messages: previewMessages,
             updatedAt: timestamp(),
           };
           setAccount({ user: { id: "preview-user", email: "preview@local.test" }, credits: 8, isAdmin: false });
+          setModelCatalog(previewModelCatalog);
           setProfile(previewProfile);
           setProfileDraft(previewProfile);
           setOnboardingStep(missingProfileStep(previewProfile) ?? "name");
@@ -535,7 +568,16 @@ export default function Home() {
           return;
         }
 
-        const nextAccount = await fetchAccount(controller.signal);
+        const [nextAccount, modelCatalogResult] = await Promise.all([
+          fetchAccount(controller.signal),
+          fetchModelCatalog(controller.signal)
+            .then((catalog) => ({ catalog, unavailable: false }))
+            .catch((caught: unknown) => {
+              if (caught instanceof Error && caught.name === "AbortError") throw caught;
+              return { catalog: null, unavailable: true };
+            }),
+        ]);
+        const nextModelCatalog = modelCatalogResult.catalog;
         const [profileResult, sessionsResult] = await Promise.all([
           supabase
             .from("profiles")
@@ -545,7 +587,7 @@ export default function Home() {
             .maybeSingle(),
           supabase
             .from("chat_sessions")
-            .select("id,title,theme,messages,updated_at")
+            .select("id,title,theme,model_id,messages,updated_at")
             .abortSignal(controller.signal)
             .order("updated_at", { ascending: false }),
         ]);
@@ -553,10 +595,11 @@ export default function Home() {
         if (profileResult.error) throw profileResult.error;
         if (sessionsResult.error) throw sessionsResult.error;
 
-        let nextSessions = readSessions(sessionsResult.data);
+        const parsedSessions = readSessions(sessionsResult.data, nextModelCatalog);
+        let nextSessions = parsedSessions.sessions;
         if (nextSessions.length === 0) {
           if (controller.signal.aborted) return;
-          const initialSession = createSession();
+          const initialSession = createSession(nextModelCatalog?.defaultModelId ?? "");
           const { error } = await supabase
             .from("chat_sessions")
             .insert({
@@ -564,6 +607,7 @@ export default function Home() {
               user_id: nextAccount.user.id,
               title: initialSession.title,
               theme: initialSession.theme,
+              model_id: initialSession.modelId || null,
               messages: initialSession.messages,
               updated_at: new Date(initialSession.updatedAt).toISOString(),
             })
@@ -572,15 +616,31 @@ export default function Home() {
           nextSessions = [initialSession];
         }
 
+        if (nextModelCatalog && parsedSessions.fallbackSessionIds.length > 0) {
+          const { error } = await supabase
+            .from("chat_sessions")
+            .update({ model_id: nextModelCatalog.defaultModelId })
+            .eq("user_id", nextAccount.user.id)
+            .in("id", parsedSessions.fallbackSessionIds)
+            .abortSignal(controller.signal);
+          if (error) throw error;
+        }
+
         if (controller.signal.aborted) return;
         const nextProfile = readProfile(profileResult.data);
         setAccount(nextAccount);
+        setModelCatalog(nextModelCatalog);
         setProfile(nextProfile);
         setProfileDraft(nextProfile);
         setStartGreeting(nextProfile.name.trim() ? createStartGreeting(nextProfile.name) : "");
         setOnboardingStep(missingProfileStep(nextProfile) ?? "name");
         setSessions(nextSessions);
         setActiveSessionId(nextSessions[0].id);
+        if (modelCatalogResult.unavailable) {
+          setComposerNotice("模型服务暂时不可用，当前无法发送问题。");
+        } else if (parsedSessions.fallbackSessionIds.length > 0) {
+          setComposerNotice("此前选择的模型已下线，已切换为默认模型。");
+        }
         setAccountError("");
       } catch (caught) {
         if ((caught as Error).name !== "AbortError" && !controller.signal.aborted) {
@@ -719,6 +779,7 @@ export default function Home() {
     const values = {
       title: session.title,
       theme: session.theme,
+      model_id: session.modelId,
       messages: session.messages,
       updated_at: new Date(session.updatedAt).toISOString(),
     };
@@ -741,9 +802,9 @@ export default function Home() {
   }
 
   async function startNewChat() {
-    if (!account || creatingSession) return;
+    if (!account || !modelCatalog || creatingSession) return;
     setMobileSidebarOpen(false);
-    const nextSession = createSession();
+    const nextSession = createSession(modelCatalog.defaultModelId);
     const previousSessionId = activeSession?.id ?? "";
     setCreatingSession(true);
     setSessions((current) => [nextSession, ...current]);
@@ -763,6 +824,31 @@ export default function Home() {
       });
     } finally {
       setCreatingSession(false);
+    }
+  }
+
+  async function selectSessionModel(modelId: string) {
+    if (!activeSession || !modelCatalog || pendingSessionId || cancellationPending || creatingSession) return;
+    const selectedModel = modelCatalog.models.find((model) => model.id === modelId);
+    if (!selectedModel || activeSession.modelId === modelId) return;
+
+    const nextSession: ChatSession = {
+      ...activeSession,
+      modelId,
+      updatedAt: timestamp(),
+    };
+    updateSession(activeSession.id, () => nextSession);
+    setRequestError(null);
+    setComposerNotice(`已切换至 ${selectedModel.label}，只影响之后的问题。`);
+
+    try {
+      await persistSession(nextSession);
+    } catch (caught) {
+      setComposerNotice(`已在当前页面切换至 ${selectedModel.label}，但云端同步失败。`);
+      setRequestError({
+        sessionId: nextSession.id,
+        message: caught instanceof Error ? caught.message : "模型选择暂时无法同步到云端。",
+      });
     }
   }
 
@@ -1059,7 +1145,7 @@ export default function Home() {
   async function send(text: string, requestedTheme?: Theme) {
     const originalQuestion = text;
     const question = text.trim();
-    if (!question || !activeSession || pendingSessionId || cancellationInFlight.current || pendingConsultation.current || !account) return;
+    if (!question || !activeSession || !modelCatalog || pendingSessionId || cancellationInFlight.current || pendingConsultation.current || !account) return;
 
     if (account.credits <= 0) {
       openAccount(true);
@@ -1178,6 +1264,7 @@ export default function Home() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           requestId,
+          modelId: currentSession.modelId,
           name: profile.name,
           year,
           month,
@@ -1369,7 +1456,7 @@ export default function Home() {
       <button className="sidebar-backdrop" tabIndex={-1} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)} />
       <aside className="sidebar" ref={sidebar} id="chat-sidebar" aria-label="对话导航" inert={profileOpen}>
         <div className="brand-row"><span className="brand-mark" aria-hidden="true" /><strong>Jyotisha</strong><button className="sidebar-close" ref={sidebarCloseButton} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)}><X aria-hidden="true" /></button></div>
-        <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || creatingSession || Boolean(pendingSessionId) || cancellationPending}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
+        <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || !modelCatalog || creatingSession || Boolean(pendingSessionId) || cancellationPending}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
         <nav className="session-nav" aria-label="聊天记录">
           <span className="sidebar-label">聊天记录</span>
           <div className="session-list">
@@ -1470,7 +1557,7 @@ export default function Home() {
                   {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
                     const theme = themes.find((candidate) => candidate.id === item.theme);
                     return (
-                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
+                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
                         <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span></span>
                         <ArrowUpRight className="starter-arrow" aria-hidden="true" />
                       </button>
@@ -1514,7 +1601,7 @@ export default function Home() {
           {activeSuggestions.length > 0 && !draft.trim() && !isLoading && !cancellationPending && (
             <div className="composer-suggestions" aria-label="推荐继续提问">
               {activeSuggestions.map((question) => (
-                <button key={question} type="button" disabled={!account || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>
+                <button key={question} type="button" disabled={!account || !modelCatalog || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>
               ))}
             </div>
           )}
@@ -1554,12 +1641,20 @@ export default function Home() {
                 <Square aria-hidden="true" />
               </Button>
             ) : (
-              <Button aria-label={!profileComplete ? "确认称呼" : "发送"} disabled={!draft.trim() || Boolean(pendingSessionId) || cancellationPending || !account || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))} size="icon" type="submit">
+              <Button aria-label={!profileComplete ? "确认称呼" : "发送"} disabled={!draft.trim() || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))} size="icon" type="submit">
                 <ArrowUp aria-hidden="true" />
               </Button>
             )}
           </form>
-          <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo" ? "已加入发送队列，2.5 秒内可免费撤回。" : !profileComplete && onboardingStep === "name" ? "Enter 确认称呼" : "Enter 发送 · Shift + Enter 换行")}</p>
+          <div className="composer-footer">
+            <ModelSelector
+              models={modelCatalog?.models ?? []}
+              selectedModelId={activeSession?.modelId ?? ""}
+              disabled={!activeSession || isLoading || cancellationPending || creatingSession}
+              onSelect={(modelId) => void selectSessionModel(modelId)}
+            />
+            <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo" ? "已加入发送队列，2.5 秒内可免费撤回。" : !profileComplete && onboardingStep === "name" ? "Enter 确认称呼" : "Enter 发送 · Shift + Enter 换行")}</p>
+          </div>
         </div>
       </section>
 
