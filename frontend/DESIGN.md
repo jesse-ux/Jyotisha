@@ -102,6 +102,14 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 - **Accessibility:** native radio inputs remain focusable, every conditional field has a persistent label, status text uses live regions, and the complete flow is keyboard operable.
 - **Motion:** source-dependent fields enter with the existing 180ms opacity/vertical reveal; reduced-motion removes the translation.
 
+### Birth date picker
+
+- **Composition:** shadcn outline Button trigger, Base UI Popover, and a single-select React DayPicker Calendar.
+- **Range:** local dates from 1900-01-01 through today; future dates are disabled. Month and year dropdowns provide direct navigation, with newest years first.
+- **Value:** display Chinese long dates while emitting the existing `YYYY-MM-DD` profile value without UTC conversion.
+- **States:** empty, open, selected, focus-visible, disabled confirmed profile, and unavailable date.
+- **Accessibility:** visible label, explicit trigger naming, 44px targets, keyboard calendar navigation, focus return, and collision-safe popup positioning.
+
 ### Model selector
 
 - **Structure:** a compact text trigger sits below the composer and opens an upward popover aligned to its left edge. The trigger shows only the active model name; each option shows only its model name and radio selection state.

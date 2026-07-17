@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import { BirthDatePicker } from "@/components/birth-date-picker";
 import {
   birthTimePeriodOptions,
   birthTimeSourceOptions,
@@ -58,16 +59,11 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
 
   return (
     <div className="birth-time-intake">
-      <label>
-        <span>出生日期</span>
-        <input
-          required
-          disabled={isConfirmed}
-          type="date"
-          value={value.date}
-          onChange={(event) => onPatch({ date: event.target.value })}
-        />
-      </label>
+      <BirthDatePicker
+        value={value.date}
+        disabled={isConfirmed}
+        onChange={(date) => onPatch({ date })}
+      />
 
       {source === "legacy_import" && (
         <p className="birth-time-legacy-note">
