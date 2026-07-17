@@ -4,7 +4,7 @@ This file adapts the full visual analysis in `CLAUDE_DESIGN.md` to the shipped J
 
 ## 1. Atmosphere & Identity
 
-Jyotisha feels like a private reading room: warm, editorial, grounded, and quiet enough for reflective conversation. The signature is a parchment canvas paced by terracotta actions and deep ink product surfaces, with serif display type giving astrological guidance the gravity of a considered essay rather than a generic chatbot.
+Jyotisha feels like a private reading room: warm, editorial, grounded, and quiet enough for reflective conversation. The signature is a pale parchment canvas, translucent warm-gray navigation, fine neutral hairlines, and restrained deep-brown accents. Serif display type gives astrological guidance the gravity of a considered essay rather than a generic chatbot.
 
 ## 2. Color
 
@@ -12,29 +12,29 @@ Jyotisha feels like a private reading room: warm, editorial, grounded, and quiet
 
 | Role | Token | Value | Usage |
 |---|---|---:|---|
-| Canvas | `--color-canvas` | `#faf9f5` | Page floor, inputs, light controls |
-| Soft canvas | `--color-canvas-soft` | `#f5f0e8` | Secondary bands, table rows |
-| Card surface | `--color-canvas-muted` | `#efe9de` | Feature cards, user messages, selected rows |
-| Strong cream | `--color-canvas-strong` | `#e8e0d2` | Pressed and emphasized neutral surfaces |
-| Ink | `--color-ink` | `#141413` | Headlines and primary text |
-| Body | `--color-ink-strong` | `#252523` | Strong body copy |
-| Secondary text | `--color-ink-secondary` | `#6c6a64` | Supporting copy and labels |
-| Tertiary text | `--color-ink-tertiary` | `#8e8b82` | Hints and metadata |
-| Primary action | `--color-action` | `#cc785c` | Primary buttons and high-signal links |
-| Primary active | `--color-action-hover` | `#a9583e` | Hover and pressed action |
-| Dark surface | `--color-surface-dark` | `#181715` | Sidebar and dark product panels |
-| Dark raised | `--color-surface-dark-raised` | `#252320` | Selected navigation and nested dark surfaces |
-| Dark soft | `--color-surface-dark-soft` | `#1f1e1b` | Dark secondary panels |
-| On dark | `--color-on-dark` | `#faf9f5` | Primary text on dark surfaces |
-| On dark muted | `--color-dark-muted` | `#a09d96` | Secondary text on dark surfaces |
-| Hairline | `--color-border` | `#e6dfd8` | Default separators and controls |
-| Strong hairline | `--color-border-strong` | `#cfc5b8` | Inputs and higher-contrast dividers |
-| Success | `--color-success` | `#5d9b6a` | Available and completed states |
+| Canvas | `--color-canvas` | `#fbfaf7` | Main reading surface, inputs, light controls |
+| Page floor | `--color-canvas-soft` | `#f3f2ee` | App background and quiet secondary bands |
+| Warm surface | `--color-canvas-muted` | `#ebe9e3` | Cards, user messages, table headings |
+| Strong neutral | `--color-canvas-strong` | `#e1ded6` | Pressed and emphasized neutral surfaces |
+| Sidebar glass | `--color-sidebar` | `rgba(235, 233, 227, .86)` | Desktop and mobile navigation |
+| Selected surface | `--color-selected` | `rgba(255, 255, 255, .62)` | Current navigation and raised light rows |
+| Ink | `--color-ink` | `#1d1d1f` | Headlines and primary text |
+| Body | `--color-ink-strong` | `#32322f` | Strong body copy |
+| Secondary text | `--color-ink-secondary` | `#676762` | Supporting copy and labels |
+| Tertiary text | `--color-ink-tertiary` | `#8a8983` | Hints and metadata |
+| Primary action | `--color-action` | `#85432f` | High-signal links, rings, and compact actions |
+| Primary soft | `--color-action-soft` | `#f4e8e2` | Editorial emphasis without a dark block |
+| Primary active | `--color-action-hover` | `#6f3627` | Hover and pressed action |
+| Dark punctuation | `--color-surface-dark` | `#1d1d1f` | Compact primary buttons and user-authored emphasis only |
+| On dark | `--color-on-dark` | `#fbfaf7` | Text on compact dark controls |
+| Hairline | `--color-border` | `#d8d6cf` | Default separators and controls |
+| Strong hairline | `--color-border-strong` | `#b8b5ad` | Inputs and higher-contrast dividers |
+| Success | `--color-success` | `#28633e` | Available and completed states |
 | Warning | `--color-warning` | `#b07b22` | Caution states |
-| Error | `--color-danger` | `#c64545` | Errors and destructive actions |
-| Accessible focus | `--color-focus` | `#a9583e` | Keyboard focus and input focus |
+| Error | `--color-danger` | `#9a2f2f` | Errors and destructive actions |
+| Accessible focus | `--color-focus` | `#85432f` | Keyboard focus and input focus |
 
-Rules: neutrals stay warm; the action color is scarce; dark surfaces provide pacing rather than a second theme. No raw color may appear in UI styles outside these tokens and their documented alpha mixes.
+Rules: neutrals stay warm; the action color is scarce; roughly ninety percent of the interface remains light. Dark ink is punctuation, never a page-scale surface. No raw color may appear in UI styles outside these tokens and their documented alpha mixes.
 
 ## 3. Typography
 
@@ -82,7 +82,7 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 
 ### Button
 
-- **Variants:** coral primary, cream secondary, text, circular icon, dark-surface neutral.
+- **Variants:** ink primary, cream secondary, text, circular icon, deep-brown emphasis.
 - **Spacing:** 44px minimum height; radii 8px for standard and full radius for icon-only.
 - **States:** default, hover, active, focus-visible, disabled, loading.
 - **Motion:** 120ms transform/color; active translates by 1px or scales to .98.
@@ -90,14 +90,14 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 ### Input and composer
 
 - **Structure:** warm canvas field, hairline, typed value, optional icon action.
-- **States:** default, hover, focus with terracotta ring, disabled, invalid, loading.
+- **States:** default, hover, focus with deep-brown ring, disabled, invalid, loading.
 - **Accessibility:** persistent label where practical; composer has an explicit accessible label.
 
 ### Navigation item
 
 - **Structure:** title, optional metadata, current-state marker.
 - **States:** default, hover, current, focus, disabled.
-- **Surface:** dark sidebar; current uses raised dark surface and terracotta marker.
+- **Surface:** translucent warm-gray sidebar; current uses a white glass surface and deep-brown marker.
 
 ### Message
 
@@ -110,7 +110,7 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 ### Suggestion card
 
 - **Structure:** topic label, question, directional icon. Categories are not numbered because they have no required order. At tablet widths, the cards stack into one column so Chinese questions keep natural phrase boundaries beside the persistent sidebar.
-- **Surface:** warm card; three responsive editorial cards rather than a generic equal feature row.
+- **Surface:** warm light cards; the lead card uses the pale brown emphasis surface and border instead of a dark block.
 - **States:** default, hover, active, focus, disabled, loading, fallback notice.
 
 ### Start greeting
@@ -122,12 +122,12 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 ### Account sheet
 
 - **Structure:** title, account summary, redeem section, profile form, actions.
-- **Surface:** canvas sheet over warm scrim; sections separated by hairlines.
+- **Surface:** canvas sheet over warm scrim; the account summary and sections are separated by hairlines rather than dark cards.
 - **States:** closed, opening, open, validation error, success, saving.
 
 ### Admin panel and data table
 
-- **Structure:** editorial header, cream form panels, dark data surface.
+- **Structure:** editorial header, cream form panels, and a light data table separated by warm hairlines.
 - **States:** loading, empty, populated, generated codes, error, copy success.
 - **Responsive:** form collapses to two columns then one; table scrolls horizontally.
 
@@ -143,4 +143,4 @@ Only `transform`, `opacity`, and color/filter transitions animate. Reduced-motio
 
 ## 7. Depth & Surface
 
-Strategy: mixed tonal shifts with warm hairlines. Most depth comes from canvas, cream card, dark surface, and terracotta alternation. Standard UI uses no drop shadow. Modal and raised-sheet depth use one restrained two-stage token: `--shadow-elevated: 0 1px 2px rgba(20, 20, 19, .08), 0 12px 28px -16px rgba(20, 20, 19, .22)`. Interactive rings use `0 0 0 1px` or the focus ring; no generic card shadows or atmospheric gradients.
+Strategy: warm tonal shifts, restrained translucency, and fine hairlines. Most depth comes from the page floor, main canvas, warm cards, and selected white glass. Standard UI uses no drop shadow. Modal and raised-sheet depth use one restrained two-stage token: `--shadow-elevated: 0 1px 2px rgba(29, 29, 31, .07), 0 12px 28px -16px rgba(29, 29, 31, .18)`. Interactive rings use `0 0 0 1px` or the focus ring; no generic card shadows or atmospheric gradients. When transparency is reduced, frosted surfaces fall back to opaque warm neutrals.
