@@ -335,7 +335,7 @@ function ProfileFields({ value, onChange }: { value: Profile; onChange: (profile
     <>
       <label>
         <span>如何称呼你</span>
-        <input required autoComplete="name" maxLength={80} placeholder="例如：林遥" value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} />
+        <input id="profile-name" required autoComplete="name" maxLength={80} placeholder="例如：林遥" value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} />
       </label>
       <BirthMomentFields value={value} onChange={onChange} />
       <BirthLocationFields value={value} onChange={onChange} />
@@ -1726,6 +1726,14 @@ export default function Home() {
 
           <section className="sheet-section birth-section">
             <div className="section-heading"><b>出生资料</b><small>加密传输并保存到云端，用于此账号的所有对话</small></div>
+            <div className="default-chart-card" aria-label="当前默认星盘">
+              <div>
+                <span>当前默认星盘</span>
+                <strong>{profileDraft.name.trim() || "未命名"}</strong>
+                <small>角色：本人</small>
+              </div>
+              <button className="button-secondary" type="button" onClick={() => profileDialog.current?.querySelector<HTMLInputElement>("#profile-name")?.focus()}>管理星盘库</button>
+            </div>
             {profileNotice && <p className="form-success" role="status">{profileNotice}</p>}
             <form className="profile-form" onSubmit={saveProfile}>
               <ProfileFields value={profileDraft} onChange={setProfileDraft} />
