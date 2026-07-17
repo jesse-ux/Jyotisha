@@ -117,6 +117,11 @@ PyJHora issue #17 is a UI/encoding issue with a general mismatch report, not VP 
 ## ERR-081 | Fixture attribution was overstated as publication | mitigated 2026-07-18
 `shadbala_VPJainBook_tests` supplies no independently citable book edition, page, or numerical table. The product therefore calls it a VP Jain-attributed fixture, not a published worked example; it remains candidate replay data and cannot close a formula branch.
 
+## ERR-082 | Public similar-case catalog coverage was mistaken for global coverage | active 2026-07-18
+The replayable public-case manifest currently contains 10 events: 5 career and 5 marriage. It contains no wealth or health events with the required birth source, event source, and replay contract. The product now returns available domains and requested uncovered domains rather than treating an empty result as evidence of no comparable case.
+
+Prevention: add a new domain only after its public cases satisfy the same source/replay contract; never substitute loosely sourced celebrity notes or absence of a match for a negative conclusion.
+
 ## Fragment Sweep Command Set
 
 Use split scans, not one unbounded full-home command:
