@@ -669,6 +669,7 @@ export default function Home() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [pinnedSessionIds, setPinnedSessionIds] = useState<string[]>([]);
   const [archivedSessionIds, setArchivedSessionIds] = useState<string[]>([]);
+  const [sessionMenuId, setSessionMenuId] = useState<string | null>(null);
   const [modelCatalog, setModelCatalog] = useState<PublicLanguageModelCatalog | null>(null);
   const [activeSessionId, setActiveSessionId] = useState("");
   const [draft, setDraft] = useState("");
@@ -1176,6 +1177,20 @@ export default function Home() {
   function toggleArchivedSession(sessionId: string) {
     setArchivedSessionIds((current) => current.includes(sessionId) ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
     if (activeSessionId === sessionId) setActiveSessionId(visibleSessions.find((session) => session.id !== sessionId)?.id ?? "");
+  }
+
+  async function shareSession(session: ChatSession) {
+    const transcript = [
+      `Jyotisha 对话：${session.title}`,
+      "",
+      ...session.messages.map((message) => `${message.role === "user" ? "我" : "Jyotisha"}：${message.text}`),
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(transcript);
+      setComposerNotice("已复制当前聊天，可粘贴转发。");
+    } catch {
+      setComposerNotice("无法访问剪贴板，请手动复制聊天内容。");
+    }
   }
 
   async function startNewChat() {
@@ -1992,13 +2007,21 @@ export default function Home() {
           <span className="sidebar-label">聊天记录</span>
           <div className="session-list">
             {visibleSessions.map((session) => (
-              <div className={`session-row ${session.id === activeSession?.id ? "is-active" : ""}`} key={session.id}>
+              <div
+                className={`session-row ${session.id === activeSession?.id ? "is-active" : ""}`}
+                key={session.id}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  setSessionMenuId(sessionMenuId === session.id ? null : session.id);
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => {
                     setActiveSessionId(session.id);
                     setDraft("");
                     setComposerNotice("");
+                    setSessionMenuId(null);
                     setMobileSidebarOpen(false);
                   }}
                   disabled={Boolean(pendingSessionId) || cancellationPending}
@@ -2007,12 +2030,16 @@ export default function Home() {
                   <span>{pinnedSessionIds.includes(session.id) ? "★ " : ""}{session.title}</span>
                   {session.messages.length > 0 && <small>{session.messages.length} 条消息</small>}
                 </button>
-                <div className="session-actions" aria-label={`${session.title} 操作`}>
-                  <button type="button" onClick={() => togglePinnedSession(session.id)}>{pinnedSessionIds.includes(session.id) ? "取消置顶" : "置顶"}</button>
-                  <button type="button" onClick={() => void renameSession(session)}>重命名</button>
-                  <button type="button" onClick={() => toggleArchivedSession(session.id)}>归档</button>
-                  <button type="button" onClick={() => void deleteSession(session)}>删除</button>
-                </div>
+                <button className="session-menu-trigger" type="button" aria-label={`${session.title} 更多操作`} aria-expanded={sessionMenuId === session.id} onClick={() => setSessionMenuId(sessionMenuId === session.id ? null : session.id)}>⋯</button>
+                {sessionMenuId === session.id && (
+                  <div className="session-actions" role="menu" aria-label={`${session.title} 操作`}>
+                    <button type="button" role="menuitem" onClick={() => { togglePinnedSession(session.id); setSessionMenuId(null); }}>{pinnedSessionIds.includes(session.id) ? "取消置顶" : "置顶"}</button>
+                    <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void renameSession(session); }}>重命名</button>
+                    <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void shareSession(session); }}>转发</button>
+                    <button type="button" role="menuitem" onClick={() => { toggleArchivedSession(session.id); setSessionMenuId(null); }}>归档</button>
+                    <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void deleteSession(session); }}>删除</button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

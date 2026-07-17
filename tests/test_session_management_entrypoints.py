@@ -11,9 +11,14 @@ def test_chat_history_management_actions_are_exposed() -> None:
         "deleteSession",
         "togglePinnedSession",
         "toggleArchivedSession",
+        "shareSession",
+        "onContextMenu",
+        "session-menu-trigger",
+        'role="menu"',
         "置顶",
         "重命名",
         "归档",
         "删除",
+        "转发",
     ):
         assert expected in source
