@@ -392,6 +392,11 @@ button:disabled { cursor: default; opacity: .45; }
 .chart-library-item small, .chart-library-item > span, .empty-library-copy { color: var(--color-ink-secondary); font-size: var(--type-caption); }
 .chart-library-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 .chart-library-form { padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
+.synastry-report-card { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface-subtle); }
+.synastry-report-card span, .synastry-report-card small, .synastry-report-card li { color: var(--color-ink-secondary); font-size: var(--type-caption); }
+.synastry-report-card strong, .synastry-report-card p { color: var(--color-ink); }
+.synastry-report-card strong { display: block; margin-top: 4px; font-size: var(--type-body); font-weight: 500; }
+.synastry-report-card p, .synastry-report-card ul { margin: 0; }
 
 input, select { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--color-border-strong); color: var(--color-ink); border-color: var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-canvas); font-size: 14px; }
 input:disabled, select:disabled { color: var(--color-ink-tertiary); background: var(--color-canvas-muted); }

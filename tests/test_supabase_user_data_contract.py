@@ -143,6 +143,8 @@ def test_chart_profile_library_has_cloud_table_api_and_local_fallback() -> None:
         "deleteCloudChartProfile",
         "buildSynastryQuestion",
         "draftSynastryQuestionFromChart",
+        "synastryReportCard",
+        "synastry-report-card",
         'fetch("/api/synastry"',
         "Ashtakoot",
         "chartLibraryStorageKey",

@@ -45,6 +45,17 @@ type ChartLibraryApiRecord = {
   profile: Profile;
   updated_at?: string;
 };
+type SynastryReportCard = {
+  partnerName: string;
+  score?: number;
+  maxScore?: number;
+  assessment?: string;
+  headline?: string;
+  scoreBand?: string;
+  strengths?: string[];
+  risks?: string[];
+  nextEvidence?: string[];
+};
 type ChatSession = { id: string; title: string; theme: Theme; modelId: string; messages: Message[]; updatedAt: number };
 type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
@@ -519,6 +530,7 @@ export default function Home() {
   const [chartLibrary, setChartLibrary] = useState<ChartLibraryRecord[]>([]);
   const [chartLibraryOpen, setChartLibraryOpen] = useState(false);
   const [otherProfileDraft, setOtherProfileDraft] = useState<Profile>(emptyProfile);
+  const [synastryReportCard, setSynastryReportCard] = useState<SynastryReportCard | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
@@ -1256,12 +1268,23 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ selfProfile: profile, partnerProfile: record.profile }),
       });
-      const payload = await response.json().catch(() => null) as { status?: string; evidenceLayers?: string[]; synastry?: { total_score?: number; max_score?: number; assessment?: string }; relationshipReport?: { headline?: string } } | null;
+      const payload = await response.json().catch(() => null) as { status?: string; evidenceLayers?: string[]; synastry?: { total_score?: number; max_score?: number; assessment?: string }; relationshipReport?: { headline?: string; scoreBand?: string; strengths?: string[]; risks?: string[]; nextEvidence?: string[] } } | null;
       if (response.ok && payload?.status === "ok") {
         const score = payload.synastry?.total_score;
         const max = payload.synastry?.max_score;
         const assessment = payload.synastry?.assessment;
         const layers = (payload.evidenceLayers || []).join(" / ") || "Ashtakoot / Moon / D9";
+        setSynastryReportCard({
+          partnerName: record.profile.name || "对方",
+          score,
+          maxScore: max,
+          assessment,
+          headline: payload.relationshipReport?.headline,
+          scoreBand: payload.relationshipReport?.scoreBand,
+          strengths: payload.relationshipReport?.strengths,
+          risks: payload.relationshipReport?.risks,
+          nextEvidence: payload.relationshipReport?.nextEvidence,
+        });
         chooseSuggestedQuestion([
           baseQuestion,
           "",
@@ -1983,6 +2006,24 @@ export default function Home() {
                     </article>
                   ))}
                 </div>
+                {synastryReportCard && (
+                  <article className="synastry-report-card" aria-label="合盘结果摘要">
+                    <div>
+                      <span>合盘结果摘要</span>
+                      <strong>{synastryReportCard.partnerName}</strong>
+                      <small>Ashtakoot {synastryReportCard.score ?? "?"}/{synastryReportCard.maxScore ?? "?"} · {synastryReportCard.assessment || synastryReportCard.scoreBand || "待解释"}</small>
+                    </div>
+                    {synastryReportCard.headline && <p>{synastryReportCard.headline}</p>}
+                    <details>
+                      <summary>查看证据</summary>
+                      <ul>
+                        {(synastryReportCard.strengths || []).map((item) => <li key={item}>{item}</li>)}
+                        {(synastryReportCard.risks || []).map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                      <small>下一步证据：{(synastryReportCard.nextEvidence || []).join(" / ") || "双方 Dasha / UL-DK / D9 7宫"}</small>
+                    </details>
+                  </article>
+                )}
                 <form className="profile-form chart-library-form" onSubmit={saveOtherChart}>
                   <div className="section-heading"><b>添加其他星盘</b><small>用于合盘、亲友盘或客户盘。</small></div>
                   <ProfileFields value={otherProfileDraft} onChange={setOtherProfileDraft} nameInputId="other-profile-name" />
