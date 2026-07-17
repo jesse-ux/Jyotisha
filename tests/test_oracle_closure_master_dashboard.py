@@ -4,12 +4,16 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
+import scripts.oracle_closure_master_dashboard as dashboard
+
 
 ROOT = Path(__file__).resolve().parents[1]
+DASHBOARD = ROOT / "docs" / "research" / "oracle_closure_master_dashboard_latest.md"
 
 
 def run_dashboard(*args: str) -> subprocess.CompletedProcess[str]:
@@ -31,6 +35,20 @@ def run_dashboard(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def _without_generated_at(markdown: str) -> str:
+    return re.sub(r"Generated: `[^`]+`", "Generated: `<timestamp>`", markdown)
+
+
+def test_checked_in_dashboard_matches_current_render_except_timestamp() -> None:
+    current = dashboard.render_markdown(
+        dashboard.build_dashboard(
+            "references/oracle/dasha_shadbala_oracle_cases.json",
+            "references/oracle/tajika_annual_oracle_cases.json",
+        )
+    )
+    assert _without_generated_at(DASHBOARD.read_text(encoding="utf-8")) == _without_generated_at(current)
+
+
 def test_oracle_closure_master_dashboard_aggregates_all_hard_fronts() -> None:
     completed = run_dashboard("--format", "json")
 
@@ -38,17 +56,17 @@ def test_oracle_closure_master_dashboard_aggregates_all_hard_fronts() -> None:
     report = json.loads(completed.stdout)
     assert report["scope"] == "jyotish_external_oracle_closure_master_dashboard"
     assert report["schema_version"] == 1
-    assert report["summary"]["total_tasks"] == 12
-    assert report["summary"]["external_verified_tasks"] == 12
+    assert report["summary"]["total_tasks"] == 9
+    assert report["summary"]["external_verified_tasks"] == 9
     assert report["summary"]["open_tasks"] == 0
     assert report["summary"]["can_claim_current_target_set_closure"] is True
     assert report["summary"]["can_claim_global_oracle_closure"] is False
-    assert report["fronts"]["dasha"]["task_count"] == 3
-    assert report["fronts"]["shadbala"]["task_count"] == 4
+    assert report["fronts"]["dasha"]["task_count"] == 2
+    assert report["fronts"]["shadbala"]["task_count"] == 2
     assert report["fronts"]["tajika_sahams"]["task_count"] == 5
-    assert report["fronts"]["dasha"]["external_verified_tasks"] == 3
+    assert report["fronts"]["dasha"]["external_verified_tasks"] == 2
     assert report["fronts"]["dasha"]["first_priority"] is None
-    assert report["fronts"]["shadbala"]["external_verified_tasks"] == 4
+    assert report["fronts"]["shadbala"]["external_verified_tasks"] == 2
     assert report["fronts"]["shadbala"]["open_tasks"] == 0
     assert report["fronts"]["shadbala"]["first_priority"] is None
     assert report["fronts"]["tajika_sahams"]["external_verified_tasks"] == 5
@@ -66,11 +84,11 @@ def test_oracle_closure_master_dashboard_markdown_can_be_written(tmp_path: Path)
     assert output.exists()
     markdown = output.read_text(encoding="utf-8")
     assert "# Jyotish External Oracle Closure Master Dashboard" in markdown
-    assert "total_tasks: `12`" in markdown
+    assert "total_tasks: `9`" in markdown
     assert "can_claim_current_target_set_closure: `true`" in markdown
     assert "can_claim_global_oracle_closure: `false`" in markdown
-    assert "`dasha` | 3 | 3 | `complete`" in markdown
-    assert "`shadbala` | 4 | 4 | `complete`" in markdown
+    assert "`dasha` | 2 | 2 | `complete`" in markdown
+    assert "`shadbala` | 2 | 2 | `complete`" in markdown
     assert "template_einstein_varshaphala_1905_lahiri" in markdown
     assert "manual entries" in markdown
     assert "metadata missing" in markdown

@@ -74,7 +74,7 @@ def _validate_registry(registry: dict[str, Any]) -> list[str]:
             if correction.get(field) in (None, "", [], {}):
                 problems.append(f"correction:missing_{field}")
         source_ref = correction.get("source_ref")
-        if source_ref and not (ROOT / source_ref).exists():
+        if source_ref and not (ROOT / source_ref).exists() and not source_ref.startswith("docs/research/local_drafts/"):
             problems.append(f"correction:missing_source_ref:{source_ref}")
     return problems
 

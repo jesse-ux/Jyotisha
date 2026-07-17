@@ -31,13 +31,13 @@
     {
       "id": "oracle_closure_master_dashboard",
       "path": "docs/research/oracle_closure_master_dashboard_latest.md",
-      "sha256": "2c020f0f499abc48a037cd33cc8d2ff2ec3170527793dba9d42792782d7d3868",
+      "sha256": "b63f4d9e0a44599320e7c547de644981b5827c733710b4798bb7de1ac4f92956",
       "scope": "target-set oracle closure boundary"
     },
     {
       "id": "public_benchmark_dashboard",
       "path": "docs/research/public_benchmark_dashboard_latest.md",
-      "sha256": "5733b610d763836f3e44d4f7baad7915224322b725014656123db4ebf0c1c3db",
+      "sha256": "ac74b0905e21726fa8113b106220676eef474c2b4154f5376e01e2025e7c75c9",
       "scope": "public benchmark coverage summary"
     },
     {
