@@ -12,5 +12,7 @@ test("passes transparent public-case references into the agent context", () => {
   assert.match(source, /timing_state/);
   assert.match(source, /partial_match/);
   assert.match(source, /narayana_status/);
+  assert.match(source, /transit_status/);
+  assert.match(source, /Jupiter and Saturn relative houses/);
   assert.match(source, /exact_triggers as technical trigger points/);
 });

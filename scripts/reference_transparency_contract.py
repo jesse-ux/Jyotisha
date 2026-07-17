@@ -15,13 +15,13 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 try:
-    from scripts.domain_calculation_service import compute_chart, compute_vimshottari_timeline
+    from scripts.domain_calculation_service import compute_chart, compute_transit_longitude, compute_vimshottari_timeline
     from scripts.timing_precision_contract import build_timing_precision_contract
     from scripts.varga import SIGNS, SIGN_LORDS, calc_varga
     from scripts.dasha_analyzer import build_antardasha
     from scripts.narayana_dasha import narayana_dasha_full_report
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
-    from domain_calculation_service import compute_chart, compute_vimshottari_timeline
+    from domain_calculation_service import compute_chart, compute_transit_longitude, compute_vimshottari_timeline
     from timing_precision_contract import build_timing_precision_contract
     from varga import SIGNS, SIGN_LORDS, calc_varga
     from dasha_analyzer import build_antardasha
@@ -50,6 +50,8 @@ FEATURE_WEIGHTS = {
     "vimshottari_antardasha": 0.10,
     "narayana_mahadasha_sign": 0.10,
     "narayana_antardasha_sign": 0.10,
+    "jupiter_transit_house": 0.10,
+    "saturn_transit_house": 0.10,
 }
 HIGH_SIMILARITY_THRESHOLD = 0.75
 
@@ -170,6 +172,59 @@ def _narayana_state(chart: dict[str, Any], reference_date: str | None) -> dict[s
         return None
 
 
+def _timezone_offset(chart: dict[str, Any]) -> float | None:
+    birth = chart.get("birth_info") if isinstance(chart, dict) else None
+    if not isinstance(birth, dict):
+        birth = chart.get("birth") if isinstance(chart, dict) else None
+    raw = birth.get("tz") if isinstance(birth, dict) else None
+    try:
+        return float(str(raw).replace("UTC", ""))
+    except (TypeError, ValueError):
+        return None
+
+
+@lru_cache(maxsize=256)
+def _transit_sign_index(planet: str, reference_date: str, tz: float, ayanamsa: str) -> int | None:
+    try:
+        longitude = compute_transit_longitude(
+            planet=planet,
+            reference_date=reference_date,
+            tz=tz,
+            ayanamsa=ayanamsa,
+        )["longitude"]
+        return int(float(longitude) / 30) % 12
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _transit_state(chart: dict[str, Any], reference_date: str | None) -> dict[str, Any] | None:
+    if not isinstance(reference_date, str):
+        return None
+    try:
+        datetime.strptime(reference_date[:10], "%Y-%m-%d")
+    except ValueError:
+        return None
+    ascendant = chart.get("ascendant") if isinstance(chart, dict) else None
+    asc_sign = ascendant.get("sign") if isinstance(ascendant, dict) else None
+    tz = _timezone_offset(chart)
+    if asc_sign not in SIGNS or tz is None:
+        return None
+    birth = chart.get("birth_info") if isinstance(chart, dict) else None
+    if not isinstance(birth, dict):
+        birth = chart.get("birth") if isinstance(chart, dict) else None
+    ayanamsa = birth.get("ayanamsa_name", "lahiri") if isinstance(birth, dict) else "lahiri"
+    asc_idx = SIGNS.index(asc_sign)
+    jupiter = _transit_sign_index("Jupiter", reference_date[:10], tz, str(ayanamsa))
+    saturn = _transit_sign_index("Saturn", reference_date[:10], tz, str(ayanamsa))
+    if jupiter is None or saturn is None:
+        return None
+    return {
+        "jupiter_transit_house": (jupiter - asc_idx) % 12 + 1,
+        "saturn_transit_house": (saturn - asc_idx) % 12 + 1,
+        "reference_date": reference_date[:10],
+    }
+
+
 def _features(chart: dict[str, Any], domain: str) -> dict[str, Any]:
     ascendant = chart.get("ascendant") if isinstance(chart, dict) else None
     rahu, ketu = _sign(chart, "Rahu"), _sign(chart, "Ketu")
@@ -231,6 +286,8 @@ def _similarity(
     case_dasha = _vimshottari_state(case_chart, case_event_date)
     user_narayana = _narayana_state(user_chart, reference_date)
     case_narayana = _narayana_state(case_chart, case_event_date)
+    user_transit = _transit_state(user_chart, reference_date)
+    case_transit = _transit_state(case_chart, case_event_date)
     if user_dasha is not None and case_dasha is not None:
         user["vimshottari_mahadasha"] = user_dasha["mahadasha"]
         candidate["vimshottari_mahadasha"] = case_dasha["mahadasha"]
@@ -266,6 +323,24 @@ def _similarity(
         timing_state["case_event_narayana"] = case_narayana
     else:
         timing_state["narayana_status"] = "not_compared"
+    if user_transit is not None and case_transit is not None:
+        user["jupiter_transit_house"] = user_transit["jupiter_transit_house"]
+        user["saturn_transit_house"] = user_transit["saturn_transit_house"]
+        candidate["jupiter_transit_house"] = case_transit["jupiter_transit_house"]
+        candidate["saturn_transit_house"] = case_transit["saturn_transit_house"]
+        timing_state["transit_status"] = (
+            "matched"
+            if user_transit["jupiter_transit_house"] == case_transit["jupiter_transit_house"]
+            and user_transit["saturn_transit_house"] == case_transit["saturn_transit_house"]
+            else "partial_match"
+            if user_transit["jupiter_transit_house"] == case_transit["jupiter_transit_house"]
+            or user_transit["saturn_transit_house"] == case_transit["saturn_transit_house"]
+            else "different"
+        )
+        timing_state["user_transit"] = user_transit
+        timing_state["case_event_transit"] = case_transit
+    else:
+        timing_state["transit_status"] = "not_compared"
     matching, dissimilar, total = [], [], 0.0
     for name, weight in FEATURE_WEIGHTS.items():
         if name not in user or name not in candidate:
@@ -283,12 +358,14 @@ def _similarity(
         compared_vargas.append("D9")
     if domain == "career" and all(user.get(name) is not None and candidate.get(name) is not None for name in ("d10_ascendant", "d10_sun")):
         compared_vargas.append("D10")
-    uncompared = ["transit_event_state"]
+    uncompared = []
     if timing_state["status"] == "not_compared":
         uncompared.insert(0, "vimshottari_mahadasha")
         uncompared.insert(1, "vimshottari_antardasha")
     if timing_state["narayana_status"] == "not_compared":
-        uncompared.insert(-1, "narayana_dasha")
+        uncompared.append("narayana_dasha")
+    if timing_state["transit_status"] == "not_compared":
+        uncompared.append("transit_event_state")
     if domain == "marriage" and "D9" not in compared_vargas:
         uncompared.insert(0, "D9")
     if domain == "career" and "D10" not in compared_vargas:
@@ -297,7 +374,7 @@ def _similarity(
         "score": score,
         "matching_factors": matching,
         "dissimilar_factors": dissimilar,
-        "feature_scope": "D1 ascendant, Moon, theme-house lord, Rahu/Ketu axis" + (f", {'/'.join(compared_vargas)}" if compared_vargas else "") + (", Vimshottari MD/AD" if timing_state["status"] != "not_compared" else "") + (", Narayana MD/AD" if timing_state["narayana_status"] != "not_compared" else ""),
+        "feature_scope": "D1 ascendant, Moon, theme-house lord, Rahu/Ketu axis" + (f", {'/'.join(compared_vargas)}" if compared_vargas else "") + (", Vimshottari MD/AD" if timing_state["status"] != "not_compared" else "") + (", Narayana MD/AD" if timing_state["narayana_status"] != "not_compared" else "") + (", Jupiter/Saturn transit houses" if timing_state["transit_status"] != "not_compared" else ""),
         "uncompared_layers": uncompared,
         "timing_state": timing_state,
     }

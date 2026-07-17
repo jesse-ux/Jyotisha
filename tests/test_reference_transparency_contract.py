@@ -127,11 +127,15 @@ def test_same_event_date_compares_vimshottari_mahadasha() -> None:
         "vimshottari_antardasha",
         "narayana_mahadasha_sign",
         "narayana_antardasha_sign",
+        "jupiter_transit_house",
+        "saturn_transit_house",
     }.issubset(similarity["matching_factors"])
     assert similarity["timing_state"]["status"] == "matched"
     assert similarity["timing_state"]["narayana_status"] == "matched"
+    assert similarity["timing_state"]["transit_status"] == "matched"
     assert "vimshottari_antardasha" not in similarity["uncompared_layers"]
     assert "narayana_dasha" not in similarity["uncompared_layers"]
+    assert "transit_event_state" not in similarity["uncompared_layers"]
 
 
 def test_pending_health_case_is_context_only_not_calibration() -> None:
