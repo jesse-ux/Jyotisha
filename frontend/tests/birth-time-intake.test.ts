@@ -1,0 +1,81 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  assistantIntentCopy,
+  birthTimePersistenceValues,
+  describeBirthTimeDraft,
+  isBirthTimeDraftReady,
+  type BirthTimeDraft,
+} from "../src/lib/birth-time-intake-model.ts";
+
+const emptyDraft: BirthTimeDraft = {
+  date: "1993-04-17",
+  time: "",
+  reportedTime: "",
+  birthTimeSource: "",
+  birthTimePeriod: "",
+  birthTimeClue: "",
+  uncertaintyBeforeMinutes: null,
+  uncertaintyAfterMinutes: null,
+  birthTimeStatus: "",
+};
+
+test("birth time intake requires only the fields selected by the source", () => {
+  const hospital = {
+    ...emptyDraft,
+    birthTimeSource: "hospital_record",
+    reportedTime: "08:16",
+  } satisfies BirthTimeDraft;
+  const period = {
+    ...emptyDraft,
+    birthTimeSource: "period_only",
+    birthTimePeriod: "evening",
+  } satisfies BirthTimeDraft;
+  const incompleteApproximate = {
+    ...emptyDraft,
+    birthTimeSource: "approximate",
+    reportedTime: "14:30",
+  } satisfies BirthTimeDraft;
+
+  assert.equal(isBirthTimeDraftReady(hospital), true);
+  assert.equal(isBirthTimeDraftReady(period), true);
+  assert.equal(isBirthTimeDraftReady(incompleteApproximate), false);
+  assert.equal(isBirthTimeDraftReady({ ...emptyDraft, birthTimeSource: "unknown" }), true);
+});
+
+test("birth time declaration payload cannot write deterministic application fields", () => {
+  const draft = {
+    ...emptyDraft,
+    time: "14:24",
+    reportedTime: "14:30",
+    birthTimeSource: "approximate",
+    uncertaintyBeforeMinutes: 30,
+    uncertaintyAfterMinutes: 30,
+    birthTimeStatus: "confirmed",
+  } satisfies BirthTimeDraft;
+
+  assert.deepEqual(birthTimePersistenceValues(draft), {
+    reported_birth_time: "14:30",
+    birth_time_source: "approximate",
+    birth_time_period: null,
+    birth_time_clue: null,
+    uncertainty_before_minutes: 30,
+    uncertainty_after_minutes: 30,
+  });
+});
+
+test("birth time intake describes uncertainty without claiming false precision", () => {
+  const approximate = {
+    ...emptyDraft,
+    birthTimeSource: "approximate",
+    reportedTime: "14:30",
+    uncertaintyBeforeMinutes: 30,
+    uncertaintyAfterMinutes: 30,
+  } satisfies BirthTimeDraft;
+
+  assert.equal(describeBirthTimeDraft(approximate), "1993年4月17日，约 14:30（前后 30 分钟）");
+  assert.equal(
+    assistantIntentCopy("present_saved_candidate_range"),
+    "目前只能保存候选范围，还没有足够证据应用到具体分钟。",
+  );
+});

@@ -16,6 +16,7 @@ export const consultationInputSchema = z.object({
   city: z.string().trim().min(1).max(120),
   question: z.string().trim().min(1).max(500),
   theme: z.enum(["career", "marriage", "wealth", "timing", "general"]),
+  entryMode: z.enum(["direct_chart", "rectification"]).default("direct_chart"),
 });
 
 export type ConsultationInput = z.infer<typeof consultationInputSchema>;
@@ -33,12 +34,13 @@ const jyotishSkillPath = process.env.JYOTISH_SKILL_PATH?.trim()
   || path.resolve(process.cwd(), "..", "skills", "jyotish-vedic-astrology");
 
 export async function runConsultationWorkflow(input: ConsultationInput) {
+  const { entryMode, ...workflowInput } = input;
   const response = await fetch(`${apiBase}/api/consultation_workflow`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      ...input,
-      entry_mode: "direct_chart",
+      ...workflowInput,
+      entry_mode: entryMode,
       question_text: input.question,
       theme: input.theme === "general" ? ["career", "marriage", "wealth"] : [input.theme],
     }),

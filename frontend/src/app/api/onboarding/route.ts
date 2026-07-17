@@ -44,7 +44,8 @@ function hasCompleteBirthProfile(profile: Record<string, unknown>) {
   return Boolean(
     profile.name
     && profile.birth_date
-    && profile.birth_time
+    && (profile.active_birth_time || profile.birth_time)
+    && (profile.birth_time_status === "confirmed" || (!profile.birth_time_status && profile.birth_time))
     && profile.country_code
     && profile.province_code
     && profile.city_code,
@@ -74,7 +75,7 @@ export async function POST() {
 
   const { data: profile, error: profileError } = await admin
     .from("profiles")
-    .select("name,birth_date,birth_time,country_code,province_code,city_code,onboarding_payload,onboarding_version,onboarding_generated_at")
+    .select("name,birth_date,birth_time,active_birth_time,birth_time_status,country_code,province_code,city_code,onboarding_payload,onboarding_version,onboarding_generated_at")
     .eq("id", user.id)
     .maybeSingle();
 
