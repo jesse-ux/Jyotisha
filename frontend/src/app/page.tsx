@@ -73,6 +73,7 @@ type OnboardingSuggestion = { theme: Exclude<Theme, "general">; text: string };
 type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[] };
 type OnboardingStep = "name" | "birth" | "place";
 type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
+type DailyStarlanguageCard = { trend: string; action: string; caution: string };
 type SessionReadResult = { readonly sessions: ChatSession[]; readonly fallbackSessionIds: string[] };
 type PendingConsultation = {
   readonly requestId: string;
@@ -105,6 +106,13 @@ const previewModelCatalog = parsePublicModelCatalog({
 });
 
 const presetOnboardingMessage = "你好，我是 Jyotisha。\n开始前，我想先认识你。\n请问我该怎么称呼你？";
+
+const dailyStarlanguageCards: DailyStarlanguageCard[] = [
+  { trend: "先收束，再推进。适合把一个悬而未决的问题拆小。", action: "选一件最重要的事，给它留出 45 分钟不被打断的时间。", caution: "避免在情绪最满时做承诺。" },
+  { trend: "适合整理关系与边界。越清楚，越不容易被外界节奏带走。", action: "把今天要回复的人和要推迟的事分开列出来。", caution: "不要把暂时的沉默误读成最终答案。" },
+  { trend: "执行力比灵感更重要。小步完成会比大计划更有力量。", action: "先完成一个可交付版本，再考虑优化。", caution: "别让完美感拖慢开始。" },
+  { trend: "适合观察资源流向：时间、注意力、金钱都算。", action: "检查一个正在消耗你的习惯，并给它设上限。", caution: "不要为了短期安心做长期成本高的选择。" },
+];
 
 const greetingVariants: Record<GreetingPeriod, Array<(name: string) => string>> = {
   morning: [
@@ -324,6 +332,13 @@ function buildDailyStarlanguageQuestion(profile: Profile) {
     "请输出今日趋势、适合推进的事、需要避开的事、一个行动建议。",
     "边界：这是探索性日提示，不是确定预测；若涉及精确事件日期，请标为候选触发，不要包装成必然结论。",
   ].join("\n");
+}
+
+function buildDailyStarlanguageCard(profile: Profile) {
+  const today = new Date().toISOString().slice(0, 10);
+  const seed = `${today}-${profile.date}-${profile.time}-${profile.provinceCode}-${profile.cityCode}`;
+  const index = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0) % dailyStarlanguageCards.length;
+  return dailyStarlanguageCards[index];
 }
 
 function buildBirthTimeRectificationQuestion(profile: Profile) {
@@ -717,6 +732,7 @@ export default function Home() {
   }, [accountId, profile]);
 
   const profileComplete = isProfileComplete(profile);
+  const dailyStarlanguage = profileComplete ? buildDailyStarlanguageCard(profile) : null;
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
     ? startGreeting || completedOnboardingMessage(profileDraft.name.trim())
@@ -1953,10 +1969,18 @@ export default function Home() {
                   })}
                   {onboardingError && <p className="starter-note">Agent 的个性化入门问题暂时不可用，已显示安全的默认问题。</p>}
                   <div className="product-entrypoints" aria-label="常用占星入口">
-                    <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftDailyStarlanguageQuestion}>
-                      <span><b>今日星语</b><small>基于默认星盘生成今日趋势；探索性日提示，不是确定预测。</small></span>
-                      <ArrowUpRight className="starter-arrow" aria-hidden="true" />
-                    </button>
+                    <article className="daily-starlanguage-card" aria-label="今日星语">
+                      <div className="daily-starlanguage-heading">
+                        <span>今日星语</span>
+                        <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftDailyStarlanguageQuestion}>深入看今日 <ArrowUpRight className="starter-arrow" aria-hidden="true" /></button>
+                      </div>
+                      <dl>
+                        <div><dt>今日趋势</dt><dd>{dailyStarlanguage?.trend}</dd></div>
+                        <div><dt>行动建议</dt><dd>{dailyStarlanguage?.action}</dd></div>
+                        <div><dt>今日提醒</dt><dd>{dailyStarlanguage?.caution}</dd></div>
+                      </dl>
+                      <small>探索性日提示，不是确定预测。</small>
+                    </article>
                     <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftBirthTimeRectificationQuestion}>
                       <span><b>生时校正</b><small>收集事件证据并给候选出生时间段，不能直接改写默认星盘。</small></span>
                       <ArrowUpRight className="starter-arrow" aria-hidden="true" />

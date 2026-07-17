@@ -7,6 +7,11 @@ PAGE = Path("frontend/src/app/page.tsx")
 def test_daily_starlanguage_entrypoint_is_productized() -> None:
     source = PAGE.read_text(encoding="utf-8")
     assert "今日星语" in source
+    assert "buildDailyStarlanguageCard" in source
+    assert "daily-starlanguage-card" in source
+    assert "今日趋势" in source
+    assert "行动建议" in source
+    assert "今日提醒" in source
     assert "draftDailyStarlanguageQuestion" in source
     assert "探索性日提示" in source
     assert "不是确定预测" in source
