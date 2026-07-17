@@ -200,7 +200,11 @@
               "gives": [
                 {
                   "aspect_type": "3",
-                  "to_planet": "Rahu"
+                  "to_house": 5
+                },
+                {
+                  "aspect_type": "3",
+                  "to_planet": "Venus"
                 },
                 {
                   "aspect_type": "7",
@@ -211,26 +215,22 @@
                   "to_planet": "Mars"
                 },
                 {
+                  "aspect_type": "3",
+                  "to_planet": "Rahu"
+                },
+                {
                   "aspect_type": "10",
                   "to_house": 12
-                },
-                {
-                  "aspect_type": "3",
-                  "to_house": 5
-                },
-                {
-                  "aspect_type": "3",
-                  "to_planet": "Venus"
                 }
               ],
               "receives": [
                 {
-                  "aspect_type": "7",
-                  "from_planet": "Mars"
-                },
-                {
                   "aspect_type": "5",
                   "from_planet": "Ketu"
+                },
+                {
+                  "aspect_type": "7",
+                  "from_planet": "Mars"
                 },
                 {
                   "aspect_type": "5",
@@ -344,11 +344,11 @@
               "gives": [
                 {
                   "aspect_type": "7",
-                  "to_house": 11
+                  "to_planet": "Ketu"
                 },
                 {
                   "aspect_type": "7",
-                  "to_planet": "Ketu"
+                  "to_house": 11
                 },
                 {
                   "aspect_type": "7",
@@ -432,12 +432,12 @@
                   "to_planet": "Mars"
                 },
                 {
-                  "aspect_type": "9",
-                  "to_house": 1
-                },
-                {
                   "aspect_type": "5",
                   "to_house": 9
+                },
+                {
+                  "aspect_type": "9",
+                  "to_house": 1
                 }
               ],
               "receives": [
@@ -778,30 +778,30 @@
             "aspects": {
               "gives": [
                 {
-                  "aspect_type": "7",
-                  "to_house": 3
-                },
-                {
-                  "aspect_type": "7",
-                  "to_planet": "Saturn"
-                },
-                {
                   "aspect_type": "8",
                   "to_house": 4
                 },
                 {
                   "aspect_type": "4",
                   "to_house": 12
+                },
+                {
+                  "aspect_type": "7",
+                  "to_planet": "Saturn"
+                },
+                {
+                  "aspect_type": "7",
+                  "to_house": 3
                 }
               ],
               "receives": [
                 {
-                  "aspect_type": "5",
-                  "from_planet": "Rahu"
-                },
-                {
                   "aspect_type": "7",
                   "from_planet": "Saturn"
+                },
+                {
+                  "aspect_type": "5",
+                  "from_planet": "Rahu"
                 }
               ]
             },
@@ -901,20 +901,16 @@
             "aspects": {
               "gives": [
                 {
-                  "aspect_type": "7",
-                  "to_planet": "Rahu"
+                  "aspect_type": "5",
+                  "to_planet": "Saturn"
                 },
                 {
                   "aspect_type": "5",
                   "to_house": 3
                 },
                 {
-                  "aspect_type": "9",
-                  "to_house": 7
-                },
-                {
-                  "aspect_type": "5",
-                  "to_planet": "Saturn"
+                  "aspect_type": "7",
+                  "to_planet": "Rahu"
                 },
                 {
                   "aspect_type": "9",
@@ -927,6 +923,10 @@
                 {
                   "aspect_type": "7",
                   "to_planet": "Venus"
+                },
+                {
+                  "aspect_type": "9",
+                  "to_house": 7
                 }
               ],
               "receives": [
@@ -1001,20 +1001,20 @@
             "aspects": {
               "gives": [
                 {
-                  "aspect_type": "9",
-                  "to_house": 7
-                },
-                {
-                  "aspect_type": "9",
-                  "to_planet": "Sun"
+                  "aspect_type": "5",
+                  "to_planet": "Saturn"
                 },
                 {
                   "aspect_type": "5",
                   "to_house": 3
                 },
                 {
-                  "aspect_type": "5",
-                  "to_planet": "Saturn"
+                  "aspect_type": "9",
+                  "to_planet": "Sun"
+                },
+                {
+                  "aspect_type": "9",
+                  "to_house": 7
                 }
               ],
               "receives": [
