@@ -73,7 +73,7 @@ function Calendar({
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
-          "cn-calendar-dropdown-root relative rounded-(--cell-radius)",
+          "cn-calendar-dropdown-root relative flex h-(--cell-size) items-center rounded-(--cell-radius)",
           defaultClassNames.dropdown_root
         ),
         dropdown: cn(
