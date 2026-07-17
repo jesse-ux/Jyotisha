@@ -7,8 +7,8 @@ from jyotish_engine import compute_chart_data, _apply_ayanamsa
 
 class TestAyanamsaSwitching(unittest.TestCase):
     def test_ayanamsa_differences(self):
-        # 1955-02-24 19:15, San Francisco
-        year, month, day = REDACTED_YEAR, 4, 17
+        # Neutral deterministic fixture; no personal birth data.
+        year, month, day = 1990, 4, 17
         hour, minute, second = 14, 45, 20
         lat, lon, tz = 37.7749, -122.4194, 8
 
@@ -35,7 +35,7 @@ class TestAyanamsaSwitching(unittest.TestCase):
         self.assertTrue(abs(sun_lahiri - sun_raman) > 0.5, "Difference should be significant")
 
     def test_compute_chart_data_accepts_direct_ayanamsa_name(self):
-        year, month, day = REDACTED_YEAR, 4, 17
+        year, month, day = 1990, 4, 17
         hour, minute, second = 14, 45, 20
         lat, lon, tz = 37.7749, -122.4194, 8
 

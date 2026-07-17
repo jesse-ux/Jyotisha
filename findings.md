@@ -233,3 +233,13 @@
 - `ccusage` 更适合做用量可视化和日/项目维度追踪，已用 `npx --yes ccusage@latest --version` 验证可运行，版本 `20.0.14`；本轮未做全局安装，避免增加长期依赖。
 - `Repomix` 适合后续把仓库打包给 AI 前做 token counting 和 include/exclude 控制；它不是本次长线程工具输出膨胀的第一止血点。
 - `LiteLLM`、`Langfuse`、`Helicone` 更适合自建 API gateway、OpenAI/VedAstro/多模型调用预算和日志治理；对当前 Codex 本地 agent 会话膨胀不是最短路径，暂不接入。
+- 2026-07-11：第二批 10 案例 holdout 上，V1 recall/exact=`0.70/0.30`，V2=`0.80/0.30`，blocked 均为 0；按冻结门槛 V2 可升级。
+- 2026-07-11：20 案例 V2 合并为 `8 strong / 8 weak / 4 miss`；事业和婚姻各自 recall/exact 均为 `0.80/0.40`。该数字只代表正事件激活回放，不是科学准确率。
+- 2026-07-11：剩余 miss 暴露三类真正技法债：政治身份事件需 D10 Raja Yoga/A10-AL/年度层；婚姻需 Narayana AD/PD 完整语义；KP 精确 cusp 与 Tajika oracle 仍未闭环。
+- 2026-07-11：`scripts/muntha.py` 原本因遗漏 `typing.List` 无法独立导入，现已修复并加回归测试。
+- 2026-07-11：新增 3 个独立 AA probe：Trump 就职 `3/miss`、DiCaprio 奥斯卡 `1/miss`、Markle 婚姻 `7/strong`。V2 对婚姻可复现，但事业泛化缺口不只限政治事件。
+- 2026-07-11：23 案例观察值降为 recall/exact=`0.7391/0.3913`；事业 `0.6667/0.3333`，婚姻 `0.8182/0.4545`。三案太小，不据此调参，但 orchestrator 必须披露。
+- 2026-07-11：V2.1 修复同星 MD/AD 重复计分后，23 案例 activation 保持 `0.7391`，strong activation 从 `0.3913` 降至 `0.3043`，确认旧 strong 数量被抬高。
+- 2026-07-11：23/23 已加入 SAV/BAV 非评分审计；hit/miss 的事件宫 SAV 均值为 `28.809/30.375`，当前数据不支持把高 SAV 直接当事件加分。
+- 2026-07-11：3 案例 × 8 控制日期负样本 pilot 中，真实日 Top-1/Top-3 均为 `0%`，控制日期 strong activation 为 `41.67%`；当前评分器不能支持具体月日，只能支持宽窗口。
+- 2026-07-11：`±1年/±2年` 控制中整体 Top-1/Top-3 仅 `33.33%`；事业两案均排最后，婚姻一案排第一。宽窗口也未整体验证，事业 timing 必须 blocked。

@@ -74,7 +74,7 @@ async function pollAsyncJob(job, { base = activeApiBase, timeoutMs = 120000, int
     if (data.status === 'failed') throw new Error(data.error || 'Async job failed');
     await new Promise(resolve => setTimeout(resolve, intervalMs));
   }
-  throw new Error('Async job timed out');
+  throw new Error(buildAPIRecoveryMessage(job.poll_path, 'Async job timed out'));
 }
 
 async function fetchJson(path) {

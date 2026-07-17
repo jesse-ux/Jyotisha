@@ -20,7 +20,7 @@ def sample_birth_payload():
         "moon_lon": 311.78995555555554,
         "gulika_lon": 256.581676,
         "weekday": 6,
-        "year": REDACTED_YEAR,
+        "year": 1990,
         "month": 4,
         "day": 17,
         "hour": 14,

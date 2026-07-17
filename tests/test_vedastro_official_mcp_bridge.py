@@ -158,7 +158,7 @@ def test_vedastro_official_mcp_bridge_can_call_tool_against_mock_server() -> Non
                 "--tool",
                 "get_dasa_at_time",
                 "--arguments-json",
-                '{"birth_date":"17/04/REDACTED_YEAR","check_date":"04/07/2026"}',
+                '{"birth_date":"17/04/1990","check_date":"04/07/2026"}',
             ],
             cwd=ROOT,
             text=True,
@@ -175,4 +175,4 @@ def test_vedastro_official_mcp_bridge_can_call_tool_against_mock_server() -> Non
     assert report["operation"] == "call_tool"
     assert report["tool_name"] == "get_dasa_at_time"
     assert report["result"]["content"][0]["text"] == "Saturn/Venus"
-    assert seen_arguments["birth_date"] == "17/04/REDACTED_YEAR"
+    assert seen_arguments["birth_date"] == "17/04/1990"

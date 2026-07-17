@@ -134,7 +134,10 @@ class _HighRigorJobCaptureHandler(JyotishAPIHandler):
 class _PostCaptureHandler(JyotishAPIHandler):
     def __init__(self, path: str, payload: dict) -> None:
         raw = json.dumps(payload).encode('utf-8')
-        self.headers = _FakeHeaders({'Content-Length': str(len(raw))})
+        self.headers = _FakeHeaders({
+            'Content-Length': str(len(raw)),
+            'Content-Type': 'application/json',
+        })
         self.server = _FakeServer()
         self.path = path
         self.rfile = BytesIO(raw)
@@ -905,33 +908,19 @@ def test_prashna_rejects_non_string_question() -> None:
         handler._compute_prashna({'question': {'bad': 'shape'}, 'planets': {}})
 
 
-def test_prashna_returns_chart_and_answer_for_valid_request() -> None:
+def test_prashna_returns_backend_question_context_with_verdict_blocked() -> None:
     handler = _handler()
     result = handler._compute_prashna({
         'question': 'career',
         'question_text': '这个工作机会是否值得争取？',
-        'horary_number': 140,
-        'planets': {'Saturn': {'sign': 'Pisces'}, 'Moon': {'sign': 'Scorpio'}},
+        'question_timestamp': '2026-07-15T10:00:00+08:00',
+        'lat': 39.9042,
+        'lon': 116.4074,
+        'timezone': 8,
     })
-    assert 'prashna_chart' in result
-    assert 'kp_answer' in result
-    assert result['kp_answer']['question_type'] == 'career'
-    assert result['kp_answer_v2']['primary_house'] == 10
-    assert 'arudha' in result
-    assert 'sphutas' in result
-    assert 'sahams' in result
-    assert 'lost_item' in result
-    assert 'kunda' in result
-    kp_horary = result['kp_horary']
-    assert kp_horary['method'] == 'KP Horary'
-    assert kp_horary['horary_number'] == 140
-    assert kp_horary['question_houses']['primary'] == 10
-    assert kp_horary['ruling_planets']['ascendant_lord']
-    assert kp_horary['ruling_planets']['moon_star_lord']
-    assert kp_horary['cuspal_sub_lord']['house'] == 10
-    assert kp_horary['cuspal_sub_lord']['kp_lords']['sub_lord']
-    assert kp_horary['house_significators']['10']
-    assert kp_horary['judgement_matrix']
+    assert result['status'] == 'computed'
+    assert result['prashna_context']['chart_source'] == 'swiss_ephemeris_backend'
+    assert result['verdict']['status'] == 'blocked'
 
 
 def test_prashna_advanced_legacy_functions_exist() -> None:
@@ -948,13 +937,13 @@ def test_prashna_advanced_legacy_functions_exist() -> None:
         'Rahu': 300,
         'Ketu': 120,
     }
-    assert prashna.cast_prashna('2026-06-22 12:00', 28.6, 77.2)['ascendant']
+    assert prashna.cast_prashna('2026-06-22 12:00', 28.6, 77.2)['status'] == 'blocked'
     assert prashna.calc_arudha(15.5, planet_lons)['arudha_house']
-    assert prashna.calc_sphutas(planet_lons, 15.5)['trisphuta']
-    assert prashna.calc_life_sphutas(15.5, 70, 10)['signal']
-    assert prashna.calc_sahams(planet_lons, 15.5)['count'] >= 5
+    assert prashna.calc_sphutas(planet_lons, 15.5)['status'] == 'blocked'
+    assert prashna.calc_life_sphutas(15.5, 70, 10)['status'] == 'blocked'
+    assert prashna.calc_sahams(planet_lons, 15.5)['status'] == 'blocked'
     assert prashna.analyze_lost_item(planet_lons, 15.5)['summary']
-    assert prashna.kunda_verify(15.5)['nakshatra']
+    assert prashna.kunda_verify(15.5)['status'] == 'blocked'
 
 
 def test_dasha_system_rejects_unknown_key() -> None:
@@ -3377,7 +3366,7 @@ def test_chart_async_submit_returns_job_id(monkeypatch: pytest.MonkeyPatch) -> N
 
 
 def test_high_rigor_job_poll_endpoint_returns_cached_job_payload(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(jyotish_api_server, '_load_high_rigor_job_record', lambda job_id: {
+    monkeypatch.setattr(jyotish_api_server, '_load_high_rigor_job_record', lambda job_id, **_kwargs: {
         'success': True,
         'endpoint': 'high_rigor_workflow_async',
         'mode': 'async_result',
@@ -3397,7 +3386,7 @@ def test_high_rigor_job_poll_endpoint_returns_cached_job_payload(monkeypatch: py
 
 
 def test_chart_job_poll_endpoint_returns_cached_job_payload(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(jyotish_api_server, '_load_async_job_record', lambda scope, job_id: {
+    monkeypatch.setattr(jyotish_api_server, '_load_async_job_record', lambda scope, job_id, **_kwargs: {
         'success': True,
         'endpoint': 'chart_async',
         'mode': 'async_result',

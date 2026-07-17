@@ -367,8 +367,8 @@ def _register_existing_techniques():
                      TechniqueLevel.L2_STANDARD, TechniqueStatus.STABLE,
                      module_path="synastry.py", compute_func="calc_synastry"),
         TechniqueSpec("prashna", "问事系统", TechniqueCategory.PRASHNA,
-                     TechniqueLevel.L2_STANDARD, TechniqueStatus.BETA,
-                     module_path="prashna.py", compute_func="cast_prashna"),
+                     TechniqueLevel.L2_STANDARD, TechniqueStatus.WIP,
+                     module_path="prashna_context.py", compute_func="build_prashna_context"),
         
         # L3 高级技法（部分已有）
         TechniqueSpec("vimsopaka", "20分力量", TechniqueCategory.NATAL,

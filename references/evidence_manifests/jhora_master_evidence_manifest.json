@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "artifact_id": "jhora_master_evidence",
+  "source_scope": "public_release",
+  "generated_at": "2026-07-16T00:00:00Z",
+  "release_gate": {
+    "local_scratch_required": false,
+    "external_raw_required_for_official_verified": true
+  },
+  "evidence": {
+    "engine": "JHora",
+    "raw_status": "not_collected",
+    "verification_status": "blocked",
+    "reason": "JHora is a desktop oracle. No redistributable raw evidence packet is versioned in the public release."
+  }
+}

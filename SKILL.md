@@ -78,6 +78,28 @@ python3 scripts/user_invocation_acceptance_check.py
 
 该命令必须返回 `"status": "pass"`，并显式列出 VedAstro / PyJHora-JHora / jyotishganit 的可用、partial 或 blocked 状态；否则不得声称云端 Git 仓库调用已可高质量使用。
 
+### 首次调用与降级合同
+
+普通用户不必先理解 API、MCP、分盘或校时方法。Skill/MCP 首次调用必须先使用
+`skill_onboarding`：缺出生字段时只收集日期、时间、经纬度；出生时间有误差时返回
+`rectification` 的选择题问卷；时间明确时进入 `direct_chart`。不得要求用户先提交长篇
+人生事件表。
+
+安装或运行异常时调用 `skill_doctor`。它只报告本地资产与外部适配器 readiness，不得把
+adapter available 解释为已完成 VedAstro、PyJHora/JHora 或 jyotishganit raw-oracle 校验。
+
+每个工作流结果必须包含 `execution_status`：
+
+- `official_verified`：仅此状态可说 VedAstro 官方 raw evidence 已被使用；
+- `official_blocked`：官方请求失败、额度/网络/超时受阻；
+- `local_fallback`：本地计算继续可用，但不能称为官方云端闭环。
+
+### Web/API 任务存储
+
+默认 `JYOTISH_ASYNC_JOB_BACKEND=file` 使用本机受限权限的临时任务文件。单机部署可设
+`JYOTISH_ASYNC_JOB_BACKEND=sqlite`，使用 `scratch/local/async_jobs.sqlite3` 保存 token-hash
+与 TTL 任务记录。两种后端都不是 Redis、多节点队列或跨主机 worker；不得把它们描述为分布式恢复能力。
+
 **强制工作流**（完整规范 → `references/ai-reading-workflow-prompt.md` v5.1.0）：
 
 0. **阶段负一**：问题类型路由（事业/婚恋/财务/应期/历史验证/综合解盘）→ 必须先读 `references/strict-workflow-router.md`，按对应 strict checklist 执行；用户不需要主动点名高级技法。

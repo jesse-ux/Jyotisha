@@ -1661,9 +1661,19 @@ def _build_ai_prompt_pack(report):
         if isinstance(primary_strict_contract, dict)
         else {}
     )
+    try:
+        from strict_evidence_service import existing_interpretation_source_pack
+        fallback_source_pack = existing_interpretation_source_pack()
+    except Exception:
+        fallback_source_pack = {}
     interpretation_source_audit = (
         primary_audit.get('interpretation_source_pack')
         if isinstance(primary_audit, dict) and isinstance(primary_audit.get('interpretation_source_pack'), dict)
+        else {}
+    )
+    fallback_domain_layers = (
+        fallback_source_pack.get('domain_invocation_layers')
+        if isinstance(fallback_source_pack, dict) and isinstance(fallback_source_pack.get('domain_invocation_layers'), dict)
         else {}
     )
     guided_topics = modules.get('guided_topics') if isinstance(modules.get('guided_topics'), list) else build_guided_topics(report)
@@ -1747,7 +1757,7 @@ def _build_ai_prompt_pack(report):
             'missing_refs': interpretation_source_audit.get('missing_refs') or [],
         },
         'prediction_boundary_contract': primary_prediction_boundary_contract or {},
-        'domain_invocation_layers': primary_domain_invocation_layers or {},
+        'domain_invocation_layers': primary_domain_invocation_layers or fallback_domain_layers or {},
         'output_template_contract': primary_output_template_contract or {},
         'mevg_collection_queue': primary_mevg_collection_queue or {},
         'real_case_calibration_layer': primary_real_case_calibration_layer or {},
@@ -2042,20 +2052,20 @@ def _attach_vedastro_official_full_snapshot(report, args):
 
 def _load_strict_evidence_collector():
     try:
-        from mcp_server import _collect_strict_evidence as collector
+        from strict_evidence_service import collect_strict_evidence as collector
         return collector
     except Exception:
-        mcp_path = os.path.join(ROOT_DIR, 'mcp_server.py')
-        if not os.path.exists(mcp_path):
+        service_path = os.path.join(SCRIPT_DIR, 'strict_evidence_service.py')
+        if not os.path.exists(service_path):
             raise
-        spec = importlib.util.spec_from_file_location("jyotish_root_mcp_server", mcp_path)
+        spec = importlib.util.spec_from_file_location("jyotish_strict_evidence_service", service_path)
         if spec is None or spec.loader is None:
-            raise ImportError(f"Unable to load mcp_server from {mcp_path}")
+            raise ImportError(f"Unable to load strict_evidence_service from {service_path}")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        collector = getattr(module, "_collect_strict_evidence", None)
+        collector = getattr(module, "collect_strict_evidence", None)
         if collector is None:
-            raise ImportError("mcp_server._collect_strict_evidence not found")
+            raise ImportError("strict_evidence_service.collect_strict_evidence not found")
         return collector
 
 

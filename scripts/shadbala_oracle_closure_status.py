@@ -200,19 +200,23 @@ def build_status(oracle_file: str) -> dict[str, Any]:
             "summary": {
                 "shadbala_task_count": len(shadbala_tasks),
                 "external_verified_shadbala_tasks": len(external_verified),
-                "can_claim_shadbala_absolute_closure": True,
+                "external_packet_fields_complete": True,
+                "same_chart_parity_status": "blocked",
+                "same_chart_parity_reason": "PyJHora same-chart replay still mismatches local Shadbala total virupas.",
+                "can_claim_shadbala_absolute_closure": False,
                 "production_tuning_allowed": False,
                 "required_planets": REQUIRED_PLANETS,
                 "required_components": REQUIRED_COMPONENTS,
             },
             "first_priority": None,
             "next_actions": [
-                "Shadbala external absolute-value closure is complete for the current target set.",
+                "Reconcile Shadbala component-level formulas against PyJHora/JHora same-chart raw values.",
                 "Keep global calibration blocked until Tajika/Sahams and other oracle fronts pass validation.",
             ],
             "boundary": (
                 "This board isolates Shadbala absolute values. Dasha boundary dates are a separate closure task. "
-                "Production tuning remains forbidden until external component-level evidence is complete."
+                "Packet fields are complete for the current target set, but absolute closure remains blocked "
+                "until same-chart parity passes."
             ),
         }
 
@@ -283,15 +287,17 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         f"- shadbala_task_count: `{summary['shadbala_task_count']}`",
         f"- external_verified_shadbala_tasks: `{summary['external_verified_shadbala_tasks']}`",
+        f"- external_packet_fields_complete: `{str(summary.get('external_packet_fields_complete', False)).lower()}`",
+        f"- same_chart_parity_status: `{summary.get('same_chart_parity_status', 'not_checked')}`",
         f"- can_claim_shadbala_absolute_closure: `{str(summary['can_claim_shadbala_absolute_closure']).lower()}`",
         f"- production_tuning_allowed: `{str(summary['production_tuning_allowed']).lower()}`",
         "",
     ]
     if first is None:
         lines.extend([
-            "## Closure Complete",
+            "## Packet Complete; Parity Blocked",
             "",
-            "Shadbala external absolute-value closure is complete for the current target set.",
+            "Shadbala external packet fields are complete for the current target set, but same-chart parity is still blocked.",
             "",
             "## Next Actions",
             "",

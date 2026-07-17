@@ -47,6 +47,8 @@ Do not add private birth data, API keys, or desktop oracle screenshots to this p
 请使用 strict_workflow，并在输出中标明 VedAstro / PyJHora-JHora / jyotishganit / Real Case Calibration 的状态。
 如果没有 VedAstro official_raw_response，请标记 official_blocked 或 local_fallback。
 如果我提供西方占星导出，请作为 western_oracle_payload 进入统一主链，不要把单边西占信号说成双系统互证。
+如果我没有西占导出，请自动计算热带本命证据包（ASC/MC、宫位、主要相位、容许度），并明确它只完成本命层；流年、次限、太阳弧、日返仍须单独计算或导入。
+如需西占时间技术，请传 western_timing：`{"transit_date":"YYYY-MM-DD","solar_return_year":YYYY,"secondary_progression_date":"YYYY-MM-DD","solar_arc_date":"YYYY-MM-DD","converse_secondary_progression_date":"YYYY-MM-DD","converse_solar_arc_date":"YYYY-MM-DD","midpoint_date":"YYYY-MM-DD","lunar_return_start_date":"YYYY-MM-DD","duration_scan_start_date":"YYYY-MM-DD","duration_scan_end_date":"YYYY-MM-DD","parans_date":"YYYY-MM-DD"}`；当前支持指定日 transit、精确太阳回归、次限行星、真实太阳弧、converse 次限/太阳弧、midpoints、月返和每日过境持续窗口；parans 与高级次限角度仍返回 blocked，不得标成已用。
 
 ## Highest Quality Mode
 

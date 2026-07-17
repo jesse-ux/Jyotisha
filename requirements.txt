@@ -3,6 +3,7 @@
 
 # 核心：Swiss Ephemeris 天文计算库（必需）
 pyswisseph
+timezonefinder>=6.5
 
 # VedAstro 官方 Python SDK（官方快照与交叉验证）
 vedastro==1.23.25
