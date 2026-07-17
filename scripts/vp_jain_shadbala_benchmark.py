@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare the native Shadbala chain with VP Jain's published worked example."""
+"""Compare the native Shadbala chain with PyJHora's VP Jain-attributed fixture."""
 
 from __future__ import annotations
 
@@ -76,7 +76,7 @@ def build_report() -> dict:
     matched = sum(row["status"] == "within_tolerance" for row in rows)
     return {
         "case": {
-            "name": "VP Jain published Shadbala example",
+            "name": "VP Jain-attributed Shadbala fixture",
             "birth": "1981-09-13T01:30:00+05:30",
             "latitude": 28.65,
             "longitude": 77.2166666667,
@@ -88,7 +88,7 @@ def build_report() -> dict:
             "upstream_url": "https://github.com/naturalstupid/PyJHora/blob/ca22995709bd60e371e7820a1a5efc80ce4cf821/src/jhora/tests/pvr_tests.py#L6853",
             "upstream_issue": None,
             "license_boundary": "AGPL-3.0 process-isolated numeric expectations only; no implementation copied.",
-            "truth_status": "candidate_published_example_replay_not_independent_arbitration",
+            "truth_status": "candidate_attributed_fixture_replay_not_independent_arbitration",
         },
         "summary": {
             "row_count": len(rows),

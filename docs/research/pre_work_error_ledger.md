@@ -114,6 +114,9 @@ For large architecture or release work, also read:
 ## ERR-080 | Issue link was mistaken for benchmark provenance | mitigated 2026-07-18
 PyJHora issue #17 is a UI/encoding issue with a general mismatch report, not VP Jain calibration. The benchmark now pins `V4.8.7` / `ca22995709bd60e371e7820a1a5efc80ce4cf821` and the exact test function URL. Treat its AGPL numeric expectations as a candidate replay, never independent formula arbitration.
 
+## ERR-081 | Fixture attribution was overstated as publication | mitigated 2026-07-18
+`shadbala_VPJainBook_tests` supplies no independently citable book edition, page, or numerical table. The product therefore calls it a VP Jain-attributed fixture, not a published worked example; it remains candidate replay data and cannot close a formula branch.
+
 ## Fragment Sweep Command Set
 
 Use split scans, not one unbounded full-home command:
