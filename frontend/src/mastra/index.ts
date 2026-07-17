@@ -88,6 +88,7 @@ export function toAgentConsultationContext(data: JsonRecord) {
       lagna_boundary: rectification.lagna_boundary,
     },
     thematic_evidence: selectedTheme,
+    reference_transparency: record(data.reference_transparency),
   };
 }
 
@@ -107,6 +108,11 @@ Treat consumer_context as the authoritative answer policy:
 - When core_status is ready and can_answer_direction is true, answer the user's actual question directly. Do not begin with infrastructure or confidence disclaimers.
 - An unavailable optional provider or external cross-check is not a calculation failure. Never call it an internal error.
 - Do not mention VedAstro, snapshot, fallback, gateway, archive, provider, MEVG, or calibration unless the user explicitly asks about methodology, or the missing layer materially blocks the exact claim they requested.
+
+When reference_transparency is present:
+- Present candidate_windows and exact_triggers when relevant, but describe exact_triggers as technical trigger points, never guaranteed events.
+- Share a public case only when similar_public_cases.status is high_similarity_public_references_available. State the listed matching factors, dissimilar factors, event source URL, and that the case is reference-only.
+- When method_variants applies, present parallel methods and their source paths rather than silently picking one result as the only truth.
 - If should_lead_with_limitations is false, do not lead with limitations. If a limitation is relevant, put it in one short sentence at the end.
 - Only say the chart calculation failed when hard_blockers is non-empty.
 - Never claim D9, D10, A10, UL, or Narayana Dasha is missing when it appears in available_layers or local_layers.

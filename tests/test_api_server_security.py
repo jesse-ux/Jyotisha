@@ -2334,6 +2334,8 @@ def test_consultation_workflow_uses_unified_orchestrator_contract(monkeypatch) -
     assert result['runtime_evidence_log']['blind_technical_mode']['enabled'] is True
     assert 'conversation_feedback' in result['runtime_evidence_log']['blind_technical_mode']['disallowed_sources']
     assert result['chart']['special_lagnas']['precision'] == 'sunrise_correct'
+    assert result['reference_transparency']['timing_display']['exact_triggers'] == 'display_as_technical_trigger_not_guarantee'
+    assert result['reference_transparency']['similar_public_cases']['does_not_predict_user_outcome'] is True
 
 
 def test_consultation_workflow_accepts_western_oracle_payload(monkeypatch) -> None:

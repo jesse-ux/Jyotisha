@@ -452,6 +452,7 @@ def execute_consultation_workflow(
     chart_override: dict | None = None,
 ) -> dict:
     from scripts.timing_precision_contract import build_timing_precision_contract
+    from scripts.reference_transparency_contract import build_reference_transparency_contract
 
     birth_payload = handler._high_rigor_birth_payload(body)
     themes = handler._high_rigor_requested_themes(body)
@@ -715,6 +716,11 @@ def execute_consultation_workflow(
     if body.get('return_high_rigor_shape'):
         result['endpoint'] = 'high_rigor_workflow'
     result['timing_precision_contract'] = build_timing_precision_contract(body.get('timing'))
+    result['reference_transparency'] = build_reference_transparency_contract(
+        chart,
+        themes,
+        timing=body.get('timing'),
+    )
     return result
 
 
