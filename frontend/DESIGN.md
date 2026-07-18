@@ -137,11 +137,13 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 ### Sidebar shell
 
 - **Composition:** provider, fixed header, one scroll-owning content region, fixed footer, trigger, rail, and flexible chat inset.
+- **Trigger placement:** the single visible collapse/expand trigger sits beside the active session title in the chat header. The sidebar brand row has no duplicate trigger.
 - **Desktop:** 288px expanded by default at 1024px and above; 64px collapsed icon rail.
 - **Tablet:** 64px collapsed by default from 768px through 1023px; 240px when expanded.
-- **Mobile:** no icon rail; an off-canvas drawer uses `min(86vw, 320px)` and closes through its scrim, trigger, or Escape.
+- **Mobile:** no icon rail; an off-canvas drawer uses `min(86vw, 320px)` and closes through its scrim or Escape.
 - **Collapsed content:** logo, new-chat action, one history expansion action, and account avatar. Individual sessions do not become indistinguishable repeated icons.
 - **Scroll ownership:** header and footer remain fixed; `SidebarContent` is the sole sidebar scroll owner.
+- **Motion:** Sidebar state changes are immediate on desktop, tablet, and mobile. The 44px trigger keeps one stable 18px sidebar glyph and never enters an intermediate scale or opacity state.
 - **Accessibility:** Command/Control+B shortcut outside editable controls, contextual trigger labels, 44px targets, focus return, collapsed-only tooltips, reduced-motion, reduced-transparency, and increased-contrast support.
 - **State:** session-local; reload uses breakpoint defaults rather than cookie or local-storage persistence.
 
@@ -202,7 +204,8 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 | Type | Duration | Easing | Usage |
 |---|---:|---|---|
 | Micro | 120ms | ease-out | Button and row feedback |
-| Standard | 180ms | `cubic-bezier(.22, 1, .36, 1)` | Sheet, sidebar, message entry |
+| Standard | 180ms | `cubic-bezier(.22, 1, .36, 1)` | Sheet and message entry |
+| Spatial | Instant | None | Sidebar state changes and mobile drawer |
 | Emphasis | 360ms | `cubic-bezier(.16, 1, .3, 1)` | Loading mark only |
 
 Only `transform`, `opacity`, and color/filter transitions animate. Reduced-motion disables non-essential animation. Motion communicates state; decorative looping is limited to an active loading state.

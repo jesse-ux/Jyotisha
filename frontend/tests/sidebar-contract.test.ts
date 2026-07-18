@@ -97,6 +97,8 @@ test("documents the sidebar shell design contract", () => {
   assert.match(design, /### Sidebar shell/);
   assert.match(design, /Scroll ownership/);
   assert.match(design, /session-local/);
+  assert.match(design, /single visible collapse\/expand trigger/);
+  assert.match(design, /Sidebar state changes are immediate/);
 });
 
 test("composes the Jyotisha app sidebar from the generic shell", () => {
@@ -218,6 +220,17 @@ test("selects desktop and tablet shell widths from provider data", () => {
   assert.doesNotMatch(globalStyles, /transition:[^;}]*(?:width|grid-template-columns)/);
 });
 
+test("changes sidebar state without transition frames", () => {
+  assert.match(globalStyles, /\[data-sidebar="trigger"\]\s+svg\s*\{[^}]*width:\s*18px[^}]*height:\s*18px/);
+  assert.doesNotMatch(cssBlock('[data-sidebar="sidebar"]'), /transition:/);
+});
+
+test("keeps the chat title in the flexible left-aligned header column", () => {
+  assert.match(cssBlock(".chat-header"), /grid-template-columns:\s*auto\s+minmax\(0,\s*1fr\)\s+auto/);
+  assert.match(cssBlock(".chat-header"), /text-align:\s*left/);
+  assert.doesNotMatch(cssBlock(".chat-header"), /justify-content:\s*space-between/);
+});
+
 test("makes SidebarContent the only sidebar scroll owner", () => {
   assert.match(cssBlock('[data-sidebar="header"]'), /flex:\s*0\s+0\s+auto/);
   assert.match(cssBlock('[data-sidebar="content"]'), /min-height:\s*0/);
@@ -242,6 +255,7 @@ test("uses provider attributes for the mobile drawer and scrim", () => {
   assert.match(globalStyles, /\[data-sidebar="sidebar"\]\[data-mobile-open="false"\][^{]*\{[^}]*transform:\s*translateX\(-100%\)/);
   assert.match(globalStyles, /\[data-sidebar="sidebar"\]\[data-mobile-open="true"\][^{]*\{[^}]*visibility:\s*visible[^}]*transform:\s*translateX\(0\)/);
   assert.match(globalStyles, /\.sidebar-scrim\s*\{[^}]*position:\s*fixed[^}]*background:\s*var\(--color-scrim\)/);
+  assert.match(globalStyles, /\[data-sidebar="sidebar"\]:focus\s*\{[^}]*outline:\s*none/);
   assert.match(globalStyles, /\[data-sidebar="rail"\]\s*\{[^}]*display:\s*none/);
 });
 
