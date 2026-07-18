@@ -76,6 +76,9 @@ The real Python-shaped fixture retains structural CJK/no-ASCII copy, normalized 
 uniqueness, partition count, opportunity ID, fingerprint, and partition-ID seam checks without
 pinning exact natural-language prose. It is parsed through the Task 3 adapter and exercised
 through the Task 4 service. Task 5 persistence was not changed.
+The service-level adversarial-note regression independently parses every captured Agent prompt
+and requires the exact `task`/`opportunities` projection and exact safe opportunity keys. It
+does not call the production serializer or search for literal note prose.
 
 ## Verification
 
@@ -93,7 +96,11 @@ through the Task 4 service. Task 5 persistence was not changed.
 | Cumulative changed Python Ruff | pass | `.omo/evidence/task-4-axis-ruff.log` |
 | Diff check and all changed TS/Python LOC | pass; every audited file <=250 | `.omo/evidence/task-4-axis-quality.log` |
 | Full TypeScript check | only known unrelated `profile-persistence.test.ts:7` TS1501 | `.omo/evidence/task-4-axis-tsc.log` |
-| Fresh standards-axis fix review | CLEAR / APPROVE; no blockers | `.omo/evidence/task-4-axis-fix-code-review.md` |
+| Structural prompt focused TypeScript | 40/40 pass | `.omo/evidence/task-4-structural-focused-ts.log` |
+| Structural prompt ESLint | pass, zero diagnostics | `.omo/evidence/task-4-structural-eslint.log` |
+| Structural prompt diff/LOC audit | pass; cumulative files <=250 | `.omo/evidence/task-4-structural-quality.log` |
+| Structural prompt TypeScript check | only known unrelated TS1501 | `.omo/evidence/task-4-structural-tsc.log` |
+| Fresh structural-prompt review | CLEAR / APPROVE; no blockers | `.omo/evidence/task-4-structural-prompt-code-review.md` |
 
 The TypeScript command remains non-zero solely because the pre-existing profile-persistence
 test uses a regular-expression flag newer than the configured target. No Task 4 file reports
@@ -104,6 +111,10 @@ The earlier `.omo/evidence/task-4-final-fix-code-review.md` `CLEAR` is explicitl
 the standards-axis review and is not cited as current acceptance. The new tests contain no
 localized month/day or domain-word assertions; precision is verified through distinct normalized
 labels and the number of numeric range-boundary tokens.
-The fresh reviewer also verified the shared 120/80 boundary through the public schema, API
-adapter, internal and persisted schemas, and binding guard. Both programming language
-perspectives and the remove-slops perspective returned `CLEAR / APPROVE`.
+The earlier `.omo/evidence/task-4-axis-fix-code-review.md` `CLEAR` is explicitly superseded by
+the main acceptance test finding; it is retained only as historical evidence. The shared
+120/80 boundary remains verified through the public schema, API adapter, internal and persisted
+schemas, and binding guard.
+The fresh reviewer independently verified the adversarial structural projection assertion,
+40/40 focused tests, zero-diagnostic ESLint, the 250-pure-LOC boundary, and both required
+programming/remove-slops perspectives with no remaining blocker.

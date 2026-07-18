@@ -73,7 +73,30 @@ test("raw tea-water note is omitted and old free-copy output cannot be accepted"
   });
 
   assert.equal(prompts.length, 2);
-  assert.equal(prompts.some((prompt) => /喝茶|喝水/.test(prompt)), false);
+  const expectedOpportunities = differenceBuild.packet.opportunities.map((opportunity) => ({
+    opportunityId: opportunity.opportunityId,
+    dimensionCode: opportunity.dimensionCode,
+    neutralContext: opportunity.neutralContext,
+  }));
+  for (const serialized of prompts) {
+    const projection: unknown = JSON.parse(serialized);
+    if (typeof projection !== "object" || projection === null) {
+      throw new Error("expected a prompt projection object");
+    }
+    assert.deepEqual(Object.keys(projection).sort(), ["opportunities", "task"]);
+    assert.equal(Reflect.get(projection, "task"), "select_dynamic_choice_opportunity");
+    const opportunities: unknown = Reflect.get(projection, "opportunities");
+    assert.ok(Array.isArray(opportunities));
+    for (const opportunity of opportunities) {
+      if (typeof opportunity !== "object" || opportunity === null) {
+        throw new Error("expected an opportunity projection object");
+      }
+      assert.deepEqual(Object.keys(opportunity).sort(), [
+        "dimensionCode", "neutralContext", "opportunityId",
+      ]);
+    }
+    assert.deepEqual(opportunities, expectedOpportunities);
+  }
   assert.equal(persisted[0]?.source, "fallback");
 });
 
