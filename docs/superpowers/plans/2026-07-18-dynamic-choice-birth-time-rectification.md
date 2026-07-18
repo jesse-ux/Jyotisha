@@ -264,6 +264,8 @@ test("unknown answers do not advance plateau or the effective safety count", () 
 });
 
 test("terminal conditions are deterministic", () => {
+  assert.equal(decisionFor({ result: null, forcedReason: "user_finished" }).reason, "user_finished");
+  assert.equal(decisionFor({ result: null, forcedReason: "generation_unavailable" }).reason, "generation_unavailable");
   assert.equal(decisionFor({ confidence: "high" }).reason, "high_confidence");
   assert.equal(decisionFor({ usefulOpportunityCount: 0 }).reason, "no_information_gain");
   assert.equal(decisionFor({ repeatedOnly: true }).reason, "repeated_partition");
@@ -279,14 +281,15 @@ Expected: FAIL because `decideDynamicStop` does not exist.
 
 - [ ] **Step 6: Implement deterministic stop ordering**
 
-Use this decision order so a high-confidence result cannot be hidden by a secondary reason:
+`DynamicStopInput.result` is nullable so generation can stop safely before a first score. Add `forcedReason: "user_finished" | "generation_unavailable" | null`; these explicit terminal events are checked before score-derived conditions. Use this decision order:
 
 ```ts
 export function decideDynamicStop(input: DynamicStopInput): DynamicStopDecision {
-  const plateauCount = input.effectiveAnswer
+  const plateauCount = input.effectiveAnswer && input.result
     ? materiallyChanged(input.previousResult, input.result) ? 0 : input.priorPlateauCount + 1
     : input.priorPlateauCount;
-  if (input.result.confidence === "high") return { kind: "finish", reason: "high_confidence", plateauCount };
+  if (input.forcedReason) return { kind: "finish", reason: input.forcedReason, plateauCount };
+  if (input.result?.confidence === "high") return { kind: "finish", reason: "high_confidence", plateauCount };
   if (input.effectiveAnswerCount >= 10) return { kind: "finish", reason: "safety_cap", plateauCount };
   if (plateauCount >= 2) return { kind: "finish", reason: "plateau", plateauCount };
   if (input.usefulOpportunityCount === 0) return { kind: "finish", reason: "no_information_gain", plateauCount };
@@ -326,6 +329,8 @@ type DynamicJourneyProgress = {
 ```
 
 Do not expose the hidden safety count or a maximum question count in either schema.
+
+Add `dynamicJourneyTurnStateSchema` with `journeyProtocol: z.literal("dynamic-choice-v2")`, nonnegative `turnVersion`, `dynamicNextActionSchema`, `dynamicJourneyProgressSchema`, and the existing derived permissions schema. Keep `journeyTurnStateSchema` unchanged as the legacy-guided-v1 compatibility contract. Terminal resume behavior is implemented by Task 6 transitions, but every v2 public response must parse through this explicit dynamic turn-state discriminator.
 
 - [ ] **Step 8: Run focused tests and commit**
 
