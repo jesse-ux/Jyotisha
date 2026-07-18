@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { BirthTimeGuideOutputError } from "./birth-time-guide-agent.ts";
 import {
-  dynamicPublicCopyIsSafe,
-  dynamicQuestionIsGrounded,
   dynamicQuestionSemanticFingerprint,
+  dynamicServerCopyIsSafe,
   modelSafeDynamicQuestionPrompt,
+  normalizeDynamicLabel,
 } from "./birth-time-dynamic-question-copy.ts";
 import {
   persistedDynamicChoiceQuestionSchema,
@@ -20,28 +20,23 @@ const exactServerIdSchema = z.string().min(1).refine(
   (value) => value === value.trim(),
   "server ids must be byte-exact",
 );
-const modelQuestionSchema = z.object({
+const questionSelectionSchema = z.object({
   kind: z.literal("question"),
   opportunityId: exactServerIdSchema,
-  prompt: z.string().trim().min(1).max(120),
-  options: z.array(z.object({
-    partitionId: exactServerIdSchema,
-    label: z.string().trim().min(1).max(80),
-  }).strict()).min(2).max(4),
 }).strict();
 const noUsefulQuestionSchema = z.object({ kind: z.literal("no_useful_question") }).strict();
 const dynamicQuestionOutputSchema = z.discriminatedUnion("kind", [
-  modelQuestionSchema,
+  questionSelectionSchema,
   noUsefulQuestionSchema,
 ]).readonly();
 
 export type ParsedDynamicQuestionOutput = z.infer<typeof dynamicQuestionOutputSchema>;
-export type ParsedQuestionOutput = Extract<ParsedDynamicQuestionOutput, { readonly kind: "question" }>;
+export type ParsedQuestionSelection = Extract<ParsedDynamicQuestionOutput, { readonly kind: "question" }>;
 export type DynamicQuestionIdFactory = () => string;
 
 export class BirthTimeDynamicBindingError extends Error {
   readonly name = "BirthTimeDynamicBindingError";
-  readonly reason: "invalid_private_binding" | "invalid_server_id" | "invalid_persisted_question" | "invalid_fallback_copy";
+  readonly reason: "invalid_private_binding" | "invalid_server_id" | "invalid_persisted_question" | "invalid_server_copy";
 
   constructor(reason: BirthTimeDynamicBindingError["reason"]) {
     super(`Birth-time dynamic question binding ${reason}`);
@@ -69,30 +64,12 @@ function opportunityFor(
   return opportunity;
 }
 
-function validateQuestionOutput(
-  output: ParsedQuestionOutput,
-  packet: CandidateDifferencePacket,
-): ParsedQuestionOutput {
-  const opportunity = opportunityFor(packet, output.opportunityId);
-  if (
-    !dynamicPublicCopyIsSafe(output.prompt, true)
-    || !dynamicQuestionIsGrounded(output.prompt, opportunity.neutralContext)
-    || output.options.some((option) => !dynamicPublicCopyIsSafe(option.label, false))
-  ) return invalidQuestion();
-  const expected = opportunity.partitions.map((item) => item.partitionId);
-  const actual = output.options.map((item) => item.partitionId);
-  if (new Set(actual).size !== actual.length) return invalidQuestion();
-  if (actual.length !== expected.length || actual.some((item) => !expected.includes(item))) {
-    return invalidQuestion();
-  }
-  return output;
-}
-
 export function generateDynamicQuestionPrompt(
   packet: CandidateDifferencePacket,
   unmatchedNote: string | null,
 ): string {
-  return modelSafeDynamicQuestionPrompt(packet, unmatchedNote);
+  void unmatchedNote;
+  return modelSafeDynamicQuestionPrompt(packet);
 }
 
 export function parseDynamicQuestionOutput(
@@ -101,8 +78,8 @@ export function parseDynamicQuestionOutput(
 ): ParsedDynamicQuestionOutput {
   const parsed = dynamicQuestionOutputSchema.safeParse(value);
   if (!parsed.success) return invalidQuestion();
-  if (parsed.data.kind === "no_useful_question") return parsed.data;
-  return validateQuestionOutput(parsed.data, packet);
+  if (parsed.data.kind === "question") opportunityFor(packet, parsed.data.opportunityId);
+  return parsed.data;
 }
 
 export function parseDynamicQuestionText(
@@ -117,12 +94,24 @@ export function parseDynamicQuestionText(
   }
 }
 
-export function dynamicQuestionFingerprint(output: ParsedQuestionOutput): string {
-  return dynamicQuestionSemanticFingerprint(output);
+function serverRendering(opportunity: QuestionOpportunity): {
+  readonly prompt: string;
+  readonly options: readonly { readonly partitionId: string; readonly label: string }[];
+} {
+  const options = opportunity.partitions.map((partition) => ({
+    partitionId: partition.partitionId,
+    label: partition.fallbackLabel,
+  }));
+  const labels = options.map((option) => normalizeDynamicLabel(option.label));
+  if (
+    !dynamicServerCopyIsSafe(opportunity.fallbackPrompt, true)
+    || options.some((option) => !dynamicServerCopyIsSafe(option.label, false))
+    || new Set(labels).size !== labels.length
+  ) throw new BirthTimeDynamicBindingError("invalid_server_copy");
+  return { prompt: opportunity.fallbackPrompt, options };
 }
 
 function privatePartitionsFor(
-  output: ParsedQuestionOutput,
   build: CandidateDifferenceBuild,
   opportunity: QuestionOpportunity,
 ): readonly ScoredEvidencePartition[] {
@@ -134,7 +123,7 @@ function privatePartitionsFor(
   if (byId.size !== privatePartitions.length) {
     throw new BirthTimeDynamicBindingError("invalid_private_binding");
   }
-  for (const publicPartition of opportunity.partitions) {
+  return opportunity.partitions.map((publicPartition) => {
     const privatePartition = byId.get(publicPartition.partitionId);
     if (
       !privatePartition
@@ -143,11 +132,7 @@ function privatePartitionsFor(
       || privatePartition.fallbackLabel !== publicPartition.fallbackLabel
       || Object.keys(privatePartition.candidateScores).length === 0
     ) throw new BirthTimeDynamicBindingError("invalid_private_binding");
-  }
-  return output.options.map((option) => {
-    const partition = byId.get(option.partitionId);
-    if (!partition) throw new BirthTimeDynamicBindingError("invalid_private_binding");
-    return partition;
+    return privatePartition;
   });
 }
 
@@ -158,26 +143,26 @@ function serverId(factory: DynamicQuestionIdFactory): string {
 }
 
 function bindQuestion(
-  output: ParsedQuestionOutput,
+  selection: ParsedQuestionSelection,
   build: CandidateDifferenceBuild,
   createId: DynamicQuestionIdFactory,
   source: "agent" | "fallback",
 ): PersistedDynamicChoiceQuestion {
-  const validated = validateQuestionOutput(output, build.packet);
-  const opportunity = opportunityFor(build.packet, validated.opportunityId);
-  const questionFingerprint = dynamicQuestionFingerprint(validated);
+  const opportunity = opportunityFor(build.packet, selection.opportunityId);
+  const rendering = serverRendering(opportunity);
+  const privatePartitions = privatePartitionsFor(build, opportunity);
+  const questionFingerprint = dynamicQuestionSemanticFingerprint(rendering);
   if (
     build.packet.askedQuestionFingerprints.includes(questionFingerprint)
     || build.packet.candidatePartitionFingerprints.includes(opportunity.candidatePartitionFingerprint)
   ) throw new BirthTimeGuideOutputError("repeated_question");
-  const privatePartitions = privatePartitionsFor(validated, build, opportunity);
   const questionId = serverId(createId);
-  const primaryOptions = validated.options.map((option, index) => {
+  const primaryOptions = rendering.options.map((option, index) => {
     const partition = privatePartitions[index];
     if (!partition) throw new BirthTimeDynamicBindingError("invalid_private_binding");
     return {
       optionId: serverId(createId), label: option.label, kind: "primary" as const,
-      partitionId: partition.partitionId, candidateScores: partition.candidateScores,
+      partitionId: option.partitionId, candidateScores: partition.candidateScores,
     };
   });
   const persisted = persistedDynamicChoiceQuestionSchema.safeParse({
@@ -189,7 +174,7 @@ function bindQuestion(
     source,
     questionFingerprint,
     candidatePartitionFingerprint: opportunity.candidatePartitionFingerprint,
-    prompt: validated.prompt,
+    prompt: rendering.prompt,
     options: [
       ...primaryOptions,
       { optionId: serverId(createId), label: "不确定 / 不记得", kind: "unknown", partitionId: null, candidateScores: null },
@@ -201,11 +186,11 @@ function bindQuestion(
 }
 
 export function bindDynamicQuestion(
-  output: ParsedQuestionOutput,
+  selection: ParsedQuestionSelection,
   build: CandidateDifferenceBuild,
   createId: DynamicQuestionIdFactory,
 ): PersistedDynamicChoiceQuestion {
-  return bindQuestion(output, build, createId, "agent");
+  return bindQuestion(selection, build, createId, "agent");
 }
 
 export function bindFallbackDynamicQuestion(
@@ -217,26 +202,13 @@ export function bindFallbackDynamicQuestion(
     || (left.opportunityId < right.opportunityId ? -1 : left.opportunityId > right.opportunityId ? 1 : 0)
   ));
   for (const opportunity of opportunities) {
-    let output: ParsedDynamicQuestionOutput;
     try {
-      output = parseDynamicQuestionOutput({
-        kind: "question",
-        opportunityId: opportunity.opportunityId,
-        prompt: opportunity.fallbackPrompt,
-        options: opportunity.partitions.map((partition) => ({
-          partitionId: partition.partitionId,
-          label: partition.fallbackLabel,
-        })),
-      }, build.packet);
-    } catch (error) {
-      if (isRecoverableDynamicQuestionError(error)) {
-        throw new BirthTimeDynamicBindingError("invalid_fallback_copy");
-      }
-      throw error;
-    }
-    if (output.kind !== "question") throw new BirthTimeDynamicBindingError("invalid_fallback_copy");
-    try {
-      return bindQuestion(output, build, createId, "fallback");
+      return bindQuestion(
+        { kind: "question", opportunityId: opportunity.opportunityId },
+        build,
+        createId,
+        "fallback",
+      );
     } catch (error) {
       if (error instanceof BirthTimeGuideOutputError && error.reason === "repeated_question") continue;
       throw error;

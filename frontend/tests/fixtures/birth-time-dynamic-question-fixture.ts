@@ -26,14 +26,9 @@ export const opportunityId = opportunity.opportunityId;
 export const firstPartitionId = firstPartition.partitionId;
 export const secondPartitionId = secondPartition.partitionId;
 
-export const validDynamicOutput = {
+export const validDynamicSelection = {
   kind: "question",
   opportunityId,
-  prompt: "哪一个时间段更接近你的工作变化？",
-  options: [
-    { partitionId: firstPartitionId, label: "2018—2020 年" },
-    { partitionId: secondPartitionId, label: "2021—2023 年" },
-  ],
 } as const;
 
 export const generationCommand: DynamicQuestionGenerationCommand = {

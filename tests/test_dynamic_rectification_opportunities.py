@@ -89,3 +89,30 @@ def test_frontend_adapter_fixture_is_real_task2_opportunity_output() -> None:
     ]
     assert fixture["dimension_code"] == "career"
     assert "career" not in fixture["neutral_context"]
+    assert fixture["neutral_context"] == opportunity["neutral_context"]
+    assert fixture["fallback_prompt"] == opportunity["fallback_prompt"]
+    assert [item["fallback_label"] for item in fixture["partitions"]] == [
+        item["fallback_label"] for item in opportunity["partitions"]
+    ]
+
+
+def test_same_year_windows_receive_distinct_visible_labels() -> None:
+    windows = [
+        {
+            "window_start": "2012-01-01",
+            "window_end": "2012-03-31",
+            "activations": {"04:00": 1.0, "04:01": 0.0},
+        },
+        {
+            "window_start": "2012-04-01",
+            "window_end": "2012-06-30",
+            "activations": {"04:00": 0.0, "04:01": 1.0},
+        },
+    ]
+
+    opportunity = _dimension_opportunity("career", windows, ["04:00", "04:01"])
+
+    assert opportunity is not None
+    labels = [item["fallback_label"] for item in opportunity["partitions"]]
+    assert len(labels) == len(set(labels))
+    assert all("月" in label for label in labels)

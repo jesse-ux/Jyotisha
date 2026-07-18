@@ -1,77 +1,78 @@
-# Task 4 Report — Dynamic Choice Question Generation
+# Task 4 Report — Selection-Only Dynamic Choice Generation
 
 ## Outcome
 
-Task 4 now uses the model only to phrase one grounded, selectable question over
-server-issued opportunities. The server remains authoritative for opportunity IDs,
-private score partitions, fallback selection, stop decisions, UUID allocation, and
-persistence. The generated contract is choice-based and carries the selected server
-partition directly; it does not require a second free-text time field.
+Task 4 now implements the approved hybrid boundary:
 
-This correction also closes the independent review blockers in
-`.omo/evidence/task-4-code-review.md`:
+- the deterministic engine creates opportunities, candidate partitions, selectable answer
+  semantics, localized prompts, and localized labels;
+- the Agent may only select one exact server opportunity ID or return advisory
+  `no_useful_question`;
+- the server validates and renders all public copy, attaches private score vectors, creates
+  public UUIDs, and decides retry, fallback, and termination behavior; and
+- the raw unmatched-answer note remains available to later workflow layers but is completely
+  omitted from the Agent prompt.
 
-- all five Task 2 dimensions now emit deterministic Simplified-Chinese public copy;
-- a real Task 2-shaped packet survives the Task 3 adapter and Task 4 fallback path;
-- unmatched notes are filtered and, when retained, represented as quoted untrusted data;
-- generated questions must contain both selected-domain and experience/change semantics;
-- recoverable model failures are separated from server binding and persistence failures;
-- private partition bindings are validated before any public ID is allocated;
-- model-supplied IDs are byte-exact; and
-- duplicated dynamic tests were split into focused modules below the 250-pure-LOC limit.
+The Agent cannot author a question, option, label, partition ID, birth-time claim, confidence
+claim, or control instruction. Those fields are unrepresentable in its strict output schema.
+This supersedes the keyword-filter/substring-grounding design reviewed in
+`.omo/evidence/task-4-rereview.md` and the earlier interim `CLEAR` narrative.
 
 ## RED evidence
 
-Artifact: `.omo/evidence/task-4-fix-red.log`
+Artifact: `.omo/evidence/task-4-finite-red.log`
 
-Tests were added before the corrections. The RED run recorded:
+Tests were changed before production code:
 
-- TypeScript: 15 tests, 11 failures covering real fallback copy, adversarial notes,
-  grounding, whitespace-padded IDs, the three-argument binder, validation-before-ID
-  allocation, UUID/private-binding propagation, and fingerprint normalization.
-- Python: 5 failures covering localized opportunity copy for education, relocation,
-  relationship, career, and health/life-pressure dimensions.
+- TypeScript: 14 tests, 9 expected failures. The failures demonstrated that the note still
+  crossed the prompt, selection-only output was rejected, old free-copy output remained
+  possible, selected server copy was not rendered, and duplicate server labels were accepted.
+- Python: 7 tests, 1 expected failure. Two distinct same-year windows both rendered as the
+  indistinguishable label `2012—2012 年`.
 
 ## Implementation
 
-- `scripts/dynamic_rectification_opportunities.py` owns a finite localized dimension map
-  and produces neutral contexts, fallback prompts, and human-readable year-range labels.
-- `frontend/src/lib/birth-time-dynamic-question-copy.ts` centralizes public-copy safety,
-  opportunity grounding, untrusted-note projection, and semantic normalization.
-- `frontend/src/lib/birth-time-dynamic-question-validator.ts` validates exact model IDs,
-  separates recoverable generation errors from binding failures, validates all private
-  partitions before ID allocation, and exposes the required three-argument agent binder
-  plus a separately named fallback binder.
-- `frontend/src/lib/birth-time-guide-service.ts` retries only recoverable model failures.
-  UUID, private-score, server-ID, fallback-copy, and persisted-schema failures propagate
-  and cannot be converted into a false low-confidence terminal result.
-- `frontend/src/mastra/index.ts` declares notes as quoted untrusted evidence and forbids
-  following them as instructions or using them to override server IDs and safety rules.
-- The shared JSON fixture is Python-shaped data rather than a sanitized TypeScript-only
-  packet. A Python regression verifies its server IDs, fingerprint, and partition IDs
-  against the actual Task 2 opportunity builder, while the TypeScript service test parses
-  it through the real Task 3 adapter.
+- `birth-time-dynamic-question-copy.ts` now contains only server-copy structural validation,
+  NFKC/whitespace label normalization, the note-free opportunity-selection projection, and
+  deterministic server-copy fingerprinting. The former note blacklist and substring
+  grounding logic were removed.
+- `birth-time-dynamic-question-validator.ts` accepts only strict selection objects. Binding
+  resolves the selected server opportunity, validates the prompt and normalized-unique
+  labels, validates every matching private partition, and only then allocates IDs. Malformed
+  server copy, private bindings, UUIDs, and persisted records raise
+  `BirthTimeDynamicBindingError` and cannot be retried into a false low result.
+- Fallback sorts opportunities by information gain descending and then opportunity ID,
+  independent of packet order. Repeated fingerprints alone are skipped as recoverable.
+- `dynamic_rectification_opportunities.py` selects the least detailed year/month/day range
+  representation needed to distinguish visible windows. Cross-year ranges stay concise;
+  same-year or same-month collisions gain month or day precision.
+- The Mastra contract describes selection only and forbids prompt/options/labels/partition
+  fields in Agent output.
 
-Prior public-question summaries remain intentionally deferred to Task 6, as specified by
-the review amendment; Task 4 rejects repeated server fingerprints without inventing
-history from hashes. Task 5 persistence internals were not changed.
+The real Python-shaped fixture is checked against fresh Task 2 localized context, prompt,
+labels, opportunity ID, fingerprint, and partition IDs, then parsed through the Task 3 adapter
+and exercised through the Task 4 service. Task 5 persistence was not changed.
 
 ## Verification
 
 | Gate | Result | Artifact |
 | --- | --- | --- |
-| Focused dynamic/guide TypeScript | 36/36 pass | `.omo/evidence/task-4-fix-focused-ts.log` |
-| Focused Task 2 Python | 28/28 pass | `.omo/evidence/task-4-fix-focused-python.log` |
-| All birth-time TypeScript | 223/223 pass | `.omo/evidence/task-4-fix-birth-time.log` |
-| Full frontend | 298/298 pass | `.omo/evidence/task-4-fix-frontend-full.log` |
-| Changed TypeScript ESLint | pass | `.omo/evidence/task-4-fix-eslint.log` |
-| Changed Python Ruff | pass | `.omo/evidence/task-4-fix-ruff.log` |
-| Diff check and pure-LOC audit | pass; every audited module <=250 | `.omo/evidence/task-4-fix-quality.log` |
-| Full TypeScript check | only known unrelated `profile-persistence.test.ts:7` TS1501 | `.omo/evidence/task-4-fix-tsc.log` |
+| Selection-only RED | expected 9 TS + 1 Python failures | `.omo/evidence/task-4-finite-red.log` |
+| Focused dynamic/guide TypeScript | 36/36 pass | `.omo/evidence/task-4-finite-focused-ts.log` |
+| Focused Task 2 Python | 29/29 pass | `.omo/evidence/task-4-finite-focused-python.log` |
+| Legacy Python rectification | 22/22 pass | `.omo/evidence/task-4-finite-legacy-python.log` |
+| All birth-time TypeScript | 223/223 pass | `.omo/evidence/task-4-finite-birth-time.log` |
+| Full frontend | 298/298 pass | `.omo/evidence/task-4-finite-frontend-full.log` |
+| Changed TypeScript ESLint | pass, zero diagnostics | `.omo/evidence/task-4-finite-eslint.log` |
+| Changed Python Ruff | pass | `.omo/evidence/task-4-finite-ruff.log` |
+| Diff check and TypeScript pure-LOC audit | pass; all audited modules <=250 | `.omo/evidence/task-4-finite-quality.log` |
+| Full TypeScript check | only known unrelated `profile-persistence.test.ts:7` TS1501 | `.omo/evidence/task-4-finite-tsc.log` |
+| Fresh selection-boundary review | CLEAR / APPROVE | `.omo/evidence/task-4-selection-boundary-code-review.md` |
 
-The empty ESLint artifact represents a successful zero-diagnostic run. The full TypeScript
-command remains non-zero solely because the pre-existing test uses a regular-expression
-flag newer than the configured target; none of the Task 4 files report a type error.
-The required `omo:programming` and `omo:remove-ai-slops` follow-up review re-ran after
-hardening imperative-note filtering and domain grounding, and returned `CLEAR`; the audit
-record is `.omo/evidence/task-4-fix-slop-review.md`.
+The TypeScript command remains non-zero solely because the pre-existing profile-persistence
+test uses a regular-expression flag newer than the configured target. No Task 4 file reports
+a type error.
+The fresh reviewer independently probed extra model fields, note omission, normalized label
+collisions, malformed private bindings, server-failure propagation, fallback ordering,
+all-repeated behavior, and Python month/day collisions. Both `omo:programming` language
+perspectives and `omo:remove-ai-slops` returned no blocker.

@@ -213,6 +213,36 @@ def opportunities(model: dict) -> list[dict]:
     return sorted(result, key=lambda item: (-item["estimated_information_gain"], item["opportunity_id"]))
 
 
+def _range_label(item: dict, precision: str) -> str:
+    start = date.fromisoformat(item["window_start"])
+    end = date.fromisoformat(item["window_end"])
+    if precision == "year":
+        return f"{start.year} 年" if start.year == end.year else f"{start.year}—{end.year} 年"
+    if precision == "month":
+        if start.year == end.year:
+            return f"{start.year} 年 {start.month} 月—{end.month} 月"
+        return f"{start.year} 年 {start.month} 月—{end.year} 年 {end.month} 月"
+    if start.year == end.year and start.month == end.month:
+        return f"{start.year} 年 {start.month} 月 {start.day} 日—{end.day} 日"
+    return (
+        f"{start.year} 年 {start.month} 月 {start.day} 日—"
+        f"{end.year} 年 {end.month} 月 {end.day} 日"
+    )
+
+
+def _visible_range_labels(items: list[dict]) -> list[str]:
+    labels = [_range_label(item, "year") for item in items]
+    for precision in ("month", "day"):
+        duplicates = {label for label in labels if labels.count(label) > 1}
+        if not duplicates:
+            break
+        labels = [
+            _range_label(item, precision) if label in duplicates else label
+            for item, label in zip(items, labels, strict=True)
+        ]
+    return labels
+
+
 def _dimension_opportunity(dimension: str, windows: list[dict], candidates: list[str]) -> dict | None:
     neutral_context = DIMENSION_CONTEXT[dimension]
     memberships: dict[int, list[str]] = defaultdict(list)
@@ -239,17 +269,18 @@ def _dimension_opportunity(dimension: str, windows: list[dict], candidates: list
         }
         for window, members in populated
     ]
+    labels = _visible_range_labels(basis)
     partitions = [
         {
             "partition_id": canonical_hash(item),
             "descriptor": f"{item['window_start']}--{item['window_end']}",
-            "fallback_label": f"{item['window_start'][:4]}—{item['window_end'][:4]} 年",
+            "fallback_label": label,
             "candidate_scores": {
                 candidate: 1.0 if candidate in item["members"] else 0.0
                 for candidate in candidates
             },
         }
-        for item in basis
+        for item, label in zip(basis, labels, strict=True)
     ]
     fingerprint = canonical_hash({"version": ALGORITHM_VERSION, "partitions": basis})
     return {
