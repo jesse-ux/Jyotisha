@@ -17,16 +17,14 @@ from datetime import date, datetime, time, timedelta
 from typing import Final
 from uuid import NAMESPACE_URL, uuid5
 
+from scripts.dynamic_rectification_copy import (
+    DIMENSION_CONTEXT,
+    SUPPORTED_DIMENSIONS,
+    visible_range_labels,
+)
+
 ALGORITHM_VERSION: Final = "birth-time-choice-scoring-v2"
 MIN_INFORMATION_GAIN: Final = 0.15
-DIMENSION_CONTEXT: Final = {
-    "education": "一次明显的升学、转学或学习方向变化",
-    "relocation": "一次明显的搬家、离乡或长期居住地变化",
-    "relationship": "一次明显的关系进入、结束或重要转变",
-    "career": "一次明显的工作、职业方向或身份变化",
-    "health_pressure": "一次持续的健康压力或生活压力变化",
-}
-SUPPORTED_DIMENSIONS: Final = frozenset(DIMENSION_CONTEXT)
 
 
 def canonical_hash(value: Mapping | Sequence) -> str:
@@ -213,36 +211,6 @@ def opportunities(model: dict) -> list[dict]:
     return sorted(result, key=lambda item: (-item["estimated_information_gain"], item["opportunity_id"]))
 
 
-def _range_label(item: dict, precision: str) -> str:
-    start = date.fromisoformat(item["window_start"])
-    end = date.fromisoformat(item["window_end"])
-    if precision == "year":
-        return f"{start.year} 年" if start.year == end.year else f"{start.year}—{end.year} 年"
-    if precision == "month":
-        if start.year == end.year:
-            return f"{start.year} 年 {start.month} 月—{end.month} 月"
-        return f"{start.year} 年 {start.month} 月—{end.year} 年 {end.month} 月"
-    if start.year == end.year and start.month == end.month:
-        return f"{start.year} 年 {start.month} 月 {start.day} 日—{end.day} 日"
-    return (
-        f"{start.year} 年 {start.month} 月 {start.day} 日—"
-        f"{end.year} 年 {end.month} 月 {end.day} 日"
-    )
-
-
-def _visible_range_labels(items: list[dict]) -> list[str]:
-    labels = [_range_label(item, "year") for item in items]
-    for precision in ("month", "day"):
-        duplicates = {label for label in labels if labels.count(label) > 1}
-        if not duplicates:
-            break
-        labels = [
-            _range_label(item, precision) if label in duplicates else label
-            for item, label in zip(items, labels, strict=True)
-        ]
-    return labels
-
-
 def _dimension_opportunity(dimension: str, windows: list[dict], candidates: list[str]) -> dict | None:
     neutral_context = DIMENSION_CONTEXT[dimension]
     memberships: dict[int, list[str]] = defaultdict(list)
@@ -269,7 +237,10 @@ def _dimension_opportunity(dimension: str, windows: list[dict], candidates: list
         }
         for window, members in populated
     ]
-    labels = _visible_range_labels(basis)
+    labels = visible_range_labels([
+        {"window_start": item["window_start"], "window_end": item["window_end"]}
+        for item in basis
+    ])
     partitions = [
         {
             "partition_id": canonical_hash(item),

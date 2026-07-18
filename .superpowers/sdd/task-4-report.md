@@ -17,6 +17,8 @@ The Agent cannot author a question, option, label, partition ID, birth-time clai
 claim, or control instruction. Those fields are unrepresentable in its strict output schema.
 This supersedes the keyword-filter/substring-grounding design reviewed in
 `.omo/evidence/task-4-rereview.md` and the earlier interim `CLEAR` narrative.
+The final acceptance correction has been implemented and independently re-audited by the
+executor, but the main acceptance reviewer remains authoritative for completion status.
 
 ## RED evidence
 
@@ -30,6 +32,14 @@ Tests were changed before production code:
 - Python: 7 tests, 1 expected failure. Two distinct same-year windows both rendered as the
   indistinguishable label `2012—2012 年`.
 
+Final-fix RED artifact: `.omo/evidence/task-4-final-red.log`.
+
+- TypeScript: 17 tests, 2 expected failures. Exact and NFKC/whitespace-equivalent primary
+  labels matching either reserved choice were accepted by both binder and service instead of
+  failing before ID allocation.
+- Python: 4/4 passed, including the new same-month/day-precision regression, confirming that
+  the production behavior existed but previously lacked durable coverage.
+
 ## Implementation
 
 - `birth-time-dynamic-question-copy.ts` now contains only server-copy structural validation,
@@ -37,42 +47,47 @@ Tests were changed before production code:
   deterministic server-copy fingerprinting. The former note blacklist and substring
   grounding logic were removed.
 - `birth-time-dynamic-question-validator.ts` accepts only strict selection objects. Binding
-  resolves the selected server opportunity, validates the prompt and normalized-unique
-  labels, validates every matching private partition, and only then allocates IDs. Malformed
+  resolves the selected server opportunity, validates the prompt and normalized uniqueness
+  across every primary and reserved visible label, validates every matching private
+  partition, and only then allocates IDs. Malformed
   server copy, private bindings, UUIDs, and persisted records raise
   `BirthTimeDynamicBindingError` and cannot be retried into a false low result.
 - Fallback sorts opportunities by information gain descending and then opportunity ID,
   independent of packet order. Repeated fingerprints alone are skipped as recoverable.
-- `dynamic_rectification_opportunities.py` selects the least detailed year/month/day range
-  representation needed to distinguish visible windows. Cross-year ranges stay concise;
-  same-year or same-month collisions gain month or day precision.
+- `dynamic_rectification_copy.py` owns localized contexts and the least detailed
+  year/month/day range representation needed to distinguish visible windows. Cross-year
+  ranges stay concise; same-year or same-month collisions gain month or day precision.
+  `dynamic_rectification_opportunities.py` is again below the 250-pure-LOC boundary.
 - The Mastra contract describes selection only and forbids prompt/options/labels/partition
   fields in Agent output.
 
-The real Python-shaped fixture is checked against fresh Task 2 localized context, prompt,
-labels, opportunity ID, fingerprint, and partition IDs, then parsed through the Task 3 adapter
-and exercised through the Task 4 service. Task 5 persistence was not changed.
+The real Python-shaped fixture retains structural CJK/no-ASCII copy, normalized label
+uniqueness, partition count, opportunity ID, fingerprint, and partition-ID seam checks without
+pinning exact natural-language prose. It is parsed through the Task 3 adapter and exercised
+through the Task 4 service. Task 5 persistence was not changed.
 
 ## Verification
 
 | Gate | Result | Artifact |
 | --- | --- | --- |
-| Selection-only RED | expected 9 TS + 1 Python failures | `.omo/evidence/task-4-finite-red.log` |
-| Focused dynamic/guide TypeScript | 36/36 pass | `.omo/evidence/task-4-finite-focused-ts.log` |
-| Focused Task 2 Python | 29/29 pass | `.omo/evidence/task-4-finite-focused-python.log` |
-| Legacy Python rectification | 22/22 pass | `.omo/evidence/task-4-finite-legacy-python.log` |
-| All birth-time TypeScript | 223/223 pass | `.omo/evidence/task-4-finite-birth-time.log` |
-| Full frontend | 298/298 pass | `.omo/evidence/task-4-finite-frontend-full.log` |
-| Changed TypeScript ESLint | pass, zero diagnostics | `.omo/evidence/task-4-finite-eslint.log` |
-| Changed Python Ruff | pass | `.omo/evidence/task-4-finite-ruff.log` |
-| Diff check and TypeScript pure-LOC audit | pass; all audited modules <=250 | `.omo/evidence/task-4-finite-quality.log` |
-| Full TypeScript check | only known unrelated `profile-persistence.test.ts:7` TS1501 | `.omo/evidence/task-4-finite-tsc.log` |
-| Fresh selection-boundary review | CLEAR / APPROVE | `.omo/evidence/task-4-selection-boundary-code-review.md` |
+| Final-fix RED | expected 2 TS failures; Python 4/4 | `.omo/evidence/task-4-final-red.log` |
+| Focused dynamic/guide TypeScript | 38/38 pass | `.omo/evidence/task-4-final-focused-ts.log` |
+| Focused Task 2 Python | 26/26 pass | `.omo/evidence/task-4-final-focused-python.log` |
+| Legacy Python rectification | 22/22 pass | `.omo/evidence/task-4-final-legacy-python.log` |
+| All birth-time TypeScript | 225/225 pass | `.omo/evidence/task-4-final-birth-time.log` |
+| Full frontend | 300/300 pass | `.omo/evidence/task-4-final-frontend-full.log` |
+| Cumulative changed TypeScript ESLint | pass, zero diagnostics | `.omo/evidence/task-4-final-eslint.log` |
+| Cumulative changed Python Ruff | pass | `.omo/evidence/task-4-final-ruff.log` |
+| Diff check and all changed TS/Python LOC | pass; every audited file <=250 | `.omo/evidence/task-4-final-quality.log` |
+| Full TypeScript check | only known unrelated `profile-persistence.test.ts:7` TS1501 | `.omo/evidence/task-4-final-tsc.log` |
+| Fresh final-fix review | CLEAR / APPROVE; no blockers or WATCH items | `.omo/evidence/task-4-final-fix-code-review.md` |
 
 The TypeScript command remains non-zero solely because the pre-existing profile-persistence
 test uses a regular-expression flag newer than the configured target. No Task 4 file reports
 a type error.
-The fresh reviewer independently probed extra model fields, note omission, normalized label
-collisions, malformed private bindings, server-failure propagation, fallback ordering,
-all-repeated behavior, and Python month/day collisions. Both `omo:programming` language
-perspectives and `omo:remove-ai-slops` returned no blocker.
+The earlier `.omo/evidence/task-4-selection-boundary-code-review.md` `CLEAR` is explicitly
+superseded by `.omo/evidence/task-4-final-review.md`; it is not cited as current acceptance.
+The final reviewer independently rechecked reserved-label normalization, zero allocation and
+commit, the packet-only prompt API, typed Python range-copy boundary, same-month day precision,
+prose-pin removal, and cumulative LOC. Both required programming language perspectives and the
+remove-slops perspective returned `CLEAR / APPROVE` with no remaining WATCH item.

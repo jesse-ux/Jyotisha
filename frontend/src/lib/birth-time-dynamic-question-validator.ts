@@ -29,6 +29,10 @@ const dynamicQuestionOutputSchema = z.discriminatedUnion("kind", [
   questionSelectionSchema,
   noUsefulQuestionSchema,
 ]).readonly();
+const reservedChoices = [
+  { label: "不确定 / 不记得", kind: "unknown" as const },
+  { label: "都不符合", kind: "unmatched" as const },
+] as const;
 
 export type ParsedDynamicQuestionOutput = z.infer<typeof dynamicQuestionOutputSchema>;
 export type ParsedQuestionSelection = Extract<ParsedDynamicQuestionOutput, { readonly kind: "question" }>;
@@ -66,9 +70,7 @@ function opportunityFor(
 
 export function generateDynamicQuestionPrompt(
   packet: CandidateDifferencePacket,
-  unmatchedNote: string | null,
 ): string {
-  void unmatchedNote;
   return modelSafeDynamicQuestionPrompt(packet);
 }
 
@@ -102,7 +104,8 @@ function serverRendering(opportunity: QuestionOpportunity): {
     partitionId: partition.partitionId,
     label: partition.fallbackLabel,
   }));
-  const labels = options.map((option) => normalizeDynamicLabel(option.label));
+  const labels = [...options, ...reservedChoices]
+    .map((option) => normalizeDynamicLabel(option.label));
   if (
     !dynamicServerCopyIsSafe(opportunity.fallbackPrompt, true)
     || options.some((option) => !dynamicServerCopyIsSafe(option.label, false))
@@ -177,8 +180,12 @@ function bindQuestion(
     prompt: rendering.prompt,
     options: [
       ...primaryOptions,
-      { optionId: serverId(createId), label: "不确定 / 不记得", kind: "unknown", partitionId: null, candidateScores: null },
-      { optionId: serverId(createId), label: "都不符合", kind: "unmatched", partitionId: null, candidateScores: null },
+      ...reservedChoices.map((choice) => ({
+        optionId: serverId(createId),
+        ...choice,
+        partitionId: null,
+        candidateScores: null,
+      })),
     ],
   });
   if (!persisted.success) throw new BirthTimeDynamicBindingError("invalid_persisted_question");

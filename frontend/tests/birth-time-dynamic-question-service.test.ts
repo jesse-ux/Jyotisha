@@ -184,6 +184,35 @@ test("duplicate server labels propagate without commit or ID allocation", async 
   assert.equal(commits, 0);
 });
 
+test("reserved-label collisions propagate without commit or ID allocation", async () => {
+  const opportunity = differenceBuild.packet.opportunities[0];
+  const privatePartitions = differenceBuild.scoringPartitions[opportunityId];
+  if (!opportunity || !privatePartitions) throw new Error("missing test opportunity");
+  for (const collision of ["不确定 / 不记得", "不 确定 ／ 不记得", "都不符合"]) {
+    let allocations = 0;
+    let commits = 0;
+    const publicPartitions = opportunity.partitions.map((item, index) => (
+      index === 0 ? { ...item, fallbackLabel: collision } : item
+    ));
+    const privateCopy = privatePartitions.map((item, index) => (
+      index === 0 ? { ...item, fallbackLabel: collision } : item
+    ));
+
+    await assert.rejects(() => dynamicService({
+      build: {
+        ...differenceBuild,
+        packet: { ...differenceBuild.packet, opportunities: [{ ...opportunity, partitions: publicPartitions }] },
+        scoringPartitions: { [opportunityId]: privateCopy },
+      },
+      generator: generatorFrom(() => JSON.stringify(validDynamicSelection)),
+      createId: deterministicIds(() => { allocations += 1; }),
+      onCommit: () => { commits += 1; },
+    }).generateQuestion("owner-1", generationCommand), BirthTimeDynamicBindingError);
+    assert.equal(allocations, 0, collision);
+    assert.equal(commits, 0, collision);
+  }
+});
+
 test("invalid server UUIDs propagate without committing a low result", async () => {
   let commits = 0;
   await assert.rejects(() => dynamicService({

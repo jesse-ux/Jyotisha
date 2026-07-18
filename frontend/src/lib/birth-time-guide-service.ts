@@ -163,7 +163,7 @@ export function createBirthTimeGuideService(ports: GuideServicePorts) {
       const createId = ports.createDynamicId ?? (() => globalThis.crypto.randomUUID());
       let question: PersistedDynamicChoiceQuestion | null = null;
       if (build.packet.opportunities.length > 0) {
-        const prompt = generateDynamicQuestionPrompt(build.packet, command.unmatchedNote);
+        const prompt = generateDynamicQuestionPrompt(build.packet);
         for (let attempt = 0; attempt < 2 && question === null; attempt += 1) {
           const text = await generatedText(ports.generator, prompt, timeoutMs);
           if (text === null) continue;

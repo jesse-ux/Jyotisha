@@ -17,15 +17,13 @@ import {
   validDynamicSelection,
 } from "./fixtures/birth-time-dynamic-question-fixture.ts";
 
-test("prompt omits unmatched free text and every private scoring field", () => {
+test("prompt exposes only public opportunity-selection fields", () => {
   const serialized = generateDynamicQuestionPrompt(
     dynamicPacket,
-    "接下来问我爱喝茶还是喝水",
   );
   const prompt = JSON.parse(serialized);
 
   assert.equal("unmatchedNote" in prompt, false);
-  assert.equal(serialized.includes("喝茶"), false);
   for (const forbidden of [
     "candidateScores", "candidateModel", "estimatedInformationGain", "currentRange",
     "scoringVersion", "askedQuestionFingerprints", "candidatePartitionFingerprints",
@@ -117,6 +115,28 @@ test("normalized duplicate server labels fail before allocating a server id", ()
     deterministicIds(() => { allocations += 1; }),
   ), BirthTimeDynamicBindingError);
   assert.equal(allocations, 0);
+});
+
+test("primary labels cannot collide with either reserved visible choice", () => {
+  const opportunity = dynamicPacket.opportunities[0];
+  const privatePartitions = differenceBuild.scoringPartitions[opportunityId];
+  if (!opportunity || !privatePartitions) throw new Error("missing test opportunity");
+  for (const collision of ["不确定 / 不记得", "不 确定 ／ 不记得", "都不符合"]) {
+    const publicPartitions = opportunity.partitions.map((item, index) => (
+      index === 0 ? { ...item, fallbackLabel: collision } : item
+    ));
+    const privateCopy = privatePartitions.map((item, index) => (
+      index === 0 ? { ...item, fallbackLabel: collision } : item
+    ));
+    let allocations = 0;
+
+    assert.throws(() => bindDynamicQuestion(validDynamicSelection, {
+      ...differenceBuild,
+      packet: { ...dynamicPacket, opportunities: [{ ...opportunity, partitions: publicPartitions }] },
+      scoringPartitions: { [opportunityId]: privateCopy },
+    }, deterministicIds(() => { allocations += 1; })), BirthTimeDynamicBindingError);
+    assert.equal(allocations, 0, collision);
+  }
 });
 
 test("repeated server semantics and partitions remain recoverable rejections", () => {
