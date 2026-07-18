@@ -1320,10 +1320,10 @@ export default function Home() {
     if (!account) throw new Error("账户尚未加载完成");
     if (process.env.NODE_ENV === "development" && uiPreview.current) return;
     const birthPlace = selectedBirthPlace(nextProfile);
-    const { data, error } = await createBrowserSupabaseClient()
-      .from("profiles")
-      .upsert({
-        id: account.user.id,
+    const response = await fetch("/api/account", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
         name: nextProfile.name.trim() || null,
         birth_date: nextProfile.date || null,
         birth_time: nextProfile.time || null,
@@ -1334,12 +1334,12 @@ export default function Home() {
         latitude: birthPlace?.lat ?? null,
         longitude: birthPlace?.lon ?? null,
         timezone_offset: birthPlace?.tz ?? null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "id" })
-      .select("id")
-      .maybeSingle();
-    if (error) throw error;
-    if (!data) throw new Error("账户档案不存在，请重新登录后再试。");
+      }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as { error?: string } | null;
+      throw new Error(payload?.error || "账户资料暂时无法保存。");
+    }
     await saveCloudChartProfile({ ...buildSelfChartRecord(nextProfile), updatedAt: timestamp() }).catch(() => null);
   }
 
