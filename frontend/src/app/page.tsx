@@ -1322,7 +1322,8 @@ export default function Home() {
     const birthPlace = selectedBirthPlace(nextProfile);
     const { data, error } = await createBrowserSupabaseClient()
       .from("profiles")
-      .update({
+      .upsert({
+        id: account.user.id,
         name: nextProfile.name.trim() || null,
         birth_date: nextProfile.date || null,
         birth_time: nextProfile.time || null,
@@ -1334,8 +1335,7 @@ export default function Home() {
         longitude: birthPlace?.lon ?? null,
         timezone_offset: birthPlace?.tz ?? null,
         updated_at: new Date().toISOString(),
-      })
-      .eq("id", account.user.id)
+      }, { onConflict: "id" })
       .select("id")
       .maybeSingle();
     if (error) throw error;
