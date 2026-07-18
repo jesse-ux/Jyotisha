@@ -18,10 +18,12 @@ export {
   questionSpecSchema,
   dynamicJourneyProgressSchema,
   dynamicNextActionSchema,
+  dynamicJourneyTurnStateSchema,
 } from "./birth-time-journey-turn-protocol.ts";
 export type {
   DynamicJourneyProgress,
   DynamicNextAction,
+  DynamicJourneyTurnState,
   EvidenceDraft,
   JourneyPermissions,
   JourneyProgress,

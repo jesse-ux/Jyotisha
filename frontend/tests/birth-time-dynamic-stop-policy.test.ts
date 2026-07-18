@@ -34,6 +34,7 @@ function decisionFor(overrides: Partial<Parameters<typeof decideDynamicStop>[0]>
     usefulOpportunityCount: 1,
     repeatedOnly: false,
     effectiveAnswerCount: 1,
+    forcedReason: null,
     ...overrides,
   });
 }
@@ -53,6 +54,7 @@ test("two effective unchanged scores stop without starting another question", ()
     usefulOpportunityCount: 3,
     repeatedOnly: false,
     effectiveAnswerCount: 6,
+    forcedReason: null,
   });
 
   assert.deepEqual(decision, { kind: "finish", reason: "plateau", plateauCount: 2 });
@@ -67,18 +69,30 @@ test("unknown answers do not advance plateau or the effective safety count", () 
     usefulOpportunityCount: 2,
     repeatedOnly: false,
     effectiveAnswerCount: 4,
+    forcedReason: null,
   });
 
   assert.deepEqual(decision, { kind: "continue", plateauCount: 1 });
 });
 
 test("terminal conditions are deterministic", () => {
+  assert.equal(finishReason({ result: null, forcedReason: "user_finished" }), "user_finished");
+  assert.equal(finishReason({ result: null, forcedReason: "generation_unavailable" }), "generation_unavailable");
   assert.equal(finishReason({ result: { ...lowCandidate, confidence: "high", canApply: true, winningSegment: {
     startTime: "09:00", endTime: "09:05", representativeTime: "09:03", widthMinutes: 5,
   }, eventCount: 4, domainCount: 3, marginPercent: 20 } }), "high_confidence");
   assert.equal(finishReason({ usefulOpportunityCount: 0 }), "no_information_gain");
   assert.equal(finishReason({ repeatedOnly: true }), "repeated_partition");
   assert.equal(finishReason({ effectiveAnswerCount: 10 }), "safety_cap");
+});
+
+test("forced terminal reasons win over a high-confidence score", () => {
+  assert.equal(finishReason({
+    result: { ...lowCandidate, confidence: "high", canApply: true, winningSegment: {
+      startTime: "09:00", endTime: "09:05", representativeTime: "09:03", widthMinutes: 5,
+    }, eventCount: 4, domainCount: 3, marginPercent: 20 },
+    forcedReason: "user_finished",
+  }), "user_finished");
 });
 
 test("a two point margin change resets the plateau", () => {

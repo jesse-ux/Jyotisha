@@ -81,6 +81,16 @@ export type DynamicJourneyProgress = z.infer<typeof dynamicJourneyProgressSchema
 
 export type { PublicDynamicChoiceQuestion, TimeRange };
 
+export const dynamicJourneyTurnStateSchema = z.object({
+  journeyProtocol: z.literal("dynamic-choice-v2"),
+  turnVersion: z.number().int().nonnegative(),
+  nextAction: dynamicNextActionSchema,
+  progress: dynamicJourneyProgressSchema,
+  permissions: journeyPermissionsSchema,
+}).strict().readonly();
+
+export type DynamicJourneyTurnState = z.infer<typeof dynamicJourneyTurnStateSchema>;
+
 export const journeyTurnStateSchema = z.object({
   turnVersion: z.number().int().nonnegative(),
   nextAction: nextActionSchema,

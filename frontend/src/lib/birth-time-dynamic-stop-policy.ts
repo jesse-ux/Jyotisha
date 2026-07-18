@@ -1,19 +1,20 @@
 import type { CandidateResult } from "./birth-time-evidence.ts";
 
 export type DynamicStopInput = {
-  readonly result: CandidateResult;
+  readonly result: CandidateResult | null;
   readonly effectiveAnswer: boolean;
   readonly previousResult: CandidateResult | null;
   readonly priorPlateauCount: number;
   readonly usefulOpportunityCount: number;
   readonly repeatedOnly: boolean;
   readonly effectiveAnswerCount: number;
+  readonly forcedReason: "user_finished" | "generation_unavailable" | null;
 };
 
 export type DynamicStopDecision =
   | {
     readonly kind: "finish";
-    readonly reason: "high_confidence" | "safety_cap" | "plateau" | "no_information_gain" | "repeated_partition";
+    readonly reason: "user_finished" | "generation_unavailable" | "high_confidence" | "safety_cap" | "plateau" | "no_information_gain" | "repeated_partition";
     readonly plateauCount: number;
   }
   | { readonly kind: "continue"; readonly plateauCount: number };
@@ -34,10 +35,11 @@ export function materiallyChanged(
 }
 
 export function decideDynamicStop(input: DynamicStopInput): DynamicStopDecision {
-  const plateauCount = input.effectiveAnswer
+  const plateauCount = input.effectiveAnswer && input.result !== null
     ? materiallyChanged(input.previousResult, input.result) ? 0 : input.priorPlateauCount + 1
     : input.priorPlateauCount;
-  if (input.result.confidence === "high") return { kind: "finish", reason: "high_confidence", plateauCount };
+  if (input.forcedReason !== null) return { kind: "finish", reason: input.forcedReason, plateauCount };
+  if (input.result?.confidence === "high") return { kind: "finish", reason: "high_confidence", plateauCount };
   if (input.effectiveAnswerCount >= 10) return { kind: "finish", reason: "safety_cap", plateauCount };
   if (plateauCount >= 2) return { kind: "finish", reason: "plateau", plateauCount };
   if (input.usefulOpportunityCount === 0) return { kind: "finish", reason: "no_information_gain", plateauCount };

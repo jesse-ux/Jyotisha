@@ -4,6 +4,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { publicDynamicChoiceQuestionSchema } from "../src/lib/birth-time-dynamic-choice.ts";
 import { persistedDynamicChoiceQuestionSchema } from "../src/lib/birth-time-dynamic-choice-internal.ts";
+import { dynamicJourneyTurnStateSchema, journeyTurnStateSchema } from "../src/lib/birth-time-journey-turn-protocol.ts";
 
 const internalQuestion = {
   questionId: "11111111-1111-4111-8111-111111111111",
@@ -132,4 +133,43 @@ test("public code never imports the internal dynamic choice contract", () => {
   for (const path of publicSourceFiles) {
     assert.equal(readFileSync(path, "utf8").includes("birth-time-dynamic-choice-internal"), false, path);
   }
+});
+
+test("dynamic turn state is explicitly discriminated from the legacy protocol", () => {
+  const dynamicTurn = {
+    journeyProtocol: "dynamic-choice-v2",
+    turnVersion: 0,
+    nextAction: { kind: "generate_dynamic_question" },
+    progress: {
+      phase: "question",
+      answeredCount: 0,
+      effectiveAnswerCount: 0,
+      currentRange: { startTime: "09:00", endTime: "10:00" },
+      previousRange: null,
+      plateauCount: 0,
+    },
+    permissions: { canConfirmCandidate: false },
+  };
+
+  assert.equal(dynamicJourneyTurnStateSchema.safeParse(dynamicTurn).success, true);
+  assert.equal(journeyTurnStateSchema.safeParse(dynamicTurn).success, false);
+  assert.equal(dynamicJourneyTurnStateSchema.safeParse({
+    ...dynamicTurn,
+    journeyProtocol: "legacy-guided-v1",
+  }).success, false);
+  assert.equal(dynamicJourneyTurnStateSchema.safeParse({
+    ...dynamicTurn,
+    nextAction: {
+      kind: "ask_baseline_evidence",
+      question: {
+        questionId: "legacy",
+        phase: "baseline",
+        domain: "career",
+        requestedPrecision: ["year"],
+        allowUnknown: true,
+        purposeCode: "candidate_difference_career",
+        plannerVersion: "candidate-difference-v1",
+      },
+    },
+  }).success, false);
 });
