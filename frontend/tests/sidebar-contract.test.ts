@@ -220,7 +220,7 @@ test("makes SidebarContent the only sidebar scroll owner", () => {
   assert.match(cssBlock('[data-sidebar="content"]'), /overflow-y:\s*auto/);
   assert.match(cssBlock('[data-sidebar="footer"]'), /flex:\s*0\s+0\s+auto/);
   assert.doesNotMatch(cssBlock(".session-list"), /overflow(?:-y)?:\s*auto/);
-  assert.match(cssBlock(".session-list button > span"), /text-overflow:\s*ellipsis/);
+  assert.match(readProjectFile("src/components/sidebar-session-row.tsx"), /className="session-title"[\s\S]*className="truncate"/);
   assert.match(globalStyles, /\[data-active="true"\][^{]*\{[^}]*background:\s*var\(--sidebar-accent\)/);
 });
 
