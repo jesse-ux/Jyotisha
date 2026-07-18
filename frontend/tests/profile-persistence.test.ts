@@ -5,6 +5,7 @@ import test from "node:test";
 test("upserts a missing profile when saving account details", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   assert.match(source, /fetch\("\/api\/account",\s*\{\s*method:\s*"PATCH"/s);
+  assert.match(source, /credentials:\s*"same-origin"/);
 });
 
 test("account route upserts profiles with the server admin client", () => {

@@ -1322,6 +1322,7 @@ export default function Home() {
     const birthPlace = selectedBirthPlace(nextProfile);
     const response = await fetch("/api/account", {
       method: "PATCH",
+      credentials: "same-origin",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         name: nextProfile.name.trim() || null,
