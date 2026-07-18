@@ -519,6 +519,7 @@ git commit -m "feat: score dynamic birth time choices"
 - Test: `frontend/tests/birth-time-journey-engine.test.ts`
 - Test: `frontend/tests/birth-time-journey-adapters.test.ts`
 - Test: `frontend/tests/birth-time-journey-dynamic-adapters.test.ts`
+- Test support: `frontend/tests/birth-time-journey-memory-store.ts`
 
 **Interfaces:**
 - Adds `buildDifferencePacket(input: DifferencePacketInput): Promise<CandidateDifferenceBuild>`.
@@ -601,6 +602,8 @@ For both dynamic calls, require `JYOTISH_DYNAMIC_RECTIFICATION_TOKEN` in the ser
 Place all v2 response schemas and mappings in `birth-time-journey-dynamic-adapters.ts`; keep legacy parsing behavior byte-compatible in `birth-time-journey-adapters.ts`. Every nested dynamic object, including `winning_segment`, is strict. Keep each production and test module within 250 pure LOC, add duplicate opportunity/partition attack tests, and assert mapped fields against independent input fixtures rather than against each other.
 
 Test authentication through an executable fake fetch/wire seam for both dynamic endpoints: exact URL, bearer header, request body, timeout signal, and missing-token fail-before-fetch. Also prove legacy calls omit the dynamic Authorization header. The HTTP helper accepts one typed request/options object rather than four primitive parameters.
+
+Wire assertions use independent literal request expectations, not the production serializer as the expected value. Inject the timeout-signal factory in tests and assert it receives the literal `45_000`; do not infer the timeout from a sibling exported constant. If a pre-existing test-support module exceeds the limit, extract the memory journey store into `birth-time-journey-memory-store.ts` instead of compressing formatting to pass the LOC check.
 
 - [ ] **Step 5: Verify endpoint payload ownership**
 
