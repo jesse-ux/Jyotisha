@@ -14,8 +14,6 @@ import type {
   JourneyEventScoreInput,
 } from "./birth-time-journey-service.ts";
 
-export const journeyEngineTimeoutMs = 45_000;
-
 export class BirthTimeJourneyEngineError extends Error {
   readonly name = "BirthTimeJourneyEngineError";
   readonly status: number;
@@ -55,7 +53,10 @@ export function createJourneyEngineWire(options: {
   readonly apiBase: string;
   readonly dynamicToken: string | null;
   readonly fetchImpl: JourneyEngineFetch;
+  readonly signalFactory?: (timeoutMs: number) => AbortSignal;
 }): JourneyEngineWire {
+  const signalFactory = options.signalFactory
+    ?? ((timeoutMs: number) => AbortSignal.timeout(timeoutMs));
   return {
     async post(input) {
       const token = options.dynamicToken?.trim();
@@ -69,7 +70,7 @@ export function createJourneyEngineWire(options: {
           ...(input.authentication === "dynamic" ? { authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(input.body),
-        signal: AbortSignal.timeout(journeyEngineTimeoutMs),
+        signal: signalFactory(45_000),
       });
       const payload = await response.json();
       if (!response.ok) throw new BirthTimeJourneyEngineError(response.status);

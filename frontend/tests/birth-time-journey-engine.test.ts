@@ -6,10 +6,7 @@ import {
   BirthTimeJourneyEngineConfigurationError,
   createJourneyEngineMethods,
   createJourneyEngineWire,
-  differencePacketPayload,
-  dynamicChoiceScorePayload,
   eventScorePayload,
-  journeyEngineTimeoutMs,
 } from "../src/lib/birth-time-journey-engine-model.ts";
 import type { JourneyEngineFetch } from "../src/lib/birth-time-journey-engine-model.ts";
 
@@ -69,53 +66,39 @@ const dynamicInput = {
   candidateModel: { version: "birth-time-choice-scoring-v2" },
 } as const;
 
-test("dynamic opportunity payload owns private evidence and candidate model server-side", () => {
-  const payload = differencePacketPayload(dynamicInput);
-
-  assert.deepEqual(payload, {
-    case_id: "case-1",
-    as_of_date: "2026-07-18",
-    birth_date: "1990-01-01",
-    start_time: "05:30",
-    end_time: "05:33",
-    lat: 31.23,
-    lon: 121.47,
-    tz: 8,
-    evidence: [{
-      question_id: "question-1",
-      opportunity_id: "career-window",
-      partition_id: "career-early",
-      dimension_code: "career",
-      candidate_scores: { "05:30": 0, "05:31": 1, "05:32": 1, "05:33": 0 },
-      information_gain: 0.5,
-    }],
-    dismissed_opportunity_ids: ["dismissed-1"],
-    question_fingerprints: ["question-fingerprint-1"],
-    partition_fingerprints: ["partition-fingerprint-1"],
-    recent_ranges: [{ start_time: "05:30", end_time: "05:33" }],
-    candidate_model: { version: "birth-time-choice-scoring-v2" },
-  });
-  const evidence = payload.evidence[0];
-  assert.ok(evidence);
-  assert.equal("option_id" in evidence, false);
-});
-
-test("dynamic score payload sends only server-resolved choice evidence", () => {
-  const payload = dynamicChoiceScorePayload(dynamicInput);
-
-  assert.deepEqual(payload.choice_evidence, [{
-    question_id: "question-1",
-    opportunity_id: "career-window",
-    partition_id: "career-early",
-    dimension_code: "career",
-    candidate_scores: { "05:30": 0, "05:31": 1, "05:32": 1, "05:33": 0 },
-    information_gain: 0.5,
-  }]);
-  assert.equal("case_id" in payload, false);
-  assert.equal("candidate_model" in payload, false);
-  assert.equal("confidence" in payload, false);
-  assert.equal("can_apply" in payload, false);
-});
+const expectedChoiceEvidence = [{
+  question_id: "question-1",
+  opportunity_id: "career-window",
+  partition_id: "career-early",
+  dimension_code: "career",
+  candidate_scores: { "05:30": 0, "05:31": 1, "05:32": 1, "05:33": 0 },
+  information_gain: 0.5,
+}] as const;
+const expectedOpportunityBody = {
+  case_id: "case-1",
+  as_of_date: "2026-07-18",
+  birth_date: "1990-01-01",
+  start_time: "05:30",
+  end_time: "05:33",
+  lat: 31.23,
+  lon: 121.47,
+  tz: 8,
+  evidence: expectedChoiceEvidence,
+  dismissed_opportunity_ids: ["dismissed-1"],
+  question_fingerprints: ["question-fingerprint-1"],
+  partition_fingerprints: ["partition-fingerprint-1"],
+  recent_ranges: [{ start_time: "05:30", end_time: "05:33" }],
+  candidate_model: { version: "birth-time-choice-scoring-v2" },
+} as const;
+const expectedScoreBody = {
+  birth_date: "1990-01-01",
+  start_time: "05:30",
+  end_time: "05:33",
+  lat: 31.23,
+  lon: 121.47,
+  tz: 8,
+  choice_evidence: expectedChoiceEvidence,
+} as const;
 
 const dynamicResponses: Readonly<Record<string, unknown>> = {
   "/api/dynamic_rectification_opportunities": {
@@ -153,6 +136,8 @@ const dynamicResponses: Readonly<Record<string, unknown>> = {
 
 function engineHarness(dynamicToken: string | null) {
   const calls: { readonly url: string; readonly init: RequestInit }[] = [];
+  const timeoutCalls: number[] = [];
+  const timeoutSignal = new AbortController().signal;
   const fetchImpl: JourneyEngineFetch = async (url, init) => {
     calls.push({ url, init });
     const payload = dynamicResponses[new URL(url).pathname];
@@ -162,8 +147,12 @@ function engineHarness(dynamicToken: string | null) {
     apiBase: "https://engine.invalid",
     dynamicToken,
     fetchImpl,
+    signalFactory(timeoutMs) {
+      timeoutCalls.push(timeoutMs);
+      return timeoutSignal;
+    },
   });
-  return { calls, engine: createJourneyEngineMethods(wire) };
+  return { calls, timeoutCalls, timeoutSignal, engine: createJourneyEngineMethods(wire) };
 }
 
 test("both dynamic endpoints send exact bodies with bearer auth and timeout signals", async () => {
@@ -182,11 +171,11 @@ test("both dynamic endpoints send exact bodies with bearer auth and timeout sign
   assert.equal(new Headers(scoreCall.init.headers).get("authorization"), "Bearer server-secret");
   assert.equal(opportunityCall.init.method, "POST");
   assert.equal(scoreCall.init.method, "POST");
-  assert.deepEqual(JSON.parse(String(opportunityCall.init.body)), differencePacketPayload(dynamicInput));
-  assert.deepEqual(JSON.parse(String(scoreCall.init.body)), dynamicChoiceScorePayload(dynamicInput));
-  assert.ok(opportunityCall.init.signal instanceof AbortSignal);
-  assert.ok(scoreCall.init.signal instanceof AbortSignal);
-  assert.equal(journeyEngineTimeoutMs, 45_000);
+  assert.deepEqual(JSON.parse(String(opportunityCall.init.body)), expectedOpportunityBody);
+  assert.deepEqual(JSON.parse(String(scoreCall.init.body)), expectedScoreBody);
+  assert.deepEqual(harness.timeoutCalls, [45_000, 45_000]);
+  assert.equal(opportunityCall.init.signal, harness.timeoutSignal);
+  assert.equal(scoreCall.init.signal, harness.timeoutSignal);
 });
 
 test("missing dynamic token fails both endpoints before fetch", async () => {

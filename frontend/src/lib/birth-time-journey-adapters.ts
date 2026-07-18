@@ -83,15 +83,7 @@ const eventDomainSchema = z.enum([
   "career",
   "health_pressure",
 ]);
-const candidateEvidenceApiSchema = z.object({
-  event_id: z.string().uuid(),
-  domain: eventDomainSchema,
-  candidate_time: z.string(),
-  rule_ids: z.array(z.string()),
-  points: z.number(),
-});
-
-const candidateResultApiFields = {
+const candidateResultApiSchema = z.object({
   result_id: z.string().uuid(),
   confidence: z.enum(["low", "medium", "high"]),
   can_apply: z.boolean(),
@@ -107,10 +99,15 @@ const candidateResultApiFields = {
   second_score: z.number(),
   margin_percent: z.number(),
   reasons: z.array(z.string()),
-  evidence: z.array(candidateEvidenceApiSchema),
+  evidence: z.array(z.object({
+    event_id: z.string().uuid(),
+    domain: eventDomainSchema,
+    candidate_time: z.string(),
+    rule_ids: z.array(z.string()),
+    points: z.number(),
+  })),
   algorithm_version: z.string(),
-} as const;
-const candidateResultApiSchema = z.object(candidateResultApiFields).passthrough();
+}).passthrough();
 
 class UnexpectedProfileSourceError extends Error {
   readonly name = "UnexpectedProfileSourceError";
