@@ -110,7 +110,7 @@ Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `birth-time-dynamic-choice.ts`.
 
 - [ ] **Step 3: Add strict public/internal schemas**
 
-Add the browser-safe shapes to `birth-time-dynamic-choice.ts` and the partition-bearing shapes to `birth-time-dynamic-choice-internal.ts`. The internal module starts with `import "server-only"` and is never imported by a component, hook, or client transport.
+Add the browser-safe shapes to `birth-time-dynamic-choice.ts` and the partition-bearing shapes to `birth-time-dynamic-choice-internal.ts`. Do not add a `server-only` package dependency: this repository does not currently install that marker and the plan forbids new runtime dependencies. Enforce the boundary with strict public projection plus a source-contract test proving no component, hook, client transport, or public response schema imports `birth-time-dynamic-choice-internal.ts`.
 
 ```ts
 export type PublicChoiceKind = "primary" | "unknown" | "unmatched";
