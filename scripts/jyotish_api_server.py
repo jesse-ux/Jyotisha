@@ -1286,8 +1286,6 @@ API_COMMAND_MAP = {
     'active-rectification-questions': '/api/active_rectification_questions',
     'active-rectification-score': '/api/active_rectification_score',
     'active-rectification-events': '/api/active_rectification_events',
-    'dynamic-rectification-opportunities': '/api/dynamic_rectification_opportunities',
-    'dynamic-rectification-score': '/api/dynamic_rectification_score',
     'case-validation': '/api/case_validation',
     'divisional-yoga': '/api/divisional_yoga',
     'deep-varga-avastha': '/api/deep_varga_avastha',
@@ -1322,8 +1320,6 @@ TECHNIQUE_EXAMPLE_ENDPOINTS = {
     '/api/active_rectification_questions',
     '/api/active_rectification_score',
     '/api/active_rectification_events',
-    '/api/dynamic_rectification_opportunities',
-    '/api/dynamic_rectification_score',
     '/api/relationship',
     '/api/remedies',
     '/api/sade_sati',
@@ -1448,6 +1444,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         authorization = self.headers.get('Authorization') or ''
         scheme, _, token = authorization.partition(' ')
         return token.strip() if scheme.lower() == 'bearer' else ''
+
+    def _require_dynamic_rectification_token(self):
+        configured = os.environ.get('JYOTISH_DYNAMIC_RECTIFICATION_TOKEN', '').strip()
+        supplied = self._job_access_token()
+        matches = secrets.compare_digest(supplied, configured)
+        if not configured or not matches:
+            raise Forbidden('Dynamic rectification server token is missing or invalid')
 
     def _vedastro_status(self):
         adapter = _load_local_module('vedastro_service_adapter')
@@ -6909,6 +6912,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             raise BadRequest('birth_date must be YYYY-MM-DD')
         if not isinstance(start_time, str) or not isinstance(end_time, str):
             raise BadRequest('candidate times must be HH:MM')
+        for key in ('lat', 'lon', 'tz'):
+            if key not in body or body[key] in (None, ''):
+                raise BadRequest(f'{key} is required')
         try:
             datetime.strptime(birth_date, '%Y-%m-%d')
             datetime.strptime(start_time, '%H:%M')
@@ -6926,6 +6932,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         }
 
     def _compute_dynamic_rectification_opportunities(self, body):
+        self._require_dynamic_rectification_token()
         allowed_fields = {
             'case_id', 'birth_date', 'as_of_date', 'start_time', 'end_time',
             'lat', 'lon', 'tz', 'candidate_model', 'evidence',
@@ -6966,6 +6973,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         return {'success': True, 'endpoint': 'dynamic_rectification_opportunities', **result}
 
     def _compute_dynamic_rectification_score(self, body):
+        self._require_dynamic_rectification_token()
         allowed_fields = {
             'birth_date', 'start_time', 'end_time', 'lat', 'lon', 'tz', 'choice_evidence',
         }
@@ -7745,8 +7753,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/active_rectification_questions': self._compute_active_rectification_questions,
             '/api/active_rectification_score': self._compute_active_rectification_score,
             '/api/active_rectification_events': self._compute_active_rectification_events,
-            '/api/dynamic_rectification_opportunities': self._compute_dynamic_rectification_opportunities,
-            '/api/dynamic_rectification_score': self._compute_dynamic_rectification_score,
             '/api/relationship': self._compute_relationship,
             '/api/remedies': self._compute_remedies,
             '/api/sade_sati': self._compute_sade_sati,
@@ -7872,8 +7878,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/prashna': 'Compute Prashna chart and answer evidence',
             '/api/rectification_gate': 'Evaluate birth-time precision gate',
             '/api/active_rectification_events': 'Score dated life events against actual birth-time candidates',
-            '/api/dynamic_rectification_opportunities': 'Build candidate-backed dynamic rectification opportunities',
-            '/api/dynamic_rectification_score': 'Score server-resolved dynamic rectification choices',
             '/api/relationship': 'Compute relationship and spouse-status evidence',
             '/api/remedies': 'Generate low-risk remedies from doshas/strength/dasha',
             '/api/sade_sati': 'Compute Sade Sati status and phase',

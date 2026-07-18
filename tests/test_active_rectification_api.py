@@ -17,6 +17,13 @@ def _handler() -> JyotishAPIHandler:
     return JyotishAPIHandler.__new__(JyotishAPIHandler)
 
 
+def _dynamic_handler(monkeypatch) -> JyotishAPIHandler:
+    monkeypatch.setenv("JYOTISH_DYNAMIC_RECTIFICATION_TOKEN", "server-secret")
+    handler = _handler()
+    handler.headers = {"Authorization": "Bearer server-secret"}
+    return handler
+
+
 def test_active_rectification_questions_api_builds_choice_workflow() -> None:
     result = _handler()._compute_active_rectification_questions(
         {
@@ -178,7 +185,9 @@ def test_dynamic_opportunities_api_accepts_only_server_contract(monkeypatch) -> 
 
     monkeypatch.setattr(api_server, "_load_local_module", lambda _name: FakeDynamicModule)
 
-    result = _handler()._compute_dynamic_rectification_opportunities(_dynamic_base())
+    result = _dynamic_handler(monkeypatch)._compute_dynamic_rectification_opportunities(
+        _dynamic_base()
+    )
 
     assert result["success"] is True
     assert result["endpoint"] == "dynamic_rectification_opportunities"
@@ -186,31 +195,38 @@ def test_dynamic_opportunities_api_accepts_only_server_contract(monkeypatch) -> 
     assert captured[0]["lat"] == 31.23
 
 
-def test_dynamic_opportunities_api_rejects_missing_clock_and_untrusted_fields() -> None:
+def test_dynamic_opportunities_api_rejects_missing_clock_and_untrusted_fields(monkeypatch) -> None:
+    handler = _dynamic_handler(monkeypatch)
     missing_date = _dynamic_base()
     del missing_date["as_of_date"]
     with pytest.raises(BadRequest, match="as_of_date"):
-        _handler()._compute_dynamic_rectification_opportunities(missing_date)
+        handler._compute_dynamic_rectification_opportunities(missing_date)
 
     with pytest.raises(BadRequest, match="unsupported dynamic rectification opportunity field"):
-        _handler()._compute_dynamic_rectification_opportunities(
+        handler._compute_dynamic_rectification_opportunities(
             {**_dynamic_base(), "confidence": "high"}
         )
 
     with pytest.raises(BadRequest, match="recent_ranges"):
-        _handler()._compute_dynamic_rectification_opportunities(
+        handler._compute_dynamic_rectification_opportunities(
             {**_dynamic_base(), "recent_ranges": [{"start_time": "05:30", "extra": "05:33"}]}
         )
 
     with pytest.raises(BadRequest, match="partition evidence"):
-        _handler()._compute_dynamic_rectification_opportunities(
+        handler._compute_dynamic_rectification_opportunities(
             {**_dynamic_base(), "evidence": [{"kind": "unknown"}]}
         )
 
+    for field in ("lat", "lon", "tz"):
+        missing_location = _dynamic_base()
+        del missing_location[field]
+        with pytest.raises(BadRequest, match=field):
+            handler._compute_dynamic_rectification_opportunities(missing_location)
 
-def test_dynamic_score_api_rejects_client_option_ids_before_scoring() -> None:
+
+def test_dynamic_score_api_rejects_client_option_ids_before_scoring(monkeypatch) -> None:
     with pytest.raises(BadRequest, match="option_id"):
-        _handler()._compute_dynamic_rectification_score(
+        _dynamic_handler(monkeypatch)._compute_dynamic_rectification_score(
             {
                 "birth_date": "1990-01-01",
                 "start_time": "05:30",
@@ -247,7 +263,7 @@ def test_dynamic_score_api_returns_versioned_candidate_result(monkeypatch) -> No
 
     monkeypatch.setattr(api_server, "_load_local_module", lambda _name: FakeDynamicModule)
 
-    result = _handler()._compute_dynamic_rectification_score(
+    result = _dynamic_handler(monkeypatch)._compute_dynamic_rectification_score(
         {
             "birth_date": "1990-01-01",
             "start_time": "05:30",
