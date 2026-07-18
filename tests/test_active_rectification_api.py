@@ -102,3 +102,38 @@ def test_active_rectification_score_api_validates_payload() -> None:
 
     with pytest.raises(BadRequest, match="answers must be an object"):
         _handler()._compute_active_rectification_score({"questionnaire": {}})
+
+
+def test_active_rectification_events_api_scores_structured_events() -> None:
+    result = _handler()._compute_active_rectification_events({
+        "birth_date": "1993-04-17",
+        "start_time": "14:29",
+        "end_time": "14:31",
+        "lat": 36.683333,
+        "lon": 114.35,
+        "tz": 8,
+        "events": [
+            {"id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5", "domain": "education", "date": "2011-09", "precision": "month"},
+            {"id": "0790866c-ad5e-4a45-b2b4-a5c73f6be6ea", "domain": "career", "date": "2019-07-01", "precision": "day"},
+            {"id": "0ef52e51-ab5f-453b-81e5-adb44a929224", "domain": "relationship", "date": "2021", "precision": "year"},
+        ],
+    })
+
+    assert result["success"] is True
+    assert result["endpoint"] == "active_rectification_events"
+    assert result["result_id"]
+    assert result["event_count"] == 3
+
+
+def test_active_rectification_events_api_rejects_client_scores() -> None:
+    with pytest.raises(BadRequest, match="unsupported active rectification event field"):
+        _handler()._compute_active_rectification_events({
+            "birth_date": "1993-04-17",
+            "start_time": "14:29",
+            "end_time": "14:31",
+            "lat": 36.683333,
+            "lon": 114.35,
+            "tz": 8,
+            "events": [],
+            "confidence": "high",
+        })

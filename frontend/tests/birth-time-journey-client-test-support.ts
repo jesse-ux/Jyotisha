@@ -1,0 +1,63 @@
+export const snapshot = {
+  state: "rectifying",
+  assistantIntent: "start_standard_rectification",
+  input: "rectification_questions",
+  route: "rectification",
+  confidence: null,
+  canApply: false,
+  activeTime: null,
+  reportedRange: {
+    label: "14:00—15:00",
+    startTime: "14:00",
+    endTime: "15:00",
+  },
+} as const;
+
+export const highConfirmationTurn = {
+  caseId: "7299894c-10a8-4b45-91d1-339007282c50",
+  snapshot: {
+    ...snapshot,
+    state: "confirming",
+    assistantIntent: "confirm_candidate_time",
+    input: "candidate_confirmation",
+    confidence: "high",
+    canApply: true,
+  },
+  questionnaire: null,
+  scoring: null,
+  answers: {},
+  lifeEvents: [],
+  candidateResult: {
+    resultId: "1d8ee348-61a3-433d-8907-ff6d281b9992",
+    confidence: "high",
+    canApply: true,
+    winningSegment: {
+      startTime: "14:22",
+      endTime: "14:26",
+      representativeTime: "14:24",
+      widthMinutes: 5,
+    },
+    eventCount: 4,
+    domainCount: 3,
+    topScore: 16,
+    secondScore: 10,
+    marginPercent: 37.5,
+    reasons: [],
+    evidence: [],
+    algorithmVersion: "birth-time-event-scoring-v1",
+  },
+  turnVersion: 1,
+  nextAction: {
+    kind: "request_candidate_confirmation",
+    resultId: "1d8ee348-61a3-433d-8907-ff6d281b9992",
+  },
+  progress: {
+    phase: "result",
+    baselineDomainCount: 3,
+    confirmedEvidenceCount: 4,
+    adaptiveRound: 0,
+    maxAdaptiveRounds: 3,
+  },
+  permissions: { canConfirmCandidate: true },
+  evidenceDraft: null,
+} as const;

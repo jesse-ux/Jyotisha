@@ -1,16 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUp, ArrowUpRight, ChevronRight, Menu, Minus, Plus, Sparkles, Square, X } from "lucide-react";
+import { ArrowUp, ArrowUpRight, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
+import { AppSidebar } from "@/components/app-sidebar";
+import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
+import { BirthTimeRectification } from "@/components/birth-time-rectification";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { ModelSelector } from "@/components/model-selector";
 import { Button } from "@/components/ui/button";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { chinaLocations, type ProvinceNode } from "@/data/china-locations";
 import { parseAgentReply, type ReplyTheme } from "@/lib/agent-reply";
+import {
+  assistantIntentCopy,
+  birthTimePersistenceValues,
+  describeBirthTimeDraft,
+  isBirthTimeDraftReady,
+  type BirthTimeDraft,
+  type BirthTimeSource,
+} from "@/lib/birth-time-intake-model";
+import { useBirthTimeGuidedJourney } from "@/hooks/use-birth-time-guided-journey";
+import {
+  requestBirthTimeAssessment,
+  resumeBirthTimeJourney,
+  type JourneyClientResponse,
+} from "@/lib/birth-time-journey-client";
+import {
+  guidedBirthTimePreview,
+  isGuidedBirthTimePreview,
+  previewRectificationJourney,
+} from "@/lib/birth-time-guided-preview";
 import { keepFocusWithin } from "@/lib/focus-trap";
+import { protectOnboardingPhrases } from "@/lib/onboarding-copy";
 import {
   SessionModelPersistenceQueue,
   persistSessionModelSelection,
@@ -24,14 +48,13 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 type Theme = ReplyTheme;
 type Message = { role: "user" | "assistant"; text: string; suggestions?: string[] };
-type Profile = {
+type Profile = BirthTimeDraft & {
   name: string;
-  date: string;
-  time: string;
   countryCode: "CN";
   provinceCode: string;
   cityCode: string;
   districtCode: string;
+  rectificationCaseId: string;
 };
 type ChartLibraryRecord = {
   id: string;
@@ -71,8 +94,9 @@ type BirthPlace = { label: string; lat: number; lon: number; tz: number };
 type Account = { user: { id: string; email: string | null }; credits: number; isAdmin: boolean };
 type OnboardingSuggestion = { theme: Exclude<Theme, "general">; text: string };
 type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[] };
-type OnboardingStep = "name" | "birth" | "place";
+type OnboardingStep = "name" | "birth" | "place" | "rectification";
 type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
+type AccountDialog = "profile" | "redeem" | "logout";
 type DailyStarlanguageCard = { trend: string; action: string; caution: string };
 type DailyStarlanguageApiResponse = {
   status?: "ok";
@@ -110,6 +134,18 @@ const themes: Array<{ id: Exclude<Theme, "general">; label: string; prompt: stri
   { id: "marriage", label: "关系", prompt: "我的关系模式是什么？" },
   { id: "timing", label: "时运", prompt: "未来哪些阶段值得把握？" },
 ];
+
+const accountDialogTitles = {
+  profile: "个人资料",
+  redeem: "兑换点数",
+  logout: "退出登录？",
+} as const satisfies Record<AccountDialog, string>;
+
+const accountDialogClasses = {
+  profile: "profile-modal",
+  redeem: "redeem-modal",
+  logout: "logout-modal",
+} as const satisfies Record<AccountDialog, string>;
 
 const previewModelCatalog = parsePublicModelCatalog({
   defaultModelId: "deepseek-pro",
@@ -174,6 +210,14 @@ const emptyProfile: Profile = {
   name: "",
   date: "",
   time: "",
+  reportedTime: "",
+  birthTimeSource: "",
+  birthTimePeriod: "",
+  birthTimeClue: "",
+  uncertaintyBeforeMinutes: null,
+  uncertaintyAfterMinutes: null,
+  birthTimeStatus: "",
+  rectificationCaseId: "",
   countryCode: "CN",
   provinceCode: "",
   cityCode: "",
@@ -388,18 +432,18 @@ function buildBirthTimeRectificationQuestion(profile: Profile) {
 
 function missingProfileStep(profile: Profile): OnboardingStep | null {
   if (!profile.name.trim()) return "name";
-  if (!profile.date || !profile.time) return "birth";
+  if (!isBirthTimeDraftReady(profile)) return "birth";
   if (!selectedBirthPlace(profile)) return "place";
+  if (!profile.time || profile.birthTimeStatus !== "confirmed") return "rectification";
   return null;
 }
 
 function birthQuestion(name: string) {
-  return `${name}，你好。接下来请告诉我你的出生日期和时间。时间越准确，后面的判断越可靠。`;
+  return `${name}，你好。接下来请告诉我出生日期，以及你对出生时间知道到什么程度。不确定也没关系，我不会要求你猜一个具体时间。`;
 }
 
 function formatBirthMoment(profile: Profile) {
-  const [year, month, day] = profile.date.split("-").map(Number);
-  return `${year}年${month}月${day}日 ${profile.time}`;
+  return describeBirthTimeDraft(profile);
 }
 
 function placeQuestion(profile: Profile) {
@@ -413,7 +457,7 @@ function completedOnboardingMessage(name: string) {
 function completedOnboardingTranscript(profile: Profile, greeting: string): Message[] {
   const name = profile.name.trim();
   const birthPlace = selectedBirthPlace(profile);
-  if (!name || !profile.date || !profile.time || !birthPlace) return [];
+  if (!name || !profile.date || !profile.time || profile.birthTimeStatus !== "confirmed" || !birthPlace) return [];
 
   return [
     { role: "assistant", text: presetOnboardingMessage },
@@ -458,13 +502,38 @@ function readProfile(value: unknown): Profile {
   const profile = value as Partial<Profile> & {
     birth_date?: unknown;
     birth_time?: unknown;
+    reported_birth_time?: unknown;
+    active_birth_time?: unknown;
+    birth_time_source?: unknown;
+    birth_time_period?: unknown;
+    birth_time_clue?: unknown;
+    uncertainty_before_minutes?: unknown;
+    uncertainty_after_minutes?: unknown;
+    birth_time_status?: unknown;
+    rectification_case_id?: unknown;
     country_code?: unknown;
     province_code?: unknown;
     city_code?: unknown;
     district_code?: unknown;
   };
   const date = typeof profile.birth_date === "string" ? profile.birth_date : profile.date;
-  const time = typeof profile.birth_time === "string" ? profile.birth_time.slice(0, 5) : profile.time;
+  const legacyTime = typeof profile.birth_time === "string" ? profile.birth_time.slice(0, 5) : profile.time;
+  const time = typeof profile.active_birth_time === "string"
+    ? profile.active_birth_time.slice(0, 5)
+    : legacyTime;
+  const reportedTime = typeof profile.reported_birth_time === "string"
+    ? profile.reported_birth_time.slice(0, 5)
+    : time;
+  const knownSources: readonly BirthTimeSource[] = [
+    "hospital_record", "family_exact", "approximate", "period_only", "unknown", "legacy_import",
+  ];
+  const source = knownSources.find((item) => item === profile.birth_time_source)
+    ?? (time ? "legacy_import" : "");
+  const knownPeriods = ["early_morning", "morning", "afternoon", "evening", "late_night"] as const;
+  const period = knownPeriods.find((item) => item === profile.birth_time_period) ?? "";
+  const knownStatuses = ["reported", "assessing", "rectifying", "candidate", "confirmed"] as const;
+  const status = knownStatuses.find((item) => item === profile.birth_time_status)
+    ?? (time ? "confirmed" : "");
   const provinceCode = typeof profile.province_code === "string" ? profile.province_code : profile.provinceCode;
   const cityCode = typeof profile.city_code === "string" ? profile.city_code : profile.cityCode;
   const districtCode = typeof profile.district_code === "string" ? profile.district_code : profile.districtCode;
@@ -473,6 +542,14 @@ function readProfile(value: unknown): Profile {
     name: typeof profile.name === "string" ? profile.name.slice(0, 80) : "",
     date: typeof date === "string" ? date : "",
     time: typeof time === "string" ? time : "",
+    reportedTime: typeof reportedTime === "string" ? reportedTime : "",
+    birthTimeSource: source,
+    birthTimePeriod: period,
+    birthTimeClue: typeof profile.birth_time_clue === "string" ? profile.birth_time_clue.slice(0, 240) : "",
+    uncertaintyBeforeMinutes: typeof profile.uncertainty_before_minutes === "number" ? profile.uncertainty_before_minutes : null,
+    uncertaintyAfterMinutes: typeof profile.uncertainty_after_minutes === "number" ? profile.uncertainty_after_minutes : null,
+    birthTimeStatus: status,
+    rectificationCaseId: typeof profile.rectification_case_id === "string" ? profile.rectification_case_id : "",
     countryCode: "CN",
     provinceCode: typeof provinceCode === "string" ? provinceCode : "",
     cityCode: typeof cityCode === "string" ? cityCode : "",
@@ -522,15 +599,6 @@ function readSessions(value: unknown, catalog: PublicLanguageModelCatalog | null
   return { sessions, fallbackSessionIds };
 }
 
-function BirthMomentFields({ value, onChange }: { value: Profile; onChange: (profile: Profile) => void }) {
-  return (
-    <div className="profile-grid">
-      <label><span>出生日期</span><input required type="date" value={value.date} onChange={(event) => onChange({ ...value, date: event.target.value })} /></label>
-      <label><span>出生时间</span><input required type="time" value={value.time} onChange={(event) => onChange({ ...value, time: event.target.value })} /></label>
-    </div>
-  );
-}
-
 function BirthLocationFields({ value, onChange }: { value: Profile; onChange: (profile: Profile) => void }) {
   const province = findProvince(value.provinceCode);
   const cities = province?.cities ?? [];
@@ -557,7 +625,7 @@ function ProfileFields({ value, onChange, nameInputId }: { value: Profile; onCha
         <span>如何称呼你</span>
         <input id={nameInputId} required autoComplete="name" maxLength={80} placeholder="例如：林遥" value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} />
       </label>
-      <BirthMomentFields value={value} onChange={onChange} />
+      <BirthTimeIntakeFields value={value} onPatch={(patch) => onChange({ ...value, ...patch })} />
       <BirthLocationFields value={value} onChange={onChange} />
     </>
   );
@@ -567,21 +635,22 @@ function AgentAvatar() {
   return <span className="agent-avatar" aria-hidden="true" />;
 }
 
-function OnboardingChatMessage({ role, text, streaming = false, length = text.length }: { role: Message["role"]; text: string; streaming?: boolean; length?: number }) {
+function OnboardingChatMessage({ role, text, streaming = false, length = text.length, phraseSafe = false }: { role: Message["role"]; text: string; streaming?: boolean; length?: number; phraseSafe?: boolean }) {
   const visibleText = streaming ? text.slice(0, length) : text;
+  const protectedVisibleText = protectOnboardingPhrases(visibleText);
   return (
-    <article className={`message message-${role} onboarding-message`} aria-label={role === "assistant" ? "Jyotisha" : "你"}>
+    <article className={`message message-${role} onboarding-message${phraseSafe ? " is-phrase-safe" : ""}`} aria-label={role === "assistant" ? "Jyotisha" : "你"}>
       {role === "assistant" && <AgentAvatar />}
       <div className="message-content">
         <div className="message-bubble">
           {role === "assistant" ? (
             streaming ? (
               <>
-                <div className={`onboarding-stream ${length >= text.length ? "is-complete" : ""}`} aria-hidden="true"><ChatMessageContent text={visibleText} /></div>
+                <div className={`onboarding-stream ${length >= text.length ? "is-complete" : ""}`} aria-hidden="true"><ChatMessageContent text={protectedVisibleText} /></div>
                 <span className="sr-only" aria-live="polite">{length >= text.length ? text : ""}</span>
               </>
-            ) : <ChatMessageContent text={text} />
-          ) : <p>{text}</p>}
+            ) : <ChatMessageContent text={protectedVisibleText} />
+          ) : <p>{protectedVisibleText}</p>}
         </div>
       </div>
     </article>
@@ -648,6 +717,8 @@ async function fetchModelCatalog(signal?: AbortSignal) {
 export default function Home() {
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [profileDraft, setProfileDraft] = useState<Profile>(emptyProfile);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [activeAccountDialog, setActiveAccountDialog] = useState<AccountDialog | null>(null);
   const [chartLibrary, setChartLibrary] = useState<ChartLibraryRecord[]>([]);
   const [chartLibraryOpen, setChartLibraryOpen] = useState(false);
   const [otherProfileDraft, setOtherProfileDraft] = useState<Profile>(emptyProfile);
@@ -655,12 +726,9 @@ export default function Home() {
   const [synastryHistory, setSynastryHistory] = useState<SynastryReportCard[]>([]);
   const [dailyStarlanguageCard, setDailyStarlanguageCard] = useState<DailyStarlanguageCard | null>(null);
   const [birthRectificationPreview, setBirthRectificationPreview] = useState<BirthRectificationPreview | null>(null);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileNotice, setProfileNotice] = useState("");
   const [account, setAccount] = useState<Account | null>(null);
   const [accountError, setAccountError] = useState("");
-  const [redeemOpen, setRedeemOpen] = useState(false);
   const [redeemCode, setRedeemCode] = useState("");
   const [redeemError, setRedeemError] = useState("");
   const [redeemMessage, setRedeemMessage] = useState("");
@@ -688,14 +756,15 @@ export default function Home() {
   const [onboardingError, setOnboardingError] = useState("");
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("name");
   const [onboardingJustCompleted, setOnboardingJustCompleted] = useState(false);
+  const [birthTimeJourney, setBirthTimeJourney] = useState<JourneyClientResponse | null>(null);
+  const [birthTimeError, setBirthTimeError] = useState("");
   const [startGreeting, setStartGreeting] = useState("");
   const [presetMessageLength, setPresetMessageLength] = useState(0);
   const conversationEnd = useRef<HTMLDivElement>(null);
   const accountTrigger = useRef<HTMLButtonElement>(null);
-  const mobileMenuTrigger = useRef<HTMLButtonElement>(null);
-  const sidebar = useRef<HTMLElement>(null);
-  const sidebarCloseButton = useRef<HTMLButtonElement>(null);
-  const profileDialog = useRef<HTMLElement>(null);
+  const accountDialog = useRef<HTMLElement>(null);
+  const creditTrigger = useRef<HTMLButtonElement>(null);
+  const dialogReturnTarget = useRef<HTMLButtonElement | null>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const redeemInput = useRef<HTMLInputElement>(null);
   const composerInput = useRef<HTMLTextAreaElement>(null);
@@ -712,6 +781,14 @@ export default function Home() {
   const chartLibraryLoadedAccount = useRef("");
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
+  const birthTimeRevisionPending = useRef(false);
+  const birthTimeGuided = useBirthTimeGuidedJourney({
+    journey: birthTimeJourney,
+    preview: process.env.NODE_ENV === "development" && uiPreview.current,
+    onJourney: setBirthTimeJourney,
+    onReady: completeGuidedBirthTime,
+    onEditBirthTimeDetails: editDeclaredBirthTimeDetails,
+  });
 
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
   const visibleSessions = sessions
@@ -813,6 +890,8 @@ export default function Home() {
       ? birthQuestion(profileDraft.name.trim())
       : onboardingStep === "place"
         ? placeQuestion(profileDraft)
+        : onboardingStep === "rectification" && birthTimeJourney
+          ? assistantIntentCopy(birthTimeJourney.snapshot.assistantIntent)
         : presetOnboardingMessage;
   const shouldStreamOnboarding = !profileComplete || onboardingJustCompleted;
   const presetMessageFinished = !shouldStreamOnboarding || presetMessageLength >= currentOnboardingMessage.length;
@@ -839,12 +918,28 @@ export default function Home() {
             setHydrated(true);
             return;
           }
+          const isRectificationPreview = isGuidedBirthTimePreview(previewMode);
+          const previewJourney = isRectificationPreview
+            ? guidedBirthTimePreview(previewMode)
+            : previewRectificationJourney;
           const previewProfile: Profile = previewMode === "onboarding"
             ? emptyProfile
             : {
               name: "林遥",
               date: "1990-06-15",
-              time: "12:30",
+              time: isRectificationPreview ? "" : "12:30",
+              reportedTime: isRectificationPreview ? "14:30" : "12:30",
+              birthTimeSource: isRectificationPreview ? "approximate" : "legacy_import",
+              birthTimePeriod: "",
+              birthTimeClue: "",
+              uncertaintyBeforeMinutes: isRectificationPreview ? 30 : null,
+              uncertaintyAfterMinutes: isRectificationPreview ? 30 : null,
+              birthTimeStatus: previewJourney.snapshot.state === "candidate"
+                || previewJourney.snapshot.state === "confirming"
+                || previewJourney.snapshot.state === "ready"
+                  ? "candidate"
+                  : isRectificationPreview ? "rectifying" : "confirmed",
+              rectificationCaseId: isRectificationPreview ? previewJourney.caseId : "",
               countryCode: "CN",
               provinceCode: "110000",
               cityCode: "110000-city",
@@ -868,6 +963,9 @@ export default function Home() {
           setModelCatalog(previewModelCatalog);
           setProfile(previewProfile);
           setProfileDraft(previewProfile);
+          if (isRectificationPreview) {
+            setBirthTimeJourney(previewJourney);
+          }
           setOnboardingStep(missingProfileStep(previewProfile) ?? "name");
           setSessions([previewSession]);
           setActiveSessionId(previewSession.id);
@@ -902,7 +1000,7 @@ export default function Home() {
         const [profileResult, sessionsResult] = await Promise.all([
           supabase
             .from("profiles")
-            .select("name,birth_date,birth_time,country_code,province_code,city_code,district_code")
+            .select("name,birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,rectification_case_id,country_code,province_code,city_code,district_code")
             .eq("id", nextAccount.user.id)
             .abortSignal(controller.signal)
             .maybeSingle(),
@@ -947,6 +1045,19 @@ export default function Home() {
         setOnboardingStep(missingProfileStep(nextProfile) ?? "name");
         setSessions(nextSessions);
         setActiveSessionId(nextSessions[0].id);
+        if ((nextProfile.birthTimeStatus === "rectifying" || nextProfile.birthTimeStatus === "candidate")
+          && nextProfile.rectificationCaseId) {
+          try {
+            const resumed = await resumeBirthTimeJourney(nextProfile.rectificationCaseId);
+            if (!controller.signal.aborted) {
+              setBirthTimeJourney(resumed);
+            }
+          } catch (caught) {
+            if (!controller.signal.aborted) {
+              setBirthTimeError(caught instanceof Error ? caught.message : "暂时无法继续上次的时间校正。");
+            }
+          }
+        }
         if (modelCatalogResult.unavailable) {
           setComposerNotice("模型服务暂时不可用，当前无法发送问题。");
         } else if (parsedSessions.fallbackSessionIds.length > 0) {
@@ -1078,41 +1189,32 @@ export default function Home() {
   }, [activeSessionId, activeSession?.messages.length, activeStreamingText, isLoading, onboardingPending, onboardingStep, presetMessageFinished, profileComplete]);
 
   useEffect(() => {
-    if (hydrated && accountId && !profileComplete && onboardingStep === "name" && presetMessageFinished && !profileOpen) {
+    if (hydrated && accountId && !profileComplete && onboardingStep === "name" && presetMessageFinished && activeAccountDialog === null) {
       composerInput.current?.focus();
     }
-  }, [accountId, hydrated, onboardingStep, presetMessageFinished, profileComplete, profileOpen]);
+  }, [accountId, activeAccountDialog, hydrated, onboardingStep, presetMessageFinished, profileComplete]);
 
   useEffect(() => {
-    if (!mobileSidebarOpen) return;
-    window.requestAnimationFrame(() => sidebarCloseButton.current?.focus());
+    if (activeAccountDialog === null) return;
+    window.requestAnimationFrame(() => {
+      if (signingOut) return;
+      if (activeAccountDialog === "redeem") redeemInput.current?.focus();
+      else closeButton.current?.focus();
+    });
     const closeOnEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
-        setMobileSidebarOpen(false);
-        window.requestAnimationFrame(() => mobileMenuTrigger.current?.focus());
+        if (signingOut) return;
+        setActiveAccountDialog(null);
+        const returnTarget = dialogReturnTarget.current;
+        window.requestAnimationFrame(() => returnTarget?.focus());
         return;
       }
-      const container = sidebar.current;
+      const container = accountDialog.current;
       if (container) keepFocusWithin(event, container);
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [mobileSidebarOpen]);
-
-  useEffect(() => {
-    if (!profileOpen) return;
-    (redeemOpen ? redeemInput.current : closeButton.current)?.focus();
-    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeAccount();
-        return;
-      }
-      const container = profileDialog.current;
-      if (container) keepFocusWithin(event, container);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [profileOpen, redeemOpen]);
+  }, [activeAccountDialog, signingOut]);
 
   async function refreshAccount() {
     try {
@@ -1222,7 +1324,6 @@ export default function Home() {
 
   async function startNewChat() {
     if (!account || !modelCatalog || creatingSession) return;
-    setMobileSidebarOpen(false);
     const nextSession = createSession(modelCatalog.defaultModelId);
     const previousSessionId = activeSession?.id ?? "";
     setCreatingSession(true);
@@ -1244,6 +1345,12 @@ export default function Home() {
     } finally {
       setCreatingSession(false);
     }
+  }
+
+  function selectSession(sessionId: string) {
+    setActiveSessionId(sessionId);
+    setDraft("");
+    setComposerNotice("");
   }
 
   async function selectSessionModel(modelId: string) {
@@ -1298,21 +1405,33 @@ export default function Home() {
     }
   }
 
-  function openAccount(showRedeem = false) {
-    setMobileSidebarOpen(false);
-    if (profileComplete) setProfileDraft(profile);
-    setProfileNotice("");
-    setRedeemOpen(showRedeem);
-    setRedeemError("");
-    setRedeemMessage("");
-    setProfileOpen(true);
+  function openAccountDialog(dialog: AccountDialog, returnTarget: HTMLButtonElement | null = accountTrigger.current) {
+    dialogReturnTarget.current = returnTarget ?? accountTrigger.current;
+    setAccountMenuOpen(false);
+    setAccountError("");
+    switch (dialog) {
+      case "profile":
+        setProfileDraft(profile);
+        setProfileNotice("");
+        break;
+      case "redeem":
+        setRedeemError("");
+        setRedeemMessage("");
+        break;
+      case "logout":
+        break;
+      default: {
+        const unreachable: never = dialog;
+        return unreachable;
+      }
+    }
+    setActiveAccountDialog(dialog);
   }
 
-  function closeAccount() {
-    setProfileOpen(false);
-    const returnTarget = window.matchMedia("(max-width: 767px)").matches
-      ? mobileMenuTrigger.current
-      : accountTrigger.current;
+  function closeAccountDialog() {
+    if (signingOut) return;
+    setActiveAccountDialog(null);
+    const returnTarget = dialogReturnTarget.current;
     window.requestAnimationFrame(() => returnTarget?.focus());
   }
 
@@ -1327,7 +1446,7 @@ export default function Home() {
       body: JSON.stringify({
         name: nextProfile.name.trim() || null,
         birth_date: nextProfile.date || null,
-        birth_time: nextProfile.time || null,
+        ...birthTimePersistenceValues(nextProfile),
         country_code: nextProfile.countryCode,
         province_code: nextProfile.provinceCode || null,
         city_code: nextProfile.cityCode || null,
@@ -1401,16 +1520,44 @@ export default function Home() {
     }
   }
 
+  async function assessSavedBirthTime(nextProfile: Profile) {
+    const result = process.env.NODE_ENV === "development" && uiPreview.current
+      ? previewRectificationJourney
+      : await requestBirthTimeAssessment();
+    const nextStatus = result.snapshot.state === "ready"
+      ? "confirmed"
+      : result.snapshot.state === "candidate"
+        ? "candidate"
+        : "rectifying";
+    const assessedProfile: Profile = {
+      ...nextProfile,
+      time: result.snapshot.activeTime ?? "",
+      birthTimeStatus: nextStatus,
+      rectificationCaseId: result.caseId,
+    };
+    setBirthTimeJourney(result);
+    setBirthTimeError("");
+    setProfile(assessedProfile);
+    setProfileDraft(assessedProfile);
+    return assessedProfile;
+  }
+
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!isProfileComplete(profileDraft) || !account || profileSaving) return;
+    if (!profileDraft.name.trim() || !isBirthTimeDraftReady(profileDraft) || !selectedBirthPlace(profileDraft) || !account || profileSaving) return;
     setProfileSaving(true);
     setProfileNotice("");
     setAccountError("");
     try {
       await persistProfile(profileDraft);
-      setProfile(profileDraft);
-      setProfileNotice("出生资料已保存到云端，可在同一账号的其他设备使用。");
+      const nextProfile = profileDraft.birthTimeStatus === "confirmed"
+        ? profileDraft
+        : await assessSavedBirthTime(profileDraft);
+      setProfile(nextProfile);
+      setProfileDraft(nextProfile);
+      setProfileNotice(nextProfile.birthTimeStatus === "confirmed"
+        ? "出生资料已保存到云端，可在同一账号的其他设备使用。"
+        : "资料已保存，当前时间仍在校正中，不会用于正式排盘。");
     } catch (caught) {
       setAccountError(friendlyError(caught instanceof Error ? caught.message : "出生资料保存失败"));
     } finally {
@@ -1443,13 +1590,20 @@ export default function Home() {
 
   async function saveOnboardingBirth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!profileDraft.date || !profileDraft.time || !account || profileSaving) return;
+    if (!isBirthTimeDraftReady(profileDraft) || !account || profileSaving) return;
     setProfileSaving(true);
     setAccountError("");
     try {
       await persistProfile(profileDraft);
-      setProfile(profileDraft);
       setPresetMessageLength(0);
+      if (birthTimeRevisionPending.current) {
+        const assessedProfile = await assessSavedBirthTime(profileDraft);
+        birthTimeRevisionPending.current = false;
+        if (assessedProfile.birthTimeStatus === "confirmed") setOnboardingJustCompleted(true);
+        else setOnboardingStep("rectification");
+        return;
+      }
+      setProfile(profileDraft);
       const nextStep = missingProfileStep(profileDraft);
       if (nextStep) setOnboardingStep(nextStep);
       else setOnboardingJustCompleted(true);
@@ -1460,6 +1614,13 @@ export default function Home() {
     }
   }
 
+  function editDeclaredBirthTimeDetails() {
+    birthTimeRevisionPending.current = true;
+    setBirthTimeError("");
+    setPresetMessageLength(0);
+    setOnboardingStep("birth");
+  }
+
   async function saveOnboardingPlace(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedBirthPlace(profileDraft) || !account || profileSaving) return;
@@ -1467,11 +1628,44 @@ export default function Home() {
     setAccountError("");
     try {
       await persistProfile(profileDraft);
-      setProfile(profileDraft);
+      const assessedProfile = await assessSavedBirthTime(profileDraft);
       setPresetMessageLength(0);
-      setOnboardingJustCompleted(true);
+      if (assessedProfile.birthTimeStatus === "confirmed") {
+        setOnboardingJustCompleted(true);
+      } else {
+        setOnboardingStep("rectification");
+      }
     } catch (caught) {
       setAccountError(friendlyError(caught instanceof Error ? caught.message : "出生地点保存失败"));
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  function completeGuidedBirthTime(result: JourneyClientResponse) {
+    if (result.nextAction.kind !== "ready") return;
+    const confirmedProfile: Profile = {
+      ...profileDraft,
+      time: result.nextAction.activeTime,
+      birthTimeStatus: "confirmed",
+      rectificationCaseId: result.caseId,
+    };
+    setProfile(confirmedProfile);
+    setProfileDraft(confirmedProfile);
+    setPresetMessageLength(0);
+    setOnboardingJustCompleted(true);
+  }
+
+  async function retryBirthTimeAssessment() {
+    if (!account || profileSaving) return;
+    setProfileSaving(true);
+    setBirthTimeError("");
+    try {
+      const assessedProfile = await assessSavedBirthTime(profileDraft);
+      setPresetMessageLength(0);
+      if (assessedProfile.birthTimeStatus === "confirmed") setOnboardingJustCompleted(true);
+    } catch (caught) {
+      setBirthTimeError(caught instanceof Error ? caught.message : "生时评估暂时不可用，请稍后重试。");
     } finally {
       setProfileSaving(false);
     }
@@ -1596,7 +1790,7 @@ export default function Home() {
       chooseSuggestedQuestion(baseQuestion, "marriage");
       setComposerNotice("合盘计算暂时不可用，已先生成问题草稿。");
     }
-    setProfileOpen(false);
+    closeAccountDialog();
   }
 
   async function requestCancellation(requestId: string) {
@@ -1722,15 +1916,13 @@ export default function Home() {
     if (!question || !activeSession || !modelCatalog || pendingSessionId || cancellationInFlight.current || pendingConsultation.current || !account) return;
 
     if (account.credits <= 0) {
-      openAccount(true);
+      openAccountDialog("redeem", creditTrigger.current);
       return;
     }
 
     if (!isProfileComplete(profile)) {
-      setProfileDraft(profile);
+      openAccountDialog("profile");
       setProfileNotice("请先补充出生资料，才能进行星盘计算。");
-      setRedeemOpen(false);
-      setProfileOpen(true);
       return;
     }
 
@@ -1850,6 +2042,7 @@ export default function Home() {
           lon: birthPlace.lon,
           tz: birthPlace.tz,
           theme,
+          entryMode: profile.birthTimeStatus === "confirmed" ? "direct_chart" : "rectification",
           question,
           history: currentSession.messages.slice(-12).map((message) => ({
             role: message.role,
@@ -1862,7 +2055,7 @@ export default function Home() {
         const contentType = response.headers.get("content-type") ?? "";
         const errorPayload = contentType.includes("application/json") ? await response.json() : { message: await response.text() };
         if (response.status === 401) window.location.assign("/login");
-        if (response.status === 402) openAccount(true);
+        if (response.status === 402) openAccountDialog("redeem", creditTrigger.current);
         throw new Error(payloadMessage(errorPayload, "服务暂时不可用"));
       }
       if (!response.body) throw new Error("浏览器未收到可读取的回答流");
@@ -2025,79 +2218,83 @@ export default function Home() {
     );
   }
 
-  return (
-    <main className={`chat-app ${mobileSidebarOpen ? "sidebar-open" : ""}`}>
-      <button className="sidebar-backdrop" tabIndex={-1} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)} />
-      <aside className="sidebar" ref={sidebar} id="chat-sidebar" aria-label="对话导航" inert={profileOpen}>
-        <div className="brand-row"><span className="brand-mark" aria-hidden="true" /><strong>Jyotisha</strong><button className="sidebar-close" ref={sidebarCloseButton} aria-label="关闭聊天记录" type="button" onClick={() => setMobileSidebarOpen(false)}><X aria-hidden="true" /></button></div>
-        <button className="new-chat" type="button" onClick={() => void startNewChat()} disabled={!hydrated || !account || !modelCatalog || creatingSession || Boolean(pendingSessionId) || cancellationPending}><Plus aria-hidden="true" /> {creatingSession ? "正在创建" : "新对话"}</button>
-        <nav className="session-nav" aria-label="聊天记录">
-          <div className="session-nav-header">
-            <span className="sidebar-label">{showArchivedSessions ? "归档记录" : "聊天记录"}</span>
-            <button type="button" onClick={() => { setShowArchivedSessions((current) => !current); setSessionMenuId(null); }}>
-              {showArchivedSessions ? "返回" : `归档 ${archivedSessionIds.length}`}
-            </button>
-          </div>
-          <div className="session-list">
-            {visibleSessions.map((session) => (
-              <div
-                className={`session-row ${session.id === activeSession?.id ? "is-active" : ""}`}
-                key={session.id}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  setSessionMenuId(sessionMenuId === session.id ? null : session.id);
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSessionId(session.id);
-                    setDraft("");
-                    setComposerNotice("");
-                    setSessionMenuId(null);
-                    setMobileSidebarOpen(false);
-                  }}
-                  disabled={Boolean(pendingSessionId) || cancellationPending}
-                  aria-current={session.id === activeSession?.id ? "page" : undefined}
-                >
-                  <span>{pinnedSessionIds.includes(session.id) ? "★ " : ""}{session.title}</span>
-                  {session.messages.length > 0 && <small>{session.messages.length} 条消息</small>}
-                </button>
-                <button className="session-menu-trigger" type="button" aria-label={`${session.title} 更多操作`} aria-expanded={sessionMenuId === session.id} onClick={() => setSessionMenuId(sessionMenuId === session.id ? null : session.id)}>⋯</button>
-                {sessionMenuId === session.id && (
-                  <div className="session-actions" role="menu" aria-label={`${session.title} 操作`}>
-                    <button type="button" role="menuitem" onClick={() => { togglePinnedSession(session.id); setSessionMenuId(null); }}>{pinnedSessionIds.includes(session.id) ? "取消置顶" : "置顶"}</button>
-                    <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void renameSession(session); }}>重命名</button>
-                    <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void shareSession(session); }}>转发</button>
-                    <button type="button" role="menuitem" onClick={() => { toggleArchivedSession(session.id); setSessionMenuId(null); }}>{archivedSessionIds.includes(session.id) ? "恢复" : "归档"}</button>
-                    <button type="button" role="menuitem" onClick={() => { setSessionMenuId(null); void deleteSession(session); }}>删除</button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </nav>
-        <div className="sidebar-footer">
-          <button className="profile-trigger" ref={accountTrigger} type="button" onClick={() => openAccount()}>
-            <span className="profile-initial" aria-hidden="true">{profile.name.trim().slice(0, 1) || account?.user.email?.slice(0, 1).toUpperCase() || "你"}</span>
-            <span><b>{profile.name.trim() || account?.user.email || "账户"}</b></span>
-            <ChevronRight className="chevron" aria-hidden="true" />
-          </button>
-        </div>
-      </aside>
+  const sidebarAccount = {
+    name: profile.name.trim() || account.user.email || "账户",
+    email: account.user.email || "尚未读取邮箱",
+    credits: account.credits,
+    isAdmin: account.isAdmin,
+    initial: profile.name.trim().slice(0, 1)
+      || account.user.email?.slice(0, 1).toUpperCase()
+      || "你",
+  };
 
-      <section className="chat-panel" inert={profileOpen || mobileSidebarOpen}>
-        <header className="chat-header">
-          <button className="mobile-menu" ref={mobileMenuTrigger} aria-label="打开聊天记录" aria-controls="chat-sidebar" aria-expanded={mobileSidebarOpen} type="button" onClick={() => setMobileSidebarOpen(true)}><Menu aria-hidden="true" /></button>
+  const sidebarSessions = visibleSessions.map((session) => ({
+    id: session.id,
+    title: session.title,
+    messageCount: session.messages.length,
+    pinned: pinnedSessionIds.includes(session.id),
+    archived: archivedSessionIds.includes(session.id),
+  }));
+
+  return (
+    <SidebarProvider escapeBlocked={accountMenuOpen || activeAccountDialog !== null}>
+      <main className="chat-app">
+        <AppSidebar
+          sessions={sidebarSessions}
+          activeSessionId={activeSession?.id ?? null}
+          account={sidebarAccount}
+          accountMenuOpen={accountMenuOpen}
+          accountTriggerRef={accountTrigger}
+          newChatDisabled={!hydrated || !modelCatalog || creatingSession || Boolean(pendingSessionId) || cancellationPending}
+          creatingSession={creatingSession}
+          sessionControls={{
+            archivedCount: archivedSessionIds.length,
+            showingArchived: showArchivedSessions,
+            menuSessionId: sessionMenuId,
+            disabled: Boolean(pendingSessionId) || cancellationPending,
+            onToggleArchivedView: () => {
+              setShowArchivedSessions((current) => !current);
+              setSessionMenuId(null);
+            },
+            onMenuSessionChange: setSessionMenuId,
+            onTogglePinned: togglePinnedSession,
+            onRename: (sessionId) => {
+              const session = sessions.find((candidate) => candidate.id === sessionId);
+              if (session) void renameSession(session);
+            },
+            onShare: (sessionId) => {
+              const session = sessions.find((candidate) => candidate.id === sessionId);
+              if (session) void shareSession(session);
+            },
+            onToggleArchived: toggleArchivedSession,
+            onDelete: (sessionId) => {
+              const session = sessions.find((candidate) => candidate.id === sessionId);
+              if (session) void deleteSession(session);
+            },
+          }}
+          onAccountMenuOpenChange={setAccountMenuOpen}
+          onNewChat={() => void startNewChat()}
+          onSelectSession={selectSession}
+          onOpenProfile={() => openAccountDialog("profile")}
+          onOpenRedeem={() => openAccountDialog("redeem")}
+          onOpenLogout={() => openAccountDialog("logout")}
+        />
+        <SidebarInset className="chat-panel" inert={activeAccountDialog !== null}>
+          <header className="chat-header">
+            <SidebarTrigger placement="inset" />
           <div>
             <strong>{activeSession?.title || "新对话"}</strong>
-            <span><i className={`status ${isLoading ? "status-loading" : "status-idle"}`} />{isLoading ? (consultationPhase === "undo" ? "即将发送，可撤回" : activeStreamingText ? "正在回答" : "正在核对星盘信息") : "基于星盘证据回答"}</span>
+            <span><i className={`status ${isLoading ? "status-loading" : "status-idle"}`} />{isLoading
+              ? (consultationPhase === "undo" ? "即将发送，可撤回" : activeStreamingText ? "正在回答" : "正在核对星盘信息")
+              : !profileComplete && onboardingStep === "rectification"
+                ? "正在校正出生时间"
+                : "基于星盘证据回答"}</span>
           </div>
-          <button className="credit-button" type="button" onClick={() => openAccount(account?.credits === 0)} aria-label={account ? `余额 ${account.credits} 点，打开账户与兑换码` : accountError || "读取余额中"}>
+          <button className="credit-button" ref={creditTrigger} type="button" onClick={() => openAccountDialog("redeem", creditTrigger.current)} aria-label={account ? `余额 ${account.credits} 点，兑换点数` : accountError || "读取余额中"}>
             <Sparkles className="credit-icon" aria-hidden="true" />
             <span>{account ? account.credits : "—"}</span>
           </button>
-        </header>
+          </header>
 
         <div className={`conversation ${activeSession?.messages.length ? "" : "is-empty"}`}>
           {!activeSession?.messages.length ? (
@@ -2107,8 +2304,10 @@ export default function Home() {
                   <OnboardingChatMessage role="assistant" text={presetOnboardingMessage} streaming={onboardingStep === "name" && !profileComplete} length={presetMessageLength} />
                   {(onboardingStep !== "name" || profileComplete) && <OnboardingChatMessage role="user" text={profileDraft.name.trim()} />}
                   {(onboardingStep !== "name" || profileComplete) && <OnboardingChatMessage role="assistant" text={birthQuestion(profileDraft.name.trim())} streaming={onboardingStep === "birth" && !profileComplete} length={presetMessageLength} />}
-                  {(onboardingStep === "place" || profileComplete) && <OnboardingChatMessage role="user" text={formatBirthMoment(profileDraft)} />}
-                  {(onboardingStep === "place" || profileComplete) && <OnboardingChatMessage role="assistant" text={placeQuestion(profileDraft)} streaming={onboardingStep === "place" && !profileComplete} length={presetMessageLength} />}
+                  {(onboardingStep === "place" || onboardingStep === "rectification" || profileComplete) && <OnboardingChatMessage role="user" text={formatBirthMoment(profileDraft)} />}
+                  {(onboardingStep === "place" || onboardingStep === "rectification" || profileComplete) && <OnboardingChatMessage role="assistant" text={placeQuestion(profileDraft)} streaming={onboardingStep === "place" && !profileComplete} length={presetMessageLength} />}
+                  {onboardingStep === "rectification" && selectedBirthPlace(profileDraft) && <OnboardingChatMessage role="user" text={selectedBirthPlace(profileDraft)?.label ?? ""} />}
+                  {onboardingStep === "rectification" && birthTimeJourney && <OnboardingChatMessage role="assistant" text={currentOnboardingMessage} streaming length={presetMessageLength} phraseSafe={onboardingStep === "rectification"} />}
                   {profileComplete && onboardingJustCompleted && selectedBirthPlace(profileDraft) && <OnboardingChatMessage role="user" text={selectedBirthPlace(profileDraft)?.label ?? ""} />}
                   {profileComplete && onboardingJustCompleted && <OnboardingChatMessage role="assistant" text={currentOnboardingMessage} streaming length={presetMessageLength} />}
                 </>
@@ -2123,10 +2322,10 @@ export default function Home() {
                 <div className="onboarding-card-reveal">
                   <div className="onboarding-card-reveal-inner">
                     <form className="profile-form onboarding-card onboarding-step-card" onSubmit={saveOnboardingBirth}>
-                      <div className="onboarding-card-heading"><b>出生时间</b><small>请选择日期和尽量准确的时间</small></div>
-                      <BirthMomentFields value={profileDraft} onChange={setProfileDraft} />
+                      <div className="onboarding-card-heading"><b>出生时间</b><small>按你实际知道的程度填写，不需要猜测</small></div>
+                      <BirthTimeIntakeFields value={profileDraft} onPatch={(patch) => setProfileDraft((current) => ({ ...current, ...patch }))} />
                       {accountError && <p className="form-error" role="alert">{accountError}</p>}
-                      <div className="onboarding-card-actions"><button className="button-primary" type="submit" disabled={profileSaving || !profileDraft.date || !profileDraft.time}>{profileSaving ? "保存中" : "确定"}</button></div>
+                      <div className="onboarding-card-actions"><button className="button-primary" type="submit" disabled={profileSaving || !isBirthTimeDraftReady(profileDraft)}>{profileSaving ? "保存中" : "继续"}</button></div>
                     </form>
                   </div>
                 </div>
@@ -2145,9 +2344,29 @@ export default function Home() {
                 </div>
               )}
 
+              {!profileComplete && onboardingStep === "rectification" && presetMessageFinished && birthTimeJourney && (
+                <div className="onboarding-card-reveal">
+                  <div className="onboarding-card-reveal-inner">
+                    <BirthTimeRectification
+                      journey={birthTimeJourney}
+                      controller={birthTimeGuided}
+                      externalError={birthTimeError}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {!profileComplete && onboardingStep === "rectification" && presetMessageFinished && !birthTimeJourney && (
+                <div className="onboarding-card birth-time-retry-card" role="status">
+                  <b>出生时间尚未完成评估</b>
+                  <p>{birthTimeError || "资料已经保留，但暂时无法恢复校正进度。系统不会应用未经验证的具体时间。"}</p>
+                  <button className="button-primary" type="button" disabled={profileSaving} onClick={() => void retryBirthTimeAssessment()}>{profileSaving ? "评估中" : "重新评估"}</button>
+                </div>
+              )}
+
               {!profileComplete && onboardingStep === "name" && accountError && <p className="form-error onboarding-inline-error" role="alert">{accountError}</p>}
 
-              {profileComplete && presetMessageFinished && !draft.trim() && (onboardingPending ? (
+              {profileComplete && presetMessageFinished && (onboardingPending ? (
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
                 <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
@@ -2221,7 +2440,7 @@ export default function Home() {
         </div>
 
         <div className="composer-wrap">
-          {activeSuggestions.length > 0 && !draft.trim() && !isLoading && !cancellationPending && (
+          {activeSuggestions.length > 0 && !isLoading && !cancellationPending && (
             <div className="composer-suggestions" aria-label="推荐继续提问">
               {activeSuggestions.map((question) => (
                 <button key={question} type="button" disabled={!account || !modelCatalog || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>
@@ -2264,7 +2483,7 @@ export default function Home() {
                 <Square aria-hidden="true" />
               </Button>
             ) : (
-              <Button aria-label={!profileComplete ? "确认称呼" : "发送"} disabled={!draft.trim() || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))} size="icon" type="submit">
+              <Button aria-label={!profileComplete && onboardingStep === "name" ? "确认称呼" : "发送"} disabled={!draft.trim() || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog || (!profileComplete && (onboardingStep !== "name" || !presetMessageFinished || profileSaving))} size="icon" type="submit">
                 <ArrowUp aria-hidden="true" />
               </Button>
             )}
@@ -2276,131 +2495,141 @@ export default function Home() {
               disabled={!activeSession || isLoading || cancellationPending || creatingSession}
               onSelect={(modelId) => void selectSessionModel(modelId)}
             />
-            <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo" ? "已加入发送队列，2.5 秒内可免费撤回。" : !profileComplete && onboardingStep === "name" ? "Enter 确认称呼" : "Enter 发送 · Shift + Enter 换行")}</p>
+            <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo"
+              ? "已加入发送队列，2.5 秒内可免费撤回。"
+              : !profileComplete
+                ? onboardingStep === "name" ? "Enter 确认称呼" : onboardingStep === "rectification" ? "完成上方生时校正后可提问" : "请先完成上方资料"
+                : "Enter 发送 · Shift + Enter 换行")}</p>
           </div>
         </div>
-      </section>
+        </SidebarInset>
 
-      <div className={`profile-overlay ${profileOpen ? "is-open" : ""}`} aria-hidden={!profileOpen} inert={!profileOpen} onMouseDown={closeAccount}>
-        <section className="profile-dialog" ref={profileDialog} role="dialog" aria-modal="true" aria-labelledby="profile-title" onMouseDown={(event) => event.stopPropagation()}>
-          <header>
-            <h2 id="profile-title">账户与出生资料</h2>
-            <button className="dialog-close" ref={closeButton} aria-label="关闭" type="button" onClick={closeAccount}><X aria-hidden="true" /></button>
-          </header>
+      {activeAccountDialog !== null && (
+        <div className="account-modal-overlay" onMouseDown={closeAccountDialog}>
+          <section className={`account-modal ${accountDialogClasses[activeAccountDialog]}`} ref={accountDialog} role="dialog" aria-modal="true" aria-labelledby="account-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
+            <header className="account-modal-header">
+              <h2 id="account-dialog-title">{accountDialogTitles[activeAccountDialog]}</h2>
+              <button className="dialog-close" ref={closeButton} aria-label="关闭" type="button" onClick={closeAccountDialog} disabled={signingOut}><X aria-hidden="true" /></button>
+            </header>
 
-          <section className="account-summary" aria-label="账户信息">
-            <div><span>邮箱</span><strong>{account?.user.email || "尚未读取"}</strong></div>
-            <div><span>剩余点数</span><strong>{account?.credits ?? "—"}</strong></div>
-          </section>
-          {accountError && <p className="form-error" role="alert">{accountError}</p>}
-
-          <section className="sheet-section">
-            <button className="section-toggle" type="button" aria-expanded={redeemOpen} onClick={() => setRedeemOpen((current) => !current)}>
-              <span><b>兑换点数</b><small>输入兑换码后余额会立即更新</small></span>{redeemOpen ? <Minus aria-hidden="true" /> : <Plus aria-hidden="true" />}
-            </button>
-            {redeemOpen && (
-              <form className="redeem-form" onSubmit={redeem}>
-                <label htmlFor="redeem-code">兑换码</label>
-                <div>
-                  <input id="redeem-code" ref={redeemInput} autoComplete="off" value={redeemCode} onChange={(event) => { setRedeemCode(event.target.value); setRedeemError(""); setRedeemMessage(""); }} placeholder="输入完整兑换码" />
-                  <button className="button-primary" type="submit" disabled={!redeemCode.trim() || redeeming}>{redeeming ? "兑换中" : "兑换"}</button>
-                </div>
-                {redeemError && <p className="form-error" role="alert">{redeemError}</p>}
-                {redeemMessage && <p className="form-success" role="status">{redeemMessage}</p>}
-              </form>
-            )}
-          </section>
-
-          <section className="sheet-section birth-section">
-            <div className="section-heading"><b>出生资料</b><small>加密传输并保存到云端，用于此账号的所有对话</small></div>
-            <div className="default-chart-card" aria-label="当前默认星盘">
-              <div>
-                <span>当前默认星盘</span>
-                <strong>{profileDraft.name.trim() || "未命名"}</strong>
-                <small>角色：本人</small>
-              </div>
-              <button className="button-secondary" type="button" onClick={() => setChartLibraryOpen((current) => !current)}>管理星盘库</button>
-            </div>
-            {chartLibraryOpen && (
-              <div className="chart-library-panel" aria-label="星盘库">
-                <div className="chart-library-group">
-                  <b>本人</b>
-                  {chartLibrary.filter((record) => record.role === "self").map((record) => (
-                    <article className="chart-library-item" key={record.id}>
-                      <div>
-                        <strong>{record.profile.name || "未命名"}</strong>
-                        <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
-                      </div>
-                      <span>当前默认</span>
-                    </article>
-                  ))}
-                </div>
-                <div className="chart-library-group">
-                  <b>其他</b>
-                  {chartLibrary.filter((record) => record.role === "other").length === 0 && <p className="empty-library-copy">还没有其他星盘。</p>}
-                  {chartLibrary.filter((record) => record.role === "other").map((record) => (
-                    <article className="chart-library-item" key={record.id}>
-                      <div>
-                        <strong>{record.profile.name || "未命名"}</strong>
-                        <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
-                      </div>
-                      <div className="chart-library-actions">
-                        <button className="button-secondary" type="button" onClick={() => void draftSynastryQuestionFromChart(record)}>用于合盘</button>
-                        <button className="button-secondary" type="button" onClick={() => void makeDefaultChart(record)} disabled={profileSaving}>设为默认</button>
-                        <button className="button-secondary danger-button" type="button" onClick={() => deleteOtherChart(record.id)}>删除</button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-                {synastryReportCard && (
-                  <article className="synastry-report-card" aria-label="合盘结果摘要">
+            {activeAccountDialog === "profile" && (
+              <>
+                {accountError && <p className="form-error" role="alert">{accountError}</p>}
+                <section className="sheet-section birth-section">
+                  <div className="section-heading"><b>出生资料</b><small>加密传输并保存到云端，用于此账号的所有对话</small></div>
+                  <div className="default-chart-card" aria-label="当前默认星盘">
                     <div>
-                      <span>合盘结果摘要</span>
-                      <strong>{synastryReportCard.partnerName}</strong>
-                      <small>Ashtakoot {synastryReportCard.score ?? "?"}/{synastryReportCard.maxScore ?? "?"} · {synastryReportCard.assessment || synastryReportCard.scoreBand || "待解释"}</small>
+                      <span>当前默认星盘</span>
+                      <strong>{profileDraft.name.trim() || "未命名"}</strong>
+                      <small>角色：本人</small>
                     </div>
-                    {synastryReportCard.headline && <p>{synastryReportCard.headline}</p>}
-                    <details>
-                      <summary>查看证据</summary>
-                      <ul>
-                        {(synastryReportCard.strengths || []).map((item) => <li key={item}>{item}</li>)}
-                        {(synastryReportCard.risks || []).map((item) => <li key={item}>{item}</li>)}
-                      </ul>
-                      <small>下一步证据：{(synastryReportCard.nextEvidence || []).join(" / ") || "双方 Dasha / UL-DK / D9 7宫"}</small>
-                    </details>
-                  </article>
-                )}
-                {synastryHistory.length > 0 && (
-                  <div className="synastry-history-list" aria-label="合盘历史">
-                    <b>合盘历史</b>
-                    {synastryHistory.slice(0, 5).map((item) => (
-                      <button key={item.id} type="button" className="synastry-history-item" onClick={() => setSynastryReportCard(item)}>
-                        <span>{item.partnerName}</span>
-                        <small>Ashtakoot {item.score ?? "?"}/{item.maxScore ?? "?"} · {item.assessment || item.scoreBand || "待解释"}</small>
-                      </button>
-                    ))}
+                    <button className="button-secondary" type="button" onClick={() => setChartLibraryOpen((current) => !current)}>管理星盘库</button>
                   </div>
-                )}
-                <form className="profile-form chart-library-form" onSubmit={saveOtherChart}>
-                  <div className="section-heading"><b>添加其他星盘</b><small>用于合盘、亲友盘或客户盘。</small></div>
-                  <ProfileFields value={otherProfileDraft} onChange={setOtherProfileDraft} nameInputId="other-profile-name" />
-                  <button className="button-primary save-profile" type="submit" disabled={!account}>添加到星盘库</button>
+                  {chartLibraryOpen && (
+                    <div className="chart-library-panel" aria-label="星盘库">
+                      <div className="chart-library-group">
+                        <b>本人</b>
+                        {chartLibrary.filter((record) => record.role === "self").map((record) => (
+                          <article className="chart-library-item" key={record.id}>
+                            <div>
+                              <strong>{record.profile.name || "未命名"}</strong>
+                              <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
+                            </div>
+                            <span>当前默认</span>
+                          </article>
+                        ))}
+                      </div>
+                      <div className="chart-library-group">
+                        <b>其他</b>
+                        {chartLibrary.filter((record) => record.role === "other").length === 0 && <p className="empty-library-copy">还没有其他星盘。</p>}
+                        {chartLibrary.filter((record) => record.role === "other").map((record) => (
+                          <article className="chart-library-item" key={record.id}>
+                            <div>
+                              <strong>{record.profile.name || "未命名"}</strong>
+                              <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
+                            </div>
+                            <div className="chart-library-actions">
+                              <button className="button-secondary" type="button" onClick={() => void draftSynastryQuestionFromChart(record)}>用于合盘</button>
+                              <button className="button-secondary" type="button" onClick={() => void makeDefaultChart(record)} disabled={profileSaving}>设为默认</button>
+                              <button className="button-secondary danger-button" type="button" onClick={() => deleteOtherChart(record.id)}>删除</button>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                      {synastryReportCard && (
+                        <article className="synastry-report-card" aria-label="合盘结果摘要">
+                          <div>
+                            <span>合盘结果摘要</span>
+                            <strong>{synastryReportCard.partnerName}</strong>
+                            <small>Ashtakoot {synastryReportCard.score ?? "?"}/{synastryReportCard.maxScore ?? "?"} · {synastryReportCard.assessment || synastryReportCard.scoreBand || "待解释"}</small>
+                          </div>
+                          {synastryReportCard.headline && <p>{synastryReportCard.headline}</p>}
+                          <details>
+                            <summary>查看证据</summary>
+                            <ul>
+                              {(synastryReportCard.strengths || []).map((item) => <li key={item}>{item}</li>)}
+                              {(synastryReportCard.risks || []).map((item) => <li key={item}>{item}</li>)}
+                            </ul>
+                            <small>下一步证据：{(synastryReportCard.nextEvidence || []).join(" / ") || "双方 Dasha / UL-DK / D9 7宫"}</small>
+                          </details>
+                        </article>
+                      )}
+                      {synastryHistory.length > 0 && (
+                        <div className="synastry-history-list" aria-label="合盘历史">
+                          <b>合盘历史</b>
+                          {synastryHistory.slice(0, 5).map((item) => (
+                            <button key={item.id} type="button" className="synastry-history-item" onClick={() => setSynastryReportCard(item)}>
+                              <span>{item.partnerName}</span>
+                              <small>Ashtakoot {item.score ?? "?"}/{item.maxScore ?? "?"} · {item.assessment || item.scoreBand || "待解释"}</small>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <form className="profile-form chart-library-form" onSubmit={saveOtherChart}>
+                        <div className="section-heading"><b>添加其他星盘</b><small>用于合盘、亲友盘或客户盘。</small></div>
+                        <ProfileFields value={otherProfileDraft} onChange={setOtherProfileDraft} nameInputId="other-profile-name" />
+                        <button className="button-primary save-profile" type="submit" disabled={!account}>添加到星盘库</button>
+                      </form>
+                    </div>
+                  )}
+                </section>
+                {profileNotice && <p className="form-success" role="status">{profileNotice}</p>}
+                <form className="profile-form" onSubmit={saveProfile}>
+                  <ProfileFields value={profileDraft} onChange={setProfileDraft} nameInputId="profile-name" />
+                  <button className="button-primary save-profile" type="submit" disabled={profileSaving || !account}>{profileSaving ? "保存中" : "保存出生资料"}</button>
                 </form>
-              </div>
+              </>
             )}
-            {profileNotice && <p className="form-success" role="status">{profileNotice}</p>}
-            <form className="profile-form" onSubmit={saveProfile}>
-              <ProfileFields value={profileDraft} onChange={setProfileDraft} nameInputId="profile-name" />
-              <button className="button-primary save-profile" type="submit" disabled={profileSaving || !account}>{profileSaving ? "保存中" : "保存出生资料"}</button>
-            </form>
-          </section>
 
-          <footer className="account-actions">
-            {account?.isAdmin && <Link className="button-secondary" href="/admin/codes">管理兑换码</Link>}
-            <button className="button-secondary danger-button" type="button" onClick={() => void signOut()} disabled={signingOut}>{signingOut ? "正在退出" : "退出登录"}</button>
-          </footer>
-        </section>
-      </div>
-    </main>
+            {activeAccountDialog === "redeem" && (
+              <>
+                <div className="redeem-balance"><span>当前余额</span><strong>{account.credits} 点</strong></div>
+                <form className="redeem-form account-redeem-form" onSubmit={redeem}>
+                  <label htmlFor="redeem-code">兑换码</label>
+                  <div>
+                    <input id="redeem-code" ref={redeemInput} autoComplete="off" value={redeemCode} onChange={(event) => { setRedeemCode(event.target.value); setRedeemError(""); setRedeemMessage(""); }} placeholder="输入完整兑换码" />
+                    <button className="button-primary" type="submit" disabled={!redeemCode.trim() || redeeming}>{redeeming ? "兑换中" : "兑换"}</button>
+                  </div>
+                  {redeemError && <p className="form-error" role="alert">{redeemError}</p>}
+                  {redeemMessage && <p className="form-success" role="status">{redeemMessage}</p>}
+                </form>
+              </>
+            )}
+
+            {activeAccountDialog === "logout" && (
+              <>
+                <p className="logout-copy">退出后，需要重新登录才能继续查看对话。</p>
+                {accountError && <p className="form-error" role="alert">{accountError}</p>}
+                <div className="dialog-actions">
+                  <button className="button-secondary" type="button" onClick={closeAccountDialog} disabled={signingOut}>取消</button>
+                  <button className="button-primary danger-primary" type="button" onClick={() => void signOut()} disabled={signingOut}>{signingOut ? "正在退出" : "确认退出"}</button>
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+      )}
+      </main>
+    </SidebarProvider>
   );
 }
