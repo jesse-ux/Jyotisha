@@ -762,6 +762,30 @@ dynamic-question test/fixture modules. Prior public-question summaries are defer
 where persisted question history becomes available; Task 4 continues to enforce exact server
 fingerprints without fabricating summaries from hashes.
 
+#### Task 4 second review amendment (finite rendering contract)
+
+The corrected range `437d50f..797cb65` is still blocked because free-form notes and model-authored
+labels remain bypassable. The final Task 4 boundary is therefore:
+
+- Raw `unmatchedNote` never crosses the Agent boundary. Task 4 omits it rather than attempting
+  semantic instruction detection with keyword filters.
+- Agent output is selection-only: `{ kind: "question", opportunityId }` or
+  `{ kind: "no_useful_question" }`. The server renders the selected engine opportunity's
+  prompt and primary labels; model-authored prompt/label copy is not accepted.
+- The model dynamically chooses the next information opportunity, while the deterministic
+  engine owns partitions/answer semantics and the server owns a finite public rendering
+  grammar. This is the approved hybrid design, not a fixed-round questionnaire.
+- `bindDynamicQuestion(selection, build, ids)` validates unique normalized server labels and
+  binds them to private partitions. Duplicate/malformed server copy is a binding fault that
+  propagates; it cannot be retried as model output or converted to low confidence.
+- Python range labels select year/month/day precision as needed so distinct same-year windows
+  remain visibly distinct. Fallback explicitly chooses maximum information gain with stable ID
+  tie-breaking rather than trusting packet order.
+- Required regressions cover the tea/water note bypass, inability for the model to author or
+  duplicate labels, unsorted multi-opportunity fallback, valid Agent selection with correct
+  private bindings, same-year unique labels, and the real Python public-copy seam. Superseded
+  `CLEAR` evidence and the Task 4 report must be corrected with fresh artifact paths.
+
 ---
 
 ### Task 5: Durable v2 Persistence and Legacy Isolation
