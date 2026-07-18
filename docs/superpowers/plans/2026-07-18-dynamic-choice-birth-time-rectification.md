@@ -732,6 +732,36 @@ git add frontend/src/lib/birth-time-dynamic-question-validator.ts frontend/src/l
 git commit -m "feat: generate constrained dynamic choice questions"
 ```
 
+#### Task 4 review amendment (mandatory before Task 5)
+
+Independent review of `437d50f..1ffc09e` blocked Task 4. Complete and independently re-review
+these corrections before persistence work begins:
+
+- Localize engine-owned `neutral_context`, `fallback_prompt`, and fallback labels with a
+  deterministic Simplified-Chinese dimension map. Add a real Task 2 Python-shaped
+  adapter-to-service regression proving two invalid Agent responses still persist the
+  highest-gain fallback.
+- Treat `unmatchedNote` as untrusted evidence: discard or redact birth-time, scoring,
+  confidence, support, control, and instruction-like content before the model boundary; label
+  the remaining text as untrusted quoted data. Require generated public copy to be grounded in
+  the selected opportunity's localized context so valid IDs cannot authorize unrelated copy.
+- Separate recoverable Agent-output/repetition failures from server binding, private scoring,
+  UUID, and persisted-schema failures. Validate bindings before allocating IDs, catch only
+  recoverable variants, and never translate a server fault into `present_low_result`.
+- Enforce byte-exact model IDs and close the reviewed confidence/support/control wording gaps.
+  Keep `bindDynamicQuestion(output, build, ids)` as the agent-facing API and use a separate
+  fallback binder for server-owned source selection.
+- Split the dynamic tests and shared fixtures so every changed TypeScript test module is at or
+  below 250 pure lines. Add distinct-input semantic-normalization coverage and replace
+  sanitized-only integration fixtures with the real engine shape.
+- Correct `.superpowers/sdd/task-4-report.md` and reference durable RED/GREEN/gate artifacts.
+
+This amendment expands Task 4 ownership to
+`scripts/dynamic_rectification_opportunities.py`, its focused Python test, and focused
+dynamic-question test/fixture modules. Prior public-question summaries are deferred to Task 6,
+where persisted question history becomes available; Task 4 continues to enforce exact server
+fingerprints without fabricating summaries from hashes.
+
 ---
 
 ### Task 5: Durable v2 Persistence and Legacy Isolation
