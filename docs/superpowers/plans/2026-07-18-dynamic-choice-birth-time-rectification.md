@@ -898,6 +898,9 @@ Task 6:
 - Split contract tests below 250 lines and replace deletion-only/source-mirroring claims with
   executable store behavior. If local Postgres execution is unavailable, preserve evidence of
   the environment limitation and make no live-database claim.
+- Expose typed persistence wrappers for dynamic scoring completion/failure RPCs and cover exact
+  payloads, replay/version results, and stale/error propagation with executable fakes. Task 6
+  continues to own stop-policy and scoring orchestration.
 
 ---
 
