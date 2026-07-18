@@ -887,6 +887,10 @@ Task 6:
   service-role `create_birth_time_dynamic_case` RPC; never use separate inserts.
 - Apply protocol isolation to every legacy guided mutation and scoring-poll path, not only
   question/evidence actions.
+- Add ordered protocol-guard migrations for existing legacy scoring/candidate RPCs: public
+  signatures stay stable, internal bodies are not executable by API roles, and service-role
+  wrappers owner-lock and verify `legacy-guided-v1` atomically. Direct legacy PostgREST writes
+  include the same protocol predicate.
 - Parse external rows into a strict `journeyProtocol`-discriminated stored-case union; normalize
   absent old protocol values to legacy at the loader boundary.
 - Make memory replay return the stored advanced state. Map supported unknown time ranges to the
