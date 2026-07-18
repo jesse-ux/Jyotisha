@@ -513,10 +513,12 @@ git commit -m "feat: score dynamic birth time choices"
 - Modify: `frontend/src/lib/birth-time-journey-service.ts:1-120`
 - Modify: `frontend/src/lib/birth-time-journey-engine.ts`
 - Modify: `frontend/src/lib/birth-time-journey-adapters.ts`
+- Create: `frontend/src/lib/birth-time-journey-dynamic-adapters.ts`
 - Modify: `frontend/src/lib/birth-time-journey-engine-model.ts`
 - Modify: `frontend/src/lib/birth-time-evidence.ts:86-150`
 - Test: `frontend/tests/birth-time-journey-engine.test.ts`
 - Test: `frontend/tests/birth-time-journey-adapters.test.ts`
+- Test: `frontend/tests/birth-time-journey-dynamic-adapters.test.ts`
 
 **Interfaces:**
 - Adds `buildDifferencePacket(input: DifferencePacketInput): Promise<CandidateDifferenceBuild>`.
@@ -584,6 +586,8 @@ export type DynamicChoiceScoreInput = Pick<DifferencePacketInput,
 
 Extend `BirthTimeJourneyEngine` with the two methods. Do not add partition data to any client response schema.
 
+Keep the primary `BirthTimeJourneyEngine` contract fully capable: both dynamic methods are required. Use an explicit legacy-only `Pick`/interface for old services and test doubles that intentionally need only `scan`, `score`, and `scoreEvents`; do not weaken the primary methods to optional.
+
 Raise the compatibility `candidateResultSchema.eventCount` maximum from 6 to 10 and change its high-gate message from “events” to “effective evidence items.” The dated-event request schema remains capped at 6, so legacy API behavior does not broaden; the shared candidate result can now represent the v2 safety cap.
 
 - [ ] **Step 4: Post to the new Python endpoints**
@@ -593,6 +597,10 @@ Raise the compatibility `candidateResultSchema.eventCount` maximum from 6 to 10 
 For both dynamic calls, require `JYOTISH_DYNAMIC_RECTIFICATION_TOKEN` in the server environment and send it as a bearer token. Never expose that token through a client module or response. Legacy engine calls remain unchanged and unauthenticated.
 
 `parseDynamicChoiceScoring()` must require `event_count === effective_answer_count`, `domain_count === dimension_count`, `evidence_mode === "dynamic_choice"`, an empty public evidence array, and the v2 algorithm version before constructing `DynamicChoiceScoringResult`. This prevents a malformed engine payload from satisfying the high-confidence gate with inconsistent counts.
+
+Place all v2 response schemas and mappings in `birth-time-journey-dynamic-adapters.ts`; keep legacy parsing behavior byte-compatible in `birth-time-journey-adapters.ts`. Every nested dynamic object, including `winning_segment`, is strict. Keep each production and test module within 250 pure LOC, add duplicate opportunity/partition attack tests, and assert mapped fields against independent input fixtures rather than against each other.
+
+Test authentication through an executable fake fetch/wire seam for both dynamic endpoints: exact URL, bearer header, request body, timeout signal, and missing-token fail-before-fetch. Also prove legacy calls omit the dynamic Authorization header. The HTTP helper accepts one typed request/options object rather than four primitive parameters.
 
 - [ ] **Step 5: Verify endpoint payload ownership**
 
