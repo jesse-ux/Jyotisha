@@ -16,3 +16,11 @@ def test_raman_source_candidates_are_not_holdout_labels() -> None:
     assert payload["candidate_count"] >= 20
     assert all(row["status"] == "needs_independent_normalization" for row in payload["candidates"])
     assert all("day_level_label" in row["prohibited_uses"] for row in payload["candidates"])
+
+
+def test_observational_holdout_is_ready_but_not_independent() -> None:
+    report = validate(ROOT / "references/real_case_calibration/day_level_observational_holdout_v1.json")
+    assert report["status"] == "observational_ready_not_independent"
+    assert report["positive_count"] >= 20
+    assert report["negative_count"] >= 80
+    assert report["production_tuning_allowed"] is False
