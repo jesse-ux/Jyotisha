@@ -8,13 +8,7 @@ import {
 import {
   BirthTimeGuideActionError,
   createBirthTimeGuideService,
-  type DynamicQuestionGenerationCommand,
-  type DynamicQuestionGenerationCommit,
 } from "../src/lib/birth-time-guide-service.ts";
-import type {
-  CandidateDifferenceBuild,
-  PersistedDynamicChoiceQuestion,
-} from "../src/lib/birth-time-dynamic-choice-internal.ts";
 import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
 import type { StoredRectificationCase, VersionedJourneyResponse } from "../src/lib/birth-time-journey-service.ts";
 import { storedJourneyResponse } from "../src/lib/birth-time-journey-response.ts";
@@ -23,53 +17,6 @@ import type { QuestionSpec } from "../src/lib/birth-time-question-planner.ts";
 
 const caseId = "7299894c-10a8-4b45-91d1-339007282c50";
 const actionId = "c70ea014-f8b4-41f2-9305-e4ae60c0d4d1";
-
-const generationCommand: DynamicQuestionGenerationCommand = {
-  caseId,
-  actionId,
-  turnVersion: 4,
-  unmatchedNote: null,
-};
-
-const dynamicBuild: CandidateDifferenceBuild = {
-  packet: {
-    caseId,
-    scoringVersion: "birth-time-choice-scoring-v2",
-    currentRange: { startTime: "04:00", endTime: "04:01" },
-    opportunities: [{
-      opportunityId: "career-window",
-      dimensionCode: "career",
-      neutralContext: "一次明显的工作变化",
-      estimatedInformationGain: 0.7,
-      candidatePartitionFingerprint: "career-partitions-v1",
-      fallbackPrompt: "哪一个时间段更接近这次工作变化？",
-      partitions: [
-        { partitionId: "window-a", descriptor: "较早阶段", fallbackLabel: "2018—2020 年" },
-        { partitionId: "window-b", descriptor: "较晚阶段", fallbackLabel: "2021—2023 年" },
-      ],
-    }],
-    askedQuestionFingerprints: [],
-    candidatePartitionFingerprints: [],
-    recentRangeHistory: [],
-  },
-  candidateModel: { privateCandidates: ["04:00", "04:01"] },
-  scoringPartitions: {
-    "career-window": [
-      {
-        partitionId: "window-a",
-        descriptor: "较早阶段",
-        fallbackLabel: "2018—2020 年",
-        candidateScores: { "04:00": 1, "04:01": 0 },
-      },
-      {
-        partitionId: "window-b",
-        descriptor: "较晚阶段",
-        fallbackLabel: "2021—2023 年",
-        candidateScores: { "04:00": 0, "04:01": 1 },
-      },
-    ],
-  },
-};
 
 type ProposedDraftCall = {
   readonly userId: string;
@@ -126,129 +73,6 @@ function generator(text: string, onGenerate?: () => void): BirthTimeGuideGenerat
     },
   };
 }
-
-function dynamicService(input?: {
-  readonly build?: CandidateDifferenceBuild;
-  readonly generator?: BirthTimeGuideGenerator | null;
-  readonly onCommit?: (
-    question: PersistedDynamicChoiceQuestion | null,
-    commit: DynamicQuestionGenerationCommit,
-  ) => void;
-}) {
-  const ids = [
-    "00000000-0000-4000-8000-000000000001",
-    "00000000-0000-4000-8000-000000000002",
-    "00000000-0000-4000-8000-000000000003",
-    "00000000-0000-4000-8000-000000000004",
-    "00000000-0000-4000-8000-000000000005",
-  ];
-  let idIndex = 0;
-  return createBirthTimeGuideService({
-    generator: input?.generator ?? null,
-    timeoutMs: 20,
-    async loadCase() { return storedCase(); },
-    async proposeEvidenceDraft() {
-      return storedJourneyResponse(storedCase()) satisfies VersionedJourneyResponse;
-    },
-    async loadDynamicQuestionBuild() {
-      return input?.build ?? dynamicBuild;
-    },
-    async commitDynamicQuestion(_userId, _command, question, commit) {
-      input?.onCommit?.(question, commit);
-      return commit;
-    },
-    createDynamicId() {
-      const value = ids[idIndex];
-      idIndex += 1;
-      if (value === undefined) throw new Error("test id supply exhausted");
-      return value;
-    },
-  });
-}
-
-test("invalid dynamic output retries once then persists the top opportunity fallback", async () => {
-  let calls = 0;
-  const persisted: PersistedDynamicChoiceQuestion[] = [];
-  const result = await dynamicService({
-    generator: generator("{}", () => { calls += 1; }),
-    onCommit: (question) => { if (question) persisted.push(question); },
-  }).generateQuestion("owner-1", generationCommand);
-
-  assert.equal(calls, 2);
-  assert.equal(result.nextAction.kind, "ask_dynamic_choice");
-  if (result.nextAction.kind !== "ask_dynamic_choice") throw new Error("expected a question");
-  assert.equal(result.nextAction.question.prompt, dynamicBuild.packet.opportunities[0]?.fallbackPrompt);
-  assert.equal(result.nextAction.question.options.length, 4);
-  assert.equal(persisted[0]?.source, "fallback");
-});
-
-test("dynamic generation rejects commentary around otherwise valid JSON", async () => {
-  let calls = 0;
-  const persisted: PersistedDynamicChoiceQuestion[] = [];
-  const wrapped = `Here is the result:\n${JSON.stringify({
-    kind: "question",
-    opportunityId: "career-window",
-    prompt: "哪一个时间段更接近这次工作变化？",
-    options: [
-      { partitionId: "window-a", label: "2018—2020 年" },
-      { partitionId: "window-b", label: "2021—2023 年" },
-    ],
-  })}`;
-  await dynamicService({
-    generator: generator(wrapped, () => { calls += 1; }),
-    onCommit: (question) => { if (question) persisted.push(question); },
-  }).generateQuestion("owner-1", generationCommand);
-
-  assert.equal(calls, 2);
-  assert.equal(persisted[0]?.source, "fallback");
-});
-
-test("no opportunity ends safely without invoking the model or regenerating a question", async () => {
-  let calls = 0;
-  let persistedQuestion: PersistedDynamicChoiceQuestion | null | undefined;
-  const result = await dynamicService({
-    build: { ...dynamicBuild, packet: { ...dynamicBuild.packet, opportunities: [] } },
-    generator: generator("{}", () => { calls += 1; }),
-    onCommit: (question) => { persistedQuestion = question; },
-  }).generateQuestion("owner-1", generationCommand);
-
-  assert.equal(calls, 0);
-  assert.equal(result.nextAction.kind, "present_low_result");
-  assert.equal(persistedQuestion, null);
-});
-
-test("model no-useful-question advice cannot stop while the engine has an opportunity", async () => {
-  let calls = 0;
-  const result = await dynamicService({
-    generator: generator(JSON.stringify({ kind: "no_useful_question" }), () => { calls += 1; }),
-  }).generateQuestion("owner-1", generationCommand);
-
-  assert.equal(calls, 1);
-  assert.equal(result.nextAction.kind, "ask_dynamic_choice");
-  if (result.nextAction.kind !== "ask_dynamic_choice") throw new Error("expected a question");
-  assert.equal(result.nextAction.question.prompt, dynamicBuild.packet.opportunities[0]?.fallbackPrompt);
-});
-
-test("valid dynamic output is persisted with server-owned ids and private bindings", async () => {
-  const persisted: PersistedDynamicChoiceQuestion[] = [];
-  const result = await dynamicService({
-    generator: generator(JSON.stringify({
-      kind: "question",
-      opportunityId: "career-window",
-      prompt: "哪一个时间段更接近这次工作变化？",
-      options: [
-        { partitionId: "window-a", label: "2018—2020 年" },
-        { partitionId: "window-b", label: "2021—2023 年" },
-      ],
-    })),
-    onCommit: (question) => { if (question) persisted.push(question); },
-  }).generateQuestion("owner-1", generationCommand);
-
-  assert.equal(result.nextAction.kind, "ask_dynamic_choice");
-  assert.equal(persisted[0]?.source, "agent");
-  assert.equal(persisted[0]?.questionId, "00000000-0000-4000-8000-000000000001");
-  assert.deepEqual(persisted[0]?.options[0]?.candidateScores, { "04:00": 1, "04:01": 0 });
-});
 
 function service(input?: {
   readonly stored?: StoredRectificationCase | null;

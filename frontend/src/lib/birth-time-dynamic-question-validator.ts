@@ -1,28 +1,35 @@
-import { createHash } from "node:crypto";
 import { z } from "zod";
 import { BirthTimeGuideOutputError } from "./birth-time-guide-agent.ts";
 import {
+  dynamicPublicCopyIsSafe,
+  dynamicQuestionIsGrounded,
+  dynamicQuestionSemanticFingerprint,
+  modelSafeDynamicQuestionPrompt,
+} from "./birth-time-dynamic-question-copy.ts";
+import {
   persistedDynamicChoiceQuestionSchema,
+  scoredEvidencePartitionSchema,
   type CandidateDifferenceBuild,
   type CandidateDifferencePacket,
   type PersistedDynamicChoiceQuestion,
   type QuestionOpportunity,
+  type ScoredEvidencePartition,
 } from "./birth-time-dynamic-choice-internal.ts";
 
+const exactServerIdSchema = z.string().min(1).refine(
+  (value) => value === value.trim(),
+  "server ids must be byte-exact",
+);
 const modelQuestionSchema = z.object({
   kind: z.literal("question"),
-  opportunityId: z.string().trim().min(1),
+  opportunityId: exactServerIdSchema,
   prompt: z.string().trim().min(1).max(120),
   options: z.array(z.object({
-    partitionId: z.string().trim().min(1),
+    partitionId: exactServerIdSchema,
     label: z.string().trim().min(1).max(80),
   }).strict()).min(2).max(4),
 }).strict();
-
-const noUsefulQuestionSchema = z.object({
-  kind: z.literal("no_useful_question"),
-}).strict();
-
+const noUsefulQuestionSchema = z.object({ kind: z.literal("no_useful_question") }).strict();
 const dynamicQuestionOutputSchema = z.discriminatedUnion("kind", [
   modelQuestionSchema,
   noUsefulQuestionSchema,
@@ -30,23 +37,27 @@ const dynamicQuestionOutputSchema = z.discriminatedUnion("kind", [
 
 export type ParsedDynamicQuestionOutput = z.infer<typeof dynamicQuestionOutputSchema>;
 export type ParsedQuestionOutput = Extract<ParsedDynamicQuestionOutput, { readonly kind: "question" }>;
-export type DynamicQuestionSource = "agent" | "fallback";
 export type DynamicQuestionIdFactory = () => string;
 
-const timeOfBirthPattern = /(?:^|[^\d])(?:[01]?\d|2[0-3])\s*[:：]\s*[0-5]\d(?:$|[^\d])/;
-const forbiddenClaimPattern = /出生(?:时间|时刻|分钟|几点)|生时|候选(?:时间|分钟|答案)|置信(?:度)?|可信度|评分|得分|权重|算法|模型|证据分区|分区标识|停止提问|结束评估|应用(?:到)?排盘|更新排盘|系统(?:会|将)/;
-const candidateSupportPattern = /(?:支持|排除).*(?:候选|出生)|(?:候选|出生).*(?:支持|排除|更符合|更接近)/;
+export class BirthTimeDynamicBindingError extends Error {
+  readonly name = "BirthTimeDynamicBindingError";
+  readonly reason: "invalid_private_binding" | "invalid_server_id" | "invalid_persisted_question" | "invalid_fallback_copy";
+
+  constructor(reason: BirthTimeDynamicBindingError["reason"]) {
+    super(`Birth-time dynamic question binding ${reason}`);
+    this.reason = reason;
+  }
+}
 
 function invalidQuestion(): never {
   throw new BirthTimeGuideOutputError("invalid_question");
 }
 
-function publicCopyIsSafe(value: string, question: boolean): boolean {
-  const normalized = value.normalize("NFKC").trim();
-  if (!/[\u3400-\u9fff]/u.test(normalized) || /[A-Za-z]/.test(normalized)) return false;
-  if (timeOfBirthPattern.test(normalized)) return false;
-  if (forbiddenClaimPattern.test(normalized) || candidateSupportPattern.test(normalized)) return false;
-  return !question || (normalized.match(/[？?]/g) ?? []).length === 1;
+export function isRecoverableDynamicQuestionError(
+  error: unknown,
+): error is BirthTimeGuideOutputError {
+  return error instanceof BirthTimeGuideOutputError
+    && ["invalid_json", "invalid_question", "repeated_question"].includes(error.reason);
 }
 
 function opportunityFor(
@@ -63,10 +74,11 @@ function validateQuestionOutput(
   packet: CandidateDifferencePacket,
 ): ParsedQuestionOutput {
   const opportunity = opportunityFor(packet, output.opportunityId);
-  if (!publicCopyIsSafe(output.prompt, true)) return invalidQuestion();
-  if (output.options.some((option) => !publicCopyIsSafe(option.label, false))) {
-    return invalidQuestion();
-  }
+  if (
+    !dynamicPublicCopyIsSafe(output.prompt, true)
+    || !dynamicQuestionIsGrounded(output.prompt, opportunity.neutralContext)
+    || output.options.some((option) => !dynamicPublicCopyIsSafe(option.label, false))
+  ) return invalidQuestion();
   const expected = opportunity.partitions.map((item) => item.partitionId);
   const actual = output.options.map((item) => item.partitionId);
   if (new Set(actual).size !== actual.length) return invalidQuestion();
@@ -80,22 +92,7 @@ export function generateDynamicQuestionPrompt(
   packet: CandidateDifferencePacket,
   unmatchedNote: string | null,
 ): string {
-  const note = unmatchedNote?.trim() || null;
-  if (note !== null && note.length > 240) return invalidQuestion();
-  return JSON.stringify({
-    task: "generate_dynamic_choice_question",
-    opportunities: packet.opportunities.map((opportunity) => ({
-      opportunityId: opportunity.opportunityId,
-      dimensionCode: opportunity.dimensionCode,
-      neutralContext: opportunity.neutralContext,
-      partitions: opportunity.partitions.map((partition) => ({
-        partitionId: partition.partitionId,
-        descriptor: partition.descriptor,
-        fallbackLabel: partition.fallbackLabel,
-      })),
-    })),
-    unmatchedNote: note,
-  });
+  return modelSafeDynamicQuestionPrompt(packet, unmatchedNote);
 }
 
 export function parseDynamicQuestionOutput(
@@ -115,69 +112,75 @@ export function parseDynamicQuestionText(
   try {
     return parseDynamicQuestionOutput(JSON.parse(text.trim()), packet);
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new BirthTimeGuideOutputError("invalid_json");
-    }
+    if (error instanceof SyntaxError) throw new BirthTimeGuideOutputError("invalid_json");
     throw error;
   }
 }
 
-function normalizeSemanticCopy(value: string): string {
-  return value.normalize("NFKC").trim().replace(/\s+/g, " ");
+export function dynamicQuestionFingerprint(output: ParsedQuestionOutput): string {
+  return dynamicQuestionSemanticFingerprint(output);
 }
 
-export function dynamicQuestionFingerprint(output: ParsedQuestionOutput): string {
-  const semantics = {
-    prompt: normalizeSemanticCopy(output.prompt),
-    options: output.options.map((option) => normalizeSemanticCopy(option.label)),
-  };
-  return createHash("sha256")
-    .update(`birth-time-dynamic-question-v1\n${JSON.stringify(semantics)}`, "utf8")
-    .digest("hex");
+function privatePartitionsFor(
+  output: ParsedQuestionOutput,
+  build: CandidateDifferenceBuild,
+  opportunity: QuestionOpportunity,
+): readonly ScoredEvidencePartition[] {
+  const privatePartitions = build.scoringPartitions[opportunity.opportunityId];
+  if (!privatePartitions || privatePartitions.length !== opportunity.partitions.length) {
+    throw new BirthTimeDynamicBindingError("invalid_private_binding");
+  }
+  const byId = new Map(privatePartitions.map((partition) => [partition.partitionId, partition]));
+  if (byId.size !== privatePartitions.length) {
+    throw new BirthTimeDynamicBindingError("invalid_private_binding");
+  }
+  for (const publicPartition of opportunity.partitions) {
+    const privatePartition = byId.get(publicPartition.partitionId);
+    if (
+      !privatePartition
+      || !scoredEvidencePartitionSchema.safeParse(privatePartition).success
+      || privatePartition.descriptor !== publicPartition.descriptor
+      || privatePartition.fallbackLabel !== publicPartition.fallbackLabel
+      || Object.keys(privatePartition.candidateScores).length === 0
+    ) throw new BirthTimeDynamicBindingError("invalid_private_binding");
+  }
+  return output.options.map((option) => {
+    const partition = byId.get(option.partitionId);
+    if (!partition) throw new BirthTimeDynamicBindingError("invalid_private_binding");
+    return partition;
+  });
 }
 
 function serverId(factory: DynamicQuestionIdFactory): string {
   const parsed = z.string().uuid().safeParse(factory());
-  if (!parsed.success) return invalidQuestion();
+  if (!parsed.success) throw new BirthTimeDynamicBindingError("invalid_server_id");
   return parsed.data.toLowerCase();
 }
 
-export function bindDynamicQuestion(
+function bindQuestion(
   output: ParsedQuestionOutput,
   build: CandidateDifferenceBuild,
   createId: DynamicQuestionIdFactory,
-  source: DynamicQuestionSource,
+  source: "agent" | "fallback",
 ): PersistedDynamicChoiceQuestion {
   const validated = validateQuestionOutput(output, build.packet);
   const opportunity = opportunityFor(build.packet, validated.opportunityId);
   const questionFingerprint = dynamicQuestionFingerprint(validated);
   if (
     build.packet.askedQuestionFingerprints.includes(questionFingerprint)
-    || build.packet.candidatePartitionFingerprints.includes(
-      opportunity.candidatePartitionFingerprint,
-    )
-  ) {
-    throw new BirthTimeGuideOutputError("repeated_question");
-  }
-  const scoringPartitions = build.scoringPartitions[opportunity.opportunityId];
-  if (!scoringPartitions) return invalidQuestion();
+    || build.packet.candidatePartitionFingerprints.includes(opportunity.candidatePartitionFingerprint)
+  ) throw new BirthTimeGuideOutputError("repeated_question");
+  const privatePartitions = privatePartitionsFor(validated, build, opportunity);
   const questionId = serverId(createId);
-  const primaryOptions = validated.options.map((option) => {
-    const partition = scoringPartitions.find((item) => item.partitionId === option.partitionId);
-    if (!partition) return invalidQuestion();
+  const primaryOptions = validated.options.map((option, index) => {
+    const partition = privatePartitions[index];
+    if (!partition) throw new BirthTimeDynamicBindingError("invalid_private_binding");
     return {
-      optionId: serverId(createId),
-      label: option.label,
-      kind: "primary" as const,
-      partitionId: partition.partitionId,
-      candidateScores: partition.candidateScores,
+      optionId: serverId(createId), label: option.label, kind: "primary" as const,
+      partitionId: partition.partitionId, candidateScores: partition.candidateScores,
     };
   });
-  if (
-    scoringPartitions.length !== primaryOptions.length
-    || new Set(scoringPartitions.map((item) => item.partitionId)).size !== primaryOptions.length
-  ) return invalidQuestion();
-  return persistedDynamicChoiceQuestionSchema.parse({
+  const persisted = persistedDynamicChoiceQuestionSchema.safeParse({
     questionId,
     opportunityId: opportunity.opportunityId,
     dimensionCode: opportunity.dimensionCode,
@@ -189,31 +192,34 @@ export function bindDynamicQuestion(
     prompt: validated.prompt,
     options: [
       ...primaryOptions,
-      {
-        optionId: serverId(createId),
-        label: "不确定 / 不记得",
-        kind: "unknown",
-        partitionId: null,
-        candidateScores: null,
-      },
-      {
-        optionId: serverId(createId),
-        label: "都不符合",
-        kind: "unmatched",
-        partitionId: null,
-        candidateScores: null,
-      },
+      { optionId: serverId(createId), label: "不确定 / 不记得", kind: "unknown", partitionId: null, candidateScores: null },
+      { optionId: serverId(createId), label: "都不符合", kind: "unmatched", partitionId: null, candidateScores: null },
     ],
   });
+  if (!persisted.success) throw new BirthTimeDynamicBindingError("invalid_persisted_question");
+  return persisted.data;
+}
+
+export function bindDynamicQuestion(
+  output: ParsedQuestionOutput,
+  build: CandidateDifferenceBuild,
+  createId: DynamicQuestionIdFactory,
+): PersistedDynamicChoiceQuestion {
+  return bindQuestion(output, build, createId, "agent");
 }
 
 export function bindFallbackDynamicQuestion(
   build: CandidateDifferenceBuild,
   createId: DynamicQuestionIdFactory,
 ): PersistedDynamicChoiceQuestion | null {
-  for (const opportunity of build.packet.opportunities) {
+  const opportunities = [...build.packet.opportunities].sort((left, right) => (
+    right.estimatedInformationGain - left.estimatedInformationGain
+    || (left.opportunityId < right.opportunityId ? -1 : left.opportunityId > right.opportunityId ? 1 : 0)
+  ));
+  for (const opportunity of opportunities) {
+    let output: ParsedDynamicQuestionOutput;
     try {
-      const output = parseDynamicQuestionOutput({
+      output = parseDynamicQuestionOutput({
         kind: "question",
         opportunityId: opportunity.opportunityId,
         prompt: opportunity.fallbackPrompt,
@@ -222,11 +228,18 @@ export function bindFallbackDynamicQuestion(
           label: partition.fallbackLabel,
         })),
       }, build.packet);
-      if (output.kind === "question") {
-        return bindDynamicQuestion(output, build, createId, "fallback");
-      }
     } catch (error) {
-      if (!(error instanceof BirthTimeGuideOutputError)) throw error;
+      if (isRecoverableDynamicQuestionError(error)) {
+        throw new BirthTimeDynamicBindingError("invalid_fallback_copy");
+      }
+      throw error;
+    }
+    if (output.kind !== "question") throw new BirthTimeDynamicBindingError("invalid_fallback_copy");
+    try {
+      return bindQuestion(output, build, createId, "fallback");
+    } catch (error) {
+      if (error instanceof BirthTimeGuideOutputError && error.reason === "repeated_question") continue;
+      throw error;
     }
   }
   return null;

@@ -19,9 +19,14 @@ from uuid import NAMESPACE_URL, uuid5
 
 ALGORITHM_VERSION: Final = "birth-time-choice-scoring-v2"
 MIN_INFORMATION_GAIN: Final = 0.15
-SUPPORTED_DIMENSIONS: Final = frozenset(
-    {"education", "relocation", "relationship", "career", "health_pressure"}
-)
+DIMENSION_CONTEXT: Final = {
+    "education": "一次明显的升学、转学或学习方向变化",
+    "relocation": "一次明显的搬家、离乡或长期居住地变化",
+    "relationship": "一次明显的关系进入、结束或重要转变",
+    "career": "一次明显的工作、职业方向或身份变化",
+    "health_pressure": "一次持续的健康压力或生活压力变化",
+}
+SUPPORTED_DIMENSIONS: Final = frozenset(DIMENSION_CONTEXT)
 
 
 def canonical_hash(value: Mapping | Sequence) -> str:
@@ -209,6 +214,7 @@ def opportunities(model: dict) -> list[dict]:
 
 
 def _dimension_opportunity(dimension: str, windows: list[dict], candidates: list[str]) -> dict | None:
+    neutral_context = DIMENSION_CONTEXT[dimension]
     memberships: dict[int, list[str]] = defaultdict(list)
     for candidate in candidates:
         winner = max(
@@ -237,7 +243,7 @@ def _dimension_opportunity(dimension: str, windows: list[dict], candidates: list
         {
             "partition_id": canonical_hash(item),
             "descriptor": f"{item['window_start']}--{item['window_end']}",
-            "fallback_label": f"{item['window_start'][:4]}—{item['window_end'][:4]}",
+            "fallback_label": f"{item['window_start'][:4]}—{item['window_end'][:4]} 年",
             "candidate_scores": {
                 candidate: 1.0 if candidate in item["members"] else 0.0
                 for candidate in candidates
@@ -251,9 +257,9 @@ def _dimension_opportunity(dimension: str, windows: list[dict], candidates: list
             "version": ALGORITHM_VERSION, "dimension": dimension, "partitions": basis
         }),
         "dimension_code": dimension,
-        "neutral_context": dimension,
+        "neutral_context": neutral_context,
         "estimated_information_gain": round(gain, 6),
         "candidate_partition_fingerprint": fingerprint,
-        "fallback_prompt": f"下面哪个时间段更接近你在 {dimension} 方面的明显变化？",
+        "fallback_prompt": f"哪一个时间段更接近{neutral_context}？",
         "partitions": partitions,
     }

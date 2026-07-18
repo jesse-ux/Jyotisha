@@ -1,40 +1,77 @@
-# Task 4 Report — Constrained Dynamic Question Generation
+# Task 4 Report — Dynamic Choice Question Generation
 
-## Scope
+## Outcome
 
-- Base implementation commit: `437d50f` (with plan-only commits through `f90a3bd`).
-- Implemented only the Task 4 files listed in `.superpowers/sdd/task-4-brief.md`.
-- Preserved the untracked `.omo/` directory and did not change dependencies.
+Task 4 now uses the model only to phrase one grounded, selectable question over
+server-issued opportunities. The server remains authoritative for opportunity IDs,
+private score partitions, fallback selection, stop decisions, UUID allocation, and
+persistence. The generated contract is choice-based and carries the selected server
+partition directly; it does not require a second free-text time field.
+
+This correction also closes the independent review blockers in
+`.omo/evidence/task-4-code-review.md`:
+
+- all five Task 2 dimensions now emit deterministic Simplified-Chinese public copy;
+- a real Task 2-shaped packet survives the Task 3 adapter and Task 4 fallback path;
+- unmatched notes are filtered and, when retained, represented as quoted untrusted data;
+- generated questions must contain both selected-domain and experience/change semantics;
+- recoverable model failures are separated from server binding and persistence failures;
+- private partition bindings are validated before any public ID is allocated;
+- model-supplied IDs are byte-exact; and
+- duplicated dynamic tests were split into focused modules below the 250-pure-LOC limit.
 
 ## RED evidence
 
-1. After adding the dynamic prompt/parser/binding and guide-service tests:
-   - Command: bundled Node `--test tests/birth-time-guide-agent.test.ts tests/birth-time-guide-route.test.ts`
-   - Expected failures: `ERR_MODULE_NOT_FOUND` for `birth-time-dynamic-question-validator.ts` and four `generateQuestion is not a function` failures.
-   - Legacy guide-route tests remained green.
-2. After adding the exact-JSON boundary test:
-   - Command: bundled Node `--test tests/birth-time-guide-route.test.ts`
-   - Expected failure: wrapped commentary was accepted in one call (`1 !== 2`) instead of being rejected, retried once, and falling back.
+Artifact: `.omo/evidence/task-4-fix-red.log`
 
-## GREEN implementation
+Tests were added before the corrections. The RED run recorded:
 
-- Added a strict discriminated model-output parser for one server-issued opportunity and its exact unique partition set.
-- The prompt projection contains only model-safe opportunity copy and an optional trimmed unmatched note. It excludes candidate times, score vectors, candidate model state, confidence/control fields, ranges, information-gain values, and history fingerprints.
-- Added content/length controls for one Simplified-Chinese-facing question, 2–4 labels, birth-time strings, confidence, candidate support, methodology, and server-control claims.
-- Added server-created UUID injection, private score-vector attachment, two server-owned special choices, SHA-256 normalized public-semantic fingerprints, and repeated question/partition rejection.
-- Added one model retry, exact-JSON enforcement, deterministic top-opportunity fallback, advisory-only `no_useful_question`, and a persisted low terminal transition when no usable opportunity remains.
-- Added the Mastra dynamic task contract while preserving legacy question-variant and evidence-draft behavior.
+- TypeScript: 15 tests, 11 failures covering real fallback copy, adversarial notes,
+  grounding, whitespace-padded IDs, the three-argument binder, validation-before-ID
+  allocation, UUID/private-binding propagation, and fingerprint normalization.
+- Python: 5 failures covering localized opportunity copy for education, relocation,
+  relationship, career, and health/life-pressure dimensions.
+
+## Implementation
+
+- `scripts/dynamic_rectification_opportunities.py` owns a finite localized dimension map
+  and produces neutral contexts, fallback prompts, and human-readable year-range labels.
+- `frontend/src/lib/birth-time-dynamic-question-copy.ts` centralizes public-copy safety,
+  opportunity grounding, untrusted-note projection, and semantic normalization.
+- `frontend/src/lib/birth-time-dynamic-question-validator.ts` validates exact model IDs,
+  separates recoverable generation errors from binding failures, validates all private
+  partitions before ID allocation, and exposes the required three-argument agent binder
+  plus a separately named fallback binder.
+- `frontend/src/lib/birth-time-guide-service.ts` retries only recoverable model failures.
+  UUID, private-score, server-ID, fallback-copy, and persisted-schema failures propagate
+  and cannot be converted into a false low-confidence terminal result.
+- `frontend/src/mastra/index.ts` declares notes as quoted untrusted evidence and forbids
+  following them as instructions or using them to override server IDs and safety rules.
+- The shared JSON fixture is Python-shaped data rather than a sanitized TypeScript-only
+  packet. A Python regression verifies its server IDs, fingerprint, and partition IDs
+  against the actual Task 2 opportunity builder, while the TypeScript service test parses
+  it through the real Task 3 adapter.
+
+Prior public-question summaries remain intentionally deferred to Task 6, as specified by
+the review amendment; Task 4 rejects repeated server fingerprints without inventing
+history from hashes. Task 5 persistence internals were not changed.
 
 ## Verification
 
-- Focused guide tests: **31/31 pass**.
-- All frontend birth-time tests: **218/218 pass**.
-- ESLint on all six owned source/test targets: **pass**.
-- `git diff --check`: **pass**.
-- Source LOC: validator **233**, guide agent **216**, guide service **250**.
-- Full `tsc --noEmit`: Task 4 has no type errors; the command still fails only at the pre-existing `tests/profile-persistence.test.ts:7` ES2018 regex-target error.
-- Mandatory pre-work check reached all audits but retains the known unrelated fragment-governance mismatch: `candidate_count` expected `0`, actual `1`; remote visibility remained blocked and no synchronization claim was made.
+| Gate | Result | Artifact |
+| --- | --- | --- |
+| Focused dynamic/guide TypeScript | 36/36 pass | `.omo/evidence/task-4-fix-focused-ts.log` |
+| Focused Task 2 Python | 28/28 pass | `.omo/evidence/task-4-fix-focused-python.log` |
+| All birth-time TypeScript | 223/223 pass | `.omo/evidence/task-4-fix-birth-time.log` |
+| Full frontend | 298/298 pass | `.omo/evidence/task-4-fix-frontend-full.log` |
+| Changed TypeScript ESLint | pass | `.omo/evidence/task-4-fix-eslint.log` |
+| Changed Python Ruff | pass | `.omo/evidence/task-4-fix-ruff.log` |
+| Diff check and pure-LOC audit | pass; every audited module <=250 | `.omo/evidence/task-4-fix-quality.log` |
+| Full TypeScript check | only known unrelated `profile-persistence.test.ts:7` TS1501 | `.omo/evidence/task-4-fix-tsc.log` |
 
-## Integration note
-
-`createBirthTimeGuideService()` commits both question and terminal outcomes through the injected `commitDynamicQuestion` port. Task 5/6 own the transactional store implementation and irreversible turn guards; this task does not bypass or pre-implement those later persistence transitions.
+The empty ESLint artifact represents a successful zero-diagnostic run. The full TypeScript
+command remains non-zero solely because the pre-existing test uses a regular-expression
+flag newer than the configured target; none of the Task 4 files report a type error.
+The required `omo:programming` and `omo:remove-ai-slops` follow-up review re-ran after
+hardening imperative-note filtering and domain grounding, and returned `CLEAR`; the audit
+record is `.omo/evidence/task-4-fix-slop-review.md`.

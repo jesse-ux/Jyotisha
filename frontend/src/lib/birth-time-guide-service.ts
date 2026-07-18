@@ -1,5 +1,4 @@
 import {
-  BirthTimeGuideOutputError,
   draftEvidencePrompt,
   fallbackQuestionCopy,
   guideQuestionResponseSchema,
@@ -13,6 +12,7 @@ import {
   bindDynamicQuestion,
   bindFallbackDynamicQuestion,
   generateDynamicQuestionPrompt,
+  isRecoverableDynamicQuestionError,
   parseDynamicQuestionText,
 } from "./birth-time-dynamic-question-validator.ts";
 import { toPublicDynamicChoiceQuestion } from "./birth-time-dynamic-choice-internal.ts";
@@ -170,9 +170,9 @@ export function createBirthTimeGuideService(ports: GuideServicePorts) {
           try {
             const output = parseDynamicQuestionText(text, build.packet);
             if (output.kind === "no_useful_question") break;
-            question = bindDynamicQuestion(output, build, createId, "agent");
+            question = bindDynamicQuestion(output, build, createId);
           } catch (error) {
-            if (!(error instanceof BirthTimeGuideOutputError)) throw error;
+            if (!isRecoverableDynamicQuestionError(error)) throw error;
           }
         }
         question ??= bindFallbackDynamicQuestion(build, createId);

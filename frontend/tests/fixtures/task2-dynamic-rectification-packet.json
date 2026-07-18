@@ -1,0 +1,33 @@
+{
+  "success": true,
+  "endpoint": "dynamic_rectification_opportunities",
+  "case_id": "7299894c-10a8-4b45-91d1-339007282c50",
+  "scoring_version": "birth-time-choice-scoring-v2",
+  "current_range": { "start_time": "04:00", "end_time": "04:01" },
+  "opportunities": [{
+    "opportunity_id": "a075871312505973865c7a5b02f9999d8eb1112c4dd3d3395011f84a678ca61a",
+    "dimension_code": "career",
+    "neutral_context": "一次明显的工作、职业方向或身份变化",
+    "estimated_information_gain": 1,
+    "candidate_partition_fingerprint": "891a4818099e5bf27ceec066a246315dc547bb8e2a3148ed48b29d1bfb1e3dd5",
+    "fallback_prompt": "哪一个时间段更接近一次明显的工作、职业方向或身份变化？",
+    "partitions": [{
+      "partition_id": "95a249ecf41fa9f3da816e567ad95528d61f741ae7a875915f4e79511bbaa128",
+      "descriptor": "2018-01-01--2020-12-31",
+      "fallback_label": "2018—2020 年",
+      "candidate_scores": { "04:00": 1, "04:01": 0 }
+    }, {
+      "partition_id": "4bc982e21dda09c3f06832ea6942cfd245201cc72a059ae3ac37b8baf759bbd7",
+      "descriptor": "2021-01-01--2023-12-31",
+      "fallback_label": "2021—2023 年",
+      "candidate_scores": { "04:00": 0, "04:01": 1 }
+    }]
+  }],
+  "asked_question_fingerprints": [],
+  "candidate_partition_fingerprints": [],
+  "recent_range_history": [],
+  "candidate_model": {
+    "version": "birth-time-choice-scoring-v2",
+    "candidate_times": ["04:00", "04:01"]
+  }
+}
