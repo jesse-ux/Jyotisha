@@ -9,6 +9,7 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+import jyotish_api_server as api_server  # noqa: E402
 from jyotish_api_server import BadRequest, JyotishAPIHandler  # noqa: E402
 
 
@@ -137,3 +138,127 @@ def test_active_rectification_events_api_rejects_client_scores() -> None:
             "events": [],
             "confidence": "high",
         })
+
+
+def _dynamic_base() -> dict:
+    return {
+        "case_id": "case-1",
+        "birth_date": "1990-01-01",
+        "as_of_date": "2026-07-18",
+        "start_time": "05:30",
+        "end_time": "05:33",
+        "lat": 31.23,
+        "lon": 121.47,
+        "tz": 8.0,
+        "evidence": [],
+        "dismissed_opportunity_ids": [],
+        "question_fingerprints": [],
+        "partition_fingerprints": [],
+        "recent_ranges": [],
+    }
+
+
+def test_dynamic_opportunities_api_accepts_only_server_contract(monkeypatch) -> None:
+    captured: list[dict] = []
+
+    class FakeDynamicModule:
+        @staticmethod
+        def build_difference_packet(payload: dict) -> dict:
+            captured.append(payload)
+            return {
+                "case_id": payload["case_id"],
+                "scoring_version": "birth-time-choice-scoring-v2",
+                "current_range": {"start_time": payload["start_time"], "end_time": payload["end_time"]},
+                "opportunities": [],
+                "asked_question_fingerprints": [],
+                "candidate_partition_fingerprints": [],
+                "recent_range_history": [],
+                "candidate_model": {},
+            }
+
+    monkeypatch.setattr(api_server, "_load_local_module", lambda _name: FakeDynamicModule)
+
+    result = _handler()._compute_dynamic_rectification_opportunities(_dynamic_base())
+
+    assert result["success"] is True
+    assert result["endpoint"] == "dynamic_rectification_opportunities"
+    assert captured[0]["as_of_date"] == "2026-07-18"
+    assert captured[0]["lat"] == 31.23
+
+
+def test_dynamic_opportunities_api_rejects_missing_clock_and_untrusted_fields() -> None:
+    missing_date = _dynamic_base()
+    del missing_date["as_of_date"]
+    with pytest.raises(BadRequest, match="as_of_date"):
+        _handler()._compute_dynamic_rectification_opportunities(missing_date)
+
+    with pytest.raises(BadRequest, match="unsupported dynamic rectification opportunity field"):
+        _handler()._compute_dynamic_rectification_opportunities(
+            {**_dynamic_base(), "confidence": "high"}
+        )
+
+    with pytest.raises(BadRequest, match="recent_ranges"):
+        _handler()._compute_dynamic_rectification_opportunities(
+            {**_dynamic_base(), "recent_ranges": [{"start_time": "05:30", "extra": "05:33"}]}
+        )
+
+    with pytest.raises(BadRequest, match="partition evidence"):
+        _handler()._compute_dynamic_rectification_opportunities(
+            {**_dynamic_base(), "evidence": [{"kind": "unknown"}]}
+        )
+
+
+def test_dynamic_score_api_rejects_client_option_ids_before_scoring() -> None:
+    with pytest.raises(BadRequest, match="option_id"):
+        _handler()._compute_dynamic_rectification_score(
+            {
+                "birth_date": "1990-01-01",
+                "start_time": "05:30",
+                "end_time": "05:33",
+                "lat": 31.23,
+                "lon": 121.47,
+                "tz": 8.0,
+                "choice_evidence": [{"option_id": "client-owned"}],
+            }
+        )
+
+
+def test_dynamic_score_api_returns_versioned_candidate_result(monkeypatch) -> None:
+    class FakeDynamicModule:
+        @staticmethod
+        def score_choice_evidence(_payload: dict) -> dict:
+            return {
+                "result_id": "result-1",
+                "confidence": "low",
+                "can_apply": False,
+                "winning_segment": None,
+                "event_count": 0,
+                "domain_count": 0,
+                "top_score": 0.0,
+                "second_score": 0.0,
+                "margin_percent": 0.0,
+                "reasons": ["insufficient_effective_evidence"],
+                "evidence": [],
+                "algorithm_version": "birth-time-choice-scoring-v2",
+                "evidence_mode": "dynamic_choice",
+                "effective_answer_count": 0,
+                "dimension_count": 0,
+            }
+
+    monkeypatch.setattr(api_server, "_load_local_module", lambda _name: FakeDynamicModule)
+
+    result = _handler()._compute_dynamic_rectification_score(
+        {
+            "birth_date": "1990-01-01",
+            "start_time": "05:30",
+            "end_time": "05:33",
+            "lat": 31.23,
+            "lon": 121.47,
+            "tz": 8.0,
+            "choice_evidence": [],
+        }
+    )
+
+    assert result["success"] is True
+    assert result["endpoint"] == "dynamic_rectification_score"
+    assert result["algorithm_version"] == "birth-time-choice-scoring-v2"
