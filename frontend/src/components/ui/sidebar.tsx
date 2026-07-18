@@ -1,6 +1,7 @@
 "use client";
 
 import { Tooltip } from "@base-ui/react/tooltip";
+import { PanelLeft } from "lucide-react";
 import {
   createContext,
   forwardRef,
@@ -37,7 +38,7 @@ export type SidebarContextValue = {
 
 type SidebarProviderContextValue = SidebarContextValue & {
   readonly setInsetTrigger: (element: HTMLButtonElement | null) => void;
-  readonly setSidebarTrigger: (element: HTMLButtonElement | null) => void;
+  readonly setSidebarSurface: (element: HTMLElement | null) => void;
 };
 
 export type SidebarProviderProps = ComponentProps<"div"> & {
@@ -84,7 +85,7 @@ export function SidebarProvider({
   const openMobileRef = useRef(false);
   const userChangedDesktopState = useRef(false);
   const insetTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const sidebarTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const sidebarSurfaceRef = useRef<HTMLElement | null>(null);
   const wasMobileOpen = useRef(false);
   const isControlled = controlledOpen !== undefined;
   const open = controlledOpen ?? uncontrolledOpen;
@@ -134,7 +135,7 @@ export function SidebarProvider({
 
   useEffect(() => {
     if (openMobile && !wasMobileOpen.current) {
-      const focusDrawer = window.requestAnimationFrame(() => sidebarTriggerRef.current?.focus());
+      const focusDrawer = window.requestAnimationFrame(() => sidebarSurfaceRef.current?.focus());
       wasMobileOpen.current = true;
       return () => window.cancelAnimationFrame(focusDrawer);
     }
@@ -158,7 +159,7 @@ export function SidebarProvider({
     isMobile,
     toggleSidebar,
     setInsetTrigger: (element) => { insetTriggerRef.current = element; },
-    setSidebarTrigger: (element) => { sidebarTriggerRef.current = element; },
+    setSidebarSurface: (element) => { sidebarSurfaceRef.current = element; },
   };
 
   return (
@@ -176,8 +177,8 @@ export function SidebarProvider({
 }
 
 export function Sidebar({ id, className, ...props }: ComponentProps<"aside">) {
-  const { isMobile, open, openMobile, setOpenMobile } = useSidebar();
-  const sidebar = <aside id={id ?? "chat-sidebar"} data-sidebar="sidebar" data-slot="sidebar" data-state={open ? "expanded" : "collapsed"} data-mobile-open={openMobile} className={cn("flex min-h-0 shrink-0 flex-col", className)} {...props} />;
+  const { isMobile, open, openMobile, setOpenMobile, setSidebarSurface } = useSidebarContext();
+  const sidebar = <aside id={id ?? "chat-sidebar"} data-sidebar="sidebar" data-slot="sidebar" data-state={open ? "expanded" : "collapsed"} data-mobile-open={openMobile} className={cn("flex min-h-0 shrink-0 flex-col", className)} tabIndex={-1} {...props} ref={setSidebarSurface} />;
   return <>
     {sidebar}
     {isMobile && openMobile ? <button type="button" data-sidebar="scrim" data-slot="sidebar-scrim" aria-label="关闭聊天记录" className="sidebar-scrim" onClick={() => setOpenMobile(false)} /> : null}
@@ -239,7 +240,7 @@ export const SidebarTrigger = forwardRef<HTMLButtonElement, SidebarTriggerProps>
   onClick,
   ...props
 }, ref) {
-  const { isMobile, open, openMobile, setInsetTrigger, setSidebarTrigger, toggleSidebar } = useSidebarContext();
+  const { isMobile, open, openMobile, setInsetTrigger, toggleSidebar } = useSidebarContext();
   const expanded = isMobile ? openMobile : open;
   const label = isMobile
     ? openMobile ? "关闭聊天记录" : "打开聊天记录"
@@ -247,9 +248,12 @@ export const SidebarTrigger = forwardRef<HTMLButtonElement, SidebarTriggerProps>
   const register = (element: HTMLButtonElement | null) => {
     setRef(ref, element);
     if (placement === "inset") setInsetTrigger(element);
-    else setSidebarTrigger(element);
   };
-  return <button ref={register} type="button" data-sidebar="trigger" data-slot="sidebar-trigger" aria-label={label} aria-expanded={expanded} className={cn("min-h-11 min-w-11", className)} onClick={(event) => { onClick?.(event); if (!event.defaultPrevented) toggleSidebar(); }} {...props} />;
+  return (
+    <button ref={register} type="button" data-sidebar="trigger" data-slot="sidebar-trigger" aria-label={label} aria-expanded={expanded} className={cn("min-h-11 min-w-11", className)} onClick={(event) => { onClick?.(event); if (!event.defaultPrevented) toggleSidebar(); }} {...props}>
+      <PanelLeft aria-hidden="true" />
+    </button>
+  );
 });
 
 export function SidebarRail({ className, onClick, ...props }: ComponentProps<"button">) {

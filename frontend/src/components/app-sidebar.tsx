@@ -25,7 +25,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
@@ -113,7 +112,6 @@ export function AppSidebar({
         <div className="brand-row">
           <span className="brand-mark" aria-hidden="true" />
           {showExpandedContent ? <strong>Jyotisha</strong> : null}
-          <SidebarTrigger placement="sidebar" />
         </div>
         <SidebarMenu>
           <SidebarMenuItem>

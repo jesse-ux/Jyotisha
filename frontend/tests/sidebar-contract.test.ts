@@ -65,6 +65,7 @@ test("keeps the sidebar subtree stable while toggling its mobile scrim", () => {
 test("cancels a stale mobile drawer focus frame", () => {
   const sidebar = readProjectFile("src/components/ui/sidebar.tsx");
   assert.match(sidebar, /const focusDrawer = window\.requestAnimationFrame/);
+  assert.match(sidebar, /sidebarSurfaceRef\.current\?\.focus\(\)/);
   assert.match(sidebar, /return \(\) => window\.cancelAnimationFrame\(focusDrawer\);/);
 });
 
@@ -74,6 +75,9 @@ test("uses the approved localized trigger actions", () => {
   assert.match(sidebar, /"展开侧边栏"/);
   assert.match(sidebar, /"打开聊天记录"/);
   assert.match(sidebar, /"关闭聊天记录"/);
+  assert.match(sidebar, /PanelLeft/);
+  assert.doesNotMatch(sidebar, /PanelLeftClose|PanelLeftOpen/);
+  assert.match(sidebar, /<PanelLeft aria-hidden="true" \/>/);
 });
 
 test("keeps provider primitive defaults and consumer handlers composable", () => {
@@ -104,10 +108,10 @@ test("composes the Jyotisha app sidebar from the generic shell", () => {
   }
 });
 
-test("renders the mobile drawer close trigger in the app sidebar brand row", () => {
+test("keeps the sidebar brand row free of a duplicate collapse trigger", () => {
   const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
 
-  assert.match(appSidebar, /<div className="brand-row">[\s\S]*<SidebarTrigger placement="sidebar" \/>[\s\S]*<\/div>/);
+  assert.doesNotMatch(appSidebar, /SidebarTrigger/);
 });
 
 test("uses one collapsed history action instead of icon-only session rows", () => {
