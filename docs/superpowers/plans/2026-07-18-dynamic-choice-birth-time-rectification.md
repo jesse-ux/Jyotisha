@@ -349,8 +349,10 @@ git commit -m "feat: define dynamic birth time choice protocol"
 
 **Files:**
 - Create: `scripts/dynamic_rectification.py`
+- Create: `scripts/dynamic_rectification_opportunities.py`
 - Modify: `scripts/jyotish_api_server.py:1280-1325,1735-1755,6766-6890,7645-7660,7770-7790`
 - Test: `tests/test_dynamic_rectification.py`
+- Test: `tests/test_dynamic_rectification_scoring.py`
 - Modify: `tests/test_active_rectification_api.py`
 
 **Interfaces:**
@@ -403,6 +405,8 @@ Expected: FAIL with `ImportError: cannot import name 'dynamic_rectification'`.
 - [ ] **Step 3: Generate candidate-backed date-window opportunities**
 
 Use minute candidates from the submitted range, the existing local chart engine, D4/D9/D10/D24/D30, Vimshottari, and Narayana Dasha. For each supported experience dimension, evaluate bounded calendar windows from age 12 through the persisted `as_of_date`. Compute each candidate chart once, then reuse it across every dimension/window. Return a compact versioned `candidate_model` containing only candidate activation numbers needed for later opportunity ranking; a subsequent request must validate and reuse that model instead of recalculating charts. A candidate joins the partition for the window with its strongest domain activation; discard opportunities with fewer than two populated partitions or normalized entropy below `0.15`.
+
+Treat an overnight range as one chronological sequence: `23:59` and `00:00` are adjacent candidates. Bind every reusable candidate model to the exact birth date, persisted `as_of_date`, start/end range, latitude, longitude, and timezone; location fields are required and never default to zero. Keep the public entrypoints/scoring in `dynamic_rectification.py` and extract candidate-model/opportunity helpers to `dynamic_rectification_opportunities.py` so production and test files stay within the repository's 250 pure-LOC limit.
 
 The exact opportunity contract is:
 
@@ -486,7 +490,9 @@ High confidence requires one winning segment, at least 4 effective answers acros
 
 - [ ] **Step 7: Add strict API validation and endpoints**
 
-For opportunities accept only birth date, a persisted ISO `as_of_date`, start/end time, location, an optional server-owned `candidate_model`, existing choice evidence summary, dismissed opportunity IDs, and fingerprint arrays. For scoring accept only birth/location/range and server-resolved `choice_evidence`. Reject candidate models whose version, range, candidate times, or numeric activation shape do not match the request; also reject candidate times outside the submitted range, duplicate question IDs, more than 10 evidence rows, non-finite scores, unsupported dimensions, and any client-style `option_id` field. Window generation uses `as_of_date`, never the Python process clock, so an existing case remains reproducible across days.
+For opportunities accept only birth date, a persisted ISO `as_of_date`, start/end time, required location, an optional server-owned `candidate_model`, existing choice evidence summary, dismissed opportunity IDs, and fingerprint arrays. For scoring accept only birth/location/range and server-resolved `choice_evidence`. Reject candidate models whose version, bound location/range, candidate times, or numeric activation shape do not match the request; also reject candidate times outside the submitted range, duplicate question IDs, more than 10 evidence rows, non-finite scores, unsupported dimensions, and any client-style `option_id` field. Accept opaque trimmed nonempty server-issued question IDs rather than UUID-only IDs. Window generation uses `as_of_date`, never the Python process clock, so an existing case remains reproducible across days.
+
+Both dynamic Python endpoints are server-to-server only. Require a constant-time checked bearer token from `JYOTISH_DYNAMIC_RECTIFICATION_TOKEN`, fail closed when it is absent, and remove the dynamic endpoints from any browser-runnable technique-example dispatch. The authenticated TypeScript adapter in Task 3 is the only application caller; a browser must not be able to submit `candidate_model`, `partition_id`, or `candidate_scores` directly.
 
 - [ ] **Step 8: Run Python suites and commit**
 
@@ -583,6 +589,8 @@ Raise the compatibility `candidateResultSchema.eventCount` maximum from 6 to 10 
 - [ ] **Step 4: Post to the new Python endpoints**
 
 `buildDifferencePacket()` posts snake-case payloads to `/api/dynamic_rectification_opportunities` and separates the response into `{ packet, candidateModel, scoringPartitions }`. Only `packet` may enter the Agent prompt; `candidateModel` and `scoringPartitions` stay server-only. `bindDynamicQuestion()` copies the selected partition's score vector into the private persisted question, and the model cannot supply or alter that vector. `scoreChoices()` posts to `/api/dynamic_rectification_score`. Both use the existing 45-second abort timeout and strict adapter parsing.
+
+For both dynamic calls, require `JYOTISH_DYNAMIC_RECTIFICATION_TOKEN` in the server environment and send it as a bearer token. Never expose that token through a client module or response. Legacy engine calls remain unchanged and unauthenticated.
 
 `parseDynamicChoiceScoring()` must require `event_count === effective_answer_count`, `domain_count === dimension_count`, `evidence_mode === "dynamic_choice"`, an empty public evidence array, and the v2 algorithm version before constructing `DynamicChoiceScoringResult`. This prevents a malformed engine payload from satisfying the high-confidence gate with inconsistent counts.
 
