@@ -876,6 +876,25 @@ git add frontend/supabase/migrations/20260718090000_dynamic_choice_birth_time_re
 git commit -m "feat: persist dynamic rectification turns"
 ```
 
+#### Task 5 review amendment
+
+Review expands Task 5 ownership to the following correctness and maintainability fixes before
+Task 6:
+
+- Split the migration into ordered schema/turn and scoring-job RPC migrations, each at or below
+  250 pure lines. Deduplicate private-state persistence through one service-role-only SQL helper.
+- Create public v2 case, required private state, and exact profile link atomically through a
+  service-role `create_birth_time_dynamic_case` RPC; never use separate inserts.
+- Apply protocol isolation to every legacy guided mutation and scoring-poll path, not only
+  question/evidence actions.
+- Parse external rows into a strict `journeyProtocol`-discriminated stored-case union; normalize
+  absent old protocol values to legacy at the loader boundary.
+- Make memory replay return the stored advanced state. Map supported unknown time ranges to the
+  full day while continuing to reject malformed mixed-null ranges.
+- Split contract tests below 250 lines and replace deletion-only/source-mirroring claims with
+  executable store behavior. If local Postgres execution is unavailable, preserve evidence of
+  the environment limitation and make no live-database claim.
+
 ---
 
 ### Task 6: Journey Actions, Scoring Jobs, and Anti-Loop Transitions
