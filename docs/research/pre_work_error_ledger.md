@@ -109,6 +109,18 @@ For large architecture or release work, also read:
 | ERR-076 | Fragment/inventory tests required machine-local drafts, workspace residue, or a fixed minimum file count. | resolved 2026-07-16 | Assert count invariants and stable tracked classifications; validate optional local categories only when present. |
 | ERR-077 | VedAstro request previews serialized the live `x-api-key` header, allowing logs and failed test output to expose credentials. | resolved; credential rotation required 2026-07-16 | Preview/metadata profiles never contain authentication headers. Inject `VEDASTRO_API_KEY` only immediately before network execution; rotate any key exposed before this fix. |
 | ERR-078 | On this macOS host, bare `python3` resolves to Python 3.9 without pytest, while the project uses PEP 604 annotations; rerunning with `.venv/bin/python` reaches the tests but `test_preflight_fragment_scan_reports_authority_layers_and_risk_buckets` has a stale `high_value_unpromoted_count >= 1` assertion even when the scanner correctly reports zero. | observed 2026-07-15 | Run the gate with the project venv on this host and do not claim the full pre-work gate passed until the fragment-governance assertion is reconciled with the valid zero-unpromoted state. |
+| ERR-079 | VedAstro hosted replay and fixed-commit self-host validation cannot run on this host when `VEDASTRO_API_ENDPOINT` / `VEDASTRO_API_KEY` are absent and neither a .NET runtime nor a reachable Docker daemon is available. | observed 2026-07-17 | Keep hosted closure `blocked`; run `vedastro_contract_probe.py --repeats 3` only after injecting credentials through the environment, and build the pinned source in a provisioned Windows/.NET or reachable container environment. Never persist credentials in artifacts or shell history. |
+
+## ERR-080 | Issue link was mistaken for benchmark provenance | mitigated 2026-07-18
+PyJHora issue #17 is a UI/encoding issue with a general mismatch report, not VP Jain calibration. The benchmark now pins `V4.8.7` / `ca22995709bd60e371e7820a1a5efc80ce4cf821` and the exact test function URL. Treat its AGPL numeric expectations as a candidate replay, never independent formula arbitration.
+
+## ERR-081 | Fixture attribution was overstated as publication | mitigated 2026-07-18
+`shadbala_VPJainBook_tests` supplies no independently citable book edition, page, or numerical table. The product therefore calls it a VP Jain-attributed fixture, not a published worked example; it remains candidate replay data and cannot close a formula branch.
+
+## ERR-082 | Public similar-case catalog coverage was mistaken for global coverage | active 2026-07-18
+The replayable public-case manifest currently contains 10 events: 5 career and 5 marriage. A separate health `public_context_only` case may be shown for comparison, but it is not replayed calibration evidence. Wealth still has no case with the required birth source, event source, and replay contract. The product returns available domains and requested uncovered domains rather than treating an empty result as evidence of no comparable case.
+
+Prevention: add a new domain only after its public cases satisfy the same source/replay contract; never substitute loosely sourced celebrity notes or absence of a match for a negative conclusion.
 
 ## Fragment Sweep Command Set
 

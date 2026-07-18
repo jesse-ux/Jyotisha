@@ -1,0 +1,1165 @@
+{
+  "benchmark_id": "day_level_observational_holdout_v1",
+  "validation_mode": "observational",
+  "status": "observational_ready_not_independent",
+  "truth_policy": "public_event_observations_plus_generated_non_target_dates",
+  "source_manifest": "docs/benchmark/public_real_case_23_case_observation_2026_07_11.json",
+  "frozen_rule_version": "v3_preregistered_not_tuned",
+  "frozen_gate": {
+    "minimum_independent_cases": 20,
+    "minimum_independent_negative_intervals": 80
+  },
+  "boundary": "Non-target dates are generated observational controls, not independently adjudicated evidence of no event. This manifest may support exploratory ranking analysis only; production tuning and verified timing claims remain prohibited.",
+  "annotations": [
+    {
+      "case_id": "jobs_iphone_2007",
+      "domain": "career",
+      "label": "target_event",
+      "start": "2007-01-09",
+      "end": "2007-01-09",
+      "source_url": "https://www.apple.com/newsroom/2007/01/09Apple-Reinvents-the-Phone-with-iPhone/",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "jobs_iphone_2007",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2006-09-11",
+      "end": "2006-09-11",
+      "source_url": "https://www.apple.com/newsroom/2007/01/09Apple-Reinvents-the-Phone-with-iPhone/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "jobs_iphone_2007",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2006-11-10",
+      "end": "2006-11-10",
+      "source_url": "https://www.apple.com/newsroom/2007/01/09Apple-Reinvents-the-Phone-with-iPhone/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "jobs_iphone_2007",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2007-03-10",
+      "end": "2007-03-10",
+      "source_url": "https://www.apple.com/newsroom/2007/01/09Apple-Reinvents-the-Phone-with-iPhone/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "jobs_iphone_2007",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2007-05-09",
+      "end": "2007-05-09",
+      "source_url": "https://www.apple.com/newsroom/2007/01/09Apple-Reinvents-the-Phone-with-iPhone/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "obama_election_2008",
+      "domain": "career",
+      "label": "target_event",
+      "start": "2008-11-04",
+      "end": "2008-11-04",
+      "source_url": "https://www.fec.gov/introduction-campaign-finance/election-results-and-voting-information/federal-elections-2008/",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "obama_election_2008",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2008-07-07",
+      "end": "2008-07-07",
+      "source_url": "https://www.fec.gov/introduction-campaign-finance/election-results-and-voting-information/federal-elections-2008/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "obama_election_2008",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2008-09-05",
+      "end": "2008-09-05",
+      "source_url": "https://www.fec.gov/introduction-campaign-finance/election-results-and-voting-information/federal-elections-2008/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "obama_election_2008",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2009-01-03",
+      "end": "2009-01-03",
+      "source_url": "https://www.fec.gov/introduction-campaign-finance/election-results-and-voting-information/federal-elections-2008/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "obama_election_2008",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2009-03-04",
+      "end": "2009-03-04",
+      "source_url": "https://www.fec.gov/introduction-campaign-finance/election-results-and-voting-information/federal-elections-2008/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "schwarzenegger_governor_2003",
+      "domain": "career",
+      "label": "target_event",
+      "start": "2003-10-07",
+      "end": "2003-10-07",
+      "source_url": "https://elections.cdn.sos.ca.gov/sov/2003-special/sov-complete.pdf",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "schwarzenegger_governor_2003",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2003-06-09",
+      "end": "2003-06-09",
+      "source_url": "https://elections.cdn.sos.ca.gov/sov/2003-special/sov-complete.pdf",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "schwarzenegger_governor_2003",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2003-08-08",
+      "end": "2003-08-08",
+      "source_url": "https://elections.cdn.sos.ca.gov/sov/2003-special/sov-complete.pdf",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "schwarzenegger_governor_2003",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2003-12-06",
+      "end": "2003-12-06",
+      "source_url": "https://elections.cdn.sos.ca.gov/sov/2003-special/sov-complete.pdf",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "schwarzenegger_governor_2003",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2004-02-04",
+      "end": "2004-02-04",
+      "source_url": "https://elections.cdn.sos.ca.gov/sov/2003-special/sov-complete.pdf",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "streep_oscar_1983",
+      "domain": "career",
+      "label": "target_event",
+      "start": "1983-04-11",
+      "end": "1983-04-11",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/1983",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "streep_oscar_1983",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1982-12-12",
+      "end": "1982-12-12",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/1983",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "streep_oscar_1983",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1983-02-10",
+      "end": "1983-02-10",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/1983",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "streep_oscar_1983",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1983-06-10",
+      "end": "1983-06-10",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/1983",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "streep_oscar_1983",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1983-08-09",
+      "end": "1983-08-09",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/1983",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "aniston_emmy_2002",
+      "domain": "career",
+      "label": "target_event",
+      "start": "2002-09-22",
+      "end": "2002-09-22",
+      "source_url": "https://www.televisionacademy.com/awards/nominees-winners/2002/outstanding-lead-actress-in-a-comedy-series",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "aniston_emmy_2002",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2002-05-25",
+      "end": "2002-05-25",
+      "source_url": "https://www.televisionacademy.com/awards/nominees-winners/2002/outstanding-lead-actress-in-a-comedy-series",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "aniston_emmy_2002",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2002-07-24",
+      "end": "2002-07-24",
+      "source_url": "https://www.televisionacademy.com/awards/nominees-winners/2002/outstanding-lead-actress-in-a-comedy-series",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "aniston_emmy_2002",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2002-11-21",
+      "end": "2002-11-21",
+      "source_url": "https://www.televisionacademy.com/awards/nominees-winners/2002/outstanding-lead-actress-in-a-comedy-series",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "aniston_emmy_2002",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2003-01-20",
+      "end": "2003-01-20",
+      "source_url": "https://www.televisionacademy.com/awards/nominees-winners/2002/outstanding-lead-actress-in-a-comedy-series",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "william_marriage_2011",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "2011-04-29",
+      "end": "2011-04-29",
+      "source_url": "https://www.royal.uk/wedding-prince-william-and-miss-catherine-middleton",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "william_marriage_2011",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2010-12-30",
+      "end": "2010-12-30",
+      "source_url": "https://www.royal.uk/wedding-prince-william-and-miss-catherine-middleton",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "william_marriage_2011",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2011-02-28",
+      "end": "2011-02-28",
+      "source_url": "https://www.royal.uk/wedding-prince-william-and-miss-catherine-middleton",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "william_marriage_2011",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2011-06-28",
+      "end": "2011-06-28",
+      "source_url": "https://www.royal.uk/wedding-prince-william-and-miss-catherine-middleton",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "william_marriage_2011",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2011-08-27",
+      "end": "2011-08-27",
+      "source_url": "https://www.royal.uk/wedding-prince-william-and-miss-catherine-middleton",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "jolie_marriage_2014",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "2014-08-23",
+      "end": "2014-08-23",
+      "source_url": "https://en.wikipedia.org/wiki/Angelina_Jolie",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "jolie_marriage_2014",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2014-04-25",
+      "end": "2014-04-25",
+      "source_url": "https://en.wikipedia.org/wiki/Angelina_Jolie",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "jolie_marriage_2014",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2014-06-24",
+      "end": "2014-06-24",
+      "source_url": "https://en.wikipedia.org/wiki/Angelina_Jolie",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "jolie_marriage_2014",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2014-10-22",
+      "end": "2014-10-22",
+      "source_url": "https://en.wikipedia.org/wiki/Angelina_Jolie",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "jolie_marriage_2014",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2014-12-21",
+      "end": "2014-12-21",
+      "source_url": "https://en.wikipedia.org/wiki/Angelina_Jolie",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "kahlo_marriage_1929",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "1929-08-21",
+      "end": "1929-08-21",
+      "source_url": "https://en.wikipedia.org/wiki/Frida_Kahlo",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "kahlo_marriage_1929",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1929-04-23",
+      "end": "1929-04-23",
+      "source_url": "https://en.wikipedia.org/wiki/Frida_Kahlo",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "kahlo_marriage_1929",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1929-06-22",
+      "end": "1929-06-22",
+      "source_url": "https://en.wikipedia.org/wiki/Frida_Kahlo",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "kahlo_marriage_1929",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1929-10-20",
+      "end": "1929-10-20",
+      "source_url": "https://en.wikipedia.org/wiki/Frida_Kahlo",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "kahlo_marriage_1929",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1929-12-19",
+      "end": "1929-12-19",
+      "source_url": "https://en.wikipedia.org/wiki/Frida_Kahlo",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "snoop_marriage_1997",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "1997-06-14",
+      "end": "1997-06-14",
+      "source_url": "https://en.wikipedia.org/wiki/Snoop_Dogg",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "snoop_marriage_1997",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1997-02-14",
+      "end": "1997-02-14",
+      "source_url": "https://en.wikipedia.org/wiki/Snoop_Dogg",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "snoop_marriage_1997",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1997-04-15",
+      "end": "1997-04-15",
+      "source_url": "https://en.wikipedia.org/wiki/Snoop_Dogg",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "snoop_marriage_1997",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1997-08-13",
+      "end": "1997-08-13",
+      "source_url": "https://en.wikipedia.org/wiki/Snoop_Dogg",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "snoop_marriage_1997",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1997-10-12",
+      "end": "1997-10-12",
+      "source_url": "https://en.wikipedia.org/wiki/Snoop_Dogg",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "disney_marriage_1925",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "1925-07-13",
+      "end": "1925-07-13",
+      "source_url": "https://www.waltdisney.org/blog/who-did-walt-disney-marry",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "disney_marriage_1925",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1925-03-15",
+      "end": "1925-03-15",
+      "source_url": "https://www.waltdisney.org/blog/who-did-walt-disney-marry",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "disney_marriage_1925",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1925-05-14",
+      "end": "1925-05-14",
+      "source_url": "https://www.waltdisney.org/blog/who-did-walt-disney-marry",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "disney_marriage_1925",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1925-09-11",
+      "end": "1925-09-11",
+      "source_url": "https://www.waltdisney.org/blog/who-did-walt-disney-marry",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "disney_marriage_1925",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1925-11-10",
+      "end": "1925-11-10",
+      "source_url": "https://www.waltdisney.org/blog/who-did-walt-disney-marry",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "albert_ii_accession_2005",
+      "domain": "career",
+      "label": "target_event",
+      "start": "2005-04-06",
+      "end": "2005-04-06",
+      "source_url": "https://www.palais.mc/en/princely-family/h-s-h-prince-albert-ii/biography-1-9.html",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "albert_ii_accession_2005",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2004-12-07",
+      "end": "2004-12-07",
+      "source_url": "https://www.palais.mc/en/princely-family/h-s-h-prince-albert-ii/biography-1-9.html",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "albert_ii_accession_2005",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2005-02-05",
+      "end": "2005-02-05",
+      "source_url": "https://www.palais.mc/en/princely-family/h-s-h-prince-albert-ii/biography-1-9.html",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "albert_ii_accession_2005",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2005-06-05",
+      "end": "2005-06-05",
+      "source_url": "https://www.palais.mc/en/princely-family/h-s-h-prince-albert-ii/biography-1-9.html",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "albert_ii_accession_2005",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2005-08-04",
+      "end": "2005-08-04",
+      "source_url": "https://www.palais.mc/en/princely-family/h-s-h-prince-albert-ii/biography-1-9.html",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "boy_george_grammy_1984",
+      "domain": "career",
+      "label": "target_event",
+      "start": "1984-02-28",
+      "end": "1984-02-28",
+      "source_url": "https://en.wikipedia.org/wiki/26th_Annual_Grammy_Awards",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "boy_george_grammy_1984",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1983-10-31",
+      "end": "1983-10-31",
+      "source_url": "https://en.wikipedia.org/wiki/26th_Annual_Grammy_Awards",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "boy_george_grammy_1984",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1983-12-30",
+      "end": "1983-12-30",
+      "source_url": "https://en.wikipedia.org/wiki/26th_Annual_Grammy_Awards",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "boy_george_grammy_1984",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1984-04-28",
+      "end": "1984-04-28",
+      "source_url": "https://en.wikipedia.org/wiki/26th_Annual_Grammy_Awards",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "boy_george_grammy_1984",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1984-06-27",
+      "end": "1984-06-27",
+      "source_url": "https://en.wikipedia.org/wiki/26th_Annual_Grammy_Awards",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "bergman_oscar_1945",
+      "domain": "career",
+      "label": "target_event",
+      "start": "1945-03-15",
+      "end": "1945-03-15",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/1945",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "bergman_oscar_1945",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1944-11-15",
+      "end": "1944-11-15",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/1945",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "bergman_oscar_1945",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1945-01-14",
+      "end": "1945-01-14",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/1945",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "bergman_oscar_1945",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1945-05-14",
+      "end": "1945-05-14",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/1945",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "bergman_oscar_1945",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1945-07-13",
+      "end": "1945-07-13",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/1945",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "morissette_grammy_1996",
+      "domain": "career",
+      "label": "target_event",
+      "start": "1996-02-28",
+      "end": "1996-02-28",
+      "source_url": "https://en.wikipedia.org/wiki/38th_Annual_Grammy_Awards",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "morissette_grammy_1996",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1995-10-31",
+      "end": "1995-10-31",
+      "source_url": "https://en.wikipedia.org/wiki/38th_Annual_Grammy_Awards",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "morissette_grammy_1996",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1995-12-30",
+      "end": "1995-12-30",
+      "source_url": "https://en.wikipedia.org/wiki/38th_Annual_Grammy_Awards",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "morissette_grammy_1996",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1996-04-28",
+      "end": "1996-04-28",
+      "source_url": "https://en.wikipedia.org/wiki/38th_Annual_Grammy_Awards",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "morissette_grammy_1996",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1996-06-27",
+      "end": "1996-06-27",
+      "source_url": "https://en.wikipedia.org/wiki/38th_Annual_Grammy_Awards",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "dion_eurovision_1988",
+      "domain": "career",
+      "label": "target_event",
+      "start": "1988-04-30",
+      "end": "1988-04-30",
+      "source_url": "https://eurovision.tv/event/dublin-1988",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "dion_eurovision_1988",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1988-01-01",
+      "end": "1988-01-01",
+      "source_url": "https://eurovision.tv/event/dublin-1988",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "dion_eurovision_1988",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1988-03-01",
+      "end": "1988-03-01",
+      "source_url": "https://eurovision.tv/event/dublin-1988",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "dion_eurovision_1988",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1988-06-29",
+      "end": "1988-06-29",
+      "source_url": "https://eurovision.tv/event/dublin-1988",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "dion_eurovision_1988",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "1988-08-28",
+      "end": "1988-08-28",
+      "source_url": "https://eurovision.tv/event/dublin-1988",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "mccartney_marriage_1969",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "1969-03-12",
+      "end": "1969-03-12",
+      "source_url": "https://en.wikipedia.org/wiki/Personal_relationships_of_Paul_McCartney",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "mccartney_marriage_1969",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1968-11-12",
+      "end": "1968-11-12",
+      "source_url": "https://en.wikipedia.org/wiki/Personal_relationships_of_Paul_McCartney",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "mccartney_marriage_1969",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1969-01-11",
+      "end": "1969-01-11",
+      "source_url": "https://en.wikipedia.org/wiki/Personal_relationships_of_Paul_McCartney",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "mccartney_marriage_1969",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1969-05-11",
+      "end": "1969-05-11",
+      "source_url": "https://en.wikipedia.org/wiki/Personal_relationships_of_Paul_McCartney",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "mccartney_marriage_1969",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1969-07-10",
+      "end": "1969-07-10",
+      "source_url": "https://en.wikipedia.org/wiki/Personal_relationships_of_Paul_McCartney",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "depp_marriage_2015",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "2015-02-03",
+      "end": "2015-02-03",
+      "source_url": "https://variety.com/2016/biz/news/johnny-depp-amber-heard-divorce-settlement-1201837685/",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "depp_marriage_2015",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2014-10-06",
+      "end": "2014-10-06",
+      "source_url": "https://variety.com/2016/biz/news/johnny-depp-amber-heard-divorce-settlement-1201837685/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "depp_marriage_2015",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2014-12-05",
+      "end": "2014-12-05",
+      "source_url": "https://variety.com/2016/biz/news/johnny-depp-amber-heard-divorce-settlement-1201837685/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "depp_marriage_2015",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2015-04-04",
+      "end": "2015-04-04",
+      "source_url": "https://variety.com/2016/biz/news/johnny-depp-amber-heard-divorce-settlement-1201837685/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "depp_marriage_2015",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2015-06-03",
+      "end": "2015-06-03",
+      "source_url": "https://variety.com/2016/biz/news/johnny-depp-amber-heard-divorce-settlement-1201837685/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "kidman_marriage_2006",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "2006-06-25",
+      "end": "2006-06-25",
+      "source_url": "https://en.wikipedia.org/wiki/Nicole_Kidman",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "kidman_marriage_2006",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2006-02-25",
+      "end": "2006-02-25",
+      "source_url": "https://en.wikipedia.org/wiki/Nicole_Kidman",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "kidman_marriage_2006",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2006-04-26",
+      "end": "2006-04-26",
+      "source_url": "https://en.wikipedia.org/wiki/Nicole_Kidman",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "kidman_marriage_2006",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2006-08-24",
+      "end": "2006-08-24",
+      "source_url": "https://en.wikipedia.org/wiki/Nicole_Kidman",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "kidman_marriage_2006",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2006-10-23",
+      "end": "2006-10-23",
+      "source_url": "https://en.wikipedia.org/wiki/Nicole_Kidman",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "demi_moore_marriage_1987",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "1987-11-21",
+      "end": "1987-11-21",
+      "source_url": "https://en.wikipedia.org/wiki/Demi_Moore",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "demi_moore_marriage_1987",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1987-07-24",
+      "end": "1987-07-24",
+      "source_url": "https://en.wikipedia.org/wiki/Demi_Moore",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "demi_moore_marriage_1987",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1987-09-22",
+      "end": "1987-09-22",
+      "source_url": "https://en.wikipedia.org/wiki/Demi_Moore",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "demi_moore_marriage_1987",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1988-01-20",
+      "end": "1988-01-20",
+      "source_url": "https://en.wikipedia.org/wiki/Demi_Moore",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "demi_moore_marriage_1987",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "1988-03-20",
+      "end": "1988-03-20",
+      "source_url": "https://en.wikipedia.org/wiki/Demi_Moore",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "chelsea_clinton_marriage_2010",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "2010-07-31",
+      "end": "2010-07-31",
+      "source_url": "https://en.wikipedia.org/wiki/Chelsea_Clinton",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "chelsea_clinton_marriage_2010",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2010-04-02",
+      "end": "2010-04-02",
+      "source_url": "https://en.wikipedia.org/wiki/Chelsea_Clinton",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "chelsea_clinton_marriage_2010",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2010-06-01",
+      "end": "2010-06-01",
+      "source_url": "https://en.wikipedia.org/wiki/Chelsea_Clinton",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "chelsea_clinton_marriage_2010",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2010-09-29",
+      "end": "2010-09-29",
+      "source_url": "https://en.wikipedia.org/wiki/Chelsea_Clinton",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "chelsea_clinton_marriage_2010",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2010-11-28",
+      "end": "2010-11-28",
+      "source_url": "https://en.wikipedia.org/wiki/Chelsea_Clinton",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "trump_inauguration_2017",
+      "domain": "career",
+      "label": "target_event",
+      "start": "2017-01-20",
+      "end": "2017-01-20",
+      "source_url": "https://www.inaugural.senate.gov/58th-inaugural-ceremonies/",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "trump_inauguration_2017",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2016-09-22",
+      "end": "2016-09-22",
+      "source_url": "https://www.inaugural.senate.gov/58th-inaugural-ceremonies/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "trump_inauguration_2017",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2016-11-21",
+      "end": "2016-11-21",
+      "source_url": "https://www.inaugural.senate.gov/58th-inaugural-ceremonies/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "trump_inauguration_2017",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2017-03-21",
+      "end": "2017-03-21",
+      "source_url": "https://www.inaugural.senate.gov/58th-inaugural-ceremonies/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "trump_inauguration_2017",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2017-05-20",
+      "end": "2017-05-20",
+      "source_url": "https://www.inaugural.senate.gov/58th-inaugural-ceremonies/",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "dicaprio_oscar_2016",
+      "domain": "career",
+      "label": "target_event",
+      "start": "2016-02-28",
+      "end": "2016-02-28",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/2016",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "dicaprio_oscar_2016",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2015-10-31",
+      "end": "2015-10-31",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/2016",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "dicaprio_oscar_2016",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2015-12-30",
+      "end": "2015-12-30",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/2016",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "dicaprio_oscar_2016",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2016-04-28",
+      "end": "2016-04-28",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/2016",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "dicaprio_oscar_2016",
+      "domain": "career",
+      "label": "observational_non_target_date",
+      "start": "2016-06-27",
+      "end": "2016-06-27",
+      "source_url": "https://www.oscars.org/oscars/ceremonies/2016",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "markle_marriage_2018",
+      "domain": "marriage",
+      "label": "target_event",
+      "start": "2018-05-19",
+      "end": "2018-05-19",
+      "source_url": "https://www.royal.uk/wedding-duke-and-duchess-sussex",
+      "adjudicator": "public_observation_import_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "markle_marriage_2018",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2018-01-19",
+      "end": "2018-01-19",
+      "source_url": "https://www.royal.uk/wedding-duke-and-duchess-sussex",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "markle_marriage_2018",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2018-03-20",
+      "end": "2018-03-20",
+      "source_url": "https://www.royal.uk/wedding-duke-and-duchess-sussex",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "markle_marriage_2018",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2018-07-18",
+      "end": "2018-07-18",
+      "source_url": "https://www.royal.uk/wedding-duke-and-duchess-sussex",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    },
+    {
+      "case_id": "markle_marriage_2018",
+      "domain": "marriage",
+      "label": "observational_non_target_date",
+      "start": "2018-09-16",
+      "end": "2018-09-16",
+      "source_url": "https://www.royal.uk/wedding-duke-and-duchess-sussex",
+      "adjudicator": "generated_observational_offset_2026_07_18",
+      "time_uncertainty_days": 0
+    }
+  ]
+}

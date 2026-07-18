@@ -1,0 +1,883 @@
+{
+  "scope": "western_real_case_calibration",
+  "status": "calculated_not_predictive_validation",
+  "case_id": "jobs_iphone_2007",
+  "subject": "Steve Jobs",
+  "event": {
+    "date": "2007-01-09",
+    "type": "career_breakthrough",
+    "source": {
+      "url": "https://www.apple.com/newsroom/2007/01/09Apple-Reinvents-the-Phone-with-iPhone/",
+      "source_grade": "primary"
+    }
+  },
+  "birth_source": {
+    "url": "https://www.astro.com/adbvip/adbvip_02_24.htm",
+    "source_grade": "primary",
+    "time_accuracy_rating": "AA",
+    "evidence_basis": "BC/BR in hand"
+  },
+  "layers": {
+    "secondary_progressions": {
+      "technique": "secondary_progressions",
+      "status": "partial",
+      "method": "one_ephemeris_day_per_tropical_year",
+      "target_date": "2007-01-09",
+      "target_local_time": "2007-01-09T00:00:00-08:00",
+      "elapsed_tropical_years": 51.8729722,
+      "progressed_julian_day_ut": 2435215.50838887,
+      "natal_sun_longitude": 335.74814,
+      "progressed_planets": {
+        "sun": {
+          "longitude": 27.200726,
+          "sign": "Aries",
+          "degree_in_sign": 27.200726,
+          "speed_longitude": 0.97771866,
+          "retrograde": false
+        },
+        "moon": {
+          "longitude": 327.085209,
+          "sign": "Aquarius",
+          "degree_in_sign": 27.085209,
+          "speed_longitude": 13.22736915,
+          "retrograde": false
+        },
+        "mercury": {
+          "longitude": 21.467043,
+          "sign": "Aries",
+          "degree_in_sign": 21.467043,
+          "speed_longitude": 2.03176132,
+          "retrograde": false
+        },
+        "venus": {
+          "longitude": 352.062856,
+          "sign": "Pisces",
+          "degree_in_sign": 22.062856,
+          "speed_longitude": 1.19645701,
+          "retrograde": false
+        },
+        "mars": {
+          "longitude": 64.755496,
+          "sign": "Gemini",
+          "degree_in_sign": 4.755496,
+          "speed_longitude": 0.67328564,
+          "retrograde": false
+        },
+        "jupiter": {
+          "longitude": 111.475558,
+          "sign": "Cancer",
+          "degree_in_sign": 21.475558,
+          "speed_longitude": 0.09538143,
+          "retrograde": false
+        },
+        "saturn": {
+          "longitude": 229.414858,
+          "sign": "Scorpio",
+          "degree_in_sign": 19.414858,
+          "speed_longitude": -0.06655717,
+          "retrograde": true
+        },
+        "uranus": {
+          "longitude": 113.715663,
+          "sign": "Cancer",
+          "degree_in_sign": 23.715663,
+          "speed_longitude": 0.01464552,
+          "retrograde": false
+        },
+        "neptune": {
+          "longitude": 206.868278,
+          "sign": "Libra",
+          "degree_in_sign": 26.868278,
+          "speed_longitude": -0.02739973,
+          "retrograde": true
+        },
+        "pluto": {
+          "longitude": 144.383855,
+          "sign": "Leo",
+          "degree_in_sign": 24.383855,
+          "speed_longitude": -0.00882106,
+          "retrograde": true
+        },
+        "true_node": {
+          "longitude": 268.467552,
+          "sign": "Sagittarius",
+          "degree_in_sign": 28.467552,
+          "speed_longitude": -0.07938677,
+          "retrograde": true
+        }
+      },
+      "progressed_angles": {
+        "status": "used",
+        "method": "secondary_quotidian_progressed_date_same_location",
+        "progressed_local_time": "1955-04-17T16:12:04.798161-08:00",
+        "angles": {
+          "ascendant": {
+            "longitude": 176.691966,
+            "sign": "Virgo",
+            "degree_in_sign": 26.691966
+          },
+          "mc": {
+            "longitude": 86.278308,
+            "sign": "Gemini",
+            "degree_in_sign": 26.278308
+          },
+          "descendant": {
+            "longitude": 356.691966,
+            "sign": "Pisces",
+            "degree_in_sign": 26.691966
+          },
+          "ic": {
+            "longitude": 266.278308,
+            "sign": "Sagittarius",
+            "degree_in_sign": 26.278308
+          }
+        },
+        "boundary": "Quotidian progressed-date angles; Naibod and solar-arc angle variants are separate methods."
+      },
+      "aspects": [
+        {
+          "transit_planet": "mercury",
+          "natal_point": "mc",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 59.85056,
+          "orb": 0.14944,
+          "allowed_orb": 5.0
+        },
+        {
+          "transit_planet": "venus",
+          "natal_point": "ascendant",
+          "aspect": "opposition",
+          "exact_degrees": 180.0,
+          "separation": 179.768817,
+          "orb": 0.231183,
+          "allowed_orb": 5.0
+        },
+        {
+          "transit_planet": "mercury",
+          "natal_point": "venus",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 90.295161,
+          "orb": 0.295161,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "jupiter",
+          "natal_point": "venus",
+          "aspect": "opposition",
+          "exact_degrees": 180.0,
+          "separation": 179.696324,
+          "orb": 0.303676,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "jupiter",
+          "natal_point": "saturn",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 119.687136,
+          "orb": 0.312864,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "true_node",
+          "natal_point": "neptune",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 60.416254,
+          "orb": 0.416254,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "uranus",
+          "natal_point": "uranus",
+          "aspect": "conjunction",
+          "exact_degrees": 0.0,
+          "separation": 0.419243,
+          "orb": 0.419243,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "true_node",
+          "natal_point": "mars",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 120.622924,
+          "orb": 0.622924,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "venus",
+          "natal_point": "mc",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 89.254747,
+          "orb": 0.745253,
+          "allowed_orb": 5.0
+        },
+        {
+          "transit_planet": "jupiter",
+          "natal_point": "ascendant",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 60.818481,
+          "orb": 0.818481,
+          "allowed_orb": 5.0
+        },
+        {
+          "transit_planet": "sun",
+          "natal_point": "neptune",
+          "aspect": "opposition",
+          "exact_degrees": 180.0,
+          "separation": 179.149428,
+          "orb": 0.850572,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "venus",
+          "natal_point": "venus",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 60.890974,
+          "orb": 0.890974,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "venus",
+          "natal_point": "saturn",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 120.900162,
+          "orb": 0.900162,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "pluto",
+          "natal_point": "pluto",
+          "aspect": "conjunction",
+          "exact_degrees": 0.0,
+          "separation": 0.938933,
+          "orb": 0.938933,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "mercury",
+          "natal_point": "jupiter",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 89.040846,
+          "orb": 0.959154,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "moon",
+          "natal_point": "neptune",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 119.033911,
+          "orb": 0.966089,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "jupiter",
+          "natal_point": "jupiter",
+          "aspect": "conjunction",
+          "exact_degrees": 0.0,
+          "separation": 0.967669,
+          "orb": 0.967669,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "mars",
+          "natal_point": "sun",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 89.007356,
+          "orb": 0.992644,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "saturn",
+          "natal_point": "jupiter",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 118.906969,
+          "orb": 1.093031,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "neptune",
+          "natal_point": "neptune",
+          "aspect": "conjunction",
+          "exact_degrees": 0.0,
+          "separation": 1.18302,
+          "orb": 1.18302,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "uranus",
+          "natal_point": "ascendant",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 58.578376,
+          "orb": 1.421624,
+          "allowed_orb": 5.0
+        },
+        {
+          "transit_planet": "neptune",
+          "natal_point": "pluto",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 61.54549,
+          "orb": 1.54549,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "venus",
+          "natal_point": "jupiter",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 118.445033,
+          "orb": 1.554967,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "saturn",
+          "natal_point": "saturn",
+          "aspect": "conjunction",
+          "exact_degrees": 0.0,
+          "separation": 1.747836,
+          "orb": 1.747836,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "saturn",
+          "natal_point": "venus",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 61.757024,
+          "orb": 1.757024,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "moon",
+          "natal_point": "pluto",
+          "aspect": "opposition",
+          "exact_degrees": 180.0,
+          "separation": 178.237579,
+          "orb": 1.762421,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "sun",
+          "natal_point": "pluto",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 118.122062,
+          "orb": 1.877938,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "sun",
+          "natal_point": "mars",
+          "aspect": "conjunction",
+          "exact_degrees": 0.0,
+          "separation": 1.88975,
+          "orb": 1.88975,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "moon",
+          "natal_point": "mars",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 62.005267,
+          "orb": 2.005267,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "venus",
+          "natal_point": "uranus",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 122.07205,
+          "orb": 2.07205,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "neptune",
+          "natal_point": "mars",
+          "aspect": "opposition",
+          "exact_degrees": 180.0,
+          "separation": 177.777802,
+          "orb": 2.222198,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "uranus",
+          "natal_point": "venus",
+          "aspect": "opposition",
+          "exact_degrees": 180.0,
+          "separation": 177.456219,
+          "orb": 2.543781,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "uranus",
+          "natal_point": "saturn",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 117.447031,
+          "orb": 2.552969,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "jupiter",
+          "natal_point": "uranus",
+          "aspect": "conjunction",
+          "exact_degrees": 0.0,
+          "separation": 2.659348,
+          "orb": 2.659348,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "mercury",
+          "natal_point": "uranus",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 92.667863,
+          "orb": 2.667863,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "neptune",
+          "natal_point": "uranus",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 92.733372,
+          "orb": 2.733372,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "saturn",
+          "natal_point": "ascendant",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 57.120819,
+          "orb": 2.879181,
+          "allowed_orb": 5.0
+        },
+        {
+          "transit_planet": "mars",
+          "natal_point": "moon",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 57.008321,
+          "orb": 2.991679,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "sun",
+          "natal_point": "uranus",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 86.93418,
+          "orb": 3.06582,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "pluto",
+          "natal_point": "mc",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 63.066252,
+          "orb": 3.066252,
+          "allowed_orb": 5.0
+        },
+        {
+          "transit_planet": "true_node",
+          "natal_point": "pluto",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 123.144764,
+          "orb": 3.144764,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "uranus",
+          "natal_point": "jupiter",
+          "aspect": "conjunction",
+          "exact_degrees": 0.0,
+          "separation": 3.207774,
+          "orb": 3.207774,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "pluto",
+          "natal_point": "saturn",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 86.778839,
+          "orb": 3.221161,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "pluto",
+          "natal_point": "neptune",
+          "aspect": "sextile",
+          "exact_degrees": 60.0,
+          "separation": 63.667443,
+          "orb": 3.667443,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "mercury",
+          "natal_point": "pluto",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 123.855745,
+          "orb": 3.855745,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "uranus",
+          "natal_point": "neptune",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 94.335635,
+          "orb": 4.335635,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "pluto",
+          "natal_point": "mars",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 115.293379,
+          "orb": 4.706621,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "saturn",
+          "natal_point": "uranus",
+          "aspect": "trine",
+          "exact_degrees": 120.0,
+          "separation": 115.279952,
+          "orb": 4.720048,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "true_node",
+          "natal_point": "true_node",
+          "aspect": "conjunction",
+          "exact_degrees": 0.0,
+          "separation": 4.943849,
+          "orb": 4.943849,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "saturn",
+          "natal_point": "mercury",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 84.946868,
+          "orb": 5.053132,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "uranus",
+          "natal_point": "mars",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 84.625187,
+          "orb": 5.374813,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "neptune",
+          "natal_point": "venus",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 84.303604,
+          "orb": 5.696396,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "saturn",
+          "natal_point": "pluto",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 84.09207,
+          "orb": 5.90793,
+          "allowed_orb": 6.0
+        },
+        {
+          "transit_planet": "moon",
+          "natal_point": "saturn",
+          "aspect": "square",
+          "exact_degrees": 90.0,
+          "separation": 95.922515,
+          "orb": 5.922515,
+          "allowed_orb": 6.0
+        }
+      ],
+      "boundary": "Progressed planets plus explicitly selected quotidian angles. Lunar phases, stations, duration, and interpretation remain separate audited layers."
+    },
+    "parans": {
+      "technique": "parans",
+      "status": "used",
+      "target_date": "2007-01-09",
+      "method": "Swiss Ephemeris rise_trans latitude-aware angular events",
+      "event_count": 33,
+      "events": [
+        {
+          "planet": "saturn",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454109.94604537,
+          "local_time": "2007-01-09T02:42:18.320357-08:00"
+        },
+        {
+          "planet": "jupiter",
+          "angle": "rise",
+          "julian_day_ut": 2454110.02462397,
+          "local_time": "2007-01-09T04:35:27.510729-08:00"
+        },
+        {
+          "planet": "moon",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454110.03029454,
+          "local_time": "2007-01-09T04:43:37.448205-08:00"
+        },
+        {
+          "planet": "pluto",
+          "angle": "rise",
+          "julian_day_ut": 2454110.06527459,
+          "local_time": "2007-01-09T05:33:59.724429-08:00"
+        },
+        {
+          "planet": "mars",
+          "angle": "rise",
+          "julian_day_ut": 2454110.07489361,
+          "local_time": "2007-01-09T05:47:50.807509-08:00"
+        },
+        {
+          "planet": "sun",
+          "angle": "rise",
+          "julian_day_ut": 2454110.14259961,
+          "local_time": "2007-01-09T07:25:20.606518-08:00"
+        },
+        {
+          "planet": "mercury",
+          "angle": "rise",
+          "julian_day_ut": 2454110.15358739,
+          "local_time": "2007-01-09T07:41:09.950433-08:00"
+        },
+        {
+          "planet": "venus",
+          "angle": "rise",
+          "julian_day_ut": 2454110.19141445,
+          "local_time": "2007-01-09T08:35:38.208827-08:00"
+        },
+        {
+          "planet": "neptune",
+          "angle": "rise",
+          "julian_day_ut": 2454110.21153608,
+          "local_time": "2007-01-09T09:04:36.717483-08:00"
+        },
+        {
+          "planet": "jupiter",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454110.22767351,
+          "local_time": "2007-01-09T09:27:50.991352-08:00"
+        },
+        {
+          "planet": "saturn",
+          "angle": "set",
+          "julian_day_ut": 2454110.22986714,
+          "local_time": "2007-01-09T09:31:00.520680-08:00"
+        },
+        {
+          "planet": "uranus",
+          "angle": "rise",
+          "julian_day_ut": 2454110.25682944,
+          "local_time": "2007-01-09T10:09:50.063788-08:00"
+        },
+        {
+          "planet": "true_node",
+          "angle": "rise",
+          "julian_day_ut": 2454110.26490969,
+          "local_time": "2007-01-09T10:21:28.196996-08:00"
+        },
+        {
+          "planet": "mars",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454110.27172895,
+          "local_time": "2007-01-09T10:31:17.381368-08:00"
+        },
+        {
+          "planet": "pluto",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454110.27983419,
+          "local_time": "2007-01-09T10:42:57.673969-08:00"
+        },
+        {
+          "planet": "moon",
+          "angle": "set",
+          "julian_day_ut": 2454110.28420722,
+          "local_time": "2007-01-09T10:49:15.504146-08:00"
+        },
+        {
+          "planet": "sun",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454110.34500033,
+          "local_time": "2007-01-09T12:16:48.028382-08:00"
+        },
+        {
+          "planet": "mercury",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454110.35064807,
+          "local_time": "2007-01-09T12:24:55.993106-08:00"
+        },
+        {
+          "planet": "venus",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454110.39828854,
+          "local_time": "2007-01-09T13:33:32.129903-08:00"
+        },
+        {
+          "planet": "neptune",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454110.42850297,
+          "local_time": "2007-01-09T14:17:02.656278-08:00"
+        },
+        {
+          "planet": "jupiter",
+          "angle": "set",
+          "julian_day_ut": 2454110.43069242,
+          "local_time": "2007-01-09T14:20:11.825158-08:00"
+        },
+        {
+          "planet": "mars",
+          "angle": "set",
+          "julian_day_ut": 2454110.46852186,
+          "local_time": "2007-01-09T15:14:40.288339-08:00"
+        },
+        {
+          "planet": "uranus",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454110.49125881,
+          "local_time": "2007-01-09T15:47:24.760886-08:00"
+        },
+        {
+          "planet": "pluto",
+          "angle": "set",
+          "julian_day_ut": 2454110.49439241,
+          "local_time": "2007-01-09T15:51:55.504177-08:00"
+        },
+        {
+          "planet": "true_node",
+          "angle": "upper_culmination",
+          "julian_day_ut": 2454110.50587744,
+          "local_time": "2007-01-09T16:08:27.811086-08:00"
+        },
+        {
+          "planet": "sun",
+          "angle": "set",
+          "julian_day_ut": 2454110.5475517,
+          "local_time": "2007-01-09T17:08:28.467114-08:00"
+        },
+        {
+          "planet": "mercury",
+          "angle": "set",
+          "julian_day_ut": 2454110.54793949,
+          "local_time": "2007-01-09T17:09:01.972344-08:00"
+        },
+        {
+          "planet": "venus",
+          "angle": "set",
+          "julian_day_ut": 2454110.6054813,
+          "local_time": "2007-01-09T18:31:53.584685-08:00"
+        },
+        {
+          "planet": "neptune",
+          "angle": "set",
+          "julian_day_ut": 2454110.6454801,
+          "local_time": "2007-01-09T19:29:29.481048-08:00"
+        },
+        {
+          "planet": "saturn",
+          "angle": "rise",
+          "julian_day_ut": 2454110.65931501,
+          "local_time": "2007-01-09T19:49:24.817192-08:00"
+        },
+        {
+          "planet": "uranus",
+          "angle": "set",
+          "julian_day_ut": 2454110.72570392,
+          "local_time": "2007-01-09T21:25:00.818990-08:00"
+        },
+        {
+          "planet": "true_node",
+          "angle": "set",
+          "julian_day_ut": 2454110.74685172,
+          "local_time": "2007-01-09T21:55:27.988239-08:00"
+        },
+        {
+          "planet": "moon",
+          "angle": "rise",
+          "julian_day_ut": 2454110.80992635,
+          "local_time": "2007-01-09T23:26:17.637054-08:00"
+        }
+      ],
+      "paran_pairs_within_4_minutes": [
+        {
+          "first": {
+            "planet": "jupiter",
+            "angle": "upper_culmination",
+            "local_time": "2007-01-09T09:27:50.991352-08:00"
+          },
+          "second": {
+            "planet": "saturn",
+            "angle": "set",
+            "local_time": "2007-01-09T09:31:00.520680-08:00"
+          },
+          "separation_minutes": 3.1588
+        },
+        {
+          "first": {
+            "planet": "neptune",
+            "angle": "upper_culmination",
+            "local_time": "2007-01-09T14:17:02.656278-08:00"
+          },
+          "second": {
+            "planet": "jupiter",
+            "angle": "set",
+            "local_time": "2007-01-09T14:20:11.825158-08:00"
+          },
+          "separation_minutes": 3.1528
+        },
+        {
+          "first": {
+            "planet": "sun",
+            "angle": "set",
+            "local_time": "2007-01-09T17:08:28.467114-08:00"
+          },
+          "second": {
+            "planet": "mercury",
+            "angle": "set",
+            "local_time": "2007-01-09T17:09:01.972344-08:00"
+          },
+          "separation_minutes": 0.5584
+        }
+      ],
+      "boundary": "Geometric rise/culmination/set simultaneity only; no interpretation or predictive claim is inferred."
+    }
+  },
+  "summary": {
+    "progressed_aspect_count": 54,
+    "paran_event_count": 33,
+    "paran_pair_count": 3
+  },
+  "boundary": "Known-event geometry replay only. One positive case cannot establish specificity, false-positive rate, or predictive accuracy."
+}

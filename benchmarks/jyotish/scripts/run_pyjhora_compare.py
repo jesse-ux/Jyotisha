@@ -197,6 +197,15 @@ def build_pyjhora_sample(sample, *, node_mode='mean'):
             'sav': list(sav),
         },
         'shadbala': {name: float(shadbala[6][index]) for index, name in enumerate(['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'])},
+        'shadbala_components': {
+            name: {
+                component: float(shadbala[row_index][index])
+                for component, row_index in {
+                    'sthana': 0, 'kala': 1, 'dig': 2, 'chesta': 3, 'naisargika': 4, 'drik': 5,
+                }.items()
+            }
+            for index, name in enumerate(['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'])
+        },
         'dasha': dasha,
     }
 
@@ -276,6 +285,13 @@ def compare_one(sample_id, local, pyjhora):
             rows, sample_id, 'Shadbala', planet, 'total_virupas',
             local.get('shadbala', {}).get(planet), pyjhora.get('shadbala', {}).get(planet), tolerance=0.5,
         )
+        for component in ['sthana', 'kala', 'dig', 'chesta', 'naisargika', 'drik']:
+            compare_scalar(
+                rows, sample_id, 'Shadbala_Component', planet, component,
+                local.get('shadbala_components', {}).get(planet, {}).get(component),
+                pyjhora.get('shadbala_components', {}).get(planet, {}).get(component),
+                tolerance=0.5,
+            )
     # PyJHora dasha is useful as external signal, but currently has different default starting convention/seed in some cases.
     # Keep fields in matrix, with generous date tolerance; differences are classified below in report.
     for field in ['mahadasha_lord', 'antardasha_lord']:

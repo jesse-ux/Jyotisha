@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "scope": "public_context_references_only",
+  "boundary": "These public cases may be shown when natal similarity is high. They are not replayed calibration cases and cannot raise a prediction score or validate a timing claim.",
+  "case_schema": "references/real_case_calibration/catalog.schema.json",
+  "cases": [
+    {
+      "case_id": "kahlo_bus_injury_1925",
+      "subject": {
+        "name": "Frida Kahlo", "year": 1907, "month": 7, "day": 6, "hour": 8, "minute": 30,
+        "lat": 19.3333, "lon": -99.1667, "tz": -6.6111, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/adbvip/adbvip_07_06.htm", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "BC/BR in hand"}
+      },
+      "source": {"url": "https://www.astro.com/adbvip/adbvip_07_06.htm", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "public_context_reference", "external_oracle_status": "not_replayed", "timezone_note": "Astro-Databank LMT m99w10"},
+      "event_outcomes": [{"event_type": "serious_injury", "event_date": "1925", "domain": "health", "expected_label": "health_event", "outcome": "A bus accident at age 18 caused lifelong pain and medical problems.", "source_excerpt_note": "Public biography records the 1925 bus accident and its lasting health impact.", "source": {"url": "https://en.wikipedia.org/wiki/Frida_Kahlo", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "pending", "do_not_use_for_prediction": true, "report_path": "", "conflict_notes": ["Public context reference only; health-domain outcome replay has not been run."]}
+    },
+    {
+      "case_id": "winfrey_oprah_show_launch_1986",
+      "subject": {
+        "name": "Oprah Winfrey", "year": 1954, "month": 1, "day": 29, "hour": 4, "minute": 30,
+        "lat": 33.51, "lon": -88.52, "tz": -6.0, "node_mode": "mean",
+        "birth_source": {"url": "https://www.astro.com/astro-databank/Winfrey,_Oprah", "source_grade": "primary", "time_accuracy_rating": "AA", "evidence_basis": "Astro-Databank public record"}
+      },
+      "source": {"url": "https://www.astro.com/astro-databank/Winfrey,_Oprah", "source_grade": "primary", "license_or_quote_boundary": "facts_and_short_summary_only"},
+      "chart_signature": {"benchmark_role": "public_context_reference", "external_oracle_status": "not_replayed", "timezone_note": "Kosciusko, Mississippi; standard time offset -06:00"},
+      "event_outcomes": [{"event_type": "public_wealth_path_opening", "event_date": "1986-09-08", "domain": "wealth", "expected_label": "wealth_event", "outcome": "The Oprah Winfrey Show launched in national syndication, creating a public media-business and wealth path.", "source_excerpt_note": "Public programme record gives the first air date as 8 September 1986.", "source": {"url": "https://en.wikipedia.org/wiki/The_Oprah_Winfrey_Show", "source_grade": "verified_secondary"}}],
+      "similarity": {"score": 0.0, "matching_factors": ["not_user_similarity_benchmark"], "dissimilar_factors": []},
+      "replay": {"outcome_replay_status": "pending", "do_not_use_for_prediction": true, "report_path": "docs/research/wealth_adjudicator_first_pass_audit_2026_06_27.md", "conflict_notes": ["Public context reference only; the programme launch is a media-business path event, not a direct measured wealth balance.", "It must not be used for threshold selection or timing calibration."]}
+    }
+  ]
+}

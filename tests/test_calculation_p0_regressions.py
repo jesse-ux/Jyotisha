@@ -78,6 +78,19 @@ def test_sade_sati_uses_real_saturn_transit_for_reference_date() -> None:
     assert result["provenance"]["reference_date"] == "2026-07-11"
 
 
+def test_jupiter_transit_is_available_from_the_native_oracle() -> None:
+    result = calculation_service.compute_transit_longitude(
+        planet="Jupiter",
+        reference_date="2026-07-11",
+        tz=5.5,
+        ayanamsa="lahiri",
+    )
+
+    assert result["planet"] == "Jupiter"
+    assert 0 <= result["longitude"] < 360
+    assert result["data_layer"] == "true_transit_positions"
+
+
 def test_timezone_inference_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         calculation_service,

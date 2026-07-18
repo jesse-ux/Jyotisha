@@ -1,0 +1,15 @@
+{
+  "boundary": "Multi-case replay and independent ephemeris reduce implementation risk; they do not arbitrate method variants without external numeric worked examples.",
+  "independent_ephemeris_status": "ready",
+  "multi_case_replay_status": "ready",
+  "promotion_allowed": false,
+  "public_case_count": 5,
+  "required_next_evidence": [
+    "published component-level Shadbala worked examples for every disputed component",
+    "published BAV contributor-table example with per-sign rows",
+    "formula-source citation for each Xalen/local method branch"
+  ],
+  "scope": "xalen_formula_arbitration_gate",
+  "truth_status": "blocked",
+  "unresolved_variant_count": 46
+}

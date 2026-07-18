@@ -1,0 +1,20 @@
+{
+  "case_id": "steve_jobs_public_1955_lahiri_mean_node",
+  "jd": 2435163.635417,
+  "day_fraction": 0.8020833333333334,
+  "asc_sign_idx": 4,
+  "planets": [
+    {"name": "Sun", "longitude": 312.51748591136726, "speed": 1.006069, "house": 7},
+    {"name": "Moon", "longitude": 344.5165209098362, "speed": 14.175536, "house": 8},
+    {"name": "Mars", "longitude": 5.8598225437926565, "speed": 0.701796, "house": 9},
+    {"name": "Mercury", "longitude": 291.13107265785646, "speed": -0.032977, "house": 6},
+    {"name": "Jupiter", "longitude": 87.27723563442187, "speed": -0.06307, "house": 11},
+    {"name": "Venus", "longitude": 267.941228624149, "speed": 1.136674, "house": 5},
+    {"name": "Saturn", "longitude": 207.93204028705406, "speed": 0.007061, "house": 3}
+  ],
+  "settings": {
+    "ayanamsa": "lahiri",
+    "node_mode": "mean",
+    "source": "local native chart raw; Xalen receives positions rather than recomputing ephemeris"
+  }
+}

@@ -1,0 +1,656 @@
+{
+  "schema_version": "1.0",
+  "scope": "raman_vol1_holdout_source_candidates",
+  "source_boundary": "Discovery index from a locally held book. Raw birth lines can contain OCR ambiguity; each candidate needs independent normalization and public outcome sourcing before any holdout use.",
+  "candidate_count": 36,
+  "candidates": [
+    {
+      "candidate_id": "raman_vol1_chart_3_pdf_24",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 24,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "3",
+      "raw_birth_line": "11-4-1880 at 10-38 a.m. L.T. Lat. 18° 5' N.. Long. 83° 28' E. Balance of Venus Dasa at birth : Years 13-3-20",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_4_pdf_25",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 25,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "4",
+      "raw_birth_line": "7/6-5-1861 at 4-5 a.m. (L.T.) Lat. 22\" 40'N. Long. 88° 30' E. Balance of Mercury Dasa at birth: Years 10-2-12.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_15_pdf_66",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 66,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "15",
+      "raw_birth_line": "9/10-6-1891 at 3-34 a.m. (L.T.) Lat. 18° 52' N., Long. 72\" 49' E. Balance of Saturn Dasa at birth : Years 15-6-6.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_16_pdf_67",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 67,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "16",
+      "raw_birth_line": "1-9-1897 at 8-15 p.m. (L.T.) Lat.11° N., Long. 78° 40' E. Balance of Rahu Dasa at birth : Years 3-8-8.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_8_pdf_69",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 69,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "8",
+      "raw_birth_line": "12-8-1896 at 1-52 a.m. (L.T.) Lat. 13° 2' N., Long. 5h. 10m. 20s. E. Balance of the Moon Dasa at birth : Years 6-0-14.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_18_pdf_71",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 71,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "18",
+      "raw_birth_line": "29-7-1909 at 6-42 a.m. (L.M.T.) hat. 13° N., Long. 5h. 10m. 20s. E. Balance of Mercury's Dasa at birth : Years 6-8-27.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_25_pdf_75",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 75,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "25",
+      "raw_birth_line": "14-5-1896 at 12-16 p.m. (L.T.) Lot. 13° N., Long. 5h. 10m. 20s. E. Balance of the Moon Dasa at birth : Years 3-3-8.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_25_pdf_77",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 77,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "25",
+      "raw_birth_line": "14/13-10-1879 at 4 a.m. (L.T.) Lot. 21° 45' N., Long. 4h. 52m. E. Balance of the Sun Dasa at birth : Years 2-1-18. natives of this chart and",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_31_pdf_83",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 83,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "31",
+      "raw_birth_line": "21-10-1903 at 10-43 a.m. (L.T.) Lot. 13°N., Long. 5h. 10m. 20s. E. Balance of Rahu Dasa at birth : Years 11-6-11.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_34_pdf_87",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 87,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "34",
+      "raw_birth_line": "28/29-3-1890 at 4-30 a.m. (L.T.) Lat. 13° N., Long. 5h. 10m. 20s. Balance of Jupiter Dasa at birth : Years 12-11-6.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_35_pdf_87",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 87,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "35",
+      "raw_birth_line": "27/28-5-1903 at 1-19 a.m. (L.T.) Lat 9° N., Long. 5h. 10m. 48s. E. Balance of Mars Dasa at birth : Years 5-10-7.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_36_pdf_88",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 88,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "36",
+      "raw_birth_line": "26-6-1920 at 2-6 a.m. (I.S. T.) Lat. 24° 47' N., Long. 4h. 28m. E. Balance of Jupiter Dasa at birth : Years 12-11-15.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_37_pdf_89",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 89,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "37",
+      "raw_birth_line": "21-9-1909 at 7-9 p.m. (L.M.T) Lat. 7° N., Long. 79° 4' E. Balance of Mercury Dasa at birth : Years 7-8-12.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_38_pdf_100",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 100,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "38",
+      "raw_birth_line": "20/21-10-1893, at 4-1 a.m. (L.T.) Lot. 13° N., Long. 5h. 10m. 20s. E. Balance of Mars Dasa at birth : Years 4-2-14.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_43_pdf_110",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 110,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "43",
+      "raw_birth_line": "24-8-1890 at 8-44 p.m. (L.T.) Lat. 12\" 20' N., Long. 76° 38' E. Balance of Mercury Dasa at birth : Years 5-10-25. The Second House.—In",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_47_pdf_116",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 116,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "47",
+      "raw_birth_line": "24-8-1890 at 8-44 p.m. (L.T.) Lot. 12° 20' N.. Long. 76\" 38' E. Balance of Mercury Dasa at birth : Years 5-10-25. The Second House.—In",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_49_pdf_130",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 130,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "49",
+      "raw_birth_line": "8-8-1912, A.D. at 7-35 p.m. (I.S.T.) Lat. 13° 4' N., Long. 5h. 10m. 20s. E. Balance of Mars Dasa at birth : Years 6-1-6.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_50_pdf_131",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 131,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "50",
+      "raw_birth_line": "15-4-1883 at 1-30 p.m. (L.T.) Lat. 30° N., Long. 70° E. Balance of Saturn Dasa at birth : Years 6-7-24.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_55_pdf_149",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 149,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "55",
+      "raw_birth_line": "10-9-1889 at about sunrise. Lat. 13° N., Long. 5h. 10m. 20s. E. Balance of Jupiter Dasa at birth : Years 3-0-6.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_56_pdf_149",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 149,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "56",
+      "raw_birth_line": "1-6-1895 at 11-42 p.m. (L.T.) Lat. 13° N., Long. 75° 35' E. Balance of the Sun Dasa at birth : Years 1-6-13.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_62_pdf_155",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 155,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "62",
+      "raw_birth_line": "24-8-1889 at 5-41 p.m. (L.T.) Lat. 16° 4' N., Long. 82° 23' E. Balance of Mercury Dasa at birth : Years 16-8-29.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_64_pdf_179",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 179,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "64",
+      "raw_birth_line": "8-8-1912 A.D. at 7-35 p.m. (I.S.T.) (Lot. 13° N., Long. 5h. 10m. 20s. E.) Balance of Mars Dasa at birth : Years 6-1-6.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_65_pdf_181",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 181,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "65",
+      "raw_birth_line": "16-11-1914 at 5 p.m. ( Lat. 27° 55' N., Long. 68° 45' E.) Balance of Rahu Dasa at birth : Years 6-7-28.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_69_pdf_186",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 186,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "69",
+      "raw_birth_line": "10-2-1909 at 11-33 a.m. (I.S.T.) (Lot. 12° 20' N., Long. 76° 38' E.) Balance of Moon Dasa at birth : Years 0-1-11.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_69_pdf_187",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 187,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "69",
+      "raw_birth_line": "25-9-1898 at 7-30 a.m. (L.M.T.) (Lat. 23° 2' N., Long. 7T 79' E.) Balance of Moon Dasa at birth : Years 6-7-2.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_70_pdf_188",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 188,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "70",
+      "raw_birth_line": "5-7-1886 at 10-32 p.m. (L.M.T.) (Lat. 23° 12' N., Long. 87° 56' E.) Balance of Venus Dasa at birth : Years 17-8-3.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_71_pdf_189",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 189,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "71",
+      "raw_birth_line": "10-4-1910 at 8-38 p.m. (I.S.T.) (Lat. 16° 20' N., Long. 80° 15' E.) Balance of Ketu Dasa at birth : Years 2-1-25.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_72_pdf_190",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 190,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "72",
+      "raw_birth_line": "5-1-1891 at 12-30 p.m. (L.M.T.) (Lat. 18° 54' N., Long. 72° 49' E.J Balance of Rahu Dasa at birth : Years 6-0-27.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_81_pdf_201",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 201,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "81",
+      "raw_birth_line": "23-11-1902 at 5-16 a.m. (L.M.T.) (Lat. 23° 8' N.. long. 72° 40' E.) Balance of Venus Dasa at birth : Years 13-11-12. The Fourth House.—In",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_85_pdf_207",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 207,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "85",
+      "raw_birth_line": "8-8-1912 A.D. at 7-35p.m. (I.S.T.) (Lat. 13° N., Long. 5h. m. 20s. E.) Balance of Mars Dasa at birth : Years 6-1-6.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_86_pdf_207",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 207,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "86",
+      "raw_birth_line": "26-9-1901 at 12-20 a.m. (L.M.T.) (Lat. 10° 25' N., Long. 5h. 53m. E.) Balance of Rahu Dasa at birth : Years 16-1-18.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_113_pdf_282",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 282,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "113",
+      "raw_birth_line": "7-10-1893 at 8-30 a.m. (L.M.T.) (hat. 16\" 57' N., Long. 82° 13' E.) Balance of Venus Dasa at birth : Years 9-2-21.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_114_pdf_282",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 282,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "114",
+      "raw_birth_line": "9-9-1911 ot 11-18 p.m. (I.S.T.) (Lat. 22° 53' N., Long. 88° 27' E.) Balance of Saturn Dasa at birth : Years 12-5-27.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_115_pdf_284",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 284,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "115",
+      "raw_birth_line": "19-5-1916 at 6-10 a.m. (I.S.T.) (Lot. 22° V N., Long. 82° 4' E.) Balance of Mercury Dasa at birth : Years 4-6-9.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_116_pdf_284",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 284,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "116",
+      "raw_birth_line": "4/5-5-1895 at 4-00 a.m. (L.M.T.) (Lot. 13° 2' N., Long. 77° 35' E.) Balance of Sun Dasa at birth : Years 4-5-19.",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    },
+    {
+      "candidate_id": "raman_vol1_chart_119_pdf_292",
+      "source": {
+        "title": "How to Judge a Horoscope, Volume One",
+        "author": "Bangalore Venkata Raman",
+        "local_page": 292,
+        "source_type": "local_nonredistributable_book"
+      },
+      "chart_number": "119",
+      "raw_birth_line": "12-4-1912 at 12-5 p.m. (I.S.T.) (Lat. 13° N., Long. 77° 35' E.)",
+      "status": "needs_independent_normalization",
+      "prohibited_uses": [
+        "day_level_label",
+        "negative_interval",
+        "rule_tuning",
+        "production_prediction_validation"
+      ]
+    }
+  ]
+}

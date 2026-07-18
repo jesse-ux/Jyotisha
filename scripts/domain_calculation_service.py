@@ -19,7 +19,10 @@ from sade_sati import calc_sade_sati_complete
 
 CONTRACT_VERSION = "1.0.0"
 _SWISSEPH_LOCK = threading.RLock()
-_PLANET_IDS = {"Saturn": swe.SATURN}
+_PLANET_IDS = {
+    "Jupiter": swe.JUPITER,
+    "Saturn": swe.SATURN,
+}
 
 
 class CalculationError(ValueError):

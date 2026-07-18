@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 
-def test_gateway_status_defaults_to_local_first_cn_safe(monkeypatch):
+def test_gateway_status_defaults_to_official_first_cn_safe(monkeypatch):
     from scripts import vedastro_gateway
 
     monkeypatch.delenv("VEDASTRO_GATEWAY_MODE", raising=False)
@@ -17,13 +17,12 @@ def test_gateway_status_defaults_to_local_first_cn_safe(monkeypatch):
     status = vedastro_gateway.gateway_status()
 
     assert status["scope"] == "vedastro_gateway"
-    assert status["mode"] == "local_first"
+    assert status["mode"] == "official_first"
     assert status["direct_browser_access_allowed"] is False
     assert status["frontend_secret_safe"] is True
     assert status["backend_priority"] == ["self_host", "official", "cache", "queue", "local_fallback"]
-    assert status["active_backend"] == "local_fallback"
-    assert status["official_readiness"]["official_ready"] is False
-    assert "missing_endpoint" in status["official_readiness"]["readiness_blockers"]
+    assert status["active_backend"] == "official"
+    assert status["official_readiness"]["official_ready"] is True
     assert status["boundary"] == "Users never call VedAstro directly; backend gateway owns cache, queue, and fallback."
 
 
@@ -259,6 +258,19 @@ def test_gateway_completion_archives_official_raw_response(monkeypatch, tmp_path
     path = tmp_path / archive["official_raw_response_path"]
     assert path.exists()
     assert '"vedastro_official"' in path.read_text(encoding="utf-8")
+
+
+def test_gateway_archives_official_full_snapshot_raw_response(monkeypatch, tmp_path):
+    from scripts import vedastro_gateway
+
+    monkeypatch.setenv("VEDASTRO_GATEWAY_QUEUE_DIR", str(tmp_path))
+    job = vedastro_gateway.enqueue_gateway_job({"year": 1990}, question="public validation")
+    completed = vedastro_gateway.complete_gateway_job(
+        job["job_id"],
+        {"raw_response": {"source": "vedastro_official_full_snapshot", "response_hash": "public-demo"}},
+    )
+
+    assert completed["raw_response_archive"]["official_raw_response_available"] is True
 
 
 def test_gateway_lists_official_raw_response_archives(monkeypatch, tmp_path):

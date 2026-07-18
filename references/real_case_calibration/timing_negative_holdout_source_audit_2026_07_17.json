@@ -1,0 +1,42 @@
+{
+  "candidate_window_policy": "Return ranked candidate days/months with signals and confidence caps; do not label them verified predictions until blind negative holdout passes.",
+  "claim_status": "exploratory_unvalidated",
+  "production_tuning_allowed": false,
+  "required_label_contract": {
+    "explicit_non_event_intervals": true,
+    "independent_human_reviewed": true,
+    "positive_and_negative_split_locked_before_scoring": true,
+    "unobserved_before_preregistration": true
+  },
+  "scope": "timing_negative_holdout_source_audit",
+  "sources": [
+    {
+      "blockers": [
+        "missing_explicit_non_event_intervals",
+        "not_independently_human_reviewed",
+        "observed_before_preregistration"
+      ],
+      "explicit_non_event_intervals": false,
+      "independent_human_reviewed": false,
+      "name": "Wikidata/EventKG/BiographyNet derived timelines",
+      "notes": "Useful for positive event dates; missing events are not non-event labels.",
+      "observed_before_preregistration": true,
+      "positive_events": true,
+      "usable_for_promotion": false
+    },
+    {
+      "blockers": [
+        "not_independently_human_reviewed",
+        "observed_before_preregistration"
+      ],
+      "explicit_non_event_intervals": true,
+      "independent_human_reviewed": false,
+      "name": "existing 40 control dates",
+      "notes": "May remain diagnostic only; cannot tune or promote claims.",
+      "observed_before_preregistration": true,
+      "positive_events": false,
+      "usable_for_promotion": false
+    }
+  ],
+  "timing_precision": "candidate_day_window"
+}

@@ -12,6 +12,17 @@ from typing import Any
 
 REQUIRED_ENGINES = {"VedAstro", "PyJHora_JHora", "jyotishganit"}
 REQUIRED_ROW_FIELDS = {"section", "field", "local_value", "oracle_values", "status"}
+REQUIRED_HIGH_RIGOR_SECTIONS = {
+    "D1",
+    "D2",
+    "D4",
+    "D9",
+    "D10",
+    "ashtakavarga_bav",
+    "ashtakavarga_sav",
+    "shadbala_total",
+    "shadbala_components",
+}
 VALID_ROW_STATUSES = {"match", "mismatch", "blocked", "not_comparable"}
 RAW_VERIFIED_STATUSES = {"verified", "official_verified", "imported"}
 
@@ -79,6 +90,12 @@ def validate_manifest(path: str | Path) -> dict[str, Any]:
     for row in rows:
         if isinstance(row, dict) and row.get("status") in counts:
             counts[row["status"]] += 1
+    covered_sections = {
+        str(row.get("section"))
+        for row in rows
+        if isinstance(row, dict) and row.get("status") in {"match", "mismatch"}
+    }
+    missing_high_rigor_sections = sorted(REQUIRED_HIGH_RIGOR_SECTIONS - covered_sections)
 
     if errors:
         status = "invalid"
@@ -92,6 +109,9 @@ def validate_manifest(path: str | Path) -> dict[str, Any]:
     elif counts["blocked"]:
         status = "partial"
         blocked_reason = "some_comparison_rows_blocked"
+    elif missing_high_rigor_sections:
+        status = "partial"
+        blocked_reason = "missing_high_rigor_sections"
     else:
         status = "pass"
         blocked_reason = None
@@ -110,6 +130,8 @@ def validate_manifest(path: str | Path) -> dict[str, Any]:
         "mismatch_count": counts["mismatch"],
         "blocked_row_count": counts["blocked"],
         "not_comparable_count": counts["not_comparable"],
+        "covered_sections": sorted(covered_sections),
+        "missing_high_rigor_sections": missing_high_rigor_sections,
         "blocked_reason": blocked_reason,
         "errors": errors,
         "runtime_boundary": manifest.get("runtime_boundary", ""),

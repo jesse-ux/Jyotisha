@@ -28,12 +28,11 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-
-export type SidebarSession = {
-  id: string;
-  title: string;
-  messageCount: number;
-};
+import {
+  SidebarSessionRow,
+  type SidebarSession,
+  type SidebarSessionControls,
+} from "@/components/sidebar-session-row";
 
 export type SidebarAccount = {
   name: string;
@@ -51,6 +50,7 @@ export type AppSidebarProps = {
   accountTriggerRef: Ref<HTMLButtonElement>;
   newChatDisabled: boolean;
   creatingSession: boolean;
+  sessionControls: SidebarSessionControls;
   onAccountMenuOpenChange: (open: boolean) => void;
   onNewChat: () => void;
   onSelectSession: (sessionId: string) => void;
@@ -67,6 +67,7 @@ export function AppSidebar({
   accountTriggerRef,
   newChatDisabled,
   creatingSession,
+  sessionControls,
   onAccountMenuOpenChange,
   onNewChat,
   onSelectSession,
@@ -133,26 +134,36 @@ export function AppSidebar({
       <SidebarContent>
         {showExpandedContent ? (
           <SidebarGroup className="session-nav" aria-label="聊天记录">
-            <SidebarGroupLabel className="sidebar-label" ref={historyHeadingRef} tabIndex={-1}>聊天记录</SidebarGroupLabel>
+            <div className="session-nav-header">
+              <SidebarGroupLabel className="sidebar-label" ref={historyHeadingRef} tabIndex={-1}>
+                {sessionControls.showingArchived ? "归档记录" : "聊天记录"}
+              </SidebarGroupLabel>
+              <button className="session-nav-toggle" type="button" onClick={sessionControls.onToggleArchivedView}>
+                {sessionControls.showingArchived ? "返回" : `归档 ${sessionControls.archivedCount}`}
+              </button>
+            </div>
             <SidebarGroupContent>
               {sessions.length === 0 ? <p className="sidebar-empty">暂无对话</p> : (
                 <SidebarMenu className="session-list">
                   {sessions.map((session, index) => (
                     <SidebarMenuItem key={session.id}>
-                      <SidebarMenuButton
+                      <SidebarSessionRow
                         ref={index === 0 ? firstSessionRef : undefined}
-                        className="session-row"
-                        type="button"
-                        isActive={session.id === activeSessionId}
-                        aria-current={session.id === activeSessionId ? "page" : undefined}
-                        onClick={() => {
+                        session={session}
+                        active={session.id === activeSessionId}
+                        disabled={sessionControls.disabled}
+                        menuOpen={sessionControls.menuSessionId === session.id}
+                        onMenuOpenChange={(open) => sessionControls.onMenuSessionChange(open ? session.id : null)}
+                        onSelect={() => {
                           onSelectSession(session.id);
                           if (isMobile) setOpenMobile(false);
                         }}
-                      >
-                        <span className="truncate">{session.title}</span>
-                        {session.messageCount > 0 ? <small>{session.messageCount} 条消息</small> : null}
-                      </SidebarMenuButton>
+                        onTogglePinned={() => sessionControls.onTogglePinned(session.id)}
+                        onRename={() => sessionControls.onRename(session.id)}
+                        onShare={() => sessionControls.onShare(session.id)}
+                        onToggleArchived={() => sessionControls.onToggleArchived(session.id)}
+                        onDelete={() => sessionControls.onDelete(session.id)}
+                      />
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>

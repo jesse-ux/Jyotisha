@@ -25,25 +25,72 @@ REQUIRED_PARITY_OUTPUTS = ["D1", "D9", "D10", "D2", "D4", "Vimshottari", "Shadba
 def _public_pyjhora_parity_manifest() -> dict:
     path = Path("references/oracle/pyjhora_same_chart_parity_public_smoke_manifest.json")
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        baseline = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {"status": "not_available", "tested": False}
+
+    supplemental_path = Path("references/oracle/pyjhora_extended_parity_public_smoke_manifest.json")
+    try:
+        supplemental = json.loads(supplemental_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        supplemental = None
+
+    result = dict(baseline)
+    supplements = [supplemental] if supplemental and supplemental.get("tested") else []
+    covered = set(baseline.get("covered_outputs", []))
+    sample_counts = {name: baseline.get("sample_count", 0) for name in covered}
+    partial_sample_counts = {}
+    source_reports = [baseline["source_report"]] if baseline.get("source_report") else []
+    for item in supplements:
+        item_count = item.get("sample_count", 0)
+        for name in item.get("covered_outputs", []):
+            covered.add(name)
+            sample_counts[name] = max(sample_counts.get(name, 0), item_count)
+        for name in item.get("partial_outputs", []):
+            partial_sample_counts[name] = max(partial_sample_counts.get(name, 0), item_count)
+        if item.get("source_report"):
+            source_reports.append(item["source_report"])
+
+    result["covered_outputs"] = [name for name in REQUIRED_PARITY_OUTPUTS if name in covered]
+    result["missing_required_outputs"] = [name for name in REQUIRED_PARITY_OUTPUTS if name not in covered]
+    result["output_sample_counts"] = sample_counts
+    result["partial_output_sample_counts"] = partial_sample_counts
+    result["source_reports"] = source_reports
+    result["supplemental_verifications"] = supplements
+    result["boundary"] = (
+        "Partial PyJHora verification with per-output sample counts. D2/D4/Ashtakavarga use a one-chart "
+        "supplemental replay; Shadbala absolute values remain mismatched. This is not JHora desktop, "
+        "VedAstro, jyotishganit, or predictive validation."
+    )
+    return result
 
 
 def _same_chart_parity_contract(engines: dict) -> dict:
     pyjhora_public = _public_pyjhora_parity_manifest()
+    replay_manifest = validate_parity_replay_manifest("references/oracle/three_engine_parity_replay_manifest.json")
+    replay_covers_all_engines = bool(
+        replay_manifest.get("tested") and not replay_manifest.get("missing_engines")
+    )
     engine_states = {}
     for name, engine in engines.items():
         available = engine["status"] == "available"
         engine_states[name] = {
             "available": available,
-            "tested": bool(name == "PyJHora/JHora" and pyjhora_public.get("tested")),
+            "tested": bool(
+                replay_covers_all_engines
+                or (name == "PyJHora/JHora" and pyjhora_public.get("tested"))
+            ),
             "blocked": not available,
             "blocking_reason": "" if available else engine["status"],
         }
-    replay_manifest = validate_parity_replay_manifest("references/oracle/three_engine_parity_replay_manifest.json")
+    if not all(state["available"] for state in engine_states.values()):
+        contract_status = "blocked"
+    elif not all(state["tested"] for state in engine_states.values()):
+        contract_status = "partial"
+    else:
+        contract_status = replay_manifest.get("status", "partial")
     return {
-        "status": "ready" if all(state["available"] for state in engine_states.values()) else "blocked",
+        "status": contract_status,
         "required_outputs": REQUIRED_PARITY_OUTPUTS,
         "expected_oracle_fields": {
             "VedAstro": [
@@ -71,7 +118,7 @@ def _same_chart_parity_contract(engines: dict) -> dict:
         "engine_states": engine_states,
         "replay_manifest": replay_manifest,
         "partial_verifications": {"PyJHora/JHora": pyjhora_public},
-        "boundary": "This is a parity contract. Public PyJHora partial verification does not close missing outputs or other engine raw-oracle requirements.",
+        "boundary": "Availability, executed raw coverage, and numerical parity are separate states; mismatch is not ready.",
     }
 
 

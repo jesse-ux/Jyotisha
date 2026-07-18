@@ -56,6 +56,37 @@ type Profile = BirthTimeDraft & {
   districtCode: string;
   rectificationCaseId: string;
 };
+type ChartLibraryRecord = {
+  id: string;
+  role: "self" | "other";
+  profile: Profile;
+  updatedAt: number;
+};
+type ChartLibraryApiRecord = {
+  id: string;
+  role: "self" | "other";
+  profile: Profile;
+  updated_at?: string;
+};
+type SynastryReportCard = {
+  id: string;
+  partnerName: string;
+  score?: number;
+  maxScore?: number;
+  assessment?: string;
+  headline?: string;
+  scoreBand?: string;
+  strengths?: string[];
+  risks?: string[];
+  nextEvidence?: string[];
+  createdAt: number;
+};
+type SynastryReportApiRecord = {
+  id: string;
+  partner_name?: string;
+  report?: SynastryReportCard;
+  created_at?: string;
+};
 type ChatSession = { id: string; title: string; theme: Theme; modelId: string; messages: Message[]; updatedAt: number };
 type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
@@ -66,6 +97,21 @@ type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[]
 type OnboardingStep = "name" | "birth" | "place" | "rectification";
 type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
 type AccountDialog = "profile" | "redeem" | "logout";
+type DailyStarlanguageCard = { trend: string; action: string; caution: string };
+type DailyStarlanguageApiResponse = {
+  status?: "ok";
+  card?: DailyStarlanguageCard;
+  source?: "calculation_lite";
+  claim_status?: "exploratory_unvalidated";
+  boundary?: "not_deterministic_prediction";
+};
+type BirthRectificationPreview = {
+  status?: "ok" | "blocked";
+  candidate_scan?: { start?: string; end?: string; candidate_count?: number };
+  question_count?: number;
+  boundary?: "not_auto_rectified";
+  source?: "active_rectification_questions" | "fallback_unavailable";
+};
 type SessionReadResult = { readonly sessions: ChatSession[]; readonly fallbackSessionIds: string[] };
 type PendingConsultation = {
   readonly requestId: string;
@@ -110,6 +156,13 @@ const previewModelCatalog = parsePublicModelCatalog({
 });
 
 const presetOnboardingMessage = "你好，我是 Jyotisha。\n开始前，我想先认识你。\n请问我该怎么称呼你？";
+
+const dailyStarlanguageCards: DailyStarlanguageCard[] = [
+  { trend: "先收束，再推进。适合把一个悬而未决的问题拆小。", action: "选一件最重要的事，给它留出 45 分钟不被打断的时间。", caution: "避免在情绪最满时做承诺。" },
+  { trend: "适合整理关系与边界。越清楚，越不容易被外界节奏带走。", action: "把今天要回复的人和要推迟的事分开列出来。", caution: "不要把暂时的沉默误读成最终答案。" },
+  { trend: "执行力比灵感更重要。小步完成会比大计划更有力量。", action: "先完成一个可交付版本，再考虑优化。", caution: "别让完美感拖慢开始。" },
+  { trend: "适合观察资源流向：时间、注意力、金钱都算。", action: "检查一个正在消耗你的习惯，并给它设上限。", caution: "不要为了短期安心做长期成本高的选择。" },
+];
 
 const greetingVariants: Record<GreetingPeriod, Array<(name: string) => string>> = {
   morning: [
@@ -208,6 +261,173 @@ function selectedBirthPlace(profile: Profile): BirthPlace | null {
     .join(" · ");
 
   return { label, lat: location.center[1], lon: location.center[0], tz: china.timezone };
+}
+
+function chartLibraryStorageKey(accountId: string) {
+  return `jyotisha_chart_library:${accountId}`;
+}
+function synastryHistoryStorageKey(accountId: string) {
+  return `jyotisha_synastry_history:${accountId}`;
+}
+
+function profileReadyForLibrary(profile: Profile) {
+  return !missingProfileStep(profile);
+}
+
+function buildSelfChartRecord(profile: Profile): ChartLibraryRecord {
+  return { id: "self", role: "self", profile, updatedAt: timestamp() };
+}
+
+function upsertSelfChart(library: ChartLibraryRecord[], profile: Profile) {
+  if (!profileReadyForLibrary(profile)) return library.filter((record) => record.role !== "self");
+  const others = library.filter((record) => record.role !== "self");
+  return [buildSelfChartRecord(profile), ...others];
+}
+
+function readChartLibrary(accountId: string): ChartLibraryRecord[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(chartLibraryStorageKey(accountId)) || "[]") as ChartLibraryRecord[];
+    return Array.isArray(parsed) ? parsed.filter((record) => record?.id && record?.profile) : [];
+  } catch {
+    return [];
+  }
+}
+function readSynastryHistory(accountId: string): SynastryReportCard[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(synastryHistoryStorageKey(accountId)) || "[]") as SynastryReportCard[];
+    return Array.isArray(parsed) ? parsed.filter((record) => record?.id && record?.partnerName).slice(0, 10) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSynastryHistory(accountId: string, history: SynastryReportCard[]) {
+  localStorage.setItem(synastryHistoryStorageKey(accountId), JSON.stringify(history.slice(0, 10)));
+}
+
+function normalizeSynastryReportApiRecord(record: SynastryReportApiRecord): SynastryReportCard | null {
+  if (!record.report || typeof record.report !== "object") return null;
+  return {
+    ...record.report,
+    id: record.id,
+    partnerName: record.partner_name || record.report.partnerName || "对方",
+    createdAt: Date.parse(record.created_at || "") || record.report.createdAt || timestamp(),
+  };
+}
+
+async function fetchCloudSynastryHistory() {
+  const response = await fetch("/api/synastry-reports", { cache: "no-store" });
+  if (!response.ok) throw new Error("cloud_synastry_history_unavailable");
+  const payload = await response.json().catch(() => null) as { reports?: SynastryReportApiRecord[] } | null;
+  return (payload?.reports || []).map(normalizeSynastryReportApiRecord).filter(Boolean) as SynastryReportCard[];
+}
+
+async function saveCloudSynastryReport(report: SynastryReportCard) {
+  const response = await fetch("/api/synastry-reports", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ partnerName: report.partnerName, report }),
+  });
+  if (!response.ok) throw new Error("cloud_synastry_report_save_failed");
+  const payload = await response.json().catch(() => null) as { report?: SynastryReportApiRecord } | null;
+  return payload?.report ? normalizeSynastryReportApiRecord(payload.report) || report : report;
+}
+
+function normalizeChartLibraryApiRecord(record: ChartLibraryApiRecord): ChartLibraryRecord {
+  return {
+    id: record.role === "self" ? "self" : record.id,
+    role: record.role,
+    profile: record.profile,
+    updatedAt: Date.parse(record.updated_at || "") || timestamp(),
+  };
+}
+
+async function fetchCloudChartLibrary() {
+  const response = await fetch("/api/chart-profiles", { cache: "no-store" });
+  if (!response.ok) throw new Error("cloud_chart_library_unavailable");
+  const payload = await response.json().catch(() => null) as { profiles?: ChartLibraryApiRecord[] } | null;
+  return (payload?.profiles || []).map(normalizeChartLibraryApiRecord);
+}
+
+async function saveCloudChartProfile(record: ChartLibraryRecord) {
+  const response = await fetch("/api/chart-profiles", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: record.role === "self" ? undefined : record.id,
+      role: record.role,
+      profile: record.profile,
+    }),
+  });
+  if (!response.ok) throw new Error("cloud_chart_profile_save_failed");
+  const payload = await response.json().catch(() => null) as { profile?: ChartLibraryApiRecord } | null;
+  return payload?.profile ? normalizeChartLibraryApiRecord(payload.profile) : record;
+}
+
+async function deleteCloudChartProfile(recordId: string) {
+  const response = await fetch(`/api/chart-profiles/${encodeURIComponent(recordId)}`, { method: "DELETE" });
+  if (!response.ok) throw new Error("cloud_chart_profile_delete_failed");
+}
+
+function profilePlaceLabel(profile: Profile) {
+  return selectedBirthPlace(profile)?.label || "地点未完整";
+}
+
+function buildSynastryQuestion(selfProfile: Profile, partnerProfile: Profile) {
+  return [
+    `请用印度占星合盘分析我和${partnerProfile.name || "对方"}的关系。`,
+    `我的资料：${selfProfile.name || "本人"}，${selfProfile.date} ${selfProfile.time}，${profilePlaceLabel(selfProfile)}。`,
+    `对方资料：${partnerProfile.name || "对方"}，${partnerProfile.date} ${partnerProfile.time}，${profilePlaceLabel(partnerProfile)}。`,
+    "请先说明会使用哪些证据层，再分析关系模式、冲突点、适合发展的方式和需要谨慎的时间窗口。",
+  ].join("\n");
+}
+
+function buildDailyStarlanguageQuestion(profile: Profile) {
+  const today = new Date().toISOString().slice(0, 10);
+  return [
+    `请生成今日星语：${today}，对象是${profile.name || "我"}。`,
+    `出生资料：${profile.date} ${profile.time}，${profilePlaceLabel(profile)}。`,
+    "请输出今日趋势、适合推进的事、需要避开的事、一个行动建议。",
+    "边界：这是探索性日提示，不是确定预测；若涉及精确事件日期，请标为候选触发，不要包装成必然结论。",
+  ].join("\n");
+}
+
+function buildDailyStarlanguageCard(profile: Profile) {
+  const today = new Date().toISOString().slice(0, 10);
+  const seed = `${today}-${profile.date}-${profile.time}-${profile.provinceCode}-${profile.cityCode}`;
+  const index = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0) % dailyStarlanguageCards.length;
+  return dailyStarlanguageCards[index];
+}
+
+async function fetchDailyStarlanguage(profile: Profile) {
+  const response = await fetch("/api/daily-starlanguage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile }),
+  });
+  if (!response.ok) throw new Error("daily_starlanguage_unavailable");
+  const payload = await response.json().catch(() => null) as DailyStarlanguageApiResponse | null;
+  if (payload?.status !== "ok" || !payload.card) throw new Error("daily_starlanguage_invalid");
+  return payload.card;
+}
+
+async function fetchBirthRectificationPreview(profile: Profile) {
+  const response = await fetch("/api/birth-rectification", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile }),
+  });
+  if (!response.ok) throw new Error("birth_rectification_preview_unavailable");
+  return await response.json().catch(() => null) as BirthRectificationPreview | null;
+}
+
+function buildBirthTimeRectificationQuestion(profile: Profile) {
+  return [
+    `请为${profile.name || "我"}做生时校正辅助。`,
+    `当前记录：${profile.date} ${profile.time || "时间不确定"}，${profilePlaceLabel(profile)}。`,
+    "请先列出需要我补充的关键人生事件，再给候选出生时间段、每段会影响的 Lagna/分盘/大运差异。",
+    "边界：候选出生时间段必须标为待验证，不能直接改写默认星盘；没有事件证据前不要声称校正完成。",
+  ].join("\n");
 }
 
 function missingProfileStep(profile: Profile): OnboardingStep | null {
@@ -398,12 +618,12 @@ function BirthLocationFields({ value, onChange }: { value: Profile; onChange: (p
   );
 }
 
-function ProfileFields({ value, onChange }: { value: Profile; onChange: (profile: Profile) => void }) {
+function ProfileFields({ value, onChange, nameInputId }: { value: Profile; onChange: (profile: Profile) => void; nameInputId?: string }) {
   return (
     <>
       <label>
         <span>如何称呼你</span>
-        <input id="profile-name" required autoComplete="name" maxLength={80} placeholder="例如：林遥" value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} />
+        <input id={nameInputId} required autoComplete="name" maxLength={80} placeholder="例如：林遥" value={value.name} onChange={(event) => onChange({ ...value, name: event.target.value })} />
       </label>
       <BirthTimeIntakeFields value={value} onPatch={(patch) => onChange({ ...value, ...patch })} />
       <BirthLocationFields value={value} onChange={onChange} />
@@ -499,6 +719,13 @@ export default function Home() {
   const [profileDraft, setProfileDraft] = useState<Profile>(emptyProfile);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [activeAccountDialog, setActiveAccountDialog] = useState<AccountDialog | null>(null);
+  const [chartLibrary, setChartLibrary] = useState<ChartLibraryRecord[]>([]);
+  const [chartLibraryOpen, setChartLibraryOpen] = useState(false);
+  const [otherProfileDraft, setOtherProfileDraft] = useState<Profile>(emptyProfile);
+  const [synastryReportCard, setSynastryReportCard] = useState<SynastryReportCard | null>(null);
+  const [synastryHistory, setSynastryHistory] = useState<SynastryReportCard[]>([]);
+  const [dailyStarlanguageCard, setDailyStarlanguageCard] = useState<DailyStarlanguageCard | null>(null);
+  const [birthRectificationPreview, setBirthRectificationPreview] = useState<BirthRectificationPreview | null>(null);
   const [profileNotice, setProfileNotice] = useState("");
   const [account, setAccount] = useState<Account | null>(null);
   const [accountError, setAccountError] = useState("");
@@ -508,6 +735,10 @@ export default function Home() {
   const [redeeming, setRedeeming] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [pinnedSessionIds, setPinnedSessionIds] = useState<string[]>([]);
+  const [archivedSessionIds, setArchivedSessionIds] = useState<string[]>([]);
+  const [showArchivedSessions, setShowArchivedSessions] = useState(false);
+  const [sessionMenuId, setSessionMenuId] = useState<string | null>(null);
   const [modelCatalog, setModelCatalog] = useState<PublicLanguageModelCatalog | null>(null);
   const [activeSessionId, setActiveSessionId] = useState("");
   const [draft, setDraft] = useState("");
@@ -547,6 +778,7 @@ export default function Home() {
   const modelSyncFailures = useRef(new Set<string>());
   const modelSelectionVersions = useRef(new Map<string, number>());
   const activeSessionIdRef = useRef("");
+  const chartLibraryLoadedAccount = useRef("");
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
   const birthTimeRevisionPending = useRef(false);
@@ -559,16 +791,98 @@ export default function Home() {
   });
 
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
+  const visibleSessions = sessions
+    .filter((session) => showArchivedSessions ? archivedSessionIds.includes(session.id) : !archivedSessionIds.includes(session.id))
+    .sort((left, right) => Number(pinnedSessionIds.includes(right.id)) - Number(pinnedSessionIds.includes(left.id)));
   const activeError = requestError && requestError.sessionId === activeSession?.id ? requestError.message : "";
   const isLoading = pendingSessionId === activeSession?.id;
   const activeStreamingText = streamingReply && streamingReply.sessionId === activeSession?.id ? streamingReply.text : "";
+  const accountId = account?.user.id;
 
   useEffect(() => {
     activeSessionIdRef.current = activeSessionId;
   }, [activeSessionId]);
+
+  useEffect(() => {
+    if (!hydrated || !accountId) return;
+    const prefix = `jyotisha-session-controls:${accountId}:`;
+    setPinnedSessionIds(JSON.parse(localStorage.getItem(`${prefix}pinned`) || "[]"));
+    setArchivedSessionIds(JSON.parse(localStorage.getItem(`${prefix}archived`) || "[]"));
+  }, [accountId, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || !accountId) return;
+    const prefix = `jyotisha-session-controls:${accountId}:`;
+    localStorage.setItem(`${prefix}pinned`, JSON.stringify(pinnedSessionIds));
+    localStorage.setItem(`${prefix}archived`, JSON.stringify(archivedSessionIds));
+  }, [accountId, archivedSessionIds, hydrated, pinnedSessionIds]);
+
+  useEffect(() => {
+    if (!sessionMenuId) return;
+    function closeSessionMenu(event: Event) {
+      if (event instanceof globalThis.KeyboardEvent && event.key !== "Escape") return;
+      if (event instanceof MouseEvent && (event.target as Element | null)?.closest(".session-row")) return;
+      setSessionMenuId(null);
+    }
+    window.addEventListener("mousedown", closeSessionMenu);
+    window.addEventListener("keydown", closeSessionMenu);
+    return () => {
+      window.removeEventListener("mousedown", closeSessionMenu);
+      window.removeEventListener("keydown", closeSessionMenu);
+    };
+  }, [sessionMenuId]);
   const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
-  const accountId = account?.user.id;
+  useEffect(() => {
+    if (!accountId) {
+      setChartLibrary([]);
+      setSynastryHistory([]);
+      chartLibraryLoadedAccount.current = "";
+      return;
+    }
+    if (chartLibraryLoadedAccount.current === accountId) return;
+    chartLibraryLoadedAccount.current = accountId;
+    setChartLibrary(upsertSelfChart(readChartLibrary(accountId), profile));
+    setSynastryHistory(readSynastryHistory(accountId));
+    void fetchCloudChartLibrary()
+      .then((cloudLibrary) => {
+        setChartLibrary((current) => {
+          const otherById = new Map([
+            ...current.filter((record) => record.role === "other").map((record) => [record.id, record] as const),
+            ...cloudLibrary.filter((record) => record.role === "other").map((record) => [record.id, record] as const),
+          ]);
+          const next = upsertSelfChart([...otherById.values()], profile);
+          localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+          return next;
+        });
+      })
+      .catch(() => {
+        // Cloud chart library is best-effort; local library remains usable.
+      });
+    void fetchCloudSynastryHistory()
+      .then((cloudHistory) => {
+        setSynastryHistory((current) => {
+          const byId = new Map([...current, ...cloudHistory].map((record) => [record.id, record] as const));
+          const next = [...byId.values()].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
+          writeSynastryHistory(accountId, next);
+          return next;
+        });
+      })
+      .catch(() => {
+        // Cloud synastry history is best-effort; local history remains usable.
+      });
+  }, [accountId, profile]);
+
+  useEffect(() => {
+    if (!accountId) return;
+    setChartLibrary((current) => {
+      const next = upsertSelfChart(current, profile);
+      localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+      return next;
+    });
+  }, [accountId, profile]);
+
   const profileComplete = isProfileComplete(profile);
+  const dailyStarlanguage = dailyStarlanguageCard ?? (profileComplete ? buildDailyStarlanguageCard(profile) : null);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
     ? startGreeting || completedOnboardingMessage(profileDraft.name.trim())
@@ -838,6 +1152,38 @@ export default function Home() {
   }, [accountId, hydrated, onboarding, onboardingError, profile.name, profileComplete, startGreeting]);
 
   useEffect(() => {
+    if (!hydrated || !profileComplete) return;
+    let cancelled = false;
+    setDailyStarlanguageCard(null);
+    void fetchDailyStarlanguage(profile)
+      .then((card) => {
+        if (!cancelled) setDailyStarlanguageCard(card);
+      })
+      .catch(() => {
+        if (!cancelled) setDailyStarlanguageCard(buildDailyStarlanguageCard(profile));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, profile.date, profile.time, profile.provinceCode, profile.cityCode, profileComplete]);
+
+  useEffect(() => {
+    if (!hydrated || !profileComplete) return;
+    let cancelled = false;
+    setBirthRectificationPreview(null);
+    void fetchBirthRectificationPreview(profile)
+      .then((preview) => {
+        if (!cancelled) setBirthRectificationPreview(preview);
+      })
+      .catch(() => {
+        if (!cancelled) setBirthRectificationPreview({ status: "blocked", boundary: "not_auto_rectified", source: "fallback_unavailable" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, profile.date, profile.time, profile.provinceCode, profile.cityCode, profileComplete]);
+
+  useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     conversationEnd.current?.scrollIntoView({ behavior: isLoading || reduceMotion ? "auto" : "smooth", block: "end" });
   }, [activeSessionId, activeSession?.messages.length, activeStreamingText, isLoading, onboardingPending, onboardingStep, presetMessageFinished, profileComplete]);
@@ -910,6 +1256,70 @@ export default function Home() {
       ...values,
     });
     if (insertError) throw new Error(`云端同步失败：${insertError.message}`);
+  }
+
+  async function renameSession(session: ChatSession) {
+    const title = window.prompt("重命名聊天记录", session.title)?.trim();
+    if (!title || title === session.title) return;
+    const nextSession = { ...session, title, updatedAt: timestamp() };
+    updateSession(session.id, () => nextSession);
+    try {
+      await persistSession(nextSession);
+    } catch (caught) {
+      setComposerNotice(caught instanceof Error ? caught.message : "重命名同步失败");
+    }
+  }
+
+  async function deleteSession(session: ChatSession) {
+    if (!account || !window.confirm(`删除“${session.title}”？此操作不可恢复。`)) return;
+    const previousSessions = sessions;
+    const nextSessions = sessions.filter((item) => item.id !== session.id);
+    setSessions(nextSessions);
+    setPinnedSessionIds((current) => current.filter((id) => id !== session.id));
+    setArchivedSessionIds((current) => current.filter((id) => id !== session.id));
+    if (activeSessionId === session.id) setActiveSessionId(nextSessions[0]?.id ?? "");
+    try {
+      const supabase = createBrowserSupabaseClient();
+      const { error } = await supabase.from("chat_sessions").delete().eq("id", session.id).eq("user_id", account.user.id);
+      if (error) throw error;
+    } catch (caught) {
+      setSessions(previousSessions);
+      setComposerNotice(caught instanceof Error ? `删除失败：${caught.message}` : "删除失败");
+    }
+  }
+
+  function togglePinnedSession(sessionId: string) {
+    setPinnedSessionIds((current) => current.includes(sessionId) ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
+  }
+
+  function toggleArchivedSession(sessionId: string) {
+    setArchivedSessionIds((current) => current.includes(sessionId) ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
+    if (activeSessionId === sessionId) setActiveSessionId(visibleSessions.find((session) => session.id !== sessionId)?.id ?? "");
+  }
+
+  async function shareSession(session: ChatSession) {
+    const sharePayload = {
+      share_payload_version: 1,
+      exported_at: new Date().toISOString(),
+      title: session.title,
+      theme: session.theme,
+      message_count: session.messages.length,
+      messages: session.messages.map((message) => ({ role: message.role, text: message.text })),
+    };
+    const transcript = [
+      `Jyotisha 对话：${session.title}`,
+      "",
+      ...session.messages.map((message) => `${message.role === "user" ? "我" : "Jyotisha"}：${message.text}`),
+      "",
+      "---- JSON 分享包 ----",
+      JSON.stringify(sharePayload, null, 2),
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(transcript);
+      setComposerNotice("已复制当前聊天，可粘贴转发。");
+    } catch {
+      setComposerNotice("无法访问剪贴板，请手动复制聊天内容。");
+    }
   }
 
   async function startNewChat() {
@@ -1029,9 +1439,11 @@ export default function Home() {
     if (!account) throw new Error("账户尚未加载完成");
     if (process.env.NODE_ENV === "development" && uiPreview.current) return;
     const birthPlace = selectedBirthPlace(nextProfile);
-    const { data, error } = await createBrowserSupabaseClient()
-      .from("profiles")
-      .update({
+    const response = await fetch("/api/account", {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
         name: nextProfile.name.trim() || null,
         birth_date: nextProfile.date || null,
         ...birthTimePersistenceValues(nextProfile),
@@ -1042,13 +1454,70 @@ export default function Home() {
         latitude: birthPlace?.lat ?? null,
         longitude: birthPlace?.lon ?? null,
         timezone_offset: birthPlace?.tz ?? null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", account.user.id)
-      .select("id")
-      .maybeSingle();
-    if (error) throw error;
-    if (!data) throw new Error("账户档案不存在，请重新登录后再试。");
+      }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as { error?: string } | null;
+      throw new Error(payload?.error || "账户资料暂时无法保存。");
+    }
+    await saveCloudChartProfile({ ...buildSelfChartRecord(nextProfile), updatedAt: timestamp() }).catch(() => null);
+  }
+
+  async function saveOtherChart(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextProfile = { ...otherProfileDraft, name: otherProfileDraft.name.trim() };
+    if (missingProfileStep(nextProfile)) {
+      setAccountError("请补全其他星盘的称呼、出生时间和出生地点。");
+      return;
+    }
+    if (!accountId) return;
+    let record: ChartLibraryRecord = {
+      id: globalThis.crypto.randomUUID(),
+      role: "other",
+      profile: nextProfile,
+      updatedAt: timestamp(),
+    };
+    try {
+      record = await saveCloudChartProfile(record);
+    } catch {
+      // Keep local chart library usable when cloud sync is unavailable.
+    }
+    setChartLibrary((current) => {
+      const next = [...upsertSelfChart(current, profile), record];
+      localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+      return next;
+    });
+    setOtherProfileDraft(emptyProfile);
+    setAccountError("");
+    setProfileNotice("已添加到星盘库。");
+  }
+
+  function deleteOtherChart(recordId: string) {
+    if (!accountId) return;
+    void deleteCloudChartProfile(recordId).catch(() => {
+      // Local deletion should not be blocked by temporary cloud sync failures.
+    });
+    setChartLibrary((current) => {
+      const next = current.filter((record) => record.id !== recordId || record.role === "self");
+      localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
+      return next;
+    });
+  }
+
+  async function makeDefaultChart(record: ChartLibraryRecord) {
+    if (record.role !== "other" || profileSaving) return;
+    setProfileSaving(true);
+    setAccountError("");
+    try {
+      await persistProfile(record.profile);
+      setProfile(record.profile);
+      setProfileDraft(record.profile);
+      setProfileNotice("已设为当前默认星盘。");
+    } catch (caught) {
+      setAccountError(friendlyError(caught instanceof Error ? caught.message : "默认星盘保存失败"));
+    } finally {
+      setProfileSaving(false);
+    }
   }
 
   async function assessSavedBirthTime(nextProfile: Profile) {
@@ -1253,6 +1722,75 @@ export default function Home() {
     setDraftTheme(theme ?? null);
     setComposerNotice("");
     window.requestAnimationFrame(() => composerInput.current?.focus());
+  }
+
+  function draftDailyStarlanguageQuestion() {
+    chooseSuggestedQuestion(buildDailyStarlanguageQuestion(profile), "timing");
+  }
+
+  function draftBirthTimeRectificationQuestion() {
+    chooseSuggestedQuestion(buildBirthTimeRectificationQuestion(profile), "timing");
+  }
+
+  async function draftSynastryQuestionFromChart(record: ChartLibraryRecord) {
+    if (record.role !== "other") return;
+    const baseQuestion = buildSynastryQuestion(profile, record.profile);
+    try {
+      const response = await fetch("/api/synastry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selfProfile: profile, partnerProfile: record.profile }),
+      });
+      const payload = await response.json().catch(() => null) as { status?: string; evidenceLayers?: string[]; synastry?: { total_score?: number; max_score?: number; assessment?: string }; relationshipReport?: { headline?: string; scoreBand?: string; strengths?: string[]; risks?: string[]; nextEvidence?: string[] } } | null;
+      if (response.ok && payload?.status === "ok") {
+        const score = payload.synastry?.total_score;
+        const max = payload.synastry?.max_score;
+        const assessment = payload.synastry?.assessment;
+        const layers = (payload.evidenceLayers || []).join(" / ") || "Ashtakoot / Moon / D9";
+        const reportCard: SynastryReportCard = {
+          id: `${record.id}-${Date.now()}`,
+          partnerName: record.profile.name || "对方",
+          score,
+          maxScore: max,
+          assessment,
+          headline: payload.relationshipReport?.headline,
+          scoreBand: payload.relationshipReport?.scoreBand,
+          strengths: payload.relationshipReport?.strengths,
+          risks: payload.relationshipReport?.risks,
+          nextEvidence: payload.relationshipReport?.nextEvidence,
+          createdAt: Date.now(),
+        };
+        let savedReportCard = reportCard;
+        if (accountId) {
+          try {
+            savedReportCard = await saveCloudSynastryReport(reportCard);
+          } catch {
+            // Local history remains the fallback when cloud persistence is unavailable.
+          }
+        }
+        setSynastryReportCard(savedReportCard);
+        if (accountId) {
+          setSynastryHistory((current) => {
+            const next = [savedReportCard, ...current.filter((item) => item.id !== savedReportCard.id)].slice(0, 10);
+            writeSynastryHistory(accountId, next);
+            return next;
+          });
+        }
+        chooseSuggestedQuestion([
+          baseQuestion,
+          "",
+          `已计算基础合盘证据：${layers}；Ashtakoot ${score ?? "?"}/${max ?? "?"}，初步评级：${assessment || "待解释"}。请基于这个证据包继续分析。`,
+          payload.relationshipReport?.headline ? `结构化摘要：${payload.relationshipReport.headline}` : "",
+        ].join("\n"), "marriage");
+      } else {
+        chooseSuggestedQuestion(baseQuestion, "marriage");
+        setComposerNotice(payload?.status === "blocked" ? "合盘计算暂时不可用，已先生成问题草稿。" : "已生成合盘问题草稿。");
+      }
+    } catch {
+      chooseSuggestedQuestion(baseQuestion, "marriage");
+      setComposerNotice("合盘计算暂时不可用，已先生成问题草稿。");
+    }
+    closeAccountDialog();
   }
 
   async function requestCancellation(requestId: string) {
@@ -1690,10 +2228,12 @@ export default function Home() {
       || "你",
   };
 
-  const sidebarSessions = sessions.map((session) => ({
+  const sidebarSessions = visibleSessions.map((session) => ({
     id: session.id,
     title: session.title,
     messageCount: session.messages.length,
+    pinned: pinnedSessionIds.includes(session.id),
+    archived: archivedSessionIds.includes(session.id),
   }));
 
   return (
@@ -1707,6 +2247,31 @@ export default function Home() {
           accountTriggerRef={accountTrigger}
           newChatDisabled={!hydrated || !modelCatalog || creatingSession || Boolean(pendingSessionId) || cancellationPending}
           creatingSession={creatingSession}
+          sessionControls={{
+            archivedCount: archivedSessionIds.length,
+            showingArchived: showArchivedSessions,
+            menuSessionId: sessionMenuId,
+            disabled: Boolean(pendingSessionId) || cancellationPending,
+            onToggleArchivedView: () => {
+              setShowArchivedSessions((current) => !current);
+              setSessionMenuId(null);
+            },
+            onMenuSessionChange: setSessionMenuId,
+            onTogglePinned: togglePinnedSession,
+            onRename: (sessionId) => {
+              const session = sessions.find((candidate) => candidate.id === sessionId);
+              if (session) void renameSession(session);
+            },
+            onShare: (sessionId) => {
+              const session = sessions.find((candidate) => candidate.id === sessionId);
+              if (session) void shareSession(session);
+            },
+            onToggleArchived: toggleArchivedSession,
+            onDelete: (sessionId) => {
+              const session = sessions.find((candidate) => candidate.id === sessionId);
+              if (session) void deleteSession(session);
+            },
+          }}
           onAccountMenuOpenChange={setAccountMenuOpen}
           onNewChat={() => void startNewChat()}
           onSelectSession={selectSession}
@@ -1805,6 +2370,32 @@ export default function Home() {
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
                 <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
+                  <div className="product-entrypoints" aria-label="常用占星入口">
+                    <article className="daily-starlanguage-card" aria-label="今日星语">
+                      <div className="daily-starlanguage-heading">
+                        <span>今日星语</span>
+                        <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftDailyStarlanguageQuestion}>深入看今日 <ArrowUpRight className="starter-arrow" aria-hidden="true" /></button>
+                      </div>
+                      <dl>
+                        <div><dt>今日趋势</dt><dd>{dailyStarlanguage?.trend}</dd></div>
+                        <div><dt>行动建议</dt><dd>{dailyStarlanguage?.action}</dd></div>
+                        <div><dt>今日提醒</dt><dd>{dailyStarlanguage?.caution}</dd></div>
+                      </dl>
+                      <small>探索性日提示，不是确定预测。</small>
+                    </article>
+                    <article className="birth-rectification-card" aria-label="生时校正">
+                      <div className="daily-starlanguage-heading">
+                        <span>生时校正</span>
+                        <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftBirthTimeRectificationQuestion}>开始校正 <ArrowUpRight className="starter-arrow" aria-hidden="true" /></button>
+                      </div>
+                      <dl>
+                        <div><dt>候选出生时间段</dt><dd>{birthRectificationPreview?.candidate_scan?.start && birthRectificationPreview?.candidate_scan?.end ? `${birthRectificationPreview.candidate_scan.start} – ${birthRectificationPreview.candidate_scan.end}` : "默认先扫描前后 30 分钟"}</dd></div>
+                        <div><dt>候选点</dt><dd>{birthRectificationPreview?.candidate_scan?.candidate_count ? `${birthRectificationPreview.candidate_scan.candidate_count} 个` : "待后端生成"}</dd></div>
+                        <div><dt>问题数</dt><dd>{birthRectificationPreview?.question_count ? `${birthRectificationPreview.question_count} 个事件问题` : "需补关键人生事件"}</dd></div>
+                      </dl>
+                      <small>不能直接改写默认星盘；需事件证据验证。</small>
+                    </article>
+                  </div>
                   {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
                     const theme = themes.find((candidate) => candidate.id === item.theme);
                     return (
@@ -1924,10 +2515,88 @@ export default function Home() {
             {activeAccountDialog === "profile" && (
               <>
                 {accountError && <p className="form-error" role="alert">{accountError}</p>}
+                <section className="sheet-section birth-section">
+                  <div className="section-heading"><b>出生资料</b><small>加密传输并保存到云端，用于此账号的所有对话</small></div>
+                  <div className="default-chart-card" aria-label="当前默认星盘">
+                    <div>
+                      <span>当前默认星盘</span>
+                      <strong>{profileDraft.name.trim() || "未命名"}</strong>
+                      <small>角色：本人</small>
+                    </div>
+                    <button className="button-secondary" type="button" onClick={() => setChartLibraryOpen((current) => !current)}>管理星盘库</button>
+                  </div>
+                  {chartLibraryOpen && (
+                    <div className="chart-library-panel" aria-label="星盘库">
+                      <div className="chart-library-group">
+                        <b>本人</b>
+                        {chartLibrary.filter((record) => record.role === "self").map((record) => (
+                          <article className="chart-library-item" key={record.id}>
+                            <div>
+                              <strong>{record.profile.name || "未命名"}</strong>
+                              <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
+                            </div>
+                            <span>当前默认</span>
+                          </article>
+                        ))}
+                      </div>
+                      <div className="chart-library-group">
+                        <b>其他</b>
+                        {chartLibrary.filter((record) => record.role === "other").length === 0 && <p className="empty-library-copy">还没有其他星盘。</p>}
+                        {chartLibrary.filter((record) => record.role === "other").map((record) => (
+                          <article className="chart-library-item" key={record.id}>
+                            <div>
+                              <strong>{record.profile.name || "未命名"}</strong>
+                              <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
+                            </div>
+                            <div className="chart-library-actions">
+                              <button className="button-secondary" type="button" onClick={() => void draftSynastryQuestionFromChart(record)}>用于合盘</button>
+                              <button className="button-secondary" type="button" onClick={() => void makeDefaultChart(record)} disabled={profileSaving}>设为默认</button>
+                              <button className="button-secondary danger-button" type="button" onClick={() => deleteOtherChart(record.id)}>删除</button>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                      {synastryReportCard && (
+                        <article className="synastry-report-card" aria-label="合盘结果摘要">
+                          <div>
+                            <span>合盘结果摘要</span>
+                            <strong>{synastryReportCard.partnerName}</strong>
+                            <small>Ashtakoot {synastryReportCard.score ?? "?"}/{synastryReportCard.maxScore ?? "?"} · {synastryReportCard.assessment || synastryReportCard.scoreBand || "待解释"}</small>
+                          </div>
+                          {synastryReportCard.headline && <p>{synastryReportCard.headline}</p>}
+                          <details>
+                            <summary>查看证据</summary>
+                            <ul>
+                              {(synastryReportCard.strengths || []).map((item) => <li key={item}>{item}</li>)}
+                              {(synastryReportCard.risks || []).map((item) => <li key={item}>{item}</li>)}
+                            </ul>
+                            <small>下一步证据：{(synastryReportCard.nextEvidence || []).join(" / ") || "双方 Dasha / UL-DK / D9 7宫"}</small>
+                          </details>
+                        </article>
+                      )}
+                      {synastryHistory.length > 0 && (
+                        <div className="synastry-history-list" aria-label="合盘历史">
+                          <b>合盘历史</b>
+                          {synastryHistory.slice(0, 5).map((item) => (
+                            <button key={item.id} type="button" className="synastry-history-item" onClick={() => setSynastryReportCard(item)}>
+                              <span>{item.partnerName}</span>
+                              <small>Ashtakoot {item.score ?? "?"}/{item.maxScore ?? "?"} · {item.assessment || item.scoreBand || "待解释"}</small>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <form className="profile-form chart-library-form" onSubmit={saveOtherChart}>
+                        <div className="section-heading"><b>添加其他星盘</b><small>用于合盘、亲友盘或客户盘。</small></div>
+                        <ProfileFields value={otherProfileDraft} onChange={setOtherProfileDraft} nameInputId="other-profile-name" />
+                        <button className="button-primary save-profile" type="submit" disabled={!account}>添加到星盘库</button>
+                      </form>
+                    </div>
+                  )}
+                </section>
                 {profileNotice && <p className="form-success" role="status">{profileNotice}</p>}
                 <form className="profile-form" onSubmit={saveProfile}>
-                  <ProfileFields value={profileDraft} onChange={setProfileDraft} />
-                  <button className="button-primary save-profile" type="submit" disabled={profileSaving}>{profileSaving ? "保存中" : "保存出生资料"}</button>
+                  <ProfileFields value={profileDraft} onChange={setProfileDraft} nameInputId="profile-name" />
+                  <button className="button-primary save-profile" type="submit" disabled={profileSaving || !account}>{profileSaving ? "保存中" : "保存出生资料"}</button>
                 </form>
               </>
             )}

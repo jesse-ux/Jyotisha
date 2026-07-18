@@ -1,0 +1,22 @@
+{
+  "scope": "vedastro_reproducible_library_candidate",
+  "package": "VedAstro.Library",
+  "version": "1.2.0",
+  "package_url": "https://api.nuget.org/v3-flatcontainer/vedastro.library/1.2.0/vedastro.library.1.2.0.nupkg",
+  "package_sha256": "f753df4e76c75b9ad219c2f5a8fe4b17361065d6f4fa1198897cf117b7bc55d5",
+  "library_dll_sha256": "e4ec61b07ac1c15fcc65d9ffdc54bc2d26497597760572e2888f1992fc7b1ca8",
+  "target_framework": "net7.0",
+  "license": "MIT",
+  "repository": "https://github.com/VedAstro/VedAstro",
+  "container_base": "mcr.microsoft.com/dotnet/sdk:7.0@sha256:d32bd65cf5843f413e81f5d917057c82da99737cb1637e905a1a4bc2e7ec6c8d",
+  "runtime_probe": "benchmarks/vedastro_nuget_probe",
+  "runtime_methods_verified": [
+    "GetAllPlanetLongitude",
+    "GetPlanetNirayanaLongitude",
+    "GetPlanetRasiSign",
+    "GetPlanetShadbalaPinda"
+  ],
+  "status": "reproducible_library_executable_verified",
+  "hosted_api_identity_status": "blocked",
+  "boundary": "The signed NuGet library is reproducible and pinned, but it is not an identity for api.vedastro.org and does not include hosted databases/routes."
+}

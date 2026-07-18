@@ -17,6 +17,10 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OFFSETS = (-120, -90, -60, -30, 30, 60, 90, 120)
 
 
+def parse_offsets(raw: str) -> tuple[int, ...]:
+    return tuple(dict.fromkeys(value for value in (int(item.strip()) for item in raw.split(",")) if value != 0))
+
+
 def generate_control_dates(event_date: str, offsets: Iterable[int] = DEFAULT_OFFSETS) -> list[str]:
     target = date.fromisoformat(event_date)
     return [(target + timedelta(days=int(offset))).isoformat() for offset in offsets if int(offset) != 0]
@@ -41,16 +45,36 @@ def summarize_negative_control_rows(rows: list[dict[str, Any]]) -> dict[str, Any
     controls = [control for row in rows for control in row.get("controls") or [] if not control.get("blocked")]
     rankings = [row["ranking"] for row in rows if row.get("ranking")]
     margins = [item["score_margin"] for item in rankings if item["score_margin"] is not None]
+    control_activation_rate = sum((control.get("score") or 0) >= 4 for control in controls) / len(controls) if controls else None
+    control_strong_activation_rate = sum((control.get("score") or 0) >= 7 for control in controls) / len(controls) if controls else None
+    positive_top_1_rate = sum(item["top_1"] for item in rankings) / len(rankings) if rankings else None
+    positive_top_3_rate = sum(item["top_3"] for item in rankings) / len(rankings) if rankings else None
+    specificity_proxy = 1 - control_activation_rate if control_activation_rate is not None else None
+    strong_specificity_proxy = 1 - control_strong_activation_rate if control_strong_activation_rate is not None else None
+    timing_precision_pass = (
+        positive_top_3_rate is not None
+        and specificity_proxy is not None
+        and positive_top_3_rate >= 0.6
+        and specificity_proxy >= 0.6
+    )
     return {
         "case_count": len(rows),
         "ranked_case_count": len(rankings),
         "control_date_count": len(controls),
-        "control_activation_rate": sum((control.get("score") or 0) >= 4 for control in controls) / len(controls) if controls else None,
-        "control_strong_activation_rate": sum((control.get("score") or 0) >= 7 for control in controls) / len(controls) if controls else None,
-        "positive_top_1_rate": sum(item["top_1"] for item in rankings) / len(rankings) if rankings else None,
-        "positive_top_3_rate": sum(item["top_3"] for item in rankings) / len(rankings) if rankings else None,
+        "control_activation_rate": control_activation_rate,
+        "control_strong_activation_rate": control_strong_activation_rate,
+        "specificity_proxy": specificity_proxy,
+        "strong_specificity_proxy": strong_specificity_proxy,
+        "positive_top_1_rate": positive_top_1_rate,
+        "positive_top_3_rate": positive_top_3_rate,
         "mean_reciprocal_rank": statistics.mean(item["reciprocal_rank"] for item in rankings) if rankings else None,
         "mean_score_margin": statistics.mean(margins) if margins else None,
+        "timing_precision_gate": {
+            "status": "pass" if timing_precision_pass else "blocked",
+            "positive_top_3_minimum": 0.6,
+            "specificity_proxy_minimum": 0.6,
+            "reason": None if timing_precision_pass else "positive_dates_do_not_rank_above_controls_with_required_specificity",
+        },
         "balanced_accuracy": None,
         "balanced_accuracy_blocked_reason": "controls_are_non_target_dates_not_independently_adjudicated_all-domain_non_events",
     }
@@ -106,9 +130,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", default="references/real_case_calibration/replay_manifest_probe3_v2.json")
     parser.add_argument("--output")
+    parser.add_argument("--offsets", default=",".join(str(value) for value in DEFAULT_OFFSETS))
     args = parser.parse_args()
     manifest = json.loads((ROOT / args.manifest).read_text(encoding="utf-8"))
-    report = build_report(manifest)
+    report = build_report(manifest, parse_offsets(args.offsets))
     payload = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if args.output:
         output_path = ROOT / args.output

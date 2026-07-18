@@ -1,0 +1,28 @@
+{
+  "benchmark_id": "day_level_timing_holdout_v3",
+  "status": "awaiting_independent_labels",
+  "frozen_rule_version": "v3_preregistered_not_tuned",
+  "truth_policy": "independent_source_and_adjudicator_required",
+  "annotation_protocol": "docs/research/day_level_holdout_v3_annotation_protocol.md",
+  "prohibited_tuning_data": [
+    "docs/benchmark/public_real_case_negative_controls_holdout_v2_4controls_20260717.json",
+    "docs/benchmark/public_real_case_negative_control_pilot_2026_07_11.json"
+  ],
+  "day_sensitive_features": [
+    "distance_to_exact_vimshottari_boundary",
+    "distance_to_exact_narayana_boundary",
+    "daily_moon_house_and_nakshatra_trigger",
+    "exact_transit_aspect_or_ingress",
+    "solar_or_lunar_return_trigger",
+    "domain_varga_lord_daily_transit_contact",
+    "functional_benefic_malefic_trigger_direction"
+  ],
+  "frozen_gate": {
+    "minimum_positive_top_3_rate": 0.6,
+    "minimum_specificity": 0.6,
+    "minimum_independent_cases": 20,
+    "minimum_independent_negative_intervals": 80
+  },
+  "annotations": [],
+  "boundary": "No day-level calibration claim until independently sourced annotations satisfy the frozen gate."
+}

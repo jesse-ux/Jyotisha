@@ -132,6 +132,27 @@ def _progressed_planets(progressed_jd: float) -> dict[str, dict[str, Any]]:
     return planets
 
 
+def _quotidian_progressed_angles(progressed_jd: float, birth: dict[str, Any]) -> dict[str, Any]:
+    local = _jd_to_local(progressed_jd, birth["timezone"])
+    progressed_birth = {
+        **birth,
+        "year": local.year,
+        "month": local.month,
+        "day": local.day,
+        "hour": local.hour,
+        "minute": local.minute,
+        "second": local.second,
+    }
+    chart = build_tropical_natal_chart(**progressed_birth)
+    return {
+        "status": "used",
+        "method": "secondary_quotidian_progressed_date_same_location",
+        "progressed_local_time": local.isoformat(),
+        "angles": chart["natal"]["angles"],
+        "boundary": "Quotidian progressed-date angles; Naibod and solar-arc angle variants are separate methods.",
+    }
+
+
 def calculate_secondary_progressions(*, target_date: str, **birth: Any) -> dict[str, Any]:
     """Calculate progressed planets using one ephemeris day per tropical year."""
     natal_chart = build_tropical_natal_chart(**birth)
@@ -140,6 +161,7 @@ def calculate_secondary_progressions(*, target_date: str, **birth: Any) -> dict[
     elapsed_years = (target_jd - birth_jd) / 365.242189
     progressed_jd = birth_jd + elapsed_years
     planets = _progressed_planets(progressed_jd)
+    progressed_angles = _quotidian_progressed_angles(progressed_jd, birth)
     natal_points = {
         **natal_chart["natal"]["planets"],
         "ascendant": natal_chart["natal"]["angles"]["ascendant"],
@@ -155,8 +177,9 @@ def calculate_secondary_progressions(*, target_date: str, **birth: Any) -> dict[
         "progressed_julian_day_ut": round(progressed_jd, 8),
         "natal_sun_longitude": natal_chart["natal"]["planets"]["sun"]["longitude"],
         "progressed_planets": planets,
+        "progressed_angles": progressed_angles,
         "aspects": _cross_aspects(planets, natal_points),
-        "boundary": "Progressed planets only. Progressed angles, lunar phases, stations, duration, and interpretation remain separate audited layers.",
+        "boundary": "Progressed planets plus explicitly selected quotidian angles. Lunar phases, stations, duration, and interpretation remain separate audited layers.",
     }
 
 
@@ -391,11 +414,56 @@ def calculate_transit_duration_scan(*, start_date: str, end_date: str, max_days:
 
 
 def calculate_parans_status(*, target_date: str | None = None, **birth: Any) -> dict[str, Any]:
+    if not target_date:
+        return {"technique": "parans", "status": "blocked", "reason": "target_date_required"}
+    start_jd, target_local = _target_jd(target_date, birth["timezone"])
+    geopos = (float(birth["longitude"]), float(birth["latitude"]), 0.0)
+    modes = {
+        "rise": swe.CALC_RISE,
+        "upper_culmination": swe.CALC_MTRANSIT,
+        "set": swe.CALC_SET,
+    }
+    events: list[dict[str, Any]] = []
+    for planet, planet_id in _PLANETS.items():
+        for angle, mode in modes.items():
+            try:
+                status, values = swe.rise_trans(start_jd, planet_id, mode, geopos, 0.0, 15.0, swe.FLG_SWIEPH)
+            except (swe.Error, TypeError, ValueError):
+                continue
+            if status != 0:
+                continue
+            event_local = _jd_to_local(float(values[0]), birth["timezone"])
+            if event_local.date() != target_local.date():
+                continue
+            events.append({
+                "planet": planet,
+                "angle": angle,
+                "julian_day_ut": round(float(values[0]), 8),
+                "local_time": event_local.isoformat(),
+            })
+    events.sort(key=lambda row: (row["julian_day_ut"], row["planet"], row["angle"]))
+    pairs: list[dict[str, Any]] = []
+    for index, first in enumerate(events):
+        for second in events[index + 1:]:
+            delta_minutes = (second["julian_day_ut"] - first["julian_day_ut"]) * 1440.0
+            if delta_minutes > 4.0:
+                break
+            if first["planet"] == second["planet"]:
+                continue
+            pairs.append({
+                "first": {key: first[key] for key in ("planet", "angle", "local_time")},
+                "second": {key: second[key] for key in ("planet", "angle", "local_time")},
+                "separation_minutes": round(delta_minutes, 4),
+            })
     return {
         "technique": "parans",
-        "status": "blocked",
+        "status": "used",
         "target_date": target_date,
-        "reason": "Parans need a dedicated rising/setting/culminating engine and latitude-aware event solver; not yet implemented in this repository.",
+        "method": "Swiss Ephemeris rise_trans latitude-aware angular events",
+        "event_count": len(events),
+        "events": events,
+        "paran_pairs_within_4_minutes": pairs,
+        "boundary": "Geometric rise/culmination/set simultaneity only; no interpretation or predictive claim is inferred.",
     }
 
 

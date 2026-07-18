@@ -512,6 +512,7 @@ def main() -> int:
             ROOT / "scripts" / "diagnose_external_engine_adapters.py",
             ROOT / "scripts" / "interpretation_source_runtime_coverage.py",
             ROOT / "scripts" / "sync_final_evidence_packet_status.py",
+            ROOT / "scripts" / "external_validation_release_gate.py",
         ]:
             py_compile.compile(str(target), doraise=True)
             print(f"compiled {target.relative_to(ROOT)}")
@@ -519,6 +520,7 @@ def main() -> int:
         run([PYTHON, "scripts/interpretation_source_inventory_gate.py"])
         run([PYTHON, "scripts/diagnose_vedastro_mode.py", "--json"])
         run([PYTHON, "scripts/diagnose_external_engine_adapters.py", "--json"])
+        run([PYTHON, "scripts/external_validation_release_gate.py", "--require-match"])
     else:
         compile_targets()
         validate_json_files()
