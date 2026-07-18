@@ -3,6 +3,7 @@ import { z } from "zod";
 import { BirthTimeScoringJobError } from "./birth-time-scoring-job.ts";
 import type {
   BirthTimeJourneyStore,
+  LegacyStoredRectificationCase,
   StoredRectificationCase,
 } from "./birth-time-journey-service.ts";
 import { BirthTimeJourneyStoreError } from "./birth-time-journey-turn-persistence.ts";
@@ -48,9 +49,11 @@ async function requireReloaded(
   loadCase: (userId: string, caseId: string) => Promise<StoredRectificationCase | null>,
   userId: string,
   caseId: string,
-): Promise<StoredRectificationCase> {
+): Promise<LegacyStoredRectificationCase> {
   const stored = await loadCase(userId, caseId);
-  if (!stored) throw new BirthTimeJourneyStoreError("load_case");
+  if (!stored || stored.journeyProtocol !== "legacy-guided-v1") {
+    throw new BirthTimeJourneyStoreError("load_case");
+  }
   return stored;
 }
 
@@ -78,7 +81,10 @@ export function createSupabaseScoringJobStore(
       });
       if (error) {
         const current = await loadCase(value.userId, value.id);
-        if (current?.processedActionIds?.includes(actionId.toLowerCase())) return current;
+        if (
+          current?.journeyProtocol === "legacy-guided-v1"
+          && current.processedActionIds?.includes(actionId.toLowerCase())
+        ) return current;
         throw mapScoringRpcError(error.message, error.code);
       }
       return requireReloaded(loadCase, value.userId, value.id);

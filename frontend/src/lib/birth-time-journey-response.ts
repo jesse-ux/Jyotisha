@@ -4,6 +4,8 @@ import {
 } from "./birth-time-journey-turn.ts";
 import type { PersistedJourneyProgress } from "./birth-time-journey-turn-persistence.ts";
 import type {
+  DynamicStoredRectificationCase,
+  DynamicVersionedJourneyResponse,
   JourneyResponseBase,
   StoredRectificationCase,
   VersionedJourneyResponse,
@@ -129,6 +131,22 @@ export function storedJourneyResponse(
     lifeEvents: stored.lifeEvents ?? [],
     candidateResult: stored.candidateResult ?? null,
     ...currentJourneyTurn(stored),
+  };
+}
+
+export function storedDynamicJourneyResponse(
+  stored: DynamicStoredRectificationCase,
+): DynamicVersionedJourneyResponse {
+  return {
+    caseId: stored.id,
+    snapshot: stored.snapshot,
+    questionnaire: stored.questionnaire,
+    scoring: stored.scoring ?? null,
+    answers: stored.answers,
+    lifeEvents: stored.lifeEvents ?? [],
+    candidateResult: stored.candidateResult ?? null,
+    evidenceDraft: null,
+    ...stored.dynamicTurnState,
   };
 }
 

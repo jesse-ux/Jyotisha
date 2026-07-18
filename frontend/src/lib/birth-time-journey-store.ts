@@ -54,7 +54,7 @@ export function createSupabaseBirthTimeJourneyStore(
     ...guidedCandidates,
 
     async saveScoring(value) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("birth_time_rectification_cases")
         .update({
           status: caseStatus(value.snapshot),
@@ -64,8 +64,11 @@ export function createSupabaseBirthTimeJourneyStore(
           updated_at: new Date().toISOString(),
         })
         .eq("id", value.id)
-        .eq("user_id", value.userId);
-      if (error) throw new BirthTimeJourneyStoreError("update_case");
+        .eq("user_id", value.userId)
+        .eq("journey_protocol", "legacy-guided-v1")
+        .select("id")
+        .maybeSingle();
+      if (error || !data) throw new BirthTimeJourneyStoreError("update_case");
 
       const { error: profileError } = await supabase
         .from("profiles")
@@ -77,7 +80,7 @@ export function createSupabaseBirthTimeJourneyStore(
 
     async saveCandidateResult(value) {
       const winner = value.candidateResult?.winningSegment ?? null;
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("birth_time_rectification_cases")
         .update({
           status: caseStatus(value.snapshot),
@@ -91,8 +94,11 @@ export function createSupabaseBirthTimeJourneyStore(
           updated_at: new Date().toISOString(),
         })
         .eq("id", value.id)
-        .eq("user_id", value.userId);
-      if (error) throw new BirthTimeJourneyStoreError("update_case");
+        .eq("user_id", value.userId)
+        .eq("journey_protocol", "legacy-guided-v1")
+        .select("id")
+        .maybeSingle();
+      if (error || !data) throw new BirthTimeJourneyStoreError("update_case");
 
       const { error: profileError } = await supabase
         .from("profiles")
@@ -106,13 +112,16 @@ export function createSupabaseBirthTimeJourneyStore(
     },
 
     async saveCandidate(value) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("birth_time_rectification_cases")
         .update({ candidate_saved_at: new Date().toISOString(), updated_at: new Date().toISOString() })
         .eq("id", value.id)
         .eq("user_id", value.userId)
-        .eq("candidate_result_id", value.candidateResult?.resultId ?? null);
-      if (error) throw new BirthTimeJourneyStoreError("update_case");
+        .eq("journey_protocol", "legacy-guided-v1")
+        .eq("candidate_result_id", value.candidateResult?.resultId ?? null)
+        .select("id")
+        .maybeSingle();
+      if (error || !data) throw new BirthTimeJourneyStoreError("update_case");
     },
 
     async confirmCandidate(value) {

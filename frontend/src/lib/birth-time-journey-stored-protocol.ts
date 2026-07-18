@@ -14,7 +14,7 @@ type LegacyProgress = {
 };
 
 export type LegacyStoredFields = {
-  readonly journeyProtocol?: "legacy-guided-v1";
+  readonly journeyProtocol: "legacy-guided-v1";
   readonly turnVersion?: number;
   readonly turnState?: JourneyTurnState | null;
   readonly evidenceDraft?: EvidenceDraft | null;
@@ -32,11 +32,11 @@ export type LegacyStoredFields = {
 export type DynamicStoredFields = {
   readonly journeyProtocol: "dynamic-choice-v2";
   readonly turnVersion: number;
-  readonly turnState?: null;
+  readonly turnState: null;
   readonly dynamicTurnState: DynamicJourneyTurnState;
-  readonly evidenceDraft?: null;
+  readonly evidenceDraft: null;
   readonly processedActionIds: readonly string[];
-  readonly persistedProgress?: LegacyProgress;
+  readonly persistedProgress: LegacyProgress;
   readonly candidateModel: Readonly<Record<string, unknown>> | null;
   readonly currentChoiceQuestion: PersistedDynamicChoiceQuestion | null;
   readonly choiceAnswers: readonly StoredChoiceAnswer[];

@@ -221,6 +221,7 @@ export function prepareLegacyDynamicUpgrade(
     journeyProtocol: "dynamic-choice-v2",
     turnVersion: value.turnVersion ?? 0,
     processedActionIds: value.processedActionIds ?? [],
+    persistedProgress: value.persistedProgress ?? { adaptiveRound: 0, askedDomains: [] },
     turnState: null,
     evidenceDraft: null,
     dynamicTurnState,

@@ -142,8 +142,6 @@ begin
 
   update public.profiles
   set reported_birth_time = nullif(p_profile ->> 'reportedBirthTime', '')::time,
-      active_birth_time = nullif(p_profile ->> 'activeBirthTime', '')::time,
-      birth_time = nullif(p_profile ->> 'birthTime', '')::time,
       birth_time_source = p_profile ->> 'birthTimeSource',
       birth_time_period = nullif(p_profile ->> 'birthTimePeriod', ''),
       birth_time_clue = nullif(p_profile ->> 'birthTimeClue', ''),

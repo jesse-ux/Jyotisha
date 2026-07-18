@@ -142,13 +142,16 @@ export const privateRow = {
 export function loadClient(
   privateState: typeof privateRow | null,
   omitProcessedActions = false,
+  publicTurnVersion = publicRow.turn_version,
 ) {
   const { processed_action_ids: ignoredReceipts, ...rowWithoutReceipts } = publicRow;
   void ignoredReceipts;
   return {
     from(table: string) {
       const row = table === "birth_time_rectification_cases"
-        ? omitProcessedActions ? rowWithoutReceipts : publicRow
+        ? omitProcessedActions
+          ? rowWithoutReceipts
+          : { ...publicRow, turn_version: publicTurnVersion }
         : table === "birth_time_rectification_dynamic_state"
           ? privateState
           : { latitude: 31.2304, longitude: 121.4737, timezone_offset: 8 };
@@ -173,8 +176,11 @@ export function dynamicCase(): DynamicStoredRectificationCase {
     lifeEvents: [],
     candidateResult: null,
     turnVersion: 7,
+    turnState: null,
     dynamicTurnState,
+    evidenceDraft: null,
     processedActionIds: [],
+    persistedProgress: { adaptiveRound: 0, askedDomains: [] },
     candidateModel: privateRow.candidate_model,
     currentChoiceQuestion: persistedQuestion,
     choiceAnswers: [],
@@ -215,6 +221,7 @@ export function legacyCase(active: boolean): LegacyStoredRectificationCase {
   return {
     id: caseId,
     userId: ownerId,
+    journeyProtocol: "legacy-guided-v1",
     snapshot,
     questionnaire: null,
     answers: { q1: "A" },

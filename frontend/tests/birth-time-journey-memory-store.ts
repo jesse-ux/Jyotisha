@@ -53,6 +53,9 @@ export function memoryStore(
       if (!savedCase) {
         throw new MissingTestCaseError();
       }
+      if (savedCase.journeyProtocol !== "legacy-guided-v1") {
+        throw new StaleJourneyTurnError(savedCase.id, expectedVersion, savedCase.turnVersion);
+      }
       const processedActionIds = savedCase.processedActionIds ?? [];
       if (processedActionIds.includes(actionId)) {
         return savedCase;
@@ -70,8 +73,9 @@ export function memoryStore(
     },
     async saveDynamicTurn(value, expectedVersion, actionId) {
       if (!savedCase) throw new MissingTestCaseError();
+      const receipt = actionId.toLowerCase();
       const receipts = savedCase.processedActionIds ?? [];
-      if (receipts.includes(actionId)) {
+      if (receipts.includes(receipt)) {
         if (!savedDynamicCase) throw new MissingTestCaseError();
         return savedDynamicCase;
       }
@@ -82,7 +86,7 @@ export function memoryStore(
         ...value,
         turnVersion: expectedVersion + 1,
         dynamicTurnState: { ...value.dynamicTurnState, turnVersion: expectedVersion + 1 },
-        processedActionIds: [...receipts, actionId],
+        processedActionIds: [...receipts, receipt],
       };
       savedCase = savedDynamic;
       savedDynamicCase = savedDynamic;
@@ -90,7 +94,7 @@ export function memoryStore(
       return savedDynamic;
     },
     async upgradeLegacyActiveCase(value) {
-      if (value.journeyProtocol === "dynamic-choice-v2" || isTerminalLegacyCase(value)) {
+      if (isTerminalLegacyCase(value)) {
         return value;
       }
       const upgraded = prepareLegacyDynamicUpgrade(value, asOfDate);
@@ -114,6 +118,13 @@ export function memoryStore(
     async commitGuidedCandidate(value, command) {
       if (!savedCase) {
         throw new MissingTestCaseError();
+      }
+      if (savedCase.journeyProtocol !== "legacy-guided-v1") {
+        throw new StaleJourneyTurnError(
+          savedCase.id,
+          command.expectedVersion,
+          savedCase.turnVersion,
+        );
       }
       const receipt = command.actionId.toLowerCase();
       const receipts = savedCase.processedActionIds ?? [];

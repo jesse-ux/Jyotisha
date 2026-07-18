@@ -11,6 +11,7 @@ const actionId = "45857b75-4718-4590-aaf5-7113a03ea765";
 const storedCase = {
   id: "case-1",
   userId: "user-1",
+  journeyProtocol: "legacy-guided-v1",
   snapshot: { state: "rectifying" },
   answers: {},
   turnState: { nextAction: { kind: "paused" } },
@@ -79,6 +80,7 @@ test("saveTurn uses one owner-and-version-constrained update", async () => {
     }],
     ["id", "case-1"],
     ["user_id", "user-1"],
+    ["journey_protocol", "legacy-guided-v1"],
     ["turn_version", 4],
     ["not", "processed_action_ids", "cs", `{${actionId}}`],
     ["select", "id"],
@@ -127,7 +129,25 @@ test("saveTurn treats an uppercase UUID replay as the stored lowercase receipt",
 
   assert.equal(saved, current);
   assert.equal(fake.calls[0][1].processed_action_ids[0], actionId);
-  assert.deepEqual(fake.calls[4], ["not", "processed_action_ids", "cs", `{${actionId}}`]);
+  assert.deepEqual(fake.calls[5], ["not", "processed_action_ids", "cs", `{${actionId}}`]);
+});
+
+test("saveTurn cannot overwrite a case upgraded between load and write", async () => {
+  const fake = updateClient({ data: null, error: null });
+  const upgraded = {
+    ...storedCase,
+    journeyProtocol: "dynamic-choice-v2",
+    turnVersion: 4,
+    processedActionIds: [],
+  };
+  const persistence = createJourneyTurnPersistence(fake.client, async () => upgraded);
+
+  await assert.rejects(
+    persistence.saveTurn(storedCase, 4, actionId),
+    StaleJourneyTurnError,
+  );
+
+  assert.deepEqual(fake.calls[3], ["journey_protocol", "legacy-guided-v1"]);
 });
 
 test("saveTurn rejects a non-UUID action receipt before writing", async () => {
@@ -181,6 +201,7 @@ test("load accepts only the exact empty legacy turn state", async () => {
   const value = await loadStoredRectificationCase(loadClient(storedRow()), "12dc56f0-1f17-4a2f-86bf-1056ab78def9", "45857b75-4718-4590-aaf5-7113a03ea765");
 
   assert.equal(value?.turnState, null);
+  assert.equal(value?.journeyProtocol, "legacy-guided-v1");
 });
 
 test("load rejects a malformed nonempty persisted turn state", async () => {

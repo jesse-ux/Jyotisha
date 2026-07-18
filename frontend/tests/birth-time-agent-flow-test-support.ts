@@ -7,6 +7,7 @@ import { createGuidedCandidateActions } from "../src/lib/birth-time-guided-candi
 import {
   createBirthTimeJourneyService,
   type LegacyBirthTimeJourneyEngine,
+  type DynamicVersionedJourneyResponse,
   type StoredRectificationCase,
   type VersionedJourneyResponse,
 } from "../src/lib/birth-time-journey-service.ts";
@@ -107,7 +108,12 @@ export function createHarness(input: {
   };
 }
 
-export function assertLegalTurn(turn: VersionedJourneyResponse): void {
+export function assertLegalTurn(
+  turn: VersionedJourneyResponse | DynamicVersionedJourneyResponse,
+): asserts turn is VersionedJourneyResponse {
+  if (turn.journeyProtocol === "dynamic-choice-v2") {
+    assert.fail("legacy flow unexpectedly resumed a dynamic journey");
+  }
   assert.ok(turn.nextAction, "every legal journey response has nextAction");
   assert.ok(turn.turnVersion >= 0);
   switch (turn.nextAction.kind) {

@@ -1,6 +1,7 @@
 import { createScoringJobSpec } from "./birth-time-scoring-job.ts";
 import type {
   BirthTimeJourneyStore,
+  LegacyStoredRectificationCase,
   StoredRectificationCase,
 } from "./birth-time-journey-service.ts";
 
@@ -11,7 +12,7 @@ export type JourneyTurnPersistencePorts = {
 
 export async function persistGuidedJourneyTurn(
   ports: JourneyTurnPersistencePorts,
-  value: StoredRectificationCase,
+  value: LegacyStoredRectificationCase,
   expectedVersion: number,
   actionId: string,
 ): Promise<StoredRectificationCase> {

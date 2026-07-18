@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { JourneySnapshot } from "./birth-time-journey.ts";
-import type { StoredRectificationCase } from "./birth-time-journey-service.ts";
+import type { LegacyStoredRectificationCase, StoredRectificationCase } from "./birth-time-journey-service.ts";
 import { evidenceDomains } from "./birth-time-question-planner.ts";
 import type { EvidenceDomain } from "./birth-time-question-planner.ts";
 import type { EvidenceDraft, JourneyTurnState } from "./birth-time-journey-turn.ts";
@@ -61,7 +61,7 @@ export function createJourneyTurnPersistence(
 ) {
   return {
     async saveTurn(
-      value: StoredRectificationCase,
+      value: LegacyStoredRectificationCase,
       expectedVersion: number,
       actionId: string,
     ): Promise<StoredRectificationCase> {
@@ -87,6 +87,7 @@ export function createJourneyTurnPersistence(
         })
         .eq("id", value.id)
         .eq("user_id", value.userId)
+        .eq("journey_protocol", "legacy-guided-v1")
         .eq("turn_version", expectedVersion)
         .not("processed_action_ids", "cs", `{${parsedActionId}}`)
         .select("id")
@@ -104,7 +105,10 @@ export function createJourneyTurnPersistence(
         } satisfies StoredRectificationCase;
       }
       const current = await loadCase(value.userId, value.id);
-      if (current?.processedActionIds?.includes(parsedActionId)) return current;
+      if (
+        current?.journeyProtocol === "legacy-guided-v1"
+        && current.processedActionIds?.includes(parsedActionId)
+      ) return current;
       throw new StaleJourneyTurnError(value.id, expectedVersion, current?.turnVersion ?? 0);
     },
   };

@@ -48,6 +48,7 @@ test("legacy low-score resume displays adaptive round one exactly once", async (
   const first = await flow.service.resume("user-1", journeyCaseId);
   const second = await flow.service.resume("user-1", journeyCaseId);
 
+  if (first.journeyProtocol === "dynamic-choice-v2") assert.fail("expected legacy response");
   assert.equal(first.nextAction.kind, "ask_adaptive_evidence");
   assert.equal(first.progress.adaptiveRound, 1);
   assert.deepEqual(second.nextAction, first.nextAction);

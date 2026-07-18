@@ -162,6 +162,10 @@ export async function loadStoredRectificationCase(
     : null;
   if (dynamicTurn && !dynamicTurn.success) throw new BirthTimeJourneyStoreError("load_case");
   const dynamicTurnState = dynamicTurn?.data ?? null;
+  if (
+    dynamicTurnState !== null
+    && dynamicTurnState.turnVersion !== parsed.turn_version
+  ) throw new BirthTimeJourneyStoreError("load_case");
   const evidenceDraft = parseEvidenceDraft(parsed.evidence_draft);
   let dynamicPrivate = null;
   if (parsed.journey_protocol === "dynamic-choice-v2") {

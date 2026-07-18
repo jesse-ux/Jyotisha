@@ -75,6 +75,19 @@ test("unknown birth time initializes the full-day dynamic range", () => {
   ]);
 });
 
+test("mixed-null reported ranges fail instead of inventing one boundary", () => {
+  const mixedRange = {
+    ...snapshot,
+    reportedRange: {
+      label: "04:00—未知",
+      startTime: "04:00",
+      endTime: null,
+    },
+  };
+
+  assert.throws(() => createInitialDynamicState(mixedRange, "2026-07-18"));
+});
+
 test("new v2 case creation crosses one atomic RPC boundary", async () => {
   const calls: { readonly name: string; readonly args: Readonly<Record<string, unknown>> }[] = [];
   const savedId = await saveDynamicAssessment({
@@ -100,6 +113,15 @@ test("new v2 case creation crosses one atomic RPC boundary", async () => {
   assert.equal(calls[0]?.name, "create_birth_time_dynamic_case");
   assert.equal(calls[0]?.args.p_user_id, ownerId);
   assert.equal(JSON.stringify(calls[0]?.args.p_public_case).includes("candidateModel"), false);
+  assert.deepEqual(calls[0]?.args.p_profile, {
+    reportedBirthTime: null,
+    birthTimeSource: "period_only",
+    birthTimePeriod: "early_morning",
+    birthTimeClue: null,
+    uncertaintyBeforeMinutes: null,
+    uncertaintyAfterMinutes: null,
+    birthTimeStatus: "rectifying",
+  });
   assert.deepEqual(calls[0]?.args.p_private_state, createInitialDynamicState(
     snapshot,
     "2026-07-18",
@@ -116,6 +138,13 @@ test("v2 load rejects a missing private row instead of regenerating", async () =
 test("v2 load rejects missing required public persistence fields", async () => {
   await assert.rejects(
     loadStoredRectificationCase(loadClient(privateRow, true), ownerId, caseId),
+    BirthTimeJourneyStoreError,
+  );
+});
+
+test("v2 load rejects incoherent public row and JSON turn versions", async () => {
+  await assert.rejects(
+    loadStoredRectificationCase(loadClient(privateRow, false, 8), ownerId, caseId),
     BirthTimeJourneyStoreError,
   );
 });
@@ -166,11 +195,12 @@ test("memory replay returns the stored advanced dynamic turn", async () => {
   const changed = { ...initial, agentContext: ["persisted context"] };
 
   const saved = await memory.store.saveDynamicTurn(changed, 7, actionId);
-  const replay = await memory.store.saveDynamicTurn(initial, 7, actionId);
+  const replay = await memory.store.saveDynamicTurn(initial, 7, actionId.toUpperCase());
 
   assert.deepEqual(replay, saved);
   assert.equal(replay.turnVersion, 8);
   assert.deepEqual(replay.agentContext, ["persisted context"]);
+  assert.deepEqual(replay.processedActionIds, [actionId]);
   assert.equal(memory.committedTurnWrites(), 1);
 });
 
@@ -203,6 +233,7 @@ test("legacy active upgrade preserves evidence and starts v2 without legacy fing
         journeyProtocol: "dynamic-choice-v2",
         turnVersion: loaded.turnVersion ?? 0,
         processedActionIds: loaded.processedActionIds ?? [],
+        persistedProgress: loaded.persistedProgress ?? { adaptiveRound: 0, askedDomains: [] },
         dynamicTurnState: parsedTurn,
         turnState: null,
         evidenceDraft: null,

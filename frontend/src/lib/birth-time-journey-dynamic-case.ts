@@ -53,8 +53,6 @@ export async function saveDynamicAssessment(
     p_private_state: initial.privateState,
     p_profile: {
       reportedBirthTime: details.reportedTime,
-      activeBirthTime: value.snapshot.activeTime,
-      birthTime: value.snapshot.activeTime,
       birthTimeSource: value.assessment.source,
       birthTimePeriod: details.period,
       birthTimeClue: details.clue,

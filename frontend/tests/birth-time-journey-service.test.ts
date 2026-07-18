@@ -78,6 +78,7 @@ test("journey service accumulates legacy answers while preserving the applicatio
   const storedCase: StoredRectificationCase = {
     id: journeyCaseId,
     userId: "user-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: assessed.snapshot,
     questionnaire,
     answers: { education_environment_shift: "A" },
@@ -121,6 +122,7 @@ test("journey service resumes an owner-scoped unfinished legacy case", async () 
   const storedCase: StoredRectificationCase = {
     id: journeyCaseId,
     userId: "user-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: {
       state: "rectifying",
       assistantIntent: "continue_rectification_questions",
@@ -150,6 +152,7 @@ test("journey service heals a completed legacy questionnaire into life-event col
   const storedCase: StoredRectificationCase = {
     id: journeyCaseId,
     userId: "user-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: {
       state: "candidate",
       assistantIntent: "present_saved_candidate_range",
@@ -184,6 +187,7 @@ test("journey service resumes a fail-closed case without a questionnaire", async
   const storedCase: StoredRectificationCase = {
     id: journeyCaseId,
     userId: "user-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: {
       state: "rectifying",
       assistantIntent: "explain_assessment_unavailable",

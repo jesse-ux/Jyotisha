@@ -128,6 +128,7 @@ export function guidedCase(input: GuidedCaseInput = {}): LegacyStoredRectificati
   return {
     id: journeyCaseId,
     userId: "user-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: {
       state: "rectifying",
       assistantIntent: candidateResult?.confidence === "low"

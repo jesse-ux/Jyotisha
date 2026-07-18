@@ -117,6 +117,9 @@ export async function POST(request: Request) {
       case "poll_scoring":
         {
           const before = await service.resume(user.id, parsed.data.caseId);
+          if (before.journeyProtocol === "dynamic-choice-v2") {
+            throw new GuidedJourneyLegacyMutationError(parsed.data.caseId);
+          }
           const response = await service.pollScoringJob(user.id, parsed.data.caseId, parsed.data.jobId);
           recordScoringJourneyMetric(before, response);
           return NextResponse.json(response);

@@ -44,6 +44,7 @@ function storedCase(): LegacyStoredRectificationCase {
   return {
     id: caseId,
     userId: "owner-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: {
       state: "rectifying",
       assistantIntent: "continue_rectification_questions",

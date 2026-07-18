@@ -6,10 +6,14 @@ Implemented durable `dynamic-choice-v2` persistence with a public/private data s
 
 New assessments initialize the public case, private state, and profile pointer in one database RPC transaction. Owner-scoped resume parsing requires complete v2 public/private rows and returns a strict legacy/v2 union; only absent protocol data from old legacy rows retains compatibility defaults. Active legacy cases can be upgraded without losing evidence or audit data, terminal legacy cases remain unchanged, and every legacy guided mutation entry point rejects v2 cases before writing.
 
+The acceptance follow-up preserves an existing chart time when rectification starts, rejects split public/JSON turn versions, and routes v2 resume before any legacy scoring normalization. Legacy store inputs now accept only the strict legacy arm. Direct legacy updates include an atomic protocol predicate, while ordered service-role RPC wrappers lock the case and require `legacy-guided-v1` before invoking the former scoring or candidate transaction. Dynamic action receipts are canonicalized to lowercase in both production and the shared memory fake.
+
 ## Files
 
 - `frontend/supabase/migrations/20260718090000_dynamic_choice_birth_time_rectification.sql`
 - `frontend/supabase/migrations/20260718091000_dynamic_choice_birth_time_transitions.sql`
+- `frontend/supabase/migrations/20260718092000_legacy_scoring_protocol_guards.sql`
+- `frontend/supabase/migrations/20260718093000_legacy_candidate_protocol_guards.sql`
 - `frontend/src/lib/birth-time-evidence-service.ts`
 - `frontend/src/lib/birth-time-guided-candidate.ts`
 - `frontend/src/lib/birth-time-guided-draft-revision.ts`
@@ -19,6 +23,7 @@ New assessments initialize the public case, private state, and profile pointer i
 - `frontend/src/lib/birth-time-journey-dynamic-persistence.ts`
 - `frontend/src/lib/birth-time-journey-dynamic-state.ts`
 - `frontend/src/lib/birth-time-journey-errors.ts`
+- `frontend/src/lib/birth-time-journey-response.ts`
 - `frontend/src/lib/birth-time-journey-service.ts`
 - `frontend/src/lib/birth-time-journey-store-errors.ts`
 - `frontend/src/lib/birth-time-journey-stored-protocol.ts`
@@ -27,6 +32,7 @@ New assessments initialize the public case, private state, and profile pointer i
 - `frontend/src/lib/birth-time-scoring-service.ts`
 - `frontend/tests/birth-time-dynamic-persistence-fixture.ts`
 - `frontend/tests/birth-time-dynamic-persistence.test.ts`
+- `frontend/tests/birth-time-dynamic-resume.test.ts`
 - `frontend/tests/birth-time-journey-memory-store.ts`
 - `frontend/tests/birth-time-journey-legacy-isolation.test.ts`
 - `tests/test_birth_time_dynamic_persistence_contract.py`
@@ -41,25 +47,27 @@ New assessments initialize the public case, private state, and profile pointer i
 - Atomic creation RED: `.omo/evidence/task-5-atomic-create-red.log`, `.omo/evidence/task-5-atomic-create-ts-red.log`
 - Legacy isolation RED: `.omo/evidence/task-5-guided-isolation-red.log`, `.omo/evidence/task-5-all-legacy-isolation-red.log`
 - Memory replay RED: `.omo/evidence/task-5-memory-replay-red.log`
+- Profile preservation RED: `.omo/evidence/task-5-profile-preservation-ts-red.log`, `.omo/evidence/task-5-profile-preservation-python-red.log`
 - Migration GREEN: `.omo/evidence/task-5-python-green.log`
 - Persistence GREEN: `.omo/evidence/task-5-ts-green.log`
 - SQL null-state regression GREEN: `.omo/evidence/task-5-null-state-green.log`
 - Unknown-time initialization GREEN: `.omo/evidence/task-5-unknown-range-green.log`
 - Atomic creation GREEN: `.omo/evidence/task-5-atomic-create-green.log`
 - Legacy isolation and replay GREEN: `.omo/evidence/task-5-memory-and-isolation-green.log`
+- Profile preservation GREEN: `.omo/evidence/task-5-profile-preservation-ts-green.log`, `.omo/evidence/task-5-profile-preservation-python-green.log`
 
-The additional regressions prove that a missing current scoring action cannot pass a SQL `NOT IN` guard through three-valued `NULL` logic, and that the supported unknown-time assessment initializes a valid full-day dynamic range instead of failing on its intentional null reported bounds.
+The additional regressions prove that a missing current scoring action cannot pass a SQL `NOT IN` guard through three-valued `NULL` logic, that the supported unknown-time assessment initializes a valid full-day dynamic range, that SQL/public JSON turn versions cannot disagree, that v2 resume performs zero legacy writes, that an upgrade race cannot cross a legacy protocol predicate, and that uppercase UUID retries replay the stored advanced dynamic state.
 
 ## Verification
 
-- Focused persistence and legacy-isolation TypeScript: 30/30 passed.
-- Relevant Python contracts and engine/API regressions: 36/36 passed.
-- Full birth-time frontend suite: 255/255 passed.
-- Full frontend suite: 330/330 passed.
+- Focused persistence, resume, and upgrade-race TypeScript: 28/28 passed.
+- Relevant Python persistence, engine, and scoring contracts: 43/43 passed.
+- Full birth-time frontend suite: 259/259 passed.
+- Full frontend suite: 334/334 passed.
 - Changed-file ESLint: passed.
 - Changed-file Ruff: passed.
 - `git diff --check`: passed.
-- All changed TypeScript, test, and ordered migration modules are at most 250 pure LOC; maximum is 247.
+- All changed TypeScript, test, and ordered migration modules are at most 250 pure LOC; maximum is 250.
 - Full TypeScript check reports only the known unrelated baseline at `frontend/tests/profile-persistence.test.ts:7` (`TS1501`, ES2018 regex under the existing target).
 
 Evidence:
@@ -75,7 +83,7 @@ Evidence:
 
 ## Review
 
-Fresh review: **CLEAR / APPROVE**, with no blockers. Artifact: `.omo/evidence/task-5-code-review.md`.
+Fresh follow-up review against the current acceptance-fix diff: **CLEAR / APPROVE**, with no blockers. Artifact: `.omo/evidence/task-5-code-review.md`.
 
 Live PostgreSQL execution was not available: Docker CLI is installed, but the daemon socket does not exist. `.omo/evidence/task-5-live-postgres-unavailable.log` records the exact failure. SQL checks are therefore described only as static migration contracts; TypeScript fakes execute the RPC boundary and failure/replay semantics without claiming database execution.
 
@@ -84,3 +92,5 @@ Task 6 remains responsible for routing public `assess`/`resume` responses and dy
 ## Commit
 
 Commit message: `feat: persist dynamic rectification turns`
+
+Follow-up commit message: `fix: isolate dynamic rectification persistence`

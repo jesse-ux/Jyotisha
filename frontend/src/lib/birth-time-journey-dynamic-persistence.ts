@@ -6,6 +6,7 @@ import {
 import type { DynamicJourneyTurnState } from "./birth-time-journey-turn-protocol.ts";
 import type {
   DynamicStoredRectificationCase,
+  LegacyStoredRectificationCase,
   StoredRectificationCase,
 } from "./birth-time-journey-service.ts";
 import {
@@ -119,9 +120,8 @@ export function createDynamicTurnPersistence(
     },
 
     async upgradeLegacyActiveCase(
-      value: StoredRectificationCase,
+      value: LegacyStoredRectificationCase,
     ): Promise<StoredRectificationCase> {
-      if (value.journeyProtocol === "dynamic-choice-v2") return value;
       if (isTerminalLegacyCase(value)) return value;
       const upgraded = prepareLegacyDynamicUpgrade(value, asOfDate());
       const result = await client.rpc("upgrade_birth_time_legacy_case", {

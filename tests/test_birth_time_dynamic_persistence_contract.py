@@ -11,6 +11,10 @@ MIGRATION = (
 TRANSITIONS_MIGRATION = MIGRATION.with_name(
     "20260718091000_dynamic_choice_birth_time_transitions.sql"
 )
+LEGACY_GUARD_MIGRATIONS = (
+    MIGRATION.with_name("20260718092000_legacy_scoring_protocol_guards.sql"),
+    MIGRATION.with_name("20260718093000_legacy_candidate_protocol_guards.sql"),
+)
 
 
 def _sql() -> str:
@@ -63,6 +67,27 @@ def test_dynamic_case_creation_is_one_service_role_transaction() -> None:
     assert "raise exception 'birth_time_dynamic_profile_not_found'" in body
     assert "revoke all on function public.create_birth_time_dynamic_case" in sql
     assert "grant execute on function public.create_birth_time_dynamic_case" in sql
+
+
+def test_dynamic_case_creation_updates_only_profile_rectification_metadata() -> None:
+    body = _function(
+        _sql(), "create_birth_time_dynamic_case", "save_birth_time_dynamic_turn"
+    )
+    profile_update = body.split("update public.profiles", 1)[1].split(
+        "where id = p_user_id", 1
+    )[0]
+    assignments = set(re.findall(r"([a-z_]+)\s*=", profile_update))
+    assert assignments == {
+        "reported_birth_time",
+        "birth_time_source",
+        "birth_time_period",
+        "birth_time_clue",
+        "uncertainty_before_minutes",
+        "uncertainty_after_minutes",
+        "birth_time_status",
+        "rectification_confidence",
+        "rectification_case_id",
+    }
 
 
 def test_dynamic_turn_rpc_is_versioned_private_and_replay_safe() -> None:
@@ -132,3 +157,37 @@ def test_private_state_upsert_has_one_internal_owner_only_implementation() -> No
     assert "on conflict (case_id) do update" in body
     assert sql.count("insert into public.birth_time_rectification_dynamic_state") == 1
     assert "revoke all on function public.persist_birth_time_dynamic_private_state" in sql
+
+
+def test_legacy_rpc_writes_lock_and_reject_upgraded_cases_atomically() -> None:
+    source = "\n".join(
+        path.read_text(encoding="utf-8").lower() for path in LEGACY_GUARD_MIGRATIONS
+    )
+    guarded_functions = (
+        "create_birth_time_scoring_job",
+        "claim_birth_time_scoring_job",
+        "complete_birth_time_scoring_job",
+        "fail_birth_time_scoring_job",
+        "confirm_birth_time_candidate",
+        "save_guided_birth_time_candidate",
+        "confirm_guided_birth_time_candidate",
+    )
+    for function_name in guarded_functions:
+        wrapper = source.split(f"create function public.{function_name}(", 1)[1]
+        wrapper = wrapper.split("$$;", 1)[0]
+        assert "journey_protocol = 'legacy-guided-v1' for update" in wrapper
+        assert "birth_time_legacy_protocol_required" in wrapper
+        assert f"public.{function_name}_without_protocol_guard" in wrapper
+        assert (
+            f"revoke all on function public.{function_name}_without_protocol_guard"
+            in source
+        )
+
+
+def test_new_protocol_guard_migrations_stay_within_review_budget() -> None:
+    for path in LEGACY_GUARD_MIGRATIONS:
+        pure_lines = [
+            line for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("--")
+        ]
+        assert len(pure_lines) <= 250
