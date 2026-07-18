@@ -69,9 +69,11 @@ export interface BirthTimeGuideGenerator {
 
 export class BirthTimeGuideOutputError extends Error {
   readonly name = "BirthTimeGuideOutputError";
-  readonly reason: "invalid_json" | "invalid_question" | "domain_tamper";
+  readonly reason: "invalid_json" | "invalid_question" | "domain_tamper" | "repeated_question";
 
-  constructor(reason: "invalid_json" | "invalid_question" | "domain_tamper") {
+  constructor(
+    reason: "invalid_json" | "invalid_question" | "domain_tamper" | "repeated_question",
+  ) {
     super(`Birth-time guide output ${reason}`);
     this.reason = reason;
   }
