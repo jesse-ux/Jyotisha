@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from pathlib import Path
 
 from scripts.dynamic_rectification_opportunities import _dimension_opportunity
@@ -44,7 +45,7 @@ def test_every_supported_dimension_emits_distinct_validator_safe_copy() -> None:
         assert re.search(r"[\u3400-\u9fff]", context)
         assert re.search(r"[A-Za-z]", context + prompt) is None
         assert prompt.endswith("？") and prompt.count("？") == 1
-        assert len(labels) == len(set(label.replace(" ", "") for label in labels))
+        assert len(labels) == len(set(re.sub(r"\s+", "", label) for label in labels))
         assert all(re.search(r"[\u3400-\u9fff]", label) for label in labels)
 
 
@@ -78,7 +79,9 @@ def test_frontend_adapter_fixture_is_real_task2_opportunity_output() -> None:
     assert len(fixture["partitions"]) == len(opportunity["partitions"])
     assert re.search(r"[A-Za-z]", fixture["neutral_context"] + fixture["fallback_prompt"]) is None
     fixture_labels = [item["fallback_label"] for item in fixture["partitions"]]
-    assert len(fixture_labels) == len(set(label.replace(" ", "") for label in fixture_labels))
+    assert len(fixture_labels) == len(
+        set(re.sub(r"\s+", "", label) for label in fixture_labels)
+    )
 
 
 def test_same_year_windows_receive_distinct_visible_labels() -> None:
@@ -99,8 +102,11 @@ def test_same_year_windows_receive_distinct_visible_labels() -> None:
 
     assert opportunity is not None
     labels = [item["fallback_label"] for item in opportunity["partitions"]]
-    assert len(labels) == len(set(labels))
-    assert all("月" in label for label in labels)
+    normalized = [
+        re.sub(r"\s+", "", unicodedata.normalize("NFKC", label)) for label in labels
+    ]
+    assert len(normalized) == len(set(normalized))
+    assert all(len(re.findall(r"\d+", label)) >= 3 for label in labels)
 
 
 def test_same_month_windows_receive_distinct_day_precision_labels() -> None:
@@ -121,5 +127,8 @@ def test_same_month_windows_receive_distinct_day_precision_labels() -> None:
 
     assert opportunity is not None
     labels = [item["fallback_label"] for item in opportunity["partitions"]]
-    assert len(labels) == len(set(labels))
-    assert all("日" in label for label in labels)
+    normalized = [
+        re.sub(r"\s+", "", unicodedata.normalize("NFKC", label)) for label in labels
+    ]
+    assert len(normalized) == len(set(normalized))
+    assert all(len(re.findall(r"\d+", label)) >= 4 for label in labels)

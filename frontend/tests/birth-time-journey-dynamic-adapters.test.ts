@@ -85,6 +85,19 @@ test("difference packets separate public copy from private score vectors", () =>
   });
 });
 
+test("difference packets enforce the public prompt limit at the API boundary", () => {
+  const withPrompt = (length: number) => ({
+    ...apiPacket,
+    opportunities: [{
+      ...apiPacket.opportunities[0],
+      fallback_prompt: `${"问".repeat(length - 1)}？`,
+    }],
+  });
+
+  assert.equal(parseCandidateDifferenceBuild(withPrompt(120)).packet.opportunities[0]?.fallbackPrompt.length, 120);
+  assert.throws(() => parseCandidateDifferenceBuild(withPrompt(121)));
+});
+
 test("difference packets reject wrong versions, extra fields, and invalid score keys", () => {
   assert.throws(() => parseCandidateDifferenceBuild({
     ...apiPacket, scoring_version: "birth-time-choice-scoring-v1",

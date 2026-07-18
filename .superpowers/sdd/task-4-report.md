@@ -40,12 +40,21 @@ Final-fix RED artifact: `.omo/evidence/task-4-final-red.log`.
 - Python: 4/4 passed, including the new same-month/day-precision regression, confirming that
   the production behavior existed but previously lacked durable coverage.
 
+Standards-axis RED artifact: `.omo/evidence/task-4-axis-red.log`.
+
+- TypeScript: 19 tests, 2 expected failures. Server prompts of 121 and 240 characters were
+  accepted by binder and service instead of failing before ID allocation and commit.
+- Python: 4/4 passed after replacing localized precision glyph assertions with numeric-boundary
+  structure and normalized uniqueness checks.
+
 ## Implementation
 
 - `birth-time-dynamic-question-copy.ts` now contains only server-copy structural validation,
   NFKC/whitespace label normalization, the note-free opportunity-selection projection, and
   deterministic server-copy fingerprinting. The former note blacklist and substring
-  grounding logic were removed.
+  grounding logic were removed. Shared constants cap server questions at 120 characters and
+  labels at 80 across the API adapter, public schema, internal model, persisted schema, and
+  binding guard.
 - `birth-time-dynamic-question-validator.ts` accepts only strict selection objects. Binding
   resolves the selected server opportunity, validates the prompt and normalized uniqueness
   across every primary and reserved visible label, validates every matching private
@@ -57,7 +66,9 @@ Final-fix RED artifact: `.omo/evidence/task-4-final-red.log`.
 - `dynamic_rectification_copy.py` owns localized contexts and the least detailed
   year/month/day range representation needed to distinguish visible windows. Cross-year
   ranges stay concise; same-year or same-month collisions gain month or day precision.
-  `dynamic_rectification_opportunities.py` is again below the 250-pure-LOC boundary.
+  Its precision discriminator is the exhaustive `Literal["year", "month", "day"]` domain;
+  unknown precision cannot silently fall through. `dynamic_rectification_opportunities.py`
+  remains below the 250-pure-LOC boundary.
 - The Mastra contract describes selection only and forbids prompt/options/labels/partition
   fields in Agent output.
 
@@ -70,24 +81,29 @@ through the Task 4 service. Task 5 persistence was not changed.
 
 | Gate | Result | Artifact |
 | --- | --- | --- |
-| Final-fix RED | expected 2 TS failures; Python 4/4 | `.omo/evidence/task-4-final-red.log` |
-| Focused dynamic/guide TypeScript | 38/38 pass | `.omo/evidence/task-4-final-focused-ts.log` |
-| Focused Task 2 Python | 26/26 pass | `.omo/evidence/task-4-final-focused-python.log` |
-| Legacy Python rectification | 22/22 pass | `.omo/evidence/task-4-final-legacy-python.log` |
-| All birth-time TypeScript | 225/225 pass | `.omo/evidence/task-4-final-birth-time.log` |
-| Full frontend | 300/300 pass | `.omo/evidence/task-4-final-frontend-full.log` |
-| Cumulative changed TypeScript ESLint | pass, zero diagnostics | `.omo/evidence/task-4-final-eslint.log` |
-| Cumulative changed Python Ruff | pass | `.omo/evidence/task-4-final-ruff.log` |
-| Diff check and all changed TS/Python LOC | pass; every audited file <=250 | `.omo/evidence/task-4-final-quality.log` |
-| Full TypeScript check | only known unrelated `profile-persistence.test.ts:7` TS1501 | `.omo/evidence/task-4-final-tsc.log` |
-| Fresh final-fix review | CLEAR / APPROVE; no blockers or WATCH items | `.omo/evidence/task-4-final-fix-code-review.md` |
+| Standards-axis RED | expected 2 TS failures; Python 4/4 | `.omo/evidence/task-4-axis-red.log` |
+| Focused dynamic/guide TypeScript | 40/40 pass | `.omo/evidence/task-4-axis-focused-ts.log` |
+| Public dynamic-choice schema TypeScript | 7/7 pass | `.omo/evidence/task-4-axis-public-schema-ts.log` |
+| Dynamic adapter boundary TypeScript | 8/8 pass | `.omo/evidence/task-4-axis-adapter-ts.log` |
+| Focused Task 2 Python | 26/26 pass | `.omo/evidence/task-4-axis-focused-python.log` |
+| Legacy Python rectification | 22/22 pass | `.omo/evidence/task-4-axis-legacy-python.log` |
+| All birth-time TypeScript | 229/229 pass | `.omo/evidence/task-4-axis-birth-time.log` |
+| Full frontend | 304/304 pass | `.omo/evidence/task-4-axis-frontend-full.log` |
+| Cumulative changed TypeScript ESLint | pass, zero diagnostics | `.omo/evidence/task-4-axis-eslint.log` |
+| Cumulative changed Python Ruff | pass | `.omo/evidence/task-4-axis-ruff.log` |
+| Diff check and all changed TS/Python LOC | pass; every audited file <=250 | `.omo/evidence/task-4-axis-quality.log` |
+| Full TypeScript check | only known unrelated `profile-persistence.test.ts:7` TS1501 | `.omo/evidence/task-4-axis-tsc.log` |
+| Fresh standards-axis fix review | CLEAR / APPROVE; no blockers | `.omo/evidence/task-4-axis-fix-code-review.md` |
 
 The TypeScript command remains non-zero solely because the pre-existing profile-persistence
 test uses a regular-expression flag newer than the configured target. No Task 4 file reports
 a type error.
 The earlier `.omo/evidence/task-4-selection-boundary-code-review.md` `CLEAR` is explicitly
 superseded by `.omo/evidence/task-4-final-review.md`; it is not cited as current acceptance.
-The final reviewer independently rechecked reserved-label normalization, zero allocation and
-commit, the packet-only prompt API, typed Python range-copy boundary, same-month day precision,
-prose-pin removal, and cumulative LOC. Both required programming language perspectives and the
-remove-slops perspective returned `CLEAR / APPROVE` with no remaining WATCH item.
+The earlier `.omo/evidence/task-4-final-fix-code-review.md` `CLEAR` is explicitly superseded by
+the standards-axis review and is not cited as current acceptance. The new tests contain no
+localized month/day or domain-word assertions; precision is verified through distinct normalized
+labels and the number of numeric range-boundary tokens.
+The fresh reviewer also verified the shared 120/80 boundary through the public schema, API
+adapter, internal and persisted schemas, and binding guard. Both programming language
+perspectives and the remove-slops perspective returned `CLEAR / APPROVE`.

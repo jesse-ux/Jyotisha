@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { candidateResultSchema } from "./birth-time-evidence.ts";
 import {
+  DYNAMIC_QUESTION_LABEL_MAX_LENGTH,
+  DYNAMIC_QUESTION_PROMPT_MAX_LENGTH,
+} from "./birth-time-dynamic-question-limits.ts";
+import {
   publicChoiceKindSchema,
   publicDynamicChoiceQuestionSchema,
   timeRangeSchema,
@@ -111,7 +115,7 @@ export type DynamicControlState = {
 const evidencePartitionBaseSchema = z.object({
   partitionId: z.string().trim().min(1),
   descriptor: z.string().trim().min(1),
-  fallbackLabel: z.string().trim().min(1).max(80),
+  fallbackLabel: z.string().trim().min(1).max(DYNAMIC_QUESTION_LABEL_MAX_LENGTH),
 }).strict();
 
 export const evidencePartitionSchema = evidencePartitionBaseSchema.readonly();
@@ -126,7 +130,7 @@ export const questionOpportunitySchema = z.object({
   neutralContext: z.string().trim().min(1),
   estimatedInformationGain: z.number().finite().nonnegative(),
   candidatePartitionFingerprint: z.string().trim().min(1),
-  fallbackPrompt: z.string().trim().min(1).max(240),
+  fallbackPrompt: z.string().trim().min(1).max(DYNAMIC_QUESTION_PROMPT_MAX_LENGTH),
   partitions: z.array(evidencePartitionSchema).min(2).max(4).readonly(),
 }).strict().readonly();
 
@@ -148,7 +152,7 @@ export const candidateDifferenceBuildSchema = z.object({
 
 const persistedPrimaryChoiceSchema = z.object({
   optionId: z.string().trim().min(1),
-  label: z.string().trim().min(1).max(80),
+  label: z.string().trim().min(1).max(DYNAMIC_QUESTION_LABEL_MAX_LENGTH),
   kind: z.literal("primary"),
   partitionId: z.string().trim().min(1),
   candidateScores: finiteScoresSchema,
@@ -156,7 +160,7 @@ const persistedPrimaryChoiceSchema = z.object({
 
 const persistedSpecialChoiceSchema = (kind: "unknown" | "unmatched") => z.object({
   optionId: z.string().trim().min(1),
-  label: z.string().trim().min(1).max(80),
+  label: z.string().trim().min(1).max(DYNAMIC_QUESTION_LABEL_MAX_LENGTH),
   kind: z.literal(kind),
   partitionId: z.null(),
   candidateScores: z.null(),
@@ -171,7 +175,7 @@ export const persistedDynamicChoiceQuestionSchema = z.object({
   source: z.enum(["agent", "fallback"]),
   questionFingerprint: z.string().trim().min(1),
   candidatePartitionFingerprint: z.string().trim().min(1),
-  prompt: z.string().trim().min(1).max(240),
+  prompt: z.string().trim().min(1).max(DYNAMIC_QUESTION_PROMPT_MAX_LENGTH),
   options: z.array(z.union([
     persistedPrimaryChoiceSchema,
     persistedSpecialChoiceSchema("unknown"),

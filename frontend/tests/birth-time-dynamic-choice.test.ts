@@ -3,7 +3,10 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { publicDynamicChoiceQuestionSchema } from "../src/lib/birth-time-dynamic-choice.ts";
-import { persistedDynamicChoiceQuestionSchema } from "../src/lib/birth-time-dynamic-choice-internal.ts";
+import {
+  persistedDynamicChoiceQuestionSchema,
+  toPublicDynamicChoiceQuestion,
+} from "../src/lib/birth-time-dynamic-choice-internal.ts";
 import { dynamicJourneyTurnStateSchema, journeyTurnStateSchema } from "../src/lib/birth-time-journey-turn-protocol.ts";
 
 const internalQuestion = {
@@ -71,6 +74,20 @@ test("public questions never expose partition ids", () => {
   assert.equal(publicDynamicChoiceQuestionSchema.safeParse({
     ...parsed,
     options: [{ ...parsed.options[0], partitionId: "private" }, ...parsed.options.slice(1)],
+  }).success, false);
+});
+
+test("public questions enforce the shared prompt limit", () => {
+  const publicQuestion = toPublicDynamicChoiceQuestion(internalQuestion);
+  const promptWithLength = (length: number) => `${"问".repeat(length - 1)}？`;
+
+  assert.equal(publicDynamicChoiceQuestionSchema.safeParse({
+    ...publicQuestion,
+    prompt: promptWithLength(120),
+  }).success, true);
+  assert.equal(publicDynamicChoiceQuestionSchema.safeParse({
+    ...publicQuestion,
+    prompt: promptWithLength(121),
   }).success, false);
 });
 

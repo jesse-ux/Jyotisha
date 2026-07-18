@@ -1,11 +1,17 @@
 import { createHash } from "node:crypto";
+import {
+  DYNAMIC_QUESTION_LABEL_MAX_LENGTH,
+  DYNAMIC_QUESTION_PROMPT_MAX_LENGTH,
+} from "./birth-time-dynamic-question-limits.ts";
 import type { CandidateDifferencePacket } from "./birth-time-dynamic-choice-internal.ts";
 
 const clockTimePattern = /(?:^|[^\d])(?:[01]?\d|2[0-3])\s*[:：]\s*[0-5]\d(?:$|[^\d])/;
 
 export function dynamicServerCopyIsSafe(value: string, question: boolean): boolean {
   const normalized = value.normalize("NFKC").trim();
-  if (normalized.length > (question ? 240 : 80)) return false;
+  if (normalized.length > (
+    question ? DYNAMIC_QUESTION_PROMPT_MAX_LENGTH : DYNAMIC_QUESTION_LABEL_MAX_LENGTH
+  )) return false;
   if (!/[\u3400-\u9fff]/u.test(normalized) || /[A-Za-z]/.test(normalized)) return false;
   if (clockTimePattern.test(normalized)) return false;
   return !question || (normalized.match(/[？?]/g) ?? []).length === 1;

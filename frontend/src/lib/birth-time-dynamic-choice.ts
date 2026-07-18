@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  DYNAMIC_QUESTION_LABEL_MAX_LENGTH,
+  DYNAMIC_QUESTION_PROMPT_MAX_LENGTH,
+} from "./birth-time-dynamic-question-limits.ts";
 
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 
@@ -18,7 +22,7 @@ export type TimeRange = {
 
 export const publicDynamicChoiceOptionSchema = z.object({
   optionId: z.string().trim().min(1),
-  label: z.string().trim().min(1).max(80),
+  label: z.string().trim().min(1).max(DYNAMIC_QUESTION_LABEL_MAX_LENGTH),
   kind: publicChoiceKindSchema,
 }).strict().readonly();
 
@@ -55,7 +59,7 @@ function validateOptionSet(
 
 export const publicDynamicChoiceQuestionSchema = z.object({
   questionId: z.string().trim().min(1),
-  prompt: z.string().trim().min(1).max(240),
+  prompt: z.string().trim().min(1).max(DYNAMIC_QUESTION_PROMPT_MAX_LENGTH),
   options: z.array(publicDynamicChoiceOptionSchema).readonly(),
 }).strict().superRefine(validateOptionSet).readonly();
 

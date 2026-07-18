@@ -139,6 +139,33 @@ test("primary labels cannot collide with either reserved visible choice", () => 
   }
 });
 
+test("server prompt accepts 120 characters but rejects longer copy before IDs", () => {
+  const opportunity = dynamicPacket.opportunities[0];
+  if (!opportunity) throw new Error("missing test opportunity");
+  const promptWithLength = (length: number) => `${"问".repeat(length - 1)}？`;
+  const buildWithPrompt = (length: number) => ({
+    ...differenceBuild,
+    packet: {
+      ...dynamicPacket,
+      opportunities: [{ ...opportunity, fallbackPrompt: promptWithLength(length) }],
+    },
+  });
+
+  assert.equal(
+    bindDynamicQuestion(validDynamicSelection, buildWithPrompt(120), deterministicIds()).prompt.length,
+    120,
+  );
+  for (const length of [121, 240]) {
+    let allocations = 0;
+    assert.throws(() => bindDynamicQuestion(
+      validDynamicSelection,
+      buildWithPrompt(length),
+      deterministicIds(() => { allocations += 1; }),
+    ), BirthTimeDynamicBindingError);
+    assert.equal(allocations, 0, String(length));
+  }
+});
+
 test("repeated server semantics and partitions remain recoverable rejections", () => {
   const selection = parseDynamicQuestionOutput(validDynamicSelection, dynamicPacket);
   if (selection.kind !== "question") throw new Error("expected a selection");

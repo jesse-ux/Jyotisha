@@ -213,6 +213,31 @@ test("reserved-label collisions propagate without commit or ID allocation", asyn
   }
 });
 
+test("overlong server prompts propagate without commit or ID allocation", async () => {
+  const opportunity = differenceBuild.packet.opportunities[0];
+  if (!opportunity) throw new Error("missing test opportunity");
+  for (const length of [121, 240]) {
+    let allocations = 0;
+    let commits = 0;
+    const fallbackPrompt = `${"问".repeat(length - 1)}？`;
+
+    await assert.rejects(() => dynamicService({
+      build: {
+        ...differenceBuild,
+        packet: {
+          ...differenceBuild.packet,
+          opportunities: [{ ...opportunity, fallbackPrompt }],
+        },
+      },
+      generator: generatorFrom(() => JSON.stringify(validDynamicSelection)),
+      createId: deterministicIds(() => { allocations += 1; }),
+      onCommit: () => { commits += 1; },
+    }).generateQuestion("owner-1", generationCommand), BirthTimeDynamicBindingError);
+    assert.equal(allocations, 0, String(length));
+    assert.equal(commits, 0, String(length));
+  }
+});
+
 test("invalid server UUIDs propagate without committing a low result", async () => {
   let commits = 0;
   await assert.rejects(() => dynamicService({

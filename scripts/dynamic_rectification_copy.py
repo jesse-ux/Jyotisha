@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import date
-from typing import Final, TypedDict
+from typing import Final, Literal, TypedDict, assert_never
 
 DIMENSION_CONTEXT: Final = {
     "education": "一次明显的升学、转学或学习方向变化",
@@ -21,21 +21,28 @@ class DateRange(TypedDict):
     window_end: str
 
 
-def _range_label(item: DateRange, precision: str) -> str:
+RangePrecision = Literal["year", "month", "day"]
+
+
+def _range_label(item: DateRange, precision: RangePrecision) -> str:
     start = date.fromisoformat(item["window_start"])
     end = date.fromisoformat(item["window_end"])
-    if precision == "year":
-        return f"{start.year} 年" if start.year == end.year else f"{start.year}—{end.year} 年"
-    if precision == "month":
-        if start.year == end.year:
-            return f"{start.year} 年 {start.month} 月—{end.month} 月"
-        return f"{start.year} 年 {start.month} 月—{end.year} 年 {end.month} 月"
-    if start.year == end.year and start.month == end.month:
-        return f"{start.year} 年 {start.month} 月 {start.day} 日—{end.day} 日"
-    return (
-        f"{start.year} 年 {start.month} 月 {start.day} 日—"
-        f"{end.year} 年 {end.month} 月 {end.day} 日"
-    )
+    match precision:
+        case "year":
+            return f"{start.year} 年" if start.year == end.year else f"{start.year}—{end.year} 年"
+        case "month":
+            if start.year == end.year:
+                return f"{start.year} 年 {start.month} 月—{end.month} 月"
+            return f"{start.year} 年 {start.month} 月—{end.year} 年 {end.month} 月"
+        case "day":
+            if start.year == end.year and start.month == end.month:
+                return f"{start.year} 年 {start.month} 月 {start.day} 日—{end.day} 日"
+            return (
+                f"{start.year} 年 {start.month} 月 {start.day} 日—"
+                f"{end.year} 年 {end.month} 月 {end.day} 日"
+            )
+        case unreachable:
+            assert_never(unreachable)
 
 
 def visible_range_labels(items: Sequence[DateRange]) -> list[str]:

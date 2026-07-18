@@ -4,6 +4,10 @@ import {
   dynamicChoiceScoringResultSchema,
 } from "./birth-time-dynamic-choice-internal.ts";
 import { candidateResultSchema } from "./birth-time-evidence.ts";
+import {
+  DYNAMIC_QUESTION_LABEL_MAX_LENGTH,
+  DYNAMIC_QUESTION_PROMPT_MAX_LENGTH,
+} from "./birth-time-dynamic-question-limits.ts";
 import type {
   CandidateDifferenceBuild,
   DynamicChoiceScoringResult,
@@ -17,7 +21,7 @@ const apiRangeSchema = z.object({
 const partitionSchema = z.object({
   partition_id: z.string().trim().min(1),
   descriptor: z.string().trim().min(1),
-  fallback_label: z.string().trim().min(1).max(80),
+  fallback_label: z.string().trim().min(1).max(DYNAMIC_QUESTION_LABEL_MAX_LENGTH),
   candidate_scores: z.record(candidateTimeSchema, z.number().finite().nonnegative()),
 }).strict();
 const opportunitySchema = z.object({
@@ -26,7 +30,7 @@ const opportunitySchema = z.object({
   neutral_context: z.string().trim().min(1),
   estimated_information_gain: z.number().finite().nonnegative(),
   candidate_partition_fingerprint: z.string().trim().min(1),
-  fallback_prompt: z.string().trim().min(1).max(240),
+  fallback_prompt: z.string().trim().min(1).max(DYNAMIC_QUESTION_PROMPT_MAX_LENGTH),
   partitions: z.array(partitionSchema).min(2).max(4),
 }).strict().superRefine((value, context) => {
   if (new Set(value.partitions.map((item) => item.partition_id)).size !== value.partitions.length) {
