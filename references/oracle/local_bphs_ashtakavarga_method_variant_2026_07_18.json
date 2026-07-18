@@ -1,0 +1,31 @@
+{
+  "scope": "local_bphs_ashtakavarga_method_evidence",
+  "status": "method_variant_candidate_not_numeric_oracle",
+  "source": {
+    "title": "BPHS reading note",
+    "access": "locally held, nonredistributable",
+    "page_labels": [271, 272, 273, 274, 275, 276, 277, 278]
+  },
+  "verified_method_facts": {
+    "contributors": ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Lagna"],
+    "terms": {"favourable": "Bindu", "unfavourable": "Rekha"},
+    "source_declares_other_allocations_exist": true
+  },
+  "observed_rows": [
+    {
+      "target": "Jupiter",
+      "source": "Sun",
+      "local_houses": [1, 2, 3, 4, 7, 8, 9, 10, 11],
+      "commercial_standard_houses": [1, 2, 3, 4, 7, 8, 9, 10, 11],
+      "comparison": "match"
+    },
+    {
+      "target": "Mercury",
+      "source": "Sun",
+      "local_houses": [1, 2, 3, 4, 7, 8, 10],
+      "commercial_standard_houses": [5, 6, 9, 11, 12],
+      "comparison": "different_method_or_transcription_candidate"
+    }
+  ],
+  "boundary": "The source has no complete natal input plus BAV/SAV result. It may explain allocation-table variation but cannot determine a numeric truth winner."
+}
