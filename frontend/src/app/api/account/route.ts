@@ -28,6 +28,14 @@ function nullableNumber(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function isMissingProfileColumn(error: { code?: string; message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? "";
+  return error?.code === "PGRST204"
+    || error?.code === "42703"
+    || message.includes("schema cache")
+    || message.includes("column");
+}
+
 export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
@@ -75,24 +83,38 @@ export async function PATCH(request: Request) {
     }
 
     const admin = createAdminSupabaseClient();
-    const { data, error } = await admin
+    const baseProfile = {
+      id: user.id,
+      name: nullableString(payload.name),
+      birth_date: nullableString(payload.birth_date),
+      birth_time: nullableString(payload.birth_time),
+      country_code: nullableString(payload.country_code),
+      province_code: nullableString(payload.province_code),
+      city_code: nullableString(payload.city_code),
+      district_code: nullableString(payload.district_code),
+      updated_at: new Date().toISOString(),
+    };
+    const withCoordinates = {
+      ...baseProfile,
+      latitude: nullableNumber(payload.latitude),
+      longitude: nullableNumber(payload.longitude),
+      timezone_offset: nullableNumber(payload.timezone_offset),
+    };
+    const withoutCoordinates = baseProfile;
+    let { data, error } = await admin
       .from("profiles")
-      .upsert({
-        id: user.id,
-        name: nullableString(payload.name),
-        birth_date: nullableString(payload.birth_date),
-        birth_time: nullableString(payload.birth_time),
-        country_code: nullableString(payload.country_code),
-        province_code: nullableString(payload.province_code),
-        city_code: nullableString(payload.city_code),
-        district_code: nullableString(payload.district_code),
-        latitude: nullableNumber(payload.latitude),
-        longitude: nullableNumber(payload.longitude),
-        timezone_offset: nullableNumber(payload.timezone_offset),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "id" })
+      .upsert(withCoordinates, { onConflict: "id" })
       .select("id")
       .single();
+    if (error && isMissingProfileColumn(error)) {
+      const fallback = await admin
+        .from("profiles")
+        .upsert(withoutCoordinates, { onConflict: "id" })
+        .select("id")
+        .single();
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error || !data) {
       return NextResponse.json({ error: "暂时无法保存账户资料" }, { status: 500 });
