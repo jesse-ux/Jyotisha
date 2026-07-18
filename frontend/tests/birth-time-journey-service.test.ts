@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createBirthTimeJourneyService } from "../src/lib/birth-time-journey-service.ts";
-import type { BirthTimeJourneyEngine, StoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
+import type { LegacyBirthTimeJourneyEngine, StoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
 import {
   approximateAssessment,
   hospitalAssessment,
@@ -14,7 +14,7 @@ import {
 test("journey service activates a stable hospital record and persists its scan", async () => {
   const memory = memoryStore();
   let receivedUncertainty = 0;
-  const engine: BirthTimeJourneyEngine = {
+  const engine: LegacyBirthTimeJourneyEngine = {
     ...unusedJourneyEngine,
     async scan(input) {
       receivedUncertainty = input.uncertaintyMinutes;
@@ -34,7 +34,7 @@ test("journey service activates a stable hospital record and persists its scan",
 
 test("journey service fails a scanner error closed without activating the time", async () => {
   const memory = memoryStore();
-  const engine: BirthTimeJourneyEngine = {
+  const engine: LegacyBirthTimeJourneyEngine = {
     ...unusedJourneyEngine,
     async scan() {
       throw new TypeError("scanner offline");

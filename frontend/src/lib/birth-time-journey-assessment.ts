@@ -1,6 +1,6 @@
 import type {
-  BirthTimeJourneyEngine,
   JourneyScanInput,
+  LegacyBirthTimeJourneyEngine,
   RectificationQuestionnaire,
 } from "./birth-time-journey-service.ts";
 import type {
@@ -54,7 +54,7 @@ function questionnaireStability(
 }
 
 export async function scanAssessment(
-  engine: BirthTimeJourneyEngine,
+  engine: Pick<LegacyBirthTimeJourneyEngine, "scan">,
   assessment: BirthTimeAssessment,
 ): Promise<{
   readonly stability: ScanStability;

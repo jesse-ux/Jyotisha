@@ -66,3 +66,38 @@
 
 - The repository still lacks a standalone runtime `server-only` package for direct Node imports. Per the approved module-boundary decision, verification uses the production file's existing `import "server-only"` plus strict projection and source-contract tests rather than adding an unavailable dependency.
 - The complete TypeScript diagnostic remains blocked by the unrelated ES2017/ES2018 regex baseline described above.
+
+## Review fixes
+
+- Restored byte-compatible legacy candidate parsing. Unknown nested evidence metadata is accepted and stripped exactly as before Task 3; dynamic response parsing no longer changes the legacy schema.
+- Moved every v2 response schema, invariant, and mapping into `birth-time-journey-dynamic-adapters.ts`. Root responses, ranges, opportunities, partitions, and winning segments are strict; empty dynamic evidence is enforced before candidate construction.
+- Split dynamic adapter regressions into `birth-time-journey-dynamic-adapters.test.ts`. Added duplicate opportunity/partition attacks, nested extra-field attacks, exact-range keys, cross-midnight mapping, and independent expected-value assertions.
+- Made `buildDifferencePacket` and `scoreChoices` required on the primary `BirthTimeJourneyEngine`. Existing services use the explicit `LegacyBirthTimeJourneyEngine` pick, and legacy-only test doubles were narrowed without runtime behavior changes.
+- Refactored HTTP execution into `createJourneyEngineWire`, whose `post` accepts one typed request object. The server-only factory remains the environment owner; engine assembly is injectable for executable fake-fetch verification without adding the unavailable `server-only` runtime dependency.
+- Replaced greedy source-regex authentication tests with executable coverage for both exact dynamic URLs, serialized bodies, POST method, bearer header, 45-second abort signal, and missing-token zero-fetch behavior. All three legacy engine endpoints execute without an Authorization header.
+- Removed newly introduced non-null assertions and narrowed the ownership scan to the client/request/component/hook boundary named by the plan.
+- Kept every modified production and test TypeScript module at or below 250 pure LOC. The largest is `birth-time-journey-test-support.ts` at 249; Task 3 production modules range from 19 to 239.
+
+### Review RED
+
+1. The legacy compatibility regression failed with `unrecognized_keys` when an existing engine evidence item contained extra server metadata.
+2. The new dynamic adapter suite failed to load because the protocol-specific module did not yet exist.
+3. Independent review probes had shown nested dynamic `winning_segment` extras were silently stripped, optional primary engine methods weakened consumers, and the source-regex auth proof could remain green after removing authentication from one endpoint.
+
+### Review GREEN
+
+1. Focused legacy/dynamic/wire suite:
+   - `/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/birth-time-journey-engine.test.ts tests/birth-time-journey-adapters.test.ts tests/birth-time-journey-dynamic-adapters.test.ts`
+   - 24 passed, 0 failed.
+2. Complete birth-time suite:
+   - `/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/birth-time*.test.ts`
+   - 210 passed, 0 failed.
+3. Full frontend suite:
+   - `/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/*.test.ts`
+   - 285 passed, 0 failed.
+4. Focused ESLint across all changed production/test TypeScript modules:
+   - Passed with no diagnostics.
+5. TypeScript diagnostic:
+   - No Task 3 diagnostics; only the known `tests/profile-persistence.test.ts:7 TS1501` baseline remains.
+6. Pure-LOC audit and `git diff --check`:
+   - Every changed TypeScript file is at or below 250 pure LOC; no whitespace errors.

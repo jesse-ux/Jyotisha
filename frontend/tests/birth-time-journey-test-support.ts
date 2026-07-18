@@ -1,18 +1,11 @@
 import { birthTimeAssessmentSchema, candidateResultSchema, lifeEventSchema } from "../src/lib/birth-time-journey.ts";
 import { createBirthTimeJourneyService } from "../src/lib/birth-time-journey-service.ts";
-import type {
-  BirthTimeJourneyEngine,
-  BirthTimeJourneyStore,
-  PersistedJourneyAssessment,
-  StoredRectificationCase,
-} from "../src/lib/birth-time-journey-service.ts";
+import type { BirthTimeJourneyStore, LegacyBirthTimeJourneyEngine, PersistedJourneyAssessment, StoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
 import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
 import type { EvidenceDomain } from "../src/lib/birth-time-question-planner.ts";
 import { createMemoryScoringJobs } from "./birth-time-scoring-memory-store.ts";
 
-class UnexpectedTestCallError extends Error {
-  readonly name = "UnexpectedTestCallError";
-}
+class UnexpectedTestCallError extends Error { readonly name = "UnexpectedTestCallError"; }
 
 class MissingTestCaseError extends Error {
   readonly name = "MissingTestCaseError";
@@ -143,7 +136,7 @@ export function memoryStore(initialCase?: StoredRectificationCase) {
   };
 }
 
-export const unusedJourneyEngine: BirthTimeJourneyEngine = {
+export const unusedJourneyEngine: LegacyBirthTimeJourneyEngine = {
   async scan() { throw new UnexpectedTestCallError(); },
   async score() { throw new UnexpectedTestCallError(); },
   async scoreEvents() { throw new UnexpectedTestCallError(); },

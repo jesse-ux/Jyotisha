@@ -6,7 +6,7 @@ import { candidateResultSchema } from "../src/lib/birth-time-evidence.ts";
 import { createGuidedCandidateActions } from "../src/lib/birth-time-guided-candidate.ts";
 import {
   createBirthTimeJourneyService,
-  type BirthTimeJourneyEngine,
+  type LegacyBirthTimeJourneyEngine,
   type StoredRectificationCase,
   type VersionedJourneyResponse,
 } from "../src/lib/birth-time-journey-service.ts";
@@ -82,7 +82,7 @@ export function createHarness(input: {
 }) {
   const memory = memoryStore(input.initial);
   let scoreEventsCalls = 0;
-  const engine: BirthTimeJourneyEngine = {
+  const engine: LegacyBirthTimeJourneyEngine = {
     ...unusedJourneyEngine,
     async scoreEvents() {
       scoreEventsCalls += 1;

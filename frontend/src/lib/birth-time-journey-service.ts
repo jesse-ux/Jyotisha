@@ -97,14 +97,13 @@ export interface BirthTimeJourneyEngine {
   scan(input: JourneyScanInput): Promise<{ readonly questionnaire: RectificationQuestionnaire }>;
   score(input: JourneyScoreInput): Promise<RectificationScoringResult>;
   scoreEvents(input: JourneyEventScoreInput): Promise<CandidateResult>;
-  buildDifferencePacket?(input: DifferencePacketInput): Promise<CandidateDifferenceBuild>;
-  scoreChoices?(input: DynamicChoiceScoreInput): Promise<DynamicChoiceScoringResult>;
-}
-
-export interface DynamicBirthTimeJourneyEngine extends BirthTimeJourneyEngine {
   buildDifferencePacket(input: DifferencePacketInput): Promise<CandidateDifferenceBuild>;
   scoreChoices(input: DynamicChoiceScoreInput): Promise<DynamicChoiceScoringResult>;
 }
+
+export type LegacyBirthTimeJourneyEngine = Pick<BirthTimeJourneyEngine,
+  "scan" | "score" | "scoreEvents"
+>;
 
 export type PersistedJourneyAssessment = {
   readonly userId: string;
@@ -148,7 +147,7 @@ export interface BirthTimeJourneyStore {
 
 export type BirthTimeJourneyPorts = {
   readonly store: BirthTimeJourneyStore;
-  readonly engine: BirthTimeJourneyEngine;
+  readonly engine: LegacyBirthTimeJourneyEngine;
   readonly now?: () => Date;
 };
 
