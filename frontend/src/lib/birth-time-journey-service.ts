@@ -133,9 +133,18 @@ export type LegacyStoredRectificationCase = StoredRectificationCaseBase
 export type DynamicStoredRectificationCase = StoredRectificationCaseBase
   & DynamicStoredFields;
 
-export type StoredRectificationCase =
-  | LegacyStoredRectificationCase
+export type StoredRectificationCase = LegacyStoredRectificationCase
   | DynamicStoredRectificationCase;
+
+export type DynamicScoringJobCommand = {
+  readonly expectedVersion: number;
+  readonly jobId: string;
+  readonly evidenceFingerprint: string;
+  readonly algorithmVersion: string;
+};
+
+export type DynamicScoringJobFailureCommand = DynamicScoringJobCommand
+  & { readonly failureCode: string };
 
 export interface BirthTimeJourneyStore {
   saveAssessment(value: PersistedJourneyAssessment): Promise<string>;
@@ -143,6 +152,8 @@ export interface BirthTimeJourneyStore {
   saveScoring(value: LegacyStoredRectificationCase): Promise<void>;
   saveTurn(value: LegacyStoredRectificationCase, expectedVersion: number, actionId: string): Promise<StoredRectificationCase>;
   saveDynamicTurn(value: DynamicStoredRectificationCase, expectedVersion: number, actionId: string): Promise<DynamicStoredRectificationCase>;
+  completeDynamicScoringJob(value: DynamicStoredRectificationCase, command: DynamicScoringJobCommand): Promise<DynamicStoredRectificationCase>;
+  failDynamicScoringJob(value: DynamicStoredRectificationCase, command: DynamicScoringJobFailureCommand): Promise<DynamicStoredRectificationCase>;
   upgradeLegacyActiveCase(value: LegacyStoredRectificationCase): Promise<StoredRectificationCase>;
   createScoringJob(value: LegacyStoredRectificationCase, expectedVersion: number, actionId: string, job: ScoringJobSpec): Promise<StoredRectificationCase>;
   claimScoringJob(identity: ScoringJobIdentity): Promise<ScoringJobClaim>;

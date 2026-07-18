@@ -1,5 +1,8 @@
+import { isDeepStrictEqual } from "node:util";
 import type {
   BirthTimeJourneyStore,
+  DynamicScoringJobCommand,
+  DynamicScoringJobFailureCommand,
   DynamicStoredRectificationCase,
   PersistedJourneyAssessment,
   StoredRectificationCase,
@@ -17,6 +20,30 @@ class MissingTestCaseError extends Error {
 
 export const journeyCaseId = "7299894c-10a8-4b45-91d1-339007282c50";
 
+type DynamicScoringReceipt = {
+  readonly kind: "complete" | "fail";
+  readonly command: DynamicScoringJobCommand | DynamicScoringJobFailureCommand;
+  readonly result: DynamicStoredRectificationCase["candidateResult"];
+};
+
+function sameScoringOperation(
+  receipt: DynamicScoringReceipt,
+  next: DynamicScoringReceipt,
+): boolean {
+  const prior = receipt.command;
+  const command = next.command;
+  return receipt.kind === next.kind
+    && prior.expectedVersion === command.expectedVersion
+    && prior.jobId.toLowerCase() === command.jobId.toLowerCase()
+    && prior.evidenceFingerprint === command.evidenceFingerprint
+    && prior.algorithmVersion === command.algorithmVersion
+    && (receipt.kind !== "fail" || (
+      "failureCode" in prior && "failureCode" in command
+      && prior.failureCode === command.failureCode
+    ))
+    && (receipt.kind !== "complete" || isDeepStrictEqual(receipt.result, next.result));
+}
+
 export function memoryStore(
   initialCase?: StoredRectificationCase,
   asOfDate = "2026-07-18",
@@ -28,6 +55,7 @@ export function memoryStore(
   let committedTurnWrites = 0;
   let legacyWrites = 0;
   let guidedCandidateWrites = 0;
+  let dynamicScoringReceipt: DynamicScoringReceipt | null = null;
   const scoringJobs = createMemoryScoringJobs({
     read: () => savedCase,
     write: (value) => {
@@ -37,6 +65,31 @@ export function memoryStore(
       committedTurnWrites += 1;
     },
   });
+  function persistDynamicScoring(
+    value: DynamicStoredRectificationCase,
+    receipt: DynamicScoringReceipt,
+  ): DynamicStoredRectificationCase {
+    if (!savedDynamicCase) throw new MissingTestCaseError();
+    const expectedVersion = receipt.command.expectedVersion;
+    if (savedDynamicCase.turnVersion === expectedVersion + 1) {
+      if (dynamicScoringReceipt && sameScoringOperation(dynamicScoringReceipt, receipt)) {
+        return savedDynamicCase;
+      }
+      throw new StaleJourneyTurnError(value.id, expectedVersion, savedDynamicCase.turnVersion);
+    }
+    if (savedDynamicCase.turnVersion !== expectedVersion) {
+      throw new StaleJourneyTurnError(value.id, expectedVersion, savedDynamicCase.turnVersion);
+    }
+    const saved = {
+      ...value,
+      turnVersion: expectedVersion + 1,
+      dynamicTurnState: { ...value.dynamicTurnState, turnVersion: expectedVersion + 1 },
+    };
+    savedCase = saved;
+    savedDynamicCase = saved;
+    dynamicScoringReceipt = receipt;
+    return saved;
+  }
   const store: BirthTimeJourneyStore = {
     async saveAssessment(value) {
       savedAssessment = value;
@@ -92,6 +145,12 @@ export function memoryStore(
       savedDynamicCase = savedDynamic;
       committedTurnWrites += 1;
       return savedDynamic;
+    },
+    async completeDynamicScoringJob(value, command) {
+      return persistDynamicScoring(value, { kind: "complete", command, result: value.candidateResult });
+    },
+    async failDynamicScoringJob(value, command) {
+      return persistDynamicScoring(value, { kind: "fail", command, result: null });
     },
     async upgradeLegacyActiveCase(value) {
       if (isTerminalLegacyCase(value)) {
@@ -161,6 +220,7 @@ export function memoryStore(
     replaceCase: (value: StoredRectificationCase) => {
       savedCase = value;
       savedDynamicCase = value.journeyProtocol === "dynamic-choice-v2" ? value : null;
+      dynamicScoringReceipt = null;
     },
   };
 }

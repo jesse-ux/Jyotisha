@@ -5,6 +5,8 @@ import {
 } from "./birth-time-journey-turn-protocol.ts";
 import type { DynamicJourneyTurnState } from "./birth-time-journey-turn-protocol.ts";
 import type {
+  DynamicScoringJobCommand,
+  DynamicScoringJobFailureCommand,
   DynamicStoredRectificationCase,
   LegacyStoredRectificationCase,
   StoredRectificationCase,
@@ -68,6 +70,7 @@ function privateState(value: DynamicStoredRectificationCase): DynamicPrivateJour
 
 function isStaleRpc(error: RpcError): boolean {
   return error.message.includes("stale_birth_time_dynamic_turn")
+    || error.message.includes("stale_birth_time_dynamic_scoring_job")
     || error.message.includes("stale_birth_time_legacy_upgrade");
 }
 
@@ -82,6 +85,43 @@ export function createDynamicTurnPersistence(
       throw new BirthTimeJourneyStoreError("load_case");
     }
     return loaded;
+  }
+
+  async function savedDynamicScoring(
+    value: DynamicStoredRectificationCase,
+    expectedVersion: number,
+    result: RpcResult,
+  ): Promise<DynamicStoredRectificationCase> {
+    if (result.error) {
+      if (isStaleRpc(result.error)) {
+        const current = await loadCase(value.userId, value.id);
+        throw new StaleJourneyTurnError(
+          value.id,
+          expectedVersion,
+          current?.turnVersion ?? 0,
+        );
+      }
+      throw new BirthTimeJourneyStoreError("update_case");
+    }
+    const version = rpcVersionSchema.safeParse(result.data);
+    if (!version.success || version.data !== expectedVersion + 1) {
+      throw new BirthTimeJourneyStoreError("update_case");
+    }
+    const loaded = await loadedDynamic(value.userId, value.id);
+    if (
+      loaded.turnVersion !== version.data
+      || loaded.dynamicTurnState.turnVersion !== version.data
+    ) throw new BirthTimeJourneyStoreError("load_case");
+    return loaded;
+  }
+
+  function scoringIdentity(command: DynamicScoringJobCommand) {
+    return {
+      p_job_id: command.jobId,
+      p_expected_version: command.expectedVersion,
+      p_evidence_fingerprint: command.evidenceFingerprint,
+      p_algorithm_version: command.algorithmVersion,
+    };
   }
 
   return {
@@ -117,6 +157,38 @@ export function createDynamicTurnPersistence(
       }
       rpcVersionSchema.parse(result.data);
       return loadedDynamic(value.userId, value.id);
+    },
+
+    async completeDynamicScoringJob(
+      value: DynamicStoredRectificationCase,
+      command: DynamicScoringJobCommand,
+    ): Promise<DynamicStoredRectificationCase> {
+      if (!value.candidateResult) throw new BirthTimeJourneyStoreError("update_case");
+      const result = await client.rpc("complete_birth_time_dynamic_scoring_job", {
+        p_user_id: value.userId,
+        p_case_id: value.id,
+        ...scoringIdentity(command),
+        p_public_turn_state: publicTurn(value, command.expectedVersion + 1),
+        p_snapshot: value.snapshot,
+        p_candidate_result: value.candidateResult,
+        p_private_state: privateState(value),
+      });
+      return savedDynamicScoring(value, command.expectedVersion, result);
+    },
+
+    async failDynamicScoringJob(
+      value: DynamicStoredRectificationCase,
+      command: DynamicScoringJobFailureCommand,
+    ): Promise<DynamicStoredRectificationCase> {
+      const result = await client.rpc("fail_birth_time_dynamic_scoring_job", {
+        p_user_id: value.userId,
+        p_case_id: value.id,
+        ...scoringIdentity(command),
+        p_failure_code: command.failureCode,
+        p_public_turn_state: publicTurn(value, command.expectedVersion + 1),
+        p_private_state: privateState(value),
+      });
+      return savedDynamicScoring(value, command.expectedVersion, result);
     },
 
     async upgradeLegacyActiveCase(

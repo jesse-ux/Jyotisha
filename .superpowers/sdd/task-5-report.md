@@ -8,6 +8,8 @@ New assessments initialize the public case, private state, and profile pointer i
 
 The acceptance follow-up preserves an existing chart time when rectification starts, rejects split public/JSON turn versions, and routes v2 resume before any legacy scoring normalization. Legacy store inputs now accept only the strict legacy arm. Direct legacy updates include an atomic protocol predicate, while ordered service-role RPC wrappers lock the case and require `legacy-guided-v1` before invoking the former scoring or candidate transaction. Dynamic action receipts are canonicalized to lowercase in both production and the shared memory fake.
 
+The scoring-persistence follow-up adds typed completion and failure commands that call the exact service-role RPCs, validate the returned version, reload the owner-scoped stored case, and preserve idempotent replay and stale-write behavior. It deliberately does not add stop policy, transition routing, or Task 6 orchestration.
+
 ## Files
 
 - `frontend/supabase/migrations/20260718090000_dynamic_choice_birth_time_rectification.sql`
@@ -33,6 +35,8 @@ The acceptance follow-up preserves an existing chart time when rectification sta
 - `frontend/tests/birth-time-dynamic-persistence-fixture.ts`
 - `frontend/tests/birth-time-dynamic-persistence.test.ts`
 - `frontend/tests/birth-time-dynamic-resume.test.ts`
+- `frontend/tests/birth-time-dynamic-scoring-memory-store.test.ts`
+- `frontend/tests/birth-time-dynamic-scoring-persistence.test.ts`
 - `frontend/tests/birth-time-journey-memory-store.ts`
 - `frontend/tests/birth-time-journey-legacy-isolation.test.ts`
 - `tests/test_birth_time_dynamic_persistence_contract.py`
@@ -56,14 +60,18 @@ The acceptance follow-up preserves an existing chart time when rectification sta
 - Legacy isolation and replay GREEN: `.omo/evidence/task-5-memory-and-isolation-green.log`
 - Profile preservation GREEN: `.omo/evidence/task-5-profile-preservation-ts-green.log`, `.omo/evidence/task-5-profile-preservation-python-green.log`
 
-The additional regressions prove that a missing current scoring action cannot pass a SQL `NOT IN` guard through three-valued `NULL` logic, that the supported unknown-time assessment initializes a valid full-day dynamic range, that SQL/public JSON turn versions cannot disagree, that v2 resume performs zero legacy writes, that an upgrade race cannot cross a legacy protocol predicate, and that uppercase UUID retries replay the stored advanced dynamic state.
+The scoring-persistence follow-up began RED with all 3 executable tests failing because the completion and failure methods did not exist. After adding only the typed persistence wrappers and memory-fake support, the same 3 tests passed GREEN.
+
+Fresh review then reproduced a shared-fake replay mismatch: completion of one job could be returned for a different failure command at the same expected version. The fake now records the endpoint kind, canonical job identity, fingerprint, algorithm, failure code or candidate result, and returns a replay only for an equivalent operation. Two executable regressions prove exact completion/failure replay and reject changed job, endpoint, fingerprint, algorithm, failure code, or result.
+
+The additional regressions prove that a missing current scoring action cannot pass a SQL `NOT IN` guard through three-valued `NULL` logic, that the supported unknown-time assessment initializes a valid full-day dynamic range, that SQL/public JSON turn versions cannot disagree, that v2 resume performs zero legacy writes, that an upgrade race cannot cross a legacy protocol predicate, and that uppercase UUID retries replay the stored advanced dynamic state. Executable scoring tests additionally prove exact completion/failure RPC names and payloads, returned-version parsing, owner reload, replay, stale and unknown-error propagation, and the public/private payload split without exposing an active or birth time.
 
 ## Verification
 
-- Focused persistence, resume, and upgrade-race TypeScript: 28/28 passed.
+- Focused persistence, resume, scoring-job, and upgrade-race TypeScript: 33/33 passed.
 - Relevant Python persistence, engine, and scoring contracts: 43/43 passed.
-- Full birth-time frontend suite: 259/259 passed.
-- Full frontend suite: 334/334 passed.
+- Full birth-time frontend suite: 264/264 passed.
+- Full frontend suite: 339/339 passed.
 - Changed-file ESLint: passed.
 - Changed-file Ruff: passed.
 - `git diff --check`: passed.
@@ -83,7 +91,7 @@ Evidence:
 
 ## Review
 
-Fresh follow-up review against the current acceptance-fix diff: **CLEAR / APPROVE**, with no blockers. Artifact: `.omo/evidence/task-5-code-review.md`.
+Final cross-review after the identity-faithful memory replay fix: **CLEAR / APPROVE**, with no remaining blocker. The earlier untracked review artifact records the reproduced mismatch that prompted this final fix and is superseded by the passing cross-review.
 
 Live PostgreSQL execution was not available: Docker CLI is installed, but the daemon socket does not exist. `.omo/evidence/task-5-live-postgres-unavailable.log` records the exact failure. SQL checks are therefore described only as static migration contracts; TypeScript fakes execute the RPC boundary and failure/replay semantics without claiming database execution.
 
@@ -94,3 +102,5 @@ Task 6 remains responsible for routing public `assess`/`resume` responses and dy
 Commit message: `feat: persist dynamic rectification turns`
 
 Follow-up commit message: `fix: isolate dynamic rectification persistence`
+
+Scoring-persistence follow-up commit message: `fix: expose dynamic scoring persistence`
