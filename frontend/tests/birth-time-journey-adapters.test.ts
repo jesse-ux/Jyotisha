@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   parseBirthTimeProfile,
+  parseCandidateDifferenceBuild,
   parseCandidateResult,
+  parseDynamicChoiceScoring,
   parseRectificationQuestionnaire,
   parseRectificationScoring,
 } from "../src/lib/birth-time-journey-adapters.ts";
@@ -12,6 +14,159 @@ const coordinates = {
   longitude: 121.4737,
   timezone_offset: 8,
 } as const;
+
+const apiPacket = {
+  success: true,
+  endpoint: "dynamic_rectification_opportunities",
+  case_id: "case-1",
+  scoring_version: "birth-time-choice-scoring-v2",
+  current_range: { start_time: "05:30", end_time: "05:33" },
+  opportunities: [{
+    opportunity_id: "career-window",
+    dimension_code: "career",
+    neutral_context: "career",
+    estimated_information_gain: 0.5,
+    candidate_partition_fingerprint: "career-partitions-v2",
+    fallback_prompt: "哪段经历更接近你的职业变化？",
+    partitions: [{
+      partition_id: "career-early",
+      descriptor: "2014-01-01--2017-12-31",
+      fallback_label: "2014—2017",
+      candidate_scores: { "05:30": 0, "05:31": 1, "05:32": 1, "05:33": 0 },
+    }, {
+      partition_id: "career-late",
+      descriptor: "2018-01-01--2021-12-31",
+      fallback_label: "2018—2021",
+      candidate_scores: { "05:30": 1, "05:31": 0, "05:32": 0, "05:33": 1 },
+    }],
+  }],
+  asked_question_fingerprints: ["asked-1"],
+  candidate_partition_fingerprints: ["partition-1"],
+  recent_range_history: [{ start_time: "05:30", end_time: "05:33" }],
+  candidate_model: {
+    version: "birth-time-choice-scoring-v2",
+    candidate_times: ["05:30", "05:31", "05:32", "05:33"],
+  },
+} as const;
+
+const apiScore = {
+  success: true,
+  endpoint: "dynamic_rectification_score",
+  result_id: "1d8ee348-61a3-433d-8907-ff6d281b9992",
+  confidence: "low",
+  can_apply: false,
+  winning_segment: {
+    start_time: "05:31",
+    end_time: "05:32",
+    representative_time: "05:31",
+    width_minutes: 2,
+  },
+  event_count: 1,
+  domain_count: 1,
+  top_score: 0.5,
+  second_score: 0,
+  margin_percent: 50,
+  reasons: ["insufficient_effective_evidence"],
+  evidence: [],
+  algorithm_version: "birth-time-choice-scoring-v2",
+  evidence_mode: "dynamic_choice",
+  effective_answer_count: 1,
+  dimension_count: 1,
+} as const;
+
+test("difference packets keep candidate scores on the server-only internal shape", () => {
+  const build = parseCandidateDifferenceBuild(apiPacket);
+
+  assert.equal(build.scoringPartitions["career-window"]?.[0]?.candidateScores["05:31"], 1);
+  assert.equal(build.packet.opportunities[0]?.estimatedInformationGain, 0.5);
+  assert.deepEqual(build.candidateModel, apiPacket.candidate_model);
+  assert.equal("candidateScores" in build.packet.opportunities[0]!.partitions[0]!, false);
+});
+
+test("difference packet parser rejects non-versioned or extra response fields", () => {
+  assert.throws(() => parseCandidateDifferenceBuild({
+    ...apiPacket,
+    scoring_version: "birth-time-choice-scoring-v1",
+  }));
+  assert.throws(() => parseCandidateDifferenceBuild({ ...apiPacket, confidence: "high" }));
+  assert.throws(() => parseCandidateDifferenceBuild({
+    ...apiPacket,
+    opportunities: [{
+      ...apiPacket.opportunities[0],
+      partitions: [{
+        ...apiPacket.opportunities[0].partitions[0],
+        candidate_scores: { "not-a-time": 1 },
+      }, apiPacket.opportunities[0].partitions[1]],
+    }],
+  }));
+  assert.throws(() => parseCandidateDifferenceBuild({
+    ...apiPacket,
+    opportunities: [{
+      ...apiPacket.opportunities[0],
+      partitions: [{
+        ...apiPacket.opportunities[0].partitions[0],
+        candidate_scores: {
+          ...apiPacket.opportunities[0].partitions[0].candidate_scores,
+          "05:34": 1,
+        },
+      }, apiPacket.opportunities[0].partitions[1]],
+    }],
+  }));
+});
+
+test("difference packet parser preserves an exact cross-midnight score range", () => {
+  const parsed = parseCandidateDifferenceBuild({
+    ...apiPacket,
+    current_range: { start_time: "23:59", end_time: "00:00" },
+    opportunities: [{
+      ...apiPacket.opportunities[0],
+      partitions: apiPacket.opportunities[0].partitions.map((partition) => ({
+        ...partition,
+        candidate_scores: { "23:59": 1, "00:00": 0 },
+      })),
+    }],
+  });
+
+  assert.deepEqual(parsed.packet.currentRange, { startTime: "23:59", endTime: "00:00" });
+});
+
+test("choice score parser rejects model-controlled confidence fields", () => {
+  assert.throws(() => parseDynamicChoiceScoring({
+    ...apiScore,
+    confidence: "high",
+    effective_answer_count: 1,
+    can_apply: true,
+  }));
+});
+
+test("choice scores adapt into the existing guarded candidate shape", () => {
+  const parsed = parseDynamicChoiceScoring(apiScore);
+
+  assert.equal(parsed.candidate.eventCount, parsed.effectiveAnswerCount);
+  assert.equal(parsed.candidate.domainCount, parsed.dimensionCount);
+  assert.deepEqual(parsed.candidate.evidence, []);
+  assert.equal(parsed.candidate.algorithmVersion, "birth-time-choice-scoring-v2");
+});
+
+test("choice score parser rejects count, evidence mode, evidence, and version mismatches", () => {
+  assert.throws(() => parseDynamicChoiceScoring({ ...apiScore, event_count: 2 }));
+  assert.throws(() => parseDynamicChoiceScoring({ ...apiScore, domain_count: 2 }));
+  assert.throws(() => parseDynamicChoiceScoring({ ...apiScore, evidence_mode: "dated_event" }));
+  assert.throws(() => parseDynamicChoiceScoring({
+    ...apiScore,
+    evidence: [{
+      event_id: "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5",
+      domain: "career",
+      candidate_time: "05:31",
+      rule_ids: ["forged"],
+      points: 1,
+    }],
+  }));
+  assert.throws(() => parseDynamicChoiceScoring({
+    ...apiScore,
+    algorithm_version: "birth-time-event-scoring-v1",
+  }));
+});
 
 test("birth time profile adapter parses an exact hospital declaration", () => {
   const assessment = parseBirthTimeProfile({
@@ -203,4 +358,24 @@ test("rectification adapter normalizes an event-scored candidate result", () => 
   assert.equal(result.resultId, "1d8ee348-61a3-433d-8907-ff6d281b9992");
   assert.equal(result.winningSegment?.representativeTime, "14:24");
   assert.deepEqual(result.evidence[0]?.ruleIds, ["vim_md_domain_house"]);
+});
+
+test("candidate compatibility result accepts ten effective items but not eleven", () => {
+  const lowCandidate = {
+    result_id: "1d8ee348-61a3-433d-8907-ff6d281b9992",
+    confidence: "low",
+    can_apply: false,
+    winning_segment: null,
+    event_count: 10,
+    domain_count: 5,
+    top_score: 0,
+    second_score: 0,
+    margin_percent: 0,
+    reasons: ["safety_cap"],
+    evidence: [],
+    algorithm_version: "birth-time-choice-scoring-v2",
+  } as const;
+
+  assert.equal(parseCandidateResult(lowCandidate).eventCount, 10);
+  assert.throws(() => parseCandidateResult({ ...lowCandidate, event_count: 11 }));
 });

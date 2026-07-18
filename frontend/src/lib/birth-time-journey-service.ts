@@ -15,6 +15,12 @@ import { scanAssessment } from "./birth-time-journey-assessment.ts";
 import type { GuidedCandidateCommit } from "./birth-time-guided-candidate.ts";
 import { createGuidedCandidateActions } from "./birth-time-guided-candidate.ts";
 import { createGuidedDraftRevisionActions } from "./birth-time-guided-draft-revision.ts";
+import type {
+  CandidateDifferenceBuild,
+  DynamicChoiceScoringResult,
+  ServerChoiceEvidence,
+} from "./birth-time-dynamic-choice-internal.ts";
+import type { TimeRange } from "./birth-time-dynamic-choice.ts";
 
 export type RectificationAnswer = "A" | "B" | "C" | "D";
 
@@ -66,10 +72,38 @@ export type JourneyEventScoreInput = {
   readonly events: readonly LifeEvent[];
 };
 
+export type DifferencePacketInput = {
+  readonly caseId: string;
+  readonly asOfDate: string;
+  readonly birthDate: string;
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly lat: number;
+  readonly lon: number;
+  readonly tz: number;
+  readonly evidence: readonly ServerChoiceEvidence[];
+  readonly dismissedOpportunityIds: readonly string[];
+  readonly questionFingerprints: readonly string[];
+  readonly partitionFingerprints: readonly string[];
+  readonly recentRanges: readonly TimeRange[];
+  readonly candidateModel: Readonly<Record<string, unknown>> | null;
+};
+
+export type DynamicChoiceScoreInput = Pick<DifferencePacketInput,
+  "birthDate" | "startTime" | "endTime" | "lat" | "lon" | "tz" | "evidence"
+>;
+
 export interface BirthTimeJourneyEngine {
   scan(input: JourneyScanInput): Promise<{ readonly questionnaire: RectificationQuestionnaire }>;
   score(input: JourneyScoreInput): Promise<RectificationScoringResult>;
   scoreEvents(input: JourneyEventScoreInput): Promise<CandidateResult>;
+  buildDifferencePacket?(input: DifferencePacketInput): Promise<CandidateDifferenceBuild>;
+  scoreChoices?(input: DynamicChoiceScoreInput): Promise<DynamicChoiceScoringResult>;
+}
+
+export interface DynamicBirthTimeJourneyEngine extends BirthTimeJourneyEngine {
+  buildDifferencePacket(input: DifferencePacketInput): Promise<CandidateDifferenceBuild>;
+  scoreChoices(input: DynamicChoiceScoreInput): Promise<DynamicChoiceScoringResult>;
 }
 
 export type PersistedJourneyAssessment = {
