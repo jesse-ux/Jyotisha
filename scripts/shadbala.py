@@ -287,6 +287,8 @@ def _saptavarga_signs(planets: Dict) -> Dict[int, Dict[str, int]]:
 
 def _compound_relation_score(planet: str, owner: str, d1_signs: Dict[str, int]) -> float:
     natural = "friend" if owner in FRIENDSHIP[planet]["friend"] else "enemy" if owner in FRIENDSHIP[planet]["enemy"] else "neutral"
+    if owner not in d1_signs:
+        return {"friend": 15.0, "neutral": 7.5, "enemy": 3.75}[natural]
     separation = (d1_signs[owner] - d1_signs[planet]) % 12
     temporary = "friend" if separation in {1, 2, 3, 9, 10, 11} else "enemy"
     return {
