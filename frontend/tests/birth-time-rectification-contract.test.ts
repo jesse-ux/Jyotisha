@@ -58,7 +58,7 @@ test("journey store keeps scored candidates server-owned until confirmation", ()
   assert.match(storeSource, /life_events: value\.lifeEvents/);
   assert.match(storeSource, /candidate_result: value\.candidateResult/);
   assert.match(storeSource, /async confirmCandidate\(value\)/);
-  assert.match(storeSource, /active_birth_time: value\.snapshot\.activeTime/);
+  assert.match(storeSource, /confirm_birth_time_candidate/);
 });
 
 test("journey route exposes only structured evidence and guarded candidate actions", () => {

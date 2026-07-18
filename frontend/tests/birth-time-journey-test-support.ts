@@ -2,7 +2,7 @@ import { birthTimeAssessmentSchema, candidateResultSchema, lifeEventSchema } fro
 import { createBirthTimeJourneyService } from "../src/lib/birth-time-journey-service.ts";
 import type {
   LegacyBirthTimeJourneyEngine,
-  StoredRectificationCase,
+  LegacyStoredRectificationCase,
 } from "../src/lib/birth-time-journey-service.ts";
 import type { EvidenceDomain } from "../src/lib/birth-time-question-planner.ts";
 import {
@@ -117,7 +117,7 @@ type GuidedCaseInput = {
   readonly candidateResult?: ReturnType<typeof candidateResultSchema.parse> | null;
 };
 
-export function guidedCase(input: GuidedCaseInput = {}): StoredRectificationCase {
+export function guidedCase(input: GuidedCaseInput = {}): LegacyStoredRectificationCase {
   const version = input.version ?? 0;
   const phase = input.phase ?? "baseline";
   const domain = input.domain ?? "career";
@@ -167,7 +167,7 @@ export function guidedCase(input: GuidedCaseInput = {}): StoredRectificationCase
   };
 }
 
-export function progressionService(storedCase: StoredRectificationCase) {
+export function progressionService(storedCase: LegacyStoredRectificationCase) {
   let scoreEventsCalls = 0;
   const memory = memoryStore(storedCase);
   const service = createBirthTimeJourneyService({

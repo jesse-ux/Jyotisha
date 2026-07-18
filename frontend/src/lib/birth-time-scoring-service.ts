@@ -1,4 +1,5 @@
 import { completeScoreTransition } from "./birth-time-journey-score-transition.ts";
+import { assertNotDynamicJourneyMutation } from "./birth-time-evidence-service.ts";
 import { currentJourneyTurn, storedJourneyResponse } from "./birth-time-journey-response.ts";
 import {
   birthTimeScoringAlgorithmVersion,
@@ -7,7 +8,7 @@ import {
 } from "./birth-time-scoring-job.ts";
 import type {
   BirthTimeJourneyPorts,
-  StoredRectificationCase,
+  LegacyStoredRectificationCase as StoredRectificationCase,
 } from "./birth-time-journey-service.ts";
 import type { CandidateResult } from "./birth-time-evidence.ts";
 
@@ -60,6 +61,7 @@ export function createBirthTimeScoringService(ports: BirthTimeJourneyPorts) {
     async pollScoringJob(userId: string, caseId: string, jobId: string) {
       const stored = await ports.store.loadCase(userId, caseId);
       if (!stored) throw new BirthTimeScoringJobError("unavailable");
+      assertNotDynamicJourneyMutation(stored);
       const fingerprint = evidenceFingerprint(stored.lifeEvents ?? []);
       const claim = await ports.store.claimScoringJob({
         userId,

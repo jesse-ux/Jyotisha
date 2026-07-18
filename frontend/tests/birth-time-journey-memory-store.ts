@@ -1,9 +1,14 @@
 import type {
   BirthTimeJourneyStore,
+  DynamicStoredRectificationCase,
   PersistedJourneyAssessment,
   StoredRectificationCase,
 } from "../src/lib/birth-time-journey-service.ts";
 import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
+import {
+  isTerminalLegacyCase,
+  prepareLegacyDynamicUpgrade,
+} from "../src/lib/birth-time-journey-dynamic-state.ts";
 import { createMemoryScoringJobs } from "./birth-time-scoring-memory-store.ts";
 
 class MissingTestCaseError extends Error {
@@ -12,9 +17,14 @@ class MissingTestCaseError extends Error {
 
 export const journeyCaseId = "7299894c-10a8-4b45-91d1-339007282c50";
 
-export function memoryStore(initialCase?: StoredRectificationCase) {
+export function memoryStore(
+  initialCase?: StoredRectificationCase,
+  asOfDate = "2026-07-18",
+) {
   let savedAssessment: PersistedJourneyAssessment | null = null;
   let savedCase = initialCase ?? null;
+  let savedDynamicCase: DynamicStoredRectificationCase | null =
+    initialCase?.journeyProtocol === "dynamic-choice-v2" ? initialCase : null;
   let committedTurnWrites = 0;
   let legacyWrites = 0;
   let guidedCandidateWrites = 0;
@@ -57,6 +67,36 @@ export function memoryStore(initialCase?: StoredRectificationCase) {
       };
       committedTurnWrites += 1;
       return savedCase;
+    },
+    async saveDynamicTurn(value, expectedVersion, actionId) {
+      if (!savedCase) throw new MissingTestCaseError();
+      const receipts = savedCase.processedActionIds ?? [];
+      if (receipts.includes(actionId)) {
+        if (!savedDynamicCase) throw new MissingTestCaseError();
+        return savedDynamicCase;
+      }
+      if (savedCase.turnVersion !== expectedVersion) {
+        throw new StaleJourneyTurnError(savedCase.id, expectedVersion, savedCase.turnVersion ?? 0);
+      }
+      const savedDynamic = {
+        ...value,
+        turnVersion: expectedVersion + 1,
+        dynamicTurnState: { ...value.dynamicTurnState, turnVersion: expectedVersion + 1 },
+        processedActionIds: [...receipts, actionId],
+      };
+      savedCase = savedDynamic;
+      savedDynamicCase = savedDynamic;
+      committedTurnWrites += 1;
+      return savedDynamic;
+    },
+    async upgradeLegacyActiveCase(value) {
+      if (value.journeyProtocol === "dynamic-choice-v2" || isTerminalLegacyCase(value)) {
+        return value;
+      }
+      const upgraded = prepareLegacyDynamicUpgrade(value, asOfDate);
+      savedCase = upgraded;
+      savedDynamicCase = upgraded;
+      return upgraded;
     },
     ...scoringJobs.methods,
     async saveCandidateResult(value) {
@@ -109,6 +149,7 @@ export function memoryStore(initialCase?: StoredRectificationCase) {
     createdScoringCase: scoringJobs.createdCase,
     replaceCase: (value: StoredRectificationCase) => {
       savedCase = value;
+      savedDynamicCase = value.journeyProtocol === "dynamic-choice-v2" ? value : null;
     },
   };
 }

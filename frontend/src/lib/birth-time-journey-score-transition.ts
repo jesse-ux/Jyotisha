@@ -7,7 +7,7 @@ import {
   projectJourneyTurn,
   type JourneyTurnState,
 } from "./birth-time-journey-turn.ts";
-import type { StoredRectificationCase } from "./birth-time-journey-service.ts";
+import type { LegacyStoredRectificationCase as StoredRectificationCase } from "./birth-time-journey-service.ts";
 
 type CompleteScoreTransitionInput = {
   readonly stored: StoredRectificationCase;

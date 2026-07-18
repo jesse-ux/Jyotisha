@@ -1,4 +1,5 @@
 import { lifeEventSchema } from "./birth-time-evidence.ts";
+import { assertNotDynamicJourneyMutation } from "./birth-time-evidence-service.ts";
 import { currentJourneyTurn, storedJourneyResponse } from "./birth-time-journey-response.ts";
 import type { VersionedJourneyResponse } from "./birth-time-journey-service.ts";
 import type { JourneyTurnPersistencePorts } from "./birth-time-scoring-job-persistence.ts";
@@ -30,6 +31,7 @@ export function createGuidedDraftRevisionActions(
     async revise(input: DraftRevision) {
       const stored = await ports.store.loadCase(input.userId, input.caseId);
       if (!stored) throw new BirthTimeJourneyActionError("case_not_found", input.caseId);
+      assertNotDynamicJourneyMutation(stored);
       if (stored.processedActionIds?.includes(input.actionId.toLowerCase())) {
         return storedJourneyResponse(stored);
       }

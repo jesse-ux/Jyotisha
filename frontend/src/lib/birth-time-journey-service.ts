@@ -8,7 +8,6 @@ import type { CandidateResult, LifeEvent } from "./birth-time-evidence.ts";
 import type { CandidateVargaSample } from "./birth-time-question-planner.ts";
 import { projectJourneyResponse, storedJourneyResponse } from "./birth-time-journey-response.ts";
 import type { JourneyTurnState } from "./birth-time-journey-turn.ts";
-import type { PersistedJourneyTurn } from "./birth-time-journey-turn-persistence.ts";
 import type { ScoringJobClaim, ScoringJobIdentity, ScoringJobSpec } from "./birth-time-scoring-job.ts";
 import { createBirthTimeScoringService } from "./birth-time-scoring-service.ts";
 import { scanAssessment } from "./birth-time-journey-assessment.ts";
@@ -21,6 +20,16 @@ import type {
   ServerChoiceEvidence,
 } from "./birth-time-dynamic-choice-internal.ts";
 import type { TimeRange } from "./birth-time-dynamic-choice.ts";
+import type {
+  DynamicStoredFields,
+  LegacyStoredFields,
+} from "./birth-time-journey-stored-protocol.ts";
+import {
+  RectificationCaseNotFoundError,
+  RectificationQuestionsUnavailableError,
+} from "./birth-time-journey-errors.ts";
+
+export { RectificationCaseNotFoundError, RectificationQuestionsUnavailableError };
 
 export type RectificationAnswer = "A" | "B" | "C" | "D";
 
@@ -113,7 +122,7 @@ export type PersistedJourneyAssessment = {
   readonly candidateScan: RectificationQuestionnaire | null;
 };
 
-export type StoredRectificationCase = {
+type StoredRectificationCaseBase = {
   readonly id: string;
   readonly userId: string;
   readonly snapshot: JourneySnapshot;
@@ -128,13 +137,25 @@ export type StoredRectificationCase = {
   };
   readonly lifeEvents?: readonly LifeEvent[];
   readonly candidateResult?: CandidateResult | null;
-} & Partial<PersistedJourneyTurn>;
+};
+
+export type LegacyStoredRectificationCase = StoredRectificationCaseBase
+  & LegacyStoredFields;
+
+export type DynamicStoredRectificationCase = StoredRectificationCaseBase
+  & DynamicStoredFields;
+
+export type StoredRectificationCase =
+  | LegacyStoredRectificationCase
+  | DynamicStoredRectificationCase;
 
 export interface BirthTimeJourneyStore {
   saveAssessment(value: PersistedJourneyAssessment): Promise<string>;
   loadCase(userId: string, caseId: string): Promise<StoredRectificationCase | null>;
   saveScoring(value: StoredRectificationCase): Promise<void>;
   saveTurn(value: StoredRectificationCase, expectedVersion: number, actionId: string): Promise<StoredRectificationCase>;
+  saveDynamicTurn(value: DynamicStoredRectificationCase, expectedVersion: number, actionId: string): Promise<DynamicStoredRectificationCase>;
+  upgradeLegacyActiveCase(value: StoredRectificationCase): Promise<StoredRectificationCase>;
   createScoringJob(value: StoredRectificationCase, expectedVersion: number, actionId: string, job: ScoringJobSpec): Promise<StoredRectificationCase>;
   claimScoringJob(identity: ScoringJobIdentity): Promise<ScoringJobClaim>;
   completeScoringJob(value: StoredRectificationCase, expectedVersion: number, jobId: string, evidenceFingerprint: string): Promise<StoredRectificationCase>;
@@ -166,18 +187,6 @@ export type VersionedJourneyResponse = JourneyResponseBase & JourneyTurnState;
 export type LegacyJourneyResponse = JourneyResponseBase & { readonly turnVersion?: undefined; readonly nextAction?: undefined; readonly progress?: undefined; readonly permissions?: undefined; readonly evidenceDraft?: undefined; };
 
 export type JourneyResponse = LegacyJourneyResponse | VersionedJourneyResponse;
-
-export class RectificationCaseNotFoundError extends Error {
-  readonly name = "RectificationCaseNotFoundError";
-  readonly caseId: string;
-
-  constructor(caseId: string) {
-    super(`Rectification case ${caseId} was not found`);
-    this.caseId = caseId;
-  }
-}
-
-export class RectificationQuestionsUnavailableError extends Error { readonly name = "RectificationQuestionsUnavailableError"; }
 
 export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
   const evidenceActions = createBirthTimeEvidenceActions(ports);

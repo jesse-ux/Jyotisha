@@ -17,7 +17,7 @@ import {
   questionJourneySnapshot,
   terminalJourneySnapshot,
 } from "./birth-time-journey-response.ts";
-import type { StoredRectificationCase } from "./birth-time-journey-service.ts";
+import type { LegacyStoredRectificationCase as StoredRectificationCase } from "./birth-time-journey-service.ts";
 
 type PlannedTurnInput = {
   readonly stored: StoredRectificationCase;

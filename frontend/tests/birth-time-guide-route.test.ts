@@ -10,7 +10,7 @@ import {
   createBirthTimeGuideService,
 } from "../src/lib/birth-time-guide-service.ts";
 import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
-import type { StoredRectificationCase, VersionedJourneyResponse } from "../src/lib/birth-time-journey-service.ts";
+import type { LegacyStoredRectificationCase, StoredRectificationCase, VersionedJourneyResponse } from "../src/lib/birth-time-journey-service.ts";
 import { storedJourneyResponse } from "../src/lib/birth-time-journey-response.ts";
 import { createInitialJourneyTurn } from "../src/lib/birth-time-journey-turn.ts";
 import type { QuestionSpec } from "../src/lib/birth-time-question-planner.ts";
@@ -40,7 +40,7 @@ function careerQuestion(): QuestionSpec {
   };
 }
 
-function storedCase(): StoredRectificationCase {
+function storedCase(): LegacyStoredRectificationCase {
   return {
     id: caseId,
     userId: "owner-1",

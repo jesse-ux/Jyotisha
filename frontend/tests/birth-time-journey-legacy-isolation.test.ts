@@ -9,6 +9,12 @@ import {
   memoryStore,
   unusedJourneyEngine,
 } from "./birth-time-journey-test-support.ts";
+import {
+  actionId,
+  caseId as dynamicCaseId,
+  dynamicCase,
+  ownerId,
+} from "./birth-time-dynamic-persistence-fixture.ts";
 
 const highCandidate = candidateResultSchema.parse({
   resultId: "f8eb3bc5-80eb-40fc-b937-e62ea37c3236",
@@ -125,4 +131,46 @@ test("guided turns reject legacy candidate confirmation without writing", async 
   );
 
   assert.equal(memory.legacyWrites(), 0);
+});
+
+test("v2 turns reject legacy guided actions before writing", async () => {
+  const initial = dynamicCase();
+  const memory = memoryStore(initial);
+  const service = createBirthTimeJourneyService({
+    store: memory.store,
+    engine: unusedJourneyEngine,
+  });
+
+  await assert.rejects(
+    service.finishWithCurrentRange(ownerId, dynamicCaseId, actionId, 7),
+    rejectsLegacyMutation,
+  );
+
+  assert.equal(memory.committedTurnWrites(), 0);
+  assert.equal(memory.savedCase(), initial);
+});
+
+test("v2 turns reject guided candidate and scoring-job mutations", async () => {
+  const initial = { ...dynamicCase(), candidateResult: highCandidate };
+  const memory = memoryStore(initial);
+  const service = createBirthTimeJourneyService({
+    store: memory.store,
+    engine: unusedJourneyEngine,
+  });
+
+  await assert.rejects(service.saveGuidedCandidate({
+    userId: ownerId,
+    caseId: dynamicCaseId,
+    actionId,
+    expectedVersion: 7,
+    resultId: highCandidate.resultId,
+  }), rejectsLegacyMutation);
+  await assert.rejects(service.pollScoringJob(
+    ownerId,
+    dynamicCaseId,
+    "ea0fd8ef-4ccc-4330-8f25-428256ca52a8",
+  ), rejectsLegacyMutation);
+
+  assert.equal(memory.committedTurnWrites(), 0);
+  assert.equal(memory.savedCase(), initial);
 });

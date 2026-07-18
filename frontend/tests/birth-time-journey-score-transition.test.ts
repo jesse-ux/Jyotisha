@@ -3,7 +3,7 @@ import test from "node:test";
 import { candidateResultSchema } from "../src/lib/birth-time-journey.ts";
 import { completeScoreTransition } from "../src/lib/birth-time-journey-score-transition.ts";
 import type { CandidateResult } from "../src/lib/birth-time-evidence.ts";
-import type { StoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
+import type { LegacyStoredRectificationCase as StoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
 import {
   existingCareerEvent,
   existingEducationEvent,
