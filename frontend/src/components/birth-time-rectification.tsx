@@ -1,92 +1,103 @@
 "use client";
 
+import { BirthTimeCandidateResult } from "@/components/birth-time-candidate-result";
+import { BirthTimeEvidenceDraftCard } from "@/components/birth-time-evidence-draft-card";
+import { BirthTimeGuideTurn } from "@/components/birth-time-guide-turn";
+import type { BirthTimeGuidedController } from "@/hooks/use-birth-time-guided-journey";
 import { assistantIntentCopy } from "@/lib/birth-time-intake-model";
-import type {
-  JourneyAnswer,
-  JourneyClientResponse,
-} from "@/lib/birth-time-journey-client";
+import type { JourneyClientResponse } from "@/lib/birth-time-journey-client";
+import { guidedTurnIdentity } from "@/lib/birth-time-guided-turn-identity";
+import type { NextAction } from "@/lib/birth-time-journey-turn";
 
 type BirthTimeRectificationProps = {
   readonly journey: JourneyClientResponse;
-  readonly answers: Readonly<Record<string, JourneyAnswer>>;
-  readonly pendingQuestionId: string;
-  readonly error: string;
-  readonly onAnswer: (questionId: string, answer: JourneyAnswer) => void;
+  readonly controller: BirthTimeGuidedController;
+  readonly externalError: string;
 };
 
-const fallbackOptions = [
-  { key: "A", label: "明确有，而且时间大致吻合" },
-  { key: "B", label: "有类似经历，但时间或程度不完全确定" },
-  { key: "C", label: "没有明显发生" },
-  { key: "D", label: "不确定 / 不记得" },
-] as const;
+function actionHeading(action: NextAction): { readonly title: string; readonly badge: string } {
+  switch (action.kind) {
+    case "ask_baseline_evidence": return { title: "回想一条关键经历", badge: "基础证据" };
+    case "ask_adaptive_evidence": return { title: "继续缩小候选范围", badge: "自适应校正" };
+    case "review_evidence_draft": return { title: "确认经历草稿", badge: "待确认" };
+    case "score_pending": return { title: "正在比较候选时间", badge: "评分中" };
+    case "retry_scoring": return { title: "评分需要重试", badge: "可恢复" };
+    case "present_low_result": return { title: "候选范围已保存", badge: "证据不足" };
+    case "present_medium_result": return { title: "候选范围已形成", badge: "中等置信" };
+    case "candidate_saved": return { title: "候选范围已保存", badge: "已保存" };
+    case "request_candidate_confirmation": return { title: "确认候选时间", badge: "待确认" };
+    case "ready": return { title: "排盘时间已更新", badge: "已完成" };
+    case "paused": return { title: "校正已暂停", badge: "已保存" };
+    default: {
+      const exhaustive: never = action;
+      return exhaustive;
+    }
+  }
+}
 
-export function BirthTimeRectification({
-  journey,
-  answers,
-  pendingQuestionId,
-  error,
-  onAnswer,
-}: BirthTimeRectificationProps) {
-  const questions = journey.questionnaire?.questions.slice(0, 3) ?? [];
-  const answeredCount = Object.keys(answers).length;
+export function BirthTimeRectification(props: BirthTimeRectificationProps) {
+  const action = props.journey.nextAction;
+  const heading = actionHeading(action);
+  const asksQuestion = action.kind === "ask_baseline_evidence" || action.kind === "ask_adaptive_evidence";
+  const showsCandidate = action.kind === "present_low_result"
+    || action.kind === "present_medium_result"
+    || action.kind === "candidate_saved"
+    || action.kind === "request_candidate_confirmation"
+    || action.kind === "ready";
+  const error = props.controller.error || props.externalError;
 
   return (
     <section className="birth-time-rectification onboarding-card" aria-labelledby="birth-time-assessment-title">
       <div className="birth-time-assessment-heading">
-        <div>
-          <span>出生时间评估</span>
-          <h2 id="birth-time-assessment-title">
-            {journey.snapshot.state === "candidate" ? "候选范围已保存" : "需要先缩小时间范围"}
-          </h2>
-        </div>
-        <span className="birth-time-status-badge">
-          {journey.snapshot.state === "candidate" ? "候选" : "校正中"}
-        </span>
+        <div><span>出生时间评估</span><h2 id="birth-time-assessment-title">{heading.title}</h2></div>
+        <span className="birth-time-status-badge">{heading.badge}</span>
       </div>
-
       <dl className="birth-time-range-summary">
-        <div><dt>当前范围</dt><dd>{journey.snapshot.reportedRange.label}</dd></div>
-        <div><dt>应用状态</dt><dd>尚未设为排盘时间</dd></div>
+        <div><dt>当前范围</dt><dd>{props.journey.snapshot.reportedRange.label}</dd></div>
+        <div><dt>应用状态</dt><dd>{action.kind === "ready" ? `当前使用 ${action.activeTime}` : "尚未更新排盘时间"}</dd></div>
       </dl>
+      <p className="birth-time-assistant-intent" role="status">{assistantIntentCopy(props.journey.snapshot.assistantIntent)}</p>
 
-      <p className="birth-time-assistant-intent" role="status">
-        {assistantIntentCopy(journey.snapshot.assistantIntent)}
-      </p>
-
-      {questions.length > 0 ? (
-        <div className="birth-time-question-list">
-          <div className="birth-time-question-progress">
-            <b>首轮问题</b>
-            <span>{Math.min(answeredCount, questions.length)} / {questions.length}</span>
-          </div>
-          {questions.map((question, index) => (
-            <fieldset className="birth-time-question" key={question.id}>
-              <legend><span>{index + 1}</span>{question.prompt}</legend>
-              <div className="birth-time-answer-list">
-                {(question.options?.length ? question.options : fallbackOptions).map((option) => (
-                  <button
-                    aria-pressed={answers[question.id] === option.key}
-                    className={answers[question.id] === option.key ? "is-selected" : ""}
-                    disabled={Boolean(pendingQuestionId)}
-                    key={option.key}
-                    type="button"
-                    onClick={() => onAnswer(question.id, option.key)}
-                  >
-                    <span>{option.key}</span>{option.label}
-                  </button>
-                ))}
-              </div>
-              {pendingQuestionId === question.id && <small role="status">正在更新候选范围…</small>}
-            </fieldset>
-          ))}
-        </div>
-      ) : (
-        <p className="birth-time-assessment-unavailable">
-          当前资料已经保留，但候选扫描暂时不可用。系统不会把未经验证的分钟用于正式排盘。
-        </p>
+      {asksQuestion && (
+        <BirthTimeGuideTurn
+          key={guidedTurnIdentity(props.journey.turnVersion, action.question.questionId)}
+          pending={props.controller.pending}
+          progress={props.journey.progress}
+          question={props.controller.question}
+          onPause={props.controller.pause}
+          onSkip={props.controller.skip}
+          onSubmit={props.controller.submitMessage}
+        />
       )}
-
+      {action.kind === "review_evidence_draft" && props.journey.evidenceDraft && (
+        <BirthTimeEvidenceDraftCard
+          key={props.journey.evidenceDraft.draftId}
+          draft={props.journey.evidenceDraft}
+          pending={props.controller.pending}
+          onConfirm={props.controller.confirmDraft}
+          onSkip={props.controller.skip}
+        />
+      )}
+      {action.kind === "score_pending" && (
+        <div className="birth-time-scoring-status" aria-live="polite">
+          <b>正在使用已确认的关键经历评分</b>
+          <p>完成后会自动显示下一题或候选结果，无需再点击比较按钮。</p>
+          {props.controller.pollRecoverable && <button className="button-secondary birth-time-guided-action" type="button" onClick={props.controller.retryScoring}>重新检查评分状态</button>}
+        </div>
+      )}
+      {action.kind === "retry_scoring" && (
+        <div className="birth-time-scoring-status" role="status">
+          <p>已确认的关键经历仍然安全保存，可以<span className="phrase-nowrap">重试</span>同一评分任务。</p>
+          <button className="button-primary birth-time-guided-action" disabled={props.controller.pending} type="button" onClick={props.controller.retryScoring}>重新评分</button>
+        </div>
+      )}
+      {action.kind === "paused" && (
+        <div className="birth-time-candidate-terminal" role="status">
+          <p>当前问题和证据已保存，可以现在继续，也可以稍后回来。</p>
+          <button className="button-primary birth-time-guided-action" disabled={props.controller.pending} type="button" onClick={props.controller.resume}>继续校正</button>
+        </div>
+      )}
+      {showsCandidate && <BirthTimeCandidateResult controller={props.controller} journey={props.journey} />}
       {error && <p className="form-error" role="alert">{error}</p>}
     </section>
   );

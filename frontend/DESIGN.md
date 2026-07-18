@@ -101,6 +101,14 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 - **Copy:** labels describe what the user actually knows. Candidate results explicitly distinguish a reported time, a candidate range, and an active chart time.
 - **Accessibility:** native radio inputs remain focusable, every conditional field has a persistent label, status text uses live regions, and the complete flow is keyboard operable.
 - **Motion:** source-dependent fields enter with the existing 180ms opacity/vertical reveal; reduced-motion removes the translation.
+- **Life-event evidence:** after deterministic questionnaire completion, render three structured event rows by default and allow up to six. Each row uses a domain select, a precision select, and a matching year/month/day control; free-form descriptions are not part of scoring.
+- **Candidate result:** keep the reported range, candidate interval, confidence, and active-time status visually separate. Low confidence keeps evidence editing open; medium offers save or add evidence; high uses a separate confirmation action and never labels the representative minute as the true birth time.
+- **Evidence accessibility:** every row keeps visible labels, validation errors use live regions, add/remove controls retain 44px targets, and scoring/confirmation loading states disable duplicate submission without hiding the existing evidence.
+- **One-question guide:** the guided journey renders only the persisted `nextAction` and one server-selected question. A deterministic question is visible immediately; Agent wording may replace it without changing the question identity, domain, precision request, progress, or permissions. The composer explicitly permits an approximate year and keeps skip and pause as secondary 44px actions.
+- **Draft review:** natural-language answers become one inline review card. The evidence domain is read-only and uses its Chinese label; precision controls which exact year, month, or day input is available. Incomplete drafts keep edit and skip paths visible, while confirmation is disabled until the structured date is valid. Status and errors use polite or assertive live regions without clearing the persisted journey.
+- **Scoring and retry:** `score_pending` is a quiet progress surface with cancellable bounded polling and no manual compare control. `retry_scoring` preserves the confirmed evidence and exposes one explicit retry action. Refresh and device changes resume from the persisted action rather than inferring progress from copy.
+- **Guided candidate states:** low confidence presents the saved candidate range and either another evidence question or a safe finish; medium confidence can save the range but never apply a representative minute; high confidence names both “候选时间” and “当前排盘使用时间” before explicit confirmation; ready states that the current chart time changed while the original report remains preserved. No state calls a candidate the true birth minute.
+- **Guided responsive/accessibility contract:** body copy remains at least 14px, labels at least 12px, and all controls at least 44px. Focus is always visible, the composer is keyboard operable, semantic Chinese phrases remain together at 390px, and reduced-motion removes entrance translation while retaining state changes.
 
 ### Birth date picker
 
@@ -202,3 +210,17 @@ Only `transform`, `opacity`, and color/filter transitions animate. Reduced-motio
 ## 7. Depth & Surface
 
 Strategy: warm tonal shifts, restrained translucency, and fine hairlines. Most depth comes from the page floor, main canvas, warm cards, and selected white glass. Standard UI uses no drop shadow. Modal and raised-sheet depth use one restrained two-stage token: `--shadow-elevated: 0 1px 2px rgba(29, 29, 31, .07), 0 12px 28px -16px rgba(29, 29, 31, .18)`. Interactive rings use `0 0 0 1px` or the focus ring; no generic card shadows or atmospheric gradients. When transparency is reduced, frosted surfaces fall back to opaque warm neutrals.
+
+## 8. Agent wording and accuracy boundary
+
+The Birth-Time Guide Agent controls wording only: it may choose a safe tone or extract a reviewable
+draft, but it cannot select evidence domains, change `nextAction`, rank candidates, set confidence,
+or grant save/apply permissions. Those decisions remain in the deterministic, versioned journey
+state machine and its server-side scorer.
+
+`confidence` is an internal, versioned safety gate for this product flow. It is not an external oracle,
+clinical claim, or proof from calibrated real cases. Until matching external-engine parity and real-
+case validation are complete, low and medium results never apply a minute, and high results still
+require explicit confirmation of the matching representative time. Journey telemetry is limited to
+metric name, phase, and optional confidence; it never records messages, dates, coordinates, case IDs,
+or user IDs.

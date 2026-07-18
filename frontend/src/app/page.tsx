@@ -22,15 +22,19 @@ import {
   type BirthTimeDraft,
   type BirthTimeSource,
 } from "@/lib/birth-time-intake-model";
+import { useBirthTimeGuidedJourney } from "@/hooks/use-birth-time-guided-journey";
 import {
-  answerBirthTimeQuestion,
-  parseJourneyResponse,
   requestBirthTimeAssessment,
   resumeBirthTimeJourney,
-  type JourneyAnswer,
   type JourneyClientResponse,
 } from "@/lib/birth-time-journey-client";
+import {
+  guidedBirthTimePreview,
+  isGuidedBirthTimePreview,
+  previewRectificationJourney,
+} from "@/lib/birth-time-guided-preview";
 import { keepFocusWithin } from "@/lib/focus-trap";
+import { protectOnboardingPhrases } from "@/lib/onboarding-copy";
 import {
   SessionModelPersistenceQueue,
   persistSessionModelSelection,
@@ -103,30 +107,6 @@ const previewModelCatalog = parsePublicModelCatalog({
     { id: "deepseek-pro", label: "DeepSeek V4 Pro", description: "更适合复杂分析", creditCost: 1, isDefault: true },
     { id: "gpt-5-mini", label: "ChatGPT 5 Mini", description: "响应稳定、速度均衡", creditCost: 1, isDefault: false },
   ],
-});
-
-const previewRectificationJourney = parseJourneyResponse({
-  caseId: "7299894c-10a8-4b45-91d1-339007282c50",
-  snapshot: {
-    state: "rectifying",
-    assistantIntent: "start_standard_rectification",
-    input: "rectification_questions",
-    route: "rectification",
-    confidence: null,
-    canApply: false,
-    activeTime: null,
-    reportedRange: { label: "14:00—15:00", startTime: "14:00", endTime: "15:00" },
-  },
-  questionnaire: {
-    questions: [
-      { id: "education_shift", prompt: "求学阶段是否发生过一次明显的环境或方向变化？" },
-      { id: "career_shift", prompt: "工作早期是否经历过一次清晰的行业、岗位或城市切换？" },
-      { id: "relationship_milestone", prompt: "重要关系或婚姻节点是否集中在某个明确年份？" },
-    ],
-    samples: [],
-    raw: {},
-  },
-  scoring: null,
 });
 
 const presetOnboardingMessage = "你好，我是 Jyotisha。\n开始前，我想先认识你。\n请问我该怎么称呼你？";
@@ -435,21 +415,22 @@ function AgentAvatar() {
   return <span className="agent-avatar" aria-hidden="true" />;
 }
 
-function OnboardingChatMessage({ role, text, streaming = false, length = text.length }: { role: Message["role"]; text: string; streaming?: boolean; length?: number }) {
+function OnboardingChatMessage({ role, text, streaming = false, length = text.length, phraseSafe = false }: { role: Message["role"]; text: string; streaming?: boolean; length?: number; phraseSafe?: boolean }) {
   const visibleText = streaming ? text.slice(0, length) : text;
+  const protectedVisibleText = protectOnboardingPhrases(visibleText);
   return (
-    <article className={`message message-${role} onboarding-message`} aria-label={role === "assistant" ? "Jyotisha" : "你"}>
+    <article className={`message message-${role} onboarding-message${phraseSafe ? " is-phrase-safe" : ""}`} aria-label={role === "assistant" ? "Jyotisha" : "你"}>
       {role === "assistant" && <AgentAvatar />}
       <div className="message-content">
         <div className="message-bubble">
           {role === "assistant" ? (
             streaming ? (
               <>
-                <div className={`onboarding-stream ${length >= text.length ? "is-complete" : ""}`} aria-hidden="true"><ChatMessageContent text={visibleText} /></div>
+                <div className={`onboarding-stream ${length >= text.length ? "is-complete" : ""}`} aria-hidden="true"><ChatMessageContent text={protectedVisibleText} /></div>
                 <span className="sr-only" aria-live="polite">{length >= text.length ? text : ""}</span>
               </>
-            ) : <ChatMessageContent text={text} />
-          ) : <p>{text}</p>}
+            ) : <ChatMessageContent text={protectedVisibleText} />
+          ) : <p>{protectedVisibleText}</p>}
         </div>
       </div>
     </article>
@@ -545,8 +526,6 @@ export default function Home() {
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>("name");
   const [onboardingJustCompleted, setOnboardingJustCompleted] = useState(false);
   const [birthTimeJourney, setBirthTimeJourney] = useState<JourneyClientResponse | null>(null);
-  const [birthTimeAnswers, setBirthTimeAnswers] = useState<Readonly<Record<string, JourneyAnswer>>>({});
-  const [birthTimeQuestionPending, setBirthTimeQuestionPending] = useState("");
   const [birthTimeError, setBirthTimeError] = useState("");
   const [startGreeting, setStartGreeting] = useState("");
   const [presetMessageLength, setPresetMessageLength] = useState(0);
@@ -570,6 +549,14 @@ export default function Home() {
   const activeSessionIdRef = useRef("");
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
+  const birthTimeRevisionPending = useRef(false);
+  const birthTimeGuided = useBirthTimeGuidedJourney({
+    journey: birthTimeJourney,
+    preview: process.env.NODE_ENV === "development" && uiPreview.current,
+    onJourney: setBirthTimeJourney,
+    onReady: completeGuidedBirthTime,
+    onEditBirthTimeDetails: editDeclaredBirthTimeDetails,
+  });
 
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
   const activeError = requestError && requestError.sessionId === activeSession?.id ? requestError.message : "";
@@ -617,20 +604,28 @@ export default function Home() {
             setHydrated(true);
             return;
           }
+          const isRectificationPreview = isGuidedBirthTimePreview(previewMode);
+          const previewJourney = isRectificationPreview
+            ? guidedBirthTimePreview(previewMode)
+            : previewRectificationJourney;
           const previewProfile: Profile = previewMode === "onboarding"
             ? emptyProfile
             : {
               name: "林遥",
               date: "1990-06-15",
-              time: previewMode === "birth-time-rectification" ? "" : "12:30",
-              reportedTime: previewMode === "birth-time-rectification" ? "14:30" : "12:30",
-              birthTimeSource: previewMode === "birth-time-rectification" ? "approximate" : "legacy_import",
+              time: isRectificationPreview ? "" : "12:30",
+              reportedTime: isRectificationPreview ? "14:30" : "12:30",
+              birthTimeSource: isRectificationPreview ? "approximate" : "legacy_import",
               birthTimePeriod: "",
               birthTimeClue: "",
-              uncertaintyBeforeMinutes: previewMode === "birth-time-rectification" ? 30 : null,
-              uncertaintyAfterMinutes: previewMode === "birth-time-rectification" ? 30 : null,
-              birthTimeStatus: previewMode === "birth-time-rectification" ? "rectifying" : "confirmed",
-              rectificationCaseId: previewMode === "birth-time-rectification" ? previewRectificationJourney.caseId : "",
+              uncertaintyBeforeMinutes: isRectificationPreview ? 30 : null,
+              uncertaintyAfterMinutes: isRectificationPreview ? 30 : null,
+              birthTimeStatus: previewJourney.snapshot.state === "candidate"
+                || previewJourney.snapshot.state === "confirming"
+                || previewJourney.snapshot.state === "ready"
+                  ? "candidate"
+                  : isRectificationPreview ? "rectifying" : "confirmed",
+              rectificationCaseId: isRectificationPreview ? previewJourney.caseId : "",
               countryCode: "CN",
               provinceCode: "110000",
               cityCode: "110000-city",
@@ -654,7 +649,9 @@ export default function Home() {
           setModelCatalog(previewModelCatalog);
           setProfile(previewProfile);
           setProfileDraft(previewProfile);
-          if (previewMode === "birth-time-rectification") setBirthTimeJourney(previewRectificationJourney);
+          if (isRectificationPreview) {
+            setBirthTimeJourney(previewJourney);
+          }
           setOnboardingStep(missingProfileStep(previewProfile) ?? "name");
           setSessions([previewSession]);
           setActiveSessionId(previewSession.id);
@@ -740,7 +737,6 @@ export default function Home() {
             const resumed = await resumeBirthTimeJourney(nextProfile.rectificationCaseId);
             if (!controller.signal.aborted) {
               setBirthTimeJourney(resumed);
-              setBirthTimeAnswers(resumed.answers);
             }
           } catch (caught) {
             if (!controller.signal.aborted) {
@@ -1071,7 +1067,6 @@ export default function Home() {
       rectificationCaseId: result.caseId,
     };
     setBirthTimeJourney(result);
-    setBirthTimeAnswers({});
     setBirthTimeError("");
     setProfile(assessedProfile);
     setProfileDraft(assessedProfile);
@@ -1131,8 +1126,15 @@ export default function Home() {
     setAccountError("");
     try {
       await persistProfile(profileDraft);
-      setProfile(profileDraft);
       setPresetMessageLength(0);
+      if (birthTimeRevisionPending.current) {
+        const assessedProfile = await assessSavedBirthTime(profileDraft);
+        birthTimeRevisionPending.current = false;
+        if (assessedProfile.birthTimeStatus === "confirmed") setOnboardingJustCompleted(true);
+        else setOnboardingStep("rectification");
+        return;
+      }
+      setProfile(profileDraft);
       const nextStep = missingProfileStep(profileDraft);
       if (nextStep) setOnboardingStep(nextStep);
       else setOnboardingJustCompleted(true);
@@ -1141,6 +1143,13 @@ export default function Home() {
     } finally {
       setProfileSaving(false);
     }
+  }
+
+  function editDeclaredBirthTimeDetails() {
+    birthTimeRevisionPending.current = true;
+    setBirthTimeError("");
+    setPresetMessageLength(0);
+    setOnboardingStep("birth");
   }
 
   async function saveOnboardingPlace(event: FormEvent<HTMLFormElement>) {
@@ -1164,26 +1173,18 @@ export default function Home() {
     }
   }
 
-  async function saveBirthTimeAnswer(questionId: string, answer: JourneyAnswer) {
-    if (!birthTimeJourney || birthTimeQuestionPending) return;
-    setBirthTimeQuestionPending(questionId);
-    setBirthTimeError("");
-    try {
-      const result = process.env.NODE_ENV === "development" && uiPreview.current
-        ? birthTimeJourney
-        : await answerBirthTimeQuestion(birthTimeJourney.caseId, questionId, answer);
-      setBirthTimeJourney(result);
-      setBirthTimeAnswers(process.env.NODE_ENV === "development" && uiPreview.current
-        ? (current) => ({ ...current, [questionId]: answer })
-        : result.answers);
-      const birthTimeStatus = result.snapshot.state === "candidate" ? "candidate" : "rectifying";
-      setProfile((current) => ({ ...current, birthTimeStatus }));
-      setProfileDraft((current) => ({ ...current, birthTimeStatus }));
-    } catch (caught) {
-      setBirthTimeError(caught instanceof Error ? caught.message : "这条回答暂时无法保存，请重试。");
-    } finally {
-      setBirthTimeQuestionPending("");
-    }
+  function completeGuidedBirthTime(result: JourneyClientResponse) {
+    if (result.nextAction.kind !== "ready") return;
+    const confirmedProfile: Profile = {
+      ...profileDraft,
+      time: result.nextAction.activeTime,
+      birthTimeStatus: "confirmed",
+      rectificationCaseId: result.caseId,
+    };
+    setProfile(confirmedProfile);
+    setProfileDraft(confirmedProfile);
+    setPresetMessageLength(0);
+    setOnboardingJustCompleted(true);
   }
 
   async function retryBirthTimeAssessment() {
@@ -1741,7 +1742,7 @@ export default function Home() {
                   {(onboardingStep === "place" || onboardingStep === "rectification" || profileComplete) && <OnboardingChatMessage role="user" text={formatBirthMoment(profileDraft)} />}
                   {(onboardingStep === "place" || onboardingStep === "rectification" || profileComplete) && <OnboardingChatMessage role="assistant" text={placeQuestion(profileDraft)} streaming={onboardingStep === "place" && !profileComplete} length={presetMessageLength} />}
                   {onboardingStep === "rectification" && selectedBirthPlace(profileDraft) && <OnboardingChatMessage role="user" text={selectedBirthPlace(profileDraft)?.label ?? ""} />}
-                  {onboardingStep === "rectification" && birthTimeJourney && <OnboardingChatMessage role="assistant" text={currentOnboardingMessage} streaming length={presetMessageLength} />}
+                  {onboardingStep === "rectification" && birthTimeJourney && <OnboardingChatMessage role="assistant" text={currentOnboardingMessage} streaming length={presetMessageLength} phraseSafe={onboardingStep === "rectification"} />}
                   {profileComplete && onboardingJustCompleted && selectedBirthPlace(profileDraft) && <OnboardingChatMessage role="user" text={selectedBirthPlace(profileDraft)?.label ?? ""} />}
                   {profileComplete && onboardingJustCompleted && <OnboardingChatMessage role="assistant" text={currentOnboardingMessage} streaming length={presetMessageLength} />}
                 </>
@@ -1783,10 +1784,8 @@ export default function Home() {
                   <div className="onboarding-card-reveal-inner">
                     <BirthTimeRectification
                       journey={birthTimeJourney}
-                      answers={birthTimeAnswers}
-                      pendingQuestionId={birthTimeQuestionPending}
-                      error={birthTimeError}
-                      onAnswer={(questionId, answer) => void saveBirthTimeAnswer(questionId, answer)}
+                      controller={birthTimeGuided}
+                      externalError={birthTimeError}
                     />
                   </div>
                 </div>

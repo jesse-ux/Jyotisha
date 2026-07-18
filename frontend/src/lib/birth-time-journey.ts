@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export {
+  candidateResultSchema,
+  lifeEventSchema,
+  withCandidateResult,
+  withConfirmedCandidate,
+} from "./birth-time-evidence.ts";
+
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const locationSchema = z.object({
@@ -62,7 +69,7 @@ export type ScanStability =
   | { readonly kind: "not_required" };
 
 export const journeySnapshotSchema = z.object({
-  state: z.enum(["rectifying", "candidate", "ready"]),
+  state: z.enum(["rectifying", "candidate", "confirming", "ready"]),
   assistantIntent: z.enum([
     "confirm_stable_record",
     "explain_sensitive_boundary",
@@ -73,10 +80,22 @@ export const journeySnapshotSchema = z.object({
     "collect_time_clues",
     "continue_rectification_questions",
     "present_saved_candidate_range",
+    "collect_dated_life_events",
+    "explain_event_evidence_insufficient",
+    "present_candidate_result",
+    "confirm_candidate_time",
+    "confirmed_candidate_time",
   ]),
-  input: z.enum(["none", "rectification_questions", "time_clue"]),
+  input: z.enum([
+    "none",
+    "rectification_questions",
+    "time_clue",
+    "life_events",
+    "candidate_actions",
+    "candidate_confirmation",
+  ]),
   route: z.enum(["direct_chart", "rectification"]),
-  confidence: z.literal("high").nullable(),
+  confidence: z.enum(["low", "medium", "high"]).nullable(),
   canApply: z.boolean(),
   activeTime: z.string().nullable(),
   reportedRange: z.object({
@@ -94,6 +113,8 @@ export type RectificationScoring = {
     readonly cluster: string;
     readonly score: number;
   }[];
+  readonly nextRound?: number | null;
+  readonly nextRoundQuestions?: readonly unknown[];
 };
 
 class UnexpectedJourneyVariantError extends Error {
@@ -198,6 +219,20 @@ export function withRectificationScoring(
   scoring: RectificationScoring,
 ): JourneySnapshot {
   if (snapshot.route === "direct_chart") return snapshot;
+  const questionnaireComplete = scoring.nextRound === null
+    && scoring.nextRoundQuestions?.length === 0
+    && scoring.answeredCount > 0;
+  if (questionnaireComplete) {
+    return {
+      ...snapshot,
+      state: "rectifying",
+      assistantIntent: "collect_dated_life_events",
+      input: "life_events",
+      confidence: null,
+      canApply: false,
+      activeTime: null,
+    };
+  }
   const hasCandidate = scoring.answeredCount >= 3 && scoring.candidateClusterRankings.length > 0;
   return {
     ...snapshot,

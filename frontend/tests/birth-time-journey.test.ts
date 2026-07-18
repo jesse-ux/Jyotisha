@@ -3,7 +3,10 @@ import test from "node:test";
 import {
   assessBirthTime,
   birthTimeAssessmentSchema,
+  candidateResultSchema,
   journeySnapshotSchema,
+  withCandidateResult,
+  withConfirmedCandidate,
   withRectificationScoring,
 } from "../src/lib/birth-time-journey.ts";
 
@@ -152,4 +155,94 @@ test("rectification scoring can save a candidate but never apply an exact minute
   assert.equal(scored.canApply, false);
   assert.equal(scored.activeTime, null);
   assert.equal(scored.assistantIntent, "present_saved_candidate_range");
+});
+
+test("the completed questionnaire deterministically requests dated life events", () => {
+  const assessment = birthTimeAssessmentSchema.parse({
+    date: "1993-04-17",
+    source: "period_only",
+    period: "early_morning",
+    location,
+  });
+  const initial = assessBirthTime(assessment, { kind: "not_required" });
+
+  const completed = withRectificationScoring(initial, {
+    answeredCount: 8,
+    candidateClusterRankings: [{ cluster: "middle_candidate_cluster", score: 5 }],
+    nextRound: null,
+    nextRoundQuestions: [],
+  });
+
+  assert.equal(completed.state, "rectifying");
+  assert.equal(completed.input, "life_events");
+  assert.equal(completed.assistantIntent, "collect_dated_life_events");
+  assert.equal(completed.canApply, false);
+  assert.equal(completed.activeTime, null);
+});
+
+test("candidate confidence deterministically selects the next action", () => {
+  const assessment = birthTimeAssessmentSchema.parse({
+    date: "1993-04-17",
+    source: "approximate",
+    reportedTime: "14:30",
+    uncertaintyBeforeMinutes: 30,
+    uncertaintyAfterMinutes: 30,
+    location,
+  });
+  const eventSnapshot = withRectificationScoring(
+    assessBirthTime(assessment, { kind: "sensitive" }),
+    {
+      answeredCount: 8,
+      candidateClusterRankings: [{ cluster: "middle_candidate_cluster", score: 5 }],
+      nextRound: null,
+      nextRoundQuestions: [],
+    },
+  );
+  const base = {
+    resultId: "1d8ee348-61a3-433d-8907-ff6d281b9992",
+    winningSegment: {
+      startTime: "14:22",
+      endTime: "14:26",
+      representativeTime: "14:24",
+      widthMinutes: 5,
+    },
+    eventCount: 4,
+    domainCount: 3,
+    topScore: 16,
+    secondScore: 10,
+    marginPercent: 37.5,
+    reasons: [],
+    evidence: [],
+    algorithmVersion: "birth-time-event-scoring-v1",
+  } as const;
+
+  const low = withCandidateResult(eventSnapshot, candidateResultSchema.parse({
+    ...base,
+    confidence: "low",
+    canApply: false,
+  }));
+  const medium = withCandidateResult(eventSnapshot, candidateResultSchema.parse({
+    ...base,
+    confidence: "medium",
+    canApply: false,
+  }));
+  const highResult = candidateResultSchema.parse({
+    ...base,
+    confidence: "high",
+    canApply: true,
+  });
+  const high = withCandidateResult(eventSnapshot, highResult);
+
+  assert.deepEqual(
+    [low.input, medium.input, high.input],
+    ["life_events", "candidate_actions", "candidate_confirmation"],
+  );
+  assert.deepEqual([low.canApply, medium.canApply, high.canApply], [false, false, true]);
+  assert.equal(high.state, "confirming");
+
+  const ready = withConfirmedCandidate(high, highResult, "14:24");
+  assert.equal(ready.state, "ready");
+  assert.equal(ready.route, "direct_chart");
+  assert.equal(ready.activeTime, "14:24");
+  assert.equal(ready.canApply, false);
 });

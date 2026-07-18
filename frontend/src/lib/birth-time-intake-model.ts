@@ -88,6 +88,11 @@ const intentCopy = {
   collect_time_clues: "不会要求你猜一个具体时间，先从家人线索和大致时段开始。",
   continue_rectification_questions: "已记录这条线索，还需要更多证据才能形成候选范围。",
   present_saved_candidate_range: "目前只能保存候选范围，还没有足够证据应用到具体分钟。",
+  collect_dated_life_events: "选择题已经完成，请补充几条带日期的关键经历，用于比较实际候选时间。",
+  explain_event_evidence_insufficient: "现有事件还不能稳定区分候选时间，可以调整日期或补充其他领域的经历。",
+  present_candidate_result: "确定性评分已经形成候选范围，但当前证据只允许保存，不能直接应用。",
+  confirm_candidate_time: "候选结果达到应用门槛，仍需你明确确认后才会成为当前排盘时间。",
+  confirmed_candidate_time: "候选时间已按你的确认设为当前排盘使用时间。",
 } as const satisfies Record<JourneySnapshot["assistantIntent"], string>;
 
 export function assistantIntentCopy(intent: JourneySnapshot["assistantIntent"]) {

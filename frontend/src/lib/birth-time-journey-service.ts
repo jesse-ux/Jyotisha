@@ -1,28 +1,44 @@
+import { assessBirthTime, withRectificationScoring, type BirthTimeAssessment, type JourneySnapshot, type RectificationScoring } from "./birth-time-journey.ts";
+import { createJourneyTurnActions } from "./birth-time-journey-actions.ts";
 import {
-  assessBirthTime,
-  withRectificationScoring,
-  type BirthTimeAssessment,
-  type JourneySnapshot,
-  type RectificationScoring,
-  type ScanStability,
-} from "./birth-time-journey.ts";
+  assertLegacyJourneyMutation,
+  createBirthTimeEvidenceActions,
+} from "./birth-time-evidence-service.ts";
+import type { CandidateResult, LifeEvent } from "./birth-time-evidence.ts";
+import type { CandidateVargaSample } from "./birth-time-question-planner.ts";
+import { projectJourneyResponse, storedJourneyResponse } from "./birth-time-journey-response.ts";
+import type { JourneyTurnState } from "./birth-time-journey-turn.ts";
+import type { PersistedJourneyTurn } from "./birth-time-journey-turn-persistence.ts";
+import type { ScoringJobClaim, ScoringJobIdentity, ScoringJobSpec } from "./birth-time-scoring-job.ts";
+import { createBirthTimeScoringService } from "./birth-time-scoring-service.ts";
+import { scanAssessment } from "./birth-time-journey-assessment.ts";
+import type { GuidedCandidateCommit } from "./birth-time-guided-candidate.ts";
+import { createGuidedCandidateActions } from "./birth-time-guided-candidate.ts";
+import { createGuidedDraftRevisionActions } from "./birth-time-guided-draft-revision.ts";
 
 export type RectificationAnswer = "A" | "B" | "C" | "D";
 
+export type RectificationQuestion = {
+  readonly id: string;
+  readonly prompt: string;
+  readonly round?: number;
+  readonly options?: readonly {
+    readonly key: RectificationAnswer;
+    readonly label: string;
+  }[];
+};
+
 export type RectificationQuestionnaire = {
-  readonly questions: readonly {
-    readonly id: string;
-    readonly prompt: string;
-    readonly options?: readonly {
-      readonly key: RectificationAnswer;
-      readonly label: string;
-    }[];
-  }[];
-  readonly samples: readonly {
+  readonly questions: readonly RectificationQuestion[];
+  readonly samples: readonly (CandidateVargaSample & {
     readonly ascendantSign: string | null;
-    readonly d9Sign: string | null;
-    readonly d10Sign: string | null;
-  }[];
+  })[];
+  readonly raw: Readonly<Record<string, unknown>>;
+};
+
+export type RectificationScoringResult = RectificationScoring & {
+  readonly nextRound: number | null;
+  readonly nextRoundQuestions: readonly RectificationQuestion[];
   readonly raw: Readonly<Record<string, unknown>>;
 };
 
@@ -40,9 +56,20 @@ export type JourneyScoreInput = {
   readonly answers: Readonly<Record<string, RectificationAnswer>>;
 };
 
+export type JourneyEventScoreInput = {
+  readonly birthDate: string;
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly lat: number;
+  readonly lon: number;
+  readonly tz: number;
+  readonly events: readonly LifeEvent[];
+};
+
 export interface BirthTimeJourneyEngine {
   scan(input: JourneyScanInput): Promise<{ readonly questionnaire: RectificationQuestionnaire }>;
-  score(input: JourneyScoreInput): Promise<RectificationScoring & { readonly raw: Readonly<Record<string, unknown>> }>;
+  score(input: JourneyScoreInput): Promise<RectificationScoringResult>;
+  scoreEvents(input: JourneyEventScoreInput): Promise<CandidateResult>;
 }
 
 export type PersistedJourneyAssessment = {
@@ -59,27 +86,53 @@ export type StoredRectificationCase = {
   readonly snapshot: JourneySnapshot;
   readonly questionnaire: RectificationQuestionnaire | null;
   readonly answers: Readonly<Record<string, RectificationAnswer>>;
-  readonly scoring?: RectificationScoring & { readonly raw: Readonly<Record<string, unknown>> };
-};
+  readonly scoring?: RectificationScoringResult;
+  readonly eventContext?: {
+    readonly birthDate: string;
+    readonly lat: number;
+    readonly lon: number;
+    readonly tz: number;
+  };
+  readonly lifeEvents?: readonly LifeEvent[];
+  readonly candidateResult?: CandidateResult | null;
+} & Partial<PersistedJourneyTurn>;
 
 export interface BirthTimeJourneyStore {
   saveAssessment(value: PersistedJourneyAssessment): Promise<string>;
   loadCase(userId: string, caseId: string): Promise<StoredRectificationCase | null>;
   saveScoring(value: StoredRectificationCase): Promise<void>;
+  saveTurn(value: StoredRectificationCase, expectedVersion: number, actionId: string): Promise<StoredRectificationCase>;
+  createScoringJob(value: StoredRectificationCase, expectedVersion: number, actionId: string, job: ScoringJobSpec): Promise<StoredRectificationCase>;
+  claimScoringJob(identity: ScoringJobIdentity): Promise<ScoringJobClaim>;
+  completeScoringJob(value: StoredRectificationCase, expectedVersion: number, jobId: string, evidenceFingerprint: string): Promise<StoredRectificationCase>;
+  failScoringJob(value: StoredRectificationCase, expectedVersion: number, jobId: string, evidenceFingerprint: string, failureCode: string): Promise<StoredRectificationCase>;
+  saveCandidateResult(value: StoredRectificationCase): Promise<void>;
+  saveCandidate(value: StoredRectificationCase): Promise<void>;
+  confirmCandidate(value: StoredRectificationCase): Promise<void>;
+  commitGuidedCandidate(value: StoredRectificationCase, command: GuidedCandidateCommit): Promise<StoredRectificationCase>;
 }
 
-type BirthTimeJourneyPorts = {
+export type BirthTimeJourneyPorts = {
   readonly store: BirthTimeJourneyStore;
   readonly engine: BirthTimeJourneyEngine;
+  readonly now?: () => Date;
 };
 
-type JourneyResponse = {
+export type JourneyResponseBase = {
   readonly caseId: string;
   readonly snapshot: JourneySnapshot;
   readonly questionnaire: RectificationQuestionnaire | null;
-  readonly scoring: (RectificationScoring & { readonly raw: Readonly<Record<string, unknown>> }) | null;
+  readonly scoring: RectificationScoringResult | null;
   readonly answers: Readonly<Record<string, RectificationAnswer>>;
+  readonly lifeEvents: readonly LifeEvent[];
+  readonly candidateResult: CandidateResult | null;
 };
+
+export type VersionedJourneyResponse = JourneyResponseBase & JourneyTurnState;
+
+export type LegacyJourneyResponse = JourneyResponseBase & { readonly turnVersion?: undefined; readonly nextAction?: undefined; readonly progress?: undefined; readonly permissions?: undefined; readonly evidenceDraft?: undefined; };
+
+export type JourneyResponse = LegacyJourneyResponse | VersionedJourneyResponse;
 
 export class RectificationCaseNotFoundError extends Error {
   readonly name = "RectificationCaseNotFoundError";
@@ -91,76 +144,16 @@ export class RectificationCaseNotFoundError extends Error {
   }
 }
 
-export class RectificationQuestionsUnavailableError extends Error {
-  readonly name = "RectificationQuestionsUnavailableError";
-}
-
-function scanInput(assessment: BirthTimeAssessment): JourneyScanInput | null {
-  if (assessment.source === "unknown") return null;
-  if (assessment.source === "period_only") {
-    const periodScan = {
-      early_morning: { time: "06:00", uncertainty: 120 },
-      morning: { time: "10:00", uncertainty: 120 },
-      afternoon: { time: "15:00", uncertainty: 180 },
-      evening: { time: "20:30", uncertainty: 150 },
-      late_night: { time: "01:30", uncertainty: 150 },
-    } as const;
-    const scan = periodScan[assessment.period];
-    return {
-      birthTime: `${assessment.date} ${scan.time}`,
-      uncertaintyMinutes: scan.uncertainty,
-      lat: assessment.location.lat,
-      lon: assessment.location.lon,
-      tz: assessment.location.tz,
-      ayanamsa: "lahiri",
-    };
-  }
-  return {
-    birthTime: `${assessment.date} ${assessment.reportedTime}`,
-    uncertaintyMinutes: Math.max(
-      assessment.uncertaintyBeforeMinutes,
-      assessment.uncertaintyAfterMinutes,
-    ),
-    lat: assessment.location.lat,
-    lon: assessment.location.lon,
-    tz: assessment.location.tz,
-    ayanamsa: "lahiri",
-  };
-}
-
-function questionnaireStability(questionnaire: RectificationQuestionnaire): ScanStability {
-  if (questionnaire.samples.length < 2) return { kind: "unavailable" };
-  const signatures = questionnaire.samples.map((sample) => {
-    if (!sample.ascendantSign || !sample.d9Sign || !sample.d10Sign) return null;
-    return `${sample.ascendantSign}|${sample.d9Sign}|${sample.d10Sign}`;
-  });
-  if (signatures.some((signature) => signature === null)) return { kind: "unavailable" };
-  return new Set(signatures).size === 1 ? { kind: "stable" } : { kind: "sensitive" };
-}
-
-async function scanAssessment(
-  engine: BirthTimeJourneyEngine,
-  assessment: BirthTimeAssessment,
-): Promise<{ readonly stability: ScanStability; readonly questionnaire: RectificationQuestionnaire | null }> {
-  const input = scanInput(assessment);
-  if (!input) return { stability: { kind: "not_required" }, questionnaire: null };
-  try {
-    const result = await engine.scan(input);
-    return {
-      stability: questionnaireStability(result.questionnaire),
-      questionnaire: result.questionnaire,
-    };
-  } catch (error) {
-    if (error instanceof Error) {
-      return { stability: { kind: "unavailable" }, questionnaire: null };
-    }
-    throw error;
-  }
-}
+export class RectificationQuestionsUnavailableError extends Error { readonly name = "RectificationQuestionsUnavailableError"; }
 
 export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
+  const evidenceActions = createBirthTimeEvidenceActions(ports);
+  const turnActions = createJourneyTurnActions(ports);
+  const scoringActions = createBirthTimeScoringService(ports);
+  const guidedCandidates = createGuidedCandidateActions(ports);
+  const draftRevisions = createGuidedDraftRevisionActions(ports, turnActions.proposeEvidenceDraft);
   return {
-    async assess(userId: string, assessment: BirthTimeAssessment): Promise<JourneyResponse> {
+    async assess(userId: string, assessment: BirthTimeAssessment): Promise<VersionedJourneyResponse> {
       const scan = await scanAssessment(ports.engine, assessment);
       const snapshot = assessBirthTime(assessment, scan.stability);
       const persisted = {
@@ -171,19 +164,30 @@ export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
         candidateScan: scan.questionnaire,
       } satisfies PersistedJourneyAssessment;
       const caseId = await ports.store.saveAssessment(persisted);
-      return { caseId, snapshot, questionnaire: scan.questionnaire, scoring: null, answers: {} };
+      return projectJourneyResponse({
+        caseId,
+        snapshot,
+        questionnaire: scan.questionnaire,
+        scoring: null,
+        answers: {},
+        lifeEvents: [],
+        candidateResult: null,
+      }, 0);
     },
 
-    async resume(userId: string, caseId: string): Promise<JourneyResponse> {
+    async resume(userId: string, caseId: string): Promise<VersionedJourneyResponse> {
       const stored = await ports.store.loadCase(userId, caseId);
       if (!stored) throw new RectificationCaseNotFoundError(caseId);
-      return {
-        caseId,
-        snapshot: stored.snapshot,
-        questionnaire: stored.questionnaire,
-        scoring: stored.scoring ?? null,
-        answers: stored.answers,
-      };
+      const completedLegacyQuestionnaire = stored.snapshot.input === "rectification_questions"
+        && stored.scoring?.nextRound === null
+        && stored.scoring.nextRoundQuestions.length === 0
+        && stored.scoring.answeredCount > 0;
+      const snapshot = completedLegacyQuestionnaire
+        ? withRectificationScoring(stored.snapshot, stored.scoring)
+        : stored.snapshot;
+      const normalized = snapshot === stored.snapshot ? stored : { ...stored, snapshot };
+      if (normalized !== stored) await ports.store.saveScoring(normalized);
+      return storedJourneyResponse(normalized);
     },
 
     async answerQuestion(
@@ -191,16 +195,37 @@ export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
       caseId: string,
       questionId: string,
       answer: RectificationAnswer,
-    ): Promise<JourneyResponse> {
+    ): Promise<VersionedJourneyResponse> {
       const stored = await ports.store.loadCase(userId, caseId);
       if (!stored) throw new RectificationCaseNotFoundError(caseId);
+      assertLegacyJourneyMutation(stored);
       if (!stored.questionnaire) throw new RectificationQuestionsUnavailableError();
       const answers = { ...stored.answers, [questionId]: answer };
       const scoring = await ports.engine.score({ questionnaire: stored.questionnaire, answers });
       const snapshot = withRectificationScoring(stored.snapshot, scoring);
       const updated = { ...stored, answers, scoring, snapshot } satisfies StoredRectificationCase;
       await ports.store.saveScoring(updated);
-      return { caseId, snapshot, questionnaire: stored.questionnaire, scoring, answers };
+      return projectJourneyResponse({
+        caseId,
+        snapshot,
+        questionnaire: stored.questionnaire,
+        scoring,
+        answers,
+        lifeEvents: stored.lifeEvents ?? [],
+        candidateResult: stored.candidateResult ?? null,
+      }, stored.turnVersion ?? 0, stored.persistedProgress);
     },
+    async submitLifeEvents(...args: Parameters<typeof evidenceActions.submitLifeEvents>) { return projectJourneyResponse(await evidenceActions.submitLifeEvents(...args), 0); },
+    async saveCandidate(...args: Parameters<typeof evidenceActions.saveCandidate>) { return projectJourneyResponse(await evidenceActions.saveCandidate(...args), 0); },
+    async confirmCandidate(...args: Parameters<typeof evidenceActions.confirmCandidate>) { return projectJourneyResponse(await evidenceActions.confirmCandidate(...args), 0); },
+    proposeEvidenceDraft: turnActions.proposeEvidenceDraft,
+    confirmEvidenceDraft: turnActions.confirmEvidenceDraft,
+    skipEvidenceQuestion: turnActions.skipEvidenceQuestion,
+    pause: turnActions.pause,
+    finishWithCurrentRange: turnActions.finishWithCurrentRange,
+    reviseEvidenceDraft: draftRevisions.revise,
+    saveGuidedCandidate: guidedCandidates.save,
+    confirmGuidedCandidate: guidedCandidates.confirm,
+    pollScoringJob: scoringActions.pollScoringJob,
   };
 }

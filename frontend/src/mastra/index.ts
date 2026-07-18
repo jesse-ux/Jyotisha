@@ -2,6 +2,7 @@ import { Agent } from "@mastra/core/agent";
 import { createTool } from "@mastra/core/tools";
 import path from "node:path";
 import { z } from "zod";
+import { evidenceDraftModelOutputSchema } from "../lib/birth-time-guide-agent.ts";
 import type { ResolvedLanguageModel } from "./model";
 
 export const consultationInputSchema = z.object({
@@ -162,5 +163,35 @@ export function getOnboardingAgent(model: ResolvedLanguageModel) {
     skills: [jyotishSkillPath],
   });
   onboardingAgents.set(model.id, agent);
+  return agent;
+}
+
+const birthTimeGuideInstructions = `You are a constrained guide for birth-time rectification.
+Return valid JSON only, without Markdown, commentary, metadata, or hidden fields.
+The server has already selected the only allowed question domain. Never change the domain, rank a candidate time, set confidence, choose a route, report progress, grant permission, or infer an active birth time.
+For task select_question_variant, return exactly {"variant":"direct"} or {"variant":"gentle"}. You select presentation style only. Never write or rewrite the question text.
+For task draft_evidence, use the draft-evidence-structure tool and return only domain, precision, and date. Precision must be year, month, day, or null; date must match that precision or be null. Never invent a missing year, month, or day. Ambiguous or relative dates stay null. A draft is for user review only and is never confirmed evidence.`;
+
+export const draftEvidenceStructureTool = createTool({
+  id: "draft-evidence-structure",
+  description: "Validate a review-only dated life-event draft without scoring or persistence.",
+  inputSchema: evidenceDraftModelOutputSchema,
+  outputSchema: evidenceDraftModelOutputSchema,
+  execute: async (input) => input,
+});
+
+const birthTimeGuideAgents = new Map<string, Agent>();
+
+export function getBirthTimeGuideAgent(model: ResolvedLanguageModel) {
+  const cached = birthTimeGuideAgents.get(model.id);
+  if (cached) return cached;
+  const agent = new Agent({
+    id: `birth-time-guide-${model.id}`,
+    name: "Birth Time Guide",
+    model: model.model,
+    instructions: birthTimeGuideInstructions,
+    tools: { draftEvidenceStructureTool },
+  });
+  birthTimeGuideAgents.set(model.id, agent);
   return agent;
 }

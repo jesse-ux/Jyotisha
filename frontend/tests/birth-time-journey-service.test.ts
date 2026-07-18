@@ -1,70 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { birthTimeAssessmentSchema } from "../src/lib/birth-time-journey.ts";
+import { createBirthTimeJourneyService } from "../src/lib/birth-time-journey-service.ts";
+import type { BirthTimeJourneyEngine, StoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
 import {
-  createBirthTimeJourneyService,
-  type BirthTimeJourneyEngine,
-  type BirthTimeJourneyStore,
-  type PersistedJourneyAssessment,
-  type StoredRectificationCase,
-} from "../src/lib/birth-time-journey-service.ts";
-
-const hospitalAssessment = birthTimeAssessmentSchema.parse({
-  date: "1993-04-17",
-  source: "hospital_record",
-  reportedTime: "08:16",
-  uncertaintyBeforeMinutes: 2,
-  uncertaintyAfterMinutes: 2,
-  location: { lat: 31.2304, lon: 121.4737, tz: 8 },
-});
-
-function scanWithSigns(signs: readonly string[]) {
-  const samples = signs.map((sign) => ({
-    ascendantSign: sign,
-    d9Sign: sign,
-    d10Sign: sign,
-  }));
-  return {
-    questionnaire: {
-      questions: [{ id: "education_environment_shift", prompt: "是否有明显学业变化？" }],
-      samples,
-      raw: { candidate_scan: { samples } },
-    },
-  };
-}
-
-function memoryStore(initialCase?: StoredRectificationCase) {
-  let savedAssessment: PersistedJourneyAssessment | null = null;
-  let savedCase = initialCase ?? null;
-  const store: BirthTimeJourneyStore = {
-    async saveAssessment(value) {
-      savedAssessment = value;
-      return "case-1";
-    },
-    async loadCase() {
-      return savedCase;
-    },
-    async saveScoring(value) {
-      savedCase = value;
-    },
-  };
-  return {
-    store,
-    savedAssessment: () => savedAssessment,
-    savedCase: () => savedCase,
-  };
-}
+  approximateAssessment,
+  hospitalAssessment,
+  journeyCaseId,
+  memoryStore,
+  scanWithSigns,
+  unusedJourneyEngine,
+} from "./birth-time-journey-test-support.ts";
 
 test("journey service activates a stable hospital record and persists its scan", async () => {
   const memory = memoryStore();
   let receivedUncertainty = 0;
   const engine: BirthTimeJourneyEngine = {
+    ...unusedJourneyEngine,
     async scan(input) {
       receivedUncertainty = input.uncertaintyMinutes;
       return scanWithSigns(["Cancer", "Cancer", "Cancer"]);
-    },
-    async score() {
-      throw new Error("not used");
     },
   };
   const service = createBirthTimeJourneyService({ store: memory.store, engine });
@@ -74,18 +28,16 @@ test("journey service activates a stable hospital record and persists its scan",
   assert.equal(receivedUncertainty, 2);
   assert.equal(result.snapshot.route, "direct_chart");
   assert.equal(result.snapshot.activeTime, "08:16");
-  assert.equal(result.caseId, "case-1");
+  assert.equal(result.caseId, journeyCaseId);
   assert.deepEqual(memory.savedAssessment()?.candidateScan, result.questionnaire);
 });
 
 test("journey service fails a scanner error closed without activating the time", async () => {
   const memory = memoryStore();
   const engine: BirthTimeJourneyEngine = {
+    ...unusedJourneyEngine,
     async scan() {
       throw new TypeError("scanner offline");
-    },
-    async score() {
-      throw new Error("not used");
     },
   };
   const service = createBirthTimeJourneyService({ store: memory.store, engine });
@@ -98,26 +50,33 @@ test("journey service fails a scanner error closed without activating the time",
   assert.equal(memory.savedAssessment()?.snapshot.activeTime, null);
 });
 
-test("journey service accumulates answers while preserving the application gate", async () => {
-  const approximate = birthTimeAssessmentSchema.parse({
-    date: "1993-04-17",
-    source: "approximate",
-    reportedTime: "14:30",
-    uncertaintyBeforeMinutes: 30,
-    uncertaintyAfterMinutes: 30,
-    location: { lat: 31.2304, lon: 121.4737, tz: 8 },
-  });
-  const questionnaire = scanWithSigns(["Cancer", "Leo", "Leo"]).questionnaire;
-  const initialSnapshot = createBirthTimeJourneyService({
+test("journey service projects a fresh active rectification into one baseline ask", async () => {
+  const service = createBirthTimeJourneyService({
     store: memoryStore().store,
     engine: {
-      async scan() { return { questionnaire }; },
-      async score() { throw new Error("not used"); },
+      ...unusedJourneyEngine,
+      async scan() { return scanWithSigns(["Cancer", "Leo", "Virgo"]); },
     },
   });
-  const assessed = await initialSnapshot.assess("user-1", approximate);
+
+  const result = await service.assess("user-1", approximateAssessment);
+
+  assert.equal(result.nextAction.kind, "ask_baseline_evidence");
+  assert.equal(result.progress.phase, "baseline");
+});
+
+test("journey service accumulates legacy answers while preserving the application gate", async () => {
+  const questionnaire = scanWithSigns(["Cancer", "Leo", "Leo"]).questionnaire;
+  const assessmentService = createBirthTimeJourneyService({
+    store: memoryStore().store,
+    engine: {
+      ...unusedJourneyEngine,
+      async scan() { return { questionnaire }; },
+    },
+  });
+  const assessed = await assessmentService.assess("user-1", approximateAssessment);
   const storedCase: StoredRectificationCase = {
-    id: "case-1",
+    id: journeyCaseId,
     userId: "user-1",
     snapshot: assessed.snapshot,
     questionnaire,
@@ -125,22 +84,29 @@ test("journey service accumulates answers while preserving the application gate"
   };
   const memory = memoryStore(storedCase);
   let scoredAnswers: Readonly<Record<string, "A" | "B" | "C" | "D">> = {};
-  const engine: BirthTimeJourneyEngine = {
-    async scan() {
-      return { questionnaire };
+  const service = createBirthTimeJourneyService({
+    store: memory.store,
+    engine: {
+      ...unusedJourneyEngine,
+      async score(input) {
+        scoredAnswers = input.answers;
+        return {
+          answeredCount: 3,
+          candidateClusterRankings: [{ cluster: "middle_candidate_cluster", score: 5 }],
+          nextRound: 2,
+          nextRoundQuestions: [],
+          raw: { next_round: 2 },
+        };
+      },
     },
-    async score(input) {
-      scoredAnswers = input.answers;
-      return {
-        answeredCount: 3,
-        candidateClusterRankings: [{ cluster: "middle_candidate_cluster", score: 5 }],
-        raw: { next_round: 2 },
-      };
-    },
-  };
-  const service = createBirthTimeJourneyService({ store: memory.store, engine });
+  });
 
-  const result = await service.answerQuestion("user-1", "case-1", "career_responsibility_pressure", "B");
+  const result = await service.answerQuestion(
+    "user-1",
+    journeyCaseId,
+    "career_responsibility_pressure",
+    "B",
+  );
 
   assert.deepEqual(scoredAnswers, {
     education_environment_shift: "A",
@@ -151,10 +117,9 @@ test("journey service accumulates answers while preserving the application gate"
   assert.deepEqual(memory.savedCase()?.answers, scoredAnswers);
 });
 
-test("journey service resumes an owner-scoped unfinished case", async () => {
-  const questionnaire = scanWithSigns(["Cancer", "Leo"]).questionnaire;
+test("journey service resumes an owner-scoped unfinished legacy case", async () => {
   const storedCase: StoredRectificationCase = {
-    id: "case-1",
+    id: journeyCaseId,
     userId: "user-1",
     snapshot: {
       state: "rectifying",
@@ -166,27 +131,58 @@ test("journey service resumes an owner-scoped unfinished case", async () => {
       activeTime: null,
       reportedRange: { label: "14:00—15:00", startTime: "14:00", endTime: "15:00" },
     },
-    questionnaire,
+    questionnaire: scanWithSigns(["Cancer", "Leo"]).questionnaire,
     answers: { education_environment_shift: "A" },
   };
   const service = createBirthTimeJourneyService({
     store: memoryStore(storedCase).store,
-    engine: {
-      async scan() { throw new Error("not used"); },
-      async score() { throw new Error("not used"); },
-    },
+    engine: unusedJourneyEngine,
   });
 
-  const result = await service.resume("user-1", "case-1");
+  const result = await service.resume("user-1", journeyCaseId);
 
-  assert.equal(result.caseId, "case-1");
+  assert.equal(result.caseId, journeyCaseId);
   assert.deepEqual(result.answers, { education_environment_shift: "A" });
   assert.equal(result.snapshot.canApply, false);
 });
 
+test("journey service heals a completed legacy questionnaire into life-event collection", async () => {
+  const storedCase: StoredRectificationCase = {
+    id: journeyCaseId,
+    userId: "user-1",
+    snapshot: {
+      state: "candidate",
+      assistantIntent: "present_saved_candidate_range",
+      input: "rectification_questions",
+      route: "rectification",
+      confidence: null,
+      canApply: false,
+      activeTime: null,
+      reportedRange: { label: "04:00—07:59", startTime: "04:00", endTime: "07:59" },
+    },
+    questionnaire: scanWithSigns(["Cancer", "Leo"]).questionnaire,
+    answers: { education_environment_shift: "A" },
+    scoring: {
+      answeredCount: 8,
+      candidateClusterRankings: [{ cluster: "middle_candidate_cluster", score: 5 }],
+      nextRound: null,
+      nextRoundQuestions: [],
+      raw: { answered_count: 8, next_round: null, next_round_questions: [] },
+    },
+  };
+  const memory = memoryStore(storedCase);
+  const service = createBirthTimeJourneyService({ store: memory.store, engine: unusedJourneyEngine });
+
+  const result = await service.resume("user-1", journeyCaseId);
+
+  assert.equal(result.snapshot.state, "rectifying");
+  assert.equal(result.snapshot.input, "life_events");
+  assert.equal(memory.savedCase()?.snapshot.input, "life_events");
+});
+
 test("journey service resumes a fail-closed case without a questionnaire", async () => {
   const storedCase: StoredRectificationCase = {
-    id: "case-2",
+    id: journeyCaseId,
     userId: "user-1",
     snapshot: {
       state: "rectifying",
@@ -203,13 +199,10 @@ test("journey service resumes a fail-closed case without a questionnaire", async
   };
   const service = createBirthTimeJourneyService({
     store: memoryStore(storedCase).store,
-    engine: {
-      async scan() { throw new Error("not used"); },
-      async score() { throw new Error("not used"); },
-    },
+    engine: unusedJourneyEngine,
   });
 
-  const result = await service.resume("user-1", "case-2");
+  const result = await service.resume("user-1", journeyCaseId);
 
   assert.equal(result.questionnaire, null);
   assert.equal(result.snapshot.canApply, false);

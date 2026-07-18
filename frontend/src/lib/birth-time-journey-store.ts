@@ -2,53 +2,22 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { parseRectificationQuestionnaire } from "./birth-time-journey-adapters.ts";
 import type {
   BirthTimeJourneyStore,
   PersistedJourneyAssessment,
-  StoredRectificationCase,
 } from "./birth-time-journey-service.ts";
+import { projectJourneyTurn } from "./birth-time-journey-turn.ts";
 import {
-  journeySnapshotSchema,
-  type JourneySnapshot,
-} from "./birth-time-journey.ts";
+  BirthTimeJourneyStoreError,
+  caseStatus,
+  createJourneyTurnPersistence,
+  loadStoredRectificationCase,
+  profileStatus,
+} from "./birth-time-journey-turn-persistence.ts";
+import { createSupabaseScoringJobStore } from "./birth-time-scoring-job-store.ts";
+import { createSupabaseGuidedCandidateStore } from "./birth-time-guided-candidate-store.ts";
 
-const answerSchema = z.enum(["A", "B", "C", "D"]);
-const storedCaseSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  journey_snapshot: journeySnapshotSchema,
-  questionnaire: z.record(z.unknown()),
-  answers: z.record(answerSchema),
-  scoring_result: z.record(z.unknown()),
-});
-
-export class BirthTimeJourneyStoreError extends Error {
-  readonly name = "BirthTimeJourneyStoreError";
-
-  constructor(readonly operation: "insert_case" | "update_profile" | "load_case" | "update_case") {
-    super(`Birth-time journey persistence failed during ${operation}`);
-  }
-}
-
-function caseStatus(snapshot: JourneySnapshot) {
-  switch (snapshot.state) {
-    case "ready":
-      return "confirmed";
-    case "candidate":
-      return "candidate";
-    case "rectifying":
-      return "rectifying";
-    default: {
-      const exhaustive: never = snapshot.state;
-      return exhaustive;
-    }
-  }
-}
-
-function profileStatus(snapshot: JourneySnapshot) {
-  return snapshot.state === "ready" ? "confirmed" : caseStatus(snapshot);
-}
+export { BirthTimeJourneyStoreError } from "./birth-time-journey-turn-persistence.ts";
 
 function assessmentValues(value: PersistedJourneyAssessment) {
   const assessment = value.assessment;
@@ -68,6 +37,10 @@ function assessmentValues(value: PersistedJourneyAssessment) {
 export function createSupabaseBirthTimeJourneyStore(
   supabase: SupabaseClient,
 ): BirthTimeJourneyStore {
+  const loadCase = (userId: string, caseId: string) => loadStoredRectificationCase(supabase, userId, caseId);
+  const turns = createJourneyTurnPersistence(supabase, loadCase);
+  const scoringJobs = createSupabaseScoringJobStore(supabase, loadCase);
+  const guidedCandidates = createSupabaseGuidedCandidateStore(supabase, loadCase);
   return {
     async saveAssessment(value) {
       const details = assessmentValues(value);
@@ -85,6 +58,13 @@ export function createSupabaseBirthTimeJourneyStore(
           questionnaire: value.questionnaire?.raw ?? {},
           journey_snapshot: value.snapshot,
           candidate_scan: value.candidateScan?.raw ?? {},
+          turn_state: projectJourneyTurn({
+            turnVersion: 0,
+            snapshot: value.snapshot,
+            questionnaire: value.questionnaire,
+            candidateResult: null,
+            lifeEvents: [],
+          }),
           candidate_start: value.snapshot.reportedRange.startTime,
           candidate_end: value.snapshot.reportedRange.endTime,
           confirmed_time: value.snapshot.activeTime,
@@ -115,35 +95,10 @@ export function createSupabaseBirthTimeJourneyStore(
       return caseId;
     },
 
-    async loadCase(userId, caseId) {
-      const { data, error } = await supabase
-        .from("birth_time_rectification_cases")
-        .select("id,user_id,journey_snapshot,questionnaire,answers,scoring_result")
-        .eq("id", caseId)
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (error) throw new BirthTimeJourneyStoreError("load_case");
-      if (!data) return null;
-      const parsed = storedCaseSchema.parse(data);
-      const scoring = Object.keys(parsed.scoring_result).length > 0
-        ? {
-            answeredCount: 0,
-            candidateClusterRankings: [],
-            raw: parsed.scoring_result,
-          }
-        : undefined;
-      const questionnaire = Object.keys(parsed.questionnaire).length > 0
-        ? parseRectificationQuestionnaire(parsed.questionnaire)
-        : null;
-      return {
-        id: parsed.id,
-        userId: parsed.user_id,
-        snapshot: parsed.journey_snapshot,
-        questionnaire,
-        answers: parsed.answers,
-        ...(scoring ? { scoring } : {}),
-      } satisfies StoredRectificationCase;
-    },
+    loadCase,
+    saveTurn: turns.saveTurn,
+    ...scoringJobs,
+    ...guidedCandidates,
 
     async saveScoring(value) {
       const { error } = await supabase
@@ -165,6 +120,57 @@ export function createSupabaseBirthTimeJourneyStore(
         .eq("id", value.userId)
         .eq("rectification_case_id", value.id);
       if (profileError) throw new BirthTimeJourneyStoreError("update_profile");
+    },
+
+    async saveCandidateResult(value) {
+      const winner = value.candidateResult?.winningSegment ?? null;
+      const { error } = await supabase
+        .from("birth_time_rectification_cases")
+        .update({
+          status: caseStatus(value.snapshot),
+          journey_snapshot: value.snapshot,
+          life_events: value.lifeEvents ?? [],
+          candidate_result: value.candidateResult ?? {},
+          event_scoring_version: value.candidateResult?.algorithmVersion ?? null,
+          candidate_result_id: value.candidateResult?.resultId ?? null,
+          candidate_start: winner?.startTime ?? null,
+          candidate_end: winner?.endTime ?? null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", value.id)
+        .eq("user_id", value.userId);
+      if (error) throw new BirthTimeJourneyStoreError("update_case");
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          birth_time_status: profileStatus(value.snapshot),
+          rectification_confidence: value.candidateResult?.marginPercent ?? null,
+        })
+        .eq("id", value.userId)
+        .eq("rectification_case_id", value.id);
+      if (profileError) throw new BirthTimeJourneyStoreError("update_profile");
+    },
+
+    async saveCandidate(value) {
+      const { error } = await supabase
+        .from("birth_time_rectification_cases")
+        .update({ candidate_saved_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq("id", value.id)
+        .eq("user_id", value.userId)
+        .eq("candidate_result_id", value.candidateResult?.resultId ?? null);
+      if (error) throw new BirthTimeJourneyStoreError("update_case");
+    },
+
+    async confirmCandidate(value) {
+      const { error } = await supabase.rpc("confirm_birth_time_candidate", {
+        p_user_id: value.userId,
+        p_case_id: value.id,
+        p_result_id: value.candidateResult?.resultId,
+        p_time: value.snapshot.activeTime,
+        p_snapshot: value.snapshot,
+      });
+      if (error) throw new BirthTimeJourneyStoreError("update_case");
     },
   };
 }

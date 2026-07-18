@@ -19,6 +19,7 @@ import secrets
 import sqlite3
 import threading
 import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -1258,6 +1259,7 @@ API_COMMAND_MAP = {
     'rectification': '/api/rectification_gate',
     'active-rectification-questions': '/api/active_rectification_questions',
     'active-rectification-score': '/api/active_rectification_score',
+    'active-rectification-events': '/api/active_rectification_events',
     'case-validation': '/api/case_validation',
     'divisional-yoga': '/api/divisional_yoga',
     'deep-varga-avastha': '/api/deep_varga_avastha',
@@ -1291,6 +1293,7 @@ TECHNIQUE_EXAMPLE_ENDPOINTS = {
     '/api/rectification_gate',
     '/api/active_rectification_questions',
     '/api/active_rectification_score',
+    '/api/active_rectification_events',
     '/api/relationship',
     '/api/remedies',
     '/api/sade_sati',
@@ -1709,6 +1712,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             elif path == '/api/active_rectification_score':
                 result = self._compute_active_rectification_score(body)
+                self._json(result)
+            elif path == '/api/active_rectification_events':
+                result = self._compute_active_rectification_events(body)
                 self._json(result)
             elif path == '/api/case_validation':
                 result = self._compute_case_validation(body)
@@ -6750,6 +6756,79 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             **result,
         }
 
+    def _compute_active_rectification_events(self, body):
+        allowed_fields = {
+            'birth_date', 'start_time', 'end_time', 'lat', 'lon', 'tz', 'events',
+        }
+        unsupported_fields = sorted(set(body) - allowed_fields)
+        if unsupported_fields:
+            raise BadRequest(
+                f'unsupported active rectification event field: {unsupported_fields[0]}'
+            )
+        birth_date = body.get('birth_date')
+        start_time = body.get('start_time')
+        end_time = body.get('end_time')
+        if not isinstance(birth_date, str):
+            raise BadRequest('birth_date must be YYYY-MM-DD')
+        if not isinstance(start_time, str) or not isinstance(end_time, str):
+            raise BadRequest('candidate times must be HH:MM')
+        try:
+            parsed_birth_date = datetime.strptime(birth_date, '%Y-%m-%d')
+            datetime.strptime(start_time, '%H:%M')
+            datetime.strptime(end_time, '%H:%M')
+        except ValueError as exc:
+            raise BadRequest('birth date or candidate time has invalid format') from exc
+        lat = self._get_float(body, 'lat', 0, -90, 90)
+        lon = self._get_float(body, 'lon', 0, -180, 180)
+        tz = self._get_float(body, 'tz', 0, -14, 14)
+        events = body.get('events')
+        if not isinstance(events, list) or not 3 <= len(events) <= 6:
+            raise BadRequest('events must contain between 3 and 6 items')
+        normalized_events = []
+        allowed_domains = {'education', 'relocation', 'relationship', 'career', 'health_pressure'}
+        formats = {'year': '%Y', 'month': '%Y-%m', 'day': '%Y-%m-%d'}
+        for raw_event in events:
+            if not isinstance(raw_event, dict) or set(raw_event) != {'id', 'domain', 'date', 'precision'}:
+                raise BadRequest('each event must contain only id, domain, date, and precision')
+            try:
+                uuid.UUID(str(raw_event['id']))
+            except (ValueError, TypeError, AttributeError) as exc:
+                raise BadRequest('event id must be a UUID') from exc
+            domain = raw_event['domain']
+            precision = raw_event['precision']
+            event_date = raw_event['date']
+            if domain not in allowed_domains:
+                raise BadRequest('event domain is unsupported')
+            if precision not in formats or not isinstance(event_date, str):
+                raise BadRequest('event precision is unsupported')
+            try:
+                parsed_event_date = datetime.strptime(event_date, formats[precision])
+            except ValueError as exc:
+                raise BadRequest('event date does not match its precision') from exc
+            if parsed_event_date.year < parsed_birth_date.year or parsed_event_date > datetime.now():
+                raise BadRequest('event date must be between birth and today')
+            normalized_events.append({
+                'id': str(raw_event['id']),
+                'domain': domain,
+                'date': event_date,
+                'precision': precision,
+            })
+        module = _load_local_module('active_rectification_events')
+        result = module.score_life_events({
+            'birth_date': birth_date,
+            'start_time': start_time,
+            'end_time': end_time,
+            'lat': lat,
+            'lon': lon,
+            'tz': tz,
+            'events': normalized_events,
+        })
+        return {
+            'success': True,
+            'endpoint': 'active_rectification_events',
+            **result,
+        }
+
     def _compute_case_validation(self, body):
         planets, _, _ = self._normalized_planets_from_body(body)
         current_md = body.get('current_md', body.get('dasha_lord', ''))
@@ -7512,6 +7591,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/rectification_gate': self._compute_rectification_gate,
             '/api/active_rectification_questions': self._compute_active_rectification_questions,
             '/api/active_rectification_score': self._compute_active_rectification_score,
+            '/api/active_rectification_events': self._compute_active_rectification_events,
             '/api/relationship': self._compute_relationship,
             '/api/remedies': self._compute_remedies,
             '/api/sade_sati': self._compute_sade_sati,
@@ -7636,6 +7716,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/pancha_mahapurusha': 'Assess Pancha Mahapurusha yoga strength',
             '/api/prashna': 'Compute Prashna chart and answer evidence',
             '/api/rectification_gate': 'Evaluate birth-time precision gate',
+            '/api/active_rectification_events': 'Score dated life events against actual birth-time candidates',
             '/api/relationship': 'Compute relationship and spouse-status evidence',
             '/api/remedies': 'Generate low-risk remedies from doshas/strength/dasha',
             '/api/sade_sati': 'Compute Sade Sati status and phase',

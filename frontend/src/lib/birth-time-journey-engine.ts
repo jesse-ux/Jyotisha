@@ -3,7 +3,9 @@ import "server-only";
 import {
   parseRectificationQuestionnaire,
   parseRectificationScoring,
+  parseCandidateResult,
 } from "./birth-time-journey-adapters.ts";
+import { eventScorePayload } from "./birth-time-journey-engine-model.ts";
 import type { BirthTimeJourneyEngine } from "./birth-time-journey-service.ts";
 
 export class BirthTimeJourneyEngineError extends Error {
@@ -51,6 +53,15 @@ export function createJyotishBirthTimeJourneyEngine(
         answers: input.answers,
       });
       return parseRectificationScoring(payload);
+    },
+
+    async scoreEvents(input) {
+      const payload = await postJson(
+        apiBase,
+        "/api/active_rectification_events",
+        eventScorePayload(input),
+      );
+      return parseCandidateResult(payload);
     },
   };
 }

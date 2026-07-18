@@ -5,32 +5,30 @@ import {
   createJyotishBirthTimeJourneyEngine,
   BirthTimeJourneyEngineError,
 } from "@/lib/birth-time-journey-engine";
-import {
-  createBirthTimeJourneyService,
-  RectificationCaseNotFoundError,
-  RectificationQuestionsUnavailableError,
-} from "@/lib/birth-time-journey-service";
-import {
-  createSupabaseBirthTimeJourneyStore,
-  BirthTimeJourneyStoreError,
-} from "@/lib/birth-time-journey-store";
+import { createBirthTimeJourneyService, RectificationCaseNotFoundError, RectificationQuestionsUnavailableError, type VersionedJourneyResponse } from "@/lib/birth-time-journey-service";
+import { BirthTimeJourneyActionError } from "@/lib/birth-time-journey-actions";
+import { birthTimeJourneyRequestSchema } from "@/lib/birth-time-journey-request";
+import { StaleJourneyTurnError } from "@/lib/birth-time-journey-turn-persistence";
+import { CandidateConfirmationError } from "@/lib/birth-time-evidence";
+import { BirthTimeEvidenceContextError, EvidenceRectificationCaseNotFoundError, GuidedJourneyLegacyMutationError, StaleCandidateConfirmationError } from "@/lib/birth-time-evidence-service";
+import { createSupabaseBirthTimeJourneyStore, BirthTimeJourneyStoreError } from "@/lib/birth-time-journey-store";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigurationError } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { BirthTimeScoringJobError } from "@/lib/birth-time-scoring-job";
+import { GuidedCandidateActionError } from "@/lib/birth-time-guided-candidate";
+import { GuidedCandidateStoreConflictError } from "@/lib/birth-time-guided-candidate-store";
+import { JourneyTurnInvariantError } from "@/lib/birth-time-journey-turn";
+import { JourneyResponseInvariantError } from "@/lib/birth-time-journey-response-schema";
+import {
+  recordJourneyMetricEvent,
+  recordJourneyTransitionMetric,
+  recordScoringJourneyMetric,
+  type JourneyMetricName,
+} from "@/lib/birth-time-journey-telemetry";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
-
-const eventSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("assess") }).strict(),
-  z.object({ type: z.literal("resume"), caseId: z.string().uuid() }).strict(),
-  z.object({
-    type: z.literal("answer_question"),
-    caseId: z.string().uuid(),
-    questionId: z.string().trim().min(1).max(120),
-    answer: z.enum(["A", "B", "C", "D"]),
-  }).strict(),
-]);
 
 async function requestPayload(request: Request): Promise<unknown> {
   try {
@@ -39,6 +37,15 @@ async function requestPayload(request: Request): Promise<unknown> {
     if (error instanceof SyntaxError) return null;
     throw error;
   }
+}
+
+async function responseWithJourneyMetric(
+  action: Promise<VersionedJourneyResponse>,
+  name: Extract<JourneyMetricName, "turn_advanced" | "draft_corrected" | "journey_paused">,
+): Promise<NextResponse> {
+  const response = await action;
+  recordJourneyTransitionMetric(response, name);
+  return NextResponse.json(response);
 }
 
 export async function POST(request: Request) {
@@ -65,7 +72,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const parsed = eventSchema.safeParse(await requestPayload(request));
+  const parsed = birthTimeJourneyRequestSchema.safeParse(await requestPayload(request));
   if (!parsed.success) {
     return NextResponse.json(
       { error: "生时评估请求格式不正确", details: parsed.error.flatten() },
@@ -94,30 +101,89 @@ export async function POST(request: Request) {
           );
         }
         const assessment = parseBirthTimeProfile(profile);
-        return NextResponse.json(await service.assess(user.id, assessment));
+        return responseWithJourneyMetric(service.assess(user.id, assessment), "turn_advanced");
       }
       case "answer_question":
-        return NextResponse.json(await service.answerQuestion(
+        return responseWithJourneyMetric(service.answerQuestion(
           user.id,
           parsed.data.caseId,
           parsed.data.questionId,
           parsed.data.answer,
-        ));
-      case "resume":
-        return NextResponse.json(await service.resume(user.id, parsed.data.caseId));
+        ), "turn_advanced");
+      case "resume": {
+        const response = await service.resume(user.id, parsed.data.caseId);
+        return NextResponse.json(response);
+      }
+      case "poll_scoring":
+        {
+          const before = await service.resume(user.id, parsed.data.caseId);
+          const response = await service.pollScoringJob(user.id, parsed.data.caseId, parsed.data.jobId);
+          recordScoringJourneyMetric(before, response);
+          return NextResponse.json(response);
+        }
+      case "submit_life_events":
+        return responseWithJourneyMetric(service.submitLifeEvents(user.id, parsed.data.caseId, parsed.data.events), "turn_advanced");
+      case "save_candidate":
+        return responseWithJourneyMetric(service.saveCandidate(user.id, parsed.data.caseId, parsed.data.resultId), "turn_advanced");
+      case "confirm_candidate":
+        return responseWithJourneyMetric(service.confirmCandidate(user.id, parsed.data.caseId, parsed.data.resultId, parsed.data.time), "turn_advanced");
+      case "confirm_evidence_draft":
+        return responseWithJourneyMetric(service.confirmEvidenceDraft(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion, parsed.data.draftId), "turn_advanced");
+      case "skip_evidence_question":
+        return responseWithJourneyMetric(service.skipEvidenceQuestion(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion), "turn_advanced");
+      case "pause_rectification":
+        return responseWithJourneyMetric(service.pause(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion), "journey_paused");
+      case "finish_rectification":
+        return responseWithJourneyMetric(service.finishWithCurrentRange(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion), "turn_advanced");
+      case "revise_evidence_draft":
+        return responseWithJourneyMetric(service.reviseEvidenceDraft({
+          userId: user.id,
+          caseId: parsed.data.caseId,
+          actionId: parsed.data.actionId,
+          expectedVersion: parsed.data.turnVersion,
+          precision: parsed.data.precision,
+          date: parsed.data.date,
+        }), "draft_corrected");
+      case "save_guided_candidate":
+        return responseWithJourneyMetric(service.saveGuidedCandidate({
+          userId: user.id,
+          caseId: parsed.data.caseId,
+          actionId: parsed.data.actionId,
+          expectedVersion: parsed.data.turnVersion,
+          resultId: parsed.data.resultId,
+        }), "turn_advanced");
+      case "confirm_guided_candidate":
+        return responseWithJourneyMetric(service.confirmGuidedCandidate({
+          userId: user.id,
+          caseId: parsed.data.caseId,
+          actionId: parsed.data.actionId,
+          expectedVersion: parsed.data.turnVersion,
+          resultId: parsed.data.resultId,
+          time: parsed.data.time,
+        }), "turn_advanced");
       default: {
         const exhaustive: never = parsed.data;
         return exhaustive;
       }
     }
   } catch (error) {
+    if (error instanceof BirthTimeScoringJobError) {
+      recordJourneyMetricEvent({ kind: "error", reason: "scoring_failure", phase: "result" });
+    } else if (error instanceof JourneyTurnInvariantError || error instanceof JourneyResponseInvariantError) {
+      recordJourneyMetricEvent({ kind: "error", reason: "illegal_state", phase: "result" });
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "出生资料尚未完成", message: "请检查出生时间情况和地点后重试。" },
         { status: 409 },
       );
     }
-    if (error instanceof RectificationCaseNotFoundError) {
+    if (
+      error instanceof RectificationCaseNotFoundError
+      || error instanceof EvidenceRectificationCaseNotFoundError
+      || (error instanceof BirthTimeJourneyActionError && error.reason === "case_not_found")
+      || (error instanceof GuidedCandidateActionError && error.reason === "case_not_found")
+    ) {
       return NextResponse.json(
         { error: "校正记录不存在", message: "请重新开始出生时间评估。" },
         { status: 404 },
@@ -126,6 +192,29 @@ export async function POST(request: Request) {
     if (error instanceof RectificationQuestionsUnavailableError) {
       return NextResponse.json(
         { error: "校正问题暂不可用", message: "当前资料已安全保留，请稍后重新评估。" },
+        { status: 409 },
+      );
+    }
+    if (
+      error instanceof StaleJourneyTurnError
+      || error instanceof BirthTimeJourneyActionError
+      || error instanceof GuidedJourneyLegacyMutationError
+      || error instanceof BirthTimeScoringJobError
+      || error instanceof GuidedCandidateActionError
+      || error instanceof GuidedCandidateStoreConflictError
+    ) {
+      return NextResponse.json(
+        { error: "校正状态已更新", message: "请使用最新问题或草稿后重试。" },
+        { status: 409 },
+      );
+    }
+    if (
+      error instanceof StaleCandidateConfirmationError
+      || error instanceof CandidateConfirmationError
+      || error instanceof BirthTimeEvidenceContextError
+    ) {
+      return NextResponse.json(
+        { error: "候选结果已变化", message: "请重新提交事件证据并确认最新候选结果。" },
         { status: 409 },
       );
     }
