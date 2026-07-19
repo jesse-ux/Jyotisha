@@ -1,8 +1,9 @@
 import { withConfirmedCandidate } from "./birth-time-evidence.ts";
+import { assertNotDynamicJourneyMutation } from "./birth-time-evidence-service.ts";
 import { currentJourneyTurn, storedJourneyResponse } from "./birth-time-journey-response.ts";
 import type {
   BirthTimeJourneyStore,
-  StoredRectificationCase,
+  LegacyStoredRectificationCase as StoredRectificationCase,
 } from "./birth-time-journey-service.ts";
 import type { JourneyTurnState } from "./birth-time-journey-turn.ts";
 import { StaleJourneyTurnError } from "./birth-time-journey-turn-persistence.ts";
@@ -35,6 +36,7 @@ type GuidedCandidatePorts = { readonly store: BirthTimeJourneyStore };
 async function ownedCase(ports: GuidedCandidatePorts, userId: string, caseId: string) {
   const stored = await ports.store.loadCase(userId, caseId);
   if (!stored) throw new GuidedCandidateActionError("case_not_found");
+  assertNotDynamicJourneyMutation(stored);
   return stored;
 }
 

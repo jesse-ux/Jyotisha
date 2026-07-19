@@ -5,7 +5,7 @@ import {
   createJyotishBirthTimeJourneyEngine,
   BirthTimeJourneyEngineError,
 } from "@/lib/birth-time-journey-engine";
-import { createBirthTimeJourneyService, RectificationCaseNotFoundError, RectificationQuestionsUnavailableError, type VersionedJourneyResponse } from "@/lib/birth-time-journey-service";
+import { createBirthTimeJourneyService, RectificationCaseNotFoundError, RectificationQuestionsUnavailableError, type DynamicVersionedJourneyResponse, type VersionedJourneyResponse } from "@/lib/birth-time-journey-service";
 import { BirthTimeJourneyActionError } from "@/lib/birth-time-journey-actions";
 import { birthTimeJourneyRequestSchema } from "@/lib/birth-time-journey-request";
 import { StaleJourneyTurnError } from "@/lib/birth-time-journey-turn-persistence";
@@ -20,6 +20,7 @@ import { GuidedCandidateActionError } from "@/lib/birth-time-guided-candidate";
 import { GuidedCandidateStoreConflictError } from "@/lib/birth-time-guided-candidate-store";
 import { JourneyTurnInvariantError } from "@/lib/birth-time-journey-turn";
 import { JourneyResponseInvariantError } from "@/lib/birth-time-journey-response-schema";
+import { BirthTimeDynamicActionError } from "@/lib/birth-time-dynamic-actions";
 import {
   recordJourneyMetricEvent,
   recordJourneyTransitionMetric,
@@ -40,11 +41,15 @@ async function requestPayload(request: Request): Promise<unknown> {
 }
 
 async function responseWithJourneyMetric(
-  action: Promise<VersionedJourneyResponse>,
+  action: Promise<VersionedJourneyResponse | DynamicVersionedJourneyResponse>,
   name: Extract<JourneyMetricName, "turn_advanced" | "draft_corrected" | "journey_paused">,
 ): Promise<NextResponse> {
   const response = await action;
-  recordJourneyTransitionMetric(response, name);
+  if (response.journeyProtocol === "dynamic-choice-v2") {
+    recordJourneyMetricEvent({ kind: "transition", name, phase: "adaptive" });
+  } else {
+    recordJourneyTransitionMetric(response, name);
+  }
   return NextResponse.json(response);
 }
 
@@ -110,6 +115,8 @@ export async function POST(request: Request) {
           parsed.data.questionId,
           parsed.data.answer,
         ), "turn_advanced");
+      case "answer_dynamic_choice":
+        return responseWithJourneyMetric(service.answerDynamicChoice(user.id, parsed.data), "turn_advanced");
       case "resume": {
         const response = await service.resume(user.id, parsed.data.caseId);
         return NextResponse.json(response);
@@ -117,6 +124,14 @@ export async function POST(request: Request) {
       case "poll_scoring":
         {
           const before = await service.resume(user.id, parsed.data.caseId);
+          if (before.journeyProtocol === "dynamic-choice-v2") {
+            const response = await service.pollDynamicScoringJob(
+              user.id,
+              parsed.data.caseId,
+              parsed.data.jobId,
+            );
+            return NextResponse.json(response);
+          }
           const response = await service.pollScoringJob(user.id, parsed.data.caseId, parsed.data.jobId);
           recordScoringJourneyMetric(before, response);
           return NextResponse.json(response);
@@ -131,10 +146,18 @@ export async function POST(request: Request) {
         return responseWithJourneyMetric(service.confirmEvidenceDraft(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion, parsed.data.draftId), "turn_advanced");
       case "skip_evidence_question":
         return responseWithJourneyMetric(service.skipEvidenceQuestion(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion), "turn_advanced");
-      case "pause_rectification":
-        return responseWithJourneyMetric(service.pause(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion), "journey_paused");
-      case "finish_rectification":
-        return responseWithJourneyMetric(service.finishWithCurrentRange(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion), "turn_advanced");
+      case "pause_rectification": {
+        const current = await service.resume(user.id, parsed.data.caseId);
+        return responseWithJourneyMetric(current.journeyProtocol === "dynamic-choice-v2"
+          ? service.pauseDynamic(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion)
+          : service.pause(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion), "journey_paused");
+      }
+      case "finish_rectification": {
+        const current = await service.resume(user.id, parsed.data.caseId);
+        return responseWithJourneyMetric(current.journeyProtocol === "dynamic-choice-v2"
+          ? service.finishDynamic(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion)
+          : service.finishWithCurrentRange(user.id, parsed.data.caseId, parsed.data.actionId, parsed.data.turnVersion), "turn_advanced");
+      }
       case "revise_evidence_draft":
         return responseWithJourneyMetric(service.reviseEvidenceDraft({
           userId: user.id,
@@ -182,6 +205,7 @@ export async function POST(request: Request) {
       error instanceof RectificationCaseNotFoundError
       || error instanceof EvidenceRectificationCaseNotFoundError
       || (error instanceof BirthTimeJourneyActionError && error.reason === "case_not_found")
+      || (error instanceof BirthTimeDynamicActionError && error.reason === "case_not_found")
       || (error instanceof GuidedCandidateActionError && error.reason === "case_not_found")
     ) {
       return NextResponse.json(
@@ -198,6 +222,7 @@ export async function POST(request: Request) {
     if (
       error instanceof StaleJourneyTurnError
       || error instanceof BirthTimeJourneyActionError
+      || (error instanceof BirthTimeDynamicActionError && error.reason !== "unavailable")
       || error instanceof GuidedJourneyLegacyMutationError
       || error instanceof BirthTimeScoringJobError
       || error instanceof GuidedCandidateActionError
@@ -218,7 +243,9 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    if (error instanceof BirthTimeJourneyStoreError || error instanceof BirthTimeJourneyEngineError) {
+    if (error instanceof BirthTimeJourneyStoreError
+      || error instanceof BirthTimeJourneyEngineError
+      || (error instanceof BirthTimeDynamicActionError && error.reason === "unavailable")) {
       return NextResponse.json(
         { error: "生时评估暂时不可用", message: "已保留当前资料，请稍后重试。" },
         { status: 503 },

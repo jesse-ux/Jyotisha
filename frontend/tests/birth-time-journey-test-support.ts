@@ -1,24 +1,21 @@
 import { birthTimeAssessmentSchema, candidateResultSchema, lifeEventSchema } from "../src/lib/birth-time-journey.ts";
 import { createBirthTimeJourneyService } from "../src/lib/birth-time-journey-service.ts";
 import type {
-  BirthTimeJourneyEngine,
   BirthTimeJourneyStore,
-  PersistedJourneyAssessment,
-  StoredRectificationCase,
+  LegacyBirthTimeJourneyEngine,
+  LegacyStoredRectificationCase,
 } from "../src/lib/birth-time-journey-service.ts";
-import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
 import type { EvidenceDomain } from "../src/lib/birth-time-question-planner.ts";
-import { createMemoryScoringJobs } from "./birth-time-scoring-memory-store.ts";
+import {
+  journeyCaseId,
+  memoryStore,
+} from "./birth-time-journey-memory-store.ts";
 
 class UnexpectedTestCallError extends Error {
   readonly name = "UnexpectedTestCallError";
 }
 
-class MissingTestCaseError extends Error {
-  readonly name = "MissingTestCaseError";
-}
-
-export const journeyCaseId = "7299894c-10a8-4b45-91d1-339007282c50";
+export { journeyCaseId, memoryStore };
 export const draftActionId = "45857b75-4718-4590-aaf5-7113a03ea765";
 export const confirmActionId = "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5";
 export const secondActionId = "0790866c-ad5e-4a45-b2b4-a5c73f6be6ea";
@@ -60,94 +57,20 @@ export function scanWithSigns(signs: readonly string[]) {
   };
 }
 
-export function memoryStore(initialCase?: StoredRectificationCase) {
-  let savedAssessment: PersistedJourneyAssessment | null = null;
-  let savedCase = initialCase ?? null;
-  let committedTurnWrites = 0;
-  let legacyWrites = 0;
-  let guidedCandidateWrites = 0;
-  const scoringJobs = createMemoryScoringJobs({
-    read: () => savedCase,
-    write: (value) => { savedCase = value; },
-    committed: () => { committedTurnWrites += 1; },
-  });
-  const store: BirthTimeJourneyStore = {
-    async saveAssessment(value) {
-      savedAssessment = value;
-      return journeyCaseId;
-    },
-    async loadCase() {
-      return savedCase;
-    },
-    async saveScoring(value) {
-      legacyWrites += 1;
-      savedCase = value;
-    },
-    async saveTurn(value, expectedVersion, actionId) {
-      if (!savedCase) throw new MissingTestCaseError();
-      const processedActionIds = savedCase.processedActionIds ?? [];
-      if (processedActionIds.includes(actionId)) return savedCase;
-      if (savedCase.turnVersion !== expectedVersion) {
-        throw new StaleJourneyTurnError(savedCase.id, expectedVersion, savedCase.turnVersion ?? 0);
-      }
-      savedCase = {
-        ...value,
-        turnVersion: expectedVersion + 1,
-        processedActionIds: [...processedActionIds, actionId],
-      };
-      committedTurnWrites += 1;
-      return savedCase;
-    },
-    ...scoringJobs.methods,
-    async saveCandidateResult(value) {
-      legacyWrites += 1;
-      savedCase = value;
-    },
-    async saveCandidate(value) {
-      legacyWrites += 1;
-      savedCase = value;
-    },
-    async confirmCandidate(value) {
-      legacyWrites += 1;
-      savedCase = value;
-    },
-    async commitGuidedCandidate(value, command) {
-      if (!savedCase) throw new MissingTestCaseError();
-      const receipt = command.actionId.toLowerCase();
-      const receipts = savedCase.processedActionIds ?? [];
-      if (receipts.includes(receipt)) return savedCase;
-      if (savedCase.turnVersion !== command.expectedVersion) {
-        throw new StaleJourneyTurnError(savedCase.id, command.expectedVersion, savedCase.turnVersion ?? 0);
-      }
-      savedCase = {
-        ...value,
-        turnVersion: command.expectedVersion + 1,
-        processedActionIds: [...receipts, receipt],
-      };
-      guidedCandidateWrites += 1;
-      return savedCase;
-    },
-  };
-  return {
-    store,
-    savedAssessment: () => savedAssessment,
-    savedCase: () => savedCase,
-    committedTurnWrites: () => committedTurnWrites,
-    legacyWrites: () => legacyWrites,
-    guidedCandidateWrites: () => guidedCandidateWrites,
-    scoringJobStatus: scoringJobs.status,
-    scoringJobCount: scoringJobs.count,
-    setScoringJobAlgorithm: scoringJobs.setAlgorithm,
-    createdScoringCase: scoringJobs.createdCase,
-    replaceCase: (value: StoredRectificationCase) => { savedCase = value; },
-  };
-}
-
-export const unusedJourneyEngine: BirthTimeJourneyEngine = {
+export const unusedJourneyEngine: LegacyBirthTimeJourneyEngine = {
   async scan() { throw new UnexpectedTestCallError(); },
   async score() { throw new UnexpectedTestCallError(); },
   async scoreEvents() { throw new UnexpectedTestCallError(); },
 };
+
+export function preserveLegacyResumeStore(store: BirthTimeJourneyStore): BirthTimeJourneyStore {
+  return {
+    ...store,
+    async upgradeLegacyActiveCase(value) {
+      return value;
+    },
+  };
+}
 
 export function evidenceQuestion(
   phase: "baseline" | "adaptive",
@@ -204,7 +127,7 @@ type GuidedCaseInput = {
   readonly candidateResult?: ReturnType<typeof candidateResultSchema.parse> | null;
 };
 
-export function guidedCase(input: GuidedCaseInput = {}): StoredRectificationCase {
+export function guidedCase(input: GuidedCaseInput = {}): LegacyStoredRectificationCase {
   const version = input.version ?? 0;
   const phase = input.phase ?? "baseline";
   const domain = input.domain ?? "career";
@@ -215,6 +138,7 @@ export function guidedCase(input: GuidedCaseInput = {}): StoredRectificationCase
   return {
     id: journeyCaseId,
     userId: "user-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: {
       state: "rectifying",
       assistantIntent: candidateResult?.confidence === "low"
@@ -254,11 +178,11 @@ export function guidedCase(input: GuidedCaseInput = {}): StoredRectificationCase
   };
 }
 
-export function progressionService(storedCase: StoredRectificationCase) {
+export function progressionService(storedCase: LegacyStoredRectificationCase) {
   let scoreEventsCalls = 0;
   const memory = memoryStore(storedCase);
   const service = createBirthTimeJourneyService({
-    store: memory.store,
+    store: preserveLegacyResumeStore(memory.store),
     engine: {
       ...unusedJourneyEngine,
       async scoreEvents() {

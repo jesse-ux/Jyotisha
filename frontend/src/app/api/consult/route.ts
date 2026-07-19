@@ -10,6 +10,10 @@ import {
   resolveLanguageModel,
 } from "@/mastra/model";
 import { blocksPromptExtraction } from "@/lib/consult-safety";
+import {
+  consultationEntrypointSchema,
+  resolveConsultationQuestion,
+} from "@/lib/consultation-entrypoint";
 import { CreditRpcError, runCreditRpc } from "@/lib/consultation-billing";
 import { reserveConsultationModel } from "@/lib/consultation-model-selection";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
@@ -23,6 +27,7 @@ export const maxDuration = 60;
 const chatRequestSchema = consultationInputSchema.extend({
   requestId: z.string().uuid(),
   modelId: z.string().trim().min(1).max(64),
+  entrypoint: consultationEntrypointSchema.optional(),
   name: z.string().trim().max(80).optional().default(""),
   history: z.array(z.object({
     role: z.enum(["user", "assistant"]),
@@ -36,6 +41,10 @@ function currentTimeContext(now = new Date()) {
     .replace("T", " ")
     .slice(0, 19);
   return `服务端当前时间（权威）：${now.toISOString()}；中国标准时间（UTC+8）：${chinaTime}。涉及“现在、今天、今年、未来几个月”等相对时间时，以此为准。`;
+}
+
+function chinaCalendarDate(now: Date) {
+  return new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 async function recordModelUsage(
@@ -107,6 +116,13 @@ export async function POST(request: Request) {
     );
   }
 
+  const requestTime = new Date();
+  const resolvedQuestion = resolveConsultationQuestion({
+    visibleQuestion: parsed.data.question,
+    entrypoint: parsed.data.entrypoint,
+    currentDate: chinaCalendarDate(requestTime),
+  });
+
   const userId = user.id;
   const requestId = parsed.data.requestId;
   let modelSelection;
@@ -168,7 +184,10 @@ export async function POST(request: Request) {
 
   try {
     const { history, name } = parsed.data;
-    const toolInput = consultationInputSchema.parse(parsed.data);
+    const toolInput = consultationInputSchema.parse({
+      ...parsed.data,
+      question: resolvedQuestion.modelQuestion,
+    });
     const workflowContext = await runConsultationWorkflow(toolInput);
     const workflowReceipt = consultationWorkflowReceipt(workflowContext);
 
@@ -179,9 +198,9 @@ export async function POST(request: Request) {
       {
         role: "user",
         content: [
-          currentTimeContext(),
+          currentTimeContext(requestTime),
           name ? `用户称呼：${name}` : "",
-          parsed.data.question,
+          resolvedQuestion.modelQuestion,
           "\n需要查询星盘时，使用以下经过服务端校验的工具参数：",
           JSON.stringify(toolInput),
         ].filter(Boolean).join("\n"),

@@ -93,7 +93,7 @@ export const candidateResultSchema = z.object({
     representativeTime: timeSchema,
     widthMinutes: z.number().int().min(1).max(1_440),
   }).strict().readonly().nullable(),
-  eventCount: z.number().int().min(0).max(6),
+  eventCount: z.number().int().min(0).max(10),
   domainCount: z.number().int().min(0).max(5),
   topScore: z.number(),
   secondScore: z.number(),
@@ -107,7 +107,7 @@ export const candidateResultSchema = z.object({
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["eventCount"],
-      message: "high candidates require at least four events",
+      message: "high candidates require at least four effective evidence items",
     });
   }
   if (value.confidence === "high" && value.domainCount < 3) {

@@ -131,6 +131,12 @@ button:disabled { cursor: default; opacity: .45; }
 .onboarding-card-heading { display: grid; gap: 4px; padding-bottom: 2px; }
 .onboarding-card-actions { display: flex; justify-content: flex-end; padding-top: 2px; }
 .onboarding-card-actions .button-primary { min-width: 84px; }
+.birth-time-transition-card { position: relative; overflow: hidden; }
+.birth-time-transition-fields { min-width: 0; display: grid; gap: 14px; margin: 0; padding: 0; border: 0; }
+.birth-time-assessment-overlay { position: absolute; z-index: 2; inset: 0; display: grid; place-items: center; padding: var(--space-6); border-radius: inherit; background: color-mix(in srgb, var(--color-canvas-soft) 94%, transparent); backdrop-filter: blur(2px); }
+.birth-time-assessment-progress { width: min(360px, 100%); display: grid; justify-items: center; gap: var(--space-2); color: var(--color-ink-secondary); text-align: center; }
+.birth-time-assessment-progress strong { margin-top: var(--space-2); color: var(--color-ink); font-family: var(--font-display); font-size: var(--type-title-md); font-weight: 400; }
+.birth-time-assessment-progress > span { font-size: var(--type-body-sm); line-height: 1.55; text-wrap: pretty; word-break: auto-phrase; }
 .onboarding-inline-error { margin-left: 0; }
 .welcome > .starter-list { margin-left: 0; }
 .message-assistant { align-items: flex-start; justify-content: flex-start; gap: var(--space-3); }
@@ -179,7 +185,7 @@ button:disabled { cursor: default; opacity: .45; }
 .status-已过期, .status-已兑换 { color: var(--color-ink-secondary); }
 .empty-cell { color: var(--color-ink-secondary); text-align: center !important; }
 
-.new-chat:not(:disabled):active, .session-list button:not(:disabled):active, .profile-trigger:not(:disabled):active, .credit-button:not(:disabled):active, .account-menu-item:not(:disabled):active, .starter-list button:not(:disabled):active, .composer-suggestions button:not(:disabled):active, .composer button:not(:disabled):active, .button-primary:not(:disabled):active, .button-secondary:not(:disabled):active, .dialog-close:not(:disabled):active, .generated-list button:not(:disabled):active, .inline-actions button:not(:disabled):active { transform: scale(.98); }
+.new-chat:not(:disabled):active, .session-list button:not(:disabled):active, .profile-trigger:not(:disabled):active, .credit-button:not(:disabled):active, .account-menu-item:not(:disabled):active, .starter-list > button:not(:disabled):active, .composer-suggestions button:not(:disabled):active, .composer button:not(:disabled):active, .button-primary:not(:disabled):active, .button-secondary:not(:disabled):active, .dialog-close:not(:disabled):active, .generated-list button:not(:disabled):active, .inline-actions button:not(:disabled):active { transform: scale(.98); }
 
 @keyframes app-loading-orbit { to { transform: rotate(360deg); } }
 @keyframes pulse { from { opacity: .28; transform: translateY(1px); } to { opacity: 1; transform: translateY(-1px); } }
@@ -209,7 +215,7 @@ button:disabled { cursor: default; opacity: .45; }
   .chat-header > div { min-width: 0; flex: 1; }
   .chat-header strong { max-width: 100%; }
   .onboarding-card { padding: 16px; }
-  .starter-list button { min-height: 64px; }
+  .starter-list > button { min-height: 64px; }
   .starter-content span { font-size: 13px; }
   .message-assistant .message-content { max-width: 100%; }
   .message p, .message-markdown { font-size: 16px; }
@@ -343,6 +349,15 @@ button:disabled { cursor: default; opacity: .45; }
 .onboarding-card-heading b { font-family: var(--font-display); font-size: var(--type-title-md); font-weight: 400; }
 .onboarding-card-heading small { color: var(--color-ink-secondary); line-height: 1.5; font-size: var(--type-caption); }
 .birth-time-intake { display: grid; gap: var(--space-4); }
+.birth-time-profile-result { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid color-mix(in srgb, var(--color-success) 32%, var(--color-border)); border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-success) 5%, var(--color-canvas)); }
+.birth-time-profile-result-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.birth-time-profile-result-heading span { color: var(--color-action); font-size: var(--type-overline); font-weight: 600; letter-spacing: .08em; }
+.birth-time-profile-result-heading strong { color: var(--color-success); font-size: var(--type-caption); }
+.birth-time-profile-result dl { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-border); }
+.birth-time-profile-result dl > div { display: grid; gap: var(--space-1); padding: var(--space-3); background: var(--color-canvas); }
+.birth-time-profile-result dt { color: var(--color-ink-secondary); font-size: var(--type-caption); }
+.birth-time-profile-result dd { margin: 0; color: var(--color-ink); font-size: var(--type-body-sm); font-variant-numeric: tabular-nums; line-height: 1.45; }
+.birth-time-profile-result p { margin: 0; color: var(--color-ink-secondary); font-size: var(--type-caption); line-height: 1.55; }
 .birth-time-source-fieldset { margin: 0; padding: 0; border: 0; }
 .birth-time-source-fieldset legend { margin-bottom: var(--space-2); color: var(--color-ink-secondary); font-size: var(--type-caption); font-weight: 600; }
 .birth-time-source-list { display: grid; gap: var(--space-2); }
@@ -421,26 +436,35 @@ button:disabled { cursor: default; opacity: .45; }
 .phrase-nowrap { white-space: nowrap; }
 
 .starter-list { border-top: 1px solid var(--color-border); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); border: 0; }
-.starter-list button { width: 100%; display: grid; align-items: end; border-bottom: 1px solid var(--color-border); cursor: pointer; text-align: left; transition: background-color 120ms ease-out, transform 120ms ease-out; min-height: 136px; grid-template-columns: minmax(0, 1fr) 20px; gap: var(--space-3); padding: var(--space-5); border: 1px solid transparent; border-radius: var(--radius-lg); background: var(--color-canvas-muted); }
-.starter-list button:first-child { border-color: color-mix(in srgb, var(--color-action) 18%, var(--color-border)); background: var(--color-action-soft); color: var(--color-ink); }
-.starter-list button:first-child .starter-content span { color: var(--color-ink); white-space: normal; }
-.starter-list button:first-child .starter-arrow { color: var(--color-action); }
+.starter-list > button { width: 100%; display: grid; align-items: end; border-bottom: 1px solid var(--color-border); cursor: pointer; text-align: left; transition: background-color 120ms ease-out, transform 120ms ease-out; min-height: 136px; grid-template-columns: minmax(0, 1fr) 20px; gap: var(--space-3); padding: var(--space-5); border: 1px solid transparent; border-radius: var(--radius-lg); background: var(--color-canvas-muted); }
+.starter-list > button:first-of-type { border-color: color-mix(in srgb, var(--color-action) 18%, var(--color-border)); background: var(--color-action-soft); color: var(--color-ink); }
+.starter-list > button:first-of-type .starter-content span { color: var(--color-ink); white-space: normal; }
+.starter-list > button:first-of-type .starter-arrow { color: var(--color-action); }
 .starter-content { min-width: 0; display: grid; gap: var(--space-2); }
 .starter-content b { color: var(--color-action); font-size: var(--type-overline); font-weight: 500; letter-spacing: 1.5px; }
 .starter-content span { overflow: hidden; color: var(--color-ink); font-family: var(--font-display); font-size: var(--type-title-md); line-height: 1.4; text-overflow: clip; text-wrap: pretty; white-space: normal; }
 .starter-arrow { width: 17px; height: 17px; color: var(--color-ink-secondary); }
 .product-entrypoints { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: var(--space-3); }
-.product-entrypoints button { min-height: 132px; align-items: end; border: 1px solid var(--color-border); background: var(--color-canvas); }
-.product-entrypoints span { display: grid; gap: var(--space-2); }
 .product-entrypoints small { color: var(--color-ink-secondary); line-height: 1.45; font-size: var(--type-caption); }
 .daily-starlanguage-card, .birth-rectification-card { min-height: 132px; display: grid; gap: var(--space-3); padding: var(--space-5); border: 1px solid color-mix(in srgb, var(--color-action) 16%, var(--color-border)); border-radius: var(--radius-lg); background: var(--color-canvas); }
+.product-entrypoint-card { position: relative; transition: border-color 120ms ease-out, background-color 120ms ease-out, transform 120ms ease-out; }
+.product-entrypoint-hitarea { position: absolute; z-index: 2; inset: 0; width: 100%; min-height: 0; padding: 0; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
+.product-entrypoint-card > :not(.product-entrypoint-hitarea) { position: relative; z-index: 1; pointer-events: none; }
+.product-entrypoint-card:has(.product-entrypoint-hitarea:not(:disabled):hover) { border-color: color-mix(in srgb, var(--color-action) 44%, var(--color-border)); background: var(--color-action-soft); transform: translateY(-1px); }
+.product-entrypoint-card:has(.product-entrypoint-hitarea:not(:disabled):active) { transform: translateY(0); }
+.product-entrypoint-card:has(.product-entrypoint-hitarea:focus-visible) { outline: 3px solid color-mix(in srgb, var(--color-focus) 56%, transparent); outline-offset: 2px; }
+.product-entrypoint-card:has(.product-entrypoint-hitarea:disabled) { opacity: .65; }
+.product-entrypoint-hitarea:disabled { cursor: not-allowed; }
 .daily-starlanguage-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .daily-starlanguage-heading > span { color: var(--color-action); font-size: var(--type-overline); font-weight: 600; letter-spacing: 1.5px; }
-.daily-starlanguage-heading button { min-height: 36px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; color: var(--color-ink); font-size: var(--type-caption); }
 .daily-starlanguage-card dl, .birth-rectification-card dl { display: grid; gap: var(--space-2); margin: 0; }
-.daily-starlanguage-card div, .birth-rectification-card div { display: grid; gap: 4px; }
+.daily-starlanguage-card dl > div, .birth-rectification-card dl > div { display: grid; gap: 4px; }
 .daily-starlanguage-card dt, .birth-rectification-card dt { color: var(--color-ink-secondary); font-size: var(--type-caption); }
 .daily-starlanguage-card dd, .birth-rectification-card dd { margin: 0; color: var(--color-ink); line-height: 1.45; }
+.product-entrypoint-footer { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+.product-entrypoint-footer small { min-width: 0; flex: 1; }
+.product-entrypoint-action { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: flex-end; gap: var(--space-1); color: var(--color-action); font-size: var(--type-caption); font-weight: 600; white-space: nowrap; }
+.product-entrypoint-action .starter-arrow { width: 15px; height: 15px; color: currentColor; }
 .starter-loading { color: var(--color-ink-secondary); margin-left: 0; padding: var(--space-5); border-radius: var(--radius-lg); background: var(--color-canvas-muted); font-size: 14px; }
 .starter-note { margin: 10px 0 0; color: var(--color-ink-secondary); line-height: 1.5; grid-column: 1 / -1; font-size: 13px; }
 
@@ -609,8 +633,8 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   .composer button:not(:disabled):hover, .button-primary:not(:disabled):hover { background: var(--color-action-hover); }
   .model-selector-trigger:not(:disabled):hover { background: var(--color-canvas-muted); color: var(--color-ink); }
   .model-selector-option:hover { background: var(--color-canvas-soft); color: var(--color-ink); }
-  .starter-list button:not(:disabled):hover { background: var(--color-canvas-strong); }
-  .starter-list button:first-child:not(:disabled):hover { background: color-mix(in srgb, var(--color-action-soft) 72%, var(--color-canvas)); }
+  .starter-list > button:not(:disabled):hover { background: var(--color-canvas-strong); }
+  .starter-list > button:first-of-type:not(:disabled):hover { background: color-mix(in srgb, var(--color-action-soft) 72%, var(--color-canvas)); }
   .composer-suggestions button:not(:disabled):hover { border-color: var(--color-action); background: var(--color-canvas); color: var(--color-action-hover); }
   .button-secondary:not(:disabled):hover { background: var(--color-canvas-muted); }
   .danger-primary:not(:disabled):hover { background: color-mix(in srgb, var(--color-danger) 88%, var(--color-ink)); }
@@ -619,7 +643,7 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
 
 @media (min-width: 768px) and (max-width: 900px) {
   .starter-list { grid-template-columns: 1fr; grid-template-rows: auto; }
-  .starter-list button, .starter-list button:first-child, .product-entrypoints button { min-height: 112px; grid-row: auto; padding: var(--space-4); }
+  .starter-list > button { min-height: 112px; grid-row: auto; padding: var(--space-4); }
   .product-entrypoints { grid-template-columns: 1fr; }
   .auth-shell { grid-template-columns: 1.2fr .8fr; }
   .auth-story, .auth-panel { padding: var(--space-8); }
@@ -639,7 +663,7 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   .welcome { padding: var(--space-6) 0 var(--space-10); }
   .welcome > .onboarding-message:first-child .message-bubble p { font-size: var(--type-display-sm); }
   .starter-list { grid-template-columns: 1fr; grid-template-rows: auto; }
-  .starter-list button, .starter-list button:first-child, .product-entrypoints button { min-height: 112px; grid-row: auto; padding: var(--space-4); }
+  .starter-list > button { min-height: 112px; grid-row: auto; padding: var(--space-4); }
   .product-entrypoints { grid-template-columns: 1fr; }
   .message-list { width: 100%; padding: var(--space-5) var(--space-4) var(--space-12); }
   .message-content { max-width: 88%; }
@@ -658,7 +682,10 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
 }
 
 @media (max-width: 480px) {
+  .birth-time-assessment-heading { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+  .birth-time-status-badge { justify-self: start; }
   .birth-time-detail-grid, .birth-time-range-summary, .birth-time-answer-list, .birth-time-candidate-grid { grid-template-columns: 1fr; }
+  .birth-time-profile-result dl { grid-template-columns: 1fr; }
   .birth-time-evidence-actions > button, .birth-time-guided-actions > button, .birth-time-candidate-terminal > button, .birth-time-confirmation-panel > button { width: 100%; }
   .birth-time-draft-fields { grid-template-columns: 1fr; }
   .welcome > .onboarding-message:first-child .message-bubble p { font-size: var(--type-title-lg); }

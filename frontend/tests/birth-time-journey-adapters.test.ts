@@ -196,6 +196,7 @@ test("rectification adapter normalizes an event-scored candidate result", () => 
       candidate_time: "14:24",
       rule_ids: ["vim_md_domain_house"],
       points: 4,
+      legacy_server_metadata: { source: "existing-engine" },
     }],
     algorithm_version: "birth-time-event-scoring-v1",
   });
@@ -203,4 +204,25 @@ test("rectification adapter normalizes an event-scored candidate result", () => 
   assert.equal(result.resultId, "1d8ee348-61a3-433d-8907-ff6d281b9992");
   assert.equal(result.winningSegment?.representativeTime, "14:24");
   assert.deepEqual(result.evidence[0]?.ruleIds, ["vim_md_domain_house"]);
+  assert.equal("legacy_server_metadata" in (result.evidence[0] ?? {}), false);
+});
+
+test("candidate compatibility result accepts ten effective items but not eleven", () => {
+  const lowCandidate = {
+    result_id: "1d8ee348-61a3-433d-8907-ff6d281b9992",
+    confidence: "low",
+    can_apply: false,
+    winning_segment: null,
+    event_count: 10,
+    domain_count: 5,
+    top_score: 0,
+    second_score: 0,
+    margin_percent: 0,
+    reasons: ["safety_cap"],
+    evidence: [],
+    algorithm_version: "birth-time-choice-scoring-v2",
+  } as const;
+
+  assert.equal(parseCandidateResult(lowCandidate).eventCount, 10);
+  assert.throws(() => parseCandidateResult({ ...lowCandidate, event_count: 11 }));
 });

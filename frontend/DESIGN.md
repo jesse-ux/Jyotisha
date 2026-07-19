@@ -162,6 +162,14 @@ The base unit is 4px. Tokens are `--space-1: 4px`, `--space-2: 8px`, `--space-3:
 - **States:** default, hover, active, focus, disabled, loading, fallback notice.
 - **Visibility:** the three initial cards remain visible while the user types or chooses a question. They leave only after the question is submitted and the session receives its first user message.
 
+### Product entrypoint card
+
+- **Structure:** the homepage daily-reading and birth-time cards are single native-button targets stretched across their article surface. Content remains semantic card copy; a compact action label and arrow sit at the lower right.
+- **Copy:** the composer and chat history show only the public labels “深入看今日”, “生时校正”, or “再次校正”. Private model instructions are selected by a closed entrypoint identifier and expanded only on the server.
+- **States:** default, whole-card hover, pressed, focus-visible, and disabled. The card surface—not an inner promotional button—carries the interaction feedback.
+- **Responsive:** cards stack below 768px without introducing a large nested button; the footer keeps supporting copy flexible and the action label on one line.
+- **Accessibility:** each card exposes exactly one native button with a descriptive accessible name, preserves a visible focus ring, and meets the full-card touch target.
+
 ### Start greeting
 
 - **Content:** invite the user to ask what matters now; do not repeat that birth data is ready or explain setup state.

@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   assistantIntentCopy,
+  birthTimeDisplayState,
   birthTimePersistenceValues,
   describeBirthTimeDraft,
   formatBirthDate,
+  isBirthTimeReadyForConsultation,
   isBirthTimeDraftReady,
   parseBirthDate,
   type BirthTimeDraft,
@@ -43,6 +45,39 @@ test("birth time intake requires only the fields selected by the source", () => 
   assert.equal(isBirthTimeDraftReady(period), true);
   assert.equal(isBirthTimeDraftReady(incompleteApproximate), false);
   assert.equal(isBirthTimeDraftReady({ ...emptyDraft, birthTimeSource: "unknown" }), true);
+});
+
+test("a persisted candidate working time can leave rectification onboarding", () => {
+  const candidate = {
+    ...emptyDraft,
+    time: "04:53",
+    birthTimeStatus: "candidate",
+  } satisfies BirthTimeDraft;
+
+  assert.equal(isBirthTimeReadyForConsultation(candidate), true);
+  assert.equal(isBirthTimeReadyForConsultation({ ...candidate, time: "" }), false);
+  assert.equal(isBirthTimeReadyForConsultation({ ...candidate, birthTimeStatus: "rectifying" }), false);
+});
+
+test("a persisted candidate working time takes precedence over the reported range", () => {
+  // Given: rectification saved a candidate minute while preserving the user's original period.
+  const candidate = {
+    ...emptyDraft,
+    time: "04:53",
+    birthTimeSource: "period_only",
+    birthTimePeriod: "early_morning",
+    birthTimeStatus: "candidate",
+  } satisfies BirthTimeDraft;
+
+  // When: a profile surface asks what birth-time state to display.
+  const display = birthTimeDisplayState(candidate);
+
+  // Then: the candidate minute is primary and the original period remains secondary.
+  assert.deepEqual(display, {
+    kind: "candidate",
+    activeTime: "04:53",
+    reportedLabel: "凌晨 / 清晨（04:00—07:59）",
+  });
 });
 
 test("birth time declaration payload cannot write deterministic application fields", () => {

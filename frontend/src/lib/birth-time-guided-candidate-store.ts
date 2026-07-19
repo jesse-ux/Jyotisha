@@ -54,7 +54,10 @@ export function createSupabaseGuidedCandidateStore(
       const { error } = await supabase.rpc(functionName, args);
       if (error) {
         const current = await loadCase(value.userId, value.id);
-        if (current?.processedActionIds?.includes(command.actionId.toLowerCase())) return current;
+        if (
+          current?.journeyProtocol === "legacy-guided-v1"
+          && current.processedActionIds?.includes(command.actionId.toLowerCase())
+        ) return current;
         if (isDomainError(error, "stale_guided_candidate_turn")) {
           throw new StaleJourneyTurnError(
             value.id,
@@ -68,7 +71,9 @@ export function createSupabaseGuidedCandidateStore(
         throw new BirthTimeJourneyStoreError("update_case");
       }
       const current = await loadCase(value.userId, value.id);
-      if (!current) throw new BirthTimeJourneyStoreError("load_case");
+      if (!current || current.journeyProtocol !== "legacy-guided-v1") {
+        throw new BirthTimeJourneyStoreError("load_case");
+      }
       return current;
     },
   };

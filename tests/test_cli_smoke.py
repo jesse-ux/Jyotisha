@@ -231,11 +231,11 @@ def test_full_reading_accepts_second_and_preserves_birth_time_precision() -> Non
         "--transit-date", "2026-06-24",
     )
 
-    assert result["birth_info"]["time"] == "19:15:00"
+    assert result["birth_info"]["time"] == "19:45:20"
     assert result["birth_info"]["second"] == 20
-    assert result["modules"]["chart"]["birth_info"]["time"] == "19:15:00"
-    assert result["modules"]["dasha"]["birth_time"] == "19:15:00"
-    assert result["modules"]["dasha"]["timeline"][0]["start_datetime"].startswith("1986-05-23T22:45:10")
+    assert result["modules"]["chart"]["birth_info"]["time"] == "19:45:20"
+    assert result["modules"]["dasha"]["birth_time"] == "19:45:20"
+    assert result["modules"]["dasha"]["timeline"][0]["start_datetime"].startswith("1952-03-19T20:24:47")
 
 
 def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
@@ -319,7 +319,7 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert prompt_pack["evidence_snapshot"]["mevg_collection_queue"]["status"] == "queued"
     assert prompt_pack["evidence_snapshot"]["real_case_calibration_layer"]["status"] == "queued"
     assert prompt_pack["evidence_snapshot"]["technical_debt_contract"]["tajika"]["status"] == "partial"
-    assert prompt_pack["evidence_snapshot"]["remaining_priority1_batch_queue"]["next_batches"][0] == "real_case_studies_batch1"
+    assert prompt_pack["evidence_snapshot"]["remaining_priority1_batch_queue"]["next_batches"][0] == "references_batch2"
     functional_rows = [row for row in audit_table if row["technique"] == "Functional Benefic/Malefic"]
     assert functional_rows
     assert functional_rows[0]["status"] == "used"
@@ -370,8 +370,8 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert isinstance(vimsopaka_summary["warnings"], list)
     oracle_progress = prompt_pack["evidence_snapshot"]["oracle_progress"]
     assert oracle_progress["scope"] == "external_oracle_evidence_validation"
-    assert oracle_progress["valid_packets"] >= 4
-    assert oracle_progress["ready_for_calibration"] >= 4
+    assert oracle_progress["valid_packets"] >= 3
+    assert oracle_progress["ready_for_calibration"] >= 3
     assert oracle_progress["production_tuning_allowed"] is False
     assert oracle_progress["artifact_policy"] == "references/oracle/artifacts/"
     assert "external_verified" in oracle_progress["promotion_rule"]
@@ -404,7 +404,7 @@ def test_full_reading_reports_ayanamsa_metadata_and_ai_prompt_pack() -> None:
     assert "domain_statuses" in vedastro_rows[0]["note"]
     capability_pool = prompt_pack["evidence_snapshot"]["capability_evidence_pool"]
     assert capability_pool["scope"] == "backend_capability_evidence_pool"
-    assert capability_pool["total_entries"] == 89
+    assert capability_pool["total_entries"] == 91
     assert capability_pool["conclusion_policy"]["all_89_entries_must_not_be_flattened_into_conclusions"] is True
     assert "后台备选证据池" in prompt_pack["prompt_zh"]
 

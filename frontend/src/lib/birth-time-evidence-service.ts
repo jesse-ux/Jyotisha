@@ -6,6 +6,7 @@ import type { CandidateResult, LifeEvent } from "./birth-time-evidence.ts";
 import type {
   BirthTimeJourneyPorts,
   JourneyResponse,
+  LegacyStoredRectificationCase,
   StoredRectificationCase,
 } from "./birth-time-journey-service.ts";
 
@@ -40,10 +41,21 @@ export class GuidedJourneyLegacyMutationError extends Error {
   }
 }
 
+export function assertNotDynamicJourneyMutation(
+  stored: StoredRectificationCase,
+): asserts stored is LegacyStoredRectificationCase {
+  if (stored.journeyProtocol === "dynamic-choice-v2") {
+    throw new GuidedJourneyLegacyMutationError(stored.id);
+  }
+}
+
 export function assertLegacyJourneyMutation(
   stored: StoredRectificationCase,
-): void {
-  if (stored.turnState) throw new GuidedJourneyLegacyMutationError(stored.id);
+): asserts stored is LegacyStoredRectificationCase {
+  assertNotDynamicJourneyMutation(stored);
+  if (stored.turnState) {
+    throw new GuidedJourneyLegacyMutationError(stored.id);
+  }
 }
 
 function response(

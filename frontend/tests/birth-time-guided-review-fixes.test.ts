@@ -9,6 +9,7 @@ import {
 import { confirmReviewedBirthTimeDraft } from "../src/lib/birth-time-guided-draft-confirmation.ts";
 import { guidedTerminalPath } from "../src/lib/birth-time-guided-terminal.ts";
 import { parseJourneyResponse } from "../src/lib/birth-time-journey-client.ts";
+import { dynamicBirthTimePreview } from "../src/lib/birth-time-dynamic-preview.ts";
 import { guidedBirthTimePreview } from "../src/lib/birth-time-guided-preview.ts";
 
 test("draft revision publishes its new version before confirmation can fail", async () => {
@@ -24,7 +25,6 @@ test("draft revision publishes its new version before confirmation can fail", as
     precision: "month",
     date: "2008-09",
   }, {
-    createActionId: () => "45857b75-4718-4590-aaf5-7113a03ea765",
     revise: async () => revised,
     publish: (turn) => { published.push(turn); },
     confirm: async () => { throw new TypeError("response unavailable"); },
@@ -54,6 +54,17 @@ test("low without a result and saved medium both return to declared-time editing
   });
 });
 
+test("dynamic medium terminal completes with its candidate working time", () => {
+  const medium = dynamicBirthTimePreview("medium");
+
+  assert.deepEqual(guidedTerminalPath(medium), {
+    kind: "complete_with_candidate",
+    time: "05:43",
+    preservesCase: true,
+    appliesCandidateTime: true,
+  });
+});
+
 test("request identity cache and scheduled polling deduplicate Strict Mode starts", async () => {
   const cache = createIdentityRequestCache<number>();
   let loads = 0;
@@ -70,6 +81,21 @@ test("request identity cache and scheduled polling deduplicate Strict Mode start
   scheduleCancellableStart(() => { starts += 1; });
   await new Promise((resolve) => setTimeout(resolve, 5));
   assert.equal(starts, 1);
+});
+
+test("a failed generation identity remains retryable", async () => {
+  const cache = createIdentityRequestCache<number>();
+  let attempts = 0;
+  await assert.rejects(cache.run("case:4", async () => {
+    attempts += 1;
+    throw new TypeError("offline");
+  }));
+
+  assert.equal(await cache.run("case:4", async () => {
+    attempts += 1;
+    return 8;
+  }), 8);
+  assert.equal(attempts, 2);
 });
 
 test("a resolved mutation cannot publish over a changed case or version", () => {
@@ -91,6 +117,15 @@ test("ready completion is explicit and terminal low has no finish mutation", () 
   assert.doesNotMatch(hookSource, /turn\.nextAction\.kind === "ready"\) onReady/);
   assert.match(candidateSource, /acknowledgeReady/);
   assert.doesNotMatch(candidateSource, /controller\.finish/);
+});
+
+test("completed rectification transcript does not repeat the birth place turn", () => {
+  const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+
+  assert.match(
+    pageSource,
+    /\{!profileComplete && onboardingStep === "rectification" && selectedBirthPlace\(profileDraft\)/,
+  );
 });
 
 test("journey turn implementation stays within the 250 pure-LOC boundary", () => {

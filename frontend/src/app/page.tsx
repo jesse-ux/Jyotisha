@@ -6,19 +6,27 @@ import { ArrowUp, ArrowUpRight, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
+import {
+  BirthTimeAssessmentOverlay,
+  type BirthTimeAssessmentPhase,
+} from "@/components/birth-time-assessment-overlay";
 import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
 import { ChatMessageContent } from "@/components/chat-message-content";
+import { AgentAvatar, ChatMessageRow } from "@/components/chat-message-row";
 import { ModelSelector } from "@/components/model-selector";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { chinaLocations, type ProvinceNode } from "@/data/china-locations";
 import { parseAgentReply, type ReplyTheme } from "@/lib/agent-reply";
+import type { ConsultationEntrypoint } from "@/lib/consultation-entrypoint";
 import {
   assistantIntentCopy,
+  birthTimeDisplayState,
   birthTimePersistenceValues,
   describeBirthTimeDraft,
   isBirthTimeDraftReady,
+  isBirthTimeReadyForConsultation,
   type BirthTimeDraft,
   type BirthTimeSource,
 } from "@/lib/birth-time-intake-model";
@@ -34,6 +42,7 @@ import {
   previewRectificationJourney,
 } from "@/lib/birth-time-guided-preview";
 import { keepFocusWithin } from "@/lib/focus-trap";
+import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
 import { protectOnboardingPhrases } from "@/lib/onboarding-copy";
 import {
   SessionModelPersistenceQueue,
@@ -55,7 +64,7 @@ const BirthTimeRectification = dynamic(
 );
 
 type Theme = ReplyTheme;
-type Message = { role: "user" | "assistant"; text: string; suggestions?: string[] };
+type Message = ChatMessage;
 type Profile = BirthTimeDraft & {
   name: string;
   countryCode: "CN";
@@ -125,6 +134,7 @@ type PendingConsultation = {
   readonly requestId: string;
   readonly sessionId: string;
   readonly question: string;
+  readonly entrypoint: ConsultationEntrypoint | null;
   readonly theme: Theme;
   readonly previousSession: ChatSession;
   readonly optimisticSession: ChatSession;
@@ -390,16 +400,6 @@ function buildSynastryQuestion(selfProfile: Profile, partnerProfile: Profile) {
   ].join("\n");
 }
 
-function buildDailyStarlanguageQuestion(profile: Profile) {
-  const today = new Date().toISOString().slice(0, 10);
-  return [
-    `请生成今日星语：${today}，对象是${profile.name || "我"}。`,
-    `出生资料：${profile.date} ${profile.time}，${profilePlaceLabel(profile)}。`,
-    "请输出今日趋势、适合推进的事、需要避开的事、一个行动建议。",
-    "边界：这是探索性日提示，不是确定预测；若涉及精确事件日期，请标为候选触发，不要包装成必然结论。",
-  ].join("\n");
-}
-
 function buildDailyStarlanguageCard(profile: Profile) {
   const today = new Date().toISOString().slice(0, 10);
   const seed = `${today}-${profile.date}-${profile.time}-${profile.provinceCode}-${profile.cityCode}`;
@@ -429,20 +429,11 @@ async function fetchBirthRectificationPreview(profile: Profile) {
   return await response.json().catch(() => null) as BirthRectificationPreview | null;
 }
 
-function buildBirthTimeRectificationQuestion(profile: Profile) {
-  return [
-    `请为${profile.name || "我"}做生时校正辅助。`,
-    `当前记录：${profile.date} ${profile.time || "时间不确定"}，${profilePlaceLabel(profile)}。`,
-    "请先列出需要我补充的关键人生事件，再给候选出生时间段、每段会影响的 Lagna/分盘/大运差异。",
-    "边界：候选出生时间段必须标为待验证，不能直接改写默认星盘；没有事件证据前不要声称校正完成。",
-  ].join("\n");
-}
-
 function missingProfileStep(profile: Profile): OnboardingStep | null {
   if (!profile.name.trim()) return "name";
   if (!isBirthTimeDraftReady(profile)) return "birth";
   if (!selectedBirthPlace(profile)) return "place";
-  if (!profile.time || profile.birthTimeStatus !== "confirmed") return "rectification";
+  if (!isBirthTimeReadyForConsultation(profile)) return "rectification";
   return null;
 }
 
@@ -465,7 +456,7 @@ function completedOnboardingMessage(name: string) {
 function completedOnboardingTranscript(profile: Profile, greeting: string): Message[] {
   const name = profile.name.trim();
   const birthPlace = selectedBirthPlace(profile);
-  if (!name || !profile.date || !profile.time || profile.birthTimeStatus !== "confirmed" || !birthPlace) return [];
+  if (!name || !profile.date || !isBirthTimeReadyForConsultation(profile) || !birthPlace) return [];
 
   return [
     { role: "assistant", text: presetOnboardingMessage },
@@ -639,10 +630,6 @@ function ProfileFields({ value, onChange, nameInputId }: { value: Profile; onCha
   );
 }
 
-function AgentAvatar() {
-  return <span className="agent-avatar" aria-hidden="true" />;
-}
-
 function OnboardingChatMessage({ role, text, streaming = false, length = text.length, phraseSafe = false }: { role: Message["role"]; text: string; streaming?: boolean; length?: number; phraseSafe?: boolean }) {
   const visibleText = streaming ? text.slice(0, length) : text;
   const protectedVisibleText = protectOnboardingPhrases(visibleText);
@@ -751,6 +738,7 @@ export default function Home() {
   const [activeSessionId, setActiveSessionId] = useState("");
   const [draft, setDraft] = useState("");
   const [draftTheme, setDraftTheme] = useState<Theme | null>(null);
+  const [draftEntrypoint, setDraftEntrypoint] = useState<ConsultationEntrypoint | null>(null);
   const [composerNotice, setComposerNotice] = useState("");
   const [consultationPhase, setConsultationPhase] = useState<"undo" | "streaming" | null>(null);
   const [cancellationPending, setCancellationPending] = useState(false);
@@ -766,6 +754,7 @@ export default function Home() {
   const [onboardingJustCompleted, setOnboardingJustCompleted] = useState(false);
   const [birthTimeJourney, setBirthTimeJourney] = useState<JourneyClientResponse | null>(null);
   const [birthTimeError, setBirthTimeError] = useState("");
+  const [birthTimeAssessmentPhase, setBirthTimeAssessmentPhase] = useState<BirthTimeAssessmentPhase | null>(null);
   const [startGreeting, setStartGreeting] = useState("");
   const [presetMessageLength, setPresetMessageLength] = useState(0);
   const conversationEnd = useRef<HTMLDivElement>(null);
@@ -795,6 +784,7 @@ export default function Home() {
     preview: process.env.NODE_ENV === "development" && uiPreview.current,
     onJourney: setBirthTimeJourney,
     onReady: completeGuidedBirthTime,
+    onCandidateComplete: completeCandidateBirthTime,
     onEditBirthTimeDetails: editDeclaredBirthTimeDetails,
   });
 
@@ -804,6 +794,7 @@ export default function Home() {
     .sort((left, right) => Number(pinnedSessionIds.includes(right.id)) - Number(pinnedSessionIds.includes(left.id)));
   const activeError = requestError && requestError.sessionId === activeSession?.id ? requestError.message : "";
   const isLoading = pendingSessionId === activeSession?.id;
+  const productEntrypointsDisabled = !hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog;
   const activeStreamingText = streamingReply && streamingReply.sessionId === activeSession?.id ? streamingReply.text : "";
   const accountId = account?.user.id;
 
@@ -839,7 +830,10 @@ export default function Home() {
       window.removeEventListener("keydown", closeSessionMenu);
     };
   }, [sessionMenuId]);
-  const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
+  const activeSuggestions = activeSession?.messages.reduce<readonly string[]>(
+    (latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest,
+    [],
+  ) ?? [];
   useEffect(() => {
     if (!accountId) {
       setChartLibrary([]);
@@ -890,6 +884,7 @@ export default function Home() {
   }, [accountId, profile]);
 
   const profileComplete = isProfileComplete(profile);
+  const birthTimeDisplay = birthTimeDisplayState(profile);
   const dailyStarlanguage = dailyStarlanguageCard ?? (profileComplete ? buildDailyStarlanguageCard(profile) : null);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
@@ -903,6 +898,7 @@ export default function Home() {
         : presetOnboardingMessage;
   const shouldStreamOnboarding = !profileComplete || onboardingJustCompleted;
   const presetMessageFinished = !shouldStreamOnboarding || presetMessageLength >= currentOnboardingMessage.length;
+  const onboardingCardReady = presetMessageFinished || birthTimeAssessmentPhase !== null;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -926,6 +922,8 @@ export default function Home() {
             setHydrated(true);
             return;
           }
+          const isAssessmentLoadingPreview = previewMode === "birth-time-assessment-loading";
+          const isCompletedCandidatePreview = previewMode === "birth-time-candidate-complete";
           const isRectificationPreview = isGuidedBirthTimePreview(previewMode);
           const previewJourney = isRectificationPreview
             ? guidedBirthTimePreview(previewMode)
@@ -935,14 +933,18 @@ export default function Home() {
             : {
               name: "林遥",
               date: "1990-06-15",
-              time: isRectificationPreview ? "" : "12:30",
-              reportedTime: isRectificationPreview ? "14:30" : "12:30",
-              birthTimeSource: isRectificationPreview ? "approximate" : "legacy_import",
-              birthTimePeriod: "",
+              time: isCompletedCandidatePreview ? "04:53" : isRectificationPreview || isAssessmentLoadingPreview ? "" : "12:30",
+              reportedTime: isRectificationPreview ? "14:30" : isAssessmentLoadingPreview || isCompletedCandidatePreview ? "" : "12:30",
+              birthTimeSource: isRectificationPreview ? "approximate" : isAssessmentLoadingPreview || isCompletedCandidatePreview ? "period_only" : "legacy_import",
+              birthTimePeriod: isAssessmentLoadingPreview || isCompletedCandidatePreview ? "early_morning" : "",
               birthTimeClue: "",
               uncertaintyBeforeMinutes: isRectificationPreview ? 30 : null,
               uncertaintyAfterMinutes: isRectificationPreview ? 30 : null,
-              birthTimeStatus: previewJourney.snapshot.state === "candidate"
+              birthTimeStatus: isCompletedCandidatePreview
+                ? "candidate"
+                : isAssessmentLoadingPreview
+                ? "rectifying"
+                : previewJourney.snapshot.state === "candidate"
                 || previewJourney.snapshot.state === "confirming"
                 || previewJourney.snapshot.state === "ready"
                   ? "candidate"
@@ -974,7 +976,10 @@ export default function Home() {
           if (isRectificationPreview) {
             setBirthTimeJourney(previewJourney);
           }
-          setOnboardingStep(missingProfileStep(previewProfile) ?? "name");
+          if (isAssessmentLoadingPreview) {
+            setBirthTimeAssessmentPhase("assessing");
+          }
+          setOnboardingStep(isAssessmentLoadingPreview ? "birth" : missingProfileStep(previewProfile) ?? "name");
           setSessions([previewSession]);
           setActiveSessionId(previewSession.id);
           const previewGreeting = previewProfile.name.trim() ? createStartGreeting(previewProfile.name) : "";
@@ -1053,7 +1058,8 @@ export default function Home() {
         setOnboardingStep(missingProfileStep(nextProfile) ?? "name");
         setSessions(nextSessions);
         setActiveSessionId(nextSessions[0].id);
-        if ((nextProfile.birthTimeStatus === "rectifying" || nextProfile.birthTimeStatus === "candidate")
+        if ((nextProfile.birthTimeStatus === "rectifying"
+          || (nextProfile.birthTimeStatus === "candidate" && !nextProfile.time))
           && nextProfile.rectificationCaseId) {
           try {
             const resumed = await resumeBirthTimeJourney(nextProfile.rectificationCaseId);
@@ -1160,7 +1166,7 @@ export default function Home() {
   }, [accountId, hydrated, onboarding, onboardingError, profile.name, profileComplete, startGreeting]);
 
   useEffect(() => {
-    if (!hydrated || !profileComplete) return;
+    if (!hydrated || !profileComplete || birthTimeDisplayState(profile)) return;
     let cancelled = false;
     setDailyStarlanguageCard(null);
     void fetchDailyStarlanguage(profile)
@@ -1173,7 +1179,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [hydrated, profile, profileComplete]);
+  }, [hydrated, profile.date, profile.time, profile.birthTimeStatus, profile.provinceCode, profile.cityCode, profileComplete]);
 
   useEffect(() => {
     if (!hydrated || !profileComplete) return;
@@ -1339,6 +1345,7 @@ export default function Home() {
     setActiveSessionId(nextSession.id);
     setDraft("");
     setDraftTheme(null);
+    setDraftEntrypoint(null);
     setComposerNotice("");
     setRequestError(null);
     try {
@@ -1358,6 +1365,7 @@ export default function Home() {
   function selectSession(sessionId: string) {
     setActiveSessionId(sessionId);
     setDraft("");
+    setDraftEntrypoint(null);
     setComposerNotice("");
   }
 
@@ -1600,24 +1608,28 @@ export default function Home() {
     event.preventDefault();
     if (!isBirthTimeDraftReady(profileDraft) || !account || profileSaving) return;
     setProfileSaving(true);
+    setBirthTimeAssessmentPhase("saving_profile");
     setAccountError("");
     try {
       await persistProfile(profileDraft);
-      setPresetMessageLength(0);
       if (birthTimeRevisionPending.current) {
+        setBirthTimeAssessmentPhase("assessing");
         const assessedProfile = await assessSavedBirthTime(profileDraft);
         birthTimeRevisionPending.current = false;
+        setPresetMessageLength(0);
         if (assessedProfile.birthTimeStatus === "confirmed") setOnboardingJustCompleted(true);
         else setOnboardingStep("rectification");
         return;
       }
       setProfile(profileDraft);
+      setPresetMessageLength(0);
       const nextStep = missingProfileStep(profileDraft);
       if (nextStep) setOnboardingStep(nextStep);
       else setOnboardingJustCompleted(true);
     } catch (caught) {
       setAccountError(friendlyError(caught instanceof Error ? caught.message : "出生时间保存失败"));
     } finally {
+      setBirthTimeAssessmentPhase(null);
       setProfileSaving(false);
     }
   }
@@ -1633,9 +1645,11 @@ export default function Home() {
     event.preventDefault();
     if (!selectedBirthPlace(profileDraft) || !account || profileSaving) return;
     setProfileSaving(true);
+    setBirthTimeAssessmentPhase("saving_profile");
     setAccountError("");
     try {
       await persistProfile(profileDraft);
+      setBirthTimeAssessmentPhase("assessing");
       const assessedProfile = await assessSavedBirthTime(profileDraft);
       setPresetMessageLength(0);
       if (assessedProfile.birthTimeStatus === "confirmed") {
@@ -1646,6 +1660,7 @@ export default function Home() {
     } catch (caught) {
       setAccountError(friendlyError(caught instanceof Error ? caught.message : "出生地点保存失败"));
     } finally {
+      setBirthTimeAssessmentPhase(null);
       setProfileSaving(false);
     }
   }
@@ -1661,6 +1676,21 @@ export default function Home() {
     setProfile(confirmedProfile);
     setProfileDraft(confirmedProfile);
     setPresetMessageLength(0);
+    setOnboardingJustCompleted(true);
+  }
+
+  function completeCandidateBirthTime(result: JourneyClientResponse, time: string) {
+    const candidateProfile: Profile = {
+      ...profileDraft,
+      time,
+      birthTimeStatus: "candidate",
+      rectificationCaseId: result.caseId,
+    };
+    setProfile(candidateProfile);
+    setProfileDraft(candidateProfile);
+    setBirthTimeJourney(null);
+    setPresetMessageLength(0);
+    setStartGreeting(createStartGreeting(candidateProfile.name));
     setOnboardingJustCompleted(true);
   }
 
@@ -1724,20 +1754,29 @@ export default function Home() {
     }
   }
 
-  function chooseSuggestedQuestion(question: string, theme?: Theme) {
+  function chooseSuggestedQuestion(
+    question: string,
+    theme?: Theme,
+    entrypoint: ConsultationEntrypoint | null = null,
+  ) {
     if (pendingSessionId || cancellationInFlight.current) return;
     setDraft(question);
     setDraftTheme(theme ?? null);
+    setDraftEntrypoint(entrypoint);
     setComposerNotice("");
     window.requestAnimationFrame(() => composerInput.current?.focus());
   }
 
   function draftDailyStarlanguageQuestion() {
-    chooseSuggestedQuestion(buildDailyStarlanguageQuestion(profile), "timing");
+    chooseSuggestedQuestion("深入看今日", "timing", "daily_starlanguage");
   }
 
   function draftBirthTimeRectificationQuestion() {
-    chooseSuggestedQuestion(buildBirthTimeRectificationQuestion(profile), "timing");
+    chooseSuggestedQuestion(
+      birthTimeDisplay ? "再次校正" : "生时校正",
+      "timing",
+      "birth_time_rectification",
+    );
   }
 
   async function draftSynastryQuestionFromChart(record: ChartLibraryRecord) {
@@ -1895,6 +1934,7 @@ export default function Home() {
     setOnboardingJustCompleted(pending.previousOnboardingState);
     setDraft(pending.question);
     setDraftTheme(pending.theme);
+    setDraftEntrypoint(pending.entrypoint);
     setStreamingReply(null);
     setPendingSessionId(null);
     setConsultationPhase(null);
@@ -1918,7 +1958,19 @@ export default function Home() {
     );
   }
 
-  async function send(text: string, requestedTheme?: Theme) {
+  function completeConsultationInterface(requestId: string) {
+    if (pendingConsultation.current?.requestId !== requestId) return;
+    pendingConsultation.current = null;
+    setStreamingReply(null);
+    setPendingSessionId(null);
+    setConsultationPhase(null);
+  }
+
+  async function send(
+    text: string,
+    requestedTheme?: Theme,
+    entrypoint: ConsultationEntrypoint | null = null,
+  ) {
     const originalQuestion = text;
     const question = text.trim();
     if (!question || !activeSession || !modelCatalog || pendingSessionId || cancellationInFlight.current || pendingConsultation.current || !account) return;
@@ -1965,6 +2017,7 @@ export default function Home() {
       requestId,
       sessionId,
       question: originalQuestion,
+      entrypoint,
       theme,
       previousSession: currentSession,
       optimisticSession: userSession,
@@ -1978,6 +2031,7 @@ export default function Home() {
     updateSession(sessionId, () => userSession);
     setDraft("");
     setDraftTheme(null);
+    setDraftEntrypoint(null);
 
     if (process.env.NODE_ENV === "development" && uiPreview.current) {
       setStreamingReply({ sessionId, text: "" });
@@ -2014,10 +2068,7 @@ export default function Home() {
         updatedAt: timestamp(),
       };
       updateSession(sessionId, () => previewSession);
-      setStreamingReply(null);
-      setPendingSessionId(null);
-      setConsultationPhase(null);
-      pendingConsultation.current = null;
+      completeConsultationInterface(requestId);
       return;
     }
 
@@ -2039,6 +2090,7 @@ export default function Home() {
         body: JSON.stringify({
           requestId,
           modelId: currentSession.modelId,
+          entrypoint: entrypoint ?? undefined,
           name: profile.name,
           year,
           month,
@@ -2099,6 +2151,7 @@ export default function Home() {
         updatedAt: timestamp(),
       };
       updateSession(sessionId, () => completedSession);
+      completeConsultationInterface(requestId);
       try {
         await persistSession(completedSession);
       } catch (caught) {
@@ -2118,6 +2171,7 @@ export default function Home() {
         if (activeSessionIdRef.current === sessionId) {
           setDraft(originalQuestion);
           setDraftTheme(theme);
+          setDraftEntrypoint(entrypoint);
         }
         if (!cancelled) {
           setRequestError({
@@ -2161,12 +2215,7 @@ export default function Home() {
       }
     } finally {
       cancellationRequests.current.delete(requestId);
-      if (pendingConsultation.current?.requestId === requestId) {
-        pendingConsultation.current = null;
-        setStreamingReply(null);
-        setPendingSessionId(null);
-        setConsultationPhase(null);
-      }
+      completeConsultationInterface(requestId);
       if (stoppedRequestAwaitingSettlement.current === requestId) {
         const persistence = stoppedSessionPersistence.current.get(requestId);
         if (persistence) {
@@ -2186,7 +2235,7 @@ export default function Home() {
       if (onboardingStep === "name" && presetMessageFinished) void saveOnboardingName();
       return;
     }
-    void send(draft, draftTheme ?? undefined);
+    void send(draft, draftTheme ?? undefined, draftEntrypoint);
   }
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -2314,8 +2363,8 @@ export default function Home() {
                   {(onboardingStep !== "name" || profileComplete) && <OnboardingChatMessage role="assistant" text={birthQuestion(profileDraft.name.trim())} streaming={onboardingStep === "birth" && !profileComplete} length={presetMessageLength} />}
                   {(onboardingStep === "place" || onboardingStep === "rectification" || profileComplete) && <OnboardingChatMessage role="user" text={formatBirthMoment(profileDraft)} />}
                   {(onboardingStep === "place" || onboardingStep === "rectification" || profileComplete) && <OnboardingChatMessage role="assistant" text={placeQuestion(profileDraft)} streaming={onboardingStep === "place" && !profileComplete} length={presetMessageLength} />}
-                  {onboardingStep === "rectification" && selectedBirthPlace(profileDraft) && <OnboardingChatMessage role="user" text={selectedBirthPlace(profileDraft)?.label ?? ""} />}
-                  {onboardingStep === "rectification" && birthTimeJourney && <OnboardingChatMessage role="assistant" text={currentOnboardingMessage} streaming length={presetMessageLength} phraseSafe={onboardingStep === "rectification"} />}
+                  {!profileComplete && onboardingStep === "rectification" && selectedBirthPlace(profileDraft) && <OnboardingChatMessage role="user" text={selectedBirthPlace(profileDraft)?.label ?? ""} />}
+                  {!profileComplete && onboardingStep === "rectification" && birthTimeJourney && <OnboardingChatMessage role="assistant" text={currentOnboardingMessage} streaming length={presetMessageLength} phraseSafe />}
                   {profileComplete && onboardingJustCompleted && selectedBirthPlace(profileDraft) && <OnboardingChatMessage role="user" text={selectedBirthPlace(profileDraft)?.label ?? ""} />}
                   {profileComplete && onboardingJustCompleted && <OnboardingChatMessage role="assistant" text={currentOnboardingMessage} streaming length={presetMessageLength} />}
                 </>
@@ -2326,27 +2375,33 @@ export default function Home() {
                     : startGreeting || `${profile.name.trim()}，从你此刻最关心的问题开始吧。`)} />
               )}
 
-              {!profileComplete && onboardingStep === "birth" && presetMessageFinished && (
+              {!profileComplete && onboardingStep === "birth" && onboardingCardReady && (
                 <div className="onboarding-card-reveal">
                   <div className="onboarding-card-reveal-inner">
-                    <form className="profile-form onboarding-card onboarding-step-card" onSubmit={saveOnboardingBirth}>
+                    <form className="profile-form onboarding-card onboarding-step-card birth-time-transition-card" onSubmit={saveOnboardingBirth} aria-busy={birthTimeAssessmentPhase !== null}>
                       <div className="onboarding-card-heading"><b>出生时间</b><small>按你实际知道的程度填写，不需要猜测</small></div>
-                      <BirthTimeIntakeFields value={profileDraft} onPatch={(patch) => setProfileDraft((current) => ({ ...current, ...patch }))} />
-                      {accountError && <p className="form-error" role="alert">{accountError}</p>}
-                      <div className="onboarding-card-actions"><button className="button-primary" type="submit" disabled={profileSaving || !isBirthTimeDraftReady(profileDraft)}>{profileSaving ? "保存中" : "继续"}</button></div>
+                      <fieldset className="birth-time-transition-fields" disabled={birthTimeAssessmentPhase !== null}>
+                        <BirthTimeIntakeFields value={profileDraft} onPatch={(patch) => setProfileDraft((current) => ({ ...current, ...patch }))} />
+                        {accountError && <p className="form-error" role="alert">{accountError}</p>}
+                        <div className="onboarding-card-actions"><button className="button-primary" type="submit" disabled={profileSaving || !isBirthTimeDraftReady(profileDraft)}>{profileSaving ? "保存中" : "继续"}</button></div>
+                      </fieldset>
+                      <BirthTimeAssessmentOverlay phase={birthTimeAssessmentPhase} />
                     </form>
                   </div>
                 </div>
               )}
 
-              {!profileComplete && onboardingStep === "place" && presetMessageFinished && (
+              {!profileComplete && onboardingStep === "place" && onboardingCardReady && (
                 <div className="onboarding-card-reveal">
                   <div className="onboarding-card-reveal-inner">
-                    <form className="profile-form onboarding-card onboarding-step-card" onSubmit={saveOnboardingPlace}>
+                    <form className="profile-form onboarding-card onboarding-step-card birth-time-transition-card" onSubmit={saveOnboardingPlace} aria-busy={birthTimeAssessmentPhase !== null}>
                       <div className="onboarding-card-heading"><b>出生地点</b><small>目前先支持中国大陆地区</small></div>
-                      <BirthLocationFields value={profileDraft} onChange={setProfileDraft} />
-                      {accountError && <p className="form-error" role="alert">{accountError}</p>}
-                      <div className="onboarding-card-actions"><button className="button-primary" type="submit" disabled={profileSaving || !selectedBirthPlace(profileDraft)}>{profileSaving ? "保存中" : "确定"}</button></div>
+                      <fieldset className="birth-time-transition-fields" disabled={birthTimeAssessmentPhase !== null}>
+                        <BirthLocationFields value={profileDraft} onChange={setProfileDraft} />
+                        {accountError && <p className="form-error" role="alert">{accountError}</p>}
+                        <div className="onboarding-card-actions"><button className="button-primary" type="submit" disabled={profileSaving || !selectedBirthPlace(profileDraft)}>{profileSaving ? "保存中" : "确定"}</button></div>
+                      </fieldset>
+                      <BirthTimeAssessmentOverlay phase={birthTimeAssessmentPhase} />
                     </form>
                   </div>
                 </div>
@@ -2379,29 +2434,61 @@ export default function Home() {
               ) : (
                 <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
                   <div className="product-entrypoints" aria-label="常用占星入口">
-                    <article className="daily-starlanguage-card" aria-label="今日星语">
+                    <article className="daily-starlanguage-card product-entrypoint-card" aria-label="今日星语">
+                      <button
+                        className="product-entrypoint-hitarea"
+                        type="button"
+                        aria-label="深入看今日"
+                        disabled={productEntrypointsDisabled}
+                        onClick={draftDailyStarlanguageQuestion}
+                      />
                       <div className="daily-starlanguage-heading">
                         <span>今日星语</span>
-                        <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftDailyStarlanguageQuestion}>深入看今日 <ArrowUpRight className="starter-arrow" aria-hidden="true" /></button>
                       </div>
                       <dl>
                         <div><dt>今日趋势</dt><dd>{dailyStarlanguage?.trend}</dd></div>
                         <div><dt>行动建议</dt><dd>{dailyStarlanguage?.action}</dd></div>
                         <div><dt>今日提醒</dt><dd>{dailyStarlanguage?.caution}</dd></div>
                       </dl>
-                      <small>探索性日提示，不是确定预测。</small>
+                      <div className="product-entrypoint-footer">
+                        <small>探索性日提示，不是确定预测。</small>
+                        <span className="product-entrypoint-action" aria-hidden="true">深入看今日 <ArrowUpRight className="starter-arrow" /></span>
+                      </div>
                     </article>
-                    <article className="birth-rectification-card" aria-label="生时校正">
+                    <article className="birth-rectification-card product-entrypoint-card" aria-label="生时校正">
+                      <button
+                        className="product-entrypoint-hitarea"
+                        type="button"
+                        aria-label={birthTimeDisplay ? "再次校正" : "生时校正"}
+                        disabled={productEntrypointsDisabled}
+                        onClick={draftBirthTimeRectificationQuestion}
+                      />
                       <div className="daily-starlanguage-heading">
                         <span>生时校正</span>
-                        <button type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={draftBirthTimeRectificationQuestion}>开始校正 <ArrowUpRight className="starter-arrow" aria-hidden="true" /></button>
                       </div>
                       <dl>
-                        <div><dt>候选出生时间段</dt><dd>{birthRectificationPreview?.candidate_scan?.start && birthRectificationPreview?.candidate_scan?.end ? `${birthRectificationPreview.candidate_scan.start} – ${birthRectificationPreview.candidate_scan.end}` : "默认先扫描前后 30 分钟"}</dd></div>
-                        <div><dt>候选点</dt><dd>{birthRectificationPreview?.candidate_scan?.candidate_count ? `${birthRectificationPreview.candidate_scan.candidate_count} 个` : "待后端生成"}</dd></div>
-                        <div><dt>问题数</dt><dd>{birthRectificationPreview?.question_count ? `${birthRectificationPreview.question_count} 个事件问题` : "需补关键人生事件"}</dd></div>
+                        {birthTimeDisplay ? (
+                          <>
+                            <div><dt>{birthTimeDisplay.kind === "candidate" ? "当前工作排盘时间" : "当前排盘时间"}</dt><dd>{birthTimeDisplay.activeTime}</dd></div>
+                            <div><dt>结果状态</dt><dd>{birthTimeDisplay.kind === "candidate" ? "候选时间（已用于排盘）" : "已确认"}</dd></div>
+                            <div><dt>原始填报</dt><dd>{birthTimeDisplay.reportedLabel}</dd></div>
+                          </>
+                        ) : (
+                          <>
+                            <div><dt>候选出生时间段</dt><dd>{birthRectificationPreview?.candidate_scan?.start && birthRectificationPreview?.candidate_scan?.end ? `${birthRectificationPreview.candidate_scan.start} – ${birthRectificationPreview.candidate_scan.end}` : "默认先扫描前后 30 分钟"}</dd></div>
+                            <div><dt>候选点</dt><dd>{birthRectificationPreview?.candidate_scan?.candidate_count ? `${birthRectificationPreview.candidate_scan.candidate_count} 个` : "待后端生成"}</dd></div>
+                            <div><dt>问题数</dt><dd>{birthRectificationPreview?.question_count ? `${birthRectificationPreview.question_count} 个事件问题` : "需补关键人生事件"}</dd></div>
+                          </>
+                        )}
                       </dl>
-                      <small>不能直接改写默认星盘；需事件证据验证。</small>
+                      <div className="product-entrypoint-footer">
+                        <small>{birthTimeDisplay?.kind === "candidate"
+                          ? "当前使用候选时间排盘；原始填报范围仍保留。"
+                          : birthTimeDisplay?.kind === "confirmed"
+                            ? "当前排盘时间已经确认。"
+                            : "不能直接改写默认星盘；需事件证据验证。"}</small>
+                        <span className="product-entrypoint-action" aria-hidden="true">{birthTimeDisplay ? "再次校正" : "生时校正"} <ArrowUpRight className="starter-arrow" /></span>
+                      </div>
                     </article>
                   </div>
                   {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
@@ -2421,26 +2508,9 @@ export default function Home() {
           ) : (
             <div className="message-list" aria-busy={isLoading}>
               <span className="sr-only" aria-live="polite">{isLoading ? "Jyotisha 正在回答" : ""}</span>
-              {activeSession.messages.map((message, index) => (
-                <article className={`message message-${message.role}`} key={`${message.role}-${index}`} aria-label={message.role === "assistant" ? "Jyotisha" : "你"}>
-                  {message.role === "assistant" && <AgentAvatar />}
-                  <div className="message-content">
-                    <div className="message-bubble">
-                      {message.role === "assistant" ? <ChatMessageContent text={message.text} /> : <p>{message.text}</p>}
-                    </div>
-                  </div>
-                </article>
+              {chatMessageViews(activeSession.messages, isLoading, activeStreamingText).map((message) => (
+                <ChatMessageRow key={message.renderKey} message={message} />
               ))}
-              {isLoading && (
-                <article className="message message-assistant" aria-label={activeStreamingText ? "Jyotisha 正在回答" : "Jyotisha 正在分析"}>
-                  <AgentAvatar />
-                  <div className="message-content">
-                    <div className="message-bubble">
-                      {activeStreamingText ? <ChatMessageContent text={activeStreamingText} /> : <div className="thinking"><i /><i /><i /></div>}
-                    </div>
-                  </div>
-                </article>
-              )}
               {activeError && <p className="error-message">{activeError}</p>}
               <div ref={conversationEnd} />
             </div>
@@ -2448,10 +2518,10 @@ export default function Home() {
         </div>
 
         <div className="composer-wrap">
-          {activeSuggestions.length > 0 && !isLoading && !cancellationPending && (
+          {activeSuggestions.length > 0 && (
             <div className="composer-suggestions" aria-label="推荐继续提问">
               {activeSuggestions.map((question) => (
-                <button key={question} type="button" disabled={!account || !modelCatalog || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>
+                <button key={question} type="button" disabled={!account || !modelCatalog || isLoading || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>
               ))}
             </div>
           )}
@@ -2475,6 +2545,7 @@ export default function Home() {
               onChange={(event) => {
                 setDraft(event.target.value);
                 setDraftTheme(null);
+                setDraftEntrypoint(null);
                 setComposerNotice("");
               }}
               onKeyDown={handleComposerKeyDown}

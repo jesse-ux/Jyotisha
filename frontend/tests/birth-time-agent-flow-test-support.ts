@@ -6,7 +6,8 @@ import { candidateResultSchema } from "../src/lib/birth-time-evidence.ts";
 import { createGuidedCandidateActions } from "../src/lib/birth-time-guided-candidate.ts";
 import {
   createBirthTimeJourneyService,
-  type BirthTimeJourneyEngine,
+  type LegacyBirthTimeJourneyEngine,
+  type DynamicVersionedJourneyResponse,
   type StoredRectificationCase,
   type VersionedJourneyResponse,
 } from "../src/lib/birth-time-journey-service.ts";
@@ -15,6 +16,7 @@ import {
   guidedCase,
   journeyCaseId,
   memoryStore,
+  preserveLegacyResumeStore,
   unusedJourneyEngine,
 } from "./birth-time-journey-test-support.ts";
 
@@ -81,8 +83,9 @@ export function createHarness(input: {
   readonly failFirstScore?: boolean;
 }) {
   const memory = memoryStore(input.initial);
+  const store = preserveLegacyResumeStore(memory.store);
   let scoreEventsCalls = 0;
-  const engine: BirthTimeJourneyEngine = {
+  const engine: LegacyBirthTimeJourneyEngine = {
     ...unusedJourneyEngine,
     async scoreEvents() {
       scoreEventsCalls += 1;
@@ -92,22 +95,27 @@ export function createHarness(input: {
         : input.result;
     },
   };
-  const service = createBirthTimeJourneyService({ store: memory.store, engine });
+  const service = createBirthTimeJourneyService({ store, engine });
   const guide = createBirthTimeGuideService({
     generator: createFakeAgent(),
-    loadCase: memory.store.loadCase,
+    loadCase: store.loadCase,
     proposeEvidenceDraft: service.proposeEvidenceDraft,
   });
   return {
     memory,
     service,
     guide,
-    candidateActions: createGuidedCandidateActions({ store: memory.store }),
+    candidateActions: createGuidedCandidateActions({ store }),
     scoreEventsCalls: () => scoreEventsCalls,
   };
 }
 
-export function assertLegalTurn(turn: VersionedJourneyResponse): void {
+export function assertLegalTurn(
+  turn: VersionedJourneyResponse | DynamicVersionedJourneyResponse,
+): asserts turn is VersionedJourneyResponse {
+  if (turn.journeyProtocol === "dynamic-choice-v2") {
+    assert.fail("legacy flow unexpectedly resumed a dynamic journey");
+  }
   assert.ok(turn.nextAction, "every legal journey response has nextAction");
   assert.ok(turn.turnVersion >= 0);
   switch (turn.nextAction.kind) {

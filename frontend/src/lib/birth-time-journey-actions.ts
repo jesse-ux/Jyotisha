@@ -3,6 +3,7 @@ import {
   lifeEventSchema,
   type EvidenceDraftProposal,
 } from "./birth-time-evidence.ts";
+import { assertNotDynamicJourneyMutation } from "./birth-time-evidence-service.ts";
 import {
   currentJourneyTurn,
   persistedJourneyResponse,
@@ -22,6 +23,7 @@ import type { EvidenceDraft } from "./birth-time-journey-turn.ts";
 import { persistGuidedJourneyTurn } from "./birth-time-scoring-job-persistence.ts";
 import type { JourneyTurnPersistencePorts } from "./birth-time-scoring-job-persistence.ts";
 import type {
+  LegacyStoredRectificationCase,
   StoredRectificationCase,
   VersionedJourneyResponse,
 } from "./birth-time-journey-service.ts";
@@ -42,7 +44,7 @@ export class BirthTimeJourneyActionError extends Error {
 
 type MutationContext = {
   readonly ports: JourneyTurnPersistencePorts;
-  readonly stored: StoredRectificationCase;
+  readonly stored: LegacyStoredRectificationCase;
   readonly expectedVersion: number;
   readonly actionId: string;
 };
@@ -56,6 +58,7 @@ async function actionContext(input: {
 }): Promise<MutationContext> {
   const stored = await input.ports.store.loadCase(input.userId, input.caseId);
   if (!stored) throw new BirthTimeJourneyActionError("case_not_found", input.caseId);
+  assertNotDynamicJourneyMutation(stored);
   return {
     ports: input.ports,
     stored,
@@ -134,7 +137,7 @@ export function createJourneyTurnActions(ports: JourneyTurnPersistencePorts) {
     caseId: string,
     actionId: string,
     expectedVersion: number,
-    transition: (stored: StoredRectificationCase) => StoredRectificationCase,
+    transition: (stored: LegacyStoredRectificationCase) => LegacyStoredRectificationCase,
     response: (stored: StoredRectificationCase) => VersionedJourneyResponse = storedJourneyResponse,
   ) {
     const mutation = await context(userId, caseId, actionId, expectedVersion);

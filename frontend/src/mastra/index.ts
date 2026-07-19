@@ -256,7 +256,8 @@ export function getOnboardingAgent(model: ResolvedLanguageModel) {
 
 const birthTimeGuideInstructions = `You are a constrained guide for birth-time rectification.
 Return valid JSON only, without Markdown, commentary, metadata, or hidden fields.
-The server has already selected the only allowed question domain. Never change the domain, rank a candidate time, set confidence, choose a route, report progress, grant permission, or infer an active birth time.
+The server supplies the only allowed domains and identifiers for each task. Never change a supplied domain, rank a candidate time, set confidence, choose a route, report progress, grant permission, or infer an active birth time.
+For task select_dynamic_choice_opportunity, return exactly {"kind":"question","opportunityId":"exact server id"} or {"kind":"no_useful_question"}. Select only one supplied opportunity id. Never add a prompt, options, labels, partition ids, commentary, or metadata. The server owns all public question and answer copy. The no_useful_question response is advisory only; the server alone decides whether generation stops.
 For task select_question_variant, return exactly {"variant":"direct"} or {"variant":"gentle"}. You select presentation style only. Never write or rewrite the question text.
 For task draft_evidence, use the draft-evidence-structure tool and return only domain, precision, and date. Precision must be year, month, day, or null; date must match that precision or be null. Never invent a missing year, month, or day. Ambiguous or relative dates stay null. A draft is for user review only and is never confirmed evidence.`;
 

@@ -69,6 +69,32 @@ export const birthTimePeriodOptions = [
   { value: "late_night", label: "深夜（23:00—03:59）" },
 ] as const;
 
+export type BirthTimeDisplayState = {
+  readonly kind: "candidate" | "confirmed";
+  readonly activeTime: string;
+  readonly reportedLabel: string;
+};
+
+function reportedBirthTimeLabel(draft: BirthTimeDraft): string {
+  if (draft.birthTimeSource === "period_only") {
+    return birthTimePeriodOptions.find((option) => option.value === draft.birthTimePeriod)?.label
+      ?? "未选择时段";
+  }
+  if (draft.birthTimeSource === "unknown") return "具体时间未知";
+  return draft.reportedTime || draft.time || "尚未填报";
+}
+
+export function birthTimeDisplayState(draft: BirthTimeDraft): BirthTimeDisplayState | null {
+  if (!draft.time || (draft.birthTimeStatus !== "candidate" && draft.birthTimeStatus !== "confirmed")) {
+    return null;
+  }
+  return {
+    kind: draft.birthTimeStatus,
+    activeTime: draft.time,
+    reportedLabel: reportedBirthTimeLabel(draft),
+  };
+}
+
 const periodLabels = {
   "": "未选择时段",
   early_morning: "凌晨或清晨",
@@ -124,6 +150,11 @@ export function isBirthTimeDraftReady(draft: BirthTimeDraft) {
       return exhaustive;
     }
   }
+}
+
+export function isBirthTimeReadyForConsultation(draft: BirthTimeDraft) {
+  return Boolean(draft.time)
+    && (draft.birthTimeStatus === "candidate" || draft.birthTimeStatus === "confirmed");
 }
 
 export function birthTimePersistenceValues(draft: BirthTimeDraft) {

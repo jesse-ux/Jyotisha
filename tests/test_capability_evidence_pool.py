@@ -54,7 +54,7 @@ def test_evidence_pool_summary_routes_few_primary_items_and_many_support_items()
     summary = build_capability_evidence_pool_summary()
 
     assert summary["scope"] == "backend_capability_evidence_pool"
-    assert summary["total_entries"] == 89
+    assert summary["total_entries"] == 91
     assert summary["ordinary_user_policy"].startswith("Users see topic-level")
     assert summary["evidence_role_counts"]["primary"] >= 8
     assert summary["evidence_role_counts"]["secondary"] > summary["evidence_role_counts"]["primary"]

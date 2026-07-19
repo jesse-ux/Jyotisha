@@ -10,7 +10,7 @@ import {
   createBirthTimeGuideService,
 } from "../src/lib/birth-time-guide-service.ts";
 import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
-import type { StoredRectificationCase, VersionedJourneyResponse } from "../src/lib/birth-time-journey-service.ts";
+import type { LegacyStoredRectificationCase, StoredRectificationCase, VersionedJourneyResponse } from "../src/lib/birth-time-journey-service.ts";
 import { storedJourneyResponse } from "../src/lib/birth-time-journey-response.ts";
 import { createInitialJourneyTurn } from "../src/lib/birth-time-journey-turn.ts";
 import type { QuestionSpec } from "../src/lib/birth-time-question-planner.ts";
@@ -40,10 +40,11 @@ function careerQuestion(): QuestionSpec {
   };
 }
 
-function storedCase(): StoredRectificationCase {
+function storedCase(): LegacyStoredRectificationCase {
   return {
     id: caseId,
     userId: "owner-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: {
       state: "rectifying",
       assistantIntent: "continue_rectification_questions",
@@ -236,6 +237,7 @@ test("guide requests are strict and bound the natural-language message", () => {
 test("route authenticates before body parsing and has no privileged workflow imports", () => {
   const source = readFileSync(new URL("../src/app/api/birth-time-guide/route.ts", import.meta.url), "utf8");
   assert.ok(source.indexOf("auth.getUser") < source.indexOf("requestPayload(request)"));
+  assert.match(source, /BirthTimeJourneyEngineConfigurationError/);
   for (const forbidden of [
     "begin_consultation_credit",
     "getJyotishAgent",

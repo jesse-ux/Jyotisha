@@ -45,7 +45,9 @@ function hasCompleteBirthProfile(profile: Record<string, unknown>) {
     profile.name
     && profile.birth_date
     && (profile.active_birth_time || profile.birth_time)
-    && (profile.birth_time_status === "confirmed" || (!profile.birth_time_status && profile.birth_time))
+    && (profile.birth_time_status === "confirmed"
+      || profile.birth_time_status === "candidate"
+      || (!profile.birth_time_status && profile.birth_time))
     && profile.country_code
     && profile.province_code
     && profile.city_code,

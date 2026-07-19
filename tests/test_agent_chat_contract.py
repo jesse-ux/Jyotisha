@@ -54,7 +54,7 @@ def test_onboarding_and_agent_suggestion_contract() -> None:
 
     assert "supabase.auth.getUser()" in route
     assert "function currentTimeContext(now = new Date())" in consult_route
-    assert "currentTimeContext()," in consult_route
+    assert "currentTimeContext(requestTime)," in consult_route
     assert "中国标准时间（UTC+8）" in consult_route
     assert 'profile.onboarding_version === ONBOARDING_VERSION' in route
     assert "getOnboardingAgent(onboardingModel).generate" in route

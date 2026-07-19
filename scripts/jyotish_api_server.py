@@ -1445,6 +1445,13 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         scheme, _, token = authorization.partition(' ')
         return token.strip() if scheme.lower() == 'bearer' else ''
 
+    def _require_dynamic_rectification_token(self):
+        configured = os.environ.get('JYOTISH_DYNAMIC_RECTIFICATION_TOKEN', '').strip()
+        supplied = self._job_access_token()
+        matches = secrets.compare_digest(supplied, configured)
+        if not configured or not matches:
+            raise Forbidden('Dynamic rectification server token is missing or invalid')
+
     def _vedastro_status(self):
         adapter = _load_local_module('vedastro_service_adapter')
         endpoint = os.environ.get('VEDASTRO_API_ENDPOINT', '').strip()
@@ -1747,6 +1754,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             elif path == '/api/active_rectification_events':
                 result = self._compute_active_rectification_events(body)
+                self._json(result)
+            elif path == '/api/dynamic_rectification_opportunities':
+                result = self._compute_dynamic_rectification_opportunities(body)
+                self._json(result)
+            elif path == '/api/dynamic_rectification_score':
+                result = self._compute_dynamic_rectification_score(body)
                 self._json(result)
             elif path == '/api/case_validation':
                 result = self._compute_case_validation(body)
@@ -6890,6 +6903,95 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'endpoint': 'active_rectification_events',
             **result,
         }
+
+    def _dynamic_rectification_base(self, body, allowed_fields, field_label):
+        unsupported_fields = sorted(set(body) - allowed_fields)
+        if unsupported_fields:
+            raise BadRequest(f'unsupported dynamic rectification {field_label} field: {unsupported_fields[0]}')
+        birth_date = body.get('birth_date')
+        start_time = body.get('start_time')
+        end_time = body.get('end_time')
+        if not isinstance(birth_date, str):
+            raise BadRequest('birth_date must be YYYY-MM-DD')
+        if not isinstance(start_time, str) or not isinstance(end_time, str):
+            raise BadRequest('candidate times must be HH:MM')
+        for key in ('lat', 'lon', 'tz'):
+            if key not in body or body[key] in (None, ''):
+                raise BadRequest(f'{key} is required')
+        try:
+            datetime.strptime(birth_date, '%Y-%m-%d')
+            datetime.strptime(start_time, '%H:%M')
+            datetime.strptime(end_time, '%H:%M')
+        except ValueError as exc:
+            raise BadRequest('birth date or candidate time has invalid format') from exc
+        return {
+            **body,
+            'birth_date': birth_date,
+            'start_time': start_time,
+            'end_time': end_time,
+            'lat': self._get_float(body, 'lat', 0, -90, 90),
+            'lon': self._get_float(body, 'lon', 0, -180, 180),
+            'tz': self._get_float(body, 'tz', 0, -14, 14),
+        }
+
+    def _compute_dynamic_rectification_opportunities(self, body):
+        self._require_dynamic_rectification_token()
+        allowed_fields = {
+            'case_id', 'birth_date', 'as_of_date', 'start_time', 'end_time',
+            'lat', 'lon', 'tz', 'candidate_model', 'evidence',
+            'dismissed_opportunity_ids', 'question_fingerprints',
+            'partition_fingerprints', 'recent_ranges',
+        }
+        normalized = self._dynamic_rectification_base(body, allowed_fields, 'opportunity')
+        case_id = normalized.get('case_id')
+        as_of_date = normalized.get('as_of_date')
+        if not isinstance(case_id, str) or not case_id.strip():
+            raise BadRequest('case_id must be a non-empty string')
+        if not isinstance(as_of_date, str):
+            raise BadRequest('as_of_date must be YYYY-MM-DD')
+        try:
+            datetime.strptime(as_of_date, '%Y-%m-%d')
+        except ValueError as exc:
+            raise BadRequest('as_of_date must be YYYY-MM-DD') from exc
+        for key in ('evidence', 'dismissed_opportunity_ids', 'question_fingerprints', 'partition_fingerprints', 'recent_ranges'):
+            if not isinstance(normalized.get(key), list):
+                raise BadRequest(f'{key} must be an array')
+        if any(not isinstance(item, str) or not item for key in ('dismissed_opportunity_ids', 'question_fingerprints', 'partition_fingerprints') for item in normalized[key]):
+            raise BadRequest('dynamic rectification fingerprints and IDs must be non-empty strings')
+        for item in normalized['recent_ranges']:
+            if not isinstance(item, dict) or set(item) != {'start_time', 'end_time'}:
+                raise BadRequest('recent_ranges must contain only start_time and end_time')
+            try:
+                datetime.strptime(item['start_time'], '%H:%M')
+                datetime.strptime(item['end_time'], '%H:%M')
+            except (KeyError, TypeError, ValueError) as exc:
+                raise BadRequest('recent_ranges must contain valid HH:MM times') from exc
+        if normalized.get('candidate_model') is not None and not isinstance(normalized['candidate_model'], dict):
+            raise BadRequest('candidate_model must be an object')
+        module = _load_local_module('dynamic_rectification')
+        try:
+            result = module.build_difference_packet(normalized)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise BadRequest(str(exc)) from exc
+        return {'success': True, 'endpoint': 'dynamic_rectification_opportunities', **result}
+
+    def _compute_dynamic_rectification_score(self, body):
+        self._require_dynamic_rectification_token()
+        allowed_fields = {
+            'birth_date', 'start_time', 'end_time', 'lat', 'lon', 'tz', 'choice_evidence',
+        }
+        normalized = self._dynamic_rectification_base(body, allowed_fields, 'score')
+        evidence = normalized.get('choice_evidence')
+        if not isinstance(evidence, list):
+            raise BadRequest('choice_evidence must be an array')
+        if any(isinstance(item, dict) and 'option_id' in item for item in evidence):
+            raise BadRequest('option_id is client-owned and cannot be scored')
+        module = _load_local_module('dynamic_rectification')
+        try:
+            result = module.score_choice_evidence(normalized)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise BadRequest(str(exc)) from exc
+        return {'success': True, 'endpoint': 'dynamic_rectification_score', **result}
 
     def _compute_case_validation(self, body):
         planets, _, _ = self._normalized_planets_from_body(body)

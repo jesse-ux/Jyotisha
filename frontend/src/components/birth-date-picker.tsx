@@ -1,9 +1,10 @@
 "use client";
 
 import { format } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { zhCN as dateFnsZhCN } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useId, useState } from "react";
+import { zhCN } from "react-day-picker/locale";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -42,10 +43,10 @@ export function BirthDatePicker({ value, disabled, onChange }: BirthDatePickerPr
           <span id={valueId}>
             {selected === undefined
               ? "选择出生日期"
-              : format(selected, "PPP", { locale: zhCN })}
+              : format(selected, "PPP", { locale: dateFnsZhCN })}
           </span>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-auto p-0">
+        <PopoverContent align="start" className="w-auto p-0" aria-label="选择出生日期">
           <Calendar
             key={value || "empty"}
             mode="single"
@@ -54,7 +55,6 @@ export function BirthDatePicker({ value, disabled, onChange }: BirthDatePickerPr
             selected={selected}
             defaultMonth={selected ?? today}
             captionLayout="dropdown"
-            navLayout="after"
             startMonth={new Date(1900, 0)}
             endMonth={today}
             reverseYears

@@ -196,7 +196,10 @@ export function parseRectificationAnswer(value: unknown): RectificationAnswer {
 }
 
 export function parseCandidateResult(value: unknown): CandidateResult {
-  const parsed = candidateResultApiSchema.parse(value);
+  return adaptCandidateResult(candidateResultApiSchema.parse(value));
+}
+
+function adaptCandidateResult(parsed: z.infer<typeof candidateResultApiSchema>): CandidateResult {
   return candidateResultSchema.parse({
     resultId: parsed.result_id,
     confidence: parsed.confidence,

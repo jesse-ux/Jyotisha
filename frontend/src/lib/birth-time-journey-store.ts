@@ -1,107 +1,63 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { z } from "zod";
 import type {
   BirthTimeJourneyStore,
-  PersistedJourneyAssessment,
 } from "./birth-time-journey-service.ts";
-import { projectJourneyTurn } from "./birth-time-journey-turn.ts";
 import {
   BirthTimeJourneyStoreError,
   caseStatus,
+  createJourneyLoadClient,
   createJourneyTurnPersistence,
   loadStoredRectificationCase,
   profileStatus,
 } from "./birth-time-journey-turn-persistence.ts";
 import { createSupabaseScoringJobStore } from "./birth-time-scoring-job-store.ts";
 import { createSupabaseGuidedCandidateStore } from "./birth-time-guided-candidate-store.ts";
+import {
+  createDynamicTurnPersistence,
+  type DynamicRpcClient,
+} from "./birth-time-journey-dynamic-persistence.ts";
+import { saveDynamicAssessment } from "./birth-time-journey-dynamic-case.ts";
+import { createDynamicScoringJobStore } from "./birth-time-dynamic-scoring-job-store.ts";
 
 export { BirthTimeJourneyStoreError } from "./birth-time-journey-turn-persistence.ts";
 
-function assessmentValues(value: PersistedJourneyAssessment) {
-  const assessment = value.assessment;
-  return {
-    reportedTime: "reportedTime" in assessment ? assessment.reportedTime : null,
-    period: assessment.source === "period_only" ? assessment.period : null,
-    clue: assessment.source === "unknown" ? assessment.clue : null,
-    before: "uncertaintyBeforeMinutes" in assessment
-      ? assessment.uncertaintyBeforeMinutes
-      : null,
-    after: "uncertaintyAfterMinutes" in assessment
-      ? assessment.uncertaintyAfterMinutes
-      : null,
-  };
-}
-
 export function createSupabaseBirthTimeJourneyStore(
   supabase: SupabaseClient,
+  now: () => Date = () => new Date(),
 ): BirthTimeJourneyStore {
-  const loadCase = (userId: string, caseId: string) => loadStoredRectificationCase(supabase, userId, caseId);
+  const loadClient = createJourneyLoadClient(supabase);
+  const loadCase = (userId: string, caseId: string) => loadStoredRectificationCase(loadClient, userId, caseId);
   const turns = createJourneyTurnPersistence(supabase, loadCase);
+  const dynamicRpc: DynamicRpcClient = {
+    async rpc(name, args) {
+      const { data, error } = await supabase.rpc(name, args);
+      return { data, error: error ? { message: error.message } : null };
+    },
+  };
+  const dynamicTurns = createDynamicTurnPersistence(
+    dynamicRpc,
+    loadCase,
+    () => now().toISOString().slice(0, 10),
+  );
   const scoringJobs = createSupabaseScoringJobStore(supabase, loadCase);
+  const dynamicScoringJobs = createDynamicScoringJobStore(dynamicRpc, loadCase);
   const guidedCandidates = createSupabaseGuidedCandidateStore(supabase, loadCase);
   return {
     async saveAssessment(value) {
-      const details = assessmentValues(value);
-      const { data, error } = await supabase
-        .from("birth_time_rectification_cases")
-        .insert({
-          user_id: value.userId,
-          status: caseStatus(value.snapshot),
-          reported_date: value.assessment.date,
-          reported_time: details.reportedTime,
-          reported_period: details.period,
-          source: value.assessment.source,
-          uncertainty_before_minutes: details.before,
-          uncertainty_after_minutes: details.after,
-          questionnaire: value.questionnaire?.raw ?? {},
-          journey_snapshot: value.snapshot,
-          candidate_scan: value.candidateScan?.raw ?? {},
-          turn_state: projectJourneyTurn({
-            turnVersion: 0,
-            snapshot: value.snapshot,
-            questionnaire: value.questionnaire,
-            candidateResult: null,
-            lifeEvents: [],
-          }),
-          candidate_start: value.snapshot.reportedRange.startTime,
-          candidate_end: value.snapshot.reportedRange.endTime,
-          confirmed_time: value.snapshot.activeTime,
-          confirmed_at: value.snapshot.state === "ready" ? new Date().toISOString() : null,
-        })
-        .select("id")
-        .single();
-      if (error) throw new BirthTimeJourneyStoreError("insert_case");
-      const caseId = z.string().uuid().parse(data.id);
-
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({
-          reported_birth_time: details.reportedTime,
-          active_birth_time: value.snapshot.activeTime,
-          birth_time: value.snapshot.activeTime,
-          birth_time_source: value.assessment.source,
-          birth_time_period: details.period,
-          birth_time_clue: details.clue,
-          uncertainty_before_minutes: details.before,
-          uncertainty_after_minutes: details.after,
-          birth_time_status: profileStatus(value.snapshot),
-          rectification_confidence: null,
-          rectification_case_id: caseId,
-        })
-        .eq("id", value.userId);
-      if (profileError) throw new BirthTimeJourneyStoreError("update_profile");
-      return caseId;
+      return saveDynamicAssessment(dynamicRpc, value, now());
     },
 
     loadCase,
     saveTurn: turns.saveTurn,
+    ...dynamicTurns,
     ...scoringJobs,
+    ...dynamicScoringJobs,
     ...guidedCandidates,
 
     async saveScoring(value) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("birth_time_rectification_cases")
         .update({
           status: caseStatus(value.snapshot),
@@ -111,8 +67,11 @@ export function createSupabaseBirthTimeJourneyStore(
           updated_at: new Date().toISOString(),
         })
         .eq("id", value.id)
-        .eq("user_id", value.userId);
-      if (error) throw new BirthTimeJourneyStoreError("update_case");
+        .eq("user_id", value.userId)
+        .eq("journey_protocol", "legacy-guided-v1")
+        .select("id")
+        .maybeSingle();
+      if (error || !data) throw new BirthTimeJourneyStoreError("update_case");
 
       const { error: profileError } = await supabase
         .from("profiles")
@@ -124,7 +83,7 @@ export function createSupabaseBirthTimeJourneyStore(
 
     async saveCandidateResult(value) {
       const winner = value.candidateResult?.winningSegment ?? null;
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("birth_time_rectification_cases")
         .update({
           status: caseStatus(value.snapshot),
@@ -138,8 +97,11 @@ export function createSupabaseBirthTimeJourneyStore(
           updated_at: new Date().toISOString(),
         })
         .eq("id", value.id)
-        .eq("user_id", value.userId);
-      if (error) throw new BirthTimeJourneyStoreError("update_case");
+        .eq("user_id", value.userId)
+        .eq("journey_protocol", "legacy-guided-v1")
+        .select("id")
+        .maybeSingle();
+      if (error || !data) throw new BirthTimeJourneyStoreError("update_case");
 
       const { error: profileError } = await supabase
         .from("profiles")
@@ -153,13 +115,16 @@ export function createSupabaseBirthTimeJourneyStore(
     },
 
     async saveCandidate(value) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("birth_time_rectification_cases")
         .update({ candidate_saved_at: new Date().toISOString(), updated_at: new Date().toISOString() })
         .eq("id", value.id)
         .eq("user_id", value.userId)
-        .eq("candidate_result_id", value.candidateResult?.resultId ?? null);
-      if (error) throw new BirthTimeJourneyStoreError("update_case");
+        .eq("journey_protocol", "legacy-guided-v1")
+        .eq("candidate_result_id", value.candidateResult?.resultId ?? null)
+        .select("id")
+        .maybeSingle();
+      if (error || !data) throw new BirthTimeJourneyStoreError("update_case");
     },
 
     async confirmCandidate(value) {

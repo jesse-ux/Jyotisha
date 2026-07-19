@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { runBirthTimeScoringPoll } from "../src/lib/birth-time-guided-polling.ts";
+import { claimMutation, publishCurrentJourney } from "../src/lib/birth-time-guided-effect-coordinator.ts";
+import { storedDynamicJourneyResponse } from "../src/lib/birth-time-journey-response.ts";
+import { dynamicCase } from "./birth-time-dynamic-persistence-fixture.ts";
 import { parseJourneyResponse } from "../src/lib/birth-time-journey-client.ts";
 import { highConfirmationTurn } from "./birth-time-journey-client-test-support.ts";
 
@@ -93,4 +96,44 @@ test("bounded polling preserves the pending turn instead of inventing completion
 
   assert.equal(result.kind, "exhausted");
   assert.equal(result.turn.nextAction.kind, "score_pending");
+});
+
+test("duplicate option clicks publish one advanced turn", async () => {
+  const gate = Promise.withResolvers<typeof completedTurn>();
+  const sent: string[] = [];
+  const published: typeof completedTurn[] = [];
+  const lock = { current: false };
+  const select = async (optionId: string) => {
+    const release = claimMutation(lock);
+    if (release === null) return;
+    sent.push(optionId);
+    const turn = await gate.promise;
+    published.push(turn);
+    release();
+  };
+
+  const first = select("primary-option");
+  const duplicate = select("primary-option");
+  gate.resolve(completedTurn);
+  await Promise.all([first, duplicate]);
+
+  assert.deepEqual(sent, ["primary-option"]);
+  assert.deepEqual(published, [completedTurn]);
+});
+
+test("a stale generated question cannot replace a newer turn", () => {
+  const expected = parseJourneyResponse(storedDynamicJourneyResponse(dynamicCase()));
+  const current = parseJourneyResponse({ ...expected, turnVersion: expected.turnVersion + 1 });
+  let published = 0;
+
+  const accepted = publishCurrentJourney({
+    expected,
+    current,
+    next: expected,
+    publish: () => { published += 1; },
+  });
+
+  assert.equal(accepted, false);
+  assert.equal(current.turnVersion, 8);
+  assert.equal(published, 0);
 });

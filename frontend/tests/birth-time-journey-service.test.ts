@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createBirthTimeJourneyService } from "../src/lib/birth-time-journey-service.ts";
-import type { BirthTimeJourneyEngine, StoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
+import type { LegacyBirthTimeJourneyEngine, StoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
 import {
   approximateAssessment,
   hospitalAssessment,
@@ -14,7 +14,7 @@ import {
 test("journey service activates a stable hospital record and persists its scan", async () => {
   const memory = memoryStore();
   let receivedUncertainty = 0;
-  const engine: BirthTimeJourneyEngine = {
+  const engine: LegacyBirthTimeJourneyEngine = {
     ...unusedJourneyEngine,
     async scan(input) {
       receivedUncertainty = input.uncertaintyMinutes;
@@ -34,7 +34,7 @@ test("journey service activates a stable hospital record and persists its scan",
 
 test("journey service fails a scanner error closed without activating the time", async () => {
   const memory = memoryStore();
-  const engine: BirthTimeJourneyEngine = {
+  const engine: LegacyBirthTimeJourneyEngine = {
     ...unusedJourneyEngine,
     async scan() {
       throw new TypeError("scanner offline");
@@ -78,6 +78,7 @@ test("journey service accumulates legacy answers while preserving the applicatio
   const storedCase: StoredRectificationCase = {
     id: journeyCaseId,
     userId: "user-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: assessed.snapshot,
     questionnaire,
     answers: { education_environment_shift: "A" },
@@ -117,10 +118,11 @@ test("journey service accumulates legacy answers while preserving the applicatio
   assert.deepEqual(memory.savedCase()?.answers, scoredAnswers);
 });
 
-test("journey service resumes an owner-scoped unfinished legacy case", async () => {
+test("journey service upgrades an owner-scoped unfinished legacy case on resume", async () => {
   const storedCase: StoredRectificationCase = {
     id: journeyCaseId,
     userId: "user-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: {
       state: "rectifying",
       assistantIntent: "continue_rectification_questions",
@@ -134,15 +136,18 @@ test("journey service resumes an owner-scoped unfinished legacy case", async () 
     questionnaire: scanWithSigns(["Cancer", "Leo"]).questionnaire,
     answers: { education_environment_shift: "A" },
   };
+  const memory = memoryStore(storedCase);
   const service = createBirthTimeJourneyService({
-    store: memoryStore(storedCase).store,
+    store: memory.store,
     engine: unusedJourneyEngine,
   });
 
   const result = await service.resume("user-1", journeyCaseId);
 
   assert.equal(result.caseId, journeyCaseId);
-  assert.deepEqual(result.answers, { education_environment_shift: "A" });
+  assert.equal(result.journeyProtocol, "dynamic-choice-v2");
+  assert.deepEqual(result.answers, {});
+  assert.deepEqual(memory.savedCase()?.answers, { education_environment_shift: "A" });
   assert.equal(result.snapshot.canApply, false);
 });
 
@@ -150,6 +155,7 @@ test("journey service heals a completed legacy questionnaire into life-event col
   const storedCase: StoredRectificationCase = {
     id: journeyCaseId,
     userId: "user-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: {
       state: "candidate",
       assistantIntent: "present_saved_candidate_range",
@@ -184,6 +190,7 @@ test("journey service resumes a fail-closed case without a questionnaire", async
   const storedCase: StoredRectificationCase = {
     id: journeyCaseId,
     userId: "user-1",
+    journeyProtocol: "legacy-guided-v1",
     snapshot: {
       state: "rectifying",
       assistantIntent: "explain_assessment_unavailable",

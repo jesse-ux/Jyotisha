@@ -2975,10 +2975,12 @@ def test_annual_endpoint_returns_varshaphala_report() -> None:
     assert result['report']['target_year'] == 2026
     assert 'muntha' in result['report']
     strength = result['report']['tajika_strength']
+    assert strength['status'] == 'partial'
     assert strength['method'] == 'Tajika Harsha/Panchavargiya Bala'
+    assert strength['usable_layers'] == ['Harsha Bala']
     assert 'harsha_bala' in strength
     assert 'panchavargiya_bala' in strength
-    assert strength['summary']['strongest_planets']
+    assert 'strongest_planets' not in strength['summary']
     assert strength['summary']['next_action']
 
 
@@ -3002,8 +3004,9 @@ def test_tajika_endpoint_alias_returns_varshaphala_report() -> None:
     assert result['report']['target_year'] == 2026
     assert 'muntha' in result['report']
     strength = result['report']['tajika_strength']
+    assert strength['status'] == 'partial'
     assert strength['method'] == 'Tajika Harsha/Panchavargiya Bala'
-    assert strength['summary']['strongest_planets']
+    assert 'strongest_planets' not in strength['summary']
 
 
 def test_bhava_chalit_endpoint_compares_shifted_houses() -> None:
@@ -3475,6 +3478,12 @@ def test_high_rigor_async_job_executes_in_background(monkeypatch: pytest.MonkeyP
     assert result['mode'] == 'async_submitted'
     assert result['status'] == 'queued'
     assert writes[0][1]['status'] == 'queued'
+
+    deadline = time.time() + 1.0
+    while len(writes) < 2 and time.time() < deadline:
+        time.sleep(0.01)
+
+    assert len(writes) >= 2
     assert writes[1][1]['status'] == 'running'
     assert len(writes) == 2
 
@@ -3524,6 +3533,12 @@ def test_chart_async_job_executes_in_background(monkeypatch: pytest.MonkeyPatch)
     assert result['status'] == 'queued'
     assert writes[0][0] == 'api_chart_response'
     assert writes[0][2]['status'] == 'queued'
+
+    deadline = time.time() + 1.0
+    while len(writes) < 2 and time.time() < deadline:
+        time.sleep(0.01)
+
+    assert len(writes) >= 2
     assert writes[1][2]['status'] == 'running'
 
     deadline = time.time() + 1.0

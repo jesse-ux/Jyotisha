@@ -5,7 +5,7 @@ import test from "node:test";
 const root = new URL("../../", import.meta.url);
 const readRoot = (path: string) => readFileSync(new URL(path, root), "utf8");
 const mastra = readRoot("frontend/src/mastra/index.ts");
-const rectification = readRoot("frontend/src/lib/birth-time-journey-engine.ts");
+const rectification = readRoot("frontend/src/lib/birth-time-journey-engine-model.ts");
 const synastry = readRoot("frontend/src/app/api/synastry/route.ts");
 const apiServer = readRoot("scripts/jyotish_api_server.py");
 
