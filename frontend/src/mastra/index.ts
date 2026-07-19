@@ -3,6 +3,7 @@ import { createTool } from "@mastra/core/tools";
 import path from "node:path";
 import { z } from "zod";
 import { evidenceDraftModelOutputSchema } from "../lib/birth-time-guide-agent.ts";
+import { consultationThemeValues, projectConsultationWorkflowRequest } from "../lib/consultation-workflow-request.ts";
 import type { ResolvedLanguageModel } from "./model";
 
 export const consultationInputSchema = z.object({
@@ -16,7 +17,7 @@ export const consultationInputSchema = z.object({
   tz: z.number().min(-12).max(14),
   city: z.string().trim().min(1).max(120),
   question: z.string().trim().min(1).max(500),
-  theme: z.enum(["career", "marriage", "wealth", "timing", "general"]),
+  theme: z.enum(consultationThemeValues),
   entryMode: z.enum(["direct_chart", "rectification"]).default("direct_chart"),
 });
 
@@ -54,15 +55,17 @@ const jyotishSkillPath = process.env.JYOTISH_SKILL_PATH?.trim()
   || path.resolve(process.cwd(), "..", "skills", "jyotish-vedic-astrology");
 
 export async function runConsultationWorkflow(input: ConsultationInput) {
-  const { entryMode, ...workflowInput } = input;
+  const { entryMode, question, theme, ...workflowInput } = input;
+  const workflowRequest = projectConsultationWorkflowRequest(question, theme);
   const response = await fetch(`${apiBase}/api/consultation_workflow`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       ...workflowInput,
       entry_mode: entryMode,
-      question_text: input.question,
-      theme: input.theme === "general" ? ["career", "marriage", "wealth"] : [input.theme],
+      question: workflowRequest.question,
+      question_text: workflowRequest.question,
+      theme: workflowRequest.themes,
     }),
     signal: AbortSignal.timeout(45_000),
   });
