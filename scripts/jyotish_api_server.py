@@ -6824,7 +6824,15 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if not isinstance(answers, dict):
             raise BadRequest('answers must be an object')
         module = _load_local_module('active_rectification_questions')
-        result = module.score_answers(questionnaire, answers)
+        result = module.score_answers(
+            questionnaire,
+            answers,
+            narayana_cross_scores=body.get('narayana_cross_scores'),
+            jaimini_karaka_cross_scores=body.get('jaimini_karaka_cross_scores'),
+            vimsopaka_avastha_cross_scores=body.get('vimsopaka_avastha_cross_scores'),
+            shadbala_av_observation_scores=body.get('shadbala_av_observation_scores'),
+            gochara_transit_observation_scores=body.get('gochara_transit_observation_scores'),
+        )
         return {
             'success': True,
             'endpoint': 'active_rectification_score',

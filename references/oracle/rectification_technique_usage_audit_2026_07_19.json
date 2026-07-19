@@ -1,0 +1,77 @@
+{
+  "scope": "rectification_technique_usage_audit",
+  "created_at": "2026-07-19",
+  "status": "runtime_usage_audit_v1",
+  "claim_boundary": "rectification_candidate_scoring_not_birth_time_truth",
+  "production_tuning_allowed": false,
+  "runtime_artifacts": [
+    "jyotish-app/rectification-engine.js",
+    "jyotish-app/rectification.js",
+    "scripts/jyotish_api_server.py",
+    "tests/test_active_rectification_api.py",
+    "tests/test_active_rectification_questions.py"
+  ],
+  "used_layers": [
+    {
+      "technique_id": "candidate_time_sweep",
+      "status": "used",
+      "evidence": "rectification-engine.js scans candidate birth times",
+      "claim_boundary": "Produces ranked candidates, not confirmed birth time."
+    },
+    {
+      "technique_id": "vimshottari_event_scoring",
+      "status": "used",
+      "evidence": "rectification-engine.js computeDasha/findActiveDasha event scoring",
+      "claim_boundary": "Event-score heuristic only."
+    },
+    {
+      "technique_id": "varga_change_scoring",
+      "status": "used",
+      "evidence": "rectification-engine.js tracks D9/D10/D60 and other varga changes",
+      "claim_boundary": "Varga boundary changes are sensitivity evidence, not proof."
+    },
+    {
+      "technique_id": "d60_late_reference",
+      "status": "used_guarded",
+      "evidence": "rectification-engine.js notes D60 is late-stage reference",
+      "claim_boundary": "D60 remains high-sensitivity and cannot dominate early scoring."
+    },
+    {
+      "technique_id": "guided_event_questionnaire",
+      "status": "used",
+      "evidence": "active rectification API and frontend guided interview",
+      "claim_boundary": "User event collection improves candidate filtering but requires evidence quality."
+    },
+    {
+      "technique_id": "narayana_dasha_rectification",
+      "status": "partial_runtime_cross_gate",
+      "evidence": "active_rectification_questions.score_answers exposes narayana_cross_score and API accepts narayana_cross_scores",
+      "claim_boundary": "Narayana is downgrade-only cross evidence; it does not replace Vimshottari ranking or confirm birth-time truth."
+    },
+    {
+      "technique_id": "jaimini_karaka_rectification",
+      "status": "partial_runtime_cross_gate",
+      "evidence": "active_rectification_questions.score_answers exposes jaimini_karaka_cross_score and API accepts jaimini_karaka_cross_scores",
+      "claim_boundary": "Karaka sensitivity is downgrade-only cross evidence; it is not standalone birth-time proof."
+    },
+    {
+      "technique_id": "vimsopaka_avastha_rectification",
+      "status": "partial_runtime_cross_gate",
+      "evidence": "active_rectification_questions.score_answers exposes vimsopaka_avastha_cross_score and API accepts vimsopaka_avastha_cross_scores",
+      "claim_boundary": "Vimsopaka/Avastha state shifts are downgrade-only cross evidence; they are not standalone correction."
+    },
+    {
+      "technique_id": "shadbala_av_rectification",
+      "status": "partial_observation_low_weight_gate",
+      "evidence": "active_rectification_questions.score_answers exposes shadbala_av_observation_score and API accepts shadbala_av_observation_scores",
+      "claim_boundary": "Formula/unit parity is still partial; Shadbala/AV can only downgrade or annotate candidate confidence."
+    },
+    {
+      "technique_id": "gochara_transit_rectification",
+      "status": "partial_observation_holdout_blocked",
+      "evidence": "active_rectification_questions.score_answers exposes gochara_transit_observation_score and API accepts gochara_transit_observation_scores",
+      "claim_boundary": "Negative holdout is still required; Gochara cannot produce verified day/month timing or birth-time truth."
+    }
+  ],
+  "not_yet_used_layers": []
+}

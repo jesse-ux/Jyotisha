@@ -1,0 +1,66 @@
+{
+  "scope": "rectification_missing_layer_integration_plan",
+  "created_at": "2026-07-19",
+  "status": "implementation_plan_v1",
+  "production_tuning_allowed": false,
+  "source_audit": "references/oracle/rectification_technique_usage_audit_2026_07_19.json",
+  "claim_boundary": "candidate_rectification_not_birth_time_truth",
+  "boundary": "This plan adds missing scoring layers to birth-time rectification without claiming confirmed birth time or verified day-level prediction accuracy.",
+  "layers": [
+    {
+      "layer_id": "narayana_dasha_cross_score",
+      "priority": "P0",
+      "implementation_status": "partial_runtime_cross_gate",
+      "entry_gate": "Use only after current Vimshottari event scoring exists; compare agreement/disagreement rather than replacing Vimshottari.",
+      "local_reuse_candidates": ["scripts/extended_dashas.py", "scripts/jyotish_api_server.py", "jyotish-app/rectification-engine.js"],
+      "test_targets": ["rectification ranks same candidates with Narayana side score", "audit table reports Vimshottari/Narayana disagreement"],
+      "output_status": "exploratory",
+      "claim_boundary": "Dual Dasha support can raise candidate confidence but cannot confirm birth time without event evidence."
+    },
+    {
+      "layer_id": "jaimini_karaka_sensitivity",
+      "priority": "P1",
+      "implementation_status": "partial_runtime_cross_gate",
+      "entry_gate": "Only consume current scripts/jaimini.py outputs; do not duplicate historical karaka_calculator runtime.",
+      "local_reuse_candidates": ["scripts/jaimini.py", "references/oracle/technique_promotion_audit_varga_karaka_2026_07_19.json"],
+      "test_targets": ["AK/AmK/DK/PK changes are surfaced as sensitivity notes", "Karakamsha changes do not dominate score alone"],
+      "output_status": "exploratory",
+      "claim_boundary": "Karaka/Karakamsha shifts are sensitivity evidence, not standalone rectification proof."
+    },
+    {
+      "layer_id": "vimsopaka_avastha_state_score",
+      "priority": "P1",
+      "implementation_status": "partial_runtime_cross_gate",
+      "entry_gate": "Use existing full-reading Vimsopaka and /api/deep_varga_avastha surfaces; add source/display contract before scoring weight.",
+      "local_reuse_candidates": ["scripts/deep_varga_avastha.py", "skills/jyotish-engine-modules/scripts/vimsopaka_calculator.py", "skills/jyotish-engine-modules/scripts/avastha_calculator.py"],
+      "test_targets": ["Vimsopaka/Avastha changes are reported as low-weight evidence", "gender/profile optional fields do not affect chart hash"],
+      "output_status": "exploratory",
+      "claim_boundary": "State/strength changes are interpretive sensitivity only until oracle/source packets close."
+    },
+    {
+      "layer_id": "shadbala_av_delta_score",
+      "priority": "P2",
+      "implementation_status": "partial_observation_low_weight_gate",
+      "entry_gate": "Blocked from high weight until Shadbala/AV component closure improves; use only as observation with explicit method-variant boundary.",
+      "local_reuse_candidates": ["references/oracle/xalen_shadbala_av_component_delta_report_2026_07_19.json", "references/oracle/formula_source_knowledge_base_2026_07_19.json"],
+      "test_targets": ["Shadbala/AV score is hidden or low-weight when formula status is partial", "claim gate prevents absolute Shadbala rectification claim"],
+      "output_status": "exploratory_observation_only",
+      "claim_boundary": "Shadbala/AV absolute parity remains partial/open; cannot drive final rectification."
+    },
+    {
+      "layer_id": "gochara_transit_trigger_score",
+      "priority": "P2",
+      "implementation_status": "partial_observation_holdout_blocked",
+      "entry_gate": "Requires Gochara scoring contract and negative holdout readiness before affecting candidate rank.",
+      "local_reuse_candidates": ["/tmp/jyotisha-optimize/assets/event_timing_template.md", "references/oracle/technique_promotion_audit_kp_gochara_muhurta_2026_07_19.json"],
+      "test_targets": ["Transit triggers are listed separately from birth-time score", "negative holdout gate blocks verified timing claims"],
+      "output_status": "exploratory_observation_only",
+      "claim_boundary": "Gochara trigger evidence cannot be used as verified rectification/timing truth until holdout passes."
+    }
+  ],
+  "required_global_tests": [
+    "candidate ranking remains reproducible",
+    "claim_audit_runtime_gate blocks verified birth-time truth",
+    "Technique Audit Table lists used/missing rectification layers"
+  ]
+}

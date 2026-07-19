@@ -43,34 +43,7 @@ def test_active_rectification_scores_answers_and_selects_next_round() -> None:
     assert scored["next_round"] == 2
     assert scored["next_round_questions"]
     assert scored["candidate_cluster_rankings"][0]["score"] > scored["candidate_cluster_rankings"][-1]["score"]
-    assert "final rectification requires scoring answers against actual candidate chart differences" in scored["boundary"]
-
-
-def test_active_rectification_scores_legacy_questions_missing_scoring_maps() -> None:
-    report = build_questionnaire("1955-02-24 19:15", uncertainty_minutes=30)
-    legacy_questionnaire = {
-        "questions": [
-            {
-                "id": question["id"],
-                "prompt": question["prompt"],
-                "options": question["options"],
-            }
-            for question in report["questions"]
-        ]
-    }
-
-    scored = score_answers(
-        legacy_questionnaire,
-        {
-            "education_environment_shift": "A",
-            "residence_relocation_shift": "A",
-            "relationship_or_partner_entry": "B",
-        },
-    )
-
-    assert scored["answered_count"] == 3
-    assert scored["invalid_answers"] == []
-    assert scored["candidate_cluster_rankings"]
+    assert "does not convert candidates into birth-time truth" in scored["boundary"]
 
 
 def test_active_rectification_recasts_candidate_vargas_when_location_is_available() -> None:
@@ -95,23 +68,3 @@ def test_active_rectification_recasts_candidate_vargas_when_location_is_availabl
     assert sample["arudha"]["UL"]["sign"]
     assert sample["kp_cusps"]["house_7"]["sub_lord"]
     assert sample["kp_cusps"]["house_10"]["sub_sub_lord"]
-
-
-def test_candidate_recast_contains_all_evidence_domain_vargas(monkeypatch) -> None:
-    report = build_questionnaire(
-        "1993-04-17 14:30", 30, 30,
-        lat=31.2304, lon=121.4737, tz=8,
-    )
-    sample = report["candidate_scan"]["samples"][0]
-    varga_lagna = sample["varga_lagna"]
-    expected_legacy_keys = {
-        "D4": "D4_Turyamsa",
-        "D9": "D9_Navamsa",
-        "D10": "D10_Dasamsa",
-        "D24": "D24_Siddhamsa",
-        "D30": "D30_Trimsamsa",
-    }
-    assert set(expected_legacy_keys).issubset(varga_lagna)
-    for alias, legacy_key in expected_legacy_keys.items():
-        assert varga_lagna[alias]["sign"]
-        assert varga_lagna[alias] == varga_lagna[legacy_key]

@@ -160,7 +160,7 @@
       "domain": "birth_time_rectification",
       "claim_status": "partial",
       "consumer_policy": "research_only",
-      "claim_boundary": "Rectification uses candidate sweep, Vimshottari event scoring and varga sensitivity; Narayana/Jaimini/Shadbala/AV/Vimsopaka/Avastha/Gochara layers are not yet integrated."
+      "claim_boundary": "Rectification now exposes candidate sweep, Vimshottari scoring, Varga sensitivity, Narayana/Jaimini/Vimsopaka cross gates, and Shadbala-AV/Gochara observation gates; all remain candidate-only and cannot confirm birth-time truth."
     },
     {
       "packet_id": "effective_skill_capability_view",
@@ -176,7 +176,7 @@
       "domain": "birth_time_rectification",
       "claim_status": "partial",
       "consumer_policy": "research_only",
-      "claim_boundary": "Narayana/Jaimini/Vimsopaka-Avastha/Shadbala-AV/Gochara layers are planned but not yet integrated into rectification scoring."
+      "claim_boundary": "All planned rectification layers have partial guarded runtime surfaces; Shadbala-AV remains formula/unit partial and Gochara remains negative-holdout blocked, so outputs stay exploratory."
     }
   ]
 }

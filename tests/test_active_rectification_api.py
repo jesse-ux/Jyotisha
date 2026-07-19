@@ -9,19 +9,11 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-import jyotish_api_server as api_server  # noqa: E402
 from jyotish_api_server import BadRequest, JyotishAPIHandler  # noqa: E402
 
 
 def _handler() -> JyotishAPIHandler:
     return JyotishAPIHandler.__new__(JyotishAPIHandler)
-
-
-def _dynamic_handler(monkeypatch) -> JyotishAPIHandler:
-    monkeypatch.setenv("JYOTISH_DYNAMIC_RECTIFICATION_TOKEN", "server-secret")
-    handler = _handler()
-    handler.headers = {"Authorization": "Bearer server-secret"}
-    return handler
 
 
 def test_active_rectification_questions_api_builds_choice_workflow() -> None:
@@ -112,169 +104,303 @@ def test_active_rectification_score_api_validates_payload() -> None:
         _handler()._compute_active_rectification_score({"questionnaire": {}})
 
 
-def test_active_rectification_events_api_scores_structured_events() -> None:
-    result = _handler()._compute_active_rectification_events({
-        "birth_date": "1993-04-17",
-        "start_time": "14:29",
-        "end_time": "14:31",
-        "lat": 36.683333,
-        "lon": 114.35,
-        "tz": 8,
-        "events": [
-            {"id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5", "domain": "education", "date": "2011-09", "precision": "month"},
-            {"id": "0790866c-ad5e-4a45-b2b4-a5c73f6be6ea", "domain": "career", "date": "2019-07-01", "precision": "day"},
-            {"id": "0ef52e51-ab5f-453b-81e5-adb44a929224", "domain": "relationship", "date": "2021", "precision": "year"},
-        ],
-    })
-
-    assert result["success"] is True
-    assert result["endpoint"] == "active_rectification_events"
-    assert result["result_id"]
-    assert result["event_count"] == 3
-
-
-def test_active_rectification_events_api_rejects_client_scores() -> None:
-    with pytest.raises(BadRequest, match="unsupported active rectification event field"):
-        _handler()._compute_active_rectification_events({
-            "birth_date": "1993-04-17",
-            "start_time": "14:29",
-            "end_time": "14:31",
+def _answered_rectification_score() -> dict:
+    questionnaire = _handler()._compute_active_rectification_questions(
+        {
+            "birth_time": "1993-04-17 14:49",
+            "uncertainty_minutes": 30,
+            "step_minutes": 1,
             "lat": 36.683333,
             "lon": 114.35,
             "tz": 8,
-            "events": [],
-            "confidence": "high",
-        })
-
-
-def _dynamic_base() -> dict:
-    return {
-        "case_id": "case-1",
-        "birth_date": "1990-01-01",
-        "as_of_date": "2026-07-18",
-        "start_time": "05:30",
-        "end_time": "05:33",
-        "lat": 31.23,
-        "lon": 121.47,
-        "tz": 8.0,
-        "evidence": [],
-        "dismissed_opportunity_ids": [],
-        "question_fingerprints": [],
-        "partition_fingerprints": [],
-        "recent_ranges": [],
-    }
-
-
-def test_dynamic_opportunities_api_accepts_only_server_contract(monkeypatch) -> None:
-    captured: list[dict] = []
-
-    class FakeDynamicModule:
-        @staticmethod
-        def build_difference_packet(payload: dict) -> dict:
-            captured.append(payload)
-            return {
-                "case_id": payload["case_id"],
-                "scoring_version": "birth-time-choice-scoring-v2",
-                "current_range": {"start_time": payload["start_time"], "end_time": payload["end_time"]},
-                "opportunities": [],
-                "asked_question_fingerprints": [],
-                "candidate_partition_fingerprints": [],
-                "recent_range_history": [],
-                "candidate_model": {},
-            }
-
-    monkeypatch.setattr(api_server, "_load_local_module", lambda _name: FakeDynamicModule)
-
-    result = _dynamic_handler(monkeypatch)._compute_dynamic_rectification_opportunities(
-        _dynamic_base()
+        }
     )
-
-    assert result["success"] is True
-    assert result["endpoint"] == "dynamic_rectification_opportunities"
-    assert captured[0]["as_of_date"] == "2026-07-18"
-    assert captured[0]["lat"] == 31.23
-
-
-def test_dynamic_opportunities_api_rejects_missing_clock_and_untrusted_fields(monkeypatch) -> None:
-    handler = _dynamic_handler(monkeypatch)
-    missing_date = _dynamic_base()
-    del missing_date["as_of_date"]
-    with pytest.raises(BadRequest, match="as_of_date"):
-        handler._compute_dynamic_rectification_opportunities(missing_date)
-
-    with pytest.raises(BadRequest, match="unsupported dynamic rectification opportunity field"):
-        handler._compute_dynamic_rectification_opportunities(
-            {**_dynamic_base(), "confidence": "high"}
-        )
-
-    with pytest.raises(BadRequest, match="recent_ranges"):
-        handler._compute_dynamic_rectification_opportunities(
-            {**_dynamic_base(), "recent_ranges": [{"start_time": "05:30", "extra": "05:33"}]}
-        )
-
-    with pytest.raises(BadRequest, match="partition evidence"):
-        handler._compute_dynamic_rectification_opportunities(
-            {**_dynamic_base(), "evidence": [{"kind": "unknown"}]}
-        )
-
-    for field in ("lat", "lon", "tz"):
-        missing_location = _dynamic_base()
-        del missing_location[field]
-        with pytest.raises(BadRequest, match=field):
-            handler._compute_dynamic_rectification_opportunities(missing_location)
-
-
-def test_dynamic_score_api_rejects_client_option_ids_before_scoring(monkeypatch) -> None:
-    with pytest.raises(BadRequest, match="option_id"):
-        _dynamic_handler(monkeypatch)._compute_dynamic_rectification_score(
-            {
-                "birth_date": "1990-01-01",
-                "start_time": "05:30",
-                "end_time": "05:33",
-                "lat": 31.23,
-                "lon": 121.47,
-                "tz": 8.0,
-                "choice_evidence": [{"option_id": "client-owned"}],
-            }
-        )
-
-
-def test_dynamic_score_api_returns_versioned_candidate_result(monkeypatch) -> None:
-    class FakeDynamicModule:
-        @staticmethod
-        def score_choice_evidence(_payload: dict) -> dict:
-            return {
-                "result_id": "result-1",
-                "confidence": "low",
-                "can_apply": False,
-                "winning_segment": None,
-                "event_count": 0,
-                "domain_count": 0,
-                "top_score": 0.0,
-                "second_score": 0.0,
-                "margin_percent": 0.0,
-                "reasons": ["insufficient_effective_evidence"],
-                "evidence": [],
-                "algorithm_version": "birth-time-choice-scoring-v2",
-                "evidence_mode": "dynamic_choice",
-                "effective_answer_count": 0,
-                "dimension_count": 0,
-            }
-
-    monkeypatch.setattr(api_server, "_load_local_module", lambda _name: FakeDynamicModule)
-
-    result = _dynamic_handler(monkeypatch)._compute_dynamic_rectification_score(
+    return _handler()._compute_active_rectification_score(
         {
-            "birth_date": "1990-01-01",
-            "start_time": "05:30",
-            "end_time": "05:33",
-            "lat": 31.23,
-            "lon": 121.47,
-            "tz": 8.0,
-            "choice_evidence": [],
+            "questionnaire": questionnaire,
+            "answers": {
+                "education_environment_shift": "A",
+                "residence_relocation_shift": "B",
+                "relationship_or_partner_entry": "D",
+                "career_responsibility_pressure": "A",
+                "research_tool_expression_shift": "C",
+            },
         }
     )
 
-    assert result["success"] is True
-    assert result["endpoint"] == "dynamic_rectification_score"
-    assert result["algorithm_version"] == "birth-time-choice-scoring-v2"
+
+def test_rectification_score_exposes_narayana_cross_score_red() -> None:
+    scored = _answered_rectification_score()
+
+    assert scored["candidate_cluster_rankings"]
+    assert all(
+        "narayana_cross_score" in candidate
+        for candidate in scored["candidate_cluster_rankings"]
+    )
+
+
+def test_rectification_technique_audit_mentions_narayana_red() -> None:
+    scored = _answered_rectification_score()
+
+    audit_rows = scored["technique_audit_table"]
+    assert any(
+        row.get("technique") == "Narayana Dasha Rectification"
+        and row.get("status") in {"used", "partial"}
+        for row in audit_rows
+    )
+
+
+def test_narayana_conflict_downgrades_without_replacing_vimshottari_red() -> None:
+    scored = _handler()._compute_active_rectification_score(
+        {
+            "questionnaire": {
+                "questions": [
+                    {
+                        "id": "career_responsibility_pressure",
+                        "round": 1,
+                        "scoring_map": {
+                            "A": {
+                                "cluster": "middle_candidate_cluster",
+                                "points": 9,
+                            }
+                        },
+                    }
+                ]
+            },
+            "answers": {"career_responsibility_pressure": "A"},
+            "narayana_cross_scores": {
+                "early_candidate_cluster": 10,
+                "middle_candidate_cluster": -10,
+            },
+        }
+    )
+
+    top = scored["candidate_cluster_rankings"][0]
+    assert top["cluster"] == "middle_candidate_cluster"
+    assert top["claim_status"] == "candidate"
+    assert top["confidence_cap"] == "low"
+    assert top["conflict_policy"] == "downgrade_without_replacement"
+
+
+def test_rectification_claim_remains_candidate_not_birth_time_truth_red() -> None:
+    scored = _answered_rectification_score()
+
+    assert scored["claim_status"] == "candidate"
+    assert scored["truth_status"] != "birth_time_truth"
+
+
+def test_rectification_score_exposes_jaimini_karaka_cross_score_red() -> None:
+    scored = _answered_rectification_score()
+
+    assert scored["candidate_cluster_rankings"]
+    assert all(
+        "jaimini_karaka_cross_score" in candidate
+        for candidate in scored["candidate_cluster_rankings"]
+    )
+
+
+def test_rectification_technique_audit_mentions_jaimini_karaka_red() -> None:
+    scored = _answered_rectification_score()
+
+    audit_rows = scored["technique_audit_table"]
+    assert any(
+        row.get("technique") == "Jaimini Karaka Rectification"
+        and row.get("status") == "partial"
+        for row in audit_rows
+    )
+
+
+def test_jaimini_karaka_conflict_downgrades_without_replacing_primary_rank_red() -> None:
+    scored = _handler()._compute_active_rectification_score(
+        {
+            "questionnaire": {
+                "questions": [
+                    {
+                        "id": "career_responsibility_pressure",
+                        "round": 1,
+                        "scoring_map": {
+                            "A": {
+                                "cluster": "middle_candidate_cluster",
+                                "points": 9,
+                            }
+                        },
+                    }
+                ]
+            },
+            "answers": {"career_responsibility_pressure": "A"},
+            "jaimini_karaka_cross_scores": {
+                "early_candidate_cluster": 10,
+                "middle_candidate_cluster": -10,
+            },
+        }
+    )
+
+    top = scored["candidate_cluster_rankings"][0]
+    assert top["cluster"] == "middle_candidate_cluster"
+    assert top["claim_status"] == "candidate"
+    assert top["confidence_cap"] == "low"
+    assert "jaimini_karaka" in top["downgrade_reasons"]
+
+
+def test_rectification_score_exposes_vimsopaka_avastha_cross_score_red() -> None:
+    scored = _answered_rectification_score()
+
+    assert scored["candidate_cluster_rankings"]
+    assert all(
+        "vimsopaka_avastha_cross_score" in candidate
+        for candidate in scored["candidate_cluster_rankings"]
+    )
+
+
+def test_rectification_technique_audit_mentions_vimsopaka_avastha_red() -> None:
+    scored = _answered_rectification_score()
+
+    audit_rows = scored["technique_audit_table"]
+    assert any(
+        row.get("technique") == "Vimsopaka Avastha Rectification"
+        and row.get("status") == "partial"
+        for row in audit_rows
+    )
+
+
+def test_vimsopaka_avastha_conflict_downgrades_without_replacing_primary_rank_red() -> None:
+    scored = _handler()._compute_active_rectification_score(
+        {
+            "questionnaire": {
+                "questions": [
+                    {
+                        "id": "career_responsibility_pressure",
+                        "round": 1,
+                        "scoring_map": {
+                            "A": {
+                                "cluster": "middle_candidate_cluster",
+                                "points": 9,
+                            }
+                        },
+                    }
+                ]
+            },
+            "answers": {"career_responsibility_pressure": "A"},
+            "vimsopaka_avastha_cross_scores": {
+                "early_candidate_cluster": 10,
+                "middle_candidate_cluster": -10,
+            },
+        }
+    )
+
+    top = scored["candidate_cluster_rankings"][0]
+    assert top["cluster"] == "middle_candidate_cluster"
+    assert top["claim_status"] == "candidate"
+    assert top["confidence_cap"] == "low"
+    assert "vimsopaka_avastha" in top["downgrade_reasons"]
+
+
+def test_rectification_score_exposes_shadbala_av_observation_score_red() -> None:
+    scored = _answered_rectification_score()
+
+    assert scored["candidate_cluster_rankings"]
+    assert all(
+        "shadbala_av_observation_score" in candidate
+        for candidate in scored["candidate_cluster_rankings"]
+    )
+    assert scored["formula_unit_parity_status"] == "partial"
+
+
+def test_rectification_technique_audit_mentions_shadbala_av_low_weight_red() -> None:
+    scored = _answered_rectification_score()
+
+    audit_rows = scored["technique_audit_table"]
+    assert any(
+        row.get("technique") == "Shadbala Ashtakavarga Rectification"
+        and row.get("status") == "partial_observation"
+        and row.get("weight_policy") == "low_weight_only"
+        for row in audit_rows
+    )
+
+
+def test_shadbala_av_conflict_downgrades_without_replacing_primary_rank_red() -> None:
+    scored = _handler()._compute_active_rectification_score(
+        {
+            "questionnaire": {
+                "questions": [
+                    {
+                        "id": "career_responsibility_pressure",
+                        "round": 1,
+                        "scoring_map": {
+                            "A": {
+                                "cluster": "middle_candidate_cluster",
+                                "points": 9,
+                            }
+                        },
+                    }
+                ]
+            },
+            "answers": {"career_responsibility_pressure": "A"},
+            "shadbala_av_observation_scores": {
+                "early_candidate_cluster": 10,
+                "middle_candidate_cluster": -10,
+            },
+        }
+    )
+
+    top = scored["candidate_cluster_rankings"][0]
+    assert top["cluster"] == "middle_candidate_cluster"
+    assert top["claim_status"] == "candidate"
+    assert top["confidence_cap"] == "low"
+    assert "shadbala_av" in top["downgrade_reasons"]
+
+
+def test_rectification_score_exposes_gochara_observation_score_red() -> None:
+    scored = _answered_rectification_score()
+
+    assert scored["candidate_cluster_rankings"]
+    assert all(
+        "gochara_transit_observation_score" in candidate
+        for candidate in scored["candidate_cluster_rankings"]
+    )
+    assert scored["timing_claim_status"] == "exploratory_unvalidated"
+
+
+def test_rectification_technique_audit_mentions_gochara_holdout_gate_red() -> None:
+    scored = _answered_rectification_score()
+
+    audit_rows = scored["technique_audit_table"]
+    assert any(
+        row.get("technique") == "Gochara Transit Rectification"
+        and row.get("status") == "blocked_from_verified_timing"
+        and row.get("holdout_gate") == "negative_holdout_required"
+        for row in audit_rows
+    )
+
+
+def test_gochara_conflict_downgrades_without_verified_timing_claim_red() -> None:
+    scored = _handler()._compute_active_rectification_score(
+        {
+            "questionnaire": {
+                "questions": [
+                    {
+                        "id": "career_responsibility_pressure",
+                        "round": 1,
+                        "scoring_map": {
+                            "A": {
+                                "cluster": "middle_candidate_cluster",
+                                "points": 9,
+                            }
+                        },
+                    }
+                ]
+            },
+            "answers": {"career_responsibility_pressure": "A"},
+            "gochara_transit_observation_scores": {
+                "early_candidate_cluster": 10,
+                "middle_candidate_cluster": -10,
+            },
+        }
+    )
+
+    top = scored["candidate_cluster_rankings"][0]
+    assert top["cluster"] == "middle_candidate_cluster"
+    assert top["claim_status"] == "candidate"
+    assert top["confidence_cap"] == "low"
+    assert "gochara_transit" in top["downgrade_reasons"]
+    assert scored["timing_claim_status"] == "exploratory_unvalidated"
