@@ -1450,6 +1450,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         endpoint = os.environ.get('VEDASTRO_API_ENDPOINT', '').strip()
         network_flag = os.environ.get('VEDASTRO_ENABLE_NETWORK', '').strip().lower()
         network_enabled = network_flag in {'1', 'true', 'yes'}
+        has_api_key = bool(os.environ.get('VEDASTRO_API_KEY', '').strip())
         parsed = urlparse(endpoint) if endpoint else None
         configured = bool(endpoint)
         if not configured:
@@ -1474,6 +1475,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'status': status,
             'configured': configured,
             'network_enabled': network_enabled,
+            'has_api_key': has_api_key,
             'endpoint_host': parsed.netloc if parsed else None,
             'required_env': {
                 'endpoint': 'VEDASTRO_API_ENDPOINT',
@@ -1538,6 +1540,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'ayanamsa_default': 'lahiri',
                     'modules': 'Chart/KP/Synastry/Prashna/Remedies/Dasha/Varga/Jaimini/Ashtakavarga/Shadbala/Yoga/Aspects/Tajika/Muhurta/BhavaChalit/BhavaBala/Sudarshana/Nakshatra/Transit/RectificationGate/CaseValidation/DivisionalYoga/Kakshya',
                     'async_job_runtime': async_job_runtime_status(),
+                    'vedastro': self._vedastro_status(),
                 })
             elif path == '/api/cities':
                 self._json(list(CITY_DB.keys()))

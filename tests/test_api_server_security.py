@@ -215,6 +215,10 @@ def test_health_endpoint_exposes_runtime_accuracy_metadata() -> None:
     assert payload['ayanamsa_default'] == 'lahiri'
     assert 'swisseph_available' in payload
     assert 'swisseph_version' in payload
+    assert payload['vedastro']['configured'] is False
+    assert payload['vedastro']['network_enabled'] is False
+    assert payload['vedastro']['has_api_key'] is False
+    assert 'VEDASTRO_API_KEY=' not in json.dumps(payload['vedastro'])
 
 
 def test_vedastro_status_endpoint_exposes_safe_adapter_state(monkeypatch) -> None:
