@@ -22,6 +22,20 @@ export const birthTimeGuideRequestSchema = z.discriminatedUnion("type", [
     turnVersion: turnVersionSchema,
     message: z.string().trim().min(1).max(500),
   }).strict(),
+  z.object({
+    type: z.literal("generate_dynamic_question"),
+    caseId: caseIdSchema,
+    actionId: actionIdSchema,
+    turnVersion: turnVersionSchema,
+  }).strict(),
+  z.object({
+    type: z.literal("reframe_unmatched"),
+    caseId: caseIdSchema,
+    actionId: actionIdSchema,
+    turnVersion: turnVersionSchema,
+    questionId: z.string().uuid(),
+    note: z.string().trim().max(240).default(""),
+  }).strict(),
 ]).readonly();
 
 export type BirthTimeGuideRequest = z.infer<typeof birthTimeGuideRequestSchema>;

@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fallbackQuestionCopy } from "@/lib/birth-time-guide-agent";
 import {
+  answerDynamicBirthTimeChoice,
   confirmBirthTimeEvidenceDraft,
   draftBirthTimeEvidence,
+  finishBirthTimeRectification,
   pauseBirthTimeRectification,
   pollBirthTimeScoring,
-  requestBirthTimeGuidePrompt,
+  reframeUnmatchedBirthTimeAnswer,
   resumeBirthTimeJourney,
   skipBirthTimeEvidenceQuestion,
 } from "@/lib/birth-time-journey-client";
@@ -19,12 +20,11 @@ import {
 } from "@/lib/birth-time-guided-client";
 import { confirmReviewedBirthTimeDraft } from "@/lib/birth-time-guided-draft-confirmation";
 import {
-  createIdentityRequestCache,
+  claimMutation,
   publishCurrentJourney,
-  scheduleCancellableStart,
 } from "@/lib/birth-time-guided-effect-coordinator";
-import { runBirthTimeScoringPoll, scoringPollDelay } from "@/lib/birth-time-guided-polling";
 import type { EvidenceDatePrecision } from "@/lib/birth-time-question-planner";
+import { useBirthTimeAutomaticJourneyEffects } from "@/hooks/use-birth-time-automatic-journey-effects";
 
 type GuidedJourneyInput = {
   readonly journey: JourneyClientResponse | null;
@@ -49,16 +49,11 @@ export type BirthTimeGuidedController = {
   readonly retryScoring: () => void;
   readonly saveCandidate: (resultId: string) => void;
   readonly confirmCandidate: (resultId: string, time: string) => void;
+  readonly selectOption: (optionId: string) => void;
+  readonly submitUnmatchedContext: (note: string) => void;
+  readonly finish: () => void;
+  readonly retryQuestionGeneration: () => void;
 };
-
-const guidePromptRequests = createIdentityRequestCache<Awaited<ReturnType<typeof requestBirthTimeGuidePrompt>>>();
-
-function questionFrom(turn: JourneyClientResponse): string {
-  const action = turn.nextAction;
-  return action.kind === "ask_baseline_evidence" || action.kind === "ask_adaptive_evidence"
-    ? fallbackQuestionCopy(action.question)
-    : "";
-}
 
 export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeGuidedController {
   const { journey, onJourney, onReady, onEditBirthTimeDetails, preview } = input;
@@ -66,8 +61,8 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
   const busy = useRef(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [agentQuestion, setAgentQuestion] = useState<{ readonly key: string; readonly text: string } | null>(null);
   const [pollRun, setPollRun] = useState(0);
+  const [generationRun, setGenerationRun] = useState(0);
 
   useEffect(() => {
     latest.current = journey;
@@ -78,9 +73,10 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     publishIntermediate: (turn: JourneyClientResponse) => void,
   ) => Promise<JourneyClientResponse>) => {
     const current = journey;
-    if (!current || busy.current) return;
+    if (!current) return;
+    const release = claimMutation(busy);
+    if (release === null) return;
     let expected = current;
-    busy.current = true;
     setPending(true);
     setError("");
     const publishIntermediate = (turn: JourneyClientResponse) => {
@@ -104,73 +100,21 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     }).catch((caught: unknown) => {
       setError(caught instanceof Error ? caught.message : "当前步骤暂时无法完成，请重试。");
     }).finally(() => {
-      busy.current = false;
+      release();
       setPending(false);
     });
   }, [journey, onJourney]);
 
   const actionId = () => globalThis.crypto.randomUUID();
-
-  useEffect(() => {
-    const turn = journey;
-    if (!turn) return;
-    const action = turn.nextAction;
-    if (action.kind !== "ask_baseline_evidence" && action.kind !== "ask_adaptive_evidence") return;
-    const key = `${turn.caseId}:${turn.turnVersion}:${action.question.questionId}`;
-    if (preview) return;
-    let active = true;
-    void guidePromptRequests.run(key, () => requestBirthTimeGuidePrompt(turn.caseId)).then((response) => {
-      if (active && response.turnVersion === turn.turnVersion && response.questionId === action.question.questionId) {
-        setAgentQuestion({ key, text: response.question });
-      }
-    }).catch(() => {
-      if (active) setAgentQuestion(null);
-    });
-    return () => { active = false; };
-  }, [journey, preview]);
-
-  const pollIdentity = journey?.nextAction.kind === "score_pending"
-    ? `${journey.caseId}:${journey.turnVersion}:${journey.nextAction.jobId}`
-    : "";
-
-  useEffect(() => {
-    const turn = latest.current;
-    if (!turn || turn.nextAction.kind !== "score_pending" || preview) return;
-    const controller = new AbortController();
-    const jobId = turn.nextAction.jobId;
-    const key = `${turn.caseId}:${turn.turnVersion}:${jobId}`;
-    const cancelStart = scheduleCancellableStart(() => {
-      void runBirthTimeScoringPoll({
-        initial: turn,
-        maxAttempts: 7,
-        signal: controller.signal,
-        delay: scoringPollDelay,
-        poll: () => pollBirthTimeScoring(turn.caseId, jobId, controller.signal),
-      }).then((result) => {
-        const current = latest.current;
-        const currentKey = current?.nextAction.kind === "score_pending"
-          ? `${current.caseId}:${current.turnVersion}:${current.nextAction.jobId}`
-          : "";
-        if (controller.signal.aborted || currentKey !== key) return;
-        onJourney(result.turn);
-        latest.current = result.turn;
-        if (result.kind === "exhausted") setError("评分仍在进行。你可以稍后继续，或重新检查状态。");
-      }).catch((caught: unknown) => {
-        if (!controller.signal.aborted) {
-          setError(caught instanceof Error ? caught.message : "暂时无法读取评分进度，请稍后重试。");
-        }
-      });
-    });
-    return () => {
-      cancelStart();
-      controller.abort();
-    };
-  }, [
-    pollIdentity,
-    onJourney,
+  const question = useBirthTimeAutomaticJourneyEffects({
+    journey,
+    latest,
     preview,
     pollRun,
-  ]);
+    generationRun,
+    onJourney,
+    setError,
+  });
 
   const submitMessage = (message: string) => operate((turn) => {
     if (preview) return Promise.resolve(turn);
@@ -211,15 +155,42 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
   };
   const saveCandidate = (resultId: string) => operate((turn) => preview ? Promise.resolve(turn) : saveGuidedBirthTimeCandidate({ caseId: turn.caseId, actionId: actionId(), turnVersion: turn.turnVersion, resultId }));
   const confirmCandidate = (resultId: string, time: string) => operate((turn) => preview ? Promise.resolve(turn) : confirmGuidedBirthTimeCandidate({ caseId: turn.caseId, actionId: actionId(), turnVersion: turn.turnVersion, resultId, time }));
+  const selectOption = (optionId: string) => operate((turn) => {
+    if (preview || turn.journeyProtocol !== "dynamic-choice-v2"
+      || turn.nextAction.kind !== "ask_dynamic_choice") return Promise.resolve(turn);
+    return answerDynamicBirthTimeChoice({
+      caseId: turn.caseId,
+      actionId: actionId(),
+      turnVersion: turn.turnVersion,
+      questionId: turn.nextAction.question.questionId,
+      optionId,
+    });
+  });
+  const submitUnmatchedContext = (note: string) => operate((turn) => {
+    if (preview || turn.journeyProtocol !== "dynamic-choice-v2"
+      || turn.nextAction.kind !== "clarify_unmatched_answer") return Promise.resolve(turn);
+    return reframeUnmatchedBirthTimeAnswer({
+      caseId: turn.caseId,
+      actionId: actionId(),
+      turnVersion: turn.turnVersion,
+      questionId: turn.nextAction.questionId,
+      note,
+    });
+  });
+  const finish = () => operate((turn) => preview
+    ? Promise.resolve(turn)
+    : finishBirthTimeRectification(turn.caseId, actionId(), turn.turnVersion));
+  const retryQuestionGeneration = () => {
+    if (journey?.journeyProtocol !== "dynamic-choice-v2") return;
+    if (journey.nextAction.kind !== "generate_dynamic_question"
+      && journey.nextAction.kind !== "retry_question_generation") return;
+    setError("");
+    setGenerationRun((value) => value + 1);
+  };
 
-  const turn = journey;
-  const fallback = turn ? questionFrom(turn) : "";
-  const action = turn?.nextAction;
-  const key = turn && (action?.kind === "ask_baseline_evidence" || action?.kind === "ask_adaptive_evidence")
-    ? `${turn.caseId}:${turn.turnVersion}:${action.question.questionId}`
-    : "";
+  const action = journey?.nextAction;
   return {
-    question: agentQuestion?.key === key ? agentQuestion.text : fallback,
+    question,
     pending,
     error,
     pollRecoverable: Boolean(error) && action?.kind === "score_pending",
@@ -233,5 +204,9 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     retryScoring,
     saveCandidate,
     confirmCandidate,
+    selectOption,
+    submitUnmatchedContext,
+    finish,
+    retryQuestionGeneration,
   };
 }

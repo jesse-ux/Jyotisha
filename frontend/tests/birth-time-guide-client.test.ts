@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   draftBirthTimeEvidence,
+  generateDynamicBirthTimeQuestion,
+  reframeUnmatchedBirthTimeAnswer,
   requestBirthTimeGuidePrompt,
 } from "../src/lib/birth-time-journey-client.ts";
 import { highConfirmationTurn } from "./birth-time-journey-client-test-support.ts";
@@ -93,4 +95,36 @@ test("guide client rejects raw model metadata and malformed nested turns", async
   }), { status: 200, headers: { "content-type": "application/json" } }));
 
   await assert.rejects(requestBirthTimeGuidePrompt(caseId));
+});
+
+test("dynamic guide commands send only public coordination fields", async (context) => {
+  const payloads: unknown[] = [];
+  context.mock.method(globalThis, "fetch", async (
+    _input: string | URL | Request,
+    init?: RequestInit,
+  ) => {
+    payloads.push(JSON.parse(String(init?.body)));
+    return new Response(JSON.stringify(highConfirmationTurn), { status: 200 });
+  });
+
+  await generateDynamicBirthTimeQuestion(caseId, actionId, 4);
+  await reframeUnmatchedBirthTimeAnswer({
+    caseId,
+    actionId,
+    turnVersion: 5,
+    questionId: "11111111-1111-4111-8111-111111111111",
+    note: "  时间更早  ",
+  });
+
+  assert.deepEqual(payloads, [
+    { type: "generate_dynamic_question", caseId, actionId, turnVersion: 4 },
+    {
+      type: "reframe_unmatched",
+      caseId,
+      actionId,
+      turnVersion: 5,
+      questionId: "11111111-1111-4111-8111-111111111111",
+      note: "时间更早",
+    },
+  ]);
 });

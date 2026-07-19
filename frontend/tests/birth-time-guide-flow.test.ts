@@ -9,6 +9,7 @@ const turnSource = read("../src/components/birth-time-guide-turn.tsx");
 const draftSource = read("../src/components/birth-time-evidence-draft-card.tsx");
 const candidateSource = read("../src/components/birth-time-candidate-result.tsx");
 const hookSource = read("../src/hooks/use-birth-time-guided-journey.ts");
+const automaticEffectsSource = read("../src/hooks/use-birth-time-automatic-journey-effects.ts");
 
 test("guided rectification renders exactly the persisted action, never a questionnaire slice", () => {
   assert.match(rectificationSource, /journey\.nextAction/);
@@ -36,12 +37,12 @@ test("draft review is explicit, domain locked, and incomplete confirmation stays
 });
 
 test("guided orchestration owns fallback copy, unique actions, polling, and retry", () => {
-  assert.match(hookSource, /fallbackQuestionCopy/);
-  assert.match(hookSource, /requestBirthTimeGuidePrompt/);
-  assert.match(hookSource, /crypto\.randomUUID\(\)/);
-  assert.match(hookSource, /runBirthTimeScoringPoll/);
+  assert.match(automaticEffectsSource, /fallbackQuestionCopy/);
+  assert.match(automaticEffectsSource, /requestBirthTimeGuidePrompt/);
+  assert.match(automaticEffectsSource, /crypto\.randomUUID\(\)/);
+  assert.match(automaticEffectsSource, /runBirthTimeScoringPoll/);
   assert.match(hookSource, /retry_scoring/);
-  assert.match(hookSource, /AbortController/);
+  assert.match(automaticEffectsSource, /AbortController/);
 });
 
 test("candidate UI is nextAction-gated and keeps application boundary explicit", () => {

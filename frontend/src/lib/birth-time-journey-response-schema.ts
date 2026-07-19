@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { candidateResultSchema, journeySnapshotSchema, lifeEventSchema } from "./birth-time-journey.ts";
 import { deriveJourneyPermissions, evidenceDraftSchema, journeyPermissionsSchema, journeyProgressSchema, nextActionSchema } from "./birth-time-journey-turn.ts";
+import { dynamicJourneyProgressSchema, dynamicNextActionSchema } from "./birth-time-journey-turn-protocol.ts";
 import type { NextAction } from "./birth-time-journey-turn.ts";
 
 export const answerSchema = z.enum(["A", "B", "C", "D"]);
@@ -69,7 +70,7 @@ function actionMatchesProgress(value: {
 }
 
 const versionedJourneyResponseSchema = z.object({
-  ...responseCore, scoring: versionedScoringSchema.nullable(), answers: z.record(answerSchema).readonly(), lifeEvents: z.array(lifeEventSchema).readonly(), candidateResult: candidateResultSchema.nullable(),
+  ...responseCore, journeyProtocol: z.undefined().optional(), scoring: versionedScoringSchema.nullable(), answers: z.record(answerSchema).readonly(), lifeEvents: z.array(lifeEventSchema).readonly(), candidateResult: candidateResultSchema.nullable(),
   turnVersion: z.number().int().nonnegative(), nextAction: nextActionSchema, progress: journeyProgressSchema, permissions: journeyPermissionsSchema, evidenceDraft: evidenceDraftSchema.nullable(),
 }).strict().superRefine((value, context) => {
   const confirmedTime = value.snapshot.state === "ready" ? value.snapshot.activeTime : null;
@@ -88,9 +89,61 @@ const versionedJourneyResponseSchema = z.object({
   }
 }).readonly();
 
-export type JourneyClientResponse = z.infer<typeof versionedJourneyResponseSchema>;
+function dynamicActionMatchesPhase(value: {
+  readonly nextAction: z.infer<typeof dynamicNextActionSchema>;
+  readonly progress: z.infer<typeof dynamicJourneyProgressSchema>;
+}): boolean {
+  switch (value.nextAction.kind) {
+    case "generate_dynamic_question": case "ask_dynamic_choice": case "retry_question_generation":
+      return value.progress.phase === "question";
+    case "clarify_unmatched_answer": return value.progress.phase === "clarification";
+    case "score_pending": case "retry_scoring": return value.progress.phase === "scoring";
+    case "present_low_result": case "present_medium_result": case "request_candidate_confirmation":
+      return value.progress.phase === "result";
+    case "ready": return value.progress.phase === "ready";
+    case "paused": return value.progress.phase === "paused";
+    default: return assertNever(value.nextAction);
+  }
+}
+
+const dynamicJourneyResponseSchema = z.object({
+  ...responseCore,
+  scoring: versionedScoringSchema.nullable(),
+  answers: z.record(answerSchema).readonly(),
+  lifeEvents: z.array(lifeEventSchema).readonly(),
+  candidateResult: candidateResultSchema.nullable(),
+  journeyProtocol: z.literal("dynamic-choice-v2"),
+  turnVersion: z.number().int().nonnegative(),
+  nextAction: dynamicNextActionSchema,
+  progress: dynamicJourneyProgressSchema,
+  permissions: journeyPermissionsSchema,
+  evidenceDraft: z.null(),
+}).strict().superRefine((value, context) => {
+  if (!dynamicActionMatchesPhase(value)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["progress", "phase"], message: "dynamic action must agree with progress" });
+  }
+  const action = value.nextAction;
+  const candidateId = value.candidateResult?.resultId ?? null;
+  if (action.kind === "present_low_result" && action.resultId !== candidateId) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["nextAction", "resultId"], message: "low result must reference the current candidate" });
+  }
+  if ((action.kind === "present_medium_result" || action.kind === "request_candidate_confirmation")
+    && action.resultId !== candidateId) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["nextAction", "resultId"], message: "result action must reference the current candidate" });
+  }
+  if (action.kind === "ready" && (value.snapshot.state !== "ready" || value.snapshot.activeTime !== action.activeTime)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["nextAction", "activeTime"], message: "ready must match the active snapshot" });
+  }
+}).readonly();
+
+export type LegacyJourneyClientResponse = z.infer<typeof versionedJourneyResponseSchema>;
+export type DynamicJourneyClientResponse = z.infer<typeof dynamicJourneyResponseSchema>;
+export type JourneyClientResponse = LegacyJourneyClientResponse | DynamicJourneyClientResponse;
 export type JourneyAnswer = z.infer<typeof answerSchema>;
 
 export function parseVersionedJourneyResponse(value: unknown): JourneyClientResponse {
-  return versionedJourneyResponseSchema.parse(value);
+  const protocol = z.object({ journeyProtocol: z.unknown().optional() }).passthrough().parse(value);
+  return protocol.journeyProtocol === "dynamic-choice-v2"
+    ? dynamicJourneyResponseSchema.parse(value)
+    : versionedJourneyResponseSchema.parse(value);
 }

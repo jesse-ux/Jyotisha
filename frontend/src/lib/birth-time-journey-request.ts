@@ -10,6 +10,11 @@ const mutationFields = {
   turnVersion: turnVersionSchema,
 } as const;
 const revisionValidationId = "00000000-0000-4000-8000-000000000000";
+const publicChoiceFields = {
+  ...mutationFields,
+  questionId: z.string().uuid(),
+  optionId: z.string().uuid(),
+} as const;
 
 export const birthTimeJourneyRequestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("assess") }).strict(),
@@ -49,6 +54,7 @@ export const birthTimeJourneyRequestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("skip_evidence_question"), ...mutationFields }).strict(),
   z.object({ type: z.literal("pause_rectification"), ...mutationFields }).strict(),
   z.object({ type: z.literal("finish_rectification"), ...mutationFields }).strict(),
+  z.object({ type: z.literal("answer_dynamic_choice"), ...publicChoiceFields }).strict(),
   z.object({
     type: z.literal("revise_evidence_draft"),
     ...mutationFields,

@@ -6,6 +6,9 @@ import {
   createBirthTimeGuideService,
 } from "@/lib/birth-time-guide-service";
 import { BirthTimeJourneyActionError, createJourneyTurnActions } from "@/lib/birth-time-journey-actions";
+import { BirthTimeDynamicActionError } from "@/lib/birth-time-dynamic-actions";
+import { BirthTimeJourneyEngineError, createJyotishBirthTimeJourneyEngine } from "@/lib/birth-time-journey-engine";
+import { createBirthTimeJourneyService } from "@/lib/birth-time-journey-service";
 import {
   BirthTimeJourneyStoreError,
   createSupabaseBirthTimeJourneyStore,
@@ -64,6 +67,10 @@ export async function POST(request: Request) {
 
   const store = createSupabaseBirthTimeJourneyStore(createAdminSupabaseClient());
   const actions = createJourneyTurnActions({ store });
+  const journey = createBirthTimeJourneyService({
+    store,
+    engine: createJyotishBirthTimeJourneyEngine(),
+  });
   const model = defaultLanguageModel();
   const generator = model
     ? {
@@ -79,6 +86,15 @@ export async function POST(request: Request) {
     generator,
     loadCase: store.loadCase,
     proposeEvidenceDraft: actions.proposeEvidenceDraft,
+    loadDynamicQuestionBuild: journey.generateDynamicQuestion,
+    commitDynamicQuestion: async (userId, command, question) => {
+      const committed = await journey.commitDynamicQuestion(userId, command, question);
+      const action = committed.nextAction;
+      if (action.kind !== "ask_dynamic_choice" && action.kind !== "present_low_result") {
+        throw new BirthTimeDynamicActionError("invalid_turn");
+      }
+      return { nextAction: action };
+    },
   });
 
   try {
@@ -90,6 +106,34 @@ export async function POST(request: Request) {
       case "draft_evidence": {
         const response = await guide.draftEvidence(user.id, parsed.data);
         recordJourneyTransitionMetric(response.turn, "turn_advanced");
+        return NextResponse.json(response);
+      }
+      case "generate_dynamic_question": {
+        const current = await store.loadCase(user.id, parsed.data.caseId);
+        const receipt = current?.journeyProtocol === "dynamic-choice-v2"
+          ? current.dynamicControl.lastActionReceipt
+          : null;
+        if (receipt?.kind === "commit_question"
+          && receipt.actionId === parsed.data.actionId.toLowerCase()
+          && receipt.turnVersion === parsed.data.turnVersion) {
+          return NextResponse.json(await journey.resume(user.id, parsed.data.caseId));
+        }
+        await guide.generateQuestion(user.id, { ...parsed.data, unmatchedNote: null });
+        return NextResponse.json(await journey.resume(user.id, parsed.data.caseId));
+      }
+      case "reframe_unmatched": {
+        const current = await store.loadCase(user.id, parsed.data.caseId);
+        const receipt = current?.journeyProtocol === "dynamic-choice-v2"
+          ? current.dynamicControl.lastActionReceipt
+          : null;
+        if (receipt?.kind === "unmatched_context"
+          && receipt.actionId === parsed.data.actionId.toLowerCase()
+          && receipt.turnVersion === parsed.data.turnVersion
+          && receipt.questionId === parsed.data.questionId
+          && receipt.note === parsed.data.note) {
+          return NextResponse.json(await journey.resume(user.id, parsed.data.caseId));
+        }
+        const response = await journey.submitUnmatchedContext(user.id, parsed.data);
         return NextResponse.json(response);
       }
       default: {
@@ -104,20 +148,25 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    if (error instanceof BirthTimeGuideActionError) {
+    if (error instanceof BirthTimeGuideActionError
+      || (error instanceof BirthTimeDynamicActionError && error.reason !== "unavailable")) {
       const status = error.reason === "case_not_found" ? 404 : 409;
       return NextResponse.json(
         { error: "当前步骤不可用", message: "请刷新并使用最新的生时校正步骤。" },
         { status },
       );
     }
-    if (error instanceof StaleJourneyTurnError || error instanceof BirthTimeJourneyActionError) {
+    if (error instanceof StaleJourneyTurnError
+      || error instanceof BirthTimeJourneyActionError
+      || (error instanceof BirthTimeDynamicActionError && error.reason !== "unavailable")) {
       return NextResponse.json(
         { error: "校正状态已更新", message: "请使用最新问题或草稿后重试。" },
         { status: 409 },
       );
     }
-    if (error instanceof BirthTimeJourneyStoreError) {
+    if (error instanceof BirthTimeJourneyStoreError
+      || error instanceof BirthTimeJourneyEngineError
+      || (error instanceof BirthTimeDynamicActionError && error.reason === "unavailable")) {
       return NextResponse.json(
         { error: "生时引导暂时不可用", message: "当前资料已保留，请稍后重试。" },
         { status: 503 },

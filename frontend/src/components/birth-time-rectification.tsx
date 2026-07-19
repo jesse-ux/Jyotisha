@@ -8,6 +8,7 @@ import { assistantIntentCopy } from "@/lib/birth-time-intake-model";
 import type { JourneyClientResponse } from "@/lib/birth-time-journey-client";
 import { guidedTurnIdentity } from "@/lib/birth-time-guided-turn-identity";
 import type { NextAction } from "@/lib/birth-time-journey-turn";
+import type { DynamicNextAction } from "@/lib/birth-time-journey-turn-protocol";
 
 type BirthTimeRectificationProps = {
   readonly journey: JourneyClientResponse;
@@ -35,7 +36,43 @@ function actionHeading(action: NextAction): { readonly title: string; readonly b
   }
 }
 
+function dynamicStatus(action: DynamicNextAction): string {
+  switch (action.kind) {
+    case "generate_dynamic_question": return "正在准备下一道候选区分问题…";
+    case "retry_question_generation": return "问题暂时未能生成，可以重试当前步骤。";
+    case "ask_dynamic_choice": return action.question.prompt;
+    case "clarify_unmatched_answer": return "可以补充一句，再换一道更合适的问题。";
+    case "score_pending": return "正在根据刚才的选择缩小候选范围…";
+    case "retry_scoring": return "评分暂时未完成，可以重试同一任务。";
+    case "present_low_result": return "本次评估已结束并保存当前候选范围。";
+    case "present_medium_result": return "已形成较窄候选范围，本次评估已结束。";
+    case "request_candidate_confirmation": return "请确认是否使用当前候选时间。";
+    case "ready": return `当前排盘使用时间已更新为 ${action.activeTime}。`;
+    case "paused": return "当前问题和候选范围已保存。";
+    default: {
+      const exhaustive: never = action;
+      return exhaustive;
+    }
+  }
+}
+
 export function BirthTimeRectification(props: BirthTimeRectificationProps) {
+  if (props.journey.journeyProtocol === "dynamic-choice-v2") {
+    const generationFailed = Boolean(props.controller.error || props.externalError)
+      && (props.journey.nextAction.kind === "generate_dynamic_question"
+        || props.journey.nextAction.kind === "retry_question_generation");
+    return (
+      <section className="birth-time-rectification onboarding-card" aria-labelledby="birth-time-assessment-title">
+        <div className="birth-time-assessment-heading">
+          <div><span>出生时间评估</span><h2 id="birth-time-assessment-title">动态候选评估</h2></div>
+          <span className="birth-time-status-badge">动态评估</span>
+        </div>
+        <p className="birth-time-assistant-intent" role="status">{dynamicStatus(props.journey.nextAction)}</p>
+        {generationFailed && <button className="button-secondary birth-time-guided-action" type="button" onClick={props.controller.retryQuestionGeneration}>重试当前问题</button>}
+        {(props.controller.error || props.externalError) && <p className="form-error" role="alert">{props.controller.error || props.externalError}</p>}
+      </section>
+    );
+  }
   const action = props.journey.nextAction;
   const heading = actionHeading(action);
   const asksQuestion = action.kind === "ask_baseline_evidence" || action.kind === "ask_adaptive_evidence";

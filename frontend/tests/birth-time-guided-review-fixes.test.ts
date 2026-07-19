@@ -72,6 +72,21 @@ test("request identity cache and scheduled polling deduplicate Strict Mode start
   assert.equal(starts, 1);
 });
 
+test("a failed generation identity remains retryable", async () => {
+  const cache = createIdentityRequestCache<number>();
+  let attempts = 0;
+  await assert.rejects(cache.run("case:4", async () => {
+    attempts += 1;
+    throw new TypeError("offline");
+  }));
+
+  assert.equal(await cache.run("case:4", async () => {
+    attempts += 1;
+    return 8;
+  }), 8);
+  assert.equal(attempts, 2);
+});
+
 test("a resolved mutation cannot publish over a changed case or version", () => {
   const expected = guidedBirthTimePreview("birth-time-rectification");
   const current = parseJourneyResponse({ ...expected, turnVersion: expected.turnVersion + 1 });

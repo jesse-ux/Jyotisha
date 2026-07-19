@@ -8,6 +8,9 @@ export function createIdentityRequestCache<T>() {
       if (existing) return existing;
       const request = load();
       requests.set(identity, request);
+      void request.catch(() => {
+        if (requests.get(identity) === request) requests.delete(identity);
+      });
       return request;
     },
   };
@@ -32,4 +35,10 @@ export function publishCurrentJourney(input: PublishCurrentJourneyInput): boolea
   ) return false;
   input.publish(input.next);
   return true;
+}
+
+export function claimMutation(gate: { current: boolean }): (() => void) | null {
+  if (gate.current) return null;
+  gate.current = true;
+  return () => { gate.current = false; };
 }

@@ -135,6 +135,16 @@ export function pollBirthTimeScoring(caseId: string, jobId: string, signal?: Abo
   return sendJourneyEvent({ type: "poll_scoring", caseId, jobId }, signal);
 }
 
+export function answerDynamicBirthTimeChoice(input: {
+  readonly caseId: string;
+  readonly actionId: string;
+  readonly turnVersion: number;
+  readonly questionId: string;
+  readonly optionId: string;
+}) {
+  return sendJourneyEvent({ type: "answer_dynamic_choice", ...input });
+}
+
 export function submitBirthTimeLifeEvents(caseId: string, events: readonly LifeEvent[]) {
   return sendJourneyEvent({ type: "submit_life_events", caseId, events });
 }
@@ -209,4 +219,28 @@ export async function draftBirthTimeEvidence(
   });
   const envelope = guideDraftEnvelopeSchema.parse(payload);
   return { ...envelope, turn: parseJourneyResponse(envelope.turn) };
+}
+
+export async function generateDynamicBirthTimeQuestion(
+  caseId: string,
+  actionId: string,
+  turnVersion: number,
+) {
+  const payload = await sendGuideEvent({
+    type: "generate_dynamic_question",
+    caseId,
+    actionId,
+    turnVersion,
+  });
+  return parseJourneyResponse(payload);
+}
+
+export async function reframeUnmatchedBirthTimeAnswer(input: {
+  readonly caseId: string;
+  readonly actionId: string;
+  readonly turnVersion: number;
+  readonly questionId: string;
+  readonly note: string;
+}) {
+  return parseJourneyResponse(await sendGuideEvent({ type: "reframe_unmatched", ...input }));
 }
