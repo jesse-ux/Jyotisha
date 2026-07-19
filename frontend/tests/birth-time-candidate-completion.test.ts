@@ -19,6 +19,22 @@ const terminalCase = {
   },
 };
 
+const lowTerminalCase = {
+  ...terminalCase,
+  status: "rectifying",
+  candidate_result: {
+    ...terminalCase.candidate_result,
+    confidence: "low",
+  },
+  turn_state: {
+    ...terminalCase.turn_state,
+    nextAction: {
+      kind: "present_low_result",
+      resultId: terminalCase.candidate_result_id,
+    },
+  },
+};
+
 test("candidate completion only accepts the persisted terminal representative time", () => {
   assert.equal(candidateWorkingTime(terminalCase, {
     caseId: terminalCase.id,
@@ -30,6 +46,31 @@ test("candidate completion only accepts the persisted terminal representative ti
     caseId: terminalCase.id,
     resultId: terminalCase.candidate_result_id,
     time: "04:54",
+  }), null);
+});
+
+test("accepts a matching low-confidence result from the rectifying state", () => {
+  assert.equal(candidateWorkingTime(lowTerminalCase, {
+    caseId: terminalCase.id,
+    resultId: terminalCase.candidate_result_id,
+    time: "04:53",
+  }), "04:53");
+});
+
+test("does not accept a medium terminal action from the rectifying state", () => {
+  assert.equal(candidateWorkingTime({
+    ...lowTerminalCase,
+    turn_state: {
+      ...lowTerminalCase.turn_state,
+      nextAction: {
+        kind: "present_medium_result",
+        resultId: terminalCase.candidate_result_id,
+      },
+    },
+  }, {
+    caseId: terminalCase.id,
+    resultId: terminalCase.candidate_result_id,
+    time: "04:53",
   }), null);
 });
 
