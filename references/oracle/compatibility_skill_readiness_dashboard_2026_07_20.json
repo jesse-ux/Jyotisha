@@ -1,0 +1,159 @@
+{
+  "scope": "compatibility_skill_readiness_dashboard",
+  "created_at": "2026-07-20",
+  "status": "dashboard_v1",
+  "claim_status": "partial",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "summary": {
+    "layer_count": 9,
+    "runtime_available_count": 5,
+    "blocked_or_registry_only_count": 4,
+    "oracle_ready_count": 0
+  },
+  "skill_use_policy": {
+    "allowed": "Expose basic compatibility factors and relationship context with explicit low/partial evidence boundaries.",
+    "forbidden": "Do not present any layer as deterministic marriage success, divorce prediction, exact relationship timing, or complete synastry truth."
+  },
+  "layers": [
+    {
+      "layer_id": "ashtakoota_guna_milan",
+      "name": "Ashtakoota / Guna Milan",
+      "runtime_status": "available",
+      "runtime_path": "scripts/ashtakoot.py",
+      "runtime_path_exists": true,
+      "skill_status": "callable_basic",
+      "api_ui_status": "surface_audit_needed",
+      "external_oracle_status": "partial",
+      "commercial_sync_status": "basic_safe_with_boundary",
+      "evidence_paths": [
+        "scripts/ashtakoot.py",
+        "references/oracle/ashtakoot_oracle_cases.json",
+        "scripts/synastry.py"
+      ],
+      "claim_boundary": "36-point compatibility can be exposed as one factor only; not deterministic marriage outcome."
+    },
+    {
+      "layer_id": "mangal_dosha",
+      "name": "Mangal / Kuja Dosha matching",
+      "runtime_status": "available",
+      "runtime_path": "scripts/ashtakoot.py",
+      "runtime_path_exists": true,
+      "skill_status": "callable_basic",
+      "api_ui_status": "surface_audit_needed",
+      "external_oracle_status": "partial",
+      "commercial_sync_status": "basic_safe_with_boundary",
+      "evidence_paths": [
+        "scripts/ashtakoot.py"
+      ],
+      "claim_boundary": "Use as risk flag and cancellation check; never as standalone rejection verdict."
+    },
+    {
+      "layer_id": "d9_navamsa_relationship",
+      "name": "D9 Navamsa relationship layer",
+      "runtime_status": "available",
+      "runtime_path": "scripts/relationship_analysis.py",
+      "runtime_path_exists": true,
+      "skill_status": "callable_context",
+      "api_ui_status": "surface_audit_needed",
+      "external_oracle_status": "partial",
+      "commercial_sync_status": "safe_as_context",
+      "evidence_paths": [
+        "scripts/relationship_analysis.py",
+        "references/navamsa-marriage-deep-analysis.md"
+      ],
+      "claim_boundary": "D9 can support relationship analysis; timing/outcome claims still require Dasha, transits, and external calibration."
+    },
+    {
+      "layer_id": "darakaraka",
+      "name": "Darakaraka spouse significator",
+      "runtime_status": "available",
+      "runtime_path": "scripts/darakaraka_reader.py",
+      "runtime_path_exists": true,
+      "skill_status": "callable_context",
+      "api_ui_status": "surface_audit_needed",
+      "external_oracle_status": "source_reference_only",
+      "commercial_sync_status": "safe_as_context",
+      "evidence_paths": [
+        "scripts/darakaraka_reader.py",
+        "references/darakaraka-complete-guide.md"
+      ],
+      "claim_boundary": "May describe spouse/relationship themes; not a compatibility score or event proof."
+    },
+    {
+      "layer_id": "upapada_lagna",
+      "name": "Upapada Lagna marriage image",
+      "runtime_status": "available_as_chart_field",
+      "runtime_path": "jyotish-app/analysis-deep.js",
+      "runtime_path_exists": true,
+      "skill_status": "callable_context",
+      "api_ui_status": "surface_audit_needed",
+      "external_oracle_status": "source_reference_only",
+      "commercial_sync_status": "safe_as_context",
+      "evidence_paths": [
+        "jyotish-app/analysis-deep.js",
+        "references/data-bridge-mapping.md",
+        "references/jaimini-complete-system.md"
+      ],
+      "claim_boundary": "UL is a relationship image layer; must not replace full chart, D9, Dasha, or event evidence."
+    },
+    {
+      "layer_id": "relationship_combinations",
+      "name": "Relationship rule-family combinations",
+      "runtime_status": "registry_only",
+      "runtime_path": null,
+      "runtime_path_exists": false,
+      "skill_status": "contract_only",
+      "api_ui_status": "no_runtime_surface",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "research_only",
+      "evidence_paths": [
+        "references/oracle/relationship_combinations_rule_family_registry_2026_07_19.json"
+      ],
+      "claim_boundary": "Indexed rule families still need source packets, deduplication, tests, and claim gates before runtime use."
+    },
+    {
+      "layer_id": "relationship_ashtakavarga_overlay",
+      "name": "Relationship Ashtakavarga overlay",
+      "runtime_status": "missing_runtime",
+      "runtime_path": null,
+      "runtime_path_exists": false,
+      "skill_status": "not_invoked",
+      "api_ui_status": "no_runtime_surface",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "evidence_paths": [
+        "references/oracle/ashtakavarga_advanced_usage_gap_registry_2026_07_19.json"
+      ],
+      "claim_boundary": "Do not expose relationship AV overlay until rules, examples, and field-level oracle packets exist."
+    },
+    {
+      "layer_id": "planet_lagna_kuta",
+      "name": "Planet/Lagna Kuta variants",
+      "runtime_status": "registry_only",
+      "runtime_path": null,
+      "runtime_path_exists": false,
+      "skill_status": "not_invoked",
+      "api_ui_status": "no_runtime_surface",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "evidence_paths": [
+        "references/oracle/compatibility_full_system_gap_registry_2026_07_19.json"
+      ],
+      "claim_boundary": "Do not claim full top-tier compatibility until Planet/Lagna Kuta variants and worked examples are validated."
+    },
+    {
+      "layer_id": "western_composite_davidson_boundary",
+      "name": "Western composite / Davidson boundary",
+      "runtime_status": "out_of_scope",
+      "runtime_path": null,
+      "runtime_path_exists": false,
+      "skill_status": "not_invoked",
+      "api_ui_status": "no_vedic_surface",
+      "external_oracle_status": "not_applicable_vedic_core",
+      "commercial_sync_status": "out_of_scope_for_vedic_core",
+      "evidence_paths": [],
+      "claim_boundary": "Keep out of Vedic commercial runtime unless explicitly scoped as cross-system research."
+    }
+  ]
+}

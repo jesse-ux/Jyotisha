@@ -633,14 +633,22 @@
       "claim_status": "open_queue",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Progress dashboard for five blocked-but-code-progressable domains; does not unblock production-ready claims."
+    },
+    {
+      "packet_id": "compatibility_skill_readiness_dashboard",
+      "path": "references/oracle/compatibility_skill_readiness_dashboard_2026_07_20.json",
+      "domain": "compatibility",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Basic compatibility layers are callable with boundaries; full synastry, relationship AV overlays, Planet/Lagna Kuta, and deterministic relationship timing remain blocked until oracle packets close."
     }
   ],
   "production_tuning_allowed": false,
   "scope": "evidence_packet_index",
   "status": "active_index_v1",
   "summary": {
-    "packet_count": 79,
-    "blocked_or_partial_count": 52,
+    "packet_count": 80,
+    "blocked_or_partial_count": 53,
     "human_review_required_count": 2
   }
 }
