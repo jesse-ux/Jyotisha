@@ -147,14 +147,72 @@ export function advanceDynamicBirthTimePreview(
       if (action.kind !== "ask_dynamic_choice") return turn;
       const option = action.question.options.find((item) => item.optionId === command.optionId);
       if (!option) return turn;
+      const answeredCount = turn.progress.answeredCount + 1;
+      const effectiveAnswerCount = turn.progress.effectiveAnswerCount + (option.kind === "primary" ? 1 : 0);
       switch (option.kind) {
-        case "unmatched": return dynamicBirthTimePreview("clarification");
-        case "primary": return dynamicBirthTimePreview("scoring");
-        case "unknown": return response({ nextAction: { kind: "ask_dynamic_choice", question: questions[1] }, phase: "question", answeredCount: 1, turnVersion: 2 });
+        case "unmatched": return response({
+          nextAction: { kind: "clarify_unmatched_answer", questionId: action.question.questionId },
+          phase: "clarification",
+          answeredCount,
+          effectiveAnswerCount,
+          turnVersion: turn.turnVersion + 1,
+        });
+        case "primary": {
+          if (action.question.questionId === questions[0].questionId) {
+            return response({
+              nextAction: { kind: "ask_dynamic_choice", question: questions[1] },
+              phase: "question",
+              answeredCount,
+              effectiveAnswerCount,
+              turnVersion: turn.turnVersion + 1,
+            });
+          }
+          return response({
+            nextAction: { kind: "present_medium_result", resultId },
+            phase: "result",
+            answeredCount,
+            effectiveAnswerCount,
+            candidateResult: candidate,
+            snapshotState: "candidate",
+            turnVersion: turn.turnVersion + 1,
+          });
+        }
+        case "unknown": {
+          if (action.question.questionId === questions[0].questionId) {
+            return response({
+              nextAction: { kind: "ask_dynamic_choice", question: questions[1] },
+              phase: "question",
+              answeredCount,
+              effectiveAnswerCount,
+              turnVersion: turn.turnVersion + 1,
+            });
+          }
+          return response({
+            nextAction: { kind: "present_low_result", resultId: null },
+            phase: "result",
+            answeredCount,
+            effectiveAnswerCount,
+            snapshotState: "candidate",
+            turnVersion: turn.turnVersion + 1,
+          });
+        }
       }
     }
-    case "reframe": return response({ nextAction: { kind: "ask_dynamic_choice", question: questions[1] }, phase: "question", answeredCount: 1, turnVersion: 3 });
-    case "finish": return dynamicBirthTimePreview("low");
+    case "reframe": return response({
+      nextAction: { kind: "ask_dynamic_choice", question: questions[1] },
+      phase: "question",
+      answeredCount: turn.progress.answeredCount,
+      effectiveAnswerCount: turn.progress.effectiveAnswerCount,
+      turnVersion: turn.turnVersion + 1,
+    });
+    case "finish": return response({
+      nextAction: { kind: "present_low_result", resultId: null },
+      phase: "result",
+      answeredCount: turn.progress.answeredCount,
+      effectiveAnswerCount: turn.progress.effectiveAnswerCount,
+      snapshotState: "candidate",
+      turnVersion: turn.turnVersion + 1,
+    });
     case "pause": return dynamicBirthTimePreview("paused");
     case "resume": return dynamicBirthTimePreview("question");
     case "retry_scoring": return dynamicBirthTimePreview("medium");

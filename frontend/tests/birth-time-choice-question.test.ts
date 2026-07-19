@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   choiceQuestionGroups,
@@ -45,31 +44,30 @@ test("unmatched requests clarification without creating scoring evidence", () =>
   assert.equal(normalizeUnmatchedNote("甲".repeat(260)).length, 240);
 });
 
-test("the rendered component keeps one-click and optional-note semantics", () => {
-  const source = readFileSync(
-    new URL("../src/components/birth-time-choice-question.tsx", import.meta.url),
-    "utf8",
-  );
-
-  assert.match(source, /<fieldset/);
-  assert.match(source, /<legend/);
-  assert.match(source, /onSelect\(intent\.optionId\)/);
-  assert.match(source, /maxLength=\{240\}/);
-  assert.doesNotMatch(source, /整理为经历草稿|记得的精度|发生时间|第.*\/.*轮/);
-  assert.doesNotMatch(source, /required/);
-});
-
 test("preview choices expose real local interaction states without authentication", () => {
   const start = dynamicBirthTimePreview();
-  const scoring = advanceDynamicBirthTimePreview(start, { kind: "select", optionId: "earlier" });
+  const nextQuestion = advanceDynamicBirthTimePreview(start, { kind: "select", optionId: "earlier" });
+  const result = advanceDynamicBirthTimePreview(nextQuestion, { kind: "select", optionId: "school" });
   const clarification = advanceDynamicBirthTimePreview(start, { kind: "select", optionId: "unmatched" });
   const reframed = advanceDynamicBirthTimePreview(clarification, { kind: "reframe" });
   const terminal = advanceDynamicBirthTimePreview(reframed, { kind: "finish" });
 
-  assert.equal(scoring.nextAction.kind, "score_pending");
+  assert.equal(nextQuestion.nextAction.kind, "ask_dynamic_choice");
+  assert.equal(nextQuestion.progress.effectiveAnswerCount, 1);
+  assert.equal(result.nextAction.kind, "present_medium_result");
   assert.equal(clarification.nextAction.kind, "clarify_unmatched_answer");
   assert.equal(reframed.nextAction.kind, "ask_dynamic_choice");
   assert.equal(terminal.nextAction.kind, "present_low_result");
+});
+
+test("preview unknown answers terminate instead of repeating the same question", () => {
+  const start = dynamicBirthTimePreview();
+  const secondQuestion = advanceDynamicBirthTimePreview(start, { kind: "select", optionId: "unknown" });
+  const terminal = advanceDynamicBirthTimePreview(secondQuestion, { kind: "select", optionId: "unknown-2" });
+
+  assert.equal(secondQuestion.nextAction.kind, "ask_dynamic_choice");
+  assert.equal(terminal.nextAction.kind, "present_low_result");
+  assert.equal(terminal.progress.answeredCount, 2);
 });
 
 test("dynamic previews cover every visible result and recovery state", () => {

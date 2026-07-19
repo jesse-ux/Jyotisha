@@ -183,6 +183,11 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
   };
   const retryScoring = () => {
     const turn = journey;
+    if (preview && turn?.journeyProtocol === "dynamic-choice-v2"
+      && (turn.nextAction.kind === "score_pending" || turn.nextAction.kind === "retry_scoring")) {
+      operate((current) => Promise.resolve(previewAction(current, { kind: "retry_scoring" })));
+      return;
+    }
     if (turn?.nextAction.kind === "score_pending") {
       setError("");
       setPollRun((value) => value + 1);
