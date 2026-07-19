@@ -136,6 +136,14 @@ test("terminal candidate owns one explicit next step and its completion error", 
   assert.match(globalCssSource, /\.birth-time-next-step/);
 });
 
+test("terminal and entrypoint CJK phrases stay intact at narrow widths", () => {
+  const candidateResultSource = readFileSync(new URL("../src/components/birth-time-candidate-result.tsx", import.meta.url), "utf8");
+  const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+
+  assert.match(candidateResultSource, /作为<span className="phrase-nowrap">当前排盘时间<\/span>并进入对话；<span className="phrase-nowrap">原始填报<\/span>和本次<span className="phrase-nowrap">候选结果<\/span>仍会保留。/);
+  assert.match(pageSource, /当前使用候选时间排盘；<span className="phrase-nowrap">原始填报范围<\/span>仍保留。/);
+});
+
 test("completed rectification transcript does not repeat the birth place turn", () => {
   const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 

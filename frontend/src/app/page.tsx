@@ -2483,7 +2483,7 @@ export default function Home() {
                       </dl>
                       <div className="product-entrypoint-footer">
                         <small>{birthTimeDisplay?.kind === "candidate"
-                          ? "当前使用候选时间排盘；原始填报范围仍保留。"
+                          ? <>当前使用候选时间排盘；<span className="phrase-nowrap">原始填报范围</span>仍保留。</>
                           : birthTimeDisplay?.kind === "confirmed"
                             ? "当前排盘时间已经确认。"
                             : "不能直接改写默认星盘；需事件证据验证。"}</small>
