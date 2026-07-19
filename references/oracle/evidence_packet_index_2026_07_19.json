@@ -609,14 +609,30 @@
       "claim_status": "open_queue",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Action queue for 10 blocked production-ready domains; prioritizes next evidence but does not unblock any claim."
+    },
+    {
+      "packet_id": "worked_example_numeric_packet_eligibility_2026_07_20",
+      "path": "references/oracle/worked_example_numeric_packet_eligibility_2026_07_20.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies public worked-example candidates by numeric-packet eligibility; no row is oracle-ready."
+    },
+    {
+      "packet_id": "three_engine_owner_track_batch_plan_2026_07_20",
+      "path": "references/oracle/three_engine_owner_track_batch_plan_2026_07_20.json",
+      "domain": "three_engine_parity",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Groups remaining three-engine mismatches by owner track for closure planning; no production tuning or truth upgrade."
     }
   ],
   "production_tuning_allowed": false,
   "scope": "evidence_packet_index",
   "status": "active_index_v1",
   "summary": {
-    "packet_count": 76,
-    "blocked_or_partial_count": 49,
+    "packet_count": 78,
+    "blocked_or_partial_count": 51,
     "human_review_required_count": 2
   }
 }

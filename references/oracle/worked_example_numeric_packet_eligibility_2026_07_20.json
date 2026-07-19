@@ -1,0 +1,129 @@
+{
+  "boundary": "Eligibility queue only; no public numeric candidate is promoted to oracle_ready.",
+  "claim_status": "open_queue",
+  "created_at": "2026-07-20",
+  "production_tuning_allowed": false,
+  "rows": [
+    {
+      "candidate_type": "tool_or_reference_page",
+      "claim_boundary": "Not oracle-ready until exact public input, settings, expected values, raw/hash and replay comparison are archived.",
+      "eligibility_status": "runtime_only_public_oracle_missing",
+      "missing_for_oracle": [
+        "fixed public input case",
+        "raw output hash",
+        "cusp longitude",
+        "star_lord",
+        "sub_lord",
+        "sub_sub_lord",
+        "method settings",
+        "birth_or_query_datetime",
+        "location",
+        "ayanamsa",
+        "house_system",
+        "cusp_longitude",
+        "nakshatra_lord",
+        "raw_capture_hash"
+      ],
+      "runtime_observation_available": true,
+      "topic": "KP cusp",
+      "url": "https://www.astrosage.com/kp/cuspal-sub-lord.asp"
+    },
+    {
+      "candidate_type": "reference_table_candidate",
+      "claim_boundary": "Not oracle-ready until exact public input, settings, expected values, raw/hash and replay comparison are archived.",
+      "eligibility_status": "reference_table_hash_needed",
+      "missing_for_oracle": [
+        "captured table raw",
+        "table hash",
+        "license/copyright boundary",
+        "worked example link",
+        "table_raw_capture",
+        "table_hash",
+        "copyright_boundary",
+        "degree_range",
+        "star_lord",
+        "sub_lord",
+        "sub_sub_lord"
+      ],
+      "runtime_observation_available": false,
+      "topic": "KP sub-lord table",
+      "url": "https://www.aryabhatt.com/astrology/krishnamurti-paddhati/kp-sub-lords-table"
+    },
+    {
+      "candidate_type": "worked_example_candidate",
+      "claim_boundary": "Not oracle-ready until exact public input, settings, expected values, raw/hash and replay comparison are archived.",
+      "eligibility_status": "raw_capture_needed",
+      "missing_for_oracle": [
+        "stable date/location/person input",
+        "captured raw hash",
+        "rule weights",
+        "expected factor table",
+        "date",
+        "location",
+        "birth_moon_nakshatra",
+        "current_moon_nakshatra",
+        "tarabala_result",
+        "chandrabala_result",
+        "raw_capture_hash"
+      ],
+      "runtime_observation_available": false,
+      "topic": "Tarabala/Chandrabala",
+      "url": "https://www.mypanchang.com/tarabalam.php"
+    },
+    {
+      "candidate_type": "calculation_reference_candidate",
+      "claim_boundary": "Not oracle-ready until exact public input, settings, expected values, raw/hash and replay comparison are archived.",
+      "eligibility_status": "fixture_and_raw_capture_needed",
+      "missing_for_oracle": [
+        "date/location fixture",
+        "sunrise/sunset source",
+        "expected interval",
+        "raw capture hash",
+        "date",
+        "location",
+        "sunrise",
+        "sunset",
+        "weekday",
+        "expected_interval",
+        "raw_capture_hash"
+      ],
+      "runtime_observation_available": false,
+      "topic": "Rahu Kalam",
+      "url": "https://www.drikpanchang.com/muhurat/rahu-kalam.html"
+    },
+    {
+      "candidate_type": "formula_reference_candidate",
+      "claim_boundary": "Not oracle-ready until exact public input, settings, expected values, raw/hash and replay comparison are archived.",
+      "eligibility_status": "formula_reference_only",
+      "missing_for_oracle": [
+        "complete birth input",
+        "per-component Virupa expected values",
+        "formula variant",
+        "raw capture hash",
+        "birth_input",
+        "planet",
+        "component_name",
+        "formula_variant",
+        "unit",
+        "expected_virupa",
+        "raw_capture_hash"
+      ],
+      "runtime_observation_available": false,
+      "topic": "Shadbala Virupa",
+      "url": "https://www.astrojyoti.com/shadbala.htm"
+    }
+  ],
+  "scope": "worked_example_numeric_packet_eligibility",
+  "sources": {
+    "candidate_numeric_audit": "references/oracle/public_worked_example_candidate_numeric_audit_2026_07_19.json",
+    "numeric_packet_queue": "references/oracle/kp_muhurta_shadbala_numeric_packet_queue_2026_07_19.json"
+  },
+  "status": "eligibility_queue_ready",
+  "summary": {
+    "candidate_count": 5,
+    "oracle_ready_count": 0,
+    "raw_capture_needed_count": 2,
+    "runtime_only_count": 1
+  },
+  "truth_matrix_allowed": false
+}
