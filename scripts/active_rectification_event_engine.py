@@ -33,6 +33,7 @@ if str(SCRIPTS) not in sys.path:
 import dasha_analyzer  # noqa: E402
 import domain_calculation_service  # noqa: E402
 import functional_benefics  # noqa: E402
+import jaimini  # noqa: E402
 import narayana_dasha  # noqa: E402
 import varga  # noqa: E402
 
@@ -158,6 +159,7 @@ def _score_event(
     varga_charts: list[dict],
     vimshottari: tuple[str, str, str],
     narayana: tuple[int | None, int | None],
+    arudha_padas: dict,
 ) -> CandidateEvidence:
     _, target_houses = DOMAIN_CONFIG[event["domain"]]
     ascendant_index = int(natal_chart["ascendant"]["lon"] // 30)
@@ -200,6 +202,17 @@ def _score_event(
         if sign_index is not None and _relative_house(sign_index, ascendant_index) in target_houses:
             rules.append(f"{label}_domain_house")
             points += weight
+    arudha_keys = ("A7", "UL") if event["domain"] == "relationship" else ("A10",) if event["domain"] == "career" else ()
+    arudha_signs = {
+        value.get("sign_idx") for key in arudha_keys
+        if isinstance((value := arudha_padas.get(key)), dict) and isinstance(value.get("sign_idx"), int)
+    }
+    if arudha_signs:
+        for lord, label in ((major_lord, "vim_md"), (minor_lord, "vim_ad"), (pratyantar_lord, "vim_pd")):
+            planet = natal_chart.get("planets", {}).get(lord) or {}
+            if isinstance(planet.get("lon"), (int, float)) and int(planet["lon"] // 30) in arudha_signs:
+                rules.append(f"{label}_arudha_auxiliary")
+                points += 0.35
 
     weighted_points = round(points * precision_weight(event["precision"]), 4)
     return {
@@ -234,6 +247,7 @@ def _candidate_row(
     }
     ascendant_longitude = float(chart["ascendant"]["lon"])
     ascendant_index = int(ascendant_longitude // 30)
+    arudha_padas = (jaimini.calc_arudha_padas(ascendant_index, planet_longitudes).get("padas") or {})
     charts = varga.calc_all_vargas(
         planet_longitudes,
         ascendant_longitude,
@@ -264,6 +278,7 @@ def _candidate_row(
             varga_charts=[chart for chart in domain_vargas if chart is not None],
             vimshottari=vimshottari,
             narayana=narayana,
+            arudha_padas=arudha_padas,
         ))
 
     return {
