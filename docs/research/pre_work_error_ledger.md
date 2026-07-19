@@ -137,3 +137,8 @@ for d in <home>/Documents <home>/WorkBuddy <home>/.workbuddy <home>/Downloads <h
   [ -d "$d" ] && find "$d" -maxdepth 7 -type f \( -iname '*jyotish*' -o -iname '*vedic*' -o -iname '*jhora*' -o -iname '*shadbala*' -o -iname '*ashtakoot*' -o -iname '*印度占星*' -o -iname '*yinduzhanxing*' \) 2>/dev/null
 done
 ```
+
+## ERR-083 | Commercial Next production build terminates before artifact generation | active 2026-07-19
+`frontend` local `npm run build` ends during Next.js 16.2.10 compile/static generation, both without configuration and with the CI Supabase placeholders. It leaves no `.next/BUILD_ID` or `.next/prerender-manifest.json`, and no application stack trace. Frontend contracts (`270 passed`), lint, and the selected Python commercial workflow regressions (`128 passed`) remain green.
+
+Prevention: do not equate this local host failure with an astrology capability regression. Treat GitHub Actions Node 22 build evidence as the deployment gate before merge. Keep VedAstro `premium_key_missing` and official raw snapshot status explicitly degraded.
