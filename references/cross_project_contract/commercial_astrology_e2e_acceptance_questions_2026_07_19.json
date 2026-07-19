@@ -1,0 +1,57 @@
+{
+  "contract_id": "commercial_astrology_e2e_acceptance_questions_2026_07_19",
+  "status": "acceptance_contract_not_runtime_claim",
+  "purpose": "Eight real-user commercial questions used to verify that synchronized astrology capabilities enter the answer context and preserve claim boundaries.",
+  "questions": [
+    {
+      "id": "marriage_timing",
+      "user_question": "我什么时候更适合结婚？",
+      "required_layers": ["Vimshottari Dasha", "Narayana Dasha", "D9", "UL", "Darakaraka", "timing precision contract", "gender interpretation boundary"],
+      "must_not_claim": ["exact day/month verified", "single-factor Venus/Jupiter truth"]
+    },
+    {
+      "id": "career_direction",
+      "user_question": "我的事业方向适合什么？",
+      "required_layers": ["Vimshottari Dasha", "Narayana Dasha", "D10", "A10", "functional benefic/malefic"],
+      "must_not_claim": ["gender changes career math", "D10 missing when present"]
+    },
+    {
+      "id": "wealth_pattern",
+      "user_question": "我的财富模式和赚钱方式是什么？",
+      "required_layers": ["Vimshottari Dasha", "Narayana Dasha", "D2", "D11", "Ashtakavarga", "functional benefic/malefic"],
+      "must_not_claim": ["guaranteed financial outcome", "D2/D11 missing when present"]
+    },
+    {
+      "id": "foreign_migration",
+      "user_question": "我适合出国发展或长期迁移吗？",
+      "required_layers": ["Vimshottari Dasha", "Narayana Dasha", "D4", "D9", "12th house", "Rahu/Ketu context"],
+      "must_not_claim": ["visa/legal guarantee"]
+    },
+    {
+      "id": "relationship_compatibility",
+      "user_question": "我和这个人合不合？",
+      "required_layers": ["D9", "UL", "Darakaraka", "Ashtakoot boundary", "gender interpretation boundary"],
+      "must_not_claim": ["relationship guarantee", "gender binary forced when not provided"]
+    },
+    {
+      "id": "birth_time_uncertain",
+      "user_question": "我的出生时间不太准，还能看吗？",
+      "required_layers": ["birth-time uncertainty boundary", "rectification boundary", "candidate windows", "not_auto_rectified"],
+      "must_not_claim": ["auto-rectified exact birth time"]
+    },
+    {
+      "id": "engine_disagreement",
+      "user_question": "为什么不同软件算出来不一样？",
+      "required_layers": ["Shadbala", "Ashtakavarga", "Shadbala/AV provenance registry", "VedAstro gateway boundary", "no_majority_vote"],
+      "must_not_claim": ["majority vote truth", "method variant as absolute error"]
+    },
+    {
+      "id": "precise_timing_boundary",
+      "user_question": "你能不能精确看某一天或某个月会发生什么？",
+      "required_layers": ["timing precision contract", "verified_window", "candidate_windows", "exact_triggers", "day-level holdout boundary"],
+      "must_not_claim": ["day/month prediction verified before holdout", "exact_triggers as guaranteed events"]
+    }
+  ],
+  "pass_condition": "For each question, the commercial answer context includes required layers or explicitly reports a justified missing layer, and the answer avoids every must_not_claim item.",
+  "blocked_until_runtime_e2e": true
+}
