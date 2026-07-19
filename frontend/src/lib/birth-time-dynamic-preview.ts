@@ -198,13 +198,26 @@ export function advanceDynamicBirthTimePreview(
         }
       }
     }
-    case "reframe": return response({
-      nextAction: { kind: "ask_dynamic_choice", question: questions[1] },
-      phase: "question",
-      answeredCount: turn.progress.answeredCount,
-      effectiveAnswerCount: turn.progress.effectiveAnswerCount,
-      turnVersion: turn.turnVersion + 1,
-    });
+    case "reframe": {
+      if (turn.nextAction.kind === "clarify_unmatched_answer"
+        && turn.nextAction.questionId === questions[1].questionId) {
+        return response({
+          nextAction: { kind: "present_low_result", resultId: null },
+          phase: "result",
+          answeredCount: turn.progress.answeredCount,
+          effectiveAnswerCount: turn.progress.effectiveAnswerCount,
+          snapshotState: "candidate",
+          turnVersion: turn.turnVersion + 1,
+        });
+      }
+      return response({
+        nextAction: { kind: "ask_dynamic_choice", question: questions[1] },
+        phase: "question",
+        answeredCount: turn.progress.answeredCount,
+        effectiveAnswerCount: turn.progress.effectiveAnswerCount,
+        turnVersion: turn.turnVersion + 1,
+      });
+    }
     case "finish": return response({
       nextAction: { kind: "present_low_result", resultId: null },
       phase: "result",

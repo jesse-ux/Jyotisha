@@ -70,6 +70,20 @@ test("preview unknown answers terminate instead of repeating the same question",
   assert.equal(terminal.progress.answeredCount, 2);
 });
 
+test("preview unmatched reframing terminates when no different question remains", () => {
+  const start = dynamicBirthTimePreview();
+  const secondQuestion = advanceDynamicBirthTimePreview(start, { kind: "select", optionId: "earlier" });
+  const secondClarification = advanceDynamicBirthTimePreview(secondQuestion, {
+    kind: "select",
+    optionId: "unmatched-2",
+  });
+  const terminal = advanceDynamicBirthTimePreview(secondClarification, { kind: "reframe" });
+
+  assert.equal(secondClarification.nextAction.kind, "clarify_unmatched_answer");
+  assert.equal(terminal.nextAction.kind, "present_low_result");
+  assert.equal(terminal.progress.answeredCount, 2);
+});
+
 test("dynamic previews cover every visible result and recovery state", () => {
   const expected = new Map([
     ["generating", "generate_dynamic_question"],
