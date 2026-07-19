@@ -1,0 +1,83 @@
+{
+  "contract_id": "gender_interpretation_contract_2026_07_19",
+  "status": "interpretation_boundary_registry",
+  "purpose": "Define where user gender may affect Vedic astrology interpretation without changing chart mathematics.",
+  "recommended_profile_field": {
+    "name": "gender",
+    "allowed_values": ["male", "female", "nonbinary", "prefer_not_to_say", null],
+    "product_copy": "Only used for traditional relationship/spouse significator weighting; it does not change the chart calculation."
+  },
+  "calculation_layer_policy": {
+    "changes_chart_math": false,
+    "gender_neutral_calculations": [
+      "rasi_chart",
+      "divisional_charts",
+      "vimshottari_dasha",
+      "narayana_dasha",
+      "ayanamsa",
+      "node_mode",
+      "shadbala",
+      "ashtakavarga",
+      "yoga_detection",
+      "functional_benefic_malefic"
+    ]
+  },
+  "allowed_use_domains": [
+    "relationship_spouse_interpretation",
+    "marriage_timing_weighting",
+    "children_birth_context_language"
+  ],
+  "forbidden_use_domains": [
+    "career",
+    "wealth",
+    "core_personality",
+    "dasha_boundary_calculation",
+    "shadbala_component_calculation",
+    "ashtakavarga_bindu_calculation",
+    "absolute_prediction_confidence"
+  ],
+  "relationship_spouse_interpretation": {
+    "core_stack_gender_neutral": ["7th_house", "7th_lord", "D9", "UL", "Darakaraka"],
+    "gender_specific_supplements": {
+      "male": {
+        "spouse_karaka_focus": ["Venus"],
+        "language": "Male-chart traditional spouse significator weighting may emphasize Venus."
+      },
+      "female": {
+        "spouse_karaka_focus": ["Jupiter", "Mars"],
+        "language": "Female-chart traditional spouse/husband significator weighting may emphasize Jupiter, with Mars used by some lineages for partner dynamics."
+      },
+      "unknown_or_not_binary": {
+        "spouse_karaka_focus": [
+          "7th_lord",
+          "D9",
+          "UL",
+          "Darakaraka",
+          "Venus_as_general_relationship_karaka"
+        ],
+        "language": "Use the gender-neutral relationship stack; do not force binary spouse significators."
+      }
+    },
+    "hard_boundary": "gender_specific_karakas_are_supplements_not_single_factor_truth"
+  },
+  "marriage_timing_weighting": {
+    "base_required": ["7th_lord_periods", "D9_activation", "UL_activation", "Darakaraka_periods", "Vimshottari_Narayana_crosscheck"],
+    "male_optional_weight": ["Venus_period_or_transit_activation"],
+    "female_optional_weight": ["Jupiter_or_Mars_period_or_transit_activation"],
+    "forbidden_claim": "Do not claim a marriage window is verified solely because a gender-specific karaka is active."
+  },
+  "children_birth_context_language": {
+    "base_required": ["5th_house", "5th_lord", "Jupiter", "D7", "Putrakaraka"],
+    "safety_boundary": "Use gender only for context language. Do not make medical, pregnancy, fertility, or guaranteed child-birth claims."
+  },
+  "answer_policy": {
+    "if_gender_missing": "Do not block. Answer from gender-neutral stack and optionally ask for gender only when relationship/spouse interpretation materially depends on traditional significator weighting.",
+    "if_nonbinary_or_prefer_not_to_say": "Do not force binary rules. Use gender-neutral relationship stack.",
+    "disclosure": "If used, say it is a traditional supplementary significator layer, not the only basis of judgment."
+  },
+  "evidence_status": {
+    "source_type": "traditional_rule_registry_plus_local_methodology",
+    "normative_strength": "medium",
+    "requires_lineage_disclosure": true
+  }
+}

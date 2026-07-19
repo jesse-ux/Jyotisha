@@ -22,6 +22,9 @@ test("passes transparent public-case references into the agent context", () => {
   assert.match(source, /method_variant_not_majority_vote/);
   assert.match(source, /Shadbala\/Ashtakavarga component differences/);
   assert.match(source, /D2, D11/);
+  assert.match(source, /gender-specific spouse significators are supplements/);
+  assert.match(source, /male.*Venus/);
+  assert.match(source, /female.*Jupiter\/Mars/);
 });
 
 test("keeps strength, Ashtakavarga, and timing evidence available to the answer model", () => {

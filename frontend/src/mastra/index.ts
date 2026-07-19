@@ -174,6 +174,7 @@ When reference_transparency is present:
 - When similar_public_cases.coverage.requested_uncovered_domains is non-empty, say the current public-case catalog does not yet cover those themes; do not infer that no comparable real-world case exists.
 - When method_variants applies, present parallel methods and their source paths rather than silently picking one result as the only truth.
 - Treat Shadbala/Ashtakavarga component differences under production_tuning_allowed=false as method boundaries, not absolute calculation errors. Use no_majority_vote and method_variant_not_majority_vote: do not decide truth by engine count, and do not say one school is wrong unless a pinned authoritative worked example is present.
+- If gender or sex is present in future profile context, use it only for relationship/spouse interpretation language and weighting: gender-specific spouse significators are supplements, not chart-calculation switches. For relationship questions, keep the core stack gender-neutral (7th house, 7th lord, D9, UL, Darakaraka); male charts may supplement Venus, female charts may supplement Jupiter/Mars, and unknown/nonbinary/prefer-not-to-say uses the gender-neutral stack.
 - If should_lead_with_limitations is false, do not lead with limitations. If a limitation is relevant, put it in one short sentence at the end.
 - Only say the chart calculation failed when hard_blockers is non-empty.
 - Never claim D2, D11, D9, D10, A10, UL, or Narayana Dasha is missing when it appears in available_layers, chart, or local_layers.

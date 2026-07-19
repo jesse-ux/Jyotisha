@@ -1,0 +1,158 @@
+{
+  "scope": "relationship_gender_role_technique_registry",
+  "created_at": "2026-07-19",
+  "default_profile_policy": "neutral_partner_a_b",
+  "base_chart_requires_gender": false,
+  "production_tuning_allowed": false,
+  "truth_policy": "technique_registry_not_prediction_truth",
+  "boundary": "Gender/role fields may change relationship interpretation, role weighting, or traditional marriage-rule variants; they must not change core D1/D9/Dasha/Shadbala/AV calculation.",
+  "recommended_optional_fields": {
+    "gender": "female|male|nonbinary|unspecified",
+    "relationship_role_mode": "neutral_partner_a_b|traditional_gendered",
+    "partner_interest": "male|female|any|unspecified"
+  },
+  "web_oss_scan": [
+    {
+      "name": "Kerykeion",
+      "url": "https://github.com/g-battaglia/kerykeion",
+      "license": "AGPL-3.0",
+      "usable_boundary": "oracle/reference only unless AGPL obligations are acceptable; useful for western natal/synastry/transits/returns and relationship score surface comparison."
+    },
+    {
+      "name": "Astrologer-API",
+      "url": "https://github.com/g-battaglia/Astrologer-API",
+      "license": "repository license must be checked before reuse",
+      "usable_boundary": "hosted/API reference for western chart/synastry/composite/returns; do not copy code without license confirmation."
+    },
+    {
+      "name": "Amber-bisht/astro",
+      "url": "https://github.com/Amber-bisht/astro",
+      "license": "repository license must be checked before reuse",
+      "usable_boundary": "Vedic compatibility output-schema reference only until license and formula sources are verified."
+    },
+    {
+      "name": "RaviKarrii/Marriage-Compatibility-Asthakoot",
+      "url": "https://github.com/RaviKarrii/Marriage-Compatibility-Asthakoot",
+      "license": "MIT",
+      "usable_boundary": "possible permissive Ashtakoot comparison reference after formula/source audit."
+    },
+    {
+      "name": "VedAstro/VedAstro",
+      "url": "https://github.com/VedAstro/VedAstro",
+      "license": "MIT",
+      "usable_boundary": "Vedic API/oracle reference; hosted identity remains blocked separately."
+    }
+  ],
+  "techniques": [
+    {
+      "id": "vedic_venus_jupiter_spouse_significators",
+      "system": "vedic",
+      "domain": "relationship",
+      "gender_dependency": "interpretation_only",
+      "what_changes": "Traditional readings often emphasize Venus as wife/relationship desire in male charts and Jupiter as husband/protective spouse factor in female charts; neutral mode treats Venus/Jupiter as partner-quality indicators without assigning gender.",
+      "local_status": "partially_present",
+      "integration_action": "add_interpretation_layer",
+      "license_boundary": "use local calculations; cite formula/source notes, do not copy AGPL prose/code.",
+      "claim_boundary": "interpretive weighting only; not a deterministic marriage outcome."
+    },
+    {
+      "id": "vedic_kuja_manglik_role_weighting",
+      "system": "vedic",
+      "domain": "relationship",
+      "gender_dependency": "role_weighting",
+      "what_changes": "Mangal/Kuja Dosha can be judged from Lagna/Moon/Venus and compared between partners; some traditional variants weight bride/groom roles differently, while neutral mode compares both charts symmetrically.",
+      "local_status": "partially_present",
+      "integration_action": "add_interpretation_layer",
+      "license_boundary": "local calculation preferred; external APIs only oracle/reference.",
+      "claim_boundary": "dosha compatibility signal, not a standalone marriage denial."
+    },
+    {
+      "id": "ashtakoot_yoni_energy_not_user_gender",
+      "system": "vedic",
+      "domain": "matching",
+      "gender_dependency": "traditional_rule_variant",
+      "what_changes": "Yoni Kuta contains male/female animal-energy assignments by nakshatra; this is not the user's biological gender and must not be mapped directly to profile gender.",
+      "local_status": "present",
+      "integration_action": "use_existing_local",
+      "license_boundary": "existing local Ashtakoot path; external articles only explanatory source evidence.",
+      "claim_boundary": "matching subscore only; do not infer gender identity."
+    },
+    {
+      "id": "ashtakoot_nadi_rajju_reproductive_safety",
+      "system": "vedic",
+      "domain": "matching",
+      "gender_dependency": "traditional_rule_variant",
+      "what_changes": "Nadi/Rajju are traditionally framed around health, longevity, and childbearing risk; modern neutral mode should describe them as traditional compatibility flags.",
+      "local_status": "present",
+      "integration_action": "use_existing_local",
+      "license_boundary": "existing local Ashtakoot path.",
+      "claim_boundary": "traditional risk flag, not medical advice."
+    },
+    {
+      "id": "jaimini_darakaraka_upapada_spouse_role",
+      "system": "vedic",
+      "domain": "relationship",
+      "gender_dependency": "interpretation_only",
+      "what_changes": "Darakaraka and Upapada calculations are gender-neutral; interpretive language can shift between spouse/partner role modes.",
+      "local_status": "present",
+      "integration_action": "add_interpretation_layer",
+      "license_boundary": "use local Jaimini implementation.",
+      "claim_boundary": "spouse/partner evidence layer, not exact event proof."
+    },
+    {
+      "id": "d9_navamsa_gendered_interpretation_layer",
+      "system": "vedic",
+      "domain": "relationship",
+      "gender_dependency": "interpretation_only",
+      "what_changes": "D9 calculation is identical for all users; relationship interpretation may emphasize partner significators differently under traditional_gendered mode.",
+      "local_status": "present",
+      "integration_action": "add_interpretation_layer",
+      "license_boundary": "use local varga calculation.",
+      "claim_boundary": "quality/structure signal; timing still needs Dasha/transit/holdout support."
+    },
+    {
+      "id": "adhana_conception_gender_sensitive_scaffold",
+      "system": "vedic",
+      "domain": "conception",
+      "gender_dependency": "traditional_rule_variant",
+      "what_changes": "Adhana/conception rules can involve gendered fertility and conception assumptions; current local module is scaffold only.",
+      "local_status": "scaffold",
+      "integration_action": "blocked_until_source_verified",
+      "license_boundary": "must verify classical source and avoid medical claims.",
+      "claim_boundary": "blocked for product interpretation; research-only."
+    },
+    {
+      "id": "western_venus_mars_sun_moon_partner_projection",
+      "system": "western",
+      "domain": "relationship",
+      "gender_dependency": "interpretation_only",
+      "what_changes": "Traditional western readings may map Venus/Moon or Mars/Sun to partner preference by gender; modern neutral mode treats them as affection, desire, identity, and safety signatures.",
+      "local_status": "not_integrated",
+      "integration_action": "oracle_only",
+      "license_boundary": "Kerykeion is AGPL-3.0; use as oracle/reference, not copied dependency for closed commercial runtime.",
+      "claim_boundary": "interpretive layer only; no deterministic compatibility claim."
+    },
+    {
+      "id": "western_synastry_composite_role_neutral_mode",
+      "system": "western",
+      "domain": "relationship",
+      "gender_dependency": "none",
+      "what_changes": "Synastry/composite math does not require gender; relationship role labels should be A/B unless user chooses traditional wording.",
+      "local_status": "partial",
+      "integration_action": "oracle_only",
+      "license_boundary": "Kerykeion/Astrologer API can guide schema; license/API boundaries required.",
+      "claim_boundary": "relationship dynamics map, not event proof."
+    },
+    {
+      "id": "western_progressed_angles_relationship_timing",
+      "system": "western",
+      "domain": "timing",
+      "gender_dependency": "none",
+      "what_changes": "Progressed angles and returns do not need gender; only interpretation voice changes.",
+      "local_status": "partial",
+      "integration_action": "add_interpretation_layer",
+      "license_boundary": "use local ephemeris where available; OSS only reference unless permissive.",
+      "claim_boundary": "candidate timing trigger; not a verified day/month prediction until holdout passes."
+    }
+  ]
+}
