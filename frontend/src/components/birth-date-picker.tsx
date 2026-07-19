@@ -17,6 +17,8 @@ type BirthDatePickerProps = {
   readonly onChange: (value: string) => void;
 };
 
+const emptyDefaultMonth = new Date(1997, 0, 1);
+
 export function BirthDatePicker({ value, disabled, onChange }: BirthDatePickerProps) {
   const labelId = useId();
   const valueId = useId();
@@ -53,7 +55,7 @@ export function BirthDatePicker({ value, disabled, onChange }: BirthDatePickerPr
             className="[--cell-size:2.75rem] [&_button[data-selected-single=true]]:text-primary-foreground!"
             locale={zhCN}
             selected={selected}
-            defaultMonth={selected ?? today}
+            defaultMonth={selected ?? emptyDefaultMonth}
             captionLayout="dropdown"
             startMonth={new Date(1900, 0)}
             endMonth={today}

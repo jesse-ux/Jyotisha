@@ -33,3 +33,13 @@ test("keeps the shadcn date-of-birth dropdown navigation order", () => {
   // Then the picker must not move the full-width nav after the caption selects
   assert.doesNotMatch(picker, /navLayout="after"/)
 })
+
+test("opens an empty birth date picker at 1997 instead of the current year", () => {
+  // Given: a new user has not selected a birth date yet.
+  const picker = readFileSync(pickerUrl, "utf8")
+
+  // When: the popover chooses its initial visible month.
+  // Then: it starts in 1997 so common birth years are nearby.
+  assert.match(picker, /const emptyDefaultMonth = new Date\(1997, 0, 1\)/)
+  assert.match(picker, /defaultMonth=\{selected \?\? emptyDefaultMonth\}/)
+})
