@@ -5,8 +5,8 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 21,
-    "blocked_or_partial_count": 13,
+    "packet_count": 26,
+    "blocked_or_partial_count": 20,
     "human_review_required_count": 1
   },
   "packets": [
@@ -177,6 +177,46 @@
       "claim_status": "partial",
       "consumer_policy": "research_only",
       "claim_boundary": "All planned rectification layers have partial guarded runtime surfaces; Shadbala-AV remains formula/unit partial and Gochara remains negative-holdout blocked, so outputs stay exploratory."
+    },
+    {
+      "packet_id": "kp_precision_timing_gap_registry",
+      "path": "references/oracle/kp_precision_timing_gap_registry_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "KP precision timing gap registry exists; star/sub-lord, ruling planets and significator tables remain blocked until source/oracle/holdout gates close."
+    },
+    {
+      "packet_id": "muhurta_full_system_gap_registry",
+      "path": "references/oracle/muhurta_full_system_gap_registry_2026_07_19.json",
+      "domain": "muhurta",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Panchanga base exists, but full Muhurta scoring remains blocked until Tarabala/Chandrabala/Panchaka/Rahu Kalam examples and source contracts close."
+    },
+    {
+      "packet_id": "ashtakavarga_advanced_usage_gap_registry",
+      "path": "references/oracle/ashtakavarga_advanced_usage_gap_registry_2026_07_19.json",
+      "domain": "ashtakavarga_advanced_usage",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Core BAV/SAV exists; Kakshya transit, sensitive transit signs/nakshatras and annual SAV timing remain observation-only until oracle/holdout gates close."
+    },
+    {
+      "packet_id": "compatibility_full_system_gap_registry",
+      "path": "references/oracle/compatibility_full_system_gap_registry_2026_07_19.json",
+      "domain": "compatibility",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Ashtakoota core exists; extended planet/Lagna Kuta, relationship AV overlay and rule-family combinations remain partial/research-only."
+    },
+    {
+      "packet_id": "kp_precision_timing_probe",
+      "path": "scripts/kp_precision_timing_probe.py",
+      "domain": "kp_precision_timing",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "KP star/sub-lord and significator probe exposes raw fields and hash, but cannot drive precise event timing without exact KP cusp oracle and independent negative holdout validation."
     }
   ]
 }

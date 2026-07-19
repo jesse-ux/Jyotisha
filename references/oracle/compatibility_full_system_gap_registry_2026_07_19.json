@@ -1,0 +1,66 @@
+{
+  "scope": "compatibility_full_system_gap_registry",
+  "created_at": "2026-07-19",
+  "status": "gap_registry_v1",
+  "production_tuning_allowed": false,
+  "source_scan_policy": "Separate mature match-score modules from advanced compatibility overlays and Western-style composite techniques.",
+  "top_external_references": [
+    {
+      "name": "Kala calculation list",
+      "url": "https://www.vedic-astrology.net/kala/List-of-Calculations.asp",
+      "relevance": "Compatibility feature reference: Kutas from Moon/planets/Lagna, Rajju/Vedha/Stree Deergha/Mahendra/Vasya, interaspects, Davidson, Composite and AV overlay."
+    },
+    {
+      "name": "Local relationship registry",
+      "url": "references/oracle/relationship_combinations_rule_family_registry_2026_07_19.json",
+      "relevance": "Current local indexed relationship-combination families requiring source closure and tests."
+    }
+  ],
+  "items": [
+    {
+      "technique_id": "ashtakoota_core",
+      "local_code_status": "present",
+      "skill_invocation_status": "invoked",
+      "api_ui_entry_status": "present",
+      "external_oracle_status": "partial",
+      "commercial_sync_status": "ready_after_guarded_contract",
+      "claim_boundary": "Usable as compatibility factor, not deterministic marriage outcome."
+    },
+    {
+      "technique_id": "extended_koota_planet_lagna",
+      "local_code_status": "partial_or_missing",
+      "skill_invocation_status": "reference_only",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Do not claim full top-tier compatibility until planet/Lagna Kuta variants and examples are validated."
+    },
+    {
+      "technique_id": "relationship_combinations_rule_families",
+      "local_code_status": "registry_only",
+      "skill_invocation_status": "not_invoked",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "research_only",
+      "claim_boundary": "Research-only until deduplication, source packet and tests exist."
+    },
+    {
+      "technique_id": "relationship_av_overlay",
+      "local_code_status": "missing_runtime",
+      "skill_invocation_status": "not_invoked",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Observation-only until Ashtakavarga relationship overlay rules and examples close."
+    },
+    {
+      "technique_id": "composite_davidson_charts",
+      "local_code_status": "missing_runtime",
+      "skill_invocation_status": "not_invoked",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "not_applicable_vedic_core",
+      "commercial_sync_status": "not_for_commercial_runtime",
+      "claim_boundary": "Western-derived compatibility overlay; keep out of Vedic commercial runtime unless explicitly scoped as cross-system research."
+    }
+  ]
+}

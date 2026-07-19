@@ -1,0 +1,66 @@
+{
+  "scope": "ashtakavarga_advanced_usage_gap_registry",
+  "created_at": "2026-07-19",
+  "status": "gap_registry_v1",
+  "production_tuning_allowed": false,
+  "source_scan_policy": "Separate core BAV/SAV calculation from advanced transit, age and relationship usage claims.",
+  "top_external_references": [
+    {
+      "name": "Kala calculation list",
+      "url": "https://www.vedic-astrology.net/kala/List-of-Calculations.asp",
+      "relevance": "Top-tier Ashtakavarga usage reference: Kakshas, sensitive transit nakshatras/rashis, important ages and relationship overlays."
+    },
+    {
+      "name": "PyJHora",
+      "url": "https://github.com/naturalstupid/PyJHora",
+      "relevance": "External AGPL oracle/reference candidate for Ashtakavarga variants; do not vendor."
+    }
+  ],
+  "items": [
+    {
+      "technique_id": "bav_sav_core",
+      "local_code_status": "present",
+      "skill_invocation_status": "invoked",
+      "api_ui_entry_status": "present",
+      "external_oracle_status": "partial",
+      "commercial_sync_status": "ready_after_guarded_contract",
+      "claim_boundary": "Core BAV/SAV can be used with method-variant and parity boundary."
+    },
+    {
+      "technique_id": "kakshya_transit",
+      "local_code_status": "missing_runtime",
+      "skill_invocation_status": "not_invoked",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Observation-only design item; do not use for precise transit timing until source and holdout gates close."
+    },
+    {
+      "technique_id": "sensitive_transit_nakshatra_rashi",
+      "local_code_status": "missing_runtime",
+      "skill_invocation_status": "reference_only",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Research-only until rules, source examples and negative controls are available."
+    },
+    {
+      "technique_id": "important_ages_directional_usage",
+      "local_code_status": "missing_runtime",
+      "skill_invocation_status": "not_invoked",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "research_only",
+      "claim_boundary": "Do not infer life events from age/direction lists without verified case calibration."
+    },
+    {
+      "technique_id": "annual_sav_timing_scan",
+      "local_code_status": "missing_runtime",
+      "skill_invocation_status": "not_invoked",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Blocked for verified timing until independent negative holdout passes."
+    }
+  ]
+}

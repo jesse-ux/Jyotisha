@@ -1,0 +1,66 @@
+{
+  "scope": "kp_precision_timing_gap_registry",
+  "created_at": "2026-07-19",
+  "status": "gap_registry_v1",
+  "production_tuning_allowed": false,
+  "source_scan_policy": "Local repo + referenced OSS/web sources only; .workbuddy remains read-only reference.",
+  "top_external_references": [
+    {
+      "name": "VedicAstro",
+      "url": "https://github.com/diliprk/VedicAstro",
+      "relevance": "KP-focused open source surface: planet/house significators, KP horary ascendant, nakshatra/sub-lord style timing candidates."
+    },
+    {
+      "name": "Kala calculation list",
+      "url": "https://www.vedic-astrology.net/kala/List-of-Calculations.asp",
+      "relevance": "Commercial top-tier feature reference for KP cusps, nakshatra lords and sub-lords."
+    }
+  ],
+  "items": [
+    {
+      "technique_id": "kp_cusps",
+      "local_code_status": "partial",
+      "skill_invocation_status": "reference_only",
+      "api_ui_entry_status": "partial_api_no_truth_gate",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Reference/probe only until KP house cusp settings, ayanamsa, Placidus/KP house contract and numeric oracle pass."
+    },
+    {
+      "technique_id": "star_sub_lord",
+      "local_code_status": "minimal_probe_present",
+      "skill_invocation_status": "not_invoked_runtime_probe_available",
+      "api_ui_entry_status": "missing_api_probe_script_available",
+      "external_oracle_status": "partial_sublord_csv_only",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Reference/probe only; KP star/sub-lord fields are exposed by scripts/kp_precision_timing_probe.py but cannot make precise event claims until exact cusp oracle and holdout gates close."
+    },
+    {
+      "technique_id": "ruling_planets",
+      "local_code_status": "missing_runtime",
+      "skill_invocation_status": "not_invoked",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Reference/probe only; ruling planets cannot drive rectification or timing before external oracle and negative holdout gates."
+    },
+    {
+      "technique_id": "kp_significators",
+      "local_code_status": "minimal_probe_present",
+      "skill_invocation_status": "not_invoked_runtime_probe_available",
+      "api_ui_entry_status": "missing_api_probe_script_available",
+      "external_oracle_status": "missing_significator_oracle",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Reference/probe only; significator ABCD tables are exposed by scripts/kp_precision_timing_probe.py but require exact cusp contract and field-level oracle before runtime use."
+    },
+    {
+      "technique_id": "kp_horary",
+      "local_code_status": "missing_runtime",
+      "skill_invocation_status": "not_invoked",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "research_only",
+      "claim_boundary": "Research-only until question-time input contract, KP number handling, and external examples are available."
+    }
+  ]
+}

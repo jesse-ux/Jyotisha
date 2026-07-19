@@ -1,0 +1,66 @@
+{
+  "scope": "muhurta_full_system_gap_registry",
+  "created_at": "2026-07-19",
+  "status": "gap_registry_v1",
+  "production_tuning_allowed": false,
+  "source_scan_policy": "Compare local Panchanga/Muhurta fragments against top-tier Muhurta software surfaces before implementation.",
+  "top_external_references": [
+    {
+      "name": "Kala calculation list",
+      "url": "https://www.vedic-astrology.net/kala/List-of-Calculations.asp",
+      "relevance": "Extensive Muhurta feature surface: Vara, Hora, Rahu Kalam, Sankranti, Vyatipata, Vaidhriti and Panchanga factors."
+    },
+    {
+      "name": "dashaflow reference candidate",
+      "url": "references/open_source_sources/dashaflow",
+      "relevance": "Local OSS candidate requiring license/formula audit before adaptation."
+    }
+  ],
+  "items": [
+    {
+      "technique_id": "panchanga_base",
+      "local_code_status": "present",
+      "skill_invocation_status": "invoked_as_supporting_layer",
+      "api_ui_entry_status": "partial",
+      "external_oracle_status": "partial",
+      "commercial_sync_status": "ready_after_guarded_contract",
+      "claim_boundary": "Can support day context, but cannot be marketed as full Muhurta scoring."
+    },
+    {
+      "technique_id": "full_muhurta_scoring",
+      "local_code_status": "missing_runtime",
+      "skill_invocation_status": "reference_only",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Do not present as auspicious-date selection until Tarabala/Chandrabala/Panchaka/Rahu Kalam weights and examples are validated."
+    },
+    {
+      "technique_id": "tarabala_chandrabala",
+      "local_code_status": "partial_or_fragment",
+      "skill_invocation_status": "not_invoked",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Observation-only until natal Moon matching, Tara sequence, Chandra Bala rules and external examples pass."
+    },
+    {
+      "technique_id": "rahu_yamaganda_gulika_kalam",
+      "local_code_status": "partial",
+      "skill_invocation_status": "not_invoked",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "partial",
+      "commercial_sync_status": "ready_after_guarded_contract",
+      "claim_boundary": "Can be shown as Panchanga interval after sunrise/sunset contract; not a full Muhurta verdict."
+    },
+    {
+      "technique_id": "abhijit_sankranti_vyatipata_vaidhriti",
+      "local_code_status": "missing_runtime",
+      "skill_invocation_status": "reference_only",
+      "api_ui_entry_status": "missing",
+      "external_oracle_status": "missing",
+      "commercial_sync_status": "blocked_until_oracle",
+      "claim_boundary": "Reference-only until formula source, timezone handling and worked examples close."
+    }
+  ]
+}
