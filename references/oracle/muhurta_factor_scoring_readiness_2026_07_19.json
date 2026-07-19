@@ -1,0 +1,95 @@
+{
+  "boundary": "Muhurta factors may appear as supporting context only. No final scored Muhurta verdict is ready until formulas, weights, public worked examples, and raw/hash replay close.",
+  "claim_status": "partial",
+  "created_at": "2026-07-19",
+  "production_tuning_allowed": false,
+  "readiness_hash": "7cf64d13359c4186a08b77b1998e7659cc990ef561fb658cb8becc04cac0b42a",
+  "rows": [
+    {
+      "allowed_product_use": "supporting_context_only",
+      "claim": "observation_only",
+      "factor": "panchanga_suddhi",
+      "missing_for_scored_verdict": [
+        "license verification",
+        "formula weights",
+        "public worked example",
+        "same-input replay"
+      ],
+      "readiness": "reference_surface_only",
+      "source_status": "oss_surface_present"
+    },
+    {
+      "allowed_product_use": "supporting_context_only",
+      "claim": "observation_only",
+      "factor": "activity_specific_rules",
+      "missing_for_scored_verdict": [
+        "license verification",
+        "formula weights",
+        "public worked example",
+        "same-input replay"
+      ],
+      "readiness": "reference_surface_only",
+      "source_status": "oss_surface_present"
+    },
+    {
+      "allowed_product_use": "supporting_context_only",
+      "claim": "observation_only",
+      "factor": "tarabala",
+      "missing_for_scored_verdict": [
+        "OSS/public formula alignment",
+        "factor weighting rule",
+        "public worked example"
+      ],
+      "readiness": "local_probe_needs_formula_alignment",
+      "source_status": "local_probe_present_needs_oss_formula_alignment"
+    },
+    {
+      "allowed_product_use": "supporting_context_only",
+      "claim": "observation_only",
+      "factor": "chandrabala",
+      "missing_for_scored_verdict": [
+        "OSS/public formula alignment",
+        "factor weighting rule",
+        "public worked example"
+      ],
+      "readiness": "local_probe_needs_formula_alignment",
+      "source_status": "local_probe_present_needs_oss_formula_alignment"
+    },
+    {
+      "allowed_product_use": "supporting_context_only",
+      "claim": "observation_only",
+      "factor": "rahu_kalam",
+      "missing_for_scored_verdict": [
+        "date/location fixture",
+        "sunrise/sunset source",
+        "expected public interval",
+        "raw/hash"
+      ],
+      "readiness": "local_probe_needs_public_interval_fixture",
+      "source_status": "local_probe_present_needs_public_interval_fixture"
+    },
+    {
+      "allowed_product_use": "supporting_context_only",
+      "claim": "observation_only",
+      "factor": "abhijit",
+      "missing_for_scored_verdict": [
+        "date/location fixture",
+        "sunrise/sunset source",
+        "expected public interval",
+        "raw/hash"
+      ],
+      "readiness": "local_probe_needs_public_interval_fixture",
+      "source_status": "local_probe_present_needs_public_interval_fixture"
+    }
+  ],
+  "scope": "muhurta_factor_scoring_readiness",
+  "source_queue": "references/oracle/muhurta_oss_factor_scoring_queue_2026_07_19.json",
+  "status": "readiness_ledger_ready",
+  "summary": {
+    "blocked_unknown_status_count": 0,
+    "factor_count": 6,
+    "scored_verdict_ready_count": 0,
+    "supporting_context_only_count": 6
+  },
+  "truth_matrix_allowed": false
+}

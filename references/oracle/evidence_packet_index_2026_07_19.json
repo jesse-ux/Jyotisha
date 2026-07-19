@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 64,
+    "packet_count": 65,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -521,6 +521,14 @@
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Classifies all 42 same-unit Shadbala rows into closed observation, method variant, or open mismatch; does not assert absolute formula truth."
+    },
+    {
+      "packet_id": "muhurta_factor_scoring_readiness",
+      "path": "references/oracle/muhurta_factor_scoring_readiness_2026_07_19.json",
+      "domain": "muhurta_factor_scoring",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Classifies Muhurta factors as supporting-context only; no scored verdict readiness until formulas, weights, public examples, and replay hashes close."
     }
   ]
 }
