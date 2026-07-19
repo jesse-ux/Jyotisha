@@ -39,12 +39,12 @@ jobs:
           RSYNC_SSH="ssh $SSH_OPTIONS"
           ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "install -m 700 -d '$DEPLOY_PATH/tmp/profile-migrations'"
           rsync -az -e "$RSYNC_SSH" \
-            frontend/supabase/migrations/20260718010000_recover_missing_profile_rows.sql \
-            frontend/supabase/migrations/20260718020000_profiles_service_role_upsert_grants.sql \
             frontend/supabase/migrations/20260718050000_profiles_service_role_upsert_grants.sql \
+            frontend/supabase/migrations/20260718060000_profiles_service_role_least_privilege.sql \
             frontend/supabase/migrations/20260718070000_profiles_service_role_upsert_id.sql \
             frontend/supabase/migrations/20260718080000_profiles_service_role_account_upsert_selects.sql \
             frontend/supabase/migrations/20260718100000_repair_missing_chart_profiles.sql \
+            frontend/supabase/migrations/20260718102000_recover_missing_profile_rows.sql \
             frontend/supabase/migrations/20260718103000_profile_birth_time_declaration_grants.sql \
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/tmp/profile-migrations/"
 
@@ -68,12 +68,12 @@ jobs:
             exit 1
           fi
           for SQL_FILE in \
-            tmp/profile-migrations/20260718010000_recover_missing_profile_rows.sql \
-            tmp/profile-migrations/20260718020000_profiles_service_role_upsert_grants.sql \
             tmp/profile-migrations/20260718050000_profiles_service_role_upsert_grants.sql \
+            tmp/profile-migrations/20260718060000_profiles_service_role_least_privilege.sql \
             tmp/profile-migrations/20260718070000_profiles_service_role_upsert_id.sql \
             tmp/profile-migrations/20260718080000_profiles_service_role_account_upsert_selects.sql \
             tmp/profile-migrations/20260718100000_repair_missing_chart_profiles.sql \
+            tmp/profile-migrations/20260718102000_recover_missing_profile_rows.sql \
             tmp/profile-migrations/20260718103000_profile_birth_time_declaration_grants.sql
           do
             echo "applying $(basename "$SQL_FILE")"
