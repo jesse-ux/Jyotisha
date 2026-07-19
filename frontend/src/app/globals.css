@@ -656,6 +656,8 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
 }
 
 @media (max-width: 480px) {
+  .birth-time-assessment-heading { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+  .birth-time-status-badge { justify-self: start; }
   .birth-time-detail-grid, .birth-time-range-summary, .birth-time-answer-list, .birth-time-candidate-grid { grid-template-columns: 1fr; }
   .birth-time-evidence-actions > button, .birth-time-guided-actions > button, .birth-time-candidate-terminal > button, .birth-time-confirmation-panel > button { width: 100%; }
   .birth-time-draft-fields { grid-template-columns: 1fr; }
