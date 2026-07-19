@@ -35,7 +35,21 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
+      - name: Reject stale CI revision
+        id: revision
+        run: |
+          tested_sha="$(git rev-parse HEAD)"
+          main_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          if [ "$tested_sha" = "$main_sha" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            echo "Deploying current main revision $tested_sha"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale CI revision $tested_sha; current main is $main_sha"
+          fi
+
       - name: Configure SSH
+        if: steps.revision.outputs.deploy == 'true'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
         run: |
@@ -45,6 +59,7 @@ jobs:
           printf '%s\n' '[103.117.123.53]:22000 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHQJvN2Mo3Yq8e6ZIK4P2blJ5Vjj0HbknEuk7TyjhMbO' > ~/.ssh/known_hosts
 
       - name: Sync and rebuild
+        if: steps.revision.outputs.deploy == 'true'
         env:
           DEPLOY_GIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
@@ -64,6 +79,7 @@ jobs:
             "cd '$DEPLOY_PATH' && GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
 
       - name: Verify production
+        if: steps.revision.outputs.deploy == 'true'
         env:
           DEPLOY_GIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |

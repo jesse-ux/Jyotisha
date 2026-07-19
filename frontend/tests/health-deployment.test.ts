@@ -21,4 +21,6 @@ test("production deployment passes the tested revision into the web runtime", ()
   assert.match(workflow, /get\("deployment", \{\}\)\.get\("gitCommit"/);
   assert.match(workflow, /DEPLOY_GIT_SHA/);
   assert.match(workflow, /Production revision did not converge/);
+  assert.match(workflow, /git ls-remote origin refs\/heads\/main/);
+  assert.match(workflow, /steps\.revision\.outputs\.deploy == 'true'/);
 });
