@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowUp, ArrowUpRight, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
-import { BirthTimeRectification } from "@/components/birth-time-rectification";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { ModelSelector } from "@/components/model-selector";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,14 @@ import {
   type PublicLanguageModelCatalog,
 } from "@/lib/public-models";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+
+const BirthTimeRectification = dynamic(
+  () => import("@/components/birth-time-rectification").then((module) => module.BirthTimeRectification),
+  {
+    ssr: false,
+    loading: () => <p className="birth-time-assistant-intent" role="status">正在加载出生时间评估...</p>,
+  },
+);
 
 type Theme = ReplyTheme;
 type Message = { role: "user" | "assistant"; text: string; suggestions?: string[] };
@@ -1165,7 +1173,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [hydrated, profile.date, profile.time, profile.provinceCode, profile.cityCode, profileComplete]);
+  }, [hydrated, profile, profileComplete]);
 
   useEffect(() => {
     if (!hydrated || !profileComplete) return;
@@ -1181,7 +1189,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [hydrated, profile.date, profile.time, profile.provinceCode, profile.cityCode, profileComplete]);
+  }, [hydrated, profile, profileComplete]);
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

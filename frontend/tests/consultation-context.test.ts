@@ -17,3 +17,23 @@ test("passes transparent public-case references into the agent context", () => {
   assert.match(source, /Jupiter and Saturn relative houses/);
   assert.match(source, /exact_triggers as technical trigger points/);
 });
+
+test("keeps strength, Ashtakavarga, and timing evidence available to the answer model", () => {
+  const source = readFileSync(new URL("../src/mastra/index.ts", import.meta.url), "utf8");
+  assert.match(source, /shadbala: chart\.shadbala/);
+  assert.match(source, /shadbala_boundary:/);
+  assert.match(source, /ashtakavarga: modules\.ashtakavarga/);
+  assert.match(source, /dasha_boundaries: modules\.dasha_boundaries/);
+  assert.match(source, /narayana_dasha: modules\.narayana_dasha/);
+  assert.match(source, /evidence_contract:/);
+  assert.match(source, /missing_route_layers: consumerContext\.missing_route_layers/);
+  assert.match(source, /answer_policy: consumerContext\.answer_policy/);
+  assert.match(source, /evidence_contract\.answer_policy/);
+  assert.match(source, /can_answer_precise_timing/);
+  assert.match(source, /boundary: "not_auto_rectified"/);
+  assert.match(source, /rectification\.boundary=not_auto_rectified/);
+  assert.match(source, /external_engine_evidence:/);
+  assert.match(source, /runtime_truth: record\(data\.runtime_truth\)/);
+  assert.match(source, /numerical_parity: record\(data\.external_parity_gate\)/);
+  assert.match(source, /real_case_calibration: record\(data\.real_case_calibration\)/);
+});

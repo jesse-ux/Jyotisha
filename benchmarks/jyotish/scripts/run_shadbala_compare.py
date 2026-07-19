@@ -13,7 +13,7 @@ from shadbala import calc_shadbala, NAISARGIKA_BALA
 from jhora import const, utils
 from jhora.panchanga import drik
 from jhora.horoscope.chart import charts
-from jhora.horoscope.strength import shadbala as pj_shadbala
+from jhora.horoscope.chart import strength as pj_strength
 
 TEST_CASES = [
     {"id": "beijing_1990_noon",     "year":1990, "month":6, "day":15, "hour":12, "minute":0, "lat":39.9,  "lon":116.4, "tz":8},
@@ -56,8 +56,8 @@ def run_benchmark():
             sign = pp[pid + 1][1][0]
             deg = pp[pid + 1][1][1]
             house = (sign - asc_sign_idx) % 12 + 1
-            retro = pp[pid + 1][4]  # retrograde flag in PyJHora
-            speed = pp[pid + 1][3]  # speed in degrees/day
+            retro = pp[pid + 1][4] if len(pp[pid + 1]) > 4 else False
+            speed = pp[pid + 1][3] if len(pp[pid + 1]) > 3 else 1.0
             planets[pname] = {
                 'sign': SIGNS[sign],
                 'degree': sign * 30 + deg,
@@ -73,7 +73,7 @@ def run_benchmark():
 
         # PyJHora Shadbala
         try:
-            pj = pj_shadbala.get_shadbala_scores(jd, place, divisional_chart_factor=1)
+            pj_total_rupas = pj_strength.shad_bala(jd, place)[7]
         except:
             print(f"  PyJHora shadbala failed for {case['id']}")
             continue
@@ -87,9 +87,7 @@ def run_benchmark():
                 continue
 
             our_rupas = our['planets'][pname]['total_rupas']
-            pj_rupas = pj.get(pname, {}).get('shadbala', {}).get('total', 0)
-            if isinstance(pj_rupas, dict):
-                pj_rupas = pj_rupas.get('rupas', 0)
+            pj_rupas = pj_total_rupas[PLANET_NAMES.index(pname)]
 
             total_planets += 1
             if pj_rupas > 0:

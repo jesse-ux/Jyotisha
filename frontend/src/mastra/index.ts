@@ -24,6 +24,25 @@ export type ConsultationInput = z.infer<typeof consultationInputSchema>;
 
 type JsonRecord = Record<string, unknown>;
 
+const workflowConsumerContextSchema = z.object({
+  route: z.string().min(1),
+  core_status: z.enum(["ready", "degraded", "blocked"]),
+  available_layers: z.array(z.string()),
+  missing_route_layers: z.array(z.string()),
+  hard_blockers: z.array(z.string()),
+  answer_policy: z.object({
+    can_answer_direction: z.boolean(),
+    can_answer_precise_timing: z.boolean(),
+  }).passthrough(),
+}).passthrough();
+
+export const consultationWorkflowResponseSchema = z.object({
+  success: z.boolean(),
+  chart: z.record(z.unknown()),
+  routing: z.record(z.unknown()),
+  consumer_context: workflowConsumerContextSchema,
+}).passthrough();
+
 function record(value: unknown): JsonRecord {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as JsonRecord
@@ -52,7 +71,21 @@ export async function runConsultationWorkflow(input: ConsultationInput) {
   if (!response.ok || !data) {
     throw new Error(data?.error || data?.message || `Jyotish API returned ${response.status}`);
   }
-  return data as JsonRecord;
+  const parsed = consultationWorkflowResponseSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new Error("Jyotish API returned an incomplete consultation contract");
+  }
+  return parsed.data;
+}
+
+export function consultationWorkflowReceipt(data: JsonRecord) {
+  const consumerContext = workflowConsumerContextSchema.parse(data.consumer_context);
+  return {
+    route: consumerContext.route,
+    status: consumerContext.core_status,
+    preciseTiming: consumerContext.answer_policy.can_answer_precise_timing ? "allowed" : "blocked",
+    missingLayers: consumerContext.missing_route_layers.join(",") || "none",
+  };
 }
 
 export function toAgentConsultationContext(data: JsonRecord) {
@@ -64,12 +97,22 @@ export function toAgentConsultationContext(data: JsonRecord) {
   const primaryTheme = String(routing.primary_theme || routing.question_type || "general");
   const selectedTheme = record(themes[primaryTheme]);
   const rectification = record(data.rectification);
+  const consumerContext = record(data.consumer_context);
 
   return {
     success: data.success === true,
     question: data.question,
     routing,
-    consumer_context: record(data.consumer_context),
+    consumer_context: consumerContext,
+    evidence_contract: {
+      route: consumerContext.route,
+      core_status: consumerContext.core_status,
+      available_layers: consumerContext.available_layers,
+      missing_route_layers: consumerContext.missing_route_layers,
+      hard_blockers: consumerContext.hard_blockers,
+      answer_policy: consumerContext.answer_policy,
+      user_facing_limitation: consumerContext.user_facing_limitation,
+    },
     chart: {
       birth: chart.birth,
       ascendant: chart.ascendant,
@@ -80,18 +123,27 @@ export function toAgentConsultationContext(data: JsonRecord) {
       yogas: chart.yogas,
     },
     local_layers: {
+      shadbala_boundary: "Shadbala is a locally consistent relative-strength layer; external component-level absolute parity remains partial and must not be stated as closed.",
       varga_full: modules.varga_full,
       arudha_padas: modules.arudha_padas,
+      ashtakavarga: modules.ashtakavarga,
+      dasha_boundaries: modules.dasha_boundaries,
       narayana_dasha: modules.narayana_dasha,
       functional_benefic_malefic: record(data.machine_evidence_packet).functional_benefic_malefic,
     },
     rectification: {
+      boundary: "not_auto_rectified",
       summary: rectification.summary,
       enabled_vargas: rectification.enabled_vargas,
       lagna_boundary: rectification.lagna_boundary,
     },
     thematic_evidence: selectedTheme,
     vedastro_gateway: record(data.vedastro_gateway),
+    external_engine_evidence: {
+      runtime_truth: record(data.runtime_truth),
+      numerical_parity: record(data.external_parity_gate),
+      real_case_calibration: record(data.real_case_calibration),
+    },
     reference_transparency: record(data.reference_transparency),
   };
 }
@@ -123,6 +175,8 @@ When reference_transparency is present:
 - If should_lead_with_limitations is false, do not lead with limitations. If a limitation is relevant, put it in one short sentence at the end.
 - Only say the chart calculation failed when hard_blockers is non-empty.
 - Never claim D9, D10, A10, UL, or Narayana Dasha is missing when it appears in available_layers or local_layers.
+- Treat evidence_contract.answer_policy as a hard output contract. When can_answer_precise_timing is false, provide only direction or structure and do not state a month, date, or guaranteed timing outcome.
+- Treat rectification.boundary=not_auto_rectified as final: a candidate time or score is not a verified birth time and must not be presented as one.
 Usually answer in 2-5 short paragraphs. Ask one clarifying question only when the user's intent is genuinely unclear.
 After every substantive answer, append exactly two hidden blocks in this order and nothing after the second block:
 <!--AYANAM_SUGGESTIONS:["问题一","问题二","问题三"]-->
@@ -135,7 +189,27 @@ Do not provide medical, legal, investment, or safety-critical instructions. Do n
 
 const jyotishAgents = new Map<string, Agent>();
 
-export function getJyotishAgent(model: ResolvedLanguageModel) {
+function groundedJyotishInstructions(workflowContext: JsonRecord) {
+  return `${jyotishInstructions}
+
+The server-computed Jyotish workflow below is the only source for this chart claim. Use it directly, preserve its truth boundaries, and do not run a second consultation workflow.
+<server-computed-jyotish-workflow>
+${JSON.stringify(toAgentConsultationContext(workflowContext))}
+</server-computed-jyotish-workflow>`;
+}
+
+export function getJyotishAgent(model: ResolvedLanguageModel, workflowContext?: JsonRecord) {
+  if (workflowContext) {
+    return new Agent({
+      id: `jyotish-guide-${model.id}-grounded`,
+      name: "Jyotish Guide",
+      model: model.model,
+      instructions: groundedJyotishInstructions(workflowContext),
+      skills: [jyotishSkillPath],
+      tools: workflowContext ? {} : { consultationTool },
+    });
+  }
+
   const cached = jyotishAgents.get(model.id);
   if (cached) return cached;
   const agent = new Agent({
@@ -144,7 +218,7 @@ export function getJyotishAgent(model: ResolvedLanguageModel) {
     model: model.model,
     instructions: jyotishInstructions,
     skills: [jyotishSkillPath],
-    tools: { consultationTool },
+    tools: workflowContext ? {} : { consultationTool },
   });
   jyotishAgents.set(model.id, agent);
   return agent;
