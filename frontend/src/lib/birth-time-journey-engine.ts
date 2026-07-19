@@ -5,6 +5,7 @@ import {
   createJourneyEngineWire,
 } from "./birth-time-journey-engine-model.ts";
 import type { BirthTimeJourneyEngine } from "./birth-time-journey-service.ts";
+import { resolveDynamicRectificationToken } from "./birth-time-dynamic-token.ts";
 
 export {
   BirthTimeJourneyEngineConfigurationError,
@@ -16,7 +17,10 @@ export function createJyotishBirthTimeJourneyEngine(
 ): BirthTimeJourneyEngine {
   return createJourneyEngineMethods(createJourneyEngineWire({
     apiBase,
-    dynamicToken: process.env.JYOTISH_DYNAMIC_RECTIFICATION_TOKEN ?? null,
+    dynamicToken: resolveDynamicRectificationToken(
+      process.env.JYOTISH_DYNAMIC_RECTIFICATION_TOKEN,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+    ),
     fetchImpl: fetch,
   }));
 }
