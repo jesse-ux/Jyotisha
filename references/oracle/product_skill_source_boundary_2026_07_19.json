@@ -1,0 +1,23 @@
+{
+  "scope": "product_skill_source_boundary",
+  "created_at": "2026-07-19",
+  "status": "registered_reference_only",
+  "claim_status": "reference_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "sources": [
+    {
+      "project_id": "rishi-ai-mcp",
+      "local_path": "references/open_source_sources/rishi-ai-mcp",
+      "role": "skill_prompt_product_flow_reference",
+      "truth_layer_allowed": false
+    },
+    {
+      "project_id": "vedic-astro-skills",
+      "local_path": "references/open_source_sources/vedic-astro-skills",
+      "role": "skill_prompt_product_flow_reference",
+      "truth_layer_allowed": false
+    }
+  ],
+  "boundary": "These sources may inform UX/skill wording and workflow taxonomy only. They must not enter numeric oracle, formula truth, or production tuning gates."
+}

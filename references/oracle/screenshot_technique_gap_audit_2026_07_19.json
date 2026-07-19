@@ -1,0 +1,62 @@
+{
+  "scope": "screenshot_technique_gap_audit",
+  "created_at": "2026-07-19",
+  "source_manifest": "references/source_ingestion_manual_classifications_2026_07_17.json",
+  "status": "gap_audit_v1",
+  "production_tuning_allowed": false,
+  "copyright_boundary": "labels_and_short_notes_only_no_fulltext",
+  "boundary": "This audit compares manually classified screenshot formula families against the skill technique registry. It does not quote or republish source screenshots.",
+  "summary": {
+    "classified_image_count": 34,
+    "formula_family_identified_count": 10,
+    "manual_unreadable_count": 23,
+    "manual_no_formula_verified_count": 1,
+    "missing_registry_family_count": 2
+  },
+  "covered_or_partial_families": [
+    {
+      "formula_id": "arudha",
+      "source_images": ["260716/IMG_3503.PNG"],
+      "registry_matches": ["arudha_lagna"],
+      "status": "covered_or_partial",
+      "next_action": "link screenshot source family to existing Arudha/Jaimini source packet"
+    },
+    {
+      "formula_id": "jaimini",
+      "source_images": ["260716/IMG_3505.PNG"],
+      "registry_matches": ["jaimini_chara_dasha", "rangacharya_jaimini_variant"],
+      "status": "covered_or_partial",
+      "next_action": "map screenshot karaka/divisional-combination notes to Jaimini source packet"
+    },
+    {
+      "formula_id": "badhaka",
+      "source_images": ["占星印度1/IMG_3226.JPG"],
+      "registry_matches": ["badhaka"],
+      "status": "covered_or_partial",
+      "next_action": "link Badhaka sign/lord rules to source packet"
+    }
+  ],
+  "missing_registry_families": [
+    {
+      "formula_id": "conception_chart",
+      "source_images": ["受孕/IMG_3216.JPG", "受孕/IMG_3219.JPG", "受孕/IMG_3221.JPG"],
+      "observed_family": "Adhana/Niseka conception-chart construction and lagna inference methods",
+      "registry_matches": [],
+      "promotion_action": "add_research_only_registry_and_source_packet",
+      "claim_boundary": "Research-only until classical source, worked example, privacy boundary, and medical/fertility safety gate are complete."
+    },
+    {
+      "formula_id": "relationship_combinations",
+      "source_images": ["260716/IMG_3506.PNG", "260716/IMG_3507.PNG", "占星印度1/IMG_3229.JPG", "占星印度1/IMG_3230.JPG"],
+      "observed_family": "Relationship, spouse, children and hostility combinations involving Arudha/Upapada/Pada/house-lord/malefic rules",
+      "registry_matches": [],
+      "promotion_action": "add_relationship_rule_registry",
+      "claim_boundary": "Must be separated into relationship, children, hostility and Upapada/Arudha rule packets before runtime claims."
+    }
+  ],
+  "unreadable_policy": {
+    "image_count": 23,
+    "status": "manual_unreadable",
+    "next_action": "Do not infer formulas. Reprocess only with better source image or human transcription."
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "scope": "relationship_combinations_rule_family_registry",
+  "created_at": "2026-07-19",
+  "status": "rule_family_registry_v1",
+  "production_tuning_allowed": false,
+  "copyright_boundary": "labels_and_short_notes_only_no_fulltext",
+  "source_manifest": "references/source_ingestion_manual_classifications_2026_07_17.json",
+  "source_images": ["260716/IMG_3506.PNG", "260716/IMG_3507.PNG", "占星印度1/IMG_3229.JPG", "占星印度1/IMG_3230.JPG"],
+  "claim_boundary": "Relationship-combination screenshot families must remain source/rule registry entries until separated, sourced, tested, and cross-checked with D1/D9/UL/DK/Dasha context.",
+  "rule_families": [
+    {
+      "family_id": "upapada_arudha_spouse_rules",
+      "status": "source_family_identified",
+      "local_overlap": ["scripts/jaimini.py", "relationship_gender_role_technique_registry_2026_07_19.json"],
+      "observed_scope": "Upapada, Pada/Arudha and spouse-related relationship indications.",
+      "required_evidence": "Map each rule to formula/source line, inputs, exception rules, and local output field."
+    },
+    {
+      "family_id": "children_relationship_combinations",
+      "status": "source_family_identified",
+      "local_overlap": ["D7/Saptamsa support via scripts/varga.py", "Putrakaraka via Jaimini"],
+      "observed_scope": "Children timing/relationship combinations from screenshot notes.",
+      "required_evidence": "Separate children rules from spouse rules; require D7, 5th house, Jupiter, Putrakaraka and Dasha context."
+    },
+    {
+      "family_id": "hostility_sixth_house_mars_rules",
+      "status": "source_family_identified",
+      "local_overlap": ["mangal_dosha", "functional benefic/malefic", "relationship risk layers"],
+      "observed_scope": "Mars and sixth-house hostility or conflict combinations.",
+      "required_evidence": "Define whether rule is natal relationship conflict, litigation/hostility, Kuja variant, or functional malefic rule."
+    },
+    {
+      "family_id": "house_lord_malefic_relationship_rules",
+      "status": "source_family_identified",
+      "local_overlap": ["functional benefic/malefic", "D1/D9 relationship workflow"],
+      "observed_scope": "House-lord and malefic combination rules affecting relationship outcomes.",
+      "required_evidence": "Break into house-lord, graha, aspect, dignity, D9 and Dasha conditions before runtime use."
+    }
+  ],
+  "required_next_steps": [
+    "Create source packet for each rule family.",
+    "Deduplicate against existing Jaimini/Upapada/D9/Ashtakoot relationship stack.",
+    "Add tests proving these rules are supplemental, not single-factor truth.",
+    "Attach claim gate: no deterministic marriage/children outcome from one combination."
+  ]
+}

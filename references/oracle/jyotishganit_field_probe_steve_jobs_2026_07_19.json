@@ -1,0 +1,539 @@
+{
+  "boundary": "Raw/hash observation only. Missing Shadbala field or matching signs do not prove formula truth or production timing readiness.",
+  "claim_status": "observation_only",
+  "coverage": {
+    "BAV_SAV": true,
+    "D10": true,
+    "D2": true,
+    "D4": true,
+    "D9": true,
+    "Shadbala": false,
+    "panchanga": true,
+    "Shadbala_object_surface": "references/oracle/jyotishganit_shadbala_surface_probe_steve_jobs_2026_07_19.json"
+  },
+  "created_at": "2026-07-19",
+  "engine": {
+    "local_path": "references/open_source_sources/jyotishganit",
+    "name": "jyotishganit"
+  },
+  "production_tuning_allowed": false,
+  "raw_hash": "4c2356efedf61e1b6736754a754ba76fe0cf9d6b43050f1f8367a919a2b64cd0",
+  "request": {
+    "datetime": "1955-02-24T19:15:00",
+    "latitude": 37.3382,
+    "location": "San Francisco, CA",
+    "longitude": -122.0383,
+    "name": "Steve Jobs public",
+    "timezone": -8.0
+  },
+  "schema_fingerprint": {
+    "ashtakavarga": {
+      "@type": "str",
+      "jupiterBhav": {
+        "Aquarius": "int",
+        "Aries": "int",
+        "Cancer": "int",
+        "Capricorn": "int",
+        "Gemini": "int",
+        "Leo": "int",
+        "Libra": "int",
+        "Pisces": "int",
+        "Sagittarius": "int",
+        "Scorpio": "int",
+        "Taurus": "int",
+        "Virgo": "int"
+      },
+      "marsBhav": {
+        "Aquarius": "int",
+        "Aries": "int",
+        "Cancer": "int",
+        "Capricorn": "int",
+        "Gemini": "int",
+        "Leo": "int",
+        "Libra": "int",
+        "Pisces": "int",
+        "Sagittarius": "int",
+        "Scorpio": "int",
+        "Taurus": "int",
+        "Virgo": "int"
+      },
+      "mercuryBhav": {
+        "Aquarius": "int",
+        "Aries": "int",
+        "Cancer": "int",
+        "Capricorn": "int",
+        "Gemini": "int",
+        "Leo": "int",
+        "Libra": "int",
+        "Pisces": "int",
+        "Sagittarius": "int",
+        "Scorpio": "int",
+        "Taurus": "int",
+        "Virgo": "int"
+      },
+      "moonBhav": {
+        "Aquarius": "int",
+        "Aries": "int",
+        "Cancer": "int",
+        "Capricorn": "int",
+        "Gemini": "int",
+        "Leo": "int",
+        "Libra": "int",
+        "Pisces": "int",
+        "Sagittarius": "int",
+        "Scorpio": "int",
+        "Taurus": "int",
+        "Virgo": "int"
+      },
+      "saturnBhav": {
+        "Aquarius": "int",
+        "Aries": "int",
+        "Cancer": "int",
+        "Capricorn": "int",
+        "Gemini": "int",
+        "Leo": "int",
+        "Libra": "int",
+        "Pisces": "int",
+        "Sagittarius": "int",
+        "Scorpio": "int",
+        "Taurus": "int",
+        "Virgo": "int"
+      },
+      "sav": {
+        "Aquarius": "int",
+        "Aries": "int",
+        "Cancer": "int",
+        "Capricorn": "int",
+        "Gemini": "int",
+        "Leo": "int",
+        "Libra": "int",
+        "Pisces": "int",
+        "Sagittarius": "int",
+        "Scorpio": "int",
+        "Taurus": "int",
+        "Virgo": "int"
+      },
+      "sunBhav": {
+        "Aquarius": "int",
+        "Aries": "int",
+        "Cancer": "int",
+        "Capricorn": "int",
+        "Gemini": "int",
+        "Leo": "int",
+        "Libra": "int",
+        "Pisces": "int",
+        "Sagittarius": "int",
+        "Scorpio": "int",
+        "Taurus": "int",
+        "Virgo": "int"
+      },
+      "venusBhav": {
+        "Aquarius": "int",
+        "Aries": "int",
+        "Cancer": "int",
+        "Capricorn": "int",
+        "Gemini": "int",
+        "Leo": "int",
+        "Libra": "int",
+        "Pisces": "int",
+        "Sagittarius": "int",
+        "Scorpio": "int",
+        "Taurus": "int",
+        "Virgo": "int"
+      }
+    },
+    "panchanga": {
+      "@type": "str",
+      "karana": "str",
+      "nakshatra": "str",
+      "tithi": "str",
+      "vaara": "str",
+      "yoga": "str"
+    },
+    "shadbala": "NoneType",
+    "strengths": "NoneType",
+    "varga_sign_table": {
+      "D10": {
+        "ascendant_sign": "str",
+        "planet_signs": [
+          {
+            "d1HousePlacement": "int",
+            "planet": "str",
+            "sign": "str"
+          }
+        ],
+        "status": "str"
+      },
+      "D2": {
+        "ascendant_sign": "str",
+        "planet_signs": [
+          {
+            "d1HousePlacement": "int",
+            "planet": "str",
+            "sign": "str"
+          }
+        ],
+        "status": "str"
+      },
+      "D4": {
+        "ascendant_sign": "str",
+        "planet_signs": [
+          {
+            "d1HousePlacement": "int",
+            "planet": "str",
+            "sign": "str"
+          }
+        ],
+        "status": "str"
+      },
+      "D9": {
+        "ascendant_sign": "str",
+        "planet_signs": [
+          {
+            "d1HousePlacement": "int",
+            "planet": "str",
+            "sign": "str"
+          }
+        ],
+        "status": "str"
+      }
+    }
+  },
+  "scope": "jyotishganit_field_probe",
+  "selected_hash": "4709b8ade84efdea4d0a67c15f3e32cea516a5aa2e8abe3885578feda20cb3f4",
+  "selected_raw": {
+    "ashtakavarga": {
+      "@type": "Ashtakavarga",
+      "jupiterBhav": {
+        "Aquarius": 5,
+        "Aries": 7,
+        "Cancer": 3,
+        "Capricorn": 6,
+        "Gemini": 3,
+        "Leo": 4,
+        "Libra": 4,
+        "Pisces": 3,
+        "Sagittarius": 4,
+        "Scorpio": 5,
+        "Taurus": 5,
+        "Virgo": 7
+      },
+      "marsBhav": {
+        "Aquarius": 1,
+        "Aries": 4,
+        "Cancer": 4,
+        "Capricorn": 4,
+        "Gemini": 4,
+        "Leo": 3,
+        "Libra": 4,
+        "Pisces": 2,
+        "Sagittarius": 1,
+        "Scorpio": 5,
+        "Taurus": 7,
+        "Virgo": 0
+      },
+      "mercuryBhav": {
+        "Aquarius": 2,
+        "Aries": 5,
+        "Cancer": 4,
+        "Capricorn": 8,
+        "Gemini": 5,
+        "Leo": 4,
+        "Libra": 6,
+        "Pisces": 3,
+        "Sagittarius": 5,
+        "Scorpio": 5,
+        "Taurus": 5,
+        "Virgo": 2
+      },
+      "moonBhav": {
+        "Aquarius": 3,
+        "Aries": 4,
+        "Cancer": 2,
+        "Capricorn": 5,
+        "Gemini": 4,
+        "Leo": 6,
+        "Libra": 3,
+        "Pisces": 5,
+        "Sagittarius": 5,
+        "Scorpio": 2,
+        "Taurus": 5,
+        "Virgo": 5
+      },
+      "saturnBhav": {
+        "Aquarius": 3,
+        "Aries": 1,
+        "Cancer": 0,
+        "Capricorn": 3,
+        "Gemini": 3,
+        "Leo": 6,
+        "Libra": 4,
+        "Pisces": 3,
+        "Sagittarius": 3,
+        "Scorpio": 5,
+        "Taurus": 5,
+        "Virgo": 3
+      },
+      "sav": {
+        "Aquarius": 22,
+        "Aries": 28,
+        "Cancer": 19,
+        "Capricorn": 35,
+        "Gemini": 28,
+        "Leo": 30,
+        "Libra": 31,
+        "Pisces": 24,
+        "Sagittarius": 27,
+        "Scorpio": 32,
+        "Taurus": 37,
+        "Virgo": 24
+      },
+      "sunBhav": {
+        "Aquarius": 3,
+        "Aries": 3,
+        "Cancer": 3,
+        "Capricorn": 4,
+        "Gemini": 4,
+        "Leo": 3,
+        "Libra": 6,
+        "Pisces": 2,
+        "Sagittarius": 4,
+        "Scorpio": 7,
+        "Taurus": 7,
+        "Virgo": 2
+      },
+      "venusBhav": {
+        "Aquarius": 5,
+        "Aries": 4,
+        "Cancer": 3,
+        "Capricorn": 5,
+        "Gemini": 5,
+        "Leo": 4,
+        "Libra": 4,
+        "Pisces": 6,
+        "Sagittarius": 5,
+        "Scorpio": 3,
+        "Taurus": 3,
+        "Virgo": 5
+      }
+    },
+    "panchanga": {
+      "@type": "Panchanga",
+      "karana": "Gara",
+      "nakshatra": "Uttara Bhadrapada",
+      "tithi": "Shukla Tritiya",
+      "vaara": "Thursday",
+      "yoga": "Shubha"
+    },
+    "shadbala": null,
+    "strengths": null,
+    "varga_sign_table": {
+      "D10": {
+        "ascendant_sign": "Taurus",
+        "planet_signs": [
+          {
+            "d1HousePlacement": 11,
+            "planet": "Jupiter",
+            "sign": "Pisces"
+          },
+          {
+            "d1HousePlacement": 11,
+            "planet": "Ketu",
+            "sign": "Leo"
+          },
+          {
+            "d1HousePlacement": 9,
+            "planet": "Mars",
+            "sign": "Taurus"
+          },
+          {
+            "d1HousePlacement": 6,
+            "planet": "Mercury",
+            "sign": "Aries"
+          },
+          {
+            "d1HousePlacement": 8,
+            "planet": "Moon",
+            "sign": "Pisces"
+          },
+          {
+            "d1HousePlacement": 5,
+            "planet": "Rahu",
+            "sign": "Aquarius"
+          },
+          {
+            "d1HousePlacement": 3,
+            "planet": "Saturn",
+            "sign": "Cancer"
+          },
+          {
+            "d1HousePlacement": 7,
+            "planet": "Sun",
+            "sign": "Gemini"
+          },
+          {
+            "d1HousePlacement": 5,
+            "planet": "Venus",
+            "sign": "Virgo"
+          }
+        ],
+        "status": "present"
+      },
+      "D2": {
+        "ascendant_sign": "Cancer",
+        "planet_signs": [
+          {
+            "d1HousePlacement": 11,
+            "planet": "Jupiter",
+            "sign": "Cancer"
+          },
+          {
+            "d1HousePlacement": 11,
+            "planet": "Ketu",
+            "sign": "Leo"
+          },
+          {
+            "d1HousePlacement": 9,
+            "planet": "Mars",
+            "sign": "Leo"
+          },
+          {
+            "d1HousePlacement": 6,
+            "planet": "Mercury",
+            "sign": "Leo"
+          },
+          {
+            "d1HousePlacement": 8,
+            "planet": "Moon",
+            "sign": "Cancer"
+          },
+          {
+            "d1HousePlacement": 5,
+            "planet": "Rahu",
+            "sign": "Leo"
+          },
+          {
+            "d1HousePlacement": 3,
+            "planet": "Saturn",
+            "sign": "Cancer"
+          },
+          {
+            "d1HousePlacement": 7,
+            "planet": "Sun",
+            "sign": "Leo"
+          },
+          {
+            "d1HousePlacement": 5,
+            "planet": "Venus",
+            "sign": "Cancer"
+          }
+        ],
+        "status": "present"
+      },
+      "D4": {
+        "ascendant_sign": "Taurus",
+        "planet_signs": [
+          {
+            "d1HousePlacement": 11,
+            "planet": "Jupiter",
+            "sign": "Pisces"
+          },
+          {
+            "d1HousePlacement": 11,
+            "planet": "Ketu",
+            "sign": "Virgo"
+          },
+          {
+            "d1HousePlacement": 9,
+            "planet": "Mars",
+            "sign": "Aries"
+          },
+          {
+            "d1HousePlacement": 6,
+            "planet": "Mercury",
+            "sign": "Cancer"
+          },
+          {
+            "d1HousePlacement": 8,
+            "planet": "Moon",
+            "sign": "Gemini"
+          },
+          {
+            "d1HousePlacement": 5,
+            "planet": "Rahu",
+            "sign": "Pisces"
+          },
+          {
+            "d1HousePlacement": 3,
+            "planet": "Saturn",
+            "sign": "Cancer"
+          },
+          {
+            "d1HousePlacement": 7,
+            "planet": "Sun",
+            "sign": "Taurus"
+          },
+          {
+            "d1HousePlacement": 5,
+            "planet": "Venus",
+            "sign": "Virgo"
+          }
+        ],
+        "status": "present"
+      },
+      "D9": {
+        "ascendant_sign": "Sagittarius",
+        "planet_signs": [
+          {
+            "d1HousePlacement": 11,
+            "planet": "Jupiter",
+            "sign": "Gemini"
+          },
+          {
+            "d1HousePlacement": 11,
+            "planet": "Ketu",
+            "sign": "Sagittarius"
+          },
+          {
+            "d1HousePlacement": 9,
+            "planet": "Mars",
+            "sign": "Taurus"
+          },
+          {
+            "d1HousePlacement": 6,
+            "planet": "Mercury",
+            "sign": "Cancer"
+          },
+          {
+            "d1HousePlacement": 8,
+            "planet": "Moon",
+            "sign": "Scorpio"
+          },
+          {
+            "d1HousePlacement": 5,
+            "planet": "Rahu",
+            "sign": "Gemini"
+          },
+          {
+            "d1HousePlacement": 3,
+            "planet": "Saturn",
+            "sign": "Gemini"
+          },
+          {
+            "d1HousePlacement": 7,
+            "planet": "Sun",
+            "sign": "Capricorn"
+          },
+          {
+            "d1HousePlacement": 5,
+            "planet": "Venus",
+            "sign": "Sagittarius"
+          }
+        ],
+        "status": "present"
+      }
+    }
+  },
+  "status": "complete",
+  "truth_matrix_allowed": false
+}

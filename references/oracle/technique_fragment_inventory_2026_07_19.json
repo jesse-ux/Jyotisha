@@ -1,0 +1,142 @@
+{
+  "scope": "technique_fragment_inventory",
+  "created_at": "2026-07-19",
+  "status": "audit_inventory_not_runtime_truth",
+  "production_tuning_allowed": false,
+  "copy_policy": "reuse_local_project_code_only_after_current-source audit; external AGPL/proprietary/no-license remains oracle-only",
+  "boundary": "This inventory identifies local/OSS technique fragments that may already exist outside the current main runtime. It does not claim those techniques are production-ready or externally calibrated.",
+  "local_fragments": [
+    {
+      "technique_id": "jaimini_chara_karaka",
+      "system": "vedic",
+      "found_in": [
+        "skills/jyotish-engine-modules/scripts/karaka_calculator.py",
+        "/Users/wuyongnaren/.workbuddy/backups/jyotish-vedic-astrology-20260711-154109/skills/jyotish-engine-modules/scripts/karaka_calculator.py"
+      ],
+      "current_call_status": "not_formally_in_main_runtime",
+      "reuse_value": "Chara Karaka assignment with BPHS/JH compatibility modes; useful for Darakaraka, Atmakaraka, Putrakaraka, Amatyakaraka and Jaimini relationship/career layers.",
+      "next_action": "promote_with_tests_and_contract",
+      "claim_boundary": "Must compare against current scripts/jaimini.py and external Jaimini examples before claim upgrade."
+    },
+    {
+      "technique_id": "special_lagnas_bhava_hora_ghati",
+      "system": "vedic",
+      "found_in": [
+        "skills/jyotish-engine-modules/scripts/special_lagnas.py",
+        "scripts/jaimini.py"
+      ],
+      "current_call_status": "partially_in_main_runtime",
+      "reuse_value": "Bhava Lagna, Hora Lagna, Ghati Lagna and related special ascendants; useful for wealth, power, timing and Adhana/Gulika workflows.",
+      "next_action": "compare_against_main_implementation",
+      "claim_boundary": "Need timezone/local-time and formula-source audit before using as high-rigor evidence."
+    },
+    {
+      "technique_id": "vimsopaka_bala",
+      "system": "vedic",
+      "found_in": [
+        "skills/jyotish-engine-modules/scripts/vimsopaka_calculator.py"
+      ],
+      "current_call_status": "not_formally_in_main_runtime",
+      "reuse_value": "Divisional dignity weighting across varga groups; useful as a strength layer beyond Shadbala.",
+      "next_action": "promote_with_tests_and_contract",
+      "claim_boundary": "Needs varga set, weight table, dignity model and worked example before runtime use."
+    },
+    {
+      "technique_id": "avastha_states",
+      "system": "vedic",
+      "found_in": [
+        "skills/jyotish-engine-modules/scripts/avastha_calculator.py"
+      ],
+      "current_call_status": "not_formally_in_main_runtime",
+      "reuse_value": "Baladi/Jagradadi/Diptadi/Shayanadi style planet states; useful as interpretive condition layer.",
+      "next_action": "promote_with_tests_and_contract",
+      "claim_boundary": "Interpretation-only until formula and source variants are mapped."
+    },
+    {
+      "technique_id": "d2_d60_extended_vargas",
+      "system": "vedic",
+      "found_in": [
+        "skills/jyotish-engine-modules/scripts/divisional_charts_extended.py",
+        "scripts/varga.py"
+      ],
+      "current_call_status": "partially_in_main_runtime",
+      "reuse_value": "Extended D2-D60 varga mapping; useful for D7, D12, D16, D20, D24, D30, D60 expansion.",
+      "next_action": "compare_against_main_implementation",
+      "claim_boundary": "Must not duplicate or override current varga.py without formula/fixture parity."
+    },
+    {
+      "technique_id": "gochara_event_timing_template",
+      "system": "vedic",
+      "found_in": [
+        "/tmp/jyotisha-optimize/assets/event_timing_template.md"
+      ],
+      "current_call_status": "not_formally_in_main_runtime",
+      "reuse_value": "Transit trigger checklist for event timing; useful for Gochara + Dasha + Varga scoring design.",
+      "next_action": "keep_reference_only",
+      "claim_boundary": "Template is not numeric oracle; use only after source/privacy review."
+    },
+    {
+      "technique_id": "kp_astrology_reference",
+      "system": "vedic_kp",
+      "found_in": [
+        "/Users/wuyongnaren/.workbuddy/backups/jyotish-vedic-astrology-20260711-154109/references/kp-astrology-complete-system.md",
+        "/tmp/jyotisha-commercial-readonly.adiUr0/skills/jyotish-engine-modules/SKILL.md"
+      ],
+      "current_call_status": "not_formally_in_main_runtime",
+      "reuse_value": "KP star lord/sub lord/cusp workflow reference; separate branch from classical Jyotish.",
+      "next_action": "keep_reference_only",
+      "claim_boundary": "Needs Placidus/KP cusp, ayanamsa, star/sub-lord oracle and license/privacy audit before integration."
+    }
+  ],
+  "oss_candidates": [
+    {
+      "name": "VedAstro",
+      "url": "https://github.com/VedAstro/VedAstro",
+      "license_status": "MIT",
+      "technique_value": "broad Vedic API/oracle candidate including chart, dasha, panchanga, some specialized methods",
+      "reuse_boundary": "local source/NuGet can be referenced under MIT; hosted identity remains blocked until build metadata is pinned"
+    },
+    {
+      "name": "jyotishganit",
+      "url": "https://github.com/northtara/jyotishganit",
+      "license_status": "MIT",
+      "technique_value": "panchanga and Jyotish calculation reference",
+      "reuse_boundary": "permissive candidate after input/output contract and field parity audit"
+    },
+    {
+      "name": "PyJHora",
+      "url": "https://github.com/naturalstupid/PyJHora",
+      "license_status": "AGPL-3.0",
+      "technique_value": "large JHora-compatible Jyotish technique surface: varga, dasha, shadbala, tajika, sahams and more",
+      "reuse_boundary": "black-box oracle/reference only; do not copy implementation into runtime"
+    },
+    {
+      "name": "Kerykeion",
+      "url": "https://github.com/g-battaglia/kerykeion",
+      "license_status": "AGPL-3.0",
+      "technique_value": "western natal, synastry, transits, returns and relationship score reference",
+      "reuse_boundary": "oracle/reference only unless AGPL obligations are acceptable"
+    },
+    {
+      "name": "logicAstroKPCharts",
+      "url": "https://github.com/logicAstro/logicAstroKPCharts",
+      "license_status": "must_verify_before_reuse",
+      "technique_value": "KP chart/cusp/star/sub-lord reference candidate",
+      "reuse_boundary": "do not copy until license, formulas and input/output contract are verified"
+    },
+    {
+      "name": "vedicpanchanga / panchangam candidates",
+      "url": "multiple GitHub projects found by OSS scan",
+      "license_status": "must_verify_per_repo",
+      "technique_value": "Muhurta/Panchanga/Tarabala/Chandrabala/Rahu Kalam reference candidates",
+      "reuse_boundary": "only permissive code after license and formula audit; otherwise source/oracle reference"
+    }
+  ],
+  "promotion_order": [
+    "compare d2_d60_extended_vargas against scripts/varga.py and add missing D7/D12/D16/D20/D24/D30/D60 contracts",
+    "promote karaka_calculator into Jaimini contract if current scripts/jaimini.py lacks equivalent modes",
+    "promote vimsopaka_bala as strength layer after weight-table source closure",
+    "promote avastha_states as interpretation-only layer after formula source registry",
+    "keep KP and Gochara templates reference-only until oracle/source/privacy audit"
+  ]
+}

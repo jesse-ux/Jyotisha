@@ -16,7 +16,12 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TARGETS = {"D2": "D2_Hora", "D4": "D4_Chaturthamsa", "D9": "D9_Navamsa", "D10": "D10_Dasamsa"}
+TARGETS = {
+    "D2": ["D2_Hora"],
+    "D4": ["D4_Chaturthamsa", "D4_Turyamsa"],
+    "D9": ["D9_Navamsa"],
+    "D10": ["D10_Dasamsa"],
+}
 
 
 def stable(data: Any) -> str:
@@ -82,7 +87,11 @@ def jyotishganit_signs(raw: dict[str, Any], code: str) -> dict[str, str]:
 
 
 def local_signs(raw: dict[str, Any], code: str) -> dict[str, str]:
-    section = raw.get(TARGETS[code], {})
+    section = {}
+    for key in TARGETS[code]:
+        if key in raw:
+            section = raw[key]
+            break
     return {
         body: value.get("sign")
         for body, value in section.items()

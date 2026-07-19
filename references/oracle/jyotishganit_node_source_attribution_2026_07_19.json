@@ -1,0 +1,65 @@
+{
+  "scope": "jyotishganit_node_source_attribution",
+  "created_at": "2026-07-19",
+  "status": "attributed",
+  "claim_status": "partial",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_comparison": "references/oracle/jyotishganit_vs_local_field_comparison_steve_jobs_2026_07_19.json",
+  "remaining_mismatches": ["D10 Rahu", "D10 Ketu"],
+  "local_engine": {
+    "ephemeris": "Swiss Ephemeris",
+    "ayanamsa": "Lahiri",
+    "node_mode": "mean",
+    "Rahu": {
+      "d1_sign": "Sagittarius",
+      "degree_in_sign": 9.274293923324649,
+      "d10_part_index_zero_based": 3,
+      "d10_sign": "Pisces"
+    },
+    "Ketu": {
+      "d1_sign": "Gemini",
+      "degree_in_sign": 9.274293923324649,
+      "d10_part_index_zero_based": 3,
+      "d10_sign": "Virgo"
+    }
+  },
+  "local_true_node_control": {
+    "node_mode": "true",
+    "Rahu": {
+      "d1_sign": "Sagittarius",
+      "degree_in_sign": 10.180747656
+    },
+    "Ketu": {
+      "d1_sign": "Gemini",
+      "degree_in_sign": 10.180747656
+    },
+    "control_result": "true node moves farther from jyotishganit 8.6539°, so mismatch is not solved by switching local mean→true node."
+  },
+  "jyotishganit_engine": {
+    "ephemeris": "Skyfield/JPL DE421",
+    "ayanamsa": "True Chitra Paksha from Spica",
+    "node_mode": "mean_lunar_node_formula",
+    "source_hint": "references/open_source_sources/jyotishganit/jyotishganit/core/astronomical.py",
+    "source_formula": "rahu_tropical = (125.04452 - 1934.136261 * T) % 360; sidereal = tropical - true_chitra_ayanamsa",
+    "Rahu": {
+      "d1_sign": "Sagittarius",
+      "degree_in_sign": 8.653881856647075,
+      "d10_part_index_zero_based": 2,
+      "d10_sign": "Aquarius"
+    },
+    "Ketu": {
+      "d1_sign": "Gemini",
+      "degree_in_sign": 8.653881856647104,
+      "d10_part_index_zero_based": 2,
+      "d10_sign": "Leo"
+    }
+  },
+  "attribution": {
+    "formula_delta": "not_d10_formula_shape",
+    "primary_delta": "node_longitude_source_plus_ayanamsa_boundary_crossing",
+    "boundary_degree": 9.0,
+    "effect": "A ~0.62° D1 node longitude delta crosses the 9° D10 part boundary, changing D10 sign by one."
+  },
+  "boundary": "Do not tune local nodes to jyotishganit unless the project explicitly switches ephemeris/ayanamsa/node-source contract."
+}

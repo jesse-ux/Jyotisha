@@ -1,0 +1,41 @@
+{
+  "scope": "conception_chart_adhana_niseka_registry",
+  "created_at": "2026-07-19",
+  "status": "research_only_registry_v1",
+  "runtime_status": "partial_scaffold_present",
+  "production_tuning_allowed": false,
+  "medical_or_fertility_claims_allowed": false,
+  "copyright_boundary": "labels_and_short_notes_only_no_fulltext",
+  "source_manifest": "references/source_ingestion_manual_classifications_2026_07_17.json",
+  "source_images": ["受孕/IMG_3216.JPG", "受孕/IMG_3219.JPG", "受孕/IMG_3221.JPG"],
+  "local_artifacts": ["scripts/adhana.py"],
+  "formula_family": {
+    "id": "conception_chart",
+    "aliases": ["Adhana", "Niseka", "Adhana Lagna", "conception chart"],
+    "observed_scope": "Conception-chart construction and Adhana/Niseka lagna inference from classical source snippets and screenshot notes."
+  },
+  "subtopics": [
+    {
+      "id": "adhana_lagna_inference",
+      "status": "source_family_identified",
+      "required_evidence": "Classical formula source, time-unit convention, birth-to-conception interval rule, worked example."
+    },
+    {
+      "id": "niseka_conception_rules",
+      "status": "source_family_identified",
+      "required_evidence": "Public worked example and source edition metadata."
+    },
+    {
+      "id": "privacy_safety_gate",
+      "status": "required_before_runtime",
+      "required_evidence": "No medical/fertility guarantee, sensitive personal-data handling, and user-facing safety wording."
+    }
+  ],
+  "required_next_steps": [
+    "Create source packet with exact formula IDs and edition metadata.",
+    "Find at least one public worked example with numeric longitudes/time units.",
+    "Compare scripts/adhana.py outputs against the worked example.",
+    "Add medical/fertility safety gate before any user-facing interpretation."
+  ],
+  "claim_boundary": "Research-only. Do not use for fertility, pregnancy, child sex, medical, or deterministic conception claims."
+}
