@@ -34,11 +34,15 @@ def test_kp_external_table_hash_manifest_reports_fixture_status() -> None:
 def test_kp_cusp_worked_example_oracle_queue_is_blocked_but_actionable() -> None:
     data = json.loads(QUEUE.read_text(encoding="utf-8"))
     assert data["scope"] == "kp_cusp_worked_example_oracle_queue"
-    assert data["status"] == "awaiting_public_oracle"
+    assert data["status"] == "public_candidates_triaged"
     assert data["production_tuning_allowed"] is False
     assert data["claim_status"] == "blocked"
     required = {field["field"] for field in data["required_fields"]}
     assert {"cusp_longitude", "star_lord", "sub_lord", "sub_sub_lord", "source_url"}.issubset(required)
+    assert len(data["queue"]) >= 4
+    assert data["queue"][0]["candidate_strength"] == "strongest_current_candidate"
+    assert all("oracle_ready" not in row["oracle_status"] for row in data["queue"])
+    assert "raw/hash" in data["claim_boundary"]
 
 
 def test_kp_hash_and_oracle_queue_are_indexed() -> None:
