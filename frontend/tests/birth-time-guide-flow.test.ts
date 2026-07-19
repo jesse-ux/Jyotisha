@@ -5,6 +5,8 @@ import { guidedTurnIdentity } from "../src/lib/birth-time-guided-turn-identity.t
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 const rectificationSource = read("../src/components/birth-time-rectification.tsx");
+const legacyRectificationSource = read("../src/components/birth-time-legacy-rectification.tsx");
+const choiceSource = read("../src/components/birth-time-choice-question.tsx");
 const turnSource = read("../src/components/birth-time-guide-turn.tsx");
 const draftSource = read("../src/components/birth-time-evidence-draft-card.tsx");
 const candidateSource = read("../src/components/birth-time-candidate-result.tsx");
@@ -24,7 +26,8 @@ test("each persisted question has a stable remount identity so skipped input can
     guidedTurnIdentity(3, "education_entry"),
     guidedTurnIdentity(4, "relationship_entry"),
   );
-  assert.match(rectificationSource, /key=\{guidedTurnIdentity\(props\.journey\.turnVersion, action\.question\.questionId\)\}/);
+  assert.match(legacyRectificationSource, /key=\{guidedTurnIdentity\(props\.journey\.turnVersion, action\.question\.questionId\)\}/);
+  assert.match(rectificationSource, /key=\{`\$\{props\.journey\.turnVersion\}:\$\{action\.question\.questionId\}`\}/);
 });
 
 test("draft review is explicit, domain locked, and incomplete confirmation stays disabled", () => {
@@ -64,4 +67,12 @@ test("guided controls expose live status and minimum target classes", () => {
   assert.match(draftSource, /role=["']alert/);
   assert.match(turnSource, /birth-time-guided-action/);
   assert.match(candidateSource, /birth-time-guided-action/);
+  assert.match(choiceSource, /aria-busy=\{props\.pending\}/);
+  assert.match(choiceSource, /birth-time-guided-action/);
+});
+
+test("the active v2 surface cannot render the legacy prose and date draft flow", () => {
+  assert.doesNotMatch(rectificationSource, /BirthTimeGuideTurn|BirthTimeEvidenceDraftCard|<textarea/);
+  assert.match(rectificationSource, /<BirthTimeChoiceQuestion/);
+  assert.match(rectificationSource, /<BirthTimeUnmatchedClarification/);
 });

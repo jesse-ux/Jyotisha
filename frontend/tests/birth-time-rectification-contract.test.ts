@@ -10,6 +10,10 @@ const source = readFileSync(
   new URL("../src/components/birth-time-rectification.tsx", import.meta.url),
   "utf8",
 );
+const legacySource = readFileSync(
+  new URL("../src/components/birth-time-legacy-rectification.tsx", import.meta.url),
+  "utf8",
+);
 const pageSource = readFileSync(
   new URL("../src/app/page.tsx", import.meta.url),
   "utf8",
@@ -35,7 +39,7 @@ test("rectification UI is driven only by the persisted guided action", () => {
 
 test("development previews cover every guided state with legal persisted actions", () => {
   const expectedActions = new Map([
-    ["birth-time-rectification", "ask_baseline_evidence"],
+    ["birth-time-rectification", "ask_dynamic_choice"],
     ["birth-time-rectification-draft", "review_evidence_draft"],
     ["birth-time-rectification-score-pending", "score_pending"],
     ["birth-time-rectification-retry", "retry_scoring"],
@@ -50,6 +54,7 @@ test("development previews cover every guided state with legal persisted actions
     assert.equal(isGuidedBirthTimePreview(mode), true);
     assert.equal(guidedBirthTimePreview(mode).nextAction.kind, action);
   }
+  assert.equal(guidedBirthTimePreview("birth-time-rectification").journeyProtocol, "dynamic-choice-v2");
   assert.match(pageSource, /guidedBirthTimePreview\(previewMode\)/);
 });
 
@@ -90,8 +95,10 @@ test("declared-time edits preserve the current journey until the revised profile
 });
 
 test("rectification renders draft review and candidates only from nextAction", () => {
-  assert.match(source, /action\.kind === "review_evidence_draft"/);
-  assert.match(source, /<BirthTimeEvidenceDraftCard/);
+  assert.match(legacySource, /action\.kind === "review_evidence_draft"/);
+  assert.match(legacySource, /<BirthTimeEvidenceDraftCard/);
+  assert.doesNotMatch(source, /BirthTimeEvidenceDraftCard|BirthTimeGuideTurn/);
+  assert.match(source, /<BirthTimeChoiceQuestion/);
   assert.match(source, /<BirthTimeCandidateResult/);
   assert.match(pageSource, /controller=\{birthTimeGuided\}/);
   assert.doesNotMatch(pageSource, /submitBirthTimeLifeEvents/);

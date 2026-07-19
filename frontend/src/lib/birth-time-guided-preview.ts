@@ -1,5 +1,6 @@
 import { parseJourneyResponse } from "./birth-time-journey-client.ts";
 import type { JourneyClientResponse } from "./birth-time-journey-client.ts";
+import { dynamicBirthTimePreview } from "./birth-time-dynamic-preview.ts";
 
 const caseId = "7299894c-10a8-4b45-91d1-339007282c50";
 const resultId = "345087cc-7e7f-4b37-90e5-f0c0a6e5b7a7";
@@ -89,6 +90,7 @@ export function isGuidedBirthTimePreview(mode: string): boolean {
 }
 
 export function guidedBirthTimePreview(mode: string): JourneyClientResponse {
+  if (mode === "birth-time-rectification") return dynamicBirthTimePreview();
   if (mode === "birth-time-rectification-draft" || mode === "birth-time-rectification-events") {
     return response({
       snapshot: { ...response().snapshot, input: "life_events", assistantIntent: "collect_dated_life_events" },

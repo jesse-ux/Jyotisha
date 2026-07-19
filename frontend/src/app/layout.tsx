@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import "./birth-time-choice.css";
 
 export const metadata: Metadata = {
   title: "Jyotisha · 印度占星",

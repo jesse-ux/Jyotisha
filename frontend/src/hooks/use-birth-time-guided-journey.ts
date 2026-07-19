@@ -27,6 +27,8 @@ import {
 } from "@/lib/birth-time-guided-effect-coordinator";
 import type { EvidenceDatePrecision } from "@/lib/birth-time-question-planner";
 import { useBirthTimeAutomaticJourneyEffects } from "@/hooks/use-birth-time-automatic-journey-effects";
+import { advanceDynamicBirthTimePreview } from "@/lib/birth-time-dynamic-preview";
+import type { DynamicPreviewCommand } from "@/lib/birth-time-dynamic-preview";
 
 type GuidedJourneyInput = {
   readonly journey: JourneyClientResponse | null;
@@ -56,6 +58,12 @@ export type BirthTimeGuidedController = {
   readonly finish: () => void;
   readonly retryQuestionGeneration: () => void;
 };
+
+function previewAction(turn: JourneyClientResponse, command: DynamicPreviewCommand) {
+  return turn.journeyProtocol === "dynamic-choice-v2"
+    ? advanceDynamicBirthTimePreview(turn, command)
+    : turn;
+}
 
 export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeGuidedController {
   const { journey, onJourney, onReady, onEditBirthTimeDetails, preview } = input;
@@ -165,11 +173,11 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     turn, "skip_evidence_question", [],
     (actionId) => skipBirthTimeEvidenceQuestion(turn.caseId, actionId, turn.turnVersion),
   ));
-  const pause = () => operate((turn) => preview ? Promise.resolve(turn) : stableAction(
+  const pause = () => operate((turn) => preview ? Promise.resolve(previewAction(turn, { kind: "pause" })) : stableAction(
     turn, "pause_rectification", [],
     (actionId) => pauseBirthTimeRectification(turn.caseId, actionId, turn.turnVersion),
   ));
-  const resume = () => operate((turn) => preview ? Promise.resolve(turn) : resumeBirthTimeJourney(turn.caseId));
+  const resume = () => operate((turn) => preview ? Promise.resolve(previewAction(turn, { kind: "resume" })) : resumeBirthTimeJourney(turn.caseId));
   const acknowledgeReady = () => {
     if (journey?.nextAction.kind === "ready") onReady(journey);
   };
@@ -193,8 +201,9 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     (actionId) => confirmGuidedBirthTimeCandidate({ caseId: turn.caseId, actionId, turnVersion: turn.turnVersion, resultId, time }),
   ));
   const selectOption = (optionId: string) => operate((turn) => {
-    if (preview || turn.journeyProtocol !== "dynamic-choice-v2"
+    if (turn.journeyProtocol !== "dynamic-choice-v2"
       || turn.nextAction.kind !== "ask_dynamic_choice") return Promise.resolve(turn);
+    if (preview) return Promise.resolve(previewAction(turn, { kind: "select", optionId }));
     const questionId = turn.nextAction.question.questionId;
     return stableAction(turn, "answer_dynamic_choice", [questionId, optionId], (actionId) => (
       answerDynamicBirthTimeChoice({
@@ -203,8 +212,9 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     ));
   });
   const submitUnmatchedContext = (note: string) => operate((turn) => {
-    if (preview || turn.journeyProtocol !== "dynamic-choice-v2"
+    if (turn.journeyProtocol !== "dynamic-choice-v2"
       || turn.nextAction.kind !== "clarify_unmatched_answer") return Promise.resolve(turn);
+    if (preview) return Promise.resolve(previewAction(turn, { kind: "reframe" }));
     const questionId = turn.nextAction.questionId;
     return stableAction(turn, "reframe_unmatched", [questionId, note.trim()], (actionId) => (
       reframeUnmatchedBirthTimeAnswer({
@@ -213,7 +223,7 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     ));
   });
   const finish = () => operate((turn) => preview
-    ? Promise.resolve(turn)
+    ? Promise.resolve(previewAction(turn, { kind: "finish" }))
     : stableAction(turn, "finish_rectification", [], (actionId) => (
       finishBirthTimeRectification(turn.caseId, actionId, turn.turnVersion)
     )));
