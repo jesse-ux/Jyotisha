@@ -20,6 +20,14 @@ Terminal low, medium, confirmation, and ready turns are one-way: answer, generat
 pause, and finish mutations cannot restart them. New assessments reload and return their
 persisted v2 generation turn instead of projecting the former legacy baseline question.
 
+The focused review follow-up closes three additional safety seams. Scoring now independently
+recomputes the deterministic confidence class from persisted effective evidence/domain counts,
+margin thresholds, and segment width; medium and high cannot be accepted below their gates.
+Winning segments must be a chronological subset of the persisted range, with exact inclusive
+width and midpoint representative time, including across midnight. Unmatched-context, pause,
+and finish retries now carry a private typed receipt and replay only the identical action,
+version, and payload; cross-action or changed-payload receipt reuse is stale.
+
 ## Persistence Amendment
 
 Added service-role-only `create_birth_time_dynamic_scoring_job` and
@@ -28,10 +36,15 @@ validates/persists the public turn, private state, canonical receipt, and pendin
 checks ownership, job identity, evidence fingerprint, algorithm version, current action, and
 lease; completed replay requires a coherent persisted result/action. Production store methods
 use these RPCs directly and do not call legacy scoring wrappers or expose the private row.
+Claim now locks job then case, matching completion/failure order and removing the prior lock
+cycle. The executable memory store also models the 60-second processing lease and reclaim.
 
 ## Main Files
 
 - `frontend/src/lib/birth-time-dynamic-actions.ts`
+- `frontend/src/lib/birth-time-dynamic-special-actions.ts`
+- `frontend/src/lib/birth-time-dynamic-action-replay.ts`
+- `frontend/src/lib/birth-time-dynamic-result-validator.ts`
 - `frontend/src/lib/birth-time-dynamic-transitions.ts`
 - `frontend/src/lib/birth-time-dynamic-scoring-service.ts`
 - `frontend/src/lib/birth-time-dynamic-scoring-job-store.ts`
@@ -55,13 +68,16 @@ use these RPCs directly and do not call legacy scoring wrappers or expose the pr
 - Persistence RED: all SQL contract cases failed before the ordered v2 job migration existed.
 - Assessment regression RED: a newly persisted v2 case returned a response with no
   `journeyProtocol`; GREEN now reloads and returns the stored dynamic generation turn.
+- Review RED: `medium + null segment + 1/1` was accepted, claim locked case before job, and
+  unmatched/pause/finish lost-response retries failed before receipt replay. Dedicated tests
+  reproduced each failure before the focused fix.
 
 Final verification:
 
 - Focused Task 6 TypeScript: **22/22 passed**.
 - Route/telemetry regression subset after v2 assessment routing: **28/28 passed**.
-- Full frontend TypeScript tests: **344/344 passed**.
-- Dynamic scoring-job SQL contracts: **3/3 passed**.
+- Full frontend TypeScript tests: **351/351 passed**.
+- Dynamic scoring-job SQL contracts: **4/4 passed**.
 - ESLint: **0 errors**, with the two pre-existing `page.tsx` hook warnings.
 - `git diff --check`: passed.
 - Every changed/new Task 6 TypeScript, test, and migration module is at most 250 pure LOC.
@@ -71,7 +87,9 @@ Final verification:
 
 Live PostgreSQL execution was unavailable from the inherited Task 5 environment because the
 Docker daemon socket was absent. The database claim is therefore limited to static SQL
-contracts plus executable TypeScript RPC fakes; no live-database pass is claimed.
+token/order contracts plus executable TypeScript RPC fakes; no live-database pass is claimed.
+The SQL tests do not simulate PostgreSQL locking; the lock-order assertion is structural, while
+lease/reclaim behavior is executed by the typed memory store.
 
 ## Handoff
 
@@ -81,3 +99,5 @@ browser coordination. In particular, v2 polling must call `pollDynamicScoringJob
 assessment response through the existing telemetry wrapper.
 
 Commit message: `feat: orchestrate dynamic rectification turns`
+
+Focused review fix commit message: `fix: harden dynamic rectification orchestration`

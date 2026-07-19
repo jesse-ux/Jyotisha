@@ -67,6 +67,13 @@ def test_dynamic_job_claim_locks_v2_and_validates_completed_replay() -> None:
     assert "algorithm_version text" in body
 
 
+def test_dynamic_job_claim_uses_job_then_case_lock_order() -> None:
+    body = _function(_sql(), "claim_birth_time_dynamic_scoring_job")
+    job_lock = body.index("from public.birth_time_rectification_scoring_jobs j")
+    case_lock = body.index("from public.birth_time_rectification_cases c")
+    assert job_lock < case_lock
+
+
 def test_dynamic_job_functions_are_service_role_only_and_reviewable() -> None:
     sql = _sql()
     for name in (

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { samePersistedDynamicReceipt } from "./birth-time-dynamic-action-replay.ts";
 import { toPublicDynamicChoiceQuestion } from "./birth-time-dynamic-choice-internal.ts";
 import {
   dynamicJourneyTurnStateSchema,
@@ -143,8 +144,10 @@ export function createDynamicTurnPersistence(
       });
       if (result.error) {
         const current = await loadCase(value.userId, value.id);
-        if (isStaleRpc(result.error) && current?.processedActionIds?.includes(receipt)) {
-          return loadedDynamic(value.userId, value.id);
+        if (isStaleRpc(result.error) && current?.journeyProtocol === "dynamic-choice-v2"
+          && current.processedActionIds.includes(receipt)) {
+          if (samePersistedDynamicReceipt(value, current, receipt, expectedVersion)) return current;
+          throw new StaleJourneyTurnError(value.id, expectedVersion, current.turnVersion);
         }
         if (isStaleRpc(result.error)) {
           throw new StaleJourneyTurnError(

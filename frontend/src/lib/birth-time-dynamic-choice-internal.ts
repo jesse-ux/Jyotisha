@@ -84,6 +84,7 @@ export type StoredChoiceAnswer = {
   readonly kind: PublicChoiceKind;
   readonly opportunityId: string;
   readonly answeredAt: string;
+  readonly unmatchedContext?: string;
 };
 
 export type ServerChoiceEvidence = {
@@ -120,6 +121,13 @@ export type DynamicControlState = {
   readonly dismissedOpportunityIds: readonly string[];
   readonly recentRanges: readonly TimeRange[];
   readonly pausedAction: PausedDynamicAction | null;
+  readonly lastActionReceipt?: {
+    readonly actionId: string;
+    readonly kind: "unmatched_context" | "pause" | "finish";
+    readonly turnVersion: number;
+    readonly questionId?: string;
+    readonly note?: string;
+  } | null;
 };
 
 const evidencePartitionBaseSchema = z.object({
@@ -199,6 +207,7 @@ export const storedChoiceAnswerSchema = z.object({
   kind: publicChoiceKindSchema,
   opportunityId: z.string().trim().min(1),
   answeredAt: z.string().datetime({ offset: true }),
+  unmatchedContext: z.string().max(240).optional(),
 }).strict().readonly();
 
 export const serverChoiceEvidenceSchema = z.object({
@@ -236,6 +245,13 @@ export const dynamicControlStateSchema = z.object({
   dismissedOpportunityIds: z.array(z.string().trim().min(1)).readonly(),
   recentRanges: z.array(timeRangeSchema).readonly(),
   pausedAction: pausedDynamicActionSchema.nullable(),
+  lastActionReceipt: z.object({
+    actionId: z.string().uuid(),
+    kind: z.enum(["unmatched_context", "pause", "finish"]),
+    turnVersion: z.number().int().nonnegative(),
+    questionId: z.string().trim().min(1).optional(),
+    note: z.string().max(240).optional(),
+  }).strict().readonly().nullable().optional(),
 }).strict().readonly();
 
 export function toPublicDynamicChoiceQuestion(

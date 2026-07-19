@@ -138,6 +138,7 @@ export function createInitialDynamicState(
     dismissedOpportunityIds: [],
     recentRanges: [currentRange],
     pausedAction: null,
+    lastActionReceipt: null,
   });
   const ready = snapshot.state === "ready";
   return {
@@ -201,6 +202,7 @@ export function prepareLegacyDynamicUpgrade(
     dismissedOpportunityIds: [],
     recentRanges: [currentRange],
     pausedAction: null,
+    lastActionReceipt: null,
   });
   const dynamicTurnState = dynamicJourneyTurnStateSchema.parse({
     journeyProtocol: "dynamic-choice-v2",

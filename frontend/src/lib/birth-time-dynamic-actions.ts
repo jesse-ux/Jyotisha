@@ -1,13 +1,9 @@
-import { z } from "zod";
+import { replayedDynamicAction } from "./birth-time-dynamic-action-replay.ts";
 import type { PersistedDynamicChoiceQuestion } from "./birth-time-dynamic-choice-internal.ts";
 import { dynamicDifferenceInput } from "./birth-time-dynamic-engine-input.ts";
 import { publicQuestionAction } from "./birth-time-dynamic-transitions.ts";
-import {
-  answerTransition,
-  isDynamicTerminal,
-  toPausedDynamicAction,
-  withDynamicAction,
-} from "./birth-time-dynamic-transitions.ts";
+import { answerTransition, isDynamicTerminal, withDynamicAction } from "./birth-time-dynamic-transitions.ts";
+import { createDynamicSpecialActions } from "./birth-time-dynamic-special-actions.ts";
 import { storedDynamicJourneyResponse } from "./birth-time-journey-response.ts";
 import type {
   BirthTimeJourneyEngine,
@@ -27,7 +23,6 @@ type ChoiceCommand = {
 };
 type TurnCommand = Pick<ChoiceCommand, "caseId" | "actionId" | "turnVersion">;
 type QuestionCommand = TurnCommand & { readonly unmatchedNote?: string | null };
-type UnmatchedCommand = TurnCommand & { readonly questionId: string; readonly note: string };
 
 export class BirthTimeDynamicActionError extends Error {
   readonly name = "BirthTimeDynamicActionError";
@@ -88,14 +83,26 @@ export function createDynamicJourneyActions(ports: BirthTimeJourneyPorts) {
   ) {
     return ports.store.saveDynamicTurn(updated, stored.turnVersion, actionId);
   }
+  const specialActions = createDynamicSpecialActions(ports, load, requireMutable);
 
   return {
+    ...specialActions,
     async answerDynamicChoice(userId: string, command: ChoiceCommand) {
       const stored = await load(userId, command.caseId);
-      requireMutable(stored);
-      if (stored.processedActionIds.includes(command.actionId.toLowerCase())) {
+      const lastAnswer = stored.choiceAnswers.at(-1);
+      const actionKind = stored.dynamicTurnState.nextAction.kind;
+      if (replayedDynamicAction(stored, command.actionId, command.turnVersion, () => (
+        lastAnswer?.questionId === command.questionId && lastAnswer.optionId === command.optionId
+        && stored.dynamicControl.lastActionReceipt?.actionId !== command.actionId.toLowerCase()
+        && (lastAnswer.kind === "primary"
+          ? actionKind === "score_pending"
+          : lastAnswer.kind === "unknown"
+            ? actionKind === "generate_dynamic_question"
+            : actionKind === "clarify_unmatched_answer")
+      ))) {
         return storedDynamicJourneyResponse(stored);
       }
+      requireMutable(stored);
       const action = stored.dynamicTurnState.nextAction;
       const question = stored.currentChoiceQuestion;
       if (stored.turnVersion !== command.turnVersion
@@ -135,33 +142,6 @@ export function createDynamicJourneyActions(ports: BirthTimeJourneyPorts) {
       return storedDynamicJourneyResponse(await save(stored, updated, command.actionId));
     },
 
-    async submitUnmatchedContext(userId: string, command: UnmatchedCommand) {
-      const stored = await load(userId, command.caseId);
-      requireMutable(stored);
-      const question = stored.currentChoiceQuestion;
-      if (stored.turnVersion !== command.turnVersion
-        || stored.dynamicTurnState.nextAction.kind !== "clarify_unmatched_answer"
-        || question?.questionId !== command.questionId) throw stale(stored, command.turnVersion);
-      const note = z.string().trim().max(240).parse(command.note);
-      const action = { kind: "generate_dynamic_question" as const };
-      const updated = withDynamicAction(stored, action, stored.turnVersion + 1);
-      const next = {
-        ...updated,
-        currentChoiceQuestion: null,
-        agentContext: note.length === 0
-          ? stored.agentContext
-          : [...stored.agentContext.slice(-9), note],
-        dynamicControl: {
-          ...stored.dynamicControl,
-          dismissedOpportunityIds: [
-            ...stored.dynamicControl.dismissedOpportunityIds,
-            question.opportunityId,
-          ],
-        },
-      };
-      return storedDynamicJourneyResponse(await save(stored, next, command.actionId));
-    },
-
     async loadDynamicQuestionBuild(userId: string, command: QuestionCommand) {
       const stored = await load(userId, command.caseId);
       requireMutable(stored);
@@ -179,10 +159,17 @@ export function createDynamicJourneyActions(ports: BirthTimeJourneyPorts) {
       question: PersistedDynamicChoiceQuestion | null,
     ) {
       const stored = await load(userId, command.caseId);
-      requireMutable(stored);
-      if (stored.processedActionIds.includes(command.actionId.toLowerCase())) {
+      if (replayedDynamicAction(stored, command.actionId, command.turnVersion, () => (
+        question === null
+          ? stored.currentChoiceQuestion === null
+            && stored.dynamicTurnState.nextAction.kind === "present_low_result"
+          : stored.currentChoiceQuestion?.questionId === question.questionId
+            && stored.currentChoiceQuestion.questionFingerprint === question.questionFingerprint
+            && stored.dynamicControl.lastActionReceipt?.actionId !== command.actionId.toLowerCase()
+      ))) {
         return { nextAction: stored.dynamicTurnState.nextAction };
       }
+      requireMutable(stored);
       const kind = stored.dynamicTurnState.nextAction.kind;
       if (stored.turnVersion !== command.turnVersion
         || (kind !== "generate_dynamic_question" && kind !== "retry_question_generation")) {
@@ -210,20 +197,6 @@ export function createDynamicJourneyActions(ports: BirthTimeJourneyPorts) {
       return { nextAction: saved.dynamicTurnState.nextAction };
     },
 
-    async pauseDynamic(userId: string, caseId: string, actionId: string, turnVersion: number) {
-      const stored = await load(userId, caseId);
-      requireMutable(stored);
-      if (stored.turnVersion !== turnVersion || stored.dynamicTurnState.nextAction.kind === "paused") {
-        throw stale(stored, turnVersion);
-      }
-      const pausedAction = toPausedDynamicAction(stored.dynamicTurnState.nextAction);
-      const updated = withDynamicAction(stored, { kind: "paused" }, stored.turnVersion + 1);
-      return storedDynamicJourneyResponse(await save(stored, {
-        ...updated,
-        dynamicControl: { ...stored.dynamicControl, pausedAction },
-      }, actionId));
-    },
-
     async resumeDynamic(userId: string, caseId: string) {
       const stored = await load(userId, caseId);
       if (isDynamicTerminal(stored) || stored.dynamicTurnState.nextAction.kind !== "paused") {
@@ -245,20 +218,5 @@ export function createDynamicJourneyActions(ports: BirthTimeJourneyPorts) {
       return storedDynamicJourneyResponse(saved);
     },
 
-    async finishDynamic(userId: string, caseId: string, actionId: string, turnVersion: number) {
-      const stored = await load(userId, caseId);
-      requireMutable(stored);
-      if (stored.turnVersion !== turnVersion) throw stale(stored, turnVersion);
-      const candidate = stored.candidateResult;
-      const action = candidate?.confidence === "medium"
-        ? { kind: "present_medium_result" as const, resultId: candidate.resultId }
-        : { kind: "present_low_result" as const, resultId: candidate?.resultId ?? null };
-      const updated = withDynamicAction(stored, action, stored.turnVersion + 1);
-      return storedDynamicJourneyResponse(await save(stored, {
-        ...updated,
-        snapshot: terminalSnapshot(stored),
-        currentChoiceQuestion: null,
-      }, actionId));
-    },
   };
 }

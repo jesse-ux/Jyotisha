@@ -3,13 +3,14 @@ import type {
   DynamicStoredRectificationCase,
 } from "../src/lib/birth-time-journey-service.ts";
 import type { DynamicScoringJobSpec } from "../src/lib/birth-time-scoring-job.ts";
-import { BirthTimeScoringJobError } from "../src/lib/birth-time-scoring-job.ts";
+import { BirthTimeScoringJobError, scoringJobDurationMs, scoringProcessingLeaseMs } from "../src/lib/birth-time-scoring-job.ts";
 import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
 
 type DynamicMemoryJob = DynamicScoringJobSpec & {
   readonly caseId: string;
   readonly userId: string;
   readonly status: "pending" | "processing" | "completed" | "failed";
+  readonly updatedAt: string;
 };
 
 export function dynamicJobStore(
@@ -32,6 +33,7 @@ export function dynamicJobStore(
         caseId: value.id,
         userId: value.userId,
         status: "pending",
+        updatedAt: new Date(Date.parse(spec.expiresAt) - scoringJobDurationMs).toISOString(),
       });
       return base.saveDynamicTurn(value, expectedVersion, receipt);
     },
@@ -48,9 +50,12 @@ export function dynamicJobStore(
         return { kind: "completed", algorithmVersion: job.algorithmVersion };
       }
       if (job.status === "processing") {
-        return { kind: "processing", algorithmVersion: job.algorithmVersion };
+        const leaseEnds = Date.parse(job.updatedAt) + scoringProcessingLeaseMs;
+        if (Date.parse(identity.now) < leaseEnds) {
+          return { kind: "processing", algorithmVersion: job.algorithmVersion };
+        }
       }
-      jobs.set(job.jobId, { ...job, status: "processing" });
+      jobs.set(job.jobId, { ...job, status: "processing", updatedAt: identity.now });
       return { kind: "claimed", algorithmVersion: job.algorithmVersion };
     },
     async completeDynamicScoringJob(value, command) {

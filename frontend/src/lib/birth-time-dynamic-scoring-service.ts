@@ -4,6 +4,7 @@ import {
   dynamicDifferenceInput,
 } from "./birth-time-dynamic-engine-input.ts";
 import { completeDynamicScoreTransition, isDynamicTerminal, withDynamicAction } from "./birth-time-dynamic-transitions.ts";
+import { assertDynamicScoringResult } from "./birth-time-dynamic-result-validator.ts";
 import { storedDynamicJourneyResponse } from "./birth-time-journey-response.ts";
 import type {
   BirthTimeJourneyEngine,
@@ -94,6 +95,7 @@ export function createDynamicScoringService(ports: BirthTimeJourneyPorts) {
         const result = dynamicChoiceScoringResultSchema.parse(
           await engine.scoreChoices(dynamicChoiceScoreInput(stored)),
         );
+        assertDynamicScoringResult(result, stored.dynamicTurnState.progress.currentRange);
         requireCounts(stored, result);
         const build = await engine.buildDifferencePacket(dynamicDifferenceInput(stored));
         const useful = build.packet.opportunities.filter((opportunity) => (

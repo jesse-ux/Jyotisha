@@ -94,14 +94,14 @@ declare
   v_result_id text;
   v_updated_id uuid;
 begin
-  select c.* into v_case from public.birth_time_rectification_cases c
-  where c.id = p_case_id and c.user_id = p_user_id
-    and c.journey_protocol = 'dynamic-choice-v2' for update;
-  if not found then raise exception 'birth_time_dynamic_case_not_found'; end if;
   select j.* into v_job from public.birth_time_rectification_scoring_jobs j
   where j.id = p_job_id and j.case_id = p_case_id and j.user_id = p_user_id
   for update;
   if not found then raise exception 'birth_time_dynamic_scoring_job_not_found'; end if;
+  select c.* into v_case from public.birth_time_rectification_cases c
+  where c.id = p_case_id and c.user_id = p_user_id
+    and c.journey_protocol = 'dynamic-choice-v2' for update;
+  if not found then raise exception 'birth_time_dynamic_case_not_found'; end if;
   if v_job.evidence_fingerprint is distinct from p_evidence_fingerprint then
     raise exception 'birth_time_dynamic_scoring_fingerprint_mismatch';
   end if;
