@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type {
   DifferencePacketInput,
   DynamicChoiceScoreInput,
@@ -5,6 +6,14 @@ import type {
 } from "./birth-time-journey-service.ts";
 import type { ServerChoiceEvidence } from "./birth-time-dynamic-choice-internal.ts";
 import type { TimeRange } from "./birth-time-dynamic-choice.ts";
+
+const reusableCandidateModelSchema = z.object({
+  opportunity_model_version: z.literal("birth-time-opportunity-model-v2"),
+  range: z.object({ start_time: z.string(), end_time: z.string() }),
+  windows: z.array(z.object({
+    activations: z.record(z.string(), z.number().finite().nonnegative()),
+  }).passthrough()),
+}).passthrough();
 
 export class BirthTimeDynamicEngineInputError extends Error {
   readonly name = "BirthTimeDynamicEngineInputError";
@@ -51,11 +60,10 @@ function candidateModelForRange(
   range: TimeRange,
 ): Readonly<Record<string, unknown>> | null {
   if (model === null) return null;
-  if (model.opportunity_model_version !== "birth-time-opportunity-model-v2") return null;
-  const persistedRange = model.range;
-  if (typeof persistedRange !== "object" || persistedRange === null) return model;
-  const value = persistedRange as Readonly<Record<string, unknown>>;
-  return value.start_time === range.startTime && value.end_time === range.endTime
+  const parsed = reusableCandidateModelSchema.safeParse(model);
+  if (!parsed.success) return null;
+  return parsed.data.range.start_time === range.startTime
+    && parsed.data.range.end_time === range.endTime
     ? model
     : null;
 }

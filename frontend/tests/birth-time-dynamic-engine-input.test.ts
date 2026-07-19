@@ -6,6 +6,15 @@ import {
 } from "../src/lib/birth-time-dynamic-engine-input.ts";
 import { dynamicCase } from "./birth-time-dynamic-persistence-fixture.ts";
 
+function matchingCandidateModel(activation = 0) {
+  return {
+    version: "birth-time-choice-scoring-v2",
+    opportunity_model_version: "birth-time-opportunity-model-v2",
+    range: { start_time: "05:02", end_time: "05:03" },
+    windows: [{ activations: { "05:02": activation, "05:03": 1 } }],
+  };
+}
+
 function narrowedCase(startTime = "05:02", endTime = "05:03") {
   const stored = dynamicCase();
   return {
@@ -65,14 +74,20 @@ test("narrowed question generation rebuilds a candidate model for the current ra
 
 test("matching candidate models remain reusable", () => {
   const stored = narrowedCase();
-  const matchingModel = {
-    version: "birth-time-choice-scoring-v2",
-    opportunity_model_version: "birth-time-opportunity-model-v2",
-    range: { start_time: "05:02", end_time: "05:03" },
-  };
+  const matchingModel = matchingCandidateModel();
   const input = dynamicDifferenceInput({ ...stored, candidateModel: matchingModel });
 
   assert.equal(input.candidateModel, matchingModel);
+});
+
+test("persisted candidate models with legacy negative activations are rebuilt", () => {
+  const stored = narrowedCase();
+  const input = dynamicDifferenceInput({
+    ...stored,
+    candidateModel: matchingCandidateModel(-0.2),
+  });
+
+  assert.equal(input.candidateModel, null);
 });
 
 test("evidence projection preserves cross-midnight candidate chronology", () => {
