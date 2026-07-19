@@ -1,0 +1,180 @@
+{
+  "scope": "formula_source_knowledge_base",
+  "created_at": "2026-07-19",
+  "status": "formula_source_registry_v1",
+  "truth_policy": "source_registry_not_absolute_truth",
+  "production_tuning_allowed": false,
+  "boundary": "This registry attaches source/formula/unit/oracle boundaries. It does not by itself prove absolute parity or prediction accuracy.",
+  "source_stack": [
+    {
+      "name": "Brihat Parashara Hora Shastra / classical Shadbala tradition",
+      "role": "classical_formula_family",
+      "license_boundary": "public-domain/classical text status depends on edition; use as conceptual formula source, not copied modern translation prose."
+    },
+    {
+      "name": "Jagannatha Hora / PyJHora",
+      "url": "https://github.com/naturalstupid/PyJHora",
+      "role": "oracle/reference implementation",
+      "license_boundary": "AGPL-3.0; do not copy implementation into commercial runtime."
+    },
+    {
+      "name": "jyotishganit",
+      "url": "https://github.com/northtara/jyotishganit",
+      "role": "permissive external oracle candidate",
+      "license_boundary": "MIT; may be adapted after field-level contract audit."
+    },
+    {
+      "name": "VedAstro",
+      "url": "https://github.com/VedAstro/VedAstro",
+      "role": "MIT oracle/API candidate",
+      "license_boundary": "MIT local/NuGet candidate; hosted identity blocked until build/method metadata is pinned."
+    },
+    {
+      "name": "Xalen",
+      "role": "Apache-2.0 independent observation oracle",
+      "license_boundary": "Apache-2.0; currently observation-only, not majority-vote truth."
+    }
+  ],
+  "formulas": [
+    {
+      "formula_id": "shadbala_sthana_bala",
+      "system": "vedic",
+      "family": "Shadbala",
+      "component": "sthana",
+      "source_evidence": ["classical Shadbala six-force tradition", "PyJHora/JHora VP Jain fixture", "Xalen Shadbala component delta report"],
+      "formula_summary": "Positional strength: combines dignity/exaltation, divisional dignity, odd/even sign rules, kendra/drekkana and related school-specific subcomponents.",
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa.",
+      "known_variants": ["moolatrikona_degree_range_vs_whole_sign", "varga dignity table variant", "subcomponent inclusion variant"],
+      "implementation_status": "implemented_partial",
+      "oracle_status": "partial",
+      "license_boundary": "PyJHora/JHora AGPL evidence is oracle-only; do not copy implementation. VedAstro hosted identity blocked.",
+      "claim_boundary": "component method variant allowed; absolute Virupa truth blocked until worked example/unit source closes."
+    },
+    {
+      "formula_id": "shadbala_dig_bala",
+      "system": "vedic",
+      "family": "Shadbala",
+      "component": "dig",
+      "source_evidence": ["classical directional strength rule", "PyJHora/JHora VP Jain fixture", "Xalen delta report"],
+      "formula_summary": "Directional strength by angular distance from planet-specific strongest direction/house.",
+      "unit_contract": "Virupa component; cap/floor and interpolation must be explicit.",
+      "known_variants": ["house-cusp vs whole-house angular distance", "rounding precision"],
+      "implementation_status": "implemented_partial",
+      "oracle_status": "partial",
+      "license_boundary": "AGPL sources oracle-only; local implementation must remain independently written.",
+      "claim_boundary": "directional component can be compared only after house/cusp semantics are declared."
+    },
+    {
+      "formula_id": "shadbala_kala_bala",
+      "system": "vedic",
+      "family": "Shadbala",
+      "component": "kala",
+      "source_evidence": ["classical temporal strength rules", "sunrise/day-night/hora/month/year lord formulas", "Xalen delta report"],
+      "formula_summary": "Temporal strength aggregation: day/night, paksha, tribhaga, year/month/day/hora lord and ayana-related subcomponents depending on lineage.",
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules.",
+      "known_variants": ["sunrise engine", "local apparent time", "included subcomponents", "hemisphere/ayana convention"],
+      "implementation_status": "implemented_partial",
+      "oracle_status": "partial",
+      "license_boundary": "Use local astronomy implementation; external packages oracle-only unless permissive and audited.",
+      "claim_boundary": "blocked for absolute parity until each Kala subcomponent has source and worked example."
+    },
+    {
+      "formula_id": "shadbala_chesta_bala",
+      "system": "vedic",
+      "family": "Shadbala",
+      "component": "chesta",
+      "source_evidence": ["classical motional strength rules", "mean-motion/Seeghrochcha requirement", "VP Jain fixture variants"],
+      "formula_summary": "Motional strength from apparent speed/retrogression state; luminary and inner/outer planet policies vary by lineage.",
+      "unit_contract": "Virupa component; speed basis and retrograde/mean-motion normalization must be explicit.",
+      "known_variants": ["luminary_chesta_policy", "mean-motion vs apparent-speed", "Seeghrochcha model"],
+      "implementation_status": "implemented_partial",
+      "oracle_status": "partial",
+      "license_boundary": "Cannot copy AGPL PyJHora Chesta implementation; independent local formula required.",
+      "claim_boundary": "absolute Chesta parity blocked until mean-motion/Seeghrochcha source closes."
+    },
+    {
+      "formula_id": "shadbala_naisargika_bala",
+      "system": "vedic",
+      "family": "Shadbala",
+      "component": "naisargika",
+      "source_evidence": ["classical natural strength ordering", "VP Jain fixture", "Xalen delta report"],
+      "formula_summary": "Natural strength assigned by fixed planetary order/brightness tradition.",
+      "unit_contract": "Fixed Virupa table for seven visible planets; table source must be named.",
+      "known_variants": ["fixed table rounding", "planet inclusion set"],
+      "implementation_status": "implemented_partial",
+      "oracle_status": "partial",
+      "license_boundary": "Formula table can be independently sourced; AGPL oracle output not copied as implementation.",
+      "claim_boundary": "lowest risk component, still requires explicit table source for absolute claim."
+    },
+    {
+      "formula_id": "shadbala_drik_bala",
+      "system": "vedic",
+      "family": "Shadbala",
+      "component": "drik",
+      "source_evidence": ["classical aspectual strength rules", "planet aspect model", "Xalen delta report"],
+      "formula_summary": "Aspectual strength from benefic/malefic aspects on planet; depends on aspect model, orb/interpolation and natural/functional treatment policy.",
+      "unit_contract": "Virupa component; positive/negative sign and aspect-strength scale must be explicit.",
+      "known_variants": ["graha drishti model", "orb/interpolation", "benefic/malefic classification"],
+      "implementation_status": "implemented_partial",
+      "oracle_status": "partial",
+      "license_boundary": "Use source-cited formula; AGPL and hosted outputs remain oracle/reference only.",
+      "claim_boundary": "blocked for absolute parity until aspect strength table/model is pinned."
+    },
+    {
+      "formula_id": "shadbala_total_rupa_virupa",
+      "system": "vedic",
+      "family": "Shadbala",
+      "component": "total",
+      "source_evidence": ["component registry", "Xalen delta report"],
+      "formula_summary": "Total strength derived from six component sums; may expose Virupa and/or Rupa.",
+      "unit_contract": "Must state whether values are raw Virupa, Rupa, normalized ratio, or required-strength ratio.",
+      "known_variants": ["absolute total vs required-ratio", "Rupa/Virupa conversion", "component caps"],
+      "implementation_status": "implemented_partial",
+      "oracle_status": "partial",
+      "license_boundary": "Do not normalize to a single truth by majority vote.",
+      "claim_boundary": "total is blocked until six components close."
+    },
+    {
+      "formula_id": "ashtakavarga_bav",
+      "system": "vedic",
+      "family": "Ashtakavarga",
+      "component": "BAV",
+      "source_evidence": ["Ashtakavarga bindu tradition", "Xalen AV table delta report", "local Ashtakoot/AV tests"],
+      "formula_summary": "Bhinna Ashtakavarga: per-planet 12-sign bindu table from contributor rules.",
+      "unit_contract": "Integer bindu counts by sign; contributor set, Lagna inclusion, and row/column order required.",
+      "known_variants": ["contributor table", "Lagna inclusion", "sign indexing", "pre/post shodhana"],
+      "implementation_status": "implemented_partial",
+      "oracle_status": "partial",
+      "license_boundary": "Permissive references may be adapted only after formula audit; AGPL oracle-only.",
+      "claim_boundary": "table variant allowed; exact truth blocked until worked BAV table source matches."
+    },
+    {
+      "formula_id": "ashtakavarga_sav",
+      "system": "vedic",
+      "family": "Ashtakavarga",
+      "component": "SAV",
+      "source_evidence": ["BAV source table", "Xalen SAV delta report"],
+      "formula_summary": "Sarvashtakavarga: summed bindu table across BAV contributors.",
+      "unit_contract": "12 integer sign scores; whether reduced/shodhita or raw SAV must be explicit.",
+      "known_variants": ["raw vs reduced SAV", "included contributors", "rounding not applicable but indexing critical"],
+      "implementation_status": "implemented_partial",
+      "oracle_status": "partial",
+      "license_boundary": "Do not treat web calculator output as formula source.",
+      "claim_boundary": "SAV mismatch cannot close until BAV contributor and shodhana state close."
+    },
+    {
+      "formula_id": "ashtakavarga_shodhana_pinda",
+      "system": "vedic",
+      "family": "Ashtakavarga",
+      "component": "shodhana_pinda",
+      "source_evidence": ["Ashtakavarga shodhana/pinda tradition", "external articles mention reductions and Shodhya Pinda"],
+      "formula_summary": "Optional reductions and Pinda weighting after raw BAV/SAV depending on school.",
+      "unit_contract": "Must label raw, reduced, trikona/ekadhipatya shodhana, and shodhya pinda separately.",
+      "known_variants": ["trikona shodhana", "ekadhipatya shodhana", "planet/sign pinda factors"],
+      "implementation_status": "blocked",
+      "oracle_status": "blocked",
+      "license_boundary": "Needs formula source and worked example before implementation.",
+      "claim_boundary": "not production claimable."
+    }
+  ]
+}

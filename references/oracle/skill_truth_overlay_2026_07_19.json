@@ -1,0 +1,66 @@
+{
+  "scope": "skill_truth_overlay",
+  "created_at": "2026-07-19",
+  "status": "truth_overlay_v1",
+  "source_registry": "references/technique_registry.json",
+  "production_tuning_allowed": false,
+  "boundary": "Overlay corrects optimistic technique_registry labels using current runtime audits. It must be applied before claiming skill completeness.",
+  "overrides": [
+    {
+      "technique_id": "kp_system",
+      "registry_status": "covered",
+      "corrected_status": "reference_only",
+      "evidence": "references/oracle/technique_promotion_audit_kp_gochara_muhurta_2026_07_19.json",
+      "reason": "KP reference exists in backup/docs; no main runtime oracle/contract."
+    },
+    {
+      "technique_id": "muhurta",
+      "registry_status": "covered",
+      "corrected_status": "reference_only",
+      "evidence": "references/oracle/technique_promotion_audit_kp_gochara_muhurta_2026_07_19.json",
+      "reason": "Panchanga runtime exists, but Muhurta/dashaflow is OSS/reference candidate requiring license/source/oracle audit."
+    },
+    {
+      "technique_id": "gochara_event_timing",
+      "registry_status": "implicit_or_fragment",
+      "corrected_status": "reference_only",
+      "evidence": "references/oracle/technique_promotion_audit_kp_gochara_muhurta_2026_07_19.json",
+      "reason": "Gochara event timing template exists in /tmp; not calibrated runtime."
+    },
+    {
+      "technique_id": "sahams",
+      "registry_status": "covered",
+      "corrected_status": "blocked",
+      "evidence": "references/oracle/prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json",
+      "reason": "Saham rules exist, but external numeric oracle worked examples are missing."
+    },
+    {
+      "technique_id": "sphuta_trisphuta_family",
+      "registry_status": "covered",
+      "corrected_status": "blocked",
+      "evidence": "references/oracle/prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json",
+      "reason": "Sphuta sensitive points lack public worked examples and field-level oracle comparison."
+    },
+    {
+      "technique_id": "tajika_yogas",
+      "registry_status": "covered",
+      "corrected_status": "partial",
+      "evidence": "references/oracle/prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json",
+      "reason": "Tajika/Varshaphala artifacts exist, but complete worked-example closure is partial."
+    },
+    {
+      "technique_id": "conception_chart",
+      "registry_status": "missing",
+      "corrected_status": "research_only_blocked",
+      "evidence": "references/oracle/conception_chart_adhana_niseka_registry_2026_07_19.json",
+      "reason": "Adhana/Niseka screenshot family and partial scaffold exist; safety/source/oracle gates block runtime claims."
+    },
+    {
+      "technique_id": "relationship_combinations",
+      "registry_status": "missing",
+      "corrected_status": "partial_registry_only",
+      "evidence": "references/oracle/relationship_combinations_rule_family_registry_2026_07_19.json",
+      "reason": "Screenshot rule families are indexed but not tested/source-closed runtime."
+    }
+  ]
+}

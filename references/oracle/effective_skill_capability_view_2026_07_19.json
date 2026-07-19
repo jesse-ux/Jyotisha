@@ -1,0 +1,763 @@
+{
+  "overlay_count": 8,
+  "scope": "effective_skill_capability_view",
+  "technique_count": 94,
+  "techniques": [
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "A10 / Karma Pada / Rajya Pada",
+      "registry_status": "covered",
+      "technique_id": "a10_karma_pada"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Argala",
+      "registry_status": "covered",
+      "technique_id": "argala"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Arudha Lagna (AL) / 镜像上升",
+      "registry_status": "covered",
+      "technique_id": "arudha_lagna"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Ashtakavarga",
+      "registry_status": "covered",
+      "technique_id": "ashtakavarga"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "ashtakavarga.py calc_prastara_av()",
+      "registry_status": "covered",
+      "technique_id": "ashtakavarga_pav"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "ashtakavarga.py calc_sodhita_av()",
+      "registry_status": "covered",
+      "technique_id": "ashtakavarga_sodhita"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "ashtakavarga.py calc_yoga_pinda()",
+      "registry_status": "covered",
+      "technique_id": "ashtakavarga_yoga_pinda"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Ashtottari Dasha / 108年周期",
+      "registry_status": "covered",
+      "technique_id": "ashtottari_dasha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Avastha",
+      "registry_status": "covered",
+      "technique_id": "avastha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Badhaka / Obstacle House-Lord",
+      "registry_status": "covered",
+      "technique_id": "badhaka"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "bhava_bala.py",
+      "registry_status": "covered",
+      "technique_id": "bhava_bala"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Bhava Chalit",
+      "registry_status": "covered",
+      "technique_id": "bhava_chalit"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Bhrigu Bindu",
+      "registry_status": "covered",
+      "technique_id": "bhrigu_bindu"
+    },
+    {
+      "effective_status": "complete",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Bhrigu Pada Dasha / 足步推进法",
+      "registry_status": "complete",
+      "technique_id": "bhrigu_pada_dasha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "birth_time_rectifier.py",
+      "registry_status": "covered",
+      "technique_id": "birth_time_rectifier"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "career_analysis.py",
+      "registry_status": "covered",
+      "technique_id": "career_engine"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "case_validator.py",
+      "registry_status": "covered",
+      "technique_id": "case_validator"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Chandra Bala / 月亮力",
+      "registry_status": "covered",
+      "technique_id": "chandra_bala"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Combustion / Asta",
+      "registry_status": "covered",
+      "technique_id": "combustion"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "D10 / Dasamsa",
+      "registry_status": "covered",
+      "technique_id": "d10_dasamsa"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "D1 / Rashi",
+      "registry_status": "covered",
+      "technique_id": "d1_rashi"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "D9 / Navamsa",
+      "registry_status": "covered",
+      "technique_id": "d9_navamsa"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Darakaraka (DK) / 配偶星",
+      "registry_status": "covered",
+      "technique_id": "darakaraka"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Dasha Sandhi",
+      "registry_status": "covered",
+      "technique_id": "dasha_sandhi"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Deep Varga Avastha / Sayanadi-Shayanadi + D24/D30/D60",
+      "registry_status": "covered",
+      "technique_id": "deep_varga_avastha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Deha / Jeeva Framework",
+      "registry_status": "covered",
+      "technique_id": "deha_jeeva"
+    },
+    {
+      "effective_status": "complete",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Dhana Yoga / 财富瑜伽",
+      "registry_status": "complete",
+      "technique_id": "dhana_yoga"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Dispositor Chain / 定位星链",
+      "registry_status": "covered",
+      "technique_id": "dispositor_chain"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "divisional_yoga.py",
+      "registry_status": "covered",
+      "technique_id": "divisional_yoga"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "22nd Drekkana",
+      "registry_status": "covered",
+      "technique_id": "drekkana_22nd"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Gandanta",
+      "registry_status": "covered",
+      "technique_id": "gandanta"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Graha Yuddha / Planetary War",
+      "registry_status": "covered",
+      "technique_id": "graha_yuddha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Inter-chart Linkage / 分盘间飞星",
+      "registry_status": "covered",
+      "technique_id": "inter_chart_linkage"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Jaimini / Chara Dasha",
+      "registry_status": "covered",
+      "technique_id": "jaimini_chara_dasha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Kaal Sarp Dosha / 时间蛇煞",
+      "registry_status": "covered",
+      "technique_id": "kaal_sarp_dosha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "kakshya.py",
+      "registry_status": "covered",
+      "technique_id": "kakshya"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Kalachakra Dasha / 时轮大运",
+      "registry_status": "covered",
+      "technique_id": "kalachakra_dasha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Karakamsha / AK / AmK",
+      "registry_status": "covered",
+      "technique_id": "karakamsha_ak_amk"
+    },
+    {
+      "effective_status": "reference_only",
+      "overlay_evidence": "references/oracle/technique_promotion_audit_kp_gochara_muhurta_2026_07_19.json",
+      "overlay_reason": "KP reference exists in backup/docs; no main runtime oracle/contract.",
+      "public_label": "kp_system.py",
+      "registry_status": "covered",
+      "technique_id": "kp_system"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Mangal Dosha / 火星煞",
+      "registry_status": "covered",
+      "technique_id": "mangal_dosha"
+    },
+    {
+      "effective_status": "complete",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Marriage Counting Method / 婚姻计数法",
+      "registry_status": "complete",
+      "technique_id": "marriage_counting"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "misconceptions.py",
+      "registry_status": "covered",
+      "technique_id": "misconceptions"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Moolatrikona / 原始三方",
+      "registry_status": "covered",
+      "technique_id": "moolatrikona"
+    },
+    {
+      "effective_status": "reference_only",
+      "overlay_evidence": "references/oracle/technique_promotion_audit_kp_gochara_muhurta_2026_07_19.json",
+      "overlay_reason": "Panchanga runtime exists, but Muhurta/dashaflow is OSS/reference candidate requiring license/source/oracle audit.",
+      "public_label": "Muhurta (Panchanga / Auspicious Timing)",
+      "registry_status": "covered",
+      "technique_id": "muhurta"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "muhurtha_election.py",
+      "registry_status": "covered",
+      "technique_id": "muhurtha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Muntha / 年运之主 (Tajika)",
+      "registry_status": "covered",
+      "technique_id": "muntha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Nakshatra Advanced / 星宿进阶（Tara Bala + Chandra Bala + Sub-Lord）",
+      "registry_status": "covered",
+      "technique_id": "nakshatra_advanced"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Nakshatra Dasha / 星宿大运推演（Ashtottari + Nakshatra-level Vimshottari）",
+      "registry_status": "covered",
+      "technique_id": "nakshatra_dasha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Narayana Dasha (Rishi Dasha / Padakrama Dasha)",
+      "registry_status": "covered",
+      "technique_id": "narayana_dasha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "64th Navamsa / Chatushashti Navamsa",
+      "registry_status": "covered",
+      "technique_id": "navamsa_64th"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Navatara / 九星链",
+      "registry_status": "covered",
+      "technique_id": "navatara"
+    },
+    {
+      "effective_status": "complete",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Neechabhanga / 落陷取消（别名入口）",
+      "registry_status": "complete",
+      "technique_id": "neechabhanga"
+    },
+    {
+      "effective_status": "complete",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Neecha Bhanga Raj Yoga / 落陷解除王者瑜伽",
+      "registry_status": "complete",
+      "technique_id": "nicha_bhanga_raj"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Pancha Mahapurusha Yoga / 五王瑜伽",
+      "registry_status": "covered",
+      "technique_id": "pancha_mahapurusha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Pancha Pakshi / 五鸟系统",
+      "registry_status": "covered",
+      "technique_id": "pancha_pakshi"
+    },
+    {
+      "effective_status": "guarded",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Panchavargiya Bala / 五分盘力量",
+      "registry_status": "guarded",
+      "technique_id": "panchavargiya_bala"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Pitra Dosha / 父辈煞",
+      "registry_status": "covered",
+      "technique_id": "pitra_dosha"
+    },
+    {
+      "effective_status": "guarded",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "prashna.py",
+      "registry_status": "guarded",
+      "technique_id": "prashna"
+    },
+    {
+      "effective_status": "guarded",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Prashna Integration / 问事占星接入",
+      "registry_status": "guarded",
+      "technique_id": "prashna_integration"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Pushkara Navamsa / Pushkara Bhaga",
+      "registry_status": "covered",
+      "technique_id": "pushkara"
+    },
+    {
+      "effective_status": "complete",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Raj Yoga / 王者瑜伽",
+      "registry_status": "complete",
+      "technique_id": "raj_yoga"
+    },
+    {
+      "effective_status": "comparison-only",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Rangacharya / Iranganti Jaimini Variant",
+      "registry_status": "comparison-only",
+      "technique_id": "rangacharya_jaimini_variant"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Rashi Tulya Navamsa / 本命对分盘分析",
+      "registry_status": "covered",
+      "technique_id": "rashi_tulya_navamsa"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "relationship_analysis.py",
+      "registry_status": "covered",
+      "technique_id": "relationship_engine"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "remedies.py",
+      "registry_status": "covered",
+      "technique_id": "remedies"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Sade Sati / 土星七年",
+      "registry_status": "covered",
+      "technique_id": "sade_sati"
+    },
+    {
+      "effective_status": "blocked",
+      "overlay_evidence": "references/oracle/prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json",
+      "overlay_reason": "Saham rules exist, but external numeric oracle worked examples are missing.",
+      "public_label": "Sahams / 特殊点",
+      "registry_status": "covered",
+      "technique_id": "sahams"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Sarpa Drekkana",
+      "registry_status": "covered",
+      "technique_id": "sarpa_drekkana"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Shadbala",
+      "registry_status": "covered",
+      "technique_id": "shadbala"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Shodasavarga / 十六分盘体系",
+      "registry_status": "covered",
+      "technique_id": "shodasavarga"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Solar/Lunar Yogas (Veshi/Voshi/Ubhayachari/Sunapha/Anapha/Durudhura)",
+      "registry_status": "covered",
+      "technique_id": "solar_lunar_yogas"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Solar Return / Varshaphala (Tajika)",
+      "registry_status": "covered",
+      "technique_id": "solar_return"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Special Lagnas / 特殊上升点（别名入口）",
+      "registry_status": "covered",
+      "technique_id": "special_lagnas"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Special Lagnas / HL GL VL PP ViL",
+      "registry_status": "covered",
+      "technique_id": "special_lagnas_extended"
+    },
+    {
+      "effective_status": "blocked",
+      "overlay_evidence": "references/oracle/prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json",
+      "overlay_reason": "Sphuta sensitive points lack public worked examples and field-level oracle comparison.",
+      "public_label": "Sphuta / Trisphuta / Catusphuta / Pancasphuta / Prana-Deha-Mrityu",
+      "registry_status": "covered",
+      "technique_id": "sphuta_trisphuta_family"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Sudarshana Chakra",
+      "registry_status": "covered",
+      "technique_id": "sudarshana_chakra"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "synastry.py",
+      "registry_status": "covered",
+      "technique_id": "synastry_16factor"
+    },
+    {
+      "effective_status": "partial",
+      "overlay_evidence": "references/oracle/prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json",
+      "overlay_reason": "Tajika/Varshaphala artifacts exist, but complete worked-example closure is partial.",
+      "public_label": "Tajika Yogas / 年运盘格局",
+      "registry_status": "covered",
+      "technique_id": "tajika_yogas"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Tara Bala / Tarabala / 星宿力",
+      "registry_status": "covered",
+      "technique_id": "tara_bala"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Thematic Report Orchestrator / 主题化报告编排",
+      "registry_status": "covered",
+      "technique_id": "thematic_report_orchestrator"
+    },
+    {
+      "effective_status": "complete",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Tithi Lord / 月日守护星",
+      "registry_status": "complete",
+      "technique_id": "tithi_lord"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "transit_trigger.py",
+      "registry_status": "covered",
+      "technique_id": "transit_trigger"
+    },
+    {
+      "effective_status": "complete",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Trimshamsa D30 / 三十分盘",
+      "registry_status": "complete",
+      "technique_id": "trimshamsa_d30"
+    },
+    {
+      "effective_status": "guarded",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Upagraha / Gulika / Maandi",
+      "registry_status": "guarded",
+      "technique_id": "upagraha_gulika_maandi"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Upapada Lagna (UL) / 配偶镜像上升",
+      "registry_status": "covered",
+      "technique_id": "upapada_lagna"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Varga Dignity / 分盘尊严等级",
+      "registry_status": "covered",
+      "technique_id": "varga_dignity"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Vargottama",
+      "registry_status": "covered",
+      "technique_id": "vargottama"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "varshaphala.py",
+      "registry_status": "covered",
+      "technique_id": "varshaphala"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Vimshottari Dasha",
+      "registry_status": "covered",
+      "technique_id": "vimshottari_dasha"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Vimsopaka Bala / 分盘综合力量",
+      "registry_status": "covered",
+      "technique_id": "vimsopaka_bala"
+    },
+    {
+      "effective_status": "covered",
+      "overlay_evidence": "",
+      "overlay_reason": "",
+      "public_label": "Yogini Dasha / 36年周期",
+      "registry_status": "covered",
+      "technique_id": "yogini_dasha"
+    },
+    {
+      "effective_status": "research_only_blocked",
+      "overlay_evidence": "references/oracle/conception_chart_adhana_niseka_registry_2026_07_19.json",
+      "overlay_reason": "Adhana/Niseka screenshot family and partial scaffold exist; safety/source/oracle gates block runtime claims.",
+      "public_label": "conception_chart",
+      "registry_status": "missing",
+      "technique_id": "conception_chart"
+    },
+    {
+      "effective_status": "reference_only",
+      "overlay_evidence": "references/oracle/technique_promotion_audit_kp_gochara_muhurta_2026_07_19.json",
+      "overlay_reason": "Gochara event timing template exists in /tmp; not calibrated runtime.",
+      "public_label": "gochara_event_timing",
+      "registry_status": "implicit_or_fragment",
+      "technique_id": "gochara_event_timing"
+    },
+    {
+      "effective_status": "partial_registry_only",
+      "overlay_evidence": "references/oracle/relationship_combinations_rule_family_registry_2026_07_19.json",
+      "overlay_reason": "Screenshot rule families are indexed but not tested/source-closed runtime.",
+      "public_label": "relationship_combinations",
+      "registry_status": "missing",
+      "technique_id": "relationship_combinations"
+    }
+  ],
+  "truth_source_order": [
+    "references/oracle/skill_truth_overlay_2026_07_19.json",
+    "references/technique_registry.json"
+  ]
+}

@@ -1,0 +1,182 @@
+{
+  "scope": "evidence_packet_index",
+  "created_at": "2026-07-19",
+  "status": "active_index_v1",
+  "production_tuning_allowed": false,
+  "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
+  "summary": {
+    "packet_count": 21,
+    "blocked_or_partial_count": 13,
+    "human_review_required_count": 1
+  },
+  "packets": [
+    {
+      "packet_id": "formula_source_kb",
+      "path": "references/oracle/formula_source_knowledge_base_2026_07_19.json",
+      "domain": "formula_sources",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Source/formula/unit registry exists; absolute numeric parity still requires worked examples and oracle comparison."
+    },
+    {
+      "packet_id": "profile_schema_contract",
+      "path": "references/oracle/profile_schema_contract_2026_07_19.json",
+      "domain": "profile_schema",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Profile schema contract is ready; UI/API adoption must prove gender optional fields do not affect core chart math."
+    },
+    {
+      "packet_id": "gender_interpretation_contract",
+      "path": "references/oracle/gender_interpretation_contract_2026_07_19.json",
+      "domain": "relationship_interpretation",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Gender affects only optional relationship/birth-context interpretation, not chart calculation."
+    },
+    {
+      "packet_id": "relationship_gender_role_registry",
+      "path": "references/relationship_gender_role_technique_registry_2026_07_19.json",
+      "domain": "relationship_interpretation",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Technique registry only; no predictive truth upgrade."
+    },
+    {
+      "packet_id": "day_level_human_annotation_packet",
+      "path": "references/real_case_calibration/day_level_holdout_v3_human_annotation_packet_2026_07_19.json",
+      "domain": "timing_holdout",
+      "claim_status": "blocked",
+      "consumer_policy": "human_review_required",
+      "claim_boundary": "Final labels are blank; blind evaluation must not run until independent human review and freeze."
+    },
+    {
+      "packet_id": "prashna_tajika_oracle_packet",
+      "path": "references/oracle/prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "blocked",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Registry exists; public worked examples and field-level numeric oracle comparison still missing."
+    },
+    {
+      "packet_id": "vedastro_identity_evidence_audit",
+      "path": "references/oracle/vedastro_identity_evidence_audit_2026_07_19.json",
+      "domain": "external_oracle_identity",
+      "claim_status": "blocked",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Local NuGet candidate is pinned; hosted API identity/source commit remains blocked."
+    },
+    {
+      "packet_id": "xalen_shadbala_av_delta_report",
+      "path": "references/oracle/xalen_shadbala_av_component_delta_report_2026_07_19.json",
+      "domain": "shadbala_ashtakavarga",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Deltas grouped by component; formulas/units/school variants remain open."
+    },
+    {
+      "packet_id": "three_engine_mismatch_closure_queue",
+      "path": "references/oracle/three_engine_mismatch_closure_queue_2026_07_19.json",
+      "domain": "three_engine_parity",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_only",
+      "claim_boundary": "60 tickets remain open; no majority-vote truth."
+    },
+    {
+      "packet_id": "technique_fragment_inventory",
+      "path": "references/oracle/technique_fragment_inventory_2026_07_19.json",
+      "domain": "technique_fragments",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Inventory prevents missed fragments; files are not capability closure by themselves."
+    },
+    {
+      "packet_id": "varga_karaka_promotion_audit",
+      "path": "references/oracle/technique_promotion_audit_varga_karaka_2026_07_19.json",
+      "domain": "varga_jaimini",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Runtime coverage exists; entry/display/source/oracle contracts remain."
+    },
+    {
+      "packet_id": "vimsopaka_avastha_promotion_audit",
+      "path": "references/oracle/technique_promotion_audit_vimsopaka_avastha_2026_07_19.json",
+      "domain": "strength_state_layers",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Runtime usage exists; formula source/oracle/display contracts remain."
+    },
+    {
+      "packet_id": "kp_gochara_muhurta_promotion_audit",
+      "path": "references/oracle/technique_promotion_audit_kp_gochara_muhurta_2026_07_19.json",
+      "domain": "kp_gochara_muhurta_panchanga",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Panchanga runtime exists; KP/Muhurta/Gochara remain reference-only or need license/source/oracle closure."
+    },
+    {
+      "packet_id": "claim_audit_runtime_gate",
+      "path": "scripts/claim_audit_runtime_gate.py",
+      "domain": "claim_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Runtime gate can block or degrade high claims from blocked/partial/open evidence packets; production tuning remains false."
+    },
+    {
+      "packet_id": "screenshot_technique_gap_audit",
+      "path": "references/oracle/screenshot_technique_gap_audit_2026_07_19.json",
+      "domain": "source_ingestion",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Screenshot labels identify missing conception-chart and relationship-combination families, but unreadable images and source packets remain unresolved."
+    },
+    {
+      "packet_id": "conception_chart_adhana_niseka_registry",
+      "path": "references/oracle/conception_chart_adhana_niseka_registry_2026_07_19.json",
+      "domain": "conception_chart",
+      "claim_status": "blocked",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Research-only Adhana/Niseka registry; no medical/fertility/user-facing claim until source, worked example, privacy, and safety gates close."
+    },
+    {
+      "packet_id": "relationship_combinations_rule_family_registry",
+      "path": "references/oracle/relationship_combinations_rule_family_registry_2026_07_19.json",
+      "domain": "relationship_rule_families",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Relationship/children/hostility combination families are indexed but require source packets, deduplication, tests, and claim gates before runtime use."
+    },
+    {
+      "packet_id": "skill_truth_overlay",
+      "path": "references/oracle/skill_truth_overlay_2026_07_19.json",
+      "domain": "skill_capability_truth",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Corrects optimistic technique_registry statuses before any skill completeness claim."
+    },
+    {
+      "packet_id": "rectification_technique_usage_audit",
+      "path": "references/oracle/rectification_technique_usage_audit_2026_07_19.json",
+      "domain": "birth_time_rectification",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Rectification uses candidate sweep, Vimshottari event scoring and varga sensitivity; Narayana/Jaimini/Shadbala/AV/Vimsopaka/Avastha/Gochara layers are not yet integrated."
+    },
+    {
+      "packet_id": "effective_skill_capability_view",
+      "path": "references/oracle/effective_skill_capability_view_2026_07_19.json",
+      "domain": "skill_capability_truth",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Effective skill view applies the truth overlay before capability claims; raw technique_registry status is not sufficient."
+    },
+    {
+      "packet_id": "rectification_missing_layer_integration_plan",
+      "path": "references/oracle/rectification_missing_layer_integration_plan_2026_07_19.json",
+      "domain": "birth_time_rectification",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Narayana/Jaimini/Vimsopaka-Avastha/Shadbala-AV/Gochara layers are planned but not yet integrated into rectification scoring."
+    }
+  ]
+}
