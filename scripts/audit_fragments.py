@@ -234,7 +234,7 @@ def source_referenced_scripts(*texts: str) -> set[str]:
     refs: set[str] = set()
     for path in SCRIPTS_DIR.glob("*.py"):
         stem = path.stem
-        if re.search(rf"\b(import|from)\s+{re.escape(stem)}\b", combined):
+        if re.search(rf"\b(import|from)\s+(?:scripts\.)?{re.escape(stem)}\b", combined):
             refs.add(path.name)
         if path.name in combined or stem in combined:
             refs.add(path.name)
