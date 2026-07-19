@@ -1,0 +1,14 @@
+{
+  "scope": "vedicastro_flatlib_sidereal_install_probe",
+  "created_at": "2026-07-19",
+  "status": "blocked_timeout",
+  "claim_status": "blocked",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "temporary_target": "/tmp/vedicastro_sidereal_flatlib_probe",
+  "attempted_package": "git+https://github.com/flatangle/flatlib.git@sidereal",
+  "observed_blocker": "pip install exceeded 120s command budget",
+  "previous_pypi_flatlib_blocker": "PyPI flatlib 0.2.3 has no flatlib.const AY_* attributes required by local VedicAstro source.",
+  "next_action": "Pin a prebuilt sidereal-compatible flatlib wheel or cache the Git checkout before runtime API proof.",
+  "boundary": "VedicAstro KP source/API surface remains pinned, but runtime readiness is blocked until sidereal flatlib dependency is reproducible."
+}

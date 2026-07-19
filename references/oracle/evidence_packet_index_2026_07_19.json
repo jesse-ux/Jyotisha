@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 46,
+    "packet_count": 50,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -377,6 +377,38 @@
       "claim_status": "source_intake_only",
       "consumer_policy": "pin_hash_license_gate_before_runtime_use",
       "claim_boundary": "Open-source Jyotish projects may provide source candidates, probes, raw artifacts, and worked-example leads; they are not final truth until license, commit/hash, input contract, and field-level oracle gates close."
+    },
+    {
+      "packet_id": "d10_rahu_ketu_node_mode_attribution",
+      "path": "references/oracle/d10_rahu_ketu_node_mode_attribution_2026_07_19.json",
+      "domain": "varga_node_mode",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "D10 Rahu/Ketu mismatch is attributed to node longitude and boundary crossing; do not tune formulas or assert engine truth until node mode/settings are pinned."
+    },
+    {
+      "packet_id": "public_worked_example_candidate_numeric_audit",
+      "path": "references/oracle/public_worked_example_candidate_numeric_audit_2026_07_19.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Candidate public pages are triaged only; no row is oracle-ready until exact input, settings, expected numeric values, raw/hash and replay are archived."
+    },
+    {
+      "packet_id": "vedicastro_flatlib_sidereal_install_probe",
+      "path": "references/oracle/vedicastro_flatlib_sidereal_install_probe_2026_07_19.json",
+      "domain": "kp_precision_timing_dependency",
+      "claim_status": "blocked",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "VedicAstro KP runtime probe is blocked by reproducible sidereal flatlib dependency; source/API surface evidence remains observation-only."
+    },
+    {
+      "packet_id": "vedicastro_kp_api_probe_flatlib_polars_tmp",
+      "path": "references/oracle/vedicastro_kp_api_probe_flatlib_polars_tmp_2026_07_19.json",
+      "domain": "kp_precision_timing_dependency",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Temporary flatlib/polars VedicAstro KP probe captures dependency/import state only; no runtime truth upgrade."
     }
   ]
 }

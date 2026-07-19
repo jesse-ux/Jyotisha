@@ -1,0 +1,46 @@
+{
+  "scope": "public_worked_example_candidate_numeric_audit",
+  "created_at": "2026-07-19",
+  "status": "candidate_audit_complete_no_oracle_ready_rows",
+  "claim_status": "open_queue",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "boundary": "Candidate URLs are triaged for numeric-field potential only. No row is oracle_ready until exact input, settings, expected values, capture date, raw text/hash, and replay comparison are archived.",
+  "candidates": [
+    {
+      "topic": "KP cusp star/sub/sub-sub",
+      "url": "https://www.astrosage.com/kp/cuspal-sub-lord.asp",
+      "candidate_type": "tool_or_reference_page",
+      "numeric_packet_status": "candidate_tool_not_replayable_yet",
+      "missing_for_oracle": ["fixed public input case", "raw output hash", "cusp longitude", "star_lord", "sub_lord", "sub_sub_lord", "method settings"]
+    },
+    {
+      "topic": "KP sub-lord table",
+      "url": "https://www.aryabhatt.com/astrology/krishnamurti-paddhati/kp-sub-lords-table",
+      "candidate_type": "reference_table_candidate",
+      "numeric_packet_status": "table_hash_candidate_pending_capture",
+      "missing_for_oracle": ["captured table raw", "table hash", "license/copyright boundary", "worked example link"]
+    },
+    {
+      "topic": "Tarabala/Chandrabala",
+      "url": "https://www.mypanchang.com/tarabalam.php",
+      "candidate_type": "worked_example_candidate",
+      "numeric_packet_status": "worked_example_candidate_pending_raw_capture",
+      "missing_for_oracle": ["stable date/location/person input", "captured raw hash", "rule weights", "expected factor table"]
+    },
+    {
+      "topic": "Rahu Kalam",
+      "url": "https://www.drikpanchang.com/muhurat/rahu-kalam.html",
+      "candidate_type": "calculation_reference_candidate",
+      "numeric_packet_status": "calculation_reference_pending_fixture",
+      "missing_for_oracle": ["date/location fixture", "sunrise/sunset source", "expected interval", "raw capture hash"]
+    },
+    {
+      "topic": "Shadbala Virupa",
+      "url": "https://www.astrojyoti.com/shadbala.htm",
+      "candidate_type": "formula_reference_candidate",
+      "numeric_packet_status": "formula_reference_only",
+      "missing_for_oracle": ["complete birth input", "per-component Virupa expected values", "formula variant", "raw capture hash"]
+    }
+  ]
+}
