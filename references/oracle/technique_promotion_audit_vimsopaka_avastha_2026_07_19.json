@@ -1,0 +1,51 @@
+{
+  "created_at": "2026-07-19",
+  "items": [
+    {
+      "claim_boundary": "Runtime presence is real, but Vimsopaka weight table/source/oracle closure is still separate.",
+      "current_call_status": "formally_called_in_full_reading",
+      "entrypoints": [
+        "full_reading prompt pack",
+        "vimsopaka_semantic_summary"
+      ],
+      "historical_artifacts": [
+        "skills/jyotish-engine-modules/scripts/vimsopaka_calculator.py"
+      ],
+      "main_artifacts": [
+        "scripts/full_reading.py",
+        "tests/test_cli_smoke.py"
+      ],
+      "next_action": "add_formula_source_and_oracle_packet",
+      "reuse_decision": "do_not_duplicate_runtime",
+      "technique_id": "vimsopaka_bala"
+    },
+    {
+      "claim_boundary": "Avastha is endpoint-visible, but formula variants and interpretive claim level still need source/oracle packet.",
+      "current_call_status": "formally_called_via_deep_varga_avastha_endpoint",
+      "entrypoints": [
+        "/api/deep_varga_avastha",
+        "jyotish-app skill-map deepVargaAvastha"
+      ],
+      "historical_artifacts": [
+        "skills/jyotish-engine-modules/scripts/avastha_calculator.py"
+      ],
+      "main_artifacts": [
+        "scripts/deep_varga_avastha.py",
+        "scripts/jyotish_api_server.py",
+        "jyotish-app/skill-map.js",
+        "tests/test_deep_varga_avastha.py"
+      ],
+      "next_action": "add_display_contract_and_source_oracle_packet",
+      "reuse_decision": "do_not_duplicate_runtime",
+      "technique_id": "avastha_states"
+    }
+  ],
+  "production_tuning_allowed": false,
+  "scope": "technique_promotion_audit_vimsopaka_avastha",
+  "summary": {
+    "duplicate_runtime_needed": 0,
+    "formally_called_count": 2,
+    "items_checked": 2
+  },
+  "truth_policy": "runtime_presence_not_oracle_closure"
+}

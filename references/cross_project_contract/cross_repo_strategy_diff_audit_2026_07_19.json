@@ -1,0 +1,74 @@
+{
+  "created_at": "2026-07-19",
+  "items": [
+    {
+      "commercial_sha256": "548d177786b76d846e5694e74dc32841bb2618989c1a1ec7dd4d0b7f2b298fbc",
+      "notes": [
+        "commercial_retains_annotation_protocol_pointer"
+      ],
+      "path": "references/real_case_calibration/day_level_holdout_v3_preregistration.json",
+      "research_sha256": "d7f794630d3def6f9f7b5d94c4365bb508c60a8b44228f35a2d2d4548ea9f360",
+      "status": "intentional_diff_review_required"
+    },
+    {
+      "commercial_sha256": "f5812c7ce35e67d1760ba0d0ada0157bd28ece2cb9be817e0d47321e592a0116",
+      "notes": [
+        "commercial_retains_observational_validation_mode_for_product_intake"
+      ],
+      "path": "scripts/day_level_holdout_validator.py",
+      "research_sha256": "a37f4fb63af2fdf42591c6a4fe3870c11663f3126309628001ed365f18817b90",
+      "status": "intentional_diff_review_required"
+    },
+    {
+      "commercial_sha256": "6e3063eeacfc6730a877a9780b9a82892defe71f74cd4561182ffc7fbfa9fac5",
+      "notes": [
+        "research_has_stricter_self_host_truth_upgrade_gate"
+      ],
+      "path": "scripts/vedastro_identity_archive.py",
+      "research_sha256": "333e490f5a2086dc046819d24285962d8660a6fd7cd022eeca2b586e8887b82e",
+      "status": "intentional_diff_review_required"
+    },
+    {
+      "commercial_sha256": "d4a2957ebbe336091544f34da20983d3152dcdca8e11b9b5f5da4eed21c69beb",
+      "notes": [
+        "diff_requires_manual_review_before_copy"
+      ],
+      "path": "tests/test_day_level_holdout_validator.py",
+      "research_sha256": "e130327895f848980da79fa4dc2d5b6802038473c8b457390f1d96aae60715d5",
+      "status": "intentional_diff_review_required"
+    },
+    {
+      "commercial_sha256": "6ab6a5b5052334eaad04b2c8f2260e5966ba789e862c69a8ebfd4adcf0d96f40",
+      "notes": [
+        "test_policy_diff_only_no_runtime_effect"
+      ],
+      "path": "tests/test_shadbala_av_normative_benchmark_plan.py",
+      "research_sha256": "73d80cd00b21b48993ba31a2018205ffe6d2c75474062ac19ed156a3e9dce163",
+      "status": "intentional_diff_review_required"
+    },
+    {
+      "commercial_sha256": "58024551bd9bb620e2cbfe1c9a28ccdce2d2c5f1588ffae19ca3fbe0082bdd64",
+      "notes": [
+        "commercial_answer_boundary_assertions_may_include_product_context"
+      ],
+      "path": "tests/test_skill_truth_overlay_application.py",
+      "research_sha256": "845aa750f740690c880b79d44960799a56ef379cc2f96c99919a12eb52e16077",
+      "status": "intentional_diff_review_required"
+    },
+    {
+      "commercial_sha256": "1300c089410d914936f44abb478dbeb4b7c17ad502b587867df2fce31487aacd",
+      "notes": [
+        "paired_with_vedastro_identity_archive_policy"
+      ],
+      "path": "tests/test_vedastro_identity_archive.py",
+      "research_sha256": "de9c183b39dd2a11b9b8d4f39877e794e2d4e5fb37236629fdfd768ecbe0f6e0",
+      "status": "intentional_diff_review_required"
+    }
+  ],
+  "scope": "cross_repo_strategy_diff_audit",
+  "status": "do_not_blind_overwrite",
+  "summary": {
+    "diff_count": 7,
+    "policy": "Commercial may keep product-safe wrappers while importing research truth gates only when compatible."
+  }
+}

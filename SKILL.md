@@ -13,7 +13,17 @@ description: "印度占星（Jyotish）专业解盘与推运系统。核心能�
 > **执行总控**：`references/quick-reference-guide.md`
 > **严格路由**：`references/strict-workflow-router.md`（涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`
+> **能力真相边界**：回答前必须参考 `references/oracle/skill_truth_overlay_2026_07_19.json` 与 `references/oracle/effective_skill_capability_view_2026_07_19.json`；不得直接把 `references/technique_registry.json` 的旧 `covered` 当作完整闭环。
 > **文章级细节模板**：`references/interpretation_template_registry.json` + `scripts/validate_interpretation_templates.py`
+
+### Skill truth overlay 硬边界
+
+KP/Muhurta/Gochara/Sahams/Sphuta/Tajika等高阶分支必须按 skill truth overlay 降级使用；商业回答必须区分 `ready / partial / reference-only / blocked`。
+
+| 技法 | 商业回答边界 |
+|---|---|
+| KP系统 | reference-only / partial |
+| Muhurta/Gochara/Sahams/Sphuta/Tajika | 只作参考或探索性证据，除非 evidence packet 明确升级 |
 
 ## v6.9.14 核心能力
 
