@@ -1,14 +1,23 @@
 {
-  "scope": "vedicastro_flatlib_sidereal_install_probe",
+  "attempted_package": "git+https://github.com/diliprk/flatlib.git@sidereal",
+  "boundary": "Sidereal flatlib dependency is reproducibly installable in a temporary isolated path and the VedicAstro KP API surface is callable; this remains observation_only and must not enter truth matrix until numeric worked-example replay closes.",
+  "claim_status": "observation_only",
   "created_at": "2026-07-19",
-  "status": "blocked_timeout",
-  "claim_status": "blocked",
-  "production_tuning_allowed": false,
-  "truth_matrix_allowed": false,
-  "temporary_target": "/tmp/vedicastro_sidereal_flatlib_probe",
-  "attempted_package": "git+https://github.com/flatangle/flatlib.git@sidereal",
-  "observed_blocker": "pip install exceeded 120s command budget",
+  "next_action": "Collect public numeric KP cusp/star/sub/sub-sub worked examples before promoting beyond observation_only.",
+  "observed_flatlib_commit": "2618c348ce1ab2588548f935ff65f031630b4872",
   "previous_pypi_flatlib_blocker": "PyPI flatlib 0.2.3 has no flatlib.const AY_* attributes required by local VedicAstro source.",
-  "next_action": "Pin a prebuilt sidereal-compatible flatlib wheel or cache the Git checkout before runtime API proof.",
-  "boundary": "VedicAstro KP source/API surface remains pinned, but runtime readiness is blocked until sidereal flatlib dependency is reproducible."
+  "production_tuning_allowed": false,
+  "resolved_blocker": "Previous timeout came from probing the wrong sidereal repository path; VedicAstro requirements specify diliprk/flatlib.git@sidereal.",
+  "runtime_artifact": "references/oracle/vedicastro_kp_runtime_surface_probe_2026_07_19.json",
+  "runtime_artifact_sha256": "76b4a0e273a4d5874fe2109401a77f79f0cfec75f218d4fa0c4a7738615c5e03",
+  "runtime_environment": {
+    "flatlib": "0.3.1.dev0",
+    "polars": "1.42.1",
+    "polars-runtime-32": "1.42.1",
+    "timezonefinder": "8.2.5"
+  },
+  "scope": "vedicastro_flatlib_sidereal_install_probe",
+  "status": "partial_runtime_surface_available",
+  "temporary_target": "/tmp/vedicastro_sidereal_flatlib_probe.Nt8ANZ",
+  "truth_matrix_allowed": false
 }

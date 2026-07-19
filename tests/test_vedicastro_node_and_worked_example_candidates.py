@@ -29,10 +29,21 @@ def test_vedicastro_flatlib_polars_probe_records_next_dependency_blocker():
 
 def test_vedicastro_sidereal_flatlib_install_probe_records_timeout_blocker():
     data = json.loads((ROOT / "references/oracle/vedicastro_flatlib_sidereal_install_probe_2026_07_19.json").read_text(encoding="utf-8"))
-    assert data["claim_status"] == "blocked"
+    assert data["claim_status"] == "observation_only"
     assert data["production_tuning_allowed"] is False
-    assert "sidereal" in data["attempted_package"]
-    assert data["status"] == "blocked_timeout"
+    assert data["attempted_package"] == "git+https://github.com/diliprk/flatlib.git@sidereal"
+    assert data["status"] == "partial_runtime_surface_available"
+    assert data["runtime_artifact"] == "references/oracle/vedicastro_kp_runtime_surface_probe_2026_07_19.json"
+    assert data["truth_matrix_allowed"] is False
+
+
+def test_vedicastro_kp_runtime_surface_probe_is_callable_but_not_truth():
+    data = json.loads((ROOT / "references/oracle/vedicastro_kp_runtime_surface_probe_2026_07_19.json").read_text(encoding="utf-8"))
+    assert data["claim_status"] == "observation_only"
+    assert data["status"] == "partial_runtime_surface_available"
+    assert data["runtime_probe"]["import_status"] == "success"
+    assert data["runtime_probe"]["sample_rl_nl_sl"]["SubLord"] == "Ketu"
+    assert "AY_KRISHNAMURTI" in data["runtime_probe"]["sidereal_ayanamsa_constants_present"]
 
 
 def test_public_worked_example_numeric_audit_has_no_oracle_ready_rows():
@@ -49,6 +60,7 @@ def test_evidence_index_registers_current_blocker_artifacts():
     for packet_id in [
         "d10_rahu_ketu_node_mode_attribution",
         "vedicastro_kp_api_probe_flatlib_polars_tmp",
+        "vedicastro_kp_runtime_surface_probe",
         "public_worked_example_candidate_numeric_audit",
     ]:
         assert packet_id in packets

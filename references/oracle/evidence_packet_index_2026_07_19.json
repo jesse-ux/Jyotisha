@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 50,
+    "packet_count": 51,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -398,9 +398,9 @@
       "packet_id": "vedicastro_flatlib_sidereal_install_probe",
       "path": "references/oracle/vedicastro_flatlib_sidereal_install_probe_2026_07_19.json",
       "domain": "kp_precision_timing_dependency",
-      "claim_status": "blocked",
+      "claim_status": "observation_only",
       "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "VedicAstro KP runtime probe is blocked by reproducible sidereal flatlib dependency; source/API surface evidence remains observation-only."
+      "claim_boundary": "Sidereal flatlib dependency is reproducibly installable in a temporary isolated path and the VedicAstro KP API surface is callable; this remains observation_only and must not enter truth matrix until numeric worked-example replay closes."
     },
     {
       "packet_id": "vedicastro_kp_api_probe_flatlib_polars_tmp",
@@ -409,6 +409,14 @@
       "claim_status": "observation_only",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Temporary flatlib/polars VedicAstro KP probe captures dependency/import state only; no runtime truth upgrade."
+    },
+    {
+      "packet_id": "vedicastro_kp_runtime_surface_probe",
+      "path": "references/oracle/vedicastro_kp_runtime_surface_probe_2026_07_19.json",
+      "domain": "kp_precision_timing_dependency",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "VedicAstro KP lord/sub/sub-sub runtime surface is callable in isolated sidereal flatlib environment; no precision-timing truth upgrade until public numeric KP worked-example replay closes."
     }
   ]
 }
