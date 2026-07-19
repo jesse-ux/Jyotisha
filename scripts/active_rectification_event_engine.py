@@ -32,6 +32,7 @@ if str(SCRIPTS) not in sys.path:
 
 import dasha_analyzer  # noqa: E402
 import domain_calculation_service  # noqa: E402
+import ashtakavarga  # noqa: E402
 import divisional_charts_extended  # noqa: E402
 import functional_benefics  # noqa: E402
 import jaimini  # noqa: E402
@@ -262,6 +263,24 @@ def _controlled_transit_rules(
     return rules
 
 
+def _ashtakavarga_auxiliary(natal_chart: dict, ascendant_index: int, target_houses: tuple[int, ...]) -> tuple[list[str], float]:
+    """Return a bounded SAV consistency adjustment, never a standalone trigger."""
+    result = ashtakavarga.calc_ashtakavarga(natal_chart.get("planets", {}), ascendant_index)
+    if not result.get("all_bav_valid") or not (result.get("sav") or {}).get("valid"):
+        return [], 0.0
+    house_scores = result.get("house_scores_full") or {}
+    values = [house_scores.get(f"house_{house}", {}).get("sav_score") for house in target_houses]
+    numeric = [float(value) for value in values if isinstance(value, (int, float))]
+    if not numeric:
+        return [], 0.0
+    average = sum(numeric) / len(numeric)
+    if average >= 32:
+        return ["ashtakavarga_target_house_support_auxiliary"], 0.2
+    if average <= 24:
+        return ["ashtakavarga_target_house_pressure_auxiliary"], -0.1
+    return [], 0.0
+
+
 def _candidate_row(
     request: RectificationEventRequest,
     candidate_at: datetime,
@@ -323,6 +342,10 @@ def _candidate_row(
         if transit_rules:
             evidence[-1]["rule_ids"].extend(transit_rules)
             evidence[-1]["points"] = round(evidence[-1]["points"] + 0.25 * len(transit_rules) * precision_weight(event["precision"]), 4)
+        av_rules, av_points = _ashtakavarga_auxiliary(chart, ascendant_index, DOMAIN_CONFIG[event["domain"]][1])
+        if av_rules:
+            evidence[-1]["rule_ids"].extend(av_rules)
+            evidence[-1]["points"] = round(evidence[-1]["points"] + av_points * precision_weight(event["precision"]), 4)
 
     return {
         "time": candidate_at.strftime("%H:%M"),
