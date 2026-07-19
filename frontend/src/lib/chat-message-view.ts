@@ -2,6 +2,7 @@ export type ChatMessage = {
   readonly role: "user" | "assistant";
   readonly text: string;
   readonly suggestions?: readonly string[];
+  readonly techniqueTruth?: string;
 };
 
 export type ChatMessageView = ChatMessage & {

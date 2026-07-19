@@ -7,6 +7,7 @@ export const lifeEventDomainSchema = z.enum([
   "relocation",
   "relationship",
   "career",
+  "finance",
   "health_pressure",
 ]);
 
@@ -104,7 +105,7 @@ export const candidateResultSchema = z.object({
     widthMinutes: z.number().int().min(1).max(1_440),
   }).strict().readonly().nullable(),
   eventCount: z.number().int().min(0).max(10),
-  domainCount: z.number().int().min(0).max(5),
+  domainCount: z.number().int().min(0).max(6),
   topScore: z.number(),
   secondScore: z.number(),
   marginPercent: z.number().min(0),
