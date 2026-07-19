@@ -75,7 +75,7 @@ def test_multi_model_route_and_persistence_contract() -> None:
     assert "reserveConsultationModel(" in consult_route
     assert "resolveLanguageModel," in consult_route
     assert 'runCreditRpc(accounting, "begin_consultation_credit"' in consult_route
-    assert "getJyotishAgent(selectedModel).stream" in consult_route
+    assert "getJyotishAgent(selectedModel, workflowContext).stream" in consult_route
     assert "modelSelection.usageModelId" in consult_route
     assert 'if (!model) return { status: "unavailable" }' in selection
     assert 'reservation: await reserveCredit()' in selection
