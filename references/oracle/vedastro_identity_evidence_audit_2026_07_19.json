@@ -1,0 +1,245 @@
+{
+  "archive": "references/oracle/vedastro_identity_archive_2026_07_19.json",
+  "boundary": "NuGet/runtime identity can be pinned locally; hosted api.vedastro.org remains blocked without upstream build/method metadata.",
+  "evidence": [
+    {
+      "blocker": "",
+      "field": "package_sha256",
+      "source": "references/oracle/artifacts/vedastro_nuget_1_2_0_runtime_contract.json",
+      "status": "complete",
+      "value": "f753df4e76c75b9ad219c2f5a8fe4b17361065d6f4fa1198897cf117b7bc55d5"
+    },
+    {
+      "blocker": "",
+      "field": "library_dll_sha256",
+      "source": "references/oracle/artifacts/vedastro_nuget_1_2_0_runtime_contract.json",
+      "status": "complete",
+      "value": "e4ec61b07ac1c15fcc65d9ffdc54bc2d26497597760572e2888f1992fc7b1ca8"
+    },
+    {
+      "blocker": "",
+      "field": "assembly_version",
+      "source": "references/oracle/artifacts/vedastro_nuget_1_2_0_runtime_contract.json",
+      "status": "complete",
+      "value": "1.2.0.0"
+    },
+    {
+      "blocker": "",
+      "field": "assembly_informational_version",
+      "source": "references/oracle/artifacts/vedastro_nuget_1_2_0_runtime_contract.json",
+      "status": "complete",
+      "value": "1.2.0"
+    },
+    {
+      "blocker": "",
+      "field": "public_method_contracts",
+      "source": "references/oracle/artifacts/vedastro_nuget_1_2_0_runtime_contract.json",
+      "status": "complete",
+      "value": [
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetAllPlanetFixedLongitude",
+          "parameters": [
+            {
+              "Name": "time",
+              "type": "VedAstro.Library.Time"
+            }
+          ],
+          "returns": "System.Collections.Generic.List`1[[VedAstro.Library.PlanetLongitude, VedAstro.Library, Version=1.2.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetAllPlanetLongitude",
+          "parameters": [
+            {
+              "Name": "time",
+              "type": "VedAstro.Library.Time"
+            }
+          ],
+          "returns": "System.Collections.Generic.List`1[[VedAstro.Library.PlanetLongitude, VedAstro.Library, Version=1.2.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetConstellationAtLongitude",
+          "parameters": [
+            {
+              "Name": "planetLongitude",
+              "type": "VedAstro.Library.Angle"
+            }
+          ],
+          "returns": "VedAstro.Library.PlanetConstellation"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetHouse1And10Longitudes",
+          "parameters": [
+            {
+              "Name": "time",
+              "type": "VedAstro.Library.Time"
+            }
+          ],
+          "returns": "System.Double[]"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetLongitudeAtZodiacSign",
+          "parameters": [
+            {
+              "Name": "zodiacSign",
+              "type": "VedAstro.Library.ZodiacSign"
+            }
+          ],
+          "returns": "VedAstro.Library.Angle"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetNavamsaSignNameFromLongitude",
+          "parameters": [
+            {
+              "Name": "longitude",
+              "type": "VedAstro.Library.Angle"
+            }
+          ],
+          "returns": "VedAstro.Library.ZodiacName"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetPlanetNirayanaLongitude",
+          "parameters": [
+            {
+              "Name": "time",
+              "type": "VedAstro.Library.Time"
+            },
+            {
+              "Name": "planetName",
+              "type": "VedAstro.Library.PlanetName"
+            }
+          ],
+          "returns": "VedAstro.Library.Angle"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetPlanetRasiSign",
+          "parameters": [
+            {
+              "Name": "planetName",
+              "type": "VedAstro.Library.PlanetName"
+            },
+            {
+              "Name": "time",
+              "type": "VedAstro.Library.Time"
+            }
+          ],
+          "returns": "VedAstro.Library.ZodiacSign"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetPlanetSayanaLongitude",
+          "parameters": [
+            {
+              "Name": "time",
+              "type": "VedAstro.Library.Time"
+            },
+            {
+              "Name": "planetName",
+              "type": "VedAstro.Library.PlanetName"
+            }
+          ],
+          "returns": "VedAstro.Library.Angle"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetPlanetShadbalaPinda",
+          "parameters": [
+            {
+              "Name": "planetName",
+              "type": "VedAstro.Library.PlanetName"
+            },
+            {
+              "Name": "time",
+              "type": "VedAstro.Library.Time"
+            }
+          ],
+          "returns": "VedAstro.Library.Shashtiamsa"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "GetZodiacSignAtLongitude",
+          "parameters": [
+            {
+              "Name": "longitude",
+              "type": "VedAstro.Library.Angle"
+            }
+          ],
+          "returns": "VedAstro.Library.ZodiacSign"
+        },
+        {
+          "declaring_type": "VedAstro.Library.MatchCalculator",
+          "name": "RasiKuta",
+          "parameters": [
+            {
+              "Name": "male",
+              "type": "VedAstro.Library.Person"
+            },
+            {
+              "Name": "female",
+              "type": "VedAstro.Library.Person"
+            }
+          ],
+          "returns": "VedAstro.Library.Compatibility.CompatibilityPrediction"
+        },
+        {
+          "declaring_type": "VedAstro.Library.AstronomicalCalculator",
+          "name": "TimeToLongitude",
+          "parameters": [
+            {
+              "Name": "time",
+              "type": "System.TimeSpan"
+            }
+          ],
+          "returns": "VedAstro.Library.Angle"
+        },
+        {
+          "declaring_type": "VedAstro.Library.Time",
+          "name": "TimeToLongitude",
+          "parameters": [
+            {
+              "Name": "time",
+              "type": "System.TimeSpan"
+            }
+          ],
+          "returns": "VedAstro.Library.Angle"
+        }
+      ]
+    },
+    {
+      "blocker": "",
+      "field": "runtime_image_digest",
+      "source": "references/oracle/artifacts/vedastro_nuget_1_2_0_runtime_contract.json",
+      "status": "complete",
+      "value": "sha256:d32bd65cf5843f413e81f5d917057c82da99737cb1637e905a1a4bc2e7ec6c8d"
+    },
+    {
+      "blocker": "source commit not present in NuGet catalog/runtime contract; hosted API identity still needs upstream metadata or pinned source checkout.",
+      "field": "source_commit",
+      "source": "references/oracle/vedastro_identity_archive_2026_07_19.json",
+      "status": "blocked",
+      "value": null
+    }
+  ],
+  "hosted_identity_status": "blocked",
+  "license": "MIT",
+  "package": "VedAstro.Library",
+  "production_tuning_allowed": false,
+  "runtime_candidate_status": "complete",
+  "runtime_contract": "references/oracle/artifacts/vedastro_nuget_1_2_0_runtime_contract.json",
+  "scope": "vedastro_identity_evidence_audit",
+  "summary": {
+    "blocked_count": 1,
+    "complete_count": 6,
+    "method_contract_count": 14,
+    "required_field_count": 7
+  },
+  "truth_upgrade_allowed": false,
+  "version": "1.2.0"
+}

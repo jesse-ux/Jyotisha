@@ -1,0 +1,171 @@
+{
+  "blind_scoring_allowed": false,
+  "production_tuning_allowed": false,
+  "scope": "day_level_holdout_pilot_source_queue_report",
+  "source_queue": "references/real_case_calibration/day_level_holdout_v3_pilot_source_queue_2026_07_19.json",
+  "status": "awaiting_independent_human_labels",
+  "summary": {
+    "blocked_annotation_count": 9,
+    "negative_candidate_count": 6,
+    "positive_candidate_count": 3,
+    "ready_annotation_count": 0,
+    "subject_count": 3,
+    "window_count": 9
+  },
+  "truth_boundary": "These rows are source candidates only. They are not holdout annotations and must not be used by timing_ranker_blind_eval.py until an independent reviewer confirms event/non-event labels and freezes them before scoring.",
+  "windows": [
+    {
+      "claim_status": "candidate_not_label",
+      "domain": "marriage",
+      "end": "1991-03-18",
+      "event_absent_assertion": "",
+      "event_description": "Marriage to Laurene Powell Jobs",
+      "label_candidate": "target_event",
+      "name": "Steve Jobs",
+      "required_next_step": "independent_human_adjudication",
+      "scoring_status": "blocked_not_frozen",
+      "source_urls": [
+        "https://allaboutstevejobs.com/bio/timeline",
+        "https://people.com/who-is-laurene-powell-jobs-steve-jobs-wife-7502390"
+      ],
+      "start": "1991-03-18",
+      "subject_id": "steve_jobs"
+    },
+    {
+      "claim_status": "candidate_not_label",
+      "domain": "marriage",
+      "end": "1990-09-30",
+      "event_absent_assertion": "Candidate non-marriage interval before the documented March 18, 1991 marriage; must be independently checked against biography/timeline sources.",
+      "event_description": "",
+      "label_candidate": "no_target_event",
+      "name": "Steve Jobs",
+      "required_next_step": "independent_human_adjudication",
+      "scoring_status": "blocked_not_frozen",
+      "source_urls": [
+        "https://allaboutstevejobs.com/bio/timeline",
+        "https://people.com/who-is-laurene-powell-jobs-steve-jobs-wife-7502390"
+      ],
+      "start": "1990-09-01",
+      "subject_id": "steve_jobs"
+    },
+    {
+      "claim_status": "candidate_not_label",
+      "domain": "marriage",
+      "end": "1991-06-30",
+      "event_absent_assertion": "Candidate non-marriage interval after the documented March 18, 1991 marriage; must be independently checked against biography/timeline sources.",
+      "event_description": "",
+      "label_candidate": "no_target_event",
+      "name": "Steve Jobs",
+      "required_next_step": "independent_human_adjudication",
+      "scoring_status": "blocked_not_frozen",
+      "source_urls": [
+        "https://allaboutstevejobs.com/bio/timeline",
+        "https://people.com/who-is-laurene-powell-jobs-steve-jobs-wife-7502390"
+      ],
+      "start": "1991-06-01",
+      "subject_id": "steve_jobs"
+    },
+    {
+      "claim_status": "candidate_not_label",
+      "domain": "marriage",
+      "end": "1992-10-03",
+      "event_absent_assertion": "",
+      "event_description": "Marriage to Michelle Robinson Obama",
+      "label_candidate": "target_event",
+      "name": "Barack Obama",
+      "required_next_step": "independent_human_adjudication",
+      "scoring_status": "blocked_not_frozen",
+      "source_urls": [
+        "https://www.obamalibrary.gov/obamas/first-lady-michelle-obama",
+        "https://www.whitehousehistory.org/bios/michelle-obama"
+      ],
+      "start": "1992-10-03",
+      "subject_id": "barack_obama"
+    },
+    {
+      "claim_status": "candidate_not_label",
+      "domain": "marriage",
+      "end": "1992-07-31",
+      "event_absent_assertion": "Candidate non-marriage interval before the documented October 3, 1992 marriage; must be independently checked against relationship/timeline sources.",
+      "event_description": "",
+      "label_candidate": "no_target_event",
+      "name": "Barack Obama",
+      "required_next_step": "independent_human_adjudication",
+      "scoring_status": "blocked_not_frozen",
+      "source_urls": [
+        "https://www.obamalibrary.gov/obamas/first-lady-michelle-obama",
+        "https://www.whitehousehistory.org/bios/michelle-obama"
+      ],
+      "start": "1992-07-01",
+      "subject_id": "barack_obama"
+    },
+    {
+      "claim_status": "candidate_not_label",
+      "domain": "marriage",
+      "end": "1993-01-31",
+      "event_absent_assertion": "Candidate non-marriage interval after the documented October 3, 1992 marriage; must be independently checked against relationship/timeline sources.",
+      "event_description": "",
+      "label_candidate": "no_target_event",
+      "name": "Barack Obama",
+      "required_next_step": "independent_human_adjudication",
+      "scoring_status": "blocked_not_frozen",
+      "source_urls": [
+        "https://www.obamalibrary.gov/obamas/first-lady-michelle-obama",
+        "https://www.whitehousehistory.org/bios/michelle-obama"
+      ],
+      "start": "1993-01-01",
+      "subject_id": "barack_obama"
+    },
+    {
+      "claim_status": "candidate_not_label",
+      "domain": "marriage",
+      "end": "1903-01-06",
+      "event_absent_assertion": "",
+      "event_description": "Marriage to Mileva Marić",
+      "label_candidate": "target_event",
+      "name": "Albert Einstein",
+      "required_next_step": "independent_human_adjudication",
+      "scoring_status": "blocked_not_frozen",
+      "source_urls": [
+        "https://einstein-website.de/en/timeline/",
+        "https://www.pbs.org/wgbh/nova/einstein/timeline/"
+      ],
+      "start": "1903-01-06",
+      "subject_id": "albert_einstein"
+    },
+    {
+      "claim_status": "candidate_not_label",
+      "domain": "marriage",
+      "end": "1902-06-30",
+      "event_absent_assertion": "Candidate non-marriage interval before the documented January 6, 1903 marriage; must be independently checked against timeline/biography sources.",
+      "event_description": "",
+      "label_candidate": "no_target_event",
+      "name": "Albert Einstein",
+      "required_next_step": "independent_human_adjudication",
+      "scoring_status": "blocked_not_frozen",
+      "source_urls": [
+        "https://einstein-website.de/en/timeline/",
+        "https://www.pbs.org/wgbh/nova/einstein/timeline/"
+      ],
+      "start": "1902-06-01",
+      "subject_id": "albert_einstein"
+    },
+    {
+      "claim_status": "candidate_not_label",
+      "domain": "marriage",
+      "end": "1903-04-30",
+      "event_absent_assertion": "Candidate non-marriage interval after the documented January 6, 1903 marriage; must be independently checked against timeline/biography sources.",
+      "event_description": "",
+      "label_candidate": "no_target_event",
+      "name": "Albert Einstein",
+      "required_next_step": "independent_human_adjudication",
+      "scoring_status": "blocked_not_frozen",
+      "source_urls": [
+        "https://einstein-website.de/en/timeline/",
+        "https://www.pbs.org/wgbh/nova/einstein/timeline/"
+      ],
+      "start": "1903-04-01",
+      "subject_id": "albert_einstein"
+    }
+  ]
+}

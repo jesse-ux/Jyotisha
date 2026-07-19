@@ -1,0 +1,244 @@
+{
+  "boundary": "Xalen multi-case coverage proves archived raw completeness only; method variants still require source/fixture arbitration.",
+  "cases": [
+    {
+      "birth_source": {
+        "evidence_basis": "quoted BC/BR",
+        "source_grade": "primary",
+        "time_accuracy_rating": "AA",
+        "url": "https://www.astro.com/adbvip/adbvip_02_11.htm"
+      },
+      "case_id": "aniston_emmy_2002",
+      "modes": {
+        "independent_ephemeris": {
+          "ashtakavarga_field_count": 96,
+          "ashtakavarga_table_count": 8,
+          "coverage_status": "complete",
+          "input_mode": "independent_ephemeris",
+          "raw_sha256": "dec78de09eb0f1009352fed49a5168d06b6fd0366bf18321d216dc10d1551c35",
+          "shadbala_component_count": 42,
+          "varga_field_count": 35,
+          "varga_sections": [
+            "D1",
+            "D10",
+            "D2",
+            "D4",
+            "D9"
+          ]
+        },
+        "shared_input": {
+          "ashtakavarga_field_count": 96,
+          "ashtakavarga_table_count": 8,
+          "coverage_status": "complete",
+          "input_mode": "shared_input",
+          "raw_sha256": "978e2fe29bb2565b4f01201a0db600b8d61961d2667e7751d8395c094c7bfd5e",
+          "shadbala_component_count": 42,
+          "varga_field_count": 35,
+          "varga_sections": [
+            "D1",
+            "D10",
+            "D2",
+            "D4",
+            "D9"
+          ]
+        }
+      },
+      "name": "Jennifer Aniston"
+    },
+    {
+      "birth_source": {
+        "evidence_basis": "BC/BR in hand",
+        "source_grade": "primary",
+        "time_accuracy_rating": "AA",
+        "url": "https://www.astro.com/adbvip/adbvip_02_24.htm"
+      },
+      "case_id": "jobs_iphone_2007",
+      "modes": {
+        "independent_ephemeris": {
+          "ashtakavarga_field_count": 96,
+          "ashtakavarga_table_count": 8,
+          "coverage_status": "complete",
+          "input_mode": "independent_ephemeris",
+          "raw_sha256": "0d3030d9f3655aa894f347e0ec49e2f948e600f9c4a5d994a10bf1594f8bfa5f",
+          "shadbala_component_count": 42,
+          "varga_field_count": 35,
+          "varga_sections": [
+            "D1",
+            "D10",
+            "D2",
+            "D4",
+            "D9"
+          ]
+        },
+        "shared_input": {
+          "ashtakavarga_field_count": 96,
+          "ashtakavarga_table_count": 8,
+          "coverage_status": "complete",
+          "input_mode": "shared_input",
+          "raw_sha256": "0913459ebbec8c31fc757f6678ede8d7eafd14aba9003f428d6bcb41958dcbea",
+          "shadbala_component_count": 42,
+          "varga_field_count": 35,
+          "varga_sections": [
+            "D1",
+            "D10",
+            "D2",
+            "D4",
+            "D9"
+          ]
+        }
+      },
+      "name": "Steve Jobs"
+    },
+    {
+      "birth_source": {
+        "evidence_basis": "BC/BR in hand",
+        "source_grade": "primary",
+        "time_accuracy_rating": "AA",
+        "url": "https://www.astro.com/adbvip/adbvip_08_04.htm"
+      },
+      "case_id": "obama_election_2008",
+      "modes": {
+        "independent_ephemeris": {
+          "ashtakavarga_field_count": 96,
+          "ashtakavarga_table_count": 8,
+          "coverage_status": "complete",
+          "input_mode": "independent_ephemeris",
+          "raw_sha256": "cd1ca45b04eaa1fdec6a83959886907c77c7d4195f32e2f58d1e423fc12511fc",
+          "shadbala_component_count": 42,
+          "varga_field_count": 35,
+          "varga_sections": [
+            "D1",
+            "D10",
+            "D2",
+            "D4",
+            "D9"
+          ]
+        },
+        "shared_input": {
+          "ashtakavarga_field_count": 96,
+          "ashtakavarga_table_count": 8,
+          "coverage_status": "complete",
+          "input_mode": "shared_input",
+          "raw_sha256": "30e498a6bf5a6539669acaa388a30b2f7d02fb0493a582e69a4b78a12afcd2ad",
+          "shadbala_component_count": 42,
+          "varga_field_count": 35,
+          "varga_sections": [
+            "D1",
+            "D10",
+            "D2",
+            "D4",
+            "D9"
+          ]
+        }
+      },
+      "name": "Barack Obama"
+    },
+    {
+      "birth_source": {
+        "evidence_basis": "BC/BR in hand",
+        "source_grade": "primary",
+        "time_accuracy_rating": "AA",
+        "url": "https://www.astro.com/adbvip/adbvip_06_22.htm"
+      },
+      "case_id": "streep_oscar_1983",
+      "modes": {
+        "independent_ephemeris": {
+          "ashtakavarga_field_count": 96,
+          "ashtakavarga_table_count": 8,
+          "coverage_status": "complete",
+          "input_mode": "independent_ephemeris",
+          "raw_sha256": "0cfcaf24f0fe5a30999a0b97b057168b407fa06bd7ae185f2769794f6df0afcf",
+          "shadbala_component_count": 42,
+          "varga_field_count": 35,
+          "varga_sections": [
+            "D1",
+            "D10",
+            "D2",
+            "D4",
+            "D9"
+          ]
+        },
+        "shared_input": {
+          "ashtakavarga_field_count": 96,
+          "ashtakavarga_table_count": 8,
+          "coverage_status": "complete",
+          "input_mode": "shared_input",
+          "raw_sha256": "06dd40ee5bfa533e7aaeef379019f2d7ec0242a5cb13cb00f5b117931483f358",
+          "shadbala_component_count": 42,
+          "varga_field_count": 35,
+          "varga_sections": [
+            "D1",
+            "D10",
+            "D2",
+            "D4",
+            "D9"
+          ]
+        }
+      },
+      "name": "Meryl Streep"
+    },
+    {
+      "birth_source": {
+        "evidence_basis": "BC/BR in hand",
+        "source_grade": "primary",
+        "time_accuracy_rating": "AA",
+        "url": "https://www.astro.com/adbvip/adbvip_06_21.htm"
+      },
+      "case_id": "william_marriage_2011",
+      "modes": {
+        "independent_ephemeris": {
+          "ashtakavarga_field_count": 96,
+          "ashtakavarga_table_count": 8,
+          "coverage_status": "complete",
+          "input_mode": "independent_ephemeris",
+          "raw_sha256": "96df97198960cae39449e2bb9c78bfcbd7f4cd9a7daca30d87bf5982fb49413b",
+          "shadbala_component_count": 42,
+          "varga_field_count": 35,
+          "varga_sections": [
+            "D1",
+            "D10",
+            "D2",
+            "D4",
+            "D9"
+          ]
+        },
+        "shared_input": {
+          "ashtakavarga_field_count": 96,
+          "ashtakavarga_table_count": 8,
+          "coverage_status": "complete",
+          "input_mode": "shared_input",
+          "raw_sha256": "d7c0a8370cf2e40a6e40c4c1ff9c541723ba9f4f4fbd0ba132a62cccbb69d1f7",
+          "shadbala_component_count": 42,
+          "varga_field_count": 35,
+          "varga_sections": [
+            "D1",
+            "D10",
+            "D2",
+            "D4",
+            "D9"
+          ]
+        }
+      },
+      "name": "William, Prince of Wales"
+    }
+  ],
+  "license": "Apache-2.0",
+  "production_tuning_allowed": false,
+  "scope": "xalen_multi_public_case_component_coverage",
+  "source_artifacts": [
+    "references/oracle/artifacts/xalen_multi_public_case_shared_input_2026_07_17.json",
+    "references/oracle/artifacts/xalen_multi_public_case_independent_ephemeris_2026_07_17.json"
+  ],
+  "source_commit": "cc6edbec1f748ebdc4950ae6198f575c5ada73fa",
+  "summary": {
+    "av_field_count": 960,
+    "case_count": 5,
+    "case_mode_count": 10,
+    "complete_case_mode_count": 10,
+    "incomplete_case_mode_count": 0,
+    "mode_count": 2,
+    "shadbala_component_field_count": 420,
+    "varga_field_count": 350
+  },
+  "truth_policy": "independent_observation_not_truth"
+}

@@ -1,0 +1,101 @@
+{
+  "scope": "day_level_holdout_v3_pilot_source_queue",
+  "created_at": "2026-07-19",
+  "status": "candidate_requires_adjudication",
+  "production_tuning_allowed": false,
+  "truth_boundary": "These rows are source candidates only. They are not holdout annotations and must not be used by timing_ranker_blind_eval.py until an independent reviewer confirms event/non-event labels and freezes them before scoring.",
+  "candidate_count": 3,
+  "required_next_step": "For each subject, an independent adjudicator must confirm one target_event window and two no_target_event windows from public sources, then ingest rows with scripts/day_level_negative_holdout_intake.py.",
+  "subjects": [
+    {
+      "subject_id": "steve_jobs",
+      "name": "Steve Jobs",
+      "domain": "marriage",
+      "candidate_positive_event": {
+        "label": "target_event",
+        "start": "1991-03-18",
+        "end": "1991-03-18",
+        "event_description": "Marriage to Laurene Powell Jobs",
+        "source_urls": [
+          "https://allaboutstevejobs.com/bio/timeline",
+          "https://people.com/who-is-laurene-powell-jobs-steve-jobs-wife-7502390"
+        ],
+        "status": "candidate_requires_adjudication"
+      },
+      "candidate_negative_windows": [
+        {
+          "start": "1990-09-01",
+          "end": "1990-09-30",
+          "event_absent_assertion": "Candidate non-marriage interval before the documented March 18, 1991 marriage; must be independently checked against biography/timeline sources.",
+          "status": "candidate_requires_adjudication"
+        },
+        {
+          "start": "1991-06-01",
+          "end": "1991-06-30",
+          "event_absent_assertion": "Candidate non-marriage interval after the documented March 18, 1991 marriage; must be independently checked against biography/timeline sources.",
+          "status": "candidate_requires_adjudication"
+        }
+      ]
+    },
+    {
+      "subject_id": "barack_obama",
+      "name": "Barack Obama",
+      "domain": "marriage",
+      "candidate_positive_event": {
+        "label": "target_event",
+        "start": "1992-10-03",
+        "end": "1992-10-03",
+        "event_description": "Marriage to Michelle Robinson Obama",
+        "source_urls": [
+          "https://www.obamalibrary.gov/obamas/first-lady-michelle-obama",
+          "https://www.whitehousehistory.org/bios/michelle-obama"
+        ],
+        "status": "candidate_requires_adjudication"
+      },
+      "candidate_negative_windows": [
+        {
+          "start": "1992-07-01",
+          "end": "1992-07-31",
+          "event_absent_assertion": "Candidate non-marriage interval before the documented October 3, 1992 marriage; must be independently checked against relationship/timeline sources.",
+          "status": "candidate_requires_adjudication"
+        },
+        {
+          "start": "1993-01-01",
+          "end": "1993-01-31",
+          "event_absent_assertion": "Candidate non-marriage interval after the documented October 3, 1992 marriage; must be independently checked against relationship/timeline sources.",
+          "status": "candidate_requires_adjudication"
+        }
+      ]
+    },
+    {
+      "subject_id": "albert_einstein",
+      "name": "Albert Einstein",
+      "domain": "marriage",
+      "candidate_positive_event": {
+        "label": "target_event",
+        "start": "1903-01-06",
+        "end": "1903-01-06",
+        "event_description": "Marriage to Mileva Marić",
+        "source_urls": [
+          "https://einstein-website.de/en/timeline/",
+          "https://www.pbs.org/wgbh/nova/einstein/timeline/"
+        ],
+        "status": "candidate_requires_adjudication"
+      },
+      "candidate_negative_windows": [
+        {
+          "start": "1902-06-01",
+          "end": "1902-06-30",
+          "event_absent_assertion": "Candidate non-marriage interval before the documented January 6, 1903 marriage; must be independently checked against timeline/biography sources.",
+          "status": "candidate_requires_adjudication"
+        },
+        {
+          "start": "1903-04-01",
+          "end": "1903-04-30",
+          "event_absent_assertion": "Candidate non-marriage interval after the documented January 6, 1903 marriage; must be independently checked against timeline/biography sources.",
+          "status": "candidate_requires_adjudication"
+        }
+      ]
+    }
+  ]
+}

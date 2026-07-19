@@ -1,0 +1,232 @@
+{
+  "annotations": [
+    {
+      "adjudicator": "",
+      "annotation_id": "DLH-PILOT-001-75809BC667",
+      "candidate_label": "target_event",
+      "domain": "marriage",
+      "end": "1991-03-18",
+      "event_absent_assertion": "",
+      "event_description": "Marriage to Laurene Powell Jobs",
+      "final_label": null,
+      "frozen_before_scoring": false,
+      "independent_human_reviewed": false,
+      "notes": "",
+      "review_decision": "pending",
+      "source_quote_or_summary": "",
+      "source_urls": [
+        "https://allaboutstevejobs.com/bio/timeline",
+        "https://people.com/who-is-laurene-powell-jobs-steve-jobs-wife-7502390"
+      ],
+      "start": "1991-03-18",
+      "subject_id": "steve_jobs",
+      "subject_name": "Steve Jobs",
+      "time_uncertainty_days": null
+    },
+    {
+      "adjudicator": "",
+      "annotation_id": "DLH-PILOT-002-2E68252F11",
+      "candidate_label": "no_target_event",
+      "domain": "marriage",
+      "end": "1990-09-30",
+      "event_absent_assertion": "Candidate non-marriage interval before the documented March 18, 1991 marriage; must be independently checked against biography/timeline sources.",
+      "event_description": "",
+      "final_label": null,
+      "frozen_before_scoring": false,
+      "independent_human_reviewed": false,
+      "notes": "",
+      "review_decision": "pending",
+      "source_quote_or_summary": "",
+      "source_urls": [
+        "https://allaboutstevejobs.com/bio/timeline",
+        "https://people.com/who-is-laurene-powell-jobs-steve-jobs-wife-7502390"
+      ],
+      "start": "1990-09-01",
+      "subject_id": "steve_jobs",
+      "subject_name": "Steve Jobs",
+      "time_uncertainty_days": null
+    },
+    {
+      "adjudicator": "",
+      "annotation_id": "DLH-PILOT-003-3B88192D62",
+      "candidate_label": "no_target_event",
+      "domain": "marriage",
+      "end": "1991-06-30",
+      "event_absent_assertion": "Candidate non-marriage interval after the documented March 18, 1991 marriage; must be independently checked against biography/timeline sources.",
+      "event_description": "",
+      "final_label": null,
+      "frozen_before_scoring": false,
+      "independent_human_reviewed": false,
+      "notes": "",
+      "review_decision": "pending",
+      "source_quote_or_summary": "",
+      "source_urls": [
+        "https://allaboutstevejobs.com/bio/timeline",
+        "https://people.com/who-is-laurene-powell-jobs-steve-jobs-wife-7502390"
+      ],
+      "start": "1991-06-01",
+      "subject_id": "steve_jobs",
+      "subject_name": "Steve Jobs",
+      "time_uncertainty_days": null
+    },
+    {
+      "adjudicator": "",
+      "annotation_id": "DLH-PILOT-004-647CE4536A",
+      "candidate_label": "target_event",
+      "domain": "marriage",
+      "end": "1992-10-03",
+      "event_absent_assertion": "",
+      "event_description": "Marriage to Michelle Robinson Obama",
+      "final_label": null,
+      "frozen_before_scoring": false,
+      "independent_human_reviewed": false,
+      "notes": "",
+      "review_decision": "pending",
+      "source_quote_or_summary": "",
+      "source_urls": [
+        "https://www.obamalibrary.gov/obamas/first-lady-michelle-obama",
+        "https://www.whitehousehistory.org/bios/michelle-obama"
+      ],
+      "start": "1992-10-03",
+      "subject_id": "barack_obama",
+      "subject_name": "Barack Obama",
+      "time_uncertainty_days": null
+    },
+    {
+      "adjudicator": "",
+      "annotation_id": "DLH-PILOT-005-4B61A2A307",
+      "candidate_label": "no_target_event",
+      "domain": "marriage",
+      "end": "1992-07-31",
+      "event_absent_assertion": "Candidate non-marriage interval before the documented October 3, 1992 marriage; must be independently checked against relationship/timeline sources.",
+      "event_description": "",
+      "final_label": null,
+      "frozen_before_scoring": false,
+      "independent_human_reviewed": false,
+      "notes": "",
+      "review_decision": "pending",
+      "source_quote_or_summary": "",
+      "source_urls": [
+        "https://www.obamalibrary.gov/obamas/first-lady-michelle-obama",
+        "https://www.whitehousehistory.org/bios/michelle-obama"
+      ],
+      "start": "1992-07-01",
+      "subject_id": "barack_obama",
+      "subject_name": "Barack Obama",
+      "time_uncertainty_days": null
+    },
+    {
+      "adjudicator": "",
+      "annotation_id": "DLH-PILOT-006-260BF5AEBD",
+      "candidate_label": "no_target_event",
+      "domain": "marriage",
+      "end": "1993-01-31",
+      "event_absent_assertion": "Candidate non-marriage interval after the documented October 3, 1992 marriage; must be independently checked against relationship/timeline sources.",
+      "event_description": "",
+      "final_label": null,
+      "frozen_before_scoring": false,
+      "independent_human_reviewed": false,
+      "notes": "",
+      "review_decision": "pending",
+      "source_quote_or_summary": "",
+      "source_urls": [
+        "https://www.obamalibrary.gov/obamas/first-lady-michelle-obama",
+        "https://www.whitehousehistory.org/bios/michelle-obama"
+      ],
+      "start": "1993-01-01",
+      "subject_id": "barack_obama",
+      "subject_name": "Barack Obama",
+      "time_uncertainty_days": null
+    },
+    {
+      "adjudicator": "",
+      "annotation_id": "DLH-PILOT-007-275F44F8FC",
+      "candidate_label": "target_event",
+      "domain": "marriage",
+      "end": "1903-01-06",
+      "event_absent_assertion": "",
+      "event_description": "Marriage to Mileva Marić",
+      "final_label": null,
+      "frozen_before_scoring": false,
+      "independent_human_reviewed": false,
+      "notes": "",
+      "review_decision": "pending",
+      "source_quote_or_summary": "",
+      "source_urls": [
+        "https://einstein-website.de/en/timeline/",
+        "https://www.pbs.org/wgbh/nova/einstein/timeline/"
+      ],
+      "start": "1903-01-06",
+      "subject_id": "albert_einstein",
+      "subject_name": "Albert Einstein",
+      "time_uncertainty_days": null
+    },
+    {
+      "adjudicator": "",
+      "annotation_id": "DLH-PILOT-008-5675318BC7",
+      "candidate_label": "no_target_event",
+      "domain": "marriage",
+      "end": "1902-06-30",
+      "event_absent_assertion": "Candidate non-marriage interval before the documented January 6, 1903 marriage; must be independently checked against timeline/biography sources.",
+      "event_description": "",
+      "final_label": null,
+      "frozen_before_scoring": false,
+      "independent_human_reviewed": false,
+      "notes": "",
+      "review_decision": "pending",
+      "source_quote_or_summary": "",
+      "source_urls": [
+        "https://einstein-website.de/en/timeline/",
+        "https://www.pbs.org/wgbh/nova/einstein/timeline/"
+      ],
+      "start": "1902-06-01",
+      "subject_id": "albert_einstein",
+      "subject_name": "Albert Einstein",
+      "time_uncertainty_days": null
+    },
+    {
+      "adjudicator": "",
+      "annotation_id": "DLH-PILOT-009-0BC3CA37FF",
+      "candidate_label": "no_target_event",
+      "domain": "marriage",
+      "end": "1903-04-30",
+      "event_absent_assertion": "Candidate non-marriage interval after the documented January 6, 1903 marriage; must be independently checked against timeline/biography sources.",
+      "event_description": "",
+      "final_label": null,
+      "frozen_before_scoring": false,
+      "independent_human_reviewed": false,
+      "notes": "",
+      "review_decision": "pending",
+      "source_quote_or_summary": "",
+      "source_urls": [
+        "https://einstein-website.de/en/timeline/",
+        "https://www.pbs.org/wgbh/nova/einstein/timeline/"
+      ],
+      "start": "1903-04-01",
+      "subject_id": "albert_einstein",
+      "subject_name": "Albert Einstein",
+      "time_uncertainty_days": null
+    }
+  ],
+  "created_at": "2026-07-19",
+  "instructions": [
+    "Do not use candidate_label as final_label.",
+    "For target_event, verify the event date from public sources.",
+    "For no_target_event, verify absence in the interval from public sources.",
+    "Freeze all labels before timing_ranker_blind_eval.py is run.",
+    "Do not use existing observed control dates for tuning."
+  ],
+  "production_tuning_allowed": false,
+  "ready_for_blind_eval": false,
+  "scope": "day_level_holdout_human_annotation_packet",
+  "source_report": "references/real_case_calibration/day_level_holdout_v3_pilot_source_queue_report_2026_07_19.json",
+  "status": "awaiting_independent_human_adjudication",
+  "summary": {
+    "annotation_count": 9,
+    "final_label_count": 0,
+    "frozen_count": 0,
+    "negative_candidate_count": 6,
+    "positive_candidate_count": 3
+  },
+  "truth_boundary": "This packet is for human labeling only. It must not be scored until final_label, adjudicator, independent_human_reviewed, and frozen_before_scoring are complete."
+}
