@@ -1,0 +1,28 @@
+{
+  "scope": "d1_d60_generic_gap_queue",
+  "created_at": "2026-07-19",
+  "status": "queue_ready",
+  "claim_status": "partial",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_registry": "references/oracle/d1_d60_varga_mapping_registry_2026_07_19.json",
+  "generic_only_divisions": [
+    "D13", "D14", "D15", "D17", "D18", "D19", "D21", "D22", "D23", "D25",
+    "D26", "D28", "D29", "D31", "D32", "D33", "D34", "D35", "D36", "D37",
+    "D38", "D39", "D41", "D42", "D43", "D44", "D46", "D47", "D48", "D49",
+    "D50", "D51", "D52", "D53", "D54", "D55", "D56", "D57", "D58", "D59"
+  ],
+  "required_closure_fields": [
+    "traditional_name",
+    "textual_source",
+    "special_formula_or_generic_formula",
+    "traditional_use",
+    "local_formula_path",
+    "api_entry_decision",
+    "ui_entry_decision",
+    "external_worked_example",
+    "claim_boundary"
+  ],
+  "next_action": "For each generic-only Dn, either attach a source-backed formal mapping and test, or keep hidden as generic calculation only.",
+  "boundary": "Queue prevents advertising generic fallback as formal D1-D60 support."
+}

@@ -5,8 +5,8 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 34,
-    "blocked_or_partial_count": 28,
+    "packet_count": 45,
+    "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
   "packets": [
@@ -281,6 +281,94 @@
       "claim_status": "observation_only",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Permissive OSS candidates and worked-example queues are registered for probes only; no truth-matrix or production-tuning upgrade."
+    },
+    {
+      "packet_id": "local_oss_observation_inventory",
+      "path": "scripts/local_oss_observation_inventory.py",
+      "domain": "oss_reuse_and_worked_examples",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Local OSS fragments are inventoried with hash/license/API hints only; no runtime dependency or truth upgrade."
+    },
+    {
+      "packet_id": "panchanga_api_observation_manifest",
+      "path": "references/oracle/panchanga_api_observation_manifest_2026_07_19.json",
+      "domain": "muhurta_panchanga",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "panchanga_api local snapshot is docs-only; no numeric parity claim."
+    },
+    {
+      "packet_id": "jyotishganit_field_closure_queue",
+      "path": "references/oracle/jyotishganit_field_closure_queue_2026_07_19.json",
+      "domain": "three_engine_field_closure",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Field-level closure queue only; does not resolve mismatch rows."
+    },
+    {
+      "packet_id": "vedicastro_kp_surface_locator",
+      "path": "scripts/vedicastro_kp_surface_locator.py",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Locates KP source surface and missing/candidate table paths; no cusp truth upgrade."
+    },
+    {
+      "packet_id": "product_skill_source_boundary",
+      "path": "references/oracle/product_skill_source_boundary_2026_07_19.json",
+      "domain": "skill_product_reference",
+      "claim_status": "reference_only",
+      "consumer_policy": "skill_prompt_reference_only",
+      "claim_boundary": "rishi-ai-mcp and vedic-astro-skills stay out of numeric truth layer."
+    },
+    {
+      "packet_id": "jyotishganit_field_probe",
+      "path": "references/oracle/jyotishganit_field_probe_steve_jobs_2026_07_19.json",
+      "domain": "three_engine_field_closure",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "jyotishganit D2/D4/D9/D10 Panchanga AV raw/hash attached; Shadbala missing remains partial."
+    },
+    {
+      "packet_id": "vedicastro_kp_api_probe",
+      "path": "references/oracle/vedicastro_kp_api_probe_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "VedicAstro KP API/source hash captured; exact cusp truth still requires public numeric worked examples."
+    },
+    {
+      "packet_id": "public_worked_example_queue",
+      "path": "references/oracle/public_worked_example_queue_2026_07_19.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_queue_only",
+      "claim_boundary": "Public worked-example queue only; URLs/search terms are not oracle-ready until numeric fields and hashes are captured."
+    },
+    {
+      "packet_id": "d1_d60_varga_mapping_registry",
+      "path": "references/oracle/d1_d60_varga_mapping_registry_2026_07_19.json",
+      "domain": "varga_mapping",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "D1-D60 rows are enumerated; generic fallback rows are not verified formal varga support."
+    },
+    {
+      "packet_id": "jyotishganit_vs_local_field_comparison",
+      "path": "references/oracle/jyotishganit_vs_local_field_comparison_steve_jobs_2026_07_19.json",
+      "domain": "three_engine_field_closure",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Local vs jyotishganit D2/D4/D9/D10 sign comparison with hash; mismatch attribution still pending."
+    },
+    {
+      "packet_id": "d1_d60_generic_gap_queue",
+      "path": "references/oracle/d1_d60_generic_gap_queue_2026_07_19.json",
+      "domain": "varga_mapping",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "40 generic-only Dn rows require source/formula/oracle closure or remain hidden generic fallback."
     }
   ]
 }
