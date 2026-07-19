@@ -2461,7 +2461,6 @@ export default function Home() {
               {chatMessageViews(activeSession.messages, isLoading, activeStreamingText).map((message) => (
                 <ChatMessageRow key={message.renderKey} message={message} />
               ))}
-              ))}
               {activeError && <p className="error-message">{activeError}</p>}
               <div ref={conversationEnd} />
             </div>
