@@ -46,6 +46,7 @@ import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
 import {
   OnboardingAuthenticationError,
   type OnboardingContent,
+  createOnboardingFallbackGreeting,
   createStartGreeting,
   isCurrentOnboardingRequest,
   onboardingProfileFingerprint,
@@ -2320,7 +2321,7 @@ export default function Home() {
                 <OnboardingChatMessage role="assistant" text={onboarding?.greeting
                   || (onboardingPending
                     ? `${profile.name.trim()}，稍等一下，我正在准备几个适合开始的问题。`
-                    : startGreeting || `${profile.name.trim()}，从你此刻最关心的问题开始吧。`)} />
+                    : createOnboardingFallbackGreeting(profile.name))} />
               )}
 
               {!profileComplete && onboardingStep === "birth" && onboardingCardReady && (

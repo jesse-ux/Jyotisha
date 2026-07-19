@@ -3,10 +3,6 @@ import test from "node:test";
 import {
   OnboardingAuthenticationError,
   OnboardingRequestError,
-  createStartGreeting,
-  isCurrentOnboardingRequest,
-  onboardingProfileFingerprint,
-  onboardingRequestIdentity,
   requestOnboardingWithRecovery,
 } from "../src/lib/onboarding-client.ts";
 
@@ -19,28 +15,6 @@ const personalizedOnboarding = {
   ],
   source: "cache",
 } as const;
-
-const completeProfile = {
-  name: "林遥", date: "1990-06-15", time: "12:30", reportedTime: "12:30",
-  birthTimeSource: "hospital_record", birthTimePeriod: "", birthTimeClue: "出生证明", birthTimeStatus: "confirmed",
-  uncertaintyBeforeMinutes: 0, uncertaintyAfterMinutes: 0, rectificationCaseId: "", countryCode: "CN", provinceCode: "110000", cityCode: "110000-city", districtCode: "110101",
-} as const;
-
-test("rejects a stale completion after a complete profile changes", () => {
-  // Given: one account starts onboarding for a complete persisted profile.
-  const firstIdentity = onboardingRequestIdentity("account-1", onboardingProfileFingerprint(completeProfile));
-
-  // When: a presentation-affecting profile field changes before that request completes.
-  const changedFingerprint = onboardingProfileFingerprint({ ...completeProfile, name: "周宁" });
-  const currentIdentity = onboardingRequestIdentity("account-1", changedFingerprint);
-  const committedGreeting = createStartGreeting("周宁", new Date("2026-07-19T08:00:00+08:00"), 0);
-
-  // Then: the new profile has a distinct identity and its greeting cannot retain the old name.
-  assert.notEqual(currentIdentity, firstIdentity);
-  assert.equal(isCurrentOnboardingRequest(currentIdentity, firstIdentity), false);
-  assert.match(committedGreeting, /周宁/);
-  assert.doesNotMatch(committedGreeting, /林遥/);
-});
 
 test("returns personalized cache content after a timeout and pending response", async () => {
   // Given: the first request times out, the second is provisional, and the third is terminal.

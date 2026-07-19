@@ -104,6 +104,10 @@ export function createStartGreeting(
   return variants[Math.floor(variantSelection * variants.length)](displayName);
 }
 
+export function createOnboardingFallbackGreeting(name: string): string {
+  return `${name.trim()}，从你此刻最关心的问题开始吧。`;
+}
+
 export function onboardingProfileFingerprint(profile: OnboardingProfileFingerprintInput): string {
   return JSON.stringify([
     profile.name,
