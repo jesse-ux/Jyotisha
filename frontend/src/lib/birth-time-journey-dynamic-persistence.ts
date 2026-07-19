@@ -158,8 +158,14 @@ export function createDynamicTurnPersistence(
         }
         throw new BirthTimeJourneyStoreError("update_case");
       }
-      rpcVersionSchema.parse(result.data);
-      return loadedDynamic(value.userId, value.id);
+      const version = rpcVersionSchema.parse(result.data);
+      const current = await loadedDynamic(value.userId, value.id);
+      if (version !== expectedVersion + 1
+        || !current.processedActionIds.includes(receipt)
+        || !samePersistedDynamicReceipt(value, current, receipt, expectedVersion)) {
+        throw new StaleJourneyTurnError(value.id, expectedVersion, current.turnVersion);
+      }
+      return current;
     },
 
     async completeDynamicScoringJob(

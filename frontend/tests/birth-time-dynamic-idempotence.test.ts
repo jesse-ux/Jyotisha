@@ -9,13 +9,13 @@ import { memoryStore } from "./birth-time-journey-memory-store.ts";
 const answerId = "9a921af8-ddcc-4d20-b4c8-fbbb3e6a814d";
 const actionId = "700406ad-1ca6-437d-9f77-61354ba8e36a";
 
-function flow() {
-  const memory = memoryStore(dynamicCase());
+function flow(initial = dynamicCase()) {
+  const memory = memoryStore(initial);
   const jobs = dynamicJobStore(memory.store, () => {
     const current = memory.savedCase();
     return current?.journeyProtocol === "dynamic-choice-v2" ? current : null;
   });
-  return createBirthTimeJourneyService({
+  const service = createBirthTimeJourneyService({
     store: jobs.store,
     engine: {
       async scan() { throw new Error("unexpected scan"); },
@@ -23,10 +23,11 @@ function flow() {
       async scoreEvents() { throw new Error("unexpected event score"); },
     },
   });
+  return { memory, service };
 }
 
 test("unmatched context replays only the identical action and payload", async () => {
-  const service = flow();
+  const { service } = flow();
   const unmatched = persistedQuestion.options.find((option) => option.kind === "unmatched");
   if (!unmatched) throw new Error("missing unmatched option");
   const clarification = await service.answerDynamicChoice(ownerId, {
@@ -58,7 +59,7 @@ test("unmatched context replays only the identical action and payload", async ()
 });
 
 test("pause replays after a lost response but cannot impersonate finish", async () => {
-  const service = flow();
+  const { service } = flow();
   const saved = await service.pauseDynamic(ownerId, dynamicCase().id, actionId, 7);
   const replay = await service.pauseDynamic(ownerId, dynamicCase().id, actionId, 7);
   assert.deepEqual(replay.nextAction, saved.nextAction);
@@ -70,13 +71,64 @@ test("pause replays after a lost response but cannot impersonate finish", async 
 });
 
 test("finish replays after a lost response but cannot impersonate pause", async () => {
-  const service = flow();
+  const { service } = flow();
   const saved = await service.finishDynamic(ownerId, dynamicCase().id, actionId, 7);
   const replay = await service.finishDynamic(ownerId, dynamicCase().id, actionId, 7);
   assert.deepEqual(replay.nextAction, saved.nextAction);
   assert.equal(replay.turnVersion, saved.turnVersion);
   await assert.rejects(
     service.pauseDynamic(ownerId, dynamicCase().id, actionId, 7),
+    StaleJourneyTurnError,
+  );
+});
+
+test("answer replay is bound to the exact question and option", async () => {
+  const { memory, service } = flow();
+  const unknown = persistedQuestion.options.find((option) => option.kind === "unknown");
+  const unmatched = persistedQuestion.options.find((option) => option.kind === "unmatched");
+  if (!unknown || !unmatched) throw new Error("missing special options");
+  const command = {
+    caseId: dynamicCase().id,
+    actionId,
+    turnVersion: 7,
+    questionId: persistedQuestion.questionId,
+    optionId: unknown.optionId,
+  };
+  const saved = await service.answerDynamicChoice(ownerId, command);
+  const replay = await service.answerDynamicChoice(ownerId, command);
+  assert.equal(replay.turnVersion, saved.turnVersion);
+  assert.equal(memory.savedCase()?.dynamicControl?.lastActionReceipt?.kind, "answer_choice");
+  await assert.rejects(
+    service.answerDynamicChoice(ownerId, { ...command, optionId: unmatched.optionId }),
+    StaleJourneyTurnError,
+  );
+});
+
+test("question commit replay is bound to the submitted fingerprints", async () => {
+  const initial = {
+    ...dynamicCase(),
+    currentChoiceQuestion: null,
+    dynamicTurnState: {
+      ...dynamicCase().dynamicTurnState,
+      nextAction: { kind: "generate_dynamic_question" as const },
+    },
+  };
+  const { memory, service } = flow(initial);
+  const question = {
+    ...persistedQuestion,
+    questionId: "af34edbf-b4b0-4ebf-9a07-5c177bc73add",
+    questionFingerprint: "fresh-question",
+    candidatePartitionFingerprint: "fresh-partition",
+  };
+  const command = { caseId: initial.id, actionId, turnVersion: 7, unmatchedNote: null };
+  const saved = await service.commitDynamicQuestion(ownerId, command, question);
+  const replay = await service.commitDynamicQuestion(ownerId, command, question);
+  assert.deepEqual(replay.nextAction, saved.nextAction);
+  assert.equal(memory.savedCase()?.dynamicControl?.lastActionReceipt?.kind, "commit_question");
+  await assert.rejects(
+    service.commitDynamicQuestion(ownerId, command, {
+      ...question, questionFingerprint: "changed-question",
+    }),
     StaleJourneyTurnError,
   );
 });

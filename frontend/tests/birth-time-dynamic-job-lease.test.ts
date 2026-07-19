@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createBirthTimeJourneyService } from "../src/lib/birth-time-journey-service.ts";
+import { completeDynamicScoreTransition } from "../src/lib/birth-time-dynamic-transitions.ts";
 import {
+  BirthTimeScoringJobError,
   dynamicChoiceScoringAlgorithmVersion,
   dynamicEvidenceFingerprint,
 } from "../src/lib/birth-time-scoring-job.ts";
@@ -47,4 +49,43 @@ test("dynamic processing claims are reclaimed only after the lease", async () =>
   assert.equal((await claim({ ...identity, now: "2026-07-18T08:00:00.000Z" })).kind, "claimed");
   assert.equal((await claim({ ...identity, now: "2026-07-18T08:00:59.999Z" })).kind, "processing");
   assert.equal((await claim({ ...identity, now: "2026-07-18T08:01:00.000Z" })).kind, "claimed");
+
+  const processing = memory.savedCase();
+  if (!processing || processing.journeyProtocol !== "dynamic-choice-v2") throw new Error("missing processing case");
+  const candidate = {
+    resultId: "097b7b4c-60f3-4ed8-b290-64b2084182e7",
+    confidence: "low" as const,
+    canApply: false,
+    winningSegment: null,
+    eventCount: 1,
+    domainCount: 1,
+    topScore: 10,
+    secondScore: 9,
+    marginPercent: 10,
+    reasons: ["insufficient_effective_evidence"],
+    evidence: [],
+    algorithmVersion: dynamicChoiceScoringAlgorithmVersion,
+  };
+  const completedTurn = completeDynamicScoreTransition({
+    stored: processing,
+    candidate,
+    usefulOpportunityCount: 1,
+    repeatedOnly: false,
+    nextVersion: processing.turnVersion + 1,
+  });
+  await jobs.store.completeDynamicScoringJob(completedTurn, {
+    expectedVersion: processing.turnVersion,
+    jobId: identity.jobId,
+    evidenceFingerprint: identity.evidenceFingerprint,
+    algorithmVersion: identity.algorithmVersion,
+  });
+  assert.equal((await claim({ ...identity, now: "2026-07-18T08:02:00.000Z" })).kind, "completed");
+
+  const coherent = memory.savedCase();
+  if (!coherent || coherent.journeyProtocol !== "dynamic-choice-v2") throw new Error("missing completed case");
+  memory.replaceCase({ ...coherent, candidateResult: null });
+  await assert.rejects(
+    claim({ ...identity, now: "2026-07-18T08:02:01.000Z" }),
+    BirthTimeScoringJobError,
+  );
 });

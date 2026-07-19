@@ -1,7 +1,9 @@
+import { isDeepStrictEqual } from "node:util";
 import type {
   BirthTimeJourneyStore,
   DynamicStoredRectificationCase,
 } from "../src/lib/birth-time-journey-service.ts";
+import { samePersistedDynamicReceipt } from "../src/lib/birth-time-dynamic-action-replay.ts";
 import type { DynamicScoringJobSpec } from "../src/lib/birth-time-scoring-job.ts";
 import { BirthTimeScoringJobError, scoringJobDurationMs, scoringProcessingLeaseMs } from "../src/lib/birth-time-scoring-job.ts";
 import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
@@ -11,7 +13,24 @@ type DynamicMemoryJob = DynamicScoringJobSpec & {
   readonly userId: string;
   readonly status: "pending" | "processing" | "completed" | "failed";
   readonly updatedAt: string;
+  readonly result: NonNullable<DynamicStoredRectificationCase["candidateResult"]> | null;
 };
+
+function completedMatches(
+  job: DynamicMemoryJob,
+  current: DynamicStoredRectificationCase,
+): boolean {
+  const result = job.result;
+  const action = current.dynamicTurnState.nextAction;
+  if (result === null || !isDeepStrictEqual(current.candidateResult, result)) return false;
+  if (result.confidence === "high") {
+    return action.kind === "request_candidate_confirmation" && action.resultId === result.resultId;
+  }
+  if (action.kind === "generate_dynamic_question") return true;
+  return result.confidence === "medium"
+    ? action.kind === "present_medium_result" && action.resultId === result.resultId
+    : action.kind === "present_low_result" && action.resultId === result.resultId;
+}
 
 export function dynamicJobStore(
   base: BirthTimeJourneyStore,
@@ -24,7 +43,10 @@ export function dynamicJobStore(
       const current = read();
       if (!current) throw new BirthTimeScoringJobError("unavailable");
       const receipt = actionId.toLowerCase();
-      if (current.processedActionIds.includes(receipt)) return current;
+      if (current.processedActionIds.includes(receipt)) {
+        if (samePersistedDynamicReceipt(value, current, receipt, expectedVersion)) return current;
+        throw new StaleJourneyTurnError(value.id, expectedVersion, current.turnVersion);
+      }
       if (current.turnVersion !== expectedVersion) {
         throw new StaleJourneyTurnError(value.id, expectedVersion, current.turnVersion);
       }
@@ -34,6 +56,7 @@ export function dynamicJobStore(
         userId: value.userId,
         status: "pending",
         updatedAt: new Date(Date.parse(spec.expiresAt) - scoringJobDurationMs).toISOString(),
+        result: null,
       });
       return base.saveDynamicTurn(value, expectedVersion, receipt);
     },
@@ -46,9 +69,15 @@ export function dynamicJobStore(
       if (job.algorithmVersion !== identity.algorithmVersion) {
         throw new BirthTimeScoringJobError("algorithm_mismatch");
       }
+      const current = read();
+      if (!current) throw new BirthTimeScoringJobError("unavailable");
       if (job.status === "completed") {
+        if (!completedMatches(job, current)) throw new BirthTimeScoringJobError("invalid_turn");
         return { kind: "completed", algorithmVersion: job.algorithmVersion };
       }
+      const action = current.dynamicTurnState.nextAction;
+      if ((action.kind !== "score_pending" && action.kind !== "retry_scoring")
+        || action.jobId !== identity.jobId) throw new BirthTimeScoringJobError("invalid_turn");
       if (job.status === "processing") {
         const leaseEnds = Date.parse(job.updatedAt) + scoringProcessingLeaseMs;
         if (Date.parse(identity.now) < leaseEnds) {
@@ -64,7 +93,7 @@ export function dynamicJobStore(
         throw new BirthTimeScoringJobError("invalid_turn");
       }
       const saved = await base.completeDynamicScoringJob(value, command);
-      jobs.set(job.jobId, { ...job, status: "completed" });
+      jobs.set(job.jobId, { ...job, status: "completed", result: value.candidateResult ?? null });
       return saved;
     },
     async failDynamicScoringJob(value, command) {

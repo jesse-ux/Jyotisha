@@ -9,13 +9,28 @@ create function public.create_birth_time_dynamic_scoring_job(
 ) returns bigint language plpgsql security definer set search_path = '' as $$
 declare
   v_case public.birth_time_rectification_cases%rowtype;
+  v_private public.birth_time_rectification_dynamic_state%rowtype;
   v_job public.birth_time_rectification_scoring_jobs%rowtype;
+  v_receipt jsonb;
   v_new_version bigint;
 begin
   select c.* into v_case from public.birth_time_rectification_cases c
   where c.id = p_case_id and c.user_id = p_user_id
     and c.journey_protocol = 'dynamic-choice-v2' for update;
   if not found then raise exception 'birth_time_dynamic_case_not_found'; end if;
+
+  select s.* into v_private from public.birth_time_rectification_dynamic_state s
+  where s.case_id = p_case_id and s.user_id = p_user_id for update;
+  if not found then raise exception 'birth_time_dynamic_private_state_missing'; end if;
+  v_receipt = p_private_state #> '{dynamicControl,lastActionReceipt}';
+  if jsonb_typeof(v_receipt) is distinct from 'object'
+    or v_receipt ->> 'actionId' is distinct from p_action_id::text
+    or v_receipt ->> 'kind' is distinct from 'answer_choice'
+    or (v_receipt ->> 'turnVersion')::bigint is distinct from p_expected_version
+    or v_receipt ->> 'questionId' is distinct from p_question_id
+    or coalesce(v_receipt ->> 'optionId', '') = '' then
+    raise exception 'birth_time_dynamic_scoring_turn_invalid';
+  end if;
 
   if p_action_id = any(v_case.processed_action_ids) then
     select j.* into v_job from public.birth_time_rectification_scoring_jobs j
@@ -24,6 +39,9 @@ begin
       or v_case.turn_version is distinct from p_expected_version + 1
       or v_case.turn_state #>> '{nextAction,kind}' is distinct from 'score_pending'
       or v_case.turn_state #>> '{nextAction,jobId}' is distinct from p_job_id::text
+      or v_private.dynamic_control -> 'lastActionReceipt' is distinct from v_receipt
+      or v_private.dynamic_control #>> '{lastActionReceipt,actionId}'
+        is distinct from p_action_id::text
       or v_job.evidence_fingerprint is distinct from p_evidence_fingerprint
       or v_job.algorithm_version is distinct from p_algorithm_version then
       raise exception 'stale_birth_time_dynamic_scoring_job';

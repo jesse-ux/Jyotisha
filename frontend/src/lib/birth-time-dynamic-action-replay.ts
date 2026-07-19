@@ -1,4 +1,5 @@
 import type { DynamicStoredRectificationCase } from "./birth-time-journey-service.ts";
+import { dynamicActionReceiptSchema } from "./birth-time-dynamic-action-receipt.ts";
 import { StaleJourneyTurnError } from "./birth-time-journey-store-errors.ts";
 
 export function replayedDynamicAction(
@@ -20,11 +21,10 @@ export function samePersistedDynamicReceipt(
 ): boolean {
   const expected = proposed.dynamicControl.lastActionReceipt;
   const actual = current.dynamicControl.lastActionReceipt;
-  if (expected?.actionId !== actionId) return actual?.actionId !== actionId;
+  if (expected?.actionId !== actionId) return false;
   return current.turnVersion === expectedVersion + 1
-    && actual?.actionId === expected.actionId
-    && actual.kind === expected.kind
-    && actual.turnVersion === expected.turnVersion
-    && actual.questionId === expected.questionId
-    && actual.note === expected.note;
+    && actual !== null
+    && actual !== undefined
+    && JSON.stringify(dynamicActionReceiptSchema.parse(actual))
+      === JSON.stringify(dynamicActionReceiptSchema.parse(expected));
 }

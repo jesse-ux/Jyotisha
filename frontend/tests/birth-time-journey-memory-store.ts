@@ -1,4 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
+import { samePersistedDynamicReceipt } from "../src/lib/birth-time-dynamic-action-replay.ts";
 import type {
   BirthTimeJourneyStore,
   DynamicScoringJobCommand,
@@ -130,7 +131,10 @@ export function memoryStore(
       const receipts = savedCase.processedActionIds ?? [];
       if (receipts.includes(receipt)) {
         if (!savedDynamicCase) throw new MissingTestCaseError();
-        return savedDynamicCase;
+        if (samePersistedDynamicReceipt(value, savedDynamicCase, receipt, expectedVersion)) {
+          return savedDynamicCase;
+        }
+        throw new StaleJourneyTurnError(value.id, expectedVersion, savedDynamicCase.turnVersion);
       }
       if (savedCase.turnVersion !== expectedVersion) {
         throw new StaleJourneyTurnError(savedCase.id, expectedVersion, savedCase.turnVersion ?? 0);

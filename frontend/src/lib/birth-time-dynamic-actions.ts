@@ -91,9 +91,14 @@ export function createDynamicJourneyActions(ports: BirthTimeJourneyPorts) {
       const stored = await load(userId, command.caseId);
       const lastAnswer = stored.choiceAnswers.at(-1);
       const actionKind = stored.dynamicTurnState.nextAction.kind;
+      const receipt = stored.dynamicControl.lastActionReceipt;
       if (replayedDynamicAction(stored, command.actionId, command.turnVersion, () => (
         lastAnswer?.questionId === command.questionId && lastAnswer.optionId === command.optionId
-        && stored.dynamicControl.lastActionReceipt?.actionId !== command.actionId.toLowerCase()
+        && receipt?.kind === "answer_choice"
+        && receipt.actionId === command.actionId.toLowerCase()
+        && receipt.turnVersion === command.turnVersion
+        && receipt.questionId === command.questionId
+        && receipt.optionId === command.optionId
         && (lastAnswer.kind === "primary"
           ? actionKind === "score_pending"
           : lastAnswer.kind === "unknown"
@@ -113,13 +118,26 @@ export function createDynamicJourneyActions(ports: BirthTimeJourneyPorts) {
       }
       const option = question.options.find((item) => item.optionId === command.optionId);
       if (!option) throw stale(stored, command.turnVersion);
-      const updated = answerTransition({
+      const transitioned = answerTransition({
         stored,
         option,
         answeredAt: (ports.now?.() ?? new Date()).toISOString(),
         jobId: globalThis.crypto.randomUUID(),
         nextVersion: stored.turnVersion + 1,
       });
+      const updated = {
+        ...transitioned,
+        dynamicControl: {
+          ...transitioned.dynamicControl,
+          lastActionReceipt: {
+            actionId: command.actionId.toLowerCase(),
+            kind: "answer_choice" as const,
+            turnVersion: command.turnVersion,
+            questionId: command.questionId,
+            optionId: command.optionId,
+          },
+        },
+      };
       if (option.kind === "primary") {
         const createJob = ports.store.createDynamicScoringJob;
         if (!createJob) throw new BirthTimeDynamicActionError("unavailable");
@@ -159,13 +177,13 @@ export function createDynamicJourneyActions(ports: BirthTimeJourneyPorts) {
       question: PersistedDynamicChoiceQuestion | null,
     ) {
       const stored = await load(userId, command.caseId);
+      const receipt = stored.dynamicControl.lastActionReceipt;
       if (replayedDynamicAction(stored, command.actionId, command.turnVersion, () => (
-        question === null
-          ? stored.currentChoiceQuestion === null
-            && stored.dynamicTurnState.nextAction.kind === "present_low_result"
-          : stored.currentChoiceQuestion?.questionId === question.questionId
-            && stored.currentChoiceQuestion.questionFingerprint === question.questionFingerprint
-            && stored.dynamicControl.lastActionReceipt?.actionId !== command.actionId.toLowerCase()
+        receipt?.kind === "commit_question"
+        && receipt.actionId === command.actionId.toLowerCase()
+        && receipt.turnVersion === command.turnVersion
+        && receipt.submittedQuestionFingerprint === (question?.questionFingerprint ?? null)
+        && receipt.submittedPartitionFingerprint === (question?.candidatePartitionFingerprint ?? null)
       ))) {
         return { nextAction: stored.dynamicTurnState.nextAction };
       }
@@ -184,14 +202,28 @@ export function createDynamicJourneyActions(ports: BirthTimeJourneyPorts) {
         ? { kind: "present_low_result" as const, resultId: stored.candidateResult?.resultId ?? null }
         : publicQuestionAction(nextQuestion);
       const updated = withDynamicAction(stored, action, stored.turnVersion + 1);
+      const priorControl = nextQuestion === null ? stored.dynamicControl : {
+        ...stored.dynamicControl,
+        questionFingerprints: [...stored.dynamicControl.questionFingerprints, nextQuestion.questionFingerprint],
+        partitionFingerprints: [...stored.dynamicControl.partitionFingerprints, nextQuestion.candidatePartitionFingerprint],
+      };
       const saved = await save(stored, {
         ...updated,
         snapshot: nextQuestion === null ? terminalSnapshot(stored) : stored.snapshot,
         currentChoiceQuestion: nextQuestion,
-        dynamicControl: nextQuestion === null ? stored.dynamicControl : {
-          ...stored.dynamicControl,
-          questionFingerprints: [...stored.dynamicControl.questionFingerprints, nextQuestion.questionFingerprint],
-          partitionFingerprints: [...stored.dynamicControl.partitionFingerprints, nextQuestion.candidatePartitionFingerprint],
+        dynamicControl: {
+          ...priorControl,
+          lastActionReceipt: {
+            actionId: command.actionId.toLowerCase(),
+            kind: "commit_question" as const,
+            turnVersion: command.turnVersion,
+            outcome: nextQuestion === null ? "terminal" as const : "question" as const,
+            questionId: nextQuestion?.questionId ?? null,
+            questionFingerprint: nextQuestion?.questionFingerprint ?? null,
+            partitionFingerprint: nextQuestion?.candidatePartitionFingerprint ?? null,
+            submittedQuestionFingerprint: question?.questionFingerprint ?? null,
+            submittedPartitionFingerprint: question?.candidatePartitionFingerprint ?? null,
+          },
         },
       }, command.actionId);
       return { nextAction: saved.dynamicTurnState.nextAction };
@@ -211,10 +243,17 @@ export function createDynamicJourneyActions(ports: BirthTimeJourneyPorts) {
         : paused;
       if (action === null) throw new BirthTimeDynamicActionError("invalid_turn");
       const updated = withDynamicAction(stored, action, stored.turnVersion + 1);
+      const actionId = globalThis.crypto.randomUUID();
       const saved = await save(stored, {
         ...updated,
-        dynamicControl: { ...stored.dynamicControl, pausedAction: null },
-      }, globalThis.crypto.randomUUID());
+        dynamicControl: {
+          ...stored.dynamicControl,
+          pausedAction: null,
+          lastActionReceipt: {
+            actionId, kind: "resume", turnVersion: stored.turnVersion,
+          },
+        },
+      }, actionId);
       return storedDynamicJourneyResponse(saved);
     },
 

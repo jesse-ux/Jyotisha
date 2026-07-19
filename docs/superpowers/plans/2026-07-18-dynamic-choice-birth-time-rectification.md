@@ -916,6 +916,10 @@ private-state boundary or leaving browser polling unable to complete.
 - Add one ordered migration at or below 250 pure lines for
   `create_birth_time_dynamic_scoring_job(...)` and
   `claim_birth_time_dynamic_scoring_job(...)`.
+- Add a later ordered replacement for `save_birth_time_dynamic_turn(...)` so a processed
+  action succeeds only when the locked private `lastActionReceipt` exactly matches the proposed
+  canonical receipt and expected next version. Apply the same exact-receipt rule to dynamic
+  scoring-job creation; TypeScript success and error reloads must independently verify it.
 - Creation owner-locks a v2 case, validates expected version/action/question/job/fingerprint/
   algorithm, atomically persists the advanced public turn, private dynamic state, canonical
   action receipt, and one pending job, and replays only the identical completed action.
@@ -930,6 +934,7 @@ private-state boundary or leaving browser polling unable to complete.
 
 **Files:**
 - Create: `frontend/supabase/migrations/20260718094000_dynamic_choice_scoring_job_lifecycle.sql`
+- Create: `frontend/supabase/migrations/20260718095000_dynamic_choice_exact_action_receipts.sql`
 - Create: `frontend/src/lib/birth-time-dynamic-transitions.ts`
 - Create: `frontend/src/lib/birth-time-dynamic-actions.ts`
 - Create: `frontend/src/lib/birth-time-dynamic-scoring-service.ts`

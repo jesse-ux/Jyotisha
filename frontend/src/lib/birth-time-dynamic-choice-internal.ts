@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { candidateResultSchema } from "./birth-time-evidence.ts";
+import { dynamicActionReceiptSchema } from "./birth-time-dynamic-action-receipt.ts";
 import {
   DYNAMIC_QUESTION_LABEL_MAX_LENGTH,
   DYNAMIC_QUESTION_PROMPT_MAX_LENGTH,
@@ -11,6 +12,7 @@ import {
   validateOptionSet,
 } from "./birth-time-dynamic-choice.ts";
 import type { CandidateResult } from "./birth-time-evidence.ts";
+import type { DynamicActionReceipt } from "./birth-time-dynamic-action-receipt.ts";
 import type { PublicChoiceKind, PublicDynamicChoiceQuestion, TimeRange } from "./birth-time-dynamic-choice.ts";
 
 const finiteScoresSchema = z.record(z.number().finite());
@@ -121,13 +123,7 @@ export type DynamicControlState = {
   readonly dismissedOpportunityIds: readonly string[];
   readonly recentRanges: readonly TimeRange[];
   readonly pausedAction: PausedDynamicAction | null;
-  readonly lastActionReceipt?: {
-    readonly actionId: string;
-    readonly kind: "unmatched_context" | "pause" | "finish";
-    readonly turnVersion: number;
-    readonly questionId?: string;
-    readonly note?: string;
-  } | null;
+  readonly lastActionReceipt?: DynamicActionReceipt | null;
 };
 
 const evidencePartitionBaseSchema = z.object({
@@ -245,13 +241,7 @@ export const dynamicControlStateSchema = z.object({
   dismissedOpportunityIds: z.array(z.string().trim().min(1)).readonly(),
   recentRanges: z.array(timeRangeSchema).readonly(),
   pausedAction: pausedDynamicActionSchema.nullable(),
-  lastActionReceipt: z.object({
-    actionId: z.string().uuid(),
-    kind: z.enum(["unmatched_context", "pause", "finish"]),
-    turnVersion: z.number().int().nonnegative(),
-    questionId: z.string().trim().min(1).optional(),
-    note: z.string().max(240).optional(),
-  }).strict().readonly().nullable().optional(),
+  lastActionReceipt: dynamicActionReceiptSchema.nullable().optional(),
 }).strict().readonly();
 
 export function toPublicDynamicChoiceQuestion(

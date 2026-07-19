@@ -40,6 +40,8 @@ def test_dynamic_job_creation_is_atomic_private_and_replay_safe() -> None:
         "insert into public.birth_time_rectification_scoring_jobs",
         "update public.birth_time_rectification_cases",
         "perform public.persist_birth_time_dynamic_private_state",
+        "lastactionreceipt",
+        "v_private.dynamic_control -> 'lastactionreceipt' is distinct from v_receipt",
     ):
         assert invariant in body
     assert "processed_action_ids" in body

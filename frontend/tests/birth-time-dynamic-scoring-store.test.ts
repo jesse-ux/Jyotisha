@@ -38,13 +38,26 @@ test("dynamic job store sends exact private create and typed claim RPCs", async 
   const now = new Date("2026-07-18T08:00:00.000Z");
   const option = persistedQuestion.options.find((candidate) => candidate.kind === "primary");
   if (!option) throw new Error("missing primary option");
-  const pending = answerTransition({
+  const transitioned = answerTransition({
     stored: freshCase(),
     option,
     answeredAt: now.toISOString(),
     jobId,
     nextVersion: 8,
   });
+  const pending = {
+    ...transitioned,
+    dynamicControl: {
+      ...transitioned.dynamicControl,
+      lastActionReceipt: {
+        actionId,
+        kind: "answer_choice" as const,
+        turnVersion: 7,
+        questionId: persistedQuestion.questionId,
+        optionId: option.optionId,
+      },
+    },
+  };
   const spec = createDynamicScoringJobSpec(jobId, pending.choiceEvidence, now);
   let loaded = freshCase();
   const calls: { readonly name: string; readonly args: Readonly<Record<string, unknown>> }[] = [];

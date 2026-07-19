@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { samePersistedDynamicReceipt } from "./birth-time-dynamic-action-replay.ts";
 import { BirthTimeScoringJobError } from "./birth-time-scoring-job.ts";
 import type {
   BirthTimeJourneyStore,
@@ -89,7 +90,10 @@ export function createDynamicScoringJobStore(
       if (result.error) {
         const current = await loadCase(value.userId, value.id);
         if (current?.journeyProtocol === "dynamic-choice-v2"
-          && current.processedActionIds.includes(receipt)) return current;
+          && current.processedActionIds.includes(receipt)) {
+          if (samePersistedDynamicReceipt(value, current, receipt, expectedVersion)) return current;
+          throw new StaleJourneyTurnError(value.id, expectedVersion, current.turnVersion);
+        }
         if (result.error.message.includes("stale_birth_time_dynamic_scoring_job")) {
           throw new StaleJourneyTurnError(value.id, expectedVersion, current?.turnVersion ?? 0);
         }
@@ -99,7 +103,12 @@ export function createDynamicScoringJobStore(
       if (!version.success || version.data !== expectedVersion + 1) {
         throw new BirthTimeJourneyStoreError("update_case");
       }
-      return loadDynamic(loadCase, value.userId, value.id);
+      const current = await loadDynamic(loadCase, value.userId, value.id);
+      if (!current.processedActionIds.includes(receipt)
+        || !samePersistedDynamicReceipt(value, current, receipt, expectedVersion)) {
+        throw new StaleJourneyTurnError(value.id, expectedVersion, current.turnVersion);
+      }
+      return current;
     },
 
     async claimDynamicScoringJob(identity) {

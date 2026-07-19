@@ -1,8 +1,6 @@
 import { createDynamicTurnPersistence } from "../src/lib/birth-time-journey-dynamic-persistence.ts";
-import type {
-  DynamicStoredRectificationCase,
-  LegacyStoredRectificationCase,
-} from "../src/lib/birth-time-journey-service.ts";
+import { dynamicPrivateStateSchema } from "../src/lib/birth-time-journey-dynamic-state.ts";
+import type { DynamicStoredRectificationCase, LegacyStoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
 
 export const caseId = "45857b75-4718-4590-aaf5-7113a03ea765";
 export const ownerId = "12dc56f0-1f17-4a2f-86bf-1056ab78def9";
@@ -205,8 +203,10 @@ export function rpcPersistence() {
         if (args.p_expected_version !== saved.turnVersion) {
           return { data: null, error: { message: "stale_birth_time_dynamic_turn" } };
         }
+        const privateState = dynamicPrivateStateSchema.parse(args.p_private_state);
         saved = {
           ...saved,
+          ...privateState,
           turnVersion: saved.turnVersion + 1,
           dynamicTurnState: { ...saved.dynamicTurnState, turnVersion: saved.turnVersion + 1 },
           processedActionIds: [...saved.processedActionIds, receivedAction],

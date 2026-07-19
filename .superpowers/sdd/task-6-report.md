@@ -28,6 +28,15 @@ width and midpoint representative time, including across midnight. Unmatched-con
 and finish retries now carry a private typed receipt and replay only the identical action,
 version, and payload; cross-action or changed-payload receipt reuse is stale.
 
+The second review follow-up closes the database success-path seam. Every action-bearing v2
+mutation now persists a canonical strict receipt: answers bind question and option, question
+commits bind submitted/result fingerprints or a terminal result, and special actions/resume
+bind their exact payload. A new ordered migration replaces the already-deployed generic turn
+save: it locks case then private state and permits processed-action success only for version
+`expected + 1` plus exact JSONB receipt equality. Dynamic scoring-job creation applies the same
+locked private receipt check. TypeScript revalidates version and receipt after both successful
+and failed RPC responses, so a normal duplicate-success response cannot bypass comparison.
+
 ## Persistence Amendment
 
 Added service-role-only `create_birth_time_dynamic_scoring_job` and
@@ -38,12 +47,15 @@ lease; completed replay requires a coherent persisted result/action. Production 
 use these RPCs directly and do not call legacy scoring wrappers or expose the private row.
 Claim now locks job then case, matching completion/failure order and removing the prior lock
 cycle. The executable memory store also models the 60-second processing lease and reclaim.
+Its completed replay additionally binds the current job action and checks persisted candidate
+result/action coherence.
 
 ## Main Files
 
 - `frontend/src/lib/birth-time-dynamic-actions.ts`
 - `frontend/src/lib/birth-time-dynamic-special-actions.ts`
 - `frontend/src/lib/birth-time-dynamic-action-replay.ts`
+- `frontend/src/lib/birth-time-dynamic-action-receipt.ts`
 - `frontend/src/lib/birth-time-dynamic-result-validator.ts`
 - `frontend/src/lib/birth-time-dynamic-transitions.ts`
 - `frontend/src/lib/birth-time-dynamic-scoring-service.ts`
@@ -54,6 +66,7 @@ cycle. The executable memory store also models the 60-second processing lease an
 - `frontend/src/lib/birth-time-journey-store.ts`
 - `frontend/src/lib/birth-time-scoring-job.ts`
 - `frontend/supabase/migrations/20260718094000_dynamic_choice_scoring_job_lifecycle.sql`
+- `frontend/supabase/migrations/20260718095000_dynamic_choice_exact_action_receipts.sql`
 - `frontend/tests/birth-time-dynamic-actions.test.ts`
 - `frontend/tests/birth-time-dynamic-scoring.test.ts`
 - `frontend/tests/birth-time-dynamic-scoring-store.test.ts`
@@ -71,13 +84,18 @@ cycle. The executable memory store also models the 60-second processing lease an
 - Review RED: `medium + null segment + 1/1` was accepted, claim locked case before job, and
   unmatched/pause/finish lost-response retries failed before receipt replay. Dedicated tests
   reproduced each failure before the focused fix.
+- Second review RED: database duplicate-success returned on action ID alone, answer/commit did
+  not write typed receipts, and TypeScript trusted a successful RPC version without comparing
+  the reloaded receipt. SQL and RPC fakes now reproduce exact duplicate success, concurrent
+  cross-action success, changed answer/commit payloads, lease reclaim, and corrupted completed
+  result/action replay.
 
 Final verification:
 
-- Focused Task 6 TypeScript: **22/22 passed**.
+- Focused Task 6 TypeScript: **43/43 passed**.
 - Route/telemetry regression subset after v2 assessment routing: **28/28 passed**.
-- Full frontend TypeScript tests: **351/351 passed**.
-- Dynamic scoring-job SQL contracts: **4/4 passed**.
+- Full frontend TypeScript tests: **358/358 passed**.
+- Dynamic action-receipt and scoring-job SQL contracts: **7/7 passed**.
 - ESLint: **0 errors**, with the two pre-existing `page.tsx` hook warnings.
 - `git diff --check`: passed.
 - Every changed/new Task 6 TypeScript, test, and migration module is at most 250 pure LOC.
@@ -101,3 +119,5 @@ assessment response through the existing telemetry wrapper.
 Commit message: `feat: orchestrate dynamic rectification turns`
 
 Focused review fix commit message: `fix: harden dynamic rectification orchestration`
+
+Exact receipt fix commit message: `fix: close dynamic receipt replay gaps`

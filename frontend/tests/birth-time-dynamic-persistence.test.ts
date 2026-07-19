@@ -1,23 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  BirthTimeDynamicStateMissingError,
-  createDynamicTurnPersistence,
-} from "../src/lib/birth-time-journey-dynamic-persistence.ts";
+import { BirthTimeDynamicStateMissingError, createDynamicTurnPersistence } from "../src/lib/birth-time-journey-dynamic-persistence.ts";
 import { saveDynamicAssessment } from "../src/lib/birth-time-journey-dynamic-case.ts";
-import {
-  BirthTimeJourneyStoreError,
-  loadStoredRectificationCase,
-  StaleJourneyTurnError,
-} from "../src/lib/birth-time-journey-turn-persistence.ts";
+import { BirthTimeJourneyStoreError, loadStoredRectificationCase, StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
 import type { StoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
 import { assessBirthTime } from "../src/lib/birth-time-journey.ts";
 import { dynamicJourneyTurnStateSchema } from "../src/lib/birth-time-journey-turn-protocol.ts";
 import { assertLegacyJourneyMutation } from "../src/lib/birth-time-evidence-service.ts";
-import {
-  createInitialDynamicState,
-  dynamicPrivateStateSchema,
-} from "../src/lib/birth-time-journey-dynamic-state.ts";
+import { createInitialDynamicState, dynamicPrivateStateSchema } from "../src/lib/birth-time-journey-dynamic-state.ts";
 import {
   actionId,
   caseId,
@@ -31,6 +21,7 @@ import {
   snapshot,
 } from "./birth-time-dynamic-persistence-fixture.ts";
 import { memoryStore } from "./birth-time-journey-memory-store.ts";
+import { savedPauseReceipt, withPauseReceipt } from "./birth-time-dynamic-receipt-test-support.ts";
 
 test("v2 load restores the exact private question and candidate model", async () => {
   const loaded = await loadStoredRectificationCase(loadClient(privateRow), ownerId, caseId);
@@ -157,7 +148,7 @@ test("v2 cases cannot fall through to legacy mutation paths", () => {
 
 test("saveDynamicTurn persists a private snapshot and a privacy-safe public turn once", async () => {
   const fake = rpcPersistence();
-  const updated = dynamicCase();
+  const updated = withPauseReceipt(dynamicCase(), actionId);
 
   const first = await fake.persistence.saveDynamicTurn(updated, 7, actionId);
   const replay = await fake.persistence.saveDynamicTurn(updated, 7, actionId);
@@ -192,10 +183,13 @@ test("saveDynamicTurn reports a stale version for an unprocessed action", async 
 test("memory replay returns the stored advanced dynamic turn", async () => {
   const initial = dynamicCase();
   const memory = memoryStore(initial);
-  const changed = { ...initial, agentContext: ["persisted context"] };
+  const changed = withPauseReceipt({
+    ...initial,
+    agentContext: ["persisted context"],
+  }, actionId);
 
   const saved = await memory.store.saveDynamicTurn(changed, 7, actionId);
-  const replay = await memory.store.saveDynamicTurn(initial, 7, actionId.toUpperCase());
+  const replay = await memory.store.saveDynamicTurn(changed, 7, actionId.toUpperCase());
 
   assert.deepEqual(replay, saved);
   assert.equal(replay.turnVersion, 8);
@@ -205,9 +199,12 @@ test("memory replay returns the stored advanced dynamic turn", async () => {
 });
 
 test("memory store replays seeded v2 receipts and executes legacy upgrades", async () => {
-  const seeded = { ...dynamicCase(), processedActionIds: [actionId] };
+  const initial = dynamicCase();
+  const seeded = savedPauseReceipt(initial, actionId);
   const dynamicMemory = memoryStore(seeded);
-  const replay = await dynamicMemory.store.saveDynamicTurn(dynamicCase(), 7, actionId);
+  const replay = await dynamicMemory.store.saveDynamicTurn(
+    withPauseReceipt(initial, actionId), 7, actionId,
+  );
   assert.equal(replay, seeded);
 
   const legacyMemory = memoryStore(legacyCase(true));
