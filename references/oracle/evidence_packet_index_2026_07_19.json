@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 54,
+    "packet_count": 60,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -441,6 +441,54 @@
       "claim_status": "tooling_observation_only",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Probe script can collect VedicAstro KP cusp raw in isolated sidereal flatlib environment; not a production prediction engine."
+    },
+    {
+      "packet_id": "four_engine_comparison_queue",
+      "path": "references/oracle/four_engine_comparison_queue_2026_07_19.json",
+      "domain": "four_engine_parity",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Unified local/Xalen/jyotishganit/VedicAstro queue; same input/fields/hash/mismatch attribution only, no majority vote truth."
+    },
+    {
+      "packet_id": "vedicastro_kp_cusp_batch_probe",
+      "path": "references/oracle/vedicastro_kp_cusp_batch_probe_2026_07_19.json",
+      "domain": "kp_precision_timing_dependency",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "VedicAstro KP cusp batch raw exists for runtime observation; public worked-example oracle closure remains open."
+    },
+    {
+      "packet_id": "jyotishganit_shadbala_surface_probe",
+      "path": "references/oracle/jyotishganit_shadbala_surface_probe_steve_jobs_2026_07_19.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "jyotishganit Shadbala raw surface is captured for Steve Jobs fixture; component closure remains open until field mapping and worked-example arbitration."
+    },
+    {
+      "packet_id": "vedicastro_kp_cusp_batch_probe_script",
+      "path": "scripts/vedicastro_kp_cusp_batch_probe.py",
+      "domain": "kp_precision_timing_dependency",
+      "claim_status": "tooling_observation_only",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Batch probe script collects KP cusp raw/hash in isolated runtime; not a production truth source."
+    },
+    {
+      "packet_id": "d1_d60_public_source_candidate_queue",
+      "path": "references/oracle/d1_d60_public_source_candidate_queue_2026_07_19.json",
+      "domain": "divisional_chart_source_queue",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "D1-D60 public source candidates fill names/use cases only; generic-only Dn remains hidden where authority is missing."
+    },
+    {
+      "packet_id": "muhurta_oss_factor_scoring_queue",
+      "path": "references/oracle/muhurta_oss_factor_scoring_queue_2026_07_19.json",
+      "domain": "muhurta_factor_scoring",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Muhurta OSS factor queue records candidates; no production scoring upgrade without source, raw/hash, and worked examples."
     }
   ]
 }

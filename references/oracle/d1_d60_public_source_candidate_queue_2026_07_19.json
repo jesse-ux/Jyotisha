@@ -1,0 +1,27 @@
+{
+  "scope": "d1_d60_public_source_candidate_queue",
+  "created_at": "2026-07-19",
+  "status": "candidate_sources_registered",
+  "claim_status": "open_queue",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_registry": "references/oracle/d1_d60_varga_mapping_registry_2026_07_19.json",
+  "candidate_sources": [
+    {
+      "url": "https://www.barbarapijan.com/bpa/Varga/varga.html",
+      "candidate_use": "D1-D60 names/use cross-check",
+      "oracle_status": "source_text_candidate_not_numeric_oracle"
+    },
+    {
+      "url": "https://www.astrosage.com/astrology/divisional-charts.asp",
+      "candidate_use": "common varga names/use",
+      "oracle_status": "source_text_candidate_not_numeric_oracle"
+    },
+    {
+      "url": "https://github.com/northtara/jyotishganit",
+      "candidate_use": "permissive OSS varga implementation cross-check",
+      "oracle_status": "observation_only"
+    }
+  ],
+  "boundary": "Public source text may upgrade names/uses only after citation and formula variant review. It does not create numeric oracle parity."
+}

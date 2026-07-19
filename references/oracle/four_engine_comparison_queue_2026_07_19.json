@@ -1,0 +1,16 @@
+{
+  "scope": "four_engine_comparison_queue",
+  "created_at": "2026-07-19",
+  "status": "queue_ready",
+  "claim_status": "partial",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "engines": ["local", "Xalen", "jyotishganit", "VedicAstro"],
+  "attached_observations": [
+    "references/oracle/jyotishganit_vs_local_field_comparison_steve_jobs_2026_07_19.json",
+    "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_19.json",
+    "references/oracle/xalen_fourth_oracle_comparison_2026_07_17.json"
+  ],
+  "target_fields": ["D2", "D4", "D9", "D10", "BAV", "SAV", "Shadbala", "KP_cusps"],
+  "boundary": "Four-engine queue requires shared input contract and per-field unit/schema mapping. It is not majority-vote truth."
+}
