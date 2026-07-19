@@ -5,8 +5,8 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 26,
-    "blocked_or_partial_count": 20,
+    "packet_count": 27,
+    "blocked_or_partial_count": 21,
     "human_review_required_count": 1
   },
   "packets": [
@@ -217,6 +217,14 @@
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "KP star/sub-lord and significator probe exposes raw fields and hash, but cannot drive precise event timing without exact KP cusp oracle and independent negative holdout validation."
+    },
+    {
+      "packet_id": "local_oss_reuse_sweep_kp_muhurta_av_compat",
+      "path": "references/oracle/local_oss_reuse_sweep_kp_muhurta_av_compat_2026_07_19.json",
+      "domain": "reuse_governance",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Records local/OSS reusable candidates for KP, Muhurta, AV and compatibility; discovery only, no runtime truth upgrade."
     }
   ]
 }

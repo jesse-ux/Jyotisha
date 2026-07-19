@@ -1,0 +1,77 @@
+{
+  "scope": "local_oss_reuse_sweep_kp_muhurta_av_compat",
+  "created_at": "2026-07-19",
+  "status": "reuse_sweep_v1",
+  "production_tuning_allowed": false,
+  "boundary": "Discovery artifact only. It records reusable local/OSS sources and license/privacy boundaries; it does not upgrade any technique to runtime truth.",
+  "local_candidates": [
+    {
+      "path": "scripts/kp_system.py",
+      "reusable_for": ["KP star/sub lord", "KP significator ABCD", "KP DBA timeline probe"],
+      "reuse_status": "already_reused_by_probe",
+      "license_boundary": "Local implementation cites diliprk/VedicAstro MIT; keep exact-source audit before commercial precise timing.",
+      "claim_boundary": "Probe-only until exact KP cusp oracle and negative holdout validation."
+    },
+    {
+      "path": "references/open_source_sources/VedicAstro",
+      "reusable_for": ["KP sublord CSV oracle", "KP significator reference", "KP horary reference"],
+      "reuse_status": "oracle_reference_only",
+      "license_boundary": "MIT candidate; reuse only after file-level source/license check.",
+      "claim_boundary": "Do not copy broad implementation blindly; prefer fixture/oracle comparison."
+    },
+    {
+      "path": "references/kp-astrology-complete-system.md",
+      "reusable_for": ["KP workflow prose", "significator explanation", "ruling planets checklist"],
+      "reuse_status": "documentation_reference",
+      "license_boundary": "Internal reference; do not treat as numeric oracle.",
+      "claim_boundary": "Can guide tests and schema names, not timing truth."
+    },
+    {
+      "path": "references/muhurta-complete-guide.md",
+      "reusable_for": ["Muhurta factor inventory", "Tarabala/Chandrabala/Panchaka checklist"],
+      "reuse_status": "documentation_reference",
+      "license_boundary": "Internal reference; formula/source validation required before runtime scoring.",
+      "claim_boundary": "Does not close full Muhurta scoring."
+    },
+    {
+      "path": "references/ashtakavarga-complete-system.md",
+      "reusable_for": ["advanced Ashtakavarga usage inventory"],
+      "reuse_status": "documentation_reference",
+      "license_boundary": "Internal reference; worked examples required.",
+      "claim_boundary": "Core BAV/SAV exists; timing overlays remain observation-only."
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish",
+      "reusable_for": ["adapter pattern review"],
+      "reuse_status": "read_only_cross_project_reference",
+      "license_boundary": "Separate project; do not copy directly without ownership/ancestry audit.",
+      "claim_boundary": "Reference only; main research repo remains source of truth."
+    }
+  ],
+  "web_candidates": [
+    {
+      "name": "VedicAstro",
+      "url": "https://github.com/diliprk/VedicAstro",
+      "reuse_status": "MIT candidate for KP-oriented references",
+      "claim_boundary": "Use as source/oracle candidate only after pinning file, commit and license."
+    },
+    {
+      "name": "PyJHora",
+      "url": "https://github.com/naturalstupid/PyJHora",
+      "reuse_status": "AGPL oracle/reference only",
+      "claim_boundary": "Do not vendor or make runtime dependency."
+    },
+    {
+      "name": "Kala calculation list",
+      "url": "https://www.vedic-astrology.net/kala/List-of-Calculations.asp",
+      "reuse_status": "feature-surface benchmark",
+      "claim_boundary": "Use for gap comparison, not formula copying."
+    }
+  ],
+  "next_best_actions": [
+    "Pin VedicAstro KP files/CSV commit and hashes for exact star/sub-lord oracle.",
+    "Add exact KP cusp contract before runtime significator timing.",
+    "Build Muhurta factor probe from existing Panchanga/sunrise-sunset modules before scoring.",
+    "Keep Ashtakavarga advanced timing blocked until independent negative holdout exists."
+  ]
+}

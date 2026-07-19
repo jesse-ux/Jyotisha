@@ -12,6 +12,7 @@ REGISTRIES = [
     "ashtakavarga_advanced_usage_gap_registry_2026_07_19.json",
     "compatibility_full_system_gap_registry_2026_07_19.json",
 ]
+REUSE_SWEEP = ROOT / "references/oracle/local_oss_reuse_sweep_kp_muhurta_av_compat_2026_07_19.json"
 REQUIRED_FIELDS = {
     "technique_id",
     "local_code_status",
@@ -77,3 +78,15 @@ def test_compatibility_registry_separates_basic_koota_from_advanced_overlays() -
     assert ids["ashtakoota_core"]["local_code_status"] == "present"
     assert ids["composite_davidson_charts"]["commercial_sync_status"] == "not_for_commercial_runtime"
     assert ids["relationship_av_overlay"]["external_oracle_status"] == "missing"
+
+
+def test_local_oss_reuse_sweep_records_reusable_sources_without_truth_upgrade() -> None:
+    data = json.loads(REUSE_SWEEP.read_text(encoding="utf-8"))
+    assert data["status"] == "reuse_sweep_v1"
+    assert data["production_tuning_allowed"] is False
+    local_paths = {item["path"] for item in data["local_candidates"]}
+    assert "scripts/kp_system.py" in local_paths
+    assert "references/open_source_sources/VedicAstro" in local_paths
+    assert "references/muhurta-complete-guide.md" in local_paths
+    assert all(item["claim_boundary"] for item in data["local_candidates"])
+    assert any(item["reuse_status"] == "AGPL oracle/reference only" for item in data["web_candidates"])
