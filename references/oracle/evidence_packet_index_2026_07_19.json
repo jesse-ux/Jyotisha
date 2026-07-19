@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 66,
+    "packet_count": 67,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -537,6 +537,14 @@
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Classifies D1-D60 sources for names/use notes only; generic-only Dn remains hidden until formula/source/oracle gates close."
+    },
+    {
+      "packet_id": "day_level_holdout_readiness_ledger",
+      "path": "references/real_case_calibration/day_level_holdout_readiness_ledger_2026_07_19.json",
+      "domain": "timing_holdout",
+      "claim_status": "blocked",
+      "consumer_policy": "human_review_required",
+      "claim_boundary": "Reports frozen-label gap for day-level timing holdout; current pilot candidates are not independent labels and cannot unlock day/month claims."
     }
   ]
 }
