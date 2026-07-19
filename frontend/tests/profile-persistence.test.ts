@@ -19,3 +19,21 @@ test("account route can fall back when coordinate columns are not deployed", () 
   assert.match(source, /withoutCoordinates/);
   assert.match(source, /PGRST204|42703|schema cache|column/i);
 });
+
+test("service role can read every column used by account profile upserts", () => {
+  // Given: the least-privilege grant omitted two columns submitted by /api/account.
+  const migration = readFileSync(
+    new URL(
+      "../supabase/migrations/20260718080000_profiles_service_role_account_upsert_selects.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  // When: the corrective migration defines the account-upsert read grant.
+  // Then: PostgREST can read both submitted columns while resolving existing rows.
+  assert.match(
+    migration,
+    /grant\s+select\s*\(\s*district_code\s*,\s*updated_at\s*\)\s*on\s+table\s+public\.profiles\s+to\s+service_role/is,
+  );
+});

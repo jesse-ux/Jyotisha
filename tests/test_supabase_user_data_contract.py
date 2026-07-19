@@ -28,14 +28,14 @@ CHART_PROFILE_MIGRATION = (
     / "frontend"
     / "supabase"
     / "migrations"
-    / "20260717010000_chart_profiles.sql"
+    / "20260718100000_repair_missing_chart_profiles.sql"
 )
 SYNASTRY_REPORT_MIGRATION = (
     Path(__file__).resolve().parents[1]
     / "frontend"
     / "supabase"
     / "migrations"
-    / "20260717020000_synastry_reports.sql"
+    / "20260718101000_repair_missing_synastry_reports.sql"
 )
 PAGE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "page.tsx"
 CHART_PROFILE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "route.ts"
