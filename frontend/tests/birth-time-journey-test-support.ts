@@ -1,6 +1,7 @@
 import { birthTimeAssessmentSchema, candidateResultSchema, lifeEventSchema } from "../src/lib/birth-time-journey.ts";
 import { createBirthTimeJourneyService } from "../src/lib/birth-time-journey-service.ts";
 import type {
+  BirthTimeJourneyStore,
   LegacyBirthTimeJourneyEngine,
   LegacyStoredRectificationCase,
 } from "../src/lib/birth-time-journey-service.ts";
@@ -61,6 +62,15 @@ export const unusedJourneyEngine: LegacyBirthTimeJourneyEngine = {
   async score() { throw new UnexpectedTestCallError(); },
   async scoreEvents() { throw new UnexpectedTestCallError(); },
 };
+
+export function preserveLegacyResumeStore(store: BirthTimeJourneyStore): BirthTimeJourneyStore {
+  return {
+    ...store,
+    async upgradeLegacyActiveCase(value) {
+      return value;
+    },
+  };
+}
 
 export function evidenceQuestion(
   phase: "baseline" | "adaptive",
@@ -172,7 +182,7 @@ export function progressionService(storedCase: LegacyStoredRectificationCase) {
   let scoreEventsCalls = 0;
   const memory = memoryStore(storedCase);
   const service = createBirthTimeJourneyService({
-    store: memory.store,
+    store: preserveLegacyResumeStore(memory.store),
     engine: {
       ...unusedJourneyEngine,
       async scoreEvents() {

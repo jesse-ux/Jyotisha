@@ -70,6 +70,7 @@ function scoringFlow(input: {
   readonly initialCandidate?: CandidateResult | null;
   readonly priorEvidence?: readonly ServerChoiceEvidence[];
   readonly failOnce?: boolean;
+  readonly emptyNarrowedRange?: boolean;
 } = {}) {
   const initial = freshDynamicCase(input.initialCandidate ?? null, input.priorEvidence);
   const memory = memoryStore(initial);
@@ -78,6 +79,7 @@ function scoringFlow(input: {
     return value?.journeyProtocol === "dynamic-choice-v2" ? value : null;
   });
   let scoreCalls = 0;
+  const differenceRanges: Array<{ readonly startTime: string; readonly endTime: string }> = [];
   let shouldFail = input.failOnce ?? false;
   const candidate = input.candidate ?? lowCandidate;
   const service = createBirthTimeJourneyService({
@@ -100,12 +102,13 @@ function scoringFlow(input: {
         };
       },
       async buildDifferencePacket(value) {
+        differenceRanges.push({ startTime: value.startTime, endTime: value.endTime });
         return {
           packet: {
             caseId: value.caseId,
             scoringVersion: "birth-time-choice-scoring-v2" as const,
             currentRange: { startTime: value.startTime, endTime: value.endTime },
-            opportunities: [{
+            opportunities: input.emptyNarrowedRange && value.startTime === "05:20" ? [] : [{
               opportunityId: "next-opportunity",
               dimensionCode: "relocation_change",
               neutralContext: "一次居住变化",
@@ -127,7 +130,7 @@ function scoringFlow(input: {
       },
     },
   });
-  return { memory, jobs, service, scoreCalls: () => scoreCalls };
+  return { memory, jobs, service, scoreCalls: () => scoreCalls, differenceRanges: () => differenceRanges };
 }
 
 test("score completion continues only when stop policy allows it", () => {
@@ -195,6 +198,66 @@ test("dynamic scoring claims once, completes atomically, and replays", async () 
   assert.deepEqual(replay.nextAction, first.nextAction);
   assert.equal(flow.scoreCalls(), 1);
   assert.deepEqual(flow.memory.savedCase()?.candidateModel, { version: "after-score" });
+});
+
+test("dynamic scoring generates the next question from the newly narrowed range", async () => {
+  const candidate = {
+    ...lowCandidate,
+    winningSegment: {
+      startTime: "05:20",
+      endTime: "05:29",
+      representativeTime: "05:24",
+      widthMinutes: 10,
+    },
+  };
+  const flow = scoringFlow({ candidate });
+
+  const pending = await flow.service.answerDynamicChoice(ownerId, {
+    caseId: dynamicCase().id,
+    actionId,
+    turnVersion: 7,
+    questionId: persistedQuestion.questionId,
+    optionId: persistedQuestion.options[0].optionId,
+  });
+  if (pending.nextAction.kind !== "score_pending") throw new Error("expected pending score");
+  const continued = await flow.service.pollDynamicScoringJob(ownerId, dynamicCase().id, pending.nextAction.jobId);
+
+  assert.deepEqual(flow.differenceRanges(), [{ startTime: "05:20", endTime: "05:29" }]);
+  assert.equal(continued.nextAction.kind, "generate_dynamic_question");
+  assert.deepEqual(continued.progress.currentRange, { startTime: "05:20", endTime: "05:29" });
+  assert.deepEqual(continued.progress.previousRange, { startTime: "05:00", endTime: "06:00" });
+});
+
+test("dynamic scoring keeps asking from the broader competitive range when the winner cannot split", async () => {
+  const flow = scoringFlow({
+    emptyNarrowedRange: true,
+    candidate: {
+      ...lowCandidate,
+      winningSegment: {
+        startTime: "05:20",
+        endTime: "05:29",
+        representativeTime: "05:24",
+        widthMinutes: 10,
+      },
+    },
+  });
+
+  const pending = await flow.service.answerDynamicChoice(ownerId, {
+    caseId: dynamicCase().id,
+    actionId,
+    turnVersion: 7,
+    questionId: persistedQuestion.questionId,
+    optionId: persistedQuestion.options[0].optionId,
+  });
+  if (pending.nextAction.kind !== "score_pending") throw new Error("expected pending score");
+  const continued = await flow.service.pollDynamicScoringJob(ownerId, dynamicCase().id, pending.nextAction.jobId);
+
+  assert.deepEqual(flow.differenceRanges(), [
+    { startTime: "05:20", endTime: "05:29" },
+    { startTime: "05:00", endTime: "06:00" },
+  ]);
+  assert.equal(continued.nextAction.kind, "generate_dynamic_question");
+  assert.deepEqual(continued.progress.currentRange, { startTime: "05:00", endTime: "06:00" });
 });
 
 test("dynamic scoring failure retries the same job without duplicating evidence", async () => {

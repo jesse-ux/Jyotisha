@@ -16,6 +16,7 @@ import {
   guidedCase,
   journeyCaseId,
   memoryStore,
+  preserveLegacyResumeStore,
   unusedJourneyEngine,
 } from "./birth-time-journey-test-support.ts";
 
@@ -82,6 +83,7 @@ export function createHarness(input: {
   readonly failFirstScore?: boolean;
 }) {
   const memory = memoryStore(input.initial);
+  const store = preserveLegacyResumeStore(memory.store);
   let scoreEventsCalls = 0;
   const engine: LegacyBirthTimeJourneyEngine = {
     ...unusedJourneyEngine,
@@ -93,17 +95,17 @@ export function createHarness(input: {
         : input.result;
     },
   };
-  const service = createBirthTimeJourneyService({ store: memory.store, engine });
+  const service = createBirthTimeJourneyService({ store, engine });
   const guide = createBirthTimeGuideService({
     generator: createFakeAgent(),
-    loadCase: memory.store.loadCase,
+    loadCase: store.loadCase,
     proposeEvidenceDraft: service.proposeEvidenceDraft,
   });
   return {
     memory,
     service,
     guide,
-    candidateActions: createGuidedCandidateActions({ store: memory.store }),
+    candidateActions: createGuidedCandidateActions({ store }),
     scoreEventsCalls: () => scoreEventsCalls,
   };
 }

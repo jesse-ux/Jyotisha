@@ -62,6 +62,18 @@ function requireCounts(stored: DynamicStoredRectificationCase, result: ReturnTyp
   }
 }
 
+function usefulOpportunities(
+  stored: DynamicStoredRectificationCase,
+  build: Awaited<ReturnType<BirthTimeJourneyEngine["buildDifferencePacket"]>>,
+) {
+  return build.packet.opportunities.filter((opportunity) => (
+    opportunity.estimatedInformationGain > 0
+    && !stored.dynamicControl.partitionFingerprints.includes(
+      opportunity.candidatePartitionFingerprint,
+    )
+  ));
+}
+
 export function createDynamicScoringService(ports: BirthTimeJourneyPorts) {
   return {
     async poll(userId: string, caseId: string, jobId: string) {
@@ -97,13 +109,23 @@ export function createDynamicScoringService(ports: BirthTimeJourneyPorts) {
         );
         assertDynamicScoringResult(result, stored.dynamicTurnState.progress.currentRange);
         requireCounts(stored, result);
-        const build = await engine.buildDifferencePacket(dynamicDifferenceInput(stored));
-        const useful = build.packet.opportunities.filter((opportunity) => (
-          opportunity.estimatedInformationGain > 0
-          && !stored.dynamicControl.partitionFingerprints.includes(
-            opportunity.candidatePartitionFingerprint,
-          )
-        ));
+        const segment = result.candidate.winningSegment;
+        const nextRange = segment === null
+          ? stored.dynamicTurnState.progress.currentRange
+          : { startTime: segment.startTime, endTime: segment.endTime };
+        let build = await engine.buildDifferencePacket(dynamicDifferenceInput(stored, nextRange));
+        let useful = usefulOpportunities(stored, build);
+        const priorRange = stored.dynamicTurnState.progress.currentRange;
+        const narrowed = nextRange.startTime !== priorRange.startTime
+          || nextRange.endTime !== priorRange.endTime;
+        if (useful.length === 0 && narrowed) {
+          const broaderBuild = await engine.buildDifferencePacket(dynamicDifferenceInput(stored));
+          const broaderUseful = usefulOpportunities(stored, broaderBuild);
+          if (broaderUseful.length > 0) {
+            build = broaderBuild;
+            useful = broaderUseful;
+          }
+        }
         updated = completeDynamicScoreTransition({
           stored,
           candidate: result.candidate,
@@ -111,6 +133,7 @@ export function createDynamicScoringService(ports: BirthTimeJourneyPorts) {
           repeatedOnly: build.packet.opportunities.length > 0 && useful.length === 0,
           nextVersion: stored.turnVersion + 1,
           candidateModel: build.candidateModel,
+          continuationRange: build.packet.currentRange,
         });
       } catch (error) {
         if (!(error instanceof Error)) throw error;

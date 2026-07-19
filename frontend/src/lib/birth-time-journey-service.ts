@@ -224,6 +224,10 @@ export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
       if (stored.journeyProtocol === "dynamic-choice-v2") {
         return storedDynamicJourneyResponse(stored);
       }
+      const upgraded = await ports.store.upgradeLegacyActiveCase(stored);
+      if (upgraded.journeyProtocol === "dynamic-choice-v2") {
+        return storedDynamicJourneyResponse(upgraded);
+      }
       const completedLegacyQuestionnaire = stored.snapshot.input === "rectification_questions"
         && stored.scoring?.nextRound === null
         && stored.scoring.nextRoundQuestions.length === 0

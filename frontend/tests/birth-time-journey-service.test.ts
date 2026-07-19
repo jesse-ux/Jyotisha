@@ -118,7 +118,7 @@ test("journey service accumulates legacy answers while preserving the applicatio
   assert.deepEqual(memory.savedCase()?.answers, scoredAnswers);
 });
 
-test("journey service resumes an owner-scoped unfinished legacy case", async () => {
+test("journey service upgrades an owner-scoped unfinished legacy case on resume", async () => {
   const storedCase: StoredRectificationCase = {
     id: journeyCaseId,
     userId: "user-1",
@@ -136,15 +136,18 @@ test("journey service resumes an owner-scoped unfinished legacy case", async () 
     questionnaire: scanWithSigns(["Cancer", "Leo"]).questionnaire,
     answers: { education_environment_shift: "A" },
   };
+  const memory = memoryStore(storedCase);
   const service = createBirthTimeJourneyService({
-    store: memoryStore(storedCase).store,
+    store: memory.store,
     engine: unusedJourneyEngine,
   });
 
   const result = await service.resume("user-1", journeyCaseId);
 
   assert.equal(result.caseId, journeyCaseId);
-  assert.deepEqual(result.answers, { education_environment_shift: "A" });
+  assert.equal(result.journeyProtocol, "dynamic-choice-v2");
+  assert.deepEqual(result.answers, {});
+  assert.deepEqual(memory.savedCase()?.answers, { education_environment_shift: "A" });
   assert.equal(result.snapshot.canApply, false);
 });
 

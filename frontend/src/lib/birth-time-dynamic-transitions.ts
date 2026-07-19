@@ -8,6 +8,7 @@ import type {
 } from "./birth-time-dynamic-choice-internal.ts";
 import type { DynamicNextAction } from "./birth-time-journey-turn-protocol.ts";
 import type { DynamicStoredRectificationCase } from "./birth-time-journey-service.ts";
+import type { TimeRange } from "./birth-time-dynamic-choice.ts";
 
 const terminalKinds = new Set<DynamicNextAction["kind"]>([
   "present_low_result",
@@ -156,6 +157,7 @@ export function completeDynamicScoreTransition(input: {
   readonly repeatedOnly: boolean;
   readonly nextVersion: number;
   readonly candidateModel?: Readonly<Record<string, unknown>>;
+  readonly continuationRange?: TimeRange;
 }): DynamicStoredRectificationCase {
   const stored = input.stored;
   const decision = decideDynamicStop({
@@ -177,9 +179,17 @@ export function completeDynamicScoreTransition(input: {
         : { kind: "present_low_result", resultId: input.candidate.resultId };
   const priorRange = stored.dynamicTurnState.progress.currentRange;
   const segment = input.candidate.winningSegment;
-  const currentRange = segment === null
+  const candidateRange = segment === null
     ? priorRange
     : { startTime: segment.startTime, endTime: segment.endTime };
+  const currentRange = decision.kind === "continue"
+    ? input.continuationRange ?? candidateRange
+    : candidateRange;
+  const rangeChanged = currentRange.startTime !== priorRange.startTime
+    || currentRange.endTime !== priorRange.endTime;
+  const previousRange = rangeChanged
+    ? priorRange
+    : stored.dynamicTurnState.progress.previousRange;
   const updated = withDynamicAction(stored, action, input.nextVersion);
   return {
     ...updated,
@@ -189,14 +199,14 @@ export function completeDynamicScoreTransition(input: {
     dynamicControl: {
       ...stored.dynamicControl,
       plateauCount: decision.plateauCount,
-      recentRanges: [...stored.dynamicControl.recentRanges, currentRange],
+      recentRanges: [...stored.dynamicControl.recentRanges, candidateRange],
     },
     dynamicTurnState: {
       ...updated.dynamicTurnState,
       progress: {
         ...updated.dynamicTurnState.progress,
         currentRange,
-        previousRange: priorRange,
+        previousRange,
         plateauCount: decision.plateauCount,
       },
       permissions: { canConfirmCandidate: input.candidate.confidence === "high" },

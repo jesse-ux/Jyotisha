@@ -24,6 +24,7 @@ from scripts.dynamic_rectification_copy import (
 )
 
 ALGORITHM_VERSION: Final = "birth-time-choice-scoring-v2"
+OPPORTUNITY_MODEL_VERSION: Final = "birth-time-opportunity-model-v2"
 MIN_INFORMATION_GAIN: Final = 0.15
 
 
@@ -44,7 +45,9 @@ def candidate_times(birth_date: str, start_time: str, end_time: str) -> list[str
     return [(start + timedelta(minutes=offset)).strftime("%H:%M") for offset in range(count)]
 
 
-def experience_windows(birth_date: str, as_of_date: str) -> list[tuple[date, date]]:
+def experience_window_sets(
+    birth_date: str, as_of_date: str,
+) -> list[tuple[str, list[tuple[date, date]]]]:
     born = date.fromisoformat(birth_date)
     as_of = date.fromisoformat(as_of_date)
     try:
@@ -54,12 +57,27 @@ def experience_windows(birth_date: str, as_of_date: str) -> list[tuple[date, dat
     if as_of < first:
         return []
     day_count = (as_of - first).days + 1
-    count = min(4, day_count, max(2, math.ceil(day_count / (6 * 365))))
-    boundaries = [first + timedelta(days=day_count * index // count) for index in range(count)]
+    counts = [1] if day_count == 1 else list(range(2, min(4, day_count) + 1))
     return [
-        (start, as_of if index == count - 1 else boundaries[index + 1] - timedelta(days=1))
-        for index, start in enumerate(boundaries)
+        (
+            f"periods-{count}",
+            [
+                (
+                    first + timedelta(days=day_count * index // count),
+                    as_of if index == count - 1 else (
+                        first + timedelta(days=day_count * (index + 1) // count - 1)
+                    ),
+                )
+                for index in range(count)
+            ],
+        )
+        for count in counts
     ]
+
+
+def experience_windows(birth_date: str, as_of_date: str) -> list[tuple[date, date]]:
+    sets = experience_window_sets(birth_date, as_of_date)
+    return sets[-1][1] if sets else []
 
 
 def candidate_window_rows(request: dict) -> list[dict]:
@@ -70,25 +88,28 @@ def candidate_window_rows(request: dict) -> list[dict]:
         _candidate_row,
     )
 
-    windows = experience_windows(request["birth_date"], request["as_of_date"])
-    if not windows:
+    window_sets = experience_window_sets(request["birth_date"], request["as_of_date"])
+    if not window_sets:
         return []
     events = []
-    event_windows: dict[str, tuple[str, date, date]] = {}
+    event_windows: dict[str, tuple[str, str, date, date]] = {}
     for dimension in sorted(SUPPORTED_DIMENSIONS):
-        for window_start, window_end in windows:
-            event_id = str(uuid5(
-                NAMESPACE_URL,
-                f"{ALGORITHM_VERSION}:{dimension}:{window_start}:{window_end}",
-            ))
-            midpoint = window_start + (window_end - window_start) / 2
-            events.append({
-                "id": event_id,
-                "domain": dimension,
-                "date": midpoint.isoformat(),
-                "precision": "day",
-            })
-            event_windows[event_id] = (dimension, window_start, window_end)
+        for window_group, windows in window_sets:
+            for window_start, window_end in windows:
+                event_id = str(uuid5(
+                    NAMESPACE_URL,
+                    f"{ALGORITHM_VERSION}:{window_group}:{dimension}:{window_start}:{window_end}",
+                ))
+                midpoint = window_start + (window_end - window_start) / 2
+                events.append({
+                    "id": event_id,
+                    "domain": dimension,
+                    "date": midpoint.isoformat(),
+                    "precision": "day",
+                })
+                event_windows[event_id] = (
+                    window_group, dimension, window_start, window_end,
+                )
     calculation_request = {
         "birth_date": request["birth_date"],
         "start_time": request["start_time"],
@@ -109,6 +130,7 @@ def candidate_window_rows(request: dict) -> list[dict]:
             activations[evidence["event_id"]][row["time"]] = float(evidence["points"])
     return [
         {
+            "window_group": window_group,
             "dimension_code": dimension,
             "window_start": window_start.isoformat(),
             "window_end": window_end.isoformat(),
@@ -116,13 +138,14 @@ def candidate_window_rows(request: dict) -> list[dict]:
             "missing_layers": [DOMAIN_CONFIG[dimension][0]]
             if DOMAIN_CONFIG[dimension][0] in missing else [],
         }
-        for event_id, (dimension, window_start, window_end) in event_windows.items()
+        for event_id, (window_group, dimension, window_start, window_end) in event_windows.items()
     ]
 
 
 def compute_candidate_model(request: dict, row_builder: Callable[[dict], list[dict]]) -> dict:
     return {
         "version": ALGORITHM_VERSION,
+        "opportunity_model_version": OPPORTUNITY_MODEL_VERSION,
         "birth_date": request["birth_date"],
         "as_of_date": request["as_of_date"],
         "range": {"start_time": request["start_time"], "end_time": request["end_time"]},
@@ -140,7 +163,7 @@ def compute_candidate_model(request: dict, row_builder: Callable[[dict], list[di
 
 def validate_candidate_model(model: dict, request: dict) -> dict:
     expected = {
-        "version", "birth_date", "as_of_date", "range", "location",
+        "version", "opportunity_model_version", "birth_date", "as_of_date", "range", "location",
         "candidate_times", "windows",
     }
     candidates = candidate_times(request["birth_date"], request["start_time"], request["end_time"])
@@ -148,6 +171,7 @@ def validate_candidate_model(model: dict, request: dict) -> dict:
         valid_header = (
             set(model) == expected
             and model["version"] == ALGORITHM_VERSION
+            and model["opportunity_model_version"] == OPPORTUNITY_MODEL_VERSION
             and model["birth_date"] == request["birth_date"]
             and model["as_of_date"] == request["as_of_date"]
             and model["range"] == {
@@ -168,18 +192,20 @@ def validate_candidate_model(model: dict, request: dict) -> dict:
 
 
 def _validate_windows(windows: list, request: dict, candidates: list[str]) -> bool:
-    generated = experience_windows(request["birth_date"], request["as_of_date"])
-    minimum = generated[0][0] if generated else date.max
+    generated = experience_window_sets(request["birth_date"], request["as_of_date"])
+    minimum = generated[0][1][0][0] if generated else date.max
     maximum = date.fromisoformat(request["as_of_date"])
+    groups = {name for name, _windows in generated}
     keys = [
-        (row.get("dimension_code"), row.get("window_start"), row.get("window_end"))
+        (row.get("window_group"), row.get("dimension_code"), row.get("window_start"), row.get("window_end"))
         for row in windows if isinstance(row, dict)
     ]
     return len(keys) == len(set(keys)) and all(
         isinstance(row, dict)
         and set(row) == {
-            "dimension_code", "window_start", "window_end", "activations", "missing_layers"
+            "window_group", "dimension_code", "window_start", "window_end", "activations", "missing_layers"
         }
+        and row["window_group"] in groups
         and row["dimension_code"] in SUPPORTED_DIMENSIONS
         and minimum <= date.fromisoformat(row["window_start"])
         <= date.fromisoformat(row["window_end"]) <= maximum
@@ -199,19 +225,27 @@ def _validate_windows(windows: list, request: dict, candidates: list[str]) -> bo
 
 
 def opportunities(model: dict) -> list[dict]:
-    grouped: dict[str, list[dict]] = defaultdict(list)
+    grouped: dict[tuple[str, str], list[dict]] = defaultdict(list)
     for row in model["windows"]:
         if not row["missing_layers"]:
-            grouped[row["dimension_code"]].append(row)
-    result = []
-    for dimension, windows in sorted(grouped.items()):
-        opportunity = _dimension_opportunity(dimension, windows, model["candidate_times"])
+            grouped[(row["dimension_code"], row["window_group"])].append(row)
+    variants: dict[str, list[dict]] = defaultdict(list)
+    for (dimension, window_group), windows in sorted(grouped.items()):
+        opportunity = _dimension_opportunity(
+            dimension, window_group, windows, model["candidate_times"],
+        )
         if opportunity is not None:
-            result.append(opportunity)
+            variants[dimension].append(opportunity)
+    result = [
+        sorted(items, key=lambda item: (-item["estimated_information_gain"], item["opportunity_id"]))[0]
+        for items in variants.values()
+    ]
     return sorted(result, key=lambda item: (-item["estimated_information_gain"], item["opportunity_id"]))
 
 
-def _dimension_opportunity(dimension: str, windows: list[dict], candidates: list[str]) -> dict | None:
+def _dimension_opportunity(
+    dimension: str, window_group: str, windows: list[dict], candidates: list[str],
+) -> dict | None:
     neutral_context = DIMENSION_CONTEXT[dimension]
     memberships: dict[int, list[str]] = defaultdict(list)
     for candidate in candidates:
@@ -230,6 +264,7 @@ def _dimension_opportunity(dimension: str, windows: list[dict], candidates: list
     basis = [
         {
             "version": ALGORITHM_VERSION,
+            "window_group": window_group,
             "dimension": dimension,
             "window_start": window["window_start"],
             "window_end": window["window_end"],

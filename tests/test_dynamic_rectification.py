@@ -28,6 +28,7 @@ def _base_request() -> dict:
 def _fake_rows(_request: dict) -> list[dict]:
     return [
         {
+            "window_group": "periods-3",
             "dimension_code": "career",
             "window_start": "2014-01-01",
             "window_end": "2017-12-31",
@@ -35,6 +36,7 @@ def _fake_rows(_request: dict) -> list[dict]:
             "missing_layers": [],
         },
         {
+            "window_group": "periods-3",
             "dimension_code": "career",
             "window_start": "2018-01-01",
             "window_end": "2021-12-31",
@@ -42,6 +44,7 @@ def _fake_rows(_request: dict) -> list[dict]:
             "missing_layers": [],
         },
         {
+            "window_group": "periods-3",
             "dimension_code": "career",
             "window_start": "2022-01-01",
             "window_end": "2026-07-18",
@@ -54,6 +57,7 @@ def _fake_rows(_request: dict) -> list[dict]:
 def _fake_model() -> dict:
     return {
         "version": "birth-time-choice-scoring-v2",
+        "opportunity_model_version": "birth-time-opportunity-model-v2",
         "birth_date": "1990-01-01",
         "as_of_date": "2026-07-18",
         "range": {"start_time": "05:30", "end_time": "05:33"},
@@ -81,6 +85,21 @@ def test_packet_contains_only_candidate_backed_high_gain_opportunities(monkeypat
             assert set(partition["candidate_scores"]) == {
                 "05:30", "05:31", "05:32", "05:33",
             }
+
+
+def test_period_range_offers_multiple_distinct_evidence_domains() -> None:
+    packet = dynamic_rectification.build_difference_packet({
+        **_base_request(),
+        "birth_date": "1997-08-09",
+        "as_of_date": "2026-07-19",
+        "start_time": "04:00",
+        "end_time": "07:59",
+        "lat": 36.6,
+        "lon": 114.5,
+    })
+
+    dimensions = {item["dimension_code"] for item in packet["opportunities"]}
+    assert len(dimensions) >= 4
 
 
 def test_packet_excludes_used_opportunity_and_partition_fingerprints(monkeypatch) -> None:
