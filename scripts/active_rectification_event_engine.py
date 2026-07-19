@@ -32,16 +32,18 @@ if str(SCRIPTS) not in sys.path:
 
 import dasha_analyzer  # noqa: E402
 import domain_calculation_service  # noqa: E402
+import functional_benefics  # noqa: E402
 import narayana_dasha  # noqa: E402
 import varga  # noqa: E402
 
-DomainConfig = tuple[str, tuple[int, ...]]
+DomainConfig = tuple[tuple[str, ...], tuple[int, ...]]
 DOMAIN_CONFIG: Final[dict[EventDomain, DomainConfig]] = {
-    "education": ("D24", (4, 5, 9)),
-    "relocation": ("D4", (4, 12)),
-    "relationship": ("D9", (7,)),
-    "career": ("D10", (10,)),
-    "health_pressure": ("D30", (6, 8, 12)),
+    "education": (("D24",), (4, 5, 9)),
+    "relocation": (("D4",), (4, 12)),
+    "relationship": (("D9",), (7,)),
+    "career": (("D10",), (10,)),
+    "finance": (("D2",), (2, 11)),
+    "health_pressure": (("D30",), (6, 8, 12)),
 }
 
 
@@ -77,7 +79,7 @@ def _active_vimshottari(
     birth_date: str,
     moon_longitude: float,
     event_at: datetime,
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     nakshatra, progress, _ = dasha_analyzer.lon_to_nakshatra(moon_longitude)
     timeline, _, _, _ = dasha_analyzer.build_dasha_timeline(
         birth_date,
@@ -89,7 +91,11 @@ def _active_vimshottari(
         dasha_analyzer.build_antardasha(major),
         event_at,
     )
-    return str(major["lord"]), str(minor["lord"])
+    pratyantar = dasha_analyzer.find_current_sub(
+        dasha_analyzer.build_antardasha(minor),
+        event_at,
+    )
+    return str(major["lord"]), str(minor["lord"]), str(pratyantar["lord"])
 
 
 def _active_narayana(
@@ -149,20 +155,26 @@ def _score_event(
     candidate_time: str,
     event: LifeEvent,
     natal_chart: dict,
-    varga_chart: dict,
-    vimshottari: tuple[str, str],
+    varga_charts: list[dict],
+    vimshottari: tuple[str, str, str],
     narayana: tuple[int | None, int | None],
 ) -> CandidateEvidence:
     _, target_houses = DOMAIN_CONFIG[event["domain"]]
     ascendant_index = int(natal_chart["ascendant"]["lon"] // 30)
     target_lords = _house_lords(ascendant_index, target_houses)
-    major_lord, minor_lord = vimshottari
+    functional = functional_benefics.derive_functional_benefic_malefic(
+        natal_chart["ascendant"].get("sign")
+    )
+    functional_benefics_set = set(functional.get("functional_benefics") or [])
+    functional_malefics_set = set(functional.get("functional_malefics") or [])
+    major_lord, minor_lord, pratyantar_lord = vimshottari
     rules: list[str] = []
     points = 0.0
 
     for lord, weight, label in (
         (major_lord, 2.0, "vim_md"),
         (minor_lord, 1.5, "vim_ad"),
+        (pratyantar_lord, 0.75, "vim_pd"),
     ):
         if _planet_house(natal_chart, lord) in target_houses:
             rules.append(f"{label}_domain_house")
@@ -170,9 +182,16 @@ def _score_event(
         if lord in target_lords:
             rules.append(f"{label}_domain_lord")
             points += weight
-        if _varga_house(varga_chart, lord) in target_houses:
-            rules.append(f"{label}_domain_varga")
-            points += weight / 2
+        for varga_chart in varga_charts:
+            if _varga_house(varga_chart, lord) in target_houses:
+                rules.append(f"{label}_domain_varga")
+                points += weight / (2 * len(varga_charts))
+        if lord in functional_benefics_set:
+            rules.append(f"{label}_functional_benefic_auxiliary")
+            points += 0.2
+        elif lord in functional_malefics_set:
+            rules.append(f"{label}_functional_malefic_auxiliary")
+            points -= 0.1
 
     for sign_index, weight, label in (
         (narayana[0], 2.0, "narayana_md"),
@@ -218,7 +237,7 @@ def _candidate_row(
     charts = varga.calc_all_vargas(
         planet_longitudes,
         ascendant_longitude,
-        divisions=[4, 9, 10, 24, 30],
+        divisions=[2, 4, 9, 10, 24, 30],
     )
     moon_longitude = planet_longitudes["Moon"]
     evidence: list[CandidateEvidence] = []
@@ -226,10 +245,10 @@ def _candidate_row(
 
     for event in request["events"]:
         event_at = _event_datetime(event)
-        prefix, _ = DOMAIN_CONFIG[event["domain"]]
-        domain_varga = _varga_chart(charts, prefix)
-        if domain_varga is None:
-            missing_layers.append(prefix)
+        prefixes, _ = DOMAIN_CONFIG[event["domain"]]
+        domain_vargas = [_varga_chart(charts, prefix) for prefix in prefixes]
+        if any(chart is None for chart in domain_vargas):
+            missing_layers.extend(prefixes)
             continue
         vimshottari = _active_vimshottari(request["birth_date"], moon_longitude, event_at)
         narayana = _active_narayana(
@@ -242,7 +261,7 @@ def _candidate_row(
             candidate_time=candidate_at.strftime("%H:%M"),
             event=event,
             natal_chart=chart,
-            varga_chart=domain_varga,
+            varga_charts=[chart for chart in domain_vargas if chart is not None],
             vimshottari=vimshottari,
             narayana=narayana,
         ))

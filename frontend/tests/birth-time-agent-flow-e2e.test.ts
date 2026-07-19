@@ -36,7 +36,7 @@ test("fake Agent and engine complete baseline, adaptive, low, and no-apply flow"
   assert.equal(turn.snapshot.activeTime, null);
   assert.equal(harness.memory.savedCase()?.snapshot.activeTime, null);
   await assert.rejects(harness.candidateActions.confirm({
-    userId: "user-1", caseId: journeyCaseId, actionId: actionIds[8], expectedVersion: turn.turnVersion,
+    userId: "user-1", caseId: journeyCaseId, actionId: actionIds[10], expectedVersion: turn.turnVersion,
     resultId: turn.candidateResult?.resultId ?? "", time: "14:24",
   }));
   assert.equal(harness.memory.savedCase()?.snapshot.activeTime, null);

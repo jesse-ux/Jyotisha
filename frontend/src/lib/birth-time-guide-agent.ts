@@ -47,7 +47,7 @@ const guideQuestionOutputSchema = z.object({
 }).strict().readonly();
 
 export const evidenceDraftModelOutputSchema = z.object({
-  domain: z.enum(["education", "relocation", "relationship", "career", "health_pressure"]),
+  domain: z.enum(["education", "relocation", "relationship", "career", "finance", "health_pressure"]),
   precision: z.enum(["year", "month", "day"]).nullable(),
   date: z.string().trim().min(1).max(10).nullable(),
 }).strict().readonly();
@@ -98,6 +98,7 @@ const subjectByDomain = {
   relocation: "一次搬家、离乡或长期居住地变化",
   relationship: "一次关系进入、关系结束或关系明显转变",
   career: "一次明显的工作、职业方向或身份变化",
+  finance: "一次收入、资产、负债或资源渠道的明显变化",
   health_pressure: "一次持续的健康压力或生活压力变化",
 } as const satisfies Readonly<Record<EvidenceDomain, string>>;
 

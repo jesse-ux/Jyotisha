@@ -10,6 +10,7 @@ const domainLabels = {
   relocation: "搬迁与长期居住地",
   relationship: "重要关系",
   career: "工作与身份变化",
+  finance: "收入、资产或资源变化",
   health_pressure: "健康或生活压力",
 } as const satisfies Readonly<Record<EvidenceDomain, string>>;
 

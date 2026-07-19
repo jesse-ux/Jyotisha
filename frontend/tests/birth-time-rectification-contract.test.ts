@@ -11,6 +11,10 @@ const source = readFileSync(
   new URL("../src/components/birth-time-rectification.tsx", import.meta.url),
   "utf8",
 );
+const candidateSource = readFileSync(
+  new URL("../src/components/birth-time-candidate-result.tsx", import.meta.url),
+  "utf8",
+);
 const pageSource = readFileSync(
   new URL("../src/app/page.tsx", import.meta.url),
   "utf8",
@@ -35,8 +39,8 @@ test("rectification UI is driven only by the persisted guided action", () => {
 });
 
 test("does not present zero-event output as a completed rectification", () => {
-  assert.match(source, /eventCount === 0/);
-  assert.match(source, /尚未进入分钟计算/);
+  assert.match(candidateSource, /eventCount === 0/);
+  assert.match(candidateSource, /尚未进入分钟计算/);
 });
 
 */

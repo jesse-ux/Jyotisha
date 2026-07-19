@@ -10,7 +10,7 @@ const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 export const questionSpecSchema: z.ZodType<QuestionSpec> = z.object({
   questionId: z.string().trim().min(1),
   phase: z.enum(["baseline", "adaptive"]),
-  domain: z.enum(["education", "relocation", "relationship", "career", "health_pressure"]),
+  domain: z.enum(["education", "relocation", "relationship", "career", "finance", "health_pressure"]),
   requestedPrecision: z.array(z.enum(["day", "month", "year"])).min(1),
   allowUnknown: z.literal(true),
   purposeCode: z.string().trim().min(1),

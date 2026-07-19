@@ -18,6 +18,7 @@ EventDomain = Literal[
     "relocation",
     "relationship",
     "career",
+    "finance",
     "health_pressure",
 ]
 Confidence = Literal["low", "medium", "high"]

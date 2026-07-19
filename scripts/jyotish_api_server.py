@@ -6928,7 +6928,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if not isinstance(events, list) or not 3 <= len(events) <= 6:
             raise BadRequest('events must contain between 3 and 6 items')
         normalized_events = []
-        allowed_domains = {'education', 'relocation', 'relationship', 'career', 'health_pressure'}
+        allowed_domains = {'education', 'relocation', 'relationship', 'career', 'finance', 'health_pressure'}
         formats = {'year': '%Y', 'month': '%Y-%m', 'day': '%Y-%m-%d'}
         for raw_event in events:
             if not isinstance(raw_event, dict) or set(raw_event) != {'id', 'domain', 'date', 'precision'}:

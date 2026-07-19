@@ -54,6 +54,7 @@ const sampleSchema = z.object({
   ascendant: signSchema,
   varga_lagna: z.object({
     D4: signSchema,
+    D2: signSchema,
     D9: signSchema,
     D10: signSchema,
     D24: signSchema,
@@ -81,6 +82,7 @@ const eventDomainSchema = z.enum([
   "relocation",
   "relationship",
   "career",
+  "finance",
   "health_pressure",
 ]);
 const candidateResultApiSchema = z.object({
@@ -161,6 +163,7 @@ export function parseRectificationQuestionnaire(value: unknown): RectificationQu
     questions: parsed.questions.map(normalizeQuestion),
     samples: parsed.candidate_scan.samples.map((sample) => ({
       ascendantSign: sample.ascendant?.sign ?? null,
+      ...(sample.varga_lagna?.D2?.sign ? { d2Sign: sample.varga_lagna.D2.sign } : {}),
       d4Sign: sample.varga_lagna?.D4?.sign ?? null,
       d9Sign: sample.varga_lagna?.D9?.sign ?? null,
       d10Sign: sample.varga_lagna?.D10?.sign ?? null,
