@@ -6,6 +6,7 @@ from __future__ import annotations
 import re
 import socket
 import subprocess
+import tempfile
 import time
 import json
 import os
@@ -19,7 +20,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "jyotish-app"
 API_SERVER = ROOT / "scripts" / "jyotish_api_server.py"
-TMP = Path(os.environ.get("TMPDIR", "/private/tmp"))
+TMP = Path(os.environ.get("TMPDIR") or tempfile.gettempdir())
 
 
 def read(relative: str) -> str:
