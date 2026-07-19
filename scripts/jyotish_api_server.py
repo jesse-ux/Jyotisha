@@ -40,8 +40,10 @@ if SCRIPTS_DIR not in sys.path:
 
 try:
     from scripts.local_env import load_local_env
+    from scripts.vedastro_runtime_context import temporary_timeout_seconds
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from local_env import load_local_env
+    from vedastro_runtime_context import temporary_timeout_seconds
 try:
     from scripts.unified_consultation_orchestrator import UnifiedConsultationOrchestrator
 except ModuleNotFoundError:  # pragma: no cover - script execution path
@@ -572,7 +574,8 @@ def execute_consultation_workflow(
                 result['success'] = False
                 result['blocked_reason'] = 'external_parity_not_passed'
         result['timing_precision_contract'] = build_timing_precision_contract(body.get('timing'))
-        return result
+        from scripts.commercial_skill_truth import apply_commercial_skill_truth
+        return apply_commercial_skill_truth(result)
 
     chart = dict(chart_override) if isinstance(chart_override, dict) else {}
     prashna = {}
@@ -779,7 +782,8 @@ def execute_consultation_workflow(
         timing=body.get('timing'),
         reference_date=_consultation_reference_date(body).date().isoformat(),
     )
-    return result
+    from scripts.commercial_skill_truth import apply_commercial_skill_truth
+    return apply_commercial_skill_truth(result)
 
 
 def _load_local_module(module_name):
@@ -841,12 +845,16 @@ def _vedastro_runtime_fingerprint() -> dict:
         'endpoint_host': (urlparse(endpoint).netloc or '').lower(),
         'network_enabled': str(os.environ.get('VEDASTRO_ENABLE_NETWORK', '')).strip().lower() in {'1', 'true', 'yes'},
         'has_api_key': bool(os.environ.get('VEDASTRO_API_KEY', '').strip()),
+        'timeout_seconds': str(os.environ.get('VEDASTRO_TIMEOUT_SECONDS', '')).strip(),
+        'full_snapshot_fanout_enabled': str(
+            os.environ.get('VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED', '1')
+        ).strip().lower() in {'1', 'true', 'yes', 'on'},
     }
 
 
 def _build_api_chart_cache_payload(body: dict) -> dict:
     return {
-        'cache_schema_version': 3,
+        'cache_schema_version': 4,
         'birth': {
             'year': body.get('year'),
             'month': body.get('month'),
@@ -958,6 +966,14 @@ def _async_job_ttl_seconds() -> float:
         return max(float(raw), 1.0)
     except ValueError:
         return 3600.0
+
+
+def _async_high_rigor_vedastro_timeout_seconds() -> float:
+    raw = str(os.environ.get('JYOTISH_ASYNC_HIGH_RIGOR_VEDASTRO_TIMEOUT_SECONDS', '90')).strip()
+    try:
+        return min(max(float(raw), 30.0), 180.0)
+    except ValueError:
+        return 90.0
 
 
 def _async_job_backend() -> str:
@@ -2759,7 +2775,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             running['started_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             _write_high_rigor_job_record(job_id, running)
             try:
-                result = self._compute_high_rigor_workflow_sync(body_copy)
+                with temporary_timeout_seconds(_async_high_rigor_vedastro_timeout_seconds()):
+                    result = self._compute_high_rigor_workflow_sync(body_copy)
                 completed = dict(running)
                 completed['status'] = 'completed'
                 completed['completed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -6884,13 +6901,16 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
     def _compute_active_rectification_events(self, body):
         allowed_fields = {
-            'birth_date', 'start_time', 'end_time', 'lat', 'lon', 'tz', 'events',
+            'birth_date', 'start_time', 'end_time', 'lat', 'lon', 'tz', 'events', 'high_rigor',
         }
         unsupported_fields = sorted(set(body) - allowed_fields)
         if unsupported_fields:
             raise BadRequest(
                 f'unsupported active rectification event field: {unsupported_fields[0]}'
             )
+        high_rigor = body.get('high_rigor', False)
+        if not isinstance(high_rigor, bool):
+            raise BadRequest('high_rigor must be a boolean')
         birth_date = body.get('birth_date')
         start_time = body.get('start_time')
         end_time = body.get('end_time')
@@ -6911,7 +6931,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if not isinstance(events, list) or not 3 <= len(events) <= 6:
             raise BadRequest('events must contain between 3 and 6 items')
         normalized_events = []
-        allowed_domains = {'education', 'relocation', 'relationship', 'career', 'health_pressure'}
+        allowed_domains = {'education', 'relocation', 'relationship', 'career', 'finance', 'health_pressure'}
         formats = {'year': '%Y', 'month': '%Y-%m', 'day': '%Y-%m-%d'}
         for raw_event in events:
             if not isinstance(raw_event, dict) or set(raw_event) != {'id', 'domain', 'date', 'precision'}:
@@ -6949,6 +6969,26 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'tz': tz,
             'events': normalized_events,
         })
+        from scripts.rectification_technique_contract import build_rectification_technique_contract
+        result['technique_contract'] = build_rectification_technique_contract(
+            event_count=result.get('event_count', 0),
+            domain_count=result.get('domain_count', 0),
+            high_rigor=high_rigor,
+        )
+        if high_rigor:
+            from scripts.rectification_three_engine_packet import build_packet
+            result['three_engine_packet'] = build_packet({
+                'year': parsed_birth_date.year,
+                'month': parsed_birth_date.month,
+                'day': parsed_birth_date.day,
+                'hour': int(start_time.split(':', 1)[0]),
+                'minute': int(start_time.split(':', 1)[1]),
+                'lat': lat,
+                'lon': lon,
+                'tz': tz,
+            })
+            result['can_apply'] = False
+            result.setdefault('reasons', []).append('three_engine_parity_not_passed')
         return {
             'success': True,
             'endpoint': 'active_rectification_events',

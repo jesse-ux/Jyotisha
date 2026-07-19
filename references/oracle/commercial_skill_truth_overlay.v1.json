@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "scope": "commercial_claim_contract",
+  "source_policy": "Commercial status boundaries only. This artifact contains no research formulas, private source material, raw cases, or tuning data.",
+  "techniques": [
+    {
+      "technique_id": "kp_system",
+      "status": "reference_only",
+      "claim_boundary": "May be named as background context, never as a primary or deterministic commercial conclusion."
+    },
+    {
+      "technique_id": "muhurta",
+      "status": "reference_only",
+      "claim_boundary": "May be named as background context, never as a primary or deterministic commercial conclusion."
+    },
+    {
+      "technique_id": "gochara_event_timing",
+      "status": "reference_only",
+      "claim_boundary": "May be named as background context, never as a primary or deterministic commercial conclusion."
+    },
+    {
+      "technique_id": "sahams",
+      "status": "blocked",
+      "claim_boundary": "Do not present as an available commercial calculation or conclusion."
+    },
+    {
+      "technique_id": "sphuta_trisphuta_family",
+      "status": "blocked",
+      "claim_boundary": "Do not present as an available commercial calculation or conclusion."
+    },
+    {
+      "technique_id": "tajika_yogas",
+      "status": "partial",
+      "claim_boundary": "Do not support deterministic conclusions, exact timing, or guarantees."
+    },
+    {
+      "technique_id": "conception_chart",
+      "status": "research_only_blocked",
+      "claim_boundary": "Not available in the commercial product."
+    },
+    {
+      "technique_id": "relationship_combinations",
+      "status": "partial_registry_only",
+      "claim_boundary": "Registry reference only; do not present as a verified commercial calculation."
+    }
+  ]
+}

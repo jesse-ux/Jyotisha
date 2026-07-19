@@ -179,6 +179,25 @@ def _kp_cusp_snapshot(chart: dict[str, Any]) -> dict[str, Any]:
     return snapshot
 
 
+def _prioritize_questions(questions: list[dict[str, Any]], scan: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
+    """Prefer questions whose declared layers actually differ in sampled candidates."""
+    samples = scan.get("samples") or []
+    if len(samples) < 2 or not all(isinstance(sample.get("varga_lagna"), dict) for sample in samples):
+        return questions, "generic_fallback_missing_candidate_recast"
+    changed: set[str] = set()
+    for layer in ("D4", "D9", "D10", "D24", "D30"):
+        values = {str((sample["varga_lagna"].get(layer) or {}).get("sign_idx")) for sample in samples}
+        if len(values) > 1:
+            changed.add(layer)
+    for layer in ("A7", "A10", "UL"):
+        values = {str(((sample.get("arudha") or {}).get(layer) or {}).get("sign_idx")) for sample in samples}
+        if len(values) > 1:
+            changed.add(layer)
+    if not changed:
+        return questions, "generic_fallback_no_sampled_difference"
+    return sorted(questions, key=lambda question: (not bool(changed.intersection(question.get("sensitivity") or [])), question.get("round", 99))), "candidate_difference_ranked"
+
+
 def build_questionnaire(
     birth_time: str,
     uncertainty_minutes: int = 30,
@@ -206,18 +225,16 @@ def build_questionnaire(
                 "D": {"effect": "neutral", "cluster": "neutral", "points": 0},
             },
         })
+    scan = _candidate_scan(
+        _parse_time(birth_time), uncertainty_minutes, step_minutes,
+        lat=lat, lon=lon, tz=tz, ayanamsa=ayanamsa,
+    )
+    questions, question_selection = _prioritize_questions(questions, scan)
     return {
         "scope": "active_birth_time_rectification_questionnaire",
         "schema_version": 1,
-        "candidate_scan": _candidate_scan(
-            _parse_time(birth_time),
-            uncertainty_minutes,
-            step_minutes,
-            lat=lat,
-            lon=lon,
-            tz=tz,
-            ayanamsa=ayanamsa,
-        ),
+        "candidate_scan": scan,
+        "question_selection": question_selection,
         "workflow": [
             "candidate_time_scan",
             "varga_arudha_kp_sensitivity_diff",
@@ -231,7 +248,7 @@ def build_questionnaire(
             "2": "domain follow-up",
             "3": "fine confirmation",
         },
-        "sensitivity_layers": ["D9", "D10", "D24", "D30", "D60", "D4", "UL", "A7", "A10", "KP_cusp", "Vimshottari", "Narayana", "Chara"],
+        "sensitivity_layers": ["D9", "D10", "D24", "D30", "D60", "D4", "UL", "A7", "A10", "Vimshottari", "Narayana", "Chara"],
         "questions": questions,
         "boundary": "Question generation only; final rectification requires scoring answers against actual candidate chart differences.",
     }

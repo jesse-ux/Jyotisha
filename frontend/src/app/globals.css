@@ -475,6 +475,7 @@ button:disabled { cursor: default; opacity: .45; }
 .message-bubble { overflow: hidden; border: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: var(--color-canvas-muted); }
 .message-assistant .message-bubble { border-radius: 0; background: transparent; padding: var(--space-3) 0; }
 .message p, .message-markdown { color: var(--color-ink-strong); font-size: var(--type-body-md); line-height: 1.65; text-wrap: pretty; word-break: auto-phrase; }
+.message-evidence-status { margin: var(--space-3) 0 0; padding-top: var(--space-2); border-top: 1px solid var(--color-border); color: var(--color-ink-muted); font-size: var(--type-body-sm); line-height: 1.5; }
 .message-user p { line-height: 1.55; color: var(--color-ink); font-size: var(--type-body-sm); }
 .message-markdown h2, .message-markdown h3 { margin: 24px 0 10px; color: var(--color-ink); font-family: var(--font-display); font-weight: 400; letter-spacing: -.3px; }
 .message-markdown h2 { font-size: var(--type-display-sm); }

@@ -1,7 +1,7 @@
 ---
 name: jyotish-vedic-astrology
 version: 6.9.14
-description: "印度占星（Jyotish）专业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→精确推运应期输出。35种Dasha、405+Yoga规则、KP系统、Prashna卜卦、16因子合盘、Remedies补救、Sahams部分覆盖、Sudarshana三参考点、PMC完整检测、Tajika年度星盘、案例验证+误区纠正。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga。GitHub: https://github.com/732642856/yinduzhanxing"
+description: "印度占星（Jyotish）商业解盘与推运系统。核心能力：PDF星盘输入→严谨解盘→受合同约束的推运方向输出。Dasha、Yoga、分盘、合盘与补救建议按计算回执和能力状态交付；精确应期及受限技法不会作为确定性商业结论。触发词：印度占星、吠陀占星、Jyotish、解盘、推运、星盘分析、Dasha、Transit、Nakshatra、Yoga。GitHub: https://github.com/732642856/yinduzhanxing"
 ---
 
 # 印度占星专业解盘与推运系统
@@ -14,6 +14,7 @@ description: "印度占星（Jyotish）专业解盘与推运系统。核心能�
 > **严格路由**：`references/strict-workflow-router.md`（涉及事业/婚恋/财务/应期/技法验证时必须优先读取）
 > **机器注册表**：`references/technique_registry.json` + `scripts/audit_capabilities.py`
 > **能力真相边界**：回答前必须参考 `references/oracle/skill_truth_overlay_2026_07_19.json` 与 `references/oracle/effective_skill_capability_view_2026_07_19.json`；不得直接把 `references/technique_registry.json` 的旧 `covered` 当作完整闭环。
+> **商业声明合同**：`references/oracle/commercial_skill_truth_overlay.v1.json`。`reference_only`、`partial`、`blocked`、`research_only_blocked`、`partial_registry_only` 不得进入确定性结论。
 > **文章级细节模板**：`references/interpretation_template_registry.json` + `scripts/validate_interpretation_templates.py`
 
 ### Skill truth overlay 硬边界
@@ -36,7 +37,7 @@ KP/Muhurta/Gochara/Sahams/Sphuta/Tajika等高阶分支必须按 skill truth over
 | Sudarshana | Asc/Moon/Sun 三参考点盘 + 宫位收敛分析 |
 | Shadbala | absolute Rupa 分量求和；内部不变量通过，外部绝对值 oracle 扩充中 |
 | Ashtakavarga | BAV+SAV+PAV（展开式）+Sodhita（净化式） |
-| KP系统 | Sublord+Subsublord+ABCD Significator（输出可用，细粒度传统口径仍以实测与案例闭环为准） |
+| KP系统 | `reference_only`；不得作为主结论或精确应期依据 |
 | 合盘 | 16因子36分制（Ashtakoot+Kuta） |
 | 补救 | 5类（宝石/咒语/捐赠/斋戒/Dosha专项） |
 | 自动化测试 | pytest/quality gate 分层守门；以当前仓库质量门输出为准 |
@@ -58,7 +59,7 @@ KP/Muhurta/Gochara/Sahams/Sphuta/Tajika等高阶分支必须按 skill truth over
 
 ## ⚠️ 核心定位
 
-**三种输入 → 严谨解盘 → 精确推运应期输出**
+**三种输入 → 严谨解盘 → 受合同约束的推运方向输出**
 
 | 路径 | 用户输入 | AI行为 |
 |------|---------|--------|
@@ -261,7 +262,7 @@ adapter available 解释为已完成 VedAstro、PyJHora/JHora 或 jyotishganit r
 - Dasha-only 外部证据当前目标集已闭环：`dasha_external_oracle_evidence_validation.valid_dasha_packets: 3/3`；Steve Jobs / Lahiri、synthetic Lahiri template 与 1800 Delhi historical epoch 的 Vimshottari 起始边界来自 PyJHora 4.8.7 隔离黑盒 stdout artifact。
 - 全局 Dasha/Shadbala Calibration Status 仍未完成：`external_oracle_evidence_validation.valid_packets: 4`，`ready_for_calibration: 4`；Shadbala 外部绝对值当前目标集已通过 4/4，Raman 扩展样本与非 Dasha 靶点尚未封顶。
 - 历史 UI 静态门禁仍保留旧提示 `ready_for_calibration: 0` 作为“不得过度宣称”的保守文案；实际进度必须以当前 `oracle_collection_queue.py` / `oracle_evidence_validator.py` 输出为准。
-- Tajika/Sahams 年运外部样本已开始闭环：`tajika_sahams_annual_benchmark_dashboard.ready_for_calibration: 1/5`；Steve Jobs 1984 Varshaphala/Lahiri 的 solar return、Varsha Lagna、Muntha、Year Lord、Mudda Dasha 首主、三项 Sahams 与 Tajika Yogas 已由 PyJHora 4.8.7 隔离黑盒 artifact 验证，下一优先级为 Einstein 1905。仍不得声称 Tajika/Sahams 年运体系已全局封顶。
+- Tajika/Sahams 年运资料仅保留为研发基准记录；商业声明合同将 Sahams 设为 `blocked`、Tajika 设为 `partial`，两者均不得进入确定性结论或精确应期。
 - D1/D9/SAV 高可信；Dasha 精细日期可引用已验证 Dasha-only 样本的局部进度，但不得把全部大运边界、Shadbala 绝对值或全局精度说成已完成外部校准。
 - 不得把大运起点或 Shadbala 绝对值说成已完成外部校准；涉及具体日期/绝对力量值时，必须同时报告 `Dasha/Shadbala Calibration Status`、`external_oracle_evidence_validation` 与 `production_tuning_allowed: false` 边界。
 - `production_tuning_allowed: false` 前，禁止为了贴合单份 PDF、单个 JHora 截图或本仓库本地输出而改生产常数。
@@ -334,7 +335,7 @@ adapter available 解释为已完成 VedAstro、PyJHora/JHora 或 jyotishganit r
 | **关系占星** | Koota 36分、Mahendra/Stree Deergha/Vedha/Rajju、D9伴侣、DK、Mangal Dosha、Papasamya、配偶六层确认 | `spouse-multi-layer-methodology.md` `darakaraka-complete-guide.md` `relationship-astrology-guide.md` |
 | **出生时间矫正** | 八大方法、自动化流程、验证报告、分盘调用决策树 | `birth-time-rectification-advanced.md` `birth-time-rectification-decision-tree.md` |
 | **PDF读取** | JH/PL PDF全量提取、完整性门、交叉校验 | `pdf-chart-reading-guide.md` `data-bridge-mapping.md` |
-| **Prashna问事** | 十步断卦、AL、Sphuta、Sahams、失物查询 | `prashna-complete-guide.md` `single-event-inquiry-protocol.md` |
+| **Prashna问事** | 十步断卦、AL、失物查询；Sphuta/Sahams 不属于可交付商业结论 | `prashna-complete-guide.md` `single-event-inquiry-protocol.md` |
 | **多元技法** | Yogi/Ava Yogi、Tithi Lord、Rashi Tulya Navamsa、BCP、Bhrigu Pada、Pancha Pakshi、Tara Bala、Deha/Jeeva、Moolatrikona、Shodasavarga/Vimsopaka、Ashwini/Abhijit/Ketu星宿专题（需保留成熟度边界） | `yogi-avayogi-system.md` `yogi-asc-tight-orb-wealth-freeze-guide.md` `tithi-lord-relationship-system.md` `tithi-lord-freeze-execution-guide.md` `rtn-high-order-d9-freeze-execution-guide.md` `bhrigu-pada-all-event-freeze-execution-guide.md` `ashwini-abhijit-ketu-nakshatra-freeze-guide.md` `bhrigu-chakra-paddhati.md` `shodasavarga-complete-guide.md` `planetary-dignity-complete-reference.md` `alternative-dasha-systems.md` |
 | **精准方法论** | PACDARES框架、九层复合方法、L3矛盾检查、三级置信度 | `precision-reading-methodology.md` |
 | **解读质检** | 真实解读结构质检、参数冻结、分盘强制展开、oracle 诚信边界 | `real-reading-quality-checklist.md` |
@@ -545,7 +546,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 
 **PACDARES框架**：P位置→A相位→C合相→D财富Yoga→A灾厄Yoga→R皇家Yoga→E互换→S特殊
 
-**九层复合方法**：L1 PACDARES → L2 分盘 → L3 矛盾检查(关键) → L4 Vimshottari → L5 AV+Transit → L6 条件Dasha → L7 Jaimini → L8 其他Jaimini → L9 Tajika
+**九层复合方法（研究参考）**：L1 PACDARES → L2 分盘 → L3 矛盾检查(关键) → L4 Vimshottari → L5 AV+Transit → L6 条件Dasha → L7 Jaimini → L8 其他Jaimini → L9 Tajika；商业输出须遵守声明合同，Tajika 不得形成确定性结论。
 
 **三级置信度**：✅[A]已验证 / ⭐[B]强推断(3+维度) / ⚡[C]假设(单一维度)
 
@@ -583,7 +584,7 @@ $PYTHON $SCRIPT <子命令> [参数]
 - [ ] Dasha推运（大运+小运+Pratyantar）
 - [ ] Dasa Convergence五系统交叉验证
 - [ ] Jaimini分析（Karaka/Karakamsha；Chara Dasha 已通过 KN Rao Method benchmark，剩余共主仲裁差异需声明）
-- [ ] KP系统分析（Significator+Sub-Lord）
+- [ ] KP系统背景参考（不得作为商业主结论或精确应期依据）
 - [ ] Transit分析（多参考点强制）
 - [ ] **Transit Actionable Output**（时间段+行动+置信度+案例检索）
 - [ ] 分盘验证

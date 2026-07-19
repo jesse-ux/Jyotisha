@@ -54,6 +54,7 @@ const sampleSchema = z.object({
   ascendant: signSchema,
   varga_lagna: z.object({
     D4: signSchema,
+    D2: signSchema,
     D9: signSchema,
     D10: signSchema,
     D24: signSchema,
@@ -81,6 +82,7 @@ const eventDomainSchema = z.enum([
   "relocation",
   "relationship",
   "career",
+  "finance",
   "health_pressure",
 ]);
 const candidateResultApiSchema = z.object({
@@ -107,6 +109,15 @@ const candidateResultApiSchema = z.object({
     points: z.number(),
   })),
   algorithm_version: z.string(),
+  technique_contract: z.object({
+    calculation_status: z.enum(["not_started", "evaluated"]),
+    used_divisional_charts: z.array(z.string()),
+    used_arudha: z.array(z.string()),
+    dasha_tracks: z.array(z.string()),
+    missing_layers: z.array(z.string()),
+    auxiliary_layers: z.array(z.string()).default([]),
+    hard_blockers: z.array(z.string()),
+  }).optional(),
 }).passthrough();
 
 class UnexpectedProfileSourceError extends Error {
@@ -161,6 +172,7 @@ export function parseRectificationQuestionnaire(value: unknown): RectificationQu
     questions: parsed.questions.map(normalizeQuestion),
     samples: parsed.candidate_scan.samples.map((sample) => ({
       ascendantSign: sample.ascendant?.sign ?? null,
+      ...(sample.varga_lagna?.D2?.sign ? { d2Sign: sample.varga_lagna.D2.sign } : {}),
       d4Sign: sample.varga_lagna?.D4?.sign ?? null,
       d9Sign: sample.varga_lagna?.D9?.sign ?? null,
       d10Sign: sample.varga_lagna?.D10?.sign ?? null,
@@ -226,5 +238,14 @@ function adaptCandidateResult(parsed: z.infer<typeof candidateResultApiSchema>):
       points: item.points,
     })),
     algorithmVersion: parsed.algorithm_version,
+    ...(parsed.technique_contract ? { techniqueReceipt: {
+      calculationStatus: parsed.technique_contract.calculation_status,
+      usedDivisionalCharts: parsed.technique_contract.used_divisional_charts,
+      usedArudha: parsed.technique_contract.used_arudha,
+      dashaTracks: parsed.technique_contract.dasha_tracks,
+      missingLayers: parsed.technique_contract.missing_layers,
+      auxiliaryLayers: parsed.technique_contract.auxiliary_layers,
+      hardBlockers: parsed.technique_contract.hard_blockers,
+    } } : {}),
   });
 }

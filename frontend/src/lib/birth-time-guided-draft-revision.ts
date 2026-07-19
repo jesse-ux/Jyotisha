@@ -12,7 +12,7 @@ type ProposeDraft = (
   caseId: string,
   actionId: string,
   expectedVersion: number,
-  proposal: { readonly domain: "education" | "relocation" | "relationship" | "career" | "health_pressure"; readonly precision: EvidenceDatePrecision; readonly date: string },
+  proposal: { readonly domain: "education" | "relocation" | "relationship" | "career" | "finance" | "health_pressure"; readonly precision: EvidenceDatePrecision; readonly date: string },
 ) => Promise<VersionedJourneyResponse>;
 type DraftRevision = {
   readonly userId: string;

@@ -3317,6 +3317,15 @@ def test_api_chart_cache_key_tracks_vedastro_runtime_state(monkeypatch: pytest.M
     )
 
     assert key_disabled != key_enabled
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "20")
+    key_timeout_20 = jyotish_api_server._api_chart_cache_key(
+        jyotish_api_server._build_api_chart_cache_payload(payload)
+    )
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "90")
+    key_timeout_90 = jyotish_api_server._api_chart_cache_key(
+        jyotish_api_server._build_api_chart_cache_payload(payload)
+    )
+    assert key_timeout_20 != key_timeout_90
 
 
 def test_high_rigor_plan_only_surfaces_chart_cache_and_queue_strategy() -> None:

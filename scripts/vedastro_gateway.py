@@ -155,6 +155,7 @@ def _raw_response_archive(job_id: str, result: dict[str, Any]) -> dict[str, Any]
     archive_path = _queue_dir() / archive_rel
     archive_path.parent.mkdir(parents=True, exist_ok=True)
     archive_path.write_text(json.dumps(raw, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+    os.chmod(archive_path, 0o600)
     return {
         "status": "official_raw_response_archived",
         "official_raw_response_available": True,

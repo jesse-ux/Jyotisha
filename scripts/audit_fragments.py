@@ -234,11 +234,37 @@ def source_referenced_scripts(*texts: str) -> set[str]:
     refs: set[str] = set()
     for path in SCRIPTS_DIR.glob("*.py"):
         stem = path.stem
-        if re.search(rf"\b(import|from)\s+{re.escape(stem)}\b", combined):
+        if re.search(rf"\b(import|from)\s+(?:scripts\.)?{re.escape(stem)}\b", combined):
             refs.add(path.name)
         if path.name in combined or stem in combined:
             refs.add(path.name)
     return refs
+
+
+def transitive_source_referenced_scripts(*texts: str) -> set[str]:
+    """Follow local script imports so indirect runtime modules are not fragments."""
+    combined = "\n".join(texts)
+    names = set(re.findall(r"(?:from|import)\s+(?:scripts\.)?([A-Za-z_][A-Za-z0-9_]*)", combined))
+    names |= set(re.findall(r"_load_local_module\(['\"]([A-Za-z_][A-Za-z0-9_]*)['\"]\)", combined))
+    referenced = {f"{name}.py" for name in names if (SCRIPTS_DIR / f"{name}.py").exists()}
+    pending = list(referenced)
+    visited: set[str] = set()
+    while pending:
+        filename = pending.pop()
+        if filename in visited:
+            continue
+        visited.add(filename)
+        path = SCRIPTS_DIR / filename
+        if not path.exists():
+            continue
+        text = read_text(path)
+        child_names = set(re.findall(r"(?:from|import)\s+(?:scripts\.)?([A-Za-z_][A-Za-z0-9_]*)", text))
+        child_names |= set(re.findall(r"_load_local_module\(['\"]([A-Za-z_][A-Za-z0-9_]*)['\"]\)", text))
+        for child in {f"{name}.py" for name in child_names if (SCRIPTS_DIR / f"{name}.py").exists()}:
+            if child not in referenced:
+                referenced.add(child)
+                pending.append(child)
+    return referenced
 
 
 def find_script_fragments(registry: dict[str, Any], frontend: dict[str, Any], test_text: str) -> dict[str, Any]:
@@ -248,6 +274,7 @@ def find_script_fragments(registry: dict[str, Any], frontend: dict[str, Any], te
     referenced = set(SCRIPT_IGNORE)
     referenced |= registry_script_refs(registry)
     referenced |= source_referenced_scripts(api_text, engine_text, app_text, test_text)
+    referenced |= transitive_source_referenced_scripts(api_text, engine_text, app_text, test_text)
     candidates = []
     for path in sorted(SCRIPTS_DIR.glob("*.py")):
         if path.name in referenced:

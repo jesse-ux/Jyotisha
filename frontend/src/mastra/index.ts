@@ -30,6 +30,7 @@ const workflowConsumerContextSchema = z.object({
   available_layers: z.array(z.string()),
   missing_route_layers: z.array(z.string()),
   hard_blockers: z.array(z.string()),
+  technique_truth: z.record(z.unknown()).optional(),
   answer_policy: z.object({
     can_answer_direction: z.boolean(),
     can_answer_precise_timing: z.boolean(),
@@ -85,6 +86,8 @@ export function consultationWorkflowReceipt(data: JsonRecord) {
     status: consumerContext.core_status,
     preciseTiming: consumerContext.answer_policy.can_answer_precise_timing ? "allowed" : "blocked",
     missingLayers: consumerContext.missing_route_layers.join(",") || "none",
+    techniqueTruth: String(record(consumerContext.technique_truth).status || "unknown"),
+    evidenceStatus: record(consumerContext.commercial_evidence_status),
   };
 }
 
@@ -110,6 +113,8 @@ export function toAgentConsultationContext(data: JsonRecord) {
       available_layers: consumerContext.available_layers,
       missing_route_layers: consumerContext.missing_route_layers,
       hard_blockers: consumerContext.hard_blockers,
+      technique_truth: consumerContext.technique_truth,
+      commercial_evidence_status: consumerContext.commercial_evidence_status,
       answer_policy: consumerContext.answer_policy,
       user_facing_limitation: consumerContext.user_facing_limitation,
     },
@@ -180,6 +185,7 @@ When reference_transparency is present:
 - Only say the chart calculation failed when hard_blockers is non-empty.
 - Never claim D2, D11, D9, D10, A10, UL, or Narayana Dasha is missing when it appears in available_layers, chart, or local_layers.
 - Treat evidence_contract.answer_policy as a hard output contract. When can_answer_precise_timing is false, provide only direction or structure and do not state a month, date, or guaranteed timing outcome.
+- Treat answer_policy.deterministic_claims_forbidden_for as a hard prohibition. Do not use a restricted technique to make a deterministic conclusion. reference_only, partial, blocked, research_only_blocked, and partial_registry_only are commercial claim boundaries, not validated capabilities.
 - Treat rectification.boundary=not_auto_rectified as final: a candidate time or score is not a verified birth time and must not be presented as one.
 Usually answer in 2-5 short paragraphs. Ask one clarifying question only when the user's intent is genuinely unclear.
 After every substantive answer, append exactly two hidden blocks in this order and nothing after the second block:
