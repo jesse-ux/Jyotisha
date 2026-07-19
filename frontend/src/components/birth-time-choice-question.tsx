@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   choiceQuestionGroups,
   choiceSelectionIntent,
@@ -43,6 +43,12 @@ export function BirthTimeQuestionProgress({ progress }: {
 export function BirthTimeChoiceQuestion(props: ChoiceQuestionProps) {
   const groups = choiceQuestionGroups(props.question);
   const [selectedId, setSelectedId] = useState("");
+  const firstChoiceRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (!props.pending && (props.progress.answeredCount > 0 || props.error)) {
+      firstChoiceRef.current?.focus();
+    }
+  }, [props.error, props.pending, props.progress.answeredCount, props.question.questionId]);
   const select = (option: PublicDynamicChoiceQuestion["options"][number]) => {
     const intent = choiceSelectionIntent(option);
     setSelectedId(intent.optionId);
@@ -55,12 +61,13 @@ export function BirthTimeChoiceQuestion(props: ChoiceQuestionProps) {
       <fieldset className="birth-time-choice-question" disabled={props.pending}>
         <legend>{props.question.prompt}</legend>
         <div className="birth-time-primary-choices">
-          {groups.primary.map((option) => (
+          {groups.primary.map((option, index) => (
             <button
               className="birth-time-choice-option is-primary"
               data-selected={selectedId === option.optionId}
               key={option.optionId}
               onClick={() => select(option)}
+              ref={index === 0 ? firstChoiceRef : undefined}
               type="button"
             >
               {option.label}
@@ -89,6 +96,12 @@ export function BirthTimeChoiceQuestion(props: ChoiceQuestionProps) {
 
 export function BirthTimeUnmatchedClarification(props: ClarificationProps) {
   const [note, setNote] = useState("");
+  const reframeRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (!props.pending && (props.progress.answeredCount > 0 || props.error)) {
+      reframeRef.current?.focus();
+    }
+  }, [props.error, props.pending, props.progress.answeredCount]);
   return (
     <div className="birth-time-choice-surface" aria-busy={props.pending}>
       <BirthTimeQuestionProgress progress={props.progress} />
@@ -104,7 +117,7 @@ export function BirthTimeUnmatchedClarification(props: ClarificationProps) {
           />
         </label>
         <div className="birth-time-reframe-actions">
-          <button className="button-secondary birth-time-guided-action" onClick={() => props.onReframe("")} type="button">换一道题</button>
+          <button className="button-secondary birth-time-guided-action" onClick={() => props.onReframe("")} ref={reframeRef} type="button">换一道题</button>
           <button className="button-primary birth-time-guided-action" onClick={() => props.onReframe(normalizeUnmatchedNote(note))} type="button">提交补充并换题</button>
         </div>
       </fieldset>

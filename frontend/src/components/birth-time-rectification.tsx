@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { BirthTimeCandidateResult } from "@/components/birth-time-candidate-result";
 import {
   BirthTimeChoiceQuestion,
@@ -50,6 +51,17 @@ function statusCopy(action: DynamicNextAction): string {
 }
 
 export function BirthTimeRectification(props: BirthTimeRectificationProps) {
+  const assessmentHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const previousTurnVersion = useRef(props.journey.turnVersion);
+  useEffect(() => {
+    const changed = previousTurnVersion.current !== props.journey.turnVersion;
+    previousTurnVersion.current = props.journey.turnVersion;
+    if (!changed || props.journey.journeyProtocol !== "dynamic-choice-v2") return;
+    const action = props.journey.nextAction;
+    if (action.kind !== "ask_dynamic_choice" && action.kind !== "clarify_unmatched_answer") {
+      assessmentHeadingRef.current?.focus();
+    }
+  }, [props.journey]);
   if (props.journey.journeyProtocol !== "dynamic-choice-v2") {
     return <BirthTimeLegacyRectification {...props} journey={props.journey} />;
   }
@@ -65,7 +77,7 @@ export function BirthTimeRectification(props: BirthTimeRectificationProps) {
   return (
     <section className="birth-time-rectification onboarding-card" aria-labelledby="birth-time-assessment-title">
       <div className="birth-time-assessment-heading">
-        <div><span>出生时间评估</span><h2 id="birth-time-assessment-title">{heading.title}</h2></div>
+        <div><span>出生时间评估</span><h2 id="birth-time-assessment-title" ref={assessmentHeadingRef} tabIndex={-1}>{heading.title}</h2></div>
         <span className="birth-time-status-badge">{heading.badge}</span>
       </div>
       {showsProgress && <BirthTimeQuestionProgress progress={props.journey.progress} />}

@@ -23,7 +23,6 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
   if (!result && action.kind === "present_low_result") {
     return (
       <div className="birth-time-candidate-result" aria-live="polite">
-        <p className="birth-time-assessment-unavailable">目前没有足够的新信息继续稳定缩小范围，本次评估已结束并保存当前候选范围。</p>
         <p className="birth-time-evidence-boundary">系统不会选择或应用未经证据支持的具体分钟，<span className="phrase-nowrap">当前排盘使用时间</span>保持不变。</p>
         {terminalPath && <NewAssessmentAction controller={controller} />}
       </div>
