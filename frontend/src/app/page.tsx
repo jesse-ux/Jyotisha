@@ -43,6 +43,11 @@ import {
 } from "@/lib/birth-time-guided-preview";
 import { keepFocusWithin } from "@/lib/focus-trap";
 import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
+import {
+  OnboardingAuthenticationError,
+  type OnboardingContent,
+  requestOnboardingWithRecovery,
+} from "@/lib/onboarding-client";
 import { protectOnboardingPhrases } from "@/lib/onboarding-copy";
 import {
   SessionModelPersistenceQueue,
@@ -109,8 +114,6 @@ type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
 type BirthPlace = { label: string; lat: number; lon: number; tz: number };
 type Account = { user: { id: string; email: string | null }; credits: number; isAdmin: boolean };
-type OnboardingSuggestion = { theme: Exclude<Theme, "general">; text: string };
-type OnboardingContent = { greeting: string; suggestions: OnboardingSuggestion[] };
 type OnboardingStep = "name" | "birth" | "place" | "rectification";
 type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
 type AccountDialog = "profile" | "redeem" | "logout";
@@ -477,25 +480,6 @@ function readSuggestions(value: unknown) {
     .filter(Boolean))].slice(0, 3);
 }
 
-function readOnboarding(value: unknown): OnboardingContent | null {
-  if (!value || typeof value !== "object") return null;
-  const payload = value as { greeting?: unknown; suggestions?: unknown };
-  if (typeof payload.greeting !== "string" || !Array.isArray(payload.suggestions)) return null;
-
-  const expectedThemes: OnboardingSuggestion["theme"][] = ["career", "marriage", "timing"];
-  const suggestions = payload.suggestions.flatMap((item, index): OnboardingSuggestion[] => {
-    if (!item || typeof item !== "object") return [];
-    const suggestion = item as { theme?: unknown; text?: unknown };
-    const theme = expectedThemes[index];
-    if (!theme || suggestion.theme !== theme || typeof suggestion.text !== "string") return [];
-    const text = suggestion.text.replace(/\s+/g, " ").trim().slice(0, 80);
-    return text ? [{ theme, text }] : [];
-  });
-
-  const greeting = payload.greeting.replace(/\s+/g, " ").trim().slice(0, 180);
-  return greeting.length >= 8 && suggestions.length === 3 ? { greeting, suggestions } : null;
-}
-
 function readProfile(value: unknown): Profile {
   if (!value || typeof value !== "object") return emptyProfile;
   const profile = value as Partial<Profile> & {
@@ -776,6 +760,8 @@ export default function Home() {
   const modelSelectionVersions = useRef(new Map<string, number>());
   const activeSessionIdRef = useRef("");
   const chartLibraryLoadedAccount = useRef("");
+  const onboardingRequestIdentity = useRef("");
+  const onboardingPresentation = useRef({ name: "", startGreeting: "" });
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
   const birthTimeRevisionPending = useRef(false);
@@ -797,6 +783,7 @@ export default function Home() {
   const productEntrypointsDisabled = !hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog;
   const activeStreamingText = streamingReply && streamingReply.sessionId === activeSession?.id ? streamingReply.text : "";
   const accountId = account?.user.id;
+  onboardingPresentation.current = { name: profile.name, startGreeting };
 
   useEffect(() => {
     activeSessionIdRef.current = activeSessionId;
@@ -1126,44 +1113,36 @@ export default function Home() {
   }, [currentOnboardingMessage, hydrated, shouldStreamOnboarding]);
 
   useEffect(() => {
-    if (!hydrated || !accountId || !profileComplete || onboarding || onboardingError) return;
+    if (!hydrated || !accountId || !profileComplete || uiPreview.current) return;
+    const requestIdentity = `${accountId}:profile-complete`;
+    if (onboardingRequestIdentity.current === requestIdentity) return;
+    onboardingRequestIdentity.current = requestIdentity;
     const controller = new AbortController();
-    const onboardingTimeout = window.setTimeout(() => {
-      if (controller.signal.aborted) return;
-      controller.abort();
-      setOnboardingError("个性化入门问题准备超时");
-    }, 12000);
-
-    async function loadOnboarding() {
-      try {
-        const response = await fetch("/api/onboarding", {
-          method: "POST",
-          cache: "no-store",
-          signal: controller.signal,
+    void requestOnboardingWithRecovery(controller.signal, () => {
+      if (!controller.signal.aborted) setOnboardingError("个性化入门问题准备超时");
+    })
+      .then((content) => {
+        if (controller.signal.aborted) return;
+        const presentation = onboardingPresentation.current;
+        setOnboarding({
+          ...content,
+          greeting: presentation.startGreeting || createStartGreeting(presentation.name),
         });
-        const payload = await response.json().catch(() => null);
-        if (response.status === 401) {
+        setOnboardingError("");
+      })
+      .catch((caught: unknown) => {
+        if (controller.signal.aborted) return;
+        if (caught instanceof OnboardingAuthenticationError) {
           window.location.assign("/login");
           return;
         }
-        if (!response.ok) throw new Error(payloadMessage(payload, "暂时无法准备初始问题"));
-        const content = readOnboarding(payload);
-        if (!content) throw new Error("Agent 返回的初始问题格式不正确");
-        setOnboarding({ ...content, greeting: startGreeting || createStartGreeting(profile.name) });
-        setOnboardingError("");
-      } catch (caught) {
-        if ((caught as Error).name !== "AbortError") {
-          setOnboardingError(caught instanceof Error ? caught.message : "暂时无法准备初始问题");
-        }
-      }
-    }
-
-    void loadOnboarding();
+        setOnboardingError(caught instanceof Error ? caught.message : "暂时无法准备初始问题");
+      });
     return () => {
-      window.clearTimeout(onboardingTimeout);
+      if (onboardingRequestIdentity.current === requestIdentity) onboardingRequestIdentity.current = "";
       controller.abort();
     };
-  }, [accountId, hydrated, onboarding, onboardingError, profile.name, profileComplete, startGreeting]);
+  }, [accountId, hydrated, profileComplete]);
 
   useEffect(() => {
     if (!hydrated || !profileComplete || birthTimeDisplayState(profile)) return;

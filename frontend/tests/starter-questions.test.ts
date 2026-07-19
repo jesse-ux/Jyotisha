@@ -28,6 +28,25 @@ test("keeps starter questions visible while the user edits a draft", () => {
   assert.doesNotMatch(starterVisibilityGuard, /\bdraft\b/);
 });
 
+test("keeps onboarding recovery alive after safe defaults become visible", () => {
+  // Given: the homepage owns one recovery sequence per completed account profile.
+  const recoveryEffect = sourceBetween(
+    pageSource,
+    "const onboardingRequestIdentity =",
+    "  useEffect(() => {\n    if (!hydrated || !profileComplete || birthTimeDisplayState(profile)) return;",
+  );
+
+  // When: the request identity, client call, and effect dependencies are inspected.
+  // Then: fallback state cannot cancel recovery and only authentication triggers login.
+  assert.match(pageSource, /requestOnboardingWithRecovery/);
+  assert.match(pageSource, /OnboardingAuthenticationError/);
+  assert.match(recoveryEffect, /onboardingRequestIdentity\.current === requestIdentity/);
+  assert.match(recoveryEffect, /requestOnboardingWithRecovery\(controller\.signal,/);
+  assert.match(recoveryEffect, /caught instanceof OnboardingAuthenticationError/);
+  assert.match(recoveryEffect, /\}, \[accountId, hydrated, profileComplete\]\);/);
+  assert.doesNotMatch(pageSource, /function readOnboarding\(/);
+});
+
 test("keeps follow-up suggestions visible while the user edits a draft", () => {
   // Given: the follow-up suggestion block and its render guard.
   const suggestionGuard = sourceBetween(
