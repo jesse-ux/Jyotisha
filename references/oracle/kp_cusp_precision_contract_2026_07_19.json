@@ -1,0 +1,69 @@
+{
+  "scope": "kp_cusp_precision_contract",
+  "created_at": "2026-07-19",
+  "status": "contract_v1",
+  "production_tuning_allowed": false,
+  "exact_cusp_status": "blocked_missing_oracle",
+  "current_runtime_cusp_mode": "whole_sign_house_center_probe",
+  "kp_significator_runtime_policy": "supporting_probe_only",
+  "boundary": "This contract separates current KP field probes from exact KP cusp timing. Current local significator tables use whole-sign/house-center probe houses and must not be treated as precise KP cusps.",
+  "claim_boundary": "KP star/sub-lord, ruling planets and significator probes can support research inspection, but cannot drive precise event timing until exact cusp calculation, external numeric oracle and independent negative holdout validation pass.",
+  "required_exact_cusp_inputs": [
+    {
+      "field": "birth_or_question_datetime",
+      "reason": "KP cusps are time-sensitive and must use the exact event/question timestamp."
+    },
+    {
+      "field": "latitude",
+      "reason": "House cusps depend on local latitude."
+    },
+    {
+      "field": "longitude",
+      "reason": "House cusps depend on local longitude and local sidereal time."
+    },
+    {
+      "field": "timezone",
+      "reason": "Timezone and DST must be explicit before sidereal time/cusp calculation."
+    },
+    {
+      "field": "ayanamsa",
+      "reason": "KP cusps and star/sub-lord fields require a fixed sidereal setting."
+    },
+    {
+      "field": "house_system",
+      "reason": "KP typically uses a Placidus-style cusp workflow; the runtime must not silently substitute whole-sign houses."
+    }
+  ],
+  "required_oracles": [
+    {
+      "oracle_id": "kp_cusp_numeric_worked_example",
+      "status": "missing",
+      "required_fields": ["house_number", "cusp_longitude", "sign", "rasi_lord", "star_lord", "sub_lord", "sub_sub_lord"],
+      "claim_boundary": "Needed before exact cusp fields can be marked verified."
+    },
+    {
+      "oracle_id": "kp_significator_field_example",
+      "status": "missing",
+      "required_fields": ["planet_significator_A", "planet_significator_B", "planet_significator_C", "planet_significator_D", "house_significator_A", "house_significator_B", "house_significator_C", "house_significator_D"],
+      "claim_boundary": "Needed before ABCD significator tables can be used beyond probe status."
+    },
+    {
+      "oracle_id": "negative_holdout_timing_set",
+      "status": "missing",
+      "required_fields": ["positive_event_window", "negative_non_event_windows", "blind_ranking_protocol"],
+      "claim_boundary": "Needed before KP timing can upgrade from exploratory candidate to verified timing claim."
+    }
+  ],
+  "safe_runtime_policy": {
+    "allowed": [
+      "Expose probe fields with raw hash",
+      "Use KP fields as downgrade-only or supporting context",
+      "Show exact-cusp blocker in Technique Audit Table"
+    ],
+    "blocked": [
+      "Verified day/month timing claim",
+      "Birth-time truth claim",
+      "Commercial precise KP event promise"
+    ]
+  }
+}

@@ -30,25 +30,25 @@
       "technique_id": "full_muhurta_scoring",
       "local_code_status": "missing_runtime",
       "skill_invocation_status": "reference_only",
-      "api_ui_entry_status": "missing",
+      "api_ui_entry_status": "factor_probe_only_no_verdict",
       "external_oracle_status": "missing",
       "commercial_sync_status": "blocked_until_oracle",
       "claim_boundary": "Do not present as auspicious-date selection until Tarabala/Chandrabala/Panchaka/Rahu Kalam weights and examples are validated."
     },
     {
       "technique_id": "tarabala_chandrabala",
-      "local_code_status": "partial_or_fragment",
+      "local_code_status": "factor_probe_present",
       "skill_invocation_status": "not_invoked",
-      "api_ui_entry_status": "missing",
+      "api_ui_entry_status": "probe_script_available",
       "external_oracle_status": "missing",
       "commercial_sync_status": "blocked_until_oracle",
       "claim_boundary": "Observation-only until natal Moon matching, Tara sequence, Chandra Bala rules and external examples pass."
     },
     {
       "technique_id": "rahu_yamaganda_gulika_kalam",
-      "local_code_status": "partial",
+      "local_code_status": "factor_probe_present",
       "skill_invocation_status": "not_invoked",
-      "api_ui_entry_status": "missing",
+      "api_ui_entry_status": "probe_script_available",
       "external_oracle_status": "partial",
       "commercial_sync_status": "ready_after_guarded_contract",
       "claim_boundary": "Can be shown as Panchanga interval after sunrise/sunset contract; not a full Muhurta verdict."

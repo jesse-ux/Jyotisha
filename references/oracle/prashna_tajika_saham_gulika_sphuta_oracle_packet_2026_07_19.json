@@ -1,0 +1,128 @@
+{
+  "scope": "prashna_tajika_saham_gulika_sphuta_oracle_packet",
+  "created_at": "2026-07-19",
+  "status": "oracle_packet_registry_v1",
+  "truth_policy": "oracle_packet_registry_not_numeric_closure",
+  "production_tuning_allowed": false,
+  "boundary": "This packet records local artifacts, source candidates, and required worked examples. It does not claim external numeric closure.",
+  "techniques": [
+    {
+      "technique_id": "prashna_guarded_chart",
+      "domain": "horary",
+      "local_status": "guarded_runtime_present",
+      "external_numeric_oracle_status": "partial",
+      "local_artifacts": [
+        "scripts/prashna.py",
+        "tests/test_prashna_guarded_registry.py",
+        "tests/test_prashna_entry_contract.py"
+      ],
+      "source_candidates": [
+        {
+          "name": "PyJHora Prashna / horary-related functions",
+          "license_boundary": "AGPL oracle-only; do not copy implementation."
+        },
+        {
+          "name": "VedAstro horary/API method catalog",
+          "license_boundary": "MIT source, but hosted identity blocked."
+        }
+      ],
+      "required_worked_example": "Public horary chart with question timestamp/location, ayanamsa, node mode, ascendant, planets, houses, and final judged rule trace.",
+      "next_packet_action": "Build one public Prashna fixture and compare local guarded chart against an external raw packet.",
+      "claim_boundary": "Can expose guarded Prashna entry; cannot claim externally calibrated horary judgment accuracy."
+    },
+    {
+      "technique_id": "tajika_varshaphala",
+      "domain": "annual_chart",
+      "local_status": "partial_runtime_present",
+      "external_numeric_oracle_status": "partial",
+      "local_artifacts": [
+        "scripts/tajika.py",
+        "references/sahams-execution-guide.md",
+        "references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt"
+      ],
+      "source_candidates": [
+        {
+          "name": "PyJHora Tajika / Varshaphala output",
+          "license_boundary": "AGPL oracle-only; numeric stdout can be used as black-box evidence."
+        },
+        {
+          "name": "VedAstro annual chart / Tajika-adjacent methods",
+          "license_boundary": "hosted identity blocked; use local/NuGet only if method contract is pinned."
+        }
+      ],
+      "required_worked_example": "Public annual-chart worked example with solar return time, Tajika aspects/yogas, Muntha, year lord, and Saham values.",
+      "next_packet_action": "Normalize existing PyJHora Varshaphala stdout into field-level packet, then add at least one public worked example.",
+      "claim_boundary": "Annual chart can be exploratory; Tajika numerical closure remains partial."
+    },
+    {
+      "technique_id": "saham_points",
+      "domain": "sensitive_points",
+      "local_status": "rules_present",
+      "external_numeric_oracle_status": "blocked",
+      "local_artifacts": [
+        "scripts/sahams.py",
+        "references/saham_rules.json",
+        "references/sahams-execution-guide.md"
+      ],
+      "source_candidates": [
+        {
+          "name": "Saham formula lists in Tajika/Varshaphala references",
+          "license_boundary": "source formulas must be cited; calculator output alone is not formula authority."
+        },
+        {
+          "name": "PyJHora Saham-related output",
+          "license_boundary": "AGPL oracle-only."
+        }
+      ],
+      "required_worked_example": "At least one public chart with named Sahams, formula direction, day/night reversal rule, input longitudes, and final degrees.",
+      "next_packet_action": "Create Saham worked-example packet from public source or mark each Saham formula as source-only.",
+      "claim_boundary": "Saham calculations remain blocked for external numeric truth until day/night and formula-direction examples close."
+    },
+    {
+      "technique_id": "gulika_longitude",
+      "domain": "upagraha",
+      "local_status": "partial_runtime_present",
+      "external_numeric_oracle_status": "blocked",
+      "local_artifacts": [
+        "scripts/gulika.py",
+        "scripts/adhana.py"
+      ],
+      "source_candidates": [
+        {
+          "name": "Gulika / Mandi worked examples in classical and calculator references",
+          "license_boundary": "must separate formula source from calculator output."
+        },
+        {
+          "name": "PyJHora Gulika output",
+          "license_boundary": "AGPL oracle-only."
+        }
+      ],
+      "required_worked_example": "Public Gulika/Mandi example with weekday, sunrise/sunset, day/night segment, latitude/longitude/timezone, and final longitude.",
+      "next_packet_action": "Compare local sunrise/day-night segment result against one public worked example and one independent engine.",
+      "claim_boundary": "Gulika can be computed locally but external numeric closure is blocked."
+    },
+    {
+      "technique_id": "sphuta_sensitive_points",
+      "domain": "sensitive_points",
+      "local_status": "partial_or_scattered",
+      "external_numeric_oracle_status": "blocked",
+      "local_artifacts": [
+        "scripts",
+        "references"
+      ],
+      "source_candidates": [
+        {
+          "name": "Sphuta formulas in Tajika/Prashna references",
+          "license_boundary": "formula source required before implementation claims."
+        },
+        {
+          "name": "VedAstro/PyJHora sensitive-point outputs if method contracts are identified",
+          "license_boundary": "VedAstro hosted identity blocked; PyJHora AGPL oracle-only."
+        }
+      ],
+      "required_worked_example": "Public Sphuta example naming point type, formula, input longitudes, normalization rule, and final longitude.",
+      "next_packet_action": "Inventory local Sphuta formulas, then build one public worked-example packet per point family.",
+      "claim_boundary": "Do not expose Sphuta as calibrated; keep as research-only until packet closes."
+    }
+  ]
+}

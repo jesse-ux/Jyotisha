@@ -1,0 +1,23 @@
+{
+  "scope": "kp_cusp_worked_example_oracle_queue",
+  "created_at": "2026-07-19",
+  "status": "awaiting_public_oracle",
+  "production_tuning_allowed": false,
+  "claim_status": "blocked",
+  "source_policy": "Public worked examples only; no private birth data or unverifiable screenshots.",
+  "required_fields": [
+    {"field": "case_id", "reason": "Stable public example id."},
+    {"field": "source_url", "reason": "Public URL or citable source."},
+    {"field": "datetime", "reason": "Birth/question datetime with timezone."},
+    {"field": "latitude", "reason": "Exact cusp calculation requires location."},
+    {"field": "longitude", "reason": "Exact cusp calculation requires location."},
+    {"field": "house_system", "reason": "KP cusp workflow must not silently use whole-sign houses."},
+    {"field": "ayanamsa", "reason": "Sidereal setting must be explicit."},
+    {"field": "cusp_longitude", "reason": "Numeric house cusp longitude oracle."},
+    {"field": "star_lord", "reason": "Cusp star lord oracle field."},
+    {"field": "sub_lord", "reason": "Cusp sub lord oracle field."},
+    {"field": "sub_sub_lord", "reason": "Cusp sub-sub lord oracle field."}
+  ],
+  "queue": [],
+  "claim_boundary": "Exact KP cusp remains blocked until at least one public numeric worked example with these fields is archived and replayed."
+}

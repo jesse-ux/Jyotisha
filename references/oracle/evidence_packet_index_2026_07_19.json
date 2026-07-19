@@ -5,8 +5,8 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 27,
-    "blocked_or_partial_count": 21,
+    "packet_count": 34,
+    "blocked_or_partial_count": 28,
     "human_review_required_count": 1
   },
   "packets": [
@@ -225,6 +225,62 @@
       "claim_status": "partial",
       "consumer_policy": "research_only",
       "claim_boundary": "Records local/OSS reusable candidates for KP, Muhurta, AV and compatibility; discovery only, no runtime truth upgrade."
+    },
+    {
+      "packet_id": "kp_cusp_precision_contract",
+      "path": "references/oracle/kp_cusp_precision_contract_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Exact KP cusp contract is defined, but numeric cusp oracle and negative timing holdout are missing; current runtime remains supporting probe only."
+    },
+    {
+      "packet_id": "high_rigor_closure_gate",
+      "path": "scripts/high_rigor_closure_gate.py",
+      "domain": "closure_governance",
+      "claim_status": "blocked",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Aggregates external numeric oracle, independent negative holdout, exact KP cusp and full scoring gates; blocks production tuning, verified timing and birth-time truth while any gate remains partial/blocked."
+    },
+    {
+      "packet_id": "kp_external_table_hash_manifest",
+      "path": "scripts/kp_external_table_hash_manifest.py",
+      "domain": "kp_precision_timing",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "KP external sub-lord table hash runner fixes fixture hash when present and reports fixture_missing when absent; no timing truth upgrade."
+    },
+    {
+      "packet_id": "kp_cusp_worked_example_oracle_queue",
+      "path": "references/oracle/kp_cusp_worked_example_oracle_queue_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Exact KP cusp worked-example queue defines required oracle fields; remains awaiting public numeric examples."
+    },
+    {
+      "packet_id": "muhurta_factor_probe",
+      "path": "scripts/muhurta_factor_probe.py",
+      "domain": "muhurta",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Muhurta factor probe exposes Tarabala/Chandrabala/Rahu Kalam/Abhijit observations only; no verified Muhurta verdict."
+    },
+    {
+      "packet_id": "day_level_holdout_intake",
+      "path": "scripts/day_level_holdout_intake.py",
+      "domain": "timing_holdout",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Human annotation intake appends frozen independent labels; production tuning remains blocked until frozen gate passes."
+    },
+    {
+      "packet_id": "permissive_oss_worked_example_registry",
+      "path": "references/oracle/permissive_oss_worked_example_registry_2026_07_19.json",
+      "domain": "oss_reuse_and_worked_examples",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Permissive OSS candidates and worked-example queues are registered for probes only; no truth-matrix or production-tuning upgrade."
     }
   ]
 }
