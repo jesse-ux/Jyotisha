@@ -59,6 +59,18 @@ test("accepts a matching low-confidence result from the rectifying state", () =>
   }), "04:53");
 });
 
+test("accepts a persisted candidate-saved compatibility action", () => {
+  assert.equal(candidateWorkingTime({
+    ...terminalCase,
+    turn_state: {
+      nextAction: {
+        kind: "candidate_saved",
+        resultId: terminalCase.candidate_result_id,
+      },
+    },
+  }, completionRequest), "04:53");
+});
+
 test("does not accept a medium terminal action from the rectifying state", () => {
   assert.equal(candidateWorkingTime({
     ...lowTerminalCase,
@@ -93,6 +105,16 @@ const rejectedCompletions = [
     name: "request from another user",
     stored: terminalCase,
     request: { ...completionRequest, userId: "f6cf99a5-9af7-4980-93ea-0298ee1dc95e" },
+  },
+  {
+    name: "missing case owner",
+    stored: { ...terminalCase, user_id: null },
+    request: completionRequest,
+  },
+  {
+    name: "empty case owner",
+    stored: { ...terminalCase, user_id: "" },
+    request: completionRequest,
   },
   {
     name: "wrong case ID",

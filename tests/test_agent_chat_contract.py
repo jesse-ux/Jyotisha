@@ -1,10 +1,14 @@
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "frontend" / "src" / "app" / "page.tsx"
 AGENT = ROOT / "frontend" / "src" / "mastra" / "index.ts"
 ONBOARDING_ROUTE = ROOT / "frontend" / "src" / "app" / "api" / "onboarding" / "route.ts"
+ONBOARDING_CLIENT = ROOT / "frontend" / "src" / "lib" / "onboarding-client.ts"
+ONBOARDING_POST = ROOT / "frontend" / "src" / "lib" / "onboarding-post.ts"
+ONBOARDING_CACHE_POLICY = (
+    ROOT / "frontend" / "src" / "lib" / "onboarding-cache-policy.ts"
+)
 CONSULT_ROUTE = ROOT / "frontend" / "src" / "app" / "api" / "consult" / "route.ts"
 MODELS_ROUTE = ROOT / "frontend" / "src" / "app" / "api" / "models" / "route.ts"
 MODEL_SELECTION = ROOT / "frontend" / "src" / "lib" / "consultation-model-selection.ts"
@@ -24,6 +28,9 @@ def test_onboarding_and_agent_suggestion_contract() -> None:
     page = PAGE.read_text(encoding="utf-8")
     agent = AGENT.read_text(encoding="utf-8")
     route = ONBOARDING_ROUTE.read_text(encoding="utf-8")
+    onboarding_client = ONBOARDING_CLIENT.read_text(encoding="utf-8")
+    onboarding_post = ONBOARDING_POST.read_text(encoding="utf-8")
+    cache_policy = ONBOARDING_CACHE_POLICY.read_text(encoding="utf-8")
     consult_route = CONSULT_ROUTE.read_text(encoding="utf-8")
     migration = ONBOARDING_MIGRATION.read_text(encoding="utf-8")
 
@@ -39,7 +46,7 @@ def test_onboarding_and_agent_suggestion_contract() -> None:
     assert "<BirthTimeIntakeFields value={value}" in page
     assert "<BirthLocationFields value={profileDraft}" in page
     assert "Enter 确认称呼" in page
-    assert 'fetch("/api/onboarding"' in page
+    assert 'fetch("/api/onboarding"' in onboarding_client
     assert "onboarding?.suggestions" in page
     assert "parseAgentReply(answer, theme)" in page
     assert "suggestions: reply.suggestions" in page
@@ -56,9 +63,23 @@ def test_onboarding_and_agent_suggestion_contract() -> None:
     assert "function currentTimeContext(now = new Date())" in consult_route
     assert "currentTimeContext(requestTime)," in consult_route
     assert "中国标准时间（UTC+8）" in consult_route
-    assert 'profile.onboarding_version === ONBOARDING_VERSION' in route
-    assert "getOnboardingAgent(onboardingModel).generate" in route
-    assert 'source: "cache"' in route
+    assert "export const POST = createOnboardingPost" in route
+    assert 'claim.is("onboarding_version", null)' in route
+    assert '.eq("onboarding_version", command.expectedVersion)' in route
+    assert 'claim.is("onboarding_generated_at", null)' in route
+    assert '.eq("onboarding_generated_at", command.expectedGeneratedAt)' in route
+    assert (
+        '.eq("onboarding_version", command.expectedPendingVersion)\n'
+        '        .select("id")\n'
+        "        .maybeSingle();"
+    ) in route
+    assert "createOnboardingCacheIdentity" in onboarding_post
+    assert "expectedGeneratedAt: profile.onboarding_generated_at" in onboarding_post
+    assert "completed.data" in onboarding_post
+    assert 'source: "cache"' in onboarding_post
+    assert 'source: "pending"' in onboarding_post
+    assert 'createHash("sha256")' in cache_policy
+    assert "getOnboardingAgent(model).generate" in route
     assert "onboarding_payload" in migration
     assert "to service_role" in migration
     assert "to authenticated" not in migration

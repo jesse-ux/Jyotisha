@@ -4,6 +4,7 @@ import {
   createOnboardingCacheIdentity,
   createOnboardingCompletionTransition,
   decideOnboardingCache,
+  ONBOARDING_CLAIM_TTL_MS,
 } from "../src/lib/onboarding-cache-policy.ts";
 
 const profileA = {
@@ -128,6 +129,75 @@ test("invalid ready content and expired pending claims are reclaimed", () => {
     assert.deepEqual(decideOnboardingCache(observation), {
       kind: "claim",
       expectedVersion: observation.observedVersion,
+      pendingVersion: identity.pendingVersion,
+    });
+  }
+});
+
+test("every selected profile input participates in the cache identity", () => {
+  // Given: the exact eight profile inputs used by onboarding generation/completeness.
+  const baseIdentity = createOnboardingCacheIdentity(profileA);
+  const mutations = [
+    { field: "name", profile: { ...profileA, name: "周宁" } },
+    { field: "birthDate", profile: { ...profileA, birthDate: "1991-06-15" } },
+    { field: "birthTime", profile: { ...profileA, birthTime: "12:31" } },
+    { field: "activeBirthTime", profile: { ...profileA, activeBirthTime: "12:45" } },
+    { field: "birthTimeStatus", profile: { ...profileA, birthTimeStatus: "candidate" } },
+    { field: "countryCode", profile: { ...profileA, countryCode: "TW" } },
+    { field: "provinceCode", profile: { ...profileA, provinceCode: "310000" } },
+    { field: "cityCode", profile: { ...profileA, cityCode: "310100" } },
+  ] as const;
+
+  // When/Then: mutating any one input changes both ready and pending identities.
+  for (const mutation of mutations) {
+    const changed = createOnboardingCacheIdentity(mutation.profile);
+    assert.notEqual(changed.readyVersion, baseIdentity.readyVersion, mutation.field);
+    assert.notEqual(changed.pendingVersion, baseIdentity.pendingVersion, mutation.field);
+  }
+});
+
+test("pending claim TTL is active through TTL minus one and reclaimable at TTL", () => {
+  // Given: the current profile owns the pending identity at a fixed time.
+  const identity = createOnboardingCacheIdentity(profileA);
+  const nowMs = Date.parse("2026-07-19T10:03:00.000Z");
+
+  // When/Then: the exact boundary preserves the existing strict-less-than policy.
+  assert.deepEqual(decideOnboardingCache({
+    identity,
+    observedVersion: identity.pendingVersion,
+    generatedAtMs: nowMs - ONBOARDING_CLAIM_TTL_MS + 1,
+    nowMs,
+    cachedPayload: null,
+  }), { kind: "pending" });
+  assert.deepEqual(decideOnboardingCache({
+    identity,
+    observedVersion: identity.pendingVersion,
+    generatedAtMs: nowMs - ONBOARDING_CLAIM_TTL_MS,
+    nowMs,
+    cachedPayload: null,
+  }), {
+    kind: "claim",
+    expectedVersion: identity.pendingVersion,
+    pendingVersion: identity.pendingVersion,
+  });
+});
+
+test("pending claims with null or invalid generation timestamps are reclaimed", () => {
+  // Given: null and invalid timestamps have both been normalized to non-finite milliseconds.
+  const identity = createOnboardingCacheIdentity(profileA);
+  const observations = [Number.NaN, Date.parse("not-a-timestamp")];
+
+  // When/Then: neither timestamp can keep a pending claim active.
+  for (const generatedAtMs of observations) {
+    assert.deepEqual(decideOnboardingCache({
+      identity,
+      observedVersion: identity.pendingVersion,
+      generatedAtMs,
+      nowMs: Date.parse("2026-07-19T10:03:00.000Z"),
+      cachedPayload: null,
+    }), {
+      kind: "claim",
+      expectedVersion: identity.pendingVersion,
       pendingVersion: identity.pendingVersion,
     });
   }

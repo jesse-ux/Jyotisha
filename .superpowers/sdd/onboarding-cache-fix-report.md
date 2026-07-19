@@ -150,3 +150,116 @@ modified `.superpowers/sdd/task-1-report.md` and untracked `.omo/` tree remained
 - The programming skill's standalone no-excuse checker could not resolve its own `typescript`
   dependency from the external skill cache. Changed-file ESLint, direct pattern audit, full tests,
   and the production TypeScript build were run instead.
+
+---
+
+## Integration-review follow-up
+
+### Outcome
+
+- Status: `DONE_WITH_CONCERNS`
+- Follow-up base SHA: `e13d595d6b3130ee20647ab95b0be3e0af8bdcac`
+- Follow-up commit: `fix: verify onboarding cache ownership end to end`
+- Resulting follow-up SHA: reported in the task handoff because a Git commit cannot embed its own
+  resulting hash without changing that hash.
+
+`POST` now delegates to the injectable `createOnboardingPost` handler. Its stateful repository seam
+executes load, version-and-timestamp claim CAS, deterministic generation, and pending-version
+completion CAS as one observable HTTP workflow. The production adapter retains the real Supabase
+PostgREST filters; the test fake models the same mutable single-row compare-and-set behavior.
+
+Completion now calls `select("id").maybeSingle()` and observes the returned row. A lost pending
+identity returns the safe provisional `pending` response, never the stale generated Agent payload.
+Database errors retain the prior warning and terminal fallback/Agent response behavior.
+
+### RED/GREEN evidence
+
+Initial route-integration RED:
+
+```text
+/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/onboarding-route.test.ts
+```
+
+Result before the injectable handler existed: exit 1, `ERR_MODULE_NOT_FOUND` for
+`src/lib/onboarding-post.ts`; 0 passed, 1 failed.
+
+The first GREEN exercised two concurrent calls: A claimed and blocked in deterministic generation,
+the fake profile changed to B, B claimed and completed, and A then lost its exact pending-version
+completion. The handler returned B with `source=agent`, returned A with `source=pending`, and the
+repository retained B's payload.
+
+Regression-sensitivity proof temporarily removed the completion result branch and returned the
+generated payload unconditionally. The focused stale test failed with actual `agent`, expected
+`pending`. Restoring the ownership-result branch made the same test pass 1/1.
+
+The stale root contract RED used the available repository environment:
+
+```text
+/Users/jesse/Downloads/Copse/astrology/yinduzhanxing/.venv/bin/python -m pytest -q tests/test_agent_chat_contract.py
+```
+
+Result before updating the contract: exit 1; 1 failed and 1 passed. The old contract still expected
+the onboarding fetch in `page.tsx` and later expected removed inline version logic. The updated
+contract follows the client/factory/cache modules and pins the production version CAS, timestamp
+CAS, pending-version completion CAS, completion-row observation, SHA-256 identity, and default POST
+delegation. Final result: 2 passed.
+
+### Expanded matrices
+
+- Route integration: ready A to B, active-pending A to B, stale A completion after B wins, observed
+  version race, and observed timestamp race.
+- Cache policy: each of the eight selected profile inputs independently changes ready and pending
+  identities; TTL minus one remains pending while exact TTL reclaims; null and invalid generated
+  timestamps reclaim.
+- Candidate completion: missing owner, empty owner, and legal `candidate_saved` compatibility were
+  added without changing confidence/status policy.
+
+### Follow-up verification
+
+Focused frontend tests:
+
+```text
+/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/onboarding-route.test.ts tests/onboarding-cache-policy.test.ts tests/birth-time-candidate-completion.test.ts
+```
+
+Result: exit 0; 31 passed, 0 failed.
+
+Full frontend suite:
+
+```text
+/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/*.test.ts
+```
+
+Result: exit 0; 455 passed, 0 failed.
+
+Changed-file ESLint: exit 0 with zero diagnostics across the route, cache/payload/handler modules,
+candidate modules, stateful fake, and focused tests.
+
+Affected Python contract: 2 passed. Changed-file Ruff initially found one extra blank line at the
+existing import boundary; it was removed before final verification.
+
+Production build:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=https://ci-placeholder.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=ci-placeholder PATH=/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH ./node_modules/.bin/next build --webpack
+```
+
+Result: exit 0; compiled in 5.9 seconds, completed TypeScript in 10.3 seconds, and generated 22/22
+pages. `/api/onboarding` remains a dynamic route.
+
+Direct `tsc --noEmit` still reports only the same eight unrelated ES2018 regexp-flag diagnostics;
+no follow-up file is reported. Pure LOC is 80 (production adapter), 184 (handler), 33 (payload), 82
+(cache policy), 141 (route integration test), 75 (stateful fake), 165 (policy test), 194 (candidate
+test), and 95 (root contract): every touched file remains below 200 pure LOC.
+
+### Follow-up concerns
+
+- The same pre-work Python 3.9/pytest and remote-visibility environment blockers remain; no remote
+  synchronization is claimed.
+- Default Turbopack still rejects the worktree's external dependency symlink. The complete webpack
+  production build with repository-standard CI placeholders passed.
+
+Staged follow-up audit ran `git diff --cached --check`, `--name-status`, and `--stat`. The check
+passed, and the staged set contained exactly nine follow-up paths: this report, the production
+route adapter, handler, payload boundary, route fake/test, policy test, candidate test, and root CI
+contract. Unrelated `.superpowers/sdd/task-1-report.md` and `.omo/` remained unstaged.
