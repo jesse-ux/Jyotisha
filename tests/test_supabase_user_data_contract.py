@@ -109,7 +109,8 @@ def test_chat_page_uses_authenticated_cloud_persistence() -> None:
     assert 'if (ownsInterface && !partialReply)' in source
     assert 'await persistSession(interruptedSession)' in source
     assert 'await persistence' in source
-    assert 'disabled={Boolean(pendingSessionId) || cancellationPending}' in source
+    assert "pendingSessionId || cancellationInFlight.current || pendingConsultation.current" in source
+    assert "setCancellationPending(true)" in source
     assert 'localStorage.setItem(chartLibraryStorageKey(accountId)' in source
     assert 'localStorage.setItem("chat_sessions"' not in source
 

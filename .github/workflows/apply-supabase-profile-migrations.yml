@@ -1,0 +1,79 @@
+name: Apply Supabase profile migrations
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-profile-migrations
+  cancel-in-progress: false
+
+env:
+  DEPLOY_HOST: 103.117.123.53
+  DEPLOY_PORT: "22000"
+  DEPLOY_USER: root
+  DEPLOY_PATH: /opt/jyotisha-app
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout migration files
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/jyotisha-production
+          chmod 600 ~/.ssh/jyotisha-production
+          printf '%s\n' '[103.117.123.53]:22000 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHQJvN2Mo3Yq8e6ZIK4P2blJ5Vjj0HbknEuk7TyjhMbO' > ~/.ssh/known_hosts
+
+      - name: Copy profile migrations to VPS
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-production -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes"
+          RSYNC_SSH="ssh $SSH_OPTIONS"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "install -m 700 -d '$DEPLOY_PATH/tmp/profile-migrations'"
+          rsync -az -e "$RSYNC_SSH" \
+            frontend/supabase/migrations/20260718010000_recover_missing_profile_rows.sql \
+            frontend/supabase/migrations/20260718020000_profiles_service_role_upsert_grants.sql \
+            frontend/supabase/migrations/20260718050000_profiles_service_role_upsert_grants.sql \
+            frontend/supabase/migrations/20260718070000_profiles_service_role_upsert_id.sql \
+            frontend/supabase/migrations/20260718080000_profiles_service_role_account_upsert_selects.sql \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/tmp/profile-migrations/"
+
+      - name: Apply profile migrations using VPS database URL
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-production -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "cd '$DEPLOY_PATH' && bash -s" <<'REMOTE'
+          set -euo pipefail
+          set +x
+          ENV_FILE="$PWD/.env.production"
+          if [ ! -f "$ENV_FILE" ]; then
+            echo ".env.production missing" >&2
+            exit 1
+          fi
+          set -a
+          . "$ENV_FILE"
+          set +a
+          DB_URL="${SUPABASE_DB_URL:-${DATABASE_URL:-}}"
+          if [ -z "$DB_URL" ]; then
+            echo "SUPABASE_DB_URL or DATABASE_URL is required in .env.production" >&2
+            exit 1
+          fi
+          for SQL_FILE in \
+            tmp/profile-migrations/20260718010000_recover_missing_profile_rows.sql \
+            tmp/profile-migrations/20260718020000_profiles_service_role_upsert_grants.sql \
+            tmp/profile-migrations/20260718050000_profiles_service_role_upsert_grants.sql \
+            tmp/profile-migrations/20260718070000_profiles_service_role_upsert_id.sql \
+            tmp/profile-migrations/20260718080000_profiles_service_role_account_upsert_selects.sql
+          do
+            echo "applying $(basename "$SQL_FILE")"
+            cat "$SQL_FILE" | docker run --rm -i postgres:16-alpine \
+              psql "$DB_URL" --set ON_ERROR_STOP=1 --quiet
+          done
+          REMOTE

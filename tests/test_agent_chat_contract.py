@@ -36,7 +36,7 @@ def test_onboarding_and_agent_suggestion_contract() -> None:
     assert "saveOnboardingName" in page
     assert "saveOnboardingBirth" in page
     assert "saveOnboardingPlace" in page
-    assert "<BirthMomentFields value={profileDraft}" in page
+    assert "<BirthTimeIntakeFields value={value}" in page
     assert "<BirthLocationFields value={profileDraft}" in page
     assert "Enter 确认称呼" in page
     assert 'fetch("/api/onboarding"' in page
