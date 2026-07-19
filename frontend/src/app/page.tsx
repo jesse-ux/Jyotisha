@@ -46,6 +46,7 @@ import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
 import {
   OnboardingAuthenticationError,
   type OnboardingContent,
+  createStartGreeting,
   isCurrentOnboardingRequest,
   onboardingProfileFingerprint,
   onboardingRequestIdentity,
@@ -118,7 +119,6 @@ type StreamingReply = { sessionId: string; text: string };
 type BirthPlace = { label: string; lat: number; lon: number; tz: number };
 type Account = { user: { id: string; email: string | null }; credits: number; isAdmin: boolean };
 type OnboardingStep = "name" | "birth" | "place" | "rectification";
-type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
 type AccountDialog = "profile" | "redeem" | "logout";
 type DailyStarlanguageCard = { trend: string; action: string; caution: string };
 type DailyStarlanguageApiResponse = {
@@ -187,48 +187,6 @@ const dailyStarlanguageCards: DailyStarlanguageCard[] = [
   { trend: "执行力比灵感更重要。小步完成会比大计划更有力量。", action: "先完成一个可交付版本，再考虑优化。", caution: "别让完美感拖慢开始。" },
   { trend: "适合观察资源流向：时间、注意力、金钱都算。", action: "检查一个正在消耗你的习惯，并给它设上限。", caution: "不要为了短期安心做长期成本高的选择。" },
 ];
-
-const greetingVariants: Record<GreetingPeriod, Array<(name: string) => string>> = {
-  morning: [
-    (name) => `早上好，${name}。今天最想先看什么？`,
-    (name) => `${name}，早安。今天最该关注哪件事？`,
-    (name) => `早上好，${name}。想从哪个问题开始？`,
-  ],
-  noon: [
-    (name) => `中午好，${name}。现在最想理清哪件事？`,
-    (name) => `${name}，中午好。什么问题最需要方向？`,
-    (name) => `午间好，${name}。事业、关系或选择，想先聊哪个？`,
-  ],
-  afternoon: [
-    (name) => `${name}，下午好。现在最想推进哪件事？`,
-    (name) => `下午好，${name}。今天想先理清什么？`,
-    (name) => `${name}，下午好。事业、关系或选择，想先聊哪个？`,
-  ],
-  evening: [
-    (name) => `晚上好，${name}。今天最挂心的是哪件事？`,
-    (name) => `${name}，晚上好。此刻最想聊哪件事？`,
-    (name) => `晚上好，${name}。把心里的问题告诉我吧。`,
-  ],
-  "late-night": [
-    (name) => `夜深了，${name}。此刻最想问什么？`,
-    (name) => `${name}，还没休息吗？想从哪件事说起？`,
-    (name) => `这么晚还醒着，${name}。直接说说最在意的问题吧。`,
-  ],
-};
-
-function greetingPeriod(hour: number): GreetingPeriod {
-  if (hour >= 5 && hour < 11) return "morning";
-  if (hour >= 11 && hour < 14) return "noon";
-  if (hour >= 14 && hour < 18) return "afternoon";
-  if (hour >= 18 && hour < 23) return "evening";
-  return "late-night";
-}
-
-function createStartGreeting(name: string, now = new Date()) {
-  const displayName = name.trim() || "你好";
-  const variants = greetingVariants[greetingPeriod(now.getHours())];
-  return variants[Math.floor(Math.random() * variants.length)](displayName);
-}
 
 const emptyProfile: Profile = {
   name: "",
@@ -1119,7 +1077,7 @@ export default function Home() {
     const requestIdentity = onboardingRequestIdentity(accountId, onboardingFingerprint);
     if (isCurrentOnboardingRequest(activeOnboardingRequestIdentity.current, requestIdentity)) return;
     activeOnboardingRequestIdentity.current = requestIdentity;
-    const presentation = { name: profile.name, startGreeting };
+    const presentationName = profile.name;
     const controller = new AbortController();
     setOnboarding(null);
     setOnboardingError("");
@@ -1134,7 +1092,7 @@ export default function Home() {
           || !isCurrentOnboardingRequest(activeOnboardingRequestIdentity.current, requestIdentity)) return;
         setOnboarding({
           ...content,
-          greeting: presentation.startGreeting || createStartGreeting(presentation.name),
+          greeting: createStartGreeting(presentationName),
         });
         setOnboardingError("");
       })
@@ -1153,7 +1111,7 @@ export default function Home() {
       }
       controller.abort();
     };
-  }, [accountId, hydrated, onboardingFingerprint, profile.name, profileComplete, startGreeting]);
+  }, [accountId, hydrated, onboardingFingerprint, profile.name, profileComplete]);
 
   useEffect(() => {
     if (!hydrated || !profileComplete || birthTimeDisplayState(profile)) return;

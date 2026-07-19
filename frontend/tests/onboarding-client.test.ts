@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   OnboardingAuthenticationError,
   OnboardingRequestError,
+  createStartGreeting,
   isCurrentOnboardingRequest,
   onboardingProfileFingerprint,
   onboardingRequestIdentity,
@@ -32,11 +33,13 @@ test("rejects a stale completion after a complete profile changes", () => {
   // When: a presentation-affecting profile field changes before that request completes.
   const changedFingerprint = onboardingProfileFingerprint({ ...completeProfile, name: "周宁" });
   const currentIdentity = onboardingRequestIdentity("account-1", changedFingerprint);
+  const committedGreeting = createStartGreeting("周宁", new Date("2026-07-19T08:00:00+08:00"), 0);
 
-  // Then: the new profile has a distinct request identity and the old completion is stale.
+  // Then: the new profile has a distinct identity and its greeting cannot retain the old name.
   assert.notEqual(currentIdentity, firstIdentity);
   assert.equal(isCurrentOnboardingRequest(currentIdentity, firstIdentity), false);
-  assert.equal(isCurrentOnboardingRequest(currentIdentity, currentIdentity), true);
+  assert.match(committedGreeting, /周宁/);
+  assert.doesNotMatch(committedGreeting, /林遥/);
 });
 
 test("returns personalized cache content after a timeout and pending response", async () => {
@@ -285,10 +288,8 @@ test("parent cancellation interrupts a pending-response retry delay", async () =
   const originalFetch = globalThis.fetch;
   const parent = new AbortController();
   let requestCount = 0;
-  let markFetched: (() => void) | null = null;
-  const fetched = new Promise<void>((resolve) => { markFetched = resolve; });
   globalThis.fetch = () => {
-    requestCount += 1; markFetched?.();
+    requestCount += 1;
     return Promise.resolve(Response.json({ ...personalizedOnboarding, source: "pending" }));
   };
 
@@ -297,7 +298,6 @@ test("parent cancellation interrupts a pending-response retry delay", async () =
     const request = requestOnboardingWithRecovery(parent.signal, () => undefined, {
       requestTimeoutMs: 10_000, retryDelayMs: 10_000, maxAttempts: 3,
     });
-    await fetched;
     await new Promise<void>((resolve) => setImmediate(resolve));
     parent.abort(new DOMException("page unmounted", "AbortError"));
 

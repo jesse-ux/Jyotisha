@@ -1,5 +1,35 @@
 import { z } from "zod";
 
+type GreetingPeriod = "morning" | "noon" | "afternoon" | "evening" | "late-night";
+
+const greetingVariants: Record<GreetingPeriod, readonly ((name: string) => string)[]> = {
+  morning: [
+    (name) => `早上好，${name}。今天最想先看什么？`,
+    (name) => `${name}，早安。今天最该关注哪件事？`,
+    (name) => `早上好，${name}。想从哪个问题开始？`,
+  ],
+  noon: [
+    (name) => `中午好，${name}。现在最想理清哪件事？`,
+    (name) => `${name}，中午好。什么问题最需要方向？`,
+    (name) => `午间好，${name}。事业、关系或选择，想先聊哪个？`,
+  ],
+  afternoon: [
+    (name) => `${name}，下午好。现在最想推进哪件事？`,
+    (name) => `下午好，${name}。今天想先理清什么？`,
+    (name) => `${name}，下午好。事业、关系或选择，想先聊哪个？`,
+  ],
+  evening: [
+    (name) => `晚上好，${name}。今天最挂心的是哪件事？`,
+    (name) => `${name}，晚上好。此刻最想聊哪件事？`,
+    (name) => `晚上好，${name}。把心里的问题告诉我吧。`,
+  ],
+  "late-night": [
+    (name) => `夜深了，${name}。此刻最想问什么？`,
+    (name) => `${name}，还没休息吗？想从哪件事说起？`,
+    (name) => `这么晚还醒着，${name}。直接说说最在意的问题吧。`,
+  ],
+};
+
 const onboardingResponseSchema = z.object({
   greeting: z.string().transform((value) => value.replace(/\s+/g, " ").trim().slice(0, 180)).pipe(z.string().min(8)),
   suggestions: z.tuple([
@@ -55,6 +85,24 @@ export type OnboardingContent = {
   readonly greeting: string;
   readonly suggestions: readonly OnboardingSuggestion[];
 };
+
+export function createStartGreeting(
+  name: string,
+  now = new Date(),
+  variantSelection = Math.random(),
+): string {
+  const displayName = name.trim() || "你好";
+  const hour = now.getHours();
+  const period: GreetingPeriod = hour >= 5 && hour < 11
+    ? "morning"
+    : hour >= 11 && hour < 14
+      ? "noon"
+      : hour >= 14 && hour < 18
+        ? "afternoon"
+        : hour >= 18 && hour < 23 ? "evening" : "late-night";
+  const variants = greetingVariants[period];
+  return variants[Math.floor(variantSelection * variants.length)](displayName);
+}
 
 export function onboardingProfileFingerprint(profile: OnboardingProfileFingerprintInput): string {
   return JSON.stringify([
