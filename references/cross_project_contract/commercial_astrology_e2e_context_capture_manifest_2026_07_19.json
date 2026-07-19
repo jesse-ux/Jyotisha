@@ -1,0 +1,139 @@
+{
+  "capture_instruction": "Run each user_question through the commercial consultation flow and save the answer context as <id>.json for this runner.",
+  "contract_id": "commercial_astrology_e2e_acceptance_questions_2026_07_19",
+  "questions": [
+    {
+      "context_filename": "marriage_timing.json",
+      "id": "marriage_timing",
+      "required_layers": [
+        "Vimshottari Dasha",
+        "Narayana Dasha",
+        "D9",
+        "UL",
+        "Darakaraka",
+        "timing precision contract",
+        "gender interpretation boundary"
+      ],
+      "user_question": "我什么时候更适合结婚？"
+    },
+    {
+      "context_filename": "career_direction.json",
+      "id": "career_direction",
+      "required_layers": [
+        "Vimshottari Dasha",
+        "Narayana Dasha",
+        "D10",
+        "A10",
+        "functional benefic/malefic"
+      ],
+      "user_question": "我的事业方向适合什么？"
+    },
+    {
+      "context_filename": "wealth_pattern.json",
+      "id": "wealth_pattern",
+      "required_layers": [
+        "Vimshottari Dasha",
+        "Narayana Dasha",
+        "D2",
+        "D11",
+        "Ashtakavarga",
+        "functional benefic/malefic"
+      ],
+      "user_question": "我的财富模式和赚钱方式是什么？"
+    },
+    {
+      "context_filename": "health_risk_window.json",
+      "id": "health_risk_window",
+      "required_layers": [
+        "Vimshottari Dasha",
+        "Narayana Dasha",
+        "D6",
+        "D8",
+        "6th/8th/12th house",
+        "functional benefic/malefic",
+        "health non-medical boundary"
+      ],
+      "user_question": "我接下来一年健康上需要注意什么？"
+    },
+    {
+      "context_filename": "foreign_migration.json",
+      "id": "foreign_migration",
+      "required_layers": [
+        "Vimshottari Dasha",
+        "Narayana Dasha",
+        "D4",
+        "D9",
+        "12th house",
+        "Rahu/Ketu context"
+      ],
+      "user_question": "我适合出国发展或长期迁移吗？"
+    },
+    {
+      "context_filename": "family_home_children.json",
+      "id": "family_home_children",
+      "required_layers": [
+        "Vimshottari Dasha",
+        "Narayana Dasha",
+        "D4",
+        "D7",
+        "D12",
+        "4th/5th/9th house",
+        "functional benefic/malefic"
+      ],
+      "user_question": "我的家庭、房产和子女缘分怎么看？"
+    },
+    {
+      "context_filename": "education_learning_path.json",
+      "id": "education_learning_path",
+      "required_layers": [
+        "Vimshottari Dasha",
+        "Narayana Dasha",
+        "D5",
+        "D24",
+        "5th/9th house",
+        "Mercury/Jupiter context",
+        "functional benefic/malefic"
+      ],
+      "user_question": "我适合继续读书、考证或走什么学习方向？"
+    },
+    {
+      "context_filename": "precise_timing_boundary.json",
+      "id": "precise_timing_boundary",
+      "required_layers": [
+        "timing precision contract",
+        "verified_window",
+        "candidate_windows",
+        "exact_triggers",
+        "day-level holdout boundary"
+      ],
+      "user_question": "你能不能精确看某一天或某个月会发生什么？"
+    },
+    {
+      "context_filename": "birth_time_uncertain.json",
+      "id": "birth_time_uncertain",
+      "required_layers": [
+        "birth-time uncertainty boundary",
+        "rectification boundary",
+        "candidate windows",
+        "not_auto_rectified"
+      ],
+      "user_question": "我的出生时间不太准，还能看吗？"
+    },
+    {
+      "context_filename": "annual_forecast.json",
+      "id": "annual_forecast",
+      "required_layers": [
+        "Vimshottari Dasha",
+        "Narayana Dasha",
+        "annual forecast boundary",
+        "transit context",
+        "Shadbala",
+        "Ashtakavarga",
+        "functional benefic/malefic",
+        "timing precision contract"
+      ],
+      "user_question": "我未来一年整体运势重点是什么？"
+    }
+  ],
+  "scope": "commercial_astrology_e2e_question_manifest"
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the commercial eight-question astrology acceptance contract.
+"""Validate the commercial astrology acceptance matrix.
 
 Default mode is deliberately blocked: the contract exists, but real E2E proof
 requires captured answer-context JSON files for each question id.
@@ -24,6 +24,12 @@ LAYER_PATTERNS: dict[str, list[str]] = {
     "D2": ["d2"],
     "D11": ["d11"],
     "D4": ["d4"],
+    "D5": ["d5"],
+    "D6": ["d6"],
+    "D7": ["d7"],
+    "D8": ["d8"],
+    "D12": ["d12"],
+    "D24": ["d24"],
     "UL": ["ul", "upapada"],
     "A10": ["a10"],
     "Darakaraka": ["darakaraka", "dk"],
@@ -35,7 +41,11 @@ LAYER_PATTERNS: dict[str, list[str]] = {
     "gender interpretation boundary": ["gender", "spouse", "supplement"],
     "functional benefic/malefic": ["functional_benefic_malefic"],
     "12th house": ["12th", "twelfth", "house_12"],
+    "6th/8th/12th house": ["6th", "8th", "12th"],
+    "4th/5th/9th house": ["4th", "5th", "9th"],
+    "5th/9th house": ["5th", "9th"],
     "Rahu/Ketu context": ["rahu", "ketu"],
+    "Mercury/Jupiter context": ["mercury", "jupiter"],
     "Ashtakoot boundary": ["ashtakoot"],
     "birth-time uncertainty boundary": ["birth_time", "uncertain"],
     "rectification boundary": ["rectification"],
@@ -46,6 +56,9 @@ LAYER_PATTERNS: dict[str, list[str]] = {
     "candidate_windows": ["candidate_windows"],
     "exact_triggers": ["exact_triggers"],
     "day-level holdout boundary": ["holdout", "exploratory_unvalidated"],
+    "health non-medical boundary": ["health", "non_medical"],
+    "annual forecast boundary": ["annual", "forecast"],
+    "transit context": ["transit"],
 }
 
 FORBIDDEN_PATTERNS: dict[str, list[str]] = {
@@ -55,7 +68,13 @@ FORBIDDEN_PATTERNS: dict[str, list[str]] = {
     "D10 missing when present": ["d10_missing_when_present"],
     "guaranteed financial outcome": ["guaranteed_financial_outcome"],
     "D2/D11 missing when present": ["d2_d11_missing_when_present"],
+    "medical diagnosis": ["medical_diagnosis"],
+    "guaranteed disease event": ["guaranteed_disease_event"],
     "visa/legal guarantee": ["visa_guarantee", "legal_guarantee"],
+    "guaranteed child outcome": ["guaranteed_child_outcome"],
+    "property/legal guarantee": ["property_guarantee", "legal_guarantee"],
+    "exam result guarantee": ["exam_result_guarantee"],
+    "single-factor Mercury/Jupiter truth": ["single_factor_mercury_jupiter_truth"],
     "relationship guarantee": ["relationship_guarantee"],
     "gender binary forced when not provided": ["forced_binary_gender"],
     "auto-rectified exact birth time": ["auto_rectified_exact_birth_time"],
@@ -63,6 +82,7 @@ FORBIDDEN_PATTERNS: dict[str, list[str]] = {
     "method variant as absolute error": ["method_variant_absolute_error"],
     "day/month prediction verified before holdout": ["day_month_verified_before_holdout"],
     "exact_triggers as guaranteed events": ["exact_triggers_guaranteed_events"],
+    "full-year certainty": ["full_year_certainty"],
 }
 
 

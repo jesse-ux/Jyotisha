@@ -17,7 +17,7 @@ def test_runner_blocks_without_runtime_contexts() -> None:
     report = runner.evaluate()
 
     assert report["status"] == "blocked"
-    assert report["question_count"] == 8
+    assert report["question_count"] == 10
     assert {row["status"] for row in report["rows"]} == {"blocked"}
     assert report["runtime_context_required"] is True
 
@@ -39,17 +39,17 @@ def test_runner_passes_when_all_required_layers_are_present(tmp_path: Path) -> N
 def test_runner_fails_on_forbidden_claim_hits(tmp_path: Path) -> None:
     contract = json.loads(runner.DEFAULT_CONTRACT.read_text(encoding="utf-8"))
     all_terms = sorted({term for patterns in runner.LAYER_PATTERNS.values() for term in patterns})
-    payload = {"context": " ".join(all_terms), "claim": "majority_vote_truth"}
+    payload = {"context": " ".join(all_terms), "claim": "full_year_certainty"}
 
     for question in contract["questions"]:
         (tmp_path / f"{question['id']}.json").write_text(json.dumps(payload), encoding="utf-8")
 
     report = runner.evaluate(context_dir=tmp_path)
-    engine = next(row for row in report["rows"] if row["id"] == "engine_disagreement")
+    annual = next(row for row in report["rows"] if row["id"] == "annual_forecast")
 
     assert report["status"] == "fail"
-    assert engine["status"] == "fail"
-    assert engine["forbidden_claim_hits"] == ["majority vote truth"]
+    assert annual["status"] == "fail"
+    assert annual["forbidden_claim_hits"] == ["full-year certainty"]
 
 
 def test_runner_writes_question_manifest_for_context_capture(tmp_path: Path) -> None:
@@ -60,5 +60,5 @@ def test_runner_writes_question_manifest_for_context_capture(tmp_path: Path) -> 
 
     assert manifest == saved
     assert saved["scope"] == "commercial_astrology_e2e_question_manifest"
-    assert len(saved["questions"]) == 8
+    assert len(saved["questions"]) == 10
     assert saved["questions"][0]["context_filename"] == "marriage_timing.json"

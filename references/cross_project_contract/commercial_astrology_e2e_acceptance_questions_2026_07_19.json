@@ -1,7 +1,7 @@
 {
   "contract_id": "commercial_astrology_e2e_acceptance_questions_2026_07_19",
   "status": "acceptance_contract_not_runtime_claim",
-  "purpose": "Eight real-user commercial questions used to verify that synchronized astrology capabilities enter the answer context and preserve claim boundaries.",
+  "purpose": "Ten-domain commercial astrology acceptance matrix used to verify that synchronized astrology capabilities enter the answer context and preserve claim boundaries across marriage, career, wealth, health, migration, family, education, timing, rectification, and annual forecast flows.",
   "questions": [
     {
       "id": "marriage_timing",
@@ -22,16 +22,34 @@
       "must_not_claim": ["guaranteed financial outcome", "D2/D11 missing when present"]
     },
     {
+      "id": "health_risk_window",
+      "user_question": "我接下来一年健康上需要注意什么？",
+      "required_layers": ["Vimshottari Dasha", "Narayana Dasha", "D6", "D8", "6th/8th/12th house", "functional benefic/malefic", "health non-medical boundary"],
+      "must_not_claim": ["medical diagnosis", "guaranteed disease event", "exact day/month verified"]
+    },
+    {
       "id": "foreign_migration",
       "user_question": "我适合出国发展或长期迁移吗？",
       "required_layers": ["Vimshottari Dasha", "Narayana Dasha", "D4", "D9", "12th house", "Rahu/Ketu context"],
       "must_not_claim": ["visa/legal guarantee"]
     },
     {
-      "id": "relationship_compatibility",
-      "user_question": "我和这个人合不合？",
-      "required_layers": ["D9", "UL", "Darakaraka", "Ashtakoot boundary", "gender interpretation boundary"],
-      "must_not_claim": ["relationship guarantee", "gender binary forced when not provided"]
+      "id": "family_home_children",
+      "user_question": "我的家庭、房产和子女缘分怎么看？",
+      "required_layers": ["Vimshottari Dasha", "Narayana Dasha", "D4", "D7", "D12", "4th/5th/9th house", "functional benefic/malefic"],
+      "must_not_claim": ["guaranteed child outcome", "property/legal guarantee"]
+    },
+    {
+      "id": "education_learning_path",
+      "user_question": "我适合继续读书、考证或走什么学习方向？",
+      "required_layers": ["Vimshottari Dasha", "Narayana Dasha", "D5", "D24", "5th/9th house", "Mercury/Jupiter context", "functional benefic/malefic"],
+      "must_not_claim": ["exam result guarantee", "single-factor Mercury/Jupiter truth"]
+    },
+    {
+      "id": "precise_timing_boundary",
+      "user_question": "你能不能精确看某一天或某个月会发生什么？",
+      "required_layers": ["timing precision contract", "verified_window", "candidate_windows", "exact_triggers", "day-level holdout boundary"],
+      "must_not_claim": ["day/month prediction verified before holdout", "exact_triggers as guaranteed events"]
     },
     {
       "id": "birth_time_uncertain",
@@ -40,16 +58,10 @@
       "must_not_claim": ["auto-rectified exact birth time"]
     },
     {
-      "id": "engine_disagreement",
-      "user_question": "为什么不同软件算出来不一样？",
-      "required_layers": ["Shadbala", "Ashtakavarga", "Shadbala/AV provenance registry", "VedAstro gateway boundary", "no_majority_vote"],
-      "must_not_claim": ["majority vote truth", "method variant as absolute error"]
-    },
-    {
-      "id": "precise_timing_boundary",
-      "user_question": "你能不能精确看某一天或某个月会发生什么？",
-      "required_layers": ["timing precision contract", "verified_window", "candidate_windows", "exact_triggers", "day-level holdout boundary"],
-      "must_not_claim": ["day/month prediction verified before holdout", "exact_triggers as guaranteed events"]
+      "id": "annual_forecast",
+      "user_question": "我未来一年整体运势重点是什么？",
+      "required_layers": ["Vimshottari Dasha", "Narayana Dasha", "annual forecast boundary", "transit context", "Shadbala", "Ashtakavarga", "functional benefic/malefic", "timing precision contract"],
+      "must_not_claim": ["full-year certainty", "exact day/month verified", "majority vote truth"]
     }
   ],
   "pass_condition": "For each question, the commercial answer context includes required layers or explicitly reports a justified missing layer, and the answer avoids every must_not_claim item.",
