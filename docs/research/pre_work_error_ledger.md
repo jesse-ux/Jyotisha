@@ -147,3 +147,7 @@ done
 `frontend` local `npm run build` ends during Next.js 16.2.10 compile/static generation, both without configuration and with the CI Supabase placeholders. It leaves no `.next/BUILD_ID` or `.next/prerender-manifest.json`, and no application stack trace. Frontend contracts (`270 passed`), lint, and the selected Python commercial workflow regressions (`128 passed`) remain green.
 
 Prevention: do not equate this local host failure with an astrology capability regression. Treat GitHub Actions Node 22 build evidence as the deployment gate before merge. Keep VedAstro `premium_key_missing` and official raw snapshot status explicitly degraded.
+
+## ERR-085 | Public production health cannot prove release identity, database migration, or authenticated workflow | active 2026-07-19
+
+`https://jyotisha.chat` homepage and `/api/health` are reachable and healthy, but those responses do not expose a deployed Git SHA, Supabase migration ledger, evidence-packet TTL policy, or an authorized test-account session. Do not treat HTTP `200` as full release acceptance. Close this only through a deployment-attested SHA plus read-only migration/TTL evidence and an authorized browser acceptance account.

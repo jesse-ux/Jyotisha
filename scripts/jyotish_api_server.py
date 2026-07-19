@@ -6986,7 +6986,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'lat': lat,
                 'lon': lon,
                 'tz': tz,
-            })
+            },
+                enqueue_vedastro_gateway=True,
+                vedastro_question='High-rigor birth-time rectification evidence packet',
+                vedastro_reference_date=datetime.now().strftime('%Y-%m-%d'),
+            )
             result['can_apply'] = False
             result.setdefault('reasons', []).append('three_engine_parity_not_passed')
         return {
