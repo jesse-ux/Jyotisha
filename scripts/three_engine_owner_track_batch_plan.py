@@ -25,8 +25,6 @@ def build(date: str) -> dict[str, Any]:
     }
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in queue["queue"]:
-        if (row["section"], row["field"].split(".")[0]) in already:
-            continue
         groups[row["owner_track"]].append(row)
 
     batches = []
@@ -56,7 +54,7 @@ def build(date: str) -> dict[str, Any]:
         "summary": {
             "source_queue_count": len(queue["queue"]),
             "already_attributed_count": len(already),
-            "remaining_ticket_count": max(len(queue["queue"]) - len(already), 0),
+            "remaining_ticket_count": progress["summary"]["remaining_open_count"],
             "batched_source_row_count": sum(batch["ticket_count"] for batch in batches),
             "owner_track_count": len(batches),
         },
