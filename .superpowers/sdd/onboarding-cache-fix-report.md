@@ -263,3 +263,31 @@ Staged follow-up audit ran `git diff --cached --check`, `--name-status`, and `--
 passed, and the staged set contained exactly nine follow-up paths: this report, the production
 route adapter, handler, payload boundary, route fake/test, policy test, candidate test, and root CI
 contract. Unrelated `.superpowers/sdd/task-1-report.md` and `.omo/` remained unstaged.
+
+## Review cleanup: behavioral authority
+
+The post-review cleanup removes implementation-text assertions from the root Python contract and
+leaves stateful TypeScript route tests as the authority for cache claim and completion behavior.
+Broad UI, authentication, migration, and structured suggestion-marker coverage remains in the
+Python contract; exact natural-language prompt prose is no longer pinned there.
+
+The one-use `createOnboardingCompletionTransition` wrapper and its tautological unit test were
+removed. The handler now passes `identity.pendingVersion` and `identity.readyVersion` directly to
+the repository completion command. This is a refactor only, so the existing route integration
+matrix provided the behavior-preservation check rather than adding a new RED case.
+
+### Cleanup verification
+
+- Focused route, policy, and candidate-completion tests: exit 0; 30 passed, 0 failed.
+- Full frontend suite: exit 0; 454 passed, 0 failed.
+- Python agent-chat contract: exit 0; 2 passed.
+- Changed-file ESLint and Ruff: exit 0 with zero diagnostics.
+- Webpack production build: exit 0; compiled successfully, TypeScript completed, and 22/22 pages
+  generated.
+- `git diff --check`: exit 0.
+- Pure LOC: cache policy 70, onboarding handler 182, policy test 154, and root contract 69; every
+  modified code/test file remains below 200 pure LOC.
+
+The build continues to use repository-standard CI placeholder Supabase values and webpack because
+the worktree's external dependency symlink is incompatible with default Turbopack. No new concern
+was introduced by this cleanup.

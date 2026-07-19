@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   createOnboardingCacheIdentity,
-  createOnboardingCompletionTransition,
   decideOnboardingCache,
   ONBOARDING_CLAIM_TTL_MS,
 } from "../src/lib/onboarding-cache-policy.ts";
@@ -62,22 +61,6 @@ test("changed profile cannot wait on the previous profile's active pending claim
     expectedVersion: identityA.pendingVersion,
     pendingVersion: identityB.pendingVersion,
   });
-});
-
-test("stale profile completion loses ownership after the current profile claims", () => {
-  // Given: B has replaced A's pending identity in the row.
-  const identityA = createOnboardingCacheIdentity(profileA);
-  const identityB = createOnboardingCacheIdentity({ ...profileA, cityCode: "310100" });
-  const rowVersionAfterBClaims = identityB.pendingVersion;
-
-  // When: each completion prepares an exact compare-and-set transition.
-  const completionA = createOnboardingCompletionTransition(identityA);
-  const completionB = createOnboardingCompletionTransition(identityB);
-
-  // Then: A cannot match the row, while B can commit its own ready identity.
-  assert.notEqual(rowVersionAfterBClaims, completionA.expectedVersion);
-  assert.equal(rowVersionAfterBClaims, completionB.expectedVersion);
-  assert.equal(completionB.readyVersion, identityB.readyVersion);
 });
 
 test("current profile accepts only valid ready content and an active current pending claim", () => {

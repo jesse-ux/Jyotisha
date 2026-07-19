@@ -19,11 +19,6 @@ export type OnboardingCacheIdentity = {
   readonly pendingVersion: string;
 };
 
-export type OnboardingCompletionTransition = {
-  readonly expectedVersion: string;
-  readonly readyVersion: string;
-};
-
 type OnboardingCacheObservation<Payload> = {
   readonly identity: OnboardingCacheIdentity;
   readonly observedVersion: string | null;
@@ -81,14 +76,5 @@ export function decideOnboardingCache<Payload>(
     kind: "claim",
     expectedVersion: observation.observedVersion,
     pendingVersion: observation.identity.pendingVersion,
-  };
-}
-
-export function createOnboardingCompletionTransition(
-  identity: OnboardingCacheIdentity,
-): OnboardingCompletionTransition {
-  return {
-    expectedVersion: identity.pendingVersion,
-    readyVersion: identity.readyVersion,
   };
 }

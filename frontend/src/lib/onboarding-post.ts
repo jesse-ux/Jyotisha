@@ -1,6 +1,5 @@
 import {
   createOnboardingCacheIdentity,
-  createOnboardingCompletionTransition,
   decideOnboardingCache,
 } from "./onboarding-cache-policy.ts";
 import {
@@ -181,11 +180,10 @@ export function createOnboardingPost(dependencies: OnboardingPostDependencies): 
       );
     }
 
-    const completion = createOnboardingCompletionTransition(identity);
     const completed = await session.repository.completeProfile({
       userId: session.userId,
-      expectedPendingVersion: completion.expectedVersion,
-      readyVersion: completion.readyVersion,
+      expectedPendingVersion: identity.pendingVersion,
+      readyVersion: identity.readyVersion,
       payload,
       generatedAt: dependencies.now().toISOString(),
     });
