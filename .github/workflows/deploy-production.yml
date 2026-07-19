@@ -64,9 +64,18 @@ jobs:
             "cd '$DEPLOY_PATH' && GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
 
       - name: Verify production
+        env:
+          DEPLOY_GIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           curl --fail --silent --show-error --retry 12 --retry-delay 5 https://jyotisha.chat/login >/dev/null
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' https://jyotisha.chat/api/account)" = "401"
+          deployed_sha=""
+          for attempt in $(seq 1 24); do
+            deployed_sha="$(curl --fail --silent --show-error https://jyotisha.chat/api/health | python3 -c 'import json, sys; print(json.load(sys.stdin).get("deployment", {}).get("gitCommit", ""))')" || deployed_sha=""
+            [ "$deployed_sha" = "$DEPLOY_GIT_SHA" ] && break
+            sleep 5
+          done
+          test "$deployed_sha" = "$DEPLOY_GIT_SHA" || { echo "Production revision did not converge: expected $DEPLOY_GIT_SHA, got ${deployed_sha:-empty}" >&2; exit 1; }
           ssh -i ~/.ssh/jyotisha-production -p "$DEPLOY_PORT" \
             -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20 \
             "$DEPLOY_USER@$DEPLOY_HOST" \

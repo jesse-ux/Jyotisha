@@ -18,4 +18,7 @@ test("production deployment passes the tested revision into the web runtime", ()
   assert.match(compose, /GITHUB_SHA: \$\{GITHUB_SHA\}/);
   assert.match(workflow, /DEPLOY_GIT_SHA: \$\{\{ github\.event\.workflow_run\.head_sha \|\| github\.sha \}\}/);
   assert.match(workflow, /GITHUB_SHA='\$DEPLOY_GIT_SHA'/);
+  assert.match(workflow, /get\("deployment", \{\}\)\.get\("gitCommit"/);
+  assert.match(workflow, /DEPLOY_GIT_SHA/);
+  assert.match(workflow, /Production revision did not converge/);
 });

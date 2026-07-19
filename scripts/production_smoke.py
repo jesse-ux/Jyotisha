@@ -22,7 +22,7 @@ def fetch(url: str, timeout: float) -> tuple[int, str, float]:
         raise RuntimeError(str(error.reason)) from error
 
 
-def check(base_url: str, timeout: float) -> dict:
+def check(base_url: str, timeout: float, expected_git_sha: str | None = None) -> dict:
     base = base_url.rstrip("/")
     checks: list[dict] = []
 
@@ -41,11 +41,16 @@ def check(base_url: str, timeout: float) -> dict:
     checks.append(
         {
             "name": "health",
-            "ok": status in {200, 503} and health.get("status") in {"ok", "degraded", "blocked"},
+            "ok": (
+                status in {200, 503}
+                and health.get("status") in {"ok", "degraded", "blocked"}
+                and (not expected_git_sha or health.get("deployment", {}).get("gitCommit") == expected_git_sha)
+            ),
             "status": status,
             "latency_ms": round(elapsed * 1000),
             "health_status": health.get("status"),
             "checks": sorted((health.get("checks") or {}).keys()),
+            "deployment_git_commit": health.get("deployment", {}).get("gitCommit"),
         }
     )
 
@@ -60,9 +65,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="https://jyotisha.chat")
     parser.add_argument("--timeout", type=float, default=8.0)
+    parser.add_argument("--expected-git-sha")
     args = parser.parse_args()
     try:
-        report = check(args.base_url, args.timeout)
+        report = check(args.base_url, args.timeout, args.expected_git_sha)
     except Exception as error:  # noqa: BLE001 - CLI smoke should report compact failure.
         report = {"base_url": args.base_url, "ok": False, "error": str(error)}
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
