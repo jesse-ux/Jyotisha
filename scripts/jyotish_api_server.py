@@ -6976,6 +6976,17 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             high_rigor=high_rigor,
         )
         if high_rigor:
+            from scripts.rectification_three_engine_packet import build_packet
+            result['three_engine_packet'] = build_packet({
+                'year': parsed_birth_date.year,
+                'month': parsed_birth_date.month,
+                'day': parsed_birth_date.day,
+                'hour': int(start_time.split(':', 1)[0]),
+                'minute': int(start_time.split(':', 1)[1]),
+                'lat': lat,
+                'lon': lon,
+                'tz': tz,
+            })
             result['can_apply'] = False
             result.setdefault('reasons', []).append('three_engine_parity_not_passed')
         return {
