@@ -561,14 +561,30 @@
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Queues formula/ayanamsa/node/rounding attribution for jyotishganit mismatches; no majority-vote truth."
+    },
+    {
+      "packet_id": "external_source_use_tier_registry_2026_07_20",
+      "path": "references/oracle/external_source_use_tier_registry_2026_07_20.json",
+      "domain": "external_source_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Classifies OSS/web/real-case sources by allowed use tier; does not upgrade any source to oracle truth."
+    },
+    {
+      "packet_id": "high_rigor_closure_gate_snapshot_2026_07_20",
+      "path": "references/oracle/high_rigor_closure_gate_snapshot_2026_07_20.json",
+      "domain": "high_rigor_governance",
+      "claim_status": "blocked",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Aggregates current high-rigor gates; blocked/partial gates remain blocked until their evidence packets close."
     }
   ],
   "production_tuning_allowed": false,
   "scope": "evidence_packet_index",
   "status": "active_index_v1",
   "summary": {
-    "packet_count": 70,
-    "blocked_or_partial_count": 45,
+    "packet_count": 72,
+    "blocked_or_partial_count": 46,
     "human_review_required_count": 2
   }
 }
