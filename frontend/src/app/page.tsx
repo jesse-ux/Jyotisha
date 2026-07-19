@@ -12,6 +12,7 @@ import {
 import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
 import { BirthTimeRectification } from "@/components/birth-time-rectification";
 import { ChatMessageContent } from "@/components/chat-message-content";
+import { AgentAvatar, ChatMessageRow } from "@/components/chat-message-row";
 import { ModelSelector } from "@/components/model-selector";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -41,6 +42,7 @@ import {
   previewRectificationJourney,
 } from "@/lib/birth-time-guided-preview";
 import { keepFocusWithin } from "@/lib/focus-trap";
+import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
 import { protectOnboardingPhrases } from "@/lib/onboarding-copy";
 import {
   SessionModelPersistenceQueue,
@@ -54,7 +56,7 @@ import {
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 type Theme = ReplyTheme;
-type Message = { role: "user" | "assistant"; text: string; suggestions?: string[] };
+type Message = ChatMessage;
 type Profile = BirthTimeDraft & {
   name: string;
   countryCode: "CN";
@@ -620,10 +622,6 @@ function ProfileFields({ value, onChange, nameInputId }: { value: Profile; onCha
   );
 }
 
-function AgentAvatar() {
-  return <span className="agent-avatar" aria-hidden="true" />;
-}
-
 function OnboardingChatMessage({ role, text, streaming = false, length = text.length, phraseSafe = false }: { role: Message["role"]; text: string; streaming?: boolean; length?: number; phraseSafe?: boolean }) {
   const visibleText = streaming ? text.slice(0, length) : text;
   const protectedVisibleText = protectOnboardingPhrases(visibleText);
@@ -824,7 +822,10 @@ export default function Home() {
       window.removeEventListener("keydown", closeSessionMenu);
     };
   }, [sessionMenuId]);
-  const activeSuggestions = activeSession?.messages.reduce((latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest, [] as string[]) ?? [];
+  const activeSuggestions = activeSession?.messages.reduce<readonly string[]>(
+    (latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest,
+    [],
+  ) ?? [];
   useEffect(() => {
     if (!accountId) {
       setChartLibrary([]);
@@ -1949,6 +1950,14 @@ export default function Home() {
     );
   }
 
+  function completeConsultationInterface(requestId: string) {
+    if (pendingConsultation.current?.requestId !== requestId) return;
+    pendingConsultation.current = null;
+    setStreamingReply(null);
+    setPendingSessionId(null);
+    setConsultationPhase(null);
+  }
+
   async function send(
     text: string,
     requestedTheme?: Theme,
@@ -2051,10 +2060,7 @@ export default function Home() {
         updatedAt: timestamp(),
       };
       updateSession(sessionId, () => previewSession);
-      setStreamingReply(null);
-      setPendingSessionId(null);
-      setConsultationPhase(null);
-      pendingConsultation.current = null;
+      completeConsultationInterface(requestId);
       return;
     }
 
@@ -2137,6 +2143,7 @@ export default function Home() {
         updatedAt: timestamp(),
       };
       updateSession(sessionId, () => completedSession);
+      completeConsultationInterface(requestId);
       try {
         await persistSession(completedSession);
       } catch (caught) {
@@ -2200,12 +2207,7 @@ export default function Home() {
       }
     } finally {
       cancellationRequests.current.delete(requestId);
-      if (pendingConsultation.current?.requestId === requestId) {
-        pendingConsultation.current = null;
-        setStreamingReply(null);
-        setPendingSessionId(null);
-        setConsultationPhase(null);
-      }
+      completeConsultationInterface(requestId);
       if (stoppedRequestAwaitingSettlement.current === requestId) {
         const persistence = stoppedSessionPersistence.current.get(requestId);
         if (persistence) {
@@ -2498,26 +2500,9 @@ export default function Home() {
           ) : (
             <div className="message-list" aria-busy={isLoading}>
               <span className="sr-only" aria-live="polite">{isLoading ? "Jyotisha 正在回答" : ""}</span>
-              {activeSession.messages.map((message, index) => (
-                <article className={`message message-${message.role}`} key={`${message.role}-${index}`} aria-label={message.role === "assistant" ? "Jyotisha" : "你"}>
-                  {message.role === "assistant" && <AgentAvatar />}
-                  <div className="message-content">
-                    <div className="message-bubble">
-                      {message.role === "assistant" ? <ChatMessageContent text={message.text} /> : <p>{message.text}</p>}
-                    </div>
-                  </div>
-                </article>
+              {chatMessageViews(activeSession.messages, isLoading, activeStreamingText).map((message) => (
+                <ChatMessageRow key={message.renderKey} message={message} />
               ))}
-              {isLoading && (
-                <article className="message message-assistant" aria-label={activeStreamingText ? "Jyotisha 正在回答" : "Jyotisha 正在分析"}>
-                  <AgentAvatar />
-                  <div className="message-content">
-                    <div className="message-bubble">
-                      {activeStreamingText ? <ChatMessageContent text={activeStreamingText} /> : <div className="thinking"><i /><i /><i /></div>}
-                    </div>
-                  </div>
-                </article>
-              )}
               {activeError && <p className="error-message">{activeError}</p>}
               <div ref={conversationEnd} />
             </div>
@@ -2525,10 +2510,10 @@ export default function Home() {
         </div>
 
         <div className="composer-wrap">
-          {activeSuggestions.length > 0 && !isLoading && !cancellationPending && (
+          {activeSuggestions.length > 0 && (
             <div className="composer-suggestions" aria-label="推荐继续提问">
               {activeSuggestions.map((question) => (
-                <button key={question} type="button" disabled={!account || !modelCatalog || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>
+                <button key={question} type="button" disabled={!account || !modelCatalog || isLoading || cancellationPending} onClick={() => chooseSuggestedQuestion(question)}>{question}</button>
               ))}
             </div>
           )}
