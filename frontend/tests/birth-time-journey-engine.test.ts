@@ -9,6 +9,7 @@ import {
   eventScorePayload,
 } from "../src/lib/birth-time-journey-engine-model.ts";
 import type { JourneyEngineFetch } from "../src/lib/birth-time-journey-engine-model.ts";
+import { resolveDynamicRectificationToken } from "../src/lib/birth-time-dynamic-token.ts";
 
 test("journey engine serializes only stored event-scoring inputs", () => {
   const payload = eventScorePayload({
@@ -189,6 +190,12 @@ test("missing dynamic token fails both endpoints before fetch", async () => {
     BirthTimeJourneyEngineConfigurationError,
   );
   assert.equal(harness.calls.length, 0);
+});
+
+test("dynamic token derives only from a server-side service role fallback", () => {
+  assert.equal(resolveDynamicRectificationToken("configured-token", "service-role"), "configured-token");
+  assert.match(resolveDynamicRectificationToken(undefined, "service-role") ?? "", /^[a-f0-9]{64}$/);
+  assert.equal(resolveDynamicRectificationToken(undefined, undefined), null);
 });
 
 test("legacy wire calls never receive dynamic authorization", async () => {
