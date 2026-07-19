@@ -36,6 +36,7 @@ import ashtakavarga  # noqa: E402
 import divisional_charts_extended  # noqa: E402
 import functional_benefics  # noqa: E402
 import jaimini  # noqa: E402
+import shadbala  # noqa: E402
 import narayana_dasha  # noqa: E402
 import varga  # noqa: E402
 
@@ -281,6 +282,35 @@ def _ashtakavarga_auxiliary(natal_chart: dict, ascendant_index: int, target_hous
     return [], 0.0
 
 
+def _shadbala_verified_components_auxiliary(natal_chart: dict, birth_hour: float, dasha_lords: tuple[str, str, str]) -> tuple[list[str], float]:
+    """Use only Sthana/Drik/Naisargika, whose oracle comparison is already matched."""
+    planets = natal_chart.get("planets", {})
+    sun = planets.get("Sun") or {}
+    moon = planets.get("Moon") or {}
+    if not isinstance(sun.get("lon"), (int, float)) or not isinstance(moon.get("lon"), (int, float)):
+        return [], 0.0
+    result = shadbala.calc_shadbala(
+        planets, str(natal_chart["ascendant"].get("sign") or "Aries"), birth_hour,
+        float(sun["lon"]), float(moon["lon"]),
+    )
+    values = {
+        planet: float((row.get("sthana_bala") or {}).get("total", 0)) + float(row.get("drik_bala", 0)) + float(row.get("naisargika_bala", 0))
+        for planet, row in (result.get("planets") or {}).items()
+    }
+    if not values:
+        return [], 0.0
+    baseline = sum(values.values()) / len(values)
+    active = [values[lord] for lord in dasha_lords if lord in values]
+    if not active:
+        return [], 0.0
+    average = sum(active) / len(active)
+    if average > baseline:
+        return ["shadbala_sthana_drik_naisargika_support_auxiliary"], 0.1
+    if average < baseline:
+        return ["shadbala_sthana_drik_naisargika_pressure_auxiliary"], -0.05
+    return [], 0.0
+
+
 def _candidate_row(
     request: RectificationEventRequest,
     candidate_at: datetime,
@@ -346,6 +376,12 @@ def _candidate_row(
         if av_rules:
             evidence[-1]["rule_ids"].extend(av_rules)
             evidence[-1]["points"] = round(evidence[-1]["points"] + av_points * precision_weight(event["precision"]), 4)
+        shadbala_rules, shadbala_points = _shadbala_verified_components_auxiliary(
+            chart, candidate_at.hour + candidate_at.minute / 60, vimshottari,
+        )
+        if shadbala_rules:
+            evidence[-1]["rule_ids"].extend(shadbala_rules)
+            evidence[-1]["points"] = round(evidence[-1]["points"] + shadbala_points * precision_weight(event["precision"]), 4)
 
     return {
         "time": candidate_at.strftime("%H:%M"),

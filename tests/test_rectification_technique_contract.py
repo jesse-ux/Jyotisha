@@ -13,12 +13,14 @@ def test_contract_discloses_used_and_missing_layers() -> None:
     assert {"D4", "D9", "D10", "D24", "D30"} <= set(contract["used_divisional_charts"])
     assert contract["dasha_tracks"] == ["vimshottari_md_ad_pd", "narayana_md_ad"]
     assert contract["used_arudha"] == ["A7", "UL", "A10"]
-    assert "shadbala" in contract["missing_layers"]
+    assert contract["missing_layers"] == ["shadbala_kala_dig_chesta_total"]
     assert "D2" in contract["partial_layers"]
     assert "D11" in contract["partial_layers"]
     assert "functional_benefic_malefic" in contract["auxiliary_layers"]
     assert "controlled_transit" in contract["auxiliary_layers"]
     assert "ashtakavarga" in contract["auxiliary_layers"]
+    assert "shadbala_verified_components" in contract["auxiliary_layers"]
+    assert "shadbala_sthana_drik_naisargika" in contract["partial_layers"]
     assert contract["external_engines"]["status"] == "not_run"
 
 
