@@ -1,4 +1,5 @@
 type CandidateCompletionRequest = {
+  readonly userId: string;
   readonly caseId: string;
   readonly resultId: string;
   readonly time: string;
@@ -29,8 +30,7 @@ export function candidateWorkingTime(
       && assessment?.status === "candidate";
 
   return assessment?.id === request.caseId
-    && typeof assessment?.user_id === "string"
-    && assessment.user_id.length > 0
+    && assessment?.user_id === request.userId
     && terminalStatusMatches
     && assessment.candidate_result_id === request.resultId
     && action?.resultId === request.resultId

@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       .eq("id", parsed.data.caseId)
       .eq("user_id", user.id)
       .maybeSingle();
-    const time = candidateWorkingTime(stored, parsed.data);
+    const time = candidateWorkingTime(stored, { ...parsed.data, userId: user.id });
     if (caseError || !time) {
       return NextResponse.json(
         { error: "候选结果已变化", message: "请使用当前评估结果继续。" },

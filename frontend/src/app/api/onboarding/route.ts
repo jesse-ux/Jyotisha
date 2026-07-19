@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  createOnboardingCacheIdentity,
+  createOnboardingCompletionTransition,
+  decideOnboardingCache,
+} from "@/lib/onboarding-cache-policy";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingAgent } from "@/mastra";
@@ -7,10 +12,6 @@ import { defaultLanguageModel } from "@/mastra/model";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
-
-const ONBOARDING_VERSION = "ayanam-onboarding-v3";
-const ONBOARDING_PENDING_VERSION = `${ONBOARDING_VERSION}:pending`;
-const ONBOARDING_CLAIM_TTL_MS = 2 * 60 * 1000;
 
 const onboardingSchema = z.object({
   greeting: z.string().trim().min(8).max(180),
@@ -95,34 +96,55 @@ export async function POST() {
     );
   }
 
-  if (profile.onboarding_version === ONBOARDING_VERSION) {
-    const cached = onboardingSchema.safeParse(profile.onboarding_payload);
-    if (cached.success) {
-      return NextResponse.json({ ...cached.data, source: "cache" });
-    }
-  }
-
-  const generatedAt = typeof profile.onboarding_generated_at === "string"
+  const identity = createOnboardingCacheIdentity({
+    name: profile.name,
+    birthDate: profile.birth_date,
+    birthTime: profile.birth_time,
+    activeBirthTime: profile.active_birth_time,
+    birthTimeStatus: profile.birth_time_status,
+    countryCode: profile.country_code,
+    provinceCode: profile.province_code,
+    cityCode: profile.city_code,
+  });
+  const cached = onboardingSchema.safeParse(profile.onboarding_payload);
+  const generatedAtMs = typeof profile.onboarding_generated_at === "string"
     ? Date.parse(profile.onboarding_generated_at)
     : 0;
-  const activeClaim = profile.onboarding_version === ONBOARDING_PENDING_VERSION
-    && Number.isFinite(generatedAt)
-    && Date.now() - generatedAt < ONBOARDING_CLAIM_TTL_MS;
-  if (activeClaim) {
-    return NextResponse.json({ ...fallbackPayload, source: "pending" });
+  const cacheDecision = decideOnboardingCache({
+    identity,
+    observedVersion: profile.onboarding_version,
+    generatedAtMs,
+    nowMs: Date.now(),
+    cachedPayload: cached.success ? cached.data : null,
+  });
+
+  switch (cacheDecision.kind) {
+    case "ready":
+      return NextResponse.json({ ...cacheDecision.payload, source: "cache" });
+    case "pending":
+      return NextResponse.json({ ...fallbackPayload, source: "pending" });
+    case "claim":
+      break;
+    default: {
+      const exhaustiveDecision: never = cacheDecision;
+      throw exhaustiveDecision;
+    }
   }
 
   const claimTime = new Date().toISOString();
   let claim = admin
     .from("profiles")
     .update({
-      onboarding_version: ONBOARDING_PENDING_VERSION,
+      onboarding_version: cacheDecision.pendingVersion,
       onboarding_generated_at: claimTime,
     })
     .eq("id", user.id);
-  claim = profile.onboarding_version === null
+  claim = cacheDecision.expectedVersion === null
     ? claim.is("onboarding_version", null)
-    : claim.eq("onboarding_version", profile.onboarding_version);
+    : claim.eq("onboarding_version", cacheDecision.expectedVersion);
+  claim = profile.onboarding_generated_at === null
+    ? claim.is("onboarding_generated_at", null)
+    : claim.eq("onboarding_generated_at", profile.onboarding_generated_at);
   const { data: claimedProfile, error: claimError } = await claim.select("id").maybeSingle();
   if (claimError) {
     return NextResponse.json(
@@ -160,15 +182,16 @@ export async function POST() {
     }
   }
 
+  const completionTransition = createOnboardingCompletionTransition(identity);
   const { error: cacheError } = await admin
     .from("profiles")
     .update({
       onboarding_payload: payload,
-      onboarding_version: ONBOARDING_VERSION,
+      onboarding_version: completionTransition.readyVersion,
       onboarding_generated_at: new Date().toISOString(),
     })
     .eq("id", user.id)
-    .eq("onboarding_version", ONBOARDING_PENDING_VERSION);
+    .eq("onboarding_version", completionTransition.expectedVersion);
 
   if (cacheError) {
     console.warn("[onboarding] unable to cache generated content", cacheError.message);
