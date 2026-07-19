@@ -24,3 +24,12 @@ test("replaces the native birth date input with the shadcn date picker", () => {
   assert.match(picker, /startMonth=\{new Date\(1900, 0\)\}/)
   assert.match(picker, /reverseYears/)
 })
+
+test("keeps the shadcn date-of-birth dropdown navigation order", () => {
+  // Given the shadcn Date of Birth composition
+  const picker = readFileSync(pickerUrl, "utf8")
+
+  // When dropdown captions are enabled
+  // Then the picker must not move the full-width nav after the caption selects
+  assert.doesNotMatch(picker, /navLayout="after"/)
+})
