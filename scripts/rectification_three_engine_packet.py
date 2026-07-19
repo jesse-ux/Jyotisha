@@ -51,7 +51,44 @@ def _jyotishganit_d1(case: dict[str, Any]) -> dict[str, str]:
             sys.path.remove(str(JYOTISHGANIT_ROOT))
 
 
-def build_packet(case: dict[str, Any]) -> dict[str, Any]:
+def _gateway_job_receipt(job: dict[str, Any]) -> dict[str, Any]:
+    """Return only pollable, non-sensitive VedAstro job state for a packet."""
+    archive = job.get("raw_response_archive")
+    archive = archive if isinstance(archive, dict) else {}
+    return {
+        "scope": "vedastro_gateway_job_receipt",
+        "status": str(job.get("status") or "blocked"),
+        "job_id": str(job.get("job_id") or ""),
+        "poll_path": str(job.get("poll_path") or ""),
+        "raw_response_archive": {
+            "status": str(archive.get("status") or "unknown"),
+            "official_raw_response_available": bool(archive.get("official_raw_response_available")),
+        },
+        "boundary": "VedAstro raw response remains server-side; this receipt never returns request data or raw evidence.",
+    }
+
+
+def _enqueue_vedastro_gateway_job(
+    case: dict[str, Any], *, question: str = "", reference_date: str = ""
+) -> dict[str, Any]:
+    from scripts.vedastro_gateway import enqueue_gateway_job
+
+    job = enqueue_gateway_job(
+        case,
+        question=question,
+        themes=["rectification"],
+        reference_date=reference_date,
+    )
+    return _gateway_job_receipt(job)
+
+
+def build_packet(
+    case: dict[str, Any],
+    *,
+    enqueue_vedastro_gateway: bool = False,
+    vedastro_question: str = "",
+    vedastro_reference_date: str = "",
+) -> dict[str, Any]:
     """Compare local/PyJHora/jyotishganit D1 without persisting private input."""
     required = {"year", "month", "day", "hour", "minute", "lat", "lon", "tz"}
     if not required <= set(case):
@@ -66,6 +103,21 @@ def build_packet(case: dict[str, Any]) -> dict[str, Any]:
             outputs[name] = {}
             engine_status[name] = f"blocked:{exc.__class__.__name__}"
     rows = [{"planet": planet, "values": {name: data.get(planet) for name, data in outputs.items()}, "status": "match" if len({data.get(planet) for data in outputs.values()}) == 1 else "mismatch"} for planet in PLANETS]
+    vedastro = {"status": "requires_gateway_raw_archive"}
+    if enqueue_vedastro_gateway:
+        try:
+            vedastro = _enqueue_vedastro_gateway_job(
+                case,
+                question=vedastro_question,
+                reference_date=vedastro_reference_date,
+            )
+        except Exception as exc:
+            vedastro = {
+                "scope": "vedastro_gateway_job_receipt",
+                "status": "blocked",
+                "reason": f"gateway_enqueue_failed:{exc.__class__.__name__}",
+                "boundary": "VedAstro raw response remains server-side; no raw evidence was returned.",
+            }
     return {
         "scope": "request_level_three_engine_d1_parity",
         "case_hash": case_hash(case),
@@ -73,7 +125,7 @@ def build_packet(case: dict[str, Any]) -> dict[str, Any]:
         "match_count": sum(row["status"] == "match" for row in rows),
         "mismatch_count": sum(row["status"] == "mismatch" for row in rows),
         "rows": rows,
-        "vedastro": {"status": "requires_gateway_raw_archive"},
+        "vedastro": vedastro,
         "can_confirm": False,
         "boundary": "D1 parity alone never confirms a rectified minute; VedAstro raw and domain-level parity remain required.",
     }

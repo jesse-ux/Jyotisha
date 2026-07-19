@@ -1,0 +1,14 @@
+{
+  "benchmark_id": "minute_rectification_holdout_v1",
+  "scope": "public_birth_minute_rectification",
+  "status": "blocked_awaiting_public_aa_cases",
+  "truth_policy": "Only independently published AA birth-minute records and independently sourced dated life events qualify.",
+  "negative_control_policy": "Each case requires blinded false-minute candidates on both sides of the published minute; generated timing-date controls are not substitutes.",
+  "minimum_gate": {
+    "public_aa_cases": 20,
+    "events_per_case": 3,
+    "negative_minutes_per_case": 4
+  },
+  "cases": [],
+  "boundary": "This empty protocol is not evidence of minute-level accuracy. It blocks any verified-minute claim until independent public cases and negative controls are frozen."
+}

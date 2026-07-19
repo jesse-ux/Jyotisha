@@ -10,6 +10,7 @@ import signal
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -18,7 +19,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "jyotish-app"
 API_SERVER = ROOT / "scripts" / "jyotish_api_server.py"
-TMP = Path(os.environ.get("TMPDIR", "/private/tmp"))
+TMP = Path(os.environ.get("TMPDIR") or tempfile.gettempdir())
 SYSTEM_CHROME = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 OFFLINE_CONSOLE_ERROR_MARKERS = [
     "ERR_CONNECTION_REFUSED",

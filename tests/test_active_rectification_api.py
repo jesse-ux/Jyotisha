@@ -404,3 +404,40 @@ def test_gochara_conflict_downgrades_without_verified_timing_claim_red() -> None
     assert top["confidence_cap"] == "low"
     assert "gochara_transit" in top["downgrade_reasons"]
     assert scored["timing_claim_status"] == "exploratory_unvalidated"
+
+
+def test_high_rigor_event_rectification_queues_vedastro_packet(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "scripts.rectification_three_engine_packet._enqueue_vedastro_gateway_job",
+        lambda *_args, **_kwargs: {
+            "scope": "vedastro_gateway_job_receipt",
+            "status": "queued",
+            "job_id": "vgw_rectification",
+            "poll_path": "/api/vedastro_gateway/jobs/vgw_rectification",
+            "raw_response_archive": {
+                "status": "pending",
+                "official_raw_response_available": False,
+            },
+            "boundary": "VedAstro raw response remains server-side; this receipt never returns request data or raw evidence.",
+        },
+    )
+    result = _handler()._compute_active_rectification_events(
+        {
+            "birth_date": "1993-04-17",
+            "start_time": "14:29",
+            "end_time": "14:31",
+            "lat": 36.683333,
+            "lon": 114.35,
+            "tz": 8,
+            "high_rigor": True,
+            "events": [
+                {"id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5", "domain": "education", "date": "2011-09", "precision": "month"},
+                {"id": "0790866c-ad5e-4a45-b2b4-a5c73f6be6ea", "domain": "career", "date": "2019-07-01", "precision": "day"},
+                {"id": "0ef52e51-ab5f-453b-81e5-adb44a929224", "domain": "relationship", "date": "2021", "precision": "year"},
+            ],
+        }
+    )
+    receipt = result["three_engine_packet"]["vedastro"]
+    assert receipt["status"] == "queued"
+    assert receipt["job_id"] == "vgw_rectification"
+    assert "1993" not in str(receipt)

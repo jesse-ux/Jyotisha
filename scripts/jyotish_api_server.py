@@ -20,6 +20,7 @@ import secrets
 import sqlite3
 import threading
 import time
+import tempfile
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
@@ -1312,7 +1313,10 @@ MAX_IMPORT_FILE_BYTES = 1536 * 1024
 MAX_IMPORT_TEXT_CHARS = 500_000
 MAX_REPORT_HTML_CHARS = 1_200_000
 MAX_REPORT_BASE64_BYTES = 8 * 1024 * 1024
-REPORT_ARTIFACT_DIR = os.path.join('/private/tmp', 'jyotish-reports')
+REPORT_ARTIFACT_DIR = os.environ.get(
+    'JYOTISH_REPORT_ARTIFACT_DIR',
+    os.path.join(tempfile.gettempdir(), 'jyotish-reports'),
+)
 
 API_COMMAND_MAP = {
     'chart': '/api/chart',
@@ -6986,7 +6990,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'lat': lat,
                 'lon': lon,
                 'tz': tz,
-            })
+            },
+                enqueue_vedastro_gateway=True,
+                vedastro_question='High-rigor birth-time rectification evidence packet',
+                vedastro_reference_date=datetime.now().strftime('%Y-%m-%d'),
+            )
             result['can_apply'] = False
             result.setdefault('reasons', []).append('three_engine_parity_not_passed')
         return {
