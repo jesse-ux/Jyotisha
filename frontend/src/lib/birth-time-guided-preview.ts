@@ -91,6 +91,7 @@ export function isGuidedBirthTimePreview(mode: string): boolean {
 
 export function guidedBirthTimePreview(mode: string): JourneyClientResponse {
   if (mode === "birth-time-rectification") return dynamicBirthTimePreview();
+  if (mode === "birth-time-rectification-low") return dynamicBirthTimePreview("terminal-low");
   if (mode === "birth-time-rectification-draft" || mode === "birth-time-rectification-events") {
     return response({
       snapshot: { ...response().snapshot, input: "life_events", assistantIntent: "collect_dated_life_events" },

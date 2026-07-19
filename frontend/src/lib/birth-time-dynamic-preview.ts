@@ -64,6 +64,19 @@ const highCandidate = {
   marginPercent: 24,
 } satisfies CandidateResult;
 
+const terminalLowCandidate = {
+  ...candidate,
+  confidence: "low",
+  winningSegment: {
+    startTime: "05:18",
+    endTime: "05:24",
+    representativeTime: "05:21",
+    widthMinutes: 7,
+  },
+  eventCount: 4,
+  domainCount: 3,
+} satisfies CandidateResult;
+
 function response(input: {
   readonly nextAction: DynamicNextAction;
   readonly phase: "question" | "clarification" | "scoring" | "result" | "ready" | "paused";
@@ -112,7 +125,7 @@ function response(input: {
 }
 
 export function dynamicBirthTimePreview(
-  state: "generating" | "question-retry" | "question" | "clarification" | "scoring" | "scoring-retry" | "low" | "medium" | "confirmation" | "ready" | "paused" = "question",
+  state: "generating" | "question-retry" | "question" | "clarification" | "scoring" | "scoring-retry" | "low" | "terminal-low" | "medium" | "confirmation" | "ready" | "paused" = "question",
 ): DynamicJourneyClientResponse {
   switch (state) {
     case "generating": return response({ nextAction: { kind: "generate_dynamic_question" }, phase: "question" });
@@ -122,6 +135,7 @@ export function dynamicBirthTimePreview(
     case "scoring": return response({ nextAction: { kind: "score_pending", jobId }, phase: "scoring", answeredCount: 1, effectiveAnswerCount: 1, turnVersion: 2 });
     case "scoring-retry": return response({ nextAction: { kind: "retry_scoring", jobId }, phase: "scoring", answeredCount: 1, effectiveAnswerCount: 1, turnVersion: 2 });
     case "low": return response({ nextAction: { kind: "present_low_result", resultId: null }, phase: "result", answeredCount: 2, effectiveAnswerCount: 1, snapshotState: "candidate", turnVersion: 3 });
+    case "terminal-low": return response({ nextAction: { kind: "present_low_result", resultId }, phase: "result", answeredCount: 4, effectiveAnswerCount: 3, candidateResult: terminalLowCandidate, snapshotState: "rectifying", turnVersion: 4 });
     case "medium": return response({ nextAction: { kind: "present_medium_result", resultId }, phase: "result", answeredCount: 3, effectiveAnswerCount: 2, candidateResult: candidate, snapshotState: "candidate", turnVersion: 4 });
     case "confirmation": return response({ nextAction: { kind: "request_candidate_confirmation", resultId }, phase: "result", answeredCount: 4, effectiveAnswerCount: 4, candidateResult: highCandidate, snapshotState: "confirming", turnVersion: 5 });
     case "ready": return response({ nextAction: { kind: "ready", activeTime: "05:43" }, phase: "ready", answeredCount: 4, effectiveAnswerCount: 4, candidateResult: highCandidate, snapshotState: "ready", activeTime: "05:43", turnVersion: 6 });
