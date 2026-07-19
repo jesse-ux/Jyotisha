@@ -83,6 +83,16 @@ const candidateEvidenceSchema = z.object({
   points: z.number(),
 }).strict().readonly();
 
+const rectificationTechniqueReceiptSchema = z.object({
+  calculationStatus: z.enum(["not_started", "evaluated"]),
+  usedDivisionalCharts: z.array(z.string()),
+  usedArudha: z.array(z.string()),
+  dashaTracks: z.array(z.string()),
+  missingLayers: z.array(z.string()),
+  auxiliaryLayers: z.array(z.string()).default([]),
+  hardBlockers: z.array(z.string()),
+}).strict().readonly();
+
 export const candidateResultSchema = z.object({
   resultId: z.string().uuid(),
   confidence: z.enum(["low", "medium", "high"]),
@@ -101,6 +111,7 @@ export const candidateResultSchema = z.object({
   reasons: z.array(z.string().trim().min(1)),
   evidence: z.array(candidateEvidenceSchema),
   algorithmVersion: z.string().trim().min(1),
+  techniqueReceipt: rectificationTechniqueReceiptSchema.optional(),
 }).strict().readonly().superRefine((value, context) => {
   const eligible = value.confidence === "high" && highCandidateMeetsSafetyGates(value);
   if (value.confidence === "high" && value.eventCount < 4) {

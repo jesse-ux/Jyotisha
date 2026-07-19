@@ -39,6 +39,7 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
   }
   if (!result) return null;
   const winner = result.winningSegment;
+  const receipt = result.techniqueReceipt;
 
   return (
     <div className="birth-time-candidate-result" aria-live="polite">
@@ -57,6 +58,15 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
         <p className="birth-time-assessment-unavailable">候选仍然并列或缺少必要计算层，系统不会选择具体分钟。</p>
       )}
       <p className="birth-time-evidence-boundary">这是可复现的候选评分，不代表已经证明出生记录中的具体分钟。</p>
+      {receipt && (
+        <details className="birth-time-evidence-receipt">
+          <summary>本次计算回执</summary>
+          <p>已用：{[...receipt.usedDivisionalCharts, ...receipt.usedArudha, ...receipt.dashaTracks].join("、") || "无"}</p>
+          <p>辅助：{receipt.auxiliaryLayers.join("、") || "无"}</p>
+          <p>未完成：{receipt.missingLayers.join("、") || "无"}</p>
+          {receipt.hardBlockers.length > 0 && <p>阻止确认：{receipt.hardBlockers.join("、")}</p>}
+        </details>
+      )}
 
       {action.kind === "present_low_result" && (
         <div className="birth-time-candidate-terminal" role="status">

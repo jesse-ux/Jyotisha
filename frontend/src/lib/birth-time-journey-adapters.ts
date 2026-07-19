@@ -109,6 +109,15 @@ const candidateResultApiSchema = z.object({
     points: z.number(),
   })),
   algorithm_version: z.string(),
+  technique_contract: z.object({
+    calculation_status: z.enum(["not_started", "evaluated"]),
+    used_divisional_charts: z.array(z.string()),
+    used_arudha: z.array(z.string()),
+    dasha_tracks: z.array(z.string()),
+    missing_layers: z.array(z.string()),
+    auxiliary_layers: z.array(z.string()).default([]),
+    hard_blockers: z.array(z.string()),
+  }).optional(),
 }).passthrough();
 
 class UnexpectedProfileSourceError extends Error {
@@ -229,5 +238,14 @@ function adaptCandidateResult(parsed: z.infer<typeof candidateResultApiSchema>):
       points: item.points,
     })),
     algorithmVersion: parsed.algorithm_version,
+    ...(parsed.technique_contract ? { techniqueReceipt: {
+      calculationStatus: parsed.technique_contract.calculation_status,
+      usedDivisionalCharts: parsed.technique_contract.used_divisional_charts,
+      usedArudha: parsed.technique_contract.used_arudha,
+      dashaTracks: parsed.technique_contract.dasha_tracks,
+      missingLayers: parsed.technique_contract.missing_layers,
+      auxiliaryLayers: parsed.technique_contract.auxiliary_layers,
+      hardBlockers: parsed.technique_contract.hard_blockers,
+    } } : {}),
   });
 }
