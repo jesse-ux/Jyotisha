@@ -1,0 +1,39 @@
+{
+  "base_images": [
+    "mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated7.0",
+    "mcr.microsoft.com/dotnet/sdk:7.0"
+  ],
+  "boundary": "Identifies the pinned local candidate only; it does not identify api.vedastro.org.",
+  "dockerfile_path": "API/Dockerfile",
+  "dockerfile_sha256": "5a22647f6402e22e583c03eedde1a2cee0661baa262e07efe36c4fcab90203b2",
+  "image_id": "",
+  "project_file_hashes": {
+    "API/API.csproj": "320c08b14d3b89f453c855ba08e4bb4cc03c379f540e7db0ffc07035b2fda173",
+    "APITester/APITester.csproj": "677e6b436b830fcd4495643b03f3a7a74f06601eac8140aa27c07f9377cecd7c",
+    "Console/Console.csproj": "c93f66eed9bb2ef4da31642802e00876f7eb733d0c4b06802774e678ddff4a78",
+    "Desktop/APILauncher/APILauncher.csproj": "600f96b7cb38786451438265fc9db06f6a8a4e3efdb8effb1d8fa4f69d9630b2",
+    "Desktop/Desktop.csproj": "bf4f16228da6708be85955349557810dcff2b550473e2cc504c0432e96d11347",
+    "Desktop/Windows/Desktop_Windows.csproj": "b118be0e8025862c27e5bfb4beb4584db19009695b7f6995ee2c1ad0e073c12f",
+    "DocToEmbeddings/DocToEmbeddings.csproj": "a3b92db8e84a5cad287fc3d769c7b4f7ad4992ff30b18cf2b47a246fcabc2559",
+    "LLMCoder/LLMCoder.csproj": "1d3905a1059e2dd5b677c1e10b6d9b8e256a7a8189dc013e5c1147d1cc2106e6",
+    "Library/Library.csproj": "d74bc184a225c77247c29ee74542f3ba4daf67912d32b587da7a30a3aa78a2b2",
+    "LibraryTests/LibraryTests.csproj": "2fe83ecbb72455dcd0df2e4744a6407acba526b61b747a835bc5944164626f35",
+    "MatchMLPipeline/MatchMLPipeline.csproj": "610a80be75226cdfa4ad70ea278d1bd14782856445c0dac03bcf47ccd62065fb",
+    "MigrateGeoLocationData/MigrateGeoLocationData.csproj": "ded1da7b81c85fa44b61df66b376ae1fea94230283051f5f6f1adf0373d395e6",
+    "Others/ArchivedCode/APITests/APITests.csproj": "cf687a39e84fb91bee847e5544a41abb8c3f911c305aa6bf13f78c73f66d1c89",
+    "Others/ArchivedCode/Compatibility.Desktop/Compatibility.Desktop.csproj": "1102b834b79badf241671faeb799a3f9acc5fa93e6dfe6cddf4bc45bf21a6bda",
+    "Others/ArchivedCode/Horoscope.Desktop/Horoscope.Desktop.csproj": "1341b72198bf757da183656b02630cb6a416de808acdc1eb75ba82157f07e2a3",
+    "Others/ArchivedCode/Muhurtha.Desktop/Muhurtha.Desktop.csproj": "4ac800f5bfc468703f62dc2c0a997bf9e67d14d9a7be772f226177eae6caebfb",
+    "Others/ArchivedCode/Tests/Tests.csproj": "f84e998698fdf6e8f007b9a01be94b07bf8de8877c3ea6679f2c3a4b755e7b0f",
+    "Others/MLTableGenerator-MK3/MLTableGenerator.csproj": "7dcf5b42246077d47f383cf023fa33e7c5b485b9fd260c949ad579c67e0490ea",
+    "Publisher/Publisher.csproj": "64622175d2a669f80c788e684d49bfad26eb34c3f2343b4fed862941bc96ae98",
+    "StaticTableGenerator/StaticTableGenerator.csproj": "a2779e770268badcf8ebd92c20a3e927210429c4621d248dac406d7efff5f6c7",
+    "Website/Website.csproj": "81b8b712286839f15472afa4dc2b449f6616d421b51ba86ac7c8f21ad2acc257",
+    "Website_Mobile/Website_Mobile.csproj": "2e0e1232a24295326ea26cbb5c48cd1b01efd8e20bf6c9d9e41b798746219e48"
+  },
+  "repo_digests": [],
+  "scope": "vedastro_reproducible_build_identity",
+  "source_commit": "1f3a46482ab98eb414ab03fa44496a37d35a3a96",
+  "source_root": "/private/tmp/VedAstro-official",
+  "status": "source_pinned_image_not_built"
+}

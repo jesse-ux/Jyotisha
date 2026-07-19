@@ -1,0 +1,110 @@
+{
+  "production_tuning_allowed": false,
+  "registry": [
+    {
+      "allowed_claim": "table_variant",
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "component_family": "ashtakavarga",
+      "next_evidence_required": "public worked table with same contributor semantics and row/column schema.",
+      "row_count": 8,
+      "sample_fields": [
+        "Sun",
+        "Moon",
+        "Mars",
+        "Mercury",
+        "Jupiter",
+        "Venus",
+        "Saturn",
+        "12_sign_scores"
+      ],
+      "sections": [
+        "ashtakavarga_bav",
+        "ashtakavarga_sav"
+      ],
+      "truth_status": "classified_unresolved",
+      "unit_contract": "BAV/SAV tables must name contributor set, shodhana state, and Lagna inclusion."
+    },
+    {
+      "allowed_claim": "derived_total_blocked_until_components_close",
+      "category": "derived_total_from_component_variants",
+      "component_family": "shadbala_total",
+      "next_evidence_required": "close sthana/dig/kala/chesta/naisargika/drik first, then recompute totals.",
+      "row_count": 7,
+      "sample_fields": [
+        "Sun",
+        "Moon",
+        "Mars",
+        "Mercury",
+        "Jupiter",
+        "Venus",
+        "Saturn"
+      ],
+      "sections": [
+        "shadbala_total"
+      ],
+      "truth_status": "classified_unresolved",
+      "unit_contract": "Total Rupa/Virupa cannot be arbitrated before component units close."
+    },
+    {
+      "allowed_claim": "current_target_observation_only",
+      "category": "endpoint_or_varga_semantics",
+      "component_family": "varga_endpoint",
+      "next_evidence_required": "identified endpoint contract for D2/D4/D9/D10 ayanamsa/node/method.",
+      "row_count": 10,
+      "sample_fields": [
+        "Sun.sign",
+        "Moon.sign",
+        "Mars.sign",
+        "Mercury.sign",
+        "Jupiter.sign",
+        "Venus.sign",
+        "Saturn.sign",
+        "Moon.sign"
+      ],
+      "sections": [
+        "D10",
+        "D2",
+        "D4",
+        "D9"
+      ],
+      "truth_status": "classified_unresolved",
+      "unit_contract": "Sign values only; endpoint must prove requested varga/method semantics."
+    },
+    {
+      "allowed_claim": "component_method_variant",
+      "category": "shadbala_formula_variant",
+      "component_family": "shadbala_components",
+      "next_evidence_required": "worked example or source text for each six-force component formula and unit.",
+      "row_count": 35,
+      "sample_fields": [
+        "Sun.sthana",
+        "Sun.kala",
+        "Sun.dig",
+        "Sun.chesta",
+        "Sun.drik",
+        "Moon.sthana",
+        "Moon.kala",
+        "Moon.dig"
+      ],
+      "sections": [
+        "shadbala_components"
+      ],
+      "truth_status": "classified_unresolved",
+      "unit_contract": "Virupa/Rupa component unit must be explicit before parity claims."
+    }
+  ],
+  "scope": "shadbala_av_component_provenance_registry",
+  "source_arbitration": "references/oracle/three_engine_mismatch_arbitration_2026_07_19.json",
+  "status": "classified_unresolved",
+  "summary": {
+    "category_counts": {
+      "ashtakavarga_table_or_contributor_variant": 8,
+      "derived_total_from_component_variants": 7,
+      "endpoint_or_varga_semantics": 10,
+      "shadbala_formula_variant": 35
+    },
+    "registry_count": 4,
+    "source_mismatch_count": 60
+  },
+  "truth_policy": "method_variant_not_majority_vote"
+}
