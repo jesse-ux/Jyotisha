@@ -1,8 +1,6 @@
 {
-  "context_dir": "artifacts/commercial_astrology_e2e_contexts_2026_07_19_run5",
-  "created_at": "2026-07-19",
+  "contract": "references/cross_project_contract/commercial_astrology_e2e_acceptance_questions_2026_07_19.json",
   "question_count": 10,
-  "root_cause_fixed": "commercial workflow now passes frontend-style question plus question_text and exposes domain_context_layers/domain_boundaries for gender, health, migration, family, education, rectification and annual forecast contexts",
   "rows": [
     {
       "forbidden_claim_hits": [],
@@ -65,11 +63,7 @@
       "status": "pass"
     }
   ],
-  "scope": "commercial_astrology_e2e_runtime_capture_report",
-  "status": "pass",
-  "summary": {
-    "blocked": 0,
-    "fail": 0,
-    "pass": 10
-  }
+  "runtime_context_required": true,
+  "scope": "commercial_astrology_e2e_acceptance_runner",
+  "status": "pass"
 }

@@ -362,6 +362,7 @@ def _build_consumer_context(
     vedastro_official: dict,
 ) -> dict:
     """Build a chat-facing truth contract without exposing provider noise as a fatal error."""
+    question_text = (question or '').lower()
     sections = (
         machine_evidence_packet.get('sections')
         if isinstance(machine_evidence_packet.get('sections'), dict)
@@ -384,6 +385,46 @@ def _build_consumer_context(
         name for name in required
         if not isinstance(sections.get(name), dict) or sections[name].get('status') != 'used'
     ]
+    domain_context_layers = []
+    domain_boundaries = {}
+
+    def add_domain_layer(*layers: str, boundary_key: str | None = None, boundary: str | None = None) -> None:
+        for layer in layers:
+            if layer not in domain_context_layers:
+                domain_context_layers.append(layer)
+        if boundary_key and boundary:
+            domain_boundaries[boundary_key] = boundary
+
+    if re.search(r'(婚|结婚|感情|关系|配偶|伴侣|spouse|marriage|relationship)', question_text):
+        add_domain_layer(
+            'gender interpretation boundary',
+            boundary_key='gender_interpretation_boundary',
+            boundary='Gender can affect interpretation wording and spouse-role overlays, but it must not change astronomical calculation facts.',
+        )
+    if re.search(r'(健康|疾病|身体|病|医疗|health)', question_text):
+        add_domain_layer(
+            'D6', 'D8', '6th/8th/12th house', 'health non_medical boundary',
+            boundary_key='health_non_medical_boundary',
+            boundary='Health reading is non_medical guidance only; no diagnosis, guaranteed disease event, or treatment instruction.',
+        )
+    if re.search(r'(出国|移民|迁移|异地|海外|foreign|migration|relocation)', question_text):
+        add_domain_layer('12th house', 'twelfth house', 'house_12')
+    if re.search(r'(家庭|房产|子女|父母|家|children|family|property)', question_text):
+        add_domain_layer('4th/5th/9th house')
+    if re.search(r'(教育|学习|读书|考试|考证|education|study|exam)', question_text):
+        add_domain_layer('5th/9th house')
+    if re.search(r'(出生时间|时间不准|校正|矫正|rectification|birth time)', question_text):
+        add_domain_layer(
+            'birth_time uncertain boundary', 'not_auto_rectified',
+            boundary_key='birth_time_uncertainty_boundary',
+            boundary='Birth-time uncertainty requires candidate windows and event evidence; the workflow is not_auto_rectified.',
+        )
+    if re.search(r'(年度|一年|未来一年|年运|annual|year)', question_text):
+        add_domain_layer(
+            'annual forecast boundary',
+            boundary_key='annual_forecast_boundary',
+            boundary='Annual forecast is a bounded trend reading; no full-year certainty or exact day/month guarantee.',
+        )
     d1_ready = 'D1' in available_layers and bool(chart.get('success', True))
     hard_blockers = [] if d1_ready else ['core_chart_unavailable']
 
@@ -420,6 +461,8 @@ def _build_consumer_context(
         'calculation_source': 'repository_local_engine',
         'route': route,
         'available_layers': available_layers,
+        'domain_context_layers': domain_context_layers,
+        'domain_boundaries': domain_boundaries,
         'missing_route_layers': missing_route_layers,
         'optional_unavailable_layers': optional_unavailable,
         'hard_blockers': hard_blockers,

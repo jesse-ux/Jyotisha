@@ -61,6 +61,7 @@ def _capture_body(question: dict[str, Any]) -> dict[str, Any]:
     qid = str(question["id"])
     return {
         **CANONICAL_BIRTH,
+        "question": question["user_question"],
         "question_text": question["user_question"],
         "theme": THEME_BY_ID.get(qid, ["general"]),
         "entry_mode": "rectification" if qid == "birth_time_uncertain" else "direct_chart",
