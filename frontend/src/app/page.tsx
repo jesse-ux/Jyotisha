@@ -402,6 +402,13 @@ function missingProfileStep(profile: Profile): OnboardingStep | null {
   return null;
 }
 
+function missingOtherProfileStep(profile: Profile): "name" | "birth" | "place" | null {
+  if (!profile.name.trim()) return "name";
+  if (!isBirthTimeDraftReady(profile)) return "birth";
+  if (!selectedBirthPlace(profile)) return "place";
+  return null;
+}
+
 function birthQuestion(name: string) {
   return `${name}，你好。接下来请告诉我出生日期，以及你对出生时间知道到什么程度。不确定也没关系，我不会要求你猜一个具体时间。`;
 }
@@ -1431,7 +1438,7 @@ export default function Home() {
   async function saveOtherChart(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextProfile = { ...otherProfileDraft, name: otherProfileDraft.name.trim() };
-    if (missingProfileStep(nextProfile)) {
+    if (missingOtherProfileStep(nextProfile)) {
       setAccountError("请补全其他星盘的称呼、出生时间和出生地点。");
       return;
     }
