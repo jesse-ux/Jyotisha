@@ -574,7 +574,8 @@ def execute_consultation_workflow(
                 result['success'] = False
                 result['blocked_reason'] = 'external_parity_not_passed'
         result['timing_precision_contract'] = build_timing_precision_contract(body.get('timing'))
-        return result
+        from scripts.commercial_skill_truth import apply_commercial_skill_truth
+        return apply_commercial_skill_truth(result)
 
     chart = dict(chart_override) if isinstance(chart_override, dict) else {}
     prashna = {}
@@ -781,7 +782,8 @@ def execute_consultation_workflow(
         timing=body.get('timing'),
         reference_date=_consultation_reference_date(body).date().isoformat(),
     )
-    return result
+    from scripts.commercial_skill_truth import apply_commercial_skill_truth
+    return apply_commercial_skill_truth(result)
 
 
 def _load_local_module(module_name):

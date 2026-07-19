@@ -274,6 +274,7 @@ export async function POST(request: Request) {
       headers: {
         "x-jyotish-workflow-route": workflowReceipt.route,
         "x-jyotish-workflow-status": workflowReceipt.status,
+        "x-jyotish-technique-truth": workflowReceipt.techniqueTruth,
         "x-jyotish-precise-timing": workflowReceipt.preciseTiming,
         "x-jyotish-missing-layers": workflowReceipt.missingLayers,
       },
