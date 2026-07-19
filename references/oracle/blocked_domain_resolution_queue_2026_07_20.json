@@ -26,6 +26,16 @@
     },
     {
       "blocking_packets": [
+        "d1_d60_public_source_candidate_queue"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": true,
+      "domain": "divisional_chart_source_queue",
+      "hard_dependency": "unknown_dependency",
+      "local_next_action": "triage_blocked_domain"
+    },
+    {
+      "blocking_packets": [
         "vedastro_identity_evidence_audit"
       ],
       "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
@@ -33,6 +43,16 @@
       "domain": "external_oracle_identity",
       "hard_dependency": "upstream_build_identity",
       "local_next_action": "archive_self_host_or_upstream_identity_metadata"
+    },
+    {
+      "blocking_packets": [
+        "four_engine_comparison_queue"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": true,
+      "domain": "four_engine_parity",
+      "hard_dependency": "unknown_dependency",
+      "local_next_action": "triage_blocked_domain"
     },
     {
       "blocking_packets": [
@@ -56,6 +76,16 @@
     },
     {
       "blocking_packets": [
+        "kp_muhurta_shadbala_numeric_packet_queue"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": true,
+      "domain": "kp_muhurta_shadbala_numeric_oracle_queue",
+      "hard_dependency": "unknown_dependency",
+      "local_next_action": "triage_blocked_domain"
+    },
+    {
+      "blocking_packets": [
         "kp_cusp_precision_contract",
         "kp_cusp_worked_example_oracle_queue"
       ],
@@ -67,7 +97,18 @@
     },
     {
       "blocking_packets": [
-        "three_engine_mismatch_closure_queue"
+        "muhurta_oss_factor_scoring_queue"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": true,
+      "domain": "muhurta_factor_scoring",
+      "hard_dependency": "unknown_dependency",
+      "local_next_action": "triage_blocked_domain"
+    },
+    {
+      "blocking_packets": [
+        "three_engine_mismatch_closure_queue",
+        "three_engine_owner_track_batch_plan_2026_07_20"
       ],
       "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
       "code_can_progress_without_truth_upgrade": true,
@@ -88,19 +129,9 @@
     },
     {
       "blocking_packets": [
-        "d1_d60_public_source_candidate_queue"
-      ],
-      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
-      "code_can_progress_without_truth_upgrade": true,
-      "domain": "varga_mapping",
-      "hard_dependency": "public_varga_formula_sources",
-      "local_next_action": "promote_d1_d60_sources_to_verified_packets"
-    },
-    {
-      "blocking_packets": [
         "public_worked_example_queue",
         "public_worked_example_candidate_numeric_audit",
-        "kp_muhurta_shadbala_numeric_packet_queue"
+        "worked_example_numeric_packet_eligibility_2026_07_20"
       ],
       "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
       "code_can_progress_without_truth_upgrade": true,
@@ -112,16 +143,16 @@
   "production_tuning_allowed": false,
   "scope": "blocked_domain_resolution_queue",
   "source_gate_report_summary": {
-    "allowed_count": 7,
-    "blocked_count": 10,
-    "degraded_count": 22,
-    "domain_count": 39,
+    "allowed_count": 8,
+    "blocked_count": 13,
+    "degraded_count": 21,
+    "domain_count": 42,
     "production_tuning_allowed_count": 0
   },
   "status": "open_queue",
   "summary": {
-    "blocked_domain_count": 10,
-    "cannot_be_closed_by_code_only_count": 8,
-    "code_can_progress_count": 5
+    "blocked_domain_count": 13,
+    "cannot_be_closed_by_code_only_count": 11,
+    "code_can_progress_count": 8
   }
 }

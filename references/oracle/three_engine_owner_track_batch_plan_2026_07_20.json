@@ -1,0 +1,104 @@
+{
+  "batches": [
+    {
+      "categories": [
+        "endpoint_or_varga_semantics"
+      ],
+      "claim_boundary": "Batch planning only; does not close mismatches, tune production, or majority-vote truth.",
+      "next_evidence": [
+        "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics"
+      ],
+      "owner_track": "endpoint_contract",
+      "priorities": [
+        "P0"
+      ],
+      "sample_ticket_ids": [
+        "TEMCQ-001",
+        "TEMCQ-002",
+        "TEMCQ-003",
+        "TEMCQ-004",
+        "TEMCQ-005"
+      ],
+      "ticket_count": 10
+    },
+    {
+      "categories": [
+        "shadbala_formula_variant"
+      ],
+      "claim_boundary": "Batch planning only; does not close mismatches, tune production, or majority-vote truth.",
+      "next_evidence": [
+        "public formula source + unit/cap/floor evidence for the component"
+      ],
+      "owner_track": "formula_source",
+      "priorities": [
+        "P0"
+      ],
+      "sample_ticket_ids": [
+        "TEMCQ-020",
+        "TEMCQ-021",
+        "TEMCQ-022",
+        "TEMCQ-023",
+        "TEMCQ-024"
+      ],
+      "ticket_count": 35
+    },
+    {
+      "categories": [
+        "derived_total_from_component_variants"
+      ],
+      "claim_boundary": "Batch planning only; does not close mismatches, tune production, or majority-vote truth.",
+      "next_evidence": [
+        "component closure before total recomputation; explicit Rupa/Virupa total rule"
+      ],
+      "owner_track": "unit_schema",
+      "priorities": [
+        "P1"
+      ],
+      "sample_ticket_ids": [
+        "TEMCQ-019",
+        "TEMCQ-025",
+        "TEMCQ-031",
+        "TEMCQ-037",
+        "TEMCQ-043"
+      ],
+      "ticket_count": 7
+    },
+    {
+      "categories": [
+        "ashtakavarga_table_or_contributor_variant"
+      ],
+      "claim_boundary": "Batch planning only; does not close mismatches, tune production, or majority-vote truth.",
+      "next_evidence": [
+        "public worked BAV/SAV table with contributor set, shodhana state, and Lagna inclusion"
+      ],
+      "owner_track": "worked_example",
+      "priorities": [
+        "P1"
+      ],
+      "sample_ticket_ids": [
+        "TEMCQ-011",
+        "TEMCQ-012",
+        "TEMCQ-013",
+        "TEMCQ-014",
+        "TEMCQ-015"
+      ],
+      "ticket_count": 8
+    }
+  ],
+  "boundary": "Prioritized owner-track batch plan for remaining three-engine mismatches; no claim is upgraded.",
+  "claim_status": "open_queue",
+  "created_at": "2026-07-20",
+  "production_tuning_allowed": false,
+  "scope": "three_engine_owner_track_batch_plan",
+  "source_progress": "references/oracle/three_engine_mismatch_progress_ledger_2026_07_19.json",
+  "source_queue": "references/oracle/three_engine_mismatch_closure_queue_2026_07_19.json",
+  "status": "open_queue",
+  "summary": {
+    "already_attributed_count": 2,
+    "batched_source_row_count": 60,
+    "owner_track_count": 4,
+    "remaining_ticket_count": 58,
+    "source_queue_count": 60
+  },
+  "truth_matrix_allowed": false
+}
