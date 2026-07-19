@@ -16,6 +16,7 @@ def test_contract_discloses_used_and_missing_layers() -> None:
     assert {"D11", "ashtakavarga", "shadbala"} <= set(contract["missing_layers"])
     assert "D2" in contract["partial_layers"]
     assert "functional_benefic_malefic" in contract["auxiliary_layers"]
+    assert "controlled_transit" in contract["auxiliary_layers"]
     assert contract["external_engines"]["status"] == "not_run"
 
 

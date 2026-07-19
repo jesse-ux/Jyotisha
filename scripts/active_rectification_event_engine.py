@@ -224,6 +224,29 @@ def _score_event(
     }
 
 
+def _controlled_transit_rules(
+    request: RectificationEventRequest,
+    event: LifeEvent,
+    natal_ascendant_index: int,
+    target_houses: tuple[int, ...],
+) -> list[str]:
+    """Use only Jupiter/Saturn and only day/month dated events as a weak check."""
+    if event["precision"] == "year":
+        return []
+    event_at = _event_datetime(event)
+    transit_chart = domain_calculation_service.compute_chart({
+        "year": event_at.year, "month": event_at.month, "day": event_at.day,
+        "hour": 12, "minute": 0, "lat": request["lat"], "lon": request["lon"],
+        "tz": request["tz"], "ayanamsa": "lahiri", "node_mode": "true",
+    })
+    rules: list[str] = []
+    for planet in ("Jupiter", "Saturn"):
+        item = transit_chart.get("planets", {}).get(planet) or {}
+        if isinstance(item.get("lon"), (int, float)) and _relative_house(int(item["lon"] // 30), natal_ascendant_index) in target_houses:
+            rules.append(f"controlled_transit_{planet.lower()}_domain_house")
+    return rules
+
+
 def _candidate_row(
     request: RectificationEventRequest,
     candidate_at: datetime,
@@ -280,6 +303,10 @@ def _candidate_row(
             narayana=narayana,
             arudha_padas=arudha_padas,
         ))
+        transit_rules = _controlled_transit_rules(request, event, ascendant_index, DOMAIN_CONFIG[event["domain"]][1])
+        if transit_rules:
+            evidence[-1]["rule_ids"].extend(transit_rules)
+            evidence[-1]["points"] = round(evidence[-1]["points"] + 0.25 * len(transit_rules) * precision_weight(event["precision"]), 4)
 
     return {
         "time": candidate_at.strftime("%H:%M"),
