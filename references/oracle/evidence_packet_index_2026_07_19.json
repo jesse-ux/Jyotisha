@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 62,
+    "packet_count": 63,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -505,6 +505,14 @@
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Normalizes local/Xalen/jyotishganit/VP Jain Shadbala rows into Virupa/Rupa where available; classifications are arbitration queues, not absolute truth."
+    },
+    {
+      "packet_id": "deep_fragment_oss_reuse_gate_round2",
+      "path": "references/oracle/deep_fragment_oss_reuse_gate_round2_2026_07_19.json",
+      "domain": "fragment_oss_reuse_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "pre_work_required_before_sync",
+      "claim_boundary": "Current whole-machine fragment and OSS reuse guardrail is recorded; no numeric truth or production capability is upgraded by this packet."
     }
   ]
 }
