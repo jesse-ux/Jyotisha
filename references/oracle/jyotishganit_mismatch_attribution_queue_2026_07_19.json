@@ -1,0 +1,40 @@
+{
+  "boundary": "This queue classifies mismatch work; it does not settle formula truth.",
+  "claim_status": "partial",
+  "created_at": "2026-07-19",
+  "production_tuning_allowed": false,
+  "rows": [
+    {
+      "attribution_status": "queued",
+      "body": "Ketu",
+      "claim_boundary": "Do not tune local formula to jyotishganit until source formula, ayanamsa, node mode, and schema aliases are pinned.",
+      "jyotishganit_sign": "Leo",
+      "local_sign": "Virgo",
+      "next_evidence_owner": "node_mode_mapping",
+      "probable_reason": "node_mode_or_shadow_planet_handling",
+      "section": "D10",
+      "status": "mismatch"
+    },
+    {
+      "attribution_status": "queued",
+      "body": "Rahu",
+      "claim_boundary": "Do not tune local formula to jyotishganit until source formula, ayanamsa, node mode, and schema aliases are pinned.",
+      "jyotishganit_sign": "Aquarius",
+      "local_sign": "Pisces",
+      "next_evidence_owner": "node_mode_mapping",
+      "probable_reason": "node_mode_or_shadow_planet_handling",
+      "section": "D10",
+      "status": "mismatch"
+    }
+  ],
+  "scope": "jyotishganit_mismatch_attribution_queue",
+  "source_comparison": "references/oracle/jyotishganit_vs_local_field_comparison_steve_jobs_2026_07_19.json",
+  "status": "queue_ready",
+  "summary": {
+    "by_reason": {
+      "node_mode_or_shadow_planet_handling": 2
+    },
+    "mismatch_count": 2
+  },
+  "truth_matrix_allowed": false
+}

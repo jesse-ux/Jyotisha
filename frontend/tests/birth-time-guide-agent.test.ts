@@ -171,6 +171,7 @@ test("server renders every approved variant from its QuestionSpec domain and pre
     relocation: /搬家|离乡|居住地/,
     relationship: /关系进入|关系结束|关系.*转变/,
     career: /工作|职业方向|身份变化/,
+    finance: /收入|资产|负债|资源渠道/,
     health_pressure: /健康压力|生活压力/,
   } as const;
   for (const domain of evidenceDomains) {

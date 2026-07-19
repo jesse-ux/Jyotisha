@@ -11,7 +11,7 @@ const rectificationQuestionSchema = z.object({
 }).strict().readonly();
 const candidateVargaSampleSchema = z.object({
   ascendantSign: z.string().nullable(), d4Sign: z.string().nullable(), d9Sign: z.string().nullable(),
-  d10Sign: z.string().nullable(), d24Sign: z.string().nullable(), d30Sign: z.string().nullable(),
+  d2Sign: z.string().nullable().optional(), d10Sign: z.string().nullable(), d24Sign: z.string().nullable(), d30Sign: z.string().nullable(),
 }).strict().readonly();
 export const questionnaireSchema = z.object({
   questions: z.array(rectificationQuestionSchema).readonly(), samples: z.array(candidateVargaSampleSchema).readonly(), raw: z.record(z.unknown()).readonly(),

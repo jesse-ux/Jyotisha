@@ -1,0 +1,25 @@
+{
+  "blocked_reason": "Pilot candidates are not independent frozen labels. Public positive event sources cannot be used as negative intervals without human absence adjudication.",
+  "boundary": "No day/month timing claim can be promoted until the frozen positive and negative thresholds are met before blind replay.",
+  "claim_status": "blocked",
+  "created_at": "2026-07-19",
+  "current": {
+    "candidate_annotation_count": 9,
+    "frozen_final_count": 0,
+    "frozen_negative_count": 0,
+    "frozen_positive_count": 0
+  },
+  "production_tuning_allowed": false,
+  "remaining": {
+    "negative_needed": 80,
+    "positive_needed": 20
+  },
+  "required": {
+    "minimum_frozen_negative": 80,
+    "minimum_frozen_positive": 20
+  },
+  "scope": "day_level_holdout_readiness_ledger",
+  "source_packet": "references/real_case_calibration/day_level_holdout_v3_human_annotation_packet_2026_07_19.json",
+  "status": "awaiting_independent_labels",
+  "truth_matrix_allowed": false
+}

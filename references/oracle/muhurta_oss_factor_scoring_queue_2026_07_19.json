@@ -1,0 +1,31 @@
+{
+  "scope": "muhurta_oss_factor_scoring_queue",
+  "created_at": "2026-07-19",
+  "status": "queue_ready",
+  "claim_status": "partial",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "local_oss_sources": [
+    {
+      "project": "dashaflow",
+      "path": "references/open_source_sources/dashaflow/muhurtha.py",
+      "available_surface": "evaluate_muhurtha(activity, panchang, planets=None, lagna_sign=None)",
+      "reuse_boundary": "unknown/license must be checked before code reuse; reference/probe only now"
+    },
+    {
+      "project": "rishi-ai-mcp",
+      "path": "references/open_source_sources/rishi-ai-mcp/test_rishi_ai_mcp.py",
+      "available_surface": "check_muhurtha_tool smoke expectations",
+      "reuse_boundary": "product workflow reference only unless license/runtime reviewed"
+    }
+  ],
+  "factor_rows": [
+    {"factor": "panchanga_suddhi", "status": "oss_surface_present", "claim": "observation_only"},
+    {"factor": "activity_specific_rules", "status": "oss_surface_present", "claim": "observation_only"},
+    {"factor": "tarabala", "status": "local_probe_present_needs_oss_formula_alignment", "claim": "observation_only"},
+    {"factor": "chandrabala", "status": "local_probe_present_needs_oss_formula_alignment", "claim": "observation_only"},
+    {"factor": "rahu_kalam", "status": "local_probe_present_needs_public_interval_fixture", "claim": "observation_only"},
+    {"factor": "abhijit", "status": "local_probe_present_needs_public_interval_fixture", "claim": "observation_only"}
+  ],
+  "boundary": "Queue prepares full scoring; do not output final Muhurta verdict until license, formula weights, public examples, and negative controls close."
+}

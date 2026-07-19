@@ -1,0 +1,934 @@
+{
+  "production_tuning_allowed": false,
+  "queue": [
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Sun.sign",
+      "owner_track": "endpoint_contract",
+      "priority": "P0",
+      "required_evidence": "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics",
+      "section": "D2",
+      "ticket_id": "TEMCQ-001"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Moon.sign",
+      "owner_track": "endpoint_contract",
+      "priority": "P0",
+      "required_evidence": "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics",
+      "section": "D2",
+      "ticket_id": "TEMCQ-002"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Mars.sign",
+      "owner_track": "endpoint_contract",
+      "priority": "P0",
+      "required_evidence": "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics",
+      "section": "D2",
+      "ticket_id": "TEMCQ-003"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Mercury.sign",
+      "owner_track": "endpoint_contract",
+      "priority": "P0",
+      "required_evidence": "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics",
+      "section": "D2",
+      "ticket_id": "TEMCQ-004"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Jupiter.sign",
+      "owner_track": "endpoint_contract",
+      "priority": "P0",
+      "required_evidence": "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics",
+      "section": "D2",
+      "ticket_id": "TEMCQ-005"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Venus.sign",
+      "owner_track": "endpoint_contract",
+      "priority": "P0",
+      "required_evidence": "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics",
+      "section": "D2",
+      "ticket_id": "TEMCQ-006"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Saturn.sign",
+      "owner_track": "endpoint_contract",
+      "priority": "P0",
+      "required_evidence": "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics",
+      "section": "D2",
+      "ticket_id": "TEMCQ-007"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Moon.sign",
+      "owner_track": "endpoint_contract",
+      "priority": "P0",
+      "required_evidence": "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics",
+      "section": "D4",
+      "ticket_id": "TEMCQ-008"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Moon.sign",
+      "owner_track": "endpoint_contract",
+      "priority": "P0",
+      "required_evidence": "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics",
+      "section": "D9",
+      "ticket_id": "TEMCQ-009"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Moon.sign",
+      "owner_track": "endpoint_contract",
+      "priority": "P0",
+      "required_evidence": "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics",
+      "section": "D10",
+      "ticket_id": "TEMCQ-010"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Sun",
+      "owner_track": "worked_example",
+      "priority": "P1",
+      "required_evidence": "public worked BAV/SAV table with contributor set, shodhana state, and Lagna inclusion",
+      "section": "ashtakavarga_bav",
+      "ticket_id": "TEMCQ-011"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon",
+      "owner_track": "worked_example",
+      "priority": "P1",
+      "required_evidence": "public worked BAV/SAV table with contributor set, shodhana state, and Lagna inclusion",
+      "section": "ashtakavarga_bav",
+      "ticket_id": "TEMCQ-012"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Mars",
+      "owner_track": "worked_example",
+      "priority": "P1",
+      "required_evidence": "public worked BAV/SAV table with contributor set, shodhana state, and Lagna inclusion",
+      "section": "ashtakavarga_bav",
+      "ticket_id": "TEMCQ-013"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Mercury",
+      "owner_track": "worked_example",
+      "priority": "P1",
+      "required_evidence": "public worked BAV/SAV table with contributor set, shodhana state, and Lagna inclusion",
+      "section": "ashtakavarga_bav",
+      "ticket_id": "TEMCQ-014"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Jupiter",
+      "owner_track": "worked_example",
+      "priority": "P1",
+      "required_evidence": "public worked BAV/SAV table with contributor set, shodhana state, and Lagna inclusion",
+      "section": "ashtakavarga_bav",
+      "ticket_id": "TEMCQ-015"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus",
+      "owner_track": "worked_example",
+      "priority": "P1",
+      "required_evidence": "public worked BAV/SAV table with contributor set, shodhana state, and Lagna inclusion",
+      "section": "ashtakavarga_bav",
+      "ticket_id": "TEMCQ-016"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Saturn",
+      "owner_track": "worked_example",
+      "priority": "P1",
+      "required_evidence": "public worked BAV/SAV table with contributor set, shodhana state, and Lagna inclusion",
+      "section": "ashtakavarga_bav",
+      "ticket_id": "TEMCQ-017"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "12_sign_scores",
+      "owner_track": "worked_example",
+      "priority": "P1",
+      "required_evidence": "public worked BAV/SAV table with contributor set, shodhana state, and Lagna inclusion",
+      "section": "ashtakavarga_sav",
+      "ticket_id": "TEMCQ-018"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun",
+      "owner_track": "unit_schema",
+      "priority": "P1",
+      "required_evidence": "component closure before total recomputation; explicit Rupa/Virupa total rule",
+      "section": "shadbala_total",
+      "ticket_id": "TEMCQ-019"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun.sthana",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-020"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun.kala",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-021"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun.dig",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-022"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun.chesta",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-023"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun.drik",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-024"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon",
+      "owner_track": "unit_schema",
+      "priority": "P1",
+      "required_evidence": "component closure before total recomputation; explicit Rupa/Virupa total rule",
+      "section": "shadbala_total",
+      "ticket_id": "TEMCQ-025"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon.sthana",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-026"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon.kala",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-027"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon.dig",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-028"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon.chesta",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-029"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon.drik",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-030"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars",
+      "owner_track": "unit_schema",
+      "priority": "P1",
+      "required_evidence": "component closure before total recomputation; explicit Rupa/Virupa total rule",
+      "section": "shadbala_total",
+      "ticket_id": "TEMCQ-031"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars.sthana",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-032"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars.kala",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-033"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars.dig",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-034"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars.chesta",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-035"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars.drik",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-036"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury",
+      "owner_track": "unit_schema",
+      "priority": "P1",
+      "required_evidence": "component closure before total recomputation; explicit Rupa/Virupa total rule",
+      "section": "shadbala_total",
+      "ticket_id": "TEMCQ-037"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury.sthana",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-038"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury.kala",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-039"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury.dig",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-040"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury.chesta",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-041"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury.drik",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-042"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter",
+      "owner_track": "unit_schema",
+      "priority": "P1",
+      "required_evidence": "component closure before total recomputation; explicit Rupa/Virupa total rule",
+      "section": "shadbala_total",
+      "ticket_id": "TEMCQ-043"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter.sthana",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-044"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter.kala",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-045"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter.dig",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-046"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter.chesta",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-047"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter.drik",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-048"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus",
+      "owner_track": "unit_schema",
+      "priority": "P1",
+      "required_evidence": "component closure before total recomputation; explicit Rupa/Virupa total rule",
+      "section": "shadbala_total",
+      "ticket_id": "TEMCQ-049"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus.sthana",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-050"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus.kala",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-051"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus.dig",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-052"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus.chesta",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-053"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus.drik",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-054"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn",
+      "owner_track": "unit_schema",
+      "priority": "P1",
+      "required_evidence": "component closure before total recomputation; explicit Rupa/Virupa total rule",
+      "section": "shadbala_total",
+      "ticket_id": "TEMCQ-055"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn.sthana",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-056"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn.kala",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-057"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn.dig",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-058"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn.chesta",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-059"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_status": "open",
+      "commercial_visibility": "do_not_expose_raw",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn.drik",
+      "owner_track": "formula_source",
+      "priority": "P0",
+      "required_evidence": "public formula source + unit/cap/floor evidence for the component",
+      "section": "shadbala_components",
+      "ticket_id": "TEMCQ-060"
+    }
+  ],
+  "scope": "three_engine_mismatch_closure_queue",
+  "source_arbitration": "references/oracle/three_engine_mismatch_arbitration_2026_07_19.json",
+  "status": "open",
+  "summary": {
+    "owner_track_counts": {
+      "endpoint_contract": 10,
+      "formula_source": 35,
+      "unit_schema": 7,
+      "worked_example": 8
+    },
+    "priority_counts": {
+      "P0": 45,
+      "P1": 15
+    },
+    "queue_count": 60,
+    "source_mismatch_count": 60
+  },
+  "truth_policy": "no_majority_vote"
+}

@@ -1,0 +1,65 @@
+{
+  "created_at": "2026-07-19",
+  "items": [
+    {
+      "claim_boundary": "Panchanga is runtime-visible but still needs field-level external oracle examples for high-rigor claims.",
+      "current_call_status": "formally_called_in_api_and_web",
+      "external_or_reference_artifacts": [
+        "references/open_source_sources/panchanga_api"
+      ],
+      "main_artifacts": [
+        "scripts/jyotish_api_server.py",
+        "jyotish-app/main.js",
+        "jyotish-app/index.html"
+      ],
+      "next_action": "add panchanga claim/display contract and source/oracle packet for tithi/nakshatra/yoga/karana/rahu-kalam outputs",
+      "reuse_decision": "do_not_duplicate_runtime",
+      "source_or_license_boundary": "Existing runtime/UI present; panchanga_api license observed as Copyright (c) 2026 moon-bot. All rights reserved.. Treat external panchanga_api as reference unless license/API contract is separately audited.",
+      "technique_id": "panchanga_calendar"
+    },
+    {
+      "claim_boundary": "Muhurta remains reference-only until license, formula, and worked examples close.",
+      "current_call_status": "oss_reference_not_main_runtime",
+      "external_or_reference_artifacts": [
+        "references/open_source_sources/dashaflow/muhurtha.py"
+      ],
+      "main_artifacts": [],
+      "next_action": "audit dashaflow license, extract formula surface, then compare Tarabala/Chandrabala/Rahu Kalam against local Panchanga.",
+      "reuse_decision": "license_audit_before_reuse",
+      "source_or_license_boundary": "dashaflow/muhurtha.py exists under references/open_source_sources; verify license and formula sources before adapting.",
+      "technique_id": "muhurta_dashaflow_candidate"
+    },
+    {
+      "claim_boundary": "KP is not part of current main Jyotish runtime truth.",
+      "current_call_status": "reference_only_not_main_runtime",
+      "external_or_reference_artifacts": [
+        "/Users/wuyongnaren/.workbuddy/backups/jyotish-vedic-astrology-20260711-154109/references/kp-astrology-complete-system.md"
+      ],
+      "main_artifacts": [],
+      "next_action": "create KP separate track: cusp system, ayanamsa, star lord/sub lord, ruling planets, public oracle examples.",
+      "reuse_decision": "reference_only",
+      "source_or_license_boundary": "KP backup/reference may contain useful notes but must pass privacy/license/source audit; do not copy blindly.",
+      "technique_id": "kp_astrology"
+    },
+    {
+      "claim_boundary": "Transit template is not a calibrated timing engine.",
+      "current_call_status": "template_reference_not_main_runtime",
+      "external_or_reference_artifacts": [
+        "/tmp/jyotisha-optimize/assets/event_timing_template.md"
+      ],
+      "main_artifacts": [],
+      "next_action": "turn Gochara template into scoring contract only after Dasha+Varga+Transit features and negative holdout are ready.",
+      "reuse_decision": "reference_only",
+      "source_or_license_boundary": "Template in /tmp must be privacy/source reviewed before promotion.",
+      "technique_id": "gochara_event_timing_template"
+    }
+  ],
+  "production_tuning_allowed": false,
+  "scope": "technique_promotion_audit_kp_gochara_muhurta",
+  "summary": {
+    "formally_called_count": 1,
+    "items_checked": 4,
+    "reference_only_count": 3
+  },
+  "truth_policy": "runtime_presence_not_oracle_closure"
+}

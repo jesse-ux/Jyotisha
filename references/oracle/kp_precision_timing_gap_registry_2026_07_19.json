@@ -19,19 +19,19 @@
   "items": [
     {
       "technique_id": "kp_cusps",
-      "local_code_status": "partial",
-      "skill_invocation_status": "reference_only",
+      "local_code_status": "precision_contract_present_probe_approximate",
+      "skill_invocation_status": "reference_only_contract_available",
       "api_ui_entry_status": "partial_api_no_truth_gate",
-      "external_oracle_status": "missing",
+      "external_oracle_status": "oracle_queue_present_awaiting_public_example",
       "commercial_sync_status": "blocked_until_oracle",
-      "claim_boundary": "Reference/probe only until KP house cusp settings, ayanamsa, Placidus/KP house contract and numeric oracle pass."
+      "claim_boundary": "Reference/probe only; exact KP cusp contract exists at references/oracle/kp_cusp_precision_contract_2026_07_19.json, but current runtime remains whole-sign/house-center probe until numeric cusp oracle passes."
     },
     {
       "technique_id": "star_sub_lord",
       "local_code_status": "minimal_probe_present",
       "skill_invocation_status": "not_invoked_runtime_probe_available",
       "api_ui_entry_status": "missing_api_probe_script_available",
-      "external_oracle_status": "partial_sublord_csv_only",
+      "external_oracle_status": "hash_manifest_present_fixture_missing_or_fixed",
       "commercial_sync_status": "blocked_until_oracle",
       "claim_boundary": "Reference/probe only; KP star/sub-lord fields are exposed by scripts/kp_precision_timing_probe.py but cannot make precise event claims until exact cusp oracle and holdout gates close."
     },

@@ -49,8 +49,10 @@ def test_kp_registry_keeps_precision_timing_blocked_without_oracle() -> None:
     data = _load("kp_precision_timing_gap_registry_2026_07_19.json")
     ids = {item["technique_id"]: item for item in data["items"]}
     assert {"kp_cusps", "star_sub_lord", "ruling_planets", "kp_significators", "kp_horary"}.issubset(ids)
+    assert ids["kp_cusps"]["local_code_status"] == "precision_contract_present_probe_approximate"
+    assert ids["kp_cusps"]["external_oracle_status"] == "oracle_queue_present_awaiting_public_example"
     assert ids["star_sub_lord"]["local_code_status"] == "minimal_probe_present"
-    assert ids["star_sub_lord"]["external_oracle_status"] == "partial_sublord_csv_only"
+    assert ids["star_sub_lord"]["external_oracle_status"] == "hash_manifest_present_fixture_missing_or_fixed"
     assert ids["ruling_planets"]["local_code_status"] == "minimal_probe_present"
     assert ids["kp_significators"]["local_code_status"] == "minimal_probe_present"
     assert ids["kp_significators"]["claim_boundary"].startswith("Reference/probe only")
@@ -61,7 +63,9 @@ def test_muhurta_registry_distinguishes_panchanga_from_full_muhurta() -> None:
     ids = {item["technique_id"]: item for item in data["items"]}
     assert ids["panchanga_base"]["local_code_status"] == "present"
     assert ids["full_muhurta_scoring"]["local_code_status"] == "missing_runtime"
+    assert ids["full_muhurta_scoring"]["api_ui_entry_status"] == "factor_probe_only_no_verdict"
     assert ids["full_muhurta_scoring"]["claim_boundary"].startswith("Do not present")
+    assert ids["tarabala_chandrabala"]["local_code_status"] == "factor_probe_present"
 
 
 def test_ashtakavarga_advanced_registry_keeps_advanced_usage_observation_only() -> None:

@@ -1,0 +1,40 @@
+{
+  "scope": "production_governance_controls",
+  "created_at": "2026-07-19",
+  "status": "automation_contract_v1",
+  "controls": [
+    {
+      "id": "production_e2e_monitor",
+      "script": "scripts/production_e2e_monitor.py",
+      "purpose": "Run health plus commercial astrology E2E acceptance after deployment.",
+      "required_env": ["JYOTISHA_PRODUCTION_BASE_URL"],
+      "optional_env": ["JYOTISHA_PRODUCTION_COOKIE"],
+      "pass_gate": "local_or_remote_acceptance_status_pass"
+    },
+    {
+      "id": "profile_persistence_regression",
+      "script": "scripts/profile_persistence_regression.py",
+      "purpose": "Verify account/profile/birth-data save contract without hardcoding credentials.",
+      "required_env": ["JYOTISHA_PRODUCTION_BASE_URL", "JYOTISHA_PRODUCTION_COOKIE"],
+      "pass_gate": "account_patch_and_chart_profile_write_return_2xx"
+    },
+    {
+      "id": "answer_quality_audit",
+      "script": "scripts/answer_quality_audit.py",
+      "purpose": "Audit final answers for forbidden claims, missing boundary language, and unreadable evidence usage.",
+      "pass_gate": "all_sampled_answers_pass_quality_rules"
+    },
+    {
+      "id": "skill_sync_admission_gate",
+      "script": "scripts/skill_sync_admission_gate.py",
+      "purpose": "Block commercial promotion of research-only, blocked, or reference-only capabilities.",
+      "pass_gate": "no_blocked_or_research_only_promoted_to_user_claim"
+    },
+    {
+      "id": "long_term_validation_dashboard",
+      "script": "scripts/long_term_validation_dashboard.py",
+      "purpose": "Summarize VedAstro, holdout, Shadbala/AV, KP, Muhurta, commercial E2E and production E2E status.",
+      "pass_gate": "dashboard_generated_with_known_blockers"
+    }
+  ]
+}

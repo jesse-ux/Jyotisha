@@ -103,3 +103,12 @@ def test_sqlite_async_job_backend_preserves_token_and_ttl(monkeypatch, tmp_path)
     assert api._load_async_job_record("test_scope", "job_sqlite", access_token="secret")["job_id"] == "job_sqlite"
     with pytest.raises(api.JobAccessDenied):
         api._load_async_job_record("test_scope", "job_sqlite", access_token="wrong")
+
+
+def test_async_high_rigor_vedastro_timeout_is_bounded(monkeypatch):
+    monkeypatch.setenv("JYOTISH_ASYNC_HIGH_RIGOR_VEDASTRO_TIMEOUT_SECONDS", "10")
+    assert api._async_high_rigor_vedastro_timeout_seconds() == 30.0
+    monkeypatch.setenv("JYOTISH_ASYNC_HIGH_RIGOR_VEDASTRO_TIMEOUT_SECONDS", "999")
+    assert api._async_high_rigor_vedastro_timeout_seconds() == 180.0
+    monkeypatch.setenv("JYOTISH_ASYNC_HIGH_RIGOR_VEDASTRO_TIMEOUT_SECONDS", "invalid")
+    assert api._async_high_rigor_vedastro_timeout_seconds() == 90.0

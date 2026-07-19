@@ -1,0 +1,315 @@
+{
+  "boundary": "Sign-level comparison only. Mismatch rows require field-level formula/ayanamsa/node/rounding attribution; do not majority-vote truth.",
+  "claim_status": "observation_only",
+  "comparison_hash": "76558f3067672a5fcaf8d587ae5f6957d1b6eedff066d3aa244ae76b15cbfbe0",
+  "coverage": {
+    "BAV_SAV_jyotishganit": true,
+    "Shadbala_jyotishganit": false,
+    "panchanga_jyotishganit": true
+  },
+  "created_at": "2026-07-19",
+  "production_tuning_allowed": false,
+  "request": {
+    "day": 24,
+    "hour": 19,
+    "latitude": 37.3382,
+    "location": "San Francisco, CA",
+    "longitude": -122.0383,
+    "minute": 15,
+    "month": 2,
+    "name": "Steve Jobs public",
+    "output": "references/oracle/jyotishganit_vs_local_field_comparison_steve_jobs_2026_07_19.json",
+    "timezone": -8.0,
+    "year": 1955
+  },
+  "rows": [
+    {
+      "body": "Ascendant",
+      "jyotishganit_sign": "Cancer",
+      "local_sign": "Cancer",
+      "section": "D2",
+      "status": "match"
+    },
+    {
+      "body": "Jupiter",
+      "jyotishganit_sign": "Cancer",
+      "local_sign": "Cancer",
+      "section": "D2",
+      "status": "match"
+    },
+    {
+      "body": "Ketu",
+      "jyotishganit_sign": "Leo",
+      "local_sign": "Leo",
+      "section": "D2",
+      "status": "match"
+    },
+    {
+      "body": "Mars",
+      "jyotishganit_sign": "Leo",
+      "local_sign": "Leo",
+      "section": "D2",
+      "status": "match"
+    },
+    {
+      "body": "Mercury",
+      "jyotishganit_sign": "Leo",
+      "local_sign": "Leo",
+      "section": "D2",
+      "status": "match"
+    },
+    {
+      "body": "Moon",
+      "jyotishganit_sign": "Cancer",
+      "local_sign": "Cancer",
+      "section": "D2",
+      "status": "match"
+    },
+    {
+      "body": "Rahu",
+      "jyotishganit_sign": "Leo",
+      "local_sign": "Leo",
+      "section": "D2",
+      "status": "match"
+    },
+    {
+      "body": "Saturn",
+      "jyotishganit_sign": "Cancer",
+      "local_sign": "Cancer",
+      "section": "D2",
+      "status": "match"
+    },
+    {
+      "body": "Sun",
+      "jyotishganit_sign": "Leo",
+      "local_sign": "Leo",
+      "section": "D2",
+      "status": "match"
+    },
+    {
+      "body": "Venus",
+      "jyotishganit_sign": "Cancer",
+      "local_sign": "Cancer",
+      "section": "D2",
+      "status": "match"
+    },
+    {
+      "body": "Ascendant",
+      "jyotishganit_sign": "Taurus",
+      "local_sign": "Taurus",
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "body": "Jupiter",
+      "jyotishganit_sign": "Pisces",
+      "local_sign": "Pisces",
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "body": "Ketu",
+      "jyotishganit_sign": "Virgo",
+      "local_sign": "Virgo",
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "body": "Mars",
+      "jyotishganit_sign": "Aries",
+      "local_sign": "Aries",
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "body": "Mercury",
+      "jyotishganit_sign": "Cancer",
+      "local_sign": "Cancer",
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "body": "Moon",
+      "jyotishganit_sign": "Gemini",
+      "local_sign": "Gemini",
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "body": "Rahu",
+      "jyotishganit_sign": "Pisces",
+      "local_sign": "Pisces",
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "body": "Saturn",
+      "jyotishganit_sign": "Cancer",
+      "local_sign": "Cancer",
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "body": "Sun",
+      "jyotishganit_sign": "Taurus",
+      "local_sign": "Taurus",
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "body": "Venus",
+      "jyotishganit_sign": "Virgo",
+      "local_sign": "Virgo",
+      "section": "D4",
+      "status": "match"
+    },
+    {
+      "body": "Ascendant",
+      "jyotishganit_sign": "Sagittarius",
+      "local_sign": "Sagittarius",
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "body": "Jupiter",
+      "jyotishganit_sign": "Gemini",
+      "local_sign": "Gemini",
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "body": "Ketu",
+      "jyotishganit_sign": "Sagittarius",
+      "local_sign": "Sagittarius",
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "body": "Mars",
+      "jyotishganit_sign": "Taurus",
+      "local_sign": "Taurus",
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "body": "Mercury",
+      "jyotishganit_sign": "Cancer",
+      "local_sign": "Cancer",
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "body": "Moon",
+      "jyotishganit_sign": "Scorpio",
+      "local_sign": "Scorpio",
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "body": "Rahu",
+      "jyotishganit_sign": "Gemini",
+      "local_sign": "Gemini",
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "body": "Saturn",
+      "jyotishganit_sign": "Gemini",
+      "local_sign": "Gemini",
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "body": "Sun",
+      "jyotishganit_sign": "Capricorn",
+      "local_sign": "Capricorn",
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "body": "Venus",
+      "jyotishganit_sign": "Sagittarius",
+      "local_sign": "Sagittarius",
+      "section": "D9",
+      "status": "match"
+    },
+    {
+      "body": "Ascendant",
+      "jyotishganit_sign": "Taurus",
+      "local_sign": "Taurus",
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "body": "Jupiter",
+      "jyotishganit_sign": "Pisces",
+      "local_sign": "Pisces",
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "body": "Ketu",
+      "jyotishganit_sign": "Leo",
+      "local_sign": "Virgo",
+      "section": "D10",
+      "status": "mismatch"
+    },
+    {
+      "body": "Mars",
+      "jyotishganit_sign": "Taurus",
+      "local_sign": "Taurus",
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "body": "Mercury",
+      "jyotishganit_sign": "Aries",
+      "local_sign": "Aries",
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "body": "Moon",
+      "jyotishganit_sign": "Pisces",
+      "local_sign": "Pisces",
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "body": "Rahu",
+      "jyotishganit_sign": "Aquarius",
+      "local_sign": "Pisces",
+      "section": "D10",
+      "status": "mismatch"
+    },
+    {
+      "body": "Saturn",
+      "jyotishganit_sign": "Cancer",
+      "local_sign": "Cancer",
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "body": "Sun",
+      "jyotishganit_sign": "Gemini",
+      "local_sign": "Gemini",
+      "section": "D10",
+      "status": "match"
+    },
+    {
+      "body": "Venus",
+      "jyotishganit_sign": "Virgo",
+      "local_sign": "Virgo",
+      "section": "D10",
+      "status": "match"
+    }
+  ],
+  "scope": "jyotishganit_vs_local_field_comparison",
+  "status": "mismatch",
+  "summary": {
+    "match_count": 38,
+    "mismatch_count": 2,
+    "row_count": 40
+  },
+  "truth_matrix_allowed": false
+}

@@ -40,6 +40,19 @@
     "scripts/domain_calculation_service.py",
     "scripts/cross_project_sync_status.py",
     "tests/test_cross_project_contract.py",
-    "tests/test_cross_project_sync_status.py"
+    "tests/test_cross_project_sync_status.py",
+    "scripts/active_rectification_questions.py",
+    "scripts/birth_time_rectifier.py",
+    "scripts/candidate_time_sensitivity_scan.py",
+    "references/oracle/rectification_technique_usage_audit_2026_07_19.json",
+    "references/oracle/rectification_missing_layer_integration_plan_2026_07_19.json",
+    "tests/test_active_rectification_api.py",
+    "tests/test_active_rectification_questions.py",
+    "tests/test_candidate_time_sensitivity_scan.py",
+    "tests/test_rectification_missing_layer_integration_plan.py",
+    "tests/test_skill_truth_overlay_and_rectification_audit.py"
+  ],
+  "notes": [
+    "Birth-time rectification technique core is shared: commercial may add UX/business flow around it, but these research-validated technique gates must remain synchronized."
   ]
 }

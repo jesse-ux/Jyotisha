@@ -1,0 +1,372 @@
+{
+  "api_surface": {
+    "calculate_all_strengths": true,
+    "compute_shadbala": true,
+    "six_strengths": [
+      "Sthanabala",
+      "Digbala",
+      "Kaalabala",
+      "Cheshtabala",
+      "Naisargikabala",
+      "Drikbala"
+    ]
+  },
+  "boundary": "jyotishganit exposes Shadbala via object surface, not top-level to_dict. Observation-only until component units and external worked examples are compared.",
+  "claim_status": "observation_only",
+  "coverage": {
+    "Jupiter": {
+      "Cheshtabala": true,
+      "Digbala": true,
+      "Drikbala": true,
+      "Kaalabala": true,
+      "Naisargikabala": true,
+      "Shadbala": true,
+      "Sthanabala": true
+    },
+    "Ketu": {
+      "Cheshtabala": false,
+      "Digbala": false,
+      "Drikbala": false,
+      "Kaalabala": true,
+      "Naisargikabala": false,
+      "Shadbala": false,
+      "Sthanabala": false
+    },
+    "Mars": {
+      "Cheshtabala": true,
+      "Digbala": true,
+      "Drikbala": true,
+      "Kaalabala": true,
+      "Naisargikabala": true,
+      "Shadbala": true,
+      "Sthanabala": true
+    },
+    "Mercury": {
+      "Cheshtabala": true,
+      "Digbala": true,
+      "Drikbala": true,
+      "Kaalabala": true,
+      "Naisargikabala": true,
+      "Shadbala": true,
+      "Sthanabala": true
+    },
+    "Moon": {
+      "Cheshtabala": true,
+      "Digbala": true,
+      "Drikbala": true,
+      "Kaalabala": true,
+      "Naisargikabala": true,
+      "Shadbala": true,
+      "Sthanabala": true
+    },
+    "Rahu": {
+      "Cheshtabala": false,
+      "Digbala": false,
+      "Drikbala": false,
+      "Kaalabala": true,
+      "Naisargikabala": false,
+      "Shadbala": false,
+      "Sthanabala": false
+    },
+    "Saturn": {
+      "Cheshtabala": true,
+      "Digbala": true,
+      "Drikbala": true,
+      "Kaalabala": true,
+      "Naisargikabala": true,
+      "Shadbala": true,
+      "Sthanabala": true
+    },
+    "Sun": {
+      "Cheshtabala": true,
+      "Digbala": true,
+      "Drikbala": true,
+      "Kaalabala": true,
+      "Naisargikabala": true,
+      "Shadbala": true,
+      "Sthanabala": true
+    },
+    "Venus": {
+      "Cheshtabala": true,
+      "Digbala": true,
+      "Drikbala": true,
+      "Kaalabala": true,
+      "Naisargikabala": true,
+      "Shadbala": true,
+      "Sthanabala": true
+    }
+  },
+  "created_at": "2026-07-19",
+  "production_tuning_allowed": false,
+  "raw": {
+    "request": {
+      "datetime": "1955-02-24T19:15:00",
+      "latitude": 37.3382,
+      "location": "San Francisco, CA",
+      "longitude": -122.0383,
+      "name": "Steve Jobs public",
+      "output": "references/oracle/jyotishganit_shadbala_surface_probe_steve_jobs_2026_07_19.json",
+      "timezone": -8.0
+    },
+    "shadbala": {
+      "Jupiter": {
+        "Cheshtabala": 36.424,
+        "Digbala": 44.095,
+        "Drikbala": 4.072,
+        "Ishtabala": 45.736,
+        "Kaalabala": {
+          "Ayanabala": 57.817,
+          "Natonnatabala": 47.5,
+          "Pakshabala": 10.667,
+          "Total": 250.984,
+          "Tribhagabala": 60.0,
+          "VarshaMaasaDinaHoraBala": 75.0,
+          "Yuddhabala": 0.0
+        },
+        "Kashtabala": 14.264,
+        "Naisargikabala": 34.29,
+        "Shadbala": {
+          "Rupas": 9.934,
+          "Total": 596.043
+        },
+        "Sthanabala": {
+          "Drekshanabala": 0.0,
+          "Kendradhibala": 30.0,
+          "Ojhayugmarashiamshabala": 30.0,
+          "Saptavargajabala": 108.75,
+          "Total": 226.178,
+          "Uchhabala": 57.428
+        },
+        "Vimshopaka": {
+          "dashavarga": 7.625,
+          "saptavarga": 7.625,
+          "shadvarga": 7.25,
+          "shodashavarga": 7.875
+        }
+      },
+      "Ketu": {
+        "Kaalabala": {
+          "Pakshabala": 0.0
+        }
+      },
+      "Mars": {
+        "Cheshtabala": 22.864,
+        "Digbala": 46.955,
+        "Drikbala": 12.483,
+        "Ishtabala": 29.234,
+        "Kaalabala": {
+          "Ayanabala": 44.574,
+          "Natonnatabala": 12.5,
+          "Pakshabala": 49.333,
+          "Total": 106.407,
+          "Tribhagabala": 0.0,
+          "VarshaMaasaDinaHoraBala": 0.0,
+          "Yuddhabala": 0.0
+        },
+        "Kashtabala": 30.766,
+        "Naisargikabala": 17.14,
+        "Shadbala": {
+          "Rupas": 7.304,
+          "Total": 438.227
+        },
+        "Sthanabala": {
+          "Drekshanabala": 15.0,
+          "Kendradhibala": 15.0,
+          "Ojhayugmarashiamshabala": 15.0,
+          "Saptavargajabala": 150.0,
+          "Total": 232.378,
+          "Uchhabala": 37.378
+        },
+        "Vimshopaka": {
+          "dashavarga": 11.175,
+          "saptavarga": 8.2,
+          "shadvarga": 8.5,
+          "shodashavarga": 11.9
+        }
+      },
+      "Mercury": {
+        "Cheshtabala": 35.368,
+        "Digbala": 7.954,
+        "Drikbala": -10.985,
+        "Ishtabala": 25.199,
+        "Kaalabala": {
+          "Ayanabala": 12.089,
+          "Natonnatabala": 60.0,
+          "Pakshabala": 0.0,
+          "Total": 72.089,
+          "Tribhagabala": 0.0,
+          "VarshaMaasaDinaHoraBala": 0.0,
+          "Yuddhabala": 0.0
+        },
+        "Kashtabala": 34.801,
+        "Naisargikabala": 25.71,
+        "Shadbala": {
+          "Rupas": 4.031,
+          "Total": 241.84
+        },
+        "Sthanabala": {
+          "Drekshanabala": 0.0,
+          "Kendradhibala": 15.0,
+          "Ojhayugmarashiamshabala": 0.0,
+          "Saptavargajabala": 78.75,
+          "Total": 111.704,
+          "Uchhabala": 17.954
+        },
+        "Vimshopaka": {
+          "dashavarga": 12.45,
+          "saptavarga": 10.075,
+          "shadvarga": 9.3,
+          "shodashavarga": 11.2
+        }
+      },
+      "Moon": {
+        "Cheshtabala": 10.667,
+        "Digbala": 20.159,
+        "Drikbala": 13.946,
+        "Ishtabala": 21.625,
+        "Kaalabala": {
+          "Ayanabala": 39.945,
+          "Natonnatabala": 12.5,
+          "Pakshabala": 10.667,
+          "Total": 183.112,
+          "Tribhagabala": 60.0,
+          "VarshaMaasaDinaHoraBala": 60.0
+        },
+        "Kashtabala": 38.375,
+        "Naisargikabala": 51.43,
+        "Shadbala": {
+          "Rupas": 7.011,
+          "Total": 420.655
+        },
+        "Sthanabala": {
+          "Drekshanabala": 0.0,
+          "Kendradhibala": 30.0,
+          "Ojhayugmarashiamshabala": 30.0,
+          "Saptavargajabala": 37.5,
+          "Total": 141.341,
+          "Uchhabala": 43.841
+        },
+        "Vimshopaka": {
+          "dashavarga": 13.2,
+          "saptavarga": 11.5,
+          "shadvarga": 10.9,
+          "shodashavarga": 12.125
+        }
+      },
+      "Rahu": {
+        "Kaalabala": {
+          "Pakshabala": 0.0
+        }
+      },
+      "Saturn": {
+        "Cheshtabala": 58.137,
+        "Digbala": 24.313,
+        "Drikbala": 8.06,
+        "Ishtabala": 57.744,
+        "Kaalabala": {
+          "Ayanabala": 10.096,
+          "Natonnatabala": 12.5,
+          "Pakshabala": 49.333,
+          "Total": 71.929,
+          "Tribhagabala": 0.0,
+          "VarshaMaasaDinaHoraBala": 0.0,
+          "Yuddhabala": 0.0
+        },
+        "Kashtabala": 2.256,
+        "Naisargikabala": 8.57,
+        "Shadbala": {
+          "Rupas": 5.369,
+          "Total": 322.113
+        },
+        "Sthanabala": {
+          "Drekshanabala": 0.0,
+          "Kendradhibala": 15.0,
+          "Ojhayugmarashiamshabala": 30.0,
+          "Saptavargajabala": 48.75,
+          "Total": 151.104,
+          "Uchhabala": 57.354
+        },
+        "Vimshopaka": {
+          "dashavarga": 10.55,
+          "saptavarga": 12.975,
+          "shadvarga": 14.05,
+          "shodashavarga": 12.275
+        }
+      },
+      "Sun": {
+        "Cheshtabala": 37.06,
+        "Digbala": 29.175,
+        "Drikbala": -6.462,
+        "Ishtabala": 38.905,
+        "Kaalabala": {
+          "Ayanabala": 37.06,
+          "Natonnatabala": 47.5,
+          "Pakshabala": 49.333,
+          "Total": 148.893,
+          "Tribhagabala": 0.0,
+          "VarshaMaasaDinaHoraBala": 15.0
+        },
+        "Kashtabala": 21.095,
+        "Naisargikabala": 60.0,
+        "Shadbala": {
+          "Rupas": 7.033,
+          "Total": 422.007
+        },
+        "Sthanabala": {
+          "Drekshanabala": 0.0,
+          "Kendradhibala": 60.0,
+          "Ojhayugmarashiamshabala": 15.0,
+          "Saptavargajabala": 37.5,
+          "Total": 153.341,
+          "Uchhabala": 40.841
+        },
+        "Vimshopaka": {
+          "dashavarga": 11.875,
+          "saptavarga": 11.525,
+          "shadvarga": 10.55,
+          "shodashavarga": 10.125
+        }
+      },
+      "Venus": {
+        "Cheshtabala": 46.466,
+        "Digbala": 45.684,
+        "Drikbala": -4.511,
+        "Ishtabala": 37.532,
+        "Kaalabala": {
+          "Ayanabala": 5.019,
+          "Natonnatabala": 47.5,
+          "Pakshabala": 10.667,
+          "Total": 63.186,
+          "Tribhagabala": 0.0,
+          "VarshaMaasaDinaHoraBala": 0.0,
+          "Yuddhabala": 0.0
+        },
+        "Kashtabala": 22.468,
+        "Naisargikabala": 42.86,
+        "Shadbala": {
+          "Rupas": 5.108,
+          "Total": 306.501
+        },
+        "Sthanabala": {
+          "Drekshanabala": 15.0,
+          "Kendradhibala": 30.0,
+          "Ojhayugmarashiamshabala": 0.0,
+          "Saptavargajabala": 37.5,
+          "Total": 112.816,
+          "Uchhabala": 30.316
+        },
+        "Vimshopaka": {
+          "dashavarga": 10.95,
+          "saptavarga": 8.275,
+          "shadvarga": 8.05,
+          "shodashavarga": 11.275
+        }
+      }
+    }
+  },
+  "raw_hash": "8748eb3c54481929a1d7232eb40032bd7c86e6e9e59a38193c233a35c18fb972",
+  "scope": "jyotishganit_shadbala_surface_probe",
+  "source_path": "references/open_source_sources/jyotishganit/jyotishganit/components/strengths.py",
+  "status": "complete",
+  "truth_matrix_allowed": false
+}

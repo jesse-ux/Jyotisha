@@ -2068,6 +2068,7 @@ export default function Home() {
         throw new Error(payloadMessage(errorPayload, "服务暂时不可用"));
       }
       if (!response.body) throw new Error("浏览器未收到可读取的回答流");
+      const techniqueTruth = response.headers.get("x-jyotish-technique-truth") ?? "unknown";
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -2096,7 +2097,7 @@ export default function Home() {
       const completedSession: ChatSession = {
         ...userSession,
         title: currentSession.messages.length === 0 && reply.title ? reply.title : userSession.title,
-        messages: [...userSession.messages, { role: "assistant", text: reply.text, suggestions: reply.suggestions }],
+        messages: [...userSession.messages, { role: "assistant", text: reply.text, suggestions: reply.suggestions, techniqueTruth }],
         updatedAt: timestamp(),
       };
       updateSession(sessionId, () => completedSession);
@@ -2459,6 +2460,7 @@ export default function Home() {
               <span className="sr-only" aria-live="polite">{isLoading ? "Jyotisha 正在回答" : ""}</span>
               {chatMessageViews(activeSession.messages, isLoading, activeStreamingText).map((message) => (
                 <ChatMessageRow key={message.renderKey} message={message} />
+              ))}
               ))}
               {activeError && <p className="error-message">{activeError}</p>}
               <div ref={conversationEnd} />

@@ -1,0 +1,61 @@
+{
+  "api_surface": {
+    "class": "VedicHoroscopeData",
+    "fields": [
+      "Nakshatra",
+      "NakshatraLord",
+      "SubLord",
+      "SubSubLord",
+      "house_sub_lord",
+      "house_ss_lord"
+    ],
+    "methods": [
+      "get_rl_nl_sl_data",
+      "get_planets_data_from_chart",
+      "get_houses_data_from_chart",
+      "generate_chart"
+    ]
+  },
+  "boundary": "KP Rashi/Nakshatra/Sub/SubSub API surface is callable in an isolated dependency path; this is still observation_only until public numeric KP worked examples and replay hashes are archived.",
+  "claim_status": "observation_only",
+  "created_at": "2026-07-19",
+  "dependency_identity": {
+    "flatlib": {
+      "version": "0.3.1.dev0"
+    },
+    "observed_pinned_flatlib_commit": "2618c348ce1ab2588548f935ff65f031630b4872",
+    "polars": {
+      "version": "1.42.1"
+    },
+    "required_flatlib_source": "git+https://github.com/diliprk/flatlib.git@sidereal",
+    "timezonefinder": {
+      "version": "8.2.5"
+    }
+  },
+  "production_tuning_allowed": false,
+  "raw_sha256": "41eca67e8347aaf8fb2b29ce0a304fadc9b4fe567edeeddbbe76dd52f6ca49e7",
+  "runtime_probe": {
+    "attempted": true,
+    "class_present": true,
+    "import_status": "success",
+    "method_present": true,
+    "sample_degree": 0.0,
+    "sample_rl_nl_sl": {
+      "Nakshatra": "Ashwini",
+      "NakshatraLord": "Ketu",
+      "Pada": 1,
+      "RasiLord": "Mars",
+      "SubLord": "Ketu",
+      "SubSubLord": "Ketu"
+    },
+    "sidereal_ayanamsa_constants_present": [
+      "AY_LAHIRI",
+      "AY_KRISHNAMURTI"
+    ]
+  },
+  "scope": "vedicastro_kp_api_probe",
+  "source_path": "references/open_source_sources/VedicAstro/vedicastro/VedicAstro.py",
+  "source_sha256": "1469c89a28dd4de6e576c2c4bd907902ee45d8a261b22836ea45503af369fa1d",
+  "status": "partial_runtime_surface_available",
+  "truth_matrix_allowed": false
+}

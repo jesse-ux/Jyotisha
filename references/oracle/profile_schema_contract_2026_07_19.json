@@ -1,0 +1,90 @@
+{
+  "scope": "profile_schema_contract",
+  "created_at": "2026-07-19",
+  "status": "research_profile_schema_v1",
+  "runtime_policy": "research_local_storage_only",
+  "supabase_required": false,
+  "credits_or_billing_allowed": false,
+  "privacy_boundary": "Research repo stores profile data locally only; no Supabase, payment, credits, or commercial account entitlement dependency.",
+  "required_fields": [
+    {
+      "name": "display_name",
+      "type": "string",
+      "purpose": "user-facing salutation and local chart library label"
+    },
+    {
+      "name": "birth_date",
+      "type": "YYYY-MM-DD",
+      "purpose": "core chart calculation"
+    },
+    {
+      "name": "birth_time",
+      "type": "HH:MM[:SS]",
+      "purpose": "core chart calculation; precision affects Lagna, varga, Dasha boundary and rectification confidence"
+    },
+    {
+      "name": "birth_place",
+      "type": "string",
+      "purpose": "human-readable birthplace"
+    },
+    {
+      "name": "timezone",
+      "type": "UTC offset or IANA timezone",
+      "purpose": "local time conversion"
+    },
+    {
+      "name": "latitude",
+      "type": "number",
+      "purpose": "core chart houses, sunrise/sunset, Kala and local calculations"
+    },
+    {
+      "name": "longitude",
+      "type": "number",
+      "purpose": "core chart houses, sunrise/sunset, Kala and local calculations"
+    }
+  ],
+  "optional_interpretation_fields": [
+    {
+      "name": "gender",
+      "allowed_values": ["male", "female", "nonbinary", "prefer_not_to_say", null],
+      "default": null,
+      "affects_chart_math": false,
+      "purpose": "optional traditional spouse-significator weighting and wording only"
+    },
+    {
+      "name": "relationship_role_mode",
+      "allowed_values": ["neutral_partner_a_b", "traditional_gendered"],
+      "default": "neutral_partner_a_b",
+      "affects_chart_math": false,
+      "purpose": "choose neutral relationship language by default; traditional gendered layer only when requested"
+    },
+    {
+      "name": "partner_interest",
+      "allowed_values": ["male", "female", "any", "unspecified"],
+      "default": "unspecified",
+      "affects_chart_math": false,
+      "purpose": "relationship interpretation context only"
+    }
+  ],
+  "calculation_boundary": {
+    "gender_changes_core_chart": false,
+    "gender_changes_dasha": false,
+    "gender_changes_shadbala_av": false,
+    "gender_changes_varga": false,
+    "gender_changes_yoga": false
+  },
+  "allowed_gender_use_domains": [
+    "relationship_spouse_interpretation",
+    "marriage_timing_weighting",
+    "children_birth_context_language"
+  ],
+  "forbidden_gender_use_domains": [
+    "core_chart_math",
+    "career_prediction",
+    "wealth_prediction",
+    "medical_or_fertility_guarantee",
+    "personality_stereotyping"
+  ],
+  "interpretation_boundary_contract": "references/oracle/gender_interpretation_contract_2026_07_19.json",
+  "technique_registry": "references/relationship_gender_role_technique_registry_2026_07_19.json"
+}

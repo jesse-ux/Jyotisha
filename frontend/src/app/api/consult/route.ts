@@ -19,6 +19,7 @@ import { reserveConsultationModel } from "@/lib/consultation-model-selection";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { streamTextResponse } from "@/lib/stream-text-response";
+import { guardPreciseTimingOutput } from "@/lib/timing-output-guard";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -29,10 +30,15 @@ const chatRequestSchema = consultationInputSchema.extend({
   modelId: z.string().trim().min(1).max(64),
   entrypoint: consultationEntrypointSchema.optional(),
   name: z.string().trim().max(80).optional().default(""),
-  history: z.array(z.object({
-    role: z.enum(["user", "assistant"]),
-    text: z.string().max(4000),
-  })).max(20).default([]),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        text: z.string().max(4000),
+      }),
+    )
+    .max(20)
+    .default([]),
 });
 
 function currentTimeContext(now = new Date()) {
@@ -67,10 +73,15 @@ async function recordModelUsage(
       .eq("transaction_type", "reserve")
       .eq("request_id", requestId);
 
-    if (error) console.warn(`[billing] unable to record model usage request=${requestId} model=${modelId}`);
+    if (error)
+      console.warn(
+        `[billing] unable to record model usage request=${requestId} model=${modelId}`,
+      );
   } catch (error) {
     const reason = error instanceof Error ? error.name : "UnknownError";
-    console.warn(`[billing] unable to read model usage request=${requestId} model=${modelId} reason=${reason}`);
+    console.warn(
+      `[billing] unable to read model usage request=${requestId} model=${modelId} reason=${reason}`,
+    );
   }
 }
 
@@ -87,7 +98,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
   if (authError || !user) {
     return NextResponse.json(
       { error: "请先登录", message: "登录后才能开始咨询。" },
@@ -95,7 +109,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const parsed = chatRequestSchema.safeParse(await request.json().catch(() => null));
+  const parsed = chatRequestSchema.safeParse(
+    await request.json().catch(() => null),
+  );
   if (!parsed.success) {
     return NextResponse.json(
       { error: "出生资料或问题格式不正确", details: parsed.error.flatten() },
@@ -111,7 +127,11 @@ export async function POST(request: Request) {
   ].join("\n");
   if (blocksPromptExtraction(userControlledPrompt)) {
     return NextResponse.json(
-      { error: "无法处理该请求", message: "我不能提供系统提示词、技能原文或任何密钥。你可以继续询问占星相关问题。" },
+      {
+        error: "无法处理该请求",
+        message:
+          "我不能提供系统提示词、技能原文或任何密钥。你可以继续询问占星相关问题。",
+      },
       { status: 400 },
     );
   }
@@ -130,11 +150,19 @@ export async function POST(request: Request) {
     modelSelection = await reserveConsultationModel(
       parsed.data.modelId,
       resolveLanguageModel,
-      () => runCreditRpc(accounting, "begin_consultation_credit", userId, requestId),
+      () =>
+        runCreditRpc(
+          accounting,
+          "begin_consultation_credit",
+          userId,
+          requestId,
+        ),
     );
   } catch (error) {
     const reason = error instanceof Error ? error.name : "UnknownError";
-    console.error(`[billing] reservation failed request=${requestId} reason=${reason}`);
+    console.error(
+      `[billing] reservation failed request=${requestId} reason=${reason}`,
+    );
     return NextResponse.json(
       { error: "暂时无法确认咨询点数", message: "请稍后重试。" },
       { status: 503 },
@@ -143,7 +171,10 @@ export async function POST(request: Request) {
 
   if (modelSelection.status === "unavailable") {
     return NextResponse.json(
-      { error: "模型暂不可用", message: "请选择其他模型后重新发送，本次不会扣除点数。" },
+      {
+        error: "模型暂不可用",
+        message: "请选择其他模型后重新发送，本次不会扣除点数。",
+      },
       { status: 409 },
     );
   }
@@ -156,7 +187,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: insufficient ? "咨询点数不足" : "暂时无法扣除咨询点数",
-        message: insufficient ? "请先兑换咨询点数后再继续。" : reserveResult.error_code || "请稍后重试。",
+        message: insufficient
+          ? "请先兑换咨询点数后再继续。"
+          : reserveResult.error_code || "请稍后重试。",
       },
       { status: insufficient ? 402 : 503 },
     );
@@ -164,16 +197,29 @@ export async function POST(request: Request) {
 
   async function cancel() {
     try {
-      await runCreditRpc(accounting, "cancel_consultation_credit", userId, requestId);
+      await runCreditRpc(
+        accounting,
+        "cancel_consultation_credit",
+        userId,
+        requestId,
+      );
     } catch (error) {
       const reason = error instanceof Error ? error.name : "UnknownError";
-      console.error(`[billing] cancellation failed request=${requestId} reason=${reason}`);
+      console.error(
+        `[billing] cancellation failed request=${requestId} reason=${reason}`,
+      );
     }
   }
 
   async function complete() {
-    const result = await runCreditRpc(accounting, "complete_consultation_credit", userId, requestId);
-    if (!result.success) throw new CreditRpcError(result.error_code || "completion_rejected");
+    const result = await runCreditRpc(
+      accounting,
+      "complete_consultation_credit",
+      userId,
+      requestId,
+    );
+    if (!result.success)
+      throw new CreditRpcError(result.error_code || "completion_rejected");
   }
 
   let settlement: Promise<void> | null = null;
@@ -208,15 +254,27 @@ export async function POST(request: Request) {
     ]);
     const completeAndRecordUsage = async () => {
       await complete();
-      void recordModelUsage(accounting, userId, requestId, modelSelection.usageModelId, result.totalUsage);
+      void recordModelUsage(
+        accounting,
+        userId,
+        requestId,
+        modelSelection.usageModelId,
+        result.totalUsage,
+      );
     };
-    const settleInterrupted = (emitted: boolean) => settle(emitted ? completeAndRecordUsage : cancel);
+    const settleInterrupted = (emitted: boolean) =>
+      settle(emitted ? completeAndRecordUsage : cancel);
     return streamTextResponse(result.textStream, {
+      transformText:
+        workflowReceipt.preciseTiming === "blocked"
+          ? guardPreciseTimingOutput
+          : undefined,
       mode: "mastra",
       requestId,
       headers: {
         "x-jyotish-workflow-route": workflowReceipt.route,
         "x-jyotish-workflow-status": workflowReceipt.status,
+        "x-jyotish-technique-truth": workflowReceipt.techniqueTruth,
         "x-jyotish-precise-timing": workflowReceipt.preciseTiming,
         "x-jyotish-missing-layers": workflowReceipt.missingLayers,
       },
@@ -227,12 +285,16 @@ export async function POST(request: Request) {
   } catch (error) {
     await cancel();
     const reason = error instanceof Error ? error.name : "UnknownError";
-    console.error(`[consult] generation failed request=${requestId} model=${modelSelection.usageModelId} reason=${reason}`);
+    console.error(
+      `[consult] generation failed request=${requestId} model=${modelSelection.usageModelId} reason=${reason}`,
+    );
     return NextResponse.json(
       {
         error: "暂时无法生成解读",
         message: "咨询服务暂时不可用，请稍后再试。",
-        recovery: languageModelConfigurationMessage() ? "当前没有可用的咨询模型，请联系管理员。" : "稍后重试，或换一个模型继续。",
+        recovery: languageModelConfigurationMessage()
+          ? "当前没有可用的咨询模型，请联系管理员。"
+          : "稍后重试，或换一个模型继续。",
       },
       { status: 503 },
     );

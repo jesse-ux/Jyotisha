@@ -18,6 +18,7 @@ from kp_system import calc_kp_analysis, get_kp_lords
 
 
 ROOT = Path(__file__).resolve().parents[1]
+KP_CUSP_CONTRACT = ROOT / "references/oracle/kp_cusp_precision_contract_2026_07_19.json"
 
 
 CANONICAL_PLANETS = {
@@ -54,6 +55,22 @@ def _kp_ruling_planets(moment: datetime, asc_longitude: float, moon_longitude: f
         "asc_star_lord": asc.get("nakshatra_lord"),
         "asc_sub_lord": asc.get("sub_lord"),
         "source_boundary": "Minimal KP ruling-planet probe; exact horary/timing use requires question-time location and external worked examples.",
+    }
+
+
+def _kp_cusp_contract_summary() -> dict[str, Any]:
+    if not KP_CUSP_CONTRACT.exists():
+        return {
+            "exact_cusp_status": "blocked_missing_contract",
+            "current_runtime_cusp_mode": "whole_sign_house_center_probe",
+            "significator_policy": "supporting_probe_only",
+        }
+    data = json.loads(KP_CUSP_CONTRACT.read_text(encoding="utf-8"))
+    return {
+        "exact_cusp_status": data.get("exact_cusp_status"),
+        "current_runtime_cusp_mode": data.get("current_runtime_cusp_mode"),
+        "significator_policy": data.get("kp_significator_runtime_policy"),
+        "contract_path": str(KP_CUSP_CONTRACT.relative_to(ROOT)),
     }
 
 
@@ -94,6 +111,7 @@ def build_probe() -> dict[str, Any]:
         },
         "kp_lords_by_planet": kp_lords_by_planet,
         "ruling_planets": ruling_planets,
+        "kp_cusp_contract": _kp_cusp_contract_summary(),
         "planet_significators": planet_significators,
         "house_significators": house_significators,
         "raw_sha256": _stable_hash(raw),

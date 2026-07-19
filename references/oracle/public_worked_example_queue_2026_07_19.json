@@ -1,0 +1,91 @@
+{
+  "scope": "public_worked_example_queue",
+  "created_at": "2026-07-19",
+  "status": "candidate_sources_registered",
+  "claim_status": "open_queue",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "boundary": "URLs are candidate public references only. A source becomes oracle_ready only after numeric inputs, method settings, expected values, citation, and replay artifact hash are captured.",
+  "queues": [
+    {
+      "topic": "KP exact cusp star/sub/sub-sub lord",
+      "status": "needs_numeric_worked_example",
+      "candidate_search_queries": [
+        "KP astrology cusp sub lord worked example",
+        "KP astrology cusp sub sub lord example",
+        "Krishnamurti Paddhati cusp sub lord example"
+      ],
+      "required_fields": [
+        "source_url",
+        "datetime",
+        "location",
+        "ayanamsa",
+        "house_system",
+        "cusp_longitude",
+        "star_lord",
+        "sub_lord",
+        "sub_sub_lord"
+      ],
+      "candidate_urls": [
+        "https://www.astrosage.com/kp/cuspal-sub-lord.asp",
+        "https://kpastrology.astrosage.com/kp-horary-astrology.asp",
+        "https://www.aryabhatt.com/astrology/krishnamurti-paddhati/kp-sub-lords-table"
+      ],
+      "oracle_ready": false,
+      "runtime_observation_available": true,
+      "blocking_reason": "Runtime house cusp raw exists, but no public numeric worked example with exact input/settings has been captured."
+    },
+    {
+      "topic": "Muhurta Tarabala/Chandrabala/Rahu Kalam/Abhijit",
+      "status": "needs_numeric_worked_example",
+      "candidate_search_queries": [
+        "Tarabala Chandrabala worked example",
+        "Rahu Kalam Abhijit Muhurta worked example",
+        "Muhurta Panchanga example Tarabala Chandrabala"
+      ],
+      "required_fields": [
+        "source_url",
+        "date",
+        "location",
+        "sunrise",
+        "sunset",
+        "birth_moon_nakshatra",
+        "tarabala",
+        "chandrabala",
+        "rahu_kalam",
+        "abhijit"
+      ],
+      "candidate_urls": [
+        "https://www.mypanchang.com/tarabalam.php",
+        "https://www.jyotish.com/abhi-muhurta.html",
+        "https://www.drikpanchang.com/muhurat/rahu-kalam.html"
+      ],
+      "oracle_ready": false
+    },
+    {
+      "topic": "Shadbala Virupa and Ashtakavarga component",
+      "status": "needs_component_numeric_worked_example",
+      "candidate_search_queries": [
+        "Shadbala Virupa worked example",
+        "Ashtakavarga bindu worked example",
+        "Bhinna Ashtakavarga SAV worked example"
+      ],
+      "required_fields": [
+        "source_url",
+        "case_input",
+        "component_name",
+        "formula_variant",
+        "unit",
+        "expected_value"
+      ],
+      "candidate_urls": [
+        "https://www.astrojyoti.com/shadbala.htm",
+        "https://www.astrojyoti.com/ashtakavarga.htm",
+        "https://www.barbarapijan.com/bpa/Graha/ShadBala.htm"
+      ],
+      "oracle_ready": false
+    }
+  ],
+  "candidate_source_status": "candidate_urls_collected_not_oracle_ready",
+  "latest_runtime_observation": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_19.json"
+}

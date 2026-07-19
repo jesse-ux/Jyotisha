@@ -1,0 +1,54 @@
+{
+  "scope": "kp_muhurta_shadbala_numeric_packet_queue",
+  "created_at": "2026-07-19",
+  "status": "queue_ready_runtime_kp_raw_attached",
+  "claim_status": "open_queue",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "boundary": "Rows are only promoted to numeric_oracle_ready when public input/settings, expected values, raw capture hash, and replay comparison all exist.",
+  "runtime_observations": [
+    {
+      "topic": "KP house cusp star/sub/sub-sub",
+      "artifact": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_19.json",
+      "raw_hash": "2e7a6b17eb2965a60846f625f6bd8bc03555216d6225983647bcbfa23d0e345b",
+      "status": "runtime_raw_available_not_oracle"
+    }
+  ],
+  "packet_rows": [
+    {
+      "topic": "KP cusp",
+      "candidate_url": "https://www.astrosage.com/kp/cuspal-sub-lord.asp",
+      "source_type": "online_tool_or_reference",
+      "numeric_oracle_status": "blocked_public_input_missing",
+      "required_fields": ["birth_or_query_datetime", "location", "ayanamsa", "house_system", "cusp_longitude", "nakshatra_lord", "sub_lord", "sub_sub_lord", "raw_capture_hash"]
+    },
+    {
+      "topic": "KP sub-lord table",
+      "candidate_url": "https://www.aryabhatt.com/astrology/krishnamurti-paddhati/kp-sub-lords-table",
+      "source_type": "reference_table_candidate",
+      "numeric_oracle_status": "blocked_table_capture_and_license_boundary",
+      "required_fields": ["table_raw_capture", "table_hash", "copyright_boundary", "degree_range", "star_lord", "sub_lord", "sub_sub_lord"]
+    },
+    {
+      "topic": "Tarabala/Chandrabala",
+      "candidate_url": "https://www.mypanchang.com/tarabalam.php",
+      "source_type": "worked_example_or_calculator_candidate",
+      "numeric_oracle_status": "blocked_fixture_missing",
+      "required_fields": ["date", "location", "birth_moon_nakshatra", "current_moon_nakshatra", "tarabala_result", "chandrabala_result", "raw_capture_hash"]
+    },
+    {
+      "topic": "Rahu Kalam",
+      "candidate_url": "https://www.drikpanchang.com/muhurat/rahu-kalam.html",
+      "source_type": "calculation_reference_candidate",
+      "numeric_oracle_status": "blocked_fixture_missing",
+      "required_fields": ["date", "location", "sunrise", "sunset", "weekday", "expected_interval", "raw_capture_hash"]
+    },
+    {
+      "topic": "Shadbala Virupa",
+      "candidate_url": "https://www.astrojyoti.com/shadbala.htm",
+      "source_type": "formula_reference_candidate",
+      "numeric_oracle_status": "blocked_component_values_missing",
+      "required_fields": ["birth_input", "planet", "component_name", "formula_variant", "unit", "expected_virupa", "raw_capture_hash"]
+    }
+  ]
+}

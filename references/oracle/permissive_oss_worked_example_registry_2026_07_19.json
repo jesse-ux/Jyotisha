@@ -1,0 +1,105 @@
+{
+  "scope": "permissive_oss_worked_example_registry",
+  "created_at": "2026-07-19",
+  "status": "observation_sources_registered",
+  "claim_status": "observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "boundary": "Permissive/open sources and public worked-example candidates may be used for adapters, probes, and gap discovery only. They do not upgrade KP cusp, Muhurta verdict, Shadbala/AV component parity, or precise timing claims until raw artifacts, hashes, formula provenance, and independent validation pass.",
+  "license_policy": {
+    "allowed_for_code_reuse": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"],
+    "quarantine_or_adapter_only": ["AGPL", "GPL", "proprietary", "no_license", "unknown"],
+    "copy_policy": "Do not copy implementation unless license, commit, package hash, and source file are fixed. Prefer adapter/probe first."
+  },
+  "candidate_projects": [
+    {
+      "project_id": "rajsanjib_jyotish_flutter_library",
+      "name": "jyotish / jyotish-flutter-library",
+      "url": "https://github.com/rajsanjib/jyotish-flutter-library",
+      "package_url": "https://pub.dev/packages/jyotish/versions/1.0.1",
+      "reported_license": "MIT",
+      "language": "Dart/Flutter",
+      "reported_capabilities": ["Swiss Ephemeris", "Lahiri ayanamsa", "nakshatra", "birth chart analysis"],
+      "reuse_mode": "adapter_probe_candidate",
+      "local_code_present": false,
+      "next_probe": "Pin Git commit and pub package hash; inspect API schema; compare D1/nakshatra only as observation."
+    },
+    {
+      "project_id": "vedastro_python",
+      "name": "VedAstro.Python",
+      "url": "https://github.com/VedAstro/VedAstro.Python",
+      "docs_url": "https://vedastro.org/PythonVedicAstrologyLibrary.html",
+      "reported_license": "MIT",
+      "language": "Python",
+      "reported_capabilities": ["Python wrapper", "VedAstro API calls", "596 calculations"],
+      "reuse_mode": "api_wrapper_contract_probe_only",
+      "local_code_present": false,
+      "next_probe": "Pin PyPI/wheel hash and method list; do not use hosted output as truth until deployment identity is resolved."
+    },
+    {
+      "project_id": "roxyapi_astrology_api_benchmark",
+      "name": "RoxyAPI astrology-api-benchmark",
+      "url": "https://github.com/RoxyAPI/astrology-api-benchmark",
+      "reported_license": "MIT",
+      "language": "benchmark",
+      "reported_capabilities": ["JPL Horizons DE441 benchmark", "210 planet positions", "21 charts"],
+      "reuse_mode": "ephemeris_benchmark_candidate",
+      "local_code_present": false,
+      "next_probe": "Pin commit and benchmark fixture hashes; use for independent ephemeris mode only, not Jyotish formula truth."
+    },
+    {
+      "project_id": "roxyapi_jyotish_vedic_astrology_app",
+      "name": "RoxyAPI jyotish-vedic-astrology-app",
+      "url": "https://github.com/RoxyAPI/jyotish-vedic-astrology-app",
+      "reported_license": "unknown_from_search_result",
+      "language": "Next.js/TypeScript",
+      "reported_capabilities": ["kundli", "daily Panchang", "Vimshottari Dasha", "Ashtakoot", "dosha", "transits"],
+      "reuse_mode": "ui_contract_reference_only_until_license_verified",
+      "local_code_present": true,
+      "local_path_hint": "references/open_source_sources/vedic-astro-skills",
+      "next_probe": "Verify repository LICENSE and API contract; do not import UI/runtime into research truth layer."
+    },
+    {
+      "project_id": "northtara_jyotishganit",
+      "name": "jyotishganit",
+      "url": "https://github.com/northtara/jyotishganit",
+      "reported_license": "permissive_candidate_already_local",
+      "language": "Python",
+      "reported_capabilities": ["birth chart", "panchanga", "JPL ephemeris claims"],
+      "reuse_mode": "existing_external_engine_observation",
+      "local_code_present": true,
+      "local_path_hint": "references/open_source_sources/jyotishganit",
+      "next_probe": "Continue same-chart field comparison; keep mismatch rows method-attributed."
+    },
+    {
+      "project_id": "vedicastro_pypi_kp",
+      "name": "VedicAstro PyPI",
+      "url": "https://pypi.org/project/vedicastro/",
+      "reported_license": "requires_local_metadata_verification",
+      "language": "Python",
+      "reported_capabilities": ["KP system", "planetary positions", "Swiss Ephemeris via flatlib/pyswisseph"],
+      "reuse_mode": "kp_table_and_cusp_probe_candidate",
+      "local_code_present": true,
+      "local_path_hint": "references/open_source_sources/VedicAstro",
+      "next_probe": "Locate/fix KP sub-lord table hash if present; exact cusp still requires worked example."
+    }
+  ],
+  "worked_example_queues": [
+    {
+      "queue_id": "kp_cusp_public_worked_examples",
+      "target_packet": "references/oracle/kp_cusp_worked_example_oracle_queue_2026_07_19.json",
+      "needed_fields": ["source_url", "birth_or_query_datetime", "location", "ayanamsa", "house_system", "cusp_longitude", "star_lord", "sub_lord", "sub_sub_lord"],
+      "status": "awaiting_public_numeric_examples"
+    },
+    {
+      "queue_id": "muhurta_factor_public_worked_examples",
+      "needed_fields": ["source_url", "date", "location", "sunrise", "sunset", "tarabala", "chandrabala", "rahu_kalam", "abhijit_muhurta", "rule_weighting"],
+      "status": "awaiting_public_numeric_examples"
+    },
+    {
+      "queue_id": "shadbala_av_component_worked_examples",
+      "needed_fields": ["source_url", "case_input", "component_name", "formula_variant", "unit", "expected_value"],
+      "status": "awaiting_component_numeric_examples"
+    }
+  ]
+}

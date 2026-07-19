@@ -1,0 +1,61 @@
+{
+  "scope": "jyotishganit_field_closure_queue",
+  "created_at": "2026-07-19",
+  "status": "probe_and_local_comparison_attached",
+  "claim_status": "observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "local_project": "references/open_source_sources/jyotishganit",
+  "engine_role": "existing_external_engine_observation",
+  "closure_rows": [
+    {
+      "field_family": "panchanga",
+      "local_source_hint": "jyotishganit/components/panchanga.py",
+      "target_fields": [
+        "tithi",
+        "nakshatra",
+        "yoga",
+        "karana",
+        "vara"
+      ],
+      "closure_status": "raw_hash_attached_needs_external_comparison",
+      "claim_boundary": "Can compare field labels/indices; not Muhurta verdict."
+    },
+    {
+      "field_family": "divisional_charts",
+      "local_source_hint": "jyotishganit/components/divisional_charts.py",
+      "target_fields": [
+        "D2",
+        "D4",
+        "D9",
+        "D10"
+      ],
+      "closure_status": "raw_hash_attached_needs_field_level_comparison",
+      "claim_boundary": "Observation-only until ayanamsa/node/rounding and house mapping are pinned."
+    },
+    {
+      "field_family": "ashtakavarga",
+      "local_source_hint": "jyotishganit/components/ashtakavarga.py",
+      "target_fields": [
+        "BAV",
+        "SAV"
+      ],
+      "closure_status": "raw_hash_attached_needs_component_unit_mapping",
+      "claim_boundary": "Do not merge with Shadbala/AV truth matrix until unit and bindu rules match."
+    },
+    {
+      "field_family": "strengths",
+      "local_source_hint": "jyotishganit/components/strengths.py",
+      "target_fields": [
+        "Shadbala",
+        "component_strengths"
+      ],
+      "closure_status": "missing_in_probe_needs_formula_variant_attribution",
+      "claim_boundary": "Known high-rigor Shadbala component mismatch; observation only."
+    }
+  ],
+  "boundary": "Queue gives next evidence owner per field. It does not resolve the 60 mismatch rows by itself.",
+  "latest_probe": "references/oracle/jyotishganit_field_probe_steve_jobs_2026_07_19.json",
+  "latest_local_comparison": "references/oracle/jyotishganit_vs_local_field_comparison_steve_jobs_2026_07_19.json",
+  "latest_mismatch_attribution": "references/oracle/jyotishganit_mismatch_attribution_queue_2026_07_19.json"
+}

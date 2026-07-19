@@ -26,8 +26,10 @@ from urllib.parse import urlparse
 
 try:
     from scripts.local_env import load_local_env
+    from scripts.vedastro_runtime_context import timeout_override_seconds
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from local_env import load_local_env
+    from vedastro_runtime_context import timeout_override_seconds
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -357,6 +359,9 @@ _FREE_TIER_REQUEST_LOCK = threading.Lock()
 
 
 def _timeout_seconds() -> float:
+    override = timeout_override_seconds()
+    if override is not None:
+        return override
     raw = os.environ.get(TIMEOUT_ENV, "").strip()
     if not raw:
         return DEFAULT_TIMEOUT_SECONDS
@@ -364,6 +369,7 @@ def _timeout_seconds() -> float:
         return float(raw)
     except ValueError:
         return DEFAULT_TIMEOUT_SECONDS
+
 
 
 def _backoff_seconds() -> float:

@@ -1,0 +1,23 @@
+{
+  "scope": "panchanga_api_observation_manifest",
+  "created_at": "2026-07-19",
+  "status": "docs_source_registered",
+  "claim_status": "observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "local_project": "references/open_source_sources/panchanga_api",
+  "source_files": [
+    "references/open_source_sources/panchanga_api/README.md",
+    "references/open_source_sources/panchanga_api/MCP.md",
+    "references/open_source_sources/panchanga_api/SKILL.md",
+    "references/open_source_sources/panchanga_api/LICENSE"
+  ],
+  "available_runtime_code": false,
+  "observation_use": [
+    "Panchanga/Muhurta API contract vocabulary",
+    "tool boundary comparison",
+    "factor checklist only"
+  ],
+  "blocked_runtime_adapter_reason": "Local snapshot contains documentation/skill metadata only; no executable panchanga_api source module is present.",
+  "boundary": "Use as docs/contract reference only. Do not claim independent numeric Panchanga or Muhurta parity from this source."
+}

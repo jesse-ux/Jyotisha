@@ -40,8 +40,10 @@ if SCRIPTS_DIR not in sys.path:
 
 try:
     from scripts.local_env import load_local_env
+    from scripts.vedastro_runtime_context import temporary_timeout_seconds
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from local_env import load_local_env
+    from vedastro_runtime_context import temporary_timeout_seconds
 try:
     from scripts.unified_consultation_orchestrator import UnifiedConsultationOrchestrator
 except ModuleNotFoundError:  # pragma: no cover - script execution path
@@ -362,6 +364,7 @@ def _build_consumer_context(
     vedastro_official: dict,
 ) -> dict:
     """Build a chat-facing truth contract without exposing provider noise as a fatal error."""
+    question_text = (question or '').lower()
     sections = (
         machine_evidence_packet.get('sections')
         if isinstance(machine_evidence_packet.get('sections'), dict)
@@ -384,6 +387,46 @@ def _build_consumer_context(
         name for name in required
         if not isinstance(sections.get(name), dict) or sections[name].get('status') != 'used'
     ]
+    domain_context_layers = []
+    domain_boundaries = {}
+
+    def add_domain_layer(*layers: str, boundary_key: str | None = None, boundary: str | None = None) -> None:
+        for layer in layers:
+            if layer not in domain_context_layers:
+                domain_context_layers.append(layer)
+        if boundary_key and boundary:
+            domain_boundaries[boundary_key] = boundary
+
+    if re.search(r'(婚|结婚|感情|关系|配偶|伴侣|spouse|marriage|relationship)', question_text):
+        add_domain_layer(
+            'gender interpretation boundary',
+            boundary_key='gender_interpretation_boundary',
+            boundary='Gender can affect interpretation wording and spouse-role overlays, but it must not change astronomical calculation facts.',
+        )
+    if re.search(r'(健康|疾病|身体|病|医疗|health)', question_text):
+        add_domain_layer(
+            'D6', 'D8', '6th/8th/12th house', 'health non_medical boundary',
+            boundary_key='health_non_medical_boundary',
+            boundary='Health reading is non_medical guidance only; no diagnosis, guaranteed disease event, or treatment instruction.',
+        )
+    if re.search(r'(出国|移民|迁移|异地|海外|foreign|migration|relocation)', question_text):
+        add_domain_layer('12th house', 'twelfth house', 'house_12')
+    if re.search(r'(家庭|房产|子女|父母|家|children|family|property)', question_text):
+        add_domain_layer('4th/5th/9th house')
+    if re.search(r'(教育|学习|读书|考试|考证|education|study|exam)', question_text):
+        add_domain_layer('5th/9th house')
+    if re.search(r'(出生时间|时间不准|校正|矫正|rectification|birth time)', question_text):
+        add_domain_layer(
+            'birth_time uncertain boundary', 'not_auto_rectified',
+            boundary_key='birth_time_uncertainty_boundary',
+            boundary='Birth-time uncertainty requires candidate windows and event evidence; the workflow is not_auto_rectified.',
+        )
+    if re.search(r'(年度|一年|未来一年|年运|annual|year)', question_text):
+        add_domain_layer(
+            'annual forecast boundary',
+            boundary_key='annual_forecast_boundary',
+            boundary='Annual forecast is a bounded trend reading; no full-year certainty or exact day/month guarantee.',
+        )
     d1_ready = 'D1' in available_layers and bool(chart.get('success', True))
     hard_blockers = [] if d1_ready else ['core_chart_unavailable']
 
@@ -420,6 +463,8 @@ def _build_consumer_context(
         'calculation_source': 'repository_local_engine',
         'route': route,
         'available_layers': available_layers,
+        'domain_context_layers': domain_context_layers,
+        'domain_boundaries': domain_boundaries,
         'missing_route_layers': missing_route_layers,
         'optional_unavailable_layers': optional_unavailable,
         'hard_blockers': hard_blockers,
@@ -529,7 +574,8 @@ def execute_consultation_workflow(
                 result['success'] = False
                 result['blocked_reason'] = 'external_parity_not_passed'
         result['timing_precision_contract'] = build_timing_precision_contract(body.get('timing'))
-        return result
+        from scripts.commercial_skill_truth import apply_commercial_skill_truth
+        return apply_commercial_skill_truth(result)
 
     chart = dict(chart_override) if isinstance(chart_override, dict) else {}
     prashna = {}
@@ -736,7 +782,8 @@ def execute_consultation_workflow(
         timing=body.get('timing'),
         reference_date=_consultation_reference_date(body).date().isoformat(),
     )
-    return result
+    from scripts.commercial_skill_truth import apply_commercial_skill_truth
+    return apply_commercial_skill_truth(result)
 
 
 def _load_local_module(module_name):
@@ -798,12 +845,16 @@ def _vedastro_runtime_fingerprint() -> dict:
         'endpoint_host': (urlparse(endpoint).netloc or '').lower(),
         'network_enabled': str(os.environ.get('VEDASTRO_ENABLE_NETWORK', '')).strip().lower() in {'1', 'true', 'yes'},
         'has_api_key': bool(os.environ.get('VEDASTRO_API_KEY', '').strip()),
+        'timeout_seconds': str(os.environ.get('VEDASTRO_TIMEOUT_SECONDS', '')).strip(),
+        'full_snapshot_fanout_enabled': str(
+            os.environ.get('VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED', '1')
+        ).strip().lower() in {'1', 'true', 'yes', 'on'},
     }
 
 
 def _build_api_chart_cache_payload(body: dict) -> dict:
     return {
-        'cache_schema_version': 3,
+        'cache_schema_version': 4,
         'birth': {
             'year': body.get('year'),
             'month': body.get('month'),
@@ -915,6 +966,14 @@ def _async_job_ttl_seconds() -> float:
         return max(float(raw), 1.0)
     except ValueError:
         return 3600.0
+
+
+def _async_high_rigor_vedastro_timeout_seconds() -> float:
+    raw = str(os.environ.get('JYOTISH_ASYNC_HIGH_RIGOR_VEDASTRO_TIMEOUT_SECONDS', '90')).strip()
+    try:
+        return min(max(float(raw), 30.0), 180.0)
+    except ValueError:
+        return 90.0
 
 
 def _async_job_backend() -> str:
@@ -2716,7 +2775,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             running['started_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             _write_high_rigor_job_record(job_id, running)
             try:
-                result = self._compute_high_rigor_workflow_sync(body_copy)
+                with temporary_timeout_seconds(_async_high_rigor_vedastro_timeout_seconds()):
+                    result = self._compute_high_rigor_workflow_sync(body_copy)
                 completed = dict(running)
                 completed['status'] = 'completed'
                 completed['completed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -6841,13 +6901,16 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
     def _compute_active_rectification_events(self, body):
         allowed_fields = {
-            'birth_date', 'start_time', 'end_time', 'lat', 'lon', 'tz', 'events',
+            'birth_date', 'start_time', 'end_time', 'lat', 'lon', 'tz', 'events', 'high_rigor',
         }
         unsupported_fields = sorted(set(body) - allowed_fields)
         if unsupported_fields:
             raise BadRequest(
                 f'unsupported active rectification event field: {unsupported_fields[0]}'
             )
+        high_rigor = body.get('high_rigor', False)
+        if not isinstance(high_rigor, bool):
+            raise BadRequest('high_rigor must be a boolean')
         birth_date = body.get('birth_date')
         start_time = body.get('start_time')
         end_time = body.get('end_time')
@@ -6868,7 +6931,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if not isinstance(events, list) or not 3 <= len(events) <= 6:
             raise BadRequest('events must contain between 3 and 6 items')
         normalized_events = []
-        allowed_domains = {'education', 'relocation', 'relationship', 'career', 'health_pressure'}
+        allowed_domains = {'education', 'relocation', 'relationship', 'career', 'finance', 'health_pressure'}
         formats = {'year': '%Y', 'month': '%Y-%m', 'day': '%Y-%m-%d'}
         for raw_event in events:
             if not isinstance(raw_event, dict) or set(raw_event) != {'id', 'domain', 'date', 'precision'}:
@@ -6906,6 +6969,26 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'tz': tz,
             'events': normalized_events,
         })
+        from scripts.rectification_technique_contract import build_rectification_technique_contract
+        result['technique_contract'] = build_rectification_technique_contract(
+            event_count=result.get('event_count', 0),
+            domain_count=result.get('domain_count', 0),
+            high_rigor=high_rigor,
+        )
+        if high_rigor:
+            from scripts.rectification_three_engine_packet import build_packet
+            result['three_engine_packet'] = build_packet({
+                'year': parsed_birth_date.year,
+                'month': parsed_birth_date.month,
+                'day': parsed_birth_date.day,
+                'hour': int(start_time.split(':', 1)[0]),
+                'minute': int(start_time.split(':', 1)[1]),
+                'lat': lat,
+                'lon': lon,
+                'tz': tz,
+            })
+            result['can_apply'] = False
+            result.setdefault('reasons', []).append('three_engine_parity_not_passed')
         return {
             'success': True,
             'endpoint': 'active_rectification_events',

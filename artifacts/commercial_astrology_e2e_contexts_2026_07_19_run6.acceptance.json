@@ -1,0 +1,69 @@
+{
+  "contract": "references/cross_project_contract/commercial_astrology_e2e_acceptance_questions_2026_07_19.json",
+  "question_count": 10,
+  "rows": [
+    {
+      "forbidden_claim_hits": [],
+      "id": "marriage_timing",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "career_direction",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "wealth_pattern",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "health_risk_window",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "foreign_migration",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "family_home_children",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "education_learning_path",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "precise_timing_boundary",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "birth_time_uncertain",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "annual_forecast",
+      "missing_layers": [],
+      "status": "pass"
+    }
+  ],
+  "runtime_context_required": true,
+  "scope": "commercial_astrology_e2e_acceptance_runner",
+  "status": "pass"
+}

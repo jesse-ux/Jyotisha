@@ -1,5 +1,5 @@
 export const evidenceDomains = [
-  "education", "relocation", "relationship", "career", "health_pressure",
+  "education", "relocation", "relationship", "career", "finance", "health_pressure",
 ] as const;
 
 export type EvidenceDomain = (typeof evidenceDomains)[number];
@@ -7,6 +7,7 @@ export type EvidenceQuestionPhase = "baseline" | "adaptive";
 export type EvidenceDatePrecision = "day" | "month" | "year";
 
 export type CandidateVargaSample = {
+  readonly d2Sign?: string | null;
   readonly d4Sign: string | null;
   readonly d9Sign: string | null;
   readonly d10Sign: string | null;
@@ -37,6 +38,7 @@ const layerByDomain = {
   relocation: "d4Sign",
   relationship: "d9Sign",
   career: "d10Sign",
+  finance: "d2Sign",
   health_pressure: "d30Sign",
 } as const;
 
@@ -57,7 +59,8 @@ function questionSpecFor(
 }
 
 export function planEvidenceQuestion(input: QuestionPlannerInput): QuestionSpec | null {
-  const available = evidenceDomains.filter((domain) => !input.askedDomains.includes(domain));
+  const available = evidenceDomains.filter((domain) => !input.askedDomains.includes(domain)
+    && (domain !== "finance" || (input.phase === "adaptive" && input.coveredDomains.length >= 2)));
   const ranked = available.map((domain) => ({
     domain,
     split: new Set(input.samples.map((sample) => sample[layerByDomain[domain]]).filter(Boolean)).size,

@@ -257,6 +257,7 @@ def test_gateway_completion_archives_official_raw_response(monkeypatch, tmp_path
     assert archive["official_raw_response_available"] is True
     path = tmp_path / archive["official_raw_response_path"]
     assert path.exists()
+    assert path.stat().st_mode & 0o777 == 0o600
     assert '"vedastro_official"' in path.read_text(encoding="utf-8")
 
 

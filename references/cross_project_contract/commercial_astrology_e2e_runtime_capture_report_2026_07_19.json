@@ -1,0 +1,75 @@
+{
+  "context_dir": "artifacts/commercial_astrology_e2e_contexts_2026_07_19_run6",
+  "created_at": "2026-07-19",
+  "question_count": 10,
+  "root_cause_fixed": "commercial workflow now passes frontend-style question plus question_text and exposes domain_context_layers/domain_boundaries for gender, health, migration, family, education, rectification and annual forecast contexts",
+  "rows": [
+    {
+      "forbidden_claim_hits": [],
+      "id": "marriage_timing",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "career_direction",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "wealth_pattern",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "health_risk_window",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "foreign_migration",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "family_home_children",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "education_learning_path",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "precise_timing_boundary",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "birth_time_uncertain",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "annual_forecast",
+      "missing_layers": [],
+      "status": "pass"
+    }
+  ],
+  "scope": "commercial_astrology_e2e_runtime_capture_report",
+  "status": "pass",
+  "summary": {
+    "blocked": 0,
+    "fail": 0,
+    "pass": 10
+  }
+}

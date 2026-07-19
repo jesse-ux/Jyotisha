@@ -3,7 +3,7 @@
 """
 吠陀占星分盘计算模块 v1.0
 BPHS Shodasavarga（十六分盘体系）
-支持: D2/D3/D4/D7/D9/D10/D12/D16/D20/D24/D27/D30/D40/D45/D60
+支持: D2/D3/D4/D5/D6/D7/D8/D9/D10/D11/D12/D16/D20/D24/D27/D30/D40/D45/D60/D81/D108/D144
 每个分盘输出精确度数，支持进一步分析。
 """
 from typing import Dict, List, Optional
@@ -22,13 +22,18 @@ OWN_SIGNS = {'Sun':[4],'Moon':[3],'Mars':[0,7],'Mercury':[2,5],
     'Jupiter':[8,11],'Venus':[1,6],'Saturn':[9,10]}
 VARGA_META = {
     2:{'name':'Hora','cn':'财富','area':'财富资源'},3:{'name':'Drekkana','cn':'兄弟','area':'兄弟姐妹'},
-    4:{'name':'Turyamsa','cn':'财产','area':'财产住所'},7:{'name':'Saptamsa','cn':'子女','area':'子女后代'},
+    4:{'name':'Turyamsa','cn':'财产','area':'财产住所'},5:{'name':'Panchamsa','cn':'名声','area':'名声权力'},
+    6:{'name':'Shashthamsa','cn':'健康','area':'健康敌人'},7:{'name':'Saptamsa','cn':'子女','area':'子女后代'},
+    8:{'name':'Ashtamsa','cn':'突发','area':'突发转化'},
     9:{'name':'Navamsa','cn':'婚姻','area':'婚姻伴侣灵魂'},10:{'name':'Dasamsa','cn':'事业','area':'事业公众形象'},
-    12:{'name':'Dwadashamsa','cn':'父母','area':'父母祖先'},16:{'name':'Shodasamsa','cn':'享受','area':'车辆物质'},
+    11:{'name':'Rudramsa','cn':'收益转化','area':'收益朋友愿望'},12:{'name':'Dwadashamsa','cn':'父母','area':'父母祖先'},16:{'name':'Shodasamsa','cn':'享受','area':'车辆物质'},
     20:{'name':'Vimsamsa','cn':'修行','area':'精神修行'},24:{'name':'Siddhamsa','cn':'学识','area':'教育学识'},
     27:{'name':'Bhamsa','cn':'力量','area':'力量弱点'},30:{'name':'Trimsamsa','cn':'苦难','area':'灾难苦难'},
     40:{'name':'Khavedamsa','cn':'运势','area':'吉凶运势'},45:{'name':'Akshavedamsa','cn':'格局','area':'整体格局'},
-    60:{'name':'Shashtyamsa','cn':'业力','area':'前世业力同盘区分'}}
+    60:{'name':'Shashtyamsa','cn':'业力','area':'前世业力同盘区分'},
+    81:{'name':'Navamsa-Navamsa','cn':'D9之D9','area':'配偶灵性精微层'},
+    108:{'name':'Dwadasamsa-Navamsa','cn':'D12之D9','area':'祖先父母精微层'},
+    144:{'name':'Dwadasamsa-Dwadasamsa','cn':'D12之D12','area':'父母祖先精微层'}}
 
 def _si(lon): return int(lon/30)%12
 def _sn(i): return SIGNS[i%12]
@@ -63,7 +68,10 @@ def varga_map(si, pi, div):
     if div==2: return (4 if o else 3) if pi==0 else (3 if o else 4)
     if div==3: return (si+pi*4)%12  # Drekkana: same → +4 → +8, no odd/even distinction
     if div==4: return (si+pi*3)%12
+    if div==5: return (si+pi)%12 if o else (si+8+pi)%12
+    if div==6: return (si+pi)%12 if o else (si+6+pi)%12
     if div==7: return (si+pi)%12 if o else (si+6+pi)%12
+    if div==8: return (si+pi)%12 if o else (si+8+pi)%12
     if div==9:
         # BPHS Navamsa: movable=same, fixed=9th from sign (+8), dual=5th from sign (+4)
         if si%3==0: start=si
@@ -71,6 +79,7 @@ def varga_map(si, pi, div):
         else: start=(si+4)%12
         return (start+pi)%12
     if div==10: return (si+pi)%12 if o else (si+8+pi)%12  # D10: even signs count from 9th inclusively => +8 offset
+    if div==11: return (si+pi)%12 if o else (si+8+pi)%12  # D11 Rudramsa: mirror extended calculator
     if div==12: return (si+pi)%12
     if div==16: return ((0 if o else 4)+pi)%12  # D16: movable=+0, fixed=+4; dual needs separate (2026-05-03 fix: was +1)
     if div==20: return ((0 if o else 8)+pi)%12
@@ -80,6 +89,20 @@ def varga_map(si, pi, div):
     if div==40: return ((0 if o else 6)+pi)%12
     if div==45: return ((0 if o else 6)+pi)%12
     if div==60: return (si+pi)%12 if o else (si+1+pi)%12
+    if div==81:
+        outer_part = pi // 9
+        inner_part = pi % 9
+        outer_sign = varga_map(si, outer_part, 9)
+        return varga_map(outer_sign, inner_part, 9)
+    if div==108:
+        outer_part = pi // 12
+        inner_part = pi % 12
+        outer_sign = varga_map(si, outer_part, 9)
+        return varga_map(outer_sign, inner_part, 12)
+    if div==144:
+        outer_part = pi // 12
+        inner_part = pi % 12
+        return (si + outer_part + inner_part) % 12
     raise ValueError(f"不支持的D{div}")
 
 
@@ -244,7 +267,7 @@ def dignity(planet, sign_idx):
 def calc_all_vargas(planet_lons, asc_lon, divisions=None, mode='classical_local'):
     """批量计算所有指定分盘"""
     if divisions is None:
-        divisions=[2,3,4,7,9,10,12,16,20,24,27,30,40,45,60]
+        divisions=[2,3,4,5,6,7,8,9,10,11,12,16,20,24,27,30,40,45,60,81,108,144]
     results={}
     for div in divisions:
         m=VARGA_META.get(div,{})

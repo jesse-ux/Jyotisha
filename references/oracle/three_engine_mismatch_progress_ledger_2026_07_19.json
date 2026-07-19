@@ -1,0 +1,34 @@
+{
+  "attributed_rows": [
+    {
+      "closure_state": "attributed_no_tuning",
+      "effect": "A ~0.62° D1 node longitude delta crosses the 9° D10 part boundary, changing D10 sign by one.",
+      "field": "Rahu",
+      "reason": "node_longitude_source_plus_ayanamsa_boundary_crossing",
+      "section": "D10"
+    },
+    {
+      "closure_state": "attributed_no_tuning",
+      "effect": "A ~0.62° D1 node longitude delta crosses the 9° D10 part boundary, changing D10 sign by one.",
+      "field": "Ketu",
+      "reason": "node_longitude_source_plus_ayanamsa_boundary_crossing",
+      "section": "D10"
+    }
+  ],
+  "attribution_sources": [
+    "references/oracle/jyotishganit_node_source_attribution_2026_07_19.json"
+  ],
+  "boundary": "Attribution closes explanation work only. The original mismatch queue stays open for formula/endpoint/worked-example evidence, and no engine majority vote is allowed.",
+  "claim_status": "partial",
+  "created_at": "2026-07-19",
+  "production_tuning_allowed": false,
+  "scope": "three_engine_mismatch_progress_ledger",
+  "source_queue": "references/oracle/three_engine_mismatch_closure_queue_2026_07_19.json",
+  "status": "progress_ledger_ready",
+  "summary": {
+    "attributed_no_tuning_count": 2,
+    "remaining_open_count": 58,
+    "source_queue_count": 60
+  },
+  "truth_matrix_allowed": false
+}

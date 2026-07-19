@@ -1,0 +1,95 @@
+{
+  "created_at": "2026-07-19",
+  "next_actions": [
+    "pin commit/hash for each source before adding as oracle artifact",
+    "prefer existing local mirrors before fetching new code",
+    "never copy AGPL/GPL into commercial runtime",
+    "store raw input/output/hash for every observation"
+  ],
+  "production_tuning_allowed": false,
+  "scope": "authoritative_oss_jyotish_source_intake",
+  "sources": [
+    {
+      "commercial_action": "pin_commit_and_compare_fields",
+      "license": "MIT",
+      "name": "northtara/jyotishganit",
+      "truth_status": "observation_not_final_truth",
+      "url": "https://github.com/northtara/jyotishganit",
+      "use": "local_oracle_observation_for_birth_chart_divisional_panchanga_shadbala"
+    },
+    {
+      "commercial_action": "hash KP tables/files before reuse",
+      "license": "check_repo_file_before_copy",
+      "name": "diliprk/VedicAstro",
+      "truth_status": "source_candidate_requires_hash",
+      "url": "https://github.com/diliprk/VedicAstro",
+      "use": "KP star/sub-lord/significator reference candidate"
+    },
+    {
+      "commercial_action": "keep adapter probe metadata/raw only",
+      "license": "MIT",
+      "name": "VicharaVandana/jyotishyamitra",
+      "truth_status": "independent_observation_not_truth",
+      "url": "https://github.com/VicharaVandana/jyotishyamitra",
+      "use": "independent package probe for bala/ashtakavarga/divisional/dasha field surface"
+    },
+    {
+      "commercial_action": "retain raw/hash and do not promote to shadbala truth",
+      "license": "Apache-2.0",
+      "name": "vedika-io/xalen-ephemeris",
+      "truth_status": "formula_isolation_oracle",
+      "url": "https://github.com/vedika-io/xalen-ephemeris",
+      "use": "formula isolation oracle for ephemeris/varga separation"
+    },
+    {
+      "commercial_action": "do_not_vendor_or_runtime_depend",
+      "license": "AGPL-3.0",
+      "name": "naturalstupid/PyJHora",
+      "truth_status": "license_isolated_oracle",
+      "url": "https://github.com/naturalstupid/PyJHora",
+      "use": "black-box oracle/fixture only"
+    },
+    {
+      "commercial_action": "hosted remains blocked without deployment identity",
+      "license": "check_repo_components",
+      "name": "VedAstro/VedAstro",
+      "truth_status": "hosted_identity_blocked",
+      "url": "https://github.com/VedAstro/VedAstro",
+      "use": "hosted observation and possible self-host candidate"
+    },
+    {
+      "commercial_action": "feature_gap_reference_only_until file-level license and formula audit",
+      "license": "MIT per search result",
+      "name": "SV-stark/jyotish-flutter-library-fork",
+      "truth_status": "feature_benchmark_only",
+      "url": "https://github.com/SV-stark/jyotish-flutter-library-fork",
+      "use": "feature-surface benchmark for D1-D60/D249/Ashtakavarga/KP/Jaimini/Panchanga/Muhurta"
+    },
+    {
+      "commercial_action": "do_not_copy_until_license_verified",
+      "license": "unknown_until_repo_license_verified",
+      "name": "pandaypr/VedicAstroEngineLite",
+      "truth_status": "feature_benchmark_only",
+      "url": "https://github.com/pandaypr/VedicAstroEngineLite",
+      "use": "feature-surface benchmark for Shodashavarga/Shadbala/Vimsopaka/Ishta-Kashta"
+    },
+    {
+      "commercial_action": "do_not_copy_into_commercial_runtime",
+      "license": "GPL-2.0-or-later per search result",
+      "name": "kunjara/jyotish",
+      "truth_status": "license_restricted_reference_only",
+      "url": "https://github.com/kunjara/jyotish",
+      "use": "historical PHP calculation reference"
+    },
+    {
+      "commercial_action": "product_surface_reference_only",
+      "license": "MIT per search result",
+      "name": "RoxyAPI/jyotish-vedic-astrology-app",
+      "truth_status": "feature_benchmark_only",
+      "url": "https://github.com/RoxyAPI/jyotish-vedic-astrology-app",
+      "use": "product/API feature benchmark for Panchang/Ashtakoot/Vimshottari/Dosha"
+    }
+  ],
+  "status": "source_intake_v1",
+  "truth_boundary": "Open-source projects can provide reusable code, field inventories, fixtures, or observation oracles; they do not become final truth unless version, license, input contract and worked-example parity are archived."
+}

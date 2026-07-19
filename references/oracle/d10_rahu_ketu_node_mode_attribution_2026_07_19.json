@@ -1,0 +1,68 @@
+{
+  "scope": "d10_rahu_ketu_node_mode_attribution",
+  "created_at": "2026-07-19",
+  "status": "attributed_to_node_longitude_boundary",
+  "claim_status": "partial",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_comparison": "references/oracle/jyotishganit_vs_local_field_comparison_steve_jobs_2026_07_19.json",
+  "resolved_schema_issue": {
+    "issue": "D4 local key alias",
+    "local_aliases": ["D4_Chaturthamsa", "D4_Turyamsa"],
+    "effect": "D4 mismatches dropped after alias normalization; no formula rewrite was made."
+  },
+  "formula_observation": {
+    "local_d10_formula": "Odd sign: sign + part; even sign: sign + 8 + part, 3° per part.",
+    "jyotishganit_d10_formula": "Odd sign: sign + part; even sign: sign + 8 + part, 3° per part.",
+    "formula_delta_status": "same_observed_formula_shape"
+  },
+  "raw_node_boundary": {
+    "local": {
+      "node_mode": "mean",
+      "Rahu": {
+        "d1_sign": "Sagittarius",
+        "degree_in_sign": 9.274293923324649,
+        "d10_part_index_zero_based": 3,
+        "d10_sign": "Pisces"
+      },
+      "Ketu": {
+        "d1_sign": "Gemini",
+        "degree_in_sign": 9.274293923324649,
+        "d10_part_index_zero_based": 3,
+        "d10_sign": "Virgo"
+      }
+    },
+    "jyotishganit": {
+      "node_mode": "unspecified_in_probe",
+      "Rahu": {
+        "d1_sign": "Sagittarius",
+        "degree_in_sign": 8.653881856647075,
+        "d10_part_index_zero_based": 2,
+        "d10_sign": "Aquarius"
+      },
+      "Ketu": {
+        "d1_sign": "Gemini",
+        "degree_in_sign": 8.653881856647104,
+        "d10_part_index_zero_based": 2,
+        "d10_sign": "Leo"
+      }
+    },
+    "boundary_degrees": [0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30],
+    "delta_explanation": "Both nodes sit near the 9° D10 boundary. A ~0.62° D1 longitude delta changes part index 2→3, producing the one-sign D10 mismatch."
+  },
+  "remaining_rows": [
+    {
+      "section": "D10",
+      "body": "Rahu",
+      "probable_reason": "node_longitude_boundary_crossing",
+      "next_evidence_needed": ["node longitude raw", "mean_vs_true_node setting", "D10 shadow-planet varga formula", "jyotishganit source line attribution"]
+    },
+    {
+      "section": "D10",
+      "body": "Ketu",
+      "probable_reason": "node_longitude_boundary_crossing",
+      "next_evidence_needed": ["node longitude raw", "mean_vs_true_node setting", "D10 shadow-planet varga formula", "jyotishganit source line attribution"]
+    }
+  ],
+  "boundary": "Do not tune Rahu/Ketu D10 to either engine until node longitude source, ayanamsa, and mean/true node settings are explicitly pinned."
+}

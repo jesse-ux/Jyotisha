@@ -1,0 +1,190 @@
+{
+  "scope": "deep_fragment_oss_reuse_gate_round2",
+  "created_at": "2026-07-19",
+  "status": "active_guardrail_ready",
+  "claim_status": "ready_contract",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "scanned_roots": [
+    "/Users/wuyongnaren/Documents",
+    "/Users/wuyongnaren/Downloads",
+    "/Users/wuyongnaren/Desktop",
+    "/tmp",
+    "/private/tmp",
+    "/Users/wuyongnaren/.workbuddy",
+    "/Users/wuyongnaren/WorkBuddy"
+  ],
+  "active_repositories": [
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星",
+      "role": "research_main",
+      "action": "authoritative local research source"
+    },
+    {
+      "path": "/tmp/jyotisha-commercial-readonly.adiUr0",
+      "role": "commercial_main",
+      "action": "target for mature astrology capability sync"
+    },
+    {
+      "path": "/Users/wuyongnaren/.workbuddy/backups/jyotish-vedic-astrology-20260711-154109",
+      "role": "historical_backup",
+      "action": "read_only_do_not_bulk_copy"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing",
+      "role": "historical_workbuddy_checkout",
+      "action": "read_only_compare_only"
+    },
+    {
+      "path": "/private/tmp/vedicastro_diliprk_flatlib_src_1784467988",
+      "role": "temporary_dependency_source",
+      "action": "dependency_identity_only_do_not_vendor"
+    }
+  ],
+  "local_fragments": [
+    {
+      "path": "/tmp/jyotisha-commercial-readonly.adiUr0/hip_main.dat",
+      "classification": "untracked_commercial_non_task_file",
+      "action": "quarantine_do_not_stage_without_owner_confirmation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Desktop/印度占星修正版研究结论v3-高压基建后的反转兑现模型.md",
+      "classification": "personal_report_or_case_note",
+      "action": "do_not_ingest_without privacy/source review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/ObsidianVault/05_文件仓库索引/电子书资料库/书目卡片",
+      "classification": "book_index_cards",
+      "action": "candidate_source_locator_only; no copyrighted text copy"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/docs/research/antigravity_round24_open_source_jyotish_landscape_2026_06_25.md",
+      "classification": "prior_oss_landscape",
+      "action": "reuse_before_new_search"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/docs/research/shadbala_av_normative_benchmark_plan_2026_07_19.md",
+      "classification": "shadbala_av_worked_example_plan",
+      "action": "reuse for component closure next steps"
+    }
+  ],
+  "oss_reuse_policy": [
+    {
+      "project": "northtara/jyotishganit",
+      "license_boundary": "MIT",
+      "allowed_use": [
+        "same-chart field observation",
+        "varga/panchanga/ashtakavarga/shadbala surface probe"
+      ],
+      "blocked_use": [
+        "absolute truth without worked examples"
+      ]
+    },
+    {
+      "project": "vedika-io/xalen-ephemeris",
+      "license_boundary": "Apache-2.0",
+      "allowed_use": [
+        "formula isolation oracle",
+        "ephemeris/varga separation"
+      ],
+      "blocked_use": [
+        "majority vote truth"
+      ]
+    },
+    {
+      "project": "diliprk/VedicAstro + diliprk/flatlib@sidereal",
+      "license_boundary": "source/license must remain file-level checked",
+      "allowed_use": [
+        "KP runtime raw/hash probe in isolated dependency path"
+      ],
+      "blocked_use": [
+        "commercial runtime vendoring before license/dependency review"
+      ]
+    },
+    {
+      "project": "naturalstupid/PyJHora",
+      "license_boundary": "AGPL-3.0",
+      "allowed_use": [
+        "black-box external fixture/oracle only"
+      ],
+      "blocked_use": [
+        "copy code",
+        "runtime dependency in commercial app"
+      ]
+    },
+    {
+      "project": "VicharaVandana/jyotishyamitra",
+      "license_boundary": "MIT",
+      "allowed_use": [
+        "independent package probe",
+        "field surface comparison"
+      ],
+      "blocked_use": [
+        "truth promotion without worked examples"
+      ]
+    },
+    {
+      "project": "dashaflow/rishi-ai-mcp local mirrors",
+      "license_boundary": "must verify before reuse",
+      "allowed_use": [
+        "Muhurta/product workflow reference only"
+      ],
+      "blocked_use": [
+        "copy implementation before license review"
+      ]
+    }
+  ],
+  "next_actions_ordered": [
+    {
+      "priority": "P0",
+      "task": "Shadbala component closure",
+      "reuse_first": [
+        "shadbala_same_unit_normalizer",
+        "jyotishganit_shadbala_surface_probe",
+        "xalen_shadbala_av_component_delta_report",
+        "VP Jain benchmark packet"
+      ],
+      "completion_gate": "component rows classified with same unit and source variant boundary"
+    },
+    {
+      "priority": "P0",
+      "task": "KP cusp worked-example oracle queue",
+      "reuse_first": [
+        "vedicastro_kp_cusp_batch_probe",
+        "KP public candidate queue",
+        "VedicAstro KP runtime raw"
+      ],
+      "completion_gate": "public input/settings/expected values/raw hash/replay comparison"
+    },
+    {
+      "priority": "P1",
+      "task": "Muhurta factor scoring",
+      "reuse_first": [
+        "muhurta_oss_factor_scoring_queue",
+        "local panchanga probes",
+        "DrikPanchang/MyPanchang public fixtures"
+      ],
+      "completion_gate": "factor weights and at least one public interval worked example per factor"
+    },
+    {
+      "priority": "P1",
+      "task": "D1-D60 source naming/use closure",
+      "reuse_first": [
+        "d1_d60_public_source_candidate_queue",
+        "jyotishganit varga surface",
+        "book index cards as locators only"
+      ],
+      "completion_gate": "source text citation without copying copyrighted content plus formula/usage boundary"
+    },
+    {
+      "priority": "P2",
+      "task": "day-level holdout",
+      "reuse_first": [
+        "public event datasets only for positive events",
+        "manual independent negative labels"
+      ],
+      "completion_gate": "20 positive and 80 explicit negative intervals reviewed by independent annotator"
+    }
+  ],
+  "boundary": "This packet completes the current pre-work sweep/OSS reuse guardrail only. It does not close numeric oracle, timing holdout, hosted identity, or worked-example blockers."
+}

@@ -1,0 +1,92 @@
+{
+  "created_at": "2026-07-19",
+  "items": [
+    {
+      "claim_boundary": "Core mapping exists; still needs endpoint/display contracts and external fixtures before claiming all D2-D60 interpretation parity.",
+      "historical_artifacts": [
+        "skills/jyotish-engine-modules/scripts/divisional_charts_extended.py"
+      ],
+      "historical_symbols": [
+        "DivisionalChartsCalculator",
+        "VargaType"
+      ],
+      "main_artifacts": [
+        "scripts/varga.py"
+      ],
+      "main_runtime_status": "covered",
+      "main_supported_vargas": [
+        "D2",
+        "D3",
+        "D4",
+        "D7",
+        "D9",
+        "D10",
+        "D12",
+        "D16",
+        "D20",
+        "D24",
+        "D27",
+        "D30",
+        "D40",
+        "D45",
+        "D60"
+      ],
+      "promotion_action": "promote_entry_tests_and_display_contract",
+      "technique_id": "d2_d60_extended_vargas"
+    },
+    {
+      "claim_boundary": "Main code already covers core Chara Karaka; historical BPHS/JH mode details should become tests/contracts, not duplicate runtime.",
+      "historical_artifacts": [
+        "skills/jyotish-engine-modules/scripts/karaka_calculator.py"
+      ],
+      "historical_symbols": [
+        "KarakaCalculator",
+        "KarakaMode",
+        "KarakaType",
+        "main"
+      ],
+      "main_artifacts": [
+        "scripts/jaimini.py"
+      ],
+      "main_runtime_status": "covered",
+      "main_supported_functions": [
+        "calc_chara_karaka_7",
+        "calc_chara_karaka_8",
+        "calc_arudha_padas",
+        "calc_upapada",
+        "calc_darapada",
+        "calc_chara_dasha",
+        "calc_chara_dasha_with_antardasha",
+        "calc_karakamsha",
+        "calc_special_lagnas_precise",
+        "calc_special_lagnas"
+      ],
+      "promotion_action": "compare_modes_then_promote_contract",
+      "technique_id": "jaimini_chara_karaka"
+    },
+    {
+      "claim_boundary": "Formula/source/timezone audit required before using special lagnas as high-rigor evidence.",
+      "historical_artifacts": [
+        "skills/jyotish-engine-modules/scripts/special_lagnas.py"
+      ],
+      "main_artifacts": [
+        "scripts/jaimini.py"
+      ],
+      "main_runtime_status": "covered",
+      "main_supported_functions": [
+        "calc_special_lagnas",
+        "calc_special_lagnas_precise"
+      ],
+      "promotion_action": "compare_current_vs_fragment",
+      "technique_id": "special_lagnas"
+    }
+  ],
+  "production_tuning_allowed": false,
+  "scope": "technique_promotion_audit_varga_karaka",
+  "summary": {
+    "fragment_items_checked": 3,
+    "main_jaimini_function_count": 10,
+    "main_varga_supported_count": 15
+  },
+  "truth_policy": "promotion_audit_not_oracle_closure"
+}

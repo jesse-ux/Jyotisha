@@ -1,0 +1,134 @@
+{
+  "scope": "kp_cusp_worked_example_oracle_queue",
+  "created_at": "2026-07-19",
+  "status": "public_candidates_triaged",
+  "production_tuning_allowed": false,
+  "claim_status": "blocked",
+  "source_policy": "Public worked examples only; no private birth data or unverifiable screenshots.",
+  "required_fields": [
+    {
+      "field": "case_id",
+      "reason": "Stable public example id."
+    },
+    {
+      "field": "source_url",
+      "reason": "Public URL or citable source."
+    },
+    {
+      "field": "datetime",
+      "reason": "Birth/question datetime with timezone."
+    },
+    {
+      "field": "latitude",
+      "reason": "Exact cusp calculation requires location."
+    },
+    {
+      "field": "longitude",
+      "reason": "Exact cusp calculation requires location."
+    },
+    {
+      "field": "house_system",
+      "reason": "KP cusp workflow must not silently use whole-sign houses."
+    },
+    {
+      "field": "ayanamsa",
+      "reason": "Sidereal setting must be explicit."
+    },
+    {
+      "field": "cusp_longitude",
+      "reason": "Numeric house cusp longitude oracle."
+    },
+    {
+      "field": "star_lord",
+      "reason": "Cusp star lord oracle field."
+    },
+    {
+      "field": "sub_lord",
+      "reason": "Cusp sub lord oracle field."
+    },
+    {
+      "field": "sub_sub_lord",
+      "reason": "Cusp sub-sub lord oracle field."
+    }
+  ],
+  "queue": [
+    {
+      "case_id": "sample_kp_calculations_pdf_candidate",
+      "source_url": "https://astro.manishverma.site/wp-content/uploads/sites/2/2023/07/Sample_KP_Calculations.pdf",
+      "source_type": "public_pdf_numeric_candidate",
+      "candidate_strength": "strongest_current_candidate",
+      "observed_fields": [
+        "planetary RL/NL/SL/SSL rows",
+        "KP cusp degree rows",
+        "KP cusp aspect table"
+      ],
+      "missing_for_oracle_ready": [
+        "birth_or_question_datetime",
+        "location",
+        "timezone",
+        "ayanamsa",
+        "house_system",
+        "per-cusp star_lord/sub_lord/sub_sub_lord extracted raw",
+        "raw_pdf_hash",
+        "replay comparison"
+      ],
+      "oracle_status": "candidate_needs_raw_capture_and_field_extraction"
+    },
+    {
+      "case_id": "astrosage_sign_star_sub_table_candidate",
+      "source_url": "https://kpastrology.astrosage.com/reference-tables/sign-star-and-sub-table",
+      "source_type": "public_reference_table",
+      "candidate_strength": "table_formula_support",
+      "observed_fields": [
+        "sign/star/sub table",
+        "sub-sub lord table navigation"
+      ],
+      "missing_for_oracle_ready": [
+        "complete raw table hash",
+        "degree ranges",
+        "license/copyright boundary",
+        "independent cusp worked example"
+      ],
+      "oracle_status": "table_support_only_not_cusp_worked_example"
+    },
+    {
+      "case_id": "astrosage_fundamental_principles_candidate",
+      "source_url": "https://kpastrology.astrosage.com/kp-learning-home/tutorial/chapter-2-fundamental-principles",
+      "source_type": "public_tutorial",
+      "candidate_strength": "method_semantics_support",
+      "observed_fields": [
+        "Vimshottari sequence explanation",
+        "star/sub-lord sequence examples"
+      ],
+      "missing_for_oracle_ready": [
+        "fixed chart input",
+        "numeric cusp longitude",
+        "per-cusp SSL values"
+      ],
+      "oracle_status": "method_reference_only"
+    },
+    {
+      "case_id": "onlinejyotish_kp_horoscope_tool_candidate",
+      "source_url": "https://www.onlinejyotish.com/free-astrology/kp-horoscope.php",
+      "source_type": "public_calculator_tool",
+      "candidate_strength": "runtime_crosscheck_candidate",
+      "observed_fields": [
+        "KP chart/cusps/significators/ruling planets surface"
+      ],
+      "missing_for_oracle_ready": [
+        "stable query URL or archived raw response",
+        "terms/license boundary",
+        "same-input output hash"
+      ],
+      "oracle_status": "tool_candidate_needs_replay_capture"
+    }
+  ],
+  "claim_boundary": "Exact KP cusp remains blocked. Current queue has public candidates, but no candidate is oracle_ready until raw/hash, full input contract, expected values, and replay comparison are archived.",
+  "acceptance_plan": [
+    "capture strongest PDF/tool raw with SHA-256",
+    "extract birth/question input and all cusp degrees",
+    "extract star_lord/sub_lord/sub_sub_lord per cusp",
+    "run scripts/vedicastro_kp_cusp_batch_probe.py on same input",
+    "compare fields without majority vote"
+  ]
+}

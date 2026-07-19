@@ -1,0 +1,39 @@
+{
+  "api_surface": {
+    "class": "VedicHoroscopeData",
+    "fields": [
+      "Nakshatra",
+      "NakshatraLord",
+      "SubLord",
+      "SubSubLord",
+      "house_sub_lord",
+      "house_ss_lord"
+    ],
+    "methods": [
+      "get_rl_nl_sl_data",
+      "get_planets_data_from_chart",
+      "get_houses_data_from_chart",
+      "generate_chart"
+    ]
+  },
+  "boundary": "Source/API surface hash only unless runtime dependencies and public numeric KP worked examples are both available.",
+  "claim_status": "observation_only",
+  "created_at": "2026-07-19",
+  "production_tuning_allowed": false,
+  "runtime_probe": {
+    "attempted": true,
+    "error": "No module named 'polars'",
+    "error_type": "ModuleNotFoundError",
+    "import_status": "blocked"
+  },
+  "scope": "vedicastro_kp_api_probe",
+  "source_path": "references/open_source_sources/VedicAstro/vedicastro/VedicAstro.py",
+  "source_sha256": "1469c89a28dd4de6e576c2c4bd907902ee45d8a261b22836ea45503af369fa1d",
+  "status": "blocked_runtime_import",
+  "truth_matrix_allowed": false,
+  "dependency_probe": {
+    "temporary_path": "/tmp/vedicastro_flatlib_probe",
+    "project_runtime_dependency_allowed": false,
+    "note": "Temporary PYTHONPATH probe only; pip resolver reported pyswisseph version conflicts, so do not promote runtime readiness."
+  }
+}

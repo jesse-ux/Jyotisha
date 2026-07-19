@@ -10,6 +10,7 @@ from varga import (
     calc_22nd_drekkana,
     calc_64th_navamsa,
     calc_bhrigu_bindu,
+    calc_all_vargas,
     calc_sarpa_drekkana,
     calc_varga,
     varga_map,
@@ -93,6 +94,30 @@ def test_varga_map_boundary_examples() -> None:
     assert varga_map(2, 0, 9) == 6  # Gemini Navamsa starts Libra (5th from sign)
     assert varga_map(1, 0, 10) == 9  # Taurus Dasamsa starts Capricorn
     assert varga_map(0, 2, 3) == 8  # Aries third Drekkana = Sagittarius
+
+
+def test_rudramsa_d11_is_supported_by_native_varga_map() -> None:
+    assert varga_map(0, 0, 11) == 0
+    assert varga_map(0, 10, 11) == 10
+    assert varga_map(1, 0, 11) == 9
+    assert varga_map(1, 10, 11) == 7
+    result = calc_varga(35.0, 11)
+    assert result["sign"] == "Aquarius"
+    assert 0 <= result["degree_in_sign"] < 30
+
+
+def test_native_varga_map_supports_declared_high_value_vargas() -> None:
+    for div in (2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 24, 60, 81, 108, 144):
+        result = calc_varga(35.0, div)
+        assert result["sign"] in SIGNS
+        assert 0 <= result["degree_in_sign"] < 30
+
+
+def test_default_varga_batch_includes_declared_vargas() -> None:
+    charts = calc_all_vargas({"Moon": 35.0}, 10.0)
+    for key in ("D5_Panchamsa", "D6_Shashthamsa", "D8_Ashtamsa", "D11_Rudramsa", "D81_Navamsa-Navamsa", "D108_Dwadasamsa-Navamsa", "D144_Dwadasamsa-Dwadasamsa"):
+        assert key in charts
+    assert charts["D11_Rudramsa"]["Moon"]["sign"] == "Aquarius"
 
 
 def test_navamsa_matches_user_jhora_pdf_reference_chart() -> None:

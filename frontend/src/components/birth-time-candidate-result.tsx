@@ -21,6 +21,15 @@ export function BirthTimeCandidateResult({ journey, controller, error }: Candida
   const action = journey.nextAction;
   const dynamic = journey.journeyProtocol === "dynamic-choice-v2";
   const terminalPath = guidedTerminalPath(journey);
+  if (result?.eventCount === 0) {
+    return (
+      <div className="birth-time-candidate-result" aria-live="polite">
+        <p className="birth-time-assessment-unavailable">尚未进入分钟计算：还没有可评分的关键经历资料。</p>
+        <p className="birth-time-evidence-boundary">当前范围仅为填报范围，不是校正结果；请补充跨领域、可注明年月的重大事件后重新评估。</p>
+        {terminalPath && <button className="button-secondary birth-time-guided-action" disabled={controller.pending} type="button" onClick={controller.editBirthTimeDetails}>补充资料并重新评估</button>}
+      </div>
+    );
+  }
   if (!result && action.kind === "present_low_result") {
     return (
       <div className="birth-time-candidate-result" aria-live="polite">
@@ -32,6 +41,7 @@ export function BirthTimeCandidateResult({ journey, controller, error }: Candida
   }
   if (!result) return null;
   const winner = result.winningSegment;
+  const receipt = result.techniqueReceipt;
 
   return (
     <div className="birth-time-candidate-result" aria-live="polite">
@@ -50,6 +60,15 @@ export function BirthTimeCandidateResult({ journey, controller, error }: Candida
         <p className="birth-time-assessment-unavailable">候选仍然并列或缺少必要计算层，系统不会选择具体分钟。</p>
       )}
       <p className="birth-time-evidence-boundary">这是可复现的候选评分，不代表已经证明出生记录中的具体分钟。</p>
+      {receipt && (
+        <details className="birth-time-evidence-receipt">
+          <summary>本次计算回执</summary>
+          <p>已用：{[...receipt.usedDivisionalCharts, ...receipt.usedArudha, ...receipt.dashaTracks].join("、") || "无"}</p>
+          <p>辅助：{receipt.auxiliaryLayers.join("、") || "无"}</p>
+          <p>未完成：{receipt.missingLayers.join("、") || "无"}</p>
+          {receipt.hardBlockers.length > 0 && <p>阻止确认：{receipt.hardBlockers.join("、")}</p>}
+        </details>
+      )}
 
       {action.kind === "present_low_result" && (
         <div className="birth-time-candidate-terminal" role="status">
