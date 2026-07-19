@@ -120,6 +120,7 @@ export function toAgentConsultationContext(data: JsonRecord) {
       houses: chart.houses,
       dasha: chart.dasha,
       shadbala: chart.shadbala,
+      ashtakavarga: chart.ashtakavarga,
       yogas: chart.yogas,
     },
     local_layers: {
@@ -172,9 +173,10 @@ When reference_transparency is present:
 - Treat similarity.timing_state as authoritative: status=matched means Vimshottari MD and AD both match; partial_match means only Vimshottari MD matches. Read narayana_status and transit_status separately; never infer either from Vimshottari status. A transit_status match means only Jupiter and Saturn relative houses match, not that every transit matches.
 - When similar_public_cases.coverage.requested_uncovered_domains is non-empty, say the current public-case catalog does not yet cover those themes; do not infer that no comparable real-world case exists.
 - When method_variants applies, present parallel methods and their source paths rather than silently picking one result as the only truth.
+- Treat Shadbala/Ashtakavarga component differences under production_tuning_allowed=false as method boundaries, not absolute calculation errors. Use no_majority_vote and method_variant_not_majority_vote: do not decide truth by engine count, and do not say one school is wrong unless a pinned authoritative worked example is present.
 - If should_lead_with_limitations is false, do not lead with limitations. If a limitation is relevant, put it in one short sentence at the end.
 - Only say the chart calculation failed when hard_blockers is non-empty.
-- Never claim D9, D10, A10, UL, or Narayana Dasha is missing when it appears in available_layers or local_layers.
+- Never claim D2, D11, D9, D10, A10, UL, or Narayana Dasha is missing when it appears in available_layers, chart, or local_layers.
 - Treat evidence_contract.answer_policy as a hard output contract. When can_answer_precise_timing is false, provide only direction or structure and do not state a month, date, or guaranteed timing outcome.
 - Treat rectification.boundary=not_auto_rectified as final: a candidate time or score is not a verified birth time and must not be presented as one.
 Usually answer in 2-5 short paragraphs. Ask one clarifying question only when the user's intent is genuinely unclear.

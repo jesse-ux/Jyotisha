@@ -33,3 +33,15 @@ def test_vedastro_only_d2_difference_is_endpoint_semantics(tmp_path: Path) -> No
     row = arbitrate_manifest(path)["rows"][0]
     assert row["category"] == "endpoint_or_varga_semantics"
     assert row["differing_engines"] == ["VedAstro"]
+
+
+def test_commercial_receives_mismatch_status_not_raw_truth_upgrade() -> None:
+    report = json.loads((ROOT / "references/oracle/three_engine_mismatch_arbitration_2026_07_19.json").read_text(encoding="utf-8"))
+    markdown = (ROOT / "docs/research/three_engine_mismatch_arbitration_2026_07_19.md").read_text(encoding="utf-8")
+
+    assert report["mismatch_count"] == 60
+    assert report["classified_count"] == 60
+    assert report["unclassified_count"] == 0
+    assert report["truth_policy"] == "no_majority_vote"
+    assert "commercial_sync: `status_and_claim_boundary_only`" in markdown
+    assert "Do not copy raw research debt into commercial runtime" in markdown

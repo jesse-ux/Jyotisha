@@ -24,6 +24,14 @@
       ]
     }
   },
+  "research_repo_exclusions": [
+    "commercial_credits",
+    "billing",
+    "subscriptions",
+    "payment",
+    "account_entitlements",
+    "service_role_runtime"
+  ],
   "shared_files": [
     "references/cross_project_contract/fixture_manifest.v1.json",
     "references/cross_project_contract/sync_ledger.json",

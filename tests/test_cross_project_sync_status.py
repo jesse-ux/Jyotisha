@@ -36,6 +36,14 @@ def test_sync_policy_encodes_research_first_commercial_mature_rule() -> None:
     assert policy["sync_model"] == "research_validates_commercial_receives_mature"
     assert policy["directional_gates"]["research_to_commercial"]["source_required"] == "validated_in_research"
     assert policy["directional_gates"]["research_to_commercial"]["target_required"] == "commercial_safe"
+    assert set(policy["research_repo_exclusions"]) >= {
+        "commercial_credits",
+        "billing",
+        "subscriptions",
+        "payment",
+        "account_entitlements",
+        "service_role_runtime",
+    }
     assert "references/cross_project_contract/fixture_manifest.v1.json" in policy["shared_files"]
 
 

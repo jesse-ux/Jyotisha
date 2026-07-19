@@ -11,11 +11,14 @@ REQUIRED={"case_id","domain","label","start","end","source_url","adjudicator","t
 def validate(path: Path) -> dict:
     data=json.loads(path.read_text(encoding="utf-8")); rows=data.get("annotations") or []; errors=[]
     mode=data.get("validation_mode", "independent")
+    prohibited=set(data.get("prohibited_tuning_data") or [])
     allowed_labels={"target_event", "no_target_event"} if mode == "independent" else {"target_event", "observational_non_target_date"}
     for i,row in enumerate(rows):
         for key in sorted(REQUIRED-set(row)): errors.append({"row":i,"field":key,"error":"missing"})
         if row.get("label") not in allowed_labels: errors.append({"row":i,"field":"label","error":"invalid"})
         if not str(row.get("source_url") or "").startswith(("https://","http://")): errors.append({"row":i,"field":"source_url","error":"not_public_url"})
+        if mode == "independent" and row.get("independent_human_reviewed") is not True: errors.append({"row":i,"field":"independent_human_reviewed","error":"not_independently_human_reviewed"})
+        if row.get("source_path") in prohibited: errors.append({"row":i,"field":"source_path","error":"prohibited_tuning_source"})
     positives=sum(r.get("label")=="target_event" for r in rows); negatives=sum(r.get("label") in {"no_target_event", "observational_non_target_date"} for r in rows)
     gate=data.get("frozen_gate") or {}; ready=not errors and positives>=gate.get("minimum_independent_cases",20) and negatives>=gate.get("minimum_independent_negative_intervals",80)
     status=("observational_ready_not_independent" if ready else "awaiting_observational_labels") if mode == "observational" else ("ready_for_blind_replay" if ready else "awaiting_independent_labels")

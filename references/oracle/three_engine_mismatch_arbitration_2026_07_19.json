@@ -1,0 +1,1464 @@
+{
+  "category_counts": {
+    "ashtakavarga_table_or_contributor_variant": 8,
+    "derived_total_from_component_variants": 7,
+    "endpoint_or_varga_semantics": 10,
+    "shadbala_formula_variant": 35
+  },
+  "classified_count": 60,
+  "manifest_path": "references/oracle/three_engine_parity_replay_manifest.json",
+  "mismatch_count": 60,
+  "rows": [
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_requirement": "Confirm VedAstro endpoint returns the requested varga under the same ayanamsa/node/method contract.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Sun.sign",
+      "local_value": "Leo",
+      "oracle_values": {
+        "PyJHora_JHora": "Leo",
+        "VedAstro": "Gemini",
+        "jyotishganit": "Leo"
+      },
+      "section": "D2",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_requirement": "Confirm VedAstro endpoint returns the requested varga under the same ayanamsa/node/method contract.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Moon.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Pisces",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D2",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_requirement": "Confirm VedAstro endpoint returns the requested varga under the same ayanamsa/node/method contract.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Mars.sign",
+      "local_value": "Leo",
+      "oracle_values": {
+        "PyJHora_JHora": "Leo",
+        "VedAstro": "Aries",
+        "jyotishganit": "Leo"
+      },
+      "section": "D2",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_requirement": "Confirm VedAstro endpoint returns the requested varga under the same ayanamsa/node/method contract.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Mercury.sign",
+      "local_value": "Leo",
+      "oracle_values": {
+        "PyJHora_JHora": "Leo",
+        "VedAstro": "Virgo",
+        "jyotishganit": "Leo"
+      },
+      "section": "D2",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_requirement": "Confirm VedAstro endpoint returns the requested varga under the same ayanamsa/node/method contract.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Jupiter.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Aquarius",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D2",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_requirement": "Confirm VedAstro endpoint returns the requested varga under the same ayanamsa/node/method contract.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Venus.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Leo",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D2",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_requirement": "Confirm VedAstro endpoint returns the requested varga under the same ayanamsa/node/method contract.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Saturn.sign",
+      "local_value": "Cancer",
+      "oracle_values": {
+        "PyJHora_JHora": "Cancer",
+        "VedAstro": "Gemini",
+        "jyotishganit": "Cancer"
+      },
+      "section": "D2",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_requirement": "Confirm VedAstro endpoint returns the requested varga under the same ayanamsa/node/method contract.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Moon.sign",
+      "local_value": "Gemini",
+      "oracle_values": {
+        "PyJHora_JHora": "Gemini",
+        "VedAstro": "Pisces",
+        "jyotishganit": "Gemini"
+      },
+      "section": "D4",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_requirement": "Confirm VedAstro endpoint returns the requested varga under the same ayanamsa/node/method contract.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Moon.sign",
+      "local_value": "Scorpio",
+      "oracle_values": {
+        "PyJHora_JHora": "Scorpio",
+        "VedAstro": "Leo",
+        "jyotishganit": "Scorpio"
+      },
+      "section": "D9",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "endpoint_or_varga_semantics",
+      "closure_requirement": "Confirm VedAstro endpoint returns the requested varga under the same ayanamsa/node/method contract.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Moon.sign",
+      "local_value": "Pisces",
+      "oracle_values": {
+        "PyJHora_JHora": "Pisces",
+        "VedAstro": "Sagittarius",
+        "jyotishganit": "Pisces"
+      },
+      "section": "D10",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_requirement": "Compare contributor tables, Lagna inclusion, shodhana state, and BAV/SAV row semantics.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Sun",
+      "local_value": [
+        3,
+        7,
+        4,
+        3,
+        3,
+        2,
+        6,
+        7,
+        4,
+        4,
+        3,
+        2
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          3,
+          7,
+          4,
+          3,
+          3,
+          2,
+          6,
+          7,
+          4,
+          4,
+          3,
+          2
+        ],
+        "VedAstro": [
+          3,
+          7,
+          3,
+          2,
+          3,
+          3,
+          6,
+          7,
+          4,
+          3,
+          4,
+          3
+        ],
+        "jyotishganit": [
+          3,
+          7,
+          4,
+          3,
+          3,
+          2,
+          6,
+          7,
+          4,
+          4,
+          3,
+          2
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_requirement": "Compare contributor tables, Lagna inclusion, shodhana state, and BAV/SAV row semantics.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon",
+      "local_value": [
+        4,
+        4,
+        4,
+        3,
+        6,
+        5,
+        3,
+        3,
+        4,
+        5,
+        3,
+        5
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          4,
+          4,
+          4,
+          3,
+          6,
+          5,
+          3,
+          3,
+          4,
+          5,
+          3,
+          5
+        ],
+        "VedAstro": [
+          4,
+          5,
+          3,
+          2,
+          6,
+          6,
+          3,
+          2,
+          5,
+          4,
+          4,
+          5
+        ],
+        "jyotishganit": [
+          4,
+          5,
+          4,
+          2,
+          6,
+          5,
+          3,
+          2,
+          5,
+          5,
+          3,
+          5
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_requirement": "Compare contributor tables, Lagna inclusion, shodhana state, and BAV/SAV row semantics.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Mars",
+      "local_value": [
+        4,
+        7,
+        4,
+        4,
+        3,
+        0,
+        4,
+        5,
+        1,
+        4,
+        1,
+        2
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          4,
+          7,
+          4,
+          4,
+          3,
+          0,
+          4,
+          5,
+          1,
+          4,
+          1,
+          2
+        ],
+        "VedAstro": [
+          4,
+          7,
+          3,
+          4,
+          2,
+          1,
+          4,
+          5,
+          2,
+          3,
+          2,
+          2
+        ],
+        "jyotishganit": [
+          4,
+          7,
+          4,
+          4,
+          3,
+          0,
+          4,
+          5,
+          1,
+          4,
+          1,
+          2
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_requirement": "Compare contributor tables, Lagna inclusion, shodhana state, and BAV/SAV row semantics.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Mercury",
+      "local_value": [
+        5,
+        5,
+        5,
+        4,
+        4,
+        2,
+        6,
+        5,
+        5,
+        8,
+        2,
+        3
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          5,
+          5,
+          5,
+          4,
+          4,
+          2,
+          6,
+          5,
+          5,
+          8,
+          2,
+          3
+        ],
+        "VedAstro": [
+          5,
+          5,
+          4,
+          5,
+          3,
+          2,
+          7,
+          4,
+          6,
+          8,
+          2,
+          3
+        ],
+        "jyotishganit": [
+          5,
+          5,
+          5,
+          4,
+          4,
+          2,
+          6,
+          5,
+          5,
+          8,
+          2,
+          3
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_requirement": "Compare contributor tables, Lagna inclusion, shodhana state, and BAV/SAV row semantics.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Jupiter",
+      "local_value": [
+        7,
+        5,
+        3,
+        3,
+        4,
+        7,
+        4,
+        5,
+        4,
+        6,
+        5,
+        3
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          7,
+          5,
+          3,
+          3,
+          4,
+          7,
+          4,
+          5,
+          4,
+          6,
+          5,
+          3
+        ],
+        "VedAstro": [
+          7,
+          5,
+          3,
+          3,
+          4,
+          7,
+          5,
+          4,
+          4,
+          6,
+          4,
+          4
+        ],
+        "jyotishganit": [
+          7,
+          5,
+          3,
+          3,
+          4,
+          7,
+          4,
+          5,
+          4,
+          6,
+          5,
+          3
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_requirement": "Compare contributor tables, Lagna inclusion, shodhana state, and BAV/SAV row semantics.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus",
+      "local_value": [
+        4,
+        3,
+        5,
+        4,
+        3,
+        5,
+        4,
+        3,
+        5,
+        5,
+        5,
+        6
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          4,
+          3,
+          5,
+          4,
+          3,
+          5,
+          4,
+          3,
+          5,
+          5,
+          5,
+          6
+        ],
+        "VedAstro": [
+          4,
+          3,
+          4,
+          4,
+          4,
+          4,
+          4,
+          2,
+          5,
+          6,
+          6,
+          6
+        ],
+        "jyotishganit": [
+          4,
+          3,
+          5,
+          3,
+          4,
+          5,
+          4,
+          3,
+          5,
+          5,
+          5,
+          6
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_requirement": "Compare contributor tables, Lagna inclusion, shodhana state, and BAV/SAV row semantics.",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "field": "Saturn",
+      "local_value": [
+        1,
+        5,
+        3,
+        0,
+        6,
+        3,
+        4,
+        5,
+        3,
+        3,
+        3,
+        3
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          1,
+          5,
+          3,
+          0,
+          6,
+          3,
+          4,
+          5,
+          3,
+          3,
+          3,
+          3
+        ],
+        "VedAstro": [
+          1,
+          5,
+          2,
+          0,
+          5,
+          4,
+          4,
+          4,
+          4,
+          2,
+          4,
+          4
+        ],
+        "jyotishganit": [
+          1,
+          5,
+          3,
+          0,
+          6,
+          3,
+          4,
+          5,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      "section": "ashtakavarga_bav",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "ashtakavarga_table_or_contributor_variant",
+      "closure_requirement": "Compare contributor tables, Lagna inclusion, shodhana state, and BAV/SAV row semantics.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "12_sign_scores",
+      "local_value": [
+        28,
+        36,
+        28,
+        21,
+        29,
+        24,
+        31,
+        33,
+        26,
+        35,
+        22,
+        24
+      ],
+      "oracle_values": {
+        "PyJHora_JHora": [
+          28,
+          36,
+          28,
+          21,
+          29,
+          24,
+          31,
+          33,
+          26,
+          35,
+          22,
+          24
+        ],
+        "VedAstro": [
+          24,
+          28,
+          37,
+          28,
+          19,
+          30,
+          24,
+          31,
+          32,
+          27,
+          35,
+          22
+        ],
+        "jyotishganit": [
+          28,
+          37,
+          28,
+          19,
+          30,
+          24,
+          31,
+          32,
+          27,
+          35,
+          22,
+          24
+        ]
+      },
+      "section": "ashtakavarga_sav",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_requirement": "Do not arbitrate totals until all six component variants and Virupa/Rupa units are aligned.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun",
+      "local_value": 480.62,
+      "oracle_values": {
+        "PyJHora_JHora": 444.63,
+        "VedAstro": 395.06,
+        "jyotishganit": 422.007
+      },
+      "section": "shadbala_total",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun.sthana",
+      "local_value": 217.09,
+      "oracle_values": {
+        "PyJHora_JHora": 217.09,
+        "VedAstro": 202.0874074074074,
+        "jyotishganit": 153.341
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun.kala",
+      "local_value": 140.98,
+      "oracle_values": {
+        "PyJHora_JHora": 140.99,
+        "VedAstro": 128.0507461419753,
+        "jyotishganit": 148.893
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun.dig",
+      "local_value": 24.81,
+      "oracle_values": {
+        "PyJHora_JHora": 24.81,
+        "VedAstro": 24.810925925925925,
+        "jyotishganit": 29.175
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun.chesta",
+      "local_value": 36.0,
+      "oracle_values": {
+        "PyJHora_JHora": 0.0,
+        "VedAstro": 0.0,
+        "jyotishganit": 37.06
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Sun.drik",
+      "local_value": 1.74,
+      "oracle_values": {
+        "PyJHora_JHora": 1.74,
+        "VedAstro": -19.891041666666666,
+        "jyotishganit": -6.462
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_requirement": "Do not arbitrate totals until all six component variants and Virupa/Rupa units are aligned.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon",
+      "local_value": 584.26,
+      "oracle_values": {
+        "PyJHora_JHora": 562.89,
+        "VedAstro": 421.8,
+        "jyotishganit": 420.655
+      },
+      "section": "shadbala_total",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon.sthana",
+      "local_value": 246.34,
+      "oracle_values": {
+        "PyJHora_JHora": 246.34,
+        "VedAstro": 236.69703703703703,
+        "jyotishganit": 141.341
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon.kala",
+      "local_value": 149.61,
+      "oracle_values": {
+        "PyJHora_JHora": 149.58,
+        "VedAstro": 159.53537962962963,
+        "jyotishganit": 183.112
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon.dig",
+      "local_value": 95.48,
+      "oracle_values": {
+        "PyJHora_JHora": 95.48,
+        "VedAstro": 52.26824074074074,
+        "jyotishganit": 20.159
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon.chesta",
+      "local_value": 21.34,
+      "oracle_values": {
+        "PyJHora_JHora": 0.0,
+        "VedAstro": 0.0,
+        "jyotishganit": 10.667
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Moon.drik",
+      "local_value": 20.06,
+      "oracle_values": {
+        "PyJHora_JHora": 20.06,
+        "VedAstro": -18.131319444444447,
+        "jyotishganit": 13.946
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_requirement": "Do not arbitrate totals until all six component variants and Virupa/Rupa units are aligned.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars",
+      "local_value": 456.19,
+      "oracle_values": {
+        "PyJHora_JHora": 533.18,
+        "VedAstro": 397.89,
+        "jyotishganit": 438.227
+      },
+      "section": "shadbala_total",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars.sthana",
+      "local_value": 198.63,
+      "oracle_values": {
+        "PyJHora_JHora": 198.63,
+        "VedAstro": 221.28777777777776,
+        "jyotishganit": 232.378
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars.kala",
+      "local_value": 127.92,
+      "oracle_values": {
+        "PyJHora_JHora": 127.93,
+        "VedAstro": 148.2544363425926,
+        "jyotishganit": 106.407
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars.dig",
+      "local_value": 77.41,
+      "oracle_values": {
+        "PyJHora_JHora": 77.41,
+        "VedAstro": 2.3666666666666667,
+        "jyotishganit": 46.955
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars.chesta",
+      "local_value": 21.6,
+      "oracle_values": {
+        "PyJHora_JHora": 98.58,
+        "VedAstro": 21.737741162570256,
+        "jyotishganit": 22.864
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mars.drik",
+      "local_value": 13.49,
+      "oracle_values": {
+        "PyJHora_JHora": 13.49,
+        "VedAstro": -12.978854166666672,
+        "jyotishganit": 12.483
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_requirement": "Do not arbitrate totals until all six component variants and Virupa/Rupa units are aligned.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury",
+      "local_value": 365.28,
+      "oracle_values": {
+        "PyJHora_JHora": 363.24,
+        "VedAstro": 376.04,
+        "jyotishganit": 241.84
+      },
+      "section": "shadbala_total",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury.sthana",
+      "local_value": 167.96,
+      "oracle_values": {
+        "PyJHora_JHora": 167.96,
+        "VedAstro": 182.95805555555555,
+        "jyotishganit": 111.704
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury.kala",
+      "local_value": 121.79,
+      "oracle_values": {
+        "PyJHora_JHora": 121.78,
+        "VedAstro": 126.59104166666665,
+        "jyotishganit": 72.089
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury.dig",
+      "local_value": 12.64,
+      "oracle_values": {
+        "PyJHora_JHora": 12.64,
+        "VedAstro": 12.643148148148148,
+        "jyotishganit": 7.954
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury.chesta",
+      "local_value": 47.8,
+      "oracle_values": {
+        "PyJHora_JHora": 45.78,
+        "VedAstro": 47.51070370816793,
+        "jyotishganit": 35.368
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Mercury.drik",
+      "local_value": -10.62,
+      "oracle_values": {
+        "PyJHora_JHora": -10.63,
+        "VedAstro": -19.363888888888884,
+        "jyotishganit": -10.985
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_requirement": "Do not arbitrate totals until all six component variants and Virupa/Rupa units are aligned.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter",
+      "local_value": 569.4,
+      "oracle_values": {
+        "PyJHora_JHora": 596.89,
+        "VedAstro": 427.22,
+        "jyotishganit": 596.043
+      },
+      "section": "shadbala_total",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter.sthana",
+      "local_value": 201.81,
+      "oracle_values": {
+        "PyJHora_JHora": 201.8,
+        "VedAstro": 213.06314814814814,
+        "jyotishganit": 226.178
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter.kala",
+      "local_value": 199.32,
+      "oracle_values": {
+        "PyJHora_JHora": 199.31,
+        "VedAstro": 141.64764506172838,
+        "jyotishganit": 250.984
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter.dig",
+      "local_value": 80.59,
+      "oracle_values": {
+        "PyJHora_JHora": 80.6,
+        "VedAstro": 6.773333333333333,
+        "jyotishganit": 44.095
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter.chesta",
+      "local_value": 46.49,
+      "oracle_values": {
+        "PyJHora_JHora": 74.0,
+        "VedAstro": 46.05491068568356,
+        "jyotishganit": 36.424
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Jupiter.drik",
+      "local_value": 6.9,
+      "oracle_values": {
+        "PyJHora_JHora": 6.89,
+        "VedAstro": -14.818125000000006,
+        "jyotishganit": 4.072
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_requirement": "Do not arbitrate totals until all six component variants and Virupa/Rupa units are aligned.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus",
+      "local_value": 406.93,
+      "oracle_values": {
+        "PyJHora_JHora": 408.64,
+        "VedAstro": 402.56,
+        "jyotishganit": 306.501
+      },
+      "section": "shadbala_total",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus.sthana",
+      "local_value": 154.06,
+      "oracle_values": {
+        "PyJHora_JHora": 154.06,
+        "VedAstro": 210.05953703703705,
+        "jyotishganit": 112.816
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus.kala",
+      "local_value": 113.45,
+      "oracle_values": {
+        "PyJHora_JHora": 113.44,
+        "VedAstro": 97.43954166666667,
+        "jyotishganit": 63.186
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus.dig",
+      "local_value": 69.95,
+      "oracle_values": {
+        "PyJHora_JHora": 69.95,
+        "VedAstro": 29.630740740740737,
+        "jyotishganit": 45.684
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus.chesta",
+      "local_value": 29.36,
+      "oracle_values": {
+        "PyJHora_JHora": 31.08,
+        "VedAstro": 30.84685510809705,
+        "jyotishganit": 46.466
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Venus.drik",
+      "local_value": -2.75,
+      "oracle_values": {
+        "PyJHora_JHora": -2.75,
+        "VedAstro": -8.51038194444445,
+        "jyotishganit": -4.511
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "derived_total_from_component_variants",
+      "closure_requirement": "Do not arbitrate totals until all six component variants and Virupa/Rupa units are aligned.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn",
+      "local_value": 430.05,
+      "oracle_values": {
+        "PyJHora_JHora": 429.42,
+        "VedAstro": 448.58,
+        "jyotishganit": 322.113
+      },
+      "section": "shadbala_total",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn.sthana",
+      "local_value": 218.61,
+      "oracle_values": {
+        "PyJHora_JHora": 218.61,
+        "VedAstro": 239.23268518518518,
+        "jyotishganit": 151.104
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn.kala",
+      "local_value": 136.76,
+      "oracle_values": {
+        "PyJHora_JHora": 136.77,
+        "VedAstro": 140.7160763888889,
+        "jyotishganit": 71.929
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn.dig",
+      "local_value": 19.63,
+      "oracle_values": {
+        "PyJHora_JHora": 19.62,
+        "VedAstro": 19.623796296296295,
+        "jyotishganit": 24.313
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "PyJHora_JHora",
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn.chesta",
+      "local_value": 36.99,
+      "oracle_values": {
+        "PyJHora_JHora": 36.36,
+        "VedAstro": 39.438983295527784,
+        "jyotishganit": 58.137
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    },
+    {
+      "category": "shadbala_formula_variant",
+      "closure_requirement": "Compare component formula, units, local solar context, aspect model, and Chesta lineage before totals.",
+      "differing_engines": [
+        "VedAstro",
+        "jyotishganit"
+      ],
+      "field": "Saturn.drik",
+      "local_value": 9.49,
+      "oracle_values": {
+        "PyJHora_JHora": 9.49,
+        "VedAstro": 0.9979513888888878,
+        "jyotishganit": 8.06
+      },
+      "section": "shadbala_components",
+      "truth_status": "unresolved"
+    }
+  ],
+  "scope": "three_engine_field_level_mismatch_arbitration",
+  "status": "classified_unresolved",
+  "truth_policy": "no_majority_vote",
+  "unclassified_count": 0
+}
