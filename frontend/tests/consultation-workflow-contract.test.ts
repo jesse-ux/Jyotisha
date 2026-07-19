@@ -9,7 +9,7 @@ test("runs the Jyotish workflow before streaming a commercial consultation", () 
   assert.match(route, /runConsultationWorkflow/);
   assert.match(route, /await runConsultationWorkflow\(toolInput\)/);
   assert.match(route, /getJyotishAgent\(selectedModel, workflowContext\)\.stream/);
-  assert.ok(route.indexOf("await runConsultationWorkflow(toolInput)") < route.indexOf(".stream(["));
+  assert.ok(route.indexOf("await runConsultationWorkflow(toolInput)") < route.indexOf(".stream("));
 });
 
 test("grounds the answer in the server-computed workflow without a second tool run", () => {
