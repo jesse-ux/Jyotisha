@@ -7,6 +7,11 @@ type Check = {
 };
 
 const jyotishApiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
+const gitCommit =
+  process.env.GITHUB_SHA
+  ?? process.env.VERCEL_GIT_COMMIT_SHA
+  ?? process.env.NEXT_PUBLIC_GIT_COMMIT
+  ?? "unknown";
 
 function envCheck(names: string[]): Check {
   const missing = names.filter((name) => !process.env[name]);
@@ -65,6 +70,9 @@ export async function GET() {
     {
       status,
       timestamp: new Date().toISOString(),
+      deployment: {
+        gitCommit,
+      },
       checks,
     },
     { status: status === "ok" ? 200 : 503 },
