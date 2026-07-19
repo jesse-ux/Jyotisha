@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 51,
+    "packet_count": 54,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -417,6 +417,30 @@
       "claim_status": "observation_only",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "VedicAstro KP lord/sub/sub-sub runtime surface is callable in isolated sidereal flatlib environment; no precision-timing truth upgrade until public numeric KP worked-example replay closes."
+    },
+    {
+      "packet_id": "kp_muhurta_shadbala_numeric_packet_queue",
+      "path": "references/oracle/kp_muhurta_shadbala_numeric_packet_queue_2026_07_19.json",
+      "domain": "kp_muhurta_shadbala_numeric_oracle_queue",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Queue tracks KP cusp, KP sub-lord table, Tarabala/Chandrabala, Rahu Kalam, and Shadbala numeric packets. Runtime KP raw exists, but no row is numeric_oracle_ready yet."
+    },
+    {
+      "packet_id": "vedicastro_kp_house_cusp_probe_steve_jobs",
+      "path": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_19.json",
+      "domain": "kp_precision_timing_dependency",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "VedicAstro KP house cusp star/sub/sub-sub raw for Steve Jobs fixture; observation-only until public worked-example replay closes."
+    },
+    {
+      "packet_id": "vedicastro_kp_house_cusp_probe",
+      "path": "scripts/vedicastro_kp_house_cusp_probe.py",
+      "domain": "kp_precision_timing_dependency",
+      "claim_status": "tooling_observation_only",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Probe script can collect VedicAstro KP cusp raw in isolated sidereal flatlib environment; not a production prediction engine."
     }
   ]
 }
