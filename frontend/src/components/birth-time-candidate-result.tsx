@@ -24,7 +24,7 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
     return (
       <div className="birth-time-candidate-result" aria-live="polite">
         <p className="birth-time-evidence-boundary">系统不会选择或应用未经证据支持的具体分钟，<span className="phrase-nowrap">当前排盘使用时间</span>保持不变。</p>
-        {terminalPath && <NewAssessmentAction controller={controller} />}
+        {terminalPath && <TerminalAction controller={controller} path={terminalPath} />}
       </div>
     );
   }
@@ -52,13 +52,13 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
       {action.kind === "present_low_result" && (
         <div className="birth-time-candidate-terminal" role="status">
           <p>{dynamic ? "目前没有足够的新信息继续稳定缩小范围，本次评估已结束并保存当前候选范围。" : "本轮校正已安全结束，只保留候选范围，当前排盘使用时间保持不变。"}</p>
-          {terminalPath && <NewAssessmentAction controller={controller} />}
+          {terminalPath && <TerminalAction controller={controller} path={terminalPath} />}
         </div>
       )}
       {action.kind === "present_medium_result" && winner && dynamic && (
         <div className="birth-time-candidate-terminal" role="status">
           <p>已形成较窄的候选范围，本次评估已结束；它不会自动改动<span className="phrase-nowrap">当前排盘使用时间</span>。</p>
-          <NewAssessmentAction controller={controller} />
+          {terminalPath && <TerminalAction controller={controller} path={terminalPath} />}
         </div>
       )}
       {action.kind === "present_medium_result" && winner && !dynamic && (
@@ -72,7 +72,7 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
       {action.kind === "candidate_saved" && (
         <div className="birth-time-candidate-terminal" role="status">
           <p className="birth-time-success-note">候选时间范围已保存。<span className="phrase-nowrap">当前排盘使用时间</span>没有改变。</p>
-          {terminalPath && <NewAssessmentAction controller={controller} />}
+          {terminalPath && <TerminalAction controller={controller} path={terminalPath} />}
         </div>
       )}
       {action.kind === "request_candidate_confirmation" && winner && (
@@ -94,9 +94,20 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
   );
 }
 
-function NewAssessmentAction({ controller }: {
+function TerminalAction({ controller, path }: {
   readonly controller: BirthTimeGuidedController;
+  readonly path: NonNullable<ReturnType<typeof guidedTerminalPath>>;
 }) {
+  if (path.kind === "complete_with_candidate") {
+    return (
+      <div className="birth-time-new-assessment">
+        <button className="button-primary birth-time-guided-action" disabled={controller.pending} onClick={() => controller.completeCandidate(path.time)} type="button">
+          {controller.pending ? "保存中…" : "完成并继续对话"}
+        </button>
+        <small>将以 {path.time} 作为当前工作排盘时间；候选状态和原始资料都会保留。</small>
+      </div>
+    );
+  }
   return (
     <div className="birth-time-new-assessment">
       <button className="button-secondary birth-time-guided-action" disabled={controller.pending} onClick={controller.editBirthTimeDetails} type="button">开始新的评估</button>

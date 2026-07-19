@@ -16,6 +16,7 @@ type DraftRevision = GuidedMutation & {
 };
 type CandidateSave = GuidedMutation & { readonly resultId: string };
 type CandidateConfirmation = CandidateSave & { readonly time: string };
+type CandidateCompletion = Pick<CandidateSave, "caseId" | "resultId"> & { readonly time: string };
 
 const errorPayloadSchema = z.object({
   message: z.string().optional(),
@@ -67,4 +68,23 @@ export function confirmGuidedBirthTimeCandidate(
   input: CandidateConfirmation,
 ) {
   return send({ type: "confirm_guided_candidate", ...input });
+}
+
+export async function completeGuidedBirthTimeCandidate(
+  input: CandidateCompletion,
+) {
+  const { response, payload } = await postJson({
+    url: "/api/birth-time-candidate-completion",
+    body: JSON.stringify(input),
+    retryLostResponse: false,
+  });
+  if (!response.ok) {
+    const parsed = errorPayloadSchema.safeParse(payload);
+    throw new GuidedBirthTimeRequestError(
+      response.status,
+      parsed.success
+        ? parsed.data.message ?? parsed.data.error ?? "候选时间暂时无法保存"
+        : "候选时间暂时无法保存",
+    );
+  }
 }

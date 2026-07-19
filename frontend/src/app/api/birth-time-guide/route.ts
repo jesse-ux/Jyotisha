@@ -7,7 +7,7 @@ import {
 } from "@/lib/birth-time-guide-service";
 import { BirthTimeJourneyActionError, createJourneyTurnActions } from "@/lib/birth-time-journey-actions";
 import { BirthTimeDynamicActionError } from "@/lib/birth-time-dynamic-actions";
-import { BirthTimeJourneyEngineError, createJyotishBirthTimeJourneyEngine } from "@/lib/birth-time-journey-engine";
+import { BirthTimeJourneyEngineConfigurationError, BirthTimeJourneyEngineError, createJyotishBirthTimeJourneyEngine } from "@/lib/birth-time-journey-engine";
 import { createBirthTimeJourneyService } from "@/lib/birth-time-journey-service";
 import {
   BirthTimeJourneyStoreError,
@@ -166,6 +166,7 @@ export async function POST(request: Request) {
     }
     if (error instanceof BirthTimeJourneyStoreError
       || error instanceof BirthTimeJourneyEngineError
+      || error instanceof BirthTimeJourneyEngineConfigurationError
       || (error instanceof BirthTimeDynamicActionError && error.reason === "unavailable")) {
       return NextResponse.json(
         { error: "生时引导暂时不可用", message: "当前资料已保留，请稍后重试。" },

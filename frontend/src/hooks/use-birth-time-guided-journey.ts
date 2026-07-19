@@ -14,6 +14,7 @@ import {
 } from "@/lib/birth-time-journey-client";
 import type { JourneyClientResponse } from "@/lib/birth-time-journey-client";
 import {
+  completeGuidedBirthTimeCandidate,
   confirmGuidedBirthTimeCandidate,
   reviseBirthTimeEvidenceDraft,
   saveGuidedBirthTimeCandidate,
@@ -35,6 +36,7 @@ type GuidedJourneyInput = {
   readonly preview: boolean;
   readonly onJourney: (journey: JourneyClientResponse) => void;
   readonly onReady: (journey: JourneyClientResponse) => void;
+  readonly onCandidateComplete: (journey: JourneyClientResponse, time: string) => void;
   readonly onEditBirthTimeDetails: () => void;
 };
 
@@ -50,6 +52,7 @@ export type BirthTimeGuidedController = {
   readonly resume: () => void;
   readonly editBirthTimeDetails: () => void;
   readonly acknowledgeReady: () => void;
+  readonly completeCandidate: (time: string) => void;
   readonly retryScoring: () => void;
   readonly saveCandidate: (resultId: string) => void;
   readonly confirmCandidate: (resultId: string, time: string) => void;
@@ -66,7 +69,7 @@ function previewAction(turn: JourneyClientResponse, command: DynamicPreviewComma
 }
 
 export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeGuidedController {
-  const { journey, onJourney, onReady, onEditBirthTimeDetails, preview } = input;
+  const { journey, onJourney, onReady, onCandidateComplete, onEditBirthTimeDetails, preview } = input;
   const latest = useRef(journey);
   const busy = useRef(false);
   const [actionRegistry] = useState(() => createStableActionIdentityRegistry());
@@ -181,6 +184,26 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
   const acknowledgeReady = () => {
     if (journey?.nextAction.kind === "ready") onReady(journey);
   };
+  const completeCandidate = (time: string) => {
+    const turn = journey;
+    const resultId = turn?.candidateResult?.resultId;
+    const winner = turn?.candidateResult?.winningSegment;
+    if (!turn || !resultId || winner?.representativeTime !== time) return;
+    const release = claimMutation(busy);
+    if (release === null) return;
+    setPending(true);
+    setError("");
+    const completion = preview
+      ? Promise.resolve()
+      : completeGuidedBirthTimeCandidate({ caseId: turn.caseId, resultId, time });
+    void completion
+      .then(() => onCandidateComplete(turn, time))
+      .catch((caught) => setError(caught instanceof Error ? caught.message : "候选时间暂时无法保存"))
+      .finally(() => {
+        release();
+        setPending(false);
+      });
+  };
   const retryScoring = () => {
     const turn = journey;
     if (preview && turn?.journeyProtocol === "dynamic-choice-v2"
@@ -253,6 +276,7 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     resume,
     editBirthTimeDetails: onEditBirthTimeDetails,
     acknowledgeReady,
+    completeCandidate,
     retryScoring,
     saveCandidate,
     confirmCandidate,

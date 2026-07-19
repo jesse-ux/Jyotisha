@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { BirthDatePicker } from "@/components/birth-date-picker";
 import {
+  birthTimeDisplayState,
   birthTimePeriodOptions,
   birthTimeSourceOptions,
   type BirthTimeDraft,
@@ -52,6 +53,7 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
   const groupId = useId();
   const source = value.birthTimeSource;
   const isConfirmed = value.birthTimeStatus === "confirmed";
+  const displayState = birthTimeDisplayState(value);
   const usesClockTime = source === "hospital_record"
     || source === "family_exact"
     || source === "approximate"
@@ -59,6 +61,27 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
 
   return (
     <div className="birth-time-intake">
+      {displayState && (
+        <section className="birth-time-profile-result" aria-label="生时校正结果">
+          <div className="birth-time-profile-result-heading">
+            <span>生时校正结果</span>
+            <strong>{displayState.kind === "candidate" ? "候选时间" : "已确认"}</strong>
+          </div>
+          <dl>
+            <div>
+              <dt>{displayState.kind === "candidate" ? "当前工作排盘时间" : "当前排盘时间"}</dt>
+              <dd>{displayState.activeTime}</dd>
+            </div>
+            <div>
+              <dt>原始填报</dt>
+              <dd>{displayState.reportedLabel}</dd>
+            </div>
+          </dl>
+          {displayState.kind === "candidate" && (
+            <p>已用于当前排盘，但仍保留为候选结果，不会标记成出生记录中的确定分钟。</p>
+          )}
+        </section>
+      )}
       <BirthDatePicker
         value={value.date}
         disabled={isConfirmed}

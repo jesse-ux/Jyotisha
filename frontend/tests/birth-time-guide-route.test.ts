@@ -237,6 +237,7 @@ test("guide requests are strict and bound the natural-language message", () => {
 test("route authenticates before body parsing and has no privileged workflow imports", () => {
   const source = readFileSync(new URL("../src/app/api/birth-time-guide/route.ts", import.meta.url), "utf8");
   assert.ok(source.indexOf("auth.getUser") < source.indexOf("requestPayload(request)"));
+  assert.match(source, /BirthTimeJourneyEngineConfigurationError/);
   for (const forbidden of [
     "begin_consultation_credit",
     "getJyotishAgent",
