@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 45,
+    "packet_count": 46,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -369,6 +369,14 @@
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "40 generic-only Dn rows require source/formula/oracle closure or remain hidden generic fallback."
+    },
+    {
+      "packet_id": "authoritative_oss_jyotish_source_intake",
+      "path": "references/oracle/authoritative_oss_jyotish_source_intake_2026_07_19.json",
+      "domain": "oss_source_reuse_governance",
+      "claim_status": "source_intake_only",
+      "consumer_policy": "pin_hash_license_gate_before_runtime_use",
+      "claim_boundary": "Open-source Jyotish projects may provide source candidates, probes, raw artifacts, and worked-example leads; they are not final truth until license, commit/hash, input contract, and field-level oracle gates close."
     }
   ]
 }
