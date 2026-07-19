@@ -802,12 +802,8 @@ export default function Home() {
     setSynastryHistory(readSynastryHistory(accountId));
     void fetchCloudChartLibrary()
       .then((cloudLibrary) => {
-        setChartLibrary((current) => {
-          const otherById = new Map([
-            ...current.filter((record) => record.role === "other").map((record) => [record.id, record] as const),
-            ...cloudLibrary.filter((record) => record.role === "other").map((record) => [record.id, record] as const),
-          ]);
-          const next = upsertSelfChart([...otherById.values()], profile);
+        setChartLibrary(() => {
+          const next = upsertSelfChart(cloudLibrary.filter((record) => record.role !== "self"), profile);
           localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
           return next;
         });
@@ -1451,8 +1447,10 @@ export default function Home() {
     };
     try {
       record = await saveCloudChartProfile(record);
-    } catch {
-      // Keep local chart library usable when cloud sync is unavailable.
+    } catch (caught) {
+      setProfileNotice("");
+      setAccountError(friendlyError(caught instanceof Error ? caught.message : "云端星盘保存失败，请稍后重试。"));
+      return;
     }
     setChartLibrary((current) => {
       const next = [...upsertSelfChart(current, profile), record];
@@ -1461,19 +1459,25 @@ export default function Home() {
     });
     setOtherProfileDraft(emptyProfile);
     setAccountError("");
-    setProfileNotice("已添加到星盘库。");
+    setProfileNotice("已保存到云端星盘库。");
   }
 
-  function deleteOtherChart(recordId: string) {
+  async function deleteOtherChart(recordId: string) {
     if (!accountId) return;
-    void deleteCloudChartProfile(recordId).catch(() => {
-      // Local deletion should not be blocked by temporary cloud sync failures.
-    });
+    try {
+      await deleteCloudChartProfile(recordId);
+    } catch (caught) {
+      setProfileNotice("");
+      setAccountError(friendlyError(caught instanceof Error ? caught.message : "云端星盘删除失败，请稍后重试。"));
+      return;
+    }
     setChartLibrary((current) => {
       const next = current.filter((record) => record.id !== recordId || record.role === "self");
       localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
       return next;
     });
+    setAccountError("");
+    setProfileNotice("已从云端星盘库删除。");
   }
 
   async function makeDefaultChart(record: ChartLibraryRecord) {
