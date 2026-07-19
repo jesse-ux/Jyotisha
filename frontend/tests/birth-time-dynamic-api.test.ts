@@ -40,15 +40,66 @@ test("unmatched context is optional, trimmed, and bounded", () => {
   assert.equal(birthTimeGuideRequestSchema.safeParse({ ...valid, partitionId: "private" }).success, false);
 });
 
-test("dynamic responses preserve the protocol discriminant without private scoring data", () => {
-  const response = storedDynamicJourneyResponse(dynamicCase());
+test("dynamic responses project one exact public shape", () => {
+  const stored = {
+    ...dynamicCase(),
+    questionnaire: { questions: [], samples: [], raw: { candidateVector: [0.4, 0.6] } },
+    scoring: {
+      answeredCount: 1,
+      candidateClusterRankings: [{ cluster: "05:00", score: 9 }],
+      raw: { candidateVector: [0.4, 0.6] },
+      nextRound: null,
+      nextRoundQuestions: [],
+    },
+    answers: { legacy_private_answer: "A" as const },
+    lifeEvents: [{
+      id: "ec4ab5f0-829c-468a-90ea-42842f9f70d3",
+      domain: "career" as const,
+      precision: "year" as const,
+      date: "2020",
+    }],
+  };
+  const response = storedDynamicJourneyResponse(stored);
   const parsed = parseJourneyResponse(response);
 
+  assert.deepEqual(Object.keys(parsed).sort(), [
+    "answers", "candidateResult", "caseId", "evidenceDraft", "journeyProtocol",
+    "lifeEvents", "nextAction", "permissions", "progress", "questionnaire",
+    "scoring", "snapshot", "turnVersion",
+  ]);
   assert.equal(parsed.journeyProtocol, "dynamic-choice-v2");
-  assert.equal(parsed.nextAction.kind, "ask_dynamic_choice");
-  const serialized = JSON.stringify(parsed);
-  assert.doesNotMatch(serialized, /partitionId|candidateScores|agentContext|candidateModel/);
-  assert.throws(() => parseJourneyResponse({ ...response, partitionId: "forged" }));
+  assert.deepEqual({
+    questionnaire: parsed.questionnaire,
+    scoring: parsed.scoring,
+    answers: parsed.answers,
+    lifeEvents: parsed.lifeEvents,
+  }, { questionnaire: null, scoring: null, answers: {}, lifeEvents: [] });
+});
+
+test("dynamic response parsing rejects private legacy and candidate payloads", () => {
+  const response = storedDynamicJourneyResponse(dynamicCase());
+  const scoring = {
+    answeredCount: 1,
+    candidateClusterRankings: [{ cluster: "05:00", score: 9 }],
+    raw: { candidateVectors: { "05:00": [0.4, 0.6] } },
+    nextRound: null,
+    nextRoundQuestions: [],
+  };
+  const privatePayloads = [
+    { ...response, scoring },
+    { ...response, questionnaire: { questions: [], samples: [], raw: { candidateVectors: [1] } } },
+    { ...response, answers: { hidden: "A" } },
+    { ...response, lifeEvents: [{ id: "ec4ab5f0-829c-468a-90ea-42842f9f70d3", domain: "career", precision: "year", date: "2020" }] },
+    { ...response, candidateModel: { candidates: ["05:10"] } },
+    { ...response, currentChoiceQuestion: persistedQuestion },
+    { ...response, partitionId: "window-a" },
+    { ...response, nextAction: { ...response.nextAction, question: {
+      ...persistedQuestion,
+      options: persistedQuestion.options,
+    } } },
+  ];
+
+  for (const payload of privatePayloads) assert.throws(() => parseJourneyResponse(payload));
 });
 
 test("dynamic routes authenticate before parsing and dispatch scoped methods", () => {

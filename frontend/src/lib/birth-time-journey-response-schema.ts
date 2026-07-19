@@ -108,9 +108,13 @@ function dynamicActionMatchesPhase(value: {
 
 const dynamicJourneyResponseSchema = z.object({
   ...responseCore,
-  scoring: versionedScoringSchema.nullable(),
-  answers: z.record(answerSchema).readonly(),
-  lifeEvents: z.array(lifeEventSchema).readonly(),
+  questionnaire: z.null(),
+  scoring: z.null(),
+  answers: z.record(answerSchema).refine(
+    (answers) => Object.keys(answers).length === 0,
+    "dynamic answers are server-private",
+  ).readonly(),
+  lifeEvents: z.array(lifeEventSchema).max(0, "dynamic life events are server-private").readonly(),
   candidateResult: candidateResultSchema.nullable(),
   journeyProtocol: z.literal("dynamic-choice-v2"),
   turnVersion: z.number().int().nonnegative(),
