@@ -107,7 +107,7 @@ def test_rudramsa_d11_is_supported_by_native_varga_map() -> None:
 
 
 def test_native_varga_map_supports_declared_high_value_vargas() -> None:
-    for div in (2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 24, 60, 144):
+    for div in (2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 24, 60, 81, 108, 144):
         result = calc_varga(35.0, div)
         assert result["sign"] in SIGNS
         assert 0 <= result["degree_in_sign"] < 30
@@ -115,7 +115,7 @@ def test_native_varga_map_supports_declared_high_value_vargas() -> None:
 
 def test_default_varga_batch_includes_declared_vargas() -> None:
     charts = calc_all_vargas({"Moon": 35.0}, 10.0)
-    for key in ("D5_Panchamsa", "D6_Shashthamsa", "D8_Ashtamsa", "D11_Rudramsa", "D144_Dwadasamsa-Dwadasamsa"):
+    for key in ("D5_Panchamsa", "D6_Shashthamsa", "D8_Ashtamsa", "D11_Rudramsa", "D81_Navamsa-Navamsa", "D108_Dwadasamsa-Navamsa", "D144_Dwadasamsa-Dwadasamsa"):
         assert key in charts
     assert charts["D11_Rudramsa"]["Moon"]["sign"] == "Aquarius"
 
