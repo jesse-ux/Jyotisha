@@ -89,12 +89,17 @@ result/action coherence.
   the reloaded receipt. SQL and RPC fakes now reproduce exact duplicate success, concurrent
   cross-action success, changed answer/commit payloads, lease reclaim, and corrupted completed
   result/action replay.
+- Final review RED: a generic transport error after a committed dynamic turn reloaded state but
+  skipped receipt classification unless the error text itself said stale. The adapter now treats
+  an exact committed receipt as lost-response replay, a processed conflicting receipt as stale,
+  and only an uncommitted generic error as a store failure. Scoring-job creation already used
+  these semantics; a generic-error regression test locks that parity.
 
 Final verification:
 
-- Focused Task 6 TypeScript: **43/43 passed**.
+- Focused Task 6 TypeScript: **47/47 passed**.
 - Route/telemetry regression subset after v2 assessment routing: **28/28 passed**.
-- Full frontend TypeScript tests: **358/358 passed**.
+- Full frontend TypeScript tests: **362/362 passed**.
 - Dynamic action-receipt and scoring-job SQL contracts: **7/7 passed**.
 - ESLint: **0 errors**, with the two pre-existing `page.tsx` hook warnings.
 - `git diff --check`: passed.
@@ -121,3 +126,5 @@ Commit message: `feat: orchestrate dynamic rectification turns`
 Focused review fix commit message: `fix: harden dynamic rectification orchestration`
 
 Exact receipt fix commit message: `fix: close dynamic receipt replay gaps`
+
+Lost-response fix commit message: `fix: recover committed dynamic transport errors`

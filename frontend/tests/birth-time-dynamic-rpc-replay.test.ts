@@ -3,7 +3,10 @@ import test from "node:test";
 import { createDynamicScoringJobStore } from "../src/lib/birth-time-dynamic-scoring-job-store.ts";
 import { createDynamicTurnPersistence } from "../src/lib/birth-time-journey-dynamic-persistence.ts";
 import { createDynamicScoringJobSpec } from "../src/lib/birth-time-scoring-job.ts";
-import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
+import {
+  BirthTimeJourneyStoreError,
+  StaleJourneyTurnError,
+} from "../src/lib/birth-time-journey-turn-persistence.ts";
 import { answerTransition } from "../src/lib/birth-time-dynamic-transitions.ts";
 import type { DynamicStoredRectificationCase } from "../src/lib/birth-time-journey-service.ts";
 import { actionId, dynamicCase, persistedQuestion } from "./birth-time-dynamic-persistence-fixture.ts";
@@ -52,6 +55,43 @@ test("a concurrent different action cannot use a successful RPC as replay", asyn
   await assert.rejects(
     persistence.saveDynamicTurn(proposed, 7, actionId),
     StaleJourneyTurnError,
+  );
+});
+
+test("a transport error returns an exact committed dynamic turn", async () => {
+  const loaded = savedTurn();
+  const proposed = { ...loaded, turnVersion: 7 };
+  const persistence = createDynamicTurnPersistence({
+    async rpc() { return { data: null, error: { message: "connection reset" } }; },
+  }, async () => loaded, () => "2026-07-18");
+
+  const replay = await persistence.saveDynamicTurn(proposed, 7, actionId);
+
+  assert.equal(replay, loaded);
+});
+
+test("a transport error maps a conflicting committed receipt to stale", async () => {
+  const proposed = { ...savedTurn(), turnVersion: 7 };
+  const concurrent = savedTurn("finish");
+  const persistence = createDynamicTurnPersistence({
+    async rpc() { return { data: null, error: { message: "connection reset" } }; },
+  }, async () => concurrent, () => "2026-07-18");
+
+  await assert.rejects(
+    persistence.saveDynamicTurn(proposed, 7, actionId),
+    StaleJourneyTurnError,
+  );
+});
+
+test("a transport error remains a store error when nothing committed", async () => {
+  const proposed = dynamicCase();
+  const persistence = createDynamicTurnPersistence({
+    async rpc() { return { data: null, error: { message: "connection reset" } }; },
+  }, async () => proposed, () => "2026-07-18");
+
+  await assert.rejects(
+    persistence.saveDynamicTurn(proposed, 7, actionId),
+    BirthTimeJourneyStoreError,
   );
 });
 
@@ -119,4 +159,28 @@ test("dynamic scoring creation accepts only exact duplicate-success receipts", a
     store.createDynamicScoringJob(pending, 7, actionId, persistedQuestion.questionId, spec),
     StaleJourneyTurnError,
   );
+});
+
+test("dynamic scoring transport errors return an exact committed receipt", async () => {
+  const pending = pendingTurn();
+  const spec = createDynamicScoringJobSpec(
+    "85b22d7e-3adc-473d-81e1-6ad29e9b06f4",
+    pending.choiceEvidence,
+    new Date("2026-07-18T08:00:00.000Z"),
+  );
+  const loaded = {
+    ...pending,
+    turnVersion: 8,
+    dynamicTurnState: { ...pending.dynamicTurnState, turnVersion: 8 },
+    processedActionIds: [actionId],
+  };
+  const store = createDynamicScoringJobStore({
+    async rpc() { return { data: null, error: { message: "connection reset" } }; },
+  }, async () => loaded);
+
+  const replay = await store.createDynamicScoringJob(
+    pending, 7, actionId, persistedQuestion.questionId, spec,
+  );
+
+  assert.equal(replay, loaded);
 });
