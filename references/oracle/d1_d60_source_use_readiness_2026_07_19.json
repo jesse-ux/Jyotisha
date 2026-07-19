@@ -1,0 +1,41 @@
+{
+  "boundary": "D1-D60 public/OSS sources can only improve names and use notes here. Generic-only divisions stay hidden from final claims until source, formula variant, and numeric oracle gates close.",
+  "claim_status": "partial",
+  "created_at": "2026-07-19",
+  "production_tuning_allowed": false,
+  "scope": "d1_d60_source_use_readiness",
+  "source_hash": "586215412fa87afed77fdc5844ce64d32ef0c39599722890e634b7732342da8e",
+  "source_queue": "references/oracle/d1_d60_public_source_candidate_queue_2026_07_19.json",
+  "source_registry": "references/oracle/d1_d60_varga_mapping_registry_2026_07_19.json",
+  "sources": [
+    {
+      "allowed_update": "names_and_use_notes_only",
+      "blocked_update": "numeric_formula_or_truth_without_variant_review",
+      "candidate_use": "D1-D60 names/use cross-check",
+      "readiness": "source_text_candidate_not_numeric_oracle",
+      "url": "https://www.barbarapijan.com/bpa/Varga/varga.html"
+    },
+    {
+      "allowed_update": "names_and_use_notes_only",
+      "blocked_update": "numeric_formula_or_truth_without_variant_review",
+      "candidate_use": "common varga names/use",
+      "readiness": "source_text_candidate_not_numeric_oracle",
+      "url": "https://www.astrosage.com/astrology/divisional-charts.asp"
+    },
+    {
+      "allowed_update": "names_and_use_notes_only",
+      "blocked_update": "numeric_formula_or_truth_without_variant_review",
+      "candidate_use": "permissive OSS varga implementation cross-check",
+      "readiness": "implementation_observation_only",
+      "url": "https://github.com/northtara/jyotishganit"
+    }
+  ],
+  "status": "source_use_readiness_ready",
+  "summary": {
+    "allowed_scope": "names_and_use_notes_only",
+    "candidate_source_count": 3,
+    "generic_only_count": 0,
+    "numeric_oracle_ready_count": 0
+  },
+  "truth_matrix_allowed": false
+}

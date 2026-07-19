@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 65,
+    "packet_count": 66,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -529,6 +529,14 @@
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Classifies Muhurta factors as supporting-context only; no scored verdict readiness until formulas, weights, public examples, and replay hashes close."
+    },
+    {
+      "packet_id": "d1_d60_source_use_readiness",
+      "path": "references/oracle/d1_d60_source_use_readiness_2026_07_19.json",
+      "domain": "varga_mapping",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Classifies D1-D60 sources for names/use notes only; generic-only Dn remains hidden until formula/source/oracle gates close."
     }
   ]
 }
