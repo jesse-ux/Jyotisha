@@ -51,7 +51,23 @@ export type CandidateDifferenceBuild = {
   readonly scoringPartitions: Readonly<Record<string, readonly ScoredEvidencePartition[]>>;
 };
 
-export type PersistedDynamicChoiceQuestion = PublicDynamicChoiceQuestion & {
+export type PersistedDynamicChoiceOption =
+  | {
+    readonly optionId: string;
+    readonly label: string;
+    readonly kind: "primary";
+    readonly partitionId: string;
+    readonly candidateScores: Readonly<Record<string, number>>;
+  }
+  | {
+    readonly optionId: string;
+    readonly label: string;
+    readonly kind: "unknown" | "unmatched";
+    readonly partitionId: null;
+    readonly candidateScores: null;
+  };
+
+export type PersistedDynamicChoiceQuestion = Omit<PublicDynamicChoiceQuestion, "options"> & {
   readonly opportunityId: string;
   readonly dimensionCode: string;
   readonly estimatedInformationGain: number;
@@ -59,13 +75,7 @@ export type PersistedDynamicChoiceQuestion = PublicDynamicChoiceQuestion & {
   readonly source: "agent" | "fallback";
   readonly questionFingerprint: string;
   readonly candidatePartitionFingerprint: string;
-  readonly options: readonly {
-    readonly optionId: string;
-    readonly label: string;
-    readonly kind: PublicChoiceKind;
-    readonly partitionId: string | null;
-    readonly candidateScores: Readonly<Record<string, number>> | null;
-  }[];
+  readonly options: readonly PersistedDynamicChoiceOption[];
 };
 
 export type StoredChoiceAnswer = {

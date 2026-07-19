@@ -5,7 +5,7 @@ import {
   createJyotishBirthTimeJourneyEngine,
   BirthTimeJourneyEngineError,
 } from "@/lib/birth-time-journey-engine";
-import { createBirthTimeJourneyService, RectificationCaseNotFoundError, RectificationQuestionsUnavailableError, type VersionedJourneyResponse } from "@/lib/birth-time-journey-service";
+import { createBirthTimeJourneyService, RectificationCaseNotFoundError, RectificationQuestionsUnavailableError, type DynamicVersionedJourneyResponse, type VersionedJourneyResponse } from "@/lib/birth-time-journey-service";
 import { BirthTimeJourneyActionError } from "@/lib/birth-time-journey-actions";
 import { birthTimeJourneyRequestSchema } from "@/lib/birth-time-journey-request";
 import { StaleJourneyTurnError } from "@/lib/birth-time-journey-turn-persistence";
@@ -40,11 +40,15 @@ async function requestPayload(request: Request): Promise<unknown> {
 }
 
 async function responseWithJourneyMetric(
-  action: Promise<VersionedJourneyResponse>,
+  action: Promise<VersionedJourneyResponse | DynamicVersionedJourneyResponse>,
   name: Extract<JourneyMetricName, "turn_advanced" | "draft_corrected" | "journey_paused">,
 ): Promise<NextResponse> {
   const response = await action;
-  recordJourneyTransitionMetric(response, name);
+  if (response.journeyProtocol === "dynamic-choice-v2") {
+    recordJourneyMetricEvent({ kind: "transition", name, phase: "adaptive" });
+  } else {
+    recordJourneyTransitionMetric(response, name);
+  }
   return NextResponse.json(response);
 }
 

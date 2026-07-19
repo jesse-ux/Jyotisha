@@ -1,8 +1,10 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { LifeEvent } from "./birth-time-evidence.ts";
+import type { ServerChoiceEvidence } from "./birth-time-dynamic-choice-internal.ts";
 
 export const birthTimeScoringAlgorithmVersion = "birth-time-event-scoring-v1" as const;
+export const dynamicChoiceScoringAlgorithmVersion = "birth-time-choice-scoring-v2" as const;
 export const scoringJobDurationMs = 15 * 60_000;
 export const scoringProcessingLeaseMs = 60_000;
 
@@ -29,6 +31,17 @@ export type ScoringJobIdentity = {
   readonly evidenceFingerprint: string;
   readonly algorithmVersion: typeof birthTimeScoringAlgorithmVersion;
   readonly now: string;
+};
+
+export type DynamicScoringJobSpec = {
+  readonly jobId: string;
+  readonly evidenceFingerprint: string;
+  readonly algorithmVersion: typeof dynamicChoiceScoringAlgorithmVersion;
+  readonly expiresAt: string;
+};
+
+export type DynamicScoringJobIdentity = Omit<ScoringJobIdentity, "algorithmVersion"> & {
+  readonly algorithmVersion: typeof dynamicChoiceScoringAlgorithmVersion;
 };
 
 export type ScoringJobClaim =
@@ -74,6 +87,44 @@ export function createScoringJobSpec(
     jobId,
     evidenceFingerprint: evidenceFingerprint(events),
     algorithmVersion: birthTimeScoringAlgorithmVersion,
+    expiresAt: new Date(now.getTime() + scoringJobDurationMs).toISOString(),
+  };
+}
+
+function canonicalChoiceEvidence(evidence: readonly ServerChoiceEvidence[]): string {
+  return JSON.stringify([...evidence]
+    .sort((left, right) => left.questionId.localeCompare(right.questionId))
+    .map((item) => ({
+      questionId: item.questionId,
+      opportunityId: item.opportunityId,
+      partitionId: item.partitionId,
+      dimensionCode: item.dimensionCode,
+      informationGain: item.informationGain,
+      candidateScores: Object.fromEntries(
+        Object.entries(item.candidateScores).sort(([left], [right]) => left.localeCompare(right)),
+      ),
+    })));
+}
+
+export function dynamicEvidenceFingerprint(
+  evidence: readonly ServerChoiceEvidence[],
+): string {
+  return createHash("sha256")
+    .update(dynamicChoiceScoringAlgorithmVersion)
+    .update("\u0000")
+    .update(canonicalChoiceEvidence(evidence))
+    .digest("hex");
+}
+
+export function createDynamicScoringJobSpec(
+  jobId: string,
+  evidence: readonly ServerChoiceEvidence[],
+  now: Date,
+): DynamicScoringJobSpec {
+  return {
+    jobId,
+    evidenceFingerprint: dynamicEvidenceFingerprint(evidence),
+    algorithmVersion: dynamicChoiceScoringAlgorithmVersion,
     expiresAt: new Date(now.getTime() + scoringJobDurationMs).toISOString(),
   };
 }

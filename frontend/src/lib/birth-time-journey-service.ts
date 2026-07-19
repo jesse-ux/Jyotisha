@@ -6,7 +6,7 @@ import type { CandidateVargaSample } from "./birth-time-question-planner.ts";
 import { projectJourneyResponse, storedDynamicJourneyResponse, storedJourneyResponse } from "./birth-time-journey-response.ts";
 import type { JourneyTurnState } from "./birth-time-journey-turn.ts";
 import type { DynamicJourneyTurnState } from "./birth-time-journey-turn-protocol.ts";
-import type { ScoringJobClaim, ScoringJobIdentity, ScoringJobSpec } from "./birth-time-scoring-job.ts";
+import type { DynamicScoringJobIdentity, DynamicScoringJobSpec, ScoringJobClaim, ScoringJobIdentity, ScoringJobSpec } from "./birth-time-scoring-job.ts";
 import { createBirthTimeScoringService } from "./birth-time-scoring-service.ts";
 import { scanAssessment } from "./birth-time-journey-assessment.ts";
 import type { GuidedCandidateCommit } from "./birth-time-guided-candidate.ts";
@@ -16,6 +16,7 @@ import type { CandidateDifferenceBuild, DynamicChoiceScoringResult, ServerChoice
 import type { TimeRange } from "./birth-time-dynamic-choice.ts";
 import type { DynamicStoredFields, LegacyStoredFields } from "./birth-time-journey-stored-protocol.ts";
 import { RectificationCaseNotFoundError, RectificationQuestionsUnavailableError } from "./birth-time-journey-errors.ts";
+import { createDynamicJourneyMethods } from "./birth-time-dynamic-service-methods.ts";
 
 export { RectificationCaseNotFoundError, RectificationQuestionsUnavailableError };
 
@@ -86,9 +87,7 @@ export type DifferencePacketInput = {
   readonly candidateModel: Readonly<Record<string, unknown>> | null;
 };
 
-export type DynamicChoiceScoreInput = Pick<DifferencePacketInput,
-  "birthDate" | "startTime" | "endTime" | "lat" | "lon" | "tz" | "evidence"
->;
+export type DynamicChoiceScoreInput = Pick<DifferencePacketInput, "birthDate" | "startTime" | "endTime" | "lat" | "lon" | "tz" | "evidence">;
 
 export interface BirthTimeJourneyEngine {
   scan(input: JourneyScanInput): Promise<{ readonly questionnaire: RectificationQuestionnaire }>;
@@ -98,9 +97,7 @@ export interface BirthTimeJourneyEngine {
   scoreChoices(input: DynamicChoiceScoreInput): Promise<DynamicChoiceScoringResult>;
 }
 
-export type LegacyBirthTimeJourneyEngine = Pick<BirthTimeJourneyEngine,
-  "scan" | "score" | "scoreEvents"
->;
+export type LegacyBirthTimeJourneyEngine = Pick<BirthTimeJourneyEngine, "scan" | "score" | "scoreEvents">;
 
 export type PersistedJourneyAssessment = {
   readonly userId: string;
@@ -127,14 +124,11 @@ type StoredRectificationCaseBase = {
   readonly candidateResult?: CandidateResult | null;
 };
 
-export type LegacyStoredRectificationCase = StoredRectificationCaseBase
-  & LegacyStoredFields;
+export type LegacyStoredRectificationCase = StoredRectificationCaseBase & LegacyStoredFields;
 
-export type DynamicStoredRectificationCase = StoredRectificationCaseBase
-  & DynamicStoredFields;
+export type DynamicStoredRectificationCase = StoredRectificationCaseBase & DynamicStoredFields;
 
-export type StoredRectificationCase = LegacyStoredRectificationCase
-  | DynamicStoredRectificationCase;
+export type StoredRectificationCase = LegacyStoredRectificationCase | DynamicStoredRectificationCase;
 
 export type DynamicScoringJobCommand = {
   readonly expectedVersion: number;
@@ -143,8 +137,7 @@ export type DynamicScoringJobCommand = {
   readonly algorithmVersion: string;
 };
 
-export type DynamicScoringJobFailureCommand = DynamicScoringJobCommand
-  & { readonly failureCode: string };
+export type DynamicScoringJobFailureCommand = DynamicScoringJobCommand & { readonly failureCode: string };
 
 export interface BirthTimeJourneyStore {
   saveAssessment(value: PersistedJourneyAssessment): Promise<string>;
@@ -154,6 +147,8 @@ export interface BirthTimeJourneyStore {
   saveDynamicTurn(value: DynamicStoredRectificationCase, expectedVersion: number, actionId: string): Promise<DynamicStoredRectificationCase>;
   completeDynamicScoringJob(value: DynamicStoredRectificationCase, command: DynamicScoringJobCommand): Promise<DynamicStoredRectificationCase>;
   failDynamicScoringJob(value: DynamicStoredRectificationCase, command: DynamicScoringJobFailureCommand): Promise<DynamicStoredRectificationCase>;
+  createDynamicScoringJob?(value: DynamicStoredRectificationCase, expectedVersion: number, actionId: string, questionId: string, job: DynamicScoringJobSpec): Promise<DynamicStoredRectificationCase>;
+  claimDynamicScoringJob?(identity: DynamicScoringJobIdentity): Promise<ScoringJobClaim>;
   upgradeLegacyActiveCase(value: LegacyStoredRectificationCase): Promise<StoredRectificationCase>;
   createScoringJob(value: LegacyStoredRectificationCase, expectedVersion: number, actionId: string, job: ScoringJobSpec): Promise<StoredRectificationCase>;
   claimScoringJob(identity: ScoringJobIdentity): Promise<ScoringJobClaim>;
@@ -167,7 +162,7 @@ export interface BirthTimeJourneyStore {
 
 export type BirthTimeJourneyPorts = {
   readonly store: BirthTimeJourneyStore;
-  readonly engine: LegacyBirthTimeJourneyEngine;
+  readonly engine: BirthTimeJourneyEngine | LegacyBirthTimeJourneyEngine;
   readonly now?: () => Date;
 };
 
@@ -197,8 +192,9 @@ export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
   const scoringActions = createBirthTimeScoringService(ports);
   const guidedCandidates = createGuidedCandidateActions(ports);
   const draftRevisions = createGuidedDraftRevisionActions(ports, turnActions.proposeEvidenceDraft);
+  const dynamicMethods = createDynamicJourneyMethods(ports);
   return {
-    async assess(userId: string, assessment: BirthTimeAssessment): Promise<VersionedJourneyResponse> {
+    async assess(userId: string, assessment: BirthTimeAssessment): Promise<VersionedJourneyResponse | DynamicVersionedJourneyResponse> {
       const scan = await scanAssessment(ports.engine, assessment);
       const snapshot = assessBirthTime(assessment, scan.stability);
       const persisted = {
@@ -209,6 +205,8 @@ export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
         candidateScan: scan.questionnaire,
       } satisfies PersistedJourneyAssessment;
       const caseId = await ports.store.saveAssessment(persisted);
+      const stored = await ports.store.loadCase(userId, caseId);
+      if (stored?.journeyProtocol === "dynamic-choice-v2") return storedDynamicJourneyResponse(stored);
       return projectJourneyResponse({
         caseId,
         snapshot,
@@ -275,5 +273,6 @@ export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
     saveGuidedCandidate: guidedCandidates.save,
     confirmGuidedCandidate: guidedCandidates.confirm,
     pollScoringJob: scoringActions.pollScoringJob,
+    ...dynamicMethods,
   };
 }

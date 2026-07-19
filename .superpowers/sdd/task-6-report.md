@@ -1,0 +1,83 @@
+# Task 6 Report: Dynamic Journey Orchestration
+
+## Outcome
+
+Implemented the `dynamic-choice-v2` journey as a persisted, Agent-driven state machine rather
+than a fixed questionnaire loop. A primary click resolves only its server-owned private
+partition, records one canonical evidence item, and creates one idempotent scoring job in the
+same versioned transition. Unknown and unmatched choices remain non-evidence actions; unmatched
+free context is bounded, stored separately for the Agent, and never enters scoring.
+
+Question generation uses the full difference packet and persists the chosen question/private
+binding before exposing it. Repeated generation fingerprints fail closed to a terminal low
+result. Scoring claims the durable job, validates identity/fingerprint/algorithm, scores once,
+and saves the result and deterministic stop decision in the same turn. Continuation depends on
+available information and plateau/confidence state, not a fixed round count. High confidence
+still requires explicit candidate confirmation and never applies a minute during orchestration.
+
+Pause stores the exact current dynamic action and resume reconstructs that persisted action.
+Terminal low, medium, confirmation, and ready turns are one-way: answer, generation, retry,
+pause, and finish mutations cannot restart them. New assessments reload and return their
+persisted v2 generation turn instead of projecting the former legacy baseline question.
+
+## Persistence Amendment
+
+Added service-role-only `create_birth_time_dynamic_scoring_job` and
+`claim_birth_time_dynamic_scoring_job` RPCs. Creation owner-locks the v2 case and atomically
+validates/persists the public turn, private state, canonical receipt, and pending job. Claiming
+checks ownership, job identity, evidence fingerprint, algorithm version, current action, and
+lease; completed replay requires a coherent persisted result/action. Production store methods
+use these RPCs directly and do not call legacy scoring wrappers or expose the private row.
+
+## Main Files
+
+- `frontend/src/lib/birth-time-dynamic-actions.ts`
+- `frontend/src/lib/birth-time-dynamic-transitions.ts`
+- `frontend/src/lib/birth-time-dynamic-scoring-service.ts`
+- `frontend/src/lib/birth-time-dynamic-scoring-job-store.ts`
+- `frontend/src/lib/birth-time-dynamic-engine-input.ts`
+- `frontend/src/lib/birth-time-dynamic-service-methods.ts`
+- `frontend/src/lib/birth-time-journey-service.ts`
+- `frontend/src/lib/birth-time-journey-store.ts`
+- `frontend/src/lib/birth-time-scoring-job.ts`
+- `frontend/supabase/migrations/20260718094000_dynamic_choice_scoring_job_lifecycle.sql`
+- `frontend/tests/birth-time-dynamic-actions.test.ts`
+- `frontend/tests/birth-time-dynamic-scoring.test.ts`
+- `frontend/tests/birth-time-dynamic-scoring-store.test.ts`
+- `frontend/tests/birth-time-dynamic-terminal.test.ts`
+- `tests/test_birth_time_dynamic_scoring_job_contract.py`
+
+## TDD Evidence
+
+- Initial action RED: dynamic answer/generation methods and modules were absent.
+- Scoring RED: the first implementation exposed legacy mutation behavior and later failed
+  completed-job replay because it inspected a now-terminal action before claiming the job.
+- Persistence RED: all SQL contract cases failed before the ordered v2 job migration existed.
+- Assessment regression RED: a newly persisted v2 case returned a response with no
+  `journeyProtocol`; GREEN now reloads and returns the stored dynamic generation turn.
+
+Final verification:
+
+- Focused Task 6 TypeScript: **22/22 passed**.
+- Route/telemetry regression subset after v2 assessment routing: **28/28 passed**.
+- Full frontend TypeScript tests: **344/344 passed**.
+- Dynamic scoring-job SQL contracts: **3/3 passed**.
+- ESLint: **0 errors**, with the two pre-existing `page.tsx` hook warnings.
+- `git diff --check`: passed.
+- Every changed/new Task 6 TypeScript, test, and migration module is at most 250 pure LOC.
+- TypeScript check reports only the known unrelated baseline at
+  `frontend/tests/profile-persistence.test.ts:7` (`TS1501`, ES2018 regex under the existing
+  target).
+
+Live PostgreSQL execution was unavailable from the inherited Task 5 environment because the
+Docker daemon socket was absent. The database claim is therefore limited to static SQL
+contracts plus executable TypeScript RPC fakes; no live-database pass is claimed.
+
+## Handoff
+
+Task 7 should expose the new v2 commands through authenticated request/response schemas and
+browser coordination. In particular, v2 polling must call `pollDynamicScoringJob`; the legacy
+`pollScoringJob` remains legacy-only. The route change in this task only permits a fresh v2
+assessment response through the existing telemetry wrapper.
+
+Commit message: `feat: orchestrate dynamic rectification turns`

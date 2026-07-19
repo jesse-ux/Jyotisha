@@ -906,7 +906,30 @@ Task 6:
 
 ### Task 6: Journey Actions, Scoring Jobs, and Anti-Loop Transitions
 
+#### Task 6 persistence amendment
+
+Task 5 intentionally exposed only typed dynamic scoring completion/failure wrappers. Its
+legacy scoring protocol guards make the existing public create/claim RPCs unavailable to
+`dynamic-choice-v2`, so Task 6 must also close the v2 job lifecycle rather than bypassing the
+private-state boundary or leaving browser polling unable to complete.
+
+- Add one ordered migration at or below 250 pure lines for
+  `create_birth_time_dynamic_scoring_job(...)` and
+  `claim_birth_time_dynamic_scoring_job(...)`.
+- Creation owner-locks a v2 case, validates expected version/action/question/job/fingerprint/
+  algorithm, atomically persists the advanced public turn, private dynamic state, canonical
+  action receipt, and one pending job, and replays only the identical completed action.
+- Claim owner-locks the v2 case, validates job identity, fingerprint, algorithm, current
+  `score_pending`/`retry_scoring` action, and the processing lease. Completed replay is allowed
+  only when the stored candidate result and dynamic terminal/continuation action agree.
+- Add typed production store methods and executable fake/store tests. Do not call the
+  legacy-guarded public wrappers or write the service-only private table from orchestration.
+- If live PostgreSQL is unavailable, record that limitation explicitly and retain executable
+  TypeScript RPC-fake evidence plus static SQL contract/syntax checks without claiming a live
+  database pass.
+
 **Files:**
+- Create: `frontend/supabase/migrations/20260718094000_dynamic_choice_scoring_job_lifecycle.sql`
 - Create: `frontend/src/lib/birth-time-dynamic-transitions.ts`
 - Create: `frontend/src/lib/birth-time-dynamic-actions.ts`
 - Create: `frontend/src/lib/birth-time-dynamic-scoring-service.ts`
@@ -916,6 +939,7 @@ Task 6:
 - Test: `frontend/tests/birth-time-dynamic-actions.test.ts`
 - Test: `frontend/tests/birth-time-dynamic-scoring.test.ts`
 - Test: `frontend/tests/birth-time-dynamic-terminal.test.ts`
+- Test: `tests/test_birth_time_dynamic_scoring_job_contract.py`
 
 **Interfaces:**
 - Produces `answerDynamicChoice`, `submitUnmatchedContext`, `generateDynamicQuestion`, `pauseDynamic`, `resumeDynamic`, and `finishDynamic` service actions.

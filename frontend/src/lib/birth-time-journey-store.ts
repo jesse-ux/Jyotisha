@@ -19,6 +19,7 @@ import {
   type DynamicRpcClient,
 } from "./birth-time-journey-dynamic-persistence.ts";
 import { saveDynamicAssessment } from "./birth-time-journey-dynamic-case.ts";
+import { createDynamicScoringJobStore } from "./birth-time-dynamic-scoring-job-store.ts";
 
 export { BirthTimeJourneyStoreError } from "./birth-time-journey-turn-persistence.ts";
 
@@ -41,6 +42,7 @@ export function createSupabaseBirthTimeJourneyStore(
     () => now().toISOString().slice(0, 10),
   );
   const scoringJobs = createSupabaseScoringJobStore(supabase, loadCase);
+  const dynamicScoringJobs = createDynamicScoringJobStore(dynamicRpc, loadCase);
   const guidedCandidates = createSupabaseGuidedCandidateStore(supabase, loadCase);
   return {
     async saveAssessment(value) {
@@ -51,6 +53,7 @@ export function createSupabaseBirthTimeJourneyStore(
     saveTurn: turns.saveTurn,
     ...dynamicTurns,
     ...scoringJobs,
+    ...dynamicScoringJobs,
     ...guidedCandidates,
 
     async saveScoring(value) {
