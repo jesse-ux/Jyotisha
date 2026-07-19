@@ -170,6 +170,22 @@ Expected: HTTP `200`, `"status": "ok"`, and `"swisseph_available": true`. Public
 
 Before deploying application code that depends on any new Supabase migration (columns, tables, grants, policies, or RPCs), run `cd frontend && npx supabase db push --linked`; the GitHub deployment workflow does not apply database migrations. Multi-model chat specifically requires `20260717010000_chat_session_model.sql` before the new web image is deployed. Then manually verify: OTP login, onboarding/profile persistence, per-session `model_id` persistence, code redemption, admin code generation, authenticated `/api/models` returns only sanitized public metadata, invalid model IDs are rejected before charging, each configured model can answer, the 2.5-second free undo window, streaming response, one-credit charge, refund before the first output chunk, and charged stop with partial output preserved after streaming starts.
 
+For the July 2026 new-user profile save fix, either run the manual GitHub Action
+`Apply Supabase profile migrations` after adding `SUPABASE_DB_URL` or `DATABASE_URL`
+to `/opt/jyotisha-app/.env.production`, or execute these five SQL migrations in
+the Supabase SQL Editor with a project member account:
+
+- `20260718010000_recover_missing_profile_rows.sql`
+- `20260718020000_profiles_service_role_upsert_grants.sql`
+- `20260718050000_profiles_service_role_upsert_grants.sql`
+- `20260718070000_profiles_service_role_upsert_id.sql`
+- `20260718080000_profiles_service_role_account_upsert_selects.sql`
+
+Do not treat a green app deployment as proof this database step ran. If the SQL
+Editor shows `You do not have access to this project`, use the correct Supabase
+organization account or invite the current GitHub user to project
+`vtvnfqmonbfuxmqkqdlc` before retrying.
+
 ## Common operations
 
 ```bash
