@@ -1,0 +1,99 @@
+{
+  "context_dir": "artifacts/commercial_astrology_e2e_contexts_2026_07_19_run3",
+  "created_at": "2026-07-19",
+  "next_actions": [
+    "add health/family/education/annual/rectification route context requirements",
+    "expose gender interpretation boundary in marriage timing context",
+    "expose birth-time uncertainty/not_auto_rectified in rectification entry mode",
+    "rerun capture script and acceptance runner"
+  ],
+  "question_count": 10,
+  "root_cause": "commercial workflow currently routes several high-value Chinese domains to general context, so runtime context does not expose all required domain layers/boundaries",
+  "rows": [
+    {
+      "forbidden_claim_hits": [],
+      "id": "marriage_timing",
+      "missing_layers": [
+        "gender interpretation boundary"
+      ],
+      "status": "fail"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "career_direction",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "wealth_pattern",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "health_risk_window",
+      "missing_layers": [
+        "D6",
+        "D8",
+        "6th/8th/12th house",
+        "health non-medical boundary"
+      ],
+      "status": "fail"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "foreign_migration",
+      "missing_layers": [
+        "12th house"
+      ],
+      "status": "fail"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "family_home_children",
+      "missing_layers": [
+        "4th/5th/9th house"
+      ],
+      "status": "fail"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "education_learning_path",
+      "missing_layers": [
+        "5th/9th house"
+      ],
+      "status": "fail"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "precise_timing_boundary",
+      "missing_layers": [],
+      "status": "pass"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "birth_time_uncertain",
+      "missing_layers": [
+        "birth-time uncertainty boundary",
+        "not_auto_rectified"
+      ],
+      "status": "fail"
+    },
+    {
+      "forbidden_claim_hits": [],
+      "id": "annual_forecast",
+      "missing_layers": [
+        "annual forecast boundary"
+      ],
+      "status": "fail"
+    }
+  ],
+  "scope": "commercial_astrology_e2e_runtime_capture_report",
+  "status": "fail",
+  "summary": {
+    "blocked": 0,
+    "fail": 7,
+    "pass": 3
+  }
+}
