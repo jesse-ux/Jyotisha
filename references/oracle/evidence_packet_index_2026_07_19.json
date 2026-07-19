@@ -641,14 +641,30 @@
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Basic compatibility layers are callable with boundaries; full synastry, relationship AV overlays, Planet/Lagna Kuta, and deterministic relationship timing remain blocked until oracle packets close."
+    },
+    {
+      "packet_id": "three_engine_worked_example_bridge_2026_07_20",
+      "path": "references/oracle/three_engine_worked_example_bridge_2026_07_20.json",
+      "domain": "three_engine_parity",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Links three-engine owner tracks to worked-example intake domains; no mismatch row is closed without replay or method-variant attribution."
+    },
+    {
+      "packet_id": "worked_example_packet_intake_plan_2026_07_20",
+      "path": "references/oracle/worked_example_packet_intake_plan_2026_07_20.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Groups KP, Muhurta, and Shadbala worked-example candidates into intake queues; no candidate is upgraded until numeric expected values, raw/hash, and replay comparison are archived."
     }
   ],
   "production_tuning_allowed": false,
   "scope": "evidence_packet_index",
   "status": "active_index_v1",
   "summary": {
-    "packet_count": 80,
-    "blocked_or_partial_count": 53,
+    "packet_count": 82,
+    "blocked_or_partial_count": 55,
     "human_review_required_count": 2
   }
 }

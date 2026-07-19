@@ -1,0 +1,92 @@
+{
+  "boundary": "Bridge converts owner tracks into evidence asks; all mismatch rows remain open until replay/attribution artifacts close them.",
+  "claim_status": "open_queue",
+  "created_at": "2026-07-20",
+  "owner_track_links": [
+    {
+      "categories": [
+        "endpoint_or_varga_semantics"
+      ],
+      "claim_boundary": "Bridge only; does not close mismatches, tune production, or majority-vote truth.",
+      "closure_condition": "Close only by field-level replay against a numeric packet or by explicit method-variant attribution.",
+      "linked_blocking_fields": [],
+      "linked_candidate_count": 0,
+      "linked_intake_domains": [],
+      "next_non_numeric_evidence": [
+        "identified endpoint/method contract with ayanamsa, node mode, varga, timezone semantics"
+      ],
+      "owner_track": "endpoint_contract",
+      "ticket_count": 10
+    },
+    {
+      "categories": [
+        "shadbala_formula_variant"
+      ],
+      "claim_boundary": "Bridge only; does not close mismatches, tune production, or majority-vote truth.",
+      "closure_condition": "Close only by field-level replay against a numeric packet or by explicit method-variant attribution.",
+      "linked_blocking_fields": [
+        "birth_input",
+        "complete birth input",
+        "component_name",
+        "expected_virupa",
+        "formula_variant",
+        "method_variant",
+        "planet",
+        "public_numeric_expected_values",
+        "raw_capture_hash",
+        "unit"
+      ],
+      "linked_candidate_count": 1,
+      "linked_intake_domains": [
+        "shadbala_component_closure"
+      ],
+      "next_non_numeric_evidence": [],
+      "owner_track": "formula_source",
+      "ticket_count": 35
+    },
+    {
+      "categories": [
+        "derived_total_from_component_variants"
+      ],
+      "claim_boundary": "Bridge only; does not close mismatches, tune production, or majority-vote truth.",
+      "closure_condition": "Close only by field-level replay against a numeric packet or by explicit method-variant attribution.",
+      "linked_blocking_fields": [],
+      "linked_candidate_count": 0,
+      "linked_intake_domains": [],
+      "next_non_numeric_evidence": [
+        "component closure before total recomputation; explicit Rupa/Virupa total rule"
+      ],
+      "owner_track": "unit_schema",
+      "ticket_count": 7
+    },
+    {
+      "categories": [
+        "ashtakavarga_table_or_contributor_variant"
+      ],
+      "claim_boundary": "Bridge only; does not close mismatches, tune production, or majority-vote truth.",
+      "closure_condition": "Close only by field-level replay against a numeric packet or by explicit method-variant attribution.",
+      "linked_blocking_fields": [],
+      "linked_candidate_count": 0,
+      "linked_intake_domains": [],
+      "next_non_numeric_evidence": [
+        "public worked BAV/SAV table with contributor set, shodhana state, and Lagna inclusion"
+      ],
+      "owner_track": "worked_example",
+      "ticket_count": 8
+    }
+  ],
+  "production_tuning_allowed": false,
+  "scope": "three_engine_worked_example_bridge",
+  "sources": {
+    "owner_track_batch_plan": "references/oracle/three_engine_owner_track_batch_plan_2026_07_20.json",
+    "worked_example_packet_intake_plan": "references/oracle/worked_example_packet_intake_plan_2026_07_20.json"
+  },
+  "status": "bridge_ready",
+  "summary": {
+    "closed_mismatch_count": 0,
+    "linked_candidate_count": 1,
+    "linked_owner_track_count": 1,
+    "owner_track_count": 4
+  },
+  "truth_matrix_allowed": false
+}
