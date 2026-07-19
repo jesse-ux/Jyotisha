@@ -76,8 +76,14 @@ export function BirthTimeLegacyRectification(props: LegacyRectificationProps) {
       {action.kind === "score_pending" && <p className="birth-time-scoring-status" role="status">正在使用已确认的关键经历评分…</p>}
       {action.kind === "retry_scoring" && <button className="button-primary birth-time-guided-action" disabled={props.controller.pending} onClick={props.controller.retryScoring} type="button">重新评分</button>}
       {action.kind === "paused" && <button className="button-primary birth-time-guided-action" disabled={props.controller.pending} onClick={props.controller.resume} type="button">继续校正</button>}
-      {showsCandidate && <BirthTimeCandidateResult controller={props.controller} journey={props.journey} />}
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {showsCandidate ? (
+        <BirthTimeCandidateResult
+          controller={props.controller}
+          error={error}
+          journey={props.journey}
+        />
+      ) : null}
+      {error && !showsCandidate ? <p className="form-error" role="alert">{error}</p> : null}
     </section>
   );
 }

@@ -115,8 +115,14 @@ export function BirthTimeRectification(props: BirthTimeRectificationProps) {
       )}
       {action.kind === "retry_scoring" && <button className="button-primary birth-time-guided-action" disabled={props.controller.pending} onClick={props.controller.retryScoring} type="button">重新评分</button>}
       {action.kind === "paused" && <button className="button-primary birth-time-guided-action" disabled={props.controller.pending} onClick={props.controller.resume} type="button">继续本次评估</button>}
-      {showsCandidate && <BirthTimeCandidateResult controller={props.controller} journey={props.journey} />}
-      {error && action.kind !== "ask_dynamic_choice" && action.kind !== "clarify_unmatched_answer" && <p className="form-error" role="alert">{error}</p>}
+      {showsCandidate ? (
+        <BirthTimeCandidateResult
+          controller={props.controller}
+          error={error}
+          journey={props.journey}
+        />
+      ) : null}
+      {error && !showsCandidate ? <p className="form-error" role="alert">{error}</p> : null}
     </section>
   );
 }

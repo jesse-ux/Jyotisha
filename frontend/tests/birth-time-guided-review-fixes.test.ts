@@ -119,6 +119,23 @@ test("ready completion is explicit and terminal low has no finish mutation", () 
   assert.doesNotMatch(candidateSource, /controller\.finish/);
 });
 
+test("terminal candidate owns one explicit next step and its completion error", () => {
+  const candidateResultSource = readFileSync(new URL("../src/components/birth-time-candidate-result.tsx", import.meta.url), "utf8");
+  const rectificationSource = readFileSync(new URL("../src/components/birth-time-rectification.tsx", import.meta.url), "utf8");
+  const legacyRectificationSource = readFileSync(new URL("../src/components/birth-time-legacy-rectification.tsx", import.meta.url), "utf8");
+  const globalCssSource = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
+
+  assert.match(candidateResultSource, /评估已完成，下一步/);
+  assert.match(candidateResultSource, /采用 \$\{path\.time\} 并进入对话/);
+  assert.match(candidateResultSource, /正在采用 \$\{path\.time\}…/);
+  assert.match(candidateResultSource, /birth-time-next-step/);
+  assert.match(rectificationSource, /error=\{error\}/);
+  assert.match(rectificationSource, /error && !showsCandidate/);
+  assert.match(legacyRectificationSource, /error=\{error\}/);
+  assert.match(legacyRectificationSource, /error && !showsCandidate/);
+  assert.match(globalCssSource, /\.birth-time-next-step/);
+});
+
 test("completed rectification transcript does not repeat the birth place turn", () => {
   const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 

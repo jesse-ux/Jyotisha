@@ -412,6 +412,11 @@ button:disabled { cursor: default; opacity: .45; }
 .birth-time-confirmation-panel { display: grid; gap: var(--space-3); padding: var(--space-4); border-left: 2px solid var(--color-action); background: var(--color-action-soft); }
 .birth-time-confirmation-panel > b { color: var(--color-ink); font-size: var(--type-body-sm); }
 .birth-time-confirmation-panel > p { margin: 0; color: var(--color-ink-secondary); font-size: var(--type-caption); line-height: 1.6; word-break: keep-all; overflow-wrap: break-word; }
+.birth-time-next-step { box-sizing: border-box; width: 100%; display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-action-soft); }
+.birth-time-next-step > b { color: var(--color-ink); }
+.birth-time-next-step > p { margin: 0; color: var(--color-ink-secondary); }
+.birth-time-next-step > .birth-time-guided-action { width: 100%; min-height: 48px; }
+.birth-time-next-step > .form-error { width: 100%; color: var(--color-danger); }
 .birth-time-retry-card { display: grid; justify-items: start; gap: var(--space-3); }
 .birth-time-retry-card p { margin: 0; color: var(--color-ink-secondary); font-size: var(--type-body-sm); line-height: 1.6; }
 .birth-time-guide-turn, .birth-time-evidence-draft-card, .birth-time-scoring-status, .birth-time-candidate-terminal { min-width: 0; max-width: 100%; display: grid; gap: var(--space-4); }

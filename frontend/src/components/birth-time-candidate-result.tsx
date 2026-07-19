@@ -7,6 +7,7 @@ import { guidedTerminalPath } from "@/lib/birth-time-guided-terminal";
 type CandidateResultProps = {
   readonly journey: JourneyClientResponse;
   readonly controller: BirthTimeGuidedController;
+  readonly error: string;
 };
 
 const confidenceLabels = {
@@ -15,7 +16,7 @@ const confidenceLabels = {
   high: "较高置信",
 } as const;
 
-export function BirthTimeCandidateResult({ journey, controller }: CandidateResultProps) {
+export function BirthTimeCandidateResult({ journey, controller, error }: CandidateResultProps) {
   const result = journey.candidateResult;
   const action = journey.nextAction;
   const dynamic = journey.journeyProtocol === "dynamic-choice-v2";
@@ -24,7 +25,8 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
     return (
       <div className="birth-time-candidate-result" aria-live="polite">
         <p className="birth-time-evidence-boundary">系统不会选择或应用未经证据支持的具体分钟，<span className="phrase-nowrap">当前排盘使用时间</span>保持不变。</p>
-        {terminalPath && <TerminalAction controller={controller} path={terminalPath} />}
+        {terminalPath && <TerminalAction controller={controller} error={error} path={terminalPath} />}
+        {!terminalPath && error ? <p className="form-error" role="alert">{error}</p> : null}
       </div>
     );
   }
@@ -52,13 +54,13 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
       {action.kind === "present_low_result" && (
         <div className="birth-time-candidate-terminal" role="status">
           <p>{dynamic ? "目前没有足够的新信息继续稳定缩小范围，本次评估已结束并保存当前候选范围。" : "本轮校正已安全结束，只保留候选范围，当前排盘使用时间保持不变。"}</p>
-          {terminalPath && <TerminalAction controller={controller} path={terminalPath} />}
+          {terminalPath && <TerminalAction controller={controller} error={error} path={terminalPath} />}
         </div>
       )}
       {action.kind === "present_medium_result" && winner && dynamic && (
         <div className="birth-time-candidate-terminal" role="status">
           <p>已形成较窄的候选范围，本次评估已结束；它不会自动改动<span className="phrase-nowrap">当前排盘使用时间</span>。</p>
-          {terminalPath && <TerminalAction controller={controller} path={terminalPath} />}
+          {terminalPath && <TerminalAction controller={controller} error={error} path={terminalPath} />}
         </div>
       )}
       {action.kind === "present_medium_result" && winner && !dynamic && (
@@ -72,7 +74,7 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
       {action.kind === "candidate_saved" && (
         <div className="birth-time-candidate-terminal" role="status">
           <p className="birth-time-success-note">候选时间范围已保存。<span className="phrase-nowrap">当前排盘使用时间</span>没有改变。</p>
-          {terminalPath && <TerminalAction controller={controller} path={terminalPath} />}
+          {terminalPath && <TerminalAction controller={controller} error={error} path={terminalPath} />}
         </div>
       )}
       {action.kind === "request_candidate_confirmation" && winner && (
@@ -90,27 +92,32 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
           <button className="button-primary birth-time-guided-action" disabled={controller.pending} type="button" onClick={controller.acknowledgeReady}>继续使用此排盘</button>
         </div>
       )}
+      {!terminalPath && error ? <p className="form-error" role="alert">{error}</p> : null}
     </div>
   );
 }
 
-function TerminalAction({ controller, path }: {
+function TerminalAction({ controller, error, path }: {
   readonly controller: BirthTimeGuidedController;
+  readonly error: string;
   readonly path: NonNullable<ReturnType<typeof guidedTerminalPath>>;
 }) {
   if (path.kind === "complete_with_candidate") {
     return (
-      <div className="birth-time-new-assessment">
+      <div className="birth-time-next-step">
+        <b>评估已完成，下一步</b>
+        <p>点击后将使用 {path.time} 作为当前排盘时间并进入对话；原始填报和本次候选结果仍会保留。</p>
         <button className="button-primary birth-time-guided-action" disabled={controller.pending} onClick={() => controller.completeCandidate(path.time)} type="button">
-          {controller.pending ? "保存中…" : "完成并继续对话"}
+          {controller.pending ? `正在采用 ${path.time}…` : `采用 ${path.time} 并进入对话`}
         </button>
-        <small>将以 {path.time} 作为当前工作排盘时间；候选状态和原始资料都会保留。</small>
+        {error ? <p className="form-error" role="alert">{error}</p> : null}
       </div>
     );
   }
   return (
     <div className="birth-time-new-assessment">
       <button className="button-secondary birth-time-guided-action" disabled={controller.pending} onClick={controller.editBirthTimeDetails} type="button">开始新的评估</button>
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
       <small>会建立新的记录，当前结果仍会保留。</small>
     </div>
   );
