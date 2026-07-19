@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "jyotish-app"
 API_SERVER = ROOT / "scripts" / "jyotish_api_server.py"
-TMP = Path(os.environ.get("TMPDIR", "/private/tmp"))
+TMP = Path(os.environ.get("TMPDIR") or tempfile.gettempdir())
 
 
 def run(cmd: list[str], *, cwd: Path = ROOT, timeout: int = 12, check: bool = True) -> subprocess.CompletedProcess[str]:
