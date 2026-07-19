@@ -141,15 +141,6 @@ export function guidedBirthTimePreview(mode: string): JourneyClientResponse {
       progress: { ...response().progress, phase: "adaptive", baselineDomainCount: 3, confirmedEvidenceCount: 3, adaptiveRound: 1 },
     });
   }
-  if (mode === "birth-time-rectification-low") {
-    return response({
-      snapshot: { ...response().snapshot, state: "candidate", input: "candidate_actions", confidence: "low", assistantIntent: "explain_event_evidence_insufficient" },
-      candidateResult: { ...candidate, confidence: "low", canApply: false },
-      turnVersion: 6,
-      nextAction: { kind: "present_low_result", resultId },
-      progress: { ...response().progress, phase: "result", baselineDomainCount: 3, confirmedEvidenceCount: 4, adaptiveRound: 3 },
-    });
-  }
   const candidateSnapshot = {
     ...response().snapshot,
     state: "candidate",

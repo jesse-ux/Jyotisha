@@ -33,6 +33,7 @@ test("low-confidence preview mirrors the persisted dynamic terminal state", () =
   assert.equal(low.snapshot.state, "rectifying");
   assert.equal(low.nextAction.kind, "present_low_result");
   assert.ok(low.candidateResult);
+  assert.equal(low.candidateResult.winningSegment?.representativeTime, "05:21");
   assert.equal(low.nextAction.resultId, low.candidateResult.resultId);
   assert.deepEqual(guidedTerminalPath(low), {
     kind: "complete_with_candidate",

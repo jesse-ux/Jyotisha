@@ -34,6 +34,7 @@ test("draft revision publishes its new version before confirmation can fail", as
 });
 
 test("low without a result and saved medium both return to declared-time editing safely", () => {
+  const dynamicLow = dynamicBirthTimePreview("low");
   const low = guidedBirthTimePreview("birth-time-rectification-low");
   const nullResultLow = parseJourneyResponse({
     ...low,
@@ -42,6 +43,7 @@ test("low without a result and saved medium both return to declared-time editing
   });
   const saved = guidedBirthTimePreview("birth-time-rectification-saved");
 
+  assert.equal(dynamicLow.candidateResult, null);
   assert.deepEqual(guidedTerminalPath(nullResultLow), {
     kind: "edit_birth_time_details",
     preservesCase: true,
@@ -121,6 +123,7 @@ test("ready completion is explicit and terminal low has no finish mutation", () 
 
 test("terminal candidate owns one explicit next step and its completion error", () => {
   const candidateResultSource = readFileSync(new URL("../src/components/birth-time-candidate-result.tsx", import.meta.url), "utf8");
+  const choiceQuestionSource = readFileSync(new URL("../src/components/birth-time-choice-question.tsx", import.meta.url), "utf8");
   const rectificationSource = readFileSync(new URL("../src/components/birth-time-rectification.tsx", import.meta.url), "utf8");
   const legacyRectificationSource = readFileSync(new URL("../src/components/birth-time-legacy-rectification.tsx", import.meta.url), "utf8");
   const globalCssSource = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
@@ -130,7 +133,9 @@ test("terminal candidate owns one explicit next step and its completion error", 
   assert.match(candidateResultSource, /正在采用 \$\{path\.time\}…/);
   assert.match(candidateResultSource, /birth-time-next-step/);
   assert.match(rectificationSource, /error=\{error\}/);
-  assert.match(rectificationSource, /error && !showsCandidate/);
+  assert.match(rectificationSource, /const childOwnsError = action\.kind === "ask_dynamic_choice"\s*\|\| action\.kind === "clarify_unmatched_answer"/);
+  assert.match(rectificationSource, /error && !showsCandidate && !childOwnsError/);
+  assert.equal(choiceQuestionSource.match(/role="alert"/g)?.length, 1);
   assert.match(legacyRectificationSource, /error=\{error\}/);
   assert.match(legacyRectificationSource, /error && !showsCandidate/);
   assert.match(globalCssSource, /\.birth-time-next-step/);

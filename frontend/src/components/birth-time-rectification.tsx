@@ -69,6 +69,8 @@ export function BirthTimeRectification(props: BirthTimeRectificationProps) {
   const heading = dynamicHeading(action);
   const error = props.controller.error || props.externalError;
   const showsProgress = action.kind !== "ask_dynamic_choice" && action.kind !== "clarify_unmatched_answer";
+  const childOwnsError = action.kind === "ask_dynamic_choice"
+    || action.kind === "clarify_unmatched_answer";
   const showsCandidate = action.kind === "present_low_result"
     || action.kind === "present_medium_result"
     || action.kind === "request_candidate_confirmation"
@@ -122,7 +124,7 @@ export function BirthTimeRectification(props: BirthTimeRectificationProps) {
           journey={props.journey}
         />
       ) : null}
-      {error && !showsCandidate ? <p className="form-error" role="alert">{error}</p> : null}
+      {error && !showsCandidate && !childOwnsError ? <p className="form-error" role="alert">{error}</p> : null}
     </section>
   );
 }
