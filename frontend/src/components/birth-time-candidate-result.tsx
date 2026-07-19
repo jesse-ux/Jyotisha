@@ -106,7 +106,7 @@ function TerminalAction({ controller, error, path }: {
     return (
       <div className="birth-time-next-step">
         <b>评估已完成，下一步</b>
-        <p>点击后将使用 {path.time} 作为<span className="phrase-nowrap">当前排盘时间</span>并进入对话；<span className="phrase-nowrap">原始填报</span>和本次<span className="phrase-nowrap">候选结果</span>仍会保留。</p>
+        <p>点击后将使用 {path.time} 作为<span className="phrase-nowrap">当前排盘时间</span>并进入对话；<span className="phrase-nowrap">原始填报</span>和本次<span className="phrase-nowrap">候选结果</span><span className="phrase-nowrap">仍会保留</span>。</p>
         <button className="button-primary birth-time-guided-action" disabled={controller.pending} onClick={() => controller.completeCandidate(path.time)} type="button">
           {controller.pending ? `正在采用 ${path.time}…` : `采用 ${path.time} 并进入对话`}
         </button>
