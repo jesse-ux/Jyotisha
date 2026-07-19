@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   consultationInputSchema,
+  consultationWorkflowReceipt,
   getJyotishAgent,
+  runConsultationWorkflow,
 } from "@/mastra";
 import {
   languageModelConfigurationMessage,
@@ -167,8 +169,10 @@ export async function POST(request: Request) {
   try {
     const { history, name } = parsed.data;
     const toolInput = consultationInputSchema.parse(parsed.data);
+    const workflowContext = await runConsultationWorkflow(toolInput);
+    const workflowReceipt = consultationWorkflowReceipt(workflowContext);
 
-    const result = await getJyotishAgent(selectedModel).stream([
+    const result = await getJyotishAgent(selectedModel, workflowContext).stream([
       ...history.map((message) => message.role === "user"
         ? { role: "user" as const, content: message.text }
         : { role: "assistant" as const, content: message.text }),
@@ -191,6 +195,12 @@ export async function POST(request: Request) {
     return streamTextResponse(result.textStream, {
       mode: "mastra",
       requestId,
+      headers: {
+        "x-jyotish-workflow-route": workflowReceipt.route,
+        "x-jyotish-workflow-status": workflowReceipt.status,
+        "x-jyotish-precise-timing": workflowReceipt.preciseTiming,
+        "x-jyotish-missing-layers": workflowReceipt.missingLayers,
+      },
       onComplete: () => settle(completeAndRecordUsage),
       onError: (_error, emitted) => settleInterrupted(emitted),
       onCancel: settleInterrupted,

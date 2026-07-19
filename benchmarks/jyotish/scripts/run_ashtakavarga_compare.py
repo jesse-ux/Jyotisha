@@ -22,7 +22,7 @@ OUT = ROOT / 'outputs'
 CANON = OUT / 'canonical'
 REPORT = OUT / 'jyotish_benchmark_round6_ashtakavarga_compare.md'
 MATRIX = OUT / 'ashtakavarga_comparison_matrix.csv'
-SKILL_SCRIPTS = Path(__file__).resolve().parents[2] / 'scripts'
+SKILL_SCRIPTS = Path(__file__).resolve().parents[3] / 'scripts'
 PYJHORA_SITE = Path(__import__('os').environ.get('PYJHORA_SITE', ''))
 PYJHORA_COMPAT = ROOT / 'scripts/pyjhora_compat'
 

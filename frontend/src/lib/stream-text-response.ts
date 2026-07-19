@@ -7,6 +7,7 @@ type StreamHooks = {
 type StreamTextResponseOptions = StreamHooks & {
   readonly mode: "engine" | "mastra";
   readonly requestId: string;
+  readonly headers?: Record<string, string>;
 };
 
 export function streamTextResponse(
@@ -62,6 +63,7 @@ export function streamTextResponse(
       "x-accel-buffering": "no",
       "x-ayanam-mode": options.mode,
       "x-ayanam-request-id": options.requestId,
+      ...options.headers,
     },
   });
 }
