@@ -4923,6 +4923,17 @@ def cmd_full_reading(args):
                 )
             except Exception as d11_error:
                 varga_result["D11_Rudramsa"] = {"error": str(d11_error)}
+        d11 = varga_result.get("D11_Rudramsa")
+        if isinstance(d11, dict) and isinstance(d11.get("Ascendant"), dict):
+            asc_sign = d11["Ascendant"].get("sign_idx")
+            if isinstance(asc_sign, int):
+                d11["planets"] = {
+                    name: {**data, "house": ((int(data["sign_idx"]) - asc_sign) % 12) + 1}
+                    for name, data in d11.items()
+                    if name not in {"_meta", "Ascendant", "planets"}
+                    and isinstance(data, dict)
+                    and isinstance(data.get("sign_idx"), int)
+                }
         report['modules']['varga_full'] = varga_result
 
         # v6.1.7: Re-run Yoga with D9/D60 context after varga-full is available.
