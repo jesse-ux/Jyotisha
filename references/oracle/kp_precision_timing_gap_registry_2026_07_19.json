@@ -37,12 +37,12 @@
     },
     {
       "technique_id": "ruling_planets",
-      "local_code_status": "missing_runtime",
-      "skill_invocation_status": "not_invoked",
-      "api_ui_entry_status": "missing",
-      "external_oracle_status": "missing",
+      "local_code_status": "minimal_probe_present",
+      "skill_invocation_status": "not_invoked_runtime_probe_available",
+      "api_ui_entry_status": "missing_api_probe_script_available",
+      "external_oracle_status": "missing_ruling_planets_oracle",
       "commercial_sync_status": "blocked_until_oracle",
-      "claim_boundary": "Reference/probe only; ruling planets cannot drive rectification or timing before external oracle and negative holdout gates."
+      "claim_boundary": "Reference/probe only; ruling planets are exposed by scripts/kp_precision_timing_probe.py but cannot drive rectification or timing before exact question-time contract, external oracle and negative holdout gates."
     },
     {
       "technique_id": "kp_significators",

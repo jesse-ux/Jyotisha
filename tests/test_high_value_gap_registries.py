@@ -50,6 +50,7 @@ def test_kp_registry_keeps_precision_timing_blocked_without_oracle() -> None:
     assert {"kp_cusps", "star_sub_lord", "ruling_planets", "kp_significators", "kp_horary"}.issubset(ids)
     assert ids["star_sub_lord"]["local_code_status"] == "minimal_probe_present"
     assert ids["star_sub_lord"]["external_oracle_status"] == "partial_sublord_csv_only"
+    assert ids["ruling_planets"]["local_code_status"] == "minimal_probe_present"
     assert ids["kp_significators"]["local_code_status"] == "minimal_probe_present"
     assert ids["kp_significators"]["claim_boundary"].startswith("Reference/probe only")
 

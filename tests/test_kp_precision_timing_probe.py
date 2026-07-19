@@ -33,6 +33,7 @@ def test_kp_precision_timing_probe_outputs_star_sub_lord_and_significators() -> 
     assert {"A", "B", "C", "D"} <= set(report["planet_significators"]["Sun"])
     assert "10" in report["house_significators"]
     assert {"A", "B", "C", "D"} <= set(report["house_significators"]["10"])
+    assert {"weekday_lord", "moon_sign_lord", "moon_star_lord", "asc_sign_lord", "asc_star_lord", "asc_sub_lord"} <= set(report["ruling_planets"])
 
 
 def test_kp_precision_timing_probe_preserves_oracle_and_holdout_blockers() -> None:
