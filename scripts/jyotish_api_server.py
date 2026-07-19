@@ -6966,6 +6966,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'tz': tz,
             'events': normalized_events,
         })
+        from scripts.rectification_technique_contract import build_rectification_technique_contract
+        result['technique_contract'] = build_rectification_technique_contract(
+            event_count=result.get('event_count', 0),
+            domain_count=result.get('domain_count', 0),
+        )
         return {
             'success': True,
             'endpoint': 'active_rectification_events',

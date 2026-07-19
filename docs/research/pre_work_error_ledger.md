@@ -124,6 +124,11 @@ Prevention: add a new domain only after its public cases satisfy the same source
 
 ## Fragment Sweep Command Set
 
+## ERR-084 | Pre-work fragment test assumes zero candidates despite current audited candidates | active 2026-07-19
+`scripts/pre_work_check.py` reports `fragment_audit.candidate_count=2`, while `tests/test_preflight_fragment_scan.py` requires exactly zero. The pre-work command therefore cannot be reported green until the two candidates are classified or the test is updated to validate the reviewed state rather than a hard-coded count.
+
+Prevention: retain candidate identity and classification in the sweep artifact; do not mask candidates or weaken the pre-work result.
+
 Use split scans, not one unbounded full-home command:
 
 ```bash

@@ -20,6 +20,15 @@ export function BirthTimeCandidateResult({ journey, controller }: CandidateResul
   const action = journey.nextAction;
   const dynamic = journey.journeyProtocol === "dynamic-choice-v2";
   const terminalPath = guidedTerminalPath(journey);
+  if (result?.eventCount === 0) {
+    return (
+      <div className="birth-time-candidate-result" aria-live="polite">
+        <p className="birth-time-assessment-unavailable">尚未进入分钟计算：还没有可评分的关键经历资料。</p>
+        <p className="birth-time-evidence-boundary">当前范围仅为填报范围，不是校正结果；请补充跨领域、可注明年月的重大事件后重新评估。</p>
+        {terminalPath && <button className="button-secondary birth-time-guided-action" disabled={controller.pending} type="button" onClick={controller.editBirthTimeDetails}>补充资料并重新评估</button>}
+      </div>
+    );
+  }
   if (!result && action.kind === "present_low_result") {
     return (
       <div className="birth-time-candidate-result" aria-live="polite">
