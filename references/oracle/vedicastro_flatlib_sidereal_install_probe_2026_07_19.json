@@ -5,6 +5,10 @@
   "created_at": "2026-07-19",
   "next_action": "Collect public numeric KP cusp/star/sub/sub-sub worked examples before promoting beyond observation_only.",
   "observed_flatlib_commit": "2618c348ce1ab2588548f935ff65f031630b4872",
+  "observed_flatlib_source_hashes": {
+    "LICENSE_sha256": "7cc30f7998a8f5a8a28f78045a10cbbc4ad5c9141dd3e32620db16634e3db335",
+    "setup_py_sha256": "83faa4af2b437ba115b74029ecfb85bfc7fea3f57a3c5d0e60a8b8c90317b7f7"
+  },
   "previous_pypi_flatlib_blocker": "PyPI flatlib 0.2.3 has no flatlib.const AY_* attributes required by local VedicAstro source.",
   "production_tuning_allowed": false,
   "resolved_blocker": "Previous timeout came from probing the wrong sidereal repository path; VedicAstro requirements specify diliprk/flatlib.git@sidereal.",

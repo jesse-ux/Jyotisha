@@ -577,14 +577,46 @@
       "claim_status": "blocked",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Aggregates current high-rigor gates; blocked/partial gates remain blocked until their evidence packets close."
+    },
+    {
+      "packet_id": "jyotishganit_node_source_attribution",
+      "path": "references/oracle/jyotishganit_node_source_attribution_2026_07_19.json",
+      "domain": "three_engine_field_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Remaining D10 Rahu/Ketu mismatch attributed to node longitude source plus ayanamsa boundary crossing, not D10 formula."
+    },
+    {
+      "packet_id": "shadbala_component_closure_queue_v2",
+      "path": "references/oracle/shadbala_component_closure_queue_v2_2026_07_19.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "42 same-unit Shadbala rows converted into field-level closure tickets; no absolute parity or majority-vote truth."
+    },
+    {
+      "packet_id": "vedicastro_kp_api_probe_flatlib_tmp",
+      "path": "references/oracle/vedicastro_kp_api_probe_flatlib_tmp_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Temporary flatlib import probe only; dependency version conflicts prevent runtime truth promotion."
+    },
+    {
+      "packet_id": "blocked_domain_resolution_queue_2026_07_20",
+      "path": "references/oracle/blocked_domain_resolution_queue_2026_07_20.json",
+      "domain": "closure_governance",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Action queue for 10 blocked production-ready domains; prioritizes next evidence but does not unblock any claim."
     }
   ],
   "production_tuning_allowed": false,
   "scope": "evidence_packet_index",
   "status": "active_index_v1",
   "summary": {
-    "packet_count": 72,
-    "blocked_or_partial_count": 46,
+    "packet_count": 76,
+    "blocked_or_partial_count": 49,
     "human_review_required_count": 2
   }
 }

@@ -1,0 +1,127 @@
+{
+  "boundary": "Resolution queue prioritizes work; it does not unblock production-ready claims.",
+  "claim_status": "open_queue",
+  "created_at": "2026-07-20",
+  "domains": [
+    {
+      "blocking_packets": [
+        "high_rigor_closure_gate",
+        "blocked_domain_resolution_queue_2026_07_20"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": false,
+      "domain": "closure_governance",
+      "hard_dependency": "blocked_subgates",
+      "local_next_action": "gate_snapshot_refresh"
+    },
+    {
+      "blocking_packets": [
+        "conception_chart_adhana_niseka_registry"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": false,
+      "domain": "conception_chart",
+      "hard_dependency": "classical_source_and_oracle",
+      "local_next_action": "keep_research_registry_until_source_oracle"
+    },
+    {
+      "blocking_packets": [
+        "vedastro_identity_evidence_audit"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": false,
+      "domain": "external_oracle_identity",
+      "hard_dependency": "upstream_build_identity",
+      "local_next_action": "archive_self_host_or_upstream_identity_metadata"
+    },
+    {
+      "blocking_packets": [
+        "high_rigor_closure_gate_snapshot_2026_07_20"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": false,
+      "domain": "high_rigor_governance",
+      "hard_dependency": "blocked_subgates",
+      "local_next_action": "refresh_snapshot_after_subgate_changes"
+    },
+    {
+      "blocking_packets": [
+        "prashna_tajika_oracle_packet"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": true,
+      "domain": "horary_annual_sensitive_points",
+      "hard_dependency": "public_numeric_worked_examples",
+      "local_next_action": "collect_prashna_tajika_saham_gulika_sphuta_packets"
+    },
+    {
+      "blocking_packets": [
+        "kp_cusp_precision_contract",
+        "kp_cusp_worked_example_oracle_queue"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": true,
+      "domain": "kp_precision_timing",
+      "hard_dependency": "public_kp_worked_example",
+      "local_next_action": "collect_exact_cusp_numeric_packet"
+    },
+    {
+      "blocking_packets": [
+        "three_engine_mismatch_closure_queue"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": true,
+      "domain": "three_engine_parity",
+      "hard_dependency": "field_source_oracle_arbitration",
+      "local_next_action": "continue_field_level_attribution"
+    },
+    {
+      "blocking_packets": [
+        "day_level_human_annotation_packet",
+        "day_level_holdout_readiness_ledger"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": false,
+      "domain": "timing_holdout",
+      "hard_dependency": "independent_human_labels",
+      "local_next_action": "prepare_blind_eval_after_labels"
+    },
+    {
+      "blocking_packets": [
+        "d1_d60_public_source_candidate_queue"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": true,
+      "domain": "varga_mapping",
+      "hard_dependency": "public_varga_formula_sources",
+      "local_next_action": "promote_d1_d60_sources_to_verified_packets"
+    },
+    {
+      "blocking_packets": [
+        "public_worked_example_queue",
+        "public_worked_example_candidate_numeric_audit",
+        "kp_muhurta_shadbala_numeric_packet_queue"
+      ],
+      "claim_boundary": "Do not change claim status until blocking packets close with reproducible evidence.",
+      "code_can_progress_without_truth_upgrade": true,
+      "domain": "worked_example_collection",
+      "hard_dependency": "public_numeric_worked_examples",
+      "local_next_action": "promote_field_complete_candidates_to_numeric_packets"
+    }
+  ],
+  "production_tuning_allowed": false,
+  "scope": "blocked_domain_resolution_queue",
+  "source_gate_report_summary": {
+    "allowed_count": 7,
+    "blocked_count": 10,
+    "degraded_count": 22,
+    "domain_count": 39,
+    "production_tuning_allowed_count": 0
+  },
+  "status": "open_queue",
+  "summary": {
+    "blocked_domain_count": 10,
+    "cannot_be_closed_by_code_only_count": 8,
+    "code_can_progress_count": 5
+  }
+}
