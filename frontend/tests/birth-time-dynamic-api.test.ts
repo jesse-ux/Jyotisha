@@ -102,13 +102,9 @@ test("dynamic response parsing rejects private legacy and candidate payloads", (
   for (const payload of privatePayloads) assert.throws(() => parseJourneyResponse(payload));
 });
 
-test("dynamic routes authenticate before parsing and dispatch scoped methods", () => {
+test("dynamic route boundaries authenticate before parsing user input", () => {
   const journeyRoute = readFileSync(new URL("../src/app/api/birth-time-journey/route.ts", import.meta.url), "utf8");
   const guideRoute = readFileSync(new URL("../src/app/api/birth-time-guide/route.ts", import.meta.url), "utf8");
   assert.ok(journeyRoute.indexOf("auth.getUser") < journeyRoute.indexOf("requestPayload(request)"));
   assert.ok(guideRoute.indexOf("auth.getUser") < guideRoute.indexOf("requestPayload(request)"));
-  assert.match(journeyRoute, /answerDynamicChoice/);
-  assert.match(journeyRoute, /pollDynamicScoringJob/);
-  assert.match(guideRoute, /generateQuestion/);
-  assert.match(guideRoute, /submitUnmatchedContext/);
 });

@@ -11,22 +11,22 @@ import type { JourneyClientResponse } from "@/lib/birth-time-journey-client";
 import {
   createIdentityRequestCache,
   publishCurrentJourney,
+  runStableJourneyAction,
   scheduleCancellableStart,
 } from "@/lib/birth-time-guided-effect-coordinator";
+import type { StableActionIdentityRegistry } from "@/lib/birth-time-guided-effect-coordinator";
 import { runBirthTimeScoringPoll, scoringPollDelay } from "@/lib/birth-time-guided-polling";
 
 type AutomaticEffectsInput = {
   readonly journey: JourneyClientResponse | null;
   readonly latest: { current: JourneyClientResponse | null };
+  readonly actionRegistry: StableActionIdentityRegistry;
   readonly preview: boolean;
   readonly pollRun: number;
   readonly generationRun: number;
   readonly onJourney: (journey: JourneyClientResponse) => void;
   readonly setError: (message: string) => void;
 };
-
-const guideRequests = createIdentityRequestCache<Awaited<ReturnType<typeof requestBirthTimeGuidePrompt>>>();
-const generationRequests = createIdentityRequestCache<Awaited<ReturnType<typeof generateDynamicBirthTimeQuestion>>>();
 
 function fallbackQuestion(turn: JourneyClientResponse): string {
   const action = turn.nextAction;
@@ -39,7 +39,9 @@ function fallbackQuestion(turn: JourneyClientResponse): string {
 }
 
 export function useBirthTimeAutomaticJourneyEffects(input: AutomaticEffectsInput): string {
-  const { generationRun, journey, latest, onJourney, pollRun, preview, setError } = input;
+  const { actionRegistry, generationRun, journey, latest, onJourney, pollRun, preview, setError } = input;
+  const [guideRequests] = useState(() => createIdentityRequestCache<Awaited<ReturnType<typeof requestBirthTimeGuidePrompt>>>());
+  const [generationRequests] = useState(() => createIdentityRequestCache<Awaited<ReturnType<typeof generateDynamicBirthTimeQuestion>>>());
   const [agentQuestion, setAgentQuestion] = useState<{ readonly key: string; readonly text: string } | null>(null);
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export function useBirthTimeAutomaticJourneyEffects(input: AutomaticEffectsInput
       }
     }).catch(() => { if (active) setAgentQuestion(null); });
     return () => { active = false; };
-  }, [journey, preview]);
+  }, [guideRequests, journey, preview]);
 
   const generationIdentity = journey?.journeyProtocol === "dynamic-choice-v2"
     && (journey.nextAction.kind === "generate_dynamic_question"
@@ -70,18 +72,20 @@ export function useBirthTimeAutomaticJourneyEffects(input: AutomaticEffectsInput
       && turn.nextAction.kind !== "retry_question_generation") return;
     const expected = turn;
     const key = `${turn.caseId}:${turn.turnVersion}`;
-    void generationRequests.run(key, () => generateDynamicBirthTimeQuestion(
-      turn.caseId,
-      globalThis.crypto.randomUUID(),
-      turn.turnVersion,
-    )).then((next) => {
+    void generationRequests.run(key, () => runStableJourneyAction(actionRegistry, {
+      caseId: turn.caseId,
+      turnVersion: turn.turnVersion,
+      operation: "generate_dynamic_question",
+    }, (actionId) => generateDynamicBirthTimeQuestion(
+      turn.caseId, actionId, turn.turnVersion,
+    ))).then((next) => {
       if (publishCurrentJourney({ expected, current: latest.current, next, publish: onJourney })) latest.current = next;
     }).catch((caught: unknown) => {
       if (latest.current?.caseId === expected.caseId && latest.current.turnVersion === expected.turnVersion) {
         setError(caught instanceof Error ? caught.message : "暂时无法生成下一题，请重试。");
       }
     });
-  }, [generationIdentity, generationRun, latest, onJourney, preview, setError]);
+  }, [actionRegistry, generationIdentity, generationRequests, generationRun, latest, onJourney, preview, setError]);
 
   const pollIdentity = journey?.nextAction.kind === "score_pending"
     ? `${journey.caseId}:${journey.turnVersion}:${journey.nextAction.jobId}`

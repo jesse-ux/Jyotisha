@@ -1,5 +1,21 @@
 import type { JourneyClientResponse } from "./birth-time-journey-response-schema.ts";
 
+type StableActionIdentityInput = {
+  readonly caseId: string;
+  readonly turnVersion: number;
+  readonly operation: string;
+  readonly payload?: readonly string[];
+};
+
+export function stableActionIdentity(input: StableActionIdentityInput): string {
+  return JSON.stringify([
+    input.caseId,
+    input.turnVersion,
+    input.operation,
+    ...(input.payload ?? []),
+  ]);
+}
+
 export function createIdentityRequestCache<T>() {
   const requests = new Map<string, Promise<T>>();
   return {
@@ -14,6 +30,31 @@ export function createIdentityRequestCache<T>() {
       return request;
     },
   };
+}
+
+export function createStableActionIdentityRegistry(
+  createId: () => string = () => globalThis.crypto.randomUUID(),
+) {
+  const actionIds = new Map<string, string>();
+  return {
+    async run<T>(identity: string, operation: (actionId: string) => Promise<T>): Promise<T> {
+      const actionId = actionIds.get(identity) ?? createId();
+      actionIds.set(identity, actionId);
+      const result = await operation(actionId);
+      if (actionIds.get(identity) === actionId) actionIds.delete(identity);
+      return result;
+    },
+  };
+}
+
+export type StableActionIdentityRegistry = ReturnType<typeof createStableActionIdentityRegistry>;
+
+export function runStableJourneyAction<T>(
+  registry: StableActionIdentityRegistry,
+  identity: StableActionIdentityInput,
+  operation: (actionId: string) => Promise<T>,
+): Promise<T> {
+  return registry.run(stableActionIdentity(identity), operation);
 }
 
 export function scheduleCancellableStart(start: () => void): () => void {

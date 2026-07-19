@@ -21,7 +21,9 @@ import {
 import { confirmReviewedBirthTimeDraft } from "@/lib/birth-time-guided-draft-confirmation";
 import {
   claimMutation,
+  createStableActionIdentityRegistry,
   publishCurrentJourney,
+  runStableJourneyAction,
 } from "@/lib/birth-time-guided-effect-coordinator";
 import type { EvidenceDatePrecision } from "@/lib/birth-time-question-planner";
 import { useBirthTimeAutomaticJourneyEffects } from "@/hooks/use-birth-time-automatic-journey-effects";
@@ -59,6 +61,7 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
   const { journey, onJourney, onReady, onEditBirthTimeDetails, preview } = input;
   const latest = useRef(journey);
   const busy = useRef(false);
+  const [actionRegistry] = useState(() => createStableActionIdentityRegistry());
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [pollRun, setPollRun] = useState(0);
@@ -105,10 +108,28 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     });
   }, [journey, onJourney]);
 
-  const actionId = () => globalThis.crypto.randomUUID();
+  const stableCommand = <T>(
+    caseId: string,
+    turnVersion: number,
+    operation: string,
+    payload: readonly string[],
+    send: (actionId: string) => Promise<T>,
+  ) => runStableJourneyAction(actionRegistry, {
+    caseId,
+    turnVersion,
+    operation,
+    payload,
+  }, send);
+  const stableAction = <T>(
+    turn: JourneyClientResponse,
+    operation: string,
+    payload: readonly string[],
+    send: (actionId: string) => Promise<T>,
+  ) => stableCommand(turn.caseId, turn.turnVersion, operation, payload, send);
   const question = useBirthTimeAutomaticJourneyEffects({
     journey,
     latest,
+    actionRegistry,
     preview,
     pollRun,
     generationRun,
@@ -118,26 +139,36 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
 
   const submitMessage = (message: string) => operate((turn) => {
     if (preview) return Promise.resolve(turn);
-    return draftBirthTimeEvidence(turn.caseId, actionId(), turn.turnVersion, message).then((value) => value.turn);
+    return stableAction(turn, "draft_evidence", [message.trim()], (actionId) => (
+      draftBirthTimeEvidence(turn.caseId, actionId, turn.turnVersion, message).then((value) => value.turn)
+    ));
   });
 
   const confirmDraft = (precision: EvidenceDatePrecision, date: string) => operate(async (turn, publishIntermediate) => {
     if (preview) return turn;
     return confirmReviewedBirthTimeDraft({ turn, precision, date }, {
-      createActionId: actionId,
-      revise: reviseBirthTimeEvidenceDraft,
+      revise: (command) => stableCommand(
+        command.caseId, command.turnVersion, "revise_evidence_draft", [command.precision, command.date],
+        (actionId) => reviseBirthTimeEvidenceDraft({ ...command, actionId }),
+      ),
       publish: publishIntermediate,
-      confirm: (command) => confirmBirthTimeEvidenceDraft(
-        command.caseId,
-        command.actionId,
-        command.turnVersion,
-        command.draftId,
+      confirm: (command) => stableCommand(
+        command.caseId, command.turnVersion, "confirm_evidence_draft", [command.draftId],
+        (actionId) => confirmBirthTimeEvidenceDraft(
+          command.caseId, actionId, command.turnVersion, command.draftId,
+        ),
       ),
     });
   });
 
-  const skip = () => operate((turn) => preview ? Promise.resolve(turn) : skipBirthTimeEvidenceQuestion(turn.caseId, actionId(), turn.turnVersion));
-  const pause = () => operate((turn) => preview ? Promise.resolve(turn) : pauseBirthTimeRectification(turn.caseId, actionId(), turn.turnVersion));
+  const skip = () => operate((turn) => preview ? Promise.resolve(turn) : stableAction(
+    turn, "skip_evidence_question", [],
+    (actionId) => skipBirthTimeEvidenceQuestion(turn.caseId, actionId, turn.turnVersion),
+  ));
+  const pause = () => operate((turn) => preview ? Promise.resolve(turn) : stableAction(
+    turn, "pause_rectification", [],
+    (actionId) => pauseBirthTimeRectification(turn.caseId, actionId, turn.turnVersion),
+  ));
   const resume = () => operate((turn) => preview ? Promise.resolve(turn) : resumeBirthTimeJourney(turn.caseId));
   const acknowledgeReady = () => {
     if (journey?.nextAction.kind === "ready") onReady(journey);
@@ -153,33 +184,39 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
       ? pollBirthTimeScoring(current.caseId, current.nextAction.jobId)
       : Promise.resolve(current));
   };
-  const saveCandidate = (resultId: string) => operate((turn) => preview ? Promise.resolve(turn) : saveGuidedBirthTimeCandidate({ caseId: turn.caseId, actionId: actionId(), turnVersion: turn.turnVersion, resultId }));
-  const confirmCandidate = (resultId: string, time: string) => operate((turn) => preview ? Promise.resolve(turn) : confirmGuidedBirthTimeCandidate({ caseId: turn.caseId, actionId: actionId(), turnVersion: turn.turnVersion, resultId, time }));
+  const saveCandidate = (resultId: string) => operate((turn) => preview ? Promise.resolve(turn) : stableAction(
+    turn, "save_guided_candidate", [resultId],
+    (actionId) => saveGuidedBirthTimeCandidate({ caseId: turn.caseId, actionId, turnVersion: turn.turnVersion, resultId }),
+  ));
+  const confirmCandidate = (resultId: string, time: string) => operate((turn) => preview ? Promise.resolve(turn) : stableAction(
+    turn, "confirm_guided_candidate", [resultId, time],
+    (actionId) => confirmGuidedBirthTimeCandidate({ caseId: turn.caseId, actionId, turnVersion: turn.turnVersion, resultId, time }),
+  ));
   const selectOption = (optionId: string) => operate((turn) => {
     if (preview || turn.journeyProtocol !== "dynamic-choice-v2"
       || turn.nextAction.kind !== "ask_dynamic_choice") return Promise.resolve(turn);
-    return answerDynamicBirthTimeChoice({
-      caseId: turn.caseId,
-      actionId: actionId(),
-      turnVersion: turn.turnVersion,
-      questionId: turn.nextAction.question.questionId,
-      optionId,
-    });
+    const questionId = turn.nextAction.question.questionId;
+    return stableAction(turn, "answer_dynamic_choice", [questionId, optionId], (actionId) => (
+      answerDynamicBirthTimeChoice({
+        caseId: turn.caseId, actionId, turnVersion: turn.turnVersion, questionId, optionId,
+      })
+    ));
   });
   const submitUnmatchedContext = (note: string) => operate((turn) => {
     if (preview || turn.journeyProtocol !== "dynamic-choice-v2"
       || turn.nextAction.kind !== "clarify_unmatched_answer") return Promise.resolve(turn);
-    return reframeUnmatchedBirthTimeAnswer({
-      caseId: turn.caseId,
-      actionId: actionId(),
-      turnVersion: turn.turnVersion,
-      questionId: turn.nextAction.questionId,
-      note,
-    });
+    const questionId = turn.nextAction.questionId;
+    return stableAction(turn, "reframe_unmatched", [questionId, note.trim()], (actionId) => (
+      reframeUnmatchedBirthTimeAnswer({
+        caseId: turn.caseId, actionId, turnVersion: turn.turnVersion, questionId, note,
+      })
+    ));
   });
   const finish = () => operate((turn) => preview
     ? Promise.resolve(turn)
-    : finishBirthTimeRectification(turn.caseId, actionId(), turn.turnVersion));
+    : stableAction(turn, "finish_rectification", [], (actionId) => (
+      finishBirthTimeRectification(turn.caseId, actionId, turn.turnVersion)
+    )));
   const retryQuestionGeneration = () => {
     if (journey?.journeyProtocol !== "dynamic-choice-v2") return;
     if (journey.nextAction.kind !== "generate_dynamic_question"

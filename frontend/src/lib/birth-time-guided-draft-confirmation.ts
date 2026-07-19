@@ -10,7 +10,6 @@ type ConfirmDraftInput = {
 
 type RevisionCommand = {
   readonly caseId: string;
-  readonly actionId: string;
   readonly turnVersion: number;
   readonly precision: EvidenceDatePrecision;
   readonly date: string;
@@ -18,13 +17,11 @@ type RevisionCommand = {
 
 type ConfirmationCommand = {
   readonly caseId: string;
-  readonly actionId: string;
   readonly turnVersion: number;
   readonly draftId: string;
 };
 
 type ConfirmDraftPorts = {
-  readonly createActionId: () => string;
   readonly revise: (command: RevisionCommand) => Promise<JourneyClientResponse>;
   readonly publish: (turn: JourneyClientResponse) => void;
   readonly confirm: (command: ConfirmationCommand) => Promise<JourneyClientResponse>;
@@ -50,7 +47,6 @@ export async function confirmReviewedBirthTimeDraft(
     ? input.turn
     : await ports.revise({
         caseId: input.turn.caseId,
-        actionId: ports.createActionId(),
         turnVersion: input.turn.turnVersion,
         precision: parsed.precision,
         date: parsed.date,
@@ -60,7 +56,6 @@ export async function confirmReviewedBirthTimeDraft(
   if (!currentDraft) throw new GuidedDraftConfirmationError("经历草稿已经变化，请使用最新内容。");
   return ports.confirm({
     caseId: revised.caseId,
-    actionId: ports.createActionId(),
     turnVersion: revised.turnVersion,
     draftId: currentDraft.draftId,
   });

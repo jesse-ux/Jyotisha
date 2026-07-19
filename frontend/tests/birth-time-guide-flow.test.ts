@@ -36,10 +36,9 @@ test("draft review is explicit, domain locked, and incomplete confirmation stays
   assert.match(hookSource, /confirmBirthTimeEvidenceDraft/);
 });
 
-test("guided orchestration owns fallback copy, unique actions, polling, and retry", () => {
+test("guided orchestration owns fallback copy, polling, and retry", () => {
   assert.match(automaticEffectsSource, /fallbackQuestionCopy/);
   assert.match(automaticEffectsSource, /requestBirthTimeGuidePrompt/);
-  assert.match(automaticEffectsSource, /crypto\.randomUUID\(\)/);
   assert.match(automaticEffectsSource, /runBirthTimeScoringPoll/);
   assert.match(hookSource, /retry_scoring/);
   assert.match(automaticEffectsSource, /AbortController/);

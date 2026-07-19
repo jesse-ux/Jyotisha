@@ -24,7 +24,6 @@ test("draft revision publishes its new version before confirmation can fail", as
     precision: "month",
     date: "2008-09",
   }, {
-    createActionId: () => "45857b75-4718-4590-aaf5-7113a03ea765",
     revise: async () => revised,
     publish: (turn) => { published.push(turn); },
     confirm: async () => { throw new TypeError("response unavailable"); },
