@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 63,
+    "packet_count": 64,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -513,6 +513,14 @@
       "claim_status": "ready_contract",
       "consumer_policy": "pre_work_required_before_sync",
       "claim_boundary": "Current whole-machine fragment and OSS reuse guardrail is recorded; no numeric truth or production capability is upgraded by this packet."
+    },
+    {
+      "packet_id": "shadbala_component_closure_ledger",
+      "path": "references/oracle/shadbala_component_closure_ledger_2026_07_19.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Classifies all 42 same-unit Shadbala rows into closed observation, method variant, or open mismatch; does not assert absolute formula truth."
     }
   ]
 }
