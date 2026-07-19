@@ -20,6 +20,42 @@ test("account route can fall back when coordinate columns are not deployed", () 
   assert.match(source, /PGRST204|42703|schema cache|column/i);
 });
 
+test("account route persists the birth-time declaration before assessment", () => {
+  // Given: the birthday step submits a reported time and its source metadata.
+  const source = readFileSync(new URL("../src/app/api/account/route.ts", import.meta.url), "utf8");
+  const declarationColumns = [
+    "reported_birth_time",
+    "birth_time_source",
+    "birth_time_period",
+    "birth_time_clue",
+    "uncertainty_before_minutes",
+    "uncertainty_after_minutes",
+  ] as const;
+
+  // When: /api/account builds the profile upsert.
+  // Then: every declaration field must cross the route boundary instead of being dropped.
+  for (const column of declarationColumns) {
+    assert.match(source, new RegExp(`${column}:\\s*nullable`), `${column} is not persisted`);
+  }
+  assert.match(source, /birthTimeSources\s*=\s*\[[\s\S]*"legacy_import"/);
+});
+
+test("service role can insert and read birth-time declaration columns during profile upsert", () => {
+  // Given: onboarding creates the profile before the birthday declaration is known.
+  const migration = readFileSync(
+    new URL(
+      "../supabase/migrations/20260718103000_profile_birth_time_declaration_grants.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  // When: the existing profile is upserted after the birthday step.
+  // Then: PostgREST may insert and read all declaration columns used by that upsert.
+  assert.match(migration, /grant\s+insert\s*\([\s\S]*reported_birth_time[\s\S]*birth_time_source[\s\S]*uncertainty_after_minutes[\s\S]*\)\s*on\s+table\s+public\.profiles\s+to\s+service_role/i);
+  assert.match(migration, /grant\s+select\s*\([\s\S]*reported_birth_time[\s\S]*birth_time_source[\s\S]*uncertainty_after_minutes[\s\S]*\)\s*on\s+table\s+public\.profiles\s+to\s+service_role/i);
+});
+
 test("service role can read every column used by account profile upserts", () => {
   // Given: the least-privilege grant omitted two columns submitted by /api/account.
   const migration = readFileSync(

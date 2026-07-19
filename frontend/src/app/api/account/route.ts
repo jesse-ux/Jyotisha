@@ -11,6 +11,12 @@ type ProfilePatchPayload = {
   name?: unknown;
   birth_date?: unknown;
   birth_time?: unknown;
+  reported_birth_time?: unknown;
+  birth_time_source?: unknown;
+  birth_time_period?: unknown;
+  birth_time_clue?: unknown;
+  uncertainty_before_minutes?: unknown;
+  uncertainty_after_minutes?: unknown;
   country_code?: unknown;
   province_code?: unknown;
   city_code?: unknown;
@@ -20,12 +26,23 @@ type ProfilePatchPayload = {
   timezone_offset?: unknown;
 };
 
+const birthTimeSources = ["hospital_record", "family_exact", "approximate", "period_only", "unknown", "legacy_import"] as const;
+const birthTimePeriods = ["early_morning", "morning", "afternoon", "evening", "late_night"] as const;
+
 function nullableString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function nullableNumber(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function nullableInteger(value: unknown) {
+  return typeof value === "number" && Number.isInteger(value) ? value : null;
+}
+
+function nullableChoice(value: unknown, choices: readonly string[]) {
+  return typeof value === "string" && choices.includes(value) ? value : null;
 }
 
 function isMissingProfileColumn(error: { code?: string; message?: string } | null) {
@@ -88,6 +105,12 @@ export async function PATCH(request: Request) {
       name: nullableString(payload.name),
       birth_date: nullableString(payload.birth_date),
       birth_time: nullableString(payload.birth_time),
+      reported_birth_time: nullableString(payload.reported_birth_time),
+      birth_time_source: nullableChoice(payload.birth_time_source, birthTimeSources),
+      birth_time_period: nullableChoice(payload.birth_time_period, birthTimePeriods),
+      birth_time_clue: nullableString(payload.birth_time_clue),
+      uncertainty_before_minutes: nullableInteger(payload.uncertainty_before_minutes),
+      uncertainty_after_minutes: nullableInteger(payload.uncertainty_after_minutes),
       country_code: nullableString(payload.country_code),
       province_code: nullableString(payload.province_code),
       city_code: nullableString(payload.city_code),
