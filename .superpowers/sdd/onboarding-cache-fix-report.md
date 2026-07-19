@@ -291,3 +291,44 @@ matrix provided the behavior-preservation check rather than adding a new RED cas
 The build continues to use repository-standard CI placeholder Supabase values and webpack because
 the worktree's external dependency symlink is incompatible with default Turbopack. No new concern
 was introduced by this cleanup.
+
+## Final cleanup: remove the obsolete Python source contract
+
+`tests/test_agent_chat_contract.py` was deleted in full. Its two tests asserted filenames,
+implementation tokens, prompt prose, and source layout rather than observable outcomes. No
+production logic changed and no replacement source-mirroring test was added.
+
+### Behavioral coverage inventory
+
+- Onboarding route ownership, generated/cache/pending responses, and compare-and-set races:
+  `frontend/tests/onboarding-route.test.ts` and `frontend/tests/onboarding-cache-policy.test.ts`.
+- Onboarding client recovery, authentication handling, response parsing, suggestion preservation,
+  cancellation, and stale presentation rejection: `frontend/tests/onboarding-client.test.ts` and
+  `frontend/tests/onboarding-presentation.test.ts`.
+- Suggestion metadata removal and visible suggestion lifetime while streaming/editing:
+  `frontend/tests/agent-reply.test.ts`, `frontend/tests/chat-stream-layout.test.ts`, and
+  `frontend/tests/starter-questions.test.ts`.
+- Public model parsing/sanitization and selected-model reservation before billing:
+  `frontend/tests/model-catalog.test.ts`, `frontend/tests/public-models.test.ts`, and
+  `frontend/tests/consultation-model-selection.test.ts`.
+- Owned-session model persistence and per-session write serialization:
+  `frontend/tests/session-model-persistence.test.ts`.
+- Credit RPC outcomes plus completion/cancellation settlement of streamed consultations:
+  `frontend/tests/consultation-billing.test.ts` and `frontend/tests/stream-text-response.test.ts`.
+
+### Final cleanup verification
+
+- Focused behavioral TypeScript inventory: exit 0; 52 passed, 0 failed.
+- Full frontend suite: exit 0; 454 passed, 0 failed.
+- Remaining Python suite discovery: exit 0.
+- Adjacent Python auth and Supabase data contracts: exit 0; 9 passed.
+- ESLint across the 12 focused TypeScript test files: exit 0 with zero diagnostics.
+- Webpack production build: exit 0; compiled successfully, TypeScript completed, and 22/22 pages
+  generated.
+- `git diff --check`: exit 0.
+
+The Ruff command over three untouched adjacent Python contract files found existing `I001`
+import-order issues in all three. The same exploratory batch also found the existing
+`test_session_management_entrypoints.py` expectation for the already-removed `onContextMenu`.
+Neither is caused by deleting the agent-chat contract, and neither unrelated file was edited.
+Because the only Python change is a deletion, there is no remaining modified Python file to lint.
