@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 61,
+    "packet_count": 62,
     "blocked_or_partial_count": 40,
     "human_review_required_count": 1
   },
@@ -497,6 +497,14 @@
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Maps Shadbala components across local/Xalen/jyotishganit/VedicAstro observations. Closed components can inform provenance; open/method-variant rows must not be treated as absolute error."
+    },
+    {
+      "packet_id": "shadbala_same_unit_normalizer",
+      "path": "references/oracle/shadbala_same_unit_normalizer_2026_07_19.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Normalizes local/Xalen/jyotishganit/VP Jain Shadbala rows into Virupa/Rupa where available; classifications are arbitration queues, not absolute truth."
     }
   ]
 }
