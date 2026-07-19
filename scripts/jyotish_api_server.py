@@ -40,8 +40,10 @@ if SCRIPTS_DIR not in sys.path:
 
 try:
     from scripts.local_env import load_local_env
+    from scripts.vedastro_runtime_context import temporary_timeout_seconds
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from local_env import load_local_env
+    from vedastro_runtime_context import temporary_timeout_seconds
 try:
     from scripts.unified_consultation_orchestrator import UnifiedConsultationOrchestrator
 except ModuleNotFoundError:  # pragma: no cover - script execution path
@@ -841,12 +843,16 @@ def _vedastro_runtime_fingerprint() -> dict:
         'endpoint_host': (urlparse(endpoint).netloc or '').lower(),
         'network_enabled': str(os.environ.get('VEDASTRO_ENABLE_NETWORK', '')).strip().lower() in {'1', 'true', 'yes'},
         'has_api_key': bool(os.environ.get('VEDASTRO_API_KEY', '').strip()),
+        'timeout_seconds': str(os.environ.get('VEDASTRO_TIMEOUT_SECONDS', '')).strip(),
+        'full_snapshot_fanout_enabled': str(
+            os.environ.get('VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED', '1')
+        ).strip().lower() in {'1', 'true', 'yes', 'on'},
     }
 
 
 def _build_api_chart_cache_payload(body: dict) -> dict:
     return {
-        'cache_schema_version': 3,
+        'cache_schema_version': 4,
         'birth': {
             'year': body.get('year'),
             'month': body.get('month'),
@@ -958,6 +964,14 @@ def _async_job_ttl_seconds() -> float:
         return max(float(raw), 1.0)
     except ValueError:
         return 3600.0
+
+
+def _async_high_rigor_vedastro_timeout_seconds() -> float:
+    raw = str(os.environ.get('JYOTISH_ASYNC_HIGH_RIGOR_VEDASTRO_TIMEOUT_SECONDS', '90')).strip()
+    try:
+        return min(max(float(raw), 30.0), 180.0)
+    except ValueError:
+        return 90.0
 
 
 def _async_job_backend() -> str:
@@ -2759,7 +2773,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             running['started_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             _write_high_rigor_job_record(job_id, running)
             try:
-                result = self._compute_high_rigor_workflow_sync(body_copy)
+                with temporary_timeout_seconds(_async_high_rigor_vedastro_timeout_seconds()):
+                    result = self._compute_high_rigor_workflow_sync(body_copy)
                 completed = dict(running)
                 completed['status'] = 'completed'
                 completed['completed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')

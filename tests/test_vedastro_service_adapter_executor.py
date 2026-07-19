@@ -87,6 +87,18 @@ def test_vedastro_official_subprocesses_use_adapter_timeout(monkeypatch) -> None
     assert catalog["status"] == "official_full_capability_catalog_runtime_error"
 
 
+def test_temporary_timeout_is_scoped_to_the_current_execution(monkeypatch) -> None:
+    from scripts import vedastro_service_adapter as adapter
+    from scripts.vedastro_runtime_context import temporary_timeout_seconds
+
+    monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "7")
+
+    assert adapter._timeout_seconds() == 7.0
+    with temporary_timeout_seconds(90):
+        assert adapter._timeout_seconds() == 90.0
+    assert adapter._timeout_seconds() == 7.0
+
+
 def test_vedastro_official_subprocess_timeouts_are_controlled(monkeypatch) -> None:
     from scripts import vedastro_service_adapter as adapter
 
