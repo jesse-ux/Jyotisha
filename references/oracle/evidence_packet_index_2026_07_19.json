@@ -625,14 +625,22 @@
       "claim_status": "open_queue",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Groups remaining three-engine mismatches by owner track for closure planning; no production tuning or truth upgrade."
+    },
+    {
+      "packet_id": "five_track_blocked_progress_dashboard_2026_07_20",
+      "path": "references/oracle/five_track_blocked_progress_dashboard_2026_07_20.json",
+      "domain": "closure_governance",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Progress dashboard for five blocked-but-code-progressable domains; does not unblock production-ready claims."
     }
   ],
   "production_tuning_allowed": false,
   "scope": "evidence_packet_index",
   "status": "active_index_v1",
   "summary": {
-    "packet_count": 78,
-    "blocked_or_partial_count": 51,
+    "packet_count": 79,
+    "blocked_or_partial_count": 52,
     "human_review_required_count": 2
   }
 }
