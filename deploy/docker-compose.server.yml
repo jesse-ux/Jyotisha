@@ -26,6 +26,7 @@ services:
     restart: unless-stopped
     env_file: ../.env.production
     environment:
+      GITHUB_SHA: ${GITHUB_SHA}
       PORT: 3000
       JYOTISH_API_BASE: http://api:5200
     expose:

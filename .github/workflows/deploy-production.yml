@@ -45,6 +45,8 @@ jobs:
           printf '%s\n' '[103.117.123.53]:22000 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHQJvN2Mo3Yq8e6ZIK4P2blJ5Vjj0HbknEuk7TyjhMbO' > ~/.ssh/known_hosts
 
       - name: Sync and rebuild
+        env:
+          DEPLOY_GIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           SSH_OPTIONS="-i $HOME/.ssh/jyotisha-production -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
           RSYNC_SSH="ssh $SSH_OPTIONS"
@@ -59,7 +61,7 @@ jobs:
             ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
 
           ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
+            "cd '$DEPLOY_PATH' && GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
 
       - name: Verify production
         run: |

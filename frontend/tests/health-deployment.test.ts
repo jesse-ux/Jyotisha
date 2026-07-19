@@ -10,3 +10,12 @@ test("health endpoint exposes deployment identity for production verification", 
   assert.match(source, /VERCEL_GIT_COMMIT_SHA/);
   assert.match(source, /gitCommit/);
 });
+
+test("production deployment passes the tested revision into the web runtime", () => {
+  const compose = readFileSync(new URL("../../deploy/docker-compose.server.yml", import.meta.url), "utf8");
+  const workflow = readFileSync(new URL("../../.github/workflows/deploy-production.yml", import.meta.url), "utf8");
+
+  assert.match(compose, /GITHUB_SHA: \$\{GITHUB_SHA\}/);
+  assert.match(workflow, /DEPLOY_GIT_SHA: \$\{\{ github\.event\.workflow_run\.head_sha \|\| github\.sha \}\}/);
+  assert.match(workflow, /GITHUB_SHA='\$DEPLOY_GIT_SHA'/);
+});
