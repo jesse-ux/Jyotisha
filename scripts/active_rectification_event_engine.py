@@ -32,6 +32,7 @@ if str(SCRIPTS) not in sys.path:
 
 import dasha_analyzer  # noqa: E402
 import domain_calculation_service  # noqa: E402
+import divisional_charts_extended  # noqa: E402
 import functional_benefics  # noqa: E402
 import jaimini  # noqa: E402
 import narayana_dasha  # noqa: E402
@@ -43,7 +44,7 @@ DOMAIN_CONFIG: Final[dict[EventDomain, DomainConfig]] = {
     "relocation": (("D4",), (4, 12)),
     "relationship": (("D9",), (7,)),
     "career": (("D10",), (10,)),
-    "finance": (("D2",), (2, 11)),
+    "finance": (("D2", "D11"), (2, 11)),
     "health_pressure": (("D30",), (6, 8, 12)),
 }
 
@@ -121,6 +122,20 @@ def _varga_chart(charts: dict, prefix: str) -> dict | None:
         (chart for name, chart in charts.items() if name.startswith(f"{prefix}_")),
         None,
     )
+
+
+def _d11_chart(planet_longitudes: dict[str, float], ascendant_longitude: float) -> dict:
+    """Adapt the repository's Rudramsa implementation to the event-score shape."""
+    raw = divisional_charts_extended.DivisionalChartsCalculator().calculate_all_vargas(
+        planet_longitudes, ascendant_longitude,
+    )["Rudramsa"]
+    return {
+        "Ascendant": {"sign_idx": raw["ascendant"]["sign_index"]},
+        **{
+            planet: {"sign_idx": value["sign_index"]}
+            for planet, value in raw["planets"].items()
+        },
+    }
 
 
 def _relative_house(sign_index: int, ascendant_index: int) -> int:
@@ -276,6 +291,7 @@ def _candidate_row(
         ascendant_longitude,
         divisions=[2, 4, 9, 10, 24, 30],
     )
+    d11_chart = _d11_chart(planet_longitudes, ascendant_longitude)
     moon_longitude = planet_longitudes["Moon"]
     evidence: list[CandidateEvidence] = []
     missing_layers: list[str] = []
@@ -283,7 +299,7 @@ def _candidate_row(
     for event in request["events"]:
         event_at = _event_datetime(event)
         prefixes, _ = DOMAIN_CONFIG[event["domain"]]
-        domain_vargas = [_varga_chart(charts, prefix) for prefix in prefixes]
+        domain_vargas = [d11_chart if prefix == "D11" else _varga_chart(charts, prefix) for prefix in prefixes]
         if any(chart is None for chart in domain_vargas):
             missing_layers.extend(prefixes)
             continue
