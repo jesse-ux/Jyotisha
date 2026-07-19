@@ -3,6 +3,9 @@ import test from "node:test";
 import {
   OnboardingAuthenticationError,
   OnboardingRequestError,
+  isCurrentOnboardingRequest,
+  onboardingProfileFingerprint,
+  onboardingRequestIdentity,
   requestOnboardingWithRecovery,
 } from "../src/lib/onboarding-client.ts";
 
@@ -15,6 +18,26 @@ const personalizedOnboarding = {
   ],
   source: "cache",
 } as const;
+
+const completeProfile = {
+  name: "林遥", date: "1990-06-15", time: "12:30", reportedTime: "12:30",
+  birthTimeSource: "hospital_record", birthTimePeriod: "", birthTimeClue: "出生证明", birthTimeStatus: "confirmed",
+  uncertaintyBeforeMinutes: 0, uncertaintyAfterMinutes: 0, rectificationCaseId: "", countryCode: "CN", provinceCode: "110000", cityCode: "110000-city", districtCode: "110101",
+} as const;
+
+test("rejects a stale completion after a complete profile changes", () => {
+  // Given: one account starts onboarding for a complete persisted profile.
+  const firstIdentity = onboardingRequestIdentity("account-1", onboardingProfileFingerprint(completeProfile));
+
+  // When: a presentation-affecting profile field changes before that request completes.
+  const changedFingerprint = onboardingProfileFingerprint({ ...completeProfile, name: "周宁" });
+  const currentIdentity = onboardingRequestIdentity("account-1", changedFingerprint);
+
+  // Then: the new profile has a distinct request identity and the old completion is stale.
+  assert.notEqual(currentIdentity, firstIdentity);
+  assert.equal(isCurrentOnboardingRequest(currentIdentity, firstIdentity), false);
+  assert.equal(isCurrentOnboardingRequest(currentIdentity, currentIdentity), true);
+});
 
 test("returns personalized cache content after a timeout and pending response", async () => {
   // Given: the first request times out, the second is provisional, and the third is terminal.
@@ -252,6 +275,35 @@ test("parent cancellation interrupts response body parsing", async () => {
 
     // Then: parsing is cancelled with the lifecycle reason, not converted into a schema error.
     await assert.rejects(request, (error: unknown) => error instanceof DOMException && error.name === "AbortError");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("parent cancellation interrupts a pending-response retry delay", async () => {
+  // Given: the first response is pending and the next retry has a long delay.
+  const originalFetch = globalThis.fetch;
+  const parent = new AbortController();
+  let requestCount = 0;
+  let markFetched: (() => void) | null = null;
+  const fetched = new Promise<void>((resolve) => { markFetched = resolve; });
+  globalThis.fetch = () => {
+    requestCount += 1; markFetched?.();
+    return Promise.resolve(Response.json({ ...personalizedOnboarding, source: "pending" }));
+  };
+
+  try {
+    // When: the page unmounts after the provisional response enters its retry wait.
+    const request = requestOnboardingWithRecovery(parent.signal, () => undefined, {
+      requestTimeoutMs: 10_000, retryDelayMs: 10_000, maxAttempts: 3,
+    });
+    await fetched;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    parent.abort(new DOMException("page unmounted", "AbortError"));
+
+    // Then: the delay is cancelled and no second request starts.
+    await assert.rejects(request, (error: unknown) => error instanceof DOMException && error.name === "AbortError");
+    assert.equal(requestCount, 1);
   } finally {
     globalThis.fetch = originalFetch;
   }

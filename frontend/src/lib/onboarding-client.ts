@@ -28,6 +28,24 @@ type OnboardingAttemptResult =
   | { readonly kind: "network"; readonly error: unknown }
   | { readonly kind: "invalid-response"; readonly error: unknown };
 
+type OnboardingProfileFingerprintInput = {
+  readonly name: string;
+  readonly date: string;
+  readonly time: string;
+  readonly reportedTime: string;
+  readonly birthTimeSource: string;
+  readonly birthTimePeriod: string;
+  readonly birthTimeClue: string;
+  readonly uncertaintyBeforeMinutes: number | null;
+  readonly uncertaintyAfterMinutes: number | null;
+  readonly birthTimeStatus: string;
+  readonly rectificationCaseId: string;
+  readonly countryCode: string;
+  readonly provinceCode: string;
+  readonly cityCode: string;
+  readonly districtCode: string;
+};
+
 export type OnboardingSuggestion = {
   readonly theme: "career" | "marriage" | "timing";
   readonly text: string;
@@ -37,6 +55,34 @@ export type OnboardingContent = {
   readonly greeting: string;
   readonly suggestions: readonly OnboardingSuggestion[];
 };
+
+export function onboardingProfileFingerprint(profile: OnboardingProfileFingerprintInput): string {
+  return JSON.stringify([
+    profile.name,
+    profile.date,
+    profile.time,
+    profile.reportedTime,
+    profile.birthTimeSource,
+    profile.birthTimePeriod,
+    profile.birthTimeClue,
+    profile.uncertaintyBeforeMinutes,
+    profile.uncertaintyAfterMinutes,
+    profile.birthTimeStatus,
+    profile.rectificationCaseId,
+    profile.countryCode,
+    profile.provinceCode,
+    profile.cityCode,
+    profile.districtCode,
+  ]);
+}
+
+export function onboardingRequestIdentity(accountId: string, profileFingerprint: string): string {
+  return JSON.stringify([accountId, profileFingerprint]);
+}
+
+export function isCurrentOnboardingRequest(currentIdentity: string, completedIdentity: string): boolean {
+  return currentIdentity.length > 0 && currentIdentity === completedIdentity;
+}
 
 export class OnboardingAuthenticationError extends Error {
   readonly name = "OnboardingAuthenticationError";

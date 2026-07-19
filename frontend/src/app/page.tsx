@@ -46,6 +46,9 @@ import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
 import {
   OnboardingAuthenticationError,
   type OnboardingContent,
+  isCurrentOnboardingRequest,
+  onboardingProfileFingerprint,
+  onboardingRequestIdentity,
   requestOnboardingWithRecovery,
 } from "@/lib/onboarding-client";
 import { protectOnboardingPhrases } from "@/lib/onboarding-copy";
@@ -760,8 +763,7 @@ export default function Home() {
   const modelSelectionVersions = useRef(new Map<string, number>());
   const activeSessionIdRef = useRef("");
   const chartLibraryLoadedAccount = useRef("");
-  const onboardingRequestIdentity = useRef("");
-  const onboardingPresentation = useRef({ name: "", startGreeting: "" });
+  const activeOnboardingRequestIdentity = useRef("");
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
   const birthTimeRevisionPending = useRef(false);
@@ -783,7 +785,7 @@ export default function Home() {
   const productEntrypointsDisabled = !hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog;
   const activeStreamingText = streamingReply && streamingReply.sessionId === activeSession?.id ? streamingReply.text : "";
   const accountId = account?.user.id;
-  onboardingPresentation.current = { name: profile.name, startGreeting };
+  const onboardingFingerprint = onboardingProfileFingerprint(profile);
 
   useEffect(() => {
     activeSessionIdRef.current = activeSessionId;
@@ -1114,16 +1116,22 @@ export default function Home() {
 
   useEffect(() => {
     if (!hydrated || !accountId || !profileComplete || uiPreview.current) return;
-    const requestIdentity = `${accountId}:profile-complete`;
-    if (onboardingRequestIdentity.current === requestIdentity) return;
-    onboardingRequestIdentity.current = requestIdentity;
+    const requestIdentity = onboardingRequestIdentity(accountId, onboardingFingerprint);
+    if (isCurrentOnboardingRequest(activeOnboardingRequestIdentity.current, requestIdentity)) return;
+    activeOnboardingRequestIdentity.current = requestIdentity;
+    const presentation = { name: profile.name, startGreeting };
     const controller = new AbortController();
+    setOnboarding(null);
+    setOnboardingError("");
     void requestOnboardingWithRecovery(controller.signal, () => {
-      if (!controller.signal.aborted) setOnboardingError("个性化入门问题准备超时");
+      if (!controller.signal.aborted
+        && isCurrentOnboardingRequest(activeOnboardingRequestIdentity.current, requestIdentity)) {
+        setOnboardingError("个性化入门问题准备超时");
+      }
     })
       .then((content) => {
-        if (controller.signal.aborted) return;
-        const presentation = onboardingPresentation.current;
+        if (controller.signal.aborted
+          || !isCurrentOnboardingRequest(activeOnboardingRequestIdentity.current, requestIdentity)) return;
         setOnboarding({
           ...content,
           greeting: presentation.startGreeting || createStartGreeting(presentation.name),
@@ -1131,7 +1139,8 @@ export default function Home() {
         setOnboardingError("");
       })
       .catch((caught: unknown) => {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted
+          || !isCurrentOnboardingRequest(activeOnboardingRequestIdentity.current, requestIdentity)) return;
         if (caught instanceof OnboardingAuthenticationError) {
           window.location.assign("/login");
           return;
@@ -1139,10 +1148,12 @@ export default function Home() {
         setOnboardingError(caught instanceof Error ? caught.message : "暂时无法准备初始问题");
       });
     return () => {
-      if (onboardingRequestIdentity.current === requestIdentity) onboardingRequestIdentity.current = "";
+      if (isCurrentOnboardingRequest(activeOnboardingRequestIdentity.current, requestIdentity)) {
+        activeOnboardingRequestIdentity.current = "";
+      }
       controller.abort();
     };
-  }, [accountId, hydrated, profileComplete]);
+  }, [accountId, hydrated, onboardingFingerprint, profile.name, profileComplete, startGreeting]);
 
   useEffect(() => {
     if (!hydrated || !profileComplete || birthTimeDisplayState(profile)) return;
