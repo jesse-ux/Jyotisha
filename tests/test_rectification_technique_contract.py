@@ -17,3 +17,10 @@ def test_contract_discloses_used_and_missing_layers() -> None:
     assert "D2" in contract["partial_layers"]
     assert "functional_benefic_malefic" in contract["auxiliary_layers"]
     assert contract["external_engines"]["status"] == "not_run"
+
+
+def test_high_rigor_requires_real_three_engine_evidence() -> None:
+    contract = build_rectification_technique_contract(event_count=4, domain_count=3, high_rigor=True)
+    assert contract["external_engines"]["status"] == "required_not_run"
+    assert "three_engine_parity_not_passed" in contract["hard_blockers"]
+    assert contract["can_narrow_to_minute"] is False

@@ -6901,13 +6901,16 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
     def _compute_active_rectification_events(self, body):
         allowed_fields = {
-            'birth_date', 'start_time', 'end_time', 'lat', 'lon', 'tz', 'events',
+            'birth_date', 'start_time', 'end_time', 'lat', 'lon', 'tz', 'events', 'high_rigor',
         }
         unsupported_fields = sorted(set(body) - allowed_fields)
         if unsupported_fields:
             raise BadRequest(
                 f'unsupported active rectification event field: {unsupported_fields[0]}'
             )
+        high_rigor = body.get('high_rigor', False)
+        if not isinstance(high_rigor, bool):
+            raise BadRequest('high_rigor must be a boolean')
         birth_date = body.get('birth_date')
         start_time = body.get('start_time')
         end_time = body.get('end_time')
@@ -6970,7 +6973,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         result['technique_contract'] = build_rectification_technique_contract(
             event_count=result.get('event_count', 0),
             domain_count=result.get('domain_count', 0),
+            high_rigor=high_rigor,
         )
+        if high_rigor:
+            result['can_apply'] = False
+            result.setdefault('reasons', []).append('three_engine_parity_not_passed')
         return {
             'success': True,
             'endpoint': 'active_rectification_events',

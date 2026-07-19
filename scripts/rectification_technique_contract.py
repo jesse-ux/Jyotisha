@@ -4,12 +4,14 @@ from __future__ import annotations
 from typing import Any
 
 
-def build_rectification_technique_contract(*, event_count: int, domain_count: int) -> dict[str, Any]:
+def build_rectification_technique_contract(*, event_count: int, domain_count: int, high_rigor: bool = False) -> dict[str, Any]:
     blockers: list[str] = []
     if event_count < 3:
         blockers.append("insufficient_events")
     if domain_count < 2:
         blockers.append("insufficient_domains")
+    if high_rigor:
+        blockers.append("three_engine_parity_not_passed")
     return {
         "schema_version": 1,
         "calculation_status": "not_started" if event_count == 0 else "evaluated",
@@ -19,7 +21,7 @@ def build_rectification_technique_contract(*, event_count: int, domain_count: in
         "missing_layers": ["D11", "controlled_transit", "ashtakavarga", "shadbala"],
         "partial_layers": ["D2"],
         "auxiliary_layers": ["functional_benefic_malefic"],
-        "external_engines": {"status": "not_run", "providers": ["pyjhora", "jyotishganit", "vedastro"]},
+        "external_engines": {"status": "required_not_run" if high_rigor else "not_run", "providers": ["pyjhora", "jyotishganit", "vedastro"]},
         "hard_blockers": blockers,
         "can_narrow_to_minute": False,
         "boundary": "A candidate range is not a confirmed birth minute.",
