@@ -175,6 +175,13 @@ Application deployment and database migration remain different operations:
 - data import/reconciliation is a separate migration-runner operation;
 - normal deploys never run database migration implicitly.
 
+Before switching application containers, the staging deployment workflow runs the
+exact SHA web image in read-only migration-check mode. With no pending migrations
+it continues automatically. With pending or drifted migrations it stops before
+touching the running application. After the operator runs the manual migration
+workflow successfully, that workflow dispatches staging deployment again for the
+same full SHA. The check may read the migration ledger but may never apply SQL.
+
 Deployment records the previous application SHA and image digests. Public and private health checks must pass before a deployment is marked successful. Application rollback does not claim to roll back database state.
 
 ## Automatic backend quality gate

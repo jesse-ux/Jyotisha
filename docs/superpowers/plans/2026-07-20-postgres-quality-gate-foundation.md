@@ -18,6 +18,7 @@
 - `.env.staging.database` is server-side only, mode `0600`, and excluded from Git/rsync. It contains bootstrap and migration credentials. `.env.staging` must not contain them.
 - Normal web/API containers never receive `SCHEMA_DATABASE_URL`.
 - App deployment never runs schema migration. Migration is manual and separately serialized.
+- Before changing app containers, staging deploy runs the exact SHA image in read-only migration-check mode. No pending migration means automatic continuation. Pending or checksum-drifted migration stops before app changes; a successful manual migration dispatches staging deploy again for the same full SHA.
 - Production defaults remain manual-only and unchanged.
 - Staging image tags are immutable full Git SHAs; never deploy `latest`.
 - Finish each task with the focused commit shown.
@@ -205,6 +206,19 @@ services:
         condition: service_healthy
     networks: [app]
 
+  migration-checker:
+    image: ${WEB_IMAGE:-jyotisha-web:local}
+    profiles: ["migration-check"]
+    restart: "no"
+    env_file:
+      - ${DATABASE_ENV_FILE:-../.env.staging.database}
+    working_dir: /app/frontend
+    command: ["npm", "run", "db:migrate:check"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [app]
+
 volumes:
   postgres_data:
 
@@ -379,7 +393,8 @@ npm install pg drizzle-orm
 npm install --save-dev @types/pg
 ```
 
-Add `"db:migrate": "node scripts/db-migrate.mjs"`.
+Add `"db:migrate": "node scripts/db-migrate.mjs"` and
+`"db:migrate:check": "node scripts/db-migrate.mjs --check"`.
 
 - [ ] **Step 4: Add typed URL config and lazy client**
 
@@ -460,6 +475,7 @@ create table if not exists migration.schema_migrations (
 - Matching row: log `already applied <filename>`.
 - Changed checksum: throw `migration checksum mismatch: <filename>`.
 - New file: `BEGIN`, execute file, insert ledger row, `COMMIT`; rollback on error.
+- With `--check`, perform no DDL/DML: compare exact files with the existing ledger, print pending filenames only, exit `0` when current, exit `3` when any file is pending, and exit `1` on checksum drift or unsafe failure. A missing ledger means every file is pending.
 - Release lock and close in `finally`.
 - Never log URL, SQL, env, or driver config.
 - Direct invocation defaults to `frontend/db/migrations`, requires `SCHEMA_DATABASE_URL`, prints safe filename-only errors, and exits `1`.
@@ -729,7 +745,9 @@ Assert:
 - Staging listens to successful `Staging Backend Quality Gate`; manual validation queries `backend-quality-gate.yml` for exact SHA.
 - Every staging Compose invocation uses server and Postgres files plus explicit app/database env, Caddyfile, hostname, API image, and web image.
 - Workflow logs into GHCR, pulls, and runs `up -d --no-build`.
-- It never contains `db:migrate`, `migrator`, or `--profile migration`.
+- It never invokes the applying `db:migrate` command, `migrator` service, or `--profile migration`.
+- It runs the exact web image through `migration-checker`/`db:migrate:check` before changing any app container.
+- Pending migrations stop before `api`, `web`, or `caddy` changes and print the manual workflow name plus exact SHA.
 - Rollback uses recorded prior image names.
 
 - [ ] **Step 2: Confirm red**
@@ -770,7 +788,8 @@ WEB_IMAGE=ghcr.io/jesse-ux/jyotisha-web:<full-sha>
 
 - Validate both env files and Compose config.
 - Send GHCR token through `docker login --password-stdin`; never save it in either env file.
-- Pull `api web postgres`, then `up -d --no-build --remove-orphans`.
+- Pull `api web postgres`, start/wait for PostgreSQL, then run the exact web image through `--profile migration-check run --rm migration-checker`.
+- Continue to `up -d --no-build --remove-orphans` only after check exit `0`; treat exit `3` as a safe stop with no application changes.
 - Record prior container image names before switching. Roll back with those exact image names and `--no-build`.
 - Log out in an always-running cleanup step.
 - Never run migrations.
@@ -810,7 +829,7 @@ git commit -m "ci: deploy immutable staging images"
 
 - [ ] **Step 1: Add failing contracts**
 
-Assert manual-only dispatch, full 40-character SHA, `staging` environment, successful exact-SHA backend gate, pinned web image, both env validators, Postgres-only start, `--profile migration run --rm migrator`, filename-only ledger output, and no web/API/Caddy restart.
+Assert manual-only dispatch, full 40-character SHA, `staging` environment, successful exact-SHA backend gate, pinned web image, both env validators, Postgres-only start, `--profile migration run --rm migrator`, filename-only ledger output, and no web/API/Caddy restart. Also assert that success dispatches `deploy-staging.yml` with the same full SHA.
 
 - [ ] **Step 2: Confirm red**
 
@@ -836,7 +855,7 @@ concurrency:
   cancel-in-progress: false
 permissions:
   contents: read
-  actions: read
+  actions: write
   packages: read
 jobs:
   migrate:
@@ -870,7 +889,7 @@ docker compose -p jyotisha-staging \
   'select filename from migration.schema_migrations order by filename'
 ```
 
-Authenticate GHCR through stdin and log out in cleanup. Do not start/restart app services.
+Authenticate GHCR through stdin and log out in cleanup. Do not start/restart app services. After migration and ledger reporting succeed, call the GitHub workflow-dispatch API for `deploy-staging.yml` with `ref: staging` and `inputs.deploy_sha` equal to the validated full SHA.
 
 - [ ] **Step 4: Verify and commit**
 
@@ -934,8 +953,8 @@ Document order:
 
 1. Merge to `staging`.
 2. Wait for backend quality gate and SHA images.
-3. If migration exists, manually run `Migrate Staging Database` with full SHA.
-4. Let exact-SHA staging deploy run.
+3. If automatic deploy reports pending migrations, manually run `Migrate Staging Database` with the reported full SHA.
+4. The successful migration workflow re-dispatches exact-SHA staging deploy automatically.
 5. Check `https://staging.jyotisha.chat/api/health`.
 6. Run:
 
@@ -989,7 +1008,7 @@ Expected: all PASS.
 - [ ] **Step 2: Boundary and secret scans**
 
 ```bash
-rg -n 'db:migrate|migrator|profile migration' \
+rg -n 'db:migrate([^:]|$)|migrator|profile migration' \
   .github/workflows/deploy-staging.yml
 rg -n 'up -d.*--build|docker compose build' \
   .github/workflows/deploy-staging.yml
@@ -999,7 +1018,7 @@ rg -n 'sb_secret_|sb_publishable_|postgresql://[^:<[:space:]]+:[^<[:space:]]+@' 
   .github deploy frontend/db frontend/scripts frontend/src/lib/db frontend/tests
 ```
 
-Expected: first two commands have no matches; third matches manual migration; fourth finds no real credential (inspect and allow only explicit test fixtures or documentation placeholders).
+Expected: first two commands have no applying-migration/build matches (the read-only `db:migrate:check` is allowed); third matches manual migration; fourth finds no real credential (inspect and allow only explicit test fixtures or documentation placeholders).
 
 - [ ] **Step 3: Inspect final state**
 
