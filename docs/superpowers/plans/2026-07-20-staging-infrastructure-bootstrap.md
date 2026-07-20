@@ -26,7 +26,7 @@
 
 - Cloud provider console: OS image, rescue console, security group.
 - Local Mac: deploy pair `~/.ssh/jyotisha-staging*` and admin pair `~/.ssh/jyotisha-staging-admin*`.
-- VPS: `/home/deploy/.ssh/authorized_keys`, `/etc/ssh/sshd_config.d/60-jyotisha-staging.conf`, `/etc/docker/daemon.json`, `/opt/jyotisha-staging/.env.staging`.
+- VPS: `/home/deploy/.ssh/authorized_keys`, `/etc/ssh/sshd_config.d/00-jyotisha-staging.conf`, `/etc/docker/daemon.json`, `/opt/jyotisha-staging/.env.staging`.
 - DNS provider: `A staging.jyotisha.chat -> 118.26.111.127`.
 - Supabase Dashboard: a new staging project, Auth URL configuration, staging credentials.
 - GitHub repository settings: Environment named `staging`, one secret, six variables.
@@ -270,17 +270,19 @@ sudo ufw allow 80/tcp comment 'HTTP'
 sudo ufw allow 443/tcp comment 'HTTPS'
 sudo ufw allow 443/udp comment 'HTTP3'
 sudo ufw --force enable
+sudo systemctl enable --now ufw
 sudo ufw status verbose
+systemctl is-enabled ufw
 ```
 
-Expected: UFW is active; only `22/tcp`, `80/tcp`, `443/tcp`, and `443/udp` are allowed. Docker-published ports must still be reviewed separately because Docker can bypass UFW; the application Compose file may publish only 80/443.
+Expected: UFW is active and enabled at boot; only `22/tcp`, `80/tcp`, `443/tcp`, and `443/udp` are allowed. Docker-published ports must still be reviewed separately because Docker can bypass UFW; the application Compose file may publish only 80/443.
 
 - [ ] **Step 4: Harden SSH with a configuration snippet**
 
 Run with `sudo`:
 
 ```bash
-sudo install -m 600 /dev/null /etc/ssh/sshd_config.d/60-jyotisha-staging.conf
+sudo install -m 600 /dev/null /etc/ssh/sshd_config.d/00-jyotisha-staging.conf
 printf '%s\n' \
   'PubkeyAuthentication yes' \
   'PasswordAuthentication no' \
@@ -288,12 +290,13 @@ printf '%s\n' \
   'PermitRootLogin no' \
   'X11Forwarding no' \
   'MaxAuthTries 3' \
-  | sudo tee /etc/ssh/sshd_config.d/60-jyotisha-staging.conf >/dev/null
+  | sudo tee /etc/ssh/sshd_config.d/00-jyotisha-staging.conf >/dev/null
 sudo sshd -t
 sudo systemctl reload ssh
+sudo sshd -T | grep -E '^(passwordauthentication|kbdinteractiveauthentication|permitrootlogin|pubkeyauthentication|maxauthtries) '
 ```
 
-Expected: `sshd -t` emits nothing and exits `0`.
+Expected: `sshd -t` emits nothing and exits `0`; the effective configuration shows password and keyboard-interactive authentication disabled, root login disabled, public-key authentication enabled, and `maxauthtries 3`. The `00-` prefix intentionally loads before provider-generated snippets such as `50-cloud-init.conf`, because OpenSSH uses the first obtained value for these settings.
 
 - [ ] **Step 5: Re-test access before closing the original password session**
 
