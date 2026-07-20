@@ -99,7 +99,9 @@ export function ConversationalRectificationSurface({
   const abandonTrigger = useRef<HTMLButtonElement>(null);
   const abandonCancel = useRef<HTMLButtonElement>(null);
   const abandonConfirm = useRef<HTMLButtonElement>(null);
+  const terminalStatus = useRef<HTMLDivElement>(null);
   const restoreAbandonFocus = useRef(false);
+  const focusTerminalForCase = useRef<string | null>(null);
   const turn = controller.turn;
   const pendingQuestion = turn?.pendingConsultationQuestion ?? pendingConsultationQuestion ?? null;
   const abandonIdentity = turn
@@ -125,6 +127,19 @@ export function ConversationalRectificationSurface({
       abandonTrigger.current?.focus();
     }
   }, [abandonArmed]);
+
+  useEffect(() => {
+    const requestedCase = focusTerminalForCase.current;
+    if (!requestedCase) return;
+    if (!turn || turn.caseId !== requestedCase) {
+      focusTerminalForCase.current = null;
+      return;
+    }
+    if (turn.status === "abandoned") {
+      focusTerminalForCase.current = null;
+      terminalStatus.current?.focus();
+    }
+  }, [turn]);
 
   if (!turn) {
     return (
@@ -178,6 +193,14 @@ export function ConversationalRectificationSurface({
       event.preventDefault();
       abandonCancel.current?.focus();
     }
+  };
+  const confirmAbandon = () => {
+    focusTerminalForCase.current = turn.caseId;
+    void controller.abandon().catch(() => {
+      if (focusTerminalForCase.current === turn.caseId) {
+        focusTerminalForCase.current = null;
+      }
+    });
   };
 
   return (
@@ -300,7 +323,13 @@ export function ConversationalRectificationSurface({
           </section>
         )}
 
-      <div className="conversational-status" aria-live="polite">
+      <div
+        aria-label={turn.status === "abandoned" ? "生时校正终态" : undefined}
+        aria-live="polite"
+        className="conversational-status"
+        ref={terminalStatus}
+        tabIndex={turn.status === "abandoned" ? -1 : undefined}
+      >
         {turn.status === "paused" && <p>校正已暂停，输入与现有证据都已保留。</p>}
         {turn.status === "abandoned" && <p>本次校正已放弃，候选时间没有应用。</p>}
         {turn.status === "completed" && turn.candidate.status === "confirmed"
@@ -389,7 +418,7 @@ export function ConversationalRectificationSurface({
                 disabled={controller.pending}
                 ref={abandonConfirm}
                 type="button"
-                onClick={() => safely(controller.abandon())}
+                onClick={confirmAbandon}
               >
                 确认放弃且不应用候选
               </button>

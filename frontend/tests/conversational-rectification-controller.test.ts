@@ -56,6 +56,16 @@ function idFactory() {
   return () => ids.shift() ?? assert.fail("unexpected action id allocation");
 }
 
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, reject, resolve };
+}
+
 test("controller admits only one in-flight mutation and clears text only after success", async () => {
   const commands: ConversationalRectificationCommand[] = [];
   let resolveRequest: ((turn: ConversationalRectificationTurn) => void) | undefined;
@@ -253,6 +263,142 @@ test("switching cases synchronizes immediately and an old in-flight response can
   assert.equal(controller.getSnapshot().turn?.caseId, otherCaseId);
   assert.equal(controller.getSnapshot().turn?.turnVersion, 1);
   assert.equal(controller.getSnapshot().pending, false);
+});
+
+test("a case switch detaches the old mutation so the new case can mutate independently", async () => {
+  const commands: ConversationalRectificationCommand[] = [];
+  const caseARequest = deferred<ConversationalRectificationTurn>();
+  const caseBRequest = deferred<ConversationalRectificationTurn>();
+  const controller = createConversationalRectificationController({
+    initialTurn: activeTurn(2),
+    createActionId: idFactory(),
+    send: async (command) => {
+      commands.push(command);
+      return command.type !== "start" && command.caseId === otherCaseId
+        ? caseBRequest.promise
+        : caseARequest.promise;
+    },
+  });
+  controller.setDraft("案例 A 的在途输入");
+  const caseAPending = controller.answer("career");
+  const caseARejected = assert.rejects(caseAPending, /案例 A 普通失败/);
+
+  const caseBTurn = { ...activeTurn(1), caseId: otherCaseId };
+  controller.synchronizeInitialTurn(caseBTurn);
+  assert.deepEqual(controller.getSnapshot(), {
+    turn: caseBTurn,
+    draft: "",
+    selectedDomain: null,
+    pending: false,
+    error: "",
+  });
+
+  controller.setDraft("案例 B 自己的输入");
+  const caseBPending = controller.answer("career");
+  assert.notEqual(caseBPending, caseAPending);
+  assert.deepEqual(commands.map((command) => (
+    command.type === "start" ? "start" : `${command.caseId}:${command.type}`
+  )), [`${caseId}:answer`, `${otherCaseId}:answer`]);
+  assert.equal(controller.getSnapshot().pending, true);
+
+  caseARequest.reject(new Error("案例 A 普通失败"));
+  await caseARejected;
+  assert.equal(controller.getSnapshot().turn?.caseId, otherCaseId);
+  assert.equal(controller.getSnapshot().draft, "案例 B 自己的输入");
+  assert.equal(controller.getSnapshot().pending, true);
+  assert.equal(controller.getSnapshot().error, "");
+
+  caseBRequest.resolve({ ...activeTurn(2), caseId: otherCaseId });
+  await caseBPending;
+  assert.equal(controller.getSnapshot().turn?.caseId, otherCaseId);
+  assert.equal(controller.getSnapshot().turn?.turnVersion, 2);
+  assert.equal(controller.getSnapshot().draft, "");
+  assert.equal(controller.getSnapshot().pending, false);
+});
+
+test("synchronizing to no case detaches an ordinary failure without publishing its error", async () => {
+  const request = deferred<ConversationalRectificationTurn>();
+  const controller = createConversationalRectificationController({
+    initialTurn: activeTurn(2),
+    createActionId: idFactory(),
+    send: async () => request.promise,
+  });
+  controller.setDraft("即将离开的案例输入");
+  const pending = controller.answer("career");
+  const rejected = assert.rejects(pending, /案例 A 已离线/);
+
+  controller.synchronizeInitialTurn(null);
+  assert.deepEqual(controller.getSnapshot(), {
+    turn: null,
+    draft: "",
+    selectedDomain: null,
+    pending: false,
+    error: "",
+  });
+
+  request.reject(new Error("案例 A 已离线"));
+  await rejected;
+  assert.deepEqual(controller.getSnapshot(), {
+    turn: null,
+    draft: "",
+    selectedDomain: null,
+    pending: false,
+    error: "",
+  });
+});
+
+test("a stale recovery failure from the old case cannot patch or unlock the new case", async () => {
+  const commands: ConversationalRectificationCommand[] = [];
+  const recoveryStarted = deferred<void>();
+  const recovery = deferred<ConversationalRectificationTurn>();
+  const caseBRequest = deferred<ConversationalRectificationTurn>();
+  const controller = createConversationalRectificationController({
+    initialTurn: activeTurn(2),
+    createActionId: idFactory(),
+    send: async (command) => {
+      commands.push(command);
+      if (command.type === "answer" && command.caseId === caseId) {
+        throw new ConversationalRectificationRequestError(
+          409,
+          "stale_turn",
+          "请加载最新进度后再试。",
+        );
+      }
+      if (command.type === "resume" && command.caseId === caseId) {
+        recoveryStarted.resolve();
+        return recovery.promise;
+      }
+      return caseBRequest.promise;
+    },
+  });
+  controller.setDraft("案例 A 的陈旧输入");
+  const caseAPending = controller.answer("career");
+  const caseARejected = assert.rejects(caseAPending, /恢复请求失败/);
+  await recoveryStarted.promise;
+
+  const caseBTurn = { ...activeTurn(1), caseId: otherCaseId };
+  controller.synchronizeInitialTurn(caseBTurn);
+  const caseBPending = controller.pause();
+  assert.deepEqual(commands.map((command) => command.type), ["answer", "resume", "pause"]);
+  assert.equal(controller.getSnapshot().pending, true);
+
+  recovery.reject(new Error("恢复请求失败"));
+  await caseARejected;
+  assert.equal(controller.getSnapshot().turn?.caseId, otherCaseId);
+  assert.equal(controller.getSnapshot().pending, true);
+  assert.equal(controller.getSnapshot().error, "");
+
+  caseBRequest.resolve({
+    ...activeTurn(2),
+    caseId: otherCaseId,
+    status: "paused",
+    actions: ["answer", "abandon"],
+  });
+  await caseBPending;
+  assert.equal(controller.getSnapshot().turn?.caseId, otherCaseId);
+  assert.equal(controller.getSnapshot().turn?.status, "paused");
+  assert.equal(controller.getSnapshot().pending, false);
+  assert.equal(controller.getSnapshot().error, "");
 });
 
 test("a newer external same-case turn wins over an older in-flight response", async () => {

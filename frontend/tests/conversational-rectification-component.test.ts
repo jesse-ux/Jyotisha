@@ -142,6 +142,7 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.match(css, /\.conversational-rectification[^}]*overflow-wrap:\s*anywhere/);
   assert.match(css, /\.conversational-rectification button[^}]*min-height:\s*44px/);
   assert.match(css, /\.conversational-rectification[^}]*:focus-visible/);
+  assert.match(css, /summary, \.conversational-status\):focus-visible/);
   assert.match(css, /@media\s*\(max-width:\s*430px\)[\s\S]*\.conversational-rectification/);
   assert.match(component, /确认放弃且不应用候选/);
 });
@@ -152,42 +153,118 @@ type CdpResponse = Readonly<{
   error?: Readonly<{ message?: string }>;
 }>;
 
+const CDP_CONNECT_TIMEOUT_MS = 3_000;
+const CDP_COMMAND_TIMEOUT_MS = 3_000;
+const EXTERNAL_PROBE_TIMEOUT_MS = 1_000;
+
+async function withHardDeadline<T>(
+  operation: Promise<T>,
+  timeoutMs: number,
+  label: string,
+  onTimeout?: () => void,
+): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_resolve, reject) => {
+    timeout = setTimeout(() => {
+      try {
+        onTimeout?.();
+      } catch {
+        // Timeout still rejects even if the best-effort cancellation hook itself fails.
+      }
+      reject(new Error(`Timed out waiting for ${label}`));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([operation, deadline]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
 class CdpSession {
   private nextId = 0;
   private readonly pending = new Map<number, {
     resolve(value: unknown): void;
     reject(error: Error): void;
+    timeout: ReturnType<typeof setTimeout>;
   }>();
+  private closedError: Error | null = null;
 
   private constructor(private readonly socket: WebSocket) {
     socket.addEventListener("message", (event) => {
-      const message = JSON.parse(String(event.data)) as CdpResponse;
+      let message: CdpResponse;
+      try {
+        message = JSON.parse(String(event.data)) as CdpResponse;
+      } catch {
+        this.rejectPending(new Error("Chromium CDP returned malformed JSON"));
+        return;
+      }
       if (message.id === undefined) return;
       const request = this.pending.get(message.id);
       if (!request) return;
       this.pending.delete(message.id);
+      clearTimeout(request.timeout);
       if (message.error) request.reject(new Error(message.error.message ?? "CDP command failed"));
       else request.resolve(message.result);
+    });
+    socket.addEventListener("close", () => {
+      this.rejectPending(new Error("Chromium CDP socket closed"));
+    });
+    socket.addEventListener("error", () => {
+      this.rejectPending(new Error("Chromium CDP socket failed"));
     });
   }
 
   static async connect(url: string): Promise<CdpSession> {
     const socket = new WebSocket(url);
-    await new Promise<void>((resolveConnection, rejectConnection) => {
-      socket.addEventListener("open", () => resolveConnection(), { once: true });
-      socket.addEventListener("error", () => rejectConnection(new Error("Unable to connect to Chromium CDP")), {
-        once: true,
-      });
-    });
+    await withHardDeadline(new Promise<void>((resolveConnection, rejectConnection) => {
+      const connected = () => {
+        cleanup();
+        resolveConnection();
+      };
+      const failed = () => {
+        cleanup();
+        rejectConnection(new Error("Unable to connect to Chromium CDP"));
+      };
+      const closed = () => {
+        cleanup();
+        rejectConnection(new Error("Chromium CDP closed before connecting"));
+      };
+      const cleanup = () => {
+        socket.removeEventListener("open", connected);
+        socket.removeEventListener("error", failed);
+        socket.removeEventListener("close", closed);
+      };
+      socket.addEventListener("open", connected, { once: true });
+      socket.addEventListener("error", failed, { once: true });
+      socket.addEventListener("close", closed, { once: true });
+    }), CDP_CONNECT_TIMEOUT_MS, "Chromium CDP connection", () => socket.close());
     return new CdpSession(socket);
   }
 
   async send(method: string, params: unknown = {}): Promise<unknown> {
+    if (this.closedError) throw this.closedError;
+    if (this.socket.readyState !== WebSocket.OPEN) {
+      throw new Error("Chromium CDP socket is not open");
+    }
     const id = ++this.nextId;
     const response = new Promise<unknown>((resolveResponse, rejectResponse) => {
-      this.pending.set(id, { resolve: resolveResponse, reject: rejectResponse });
+      const timeout = setTimeout(() => {
+        if (!this.pending.delete(id)) return;
+        rejectResponse(new Error(`Timed out waiting for CDP command ${method}`));
+      }, CDP_COMMAND_TIMEOUT_MS);
+      this.pending.set(id, { resolve: resolveResponse, reject: rejectResponse, timeout });
     });
-    this.socket.send(JSON.stringify({ id, method, params }));
+    try {
+      this.socket.send(JSON.stringify({ id, method, params }));
+    } catch (error) {
+      const request = this.pending.get(id);
+      if (request) {
+        this.pending.delete(id);
+        clearTimeout(request.timeout);
+        request.reject(error instanceof Error ? error : new Error(String(error)));
+      }
+    }
     return response;
   }
 
@@ -207,7 +284,19 @@ class CdpSession {
   }
 
   close() {
-    this.socket.close();
+    this.rejectPending(new Error("Chromium CDP session closed"));
+    if (this.socket.readyState === WebSocket.CONNECTING || this.socket.readyState === WebSocket.OPEN) {
+      this.socket.close();
+    }
+  }
+
+  private rejectPending(error: Error) {
+    this.closedError ??= error;
+    for (const request of this.pending.values()) {
+      clearTimeout(request.timeout);
+      request.reject(error);
+    }
+    this.pending.clear();
   }
 }
 
@@ -268,14 +357,65 @@ async function waitFor<T>(probe: () => Promise<T | null | false>, label: string)
   let lastError: unknown;
   while (Date.now() < deadline) {
     try {
-      const value = await probe();
+      const remaining = deadline - Date.now();
+      const value = await withHardDeadline(
+        Promise.resolve().then(probe),
+        Math.max(1, Math.min(EXTERNAL_PROBE_TIMEOUT_MS, remaining)),
+        `${label} probe`,
+      );
       if (value !== null && value !== false) return value;
     } catch (error) {
       lastError = error;
     }
-    await new Promise((resolveWait) => setTimeout(resolveWait, 30));
+    const remaining = deadline - Date.now();
+    if (remaining > 0) {
+      await new Promise((resolveWait) => setTimeout(resolveWait, Math.min(30, remaining)));
+    }
   }
   throw new Error(`Timed out waiting for ${label}${lastError ? `: ${String(lastError)}` : ""}`);
+}
+
+async function fetchJsonWithDeadline<T>(url: string): Promise<T> {
+  const abort = new AbortController();
+  try {
+    const response = await withHardDeadline(
+      fetch(url, { signal: abort.signal }),
+      EXTERNAL_PROBE_TIMEOUT_MS,
+      `fetch ${url}`,
+      () => abort.abort(),
+    );
+    if (!response.ok) throw new Error(`Chromium target list returned HTTP ${response.status}`);
+    return await withHardDeadline(
+      response.json() as Promise<T>,
+      EXTERNAL_PROBE_TIMEOUT_MS,
+      `JSON body from ${url}`,
+      () => abort.abort(),
+    );
+  } finally {
+    abort.abort();
+  }
+}
+
+async function terminateChildProcess(browser: ChildProcess): Promise<void> {
+  try {
+    const alreadyExited = browser.exitCode !== null || browser.signalCode !== null;
+    if (!alreadyExited) {
+      const closed = new Promise<void>((resolveClosed) => {
+        const done = () => {
+          browser.removeListener("close", done);
+          browser.removeListener("error", done);
+          resolveClosed();
+        };
+        browser.once("close", done);
+        browser.once("error", done);
+      });
+      browser.kill("SIGKILL");
+      await withHardDeadline(closed, 3_000, "Chromium process exit");
+    }
+  } finally {
+    browser.stdout?.destroy();
+    browser.stderr?.destroy();
+  }
 }
 
 async function pressEscape(cdp: CdpSession) {
@@ -310,28 +450,73 @@ async function launchFixture(htmlPath: string, userDataDirectory: string): Promi
     "--disable-gpu",
     "--disable-sync",
     "--no-first-run",
-    "--no-sandbox",
     "--remote-debugging-port=0",
     `--user-data-dir=${userDataDirectory}`,
     pathToFileURL(htmlPath).href,
   ], { stdio: ["ignore", "pipe", "pipe"] });
-  const activePort = join(userDataDirectory, "DevToolsActivePort");
-  const port = await waitFor(async () => {
-    if (browser.exitCode !== null) {
-      throw new Error(`Chromium exited before CDP was ready (${browser.exitCode})`);
+  let launchError: Error | null = null;
+  let cdp: CdpSession | null = null;
+  browser.on("error", (error) => {
+    launchError = error;
+  });
+  browser.stdout?.resume();
+  browser.stderr?.resume();
+  try {
+    const activePort = join(userDataDirectory, "DevToolsActivePort");
+    const port = await waitFor(async () => {
+      if (launchError) throw launchError;
+      if (browser.exitCode !== null || browser.signalCode !== null) {
+        throw new Error(
+          `Chromium exited before CDP was ready (${browser.exitCode ?? browser.signalCode})`,
+        );
+      }
+      if (!existsSync(activePort)) return null;
+      const parsed = Number(readFileSync(activePort, "utf8").split("\n")[0]);
+      if (!Number.isInteger(parsed) || parsed <= 0 || parsed > 65_535) {
+        throw new Error("Chromium wrote an invalid DevTools port");
+      }
+      return parsed;
+    }, "Chromium DevTools port");
+    const target = await waitFor(async () => {
+      const targets = await fetchJsonWithDeadline<Array<{
+        type?: string;
+        webSocketDebuggerUrl?: string;
+      }>>(`http://127.0.0.1:${port}/json/list`);
+      return targets.find((candidate) => candidate.type === "page")?.webSocketDebuggerUrl ?? null;
+    }, "Chromium page target");
+    cdp = await CdpSession.connect(target);
+    return { browser, cdp };
+  } catch (error) {
+    cdp?.close();
+    let cleanupError: unknown;
+    try {
+      await terminateChildProcess(browser);
+    } catch (caught) {
+      cleanupError = caught;
+    } finally {
+      rmSync(userDataDirectory, { force: true, recursive: true });
     }
-    if (!existsSync(activePort)) return null;
-    return Number(readFileSync(activePort, "utf8").split("\n")[0]);
-  }, "Chromium DevTools port");
-  const target = await waitFor(async () => {
-    const response = await fetch(`http://127.0.0.1:${port}/json/list`);
-    const targets = await response.json() as Array<{ type?: string; webSocketDebuggerUrl?: string }>;
-    return targets.find((candidate) => candidate.type === "page")?.webSocketDebuggerUrl ?? null;
-  }, "Chromium page target");
-  return { browser, cdp: await CdpSession.connect(target) };
+    if (cleanupError) {
+      throw new AggregateError([error, cleanupError], "Chromium fixture launch and cleanup failed");
+    }
+    throw error;
+  }
 }
 
-test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, dialog lifecycle, and live hook inputs", async () => {
+test("Chromium harness keeps the browser sandbox and bounds every external wait", () => {
+  const source = readFileSync(fileURLToPath(import.meta.url), "utf8");
+  const unsafeSandboxFlag = ["--no", "sandbox"].join("-");
+
+  assert.equal(source.includes(`"${unsafeSandboxFlag}"`), false);
+  assert.match(source, /withHardDeadline/);
+  assert.match(source, /rejectPending/);
+  assert.match(source, /terminateChildProcess/);
+  assert.match(source, /fetchJsonWithDeadline/);
+});
+
+test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, dialog lifecycle, and live hook inputs", {
+  timeout: 30_000,
+}, async () => {
   const frontendRoot = fileURLToPath(new URL("..", import.meta.url));
   const directory = mkdtempSync(join(tmpdir(), "rectification-browser-"));
   const entryPath = join(directory, "fixture.tsx");
@@ -425,7 +610,7 @@ test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, 
   let cdp: CdpSession | null = null;
   try {
     writeFileSync(entryPath, fixture);
-    await build({
+    await withHardDeadline(build({
       absWorkingDir: frontendRoot,
       bundle: true,
       define: { "process.env.NODE_ENV": '"test"' },
@@ -436,7 +621,7 @@ test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, 
       nodePaths: [join(frontendRoot, "node_modules")],
       outfile: bundlePath,
       platform: "browser",
-    });
+    }), 10_000, "browser fixture bundle");
     writeFileSync(htmlPath, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}\nhtml,body{height:auto;overflow:auto}body{padding:12px}#root{width:100%;min-width:0}</style></head><body><main id="root"></main><script src="${pathToFileURL(bundlePath).href}"></script></body></html>`);
 
     ({ browser, cdp } = await launchFixture(htmlPath, userDataDirectory));
@@ -546,17 +731,23 @@ test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, 
       () => cdp?.evaluate<boolean>("Boolean(document.querySelector('[role=alertdialog]'))") ?? Promise.resolve(false),
       "case-B abandon dialog",
     );
-    await cdp.evaluate("globalThis.__rectificationHarness.setTurn('abandonedB2')");
+    await cdp.evaluate("[...document.querySelectorAll('[role=alertdialog] button')].find((button) => button.textContent.includes('确认放弃且不应用候选')).click()");
     await waitFor(
-      () => cdp?.evaluate<boolean>("!document.querySelector('[role=alertdialog]') && document.body.textContent.includes('本次校正已放弃')") ?? Promise.resolve(false),
-      "terminal dialog reset",
+      () => cdp?.evaluate<boolean>(`(() => {
+        const status = document.querySelector('.conversational-status');
+        return !document.querySelector('[role=alertdialog]')
+          && document.body.textContent.includes('本次校正已放弃')
+          && status?.tabIndex === -1
+          && document.activeElement === status;
+      })()`) ?? Promise.resolve(false),
+      "terminal dialog close and terminal status focus",
     );
   } finally {
-    cdp?.close();
-    browser?.kill("SIGKILL");
-    browser?.stdout?.destroy();
-    browser?.stderr?.destroy();
-    browser?.unref();
-    rmSync(directory, { force: true, recursive: true });
+    try {
+      cdp?.close();
+      if (browser) await terminateChildProcess(browser);
+    } finally {
+      rmSync(directory, { force: true, recursive: true });
+    }
   }
 });

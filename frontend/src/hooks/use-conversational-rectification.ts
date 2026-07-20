@@ -54,6 +54,12 @@ type Mutation = Readonly<{
   clearDraftOnSuccess?: boolean;
 }>;
 
+type ActiveMutation = Readonly<{
+  caseContext: number;
+  token: symbol;
+  promise: MutationResult;
+}>;
+
 function createLatestControllerInput(initial: ControllerInput) {
   let current = initial;
   return {
@@ -94,7 +100,7 @@ export function createConversationalRectificationController(
     pending: false,
     error: "",
   };
-  let activeMutation: MutationResult | null = null;
+  let activeMutation: ActiveMutation | null = null;
   let caseContext = 0;
 
   const publish = (next: ConversationalRectificationControllerSnapshot) => {
@@ -142,10 +148,13 @@ export function createConversationalRectificationController(
     turnVersion: turn.turnVersion,
   }));
   const run = (mutation: Mutation): MutationResult => {
-    if (activeMutation) return activeMutation;
+    if (activeMutation?.caseContext === caseContext) return activeMutation.promise;
     patch({ pending: true, error: "" });
     const turnAtStart = snapshot.turn;
     const caseContextAtStart = caseContext;
+    const mutationToken = Symbol("conversational-rectification-mutation");
+    const ownsCurrentContext = () => caseContext === caseContextAtStart
+      && activeMutation?.token === mutationToken;
     const operation = registry.run(
       mutation.identity,
       (actionId) => send(mutation.command(actionId)),
@@ -155,25 +164,33 @@ export function createConversationalRectificationController(
       caseContextAtStart,
     ))
       .catch(async (error: unknown) => {
-        if (turnAtStart && staleTurn(error)) {
+        if (turnAtStart && staleTurn(error) && caseContext === caseContextAtStart) {
           try {
             const recovered = await recoverLatest(turnAtStart);
             return acceptTurn(recovered, false, caseContextAtStart);
           } catch (recoveryError) {
-            patch({ error: displayError(recoveryError) });
+            if (ownsCurrentContext()) patch({ error: displayError(recoveryError) });
             throw recoveryError;
           }
         }
-        patch({ error: displayError(error) });
+        if (ownsCurrentContext()) patch({ error: displayError(error) });
         throw error;
       })
       .finally(() => {
+        if (activeMutation?.token !== mutationToken) return;
         activeMutation = null;
-        patch({ pending: false });
+        if (caseContext === caseContextAtStart) patch({ pending: false });
       });
-    activeMutation = operation;
+    activeMutation = {
+      caseContext: caseContextAtStart,
+      token: mutationToken,
+      promise: operation,
+    };
     return operation;
   };
+  const activeMutationForCurrentContext = () => (
+    activeMutation?.caseContext === caseContext ? activeMutation.promise : null
+  );
   const currentTurn = () => snapshot.turn;
   const currentMutation = (
     operation: Exclude<ConversationalRectificationCommand["type"], "start">,
@@ -211,12 +228,14 @@ export function createConversationalRectificationController(
       if (turn === null) {
         if (current === null) return;
         caseContext += 1;
-        patch({ turn: null, draft: "", selectedDomain: null, error: "" });
+        activeMutation = null;
+        patch({ turn: null, draft: "", selectedDomain: null, pending: false, error: "" });
         return;
       }
       if (current === null || current.caseId !== turn.caseId) {
         caseContext += 1;
-        patch({ turn, draft: "", selectedDomain: null, error: "" });
+        activeMutation = null;
+        patch({ turn, draft: "", selectedDomain: null, pending: false, error: "" });
         return;
       }
       if (turn.turnVersion <= current.turnVersion) return;
@@ -270,7 +289,9 @@ export function createConversationalRectificationController(
     },
     pause() {
       const turn = currentTurn();
-      if (!turn?.actions.includes("pause")) return activeMutation ?? Promise.resolve(turn);
+      if (!turn?.actions.includes("pause")) {
+        return activeMutationForCurrentContext() ?? Promise.resolve(turn);
+      }
       return currentMutation("pause", {}, (current, actionId) => ({
         type: "pause",
         caseId: current.caseId,
@@ -280,7 +301,9 @@ export function createConversationalRectificationController(
     },
     abandon() {
       const turn = currentTurn();
-      if (!turn?.actions.includes("abandon")) return activeMutation ?? Promise.resolve(turn);
+      if (!turn?.actions.includes("abandon")) {
+        return activeMutationForCurrentContext() ?? Promise.resolve(turn);
+      }
       return currentMutation("abandon", {}, (current, actionId) => ({
         type: "abandon",
         caseId: current.caseId,
@@ -292,7 +315,9 @@ export function createConversationalRectificationController(
       const turn = currentTurn();
       const candidateTime = time ?? turn?.candidate.representativeTime ?? null;
       if (!turn?.actions.includes("confirm") || turn.candidate.status !== "ready_for_confirmation"
-        || !candidateTime) return activeMutation ?? Promise.resolve(turn);
+        || !candidateTime) {
+        return activeMutationForCurrentContext() ?? Promise.resolve(turn);
+      }
       return currentMutation("confirm", { time: candidateTime }, (current, actionId) => ({
         type: "confirm",
         caseId: current.caseId,
