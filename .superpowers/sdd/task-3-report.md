@@ -1,84 +1,69 @@
-# Task 3 — TypeScript Engine Adapter and Trust Boundary
+# Task 3 — Encrypted Local Staging Backups
 
-## Final design
+## Scope delivered
 
-- `BirthTimeJourneyEngine` requires both dynamic operations: `buildDifferencePacket` and `scoreChoices`. Existing scan/score consumers depend on the explicit `LegacyBirthTimeJourneyEngine` pick instead of weakening the primary interface.
-- The server-only engine factory owns `JYOTISH_DYNAMIC_RECTIFICATION_TOKEN`. Both dynamic endpoints use an authenticated POST and a 45-second abort signal; all three legacy endpoints remain unauthenticated.
-- Request serializers expose only server-resolved choice evidence. Client option IDs, confidence, applicability, and model-controlled safety gates are never sent as scoring authority.
-- Dynamic v2 responses have a dedicated strict adapter. Root objects, ranges, opportunities, partitions, winning segments, score-map keys, counts, versions, modes, and duplicate identifiers are validated before mapping.
-- Public difference packets omit private candidate score vectors. Private scoring partitions retain the exact server vector used by the later deterministic scoring call.
-- Legacy response parsing remains compatibility-oriented: unknown server metadata is accepted and stripped. Only the shared result representation supports up to ten effective items; the legacy dated-event request remains capped at six.
-- The HTTP wire accepts injected fetch and timeout-signal factories for executable contract tests. Production still defaults to `AbortSignal.timeout`.
+- Added `deploy/backup-staging-postgres.sh DATABASE_ENV_FILE BACKUP_DIRECTORY`.
+- Validates the private database environment before reading required values without sourcing or executing the env file.
+- Refuses backup destinations with disk usage at or above 70%, creates the explicit destination with mode `0700`, writes encrypted custom PostgreSQL dumps with mode `0600`, and keeps only the newest three exact staging dump names.
+- Uses a PID-scoped `.partial` file, `pipefail`, an exit cleanup trap, and same-directory rename so failed dump/encryption pipelines leave no completed partial archive and successful archives are published atomically.
+- Emits only final path/count on success; credentials use environment variables and never command-line arguments.
 
-## Files changed
+## TDD evidence
 
-Production:
+RED (before the script existed):
 
-- `frontend/src/lib/birth-time-evidence.ts`
-- `frontend/src/lib/birth-time-journey-service.ts`
-- `frontend/src/lib/birth-time-journey-engine.ts`
-- `frontend/src/lib/birth-time-journey-engine-model.ts`
-- `frontend/src/lib/birth-time-journey-adapters.ts`
-- `frontend/src/lib/birth-time-journey-dynamic-adapters.ts`
-- `frontend/src/lib/birth-time-journey-assessment.ts`
+```text
+cd frontend && npm run test:db
+FAIL database-backup.test.ts: bash: .../deploy/backup-staging-postgres.sh: No such file or directory
+```
 
-Tests and support:
+GREEN focused integration:
 
-- `frontend/tests/birth-time-journey-engine.test.ts`
-- `frontend/tests/birth-time-journey-adapters.test.ts`
-- `frontend/tests/birth-time-journey-dynamic-adapters.test.ts`
-- `frontend/tests/birth-time-journey-memory-store.ts`
-- `frontend/tests/birth-time-journey-test-support.ts`
-- `frontend/tests/birth-time-journey-service.test.ts`
-- `frontend/tests/birth-time-agent-flow-test-support.ts`
+```text
+./node_modules/.bin/tsx --test --test-concurrency=1 tests/database-backup.test.ts
+pass 1, fail 0
+```
 
-Documentation:
-
-- `docs/superpowers/plans/2026-07-18-dynamic-choice-birth-time-rectification.md`
-- `.superpowers/sdd/task-3-report.md`
-
-## RED evidence
-
-1. The initial focused run failed to load because the dynamic response parsers did not exist.
-2. Adapter regressions then exposed acceptance of malformed score keys, keys outside the submitted range, duplicate opportunity/partition identifiers, nested extra fields, and legacy evidence metadata incompatibility.
-3. Interface and wire review probes exposed optional primary dynamic methods, source-regex authentication assertions, and a missing executable proof for exact URLs, bodies, authorization, and timeout behavior.
-4. The final wire cleanup test injected a timeout factory and failed with `[]` instead of `[45000, 45000]`, proving that the seam was initially ignored.
+The integration starts the real fixture, creates four encrypted dumps at deterministic timestamps, verifies the final three names and modes, decrypts an archive with OpenSSL, and runs `pg_restore --list` (falling back to the fixture container when necessary).
 
 ## Final verification
 
-1. Focused adapter, wire, and evidence suite:
-   - `/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/birth-time-journey-engine.test.ts tests/birth-time-journey-adapters.test.ts tests/birth-time-journey-dynamic-adapters.test.ts tests/birth-time-evidence.test.ts`
-   - 29 passed, 0 failed.
-2. Complete birth-time frontend suite:
-   - `/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/birth-time*.test.ts`
-   - 208 passed, 0 failed.
-3. Full frontend suite:
-   - `/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/*.test.ts`
-   - 283 passed, 0 failed.
-4. ESLint across every changed production/test TypeScript module:
-   - Passed with no diagnostics.
-5. TypeScript diagnostic:
-   - No Task 3 diagnostics. The only result is the known baseline `tests/profile-persistence.test.ts:7 TS1501`, caused by an ES2018 regex flag under the project's ES2017 target.
-6. Pure-LOC audit:
-   - Every changed TypeScript file is at or below 250 pure LOC. The largest is `frontend/src/lib/birth-time-journey-service.ts` at 239; the split test-support modules are 171 and 111.
-7. `git diff --check`:
-   - Passed with no whitespace errors.
+```text
+bash -n deploy/backup-staging-postgres.sh                 exit 0
+cd frontend && npm run test:db                            12 passed, 0 failed
+cd frontend && npm test                                   488 passed, 0 failed
+cd frontend && npm run lint                               exit 0
+git diff --check                                          exit 0
+```
 
-## Pre-work gate
+## Self-review and caveats
 
-- `/Users/jesse/Downloads/Copse/astrology/yinduzhanxing/.venv/bin/python scripts/pre_work_check.py --remote-timeout 8 --command-timeout 45` remained red only on the unrelated known fragment-governance baseline: `candidate_count` expected `0`, observed `1`.
-- Remote visibility was blocked, so no cloud-sync claim is made.
+- Reviewed the final diff for secret exposure, output scope, filename filtering, rotation boundaries, portable shell options, and atomic/cleanup behavior; no task-scope finding remained.
+- This Mac's actual filesystem usage is at least 70%, which correctly makes the production script refuse a backup. The integration test supplies a controlled `df` executable reporting 10% usage so it can exercise the real Docker/PostgreSQL/OpenSSL/`pg_restore` flow without weakening the production guard.
+- The mandatory repository pre-work gate remains host-blocked for its known unrelated reason: system Python 3.9 lacks pytest (and cannot import the project's Python 3.10+ syntax). No Task 3 change touches that gate.
 
-## Self-review
+## Follow-up safety hardening (2026-07-20)
 
-- Dynamic secrets and candidate score vectors remain behind the server boundary.
-- Wire tests use independent literal request bodies rather than production serializers and directly assert two `45_000` timeout calls and the exact injected signals.
-- Missing-token tests prove both dynamic operations fail before fetch. Executable legacy tests prove no Authorization header reaches any legacy endpoint.
-- Dynamic parsing is fail-closed; legacy parsing preserves its prior accept-and-strip behavior.
-- Cross-midnight ranges enumerate minutes modulo 24 hours and bind score keys to the exact submitted interval.
-- The extracted memory store has no dependency on the fixture module, so its re-export does not create a runtime cycle.
-- No dependency, logging field, client response field, or persistence write was added.
+Implementation:
 
-## Known unrelated baseline
+- Rejects `/`, relative paths, repeated/trailing separators, `.`/`..` traversal, and every existing symlink component before the script can create, chmod, write, or delete under the requested backup path. After `mkdir -p`, it resolves physically and requires the exact non-root input before chmod.
+- Acquires a per-archive directory lock using portable exclusive `mkdir`; publishes with a same-directory hard link (`ln`) rather than overwrite-capable `mv`; removes partial and owned lock artifacts on every handled exit.
+- Captures `find | LC_ALL=C sort` into a variable under `pipefail` and fails before retention deletion if enumeration fails. Retention remains the newest exact three archives.
+- The collision regression no longer mocks `mv`. It runs two same-timestamp processes through a slow, successful dump producer, proves exactly one success/archive, decrypts it, and verifies no lock/partial remains. The existing integration still uses real PostgreSQL dump, OpenSSL decryption, and `pg_restore --list`.
 
-- A clean TypeScript run is still blocked by `tests/profile-persistence.test.ts:7 TS1501`; Task 3 introduces no additional diagnostic.
+Exact RED/GREEN evidence:
+
+```text
+RED against 6008d2f (before this implementation):
+cd frontend && npm run test:db -- --test-name-pattern='rejects destructive|same-second|find enumeration|refuses full'
+tests 16; pass 14; fail 2
+- root/alias handling returned the old root-only message instead of the required pre-mutation rejection
+- two same-second invocations both succeeded (2 !== 1)
+
+GREEN after implementation:
+bash -n deploy/backup-staging-postgres.sh                exit 0
+cd frontend && npm run test:db                            16 passed, 0 failed
+cd frontend && npm test                                   492 passed, 0 failed
+cd frontend && npm run lint                               exit 0
+git diff --check                                          exit 0
+```

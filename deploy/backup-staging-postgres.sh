@@ -15,10 +15,30 @@ DATABASE_ENV_FILE="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
 export DATABASE_ENV_FILE
 BACKUP_DIRECTORY_INPUT="$2"
 
-if [ "$BACKUP_DIRECTORY_INPUT" = "/" ]; then
-  echo "backup directory must not be the filesystem root" >&2
+reject_backup_directory() {
+  echo "backup directory must be an absolute path without traversal, aliases, or symlinks" >&2
   exit 1
+}
+
+if [ "$BACKUP_DIRECTORY_INPUT" = "/" ] || [[ "$BACKUP_DIRECTORY_INPUT" != /* ]] || [[ "$BACKUP_DIRECTORY_INPUT" == */ ]] || [[ "$BACKUP_DIRECTORY_INPUT" == *"//"* ]]; then
+  reject_backup_directory
 fi
+
+IFS='/' read -r -a backup_directory_components <<< "${BACKUP_DIRECTORY_INPUT#/}"
+if [ "${#backup_directory_components[@]}" -eq 0 ]; then
+  reject_backup_directory
+fi
+
+backup_directory_component_path=""
+for backup_directory_component in "${backup_directory_components[@]}"; do
+  if [ -z "$backup_directory_component" ] || [ "$backup_directory_component" = "." ] || [ "$backup_directory_component" = ".." ]; then
+    reject_backup_directory
+  fi
+  backup_directory_component_path="${backup_directory_component_path}/${backup_directory_component}"
+  if [ -L "$backup_directory_component_path" ]; then
+    reject_backup_directory
+  fi
+done
 
 "$VALIDATOR" "$DATABASE_ENV_FILE" >/dev/null
 
@@ -40,8 +60,11 @@ STAGING_BACKUP_ENCRYPTION_KEY="$(read_environment_value STAGING_BACKUP_ENCRYPTIO
 export STAGING_BACKUP_ENCRYPTION_KEY
 
 mkdir -p "$BACKUP_DIRECTORY_INPUT"
-chmod 0700 "$BACKUP_DIRECTORY_INPUT"
 BACKUP_DIRECTORY="$(cd "$BACKUP_DIRECTORY_INPUT" && pwd -P)"
+if [ "$BACKUP_DIRECTORY" != "$BACKUP_DIRECTORY_INPUT" ] || [ "$BACKUP_DIRECTORY" = "/" ]; then
+  reject_backup_directory
+fi
+chmod 0700 "$BACKUP_DIRECTORY"
 
 DISK_USAGE="$(df -Pk "$BACKUP_DIRECTORY" | awk 'NR == 2 { gsub(/%/, "", $5); print $5 }')"
 if ! [[ "$DISK_USAGE" =~ ^[0-9]+$ ]] || [ "$DISK_USAGE" -ge 70 ]; then
@@ -58,6 +81,8 @@ fi
 FILE_NAME="jyotisha-staging-${BACKUP_TIMESTAMP}.dump.enc"
 FINAL_FILE="$BACKUP_DIRECTORY/$FILE_NAME"
 PARTIAL_FILE="$BACKUP_DIRECTORY/.${FILE_NAME}.$$.partial"
+LOCK_DIRECTORY="$BACKUP_DIRECTORY/.${FILE_NAME}.lock"
+LOCK_ACQUIRED=0
 
 if [ -e "$FINAL_FILE" ] || [ -L "$FINAL_FILE" ]; then
   echo "backup destination already exists" >&2
@@ -69,11 +94,19 @@ cleanup_partial() {
   if [ -n "${PARTIAL_FILE:-}" ] && [ -e "$PARTIAL_FILE" ]; then
     rm -f "$PARTIAL_FILE"
   fi
+  if [ "${LOCK_ACQUIRED:-0}" -eq 1 ] && [ -d "$LOCK_DIRECTORY" ]; then
+    rmdir "$LOCK_DIRECTORY" || true
+  fi
   exit "$status"
 }
 trap cleanup_partial EXIT HUP INT TERM
 
 umask 077
+if ! mkdir "$LOCK_DIRECTORY"; then
+  echo "backup destination is already being created" >&2
+  exit 1
+fi
+LOCK_ACQUIRED=1
 : > "$PARTIAL_FILE"
 chmod 0600 "$PARTIAL_FILE"
 
@@ -85,16 +118,24 @@ openssl enc -aes-256-cbc -salt -pbkdf2 \
   -pass env:STAGING_BACKUP_ENCRYPTION_KEY > "$PARTIAL_FILE"
 
 chmod 0600 "$PARTIAL_FILE"
-mv "$PARTIAL_FILE" "$FINAL_FILE"
+if ! ln "$PARTIAL_FILE" "$FINAL_FILE"; then
+  echo "backup destination already exists" >&2
+  exit 1
+fi
+rm -f "$PARTIAL_FILE"
 PARTIAL_FILE=""
 
 completed=()
+if ! completed_paths="$(find "$BACKUP_DIRECTORY" -maxdepth 1 -type f -name 'jyotisha-staging-*.dump.enc' -print | LC_ALL=C sort)"; then
+  echo "failed to enumerate completed backups" >&2
+  exit 1
+fi
 while IFS= read -r path; do
   name="${path##*/}"
   if [[ "$name" =~ ^jyotisha-staging-[0-9]{8}T[0-9]{6}Z\.dump\.enc$ ]]; then
     completed+=("$name")
   fi
-done < <(find "$BACKUP_DIRECTORY" -maxdepth 1 -type f -name 'jyotisha-staging-*.dump.enc' -print | LC_ALL=C sort)
+done <<< "$completed_paths"
 
 if [ "${#completed[@]}" -gt 3 ]; then
   for ((index = 0; index < ${#completed[@]} - 3; index += 1)); do
