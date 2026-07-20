@@ -7,6 +7,7 @@ import {
 } from "../src/lib/account-profile-patch.ts";
 
 const source = readFileSync(new URL("../src/app/api/account/route.ts", import.meta.url), "utf8");
+const patchSource = readFileSync(new URL("../src/lib/account-profile-patch.ts", import.meta.url), "utf8");
 
 test("account API reads and returns the server-configured rectification price", () => {
   assert.match(source, /parseRectificationPriceCredits\(\s*process\.env\.RECTIFICATION_PRICE_CREDITS,?\s*\)/);
@@ -91,6 +92,9 @@ test("ordinary declaration edits clear stale candidate application but never ove
     birth_time: "05:18",
     birth_time_status: "candidate",
     rectification_case_id: "11111111-1111-4111-8111-111111111111",
+    latitude: 36.420487,
+    longitude: 114.209936,
+    timezone_offset: 8,
   } as const;
   const edited = {
     birth_date: candidate.birth_date,
@@ -116,10 +120,33 @@ test("ordinary declaration edits clear stale candidate application but never ove
     birth_time_status: "reported",
     rectification_case_id: null,
   });
+  for (const coordinatePatch of [
+    { latitude: 36.420488 },
+    { longitude: 114.209937 },
+    { timezone_offset: 9 },
+  ]) {
+    assert.deepEqual(resolveAccountBirthTimeApplicationPatch(candidate, coordinatePatch), {
+      active_birth_time: null,
+      birth_time: null,
+      birth_time_status: "reported",
+      rectification_case_id: null,
+    });
+  }
   assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
     ...candidate,
     birth_time_status: "confirmed",
   }, edited), {});
+  assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
+    ...candidate,
+    active_birth_time: null,
+    birth_time: null,
+    birth_time_status: "reported",
+  }, { timezone_offset: 7 }), {
+    active_birth_time: null,
+    birth_time: null,
+    birth_time_status: "reported",
+    rectification_case_id: null,
+  });
 });
 
 test("account PATCH uses the shared validator and never writes client birth_time over account truth", () => {
@@ -127,7 +154,54 @@ test("account PATCH uses the shared validator and never writes client birth_time
   assert.match(source, /resolveAccountBirthTimeApplicationPatch/);
   assert.doesNotMatch(source, /birth_time:\s*nullableString\(payload\.birth_time\)/);
   assert.match(source, /invalidatesUnconfirmedApplication/);
-  assert.match(source, /query\.eq\("birth_time_status", currentProfile\.birth_time_status\)/);
-  assert.match(source, /query\.eq\("active_birth_time", currentProfile\.active_birth_time\)/);
+  assert.match(patchSource, /"birth_time_status"/);
+  assert.match(patchSource, /"active_birth_time"/);
+  assert.match(source, /latitude,longitude,timezone_offset/);
+  assert.match(source, /applyAccountProfileConcurrencyGuards/);
   assert.match(source, /最新确认结果已保留/);
+});
+
+test("candidate invalidation compares coordinates and timezone in the conditional write", async () => {
+  const { applyAccountProfileConcurrencyGuards } = await import("../src/lib/account-profile-patch.ts");
+  const calls: Array<["eq" | "is", string, unknown]> = [];
+  const query = {
+    eq(column: string, value: unknown) {
+      calls.push(["eq", column, value]);
+      return this;
+    },
+    is(column: string, value: null) {
+      calls.push(["is", column, value]);
+      return this;
+    },
+  };
+  const current = {
+    birth_date: "1997-08-08",
+    reported_birth_time: "05:30",
+    birth_time_source: "approximate",
+    birth_time_period: null,
+    birth_time_clue: null,
+    uncertainty_before_minutes: 30,
+    uncertainty_after_minutes: 30,
+    active_birth_time: "05:18",
+    birth_time: "05:18",
+    birth_time_status: "candidate",
+    rectification_case_id: "11111111-1111-4111-8111-111111111111",
+    country_code: "CN",
+    province_code: "130000",
+    city_code: "130400",
+    district_code: "130406",
+    latitude: 36.420487,
+    longitude: 114.209936,
+    timezone_offset: 8,
+  };
+
+  applyAccountProfileConcurrencyGuards(query, current);
+
+  assert.deepEqual(calls.filter((call) => ["latitude", "longitude", "timezone_offset"].includes(call[1])), [
+    ["eq", "latitude", 36.420487],
+    ["eq", "longitude", 114.209936],
+    ["eq", "timezone_offset", 8],
+  ]);
+  assert.deepEqual(calls.find((call) => call[1] === "active_birth_time"), ["eq", "active_birth_time", "05:18"]);
+  assert.deepEqual(calls.find((call) => call[1] === "birth_time_status"), ["eq", "birth_time_status", "candidate"]);
 });

@@ -118,3 +118,51 @@ test("does not run cancellation settlement once completion has started", async (
   assert.equal(completed, 1);
   assert.equal(cancelled, 0);
 });
+
+test("transformed empty streams still refund through the error settlement", async () => {
+  let completed = 0;
+  let errors = 0;
+  async function* reply() {
+    // Intentionally empty.
+  }
+  const response = streamTextResponse(reply(), {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000005",
+    transformText: (text) => text,
+    onComplete: async () => { completed += 1; },
+    onError: async (_error, emitted) => {
+      assert.equal(emitted, false);
+      errors += 1;
+    },
+  });
+
+  await assert.rejects(response.text(), /empty_stream/);
+  assert.equal(completed, 0);
+  assert.equal(errors, 1);
+});
+
+test("cancelling a transformed stream after visible output preserves emitted settlement", async () => {
+  let charged = 0;
+  let refunded = 0;
+  async function* reply() {
+    yield "一般正文。".repeat(300);
+    yield "不应继续读取";
+  }
+  const response = streamTextResponse(reply(), {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000006",
+    transformText: (text) => text,
+    onCancel: async (emitted) => {
+      if (emitted) charged += 1;
+      else refunded += 1;
+    },
+  });
+  const reader = response.body?.getReader();
+  assert.ok(reader);
+  const first = await reader.read();
+  assert.equal(first.done, false);
+
+  await reader.cancel();
+  assert.equal(charged, 1);
+  assert.equal(refunded, 0);
+});

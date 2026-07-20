@@ -2638,7 +2638,7 @@ export default function Home() {
                         {birthTimeDisplay ? (
                           <>
                             <div><dt>{birthTimeDisplay.kind === "candidate" ? "待验证候选时间" : "当前排盘时间"}</dt><dd>{birthTimeDisplay.activeTime}</dd></div>
-                            <div><dt>结果状态</dt><dd>{birthTimeDisplay.kind === "candidate" ? "未确认，可临时选择使用" : "已确认"}</dd></div>
+                            <div><dt>结果状态</dt><dd>{birthTimeDisplay.kind === "candidate" ? "未确认；咨询时仅可临时使用原始填报时间" : "已确认"}</dd></div>
                             <div><dt>原始填报</dt><dd>{birthTimeDisplay.reportedLabel}</dd></div>
                           </>
                         ) : (

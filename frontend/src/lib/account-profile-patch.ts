@@ -148,6 +148,9 @@ type AccountBirthTimeState = Readonly<{
   province_code?: string | null;
   city_code?: string | null;
   district_code?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  timezone_offset?: number | null;
 }>;
 
 const declarationFields = [
@@ -162,7 +165,38 @@ const declarationFields = [
   "province_code",
   "city_code",
   "district_code",
+  "latitude",
+  "longitude",
+  "timezone_offset",
 ] as const;
+
+const concurrencyFields = [
+  ...declarationFields,
+  "active_birth_time",
+  "birth_time",
+  "birth_time_status",
+  "rectification_case_id",
+] as const;
+
+type ConditionalProfileQuery<Query> = Readonly<{
+  eq: (column: string, value: string | number) => Query;
+  is: (column: string, value: null) => Query;
+}>;
+
+/** Keeps an ordinary profile edit from overwriting a concurrent edit or confirmation. */
+export function applyAccountProfileConcurrencyGuards<
+  Query extends ConditionalProfileQuery<Query>,
+>(query: Query, current: AccountBirthTimeState): Query {
+  let guarded = query;
+  for (const field of concurrencyFields) {
+    const value = current[field];
+    if (value === undefined) continue;
+    guarded = value === null
+      ? guarded.is(field, null)
+      : guarded.eq(field, value);
+  }
+  return guarded;
+}
 
 export type AccountBirthTimeApplicationPatch = Readonly<{
   active_birth_time?: null;
@@ -185,7 +219,8 @@ export function resolveAccountBirthTimeApplicationPatch(
   if (confirmed) return {};
   if (!current.active_birth_time
     && !current.birth_time
-    && current.birth_time_status !== "candidate") return {};
+    && current.birth_time_status !== "candidate"
+    && !current.rectification_case_id) return {};
   return {
     active_birth_time: null,
     birth_time: null,

@@ -24,10 +24,13 @@ import {
   applyBirthTimeModeToWorkflowContext,
   consultationBirthTimeModeSchema,
   createBirthTimeModeOutputGuard,
-  serverProfileAllowsBirthTimeMode,
   shouldRunBirthChartWorkflow,
   type ConsultationBirthTimeMode,
 } from "@/lib/consultation-birth-time-mode";
+import {
+  ConsultationProfileTruthError,
+  prepareConsultationRoute,
+} from "@/lib/consultation-route-service";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -171,41 +174,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const requestedConsultationMode = parsed.data.consultationMode;
-  if (shouldRunBirthChartWorkflow(requestedConsultationMode)) {
-    if (!("hour" in parsed.data) || !("minute" in parsed.data)) {
-      return NextResponse.json(
-        { error: "出生时间请求格式不正确" },
-        { status: 400 },
-      );
-    }
-    const requestedTime = `${String(parsed.data.hour).padStart(2, "0")}:${String(parsed.data.minute).padStart(2, "0")}`;
-    const { data: birthTimeProfile, error: birthTimeProfileError } = await supabase
-      .from("profiles")
-      .select("active_birth_time,reported_birth_time,birth_time_source,birth_time_status")
-      .eq("id", user.id)
-      .single();
-    if (birthTimeProfileError || !birthTimeProfile) {
-      return NextResponse.json(
-        { error: "暂时无法核对出生时间状态", message: "请稍后重试，本次不会扣点。" },
-        { status: 503 },
-      );
-    }
-    if (!serverProfileAllowsBirthTimeMode(
-      birthTimeProfile,
-      requestedConsultationMode,
-      requestedTime,
-    )) {
-      return NextResponse.json(
-        {
-          error: "出生时间状态已经变化",
-          message: "请刷新后重新选择使用填报时间、一般咨询或先完成校正，本次不会扣点。",
-        },
-        { status: 409 },
-      );
-    }
-  }
-
   const requestTime = new Date();
   const resolvedQuestion = resolveConsultationQuestion({
     visibleQuestion: parsed.data.question,
@@ -215,20 +183,47 @@ export async function POST(request: Request) {
 
   const userId = user.id;
   const requestId = parsed.data.requestId;
-  let modelSelection;
+  let prepared;
   try {
-    modelSelection = await reserveConsultationModel(
-      parsed.data.modelId,
-      resolveLanguageModel,
-      () =>
-        runCreditRpc(
+    prepared = await prepareConsultationRoute({
+      userId,
+      mode: parsed.data.consultationMode,
+      async loadProfile(profileUserId) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("name,birth_date,reported_birth_time,active_birth_time,birth_time_source,birth_time_status,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset")
+          .eq("id", profileUserId)
+          .single();
+        if (error || !data) throw new ConsultationProfileTruthError("profile_unavailable");
+        return data;
+      },
+      reserve: () => reserveConsultationModel(
+        parsed.data.modelId,
+        resolveLanguageModel,
+        () => runCreditRpc(
           accounting,
           "begin_consultation_credit",
           userId,
           requestId,
         ),
-    );
+      ),
+    });
   } catch (error) {
+    if (error instanceof ConsultationProfileTruthError) {
+      const modeChanged = error.code === "mode_changed";
+      return NextResponse.json(
+        modeChanged
+          ? {
+            error: "出生时间状态已经变化",
+            message: "请刷新后重新选择使用填报时间、一般咨询或先完成校正，本次不会扣点。",
+          }
+          : {
+            error: "暂时无法核对完整出生资料",
+            message: "出生日期、时间来源或出生地点资料不完整或不一致，请重新保存后再试，本次不会扣点。",
+          },
+        { status: modeChanged ? 409 : 503 },
+      );
+    }
     const reason = error instanceof Error ? error.name : "UnknownError";
     console.error(
       `[billing] reservation failed request=${requestId} reason=${reason}`,
@@ -238,6 +233,8 @@ export async function POST(request: Request) {
       { status: 503 },
     );
   }
+
+  const modelSelection = prepared.reservation;
 
   if (modelSelection.status === "unavailable") {
     return NextResponse.json(
@@ -299,7 +296,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { history, name } = parsed.data;
+    const { history } = parsed.data;
+    const name = prepared.serverChart?.name ?? parsed.data.name;
     const consultationMode: ConsultationBirthTimeMode = parsed.data.consultationMode;
     if (!shouldRunBirthChartWorkflow(consultationMode)) {
       const result = await getGeneralJyotishAgent(selectedModel).stream([
@@ -343,12 +341,14 @@ export async function POST(request: Request) {
       });
     }
 
+    if (!prepared.serverChart) throw new Error("server_chart_truth_missing");
     const toolInput = consultationInputSchema.parse({
-      ...parsed.data,
+      ...prepared.serverChart.toolInput,
       // Unverified use is still a normal chart calculation with a hard answer
       // boundary. It must never reactivate the retired rectification questionnaire.
       entryMode: "direct_chart",
       question: resolvedQuestion.modelQuestion,
+      theme: parsed.data.theme,
     });
     const workflowContext = applyBirthTimeModeToWorkflowContext(
       await runConsultationWorkflow(toolInput),

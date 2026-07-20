@@ -150,7 +150,7 @@ test("terminal CJK copy stays intact while homepage candidates remain unconfirme
   const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
   assert.match(candidateResultSource, /作为<span className="phrase-nowrap">当前排盘时间<\/span>并进入对话；<span className="phrase-nowrap">原始填报<\/span>和本次<span className="phrase-nowrap">候选结果<\/span><span className="phrase-nowrap">仍会保留<\/span>。/);
-  assert.match(pageSource, /未确认，可临时选择使用/);
+  assert.match(pageSource, /未确认；咨询时仅可临时使用原始填报时间/);
   assert.match(pageSource, /<ConversationalBirthTimeRectification/);
   assert.doesNotMatch(pageSource, /当前使用候选时间排盘/);
 });

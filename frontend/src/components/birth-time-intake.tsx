@@ -78,7 +78,7 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
             </div>
           </dl>
           {displayState.kind === "candidate" && (
-            <p>这仍是未确认候选，不会自动成为出生分钟；普通咨询前可以选择临时使用或先校正。</p>
+            <p>这仍是未确认候选，不会自动成为出生分钟；普通咨询只能临时使用上面的原始填报时间，或先继续校正。</p>
           )}
         </section>
       )}

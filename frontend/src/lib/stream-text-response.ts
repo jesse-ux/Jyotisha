@@ -11,6 +11,78 @@ type StreamTextResponseOptions = StreamHooks & {
   readonly transformText?: (text: string) => string;
 };
 
+const hiddenBlockOpeners = [
+  "<!--AYANAM_SUGGESTIONS:",
+  "<!--AYANAM_TITLE:",
+] as const;
+
+function longestOpenerPrefixSuffix(value: string) {
+  const maximum = Math.min(
+    value.length,
+    Math.max(...hiddenBlockOpeners.map((opener) => opener.length - 1)),
+  );
+  for (let length = maximum; length > 0; length -= 1) {
+    const suffix = value.slice(-length);
+    if (hiddenBlockOpeners.some((opener) => opener.startsWith(suffix))) return length;
+  }
+  return 0;
+}
+
+/** Sends only visible prose through the output guard and preserves metadata bytes. */
+function createVisibleTextTransformer(transform: (text: string) => string) {
+  let buffered = "";
+  let hidden = false;
+
+  function consume(value: string, final: boolean) {
+    buffered += value;
+    let output = "";
+    while (buffered) {
+      if (hidden) {
+        const closeIndex = buffered.indexOf("-->");
+        if (closeIndex < 0) {
+          if (final) {
+            output += buffered;
+            buffered = "";
+          }
+          break;
+        }
+        output += buffered.slice(0, closeIndex + 3);
+        buffered = buffered.slice(closeIndex + 3);
+        hidden = false;
+        continue;
+      }
+
+      const openerIndex = hiddenBlockOpeners.reduce<number>((earliest, opener) => {
+        const index = buffered.indexOf(opener);
+        return index >= 0 && (earliest < 0 || index < earliest) ? index : earliest;
+      }, -1);
+      if (openerIndex >= 0) {
+        if (openerIndex > 0) output += transform(buffered.slice(0, openerIndex));
+        buffered = buffered.slice(openerIndex);
+        hidden = true;
+        continue;
+      }
+
+      if (final) {
+        output += transform(buffered);
+        buffered = "";
+        break;
+      }
+      const retainedLength = longestOpenerPrefixSuffix(buffered);
+      const visibleLength = buffered.length - retainedLength;
+      if (visibleLength > 0) output += transform(buffered.slice(0, visibleLength));
+      buffered = buffered.slice(visibleLength);
+      break;
+    }
+    return output;
+  }
+
+  return Object.freeze({
+    push: (value: string) => consume(value, false),
+    finish: (value: string) => consume(value, true),
+  });
+}
+
 export function streamTextResponse(
   stream: AsyncIterable<string>,
   options: StreamTextResponseOptions,
@@ -20,6 +92,9 @@ export function streamTextResponse(
   // Keep a full natural-language clause unflushed so a later stream chunk cannot
   // turn an allowed prefix into a disallowed timing or guaranteed conclusion.
   const guardTailLength = options.transformText ? 1024 : 0;
+  const visibleTransformer = options.transformText
+    ? createVisibleTextTransformer(options.transformText)
+    : null;
   let pending = "";
   let settled = false;
   let emitted = false;
@@ -30,10 +105,10 @@ export function streamTextResponse(
         while (true) {
           const { done, value } = await iterator.next();
           if (done) {
-            if (pending)
-              controller.enqueue(
-                encoder.encode(options.transformText?.(pending) ?? pending),
-              );
+            const finalText = visibleTransformer
+              ? visibleTransformer.finish(pending)
+              : pending;
+            if (finalText) controller.enqueue(encoder.encode(finalText));
             settled = true;
             if (!emitted) {
               const error = new Error("empty_stream");
@@ -52,10 +127,13 @@ export function streamTextResponse(
           const stableLength = pending.length - guardTailLength;
           const stable = pending.slice(0, stableLength);
           pending = pending.slice(stableLength);
-          controller.enqueue(
-            encoder.encode(options.transformText?.(stable) ?? stable),
-          );
-          return;
+          const transformed = visibleTransformer
+            ? visibleTransformer.push(stable)
+            : stable;
+          if (transformed) {
+            controller.enqueue(encoder.encode(transformed));
+            return;
+          }
         }
       } catch (error) {
         if (!settled) {

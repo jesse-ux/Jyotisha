@@ -255,8 +255,6 @@ export function getGeneralJyotishAgent(model: ResolvedLanguageModel) {
     name: "Jyotisha General Guide",
     model: model.model,
     instructions: generalJyotishInstructions,
-    skills: [jyotishSkillPath],
-    tools: {},
   });
   generalJyotishAgents.set(model.id, agent);
   return agent;

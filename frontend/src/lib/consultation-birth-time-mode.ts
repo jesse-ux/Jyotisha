@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { guardPreciseTimingOutput } from "./timing-output-guard.ts";
+import {
+  guardGeneralNoBirthTimeOutput,
+  guardPreciseTimingOutput,
+} from "./timing-output-guard.ts";
 
 export const consultationBirthTimeModeSchema = z.enum([
   "verified_chart",
@@ -13,35 +16,6 @@ export const UNVERIFIED_BIRTH_TIME_NOTICE = "使用未校正填报时间；分�
 
 export function shouldRunBirthChartWorkflow(mode: ConsultationBirthTimeMode): boolean {
   return mode !== "general_no_birth_time";
-}
-
-type ServerBirthTimeProfile = Readonly<{
-  active_birth_time: string | null;
-  reported_birth_time: string | null;
-  birth_time_source: string | null;
-  birth_time_status: string | null;
-}>;
-
-const concreteReportedSources = new Set([
-  "hospital_record",
-  "family_exact",
-  "approximate",
-]);
-
-export function serverProfileAllowsBirthTimeMode(
-  profile: ServerBirthTimeProfile,
-  mode: ConsultationBirthTimeMode,
-  requestedTime: string | null,
-): boolean {
-  if (mode === "general_no_birth_time") return requestedTime === null;
-  if (!requestedTime) return false;
-  if (mode === "verified_chart") {
-    return profile.birth_time_status === "confirmed"
-      && profile.active_birth_time?.slice(0, 5) === requestedTime;
-  }
-  return profile.birth_time_status !== "confirmed"
-    && concreteReportedSources.has(profile.birth_time_source ?? "")
-    && profile.reported_birth_time?.slice(0, 5) === requestedTime;
 }
 
 export function applyBirthTimeModeToWorkflowContext<
@@ -80,7 +54,9 @@ export function createBirthTimeModeOutputGuard(
 ): (text: string) => string {
   let noticeWritten = false;
   return (text) => {
-    const guarded = canAnswerPreciseTiming ? text : guardPreciseTimingOutput(text);
+    const guarded = mode === "general_no_birth_time"
+      ? guardGeneralNoBirthTimeOutput(text)
+      : canAnswerPreciseTiming ? text : guardPreciseTimingOutput(text);
     if (mode !== "unverified_birth_time" || noticeWritten || !guarded.trim()) return guarded;
     noticeWritten = true;
     return `> ${UNVERIFIED_BIRTH_TIME_NOTICE}\n\n${guarded}`;

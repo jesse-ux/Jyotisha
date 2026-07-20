@@ -5,6 +5,7 @@ import {
 } from "@/lib/birth-time-consultation-consent";
 import {
   accountProfilePatchSchema,
+  applyAccountProfileConcurrencyGuards,
   resolveAccountBirthTimeApplicationPatch,
 } from "@/lib/account-profile-patch";
 import { createAdminSupabaseClient, isAdminEmail } from "@/lib/supabase/admin";
@@ -121,11 +122,25 @@ export async function PATCH(request: Request) {
     const payload = parsedPayload.data;
 
     const admin = createAdminSupabaseClient();
-    const { data: currentProfile, error: currentProfileError } = await admin
+    let { data: currentProfile, error: currentProfileError } = await admin
       .from("profiles")
-      .select("birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,rectification_case_id,country_code,province_code,city_code,district_code")
+      .select("birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,rectification_case_id,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset")
       .eq("id", userId)
       .maybeSingle();
+    if (currentProfileError && isMissingProfileColumn(currentProfileError)) {
+      const fallback = await admin
+        .from("profiles")
+        .select("birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,rectification_case_id,country_code,province_code,city_code,district_code")
+        .eq("id", userId)
+        .maybeSingle();
+      currentProfile = fallback.data ? {
+        ...fallback.data,
+        latitude: undefined,
+        longitude: undefined,
+        timezone_offset: undefined,
+      } : null;
+      currentProfileError = fallback.error;
+    }
     if (currentProfileError) {
       return NextResponse.json({ error: "暂时无法核对现有出生资料" }, { status: 500 });
     }
@@ -179,12 +194,7 @@ export async function PATCH(request: Request) {
       }
       let query = admin.from("profiles").update(values).eq("id", userId);
       if (invalidatesUnconfirmedApplication) {
-        query = currentProfile.birth_time_status === null
-          ? query.is("birth_time_status", null)
-          : query.eq("birth_time_status", currentProfile.birth_time_status);
-        query = currentProfile.active_birth_time === null
-          ? query.is("active_birth_time", null)
-          : query.eq("active_birth_time", currentProfile.active_birth_time);
+        query = applyAccountProfileConcurrencyGuards(query, currentProfile);
       }
       return query.select("id").maybeSingle();
     }
