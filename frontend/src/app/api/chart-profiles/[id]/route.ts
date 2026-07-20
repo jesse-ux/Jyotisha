@@ -17,14 +17,17 @@ export async function DELETE(_request: Request, context: RouteContext) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "请先登录" }, { status: 401 });
 
-    const { error } = await supabase
+    const { count, error } = await supabase
       .from("chart_profiles")
-      .delete()
+      .delete({ count: "exact" })
       .eq("id", id)
       .eq("user_id", user.id)
       .eq("role", "other");
 
     if (error) throw error;
+    if (count !== 1) {
+      return NextResponse.json({ error: "星盘不存在或无权删除" }, { status: 404 });
+    }
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (isSupabaseConfigurationError(error)) {

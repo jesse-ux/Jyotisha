@@ -145,7 +145,10 @@ def test_chart_profile_library_has_cloud_table_api_and_local_fallback() -> None:
     ):
         assert token in route
     assert 'upsert(record, { onConflict: "id" })' not in route
+    assert '.delete({ count: "exact" })' in delete_route
     assert 'eq("role", "other")' in delete_route
+    assert "count !== 1" in delete_route
+    assert "星盘不存在或无权删除" in delete_route
 
     for token in (
         "fetchCloudChartLibrary",
