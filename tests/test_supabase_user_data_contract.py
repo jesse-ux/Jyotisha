@@ -141,9 +141,10 @@ def test_chart_profile_library_has_cloud_table_api_and_local_fallback() -> None:
         'eq("user_id", user.id)',
         'eq("role", "self")',
         'insert({ user_id: user.id, role, profile: body.profile',
-        'upsert(record, { onConflict: "id" })',
+        'insert({ user_id: user.id, role, profile: body.profile, updated_at: updatedAt })',
     ):
         assert token in route
+    assert 'upsert(record, { onConflict: "id" })' not in route
     assert 'eq("role", "other")' in delete_route
 
     for token in (
