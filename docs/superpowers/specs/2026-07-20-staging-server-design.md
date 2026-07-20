@@ -25,7 +25,7 @@ staging 不得写入生产数据库，不得复用 service-role key、数据库�
 ## 服务器基础设计
 
 - 操作系统：Ubuntu 24.04 LTS x86_64。
-- 访问：首次通过供应商 root 凭据进入；建立 `deploy` 用户和独立 Ed25519 key；验证 key 登录后再关闭 SSH 密码登录和直接 root 登录。
+- 访问：供应商默认 SSH 用户为 `ubuntu`；本机管理密钥只授权给 `ubuntu`，GitHub deploy 密钥只授权给 `deploy`。两个 key 登录都验证成功后再关闭 SSH 密码登录和直接 root 登录。
 - 内存：2 vCPU / 4 GB RAM，增加 4 GB swap；staging 部署串行执行，避免构建峰值并发。
 - 防火墙：只开放 SSH、80、443；Python API 5200 和 Next.js 3000 只在 Docker 网络暴露。
 - 运行时：Docker Engine、Buildx 和 Compose plugin，从 Docker 官方 apt repository 安装。
@@ -89,7 +89,7 @@ push staging
 
 服务器基础验收：
 
-- deploy key 登录成功，密码/root 登录按设计受限；
+- ubuntu admin key 与 deploy key 分别登录成功，密码/root 登录按设计受限；
 - UFW 与云防火墙只开放预期端口；
 - Docker/Compose 正常；swap 生效；重启后容器能恢复。
 
@@ -128,4 +128,3 @@ push staging
 - 不购买或部署国内后端服务器。
 - 不在本机运行大模型。
 - 不在 staging 和 production 之间做应用双写。
-
