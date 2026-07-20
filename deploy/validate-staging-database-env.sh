@@ -43,12 +43,19 @@ fi
 
 definition_count() {
   local key="$1"
-  grep -Ec "^[[:space:]]*(export[[:space:]]+)?${key}[[:space:]]*=" "$ENV_FILE" || true
+  grep -Ec "^[[:space:]]*(export[[:space:]]+)?${key}([[:space:]]*=|[[:space:]]*$)" "$ENV_FILE" || true
 }
 
 environment_value() {
   local key="$1"
   sed -n -E "s/^[[:space:]]*(export[[:space:]]+)?${key}[[:space:]]*=[[:space:]]*(.*)$/\\2/p" "$ENV_FILE"
+}
+
+is_safe_literal() {
+  local value="$1"
+  # Required values are generated as single-line hex-safe literals. This also
+  # permits percent-encoded schema URLs without evaluating dotenv syntax.
+  [[ "$value" =~ ^[A-Za-z0-9._~%:@/+,-]+$ ]]
 }
 
 require_once_non_empty() {
@@ -57,7 +64,7 @@ require_once_non_empty() {
   local value
   count="$(definition_count "$key")"
   value="$(environment_value "$key")"
-  if [ "$count" -ne 1 ] || [ -z "$value" ]; then
+  if [ "$count" -ne 1 ] || ! is_safe_literal "$value"; then
     echo "required staging database environment variable is missing or duplicated: $key" >&2
     exit 1
   fi

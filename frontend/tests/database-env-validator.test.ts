@@ -25,7 +25,7 @@ const validEnvironment = [
   "MIGRATION_RUNNER_PASSWORD=migration-runner-test-password",
   "BACKUP_READER_PASSWORD=backup-reader-test-password",
   "STAGING_BACKUP_ENCRYPTION_KEY=staging-backup-test-password",
-  "SCHEMA_DATABASE_URL=postgresql://schema_owner:schema-owner-test-password@postgres:5432/jyotisha",
+  "SCHEMA_DATABASE_URL=postgresql://schema_owner:schema-owner%2Dtest-password@postgres:5432/jyotisha",
 ];
 
 test("database env validator rejects Compose-compatible duplicate selectors without printing values", () => {
@@ -78,6 +78,60 @@ test("database env validator rejects Compose-compatible duplicate selectors with
       `${result.stdout}${result.stderr}`,
       /postgres-test-password|schema-owner-test-password|staging-backup-test-password/,
     );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("database env validator rejects bare Compose-compatible duplicate definitions", () => {
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-database-env-"));
+  const envFile = join(root, ".env.staging.database");
+
+  try {
+    writeFileSync(
+      envFile,
+      `${[...validEnvironment, " POSTGRES_DB"].join("\n")}\n`,
+      { mode: 0o600 },
+    );
+    chmodSync(envFile, 0o600);
+
+    const result = spawnSync("bash", [validator, envFile], { encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+    assert.doesNotMatch(
+      `${result.stdout}${result.stderr}`,
+      /postgres-test-password|schema-owner-test-password|staging-backup-test-password/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("database env validator rejects quoted and interpolated required secrets", () => {
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-database-env-"));
+  const envFile = join(root, ".env.staging.database");
+
+  try {
+    for (const password of ['""', "''", "${UNSET}"]) {
+      writeFileSync(
+        envFile,
+        `${validEnvironment
+          .map((line) =>
+            line.startsWith("POSTGRES_PASSWORD=")
+              ? `POSTGRES_PASSWORD=${password}`
+              : line,
+          )
+          .join("\n")}\n`,
+        { mode: 0o600 },
+      );
+      chmodSync(envFile, 0o600);
+
+      const result = spawnSync("bash", [validator, envFile], { encoding: "utf8" });
+      assert.notEqual(result.status, 0, password);
+      assert.doesNotMatch(
+        `${result.stdout}${result.stderr}`,
+        /postgres-test-password|schema-owner-test-password|staging-backup-test-password/,
+      );
+    }
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
