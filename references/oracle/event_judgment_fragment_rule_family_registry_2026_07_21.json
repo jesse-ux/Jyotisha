@@ -1,0 +1,53 @@
+{
+  "scope": "event_judgment_fragment_rule_family_registry",
+  "created_at": "2026-07-21",
+  "claim_status": "ready_contract",
+  "source_fragment": "/Users/wuyongnaren/.workbuddy/backups/jyotish-vedic-astrology-20260711-154109/scripts/event_judgment_engine.py",
+  "source_policy": "rule_family_inventory_only_no_runtime_copy",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "boundary": "Migrates WorkBuddy event_judgment_engine as a rule-family registry only. No old engine implementation is copied; current event_judgment_skeleton remains the runtime authority.",
+  "route_families": [
+    {
+      "route": "relationship",
+      "required_families": [
+        {"key": "d9_navamsa", "phase": "promise", "module": "varga_full", "claim": "Marriage/relationship questions must include D9."},
+        {"key": "upapada_lagna", "phase": "promise", "module": "special_lagnas", "claim": "UL must be present or explicitly blocked."},
+        {"key": "darakaraka", "phase": "manifestation", "module": "jaimini", "claim": "DK layer supports manifestation reading."},
+        {"key": "marriage_convergence", "phase": "activation", "module": "dasa_convergence", "claim": "Activation must not rely on static promise alone."},
+        {"key": "vimshottari_current", "phase": "timing", "module": "dasha", "claim": "Timing requires Vimshottari."},
+        {"key": "narayana_current", "phase": "timing", "module": "narayana_dasha", "claim": "Timing requires Narayana cross-check; conflict downgrades certainty."}
+      ]
+    },
+    {
+      "route": "career",
+      "required_families": [
+        {"key": "d10_dasamsa", "phase": "promise", "module": "varga_full", "claim": "Career questions must include D10."},
+        {"key": "a10_karma_pada", "phase": "promise", "module": "special_lagnas", "claim": "A10/Karma Pada must be present or explicitly blocked."},
+        {"key": "amatyakaraka", "phase": "manifestation", "module": "jaimini", "claim": "AmK supports vocation manifestation layer."},
+        {"key": "shadbala", "phase": "manifestation", "module": "shadbala", "claim": "Strength layer must be included with current partial/oracle boundary."},
+        {"key": "career_convergence", "phase": "activation", "module": "dasa_convergence", "claim": "Activation must include career dasha convergence."},
+        {"key": "vimshottari_current", "phase": "timing", "module": "dasha", "claim": "Timing requires Vimshottari."},
+        {"key": "narayana_current", "phase": "timing", "module": "narayana_dasha", "claim": "Timing requires Narayana cross-check."}
+      ]
+    },
+    {
+      "route": "wealth",
+      "required_families": [
+        {"key": "d2_hora", "phase": "promise", "module": "varga_full", "claim": "Wealth questions must include D2."},
+        {"key": "d10_dasamsa", "phase": "promise", "module": "varga_full", "claim": "Career/status channel must be checked for wealth manifestation."},
+        {"key": "ashtakavarga_house_scores", "phase": "manifestation", "module": "ashtakavarga", "claim": "House-score support must be included with current AV boundary."},
+        {"key": "wealth_convergence", "phase": "activation", "module": "dasa_convergence", "claim": "Activation must include wealth/family convergence."},
+        {"key": "gains_convergence", "phase": "activation", "module": "dasa_convergence", "claim": "Gains/wishes convergence is a separate activation layer."},
+        {"key": "vimshottari_current", "phase": "timing", "module": "dasha", "claim": "Timing requires Vimshottari."},
+        {"key": "narayana_current", "phase": "timing", "module": "narayana_dasha", "claim": "Timing requires Narayana cross-check."}
+      ]
+    }
+  ],
+  "global_requirements": [
+    "Every route must map evidence into promise, activation, manifestation and timing phases.",
+    "Missing promise/activation/manifestation/timing evidence blocks or downgrades the verdict.",
+    "Timing/event claims must use Vimshottari + Narayana, not Vimshottari alone.",
+    "Functional Benefic/Malefic remains mandatory from AGENTS.md even though the WorkBuddy fragment did not contain it."
+  ]
+}

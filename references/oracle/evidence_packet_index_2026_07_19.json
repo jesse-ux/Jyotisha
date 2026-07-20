@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 100,
+    "packet_count": 103,
     "blocked_or_partial_count": 51,
     "human_review_required_count": 3
   },
@@ -809,6 +809,30 @@
       "claim_status": "partial",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Classifies Digbala rows as formula/unit mismatch and routes them to angular-reference formula arbitration; no absolute parity upgrade."
+    },
+    {
+      "packet_id": "fragment_second_pass_candidate_ledger_2026_07_21",
+      "path": "references/oracle/fragment_second_pass_candidate_ledger_2026_07_21.json",
+      "domain": "fragment_governance",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_only_no_direct_fragment_copy",
+      "claim_boundary": "Second-pass ledger for five high-value fragments; each candidate is migrate-to-test/registry, reference-only, or forbidden/private/obsolete. No wholesale copy or truth upgrade."
+    },
+    {
+      "packet_id": "event_judgment_fragment_rule_family_registry_2026_07_21",
+      "path": "references/oracle/event_judgment_fragment_rule_family_registry_2026_07_21.json",
+      "domain": "event_judgment",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_registry_only_no_runtime_copy",
+      "claim_boundary": "Ports WorkBuddy event judgment as rule-family inventory only; no old engine code copied."
+    },
+    {
+      "packet_id": "research_birth_time_journey_ui_contract_2026_07_21",
+      "path": "references/oracle/research_birth_time_journey_ui_contract_2026_07_21.json",
+      "domain": "research_web_birth_time_journey",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_local_ui_contract_only",
+      "claim_boundary": "Ports commercial birth-time journey behavior contracts only; no Supabase, credits, auth, or commercial code imported."
     }
   ]
 }
