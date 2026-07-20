@@ -130,6 +130,45 @@ PRODUCTION_SSH_PRIVATE_KEY = dedicated production deploy private key
 
 The workflow pins the VPS Ed25519 host key and serializes deployments with the `production` concurrency group.
 
+## Staging deployment
+
+Staging is isolated from production:
+
+| Item | Value |
+| --- | --- |
+| URL | `https://staging.jyotisha.chat` |
+| Host | `118.26.111.127` |
+| Path | `/opt/jyotisha-staging` |
+| Runtime env | `/opt/jyotisha-staging/.env.staging` (`0600`) |
+| Supabase | separate `Jyotisha Staging` project |
+| GitHub Environment | `staging` |
+
+The GitHub Environment contains `STAGING_SSH_PRIVATE_KEY` and the variables `STAGING_HOST`, `STAGING_PORT`, `STAGING_USER`, `STAGING_PATH`, `STAGING_URL`, and `STAGING_KNOWN_HOSTS`. The staging key, database, Supabase keys, and model-provider keys must not be shared with production.
+
+A push to branch `staging` runs `Jyotish Skill CI`. A successful push run triggers `.github/workflows/deploy-staging.yml`, which deploys the tested SHA and verifies the login route, logged-out account response, deployment SHA, and private Python health endpoint.
+
+The first deployment should be manual:
+
+1. Confirm `/opt/jyotisha-staging/.env.staging` exists and has mode `0600`.
+2. Open GitHub Actions -> Deploy staging -> Run workflow.
+3. Enter the tested commit SHA in `git_ref`.
+4. Confirm `https://staging.jyotisha.chat/api/health` reports that SHA.
+5. Only after the manual deployment passes, push the same revision to branch `staging` to validate automatic deployment.
+
+Application rollback uses the same workflow: manually dispatch `Deploy staging` with the previous known-good commit SHA. Database migrations are separate and are not rolled back by an application deployment. Restore a staging database backup before running any destructive migration rehearsal.
+
+Inspect staging without printing secrets:
+
+```bash
+ssh -i ~/.ssh/jyotisha-staging deploy@118.26.111.127
+cd /opt/jyotisha-staging
+docker compose --env-file .env.staging -f deploy/docker-compose.server.yml ps
+docker compose --env-file .env.staging -f deploy/docker-compose.server.yml logs --tail=100 api web caddy
+curl -fsS https://staging.jyotisha.chat/api/health
+```
+
+The normal application deployment workflow never runs database migrations. Apply migrations to the separate staging project first, verify them, and only then deploy application code that depends on them.
+
 ## Manual deployment fallback
 
 If GitHub Actions is unavailable, deploy the tracked tree without copying local secrets:
