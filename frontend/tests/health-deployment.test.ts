@@ -132,6 +132,10 @@ test("staging deploy consumes only the isolated staging environment and tested r
     new URL("../../.github/workflows/deploy-staging.yml", import.meta.url),
     "utf8",
   );
+  const syncController = readFileSync(
+    new URL("../../deploy/sync-staging-tree.sh", import.meta.url),
+    "utf8",
+  );
 
   assert.match(qualityGate, /push:\s*\n\s*branches: \[staging\]/);
   assert.match(workflow, /workflows: \["Staging Backend Quality Gate"\]/);
@@ -154,13 +158,18 @@ test("staging deploy consumes only the isolated staging environment and tested r
   assert.match(workflow, /test "\$DEPLOY_HOST" = "118\.26\.111\.127"/);
   assert.match(workflow, /test "\$DEPLOY_USER" = "deploy"/);
   assert.match(workflow, /test "\$DEPLOY_PATH" = "\/opt\/jyotisha-staging"/);
-  assert.match(workflow, /--exclude='\/\.env\*'/);
-  assert.match(workflow, /--exclude='\/backups\/'/);
+  assert.match(
+    workflow,
+    /--include='\/deploy\/' --include='\/deploy\/\*\*\*' --exclude='\*'/,
+  );
   assert.match(workflow, /run-staging-deploy\.sh/);
   assert.match(workflow, /steps\.images\.outputs\.api_image/);
   assert.match(workflow, /steps\.images\.outputs\.web_image/);
   assert.doesNotMatch(workflow, /PRODUCTION_SSH_PRIVATE_KEY/);
   assert.doesNotMatch(workflow, /103\.117\.123\.53/);
+  assert.match(syncController, /--exclude='\/\.env\*'/);
+  assert.match(syncController, /--exclude='\/\.docker\/'/);
+  assert.match(syncController, /--exclude='\/backups\/'/);
 });
 
 test("staging env validator rejects selector drift, duplicates, and unsafe permissions", () => {

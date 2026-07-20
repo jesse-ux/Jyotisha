@@ -11,6 +11,7 @@ on:
 concurrency:
   group: staging-mutation
   cancel-in-progress: false
+  queue: max
 
 permissions:
   contents: read
@@ -51,7 +52,7 @@ jobs:
             [.workflow_runs[] | select(
               .head_sha == $sha and .head_branch == "staging" and
               .event == "push" and .conclusion == "success"
-            )] | sort_by(.run_attempt) | reverse | first
+            )] | sort_by(.id) | reverse | first
           ' <<<"$runs")"
           gate_run_id="$(jq -er '.id' <<<"$selected_run")"
           gate_run_attempt="$(jq -er '.run_attempt' <<<"$selected_run")"
@@ -73,10 +74,11 @@ jobs:
             echo "gate_run_attempt=$gate_run_attempt"
           } >>"$GITHUB_OUTPUT"
 
-      - name: Checkout tested revision
+      - name: Checkout trusted main controller
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.revision.outputs.sha }}
+          ref: main
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Download gate-produced image manifest
@@ -96,12 +98,16 @@ jobs:
           node frontend/scripts/staging-image-manifest.mjs \
             artifacts/staging-image/manifest.env "$DEPLOY_SHA" >>"$GITHUB_OUTPUT"
 
-      - name: Verify revision and staging target
+      - name: Verify reviewed revision and staging target
         env:
           DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$DEPLOY_SHA"
+          git cat-file -e "$DEPLOY_SHA^{commit}"
+          git merge-base --is-ancestor "$DEPLOY_SHA" HEAD || {
+            echo "staging revision is not in the reviewed main history" >&2
+            exit 1
+          }
           test "$DEPLOY_HOST" = "118.26.111.127"
           test "$DEPLOY_PORT" = "22"
           test "$DEPLOY_USER" = "deploy"
@@ -152,7 +158,7 @@ jobs:
             echo "forward_verified=true"
           } >>"$GITHUB_OUTPUT"
 
-      - name: Stage tested sources in an isolated incoming directory
+      - name: Stage trusted controller files in an isolated incoming directory
         id: incoming
         run: |
           set -euo pipefail
@@ -160,11 +166,10 @@ jobs:
           RSYNC_SSH="ssh $SSH_OPTIONS"
           incoming="$DEPLOY_PATH/.incoming/$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 700 '$incoming'"
-          rsync -az --delete \
-            --exclude='/.git/' --exclude='/.env*' --exclude='/backups/' \
-            --exclude='/frontend/node_modules/' --exclude='/frontend/.next/' \
-            -e "$RSYNC_SSH" ./ "$DEPLOY_USER@$DEPLOY_HOST:$incoming/"
           echo "path=$incoming" >>"$GITHUB_OUTPUT"
+          rsync -az --delete --prune-empty-dirs \
+            --include='/deploy/' --include='/deploy/***' --exclude='*' \
+            -e "$RSYNC_SSH" ./ "$DEPLOY_USER@$DEPLOY_HOST:$incoming/"
 
       - name: Log in to GHCR with run-local Docker state
         env:

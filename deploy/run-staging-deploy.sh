@@ -146,8 +146,8 @@ rollback() {
 }
 trap rollback ERR
 
-"${compose[@]}" up -d --no-build --remove-orphans
 switched=true
+"${compose[@]}" up -d --no-build --remove-orphans
 
 verify_container_image() {
   local service="$1"

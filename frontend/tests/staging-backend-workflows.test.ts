@@ -92,6 +92,8 @@ test("live staging sync preserves env, state, incoming files, and encrypted back
   mkdirSync(source);
   mkdirSync(destination);
   writeFileSync(join(source, "revision.txt"), "new\n");
+  mkdirSync(join(source, ".docker"));
+  writeFileSync(join(source, ".docker", "config.json"), "temporary-token\n");
   writeFileSync(join(destination, "stale.txt"), "old\n");
   for (const relative of [
     ".env.staging",
@@ -114,6 +116,7 @@ test("live staging sync preserves env, state, incoming files, and encrypted back
     assert.equal(result.status, 0, result.stderr);
     assert.equal(existsSync(join(destination, "stale.txt")), false);
     assert.equal(readFileSync(join(destination, "revision.txt"), "utf8"), "new\n");
+    assert.equal(existsSync(join(destination, ".docker")), false);
     for (const relative of [
       ".env.staging",
       ".env.staging.database",
@@ -155,10 +158,30 @@ test("deploy and migration consume the exact successful gate artifact", () => {
     assert.match(workflow, /\.head_branch == "staging"/);
     assert.match(workflow, /\.event == "push"/);
     assert.match(workflow, /\.conclusion == "success"/);
+    assert.match(workflow, /sort_by\(\.id\) \| reverse \| first/);
     assert.match(workflow, /uses: actions\/download-artifact@v4/);
     assert.match(workflow, /run-id: \$\{\{ steps\.revision\.outputs\.gate_run_id \}\}/);
     assert.match(workflow, /node frontend\/scripts\/staging-image-manifest\.mjs/);
     assert.doesNotMatch(workflow, /jyotisha-(?:api|web):\$[A-Z_]*SHA/);
+  }
+});
+
+test("main owns the deployment control plane and target revisions are data only", () => {
+  for (const workflow of [read(deployWorkflow), read(migrationWorkflow)]) {
+    assert.match(workflow, /name: Checkout trusted main controller[\s\S]*ref: main/);
+    assert.match(workflow, /fetch-depth: 0/);
+    assert.match(workflow, /git merge-base --is-ancestor "\$DEPLOY_SHA" HEAD/);
+    assert.match(workflow, /--include='\/deploy\/' --include='\/deploy\/\*\*\*' --exclude='\*'/);
+    assert.doesNotMatch(workflow, /ref: \$\{\{ steps\.revision\.outputs\.sha \}\}/);
+  }
+});
+
+test("staging mutations retain every pending deployment and migration", () => {
+  for (const workflow of [read(deployWorkflow), read(migrationWorkflow)]) {
+    assert.match(
+      workflow,
+      /concurrency:\n  group: staging-mutation\n  cancel-in-progress: false\n  queue: max/,
+    );
   }
 });
 
@@ -186,6 +209,10 @@ test("remote deployment verifies running image IDs, RepoDigests, and application
   assert.match(runner, /publicBody\.deployment\?\.gitCommit !== process\.env\.EXPECTED_SHA/);
   assert.match(runner, /mv -f "\$revision_file" "\$state_directory\/deployed-revision"/);
   assert.match(runner, /restoring prior image digests/);
+  assert.match(
+    runner,
+    /switched=true\n"\$\{compose\[@\]\}" up -d --no-build --remove-orphans\n/,
+  );
   assert.doesNotMatch(runner, /jyotisha-(?:api|web):\$DEPLOY_SHA/);
 });
 
@@ -223,6 +250,10 @@ test("run-local registry state and incoming trees are always cleaned up", () => 
     assert.match(workflow, /if: always\(\) && steps\.incoming\.outputs\.path != ''/);
     assert.match(workflow, /docker logout ghcr\.io/);
     assert.match(workflow, /rm -rf -- '\$INCOMING_PATH'/);
+    assert.match(
+      workflow,
+      /install -d -m 700 [^\n]*\$incoming[^\n]*\n\s+echo "path=\$incoming" >>"\$GITHUB_OUTPUT"\n\s+rsync/,
+    );
     assert.doesNotMatch(workflow, /--password(?:\s|=)/);
   }
 });

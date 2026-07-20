@@ -23,6 +23,10 @@
 - Staging publication uses full Git SHA tags for discovery, but deployment is
   authorized and pinned by the build outputs' `sha256` manifest digests. Never
   deploy a mutable tag such as `latest`, or treat a tag alone as image identity.
+- The `main` workflow revision is the trusted deployment controller. Target and
+  rollback SHAs must already be ancestors of reviewed `main`; their code is
+  represented by the digest-pinned images, but their validators and remote
+  orchestration scripts are never executed with staging Environment privileges.
 - Finish each task with the focused commit shown.
 
 ## Planned Files

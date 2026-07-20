@@ -9,6 +9,7 @@ fi
 rsync -az --delete \
   --exclude='/.git/' \
   --exclude='/.env*' \
+  --exclude='/.docker/' \
   --exclude='/backups/' \
   --exclude='/.state/' \
   --exclude='/.incoming/' \

@@ -373,13 +373,16 @@ test("foundation grants no direct runtime table DML and exposes only reviewed fu
         create table audit.admin_event_probe (
           value text not null
         );
+        create function identity.unreviewed_identity_probe()
+        returns text
+        language sql
+        as 'select ''not callable''::text';
         create function audit.record_admin_event_probe(event_value text)
         returns void
         language sql
         security definer
         set search_path = pg_catalog, audit
         as 'insert into audit.admin_event_probe(value) values (event_value)';
-        revoke all on function audit.record_admin_event_probe(text) from public;
         grant execute on function audit.record_admin_event_probe(text) to admin_runtime;
       `,
     );
@@ -410,6 +413,19 @@ test("foundation grants no direct runtime table DML and exposes only reviewed fu
         "admin_runtime",
         "admin-runtime-test-password",
         "update public.runtime_boundary_probe set value = 'denied'",
+      ),
+    );
+    assert.equal(
+      fixture.psql(
+        "select has_function_privilege('identity_runtime', 'identity.unreviewed_identity_probe()', 'execute')",
+      ),
+      "f",
+    );
+    assert.throws(() =>
+      fixture.psqlAs(
+        "identity_runtime",
+        "identity-runtime-test-password",
+        "select identity.unreviewed_identity_probe()",
       ),
     );
 
