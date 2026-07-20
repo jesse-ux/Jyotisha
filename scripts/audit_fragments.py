@@ -21,7 +21,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = ROOT / "references" / "technique_registry.json"
 SCRIPTS_DIR = ROOT / "scripts"
-APP_DIR = ROOT / "jyotish-app"
+APP_DIR = ROOT / "frontend" / "src"
 TESTS_DIR = ROOT / "tests"
 OPEN_SOURCE_DIR = ROOT / "references" / "open_source_sources"
 
@@ -135,9 +135,9 @@ def scan_frontend() -> dict[str, Any]:
     files: list[str] = []
     if APP_DIR.exists():
         for path in APP_DIR.rglob("*"):
-            if any(part in {"node_modules", "dist", ".vite"} for part in path.parts):
+            if any(part in {"node_modules", ".next"} for part in path.parts):
                 continue
-            if path.suffix not in {".js", ".html", ".css"}:
+            if path.suffix not in {".js", ".ts", ".tsx", ".jsx", ".html", ".css"}:
                 continue
             files.append(str(path.relative_to(ROOT)))
             text_parts.append(read_text(path))

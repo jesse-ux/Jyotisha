@@ -165,7 +165,7 @@ def test_p3_p4_domain_layers_affect_judgement_and_technical_debt_is_split() -> N
     assert debt["oracle_parity"]["status"] == "blocked"
 
 
-def test_p5_p6_p7_p8_frontend_batches_oracle_and_hygiene_are_visible() -> None:
+def test_p5_p6_p7_p8_batches_oracle_and_hygiene_are_visible() -> None:
     result = _run_engine(
         "full-reading",
         "--year",
@@ -196,9 +196,3 @@ def test_p5_p6_p7_p8_frontend_batches_oracle_and_hygiene_are_visible() -> None:
     assert snapshot["oracle_parity_queue"]["priority_domains"] == ["Dasha", "Shadbala", "Tajika", "Narayana"]
     assert snapshot["release_hygiene_plan"]["git_sync_required"] is True
     assert snapshot["release_hygiene_plan"]["gc_log_policy"] == "separate_safe_cleanup_plan_required"
-
-    main_js = (ROOT / "jyotish-app" / "main.js").read_text(encoding="utf-8")
-    assert "core source refs" in main_js
-    assert "why confidence downgraded" in main_js
-    assert "next batch queue" in main_js
-    assert "oracle parity" in main_js

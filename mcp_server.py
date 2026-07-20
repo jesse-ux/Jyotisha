@@ -310,13 +310,6 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
         "references/mandatory-verification-gate-protocol.md",
         "references/real-reading-quality-checklist.md",
     ]
-    frontend_interpretation = [
-        "jyotish-app/interpretation.js",
-        "jyotish-app/analysis-deep.js",
-        "jyotish-app/planet-house-details-a.js",
-        "jyotish-app/planet-house-details-b.js",
-        "jyotish-app/planet-house-details-c.js",
-    ]
     qa_governance = [
         "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/qa_rules.md",
     ]
@@ -327,10 +320,6 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
     yoga_rules = [
         "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/yogas.md",
         "references/yoga_rules.json",
-        "jyotish-app/yoga-details-a.js",
-        "jyotish-app/yoga-details-b.js",
-        "jyotish-app/yoga-extended.js",
-        "jyotish-app/yoga-extended-b.js",
     ]
     saham_rules = [
         "references/saham_rules.json",
@@ -341,7 +330,6 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
         *CORE_RULE_SOURCE_REFS,
         *PROMOTE_BATCH2_TOPIC_SOURCE_REFS,
         *REFERENCE_ONLY_CONFLICT_SOURCE_REFS,
-        *frontend_interpretation,
         *qa_governance,
         *reader_validation,
         *yoga_rules,
@@ -359,12 +347,6 @@ def _build_interpretation_source_inventory(source_refs: List[str]) -> Dict[str, 
             "promotion_status": "primary_truth",
             "source_refs": _existing_paths(primary_truth),
             "missing_refs": [path for path in primary_truth if not _repo_relative_exists(path)],
-        },
-        "frontend_interpretation": {
-            "status": "available",
-            "promotion_status": "reference_layer",
-            "source_refs": _existing_paths(frontend_interpretation),
-            "missing_refs": [path for path in frontend_interpretation if not _repo_relative_exists(path)],
         },
         "qa_governance": {
             "status": "available",
@@ -485,22 +467,9 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
     promote_batch2_paths = PROMOTE_BATCH2_TOPIC_SOURCE_REFS
     reference_only_paths = REFERENCE_ONLY_CONFLICT_SOURCE_REFS
     blocked_non_runtime_paths = BLOCKED_NON_RUNTIME_SOURCE_REFS
-    frontend_interpretation_paths = [
-        "jyotish-app/interpretation.js",
-        "jyotish-app/analysis-deep.js",
-    ]
-    planet_house_paths = [
-        "jyotish-app/planet-house-details-a.js",
-        "jyotish-app/planet-house-details-b.js",
-        "jyotish-app/planet-house-details-c.js",
-    ]
     yoga_rule_paths = [
         core_yogas_path,
         "references/yoga_rules.json",
-        "jyotish-app/yoga-details-a.js",
-        "jyotish-app/yoga-details-b.js",
-        "jyotish-app/yoga-extended.js",
-        "jyotish-app/yoga-extended-b.js",
     ]
     saham_rule_paths = [
         "references/saham_rules.json",
@@ -531,8 +500,6 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
         *REAL_CASE_STUDIES_BATCH1_SOURCE_REFS,
         *RISHI_AI_MCP_BATCH1_SOURCE_REFS,
         *VEDIC_ASTRO_SKILLS_BATCH1_SOURCE_REFS,
-        *frontend_interpretation_paths,
-        *planet_house_paths,
         qa_rules_path,
         reader_chart_rules_path,
         reader_validation_rules_path,
@@ -564,7 +531,6 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
             "reference_only_conflict_sources",
             "qa_governance_rules",
             "reader_validation_rules",
-            "frontend_interpretation_layer",
             "yoga_rule_layer",
             "saham_rule_layer",
         ],
@@ -655,18 +621,6 @@ def _existing_interpretation_source_pack() -> Dict[str, Any]:
             "status": "queued",
             "next_batches": REMAINING_PRIORITY1_BATCH_QUEUE,
             "boundary": "Future batches remain audit-only until classified and tested.",
-        },
-        "frontend_interpretation_layer": {
-            "status": "available" if all(_repo_relative_exists(path) for path in frontend_interpretation_paths) else "partial",
-            "source_refs": frontend_interpretation_paths,
-            "promotion_status": "reference_layer",
-        },
-        "frontend_planet_house_details": {
-            "status": "available" if all(_repo_relative_exists(path) for path in planet_house_paths) else "partial",
-            "coverage": "9_planets_x_12_houses",
-            "planet_count": 9,
-            "house_count": 12,
-            "source_refs": planet_house_paths,
         },
         "qa_governance_layer": {
             "status": "available" if _repo_relative_exists(qa_rules_path) else "partial",

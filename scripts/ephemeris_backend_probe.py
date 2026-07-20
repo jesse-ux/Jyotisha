@@ -37,12 +37,7 @@ def _python_module_status(module_name: str) -> dict[str, Any]:
     }
 
 
-def _package_has_dependency(package_text: str, dependency: str) -> bool:
-    return f'"{dependency}"' in package_text or f"'{dependency}'" in package_text
-
-
 def build_probe() -> dict[str, Any]:
-    package_json = _read_text("jyotish-app", "package.json")
     product_gap = _read_text("docs", "research", "product_gap_matrix_2026_06_22.md")
     open_source_scan = _read_text("docs", "research", "open_source_scan_2026_06_22.md")
 
@@ -50,12 +45,6 @@ def build_probe() -> dict[str, Any]:
     swisseph_python_available = swisseph_python_module["available"] and "import swisseph as swe" in _read_text(
         "scripts", "jyotish_api_server.py"
     )
-    swisseph_wasm_files = [
-        "jyotish-app/lib/swisseph-wasm/swisseph.js",
-        "jyotish-app/public/swisseph/swisseph.js",
-    ]
-    swisseph_wasm_available = any(_exists(*path.split("/")) for path in swisseph_wasm_files)
-
     vedastro_local = _exists("references", "open_source_sources", "VedicAstro")
     vedastro_scan = "VedAstro/VedAstro" in open_source_scan or "VedAstro/VedAstro" in product_gap
     external_benchmark_scan = "naturalstupid/PyJHora" in open_source_scan or "PyJHora" in product_gap
@@ -71,21 +60,6 @@ def build_probe() -> dict[str, Any]:
                 swisseph_python_module,
             ],
             "next_step": "keep as canonical longitude source until another backend passes parity cases",
-        },
-        "swisseph_wasm": {
-            "available": bool(swisseph_wasm_available),
-            "replacement_readiness": "fallback",
-            "license_posture": "browser fallback using Swiss Ephemeris WASM assets; same boundary as Swiss Ephemeris",
-            "evidence": [
-                path for path in swisseph_wasm_files if _exists(*path.split("/"))
-            ]
-            + [
-                {
-                    "@swisseph/browser": _package_has_dependency(package_json, "@swisseph/browser"),
-                    "swisseph-wasm": _package_has_dependency(package_json, "swisseph-wasm"),
-                }
-            ],
-            "next_step": "keep for local-first browser degradation, not as a separate accuracy baseline",
         },
         "xalen_ephemeris": {
             "available": False,
@@ -130,7 +104,6 @@ def build_probe() -> dict[str, Any]:
         },
         "replacement_readiness": {
             "primary": ["swisseph_python"],
-            "fallback": ["swisseph_wasm"],
             "spike_only": ["xalen_ephemeris"],
             "service_adapter_candidate": ["vedastro"],
             "benchmark_only": ["external_benchmark_benchmark"],

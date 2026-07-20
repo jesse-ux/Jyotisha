@@ -70,8 +70,6 @@ jobs:
             --exclude='.env.production' \
             --exclude='frontend/node_modules/' \
             --exclude='frontend/.next/' \
-            --exclude='jyotish-app/node_modules/' \
-            --exclude='jyotish-app/dist/' \
             -e "$RSYNC_SSH" \
             ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
 

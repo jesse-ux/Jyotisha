@@ -6,10 +6,9 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/release-quality-gate.yml'
+      - 'frontend/**'
       - 'scripts/run_quality_gate.py'
-      - 'tests/run_frontend_click_smoke.py'
-      - 'tests/run_frontend_runtime_smoke.py'
-      - 'jyotish-app/**'
+      - 'tests/**'
 
 jobs:
   release-quality-gate:
@@ -27,9 +26,9 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
-          cache-dependency-path: jyotish-app/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: |
@@ -37,24 +36,23 @@ jobs:
           python -m pip install -r requirements.txt -r requirements-dev.txt
           python -m pip install playwright
           python -m playwright install --with-deps chromium
-          npm ci --prefix jyotish-app
+          npm ci --prefix frontend
 
       - name: Print environment diagnostics
         run: |
           python --version
           node --version
           npm --version
-          npm --prefix jyotish-app exec -- vite --version
-          python - <<'PY'
-          from pathlib import Path
-          print("frontend node_modules:", (Path("jyotish-app") / "node_modules").exists())
-          print("vite binary:", (Path("jyotish-app") / "node_modules" / ".bin" / "vite").exists())
-          PY
+          npm --prefix frontend exec -- next --version
 
       - name: Run release quality gate
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
         run: |
           mkdir -p artifacts
-          python scripts/run_quality_gate.py --profile release --frontend-click-timeout 240 2>&1 | tee artifacts/release-quality-gate.log
+          python scripts/run_quality_gate.py --profile release 2>&1 | tee artifacts/release-quality-gate.log
+
       - name: Upload release quality gate diagnostics
         if: always()
         uses: actions/upload-artifact@v4

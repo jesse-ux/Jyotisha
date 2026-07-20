@@ -97,16 +97,8 @@ def test_career_strict_contract_attaches_existing_interpretation_source_pack() -
     assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/p1_p12.md" in source_pack["source_refs"]
     assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/house_framework.md" in source_pack["source_refs"]
     assert "references/raman-house-judgment-methodology.md" in source_pack["source_refs"]
-    assert "jyotish-app/planet-house-details-a.js" in source_pack["source_refs"]
     assert source_pack["template_registry"]["template_count"] >= 11
-    assert source_pack["frontend_planet_house_details"]["planet_count"] == 9
-    assert source_pack["frontend_planet_house_details"]["house_count"] == 12
     assert source_pack["interpretation_source_inventory"]["status"] == "used"
-    assert source_pack["frontend_interpretation_layer"]["status"] == "available"
-    assert source_pack["frontend_interpretation_layer"]["source_refs"] == [
-        "jyotish-app/interpretation.js",
-        "jyotish-app/analysis-deep.js",
-    ]
     assert source_pack["yoga_rule_layer"]["status"] == "available"
     assert "references/yoga_rules.json" in source_pack["yoga_rule_layer"]["source_refs"]
     assert source_pack["reader_validation_layer"]["status"] == "available"
@@ -126,7 +118,7 @@ def test_interpretation_source_inventory_classifies_sources_without_promoting_dr
     assert inventory["summary"]["primary_truth_count"] >= 4
     assert inventory["summary"]["reference_layer_count"] >= 4
     assert inventory["summary"]["quarantined_draft_count"] >= 1
-    assert "jyotish-app/interpretation.js" in inventory["layers"]["frontend_interpretation"]["source_refs"]
+    assert "frontend_interpretation" not in inventory["layers"]
     assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/qa_rules.md" in inventory["layers"]["qa_governance"]["source_refs"]
     assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/validation_rules.md" in inventory["layers"]["reader_validation"]["source_refs"]
     assert "references/yoga_rules.json" in inventory["layers"]["yoga_rules"]["source_refs"]

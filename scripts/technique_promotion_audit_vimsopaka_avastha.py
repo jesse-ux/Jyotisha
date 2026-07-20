@@ -17,7 +17,6 @@ def build_audit(root: Path) -> dict:
     full_reading = root / "scripts/full_reading.py"
     api_server = root / "scripts/jyotish_api_server.py"
     deep = root / "scripts/deep_varga_avastha.py"
-    skill_map = root / "jyotish-app/skill-map.js"
     tests = root / "tests/test_cli_smoke.py"
     deep_tests = root / "tests/test_deep_varga_avastha.py"
 
@@ -43,11 +42,10 @@ def build_audit(root: Path) -> dict:
             "main_artifacts": [
                 "scripts/deep_varga_avastha.py",
                 "scripts/jyotish_api_server.py",
-                "jyotish-app/skill-map.js",
                 "tests/test_deep_varga_avastha.py",
             ],
             "historical_artifacts": ["skills/jyotish-engine-modules/scripts/avastha_calculator.py"],
-            "entrypoints": ["/api/deep_varga_avastha", "jyotish-app skill-map deepVargaAvastha"],
+            "entrypoints": ["/api/deep_varga_avastha"],
             "reuse_decision": "do_not_duplicate_runtime",
             "next_action": "add_display_contract_and_source_oracle_packet",
             "claim_boundary": "Avastha is endpoint-visible, but formula variants and interpretive claim level still need source/oracle packet.",

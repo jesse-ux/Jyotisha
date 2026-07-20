@@ -163,6 +163,7 @@ class _PostCaptureHandler(JyotishAPIHandler):
 
 def test_default_cors_origins_are_local_only() -> None:
     assert 'http://localhost:3456' in DEFAULT_ALLOWED_ORIGINS
+    assert 'http://localhost:3000' in DEFAULT_ALLOWED_ORIGINS
     assert '*' not in DEFAULT_ALLOWED_ORIGINS
     assert 'https://example.com' not in DEFAULT_ALLOWED_ORIGINS
 
@@ -1566,21 +1567,13 @@ def test_capability_audit_scans_registry_and_local_sources() -> None:
     assert audit['local_open_source']['source_count'] >= 3
     assert any(source['name'] == 'dashaflow' for source in audit['local_open_source']['sources'])
     assert all(gap.get('command') != 'varga-full' for gap in audit['priority_gaps'])
-    assert 'Muhurta' in audit['surfaces']['app_visible_topics']
-    assert 'Tajika' in audit['surfaces']['app_visible_topics']
-    assert 'Bhava Chalit' in audit['surfaces']['app_visible_topics']
-    assert 'Sudarshana' in audit['surfaces']['app_visible_topics']
-    assert 'Jaimini' in audit['surfaces']['app_visible_topics']
-    assert 'Ashtakavarga' in audit['surfaces']['app_visible_topics']
-    assert 'Shadbala' in audit['surfaces']['app_visible_topics']
-    assert 'Yoga' in audit['surfaces']['app_visible_topics']
-    assert 'Aspects' in audit['surfaces']['app_visible_topics']
-    assert 'Birth Rectification' in audit['surfaces']['app_visible_topics']
-    assert 'Case Validation' in audit['surfaces']['app_visible_topics']
-    assert 'Divisional Yoga' in audit['surfaces']['app_visible_topics']
-    assert 'Kakshya' in audit['surfaces']['app_visible_topics']
+    assert audit['surfaces']['app_routes'] == ['admin/codes', 'home', 'login']
+    assert set(audit['surfaces']['app_visible_topics']) == {
+        'Birth Rectification',
+        'Synastry 16-factor',
+    }
     assert '/api/deep_varga_avastha' in audit['surfaces']['api_endpoints']
-    assert all(gap['kind'] != 'app_visibility' for gap in audit['priority_gaps'])
+    assert any(gap['kind'] == 'app_visibility' for gap in audit['priority_gaps'])
     productization = audit['productization']
     summary = productization['summary']
     assert sum(summary.values()) == audit['registry']['technique_count']
@@ -1598,22 +1591,30 @@ def test_capability_audit_scans_registry_and_local_sources() -> None:
     }
     assert sum(ux['summary'].values()) == audit['registry']['technique_count']
     assert ux['rows']
-    assert ux['summary']['excellent'] == audit['registry']['technique_count']
+    assert ux['summary']['excellent'] == summary['productized']
     assert ux['summary']['usable'] == 0
-    assert ux['summary']['thin'] == 0
+    assert ux['summary']['thin'] == summary['api_backed'] + summary['engine_or_full_reading']
     assert ux['summary']['not_user_ready'] == 0
     assert all(0 <= row['ux_score'] <= 6 for row in ux['rows'])
     assert all('ux_next_action' in row for row in ux['next_queue'])
     ux_by_id = {row['id']: row for row in ux['rows']}
     assert ux_by_id['birth_time_rectifier']['ux_level'] in {'excellent', 'usable'}
-    assert ux_by_id['case_validator']['ux_level'] in {'excellent', 'usable'}
-    assert ux_by_id['divisional_yoga']['ux_level'] in {'excellent', 'usable'}
-    assert ux_by_id['deep_varga_avastha']['ux_level'] in {'excellent', 'usable'}
-    assert ux_by_id['kakshya']['ux_level'] in {'excellent', 'usable'}
-    for technique_id in ['ashtakavarga_pav', 'ashtakavarga_sodhita', 'remedies']:
-        assert ux_by_id[technique_id]['ux_level'] == 'excellent'
-    for technique_id in ['bhava_bala', 'career_engine', 'kp_system', 'prashna', 'synastry_16factor', 'transit_trigger']:
-        assert ux_by_id[technique_id]['ux_level'] in {'excellent', 'usable'}
+    assert ux_by_id['synastry_16factor']['ux_level'] == 'excellent'
+    for technique_id in [
+        'ashtakavarga_pav',
+        'ashtakavarga_sodhita',
+        'bhava_bala',
+        'career_engine',
+        'case_validator',
+        'deep_varga_avastha',
+        'divisional_yoga',
+        'kakshya',
+        'kp_system',
+        'prashna',
+        'remedies',
+        'transit_trigger',
+    ]:
+        assert ux_by_id[technique_id]['ux_level'] == 'thin'
 
 
 def test_technique_catalog_exposes_runnable_api_examples() -> None:

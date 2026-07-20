@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 印度占星 API 服务器 v1.0
-为 jyotish-app 前端提供 v6.9.14 引擎的精算能力
+为 Next.js 产品前端提供 v6.9.14 引擎的精算能力
 
 启动: python3 scripts/jyotish_api_server.py --port 5200
 """
@@ -1304,8 +1304,8 @@ DEFAULT_ALLOWED_ORIGINS = {
     'http://127.0.0.1:3456',
     'http://localhost:3457',
     'http://127.0.0.1:3457',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
 }
 DEFAULT_ALLOWED_HOSTS = {'localhost', '127.0.0.1', '::1'}
 MAX_REQUEST_BYTES = 2 * 1024 * 1024
@@ -7582,7 +7582,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         techniques = registry.get('techniques', {})
         engine_commands = self._scan_engine_commands()
         api_endpoints = self._scan_api_endpoints()
-        app_tabs = self._scan_app_tabs()
+        app_routes = self._scan_app_routes()
         local_sources = self._scan_local_open_source_sources()
         command_set = set(engine_commands)
         api_command_map = API_COMMAND_MAP
@@ -7591,7 +7591,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             for command, endpoint in api_command_map.items()
             if endpoint in api_endpoints or command in command_set
         )
-        app_visible_topics = self._app_visible_topics(app_tabs)
+        app_visible_topics = self._app_visible_topics()
         registry_commands = sorted({
             command
             for technique in techniques.values()
@@ -7652,8 +7652,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'api_backed_commands': api_backed_commands,
                 'engine_not_api': engine_not_api,
                 'registry_only_commands': registry_only_commands,
-                'app_tab_count': len(app_tabs),
-                'app_tabs': app_tabs,
+                'app_route_count': len(app_routes),
+                'app_routes': app_routes,
                 'app_visible_topics': app_visible_topics,
             },
             'local_open_source': {
@@ -8111,33 +8111,40 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             return []
         return sorted(set(re.findall(r"path == ['\"](/api/[^'\"]+)['\"]", text)))
 
-    def _scan_app_tabs(self):
-        path = os.path.join(REPO_ROOT, 'jyotish-app', 'index.html')
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                text = f.read()
-        except OSError:
+    def _scan_app_routes(self):
+        root = os.path.join(REPO_ROOT, 'frontend', 'src', 'app')
+        if not os.path.isdir(root):
             return []
-        return sorted(set(re.findall(r'data-tab="([^"]+)"', text)))
+        routes = []
+        for dirpath, _, filenames in os.walk(root):
+            if not {'page.tsx', 'page.ts', 'page.jsx', 'page.js'}.intersection(filenames):
+                continue
+            relative = os.path.relpath(dirpath, root)
+            routes.append('home' if relative == '.' else relative.replace(os.sep, '/'))
+        return sorted(set(routes))
 
     def _scan_app_source_text(self):
-        root = os.path.join(REPO_ROOT, 'jyotish-app')
-        if not os.path.isdir(root):
-            return ''
+        roots = [
+            os.path.join(REPO_ROOT, 'frontend', 'src', 'app'),
+            os.path.join(REPO_ROOT, 'frontend', 'src', 'components'),
+        ]
         chunks = []
-        for dirpath, dirnames, filenames in os.walk(root):
-            dirnames[:] = [
-                d for d in dirnames
-                if d not in {'node_modules', 'dist', '.vite', '.git'}
-            ]
-            for filename in filenames:
-                if not filename.endswith(('.js', '.html', '.css')):
-                    continue
-                try:
-                    with open(os.path.join(dirpath, filename), 'r', encoding='utf-8', errors='ignore') as f:
-                        chunks.append(f.read(40000))
-                except OSError:
-                    continue
+        for root in roots:
+            if not os.path.isdir(root):
+                continue
+            for dirpath, dirnames, filenames in os.walk(root):
+                dirnames[:] = [
+                    d for d in dirnames
+                    if d not in {'api', 'node_modules', '.next', '.git'}
+                ]
+                for filename in filenames:
+                    if not filename.endswith(('.js', '.jsx', '.ts', '.tsx', '.html', '.css')):
+                        continue
+                    try:
+                        with open(os.path.join(dirpath, filename), 'r', encoding='utf-8', errors='ignore') as f:
+                            chunks.append(f.read(40000))
+                    except OSError:
+                        continue
         return '\n'.join(chunks).lower()
 
     def _scan_local_open_source_sources(self):
@@ -8258,29 +8265,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 found.append(module)
         return found
 
-    def _app_visible_topics(self, tabs):
-        mapping = {
-            'chart': 'D1/Rashi',
-            'complete': 'Full Reading',
-            'karaka': 'Jaimini Karaka',
-            'houses': 'Bhava',
-            'aspects': 'Aspects',
-            'yogas': 'Yoga',
-            'vargas': 'Varga',
-            'ashtakavarga': 'Ashtakavarga',
-            'shadbala': 'Shadbala',
-            'dasha': 'Dasha',
-            'transit': 'Transit',
-            'deep': 'PACDARES/Argala',
-            'extended': 'Bhava Bala/Vimsopaka',
-            'remedies': 'Remedies',
-            'synastry': 'Synastry',
-            'prashna': 'Prashna',
-            'kp': 'KP',
-            'verify': 'Verification',
-            'transit-compare': 'Transit Compare',
-        }
-        topics = [mapping[t] for t in tabs if t in mapping]
+    def _app_visible_topics(self):
+        topics = []
         source_text = self._scan_app_source_text()
         source_markers = {
             'Muhurta': ['computemuhurta', 'muhurta'],
