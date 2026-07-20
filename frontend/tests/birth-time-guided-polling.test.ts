@@ -8,6 +8,15 @@ import { parseJourneyResponse } from "../src/lib/birth-time-journey-client.ts";
 import { highConfirmationTurn } from "./birth-time-journey-client-test-support.ts";
 
 const completedTurn = parseJourneyResponse(highConfirmationTurn);
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((settle) => {
+    resolve = settle;
+  });
+  return { promise, resolve };
+}
+
 const pendingTurn = parseJourneyResponse({
   ...highConfirmationTurn,
   snapshot: {
@@ -28,10 +37,10 @@ test("polling is sequential and returns the first completed turn", async () => {
   let active = 0;
   let peak = 0;
   let calls = 0;
-  const entered = Array.from({ length: 3 }, () => Promise.withResolvers<void>());
+  const entered = Array.from({ length: 3 }, () => deferred<void>());
   const gates = Array.from(
     { length: 3 },
-    () => Promise.withResolvers<typeof pendingTurn | typeof completedTurn>(),
+    () => deferred<typeof pendingTurn | typeof completedTurn>(),
   );
   const running = runBirthTimeScoringPoll({
     initial: pendingTurn,
@@ -99,7 +108,7 @@ test("bounded polling preserves the pending turn instead of inventing completion
 });
 
 test("duplicate option clicks publish one advanced turn", async () => {
-  const gate = Promise.withResolvers<typeof completedTurn>();
+  const gate = deferred<typeof completedTurn>();
   const sent: string[] = [];
   const published: typeof completedTurn[] = [];
   const lock = { current: false };
