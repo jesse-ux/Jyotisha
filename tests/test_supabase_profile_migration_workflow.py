@@ -27,6 +27,7 @@ def test_profile_migration_workflow_includes_chart_library_and_birth_time_profil
     assert "20260718100000_repair_missing_chart_profiles.sql" in text
     assert "20260718102000_recover_missing_profile_rows.sql" in text
     assert "20260718103000_profile_birth_time_declaration_grants.sql" in text
+    assert "20260718104000_chart_profiles_upsert_id_grant.sql" in text
 
 
 def test_profile_migration_workflow_does_not_reference_missing_sql_files() -> None:
