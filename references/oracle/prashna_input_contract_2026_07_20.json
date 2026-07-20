@@ -1,0 +1,42 @@
+{
+  "claim_boundary": "Input contract only; does not validate Prashna predictions or external numeric parity.",
+  "claim_status": "ready_contract",
+  "created_at": "2026-07-20",
+  "optional_fields": [
+    "question_text",
+    "querent_id",
+    "house_focus",
+    "language"
+  ],
+  "production_tuning_allowed": false,
+  "required_fields": [
+    {
+      "boundary": "exact time question is received/accepted",
+      "field": "question_datetime_local",
+      "format": "YYYY-MM-DDTHH:MM:SS"
+    },
+    {
+      "boundary": "place of querent/astrologer must be explicit",
+      "field": "location",
+      "format": "lat/lon + place label"
+    },
+    {
+      "boundary": "no implicit local machine timezone",
+      "field": "timezone",
+      "format": "IANA or UTC offset"
+    },
+    {
+      "boundary": "default must be recorded, e.g. Lahiri",
+      "field": "ayanamsa",
+      "format": "named sidereal ayanamsa"
+    },
+    {
+      "boundary": "Rahu/Ketu mode must be frozen",
+      "field": "node_mode",
+      "format": "mean|true"
+    }
+  ],
+  "scope": "prashna_input_contract",
+  "status": "contract_ready",
+  "truth_matrix_allowed": false
+}

@@ -665,14 +665,46 @@
       "claim_status": "source_intake_only",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Triage of public KP, Muhurta, and Shadbala source candidates; no source is oracle-ready until raw capture, exact settings, expected values, hash, and replay comparison are archived."
+    },
+    {
+      "packet_id": "real_case_website_e2e_eval_2026_07_20",
+      "path": "references/real_case_calibration/real_case_website_e2e_eval_2026_07_20.json",
+      "domain": "real_case_website_e2e",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "20 public real-case website E2E quality contract; product QA only, not an accuracy benchmark or independent holdout."
+    },
+    {
+      "packet_id": "prashna_input_contract_2026_07_20",
+      "path": "references/oracle/prashna_input_contract_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Prashna input contract only; requires explicit time/place/timezone/ayanamsa/node, not predictive truth."
+    },
+    {
+      "packet_id": "prashna_numeric_oracle_packet_queue_2026_07_20",
+      "path": "references/oracle/prashna_numeric_oracle_packet_queue_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Public numeric Prashna/Sphuta candidates remain open queue until complete input/settings/raw hash/replay close."
+    },
+    {
+      "packet_id": "muhurta_numeric_candidate_capture_packet_2026_07_20",
+      "path": "references/oracle/muhurta_numeric_candidate_capture_packet_2026_07_20.json",
+      "domain": "muhurta_factor_scoring",
+      "claim_status": "source_intake_only",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Stages two Muhurta numeric candidates for raw page capture; does not calculate, replay, or validate Muhurta verdicts."
     }
   ],
   "production_tuning_allowed": false,
   "scope": "evidence_packet_index",
   "status": "active_index_v1",
   "summary": {
-    "packet_count": 83,
-    "blocked_or_partial_count": 55,
+    "packet_count": 87,
+    "blocked_or_partial_count": 56,
     "human_review_required_count": 2
   }
 }

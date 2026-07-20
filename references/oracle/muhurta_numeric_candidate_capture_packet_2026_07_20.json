@@ -1,0 +1,75 @@
+{
+  "boundary": "Capture packet staging only; does not calculate or validate Muhurta verdicts.",
+  "capture_rows": [
+    {
+      "canonical_request_hash": "5bcdcf51cdd8a7bb42a3fab019eaffacf3a562904f69c25b65c1ba559b41f602",
+      "claim_boundary": "Numeric-looking public source; not oracle-ready until raw page, exact settings, hash, and local replay comparison are archived.",
+      "domain": "muhurta_factor_scoring",
+      "missing_for_oracle": [
+        "raw_capture_hash",
+        "exact_date_selection",
+        "timezone",
+        "sunrise",
+        "formula_weight_contract",
+        "exact_method_settings",
+        "replay_comparison"
+      ],
+      "next_artifact_path": "references/oracle/artifacts/mypanchang_edison_2025_panchangam_raw_capture_packet.json",
+      "observed_numeric_fields": [
+        "tarabalam periods",
+        "chandrabalam periods",
+        "nakshatra",
+        "rasi",
+        "tithi",
+        "yoga",
+        "karana"
+      ],
+      "raw_capture_status": "pending_raw_page_capture",
+      "source_id": "mypanchang_edison_2025_panchangam",
+      "source_observation_hash": "d57a30a4da43bb5ee92f16b6d8e2f6df099854a1cab1a2f95f72efea16dd9671",
+      "topic": "Tarabala/Chandrabala/Panchangam daily factors",
+      "upgrade_status": "not_oracle_ready",
+      "url": "https://www.mypanchang.com/phppanchang.php?cityhead=&cityname=Edison-NJ&mn=04&monthtype=1&yr=2025"
+    },
+    {
+      "canonical_request_hash": "b6110c7ab7a6346f42671a1c46fb6d81286483ea2e9a3808dd02367742ed06df",
+      "claim_boundary": "Numeric-looking public source; not oracle-ready until raw page, exact settings, hash, and local replay comparison are archived.",
+      "domain": "muhurta_factor_scoring",
+      "missing_for_oracle": [
+        "raw_capture_hash",
+        "sunrise",
+        "sunset",
+        "timezone",
+        "calculation_rule_replay",
+        "exact_method_settings",
+        "replay_comparison"
+      ],
+      "next_artifact_path": "references/oracle/artifacts/drikpanchang_mumbai_rahu_2026_07_20_raw_capture_packet.json",
+      "observed_numeric_fields": [
+        "rahu kalam interval",
+        "weekday",
+        "city/date scoped daily table"
+      ],
+      "raw_capture_status": "pending_raw_page_capture",
+      "source_id": "drikpanchang_mumbai_rahu_2026_07_20",
+      "source_observation_hash": "a7a4c1f5ba3fe872af645cddab962eba9fe4e0f697eee5d3bfca73951a571a8a",
+      "topic": "Rahu Kalam daily interval",
+      "upgrade_status": "not_oracle_ready",
+      "url": "https://www.drikpanchang.com/muhurat/rahu-kalam.html?date=20/07/2026&geoname-id=1275339"
+    }
+  ],
+  "claim_status": "source_intake_only",
+  "created_at": "2026-07-20",
+  "production_tuning_allowed": false,
+  "scope": "muhurta_numeric_candidate_capture_packet",
+  "sources": {
+    "source_triage": "references/oracle/public_worked_example_source_triage_2026_07_20.json"
+  },
+  "status": "capture_packet_ready",
+  "summary": {
+    "candidate_count": 2,
+    "oracle_ready_count": 0,
+    "pending_raw_capture_count": 2
+  },
+  "truth_matrix_allowed": false
+}
