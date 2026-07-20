@@ -169,6 +169,129 @@ begin
 end;
 $$;
 
+create or replace function public.conversational_rectification_case_fits_load_limits(
+  p_user_id uuid,
+  p_case_id uuid,
+  p_status text,
+  p_turn_version bigint,
+  p_latest_turn jsonb,
+  p_private_candidate jsonb,
+  p_new_evidence jsonb,
+  p_validation_receipt jsonb
+)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_evidence_count bigint;
+  v_receipt_count bigint;
+  v_existing_evidence jsonb;
+  v_new_evidence jsonb;
+  v_validation_receipts jsonb;
+  v_projection jsonb;
+begin
+  if public.conversational_rectification_valid_public_turn(p_latest_turn) is not true
+    or public.conversational_rectification_valid_private_candidate(
+      p_private_candidate
+    ) is not true
+    or public.conversational_rectification_valid_life_event_evidence_array(
+      p_new_evidence
+    ) is not true
+    or public.conversational_rectification_valid_validation_receipt(
+      p_validation_receipt
+    ) is not true then
+    return false;
+  end if;
+
+  select pg_catalog.count(*) into v_evidence_count
+  from public.birth_time_rectification_event_evidence evidence
+  where evidence.case_id = p_case_id;
+  select pg_catalog.count(*) into v_receipt_count
+  from public.birth_time_rectification_turns turn
+  where turn.case_id = p_case_id;
+  if v_evidence_count + pg_catalog.jsonb_array_length(p_new_evidence) > 2000
+    or v_receipt_count + 1 > 2000 then
+    return false;
+  end if;
+
+  select coalesce(pg_catalog.jsonb_agg(
+    pg_catalog.jsonb_build_object(
+      'id', evidence.id,
+      'rawText', evidence.raw_text,
+      'domain', evidence.domain,
+      'eventSummary', evidence.event_summary,
+      'dateValue', evidence.date_value,
+      'datePrecision', evidence.date_precision,
+      'extractionStatus', evidence.extraction_status,
+      'scoreable', evidence.scoreable
+    ) order by evidence.created_at, evidence.id
+  ), '[]'::jsonb) into v_existing_evidence
+  from public.birth_time_rectification_event_evidence evidence
+  where evidence.case_id = p_case_id;
+
+  select coalesce(pg_catalog.jsonb_agg(
+    pg_catalog.jsonb_build_object(
+      'id', item.value ->> 'id',
+      'rawText', item.value ->> 'rawText',
+      'domain', item.value ->> 'domain',
+      'eventSummary', item.value ->> 'eventSummary',
+      'dateValue', case
+        when item.value -> 'dateValue' = 'null'::jsonb then null
+        else item.value ->> 'dateValue'
+      end,
+      'datePrecision', item.value ->> 'datePrecision',
+      'extractionStatus', item.value ->> 'extractionStatus',
+      'scoreable', case
+        when item.value ? 'scoreable' then (item.value ->> 'scoreable')::boolean
+        else false
+      end
+    ) order by item.ordinality
+  ), '[]'::jsonb) into v_new_evidence
+  from pg_catalog.jsonb_array_elements(p_new_evidence) with ordinality item(value, ordinality);
+
+  select coalesce(pg_catalog.jsonb_agg(
+    turn.output_validation_receipt order by turn.turn_version
+  ), '[]'::jsonb) || pg_catalog.jsonb_build_array(p_validation_receipt)
+  into v_validation_receipts
+  from public.birth_time_rectification_turns turn
+  where turn.case_id = p_case_id;
+
+  select pg_catalog.jsonb_build_object(
+    'case_id', c.id,
+    'user_id', c.user_id,
+    'status', p_status,
+    'turn_version', p_turn_version,
+    'revision_of_case_id', c.revision_of_case_id,
+    'imported_from_case_id', c.imported_from_case_id,
+    'baseline_active_time', case when c.baseline_active_time is null then null
+      else pg_catalog.to_char(c.baseline_active_time, 'HH24:MI') end,
+    'pending_consultation_question', c.pending_consultation_question,
+    'billing_state', billing.state,
+    'latest_turn', p_latest_turn,
+    'declared_birth_input', c.declared_birth_input,
+    'private_candidate', p_private_candidate,
+    'event_evidence', v_existing_evidence || v_new_evidence,
+    'validation_receipts', v_validation_receipts
+  ) into v_projection
+  from public.birth_time_rectification_cases c
+  left join public.birth_time_rectification_billing billing
+    on billing.case_id = c.id and billing.user_id = c.user_id
+  where c.id = p_case_id
+    and c.user_id = p_user_id
+    and c.journey_protocol = 'conversational-evidence-v3';
+
+  return v_evidence_count + pg_catalog.jsonb_array_length(p_new_evidence) <= 2000
+    and v_receipt_count + 1 <= 2000
+    and v_projection is not null
+    and pg_catalog.octet_length(v_projection::text) <= 4194304;
+exception when others then
+  return false;
+end;
+$$;
+
 create or replace function public.create_conversational_rectification_case(
   p_user_id uuid,
   p_case_id uuid,
@@ -435,11 +558,16 @@ begin
   end if;
 
   if v_case.status not in ('active', 'paused', 'confirming')
-    or pg_catalog.jsonb_typeof(p_turn) is distinct from 'object'
-    or pg_catalog.jsonb_typeof(p_evidence) is distinct from 'array'
-    or pg_catalog.jsonb_array_length(p_evidence) > 20
-    or pg_catalog.jsonb_typeof(p_validation_receipt) is distinct from 'object'
-    or pg_catalog.jsonb_typeof(p_private_candidate) is distinct from 'object'
+    or public.conversational_rectification_valid_public_turn(p_turn) is not true
+    or public.conversational_rectification_valid_life_event_evidence_array(
+      p_evidence
+    ) is not true
+    or public.conversational_rectification_valid_validation_receipt(
+      p_validation_receipt
+    ) is not true
+    or public.conversational_rectification_valid_private_candidate(
+      p_private_candidate
+    ) is not true
     or p_turn ->> 'caseId' is distinct from p_case_id::text
     or p_turn ->> 'journeyProtocol' is distinct from 'conversational-evidence-v3'
     or (p_turn ->> 'turnVersion')::bigint is distinct from p_expected_version + 1
@@ -451,6 +579,12 @@ begin
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.partitionId')
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.rawModelOutput')
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.systemPrompt') then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
+  end if;
+  if public.conversational_rectification_case_fits_load_limits(
+    p_user_id, p_case_id, p_turn ->> 'status', p_expected_version + 1,
+    p_turn, p_private_candidate, p_evidence, p_validation_receipt
+  ) is not true then
     raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
 
@@ -473,9 +607,12 @@ begin
   select
     (item ->> 'id')::uuid, p_case_id, v_turn_id, item ->> 'rawText',
     item ->> 'domain', item ->> 'eventSummary',
-    nullif(item ->> 'dateValue', ''), item ->> 'datePrecision',
+    case when item -> 'dateValue' = 'null'::jsonb then null
+      else item ->> 'dateValue' end,
+    item ->> 'datePrecision',
     item ->> 'extractionStatus',
-    coalesce((item ->> 'scoreable')::boolean, false)
+    case when item ? 'scoreable' then (item ->> 'scoreable')::boolean
+      else false end
   from pg_catalog.jsonb_array_elements(p_evidence) item;
 
   update public.birth_time_rectification_cases
@@ -576,8 +713,10 @@ begin
     raise exception 'conversational_billing_failed' using errcode = 'P0001';
   end if;
   if v_case.status not in ('active', 'confirming')
-    or pg_catalog.jsonb_typeof(p_turn) is distinct from 'object'
-    or pg_catalog.jsonb_typeof(p_validation_receipt) is distinct from 'object'
+    or public.conversational_rectification_valid_public_turn(p_turn) is not true
+    or public.conversational_rectification_valid_validation_receipt(
+      p_validation_receipt
+    ) is not true
     or p_turn ->> 'caseId' is distinct from p_case_id::text
     or p_turn ->> 'journeyProtocol' is distinct from 'conversational-evidence-v3'
     or (p_turn ->> 'turnVersion')::bigint is distinct from p_expected_version + 1
@@ -589,6 +728,12 @@ begin
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.partitionId')
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.rawModelOutput')
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.systemPrompt') then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
+  end if;
+  if public.conversational_rectification_case_fits_load_limits(
+    p_user_id, p_case_id, 'paused', p_expected_version + 1,
+    p_turn, v_case.candidate_result, '[]'::jsonb, p_validation_receipt
+  ) is not true then
     raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
 
@@ -693,8 +838,10 @@ begin
     raise exception 'conversational_billing_failed' using errcode = 'P0001';
   end if;
   if v_case.status not in ('active', 'paused', 'confirming')
-    or pg_catalog.jsonb_typeof(p_turn) is distinct from 'object'
-    or pg_catalog.jsonb_typeof(p_validation_receipt) is distinct from 'object'
+    or public.conversational_rectification_valid_public_turn(p_turn) is not true
+    or public.conversational_rectification_valid_validation_receipt(
+      p_validation_receipt
+    ) is not true
     or p_turn ->> 'caseId' is distinct from p_case_id::text
     or p_turn ->> 'journeyProtocol' is distinct from 'conversational-evidence-v3'
     or (p_turn ->> 'turnVersion')::bigint is distinct from p_expected_version + 1
@@ -706,6 +853,12 @@ begin
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.partitionId')
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.rawModelOutput')
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.systemPrompt') then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
+  end if;
+  if public.conversational_rectification_case_fits_load_limits(
+    p_user_id, p_case_id, 'abandoned', p_expected_version + 1,
+    p_turn, v_case.candidate_result, '[]'::jsonb, p_validation_receipt
+  ) is not true then
     raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
 
@@ -848,8 +1001,10 @@ begin
     or v_current_turn.candidate ->> 'representativeTime' is distinct from v_time
     or v_current_turn.technical_receipt ->> 'calculationVersion'
       is distinct from p_calculation_version
-    or pg_catalog.jsonb_typeof(p_turn) is distinct from 'object'
-    or pg_catalog.jsonb_typeof(p_validation_receipt) is distinct from 'object'
+    or public.conversational_rectification_valid_public_turn(p_turn) is not true
+    or public.conversational_rectification_valid_validation_receipt(
+      p_validation_receipt
+    ) is not true
     or p_turn ->> 'caseId' is distinct from p_case_id::text
     or p_turn ->> 'journeyProtocol' is distinct from 'conversational-evidence-v3'
     or (p_turn ->> 'turnVersion')::bigint is distinct from p_expected_version + 1
@@ -866,6 +1021,12 @@ begin
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.rawModelOutput')
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.systemPrompt') then
     raise exception 'conversational_candidate_changed' using errcode = 'P0001';
+  end if;
+  if public.conversational_rectification_case_fits_load_limits(
+    p_user_id, p_case_id, 'completed', p_expected_version + 1,
+    p_turn, v_case.candidate_result, '[]'::jsonb, p_validation_receipt
+  ) is not true then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
 
   insert into public.birth_time_rectification_turns (
@@ -1036,6 +1197,11 @@ begin
   if not found then
     raise exception 'conversational_case_not_found' using errcode = 'P0001';
   end if;
+  v_profile.credits :=
+    public.recover_conversational_rectification_orphan_reservations(
+      p_user_id,
+      null::uuid
+    );
   -- Preserve an explicit nullable clue while omitting inapplicable time-mode
   -- keys. This yields the same source-discriminated representation accepted
   -- by new starts and keeps legacy import round-trippable across devices.
@@ -1168,6 +1334,9 @@ revoke all on function public.guard_imported_rectification_history()
   from public, anon, authenticated, service_role;
 revoke all on function public.conversational_rectification_case_projection(uuid, uuid)
   from public, anon, authenticated, service_role;
+revoke all on function public.conversational_rectification_case_fits_load_limits(
+  uuid, uuid, text, bigint, jsonb, jsonb, jsonb, jsonb
+) from public, anon, authenticated, service_role;
 
 revoke all on function public.load_conversational_rectification_case(uuid, uuid)
   from public, anon, authenticated;

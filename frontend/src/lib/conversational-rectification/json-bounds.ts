@@ -1,5 +1,32 @@
 import { z } from "zod";
 
+const POSTGRES_JSON_DECIMAL_SCALE = 1_000_000;
+const POSTGRES_JSON_MIN_FRACTION = 1 / POSTGRES_JSON_DECIMAL_SCALE;
+const POSTGRES_JSON_MAX_FRACTION_MAGNITUDE = 1_000_000;
+
+function postgresStableJsonNumber(value: number): boolean {
+  if (!Number.isFinite(value)) return false;
+  if (Number.isSafeInteger(value)) return true;
+  const magnitude = Math.abs(value);
+  return magnitude >= POSTGRES_JSON_MIN_FRACTION
+    && magnitude <= POSTGRES_JSON_MAX_FRACTION_MAGNITUDE
+    && Number.isSafeInteger(value * POSTGRES_JSON_DECIMAL_SCALE);
+}
+
+function postgresJsonNumbersAreStable(
+  value: unknown,
+  ancestors: Set<object> = new Set<object>(),
+): boolean {
+  if (typeof value === "number") return postgresStableJsonNumber(value);
+  if (value === null || typeof value !== "object") return true;
+  if (ancestors.has(value)) return false;
+  ancestors.add(value);
+  const values = Array.isArray(value) ? value : Object.values(value);
+  const stable = values.every((item) => postgresJsonNumbersAreStable(item, ancestors));
+  ancestors.delete(value);
+  return stable;
+}
+
 function postgresSeparatorBytes(value: unknown): number {
   if (Array.isArray(value)) {
     return Math.max(0, value.length - 1)
@@ -13,9 +40,15 @@ function postgresSeparatorBytes(value: unknown): number {
   return 0;
 }
 
-/** Matches PostgreSQL jsonb::text, which adds one space after each comma and colon. */
+/**
+ * Matches PostgreSQL jsonb::text for the durable numeric contract: safe
+ * integers or nonzero decimals with at most six places and magnitude <= 1e6.
+ * PostgreSQL expands exponent-form numerics, so values outside that contract
+ * return Infinity instead of undercounting their durable representation.
+ */
 export function postgresJsonbTextBytes(value: unknown): number {
   try {
+    if (!postgresJsonNumbersAreStable(value)) return Number.POSITIVE_INFINITY;
     const compact = JSON.stringify(value);
     if (compact === undefined) return Number.POSITIVE_INFINITY;
     const serializedValue: unknown = JSON.parse(compact);

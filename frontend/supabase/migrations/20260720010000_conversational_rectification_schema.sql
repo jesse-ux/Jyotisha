@@ -58,6 +58,60 @@ exception when others then
 end;
 $$;
 
+create or replace function public.conversational_rectification_text_is_nonblank(
+  p_value text
+)
+returns boolean
+language sql
+immutable
+strict
+set search_path = ''
+as $$
+  select pg_catalog.char_length(pg_catalog.btrim(
+    p_value,
+    U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF'
+  )) > 0;
+$$;
+
+create or replace function public.conversational_rectification_numbers_are_stable(
+  p_value jsonb
+)
+returns boolean
+language plpgsql
+immutable
+strict
+set search_path = ''
+as $$
+declare
+  v_item jsonb;
+  v_number numeric;
+begin
+  if pg_catalog.jsonb_typeof(p_value) = 'number' then
+    v_number := (p_value #>> '{}')::numeric;
+    if v_number = pg_catalog.trunc(v_number) then
+      return pg_catalog.abs(v_number) <= 9007199254740991;
+    end if;
+    return pg_catalog.abs(v_number) between 0.000001 and 1000000
+      and v_number = pg_catalog.trunc(v_number, 6);
+  elsif pg_catalog.jsonb_typeof(p_value) = 'array' then
+    for v_item in select value from pg_catalog.jsonb_array_elements(p_value) loop
+      if public.conversational_rectification_numbers_are_stable(v_item) is not true then
+        return false;
+      end if;
+    end loop;
+  elsif pg_catalog.jsonb_typeof(p_value) = 'object' then
+    for v_item in select value from pg_catalog.jsonb_each(p_value) loop
+      if public.conversational_rectification_numbers_are_stable(v_item) is not true then
+        return false;
+      end if;
+    end loop;
+  end if;
+  return true;
+exception when others then
+  return false;
+end;
+$$;
+
 create or replace function public.conversational_rectification_text_array_is_bounded(
   p_value jsonb,
   p_max_items integer,
@@ -94,6 +148,7 @@ declare
 begin
   if pg_catalog.jsonb_typeof(p_value) is distinct from 'object'
     or pg_catalog.octet_length(p_value::text) > 512
+    or public.conversational_rectification_numbers_are_stable(p_value) is not true
     or not public.conversational_rectification_has_only_keys(
       p_value,
       array['status', 'representativeTime', 'rangeStart', 'rangeEnd']::text[]
@@ -130,6 +185,7 @@ set search_path = ''
 as $$
   select pg_catalog.jsonb_typeof(p_value) = 'object'
     and pg_catalog.octet_length(p_value::text) <= 8192
+    and public.conversational_rectification_numbers_are_stable(p_value)
     and public.conversational_rectification_has_only_keys(
       p_value,
       array[
@@ -166,6 +222,7 @@ set search_path = ''
 as $$
   select pg_catalog.jsonb_typeof(p_value) = 'object'
     and pg_catalog.octet_length(p_value::text) <= 2048
+    and public.conversational_rectification_numbers_are_stable(p_value)
     and public.conversational_rectification_has_only_keys(
       p_value,
       array['domains', 'datePrecision', 'freeTextAllowed']::text[]
@@ -193,6 +250,7 @@ set search_path = ''
 as $$
   select pg_catalog.jsonb_typeof(p_value) = 'array'
     and pg_catalog.octet_length(p_value::text) <= 24576
+    and public.conversational_rectification_numbers_are_stable(p_value)
     and pg_catalog.jsonb_array_length(p_value) <= 20
     and not exists (
       select 1
@@ -223,6 +281,7 @@ set search_path = ''
 as $$
   select pg_catalog.jsonb_typeof(p_value) = 'array'
     and pg_catalog.octet_length(p_value::text) <= 512
+    and public.conversational_rectification_numbers_are_stable(p_value)
     and pg_catalog.jsonb_array_length(p_value) <= 5
     and not exists (
       select 1
@@ -245,6 +304,7 @@ as $$
 begin
   if pg_catalog.jsonb_typeof(p_value) is distinct from 'object'
     or pg_catalog.octet_length(p_value::text) > 8192
+    or public.conversational_rectification_numbers_are_stable(p_value) is not true
     or not public.conversational_rectification_has_only_keys(
       p_value,
       array[
@@ -289,6 +349,103 @@ exception when others then
 end;
 $$;
 
+create or replace function public.conversational_rectification_valid_life_event_evidence(
+  p_value jsonb
+)
+returns boolean
+language plpgsql
+immutable
+strict
+set search_path = ''
+as $$
+begin
+  if pg_catalog.jsonb_typeof(p_value) is distinct from 'object'
+    or pg_catalog.octet_length(p_value::text) > 16384
+    or public.conversational_rectification_numbers_are_stable(p_value) is not true
+    or not public.conversational_rectification_has_only_keys(
+      p_value,
+      array[
+        'id', 'rawText', 'domain', 'eventSummary', 'dateValue',
+        'datePrecision', 'extractionStatus', 'scoreable'
+      ]::text[]
+    )
+    or not (p_value ?& array[
+      'id', 'rawText', 'domain', 'eventSummary', 'dateValue',
+      'datePrecision', 'extractionStatus'
+    ]::text[])
+    or pg_catalog.jsonb_typeof(p_value -> 'id') is distinct from 'string'
+    or not public.conversational_rectification_valid_uuid_text(p_value ->> 'id')
+    or p_value ->> 'id' !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    or pg_catalog.jsonb_typeof(p_value -> 'rawText') is distinct from 'string'
+    or pg_catalog.char_length(p_value ->> 'rawText') not between 1 and 4000
+    or public.conversational_rectification_text_is_nonblank(
+      p_value ->> 'rawText'
+    ) is not true
+    or pg_catalog.jsonb_typeof(p_value -> 'domain') is distinct from 'string'
+    or p_value ->> 'domain' not in (
+      'career', 'education', 'relocation', 'relationship', 'family', 'other'
+    )
+    or pg_catalog.jsonb_typeof(p_value -> 'eventSummary') is distinct from 'string'
+    or pg_catalog.char_length(p_value ->> 'eventSummary') not between 1 and 1000
+    or public.conversational_rectification_text_is_nonblank(
+      p_value ->> 'eventSummary'
+    ) is not true
+    or not (p_value ? 'dateValue')
+    or (
+      p_value -> 'dateValue' <> 'null'::jsonb
+      and (
+        pg_catalog.jsonb_typeof(p_value -> 'dateValue') is distinct from 'string'
+        or pg_catalog.char_length(p_value ->> 'dateValue') not between 1 and 80
+        or public.conversational_rectification_text_is_nonblank(
+          p_value ->> 'dateValue'
+        ) is not true
+      )
+    )
+    or pg_catalog.jsonb_typeof(p_value -> 'datePrecision') is distinct from 'string'
+    or p_value ->> 'datePrecision' not in ('day', 'month', 'year', 'range', 'unknown')
+    or pg_catalog.jsonb_typeof(p_value -> 'extractionStatus') is distinct from 'string'
+    or p_value ->> 'extractionStatus' not in (
+      'clear', 'needs_clarification', 'corrected'
+    )
+    or (
+      p_value ? 'scoreable'
+      and pg_catalog.jsonb_typeof(p_value -> 'scoreable') is distinct from 'boolean'
+    ) then
+    return false;
+  end if;
+  return true;
+exception when others then
+  return false;
+end;
+$$;
+
+create or replace function public.conversational_rectification_valid_life_event_evidence_array(
+  p_value jsonb
+)
+returns boolean
+language plpgsql
+immutable
+strict
+set search_path = ''
+as $$
+declare
+  v_item jsonb;
+begin
+  if pg_catalog.jsonb_typeof(p_value) is distinct from 'array'
+    or pg_catalog.jsonb_array_length(p_value) > 20 then
+    return false;
+  end if;
+  for v_item in select value from pg_catalog.jsonb_array_elements(p_value) loop
+    if public.conversational_rectification_valid_life_event_evidence(v_item) is not true then
+      return false;
+    end if;
+  end loop;
+  return true;
+exception when others then
+  return false;
+end;
+$$;
+
 create or replace function public.conversational_rectification_valid_private_candidate(
   p_value jsonb
 )
@@ -304,6 +461,7 @@ declare
 begin
   if pg_catalog.jsonb_typeof(p_value) is distinct from 'object'
     or pg_catalog.octet_length(p_value::text) > 65536
+    or public.conversational_rectification_numbers_are_stable(p_value) is not true
     or not public.conversational_rectification_has_only_keys(
       p_value,
       array[
@@ -457,6 +615,7 @@ declare
 begin
   if pg_catalog.jsonb_typeof(p_value) is distinct from 'object'
     or pg_catalog.octet_length(p_value::text) > 12000
+    or public.conversational_rectification_numbers_are_stable(p_value) is not true
     or not public.conversational_rectification_has_only_keys(
       p_value,
       array[
@@ -574,6 +733,7 @@ set search_path = ''
 as $$
   select pg_catalog.jsonb_typeof(p_value) = 'object'
     and pg_catalog.octet_length(p_value::text) <= 65536
+    and public.conversational_rectification_numbers_are_stable(p_value)
     and public.conversational_rectification_has_only_keys(
       p_value,
       array[
@@ -624,6 +784,7 @@ set search_path = ''
 as $$
   select pg_catalog.jsonb_typeof(p_value) = 'object'
     and pg_catalog.octet_length(p_value::text) <= 2048
+    and public.conversational_rectification_numbers_are_stable(p_value)
     and public.conversational_rectification_has_only_keys(
       p_value,
       array[
@@ -688,6 +849,7 @@ begin
   if p_action_kind in ('reserve_fee', 'complete_fee', 'release_fee', 'recover_fee') then
     return coalesce(pg_catalog.jsonb_typeof(p_value) = 'object'
       and pg_catalog.octet_length(p_value::text) <= 2048
+      and public.conversational_rectification_numbers_are_stable(p_value)
       and public.conversational_rectification_has_only_keys(
         p_value, array['success', 'credits', 'billing_state', 'error_code']::text[]
       )
@@ -715,6 +877,7 @@ begin
   end if;
   return coalesce(pg_catalog.jsonb_typeof(p_value) = 'object'
     and pg_catalog.octet_length(p_value::text) <= 69632
+    and public.conversational_rectification_numbers_are_stable(p_value)
     and public.conversational_rectification_has_only_keys(
       p_value,
       array[
@@ -903,13 +1066,22 @@ create table if not exists public.birth_time_rectification_event_evidence (
   source_turn_id uuid not null,
   raw_text text not null check (
     char_length(raw_text) between 1 and 4000
-    and char_length(btrim(raw_text)) > 0
+    and public.conversational_rectification_text_is_nonblank(raw_text)
   ),
   domain text not null check (
     domain in ('career', 'education', 'relocation', 'relationship', 'family', 'other')
   ),
-  event_summary text not null check (char_length(event_summary) between 1 and 1000),
-  date_value text check (date_value is null or char_length(date_value) between 1 and 80),
+  event_summary text not null check (
+    char_length(event_summary) between 1 and 1000
+    and public.conversational_rectification_text_is_nonblank(event_summary)
+  ),
+  date_value text check (
+    date_value is null
+    or (
+      char_length(date_value) between 1 and 80
+      and public.conversational_rectification_text_is_nonblank(date_value)
+    )
+  ),
   date_precision text not null check (
     date_precision in ('day', 'month', 'year', 'range', 'unknown')
   ),
@@ -1017,5 +1189,21 @@ grant all on table public.birth_time_rectification_billing to service_role;
 revoke all on function public.conversational_rectification_billing_receipt_action_id(
   uuid, text
 ) from public, anon, authenticated, service_role;
+revoke all on function public.conversational_rectification_numbers_are_stable(jsonb)
+  from public, anon, authenticated;
+revoke all on function public.conversational_rectification_text_is_nonblank(text)
+  from public, anon, authenticated;
+revoke all on function public.conversational_rectification_valid_life_event_evidence(jsonb)
+  from public, anon, authenticated;
+revoke all on function public.conversational_rectification_valid_life_event_evidence_array(jsonb)
+  from public, anon, authenticated;
+grant execute on function public.conversational_rectification_numbers_are_stable(jsonb)
+  to service_role;
+grant execute on function public.conversational_rectification_text_is_nonblank(text)
+  to service_role;
+grant execute on function public.conversational_rectification_valid_life_event_evidence(jsonb)
+  to service_role;
+grant execute on function public.conversational_rectification_valid_life_event_evidence_array(jsonb)
+  to service_role;
 
 commit;

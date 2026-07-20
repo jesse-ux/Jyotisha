@@ -82,6 +82,10 @@ const evidenceRecapEntrySchema = boundedJson(z.object({
   summary: boundedNonblankText(1_000),
   dateLabel: boundedNonblankText(80),
 }).strict(), 4_096);
+const evidenceRecapSchema = boundedJson(
+  z.array(evidenceRecapEntrySchema).max(20),
+  24_576,
+);
 
 export const conversationalRectificationTurnSchema = boundedJson(z.object({
   caseId: caseIdSchema,
@@ -92,7 +96,7 @@ export const conversationalRectificationTurnSchema = boundedJson(z.object({
   candidate: candidateSchema,
   technicalReceipt: technicalReceiptSchema,
   evidenceRequest: evidenceRequestSchema.nullable(),
-  evidenceRecap: z.array(evidenceRecapEntrySchema).max(20),
+  evidenceRecap: evidenceRecapSchema,
   actions: z.array(z.enum([
     "answer",
     "pause",
