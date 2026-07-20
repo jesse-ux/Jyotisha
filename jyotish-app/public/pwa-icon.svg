@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Jyotish">
-  <rect width="512" height="512" rx="96" fill="#0f172a"/>
-  <circle cx="256" cy="256" r="150" fill="none" stroke="#93c5fd" stroke-width="18"/>
-  <circle cx="256" cy="256" r="54" fill="#f8fafc"/>
-  <circle cx="256" cy="256" r="20" fill="#2563eb"/>
-  <path d="M256 82v52M256 378v52M82 256h52M378 256h52M133 133l37 37M342 342l37 37M379 133l-37 37M170 342l-37 37" stroke="#facc15" stroke-width="22" stroke-linecap="round"/>
-  <path d="M256 160l25 70 70 26-70 25-25 71-26-71-70-25 70-26z" fill="#38bdf8" opacity=".9"/>
-</svg>

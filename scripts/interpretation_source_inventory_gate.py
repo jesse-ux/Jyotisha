@@ -18,7 +18,6 @@ from scripts.strict_evidence_service import existing_interpretation_source_pack 
 
 REQUIRED_LAYERS = [
     "primary_truth",
-    "frontend_interpretation",
     "qa_governance",
     "reader_validation",
     "yoga_rules",
@@ -29,7 +28,7 @@ REQUIRED_LAYERS = [
 SCAN_ROOTS = [
     "references",
     "docs",
-    "jyotish-app",
+    "frontend",
     "assets",
     "SKILL.md",
     "AGENTS.md",
@@ -271,7 +270,7 @@ def _classify_candidate(path: str, runtime_source_refs: set[str], layer_refs: se
             "promotion_status": "benchmark_evidence_only",
             "reason": "Benchmark or evidence report; use for validation boundaries, not direct rules.",
         }
-    if path.startswith("jyotish-app/"):
+    if path.startswith("frontend/"):
         return {
             "classification": "frontend_surface",
             "priority": "priority_3",

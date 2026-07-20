@@ -49,14 +49,3 @@ def test_api_prashna_rejects_client_planets_and_computes_context():
     assert result["prashna_context"]["chart_source"] == "swiss_ephemeris_backend"
     with pytest.raises(BadRequest, match="forbidden"):
         handler._compute_prashna({**body, "planets": {"Sun": 0}})
-
-
-def test_web_prashna_collects_question_context_not_natal_chart():
-    source = (ROOT / "jyotish-app" / "main.js").read_text(encoding="utf-8")
-    markup = (ROOT / "jyotish-app" / "index.html").read_text(encoding="utf-8")
-
-    assert "question_timestamp: timestamp.value" in source
-    assert "planets: chartData?.planets" not in source
-    assert "asc_degree: chartData?.ascendant" not in source
-    for field in ("prashna-timestamp", "prashna-lat", "prashna-lon", "prashna-timezone"):
-        assert field in markup

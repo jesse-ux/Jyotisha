@@ -1835,9 +1835,6 @@ def _build_ai_prompt_pack(report):
                 'references/raman-house-judgment-methodology.md',
                 'references/mandatory-verification-gate-protocol.md',
                 'references/real-reading-quality-checklist.md',
-                'jyotish-app/planet-house-details-a.js',
-                'jyotish-app/planet-house-details-b.js',
-                'jyotish-app/planet-house-details-c.js',
             ],
             'retrieval_tags': [
                 'no_single_factor_conclusion',

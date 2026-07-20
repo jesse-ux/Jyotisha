@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from local_env import load_local_env  # noqa: E402
 
 load_local_env(ROOT)
-APP = ROOT / "jyotish-app"
+APP = ROOT / "frontend"
 PYTHON = sys.executable
 
 COMPILE_DIRS = [
@@ -37,14 +37,11 @@ EXTRA_COMPILE_TARGETS = [
     ROOT / "scripts" / "oracle_collection_queue.py",
     ROOT / "scripts" / "oracle_evidence_validator.py",
     ROOT / "scripts" / "sync_final_evidence_packet_status.py",
-    ROOT / "scripts" / "deployment_preflight.py",
     ROOT / "tests" / "run_golden_cases.py",
     ROOT / "tests" / "run_real_case_revalidation.py",
-    ROOT / "tests" / "run_frontend_runtime_smoke.py",
 ]
 
 CORE_PYTEST_TARGETS = [
-    "tests/test_frontend_productization.py",
     "tests/test_cli_smoke.py",
     "tests/test_api_server_security.py",
     "tests/test_jaimini.py",
@@ -63,7 +60,6 @@ RUNTIME_TRUTH_PYTEST_TARGETS = [
     "tests/test_interpretation_source_inventory_gate.py::test_quality_gate_runs_interpretation_source_inventory_gate",
     "tests/test_interpretation_source_runtime_coverage.py",
     "tests/test_final_jhora_evidence_packet_acceptance.py",
-    "tests/test_frontend_productization.py::test_result_page_surfaces_workflow_summary_and_provenance_detail",
 ]
 
 RELEASE_CRITICAL_UNTRACKED_PATHS = [
@@ -75,19 +71,10 @@ RELEASE_CRITICAL_UNTRACKED_PATHS = [
     "docs/research/product_gap_matrix_2026_06_22.md",
     "docs/research/whole_machine_git_audit_2026_06_23.md",
     "findings.md",
-    "jyotish-app/import-chart.js",
-    "jyotish-app/mevg-audit.js",
-    "jyotish-app/public/manifest.webmanifest",
-    "jyotish-app/public/pwa-icon.svg",
-    "jyotish-app/public/sw.js",
-    "jyotish-app/security.js",
-    "jyotish-app/skill-map.js",
     "progress.md",
     "references/oracle/dasha_shadbala_oracle_cases.json",
     "scripts/audit_fragments.py",
     "scripts/deep_varga_avastha.py",
-    "scripts/deployment_preflight.py",
-    "scripts/desktop_packaging_preflight.py",
     "scripts/dasha_reference_audit.py",
     "scripts/ephemeris_adapter_contract.py",
     "scripts/ephemeris_backend_probe.py",
@@ -96,12 +83,9 @@ RELEASE_CRITICAL_UNTRACKED_PATHS = [
     "scripts/oracle_collection_queue.py",
     "scripts/oracle_evidence_validator.py",
     "task_plan.md",
-    "tests/run_frontend_click_smoke.py",
-    "tests/run_frontend_runtime_smoke.py",
     "tests/test_api_server_security.py",
     "tests/test_dasha_reference_audit.py",
     "tests/test_deep_varga_avastha.py",
-    "tests/test_frontend_productization.py",
     "tests/test_oracle_boundary_audit.py",
     "tests/test_oracle_collection_queue.py",
     "tests/test_oracle_evidence_validator.py",
@@ -112,8 +96,6 @@ QUALITY_GATE_PROFILES = {
         "skip_slow": True,
         "skip_yoga_logic": True,
         "skip_frontend_runtime": False,
-        "skip_frontend_click": True,
-        "frontend_click_mode": "core",
         "check_release_hygiene": False,
         "skip_real_cases": True,
         "skip_dasha_audit": True,
@@ -125,8 +107,6 @@ QUALITY_GATE_PROFILES = {
         "skip_slow": True,
         "skip_yoga_logic": True,
         "skip_frontend_runtime": False,
-        "skip_frontend_click": False,
-        "frontend_click_mode": "all",
         "check_release_hygiene": False,
         "skip_real_cases": True,
         "skip_dasha_audit": True,
@@ -138,8 +118,6 @@ QUALITY_GATE_PROFILES = {
         "skip_slow": False,
         "skip_yoga_logic": False,
         "skip_frontend_runtime": False,
-        "skip_frontend_click": False,
-        "frontend_click_mode": "all",
         "check_release_hygiene": True,
         "skip_real_cases": False,
         "skip_dasha_audit": False,
@@ -151,8 +129,6 @@ QUALITY_GATE_PROFILES = {
         "skip_slow": True,
         "skip_yoga_logic": False,
         "skip_frontend_runtime": True,
-        "skip_frontend_click": True,
-        "frontend_click_mode": "core",
         "check_release_hygiene": False,
         "skip_real_cases": False,
         "skip_dasha_audit": False,
@@ -164,8 +140,6 @@ QUALITY_GATE_PROFILES = {
         "skip_slow": True,
         "skip_yoga_logic": True,
         "skip_frontend_runtime": True,
-        "skip_frontend_click": True,
-        "frontend_click_mode": "core",
         "check_release_hygiene": False,
         "skip_real_cases": True,
         "skip_dasha_audit": True,
@@ -177,8 +151,6 @@ QUALITY_GATE_PROFILES = {
         "skip_slow": True,
         "skip_yoga_logic": True,
         "skip_frontend_runtime": True,
-        "skip_frontend_click": True,
-        "frontend_click_mode": "core",
         "check_release_hygiene": False,
         "skip_real_cases": True,
         "skip_dasha_audit": True,
@@ -301,10 +273,9 @@ def format_failure_summary(
     lines.extend([
         "普通用户启动路径:",
         "1. 本地 API 服务：.venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200",
-        "2. 网页服务：cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173",
-        "3. Open http://127.0.0.1:5173, then open Trust Center and run the health check.",
-        "4. PWA 安装壳只包装网页服务，本地 API 服务仍需单独启动。",
-        "Next action: Run the focused command above, add --keep-logs for browser click smoke, then compare the app state with the startup path above.",
+        "2. 网页服务：npm run dev --prefix frontend",
+        "3. Open http://127.0.0.1:3000 and verify /api/health.",
+        "Next action: Run the focused command above, then rerun the affected Python or Next.js check.",
         "",
     ])
     return "\n".join(lines)
@@ -469,7 +440,6 @@ def run_profile(args: argparse.Namespace) -> dict:
         "skip_slow",
         "skip_yoga_logic",
         "skip_frontend_runtime",
-        "skip_frontend_click",
         "skip_real_cases",
         "skip_dasha_audit",
         "skip_oracle_audit",
@@ -478,8 +448,6 @@ def run_profile(args: argparse.Namespace) -> dict:
     ]:
         if getattr(args, key):
             profile[key] = True
-    if args.frontend_click_mode:
-        profile["frontend_click_mode"] = args.frontend_click_mode
     return profile
 
 
@@ -488,15 +456,12 @@ def main() -> int:
     parser.add_argument("--profile", choices=["quick", "browser", "release", "accuracy", "vedastro-live", "runtime-truth"], default="browser", help="Quality gate profile: quick, browser, release, accuracy, vedastro-live, or runtime-truth")
     parser.add_argument("--skip-slow", action="store_true", help="Skip slow golden-case regressions")
     parser.add_argument("--skip-yoga-logic", action="store_true", help="Skip Yoga logic comparison report refresh")
-    parser.add_argument("--skip-frontend-runtime", action="store_true", help="Skip frontend build and runtime smoke")
-    parser.add_argument("--skip-frontend-click", action="store_true", help="Skip browser click smoke")
+    parser.add_argument("--skip-frontend-runtime", action="store_true", help="Skip Next.js tests, lint, and production build")
     parser.add_argument("--skip-real-cases", action="store_true", help="Skip public real-person chart revalidation")
     parser.add_argument("--skip-dasha-audit", action="store_true", help="Skip Dasha reference-drift audit")
     parser.add_argument("--skip-oracle-audit", action="store_true", help="Skip combined Dasha/Shadbala external oracle boundary audit")
     parser.add_argument("--skip-local-accuracy-report", action="store_true", help="Skip consolidated local accuracy report")
     parser.add_argument("--skip-vedastro-live", action="store_true", help="Skip optional VedAstro live endpoint smoke")
-    parser.add_argument("--frontend-click-mode", choices=["core", "mobile", "offline", "pdf", "workspace", "mobile-trust", "import-files", "all"], default=None, help="Browser click smoke mode for browser/release profiles")
-    parser.add_argument("--frontend-click-timeout", type=int, default=240, help="Timeout seconds for browser click smoke")
     parser.add_argument("--all-tests", action="store_true", help="Run every pytest file, including optional-dependency suites")
     parser.add_argument("--require-external-parity", action="store_true", help="Fail the release gate unless the three-engine raw parity manifest passes.")
     args = parser.parse_args()
@@ -528,7 +493,6 @@ def main() -> int:
         run([PYTHON, "scripts/audit_fragments.py", "--strict"])
         run([PYTHON, "scripts/interpretation_source_inventory_gate.py"])
         run([PYTHON, "scripts/character_level_inventory_manifest.py", "--scope", "project", "--no-write", "--summary-only"])
-        run([PYTHON, "scripts/deployment_preflight.py"])
         if profile["check_release_hygiene"]:
             release_hygiene_check(require_external_parity=args.require_external_parity)
         run([PYTHON, "scripts/validate_bphs_invariants.py"])
@@ -540,17 +504,9 @@ def main() -> int:
         pytest_targets = CORE_PYTEST_TARGETS
     run([PYTHON, "-m", "pytest", *pytest_targets])
     if not profile["skip_frontend_runtime"]:
+        run(["npm", "test"], optional=False, cwd=APP)
+        run(["npm", "run", "lint"], optional=False, cwd=APP)
         run(["npm", "run", "build"], optional=False, cwd=APP)
-        run([PYTHON, "tests/run_frontend_runtime_smoke.py", "--start-if-needed"])
-    if not profile["skip_frontend_click"]:
-        run([
-            PYTHON,
-            "tests/run_frontend_click_smoke.py",
-            "--mode",
-            profile["frontend_click_mode"],
-            "--timeout",
-            str(args.frontend_click_timeout),
-        ])
     if not profile["skip_slow"]:
         run([PYTHON, "tests/run_golden_cases.py", "--python", PYTHON])
     if not profile["skip_real_cases"]:

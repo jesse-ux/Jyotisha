@@ -142,8 +142,6 @@ rsync -az --delete \
   --exclude='.env.production' \
   --exclude='frontend/node_modules/' \
   --exclude='frontend/.next/' \
-  --exclude='jyotish-app/node_modules/' \
-  --exclude='jyotish-app/dist/' \
   -e 'ssh -p 22000' \
   ./ root@103.117.123.53:/opt/jyotisha-app/
 ssh -p 22000 root@103.117.123.53 \

@@ -17,19 +17,17 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: jyotish-app/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt -r requirements-dev.txt
-          npm ci --prefix jyotish-app
+          npm ci --prefix frontend
       - name: Print environment diagnostics
         run: |
           python --version
           node --version
           npm --version
-          npm --prefix jyotish-app exec -- vite --version
-          test -x jyotish-app/node_modules/.bin/vite
       - name: Run pytest suite
         run: |
           mkdir -p artifacts
@@ -42,5 +40,11 @@ jobs:
           path: artifacts/
       - name: Run legacy runner
         run: python tests/run_all.py
-      - name: Build frontend
-        run: npm run build --prefix jyotish-app
+      - name: Validate production web
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+        run: |
+          npm test --prefix frontend
+          npm run lint --prefix frontend
+          npm run build --prefix frontend

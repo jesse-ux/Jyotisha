@@ -12,7 +12,6 @@ hermes_memory.db/
 *.egg-info/
 dist/
 build/
-jyotish-app/dist/
 .DS_Store
 brain/
 COVERAGE_AUDIT_REPORT.md
@@ -31,7 +30,6 @@ benchmarks/jyotish/outputs/
 output_report.txt
 results_extracted.md
 runtime-smoke-report-*.html
-jyotish-app/runtime-smoke-report-*.html
 # Local Python runtime for the API server
 .venv/
 # Local Supabase CLI link/cache state

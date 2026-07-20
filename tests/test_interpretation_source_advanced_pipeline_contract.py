@@ -183,9 +183,3 @@ def test_prompt_pack_frontend_and_remaining_batch_queue_expose_next_stage_contra
         "external_oracle_parity_batch",
         "install_usage_path_slimming",
     ]
-
-    main_js = (ROOT / "jyotish-app" / "main.js").read_text(encoding="utf-8")
-    assert "renderInterpretationSourceGovernancePanel" in main_js
-    assert "Source Governance" in main_js
-    assert "reference-only" in main_js
-    assert "blocked non-runtime" in main_js

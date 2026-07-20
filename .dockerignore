@@ -11,7 +11,5 @@ venv*
 frontend/node_modules
 frontend/.next
 frontend/.env*
-jyotish-app/node_modules
-jyotish-app/dist
 htmlcov
 coverage.xml

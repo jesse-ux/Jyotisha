@@ -23,15 +23,12 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: |
-            jyotish-app/package-lock.json
-            frontend/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt -r requirements-dev.txt
-          npm ci --prefix jyotish-app
           npm ci --prefix frontend
 
       - name: Print environment diagnostics
@@ -39,8 +36,6 @@ jobs:
           python --version
           node --version
           npm --version
-          npm --prefix jyotish-app exec -- vite --version
-          test -x jyotish-app/node_modules/.bin/vite
 
       - name: Run Ruff lint for quality gate files
         run: ruff check scripts/run_quality_gate.py tests/test_varga_bphs.py tests/test_ashtakavarga_invariants.py tests/test_cli_smoke.py tests/test_yoga_rules_integrity.py
@@ -51,16 +46,13 @@ jobs:
       - name: Run quick quality gate
         run: |
           mkdir -p artifacts
-          python scripts/run_quality_gate.py --profile quick --skip-yoga-logic 2>&1 | tee artifacts/quick-quality-gate.log
+          python scripts/run_quality_gate.py --profile quick --skip-yoga-logic --skip-frontend-runtime 2>&1 | tee artifacts/quick-quality-gate.log
       - name: Upload quick quality gate diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: quick-quality-gate-diagnostics
           path: artifacts/
-
-      - name: Build frontend
-        run: npm run build --prefix jyotish-app
 
       - name: Validate production web
         env:

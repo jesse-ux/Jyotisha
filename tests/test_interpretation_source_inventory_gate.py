@@ -38,7 +38,7 @@ def test_interpretation_source_inventory_gate_reports_layered_source_pack() -> N
     assert report["summary"]["quarantined_draft_count"] >= 1
 
     layers = report["layers"]
-    assert "jyotish-app/interpretation.js" in layers["frontend_interpretation"]["source_refs"]
+    assert "frontend_interpretation" not in layers
     assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-core/resources/qa_rules.md" in layers["qa_governance"]["source_refs"]
     assert "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/validation_rules.md" in layers["reader_validation"]["source_refs"]
     assert "references/yoga_rules.json" in layers["yoga_rules"]["source_refs"]

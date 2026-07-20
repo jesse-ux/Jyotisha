@@ -60,7 +60,7 @@ Changelog = "https://github.com/732642856/yinduzhanxing/blob/main/CHANGELOG.md"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["jyotish_vedic*", "scripts*"]
-exclude = ["tests*", "docs*", "jyotish-app*", "benchmark*", "benchmarks*", "references*", "skills*", "assets*"]
+exclude = ["tests*", "docs*", "frontend*", "benchmark*", "benchmarks*", "references*", "skills*", "assets*"]
 
 [tool.setuptools.package-data]
 jyotish_vedic = ["*.json", "*.md", "*.csv", "*.db"]
@@ -96,7 +96,7 @@ exclude = [
     ".git",
     "__pycache__",
     ".pytest_cache",
-    "jyotish-app",
+    "frontend",
     "benchmark",
 ]
 

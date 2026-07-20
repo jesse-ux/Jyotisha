@@ -128,15 +128,14 @@ python3.12 -m venv .venv
 
 若看到 `No module named swisseph`，说明 API 没有使用这个虚拟环境；重新执行上面的安装命令，再用 `.venv/bin/python` 启动。脚本入口已支持其内部 `scripts.*` 包导入，不需要通过修改 `PYTHONPATH` 绕过错误。
 
-### 普通用户启动路径
+### 本地开发启动路径
 
-如果只是打开网页/app，请按同一条路径走，不要在多个入口之间猜：
+本地开发使用当前生产链的 Next.js 前端：
 
 1. 先启动本地 API 服务：`.venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200`
-2. 再启动网页服务：`cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173`
-3. 打开 Trust Center，点击运行健康检查；页面地址是 `http://127.0.0.1:5173`。
-4. 如果只安装 PWA：PWA 安装壳只包装网页服务，本地 API 服务仍需单独启动；无 API 时网页会保留基础浏览器 fallback，但 PDF/高级技法需要本地 API 服务。
-5. 开发者做完整自检时运行：`.venv/bin/python scripts/run_quality_gate.py --frontend-click-timeout 240`。
+2. 安装并启动网页服务：`npm ci --prefix frontend && npm run dev --prefix frontend`
+3. 打开 `http://127.0.0.1:3000`；Next.js 通过服务端 API 路由访问 Python 服务。
+4. 开发者做完整自检时运行：`.venv/bin/python scripts/run_quality_gate.py --profile quick`。
 
 ### VedAstro：聊天产品推荐配置
 
@@ -199,7 +198,8 @@ AI/vibe coding 推荐入口：Cline 接本仓 MCP，Aider 负责低成本小改�
 ```bash
 cp .env.cn.example .env.local
 .venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200
-cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173
+npm ci --prefix frontend
+npm run dev --prefix frontend
 ```
 
 网页侧使用：
@@ -339,19 +339,16 @@ python3 scripts/diagnose_vedastro_mode.py
 
 | 形态 | 入口 | 命令 | 能力边界 |
 |------|------|------|----------|
-| Local dev | `http://127.0.0.1:5173` | `.venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200` + `cd jyotish-app && npm run dev -- --host 127.0.0.1 --port 5173` | 完整网页/app 用户端，适合本机普通用户试用。 |
-| Docker Compose | `http://localhost:5300` | `docker compose up -d` | 同时启动 Web shell 与本地 API，适合低门槛本机部署。 |
-| Static demo / PWA | 静态站点 URL | `cd jyotish-app && npm run build` | 公开演示环境只能完整展示静态壳；完整高级技法需要本地 API 服务。 |
-| Desktop shell | PWA / Pake / Tauri | `python3 scripts/desktop_packaging_preflight.py` | PWA/Pake 当前可用；Tauri sidecar 需等 API 生命周期、签名和权限策略固定。 |
+| Local dev | `http://127.0.0.1:3000` | `.venv/bin/python scripts/jyotish_api_server.py --host 127.0.0.1 --port 5200` + `npm run dev --prefix frontend` | Next.js 用户端与本地 Python API。 |
+| Production | `https://jyotisha.chat` | `docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build` | Caddy 是唯一公网入口；Next.js `3000` 与 Python `5200` 仅在 Docker 网络内开放。 |
+| Railway（可选） | 平台分配 URL | `deploy/railway-web.Dockerfile` + `deploy/railway-api.Dockerfile` | API 使用私有服务地址，不直接暴露 `5200`。 |
 
-Static demo / PWA 发布要求：必须保留 `static_demo_boundary_visible` 说明。静态演示模式下，可直接体验出生资料输入、基础 D1/D9 星盘、术语模式、Trust Center；需要本地 API 的能力包括 PDF/HTML 报告、高级技法、真实案例复验、AI 解读代理。推荐部署：Vercel / Netlify / GitHub Pages 作为静态壳；完整版本用 Docker Compose 或本地双服务。
-
-发布前检查交付矩阵：`python3 scripts/deployment_preflight.py`。如果该命令失败，不要把当前构建交给普通用户。
+生产部署与验收以 `deploy/README.md` 和 `deploy/docker-compose.server.yml` 为准；不要使用仓库根目录的 Compose 文件或直接映射 Python API 端口。
 
 ### 质量门分层
 
 - quick：快速开发守门，适合普通代码/文案修改后先跑：`python3 scripts/run_quality_gate.py --profile quick`
-- browser：完整浏览器守门，覆盖 runtime smoke 与真实浏览器用户路径：`python3 scripts/run_quality_gate.py --profile browser`
+- browser：Web 产品守门，覆盖 Next.js 测试、lint 与生产构建：`python3 scripts/run_quality_gate.py --profile browser`
 - release：发布前守门，包含关键产品文件未跟踪检查、慢速 golden cases、真实案例复验与 Yoga 逻辑报告：`python3 scripts/run_quality_gate.py --profile release`
 - accuracy：本地准确率守门，跳过浏览器点击重活，但强制运行真实案例复验、Dasha/Oracle 审计、Yoga 逻辑对照和本地准确率总报告：`python3 scripts/run_quality_gate.py --profile accuracy`
 - vedastro-live：外部 VedAstro 雷达守门，只跑可选 live smoke，默认不依赖网络；只有配置 `VEDASTRO_API_ENDPOINT` 与 `VEDASTRO_ENABLE_NETWORK=1` 时才真正出网：`python3 scripts/run_quality_gate.py --profile vedastro-live`
@@ -862,14 +859,13 @@ Examples:
 2. **README / package metadata sync** — keep public docs, registry counts and distribution artifacts consistent
 3. **Dasha oracle expansion** — add external cases for Vimshottari start/end boundaries and configurable year-length/ayanamsa comparisons
 4. **Benchmark expansion** — add more oracle cases for Shadbala, KP and annual-chart modules
-5. **Frontend verification** — keep the pure JS/WASM fallback aligned with the Python engine output
+5. **Frontend verification** — keep the Next.js API contracts aligned with the Python engine output
 
 ### Next (P1)
 
-- Docker image publishing and smoke-test docs
+- Production image publishing and smoke-test docs
 - English documentation examples and API tutorials
 - Multi-Ayanamsa UX polish and benchmark examples（计算层已可验证切换；网页设置展示和更多外部样本仍需补齐）
-- Desktop packaging path: PWA now, Pake URL shell for quick wrappers, Tauri sidecar after API lifecycle/signing decisions. See `docs/research/desktop_packaging_spike_2026_06_23.md`.
 
 ---
 
@@ -884,11 +880,10 @@ python3 -m py_compile scripts/*.py
 # Capability audit (must pass with 0 problems, 0 warnings)
 python3 scripts/audit_capabilities.py --mode validate
 
-# Desktop packaging readiness
-python3 scripts/desktop_packaging_preflight.py
-
-# Installed-shell / first-launch browser smoke
-python3 tests/run_frontend_click_smoke.py --mode all
+# Next.js unit tests, lint, and production build
+npm test --prefix frontend
+npm run lint --prefix frontend
+npm run build --prefix frontend
 
 # Full-reading regression test (use FICTIONAL data only)
 python3 scripts/jyotish_engine.py full-reading \

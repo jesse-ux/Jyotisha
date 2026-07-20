@@ -129,21 +129,6 @@ def test_expired_async_job_is_deleted(
     ) is None
     assert not (tmp_path / f"{identity['job_id']}.json").exists()
 
-
-def test_authenticated_frontend_does_not_use_local_storage_api_base() -> None:
-    auth_source = (ROOT / "jyotish-app" / "auth.js").read_text(encoding="utf-8")
-    chat_source = (ROOT / "jyotish-app" / "ai-chat.js").read_text(encoding="utf-8")
-    assert "localStorage.getItem(API_BASE_KEY)" not in auth_source
-    assert "localStorage.getItem('jyotish_api_base')" not in chat_source
-
-
-def test_frontend_async_poll_uses_ephemeral_job_capability() -> None:
-    bridge_source = (ROOT / "jyotish-app" / "api-bridge.js").read_text(encoding="utf-8")
-    assert "pollAsyncJob(data, { base })" in bridge_source
-    assert "Authorization: `Bearer ${job.access_token}`" in bridge_source
-    assert "sessionStorage.setItem('jyotish_job" not in bridge_source
-
-
 def test_background_job_queue_rejects_when_capacity_is_full(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
