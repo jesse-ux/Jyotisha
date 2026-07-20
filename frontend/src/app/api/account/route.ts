@@ -95,7 +95,7 @@ export async function PATCH(request: Request) {
     }
 
     const payload = await request.json().catch(() => null) as ProfilePatchPayload | null;
-    if (!payload || typeof payload !== "object") {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
       return NextResponse.json({ error: "账户资料格式不正确" }, { status: 400 });
     }
 

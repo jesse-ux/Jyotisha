@@ -38,6 +38,7 @@ SYNASTRY_REPORT_MIGRATION = (
     / "20260718101000_repair_missing_synastry_reports.sql"
 )
 PAGE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "page.tsx"
+ACCOUNT_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "account" / "route.ts"
 CHART_PROFILE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "route.ts"
 CHART_PROFILE_DELETE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "[id]" / "route.ts"
 SYNASTRY_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "synastry" / "route.ts"
@@ -115,6 +116,12 @@ def test_chat_page_uses_authenticated_cloud_persistence() -> None:
     assert 'localStorage.setItem("chat_sessions"' not in source
 
 
+def test_account_profile_patch_rejects_array_payloads() -> None:
+    route = ACCOUNT_ROUTE.read_text(encoding="utf-8")
+    assert 'typeof payload !== "object" || Array.isArray(payload)' in route
+    assert "账户资料格式不正确" in route
+
+
 def test_chart_profile_library_has_cloud_table_api_and_local_fallback() -> None:
     sql = re.sub(r"\s+", " ", CHART_PROFILE_MIGRATION.read_text(encoding="utf-8").lower()).strip()
     route = CHART_PROFILE_ROUTE.read_text(encoding="utf-8")
@@ -140,6 +147,7 @@ def test_chart_profile_library_has_cloud_table_api_and_local_fallback() -> None:
         'from("chart_profiles")',
         'eq("user_id", user.id)',
         'eq("role", "self")',
+        "Array.isArray(body.profile)",
         'insert({ user_id: user.id, role, profile: body.profile',
         'insert({ user_id: user.id, role, profile: body.profile, updated_at: updatedAt })',
     ):

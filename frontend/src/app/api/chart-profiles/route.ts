@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "请先登录" }, { status: 401 });
 
     const body = await request.json().catch(() => null) as ChartProfilePayload | null;
-    if (!body?.profile || typeof body.profile !== "object") {
+    if (!body?.profile || typeof body.profile !== "object" || Array.isArray(body.profile)) {
       return NextResponse.json({ error: "星盘资料格式不正确" }, { status: 400 });
     }
     const role = body.role === "self" ? "self" : "other";
