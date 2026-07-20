@@ -305,6 +305,71 @@ test("rejects unsafe writable backup parents before creating the target", () => 
   }
 });
 
+test("rejects a direct canonical sticky shared backup directory before chmod", () => {
+  const sharedDirectory = realpathSync("/tmp");
+  const environmentFile = createDatabaseEnvironment();
+  const commandDirectory = mkdtempSync(join(tmpdir(), "jyotisha-backup-direct-shared-command-"));
+  const chmodLog = join(commandDirectory, "chmod.log");
+  const originalMode = statSync(sharedDirectory).mode & 0o777;
+
+  try {
+    writeCommand(commandDirectory, "chmod", "printf '%s' called > \"$CHMOD_LOG\"\nexit 97");
+    const result = runBackup(
+      environmentFile.file,
+      sharedDirectory,
+      backupEnvironment(commandDirectory, { CHMOD_LOG: chmodLog }),
+    );
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /backup directory ancestor must be owned by the current user or root and not group\/world-writable/);
+    assert.equal(existsSync(chmodLog), false);
+    assert.equal(statSync(sharedDirectory).mode & 0o777, originalMode);
+  } finally {
+    rmSync(environmentFile.directory, { force: true, recursive: true });
+    rmSync(commandDirectory, { force: true, recursive: true });
+  }
+});
+
+test("fails safely when a racer inserts a symlink during nested backup path creation", () => {
+  const root = canonicalSharedTemporaryDirectory("jyotisha-backup-create-race-");
+  const raceTarget = canonicalTemporaryDirectory("jyotisha-backup-race-target-");
+  const environmentFile = createDatabaseEnvironment();
+  const commandDirectory = mkdtempSync(join(tmpdir(), "jyotisha-backup-create-race-command-"));
+  const target = join(root, "first", "second", "backup");
+  const originalRootMode = statSync(root).mode & 0o777;
+
+  try {
+    safeDiskCommand(commandDirectory);
+    writeCommand(commandDirectory, "docker", "printf '%s' 'race dump payload'");
+    writeCommand(
+      commandDirectory,
+      "mkdir",
+      `if [ "$#" -eq 1 ] && [ "$1" = first ]; then
+  ln -s "$RACE_TARGET" first
+fi
+exec /bin/mkdir "$@"`,
+    );
+    const result = runBackup(
+      environmentFile.file,
+      target,
+      backupEnvironment(commandDirectory, {
+        BACKUP_TIMESTAMP: "20260720T060101Z",
+        RACE_TARGET: raceTarget,
+      }),
+    );
+
+    assert.notEqual(result.status, 0);
+    assert.equal(existsSync(join(raceTarget, "second")), false);
+    assert.equal(existsSync(join(raceTarget, "backup")), false);
+    assert.equal(statSync(root).mode & 0o777, originalRootMode);
+  } finally {
+    rmSync(root, { force: true, recursive: true });
+    rmSync(raceTarget, { force: true, recursive: true });
+    rmSync(environmentFile.directory, { force: true, recursive: true });
+    rmSync(commandDirectory, { force: true, recursive: true });
+  }
+});
+
 test("creates every absent backup path component privately despite a permissive caller umask", () => {
   const root = canonicalSharedTemporaryDirectory("jyotisha-backup-umask-");
   const environmentFile = createDatabaseEnvironment();

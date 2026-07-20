@@ -95,6 +95,8 @@ fi
 backup_directory_component_path=""
 CURRENT_UID="$(id -u)"
 FIRST_CREATED_COMPONENT_INDEX=-1
+DEEPEST_EXISTING_COMPONENT_INDEX=-1
+DEEPEST_EXISTING_COMPONENT_PATH="/"
 for ((backup_directory_component_index = 0; backup_directory_component_index < ${#backup_directory_components[@]}; backup_directory_component_index += 1)); do
   backup_directory_component="${backup_directory_components[$backup_directory_component_index]}"
   if [ -z "$backup_directory_component" ] || [ "$backup_directory_component" = "." ] || [ "$backup_directory_component" = ".." ]; then
@@ -106,6 +108,8 @@ for ((backup_directory_component_index = 0; backup_directory_component_index < $
   fi
   if [ -e "$backup_directory_component_path" ]; then
     validate_backup_directory_component "$backup_directory_component_path" 0
+    DEEPEST_EXISTING_COMPONENT_INDEX="$backup_directory_component_index"
+    DEEPEST_EXISTING_COMPONENT_PATH="$backup_directory_component_path"
   elif [ "$FIRST_CREATED_COMPONENT_INDEX" -eq -1 ]; then
     FIRST_CREATED_COMPONENT_INDEX="$backup_directory_component_index"
   fi
@@ -130,18 +134,24 @@ POSTGRES_USER="$(read_environment_value POSTGRES_USER)"
 STAGING_BACKUP_ENCRYPTION_KEY="$(read_environment_value STAGING_BACKUP_ENCRYPTION_KEY)"
 export STAGING_BACKUP_ENCRYPTION_KEY
 
-mkdir -p "$BACKUP_DIRECTORY_INPUT"
-backup_directory_component_path=""
-for ((backup_directory_component_index = 0; backup_directory_component_index < ${#backup_directory_components[@]}; backup_directory_component_index += 1)); do
-  backup_directory_component="${backup_directory_components[$backup_directory_component_index]}"
-  backup_directory_component_path="${backup_directory_component_path}/${backup_directory_component}"
-  if [ "$FIRST_CREATED_COMPONENT_INDEX" -ne -1 ] && [ "$backup_directory_component_index" -ge "$FIRST_CREATED_COMPONENT_INDEX" ]; then
-    validate_backup_directory_component "$backup_directory_component_path" 1
-  else
-    validate_backup_directory_component "$backup_directory_component_path" 0
-  fi
-done
-cd -P "$BACKUP_DIRECTORY_INPUT"
+if [ "$FIRST_CREATED_COMPONENT_INDEX" -eq -1 ]; then
+  validate_backup_directory_component "$BACKUP_DIRECTORY_INPUT" 1
+fi
+
+cd -P "$DEEPEST_EXISTING_COMPONENT_PATH"
+if [ "$FIRST_CREATED_COMPONENT_INDEX" -ne -1 ]; then
+  for ((backup_directory_component_index = DEEPEST_EXISTING_COMPONENT_INDEX + 1; backup_directory_component_index < ${#backup_directory_components[@]}; backup_directory_component_index += 1)); do
+    backup_directory_component="${backup_directory_components[$backup_directory_component_index]}"
+    if [ -e "$backup_directory_component" ] || [ -L "$backup_directory_component" ]; then
+      reject_backup_directory
+    fi
+    if ! mkdir "$backup_directory_component"; then
+      reject_backup_directory
+    fi
+    validate_backup_directory_component "$backup_directory_component" 1
+    cd -P "$backup_directory_component"
+  done
+fi
 BACKUP_DIRECTORY="$(pwd -P)"
 if [ "$BACKUP_DIRECTORY" != "$BACKUP_DIRECTORY_INPUT" ] || [ "$BACKUP_DIRECTORY" = "/" ]; then
   reject_backup_directory

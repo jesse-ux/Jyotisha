@@ -36,6 +36,25 @@ cd frontend && npm run lint                               exit 0
 git diff --check                                          exit 0
 ```
 
+## Atomic component-creation follow-up (2026-07-20)
+
+- The sticky root-owned exception now applies only to ancestors. An existing requested backup leaf is separately required to be current-user owned, non-symlink, and non-group/world-writable before the script can chmod or write it; direct canonical `/tmp` is rejected without calling `chmod` or changing its mode.
+- The script no longer uses `mkdir -p` for backup paths. It pins the deepest validated existing ancestor, creates each missing component with one plain relative `mkdir`, validates it, and `cd -P`s into it before creating the next. If a concurrent actor creates any component first, including a symlink, the script rejects it without descending through it.
+
+```text
+RED:
+cd frontend && npm run test:db
+FAIL rejects a direct canonical sticky shared backup directory before chmod
+FAIL fails safely when a racer inserts a symlink during nested backup path creation
+
+GREEN:
+bash -n deploy/backup-staging-postgres.sh                exit 0
+cd frontend && npm run test:db                            20 passed, 0 failed
+cd frontend && npm test                                   496 passed, 0 failed
+cd frontend && npm run lint                               exit 0
+git diff --check                                          exit 0
+```
+
 ## Secure directory-creation follow-up (2026-07-20)
 
 - `umask 077` now executes at script startup, before any possible `mkdir`. The script records the first absent component, then re-walks every component after `mkdir -p`; all newly created directories must be current-user owned, non-symlink directories without group/world write permission before `cd -P` pins the target.
