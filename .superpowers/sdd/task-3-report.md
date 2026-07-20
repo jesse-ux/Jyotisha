@@ -1,146 +1,84 @@
-# Task 3 — Encrypted Local Staging Backups
+# Task 3 — TypeScript Engine Adapter and Trust Boundary
 
-## Scope delivered
+## Final design
 
-- Added `deploy/backup-staging-postgres.sh DATABASE_ENV_FILE BACKUP_DIRECTORY`.
-- Validates the private database environment before reading required values without sourcing or executing the env file.
-- Refuses backup destinations with disk usage at or above 70%, creates the explicit destination with mode `0700`, writes encrypted custom PostgreSQL dumps with mode `0600`, and keeps only the newest three exact staging dump names.
-- Uses a PID-scoped `.partial` file, `pipefail`, an exit cleanup trap, and same-directory hard-link/no-clobber publication so failed dump/encryption pipelines leave no completed partial archive and successful archives are published atomically.
-- Emits only final path/count on success; credentials use environment variables and never command-line arguments.
+- `BirthTimeJourneyEngine` requires both dynamic operations: `buildDifferencePacket` and `scoreChoices`. Existing scan/score consumers depend on the explicit `LegacyBirthTimeJourneyEngine` pick instead of weakening the primary interface.
+- The server-only engine factory owns `JYOTISH_DYNAMIC_RECTIFICATION_TOKEN`. Both dynamic endpoints use an authenticated POST and a 45-second abort signal; all three legacy endpoints remain unauthenticated.
+- Request serializers expose only server-resolved choice evidence. Client option IDs, confidence, applicability, and model-controlled safety gates are never sent as scoring authority.
+- Dynamic v2 responses have a dedicated strict adapter. Root objects, ranges, opportunities, partitions, winning segments, score-map keys, counts, versions, modes, and duplicate identifiers are validated before mapping.
+- Public difference packets omit private candidate score vectors. Private scoring partitions retain the exact server vector used by the later deterministic scoring call.
+- Legacy response parsing remains compatibility-oriented: unknown server metadata is accepted and stripped. Only the shared result representation supports up to ten effective items; the legacy dated-event request remains capped at six.
+- The HTTP wire accepts injected fetch and timeout-signal factories for executable contract tests. Production still defaults to `AbortSignal.timeout`.
 
-## TDD evidence
+## Files changed
 
-RED (before the script existed):
+Production:
 
-```text
-cd frontend && npm run test:db
-FAIL database-backup.test.ts: bash: .../deploy/backup-staging-postgres.sh: No such file or directory
-```
+- `frontend/src/lib/birth-time-evidence.ts`
+- `frontend/src/lib/birth-time-journey-service.ts`
+- `frontend/src/lib/birth-time-journey-engine.ts`
+- `frontend/src/lib/birth-time-journey-engine-model.ts`
+- `frontend/src/lib/birth-time-journey-adapters.ts`
+- `frontend/src/lib/birth-time-journey-dynamic-adapters.ts`
+- `frontend/src/lib/birth-time-journey-assessment.ts`
 
-GREEN focused integration:
+Tests and support:
 
-```text
-./node_modules/.bin/tsx --test --test-concurrency=1 tests/database-backup.test.ts
-pass 1, fail 0
-```
+- `frontend/tests/birth-time-journey-engine.test.ts`
+- `frontend/tests/birth-time-journey-adapters.test.ts`
+- `frontend/tests/birth-time-journey-dynamic-adapters.test.ts`
+- `frontend/tests/birth-time-journey-memory-store.ts`
+- `frontend/tests/birth-time-journey-test-support.ts`
+- `frontend/tests/birth-time-journey-service.test.ts`
+- `frontend/tests/birth-time-agent-flow-test-support.ts`
 
-The integration starts the real fixture, creates four encrypted dumps at deterministic timestamps, verifies the final three names and modes, decrypts an archive with OpenSSL, and runs `pg_restore --list` (falling back to the fixture container when necessary).
+Documentation:
+
+- `docs/superpowers/plans/2026-07-18-dynamic-choice-birth-time-rectification.md`
+- `.superpowers/sdd/task-3-report.md`
+
+## RED evidence
+
+1. The initial focused run failed to load because the dynamic response parsers did not exist.
+2. Adapter regressions then exposed acceptance of malformed score keys, keys outside the submitted range, duplicate opportunity/partition identifiers, nested extra fields, and legacy evidence metadata incompatibility.
+3. Interface and wire review probes exposed optional primary dynamic methods, source-regex authentication assertions, and a missing executable proof for exact URLs, bodies, authorization, and timeout behavior.
+4. The final wire cleanup test injected a timeout factory and failed with `[]` instead of `[45000, 45000]`, proving that the seam was initially ignored.
 
 ## Final verification
 
-```text
-bash -n deploy/backup-staging-postgres.sh                 exit 0
-cd frontend && npm run test:db                            12 passed, 0 failed
-cd frontend && npm test                                   488 passed, 0 failed
-cd frontend && npm run lint                               exit 0
-git diff --check                                          exit 0
-```
+1. Focused adapter, wire, and evidence suite:
+   - `/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/birth-time-journey-engine.test.ts tests/birth-time-journey-adapters.test.ts tests/birth-time-journey-dynamic-adapters.test.ts tests/birth-time-evidence.test.ts`
+   - 29 passed, 0 failed.
+2. Complete birth-time frontend suite:
+   - `/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/birth-time*.test.ts`
+   - 208 passed, 0 failed.
+3. Full frontend suite:
+   - `/Users/jesse/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/*.test.ts`
+   - 283 passed, 0 failed.
+4. ESLint across every changed production/test TypeScript module:
+   - Passed with no diagnostics.
+5. TypeScript diagnostic:
+   - No Task 3 diagnostics. The only result is the known baseline `tests/profile-persistence.test.ts:7 TS1501`, caused by an ES2018 regex flag under the project's ES2017 target.
+6. Pure-LOC audit:
+   - Every changed TypeScript file is at or below 250 pure LOC. The largest is `frontend/src/lib/birth-time-journey-service.ts` at 239; the split test-support modules are 171 and 111.
+7. `git diff --check`:
+   - Passed with no whitespace errors.
 
-## Pre-scan race follow-up (2026-07-21)
+## Pre-work gate
 
-- Lexical component validation now completes before ancestor scanning. Once scanning finds the first absent component, it stops constructing deeper absolute pathnames immediately; creation continues only from the already pinned deepest existing directory.
-- A deterministic `BASH_ENV` DEBUG-hook regression inserts a symlink after the first missing component is recorded. The script rejects it from the pinned parent and creates no `backup` path under the symlink target. Creation uses `./$component` for test, mkdir, validation, and `cd -P`, so legal names beginning with `-` are handled as names rather than options.
+- `/Users/jesse/Downloads/Copse/astrology/yinduzhanxing/.venv/bin/python scripts/pre_work_check.py --remote-timeout 8 --command-timeout 45` remained red only on the unrelated known fragment-governance baseline: `candidate_count` expected `0`, observed `1`.
+- Remote visibility was blocked, so no cloud-sync claim is made.
 
-```text
-RED:
-cd frontend && npm run test:db
-FAIL stops absolute pre-scan traversal when a symlink appears after the first missing component
-FAIL creates every absent backup path component privately despite a permissive caller umask
+## Self-review
 
-GREEN:
-bash -n deploy/backup-staging-postgres.sh                exit 0
-cd frontend && npm run test:db                            21 passed, 0 failed
-cd frontend && npm test                                   497 passed, 0 failed
-cd frontend && npm run lint                               exit 0
-git diff --check                                          exit 0
-```
+- Dynamic secrets and candidate score vectors remain behind the server boundary.
+- Wire tests use independent literal request bodies rather than production serializers and directly assert two `45_000` timeout calls and the exact injected signals.
+- Missing-token tests prove both dynamic operations fail before fetch. Executable legacy tests prove no Authorization header reaches any legacy endpoint.
+- Dynamic parsing is fail-closed; legacy parsing preserves its prior accept-and-strip behavior.
+- Cross-midnight ranges enumerate minutes modulo 24 hours and bind score keys to the exact submitted interval.
+- The extracted memory store has no dependency on the fixture module, so its re-export does not create a runtime cycle.
+- No dependency, logging field, client response field, or persistence write was added.
 
-## Atomic component-creation follow-up (2026-07-20)
+## Known unrelated baseline
 
-- The sticky root-owned exception now applies only to ancestors. An existing requested backup leaf is separately required to be current-user owned, non-symlink, and non-group/world-writable before the script can chmod or write it; direct canonical `/tmp` is rejected without calling `chmod` or changing its mode.
-- The script no longer uses `mkdir -p` for backup paths. It pins the deepest validated existing ancestor, creates each missing component with one plain relative `mkdir`, validates it, and `cd -P`s into it before creating the next. If a concurrent actor creates any component first, including a symlink, the script rejects it without descending through it.
-
-```text
-RED:
-cd frontend && npm run test:db
-FAIL rejects a direct canonical sticky shared backup directory before chmod
-FAIL fails safely when a racer inserts a symlink during nested backup path creation
-
-GREEN:
-bash -n deploy/backup-staging-postgres.sh                exit 0
-cd frontend && npm run test:db                            20 passed, 0 failed
-cd frontend && npm test                                   496 passed, 0 failed
-cd frontend && npm run lint                               exit 0
-git diff --check                                          exit 0
-```
-
-## Secure directory-creation follow-up (2026-07-20)
-
-- `umask 077` now executes at script startup, before any possible `mkdir`. The script records the first absent component, then re-walks every component after `mkdir -p`; all newly created directories must be current-user owned, non-symlink directories without group/world write permission before `cd -P` pins the target.
-- Existing root-owned sticky shared ancestors, including canonical `/tmp`, are allowed; ordinary group/world-writable ancestors remain rejected. The shared-temporary-root tests canonicalize `/tmp` with `realpathSync`, so they prove validation reaches their deliberately nested symlink and `0777` parent instead of stopping at the standard sticky ancestor.
-
-```text
-RED:
-cd frontend && npm run test:db
-FAIL rejects destructive backup directory aliases and symlink components before mutation
-FAIL creates every absent backup path component privately despite a permissive caller umask
-The prior policy rejected canonical /tmp and only set umask after mkdir.
-
-GREEN:
-bash -n deploy/backup-staging-postgres.sh                exit 0
-cd frontend && npm run test:db                            18 passed, 0 failed
-cd frontend && npm test                                   494 passed, 0 failed
-cd frontend && npm run lint                               exit 0
-git diff --check                                          exit 0
-```
-
-## TOCTOU follow-up (2026-07-20)
-
-- Before `mkdir`/`cd`, the script walks all existing absolute-target ancestors, rejects symlinks, requires current-user-or-root ownership, and rejects group/world-writable modes. The unsafe-parent regression uses `realpathSync` for the macOS temporary root, so its nested symlink and `0777` parent are the components actually reached by validation.
-- After creation it enters the directory with `cd -P`, verifies the canonical path and directory identity, and keeps the working directory pinned. Disk check, lock, partial/final publication, inventory, `find`, and rotation all use `.` or relative filenames; success still prints the canonical absolute archive path.
-
-```text
-RED:
-cd frontend && npm run test:db
-FAIL rejects unsafe writable backup parents before creating the target
-The old script created the target and then failed only at the disk check, rather than rejecting the unsafe ancestor.
-
-GREEN:
-bash -n deploy/backup-staging-postgres.sh                exit 0
-cd frontend && npm run test:db                            17 passed, 0 failed
-cd frontend && npm test                                   493 passed, 0 failed
-cd frontend && npm run lint                               exit 0
-git diff --check                                          exit 0
-```
-
-## Self-review and caveats
-
-- Reviewed the final diff for secret exposure, output scope, filename filtering, rotation boundaries, portable shell options, and atomic/cleanup behavior; no task-scope finding remained.
-- This Mac's actual filesystem usage is at least 70%, which correctly makes the production script refuse a backup. The integration test supplies a controlled `df` executable reporting 10% usage so it can exercise the real Docker/PostgreSQL/OpenSSL/`pg_restore` flow without weakening the production guard.
-- The mandatory repository pre-work gate remains host-blocked for its known unrelated reason: system Python 3.9 lacks pytest (and cannot import the project's Python 3.10+ syntax). No Task 3 change touches that gate.
-
-## Follow-up safety hardening (2026-07-20)
-
-Implementation:
-
-- Rejects `/`, relative paths, repeated/trailing separators, `.`/`..` traversal, and every existing symlink component before the script can create, chmod, write, or delete under the requested backup path. After `mkdir -p`, it resolves physically and requires the exact non-root input before chmod.
-- Acquires a per-archive directory lock using portable exclusive `mkdir`; publishes with a same-directory hard link (`ln`) rather than overwrite-capable `mv`; removes partial and owned lock artifacts on every handled exit.
-- Captures `find | LC_ALL=C sort` into a variable under `pipefail` and fails before retention deletion if enumeration fails. Retention remains the newest exact three archives.
-- The collision regression no longer mocks `mv`. It runs two same-timestamp processes through a slow, successful dump producer, proves exactly one success/archive, decrypts it, and verifies no lock/partial remains. The existing integration still uses real PostgreSQL dump, OpenSSL decryption, and `pg_restore --list`.
-
-Exact RED/GREEN evidence:
-
-```text
-RED against 6008d2f (before this implementation):
-cd frontend && npm run test:db -- --test-name-pattern='rejects destructive|same-second|find enumeration|refuses full'
-tests 16; pass 14; fail 2
-- root/alias handling returned the old root-only message instead of the required pre-mutation rejection
-- two same-second invocations both succeeded (2 !== 1)
-
-GREEN after implementation:
-bash -n deploy/backup-staging-postgres.sh                exit 0
-cd frontend && npm run test:db                            16 passed, 0 failed
-cd frontend && npm test                                   492 passed, 0 failed
-cd frontend && npm run lint                               exit 0
-git diff --check                                          exit 0
-```
+- A clean TypeScript run is still blocked by `tests/profile-persistence.test.ts:7 TS1501`; Task 3 introduces no additional diagnostic.
