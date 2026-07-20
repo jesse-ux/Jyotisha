@@ -37,7 +37,7 @@ const birthplaceSchema = boundedJson(z.object({
   }
 }), 4_096);
 
-const clueSchema = z.string().max(240).nullable();
+const clueSchema = boundedText(240).nullable();
 const commonBirthFields = {
   birthDate: birthDateSchema,
   birthTimeClue: clueSchema,

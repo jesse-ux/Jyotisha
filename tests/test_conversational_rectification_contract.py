@@ -47,8 +47,8 @@ def test_v3_schema_is_account_scoped_bounded_and_service_role_only() -> None:
         )
 
     assert "primary key (case_id, turn_version)" in sql
-    assert "char_length(narrative) between 1 and 12000" in sql
-    assert "char_length(raw_text) between 1 and 4000" in sql
+    assert "conversational_rectification_text_utf16_length(narrative) between 1 and 12000" in sql
+    assert "conversational_rectification_text_utf16_length(raw_text) between 1 and 4000" in sql
     assert "date_precision in ('day', 'month', 'year', 'range', 'unknown')" in sql
     assert "extraction_status in ('clear', 'needs_clarification', 'corrected')" in sql
     assert "primary key (case_id, action_id)" in sql
@@ -310,6 +310,13 @@ def test_durable_json_numbers_and_evidence_recap_share_postgres_bounds() -> None
     sql = _normalized(SCHEMA)
 
     assert "create or replace function public.conversational_rectification_numbers_are_stable" in sql
+    numeric = _function(sql, "conversational_rectification_numbers_are_stable")
+    for invariant in (
+        "abs(v_number) <= 9007199254740991",
+        "abs(v_number) between 0.000001 and 1000000",
+        "v_number = pg_catalog.trunc(v_number, 6)",
+    ):
+        assert invariant in numeric
     for validator in (
         "conversational_rectification_valid_declared_birth_input",
         "conversational_rectification_valid_private_candidate",
@@ -320,6 +327,71 @@ def test_durable_json_numbers_and_evidence_recap_share_postgres_bounds() -> None
         assert "conversational_rectification_numbers_are_stable" in _function(sql, validator)
     recap = _function(sql, "conversational_rectification_valid_evidence_recap")
     assert "octet_length(p_value::text) <= 24576" in recap
+
+
+def test_sql_json_strings_and_enum_arrays_reject_null_and_non_string_values() -> None:
+    sql = _normalized(SCHEMA)
+    assert "jsonb_array_elements_text" not in sql
+
+    candidate = _function(sql, "conversational_rectification_valid_candidate")
+    assert "jsonb_typeof(p_value -> 'status') is distinct from 'string'" in candidate
+
+    request = _function(sql, "conversational_rectification_valid_evidence_request")
+    assert "jsonb_typeof(p_value -> 'dateprecision') = 'string'" in request
+    assert "jsonb_array_elements(p_value -> 'domains')" in request
+    assert "jsonb_typeof(domain) is distinct from 'string'" in request
+
+    actions = _function(sql, "conversational_rectification_valid_actions")
+    assert "jsonb_array_elements(p_value)" in actions
+    assert "jsonb_typeof(action) is distinct from 'string'" in actions
+
+    private = _function(sql, "conversational_rectification_valid_private_candidate")
+    assert "jsonb_array_elements(p_value -> 'suggesteddomains')" in private
+    assert "jsonb_typeof(domain) is distinct from 'string'" in private
+
+    public_turn = _function(sql, "conversational_rectification_valid_public_turn")
+    for key in ("caseid", "journeyprotocol", "status"):
+        assert f"jsonb_typeof(p_value -> '{key}') = 'string'" in public_turn
+
+
+def test_sql_uuid_text_matches_zod_canonical_hyphenated_syntax_at_all_json_boundaries() -> None:
+    sql = _normalized(SCHEMA)
+    uuid = _function(sql, "conversational_rectification_valid_uuid_text")
+    assert "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" in uuid
+    assert "perform p_value::uuid" in uuid
+
+    for validator in (
+        "conversational_rectification_valid_evidence_recap",
+        "conversational_rectification_valid_life_event_evidence",
+        "conversational_rectification_valid_private_candidate",
+        "conversational_rectification_valid_public_turn",
+        "conversational_rectification_valid_action_request",
+        "conversational_rectification_valid_action_response",
+    ):
+        assert "conversational_rectification_valid_uuid_text" in _function(sql, validator)
+
+
+def test_sql_nonblank_and_maximum_text_rules_match_ecmascript_and_utf16() -> None:
+    sql = _normalized(SCHEMA)
+    assert "create or replace function public.conversational_rectification_text_utf16_length" in sql
+
+    for validator, minimum_nonblank_calls, minimum_utf16_calls in (
+        ("conversational_rectification_text_array_is_bounded", 1, 1),
+        ("conversational_rectification_valid_technical_receipt", 1, 1),
+        ("conversational_rectification_valid_evidence_recap", 2, 2),
+        ("conversational_rectification_valid_validation_receipt", 2, 3),
+        ("conversational_rectification_valid_life_event_evidence", 3, 3),
+        ("conversational_rectification_valid_private_candidate", 2, 2),
+        ("conversational_rectification_valid_declared_birth_input", 2, 2),
+        ("conversational_rectification_valid_public_turn", 2, 2),
+        ("conversational_rectification_valid_action_response", 2, 2),
+    ):
+        body = _function(sql, validator)
+        assert body.count("conversational_rectification_text_is_nonblank") >= minimum_nonblank_calls
+        assert body.count("conversational_rectification_text_utf16_length") >= minimum_utf16_calls
+
+    for durable_column in ("narrative", "raw_text", "event_summary", "date_value"):
+        assert f"conversational_rectification_text_utf16_length({durable_column})" in sql
 
 
 def test_life_event_evidence_is_strictly_validated_before_insert() -> None:

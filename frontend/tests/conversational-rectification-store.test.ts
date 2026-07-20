@@ -478,10 +478,11 @@ test("durable JSON uses PostgreSQL-stable numeric vectors recursively", () => {
   const stableVector = {
     zero: 0,
     minFraction: 0.000001,
+    ieeeRoundingBoundary: 1.000001,
     decimal: 0.123456,
     maxSafe: 9_007_199_254_740_991,
   };
-  assert.equal(postgresJsonbTextBytes(stableVector), 86);
+  assert.equal(postgresJsonbTextBytes(stableVector), 120);
   assert.equal(declaredBirthInputSchema.safeParse({
     ...storedRow.declared_birth_input,
     birthplace: {
@@ -492,7 +493,8 @@ test("durable JSON uses PostgreSQL-stable numeric vectors recursively", () => {
     },
   }).success, true);
 
-  for (const candidateWeights of [[1e-100], [0.1234567]]) {
+  assert.ok(Number.isSafeInteger(1.000001 * 1_000_000) === false);
+  for (const candidateWeights of [[1e-7], [1e-100], [0.0000012], [0.1234567]]) {
     assert.equal(privateCandidateSchema.safeParse({
       resultId,
       calculationVersion: "rectification-v3.1",
@@ -518,6 +520,87 @@ test("durable JSON uses PostgreSQL-stable numeric vectors recursively", () => {
     },
   }).success, false);
   assert.equal(postgresJsonbTextBytes({ nested: [{ score: 1e-100 }] }), Number.POSITIVE_INFINITY);
+});
+
+test("durable text uses ECMAScript nonblank and UTF-16 maximum semantics", () => {
+  const unicodeWhitespace = "\u00a0\u2007\ufeff";
+  const validAstral80 = "😀".repeat(40);
+  const invalidAstral82 = "😀".repeat(41);
+
+  assert.equal(validationReceiptSchema.safeParse({
+    modelId: "😀".repeat(60),
+    schemaValidated: true,
+  }).success, true);
+  assert.equal(validationReceiptSchema.safeParse({
+    modelId: "😀".repeat(61),
+    schemaValidated: true,
+  }).success, false);
+  assert.equal(privateCandidateSchema.safeParse({
+    resultId,
+    calculationVersion: validAstral80,
+  }).success, true);
+  assert.equal(privateCandidateSchema.safeParse({
+    resultId,
+    calculationVersion: invalidAstral82,
+  }).success, false);
+
+  for (const invalid of [
+    { ...firstTurn, narrative: unicodeWhitespace },
+    {
+      ...firstTurn,
+      technicalReceipt: { ...firstTurn.technicalReceipt, calculationVersion: unicodeWhitespace },
+    },
+    {
+      ...firstTurn,
+      technicalReceipt: { ...firstTurn.technicalReceipt, stableLayers: [unicodeWhitespace] },
+    },
+    {
+      ...firstTurn,
+      evidenceRecap: [{ id: resultId, summary: unicodeWhitespace, dateLabel: "2020-01" }],
+    },
+    { ...firstTurn, pendingConsultationQuestion: unicodeWhitespace },
+  ]) {
+    assert.equal(conversationalRectificationTurnSchema.safeParse(invalid).success, false);
+  }
+
+  for (const invalid of [
+    { modelId: unicodeWhitespace, schemaValidated: true },
+    { modelId: "model", schemaValidated: true, validatorVersion: unicodeWhitespace },
+    { modelId: "model", schemaValidated: true, issues: [unicodeWhitespace] },
+  ]) {
+    assert.equal(validationReceiptSchema.safeParse(invalid).success, false);
+  }
+
+  for (const invalid of [
+    { resultId, calculationVersion: unicodeWhitespace },
+    { resultId, calculationVersion: "v1", candidateModelRefs: [unicodeWhitespace] },
+    {
+      resultId,
+      calculationVersion: "v1",
+      futureWindows: [{
+        label: unicodeWhitespace,
+        startDate: "2020-01-01",
+        endDate: "2020-01-02",
+        scoreable: false,
+      }],
+    },
+    {
+      resultId,
+      calculationVersion: "v1",
+      workingState: { phase: "initial", iteration: 0, notes: [unicodeWhitespace] },
+    },
+  ]) {
+    assert.equal(privateCandidateSchema.safeParse(invalid).success, false);
+  }
+
+  assert.equal(declaredBirthInputSchema.safeParse({
+    ...storedRow.declared_birth_input,
+    birthTimeClue: unicodeWhitespace,
+  }).success, false);
+  assert.equal(declaredBirthInputSchema.safeParse({
+    ...storedRow.declared_birth_input,
+    birthplace: { ...storedRow.declared_birth_input.birthplace, city: unicodeWhitespace },
+  }).success, false);
 });
 
 test("evidence recap enforces the SQL-matched aggregate byte limit", () => {
@@ -628,6 +711,29 @@ test("durable private and receipt schemas accept boundaries and reject oversize 
     billing_state: null,
     error_code: "e".repeat(81),
   }).success, false);
+});
+
+test("durable UUID text is canonical hyphenated syntax and case-insensitive", () => {
+  const canonical = "a9890e09-d535-46f0-9a36-86017515a5a1";
+  const compact = canonical.replaceAll("-", "");
+  const braced = `{${canonical}}`;
+
+  for (const validResultId of [canonical, canonical.toUpperCase()]) {
+    assert.equal(privateCandidateSchema.safeParse({
+      resultId: validResultId,
+      calculationVersion: "v1",
+    }).success, true);
+  }
+  for (const invalidResultId of [compact, braced]) {
+    assert.equal(privateCandidateSchema.safeParse({
+      resultId: invalidResultId,
+      calculationVersion: "v1",
+    }).success, false);
+    assert.equal(conversationalRectificationTurnSchema.safeParse({
+      ...firstTurn,
+      evidenceRecap: [{ id: invalidResultId, summary: "summary", dateLabel: "2020-01" }],
+    }).success, false);
+  }
 });
 
 test("public turn JSON fields reject field and byte boundary violations", () => {

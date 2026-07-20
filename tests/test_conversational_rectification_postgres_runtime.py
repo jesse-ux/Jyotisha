@@ -638,6 +638,7 @@ def test_postgres_uses_the_shared_stable_numeric_boundary_vectors(
     stable_vector = {
         "zero": 0,
         "minFraction": 0.000001,
+        "ieeeRoundingBoundary": 1.000001,
         "decimal": 0.123456,
         "maxSafe": 9_007_199_254_740_991,
     }
@@ -649,11 +650,14 @@ def test_postgres_uses_the_shared_stable_numeric_boundary_vectors(
         )::text;
         """
     )
-    assert json.loads(numeric_result) == {"valid": True, "bytes": 86}
+    assert json.loads(numeric_result) == {"valid": True, "bytes": 120}
 
     for invalid in (
+        {"nested": [{"score": 1e-7}]},
         {"nested": [{"score": 1e-100}]},
+        {"nested": [{"score": 0.0000012}]},
         {"nested": [{"score": 0.1234567}]},
+        {"nested": [{"score": 1_000_000.000001}]},
         {"nested": [{"score": 9_007_199_254_740_992}]},
     ):
         assert pg14_database.sql(
@@ -676,6 +680,123 @@ def test_postgres_uses_the_shared_stable_numeric_boundary_vectors(
         "select public.conversational_rectification_valid_declared_birth_input("
         f"{_jsonb(unstable_declared_input)})::text"
     ) == "false"
+
+
+def test_json_text_validators_align_types_uuid_unicode_and_utf16(
+    pg14_database: PgDatabase,
+) -> None:
+    case_id = "00000000-0000-4000-8000-000000000960"
+    turn = _valid_turn(case_id)
+    private_candidate = _valid_private_candidate()
+    unicode_whitespace = "\u00a0\u2007\ufeff"
+    canonical_uuid = "a9890e09-d535-46f0-9a36-86017515a5a1"
+    compact_uuid = canonical_uuid.replace("-", "")
+
+    uuid_result = json.loads(pg14_database.sql(
+        f"""
+        select pg_catalog.jsonb_build_object(
+          'lower', public.conversational_rectification_valid_uuid_text({_text(canonical_uuid)}),
+          'upper', public.conversational_rectification_valid_uuid_text({_text(canonical_uuid.upper())}),
+          'compact', public.conversational_rectification_valid_uuid_text({_text(compact_uuid)}),
+          'braced', public.conversational_rectification_valid_uuid_text({_text('{' + canonical_uuid + '}')})
+        )::text;
+        """
+    ))
+    assert uuid_result == {"lower": True, "upper": True, "compact": False, "braced": False}
+
+    invalid_turns = (
+        {**turn, "candidate": {**turn["candidate"], "status": None}},
+        {
+            **turn,
+            "technicalReceipt": {**turn["technicalReceipt"], "stableLayers": [None]},
+        },
+        {
+            **turn,
+            "technicalReceipt": {**turn["technicalReceipt"], "sensitiveLayers": [42]},
+        },
+        {
+            **turn,
+            "evidenceRequest": {**turn["evidenceRequest"], "domains": ["career", None]},
+        },
+        {
+            **turn,
+            "evidenceRequest": {**turn["evidenceRequest"], "datePrecision": None},
+        },
+        {**turn, "actions": [None]},
+        {**turn, "status": None},
+        {**turn, "narrative": unicode_whitespace},
+        {
+            **turn,
+            "evidenceRecap": [{
+                "id": compact_uuid,
+                "summary": "summary",
+                "dateLabel": "2020-01",
+            }],
+        },
+    )
+    for invalid in invalid_turns:
+        assert pg14_database.sql(
+            "select public.conversational_rectification_valid_public_turn("
+            f"{_jsonb(invalid)})::text"
+        ) == "false"
+
+    invalid_private_candidates = (
+        {**private_candidate, "resultId": compact_uuid},
+        {**private_candidate, "suggestedDomains": ["career", None]},
+        {**private_candidate, "d1Stability": None},
+        {**private_candidate, "calculationVersion": unicode_whitespace},
+        {
+            **private_candidate,
+            "workingState": {"phase": "initial", "iteration": 0, "notes": [unicode_whitespace]},
+        },
+        {
+            **private_candidate,
+            "futureWindows": [{
+                "label": unicode_whitespace,
+                "startDate": "2020-01-01",
+                "endDate": "2020-01-02",
+                "scoreable": False,
+            }],
+        },
+    )
+    for invalid in invalid_private_candidates:
+        assert pg14_database.sql(
+            "select public.conversational_rectification_valid_private_candidate("
+            f"{_jsonb(invalid)})::text"
+        ) == "false"
+
+    invalid_declared = {
+        **_valid_declared_birth_input(),
+        "birthTimeClue": unicode_whitespace,
+        "birthplace": {
+            **_valid_declared_birth_input()["birthplace"],
+            "city": unicode_whitespace,
+        },
+    }
+    assert pg14_database.sql(
+        "select public.conversational_rectification_valid_declared_birth_input("
+        f"{_jsonb(invalid_declared)})::text"
+    ) == "false"
+
+    assert pg14_database.sql(
+        "select public.conversational_rectification_valid_validation_receipt("
+        f"{_jsonb({'modelId': unicode_whitespace, 'schemaValidated': True})})::text"
+    ) == "false"
+    assert pg14_database.sql(
+        "select public.conversational_rectification_valid_action_response("
+        f"{_jsonb({'success': False, 'credits': 7, 'billing_state': None, 'error_code': unicode_whitespace})}, "
+        "'reserve_fee')::text"
+    ) == "false"
+
+    assert pg14_database.sql(
+        "select public.conversational_rectification_text_utf16_length("
+        f"{_text('😀' * 40)})::text"
+    ) == "80"
+    for model_id, expected in (("😀" * 60, "true"), ("😀" * 61, "false")):
+        assert pg14_database.sql(
+            "select public.conversational_rectification_valid_validation_receipt("
+            f"{_jsonb({'modelId': model_id, 'schemaValidated': True})})::text"
+        ) == expected
 
 
 def test_save_rejects_invalid_evidence_without_discarding_or_coercing_fields(

@@ -1,16 +1,27 @@
 import { z } from "zod";
 
-const POSTGRES_JSON_DECIMAL_SCALE = 1_000_000;
-const POSTGRES_JSON_MIN_FRACTION = 1 / POSTGRES_JSON_DECIMAL_SCALE;
+const POSTGRES_JSON_MAX_DECIMAL_PLACES = 6;
+const POSTGRES_JSON_MIN_FRACTION = 0.000001;
 const POSTGRES_JSON_MAX_FRACTION_MAGNITUDE = 1_000_000;
+
+function canonicalJsonDecimalPlaces(value: number): number | null {
+  const serialized = JSON.stringify(value);
+  const match = /^-?\d+(?:\.(\d+))?(?:e([+-]?\d+))?$/i.exec(serialized);
+  if (!match) return null;
+  const fractionLength = match[1]?.length ?? 0;
+  const exponent = Number(match[2] ?? 0);
+  return Math.max(0, fractionLength - exponent);
+}
 
 function postgresStableJsonNumber(value: number): boolean {
   if (!Number.isFinite(value)) return false;
   if (Number.isSafeInteger(value)) return true;
   const magnitude = Math.abs(value);
+  const decimalPlaces = canonicalJsonDecimalPlaces(value);
   return magnitude >= POSTGRES_JSON_MIN_FRACTION
     && magnitude <= POSTGRES_JSON_MAX_FRACTION_MAGNITUDE
-    && Number.isSafeInteger(value * POSTGRES_JSON_DECIMAL_SCALE);
+    && decimalPlaces !== null
+    && decimalPlaces <= POSTGRES_JSON_MAX_DECIMAL_PLACES;
 }
 
 function postgresJsonNumbersAreStable(
