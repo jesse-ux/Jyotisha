@@ -12,9 +12,12 @@
     {
       "birth": {
         "date": "1955-02-24",
+        "lat": 37.7749,
+        "lon": -122.4194,
         "place": "San Francisco, CA, USA",
         "source_policy": "public_record_candidate",
-        "time": "19:15"
+        "time": "19:15",
+        "tz": -8
       },
       "case_id": "steve_jobs",
       "domains": [
@@ -44,9 +47,12 @@
     {
       "birth": {
         "date": "1879-03-14",
+        "lat": 48.4011,
+        "lon": 9.9876,
         "place": "Ulm, Germany",
         "source_policy": "public_record_candidate",
-        "time": "11:30"
+        "time": "11:30",
+        "tz": 1
       },
       "case_id": "albert_einstein",
       "domains": [
@@ -76,9 +82,12 @@
     {
       "birth": {
         "date": "1961-08-04",
+        "lat": 21.3069,
+        "lon": -157.8583,
         "place": "Honolulu, HI, USA",
         "source_policy": "public_record_candidate",
-        "time": "19:24"
+        "time": "19:24",
+        "tz": -10
       },
       "case_id": "barack_obama",
       "domains": [
@@ -108,9 +117,12 @@
     {
       "birth": {
         "date": "1961-07-01",
+        "lat": 52.8294,
+        "lon": 0.5143,
         "place": "Sandringham, England",
         "source_policy": "public_record_candidate",
-        "time": "19:45"
+        "time": "19:45",
+        "tz": 0
       },
       "case_id": "princess_diana",
       "domains": [
@@ -139,9 +151,12 @@
     {
       "birth": {
         "date": "1946-06-14",
+        "lat": 40.7282,
+        "lon": -73.7949,
         "place": "Queens, NY, USA",
         "source_policy": "public_record_candidate",
-        "time": "10:54"
+        "time": "10:54",
+        "tz": -5
       },
       "case_id": "donald_trump",
       "domains": [
@@ -171,9 +186,12 @@
     {
       "birth": {
         "date": "1954-01-29",
+        "lat": 33.0576,
+        "lon": -89.5887,
         "place": "Kosciusko, MS, USA",
         "source_policy": "public_record_candidate",
-        "time": "04:30"
+        "time": "04:30",
+        "tz": -6
       },
       "case_id": "oprah_winfrey",
       "domains": [
@@ -203,9 +221,12 @@
     {
       "birth": {
         "date": "1971-06-28",
+        "lat": -25.7479,
+        "lon": 28.2293,
         "place": "Pretoria, South Africa",
         "source_policy": "public_record_candidate",
-        "time": "07:30"
+        "time": "07:30",
+        "tz": 2
       },
       "case_id": "elon_musk",
       "domains": [
@@ -235,9 +256,12 @@
     {
       "birth": {
         "date": "1869-10-02",
+        "lat": 21.6417,
+        "lon": 69.6293,
         "place": "Porbandar, India",
         "source_policy": "public_record_candidate",
-        "time": "07:11"
+        "time": "07:11",
+        "tz": 5.5
       },
       "case_id": "mahatma_gandhi",
       "domains": [
@@ -267,9 +291,12 @@
     {
       "birth": {
         "date": "1926-06-01",
+        "lat": 34.0522,
+        "lon": -118.2437,
         "place": "Los Angeles, CA, USA",
         "source_policy": "public_record_candidate",
-        "time": "09:30"
+        "time": "09:30",
+        "tz": -8
       },
       "case_id": "marilyn_monroe",
       "domains": [
@@ -299,9 +326,12 @@
     {
       "birth": {
         "date": "1955-10-28",
+        "lat": 47.6062,
+        "lon": -122.3321,
         "place": "Seattle, WA, USA",
         "source_policy": "public_record_candidate",
-        "time": "22:00"
+        "time": "22:00",
+        "tz": -8
       },
       "case_id": "bill_gates",
       "domains": [
@@ -331,9 +361,12 @@
     {
       "birth": {
         "date": "1965-07-31",
+        "lat": 0.0,
+        "lon": 0.0,
         "place": "Yate, England",
         "source_policy": "public_record_candidate",
-        "time": "14:00"
+        "time": "14:00",
+        "tz": 0
       },
       "case_id": "j_k_rowling",
       "domains": [
@@ -363,9 +396,12 @@
     {
       "birth": {
         "date": "1918-07-18",
+        "lat": 0.0,
+        "lon": 0.0,
         "place": "Mvezo, South Africa",
         "source_policy": "public_record_candidate",
-        "time": "14:54"
+        "time": "14:54",
+        "tz": 0
       },
       "case_id": "nelson_mandela",
       "domains": [
@@ -395,9 +431,12 @@
     {
       "birth": {
         "date": "1910-08-26",
+        "lat": 0.0,
+        "lon": 0.0,
         "place": "Skopje, North Macedonia",
         "source_policy": "public_record_candidate",
-        "time": "14:25"
+        "time": "14:25",
+        "tz": 0
       },
       "case_id": "mother_teresa",
       "domains": [
@@ -427,9 +466,12 @@
     {
       "birth": {
         "date": "1958-08-29",
+        "lat": 0.0,
+        "lon": 0.0,
         "place": "Gary, IN, USA",
         "source_policy": "public_record_candidate",
-        "time": "19:33"
+        "time": "19:33",
+        "tz": 0
       },
       "case_id": "michael_jackson",
       "domains": [
@@ -459,9 +501,12 @@
     {
       "birth": {
         "date": "1926-04-21",
+        "lat": 0.0,
+        "lon": 0.0,
         "place": "London, England",
         "source_policy": "public_record_candidate",
-        "time": "02:40"
+        "time": "02:40",
+        "tz": 0
       },
       "case_id": "queen_elizabeth_ii",
       "domains": [
@@ -491,9 +536,12 @@
     {
       "birth": {
         "date": "1917-05-29",
+        "lat": 0.0,
+        "lon": 0.0,
         "place": "Brookline, MA, USA",
         "source_policy": "public_record_candidate",
-        "time": "15:00"
+        "time": "15:00",
+        "tz": 0
       },
       "case_id": "john_f_kennedy",
       "domains": [
@@ -523,9 +571,12 @@
     {
       "birth": {
         "date": "1929-01-15",
+        "lat": 0.0,
+        "lon": 0.0,
         "place": "Atlanta, GA, USA",
         "source_policy": "public_record_candidate",
-        "time": "12:00"
+        "time": "12:00",
+        "tz": 0
       },
       "case_id": "martin_luther_king_jr",
       "domains": [
@@ -555,9 +606,12 @@
     {
       "birth": {
         "date": "1975-06-04",
+        "lat": 0.0,
+        "lon": 0.0,
         "place": "Los Angeles, CA, USA",
         "source_policy": "public_record_candidate",
-        "time": "09:09"
+        "time": "09:09",
+        "tz": 0
       },
       "case_id": "angelina_jolie",
       "domains": [
@@ -587,9 +641,12 @@
     {
       "birth": {
         "date": "1963-12-18",
+        "lat": 0.0,
+        "lon": 0.0,
         "place": "Shawnee, OK, USA",
         "source_policy": "public_record_candidate",
-        "time": "06:31"
+        "time": "06:31",
+        "tz": 0
       },
       "case_id": "brad_pitt",
       "domains": [
@@ -619,9 +676,12 @@
     {
       "birth": {
         "date": "1981-09-26",
+        "lat": 0.0,
+        "lon": 0.0,
         "place": "Saginaw, MI, USA",
         "source_policy": "public_record_candidate",
-        "time": "20:28"
+        "time": "20:28",
+        "tz": 0
       },
       "case_id": "serena_williams",
       "domains": [
