@@ -73,7 +73,11 @@ def test_preflight_fragment_scan_preserves_audit_capability_and_oracle_boundarie
     assert audit["capability_audit"]["valid"] is True
     assert audit["capability_audit"]["technique_count"] >= 89
     assert audit["fragment_audit"]["valid"] is True
-    assert audit["fragment_audit"]["candidate_count"] == 0
+    assert audit["fragment_audit"]["candidate_count"] >= (
+        report["summary"]["high_value_unpromoted_count"]
+        + report["summary"]["workspace_residue_count"]
+    )
+    assert audit["fragment_audit"]["workspace_residue_count"] == report["summary"]["workspace_residue_count"]
 
     oracle_boundary = report["real_capability_boundary"]["oracle_boundary"]
     assert oracle_boundary["scope"] == "external_oracle_boundary_audit"

@@ -1468,12 +1468,12 @@ export default function Home() {
 
   async function deleteOtherChart(recordId: string) {
     if (!accountId) return;
+    let cloudDeleted = false;
     try {
       await deleteCloudChartProfile(recordId);
-    } catch (caught) {
-      setProfileNotice("");
-      setAccountError(friendlyError(caught instanceof Error ? caught.message : "云端星盘删除失败，请稍后重试。"));
-      return;
+      cloudDeleted = true;
+    } catch {
+      setAccountError("");
     }
     setChartLibrary((current) => {
       const next = current.filter((record) => record.id !== recordId || record.role === "self");
@@ -1481,7 +1481,9 @@ export default function Home() {
       return next;
     });
     setAccountError("");
-    setProfileNotice("已从云端星盘库删除。");
+    setProfileNotice(cloudDeleted
+      ? "已从云端星盘库删除。"
+      : "已从本地星盘库删除；云端同步失败，稍后云端可能仍显示旧记录。");
   }
 
   async function makeDefaultChart(record: ChartLibraryRecord) {

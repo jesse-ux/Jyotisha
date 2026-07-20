@@ -16,8 +16,10 @@ test("other chart save falls back to local library when cloud sync fails", () =>
   assert.match(source, /catch\s*\{[\s\S]{0,300}已保存到本地星盘库；云端同步失败/);
   assert.match(source, /localStorage\.setItem\(chartLibraryStorageKey\(accountId\), JSON\.stringify\(next\)\)/);
   assert.match(source, /if \(cloudSaved\)[\s\S]{0,180}已保存到云端星盘库/);
+  assert.match(source, /async function deleteOtherChart[\s\S]{0,500}let cloudDeleted = false/);
   assert.match(source, /async function deleteOtherChart[\s\S]{0,500}await deleteCloudChartProfile\(recordId\)/);
-  assert.doesNotMatch(source, /deleteOtherChart[\s\S]{0,500}void deleteCloudChartProfile/);
+  assert.match(source, /async function deleteOtherChart[\s\S]{0,900}已从本地星盘库删除；云端同步失败/);
+  assert.doesNotMatch(source, /deleteOtherChart[\s\S]{0,500}return;\s*}\s*setChartLibrary/);
 });
 
 test("adding another chart immediately opens the synastry path", () => {
