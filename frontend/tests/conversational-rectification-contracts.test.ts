@@ -7,6 +7,7 @@ import {
 import {
   ConversationalRectificationError,
   toConversationalRectificationError,
+  toConversationalRectificationPublicError,
 } from "../src/lib/conversational-rectification/errors.ts";
 
 const actionId = "a9890e09-d535-46f0-9a36-86017515a5a1";
@@ -96,21 +97,52 @@ test("accepts only the exact public turn shape", () => {
   assert.equal(conversationalRectificationTurnSchema.safeParse({ ...turn, technicalReceipt: { ...turn.technicalReceipt, rawModelOutput: "secret" } }).success, false);
 });
 
-test("maps known domain failures to stable Chinese recovery copy", () => {
-  const stale = new ConversationalRectificationError("stale_turn");
-  assert.deepEqual(stale.public, {
+function assertNoReachableText(value: unknown, forbidden: string, seen = new Set<unknown>()) {
+  if (typeof value === "string") {
+    assert.equal(value.includes(forbidden), false, `found raw text in ${value}`);
+    return;
+  }
+  if (value === null || (typeof value !== "object" && typeof value !== "function") || seen.has(value)) return;
+
+  seen.add(value);
+  for (const key of Reflect.ownKeys(value)) {
+    assertNoReachableText(String(key), forbidden, seen);
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (descriptor && "value" in descriptor) assertNoReachableText(descriptor.value, forbidden, seen);
+  }
+}
+
+test("maps known domain failures to a frozen stable public DTO", () => {
+  const stale = toConversationalRectificationPublicError(new ConversationalRectificationError("stale_turn"));
+  assert.deepEqual(stale, {
     code: "stale_turn",
     status: 409,
     error: "校正进度已更新",
     message: "请加载最新进度后再试。",
+    retryable: true,
   });
+  assert.equal(Object.isFrozen(stale), true);
+  assert.equal(Reflect.set(stale, "message", "mutated"), false);
+});
 
-  const recovered = toConversationalRectificationError(new Error("WebKit SyntaxError: SQL password=model secret"));
-  assert.deepEqual(recovered.public, {
+test("maps unknown failures to a complete non-leaking public DTO", () => {
+  const rawMessage = "WebKit SyntaxError: SQL password=model secret";
+  const rawFailure = Object.assign(new Error(rawMessage, { cause: new Error(rawMessage) }), {
+    browserError: rawMessage,
+    modelResponse: { message: rawMessage },
+  });
+  const recovered = toConversationalRectificationPublicError(rawFailure);
+  assert.deepEqual(recovered, {
     code: "service_unavailable",
     status: 503,
     error: "生时校正暂时不可用",
-    message: "当前资料已安全保留，请稍后重试。",
+    message: "服务暂时不可用，请稍后重试。",
+    retryable: true,
   });
-  assert.doesNotMatch(recovered.public.message, /WebKit|SQL|model|secret/i);
+  assert.equal(Object.isFrozen(recovered), true);
+  assertNoReachableText(recovered, rawMessage);
+  assert.equal(JSON.stringify(recovered).includes(rawMessage), false);
+  assert.equal(Reflect.set(recovered, "error", rawMessage), false);
+
+  assert.deepEqual(toConversationalRectificationError(rawFailure), recovered);
 });
