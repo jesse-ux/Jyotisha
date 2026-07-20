@@ -78,6 +78,20 @@ type MutationIdentity = Readonly<{
   actionId: string;
 }>;
 
+type CommandMutationIdentity = MutationIdentity & Readonly<{
+  commandFingerprint: string;
+}>;
+
+export type ConversationalRectificationActionKind =
+  | "save_turn"
+  | "pause"
+  | "abandon"
+  | "confirm";
+
+export type LoadConversationalRectificationActionReceiptInput = CommandMutationIdentity & Readonly<{
+  actionKind: ConversationalRectificationActionKind;
+}>;
+
 export type CreateConversationalRectificationCaseInput = MutationIdentity & Readonly<{
   revisionOfCaseId: string | null;
   pendingConsultationQuestion: string | null;
@@ -89,19 +103,19 @@ export type CreateConversationalRectificationCaseInput = MutationIdentity & Read
 
 export type LifeEventEvidenceInput = DeepReadonly<LifeEventEvidence>;
 
-export type SaveConversationalRectificationTurnInput = MutationIdentity & Readonly<{
+export type SaveConversationalRectificationTurnInput = CommandMutationIdentity & Readonly<{
   turn: ConversationalRectificationTurnInput;
   evidence: ReadonlyArray<LifeEventEvidenceInput>;
   validationReceipt: ValidationReceiptInput;
   privateCandidate: PrivateCandidateInput;
 }>;
 
-export type ConversationalRectificationTransitionInput = MutationIdentity & Readonly<{
+export type ConversationalRectificationTransitionInput = CommandMutationIdentity & Readonly<{
   turn: ConversationalRectificationTurnInput;
   validationReceipt: ValidationReceiptInput;
 }>;
 
-export type ConfirmConversationalRectificationInput = MutationIdentity & Readonly<{
+export type ConfirmConversationalRectificationInput = CommandMutationIdentity & Readonly<{
   resultId: string;
   time: string;
   calculationVersion: string;
@@ -174,10 +188,14 @@ function parseStoredCase(data: unknown, allowNull = false): StoredConversational
     pendingConsultationQuestion: value.pending_consultation_question,
     billingState: value.billing_state,
     latestTurn: value.latest_turn,
-    declaredBirthInput: value.declared_birth_input,
-    privateCandidate: value.private_candidate,
-    eventEvidence: value.event_evidence,
-    validationReceipts: value.validation_receipts,
+    ...(value.declared_birth_input === undefined
+      ? {} : { declaredBirthInput: value.declared_birth_input }),
+    ...(value.private_candidate === undefined
+      ? {} : { privateCandidate: value.private_candidate }),
+    ...(value.event_evidence === undefined
+      ? {} : { eventEvidence: value.event_evidence }),
+    ...(value.validation_receipts === undefined
+      ? {} : { validationReceipts: value.validation_receipts }),
   });
 }
 
@@ -222,6 +240,9 @@ const mutationIdentitySchema = z.object({
   actionId: z.string().uuid(),
 }).strict();
 
+const commandFingerprintSchema = z.string().regex(/^[0-9a-f]{64}$/);
+const actionKindSchema = z.enum(["save_turn", "pause", "abandon", "confirm"]);
+
 function mutationArgs(input: MutationIdentity): Readonly<Record<string, unknown>> {
   const parsed = mutationIdentitySchema.safeParse({
     userId: input.userId,
@@ -236,6 +257,12 @@ function mutationArgs(input: MutationIdentity): Readonly<Record<string, unknown>
     p_expected_version: parsed.data.expectedVersion,
     p_action_id: parsed.data.actionId,
   };
+}
+
+function commandFingerprint(input: CommandMutationIdentity): string {
+  const parsed = commandFingerprintSchema.safeParse(input.commandFingerprint);
+  if (!parsed.success) return invalidDurableInput();
+  return parsed.data;
 }
 
 /**
@@ -304,11 +331,24 @@ export class ConversationalRectificationStore {
     return loaded as LoadedConversationalRectificationCase;
   }
 
+  async loadActionReceipt(
+    input: LoadConversationalRectificationActionReceiptInput,
+  ): Promise<StoredConversationalRectificationCase | null> {
+    const actionKind = actionKindSchema.safeParse(input.actionKind);
+    if (!actionKind.success) return invalidDurableInput();
+    return this.callCaseRpc("replay_conversational_rectification_action", {
+      ...mutationArgs(input),
+      p_action_kind: actionKind.data,
+      p_command_fingerprint: commandFingerprint(input),
+    }, true);
+  }
+
   async saveTurn(
     input: SaveConversationalRectificationTurnInput,
   ): Promise<StoredConversationalRectificationCase> {
     const result = await this.callCaseRpc("save_conversational_rectification_turn", {
       ...mutationArgs(input),
+      p_command_fingerprint: commandFingerprint(input),
       p_turn: requirePublicTurn(input.turn),
       p_evidence: requireEvidence(input.evidence),
       p_validation_receipt: requireValidationReceipt(input.validationReceipt),
@@ -336,6 +376,7 @@ export class ConversationalRectificationStore {
   ): Promise<StoredConversationalRectificationCase> {
     const result = await this.callCaseRpc(functionName, {
       ...mutationArgs(input),
+      p_command_fingerprint: commandFingerprint(input),
       p_turn: requirePublicTurn(input.turn),
       p_validation_receipt: requireValidationReceipt(input.validationReceipt),
     });
@@ -348,6 +389,7 @@ export class ConversationalRectificationStore {
   ): Promise<StoredConversationalRectificationCase> {
     const result = await this.callCaseRpc("confirm_conversational_rectification_candidate", {
       ...mutationArgs(input),
+      p_command_fingerprint: commandFingerprint(input),
       p_result_id: input.resultId,
       p_time: input.time,
       p_calculation_version: input.calculationVersion,

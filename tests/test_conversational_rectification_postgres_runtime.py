@@ -328,6 +328,7 @@ def _save_statement(
     turn: dict[str, object] | None = None,
     validation_receipt: dict[str, object] | None = None,
     private_candidate: dict[str, object] | None = None,
+    command_fingerprint: str | None = None,
 ) -> str:
     next_turn = turn or {
         **_valid_turn(case_id),
@@ -342,7 +343,8 @@ def _save_statement(
       {_jsonb(next_turn)},
       {_jsonb(evidence)},
       {_jsonb(validation_receipt or {"modelId": "synthetic-model", "schemaValidated": True})},
-      {_jsonb(private_candidate or _valid_private_candidate())}
+      {_jsonb(private_candidate or _valid_private_candidate())},
+      {"null" if command_fingerprint is None else _text(command_fingerprint)}
     )::text;
     """
 
@@ -481,6 +483,84 @@ def test_valid_declared_birth_input_round_trips_across_account_load(pg14_databas
         f"select public.load_conversational_rectification_case('{user_id}'::uuid, null)::text"
     ))
     assert loaded["declared_birth_input"] == declared
+
+
+def test_historical_receipt_replays_exact_public_response_after_later_turns(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000000943"
+    case_id = "00000000-0000-4000-8000-000000000944"
+    first_action = "00000000-0000-4000-8000-000000000945"
+    later_actions = (
+        "00000000-0000-4000-8000-000000000946",
+        "00000000-0000-4000-8000-000000000947",
+    )
+    first_fingerprint = "a" * 64
+    _create_user(pg14_database, user_id)
+    _reserve(pg14_database, user_id, case_id)
+    _create_case(pg14_database, user_id, case_id, _valid_declared_birth_input())
+    _complete(pg14_database, user_id, case_id)
+
+    original = json.loads(pg14_database.sql(_save_statement(
+        user_id,
+        case_id,
+        0,
+        first_action,
+        [],
+        command_fingerprint=first_fingerprint,
+    )))
+    for version, action_id in enumerate(later_actions, start=1):
+        pg14_database.sql(_save_statement(
+            user_id,
+            case_id,
+            version,
+            action_id,
+            [],
+            command_fingerprint=str(version) * 64,
+        ))
+
+    replayed = json.loads(pg14_database.sql(
+        f"""
+        select public.replay_conversational_rectification_action(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0, '{first_action}'::uuid,
+          'save_turn', '{first_fingerprint}'
+        )::text;
+        """
+    ))
+    assert replayed == original
+    assert replayed["turn_version"] == 1
+    assert replayed["latest_turn"]["turnVersion"] == 1
+    assert pg14_database.rejects(
+        f"""
+        select public.replay_conversational_rectification_action(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0, '{first_action}'::uuid,
+          'save_turn', '{'b' * 64}'
+        );
+        """
+    )
+
+    privileges = json.loads(pg14_database.sql(
+        """
+        select pg_catalog.jsonb_build_object(
+          'anon', pg_catalog.has_function_privilege(
+            'anon',
+            'public.replay_conversational_rectification_action(uuid,uuid,bigint,uuid,text,text)',
+            'EXECUTE'
+          ),
+          'authenticated', pg_catalog.has_function_privilege(
+            'authenticated',
+            'public.replay_conversational_rectification_action(uuid,uuid,bigint,uuid,text,text)',
+            'EXECUTE'
+          ),
+          'serviceRole', pg_catalog.has_function_privilege(
+            'service_role',
+            'public.replay_conversational_rectification_action(uuid,uuid,bigint,uuid,text,text)',
+            'EXECUTE'
+          )
+        )::text;
+        """
+    ))
+    assert privileges == {"anon": False, "authenticated": False, "serviceRole": True}
 
 
 def test_database_rejects_oversize_or_unknown_durable_json(pg14_database: PgDatabase) -> None:

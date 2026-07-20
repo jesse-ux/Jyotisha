@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   conversationalRectificationCommandSchema,
   conversationalRectificationTurnSchema,
@@ -60,7 +61,7 @@ export type ConversationalRectificationPacketBuildInput = Readonly<{
 
 export type ConversationalRectificationServicePorts = Readonly<{
   store: Pick<ConversationalRectificationStore,
-    "createCaseWithFirstTurn" | "loadCase" | "saveTurn" | "pause" | "abandon" | "confirm">;
+    "createCaseWithFirstTurn" | "loadCase" | "loadActionReceipt" | "saveTurn" | "pause" | "abandon" | "confirm">;
   billing: Pick<ConversationalRectificationBilling, "reserve" | "complete" | "release">;
   rectificationPriceCredits: number;
   loadDeclaredProfile(userId: string): Promise<ConversationalRectificationProfile>;
@@ -81,7 +82,8 @@ export type ConversationalRectificationService = Readonly<{
 }>;
 
 const transitionValidatorVersion = "conversational-rectification-orchestrator-v1";
-const directionChangePattern = /(?:都不符合|都不是|不符合|换(?:个|一)?(?:方向|领域)|其他方向|别的方向|不知道|不确定)/;
+const explicitDirectionChangePattern = /(?:都不符合|都不是|不符合|换(?:个|一)?(?:方向|领域)|其他方向|别的方向|不想(?:谈|说|回答)|拒绝回答)/;
+const genericUncertaintyPattern = /(?:不知道|不确定)/;
 
 function safeFailure(error: unknown): ConversationalRectificationError {
   return error instanceof ConversationalRectificationError
@@ -98,6 +100,20 @@ function parseCommand<Type extends ConversationalRectificationCommand["type"]>(
     throw new ConversationalRectificationError("invalid_command");
   }
   return parsed.data as CommandOf<Type>;
+}
+
+type MutableCommand = Extract<ConversationalRectificationCommand, {
+  readonly type: "answer" | "pause" | "abandon" | "confirm";
+}>;
+
+function commandFingerprint(command: MutableCommand): string {
+  const identity = command.type === "answer"
+    ? [command.type, command.caseId, command.actionId, command.turnVersion,
+        command.domain ?? null, command.answer]
+    : command.type === "confirm"
+      ? [command.type, command.caseId, command.actionId, command.turnVersion, command.time]
+      : [command.type, command.caseId, command.actionId, command.turnVersion];
+  return createHash("sha256").update(JSON.stringify(identity), "utf8").digest("hex");
 }
 
 function publicTurn(value: StoredConversationalRectificationCase): ConversationalRectificationTurn {
@@ -347,6 +363,27 @@ export function createConversationalRectificationService(
     }
   }
 
+  async function replayMutation(
+    userId: string,
+    command: MutableCommand,
+    actionKind: "save_turn" | "pause" | "abandon" | "confirm",
+    fingerprint: string,
+  ): Promise<ConversationalRectificationTurn | null> {
+    try {
+      const receipt = await ports.store.loadActionReceipt({
+        userId,
+        caseId: command.caseId,
+        expectedVersion: command.turnVersion,
+        actionId: command.actionId,
+        actionKind,
+        commandFingerprint: fingerprint,
+      });
+      return receipt ? publicTurn(receipt) : null;
+    } catch (error) {
+      throw safeFailure(error);
+    }
+  }
+
   function extractedEvidence(command: CommandOf<"answer">): readonly LifeEventEvidence[] {
     let extracted: readonly LifeEventEvidence[];
     try {
@@ -505,12 +542,14 @@ export function createConversationalRectificationService(
     async resume(userId, rawCommand) {
       const command = parseCommand("resume", rawCommand);
       const current = await load(userId, command.caseId);
-      requireExactVersion(current, command.turnVersion);
       return publicTurn(current);
     },
 
     async answer(userId, rawCommand) {
       const command = parseCommand("answer", rawCommand);
+      const fingerprint = commandFingerprint(command);
+      const receipt = await replayMutation(userId, command, "save_turn", fingerprint);
+      if (receipt) return receipt;
       const current = await load(userId, command.caseId);
       requireMutable(current);
       const evidence = extractedEvidence(command);
@@ -522,6 +561,7 @@ export function createConversationalRectificationService(
             caseId: command.caseId,
             expectedVersion: command.turnVersion,
             actionId: command.actionId,
+            commandFingerprint: fingerprint,
             turn: current.latestTurn,
             evidence,
             validationReceipt: latestReceipt(current),
@@ -536,7 +576,9 @@ export function createConversationalRectificationService(
 
       const scoreableEvidence = evidence.filter((item) => item.scoreable === true
         && item.extractionStatus !== "needs_clarification");
-      const directionChange = directionChangePattern.test(command.answer);
+      const explicitDirectionChange = explicitDirectionChangePattern.test(command.answer);
+      const directionChange = explicitDirectionChange
+        || (scoreableEvidence.length === 0 && genericUncertaintyPattern.test(command.answer));
       if (directionChange || scoreableEvidence.length === 0) {
         const next = nonScoringTurn({
           current,
@@ -550,6 +592,7 @@ export function createConversationalRectificationService(
             caseId: command.caseId,
             expectedVersion: command.turnVersion,
             actionId: command.actionId,
+            commandFingerprint: fingerprint,
             turn: next.turn,
             evidence,
             validationReceipt: next.receipt,
@@ -593,6 +636,7 @@ export function createConversationalRectificationService(
             caseId: command.caseId,
             expectedVersion: command.turnVersion,
             actionId: command.actionId,
+            commandFingerprint: fingerprint,
             turn: next.turn,
             evidence,
             validationReceipt: narrative.validationReceipt,
@@ -618,6 +662,7 @@ export function createConversationalRectificationService(
           caseId: command.caseId,
           expectedVersion: command.turnVersion,
           actionId: command.actionId,
+          commandFingerprint: fingerprint,
           turn,
           evidence,
           validationReceipt: narrative.validationReceipt,
@@ -631,6 +676,9 @@ export function createConversationalRectificationService(
 
     async pause(userId, rawCommand) {
       const command = parseCommand("pause", rawCommand);
+      const fingerprint = commandFingerprint(command);
+      const receipt = await replayMutation(userId, command, "pause", fingerprint);
+      if (receipt) return receipt;
       const current = await load(userId, command.caseId);
       if (current.turnVersion === command.turnVersion + 1 && current.status === "paused") {
         try {
@@ -639,6 +687,7 @@ export function createConversationalRectificationService(
             caseId: command.caseId,
             expectedVersion: command.turnVersion,
             actionId: command.actionId,
+            commandFingerprint: fingerprint,
             turn: current.latestTurn,
             validationReceipt: latestReceipt(current),
           });
@@ -662,6 +711,7 @@ export function createConversationalRectificationService(
           caseId: command.caseId,
           expectedVersion: command.turnVersion,
           actionId: command.actionId,
+          commandFingerprint: fingerprint,
           turn: next.turn,
           validationReceipt: next.receipt,
         }));
@@ -672,6 +722,9 @@ export function createConversationalRectificationService(
 
     async abandon(userId, rawCommand) {
       const command = parseCommand("abandon", rawCommand);
+      const fingerprint = commandFingerprint(command);
+      const receipt = await replayMutation(userId, command, "abandon", fingerprint);
+      if (receipt) return receipt;
       const current = await load(userId, command.caseId);
       if (current.turnVersion === command.turnVersion + 1 && current.status === "abandoned") {
         try {
@@ -680,6 +733,7 @@ export function createConversationalRectificationService(
             caseId: command.caseId,
             expectedVersion: command.turnVersion,
             actionId: command.actionId,
+            commandFingerprint: fingerprint,
             turn: current.latestTurn,
             validationReceipt: latestReceipt(current),
           }));
@@ -700,6 +754,7 @@ export function createConversationalRectificationService(
           caseId: command.caseId,
           expectedVersion: command.turnVersion,
           actionId: command.actionId,
+          commandFingerprint: fingerprint,
           turn: next.turn,
           validationReceipt: next.receipt,
         }));
@@ -710,6 +765,9 @@ export function createConversationalRectificationService(
 
     async confirm(userId, rawCommand) {
       const command = parseCommand("confirm", rawCommand);
+      const fingerprint = commandFingerprint(command);
+      const receipt = await replayMutation(userId, command, "confirm", fingerprint);
+      if (receipt) return receipt;
       const current = await load(userId, command.caseId);
       if (current.turnVersion === command.turnVersion + 1 && current.status === "completed") {
         const resultId = current.privateCandidate.resultId;
@@ -720,6 +778,7 @@ export function createConversationalRectificationService(
             caseId: command.caseId,
             expectedVersion: command.turnVersion,
             actionId: command.actionId,
+            commandFingerprint: fingerprint,
             resultId,
             time: command.time,
             calculationVersion: current.privateCandidate.calculationVersion,
@@ -755,6 +814,7 @@ export function createConversationalRectificationService(
           caseId: command.caseId,
           expectedVersion: command.turnVersion,
           actionId: command.actionId,
+          commandFingerprint: fingerprint,
           resultId,
           time: command.time,
           calculationVersion: current.privateCandidate.calculationVersion,

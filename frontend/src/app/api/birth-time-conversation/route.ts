@@ -13,7 +13,11 @@ import {
   type ConversationalRectificationPacketBuildInput,
   type ConversationalRectificationService,
 } from "../../../lib/conversational-rectification/orchestrator.ts";
-import type { DeclaredBirthInput, LifeEventEvidence } from "../../../lib/conversational-rectification/persistence-contracts.ts";
+import {
+  declaredBirthInputSchema,
+  type DeclaredBirthInput,
+  type LifeEventEvidence,
+} from "../../../lib/conversational-rectification/persistence-contracts.ts";
 import type { RectificationNarrativeGenerator } from "../../../lib/conversational-rectification/narrative-agent.ts";
 import type { BirthTimeJourneyEngine, RectificationQuestionnaire } from "../../../lib/birth-time-journey-service.ts";
 import type { CandidateResult, LifeEvent } from "../../../lib/birth-time-evidence.ts";
@@ -92,10 +96,7 @@ function integer(value: unknown): number | null {
   return typeof value === "number" && Number.isInteger(value) ? value : null;
 }
 
-function declaredBirthInputFromProfile(value: unknown): {
-  readonly declaredBirthInput: unknown;
-  readonly revisionOfCaseId: string | null;
-} {
+function declaredBirthInputFromProfile(value: unknown): DeclaredBirthInput {
   const profile = profileRecord(value);
   if (!profile) throw new ConversationalRectificationError("profile_incomplete");
   const birthDate = text(profile.birth_date);
@@ -160,9 +161,38 @@ function declaredBirthInputFromProfile(value: unknown): {
     default:
       throw new ConversationalRectificationError("profile_incomplete");
   }
+  const parsed = declaredBirthInputSchema.safeParse(declaredBirthInput);
+  if (!parsed.success) throw new ConversationalRectificationError("profile_incomplete");
+  return parsed.data;
+}
+
+export type ProductionConversationalRectificationProfileDependencies = Readonly<{
+  loadProfile(userId: string): Promise<unknown>;
+  loadRectificationCase(userId: string, caseId: string): Promise<unknown>;
+}>;
+
+export async function loadProductionConversationalRectificationProfile(
+  dependencies: ProductionConversationalRectificationProfileDependencies,
+  userId: string,
+): Promise<Readonly<{
+  declaredBirthInput: DeclaredBirthInput;
+  revisionOfCaseId: string | null;
+}>> {
+  const profileValue = await dependencies.loadProfile(userId);
+  const profile = profileRecord(profileValue);
+  if (!profile) throw new ConversationalRectificationError("profile_incomplete");
+  const declaredBirthInput = declaredBirthInputFromProfile(profile);
+  const priorCaseId = text(profile.rectification_case_id);
+  if (!priorCaseId) return { declaredBirthInput, revisionOfCaseId: null };
+
+  const prior = profileRecord(await dependencies.loadRectificationCase(userId, priorCaseId));
+  const terminalV3Revision = prior
+    && text(prior.id) === priorCaseId
+    && text(prior.journey_protocol) === "conversational-evidence-v3"
+    && (text(prior.status) === "completed" || text(prior.status) === "abandoned");
   return {
     declaredBirthInput,
-    revisionOfCaseId: text(profile.rectification_case_id),
+    revisionOfCaseId: terminalV3Revision ? priorCaseId : null,
   };
 }
 
@@ -195,12 +225,12 @@ function declaredRange(input: DeclaredBirthInput): { readonly startTime: string;
       late_night: { startTime: "23:00", endTime: "03:59" },
     }[input.reportedPeriod];
   }
-  if (input.source === "unknown") return { startTime: "00:01", endTime: "23:59" };
+  if (input.source === "unknown") return { startTime: "00:00", endTime: "23:59" };
   if (input.source === "legacy_import" && !input.reportedTime) {
     if (input.reportedPeriod) {
       return declaredRange({ ...input, source: "period_only", reportedPeriod: input.reportedPeriod });
     }
-    return { startTime: "00:01", endTime: "23:59" };
+    return { startTime: "00:00", endTime: "23:59" };
   }
   const reportedTime = input.reportedTime;
   if (!reportedTime) throw new ConversationalRectificationError("profile_incomplete");
@@ -221,6 +251,28 @@ function scanCoordinates(range: { readonly startTime: string; readonly endTime: 
     centerTime: clock(center),
     uncertaintyMinutes: Math.max(1, Math.ceil((end - start) / 2)),
   };
+}
+
+function boundedScanRanges(range: { readonly startTime: string; readonly endTime: string }) {
+  const start = minute(range.startTime);
+  let end = minute(range.endTime);
+  if (end < start) end += 1_440;
+  if (end - start <= 360) return [range];
+
+  const ranges: Array<{ readonly startTime: string; readonly endTime: string }> = [];
+  let cursor = start;
+  while (end - cursor > 360) {
+    ranges.push({ startTime: clock(cursor), endTime: clock(cursor + 360) });
+    cursor += 360;
+  }
+  if (cursor < end) {
+    // A symmetric integer-minute scan needs an even endpoint span. Pull an
+    // odd final span back by one minute, overlapping rather than inventing a
+    // minute outside the user's declared range.
+    const finalStart = (end - cursor) % 2 === 0 ? cursor : cursor - 1;
+    ranges.push({ startTime: clock(finalStart), endTime: clock(end) });
+  }
+  return ranges;
 }
 
 function currentRange(input: ConversationalRectificationPacketBuildInput) {
@@ -262,6 +314,65 @@ function sampleTimes(scan: RectificationQuestionnaire): readonly { readonly samp
   return links;
 }
 
+function timeOffsetFromRangeStart(time: string, rangeStart: string): number {
+  const start = minute(rangeStart);
+  let value = minute(time);
+  if (value < start) value += 1_440;
+  return value - start;
+}
+
+function timeIsInsideRange(
+  time: string,
+  range: { readonly startTime: string; readonly endTime: string },
+): boolean {
+  const offset = timeOffsetFromRangeStart(time, range.startTime);
+  const endOffset = timeOffsetFromRangeStart(range.endTime, range.startTime);
+  return offset <= endOffset;
+}
+
+function mergeQuestionnaireScans(
+  scans: readonly RectificationQuestionnaire[],
+  range: { readonly startTime: string; readonly endTime: string },
+): RectificationQuestionnaire {
+  const first = scans[0];
+  if (!first) throw new ConversationalRectificationError("service_unavailable");
+  if (scans.length === 1) return first;
+
+  const byTime = new Map<string, {
+    sample: RectificationQuestionnaire["samples"][number];
+    rawSample: unknown;
+  }>();
+  const questions = new Map<string, RectificationQuestionnaire["questions"][number]>();
+  for (const scan of scans) {
+    for (const question of scan.questions) {
+      if (!questions.has(question.id)) questions.set(question.id, question);
+    }
+    const rawCandidateScan = profileRecord(scan.raw.candidate_scan);
+    const rawSamples = Array.isArray(rawCandidateScan?.samples) ? rawCandidateScan.samples : [];
+    for (const link of sampleTimes(scan)) {
+      const sample = scan.samples[link.sampleIndex];
+      const rawSample = rawSamples[link.sampleIndex];
+      if (!sample || rawSample === undefined || !timeIsInsideRange(link.time, range)) continue;
+      if (!byTime.has(link.time)) byTime.set(link.time, { sample, rawSample });
+    }
+  }
+  const merged = [...byTime.entries()].sort(([left], [right]) =>
+    timeOffsetFromRangeStart(left, range.startTime)
+      - timeOffsetFromRangeStart(right, range.startTime));
+  const firstCandidateScan = profileRecord(first.raw.candidate_scan) ?? {};
+  return {
+    questions: [...questions.values()],
+    samples: merged.map(([, item]) => item.sample),
+    raw: {
+      ...first.raw,
+      candidate_scan: {
+        ...firstCandidateScan,
+        samples: merged.map(([, item]) => item.rawSample),
+      },
+    },
+  };
+}
+
 function layerMetadata(scan: RectificationQuestionnaire, calculationVersion: string) {
   const layers = [
     ["D1", "ascendantSign"],
@@ -292,7 +403,7 @@ function boundaryDistance(range: { readonly startTime: string; readonly endTime:
   return Math.max(0, Math.min(value - start, end - value));
 }
 
-async function buildProductionPacket(
+export async function buildProductionConversationalRectificationPacket(
   engine: BirthTimeJourneyEngine,
   input: ConversationalRectificationPacketBuildInput,
 ) {
@@ -316,15 +427,20 @@ async function buildProductionPacket(
   const selectedRange = eventScore?.winningSegment
     ? { startTime: eventScore.winningSegment.startTime, endTime: eventScore.winningSegment.endTime }
     : baseRange;
-  const scanPoint = scanCoordinates(selectedRange);
-  const { questionnaire } = await engine.scan({
-    birthTime: `${input.declaredBirthInput.birthDate} ${scanPoint.centerTime}`,
-    uncertaintyMinutes: scanPoint.uncertaintyMinutes,
-    lat: place.latitude,
-    lon: place.longitude,
-    tz: place.timezoneOffset,
-    ayanamsa: "lahiri",
-  });
+  const questionnaires: RectificationQuestionnaire[] = [];
+  for (const scanRange of boundedScanRanges(selectedRange)) {
+    const scanPoint = scanCoordinates(scanRange);
+    const { questionnaire } = await engine.scan({
+      birthTime: `${input.declaredBirthInput.birthDate} ${scanPoint.centerTime}`,
+      uncertaintyMinutes: scanPoint.uncertaintyMinutes,
+      lat: place.latitude,
+      lon: place.longitude,
+      tz: place.timezoneOffset,
+      ayanamsa: "lahiri",
+    });
+    questionnaires.push(questionnaire);
+  }
+  const questionnaire = mergeQuestionnaireScans(questionnaires, selectedRange);
   const candidateDifferences = await engine.buildDifferencePacket({
     caseId: input.caseId,
     asOfDate: input.asOfDate,
@@ -346,7 +462,7 @@ async function buildProductionPacket(
     : candidateDifferences.packet.scoringVersion;
   const metadata = layerMetadata(questionnaire, calculationVersion);
   const representative = eventScore?.winningSegment?.representativeTime
-    ?? scanPoint.centerTime;
+    ?? scanCoordinates(selectedRange).centerTime;
   const { buildRectificationTechnicalPacket } = await import(
     "../../../lib/conversational-rectification/technical-packet.ts"
   );
@@ -420,15 +536,29 @@ async function createProductionService(
     billing: createSupabaseConversationalRectificationBilling(admin),
     get rectificationPriceCredits() { return priceCredits(); },
     async loadDeclaredProfile(userId) {
-      const { data, error } = await profileClient
-        .from("profiles")
-        .select("birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,rectification_case_id")
-        .eq("id", userId)
-        .maybeSingle();
-      if (error) throw new ConversationalRectificationError("store_unavailable");
-      return declaredBirthInputFromProfile(data);
+      return loadProductionConversationalRectificationProfile({
+        async loadProfile(receivedUserId) {
+          const { data, error } = await profileClient
+            .from("profiles")
+            .select("birth_date,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,rectification_case_id")
+            .eq("id", receivedUserId)
+            .maybeSingle();
+          if (error) throw new ConversationalRectificationError("store_unavailable");
+          return data;
+        },
+        async loadRectificationCase(receivedUserId, receivedCaseId) {
+          const { data, error } = await admin
+            .from("birth_time_rectification_cases")
+            .select("id,journey_protocol,status")
+            .eq("id", receivedCaseId)
+            .eq("user_id", receivedUserId)
+            .maybeSingle();
+          if (error) throw new ConversationalRectificationError("store_unavailable");
+          return data;
+        },
+      }, userId);
     },
-    buildTechnicalPacket: (input) => buildProductionPacket(engine, input),
+    buildTechnicalPacket: (input) => buildProductionConversationalRectificationPacket(engine, input),
     narrativeGenerator,
     asOfDate: () => new Date().toISOString().slice(0, 10),
   });

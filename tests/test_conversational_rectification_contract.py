@@ -246,6 +246,58 @@ def test_account_resume_projection_contains_private_working_state_only_for_servi
     assert "private_candidate" not in public_projection
 
 
+def test_historical_action_replay_is_owner_scoped_exact_bounded_and_read_only() -> None:
+    schema = _normalized(SCHEMA)
+    transitions = _normalized(TRANSITIONS)
+    request = _function(schema, "conversational_rectification_valid_action_request")
+    replay = _function(
+        transitions, "replay_conversational_rectification_action"
+    )
+
+    assert "'commandfingerprint'" in request
+    assert "requestfingerprint" in request
+    assert "^[0-9a-f]{64}$" in request
+    for invariant in (
+        "r.user_id = p_user_id",
+        "r.case_id = p_case_id",
+        "r.action_id = p_action_id",
+        "v_receipt.action_kind is distinct from p_action_kind",
+        "v_receipt.expected_turn_version is distinct from p_expected_version",
+        "not (v_receipt.request ? 'commandfingerprint')",
+        "v_receipt.request ->> 'commandfingerprint' is distinct from p_command_fingerprint",
+        "return v_receipt.response",
+        "raise exception 'conversational_action_conflict'",
+    ):
+        assert invariant in replay
+    assert "insert into" not in replay
+    assert "update public." not in replay
+    assert "delete from" not in replay
+    assert (
+        "revoke all on function public.replay_conversational_rectification_action"
+        in transitions
+    )
+    assert (
+        "grant execute on function public.replay_conversational_rectification_action"
+        in transitions
+    )
+    assert not re.search(
+        r"grant execute on function public\.replay_conversational_rectification_action"
+        r".+?to (?:anon|authenticated)",
+        transitions,
+    )
+
+    for name in (
+        "save_conversational_rectification_turn",
+        "pause_conversational_rectification_case",
+        "abandon_conversational_rectification_case",
+        "confirm_conversational_rectification_candidate",
+    ):
+        body = _function(transitions, name)
+        assert "p_command_fingerprint text" in body
+        assert "p_command_fingerprint !~ '^[0-9a-f]{64}$'" in body
+        assert "'commandfingerprint', p_command_fingerprint" in body
+
+
 def test_start_identity_and_account_concurrency_are_server_guarded() -> None:
     schema = _normalized(SCHEMA)
     transitions = _normalized(TRANSITIONS)

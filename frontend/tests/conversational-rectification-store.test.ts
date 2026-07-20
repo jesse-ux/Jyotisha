@@ -26,6 +26,7 @@ const caseId = "00000000-0000-4000-8000-000000000102";
 const actionId = "00000000-0000-4000-8000-000000000103";
 const resultId = "00000000-0000-4000-8000-000000000104";
 const importCaseId = "00000000-0000-4000-8000-000000000107";
+const commandFingerprint = "c".repeat(64);
 
 const firstTurn = {
   caseId,
@@ -206,6 +207,40 @@ test("loads the latest unfinished case by account without a chat identifier", as
   }]]);
 });
 
+test("loads an exact owner-scoped historical mutation receipt before current case state", async () => {
+  const calls: unknown[] = [];
+  const publicReceiptRow: Partial<typeof storedRow> = { ...storedRow };
+  delete publicReceiptRow.declared_birth_input;
+  delete publicReceiptRow.private_candidate;
+  delete publicReceiptRow.event_evidence;
+  delete publicReceiptRow.validation_receipts;
+  const store = new ConversationalRectificationStore(rpcClient((name, args) => {
+    calls.push([name, args]);
+    return publicReceiptRow;
+  }));
+
+  const replayed = await store.loadActionReceipt({
+    userId,
+    caseId,
+    actionId,
+    actionKind: "save_turn",
+    expectedVersion: 0,
+    commandFingerprint,
+  });
+
+  assert.equal(replayed?.caseId, caseId);
+  assert.deepEqual(replayed?.latestTurn, firstTurn);
+  assert.equal(replayed && "privateCandidate" in replayed, false);
+  assert.deepEqual(calls, [["replay_conversational_rectification_action", {
+    p_user_id: userId,
+    p_case_id: caseId,
+    p_action_id: actionId,
+    p_action_kind: "save_turn",
+    p_expected_version: 0,
+    p_command_fingerprint: commandFingerprint,
+  }]]);
+});
+
 test("binds every paid start to the public action as its recoverable case id", async () => {
   let calls = 0;
   const client = rpcClient(() => {
@@ -245,7 +280,7 @@ test("save, pause, abandon, confirm, and import carry owner/version/action guard
     calls.push([name, args]);
     return storedRow;
   }));
-  const common = { userId, caseId, actionId, expectedVersion: 0 };
+  const common = { userId, caseId, actionId, expectedVersion: 0, commandFingerprint };
   const evidence = [{
     id: "00000000-0000-4000-8000-000000000105",
     rawText: "2019 年 7 月换工作",
@@ -313,6 +348,7 @@ test("save, pause, abandon, confirm, and import carry owner/version/action guard
     assert.equal(args.p_case_id, caseId);
     assert.equal(args.p_action_id, actionId);
     assert.equal(args.p_expected_version, 0);
+    assert.equal(args.p_command_fingerprint, commandFingerprint);
     assert.deepEqual(args.p_validation_receipt, validationReceipt);
   }
   assert.equal(calls[4]?.[1].p_case_id, importCaseId);
@@ -756,6 +792,7 @@ test("durable private and receipt schemas accept boundaries and reject oversize 
     expectedVersion: 0,
     actionId,
     requestFingerprint: "a".repeat(64),
+    commandFingerprint,
   };
   assert.equal(conversationalRectificationActionReceiptRequestSchema.safeParse(request).success, true);
   assert.equal(conversationalRectificationActionReceiptRequestSchema.safeParse({
@@ -765,6 +802,10 @@ test("durable private and receipt schemas accept boundaries and reject oversize 
   assert.equal(conversationalRectificationActionReceiptRequestSchema.safeParse({
     ...request,
     requestFingerprint: "a".repeat(65),
+  }).success, false);
+  assert.equal(conversationalRectificationActionReceiptRequestSchema.safeParse({
+    ...request,
+    commandFingerprint: "c".repeat(63),
   }).success, false);
   assert.equal(conversationalRectificationActionReceiptResponseSchema.safeParse({
     success: false,

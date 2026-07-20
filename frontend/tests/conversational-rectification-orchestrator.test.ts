@@ -21,6 +21,7 @@ const resumeActionId = "00000000-0000-4000-8000-000000000705";
 const confirmActionId = "00000000-0000-4000-8000-000000000706";
 const priorCaseId = "00000000-0000-4000-8000-000000000707";
 const resultId = "00000000-0000-4000-8000-000000000708";
+const laterActionId = "00000000-0000-4000-8000-000000000710";
 
 const declaredBirthInput = {
   source: "approximate" as const,
@@ -148,7 +149,13 @@ function harness(options: {
   const events: string[] = [];
   const mutations: string[] = [];
   const cases = new Map<string, MutableCase>();
-  const receipts = new Map<string, { input: unknown; response: StoredConversationalRectificationCase }>();
+  const receipts = new Map<string, {
+    input: unknown;
+    response: StoredConversationalRectificationCase;
+    actionKind?: "save_turn" | "pause" | "abandon" | "confirm";
+    expectedVersion?: number;
+    commandFingerprint?: string;
+  }>();
   let packetBuilds = 0;
   let reserveCount = 0;
   let releaseCount = 0;
@@ -189,18 +196,39 @@ function harness(options: {
     };
   }
 
-  function replay(actionId: string, input: unknown, make: () => LoadedConversationalRectificationCase) {
+  function replay(
+    actionId: string,
+    input: { readonly expectedVersion?: number; readonly commandFingerprint?: string },
+    make: () => LoadedConversationalRectificationCase,
+    actionKind?: "save_turn" | "pause" | "abandon" | "confirm",
+  ) {
     const prior = receipts.get(actionId);
     if (prior) {
       assert.deepEqual(input, prior.input);
       return prior.response;
     }
     const response = make();
-    receipts.set(actionId, { input: structuredClone(input), response });
+    receipts.set(actionId, {
+      input: structuredClone(input),
+      response,
+      actionKind,
+      expectedVersion: input.expectedVersion,
+      commandFingerprint: input.commandFingerprint,
+    });
     return response;
   }
 
   const store: ConversationalRectificationServicePorts["store"] = {
+    async loadActionReceipt(input) {
+      const prior = receipts.get(input.actionId);
+      if (!prior?.actionKind) return null;
+      if (prior.actionKind !== input.actionKind
+        || prior.expectedVersion !== input.expectedVersion
+        || prior.commandFingerprint !== input.commandFingerprint) {
+        throw new ConversationalRectificationError("action_conflict");
+      }
+      return prior.response;
+    },
     async loadCase(input) {
       const value = input.caseId
         ? cases.get(input.caseId)?.row
@@ -240,7 +268,7 @@ function harness(options: {
         });
         cases.set(input.turn.caseId, { row });
         return row;
-      });
+      }, "save_turn");
     },
     async pause(input) {
       mutations.push("pause");
@@ -252,7 +280,7 @@ function harness(options: {
           receipts: [...current.validationReceipts, input.validationReceipt] });
         cases.set(input.turn.caseId, { row });
         return row;
-      });
+      }, "pause");
     },
     async abandon(input) {
       mutations.push("abandon");
@@ -263,7 +291,7 @@ function harness(options: {
           receipts: [...current.validationReceipts, input.validationReceipt] });
         cases.set(input.turn.caseId, { row });
         return row;
-      });
+      }, "abandon");
     },
     async confirm(input) {
       mutations.push("confirm");
@@ -274,7 +302,7 @@ function harness(options: {
           receipts: [...current.validationReceipts, input.validationReceipt] });
         cases.set(input.turn.caseId, { row });
         return row;
-      });
+      }, "confirm");
     },
   };
 
@@ -330,6 +358,26 @@ function harness(options: {
     cases,
     service: createConversationalRectificationService(ports),
     counts: () => ({ packetBuilds, reserveCount, releaseCount }),
+    forceLaterVersion(caseId: string, turnVersion: number) {
+      const current = cases.get(caseId)?.row;
+      assert.ok(current);
+      cases.set(caseId, {
+        row: {
+          ...current,
+          status: "active",
+          turnVersion,
+          latestTurn: conversationalRectificationTurnSchema.parse({
+            ...current.latestTurn,
+            status: "active",
+            turnVersion,
+            candidate: current.latestTurn.candidate.status === "confirmed"
+              ? { ...current.latestTurn.candidate, status: "pending_validation" }
+              : current.latestTurn.candidate,
+            actions: ["answer", "pause", "abandon"],
+          }),
+        },
+      });
+    },
   };
 }
 
@@ -422,6 +470,25 @@ test("clear historical evidence is extracted, scored, narrated, recapped, and at
   assert.ok(value.events.includes("score-packet"));
 });
 
+test("generic date uncertainty does not suppress clear historical evidence", async () => {
+  const value = harness();
+  await start(value, null);
+
+  const turn = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2021年7月毕业，具体日期不确定",
+  });
+
+  assert.equal(turn.status, "confirming");
+  assert.equal(value.counts().packetBuilds, 2);
+  assert.ok(value.events.includes("score-packet"));
+  assert.ok((value.cases.get(startActionId)?.row.eventEvidence ?? [])
+    .some((item) => item.eventSummary.includes("毕业") && item.scoreable === true));
+});
+
 test("vague, future, and unmatched answers stay conversational and never score", async () => {
   for (const [answer, domain] of [
     ["后来换了工作", undefined],
@@ -446,20 +513,26 @@ test("vague, future, and unmatched answers stay conversational and never score",
   }
 });
 
-test("pause persists, resume reads it without another charge, and stale commands are stable", async () => {
+test("resume returns the latest owned turn on a stale new-device version without mutation or charge", async () => {
   const value = harness();
   await start(value, null);
   const paused = await value.service.pause(userId, {
     type: "pause", caseId: startActionId, actionId: pauseActionId, turnVersion: 0,
   });
   assert.equal(paused.status, "paused");
-  const resumed = await value.service.resume(userId, {
-    type: "resume", caseId: startActionId, actionId: resumeActionId, turnVersion: 1,
+  const latest = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 1, answer: "2021年7月毕业，并在2022年3月去外地工作",
   });
-  assert.deepEqual(resumed, paused);
+  const mutationsBeforeResume = [...value.mutations];
+  const resumed = await value.service.resume(userId, {
+    type: "resume", caseId: startActionId, actionId: resumeActionId, turnVersion: 0,
+  });
+  assert.deepEqual(resumed, latest);
+  assert.deepEqual(value.mutations, mutationsBeforeResume);
   assert.equal(value.counts().reserveCount, 1);
   await assert.rejects(value.service.answer(userId, {
-    type: "answer", caseId: startActionId, actionId: answerActionId,
+    type: "answer", caseId: startActionId, actionId: laterActionId,
     turnVersion: 0, answer: "2021年7月毕业",
   }), (error: unknown) => error instanceof ConversationalRectificationError
     && error.code === "stale_turn");
@@ -481,6 +554,104 @@ test("a lost-response retry replays the saved answer without rescoring or regene
   assert.deepEqual(replayed, first);
   assert.equal(value.counts().packetBuilds, 2);
   assert.deepEqual(value.events, before);
+});
+
+test("receipt-first delayed retries replay the original answer, pause, abandon, and confirm after later turns", async () => {
+  const scenarios = [
+    {
+      name: "answer",
+      async perform(value: ReturnType<typeof harness>) {
+        const command = {
+          type: "answer" as const,
+          caseId: startActionId,
+          actionId: answerActionId,
+          turnVersion: 0,
+          answer: "2021年7月毕业，并在2022年3月去外地工作",
+        };
+        return { command, first: await value.service.answer(userId, command) };
+      },
+    },
+    {
+      name: "pause",
+      async perform(value: ReturnType<typeof harness>) {
+        const command = {
+          type: "pause" as const,
+          caseId: startActionId,
+          actionId: pauseActionId,
+          turnVersion: 0,
+        };
+        return { command, first: await value.service.pause(userId, command) };
+      },
+    },
+    {
+      name: "abandon",
+      async perform(value: ReturnType<typeof harness>) {
+        const command = {
+          type: "abandon" as const,
+          caseId: startActionId,
+          actionId: laterActionId,
+          turnVersion: 0,
+        };
+        return { command, first: await value.service.abandon(userId, command) };
+      },
+    },
+    {
+      name: "confirm",
+      async perform(value: ReturnType<typeof harness>) {
+        const ready = await value.service.answer(userId, {
+          type: "answer",
+          caseId: startActionId,
+          actionId: answerActionId,
+          turnVersion: 0,
+          answer: "2021年7月毕业，并在2022年3月去外地工作",
+        });
+        const command = {
+          type: "confirm" as const,
+          caseId: startActionId,
+          actionId: confirmActionId,
+          turnVersion: ready.turnVersion,
+          time: "05:18",
+        };
+        return { command, first: await value.service.confirm(userId, command) };
+      },
+    },
+  ] as const;
+
+  for (const scenario of scenarios) {
+    const value = harness();
+    await start(value, null);
+    const { command, first } = await scenario.perform(value);
+    value.forceLaterVersion(startActionId, first.turnVersion + 2);
+    const mutationsBeforeReplay = [...value.mutations];
+    const eventsBeforeReplay = [...value.events];
+
+    const replayed = await value.service[scenario.name](userId, command as never);
+
+    assert.deepEqual(replayed, first, scenario.name);
+    assert.deepEqual(value.mutations, mutationsBeforeReplay, scenario.name);
+    assert.deepEqual(value.events, eventsBeforeReplay, scenario.name);
+  }
+});
+
+test("receipt-first delayed replay rejects the same action id with a different command payload", async () => {
+  const value = harness();
+  await start(value, null);
+  const command = {
+    type: "answer" as const,
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    domain: "education" as const,
+    answer: "2021年7月毕业",
+  };
+  const first = await value.service.answer(userId, command);
+  value.forceLaterVersion(startActionId, first.turnVersion + 2);
+
+  await assert.rejects(value.service.answer(userId, {
+    ...command,
+    domain: "career",
+  }), (error: unknown) => error instanceof ConversationalRectificationError
+    && error.code === "action_conflict");
 });
 
 test("confirm delegates to the atomic store call, preserves the old baseline until then, and returns the saved question", async () => {

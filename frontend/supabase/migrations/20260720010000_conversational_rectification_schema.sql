@@ -883,7 +883,8 @@ as $$
     and public.conversational_rectification_has_only_keys(
       p_value,
       array[
-        'kind', 'userId', 'caseId', 'expectedVersion', 'actionId', 'requestFingerprint'
+        'kind', 'userId', 'caseId', 'expectedVersion', 'actionId',
+        'requestFingerprint', 'commandFingerprint'
       ]::text[]
     )
     and p_value ?& array[
@@ -903,7 +904,14 @@ as $$
     and pg_catalog.jsonb_typeof(p_value -> 'expectedVersion') = 'number'
     and p_value ->> 'expectedVersion' ~ '^[0-9]+$'
     and pg_catalog.jsonb_typeof(p_value -> 'requestFingerprint') = 'string'
-    and p_value ->> 'requestFingerprint' ~ '^[0-9a-f]{64}$';
+    and p_value ->> 'requestFingerprint' ~ '^[0-9a-f]{64}$'
+    and (
+      not (p_value ? 'commandFingerprint')
+      or (
+        pg_catalog.jsonb_typeof(p_value -> 'commandFingerprint') = 'string'
+        and p_value ->> 'commandFingerprint' ~ '^[0-9a-f]{64}$'
+      )
+    );
 $$;
 
 create or replace function public.conversational_rectification_action_request(

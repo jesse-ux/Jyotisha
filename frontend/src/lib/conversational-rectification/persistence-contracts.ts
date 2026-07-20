@@ -212,6 +212,7 @@ export const conversationalRectificationActionReceiptRequestSchema = boundedJson
   expectedVersion: z.number().int().nonnegative(),
   actionId: uuidSchema,
   requestFingerprint: z.string().regex(/^[0-9a-f]{64}$/),
+  commandFingerprint: z.string().regex(/^[0-9a-f]{64}$/).optional(),
 }).strict(), 2_048);
 
 export const billingReceiptResponseSchema = boundedJson(z.object({

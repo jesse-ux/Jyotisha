@@ -169,6 +169,53 @@ begin
 end;
 $$;
 
+create or replace function public.replay_conversational_rectification_action(
+  p_user_id uuid,
+  p_case_id uuid,
+  p_expected_version bigint,
+  p_action_id uuid,
+  p_action_kind text,
+  p_command_fingerprint text
+)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_receipt public.birth_time_rectification_action_receipts%rowtype;
+begin
+  if p_user_id is null or p_case_id is null or p_action_id is null
+    or p_expected_version is null or p_expected_version < 0
+    or p_action_kind not in ('save_turn', 'pause', 'abandon', 'confirm')
+    or p_command_fingerprint !~ '^[0-9a-f]{64}$' then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
+  end if;
+
+  select r.* into v_receipt
+  from public.birth_time_rectification_action_receipts r
+  where r.user_id = p_user_id
+    and r.case_id = p_case_id
+    and r.action_id = p_action_id;
+  if not found then
+    return null;
+  end if;
+  -- Receipts created before command identities were introduced still use the
+  -- mutation RPC's complete request fingerprint for their one-step replay.
+  if not (v_receipt.request ? 'commandFingerprint') then
+    return null;
+  end if;
+  if v_receipt.action_kind is distinct from p_action_kind
+    or v_receipt.expected_turn_version is distinct from p_expected_version
+    or v_receipt.request ->> 'commandFingerprint'
+      is distinct from p_command_fingerprint then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
+  end if;
+  return v_receipt.response;
+end;
+$$;
+
 create or replace function public.conversational_rectification_case_fits_load_limits(
   p_user_id uuid,
   p_case_id uuid,
@@ -494,7 +541,8 @@ create or replace function public.save_conversational_rectification_turn(
   p_turn jsonb,
   p_evidence jsonb,
   p_validation_receipt jsonb,
-  p_private_candidate jsonb
+  p_private_candidate jsonb,
+  p_command_fingerprint text default null
 )
 returns jsonb
 language plpgsql
@@ -518,7 +566,9 @@ declare
   );
 begin
   if p_user_id is null or p_case_id is null or p_action_id is null
-    or p_expected_version is null or p_expected_version < 0 then
+    or p_expected_version is null or p_expected_version < 0
+    or (p_command_fingerprint is not null
+      and p_command_fingerprint !~ '^[0-9a-f]{64}$') then
     raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
   perform pg_catalog.pg_advisory_xact_lock(
@@ -540,6 +590,9 @@ begin
     if v_receipt.user_id is distinct from p_user_id
       or v_receipt.action_kind is distinct from 'save_turn'
       or v_receipt.expected_turn_version is distinct from p_expected_version
+      or (v_receipt.request ? 'commandFingerprint'
+        and v_receipt.request ->> 'commandFingerprint'
+          is distinct from p_command_fingerprint)
       or v_receipt.request_fingerprint is distinct from v_fingerprint then
       raise exception 'conversational_action_conflict' using errcode = 'P0001';
     end if;
@@ -642,7 +695,10 @@ begin
     public.conversational_rectification_action_request(
       'save_turn', p_user_id, p_case_id, p_expected_version,
       p_action_id, v_fingerprint
-    ),
+    ) || case when p_command_fingerprint is null then '{}'::jsonb
+      else pg_catalog.jsonb_build_object(
+        'commandFingerprint', p_command_fingerprint
+      ) end,
     v_response
   );
   return v_response;
@@ -655,7 +711,8 @@ create or replace function public.pause_conversational_rectification_case(
   p_expected_version bigint,
   p_action_id uuid,
   p_turn jsonb,
-  p_validation_receipt jsonb
+  p_validation_receipt jsonb,
+  p_command_fingerprint text default null
 )
 returns jsonb
 language plpgsql
@@ -676,7 +733,9 @@ declare
   );
 begin
   if p_user_id is null or p_case_id is null or p_action_id is null
-    or p_expected_version is null or p_expected_version < 0 then
+    or p_expected_version is null or p_expected_version < 0
+    or (p_command_fingerprint is not null
+      and p_command_fingerprint !~ '^[0-9a-f]{64}$') then
     raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
   perform pg_catalog.pg_advisory_xact_lock(
@@ -697,6 +756,9 @@ begin
     if v_receipt.user_id is distinct from p_user_id
       or v_receipt.action_kind is distinct from 'pause'
       or v_receipt.expected_turn_version is distinct from p_expected_version
+      or (v_receipt.request ? 'commandFingerprint'
+        and v_receipt.request ->> 'commandFingerprint'
+          is distinct from p_command_fingerprint)
       or v_receipt.request_fingerprint is distinct from v_fingerprint then
       raise exception 'conversational_action_conflict' using errcode = 'P0001';
     end if;
@@ -767,7 +829,10 @@ begin
     p_expected_version + 1, v_fingerprint,
     public.conversational_rectification_action_request(
       'pause', p_user_id, p_case_id, p_expected_version, p_action_id, v_fingerprint
-    ),
+    ) || case when p_command_fingerprint is null then '{}'::jsonb
+      else pg_catalog.jsonb_build_object(
+        'commandFingerprint', p_command_fingerprint
+      ) end,
     v_response
   );
   return v_response;
@@ -780,7 +845,8 @@ create or replace function public.abandon_conversational_rectification_case(
   p_expected_version bigint,
   p_action_id uuid,
   p_turn jsonb,
-  p_validation_receipt jsonb
+  p_validation_receipt jsonb,
+  p_command_fingerprint text default null
 )
 returns jsonb
 language plpgsql
@@ -801,7 +867,9 @@ declare
   );
 begin
   if p_user_id is null or p_case_id is null or p_action_id is null
-    or p_expected_version is null or p_expected_version < 0 then
+    or p_expected_version is null or p_expected_version < 0
+    or (p_command_fingerprint is not null
+      and p_command_fingerprint !~ '^[0-9a-f]{64}$') then
     raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
   perform pg_catalog.pg_advisory_xact_lock(
@@ -822,6 +890,9 @@ begin
     if v_receipt.user_id is distinct from p_user_id
       or v_receipt.action_kind is distinct from 'abandon'
       or v_receipt.expected_turn_version is distinct from p_expected_version
+      or (v_receipt.request ? 'commandFingerprint'
+        and v_receipt.request ->> 'commandFingerprint'
+          is distinct from p_command_fingerprint)
       or v_receipt.request_fingerprint is distinct from v_fingerprint then
       raise exception 'conversational_action_conflict' using errcode = 'P0001';
     end if;
@@ -892,7 +963,10 @@ begin
     p_expected_version + 1, v_fingerprint,
     public.conversational_rectification_action_request(
       'abandon', p_user_id, p_case_id, p_expected_version, p_action_id, v_fingerprint
-    ),
+    ) || case when p_command_fingerprint is null then '{}'::jsonb
+      else pg_catalog.jsonb_build_object(
+        'commandFingerprint', p_command_fingerprint
+      ) end,
     v_response
   );
   return v_response;
@@ -908,7 +982,8 @@ create or replace function public.confirm_conversational_rectification_candidate
   p_time time without time zone,
   p_calculation_version text,
   p_turn jsonb,
-  p_validation_receipt jsonb
+  p_validation_receipt jsonb,
+  p_command_fingerprint text default null
 )
 returns jsonb
 language plpgsql
@@ -933,6 +1008,10 @@ declare
     )
   );
 begin
+  if p_command_fingerprint is not null
+    and p_command_fingerprint !~ '^[0-9a-f]{64}$' then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
+  end if;
   if p_user_id is null or p_case_id is null or p_action_id is null
     or p_result_id is null or p_time is null
     or extract(second from p_time) is distinct from 0
@@ -958,6 +1037,9 @@ begin
     if v_receipt.user_id is distinct from p_user_id
       or v_receipt.action_kind is distinct from 'confirm'
       or v_receipt.expected_turn_version is distinct from p_expected_version
+      or (v_receipt.request ? 'commandFingerprint'
+        and v_receipt.request ->> 'commandFingerprint'
+          is distinct from p_command_fingerprint)
       or v_receipt.request_fingerprint is distinct from v_fingerprint then
       raise exception 'conversational_action_conflict' using errcode = 'P0001';
     end if;
@@ -1075,7 +1157,10 @@ begin
     p_expected_version + 1, v_fingerprint,
     public.conversational_rectification_action_request(
       'confirm', p_user_id, p_case_id, p_expected_version, p_action_id, v_fingerprint
-    ),
+    ) || case when p_command_fingerprint is null then '{}'::jsonb
+      else pg_catalog.jsonb_build_object(
+        'commandFingerprint', p_command_fingerprint
+      ) end,
     v_response
   );
   return v_response;
@@ -1340,20 +1425,23 @@ revoke all on function public.conversational_rectification_case_fits_load_limits
 
 revoke all on function public.load_conversational_rectification_case(uuid, uuid)
   from public, anon, authenticated;
+revoke all on function public.replay_conversational_rectification_action(
+  uuid, uuid, bigint, uuid, text, text
+) from public, anon, authenticated;
 revoke all on function public.create_conversational_rectification_case(
   uuid, uuid, bigint, uuid, uuid, text, jsonb, jsonb, jsonb, jsonb
 ) from public, anon, authenticated;
 revoke all on function public.save_conversational_rectification_turn(
-  uuid, uuid, bigint, uuid, jsonb, jsonb, jsonb, jsonb
+  uuid, uuid, bigint, uuid, jsonb, jsonb, jsonb, jsonb, text
 ) from public, anon, authenticated;
 revoke all on function public.pause_conversational_rectification_case(
-  uuid, uuid, bigint, uuid, jsonb, jsonb
+  uuid, uuid, bigint, uuid, jsonb, jsonb, text
 ) from public, anon, authenticated;
 revoke all on function public.abandon_conversational_rectification_case(
-  uuid, uuid, bigint, uuid, jsonb, jsonb
+  uuid, uuid, bigint, uuid, jsonb, jsonb, text
 ) from public, anon, authenticated;
 revoke all on function public.confirm_conversational_rectification_candidate(
-  uuid, uuid, bigint, uuid, uuid, time without time zone, text, jsonb, jsonb
+  uuid, uuid, bigint, uuid, uuid, time without time zone, text, jsonb, jsonb, text
 ) from public, anon, authenticated;
 revoke all on function public.import_legacy_conversational_rectification_case(
   uuid, uuid, uuid, bigint, uuid, integer, text, jsonb, jsonb, jsonb
@@ -1361,20 +1449,23 @@ revoke all on function public.import_legacy_conversational_rectification_case(
 
 grant execute on function public.load_conversational_rectification_case(uuid, uuid)
   to service_role;
+grant execute on function public.replay_conversational_rectification_action(
+  uuid, uuid, bigint, uuid, text, text
+) to service_role;
 grant execute on function public.create_conversational_rectification_case(
   uuid, uuid, bigint, uuid, uuid, text, jsonb, jsonb, jsonb, jsonb
 ) to service_role;
 grant execute on function public.save_conversational_rectification_turn(
-  uuid, uuid, bigint, uuid, jsonb, jsonb, jsonb, jsonb
+  uuid, uuid, bigint, uuid, jsonb, jsonb, jsonb, jsonb, text
 ) to service_role;
 grant execute on function public.pause_conversational_rectification_case(
-  uuid, uuid, bigint, uuid, jsonb, jsonb
+  uuid, uuid, bigint, uuid, jsonb, jsonb, text
 ) to service_role;
 grant execute on function public.abandon_conversational_rectification_case(
-  uuid, uuid, bigint, uuid, jsonb, jsonb
+  uuid, uuid, bigint, uuid, jsonb, jsonb, text
 ) to service_role;
 grant execute on function public.confirm_conversational_rectification_candidate(
-  uuid, uuid, bigint, uuid, uuid, time without time zone, text, jsonb, jsonb
+  uuid, uuid, bigint, uuid, uuid, time without time zone, text, jsonb, jsonb, text
 ) to service_role;
 grant execute on function public.import_legacy_conversational_rectification_case(
   uuid, uuid, uuid, bigint, uuid, integer, text, jsonb, jsonb, jsonb
