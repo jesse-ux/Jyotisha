@@ -347,7 +347,7 @@ jobs:
             -e "$RSYNC_SSH" \
             ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
           ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && bash deploy/validate-staging-env.sh .env.staging && docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet && GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
+            "cd '$DEPLOY_PATH' && bash deploy/validate-staging-env.sh .env.staging && APP_ENV_FILE='../.env.staging' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet && APP_ENV_FILE='../.env.staging' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
 
       - name: Verify staging
         env:

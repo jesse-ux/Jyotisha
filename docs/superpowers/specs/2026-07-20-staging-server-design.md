@@ -71,7 +71,7 @@ push staging
   -> checkout 已测试 SHA
   -> 记录旧 SHA 和镜像 ID
   -> rsync 到 /opt/jyotisha-staging（排除所有 .env*）
-  -> 校验 .env.staging 权限、固定选择器和 Compose 配置
+  -> 校验 .env.staging 权限、固定选择器和 Compose 配置，并在 Compose 进程上显式钉死 staging 选择器
   -> docker compose build/up
   -> login、401 account、Python health smoke tests
   -> 记录部署 SHA

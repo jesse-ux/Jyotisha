@@ -120,6 +120,17 @@ test("staging deploy consumes only the isolated staging environment and tested r
   assert.match(workflow, /deployment\.gitCommit/);
   assert.doesNotMatch(workflow, /PRODUCTION_SSH_PRIVATE_KEY/);
   assert.doesNotMatch(workflow, /103\.117\.123\.53/);
+
+  const composeLines = workflow
+    .split("\n")
+    .filter((line) => line.includes("docker compose"));
+  assert.equal(workflow.match(/docker compose/g)?.length, 4);
+  assert.equal(composeLines.length, 3);
+  for (const line of composeLines) {
+    assert.match(line, /APP_ENV_FILE='\.\.\/\.env\.staging'/);
+    assert.match(line, /CADDYFILE_PATH='\.\/Caddyfile\.staging'/);
+    assert.match(line, /SITE_ADDRESS='https:\/\/staging\.jyotisha\.chat'/);
+  }
 });
 
 test("staging rsync preserves every destination env variant during delete", () => {
@@ -209,6 +220,28 @@ test("staging env validator rejects selector drift, duplicates, and unsafe permi
     );
     writeEnv(validSelectors);
     assert.equal(run().status, 0);
+    const shellOverride = spawnSync(
+      "docker",
+      [
+        "compose",
+        "--env-file",
+        envFile,
+        "-f",
+        composeFile,
+        "config",
+        "--format",
+        "json",
+      ],
+      {
+        encoding: "utf8",
+        env: { ...process.env, APP_ENV_FILE: "../.env.production" },
+      },
+    );
+    assert.equal(shellOverride.status, 0, shellOverride.stderr);
+    assert.equal(
+      JSON.parse(shellOverride.stdout).services.probe.environment.SELECTED,
+      "../.env.production",
+    );
 
     writeEnv(["APP_ENV_FILE=../.env.production", ...validSelectors.slice(1)]);
     assert.notEqual(run().status, 0);
