@@ -5,7 +5,7 @@
 - Added `deploy/backup-staging-postgres.sh DATABASE_ENV_FILE BACKUP_DIRECTORY`.
 - Validates the private database environment before reading required values without sourcing or executing the env file.
 - Refuses backup destinations with disk usage at or above 70%, creates the explicit destination with mode `0700`, writes encrypted custom PostgreSQL dumps with mode `0600`, and keeps only the newest three exact staging dump names.
-- Uses a PID-scoped `.partial` file, `pipefail`, an exit cleanup trap, and same-directory rename so failed dump/encryption pipelines leave no completed partial archive and successful archives are published atomically.
+- Uses a PID-scoped `.partial` file, `pipefail`, an exit cleanup trap, and same-directory hard-link/no-clobber publication so failed dump/encryption pipelines leave no completed partial archive and successful archives are published atomically.
 - Emits only final path/count on success; credentials use environment variables and never command-line arguments.
 
 ## TDD evidence
@@ -32,6 +32,25 @@ The integration starts the real fixture, creates four encrypted dumps at determi
 bash -n deploy/backup-staging-postgres.sh                 exit 0
 cd frontend && npm run test:db                            12 passed, 0 failed
 cd frontend && npm test                                   488 passed, 0 failed
+cd frontend && npm run lint                               exit 0
+git diff --check                                          exit 0
+```
+
+## TOCTOU follow-up (2026-07-20)
+
+- Before `mkdir`/`cd`, the script walks all existing absolute-target ancestors, rejects symlinks, requires current-user-or-root ownership, and rejects group/world-writable modes. The unsafe-parent regression uses `realpathSync` for the macOS temporary root, so its nested symlink and `0777` parent are the components actually reached by validation.
+- After creation it enters the directory with `cd -P`, verifies the canonical path and directory identity, and keeps the working directory pinned. Disk check, lock, partial/final publication, inventory, `find`, and rotation all use `.` or relative filenames; success still prints the canonical absolute archive path.
+
+```text
+RED:
+cd frontend && npm run test:db
+FAIL rejects unsafe writable backup parents before creating the target
+The old script created the target and then failed only at the disk check, rather than rejecting the unsafe ancestor.
+
+GREEN:
+bash -n deploy/backup-staging-postgres.sh                exit 0
+cd frontend && npm run test:db                            17 passed, 0 failed
+cd frontend && npm test                                   493 passed, 0 failed
 cd frontend && npm run lint                               exit 0
 git diff --check                                          exit 0
 ```

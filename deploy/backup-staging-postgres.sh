@@ -20,6 +20,31 @@ reject_backup_directory() {
   exit 1
 }
 
+reject_unsafe_backup_directory_ancestor() {
+  echo "backup directory ancestor must be owned by the current user or root and not group/world-writable" >&2
+  exit 1
+}
+
+stat_owner_and_mode() {
+  local path="$1"
+
+  if stat -f '%u %Lp' "$path" >/dev/null 2>&1; then
+    stat -f '%u %Lp' "$path"
+  else
+    stat -c '%u %a' "$path"
+  fi
+}
+
+directory_identity() {
+  local path="$1"
+
+  if stat -f '%d:%i' "$path" >/dev/null 2>&1; then
+    stat -f '%d:%i' "$path"
+  else
+    stat -c '%d:%i' "$path"
+  fi
+}
+
 if [ "$BACKUP_DIRECTORY_INPUT" = "/" ] || [[ "$BACKUP_DIRECTORY_INPUT" != /* ]] || [[ "$BACKUP_DIRECTORY_INPUT" == */ ]] || [[ "$BACKUP_DIRECTORY_INPUT" == *"//"* ]]; then
   reject_backup_directory
 fi
@@ -30,6 +55,7 @@ if [ "${#backup_directory_components[@]}" -eq 0 ]; then
 fi
 
 backup_directory_component_path=""
+CURRENT_UID="$(id -u)"
 for backup_directory_component in "${backup_directory_components[@]}"; do
   if [ -z "$backup_directory_component" ] || [ "$backup_directory_component" = "." ] || [ "$backup_directory_component" = ".." ]; then
     reject_backup_directory
@@ -37,6 +63,18 @@ for backup_directory_component in "${backup_directory_components[@]}"; do
   backup_directory_component_path="${backup_directory_component_path}/${backup_directory_component}"
   if [ -L "$backup_directory_component_path" ]; then
     reject_backup_directory
+  fi
+  if [ -e "$backup_directory_component_path" ]; then
+    if [ ! -d "$backup_directory_component_path" ]; then
+      reject_backup_directory
+    fi
+    read -r backup_directory_owner backup_directory_mode <<< "$(stat_owner_and_mode "$backup_directory_component_path")"
+    if [ "$backup_directory_owner" != "$CURRENT_UID" ] && [ "$backup_directory_owner" != "0" ]; then
+      reject_unsafe_backup_directory_ancestor
+    fi
+    if (( (10#${backup_directory_mode: -2:1} & 2) != 0 || (10#${backup_directory_mode: -1} & 2) != 0 )); then
+      reject_unsafe_backup_directory_ancestor
+    fi
   fi
 done
 
@@ -60,13 +98,18 @@ STAGING_BACKUP_ENCRYPTION_KEY="$(read_environment_value STAGING_BACKUP_ENCRYPTIO
 export STAGING_BACKUP_ENCRYPTION_KEY
 
 mkdir -p "$BACKUP_DIRECTORY_INPUT"
-BACKUP_DIRECTORY="$(cd "$BACKUP_DIRECTORY_INPUT" && pwd -P)"
+cd -P "$BACKUP_DIRECTORY_INPUT"
+BACKUP_DIRECTORY="$(pwd -P)"
 if [ "$BACKUP_DIRECTORY" != "$BACKUP_DIRECTORY_INPUT" ] || [ "$BACKUP_DIRECTORY" = "/" ]; then
   reject_backup_directory
 fi
-chmod 0700 "$BACKUP_DIRECTORY"
+BACKUP_DIRECTORY_IDENTITY="$(directory_identity .)"
+if [ "$(directory_identity "$BACKUP_DIRECTORY_INPUT")" != "$BACKUP_DIRECTORY_IDENTITY" ]; then
+  reject_backup_directory
+fi
+chmod 0700 .
 
-DISK_USAGE="$(df -Pk "$BACKUP_DIRECTORY" | awk 'NR == 2 { gsub(/%/, "", $5); print $5 }')"
+DISK_USAGE="$(df -Pk . | awk 'NR == 2 { gsub(/%/, "", $5); print $5 }')"
 if ! [[ "$DISK_USAGE" =~ ^[0-9]+$ ]] || [ "$DISK_USAGE" -ge 70 ]; then
   echo "backup directory disk usage must be below 70 percent" >&2
   exit 1
@@ -79,9 +122,9 @@ if ! [[ "$BACKUP_TIMESTAMP" =~ ^[0-9]{8}T[0-9]{6}Z$ ]]; then
 fi
 
 FILE_NAME="jyotisha-staging-${BACKUP_TIMESTAMP}.dump.enc"
-FINAL_FILE="$BACKUP_DIRECTORY/$FILE_NAME"
-PARTIAL_FILE="$BACKUP_DIRECTORY/.${FILE_NAME}.$$.partial"
-LOCK_DIRECTORY="$BACKUP_DIRECTORY/.${FILE_NAME}.lock"
+FINAL_FILE="$FILE_NAME"
+PARTIAL_FILE=".${FILE_NAME}.$$.partial"
+LOCK_DIRECTORY=".${FILE_NAME}.lock"
 LOCK_ACQUIRED=0
 
 if [ -e "$FINAL_FILE" ] || [ -L "$FINAL_FILE" ]; then
@@ -110,10 +153,12 @@ LOCK_ACQUIRED=1
 : > "$PARTIAL_FILE"
 chmod 0600 "$PARTIAL_FILE"
 
-cd "$REPOSITORY_ROOT"
-docker compose -p "${COMPOSE_PROJECT_NAME:-jyotisha-staging}" \
-  -f deploy/docker-compose.postgres.yml exec -T postgres \
-  pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom --no-owner |
+(
+  cd "$REPOSITORY_ROOT"
+  docker compose -p "${COMPOSE_PROJECT_NAME:-jyotisha-staging}" \
+    -f deploy/docker-compose.postgres.yml exec -T postgres \
+    pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom --no-owner
+) |
 openssl enc -aes-256-cbc -salt -pbkdf2 \
   -pass env:STAGING_BACKUP_ENCRYPTION_KEY > "$PARTIAL_FILE"
 
@@ -126,7 +171,7 @@ rm -f "$PARTIAL_FILE"
 PARTIAL_FILE=""
 
 completed=()
-if ! completed_paths="$(find "$BACKUP_DIRECTORY" -maxdepth 1 -type f -name 'jyotisha-staging-*.dump.enc' -print | LC_ALL=C sort)"; then
+if ! completed_paths="$(find . -maxdepth 1 -type f -name 'jyotisha-staging-*.dump.enc' -print | LC_ALL=C sort)"; then
   echo "failed to enumerate completed backups" >&2
   exit 1
 fi
@@ -139,8 +184,8 @@ done <<< "$completed_paths"
 
 if [ "${#completed[@]}" -gt 3 ]; then
   for ((index = 0; index < ${#completed[@]} - 3; index += 1)); do
-    rm -f "$BACKUP_DIRECTORY/${completed[$index]}"
+    rm -f "${completed[$index]}"
   done
 fi
 
-printf 'path=%s count=%s\n' "$FINAL_FILE" "$(( ${#completed[@]} > 3 ? 3 : ${#completed[@]} ))"
+printf 'path=%s count=%s\n' "$BACKUP_DIRECTORY/$FINAL_FILE" "$(( ${#completed[@]} > 3 ? 3 : ${#completed[@]} ))"

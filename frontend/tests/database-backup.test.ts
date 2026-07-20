@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import {
   chmodSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -227,7 +228,7 @@ test("staging backups are encrypted, atomic, private, and retain the newest thre
 });
 
 test("rejects destructive backup directory aliases and symlink components before mutation", () => {
-  const root = mkdtempSync(join(tmpdir(), "jyotisha-backup-boundary-"));
+  const root = canonicalTemporaryDirectory("jyotisha-backup-boundary-");
   const environmentFile = createDatabaseEnvironment();
   const target = join(root, "target");
   const sentinel = join(target, "sentinel.txt");
@@ -265,6 +266,31 @@ test("rejects destructive backup directory aliases and symlink components before
     assert.equal(statSync(target).mode & 0o777, originalMode);
     assert.equal(readFileSync(sentinel, "utf8"), "must remain untouched");
     assert.deepEqual(readdirSync(target), ["sentinel.txt"]);
+  } finally {
+    rmSync(root, { force: true, recursive: true });
+    rmSync(environmentFile.directory, { force: true, recursive: true });
+  }
+});
+
+test("rejects unsafe writable backup parents before creating the target", () => {
+  const root = canonicalTemporaryDirectory("jyotisha-backup-unsafe-parent-");
+  const environmentFile = createDatabaseEnvironment();
+  const unsafeParent = join(root, "unsafe-parent");
+  const target = join(unsafeParent, "backup");
+  const sentinel = join(unsafeParent, "sentinel.txt");
+
+  try {
+    mkdirSync(unsafeParent, { mode: 0o700 });
+    writeFileSync(sentinel, "must remain untouched");
+    chmodSync(unsafeParent, 0o777);
+
+    const result = runBackup(environmentFile.file, target, process.env, root);
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /backup directory ancestor must be owned by the current user or root and not group\/world-writable/);
+    assert.equal(existsSync(target), false);
+    assert.equal(statSync(unsafeParent).mode & 0o777, 0o777);
+    assert.equal(readFileSync(sentinel, "utf8"), "must remain untouched");
   } finally {
     rmSync(root, { force: true, recursive: true });
     rmSync(environmentFile.directory, { force: true, recursive: true });
