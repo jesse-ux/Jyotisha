@@ -80,6 +80,8 @@ for (const rawText of [
   "2021年7月毕业并后来工作",
   "2021年7月毕业并第二年工作",
   "2021年7月毕业并此前工作",
+  "2021年7月毕业然后工作",
+  "2021年7月毕业后来又工作",
 ]) {
   test(`does not propagate a shared date through an unresolved relative clause: ${rawText}`, () => {
     const evidence = extractLifeEventEvidence({ rawText, sourceTurnId, asOfDate: "2026-07-20" });

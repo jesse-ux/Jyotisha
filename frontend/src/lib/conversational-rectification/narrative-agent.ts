@@ -16,7 +16,8 @@ const sensitiveSemanticsPattern = /(?:敏感|变化|差异|切换|不同|sensiti
 const discriminationSemanticsPattern = /(?:区分|辨别|判别|验证|差异|变化|discriminat|distinguish)/i;
 const broadYearRangePattern = /(?:19|20)\d{2}\s*年?\s*(?:[-–—~～至到\/]|\.\.)\s*(?:19|20)\d{2}\s*年?/i;
 const explicitYearPattern = /(?:19|20)\d{2}\s*年?/g;
-const choiceQuestionPattern = /(?:哪(?:一|个)?(?:年份|年代|时间段|区间|时期)|哪个时间段|选择|选项|更符合|更匹配|A\s*[.、:：)]|B\s*[.、:：)]|which\s+(?:year|period|range)|options?)/i;
+const proposedYearAlternativesPattern = /(?:19|20)\d{2}\s*年?\s*(?:还是|或者|或是|或|、|,|，)\s*(?:19|20)\d{2}\s*年?/i;
+const choiceQuestionPattern = /(?:哪(?:一|个)?(?:年|年份|年代|时间段|区间|时期)|哪个时间段|还是|选择|选项|更符合|更匹配|A\s*[.、:：)]|B\s*[.、:：)]|which\s+(?:year|period|range)|options?)/i;
 const domainSemantics = {
   career: /(?:事业|工作|职业|career)/i,
   education: /(?:教育|学业|学校|education)/i,
@@ -120,8 +121,9 @@ function narrativeReferences(value: string): string[] {
 function isGenericBroadYearChoiceQuestionnaire(value: string): boolean {
   const distinctYears = unique((value.match(explicitYearPattern) ?? [])
     .map((year) => year.replace(/\s*年$/, "")));
-  return choiceQuestionPattern.test(value)
-    && (broadYearRangePattern.test(value) || distinctYears.length >= 2);
+  return proposedYearAlternativesPattern.test(value)
+    || (choiceQuestionPattern.test(value)
+      && (broadYearRangePattern.test(value) || distinctYears.length >= 2));
 }
 
 function proseFields(output: RectificationNarrativeModelOutput): readonly {

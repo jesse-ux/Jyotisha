@@ -102,13 +102,34 @@ function evidenceId(input: ExtractLifeEventEvidenceInput, index: number, summary
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
+function splitSentenceFragments(sentence: string): string[] {
+  const fragments: string[] = [];
+  const separators = /\s*(并且|并|以及|同时|然后|后来又|又|，|,)\s*/g;
+  let cursor = 0;
+  let prefixForNext = "";
+  for (const match of sentence.matchAll(separators)) {
+    const index = match.index ?? cursor;
+    const fragment = sentence.slice(cursor, index).trim();
+    if (fragment) {
+      fragments.push(`${prefixForNext}${fragment}`);
+      prefixForNext = "";
+    }
+    const separator = match[1] ?? "";
+    if (separator === "然后" || separator === "后来又") {
+      prefixForNext += separator;
+    }
+    cursor = index + match[0].length;
+  }
+  const tail = sentence.slice(cursor).trim();
+  if (tail) fragments.push(`${prefixForNext}${tail}`);
+  return fragments;
+}
+
 function splitSentences(value: string): string[][] {
   const sentences = value.split(/[。！？!?；;]/)
     .map((sentence) => sentence.trim())
     .filter(Boolean)
-    .map((sentence) => sentence.split(/\s*(?:并且|并|以及|同时|然后|后来又|又|，|,)\s*/)
-      .map((fragment) => fragment.trim())
-      .filter(Boolean));
+    .map(splitSentenceFragments);
   return sentences.length > 0 ? sentences : [[value.trim()]];
 }
 

@@ -217,6 +217,42 @@ test("rejects generic individual-year options even without a written range", () 
   assert.ok(result.issues.some((issue) => issue.includes("broad-year choice questionnaire")));
 });
 
+for (const prompt of [
+  "请提供已经发生的真实事件：2018年还是2021年？也请说明哪一月以及发生了什么。",
+  "请提供已经发生的真实事件，并说明哪一年：2018年、2021年；也请说明哪一月以及发生了什么。",
+  "请提供已经发生的真实事件：2018年或2021年，也请说明哪一月以及发生了什么。",
+]) {
+  test(`rejects a rich first turn that proposes multiple years: ${prompt}`, () => {
+    const output = richOutput();
+    assert.ok(output.evidenceRequest);
+    const invalid = {
+      ...output,
+      evidenceRequest: { ...output.evidenceRequest, prompt },
+    } satisfies RectificationNarrativeModelOutput;
+    const result = validateNarrativeAgainstPacket(invalid, syntheticTechnicalPacket(), "first");
+
+    assert.equal(result.valid, false);
+    assert.ok(result.issues.some((issue) => issue.includes("broad-year choice questionnaire")));
+  });
+}
+
+test("accepts a request for one real past event's year and month without proposed years", () => {
+  const output = richOutput();
+  assert.ok(output.evidenceRequest);
+  const legitimate = {
+    ...output,
+    evidenceRequest: {
+      ...output.evidenceRequest,
+      prompt: "请提供一件已经发生的真实事件，并说明是哪一年、哪一月以及发生了什么。",
+    },
+  } satisfies RectificationNarrativeModelOutput;
+
+  assert.deepEqual(
+    validateNarrativeAgainstPacket(legitimate, syntheticTechnicalPacket(), "first"),
+    { valid: true, issues: [] },
+  );
+});
+
 test("rejects ungrounded layers and references nested in a domain reason", () => {
   const output = richOutput();
   const firstReason = output.domainReasons[0];
