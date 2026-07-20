@@ -657,13 +657,21 @@
       "claim_status": "open_queue",
       "consumer_policy": "research_to_commercial_contract_only",
       "claim_boundary": "Groups KP, Muhurta, and Shadbala worked-example candidates into intake queues; no candidate is upgraded until numeric expected values, raw/hash, and replay comparison are archived."
+    },
+    {
+      "packet_id": "public_worked_example_source_triage_2026_07_20",
+      "path": "references/oracle/public_worked_example_source_triage_2026_07_20.json",
+      "domain": "worked_example_collection",
+      "claim_status": "source_intake_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Triage of public KP, Muhurta, and Shadbala source candidates; no source is oracle-ready until raw capture, exact settings, expected values, hash, and replay comparison are archived."
     }
   ],
   "production_tuning_allowed": false,
   "scope": "evidence_packet_index",
   "status": "active_index_v1",
   "summary": {
-    "packet_count": 82,
+    "packet_count": 83,
     "blocked_or_partial_count": 55,
     "human_review_required_count": 2
   }
