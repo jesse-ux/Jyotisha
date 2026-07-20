@@ -15,6 +15,7 @@ done
 
 sha_pattern='^[0-9a-f]{40}$'
 digest_pattern='^ghcr\.io/jesse-ux/jyotisha-(api|web)@sha256:[0-9a-f]{64}$'
+image_id_pattern='^sha256:[0-9a-f]{64}$'
 if [[ ! "$DEPLOY_SHA" =~ $sha_pattern ]] ||
   [[ ! "$API_IMAGE" =~ $digest_pattern ]] ||
   [[ ! "$WEB_IMAGE" =~ $digest_pattern ]]; then
@@ -95,6 +96,19 @@ if [ -n "$(container_id web)" ]; then
   previous_web_id="$(docker inspect --format '{{.Image}}' "$(container_id web)")"
 fi
 
+rollback_image() {
+  local digest_ref="$1"
+  local image_id="$2"
+  if [[ "$digest_ref" =~ $digest_pattern ]]; then
+    printf '%s' "$digest_ref"
+  elif [[ "$image_id" =~ $image_id_pattern ]]; then
+    printf '%s' "$image_id"
+  fi
+}
+
+previous_api_target="$(rollback_image "$previous_api_image" "$previous_api_id")"
+previous_web_target="$(rollback_image "$previous_web_image" "$previous_web_id")"
+
 bash "$INCOMING_PATH/deploy/sync-staging-tree.sh" \
   "$INCOMING_PATH" "$DEPLOY_PATH"
 
@@ -114,8 +128,8 @@ export SITE_ADDRESS='https://staging.jyotisha.chat'
 export GITHUB_SHA="$DEPLOY_SHA"
 
 "${compose[@]}" config --quiet
-"${compose[@]}" pull api web postgres
-"${compose[@]}" up -d --no-build --wait postgres
+"${compose[@]}" pull api web
+"${compose[@]}" up -d --no-build --pull never --wait postgres
 
 set +e
 "${compose[@]}" --profile migration-check run --rm migration-checker
@@ -134,11 +148,11 @@ switched=false
 rollback() {
   local status=$?
   if [ "$switched" = "true" ] &&
-    [[ "$previous_api_image" =~ $digest_pattern ]] &&
-    [[ "$previous_web_image" =~ $digest_pattern ]] &&
+    [ -n "$previous_api_target" ] &&
+    [ -n "$previous_web_target" ] &&
     [[ "$current_sha" =~ $sha_pattern ]]; then
-    echo "staging verification failed; restoring prior image digests" >&2
-    API_IMAGE="$previous_api_image" WEB_IMAGE="$previous_web_image" \
+    echo "staging verification failed; restoring prior application images" >&2
+    API_IMAGE="$previous_api_target" WEB_IMAGE="$previous_web_target" \
       GITHUB_SHA="$current_sha" \
       "${compose[@]}" up -d --no-build --remove-orphans api web caddy || true
   fi

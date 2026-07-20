@@ -59,6 +59,20 @@ async function readLedger(client) {
   return new Map(result.rows.map((row) => [row.filename, row.checksum]));
 }
 
+function assertLedgerFilesPresent(ledger, files) {
+  const reviewedFilenames = new Set(files.map((file) => file.filename));
+  for (const filename of ledger.keys()) {
+    if (!reviewedFilenames.has(filename)) {
+      if (!migrationFilenamePattern.test(filename)) {
+        throw new SafeMigrationError(
+          "migration ledger contains an invalid filename",
+        );
+      }
+      throw new SafeMigrationError(`migration file missing: ${filename}`);
+    }
+  }
+}
+
 export async function runMigrations({
   connectionString,
   migrationsDirectory,
@@ -78,19 +92,8 @@ export async function runMigrations({
 
     if (check) {
       const ledger = await readLedger(client);
-      const reviewedFilenames = new Set(files.map((file) => file.filename));
       const pending = [];
-
-      for (const filename of ledger.keys()) {
-        if (!reviewedFilenames.has(filename)) {
-          if (!migrationFilenamePattern.test(filename)) {
-            throw new SafeMigrationError(
-              "migration ledger contains an invalid filename",
-            );
-          }
-          throw new SafeMigrationError(`migration file missing: ${filename}`);
-        }
-      }
+      assertLedgerFilesPresent(ledger, files);
 
       for (const file of files) {
         const recordedChecksum = ledger.get(file.filename);
@@ -123,6 +126,7 @@ export async function runMigrations({
     );
 
     const ledger = await readLedger(client);
+    assertLedgerFilesPresent(ledger, files);
     for (const file of files) {
       const recordedChecksum = ledger.get(file.filename);
       if (recordedChecksum !== undefined) {

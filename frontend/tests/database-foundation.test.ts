@@ -205,6 +205,15 @@ test("migration runner is serialized, atomic, drift-safe, and read-only in check
       missingFileCheck.stderr,
       new RegExp(`migration file missing: ${migrationFilename}`),
     );
+    const missingFileApply = runMigration(schemaUrl, {
+      migrationsDirectory: emptyDirectory,
+    });
+    results.push(missingFileApply);
+    assert.equal(missingFileApply.status, 1);
+    assert.match(
+      missingFileApply.stderr,
+      new RegExp(`migration file missing: ${migrationFilename}`),
+    );
 
     const pendingPath = join(temporaryDirectory, pendingFilename);
     mkdirSync(dirname(pendingPath), { recursive: true });

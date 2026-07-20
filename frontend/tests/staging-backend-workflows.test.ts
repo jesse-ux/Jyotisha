@@ -208,7 +208,7 @@ test("remote deployment verifies running image IDs, RepoDigests, and application
   assert.match(runner, /grep -Fqx "\$expected_ref"/);
   assert.match(runner, /publicBody\.deployment\?\.gitCommit !== process\.env\.EXPECTED_SHA/);
   assert.match(runner, /mv -f "\$revision_file" "\$state_directory\/deployed-revision"/);
-  assert.match(runner, /restoring prior image digests/);
+  assert.match(runner, /restoring prior application images/);
   assert.match(
     runner,
     /switched=true\n"\$\{compose\[@\]\}" up -d --no-build --remove-orphans\n/,
@@ -216,11 +216,101 @@ test("remote deployment verifies running image IDs, RepoDigests, and application
   assert.doesNotMatch(runner, /jyotisha-(?:api|web):\$DEPLOY_SHA/);
 });
 
+test("first immutable deployment rolls back to validated local image IDs", () => {
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-local-image-rollback-"));
+  const deploymentPath = join(root, "live");
+  const incomingPath = join(deploymentPath, ".incoming", "run-1");
+  const incomingDeploy = join(incomingPath, "deploy");
+  const liveDeploy = join(deploymentPath, "deploy");
+  const mockBin = join(root, "bin");
+  const rollbackLog = join(root, "rollback.log");
+  const previousSha = "1".repeat(40);
+  const previousApiId = `sha256:${"a".repeat(64)}`;
+  const previousWebId = `sha256:${"b".repeat(64)}`;
+  const nextSha = "2".repeat(40);
+
+  mkdirSync(incomingDeploy, { recursive: true });
+  mkdirSync(liveDeploy, { recursive: true });
+  mkdirSync(join(deploymentPath, ".state"), { recursive: true });
+  mkdirSync(mockBin);
+  writeFileSync(join(deploymentPath, ".state", "deployed-revision"), `${previousSha}\n`);
+  for (const script of [
+    join(incomingDeploy, "sync-staging-tree.sh"),
+    join(liveDeploy, "validate-staging-env.sh"),
+    join(liveDeploy, "validate-staging-database-env.sh"),
+  ]) {
+    writeFileSync(script, "#!/usr/bin/env bash\nexit 0\n");
+    chmodSync(script, 0o755);
+  }
+  writeFileSync(
+    join(mockBin, "docker"),
+    [
+      "#!/usr/bin/env bash",
+      "set -euo pipefail",
+      "if [ \"$1\" = ps ]; then",
+      "  case \"$*\" in",
+      "    *service=api*) echo container-api ;;",
+      "    *service=web*) echo container-web ;;",
+      "  esac",
+      "  exit 0",
+      "fi",
+      "if [ \"$1\" = inspect ]; then",
+      `  if [ \"\${!#}\" = container-api ]; then echo '${previousApiId}'; else echo '${previousWebId}'; fi`,
+      "  exit 0",
+      "fi",
+      "if [ \"$1\" = image ]; then exit 0; fi",
+      "if [ \"$1\" = compose ]; then",
+      "  if [[ \" $* \" == *\" up -d --no-build --remove-orphans \"* ]]; then",
+      `    printf '%s|%s|%s|%s\\n' \"\${API_IMAGE:-}\" \"\${WEB_IMAGE:-}\" \"\${GITHUB_SHA:-}\" \"$*\" >>'${rollbackLog}'`,
+      "    [[ \"$*\" == *\" api web caddy\" ]] && exit 0",
+      "    exit 42",
+      "  fi",
+      "  exit 0",
+      "fi",
+      "exit 1",
+      "",
+    ].join("\n"),
+  );
+  chmodSync(join(mockBin, "docker"), 0o755);
+  writeFileSync(join(mockBin, "flock"), "#!/usr/bin/env bash\nexit 0\n");
+  chmodSync(join(mockBin, "flock"), 0o755);
+
+  try {
+    const result = spawnSync("bash", [fileURLToPath(deployScript)], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${mockBin}:${process.env.PATH ?? ""}`,
+        INCOMING_PATH: incomingPath,
+        DEPLOY_PATH: deploymentPath,
+        API_IMAGE: `ghcr.io/jesse-ux/jyotisha-api@sha256:${"c".repeat(64)}`,
+        WEB_IMAGE: `ghcr.io/jesse-ux/jyotisha-web@sha256:${"d".repeat(64)}`,
+        DEPLOY_SHA: nextSha,
+        EXPECTED_PREVIOUS_SHA: previousSha,
+        ALLOW_ROLLBACK: "false",
+        FORWARD_REVISION_VERIFIED: "true",
+        DOCKER_CONFIG: join(incomingPath, ".docker"),
+        STAGING_URL: "https://staging.jyotisha.chat",
+      },
+    });
+    assert.equal(result.status, 42, result.stderr);
+    const attempts = readFileSync(rollbackLog, "utf8").trim().split("\n");
+    assert.equal(attempts.length, 2);
+    assert.match(
+      attempts[1],
+      new RegExp(`^${previousApiId}\\|${previousWebId}\\|${previousSha}\\|`),
+    );
+    assert.match(attempts[1], /api web caddy$/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("normal deployment checks migrations but never applies them", () => {
   const runner = read(deployScript);
   assertOrder(runner, [
-    "pull api web postgres",
-    "up -d --no-build --wait postgres",
+    "pull api web",
+    "up -d --no-build --pull never --wait postgres",
     "--profile migration-check run --rm migration-checker",
     "up -d --no-build --remove-orphans",
   ]);
@@ -228,6 +318,7 @@ test("normal deployment checks migrations but never applies them", () => {
   assert.match(runner, /exit 3/);
   assert.doesNotMatch(runner, /--profile migration run --rm migrator/);
   assert.doesNotMatch(runner, /npm\s+run\s+db:migrate(?!:check)/);
+  assert.doesNotMatch(runner, /pull api web postgres/);
 });
 
 test("manual migration uses only PostgreSQL and the digest-pinned migrator", () => {
@@ -237,6 +328,7 @@ test("manual migration uses only PostgreSQL and the digest-pinned migrator", () 
   assert.match(workflow, /^on:\n\s+workflow_dispatch:/m);
   assert.doesNotMatch(workflow, /workflow_run:|\n\s+push:/);
   assert.match(runner, /docker pull "\$WEB_IMAGE"/);
+  assert.match(runner, /up -d --no-build --pull never --wait postgres/);
   assert.match(runner, /-f deploy\/docker-compose\.postgres\.yml/);
   assert.match(runner, /--profile migration run --rm migrator/);
   assert.match(runner, /select filename from migration\.schema_migrations order by filename/);

@@ -959,7 +959,7 @@ Each secret uses independently generated 32 random bytes. URL password is percen
 
 Document order:
 
-1. Merge to `staging`.
+1. Merge the reviewed revision to `main`, then fast-forward/push that exact SHA to `staging`.
 2. Wait for backend quality gate and its exact-SHA image digest manifest.
 3. If automatic deploy reports pending migrations, manually run `Migrate Staging Database` with the reported full SHA.
 4. The successful migration workflow re-dispatches exact-SHA staging deploy automatically.
