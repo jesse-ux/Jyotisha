@@ -47,6 +47,43 @@ const deploymentReadmeUrl = new URL(
   import.meta.url,
 );
 
+function markdownSection(readme: string, heading: string): string {
+  const lines = readme.split("\n");
+  const start = lines.indexOf(heading);
+  assert.notEqual(start, -1, `missing README heading: ${heading}`);
+  const level = heading.match(/^#+/)?.[0].length ?? 0;
+  let inFence = false;
+  let end = -1;
+  for (let index = start + 1; index < lines.length; index += 1) {
+    if (lines[index].trim().startsWith("```")) {
+      inFence = !inFence;
+      continue;
+    }
+    if (
+      !inFence &&
+      /^#+\s/.test(lines[index]) &&
+      (lines[index].match(/^#+/)?.[0].length ?? 0) <= level
+    ) {
+      end = index;
+      break;
+    }
+  }
+  return lines.slice(start, end === -1 ? lines.length : end).join("\n");
+}
+
+function fencedCodeBlocks(section: string, language: string): string[] {
+  const lines = section.split("\n");
+  const blocks: string[] = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    if (lines[index] !== `\`\`\`${language}`) continue;
+    const end = lines.indexOf("```", index + 1);
+    assert.notEqual(end, -1, `unterminated ${language} code block`);
+    blocks.push(lines.slice(index + 1, end).join("\n"));
+    index = end;
+  }
+  return blocks;
+}
+
 function indentation(line: string): number {
   return line.match(/^ */)?.[0].length ?? 0;
 }
@@ -206,13 +243,99 @@ function logicalShellLines(script: string): string[] {
     .filter(Boolean);
 }
 
+test("first staging deployment is executable and cannot route publish through main", () => {
+  const readme = readFileSync(deploymentReadmeUrl, "utf8");
+  const staging = markdownSection(readme, "## Staging deployment");
+  const firstDeploy = markdownSection(staging, "### First-deploy sequence").split(
+    "\n\nApplication rollback uses",
+  )[0];
+
+  assert.doesNotMatch(firstDeploy, /first deployment should be manual/i);
+  assert.doesNotMatch(
+    firstDeploy,
+    /Staging Backend Quality Gate[^\n]*from `main`/i,
+  );
+  for (const phrase of [
+    "complete the server and GitHub bootstrap",
+    "push the reviewed SHA to `staging`",
+    "publishes the SHA-tagged API/web images",
+    "automatic `Deploy staging`",
+    "validates both `.env.staging` and `.env.staging.database`",
+    "same successful SHA",
+    "pending migration",
+    "Migrate Staging Database",
+    "https://staging.jyotisha.chat/api/health",
+  ]) {
+    assert.match(firstDeploy, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+  }
+
+  const orderedPhrases = [
+    "complete the server and GitHub bootstrap",
+    "push the reviewed SHA to `staging`",
+    "publishes the SHA-tagged API/web images",
+    "validates both `.env.staging` and `.env.staging.database`",
+    "same successful SHA",
+    "pending migration",
+    "https://staging.jyotisha.chat/api/health",
+  ];
+  const indexes = orderedPhrases.map((phrase) => firstDeploy.indexOf(phrase));
+  for (let index = 1; index < indexes.length; index += 1) {
+    assert.ok(
+      indexes[index] > indexes[index - 1],
+      `first-deploy step is out of order: ${orderedPhrases[index - 1]} -> ${orderedPhrases[index]}`,
+    );
+  }
+});
+
+test("restore drill command block is fail-fast, archive-safe, and narrowly destructive", () => {
+  const readme = readFileSync(deploymentReadmeUrl, "utf8");
+  const operations = markdownSection(readme, "## Staging PostgreSQL operations");
+  const restore = markdownSection(
+    operations,
+    "### Restore drill into a disposable database",
+  );
+  const blocks = fencedCodeBlocks(restore, "bash");
+  assert.equal(blocks.length, 1, "restore drill must have one executable bash block");
+  const script = blocks[0];
+
+  assert.match(script, /^set -euo pipefail\n/);
+  assert.doesNotMatch(script, /<archive>/);
+  assert.match(script, /find "\$BACKUP_DIR"[^\n]*-type f[^\n]*-name/);
+  assert.match(script, /BACKUP_FILE=.*\$\(.*find/);
+  assert.match(script, /test -n "\$BACKUP_FILE"/);
+  assert.match(script, /test -f "\$BACKUP_FILE"/);
+  assert.match(script, /test ! -L "\$BACKUP_FILE"/);
+  assert.match(script, /test -s "\$BACKUP_FILE"/);
+
+  const traps = script.match(/^trap .*$/gm) ?? [];
+  assert.equal(traps.length, 1, "restore drill must have one cleanup trap");
+  assert.match(traps[0], /RESTORE_DUMP/);
+  assert.doesNotMatch(traps[0], /BACKUP_FILE|BACKUP_DIR|jyotisha_restore_check/);
+
+  const decrypt = script.indexOf("openssl enc -d");
+  const create = script.indexOf("createdb -U postgres jyotisha_restore_check");
+  const restoreDb = script.indexOf("pg_restore");
+  const drop = script.indexOf("dropdb -U postgres --if-exists jyotisha_restore_check");
+  assert.ok(decrypt >= 0 && decrypt < create, "decrypt must precede database creation");
+  assert.ok(create < restoreDb, "database creation must precede pg_restore");
+  assert.ok(restoreDb < drop, "dropdb must follow a successful pg_restore");
+  assert.match(script, /-pass env:STAGING_BACKUP_ENCRYPTION_KEY/);
+  assert.match(script, /rm -f -- "\$RESTORE_DUMP"/);
+  assert.doesNotMatch(script, /dropdb[^\n]*\|\|/);
+});
+
 test("operations runbook documents the staging database boundary and deployment order", () => {
   const readme = readFileSync(deploymentReadmeUrl, "utf8");
+  const staging = markdownSection(readme, "## Staging deployment");
+  const operations = markdownSection(
+    readme,
+    "## Staging PostgreSQL operations",
+  );
 
-  assert.match(readme, /Staging PostgreSQL operations/);
-  assert.match(readme, /\/opt\/jyotisha-staging\/\.env\.staging` \(`?0600`?\)/);
-  assert.match(readme, /\/opt\/jyotisha-staging\/\.env\.staging\.database` \(`?0600`?\)/);
-  assert.match(readme, /umask 077[\s\S]*touch \.env\.staging\.database[\s\S]*chmod 600 \.env\.staging\.database/);
+  assert.match(operations, /Staging PostgreSQL operations/);
+  assert.match(staging, /\/opt\/jyotisha-staging\/\.env\.staging` \(`?0600`?\)/);
+  assert.match(staging, /\/opt\/jyotisha-staging\/\.env\.staging\.database` \(`?0600`?\)/);
+  assert.match(operations, /umask 077[\s\S]*touch \.env\.staging\.database[\s\S]*chmod 600 \.env\.staging\.database/);
 
   for (const key of [
     "POSTGRES_DB=jyotisha",
@@ -227,35 +350,35 @@ test("operations runbook documents the staging database boundary and deployment 
     "STAGING_BACKUP_ENCRYPTION_KEY=<generated>",
     "SCHEMA_DATABASE_URL=postgresql://schema_owner:<percent-encoded-password>@postgres:5432/jyotisha",
   ]) {
-    assert.match(readme, new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(operations, new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
-  assert.match(readme, /independently generated 32 random bytes/);
-  assert.match(readme, /openssl rand -base64 32/);
-  assert.match(readme, /percent-encod(?:e|ed)[^\n]*URL password/i);
-  assert.match(readme, /SCHEMA_DATABASE_URL[^\n]*must not[^\n]*\.env\.staging/i);
+  assert.match(operations, /independently generated 32 random bytes/);
+  assert.match(operations, /openssl rand -base64 32/);
+  assert.match(operations, /percent-encod(?:e|ed)[^\n]*URL password/i);
+  assert.match(operations, /SCHEMA_DATABASE_URL[^\n]*must not[^\n]*\.env\.staging/i);
   assert.match(
-    readme,
+    operations,
     /there is no `?SCHEMA_DATABASE_URL`? in `?\.env\.staging`?/i,
   );
 
-  assert.match(readme, /private[^\n]*PostgreSQL|PostgreSQL[^\n]*private/i);
-  assert.match(readme, /no published host port|no host port/i);
-  assert.match(readme, /127\.0\.0\.1:\$\{POSTGRES_HOST_PORT:-55432\}:5432/);
+  assert.match(operations, /private[^\n]*PostgreSQL|PostgreSQL[^\n]*private/i);
+  assert.match(staging, /no published host port|no host port/i);
+  assert.match(operations, /127\.0\.0\.1:\$\{POSTGRES_HOST_PORT:-55432\}:5432/);
 
   for (const workflow of [
     "Staging Backend Quality Gate",
     "Migrate Staging Database",
     "Deploy staging",
   ]) {
-    assert.match(readme, new RegExp(workflow));
+    assert.match(staging + operations, new RegExp(workflow));
   }
-  assert.match(readme, /pull_request/);
-  assert.match(readme, /push[^\n]*staging|staging[^\n]*push/i);
-  assert.match(readme, /workflow_dispatch/);
-  assert.match(readme, /deploy_sha/);
-  assert.match(readme, /exact[^\n]*40-character[^\n]*SHA/i);
-  assert.match(readme, /re-dispatch|redispatch/i);
-  assert.match(readme, /same[^\n]*SHA/i);
+  assert.match(staging, /pull_request/);
+  assert.match(staging, /push[^\n]*staging|staging[^\n]*push/i);
+  assert.match(staging, /workflow_dispatch/);
+  assert.match(staging, /deploy_sha/);
+  assert.match(staging, /exact[^\n]*40-character[^\n]*SHA/i);
+  assert.match(operations, /re-dispatch|redispatch/i);
+  assert.match(operations, /same[^\n]*SHA/i);
 
   for (const variable of [
     "STAGING_SUPABASE_URL",
@@ -267,22 +390,22 @@ test("operations runbook documents the staging database boundary and deployment 
     "STAGING_URL",
     "STAGING_KNOWN_HOSTS",
   ]) {
-    assert.match(readme, new RegExp(variable));
+    assert.match(staging, new RegExp(variable));
   }
-  assert.match(readme, /Settings[ ]*[→>-][ ]*Secrets and variables[ ]*[→>-][ ]*Actions[ ]*[→>-][ ]*Variables/);
-  assert.match(readme, /public build inputs[^\n]*required for publish/i);
-  assert.match(readme, /never print[^\n]*(?:values|keys)/i);
-  assert.match(readme, /STAGING_SSH_PRIVATE_KEY/);
+  assert.match(staging, /Settings[ ]*[→>-][ ]*Secrets and variables[ ]*[→>-][ ]*Actions[ ]*[→>-][ ]*Variables/);
+  assert.match(staging, /public build inputs[^\n]*required for publish/i);
+  assert.match(staging, /never print[^\n]*(?:values|keys)/i);
+  assert.match(staging, /STAGING_SSH_PRIVATE_KEY/);
 
-  const mergeIndex = readme.indexOf("Merge to `staging`");
-  const gateIndex = readme.indexOf("Staging Backend Quality Gate", mergeIndex);
-  const migrationIndex = readme.indexOf("Migrate Staging Database", gateIndex);
-  const redispatchIndex = readme.search(/re-dispatch|redispatch/i);
-  const healthIndex = readme.indexOf(
+  const mergeIndex = operations.indexOf("Merge to `staging`");
+  const gateIndex = operations.indexOf("Staging Backend Quality Gate", mergeIndex);
+  const migrationIndex = operations.indexOf("Migrate Staging Database", gateIndex);
+  const redispatchIndex = operations.search(/re-dispatch|redispatch/i);
+  const healthIndex = operations.indexOf(
     "https://staging.jyotisha.chat/api/health",
     redispatchIndex,
   );
-  const backupIndex = readme.indexOf("backup-staging-postgres.sh", healthIndex);
+  const backupIndex = operations.indexOf("backup-staging-postgres.sh", healthIndex);
   assert.ok(mergeIndex >= 0, "runbook must state the staging merge step");
   assert.ok(gateIndex > mergeIndex, "quality gate must follow the staging merge");
   assert.ok(migrationIndex > gateIndex, "manual migration must follow the gate");
@@ -293,25 +416,29 @@ test("operations runbook documents the staging database boundary and deployment 
 
 test("operations runbook documents three encrypted local backups and a safe restore drill", () => {
   const readme = readFileSync(deploymentReadmeUrl, "utf8");
-
-  assert.match(readme, /newest three|three[^\n]*encrypted local backups/i);
-  assert.match(readme, /AES-256-CBC/i);
-  assert.match(readme, /PBKDF2|pbkdf2/);
-  assert.match(readme, /custom[^\n]*format|format:[ ]*custom/i);
-  assert.match(readme, /no off[- ]site[^\n]*staging[^\n]*(?:recovery|backup)/i);
-  assert.match(
+  const operations = markdownSection(
     readme,
+    "## Staging PostgreSQL operations",
+  );
+
+  assert.match(operations, /newest three|three[^\n]*encrypted local backups/i);
+  assert.match(operations, /AES-256-CBC/i);
+  assert.match(operations, /PBKDF2|pbkdf2/);
+  assert.match(operations, /custom[^\n]*format|format:[ ]*custom/i);
+  assert.match(operations, /no off[- ]site[^\n]*staging[^\n]*(?:recovery|backup)/i);
+  assert.match(
+    operations,
     /\.\/deploy\/backup-staging-postgres\.sh[\s\S]*\.env\.staging\.database[\s\S]*\/opt\/jyotisha-staging\/backups\/staging-db/,
   );
-  assert.match(readme, /-pass env:STAGING_BACKUP_ENCRYPTION_KEY/);
-  assert.match(readme, /passphrase[^\n]*(?:argv|command line|output|history)/i);
-  assert.match(readme, /jyotisha_restore_check/);
-  assert.match(readme, /pg_restore/);
-  assert.match(readme, /dropdb[^\n]*jyotisha_restore_check|DROP DATABASE[^\n]*jyotisha_restore_check/i);
-  assert.match(readme, /temporary decrypted dump/);
-  assert.match(readme, /delete[^\n]*(?:only|just)[^\n]*(?:disposable database|jyotisha_restore_check)[^\n]*(?:and|,)[^\n]*temporary decrypted dump/i);
-  assert.match(readme, /do not[^\n]*(?:docker compose[^\n]*down|down -v)[^\n]*(?:restore|drill|staging)/i);
-  assert.match(readme, /does not authorize[^\n]*(?:production|cutover)|no production[^\n]*cutover[^\n]*authoriz/i);
+  assert.match(operations, /-pass env:STAGING_BACKUP_ENCRYPTION_KEY/);
+  assert.match(operations, /passphrase[^\n]*(?:argv|command line|output|history)/i);
+  assert.match(operations, /jyotisha_restore_check/);
+  assert.match(operations, /pg_restore/);
+  assert.match(operations, /dropdb[^\n]*jyotisha_restore_check|DROP DATABASE[^\n]*jyotisha_restore_check/i);
+  assert.match(operations, /temporary decrypted dump/);
+  assert.match(operations, /delete[^\n]*(?:only|just)[^\n]*(?:disposable database|jyotisha_restore_check)[^\n]*(?:and|,)[^\n]*temporary decrypted dump/i);
+  assert.match(operations, /do not[^\n]*(?:docker compose[^\n]*down|down -v)[^\n]*(?:restore|drill|staging)/i);
+  assert.match(operations, /does not authorize[^\n]*(?:production|cutover)|no production[^\n]*cutover[^\n]*authoriz/i);
 });
 
 test("backend quality gate has structured staging triggers and concurrency", () => {

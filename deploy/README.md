@@ -159,14 +159,17 @@ CADDYFILE_PATH=./Caddyfile.staging
 SITE_ADDRESS=https://staging.jyotisha.chat
 ```
 
-After source sync and before `up`, the workflow validates `.env.staging` mode/selectors, explicitly pins the three staging selectors against ambient shell overrides, and runs `docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet`. For later manual inspections, run the same checks only after the tracked deployment files exist on the server. The first deployment should be manual:
+After source sync and before `up`, the workflow validates `.env.staging` mode/selectors, explicitly pins the three staging selectors against ambient shell overrides, and runs `docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet`. For later manual inspections, run the same checks only after the tracked deployment files exist on the server. Do not use a manual gate run from `main` as the first publishing path: publishing requires a successful push to `staging`, while manual `Deploy staging` requires a successful gate run for the exact SHA.
 
-1. Confirm `/opt/jyotisha-staging/.env.staging` exists, has mode `0600`, and contains the three selectors above.
-2. Open GitHub Actions -> Staging Backend Quality Gate -> Run workflow, using workflow from `main`.
-3. Wait for success and copy that run's exact 40-character commit SHA.
-4. Open GitHub Actions -> Deploy staging -> Run workflow, using workflow from `main`, and enter the SHA in `deploy_sha`.
-5. Confirm `https://staging.jyotisha.chat/api/health` reports that SHA.
-6. Only after the manual deployment passes, push a reviewed revision to branch `staging` to validate automatic deployment.
+### First-deploy sequence
+
+1. Complete the server and GitHub bootstrap: create both mode-`0600` env files, configure the staging Environment variables/secrets, and configure the repository staging build variables.
+2. Merge the reviewed change, then push the reviewed SHA to `staging`; do not rely on a `main` workflow dispatch to publish images.
+3. The `Staging Backend Quality Gate` runs for that push and, when successful, publishes the SHA-tagged API/web images for that exact 40-character commit SHA.
+4. The automatic `Deploy staging` workflow starts from that successful gate, syncs the exact SHA, and validates both `.env.staging` and `.env.staging.database` before any app change.
+5. If environment validation fails, fix the server-side env files without committing or copying secrets, then manually rerun `Deploy staging` from `main` with the same successful SHA in `deploy_sha`; the workflow rechecks a successful staging gate for that exact SHA.
+6. If the read-only checker reports a pending migration, stop app deployment and run `Migrate Staging Database` manually with the same full SHA; a successful migration re-dispatches `Deploy staging` with that same SHA.
+7. Confirm `https://staging.jyotisha.chat/api/health` reports the exact SHA and private API health.
 
 Application rollback uses the same workflow: manually dispatch `Deploy staging` from `main` with a previous known-good full SHA that has a successful `Staging Backend Quality Gate` run. Database migrations are separate and are not rolled back by an application deployment. Restore a staging database backup before running any destructive migration rehearsal.
 
@@ -253,9 +256,15 @@ The helper invokes `pg_dump --format=custom --no-owner` in the PostgreSQL contai
 Run a restore drill only against the disposable `jyotisha_restore_check` database. Choose one archive and use a temporary decrypted custom-format dump; the commands below match the backup helper's AES-256-CBC/PBKDF2 and `pg_dump --format=custom` interfaces:
 
 ```bash
+set -euo pipefail
 cd /opt/jyotisha-staging
 export DATABASE_ENV_FILE=../.env.staging.database
-BACKUP_FILE=/opt/jyotisha-staging/backups/staging-db/<archive>.dump.enc
+BACKUP_DIR=/opt/jyotisha-staging/backups/staging-db
+BACKUP_FILE="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'jyotisha-staging-*.dump.enc' -print | LC_ALL=C sort | tail -n 1)"
+test -n "$BACKUP_FILE"
+test -f "$BACKUP_FILE"
+test ! -L "$BACKUP_FILE"
+test -s "$BACKUP_FILE"
 RESTORE_DUMP="$(mktemp /tmp/jyotisha-staging-restore.XXXXXX.dump)"
 chmod 600 "$RESTORE_DUMP"
 trap 'rm -f -- "$RESTORE_DUMP"' EXIT
@@ -277,7 +286,6 @@ docker compose -p jyotisha-staging -f deploy/docker-compose.postgres.yml \
 docker compose -p jyotisha-staging -f deploy/docker-compose.postgres.yml \
   exec -T postgres dropdb -U postgres --if-exists jyotisha_restore_check
 rm -f -- "$RESTORE_DUMP"
-trap - EXIT
 unset STAGING_BACKUP_ENCRYPTION_KEY
 ```
 

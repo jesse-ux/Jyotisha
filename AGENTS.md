@@ -22,7 +22,7 @@ Deployment safety rules:
 3. Keep Supabase Auth Site URL and redirect URLs aligned with `https://jyotisha.chat`.
 4. After deployment, verify `/login`, logged-out `/api/account` = `401`, internal `/api/health` = `200`, and `swisseph_available = true`.
 5. Never expose port `5200`, `SUPABASE_SERVICE_ROLE_KEY`, model keys, user JWTs, passwords, or SSH private keys.
-6. GitHub Actions workflows are manual-only. Run the required validation workflows from the Actions page before manually starting production deployment; the production workflow and required secret are documented in `deploy/README.md`.
+6. Production GitHub Actions validation, deployment, and migration workflows are manual-only. The explicitly authorized staging `Staging Backend Quality Gate` may run automatically for pull requests and pushes to `staging`, and a successful staging gate may automatically trigger `Deploy staging`; `Migrate Staging Database` remains manual-only. Run the required production validation workflows from the Actions page before manually starting production deployment; the production workflow and required secret are documented in `deploy/README.md`.
 
 ## 1. High-Rigor Override
 
