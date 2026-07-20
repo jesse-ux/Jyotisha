@@ -85,6 +85,31 @@ const transitionValidatorVersion = "conversational-rectification-orchestrator-v1
 const explicitDirectionChangePattern = /(?:都不符合|都不是|不符合|换(?:个|一)?(?:方向|领域)|其他方向|别的方向|不想(?:谈|说|回答)|拒绝回答)/;
 const genericUncertaintyPattern = /(?:不知道|不确定)/;
 
+export function evidencePredatesBirthDate(
+  evidence: Pick<LifeEventEvidence, "dateValue" | "datePrecision">,
+  birthDate: string,
+): boolean {
+  if (!evidence.dateValue) return false;
+  const boundary = evidence.datePrecision === "year"
+    ? birthDate.slice(0, 4)
+    : evidence.datePrecision === "month"
+      ? birthDate.slice(0, 7)
+      : evidence.datePrecision === "day"
+        ? birthDate
+        : null;
+  return boundary !== null && evidence.dateValue < boundary;
+}
+
+function evidenceForDeclaredBirthDate(
+  evidence: readonly LifeEventEvidence[],
+  birthDate: string,
+): readonly LifeEventEvidence[] {
+  return evidence.map((item) => item.scoreable === true
+    && evidencePredatesBirthDate(item, birthDate)
+    ? { ...item, extractionStatus: "needs_clarification" as const, scoreable: false }
+    : item);
+}
+
 function safeFailure(error: unknown): ConversationalRectificationError {
   return error instanceof ConversationalRectificationError
     ? error
@@ -552,7 +577,10 @@ export function createConversationalRectificationService(
       if (receipt) return receipt;
       const current = await load(userId, command.caseId);
       requireMutable(current);
-      const evidence = extractedEvidence(command);
+      const evidence = evidenceForDeclaredBirthDate(
+        extractedEvidence(command),
+        current.declaredBirthInput.birthDate,
+      );
 
       if (current.turnVersion === command.turnVersion + 1) {
         try {
@@ -606,7 +634,9 @@ export function createConversationalRectificationService(
 
       try {
         const allScoreable = [...current.eventEvidence, ...evidence]
-          .filter((item) => item.scoreable === true && item.extractionStatus !== "needs_clarification");
+          .filter((item) => item.scoreable === true
+            && item.extractionStatus !== "needs_clarification"
+            && !evidencePredatesBirthDate(item, current.declaredBirthInput.birthDate));
         const computed = await ports.buildTechnicalPacket({
           userId,
           caseId: command.caseId,

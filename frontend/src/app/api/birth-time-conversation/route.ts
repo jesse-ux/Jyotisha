@@ -10,6 +10,7 @@ import {
 } from "../../../lib/conversational-rectification/errors.ts";
 import {
   createConversationalRectificationService,
+  evidencePredatesBirthDate,
   type ConversationalRectificationPacketBuildInput,
   type ConversationalRectificationService,
 } from "../../../lib/conversational-rectification/orchestrator.ts";
@@ -281,10 +282,14 @@ function currentRange(input: ConversationalRectificationPacketBuildInput) {
   return start && end ? { startTime: start, endTime: end } : declaredRange(input.declaredBirthInput);
 }
 
-function scoreableLifeEvents(evidence: readonly LifeEventEvidence[]): LifeEvent[] {
+function scoreableLifeEvents(
+  evidence: readonly LifeEventEvidence[],
+  birthDate: string,
+): LifeEvent[] {
   return evidence.flatMap((item) => {
     if (item.scoreable !== true || !item.dateValue
-      || !(["day", "month", "year"] as const).includes(item.datePrecision as "day" | "month" | "year")) {
+      || !(["day", "month", "year"] as const).includes(item.datePrecision as "day" | "month" | "year")
+      || evidencePredatesBirthDate(item, birthDate)) {
       return [];
     }
     if (item.domain === "family" || item.domain === "other") return [];
@@ -408,7 +413,10 @@ export async function buildProductionConversationalRectificationPacket(
     throw new ConversationalRectificationError("profile_incomplete");
   }
   const baseRange = currentRange(input);
-  const events = scoreableLifeEvents(input.evidence as readonly LifeEventEvidence[]);
+  const events = scoreableLifeEvents(
+    input.evidence as readonly LifeEventEvidence[],
+    input.declaredBirthInput.birthDate,
+  );
   const eventScore: CandidateResult | null = events.length >= 3
     ? await engine.scoreEvents({
         birthDate: input.declaredBirthInput.birthDate,

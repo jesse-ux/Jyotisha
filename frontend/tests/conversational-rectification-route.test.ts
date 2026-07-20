@@ -70,14 +70,16 @@ function service(overrides: Partial<BirthTimeConversationRouteService> = {}): Bi
 function syntheticEvidence(
   index: number,
   domain: LifeEventEvidence["domain"],
+  dateValue = `${2010 + index}-07`,
+  datePrecision: LifeEventEvidence["datePrecision"] = "month",
 ): LifeEventEvidence {
   return {
     id: `00000000-0000-4000-8000-${String(800 + index).padStart(12, "0")}`,
     rawText: `synthetic event ${index}`,
     domain,
     eventSummary: `synthetic summary ${index}`,
-    dateValue: `${2010 + index}-07`,
-    datePrecision: "month",
+    dateValue,
+    datePrecision,
     extractionStatus: "clear",
     scoreable: true,
   };
@@ -124,6 +126,15 @@ function packetEngine(options: {
     },
     async score() { throw new Error("unexpected questionnaire score"); },
     async scoreEvents(input) {
+      assert.ok(input.events.length >= 3 && input.events.length <= 6);
+      for (const event of input.events) {
+        const birthBoundary = event.precision === "year"
+          ? input.birthDate.slice(0, 4)
+          : event.precision === "month"
+            ? input.birthDate.slice(0, 7)
+            : input.birthDate;
+        assert.ok(event.date >= birthBoundary, "synthetic scorer rejected pre-birth evidence");
+      }
       options.scoreCalls?.push([...input.events]);
       return {
         resultId: "00000000-0000-4000-8000-000000000899",
@@ -552,4 +563,79 @@ test("a single period-only scan filters duplicate and out-of-range samples from 
 
   assert.deepEqual(built.packet.candidate.range, { startTime: "08:00", endTime: "11:59" });
   assert.deepEqual(built.packet.sensitivityScope.sampleTimes, ["08:00", "10:00"]);
+});
+
+test("year-precision evidence before birth waits while the birth year can become the valid third event", async () => {
+  const scoreCalls: LifeEvent[][] = [];
+  const engine = packetEngine({ scoreCalls });
+  const valid = [
+    syntheticEvidence(20, "education", "2018", "year"),
+    syntheticEvidence(21, "relocation", "2019", "year"),
+  ];
+  const beforeBirth = syntheticEvidence(22, "career", "1999", "year");
+  const birthYear = syntheticEvidence(23, "relationship", "2000", "year");
+  const input = {
+    userId,
+    caseId,
+    asOfDate: "2026-07-21",
+    declaredBirthInput: {
+      source: "approximate" as const,
+      birthDate: "2000-06-15",
+      reportedTime: "05:20",
+      uncertaintyBeforeMinutes: 30 as const,
+      uncertaintyAfterMinutes: 30 as const,
+      birthTimeClue: null,
+      birthplace: packetBirthplace,
+    },
+    privateCandidate: null,
+  };
+
+  const waiting = await buildProductionConversationalRectificationPacket(engine, {
+    ...input,
+    evidence: [...valid, beforeBirth],
+  });
+  assert.equal(waiting.resultId, null);
+  assert.equal(scoreCalls.length, 0);
+
+  await buildProductionConversationalRectificationPacket(engine, {
+    ...input,
+    evidence: [...valid, beforeBirth, birthYear],
+  });
+  assert.deepEqual(scoreCalls.map((events) => events.map((event) => event.id)), [[
+    ...valid.map((item) => item.id),
+    birthYear.id,
+  ]]);
+});
+
+test("month-precision evidence excludes the month before birth and accepts the birth month", async () => {
+  const scoreCalls: LifeEvent[][] = [];
+  const engine = packetEngine({ scoreCalls });
+  const valid = [
+    syntheticEvidence(30, "education", "2018-01", "month"),
+    syntheticEvidence(31, "relocation", "2019-02", "month"),
+  ];
+  const monthBeforeBirth = syntheticEvidence(32, "career", "2000-05", "month");
+  const birthMonth = syntheticEvidence(33, "relationship", "2000-06", "month");
+
+  await buildProductionConversationalRectificationPacket(engine, {
+    userId,
+    caseId,
+    asOfDate: "2026-07-21",
+    declaredBirthInput: {
+      source: "approximate",
+      birthDate: "2000-06-15",
+      reportedTime: "05:20",
+      uncertaintyBeforeMinutes: 30,
+      uncertaintyAfterMinutes: 30,
+      birthTimeClue: null,
+      birthplace: packetBirthplace,
+    },
+    privateCandidate: null,
+    evidence: [...valid, monthBeforeBirth, birthMonth],
+  });
+
+  assert.deepEqual(scoreCalls.map((events) => events.map((event) => event.id)), [[
+    ...valid.map((item) => item.id),
+    birthMonth.id,
+  ]]);
 });

@@ -24,6 +24,7 @@ const resultId = "00000000-0000-4000-8000-000000000708";
 const laterActionId = "00000000-0000-4000-8000-000000000710";
 const secondAnswerActionId = "00000000-0000-4000-8000-000000000711";
 const thirdAnswerActionId = "00000000-0000-4000-8000-000000000712";
+const fourthAnswerActionId = "00000000-0000-4000-8000-000000000713";
 
 const declaredBirthInput = {
   source: "approximate" as const,
@@ -163,6 +164,7 @@ function harness(options: {
     expectedVersion?: number;
     commandFingerprint?: string;
   }>();
+  const packetEvidenceCounts: number[] = [];
   let packetBuilds = 0;
   let reserveCount = 0;
   let releaseCount = 0;
@@ -355,6 +357,7 @@ function harness(options: {
     },
     async buildTechnicalPacket(input) {
       packetBuilds += 1;
+      packetEvidenceCounts.push(input.evidence.length);
       events.push(input.evidence.length > 0 ? "score-packet" : "packet");
       if (options.packetFailure) throw options.packetFailure;
       return input.evidence.length >= (options.readyAfterEvidenceCount ?? 1)
@@ -368,6 +371,7 @@ function harness(options: {
   return {
     events,
     mutations,
+    packetEvidenceCounts,
     cases,
     service: createConversationalRectificationService(ports),
     counts: () => ({ packetBuilds, reserveCount, releaseCount }),
@@ -551,6 +555,37 @@ test("family evidence remains stored and public without changing its domain", as
     dateLabel: "2020-07",
   }]);
   assert.equal(turn.status, "active");
+});
+
+test("two valid events plus pre-birth evidence wait until a later valid third event scores", async () => {
+  const value = harness({ readyAfterEvidenceCount: 3 });
+  await start(value, null);
+  const answers = [
+    [answerActionId, "2019年7月毕业"],
+    [secondAnswerActionId, "2020年8月搬家"],
+    [thirdAnswerActionId, "1999年12月开始工作"],
+    [fourthAnswerActionId, "2021年9月换工作"],
+  ] as const;
+
+  let latest = value.cases.get(startActionId)?.row.latestTurn;
+  for (const [index, [receivedActionId, answer]] of answers.entries()) {
+    latest = await value.service.answer(userId, {
+      type: "answer",
+      caseId: startActionId,
+      actionId: receivedActionId,
+      turnVersion: index,
+      answer,
+    });
+    assert.equal(latest.status, index < 3 ? "active" : "confirming");
+  }
+
+  const stored = value.cases.get(startActionId)?.row;
+  const preBirth = stored?.eventEvidence.find((item) => item.dateValue === "1999-12");
+  assert.equal(preBirth?.scoreable, false);
+  assert.equal(preBirth?.extractionStatus, "needs_clarification");
+  assert.equal(stored?.eventEvidence.length, 4);
+  assert.equal(latest?.evidenceRecap.length, 4);
+  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 2, 3]);
 });
 
 test("vague, future, and unmatched answers stay conversational and never score", async () => {
