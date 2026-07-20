@@ -23,8 +23,9 @@ test("other chart save falls back to local library when cloud sync fails", () =>
   assert.doesNotMatch(source, /deleteOtherChart[\s\S]{0,500}return;\s*}\s*setChartLibrary/);
 });
 
-test("adding another chart immediately opens the synastry path", () => {
-  assert.match(source, /async function saveOtherChart[\s\S]{0,1400}await draftSynastryQuestionFromChart\(record\)/);
+test("adding another chart waits for the user to choose a relationship type", () => {
+  assert.doesNotMatch(source, /async function saveOtherChart[\s\S]{0,1400}await draftSynastryQuestionFromChart\(/);
+  assert.match(source, /请选择关系类型后点击“用于合盘”。/);
   assert.match(source, /用于合盘/);
   assert.match(source, /\/api\/synastry/);
 });
@@ -54,4 +55,23 @@ test("synastry selection exposes a pending state while the evidence packet is co
   assert.match(source, /finally \{\s*setSynastryPendingId\(null\);\s*\}/);
   assert.match(source, /disabled=\{synastryPendingId !== null\}/);
   assert.match(source, /synastryPendingId === record\.id \? "正在计算合盘\.\.\." : "用于合盘"/);
+});
+
+test("relationship intent selects domain-specific evidence instead of treating every pairing as romance", () => {
+  const route = readFileSync(new URL("../src/app/api/synastry/route.ts", import.meta.url), "utf8");
+  assert.match(source, /商业合作/);
+  assert.match(source, /亲友\/家庭/);
+  assert.match(source, /其他关系/);
+  assert.match(source, /relationshipType: SynastryRelationshipType/);
+  assert.match(source, /body: JSON\.stringify\(\{ selfProfile: profile, partnerProfile: record\.profile, relationshipType \}\)/);
+  assert.match(route, /relationshipType === "business"/);
+  assert.match(route, /divisions: \["D2", "D10", "D11"\]/);
+  assert.match(route, /"D10_Dasamsa"/);
+  assert.match(route, /"D11_Rudramsa"/);
+  assert.match(route, /blockedLayers:/);
+  assert.match(route, /"A10"/);
+  assert.match(route, /"functional_benefic_malefic"/);
+  assert.match(route, /"vimshottari_narayana"/);
+  assert.match(source, /基础商业合作证据筛查/);
+  assert.match(source, /relationshipType === "business"/);
 });
