@@ -120,7 +120,7 @@ The server has a persistent 2 GB `/swapfile`. UFW permits only SSH `22000/tcp`, 
 
 ## Manual deployment with GitHub Actions
 
-Pushes and pull requests do not start GitHub Actions automatically. Run the required validation workflows from the Actions page, then manually start `.github/workflows/deploy-production.yml` for the tested branch. The deployment workflow syncs that revision with `rsync`, preserves `/opt/jyotisha-app/.env.production`, rebuilds both Docker services, and verifies the public login route, logged-out account response, and private Python health endpoint.
+Production pushes and pull requests do not start GitHub Actions automatically. Run the required validation workflows from the Actions page, then manually start `.github/workflows/deploy-production.yml` for the tested branch. The deployment workflow syncs that revision with `rsync`, preserves `/opt/jyotisha-app/.env.production`, rebuilds both Docker services, and verifies the public login route, logged-out account response, and private Python health endpoint.
 
 Required GitHub Actions secret:
 

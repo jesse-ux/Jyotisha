@@ -243,6 +243,29 @@ function logicalShellLines(script: string): string[] {
     .filter(Boolean);
 }
 
+test("production manual-trigger wording is scoped and staging automation stays explicit", () => {
+  const readme = readFileSync(deploymentReadmeUrl, "utf8");
+  const production = markdownSection(
+    readme,
+    "## Manual deployment with GitHub Actions",
+  );
+  const staging = markdownSection(readme, "## Staging deployment");
+
+  assert.doesNotMatch(
+    readme,
+    /^Pushes and pull requests do not start GitHub Actions automatically\./m,
+  );
+  assert.match(
+    production,
+    /^Production pushes and pull requests do not start GitHub Actions automatically\./m,
+  );
+  assert.match(
+    staging,
+    /Staging Backend Quality Gate[\s\S]*only a successful push to `staging` can publish/i,
+  );
+  assert.match(staging, /automatic `Deploy staging`/i);
+});
+
 test("first staging deployment is executable and cannot route publish through main", () => {
   const readme = readFileSync(deploymentReadmeUrl, "utf8");
   const staging = markdownSection(readme, "## Staging deployment");
