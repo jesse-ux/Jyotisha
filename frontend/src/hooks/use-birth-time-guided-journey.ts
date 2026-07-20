@@ -190,6 +190,7 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     const resultId = turn?.candidateResult?.resultId;
     const winner = turn?.candidateResult?.winningSegment;
     if (!turn || !resultId || winner?.representativeTime !== time) return;
+    if (turn.journeyProtocol === "dynamic-choice-v2") return;
     const release = claimMutation(busy);
     if (release === null) return;
     setPending(true);

@@ -56,15 +56,19 @@ test("low without a result and saved medium both return to declared-time editing
   });
 });
 
-test("dynamic medium terminal completes with its candidate working time", () => {
+test("dynamic non-confirmable terminal stays in declared-time editing", () => {
   const medium = dynamicBirthTimePreview("medium");
 
   assert.deepEqual(guidedTerminalPath(medium), {
-    kind: "complete_with_candidate",
-    time: "05:43",
+    kind: "edit_birth_time_details",
     preservesCase: true,
-    appliesCandidateTime: true,
+    appliesCandidateTime: false,
   });
+});
+
+test("candidate completion hook cannot invoke the legacy endpoint for dynamic turns", () => {
+  const hookSource = readFileSync(new URL("../src/hooks/use-birth-time-guided-journey.ts", import.meta.url), "utf8");
+  assert.match(hookSource, /if \(turn\.journeyProtocol === "dynamic-choice-v2"\) return;/);
 });
 
 test("request identity cache and scheduled polling deduplicate Strict Mode starts", async () => {

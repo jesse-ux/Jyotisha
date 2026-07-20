@@ -15,15 +15,12 @@ export type GuidedTerminalPath =
 
 export function guidedTerminalPath(journey: JourneyClientResponse): GuidedTerminalPath | null {
   const kind = journey.nextAction.kind;
-  const winner = journey.candidateResult?.winningSegment;
   if (journey.journeyProtocol === "dynamic-choice-v2"
-    && winner
     && (kind === "present_low_result" || kind === "present_medium_result" || kind === "candidate_saved")) {
     return {
-      kind: "complete_with_candidate",
-      time: winner.representativeTime,
+      kind: "edit_birth_time_details",
       preservesCase: true,
-      appliesCandidateTime: true,
+      appliesCandidateTime: false,
     };
   }
   return kind === "present_low_result" || kind === "candidate_saved"

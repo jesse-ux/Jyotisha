@@ -5,6 +5,7 @@ import { candidateWorkingTime } from "../src/lib/birth-time-candidate-completion
 const terminalCase = {
   id: "5425f9e7-3d45-491d-aab3-24cfd4261d51",
   user_id: "07e583fc-90b9-4fcb-a9d3-8de654eeac9a",
+  journey_protocol: "legacy-guided-v1",
   status: "candidate",
   candidate_result_id: "d9133ba2-afcf-56da-b40b-ace3d7124a7d",
   candidate_result: {
@@ -93,6 +94,17 @@ test("non-terminal cases cannot be adopted for consultation", () => {
   }, {
     ...completionRequest,
   }), null);
+});
+
+test("legacy candidate completion rejects dynamic-choice-v2 cases", () => {
+  assert.equal(candidateWorkingTime({
+    ...terminalCase,
+    journey_protocol: "dynamic-choice-v2",
+  }, completionRequest), null);
+});
+
+test("legacy candidate completion requires an explicit legacy protocol", () => {
+  assert.equal(candidateWorkingTime({ ...terminalCase, journey_protocol: undefined }, completionRequest), null);
 });
 
 const rejectedCompletions = [

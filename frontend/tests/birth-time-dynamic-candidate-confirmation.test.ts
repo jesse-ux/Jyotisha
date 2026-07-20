@@ -119,6 +119,85 @@ test("dynamic confirmation replays only its exact receipt and rejects stale vers
   }), StaleJourneyTurnError);
 });
 
+test("dynamic confirmation rejects every binding mismatch without writing", async () => {
+  const cases = [
+    {
+      name: "wrong protocol",
+      current: { ...highConfidenceDynamicCase(), journeyProtocol: "legacy-guided-v1" as const },
+      command: {},
+    },
+    {
+      name: "wrong current action",
+      current: {
+        ...highConfidenceDynamicCase(),
+        dynamicTurnState: { ...highConfidenceDynamicCase().dynamicTurnState, nextAction: { kind: "present_medium_result" as const, resultId: highCandidate.resultId } },
+      },
+      command: {},
+    },
+    {
+      name: "wrong result",
+      current: highConfidenceDynamicCase(),
+      command: { resultId: "a3e41512-9fa0-4866-a187-e3b3aa07aee0" },
+    },
+    {
+      name: "wrong representative time",
+      current: highConfidenceDynamicCase(),
+      command: { time: "17:14" },
+    },
+    {
+      name: "confirmation disabled",
+      current: {
+        ...highConfidenceDynamicCase(),
+        dynamicTurnState: { ...highConfidenceDynamicCase().dynamicTurnState, permissions: { canConfirmCandidate: false } },
+      },
+      command: {},
+    },
+    {
+      name: "stale version",
+      current: highConfidenceDynamicCase(),
+      command: { expectedVersion: highConfidenceDynamicCase().turnVersion - 1 },
+    },
+  ] as const;
+
+  for (const scenario of cases) {
+    const memory = memoryStore(scenario.current);
+    const service = createBirthTimeJourneyService({ store: memory.store, engine: {
+      async scan() { throw new Error("unexpected scan"); },
+      async score() { throw new Error("unexpected score"); },
+      async scoreEvents() { throw new Error("unexpected event score"); },
+      async buildDifferencePacket() { throw new Error("unexpected packet"); },
+      async scoreChoices() { throw new Error("unexpected choice score"); },
+    } });
+    await assert.rejects(service.confirmDynamicCandidate({
+      userId: ownerId,
+      caseId: scenario.current.id,
+      actionId,
+      expectedVersion: scenario.current.turnVersion,
+      resultId: highCandidate.resultId,
+      time: "17:15",
+      ...scenario.command,
+    }));
+    assert.equal(memory.committedTurnWrites(), 0, scenario.name);
+  }
+});
+
+test("dynamic confirmation rejects same-action payload mismatches after a successful receipt", async () => {
+  const current = highConfidenceDynamicCase();
+  const memory = memoryStore(current);
+  const service = createBirthTimeJourneyService({ store: memory.store, engine: {
+    async scan() { throw new Error("unexpected scan"); },
+    async score() { throw new Error("unexpected score"); },
+    async scoreEvents() { throw new Error("unexpected event score"); },
+    async buildDifferencePacket() { throw new Error("unexpected packet"); },
+    async scoreChoices() { throw new Error("unexpected choice score"); },
+  } });
+  const command = { userId: ownerId, caseId: current.id, actionId, expectedVersion: current.turnVersion, resultId: highCandidate.resultId, time: "17:15" };
+  await service.confirmDynamicCandidate(command);
+  await assert.rejects(service.confirmDynamicCandidate({ ...command, time: "17:14" }), StaleJourneyTurnError);
+  await assert.rejects(service.confirmDynamicCandidate({ ...command, resultId: "a3e41512-9fa0-4866-a187-e3b3aa07aee0" }), StaleJourneyTurnError);
+  assert.equal(memory.committedTurnWrites(), 1);
+});
+
 test("dynamic confirmation rejects a non-representative minute before writing", async () => {
   const current = highConfidenceDynamicCase();
   const memory = memoryStore(current);
@@ -168,4 +247,15 @@ test("dynamic confirmation RPC locks the v2 case and is service-role only", () =
   assert.match(migration, /turn_version = p_expected_version \+ 1[\s\S]*turn_state = p_turn_state/i);
   assert.match(migration, /set active_birth_time = p_time,[\s\S]*birth_time_status = 'confirmed',[\s\S]*rectification_case_id = p_case_id/i);
   assert.match(migration, /revoke all on function public\.confirm_birth_time_dynamic_candidate\([\s\S]*?from public, anon, authenticated;[\s\S]*?grant execute on function public\.confirm_birth_time_dynamic_candidate\([\s\S]*?to service_role;/i);
+});
+
+test("dynamic confirmation SQL binds replay and mutation to the exact guarded receipt", () => {
+  assert.match(migration, /security definer\s+set search_path = ''/i);
+  assert.match(migration, /from public\.birth_time_rectification_cases c[\s\S]*?where c\.id = p_case_id and c\.user_id = p_user_id[\s\S]*?for update/i);
+  assert.match(migration, /from public\.birth_time_rectification_dynamic_state s[\s\S]*?where s\.case_id = p_case_id and s\.user_id = p_user_id[\s\S]*?for update/i);
+  assert.match(migration, /v_case\.turn_version is distinct from p_expected_version \+ 1[\s\S]*?dynamic_control -> 'lastActionReceipt' is distinct from v_receipt/i);
+  assert.match(migration, /v_case\.status is distinct from 'confirming'[\s\S]*?request_candidate_confirmation[\s\S]*?canConfirmCandidate/i);
+  assert.match(migration, /update public\.birth_time_rectification_cases[\s\S]*?turn_version = p_expected_version \+ 1[\s\S]*?update public\.birth_time_rectification_dynamic_state[\s\S]*?lastActionReceipt[\s\S]*?update public\.profiles/i);
+  assert.match(migration, /revoke all on function public\.confirm_birth_time_dynamic_candidate\([\s\S]*?from public, anon, authenticated;/i);
+  assert.match(migration, /grant execute on function public\.confirm_birth_time_dynamic_candidate\([\s\S]*?to service_role;/i);
 });
