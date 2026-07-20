@@ -1445,12 +1445,13 @@ export default function Home() {
       profile: nextProfile,
       updatedAt: timestamp(),
     };
+    let cloudSaved = false;
     try {
       record = await saveCloudChartProfile(record);
-    } catch (caught) {
-      setProfileNotice("");
-      setAccountError(friendlyError(caught instanceof Error ? caught.message : "云端星盘保存失败，请稍后重试。"));
-      return;
+      cloudSaved = true;
+    } catch {
+      setProfileNotice("已保存到本地星盘库；云端同步失败，稍后会继续使用本地记录。");
+      setAccountError("");
     }
     setChartLibrary((current) => {
       const next = [...upsertSelfChart(current, profile), record];
@@ -1458,8 +1459,10 @@ export default function Home() {
       return next;
     });
     setOtherProfileDraft(emptyProfile);
-    setAccountError("");
-    setProfileNotice("已保存到云端星盘库。");
+    if (cloudSaved) {
+      setAccountError("");
+      setProfileNotice("已保存到云端星盘库。");
+    }
   }
 
   async function deleteOtherChart(recordId: string) {
