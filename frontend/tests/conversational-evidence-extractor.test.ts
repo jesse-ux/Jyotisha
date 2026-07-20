@@ -112,14 +112,32 @@ test("marks a future event as context-only and non-scoreable", () => {
 });
 
 test("clear replacement evidence is explicitly marked corrected", () => {
+  const targetId = "00000000-0000-4000-8000-000000000611";
   const [evidence] = extractLifeEventEvidence({
     rawText: "更正：2020年11月离职",
     sourceTurnId,
     asOfDate: "2026-07-20",
-    correctionOfEvidenceIds: ["00000000-0000-4000-8000-000000000611"],
+    correctsEvidenceId: targetId,
   });
 
   assert.equal(evidence?.eventSummary, "离职");
   assert.equal(evidence?.extractionStatus, "corrected");
   assert.equal(evidence?.scoreable, true);
+  assert.deepEqual(evidence?.correctsEvidenceIds, [targetId]);
+  assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);
+});
+
+test("an unclear correction keeps durable lineage while withholding both old and new scoring", () => {
+  const targetId = "00000000-0000-4000-8000-000000000611";
+  const [evidence] = extractLifeEventEvidence({
+    rawText: "更正：具体年月记不清",
+    sourceTurnId,
+    asOfDate: "2026-07-20",
+    correctsEvidenceId: targetId,
+  });
+
+  assert.equal(evidence?.extractionStatus, "needs_clarification");
+  assert.equal(evidence?.scoreable, false);
+  assert.deepEqual(evidence?.correctsEvidenceIds, [targetId]);
+  assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);
 });

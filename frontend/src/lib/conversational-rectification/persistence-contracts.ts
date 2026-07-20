@@ -181,6 +181,8 @@ export const validationReceiptSchema = boundedJson(z.object({
 }).strict(), 8_192);
 export type ValidationReceipt = z.infer<typeof validationReceiptSchema>;
 
+const correctionEvidenceIdsSchema = boundedJson(z.array(uuidSchema).max(1), 64);
+
 export const lifeEventEvidenceSchema = boundedJson(z.object({
   id: uuidSchema,
   rawText: boundedText(4_000),
@@ -190,7 +192,17 @@ export const lifeEventEvidenceSchema = boundedJson(z.object({
   datePrecision: z.enum(["day", "month", "year", "range", "unknown"]),
   extractionStatus: z.enum(["clear", "needs_clarification", "corrected"]),
   scoreable: z.boolean().optional(),
-}).strict(), 16_384);
+  // Optional only for rows written before durable correction lineage existed.
+  correctsEvidenceIds: correctionEvidenceIdsSchema.optional(),
+}).strict().superRefine((value, context) => {
+  const correctionCount = value.correctsEvidenceIds?.length ?? 0;
+  if (value.extractionStatus === "corrected" && correctionCount !== 1) {
+    context.addIssue({ code: "custom", message: "corrected evidence requires one target" });
+  }
+  if (value.extractionStatus === "clear" && correctionCount !== 0) {
+    context.addIssue({ code: "custom", message: "clear evidence cannot correct another row" });
+  }
+}), 16_384);
 export type LifeEventEvidence = z.infer<typeof lifeEventEvidenceSchema>;
 
 const mutationKindSchema = z.enum([

@@ -243,14 +243,33 @@ export function ConversationalRectificationSurface({
           submit();
         }}
       >
+        {controller.correctionTarget && (
+          <div className="conversational-correction-target" role="status">
+            <p>
+              正在更正：<strong>{controller.correctionTarget.dateLabel} · {controller.correctionTarget.summary}</strong>
+            </p>
+            <span>提交后会保留原记录用于审计，但候选评分只使用更正后的有效证据。</span>
+            <button
+              className="button-secondary"
+              disabled={controller.pending}
+              type="button"
+              onClick={() => controller.cancelEvidenceCorrection()}
+            >
+              取消更正
+            </button>
+          </div>
+        )}
         <label htmlFor="conversational-rectification-answer">
-          补充或更正真实经历
+          {controller.correctionTarget ? "填写更正后的真实经历" : "补充真实经历"}
           <span>大概年份也可以；不确定的部分请直接说不确定。</span>
         </label>
         <textarea
           id="conversational-rectification-answer"
           disabled={controller.pending || !canAnswer}
           maxLength={4_000}
+          placeholder={controller.correctionTarget
+            ? "例如：其实是 2020 年 11 月离职"
+            : "请描述一件已经发生的事，并尽量写明年份或月份"}
           ref={composer}
           rows={4}
           value={controller.draft}
@@ -283,13 +302,17 @@ export function ConversationalRectificationSurface({
           <ul>
             {turn.evidenceRecap.map((entry) => (
               <li key={entry.id}>
-                <div><time>{entry.dateLabel}</time><p>{entry.summary}</p></div>
+                <div>
+                  <time>{entry.dateLabel}</time>
+                  <p>{entry.summary}</p>
+                  {entry.isCorrection && <span className="conversational-correction-badge">已修订</span>}
+                </div>
                 <button
                   aria-label={`更正这条经历：${entry.summary}`}
                   disabled={controller.pending || !canAnswer}
                   type="button"
                   onClick={() => {
-                    controller.setDraft(`更正「${entry.summary}」（${entry.dateLabel}）：`);
+                    controller.beginEvidenceCorrection(entry.id);
                     focusComposer();
                   }}
                 >

@@ -10,13 +10,14 @@ export type ExtractedLifeEventEvidence = {
   readonly datePrecision: "day" | "month" | "year" | "unknown";
   readonly extractionStatus: "clear" | "needs_clarification" | "corrected";
   readonly scoreable: boolean;
+  readonly correctsEvidenceIds: readonly string[];
 };
 
 export type ExtractLifeEventEvidenceInput = {
   readonly rawText: string;
   readonly sourceTurnId: string;
   readonly asOfDate: string;
-  readonly correctionOfEvidenceIds?: readonly string[];
+  readonly correctsEvidenceId?: string;
 };
 
 type ParsedDate = {
@@ -139,7 +140,7 @@ export function extractLifeEventEvidence(
   if (!input.rawText.trim()) throw new TypeError("life-event raw text is required");
   if (!input.sourceTurnId.trim()) throw new TypeError("source turn id is required");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.asOfDate)) throw new TypeError("asOfDate must be YYYY-MM-DD");
-  const corrections = [...(input.correctionOfEvidenceIds ?? [])];
+  const correctionTargets = input.correctsEvidenceId ? [input.correctsEvidenceId] : [];
   const events: ExtractedLifeEventEvidence[] = [];
 
   for (const fragments of splitSentences(input.rawText.normalize("NFKC"))) {
@@ -155,7 +156,7 @@ export function extractLifeEventEvidence(
       const complete = summary !== missingEventSummary && date !== null && !unresolvedRelativeTime;
       const extractionStatus = !complete
         ? "needs_clarification"
-        : corrections.length > 0 ? "corrected" : "clear";
+        : correctionTargets.length > 0 ? "corrected" : "clear";
       events.push({
         id: evidenceId(input, events.length, summary),
         rawText: input.rawText,
@@ -165,6 +166,7 @@ export function extractLifeEventEvidence(
         datePrecision: date?.precision ?? "unknown",
         extractionStatus,
         scoreable: complete && !dateIsFuture(date, input.asOfDate),
+        correctsEvidenceIds: correctionTargets,
       });
     }
   }

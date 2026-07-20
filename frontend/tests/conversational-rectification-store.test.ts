@@ -288,7 +288,8 @@ test("save, pause, abandon, confirm, and import carry owner/version/action guard
     eventSummary: "换工作",
     dateValue: "2019-07",
     datePrecision: "month" as const,
-    extractionStatus: "clear" as const,
+    extractionStatus: "corrected" as const,
+    correctsEvidenceIds: ["00000000-0000-4000-8000-000000000109"],
   }];
 
   await store.saveTurn({
@@ -731,12 +732,33 @@ test("life-event evidence rejects unknown, blank, and non-boolean durable values
     scoreable: true,
   };
   assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);
+  assert.equal(lifeEventEvidenceSchema.safeParse({
+    ...evidence,
+    extractionStatus: "corrected",
+    correctsEvidenceIds: ["00000000-0000-4000-8000-000000000109"],
+  }).success, true);
+  assert.equal(lifeEventEvidenceSchema.safeParse({
+    ...evidence,
+    extractionStatus: "needs_clarification",
+    scoreable: false,
+    correctsEvidenceIds: ["00000000-0000-4000-8000-000000000109"],
+  }).success, true);
   for (const invalid of [
     { ...evidence, extra: "discard me" },
     { ...evidence, eventSummary: " \t " },
     { ...evidence, dateValue: " \t " },
     { ...evidence, scoreable: null },
     { ...evidence, scoreable: "true" },
+    { ...evidence, extractionStatus: "corrected", correctsEvidenceIds: [] },
+    { ...evidence, correctsEvidenceIds: ["not-a-uuid"] },
+    {
+      ...evidence,
+      extractionStatus: "corrected",
+      correctsEvidenceIds: [
+        "00000000-0000-4000-8000-000000000109",
+        "00000000-0000-4000-8000-000000000110",
+      ],
+    },
   ]) {
     assert.equal(lifeEventEvidenceSchema.safeParse(invalid).success, false);
   }

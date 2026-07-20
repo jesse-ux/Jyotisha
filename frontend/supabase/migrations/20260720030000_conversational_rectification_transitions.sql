@@ -152,7 +152,8 @@ begin
           'dateValue', evidence.date_value,
           'datePrecision', evidence.date_precision,
           'extractionStatus', evidence.extraction_status,
-          'scoreable', evidence.scoreable
+          'scoreable', evidence.scoreable,
+          'correctsEvidenceIds', pg_catalog.to_jsonb(evidence.corrects_evidence_ids)
         ) order by evidence.created_at, evidence.id
       )
       from public.birth_time_rectification_event_evidence evidence
@@ -273,7 +274,8 @@ begin
       'dateValue', evidence.date_value,
       'datePrecision', evidence.date_precision,
       'extractionStatus', evidence.extraction_status,
-      'scoreable', evidence.scoreable
+      'scoreable', evidence.scoreable,
+      'correctsEvidenceIds', pg_catalog.to_jsonb(evidence.corrects_evidence_ids)
     ) order by evidence.created_at, evidence.id
   ), '[]'::jsonb) into v_existing_evidence
   from public.birth_time_rectification_event_evidence evidence
@@ -294,7 +296,10 @@ begin
       'scoreable', case
         when item.value ? 'scoreable' then (item.value ->> 'scoreable')::boolean
         else false
-      end
+      end,
+      'correctsEvidenceIds', coalesce(
+        item.value -> 'correctsEvidenceIds', '[]'::jsonb
+      )
     ) order by item.ordinality
   ), '[]'::jsonb) into v_new_evidence
   from pg_catalog.jsonb_array_elements(p_new_evidence) with ordinality item(value, ordinality);
@@ -634,6 +639,32 @@ begin
     or pg_catalog.jsonb_path_exists(p_turn, '$.**.systemPrompt') then
     raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
+  -- Correction targets are account-case evidence tips. Under the locked case version,
+  -- reject missing, cross-case, or already-retired targets before writing a turn.
+  if exists (
+    select 1
+    from pg_catalog.jsonb_array_elements(p_evidence) item(value)
+    cross join lateral pg_catalog.jsonb_array_elements_text(
+      coalesce(item.value -> 'correctsEvidenceIds', '[]'::jsonb)
+    ) correction(value)
+    where not exists (
+      select 1
+      from public.birth_time_rectification_event_evidence target
+      where target.case_id = p_case_id
+        and target.id = correction.value::uuid
+    )
+    or exists (
+      select 1
+      from public.birth_time_rectification_event_evidence evidence
+      cross join lateral pg_catalog.unnest(
+        evidence.corrects_evidence_ids
+      ) retired(target_id)
+      where evidence.case_id = p_case_id
+        and retired.target_id = correction.value::uuid
+    )
+  ) then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
+  end if;
   if public.conversational_rectification_case_fits_load_limits(
     p_user_id, p_case_id, p_turn ->> 'status', p_expected_version + 1,
     p_turn, p_private_candidate, p_evidence, p_validation_receipt
@@ -655,7 +686,7 @@ begin
 
   insert into public.birth_time_rectification_event_evidence (
     id, case_id, source_turn_id, raw_text, domain, event_summary,
-    date_value, date_precision, extraction_status, scoreable
+    date_value, date_precision, extraction_status, corrects_evidence_ids, scoreable
   )
   select
     (item ->> 'id')::uuid, p_case_id, v_turn_id, item ->> 'rawText',
@@ -664,6 +695,12 @@ begin
       else item ->> 'dateValue' end,
     item ->> 'datePrecision',
     item ->> 'extractionStatus',
+    case when item ? 'correctsEvidenceIds' then array(
+      select correction.value::uuid
+      from pg_catalog.jsonb_array_elements_text(
+        item -> 'correctsEvidenceIds'
+      ) correction(value)
+    ) else '{}'::uuid[] end,
     case when item ? 'scoreable' then (item ->> 'scoreable')::boolean
       else false end
   from pg_catalog.jsonb_array_elements(p_evidence) item;

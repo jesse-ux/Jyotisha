@@ -16,11 +16,13 @@ import type {
 type EvidenceDomain = NonNullable<
   ConversationalRectificationTurn["evidenceRequest"]
 >["domains"][number];
+type EvidenceRecapEntry = ConversationalRectificationTurn["evidenceRecap"][number];
 
 export type ConversationalRectificationControllerSnapshot = Readonly<{
   turn: ConversationalRectificationTurn | null;
   draft: string;
   selectedDomain: EvidenceDomain | null;
+  correctionTarget: EvidenceRecapEntry | null;
   pending: boolean;
   error: string;
 }>;
@@ -33,6 +35,8 @@ export type ConversationalRectificationController = ConversationalRectificationC
   synchronizeInitialTurn(turn: ConversationalRectificationTurn | null): void;
   setDraft(value: string): void;
   selectDomain(domain: EvidenceDomain | null): void;
+  beginEvidenceCorrection(evidenceId: string): void;
+  cancelEvidenceCorrection(): void;
   start(pendingConsultationQuestion?: string | null): MutationResult;
   resume(): MutationResult;
   answer(domain?: EvidenceDomain): MutationResult;
@@ -97,6 +101,7 @@ export function createConversationalRectificationController(
     turn: input.initialTurn ?? null,
     draft: "",
     selectedDomain: null,
+    correctionTarget: null,
     pending: false,
     error: "",
   };
@@ -123,10 +128,16 @@ export function createConversationalRectificationController(
       : snapshot.selectedDomain && turn.evidenceRequest?.domains.includes(snapshot.selectedDomain)
         ? snapshot.selectedDomain
         : null;
+    const correctionTarget = clearDraft
+      ? null
+      : snapshot.correctionTarget
+        ? turn.evidenceRecap.find((entry) => entry.id === snapshot.correctionTarget?.id) ?? null
+        : null;
     patch({
       turn,
       error: "",
       selectedDomain,
+      correctionTarget,
       ...(clearDraft ? { draft: "" } : {}),
     });
     try {
@@ -216,6 +227,7 @@ export function createConversationalRectificationController(
     get turn() { return snapshot.turn; },
     get draft() { return snapshot.draft; },
     get selectedDomain() { return snapshot.selectedDomain; },
+    get correctionTarget() { return snapshot.correctionTarget; },
     get pending() { return snapshot.pending; },
     get error() { return snapshot.error; },
     getSnapshot: () => snapshot,
@@ -229,13 +241,27 @@ export function createConversationalRectificationController(
         if (current === null) return;
         caseContext += 1;
         activeMutation = null;
-        patch({ turn: null, draft: "", selectedDomain: null, pending: false, error: "" });
+        patch({
+          turn: null,
+          draft: "",
+          selectedDomain: null,
+          correctionTarget: null,
+          pending: false,
+          error: "",
+        });
         return;
       }
       if (current === null || current.caseId !== turn.caseId) {
         caseContext += 1;
         activeMutation = null;
-        patch({ turn, draft: "", selectedDomain: null, pending: false, error: "" });
+        patch({
+          turn,
+          draft: "",
+          selectedDomain: null,
+          correctionTarget: null,
+          pending: false,
+          error: "",
+        });
         return;
       }
       if (turn.turnVersion <= current.turnVersion) return;
@@ -246,6 +272,9 @@ export function createConversationalRectificationController(
           && turn.evidenceRequest?.domains.includes(snapshot.selectedDomain)
           ? snapshot.selectedDomain
           : null,
+        correctionTarget: snapshot.correctionTarget
+          ? turn.evidenceRecap.find((entry) => entry.id === snapshot.correctionTarget?.id) ?? null
+          : null,
       });
     },
     setDraft(value: string) {
@@ -253,6 +282,19 @@ export function createConversationalRectificationController(
     },
     selectDomain(domain: EvidenceDomain | null) {
       patch({ selectedDomain: domain });
+    },
+    beginEvidenceCorrection(evidenceId: string) {
+      const target = snapshot.turn?.evidenceRecap.find((entry) => entry.id === evidenceId);
+      if (!target || !snapshot.turn?.actions.includes("answer")) return;
+      patch({
+        correctionTarget: target,
+        // Keep the old fact visible in the correction banner, but out of the new raw evidence.
+        // Otherwise its old date can make an appended replacement date look ambiguous.
+        draft: "",
+      });
+    },
+    cancelEvidenceCorrection() {
+      patch({ correctionTarget: null, draft: "" });
     },
     start(pendingConsultationQuestion: string | null = null) {
       return run({
@@ -277,7 +319,12 @@ export function createConversationalRectificationController(
       const turn = currentTurn();
       const answer = snapshot.draft.trim();
       if (!turn || !answer || !turn.actions.includes("answer")) return Promise.resolve(turn);
-      const payload = { answer, ...(domain ? { domain } : {}) };
+      const correctsEvidenceId = snapshot.correctionTarget?.id;
+      const payload = {
+        answer,
+        ...(domain ? { domain } : {}),
+        ...(correctsEvidenceId ? { correctsEvidenceId } : {}),
+      };
       return currentMutation("answer", payload, (current, actionId) => ({
         type: "answer",
         caseId: current.caseId,
@@ -285,6 +332,7 @@ export function createConversationalRectificationController(
         turnVersion: current.turnVersion,
         answer,
         ...(domain ? { domain } : {}),
+        ...(correctsEvidenceId ? { correctsEvidenceId } : {}),
       }), true);
     },
     pause() {

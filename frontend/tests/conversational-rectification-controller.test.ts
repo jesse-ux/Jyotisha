@@ -14,6 +14,7 @@ import type {
 
 const caseId = "00000000-0000-4000-8000-000000000811";
 const otherCaseId = "00000000-0000-4000-8000-000000000819";
+const evidenceId = "00000000-0000-4000-8000-000000000818";
 const actionIds = [
   "00000000-0000-4000-8000-000000000812",
   "00000000-0000-4000-8000-000000000813",
@@ -48,6 +49,18 @@ function activeTurn(turnVersion = 2): ConversationalRectificationTurn {
     evidenceRecap: [],
     actions: ["answer", "pause", "abandon"],
     pendingConsultationQuestion: null,
+  };
+}
+
+function correctableTurn(turnVersion = 2): ConversationalRectificationTurn {
+  return {
+    ...activeTurn(turnVersion),
+    evidenceRecap: [{
+      id: evidenceId,
+      summary: "开始第一份长期工作",
+      dateLabel: "2021-07",
+      isCorrection: false,
+    }],
   };
 }
 
@@ -124,6 +137,70 @@ test("controller preserves the exact draft and stable action id across failures"
   assert.equal(commands[0]?.actionId, commands[1]?.actionId);
 });
 
+test("a correction target is explicit in the command identity, survives failure, and clears on success", async () => {
+  const commands: ConversationalRectificationCommand[] = [];
+  let fail = true;
+  const controller = createConversationalRectificationController({
+    initialTurn: correctableTurn(),
+    createActionId: idFactory(),
+    send: async (command) => {
+      commands.push(command);
+      if (fail) throw new Error("offline");
+      return { ...correctableTurn(3), evidenceRecap: [] };
+    },
+  });
+
+  controller.beginEvidenceCorrection(evidenceId);
+  assert.equal(controller.getSnapshot().correctionTarget?.id, evidenceId);
+  assert.equal(
+    controller.getSnapshot().draft,
+    "",
+    "the old summary/date must stay outside the submitted correction text",
+  );
+  controller.setDraft("更正：其实是 2020 年 11 月离职");
+  await assert.rejects(controller.answer());
+  assert.equal(controller.getSnapshot().correctionTarget?.id, evidenceId);
+  assert.equal(commands[0]?.type, "answer");
+  assert.equal(commands[0]?.type === "answer" ? commands[0].correctsEvidenceId : null, evidenceId);
+
+  fail = false;
+  await controller.answer();
+  assert.equal(commands[0]?.actionId, commands[1]?.actionId);
+  assert.equal(controller.getSnapshot().correctionTarget, null);
+  assert.equal(controller.getSnapshot().draft, "");
+});
+
+test("canceling correction removes the target and changing targets changes the replay identity", async () => {
+  const secondEvidenceId = "00000000-0000-4000-8000-000000000817";
+  const commands: ConversationalRectificationCommand[] = [];
+  const initial = {
+    ...correctableTurn(),
+    evidenceRecap: [
+      ...correctableTurn().evidenceRecap,
+      { id: secondEvidenceId, summary: "搬到另一座城市", dateLabel: "2022-03" },
+    ],
+  } satisfies ConversationalRectificationTurn;
+  const controller = createConversationalRectificationController({
+    initialTurn: initial,
+    createActionId: idFactory(),
+    send: async (command) => {
+      commands.push(command);
+      throw new Error("offline");
+    },
+  });
+
+  controller.beginEvidenceCorrection(evidenceId);
+  controller.setDraft("更正：其实是 2020 年 11 月离职");
+  await assert.rejects(controller.answer());
+  controller.beginEvidenceCorrection(secondEvidenceId);
+  controller.setDraft("更正：其实是 2022 年 3 月搬家");
+  await assert.rejects(controller.answer());
+  assert.notEqual(commands[0]?.actionId, commands[1]?.actionId);
+  controller.cancelEvidenceCorrection();
+  assert.equal(controller.getSnapshot().correctionTarget, null);
+  assert.equal(controller.getSnapshot().draft, "");
+});
+
 test("a stale answer resumes the latest turn and returns recovered state without clearing text", async () => {
   const commands: ConversationalRectificationCommand[] = [];
   const recovered = activeTurn(5);
@@ -171,6 +248,32 @@ test("a stale recovery retains the selected domain only while the recovered turn
 
   assert.equal(controller.getSnapshot().draft, "2021 年 7 月开始第一份工作");
   assert.equal(controller.getSnapshot().selectedDomain, "career");
+});
+
+test("stale recovery retains a correction only when the latest effective recap still contains it", async () => {
+  const recoveryCases: Array<[ConversationalRectificationTurn, string | null]> = [
+    [correctableTurn(5), evidenceId],
+    [{ ...correctableTurn(5), evidenceRecap: [] }, null],
+  ];
+  for (const [recovered, expected] of recoveryCases) {
+    const controller = createConversationalRectificationController({
+      initialTurn: correctableTurn(2),
+      createActionId: idFactory(),
+      send: async (command) => {
+        if (command.type === "answer") {
+          throw new ConversationalRectificationRequestError(409, "stale_turn", "请加载最新进度后再试。");
+        }
+        return recovered;
+      },
+    });
+    controller.beginEvidenceCorrection(evidenceId);
+    controller.setDraft("更正：其实是 2020 年 11 月离职");
+
+    await controller.answer();
+
+    assert.equal(controller.getSnapshot().correctionTarget?.id ?? null, expected);
+    assert.equal(controller.getSnapshot().draft, "更正：其实是 2020 年 11 月离职");
+  }
 });
 
 test("a changed payload receives a different action id after a failed send", async () => {
@@ -289,6 +392,7 @@ test("a case switch detaches the old mutation so the new case can mutate indepen
     turn: caseBTurn,
     draft: "",
     selectedDomain: null,
+    correctionTarget: null,
     pending: false,
     error: "",
   });
@@ -332,6 +436,7 @@ test("synchronizing to no case detaches an ordinary failure without publishing i
     turn: null,
     draft: "",
     selectedDomain: null,
+    correctionTarget: null,
     pending: false,
     error: "",
   });
@@ -342,6 +447,7 @@ test("synchronizing to no case detaches an ordinary failure without publishing i
     turn: null,
     draft: "",
     selectedDomain: null,
+    correctionTarget: null,
     pending: false,
     error: "",
   });

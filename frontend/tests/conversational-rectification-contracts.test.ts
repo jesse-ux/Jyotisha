@@ -11,6 +11,7 @@ import {
 
 const actionId = "a9890e09-d535-46f0-9a36-86017515a5a1";
 const caseId = "77b29d28-c576-429e-9e3d-d0a90348e3cb";
+const evidenceId = "37e0e35e-cfdc-4c7a-8375-84310ee6bd42";
 
 function parseCommand(value: unknown) {
   return conversationalRectificationCommandSchema.safeParse(value).success;
@@ -44,6 +45,33 @@ test("bounds free-text answers and requires a strict HH:mm confirmation time", (
   assert.equal(parseCommand({ type: "answer", caseId, actionId, turnVersion: 1, answer: "x".repeat(4_001) }), false);
   assert.equal(parseCommand({ type: "confirm", caseId, actionId, turnVersion: 1, time: "5:21" }), false);
   assert.equal(parseCommand({ type: "confirm", caseId, actionId, turnVersion: 1, time: "24:00" }), false);
+});
+
+test("accepts one explicit UUID correction target and rejects ambiguous target shapes", () => {
+  assert.equal(parseCommand({
+    type: "answer",
+    caseId,
+    actionId,
+    turnVersion: 1,
+    answer: "更正：2020 年 11 月离职",
+    correctsEvidenceId: evidenceId,
+  }), true);
+  assert.equal(parseCommand({
+    type: "answer",
+    caseId,
+    actionId,
+    turnVersion: 1,
+    answer: "更正：2020 年 11 月离职",
+    correctsEvidenceId: "not-a-uuid",
+  }), false);
+  assert.equal(parseCommand({
+    type: "answer",
+    caseId,
+    actionId,
+    turnVersion: 1,
+    answer: "更正两条",
+    correctsEvidenceIds: [evidenceId, caseId],
+  }), false);
 });
 
 test("rejects client candidate scores and technical receipts", () => {
@@ -82,9 +110,10 @@ test("accepts only the exact public turn shape", () => {
       freeTextAllowed: true,
     },
     evidenceRecap: [{
-      id: "37e0e35e-cfdc-4c7a-8375-84310ee6bd42",
+      id: evidenceId,
       summary: "2019 年换工作",
       dateLabel: "2019-07",
+      isCorrection: true,
     }],
     actions: ["answer", "pause", "abandon"],
     pendingConsultationQuestion: null,
@@ -94,6 +123,10 @@ test("accepts only the exact public turn shape", () => {
   assert.equal(conversationalRectificationTurnSchema.safeParse({ ...turn, candidateScores: [0.99] }).success, false);
   assert.equal(conversationalRectificationTurnSchema.safeParse({ ...turn, candidate: { ...turn.candidate, score: 0.99 } }).success, false);
   assert.equal(conversationalRectificationTurnSchema.safeParse({ ...turn, technicalReceipt: { ...turn.technicalReceipt, rawModelOutput: "secret" } }).success, false);
+  assert.equal(conversationalRectificationTurnSchema.safeParse({
+    ...turn,
+    evidenceRecap: [{ ...turn.evidenceRecap[0], isCorrection: "yes" }],
+  }).success, false);
 });
 
 function assertNoReachableText(value: unknown, forbidden: string, seen = new Set<unknown>()) {

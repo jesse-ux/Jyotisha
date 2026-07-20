@@ -489,6 +489,30 @@ def test_life_event_evidence_is_strictly_validated_before_insert() -> None:
     assert "nullif(item ->> 'datevalue', '')" not in save
 
 
+def test_evidence_correction_lineage_is_bounded_projected_and_validated_atomically() -> None:
+    schema = _normalized(SCHEMA)
+    transitions = _normalized(TRANSITIONS)
+    validator = _function(schema, "conversational_rectification_valid_life_event_evidence")
+    load = _function(transitions, "load_conversational_rectification_case")
+    limits = _function(transitions, "conversational_rectification_case_fits_load_limits")
+    save = _function(transitions, "save_conversational_rectification_turn")
+
+    assert "corrects_evidence_ids uuid[] not null default '{}'::uuid[]" in schema
+    assert "'correctsevidenceids'" in validator
+    assert "jsonb_array_length(p_value -> 'correctsevidenceids') > 1" in validator
+    assert "p_value ->> 'extractionstatus' = 'corrected'" in validator
+    assert "p_value ->> 'extractionstatus' = 'clear'" in validator
+    assert "'correctsevidenceids', pg_catalog.to_jsonb(evidence.corrects_evidence_ids)" in load
+    assert "'correctsevidenceids', pg_catalog.to_jsonb(evidence.corrects_evidence_ids)" in limits
+    assert "corrects_evidence_ids" in save
+    assert "item -> 'correctsevidenceids'" in save
+    assert "pg_catalog.unnest( evidence.corrects_evidence_ids )" in save
+    assert save.index("pg_catalog.unnest( evidence.corrects_evidence_ids )") < save.index(
+        "insert into public.birth_time_rectification_event_evidence"
+    )
+    assert "where evidence.case_id = p_case_id" in save
+
+
 def test_case_mutations_enforce_cumulative_load_limits_under_the_case_lock() -> None:
     transitions = _normalized(TRANSITIONS)
     helper = _function(transitions, "conversational_rectification_case_fits_load_limits")

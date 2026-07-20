@@ -134,7 +134,7 @@ type MutableCommand = Extract<ConversationalRectificationCommand, {
 function commandFingerprint(command: MutableCommand): string {
   const identity = command.type === "answer"
     ? [command.type, command.caseId, command.actionId, command.turnVersion,
-        command.domain ?? null, command.answer]
+        command.domain ?? null, command.answer, command.correctsEvidenceId ?? null]
     : command.type === "confirm"
       ? [command.type, command.caseId, command.actionId, command.turnVersion, command.time]
       : [command.type, command.caseId, command.actionId, command.turnVersion];
@@ -165,8 +165,21 @@ function latestReceipt(value: LoadedConversationalRectificationCase): Validation
   return parsed.data;
 }
 
+export function effectiveLifeEventEvidence<
+  Evidence extends Readonly<{
+    id: string;
+    correctsEvidenceIds?: readonly string[];
+  }>,
+>(evidence: ReadonlyArray<Evidence>): ReadonlyArray<Evidence> {
+  const correctedIds = new Set<string>();
+  for (const item of evidence) {
+    for (const correctedId of item.correctsEvidenceIds ?? []) correctedIds.add(correctedId);
+  }
+  return evidence.filter((item) => !correctedIds.has(item.id));
+}
+
 function evidenceRecap(evidence: ReadonlyArray<LifeEventEvidenceInput>) {
-  return evidence.slice(-20).map((item) => ({
+  return effectiveLifeEventEvidence(evidence).slice(-20).map((item) => ({
     id: item.id,
     summary: item.eventSummary,
     dateLabel: item.dateValue
@@ -174,6 +187,7 @@ function evidenceRecap(evidence: ReadonlyArray<LifeEventEvidenceInput>) {
         ? `${item.dateValue}（未来，仅作背景）`
         : item.dateValue
       : "日期待补充",
+    ...((item.correctsEvidenceIds?.length ?? 0) > 0 ? { isCorrection: true } : {}),
   }));
 }
 
@@ -238,6 +252,7 @@ function privateCandidateFromPacket(input: {
   readonly packet: RectificationTechnicalPacket;
   readonly resultId: string | null;
   readonly iteration: number;
+  readonly forceCollecting?: boolean;
 }): PrivateCandidate {
   const packet = input.packet;
   const parsed = privateCandidateSchema.safeParse({
@@ -257,7 +272,9 @@ function privateCandidateFromPacket(input: {
     suggestedDomains: packet.suggestedDomains.map((item) => item.domain),
     futureWindows: packet.futureWindows,
     workingState: {
-      phase: packet.candidate.status === "ready_for_confirmation" ? "ready" : "collecting_evidence",
+      phase: input.forceCollecting
+        ? "collecting_evidence"
+        : packet.candidate.status === "ready_for_confirmation" ? "ready" : "collecting_evidence",
       iteration: input.iteration,
       notes: [],
     },
@@ -320,18 +337,23 @@ function nonScoringTurn(input: {
   readonly domain?: RectificationEvidenceDomain;
   readonly directionChange: boolean;
   readonly scoringFallback?: boolean;
+  readonly correctionClarificationPacket?: RectificationTechnicalPacket;
 }): { readonly turn: ConversationalRectificationTurn; readonly receipt: ValidationReceipt } {
   const allEvidence = [...input.current.eventEvidence, ...input.newEvidence];
   const hasFuture = input.newEvidence.some((item) => item.extractionStatus !== "needs_clarification"
     && item.scoreable === false && item.dateValue !== null);
-  const narrative = input.scoringFallback
+  const narrative = input.correctionClarificationPacket
+    ? "这条更正已保存，原记录已经停止参与候选评分。更正后的事件时间还不够清楚，请补充大约年份、月份和发生了什么；在补清之前不会沿用旧证据推进确认。"
+    : input.scoringFallback
     ? "本轮原文已安全保存，但新的专业解释未通过事实一致性校验，因此候选没有推进。请稍后重试，或继续补充一件已经发生并带有年月的事件。"
     : input.directionChange
       ? "好的，我们不沿用不符合你的方向。你可以自由描述另一件已经发生的生活变化，尽量写明年月；我会根据事实继续，而不是让你选择宽泛年份。"
       : hasFuture
         ? "已保存这段描述。未来事件只能作为背景，不能用于校正评分；请再说一件已经发生的事件，并尽量写明年月。"
         : "我已保存你的原话，但还缺少可用于区分候选的明确时间。请用自己的话补充这件已经发生的事大约是哪一年、哪一月；不需要选择固定答案。";
-  const status = input.current.status === "confirming" ? "confirming" : "active";
+  const status = input.correctionClarificationPacket
+    ? "active" as const
+    : input.current.status === "confirming" ? "confirming" as const : "active" as const;
   const actions = actionsFor(status);
   const evidenceRequest = status === "confirming" && input.current.latestTurn.evidenceRequest === null
     ? null
@@ -348,6 +370,13 @@ function nonScoringTurn(input: {
     evidenceRequest,
     evidenceRecap: evidenceRecap(allEvidence),
     actions,
+    ...(input.correctionClarificationPacket ? {
+      candidate: {
+        ...projectRectificationTechnicalPacket(input.correctionClarificationPacket).candidate,
+        status: "pending_validation" as const,
+      },
+      technicalReceipt: exactTechnicalReceipt(input.correctionClarificationPacket),
+    } : {}),
   });
   if (!parsed.success) throw new ConversationalRectificationError("service_unavailable");
   return {
@@ -416,8 +445,10 @@ export function createConversationalRectificationService(
         rawText: command.answer,
         sourceTurnId: command.actionId,
         asOfDate: ports.asOfDate(),
+        correctsEvidenceId: command.correctsEvidenceId,
       }).map((item) => ({
         ...item,
+        correctsEvidenceIds: [...item.correctsEvidenceIds],
         domain: item.domain === "other" && command.domain && command.domain !== "other"
           ? command.domain
           : item.domain,
@@ -602,11 +633,62 @@ export function createConversationalRectificationService(
       }
       requireExactVersion(current, command.turnVersion);
 
+      if (command.correctsEvidenceId
+        && !effectiveLifeEventEvidence(current.eventEvidence)
+          .some((item) => item.id === command.correctsEvidenceId)) {
+        throw new ConversationalRectificationError("action_conflict");
+      }
+
       const scoreableEvidence = evidence.filter((item) => item.scoreable === true
         && item.extractionStatus !== "needs_clarification");
       const explicitDirectionChange = explicitDirectionChangePattern.test(command.answer);
       const directionChange = explicitDirectionChange
         || (scoreableEvidence.length === 0 && genericUncertaintyPattern.test(command.answer));
+      const unclearCorrection = Boolean(command.correctsEvidenceId)
+        && evidence.some((item) => item.extractionStatus === "needs_clarification");
+      if (unclearCorrection) {
+        try {
+          const allScoreable = effectiveLifeEventEvidence([...current.eventEvidence, ...evidence])
+            .filter((item) => item.scoreable === true
+              && item.extractionStatus !== "needs_clarification"
+              && !evidencePredatesBirthDate(item, current.declaredBirthInput.birthDate));
+          const computed = await ports.buildTechnicalPacket({
+            userId,
+            caseId: command.caseId,
+            asOfDate: ports.asOfDate(),
+            declaredBirthInput: current.declaredBirthInput,
+            privateCandidate: current.privateCandidate,
+            evidence: allScoreable,
+          });
+          const next = nonScoringTurn({
+            current,
+            newEvidence: evidence,
+            domain: command.domain,
+            directionChange: false,
+            correctionClarificationPacket: computed.packet,
+          });
+          const privateCandidate = privateCandidateFromPacket({
+            packet: computed.packet,
+            resultId: null,
+            iteration: (current.privateCandidate.workingState?.iteration ?? 0) + 1,
+            forceCollecting: true,
+          });
+          const saved = await ports.store.saveTurn({
+            userId,
+            caseId: command.caseId,
+            expectedVersion: command.turnVersion,
+            actionId: command.actionId,
+            commandFingerprint: fingerprint,
+            turn: next.turn,
+            evidence,
+            validationReceipt: next.receipt,
+            privateCandidate,
+          });
+          return publicTurn(saved);
+        } catch (error) {
+          throw safeFailure(error);
+        }
+      }
       if (directionChange || scoreableEvidence.length === 0) {
         const next = nonScoringTurn({
           current,
@@ -633,7 +715,7 @@ export function createConversationalRectificationService(
       }
 
       try {
-        const allScoreable = [...current.eventEvidence, ...evidence]
+        const allScoreable = effectiveLifeEventEvidence([...current.eventEvidence, ...evidence])
           .filter((item) => item.scoreable === true
             && item.extractionStatus !== "needs_clarification"
             && !evidencePredatesBirthDate(item, current.declaredBirthInput.birthDate));

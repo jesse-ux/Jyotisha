@@ -1018,6 +1018,144 @@ def test_save_rejects_invalid_evidence_without_discarding_or_coercing_fields(
     ) == "false"
 
 
+def test_correction_lineage_is_append_only_owner_scoped_and_rejects_retired_targets(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000001201"
+    case_id = "00000000-0000-4000-8000-000000001202"
+    first_action = "00000000-0000-4000-8000-000000001203"
+    second_action = "00000000-0000-4000-8000-000000001204"
+    third_action = "00000000-0000-4000-8000-000000001205"
+    rejected_action = "00000000-0000-4000-8000-000000001206"
+    missing_id = "00000000-0000-4000-8000-000000001207"
+    first_id = "00000000-0000-4000-8000-000000001211"
+    second_id = "00000000-0000-4000-8000-000000001212"
+    third_id = "00000000-0000-4000-8000-000000001213"
+    _create_user(pg14_database, user_id)
+    _reserve(pg14_database, user_id, case_id)
+    _create_case(pg14_database, user_id, case_id, _valid_declared_birth_input())
+    _complete(pg14_database, user_id, case_id)
+
+    first = {
+        "id": first_id,
+        "rawText": "2019 年 7 月开始第一份工作",
+        "domain": "career",
+        "eventSummary": "开始第一份工作",
+        "dateValue": "2019-07",
+        "datePrecision": "month",
+        "extractionStatus": "clear",
+        "scoreable": True,
+    }
+    pg14_database.sql(_save_statement(
+        user_id,
+        case_id,
+        0,
+        first_action,
+        [first],
+        turn={
+            **_valid_turn(case_id),
+            "turnVersion": 1,
+            "evidenceRecap": [{
+                "id": first_id,
+                "summary": "开始第一份工作",
+                "dateLabel": "2019-07",
+                "isCorrection": False,
+            }],
+        },
+    ))
+    loaded_first = json.loads(pg14_database.sql(
+        f"select public.load_conversational_rectification_case('{user_id}'::uuid, '{case_id}'::uuid)::text"
+    ))
+    assert loaded_first["event_evidence"][0]["correctsEvidenceIds"] == []
+
+    second = {
+        "id": second_id,
+        "rawText": "更正：2020 年 11 月离职",
+        "domain": "career",
+        "eventSummary": "离职",
+        "dateValue": "2020-11",
+        "datePrecision": "month",
+        "extractionStatus": "corrected",
+        "scoreable": True,
+        "correctsEvidenceIds": [first_id],
+    }
+    pg14_database.sql(_save_statement(
+        user_id,
+        case_id,
+        1,
+        second_action,
+        [second],
+        turn={
+            **_valid_turn(case_id),
+            "turnVersion": 2,
+            "evidenceRecap": [{
+                "id": second_id,
+                "summary": "离职",
+                "dateLabel": "2020-11",
+                "isCorrection": True,
+            }],
+        },
+    ))
+
+    for invalid_target in (missing_id, first_id):
+        rejected = {
+            **second,
+            "id": third_id,
+            "correctsEvidenceIds": [invalid_target],
+        }
+        assert pg14_database.rejects(_save_statement(
+            user_id,
+            case_id,
+            2,
+            rejected_action,
+            [rejected],
+        ))
+    assert pg14_database.sql(
+        f"select turn_version::text from public.birth_time_rectification_cases where id = '{case_id}'::uuid"
+    ) == "2"
+    assert pg14_database.sql(
+        f"select count(*)::text from public.birth_time_rectification_event_evidence where case_id = '{case_id}'::uuid"
+    ) == "2"
+
+    third = {
+        **second,
+        "id": third_id,
+        "rawText": "更正：2021 年 2 月入职",
+        "eventSummary": "入职",
+        "dateValue": "2021-02",
+        "correctsEvidenceIds": [second_id],
+    }
+    pg14_database.sql(_save_statement(
+        user_id,
+        case_id,
+        2,
+        third_action,
+        [third],
+        turn={
+            **_valid_turn(case_id),
+            "turnVersion": 3,
+            "evidenceRecap": [{
+                "id": third_id,
+                "summary": "入职",
+                "dateLabel": "2021-02",
+                "isCorrection": True,
+            }],
+        },
+    ))
+    loaded = json.loads(pg14_database.sql(
+        f"select public.load_conversational_rectification_case('{user_id}'::uuid, '{case_id}'::uuid)::text"
+    ))
+    assert len(loaded["event_evidence"]) == 3
+    assert loaded["event_evidence"][1]["correctsEvidenceIds"] == [first_id]
+    assert loaded["event_evidence"][2]["correctsEvidenceIds"] == [second_id]
+    assert loaded["latest_turn"]["evidenceRecap"] == [{
+        "id": third_id,
+        "summary": "入职",
+        "dateLabel": "2021-02",
+        "isCorrection": True,
+    }]
+
+
 def test_save_rejects_cumulative_evidence_count_before_inserting(
     pg14_database: PgDatabase,
 ) -> None:

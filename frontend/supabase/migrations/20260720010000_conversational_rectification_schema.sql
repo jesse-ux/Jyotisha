@@ -293,7 +293,7 @@ as $$
       where pg_catalog.jsonb_typeof(item) <> 'object'
         or pg_catalog.octet_length(item::text) > 4096
         or not public.conversational_rectification_has_only_keys(
-          item, array['id', 'summary', 'dateLabel']::text[]
+          item, array['id', 'summary', 'dateLabel', 'isCorrection']::text[]
         )
         or not (item ?& array['id', 'summary', 'dateLabel']::text[])
         or pg_catalog.jsonb_typeof(item -> 'id') <> 'string'
@@ -312,6 +312,10 @@ as $$
         or public.conversational_rectification_text_is_nonblank(
           item ->> 'dateLabel'
         ) is not true
+        or (
+          item ? 'isCorrection'
+          and pg_catalog.jsonb_typeof(item -> 'isCorrection') <> 'boolean'
+        )
     );
 $$;
 
@@ -423,7 +427,7 @@ begin
       p_value,
       array[
         'id', 'rawText', 'domain', 'eventSummary', 'dateValue',
-        'datePrecision', 'extractionStatus', 'scoreable'
+        'datePrecision', 'extractionStatus', 'scoreable', 'correctsEvidenceIds'
       ]::text[]
     )
     or not (p_value ?& array[
@@ -473,6 +477,32 @@ begin
     or (
       p_value ? 'scoreable'
       and pg_catalog.jsonb_typeof(p_value -> 'scoreable') is distinct from 'boolean'
+    )
+    or (
+      p_value ? 'correctsEvidenceIds'
+      and (
+        pg_catalog.jsonb_typeof(p_value -> 'correctsEvidenceIds') is distinct from 'array'
+        or pg_catalog.octet_length((p_value -> 'correctsEvidenceIds')::text) > 64
+        or pg_catalog.jsonb_array_length(p_value -> 'correctsEvidenceIds') > 1
+        or exists (
+          select 1
+          from pg_catalog.jsonb_array_elements(p_value -> 'correctsEvidenceIds') target
+          where pg_catalog.jsonb_typeof(target) is distinct from 'string'
+            or public.conversational_rectification_valid_uuid_text(target #>> '{}') is not true
+        )
+      )
+    )
+    or (
+      p_value ->> 'extractionStatus' = 'corrected'
+      and (
+        not (p_value ? 'correctsEvidenceIds')
+        or pg_catalog.jsonb_array_length(p_value -> 'correctsEvidenceIds') <> 1
+      )
+    )
+    or (
+      p_value ->> 'extractionStatus' = 'clear'
+      and p_value ? 'correctsEvidenceIds'
+      and pg_catalog.jsonb_array_length(p_value -> 'correctsEvidenceIds') <> 0
     ) then
     return false;
   end if;
@@ -1208,6 +1238,14 @@ create table if not exists public.birth_time_rectification_event_evidence (
   ),
   extraction_status text not null check (
     extraction_status in ('clear', 'needs_clarification', 'corrected')
+  ),
+  corrects_evidence_ids uuid[] not null default '{}'::uuid[] check (
+    pg_catalog.cardinality(corrects_evidence_ids) <= 1
+    and (
+      (extraction_status = 'corrected' and pg_catalog.cardinality(corrects_evidence_ids) = 1)
+      or (extraction_status = 'clear' and pg_catalog.cardinality(corrects_evidence_ids) = 0)
+      or extraction_status = 'needs_clarification'
+    )
   ),
   scoreable boolean not null default false,
   created_at timestamptz not null default now(),

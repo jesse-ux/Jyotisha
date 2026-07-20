@@ -487,6 +487,137 @@ test("clear historical evidence is extracted, scored, narrated, recapped, and at
   assert.ok(value.events.includes("score-packet"));
 });
 
+test("evidence corrections are append-only while recap and scoring use only the effective lineage tip", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2019年7月开始第一份工作",
+  });
+  const firstId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
+  assert.ok(firstId);
+
+  const corrected = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "更正：其实是2020年11月离职",
+    correctsEvidenceId: firstId,
+  });
+  const secondId = value.cases.get(startActionId)?.row.eventEvidence[1]?.id;
+  assert.ok(secondId);
+  assert.deepEqual(corrected.evidenceRecap, [{
+    id: secondId,
+    summary: "其实是离职",
+    dateLabel: "2020-11",
+    isCorrection: true,
+  }]);
+
+  const twiceCorrected = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: thirdAnswerActionId,
+    turnVersion: 2,
+    answer: "更正：准确的是2021年2月入职",
+    correctsEvidenceId: secondId,
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 3, "the audit lineage must remain append-only");
+  assert.deepEqual(stored[0]?.correctsEvidenceIds ?? [], []);
+  assert.deepEqual(stored[1]?.correctsEvidenceIds, [firstId]);
+  assert.deepEqual(stored[2]?.correctsEvidenceIds, [secondId]);
+  assert.deepEqual(twiceCorrected.evidenceRecap, [{
+    id: stored[2]?.id,
+    summary: "准确的是入职",
+    dateLabel: "2021-02",
+    isCorrection: true,
+  }]);
+  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 1, 1]);
+});
+
+test("an unclear correction immediately retires the wrong fact and stays retired after later turns", async () => {
+  const value = harness();
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "2019年7月开始第一份工作",
+  });
+  const wrongId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
+  assert.ok(wrongId);
+
+  const clarification = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: secondAnswerActionId,
+    turnVersion: 1, answer: "更正：具体年月记不清", correctsEvidenceId: wrongId,
+  });
+  const unclear = value.cases.get(startActionId)?.row.eventEvidence[1];
+  assert.equal(unclear?.extractionStatus, "needs_clarification");
+  assert.equal(unclear?.scoreable, false);
+  assert.deepEqual(unclear?.correctsEvidenceIds, [wrongId]);
+  assert.deepEqual(clarification.evidenceRecap, [{
+    id: unclear?.id,
+    summary: "具体年月记不清",
+    dateLabel: "日期待补充",
+    isCorrection: true,
+  }]);
+  assert.equal(clarification.status, "active");
+  assert.equal(clarification.candidate.status, "pending_validation");
+  assert.equal(clarification.actions.includes("confirm"), false);
+  assert.equal(value.cases.get(startActionId)?.row.privateCandidate.resultId, null);
+  assert.deepEqual(
+    value.cases.get(startActionId)?.row.privateCandidate.scoredHistoricalEvidence ?? [],
+    [],
+  );
+  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 0]);
+
+  const later = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: thirdAnswerActionId,
+    turnVersion: 2, answer: "2022年3月搬家",
+  });
+  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 0, 1]);
+  assert.equal(later.evidenceRecap.some((item) => item.id === wrongId), false);
+  assert.equal(later.evidenceRecap.some((item) => item.id === unclear?.id), true);
+});
+
+test("missing or already-retired correction targets fail closed without advancing or persisting", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+  const before = [...value.mutations];
+  await assert.rejects(value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "更正：2020年11月离职",
+    correctsEvidenceId: "00000000-0000-4000-8000-000000000799",
+  }), (error: unknown) => error instanceof ConversationalRectificationError
+    && error.code === "action_conflict");
+  assert.deepEqual(value.mutations, before);
+  assert.equal(value.cases.get(startActionId)?.row.turnVersion, 0);
+  assert.equal(value.cases.get(startActionId)?.row.eventEvidence.length, 0);
+
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: secondAnswerActionId,
+    turnVersion: 0, answer: "2019年7月开始第一份工作",
+  });
+  const firstId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
+  assert.ok(firstId);
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: thirdAnswerActionId,
+    turnVersion: 1, answer: "更正：2020年11月离职", correctsEvidenceId: firstId,
+  });
+  const versionBeforeConflict = value.cases.get(startActionId)?.row.turnVersion;
+  const evidenceBeforeConflict = value.cases.get(startActionId)?.row.eventEvidence.length;
+  await assert.rejects(value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: fourthAnswerActionId,
+    turnVersion: 2, answer: "再次覆盖旧错误：2021年2月入职", correctsEvidenceId: firstId,
+  }), (error: unknown) => error instanceof ConversationalRectificationError
+    && error.code === "action_conflict");
+  assert.equal(value.cases.get(startActionId)?.row.turnVersion, versionBeforeConflict);
+  assert.equal(value.cases.get(startActionId)?.row.eventEvidence.length, evidenceBeforeConflict);
+});
+
 test("generic date uncertainty does not suppress clear historical evidence", async () => {
   const value = harness();
   await start(value, null);

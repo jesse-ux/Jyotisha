@@ -51,6 +51,7 @@ const turn: ConversationalRectificationTurn = {
     id: "00000000-0000-4000-8000-000000000822",
     summary: "开始第一份长期工作",
     dateLabel: "2021 年 7 月",
+    isCorrection: false,
   }],
   actions: ["answer", "pause", "abandon", "confirm"],
   pendingConsultationQuestion: "我适合什么时候换工作？",
@@ -61,13 +62,18 @@ function controller(overrides: Partial<ConversationalRectificationController> = 
     turn,
     draft: "",
     selectedDomain: null,
+    correctionTarget: null,
     pending: false,
     error: "",
-    getSnapshot: () => ({ turn, draft: "", selectedDomain: null, pending: false, error: "" }),
+    getSnapshot: () => ({
+      turn, draft: "", selectedDomain: null, correctionTarget: null, pending: false, error: "",
+    }),
     subscribe: () => () => undefined,
     synchronizeInitialTurn: () => undefined,
     setDraft: () => undefined,
     selectDomain: () => undefined,
+    beginEvidenceCorrection: () => undefined,
+    cancelEvidenceCorrection: () => undefined,
     start: async () => turn,
     resume: async () => turn,
     answer: async () => turn,
@@ -112,6 +118,35 @@ test("evidence is correctable, technical receipts stay visible, and confirmation
   assert.match(markup, /放弃本次校正/);
 });
 
+test("correction mode identifies its durable target, can be cancelled, and marks revised recaps", () => {
+  const revisedTurn = {
+    ...turn,
+    evidenceRecap: [{ ...turn.evidenceRecap[0]!, isCorrection: true }],
+  } satisfies ConversationalRectificationTurn;
+  const correctionTarget = revisedTurn.evidenceRecap[0]!;
+  const markup = renderToStaticMarkup(React.createElement(
+    ConversationalRectificationSurface,
+    { controller: controller({
+      turn: revisedTurn,
+      draft: "更正：其实是 2020 年 11 月离职",
+      correctionTarget,
+      getSnapshot: () => ({
+        turn: revisedTurn,
+        draft: "更正：其实是 2020 年 11 月离职",
+        selectedDomain: null,
+        correctionTarget,
+        pending: false,
+        error: "",
+      }),
+    }) },
+  ));
+
+  assert.match(markup, /正在更正/);
+  assert.match(markup, /开始第一份长期工作/);
+  assert.match(markup, /取消更正/);
+  assert.match(markup, /已修订/);
+});
+
 test("pending markup and responsive CSS expose accessibility contracts", () => {
   const pendingController = controller({
     pending: true,
@@ -120,6 +155,7 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
       turn,
       draft: "保留中的文字",
       selectedDomain: "career",
+      correctionTarget: null,
       pending: true,
       error: "",
     }),
@@ -559,7 +595,12 @@ test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, 
         datePrecision: "month_preferred",
         freeTextAllowed: true,
       },
-      evidenceRecap: [],
+      evidenceRecap: status === "abandoned" ? [] : [{
+        id: "00000000-0000-4000-8000-000000000822",
+        summary: "开始第一份长期工作",
+        dateLabel: "2021-07",
+        isCorrection: false,
+      }],
       actions: status === "abandoned" ? [] : status === "paused"
         ? ["answer", "abandon"]
         : ["answer", "pause", "abandon"],
@@ -661,6 +702,22 @@ test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, 
     assert.ok(layout.scrollWidth <= 390, `page overflowed: ${layout.scrollWidth}px`);
     assert.ok(layout.surfaceWidth <= 366, `surface overflowed padded viewport: ${layout.surfaceWidth}px`);
     assert.ok(layout.shortestButton >= 44, `shortest button was ${layout.shortestButton}px`);
+
+    await cdp.evaluate("document.querySelector('[aria-label^=\"更正这条经历\"]').click()");
+    await waitFor(
+      () => cdp?.evaluate<boolean>(`(() => {
+        const textarea = document.getElementById('conversational-rectification-answer');
+        return document.body.textContent.includes('正在更正')
+          && document.body.textContent.includes('开始第一份长期工作')
+          && textarea?.value === '';
+      })()`) ?? Promise.resolve(false),
+      "durable correction target selection without polluting the new answer",
+    );
+    await cdp.evaluate("[...document.querySelectorAll('button')].find((button) => button.textContent.includes('取消更正')).click()");
+    await waitFor(
+      () => cdp?.evaluate<boolean>("!document.body.textContent.includes('正在更正') && document.getElementById('conversational-rectification-answer').value === ''") ?? Promise.resolve(false),
+      "correction cancellation",
+    );
 
     await cdp.evaluate("document.querySelector('[data-evidence-domain=career]').click()");
     await waitFor(

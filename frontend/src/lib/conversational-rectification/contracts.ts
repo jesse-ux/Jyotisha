@@ -42,6 +42,7 @@ export const conversationalRectificationCommandSchema = z.discriminatedUnion("ty
     type: z.literal("answer"),
     domain: evidenceDomainSchema.optional(),
     answer: z.string().trim().min(1).max(4_000),
+    correctsEvidenceId: z.string().uuid().optional(),
   }).strict(),
   actionCommandSchema.extend({
     type: z.literal("pause"),
@@ -81,6 +82,8 @@ const evidenceRecapEntrySchema = boundedJson(z.object({
   id: z.string().uuid(),
   summary: boundedNonblankText(1_000),
   dateLabel: boundedNonblankText(80),
+  // Optional so turns written before correction lineage was introduced still resume safely.
+  isCorrection: z.boolean().optional(),
 }).strict(), 4_096);
 const evidenceRecapSchema = boundedJson(
   z.array(evidenceRecapEntrySchema).max(20),
