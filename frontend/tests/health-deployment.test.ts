@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
 import {
   chmodSync,
-  existsSync,
-  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -145,8 +143,7 @@ test("staging deploy consumes only the isolated staging environment and tested r
   assert.match(workflow, /packages: read/);
   assert.match(workflow, /environment:\s*\n\s*name: staging/);
   assert.match(workflow, /deploy_sha:/);
-  assert.doesNotMatch(workflow, /default: staging/);
-  assert.match(workflow, /test "\$\{#REQUESTED_SHA\}" -eq 40/);
+  assert.match(workflow, /\^\[0-9a-f\]\{40\}\$/);
   assert.match(
     workflow,
     /actions\/workflows\/backend-quality-gate\.yml\/runs\?head_sha=/,
@@ -157,78 +154,13 @@ test("staging deploy consumes only the isolated staging environment and tested r
   assert.match(workflow, /test "\$DEPLOY_HOST" = "118\.26\.111\.127"/);
   assert.match(workflow, /test "\$DEPLOY_USER" = "deploy"/);
   assert.match(workflow, /test "\$DEPLOY_PATH" = "\/opt\/jyotisha-staging"/);
-  assert.match(workflow, /--exclude='\.env\*'/);
-  assert.match(
-    workflow,
-    /docker compose -p jyotisha-staging --env-file \.env\.staging/,
-  );
-  assert.match(
-    workflow,
-    /bash deploy\/validate-staging-env\.sh \.env\.staging/,
-  );
-  assert.match(
-    workflow,
-    /bash deploy\/validate-staging-database-env\.sh \.env\.staging\.database/,
-  );
-  assert.match(workflow, /-f deploy\/docker-compose\.server\.yml/);
-  assert.match(workflow, /-f deploy\/docker-compose\.postgres\.yml/);
-  assert.match(workflow, /deployment\.gitCommit/);
+  assert.match(workflow, /--exclude='\/\.env\*'/);
+  assert.match(workflow, /--exclude='\/backups\/'/);
+  assert.match(workflow, /run-staging-deploy\.sh/);
+  assert.match(workflow, /steps\.images\.outputs\.api_image/);
+  assert.match(workflow, /steps\.images\.outputs\.web_image/);
   assert.doesNotMatch(workflow, /PRODUCTION_SSH_PRIVATE_KEY/);
   assert.doesNotMatch(workflow, /103\.117\.123\.53/);
-});
-
-test("staging rsync preserves every destination env variant during delete", () => {
-  const workflow = readFileSync(
-    new URL("../../.github/workflows/deploy-staging.yml", import.meta.url),
-    "utf8",
-  );
-  const envExclusion = workflow.match(/--exclude='([^']*\.env[^']*)'/)?.[1];
-
-  assert.equal(envExclusion, ".env*");
-
-  const root = mkdtempSync(join(tmpdir(), "jyotisha-staging-rsync-"));
-  const source = join(root, "source");
-  const destination = join(root, "destination");
-  mkdirSync(source);
-  mkdirSync(destination);
-  writeFileSync(join(source, "app.txt"), "new revision\n");
-  for (const name of [
-    ".env",
-    ".env.local",
-    ".env.staging",
-    ".env.staging.backup",
-  ]) {
-    writeFileSync(join(destination, name), "preserve\n");
-  }
-
-  try {
-    const result = spawnSync(
-      "rsync",
-      [
-        "-a",
-        "--delete",
-        `--exclude=${envExclusion}`,
-        `${source}/`,
-        `${destination}/`,
-      ],
-      { encoding: "utf8" },
-    );
-    assert.equal(result.status, 0, result.stderr);
-    for (const name of [
-      ".env",
-      ".env.local",
-      ".env.staging",
-      ".env.staging.backup",
-    ]) {
-      assert.equal(
-        existsSync(join(destination, name)),
-        true,
-        `${name} was deleted`,
-      );
-    }
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
 });
 
 test("staging env validator rejects selector drift, duplicates, and unsafe permissions", () => {

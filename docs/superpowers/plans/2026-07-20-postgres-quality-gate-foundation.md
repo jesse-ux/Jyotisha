@@ -4,7 +4,7 @@
 
 **Goal:** Add the self-hosted PostgreSQL staging foundation, least-privilege roles, reviewed SQL migration runner, automatic backend quality gate, immutable GHCR images, and exact-SHA staging deploy path without moving authentication or business traffic off Supabase.
 
-**Architecture:** PostgreSQL 17 runs on the private Compose network of the Hong Kong staging VPS. A separate deployment-user-owned database env file supplies bootstrap and schema credentials only to PostgreSQL and an opt-in migrator; normal web/API containers never receive them. Reviewed plain SQL is the schema source of truth, while `pg` and Drizzle provide the future runtime seam. PRs and `staging` pushes run database/backend/frontend/configuration tests; successful `staging` pushes publish SHA-tagged web/API images, and staging pulls that exact SHA. Migrations remain a separate manual workflow.
+**Architecture:** PostgreSQL 17 runs on the private Compose network of the Hong Kong staging VPS. A separate deployment-user-owned database env file supplies bootstrap and schema credentials only to PostgreSQL and an opt-in migrator; normal web/API containers never receive them. Reviewed plain SQL is the schema source of truth, while `pg` and Drizzle provide the future runtime seam. PRs and `staging` pushes run database/backend/frontend/configuration tests; successful `staging` pushes publish web/API images and a run-bound SHA-to-digest manifest, and staging deploys only those exact digests. Migrations remain a separate manual workflow.
 
 **Tech Stack:** PostgreSQL 17 Alpine, Docker Compose, Node.js 22, Next.js 16, TypeScript, `pg`, Drizzle ORM, Python 3.12, GitHub Actions, GHCR, Bash, OpenSSL.
 
@@ -20,7 +20,9 @@
 - App deployment never runs schema migration. Migration is manual and separately serialized.
 - Before changing app containers, staging deploy runs the exact SHA image in read-only migration-check mode. No pending migration means automatic continuation. Pending or checksum-drifted migration stops before app changes; a successful manual migration dispatches staging deploy again for the same full SHA.
 - Production defaults remain manual-only and unchanged.
-- Staging image tags are immutable full Git SHAs; never deploy `latest`.
+- Staging publication uses full Git SHA tags for discovery, but deployment is
+  authorized and pinned by the build outputs' `sha256` manifest digests. Never
+  deploy a mutable tag such as `latest`, or treat a tag alone as image identity.
 - Finish each task with the focused commit shown.
 
 ## Planned Files
@@ -742,7 +744,7 @@ Assert:
 - It never invokes the applying `db:migrate` command, `migrator` service, or `--profile migration`.
 - It runs the exact web image through `migration-checker`/`db:migrate:check` before changing any app container.
 - Pending migrations stop before `api`, `web`, or `caddy` changes and print the manual workflow name plus exact SHA.
-- Rollback uses recorded prior image names.
+- Rollback uses recorded prior digest references, image IDs, and SHA.
 
 - [ ] **Step 2: Confirm red**
 
@@ -776,15 +778,17 @@ APP_ENV_FILE=../.env.staging
 DATABASE_ENV_FILE=../.env.staging.database
 CADDYFILE_PATH=./Caddyfile.staging
 SITE_ADDRESS=staging.jyotisha.chat
-API_IMAGE=ghcr.io/jesse-ux/jyotisha-api:<full-sha>
-WEB_IMAGE=ghcr.io/jesse-ux/jyotisha-web:<full-sha>
+API_IMAGE=ghcr.io/jesse-ux/jyotisha-api@sha256:<manifest-digest>
+WEB_IMAGE=ghcr.io/jesse-ux/jyotisha-web@sha256:<manifest-digest>
 ```
 
 - Validate both env files and Compose config.
 - Send GHCR token through `docker login --password-stdin`; never save it in either env file.
 - Pull `api web postgres`, start/wait for PostgreSQL, then run the exact web image through `--profile migration-check run --rm migration-checker`.
 - Continue to `up -d --no-build --remove-orphans` only after check exit `0`; treat exit `3` as a safe stop with no application changes.
-- Record prior container image names before switching. Roll back with those exact image names and `--no-build`.
+- Download and validate the successful gate run's SHA-to-digest manifest. Record
+  prior container digest references, image IDs, and SHA before switching. Roll
+  back with those exact digest references and `--no-build`.
 - Log out in an always-running cleanup step.
 - Never run migrations.
 
@@ -845,7 +849,7 @@ on:
         required: true
         type: string
 concurrency:
-  group: staging-database-migration
+  group: staging-mutation
   cancel-in-progress: false
 permissions:
   contents: read
@@ -883,7 +887,13 @@ docker compose -p jyotisha-staging \
   'select filename from migration.schema_migrations order by filename'
 ```
 
-Authenticate GHCR through stdin and log out in cleanup. Do not start/restart app services. After migration and ledger reporting succeed, call the GitHub workflow-dispatch API for `deploy-staging.yml` with `ref: staging` and `inputs.deploy_sha` equal to the validated full SHA.
+Authenticate GHCR through stdin using run-local Docker state and remove it in
+cleanup. Do not start/restart app services. Deployment and migration share the
+`staging-mutation` concurrency group and the host mutation lock. After migration
+and ledger reporting succeed, recheck that `staging` still points at the validated
+SHA, then call the GitHub workflow-dispatch API for `deploy-staging.yml` with the
+`main` controller ref, `inputs.deploy_sha` equal to that full SHA, and
+`inputs.allow_rollback` set to `false`.
 
 - [ ] **Step 4: Verify and commit**
 
@@ -946,7 +956,7 @@ Each secret uses independently generated 32 random bytes. URL password is percen
 Document order:
 
 1. Merge to `staging`.
-2. Wait for backend quality gate and SHA images.
+2. Wait for backend quality gate and its exact-SHA image digest manifest.
 3. If automatic deploy reports pending migrations, manually run `Migrate Staging Database` with the reported full SHA.
 4. The successful migration workflow re-dispatches exact-SHA staging deploy automatically.
 5. Check `https://staging.jyotisha.chat/api/health`.

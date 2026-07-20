@@ -2,6 +2,18 @@ name: Staging Backend Quality Gate
 
 on:
   pull_request:
+    paths:
+      - '.github/workflows/backend-quality-gate.yml'
+      - '.github/workflows/deploy-staging.yml'
+      - '.github/workflows/migrate-staging-database.yml'
+      - 'deploy/**'
+      - 'frontend/**'
+      - 'jyotish_vedic/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'mcp_server.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
   push:
     branches: [staging]
   workflow_dispatch:
@@ -60,10 +72,7 @@ jobs:
           name: quick-quality-gate-diagnostics
           path: artifacts/quick-quality-gate.log
 
-      - name: Run database tests
-        run: npm run test:db --prefix frontend
-
-      - name: Validate frontend
+      - name: Validate frontend and database contracts
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
@@ -109,6 +118,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and publish API image
+        id: api_build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -117,6 +127,7 @@ jobs:
           tags: ghcr.io/jesse-ux/jyotisha-api:${{ github.sha }}
 
       - name: Build and publish web image
+        id: web_build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -126,3 +137,28 @@ jobs:
           build-args: |
             NEXT_PUBLIC_SUPABASE_URL=${{ vars.STAGING_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.STAGING_SUPABASE_ANON_KEY }}
+
+      - name: Record immutable staging image manifest
+        env:
+          API_DIGEST: ${{ steps.api_build.outputs.digest }}
+          WEB_DIGEST: ${{ steps.web_build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$API_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ "$WEB_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          install -d -m 700 artifacts/staging-images
+          umask 077
+          printf 'git_sha=%s\napi_digest=%s\nweb_digest=%s\n' \
+            "$GITHUB_SHA" "$API_DIGEST" "$WEB_DIGEST" \
+            > artifacts/staging-images/manifest.env
+          node frontend/scripts/staging-image-manifest.mjs \
+            artifacts/staging-images/manifest.env "$GITHUB_SHA" >/dev/null
+
+      - name: Upload immutable staging image manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-image-manifest-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/staging-images/manifest.env
+          if-no-files-found: error
+          retention-days: 30

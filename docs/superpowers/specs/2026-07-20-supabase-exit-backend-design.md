@@ -166,7 +166,7 @@ Sustained swap use, database saturation, disk above 70%, or unacceptable request
 
 ## Build and deployment
 
-The VPS must not compile large application images while PostgreSQL is serving tests. GitHub Actions builds immutable web/API images, pushes SHA-addressed images to GitHub Container Registry, and the VPS only pulls and restarts them.
+The VPS must not compile large application images while PostgreSQL is serving tests. GitHub Actions builds web/API images, publishes SHA tags only for discovery, and records the build outputs' immutable manifest digests in an artifact bound to the successful quality-gate run. The VPS validates that artifact and pulls digest references only.
 
 Application deployment and database migration remain different operations:
 
@@ -182,7 +182,7 @@ touching the running application. After the operator runs the manual migration
 workflow successfully, that workflow dispatches staging deployment again for the
 same full SHA. The check may read the migration ledger but may never apply SQL.
 
-Deployment records the previous application SHA and image digests. Public and private health checks must pass before a deployment is marked successful. Application rollback does not claim to roll back database state.
+Deployment and migration share one Actions concurrency group and one host-side lock covering live-tree synchronization through their final database/application verification. Deployment records the previous application SHA, image digests, and image IDs. It rejects stale or backward automatic revisions, verifies running container image IDs/RepoDigests plus the application-reported SHA, and requires public and private health checks before updating deployed-revision state. An older application revision requires an explicit manual rollback authorization; application rollback does not claim to roll back database state.
 
 ## Automatic backend quality gate
 

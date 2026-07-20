@@ -149,7 +149,7 @@ The GitHub `staging` Environment contains the secret `STAGING_SSH_PRIVATE_KEY` a
 
 The repository-level public build inputs are configured at GitHub **Settings -> Secrets and variables -> Actions -> Variables** (the UI is also shown as **Settings → Secrets and variables → Actions → Variables**): `STAGING_SUPABASE_URL` and `STAGING_SUPABASE_ANON_KEY`. They are public build inputs, required for publish, and exposed to the browser; keep them staging-only and never print their values in workflow output, summaries, or support messages. The workflow passes them only as the `NEXT_PUBLIC_*` build arguments after non-empty/HTTPS validation.
 
-`Staging Backend Quality Gate` runs for `pull_request`, pushes to `staging`, and `workflow_dispatch`. It validates the Python/database/frontend contract; only a successful push to `staging` can publish immutable full-SHA GHCR images. `.github/workflows/deploy-staging.yml` consumes the successful gate's exact SHA, and its manual `deploy_sha` input must identify a full 40-character commit with a successful `staging` gate run.
+`Staging Backend Quality Gate` runs for relevant `pull_request` paths, pushes to `staging`, and `workflow_dispatch`. It validates the Python/database/frontend contract; only a successful push to `staging` publishes the API/web images and a run-bound manifest containing their `sha256` digests. `.github/workflows/deploy-staging.yml` consumes that exact successful run, validates its manifest against the full 40-character commit, and deploys digest references rather than trusting the discoverability tags.
 
 The staging env file must include these non-secret selectors so Compose cannot fall back to production paths:
 
@@ -165,13 +165,13 @@ After source sync and before `up`, the workflow validates `.env.staging` mode/se
 
 1. Complete the server and GitHub bootstrap: create both mode-`0600` env files, configure the staging Environment variables/secrets, and configure the repository staging build variables.
 2. Merge the reviewed change, then push the reviewed SHA to `staging`; do not rely on a `main` workflow dispatch to publish images.
-3. The `Staging Backend Quality Gate` runs for that push and, when successful, publishes the SHA-tagged API/web images for that exact 40-character commit SHA.
-4. The automatic `Deploy staging` workflow starts from that successful gate, syncs the exact SHA, and validates both `.env.staging` and `.env.staging.database` before any app change.
+3. The `Staging Backend Quality Gate` runs for that push and, when successful, publishes API/web images plus an artifact binding the exact SHA to both immutable image digests.
+4. The automatic `Deploy staging` workflow downloads that gate-run artifact, syncs the exact revision under the shared staging host lock, and validates both `.env.staging` and `.env.staging.database` before any app change.
 5. If environment validation fails, fix the server-side env files without committing or copying secrets, then manually rerun `Deploy staging` from `main` with the same successful SHA in `deploy_sha`; the workflow rechecks a successful staging gate for that exact SHA.
 6. If the read-only checker reports a pending migration, stop app deployment and run `Migrate Staging Database` manually with the same full SHA; a successful migration re-dispatches `Deploy staging` with that same SHA.
 7. Confirm `https://staging.jyotisha.chat/api/health` reports the exact SHA and private API health.
 
-Application rollback uses the same workflow: manually dispatch `Deploy staging` from `main` with a previous known-good full SHA that has a successful `Staging Backend Quality Gate` run. Database migrations are separate and are not rolled back by an application deployment. Restore a staging database backup before running any destructive migration rehearsal.
+Application rollback uses the same workflow: manually dispatch `Deploy staging` from the `main` controller with a previous known-good full SHA that has a successful `Staging Backend Quality Gate` run, and explicitly set `allow_rollback=true`. Normal and migration-triggered deployments reject stale, divergent, or backward revisions. Rollback still consumes the selected gate run's digest manifest; database migrations are separate and are not rolled back by an application deployment. Restore a staging database backup before running any destructive migration rehearsal.
 
 Inspect staging without printing secrets:
 
@@ -229,14 +229,14 @@ PostgreSQL is private: `deploy/docker-compose.postgres.yml` has no `ports` mappi
 Use this order for every staging revision:
 
 1. Merge to `staging` after reviewing the change.
-2. Wait for `Staging Backend Quality Gate` to pass and for that exact full SHA's API/web images to be published.
+2. Wait for `Staging Backend Quality Gate` to pass and publish that exact full SHA's API/web digest manifest.
 3. The automatic `Deploy staging` workflow checks the exact SHA in read-only migration-check mode before changing API, web, or Caddy. If it reports pending or drifted migrations, stop; do not retry the application deployment as if it were a migration.
 4. Open **Migrate Staging Database -> Run workflow** and enter the reported full lowercase 40-character SHA in `deploy_sha`. The workflow validates that exact SHA against a successful `staging` gate, checks it out, starts only PostgreSQL, and runs the reviewed migrator.
-5. A successful migration prints the ordered migration ledger and re-dispatches `Deploy staging` automatically with the same exact SHA. Do not substitute a branch name, a short SHA, or a newer commit.
+5. A successful migration rechecks that `staging` still points at the same exact SHA, prints the ordered migration ledger, and dispatches the `main` controller for digest-pinned deployment with `allow_rollback=false`. If `staging` advanced during migration, it refuses the stale dispatch. Do not substitute a branch name, a short SHA, or a newer commit.
 6. Confirm `https://staging.jyotisha.chat/api/health` and verify that its deployment SHA is the SHA from step 2.
 7. After health verification, create the local encrypted backup described below.
 
-The read-only checker exits before app changes when a migration is pending. Its message includes the exact SHA and the `Migrate Staging Database` workflow name. A failed migration does not re-dispatch deployment. Application rollback restores a previously verified image/SHA only; it does not roll back database state.
+The deploy and migration workflows share the `staging-mutation` Actions concurrency group, and their live-tree sync plus Compose work runs under `/opt/jyotisha-staging/.state/mutation.lock`. The synchronized tree explicitly preserves `/backups/`, `.env*`, `.state`, and `.incoming`. The read-only checker exits before app changes when a migration is pending. Its message includes the exact SHA and the `Migrate Staging Database` workflow name. A failed migration does not re-dispatch deployment. Application rollback restores previously recorded digest references and SHA only; it does not roll back database state.
 
 ### Local encrypted staging backups (three-copy limit)
 
