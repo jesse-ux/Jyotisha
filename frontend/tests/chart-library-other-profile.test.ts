@@ -47,3 +47,11 @@ test("cloud save failures preserve the server error message", () => {
   assert.match(source, /const payload = await response\.json\(\)\.catch\(\(\) => null\) as \{ error\?: string \} \| null;/);
   assert.match(source, /throw new Error\(payload\?\.error \|\| "cloud_chart_profile_save_failed"\);/);
 });
+
+test("synastry selection exposes a pending state while the evidence packet is computed", () => {
+  assert.match(source, /const \[synastryPendingId, setSynastryPendingId\] = useState<string \| null>\(null\);/);
+  assert.match(source, /setSynastryPendingId\(record\.id\);/);
+  assert.match(source, /finally \{\s*setSynastryPendingId\(null\);\s*\}/);
+  assert.match(source, /disabled=\{synastryPendingId !== null\}/);
+  assert.match(source, /synastryPendingId === record\.id \? "正在计算合盘\.\.\." : "用于合盘"/);
+});

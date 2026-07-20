@@ -668,6 +668,7 @@ export default function Home() {
   const [activeAccountDialog, setActiveAccountDialog] = useState<AccountDialog | null>(null);
   const [chartLibrary, setChartLibrary] = useState<ChartLibraryRecord[]>([]);
   const [chartLibraryOpen, setChartLibraryOpen] = useState(false);
+  const [synastryPendingId, setSynastryPendingId] = useState<string | null>(null);
   const [otherProfileDraft, setOtherProfileDraft] = useState<Profile>(emptyProfile);
   const [synastryReportCard, setSynastryReportCard] = useState<SynastryReportCard | null>(null);
   const [synastryHistory, setSynastryHistory] = useState<SynastryReportCard[]>([]);
@@ -1746,7 +1747,10 @@ export default function Home() {
 
   async function draftSynastryQuestionFromChart(record: ChartLibraryRecord) {
     if (record.role !== "other") return;
+    if (synastryPendingId) return;
     const baseQuestion = buildSynastryQuestion(profile, record.profile);
+    setSynastryPendingId(record.id);
+    setComposerNotice("正在计算基础合盘证据，请稍候。");
     try {
       const response = await fetch("/api/synastry", {
         method: "POST",
@@ -1801,6 +1805,8 @@ export default function Home() {
     } catch {
       chooseSuggestedQuestion(baseQuestion, "marriage");
       setComposerNotice("合盘计算暂时不可用，已先生成问题草稿。");
+    } finally {
+      setSynastryPendingId(null);
     }
     closeAccountDialog();
   }
@@ -2594,7 +2600,7 @@ export default function Home() {
                               <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
                             </div>
                             <div className="chart-library-actions">
-                              <button className="button-secondary" type="button" onClick={() => void draftSynastryQuestionFromChart(record)}>用于合盘</button>
+                              <button className="button-secondary" type="button" onClick={() => void draftSynastryQuestionFromChart(record)} disabled={synastryPendingId !== null}>{synastryPendingId === record.id ? "正在计算合盘..." : "用于合盘"}</button>
                               <button className="button-secondary" type="button" onClick={() => void makeDefaultChart(record)} disabled={profileSaving}>设为默认</button>
                               <button className="button-secondary danger-button" type="button" onClick={() => deleteOtherChart(record.id)}>删除</button>
                             </div>
