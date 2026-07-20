@@ -124,6 +124,24 @@ test("maps known domain failures to a frozen stable public DTO", () => {
   assert.equal(Reflect.set(stale, "message", "mutated"), false);
 });
 
+test("exposes stable store and billing failures without retaining infrastructure details", () => {
+  const expected = [
+    ["action_conflict", 409],
+    ["billing_failed", 503],
+    ["store_unavailable", 503],
+  ] as const;
+
+  for (const [code, status] of expected) {
+    const error = new ConversationalRectificationError(code);
+    const publicError = toConversationalRectificationPublicError(error);
+    assert.equal(publicError.code, code);
+    assert.equal(publicError.status, status);
+    assert.equal(publicError.retryable, true);
+    assert.equal(Object.isFrozen(publicError), true);
+    assert.deepEqual(Reflect.ownKeys(publicError).sort(), ["code", "error", "message", "retryable", "status"]);
+  }
+});
+
 test("maps unknown failures to a complete non-leaking public DTO", () => {
   const rawMessage = "WebKit SyntaxError: SQL password=model secret";
   const rawFailure = Object.assign(new Error(rawMessage, { cause: new Error(rawMessage) }), {

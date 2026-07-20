@@ -1,0 +1,327 @@
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MIGRATIONS = ROOT / "frontend" / "supabase" / "migrations"
+SCHEMA = MIGRATIONS / "20260720010000_conversational_rectification_schema.sql"
+BILLING = MIGRATIONS / "20260720020000_conversational_rectification_billing.sql"
+TRANSITIONS = MIGRATIONS / "20260720030000_conversational_rectification_transitions.sql"
+
+
+def _normalized(path: Path) -> str:
+    assert path.exists(), f"missing migration: {path.name}"
+    return re.sub(r"\s+", " ", path.read_text(encoding="utf-8").lower()).strip()
+
+
+def _function(sql: str, name: str) -> str:
+    marker = f"create or replace function public.{name}"
+    assert marker in sql
+    body = sql.split(marker, 1)[1]
+    return body.split("$$;", 1)[0]
+
+
+def test_v3_schema_is_account_scoped_bounded_and_service_role_only() -> None:
+    sql = _normalized(SCHEMA)
+    assert "'conversational-evidence-v3'" in sql
+    for column in (
+        "revision_of_case_id uuid",
+        "imported_from_case_id uuid",
+        "baseline_active_time time without time zone",
+        "pending_consultation_question text",
+        "declared_birth_input jsonb not null",
+    ):
+        assert column in sql
+
+    for table in (
+        "birth_time_rectification_cases",
+        "birth_time_rectification_turns",
+        "birth_time_rectification_event_evidence",
+        "birth_time_rectification_action_receipts",
+        "birth_time_rectification_billing",
+    ):
+        assert f"revoke all on table public.{table} from public, anon, authenticated" in sql
+        assert f"grant all on table public.{table} to service_role" in sql
+        assert not re.search(
+            rf"grant\s+.+?on\s+table\s+public\.{table}\s+to\s+(?:anon|authenticated)",
+            sql,
+        )
+
+    assert "primary key (case_id, turn_version)" in sql
+    assert "char_length(narrative) between 1 and 12000" in sql
+    assert "char_length(raw_text) between 1 and 4000" in sql
+    assert "date_precision in ('day', 'month', 'year', 'range', 'unknown')" in sql
+    assert "extraction_status in ('clear', 'needs_clarification', 'corrected')" in sql
+    assert "primary key (case_id, action_id)" in sql
+    assert "state in ('reserved', 'charged', 'released', 'migration_waived')" in sql
+    assert "chat_session" not in sql
+
+
+def test_public_turn_projection_rejects_private_candidate_material() -> None:
+    sql = _normalized(SCHEMA)
+    for forbidden_key in (
+        "candidateweights",
+        "candidatescores",
+        "partitionid",
+        "rawmodeloutput",
+        "systemprompt",
+    ):
+        assert f"$.**.{forbidden_key}" in sql
+    assert "technical_receipt jsonb not null" in sql
+    assert "candidate_result jsonb" not in _function(
+        _normalized(TRANSITIONS), "conversational_rectification_case_projection"
+    )
+
+
+def test_fixed_fee_reserve_is_bounded_locked_and_exactly_once() -> None:
+    sql = _normalized(BILLING)
+    body = _function(sql, "reserve_conversational_rectification_fee")
+    for invariant in (
+        "p_price between 1 and 1000000",
+        "pg_advisory_xact_lock",
+        "p_user_id::text || ':' || p_action_id::text",
+        "profile.id = p_user_id",
+        "for update",
+        "p_expected_version is distinct from 0",
+        "v_receipt.request_fingerprint is distinct from v_fingerprint",
+        "raise exception 'conversational_action_conflict'",
+        "set credits = profile.credits - p_price",
+        "transaction_type, amount, balance_after, request_id",
+        "'reserve', -p_price",
+    ):
+        assert invariant in body
+    assert "returns table ( success boolean, credits integer, billing_state text, error_code text )" in body
+    # Reservation may inspect competing unfinished cases, but it must not
+    # require or lock the not-yet-created target case.
+    assert "select c.* into v_case" not in body
+    assert "r.user_id = p_user_id" in body
+    assert "r.action_id = v_receipt_action_id" in body
+
+
+def test_complete_never_debits_and_release_refunds_at_most_once() -> None:
+    sql = _normalized(BILLING)
+    complete = _function(sql, "complete_conversational_rectification_fee")
+    release = _function(sql, "release_conversational_rectification_fee")
+
+    assert "set state = 'charged'" in complete
+    assert "profile.credits -" not in complete
+    assert "insert into public.credit_transactions" not in complete
+    assert "v_billing.state = 'charged'" in complete
+
+    assert "v_billing.state = 'released'" in release
+    assert "set credits = profile.credits + v_billing.price" in release
+    assert "'refund', v_billing.price" in release
+    assert "v_billing.price is distinct from p_price" not in release
+    assert "set state = 'released'" in release
+    assert "if v_billing.state = 'charged'" in release
+    assert "'already_charged'" in release
+
+
+def test_release_terminalizes_a_created_reserved_case() -> None:
+    release = _function(_normalized(BILLING), "release_conversational_rectification_fee")
+
+    assert "update public.birth_time_rectification_cases" in release
+    assert "set status = 'abandoned'" in release
+    assert "status in ('starting', 'active', 'paused', 'confirming')" in release
+    assert "turn_version = p_expected_version" in release
+
+
+def test_all_billing_rpcs_are_service_role_only() -> None:
+    sql = _normalized(BILLING)
+    for name in (
+        "reserve_conversational_rectification_fee",
+        "complete_conversational_rectification_fee",
+        "release_conversational_rectification_fee",
+    ):
+        assert f"revoke all on function public.{name}" in sql
+        assert f"grant execute on function public.{name}" in sql
+    assert not re.search(r"grant execute on function .+ to (?:anon|authenticated)", sql)
+
+
+def test_fingerprints_do_not_depend_on_the_pgcrypto_extension_schema() -> None:
+    sql = f"{_normalized(BILLING)} {_normalized(TRANSITIONS)}"
+    assert "public.digest" not in sql
+    assert "pg_catalog.sha256" in sql
+
+
+def test_case_mutations_lock_owner_check_version_and_replay_exact_receipts() -> None:
+    sql = _normalized(TRANSITIONS)
+    for name in (
+        "create_conversational_rectification_case",
+        "save_conversational_rectification_turn",
+        "pause_conversational_rectification_case",
+        "abandon_conversational_rectification_case",
+        "confirm_conversational_rectification_candidate",
+        "import_legacy_conversational_rectification_case",
+    ):
+        body = _function(sql, name)
+        assert "p_action_id" in body
+        assert "p_expected_version" in body
+        assert "request_fingerprint" in body
+        assert "conversational_action_conflict" in body
+        assert "for update" in body
+        assert "p_user_id" in body
+        assert "conversational_stale_turn" in body
+        assert "insert into public.birth_time_rectification_action_receipts" in body
+        assert f"revoke all on function public.{name}" in sql
+        assert f"grant execute on function public.{name}" in sql
+
+
+def test_case_creation_and_turn_save_are_atomic_public_history_units() -> None:
+    sql = _normalized(TRANSITIONS)
+    create = _function(sql, "create_conversational_rectification_case")
+    save = _function(sql, "save_conversational_rectification_turn")
+
+    assert "insert into public.birth_time_rectification_cases" in create
+    assert "insert into public.birth_time_rectification_turns" in create
+    assert "p_first_turn ->> 'journeyprotocol' is distinct from 'conversational-evidence-v3'" in create
+    assert "active_birth_time" in create
+    assert "update public.profiles" not in create
+    assert "from public.birth_time_rectification_billing" in create
+    assert "v_billing.state not in ('reserved', 'charged')" in create
+    assert "declared_birth_input" in create
+    assert "p_declared_birth_input" in create
+
+    assert "insert into public.birth_time_rectification_turns" in save
+    assert "insert into public.birth_time_rectification_event_evidence" in save
+    assert "rawtext" in save
+    assert "p_expected_version + 1" in save
+
+
+def test_legacy_import_is_waived_without_changing_credits() -> None:
+    body = _function(
+        _normalized(TRANSITIONS), "import_legacy_conversational_rectification_case"
+    )
+    assert "imported_from_case_id" in body
+    assert "'migration_waived'" in body
+    assert "insert into public.birth_time_rectification_billing" in body
+    assert "credits =" not in body
+    assert "credit_transactions" not in body
+    assert "update public.birth_time_rectification_cases" not in body
+    for preserved_profile_field in (
+        "birth_time_clue",
+        "country_code",
+        "province_code",
+        "city_code",
+        "district_code",
+        "latitude",
+        "longitude",
+        "timezone_offset",
+    ):
+        assert f"v_profile.{preserved_profile_field}" in body
+
+
+def test_imported_legacy_sources_are_immutable_history() -> None:
+    sql = _normalized(TRANSITIONS)
+    assert "create or replace function public.guard_imported_rectification_history" in sql
+    assert "before update on public.birth_time_rectification_cases" in sql
+    assert "conversational_imported_case_read_only" in sql
+
+
+def test_mutations_require_a_paid_or_waived_case() -> None:
+    sql = _normalized(TRANSITIONS)
+    for name in (
+        "save_conversational_rectification_turn",
+        "pause_conversational_rectification_case",
+        "abandon_conversational_rectification_case",
+        "confirm_conversational_rectification_candidate",
+    ):
+        body = _function(sql, name)
+        assert "from public.birth_time_rectification_billing" in body
+        assert "v_billing.state not in ('charged', 'migration_waived')" in body
+
+
+def test_account_resume_projection_contains_private_working_state_only_for_service_rpc() -> None:
+    sql = _normalized(TRANSITIONS)
+    load = _function(sql, "load_conversational_rectification_case")
+    for key in (
+        "declared_birth_input",
+        "private_candidate",
+        "event_evidence",
+        "validation_receipts",
+    ):
+        assert f"'{key}'" in load
+    assert "c.declared_birth_input" in load
+    public_projection = _function(sql, "conversational_rectification_case_projection")
+    assert "candidateweights" not in public_projection
+    assert "private_candidate" not in public_projection
+
+
+def test_start_identity_and_account_concurrency_are_server_guarded() -> None:
+    schema = _normalized(SCHEMA)
+    transitions = _normalized(TRANSITIONS)
+    assert "unique (user_id, reserve_action_id)" in schema
+    assert "on public.birth_time_rectification_action_receipts (user_id, action_id)" in schema
+    assert "where action_kind = 'reserve_fee'" in schema
+    assert "conversational_rectification_billing_receipt_action_id" in schema
+    reserve = _function(_normalized(BILLING), "reserve_conversational_rectification_fee")
+    assert "p_case_id is distinct from p_action_id" in reserve
+    create = _function(transitions, "create_conversational_rectification_case")
+    assert "p_case_id is distinct from p_action_id" in create
+    assert "conversational-rectification-case" in create
+    assert "status in ('starting', 'active', 'paused', 'confirming')" in create
+    assert "raise exception 'conversational_action_conflict'" in create
+
+
+def test_one_public_start_action_has_noncolliding_internal_billing_receipts() -> None:
+    billing = _normalized(BILLING)
+    for name, kind in (
+        ("reserve_conversational_rectification_fee", "reserve_fee"),
+        ("complete_conversational_rectification_fee", "complete_fee"),
+        ("release_conversational_rectification_fee", "release_fee"),
+    ):
+        body = _function(billing, name)
+        assert "conversational_rectification_billing_receipt_action_id" in body
+        assert f"'{kind}'" in body
+        assert "r.action_id = v_receipt_action_id" in body
+        assert "p_case_id, v_receipt_action_id, p_user_id" in body
+
+    create = _function(
+        _normalized(TRANSITIONS), "create_conversational_rectification_case"
+    )
+    assert "p_case_id, p_action_id, p_user_id, 'create'" in create
+
+
+def test_validation_receipts_are_private_parameters_not_public_turn_fields() -> None:
+    sql = _normalized(TRANSITIONS)
+    for name in (
+        "create_conversational_rectification_case",
+        "save_conversational_rectification_turn",
+        "pause_conversational_rectification_case",
+        "abandon_conversational_rectification_case",
+        "confirm_conversational_rectification_candidate",
+        "import_legacy_conversational_rectification_case",
+    ):
+        body = _function(sql, name)
+        assert "p_validation_receipt jsonb" in body
+        assert "p_validation_receipt" in body.split(
+            "insert into public.birth_time_rectification_turns", 1
+        )[1]
+
+
+def test_only_atomic_confirm_changes_the_active_birth_time() -> None:
+    sql = _normalized(TRANSITIONS)
+    confirm = _function(sql, "confirm_conversational_rectification_candidate")
+    for invariant in (
+        "v_case.status is distinct from 'confirming'",
+        "v_case.candidate_result_id is distinct from p_result_id",
+        "representativetime",
+        "p_time",
+        "calculationversion",
+        "p_calculation_version",
+        "update public.profiles",
+        "active_birth_time = p_time",
+        "birth_time_status = 'confirmed'",
+        "set status = 'completed'",
+        "pending_consultation_question",
+        "extract(second from p_time) is distinct from 0",
+    ):
+        assert invariant in confirm
+
+    without_confirm = sql.replace(confirm, "")
+    assert "active_birth_time =" not in without_confirm
+
+
+def test_transition_rpcs_are_service_role_only() -> None:
+    sql = _normalized(TRANSITIONS)
+    assert not re.search(r"grant execute on function .+ to (?:anon|authenticated)", sql)
+    assert not re.search(r"grant\s+.+?on\s+table\s+.+?to\s+(?:anon|authenticated)", sql)

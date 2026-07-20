@@ -35,6 +35,12 @@ const errorDefinitions = {
     message: "请查看最新候选结果后再确认。",
     retryable: true,
   },
+  action_conflict: {
+    status: 409,
+    error: "校正操作发生冲突",
+    message: "请加载最新进度后再试。",
+    retryable: true,
+  },
   profile_incomplete: {
     status: 409,
     error: "出生资料尚未完成",
@@ -46,6 +52,18 @@ const errorDefinitions = {
     error: "校正点数不足",
     message: "请补充点数后再开始校正。",
     retryable: false,
+  },
+  billing_failed: {
+    status: 503,
+    error: "校正计费暂未完成",
+    message: "本次操作未重复扣点，请稍后重试。",
+    retryable: true,
+  },
+  store_unavailable: {
+    status: 503,
+    error: "校正记录暂时不可用",
+    message: "服务暂时不可用，请稍后重试。",
+    retryable: true,
   },
   service_unavailable: {
     status: 503,
