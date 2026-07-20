@@ -23,6 +23,12 @@ function syntheticTechnicalPacket(): RectificationTechnicalPacket {
     partitionIds: ["private-partition-early", "private-partition-late"],
     d1Stability: "stable",
     boundaryDistanceMinutes: 4,
+    sensitivityScope: {
+      source: "time_linked_candidate_scan_samples",
+      rangeStart: "05:16",
+      rangeEnd: "05:24",
+      sampleTimes: ["05:16", "05:24"],
+    },
     stableLayers: [{ layer: "D1", values: ["Cancer"], referenceIds: ["consult-d1-ascendant"] }],
     sensitiveLayers: [
       { layer: "D9", values: ["Leo", "Virgo"], referenceIds: ["consult-d9-candidate-difference"] },
@@ -31,8 +37,8 @@ function syntheticTechnicalPacket(): RectificationTechnicalPacket {
     supportedSensitiveLayers: ["D9", "D10"],
     scoredHistoricalEvidence: [],
     suggestedDomains: [
-      { domain: "relationship", layer: "D9", reason: "D9 在候选范围内变化" },
-      { domain: "career", layer: "D10", reason: "D10 在候选范围内变化" },
+      { domain: "relationship", layer: "D9", reason: "D9 在候选范围内呈现 Leo / Virgo 差异，可用已发生的关系事件区分。" },
+      { domain: "career", layer: "D10", reason: "D10 在候选范围内呈现 Libra / Scorpio 差异，可用已发生的事业事件区分。" },
     ],
     referenceIds: [
       "difference-d9-relationship",
@@ -68,8 +74,8 @@ function richOutput(): RectificationNarrativeModelOutput {
     sensitiveLayers: ["D9", "D10"],
     referenceIds: ["consult-d1-ascendant"],
     domainReasons: [
-      { domain: "relationship", layer: "D9", reason: "D9 changes across the candidate minutes" },
-      { domain: "career", layer: "D10", reason: "D10 changes across the candidate minutes" },
+      { domain: "relationship", layer: "D9", reason: packet.suggestedDomains[0]?.reason ?? "" },
+      { domain: "career", layer: "D10", reason: packet.suggestedDomains[1]?.reason ?? "" },
     ],
     evidenceRequest: {
       domains: ["relationship", "career"],
@@ -132,6 +138,120 @@ test("rejects invented representative times, layers, and references", () => {
   assert.ok(result.issues.some((issue) => issue.includes("invented-reference")));
 });
 
+test("rejects a first turn that names layer tokens without their stable and sensitive values", () => {
+  const packet = syntheticTechnicalPacket();
+  const invalid = {
+    ...richOutput(),
+    narrative: [
+      "05:20 是 05:16–05:24 范围内的待验证候选，不能视为已经确认的出生分钟。",
+      "D1 是稳定层，D9 和 D10 是分钟敏感层。",
+      "关系事件可区分 D9，事业事件可区分 D10。请提供已经发生的真实事件，写明哪一年、哪一月。",
+    ].join("\n"),
+  } satisfies RectificationNarrativeModelOutput;
+  const result = validateNarrativeAgainstPacket(invalid, packet, "first");
+
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.some((issue) => issue.includes("stable evidence semantics")));
+  assert.ok(result.issues.some((issue) => issue.includes("sensitive evidence semantics")));
+});
+
+test("rejects duplicated generic domain reasons that omit a packet discrimination pair", () => {
+  const packet = syntheticTechnicalPacket();
+  const relationshipReason = richOutput().domainReasons[0];
+  assert.ok(relationshipReason);
+  const invalid = {
+    ...richOutput(),
+    domainReasons: [
+      { ...relationshipReason, reason: "D9 may matter for this question" },
+      { ...relationshipReason, reason: "D9 may matter for another question" },
+    ],
+  } satisfies RectificationNarrativeModelOutput;
+  const result = validateNarrativeAgainstPacket(invalid, packet, "first");
+
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.some((issue) => issue.includes("packet discrimination pairs")));
+});
+
+test("rejects a generic broad-year choice questionnaire and falls back without scoring", async () => {
+  const invalid = {
+    ...richOutput(),
+    narrative: [
+      "05:20 是 05:16–05:24 范围内的待验证候选，不能视为已经确认的出生分钟。",
+      "D1 的 Cancer 保持稳定；D9 的 Leo / Virgo 与 D10 的 Libra / Scorpio 都有分钟敏感差异。",
+      "关系事件可区分 D9，事业事件可区分 D10。请按已经发生的经历选择哪一年、哪一月：A. 2018–2020；B. 2021–2023，哪个时间段更符合？",
+    ].join("\n"),
+    evidenceRequest: {
+      domains: ["relationship", "career"],
+      datePrecision: "month_preferred",
+      prompt: "请按过去经历选择哪一年、哪一月：A. 2018–2020；B. 2021–2023，哪个时间段更符合？",
+    },
+  } satisfies RectificationNarrativeModelOutput;
+  const direct = validateNarrativeAgainstPacket(invalid, syntheticTechnicalPacket(), "first");
+
+  assert.equal(direct.valid, false);
+  assert.ok(direct.issues.some((issue) => issue.includes("broad-year choice questionnaire")));
+
+  const result = await generateRectificationNarrative({
+    phase: "first",
+    packet: syntheticTechnicalPacket(),
+    generator: generator([invalid, invalid]),
+  });
+  assert.equal(result.attempts, 2);
+  assert.equal(result.fallbackUsed, true);
+  assert.equal(result.allowEvidenceScoringAdvance, false);
+});
+
+test("rejects generic individual-year options even without a written range", () => {
+  const output = richOutput();
+  assert.ok(output.evidenceRequest);
+  const invalid = {
+    ...output,
+    evidenceRequest: {
+      ...output.evidenceRequest,
+      prompt: "请按过去已经发生的事件选择哪一年、哪一月更符合：A. 2018年；B. 2021年。",
+    },
+  } satisfies RectificationNarrativeModelOutput;
+  const result = validateNarrativeAgainstPacket(invalid, syntheticTechnicalPacket(), "first");
+
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.some((issue) => issue.includes("broad-year choice questionnaire")));
+});
+
+test("rejects ungrounded layers and references nested in a domain reason", () => {
+  const output = richOutput();
+  const firstReason = output.domainReasons[0];
+  assert.ok(firstReason);
+  const invalid = {
+    ...output,
+    domainReasons: [
+      { ...firstReason, reason: `${firstReason.reason} D60 另见 invented-reference。` },
+      ...output.domainReasons.slice(1),
+    ],
+  } satisfies RectificationNarrativeModelOutput;
+  const result = validateNarrativeAgainstPacket(invalid, syntheticTechnicalPacket(), "first");
+
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.some((issue) => issue.includes("domainReasons[0].reason") && issue.includes("D60")));
+  assert.ok(result.issues.some((issue) => issue.includes("domainReasons[0].reason") && issue.includes("invented-reference")));
+});
+
+test("rejects ungrounded times and references nested in the evidence request prompt", () => {
+  const output = richOutput();
+  assert.ok(output.evidenceRequest);
+  const invalid = {
+    ...output,
+    evidenceRequest: {
+      ...output.evidenceRequest,
+      prompt: `${output.evidenceRequest.prompt} 请以 06:45 和 invented-reference 为准。`,
+    },
+  } satisfies RectificationNarrativeModelOutput;
+  const result = validateNarrativeAgainstPacket(invalid, syntheticTechnicalPacket(), "first");
+
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.some((issue) => issue.includes("evidenceRequest.prompt") && issue.includes("06:45")));
+  assert.ok(result.issues.some((issue) => issue.includes("evidenceRequest.prompt") && issue.includes("invented-reference")));
+});
+
 test("rejects an invented plain-text technical reference omitted from the reference list", () => {
   const packet = syntheticTechnicalPacket();
   const invalid = {
@@ -159,6 +279,7 @@ test("retries expression exactly once with the same grounded packet", async () =
   assert.equal(prompts.length, 2);
   assert.match(prompts[0] ?? "", /rectification-technical-v1/);
   assert.match(prompts[1] ?? "", /rectification-technical-v1/);
+  assert.match(prompts[0] ?? "", /time_linked_candidate_scan_samples/);
   assert.equal(prompts.some((prompt) => prompt.includes("candidateWeights")), false);
   assert.equal(prompts.some((prompt) => prompt.includes("private-partition")), false);
 });

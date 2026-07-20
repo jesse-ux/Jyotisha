@@ -26,6 +26,9 @@ type ParsedDate = {
 
 const chineseDatePattern = /(?:19|20)\d{2}\s*年(?:\s*\d{1,2}\s*月(?:\s*\d{1,2}\s*(?:日|号))?)?/g;
 const isoDatePattern = /(?:19|20)\d{2}-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12]\d|3[01]))?/g;
+const unresolvedRelativeTimePattern = /(?:次年|第二年|后来|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)/;
+const leadingRelativeTimePattern = /^\s*(?:(?:次年|第二年|后来(?:又)?|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)\s*)+/;
+const missingEventSummary = "事件内容待补充";
 
 function normalizedDate(value: string): ParsedDate | null {
   const chinese = value.match(/^((?:19|20)\d{2})\s*年(?:\s*(\d{1,2})\s*月(?:\s*(\d{1,2})\s*(?:日|号))?)?$/);
@@ -66,10 +69,13 @@ function eventSummary(fragment: string): string {
     .replace(chineseDatePattern, "")
     .replace(isoDatePattern, "")
     .replace(/^\s*(?:更正|纠正|修正)\s*[:：]?\s*/, "")
-    .replace(/^\s*(?:后来|然后|同时|又)\s*/, "")
+    .replace(leadingRelativeTimePattern, "")
+    .replace(/^\s*(?:同时|又)\s*/, "")
     .trim()
     .replace(/^[，,、:：\s]+|[，,、:：\s]+$/g, "");
-  return withoutDates || fragment.trim();
+  return /[A-Za-z0-9\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/.test(withoutDates)
+    ? withoutDates
+    : missingEventSummary;
 }
 
 function classifyDomain(summary: string): RectificationEvidenceDomain {
@@ -120,9 +126,12 @@ export function extractLifeEventEvidence(
     const sharedDate = sentenceDates.length === 1 ? sentenceDates[0] ?? null : null;
     for (const fragment of fragments) {
       const ownDates = datesIn(fragment);
-      const date = ownDates.length === 1 ? ownDates[0] ?? null : sharedDate;
+      const unresolvedRelativeTime = ownDates.length === 0 && unresolvedRelativeTimePattern.test(fragment);
+      const date = ownDates.length === 1
+        ? ownDates[0] ?? null
+        : ownDates.length === 0 && !unresolvedRelativeTime ? sharedDate : null;
       const summary = eventSummary(fragment);
-      const complete = summary.length > 0 && date !== null;
+      const complete = summary !== missingEventSummary && date !== null && !unresolvedRelativeTime;
       const extractionStatus = !complete
         ? "needs_clarification"
         : corrections.length > 0 ? "corrected" : "clear";

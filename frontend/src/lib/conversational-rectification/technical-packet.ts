@@ -15,6 +15,10 @@ export type ServerComputedRectificationConsultation = {
   readonly calculationVersion: string;
   readonly availableLayers: readonly string[];
   readonly layerReferences: Readonly<Record<string, readonly string[]>>;
+  readonly timeLinkedScanSamples: readonly {
+    readonly sampleIndex: number;
+    readonly time: string;
+  }[];
   readonly boundaryDistanceMinutes: number | null;
   readonly futureWindows: readonly {
     readonly label: string;
@@ -49,6 +53,12 @@ export type RectificationTechnicalPacket = {
   readonly partitionIds: readonly string[];
   readonly d1Stability: "stable" | "sensitive" | "unavailable";
   readonly boundaryDistanceMinutes: number | null;
+  readonly sensitivityScope: {
+    readonly source: "time_linked_candidate_scan_samples";
+    readonly rangeStart: string;
+    readonly rangeEnd: string;
+    readonly sampleTimes: readonly string[];
+  };
   readonly stableLayers: readonly RectificationLayerEvidence[];
   readonly sensitiveLayers: readonly RectificationLayerEvidence[];
   readonly supportedSensitiveLayers: readonly string[];
@@ -76,6 +86,11 @@ type PacketInput = {
   readonly consultation: ServerComputedRectificationConsultation;
 };
 
+type TimeLinkedVargaSample = {
+  readonly time: string;
+  readonly sample: RectificationQuestionnaire["samples"][number];
+};
+
 const layerFields = [
   ["D1", "ascendantSign"],
   ["D4", "d4Sign"],
@@ -92,6 +107,15 @@ const domainByLayer = {
   D4: "relocation",
 } as const satisfies Readonly<Record<string, RectificationEvidenceDomain>>;
 
+const domainLabels = {
+  career: "事业",
+  education: "教育",
+  relocation: "迁居",
+  relationship: "关系",
+  family: "家庭",
+  other: "其他",
+} as const satisfies Readonly<Record<RectificationEvidenceDomain, string>>;
+
 function unique(values: readonly string[]): string[] {
   return [...new Set(values.filter((value) => value.trim().length > 0))];
 }
@@ -104,6 +128,44 @@ function timeToMinute(value: string): number {
 function minuteToTime(value: number): string {
   const normalized = ((value % 1_440) + 1_440) % 1_440;
   return `${String(Math.floor(normalized / 60)).padStart(2, "0")}:${String(normalized % 60).padStart(2, "0")}`;
+}
+
+function sampleClockTime(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const match = value.trim().match(
+    /(?:^|[T\s])(([01]\d|2[0-3]):[0-5]\d)(?::[0-5]\d)?(?:Z|[+-]\d{2}:?\d{2})?$/,
+  );
+  return match?.[1] ?? null;
+}
+
+function timeIsInsideRange(time: string, startTime: string, endTime: string): boolean {
+  const minute = timeToMinute(time);
+  const start = timeToMinute(startTime);
+  const end = timeToMinute(endTime);
+  return end >= start
+    ? minute >= start && minute <= end
+    : minute >= start || minute <= end;
+}
+
+function timeLinkedSamples(
+  scan: RectificationQuestionnaire,
+  links: ServerComputedRectificationConsultation["timeLinkedScanSamples"],
+): readonly TimeLinkedVargaSample[] {
+  const byTime = new Map<string, TimeLinkedVargaSample>();
+  const linkedIndexes = new Set<number>();
+  for (const link of links) {
+    const sample = scan.samples[link.sampleIndex];
+    const time = sampleClockTime(link.time);
+    if (!Number.isInteger(link.sampleIndex) || link.sampleIndex < 0 || !sample || !time) {
+      throw new TypeError("rectification packet received an invalid time-linked scan sample");
+    }
+    if (linkedIndexes.has(link.sampleIndex) || byTime.has(time)) {
+      throw new TypeError("rectification packet received duplicate time-linked scan samples");
+    }
+    linkedIndexes.add(link.sampleIndex);
+    byTime.set(time, { time, sample });
+  }
+  return [...byTime.values()];
 }
 
 function midpoint(startTime: string, endTime: string): string {
@@ -129,11 +191,14 @@ function eventDomain(domain: CandidateResult["evidence"][number]["domain"]): Rec
   return domain === "finance" || domain === "health_pressure" ? "other" : domain;
 }
 
-function layerEvidence(input: PacketInput): RectificationLayerEvidence[] {
+function layerEvidence(
+  samples: readonly RectificationQuestionnaire["samples"][number][],
+  consultation: ServerComputedRectificationConsultation,
+): RectificationLayerEvidence[] {
   return layerFields.map(([layer, field]) => ({
     layer,
-    values: unique(input.scan.samples.map((sample) => sample[field] ?? "")),
-    referenceIds: unique(input.consultation.layerReferences[layer] ?? []),
+    values: unique(samples.map((sample) => sample[field] ?? "")),
+    referenceIds: unique(consultation.layerReferences[layer] ?? []),
   })).filter((item) => item.values.length > 0);
 }
 
@@ -144,7 +209,7 @@ function suggestedDomains(layers: readonly RectificationLayerEvidence[]): Sugges
     return [{
       domain,
       layer: item.layer,
-      reason: `${item.layer} 在候选范围内呈现 ${item.values.join(" / ")} 差异，可用已发生的${domain}事件区分。`,
+      reason: `${item.layer} 在候选范围内呈现 ${item.values.join(" / ")} 差异，可用已发生的${domainLabels[domain]}事件区分。`,
     }];
   });
 }
@@ -159,7 +224,14 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
     : input.candidateDifferences.packet.currentRange;
   const representativeTime = eventSegment?.representativeTime
     ?? midpoint(range.startTime, range.endTime);
-  const layers = layerEvidence(input);
+  const selectedSamples = timeLinkedSamples(input.scan, input.consultation.timeLinkedScanSamples)
+    .filter((item) => timeIsInsideRange(item.time, range.startTime, range.endTime));
+  if (selectedSamples.length < 2) {
+    throw new TypeError(
+      "rectification packet requires two time-linked scan samples inside the selected candidate range",
+    );
+  }
+  const layers = layerEvidence(selectedSamples.map((item) => item.sample), input.consultation);
   const d1 = layers.find((item) => item.layer === "D1");
   const d1Stability = !d1 ? "unavailable" : d1.values.length === 1 ? "stable" : "sensitive";
   const available = new Set(input.consultation.availableLayers);
@@ -168,7 +240,9 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
     && available.has(item.layer));
   const domains = suggestedDomains(sensitiveLayers);
   if (domains.length < 2) {
-    throw new TypeError("rectification packet requires two server-computed discriminating domains");
+    throw new TypeError(
+      "rectification packet requires two time-linked discriminating domains inside the selected candidate range",
+    );
   }
   const scoredHistoricalEvidence = (input.eventScore?.evidence ?? []).map((item) => ({
     evidenceId: item.eventId,
@@ -177,7 +251,12 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
     score: item.points,
     ruleRefs: [...item.ruleIds],
   }));
-  const opportunityRefs = input.candidateDifferences.packet.opportunities.map((item) => item.opportunityId);
+  const scanRange = input.candidateDifferences.packet.currentRange;
+  const selectedRangeMatchesScan = range.startTime === scanRange.startTime
+    && range.endTime === scanRange.endTime;
+  const opportunityRefs = selectedRangeMatchesScan
+    ? input.candidateDifferences.packet.opportunities.map((item) => item.opportunityId)
+    : [];
   const ruleRefs = scoredHistoricalEvidence.flatMap((item) => item.ruleRefs);
   const layerRefs = layers.flatMap((item) => item.referenceIds);
   const modelVersion = input.candidateDifferences.candidateModel.version;
@@ -205,6 +284,12 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
     partitionIds,
     d1Stability,
     boundaryDistanceMinutes: input.consultation.boundaryDistanceMinutes,
+    sensitivityScope: {
+      source: "time_linked_candidate_scan_samples",
+      rangeStart: range.startTime,
+      rangeEnd: range.endTime,
+      sampleTimes: selectedSamples.map((item) => item.time),
+    },
     stableLayers: d1Stability === "stable" && d1 ? [d1] : [],
     sensitiveLayers,
     supportedSensitiveLayers: sensitiveLayers.map((item) => item.layer),
@@ -228,6 +313,10 @@ export function projectRectificationTechnicalPacket(packet: RectificationTechnic
       calculationVersion: packet.calculationVersion,
       stableLayers: packet.stableLayers.map((item) => item.layer),
       sensitiveLayers: [...packet.supportedSensitiveLayers],
+      sensitivityScope: {
+        ...packet.sensitivityScope,
+        sampleTimes: [...packet.sensitivityScope.sampleTimes],
+      },
       candidateDifferenceRefs: packet.candidateDifferenceRefs
         .filter((reference) => reference.trim().length > 0 && reference.length <= 120)
         .slice(0, 40),

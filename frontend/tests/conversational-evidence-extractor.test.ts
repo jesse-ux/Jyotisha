@@ -58,6 +58,44 @@ test("never invents a missing month or day", () => {
   assert.equal(evidence?.eventSummary, "毕业");
 });
 
+test("keeps a bare year as non-scoreable clarification instead of an event summary", () => {
+  const rawText = "2021年";
+  const [evidence] = extractLifeEventEvidence({
+    rawText,
+    sourceTurnId,
+    asOfDate: "2026-07-20",
+  });
+
+  assert.equal(evidence?.rawText, rawText);
+  assert.equal(evidence?.dateValue, "2021");
+  assert.equal(evidence?.datePrecision, "year");
+  assert.notEqual(evidence?.eventSummary, rawText);
+  assert.equal(evidence?.extractionStatus, "needs_clarification");
+  assert.equal(evidence?.scoreable, false);
+  assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);
+});
+
+for (const rawText of [
+  "2021年7月毕业并次年工作",
+  "2021年7月毕业并后来工作",
+  "2021年7月毕业并第二年工作",
+  "2021年7月毕业并此前工作",
+]) {
+  test(`does not propagate a shared date through an unresolved relative clause: ${rawText}`, () => {
+    const evidence = extractLifeEventEvidence({ rawText, sourceTurnId, asOfDate: "2026-07-20" });
+
+    assert.equal(evidence.length, 2);
+    assert.deepEqual(evidence.map((item) => item.eventSummary), ["毕业", "工作"]);
+    assert.equal(evidence[0]?.dateValue, "2021-07");
+    assert.equal(evidence[0]?.extractionStatus, "clear");
+    assert.equal(evidence[0]?.scoreable, true);
+    assert.equal(evidence[1]?.dateValue, null);
+    assert.equal(evidence[1]?.datePrecision, "unknown");
+    assert.equal(evidence[1]?.extractionStatus, "needs_clarification");
+    assert.equal(evidence[1]?.scoreable, false);
+  });
+}
+
 test("marks a future event as context-only and non-scoreable", () => {
   const [evidence] = extractLifeEventEvidence({
     rawText: "2030年3月计划结婚",
