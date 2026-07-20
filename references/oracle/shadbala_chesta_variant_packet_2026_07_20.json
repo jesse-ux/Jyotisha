@@ -1,0 +1,232 @@
+{
+  "scope": "shadbala_chesta_variant_packet",
+  "created_at": "2026-07-20",
+  "component": "chesta",
+  "canonical_component": "Cheshtabala",
+  "status": "variant_packet_ready",
+  "claim_status": "partial",
+  "closure_classification": "method_variant_mixed_with_formula_mismatch",
+  "absolute_parity_ready": false,
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_queue": "references/oracle/shadbala_component_closure_queue_v2_2026_07_19.json",
+  "summary": {
+    "component_row_count": 7,
+    "method_variant_count": 6,
+    "formula_or_unit_mismatch_count": 1,
+    "within_tolerance_count": 0,
+    "max_delta_virupa": 108.76
+  },
+  "rows": [
+    {
+      "ticket_id": "shadbala.sun.chesta",
+      "planet": "Sun",
+      "canonical_component": "Cheshtabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 37.06,
+        "local": 36.0,
+        "vp_jain_local": 70.14,
+        "vp_jain_published": 0.0,
+        "xalen": 30.0
+      },
+      "max_delta_virupa": 70.14,
+      "closure_classification": "method_variant",
+      "variant_family": "luminary_chesta_policy_conflict",
+      "next_evidence_owner": "method_variant_decision",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "closure_note": "Luminary Chesta policy diverges sharply: VP Jain published uses 0 while other engines keep non-zero or fixed values.",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close."
+    },
+    {
+      "ticket_id": "shadbala.moon.chesta",
+      "planet": "Moon",
+      "canonical_component": "Cheshtabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 10.667,
+        "local": 21.34,
+        "vp_jain_local": 108.76,
+        "vp_jain_published": 0.0,
+        "xalen": 30.0
+      },
+      "max_delta_virupa": 108.76,
+      "closure_classification": "method_variant",
+      "variant_family": "luminary_chesta_policy_conflict",
+      "next_evidence_owner": "method_variant_decision",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "closure_note": "Luminary Chesta policy diverges sharply: VP Jain published uses 0 while other engines keep non-zero or fixed values.",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close."
+    },
+    {
+      "ticket_id": "shadbala.mars.chesta",
+      "planet": "Mars",
+      "canonical_component": "Cheshtabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 22.864,
+        "local": 21.6,
+        "vp_jain_local": 19.25,
+        "vp_jain_published": 20.93,
+        "xalen": 15.0
+      },
+      "max_delta_virupa": 7.864,
+      "closure_classification": "method_variant",
+      "variant_family": "mean_motion_seeghrochcha_variant",
+      "next_evidence_owner": "method_variant_decision",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "closure_note": "Differences are consistent with speed basis/Seeghrochcha implementation variants; preserve variant instead of tuning to majority.",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close."
+    },
+    {
+      "ticket_id": "shadbala.mercury.chesta",
+      "planet": "Mercury",
+      "canonical_component": "Cheshtabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 35.368,
+        "local": 47.8,
+        "vp_jain_local": 18.08,
+        "vp_jain_published": 28.76,
+        "xalen": 60.0
+      },
+      "max_delta_virupa": 41.92,
+      "closure_classification": "method_variant",
+      "variant_family": "mean_motion_seeghrochcha_variant",
+      "next_evidence_owner": "method_variant_decision",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "closure_note": "Differences are consistent with speed basis/Seeghrochcha implementation variants; preserve variant instead of tuning to majority.",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close."
+    },
+    {
+      "ticket_id": "shadbala.jupiter.chesta",
+      "planet": "Jupiter",
+      "canonical_component": "Cheshtabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 36.424,
+        "local": 46.49,
+        "vp_jain_local": 11.23,
+        "vp_jain_published": 8.43,
+        "xalen": 60.0
+      },
+      "max_delta_virupa": 51.57,
+      "closure_classification": "method_variant",
+      "variant_family": "mean_motion_seeghrochcha_variant",
+      "next_evidence_owner": "method_variant_decision",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "closure_note": "Differences are consistent with speed basis/Seeghrochcha implementation variants; preserve variant instead of tuning to majority.",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close."
+    },
+    {
+      "ticket_id": "shadbala.venus.chesta",
+      "planet": "Venus",
+      "canonical_component": "Cheshtabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 46.466,
+        "local": 29.36,
+        "vp_jain_local": 27.23,
+        "vp_jain_published": 28.18,
+        "xalen": 15.0
+      },
+      "max_delta_virupa": 31.466,
+      "closure_classification": "formula_or_unit_mismatch",
+      "variant_family": "mean_motion_seeghrochcha_formula_or_unit_exception",
+      "next_evidence_owner": "formula_source_arbitration",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "closure_note": "Same broad Chesta method family, but current normalized values do not cluster enough to close as method variant only.",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close."
+    },
+    {
+      "ticket_id": "shadbala.saturn.chesta",
+      "planet": "Saturn",
+      "canonical_component": "Cheshtabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 58.137,
+        "local": 36.99,
+        "vp_jain_local": 6.78,
+        "vp_jain_published": 5.05,
+        "xalen": 30.0
+      },
+      "max_delta_virupa": 53.087,
+      "closure_classification": "method_variant",
+      "variant_family": "mean_motion_seeghrochcha_variant",
+      "next_evidence_owner": "method_variant_decision",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "closure_note": "Differences are consistent with speed basis/Seeghrochcha implementation variants; preserve variant instead of tuning to majority.",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close."
+    }
+  ],
+  "boundary": "Cheshtabala is split into explicit variant families. This packet improves attribution but does not close absolute Shadbala Virupa parity or production prediction tuning.",
+  "next_actions": [
+    "pin classical/VP Jain Chesta formula source line by line",
+    "add independent public Shadbala worked example with Chesta components",
+    "separate luminary policy from non-luminary mean-motion/Seeghrochcha implementation tests"
+  ],
+  "raw_hash": "558cf827ede9298df041e1d2d615096868b5d4e510a60f607a4942f5673e30b7"
+}

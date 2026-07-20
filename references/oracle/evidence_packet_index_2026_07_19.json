@@ -5,8 +5,8 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 99,
-    "blocked_or_partial_count": 50,
+    "packet_count": 100,
+    "blocked_or_partial_count": 51,
     "human_review_required_count": 3
   },
   "packets": [
@@ -801,6 +801,14 @@
       "claim_status": "partial",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Splits Cheshtabala into luminary policy, mean-motion/Seeghrochcha method variants, and Venus formula/unit mismatch; no absolute Shadbala parity upgrade."
+    },
+    {
+      "packet_id": "shadbala_digbala_formula_packet_2026_07_20",
+      "path": "references/oracle/shadbala_digbala_formula_packet_2026_07_20.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies Digbala rows as formula/unit mismatch and routes them to angular-reference formula arbitration; no absolute parity upgrade."
     }
   ]
 }
