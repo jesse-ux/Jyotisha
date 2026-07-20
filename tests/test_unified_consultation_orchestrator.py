@@ -19,6 +19,16 @@ def test_unified_consultation_orchestrator_normalizes_themes_and_route() -> None
     assert "D10" in route["focus_techniques"]
 
 
+def test_unified_consultation_orchestrator_routes_health_questions() -> None:
+    orchestrator = UnifiedConsultationOrchestrator()
+    themes = orchestrator.normalize_themes(["health"])
+    route = orchestrator.resolve_route("健康 health risk should stay non-medical", themes)
+    assert route["question_type"] == "health"
+    assert route["primary_theme"] == "health"
+    assert "D6" in route["focus_techniques"]
+    assert "non-medical boundary" in route["focus_techniques"]
+
+
 def test_unified_consultation_orchestrator_exposes_surface_agnostic_contract() -> None:
     orchestrator = UnifiedConsultationOrchestrator()
     route = orchestrator.resolve_route("When will I marry?", ["marriage"])

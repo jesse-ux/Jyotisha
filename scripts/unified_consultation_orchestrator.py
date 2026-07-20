@@ -118,6 +118,12 @@ class UnifiedConsultationOrchestrator:
             focus_techniques=["D2", "D11", "Dasha", "Shadbala", "Ashtakavarga"],
             display_label="finance",
         ),
+        "health": RouteDefinition(
+            question_type="health",
+            primary_theme="health",
+            focus_techniques=["D1", "D6", "D8", "Dasha", "Shadbala", "non-medical boundary"],
+            display_label="health",
+        ),
         "timing": RouteDefinition(
             question_type="timing",
             primary_theme="career",
@@ -135,6 +141,7 @@ class UnifiedConsultationOrchestrator:
         "career": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
         "relationship": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
         "finance": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
+        "health": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
         "timing": ["compute_chart", "run_rectification_gate", "run_muhurta_panchanga", "run_thematic_report"],
         "general": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
     }
@@ -172,6 +179,7 @@ class UnifiedConsultationOrchestrator:
             "career": ("career", "job", "work", "promotion", "business", "profession", "事业", "工作", "升职", "生意"),
             "relationship": ("marriage", "married", "wedding", "relationship", "love", "spouse", "partner", "divorce", "婚恋", "婚姻", "感情", "配偶", "恋爱", "结婚", "marry"),
             "finance": ("money", "wealth", "finance", "investment", "property", "income", "财务", "财富", "投资", "房产", "收入"),
+            "health": ("health", "illness", "medical", "disease", "vitality", "健康", "疾病", "病", "体力", "医疗"),
         }
         first_hits: list[tuple[int, str]] = []
         for route_name, tokens in domain_tokens.items():
@@ -195,6 +203,8 @@ class UnifiedConsultationOrchestrator:
             route = self._ROUTE_DEFINITIONS["relationship"]
         elif "wealth" in normalized_themes:
             route = self._ROUTE_DEFINITIONS["finance"]
+        elif "health" in normalized_themes:
+            route = self._ROUTE_DEFINITIONS["health"]
         else:
             route = self._ROUTE_DEFINITIONS["general"]
 

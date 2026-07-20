@@ -1,0 +1,20 @@
+{
+  "batch_max_items": 20,
+  "batch_offset": 40,
+  "boundary": "Health route smoke summary for public real-case E2E; product QA only, not medical or prediction proof.",
+  "captured_count": 20,
+  "core_status_counts": {
+    "ready": 20
+  },
+  "created_at": "2026-07-20",
+  "missing_route_layer_total": 0,
+  "production_tuning_allowed": false,
+  "route_counts": {
+    "finance": 7,
+    "health": 4,
+    "relationship": 5,
+    "timing": 4
+  },
+  "scope": "real_case_website_e2e_health_route_summary",
+  "truth_matrix_allowed": false
+}
