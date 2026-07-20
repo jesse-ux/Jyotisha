@@ -208,6 +208,7 @@ button:disabled { cursor: default; opacity: .45; }
 }
 
 @media (max-width: 767px) {
+  .conversation.is-empty { display: block; }
   .brand-row { padding: 0 4px; }
   .brand-mark { width: 26px; height: 26px; }
   .session-nav { overflow: hidden; }
