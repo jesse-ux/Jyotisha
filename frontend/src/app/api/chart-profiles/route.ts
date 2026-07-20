@@ -70,16 +70,9 @@ export async function POST(request: Request) {
           .single();
       ({ data, error } = await query);
     } else {
-      const record = {
-        ...(body.id ? { id: body.id } : {}),
-        user_id: user.id,
-        role,
-        profile: body.profile,
-        updated_at: updatedAt,
-      };
       ({ data, error } = await supabase
         .from("chart_profiles")
-        .upsert(record, { onConflict: "id" })
+        .insert({ user_id: user.id, role, profile: body.profile, updated_at: updatedAt })
         .select("id, role, profile, updated_at")
         .single());
     }

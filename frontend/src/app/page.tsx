@@ -337,13 +337,12 @@ async function saveCloudChartProfile(record: ChartLibraryRecord) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      id: record.role === "self" ? undefined : record.id,
       role: record.role,
       profile: record.profile,
     }),
   });
-  if (!response.ok) throw new Error("cloud_chart_profile_save_failed");
-  const payload = await response.json().catch(() => null) as { profile?: ChartLibraryApiRecord } | null;
+  const payload = await response.json().catch(() => null) as { profile?: ChartLibraryApiRecord; error?: string } | null;
+  if (!response.ok) throw new Error(payload?.error || "cloud_chart_profile_save_failed");
   return payload?.profile ? normalizeChartLibraryApiRecord(payload.profile) : record;
 }
 
