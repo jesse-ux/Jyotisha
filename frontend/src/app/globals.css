@@ -438,6 +438,51 @@ button:disabled { cursor: default; opacity: .45; }
 .birth-time-success-note { padding: var(--space-4); border-left: 2px solid var(--color-success); background: var(--color-success-muted); color: var(--color-success); }
 .birth-time-candidate-terminal { justify-items: start; }
 .birth-time-candidate-result, .birth-time-candidate-result > *, .birth-time-confirmation-panel > * { min-width: 0; max-width: 100%; }
+.conversational-rectification { width: 100%; min-width: 0; max-width: 720px; display: grid; gap: var(--space-5); overflow-wrap: anywhere; color: var(--color-ink); }
+.conversational-rectification > *, .conversational-rectification form, .conversational-rectification fieldset { min-width: 0; max-width: 100%; }
+.conversational-rectification button { min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
+.conversational-rectification :where(button, textarea, summary):focus-visible { outline: 3px solid color-mix(in srgb, var(--color-focus) 56%, transparent); outline-offset: 3px; }
+.conversational-narrative { padding: var(--space-5); border-left: 3px solid var(--color-action); border-radius: 0 var(--radius-lg) var(--radius-lg) 0; background: var(--color-action-soft); }
+.conversational-narrative .message-markdown { overflow-wrap: anywhere; }
+.conversational-domain-picker { display: grid; gap: var(--space-3); margin: 0; padding: 0; border: 0; }
+.conversational-domain-picker legend { margin-bottom: var(--space-2); color: var(--color-ink-secondary); font-size: var(--type-caption); font-weight: 600; }
+.conversational-domain-picker > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-2); }
+.conversational-domain-picker button { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-canvas); color: var(--color-ink); cursor: pointer; text-align: left; }
+.conversational-domain-picker button[aria-pressed="true"] { border-color: var(--color-action); background: var(--color-action-soft); color: var(--color-action); }
+.conversational-composer { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-canvas); }
+.conversational-composer label { display: grid; gap: var(--space-1); font-size: var(--type-body-sm); font-weight: 600; }
+.conversational-composer label span { color: var(--color-ink-secondary); font-size: var(--type-caption); font-weight: 400; line-height: 1.5; }
+.conversational-composer textarea { width: 100%; min-width: 0; min-height: 112px; resize: vertical; padding: var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-canvas); color: var(--color-ink); line-height: 1.55; }
+.conversational-composer-footer { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.conversational-composer-footer small { color: var(--color-ink-tertiary); font-size: var(--type-overline); }
+.conversational-evidence-recap, .conversational-candidate, .conversational-confirmation, .conversational-original-question, .conversational-abandon-confirmation, .conversational-empty-state { min-width: 0; display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-canvas); }
+.conversational-evidence-recap > header, .conversational-candidate > header { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.conversational-evidence-recap h3, .conversational-candidate h3, .conversational-confirmation h3 { margin: 0; font-family: var(--font-display); font-size: var(--type-title-md); font-weight: 400; }
+.conversational-evidence-recap > header span, .conversational-candidate > header span { color: var(--color-ink-secondary); font-size: var(--type-caption); }
+.conversational-candidate > header .is-unverified { color: var(--color-warning); font-weight: 600; }
+.conversational-candidate > header .is-confirmed { color: var(--color-success); font-weight: 600; }
+.conversational-evidence-recap ul { min-width: 0; display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.conversational-evidence-recap li { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-canvas-soft); }
+.conversational-evidence-recap li > div { min-width: 0; }
+.conversational-evidence-recap time { color: var(--color-ink-tertiary); font-size: var(--type-overline); }
+.conversational-evidence-recap p, .conversational-candidate p, .conversational-confirmation p, .conversational-original-question p, .conversational-abandon-confirmation p, .conversational-empty-state p, .conversational-status p { margin: 0; color: var(--color-ink-secondary); font-size: var(--type-body-sm); line-height: 1.6; }
+.conversational-evidence-recap li button { min-width: 56px; padding: 0 var(--space-3); border: 0; background: transparent; color: var(--color-action); cursor: pointer; }
+.conversational-candidate dl, .conversational-technical-receipt dl { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-border); }
+.conversational-candidate dl > div, .conversational-technical-receipt dl > div { min-width: 0; display: grid; gap: var(--space-1); padding: var(--space-3); background: var(--color-canvas-soft); }
+.conversational-candidate dt, .conversational-technical-receipt dt { color: var(--color-ink-tertiary); font-size: var(--type-overline); }
+.conversational-candidate dd, .conversational-technical-receipt dd { min-width: 0; margin: 0; color: var(--color-ink); font-size: var(--type-body-sm); overflow-wrap: anywhere; }
+.conversational-candidate time { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.conversational-technical-receipt { min-width: 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+.conversational-technical-receipt summary { min-height: 44px; display: flex; align-items: center; color: var(--color-action); cursor: pointer; font-size: var(--type-body-sm); font-weight: 600; }
+.conversational-technical-receipt code { font-family: var(--font-mono); font-size: var(--type-overline); }
+.conversational-confirmation { border-color: color-mix(in srgb, var(--color-action) 44%, var(--color-border)); background: var(--color-action-soft); }
+.conversational-status { min-width: 0; min-height: 1px; }
+.conversational-original-question { background: var(--color-success-muted); }
+.conversational-session-actions { min-width: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); }
+.conversational-abandon { min-height: 44px; padding: 0 var(--space-3); border: 1px solid transparent; border-radius: var(--radius-md); background: transparent; color: var(--color-danger); cursor: pointer; }
+.conversational-abandon.is-confirm { border-color: var(--color-danger); background: var(--color-danger); color: var(--color-on-dark); }
+.conversational-abandon-confirmation { border-color: color-mix(in srgb, var(--color-danger) 50%, var(--color-border)); background: var(--color-danger-muted); }
+.conversational-abandon-confirmation > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 .phrase-nowrap { white-space: nowrap; }
 
 .starter-list { border-top: 1px solid var(--color-border); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); border: 0; }
@@ -705,4 +750,13 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   .auth-panel { padding: var(--space-8) var(--space-5); }
   .auth-panel h1 { font-size: var(--type-display-sm); }
   .admin-section { padding: var(--space-5); }
+}
+
+@media (max-width: 430px) {
+  .conversational-rectification { width: 100%; max-width: 100%; gap: var(--space-4); overflow-x: clip; }
+  .conversational-narrative, .conversational-composer, .conversational-evidence-recap, .conversational-candidate, .conversational-confirmation, .conversational-original-question, .conversational-abandon-confirmation, .conversational-empty-state { padding: var(--space-3); }
+  .conversational-domain-picker > div, .conversational-candidate dl, .conversational-technical-receipt dl { grid-template-columns: minmax(0, 1fr); }
+  .conversational-composer-footer { align-items: stretch; flex-direction: column; }
+  .conversational-composer-footer button, .conversational-confirmation button, .conversational-original-question button, .conversational-session-actions > button, .conversational-abandon-confirmation button { width: 100%; }
+  .conversational-session-actions, .conversational-abandon-confirmation > div { flex-direction: column; }
 }
