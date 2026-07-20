@@ -42,6 +42,10 @@ const migrationWorkflowUrl = new URL(
   "../../.github/workflows/migrate-staging-database.yml",
   import.meta.url,
 );
+const deploymentReadmeUrl = new URL(
+  "../../deploy/README.md",
+  import.meta.url,
+);
 
 function indentation(line: string): number {
   return line.match(/^ */)?.[0].length ?? 0;
@@ -201,6 +205,114 @@ function logicalShellLines(script: string): string[] {
     .map((line) => line.trim())
     .filter(Boolean);
 }
+
+test("operations runbook documents the staging database boundary and deployment order", () => {
+  const readme = readFileSync(deploymentReadmeUrl, "utf8");
+
+  assert.match(readme, /Staging PostgreSQL operations/);
+  assert.match(readme, /\/opt\/jyotisha-staging\/\.env\.staging` \(`?0600`?\)/);
+  assert.match(readme, /\/opt\/jyotisha-staging\/\.env\.staging\.database` \(`?0600`?\)/);
+  assert.match(readme, /umask 077[\s\S]*touch \.env\.staging\.database[\s\S]*chmod 600 \.env\.staging\.database/);
+
+  for (const key of [
+    "POSTGRES_DB=jyotisha",
+    "POSTGRES_USER=postgres",
+    "POSTGRES_PASSWORD=<generated>",
+    "SCHEMA_OWNER_PASSWORD=<generated>",
+    "IDENTITY_RUNTIME_PASSWORD=<generated>",
+    "APP_RUNTIME_PASSWORD=<generated>",
+    "ADMIN_RUNTIME_PASSWORD=<generated>",
+    "MIGRATION_RUNNER_PASSWORD=<generated>",
+    "BACKUP_READER_PASSWORD=<generated>",
+    "STAGING_BACKUP_ENCRYPTION_KEY=<generated>",
+    "SCHEMA_DATABASE_URL=postgresql://schema_owner:<percent-encoded-password>@postgres:5432/jyotisha",
+  ]) {
+    assert.match(readme, new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+  assert.match(readme, /independently generated 32 random bytes/);
+  assert.match(readme, /openssl rand -base64 32/);
+  assert.match(readme, /percent-encod(?:e|ed)[^\n]*URL password/i);
+  assert.match(readme, /SCHEMA_DATABASE_URL[^\n]*must not[^\n]*\.env\.staging/i);
+  assert.match(
+    readme,
+    /there is no `?SCHEMA_DATABASE_URL`? in `?\.env\.staging`?/i,
+  );
+
+  assert.match(readme, /private[^\n]*PostgreSQL|PostgreSQL[^\n]*private/i);
+  assert.match(readme, /no published host port|no host port/i);
+  assert.match(readme, /127\.0\.0\.1:\$\{POSTGRES_HOST_PORT:-55432\}:5432/);
+
+  for (const workflow of [
+    "Staging Backend Quality Gate",
+    "Migrate Staging Database",
+    "Deploy staging",
+  ]) {
+    assert.match(readme, new RegExp(workflow));
+  }
+  assert.match(readme, /pull_request/);
+  assert.match(readme, /push[^\n]*staging|staging[^\n]*push/i);
+  assert.match(readme, /workflow_dispatch/);
+  assert.match(readme, /deploy_sha/);
+  assert.match(readme, /exact[^\n]*40-character[^\n]*SHA/i);
+  assert.match(readme, /re-dispatch|redispatch/i);
+  assert.match(readme, /same[^\n]*SHA/i);
+
+  for (const variable of [
+    "STAGING_SUPABASE_URL",
+    "STAGING_SUPABASE_ANON_KEY",
+    "STAGING_HOST",
+    "STAGING_PORT",
+    "STAGING_USER",
+    "STAGING_PATH",
+    "STAGING_URL",
+    "STAGING_KNOWN_HOSTS",
+  ]) {
+    assert.match(readme, new RegExp(variable));
+  }
+  assert.match(readme, /Settings[ ]*[→>-][ ]*Secrets and variables[ ]*[→>-][ ]*Actions[ ]*[→>-][ ]*Variables/);
+  assert.match(readme, /public build inputs[^\n]*required for publish/i);
+  assert.match(readme, /never print[^\n]*(?:values|keys)/i);
+  assert.match(readme, /STAGING_SSH_PRIVATE_KEY/);
+
+  const mergeIndex = readme.indexOf("Merge to `staging`");
+  const gateIndex = readme.indexOf("Staging Backend Quality Gate", mergeIndex);
+  const migrationIndex = readme.indexOf("Migrate Staging Database", gateIndex);
+  const redispatchIndex = readme.search(/re-dispatch|redispatch/i);
+  const healthIndex = readme.indexOf(
+    "https://staging.jyotisha.chat/api/health",
+    redispatchIndex,
+  );
+  const backupIndex = readme.indexOf("backup-staging-postgres.sh", healthIndex);
+  assert.ok(mergeIndex >= 0, "runbook must state the staging merge step");
+  assert.ok(gateIndex > mergeIndex, "quality gate must follow the staging merge");
+  assert.ok(migrationIndex > gateIndex, "manual migration must follow the gate");
+  assert.ok(redispatchIndex > migrationIndex, "migration must redispatch the same SHA");
+  assert.ok(healthIndex > redispatchIndex, "health check must follow redispatch");
+  assert.ok(backupIndex > healthIndex, "backup must follow health verification");
+});
+
+test("operations runbook documents three encrypted local backups and a safe restore drill", () => {
+  const readme = readFileSync(deploymentReadmeUrl, "utf8");
+
+  assert.match(readme, /newest three|three[^\n]*encrypted local backups/i);
+  assert.match(readme, /AES-256-CBC/i);
+  assert.match(readme, /PBKDF2|pbkdf2/);
+  assert.match(readme, /custom[^\n]*format|format:[ ]*custom/i);
+  assert.match(readme, /no off[- ]site[^\n]*staging[^\n]*(?:recovery|backup)/i);
+  assert.match(
+    readme,
+    /\.\/deploy\/backup-staging-postgres\.sh[\s\S]*\.env\.staging\.database[\s\S]*\/opt\/jyotisha-staging\/backups\/staging-db/,
+  );
+  assert.match(readme, /-pass env:STAGING_BACKUP_ENCRYPTION_KEY/);
+  assert.match(readme, /passphrase[^\n]*(?:argv|command line|output|history)/i);
+  assert.match(readme, /jyotisha_restore_check/);
+  assert.match(readme, /pg_restore/);
+  assert.match(readme, /dropdb[^\n]*jyotisha_restore_check|DROP DATABASE[^\n]*jyotisha_restore_check/i);
+  assert.match(readme, /temporary decrypted dump/);
+  assert.match(readme, /delete[^\n]*(?:only|just)[^\n]*(?:disposable database|jyotisha_restore_check)[^\n]*(?:and|,)[^\n]*temporary decrypted dump/i);
+  assert.match(readme, /do not[^\n]*(?:docker compose[^\n]*down|down -v)[^\n]*(?:restore|drill|staging)/i);
+  assert.match(readme, /does not authorize[^\n]*(?:production|cutover)|no production[^\n]*cutover[^\n]*authoriz/i);
+});
 
 test("backend quality gate has structured staging triggers and concurrency", () => {
   const document = parseWorkflow();
