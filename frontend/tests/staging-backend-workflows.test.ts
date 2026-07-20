@@ -367,6 +367,8 @@ test("diagnostic artifact upload is always executed in validation", () => {
 test("publishing has job-local permissions and immutable staging SHA images", () => {
   const document = parseWorkflow();
   const publish = job(document, "publish");
+  const publishSteps = steps(document, publish);
+  const publishStepNames = publishSteps.map(({ name }) => name);
 
   assert.equal(
     child(document, publish, "if").value,
@@ -381,6 +383,30 @@ test("publishing has job-local permissions and immutable staging SHA images", ()
       ["contents", "read"],
       ["packages", "write"],
     ],
+  );
+
+  assert.ok(
+    publishStepNames.indexOf("Validate staging web build variables") <
+      publishStepNames.indexOf("Build and publish API image"),
+  );
+  assert.ok(
+    publishStepNames.indexOf("Validate staging web build variables") <
+      publishStepNames.indexOf("Build and publish web image"),
+  );
+
+  const stagingVariables = requiredStep(
+    document,
+    publish,
+    "Validate staging web build variables",
+  );
+  const stagingVariableEnv = stepField(document, stagingVariables, "env");
+  assert.equal(
+    child(document, stagingVariableEnv, "STAGING_SUPABASE_URL").value,
+    "${{ vars.STAGING_SUPABASE_URL }}",
+  );
+  assert.equal(
+    child(document, stagingVariableEnv, "STAGING_SUPABASE_ANON_KEY").value,
+    "${{ vars.STAGING_SUPABASE_ANON_KEY }}",
   );
 
   const login = requiredStep(document, publish, "Log in to GHCR");
@@ -423,10 +449,58 @@ test("publishing has job-local permissions and immutable staging SHA images", ()
   assert.equal(
     blockScalar(document, child(document, webOptions, "build-args")),
     [
-      "NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co",
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder",
+      "NEXT_PUBLIC_SUPABASE_URL=${{ vars.STAGING_SUPABASE_URL }}",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.STAGING_SUPABASE_ANON_KEY }}",
     ].join("\n"),
   );
+
+  const validateFrontend = requiredStep(
+    document,
+    job(document, "validate"),
+    "Validate frontend",
+  );
+  const outsideValidationBuild = [
+    ...document.lines.slice(0, validateFrontend.node.start),
+    ...document.lines.slice(validateFrontend.node.end),
+  ].join("\n");
+  assert.doesNotMatch(outsideValidationBuild, /placeholder/);
+});
+
+test("publishing fails closed for missing or invalid staging web variables without exposing values", () => {
+  const document = parseWorkflow();
+  const validation = requiredStep(
+    document,
+    job(document, "publish"),
+    "Validate staging web build variables",
+  );
+  const script = stepRun(document, validation);
+  const secretFixture = "anon-fixture-must-not-appear";
+  const validUrl = "https://project-ref.supabase.co";
+  const invalidUrl = "http://project-ref.supabase.co";
+  const run = (url: string, anonKey: string) =>
+    spawnSync("bash", ["-c", script], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        STAGING_SUPABASE_URL: url,
+        STAGING_SUPABASE_ANON_KEY: anonKey,
+      },
+    });
+
+  assert.match(script, /test -n "\$STAGING_SUPABASE_URL"/);
+  assert.match(script, /test -n "\$STAGING_SUPABASE_ANON_KEY"/);
+  assert.doesNotMatch(script, /echo[^\n]*\$STAGING_SUPABASE_(?:URL|ANON_KEY)/);
+
+  for (const failed of [
+    run("", secretFixture),
+    run(validUrl, ""),
+    run(invalidUrl, secretFixture),
+  ]) {
+    assert.notEqual(failed.status, 0);
+    assert.doesNotMatch(`${failed.stdout}\n${failed.stderr}`, new RegExp(secretFixture));
+    assert.doesNotMatch(`${failed.stdout}\n${failed.stderr}`, new RegExp(invalidUrl));
+  }
+  assert.equal(run(validUrl, secretFixture).status, 0);
 });
 
 test("deployment test script covers health and backend workflow contracts", () => {
@@ -516,14 +590,32 @@ test("staging deploy pins every Compose call and gates app changes on the read-o
     .flatMap(logicalShellLines)
     .filter((line) => line.includes("docker compose"));
   assert.equal(composeCommands.length, 7);
+  const rollbackComposeCommands = composeCommands.filter((command) =>
+    command.includes("API_IMAGE='$PREVIOUS_API_IMAGE'"),
+  );
+  assert.equal(rollbackComposeCommands.length, 1);
+  const targetComposeCommands = composeCommands.filter(
+    (command) => !command.includes("API_IMAGE='$PREVIOUS_API_IMAGE'"),
+  );
+  assert.equal(targetComposeCommands.length, 6);
+  for (const command of targetComposeCommands) {
+    assert.match(
+      command,
+      /API_IMAGE='ghcr\.io\/jesse-ux\/jyotisha-api:\$DEPLOY_GIT_SHA'/,
+    );
+    assert.match(
+      command,
+      /WEB_IMAGE='ghcr\.io\/jesse-ux\/jyotisha-web:\$DEPLOY_GIT_SHA'/,
+    );
+  }
+  assert.match(rollbackComposeCommands[0], /WEB_IMAGE='\$PREVIOUS_WEB_IMAGE'/);
+  assert.match(rollbackComposeCommands[0], /GITHUB_SHA='\$PREVIOUS_SHA'/);
   for (const command of composeCommands) {
     assert.match(command, /ssh /);
     assert.match(command, /APP_ENV_FILE='\.\.\/\.env\.staging'/);
     assert.match(command, /DATABASE_ENV_FILE='\.\.\/\.env\.staging\.database'/);
     assert.match(command, /CADDYFILE_PATH='\.\/Caddyfile\.staging'/);
     assert.match(command, /SITE_ADDRESS='https:\/\/staging\.jyotisha\.chat'/);
-    assert.match(command, /API_IMAGE=/);
-    assert.match(command, /WEB_IMAGE=/);
     assert.match(command, /--env-file \.env\.staging/);
     assert.match(command, /-f deploy\/docker-compose\.server\.yml/);
     assert.match(command, /-f deploy\/docker-compose\.postgres\.yml/);
@@ -575,13 +667,22 @@ test("staging deploy pins every Compose call and gates app changes on the read-o
   assert.match(applicationDeploy, /up -d --no-build --remove-orphans/);
   const previous = requiredStep(document, deploy, "Record previous staging images");
   assert.equal(stepField(document, previous, "id").value, "previous");
-  assert.match(stepRun(document, previous), /docker inspect --format '\{\{\.Config\.Image\}\}'/);
-  assert.match(stepRun(document, previous), /api_image=\$PREVIOUS_API_IMAGE/);
-  assert.match(stepRun(document, previous), /web_image=\$PREVIOUS_WEB_IMAGE/);
-  assert.match(stepRun(document, previous), /previous_sha=\$PREVIOUS_SHA/);
+  const previousScript = stepRun(document, previous);
+  assert.match(previousScript, /docker inspect --format '\{\{\.Config\.Image\}\}'/);
+  assert.match(previousScript, /api_image=\$PREVIOUS_API_IMAGE/);
+  assert.match(previousScript, /web_image=\$PREVIOUS_WEB_IMAGE/);
+  assert.match(previousScript, /previous_sha=\$PREVIOUS_SHA/);
+  assert.doesNotMatch(
+    previousScript,
+    /(?:api_image|web_image|previous_sha)=not-deployed/,
+  );
+  assert.match(previousScript, /\$\{PREVIOUS_SHA:-not-deployed\}/);
 
   const rollback = requiredStep(document, deploy, "Roll back staging images");
-  assert.match(stepField(document, rollback, "if").value, /steps\.migration_check\.outcome == 'success'/);
+  assert.equal(
+    stepField(document, rollback, "if").value,
+    "failure() && steps.migration_check.outcome == 'success' && steps.previous.outputs.api_image != '' && steps.previous.outputs.web_image != '' && steps.previous.outputs.previous_sha != ''",
+  );
   const rollbackEnv = stepField(document, rollback, "env");
   assert.equal(
     child(document, rollbackEnv, "PREVIOUS_API_IMAGE").value,
@@ -599,6 +700,7 @@ test("staging deploy pins every Compose call and gates app changes on the read-o
   assert.match(stepRun(document, rollback), /WEB_IMAGE='\$PREVIOUS_WEB_IMAGE'/);
   assert.match(stepRun(document, rollback), /GITHUB_SHA='\$PREVIOUS_SHA'/);
   assert.match(stepRun(document, rollback), /up -d --no-build/);
+  assert.doesNotMatch(stepRun(document, rollback), /not-deployed/);
 
   const logout = requiredStep(document, deploy, "Log out of GHCR");
   assert.equal(stepField(document, logout, "if").value, "always()");
