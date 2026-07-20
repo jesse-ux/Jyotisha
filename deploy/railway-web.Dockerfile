@@ -7,6 +7,8 @@ RUN npm ci
 COPY frontend/src ./src
 COPY frontend/public ./public
 COPY frontend/next.config.ts frontend/postcss.config.mjs frontend/tsconfig.json ./
+COPY frontend/scripts ./scripts
+COPY frontend/db ./db
 
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
