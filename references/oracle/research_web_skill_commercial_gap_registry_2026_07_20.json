@@ -1,0 +1,112 @@
+{
+  "scope": "research_web_skill_commercial_gap_registry",
+  "created_at": "2026-07-20",
+  "claim_status": "open_queue",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "boundary": "Research repo optimization plan only. Commercial UI patterns can be learned as product flow references, but research runtime must not import Supabase, credits, payment, or dirty commercial worktree code.",
+  "current_state": {
+    "research_repo": {
+      "strength": [
+        "core Jyotish calculation and interpretation skill coverage",
+        "strict workflow and Technique Audit Table requirements",
+        "evidence packet index and claim-status governance",
+        "open-source observation probes for PyJHora/JHora, jyotishganit, VedicAstro, Xalen/Jyotishyamitra candidates"
+      ],
+      "web_maturity": "research_tooling_partial",
+      "web_current_entries": [
+        "chart calculation and rendering",
+        "AI/chat bridge",
+        "rectification UI and engine",
+        "MEVG audit helpers",
+        "Tajika/transit/advanced analysis modules"
+      ],
+      "web_gap": [
+        "profile onboarding is lighter than commercial chart-profile flow",
+        "local chart library and current-profile linkage need clearer UX",
+        "conversation/session management is less mature than commercial sidebar",
+        "rectification journey lacks commercial-grade resume/mobile-scroll/error-contract polish",
+        "skill truth overlay is stronger than web claim display; web should surface blocked/partial boundaries more explicitly"
+      ]
+    },
+    "skill_layer": {
+      "strength": [
+        "35 Dasha systems named with maturity caveats",
+        "405+ Yoga rule registry",
+        "D1-D144/generic divisional engine claims guarded by truth overlay",
+        "Prashna/KP/Muhurta/Tajika/Sphuta marked partial or blocked where needed"
+      ],
+      "gap": [
+        "effective_skill_capability_view must be the only advertised capability source",
+        "web/API should consume skill_truth_overlay before showing technique confidence",
+        "high-rigor closure gates need visible UI/API claim boundaries",
+        "worked-example numeric packets should drive skill upgrades, not registry labels alone"
+      ]
+    },
+    "commercial_repo_patterns_to_learn": {
+      "source_path": "/private/tmp/jyotisha-commercial-readonly.adiUr0",
+      "source_status": "read_only_dirty_worktree_do_not_copy_directly",
+      "valuable_patterns": [
+        "chart profile persistence flow",
+        "birth-time journey resume and turn persistence",
+        "dynamic rectification question planner and stop policy",
+        "mobile scroll contract for rectification cards",
+        "sidebar session row actions and conversation organization",
+        "user-facing error contracts around invalid patterns/input"
+      ],
+      "must_not_import": [
+        "Supabase runtime",
+        "credits/payment/subscription logic",
+        "commercial auth/session business rules",
+        "dirty uncommitted API/test changes",
+        "commercial user data"
+      ]
+    }
+  },
+  "delivery_queue": [
+    {
+      "track": "worked_examples_to_numeric_packets",
+      "status": "in_progress",
+      "next_delivery": "Convert eligible public/OSS candidates into raw-captured numeric packets only when exact input, expected numeric fields, license/version, and replay hash are available.",
+      "gate_for_upgrade": "oracle_ready_count > 0 in worked_example_numeric_packet_eligibility"
+    },
+    {
+      "track": "component_closure",
+      "status": "in_progress",
+      "next_delivery": "Use Shadbala same-unit rows to close each of 42 components as within_tolerance, formula_mismatch, unit_mismatch, or method_variant.",
+      "gate_for_upgrade": "absolute_parity_ready_count increases without majority-vote truth"
+    },
+    {
+      "track": "claim_gate_upgrade",
+      "status": "in_progress",
+      "next_delivery": "Wire high-rigor closure snapshot into user-facing/API claim boundary so blocked/partial cannot be displayed as verified.",
+      "gate_for_upgrade": "runtime output carries claim_status and production_tuning_allowed=false for partial techniques"
+    },
+    {
+      "track": "research_web_profile_flow",
+      "status": "planned",
+      "next_delivery": "Adopt commercial-style chart profile onboarding with localStorage only: name, birth date/time, place, timezone, optional gender-role field, active profile selector.",
+      "gate_for_upgrade": "local profile save/load/clear and active-profile chart hash tests pass"
+    },
+    {
+      "track": "research_web_rectification_journey",
+      "status": "planned",
+      "next_delivery": "Learn commercial journey patterns: resume state, candidate range card, mobile scroll contract, clearer invalid-input messages.",
+      "gate_for_upgrade": "rectification UI tests prove candidate claim remains exploratory, not birth-time truth"
+    },
+    {
+      "track": "skill_to_web_sync",
+      "status": "planned",
+      "next_delivery": "Expose effective_skill_capability_view and skill_truth_overlay inside research web technique audit display.",
+      "gate_for_upgrade": "web audit table labels KP/Muhurta/Shadbala/Prashna according to overlay, not optimistic registry labels"
+    }
+  ],
+  "recommended_order": [
+    "worked_examples_to_numeric_packets",
+    "component_closure",
+    "claim_gate_upgrade",
+    "research_web_profile_flow",
+    "research_web_rectification_journey",
+    "skill_to_web_sync"
+  ]
+}

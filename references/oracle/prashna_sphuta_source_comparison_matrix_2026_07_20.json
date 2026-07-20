@@ -1,0 +1,87 @@
+{
+  "boundary": "Matrix connects VedAstro expected values, local arithmetic replay, and IA locator hashes; still open queue.",
+  "claim_status": "open_queue",
+  "created_at": "2026-07-20",
+  "field_rows": [
+    {
+      "claim_boundary": "Field comparison only; no Prashna truth upgrade without complete input/raw/replay.",
+      "field": "sun",
+      "ia_excerpt_status": "not_field_specific",
+      "local_formula_degree": null,
+      "local_vs_vedastro_status": "input_value_only",
+      "vedastro_expected_degree": 123.14027777777778
+    },
+    {
+      "claim_boundary": "Field comparison only; no Prashna truth upgrade without complete input/raw/replay.",
+      "field": "moon",
+      "ia_excerpt_status": "not_field_specific",
+      "local_formula_degree": null,
+      "local_vs_vedastro_status": "input_value_only",
+      "vedastro_expected_degree": 109.60944444444443
+    },
+    {
+      "claim_boundary": "Field comparison only; no Prashna truth upgrade without complete input/raw/replay.",
+      "field": "lagna",
+      "ia_excerpt_status": "not_field_specific",
+      "local_formula_degree": null,
+      "local_vs_vedastro_status": "input_value_only",
+      "vedastro_expected_degree": 117.36666666666666
+    },
+    {
+      "claim_boundary": "Field comparison only; no Prashna truth upgrade without complete input/raw/replay.",
+      "field": "gulika",
+      "ia_excerpt_status": "located_context",
+      "local_formula_degree": null,
+      "local_vs_vedastro_status": "input_value_only",
+      "vedastro_expected_degree": 104.16666666666667
+    },
+    {
+      "claim_boundary": "Field comparison only; no Prashna truth upgrade without complete input/raw/replay.",
+      "field": "rahu",
+      "ia_excerpt_status": "not_field_specific",
+      "local_formula_degree": null,
+      "local_vs_vedastro_status": "input_value_only",
+      "vedastro_expected_degree": 98.26666666666667
+    },
+    {
+      "claim_boundary": "Field comparison only; no Prashna truth upgrade without complete input/raw/replay.",
+      "field": "trisphuta",
+      "ia_excerpt_status": "located_context",
+      "local_formula_degree": 331.1427777777778,
+      "local_vs_vedastro_status": "match",
+      "vedastro_expected_degree": 331.1427777777778
+    },
+    {
+      "claim_boundary": "Field comparison only; no Prashna truth upgrade without complete input/raw/replay.",
+      "field": "chatusphuta",
+      "ia_excerpt_status": "located_context",
+      "local_formula_degree": 94.28305555555556,
+      "local_vs_vedastro_status": "mismatch",
+      "vedastro_expected_degree": 75.30944444444444
+    },
+    {
+      "claim_boundary": "Field comparison only; no Prashna truth upgrade without complete input/raw/replay.",
+      "field": "panchasphuta",
+      "ia_excerpt_status": "located_context",
+      "local_formula_degree": 192.54972222222221,
+      "local_vs_vedastro_status": "mismatch",
+      "vedastro_expected_degree": 173.57611111111112
+    }
+  ],
+  "ia_excerpt_window_count": 2,
+  "next_evidence": [
+    "line-level transcription review",
+    "complete Prashna input",
+    "legal external replay"
+  ],
+  "production_tuning_allowed": false,
+  "scope": "prashna_sphuta_source_comparison_matrix",
+  "status": "comparison_matrix_ready",
+  "summary": {
+    "field_count": 8,
+    "match_count": 1,
+    "mismatch_count": 2,
+    "truth_upgrade_count": 0
+  },
+  "truth_matrix_allowed": false
+}

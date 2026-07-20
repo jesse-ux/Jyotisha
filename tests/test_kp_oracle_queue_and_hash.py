@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 HASH_SCRIPT = ROOT / "scripts/kp_external_table_hash_manifest.py"
+HASH_ARTIFACT = ROOT / "references/oracle/kp_external_table_hash_manifest_2026_07_20.json"
 QUEUE = ROOT / "references/oracle/kp_cusp_worked_example_oracle_queue_2026_07_19.json"
 INDEX = ROOT / "references/oracle/evidence_packet_index_2026_07_19.json"
 
@@ -49,4 +50,19 @@ def test_kp_hash_and_oracle_queue_are_indexed() -> None:
     data = json.loads(INDEX.read_text(encoding="utf-8"))
     packets = {packet["packet_id"]: packet for packet in data["packets"]}
     assert packets["kp_external_table_hash_manifest"]["path"] == "scripts/kp_external_table_hash_manifest.py"
+    assert packets["kp_external_table_hash_manifest_2026_07_20"]["path"] == "references/oracle/kp_external_table_hash_manifest_2026_07_20.json"
     assert packets["kp_cusp_worked_example_oracle_queue"]["claim_status"] == "blocked"
+
+
+def test_kp_external_table_hash_artifact_records_current_fixture_blocker() -> None:
+    data = json.loads(HASH_ARTIFACT.read_text(encoding="utf-8"))
+    assert data["scope"] == "kp_external_table_hash_manifest"
+    assert data["table_id"] == "VedicAstro_KP_SL_Divisions"
+    assert data["status"] in {"fixed_hash", "fixture_missing"}
+    assert data["production_tuning_allowed"] is False
+    assert data["truth_matrix_allowed"] is False
+    if data["status"] == "fixture_missing":
+        assert data["claim_status"] == "blocked_fixture_missing"
+        assert data["next_action"] == "pin legal source table file or keep KP exact cusp oracle blocked"
+    else:
+        assert len(data["sha256"]) == 64

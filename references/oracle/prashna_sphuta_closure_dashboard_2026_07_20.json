@@ -1,0 +1,109 @@
+{
+  "boundary": "Dashboard only; summarizes blocked gates and does not upgrade any Prashna/Sphuta claim.",
+  "claim_status": "blocked_until_human_labels",
+  "commercial_sync_status": "research_observation_only",
+  "created_at": "2026-07-20",
+  "forbidden_uses": [
+    "do_not_use_for_deterministic_prashna_verdict",
+    "do_not_tune_formula_from_candidate_mismatch",
+    "do_not_claim_external_oracle_ready"
+  ],
+  "gates": [
+    {
+      "evidence": "review_result_validation valid_completed_review_count == 0",
+      "gate_id": "human_line_review",
+      "status": "blocked"
+    },
+    {
+      "evidence": "candidate lacks question datetime/location/timezone/ayanamsa/node",
+      "gate_id": "complete_prashna_input",
+      "status": "blocked"
+    },
+    {
+      "evidence": "no PyJHora/other legal replay packet yet",
+      "gate_id": "legal_external_replay",
+      "status": "blocked"
+    },
+    {
+      "evidence": "Trisphuta matches; Chatusphuta/Panchasphuta mismatch",
+      "gate_id": "formula_or_transcription_arbitration",
+      "status": "open_queue"
+    }
+  ],
+  "next_actions": [
+    "fill review_result_template via human/second-source review",
+    "capture complete Prashna input if a worked example is found",
+    "run legal external replay only after inputs close"
+  ],
+  "packet_chain": [
+    {
+      "claim_status": "ready_contract",
+      "path": "references/oracle/prashna_input_contract_2026_07_20.json",
+      "scope": "prashna_input_contract",
+      "status": "contract_ready"
+    },
+    {
+      "claim_status": "open_queue",
+      "path": "references/oracle/prashna_numeric_oracle_packet_queue_2026_07_20.json",
+      "scope": "prashna_numeric_oracle_packet_queue",
+      "status": "queue_ready"
+    },
+    {
+      "claim_status": "tooling_observation_only",
+      "path": "references/oracle/prashna_sphuta_candidate_replay_readiness_2026_07_20.json",
+      "scope": "prashna_sphuta_candidate_replay_readiness",
+      "status": "replay_readiness_ready"
+    },
+    {
+      "claim_status": "open_queue",
+      "path": "references/oracle/prashna_sphuta_mismatch_arbitration_2026_07_20.json",
+      "scope": "prashna_sphuta_mismatch_arbitration",
+      "status": "arbitration_queue_ready"
+    },
+    {
+      "claim_status": "source_intake_only",
+      "path": "references/oracle/prashna_marga_raw_capture_packet_2026_07_20.json",
+      "scope": "prashna_marga_raw_capture_packet",
+      "status": "raw_capture_metadata_ready"
+    },
+    {
+      "claim_status": "source_intake_only",
+      "path": "references/oracle/prashna_marga_excerpt_locator_2026_07_20.json",
+      "scope": "prashna_marga_excerpt_locator",
+      "status": "excerpt_locator_ready"
+    },
+    {
+      "claim_status": "open_queue",
+      "path": "references/oracle/prashna_sphuta_source_comparison_matrix_2026_07_20.json",
+      "scope": "prashna_sphuta_source_comparison_matrix",
+      "status": "comparison_matrix_ready"
+    },
+    {
+      "claim_status": "open_queue",
+      "path": "references/oracle/prashna_sphuta_line_review_queue_2026_07_20.json",
+      "scope": "prashna_sphuta_line_review_queue",
+      "status": "review_queue_ready"
+    },
+    {
+      "claim_status": "blocked_until_human_labels",
+      "path": "references/oracle/prashna_sphuta_review_result_template_2026_07_20.json",
+      "scope": "prashna_sphuta_review_result_template",
+      "status": "blank_review_template_ready"
+    },
+    {
+      "claim_status": "blocked_until_human_labels",
+      "path": "references/oracle/prashna_sphuta_review_result_validation_2026_07_20.json",
+      "scope": "prashna_sphuta_review_result_validation",
+      "status": "validation_ready"
+    }
+  ],
+  "production_tuning_allowed": false,
+  "scope": "prashna_sphuta_closure_dashboard",
+  "status": "closure_dashboard_ready",
+  "summary": {
+    "blocked_gate_count": 3,
+    "packet_chain_count": 10,
+    "truth_upgrade_count": 0
+  },
+  "truth_matrix_allowed": false
+}

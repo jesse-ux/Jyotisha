@@ -1,0 +1,97 @@
+{
+  "boundary": "Blank template only; human review fields must be filled before any classification or formula change.",
+  "claim_status": "blocked_until_human_labels",
+  "created_at": "2026-07-20",
+  "production_tuning_allowed": false,
+  "scope": "prashna_sphuta_review_result_template",
+  "status": "blank_review_template_ready",
+  "summary": {
+    "completed_review_count": 0,
+    "template_count": 2,
+    "truth_upgrade_count": 0
+  },
+  "templates": [
+    {
+      "allowed_results": [
+        "formula_variant",
+        "source_transcription",
+        "naming_variant",
+        "insufficient_evidence"
+      ],
+      "candidate_causes": [
+        "formula_variant",
+        "source_transcription",
+        "naming_variant"
+      ],
+      "claim_boundary": "Review task only; no formula change or truth upgrade.",
+      "completed": false,
+      "download_url": "https://archive.org/download/PrasnaMargaBVR/Prasna%20Marga%201_djvu.txt",
+      "fields_to_check": [
+        "trisphuta",
+        "chatusphuta",
+        "catusphuta",
+        "panchasphuta",
+        "gulika"
+      ],
+      "file_name": "Prasna Marga 1_djvu.txt",
+      "line_end": 143,
+      "line_start": 139,
+      "required_human_fields": [
+        "reviewer_id",
+        "reviewed_at",
+        "source_line_coordinates",
+        "second_source_or_scan_evidence",
+        "review_notes"
+      ],
+      "review_result": null,
+      "review_status": "needs_human_or_second_source_review",
+      "short_context": "53. The Moon’s Longitude ... 154 54. Position of Gulika 159 55. Thrisphuta... 162",
+      "source_id": "PrasnaMargaBVR",
+      "task_id": "PSLRQ-001",
+      "upgrade_after_completion": "requires_replay_packet_and_gate_review",
+      "window_hash": "9b512ea3157ce3f8b24f30a9f7d6ded1a9eb97dc77462dc27cac269ace2f5a52"
+    },
+    {
+      "allowed_results": [
+        "formula_variant",
+        "source_transcription",
+        "naming_variant",
+        "insufficient_evidence"
+      ],
+      "candidate_causes": [
+        "formula_variant",
+        "source_transcription",
+        "naming_variant"
+      ],
+      "claim_boundary": "Review task only; no formula change or truth upgrade.",
+      "completed": false,
+      "download_url": "https://archive.org/download/prasna-marga-part-2-by-bv-raman/Prasna%20Marga%20Part%202%20by%20BV%20Raman_djvu.txt",
+      "fields_to_check": [
+        "trisphuta",
+        "chatusphuta",
+        "catusphuta",
+        "panchasphuta",
+        "gulika"
+      ],
+      "file_name": "Prasna Marga Part 2 by BV Raman_djvu.txt",
+      "line_end": 1161,
+      "line_start": 1157,
+      "required_human_fields": [
+        "reviewer_id",
+        "reviewed_at",
+        "source_line_coordinates",
+        "second_source_or_scan_evidence",
+        "review_notes"
+      ],
+      "review_result": null,
+      "review_status": "needs_human_or_second_source_review",
+      "short_context": "Stanza 19. If Yama Sukra (...) or the lord of the 10th house from him occupies the 6th, the 8th or the 12th from Arudha or if Venus occupies the 6th, the 8th or the 12th from Yama Sukra, marriage will not take place at the time fixed. If Ra",
+      "source_id": "prasna-marga-part-2-by-bv-raman",
+      "task_id": "PSLRQ-002",
+      "upgrade_after_completion": "requires_replay_packet_and_gate_review",
+      "window_hash": "84f1b543641d873e4737333ab9243632f4d7f191b67bf716d3e8616bcc2a10dd"
+    }
+  ],
+  "truth_matrix_allowed": false,
+  "upgrade_policy": "no_upgrade_until_completed_review_and_replay"
+}
