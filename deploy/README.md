@@ -118,9 +118,9 @@ docker stats --no-stream
 
 The server has a persistent 2 GB `/swapfile`. UFW permits only SSH `22000/tcp`, HTTP `80/tcp`, HTTPS `443/tcp`, and the pre-existing WireGuard `51820/udp` rule.
 
-## Automatic deployment
+## Manual deployment with GitHub Actions
 
-A successful `Jyotish Skill CI` run for a push to `main` triggers `.github/workflows/deploy-production.yml`. The workflow syncs the tested revision with `rsync`, preserves `/opt/jyotisha-app/.env.production`, rebuilds both Docker services, and verifies the public login route, logged-out account response, and private Python health endpoint.
+Pushes and pull requests do not start GitHub Actions automatically. Run the required validation workflows from the Actions page, then manually start `.github/workflows/deploy-production.yml` for the tested branch. The deployment workflow syncs that revision with `rsync`, preserves `/opt/jyotisha-app/.env.production`, rebuilds both Docker services, and verifies the public login route, logged-out account response, and private Python health endpoint.
 
 Required GitHub Actions secret:
 
@@ -128,7 +128,7 @@ Required GitHub Actions secret:
 PRODUCTION_SSH_PRIVATE_KEY = dedicated production deploy private key
 ```
 
-The workflow pins the VPS Ed25519 host key and serializes deployments with the `production` concurrency group. It can also be run manually from GitHub Actions.
+The workflow pins the VPS Ed25519 host key and serializes deployments with the `production` concurrency group.
 
 ## Manual deployment fallback
 
