@@ -182,6 +182,7 @@ test("staging env validator rejects selector drift, duplicates, and unsafe permi
   );
   const root = mkdtempSync(join(tmpdir(), "jyotisha-staging-env-"));
   const envFile = join(root, ".env.staging");
+  const composeFile = join(root, "compose.yml");
   const validSelectors = [
     "APP_ENV_FILE=../.env.staging",
     "CADDYFILE_PATH=./Caddyfile.staging",
@@ -195,6 +196,17 @@ test("staging env validator rejects selector drift, duplicates, and unsafe permi
   };
 
   try {
+    writeFileSync(
+      composeFile,
+      [
+        "services:",
+        "  probe:",
+        "    image: alpine",
+        "    environment:",
+        "      SELECTED: ${APP_ENV_FILE}",
+        "",
+      ].join("\n"),
+    );
     writeEnv(validSelectors);
     assert.equal(run().status, 0);
 
@@ -202,6 +214,34 @@ test("staging env validator rejects selector drift, duplicates, and unsafe permi
     assert.notEqual(run().status, 0);
 
     writeEnv([...validSelectors, "SITE_ADDRESS=https://example.invalid"]);
+    assert.notEqual(run().status, 0);
+
+    writeEnv([...validSelectors, "APP_ENV_FILE = ../.env.production"]);
+    assert.notEqual(run().status, 0);
+    const rendered = spawnSync(
+      "docker",
+      [
+        "compose",
+        "--env-file",
+        envFile,
+        "-f",
+        composeFile,
+        "config",
+        "--format",
+        "json",
+      ],
+      { encoding: "utf8" },
+    );
+    assert.equal(rendered.status, 0, rendered.stderr);
+    assert.equal(
+      JSON.parse(rendered.stdout).services.probe.environment.SELECTED,
+      "../.env.production",
+    );
+
+    writeEnv([...validSelectors, "export CADDYFILE_PATH=./Caddyfile"]);
+    assert.notEqual(run().status, 0);
+
+    writeEnv([...validSelectors, "SITE_ADDRESS"]);
     assert.notEqual(run().status, 0);
 
     writeEnv(validSelectors, 0o644);

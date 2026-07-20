@@ -18,7 +18,7 @@
 | 部署密钥 | production 专用 | staging 专用 |
 | 应用配置 | `.env.production` | `.env.staging` |
 | Supabase | 生产项目 | 独立 staging 项目 |
-| 部署触发 | `main` CI 成功 | `staging` CI 成功或手动触发 |
+| 部署触发 | 手动 production workflow | `staging` CI 成功或手动触发 |
 
 staging 不得写入生产数据库，不得复用 service-role key、数据库密码、SSH 私钥或模型计费密钥。模型接口优先使用独立测试 key、低额度或 provider sandbox。
 

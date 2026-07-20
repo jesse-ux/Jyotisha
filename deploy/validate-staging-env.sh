@@ -23,8 +23,10 @@ require_selector() {
   local key="$1"
   local expected="$2"
   local count
+  local definition_pattern
 
-  count="$(grep -c "^${key}=" "$ENV_FILE" || true)"
+  definition_pattern="^[[:space:]]*(export[[:space:]]+)?${key}([[:space:]]*=|[[:space:]]*$)"
+  count="$(grep -Ec "$definition_pattern" "$ENV_FILE" || true)"
   if [ "$count" -ne 1 ] || ! grep -Fqx "${key}=${expected}" "$ENV_FILE"; then
     echo "invalid staging selector: $key" >&2
     exit 1
