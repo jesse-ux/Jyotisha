@@ -161,6 +161,16 @@ export function confirmBirthTimeCandidate(
   return sendJourneyEvent({ type: "confirm_candidate", caseId, resultId, time });
 }
 
+export function confirmDynamicBirthTimeCandidate(input: {
+  readonly caseId: string;
+  readonly actionId: string;
+  readonly turnVersion: number;
+  readonly resultId: string;
+  readonly time: string;
+}) {
+  return sendJourneyEvent({ type: "confirm_dynamic_candidate", ...input });
+}
+
 export function confirmBirthTimeEvidenceDraft(
   caseId: string,
   actionId: string,

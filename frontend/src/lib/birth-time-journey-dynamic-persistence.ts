@@ -8,6 +8,7 @@ import type { DynamicJourneyTurnState } from "./birth-time-journey-turn-protocol
 import type {
   DynamicScoringJobCommand,
   DynamicScoringJobFailureCommand,
+  DynamicCandidateConfirmationCommand,
   DynamicStoredRectificationCase,
   LegacyStoredRectificationCase,
   StoredRectificationCase,
@@ -72,6 +73,8 @@ function privateState(value: DynamicStoredRectificationCase): DynamicPrivateJour
 function isStaleRpc(error: RpcError): boolean {
   return error.message.includes("stale_birth_time_dynamic_turn")
     || error.message.includes("stale_birth_time_dynamic_scoring_job")
+    || error.message.includes("stale_birth_time_dynamic_candidate")
+    || error.message.includes("birth_time_dynamic_candidate_invalid")
     || error.message.includes("stale_birth_time_legacy_upgrade");
 }
 
@@ -126,6 +129,45 @@ export function createDynamicTurnPersistence(
   }
 
   return {
+    async confirmDynamicCandidate(
+      value: DynamicStoredRectificationCase,
+      command: DynamicCandidateConfirmationCommand,
+    ): Promise<DynamicStoredRectificationCase> {
+      const receipt = actionIdSchema.parse(command.actionId).toLowerCase();
+      const result = await client.rpc("confirm_birth_time_dynamic_candidate", {
+        p_user_id: value.userId,
+        p_case_id: value.id,
+        p_result_id: command.resultId,
+        p_time: command.time,
+        p_action_id: receipt,
+        p_expected_version: command.expectedVersion,
+        p_snapshot: value.snapshot,
+        p_turn_state: publicTurn(value, command.expectedVersion + 1),
+      });
+      const current = await loadCase(value.userId, value.id);
+      if (result.error) {
+        if (current?.journeyProtocol === "dynamic-choice-v2"
+          && current.processedActionIds.includes(receipt)
+          && samePersistedDynamicReceipt(value, current, receipt, command.expectedVersion)) {
+          return current;
+        }
+        if (isStaleRpc(result.error)) {
+          throw new StaleJourneyTurnError(value.id, command.expectedVersion, current?.turnVersion ?? 0);
+        }
+        throw new BirthTimeJourneyStoreError("update_case");
+      }
+      const version = rpcVersionSchema.safeParse(result.data);
+      if (!current || current.journeyProtocol !== "dynamic-choice-v2") {
+        throw new BirthTimeJourneyStoreError("load_case");
+      }
+      if (!version.success || version.data !== command.expectedVersion + 1
+        || !current.processedActionIds.includes(receipt)
+        || !samePersistedDynamicReceipt(value, current, receipt, command.expectedVersion)) {
+        throw new StaleJourneyTurnError(value.id, command.expectedVersion, current.turnVersion);
+      }
+      return current;
+    },
+
     async saveDynamicTurn(
       value: DynamicStoredRectificationCase,
       expectedVersion: number,

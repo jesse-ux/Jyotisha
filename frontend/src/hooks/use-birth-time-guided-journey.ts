@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   answerDynamicBirthTimeChoice,
+  confirmDynamicBirthTimeCandidate,
   confirmBirthTimeEvidenceDraft,
   draftBirthTimeEvidence,
   finishBirthTimeRectification,
@@ -225,8 +226,10 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
     (actionId) => saveGuidedBirthTimeCandidate({ caseId: turn.caseId, actionId, turnVersion: turn.turnVersion, resultId }),
   ));
   const confirmCandidate = (resultId: string, time: string) => operate((turn) => preview ? Promise.resolve(turn) : stableAction(
-    turn, "confirm_guided_candidate", [resultId, time],
-    (actionId) => confirmGuidedBirthTimeCandidate({ caseId: turn.caseId, actionId, turnVersion: turn.turnVersion, resultId, time }),
+    turn, turn.journeyProtocol === "dynamic-choice-v2" ? "confirm_dynamic_candidate" : "confirm_guided_candidate", [resultId, time],
+    (actionId) => turn.journeyProtocol === "dynamic-choice-v2"
+      ? confirmDynamicBirthTimeCandidate({ caseId: turn.caseId, actionId, turnVersion: turn.turnVersion, resultId, time })
+      : confirmGuidedBirthTimeCandidate({ caseId: turn.caseId, actionId, turnVersion: turn.turnVersion, resultId, time }),
   ));
   const selectOption = (optionId: string) => operate((turn) => {
     if (turn.journeyProtocol !== "dynamic-choice-v2"

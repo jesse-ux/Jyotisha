@@ -5,6 +5,7 @@ import {
   reviseBirthTimeEvidenceDraft,
   saveGuidedBirthTimeCandidate,
 } from "../src/lib/birth-time-guided-client.ts";
+import { confirmDynamicBirthTimeCandidate } from "../src/lib/birth-time-journey-client.ts";
 import { birthTimeJourneyRequestSchema } from "../src/lib/birth-time-journey-request.ts";
 import { highConfirmationTurn } from "./birth-time-journey-client-test-support.ts";
 
@@ -60,11 +61,13 @@ test("guided client emits only deterministic mutation fields", async (context) =
   await reviseBirthTimeEvidenceDraft({ caseId: highConfirmationTurn.caseId, actionId, turnVersion: 2, precision: "month", date: "2019-07" });
   await saveGuidedBirthTimeCandidate({ caseId: highConfirmationTurn.caseId, actionId, turnVersion: 2, resultId: highConfirmationTurn.candidateResult.resultId });
   await confirmGuidedBirthTimeCandidate({ caseId: highConfirmationTurn.caseId, actionId, turnVersion: 2, resultId: highConfirmationTurn.candidateResult.resultId, time: "14:24" });
+  await confirmDynamicBirthTimeCandidate({ caseId: highConfirmationTurn.caseId, actionId, turnVersion: 2, resultId: highConfirmationTurn.candidateResult.resultId, time: "14:24" });
 
   assert.deepEqual(payloads, [
     { type: "revise_evidence_draft", caseId: highConfirmationTurn.caseId, actionId, turnVersion: 2, precision: "month", date: "2019-07" },
     { type: "save_guided_candidate", caseId: highConfirmationTurn.caseId, actionId, turnVersion: 2, resultId: highConfirmationTurn.candidateResult.resultId },
     { type: "confirm_guided_candidate", caseId: highConfirmationTurn.caseId, actionId, turnVersion: 2, resultId: highConfirmationTurn.candidateResult.resultId, time: "14:24" },
+    { type: "confirm_dynamic_candidate", caseId: highConfirmationTurn.caseId, actionId, turnVersion: 2, resultId: highConfirmationTurn.candidateResult.resultId, time: "14:24" },
   ]);
 });
 
