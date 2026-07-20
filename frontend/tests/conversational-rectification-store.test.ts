@@ -10,6 +10,14 @@ import {
   type ConversationalRectificationRpcClient,
 } from "../src/lib/conversational-rectification/store.ts";
 import { ConversationalRectificationBilling } from "../src/lib/conversational-rectification/billing.ts";
+import {
+  conversationalRectificationActionReceiptRequestSchema,
+  conversationalRectificationActionReceiptResponseSchema,
+  declaredBirthInputSchema,
+  privateCandidateSchema,
+  validationReceiptSchema,
+} from "../src/lib/conversational-rectification/persistence-contracts.ts";
+import { postgresJsonbTextBytes } from "../src/lib/conversational-rectification/json-bounds.ts";
 
 const userId = "00000000-0000-4000-8000-000000000101";
 const caseId = "00000000-0000-4000-8000-000000000102";
@@ -61,6 +69,8 @@ const storedRow = {
     reportedTime: "05:20",
     source: "approximate",
     birthTimeClue: "家人记得天刚亮",
+    uncertaintyBeforeMinutes: 30,
+    uncertaintyAfterMinutes: 30,
     birthplace: {
       countryCode: "TW",
       provinceCode: "TPE",
@@ -114,6 +124,8 @@ test("creates an account-level case and first public turn through one RPC", asyn
       reportedTime: "05:20",
       source: "approximate",
       birthTimeClue: "家人记得天刚亮",
+      uncertaintyBeforeMinutes: 30,
+      uncertaintyAfterMinutes: 30,
       birthplace: {
         countryCode: "TW",
         provinceCode: "TPE",
@@ -147,6 +159,8 @@ test("creates an account-level case and first public turn through one RPC", asyn
       reportedTime: "05:20",
       source: "approximate",
       birthTimeClue: "家人记得天刚亮",
+      uncertaintyBeforeMinutes: 30,
+      uncertaintyAfterMinutes: 30,
       birthplace: {
         countryCode: "TW",
         provinceCode: "TPE",
@@ -212,10 +226,10 @@ test("binds every paid start to the public action as its recoverable case id", a
       expectedVersion: 0,
       revisionOfCaseId: null,
       pendingConsultationQuestion: null,
-      declaredBirthInput: { birthDate: "1990-01-01", source: "approximate" },
+      declaredBirthInput: storedRow.declared_birth_input as never,
       firstTurn,
       validationReceipt,
-      privateCandidate: {},
+      privateCandidate: storedRow.private_candidate,
     }),
     (error: unknown) => error instanceof ConversationalRectificationError
       && error.code === "action_conflict",
@@ -401,4 +415,248 @@ test("billing rejections use stable domain errors instead of raw RPC messages", 
     (error: unknown) => error instanceof ConversationalRectificationError
       && error.code === "billing_failed",
   );
+});
+
+test("declared birth input is strict, source-aware, bounded, and location-complete", () => {
+  assert.equal(declaredBirthInputSchema.safeParse(storedRow.declared_birth_input).success, true);
+  const commonDeclaration = {
+    birthDate: "1990-01-01",
+    birthTimeClue: null,
+    birthplace: {
+      city: "Taipei",
+      latitude: 25.03,
+      longitude: 121.56,
+      timezoneOffset: 8,
+    },
+  };
+  for (const value of [
+    { ...commonDeclaration, source: "hospital_record", reportedTime: "05:20", uncertaintyBeforeMinutes: 2, uncertaintyAfterMinutes: 2 },
+    { ...commonDeclaration, source: "family_exact", reportedTime: "05:20", uncertaintyBeforeMinutes: 10, uncertaintyAfterMinutes: 10 },
+    { ...commonDeclaration, source: "period_only", reportedPeriod: "morning" },
+    { ...commonDeclaration, source: "unknown" },
+    { ...commonDeclaration, source: "legacy_import", reportedTime: "05:20", uncertaintyBeforeMinutes: 0, uncertaintyAfterMinutes: 0 },
+  ]) {
+    assert.equal(declaredBirthInputSchema.safeParse(value).success, true);
+  }
+
+  const invalid = [
+    { ...storedRow.declared_birth_input, unexpected: true },
+    { ...storedRow.declared_birth_input, birthDate: "2023-02-30" },
+    { ...storedRow.declared_birth_input, birthTimeClue: undefined },
+    { ...storedRow.declared_birth_input, birthplace: undefined },
+    { ...storedRow.declared_birth_input, source: "unrecognized" },
+    {
+      ...storedRow.declared_birth_input,
+      uncertaintyAfterMinutes: 60,
+    },
+    {
+      ...storedRow.declared_birth_input,
+      reportedPeriod: "morning",
+    },
+    {
+      ...storedRow.declared_birth_input,
+      birthplace: { ...storedRow.declared_birth_input.birthplace, latitude: 91 },
+    },
+    {
+      ...storedRow.declared_birth_input,
+      birthplace: { timezoneOffset: 8 },
+    },
+  ];
+  for (const value of invalid) {
+    assert.equal(declaredBirthInputSchema.safeParse(value).success, false);
+  }
+  const exactClue = declaredBirthInputSchema.parse({
+    ...storedRow.declared_birth_input,
+    birthTimeClue: "  exact clue spacing  ",
+  });
+  assert.equal(exactClue.birthTimeClue, "  exact clue spacing  ");
+});
+
+test("durable private and receipt schemas accept boundaries and reject oversize or unknown fields", () => {
+  assert.equal(postgresJsonbTextBytes({ a: [1, 2] }), 13);
+  assert.equal(validationReceiptSchema.safeParse({
+    modelId: "m".repeat(120),
+    schemaValidated: true,
+    validatorVersion: "v".repeat(80),
+    retryCount: 2,
+    fallbackUsed: false,
+    issues: ["i".repeat(240)],
+  }).success, true);
+  assert.equal(validationReceiptSchema.safeParse({
+    modelId: "m".repeat(121),
+    schemaValidated: true,
+  }).success, false);
+  assert.equal(validationReceiptSchema.safeParse({
+    modelId: `${"m".repeat(120)} `,
+    schemaValidated: true,
+  }).success, false);
+  assert.equal(validationReceiptSchema.safeParse({
+    modelId: "model",
+    schemaValidated: true,
+    validatedAt: "2026-07-20T12:00:00.123456789012345678901Z",
+  }).success, false);
+
+  const candidate = {
+    resultId,
+    representativeTime: "05:21",
+    calculationVersion: "rectification-v3.1",
+    candidateWeights: Array.from({ length: 1_440 }, () => 0.5),
+    candidateModelRefs: ["model-ref"],
+    suggestedDomains: ["career", "relocation"],
+  };
+  assert.equal(privateCandidateSchema.safeParse(candidate).success, true);
+  assert.equal(privateCandidateSchema.safeParse({
+    ...candidate,
+    candidateWeights: [...candidate.candidateWeights, 0.5],
+  }).success, false);
+  assert.equal(privateCandidateSchema.safeParse({
+    calculationVersion: "v1",
+    rangeStart: null,
+  }).success, false);
+  assert.equal(privateCandidateSchema.safeParse({ ...candidate, secretExtra: true }).success, false);
+
+  const request = {
+    kind: "save_turn",
+    userId,
+    caseId,
+    expectedVersion: 0,
+    actionId,
+    requestFingerprint: "a".repeat(64),
+  };
+  assert.equal(conversationalRectificationActionReceiptRequestSchema.safeParse(request).success, true);
+  assert.equal(conversationalRectificationActionReceiptRequestSchema.safeParse({
+    ...request,
+    extra: "not durable",
+  }).success, false);
+  assert.equal(conversationalRectificationActionReceiptRequestSchema.safeParse({
+    ...request,
+    requestFingerprint: "a".repeat(65),
+  }).success, false);
+  assert.equal(conversationalRectificationActionReceiptResponseSchema.safeParse({
+    success: false,
+    credits: 7,
+    billing_state: null,
+    error_code: "e".repeat(80),
+  }).success, true);
+  assert.equal(conversationalRectificationActionReceiptResponseSchema.safeParse({
+    success: false,
+    credits: 7,
+    billing_state: null,
+    error_code: "e".repeat(81),
+  }).success, false);
+});
+
+test("public turn JSON fields reject field and byte boundary violations", () => {
+  assert.equal(conversationalRectificationActionReceiptResponseSchema.safeParse({
+    ...storedRow,
+    declared_birth_input: undefined,
+    private_candidate: undefined,
+    event_evidence: undefined,
+    validation_receipts: undefined,
+  }).success, true);
+
+  const exact = {
+    ...firstTurn,
+    technicalReceipt: {
+      ...firstTurn.technicalReceipt,
+      calculationVersion: "v".repeat(80),
+    },
+    evidenceRecap: [{
+      id: "00000000-0000-4000-8000-000000000108",
+      summary: "事".repeat(1_000),
+      dateLabel: "d".repeat(80),
+    }],
+  };
+  assert.equal(conversationalRectificationActionReceiptResponseSchema.safeParse({
+    ...storedRow,
+    latest_turn: exact,
+    declared_birth_input: undefined,
+    private_candidate: undefined,
+    event_evidence: undefined,
+    validation_receipts: undefined,
+  }).success, true);
+
+  const nearTurnLimit = {
+    ...exact,
+    narrative: "n".repeat(12_000),
+    evidenceRecap: Array.from({ length: 16 }, (_, index) => ({
+      id: `00000000-0000-4000-8000-${(300 + index).toString().padStart(12, "0")}`,
+      summary: "事".repeat(1_000),
+      dateLabel: "d".repeat(80),
+    })),
+  };
+  assert.equal(conversationalRectificationActionReceiptResponseSchema.safeParse({
+    ...storedRow,
+    latest_turn: nearTurnLimit,
+    declared_birth_input: undefined,
+    private_candidate: undefined,
+    event_evidence: undefined,
+    validation_receipts: undefined,
+  }).success, true);
+
+  for (const latest_turn of [
+    {
+      ...exact,
+      candidate: { ...exact.candidate, unknown: true },
+    },
+    {
+      ...exact,
+      technicalReceipt: { ...exact.technicalReceipt, calculationVersion: "v".repeat(81) },
+    },
+    {
+      ...exact,
+      evidenceRecap: [{ ...exact.evidenceRecap[0], summary: "事".repeat(1_001) }],
+    },
+    {
+      ...exact,
+      narrative: "n".repeat(12_000),
+      evidenceRecap: Array.from({ length: 20 }, (_, index) => ({
+        id: `00000000-0000-4000-8000-${(200 + index).toString().padStart(12, "0")}`,
+        summary: "事".repeat(1_000),
+        dateLabel: "d".repeat(80),
+      })),
+    },
+  ]) {
+    assert.equal(conversationalRectificationActionReceiptResponseSchema.safeParse({
+      ...storedRow,
+      latest_turn,
+      declared_birth_input: undefined,
+      private_candidate: undefined,
+      event_evidence: undefined,
+      validation_receipts: undefined,
+    }).success, false);
+  }
+});
+
+test("store rejects invalid durable inputs before issuing an RPC", async () => {
+  let calls = 0;
+  const store = new ConversationalRectificationStore(rpcClient(() => {
+    calls += 1;
+    return storedRow;
+  }));
+
+  await assert.rejects(store.createCaseWithFirstTurn({
+    userId,
+    caseId,
+    actionId: caseId,
+    expectedVersion: 0,
+    revisionOfCaseId: null,
+    pendingConsultationQuestion: null,
+    declaredBirthInput: {
+      birthDate: "1990-01-01",
+      source: "approximate",
+      reportedTime: "05:20",
+      birthTimeClue: null,
+      uncertaintyBeforeMinutes: 30,
+      uncertaintyAfterMinutes: 30,
+    } as never,
+    firstTurn,
+    validationReceipt,
+    privateCandidate: {
+      resultId,
+      calculationVersion: "rectification-v3.1",
+    },
+  }), (error: unknown) => error instanceof ConversationalRectificationError
+    && error.code === "action_conflict");
+  assert.equal(calls, 0);
 });

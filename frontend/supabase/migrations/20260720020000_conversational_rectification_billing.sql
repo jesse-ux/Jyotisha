@@ -20,6 +20,7 @@ as $$
 declare
   v_receipt public.birth_time_rectification_action_receipts%rowtype;
   v_billing public.birth_time_rectification_billing%rowtype;
+  v_orphan public.birth_time_rectification_billing%rowtype;
   v_receipt_action_id uuid :=
     public.conversational_rectification_billing_receipt_action_id(
       p_action_id,
@@ -27,6 +28,9 @@ declare
     );
   v_balance integer;
   v_response jsonb;
+  v_recovery_action_id uuid;
+  v_recovery_fingerprint text;
+  v_recovery_response jsonb;
   v_fingerprint text := pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(
     pg_catalog.jsonb_build_object(
       'kind', 'reserve_fee', 'userId', p_user_id, 'caseId', p_case_id,
@@ -109,17 +113,83 @@ begin
     raise exception 'conversational_billing_failed' using errcode = 'P0001';
   end if;
 
-  perform 1
-  from public.birth_time_rectification_billing active_billing
-  where active_billing.user_id = p_user_id
-    and active_billing.case_id <> p_case_id
-    -- A charged row belongs to a created case; the unfinished-case check
-    -- above governs it. Only an orphan reservation has no case row to find.
-    and active_billing.state = 'reserved'
-  for update;
-  if found then
-    raise exception 'conversational_action_conflict' using errcode = 'P0001';
-  end if;
+  -- Reservation intentionally precedes the external first-turn calculation,
+  -- so it cannot share a transaction with case creation. A process/device
+  -- loss in that gap leaves no case for the account resume RPC to expose.
+  -- A fresh account-scoped start deterministically releases every such orphan
+  -- under the same account/profile locks before it attempts another debit.
+  for v_orphan in
+    select orphan_billing.*
+    from public.birth_time_rectification_billing orphan_billing
+    left join public.birth_time_rectification_cases orphan_case
+      on orphan_case.id = orphan_billing.case_id
+    where orphan_billing.user_id = p_user_id
+      and orphan_billing.case_id <> p_case_id
+      and orphan_billing.state = 'reserved'
+      and orphan_case.id is null
+    order by orphan_billing.reserved_at, orphan_billing.case_id
+    for update of orphan_billing
+  loop
+    v_recovery_action_id :=
+      public.conversational_rectification_billing_receipt_action_id(
+        v_orphan.reserve_action_id,
+        'recover_fee'
+      );
+    v_recovery_fingerprint := pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(
+      pg_catalog.jsonb_build_object(
+        'kind', 'recover_fee', 'userId', p_user_id, 'caseId', v_orphan.case_id,
+        'expectedVersion', 0, 'actionId', v_recovery_action_id,
+        'reserveActionId', v_orphan.reserve_action_id
+      )::text,
+      'UTF8'
+    )), 'hex');
+
+    update public.profiles profile
+    set credits = profile.credits + v_orphan.price,
+        updated_at = pg_catalog.now()
+    where profile.id = p_user_id
+    returning profile.credits into v_balance;
+    if not found then
+      raise exception 'conversational_billing_failed' using errcode = 'P0001';
+    end if;
+
+    insert into public.credit_transactions (
+      user_id, transaction_type, amount, balance_after, request_id
+    ) values (
+      p_user_id, 'refund', v_orphan.price, v_balance,
+      'rectification:' || v_orphan.case_id::text
+    );
+
+    update public.birth_time_rectification_billing orphan_billing
+    set state = 'released',
+        release_action_id = v_recovery_action_id,
+        balance_after = v_balance,
+        released_at = pg_catalog.now(),
+        updated_at = pg_catalog.now()
+    where orphan_billing.case_id = v_orphan.case_id
+      and orphan_billing.user_id = p_user_id
+      and orphan_billing.state = 'reserved';
+    if not found then
+      raise exception 'conversational_billing_failed' using errcode = 'P0001';
+    end if;
+
+    v_recovery_response := pg_catalog.jsonb_build_object(
+      'success', true, 'credits', v_balance,
+      'billing_state', 'released', 'error_code', null
+    );
+    insert into public.birth_time_rectification_action_receipts (
+      case_id, action_id, user_id, action_kind, expected_turn_version,
+      result_turn_version, request_fingerprint, request, response
+    ) values (
+      v_orphan.case_id, v_recovery_action_id, p_user_id, 'recover_fee', 0,
+      0, v_recovery_fingerprint,
+      public.conversational_rectification_action_request(
+        'recover_fee', p_user_id, v_orphan.case_id, 0,
+        v_recovery_action_id, v_recovery_fingerprint
+      ),
+      v_recovery_response
+    );
+  end loop;
 
   select b.* into v_billing
   from public.birth_time_rectification_billing b
@@ -136,10 +206,14 @@ begin
     );
     insert into public.birth_time_rectification_action_receipts (
       case_id, action_id, user_id, action_kind, expected_turn_version,
-      result_turn_version, request_fingerprint, response
+      result_turn_version, request_fingerprint, request, response
     ) values (
       p_case_id, v_receipt_action_id, p_user_id, 'reserve_fee', 0,
-      0, v_fingerprint, v_response
+      0, v_fingerprint,
+      public.conversational_rectification_action_request(
+        'reserve_fee', p_user_id, p_case_id, 0, p_action_id, v_fingerprint
+      ),
+      v_response
     );
     return query select false, v_balance, null::text, 'insufficient_credits'::text;
     return;
@@ -175,10 +249,14 @@ begin
   );
   insert into public.birth_time_rectification_action_receipts (
     case_id, action_id, user_id, action_kind, expected_turn_version,
-    result_turn_version, request_fingerprint, response
+    result_turn_version, request_fingerprint, request, response
   ) values (
     p_case_id, v_receipt_action_id, p_user_id, 'reserve_fee', 0,
-    0, v_fingerprint, v_response
+    0, v_fingerprint,
+    public.conversational_rectification_action_request(
+      'reserve_fee', p_user_id, p_case_id, 0, p_action_id, v_fingerprint
+    ),
+    v_response
   );
 
   return query select true, v_balance, 'reserved'::text, null::text;
@@ -314,10 +392,15 @@ begin
   );
   insert into public.birth_time_rectification_action_receipts (
     case_id, action_id, user_id, action_kind, expected_turn_version,
-    result_turn_version, request_fingerprint, response
+    result_turn_version, request_fingerprint, request, response
   ) values (
     p_case_id, v_receipt_action_id, p_user_id, 'complete_fee', p_expected_version,
-    v_case.turn_version, v_fingerprint, v_response
+    v_case.turn_version, v_fingerprint,
+    public.conversational_rectification_action_request(
+      'complete_fee', p_user_id, p_case_id, p_expected_version,
+      p_action_id, v_fingerprint
+    ),
+    v_response
   );
   return query select v_success, v_balance, v_state, v_error_code;
 end;
@@ -507,10 +590,15 @@ begin
   );
   insert into public.birth_time_rectification_action_receipts (
     case_id, action_id, user_id, action_kind, expected_turn_version,
-    result_turn_version, request_fingerprint, response
+    result_turn_version, request_fingerprint, request, response
   ) values (
     p_case_id, v_receipt_action_id, p_user_id, 'release_fee', p_expected_version,
-    v_result_version, v_fingerprint, v_response
+    v_result_version, v_fingerprint,
+    public.conversational_rectification_action_request(
+      'release_fee', p_user_id, p_case_id, p_expected_version,
+      p_action_id, v_fingerprint
+    ),
+    v_response
   );
   return query select v_success, v_balance, v_state, v_error_code;
 end;

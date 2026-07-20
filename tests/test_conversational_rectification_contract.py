@@ -262,6 +262,74 @@ def test_start_identity_and_account_concurrency_are_server_guarded() -> None:
     assert "raise exception 'conversational_action_conflict'" in create
 
 
+def test_new_account_start_recovers_a_committed_pre_case_reservation() -> None:
+    reserve = _function(_normalized(BILLING), "reserve_conversational_rectification_fee")
+
+    assert "orphan_billing.state = 'reserved'" in reserve
+    assert "orphan_case.id is null" in reserve
+    assert "set credits = profile.credits + v_orphan.price" in reserve
+    assert "'refund', v_orphan.price" in reserve
+    assert "set state = 'released'" in reserve
+    assert "'recover_fee'" in reserve
+    assert "v_orphan.case_id" in reserve
+    assert reserve.index("set state = 'released'") < reserve.index(
+        "set credits = profile.credits - p_price"
+    )
+
+
+def test_durable_json_columns_have_byte_and_field_shape_guards() -> None:
+    sql = _normalized(SCHEMA)
+    for validator in (
+        "conversational_rectification_valid_candidate",
+        "conversational_rectification_valid_technical_receipt",
+        "conversational_rectification_valid_evidence_recap",
+        "conversational_rectification_valid_validation_receipt",
+        "conversational_rectification_valid_private_candidate",
+        "conversational_rectification_valid_action_request",
+        "conversational_rectification_valid_action_response",
+    ):
+        assert f"create or replace function public.{validator}" in sql
+        assert "octet_length" in _function(sql, validator)
+
+    assert "request jsonb not null" in sql
+    assert "conversational_rectification_valid_candidate(candidate)" in sql
+    assert "conversational_rectification_valid_technical_receipt(technical_receipt)" in sql
+    assert "conversational_rectification_valid_evidence_recap(evidence_recap)" in sql
+    assert "conversational_rectification_valid_validation_receipt(output_validation_receipt)" in sql
+    assert "conversational_rectification_valid_action_request(request)" in sql
+    assert "conversational_rectification_valid_action_response(response, action_kind)" in sql
+    assert "conversational_rectification_valid_private_candidate(candidate_result)" in sql
+
+
+def test_declared_birth_input_is_strict_source_aware_and_location_complete() -> None:
+    sql = _normalized(SCHEMA)
+    body = _function(sql, "conversational_rectification_valid_declared_birth_input")
+
+    for invariant in (
+        "octet_length",
+        "birthdate",
+        "birthtimeclue",
+        "birthplace",
+        "timezoneoffset",
+        "latitude",
+        "longitude",
+        "citycode",
+        "reportedtime",
+        "reportedperiod",
+        "uncertaintybeforeminutes",
+        "uncertaintyafterminutes",
+        "hospital_record",
+        "family_exact",
+        "approximate",
+        "period_only",
+        "unknown",
+        "legacy_import",
+    ):
+        assert invariant in body
+    assert "conversational_rectification_has_only_keys" in body
+    assert "conversational_rectification_valid_declared_birth_input(declared_birth_input)" in sql
+
+
 def test_one_public_start_action_has_noncolliding_internal_billing_receipts() -> None:
     billing = _normalized(BILLING)
     for name, kind in (

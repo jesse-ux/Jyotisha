@@ -286,13 +286,16 @@ begin
     end if;
   end if;
 
-  if pg_catalog.jsonb_typeof(p_declared_birth_input) is distinct from 'object'
-    or pg_catalog.octet_length(p_declared_birth_input::text) > 12000
-    or pg_catalog.jsonb_typeof(p_first_turn) is distinct from 'object'
-    or pg_catalog.jsonb_typeof(p_validation_receipt) is distinct from 'object'
-    or pg_catalog.jsonb_typeof(p_private_candidate) is distinct from 'object'
-    or nullif(p_declared_birth_input ->> 'birthDate', '') is null
-    or nullif(p_declared_birth_input ->> 'source', '') is null
+  if public.conversational_rectification_valid_declared_birth_input(
+      p_declared_birth_input
+    ) is not true
+    or public.conversational_rectification_valid_public_turn(p_first_turn) is not true
+    or public.conversational_rectification_valid_validation_receipt(
+      p_validation_receipt
+    ) is not true
+    or public.conversational_rectification_valid_private_candidate(
+      p_private_candidate
+    ) is not true
     or p_first_turn ->> 'caseId' is distinct from p_case_id::text
     or p_first_turn ->> 'journeyProtocol' is distinct from 'conversational-evidence-v3'
     or (p_first_turn ->> 'turnVersion')::bigint is distinct from 0
@@ -347,10 +350,14 @@ begin
   v_response := public.conversational_rectification_case_projection(p_user_id, p_case_id);
   insert into public.birth_time_rectification_action_receipts (
     case_id, action_id, user_id, action_kind, expected_turn_version,
-    result_turn_version, request_fingerprint, response
+    result_turn_version, request_fingerprint, request, response
   ) values (
     p_case_id, p_action_id, p_user_id, 'create', p_expected_version,
-    0, v_fingerprint, v_response
+    0, v_fingerprint,
+    public.conversational_rectification_action_request(
+      'create', p_user_id, p_case_id, p_expected_version, p_action_id, v_fingerprint
+    ),
+    v_response
   );
   return v_response;
 end;
@@ -491,10 +498,15 @@ begin
   v_response := public.conversational_rectification_case_projection(p_user_id, p_case_id);
   insert into public.birth_time_rectification_action_receipts (
     case_id, action_id, user_id, action_kind, expected_turn_version,
-    result_turn_version, request_fingerprint, response
+    result_turn_version, request_fingerprint, request, response
   ) values (
     p_case_id, p_action_id, p_user_id, 'save_turn', p_expected_version,
-    p_expected_version + 1, v_fingerprint, v_response
+    p_expected_version + 1, v_fingerprint,
+    public.conversational_rectification_action_request(
+      'save_turn', p_user_id, p_case_id, p_expected_version,
+      p_action_id, v_fingerprint
+    ),
+    v_response
   );
   return v_response;
 end;
@@ -604,10 +616,14 @@ begin
   v_response := public.conversational_rectification_case_projection(p_user_id, p_case_id);
   insert into public.birth_time_rectification_action_receipts (
     case_id, action_id, user_id, action_kind, expected_turn_version,
-    result_turn_version, request_fingerprint, response
+    result_turn_version, request_fingerprint, request, response
   ) values (
     p_case_id, p_action_id, p_user_id, 'pause', p_expected_version,
-    p_expected_version + 1, v_fingerprint, v_response
+    p_expected_version + 1, v_fingerprint,
+    public.conversational_rectification_action_request(
+      'pause', p_user_id, p_case_id, p_expected_version, p_action_id, v_fingerprint
+    ),
+    v_response
   );
   return v_response;
 end;
@@ -717,10 +733,14 @@ begin
   v_response := public.conversational_rectification_case_projection(p_user_id, p_case_id);
   insert into public.birth_time_rectification_action_receipts (
     case_id, action_id, user_id, action_kind, expected_turn_version,
-    result_turn_version, request_fingerprint, response
+    result_turn_version, request_fingerprint, request, response
   ) values (
     p_case_id, p_action_id, p_user_id, 'abandon', p_expected_version,
-    p_expected_version + 1, v_fingerprint, v_response
+    p_expected_version + 1, v_fingerprint,
+    public.conversational_rectification_action_request(
+      'abandon', p_user_id, p_case_id, p_expected_version, p_action_id, v_fingerprint
+    ),
+    v_response
   );
   return v_response;
 end;
@@ -888,10 +908,14 @@ begin
   v_response := public.conversational_rectification_case_projection(p_user_id, p_case_id);
   insert into public.birth_time_rectification_action_receipts (
     case_id, action_id, user_id, action_kind, expected_turn_version,
-    result_turn_version, request_fingerprint, response
+    result_turn_version, request_fingerprint, request, response
   ) values (
     p_case_id, p_action_id, p_user_id, 'confirm', p_expected_version,
-    p_expected_version + 1, v_fingerprint, v_response
+    p_expected_version + 1, v_fingerprint,
+    public.conversational_rectification_action_request(
+      'confirm', p_user_id, p_case_id, p_expected_version, p_action_id, v_fingerprint
+    ),
+    v_response
   );
   return v_response;
 end;
@@ -1012,27 +1036,40 @@ begin
   if not found then
     raise exception 'conversational_case_not_found' using errcode = 'P0001';
   end if;
-  v_declared_birth_input := pg_catalog.jsonb_strip_nulls(
-    pg_catalog.jsonb_build_object(
-      'birthDate', pg_catalog.to_char(v_legacy.reported_date, 'YYYY-MM-DD'),
-      'reportedTime', case when v_legacy.reported_time is null then null
-        else pg_catalog.to_char(v_legacy.reported_time, 'HH24:MI') end,
-      'reportedPeriod', v_legacy.reported_period,
-      'source', v_legacy.source,
-      'birthTimeClue', v_profile.birth_time_clue,
-      'uncertaintyBeforeMinutes', v_legacy.uncertainty_before_minutes,
-      'uncertaintyAfterMinutes', v_legacy.uncertainty_after_minutes,
-      'birthplace', pg_catalog.jsonb_strip_nulls(pg_catalog.jsonb_build_object(
-        'countryCode', v_profile.country_code,
-        'provinceCode', v_profile.province_code,
-        'cityCode', v_profile.city_code,
-        'districtCode', v_profile.district_code,
-        'latitude', v_profile.latitude,
-        'longitude', v_profile.longitude,
-        'timezoneOffset', v_profile.timezone_offset
-      ))
-    )
+  -- Preserve an explicit nullable clue while omitting inapplicable time-mode
+  -- keys. This yields the same source-discriminated representation accepted
+  -- by new starts and keeps legacy import round-trippable across devices.
+  v_declared_birth_input := pg_catalog.jsonb_build_object(
+    'birthDate', pg_catalog.to_char(v_legacy.reported_date, 'YYYY-MM-DD'),
+    'source', v_legacy.source,
+    'birthTimeClue', v_profile.birth_time_clue,
+    'birthplace', pg_catalog.jsonb_strip_nulls(pg_catalog.jsonb_build_object(
+      'countryCode', v_profile.country_code,
+      'provinceCode', v_profile.province_code,
+      'cityCode', v_profile.city_code,
+      'districtCode', v_profile.district_code,
+      'latitude', v_profile.latitude,
+      'longitude', v_profile.longitude,
+      'timezoneOffset', v_profile.timezone_offset
+    ))
   );
+  if v_legacy.reported_time is not null then
+    v_declared_birth_input := v_declared_birth_input || pg_catalog.jsonb_build_object(
+      'reportedTime', pg_catalog.to_char(v_legacy.reported_time, 'HH24:MI')
+    );
+  end if;
+  if v_legacy.reported_period is not null then
+    v_declared_birth_input := v_declared_birth_input || pg_catalog.jsonb_build_object(
+      'reportedPeriod', v_legacy.reported_period
+    );
+  end if;
+  if v_legacy.uncertainty_before_minutes is not null
+    or v_legacy.uncertainty_after_minutes is not null then
+    v_declared_birth_input := v_declared_birth_input || pg_catalog.jsonb_build_object(
+      'uncertaintyBeforeMinutes', v_legacy.uncertainty_before_minutes,
+      'uncertaintyAfterMinutes', v_legacy.uncertainty_after_minutes
+    );
+  end if;
   select b.* into v_billing
   from public.birth_time_rectification_billing b
   where b.user_id = p_user_id and b.state = 'reserved'
@@ -1040,9 +1077,16 @@ begin
   if found then
     raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
-  if pg_catalog.jsonb_typeof(p_first_turn) is distinct from 'object'
-    or pg_catalog.jsonb_typeof(p_validation_receipt) is distinct from 'object'
-    or pg_catalog.jsonb_typeof(p_private_candidate) is distinct from 'object'
+  if public.conversational_rectification_valid_declared_birth_input(
+      v_declared_birth_input
+    ) is not true
+    or public.conversational_rectification_valid_public_turn(p_first_turn) is not true
+    or public.conversational_rectification_valid_validation_receipt(
+      p_validation_receipt
+    ) is not true
+    or public.conversational_rectification_valid_private_candidate(
+      p_private_candidate
+    ) is not true
     or p_first_turn ->> 'caseId' is distinct from p_case_id::text
     or p_first_turn ->> 'journeyProtocol' is distinct from 'conversational-evidence-v3'
     or (p_first_turn ->> 'turnVersion')::bigint is distinct from 0
@@ -1104,10 +1148,15 @@ begin
   v_response := public.conversational_rectification_case_projection(p_user_id, p_case_id);
   insert into public.birth_time_rectification_action_receipts (
     case_id, action_id, user_id, action_kind, expected_turn_version,
-    result_turn_version, request_fingerprint, response
+    result_turn_version, request_fingerprint, request, response
   ) values (
     p_case_id, p_action_id, p_user_id, 'import_legacy', p_expected_version,
-    0, v_fingerprint, v_response
+    0, v_fingerprint,
+    public.conversational_rectification_action_request(
+      'import_legacy', p_user_id, p_case_id, p_expected_version,
+      p_action_id, v_fingerprint
+    ),
+    v_response
   );
   return v_response;
 end;

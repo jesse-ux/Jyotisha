@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { boundedJson } from "./json-bounds.ts";
 
 const actionIdSchema = z.string().uuid();
 const caseIdSchema = z.string().uuid();
@@ -12,6 +13,11 @@ const evidenceDomainSchema = z.enum([
   "family",
   "other",
 ]);
+
+const boundedNonblankText = (maximum: number) => z.string()
+  .min(1)
+  .max(maximum)
+  .refine((value) => value.trim().length > 0, "text must contain a non-whitespace character");
 
 const actionCommandSchema = z.object({
   caseId: caseIdSchema,
@@ -51,34 +57,42 @@ export const conversationalRectificationCommandSchema = z.discriminatedUnion("ty
 
 export type ConversationalRectificationCommand = z.infer<typeof conversationalRectificationCommandSchema>;
 
-export const conversationalRectificationTurnSchema = z.object({
+const candidateSchema = boundedJson(z.object({
+  status: z.enum(["declared", "pending_validation", "ready_for_confirmation", "confirmed"]),
+  representativeTime: timeSchema.nullable(),
+  rangeStart: timeSchema.nullable(),
+  rangeEnd: timeSchema.nullable(),
+}).strict(), 512);
+
+const technicalReceiptSchema = boundedJson(z.object({
+  calculationVersion: boundedNonblankText(80),
+  stableLayers: z.array(boundedNonblankText(80)).max(20),
+  sensitiveLayers: z.array(boundedNonblankText(80)).max(20),
+  candidateDifferenceRefs: z.array(boundedNonblankText(120)).max(40),
+}).strict(), 8_192);
+
+const evidenceRequestSchema = boundedJson(z.object({
+  domains: z.array(evidenceDomainSchema).min(2).max(4),
+  datePrecision: z.enum(["month_preferred", "year_accepted"]),
+  freeTextAllowed: z.literal(true),
+}).strict(), 2_048);
+
+const evidenceRecapEntrySchema = boundedJson(z.object({
+  id: z.string().uuid(),
+  summary: boundedNonblankText(1_000),
+  dateLabel: boundedNonblankText(80),
+}).strict(), 4_096);
+
+export const conversationalRectificationTurnSchema = boundedJson(z.object({
   caseId: caseIdSchema,
   journeyProtocol: z.literal("conversational-evidence-v3"),
   status: z.enum(["active", "paused", "confirming", "completed", "abandoned"]),
   turnVersion: turnVersionSchema,
-  narrative: z.string().trim().min(1).max(12_000),
-  candidate: z.object({
-    status: z.enum(["declared", "pending_validation", "ready_for_confirmation", "confirmed"]),
-    representativeTime: timeSchema.nullable(),
-    rangeStart: timeSchema.nullable(),
-    rangeEnd: timeSchema.nullable(),
-  }).strict(),
-  technicalReceipt: z.object({
-    calculationVersion: z.string().trim().min(1).max(80),
-    stableLayers: z.array(z.string().trim().min(1).max(80)).max(20),
-    sensitiveLayers: z.array(z.string().trim().min(1).max(80)).max(20),
-    candidateDifferenceRefs: z.array(z.string().trim().min(1).max(120)).max(40),
-  }).strict(),
-  evidenceRequest: z.object({
-    domains: z.array(evidenceDomainSchema).min(2).max(4),
-    datePrecision: z.enum(["month_preferred", "year_accepted"]),
-    freeTextAllowed: z.literal(true),
-  }).strict().nullable(),
-  evidenceRecap: z.array(z.object({
-    id: z.string().uuid(),
-    summary: z.string(),
-    dateLabel: z.string(),
-  }).strict()).max(20),
+  narrative: boundedNonblankText(12_000),
+  candidate: candidateSchema,
+  technicalReceipt: technicalReceiptSchema,
+  evidenceRequest: evidenceRequestSchema.nullable(),
+  evidenceRecap: z.array(evidenceRecapEntrySchema).max(20),
   actions: z.array(z.enum([
     "answer",
     "pause",
@@ -86,7 +100,7 @@ export const conversationalRectificationTurnSchema = z.object({
     "confirm",
     "continue_original_question",
   ])).max(5),
-  pendingConsultationQuestion: z.string().max(500).nullable(),
-}).strict();
+  pendingConsultationQuestion: boundedNonblankText(500).nullable(),
+}).strict(), 65_536);
 
 export type ConversationalRectificationTurn = z.infer<typeof conversationalRectificationTurnSchema>;

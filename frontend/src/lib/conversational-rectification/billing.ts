@@ -5,6 +5,7 @@ import {
   mapConversationalRectificationStoreError,
   type ConversationalRectificationRpcClient,
 } from "./store.ts";
+import { billingReceiptResponseSchema } from "./persistence-contracts.ts";
 
 export type ConversationalRectificationBillingIdentity = Readonly<{
   userId: string;
@@ -22,24 +23,31 @@ export type ConversationalRectificationBillingResult = Readonly<{
   billingState: "reserved" | "charged" | "released" | "migration_waived";
 }>;
 
-const billingRowSchema = z.object({
-  success: z.boolean(),
-  credits: z.number().int().nonnegative().nullable(),
-  billing_state: z.enum(["reserved", "charged", "released", "migration_waived"]).nullable(),
-  error_code: z.string().nullable(),
+const billingIdentitySchema = z.object({
+  userId: z.string().uuid(),
+  caseId: z.string().uuid(),
+  expectedVersion: z.number().int().nonnegative(),
+  actionId: z.string().uuid(),
 }).strict();
 
 function billingArgs(
   input: ConversationalRectificationBillingIdentity,
 ): Readonly<Record<string, unknown>> {
-  if (input.caseId !== conversationalRectificationCaseIdForStartAction(input.actionId)) {
+  const parsed = billingIdentitySchema.safeParse({
+    userId: input.userId,
+    caseId: input.caseId,
+    expectedVersion: input.expectedVersion,
+    actionId: input.actionId,
+  });
+  if (!parsed.success
+    || parsed.data.caseId !== conversationalRectificationCaseIdForStartAction(parsed.data.actionId)) {
     throw new ConversationalRectificationError("action_conflict");
   }
   return {
-    p_user_id: input.userId,
-    p_case_id: input.caseId,
-    p_expected_version: input.expectedVersion,
-    p_action_id: input.actionId,
+    p_user_id: parsed.data.userId,
+    p_case_id: parsed.data.caseId,
+    p_expected_version: parsed.data.expectedVersion,
+    p_action_id: parsed.data.actionId,
   };
 }
 
@@ -74,7 +82,7 @@ export class ConversationalRectificationBilling {
           ? new ConversationalRectificationError("billing_failed")
           : mapped;
       }
-      const parsed = billingRowSchema.safeParse(unwrapBillingRow(data));
+      const parsed = billingReceiptResponseSchema.safeParse(unwrapBillingRow(data));
       if (!parsed.success) throw new ConversationalRectificationError("billing_failed");
       if (!parsed.data.success || !parsed.data.billing_state || parsed.data.credits === null) {
         throw billingRejection(parsed.data.error_code);

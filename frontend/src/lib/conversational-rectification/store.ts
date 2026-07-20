@@ -7,6 +7,17 @@ import {
   ConversationalRectificationError,
   type ConversationalRectificationErrorCode,
 } from "./errors.ts";
+import {
+  declaredBirthInputSchema,
+  lifeEventEvidenceSchema,
+  privateCandidateSchema,
+  storedCaseRowSchema,
+  validationReceiptSchema,
+  type DeclaredBirthInput,
+  type LifeEventEvidence,
+  type PrivateCandidate,
+  type ValidationReceipt,
+} from "./persistence-contracts.ts";
 
 export type ConversationalRectificationRpcError = Readonly<{
   code?: string;
@@ -32,8 +43,8 @@ type DeepReadonly<T> = T extends (...args: never[]) => unknown
       : T;
 
 export type ConversationalRectificationTurnInput = DeepReadonly<ConversationalRectificationTurn>;
-export type PrivateCandidateInput = Readonly<Record<string, unknown>>;
-export type ValidationReceiptInput = Readonly<Record<string, unknown>>;
+export type PrivateCandidateInput = DeepReadonly<PrivateCandidate>;
+export type ValidationReceiptInput = DeepReadonly<ValidationReceipt>;
 
 export type StoredConversationalRectificationCase = Readonly<{
   caseId: string;
@@ -46,18 +57,18 @@ export type StoredConversationalRectificationCase = Readonly<{
   pendingConsultationQuestion: string | null;
   billingState: "reserved" | "charged" | "released" | "migration_waived" | null;
   latestTurn: ConversationalRectificationTurn;
-  declaredBirthInput?: Readonly<Record<string, unknown>>;
-  privateCandidate?: Readonly<Record<string, unknown>>;
+  declaredBirthInput?: DeepReadonly<DeclaredBirthInput>;
+  privateCandidate?: DeepReadonly<PrivateCandidate>;
   eventEvidence?: ReadonlyArray<LifeEventEvidenceInput>;
-  validationReceipts?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+  validationReceipts?: ReadonlyArray<DeepReadonly<ValidationReceipt>>;
 }>;
 
 export type LoadedConversationalRectificationCase =
   StoredConversationalRectificationCase & Readonly<{
-    declaredBirthInput: Readonly<Record<string, unknown>>;
-    privateCandidate: Readonly<Record<string, unknown>>;
+    declaredBirthInput: DeepReadonly<DeclaredBirthInput>;
+    privateCandidate: DeepReadonly<PrivateCandidate>;
     eventEvidence: ReadonlyArray<LifeEventEvidenceInput>;
-    validationReceipts: ReadonlyArray<Readonly<Record<string, unknown>>>;
+    validationReceipts: ReadonlyArray<DeepReadonly<ValidationReceipt>>;
   }>;
 
 type MutationIdentity = Readonly<{
@@ -70,22 +81,13 @@ type MutationIdentity = Readonly<{
 export type CreateConversationalRectificationCaseInput = MutationIdentity & Readonly<{
   revisionOfCaseId: string | null;
   pendingConsultationQuestion: string | null;
-  declaredBirthInput: Readonly<Record<string, unknown>>;
+  declaredBirthInput: DeepReadonly<DeclaredBirthInput>;
   firstTurn: ConversationalRectificationTurnInput;
   validationReceipt: ValidationReceiptInput;
   privateCandidate: PrivateCandidateInput;
 }>;
 
-export type LifeEventEvidenceInput = Readonly<{
-  id: string;
-  rawText: string;
-  domain: "career" | "education" | "relocation" | "relationship" | "family" | "other";
-  eventSummary: string;
-  dateValue: string | null;
-  datePrecision: "day" | "month" | "year" | "range" | "unknown";
-  extractionStatus: "clear" | "needs_clarification" | "corrected";
-  scoreable?: boolean;
-}>;
+export type LifeEventEvidenceInput = DeepReadonly<LifeEventEvidence>;
 
 export type SaveConversationalRectificationTurnInput = MutationIdentity & Readonly<{
   turn: ConversationalRectificationTurnInput;
@@ -146,32 +148,6 @@ export function mapConversationalRectificationStoreError(
   return new ConversationalRectificationError(domainCode ?? "store_unavailable");
 }
 
-const storedCaseRowSchema = z.object({
-  case_id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  status: z.enum(["starting", "active", "paused", "confirming", "completed", "abandoned"]),
-  turn_version: z.number().int().nonnegative(),
-  revision_of_case_id: z.string().uuid().nullable(),
-  imported_from_case_id: z.string().uuid().nullable(),
-  baseline_active_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable(),
-  pending_consultation_question: z.string().min(1).max(500).nullable(),
-  billing_state: z.enum(["reserved", "charged", "released", "migration_waived"]).nullable(),
-  latest_turn: conversationalRectificationTurnSchema,
-  declared_birth_input: z.record(z.unknown()).optional(),
-  private_candidate: z.record(z.unknown()).optional(),
-  event_evidence: z.array(z.object({
-    id: z.string().uuid(),
-    rawText: z.string().trim().min(1).max(4_000),
-    domain: z.enum(["career", "education", "relocation", "relationship", "family", "other"]),
-    eventSummary: z.string().min(1).max(1_000),
-    dateValue: z.string().min(1).max(80).nullable(),
-    datePrecision: z.enum(["day", "month", "year", "range", "unknown"]),
-    extractionStatus: z.enum(["clear", "needs_clarification", "corrected"]),
-    scoreable: z.boolean(),
-  }).strict()).optional(),
-  validation_receipts: z.array(z.record(z.unknown())).optional(),
-}).strict();
-
 function unwrapSingle(data: unknown, allowNull: boolean): unknown {
   if (Array.isArray(data)) {
     if (data.length === 0 && allowNull) return null;
@@ -211,12 +187,54 @@ function requirePublicTurn(turn: ConversationalRectificationTurnInput): Conversa
   return parsed.data;
 }
 
+function invalidDurableInput(): never {
+  throw new ConversationalRectificationError("action_conflict");
+}
+
+function requireDeclaredBirthInput(input: DeepReadonly<DeclaredBirthInput>): DeclaredBirthInput {
+  const parsed = declaredBirthInputSchema.safeParse(input);
+  if (!parsed.success) return invalidDurableInput();
+  return parsed.data;
+}
+
+function requirePrivateCandidate(input: PrivateCandidateInput): PrivateCandidate {
+  const parsed = privateCandidateSchema.safeParse(input);
+  if (!parsed.success) return invalidDurableInput();
+  return parsed.data;
+}
+
+function requireValidationReceipt(input: ValidationReceiptInput): ValidationReceipt {
+  const parsed = validationReceiptSchema.safeParse(input);
+  if (!parsed.success) return invalidDurableInput();
+  return parsed.data;
+}
+
+function requireEvidence(input: ReadonlyArray<LifeEventEvidenceInput>): ReadonlyArray<LifeEventEvidence> {
+  const parsed = z.array(lifeEventEvidenceSchema).max(20).safeParse(input);
+  if (!parsed.success) return invalidDurableInput();
+  return parsed.data;
+}
+
+const mutationIdentitySchema = z.object({
+  userId: z.string().uuid(),
+  caseId: z.string().uuid(),
+  expectedVersion: z.number().int().nonnegative(),
+  actionId: z.string().uuid(),
+}).strict();
+
 function mutationArgs(input: MutationIdentity): Readonly<Record<string, unknown>> {
+  const parsed = mutationIdentitySchema.safeParse({
+    userId: input.userId,
+    caseId: input.caseId,
+    expectedVersion: input.expectedVersion,
+    actionId: input.actionId,
+  });
+  if (!parsed.success) return invalidDurableInput();
   return {
-    p_user_id: input.userId,
-    p_case_id: input.caseId,
-    p_expected_version: input.expectedVersion,
-    p_action_id: input.actionId,
+    p_user_id: parsed.data.userId,
+    p_case_id: parsed.data.caseId,
+    p_expected_version: parsed.data.expectedVersion,
+    p_action_id: parsed.data.actionId,
   };
 }
 
@@ -259,10 +277,10 @@ export class ConversationalRectificationStore {
       ...mutationArgs(input),
       p_revision_of_case_id: input.revisionOfCaseId,
       p_pending_consultation_question: input.pendingConsultationQuestion,
-      p_declared_birth_input: input.declaredBirthInput,
+      p_declared_birth_input: requireDeclaredBirthInput(input.declaredBirthInput),
       p_first_turn: requirePublicTurn(input.firstTurn),
-      p_validation_receipt: input.validationReceipt,
-      p_private_candidate: input.privateCandidate,
+      p_validation_receipt: requireValidationReceipt(input.validationReceipt),
+      p_private_candidate: requirePrivateCandidate(input.privateCandidate),
     });
     if (!result) throw new ConversationalRectificationError("store_unavailable");
     return result;
@@ -292,9 +310,9 @@ export class ConversationalRectificationStore {
     const result = await this.callCaseRpc("save_conversational_rectification_turn", {
       ...mutationArgs(input),
       p_turn: requirePublicTurn(input.turn),
-      p_evidence: input.evidence,
-      p_validation_receipt: input.validationReceipt,
-      p_private_candidate: input.privateCandidate,
+      p_evidence: requireEvidence(input.evidence),
+      p_validation_receipt: requireValidationReceipt(input.validationReceipt),
+      p_private_candidate: requirePrivateCandidate(input.privateCandidate),
     });
     if (!result) throw new ConversationalRectificationError("store_unavailable");
     return result;
@@ -319,7 +337,7 @@ export class ConversationalRectificationStore {
     const result = await this.callCaseRpc(functionName, {
       ...mutationArgs(input),
       p_turn: requirePublicTurn(input.turn),
-      p_validation_receipt: input.validationReceipt,
+      p_validation_receipt: requireValidationReceipt(input.validationReceipt),
     });
     if (!result) throw new ConversationalRectificationError("store_unavailable");
     return result;
@@ -334,7 +352,7 @@ export class ConversationalRectificationStore {
       p_time: input.time,
       p_calculation_version: input.calculationVersion,
       p_turn: requirePublicTurn(input.turn),
-      p_validation_receipt: input.validationReceipt,
+      p_validation_receipt: requireValidationReceipt(input.validationReceipt),
     });
     if (!result) throw new ConversationalRectificationError("store_unavailable");
     return result;
@@ -346,14 +364,17 @@ export class ConversationalRectificationStore {
     if (input.caseId !== conversationalRectificationCaseIdForStartAction(input.actionId)) {
       throw new ConversationalRectificationError("action_conflict");
     }
+    if (!Number.isSafeInteger(input.price) || input.price < 1 || input.price > 1_000_000) {
+      throw new ConversationalRectificationError("action_conflict");
+    }
     const result = await this.callCaseRpc("import_legacy_conversational_rectification_case", {
       ...mutationArgs(input),
       p_legacy_case_id: input.legacyCaseId,
       p_price: input.price,
       p_pending_consultation_question: input.pendingConsultationQuestion,
       p_first_turn: requirePublicTurn(input.firstTurn),
-      p_validation_receipt: input.validationReceipt,
-      p_private_candidate: input.privateCandidate,
+      p_validation_receipt: requireValidationReceipt(input.validationReceipt),
+      p_private_candidate: requirePrivateCandidate(input.privateCandidate),
     });
     if (!result) throw new ConversationalRectificationError("store_unavailable");
     return result;
