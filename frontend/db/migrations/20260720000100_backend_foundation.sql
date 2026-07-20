@@ -13,11 +13,3 @@ alter default privileges for role schema_owner in schema public
   revoke all on tables from public;
 alter default privileges for role schema_owner in schema audit
   revoke all on tables from public;
-alter default privileges for role schema_owner in schema identity
-  grant select, insert, update, delete on tables to identity_runtime;
-alter default privileges for role schema_owner in schema identity
-  grant select on tables to admin_runtime;
-alter default privileges for role schema_owner in schema public
-  grant select, insert, update, delete on tables to app_runtime, admin_runtime;
-alter default privileges for role schema_owner in schema audit
-  grant select, insert on tables to admin_runtime;

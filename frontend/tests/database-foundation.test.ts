@@ -20,6 +20,7 @@ const migrationFilename = "20260720000100_backend_foundation.sql";
 const pendingFilename = "20260720000200_pending_check.sql";
 const concurrentFilename = "20260720000300_concurrent_lock.sql";
 const failingFilename = "20260720000400_atomic_rollback.sql";
+const malformedFilename = "20260720_malformed.sql";
 const runnerPath = fileURLToPath(
   new URL("../scripts/db-migrate.mjs", import.meta.url),
 );
@@ -127,6 +128,17 @@ test("migration runner is serialized, atomic, drift-safe, and read-only in check
 
   try {
     copyFileSync(migrationPath, copiedMigration);
+
+    const malformedPath = join(temporaryDirectory, malformedFilename);
+    writeFileSync(malformedPath, "select 1;\n");
+    const malformedCheck = runMigration(schemaUrl, {
+      check: true,
+      migrationsDirectory: temporaryDirectory,
+    });
+    results.push(malformedCheck);
+    assert.equal(malformedCheck.status, 1);
+    assert.match(malformedCheck.stderr, /invalid migration filename/);
+    unlinkSync(malformedPath);
 
     const missingLedgerCheck = runMigration(schemaUrl, {
       check: true,
@@ -325,6 +337,94 @@ insert into atomic_rollback_probe.child (parent_id) values (1);
     );
 
     for (const result of results) assertSafeOutput(result);
+  } finally {
+    fixture.stop();
+    rmSync(temporaryDirectory, { force: true, recursive: true });
+  }
+});
+
+test("foundation grants no direct runtime table DML and exposes only reviewed functions", () => {
+  const fixture = startPostgresFixture();
+  const temporaryDirectory = mkdtempSync(join(tmpdir(), "jyotisha-privileges-"));
+  const schemaUrl = fixture.connectionUrl(
+    "schema_owner",
+    "schema-owner-test-password",
+  );
+
+  try {
+    copyFileSync(migrationPath, join(temporaryDirectory, migrationFilename));
+    const migration = runMigration(schemaUrl, {
+      migrationsDirectory: temporaryDirectory,
+    });
+    assert.equal(migration.status, 0, migration.stderr);
+
+    fixture.psqlAs(
+      "schema_owner",
+      "schema-owner-test-password",
+      `
+        create table public.runtime_boundary_probe (
+          id integer primary key,
+          value text not null
+        );
+        create table identity.runtime_boundary_probe (
+          id integer primary key,
+          value text not null
+        );
+        create table audit.admin_event_probe (
+          value text not null
+        );
+        create function audit.record_admin_event_probe(event_value text)
+        returns void
+        language sql
+        security definer
+        set search_path = pg_catalog, audit
+        as 'insert into audit.admin_event_probe(value) values (event_value)';
+        revoke all on function audit.record_admin_event_probe(text) from public;
+        grant execute on function audit.record_admin_event_probe(text) to admin_runtime;
+      `,
+    );
+
+    assert.throws(() =>
+      fixture.psqlAs(
+        "app_runtime",
+        "app-runtime-test-password",
+        "insert into public.runtime_boundary_probe values (1, 'denied')",
+      ),
+    );
+    assert.throws(() =>
+      fixture.psqlAs(
+        "admin_runtime",
+        "admin-runtime-test-password",
+        "insert into audit.admin_event_probe values ('denied')",
+      ),
+    );
+    assert.throws(() =>
+      fixture.psqlAs(
+        "identity_runtime",
+        "identity-runtime-test-password",
+        "insert into identity.runtime_boundary_probe values (1, 'denied')",
+      ),
+    );
+    assert.throws(() =>
+      fixture.psqlAs(
+        "admin_runtime",
+        "admin-runtime-test-password",
+        "update public.runtime_boundary_probe set value = 'denied'",
+      ),
+    );
+
+    assert.equal(
+      fixture.psqlAs(
+        "admin_runtime",
+        "admin-runtime-test-password",
+        "select audit.record_admin_event_probe('approved')",
+      ),
+      "",
+    );
+    assert.equal(
+      fixture.psql("select value from audit.admin_event_probe"),
+      "approved",
+    );
   } finally {
     fixture.stop();
     rmSync(temporaryDirectory, { force: true, recursive: true });

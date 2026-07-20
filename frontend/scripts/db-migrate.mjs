@@ -17,6 +17,18 @@ async function loadMigrationFiles(migrationsDirectory) {
     throw new SafeMigrationError("unable to read migrations directory");
   }
 
+  const malformedSqlEntry = entries.find(
+    (entry) =>
+      entry.isFile() &&
+      entry.name.endsWith(".sql") &&
+      !migrationFilenamePattern.test(entry.name),
+  );
+  if (malformedSqlEntry) {
+    throw new SafeMigrationError(
+      `invalid migration filename: ${malformedSqlEntry.name}`,
+    );
+  }
+
   return Promise.all(
     entries
       .filter(

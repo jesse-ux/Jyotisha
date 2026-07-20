@@ -15,6 +15,7 @@ export type PostgresFixture = {
   hostPort: number;
   connectionUrl(role: string, password: string): string;
   psql(sql: string): string;
+  psqlAs(role: string, password: string, sql: string): string;
   stop(): void;
 };
 
@@ -144,6 +145,29 @@ export function startPostgresFixture(): PostgresFixture {
       )
         .trim()
         .replace(/(^|:)false(?=:|$)/gm, "$1f");
+    },
+    psqlAs(role, password, sql) {
+      return execFileSync(
+        "docker",
+        [
+          ...composeArguments,
+          "exec",
+          "-T",
+          "-e",
+          `PGPASSWORD=${password}`,
+          "postgres",
+          "psql",
+          "-v",
+          "ON_ERROR_STOP=1",
+          "-U",
+          role,
+          "-d",
+          "jyotisha",
+          "-Atc",
+          sql,
+        ],
+        { encoding: "utf8", env: environment },
+      ).trim();
     },
     stop() {
       try {
