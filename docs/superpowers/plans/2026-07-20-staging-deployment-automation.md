@@ -183,11 +183,16 @@ test("staging deploy consumes only the isolated staging environment and tested r
   assert.match(ci, /push:\s*\n\s*branches: \[staging\]/);
   assert.match(workflow, /workflows: \["Jyotish Skill CI"\]/);
   assert.match(workflow, /github\.event\.workflow_run\.head_branch == 'staging'/);
+  assert.match(workflow, /actions: read/);
   assert.match(workflow, /environment:\s*\n\s*name: staging/);
+  assert.match(workflow, /git_sha:/);
+  assert.doesNotMatch(workflow, /default: staging/);
+  assert.match(workflow, /test "\$\{#REQUESTED_SHA\}" -eq 40/);
+  assert.match(workflow, /actions\/workflows\/ci\.yml\/runs\?head_sha=/);
   assert.match(workflow, /STAGING_SSH_PRIVATE_KEY/);
   assert.match(workflow, /vars\.STAGING_HOST/);
   assert.match(workflow, /vars\.STAGING_KNOWN_HOSTS/);
-  assert.match(workflow, /--exclude='\.env\.staging'/);
+  assert.match(workflow, /--exclude='\.env\*'/);
   assert.match(workflow, /docker compose --env-file \.env\.staging/);
   assert.match(workflow, /deployment\.gitCommit/);
   assert.doesNotMatch(workflow, /PRODUCTION_SSH_PRIVATE_KEY/);
@@ -230,13 +235,13 @@ on:
     types: [completed]
   workflow_dispatch:
     inputs:
-      git_ref:
-        description: Tested branch, tag, or commit SHA to deploy
+      git_sha:
+        description: Exact 40-character commit SHA from a successful CI run
         required: true
-        default: staging
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: staging
@@ -263,25 +268,48 @@ jobs:
       STAGING_KNOWN_HOSTS: ${{ vars.STAGING_KNOWN_HOSTS }}
 
     steps:
+      - name: Validate tested revision
+        id: revision
+        env:
+          REQUESTED_SHA: ${{ github.event.workflow_run.head_sha || inputs.git_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "${#REQUESTED_SHA}" -eq 40
+          case "$REQUESTED_SHA" in
+            *[!0-9a-fA-F]*) echo "git_sha must be a full hexadecimal commit SHA" >&2; exit 1 ;;
+          esac
+          DEPLOY_GIT_SHA="$(printf '%s' "$REQUESTED_SHA" | tr '[:upper:]' '[:lower:]')"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            TESTED_RUNS="$(curl --fail --silent --show-error \
+              --header "Authorization: Bearer $GH_TOKEN" \
+              --header "Accept: application/vnd.github+json" \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$DEPLOY_GIT_SHA&status=success&per_page=1")"
+            test "$(printf '%s' "$TESTED_RUNS" | jq -r '.total_count')" -ge 1 || {
+              echo "No successful Jyotish Skill CI run found for $DEPLOY_GIT_SHA" >&2
+              exit 1
+            }
+          fi
+          echo "sha=$DEPLOY_GIT_SHA" >> "$GITHUB_OUTPUT"
+
       - name: Checkout tested revision
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || inputs.git_ref }}
+          ref: ${{ steps.revision.outputs.sha }}
 
-      - name: Resolve deployment SHA
-        id: revision
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Verify checked-out revision
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: test "$(git rev-parse HEAD)" = "$DEPLOY_GIT_SHA"
 
       - name: Validate staging target configuration
         run: |
-          test -n "$DEPLOY_HOST"
-          test -n "$DEPLOY_PORT"
-          test -n "$DEPLOY_USER"
-          test -n "$DEPLOY_PATH"
-          test -n "$STAGING_URL"
-          test -n "$STAGING_KNOWN_HOSTS"
-          test "$DEPLOY_HOST" != "103.117.123.53"
+          test "$DEPLOY_HOST" = "118.26.111.127"
+          test "$DEPLOY_PORT" = "22"
+          test "$DEPLOY_USER" = "deploy"
+          test "$DEPLOY_PATH" = "/opt/jyotisha-staging"
           test "$STAGING_URL" = "https://staging.jyotisha.chat"
+          test -n "$STAGING_KNOWN_HOSTS"
 
       - name: Configure pinned staging SSH
         env:
@@ -303,8 +331,7 @@ jobs:
           ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 755 '$DEPLOY_PATH'"
           rsync -az --delete \
             --exclude='.git/' \
-            --exclude='.env.production' \
-            --exclude='.env.staging' \
+            --exclude='.env*' \
             --exclude='frontend/node_modules/' \
             --exclude='frontend/.next/' \
             -e "$RSYNC_SSH" \
@@ -379,17 +406,18 @@ Staging is isolated from production:
 | Supabase | separate `jyotisha-staging` project |
 | GitHub Environment | `staging` |
 
-The GitHub Environment contains `STAGING_SSH_PRIVATE_KEY` and the variables `STAGING_HOST`, `STAGING_PORT`, `STAGING_USER`, `STAGING_PATH`, `STAGING_URL`, and `STAGING_KNOWN_HOSTS`. The staging key, database, Supabase keys, and model-provider keys must not be shared with production.
+The GitHub Environment contains `STAGING_SSH_PRIVATE_KEY` and the variables `STAGING_HOST`, `STAGING_PORT`, `STAGING_USER`, `STAGING_PATH`, `STAGING_URL`, and `STAGING_KNOWN_HOSTS`. Its deployment policy allows the `main` controller branch; the workflow separately requires an upstream successful CI push from branch `staging`. The staging key, database, Supabase keys, and model-provider keys must not be shared with production.
 
 A push to branch `staging` runs `Jyotish Skill CI`. A successful push run triggers `.github/workflows/deploy-staging.yml`, which deploys the tested SHA and verifies the login route, logged-out account response, deployment SHA, and private Python health endpoint.
 
-The first deployment should be manual:
+The first deployment should be manual, after `.env.staging` is verified to contain `APP_ENV_FILE=../.env.staging`, `CADDYFILE_PATH=./Caddyfile.staging`, and `SITE_ADDRESS=https://staging.jyotisha.chat`:
 
 1. Confirm `/opt/jyotisha-staging/.env.staging` exists and has mode `0600`.
-2. Open GitHub Actions -> Deploy staging -> Run workflow.
-3. Enter the tested commit SHA in `git_ref`.
-4. Confirm `https://staging.jyotisha.chat/api/health` reports that SHA.
-5. Only after the manual deployment passes, push the same revision to branch `staging` to validate automatic deployment.
+2. Run `Jyotish Skill CI` manually using workflow from `main` and wait for success.
+3. Open GitHub Actions -> Deploy staging -> Run workflow, using workflow from `main`.
+4. Enter that successful CI run's exact 40-character commit SHA in `git_sha`.
+5. Confirm `https://staging.jyotisha.chat/api/health` reports that SHA.
+6. Only after the manual deployment passes, push a reviewed revision to branch `staging` to validate automatic deployment.
 
 Application rollback uses the same workflow: manually dispatch `Deploy staging` with the previous known-good commit SHA. Database migrations are separate and are not rolled back by an application deployment. Restore a staging database backup before running any destructive migration rehearsal.
 
@@ -482,8 +510,8 @@ In GitHub:
 
 ```text
 Actions -> Deploy staging -> Run workflow
-Use workflow from -> staging
-git_ref -> exact reviewed commit SHA
+Use workflow from -> main
+git_sha -> exact 40-character SHA from a successful Jyotish Skill CI run
 ```
 
 Expected: `Configure pinned staging SSH`, `Sync and rebuild staging`, and `Verify staging` all pass. GitHub Environment shows the deployment URL.
@@ -531,7 +559,7 @@ cp -p .env.staging /home/deploy/.env.staging.health-rehearsal
 sed -i 's/^SUPABASE_SERVICE_ROLE_KEY=.*/SUPABASE_SERVICE_ROLE_KEY=/' .env.staging
 ```
 
-Manually dispatch `Deploy staging` using the current tested SHA and `Use workflow from -> staging`.
+Manually dispatch `Deploy staging` from `main` using the current full SHA that already has a successful `Jyotish Skill CI` run.
 
 Expected: deployment reaches `Verify staging`, `/api/health` is not `ok`, and GitHub marks the workflow failed rather than successful.
 

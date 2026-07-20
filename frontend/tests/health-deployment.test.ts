@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 test("health endpoint exposes deployment identity for production verification", () => {
@@ -50,16 +53,52 @@ test("staging deploy consumes only the isolated staging environment and tested r
   assert.match(ci, /push:\s*\n\s*branches: \[staging\]/);
   assert.match(workflow, /workflows: \["Jyotish Skill CI"\]/);
   assert.match(workflow, /github\.event\.workflow_run\.head_branch == 'staging'/);
+  assert.match(workflow, /actions: read/);
   assert.match(workflow, /environment:\s*\n\s*name: staging/);
+  assert.match(workflow, /git_sha:/);
+  assert.doesNotMatch(workflow, /default: staging/);
+  assert.match(workflow, /test "\$\{#REQUESTED_SHA\}" -eq 40/);
+  assert.match(workflow, /actions\/workflows\/ci\.yml\/runs\?head_sha=/);
   assert.match(workflow, /STAGING_SSH_PRIVATE_KEY/);
   assert.match(workflow, /vars\.STAGING_HOST/);
   assert.match(workflow, /vars\.STAGING_KNOWN_HOSTS/);
   assert.match(workflow, /test "\$DEPLOY_HOST" = "118\.26\.111\.127"/);
   assert.match(workflow, /test "\$DEPLOY_USER" = "deploy"/);
   assert.match(workflow, /test "\$DEPLOY_PATH" = "\/opt\/jyotisha-staging"/);
-  assert.match(workflow, /--exclude='\.env\.staging'/);
+  assert.match(workflow, /--exclude='\.env\*'/);
   assert.match(workflow, /docker compose --env-file \.env\.staging/);
   assert.match(workflow, /deployment\.gitCommit/);
   assert.doesNotMatch(workflow, /PRODUCTION_SSH_PRIVATE_KEY/);
   assert.doesNotMatch(workflow, /103\.117\.123\.53/);
+});
+
+test("staging rsync preserves every destination env variant during delete", () => {
+  const workflow = readFileSync(new URL("../../.github/workflows/deploy-staging.yml", import.meta.url), "utf8");
+  const envExclusion = workflow.match(/--exclude='([^']*\.env[^']*)'/)?.[1];
+
+  assert.equal(envExclusion, ".env*");
+
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-staging-rsync-"));
+  const source = join(root, "source");
+  const destination = join(root, "destination");
+  mkdirSync(source);
+  mkdirSync(destination);
+  writeFileSync(join(source, "app.txt"), "new revision\n");
+  for (const name of [".env", ".env.local", ".env.staging", ".env.staging.backup"]) {
+    writeFileSync(join(destination, name), "preserve\n");
+  }
+
+  try {
+    const result = spawnSync(
+      "rsync",
+      ["-a", "--delete", `--exclude=${envExclusion}`, `${source}/`, `${destination}/`],
+      { encoding: "utf8" },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    for (const name of [".env", ".env.local", ".env.staging", ".env.staging.backup"]) {
+      assert.equal(existsSync(join(destination, name)), true, `${name} was deleted`);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

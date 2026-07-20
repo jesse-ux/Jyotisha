@@ -143,19 +143,28 @@ Staging is isolated from production:
 | Supabase | separate `Jyotisha Staging` project |
 | GitHub Environment | `staging` |
 
-The GitHub Environment contains `STAGING_SSH_PRIVATE_KEY` and the variables `STAGING_HOST`, `STAGING_PORT`, `STAGING_USER`, `STAGING_PATH`, `STAGING_URL`, and `STAGING_KNOWN_HOSTS`. The staging key, database, Supabase keys, and model-provider keys must not be shared with production.
+The GitHub Environment contains `STAGING_SSH_PRIVATE_KEY` and the variables `STAGING_HOST`, `STAGING_PORT`, `STAGING_USER`, `STAGING_PATH`, `STAGING_URL`, and `STAGING_KNOWN_HOSTS`. Its deployment branch policy allows the `main` controller branch: GitHub's `workflow_run` event executes from the default branch while the workflow separately requires the successfully tested upstream branch to be `staging`. The staging key, database, Supabase keys, and model-provider keys must not be shared with production.
 
 A push to branch `staging` runs `Jyotish Skill CI`. A successful push run triggers `.github/workflows/deploy-staging.yml`, which deploys the tested SHA and verifies the login route, logged-out account response, deployment SHA, and private Python health endpoint.
 
-The first deployment should be manual:
+The staging env file must include these non-secret selectors so Compose cannot fall back to production paths:
 
-1. Confirm `/opt/jyotisha-staging/.env.staging` exists and has mode `0600`.
-2. Open GitHub Actions -> Deploy staging -> Run workflow.
-3. Enter the tested commit SHA in `git_ref`.
-4. Confirm `https://staging.jyotisha.chat/api/health` reports that SHA.
-5. Only after the manual deployment passes, push the same revision to branch `staging` to validate automatic deployment.
+```dotenv
+APP_ENV_FILE=../.env.staging
+CADDYFILE_PATH=./Caddyfile.staging
+SITE_ADDRESS=https://staging.jyotisha.chat
+```
 
-Application rollback uses the same workflow: manually dispatch `Deploy staging` with the previous known-good commit SHA. Database migrations are separate and are not rolled back by an application deployment. Restore a staging database backup before running any destructive migration rehearsal.
+Before deploying, run `docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet` on the server. The first deployment should be manual:
+
+1. Confirm `/opt/jyotisha-staging/.env.staging` exists, has mode `0600`, and contains the three selectors above.
+2. Open GitHub Actions -> Jyotish Skill CI -> Run workflow, using workflow from `main`.
+3. Wait for success and copy that run's exact 40-character commit SHA.
+4. Open GitHub Actions -> Deploy staging -> Run workflow, using workflow from `main`, and enter the SHA in `git_sha`.
+5. Confirm `https://staging.jyotisha.chat/api/health` reports that SHA.
+6. Only after the manual deployment passes, push a reviewed revision to branch `staging` to validate automatic deployment.
+
+Application rollback uses the same workflow: manually dispatch `Deploy staging` from `main` with a previous known-good full SHA that has a successful CI run. Database migrations are separate and are not rolled back by an application deployment. Restore a staging database backup before running any destructive migration rehearsal.
 
 Inspect staging without printing secrets:
 
