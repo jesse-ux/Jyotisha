@@ -101,7 +101,12 @@ def _capture_body_for_real_case(case: dict[str, Any], prompt: str) -> dict[str, 
     }
 
 
-def capture(contract_path: Path = DEFAULT_CONTRACT, output_dir: Path = DEFAULT_OUTPUT_DIR, max_items: int | None = None) -> dict[str, Any]:
+def capture(
+    contract_path: Path = DEFAULT_CONTRACT,
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+    max_items: int | None = None,
+    offset: int = 0,
+) -> dict[str, Any]:
     contract = _load_json(contract_path)
     output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -114,7 +119,7 @@ def capture(contract_path: Path = DEFAULT_CONTRACT, output_dir: Path = DEFAULT_O
         ]
     else:
         questions = [{"id": str(question["id"]), "body": _capture_body(question)} for question in contract["questions"]]
-    for question in questions:
+    for question in questions[offset:]:
         if max_items is not None and len(rows) >= max_items:
             break
         qid = str(question["id"])
@@ -136,6 +141,7 @@ def capture(contract_path: Path = DEFAULT_CONTRACT, output_dir: Path = DEFAULT_O
         "contract": _display_path(contract_path),
         "output_dir": _display_path(output_dir),
         "question_count": len(rows),
+        "offset": offset,
         "rows": rows,
     }
     (output_dir / "capture_manifest.json").write_text(
@@ -150,8 +156,16 @@ def main() -> int:
     parser.add_argument("--contract", type=Path, default=DEFAULT_CONTRACT)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--max-items", type=int, default=None)
+    parser.add_argument("--offset", type=int, default=0)
     args = parser.parse_args()
-    print(json.dumps(capture(args.contract, args.output_dir, max_items=args.max_items), ensure_ascii=False, indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            capture(args.contract, args.output_dir, max_items=args.max_items, offset=args.offset),
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 
