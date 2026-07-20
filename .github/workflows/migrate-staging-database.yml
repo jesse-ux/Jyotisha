@@ -1,0 +1,189 @@
+name: Migrate Staging Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_sha:
+        description: Full tested commit SHA to migrate
+        required: true
+        type: string
+
+concurrency:
+  group: staging-database-migration
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+  packages: read
+
+jobs:
+  migrate:
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DEPLOY_HOST: ${{ vars.STAGING_HOST }}
+      DEPLOY_PORT: ${{ vars.STAGING_PORT }}
+      DEPLOY_USER: ${{ vars.STAGING_USER }}
+      DEPLOY_PATH: ${{ vars.STAGING_PATH }}
+      STAGING_KNOWN_HOSTS: ${{ vars.STAGING_KNOWN_HOSTS }}
+
+    steps:
+      - name: Validate tested revision
+        id: revision
+        env:
+          REQUESTED_SHA: ${{ inputs.deploy_sha }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$REQUESTED_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "deploy_sha must be a lowercase full 40-character commit SHA" >&2
+            exit 1
+          fi
+          TESTED_RUNS="$(curl --fail --silent --show-error \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/backend-quality-gate.yml/runs?head_sha=$REQUESTED_SHA&branch=staging&event=push&status=success&per_page=100")"
+          if ! jq -e --arg sha "$REQUESTED_SHA" '
+            (.workflow_runs | type == "array") and
+            any(.workflow_runs[];
+              .head_sha == $sha and
+              .head_branch == "staging" and
+              .event == "push" and
+              .conclusion == "success"
+            )
+          ' <<< "$TESTED_RUNS" >/dev/null; then
+            echo "No successful Staging Backend Quality Gate run found for exact SHA $REQUESTED_SHA on staging" >&2
+            exit 1
+          fi
+          printf 'deploy_sha=%s\n' "$REQUESTED_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout tested revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.revision.outputs.deploy_sha }}
+          persist-credentials: false
+
+      - name: Verify checked-out revision
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.deploy_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$DEPLOY_SHA"
+
+      - name: Validate staging target configuration
+        run: |
+          set -euo pipefail
+          test "$DEPLOY_HOST" = "118.26.111.127"
+          test "$DEPLOY_PORT" = "22"
+          test "$DEPLOY_USER" = "deploy"
+          test "$DEPLOY_PATH" = "/opt/jyotisha-staging"
+          test -n "$STAGING_KNOWN_HOSTS"
+
+      - name: Configure pinned staging SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/jyotisha-staging
+          chmod 600 ~/.ssh/jyotisha-staging
+          printf '%s\n' "$STAGING_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Sync tested staging sources
+        run: |
+          set -euo pipefail
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          RSYNC_SSH="ssh $SSH_OPTIONS"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 755 '$DEPLOY_PATH'"
+          rsync -az --delete \
+            --exclude='.git/' \
+            --exclude='.env*' \
+            --exclude='frontend/node_modules/' \
+            --exclude='frontend/.next/' \
+            -e "$RSYNC_SSH" \
+            ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
+
+      - name: Validate staging environment files
+        run: |
+          set -euo pipefail
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && bash deploy/validate-staging-env.sh .env.staging staging.jyotisha.chat deploy/Caddyfile.staging && bash deploy/validate-staging-database-env.sh .env.staging.database"
+
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test -n "$GHCR_TOKEN"
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          printf '%s' "$GHCR_TOKEN" | ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io --username '$GITHUB_ACTOR' --password-stdin"
+
+      - name: Pull exact migration image
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.deploy_sha }}
+        run: |
+          set -euo pipefail
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "docker pull 'ghcr.io/jesse-ux/jyotisha-web:$DEPLOY_SHA'"
+
+      - name: Start and wait for staging PostgreSQL
+        run: |
+          set -euo pipefail
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && DATABASE_ENV_FILE='../.env.staging.database' docker compose -p jyotisha-staging -f deploy/docker-compose.postgres.yml up -d --wait postgres"
+
+      - name: Apply reviewed staging migrations
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.deploy_sha }}
+        run: |
+          set -euo pipefail
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && DATABASE_ENV_FILE='../.env.staging.database' WEB_IMAGE='ghcr.io/jesse-ux/jyotisha-web:$DEPLOY_SHA' docker compose -p jyotisha-staging -f deploy/docker-compose.postgres.yml --profile migration run --rm migrator"
+
+      - name: Print ordered migration ledger
+        run: |
+          set -euo pipefail
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && DATABASE_ENV_FILE='../.env.staging.database' docker compose -p jyotisha-staging -f deploy/docker-compose.postgres.yml exec -T postgres psql -U postgres -d jyotisha -Atc 'select filename from migration.schema_migrations order by filename'"
+
+      - name: Dispatch exact-SHA staging deployment
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.deploy_sha }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "validated deploy SHA is unsafe" >&2
+            exit 1
+          fi
+          PAYLOAD_FILE="$(mktemp)"
+          trap 'rm -f "$PAYLOAD_FILE"' EXIT
+          jq -n --arg deploy_sha "$DEPLOY_SHA" \
+            '{ref: "staging", inputs: {deploy_sha: $deploy_sha}}' > "$PAYLOAD_FILE"
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            --header "Content-Type: application/json" \
+            --data-binary "@$PAYLOAD_FILE" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/deploy-staging.yml/dispatches"
+
+      - name: Log out of GHCR
+        if: always()
+        continue-on-error: true
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "docker logout ghcr.io >/dev/null 2>&1 || true"

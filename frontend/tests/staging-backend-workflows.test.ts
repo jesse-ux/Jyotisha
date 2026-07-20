@@ -38,6 +38,10 @@ const deploymentWorkflowUrl = new URL(
   "../../.github/workflows/deploy-staging.yml",
   import.meta.url,
 );
+const migrationWorkflowUrl = new URL(
+  "../../.github/workflows/migrate-staging-database.yml",
+  import.meta.url,
+);
 
 function indentation(line: string): number {
   return line.match(/^ */)?.[0].length ?? 0;
@@ -746,6 +750,372 @@ test("pending migration status exits 3 with the manual workflow and exact SHA", 
     assert.match(`${pending.stdout}\n${pending.stderr}`, /Migrate Staging Database/);
     assert.match(`${pending.stdout}\n${pending.stderr}`, new RegExp(exactSha));
     assert.equal(run(0).status, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("staging migration is manual-only, serialized, and least-privileged", () => {
+  const document = parseWorkflow(migrationWorkflowUrl);
+
+  assert.equal(requiredNode(document.root, "name").value, "Migrate Staging Database");
+  const triggers = requiredNode(document.root, "on");
+  assert.deepEqual(children(document, triggers).map(({ key }) => key), [
+    "workflow_dispatch",
+  ]);
+  const dispatch = child(document, triggers, "workflow_dispatch");
+  const inputs = child(document, dispatch, "inputs");
+  assert.deepEqual(children(document, inputs).map(({ key }) => key), [
+    "deploy_sha",
+  ]);
+  const deploySha = child(document, inputs, "deploy_sha");
+  assert.equal(child(document, deploySha, "required").value, "true");
+  assert.equal(child(document, deploySha, "type").value, "string");
+
+  const concurrency = requiredNode(document.root, "concurrency");
+  assert.equal(
+    child(document, concurrency, "group").value,
+    "staging-database-migration",
+  );
+  assert.equal(child(document, concurrency, "cancel-in-progress").value, "false");
+  assert.deepEqual(
+    children(document, requiredNode(document.root, "permissions")).map(
+      ({ key, value }) => [key, value],
+    ),
+    [
+      ["contents", "read"],
+      ["actions", "write"],
+      ["packages", "read"],
+    ],
+  );
+  assert.deepEqual(
+    children(document, requiredNode(document.root, "jobs")).map(({ key }) => key),
+    ["migrate"],
+  );
+
+  const migrate = job(document, "migrate");
+  assert.equal(child(document, migrate, "environment").value, "staging");
+  assert.equal(child(document, migrate, "runs-on").value, "ubuntu-latest");
+  assert.equal(child(document, migrate, "timeout-minutes").value, "20");
+});
+
+test("staging migration accepts only an exact lowercase SHA with a successful staging gate", () => {
+  const document = parseWorkflow(migrationWorkflowUrl);
+  const migrate = job(document, "migrate");
+  const revision = requiredStep(document, migrate, "Validate tested revision");
+  const revisionEnv = stepField(document, revision, "env");
+  assert.equal(
+    child(document, revisionEnv, "REQUESTED_SHA").value,
+    "${{ inputs.deploy_sha }}",
+  );
+  assert.equal(
+    child(document, revisionEnv, "GH_TOKEN").value,
+    "${{ github.token }}",
+  );
+  const validation = stepRun(document, revision);
+  assert.match(validation, /\^\[0-9a-f\]\{40\}\$/);
+  assert.match(
+    validation,
+    /actions\/workflows\/backend-quality-gate\.yml\/runs\?head_sha=\$REQUESTED_SHA&branch=staging&event=push&status=success/,
+  );
+  assert.match(validation, /\.head_sha == \$sha/);
+  assert.match(validation, /\.head_branch == "staging"/);
+  assert.match(validation, /\.event == "push"/);
+  assert.match(validation, /\.conclusion == "success"/);
+  assert.equal(
+    validation.match(/>> "\$GITHUB_OUTPUT"/g)?.length,
+    1,
+    "only the validated single-line SHA may reach GITHUB_OUTPUT",
+  );
+
+  const checkout = requiredStep(document, migrate, "Checkout tested revision");
+  assert.equal(stepField(document, checkout, "uses").value, "actions/checkout@v4");
+  assert.equal(
+    child(document, stepField(document, checkout, "with"), "ref").value,
+    "${{ steps.revision.outputs.deploy_sha }}",
+  );
+  const verify = requiredStep(document, migrate, "Verify checked-out revision");
+  assert.match(stepRun(document, verify), /git rev-parse HEAD/);
+  assert.match(stepRun(document, verify), /"\$DEPLOY_SHA"/);
+});
+
+test("tested-revision validation fails closed before checkout or migration", () => {
+  const document = parseWorkflow(migrationWorkflowUrl);
+  const script = stepRun(
+    document,
+    requiredStep(document, job(document, "migrate"), "Validate tested revision"),
+  );
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-migration-gate-"));
+  const fakeBin = join(root, "bin");
+  const fakeCurl = join(fakeBin, "curl");
+  const curlLog = join(root, "curl.log");
+  const githubOutput = join(root, "github-output");
+  const exactSha = "0123456789abcdef0123456789abcdef01234567";
+  mkdirSync(fakeBin);
+  writeFileSync(
+    fakeCurl,
+    [
+      "#!/usr/bin/env bash",
+      'printf \'%s\\n\' "$@" >> "$FAKE_CURL_LOG"',
+      'printf \'%s\' "$FAKE_GATE_JSON"',
+    ].join("\n"),
+  );
+  chmodSync(fakeCurl, 0o700);
+
+  const run = (sha: string, gateJson: object) => {
+    writeFileSync(curlLog, "");
+    writeFileSync(githubOutput, "");
+    const result = spawnSync("bash", ["-c", script], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        FAKE_CURL_LOG: curlLog,
+        FAKE_GATE_JSON: JSON.stringify(gateJson),
+        GH_TOKEN: "gate-token-fixture",
+        GITHUB_API_URL: "https://api.github.test",
+        GITHUB_OUTPUT: githubOutput,
+        GITHUB_REPOSITORY: "jesse-ux/Jyotisha",
+        PATH: `${fakeBin}:${process.env.PATH}`,
+        REQUESTED_SHA: sha,
+      },
+    });
+    return {
+      calls: readFileSync(curlLog, "utf8"),
+      output: readFileSync(githubOutput, "utf8"),
+      result,
+    };
+  };
+
+  try {
+    for (const invalidSha of [exactSha.toUpperCase(), exactSha.slice(1), `${exactSha}\n`]) {
+      const invalid = run(invalidSha, { workflow_runs: [] });
+      assert.notEqual(invalid.result.status, 0);
+      assert.equal(invalid.calls, "");
+      assert.equal(invalid.output, "");
+    }
+
+    const wrongBranch = run(exactSha, {
+      workflow_runs: [
+        {
+          conclusion: "success",
+          event: "push",
+          head_branch: "main",
+          head_sha: exactSha,
+        },
+      ],
+    });
+    assert.notEqual(wrongBranch.result.status, 0);
+    assert.equal(wrongBranch.output, "");
+
+    const accepted = run(exactSha, {
+      workflow_runs: [
+        {
+          conclusion: "success",
+          event: "push",
+          head_branch: "staging",
+          head_sha: exactSha,
+        },
+      ],
+    });
+    assert.equal(accepted.result.status, 0, accepted.result.stderr);
+    assert.equal(accepted.output, `deploy_sha=${exactSha}\n`);
+    assert.match(accepted.calls, new RegExp(`head_sha=${exactSha}`));
+    assert.doesNotMatch(
+      `${accepted.result.stdout}\n${accepted.result.stderr}`,
+      /gate-token-fixture/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("staging migration preserves env files and runs only PostgreSQL plus migrator", () => {
+  const document = parseWorkflow(migrationWorkflowUrl);
+  const migrate = job(document, "migrate");
+  const names = steps(document, migrate).map(({ name }) => name);
+  const stepIndex = (name: string) => {
+    const index = names.indexOf(name);
+    assert.notEqual(index, -1, `missing migration step: ${name}`);
+    return index;
+  };
+  assert.ok(
+    stepIndex("Validate staging environment files") <
+      stepIndex("Start and wait for staging PostgreSQL"),
+  );
+  assert.ok(
+    stepIndex("Start and wait for staging PostgreSQL") <
+      stepIndex("Apply reviewed staging migrations"),
+  );
+  assert.ok(
+    stepIndex("Apply reviewed staging migrations") <
+      stepIndex("Print ordered migration ledger"),
+  );
+  assert.ok(
+    stepIndex("Print ordered migration ledger") <
+      stepIndex("Dispatch exact-SHA staging deployment"),
+  );
+
+  const target = stepRun(
+    document,
+    requiredStep(document, migrate, "Validate staging target configuration"),
+  );
+  assert.match(target, /DEPLOY_HOST" = "118\.26\.111\.127/);
+  assert.match(target, /DEPLOY_USER" = "deploy/);
+  assert.match(target, /DEPLOY_PATH" = "\/opt\/jyotisha-staging/);
+  assert.match(target, /test -n "\$STAGING_KNOWN_HOSTS"/);
+  const ssh = stepRun(
+    document,
+    requiredStep(document, migrate, "Configure pinned staging SSH"),
+  );
+  assert.match(ssh, /STAGING_KNOWN_HOSTS/);
+  assert.doesNotMatch(ssh, /ssh-keyscan/);
+
+  const sync = stepRun(
+    document,
+    requiredStep(document, migrate, "Sync tested staging sources"),
+  );
+  assert.match(sync, /rsync -az --delete/);
+  assert.match(sync, /--exclude='\.env\*'/);
+  const validators = stepRun(
+    document,
+    requiredStep(document, migrate, "Validate staging environment files"),
+  );
+  assert.match(validators, /validate-staging-env\.sh \.env\.staging/);
+  assert.match(
+    validators,
+    /validate-staging-database-env\.sh \.env\.staging\.database/,
+  );
+
+  const migrationSteps = steps(document, migrate);
+  const scripts = migrationSteps.map((step) => {
+    const run = mappingNodes(
+      document.lines,
+      step.node.indent + 2,
+      step.node.start + 1,
+      step.node.end,
+    ).find(({ key }) => key === "run");
+    return run ? (run.value === "|" ? blockScalar(document, run) : run.value) : "";
+  });
+  const composeCommands = scripts
+    .flatMap(logicalShellLines)
+    .filter((line) => line.includes("docker compose"));
+  assert.equal(composeCommands.length, 3);
+  for (const command of composeCommands) {
+    assert.match(command, /-f deploy\/docker-compose\.postgres\.yml/);
+    assert.doesNotMatch(command, /docker-compose\.server\.yml/);
+    assert.doesNotMatch(command, /\brestart\b/);
+  }
+  const startCommands = composeCommands.filter((command) => /\sup\s/.test(command));
+  assert.equal(startCommands.length, 1);
+  assert.match(startCommands[0], /up -d --wait postgres/);
+  assert.doesNotMatch(startCommands[0], /\b(?:api|web|caddy)\b/);
+
+  const apply = stepRun(
+    document,
+    requiredStep(document, migrate, "Apply reviewed staging migrations"),
+  );
+  assert.match(
+    apply,
+    /WEB_IMAGE='ghcr\.io\/jesse-ux\/jyotisha-web:\$DEPLOY_SHA'/,
+  );
+  assert.match(apply, /--profile migration run --rm migrator/);
+  const ledger = stepRun(
+    document,
+    requiredStep(document, migrate, "Print ordered migration ledger"),
+  );
+  assert.match(ledger, /psql -U postgres -d jyotisha -Atc/);
+  assert.match(
+    ledger,
+    /select filename from migration\.schema_migrations order by filename/,
+  );
+  assert.doesNotMatch(
+    readFileSync(migrationWorkflowUrl, "utf8"),
+    /docker-compose\.server\.yml/,
+  );
+});
+
+test("successful migration dispatches exact-SHA staging deploy and always logs out", () => {
+  const document = parseWorkflow(migrationWorkflowUrl);
+  const migrate = job(document, "migrate");
+  const dispatch = requiredStep(
+    document,
+    migrate,
+    "Dispatch exact-SHA staging deployment",
+  );
+  const dispatchFields = mappingNodes(
+    document.lines,
+    dispatch.node.indent + 2,
+    dispatch.node.start + 1,
+    dispatch.node.end,
+  );
+  assert.equal(dispatchFields.some(({ key }) => key === "if"), false);
+  assert.equal(dispatchFields.some(({ key }) => key === "continue-on-error"), false);
+  const script = stepRun(document, dispatch);
+  assert.match(
+    script,
+    /actions\/workflows\/deploy-staging\.yml\/dispatches/,
+  );
+  assert.match(script, /--data-binary "@\$PAYLOAD_FILE"/);
+
+  const logout = requiredStep(document, migrate, "Log out of GHCR");
+  assert.equal(stepField(document, logout, "if").value, "always()");
+  assert.equal(stepField(document, logout, "continue-on-error").value, "true");
+  assert.match(stepRun(document, logout), /docker logout ghcr\.io/);
+
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-migration-dispatch-"));
+  const fakeBin = join(root, "bin");
+  const fakeCurl = join(fakeBin, "curl");
+  const body = join(root, "body.json");
+  const curlLog = join(root, "curl.log");
+  const exactSha = "0123456789abcdef0123456789abcdef01234567";
+  mkdirSync(fakeBin);
+  writeFileSync(
+    fakeCurl,
+    [
+      "#!/usr/bin/env bash",
+      'printf \'%s\\n\' "$@" > "$FAKE_CURL_LOG"',
+      'for argument in "$@"; do',
+      '  case "$argument" in',
+      '    @*) cp -- "${argument#@}" "$FAKE_REQUEST_BODY" ;;',
+      "  esac",
+      "done",
+      'exit "${FAKE_CURL_STATUS:-0}"',
+    ].join("\n"),
+  );
+  chmodSync(fakeCurl, 0o700);
+
+  const run = (status: number) =>
+    spawnSync("bash", ["-c", script], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DEPLOY_SHA: exactSha,
+        FAKE_CURL_LOG: curlLog,
+        FAKE_CURL_STATUS: String(status),
+        FAKE_REQUEST_BODY: body,
+        GH_TOKEN: "dispatch-token-fixture",
+        GITHUB_API_URL: "https://api.github.test",
+        GITHUB_REPOSITORY: "jesse-ux/Jyotisha",
+        PATH: `${fakeBin}:${process.env.PATH}`,
+      },
+    });
+
+  try {
+    const accepted = run(0);
+    assert.equal(accepted.status, 0, accepted.stderr);
+    assert.deepEqual(JSON.parse(readFileSync(body, "utf8")), {
+      inputs: { deploy_sha: exactSha },
+      ref: "staging",
+    });
+    assert.match(
+      readFileSync(curlLog, "utf8"),
+      /actions\/workflows\/deploy-staging\.yml\/dispatches/,
+    );
+    assert.doesNotMatch(
+      `${accepted.stdout}\n${accepted.stderr}`,
+      /dispatch-token-fixture/,
+    );
+    assert.notEqual(run(22).status, 0, "workflow dispatch API failure must fail");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
