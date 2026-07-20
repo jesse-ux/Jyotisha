@@ -95,13 +95,21 @@ function packet(ready = false): RectificationTechnicalPacket {
   };
 }
 
-function validGenerator(events: string[], varyNarrative = false) {
+function validGenerator(
+  events: string[],
+  varyNarrative = false,
+  invalidNarrativeFromGeneration?: number,
+) {
   let generation = 0;
   return {
     modelId: "synthetic-rectification-model",
     async generate(prompt: string) {
       generation += 1;
       events.push("narrative");
+      if (invalidNarrativeFromGeneration !== undefined
+        && generation >= invalidNarrativeFromGeneration) {
+        return { text: "not a grounded narrative result" };
+      }
       const request = JSON.parse(prompt) as {
         phase: "first" | "intermediate" | "final";
         packet: Omit<ReturnType<typeof packet>, "candidate"> & {
@@ -153,6 +161,7 @@ function harness(options: {
   readonly releaseFailure?: boolean;
   readonly readyAfterEvidenceCount?: number;
   readonly varyNarrative?: boolean;
+  readonly invalidNarrativeFromGeneration?: number;
 } = {}) {
   const events: string[] = [];
   const mutations: string[] = [];
@@ -165,6 +174,12 @@ function harness(options: {
     commandFingerprint?: string;
   }>();
   const packetEvidenceCounts: number[] = [];
+  const packetEvidenceIds: string[][] = [];
+  const packetPrivateCandidates: Array<Readonly<{
+    rangeStart?: string | null;
+    rangeEnd?: string | null;
+    resultId?: string | null;
+  }> | null> = [];
   let packetBuilds = 0;
   let reserveCount = 0;
   let releaseCount = 0;
@@ -358,13 +373,25 @@ function harness(options: {
     async buildTechnicalPacket(input) {
       packetBuilds += 1;
       packetEvidenceCounts.push(input.evidence.length);
+      packetEvidenceIds.push(input.evidence.map((item) => item.id));
+      packetPrivateCandidates.push(input.privateCandidate
+        ? {
+            rangeStart: input.privateCandidate.rangeStart,
+            rangeEnd: input.privateCandidate.rangeEnd,
+            resultId: input.privateCandidate.resultId,
+          }
+        : null);
       events.push(input.evidence.length > 0 ? "score-packet" : "packet");
       if (options.packetFailure) throw options.packetFailure;
       return input.evidence.length >= (options.readyAfterEvidenceCount ?? 1)
         ? { packet: packet(true), resultId }
         : { packet: packet(false), resultId: null };
     },
-    narrativeGenerator: validGenerator(events, options.varyNarrative),
+    narrativeGenerator: validGenerator(
+      events,
+      options.varyNarrative,
+      options.invalidNarrativeFromGeneration,
+    ),
     asOfDate: () => "2026-07-21",
   };
 
@@ -372,6 +399,8 @@ function harness(options: {
     events,
     mutations,
     packetEvidenceCounts,
+    packetEvidenceIds,
+    packetPrivateCandidates,
     cases,
     service: createConversationalRectificationService(ports),
     counts: () => ({ packetBuilds, reserveCount, releaseCount }),
@@ -581,6 +610,148 @@ test("an unclear correction immediately retires the wrong fact and stays retired
   assert.deepEqual(value.packetEvidenceCounts, [0, 1, 0, 1]);
   assert.equal(later.evidenceRecap.some((item) => item.id === wrongId), false);
   assert.equal(later.evidenceRecap.some((item) => item.id === unclear?.id), true);
+});
+
+test("every non-confirmable correction rescans the declared range and withdraws the old candidate", async () => {
+  const scenarios = [
+    { name: "unclear", answer: "更正：具体年月记不清" },
+    { name: "future", answer: "更正：2099年3月开始新工作" },
+    { name: "direction change", answer: "更正：这些都不符合" },
+    {
+      name: "narrative validation fallback",
+      answer: "更正：其实是2020年11月离职",
+      invalidNarrativeFromGeneration: 3,
+    },
+  ] as const;
+
+  for (const scenario of scenarios) {
+    const invalidNarrativeFromGeneration = "invalidNarrativeFromGeneration" in scenario
+      ? scenario.invalidNarrativeFromGeneration
+      : undefined;
+    const value = harness({
+      ...(invalidNarrativeFromGeneration === undefined
+        ? {}
+        : { invalidNarrativeFromGeneration }),
+    });
+    await start(value, null);
+    const prior = await value.service.answer(userId, {
+      type: "answer",
+      caseId: startActionId,
+      actionId: answerActionId,
+      turnVersion: 0,
+      answer: "2019年7月开始第一份工作",
+    });
+    assert.equal(prior.status, "confirming", scenario.name);
+    const wrongId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
+    assert.ok(wrongId, scenario.name);
+    const buildsBeforeCorrection = value.counts().packetBuilds;
+
+    const corrected = await value.service.answer(userId, {
+      type: "answer",
+      caseId: startActionId,
+      actionId: secondAnswerActionId,
+      turnVersion: 1,
+      answer: scenario.answer,
+      correctsEvidenceId: wrongId,
+    });
+
+    const stored = value.cases.get(startActionId)?.row;
+    const replacement = stored?.eventEvidence.at(-1);
+    assert.ok(stored && replacement, scenario.name);
+    assert.equal(value.counts().packetBuilds, buildsBeforeCorrection + 1, scenario.name);
+    assert.equal(value.packetPrivateCandidates.at(-1), null, scenario.name);
+    assert.equal(value.packetEvidenceIds.at(-1)?.includes(wrongId), false, scenario.name);
+    assert.equal(corrected.status, "active", scenario.name);
+    assert.equal(corrected.candidate.status, "pending_validation", scenario.name);
+    assert.equal(corrected.actions.includes("confirm"), false, scenario.name);
+    assert.equal(stored.privateCandidate.resultId ?? null, null, scenario.name);
+    assert.equal(stored.privateCandidate.workingState?.phase, "collecting_evidence", scenario.name);
+    assert.equal(corrected.evidenceRecap.some((item) => item.id === wrongId), false, scenario.name);
+    assert.equal(corrected.evidenceRecap.some((item) => item.id === replacement.id), true, scenario.name);
+    assert.equal(value.counts().reserveCount, 1, scenario.name);
+
+    if (scenario.name === "narrative validation fallback") {
+      assert.deepEqual(value.packetEvidenceIds.at(-1), [replacement.id]);
+    } else {
+      assert.deepEqual(value.packetEvidenceIds.at(-1), []);
+    }
+  }
+});
+
+test("a clear one-to-one correction can form a new confirmation candidate only after a declared-range rescan", async () => {
+  const value = harness();
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "2019年7月开始第一份工作",
+  });
+  const wrongId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
+  assert.ok(wrongId);
+
+  const corrected = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: secondAnswerActionId,
+    turnVersion: 1, answer: "更正：其实是2020年11月离职",
+    correctsEvidenceId: wrongId,
+  });
+  const stored = value.cases.get(startActionId)?.row;
+  const replacementId = stored?.eventEvidence.at(-1)?.id;
+  assert.ok(stored && replacementId);
+
+  assert.equal(value.packetPrivateCandidates.at(-1), null);
+  assert.deepEqual(value.packetEvidenceIds.at(-1), [replacementId]);
+  assert.equal(corrected.status, "confirming");
+  assert.equal(corrected.candidate.status, "ready_for_confirmation");
+  assert.equal(corrected.actions.includes("confirm"), true);
+  assert.equal(stored.privateCandidate.resultId, resultId);
+});
+
+test("a targeted correction must extract exactly one replacement before scoring or persistence", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "2019年7月开始第一份工作",
+  });
+  const wrongId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
+  assert.ok(wrongId);
+  const before = {
+    builds: value.counts().packetBuilds,
+    mutations: [...value.mutations],
+    version: value.cases.get(startActionId)?.row.turnVersion,
+    evidenceCount: value.cases.get(startActionId)?.row.eventEvidence.length,
+  };
+
+  await assert.rejects(value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "更正：2020年11月离职，并在2021年2月入职",
+    correctsEvidenceId: wrongId,
+  }), (error: unknown) => error instanceof ConversationalRectificationError
+    && error.code === "invalid_command");
+
+  assert.equal(value.counts().packetBuilds, before.builds);
+  assert.deepEqual(value.mutations, before.mutations);
+  assert.equal(value.cases.get(startActionId)?.row.turnVersion, before.version);
+  assert.equal(value.cases.get(startActionId)?.row.eventEvidence.length, before.evidenceCount);
+});
+
+test("ordinary new evidence continues incrementally from the current candidate range", async () => {
+  const value = harness();
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "2019年7月开始第一份工作",
+  });
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: secondAnswerActionId,
+    turnVersion: 1, answer: "2020年11月搬家",
+  });
+
+  assert.deepEqual(value.packetPrivateCandidates, [
+    null,
+    { rangeStart: "04:50", rangeEnd: "05:50", resultId: null },
+    { rangeStart: "05:16", rangeEnd: "05:20", resultId },
+  ]);
 });
 
 test("missing or already-retired correction targets fail closed without advancing or persisting", async () => {

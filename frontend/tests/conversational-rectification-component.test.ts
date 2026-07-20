@@ -143,6 +143,7 @@ test("correction mode identifies its durable target, can be cancelled, and marks
 
   assert.match(markup, /正在更正/);
   assert.match(markup, /开始第一份长期工作/);
+  assert.match(markup, /一次只更正一条事件/);
   assert.match(markup, /取消更正/);
   assert.match(markup, /已修订/);
 });

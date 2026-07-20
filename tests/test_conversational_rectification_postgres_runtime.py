@@ -1156,6 +1156,163 @@ def test_correction_lineage_is_append_only_owner_scoped_and_rejects_retired_targ
     }]
 
 
+def test_duplicate_correction_target_fails_atomically_without_advancing_any_durable_state(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000001401"
+    case_id = "00000000-0000-4000-8000-000000001402"
+    first_action = "00000000-0000-4000-8000-000000001403"
+    rejected_action = "00000000-0000-4000-8000-000000001404"
+    first_id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa1411"
+    replacement_a = "00000000-0000-4000-8000-000000001412"
+    replacement_b = "00000000-0000-4000-8000-000000001413"
+    _create_user(pg14_database, user_id)
+    _reserve(pg14_database, user_id, case_id)
+    _create_case(pg14_database, user_id, case_id, _valid_declared_birth_input())
+    _complete(pg14_database, user_id, case_id)
+    first = {
+        "id": first_id,
+        "rawText": "2019 年 7 月开始第一份工作",
+        "domain": "career",
+        "eventSummary": "开始第一份工作",
+        "dateValue": "2019-07",
+        "datePrecision": "month",
+        "extractionStatus": "clear",
+        "scoreable": True,
+    }
+    pg14_database.sql(_save_statement(user_id, case_id, 0, first_action, [first]))
+
+    def durable_counts() -> dict[str, int]:
+        return json.loads(pg14_database.sql(
+            f"""
+            select pg_catalog.jsonb_build_object(
+              'version', rectification.turn_version,
+              'turns', (select pg_catalog.count(*) from public.birth_time_rectification_turns turn where turn.case_id = rectification.id),
+              'evidence', (select pg_catalog.count(*) from public.birth_time_rectification_event_evidence evidence where evidence.case_id = rectification.id),
+              'receipts', (select pg_catalog.count(*) from public.birth_time_rectification_action_receipts receipt where receipt.case_id = rectification.id)
+            )::text
+            from public.birth_time_rectification_cases rectification
+            where rectification.id = '{case_id}'::uuid;
+            """
+        ))
+
+    before = durable_counts()
+    duplicate_replacements = [
+        {
+            "id": replacement_a,
+            "rawText": "更正：2020 年 11 月离职",
+            "domain": "career",
+            "eventSummary": "离职",
+            "dateValue": "2020-11",
+            "datePrecision": "month",
+            "extractionStatus": "corrected",
+            "scoreable": True,
+            "correctsEvidenceIds": [first_id.upper()],
+        },
+        {
+            "id": replacement_b,
+            "rawText": "更正：2021 年 2 月入职",
+            "domain": "career",
+            "eventSummary": "入职",
+            "dateValue": "2021-02",
+            "datePrecision": "month",
+            "extractionStatus": "corrected",
+            "scoreable": True,
+            "correctsEvidenceIds": [first_id],
+        },
+    ]
+    assert pg14_database.rejects(_save_statement(
+        user_id,
+        case_id,
+        1,
+        rejected_action,
+        duplicate_replacements,
+    ))
+    assert durable_counts() == before
+
+
+def test_concurrent_corrections_of_one_tip_leave_exactly_one_winner(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000001421"
+    case_id = "00000000-0000-4000-8000-000000001422"
+    first_action = "00000000-0000-4000-8000-000000001423"
+    action_a = "00000000-0000-4000-8000-000000001424"
+    action_b = "00000000-0000-4000-8000-000000001425"
+    first_id = "00000000-0000-4000-8000-000000001431"
+    replacement_a = "00000000-0000-4000-8000-000000001432"
+    replacement_b = "00000000-0000-4000-8000-000000001433"
+    _create_user(pg14_database, user_id)
+    _reserve(pg14_database, user_id, case_id)
+    _create_case(pg14_database, user_id, case_id, _valid_declared_birth_input())
+    _complete(pg14_database, user_id, case_id)
+    first = {
+        "id": first_id,
+        "rawText": "2019 年 7 月开始第一份工作",
+        "domain": "career",
+        "eventSummary": "开始第一份工作",
+        "dateValue": "2019-07",
+        "datePrecision": "month",
+        "extractionStatus": "clear",
+        "scoreable": True,
+    }
+    pg14_database.sql(_save_statement(user_id, case_id, 0, first_action, [first]))
+
+    statements = []
+    for action_id, evidence_id, date_value, summary in (
+        (action_a, replacement_a, "2020-11", "离职"),
+        (action_b, replacement_b, "2021-02", "入职"),
+    ):
+        replacement = {
+            "id": evidence_id,
+            "rawText": f"更正：{date_value} {summary}",
+            "domain": "career",
+            "eventSummary": summary,
+            "dateValue": date_value,
+            "datePrecision": "month",
+            "extractionStatus": "corrected",
+            "scoreable": True,
+            "correctsEvidenceIds": [first_id],
+        }
+        statements.append(_save_statement(
+            user_id,
+            case_id,
+            1,
+            action_id,
+            [replacement],
+        ))
+
+    processes = [subprocess.Popen(
+        pg14_database.command("-A", "-t", "-q", "-c", statement),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    ) for statement in statements]
+    results = [process.communicate(timeout=20) for process in processes]
+    return_codes = [process.returncode for process in processes]
+    assert return_codes.count(0) == 1, results
+    assert sum(code != 0 for code in return_codes) == 1, results
+
+    durable = json.loads(pg14_database.sql(
+        f"""
+        select pg_catalog.jsonb_build_object(
+          'version', rectification.turn_version,
+          'turns', (select pg_catalog.count(*) from public.birth_time_rectification_turns turn where turn.case_id = rectification.id),
+          'evidence', (select pg_catalog.count(*) from public.birth_time_rectification_event_evidence evidence where evidence.case_id = rectification.id),
+          'winningReceipts', (select pg_catalog.count(*) from public.birth_time_rectification_action_receipts receipt where receipt.case_id = rectification.id and receipt.action_id in ('{action_a}'::uuid, '{action_b}'::uuid))
+        )::text
+        from public.birth_time_rectification_cases rectification
+        where rectification.id = '{case_id}'::uuid;
+        """
+    ))
+    assert durable == {
+        "version": 2,
+        "turns": 3,
+        "evidence": 2,
+        "winningReceipts": 1,
+    }
+
+
 def test_save_rejects_cumulative_evidence_count_before_inserting(
     pg14_database: PgDatabase,
 ) -> None:

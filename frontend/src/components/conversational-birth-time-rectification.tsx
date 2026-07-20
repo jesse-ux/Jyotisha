@@ -248,7 +248,7 @@ export function ConversationalRectificationSurface({
             <p>
               正在更正：<strong>{controller.correctionTarget.dateLabel} · {controller.correctionTarget.summary}</strong>
             </p>
-            <span>提交后会保留原记录用于审计，但候选评分只使用更正后的有效证据。</span>
+            <span>一次只更正一条事件。提交后会保留原记录用于审计，但候选评分只使用更正后的有效证据。</span>
             <button
               className="button-secondary"
               disabled={controller.pending}

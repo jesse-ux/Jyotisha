@@ -9,7 +9,7 @@ import {
 import { ConversationalRectificationError } from "../src/lib/conversational-rectification/errors.ts";
 import type { BirthTimeJourneyEngine } from "../src/lib/birth-time-journey-service.ts";
 import type { LifeEventEvidence } from "../src/lib/conversational-rectification/persistence-contracts.ts";
-import type { LifeEvent } from "../src/lib/birth-time-evidence.ts";
+import type { CandidateResult, LifeEvent } from "../src/lib/birth-time-evidence.ts";
 
 const userId = "00000000-0000-4000-8000-000000000711";
 const actionId = "00000000-0000-4000-8000-000000000712";
@@ -88,7 +88,10 @@ function syntheticEvidence(
 function packetEngine(options: {
   readonly scoreCalls?: LifeEvent[][];
   readonly scanTimes?: readonly string[];
+  readonly scanCalls?: Array<{ readonly birthTime: string; readonly uncertaintyMinutes: number }>;
+  readonly scoreResults?: readonly CandidateResult[];
 } = {}): BirthTimeJourneyEngine {
+  let scoreResultIndex = 0;
   const minute = (value: string) => {
     const [hour = 0, part = 0] = value.slice(-5).split(":").map(Number);
     return hour * 60 + part;
@@ -99,6 +102,10 @@ function packetEngine(options: {
   };
   return {
     async scan(input) {
+      options.scanCalls?.push({
+        birthTime: input.birthTime,
+        uncertaintyMinutes: input.uncertaintyMinutes,
+      });
       const center = minute(input.birthTime);
       const times = options.scanTimes ?? [
         clock(center - input.uncertaintyMinutes),
@@ -136,6 +143,9 @@ function packetEngine(options: {
         assert.ok(event.date >= birthBoundary, "synthetic scorer rejected pre-birth evidence");
       }
       options.scoreCalls?.push([...input.events]);
+      const configured = options.scoreResults?.[scoreResultIndex];
+      scoreResultIndex += 1;
+      if (configured) return configured;
       return {
         resultId: "00000000-0000-4000-8000-000000000899",
         confidence: "low",
@@ -474,6 +484,107 @@ test("production packet waits for three supported events and then scores the acc
 
   assert.equal(scoreCalls.length, 1);
   assert.deepEqual(scoreCalls[0]?.map((event) => event.id), evidence.map((item) => item.id));
+});
+
+test("production rescans the declared range after correction while ordinary evidence stays incremental", async () => {
+  const scanCalls: Array<{ readonly birthTime: string; readonly uncertaintyMinutes: number }> = [];
+  const narrowResult: CandidateResult = {
+    resultId: "00000000-0000-4000-8000-000000001301",
+    confidence: "low",
+    canApply: false,
+    winningSegment: {
+      startTime: "05:16",
+      endTime: "05:20",
+      representativeTime: "05:18",
+      widthMinutes: 5,
+    },
+    eventCount: 3,
+    domainCount: 3,
+    topScore: 4,
+    secondScore: 3,
+    marginPercent: 10,
+    reasons: ["synthetic narrowed range"],
+    evidence: [],
+    algorithmVersion: "synthetic-event-score-v1",
+  };
+  const broadResult: CandidateResult = {
+    ...narrowResult,
+    resultId: "00000000-0000-4000-8000-000000001302",
+    winningSegment: null,
+    reasons: ["synthetic evidence no longer narrows the range"],
+  };
+  const engine = packetEngine({
+    scanCalls,
+    scoreResults: [narrowResult, broadResult, broadResult],
+  });
+  const declaredBirthInput = {
+    source: "approximate" as const,
+    birthDate: "1990-01-01",
+    reportedTime: "05:20",
+    uncertaintyBeforeMinutes: 30 as const,
+    uncertaintyAfterMinutes: 30 as const,
+    birthTimeClue: null,
+    birthplace: packetBirthplace,
+  };
+  const oldEvidence = [
+    syntheticEvidence(41, "education"),
+    syntheticEvidence(42, "relocation"),
+    syntheticEvidence(43, "career"),
+  ];
+
+  const narrowed = await buildProductionConversationalRectificationPacket(engine, {
+    userId,
+    caseId,
+    asOfDate: "2026-07-21",
+    declaredBirthInput,
+    privateCandidate: null,
+    evidence: oldEvidence,
+  });
+  assert.deepEqual(narrowed.packet.candidate.range, { startTime: "05:16", endTime: "05:20" });
+  assert.deepEqual(scanCalls.at(-1), {
+    birthTime: "1990-01-01 05:18",
+    uncertaintyMinutes: 2,
+  });
+
+  const currentCandidate = {
+    calculationVersion: narrowed.packet.calculationVersion,
+    rangeStart: narrowed.packet.candidate.range.startTime,
+    rangeEnd: narrowed.packet.candidate.range.endTime,
+    representativeTime: narrowed.packet.candidate.representativeTime,
+  };
+  const ordinary = await buildProductionConversationalRectificationPacket(engine, {
+    userId,
+    caseId,
+    asOfDate: "2026-07-21",
+    declaredBirthInput,
+    privateCandidate: currentCandidate,
+    evidence: [...oldEvidence, syntheticEvidence(44, "relationship")],
+  });
+  assert.deepEqual(ordinary.packet.candidate.range, { startTime: "05:16", endTime: "05:20" });
+  assert.deepEqual(scanCalls.at(-1), {
+    birthTime: "1990-01-01 05:18",
+    uncertaintyMinutes: 2,
+  });
+
+  const corrected = await buildProductionConversationalRectificationPacket(engine, {
+    userId,
+    caseId,
+    asOfDate: "2026-07-21",
+    declaredBirthInput,
+    privateCandidate: null,
+    evidence: [
+      syntheticEvidence(45, "education"),
+      syntheticEvidence(46, "relocation"),
+      syntheticEvidence(47, "career"),
+    ],
+  });
+  assert.deepEqual(corrected.packet.candidate.range, { startTime: "04:50", endTime: "05:50" });
+  assert.deepEqual(scanCalls.at(-1), {
+    birthTime: "1990-01-01 05:20",
+    uncertaintyMinutes: 30,
+  });
+  assert.ok(corrected.packet.sensitivityScope.sampleTimes.includes("04:50"));
+  assert.equal(ordinary.packet.sensitivityScope.sampleTimes.includes("04:50"), false);
 });
 
 test("production packet deterministically sends only the latest six supported events", async () => {

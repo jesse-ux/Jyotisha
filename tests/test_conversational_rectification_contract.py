@@ -511,6 +511,10 @@ def test_evidence_correction_lineage_is_bounded_projected_and_validated_atomical
         "insert into public.birth_time_rectification_event_evidence"
     )
     assert "where evidence.case_id = p_case_id" in save
+    assert "group by correction.value::uuid having pg_catalog.count(*) > 1" in save
+    assert save.index("group by correction.value::uuid having pg_catalog.count(*) > 1") < save.index(
+        "insert into public.birth_time_rectification_turns"
+    )
 
 
 def test_case_mutations_enforce_cumulative_load_limits_under_the_case_lock() -> None:

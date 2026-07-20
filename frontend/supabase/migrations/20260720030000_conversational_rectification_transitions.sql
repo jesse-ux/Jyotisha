@@ -640,7 +640,22 @@ begin
     raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
   -- Correction targets are account-case evidence tips. Under the locked case version,
-  -- reject missing, cross-case, or already-retired targets before writing a turn.
+  -- reject one-to-many replacement attempts, missing/cross-case targets, or
+  -- already-retired targets before writing a turn.
+  if exists (
+    select 1
+    from (
+      select correction.value::uuid as target_id
+      from pg_catalog.jsonb_array_elements(p_evidence) item(value)
+      cross join lateral pg_catalog.jsonb_array_elements_text(
+        coalesce(item.value -> 'correctsEvidenceIds', '[]'::jsonb)
+      ) correction(value)
+      group by correction.value::uuid
+      having pg_catalog.count(*) > 1
+    ) duplicate_correction_target
+  ) then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
+  end if;
   if exists (
     select 1
     from pg_catalog.jsonb_array_elements(p_evidence) item(value)
