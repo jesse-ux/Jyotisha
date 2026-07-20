@@ -296,6 +296,12 @@ def test_historical_action_replay_is_owner_scoped_exact_bounded_and_read_only() 
         assert "p_command_fingerprint text" in body
         assert "p_command_fingerprint !~ '^[0-9a-f]{64}$'" in body
         assert "'commandfingerprint', p_command_fingerprint" in body
+        assert (
+            "case when v_receipt.request ? 'commandfingerprint' then "
+            "v_receipt.request ->> 'commandfingerprint' is distinct from "
+            "p_command_fingerprint else v_receipt.request_fingerprint is "
+            "distinct from v_fingerprint end"
+        ) in body
 
 
 def test_start_identity_and_account_concurrency_are_server_guarded() -> None:

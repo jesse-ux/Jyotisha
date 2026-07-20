@@ -563,6 +563,87 @@ def test_historical_receipt_replays_exact_public_response_after_later_turns(
     assert privileges == {"anon": False, "authenticated": False, "serviceRole": True}
 
 
+def test_overlapping_mutation_uses_command_identity_while_legacy_uses_full_request(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000001041"
+    case_id = "00000000-0000-4000-8000-000000001042"
+    action_id = "00000000-0000-4000-8000-000000001043"
+    fingerprint = "c" * 64
+    _create_user(pg14_database, user_id)
+    _reserve(pg14_database, user_id, case_id)
+    _create_case(pg14_database, user_id, case_id, _valid_declared_birth_input())
+    _complete(pg14_database, user_id, case_id)
+
+    original = json.loads(pg14_database.sql(_save_statement(
+        user_id,
+        case_id,
+        0,
+        action_id,
+        [],
+        command_fingerprint=fingerprint,
+    )))
+    alternate_turn = {
+        **_valid_turn(case_id),
+        "turnVersion": 1,
+        "narrative": "A different valid narrative derived by an overlapping request.",
+    }
+    replayed = json.loads(pg14_database.sql(_save_statement(
+        user_id,
+        case_id,
+        0,
+        action_id,
+        [],
+        turn=alternate_turn,
+        validation_receipt={"modelId": "alternate-model", "schemaValidated": True},
+        command_fingerprint=fingerprint,
+    )))
+    assert replayed == original
+    assert pg14_database.rejects(_save_statement(
+        user_id,
+        case_id,
+        0,
+        action_id,
+        [],
+        turn=alternate_turn,
+        command_fingerprint="d" * 64,
+    ))
+
+    legacy_user_id = "00000000-0000-4000-8000-000000001051"
+    legacy_case_id = "00000000-0000-4000-8000-000000001052"
+    legacy_action_id = "00000000-0000-4000-8000-000000001053"
+    _create_user(pg14_database, legacy_user_id)
+    _reserve(pg14_database, legacy_user_id, legacy_case_id)
+    _create_case(
+        pg14_database,
+        legacy_user_id,
+        legacy_case_id,
+        _valid_declared_birth_input(),
+    )
+    _complete(pg14_database, legacy_user_id, legacy_case_id)
+    legacy_statement = _save_statement(
+        legacy_user_id,
+        legacy_case_id,
+        0,
+        legacy_action_id,
+        [],
+    )
+    legacy_original = json.loads(pg14_database.sql(legacy_statement))
+    assert json.loads(pg14_database.sql(legacy_statement)) == legacy_original
+    assert pg14_database.rejects(_save_statement(
+        legacy_user_id,
+        legacy_case_id,
+        0,
+        legacy_action_id,
+        [],
+        turn={
+            **_valid_turn(legacy_case_id),
+            "turnVersion": 1,
+            "narrative": "A different legacy-derived narrative must remain a conflict.",
+        },
+    ))
+
+
 def test_database_rejects_oversize_or_unknown_durable_json(pg14_database: PgDatabase) -> None:
     user_id = "00000000-0000-4000-8000-000000000951"
     action_id = "00000000-0000-4000-8000-000000000952"

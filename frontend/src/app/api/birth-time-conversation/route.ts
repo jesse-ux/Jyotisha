@@ -282,22 +282,19 @@ function currentRange(input: ConversationalRectificationPacketBuildInput) {
 }
 
 function scoreableLifeEvents(evidence: readonly LifeEventEvidence[]): LifeEvent[] {
-  return evidence.slice(-10).flatMap((item) => {
+  return evidence.flatMap((item) => {
     if (item.scoreable !== true || !item.dateValue
       || !(["day", "month", "year"] as const).includes(item.datePrecision as "day" | "month" | "year")) {
       return [];
     }
-    const domain = item.domain === "family" ? "relationship"
-      : item.domain === "other" ? null
-      : item.domain;
-    if (!domain) return [];
+    if (item.domain === "family" || item.domain === "other") return [];
     return [{
       id: item.id,
-      domain,
+      domain: item.domain,
       precision: item.datePrecision as "day" | "month" | "year",
       date: item.dateValue,
     } as LifeEvent];
-  });
+  }).slice(-6);
 }
 
 function sampleTimes(scan: RectificationQuestionnaire): readonly { readonly sampleIndex: number; readonly time: string }[] {
@@ -336,7 +333,6 @@ function mergeQuestionnaireScans(
 ): RectificationQuestionnaire {
   const first = scans[0];
   if (!first) throw new ConversationalRectificationError("service_unavailable");
-  if (scans.length === 1) return first;
 
   const byTime = new Map<string, {
     sample: RectificationQuestionnaire["samples"][number];
@@ -413,7 +409,7 @@ export async function buildProductionConversationalRectificationPacket(
   }
   const baseRange = currentRange(input);
   const events = scoreableLifeEvents(input.evidence as readonly LifeEventEvidence[]);
-  const eventScore: CandidateResult | null = events.length > 0
+  const eventScore: CandidateResult | null = events.length >= 3
     ? await engine.scoreEvents({
         birthDate: input.declaredBirthInput.birthDate,
         startTime: baseRange.startTime,

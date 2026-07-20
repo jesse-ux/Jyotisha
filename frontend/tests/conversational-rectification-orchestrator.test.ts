@@ -22,6 +22,8 @@ const confirmActionId = "00000000-0000-4000-8000-000000000706";
 const priorCaseId = "00000000-0000-4000-8000-000000000707";
 const resultId = "00000000-0000-4000-8000-000000000708";
 const laterActionId = "00000000-0000-4000-8000-000000000710";
+const secondAnswerActionId = "00000000-0000-4000-8000-000000000711";
+const thirdAnswerActionId = "00000000-0000-4000-8000-000000000712";
 
 const declaredBirthInput = {
   source: "approximate" as const,
@@ -92,10 +94,12 @@ function packet(ready = false): RectificationTechnicalPacket {
   };
 }
 
-function validGenerator(events: string[]) {
+function validGenerator(events: string[], varyNarrative = false) {
+  let generation = 0;
   return {
     modelId: "synthetic-rectification-model",
     async generate(prompt: string) {
+      generation += 1;
       events.push("narrative");
       const request = JSON.parse(prompt) as {
         phase: "first" | "intermediate" | "final";
@@ -113,6 +117,7 @@ function validGenerator(events: string[]) {
         "D1（Cancer）保持稳定。",
         "D9（Aries / Leo）呈现分钟敏感差异，关系事件可区分 D9。",
         "D10（Taurus / Libra）呈现分钟敏感差异，事业事件可区分 D10。",
+        varyNarrative ? `这是第 ${generation} 次合成措辞。` : "",
         request.phase === "final" ? "当前证据已形成候选总结。" : "请提供已经发生的真实事件，写明哪一年、哪一月以及发生了什么。",
         "这仅是候选，必须由你确认后才会替换当前排盘时间。",
       ].join("");
@@ -145,6 +150,8 @@ function harness(options: {
   readonly packetFailure?: Error;
   readonly completeFailures?: number;
   readonly releaseFailure?: boolean;
+  readonly readyAfterEvidenceCount?: number;
+  readonly varyNarrative?: boolean;
 } = {}) {
   const events: string[] = [];
   const mutations: string[] = [];
@@ -204,7 +211,13 @@ function harness(options: {
   ) {
     const prior = receipts.get(actionId);
     if (prior) {
-      assert.deepEqual(input, prior.input);
+      if (prior.actionKind && prior.commandFingerprint) {
+        assert.equal(actionKind, prior.actionKind);
+        assert.equal(input.expectedVersion, prior.expectedVersion);
+        assert.equal(input.commandFingerprint, prior.commandFingerprint);
+      } else {
+        assert.deepEqual(input, prior.input);
+      }
       return prior.response;
     }
     const response = make();
@@ -344,11 +357,11 @@ function harness(options: {
       packetBuilds += 1;
       events.push(input.evidence.length > 0 ? "score-packet" : "packet");
       if (options.packetFailure) throw options.packetFailure;
-      return input.evidence.length > 0
+      return input.evidence.length >= (options.readyAfterEvidenceCount ?? 1)
         ? { packet: packet(true), resultId }
         : { packet: packet(false), resultId: null };
     },
-    narrativeGenerator: validGenerator(events),
+    narrativeGenerator: validGenerator(events, options.varyNarrative),
     asOfDate: () => "2026-07-21",
   };
 
@@ -489,6 +502,57 @@ test("generic date uncertainty does not suppress clear historical evidence", asy
     .some((item) => item.eventSummary.includes("毕业") && item.scoreable === true));
 });
 
+test("one and two supported events save and narrate before the third accumulated event ranks", async () => {
+  const value = harness({ readyAfterEvidenceCount: 3 });
+  await start(value, null);
+  const answers = [
+    [answerActionId, "2019年7月毕业"],
+    [secondAnswerActionId, "2020年8月搬家"],
+    [thirdAnswerActionId, "2021年9月换工作"],
+  ] as const;
+
+  for (const [index, [receivedActionId, answer]] of answers.entries()) {
+    const turn = await value.service.answer(userId, {
+      type: "answer",
+      caseId: startActionId,
+      actionId: receivedActionId,
+      turnVersion: index,
+      answer,
+    });
+    const stored = value.cases.get(startActionId)?.row;
+    assert.equal(stored?.eventEvidence.length, index + 1);
+    assert.equal(turn.evidenceRecap.length, index + 1);
+    assert.equal(turn.status, index < 2 ? "active" : "confirming");
+  }
+
+  assert.equal(value.counts().packetBuilds, 4);
+  assert.equal(value.events.filter((event) => event === "narrative").length, 4);
+});
+
+test("family evidence remains stored and public without changing its domain", async () => {
+  const value = harness({ readyAfterEvidenceCount: 3 });
+  await start(value, null);
+
+  const turn = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2020年7月父亲生病",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 1);
+  assert.equal(stored[0]?.domain, "family");
+  assert.match(stored[0]?.eventSummary ?? "", /父亲/);
+  assert.deepEqual(turn.evidenceRecap, [{
+    id: stored[0]?.id,
+    summary: stored[0]?.eventSummary,
+    dateLabel: "2020-07",
+  }]);
+  assert.equal(turn.status, "active");
+});
+
 test("vague, future, and unmatched answers stay conversational and never score", async () => {
   for (const [answer, domain] of [
     ["后来换了工作", undefined],
@@ -554,6 +618,28 @@ test("a lost-response retry replays the saved answer without rescoring or regene
   assert.deepEqual(replayed, first);
   assert.equal(value.counts().packetBuilds, 2);
   assert.deepEqual(value.events, before);
+});
+
+test("overlapping identical answers converge on the first receipt despite different derived narratives", async () => {
+  const value = harness({ varyNarrative: true });
+  await start(value, null);
+  const command = {
+    type: "answer" as const,
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2021年7月毕业，并在2022年3月去外地工作",
+  };
+
+  const [first, second] = await Promise.all([
+    value.service.answer(userId, command),
+    value.service.answer(userId, command),
+  ]);
+
+  assert.deepEqual(second, first);
+  assert.equal(value.cases.get(startActionId)?.row.eventEvidence.length, 2);
+  assert.equal(value.events.filter((event) => event === "narrative").length, 3);
+  assert.equal(value.mutations.filter((mutation) => mutation === "saveTurn").length, 2);
 });
 
 test("receipt-first delayed retries replay the original answer, pause, abandon, and confirm after later turns", async () => {

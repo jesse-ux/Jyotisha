@@ -8,6 +8,8 @@ import {
 } from "../src/app/api/birth-time-conversation/route.ts";
 import { ConversationalRectificationError } from "../src/lib/conversational-rectification/errors.ts";
 import type { BirthTimeJourneyEngine } from "../src/lib/birth-time-journey-service.ts";
+import type { LifeEventEvidence } from "../src/lib/conversational-rectification/persistence-contracts.ts";
+import type { LifeEvent } from "../src/lib/birth-time-evidence.ts";
 
 const userId = "00000000-0000-4000-8000-000000000711";
 const actionId = "00000000-0000-4000-8000-000000000712";
@@ -64,6 +66,105 @@ function service(overrides: Partial<BirthTimeConversationRouteService> = {}): Bi
     ...overrides,
   };
 }
+
+function syntheticEvidence(
+  index: number,
+  domain: LifeEventEvidence["domain"],
+): LifeEventEvidence {
+  return {
+    id: `00000000-0000-4000-8000-${String(800 + index).padStart(12, "0")}`,
+    rawText: `synthetic event ${index}`,
+    domain,
+    eventSummary: `synthetic summary ${index}`,
+    dateValue: `${2010 + index}-07`,
+    datePrecision: "month",
+    extractionStatus: "clear",
+    scoreable: true,
+  };
+}
+
+function packetEngine(options: {
+  readonly scoreCalls?: LifeEvent[][];
+  readonly scanTimes?: readonly string[];
+} = {}): BirthTimeJourneyEngine {
+  const minute = (value: string) => {
+    const [hour = 0, part = 0] = value.slice(-5).split(":").map(Number);
+    return hour * 60 + part;
+  };
+  const clock = (value: number) => {
+    const normalized = ((value % 1_440) + 1_440) % 1_440;
+    return `${String(Math.floor(normalized / 60)).padStart(2, "0")}:${String(normalized % 60).padStart(2, "0")}`;
+  };
+  return {
+    async scan(input) {
+      const center = minute(input.birthTime);
+      const times = options.scanTimes ?? [
+        clock(center - input.uncertaintyMinutes),
+        clock(center),
+        clock(center + input.uncertaintyMinutes),
+      ];
+      return {
+        questionnaire: {
+          questions: [],
+          samples: times.map((time, index) => ({
+            ascendantSign: "Cancer",
+            d4Sign: index % 2 === 0 ? "Aries" : "Taurus",
+            d9Sign: index % 2 === 0 ? "Gemini" : "Virgo",
+            d10Sign: index % 2 === 0 ? "Leo" : "Libra",
+            d24Sign: "Sagittarius",
+            d30Sign: "Pisces",
+          })),
+          raw: {
+            candidate_scan: {
+              samples: times.map((time) => ({ time: `1990-01-01 ${time}` })),
+            },
+          },
+        },
+      };
+    },
+    async score() { throw new Error("unexpected questionnaire score"); },
+    async scoreEvents(input) {
+      options.scoreCalls?.push([...input.events]);
+      return {
+        resultId: "00000000-0000-4000-8000-000000000899",
+        confidence: "low",
+        canApply: false,
+        winningSegment: null,
+        eventCount: input.events.length,
+        domainCount: new Set(input.events.map((event) => event.domain)).size,
+        topScore: 1,
+        secondScore: 1,
+        marginPercent: 0,
+        reasons: ["synthetic low result"],
+        evidence: [],
+        algorithmVersion: "synthetic-event-score-v1",
+      };
+    },
+    async buildDifferencePacket(input) {
+      return {
+        packet: {
+          caseId: input.caseId,
+          scoringVersion: "birth-time-choice-scoring-v2",
+          currentRange: { startTime: input.startTime, endTime: input.endTime },
+          opportunities: [],
+          askedQuestionFingerprints: [],
+          candidatePartitionFingerprints: [],
+          recentRangeHistory: [],
+        },
+        candidateModel: { version: "birth-time-choice-scoring-v2" },
+        scoringPartitions: {},
+      };
+    },
+    async scoreChoices() { throw new Error("unexpected choice score"); },
+  };
+}
+
+const packetBirthplace = {
+  cityCode: "TPE-CITY",
+  latitude: 25.0268,
+  longitude: 121.5434,
+  timezoneOffset: 8,
+};
 
 test("authentication happens before body parsing and unauthenticated requests create no privileged service", async () => {
   const events: string[] = [];
@@ -325,4 +426,130 @@ test("production unknown-time adapter covers the declared full day with bounded 
   const sampleTimes = result.packet.sensitivityScope.sampleTimes;
   assert.equal(new Set(sampleTimes).size, sampleTimes.length);
   assert.deepEqual(sampleTimes, [...sampleTimes].sort((left, right) => minute(left) - minute(right)));
+});
+
+test("production packet waits for three supported events and then scores the accumulated evidence", async () => {
+  const scoreCalls: LifeEvent[][] = [];
+  const engine = packetEngine({ scoreCalls });
+  const evidence = [
+    syntheticEvidence(1, "education"),
+    syntheticEvidence(2, "relocation"),
+    syntheticEvidence(3, "career"),
+  ];
+
+  for (let count = 1; count <= 3; count += 1) {
+    const built = await buildProductionConversationalRectificationPacket(engine, {
+      userId,
+      caseId,
+      asOfDate: "2026-07-21",
+      declaredBirthInput: {
+        source: "approximate",
+        birthDate: "1990-01-01",
+        reportedTime: "05:20",
+        uncertaintyBeforeMinutes: 30,
+        uncertaintyAfterMinutes: 30,
+        birthTimeClue: null,
+        birthplace: packetBirthplace,
+      },
+      privateCandidate: null,
+      evidence: evidence.slice(0, count),
+    });
+    assert.equal(built.packet.candidate.status, "pending_validation");
+    assert.equal(
+      built.resultId,
+      count < 3 ? null : "00000000-0000-4000-8000-000000000899",
+    );
+  }
+
+  assert.equal(scoreCalls.length, 1);
+  assert.deepEqual(scoreCalls[0]?.map((event) => event.id), evidence.map((item) => item.id));
+});
+
+test("production packet deterministically sends only the latest six supported events", async () => {
+  const scoreCalls: LifeEvent[][] = [];
+  const engine = packetEngine({ scoreCalls });
+  const domains = ["education", "relocation", "career", "relationship"] as const;
+  const evidence = Array.from({ length: 8 }, (_, index) =>
+    syntheticEvidence(index + 1, domains[index % domains.length] ?? "career"));
+
+  await buildProductionConversationalRectificationPacket(engine, {
+    userId,
+    caseId,
+    asOfDate: "2026-07-21",
+    declaredBirthInput: {
+      source: "approximate",
+      birthDate: "1990-01-01",
+      reportedTime: "05:20",
+      uncertaintyBeforeMinutes: 30,
+      uncertaintyAfterMinutes: 30,
+      birthTimeClue: null,
+      birthplace: packetBirthplace,
+    },
+    privateCandidate: null,
+    evidence,
+  });
+
+  assert.equal(scoreCalls.length, 1);
+  assert.deepEqual(
+    scoreCalls[0]?.map((event) => event.id),
+    evidence.slice(-6).map((item) => item.id),
+  );
+});
+
+test("family evidence stays out of relationship scoring when three real scorer domains exist", async () => {
+  const scoreCalls: LifeEvent[][] = [];
+  const engine = packetEngine({ scoreCalls });
+  const family = syntheticEvidence(1, "family");
+  const supported = [
+    syntheticEvidence(2, "education"),
+    syntheticEvidence(3, "relocation"),
+    syntheticEvidence(4, "career"),
+  ];
+
+  await buildProductionConversationalRectificationPacket(engine, {
+    userId,
+    caseId,
+    asOfDate: "2026-07-21",
+    declaredBirthInput: {
+      source: "approximate",
+      birthDate: "1990-01-01",
+      reportedTime: "05:20",
+      uncertaintyBeforeMinutes: 30,
+      uncertaintyAfterMinutes: 30,
+      birthTimeClue: null,
+      birthplace: packetBirthplace,
+    },
+    privateCandidate: null,
+    evidence: [family, ...supported],
+  });
+
+  assert.equal(scoreCalls.length, 1);
+  assert.deepEqual(scoreCalls[0]?.map((event) => event.domain), [
+    "education",
+    "relocation",
+    "career",
+  ]);
+  assert.equal(scoreCalls[0]?.some((event) => event.id === family.id), false);
+  assert.equal(scoreCalls[0]?.some((event) => event.domain === "relationship"), false);
+});
+
+test("a single period-only scan filters duplicate and out-of-range samples from the exact :59 range", async () => {
+  const engine = packetEngine({ scanTimes: ["08:00", "10:00", "10:00", "12:00"] });
+  const built = await buildProductionConversationalRectificationPacket(engine, {
+    userId,
+    caseId,
+    asOfDate: "2026-07-21",
+    declaredBirthInput: {
+      source: "period_only",
+      birthDate: "1990-01-01",
+      reportedPeriod: "morning",
+      birthTimeClue: null,
+      birthplace: packetBirthplace,
+    },
+    privateCandidate: null,
+    evidence: [],
+  });
+
+  assert.deepEqual(built.packet.candidate.range, { startTime: "08:00", endTime: "11:59" });
+  assert.deepEqual(built.packet.sensitivityScope.sampleTimes, ["08:00", "10:00"]);
 });

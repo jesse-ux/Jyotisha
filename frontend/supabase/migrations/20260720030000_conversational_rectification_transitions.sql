@@ -590,10 +590,10 @@ begin
     if v_receipt.user_id is distinct from p_user_id
       or v_receipt.action_kind is distinct from 'save_turn'
       or v_receipt.expected_turn_version is distinct from p_expected_version
-      or (v_receipt.request ? 'commandFingerprint'
-        and v_receipt.request ->> 'commandFingerprint'
-          is distinct from p_command_fingerprint)
-      or v_receipt.request_fingerprint is distinct from v_fingerprint then
+      or (case when v_receipt.request ? 'commandFingerprint' then
+        v_receipt.request ->> 'commandFingerprint'
+          is distinct from p_command_fingerprint
+      else v_receipt.request_fingerprint is distinct from v_fingerprint end) then
       raise exception 'conversational_action_conflict' using errcode = 'P0001';
     end if;
     return v_receipt.response;
@@ -756,10 +756,10 @@ begin
     if v_receipt.user_id is distinct from p_user_id
       or v_receipt.action_kind is distinct from 'pause'
       or v_receipt.expected_turn_version is distinct from p_expected_version
-      or (v_receipt.request ? 'commandFingerprint'
-        and v_receipt.request ->> 'commandFingerprint'
-          is distinct from p_command_fingerprint)
-      or v_receipt.request_fingerprint is distinct from v_fingerprint then
+      or (case when v_receipt.request ? 'commandFingerprint' then
+        v_receipt.request ->> 'commandFingerprint'
+          is distinct from p_command_fingerprint
+      else v_receipt.request_fingerprint is distinct from v_fingerprint end) then
       raise exception 'conversational_action_conflict' using errcode = 'P0001';
     end if;
     return v_receipt.response;
@@ -890,10 +890,10 @@ begin
     if v_receipt.user_id is distinct from p_user_id
       or v_receipt.action_kind is distinct from 'abandon'
       or v_receipt.expected_turn_version is distinct from p_expected_version
-      or (v_receipt.request ? 'commandFingerprint'
-        and v_receipt.request ->> 'commandFingerprint'
-          is distinct from p_command_fingerprint)
-      or v_receipt.request_fingerprint is distinct from v_fingerprint then
+      or (case when v_receipt.request ? 'commandFingerprint' then
+        v_receipt.request ->> 'commandFingerprint'
+          is distinct from p_command_fingerprint
+      else v_receipt.request_fingerprint is distinct from v_fingerprint end) then
       raise exception 'conversational_action_conflict' using errcode = 'P0001';
     end if;
     return v_receipt.response;
@@ -1037,10 +1037,10 @@ begin
     if v_receipt.user_id is distinct from p_user_id
       or v_receipt.action_kind is distinct from 'confirm'
       or v_receipt.expected_turn_version is distinct from p_expected_version
-      or (v_receipt.request ? 'commandFingerprint'
-        and v_receipt.request ->> 'commandFingerprint'
-          is distinct from p_command_fingerprint)
-      or v_receipt.request_fingerprint is distinct from v_fingerprint then
+      or (case when v_receipt.request ? 'commandFingerprint' then
+        v_receipt.request ->> 'commandFingerprint'
+          is distinct from p_command_fingerprint
+      else v_receipt.request_fingerprint is distinct from v_fingerprint end) then
       raise exception 'conversational_action_conflict' using errcode = 'P0001';
     end if;
     return v_receipt.response;
