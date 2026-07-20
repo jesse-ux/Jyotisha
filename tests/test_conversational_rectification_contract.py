@@ -194,8 +194,8 @@ def test_legacy_import_is_waived_without_changing_credits() -> None:
     assert "imported_from_case_id" in body
     assert "'migration_waived'" in body
     assert "insert into public.birth_time_rectification_billing" in body
-    assert "credits =" not in body
-    assert "credit_transactions" not in body
+    assert "set credits = profile.credits -" not in body
+    assert "'reserve', -" not in body
     assert "update public.birth_time_rectification_cases" not in body
     for preserved_profile_field in (
         "birth_time_clue",
@@ -263,16 +263,21 @@ def test_start_identity_and_account_concurrency_are_server_guarded() -> None:
 
 
 def test_new_account_start_recovers_a_committed_pre_case_reservation() -> None:
-    reserve = _function(_normalized(BILLING), "reserve_conversational_rectification_fee")
+    billing = _normalized(BILLING)
+    reserve = _function(billing, "reserve_conversational_rectification_fee")
+    recovery = _function(
+        billing, "recover_conversational_rectification_orphan_reservations"
+    )
 
-    assert "orphan_billing.state = 'reserved'" in reserve
-    assert "orphan_case.id is null" in reserve
-    assert "set credits = profile.credits + v_orphan.price" in reserve
-    assert "'refund', v_orphan.price" in reserve
-    assert "set state = 'released'" in reserve
-    assert "'recover_fee'" in reserve
-    assert "v_orphan.case_id" in reserve
-    assert reserve.index("set state = 'released'") < reserve.index(
+    assert "orphan_billing.state = 'reserved'" in recovery
+    assert "orphan_case.id is null" in recovery
+    assert "set credits = profile.credits + v_orphan.price" in recovery
+    assert "'refund', v_orphan.price" in recovery
+    assert "set state = 'released'" in recovery
+    assert "'recover_fee'" in recovery
+    assert "v_orphan.case_id" in recovery
+    assert "recover_conversational_rectification_orphan_reservations" in reserve
+    assert reserve.index("recover_conversational_rectification_orphan_reservations") < reserve.index(
         "set credits = profile.credits - p_price"
     )
 
@@ -299,6 +304,109 @@ def test_durable_json_columns_have_byte_and_field_shape_guards() -> None:
     assert "conversational_rectification_valid_action_request(request)" in sql
     assert "conversational_rectification_valid_action_response(response, action_kind)" in sql
     assert "conversational_rectification_valid_private_candidate(candidate_result)" in sql
+
+
+def test_durable_json_numbers_and_evidence_recap_share_postgres_bounds() -> None:
+    sql = _normalized(SCHEMA)
+
+    assert "create or replace function public.conversational_rectification_numbers_are_stable" in sql
+    for validator in (
+        "conversational_rectification_valid_declared_birth_input",
+        "conversational_rectification_valid_private_candidate",
+        "conversational_rectification_valid_public_turn",
+        "conversational_rectification_valid_action_request",
+        "conversational_rectification_valid_action_response",
+    ):
+        assert "conversational_rectification_numbers_are_stable" in _function(sql, validator)
+    recap = _function(sql, "conversational_rectification_valid_evidence_recap")
+    assert "octet_length(p_value::text) <= 24576" in recap
+
+
+def test_life_event_evidence_is_strictly_validated_before_insert() -> None:
+    schema = _normalized(SCHEMA)
+    transitions = _normalized(TRANSITIONS)
+    validator = _function(schema, "conversational_rectification_valid_life_event_evidence")
+    save = _function(transitions, "save_conversational_rectification_turn")
+
+    for invariant in (
+        "conversational_rectification_has_only_keys",
+        "jsonb_typeof(p_value -> 'id')",
+        "conversational_rectification_valid_uuid_text",
+        "p_value ->> 'id' !~* '^[0-9a-f]{8}-",
+        "conversational_rectification_text_is_nonblank( p_value ->> 'rawtext'",
+        "conversational_rectification_text_is_nonblank( p_value ->> 'eventsummary'",
+        "conversational_rectification_text_is_nonblank( p_value ->> 'datevalue'",
+        "jsonb_typeof(p_value -> 'scoreable')",
+    ):
+        assert invariant in validator
+    for key in (
+        "id",
+        "rawtext",
+        "domain",
+        "eventsummary",
+        "datevalue",
+        "dateprecision",
+        "extractionstatus",
+        "scoreable",
+    ):
+        assert f"'{key}'" in validator
+    evidence_array_validator = "conversational_rectification_valid_life_event_evidence_array"
+    assert evidence_array_validator in save
+    assert save.index(evidence_array_validator) < save.index(
+        "insert into public.birth_time_rectification_event_evidence"
+    )
+    assert "coalesce((item ->> 'scoreable')::boolean, false)" not in save
+    assert "nullif(item ->> 'datevalue', '')" not in save
+
+
+def test_case_mutations_enforce_cumulative_load_limits_under_the_case_lock() -> None:
+    transitions = _normalized(TRANSITIONS)
+    helper = _function(transitions, "conversational_rectification_case_fits_load_limits")
+
+    assert "count(*)" in helper
+    assert "<= 2000" in helper
+    assert "octet_length(v_projection::text) <= 4194304" in helper
+    for name in (
+        "save_conversational_rectification_turn",
+        "pause_conversational_rectification_case",
+        "abandon_conversational_rectification_case",
+        "confirm_conversational_rectification_candidate",
+    ):
+        body = _function(transitions, name)
+        assert body.index("for update") < body.index(
+            "conversational_rectification_case_fits_load_limits"
+        )
+        assert body.index("conversational_rectification_case_fits_load_limits") < body.index(
+            "insert into public.birth_time_rectification_turns"
+        )
+
+
+def test_legacy_import_recovers_orphan_reservations_without_a_paid_start() -> None:
+    billing = _normalized(BILLING)
+    transitions = _normalized(TRANSITIONS)
+    recovery = _function(
+        billing, "recover_conversational_rectification_orphan_reservations"
+    )
+    imported = _function(
+        transitions, "import_legacy_conversational_rectification_case"
+    )
+
+    for invariant in (
+        "conversational-rectification-case",
+        "for update",
+        "orphan_billing.state = 'reserved'",
+        "orphan_case.id is null",
+        "set credits = profile.credits + v_orphan.price",
+        "'refund', v_orphan.price",
+        "set state = 'released'",
+        "'recover_fee'",
+    ):
+        assert invariant in recovery
+    assert "recover_conversational_rectification_orphan_reservations" in imported
+    assert imported.index("recover_conversational_rectification_orphan_reservations") < imported.index(
+        "'migration_waived'"
+    )
+    assert "set credits = profile.credits -" not in imported
 
 
 def test_declared_birth_input_is_strict_source_aware_and_location_complete() -> None:

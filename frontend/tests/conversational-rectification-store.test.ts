@@ -10,10 +10,12 @@ import {
   type ConversationalRectificationRpcClient,
 } from "../src/lib/conversational-rectification/store.ts";
 import { ConversationalRectificationBilling } from "../src/lib/conversational-rectification/billing.ts";
+import { conversationalRectificationTurnSchema } from "../src/lib/conversational-rectification/contracts.ts";
 import {
   conversationalRectificationActionReceiptRequestSchema,
   conversationalRectificationActionReceiptResponseSchema,
   declaredBirthInputSchema,
+  lifeEventEvidenceSchema,
   privateCandidateSchema,
   validationReceiptSchema,
 } from "../src/lib/conversational-rectification/persistence-contracts.ts";
@@ -472,6 +474,88 @@ test("declared birth input is strict, source-aware, bounded, and location-comple
   assert.equal(exactClue.birthTimeClue, "  exact clue spacing  ");
 });
 
+test("durable JSON uses PostgreSQL-stable numeric vectors recursively", () => {
+  const stableVector = {
+    zero: 0,
+    minFraction: 0.000001,
+    decimal: 0.123456,
+    maxSafe: 9_007_199_254_740_991,
+  };
+  assert.equal(postgresJsonbTextBytes(stableVector), 86);
+  assert.equal(declaredBirthInputSchema.safeParse({
+    ...storedRow.declared_birth_input,
+    birthplace: {
+      ...storedRow.declared_birth_input.birthplace,
+      latitude: 25.0268,
+      longitude: 121.5434,
+      timezoneOffset: 8,
+    },
+  }).success, true);
+
+  for (const candidateWeights of [[1e-100], [0.1234567]]) {
+    assert.equal(privateCandidateSchema.safeParse({
+      resultId,
+      calculationVersion: "rectification-v3.1",
+      candidateWeights,
+    }).success, false);
+  }
+  assert.equal(privateCandidateSchema.safeParse({
+    resultId,
+    calculationVersion: "rectification-v3.1",
+    scoredHistoricalEvidence: [{
+      evidenceId: "00000000-0000-4000-8000-000000000105",
+      domain: "career",
+      candidateTime: "05:21",
+      score: 1e-100,
+      ruleRefs: [],
+    }],
+  }).success, false);
+  assert.equal(declaredBirthInputSchema.safeParse({
+    ...storedRow.declared_birth_input,
+    birthplace: {
+      ...storedRow.declared_birth_input.birthplace,
+      latitude: 1e-100,
+    },
+  }).success, false);
+  assert.equal(postgresJsonbTextBytes({ nested: [{ score: 1e-100 }] }), Number.POSITIVE_INFINITY);
+});
+
+test("evidence recap enforces the SQL-matched aggregate byte limit", () => {
+  const evidenceRecap = Array.from({ length: 9 }, (_, index) => ({
+    id: `00000000-0000-4000-8000-${(700 + index).toString().padStart(12, "0")}`,
+    summary: "事".repeat(900),
+    dateLabel: "2020-01",
+  }));
+  const turn = { ...firstTurn, evidenceRecap };
+
+  assert.ok(postgresJsonbTextBytes(evidenceRecap) > 24_576);
+  assert.ok(postgresJsonbTextBytes(turn) < 65_536);
+  assert.equal(conversationalRectificationTurnSchema.safeParse(turn).success, false);
+});
+
+test("life-event evidence rejects unknown, blank, and non-boolean durable values", () => {
+  const evidence = {
+    id: "00000000-0000-4000-8000-000000000105",
+    rawText: "2019 年 7 月换工作",
+    domain: "career" as const,
+    eventSummary: "换工作",
+    dateValue: "2019-07",
+    datePrecision: "month" as const,
+    extractionStatus: "clear" as const,
+    scoreable: true,
+  };
+  assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);
+  for (const invalid of [
+    { ...evidence, extra: "discard me" },
+    { ...evidence, eventSummary: " \t " },
+    { ...evidence, dateValue: " \t " },
+    { ...evidence, scoreable: null },
+    { ...evidence, scoreable: "true" },
+  ]) {
+    assert.equal(lifeEventEvidenceSchema.safeParse(invalid).success, false);
+  }
+});
+
 test("durable private and receipt schemas accept boundaries and reject oversize or unknown fields", () => {
   assert.equal(postgresJsonbTextBytes({ a: [1, 2] }), 13);
   assert.equal(validationReceiptSchema.safeParse({
@@ -579,7 +663,7 @@ test("public turn JSON fields reject field and byte boundary violations", () => 
   const nearTurnLimit = {
     ...exact,
     narrative: "n".repeat(12_000),
-    evidenceRecap: Array.from({ length: 16 }, (_, index) => ({
+    evidenceRecap: Array.from({ length: 7 }, (_, index) => ({
       id: `00000000-0000-4000-8000-${(300 + index).toString().padStart(12, "0")}`,
       summary: "事".repeat(1_000),
       dateLabel: "d".repeat(80),
