@@ -36,6 +36,25 @@ cd frontend && npm run lint                               exit 0
 git diff --check                                          exit 0
 ```
 
+## Pre-scan race follow-up (2026-07-21)
+
+- Lexical component validation now completes before ancestor scanning. Once scanning finds the first absent component, it stops constructing deeper absolute pathnames immediately; creation continues only from the already pinned deepest existing directory.
+- A deterministic `BASH_ENV` DEBUG-hook regression inserts a symlink after the first missing component is recorded. The script rejects it from the pinned parent and creates no `backup` path under the symlink target. Creation uses `./$component` for test, mkdir, validation, and `cd -P`, so legal names beginning with `-` are handled as names rather than options.
+
+```text
+RED:
+cd frontend && npm run test:db
+FAIL stops absolute pre-scan traversal when a symlink appears after the first missing component
+FAIL creates every absent backup path component privately despite a permissive caller umask
+
+GREEN:
+bash -n deploy/backup-staging-postgres.sh                exit 0
+cd frontend && npm run test:db                            21 passed, 0 failed
+cd frontend && npm test                                   497 passed, 0 failed
+cd frontend && npm run lint                               exit 0
+git diff --check                                          exit 0
+```
+
 ## Atomic component-creation follow-up (2026-07-20)
 
 - The sticky root-owned exception now applies only to ancestors. An existing requested backup leaf is separately required to be current-user owned, non-symlink, and non-group/world-writable before the script can chmod or write it; direct canonical `/tmp` is rejected without calling `chmod` or changing its mode.

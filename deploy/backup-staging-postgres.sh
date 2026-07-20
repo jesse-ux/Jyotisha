@@ -102,6 +102,10 @@ for ((backup_directory_component_index = 0; backup_directory_component_index < $
   if [ -z "$backup_directory_component" ] || [ "$backup_directory_component" = "." ] || [ "$backup_directory_component" = ".." ]; then
     reject_backup_directory
   fi
+done
+
+for ((backup_directory_component_index = 0; backup_directory_component_index < ${#backup_directory_components[@]}; backup_directory_component_index += 1)); do
+  backup_directory_component="${backup_directory_components[$backup_directory_component_index]}"
   backup_directory_component_path="${backup_directory_component_path}/${backup_directory_component}"
   if [ -L "$backup_directory_component_path" ]; then
     reject_backup_directory
@@ -112,6 +116,7 @@ for ((backup_directory_component_index = 0; backup_directory_component_index < $
     DEEPEST_EXISTING_COMPONENT_PATH="$backup_directory_component_path"
   elif [ "$FIRST_CREATED_COMPONENT_INDEX" -eq -1 ]; then
     FIRST_CREATED_COMPONENT_INDEX="$backup_directory_component_index"
+    break
   fi
 done
 
@@ -142,14 +147,14 @@ cd -P "$DEEPEST_EXISTING_COMPONENT_PATH"
 if [ "$FIRST_CREATED_COMPONENT_INDEX" -ne -1 ]; then
   for ((backup_directory_component_index = DEEPEST_EXISTING_COMPONENT_INDEX + 1; backup_directory_component_index < ${#backup_directory_components[@]}; backup_directory_component_index += 1)); do
     backup_directory_component="${backup_directory_components[$backup_directory_component_index]}"
-    if [ -e "$backup_directory_component" ] || [ -L "$backup_directory_component" ]; then
+    if [ -e "./$backup_directory_component" ] || [ -L "./$backup_directory_component" ]; then
       reject_backup_directory
     fi
-    if ! mkdir "$backup_directory_component"; then
+    if ! mkdir "./$backup_directory_component"; then
       reject_backup_directory
     fi
-    validate_backup_directory_component "$backup_directory_component" 1
-    cd -P "$backup_directory_component"
+    validate_backup_directory_component "./$backup_directory_component" 1
+    cd -P "./$backup_directory_component"
   done
 fi
 BACKUP_DIRECTORY="$(pwd -P)"

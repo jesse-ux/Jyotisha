@@ -344,8 +344,8 @@ test("fails safely when a racer inserts a symlink during nested backup path crea
     writeCommand(
       commandDirectory,
       "mkdir",
-      `if [ "$#" -eq 1 ] && [ "$1" = first ]; then
-  ln -s "$RACE_TARGET" first
+      `if [ "$#" -eq 1 ] && [ "$1" = ./first ]; then
+  ln -s "$RACE_TARGET" ./first
 fi
 exec /bin/mkdir "$@"`,
     );
@@ -370,11 +370,61 @@ exec /bin/mkdir "$@"`,
   }
 });
 
+test("stops absolute pre-scan traversal when a symlink appears after the first missing component", () => {
+  const root = canonicalSharedTemporaryDirectory("jyotisha-backup-pre-scan-race-");
+  const raceTarget = canonicalTemporaryDirectory("jyotisha-backup-pre-scan-target-");
+  const environmentFile = createDatabaseEnvironment();
+  const commandDirectory = mkdtempSync(join(tmpdir(), "jyotisha-backup-pre-scan-command-"));
+  const preScanHook = join(commandDirectory, "pre-scan-hook.sh");
+  const firstComponent = join(root, "first");
+  const target = join(firstComponent, "second", "backup");
+  const externalBackup = join(raceTarget, "second", "backup");
+  const originalRootMode = statSync(root).mode & 0o777;
+
+  try {
+    mkdirSync(join(raceTarget, "second"), { mode: 0o700 });
+    safeDiskCommand(commandDirectory);
+    writeCommand(commandDirectory, "docker", "printf '%s' 'pre-scan race dump payload'");
+    writeFileSync(
+      preScanHook,
+      `pre_scan_inject() {
+  if [ "${"${BASH_COMMAND:-}"}" = 'FIRST_CREATED_COMPONENT_INDEX="$backup_directory_component_index"' ] && [ "${"${backup_directory_component_path:-}"}" = "$PRE_SCAN_FIRST_PATH" ]; then
+    ln -s "$PRE_SCAN_RACE_TARGET" "$PRE_SCAN_FIRST_PATH"
+    trap - DEBUG
+  fi
+}
+trap pre_scan_inject DEBUG
+`,
+      { mode: 0o700 },
+    );
+    chmodSync(preScanHook, 0o700);
+    const result = runBackup(
+      environmentFile.file,
+      target,
+      backupEnvironment(commandDirectory, {
+        BACKUP_TIMESTAMP: "20260720T060201Z",
+        BASH_ENV: preScanHook,
+        PRE_SCAN_FIRST_PATH: firstComponent,
+        PRE_SCAN_RACE_TARGET: raceTarget,
+      }),
+    );
+
+    assert.notEqual(result.status, 0);
+    assert.equal(existsSync(externalBackup), false);
+    assert.equal(statSync(root).mode & 0o777, originalRootMode);
+  } finally {
+    rmSync(root, { force: true, recursive: true });
+    rmSync(raceTarget, { force: true, recursive: true });
+    rmSync(environmentFile.directory, { force: true, recursive: true });
+    rmSync(commandDirectory, { force: true, recursive: true });
+  }
+});
+
 test("creates every absent backup path component privately despite a permissive caller umask", () => {
   const root = canonicalSharedTemporaryDirectory("jyotisha-backup-umask-");
   const environmentFile = createDatabaseEnvironment();
   const commandDirectory = mkdtempSync(join(tmpdir(), "jyotisha-backup-umask-command-"));
-  const components = ["first", "second", "backup"];
+  const components = ["first", "-second", "backup"];
   const target = join(root, ...components);
 
   try {
