@@ -75,6 +75,35 @@ test("action registry keeps one id for a failed canonical command and separates 
   assert.deepEqual(seen, [firstActionId, firstActionId, secondActionId]);
 });
 
+test("action registry releases a successful identity but keeps it for a manual failure retry", async () => {
+  const ids = [firstActionId, secondActionId];
+  const registry = createConversationalRectificationActionRegistry(
+    () => ids.shift() ?? assert.fail("unexpected action id allocation"),
+  );
+  const identity = {
+    caseId,
+    turnVersion: 4,
+    operation: "pause",
+    payload: {},
+  } as const;
+  const seen: string[] = [];
+
+  await assert.rejects(registry.run(identity, async (actionId) => {
+    seen.push(actionId);
+    throw new TypeError("offline");
+  }));
+  await registry.run(identity, async (actionId) => {
+    seen.push(actionId);
+    return turn;
+  });
+  await registry.run(identity, async (actionId) => {
+    seen.push(actionId);
+    return turn;
+  });
+
+  assert.deepEqual(seen, [firstActionId, firstActionId, secondActionId]);
+});
+
 test("client replays the exact action body after a lost response without adding a price", async (context) => {
   const bodies: string[] = [];
   let attempts = 0;
@@ -103,11 +132,63 @@ test("client replays the exact action body after a lost response without adding 
   assert.equal(Object.hasOwn(JSON.parse(bodies[0]) as object, "price"), false);
 });
 
-test("502 and non-JSON failures expose one stable Chinese message", async (context) => {
-  context.mock.method(globalThis, "fetch", async () => new Response("upstream html", {
-    status: 502,
-    headers: { "content-type": "text/html" },
-  }));
+test("a JSON 502 is retried once with the exact action body before succeeding", async (context) => {
+  const bodies: string[] = [];
+  context.mock.method(globalThis, "fetch", async (_input: string | URL | Request, init?: RequestInit) => {
+    bodies.push(String(init?.body));
+    if (bodies.length === 1) {
+      return Response.json({ code: "service_unavailable", message: "internal detail" }, { status: 502 });
+    }
+    return Response.json(turn);
+  });
+
+  const result = await sendConversationalRectificationCommand({
+    type: "pause",
+    caseId,
+    actionId: firstActionId,
+    turnVersion: 4,
+  });
+
+  assert.deepEqual(result, turn);
+  assert.equal(bodies.length, 2);
+  assert.equal(bodies[0], bodies[1]);
+  assert.equal(JSON.parse(bodies[0] ?? "{}").actionId, firstActionId);
+});
+
+test("a non-ok non-JSON response is retried once even when a proxy mislabels it as JSON", async (context) => {
+  const bodies: string[] = [];
+  context.mock.method(globalThis, "fetch", async (_input: string | URL | Request, init?: RequestInit) => {
+    bodies.push(String(init?.body));
+    if (bodies.length === 1) {
+      return new Response("proxy html", {
+        status: 503,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return Response.json(turn);
+  });
+
+  const result = await sendConversationalRectificationCommand({
+    type: "pause",
+    caseId,
+    actionId: firstActionId,
+    turnVersion: 4,
+  });
+
+  assert.deepEqual(result, turn);
+  assert.equal(bodies.length, 2);
+  assert.equal(bodies[0], bodies[1]);
+});
+
+test("502 and non-JSON failures retry only once before one stable Chinese message", async (context) => {
+  const bodies: string[] = [];
+  context.mock.method(globalThis, "fetch", async (_input: string | URL | Request, init?: RequestInit) => {
+    bodies.push(String(init?.body));
+    return new Response("upstream html", {
+      status: 502,
+      headers: { "content-type": "text/html" },
+    });
+  });
 
   await assert.rejects(
     sendConversationalRectificationCommand({
@@ -120,4 +201,6 @@ test("502 and non-JSON failures expose one stable Chinese message", async (conte
       && error.status === 502
       && error.message === CONVERSATIONAL_RECTIFICATION_UNAVAILABLE,
   );
+  assert.equal(bodies.length, 2);
+  assert.equal(bodies[0], bodies[1]);
 });

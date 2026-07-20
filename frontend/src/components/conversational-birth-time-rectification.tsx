@@ -1,6 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { ChatMessageContent } from "./chat-message-content.tsx";
 import {
   useConversationalRectification,
@@ -85,10 +90,41 @@ export function ConversationalRectificationSurface({
   pendingConsultationQuestion,
   onContinueOriginalQuestion,
 }: SurfaceProps) {
-  const [abandonArmed, setAbandonArmed] = useState(false);
+  const [abandonArmedFor, setAbandonArmedFor] = useState<string | null>(null);
+  const [localAnnouncement, setLocalAnnouncement] = useState<Readonly<{
+    identity: string;
+    message: string;
+  }> | null>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
+  const abandonTrigger = useRef<HTMLButtonElement>(null);
+  const abandonCancel = useRef<HTMLButtonElement>(null);
+  const abandonConfirm = useRef<HTMLButtonElement>(null);
+  const restoreAbandonFocus = useRef(false);
   const turn = controller.turn;
   const pendingQuestion = turn?.pendingConsultationQuestion ?? pendingConsultationQuestion ?? null;
+  const abandonIdentity = turn
+    ? `${turn.caseId}:${turn.turnVersion}:${turn.status}`
+    : null;
+  const canAbandon = Boolean(
+    turn?.actions.includes("abandon")
+    && turn.status !== "abandoned"
+    && turn.status !== "completed",
+  );
+  const abandonArmed = canAbandon && abandonArmedFor === abandonIdentity;
+  const statusAnnouncement = localAnnouncement?.identity === abandonIdentity
+    ? localAnnouncement.message
+    : "";
+
+  useEffect(() => {
+    if (abandonArmed) {
+      abandonCancel.current?.focus();
+      return;
+    }
+    if (restoreAbandonFocus.current) {
+      restoreAbandonFocus.current = false;
+      abandonTrigger.current?.focus();
+    }
+  }, [abandonArmed]);
 
   if (!turn) {
     return (
@@ -115,6 +151,34 @@ export function ConversationalRectificationSurface({
     if (canAnswer && controller.draft.trim() && !controller.pending) safely(controller.answer());
   };
   const focusComposer = () => composer.current?.focus();
+  const continueLocally = () => {
+    if (abandonIdentity) {
+      setLocalAnnouncement({
+        identity: abandonIdentity,
+        message: "现在可以继续填写真实经历，输入框已就绪；发送后才会推进校正进度。",
+      });
+    }
+    focusComposer();
+  };
+  const closeAbandonDialog = () => {
+    restoreAbandonFocus.current = true;
+    setAbandonArmedFor(null);
+  };
+  const handleAbandonDialogKey = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeAbandonDialog();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    if (event.shiftKey && document.activeElement === abandonCancel.current) {
+      event.preventDefault();
+      abandonConfirm.current?.focus();
+    } else if (!event.shiftKey && document.activeElement === abandonConfirm.current) {
+      event.preventDefault();
+      abandonCancel.current?.focus();
+    }
+  };
 
   return (
     <section
@@ -241,6 +305,7 @@ export function ConversationalRectificationSurface({
         {turn.status === "abandoned" && <p>本次校正已放弃，候选时间没有应用。</p>}
         {turn.status === "completed" && turn.candidate.status === "confirmed"
           && <p>候选时间已经过你的明确确认。</p>}
+        {statusAnnouncement && <p>{statusAnnouncement}</p>}
         {controller.error && <p className="form-error" role="alert">{controller.error}</p>}
       </div>
 
@@ -264,7 +329,7 @@ export function ConversationalRectificationSurface({
             className="button-secondary"
             disabled={controller.pending}
             type="button"
-            onClick={() => safely(controller.resume())}
+            onClick={continueLocally}
           >
             继续校正
           </button>
@@ -279,12 +344,16 @@ export function ConversationalRectificationSurface({
           </button>
         ) : null}
 
-        {turn.actions.includes("abandon") && !abandonArmed && (
+        {canAbandon && !abandonArmed && (
           <button
             className="conversational-abandon"
             disabled={controller.pending}
+            ref={abandonTrigger}
             type="button"
-            onClick={() => setAbandonArmed(true)}
+            onClick={() => {
+              setLocalAnnouncement(null);
+              setAbandonArmedFor(abandonIdentity);
+            }}
           >
             放弃本次校正
           </button>
@@ -292,27 +361,41 @@ export function ConversationalRectificationSurface({
       </footer>
 
       {abandonArmed && (
-        <section className="conversational-abandon-confirmation" role="alert">
-          <p>放弃后会保留审计记录，但不会应用任何候选时间。确定继续吗？</p>
-          <div>
-            <button
-              className="button-secondary"
-              disabled={controller.pending}
-              type="button"
-              onClick={() => setAbandonArmed(false)}
-            >
-              返回校正
-            </button>
-            <button
-              className="conversational-abandon is-confirm"
-              disabled={controller.pending}
-              type="button"
-              onClick={() => safely(controller.abandon())}
-            >
-              确认放弃且不应用候选
-            </button>
-          </div>
-        </section>
+        <div className="conversational-abandon-scrim">
+          <section
+            aria-describedby="conversational-abandon-description"
+            aria-labelledby="conversational-abandon-title"
+            aria-modal="true"
+            className="conversational-abandon-confirmation"
+            onKeyDown={handleAbandonDialogKey}
+            role="alertdialog"
+          >
+            <h3 id="conversational-abandon-title">确认放弃本次校正？</h3>
+            <p id="conversational-abandon-description">
+              放弃后会保留审计记录，但不会应用任何候选时间。
+            </p>
+            <div>
+              <button
+                className="button-secondary"
+                disabled={controller.pending}
+                ref={abandonCancel}
+                type="button"
+                onClick={closeAbandonDialog}
+              >
+                返回校正
+              </button>
+              <button
+                className="conversational-abandon is-confirm"
+                disabled={controller.pending}
+                ref={abandonConfirm}
+                type="button"
+                onClick={() => safely(controller.abandon())}
+              >
+                确认放弃且不应用候选
+              </button>
+            </div>
+          </section>
+        </div>
       )}
     </section>
   );

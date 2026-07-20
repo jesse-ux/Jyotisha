@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import {
   CONVERSATIONAL_RECTIFICATION_UNAVAILABLE,
   ConversationalRectificationRequestError,
@@ -30,6 +30,7 @@ type MutationResult = Promise<ConversationalRectificationTurn | null>;
 export type ConversationalRectificationController = ConversationalRectificationControllerSnapshot & Readonly<{
   getSnapshot(): ConversationalRectificationControllerSnapshot;
   subscribe(listener: () => void): () => void;
+  synchronizeInitialTurn(turn: ConversationalRectificationTurn | null): void;
   setDraft(value: string): void;
   selectDomain(domain: EvidenceDomain | null): void;
   start(pendingConsultationQuestion?: string | null): MutationResult;
@@ -52,6 +53,21 @@ type Mutation = Readonly<{
   command(actionId: string): ConversationalRectificationCommand;
   clearDraftOnSuccess?: boolean;
 }>;
+
+function createLatestControllerInput(initial: ControllerInput) {
+  let current = initial;
+  return {
+    update(next: ControllerInput) {
+      current = next;
+    },
+    send(command: ConversationalRectificationCommand) {
+      return (current.send ?? sendConversationalRectificationCommand)(command);
+    },
+    onTurn(turn: ConversationalRectificationTurn) {
+      current.onTurn?.(turn);
+    },
+  };
+}
 
 function displayError(error: unknown): string {
   return error instanceof ConversationalRectificationRequestError
@@ -79,6 +95,7 @@ export function createConversationalRectificationController(
     error: "",
   };
   let activeMutation: MutationResult | null = null;
+  let caseContext = 0;
 
   const publish = (next: ConversationalRectificationControllerSnapshot) => {
     snapshot = next;
@@ -90,13 +107,27 @@ export function createConversationalRectificationController(
   const acceptTurn = (
     turn: ConversationalRectificationTurn,
     clearDraft: boolean,
+    expectedCaseContext: number,
   ) => {
+    const current = snapshot.turn;
+    if (caseContext !== expectedCaseContext) return turn;
+    if (current?.caseId === turn.caseId && current.turnVersion >= turn.turnVersion) return turn;
+    const selectedDomain = clearDraft
+      ? null
+      : snapshot.selectedDomain && turn.evidenceRequest?.domains.includes(snapshot.selectedDomain)
+        ? snapshot.selectedDomain
+        : null;
     patch({
       turn,
       error: "",
-      ...(clearDraft ? { draft: "", selectedDomain: null } : {}),
+      selectedDomain,
+      ...(clearDraft ? { draft: "" } : {}),
     });
-    input.onTurn?.(turn);
+    try {
+      input.onTurn?.(turn);
+    } catch {
+      // A consumer callback is observational. It must never turn a durable success into a failure.
+    }
     return turn;
   };
   const recoverLatest = async (turn: ConversationalRectificationTurn) => registry.run({
@@ -114,15 +145,20 @@ export function createConversationalRectificationController(
     if (activeMutation) return activeMutation;
     patch({ pending: true, error: "" });
     const turnAtStart = snapshot.turn;
+    const caseContextAtStart = caseContext;
     const operation = registry.run(
       mutation.identity,
       (actionId) => send(mutation.command(actionId)),
-    ).then((turn) => acceptTurn(turn, mutation.clearDraftOnSuccess === true))
+    ).then((turn) => acceptTurn(
+      turn,
+      mutation.clearDraftOnSuccess === true,
+      caseContextAtStart,
+    ))
       .catch(async (error: unknown) => {
         if (turnAtStart && staleTurn(error)) {
           try {
             const recovered = await recoverLatest(turnAtStart);
-            return acceptTurn(recovered, false);
+            return acceptTurn(recovered, false, caseContextAtStart);
           } catch (recoveryError) {
             patch({ error: displayError(recoveryError) });
             throw recoveryError;
@@ -169,6 +205,29 @@ export function createConversationalRectificationController(
     subscribe(listener: () => void) {
       listeners.add(listener);
       return () => listeners.delete(listener);
+    },
+    synchronizeInitialTurn(turn: ConversationalRectificationTurn | null) {
+      const current = snapshot.turn;
+      if (turn === null) {
+        if (current === null) return;
+        caseContext += 1;
+        patch({ turn: null, draft: "", selectedDomain: null, error: "" });
+        return;
+      }
+      if (current === null || current.caseId !== turn.caseId) {
+        caseContext += 1;
+        patch({ turn, draft: "", selectedDomain: null, error: "" });
+        return;
+      }
+      if (turn.turnVersion <= current.turnVersion) return;
+      patch({
+        turn,
+        error: "",
+        selectedDomain: snapshot.selectedDomain
+          && turn.evidenceRequest?.domains.includes(snapshot.selectedDomain)
+          ? snapshot.selectedDomain
+          : null,
+      });
     },
     setDraft(value: string) {
       patch({ draft: value });
@@ -250,11 +309,23 @@ export function createConversationalRectificationController(
 export function useConversationalRectification(
   input: ControllerInput = {},
 ): ConversationalRectificationController {
-  const [controller] = useState(() => createConversationalRectificationController(input));
+  const [latestInput] = useState(() => createLatestControllerInput(input));
+  const [controller] = useState(() => createConversationalRectificationController({
+    initialTurn: input.initialTurn,
+    createActionId: input.createActionId,
+    send: latestInput.send,
+    onTurn: latestInput.onTurn,
+  }));
   const snapshot = useSyncExternalStore(
     controller.subscribe,
     controller.getSnapshot,
     controller.getSnapshot,
   );
+  useLayoutEffect(() => {
+    latestInput.update(input);
+  }, [input, latestInput]);
+  useEffect(() => {
+    controller.synchronizeInitialTurn(input.initialTurn ?? null);
+  }, [controller, input.initialTurn]);
   return { ...controller, ...snapshot };
 }

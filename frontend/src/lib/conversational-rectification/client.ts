@@ -83,16 +83,46 @@ export type ConversationalRectificationActionRegistry = ReturnType<
   typeof createConversationalRectificationActionRegistry
 >;
 
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
+function isRetryableTransportError(error: unknown): boolean {
+  return !isAbortError(error) && (
+    error instanceof TypeError
+    || error instanceof SyntaxError
+    || (error instanceof DOMException && error.name === "SyntaxError")
+  );
+}
+
+async function postCommandWithOneReplay(body: string) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const result = await postJson({
+        url: "/api/birth-time-conversation",
+        body,
+        retryLostResponse: false,
+      });
+      // postJson deliberately projects an unparseable non-ok body to null. Treating all null
+      // error payloads as replayable also covers proxies that mislabel HTML as application/json.
+      const nonJsonFailure = !result.response.ok && result.payload === null;
+      if (attempt === 0 && (result.response.status === 502 || nonJsonFailure)) continue;
+      return result;
+    } catch (error) {
+      if (attempt === 0 && isRetryableTransportError(error)) continue;
+      throw error;
+    }
+  }
+  throw new TypeError("unreachable conversational rectification replay state");
+}
+
 export async function sendConversationalRectificationCommand(
   command: ConversationalRectificationCommand,
 ): Promise<ConversationalRectificationTurn> {
   const request = conversationalRectificationCommandSchema.parse(command);
+  const body = JSON.stringify(request);
   try {
-    const { response, payload } = await postJson({
-      url: "/api/birth-time-conversation",
-      body: JSON.stringify(request),
-      retryLostResponse: true,
-    });
+    const { response, payload } = await postCommandWithOneReplay(body);
     if (!response.ok) {
       const parsed = publicErrorSchema.safeParse(payload);
       const safeServerMessage = response.status < 500 && parsed.success
