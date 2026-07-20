@@ -1,6 +1,9 @@
 {$SITE_ADDRESS:https://jyotisha.chat} {
     encode zstd gzip
-    reverse_proxy web:3000
+    reverse_proxy web:3000 {
+        lb_try_duration 10s
+        lb_try_interval 250ms
+    }
 }
 
 www.jyotisha.chat {

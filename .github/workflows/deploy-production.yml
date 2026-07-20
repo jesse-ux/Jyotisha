@@ -25,7 +25,7 @@ jobs:
       - name: Checkout tested revision
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Configure SSH
         env:
@@ -38,7 +38,7 @@ jobs:
 
       - name: Sync and rebuild
         env:
-          DEPLOY_GIT_SHA: ${{ github.sha }}
+          DEPLOY_GIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           SSH_OPTIONS="-i $HOME/.ssh/jyotisha-production -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
           RSYNC_SSH="ssh $SSH_OPTIONS"
@@ -54,9 +54,13 @@ jobs:
             "cd '$DEPLOY_PATH' && GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.production -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
 
       - name: Verify production
+        env:
+          DEPLOY_GIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           curl --fail --silent --show-error --retry 12 --retry-delay 5 https://jyotisha.chat/login >/dev/null
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' https://jyotisha.chat/api/account)" = "401"
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 https://jyotisha.chat/api/health | \
+            node -e 'const body = JSON.parse(require("node:fs").readFileSync(0, "utf8")); if (body.deployment?.gitCommit !== process.env.DEPLOY_GIT_SHA) process.exit(1); console.log(JSON.stringify(body));'
           ssh -i ~/.ssh/jyotisha-production -p "$DEPLOY_PORT" \
             -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20 \
             "$DEPLOY_USER@$DEPLOY_HOST" \
