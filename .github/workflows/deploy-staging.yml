@@ -2,17 +2,19 @@ name: Deploy staging
 
 on:
   workflow_run:
-    workflows: ["Jyotish Skill CI"]
+    workflows: ["Staging Backend Quality Gate"]
     types: [completed]
   workflow_dispatch:
     inputs:
-      git_sha:
-        description: Exact 40-character commit SHA from a successful CI run
+      deploy_sha:
+        description: Exact 40-character commit SHA from a successful backend quality gate
         required: true
+        type: string
 
 permissions:
   contents: read
   actions: read
+  packages: read
 
 concurrency:
   group: staging
@@ -20,11 +22,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push' &&
-       github.event.workflow_run.head_branch == 'staging')
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'staging')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -42,12 +40,12 @@ jobs:
       - name: Validate tested revision
         id: revision
         env:
-          REQUESTED_SHA: ${{ github.event.workflow_run.head_sha || inputs.git_sha }}
+          REQUESTED_SHA: ${{ github.event.workflow_run.head_sha || inputs.deploy_sha }}
           GH_TOKEN: ${{ github.token }}
         run: |
           test "${#REQUESTED_SHA}" -eq 40
           case "$REQUESTED_SHA" in
-            *[!0-9a-fA-F]*) echo "git_sha must be a full hexadecimal commit SHA" >&2; exit 1 ;;
+            *[!0-9a-fA-F]*) echo "deploy_sha must be a full hexadecimal commit SHA" >&2; exit 1 ;;
           esac
           DEPLOY_GIT_SHA="$(printf '%s' "$REQUESTED_SHA" | tr '[:upper:]' '[:lower:]')"
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
@@ -55,9 +53,11 @@ jobs:
               --header "Authorization: Bearer $GH_TOKEN" \
               --header "Accept: application/vnd.github+json" \
               --header "X-GitHub-Api-Version: 2022-11-28" \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$DEPLOY_GIT_SHA&status=success&per_page=1")"
-            test "$(printf '%s' "$TESTED_RUNS" | jq -r '.total_count')" -ge 1 || {
-              echo "No successful Jyotish Skill CI run found for $DEPLOY_GIT_SHA" >&2
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/backend-quality-gate.yml/runs?head_sha=$DEPLOY_GIT_SHA&branch=staging&event=push&status=success&per_page=100")"
+            MATCHING_RUNS="$(printf '%s' "$TESTED_RUNS" | jq --arg sha "$DEPLOY_GIT_SHA" \
+              '[.workflow_runs[] | select(.head_sha == $sha and .head_branch == "staging" and .event == "push" and .conclusion == "success")] | length')"
+            test "$MATCHING_RUNS" -ge 1 || {
+              echo "No successful Staging Backend Quality Gate run found for exact SHA $DEPLOY_GIT_SHA" >&2
               exit 1
             }
           fi
@@ -93,29 +93,52 @@ jobs:
           printf '%s\n' "$STAGING_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Record previous staging state
+      - name: Record previous staging images
+        id: previous
         env:
           DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
         run: |
           SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
-          PREVIOUS_SHA="$(curl --fail --silent --show-error --max-time 10 "$STAGING_URL/api/health" 2>/dev/null | jq -r '.deployment.gitCommit // empty' || true)"
-          test -n "$PREVIOUS_SHA" || PREVIOUS_SHA="not-deployed"
-          PREVIOUS_IMAGES="$(ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
-            "if [ -f '$DEPLOY_PATH/.env.staging' ] && [ -f '$DEPLOY_PATH/deploy/docker-compose.server.yml' ]; then cd '$DEPLOY_PATH' && APP_ENV_FILE='../.env.staging' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml images --quiet; else echo not-deployed; fi")"
-          test -n "$PREVIOUS_IMAGES" || PREVIOUS_IMAGES="not-deployed"
+          PREVIOUS_HEALTH_SHA="$(curl --fail --silent --show-error --max-time 10 "$STAGING_URL/api/health" 2>/dev/null | jq -r '.deployment.gitCommit // empty' || true)"
+          PREVIOUS_API_IMAGE="$(ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "container_id=\$(docker ps -aq --filter 'label=com.docker.compose.project=jyotisha-staging' --filter 'label=com.docker.compose.service=api' | head -n 1); if [ -n \"\$container_id\" ]; then docker inspect --format '{{.Config.Image}}' \"\$container_id\"; fi")"
+          PREVIOUS_WEB_IMAGE="$(ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "container_id=\$(docker ps -aq --filter 'label=com.docker.compose.project=jyotisha-staging' --filter 'label=com.docker.compose.service=web' | head -n 1); if [ -n \"\$container_id\" ]; then docker inspect --format '{{.Config.Image}}' \"\$container_id\"; fi")"
+          PREVIOUS_SHA="$(ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "container_id=\$(docker ps -aq --filter 'label=com.docker.compose.project=jyotisha-staging' --filter 'label=com.docker.compose.service=web' | head -n 1); if [ -n \"\$container_id\" ]; then docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' \"\$container_id\" | sed -n 's/^GITHUB_SHA=//p' | head -n 1; fi")"
+          if [ -z "$PREVIOUS_SHA" ] && [[ "$PREVIOUS_HEALTH_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            PREVIOUS_SHA="$PREVIOUS_HEALTH_SHA"
+          fi
+          if [ -z "$PREVIOUS_SHA" ] && [[ "$PREVIOUS_WEB_IMAGE" =~ ^ghcr\.io/jesse-ux/jyotisha-web:([0-9a-f]{40})$ ]]; then
+            PREVIOUS_SHA="${BASH_REMATCH[1]}"
+          fi
+          if [ -n "$PREVIOUS_SHA" ]; then
+            test "${#PREVIOUS_SHA}" -eq 40
+            case "$PREVIOUS_SHA" in
+              *[!0-9a-fA-F]*) echo "Previous staging SHA is unsafe" >&2; exit 1 ;;
+            esac
+            PREVIOUS_SHA="$(printf '%s' "$PREVIOUS_SHA" | tr '[:upper:]' '[:lower:]')"
+          fi
+          for image in "$PREVIOUS_API_IMAGE" "$PREVIOUS_WEB_IMAGE"; do
+            case "$image" in
+              "") ;;
+              *[!A-Za-z0-9._/@:-]*) echo "Previous staging image reference is unsafe" >&2; exit 1 ;;
+            esac
+          done
+          {
+            echo "api_image=$PREVIOUS_API_IMAGE"
+            echo "web_image=$PREVIOUS_WEB_IMAGE"
+            echo "previous_sha=$PREVIOUS_SHA"
+          } >> "$GITHUB_OUTPUT"
           {
             echo "### Staging deployment state"
-            echo "- Previous verified SHA: \`$PREVIOUS_SHA\`"
+            echo "- Previous verified SHA: \`${PREVIOUS_SHA:-not-deployed}\`"
             echo "- Target SHA: \`$DEPLOY_GIT_SHA\`"
-            echo "- Previous image IDs:"
-            echo '```text'
-            printf '%s\n' "$PREVIOUS_IMAGES"
-            echo '```'
+            echo "- Previous API image: \`${PREVIOUS_API_IMAGE:-not-deployed}\`"
+            echo "- Previous web image: \`${PREVIOUS_WEB_IMAGE:-not-deployed}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Sync and rebuild staging
-        env:
-          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+      - name: Sync tested staging sources
         run: |
           SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
           RSYNC_SSH="ssh $SSH_OPTIONS"
@@ -127,8 +150,65 @@ jobs:
             --exclude='frontend/.next/' \
             -e "$RSYNC_SSH" \
             ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
+
+      - name: Validate staging configuration
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
           ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && bash deploy/validate-staging-env.sh .env.staging && APP_ENV_FILE='../.env.staging' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet && APP_ENV_FILE='../.env.staging' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
+            "cd '$DEPLOY_PATH' && bash deploy/validate-staging-env.sh .env.staging && bash deploy/validate-staging-database-env.sh .env.staging.database && APP_ENV_FILE='../.env.staging' DATABASE_ENV_FILE='../.env.staging.database' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' API_IMAGE='ghcr.io/jesse-ux/jyotisha-api:$DEPLOY_GIT_SHA' WEB_IMAGE='ghcr.io/jesse-ux/jyotisha-web:$DEPLOY_GIT_SHA' GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose -p jyotisha-staging --env-file .env.staging -f deploy/docker-compose.server.yml -f deploy/docker-compose.postgres.yml config --quiet"
+
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          printf '%s' "$GHCR_TOKEN" | ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io --username '$GITHUB_ACTOR' --password-stdin"
+
+      - name: Pull exact staging images
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && APP_ENV_FILE='../.env.staging' DATABASE_ENV_FILE='../.env.staging.database' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' API_IMAGE='ghcr.io/jesse-ux/jyotisha-api:$DEPLOY_GIT_SHA' WEB_IMAGE='ghcr.io/jesse-ux/jyotisha-web:$DEPLOY_GIT_SHA' GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose -p jyotisha-staging --env-file .env.staging -f deploy/docker-compose.server.yml -f deploy/docker-compose.postgres.yml pull api web postgres"
+
+      - name: Start and wait for staging PostgreSQL
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && APP_ENV_FILE='../.env.staging' DATABASE_ENV_FILE='../.env.staging.database' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' API_IMAGE='ghcr.io/jesse-ux/jyotisha-api:$DEPLOY_GIT_SHA' WEB_IMAGE='ghcr.io/jesse-ux/jyotisha-web:$DEPLOY_GIT_SHA' GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose -p jyotisha-staging --env-file .env.staging -f deploy/docker-compose.server.yml -f deploy/docker-compose.postgres.yml up -d --no-build --wait postgres"
+
+      - name: Check staging migrations
+        id: migration_check
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          set +e
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && APP_ENV_FILE='../.env.staging' DATABASE_ENV_FILE='../.env.staging.database' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' API_IMAGE='ghcr.io/jesse-ux/jyotisha-api:$DEPLOY_GIT_SHA' WEB_IMAGE='ghcr.io/jesse-ux/jyotisha-web:$DEPLOY_GIT_SHA' GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose -p jyotisha-staging --env-file .env.staging -f deploy/docker-compose.server.yml -f deploy/docker-compose.postgres.yml --profile migration-check run --rm migration-checker"
+          CHECK_STATUS=$?
+          set -e
+          if [ "$CHECK_STATUS" -eq 3 ]; then
+            echo "Run the Migrate Staging Database workflow manually with exact SHA $DEPLOY_GIT_SHA; no API, web, or Caddy container was changed." >&2
+            exit 3
+          fi
+          if [ "$CHECK_STATUS" -ne 0 ]; then
+            echo "Staging migration check failed safely for exact SHA $DEPLOY_GIT_SHA" >&2
+            exit "$CHECK_STATUS"
+          fi
+
+      - name: Deploy exact staging images
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && APP_ENV_FILE='../.env.staging' DATABASE_ENV_FILE='../.env.staging.database' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' API_IMAGE='ghcr.io/jesse-ux/jyotisha-api:$DEPLOY_GIT_SHA' WEB_IMAGE='ghcr.io/jesse-ux/jyotisha-web:$DEPLOY_GIT_SHA' GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose -p jyotisha-staging --env-file .env.staging -f deploy/docker-compose.server.yml -f deploy/docker-compose.postgres.yml up -d --no-build --remove-orphans"
 
       - name: Verify staging
         env:
@@ -137,8 +217,25 @@ jobs:
           curl --fail --silent --show-error --retry 12 --retry-delay 5 "$STAGING_URL/login" >/dev/null
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$STAGING_URL/api/account")" = "401"
           test "$(curl --fail --silent --show-error "$STAGING_URL/api/health" | jq -r '.deployment.gitCommit')" = "$DEPLOY_GIT_SHA"
-          ssh -i ~/.ssh/jyotisha-staging -p "$DEPLOY_PORT" \
-            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && APP_ENV_FILE='../.env.staging' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml exec -T web node -e 'fetch(\"http://api:5200/api/health\").then(async r => { const body = await r.json(); if (!r.ok || body.status !== \"ok\" || body.swisseph_available !== true) process.exit(1); console.log(JSON.stringify(body)); })'"
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && APP_ENV_FILE='../.env.staging' DATABASE_ENV_FILE='../.env.staging.database' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' API_IMAGE='ghcr.io/jesse-ux/jyotisha-api:$DEPLOY_GIT_SHA' WEB_IMAGE='ghcr.io/jesse-ux/jyotisha-web:$DEPLOY_GIT_SHA' GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose -p jyotisha-staging --env-file .env.staging -f deploy/docker-compose.server.yml -f deploy/docker-compose.postgres.yml exec -T web node -e 'fetch(\"http://api:5200/api/health\").then(async r => { const body = await r.json(); if (!r.ok || body.status !== \"ok\" || body.swisseph_available !== true) process.exit(1); console.log(JSON.stringify(body)); })'"
           echo "- Verified deployed SHA: \`$DEPLOY_GIT_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Roll back staging images
+        if: failure() && steps.migration_check.outcome == 'success' && steps.previous.outputs.api_image != '' && steps.previous.outputs.web_image != '' && steps.previous.outputs.previous_sha != ''
+        env:
+          PREVIOUS_API_IMAGE: ${{ steps.previous.outputs.api_image }}
+          PREVIOUS_WEB_IMAGE: ${{ steps.previous.outputs.web_image }}
+          PREVIOUS_SHA: ${{ steps.previous.outputs.previous_sha }}
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && APP_ENV_FILE='../.env.staging' DATABASE_ENV_FILE='../.env.staging.database' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' API_IMAGE='$PREVIOUS_API_IMAGE' WEB_IMAGE='$PREVIOUS_WEB_IMAGE' GITHUB_SHA='$PREVIOUS_SHA' docker compose -p jyotisha-staging --env-file .env.staging -f deploy/docker-compose.server.yml -f deploy/docker-compose.postgres.yml up -d --no-build --remove-orphans api web caddy"
+
+      - name: Log out of GHCR
+        if: always()
+        continue-on-error: true
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "docker logout ghcr.io >/dev/null 2>&1 || true"

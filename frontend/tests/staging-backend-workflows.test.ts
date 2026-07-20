@@ -1,5 +1,15 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 type YamlNode = {
@@ -20,8 +30,12 @@ type WorkflowStep = {
   name: string;
 };
 
-const workflowUrl = new URL(
+const backendWorkflowUrl = new URL(
   "../../.github/workflows/backend-quality-gate.yml",
+  import.meta.url,
+);
+const deploymentWorkflowUrl = new URL(
+  "../../.github/workflows/deploy-staging.yml",
   import.meta.url,
 );
 
@@ -60,8 +74,8 @@ function mappingNodes(
   return nodes;
 }
 
-function parseWorkflow(): WorkflowDocument {
-  const lines = readFileSync(workflowUrl, "utf8").split("\n");
+function parseWorkflow(url = backendWorkflowUrl): WorkflowDocument {
+  const lines = readFileSync(url, "utf8").split("\n");
   return { lines, root: mappingNodes(lines, 0) };
 }
 
@@ -104,10 +118,7 @@ function blockScalar(document: WorkflowDocument, node: YamlNode): string {
     .join("\n");
 }
 
-function job(
-  document: WorkflowDocument,
-  name: "validate" | "publish",
-): YamlNode {
+function job(document: WorkflowDocument, name: string): YamlNode {
   return child(document, requiredNode(document.root, "jobs"), name);
 }
 
@@ -172,6 +183,19 @@ function stepField(
     ),
     key,
   );
+}
+
+function stepRun(document: WorkflowDocument, step: WorkflowStep): string {
+  const run = stepField(document, step, "run");
+  return run.value === "|" ? blockScalar(document, run) : run.value;
+}
+
+function logicalShellLines(script: string): string[] {
+  return script
+    .replace(/\\\n\s*/g, " ")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 test("backend quality gate has structured staging triggers and concurrency", () => {
@@ -413,4 +437,214 @@ test("deployment test script covers health and backend workflow contracts", () =
     packageJson.scripts["test:deployment"],
     "tsx --test tests/health-deployment.test.ts tests/staging-backend-workflows.test.ts",
   );
+});
+
+test("staging deploy structurally follows the backend gate and validates an exact manual SHA", () => {
+  const document = parseWorkflow(deploymentWorkflowUrl);
+
+  assert.equal(requiredNode(document.root, "name").value, "Deploy staging");
+  const triggers = requiredNode(document.root, "on");
+  const workflowRun = child(document, triggers, "workflow_run");
+  assert.equal(
+    child(document, workflowRun, "workflows").value,
+    '["Staging Backend Quality Gate"]',
+  );
+  assert.equal(child(document, workflowRun, "types").value, "[completed]");
+  const dispatch = child(document, triggers, "workflow_dispatch");
+  const deploySha = child(document, child(document, dispatch, "inputs"), "deploy_sha");
+  assert.equal(child(document, deploySha, "required").value, "true");
+  assert.equal(child(document, deploySha, "type").value, "string");
+
+  assert.deepEqual(
+    children(document, requiredNode(document.root, "permissions")).map(
+      ({ key, value }) => [key, value],
+    ),
+    [
+      ["contents", "read"],
+      ["actions", "read"],
+      ["packages", "read"],
+    ],
+  );
+  const deploy = job(document, "deploy");
+  assert.match(child(document, deploy, "if").value, /conclusion == 'success'/);
+  const revision = requiredStep(document, deploy, "Validate tested revision");
+  assert.equal(
+    child(document, stepField(document, revision, "env"), "REQUESTED_SHA").value,
+    "${{ github.event.workflow_run.head_sha || inputs.deploy_sha }}",
+  );
+  const validation = stepRun(document, revision);
+  assert.match(validation, /test "\$\{#REQUESTED_SHA\}" -eq 40/);
+  assert.match(
+    validation,
+    /actions\/workflows\/backend-quality-gate\.yml\/runs\?head_sha=\$DEPLOY_GIT_SHA/,
+  );
+  assert.match(validation, /head_branch == "staging"/);
+  assert.match(validation, /conclusion == "success"/);
+});
+
+test("staging deploy pins every Compose call and gates app changes on the read-only checker", () => {
+  const document = parseWorkflow(deploymentWorkflowUrl);
+  const deploy = job(document, "deploy");
+  const deploySteps = steps(document, deploy);
+  const names = deploySteps.map(({ name }) => name);
+  const index = (name: string) => {
+    const found = names.indexOf(name);
+    assert.notEqual(found, -1, `missing deployment step: ${name}`);
+    return found;
+  };
+
+  assert.ok(index("Pull exact staging images") < index("Start and wait for staging PostgreSQL"));
+  assert.ok(index("Start and wait for staging PostgreSQL") < index("Check staging migrations"));
+  assert.ok(index("Check staging migrations") < index("Deploy exact staging images"));
+  assert.ok(index("Deploy exact staging images") < index("Verify staging"));
+  assert.ok(index("Verify staging") < index("Roll back staging images"));
+  assert.ok(index("Roll back staging images") < index("Log out of GHCR"));
+
+  const scripts = deploySteps
+    .map((step) => {
+      const fields = mappingNodes(
+        document.lines,
+        step.node.indent + 2,
+        step.node.start + 1,
+        step.node.end,
+      );
+      const run = fields.find(({ key }) => key === "run");
+      return run ? (run.value === "|" ? blockScalar(document, run) : run.value) : "";
+    })
+    .filter(Boolean);
+  const composeCommands = scripts
+    .flatMap(logicalShellLines)
+    .filter((line) => line.includes("docker compose"));
+  assert.equal(composeCommands.length, 7);
+  for (const command of composeCommands) {
+    assert.match(command, /ssh /);
+    assert.match(command, /APP_ENV_FILE='\.\.\/\.env\.staging'/);
+    assert.match(command, /DATABASE_ENV_FILE='\.\.\/\.env\.staging\.database'/);
+    assert.match(command, /CADDYFILE_PATH='\.\/Caddyfile\.staging'/);
+    assert.match(command, /SITE_ADDRESS='https:\/\/staging\.jyotisha\.chat'/);
+    assert.match(command, /API_IMAGE=/);
+    assert.match(command, /WEB_IMAGE=/);
+    assert.match(command, /--env-file \.env\.staging/);
+    assert.match(command, /-f deploy\/docker-compose\.server\.yml/);
+    assert.match(command, /-f deploy\/docker-compose\.postgres\.yml/);
+  }
+
+  const login = stepRun(document, requiredStep(document, deploy, "Log in to GHCR"));
+  assert.match(login, /printf '%s' "\$GHCR_TOKEN" \| ssh /);
+  assert.match(login, /docker login ghcr\.io .*--password-stdin/);
+  assert.doesNotMatch(login, /--password(?:\s|=)/);
+
+  assert.match(
+    stepRun(document, requiredStep(document, deploy, "Pull exact staging images")),
+    /pull api web postgres/,
+  );
+  assert.match(
+    stepRun(
+      document,
+      requiredStep(document, deploy, "Start and wait for staging PostgreSQL"),
+    ),
+    /up -d --no-build --wait postgres/,
+  );
+
+  const check = requiredStep(document, deploy, "Check staging migrations");
+  assert.equal(stepField(document, check, "id").value, "migration_check");
+  const checkScript = stepRun(document, check);
+  assert.match(checkScript, /--profile migration-check run --rm migration-checker/);
+  assert.match(checkScript, /"\$CHECK_STATUS" -eq 3/);
+  assert.match(checkScript, /Migrate Staging Database/);
+  assert.match(checkScript, /\$DEPLOY_GIT_SHA/);
+  assert.match(checkScript, /exit 3/);
+  assert.match(
+    readFileSync(
+      new URL("../../deploy/docker-compose.postgres.yml", import.meta.url),
+      "utf8",
+    ),
+    /command: \["npm", "run", "db:migrate:check"\]/,
+  );
+
+  const workflow = readFileSync(deploymentWorkflowUrl, "utf8");
+  assert.doesNotMatch(workflow, /npm\s+run\s+db:migrate(?!:check)/);
+  assert.doesNotMatch(workflow, /run\s+--rm\s+migrator/);
+  assert.doesNotMatch(workflow, /--profile\s+migration(?:\s|["'])/);
+  assert.doesNotMatch(workflow, /(?:up -d[^\n]*--build|docker compose build)/);
+
+  const applicationDeploy = stepRun(
+    document,
+    requiredStep(document, deploy, "Deploy exact staging images"),
+  );
+  assert.match(applicationDeploy, /up -d --no-build --remove-orphans/);
+  const previous = requiredStep(document, deploy, "Record previous staging images");
+  assert.equal(stepField(document, previous, "id").value, "previous");
+  assert.match(stepRun(document, previous), /docker inspect --format '\{\{\.Config\.Image\}\}'/);
+  assert.match(stepRun(document, previous), /api_image=\$PREVIOUS_API_IMAGE/);
+  assert.match(stepRun(document, previous), /web_image=\$PREVIOUS_WEB_IMAGE/);
+  assert.match(stepRun(document, previous), /previous_sha=\$PREVIOUS_SHA/);
+
+  const rollback = requiredStep(document, deploy, "Roll back staging images");
+  assert.match(stepField(document, rollback, "if").value, /steps\.migration_check\.outcome == 'success'/);
+  const rollbackEnv = stepField(document, rollback, "env");
+  assert.equal(
+    child(document, rollbackEnv, "PREVIOUS_API_IMAGE").value,
+    "${{ steps.previous.outputs.api_image }}",
+  );
+  assert.equal(
+    child(document, rollbackEnv, "PREVIOUS_WEB_IMAGE").value,
+    "${{ steps.previous.outputs.web_image }}",
+  );
+  assert.equal(
+    child(document, rollbackEnv, "PREVIOUS_SHA").value,
+    "${{ steps.previous.outputs.previous_sha }}",
+  );
+  assert.match(stepRun(document, rollback), /API_IMAGE='\$PREVIOUS_API_IMAGE'/);
+  assert.match(stepRun(document, rollback), /WEB_IMAGE='\$PREVIOUS_WEB_IMAGE'/);
+  assert.match(stepRun(document, rollback), /GITHUB_SHA='\$PREVIOUS_SHA'/);
+  assert.match(stepRun(document, rollback), /up -d --no-build/);
+
+  const logout = requiredStep(document, deploy, "Log out of GHCR");
+  assert.equal(stepField(document, logout, "if").value, "always()");
+  assert.equal(stepField(document, logout, "continue-on-error").value, "true");
+  assert.match(stepRun(document, logout), /docker logout ghcr\.io/);
+});
+
+test("pending migration status exits 3 with the manual workflow and exact SHA", () => {
+  const document = parseWorkflow(deploymentWorkflowUrl);
+  const check = requiredStep(
+    document,
+    job(document, "deploy"),
+    "Check staging migrations",
+  );
+  const script = stepRun(document, check);
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-migration-check-"));
+  const fakeBin = join(root, "bin");
+  const fakeSsh = join(fakeBin, "ssh");
+  const exactSha = "0123456789abcdef0123456789abcdef01234567";
+  mkdirSync(fakeBin);
+  writeFileSync(fakeSsh, '#!/usr/bin/env bash\nexit "${FAKE_SSH_STATUS:?}"\n');
+  chmodSync(fakeSsh, 0o700);
+
+  const run = (status: number) =>
+    spawnSync("bash", ["-c", script], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DEPLOY_GIT_SHA: exactSha,
+        DEPLOY_HOST: "staging.example.invalid",
+        DEPLOY_PORT: "22",
+        DEPLOY_USER: "deploy",
+        DEPLOY_PATH: "/opt/jyotisha-staging",
+        FAKE_SSH_STATUS: String(status),
+        HOME: root,
+        PATH: `${fakeBin}:${process.env.PATH}`,
+      },
+    });
+
+  try {
+    const pending = run(3);
+    assert.equal(pending.status, 3, pending.stderr);
+    assert.match(`${pending.stdout}\n${pending.stderr}`, /Migrate Staging Database/);
+    assert.match(`${pending.stdout}\n${pending.stderr}`, new RegExp(exactSha));
+    assert.equal(run(0).status, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
