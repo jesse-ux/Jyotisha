@@ -155,7 +155,7 @@ CADDYFILE_PATH=./Caddyfile.staging
 SITE_ADDRESS=https://staging.jyotisha.chat
 ```
 
-Before deploying, run `docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet` on the server. The first deployment should be manual:
+After source sync and before `up`, the workflow validates `.env.staging` mode/selectors and runs `docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet`. For later manual inspections, run the same checks only after the tracked deployment files exist on the server. The first deployment should be manual:
 
 1. Confirm `/opt/jyotisha-staging/.env.staging` exists, has mode `0600`, and contains the three selectors above.
 2. Open GitHub Actions -> Jyotish Skill CI -> Run workflow, using workflow from `main`.

@@ -26,6 +26,7 @@
 
 - Modify `deploy/docker-compose.server.yml`: environment-specific env file and Caddyfile selection while retaining production defaults.
 - Create `deploy/Caddyfile.staging`: staging-only public reverse proxy with no production `www` redirect.
+- Create `deploy/validate-staging-env.sh`: fail closed unless the staging env is mode `0600` and contains exactly the three fixed staging selectors.
 - Modify `frontend/tests/health-deployment.test.ts`: Compose, Caddy, CI-trigger, and staging-workflow contracts.
 - Modify `.github/workflows/ci.yml`: run the existing CI on pushes to `staging`; do not add a `main` push trigger in this task.
 - Create `.github/workflows/deploy-staging.yml`: tested-revision staging deployment and smoke checks.
@@ -194,6 +195,8 @@ test("staging deploy consumes only the isolated staging environment and tested r
   assert.match(workflow, /vars\.STAGING_KNOWN_HOSTS/);
   assert.match(workflow, /--exclude='\.env\*'/);
   assert.match(workflow, /docker compose --env-file \.env\.staging/);
+  assert.match(workflow, /bash deploy\/validate-staging-env\.sh \.env\.staging/);
+  assert.match(workflow, /docker compose --env-file \.env\.staging -f deploy\/docker-compose\.server\.yml config --quiet/);
   assert.match(workflow, /deployment\.gitCommit/);
   assert.doesNotMatch(workflow, /PRODUCTION_SSH_PRIVATE_KEY/);
   assert.doesNotMatch(workflow, /103\.117\.123\.53/);
@@ -322,6 +325,13 @@ jobs:
           printf '%s\n' "$STAGING_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+      - name: Record previous staging state
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          # Query the current public deployment SHA and current Compose image IDs.
+          # Append both, plus DEPLOY_GIT_SHA, to GITHUB_STEP_SUMMARY before rebuilding.
+
       - name: Sync and rebuild staging
         env:
           DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
@@ -337,7 +347,7 @@ jobs:
             -e "$RSYNC_SSH" \
             ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
           ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && test -f .env.staging && GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
+            "cd '$DEPLOY_PATH' && bash deploy/validate-staging-env.sh .env.staging && docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet && GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
 
       - name: Verify staging
         env:
@@ -408,7 +418,7 @@ Staging is isolated from production:
 
 The GitHub Environment contains `STAGING_SSH_PRIVATE_KEY` and the variables `STAGING_HOST`, `STAGING_PORT`, `STAGING_USER`, `STAGING_PATH`, `STAGING_URL`, and `STAGING_KNOWN_HOSTS`. Its deployment policy allows the `main` controller branch; the workflow separately requires an upstream successful CI push from branch `staging`. The staging key, database, Supabase keys, and model-provider keys must not be shared with production.
 
-A push to branch `staging` runs `Jyotish Skill CI`. A successful push run triggers `.github/workflows/deploy-staging.yml`, which deploys the tested SHA and verifies the login route, logged-out account response, deployment SHA, and private Python health endpoint.
+A push to branch `staging` runs `Jyotish Skill CI`. A successful push run triggers `.github/workflows/deploy-staging.yml`, which records the previous SHA/images, validates the env selectors and Compose configuration, deploys the tested SHA, and verifies the login route, logged-out account response, deployment SHA, and private Python health endpoint.
 
 The first deployment should be manual, after `.env.staging` is verified to contain `APP_ENV_FILE=../.env.staging`, `CADDYFILE_PATH=./Caddyfile.staging`, and `SITE_ADDRESS=https://staging.jyotisha.chat`:
 

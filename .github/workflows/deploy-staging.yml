@@ -93,6 +93,26 @@ jobs:
           printf '%s\n' "$STAGING_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+      - name: Record previous staging state
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          PREVIOUS_SHA="$(curl --fail --silent --show-error --max-time 10 "$STAGING_URL/api/health" 2>/dev/null | jq -r '.deployment.gitCommit // empty' || true)"
+          test -n "$PREVIOUS_SHA" || PREVIOUS_SHA="not-deployed"
+          PREVIOUS_IMAGES="$(ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "if [ -f '$DEPLOY_PATH/.env.staging' ] && [ -f '$DEPLOY_PATH/deploy/docker-compose.server.yml' ]; then cd '$DEPLOY_PATH' && docker compose --env-file .env.staging -f deploy/docker-compose.server.yml images --quiet; else echo not-deployed; fi")"
+          test -n "$PREVIOUS_IMAGES" || PREVIOUS_IMAGES="not-deployed"
+          {
+            echo "### Staging deployment state"
+            echo "- Previous verified SHA: \`$PREVIOUS_SHA\`"
+            echo "- Target SHA: \`$DEPLOY_GIT_SHA\`"
+            echo "- Previous image IDs:"
+            echo '```text'
+            printf '%s\n' "$PREVIOUS_IMAGES"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Sync and rebuild staging
         env:
           DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
@@ -108,7 +128,7 @@ jobs:
             -e "$RSYNC_SSH" \
             ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
           ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && test -f .env.staging && GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
+            "cd '$DEPLOY_PATH' && bash deploy/validate-staging-env.sh .env.staging && docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet && GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
 
       - name: Verify staging
         env:
@@ -121,3 +141,4 @@ jobs:
             -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "cd '$DEPLOY_PATH' && docker compose --env-file .env.staging -f deploy/docker-compose.server.yml exec -T web node -e 'fetch(\"http://api:5200/api/health\").then(async r => { const body = await r.json(); if (!r.ok || body.status !== \"ok\" || body.swisseph_available !== true) process.exit(1); console.log(JSON.stringify(body)); })'"
+          echo "- Verified deployed SHA: \`$DEPLOY_GIT_SHA\`" >> "$GITHUB_STEP_SUMMARY"

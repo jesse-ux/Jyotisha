@@ -60,7 +60,7 @@ staging 配置包含：
 
 - Secret：`STAGING_SSH_PRIVATE_KEY`；
 - Variable：`STAGING_HOST=118.26.111.127`、SSH port/user/path、staging URL；
-- 只允许 `staging` 分支使用；
+- GitHub Environment 只允许控制器分支 `main` 使用；`workflow_run` 另外强制上游成功运行来自 `staging`，并部署其 `head_sha`；
 - staging 部署使用独立 concurrency group，不能阻塞或取消 production。
 
 部署流：
@@ -69,7 +69,9 @@ staging 配置包含：
 push staging
   -> Jyotish Skill CI
   -> checkout 已测试 SHA
-  -> rsync 到 /opt/jyotisha-staging（排除 .env.staging）
+  -> 记录旧 SHA 和镜像 ID
+  -> rsync 到 /opt/jyotisha-staging（排除所有 .env*）
+  -> 校验 .env.staging 权限、固定选择器和 Compose 配置
   -> docker compose build/up
   -> login、401 account、Python health smoke tests
   -> 记录部署 SHA
