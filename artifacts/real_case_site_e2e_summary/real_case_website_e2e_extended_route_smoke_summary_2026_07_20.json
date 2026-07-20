@@ -1,0 +1,26 @@
+{
+  "batch_max_items": 10,
+  "batch_offsets": [
+    0,
+    20,
+    40
+  ],
+  "boundary": "Extended route smoke for migration/family/education/annual/health real-case E2E; product QA only.",
+  "captured_count": 30,
+  "core_status_counts": {
+    "ready": 30
+  },
+  "created_at": "2026-07-20",
+  "missing_route_layer_total": 0,
+  "production_tuning_allowed": false,
+  "route_counts": {
+    "career": 7,
+    "education": 1,
+    "family": 1,
+    "finance": 4,
+    "migration": 4,
+    "timing": 13
+  },
+  "scope": "real_case_website_e2e_extended_route_smoke_summary",
+  "truth_matrix_allowed": false
+}

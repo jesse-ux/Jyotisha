@@ -73,24 +73,30 @@ def _capture_body_for_real_case(case: dict[str, Any], prompt: str) -> dict[str, 
     year, month, day = [int(part) for part in birth["date"].split("-")]
     hour, minute = [int(part) for part in birth["time"].split(":")[:2]]
     theme_map = {
-        "timing": "career",
         "annual": "career",
-        "migration": "career",
-        "family": "marriage",
         "education": "career",
+        "family": "marriage",
+        "migration": "career",
+        "timing": "career",
     }
     themes = [theme_map.get(domain, domain) for domain in case["domains"]]
     prompt_prefix = ""
-    if "marriage" in case["domains"] or "family" in case["domains"]:
-        prompt_prefix = "婚恋 relationship marriage: "
-    elif "wealth" in case["domains"]:
-        prompt_prefix = "财富 finance wealth: "
-    elif "timing" in case["domains"] or "annual" in case["domains"]:
-        prompt_prefix = "应期 timing when: "
-    elif "health" in case["domains"]:
+    if "迁移" in prompt or "海外" in prompt:
+        prompt_prefix = "迁移 migration foreign abroad: "
+    elif "家庭" in prompt or "子女" in prompt:
+        prompt_prefix = "家庭 family children home: "
+    elif "学习" in prompt or "教育" in prompt:
+        prompt_prefix = "教育 education study: "
+    elif "年度" in prompt or "运势" in prompt:
+        prompt_prefix = "年度 annual yearly forecast: "
+    elif "健康" in prompt:
         prompt_prefix = "健康 health: "
-    elif "migration" in case["domains"]:
-        prompt_prefix = "迁移 foreign career: "
+    elif "婚恋" in prompt or "关系" in prompt:
+        prompt_prefix = "婚恋 relationship marriage: "
+    elif "财富" in prompt or "风险" in prompt:
+        prompt_prefix = "财富 finance wealth: "
+    elif "阶段" in prompt or "何时" in prompt:
+        prompt_prefix = "应期 timing when: "
     return {
         "year": year,
         "month": month,
