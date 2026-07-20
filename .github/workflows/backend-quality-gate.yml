@@ -40,7 +40,9 @@ jobs:
           npm ci --prefix frontend
 
       - name: Run Python quick quality gate
+        shell: bash
         run: |
+          set -o pipefail
           ruff check scripts/run_quality_gate.py tests/test_varga_bphs.py \
             tests/test_ashtakavarga_invariants.py tests/test_cli_smoke.py \
             tests/test_yoga_rules_integrity.py
