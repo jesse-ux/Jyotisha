@@ -66,8 +66,8 @@ const candidateSchema = boundedJson(z.object({
 
 const technicalReceiptSchema = boundedJson(z.object({
   calculationVersion: boundedNonblankText(80),
-  stableLayers: z.array(boundedNonblankText(80)).max(20),
-  sensitiveLayers: z.array(boundedNonblankText(80)).max(20),
+  stableLayers: boundedJson(z.array(boundedNonblankText(80)).max(20), 4_096),
+  sensitiveLayers: boundedJson(z.array(boundedNonblankText(80)).max(20), 4_096),
   candidateDifferenceRefs: z.array(boundedNonblankText(120)).max(40),
 }).strict(), 8_192);
 

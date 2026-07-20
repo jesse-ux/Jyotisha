@@ -616,6 +616,73 @@ test("evidence recap enforces the SQL-matched aggregate byte limit", () => {
   assert.equal(conversationalRectificationTurnSchema.safeParse(turn).success, false);
 });
 
+test("nested receipt and private-candidate arrays match SQL UTF-8 byte caps", () => {
+  const fullLayer = "事".repeat(80);
+  const receiptAtLimit = [
+    ...Array.from({ length: 16 }, () => fullLayer),
+    `${"事".repeat(62)}aa`,
+  ];
+  const receiptOverLimit = [
+    ...Array.from({ length: 16 }, () => fullLayer),
+    "事".repeat(61),
+    "aa",
+  ];
+  assert.equal(postgresJsonbTextBytes(receiptAtLimit), 4_096);
+  assert.equal(postgresJsonbTextBytes(receiptOverLimit), 4_097);
+
+  for (const field of ["stableLayers", "sensitiveLayers"] as const) {
+    assert.equal(conversationalRectificationTurnSchema.safeParse({
+      ...firstTurn,
+      technicalReceipt: { ...firstTurn.technicalReceipt, [field]: receiptAtLimit },
+    }).success, true, `${field} at its SQL byte limit`);
+    assert.equal(conversationalRectificationTurnSchema.safeParse({
+      ...firstTurn,
+      technicalReceipt: { ...firstTurn.technicalReceipt, [field]: receiptOverLimit },
+    }).success, false, `${field} above its SQL byte limit`);
+  }
+
+  const fullModelReference = "事".repeat(120);
+  const modelReferencesAtLimit = [
+    ...Array.from({ length: 44 }, () => fullModelReference),
+    "事".repeat(119),
+    "aaa",
+  ];
+  const modelReferencesOverLimit = [
+    ...Array.from({ length: 44 }, () => fullModelReference),
+    "事".repeat(119),
+    "aaaa",
+  ];
+  assert.equal(postgresJsonbTextBytes(modelReferencesAtLimit), 16_384);
+  assert.equal(postgresJsonbTextBytes(modelReferencesOverLimit), 16_385);
+
+  const supportedLayersAtLimit = [
+    ...Array.from({ length: 33 }, () => fullLayer),
+    `${"事".repeat(45)}a`,
+  ];
+  const supportedLayersOverLimit = [
+    ...Array.from({ length: 33 }, () => fullLayer),
+    `${"事".repeat(45)}aa`,
+  ];
+  assert.equal(postgresJsonbTextBytes(supportedLayersAtLimit), 8_192);
+  assert.equal(postgresJsonbTextBytes(supportedLayersOverLimit), 8_193);
+
+  for (const [field, atLimit, overLimit] of [
+    ["candidateModelRefs", modelReferencesAtLimit, modelReferencesOverLimit],
+    ["supportedSensitiveLayers", supportedLayersAtLimit, supportedLayersOverLimit],
+  ] as const) {
+    assert.equal(privateCandidateSchema.safeParse({
+      resultId,
+      calculationVersion: "rectification-v3.1",
+      [field]: atLimit,
+    }).success, true, `${field} at its SQL byte limit`);
+    assert.equal(privateCandidateSchema.safeParse({
+      resultId,
+      calculationVersion: "rectification-v3.1",
+      [field]: overLimit,
+    }).success, false, `${field} above its SQL byte limit`);
+  }
+});
+
 test("life-event evidence rejects unknown, blank, and non-boolean durable values", () => {
   const evidence = {
     id: "00000000-0000-4000-8000-000000000105",
