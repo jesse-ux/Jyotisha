@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   assistantIntentCopy,
@@ -6,6 +7,7 @@ import {
   birthTimePersistenceValues,
   describeBirthTimeDraft,
   formatBirthDate,
+  isDeclaredBirthProfileComplete,
   isBirthTimeReadyForConsultation,
   isBirthTimeDraftReady,
   parseBirthDate,
@@ -57,6 +59,28 @@ test("a persisted candidate working time can leave rectification onboarding", ()
   assert.equal(isBirthTimeReadyForConsultation(candidate), true);
   assert.equal(isBirthTimeReadyForConsultation({ ...candidate, time: "" }), false);
   assert.equal(isBirthTimeReadyForConsultation({ ...candidate, birthTimeStatus: "rectifying" }), false);
+});
+
+test("declared birth data completes onboarding without an active or confirmed minute", () => {
+  const declaredExact = {
+    ...emptyDraft,
+    reportedTime: "05:30",
+    birthTimeSource: "family_exact",
+    uncertaintyBeforeMinutes: 10,
+    uncertaintyAfterMinutes: 10,
+    birthTimeStatus: "reported",
+  } satisfies BirthTimeDraft;
+  const declaredPeriod = {
+    ...emptyDraft,
+    birthTimeSource: "period_only",
+    birthTimePeriod: "early_morning",
+    birthTimeStatus: "reported",
+  } satisfies BirthTimeDraft;
+
+  assert.equal(isDeclaredBirthProfileComplete(declaredExact), true);
+  assert.equal(isBirthTimeReadyForConsultation(declaredExact), false);
+  assert.equal(isDeclaredBirthProfileComplete(declaredPeriod), true);
+  assert.equal(isBirthTimeReadyForConsultation(declaredPeriod), false);
 });
 
 test("a persisted candidate working time takes precedence over the reported range", () => {
@@ -131,4 +155,11 @@ test("birth date values round trip leap days and reject invalid input", () => {
   assert.equal(leapDay === undefined ? undefined : formatBirthDate(leapDay), "2000-02-29");
   assert.equal(parseBirthDate(""), undefined);
   assert.equal(parseBirthDate("2001-02-29"), undefined);
+});
+
+test("candidate copy does not claim an unconfirmed minute is automatically in use", () => {
+  const source = readFileSync(new URL("../src/components/birth-time-intake.tsx", import.meta.url), "utf8");
+
+  assert.doesNotMatch(source, /已用于当前排盘/);
+  assert.match(source, /普通咨询前可以选择临时使用或先校正/);
 });

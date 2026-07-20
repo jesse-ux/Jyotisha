@@ -152,6 +152,14 @@ export function isBirthTimeDraftReady(draft: BirthTimeDraft) {
   }
 }
 
+/**
+ * Whether the user has finished declaring what they actually know about birth time.
+ * This is an onboarding condition, not a claim that an exact chart minute is ready.
+ */
+export function isDeclaredBirthProfileComplete(draft: BirthTimeDraft) {
+  return isBirthTimeDraftReady(draft);
+}
+
 export function isBirthTimeReadyForConsultation(draft: BirthTimeDraft) {
   return Boolean(draft.time)
     && (draft.birthTimeStatus === "candidate" || draft.birthTimeStatus === "confirmed");

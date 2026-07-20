@@ -69,7 +69,7 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
           </div>
           <dl>
             <div>
-              <dt>{displayState.kind === "candidate" ? "当前工作排盘时间" : "当前排盘时间"}</dt>
+              <dt>{displayState.kind === "candidate" ? "待验证候选时间" : "当前排盘时间"}</dt>
               <dd>{displayState.activeTime}</dd>
             </div>
             <div>
@@ -78,7 +78,7 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
             </div>
           </dl>
           {displayState.kind === "candidate" && (
-            <p>已用于当前排盘，但仍保留为候选结果，不会标记成出生记录中的确定分钟。</p>
+            <p>这仍是未确认候选，不会自动成为出生分钟；普通咨询前可以选择临时使用或先校正。</p>
           )}
         </section>
       )}
