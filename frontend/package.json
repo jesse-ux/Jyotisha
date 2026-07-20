@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "test": "tsx --test tests/*.test.ts",
+    "test:db": "tsx --test --test-concurrency=1 tests/database-*.test.ts",
     "lint": "eslint",
     "data:china": "node scripts/pull-china-locations.mjs"
   },
