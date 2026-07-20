@@ -101,7 +101,7 @@ def build() -> dict:
         layer(
             "upapada_lagna",
             "Upapada Lagna marriage image",
-            "jyotish-app/analysis-deep.js",
+            "scripts/jaimini.py",
             "available_as_chart_field",
             "callable_context",
             "surface_audit_needed",

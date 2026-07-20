@@ -84,14 +84,14 @@
       "layer_id": "upapada_lagna",
       "name": "Upapada Lagna marriage image",
       "runtime_status": "available_as_chart_field",
-      "runtime_path": "jyotish-app/analysis-deep.js",
+      "runtime_path": "scripts/jaimini.py",
       "runtime_path_exists": true,
       "skill_status": "callable_context",
       "api_ui_status": "surface_audit_needed",
       "external_oracle_status": "source_reference_only",
       "commercial_sync_status": "safe_as_context",
       "evidence_paths": [
-        "jyotish-app/analysis-deep.js",
+        "scripts/jaimini.py",
         "references/data-bridge-mapping.md",
         "references/jaimini-complete-system.md"
       ],

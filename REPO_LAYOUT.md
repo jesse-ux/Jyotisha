@@ -4,6 +4,10 @@ This repository mixes product code, astrology research, oracle artifacts, and lo
 
 ## Core Areas
 
+- `<repo>/frontend/`
+  - current Next.js production web application
+- `<repo>/deploy/`
+  - production container topology and operational source of truth; start with `deploy/README.md`
 - `<repo>/mcp_server.py`
   - adjudicator-facing MCP entrypoint
 - `<repo>/scripts/`
@@ -19,6 +23,16 @@ This repository mixes product code, astrology research, oracle artifacts, and lo
   - active research and current audits
 - `<repo>/docs/research/archive/`
   - historical round notes and local draft research
+
+## Historical Working Logs
+
+- `<repo>/task_plan.md`
+- `<repo>/findings.md`
+- `<repo>/progress.md`
+
+These root files preserve earlier implementation history and may mention retired
+paths or commands. They are not runtime or deployment instructions. Use
+`README.md` for current local development and `deploy/README.md` for production.
 
 ## Local Scratch
 

@@ -37,6 +37,8 @@ def test_compatibility_skill_dashboard_generator_creates_bounded_layers():
 
     assert layers["ashtakoota_guna_milan"]["runtime_status"] == "available"
     assert layers["ashtakoota_guna_milan"]["external_oracle_status"] == "partial"
+    assert layers["upapada_lagna"]["runtime_path"] == "scripts/jaimini.py"
+    assert layers["upapada_lagna"]["runtime_path_exists"] is True
     assert layers["relationship_ashtakavarga_overlay"]["runtime_status"] in {
         "missing_runtime",
         "registry_only",
