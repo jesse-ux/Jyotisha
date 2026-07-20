@@ -113,7 +113,7 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
         publish: onJourney,
       })) latest.current = turn;
     }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "当前步骤暂时无法完成，请重试。");
+      setError(birthTimeUserError(caught));
     }).finally(() => {
       release();
       setPending(false);

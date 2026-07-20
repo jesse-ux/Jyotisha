@@ -46,6 +46,7 @@ jobs:
             frontend/supabase/migrations/20260718100000_repair_missing_chart_profiles.sql \
             frontend/supabase/migrations/20260718102000_recover_missing_profile_rows.sql \
             frontend/supabase/migrations/20260718103000_profile_birth_time_declaration_grants.sql \
+            frontend/supabase/migrations/20260718104000_chart_profiles_upsert_id_grant.sql \
             "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/tmp/profile-migrations/"
 
       - name: Apply profile migrations using VPS database URL
@@ -74,7 +75,8 @@ jobs:
             tmp/profile-migrations/20260718080000_profiles_service_role_account_upsert_selects.sql \
             tmp/profile-migrations/20260718100000_repair_missing_chart_profiles.sql \
             tmp/profile-migrations/20260718102000_recover_missing_profile_rows.sql \
-            tmp/profile-migrations/20260718103000_profile_birth_time_declaration_grants.sql
+            tmp/profile-migrations/20260718103000_profile_birth_time_declaration_grants.sql \
+            tmp/profile-migrations/20260718104000_chart_profiles_upsert_id_grant.sql
           do
             echo "applying $(basename "$SQL_FILE")"
             cat "$SQL_FILE" | docker run --rm -i postgres:16-alpine \
