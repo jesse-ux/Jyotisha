@@ -361,7 +361,9 @@ export function ConversationalRectificationSurface({
         {controller.error && <p className="form-error" role="alert">{controller.error}</p>}
       </div>
 
-      {turn.actions.includes("continue_original_question") && pendingQuestion && (
+      {turn.actions.includes("continue_original_question")
+        && pendingQuestion
+        && onContinueOriginalQuestion && (
         <section className="conversational-original-question">
           <p>原问题：{pendingQuestion}</p>
           <button
@@ -457,15 +459,22 @@ type ConversationalBirthTimeRectificationProps = Readonly<{
   initialTurn?: ConversationalRectificationTurn | null;
   pendingConsultationQuestion?: string | null;
   onTurn?: (turn: ConversationalRectificationTurn) => void;
+  onPendingChange?: (pending: boolean) => void;
   onContinueOriginalQuestion?: (question: string) => void;
 }>;
 
 export function ConversationalBirthTimeRectification(
   props: ConversationalBirthTimeRectificationProps,
 ) {
+  const pendingChange = useRef(props.onPendingChange);
+  useEffect(() => {
+    pendingChange.current = props.onPendingChange;
+  }, [props.onPendingChange]);
+  useEffect(() => () => pendingChange.current?.(false), []);
   const controller = useConversationalRectification({
     initialTurn: props.initialTurn,
     onTurn: props.onTurn,
+    onPendingChange: props.onPendingChange,
   });
   return (
     <ConversationalRectificationSurface

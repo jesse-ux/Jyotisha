@@ -1,6 +1,14 @@
-import type { BirthTimeDraft } from "./birth-time-intake-model.ts";
+import { isBirthClockTime, type BirthTimeDraft } from "./birth-time-intake-model.ts";
+import type { ConsultationBirthTimeMode } from "./consultation-birth-time-mode.ts";
 
-export type BirthTimeConsultationConsentState = Readonly<Record<string, true>>;
+export type BirthTimeConsultationConsentMode = Extract<
+  ConsultationBirthTimeMode,
+  "unverified_birth_time" | "general_no_birth_time"
+>;
+
+export type BirthTimeConsultationConsentState = Readonly<
+  Record<string, BirthTimeConsultationConsentMode>
+>;
 
 export type AccountRectificationCaseState = Readonly<{
   caseId: string;
@@ -34,15 +42,27 @@ export function hasBirthTimeConsultationConsent(
   state: BirthTimeConsultationConsentState,
   sessionId: string,
 ): boolean {
-  return Boolean(sessionId && state[sessionId] === true);
+  return consultationModeForSession(state, sessionId) !== null;
+}
+
+export function consultationModeForSession(
+  state: BirthTimeConsultationConsentState,
+  sessionId: string,
+): BirthTimeConsultationConsentMode | null {
+  if (!sessionId) return null;
+  const mode = state[sessionId];
+  return mode === "unverified_birth_time" || mode === "general_no_birth_time"
+    ? mode
+    : null;
 }
 
 export function grantBirthTimeConsultationConsent(
   state: BirthTimeConsultationConsentState,
   sessionId: string,
+  mode: BirthTimeConsultationConsentMode = "unverified_birth_time",
 ): BirthTimeConsultationConsentState {
-  if (!sessionId || state[sessionId]) return state;
-  return Object.freeze({ ...state, [sessionId]: true });
+  if (!sessionId || state[sessionId] === mode) return state;
+  return Object.freeze({ ...state, [sessionId]: mode });
 }
 
 export function clearBirthTimeConsultationConsent(
@@ -52,14 +72,13 @@ export function clearBirthTimeConsultationConsent(
   if (!sessionId || !state[sessionId]) return state;
   return Object.freeze(Object.fromEntries(
     Object.entries(state).filter(([candidate]) => candidate !== sessionId),
-  ) as Record<string, true>);
+  ) as Record<string, BirthTimeConsultationConsentMode>);
 }
 
 export function unverifiedBirthTime(profile: BirthTimeDraft): string | null {
   if (profile.birthTimeStatus === "confirmed") return null;
   if (!concreteReportedSources.has(profile.birthTimeSource)) return null;
-  const time = profile.time || profile.reportedTime;
-  return /^([01]\d|2[0-3]):[0-5]\d$/.test(time) ? time : null;
+  return isBirthClockTime(profile.reportedTime) ? profile.reportedTime : null;
 }
 
 export function canUseUnverifiedBirthTime(profile: BirthTimeDraft): boolean {
@@ -68,6 +87,33 @@ export function canUseUnverifiedBirthTime(profile: BirthTimeDraft): boolean {
 
 export function requiresBirthTimeConsent(profile: BirthTimeDraft): boolean {
   return canUseUnverifiedBirthTime(profile);
+}
+
+export type BirthTimeConsultationRoute =
+  | Readonly<{ kind: "choice"; canUseUnverifiedTime: boolean }>
+  | Readonly<{
+    kind: "consult";
+    mode: ConsultationBirthTimeMode;
+    time: string | null;
+  }>;
+
+export function resolveBirthTimeConsultationRoute(
+  profile: BirthTimeDraft,
+  state: BirthTimeConsultationConsentState,
+  sessionId: string,
+): BirthTimeConsultationRoute {
+  if (profile.birthTimeStatus === "confirmed" && isBirthClockTime(profile.time)) {
+    return { kind: "consult", mode: "verified_chart", time: profile.time };
+  }
+  const reportedTime = unverifiedBirthTime(profile);
+  const consentMode = consultationModeForSession(state, sessionId);
+  if (reportedTime && consentMode === "unverified_birth_time") {
+    return { kind: "consult", mode: "unverified_birth_time", time: reportedTime };
+  }
+  if (!reportedTime && consentMode === "general_no_birth_time") {
+    return { kind: "consult", mode: "general_no_birth_time", time: null };
+  }
+  return { kind: "choice", canUseUnverifiedTime: reportedTime !== null };
 }
 
 export function resolveRectificationCardAction(input: Readonly<{
@@ -93,4 +139,22 @@ export function parseRectificationPriceCredits(raw: string | undefined): number 
     throw new Error("RECTIFICATION_PRICE_CREDITS must be an integer from 1 through 100");
   }
   return price;
+}
+
+export type LatestAccountRequestGuard = Readonly<{
+  begin(): number;
+  isCurrent(identity: number): boolean;
+}>;
+
+export function createLatestAccountRequestGuard(): LatestAccountRequestGuard {
+  let version = 0;
+  return Object.freeze({
+    begin() {
+      version += 1;
+      return version;
+    },
+    isCurrent(identity: number) {
+      return identity === version;
+    },
+  });
 }

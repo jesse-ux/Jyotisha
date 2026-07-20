@@ -2,6 +2,9 @@ import { format, isValid, parse } from "date-fns";
 import type { JourneySnapshot } from "./birth-time-journey.ts";
 
 const birthDatePattern = "yyyy-MM-dd";
+const birthClockPattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+const earliestBirthYear = 1900;
+const latestBirthYear = 2100;
 
 export type BirthTimeSource =
   | ""
@@ -42,11 +45,25 @@ export type BirthTimeDraft = {
 
 export type BirthTimeDraftPatch = Partial<BirthTimeDraft>;
 
+export type DeclaredBirthPlace = Readonly<{
+  label: string;
+  lat: number;
+  lon: number;
+  tz: number;
+}>;
+
 export function parseBirthDate(value: string): Date | undefined {
   if (value === "") return undefined;
   const parsed = parse(value, birthDatePattern, new Date(2000, 0, 1));
-  if (!isValid(parsed) || format(parsed, birthDatePattern) !== value) return undefined;
+  if (!isValid(parsed)
+    || format(parsed, birthDatePattern) !== value
+    || parsed.getFullYear() < earliestBirthYear
+    || parsed.getFullYear() > latestBirthYear) return undefined;
   return parsed;
+}
+
+export function isBirthClockTime(value: string): boolean {
+  return birthClockPattern.test(value);
 }
 
 export function formatBirthDate(value: Date): string {
@@ -126,23 +143,32 @@ export function assistantIntentCopy(intent: JourneySnapshot["assistantIntent"]) 
 }
 
 export function isBirthTimeDraftReady(draft: BirthTimeDraft) {
-  if (!draft.date) return false;
+  if (!parseBirthDate(draft.date) || draft.birthTimeClue.length > 240) return false;
   switch (draft.birthTimeSource) {
     case "hospital_record":
+      return isBirthClockTime(draft.reportedTime)
+        && draft.uncertaintyBeforeMinutes === 2
+        && draft.uncertaintyAfterMinutes === 2;
     case "legacy_import":
-      return Boolean(draft.reportedTime || draft.time);
+      return isBirthClockTime(draft.reportedTime || draft.time);
     case "family_exact":
-      return Boolean(draft.reportedTime)
+      return isBirthClockTime(draft.reportedTime)
         && [5, 10, 15].includes(draft.uncertaintyBeforeMinutes ?? -1)
         && draft.uncertaintyBeforeMinutes === draft.uncertaintyAfterMinutes;
     case "approximate":
-      return Boolean(draft.reportedTime)
+      return isBirthClockTime(draft.reportedTime)
         && [15, 30, 60].includes(draft.uncertaintyBeforeMinutes ?? -1)
         && draft.uncertaintyBeforeMinutes === draft.uncertaintyAfterMinutes;
     case "period_only":
-      return Boolean(draft.birthTimePeriod);
+      return birthTimePeriodOptions.some((option) => option.value === draft.birthTimePeriod)
+        && !draft.reportedTime
+        && draft.uncertaintyBeforeMinutes === null
+        && draft.uncertaintyAfterMinutes === null;
     case "unknown":
-      return true;
+      return !draft.reportedTime
+        && !draft.birthTimePeriod
+        && draft.uncertaintyBeforeMinutes === null
+        && draft.uncertaintyAfterMinutes === null;
     case "":
       return false;
     default: {
@@ -156,17 +182,78 @@ export function isBirthTimeDraftReady(draft: BirthTimeDraft) {
  * Whether the user has finished declaring what they actually know about birth time.
  * This is an onboarding condition, not a claim that an exact chart minute is ready.
  */
-export function isDeclaredBirthProfileComplete(draft: BirthTimeDraft) {
-  return isBirthTimeDraftReady(draft);
+export function isDeclaredBirthProfileComplete(
+  draft: BirthTimeDraft,
+  place?: DeclaredBirthPlace | null,
+) {
+  if (!isBirthTimeDraftReady(draft)) return false;
+  if (place === undefined) return true;
+  return Boolean(place
+    && place.label.trim()
+    && Number.isFinite(place.lat)
+    && place.lat >= -90
+    && place.lat <= 90
+    && Number.isFinite(place.lon)
+    && place.lon >= -180
+    && place.lon <= 180
+    && Number.isFinite(place.tz)
+    && place.tz >= -12
+    && place.tz <= 14);
 }
 
 export function isBirthTimeReadyForConsultation(draft: BirthTimeDraft) {
-  return Boolean(draft.time)
+  return isBirthClockTime(draft.time)
     && (draft.birthTimeStatus === "candidate" || draft.birthTimeStatus === "confirmed");
 }
 
+const declaredBirthInputKeys = [
+  "date",
+  "reportedTime",
+  "birthTimeSource",
+  "birthTimePeriod",
+  "birthTimeClue",
+  "uncertaintyBeforeMinutes",
+  "uncertaintyAfterMinutes",
+] as const satisfies readonly (keyof BirthTimeDraft)[];
+
+export function declaredBirthInputChanged(
+  current: BirthTimeDraft,
+  next: BirthTimeDraft,
+): boolean {
+  return declaredBirthInputKeys.some((key) => current[key] !== next[key]);
+}
+
+/**
+ * Applies an intake edit without allowing a stale, unconfirmed candidate minute
+ * to survive changes to the declaration it was calculated from.
+ * Confirmed active time belongs to the account and is changed only by explicit
+ * rectification confirmation, so ordinary profile edits leave it intact.
+ */
+export function applyBirthTimeDraftPatch<T extends BirthTimeDraft>(
+  current: T,
+  patch: BirthTimeDraftPatch,
+): T {
+  const next = { ...current, ...patch };
+  const declarationChanged = declaredBirthInputKeys.some((key) => (
+    Object.hasOwn(patch, key) && next[key] !== current[key]
+  ));
+  if (!declarationChanged || current.birthTimeStatus === "confirmed") return next;
+  if (current.birthTimeStatus !== "candidate" && !current.time) return next;
+  return {
+    ...next,
+    time: "",
+    birthTimeStatus: "reported",
+  } as T;
+}
+
 export function birthTimePersistenceValues(draft: BirthTimeDraft) {
-  const reportedTime = draft.reportedTime || draft.time || null;
+  const reportedTime = draft.birthTimeSource === "legacy_import"
+    ? draft.reportedTime || draft.time || null
+    : draft.birthTimeSource === "hospital_record"
+      || draft.birthTimeSource === "family_exact"
+      || draft.birthTimeSource === "approximate"
+      ? draft.reportedTime || null
+      : null;
   const uncertainty = draft.birthTimeSource === "hospital_record"
     ? 2
     : draft.birthTimeSource === "family_exact" || draft.birthTimeSource === "approximate"

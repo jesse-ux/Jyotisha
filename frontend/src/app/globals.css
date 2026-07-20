@@ -132,6 +132,10 @@ button:disabled { cursor: default; opacity: .45; }
 .onboarding-card-actions { display: flex; justify-content: flex-end; padding-top: 2px; }
 .onboarding-card-actions .button-primary { min-width: 84px; }
 .birth-time-transition-card { position: relative; overflow: hidden; }
+.unverified-birth-time-choice-scrim { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: var(--space-4); overflow-y: auto; background: var(--color-scrim); }
+.unverified-birth-time-choice { width: min(100%, 620px); margin: 0; overflow: visible; }
+.unverified-birth-time-choice .onboarding-card-actions { flex-wrap: wrap; gap: var(--space-2); }
+.unverified-birth-time-choice button { min-height: 44px; }
 .birth-time-transition-fields { min-width: 0; display: grid; gap: 14px; margin: 0; padding: 0; border: 0; }
 .birth-time-assessment-overlay { position: absolute; z-index: 2; inset: 0; display: grid; place-items: center; padding: var(--space-6); border-radius: inherit; background: color-mix(in srgb, var(--color-canvas-soft) 94%, transparent); backdrop-filter: blur(2px); }
 .birth-time-assessment-progress { width: min(360px, 100%); display: grid; justify-items: center; gap: var(--space-2); color: var(--color-ink-secondary); text-align: center; }

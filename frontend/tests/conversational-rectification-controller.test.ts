@@ -81,6 +81,7 @@ function deferred<T>() {
 
 test("controller admits only one in-flight mutation and clears text only after success", async () => {
   const commands: ConversationalRectificationCommand[] = [];
+  const pendingChanges: boolean[] = [];
   let resolveRequest: ((turn: ConversationalRectificationTurn) => void) | undefined;
   const request = new Promise<ConversationalRectificationTurn>((resolve) => {
     resolveRequest = resolve;
@@ -88,6 +89,7 @@ test("controller admits only one in-flight mutation and clears text only after s
   const controller = createConversationalRectificationController({
     initialTurn: activeTurn(),
     createActionId: idFactory(),
+    onPendingChange: (pending) => pendingChanges.push(pending),
     send: async (command) => {
       commands.push(command);
       return request;
@@ -109,6 +111,7 @@ test("controller admits only one in-flight mutation and clears text only after s
   assert.equal(controller.getSnapshot().pending, false);
   assert.equal(controller.getSnapshot().draft, "");
   assert.equal(controller.getSnapshot().turn?.turnVersion, 3);
+  assert.deepEqual(pendingChanges, [true, false]);
 });
 
 test("controller preserves the exact draft and stable action id across failures", async () => {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   consultationInputSchema,
   consultationWorkflowReceipt,
+  getGeneralJyotishAgent,
   getJyotishAgent,
   runConsultationWorkflow,
 } from "@/mastra";
@@ -19,16 +20,22 @@ import { reserveConsultationModel } from "@/lib/consultation-model-selection";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { streamTextResponse } from "@/lib/stream-text-response";
-import { guardPreciseTimingOutput } from "@/lib/timing-output-guard";
+import {
+  applyBirthTimeModeToWorkflowContext,
+  consultationBirthTimeModeSchema,
+  createBirthTimeModeOutputGuard,
+  serverProfileAllowsBirthTimeMode,
+  shouldRunBirthChartWorkflow,
+  type ConsultationBirthTimeMode,
+} from "@/lib/consultation-birth-time-mode";
 import { z } from "zod";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const chatRequestSchema = consultationInputSchema.extend({
+const chatRequestMetadataSchema = z.object({
   requestId: z.string().uuid(),
   modelId: z.string().trim().min(1).max(64),
-  entrypoint: consultationEntrypointSchema.optional(),
   name: z.string().trim().max(80).optional().default(""),
   history: z
     .array(
@@ -40,6 +47,24 @@ const chatRequestSchema = consultationInputSchema.extend({
     .max(20)
     .default([]),
 });
+
+const chartChatRequestSchema = consultationInputSchema.extend({
+  ...chatRequestMetadataSchema.shape,
+  consultationMode: consultationBirthTimeModeSchema.exclude(["general_no_birth_time"])
+    .optional()
+    .default("verified_chart"),
+  entrypoint: consultationEntrypointSchema.optional(),
+});
+
+const generalChatRequestSchema = z.object({
+  ...chatRequestMetadataSchema.shape,
+  consultationMode: z.literal("general_no_birth_time"),
+  question: z.string().trim().min(1).max(500),
+  theme: z.enum(["career", "marriage", "wealth", "timing", "general"]),
+  entrypoint: z.undefined().optional(),
+}).strict();
+
+const chatRequestSchema = z.union([generalChatRequestSchema, chartChatRequestSchema]);
 
 function currentTimeContext(now = new Date()) {
   const chinaTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
@@ -119,6 +144,16 @@ export async function POST(request: Request) {
     );
   }
 
+  if (parsed.data.entrypoint === "birth_time_rectification") {
+    return NextResponse.json(
+      {
+        error: "旧版生时校正入口已停用",
+        message: "请从首页生时校正卡片开始或继续对话式校正，本次不会扣点。",
+      },
+      { status: 409 },
+    );
+  }
+
   const userControlledPrompt = [
     parsed.data.question,
     ...parsed.data.history
@@ -134,6 +169,41 @@ export async function POST(request: Request) {
       },
       { status: 400 },
     );
+  }
+
+  const requestedConsultationMode = parsed.data.consultationMode;
+  if (shouldRunBirthChartWorkflow(requestedConsultationMode)) {
+    if (!("hour" in parsed.data) || !("minute" in parsed.data)) {
+      return NextResponse.json(
+        { error: "出生时间请求格式不正确" },
+        { status: 400 },
+      );
+    }
+    const requestedTime = `${String(parsed.data.hour).padStart(2, "0")}:${String(parsed.data.minute).padStart(2, "0")}`;
+    const { data: birthTimeProfile, error: birthTimeProfileError } = await supabase
+      .from("profiles")
+      .select("active_birth_time,reported_birth_time,birth_time_source,birth_time_status")
+      .eq("id", user.id)
+      .single();
+    if (birthTimeProfileError || !birthTimeProfile) {
+      return NextResponse.json(
+        { error: "暂时无法核对出生时间状态", message: "请稍后重试，本次不会扣点。" },
+        { status: 503 },
+      );
+    }
+    if (!serverProfileAllowsBirthTimeMode(
+      birthTimeProfile,
+      requestedConsultationMode,
+      requestedTime,
+    )) {
+      return NextResponse.json(
+        {
+          error: "出生时间状态已经变化",
+          message: "请刷新后重新选择使用填报时间、一般咨询或先完成校正，本次不会扣点。",
+        },
+        { status: 409 },
+      );
+    }
   }
 
   const requestTime = new Date();
@@ -230,11 +300,60 @@ export async function POST(request: Request) {
 
   try {
     const { history, name } = parsed.data;
+    const consultationMode: ConsultationBirthTimeMode = parsed.data.consultationMode;
+    if (!shouldRunBirthChartWorkflow(consultationMode)) {
+      const result = await getGeneralJyotishAgent(selectedModel).stream([
+        {
+          role: "user",
+          content: [
+            currentTimeContext(requestTime),
+            name ? `用户称呼：${name}` : "",
+            "当前是用户明确选择的无出生分钟一般咨询。不得计算或推断个人星盘；不得补 00:00、时段中点或任何候选分钟。",
+            resolvedQuestion.modelQuestion,
+          ].filter(Boolean).join("\n"),
+        },
+      ]);
+      const completeAndRecordUsage = async () => {
+        await complete();
+        void recordModelUsage(
+          accounting,
+          userId,
+          requestId,
+          modelSelection.usageModelId,
+          result.totalUsage,
+        );
+      };
+      const settleInterrupted = (emitted: boolean) =>
+        settle(emitted ? completeAndRecordUsage : cancel);
+      return streamTextResponse(result.textStream, {
+        transformText: createBirthTimeModeOutputGuard(consultationMode, false),
+        mode: "mastra",
+        requestId,
+        headers: {
+          "x-jyotish-workflow-route": "general-no-birth-time",
+          "x-jyotish-workflow-status": "ready",
+          "x-jyotish-technique-truth": "not-applicable",
+          "x-jyotish-precise-timing": "blocked",
+          "x-jyotish-missing-layers": "birth-minute",
+          "x-jyotish-birth-time-mode": consultationMode,
+        },
+        onComplete: () => settle(completeAndRecordUsage),
+        onError: (_error, emitted) => settleInterrupted(emitted),
+        onCancel: settleInterrupted,
+      });
+    }
+
     const toolInput = consultationInputSchema.parse({
       ...parsed.data,
+      // Unverified use is still a normal chart calculation with a hard answer
+      // boundary. It must never reactivate the retired rectification questionnaire.
+      entryMode: "direct_chart",
       question: resolvedQuestion.modelQuestion,
     });
-    const workflowContext = await runConsultationWorkflow(toolInput);
+    const workflowContext = applyBirthTimeModeToWorkflowContext(
+      await runConsultationWorkflow(toolInput),
+      consultationMode,
+    );
     const workflowReceipt = consultationWorkflowReceipt(workflowContext);
 
     const result = await getJyotishAgent(selectedModel, workflowContext).stream([
@@ -265,10 +384,10 @@ export async function POST(request: Request) {
     const settleInterrupted = (emitted: boolean) =>
       settle(emitted ? completeAndRecordUsage : cancel);
     return streamTextResponse(result.textStream, {
-      transformText:
-        workflowReceipt.preciseTiming === "blocked"
-          ? guardPreciseTimingOutput
-          : undefined,
+      transformText: createBirthTimeModeOutputGuard(
+        consultationMode,
+        workflowReceipt.preciseTiming !== "blocked",
+      ),
       mode: "mastra",
       requestId,
       headers: {
@@ -277,6 +396,7 @@ export async function POST(request: Request) {
         "x-jyotish-technique-truth": workflowReceipt.techniqueTruth,
         "x-jyotish-precise-timing": workflowReceipt.preciseTiming,
         "x-jyotish-missing-layers": workflowReceipt.missingLayers,
+        "x-jyotish-birth-time-mode": consultationMode,
       },
       onComplete: () => settle(completeAndRecordUsage),
       onError: (_error, emitted) => settleInterrupted(emitted),

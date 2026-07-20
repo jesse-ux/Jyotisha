@@ -182,6 +182,9 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.match(css, /summary, \.conversational-status\):focus-visible/);
   assert.match(css, /@media\s*\(max-width:\s*430px\)[\s\S]*\.conversational-rectification/);
   assert.match(component, /确认放弃且不应用候选/);
+  assert.match(component, /onPendingChange/);
+  assert.match(component, /onPendingChange:\s*props\.onPendingChange/);
+  assert.match(component, /&& onContinueOriginalQuestion &&/);
 });
 
 type CdpResponse = Readonly<{
@@ -565,10 +568,11 @@ test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, 
   const css = readFileSync(join(frontendRoot, "src/app/globals.css"), "utf8")
     .replace(/^@import[^;]+;\s*/gm, "");
   const fixture = `
-    import React, { useEffect, useState } from "react";
+    import React, { useEffect, useRef, useState } from "react";
     import { createRoot } from "react-dom/client";
     import { ConversationalRectificationSurface } from ${JSON.stringify(componentPath)};
     import { useConversationalRectification } from ${JSON.stringify(hookPath)};
+    import { UnverifiedBirthTimeChoice } from ${JSON.stringify(join(frontendRoot, "src/components/unverified-birth-time-choice.tsx"))};
 
     const caseA = "00000000-0000-4000-8000-000000000821";
     const caseB = "00000000-0000-4000-8000-000000000829";
@@ -619,6 +623,10 @@ test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, 
       const [initialTurn, setInitialTurn] = useState(null);
       const [transportLabel, setTransportLabel] = useState("first");
       const [callbackLabel, setCallbackLabel] = useState("first");
+      const [screen, setScreen] = useState("rectification");
+      const [choicePending, setChoicePending] = useState(false);
+      const [activeChat, setActiveChat] = useState("chat-a");
+      const returnComposer = useRef(null);
       const send = async (command) => {
         events.push("send:" + transportLabel + ":" + command.type);
         await new Promise((resolveSend) => setTimeout(resolveSend, 20));
@@ -638,12 +646,45 @@ test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, 
       useEffect(() => {
         globalThis.__rectificationHarness = {
           events,
+          networkCalls: 0,
+          setActiveChat,
           setCallbackLabel,
+          setChoicePending,
+          setScreen,
           setTransportLabel,
           setTurn(name) { setInitialTurn(name === "none" ? null : turns[name]); },
         };
         globalThis.__rectificationReady = true;
       });
+      useEffect(() => {
+        if (screen !== "composer" && activeChat === "chat-a") return;
+        const frame = requestAnimationFrame(() => returnComposer.current?.focus());
+        return () => cancelAnimationFrame(frame);
+      }, [activeChat, screen]);
+      if (screen !== "rectification") {
+        if (activeChat !== "chat-a" || screen === "composer") {
+          return <textarea ref={returnComposer} id="choice-return-composer" defaultValue="原问题" />;
+        }
+        const canUse = screen === "choice-concrete";
+        return <UnverifiedBirthTimeChoice
+          canUseUnverifiedTime={canUse}
+          unverifiedTime={canUse ? "05:30" : null}
+          pending={choicePending}
+          onUseUnverifiedTime={() => events.push("choice:unverified")}
+          onContinueGenerally={() => {
+            events.push("choice:general");
+            setScreen("composer");
+          }}
+          onRectifyFirst={() => {
+            events.push("choice:rectify");
+            setChoicePending(true);
+          }}
+          onCancel={() => {
+            events.push("choice:cancel");
+            setScreen("composer");
+          }}
+        />;
+      }
       return <ConversationalRectificationSurface controller={controller} />;
     }
     createRoot(document.getElementById("root")).render(<Harness />);
@@ -754,7 +795,7 @@ test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, 
     const dialog = await waitFor<{ title: string; description: string; active: string }>(
       () => cdp!.evaluate<false | { title: string; description: string; active: string }>(`(() => {
         const dialog = document.querySelector('[role=alertdialog]');
-        if (!dialog) return false;
+        if (!dialog || document.activeElement?.tagName !== 'BUTTON') return false;
         return {
           title: document.getElementById(dialog.getAttribute('aria-labelledby'))?.textContent ?? '',
           description: document.getElementById(dialog.getAttribute('aria-describedby'))?.textContent ?? '',
@@ -799,6 +840,83 @@ test("real Chromium at 390px verifies layout, keyboard focus, pause affordance, 
           && document.activeElement === status;
       })()`) ?? Promise.resolve(false),
       "terminal dialog close and terminal status focus",
+    );
+
+    await cdp.evaluate("globalThis.__rectificationHarness.setScreen('choice-general')");
+    const generalChoice = await waitFor<{ role: string; focused: string; buttons: string[] }>(
+      () => cdp!.evaluate<false | { role: string; focused: string; buttons: string[] }>(`(() => {
+        const dialog = document.querySelector('[role=alertdialog]');
+        if (!dialog || document.activeElement?.tagName !== 'BUTTON') return false;
+        return {
+          role: dialog.getAttribute('role'),
+          focused: document.activeElement?.textContent?.trim() ?? '',
+          buttons: [...dialog.querySelectorAll('button')].map((button) => button.textContent.trim()),
+        };
+      })()`),
+      "minute-free choice initial focus",
+    );
+    assert.equal(generalChoice.role, "alertdialog");
+    assert.equal(generalChoice.focused, "继续不依赖出生分钟的一般咨询");
+    assert.ok(generalChoice.buttons.includes("先校正再询问"));
+
+    const eventsBeforeGeneral = await cdp.evaluate<number>("globalThis.__rectificationHarness.events.length");
+    await cdp.evaluate("document.activeElement.click()");
+    await waitFor(
+      () => cdp?.evaluate<boolean>("document.activeElement?.id === 'choice-return-composer'") ?? Promise.resolve(false),
+      "general choice restores composer focus",
+    );
+    assert.deepEqual(
+      await cdp.evaluate<string[]>(`globalThis.__rectificationHarness.events.slice(${eventsBeforeGeneral})`),
+      ["choice:general"],
+    );
+    assert.equal(await cdp.evaluate<number>("globalThis.__rectificationHarness.networkCalls"), 0);
+
+    await cdp.evaluate("globalThis.__rectificationHarness.setScreen('choice-general')");
+    await waitFor(
+      () => cdp?.evaluate<boolean>("document.activeElement?.tagName === 'BUTTON' && document.activeElement?.textContent?.includes('继续不依赖出生分钟')") ?? Promise.resolve(false),
+      "reopened minute-free choice",
+    );
+    await pressEscape(cdp);
+    await waitFor(
+      () => cdp?.evaluate<boolean>("document.activeElement?.id === 'choice-return-composer'") ?? Promise.resolve(false),
+      "choice Escape restores composer focus",
+    );
+
+    await cdp.evaluate("globalThis.__rectificationHarness.setScreen('choice-concrete')");
+    await waitFor(
+      () => cdp?.evaluate<boolean>("document.activeElement?.textContent?.includes('先用 05:30')") ?? Promise.resolve(false),
+      "concrete choice initial focus",
+    );
+    await cdp.evaluate("[...document.querySelectorAll('[role=alertdialog] button')].find((button) => button.textContent.includes('先校正再询问')).click()");
+    await waitFor(
+      () => cdp?.evaluate<boolean>(`(() => {
+        const dialog = document.querySelector('[role=alertdialog]');
+        const buttons = [...dialog.querySelectorAll('button')];
+        return dialog?.getAttribute('aria-busy') === 'true'
+          && buttons.length === 3
+          && buttons.every((button) => button.disabled);
+      })()`) ?? Promise.resolve(false),
+      "choice pending lock",
+    );
+    await pressEscape(cdp);
+    assert.equal(
+      await cdp.evaluate<boolean>("Boolean(document.querySelector('[role=alertdialog]'))"),
+      true,
+    );
+    await cdp.evaluate("globalThis.__rectificationHarness.setChoicePending(false); globalThis.__rectificationHarness.setScreen('choice-general')");
+    await waitFor(
+      () => cdp?.evaluate<boolean>("Boolean(document.querySelector('[role=alertdialog]'))") ?? Promise.resolve(false),
+      "choice ready before chat switch",
+    );
+    await cdp.evaluate("globalThis.__rectificationHarness.setActiveChat('chat-b')");
+    await waitFor(
+      () => cdp?.evaluate<boolean>("!document.querySelector('[role=alertdialog]') && document.activeElement?.id === 'choice-return-composer'") ?? Promise.resolve(false),
+      "other chat hides the pending choice",
+    );
+    await cdp.evaluate("globalThis.__rectificationHarness.setActiveChat('chat-a')");
+    await waitFor(
+      () => cdp?.evaluate<boolean>("document.activeElement?.textContent?.includes('继续不依赖出生分钟')") ?? Promise.resolve(false),
+      "returning chat restores its choice and focus",
     );
   } finally {
     try {

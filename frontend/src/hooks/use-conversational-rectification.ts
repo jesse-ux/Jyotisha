@@ -50,6 +50,7 @@ type ControllerInput = Readonly<{
   send?: (command: ConversationalRectificationCommand) => Promise<ConversationalRectificationTurn>;
   createActionId?: () => string;
   onTurn?: (turn: ConversationalRectificationTurn) => void;
+  onPendingChange?: (pending: boolean) => void;
 }>;
 
 type Mutation = Readonly<{
@@ -75,6 +76,9 @@ function createLatestControllerInput(initial: ControllerInput) {
     },
     onTurn(turn: ConversationalRectificationTurn) {
       current.onTurn?.(turn);
+    },
+    onPendingChange(pending: boolean) {
+      current.onPendingChange?.(pending);
     },
   };
 }
@@ -114,6 +118,15 @@ export function createConversationalRectificationController(
   };
   const patch = (next: Partial<ConversationalRectificationControllerSnapshot>) => {
     publish({ ...snapshot, ...next });
+  };
+  const setPending = (pending: boolean) => {
+    if (snapshot.pending === pending) return;
+    patch({ pending });
+    try {
+      input.onPendingChange?.(pending);
+    } catch {
+      // Parent locks are observational and cannot change durable mutation state.
+    }
   };
   const acceptTurn = (
     turn: ConversationalRectificationTurn,
@@ -160,7 +173,8 @@ export function createConversationalRectificationController(
   }));
   const run = (mutation: Mutation): MutationResult => {
     if (activeMutation?.caseContext === caseContext) return activeMutation.promise;
-    patch({ pending: true, error: "" });
+    patch({ error: "" });
+    setPending(true);
     const turnAtStart = snapshot.turn;
     const caseContextAtStart = caseContext;
     const mutationToken = Symbol("conversational-rectification-mutation");
@@ -190,7 +204,7 @@ export function createConversationalRectificationController(
       .finally(() => {
         if (activeMutation?.token !== mutationToken) return;
         activeMutation = null;
-        if (caseContext === caseContextAtStart) patch({ pending: false });
+        if (caseContext === caseContextAtStart) setPending(false);
       });
     activeMutation = {
       caseContext: caseContextAtStart,
@@ -241,6 +255,11 @@ export function createConversationalRectificationController(
         if (current === null) return;
         caseContext += 1;
         activeMutation = null;
+        try {
+          input.onPendingChange?.(false);
+        } catch {
+          // Parent locks are observational.
+        }
         patch({
           turn: null,
           draft: "",
@@ -254,6 +273,11 @@ export function createConversationalRectificationController(
       if (current === null || current.caseId !== turn.caseId) {
         caseContext += 1;
         activeMutation = null;
+        try {
+          input.onPendingChange?.(false);
+        } catch {
+          // Parent locks are observational.
+        }
         patch({
           turn,
           draft: "",
@@ -388,6 +412,7 @@ export function useConversationalRectification(
     createActionId: input.createActionId,
     send: latestInput.send,
     onTurn: latestInput.onTurn,
+    onPendingChange: latestInput.onPendingChange,
   }));
   const snapshot = useSyncExternalStore(
     controller.subscribe,
