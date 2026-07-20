@@ -53,9 +53,33 @@ environment_value() {
 
 is_safe_literal() {
   local value="$1"
-  # Required values are generated as single-line hex-safe literals. This also
-  # permits percent-encoded schema URLs without evaluating dotenv syntax.
-  [[ "$value" =~ ^[A-Za-z0-9._~%:@/+,-]+$ ]]
+  local inner
+
+  # Required values are literal single-line values: use an unquoted token or
+  # matching non-empty quotes. Dotenv interpolation, comments, and malformed
+  # quoting are rejected rather than evaluated, so generate secrets without $.
+  if [ -z "$value" ] || [[ "$value" == *'$'* ]]; then
+    return 1
+  fi
+
+  case "$value" in
+    \"*\")
+      inner="${value:1}"
+      inner="${inner%?}"
+      [ -n "$inner" ] && [[ "$inner" != *'"'* ]]
+      ;;
+    \'*\')
+      inner="${value:1}"
+      inner="${inner%?}"
+      [ -n "$inner" ] && [[ "$inner" != *"'"* ]]
+      ;;
+    *\"*|*\'*)
+      return 1
+      ;;
+    *[[:space:]]*|*\#*)
+      return 1
+      ;;
+  esac
 }
 
 require_once_non_empty() {
@@ -65,7 +89,7 @@ require_once_non_empty() {
   count="$(definition_count "$key")"
   value="$(environment_value "$key")"
   if [ "$count" -ne 1 ] || ! is_safe_literal "$value"; then
-    echo "required staging database environment variable is missing or duplicated: $key" >&2
+    echo "required staging database literal is missing, duplicated, or ambiguous: $key" >&2
     exit 1
   fi
 }

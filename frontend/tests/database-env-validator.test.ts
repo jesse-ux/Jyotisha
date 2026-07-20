@@ -137,6 +137,35 @@ test("database env validator rejects quoted and interpolated required secrets", 
   }
 });
 
+test("database env validator accepts punctuated literal required secrets", () => {
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-database-env-"));
+  const envFile = join(root, ".env.staging.database");
+
+  try {
+    for (const password of ["c2VjcmV0IT0=", '"secret!=value"']) {
+      writeFileSync(
+        envFile,
+        `${validEnvironment
+          .map((line) =>
+            line.startsWith("POSTGRES_PASSWORD=")
+              ? `POSTGRES_PASSWORD=${password}`
+              : line,
+          )
+          .join("\n")}\n`,
+        { mode: 0o600 },
+      );
+      chmodSync(envFile, 0o600);
+
+      const result = spawnSync("bash", [validator, envFile], { encoding: "utf8" });
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stdout, "staging database environment validated\n");
+      assert.doesNotMatch(`${result.stdout}${result.stderr}`, /secret!=value|c2VjcmV0IT0=/);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("database env validator rejects symlinks and unsafe modes", () => {
   const root = mkdtempSync(join(tmpdir(), "jyotisha-database-env-"));
   const envFile = join(root, ".env.staging.database");
