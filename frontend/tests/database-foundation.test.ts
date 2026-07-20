@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { spawnSync, type SpawnSyncReturns } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
   appendFileSync,
   copyFileSync,
   mkdtempSync,
   mkdirSync,
   rmSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -17,6 +18,8 @@ import { startPostgresFixture } from "./helpers/postgres-fixture";
 
 const migrationFilename = "20260720000100_backend_foundation.sql";
 const pendingFilename = "20260720000200_pending_check.sql";
+const concurrentFilename = "20260720000300_concurrent_lock.sql";
+const failingFilename = "20260720000400_atomic_rollback.sql";
 const runnerPath = fileURLToPath(
   new URL("../scripts/db-migrate.mjs", import.meta.url),
 );
@@ -33,26 +36,72 @@ const fixturePasswords = [
   "postgres-test-password",
 ];
 
+type MigrationResult = {
+  status: number | null;
+  stdout: string;
+  stderr: string;
+};
+
+function migrationInvocation(
+  connectionString: string,
+  options: { check?: boolean; migrationsDirectory?: string },
+) {
+  return {
+    arguments: [runnerPath, ...(options.check ? ["--check"] : [])],
+    environment: {
+      SCHEMA_DATABASE_URL: connectionString,
+      ...(options.migrationsDirectory
+        ? { MIGRATIONS_DIRECTORY: options.migrationsDirectory }
+        : {}),
+    } as NodeJS.ProcessEnv,
+  };
+}
+
 function runMigration(
   connectionString: string,
   options: { check?: boolean; migrationsDirectory?: string } = {},
-): SpawnSyncReturns<string> {
-  return spawnSync(
+): MigrationResult {
+  const invocation = migrationInvocation(connectionString, options);
+  const result = spawnSync(
     process.execPath,
-    [runnerPath, ...(options.check ? ["--check"] : [])],
+    invocation.arguments,
     {
       encoding: "utf8",
-      env: {
-        SCHEMA_DATABASE_URL: connectionString,
-        ...(options.migrationsDirectory
-          ? { MIGRATIONS_DIRECTORY: options.migrationsDirectory }
-          : {}),
-      } as NodeJS.ProcessEnv,
+      env: invocation.environment,
     },
   );
+  return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
-function assertSafeOutput(result: SpawnSyncReturns<string>): void {
+function runMigrationAsync(
+  connectionString: string,
+  migrationsDirectory: string,
+): Promise<MigrationResult> {
+  const invocation = migrationInvocation(connectionString, {
+    migrationsDirectory,
+  });
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, invocation.arguments, {
+      env: invocation.environment,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.once("error", reject);
+    child.once("close", (status) => resolve({ status, stdout, stderr }));
+  });
+}
+
+function assertSafeOutput(result: MigrationResult): void {
   const output = `${result.stdout}${result.stderr}`;
   for (const password of fixturePasswords) {
     assert.doesNotMatch(output, new RegExp(password));
@@ -66,7 +115,7 @@ test("readDatabaseUrl requires APP_DATABASE_URL", () => {
   );
 });
 
-test("migration runner applies once, detects drift, and checks read-only", () => {
+test("migration runner is serialized, atomic, drift-safe, and read-only in check mode", async () => {
   const fixture = startPostgresFixture();
   const temporaryDirectory = mkdtempSync(join(tmpdir(), "jyotisha-migrations-"));
   const copiedMigration = join(temporaryDirectory, migrationFilename);
@@ -74,7 +123,7 @@ test("migration runner applies once, detects drift, and checks read-only", () =>
     "schema_owner",
     "schema-owner-test-password",
   );
-  const results: SpawnSyncReturns<string>[] = [];
+  const results: MigrationResult[] = [];
 
   try {
     copyFileSync(migrationPath, copiedMigration);
@@ -93,7 +142,9 @@ test("migration runner applies once, detects drift, and checks read-only", () =>
       "f",
     );
 
-    const firstRun = runMigration(schemaUrl);
+    const firstRun = runMigration(schemaUrl, {
+      migrationsDirectory: temporaryDirectory,
+    });
     results.push(firstRun);
     assert.equal(firstRun.status, 0, firstRun.stderr);
     assert.match(firstRun.stdout, new RegExp(`applied ${migrationFilename}`));
@@ -106,7 +157,9 @@ test("migration runner applies once, detects drift, and checks read-only", () =>
     assert.equal(filename, migrationFilename);
     assert.equal(checksum.length, 64);
 
-    const secondRun = runMigration(schemaUrl);
+    const secondRun = runMigration(schemaUrl, {
+      migrationsDirectory: temporaryDirectory,
+    });
     results.push(secondRun);
     assert.equal(secondRun.status, 0, secondRun.stderr);
     assert.match(
@@ -121,7 +174,10 @@ test("migration runner applies once, detects drift, and checks read-only", () =>
       ledgerRow,
     );
 
-    const currentCheck = runMigration(schemaUrl, { check: true });
+    const currentCheck = runMigration(schemaUrl, {
+      check: true,
+      migrationsDirectory: temporaryDirectory,
+    });
     results.push(currentCheck);
     assert.equal(currentCheck.status, 0, currentCheck.stderr);
 
@@ -161,8 +217,19 @@ test("migration runner applies once, detects drift, and checks read-only", () =>
       ),
       "f",
     );
+    unlinkSync(pendingPath);
 
     appendFileSync(copiedMigration, " ");
+    const driftRun = runMigration(schemaUrl, {
+      migrationsDirectory: temporaryDirectory,
+    });
+    results.push(driftRun);
+    assert.equal(driftRun.status, 1);
+    assert.match(
+      driftRun.stderr,
+      new RegExp(`migration checksum mismatch: ${migrationFilename}`),
+    );
+
     const driftCheck = runMigration(schemaUrl, {
       check: true,
       migrationsDirectory: temporaryDirectory,
@@ -173,15 +240,75 @@ test("migration runner applies once, detects drift, and checks read-only", () =>
       driftCheck.stderr,
       new RegExp(`migration checksum mismatch: ${migrationFilename}`),
     );
+    copyFileSync(migrationPath, copiedMigration);
 
-    const driftRun = runMigration(schemaUrl, {
+    writeFileSync(
+      join(temporaryDirectory, concurrentFilename),
+      "select pg_sleep(1);\ncreate schema concurrent_lock_probe;\n",
+    );
+    const concurrentResults = await Promise.all([
+      runMigrationAsync(schemaUrl, temporaryDirectory),
+      runMigrationAsync(schemaUrl, temporaryDirectory),
+    ]);
+    results.push(...concurrentResults);
+    assert.deepEqual(
+      concurrentResults.map((result) => result.status),
+      [0, 0],
+    );
+    assert.deepEqual(
+      concurrentResults
+        .flatMap((result) => result.stdout.trim().split("\n"))
+        .filter((line) => line.endsWith(concurrentFilename))
+        .sort(),
+      [
+        `already applied ${concurrentFilename}`,
+        `applied ${concurrentFilename}`,
+      ].sort(),
+    );
+    assert.equal(
+      fixture.psql(`
+        select count(*)
+        from migration.schema_migrations
+        where filename = '${concurrentFilename}'
+      `),
+      "1",
+    );
+
+    writeFileSync(
+      join(temporaryDirectory, failingFilename),
+      `create schema atomic_rollback_probe authorization schema_owner;
+create table atomic_rollback_probe.parent (id integer primary key);
+create table atomic_rollback_probe.child (
+  parent_id integer references atomic_rollback_probe.parent(id)
+    deferrable initially deferred
+);
+insert into atomic_rollback_probe.child (parent_id) values (1);
+`,
+    );
+    const failingRun = runMigration(schemaUrl, {
       migrationsDirectory: temporaryDirectory,
     });
-    results.push(driftRun);
-    assert.equal(driftRun.status, 1);
+    results.push(failingRun);
+    assert.equal(failingRun.status, 1);
     assert.match(
-      driftRun.stderr,
-      new RegExp(`migration checksum mismatch: ${migrationFilename}`),
+      failingRun.stderr,
+      new RegExp(`migration failed: ${failingFilename}`),
+    );
+    assert.equal(
+      fixture.psql(`
+        select exists (
+          select from pg_namespace where nspname = 'atomic_rollback_probe'
+        )
+      `),
+      "f",
+    );
+    assert.equal(
+      fixture.psql(`
+        select count(*)
+        from migration.schema_migrations
+        where filename = '${failingFilename}'
+      `),
+      "0",
     );
 
     assert.equal(

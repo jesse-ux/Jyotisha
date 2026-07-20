@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "tsx --test --test-concurrency=1 tests/*.test.ts",
+    "test": "tsx --test tests/*.test.ts",
     "test:db": "tsx --test --test-concurrency=1 tests/database-*.test.ts",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:migrate:check": "node scripts/db-migrate.mjs --check",

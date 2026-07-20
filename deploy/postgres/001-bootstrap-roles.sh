@@ -69,4 +69,7 @@ SELECT format(
   'GRANT CONNECT ON DATABASE %I TO identity_runtime, app_runtime, admin_runtime, migration_runner, backup_reader',
   :'database_name'
 ) \gexec
+
+ALTER SCHEMA public OWNER TO schema_owner;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
 SQL

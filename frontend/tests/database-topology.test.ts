@@ -33,6 +33,38 @@ test("database roles have no cluster privileges", () => {
         "schema_owner:f:f:f:f:f:f",
       ].join("\n"),
     );
+    assert.equal(
+      fixture.psql(
+        "select nspowner::regrole::text from pg_namespace where nspname = 'public'",
+      ),
+      "schema_owner",
+    );
+    assert.equal(
+      fixture.psql(`
+        select has_schema_privilege('schema_owner', 'public', 'create')
+          and has_schema_privilege('schema_owner', 'public', 'usage')
+      `),
+      "t",
+    );
+    assert.equal(
+      fixture.psql(`
+        select coalesce(string_agg(privilege_type, ',' order by privilege_type), '')
+        from pg_namespace,
+          aclexplode(coalesce(nspacl, acldefault('n', nspowner)))
+        where nspname = 'public'
+          and grantee = 0
+          and privilege_type in ('CREATE', 'USAGE')
+      `),
+      "",
+    );
+    assert.equal(
+      fixture.psql(`
+        select pg_get_userbyid(datdba)
+        from pg_database
+        where datname = current_database()
+      `),
+      "postgres",
+    );
   } finally {
     fixture.stop();
   }

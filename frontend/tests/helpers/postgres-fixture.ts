@@ -1,5 +1,11 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -43,21 +49,43 @@ server.listen({ host: "127.0.0.1", port: Number(process.argv[1]) }, () =>
   );
 }
 
-function findAvailablePort(): number {
+type PortReservation = { port: number; directory: string };
+
+function reserveAvailablePort(): PortReservation {
   for (let port = 55432; port <= 55531; port += 1) {
-    if (isPortAvailable(port)) {
-      return port;
+    const directory = join(tmpdir(), `jyotisha-postgres-port-${port}.lock`);
+    try {
+      mkdirSync(directory);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EEXIST") continue;
+      throw error;
     }
+
+    if (isPortAvailable(port)) {
+      return { port, directory };
+    }
+    rmSync(directory, { force: true, recursive: true });
   }
 
   throw new Error("no available PostgreSQL test port in 55432..55531");
+}
+
+function releasePort(reservation: PortReservation): void {
+  rmSync(reservation.directory, { force: true, recursive: true });
 }
 
 export function startPostgresFixture(): PostgresFixture {
   const projectName = `jyotisha-postgres-${process.pid}-${Date.now()}`;
   const temporaryDirectory = mkdtempSync(join(tmpdir(), "jyotisha-postgres-"));
   const databaseEnvFile = join(temporaryDirectory, "database.env");
-  const hostPort = findAvailablePort();
+  let portReservation: PortReservation;
+  try {
+    portReservation = reserveAvailablePort();
+  } catch (error) {
+    rmSync(temporaryDirectory, { force: true, recursive: true });
+    throw error;
+  }
+  const hostPort = portReservation.port;
   const composeArguments = [
     "compose",
     "--project-name",
@@ -75,10 +103,9 @@ export function startPostgresFixture(): PostgresFixture {
     POSTGRES_HOST_PORT: String(hostPort),
   };
 
-  writeFileSync(databaseEnvFile, databaseEnvironment, { mode: 0o600 });
-  chmodSync(databaseEnvFile, 0o600);
-
   try {
+    writeFileSync(databaseEnvFile, databaseEnvironment, { mode: 0o600 });
+    chmodSync(databaseEnvFile, 0o600);
     execFileSync(
       "docker",
       [...composeArguments, "up", "-d", "--wait", "postgres"],
@@ -86,12 +113,17 @@ export function startPostgresFixture(): PostgresFixture {
     );
   } catch (error) {
     try {
-      execFileSync(
-        "docker",
-        [...composeArguments, "down", "-v", "--remove-orphans"],
-        { env: environment, stdio: "inherit" },
-      );
+      try {
+        execFileSync(
+          "docker",
+          [...composeArguments, "down", "-v", "--remove-orphans"],
+          { env: environment, stdio: "inherit" },
+        );
+      } catch {
+        // Preserve the original startup failure.
+      }
     } finally {
+      releasePort(portReservation);
       rmSync(temporaryDirectory, { force: true, recursive: true });
     }
     throw error;
@@ -121,6 +153,7 @@ export function startPostgresFixture(): PostgresFixture {
           { env: environment, stdio: "inherit" },
         );
       } finally {
+        releasePort(portReservation);
         rmSync(temporaryDirectory, { force: true, recursive: true });
       }
     },
