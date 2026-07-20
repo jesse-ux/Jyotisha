@@ -36,6 +36,26 @@ cd frontend && npm run lint                               exit 0
 git diff --check                                          exit 0
 ```
 
+## Secure directory-creation follow-up (2026-07-20)
+
+- `umask 077` now executes at script startup, before any possible `mkdir`. The script records the first absent component, then re-walks every component after `mkdir -p`; all newly created directories must be current-user owned, non-symlink directories without group/world write permission before `cd -P` pins the target.
+- Existing root-owned sticky shared ancestors, including canonical `/tmp`, are allowed; ordinary group/world-writable ancestors remain rejected. The shared-temporary-root tests canonicalize `/tmp` with `realpathSync`, so they prove validation reaches their deliberately nested symlink and `0777` parent instead of stopping at the standard sticky ancestor.
+
+```text
+RED:
+cd frontend && npm run test:db
+FAIL rejects destructive backup directory aliases and symlink components before mutation
+FAIL creates every absent backup path component privately despite a permissive caller umask
+The prior policy rejected canonical /tmp and only set umask after mkdir.
+
+GREEN:
+bash -n deploy/backup-staging-postgres.sh                exit 0
+cd frontend && npm run test:db                            18 passed, 0 failed
+cd frontend && npm test                                   494 passed, 0 failed
+cd frontend && npm run lint                               exit 0
+git diff --check                                          exit 0
+```
+
 ## TOCTOU follow-up (2026-07-20)
 
 - Before `mkdir`/`cd`, the script walks all existing absolute-target ancestors, rejects symlinks, requires current-user-or-root ownership, and rejects group/world-writable modes. The unsafe-parent regression uses `realpathSync` for the macOS temporary root, so its nested symlink and `0777` parent are the components actually reached by validation.

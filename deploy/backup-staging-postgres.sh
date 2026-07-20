@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 set +x
+umask 077
 
 if [ "$#" -ne 2 ]; then
   echo "usage: backup-staging-postgres.sh DATABASE_ENV_FILE BACKUP_DIRECTORY" >&2
@@ -28,8 +29,8 @@ reject_unsafe_backup_directory_ancestor() {
 stat_owner_and_mode() {
   local path="$1"
 
-  if stat -f '%u %Lp' "$path" >/dev/null 2>&1; then
-    stat -f '%u %Lp' "$path"
+  if stat -f '%u %p' "$path" >/dev/null 2>&1; then
+    stat -f '%u %p' "$path"
   else
     stat -c '%u %a' "$path"
   fi
@@ -45,6 +46,43 @@ directory_identity() {
   fi
 }
 
+directory_mode_is_group_or_world_writable() {
+  local mode="$1"
+  local permissions="${mode: -3}"
+
+  (( (10#${permissions:1:1} & 2) != 0 || (10#${permissions:2:1} & 2) != 0 ))
+}
+
+directory_mode_is_sticky() {
+  local mode="$1"
+
+  [ "${#mode}" -ge 4 ] && (( (10#${mode: -4:1} & 1) != 0 ))
+}
+
+validate_backup_directory_component() {
+  local path="$1"
+  local require_private="$2"
+  local owner
+  local mode
+
+  if [ -L "$path" ] || [ ! -d "$path" ]; then
+    reject_backup_directory
+  fi
+  read -r owner mode <<< "$(stat_owner_and_mode "$path")"
+  if [ "$require_private" = "1" ]; then
+    if [ "$owner" != "$CURRENT_UID" ] || directory_mode_is_group_or_world_writable "$mode"; then
+      reject_unsafe_backup_directory_ancestor
+    fi
+    return
+  fi
+  if [ "$owner" != "$CURRENT_UID" ] && [ "$owner" != "0" ]; then
+    reject_unsafe_backup_directory_ancestor
+  fi
+  if directory_mode_is_group_or_world_writable "$mode" && ! { [ "$owner" = "0" ] && directory_mode_is_sticky "$mode"; }; then
+    reject_unsafe_backup_directory_ancestor
+  fi
+}
+
 if [ "$BACKUP_DIRECTORY_INPUT" = "/" ] || [[ "$BACKUP_DIRECTORY_INPUT" != /* ]] || [[ "$BACKUP_DIRECTORY_INPUT" == */ ]] || [[ "$BACKUP_DIRECTORY_INPUT" == *"//"* ]]; then
   reject_backup_directory
 fi
@@ -56,7 +94,9 @@ fi
 
 backup_directory_component_path=""
 CURRENT_UID="$(id -u)"
-for backup_directory_component in "${backup_directory_components[@]}"; do
+FIRST_CREATED_COMPONENT_INDEX=-1
+for ((backup_directory_component_index = 0; backup_directory_component_index < ${#backup_directory_components[@]}; backup_directory_component_index += 1)); do
+  backup_directory_component="${backup_directory_components[$backup_directory_component_index]}"
   if [ -z "$backup_directory_component" ] || [ "$backup_directory_component" = "." ] || [ "$backup_directory_component" = ".." ]; then
     reject_backup_directory
   fi
@@ -65,16 +105,9 @@ for backup_directory_component in "${backup_directory_components[@]}"; do
     reject_backup_directory
   fi
   if [ -e "$backup_directory_component_path" ]; then
-    if [ ! -d "$backup_directory_component_path" ]; then
-      reject_backup_directory
-    fi
-    read -r backup_directory_owner backup_directory_mode <<< "$(stat_owner_and_mode "$backup_directory_component_path")"
-    if [ "$backup_directory_owner" != "$CURRENT_UID" ] && [ "$backup_directory_owner" != "0" ]; then
-      reject_unsafe_backup_directory_ancestor
-    fi
-    if (( (10#${backup_directory_mode: -2:1} & 2) != 0 || (10#${backup_directory_mode: -1} & 2) != 0 )); then
-      reject_unsafe_backup_directory_ancestor
-    fi
+    validate_backup_directory_component "$backup_directory_component_path" 0
+  elif [ "$FIRST_CREATED_COMPONENT_INDEX" -eq -1 ]; then
+    FIRST_CREATED_COMPONENT_INDEX="$backup_directory_component_index"
   fi
 done
 
@@ -98,6 +131,16 @@ STAGING_BACKUP_ENCRYPTION_KEY="$(read_environment_value STAGING_BACKUP_ENCRYPTIO
 export STAGING_BACKUP_ENCRYPTION_KEY
 
 mkdir -p "$BACKUP_DIRECTORY_INPUT"
+backup_directory_component_path=""
+for ((backup_directory_component_index = 0; backup_directory_component_index < ${#backup_directory_components[@]}; backup_directory_component_index += 1)); do
+  backup_directory_component="${backup_directory_components[$backup_directory_component_index]}"
+  backup_directory_component_path="${backup_directory_component_path}/${backup_directory_component}"
+  if [ "$FIRST_CREATED_COMPONENT_INDEX" -ne -1 ] && [ "$backup_directory_component_index" -ge "$FIRST_CREATED_COMPONENT_INDEX" ]; then
+    validate_backup_directory_component "$backup_directory_component_path" 1
+  else
+    validate_backup_directory_component "$backup_directory_component_path" 0
+  fi
+done
 cd -P "$BACKUP_DIRECTORY_INPUT"
 BACKUP_DIRECTORY="$(pwd -P)"
 if [ "$BACKUP_DIRECTORY" != "$BACKUP_DIRECTORY_INPUT" ] || [ "$BACKUP_DIRECTORY" = "/" ]; then
@@ -144,7 +187,6 @@ cleanup_partial() {
 }
 trap cleanup_partial EXIT HUP INT TERM
 
-umask 077
 if ! mkdir "$LOCK_DIRECTORY"; then
   echo "backup destination is already being created" >&2
   exit 1

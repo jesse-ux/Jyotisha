@@ -54,6 +54,10 @@ function canonicalTemporaryDirectory(prefix: string): string {
   return realpathSync(mkdtempSync(join(tmpdir(), prefix)));
 }
 
+function canonicalSharedTemporaryDirectory(prefix: string): string {
+  return realpathSync(mkdtempSync(join("/tmp", prefix)));
+}
+
 function listDumpArchive(fixture: ReturnType<typeof startPostgresFixture>, dump: Buffer): void {
   const hostRestore = spawnSync("pg_restore", ["--list"], {
     input: dump,
@@ -119,8 +123,12 @@ function runBackup(
   backupDirectory: string,
   environment: NodeJS.ProcessEnv,
   cwd = repositoryRoot,
+  callerUmask?: string,
 ) {
-  return spawnSync("bash", [backupScript, databaseEnvFile, backupDirectory], {
+  const args = callerUmask
+    ? ["-c", 'umask "$1"; shift; exec bash "$@"', "backup-umask", callerUmask, backupScript, databaseEnvFile, backupDirectory]
+    : [backupScript, databaseEnvFile, backupDirectory];
+  return spawnSync("bash", args, {
     cwd,
     encoding: "utf8",
     env: environment,
@@ -228,7 +236,7 @@ test("staging backups are encrypted, atomic, private, and retain the newest thre
 });
 
 test("rejects destructive backup directory aliases and symlink components before mutation", () => {
-  const root = canonicalTemporaryDirectory("jyotisha-backup-boundary-");
+  const root = canonicalSharedTemporaryDirectory("jyotisha-backup-boundary-");
   const environmentFile = createDatabaseEnvironment();
   const target = join(root, "target");
   const sentinel = join(target, "sentinel.txt");
@@ -273,7 +281,7 @@ test("rejects destructive backup directory aliases and symlink components before
 });
 
 test("rejects unsafe writable backup parents before creating the target", () => {
-  const root = canonicalTemporaryDirectory("jyotisha-backup-unsafe-parent-");
+  const root = canonicalSharedTemporaryDirectory("jyotisha-backup-unsafe-parent-");
   const environmentFile = createDatabaseEnvironment();
   const unsafeParent = join(root, "unsafe-parent");
   const target = join(unsafeParent, "backup");
@@ -294,6 +302,39 @@ test("rejects unsafe writable backup parents before creating the target", () => 
   } finally {
     rmSync(root, { force: true, recursive: true });
     rmSync(environmentFile.directory, { force: true, recursive: true });
+  }
+});
+
+test("creates every absent backup path component privately despite a permissive caller umask", () => {
+  const root = canonicalSharedTemporaryDirectory("jyotisha-backup-umask-");
+  const environmentFile = createDatabaseEnvironment();
+  const commandDirectory = mkdtempSync(join(tmpdir(), "jyotisha-backup-umask-command-"));
+  const components = ["first", "second", "backup"];
+  const target = join(root, ...components);
+
+  try {
+    safeDiskCommand(commandDirectory);
+    writeCommand(commandDirectory, "docker", "printf '%s' 'umask dump payload'");
+    const result = runBackup(
+      environmentFile.file,
+      target,
+      backupEnvironment(commandDirectory, { BACKUP_TIMESTAMP: "20260720T050101Z" }),
+      repositoryRoot,
+      "000",
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    let createdPath = root;
+    for (const component of components) {
+      createdPath = join(createdPath, component);
+      const created = statSync(createdPath);
+      assert.equal(created.uid, process.getuid?.());
+      assert.equal(created.mode & 0o777, 0o700);
+    }
+  } finally {
+    rmSync(root, { force: true, recursive: true });
+    rmSync(environmentFile.directory, { force: true, recursive: true });
+    rmSync(commandDirectory, { force: true, recursive: true });
   }
 });
 
