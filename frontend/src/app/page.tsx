@@ -1463,6 +1463,7 @@ export default function Home() {
       setAccountError("");
       setProfileNotice("已保存到云端星盘库。");
     }
+    await draftSynastryQuestionFromChart(record);
   }
 
   async function deleteOtherChart(recordId: string) {

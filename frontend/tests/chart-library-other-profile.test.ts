@@ -20,6 +20,12 @@ test("other chart save falls back to local library when cloud sync fails", () =>
   assert.doesNotMatch(source, /deleteOtherChart[\s\S]{0,500}void deleteCloudChartProfile/);
 });
 
+test("adding another chart immediately opens the synastry path", () => {
+  assert.match(source, /async function saveOtherChart[\s\S]{0,1400}await draftSynastryQuestionFromChart\(record\)/);
+  assert.match(source, /用于合盘/);
+  assert.match(source, /\/api\/synastry/);
+});
+
 test("a successful cloud read replaces stale local other charts", () => {
   assert.match(
     source,
