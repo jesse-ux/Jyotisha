@@ -57,6 +57,8 @@ const errorDefinitions = {
 
 export type ConversationalRectificationErrorCode = keyof typeof errorDefinitions;
 
+const trustedErrorCodes = new WeakMap<object, ConversationalRectificationErrorCode>();
+
 export type ConversationalRectificationPublicError = Readonly<{
   code: ConversationalRectificationErrorCode;
   status: number;
@@ -65,10 +67,13 @@ export type ConversationalRectificationPublicError = Readonly<{
   retryable: boolean;
 }>;
 
-function createPublicError(code: ConversationalRectificationErrorCode): ConversationalRectificationPublicError {
-  const definition = errorDefinitions[code];
+function createPublicError(code: unknown): ConversationalRectificationPublicError {
+  const safeCode = typeof code === "string" && Object.hasOwn(errorDefinitions, code)
+    ? code as ConversationalRectificationErrorCode
+    : "service_unavailable";
+  const definition = errorDefinitions[safeCode];
   return Object.freeze({
-    code,
+    code: safeCode,
     status: definition.status,
     error: definition.error,
     message: definition.message,
@@ -92,7 +97,20 @@ export class ConversationalRectificationError extends Error {
     this.code = code;
     this.status = definition.status;
     this.public = createPublicError(code);
+    trustedErrorCodes.set(this, code);
   }
+}
+
+function getTrustedErrorCode(error: unknown): ConversationalRectificationErrorCode | undefined {
+  if (error === null || typeof error !== "object") return undefined;
+
+  const trustedCode = trustedErrorCodes.get(error);
+  if (!trustedCode) return undefined;
+
+  const descriptor = Object.getOwnPropertyDescriptor(error, "code");
+  return descriptor && "value" in descriptor && descriptor.value === trustedCode
+    ? trustedCode
+    : undefined;
 }
 
 /**
@@ -100,12 +118,5 @@ export class ConversationalRectificationError extends Error {
  * and never keeps the unknown input or any of its properties reachable.
  */
 export function toConversationalRectificationPublicError(error: unknown): ConversationalRectificationPublicError {
-  return error instanceof ConversationalRectificationError
-    ? error.public
-    : createPublicError("service_unavailable");
-}
-
-/** @deprecated Use toConversationalRectificationPublicError for route responses. */
-export function toConversationalRectificationError(error: unknown): ConversationalRectificationPublicError {
-  return toConversationalRectificationPublicError(error);
+  return createPublicError(getTrustedErrorCode(error));
 }

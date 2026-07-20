@@ -6,7 +6,6 @@ import {
 } from "../src/lib/conversational-rectification/contracts.ts";
 import {
   ConversationalRectificationError,
-  toConversationalRectificationError,
   toConversationalRectificationPublicError,
 } from "../src/lib/conversational-rectification/errors.ts";
 
@@ -143,6 +142,75 @@ test("maps unknown failures to a complete non-leaking public DTO", () => {
   assertNoReachableText(recovered, rawMessage);
   assert.equal(JSON.stringify(recovered).includes(rawMessage), false);
   assert.equal(Reflect.set(recovered, "error", rawMessage), false);
+});
 
-  assert.deepEqual(toConversationalRectificationError(rawFailure), recovered);
+function assertExactSafePublicDto(
+  value: unknown,
+  expected: {
+    code: string;
+    status: number;
+    error: string;
+    message: string;
+    retryable: boolean;
+  },
+  rawMessage: string,
+) {
+  assert.deepEqual(value, expected);
+  assert.equal(Object.getPrototypeOf(value), Object.prototype);
+  assert.deepEqual(Reflect.ownKeys(value).sort(), ["code", "error", "message", "retryable", "status"]);
+  assert.equal(Object.isFrozen(value), true);
+  assert.equal("cause" in (value as object), false);
+  assert.deepEqual(JSON.parse(JSON.stringify(value)), expected);
+  assertNoReachableText(value, rawMessage);
+}
+
+test("rebuilds safe DTOs from forged or mutated recognized errors", () => {
+  const rawMessage = "raw browser SQL model cause";
+  const expectedStale = {
+    code: "stale_turn",
+    status: 409,
+    error: "校正进度已更新",
+    message: "请加载最新进度后再试。",
+    retryable: true,
+  };
+  const expectedUnavailable = {
+    code: "service_unavailable",
+    status: 503,
+    error: "生时校正暂时不可用",
+    message: "服务暂时不可用，请稍后重试。",
+    retryable: true,
+  };
+  const mutatedPublic = new ConversationalRectificationError("stale_turn");
+  const poisonedPublic = {
+    ...expectedStale,
+    message: rawMessage,
+    cause: new Error(rawMessage),
+  };
+  Object.defineProperty(mutatedPublic, "public", { value: poisonedPublic });
+  Object.assign(mutatedPublic, { cause: new Error(rawMessage), rawMessage });
+
+  const rebuilt = toConversationalRectificationPublicError(mutatedPublic);
+  assert.notStrictEqual(rebuilt, poisonedPublic);
+  assertExactSafePublicDto(rebuilt, expectedStale, rawMessage);
+
+  const mutatedCode = new ConversationalRectificationError("stale_turn");
+  Object.defineProperty(mutatedCode, "code", { value: "forged_code" });
+  assertExactSafePublicDto(
+    toConversationalRectificationPublicError(mutatedCode),
+    expectedUnavailable,
+    rawMessage,
+  );
+
+  const forged = Object.create(ConversationalRectificationError.prototype);
+  Object.assign(forged, {
+    code: "stale_turn",
+    public: poisonedPublic,
+    cause: new Error(rawMessage),
+    rawMessage,
+  });
+  assertExactSafePublicDto(
+    toConversationalRectificationPublicError(forged),
+    expectedUnavailable,
+    rawMessage,
+  );
 });
