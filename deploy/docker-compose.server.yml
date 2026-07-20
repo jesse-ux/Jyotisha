@@ -4,7 +4,8 @@ services:
       context: ..
       dockerfile: deploy/railway-api.Dockerfile
     restart: unless-stopped
-    env_file: ../.env.production
+    env_file:
+      - ${APP_ENV_FILE:-../.env.production}
     environment:
       PORT: 5200
       JYOTISH_ALLOWED_HOSTS: localhost,127.0.0.1,::1,api
@@ -24,7 +25,8 @@ services:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     restart: unless-stopped
-    env_file: ../.env.production
+    env_file:
+      - ${APP_ENV_FILE:-../.env.production}
     environment:
       GITHUB_SHA: ${GITHUB_SHA}
       PORT: 3000
@@ -45,7 +47,7 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${CADDYFILE_PATH:-./Caddyfile}:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

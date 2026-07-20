@@ -1,6 +1,8 @@
 name: Jyotish Skill CI
 
 on:
+  push:
+    branches: [staging]
   workflow_dispatch:
 
 jobs:

@@ -1,0 +1,144 @@
+name: Deploy staging
+
+on:
+  workflow_run:
+    workflows: ["Jyotish Skill CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      git_sha:
+        description: Exact 40-character commit SHA from a successful CI run
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'staging')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    env:
+      DEPLOY_HOST: ${{ vars.STAGING_HOST }}
+      DEPLOY_PORT: ${{ vars.STAGING_PORT }}
+      DEPLOY_USER: ${{ vars.STAGING_USER }}
+      DEPLOY_PATH: ${{ vars.STAGING_PATH }}
+      STAGING_URL: ${{ vars.STAGING_URL }}
+      STAGING_KNOWN_HOSTS: ${{ vars.STAGING_KNOWN_HOSTS }}
+
+    steps:
+      - name: Validate tested revision
+        id: revision
+        env:
+          REQUESTED_SHA: ${{ github.event.workflow_run.head_sha || inputs.git_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "${#REQUESTED_SHA}" -eq 40
+          case "$REQUESTED_SHA" in
+            *[!0-9a-fA-F]*) echo "git_sha must be a full hexadecimal commit SHA" >&2; exit 1 ;;
+          esac
+          DEPLOY_GIT_SHA="$(printf '%s' "$REQUESTED_SHA" | tr '[:upper:]' '[:lower:]')"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            TESTED_RUNS="$(curl --fail --silent --show-error \
+              --header "Authorization: Bearer $GH_TOKEN" \
+              --header "Accept: application/vnd.github+json" \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$DEPLOY_GIT_SHA&status=success&per_page=1")"
+            test "$(printf '%s' "$TESTED_RUNS" | jq -r '.total_count')" -ge 1 || {
+              echo "No successful Jyotish Skill CI run found for $DEPLOY_GIT_SHA" >&2
+              exit 1
+            }
+          fi
+          echo "sha=$DEPLOY_GIT_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout tested revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.revision.outputs.sha }}
+
+      - name: Verify checked-out revision
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: test "$(git rev-parse HEAD)" = "$DEPLOY_GIT_SHA"
+
+      - name: Validate staging target configuration
+        run: |
+          test "$DEPLOY_HOST" = "118.26.111.127"
+          test "$DEPLOY_PORT" = "22"
+          test "$DEPLOY_USER" = "deploy"
+          test "$DEPLOY_PATH" = "/opt/jyotisha-staging"
+          test "$STAGING_URL" = "https://staging.jyotisha.chat"
+          test -n "$STAGING_KNOWN_HOSTS"
+
+      - name: Configure pinned staging SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+        run: |
+          test -n "$SSH_PRIVATE_KEY"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/jyotisha-staging
+          chmod 600 ~/.ssh/jyotisha-staging
+          printf '%s\n' "$STAGING_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Record previous staging state
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          PREVIOUS_SHA="$(curl --fail --silent --show-error --max-time 10 "$STAGING_URL/api/health" 2>/dev/null | jq -r '.deployment.gitCommit // empty' || true)"
+          test -n "$PREVIOUS_SHA" || PREVIOUS_SHA="not-deployed"
+          PREVIOUS_IMAGES="$(ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "if [ -f '$DEPLOY_PATH/.env.staging' ] && [ -f '$DEPLOY_PATH/deploy/docker-compose.server.yml' ]; then cd '$DEPLOY_PATH' && APP_ENV_FILE='../.env.staging' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml images --quiet; else echo not-deployed; fi")"
+          test -n "$PREVIOUS_IMAGES" || PREVIOUS_IMAGES="not-deployed"
+          {
+            echo "### Staging deployment state"
+            echo "- Previous verified SHA: \`$PREVIOUS_SHA\`"
+            echo "- Target SHA: \`$DEPLOY_GIT_SHA\`"
+            echo "- Previous image IDs:"
+            echo '```text'
+            printf '%s\n' "$PREVIOUS_IMAGES"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Sync and rebuild staging
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          RSYNC_SSH="ssh $SSH_OPTIONS"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "install -d -m 755 '$DEPLOY_PATH'"
+          rsync -az --delete \
+            --exclude='.git/' \
+            --exclude='.env*' \
+            --exclude='frontend/node_modules/' \
+            --exclude='frontend/.next/' \
+            -e "$RSYNC_SSH" \
+            ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && bash deploy/validate-staging-env.sh .env.staging && APP_ENV_FILE='../.env.staging' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet && APP_ENV_FILE='../.env.staging' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' GITHUB_SHA='$DEPLOY_GIT_SHA' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml up -d --build --remove-orphans"
+
+      - name: Verify staging
+        env:
+          DEPLOY_GIT_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 "$STAGING_URL/login" >/dev/null
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$STAGING_URL/api/account")" = "401"
+          test "$(curl --fail --silent --show-error "$STAGING_URL/api/health" | jq -r '.deployment.gitCommit')" = "$DEPLOY_GIT_SHA"
+          ssh -i ~/.ssh/jyotisha-staging -p "$DEPLOY_PORT" \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && APP_ENV_FILE='../.env.staging' CADDYFILE_PATH='./Caddyfile.staging' SITE_ADDRESS='https://staging.jyotisha.chat' docker compose --env-file .env.staging -f deploy/docker-compose.server.yml exec -T web node -e 'fetch(\"http://api:5200/api/health\").then(async r => { const body = await r.json(); if (!r.ok || body.status !== \"ok\" || body.swisseph_available !== true) process.exit(1); console.log(JSON.stringify(body)); })'"
+          echo "- Verified deployed SHA: \`$DEPLOY_GIT_SHA\`" >> "$GITHUB_STEP_SUMMARY"
