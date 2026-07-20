@@ -80,6 +80,17 @@ def _capture_body_for_real_case(case: dict[str, Any], prompt: str) -> dict[str, 
         "education": "career",
     }
     themes = [theme_map.get(domain, domain) for domain in case["domains"]]
+    prompt_prefix = ""
+    if "marriage" in case["domains"] or "family" in case["domains"]:
+        prompt_prefix = "婚恋 relationship marriage: "
+    elif "wealth" in case["domains"]:
+        prompt_prefix = "财富 finance wealth: "
+    elif "timing" in case["domains"] or "annual" in case["domains"]:
+        prompt_prefix = "应期 timing when: "
+    elif "health" in case["domains"]:
+        prompt_prefix = "健康 health: "
+    elif "migration" in case["domains"]:
+        prompt_prefix = "迁移 foreign career: "
     return {
         "year": year,
         "month": month,
@@ -90,8 +101,8 @@ def _capture_body_for_real_case(case: dict[str, Any], prompt: str) -> dict[str, 
         "lon": birth["lon"],
         "tz": birth["tz"],
         "city": birth["place"],
-        "question": prompt,
-        "question_text": prompt,
+        "question": f"{prompt_prefix}{prompt}",
+        "question_text": f"{prompt_prefix}{prompt}",
         "theme": themes,
         "evaluation_domains": case["domains"],
         "entry_mode": "direct_chart",
