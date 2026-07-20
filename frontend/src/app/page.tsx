@@ -1131,7 +1131,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [hydrated, profile.date, profile.time, profile.birthTimeStatus, profile.provinceCode, profile.cityCode, profileComplete]);
+  }, [hydrated, profile, profileComplete]);
 
   useEffect(() => {
     if (!hydrated || !profileComplete) return;
