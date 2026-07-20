@@ -27,7 +27,7 @@
 
 ## Commit
 
-- `ba8ece0 fix: close chat deletion and transport errors`
+- Implementation: `4ffebdd fix: close chat deletion and transport errors`
 
 ## Concerns
 
