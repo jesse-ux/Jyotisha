@@ -17,19 +17,20 @@ test("database roles have no cluster privileges", () => {
     assert.equal(
       fixture.psql(`
         select rolname || ':' || rolsuper || ':' || rolcreatedb || ':' ||
-               rolcreaterole || ':' || rolbypassrls
+               rolcreaterole || ':' || rolbypassrls || ':' ||
+               rolreplication || ':' || rolinherit
         from pg_roles
         where rolname in ('schema_owner','identity_runtime','app_runtime',
           'admin_runtime','migration_runner','backup_reader')
         order by rolname
       `),
       [
-        "admin_runtime:f:f:f:f",
-        "app_runtime:f:f:f:f",
-        "backup_reader:f:f:f:f",
-        "identity_runtime:f:f:f:f",
-        "migration_runner:f:f:f:f",
-        "schema_owner:f:f:f:f",
+        "admin_runtime:f:f:f:f:f:f",
+        "app_runtime:f:f:f:f:f:f",
+        "backup_reader:f:f:f:f:f:f",
+        "identity_runtime:f:f:f:f:f:f",
+        "migration_runner:f:f:f:f:f:f",
+        "schema_owner:f:f:f:f:f:f",
       ].join("\n"),
     );
   } finally {

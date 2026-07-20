@@ -43,12 +43,12 @@ fi
 
 definition_count() {
   local key="$1"
-  grep -Ec "^(export[[:space:]]+)?${key}=" "$ENV_FILE" || true
+  grep -Ec "^[[:space:]]*(export[[:space:]]+)?${key}[[:space:]]*=" "$ENV_FILE" || true
 }
 
 environment_value() {
   local key="$1"
-  sed -n -E "s/^(export[[:space:]]+)?${key}=(.*)$/\\2/p" "$ENV_FILE"
+  sed -n -E "s/^[[:space:]]*(export[[:space:]]+)?${key}[[:space:]]*=[[:space:]]*(.*)$/\\2/p" "$ENV_FILE"
 }
 
 require_once_non_empty() {
