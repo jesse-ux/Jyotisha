@@ -413,7 +413,7 @@ test("confirmed surface never revives an old local question after durable consum
   const consumed = {
     ...confirmedTurn(),
     pendingConsultationQuestion: null,
-    actions: [] as const,
+    actions: [],
   };
   const markup = renderToStaticMarkup(React.createElement(
     ConversationalRectificationSurface,

@@ -161,9 +161,18 @@ export function streamTextResponse(
   let firstOutputSettled = false;
 
   async function settleFirstOutput(value: string) {
-    if (!value || firstOutputSettled) return;
+    if (!/\S/.test(value) || firstOutputSettled) return;
     firstOutputSettled = true;
     await options.onFirstOutput?.();
+  }
+
+  async function enqueueOutput(
+    controller: ReadableStreamDefaultController<Uint8Array>,
+    value: string,
+  ) {
+    await settleFirstOutput(value);
+    controller.enqueue(encoder.encode(value));
+    if (/\S/.test(value)) emitted = true;
   }
 
   const body = new ReadableStream<Uint8Array>({
@@ -176,8 +185,7 @@ export function streamTextResponse(
               ? visibleTransformer.finish(pending)
               : pending;
             if (finalText) {
-              await settleFirstOutput(finalText);
-              controller.enqueue(encoder.encode(finalText));
+              await enqueueOutput(controller, finalText);
             }
             settled = true;
             if (!emitted) {
@@ -190,7 +198,6 @@ export function streamTextResponse(
             controller.close();
             return;
           }
-          if (/\S/.test(value)) emitted = true;
           pending += value;
           if (pending.length <= guardTailLength) continue;
 
@@ -201,8 +208,7 @@ export function streamTextResponse(
             ? visibleTransformer.push(stable)
             : stable;
           if (transformed) {
-            await settleFirstOutput(transformed);
-            controller.enqueue(encoder.encode(transformed));
+            await enqueueOutput(controller, transformed);
             return;
           }
         }

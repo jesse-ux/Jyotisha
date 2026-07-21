@@ -165,6 +165,64 @@ test("transformed empty streams still refund through the error settlement", asyn
   assert.equal(errors, 1);
 });
 
+test("a transformed short reply that fails while buffered reports no emitted output", async () => {
+  let observedEmitted: boolean | null = null;
+  async function* reply() {
+    yield "尚未冲出的短回答";
+    throw new Error("upstream_failed");
+  }
+  const response = streamTextResponse(reply(), {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000007",
+    transformText: (text) => text,
+    onError: async (_error, emitted) => { observedEmitted = emitted; },
+  });
+
+  await assert.rejects(response.text(), /upstream_failed/);
+  assert.equal(observedEmitted, false);
+});
+
+test("cancelling while transformed short output is buffered reports no emitted output", async () => {
+  let markSecondReadStarted = () => {};
+  const secondReadStarted = new Promise<void>((resolve) => {
+    markSecondReadStarted = resolve;
+  });
+  const never = new Promise<IteratorResult<string>>(() => {});
+  let reads = 0;
+  const reply: AsyncIterable<string> = {
+    [Symbol.asyncIterator]() {
+      return {
+        next() {
+          reads += 1;
+          if (reads === 1) {
+            return Promise.resolve({ done: false, value: "尚未冲出的短回答" });
+          }
+          markSecondReadStarted();
+          return never;
+        },
+        return() {
+          return Promise.resolve({ done: true, value: undefined });
+        },
+      };
+    },
+  };
+  let observedEmitted: boolean | null = null;
+  const response = streamTextResponse(reply, {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000008",
+    transformText: (text) => text,
+    onCancel: async (emitted) => { observedEmitted = emitted; },
+  });
+  const reader = response.body?.getReader();
+  assert.ok(reader);
+  const pendingRead = reader.read();
+  await secondReadStarted;
+
+  await reader.cancel();
+  await pendingRead;
+  assert.equal(observedEmitted, false);
+});
+
 test("cancelling a transformed stream after visible output preserves emitted settlement", async () => {
   let charged = 0;
   let refunded = 0;
