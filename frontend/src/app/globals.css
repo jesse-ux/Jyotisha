@@ -707,6 +707,8 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   .auth-panel h1 { font-size: var(--type-display-sm); }
   .admin-section { padding: var(--space-5); }
 }
-.session-delete-confirmation { position: fixed; inset: auto var(--space-5) var(--space-5) auto; z-index: 100; width: min(360px, calc(100vw - var(--space-10))); padding: var(--space-5); border: 1px solid var(--border); border-radius: 8px; background: var(--background); box-shadow: 0 12px 32px rgb(0 0 0 / 18%); }
-.session-delete-confirmation p { margin: 0 0 var(--space-4); }
-.session-delete-confirmation div { display: flex; justify-content: flex-end; gap: var(--space-3); }
+.session-delete-overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: var(--space-5); background: rgb(0 0 0 / 32%); }
+.session-delete-confirmation { width: min(420px, 100%); padding: var(--space-6); border: 1px solid var(--border); border-radius: 8px; background: var(--background); box-shadow: 0 20px 56px rgb(0 0 0 / 24%); }
+.session-delete-confirmation h2 { margin: 0 0 var(--space-3); font-size: var(--type-title-lg); }
+.session-delete-confirmation p { margin: 0; color: var(--muted-foreground); }
+.session-delete-actions { display: flex; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-6); }
