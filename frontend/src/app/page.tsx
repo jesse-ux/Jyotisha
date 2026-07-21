@@ -50,6 +50,7 @@ import {
 import type { ConsultationBirthTimeMode } from "@/lib/consultation-birth-time-mode";
 import { sendConversationalRectificationCommand } from "@/lib/conversational-rectification/client";
 import type { ConversationalRectificationTurn } from "@/lib/conversational-rectification/contracts";
+import { createRectificationQuestionHandoffCoordinator } from "@/lib/rectification-question-handoff";
 import { useBirthTimeGuidedJourney } from "@/hooks/use-birth-time-guided-journey";
 import {
   requestBirthTimeAssessment,
@@ -747,6 +748,7 @@ export default function Home() {
   const [rectificationPendingQuestion, setRectificationPendingQuestion] = useState<string | null>(null);
   const [rectificationLoading, setRectificationLoading] = useState(false);
   const [rectificationMutationPending, setRectificationMutationPending] = useState(false);
+  const [rectificationContinuationPending, setRectificationContinuationPending] = useState(false);
   const [rectificationError, setRectificationError] = useState("");
   const [hydrated, setHydrated] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -781,6 +783,8 @@ export default function Home() {
   const chartLibraryLoadedAccount = useRef("");
   const activeOnboardingRequestIdentity = useRef("");
   const accountRefreshGuard = useRef(createLatestAccountRequestGuard());
+  const rectificationQuestionHandoff = useRef(createRectificationQuestionHandoffCoordinator<Theme>());
+  const rectificationContinuationInFlight = useRef(false);
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
   const birthTimeRevisionPending = useRef(false);
@@ -806,6 +810,7 @@ export default function Home() {
     || Boolean(pendingSessionId)
     || cancellationPending
     || rectificationMutationPending
+    || rectificationContinuationPending
     || !account
     || !modelCatalog;
   const activeStreamingText = streamingReply && streamingReply.sessionId === activeSession?.id ? streamingReply.text : "";
@@ -1777,8 +1782,18 @@ export default function Home() {
     chooseSuggestedQuestion("深入看今日", "timing", "daily_starlanguage");
   }
 
+  function synchronizeRectificationQuestion(turn: ConversationalRectificationTurn) {
+    if (!turn.pendingConsultationQuestion || !activeSession) return;
+    rectificationQuestionHandoff.current.synchronizeDurableQuestion(
+      turn.pendingConsultationQuestion,
+      { sessionId: activeSession.id, theme: activeSession.theme },
+    );
+    setRectificationPendingQuestion(turn.pendingConsultationQuestion);
+  }
+
   async function openBirthTimeRectification(pendingConsultationQuestion: string | null = null) {
-    if (!account || rectificationLoading || rectificationMutationPending) return;
+    if (!account || rectificationLoading || rectificationMutationPending
+      || rectificationContinuationInFlight.current) return;
     const action = resolveRectificationCardAction({
       rectificationCase: account.rectificationCase,
       hasConfirmedBirthTime: account.hasConfirmedBirthTime,
@@ -1787,7 +1802,11 @@ export default function Home() {
     setDraft("");
     setDraftTheme(null);
     setDraftEntrypoint(null);
-    setRectificationPendingQuestion(pendingConsultationQuestion);
+    setRectificationPendingQuestion(
+      pendingConsultationQuestion
+        ?? rectificationQuestionHandoff.current.peek()?.question
+        ?? null,
+    );
     setRectificationInitialTurn(null);
     setRectificationError("");
     setRectificationSurfaceOpen(true);
@@ -1803,6 +1822,7 @@ export default function Home() {
         turnVersion: current.turnVersion,
       });
       setRectificationInitialTurn(turn);
+      synchronizeRectificationQuestion(turn);
     } catch (caught) {
       setRectificationError(caught instanceof Error
         ? caught.message
@@ -1815,6 +1835,7 @@ export default function Home() {
   function handleConversationalRectificationTurn(turn: ConversationalRectificationTurn) {
     const requestIdentity = accountRefreshGuard.current.begin();
     setRectificationInitialTurn(turn);
+    synchronizeRectificationQuestion(turn);
     setAccount((current) => current ? {
       ...current,
       hasConfirmedBirthTime: current.hasConfirmedBirthTime
@@ -2050,26 +2071,30 @@ export default function Home() {
     requestedTheme?: Theme,
     entrypoint: ConsultationEntrypoint | null = null,
     consentGrantedForRequest: ConsultationBirthTimeMode | null = null,
-  ) {
+    targetSessionId: string | null = null,
+  ): Promise<boolean> {
     const originalQuestion = text;
     const question = text.trim();
-    if (!question || !activeSession || !modelCatalog || pendingSessionId || cancellationInFlight.current || pendingConsultation.current || !account) return;
+    const currentSession = targetSessionId
+      ? sessions.find((session) => session.id === targetSessionId)
+      : activeSession;
+    if (!question || !currentSession || !modelCatalog || pendingSessionId
+      || cancellationInFlight.current || pendingConsultation.current || !account) return false;
 
     if (!isProfileComplete(profile)) {
       openAccountDialog("profile");
       setProfileNotice("请先补充出生资料，才能进行星盘计算。");
-      return;
+      return false;
     }
 
     if (entrypoint === "birth_time_rectification") {
       await openBirthTimeRectification(null);
-      return;
+      return false;
     }
 
     const birthPlace = selectedBirthPlace(profile);
-    if (!birthPlace) return;
+    if (!birthPlace) return false;
 
-    const currentSession = activeSession;
     const theme = requestedTheme ?? currentSession.theme;
     const sessionId = currentSession.id;
     const consentForDecision = consentGrantedForRequest === "unverified_birth_time"
@@ -2094,12 +2119,12 @@ export default function Home() {
       setComposerNotice(consultationRoute.canUseUnverifiedTime
         ? "请选择在当前聊天临时使用填报时间，或先校正再询问。"
         : "你还没有可使用的具体出生分钟，可以先校正，或改问不依赖出生分钟的一般问题。");
-      return;
+      return false;
     }
 
     if (account.credits <= 0) {
       openAccountDialog("redeem", creditTrigger.current);
-      return;
+      return false;
     }
 
     const [year, month, day] = profile.date.split("-").map(Number);
@@ -2160,7 +2185,7 @@ export default function Home() {
       await new Promise((resolve) => window.setTimeout(resolve, uiPreviewMode.current === "streaming" || uiPreviewMode.current === "partial" ? 15_000 : 800));
       if (controller.signal.aborted) {
         if (pendingConsultation.current?.requestId === requestId) pendingConsultation.current = null;
-        return;
+        return false;
       }
       const previewReply = parseAgentReply([
         "这是本地交互预览。正式对话会结合你的星盘证据继续分析。",
@@ -2179,11 +2204,11 @@ export default function Home() {
       };
       updateSession(sessionId, () => previewSession);
       completeConsultationInterface(requestId);
-      return;
+      return true;
     }
 
     await waitForUndoWindow(controller.signal);
-    if (controller.signal.aborted) return;
+    if (controller.signal.aborted) return false;
     if (pendingConsultation.current?.requestId === requestId) {
       pendingConsultation.current = {
         ...pendingConsultation.current,
@@ -2253,7 +2278,7 @@ export default function Home() {
         }
       }
       answer += decoder.decode();
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted) return Boolean(latestPartialReply);
       if (!answer.trim()) throw new Error("Agent 没有返回内容，请重试。");
       const reply = parseAgentReply(answer, theme);
       if (!reply.text) throw new Error("Agent 没有返回可显示的回答，请重试。");
@@ -2275,6 +2300,7 @@ export default function Home() {
         });
       }
       void refreshAccount();
+      return true;
     } catch (caught) {
       const cancelled = controller.signal.aborted;
       const ownsInterface = pendingConsultation.current?.requestId === requestId;
@@ -2327,6 +2353,7 @@ export default function Home() {
           setComposerNotice("回答中途断开，已保留现有内容，本次已计费。");
         }
       }
+      return Boolean(partialReply);
     } finally {
       cancellationRequests.current.delete(requestId);
       completeConsultationInterface(requestId);
@@ -2341,6 +2368,85 @@ export default function Home() {
         setCancellationPending(false);
       }
     }
+  }
+
+
+  async function continueRectificationOriginalQuestion(question: string) {
+    if (rectificationContinuationInFlight.current || rectificationMutationPending
+      || rectificationLoading || !activeSession) return;
+    if (rectificationQuestionHandoff.current.peek()
+      && !sessions.some((session) => session.id === rectificationQuestionHandoff.current.peek()?.sessionId)) {
+      rectificationQuestionHandoff.current.clear();
+    }
+
+    rectificationContinuationInFlight.current = true;
+    setRectificationContinuationPending(true);
+    setRectificationError("");
+    try {
+      const completed = await rectificationQuestionHandoff.current.continueOriginalQuestion(
+        question,
+        { sessionId: activeSession.id, theme: activeSession.theme },
+        async (context) => {
+          activeSessionIdRef.current = context.sessionId;
+          setActiveSessionId(context.sessionId);
+          setBirthTimeConsultationConsent((current) => clearBirthTimeConsultationConsent(
+            current,
+            context.sessionId,
+          ));
+          return send(context.question, context.theme, null, null, context.sessionId);
+        },
+      );
+      if (completed) {
+        setRectificationSurfaceOpen(false);
+        setRectificationPendingQuestion(null);
+        setRectificationInitialTurn(null);
+        setComposerNotice("已使用新确认时间继续回答原问题。");
+      } else {
+        setComposerNotice("原问题仍保留，可再次点击继续回答。");
+      }
+    } catch {
+      setComposerNotice("原问题仍保留，可再次点击继续回答。");
+    } finally {
+      rectificationContinuationInFlight.current = false;
+      setRectificationContinuationPending(false);
+    }
+  }
+
+  function restoreQuestionFromRectification() {
+    if (rectificationLoading || rectificationMutationPending
+      || rectificationContinuationInFlight.current) return;
+    const durableQuestion = rectificationInitialTurn?.pendingConsultationQuestion
+      ?? rectificationPendingQuestion
+      ?? rectificationQuestionHandoff.current.peek()?.question
+      ?? null;
+    let handoff = activeSession
+      ? rectificationQuestionHandoff.current.synchronizeDurableQuestion(
+        durableQuestion,
+        { sessionId: activeSession.id, theme: activeSession.theme },
+      )
+      : null;
+    const handoffSessionId = handoff?.sessionId ?? null;
+    if (handoffSessionId
+      && !sessions.some((session) => session.id === handoffSessionId)
+      && activeSession) {
+      rectificationQuestionHandoff.current.clear();
+      handoff = rectificationQuestionHandoff.current.synchronizeDurableQuestion(
+        durableQuestion,
+        { sessionId: activeSession.id, theme: activeSession.theme },
+      );
+    }
+    if (handoff) {
+      activeSessionIdRef.current = handoff.sessionId;
+      setActiveSessionId(handoff.sessionId);
+      setDraft(handoff.question);
+      setDraftTheme(handoff.theme);
+      setDraftEntrypoint(null);
+      setComposerNotice("原问题已放回输入框；没有发起普通咨询，也未扣咨询点数。");
+      rectificationQuestionHandoff.current.clear();
+      window.requestAnimationFrame(() => composerInput.current?.focus());
+    }
+    setRectificationSurfaceOpen(false);
+    setRectificationInitialTurn(null);
   }
 
   function useUnverifiedTimeForPendingConsultation() {
@@ -2385,6 +2491,11 @@ export default function Home() {
       || !activeSession
       || pendingBirthTimeChoice.sessionId !== activeSession.id) return;
     const pending = pendingBirthTimeChoice;
+    rectificationQuestionHandoff.current.capture({
+      question: pending.question,
+      sessionId: pending.sessionId,
+      theme: pending.theme,
+    });
     setPendingBirthTimeChoice(null);
     setComposerNotice("");
     void openBirthTimeRectification(pending.question);
@@ -2708,15 +2819,18 @@ export default function Home() {
               <div className="onboarding-card-actions">
                 <button
                   className="button-secondary"
-                  disabled={rectificationLoading || rectificationMutationPending}
+                  disabled={rectificationLoading || rectificationMutationPending || rectificationContinuationPending}
                   type="button"
                   onClick={() => {
                     if (!rectificationLoading && !rectificationMutationPending) {
-                      setRectificationSurfaceOpen(false);
+                      restoreQuestionFromRectification();
                     }
                   }}
                 >
-                  返回首页
+                  {(rectificationInitialTurn?.pendingConsultationQuestion
+                    ?? rectificationPendingQuestion)
+                    ? "返回并恢复原问题"
+                    : "返回首页"}
                 </button>
               </div>
               {rectificationLoading ? (
@@ -2726,6 +2840,7 @@ export default function Home() {
                   <p className="form-error">{rectificationError}</p>
                   <button
                     className="button-primary"
+                    disabled={rectificationLoading || rectificationMutationPending}
                     type="button"
                     onClick={() => void openBirthTimeRectification(rectificationPendingQuestion)}
                   >
@@ -2736,8 +2851,10 @@ export default function Home() {
                 <ConversationalBirthTimeRectification
                   initialTurn={rectificationInitialTurn}
                   pendingConsultationQuestion={rectificationPendingQuestion}
+                  continuationPending={rectificationContinuationPending}
                   onPendingChange={setRectificationMutationPending}
                   onTurn={handleConversationalRectificationTurn}
+                  onContinueOriginalQuestion={(question) => void continueRectificationOriginalQuestion(question)}
                 />
               )}
             </section>

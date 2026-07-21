@@ -57,7 +57,7 @@ const chartChatRequestSchema = consultationInputSchema.extend({
     .optional()
     .default("verified_chart"),
   entrypoint: consultationEntrypointSchema.optional(),
-});
+}).strict();
 
 const generalChatRequestSchema = z.object({
   ...chatRequestMetadataSchema.shape,

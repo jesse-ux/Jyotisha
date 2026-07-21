@@ -29,6 +29,7 @@ const domainLabels = {
 type SurfaceProps = Readonly<{
   controller: ConversationalRectificationController;
   pendingConsultationQuestion?: string | null;
+  continuationPending?: boolean;
   onContinueOriginalQuestion?: (question: string) => void;
 }>;
 
@@ -88,6 +89,7 @@ function TechnicalReceipt({ turn }: { readonly turn: ConversationalRectification
 export function ConversationalRectificationSurface({
   controller,
   pendingConsultationQuestion,
+  continuationPending = false,
   onContinueOriginalQuestion,
 }: SurfaceProps) {
   const [abandonArmedFor, setAbandonArmedFor] = useState<string | null>(null);
@@ -368,11 +370,13 @@ export function ConversationalRectificationSurface({
           <p>原问题：{pendingQuestion}</p>
           <button
             className="button-primary"
-            disabled={controller.pending}
+            disabled={controller.pending || continuationPending}
             type="button"
             onClick={() => onContinueOriginalQuestion?.(pendingQuestion)}
           >
-            继续回答原问题
+            {continuationPending
+              ? "正在继续回答原问题…"
+              : "使用新确认时间继续回答原问题"}
           </button>
         </section>
       )}
@@ -458,6 +462,7 @@ export function ConversationalRectificationSurface({
 type ConversationalBirthTimeRectificationProps = Readonly<{
   initialTurn?: ConversationalRectificationTurn | null;
   pendingConsultationQuestion?: string | null;
+  continuationPending?: boolean;
   onTurn?: (turn: ConversationalRectificationTurn) => void;
   onPendingChange?: (pending: boolean) => void;
   onContinueOriginalQuestion?: (question: string) => void;
@@ -480,6 +485,7 @@ export function ConversationalBirthTimeRectification(
     <ConversationalRectificationSurface
       controller={controller}
       pendingConsultationQuestion={props.pendingConsultationQuestion}
+      continuationPending={props.continuationPending}
       onContinueOriginalQuestion={props.onContinueOriginalQuestion}
     />
   );
