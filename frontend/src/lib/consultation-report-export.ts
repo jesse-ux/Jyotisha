@@ -23,3 +23,15 @@ export function consultationReportMarkdown(input: {
     "本报告保留证据边界；未闭环内容不得包装成确定预测。",
   ].join("\n");
 }
+
+export function downloadMarkdownReport(title: string, markdown: string) {
+  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${title.replace(/[\\/:*?"<>|]+/g, "-")}.md`;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
