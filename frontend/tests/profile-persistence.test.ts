@@ -79,3 +79,19 @@ test("service role can read every column used by account profile upserts", () =>
     /grant\s+select\s*\(\s*district_code\s*,\s*updated_at\s*\)\s*on\s+table\s+public\.profiles\s+to\s+service_role/i,
   );
 });
+
+test("reported birth declarations remain editable and candidate times never overwrite them", () => {
+  const migration = readFileSync(
+    new URL(
+      "../supabase/migrations/20260721140000_repair_reported_birth_time_revision.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(migration, /create or replace function public\.guard_birth_time_journey\(\)/i);
+  assert.doesNotMatch(migration, /reported_birth_time_is_immutable/i);
+  assert.doesNotMatch(migration, /new\.reported_birth_time\s*:=\s*new\.birth_time/i);
+  assert.match(migration, /update public\.profiles\s+set reported_birth_time\s*=\s*null[\s\S]*?birth_time_source\s+in\s*\(\s*'period_only'\s*,\s*'unknown'\s*\)/i);
+  assert.match(migration, /profiles_reported_birth_time_source_consistency/i);
+});

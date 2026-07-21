@@ -100,21 +100,22 @@ test("homepage birth-time card starts the first rectification turn without a sec
   assert.match(handler, /sendConversationalRectificationCommand\(\{[\s\S]*?type:\s*"start"/);
 });
 
-test("homepage birth-time card creates a dedicated session before starting the first turn", () => {
+test("homepage birth-time card waits for the first turn before opening its dedicated session", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const start = source.indexOf("async function openBirthTimeRectification");
   const end = source.indexOf("function handleConversationalRectificationTurn", start);
   const handler = source.slice(start, end);
   const create = handler.indexOf('createSession(modelCatalog.defaultModelId, "birth_time_rectification")');
-  const persist = handler.indexOf('await persistSession(rectificationSession, "create")');
   const request = handler.indexOf("sendConversationalRectificationCommand");
+  const reveal = handler.indexOf("setActiveSessionId(boundSession.id)");
 
   assert.ok(create >= 0);
-  assert.ok(persist > create);
-  assert.ok(request > persist);
-  assert.match(handler, /setActiveSessionId\(rectificationSession\.id\)/);
+  assert.ok(request > create);
+  assert.ok(reveal > request);
+  assert.doesNotMatch(handler.slice(0, request), /setActiveSessionId\(/);
+  assert.doesNotMatch(handler.slice(0, request), /setSessions\(/);
   assert.match(handler, /setRectificationReturnSessionId\(sourceSession\.id\)/);
-  assert.match(handler, /setSessions\(\(current\) => current\.filter\(\(session\) => session\.id !== rectificationSession\.id\)\)/);
+  assert.match(handler, /setRectificationInitialTurn\(turn\);[\s\S]*?setActiveSessionId\(boundSession\.id\)/);
 });
 
 test("rectification cards render only inside the active rectification session", () => {
@@ -136,8 +137,8 @@ test("selecting a rectification session resumes it without an intermediate confi
   assert.match(selectSession, /nextSession\?\.sessionType === "birth_time_rectification"/);
   assert.match(selectSession, /resumeRectificationSession\.current\(nextSession\)/);
   assert.match(source, /resumeRectificationSession\.current\(activeSession\)/);
-  assert.match(source, /正在和星星核对校正进度/);
-  assert.doesNotMatch(source, /正在加载生时校正对话|正在恢复账户里的校正进度/);
+  assert.doesNotMatch(source, /RectificationLoadingState|重试恢复/);
+  assert.match(source, /setComposerNotice\(message\)/);
 });
 
 test("homepage reuses the session bound to an unfinished rectification case", () => {
@@ -206,7 +207,7 @@ test("rectification mutations report pending state while session-level return co
 
   assert.match(source, /onPendingChange=\{setRectificationMutationPending\}/);
   assert.match(source, /disabled=\{productEntrypointsDisabled \|\| rectificationLoading \|\| rectificationMutationPending\}/);
-  assert.match(source, /disabled=\{rectificationLoading \|\| rectificationMutationPending\}/);
+  assert.doesNotMatch(source, /重试恢复/);
   assert.doesNotMatch(source, /返回并恢复原问题|返回首页/);
 });
 

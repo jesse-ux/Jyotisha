@@ -13,7 +13,8 @@ const healthSource = readFileSync(
 
 test("truth source identity records research source without pretending local mount is always present", () => {
   assert.match(identitySource, /DEFAULT_RESEARCH_TRUTH_SOURCE_PATH/);
-  assert.ok(identitySource.includes("/Users/wuyongnaren/Documents/印度占星"));
+  assert.doesNotMatch(identitySource, /\/Users\/[^"\n]+/);
+  assert.match(identitySource, /resolve\(process\.cwd\(\),\s*"\.\."\)/);
   assert.match(identitySource, /not_mounted/);
   assert.match(identitySource, /claimGateStatus/);
   assert.match(identitySource, /evidencePacketCount/);

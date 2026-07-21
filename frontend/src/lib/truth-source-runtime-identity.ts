@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 type OracleSummary = {
   ready: string[];
@@ -18,7 +18,7 @@ export type TruthSourceRuntimeIdentity = {
   claimGateStatus: "ready" | "partial_or_blocked_present" | "not_mounted";
 };
 
-export const DEFAULT_RESEARCH_TRUTH_SOURCE_PATH = "/Users/wuyongnaren/Documents/印度占星";
+export const DEFAULT_RESEARCH_TRUTH_SOURCE_PATH = resolve(process.cwd(), "..");
 
 function readJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));

@@ -161,3 +161,15 @@ Prevention: do not equate this local host failure with an astrology capability r
 ## ERR-085 | Public production health cannot prove release identity, database migration, or authenticated workflow | active 2026-07-19
 
 `https://jyotisha.chat` homepage and `/api/health` are reachable and healthy, but those responses do not expose a deployed Git SHA, Supabase migration ledger, evidence-packet TTL policy, or an authorized test-account session. Do not treat HTTP `200` as full release acceptance. Close this only through a deployment-attested SHA plus read-only migration/TTL evidence and an authorized browser acceptance account.
+
+## ERR-087 | Production rectification stayed dependency-unavailable behind incomplete rollout identity | mitigated 2026-07-21
+
+The production web service had no explicit V3 creation/migration/smoke rollout values, while the truth-source fallback pointed at one developer's macOS directory. Health therefore stayed `503` and a homepage rectification start failed as a dependency error even though the Python service and Supabase were reachable.
+
+Prevention: resolve the packaged repository root by default, deploy only an attested commit, and move creation from `smoke_only` to `public` only after the exact deployed SHA completes the authenticated synthetic smoke contract.
+
+## ERR-088 | Candidate birth time polluted the reported declaration and blocked profile edits | mitigated 2026-07-21
+
+The journey trigger copied `birth_time` into `reported_birth_time` and then raised `reported_birth_time_is_immutable` on a later account edit. This both changed the meaning of the user's original declaration and surfaced as a generic `PATCH /api/account` 500.
+
+Prevention: keep reported declarations editable, never derive them from active/candidate time, repair impossible `period_only`/`unknown` rows, and enforce the source/time consistency constraint in the database.

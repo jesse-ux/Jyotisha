@@ -208,19 +208,6 @@ const rectificationCardLabels = {
 } as const satisfies Record<RectificationCardAction, string>;
 const rectifyBeforeConsultationSuggestion = "先完成生时校正";
 
-function RectificationLoadingState() {
-  return (
-    <div className="rectification-loading-state" role="status" aria-live="polite">
-      <div className="app-loading-symbol" aria-hidden="true">
-        <span className="app-loading-orbit" />
-        <span className="app-loading-mark" />
-      </div>
-      <strong>正在和星星核对校正进度</strong>
-      <span>马上回到上次的生时校正</span>
-    </div>
-  );
-}
-
 const accountDialogTitles = {
   profile: "个人资料",
   redeem: "兑换点数",
@@ -855,10 +842,11 @@ export default function Home() {
   });
 
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
-  const rectificationSurfaceOpen = activeSession?.sessionType === "birth_time_rectification";
+  const activeRectificationSession = activeSession?.sessionType === "birth_time_rectification";
   const visibleRectificationTurn = activeSession?.id === rectificationSessionId
     ? rectificationInitialTurn
     : null;
+  const rectificationSurfaceOpen = activeRectificationSession && visibleRectificationTurn !== null;
   const visibleSessions = sessions
     .filter((session) => showArchivedSessions ? archivedSessionIds.includes(session.id) : !archivedSessionIds.includes(session.id))
     .sort((left, right) => Number(pinnedSessionIds.includes(right.id)) - Number(pinnedSessionIds.includes(left.id)));
@@ -1971,40 +1959,7 @@ export default function Home() {
     setRectificationPendingQuestion(requestedQuestion);
     setRectificationInitialTurn(null);
     setRectificationError("");
-
-    if (!reusingRectificationSession) {
-      setCreatingSession(true);
-      setSessions((current) => [rectificationSession, ...current]);
-      setRectificationReturnSessionId(sourceSession.id);
-      activeSessionIdRef.current = rectificationSession.id;
-      setActiveSessionId(rectificationSession.id);
-      setRectificationSessionId(rectificationSession.id);
-      setRectificationLoading(true);
-      try {
-        await persistSession(rectificationSession, "create");
-      } catch (caught) {
-        setSessions((current) => current.filter((session) => session.id !== rectificationSession.id));
-        activeSessionIdRef.current = sourceSession.id;
-        setActiveSessionId(sourceSession.id);
-        setRectificationSessionId(null);
-        setRectificationLoading(false);
-        setRequestError({
-          sessionId: sourceSession.id,
-          message: caught instanceof Error ? caught.message : "生时校正会话未能保存到云端。",
-        });
-        return;
-      } finally {
-        setCreatingSession(false);
-      }
-    } else {
-      if (sourceSession.id !== rectificationSession.id) {
-        setRectificationReturnSessionId(sourceSession.id);
-      }
-      activeSessionIdRef.current = rectificationSession.id;
-      setActiveSessionId(rectificationSession.id);
-      setRectificationSessionId(rectificationSession.id);
-      setRectificationLoading(true);
-    }
+    setRectificationLoading(true);
     try {
       let turn: ConversationalRectificationTurn;
       if (action !== "resume" || !account.rectificationCase) {
@@ -2052,20 +2007,37 @@ export default function Home() {
       const boundSession = rectificationSession.rectificationCaseId === turn.caseId
         ? rectificationSession
         : { ...rectificationSession, rectificationCaseId: turn.caseId, updatedAt: timestamp() };
-      setRectificationInitialTurn(turn);
-      synchronizeRectificationQuestion(turn, sourceSession);
-      if (boundSession !== rectificationSession) {
+      let sessionSyncFailed = false;
+      if (!reusingRectificationSession) {
+        try {
+          await persistSession(boundSession, "create");
+        } catch {
+          sessionSyncFailed = true;
+        }
+        setSessions((current) => [boundSession, ...current.filter((session) => session.id !== boundSession.id)]);
+      } else if (boundSession !== rectificationSession) {
         updateSession(rectificationSession.id, () => boundSession);
         try {
           await persistSession(boundSession);
         } catch {
-          setComposerNotice("校正已经开始，但会话关联暂时未同步到云端。");
+          sessionSyncFailed = true;
         }
       }
+      setRectificationInitialTurn(turn);
+      synchronizeRectificationQuestion(turn, sourceSession);
+      if (sourceSession.id !== boundSession.id) {
+        setRectificationReturnSessionId(sourceSession.id);
+      }
+      setRectificationSessionId(boundSession.id);
+      activeSessionIdRef.current = boundSession.id;
+      setActiveSessionId(boundSession.id);
+      setComposerNotice(sessionSyncFailed ? "校正已经开始，但会话关联暂时未同步到云端。" : "");
     } catch (caught) {
-      setRectificationError(caught instanceof Error
+      const message = caught instanceof Error
         ? caught.message
-        : "生时校正暂时无法继续，请稍后重试。");
+        : "生时校正暂时无法继续，请稍后重试。";
+      setRectificationError(message);
+      setComposerNotice(message);
     } finally {
       setRectificationLoading(false);
     }
@@ -3066,34 +3038,16 @@ export default function Home() {
               <div ref={conversationEnd} />
             </div>
           ))}
-          {rectificationSurfaceOpen && (
+          {rectificationSurfaceOpen && visibleRectificationTurn && (
             <section className="rectification-session-surface" aria-label="生时校正">
-              {rectificationLoading ? (
-                <RectificationLoadingState />
-              ) : rectificationError ? (
-                <div role="alert">
-                  <p className="form-error">{rectificationError}</p>
-                  <button
-                    className="button-primary"
-                    disabled={rectificationLoading || rectificationMutationPending}
-                    type="button"
-                    onClick={() => void openBirthTimeRectification(rectificationPendingQuestion)}
-                  >
-                    重试恢复
-                  </button>
-                </div>
-              ) : !visibleRectificationTurn ? (
-                <RectificationLoadingState />
-              ) : (
-                <ConversationalBirthTimeRectification
-                  initialTurn={visibleRectificationTurn}
-                  pendingConsultationQuestion={rectificationPendingQuestion}
-                  continuationPending={rectificationContinuationPending}
-                  onPendingChange={setRectificationMutationPending}
-                  onTurn={handleConversationalRectificationTurn}
-                  onContinueOriginalQuestion={(question) => void continueRectificationOriginalQuestion(question)}
-                />
-              )}
+              <ConversationalBirthTimeRectification
+                initialTurn={visibleRectificationTurn}
+                pendingConsultationQuestion={rectificationPendingQuestion}
+                continuationPending={rectificationContinuationPending}
+                onPendingChange={setRectificationMutationPending}
+                onTurn={handleConversationalRectificationTurn}
+                onContinueOriginalQuestion={(question) => void continueRectificationOriginalQuestion(question)}
+              />
             </section>
           )}
         </div>

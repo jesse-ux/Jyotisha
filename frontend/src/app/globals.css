@@ -455,9 +455,6 @@ button:disabled { cursor: default; opacity: .45; }
 .birth-time-candidate-terminal { justify-items: start; }
 .birth-time-candidate-result, .birth-time-candidate-result > *, .birth-time-confirmation-panel > * { min-width: 0; max-width: 100%; }
 .rectification-session-surface { width: min(720px, 100%); min-width: 0; margin: 0 auto; }
-.rectification-loading-state { min-height: min(52dvh, 420px); display: grid; align-content: center; justify-items: center; gap: var(--space-2); padding: var(--space-8); color: var(--color-ink-secondary); text-align: center; }
-.rectification-loading-state strong { margin-top: var(--space-2); color: var(--color-ink); font-family: var(--font-display); font-size: var(--type-title-lg); font-weight: 400; }
-.rectification-loading-state > span { font-size: var(--type-body-sm); }
 .conversational-rectification { width: 100%; min-width: 0; max-width: 720px; display: grid; gap: var(--space-5); margin: 0 auto; overflow-wrap: anywhere; color: var(--color-ink); }
 .conversational-rectification > *, .conversational-rectification form, .conversational-rectification fieldset { min-width: 0; max-width: 100%; }
 .conversational-rectification button { min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
