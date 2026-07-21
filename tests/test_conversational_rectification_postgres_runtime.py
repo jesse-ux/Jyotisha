@@ -1,7 +1,9 @@
 import json
+import hashlib
 import os
 import subprocess
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -363,6 +365,52 @@ def _create_legacy_case(database: PgDatabase, user_id: str, legacy_case_id: str)
     )
 
 
+def _create_completed_handoff_case(
+    database: PgDatabase,
+    user_id: str,
+    case_id: str,
+    question: str,
+) -> None:
+    _reserve(database, user_id, case_id)
+    first_turn = {
+        **_valid_turn(case_id),
+        "pendingConsultationQuestion": question,
+    }
+    database.sql(
+        f"""
+        select public.create_conversational_rectification_case(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0, '{case_id}'::uuid,
+          null, {_text(question)}, {_jsonb(_valid_declared_birth_input())},
+          {_jsonb(first_turn)},
+          {_jsonb({"modelId": "synthetic-model", "schemaValidated": True})},
+          {_jsonb(_valid_private_candidate())}
+        )::text;
+        """
+    )
+    _complete(database, user_id, case_id)
+    completed_turn = {
+        **first_turn,
+        "status": "completed",
+        "candidate": {**first_turn["candidate"], "status": "confirmed"},
+        "evidenceRequest": None,
+        "actions": ["continue_original_question"],
+    }
+    database.sql(
+        f"""
+        update public.birth_time_rectification_turns
+        set candidate = {_jsonb(completed_turn["candidate"])},
+            evidence_request = null,
+            actions = '["continue_original_question"]'::jsonb
+        where case_id = '{case_id}'::uuid and turn_version = 0;
+        update public.birth_time_rectification_cases
+        set status = 'completed',
+            turn_state = {_jsonb(completed_turn)},
+            journey_snapshot = {_jsonb(completed_turn)}
+        where id = '{case_id}'::uuid and user_id = '{user_id}'::uuid;
+        """
+    )
+
+
 def test_committed_pre_case_reservation_is_recovered_by_a_fresh_account_action(
     pg14_database: PgDatabase,
 ) -> None:
@@ -563,7 +611,7 @@ def test_historical_receipt_replays_exact_public_response_after_later_turns(
     assert privileges == {"anon": False, "authenticated": False, "serviceRole": True}
 
 
-def test_overlapping_mutation_uses_command_identity_while_legacy_uses_full_request(
+def test_overlapping_mutation_uses_command_identity(
     pg14_database: PgDatabase,
 ) -> None:
     user_id = "00000000-0000-4000-8000-000000001041"
@@ -609,6 +657,311 @@ def test_overlapping_mutation_uses_command_identity_while_legacy_uses_full_reque
         command_fingerprint="d" * 64,
     ))
 
+
+def test_handoff_claim_is_atomic_and_failure_then_success_settles_once(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000002101"
+    case_id = "00000000-0000-4000-8000-000000002102"
+    first_claim = "00000000-0000-4000-8000-000000002103"
+    second_claim = "00000000-0000-4000-8000-000000002104"
+    retry_claim = "00000000-0000-4000-8000-000000002105"
+    question = "未来半年是否适合换工作？"
+    fingerprint = hashlib.sha256(question.encode("utf-8")).hexdigest()
+    _create_user(pg14_database, user_id, credits=10)
+    _create_completed_handoff_case(pg14_database, user_id, case_id, question)
+
+    def claim(action_id: str) -> dict[str, object]:
+        return json.loads(pg14_database.sql(
+            f"""
+            select public.claim_conversational_rectification_handoff(
+              '{user_id}'::uuid, '{case_id}'::uuid, 0,
+              '{action_id}'::uuid, '{fingerprint}'
+            )::text;
+            """
+        ))
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(claim, (first_claim, second_claim)))
+    assert sorted(result["status"] for result in results) == ["claimed", "in_progress"]
+    winner_action = first_claim if results[0]["status"] == "claimed" else second_claim
+    request_id = next(result["requestId"] for result in results if result["status"] == "claimed")
+    assert results[0]["requestId"] == results[1]["requestId"]
+
+    execution = json.loads(pg14_database.sql(
+        f"""
+        select public.begin_conversational_rectification_handoff_execution(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0, '{winner_action}'::uuid,
+          '{request_id}'::uuid, '{fingerprint}'
+        )::text;
+        """
+    ))
+    assert execution == {
+        "status": "ready",
+        "requestId": request_id,
+        "billingReused": False,
+        "credits": 7,
+    }
+    reserved = json.loads(pg14_database.sql(
+        f"""
+        select row_to_json(result)::text from public.begin_consultation_credit(
+          '{user_id}'::uuid, '{request_id}'
+        ) result;
+        """
+    ))
+    assert reserved["success"] is True
+    assert reserved["credits"] == 6
+
+    released = json.loads(pg14_database.sql(
+        f"""
+        select public.settle_conversational_rectification_handoff(
+          '{user_id}'::uuid, '{case_id}'::uuid, '{winner_action}'::uuid,
+          '{request_id}'::uuid, false
+        )::text;
+        """
+    ))
+    assert released == {"status": "pending", "requestId": request_id, "credits": 7}
+    retry = claim(retry_claim)
+    assert retry["status"] == "claimed"
+    assert retry["requestId"] != request_id
+
+    retry_execution = json.loads(pg14_database.sql(
+        f"""
+        select public.begin_conversational_rectification_handoff_execution(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0, '{retry_claim}'::uuid,
+          '{retry['requestId']}'::uuid, '{fingerprint}'
+        )::text;
+        """
+    ))
+    assert retry_execution["status"] == "ready"
+    assert json.loads(pg14_database.sql(
+        f"""
+        select row_to_json(result)::text from public.begin_consultation_credit(
+          '{user_id}'::uuid, '{retry['requestId']}'
+        ) result;
+        """
+    ))["success"] is True
+    consumed = json.loads(pg14_database.sql(
+        f"""
+        select public.settle_conversational_rectification_handoff(
+          '{user_id}'::uuid, '{case_id}'::uuid, '{retry_claim}'::uuid,
+          '{retry['requestId']}'::uuid, true
+        )::text;
+        """
+    ))
+    assert consumed == {"status": "consumed", "requestId": retry["requestId"], "credits": 6}
+    state = json.loads(pg14_database.sql(
+        f"""
+        select jsonb_build_object(
+          'credits', profile.credits,
+          'pendingQuestion', c.pending_consultation_question,
+          'actions', t.actions,
+          'handoffState', h.state,
+          'consultations', (
+            select count(*) from public.consultation_requests r
+            where r.user_id = '{user_id}'::uuid and r.status = 'completed'
+          )
+        )::text
+        from public.profiles profile
+        join public.birth_time_rectification_cases c on c.user_id = profile.id
+        join public.birth_time_rectification_turns t
+          on t.case_id = c.id and t.turn_version = c.turn_version
+        join public.birth_time_rectification_question_handoffs h on h.case_id = c.id
+        where profile.id = '{user_id}'::uuid and c.id = '{case_id}'::uuid;
+        """
+    ))
+    assert state == {
+        "credits": 6,
+        "pendingQuestion": None,
+        "actions": [],
+        "handoffState": "consumed",
+        "consultations": 1,
+    }
+    late_claim = claim("00000000-0000-4000-8000-000000002106")
+    assert late_claim["status"] == "consumed"
+    assert late_claim["turn"]["pendingConsultationQuestion"] is None
+    replayed_execution = json.loads(pg14_database.sql(
+        f"""
+        select public.begin_conversational_rectification_handoff_execution(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0, '{retry_claim}'::uuid,
+          '{retry['requestId']}'::uuid, '{fingerprint}'
+        )::text;
+        """
+    ))
+    assert replayed_execution == {
+        "status": "consumed",
+        "requestId": retry["requestId"],
+    }
+
+
+def test_handoff_acl_and_attach_replacement_are_owner_locked(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000002111"
+    other_user_id = "00000000-0000-4000-8000-000000002112"
+    case_id = "00000000-0000-4000-8000-000000002113"
+    action_id = "00000000-0000-4000-8000-000000002114"
+    first_question = "旧问题"
+    replacement = "新的事业问题"
+    fingerprint = hashlib.sha256(replacement.encode("utf-8")).hexdigest()
+    _create_user(pg14_database, user_id)
+    _create_user(pg14_database, other_user_id)
+    _reserve(pg14_database, user_id, case_id)
+    first_turn = {**_valid_turn(case_id), "pendingConsultationQuestion": first_question}
+    pg14_database.sql(
+        f"""
+        select public.create_conversational_rectification_case(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0, '{case_id}'::uuid,
+          null, {_text(first_question)}, {_jsonb(_valid_declared_birth_input())},
+          {_jsonb(first_turn)},
+          {_jsonb({"modelId": "synthetic-model", "schemaValidated": True})},
+          {_jsonb(_valid_private_candidate())}
+        );
+        """
+    )
+    _complete(pg14_database, user_id, case_id)
+    replaced = json.loads(pg14_database.sql(
+        f"""
+        select public.attach_conversational_rectification_question(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0, '{action_id}'::uuid,
+          {_text(replacement)}, '{fingerprint}'
+        )::text;
+        """
+    ))
+    assert replaced["pending_consultation_question"] == replacement
+    assert replaced["latest_turn"]["pendingConsultationQuestion"] == replacement
+    assert pg14_database.rejects(
+        f"""
+        select public.attach_conversational_rectification_question(
+          '{other_user_id}'::uuid, '{case_id}'::uuid, 0, '{action_id}'::uuid,
+          {_text(replacement)}, '{fingerprint}'
+        );
+        """
+    )
+
+    privileges = json.loads(pg14_database.sql(
+        """
+        select jsonb_build_object(
+          'anon', has_function_privilege(
+            'anon',
+            'public.claim_conversational_rectification_handoff(uuid,uuid,bigint,uuid,text)',
+            'EXECUTE'
+          ),
+          'authenticated', has_function_privilege(
+            'authenticated',
+            'public.claim_conversational_rectification_handoff(uuid,uuid,bigint,uuid,text)',
+            'EXECUTE'
+          ),
+          'serviceRole', has_function_privilege(
+            'service_role',
+            'public.claim_conversational_rectification_handoff(uuid,uuid,bigint,uuid,text)',
+            'EXECUTE'
+          )
+        )::text;
+        """
+    ))
+    assert privileges == {"anon": False, "authenticated": False, "serviceRole": True}
+
+
+def test_expired_handoff_lease_reuses_the_reserved_request_without_double_billing(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000002121"
+    case_id = "00000000-0000-4000-8000-000000002122"
+    abandoned_claim = "00000000-0000-4000-8000-000000002123"
+    recovered_claim = "00000000-0000-4000-8000-000000002124"
+    question = "这次事业调整应该如何准备？"
+    fingerprint = hashlib.sha256(question.encode("utf-8")).hexdigest()
+    _create_user(pg14_database, user_id, credits=10)
+    _create_completed_handoff_case(pg14_database, user_id, case_id, question)
+
+    first_claim = json.loads(pg14_database.sql(
+        f"""
+        select public.claim_conversational_rectification_handoff(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0,
+          '{abandoned_claim}'::uuid, '{fingerprint}'
+        )::text;
+        """
+    ))
+    request_id = first_claim["requestId"]
+    assert first_claim["status"] == "claimed"
+    assert json.loads(pg14_database.sql(
+        f"""
+        select public.begin_conversational_rectification_handoff_execution(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0,
+          '{abandoned_claim}'::uuid, '{request_id}'::uuid, '{fingerprint}'
+        )::text;
+        """
+    ))["billingReused"] is False
+    assert json.loads(pg14_database.sql(
+        f"""
+        select row_to_json(result)::text from public.begin_consultation_credit(
+          '{user_id}'::uuid, '{request_id}'
+        ) result;
+        """
+    ))["success"] is True
+
+    pg14_database.sql(
+        f"""
+        update public.birth_time_rectification_question_handoffs
+        set lease_expires_at = now() - interval '1 second'
+        where case_id = '{case_id}'::uuid and user_id = '{user_id}'::uuid;
+        """
+    )
+    recovered = json.loads(pg14_database.sql(
+        f"""
+        select public.claim_conversational_rectification_handoff(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0,
+          '{recovered_claim}'::uuid, '{fingerprint}'
+        )::text;
+        """
+    ))
+    assert recovered["status"] == "claimed"
+    assert recovered["requestId"] == request_id
+    execution = json.loads(pg14_database.sql(
+        f"""
+        select public.begin_conversational_rectification_handoff_execution(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0,
+          '{recovered_claim}'::uuid, '{request_id}'::uuid, '{fingerprint}'
+        )::text;
+        """
+    ))
+    assert execution == {
+        "status": "ready",
+        "requestId": request_id,
+        "billingReused": True,
+        "credits": 6,
+    }
+    accounting = json.loads(pg14_database.sql(
+        f"""
+        select jsonb_build_object(
+          'credits', profile.credits,
+          'requests', count(distinct request.request_id),
+          'reserves', count(tx.id) filter (where tx.transaction_type = 'reserve')
+        )::text
+        from public.profiles profile
+        join public.consultation_requests request
+          on request.user_id = profile.id and request.request_id = '{request_id}'
+        left join public.credit_transactions tx
+          on tx.user_id = profile.id and tx.request_id = '{request_id}'
+        where profile.id = '{user_id}'::uuid
+        group by profile.credits;
+        """
+    ))
+    assert accounting == {"credits": 6, "requests": 1, "reserves": 1}
+
+    released = json.loads(pg14_database.sql(
+        f"""
+        select public.settle_conversational_rectification_handoff(
+          '{user_id}'::uuid, '{case_id}'::uuid, '{recovered_claim}'::uuid,
+          '{request_id}'::uuid, false
+        )::text;
+        """
+    ))
+    assert released == {"status": "pending", "requestId": request_id, "credits": 7}
+
+
+def test_legacy_overlap_still_uses_full_derived_request(pg14_database: PgDatabase) -> None:
     legacy_user_id = "00000000-0000-4000-8000-000000001051"
     legacy_case_id = "00000000-0000-4000-8000-000000001052"
     legacy_action_id = "00000000-0000-4000-8000-000000001053"

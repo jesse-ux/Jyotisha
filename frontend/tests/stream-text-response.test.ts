@@ -2,6 +2,30 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { streamTextResponse } from "../src/lib/stream-text-response.ts";
 
+test("durable settlement runs before the first response bytes are exposed", async () => {
+  const order: string[] = [];
+  async function* reply() {
+    yield "第一段";
+    yield "第二段";
+  }
+  const response = streamTextResponse(reply(), {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000099",
+    onFirstOutput: async () => { order.push("settled"); },
+    onComplete: async () => { order.push("completed"); },
+  });
+  const reader = response.body?.getReader();
+  assert.ok(reader);
+
+  const first = await reader.read();
+  order.push(new TextDecoder().decode(first.value));
+  while (!(await reader.read()).done) {
+    // Drain so normal completion runs too.
+  }
+
+  assert.deepEqual(order, ["settled", "第一段", "completed"]);
+});
+
 test("charges a consultation when cancellation happens after partial output", async () => {
   // Given
   let completed = 0;

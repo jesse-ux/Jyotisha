@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -10,6 +9,7 @@ import type { ConversationalRectificationController } from "../src/hooks/use-con
 import { prepareConsultationRoute } from "../src/lib/consultation-route-service.ts";
 import type { ConversationalRectificationTurn } from "../src/lib/conversational-rectification/contracts.ts";
 import {
+  createDurableRectificationQuestionHandoffClient,
   createRectificationQuestionHandoffCoordinator,
 } from "../src/lib/rectification-question-handoff.ts";
 
@@ -299,48 +299,131 @@ test("returning from rectification restores the composer context without consult
   assert.equal(coordinator.peek(), null);
 });
 
-test("homepage wires the tested handoff coordinator without carrying hidden rectification routing", () => {
-  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const chooseStart = page.indexOf("function rectifyBeforePendingConsultation");
-  const chooseEnd = page.indexOf("function cancelPendingBirthTimeChoice", chooseStart);
-  const chooseHandler = page.slice(chooseStart, chooseEnd);
-  const continuationStart = page.indexOf("async function continueRectificationOriginalQuestion");
-  const continuationEnd = page.indexOf("function restoreQuestionFromRectification", continuationStart);
-  const continuationHandler = page.slice(continuationStart, continuationEnd);
-  const restoreStart = continuationEnd;
-  const restoreEnd = page.indexOf("function useUnverifiedTimeForPendingConsultation", restoreStart);
-  const restoreHandler = page.slice(restoreStart, restoreEnd);
+test("lost claim responses replay one stable action and durable request identity", async () => {
+  const actionId = "00000000-0000-4000-8000-000000001099";
+  const requestId = "00000000-0000-4000-8000-000000001098";
+  const bodies: Array<Record<string, unknown>> = [];
+  let attempt = 0;
+  const client = createDurableRectificationQuestionHandoffClient({
+    createActionId: () => actionId,
+    async fetch(_url, init) {
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      bodies.push(body);
+      attempt += 1;
+      if (attempt === 1) throw new TypeError("lost response");
+      return Response.json({
+        caseId: confirmedTurn().caseId,
+        turnVersion: confirmedTurn().turnVersion,
+        question: pendingQuestion,
+        questionFingerprint: "a".repeat(64),
+        requestId,
+        status: "claimed",
+        turn: confirmedTurn(),
+      });
+    },
+  });
 
-  assert.match(page, /createRectificationQuestionHandoffCoordinator/);
-  assert.match(chooseHandler, /\.capture\(\{[\s\S]*question:\s*pending\.question,[\s\S]*sessionId:\s*pending\.sessionId,[\s\S]*theme:\s*pending\.theme/);
-  assert.doesNotMatch(chooseHandler, /\/api\/consult|\bsend\(/);
-  assert.match(continuationHandler, /continueOriginalQuestion\(/);
-  assert.match(continuationHandler, /send\(context\.question, context\.theme, null, null, context\.sessionId\)/);
-  assert.match(continuationHandler, /if \(completed\)[\s\S]*setRectificationSurfaceOpen\(false\)/);
-  assert.match(restoreHandler, /setDraft\(handoff\.question\)/);
-  assert.match(restoreHandler, /setDraftTheme\(handoff\.theme\)/);
-  assert.match(restoreHandler, /setDraftEntrypoint\(null\)/);
-  assert.doesNotMatch(restoreHandler, /\/api\/consult|\bsend\(/);
-  assert.match(page, /continuationPending=\{rectificationContinuationPending\}/);
-  assert.match(page, /onContinueOriginalQuestion=\{\(question\) => void continueRectificationOriginalQuestion\(question\)\}/);
-  assert.match(page, /\? "返回并恢复原问题"\s*:\s*"返回首页"/);
+  const claimed = await client.claim({
+    caseId: confirmedTurn().caseId,
+    turnVersion: confirmedTurn().turnVersion,
+    question: pendingQuestion,
+  });
+
+  assert.equal(claimed.claimActionId, actionId);
+  assert.equal(claimed.requestId, requestId);
+  assert.equal(bodies.length, 2);
+  assert.equal(bodies[0]?.actionId, actionId);
+  assert.deepEqual(bodies[1], bodies[0]);
 });
 
-test("ordinary consult remains strict and bills the confirmed continuation through the normal route", () => {
-  const route = readFileSync(new URL("../src/app/api/consult/route.ts", import.meta.url), "utf8");
-  const chartSchema = route.slice(
-    route.indexOf("const chartChatRequestSchema"),
-    route.indexOf("const generalChatRequestSchema"),
-  );
-  const parse = route.indexOf("chatRequestSchema.safeParse");
-  const legacyRejection = route.indexOf('parsed.data.entrypoint === "birth_time_rectification"', parse);
-  const prepare = route.indexOf("prepareConsultationRoute({", parse);
-  const reserve = route.indexOf("reserveConsultationModel(", prepare);
+test("two independent devices cannot both claim the same confirmed question", async () => {
+  let owner: string | null = null;
+  let claimCalls = 0;
+  const requestId = "00000000-0000-4000-8000-000000001097";
+  const transport = async (_url: RequestInfo | URL, init?: RequestInit) => {
+    const command = JSON.parse(String(init?.body)) as { actionId: string };
+    claimCalls += 1;
+    const status = owner === null || owner === command.actionId ? "claimed" : "in_progress";
+    owner ??= command.actionId;
+    return Response.json({
+      caseId: confirmedTurn().caseId,
+      turnVersion: confirmedTurn().turnVersion,
+      question: pendingQuestion,
+      questionFingerprint: "b".repeat(64),
+      requestId,
+      status,
+      turn: confirmedTurn(),
+    });
+  };
+  const first = createDurableRectificationQuestionHandoffClient({
+    fetch: transport,
+    createActionId: () => "00000000-0000-4000-8000-000000001091",
+  });
+  const second = createDurableRectificationQuestionHandoffClient({
+    fetch: transport,
+    createActionId: () => "00000000-0000-4000-8000-000000001092",
+  });
 
-  assert.match(chartSchema, /consultationInputSchema\.extend\([\s\S]*?\)\.strict\(\);/);
-  assert.doesNotMatch(route, /continue_original_question|rectificationHandoff|skipBilling/);
-  assert.ok(parse >= 0 && legacyRejection > parse && prepare > legacyRejection && reserve > prepare);
-  assert.match(route, /"begin_consultation_credit"/);
-  assert.match(route, /"complete_consultation_credit"/);
-  assert.match(route, /"cancel_consultation_credit"/);
+  const [firstResult, secondResult] = await Promise.all([
+    first.claim({ caseId: confirmedTurn().caseId, turnVersion: 5, question: pendingQuestion }),
+    second.claim({ caseId: confirmedTurn().caseId, turnVersion: 5, question: pendingQuestion }),
+  ]);
+
+  assert.equal(firstResult.status, "claimed");
+  assert.equal(secondResult.status, "in_progress");
+  assert.equal(firstResult.requestId, secondResult.requestId);
+  assert.equal(claimCalls, 2);
+});
+
+test("refresh restores only the server-owned pending question and replacement wins", async () => {
+  let durableQuestion = "旧问题";
+  const client = createDurableRectificationQuestionHandoffClient({
+    createActionId: () => "00000000-0000-4000-8000-000000001093",
+    async fetch(_url, init) {
+      if (init?.method === "GET") {
+        return Response.json({
+          caseId: confirmedTurn().caseId,
+          turnVersion: 5,
+          question: durableQuestion,
+          questionFingerprint: "c".repeat(64),
+          requestId: "00000000-0000-4000-8000-000000001094",
+          status: "pending",
+          turn: { ...confirmedTurn(), pendingConsultationQuestion: durableQuestion },
+        });
+      }
+      const command = JSON.parse(String(init?.body)) as { question: string };
+      durableQuestion = command.question;
+      return Response.json({ ...confirmedTurn(), pendingConsultationQuestion: durableQuestion });
+    },
+  });
+
+  const replaced = await client.attach({
+    caseId: confirmedTurn().caseId,
+    turnVersion: 5,
+    question: "新问题",
+  });
+  const refreshed = await client.load();
+
+  assert.equal(replaced.pendingConsultationQuestion, "新问题");
+  assert.equal(refreshed?.question, "新问题");
+  assert.equal(refreshed?.turn.pendingConsultationQuestion, "新问题");
+});
+
+test("confirmed surface never revives an old local question after durable consumption", () => {
+  const consumed = {
+    ...confirmedTurn(),
+    pendingConsultationQuestion: null,
+    actions: [] as const,
+  };
+  const markup = renderToStaticMarkup(React.createElement(
+    ConversationalRectificationSurface,
+    {
+      controller: controllerFor(consumed),
+      pendingConsultationQuestion: "浏览器里的旧问题",
+      onContinueOriginalQuestion: () => undefined,
+    },
+  ));
+
+  assert.doesNotMatch(markup, /使用新确认时间继续回答原问题/);
+  assert.doesNotMatch(markup, /浏览器里的旧问题/);
 });

@@ -1,4 +1,5 @@
 type StreamHooks = {
+  readonly onFirstOutput?: () => Promise<void>;
   readonly onComplete?: () => Promise<void>;
   readonly onError?: (error: unknown, emitted: boolean) => Promise<void>;
   readonly onCancel?: (emitted: boolean) => Promise<void>;
@@ -157,6 +158,13 @@ export function streamTextResponse(
   let pending = "";
   let settled = false;
   let emitted = false;
+  let firstOutputSettled = false;
+
+  async function settleFirstOutput(value: string) {
+    if (!value || firstOutputSettled) return;
+    firstOutputSettled = true;
+    await options.onFirstOutput?.();
+  }
 
   const body = new ReadableStream<Uint8Array>({
     async pull(controller) {
@@ -167,7 +175,10 @@ export function streamTextResponse(
             const finalText = visibleTransformer
               ? visibleTransformer.finish(pending)
               : pending;
-            if (finalText) controller.enqueue(encoder.encode(finalText));
+            if (finalText) {
+              await settleFirstOutput(finalText);
+              controller.enqueue(encoder.encode(finalText));
+            }
             settled = true;
             if (!emitted) {
               const error = new Error("empty_stream");
@@ -190,6 +201,7 @@ export function streamTextResponse(
             ? visibleTransformer.push(stable)
             : stable;
           if (transformed) {
+            await settleFirstOutput(transformed);
             controller.enqueue(encoder.encode(transformed));
             return;
           }

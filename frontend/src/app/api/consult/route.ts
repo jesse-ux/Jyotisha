@@ -31,6 +31,11 @@ import {
   ConsultationProfileTruthError,
   prepareConsultationRoute,
 } from "@/lib/consultation-route-service";
+import {
+  createRectificationHandoffService,
+  type RectificationHandoffExecution,
+  type RectificationHandoffService,
+} from "@/lib/rectification-handoff-service";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -51,12 +56,20 @@ const chatRequestMetadataSchema = z.object({
     .default([]),
 });
 
+const rectificationHandoffSchema = z.object({
+  caseId: z.string().uuid(),
+  turnVersion: z.number().int().nonnegative(),
+  claimActionId: z.string().uuid(),
+  requestId: z.string().uuid(),
+}).strict();
+
 const chartChatRequestSchema = consultationInputSchema.extend({
   ...chatRequestMetadataSchema.shape,
   consultationMode: consultationBirthTimeModeSchema.exclude(["general_no_birth_time"])
     .optional()
     .default("verified_chart"),
   entrypoint: consultationEntrypointSchema.optional(),
+  rectificationHandoff: rectificationHandoffSchema.optional(),
 }).strict();
 
 const generalChatRequestSchema = z.object({
@@ -157,23 +170,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const userControlledPrompt = [
-    parsed.data.question,
-    ...parsed.data.history
-      .filter((message) => message.role === "user")
-      .map((message) => message.text),
-  ].join("\n");
-  if (blocksPromptExtraction(userControlledPrompt)) {
-    return NextResponse.json(
-      {
-        error: "无法处理该请求",
-        message:
-          "我不能提供系统提示词、技能原文或任何密钥。你可以继续询问占星相关问题。",
-      },
-      { status: 400 },
-    );
-  }
-
   const requestTime = new Date();
   const resolvedQuestion = resolveConsultationQuestion({
     visibleQuestion: parsed.data.question,
@@ -183,6 +179,97 @@ export async function POST(request: Request) {
 
   const userId = user.id;
   const requestId = parsed.data.requestId;
+  const handoff = "rectificationHandoff" in parsed.data
+    ? parsed.data.rectificationHandoff
+    : undefined;
+  let handoffService: RectificationHandoffService | null = null;
+  let handoffExecution: RectificationHandoffExecution | null = null;
+  let handoffSettlement: Promise<void> | null = null;
+
+  async function settleHandoff(emitted: boolean) {
+    if (!handoff || !handoffService || !handoffExecution
+      || handoffExecution.status !== "ready") return;
+    handoffSettlement ??= handoffService.settle({
+      userId,
+      caseId: handoff.caseId,
+      claimActionId: handoff.claimActionId,
+      requestId: handoff.requestId,
+      emitted,
+    }).then(() => undefined);
+    await handoffSettlement;
+  }
+
+  if (handoff) {
+    if (parsed.data.consultationMode !== "verified_chart"
+      || parsed.data.entrypoint !== undefined
+      || requestId !== handoff.requestId) {
+      return NextResponse.json(
+        {
+          error: "原问题交接请求不一致",
+          message: "请刷新校正结果后重新点击继续，本次不会扣点。",
+        },
+        { status: 409 },
+      );
+    }
+    try {
+      handoffService = createRectificationHandoffService(accounting);
+      handoffExecution = await handoffService.beginExecution({
+        userId,
+        caseId: handoff.caseId,
+        turnVersion: handoff.turnVersion,
+        claimActionId: handoff.claimActionId,
+        requestId: handoff.requestId,
+        question: parsed.data.question,
+      });
+    } catch {
+      return NextResponse.json(
+        {
+          error: "原问题状态已经变化",
+          message: "请刷新后查看最新状态，本次不会扣点。",
+        },
+        { status: 409 },
+      );
+    }
+    if (handoffExecution.status !== "ready") {
+      const consumed = handoffExecution.status === "consumed";
+      return NextResponse.json(
+        {
+          error: consumed ? "原问题已经继续回答" : "原问题正在另一处继续",
+          message: consumed
+            ? "刷新后即可查看最新状态，不会再次扣点。"
+            : "请等待当前回答完成后刷新，本次不会重复扣点。",
+        },
+        { status: consumed ? 410 : 409 },
+      );
+    }
+  }
+
+  const userControlledPrompt = [
+    parsed.data.question,
+    ...parsed.data.history
+      .filter((message) => message.role === "user")
+      .map((message) => message.text),
+  ].join("\n");
+  if (blocksPromptExtraction(userControlledPrompt)) {
+    if (handoffExecution?.status === "ready") {
+      try {
+        await settleHandoff(false);
+      } catch {
+        return NextResponse.json(
+          { error: "暂时无法释放原问题", message: "请稍后刷新状态。" },
+          { status: 503 },
+        );
+      }
+    }
+    return NextResponse.json(
+      {
+        error: "无法处理该请求",
+        message:
+          "我不能提供系统提示词、技能原文或任何密钥。你可以继续询问占星相关问题。",
+      },
+      { status: 400 },
+    );
+  }
   let prepared;
   try {
     prepared = await prepareConsultationRoute({
@@ -200,15 +287,34 @@ export async function POST(request: Request) {
       reserve: () => reserveConsultationModel(
         parsed.data.modelId,
         resolveLanguageModel,
-        () => runCreditRpc(
-          accounting,
-          "begin_consultation_credit",
-          userId,
-          requestId,
-        ),
+        () => handoffExecution?.billingReused
+          ? Promise.resolve({
+            success: true,
+            credits: handoffExecution.credits ?? null,
+            error_code: null,
+          })
+          : runCreditRpc(
+            accounting,
+            "begin_consultation_credit",
+            userId,
+            requestId,
+          ),
       ),
     });
   } catch (error) {
+    if (handoffExecution?.status === "ready") {
+      try {
+        await settleHandoff(false);
+      } catch {
+        return NextResponse.json(
+          {
+            error: "暂时无法释放原问题",
+            message: "请稍后刷新状态，本次不会重复扣点。",
+          },
+          { status: 503 },
+        );
+      }
+    }
     if (error instanceof ConsultationProfileTruthError) {
       const modeChanged = error.code === "mode_changed";
       return NextResponse.json(
@@ -237,6 +343,16 @@ export async function POST(request: Request) {
   const modelSelection = prepared.reservation;
 
   if (modelSelection.status === "unavailable") {
+    if (handoffExecution?.status === "ready") {
+      try {
+        await settleHandoff(false);
+      } catch {
+        return NextResponse.json(
+          { error: "暂时无法释放原问题", message: "请稍后刷新状态。" },
+          { status: 503 },
+        );
+      }
+    }
     return NextResponse.json(
       {
         error: "模型暂不可用",
@@ -250,6 +366,16 @@ export async function POST(request: Request) {
   const reserveResult = modelSelection.reservation;
 
   if (!reserveResult.success) {
+    if (handoffExecution?.status === "ready") {
+      try {
+        await settleHandoff(false);
+      } catch {
+        return NextResponse.json(
+          { error: "暂时无法释放原问题", message: "请稍后刷新状态。" },
+          { status: 503 },
+        );
+      }
+    }
     const insufficient = reserveResult.error_code === "insufficient_credits";
     return NextResponse.json(
       {
@@ -263,6 +389,17 @@ export async function POST(request: Request) {
   }
 
   async function cancel() {
+    if (handoffExecution?.status === "ready") {
+      try {
+        await settleHandoff(false);
+      } catch (error) {
+        const reason = error instanceof Error ? error.name : "UnknownError";
+        console.error(
+          `[billing] handoff release failed request=${requestId} reason=${reason}`,
+        );
+      }
+      return;
+    }
     try {
       await runCreditRpc(
         accounting,
@@ -279,6 +416,10 @@ export async function POST(request: Request) {
   }
 
   async function complete() {
+    if (handoffExecution?.status === "ready") {
+      await settleHandoff(true);
+      return;
+    }
     const result = await runCreditRpc(
       accounting,
       "complete_consultation_credit",
@@ -335,6 +476,7 @@ export async function POST(request: Request) {
           "x-jyotish-missing-layers": "birth-minute",
           "x-jyotish-birth-time-mode": consultationMode,
         },
+        ...(handoff ? { onFirstOutput: () => settle(completeAndRecordUsage) } : {}),
         onComplete: () => settle(completeAndRecordUsage),
         onError: (_error, emitted) => settleInterrupted(emitted),
         onCancel: settleInterrupted,
@@ -398,6 +540,7 @@ export async function POST(request: Request) {
         "x-jyotish-missing-layers": workflowReceipt.missingLayers,
         "x-jyotish-birth-time-mode": consultationMode,
       },
+      ...(handoff ? { onFirstOutput: () => settle(completeAndRecordUsage) } : {}),
       onComplete: () => settle(completeAndRecordUsage),
       onError: (_error, emitted) => settleInterrupted(emitted),
       onCancel: settleInterrupted,

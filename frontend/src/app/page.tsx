@@ -50,7 +50,11 @@ import {
 import type { ConsultationBirthTimeMode } from "@/lib/consultation-birth-time-mode";
 import { sendConversationalRectificationCommand } from "@/lib/conversational-rectification/client";
 import type { ConversationalRectificationTurn } from "@/lib/conversational-rectification/contracts";
-import { createRectificationQuestionHandoffCoordinator } from "@/lib/rectification-question-handoff";
+import {
+  createDurableRectificationQuestionHandoffClient,
+  createRectificationQuestionHandoffCoordinator,
+  DurableRectificationHandoffError,
+} from "@/lib/rectification-question-handoff";
 import { useBirthTimeGuidedJourney } from "@/hooks/use-birth-time-guided-journey";
 import {
   requestBirthTimeAssessment,
@@ -63,6 +67,7 @@ import {
 } from "@/lib/birth-time-guided-preview";
 import { keepFocusWithin } from "@/lib/focus-trap";
 import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
+import { persistExistingChatSession } from "@/lib/chat-session-persistence";
 import {
   OnboardingAuthenticationError,
   type OnboardingContent,
@@ -172,12 +177,19 @@ type PendingBirthTimeChoice = Readonly<{
   entrypoint: ConsultationEntrypoint | null;
   theme: Theme;
 }>;
+type ConsultationRectificationHandoff = Readonly<{
+  caseId: string;
+  turnVersion: number;
+  claimActionId: string;
+  requestId: string;
+}>;
 type PendingConsultation = {
   readonly requestId: string;
   readonly sessionId: string;
   readonly question: string;
   readonly entrypoint: ConsultationEntrypoint | null;
   readonly theme: Theme;
+  readonly rectificationHandoff: ConsultationRectificationHandoff | null;
   readonly previousSession: ChatSession;
   readonly optimisticSession: ChatSession;
   readonly previousOnboardingState: boolean;
@@ -784,6 +796,9 @@ export default function Home() {
   const activeOnboardingRequestIdentity = useRef("");
   const accountRefreshGuard = useRef(createLatestAccountRequestGuard());
   const rectificationQuestionHandoff = useRef(createRectificationQuestionHandoffCoordinator<Theme>());
+  const durableRectificationQuestionHandoff = useRef(
+    createDurableRectificationQuestionHandoffClient(),
+  );
   const rectificationContinuationInFlight = useRef(false);
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
@@ -1260,7 +1275,7 @@ export default function Home() {
     setSessions((current) => current.map((session) => (session.id === sessionId ? change(session) : session)));
   }
 
-  async function persistSession(session: ChatSession) {
+  async function persistSession(session: ChatSession, mode: "create" | "update" = "update") {
     if (!account) throw new Error("账户尚未加载完成");
     if (process.env.NODE_ENV === "development" && uiPreview.current) return;
     const supabase = createBrowserSupabaseClient();
@@ -1271,22 +1286,26 @@ export default function Home() {
       messages: session.messages,
       updated_at: new Date(session.updatedAt).toISOString(),
     };
-    const { data, error } = await supabase
-      .from("chat_sessions")
-      .update(values)
-      .eq("id", session.id)
-      .eq("user_id", account.user.id)
-      .select("id")
-      .maybeSingle();
-    if (error) throw new Error(`云端同步失败：${error.message}`);
-    if (data) return;
+    if (mode === "create") {
+      const { error } = await supabase.from("chat_sessions").insert({
+        id: session.id,
+        user_id: account.user.id,
+        ...values,
+      });
+      if (error) throw new Error(`云端同步失败：${error.message}`);
+      return;
+    }
 
-    const { error: insertError } = await supabase.from("chat_sessions").insert({
-      id: session.id,
-      user_id: account.user.id,
-      ...values,
+    await persistExistingChatSession(async () => {
+      const { data, error } = await supabase
+        .from("chat_sessions")
+        .update(values)
+        .eq("id", session.id)
+        .eq("user_id", account.user.id)
+        .select("id")
+        .maybeSingle();
+      return { found: Boolean(data), error: error?.message ?? null };
     });
-    if (insertError) throw new Error(`云端同步失败：${insertError.message}`);
   }
 
   async function renameSession(session: ChatSession) {
@@ -1368,7 +1387,7 @@ export default function Home() {
     setComposerNotice("");
     setRequestError(null);
     try {
-      await persistSession(nextSession);
+      await persistSession(nextSession, "create");
     } catch (caught) {
       setSessions((current) => current.filter((session) => session.id !== nextSession.id));
       setActiveSessionId(previousSessionId);
@@ -1810,17 +1829,47 @@ export default function Home() {
     setRectificationInitialTurn(null);
     setRectificationError("");
     setRectificationSurfaceOpen(true);
-    if (action !== "resume" || !account.rectificationCase) return;
-
     setRectificationLoading(true);
     try {
-      const current = account.rectificationCase;
-      const turn = await sendConversationalRectificationCommand({
-        type: "resume",
-        caseId: current.caseId,
-        actionId: globalThis.crypto.randomUUID(),
-        turnVersion: current.turnVersion,
-      });
+      if (action !== "resume" || !account.rectificationCase) {
+        const durable = await durableRectificationQuestionHandoff.current.load();
+        if (!durable || durable.status === "consumed") return;
+        setRectificationInitialTurn(durable.turn);
+        synchronizeRectificationQuestion(durable.turn);
+        return;
+      }
+
+      let current = account.rectificationCase;
+      let turn: ConversationalRectificationTurn;
+      if (pendingConsultationQuestion) {
+        try {
+          turn = await durableRectificationQuestionHandoff.current.attach({
+            caseId: current.caseId,
+            turnVersion: current.turnVersion,
+            question: pendingConsultationQuestion,
+          });
+        } catch (error) {
+          if (!(error instanceof DurableRectificationHandoffError)
+            || error.status !== 409) throw error;
+          const latest = await fetchAccount();
+          if (!latest.rectificationCase
+            || latest.rectificationCase.caseId !== current.caseId) throw error;
+          current = latest.rectificationCase;
+          setAccount(latest);
+          turn = await durableRectificationQuestionHandoff.current.attach({
+            caseId: current.caseId,
+            turnVersion: current.turnVersion,
+            question: pendingConsultationQuestion,
+          });
+        }
+      } else {
+        turn = await sendConversationalRectificationCommand({
+          type: "resume",
+          caseId: current.caseId,
+          actionId: globalThis.crypto.randomUUID(),
+          turnVersion: current.turnVersion,
+        });
+      }
       setRectificationInitialTurn(turn);
       synchronizeRectificationQuestion(turn);
     } catch (caught) {
@@ -2039,8 +2088,10 @@ export default function Home() {
     setPendingSessionId(null);
     setConsultationPhase(null);
     setRequestError(null);
-    cancellationFeedbackRequest.current = pending.requestId;
-    setComposerNotice("已停止，问题已放回输入框，正在确认点数…");
+    cancellationFeedbackRequest.current = pending.rectificationHandoff ? null : pending.requestId;
+    setComposerNotice(pending.rectificationHandoff
+      ? "已停止，原问题仍由校正案例保留；正在释放本次继续操作…"
+      : "已停止，问题已放回输入框，正在确认点数…");
     window.requestAnimationFrame(() => composerInput.current?.focus());
 
     if (pending.phase === "undo" || isPreview) {
@@ -2051,11 +2102,15 @@ export default function Home() {
       return;
     }
 
-    await confirmCancellation(
-      pending.requestId,
-      pending.sessionId,
-      "已停止，问题已放回输入框，本次未扣点。",
-    );
+    if (pending.rectificationHandoff) {
+      setComposerNotice("已停止；原问题仍保留，可刷新校正状态后重试。");
+    } else {
+      await confirmCancellation(
+        pending.requestId,
+        pending.sessionId,
+        "已停止，问题已放回输入框，本次未扣点。",
+      );
+    }
   }
 
   function completeConsultationInterface(requestId: string) {
@@ -2072,6 +2127,7 @@ export default function Home() {
     entrypoint: ConsultationEntrypoint | null = null,
     consentGrantedForRequest: ConsultationBirthTimeMode | null = null,
     targetSessionId: string | null = null,
+    rectificationHandoff: ConsultationRectificationHandoff | null = null,
   ): Promise<boolean> {
     const originalQuestion = text;
     const question = text.trim();
@@ -2140,7 +2196,7 @@ export default function Home() {
       messages: [...preservedMessages, { role: "user", text: question }],
       updatedAt: timestamp(),
     };
-    const requestId = globalThis.crypto.randomUUID();
+    const requestId = rectificationHandoff?.requestId ?? globalThis.crypto.randomUUID();
     const controller = new AbortController();
     const previousOnboardingState = onboardingJustCompleted;
     cancellationFeedbackRequest.current = null;
@@ -2154,6 +2210,7 @@ export default function Home() {
       question: originalQuestion,
       entrypoint,
       theme,
+      rectificationHandoff,
       previousSession: currentSession,
       optimisticSession: userSession,
       previousOnboardingState,
@@ -2246,6 +2303,7 @@ export default function Home() {
             role: message.role,
             text: message.text.slice(0, 4000),
           })),
+          ...(rectificationHandoff ? { rectificationHandoff } : {}),
         }),
         signal: controller.signal,
       });
@@ -2324,12 +2382,14 @@ export default function Home() {
           }
         }
       }
-      if (ownsInterface && !partialReply) {
+      if (ownsInterface && !partialReply && !rectificationHandoff) {
         await confirmCancellation(
           requestId,
           sessionId,
           "问题已放回输入框，本次未扣点。",
         );
+      } else if (ownsInterface && !partialReply && rectificationHandoff) {
+        setComposerNotice("原问题仍保留；请刷新校正状态后重试，本次不会重复扣点。");
       } else if (!cancelled && ownsInterface) {
         const interruptedSession: ChatSession = {
           ...userSession,
@@ -2373,7 +2433,15 @@ export default function Home() {
 
   async function continueRectificationOriginalQuestion(question: string) {
     if (rectificationContinuationInFlight.current || rectificationMutationPending
-      || rectificationLoading || !activeSession) return;
+      || rectificationLoading || !activeSession || !account) return;
+    const confirmedTurn = rectificationInitialTurn;
+    if (!confirmedTurn || confirmedTurn.status !== "completed"
+      || confirmedTurn.pendingConsultationQuestion !== question
+      || !confirmedTurn.actions.includes("continue_original_question")) return;
+    if (account.credits <= 0) {
+      openAccountDialog("redeem", creditTrigger.current);
+      return;
+    }
     if (rectificationQuestionHandoff.current.peek()
       && !sessions.some((session) => session.id === rectificationQuestionHandoff.current.peek()?.sessionId)) {
       rectificationQuestionHandoff.current.clear();
@@ -2383,6 +2451,26 @@ export default function Home() {
     setRectificationContinuationPending(true);
     setRectificationError("");
     try {
+      const durableClaim = await durableRectificationQuestionHandoff.current.claim({
+        caseId: confirmedTurn.caseId,
+        turnVersion: confirmedTurn.turnVersion,
+        question,
+      });
+      if (durableClaim.status === "in_progress") {
+        setComposerNotice("原问题正在另一设备继续回答；完成后刷新即可查看，不会重复扣点。");
+        return;
+      }
+      if (durableClaim.status === "consumed") {
+        setRectificationSurfaceOpen(false);
+        setRectificationPendingQuestion(null);
+        setRectificationInitialTurn(null);
+        setComposerNotice("原问题已经继续回答，不会再次发送或扣点。");
+        return;
+      }
+      if (durableClaim.status !== "claimed") {
+        setComposerNotice("原问题仍保留，请刷新校正状态后重试。");
+        return;
+      }
       const completed = await rectificationQuestionHandoff.current.continueOriginalQuestion(
         question,
         { sessionId: activeSession.id, theme: activeSession.theme },
@@ -2393,7 +2481,19 @@ export default function Home() {
             current,
             context.sessionId,
           ));
-          return send(context.question, context.theme, null, null, context.sessionId);
+          return send(
+            context.question,
+            context.theme,
+            null,
+            null,
+            context.sessionId,
+            {
+              caseId: durableClaim.caseId,
+              turnVersion: durableClaim.turnVersion,
+              claimActionId: durableClaim.claimActionId,
+              requestId: durableClaim.requestId,
+            },
+          );
         },
       );
       if (completed) {

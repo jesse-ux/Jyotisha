@@ -105,7 +105,9 @@ export function ConversationalRectificationSurface({
   const restoreAbandonFocus = useRef(false);
   const focusTerminalForCase = useRef<string | null>(null);
   const turn = controller.turn;
-  const pendingQuestion = turn?.pendingConsultationQuestion ?? pendingConsultationQuestion ?? null;
+  const pendingQuestion = turn?.status === "completed"
+    ? turn.pendingConsultationQuestion
+    : turn?.pendingConsultationQuestion ?? pendingConsultationQuestion ?? null;
   const abandonIdentity = turn
     ? `${turn.caseId}:${turn.turnVersion}:${turn.status}`
     : null;
