@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { streamTextResponse } from "../src/lib/stream-text-response.ts";
 
-test("durable settlement runs before the first response bytes are exposed", async () => {
+test("durable settlement starts before the first response bytes are exposed", async () => {
   const order: string[] = [];
   async function* reply() {
     yield "第一段";
@@ -24,6 +24,111 @@ test("durable settlement runs before the first response bytes are exposed", asyn
   }
 
   assert.deepEqual(order, ["settled", "第一段", "completed"]);
+});
+
+test("cancelling while first-output settlement is pending observes committed output", async () => {
+  let markSettlementStarted = () => {};
+  const settlementStarted = new Promise<void>((resolve) => {
+    markSettlementStarted = resolve;
+  });
+  let releaseSettlement = () => {};
+  const settlementGate = new Promise<void>((resolve) => {
+    releaseSettlement = resolve;
+  });
+  let markSettlementFinished = () => {};
+  const settlementFinished = new Promise<void>((resolve) => {
+    markSettlementFinished = resolve;
+  });
+  async function* reply() {
+    yield "已经通过转换的可见短回答。";
+  }
+  let cancelledAsEmitted: boolean | null = null;
+  let completed = 0;
+  const response = streamTextResponse(reply(), {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000100",
+    transformText: (text) => text,
+    onFirstOutput: async () => {
+      markSettlementStarted();
+      try {
+        await settlementGate;
+      } finally {
+        markSettlementFinished();
+      }
+    },
+    onCancel: async (emitted) => { cancelledAsEmitted = emitted; },
+    onComplete: async () => { completed += 1; },
+  });
+  const reader = response.body?.getReader();
+  assert.ok(reader);
+  const pendingRead = reader.read();
+  await settlementStarted;
+
+  try {
+    await reader.cancel();
+    const first = await pendingRead;
+    assert.equal(cancelledAsEmitted, true);
+    assert.equal(first.done, false);
+    assert.match(new TextDecoder().decode(first.value), /已经通过转换的可见短回答/);
+  } finally {
+    releaseSettlement();
+  }
+  await settlementFinished;
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+  assert.equal(completed, 0);
+});
+
+test("a synchronous first-output hook failure exposes no bytes", async () => {
+  let observedEmitted: boolean | null = null;
+  async function* reply() {
+    yield "已经通过转换的可见正文。".repeat(120);
+  }
+  const response = streamTextResponse(reply(), {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000101",
+    transformText: (text) => text,
+    onFirstOutput: () => { throw new Error("settlement_start_failed"); },
+    onError: async (_error, emitted) => { observedEmitted = emitted; },
+  });
+
+  await assert.rejects(response.text(), /settlement_start_failed/);
+  assert.equal(observedEmitted, false);
+});
+
+test("an asynchronous first-output rejection preserves already committed bytes", async () => {
+  let rejectSettlement = () => {};
+  const settlement = new Promise<void>((_resolve, reject) => {
+    rejectSettlement = () => reject(new Error("settlement_failed"));
+  });
+  let markSettlementStarted = () => {};
+  const settlementStarted = new Promise<void>((resolve) => {
+    markSettlementStarted = resolve;
+  });
+  async function* reply() {
+    yield "已经通过转换的可见正文。".repeat(120);
+  }
+  let observedEmitted: boolean | null = null;
+  const response = streamTextResponse(reply(), {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000102",
+    transformText: (text) => text,
+    onFirstOutput: () => {
+      markSettlementStarted();
+      return settlement;
+    },
+    onError: async (_error, emitted) => { observedEmitted = emitted; },
+  });
+  const reader = response.body?.getReader();
+  assert.ok(reader);
+  const pendingRead = reader.read();
+  await settlementStarted;
+  rejectSettlement();
+
+  const first = await pendingRead;
+  assert.equal(first.done, false);
+  assert.match(new TextDecoder().decode(first.value), /已经通过转换的可见正文/);
+  await assert.rejects(reader.read(), /settlement_failed/);
+  assert.equal(observedEmitted, true);
 });
 
 test("charges a consultation when cancellation happens after partial output", async () => {

@@ -158,21 +158,22 @@ export function streamTextResponse(
   let pending = "";
   let settled = false;
   let emitted = false;
-  let firstOutputSettled = false;
+  let firstOutputSettlementStarted = false;
 
-  async function settleFirstOutput(value: string) {
-    if (!/\S/.test(value) || firstOutputSettled) return;
-    firstOutputSettled = true;
-    await options.onFirstOutput?.();
+  function startFirstOutputSettlement(value: string) {
+    if (!/\S/.test(value) || firstOutputSettlementStarted) return undefined;
+    firstOutputSettlementStarted = true;
+    return options.onFirstOutput?.();
   }
 
   async function enqueueOutput(
     controller: ReadableStreamDefaultController<Uint8Array>,
     value: string,
   ) {
-    await settleFirstOutput(value);
+    const firstOutputSettlement = startFirstOutputSettlement(value);
     controller.enqueue(encoder.encode(value));
     if (/\S/.test(value)) emitted = true;
+    await firstOutputSettlement;
   }
 
   const body = new ReadableStream<Uint8Array>({
@@ -187,6 +188,7 @@ export function streamTextResponse(
             if (finalText) {
               await enqueueOutput(controller, finalText);
             }
+            if (settled) return;
             settled = true;
             if (!emitted) {
               const error = new Error("empty_stream");
