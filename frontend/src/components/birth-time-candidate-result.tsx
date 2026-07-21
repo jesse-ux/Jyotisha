@@ -145,20 +145,10 @@ function TerminalAction({ controller, error, path }: {
   readonly error: string;
   readonly path: NonNullable<ReturnType<typeof guidedTerminalPath>>;
 }) {
-  if (path.kind === "complete_with_candidate") {
-    return (
-      <div className="birth-time-next-step">
-        <b>评估已完成，下一步</b>
-        <p>点击后将使用 {path.time} 作为<span className="phrase-nowrap">当前排盘时间</span>并进入对话；<span className="phrase-nowrap">原始填报</span>和本次<span className="phrase-nowrap">候选结果</span><span className="phrase-nowrap">仍会保留</span>。</p>
-        <button className="button-primary birth-time-guided-action" disabled={controller.pending} onClick={() => controller.completeCandidate(path.time)} type="button">
-          {controller.pending ? `正在采用 ${path.time}…` : `采用 ${path.time} 并进入对话`}
-        </button>
-        {error ? <p className="form-error" role="alert">{error}</p> : null}
-      </div>
-    );
-  }
   return (
     <div className="birth-time-new-assessment">
+      <b>尚未达到采用条件</b>
+      <p>候选范围已保留，但当前证据不足以将具体分钟写入当前排盘时间。补充经历后可重新评估。</p>
       <button className="button-secondary birth-time-guided-action" disabled={controller.pending} onClick={controller.editBirthTimeDetails} type="button">开始新的评估</button>
       {error ? <p className="form-error" role="alert">{error}</p> : null}
       <small>会建立新的记录，当前结果仍会保留。</small>

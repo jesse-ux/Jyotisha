@@ -1,0 +1,2707 @@
+{
+  "scope": "whole_machine_jyotish_fragment_scan_2026_07_21",
+  "created_at": "2026-07-21",
+  "scan_bases": [
+    "/Users/wuyongnaren/Documents",
+    "/Users/wuyongnaren/WorkBuddy",
+    "/Users/wuyongnaren/.workbuddy",
+    "/Users/wuyongnaren/Downloads",
+    "/Users/wuyongnaren/Desktop",
+    "/private/tmp",
+    "/tmp",
+    "/Users/wuyongnaren/Projects"
+  ],
+  "summary": {
+    "files_with_signals": 2096,
+    "main_repo_signal_files": 564,
+    "external_signal_files": 1532,
+    "privacy_blocked_files": 983,
+    "reviewable_external_files": 742
+  },
+  "decision_policy": {
+    "main_repo": "check invocation coverage before new work",
+    "workbuddy_fragment": "reference only; never truth source",
+    "privacy_review_required": "forbidden until human privacy review",
+    "tmp_fragment": "must pin license/version/hash before reuse"
+  },
+  "reviewable_external_candidates": [
+    {
+      "path": "/Users/wuyongnaren/Documents/Codex/2026-06-20/732642856-talk-https-github-com-732642856/work/talk-active/engines-repo/jyotish/jyotishganit-adapter.js",
+      "size": 7588,
+      "category": "external_candidate",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/ObsidianVault/10_个人知识管理/09_术数与玄学/紫微风水与印度占星的本土术数谱系.md",
+      "size": 3600,
+      "category": "external_candidate",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/ObsidianVault/05_文件仓库索引/电子书资料库/分类-术数占星玄学.md",
+      "size": 23971,
+      "category": "external_candidate",
+      "signals": [
+        "tajika",
+        "dasha"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/ObsidianVault/05_文件仓库索引/电子书资料库/书目卡片/Yogini Dasha VPGOEL 0000 Yogini001.png 1.png.md",
+      "size": 1922,
+      "category": "external_candidate",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/ObsidianVault/05_文件仓库索引/电子书资料库/书目卡片/Tajika占星术是印度占星术体系之一.md",
+      "size": 2185,
+      "category": "external_candidate",
+      "signals": [
+        "tajika"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/ObsidianVault/05_文件仓库索引/电子书资料库/书目卡片/Predicting Through Shasti Hayani Dasha (V.P.Goel) (Z-Library.md",
+      "size": 1980,
+      "category": "external_candidate",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/ObsidianVault/05_文件仓库索引/电子书资料库/书目卡片/Predicting through Jaiminis Chara Dasha An Original Research Hindu Astrology Series (K. N..md",
+      "size": 2364,
+      "category": "external_candidate",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/ObsidianVault/03_研究_术数占星/一楠 · 印度占星完整解盘报告 v2.md",
+      "size": 1001,
+      "category": "external_candidate",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/ObsidianVault/03_研究_术数占星/印度占星研究结论 v3.md",
+      "size": 5264,
+      "category": "external_candidate",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/ObsidianVault/03_研究_术数占星/印度占星 Jyotish.md",
+      "size": 1988,
+      "category": "external_candidate",
+      "signals": [
+        "prashna",
+        "tajika",
+        "saham",
+        "kp",
+        "dasha"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/engines-repo/verify-local-jyotish-reference-audit.js",
+      "size": 2388,
+      "category": "external_candidate",
+      "signals": [
+        "oracle",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish-prashna-bridge.js",
+      "size": 9568,
+      "category": "external_candidate",
+      "signals": [
+        "prashna",
+        "kp",
+        "test"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/engines-repo/verify-jyotish-prashna-bridge.js",
+      "size": 5628,
+      "category": "external_candidate",
+      "signals": [
+        "prashna",
+        "gulika",
+        "kp",
+        "registry",
+        "test"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish/jyotishganit-adapter.js",
+      "size": 7588,
+      "category": "external_candidate",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/docs/jyotish-gap-migration-plan.md",
+      "size": 3107,
+      "category": "external_candidate",
+      "signals": [
+        "saham",
+        "dasha",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/reports/local-jyotish-reference-audit.md",
+      "size": 2176,
+      "category": "external_candidate",
+      "signals": [
+        "dasha",
+        "oracle",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [],
+      "decision": "candidate_review_required"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/sahams-execution-guide.md",
+      "size": 1867,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "prashna",
+        "tajika",
+        "saham",
+        "sphuta",
+        "kp",
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/chara-dasha-calibration-roadmap.md",
+      "size": 2690,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/dasha-transit-method.md",
+      "size": 6575,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/ashtakavarga-complete-system.md",
+      "size": 8651,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "ashtakavarga",
+        "varga"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/chara-dasha-v6910-test-report.md",
+      "size": 3119,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/kp-practical-event-timing.md",
+      "size": 303,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "kp"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/tajika-yoga-complete-guide.md",
+      "size": 11850,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/muhurta-complete-guide.md",
+      "size": 1348,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "muhurta",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/multi-dasha-convergence-protocol.md",
+      "size": 6189,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/bphs-ch48-narayana-dasha.md",
+      "size": 1085,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/vp-goel-jaimini-dasha-systems.md",
+      "size": 4955,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/bhrigu-pada-dasha-marriage-counting.md",
+      "size": 7474,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/relationship-astrology-guide.md",
+      "size": 16418,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/jyotishganit_benchmark.md",
+      "size": 2333,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "ashtakavarga",
+        "varga",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/real_case_studies/印度占星修正版研究结论v3-高压基建后的反转兑现模型.md",
+      "size": 32938,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pyjhora_historical_epoch_dasha_stdout_20260627.txt",
+      "size": 6188,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+      "size": 2980,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
+      "size": 2973,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "kp"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pyjhora_marilyn_monroe_varshaphala_1962_lahiri_20260629.txt",
+      "size": 1190,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pyjhora_historical_dst_london_varshaphala_1943_lahiri_20260629.txt",
+      "size": 1140,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pyjhora_steve_jobs_dasha_stdout_20260627.txt",
+      "size": 5765,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pyjhora_synthetic_extreme_latitude_varshaphala_kp_20260629.txt",
+      "size": 1182,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "kp",
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pyjhora_einstein_varshaphala_1905_lahiri_partial_20260629.txt",
+      "size": 1030,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/open_source_sources/jyotishganit/tests/test_astronomical.py",
+      "size": 538,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/open_source_sources/jyotishganit/tests/test_ashtakavarga.py",
+      "size": 11682,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "ashtakavarga",
+        "kp",
+        "varga",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/open_source_sources/VedicAstro/VedicAstroAPI.py",
+      "size": 5043,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "kp",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/open_source_sources/VedicAstro/vedicastro/VedicAstro.py",
+      "size": 33217,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "kp"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/open_source_sources/VedicAstro/vedicastro/horary_chart.py",
+      "size": 7325,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "kp"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/open_source_sources/VedicAstro/test_suite/horary_functions_test.py",
+      "size": 3617,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/open_source_sources/dashaflow/ashtakavarga.py",
+      "size": 4770,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "ashtakavarga",
+        "varga"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/open_source_sources/vedic-astro-skills/claude-code/.claude/commands/vedic-love.md",
+      "size": 10118,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/open_source_sources/vedic-astro-skills/claude-code/.claude/commands/vedic-career.md",
+      "size": 13323,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_ashtakavarga_invariants.py",
+      "size": 3548,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "ashtakavarga",
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_shadbala_oracle_closure_status.py",
+      "size": 2254,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_nakshatra.py",
+      "size": 10401,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_tajika_einstein_1905_fill_map.py",
+      "size": 1100,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_vedastro_fast_path_checklist.py",
+      "size": 2038,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_vedastro_external_technique_evidence.py",
+      "size": 18178,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga",
+        "rectification",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_dasha_first_packet_operator_card.py",
+      "size": 1590,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_chara_dasha_dignity.py",
+      "size": 8430,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_muhurta.py",
+      "size": 18035,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "gulika",
+        "muhurta",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_pyjhora_oracle_artifact_manifest.py",
+      "size": 1592,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_final_jhora_evidence_packet_acceptance.py",
+      "size": 5294,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_jyotishganit_adapter_diagnostics.py",
+      "size": 1216,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_shadbala_sthana_targeted_audit.py",
+      "size": 851,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_dasha_oracle_evidence_validator.py",
+      "size": 3539,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_deep_varga_avastha.py",
+      "size": 1477,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_vedastro_runtime_mode_diagnostics.py",
+      "size": 3026,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_varga_vedastro_mode.py",
+      "size": 4640,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_tajika_annual_oracle_queue.py",
+      "size": 6504,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_vedastro_method_catalog_sync.py",
+      "size": 4206,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "registry",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_tajika_first_packet_operator_card.py",
+      "size": 2098,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_vedastro_evidence_orchestrator.py",
+      "size": 10937,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_pyjhora_adapter_diagnostics.py",
+      "size": 1690,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_chara_dasha_precision_v6910.py",
+      "size": 13446,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_narayana_dasha.py",
+      "size": 1357,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_vedastro_adapter_candidate_guard.py",
+      "size": 1746,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "probe",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_varga_bphs.py",
+      "size": 5225,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_shadbala_sapta_layer_hotspots.py",
+      "size": 936,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "varga",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_shadbala_d3_mapping_audit.py",
+      "size": 750,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_shadbala_oracle_comparison.py",
+      "size": 1077,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_shadbala_sapta_dignity_whitelist.py",
+      "size": 794,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_vedastro_parity_matrix.py",
+      "size": 5001,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "prashna",
+        "tajika",
+        "dasha",
+        "varga",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_shadbala_oracle_component_cluster_summary.py",
+      "size": 868,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_shadbala_dig_source_of_truth_audit.py",
+      "size": 758,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_vedastro_ingestion_closure_pack.py",
+      "size": 859,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_vedastro_gateway.py",
+      "size": 3063,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_dasha_oracle_closure_status.py",
+      "size": 3829,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_tajika_annual_closure_status.py",
+      "size": 4097,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_tajika_annual_benchmark_dashboard.py",
+      "size": 1983,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "oracle",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/tests/test_pyjhora_oracle_artifacts_presence.py",
+      "size": 1290,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/first_tajika_oracle_packet_assistant.md",
+      "size": 2590,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/tajika_einstein_1905_fill_map.md",
+      "size": 3139,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/public_jyotish_benchmark_dashboard.json",
+      "size": 2258,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/tajika_einstein_1905_copy_ready_checklist.md",
+      "size": 2871,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/tajika_einstein_1905_packet_paste_instructions.md",
+      "size": 1669,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/first_dasha_oracle_packet_assistant.md",
+      "size": 1210,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/shadbala_external_absolute_value_closure_status.md",
+      "size": 699,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/tajika_einstein_1905_field_copy_template.md",
+      "size": 5627,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/tajika_einstein_1905_packet_paste_block.jsonc",
+      "size": 1280,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/public_jyotish_benchmark_dashboard.md",
+      "size": 1266,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "benchmark",
+        "registry"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/tajika_sahams_annual_benchmark_dashboard.json",
+      "size": 1393,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/jyotish_external_oracle_closure_master_dashboard.md",
+      "size": 967,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/dasha_external_oracle_closure_status.json",
+      "size": 663,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/first_tajika_oracle_packet_assistant.json",
+      "size": 3275,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/dasha_external_oracle_closure_status.md",
+      "size": 661,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/shadbala_external_absolute_value_closure_status.json",
+      "size": 994,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/first_dasha_oracle_packet_assistant.json",
+      "size": 1517,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/jyotish_external_oracle_closure_master_dashboard.json",
+      "size": 3916,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/tajika_sahams_annual_closure_status.md",
+      "size": 3120,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/tajika_sahams_annual_benchmark_dashboard.md",
+      "size": 1229,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/legacy-marriage-v6.1/印度占星实战案例综合验证报告-v6.1-2026-05-03.md",
+      "size": 8142,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "saham",
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/shadbala_component_cap_all_routes_2026_06_28.md",
+      "size": 1445,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/whole_project_fragment_sweep_and_vedastro_ledger_link_2026_06_28.md",
+      "size": 1935,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/antigravity_round25_shadbala_validator_phase2_acceptance_2026_06_25.md",
+      "size": 1325,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "oracle"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/antigravity_round26_shadbala_validator_phase2_tickets_2026_06_25.md",
+      "size": 2027,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "oracle"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/antigravity_round28_pyjhora_jhora_breadth_gap_matrix_2026_06_26.md",
+      "size": 1792,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "tajika",
+        "dasha",
+        "varga",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/vedastro_required_high_frequency_radar_contract_2026_06_28.md",
+      "size": 4023,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/antigravity_round24_open_source_jyotish_landscape_2026_06_25.md",
+      "size": 2552,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/antigravity_round28_jaimini_kp_prashna_depth_plan_2026_06_26.md",
+      "size": 1129,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "prashna",
+        "tajika",
+        "muhurta",
+        "kp"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/raman_dasha_boundary_series_oracle_seed_2026_06_28.md",
+      "size": 1473,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/shadbala_component_confidence_cap_v1_2026_06_28.md",
+      "size": 1490,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "oracle"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/antigravity_round29_jaimini_kp_prashna_gap_matrix_2026_06_26.md",
+      "size": 1188,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "prashna",
+        "kp",
+        "dasha"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    },
+    {
+      "path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/research/antigravity_round20_shadbala_units_totals_design_2026_06_25.md",
+      "size": 1514,
+      "category": "workbuddy_fragment",
+      "signals": [
+        "shadbala",
+        "oracle",
+        "test"
+      ],
+      "risk_labels": [
+        "historical_fragment_only",
+        "not_for_truth_source"
+      ],
+      "decision": "reference_only_candidate_not_truth_source"
+    }
+  ],
+  "privacy_blocked_sample": [
+    {
+      "path": "/Users/wuyongnaren/Documents/Codex/2026-06-18/new-chat-4/work/starcanvas-active/apps/web/src/app/canvas/utils/characterAstrologyService.ts",
+      "size": 13673,
+      "category": "external_candidate",
+      "signals": [
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "forbidden_until_privacy_review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/Codex/2026-06-20/732642856-yinduzhanxing-https-github-com-732642856/work/audit_tmp/jyotish-engine-modules/scripts/special_lagnas.py",
+      "size": 12121,
+      "category": "external_candidate",
+      "signals": [
+        "prashna"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "forbidden_until_privacy_review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/Codex/2026-06-20/732642856-talk-https-github-com-732642856/work/talk-active/engines-repo/jyotish/jyotish-adapter.js",
+      "size": 10913,
+      "category": "external_candidate",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "forbidden_until_privacy_review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/Codex/2026-06-20/732642856-talk-https-github-com-732642856/work/talk-active/engines-repo/jyotish/vedic-calc-runner.py",
+      "size": 13523,
+      "category": "external_candidate",
+      "signals": [
+        "prashna",
+        "tajika",
+        "gulika",
+        "kp",
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "forbidden_until_privacy_review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/Codex/2026-06-20/732642856-talk-https-github-com-732642856/work/talk-active/engines-repo/jyotish/jyotishganit-runner.py",
+      "size": 9754,
+      "category": "external_candidate",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "forbidden_until_privacy_review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/Codex/2026-06-21/starcanvas-https-github-com-732642856-starcanvas/work/starcanvas/apps/web/src/app/canvas/utils/characterAstrologyService.ts",
+      "size": 13673,
+      "category": "external_candidate",
+      "signals": [
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "forbidden_until_privacy_review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/engines-repo/local-jyotish-reference-audit.js",
+      "size": 16997,
+      "category": "external_candidate",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga",
+        "oracle",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "forbidden_until_privacy_review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish/jyotish-adapter.js",
+      "size": 10913,
+      "category": "external_candidate",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "forbidden_until_privacy_review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish/vedic-calc-runner.py",
+      "size": 13523,
+      "category": "external_candidate",
+      "signals": [
+        "prashna",
+        "tajika",
+        "gulika",
+        "kp",
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "forbidden_until_privacy_review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/星轨talk/engines-repo/jyotish/jyotishganit-runner.py",
+      "size": 9754,
+      "category": "external_candidate",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "forbidden_until_privacy_review"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/indastro-case-studies.md",
+      "size": 26174,
+      "category": "main_repo",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/condition-dasha-complete.md",
+      "size": 5844,
+      "category": "main_repo",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/global-astrologer-reflections.md",
+      "size": 17184,
+      "category": "main_repo",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/dasha-calculation-tool.md",
+      "size": 11706,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/varga-system-quick-reference.md",
+      "size": 10468,
+      "category": "main_repo",
+      "signals": [
+        "kp",
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/open-source-jyotish-scan-2026.md",
+      "size": 16821,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "prashna",
+        "tajika",
+        "gulika",
+        "muhurta",
+        "kp",
+        "dasha",
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/varga-divisional-charts-quick-reference.md",
+      "size": 14961,
+      "category": "main_repo",
+      "signals": [
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/global-astrologer-practical-methodology.md",
+      "size": 14244,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "kp",
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/pancha-pakshi-nakshatra-systems.md",
+      "size": 11280,
+      "category": "main_repo",
+      "signals": [
+        "muhurta",
+        "kp",
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/yoga-and-dasha.md",
+      "size": 9968,
+      "category": "main_repo",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/analysis-natal-full-part3-Ashtakavarga.md",
+      "size": 681,
+      "category": "main_repo",
+      "signals": [
+        "ashtakavarga",
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/shasti-hayani-dasha-guide.md",
+      "size": 3734,
+      "category": "main_repo",
+      "signals": [
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/vimshottari_dasha_guide.md",
+      "size": 18384,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/deep-varga-avastha-execution-guide.md",
+      "size": 2170,
+      "category": "main_repo",
+      "signals": [
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/alternative-dasha-systems.md",
+      "size": 7628,
+      "category": "main_repo",
+      "signals": [
+        "ashtakavarga",
+        "prashna",
+        "tajika",
+        "kp",
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/shadbala-complete-methodology.md",
+      "size": 10552,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/saham_rules.json",
+      "size": 2065,
+      "category": "main_repo",
+      "signals": [
+        "tajika",
+        "saham"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/ashwini-abhijit-ketu-nakshatra-freeze-guide.md",
+      "size": 8520,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "muhurta",
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/shadbala-interpretation-methodology.md",
+      "size": 7935,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/prashna-complete-guide.md",
+      "size": 17864,
+      "category": "main_repo",
+      "signals": [
+        "prashna",
+        "tajika",
+        "saham",
+        "gulika",
+        "sphuta",
+        "kp",
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/kp-astrology-complete-system.md",
+      "size": 10337,
+      "category": "main_repo",
+      "signals": [
+        "prashna",
+        "kp",
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/shodasavarga-complete-guide.md",
+      "size": 9252,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/cross_project_contract/commercial_astrology_e2e_context_capture_manifest_2026_07_19.json",
+      "size": 4030,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga",
+        "rectification"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/cross_project_contract/commercial_astrology_e2e_acceptance_questions_2026_07_19.json",
+      "size": 4162,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga",
+        "rectification"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/shadbala_component_closure_queue_v2_2026_07_19.json",
+      "size": 58478,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "varga",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/pyjhora_same_chart_parity_public_smoke_manifest.json",
+      "size": 755,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/vp_jain_shadbala_component_benchmark_2026_07_17.json",
+      "size": 11770,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "benchmark",
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/xalen_public_case_batch_2026_07_17.json",
+      "size": 41935,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/kp_muhurta_shadbala_numeric_packet_queue_2026_07_19.json",
+      "size": 2693,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "muhurta",
+        "kp",
+        "oracle",
+        "probe"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/jyotishyamitra_pinned_adapter_probe_2026_07_18.json",
+      "size": 2520,
+      "category": "main_repo",
+      "signals": [
+        "dasha",
+        "oracle",
+        "probe"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/xalen_multi_public_case_component_coverage_2026_07_19.json",
+      "size": 7587,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "varga",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/jyotishyamitra_steve_jobs_probe_2026_07_18.json",
+      "size": 615069,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga",
+        "oracle",
+        "probe"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/dasha_shadbala_oracle_cases.json",
+      "size": 9600,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "kp",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/pyjhora_extended_parity_public_smoke_manifest.json",
+      "size": 777,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "varga",
+        "test"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/tajika_annual_oracle_cases.json",
+      "size": 21232,
+      "category": "main_repo",
+      "signals": [
+        "tajika",
+        "saham",
+        "kp",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/authoritative_oss_jyotish_source_intake_2026_07_19.json",
+      "size": 4220,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "muhurta",
+        "kp",
+        "dasha",
+        "varga",
+        "oracle",
+        "benchmark",
+        "probe"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/prashna_sphuta_pyjhora_public_smoke.json",
+      "size": 1817,
+      "category": "main_repo",
+      "signals": [
+        "prashna",
+        "gulika",
+        "sphuta",
+        "benchmark"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/xalen_multi_public_case_independent_ephemeris_2026_07_17.json",
+      "size": 42430,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+      "size": 3455,
+      "category": "main_repo",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/xalen_multi_public_case_shared_input_2026_07_17.json",
+      "size": 41935,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/jyotishganit_steve_jobs_high_rigor_raw.json",
+      "size": 212469,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "ashtakavarga",
+        "dasha",
+        "varga"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/external_template_historical_epoch_lahiri_pyjhora_20260627.json",
+      "size": 1552,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri_pyjhora_20260627.json",
+      "size": 1549,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/external_template_synthetic_north_china_shadbala_raman.json",
+      "size": 2595,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri_pyjhora_20260627.json",
+      "size": 3249,
+      "category": "main_repo",
+      "signals": [
+        "tajika",
+        "saham",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/external_template_extreme_latitude_kp_pyjhora_20260627.json",
+      "size": 3054,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "kp",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/external_template_synthetic_north_china_shadbala_raman_pyjhora_20260627.json",
+      "size": 3220,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/external_template_steve_jobs_shadbala_lahiri_pyjhora_20260627.json",
+      "size": 3036,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/artifacts/pending_packets/external_template_steve_jobs_dasha_lahiri.json",
+      "size": 2570,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    },
+    {
+      "path": "/Users/wuyongnaren/Documents/印度占星/references/oracle/evidence_packet_templates/jhora_steve_jobs_lahiri_first_packet.json",
+      "size": 2803,
+      "category": "main_repo",
+      "signals": [
+        "shadbala",
+        "dasha",
+        "oracle"
+      ],
+      "risk_labels": [
+        "privacy_review_required"
+      ],
+      "decision": "already_in_truth_source_check_invocation"
+    }
+  ],
+  "runtime_invocation_findings": {
+    "interpretation_source_runtime_coverage_status": "partial",
+    "proven_runtime_markers": [
+      "dasha_timing_layer_used",
+      "varga_strength_layer_used",
+      "annual_special_layer_context",
+      "modifier_obstacle_layer_used"
+    ],
+    "not_fully_closed_reference_layers": [
+      "references/open_source_sources/jyotishganit",
+      "references/open_source_sources/jaimini-tropical",
+      "references/open_source_sources/VedicAstro",
+      "references/open_source_sources/rishi-ai-mcp",
+      "references/open_source_sources/vedic-astro-skills",
+      "references/open_source_sources/dashaflow"
+    ],
+    "inventory_gate_status": "pass",
+    "boundary": "runtime invocation is proven for surfaced strict-workflow markers, not every source asset; remaining layers require adapter/API/UI/skill call proof before claiming capability."
+  },
+  "priority_follow_up": [
+    {
+      "id": "jyotishganit_field_closure",
+      "reason": "already one of the comparison engines; still not fully closed as source asset/runtime parity layer",
+      "action": "reuse existing adapters/probes; add field-level closure rows only, no truth upgrade"
+    },
+    {
+      "id": "vedicastro_kp_runtime_surface",
+      "reason": "KP/cusp/sub-lord source exists but exact public oracle remains partial",
+      "action": "keep isolated runtime probe and source hash; add worked-example numeric packets when fields are public"
+    },
+    {
+      "id": "jaimini_tropical_dashaflow_reference",
+      "reason": "reference source present but not truth source",
+      "action": "registry/reference only unless license, input contract, raw hash and replay tests are pinned"
+    },
+    {
+      "id": "rishi_ai_mcp_vedic_astro_skills",
+      "reason": "prompt/product-flow source, not numeric oracle",
+      "action": "reuse as skill wording/process reference only; no formula copying or truth matrix"
+    },
+    {
+      "id": "workbuddy_reference_docs",
+      "reason": "many docs are already mirrored or represented in main repo; old checkout remains artifact incomplete and privacy risky",
+      "action": "only migrate via tests/registry after file-by-file ledger review"
+    }
+  ]
+}

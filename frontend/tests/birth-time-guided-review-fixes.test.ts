@@ -56,7 +56,7 @@ test("low without a result and saved medium both return to declared-time editing
   });
 });
 
-test("dynamic non-confirmable terminal stays in declared-time editing", () => {
+test("dynamic medium terminal preserves its candidate range without direct adoption", () => {
   const medium = dynamicBirthTimePreview("medium");
 
   assert.deepEqual(guidedTerminalPath(medium), {
@@ -68,7 +68,7 @@ test("dynamic non-confirmable terminal stays in declared-time editing", () => {
 
 test("candidate completion hook cannot invoke the legacy endpoint for dynamic turns", () => {
   const hookSource = readFileSync(new URL("../src/hooks/use-birth-time-guided-journey.ts", import.meta.url), "utf8");
-  assert.match(hookSource, /if \(turn\.journeyProtocol === "dynamic-choice-v2"\) return;/);
+  assert.doesNotMatch(hookSource, /completeBirthTimeCandidate|completeCandidate/);
 });
 
 test("request identity cache and scheduled polling deduplicate Strict Mode starts", async () => {
@@ -123,33 +123,33 @@ test("ready completion is explicit and terminal low has no finish mutation", () 
   assert.doesNotMatch(hookSource, /turn\.nextAction\.kind === "ready"\) onReady/);
   assert.match(candidateSource, /acknowledgeReady/);
   assert.doesNotMatch(candidateSource, /controller\.finish/);
+  assert.doesNotMatch(hookSource, /completeGuidedBirthTimeCandidate/);
+  assert.doesNotMatch(hookSource, /completeCandidate:/);
 });
 
-test("terminal candidate owns one explicit next step and its completion error", () => {
+test("unconfirmed terminal candidates preserve the range without offering direct adoption", () => {
   const candidateResultSource = readFileSync(new URL("../src/components/birth-time-candidate-result.tsx", import.meta.url), "utf8");
   const choiceQuestionSource = readFileSync(new URL("../src/components/birth-time-choice-question.tsx", import.meta.url), "utf8");
   const rectificationSource = readFileSync(new URL("../src/components/birth-time-rectification.tsx", import.meta.url), "utf8");
   const legacyRectificationSource = readFileSync(new URL("../src/components/birth-time-legacy-rectification.tsx", import.meta.url), "utf8");
-  const globalCssSource = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
-  assert.match(candidateResultSource, /评估已完成，下一步/);
-  assert.match(candidateResultSource, /采用 \$\{path\.time\} 并进入对话/);
-  assert.match(candidateResultSource, /正在采用 \$\{path\.time\}…/);
-  assert.match(candidateResultSource, /birth-time-next-step/);
+  assert.match(candidateResultSource, /尚未达到采用条件/);
+  assert.match(candidateResultSource, /补充资料并重新评估/);
+  assert.doesNotMatch(candidateResultSource, /采用 \$\{path\.time\} 并进入对话/);
+  assert.doesNotMatch(candidateResultSource, /birth-time-next-step/);
   assert.match(rectificationSource, /error=\{error\}/);
   assert.match(rectificationSource, /const childOwnsError = action\.kind === "ask_dynamic_choice"\s*\|\| action\.kind === "clarify_unmatched_answer"/);
   assert.match(rectificationSource, /error && !showsCandidate && !childOwnsError/);
   assert.equal(choiceQuestionSource.match(/role="alert"/g)?.length, 1);
   assert.match(legacyRectificationSource, /error=\{error\}/);
   assert.match(legacyRectificationSource, /error && !showsCandidate/);
-  assert.match(globalCssSource, /\.birth-time-next-step/);
 });
 
 test("terminal CJK copy stays intact while homepage candidates remain unconfirmed in v3", () => {
   const candidateResultSource = readFileSync(new URL("../src/components/birth-time-candidate-result.tsx", import.meta.url), "utf8");
   const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
-  assert.match(candidateResultSource, /作为<span className="phrase-nowrap">当前排盘时间<\/span>并进入对话；<span className="phrase-nowrap">原始填报<\/span>和本次<span className="phrase-nowrap">候选结果<\/span><span className="phrase-nowrap">仍会保留<\/span>。/);
+  assert.match(candidateResultSource, /候选范围已保留，但当前证据不足以将具体分钟写入当前排盘时间。补充经历后可重新评估。/);
   assert.match(pageSource, /未确认；\$\{birthTimeConsultationOptionsCopy\(profile\)\}/);
   assert.match(pageSource, /<ConversationalBirthTimeRectification/);
   assert.doesNotMatch(pageSource, /当前使用候选时间排盘/);

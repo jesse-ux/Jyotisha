@@ -1,0 +1,230 @@
+{
+  "scope": "WorkBuddy round4 candidate ledger after round3 was found non-exhaustive",
+  "created_at": "2026-07-21",
+  "source_roots": [
+    "/Users/wuyongnaren/WorkBuddy",
+    "/Users/wuyongnaren/.workbuddy"
+  ],
+  "claim_status": "fragment_audit_only",
+  "status": "partial_non_exhaustive",
+  "summary": {
+    "round3_indexed_entries": 30,
+    "unindexed_filename_signal_total": 858,
+    "round4_entries": 20,
+    "decisions": {
+      "migrate_to_registry": 8,
+      "migrate_to_test": 4,
+      "reference_only": 6,
+      "forbidden_private_or_obsolete": 2
+    }
+  },
+  "allowed_decisions": [
+    "migrate_to_registry",
+    "migrate_to_test",
+    "reference_only",
+    "forbidden_private_or_obsolete"
+  ],
+  "entries": [
+    {
+      "candidate_id": "wb_round4_sahams_execution_guide",
+      "domain": "tajika_saham",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/sahams-execution-guide.md",
+      "sha256": "0848ee1bb946cd81a034f6fe1025d599b7ff78631f016297a9cf35bb08db90ce",
+      "size_bytes": 1867,
+      "current_repo_same_name": "references/sahams-execution-guide.md",
+      "decision": "reference_only",
+      "reason": "Already present in the research repo by filename; use only as duplicate/supersession evidence unless runtime invocation is separately proven."
+    },
+    {
+      "candidate_id": "wb_round4_varga_system_quick_reference",
+      "domain": "varga",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/varga-system-quick-reference.md",
+      "sha256": "3b9503b5c5e6651226ace1770b8021b7e33744737cdd150d66da2c1f476cc3a6",
+      "size_bytes": 10468,
+      "current_repo_same_name": "references/varga-system-quick-reference.md",
+      "decision": "reference_only",
+      "reason": "Already present in research references; next step is invocation audit, not content copying."
+    },
+    {
+      "candidate_id": "wb_round4_varga_divisional_quick_reference",
+      "domain": "varga",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/varga-divisional-charts-quick-reference.md",
+      "sha256": "081814f256677cf12cc91a44d83e6ac7f587cb83fa8276d8815f517e8d93d5bf",
+      "size_bytes": 14961,
+      "current_repo_same_name": "references/varga-divisional-charts-quick-reference.md",
+      "decision": "reference_only",
+      "reason": "Already present in research references; keep as duplicate candidate until D1-D60 invocation audit closes."
+    },
+    {
+      "candidate_id": "wb_round4_ashtakavarga_complete_system",
+      "domain": "ashtakavarga",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/ashtakavarga-complete-system.md",
+      "sha256": "a37203762fbe4e2ecf358abb6104d0ee9ef07ca542d6d10ca6060133f657c574",
+      "size_bytes": 8651,
+      "current_repo_same_name": "references/ashtakavarga-complete-system.md",
+      "decision": "reference_only",
+      "reason": "Already present; high-level reference cannot upgrade AV component truth without numeric oracle packets."
+    },
+    {
+      "candidate_id": "wb_round4_dasha_shadbala_oracle_cases",
+      "domain": "shadbala_oracle",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/dasha_shadbala_oracle_cases.json",
+      "sha256": "0e08fa9d593f89ac5762d6b2952f93a17f5e831ad556aea365cce9dfa601794d",
+      "size_bytes": 21415,
+      "current_repo_same_name": "references/oracle/dasha_shadbala_oracle_cases.json",
+      "decision": "reference_only",
+      "reason": "Already present; use only through existing oracle validators."
+    },
+    {
+      "candidate_id": "wb_round4_tajika_annual_oracle_cases",
+      "domain": "tajika_oracle",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/tajika_annual_oracle_cases.json",
+      "sha256": "b28c320134357f54e6a42248f6ce8d49dfd773475c55f39d09f57f48f51aa3db",
+      "size_bytes": 21232,
+      "current_repo_same_name": "references/oracle/tajika_annual_oracle_cases.json",
+      "decision": "reference_only",
+      "reason": "Already present; no new migration until numeric field validation is rerun."
+    },
+    {
+      "candidate_id": "wb_round4_event_judgment_examples",
+      "domain": "event_judgment",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/event_judgment_examples.md",
+      "sha256": "2e4d8c630dc7faf299089fdf9a029448ed85b6ffadbd7cb4820409d3a5ff5447",
+      "size_bytes": 2525,
+      "current_repo_same_name": "references/event_judgment_examples.md",
+      "decision": "migrate_to_registry",
+      "reason": "Already present as reference, but not proven as a formal rule-family registry."
+    },
+    {
+      "candidate_id": "wb_round4_birth_time_rectification_cases",
+      "domain": "birth_time_rectification",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/birth-time-rectification-cases.md",
+      "sha256": "40a6e856672a275c91e09a4aa7ae776f37696fcdff31dc34f3b00c3766b62793",
+      "size_bytes": 11540,
+      "current_repo_same_name": "references/birth-time-rectification-cases.md",
+      "decision": "migrate_to_test",
+      "reason": "Useful for local UI journey and claim-boundary tests; do not use as truth labels without public provenance."
+    },
+    {
+      "candidate_id": "wb_round4_birth_time_rectification_advanced",
+      "domain": "birth_time_rectification",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/birth-time-rectification-advanced.md",
+      "sha256": "da25c979a94945d2990ad78b7ccc95bd0609e1458643382734fb920617182083",
+      "size_bytes": 13581,
+      "current_repo_same_name": "references/birth-time-rectification-advanced.md",
+      "decision": "migrate_to_registry",
+      "reason": "Needs rule-family registry extraction for rectification techniques; no bulk copy."
+    },
+    {
+      "candidate_id": "wb_round4_event_judgment_career",
+      "domain": "event_judgment",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/event_judgment_career.md",
+      "sha256": "16ad9e0e832b83f0610c4790ef558d807f44031d59d647da225adda80868d22b",
+      "size_bytes": 4334,
+      "current_repo_same_name": "references/event_judgment_career.md",
+      "decision": "migrate_to_registry",
+      "reason": "Candidate for event judgment rule-family registry, especially career domain."
+    },
+    {
+      "candidate_id": "wb_round4_event_judgment_wealth",
+      "domain": "event_judgment",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/event_judgment_wealth.md",
+      "sha256": "e690fa3d753a169dc50bb7773a687e4aa71d267cd82f536ea6096afe2fda9218",
+      "size_bytes": 5440,
+      "current_repo_same_name": "references/event_judgment_wealth.md",
+      "decision": "migrate_to_registry",
+      "reason": "Candidate for event judgment rule-family registry, especially wealth domain."
+    },
+    {
+      "candidate_id": "wb_round4_event_judgment_skeleton",
+      "domain": "event_judgment",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/event_judgment_skeleton.md",
+      "sha256": "8c627aea6cb00a9c067f2bab0b2080cd229ba5ab498daf4dc728ec21cbd2755f",
+      "size_bytes": 4535,
+      "current_repo_same_name": "references/event_judgment_skeleton.md",
+      "decision": "migrate_to_registry",
+      "reason": "Candidate skeleton for normalizing event-judgment registry fields."
+    },
+    {
+      "candidate_id": "wb_round4_kp_practical_event_timing",
+      "domain": "kp_precision_timing",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/kp-practical-event-timing.md",
+      "sha256": "9525d289288da13b94aa16299ffa2de902f702d236f4433af291ebe29336586b",
+      "size_bytes": 303,
+      "current_repo_same_name": "references/kp-practical-event-timing.md",
+      "decision": "migrate_to_registry",
+      "reason": "Small KP timing note; useful only as a registry pointer, not as oracle."
+    },
+    {
+      "candidate_id": "wb_round4_muhurta_complete_guide",
+      "domain": "muhurta",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/muhurta-complete-guide.md",
+      "sha256": "77caf0180f1d054b218433e5e57b9e0f2c8da17c9188cc56b4911737ffb3b3d0",
+      "size_bytes": 1348,
+      "current_repo_same_name": "references/muhurta-complete-guide.md",
+      "decision": "migrate_to_registry",
+      "reason": "Candidate for Muhurta factor registry; not enough for verdict scoring."
+    },
+    {
+      "candidate_id": "wb_round4_tajika_yoga_complete_guide",
+      "domain": "tajika_saham",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/tajika-yoga-complete-guide.md",
+      "sha256": "8054b0752da77d1e101551f982b5c7d8d8a5d9cffe449a3c171eff87332c8e58",
+      "size_bytes": 11850,
+      "current_repo_same_name": "references/tajika-yoga-complete-guide.md",
+      "decision": "migrate_to_registry",
+      "reason": "Candidate for Tajika yoga registry and annual chart claim-boundary mapping."
+    },
+    {
+      "candidate_id": "wb_round4_saham_rules",
+      "domain": "tajika_saham",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/saham_rules.json",
+      "sha256": "374f5725212742f331199351b77121235c08b266798f0528f9e5f040558a0848",
+      "size_bytes": 2065,
+      "current_repo_same_name": "references/saham_rules.json",
+      "decision": "migrate_to_test",
+      "reason": "Use for formula schema tests after public numeric oracle packets are attached."
+    },
+    {
+      "candidate_id": "wb_round4_user_1993_shadbala_pending_packet",
+      "domain": "shadbala_private",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pending_packets/external_template_user_1993_shadbala_lahiri_pyjhora_20260627.json",
+      "sha256": "841bd71a78fb4d0ca6b0eba800eaddc9cbee8bd9cbadd60cc4357bcc5b91e21a",
+      "size_bytes": 3275,
+      "current_repo_same_name": null,
+      "decision": "forbidden_private_or_obsolete",
+      "reason": "Private/person-specific pending packet; not for truth source, commercial claim, or public release."
+    },
+    {
+      "candidate_id": "wb_round4_handan_shadbala_pending_packet",
+      "domain": "shadbala_private",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pending_packets/external_template_handan_shadbala_raman.json",
+      "sha256": "2163eeecb9aef353d39c42ae6b02f2bf45cf1df758c6399a8feaf1c1bb0896b0",
+      "size_bytes": 2563,
+      "current_repo_same_name": null,
+      "decision": "forbidden_private_or_obsolete",
+      "reason": "Private/source-insufficient pending packet; keep quarantined."
+    },
+    {
+      "candidate_id": "wb_round4_pyjhora_steve_jobs_shadbala_stdout",
+      "domain": "shadbala_oracle",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+      "sha256": "2b8c5c76a4a369ff066b0160701c9f443d891832f6d2f811a983ca8326b002a7",
+      "size_bytes": 2980,
+      "current_repo_same_name": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+      "decision": "migrate_to_test",
+      "reason": "Already present; use only through reproducible parser/hash tests."
+    },
+    {
+      "candidate_id": "wb_round4_tajika_steve_jobs_1984_first_packet",
+      "domain": "tajika_oracle",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json",
+      "sha256": "26a7231bd06f60bde2097352dc35793220c7c73f7ad32fb21fe6d35f12042d9e",
+      "size_bytes": 1783,
+      "current_repo_same_name": "references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json",
+      "decision": "migrate_to_test",
+      "reason": "Already present; eligible for numeric packet tests only after provenance fields are verified."
+    }
+  ],
+  "boundary": "This ledger proves round3 was non-exhaustive. It does not authorize copying WorkBuddy runtime code or upgrading any candidate to truth. Private/source-insufficient pending packets remain quarantined."
+}

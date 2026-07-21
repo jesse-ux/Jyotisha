@@ -1,8 +1,9 @@
-export type ReplyTheme = "career" | "marriage" | "timing" | "general";
+export type ReplyTheme = "career" | "marriage" | "wealth" | "timing" | "general";
 
 const fallbackSuggestions: Record<ReplyTheme, readonly [string, string, string]> = {
   career: ["我更适合怎样的职业路径？", "未来一年事业上要避开什么？", "我该如何发挥自己的优势？"],
   marriage: ["我在关系里容易重复什么模式？", "怎样的伴侣更适合我？", "未来一年关系上要注意什么？"],
+  wealth: ["我的财富增长方式是什么？", "接下来财务上要避开什么？", "我该如何稳定提升收入？"],
   timing: ["接下来最值得把握的阶段是什么？", "哪些时期更适合主动行动？", "我现在应该优先准备什么？"],
   general: ["未来一年，事业和收入该关注什么？", "我的关系模式是什么？", "未来哪些阶段值得把握？"],
 };

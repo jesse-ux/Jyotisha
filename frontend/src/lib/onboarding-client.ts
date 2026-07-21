@@ -77,7 +77,7 @@ type OnboardingProfileFingerprintInput = {
 };
 
 export type OnboardingSuggestion = {
-  readonly theme: "career" | "marriage" | "timing";
+  readonly theme: ConsultationTheme;
   readonly text: string;
 };
 
@@ -268,3 +268,4 @@ export async function requestOnboardingWithRecovery(
 
   throw lastError ?? new OnboardingRequestError("pending");
 }
+import type { ConsultationTheme } from "./consultation-workflow-request";

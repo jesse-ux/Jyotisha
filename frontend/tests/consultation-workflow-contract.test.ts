@@ -39,3 +39,11 @@ test("carries commercial technique truth into the model contract", () => {
   assert.match(mastra, /Do not use a restricted technique/);
   assert.match(route, /x-jyotish-technique-truth/);
 });
+
+test("projects consultation themes through explicit strict workflow taxonomy", () => {
+  const projection = readFileSync(new URL("../src/lib/consultation-workflow-request.ts", import.meta.url), "utf8");
+  assert.match(projection, /strictWorkflowRoute/);
+  assert.match(projection, /claimBoundary/);
+  assert.match(projection, /requiredLayers/);
+  assert.match(projection, /negative holdout gate/);
+});

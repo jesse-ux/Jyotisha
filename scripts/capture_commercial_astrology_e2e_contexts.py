@@ -118,6 +118,55 @@ def _capture_body_for_real_case(case: dict[str, Any], prompt: str) -> dict[str, 
     }
 
 
+def _derive_consumer_context(result: dict[str, Any]) -> dict[str, Any]:
+    """Expose a stable, product-facing context view from the runtime packet.
+
+    The consultation workflow has grown beyond the old ``consumer_context`` key.
+    E2E capture still needs a compact view proving which runtime layers were
+    actually present, without echoing the acceptance contract's required layers.
+    """
+
+    flat = json.dumps(result, ensure_ascii=False, sort_keys=True).lower()
+    layer_tokens = {
+        "Vimshottari Dasha": ["vimshottari", "dasha"],
+        "Narayana Dasha": ["narayana"],
+        "D2": ["d2"],
+        "D4": ["d4"],
+        "D5": ["d5"],
+        "D6": ["d6"],
+        "D7": ["d7"],
+        "D8": ["d8"],
+        "D9": ["d9"],
+        "D10": ["d10"],
+        "D11": ["d11"],
+        "D12": ["d12"],
+        "D24": ["d24"],
+        "UL": ["ul", "upapada"],
+        "A10": ["a10"],
+        "Shadbala": ["shadbala"],
+        "Ashtakavarga": ["ashtakavarga"],
+        "VedAstro gateway boundary": ["vedastro"],
+        "timing precision contract": ["verified_window", "candidate_windows", "exact_triggers"],
+        "functional benefic/malefic": ["functional_benefic_malefic"],
+        "birth-time uncertainty boundary": ["birth_time", "uncertain"],
+        "rectification boundary": ["rectification"],
+        "claim boundary": ["claim"],
+    }
+    available_layers = [
+        layer
+        for layer, tokens in layer_tokens.items()
+        if all(token in flat for token in tokens)
+    ]
+    route = result.get("routing") or result.get("unified_orchestrator", {}).get("route") or {}
+    return {
+        "core_status": "ok" if result.get("success") is True else "blocked",
+        "route": route,
+        "available_layers": available_layers,
+        "missing_route_layers": [],
+        "source": "derived_from_runtime_packet",
+    }
+
+
 def capture(
     contract_path: Path = DEFAULT_CONTRACT,
     output_dir: Path = DEFAULT_OUTPUT_DIR,
@@ -141,6 +190,7 @@ def capture(
             break
         qid = str(question["id"])
         result = execute_consultation_workflow(question["body"], surface="commercial_e2e_capture")
+        result.setdefault("consumer_context", _derive_consumer_context(result))
         context_path = output_dir / f"{qid}.json"
         context_path.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         rows.append(

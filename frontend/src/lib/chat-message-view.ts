@@ -3,6 +3,12 @@ export type ChatMessage = {
   readonly text: string;
   readonly suggestions?: readonly string[];
   readonly techniqueTruth?: string;
+  readonly workflowReceipt?: {
+    readonly route: string;
+    readonly status: string;
+    readonly preciseTiming: string;
+    readonly missingLayers: readonly string[];
+  };
 };
 
 export type ChatMessageView = ChatMessage & {

@@ -1,0 +1,23 @@
+{
+  "boundary": "dependency_preparation_only_no_kp_oracle_truth",
+  "claim_status": "runtime_dependency_ready",
+  "created_at": "2026-07-21",
+  "package_versions": {
+    "flatlib": "0.3.1.dev0",
+    "polars": "1.42.1",
+    "pyswisseph": "2.10.3.2",
+    "timezonefinder": "8.2.5"
+  },
+  "production_tuning_allowed": false,
+  "project_dependency_mutation_allowed": false,
+  "required_packages": {
+    "flatlib": "git+https://github.com/diliprk/flatlib.git@sidereal#egg=flatlib",
+    "polars": "polars",
+    "pyswisseph": "pyswisseph",
+    "timezonefinder": "timezonefinder"
+  },
+  "scope": "vedicastro_kp_tmp_env_preparer",
+  "target": "/tmp/vedicastro_flatlib_probe",
+  "target_tree_hash": "7a75855cd9f641a30a4d466d44a282571e3d797c39de0d975f5f6647a3e1bf74",
+  "truth_matrix_allowed": false
+}

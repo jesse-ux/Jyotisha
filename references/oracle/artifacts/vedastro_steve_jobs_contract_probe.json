@@ -6,8 +6,8 @@
   },
   "capability_catalog": {
     "capability_count": 641,
-    "catalog_hash": "b88d1067eb967b06de945a7773858ff1cc34f4145487216752df2857b4b3b927",
-    "installed_package_version": "1.23.25",
+    "catalog_hash": "bf10eb7ccd9e660a1d82d98a055119d6bab45f5a69dd6a6b96d1832418e513a8",
+    "installed_package_version": "1.23.26",
     "module_name": "vedastro",
     "source": "vedastro_python_bridge",
     "status": "captured"
@@ -17,7 +17,7 @@
   "field_statuses": {
     "VedAstro.D1.longitude": "blocked"
   },
-  "generated_at": "2026-07-17T09:40:11.856902+00:00",
+  "generated_at": "2026-07-21T12:09:41.148914+00:00",
   "method_contract": {
     "all_planet_data_matches_nirayana": false,
     "all_planet_longitude_matches_nirayana": false,
@@ -27,24 +27,24 @@
         "all_planet_vs_nirayana": 0.0
       },
       "Mars": {
-        "all_planet_data_vs_nirayana": -0.000277778,
-        "all_planet_vs_nirayana": 0.0
+        "all_planet_data_vs_nirayana": 0.467777778,
+        "all_planet_vs_nirayana": 0.468055556
       },
       "Mercury": {
-        "all_planet_data_vs_nirayana": -0.047777778,
-        "all_planet_vs_nirayana": -0.0475
+        "all_planet_data_vs_nirayana": -0.000277778,
+        "all_planet_vs_nirayana": 0.0
       },
       "Moon": {
         "all_planet_data_vs_nirayana": -0.0,
         "all_planet_vs_nirayana": 0.0
       },
       "Saturn": {
-        "all_planet_data_vs_nirayana": 0.004722222,
-        "all_planet_vs_nirayana": 0.005
-      },
-      "Sun": {
         "all_planet_data_vs_nirayana": -0.000277778,
         "all_planet_vs_nirayana": 0.0
+      },
+      "Sun": {
+        "all_planet_data_vs_nirayana": 0.670555556,
+        "all_planet_vs_nirayana": 0.670833333
       },
       "Venus": {
         "all_planet_data_vs_nirayana": -0.000277778,
@@ -82,11 +82,11 @@
     },
     "PlanetNirayanaLongitude": {
       "Jupiter": 87.27222222222223,
-      "Mars": 5.854722222222223,
-      "Mercury": 291.17333333333335,
+      "Mars": 5.386666666666667,
+      "Mercury": 291.12583333333333,
       "Moon": 344.5113888888889,
-      "Saturn": 207.92194444444445,
-      "Sun": 312.51222222222225,
+      "Saturn": 207.92694444444444,
+      "Sun": 311.8413888888889,
       "Venus": 267.93611111111113
     }
   },
@@ -460,7 +460,7 @@
         "request_body_hash": "d45c4facf45e6f530e114d7b5bd12565ed98ce7c5ffe612c9f5d6ad54b0d4c1e",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:39:59 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:27 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "c0b951e8e79edf0dfc7f21f0eea8d9233baa2e7b155c0e8dd0a078c26081d83c",
@@ -825,7 +825,7 @@
         "request_body_hash": "f65f499ed5198e9a908f8162c7416ee1900cce776985f3431fbe585d465bb966",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:39:55 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:24 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "6d0ccc01163f52882b4729126b6040173b861530facc71c3c5bb4fbee775b7f9",
@@ -1184,7 +1184,7 @@
         "request_body_hash": "5d06bcab5ad35cc9bab8d6045c9cc94a5401355efde5fb2fcebec588ff37a82a",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:39:57 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:25 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "4521a381ebbf2462fd932e411bdf604872ac57f76389687af8f5ad47af16c733",
@@ -1543,7 +1543,7 @@
         "request_body_hash": "ecb534474630f8b3c71299279668ac78bdcb0b41b856e692880f17094526a8f6",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:39:53 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:22 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "93089694d5e0a5ce4817f42d69ec654682bec1dab9ec623ff76323380467830d",
@@ -1914,7 +1914,7 @@
         "request_body_hash": "a7c609c106c29384f57d221eef233095f98f868725f95810aaf834ab05dc3e4c",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:40:02 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:31 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "bfb4d685797ba0b90d2951c29843f10831bc085535ca6abcb6b9e0a86bc8fcbb",
@@ -2274,7 +2274,7 @@
         "request_body_hash": "ca1c489fb000c6c0fce82847290ae225bac0080b5c068b16b5b96b57d36bccdb",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:39:51 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:21 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "cb72a68310596f5f4533b7562dd9b13e03e7b229257d1c231e7f4590bd9cc135",
@@ -2650,7 +2650,7 @@
         "request_body_hash": "db1bf8a8aa52b1b9a30c8affd606cb6ac4a8c803244efb2910e3a17fe40e8d01",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:40:01 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:30 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "fb49f3bab33f8326366dc58078f631f561da0471f6775d2facdbe60afbb685b3",
@@ -2698,7 +2698,7 @@
         "request_body_hash": "d45c4facf45e6f530e114d7b5bd12565ed98ce7c5ffe612c9f5d6ad54b0d4c1e",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:40:09 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:38 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "e61e2eda72b1dba9b72fce2d8237ea677b3fdb45ac591ec7f370f9e2d2d54647",
@@ -2733,22 +2733,22 @@
           ],
           "Type": "SingleCall"
         },
-        "normalized_value": 5.854722222222223,
+        "normalized_value": 5.386666666666667,
         "payload": {
           "PlanetNirayanaLongitude": {
-            "DegreeMinuteSecond": "5° 51' 17",
-            "TotalDegrees": "5.854722222222223"
+            "DegreeMinuteSecond": "5° 23' 12",
+            "TotalDegrees": "5.386666666666667"
           }
         },
-        "raw_hash": "59f8be1c9e661688e5c5400363a4eb6a5f00947e8147a95a7ba18d4b01fb2b08",
+        "raw_hash": "5c9e2922439e94e0df2fabfc0c6de87afe52756f3ba67846ce583ea1464e00a7",
         "request_body_hash": "f65f499ed5198e9a908f8162c7416ee1900cce776985f3431fbe585d465bb966",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:40:06 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:35 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "8af9e6b535c04fb7c9918ade07b7ad91348080a769cf39878951d543fc63cd1f",
-        "response_payload_hash": "292052d508cb637199bc3b5ee80b002b8c7d5982f5830b6585b5c47e7aa66ead",
+        "response_payload_hash": "ffe42426ce86977e771f7afe0e9655f9805e34cd012391b6b73568c1a456e0f9",
         "status": "Pass"
       },
       "Mercury": {
@@ -2779,22 +2779,22 @@
           ],
           "Type": "SingleCall"
         },
-        "normalized_value": 291.17333333333335,
+        "normalized_value": 291.12583333333333,
         "payload": {
           "PlanetNirayanaLongitude": {
-            "DegreeMinuteSecond": "291° 10' 24",
-            "TotalDegrees": "291.17333333333335"
+            "DegreeMinuteSecond": "291° 7' 33",
+            "TotalDegrees": "291.12583333333333"
           }
         },
-        "raw_hash": "c9868d178e0142c417e77387e906ec8671297fa0cda260ef8a0bfd142d823a97",
+        "raw_hash": "65629974eebe9e80f5ad0891f3a92089ccf51726dd006427153fb1d97b92a9fd",
         "request_body_hash": "5d06bcab5ad35cc9bab8d6045c9cc94a5401355efde5fb2fcebec588ff37a82a",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:40:07 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:36 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "c0ef28b19014505b62ba3078efd5491940aea6a0a0e6a40d3c36d5da5a6652ff",
-        "response_payload_hash": "90f55fdf61c751832b22d8d45a99cfb987f0591e1ce75907fd8a2ee78b768476",
+        "response_payload_hash": "985edf2ca075cc9bee89e989d435ca5b5e90965156bfc22afc70638079bd5169",
         "status": "Pass"
       },
       "Moon": {
@@ -2836,7 +2836,7 @@
         "request_body_hash": "ecb534474630f8b3c71299279668ac78bdcb0b41b856e692880f17094526a8f6",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:40:05 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:34 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "e4df625ac24adb3bbc5d5eccdae52d7b2baabcf7243af20c06e7e6e58a036015",
@@ -2871,22 +2871,22 @@
           ],
           "Type": "SingleCall"
         },
-        "normalized_value": 207.92194444444445,
+        "normalized_value": 207.92694444444444,
         "payload": {
           "PlanetNirayanaLongitude": {
-            "DegreeMinuteSecond": "207° 55' 19",
-            "TotalDegrees": "207.92194444444445"
+            "DegreeMinuteSecond": "207° 55' 37",
+            "TotalDegrees": "207.92694444444444"
           }
         },
-        "raw_hash": "00a810322b43e0dca99e9e314da1f9c7f049063d647168f3efa9a8115932423f",
+        "raw_hash": "281751b85dabb7f5e6abbf7b74f567a6e2fa6cfceb724a3a7de46297de03e88e",
         "request_body_hash": "a7c609c106c29384f57d221eef233095f98f868725f95810aaf834ab05dc3e4c",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:40:11 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:41 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "61e79349787305a7ad2700e59b0193047d234f7b4428ebd9518e1882b7d2bc98",
-        "response_payload_hash": "f49e0a274793b50f20fb283184fefb06ee3d32a49bf8d25219b96a6b74e1aac7",
+        "response_payload_hash": "3a20bc9fb70a0ae28b55301ff7c4aea6b06d1ab279bcd29271cb99f73545772f",
         "status": "Pass"
       },
       "Sun": {
@@ -2917,22 +2917,22 @@
           ],
           "Type": "SingleCall"
         },
-        "normalized_value": 312.51222222222225,
+        "normalized_value": 311.8413888888889,
         "payload": {
           "PlanetNirayanaLongitude": {
-            "DegreeMinuteSecond": "312° 30' 44",
-            "TotalDegrees": "312.51222222222225"
+            "DegreeMinuteSecond": "311° 50' 29",
+            "TotalDegrees": "311.8413888888889"
           }
         },
-        "raw_hash": "55573bed79d0af387142867e45f8a430e6d25e87496fa411eb44ebf1cd72a24c",
+        "raw_hash": "efc6004f4d98a75bf96ec8576c0d923174ba2c794af7f097ff78eee9d29cfaa2",
         "request_body_hash": "ca1c489fb000c6c0fce82847290ae225bac0080b5c068b16b5b96b57d36bccdb",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:40:03 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:32 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "bd722e1cb9e24693ba6c8671c7a723999db97f978413ad2c8921d66e8323f7d8",
-        "response_payload_hash": "21857d79a7fa6fab10ab3b2698779f605d379d372ad18b22766a8a491dfc70ca",
+        "response_payload_hash": "e9f4f8ae0f5c9892ecfa7bb286ab7907634e537c7984a5511f9a234c49c2f729",
         "status": "Pass"
       },
       "Venus": {
@@ -2974,7 +2974,7 @@
         "request_body_hash": "db1bf8a8aa52b1b9a30c8affd606cb6ac4a8c803244efb2910e3a17fe40e8d01",
         "request_url_host": "api.vedastro.org",
         "response_headers": {
-          "date": "Fri, 17 Jul 2026 09:40:10 GMT",
+          "date": "Tue, 21 Jul 2026 12:09:40 GMT",
           "server": "Kestrel"
         },
         "response_input_hash": "290d41983b8413973c02ebfc840f77597a249e167fb8b2bfa85d02da9dd677bb",
@@ -3022,7 +3022,7 @@
           "request_body_hash": "638d6d846cae88f0137456c4dab1cd619992a04e43cab576be290c0d65fa275f",
           "request_url_host": "api.vedastro.org",
           "response_headers": {
-            "date": "Fri, 17 Jul 2026 09:39:45 GMT",
+            "date": "Tue, 21 Jul 2026 12:09:13 GMT",
             "server": "Kestrel"
           },
           "response_input_hash": "1e529077a4b6ea7cafb4e5ac9ec67577dbe0e1d87e20c509a9adc4eb50dcf7f1",
@@ -3067,7 +3067,7 @@
           "request_body_hash": "638d6d846cae88f0137456c4dab1cd619992a04e43cab576be290c0d65fa275f",
           "request_url_host": "api.vedastro.org",
           "response_headers": {
-            "date": "Fri, 17 Jul 2026 09:39:46 GMT",
+            "date": "Tue, 21 Jul 2026 12:09:14 GMT",
             "server": "Kestrel"
           },
           "response_input_hash": "1e529077a4b6ea7cafb4e5ac9ec67577dbe0e1d87e20c509a9adc4eb50dcf7f1",
@@ -3112,7 +3112,7 @@
           "request_body_hash": "638d6d846cae88f0137456c4dab1cd619992a04e43cab576be290c0d65fa275f",
           "request_url_host": "api.vedastro.org",
           "response_headers": {
-            "date": "Fri, 17 Jul 2026 09:39:47 GMT",
+            "date": "Tue, 21 Jul 2026 12:09:16 GMT",
             "server": "Kestrel"
           },
           "response_input_hash": "1e529077a4b6ea7cafb4e5ac9ec67577dbe0e1d87e20c509a9adc4eb50dcf7f1",
@@ -3144,26 +3144,26 @@
           },
           "interpreted_utc": "1955-02-24T11:15:00+00:00",
           "normalized": {
-            "Jupiter": 87.27222222222223,
-            "Mars": 5.854722222222223,
-            "Mercury": 291.12583333333333,
-            "Moon": 344.5113888888889,
-            "Saturn": 207.92694444444444,
-            "Sun": 312.51222222222225,
-            "Venus": 267.93611111111113
+            "Jupiter": 87.31472222222222,
+            "Mars": 5.386666666666667,
+            "Mercury": 291.17333333333335,
+            "Moon": 335.0911111111111,
+            "Saturn": 207.92194444444445,
+            "Sun": 311.8413888888889,
+            "Venus": 267.1788888888889
           },
           "payload": {
-            "AllPlanetLongitude": "Sun - 312.51222222222225, Moon - 344.5113888888889, Mars - 5.854722222222223, Mercury - 291.12583333333333, Jupiter - 87.27222222222223, Venus - 267.93611111111113, Saturn - 207.92694444444444, Ketu - 69.2688888888889, Rahu - 249.26916666666668"
+            "AllPlanetLongitude": "Sun - 311.8413888888889, Moon - 335.0911111111111, Mars - 5.386666666666667, Mercury - 291.17333333333335, Jupiter - 87.31472222222222, Venus - 267.1788888888889, Saturn - 207.92194444444445, Ketu - 69.30444444444444, Rahu - 249.30444444444444"
           },
-          "raw_hash": "d87b7025392efd7411ae56db4e46c199deba565a68bebbab0a9b318727113291",
+          "raw_hash": "ef8dfad6e8da61e6a3409f5058787d7d8bc5f43592bf9a05e9db1cb0b158f031",
           "request_body_hash": "b4f6d47f9a2223d7ef81457c8e3e6ba1abcf9238900f8472baf5f31eb359068e",
           "request_url_host": "api.vedastro.org",
           "response_headers": {
-            "date": "Fri, 17 Jul 2026 09:39:50 GMT",
+            "date": "Tue, 21 Jul 2026 12:09:20 GMT",
             "server": "Kestrel"
           },
           "response_input_hash": "09057eb68ad30572d165a46d258b5f93d8e39fd22814c50dc79864be6cd7c721",
-          "response_payload_hash": "21bbebeffe2ec586d45286161abe89bc2dfdda7329133ce4d0c8156a082831da",
+          "response_payload_hash": "03b1f1d8cdbcdd5a67a6abf8b8c2b48659848dd91c2b08dcb54f13bea0ed8e18",
           "status": "Pass"
         }
       ],
@@ -3206,7 +3206,7 @@
           "request_body_hash": "66a847008737bce56835e50795db663c435b0bcb9de05657e0680fe9f9a414a4",
           "request_url_host": "api.vedastro.org",
           "response_headers": {
-            "date": "Fri, 17 Jul 2026 09:39:49 GMT",
+            "date": "Tue, 21 Jul 2026 12:09:17 GMT",
             "server": "Kestrel"
           },
           "response_input_hash": "26ace2c3732b246f0d503110cd3d6e312bea411d52a63771bca192aeefea1769",
@@ -3226,7 +3226,7 @@
   },
   "time_contract": {
     "equivalent_local_utc": true,
-    "positive_offset_control_distinct": false,
+    "positive_offset_control_distinct": true,
     "raw_hash_stable": true,
     "repeat_normalized_stable": true
   },

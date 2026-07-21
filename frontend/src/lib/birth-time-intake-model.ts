@@ -203,7 +203,7 @@ export function isDeclaredBirthProfileComplete(
 
 export function isBirthTimeReadyForConsultation(draft: BirthTimeDraft) {
   return isBirthClockTime(draft.time)
-    && (draft.birthTimeStatus === "candidate" || draft.birthTimeStatus === "confirmed");
+    && draft.birthTimeStatus === "confirmed";
 }
 
 const declaredBirthInputKeys = [

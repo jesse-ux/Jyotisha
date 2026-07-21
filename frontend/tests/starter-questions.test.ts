@@ -5,6 +5,7 @@ import test from "node:test";
 const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 const globalStyles = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 const appSidebarSource = readFileSync(new URL("../src/components/app-sidebar.tsx", import.meta.url), "utf8");
+const guidedTopicsSource = readFileSync(new URL("../src/lib/guided-jyotish-topics.ts", import.meta.url), "utf8");
 
 function sourceBetween(source: string, startMarker: string, endMarker: string) {
   const start = source.indexOf(startMarker);
@@ -31,6 +32,20 @@ test("keeps starter questions visible while the user edits a draft", () => {
 test("completed account initialization switches directly to the home cards", () => {
   assert.doesNotMatch(pageSource, /setOnboardingJustCompleted\(true\)/);
   assert.doesNotMatch(pageSource, /!profileComplete \|\| onboardingJustCompleted/);
+});
+
+test("default starter questions are guided Jyotish topics with evidence and claim boundaries", () => {
+  assert.match(pageSource, /defaultGuidedJyotishTopics/);
+  assert.match(pageSource, /theme\.evidencePreview\.join/);
+  assert.match(pageSource, /theme\.claimBoundary/);
+  assert.match(guidedTopicsSource, /strictWorkflowRoute/);
+  assert.match(guidedTopicsSource, /evidencePreview/);
+  assert.match(guidedTopicsSource, /confidenceCap/);
+  assert.match(guidedTopicsSource, /claimBoundary/);
+  assert.match(guidedTopicsSource, /D10/);
+  assert.match(guidedTopicsSource, /D9/);
+  assert.match(guidedTopicsSource, /Ashtakavarga/);
+  assert.match(guidedTopicsSource, /独立 holdout/);
 });
 
 test("keeps follow-up suggestions visible while the user edits a draft", () => {

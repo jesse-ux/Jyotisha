@@ -1,0 +1,88 @@
+{
+  "scope": "panchanga_local_jyotishganit_comparison",
+  "ticket_id": "TEMCQ-061",
+  "created_at": "2026-07-21",
+  "claim_status": "partial",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "algorithm_reuse_policy": "reuse_existing_local_muhurta_calc_panchanga_no_new_algorithm",
+  "source_local_method": "scripts/muhurta.py::calc_panchanga",
+  "source_local_input": {
+    "case": "Steve Jobs",
+    "source_artifact": "references/oracle/artifacts/local_steve_jobs_high_rigor_raw.json",
+    "sun_lon_reconstructed_from_sign_degree": 312.5175,
+    "moon_lon_reconstructed_from_sign_degree": 344.5165,
+    "weekday_convention": "0=Sun ... 6=Sat",
+    "weekday_used": 4,
+    "hour_from_sunrise_used": 6.0
+  },
+  "local_normalized_raw": {
+    "vaara": "Thursday",
+    "tithi": "Shukla Tritiya",
+    "nakshatra": "Uttara Bhadrapada",
+    "yoga": "Shubha",
+    "karana": "Garija"
+  },
+  "jyotishganit_observed_raw": {
+    "@type": "Panchanga",
+    "karana": "Gara",
+    "nakshatra": "Uttara Bhadrapada",
+    "tithi": "Shukla Tritiya",
+    "vaara": "Thursday",
+    "yoga": "Shubha"
+  },
+  "field_comparison": [
+    {
+      "field": "vaara",
+      "local_value": "Thursday",
+      "jyotishganit_value": "Thursday",
+      "status": "within_tolerance",
+      "reason": "same weekday name"
+    },
+    {
+      "field": "tithi",
+      "local_value": "Shukla Tritiya",
+      "jyotishganit_value": "Shukla Tritiya",
+      "status": "within_tolerance",
+      "reason": "same paksha+tithi label"
+    },
+    {
+      "field": "nakshatra",
+      "local_value": "Uttara Bhadrapada",
+      "jyotishganit_value": "Uttara Bhadrapada",
+      "status": "within_tolerance",
+      "reason": "same nakshatra label"
+    },
+    {
+      "field": "yoga",
+      "local_value": "Shubha",
+      "jyotishganit_value": "Shubha",
+      "status": "within_tolerance",
+      "reason": "same yoga label"
+    },
+    {
+      "field": "karana",
+      "local_value": "Garija",
+      "jyotishganit_value": "Gara",
+      "status": "alias_match",
+      "alias_rule": "Gara == Garija",
+      "reason": "naming alias only; not treated as formula mismatch"
+    }
+  ],
+  "summary": {
+    "fields_total": 5,
+    "within_tolerance": 4,
+    "alias_match": 1,
+    "formula_mismatch": 0,
+    "unit_mismatch": 0,
+    "truth_upgrades": 0
+  },
+  "still_blocked": [
+    "VedAstro shared Panchanga endpoint/version not pinned",
+    "PyJHora/JHora Panchanga normalized packet not archived for this five-field comparison",
+    "single-case agreement cannot establish global Panchanga oracle truth",
+    "sunrise-relative semantics and local civil-time convention still require explicit multi-case contract"
+  ],
+  "supersedes_schema_gap": "references/oracle/panchanga_temcq_061_schema_packet_2026_07_21.json",
+  "boundary": "local_jyotishganit_panchanga_field_observation_not_global_truth"
+}

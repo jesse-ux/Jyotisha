@@ -5,6 +5,7 @@ import test from "node:test";
 import { chatMessageViews } from "../src/lib/chat-message-view.ts";
 
 const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+const globalStyles = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
 const previousMessages = [
   { role: "user", text: "问题" },
@@ -51,4 +52,13 @@ test("keeps the suggestion row height stable while an answer streams", () => {
   // Then: loading disables the actions without removing their layout slot.
   assert.doesNotMatch(suggestionBlock[0].split("<div className=", 1)[0], /!isLoading/);
   assert.match(suggestionBlock[0], /disabled=\{[^}]*isLoading/);
+});
+
+test("docks the composer inside the chat panel instead of floating over content", () => {
+  assert.match(pageSource, /<div className="composer-wrap">/);
+  assert.match(globalStyles, /\.chat-panel[^}]*grid-template-rows:\s*68px minmax\(0,\s*1fr\) auto/);
+  assert.match(globalStyles, /\.conversation[^}]*padding-bottom:\s*var\(--composer-reserve\)/);
+  assert.match(globalStyles, /\.composer-wrap[^}]*position:\s*sticky/);
+  assert.match(globalStyles, /\.composer-wrap[^}]*bottom:\s*0/);
+  assert.doesNotMatch(globalStyles, /\.composer-wrap[^}]*position:\s*fixed/);
 });

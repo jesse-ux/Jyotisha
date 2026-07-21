@@ -112,6 +112,9 @@ def test_chat_page_uses_authenticated_cloud_persistence() -> None:
     assert 'await persistence' in source
     assert "pendingSessionId || cancellationInFlight.current || pendingConsultation.current" in source
     assert "setCancellationPending(true)" in source
+    assert "系统正在以账户记录为准同步点数" in source
+    assert "回答中途断开，已保留现有内容，本次已计费。" not in source
+    assert "本次已开始生成并计费" not in source
     assert 'localStorage.setItem(chartLibraryStorageKey(accountId)' in source
     assert 'localStorage.setItem("chat_sessions"' not in source
 

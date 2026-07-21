@@ -1,0 +1,64 @@
+{
+  "scope": "kp_public_worked_example_candidate_queue",
+  "created_at": "2026-07-21",
+  "claim_status": "open_queue",
+  "numeric_oracle_ready_count": 0,
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "runtime_observation_packet": "references/oracle/vedicastro_kp_house_cusp_raw_2026_07_21.json",
+  "candidates": [
+    {
+      "id": "astrosage_kp_chapter_2",
+      "url": "https://kpastrology.astrosage.com/kp-learning-home/tutorial/chapter-2-fundamental-principles",
+      "candidate_type": "formula_and_text_worked_example",
+      "useful_fields": [
+        "sign lord",
+        "star lord",
+        "sub lord",
+        "significator logic",
+        "ruling planets text examples"
+      ],
+      "has_numeric_cusp_table": false,
+      "upgrade_status": "reference_only_until_numeric_cusp_rows"
+    },
+    {
+      "id": "astrosage_kp_sign_star_sub_table",
+      "url": "https://kpastrology.astrosage.com/kp-learning-home/tutorial/chapter-2-fundamental-principles",
+      "candidate_type": "reference_table",
+      "useful_fields": [
+        "sign-star-sub division rules",
+        "KP star/sub conceptual table"
+      ],
+      "has_numeric_cusp_table": false,
+      "upgrade_status": "formula_reference_only"
+    },
+    {
+      "id": "onlinejyotish_kp_horoscope",
+      "url": "https://www.onlinejyotish.com/free-astrology/kp-horoscope.aspx",
+      "candidate_type": "runtime_form_candidate",
+      "useful_fields": [
+        "possible KP horoscope table",
+        "possible cusp/sub-lord output"
+      ],
+      "has_numeric_cusp_table": false,
+      "upgrade_status": "blocked_until_stable_public_input_output_packet"
+    },
+    {
+      "id": "astrobix_kp_houses",
+      "url": "https://astrobix.com/astrosight/1291-houses-in-kp-system.html",
+      "candidate_type": "runtime_form_candidate",
+      "useful_fields": [
+        "KP house/cusp explanation",
+        "possible public worked chart context"
+      ],
+      "has_numeric_cusp_table": false,
+      "upgrade_status": "reference_only_until_numeric_rows"
+    }
+  ],
+  "next_actions": [
+    "Capture a stable public KP chart with full cusp degree, star lord, sub lord and sub-sub lord rows.",
+    "Normalize VedicAstro KP raw to the same 12-row table.",
+    "Only then create a numeric oracle packet; until then KP timing remains observation-only."
+  ],
+  "boundary": "public_source_candidate_queue_only_no_kp_numeric_oracle"
+}

@@ -1,0 +1,758 @@
+{
+  "scope": "workbuddy_round3_candidate_ledger",
+  "created_at": "2026-07-21",
+  "source_root": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511",
+  "claim_status": "open_queue",
+  "status": "candidate_triage_not_runtime_truth",
+  "summary": {
+    "candidate_count": 30,
+    "migrate_to_registry": 14,
+    "migrate_to_test": 7,
+    "reference_only": 8,
+    "forbidden_private_or_obsolete": 1
+  },
+  "priority_order": [
+    "KP",
+    "Muhurta",
+    "Prashna",
+    "Tajika/Saham",
+    "Shadbala/AV",
+    "birth-time rectification",
+    "event judgment"
+  ],
+  "entries": [
+    {
+      "candidate_id": "references__kp-astrology-complete-system_md",
+      "domain": "kp_system",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/kp-astrology-complete-system.md",
+      "sha256": "9a44f277feaa91c3773e41e6d3d6d04be2538ed0a6457391b645c45443f05ed4",
+      "size_bytes": 10337,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# KP占星完整体系",
+        "## 一、什么是KP占星术？",
+        "## 二、249个Sub-Lord系统详解",
+        "### 核心原理",
+        "### 三层级描述系统",
+        "### 249的来源",
+        "## 三、Significator（指示星）分析",
+        "### 四层级指示星体系（从强到弱）"
+      ],
+      "risk_flags": [
+        "stale_workbuddy_snapshot_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__kp-practical-event-timing_md",
+      "domain": "kp_system",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/kp-practical-event-timing.md",
+      "sha256": "9525d289288da13b94aa16299ffa2de902f702d236f4433af291ebe29336586b",
+      "size_bytes": 303,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# KP实战案例与Sub-Lord事件时机判断指南"
+      ],
+      "risk_flags": [
+        "stale_workbuddy_snapshot_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__muhurta-complete-guide_md",
+      "domain": "muhurta",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/muhurta-complete-guide.md",
+      "sha256": "77caf0180f1d054b218433e5e57b9e0f2c8da17c9188cc56b4911737ffb3b3d0",
+      "size_bytes": 1348,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Muhurta Complete Guide",
+        "## 概述",
+        "## Panchanga 五要素",
+        "## 其他要素",
+        "## 活动适宜性判断",
+        "## 当前实现状态",
+        "## 局限",
+        "## 参考"
+      ],
+      "risk_flags": [
+        "external_license_boundary"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__prashna-complete-guide_md",
+      "domain": "prashna",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/prashna-complete-guide.md",
+      "sha256": "6a1fe3f0686a137f181c43bceaa1c825e3767c40bd1f11859b2bfa5e125f38c0",
+      "size_bytes": 17864,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Prashna Shastra（问事占星/时卦）完整指南",
+        "## 目录",
+        "## 1. 核心原理",
+        "## 2. 星盘铸造与Kunda验证",
+        "### 2.1 铸造五要素",
+        "### 2.2 Kunda 验证法（Prasna Marga Ch.5）",
+        "## 3. 十大核心计算体系",
+        "### 3.1 Arudha Lagna（映像上升点）"
+      ],
+      "risk_flags": [
+        "stale_workbuddy_snapshot_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__tajika-yoga-complete-guide_md",
+      "domain": "tajika_saham",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/tajika-yoga-complete-guide.md",
+      "sha256": "8054b0752da77d1e101551f982b5c7d8d8a5d9cffe449a3c171eff87332c8e58",
+      "size_bytes": 11850,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Tajika Yoga完整审计指南",
+        "## 一、Tajika Yoga体系概述",
+        "### 核心原理",
+        "### 十大Tajika Yoga分类",
+        "## 二、十大Tajika Yoga详解",
+        "### 2.1 Ithasala（结合Yoga）⭐⭐⭐⭐⭐",
+        "### 2.2 Easarapha（分离Yoga）",
+        "### 2.3 Nakta（间接联系Yoga）"
+      ],
+      "risk_flags": [
+        "stale_workbuddy_snapshot_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__sahams-execution-guide_md",
+      "domain": "tajika_saham",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/sahams-execution-guide.md",
+      "sha256": "0848ee1bb946cd81a034f6fe1025d599b7ff78631f016297a9cf35bb08db90ce",
+      "size_bytes": 1867,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Sahams 执行指南",
+        "## 一、当前已具备的落点",
+        "## 二、当前常见使用场景",
+        "## 三、当前推荐阅读顺序",
+        "### 场景 A：年运",
+        "### 场景 B：婚恋",
+        "### 场景 C：Prashna",
+        "## 四、当前真实边界"
+      ],
+      "risk_flags": [
+        "stale_workbuddy_snapshot_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__ashtakavarga-complete-system_md",
+      "domain": "shadbala_av",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/ashtakavarga-complete-system.md",
+      "sha256": "a37203762fbe4e2ecf358abb6104d0ee9ef07ca542d6d10ca6060133f657c574",
+      "size_bytes": 8651,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Ashtakavarga完整体系",
+        "## 一、核心概念",
+        "## 二、双层计算框架",
+        "### Bhinna Ashtakavarga (BAV) - 个人评分表",
+        "### Sarva Ashtakavarga (SAV) - 综合评分表",
+        "## 三、分数解读标准",
+        "### BAV评分",
+        "### SAV评分"
+      ],
+      "risk_flags": [
+        "stale_workbuddy_snapshot_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__shadbala-complete-methodology_md",
+      "domain": "shadbala_av",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/shadbala-complete-methodology.md",
+      "sha256": "4bcf2ce9d860734278af63e82f89c055b268600bd10ad426eeca0d3fef344c11",
+      "size_bytes": 10552,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Shadbala计算方法论",
+        "## 一、Shadbala概述",
+        "### 综合评分体系",
+        "## 二、六种力量详解",
+        "### 2.1 Sthana Bala（位置力量）",
+        "### 2.2 Dig Bala（方向力量）",
+        "### 2.3 Kala Bala（时间力量）",
+        "### 2.4 Chesta Bala（运动力量）"
+      ],
+      "risk_flags": [
+        "stale_workbuddy_snapshot_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__shadbala-interpretation-methodology_md",
+      "domain": "shadbala_av",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/shadbala-interpretation-methodology.md",
+      "sha256": "decea4454d2ab0600eee429b4a3bca94336d82666156f689f77c972543d82156",
+      "size_bytes": 7935,
+      "decision": "reference_only",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Shadbala六重力量实战解读方法论",
+        "## 一、核心理念：六力量不是六个独立数字",
+        "## 二、六力量组合模式库",
+        "### 模式A：全面型（所有维度≥均值）",
+        "### 模式B：位置依赖型（Sthana极高，其他一般）",
+        "### 模式C：关系依赖型（Drik Bala极低）",
+        "### 模式D：时间敏感型（Kala Bala极低）",
+        "### 模式E：运动受限型（Chesta Bala极低）"
+      ],
+      "risk_flags": [
+        "stale_workbuddy_snapshot_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__birth-time-rectification-advanced_md",
+      "domain": "birth_time_rectification",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/birth-time-rectification-advanced.md",
+      "sha256": "da25c979a94945d2990ad78b7ccc95bd0609e1458643382734fb920617182083",
+      "size_bytes": 13581,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# 出生时间矫正高级方法论",
+        "## 核心理念",
+        "## 出生时间矫正八大方法",
+        "### 方法1：运限与星曜过宫法（最常用）",
+        "### 方法2：D9 Navamsa上升判定法",
+        "### 方法3：D10 Dasamsa上升判定法",
+        "### 方法4：六亲关系验证法",
+        "### 方法5：外表和体质验证法"
+      ],
+      "risk_flags": [
+        "privacy_or_fixture_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__birth-time-rectification-decision-tree_md",
+      "domain": "birth_time_rectification",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/birth-time-rectification-decision-tree.md",
+      "sha256": "779cd9c53274084175fdc97669f16cbac6e1f41ad0fd6dc9140ca80546074fca",
+      "size_bytes": 5641,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# 生时校正分盘调用决策树",
+        "## 1. 总原则",
+        "## 1.1 产品化问询原则",
+        "## 2. 第一层：主引擎",
+        "### Dasha + dated events",
+        "## 3. 第二层：核心分盘",
+        "### D9",
+        "### D10"
+      ],
+      "risk_flags": [
+        "privacy_or_fixture_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__event_judgment_skeleton_md",
+      "domain": "event_judgment",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/event_judgment_skeleton.md",
+      "sha256": "8c627aea6cb00a9c067f2bab0b2080cd229ba5ab498daf4dc728ec21cbd2755f",
+      "size_bytes": 4535,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Event Judgment Skeleton v1.0",
+        "## 1. Route",
+        "## 2. Evidence Ledger",
+        "## 3. Adjudication",
+        "### 矛盾优先级",
+        "## 4. Confidence Mapping",
+        "## 5. Output Contract",
+        "## 6. Hard Stops"
+      ],
+      "risk_flags": [
+        "privacy_or_fixture_review_required",
+        "external_license_boundary",
+        "oracle_claim_must_not_upgrade_without_current_hash"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__event_judgment_career_md",
+      "domain": "event_judgment",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/event_judgment_career.md",
+      "sha256": "16ad9e0e832b83f0610c4790ef558d807f44031d59d647da225adda80868d22b",
+      "size_bytes": 4334,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Career Event Adjudicator v1.0",
+        "## 1. Route Freeze",
+        "## 2. Mandatory Layers",
+        "## 3. Evidence Ledger Roles",
+        "## 4. Career Adjudication Order",
+        "### 4.1 Promise",
+        "### 4.2 Activation",
+        "### 4.3 Manifestation"
+      ],
+      "risk_flags": [
+        "privacy_or_fixture_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__event_judgment_marriage_md",
+      "domain": "event_judgment",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/event_judgment_marriage.md",
+      "sha256": "32020ccc00fc25cc29146eea4e74c765c7643bd5c96b7d2efe6b7d0cadbc35c3",
+      "size_bytes": 5174,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Marriage Event Adjudicator v1.0",
+        "## 1. Route Freeze",
+        "## 2. Mandatory Layers",
+        "## 3. Evidence Ledger Roles",
+        "## 4. Marriage Adjudication Order",
+        "### 4.1 Promise",
+        "### 4.2 Activation",
+        "### 4.2.1 Non-Standard Proxy Activation"
+      ],
+      "risk_flags": [
+        "privacy_or_fixture_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__event_judgment_wealth_md",
+      "domain": "event_judgment",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/event_judgment_wealth.md",
+      "sha256": "e690fa3d753a169dc50bb7773a687e4aa71d267cd82f536ea6096afe2fda9218",
+      "size_bytes": 5440,
+      "decision": "migrate_to_registry",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# Wealth Event Adjudicator v1.0",
+        "## 1. Route Freeze",
+        "## 2. Four Wealth Layers",
+        "### payout label 子类",
+        "## 3. Mandatory Layers",
+        "## 4. Evidence Ledger Roles",
+        "## 5. Wealth Adjudication Order",
+        "### 5.1 Promise"
+      ],
+      "risk_flags": [
+        "privacy_or_fixture_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "tests__test_kp_system_py",
+      "domain": "kp_system",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/tests/test_kp_system.py",
+      "sha256": "ebcf970d7a9c1690fc4d0b8df95ed2540dad5360ce18e7a268c40fb477b53b9a",
+      "size_bytes": 3132,
+      "decision": "migrate_to_test",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "oracle_claim_must_not_upgrade_without_current_hash"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "tests__test_muhurta_py",
+      "domain": "muhurta",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/tests/test_muhurta.py",
+      "sha256": "ba45f11f4bb93d7f4bdc78f5312d3a2c023f3e69788a8633281c1344ca2716ff",
+      "size_bytes": 18035,
+      "decision": "migrate_to_test",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# ── Tithi Tests ─────────────────────────────────────────────────────",
+        "# ── Nakshatra from Longitude Tests ──────────────────────────────────",
+        "# ── Yoga Tests ──────────────────────────────────────────────────────",
+        "# ── Karana Tests ────────────────────────────────────────────────────",
+        "# ── Vara Tests ──────────────────────────────────────────────────────",
+        "# ── Hora Tests ──────────────────────────────────────────────────────",
+        "# ── Abhijit Muhurta Tests ──────────────────────────────────────────",
+        "# ── Panchanga Complete Tests ────────────────────────────────────────"
+      ],
+      "risk_flags": [
+        "stale_workbuddy_snapshot_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "tests__test_shadbala_jhora_benchmark_py",
+      "domain": "shadbala_av",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/tests/test_shadbala_jhora_benchmark.py",
+      "sha256": "d87c76be28ff8751699e1b3d802f801cbe60f94daa9b4b14e405d28183542c2b",
+      "size_bytes": 9149,
+      "decision": "migrate_to_test",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [
+        "# 确保可以导入 scripts 模块",
+        "# ============================================================================",
+        "# 标准测试数据集",
+        "# ============================================================================",
+        "# 来源：PyJHora test suite + PVR 教材",
+        "# ============================================================================",
+        "# 参考值：BPHS Shadbala 最低要求（Rupas）",
+        "# ============================================================================"
+      ],
+      "risk_flags": [
+        "privacy_or_fixture_review_required",
+        "external_license_boundary"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "tests__test_tajika_annual_oracle_queue_py",
+      "domain": "tajika_saham",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/tests/test_tajika_annual_oracle_queue.py",
+      "sha256": "5456ee550c94740e9325ac176e5fb40ee1b450cf1980e0bd9c3f2f734eaba0da",
+      "size_bytes": 6504,
+      "decision": "migrate_to_test",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "external_license_boundary",
+        "oracle_claim_must_not_upgrade_without_current_hash"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "tests__test_active_rectification_questions_py",
+      "domain": "birth_time_rectification",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/tests/test_active_rectification_questions.py",
+      "sha256": "c4f3da76b189923d0b8800820d46cf96fbec072d0bed04dfd330939a50c55a92",
+      "size_bytes": 1914,
+      "decision": "migrate_to_test",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "privacy_or_fixture_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "tests__test_rectification_decision_tree_doc_py",
+      "domain": "birth_time_rectification",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/tests/test_rectification_decision_tree_doc.py",
+      "sha256": "5ae8f67a9a62a65a5008c5352ff5d9779ff43748bcf0c6b054dc44fe111dcdb1",
+      "size_bytes": 1186,
+      "decision": "migrate_to_test",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "privacy_or_fixture_review_required"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "tests__test_pyjhora_oracle_artifact_manifest_py",
+      "domain": "external_oracle_manifest",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/tests/test_pyjhora_oracle_artifact_manifest.py",
+      "sha256": "9e2c60bc434380f7c747d23e67e3ac168f7e78146e7449a462771197f82f589e",
+      "size_bytes": 1592,
+      "decision": "migrate_to_test",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "external_license_boundary",
+        "oracle_claim_must_not_upgrade_without_current_hash"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__oracle__tajika_annual_oracle_cases_json",
+      "domain": "tajika_saham",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/oracle/tajika_annual_oracle_cases.json",
+      "sha256": "b28c320134357f54e6a42248f6ce8d49dfd773475c55f39d09f57f48f51aa3db",
+      "size_bytes": 21232,
+      "decision": "reference_only",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "privacy_or_fixture_review_required",
+        "external_license_boundary",
+        "oracle_claim_must_not_upgrade_without_current_hash"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__oracle__dasha_shadbala_oracle_cases_json",
+      "domain": "shadbala_av",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/oracle/dasha_shadbala_oracle_cases.json",
+      "sha256": "ff3f0c3eaaaedeae46c29b1fd03ae10f3d0d1114fcf53eabfe378ffac0e1da95",
+      "size_bytes": 9600,
+      "decision": "reference_only",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "privacy_or_fixture_review_required",
+        "external_license_boundary",
+        "oracle_claim_must_not_upgrade_without_current_hash"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__oracle__artifacts__pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627_txt",
+      "domain": "shadbala_av",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+      "sha256": "65f652ac47d4a81ab43568bde8c5d7b9fac09d45f399564500c5af1a12db96c3",
+      "size_bytes": 2944,
+      "decision": "reference_only",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "privacy_or_fixture_review_required",
+        "external_license_boundary"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__oracle__artifacts__pyjhora_steve_jobs_dasha_stdout_20260627_txt",
+      "domain": "external_oracle_manifest",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/oracle/artifacts/pyjhora_steve_jobs_dasha_stdout_20260627.txt",
+      "sha256": "dd64e80002b4c47b79ffee47cd949a0d9edba0403668fbc879b6e3f39ad868b9",
+      "size_bytes": 5765,
+      "decision": "reference_only",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "privacy_or_fixture_review_required",
+        "external_license_boundary"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__oracle__artifacts__pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627_txt",
+      "domain": "tajika_saham",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+      "sha256": "9cdfca16f756ad8fbd297032c49e5744639804cf473ece8fc7f71b2039d964b9",
+      "size_bytes": 3455,
+      "decision": "reference_only",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "privacy_or_fixture_review_required",
+        "external_license_boundary"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__oracle__evidence_packet_templates__tajika_steve_jobs_1984_first_packet_json",
+      "domain": "tajika_saham",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json",
+      "sha256": "26a7231bd06f60bde2097352dc35793220c7c73f7ad32fb21fe6d35f12042d9e",
+      "size_bytes": 1783,
+      "decision": "reference_only",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "privacy_or_fixture_review_required",
+        "oracle_claim_must_not_upgrade_without_current_hash"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__oracle__evidence_packet_templates__jhora_steve_jobs_lahiri_first_packet_json",
+      "domain": "external_oracle_manifest",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/oracle/evidence_packet_templates/jhora_steve_jobs_lahiri_first_packet.json",
+      "sha256": "2595870ebade2ad1f66cb3d620784512adcc61fa9a1959417c078dc7f3640f0c",
+      "size_bytes": 2803,
+      "decision": "reference_only",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "privacy_or_fixture_review_required",
+        "external_license_boundary",
+        "oracle_claim_must_not_upgrade_without_current_hash"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    },
+    {
+      "candidate_id": "references__oracle__evidence_packet_templates__shadbala_synthetic_north_china_raman_first_packet_json",
+      "domain": "shadbala_av",
+      "source_path": "/Users/wuyongnaren/.workbuddy/skills/jyotish-vedic-astrology.backup.20260711-233511/references/oracle/evidence_packet_templates/shadbala_synthetic_north_china_raman_first_packet.json",
+      "sha256": "a95b7563b4544e52e42fd66cd11e0599c95392cd96b8fd5fc56a0115ade40f7f",
+      "size_bytes": 2727,
+      "decision": "forbidden_private_or_obsolete",
+      "allowed_decisions": [
+        "migrate_to_registry",
+        "migrate_to_test",
+        "reference_only",
+        "forbidden_private_or_obsolete"
+      ],
+      "observed_headings_or_markers": [],
+      "risk_flags": [
+        "privacy_or_fixture_review_required",
+        "oracle_claim_must_not_upgrade_without_current_hash"
+      ],
+      "migration_boundary": "Do not bulk copy WorkBuddy text or runtime code; extract formula/rule/test contract only after privacy, license, and supersession review."
+    }
+  ],
+  "boundary": "Round3 ledger proves candidates are identified and classified; it does not migrate private content or upgrade any oracle truth."
+}

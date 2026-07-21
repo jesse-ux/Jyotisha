@@ -5,8 +5,8 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 103,
-    "blocked_or_partial_count": 51,
+    "packet_count": 128,
+    "blocked_or_partial_count": 52,
     "human_review_required_count": 3
   },
   "packets": [
@@ -833,6 +833,206 @@
       "claim_status": "ready_contract",
       "consumer_policy": "research_local_ui_contract_only",
       "claim_boundary": "Ports commercial birth-time journey behavior contracts only; no Supabase, credits, auth, or commercial code imported."
+    },
+    {
+      "packet_id": "truth_source_runtime_identity",
+      "path": "references/oracle/truth_source_runtime_identity_2026_07_21.json",
+      "domain": "truth_source_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_startup_contract",
+      "claim_boundary": "Pins the main research repo as the only truth source, exposes runtime identity, and quarantines old WorkBuddy fragments; no oracle truth upgrade."
+    },
+    {
+      "packet_id": "commercial_startup_self_check_contract_2026_07_21",
+      "path": "references/oracle/commercial_startup_self_check_contract_2026_07_21.json",
+      "domain": "commercial_sync_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "commercial_startup_gate_contract_only",
+      "claim_boundary": "Requires commercial runtime to expose truth source identity, artifact gate and privacy status; no business runtime code imported into research."
+    },
+    {
+      "packet_id": "commercial_golden_oss_case_ci_contract_2026_07_21",
+      "path": "references/oracle/commercial_golden_oss_case_ci_contract_2026_07_21.json",
+      "domain": "commercial_sync_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "commercial_ci_gate_contract_only",
+      "claim_boundary": "Requires commercial CI to replay the PyJHora/JHora Sphuta OSS observation and hash; observation-only, no truth upgrade."
+    },
+    {
+      "packet_id": "whole_machine_jyotish_fragment_scan_2026_07_21",
+      "path": "references/oracle/whole_machine_jyotish_fragment_scan_2026_07_21.json",
+      "domain": "fragment_governance",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_only_no_direct_fragment_copy",
+      "claim_boundary": "Whole-machine Jyotish signal scan classifies main, WorkBuddy, temp and user-drop candidates; reviewable fragments are not truth source until privacy/license/invocation checks close."
+    },
+    {
+      "packet_id": "source_runtime_closure_queue_2026_07_21",
+      "path": "references/oracle/source_runtime_closure_queue_2026_07_21.json",
+      "domain": "source_runtime_closure",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Prioritizes not-fully-invoked source assets such as jyotishganit and VedicAstro KP; queue only, no adapter or truth upgrade."
+    },
+    {
+      "packet_id": "vedicastro_kp_tmp_env_identity_2026_07_21",
+      "path": "references/oracle/vedicastro_kp_tmp_env_identity_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Pins isolated /tmp VedicAstro KP dependency identity; dependency readiness only, no oracle truth."
+    },
+    {
+      "packet_id": "vedicastro_kp_house_cusp_raw_2026_07_21",
+      "path": "references/oracle/vedicastro_kp_house_cusp_raw_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Archives VedicAstro KP house cusp star/sub/sub-sub raw for Steve Jobs public case; observation-only until public numeric worked-example replay."
+    },
+    {
+      "packet_id": "jyotishganit_three_engine_closure_bridge_2026_07_21",
+      "path": "references/oracle/jyotishganit_three_engine_closure_bridge_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Routes available jyotishganit D2/D4/D9/D10, Panchanga and BAV/SAV fields to closure queues; Shadbala remains explicit gap."
+    },
+    {
+      "packet_id": "kp_public_worked_example_candidate_queue_2026_07_21",
+      "path": "references/oracle/kp_public_worked_example_candidate_queue_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Public KP sources were triaged as formula/runtime candidates; none yet provide stable full numeric cusp star/sub/sub-sub rows for oracle upgrade."
+    },
+    {
+      "packet_id": "jyotishganit_field_closure_rows_2026_07_21",
+      "path": "references/oracle/jyotishganit_field_closure_rows_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Routes jyotishganit D2/D4/D9/D10, Panchanga and BAV/SAV selected raw fields into closure rows; Shadbala remains explicit gap."
+    },
+    {
+      "packet_id": "three_engine_jyotishganit_bridge_applied_2026_07_21",
+      "path": "references/oracle/three_engine_jyotishganit_bridge_applied_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Applies jyotishganit field bridge to existing TEMCQ D2/D4/D9/D10/BAV/SAV tickets and marks Panchanga as new-ticket-needed; no truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_field_status_batch_2026_07_21",
+      "path": "references/oracle/three_engine_field_status_batch_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies 18 jyotishganit-applied TEMCQ rows and creates a Panchanga ticket placeholder; status only, no numeric truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_d2_field_closure_packet_2026_07_21",
+      "path": "references/oracle/three_engine_d2_field_closure_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "D2 rows show local/PyJHora/jyotishganit agreement while VedAstro endpoint semantics remain blocked; no global truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_d4_d9_d10_field_closure_packet_2026_07_21",
+      "path": "references/oracle/three_engine_d4_d9_d10_field_closure_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "D4/D9/D10 Moon.sign rows show local/PyJHora/jyotishganit agreement while VedAstro endpoint semantics remain blocked; no global truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_bav_sav_field_closure_packet_2026_07_21",
+      "path": "references/oracle/three_engine_bav_sav_field_closure_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies BAV/SAV rows into partial consensus or multi-engine variant; public worked table and method metadata still required."
+    },
+    {
+      "packet_id": "panchanga_temcq_061_schema_packet_2026_07_21",
+      "path": "references/oracle/panchanga_temcq_061_schema_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Creates TEMCQ-061 Panchanga schema mapping queue from jyotishganit raw; local/PyJHora/VedAstro normalized fields remain missing or unpinned."
+    },
+    {
+      "packet_id": "panchanga_local_jyotishganit_comparison_2026_07_21",
+      "path": "references/oracle/panchanga_local_jyotishganit_comparison_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Compares local calc_panchanga against jyotishganit for five Panchanga labels; one Karana alias remains naming-only and no global truth upgrade is made."
+    },
+    {
+      "packet_id": "workbuddy_round3_candidate_ledger_2026_07_21",
+      "path": "references/oracle/workbuddy_round3_candidate_ledger_2026_07_21.json",
+      "domain": "fragment_migration",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Triage ledger for stale WorkBuddy candidate fragments only; no runtime truth, no bulk-copy permission, and no commercial technique upgrade until each entry is separately reviewed."
+    },
+    {
+      "packet_id": "workbuddy_round4_candidate_ledger_2026_07_21",
+      "path": "references/oracle/workbuddy_round4_candidate_ledger_2026_07_21.json",
+      "domain": "fragment_migration",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Round4 triage confirms round3 was non-exhaustive: 858 unindexed WorkBuddy filename-signal files were detected and 20 high-value candidates were classified; no truth upgrade or bulk-copy permission."
+    },
+    {
+      "packet_id": "workbuddy_round4_formalization_registry_2026_07_21",
+      "path": "references/oracle/workbuddy_round4_formalization_registry_2026_07_21.json",
+      "domain": "fragment_migration",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Maps round4 WorkBuddy candidates into formal registry/test targets for event judgment, birth-time rectification, Muhurta and Tajika/Saham; no runtime import, truth upgrade or bulk-copy permission."
+    },
+    {
+      "packet_id": "workbuddy_round4_usage_closure_queue_2026_07_21",
+      "path": "references/oracle/workbuddy_round4_usage_closure_queue_2026_07_21.json",
+      "domain": "fragment_migration",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Tracks all round4 migrate_to_registry/test candidates: 9 formalized, 2 pending oracle closure, 1 pending invocation audit; no truth upgrade."
+    },
+    {
+      "packet_id": "vedastro_divisional_degree_contract_probe_2026_07_21",
+      "path": "references/oracle/artifacts/vedastro_divisional_degree_contract_probe.json",
+      "domain": "vedastro_contract_probe",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Validates only VedAstro DivisionalLongitude degree transformation for a fixed scalar input; does not establish hosted chart sign, ayanamsa, node, timezone, or full D2/D4/D9/D10 parity."
+    },
+    {
+      "packet_id": "workbuddy_round4_remaining_closure_packet_2026_07_21",
+      "path": "references/oracle/workbuddy_round4_remaining_closure_packet_2026_07_21.json",
+      "domain": "fragment_migration",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies the last three round4 WorkBuddy candidates as privacy-scrubbed reference, Shadbala artifact parse-needed, and blank Tajika template; no truth upgrade."
+    },
+    {
+      "packet_id": "pyjhora_steve_jobs_shadbala_stdout_components_2026_07_21",
+      "path": "references/oracle/pyjhora_steve_jobs_shadbala_stdout_components_2026_07_21.json",
+      "domain": "shadbala_oracle",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Parses WorkBuddy/PyJHora Steve Jobs Shadbala stdout into 42 same-unit component rows; observation only, no formula arbitration or absolute parity upgrade."
+    },
+    {
+      "packet_id": "kp_tajika_public_oracle_source_candidates_2026_07_21",
+      "path": "references/oracle/kp_tajika_public_oracle_source_candidates_2026_07_21.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Records public KP and Tajika/Varshaphala candidate sources found during WorkBuddy closure; none is a complete numeric oracle yet."
     }
   ]
 }

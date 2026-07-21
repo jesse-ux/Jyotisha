@@ -46,6 +46,8 @@ jobs:
         run: |
           mkdir -p artifacts
           python scripts/run_quality_gate.py --profile quick --skip-yoga-logic --skip-frontend-runtime 2>&1 | tee artifacts/quick-quality-gate.log
+      - name: Run commercial privacy artifact gate
+        run: python scripts/commercial_privacy_artifact_scan.py --json
       - name: Upload quick quality gate diagnostics
         if: always()
         uses: actions/upload-artifact@v4

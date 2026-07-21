@@ -1,0 +1,22 @@
+{
+  "scope": "commercial_golden_oss_case_ci_contract",
+  "created_at": "2026-07-21",
+  "status": "ready_contract",
+  "purpose": "Commercial CI must replay at least one public OSS golden observation from the main research repo to detect accidental legacy WorkBuddy or incomplete artifact source wiring.",
+  "golden_case": {
+    "name": "pyjhora_jhora_sphuta_oss_case",
+    "probe": "scripts/prashna_sphuta_oss_case_probe.py",
+    "test": "tests/test_prashna_sphuta_oss_case_probe.py",
+    "source_packet": "references/oracle/prashna_sphuta_oss_case_probe_2026_07_20.json",
+    "expected_raw_hash": "f0705d205440ea8d7f39116042a0723d971f4ab79c94f7d448fc42d683d52326",
+    "claim_status": "tooling_observation_only"
+  },
+  "gate_policy": {
+    "fail_if_probe_missing": true,
+    "fail_if_raw_hash_mismatch": true,
+    "fail_if_claim_status_upgraded": true,
+    "truth_upgrade_allowed": false,
+    "allow_business_runtime_to_continue_after_warning": false
+  },
+  "claim_boundary": "ci_golden_observation_gate_only_not_oracle_truth"
+}
