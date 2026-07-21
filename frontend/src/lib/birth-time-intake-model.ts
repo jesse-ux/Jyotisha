@@ -154,7 +154,7 @@ export function isBirthTimeDraftReady(draft: BirthTimeDraft) {
 
 export function isBirthTimeReadyForConsultation(draft: BirthTimeDraft) {
   return Boolean(draft.time)
-    && (draft.birthTimeStatus === "candidate" || draft.birthTimeStatus === "confirmed");
+    && draft.birthTimeStatus === "confirmed";
 }
 
 export function birthTimePersistenceValues(draft: BirthTimeDraft) {

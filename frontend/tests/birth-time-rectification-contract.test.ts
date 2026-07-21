@@ -75,9 +75,8 @@ test("low-confidence preview mirrors the persisted dynamic terminal state", () =
   assert.equal(low.candidateResult.winningSegment?.representativeTime, "05:21");
   assert.equal(low.nextAction.resultId, low.candidateResult.resultId);
   assert.deepEqual(guidedTerminalPath(low), {
-    kind: "complete_with_candidate",
-    time: low.candidateResult.winningSegment?.representativeTime,
+    kind: "edit_birth_time_details",
     preservesCase: true,
-    appliesCandidateTime: true,
+    appliesCandidateTime: false,
   });
 });
