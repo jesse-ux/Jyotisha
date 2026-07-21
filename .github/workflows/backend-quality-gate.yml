@@ -1,0 +1,164 @@
+name: Staging Backend Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/backend-quality-gate.yml'
+      - '.github/workflows/deploy-staging.yml'
+      - '.github/workflows/migrate-staging-database.yml'
+      - 'deploy/**'
+      - 'frontend/**'
+      - 'jyotish_vedic/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'mcp_server.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+concurrency:
+  group: backend-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+          npm ci --prefix frontend
+
+      - name: Run Python quick quality gate
+        shell: bash
+        run: |
+          set -o pipefail
+          ruff check scripts/run_quality_gate.py tests/test_varga_bphs.py \
+            tests/test_ashtakavarga_invariants.py tests/test_cli_smoke.py \
+            tests/test_yoga_rules_integrity.py
+          python -m py_compile scripts/*.py jyotish_vedic/*.py mcp_server.py
+          mkdir -p artifacts
+          python scripts/run_quality_gate.py \
+            --profile quick --skip-yoga-logic --skip-frontend-runtime \
+            2>&1 | tee artifacts/quick-quality-gate.log
+          python -m build
+
+      - name: Upload quick quality gate diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quick-quality-gate-diagnostics
+          path: artifacts/quick-quality-gate.log
+
+      - name: Validate frontend and database contracts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+        run: |
+          npm test --prefix frontend
+          npm run lint --prefix frontend
+          npm run build --prefix frontend
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate staging web build variables
+        env:
+          STAGING_SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
+          STAGING_SUPABASE_ANON_KEY: ${{ vars.STAGING_SUPABASE_ANON_KEY }}
+        run: |
+          test -n "$STAGING_SUPABASE_URL" || {
+            echo "STAGING_SUPABASE_URL is required" >&2
+            exit 1
+          }
+          test -n "$STAGING_SUPABASE_ANON_KEY" || {
+            echo "STAGING_SUPABASE_ANON_KEY is required" >&2
+            exit 1
+          }
+          if [[ ! "$STAGING_SUPABASE_URL" =~ ^https://[a-z0-9][a-z0-9-]*\.supabase\.co/?$ ]]; then
+            echo "STAGING_SUPABASE_URL must be an HTTPS Supabase project URL" >&2
+            exit 1
+          fi
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish API image
+        id: api_build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/railway-api.Dockerfile
+          push: true
+          tags: ghcr.io/jesse-ux/jyotisha-api:${{ github.sha }}
+
+      - name: Build and publish web image
+        id: web_build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/railway-web.Dockerfile
+          push: true
+          tags: ghcr.io/jesse-ux/jyotisha-web:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.STAGING_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.STAGING_SUPABASE_ANON_KEY }}
+
+      - name: Record immutable staging image manifest
+        env:
+          API_DIGEST: ${{ steps.api_build.outputs.digest }}
+          WEB_DIGEST: ${{ steps.web_build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$API_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ "$WEB_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          install -d -m 700 artifacts/staging-images
+          umask 077
+          printf 'git_sha=%s\napi_digest=%s\nweb_digest=%s\n' \
+            "$GITHUB_SHA" "$API_DIGEST" "$WEB_DIGEST" \
+            > artifacts/staging-images/manifest.env
+          node frontend/scripts/staging-image-manifest.mjs \
+            artifacts/staging-images/manifest.env "$GITHUB_SHA" >/dev/null
+
+      - name: Upload immutable staging image manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-image-manifest-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/staging-images/manifest.env
+          if-no-files-found: error
+          retention-days: 30

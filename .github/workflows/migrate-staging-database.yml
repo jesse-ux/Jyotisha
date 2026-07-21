@@ -1,55 +1,40 @@
-name: Deploy staging
+name: Migrate Staging Database
 
 on:
-  workflow_run:
-    workflows: ["Staging Backend Quality Gate"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       deploy_sha:
-        description: Exact tested 40-character staging commit SHA
+        description: Full tested staging commit SHA to migrate
         required: true
         type: string
-      allow_rollback:
-        description: Explicitly permit a manual rollback to an older tested SHA
-        required: true
-        default: false
-        type: boolean
-
-permissions:
-  contents: read
-  actions: read
-  packages: read
 
 concurrency:
   group: staging-mutation
   cancel-in-progress: false
   queue: max
 
+permissions:
+  contents: read
+  actions: write
+  packages: read
+
 jobs:
-  deploy:
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'staging')
+  migrate:
+    environment: staging
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment:
-      name: staging
-      url: ${{ vars.STAGING_URL }}
+    timeout-minutes: 20
     env:
       DEPLOY_HOST: ${{ vars.STAGING_HOST }}
       DEPLOY_PORT: ${{ vars.STAGING_PORT }}
       DEPLOY_USER: ${{ vars.STAGING_USER }}
       DEPLOY_PATH: ${{ vars.STAGING_PATH }}
-      STAGING_URL: ${{ vars.STAGING_URL }}
       STAGING_KNOWN_HOSTS: ${{ vars.STAGING_KNOWN_HOSTS }}
 
     steps:
-      - name: Validate tested revision and gate run
+      - name: Validate current tested staging revision
         id: revision
         env:
-          REQUESTED_SHA: ${{ github.event.workflow_run.head_sha || inputs.deploy_sha }}
-          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
-          WORKFLOW_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
-          REQUESTED_ROLLBACK: ${{ inputs.allow_rollback || 'false' }}
+          REQUESTED_SHA: ${{ inputs.deploy_sha }}
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
@@ -58,57 +43,35 @@ jobs:
             echo "deploy_sha must be a lowercase full commit SHA" >&2
             exit 1
           }
-          allow_rollback=false
-          if [ "$REQUESTED_ROLLBACK" = "true" ]; then
-            [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] || {
-              echo "rollback authorization is manual-only" >&2
-              exit 1
-            }
-            allow_rollback=true
-          fi
-
-          gate_run_id="$WORKFLOW_RUN_ID"
-          gate_run_attempt="$WORKFLOW_RUN_ATTEMPT"
-          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            runs="$(curl --fail --silent --show-error \
-              --header "Authorization: Bearer $GH_TOKEN" \
-              --header "Accept: application/vnd.github+json" \
-              --header "X-GitHub-Api-Version: 2022-11-28" \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/backend-quality-gate.yml/runs?head_sha=$REQUESTED_SHA&branch=staging&event=push&status=success&per_page=100")"
-            selected_run="$(jq -cer --arg sha "$REQUESTED_SHA" '
-              [.workflow_runs[] | select(
-                .head_sha == $sha and .head_branch == "staging" and
-                .event == "push" and .conclusion == "success"
-              )] | sort_by(.id) | reverse | first
-            ' <<<"$runs")"
-            gate_run_id="$(jq -er '.id' <<<"$selected_run")"
-            gate_run_attempt="$(jq -er '.run_attempt' <<<"$selected_run")"
-          fi
-          [[ "$gate_run_id" =~ ^[0-9]+$ ]] || {
-            echo "no successful exact-SHA staging quality gate run found" >&2
-            exit 1
-          }
-          [[ "$gate_run_attempt" =~ ^[1-9][0-9]*$ ]] || {
-            echo "invalid staging quality gate run attempt" >&2
-            exit 1
-          }
-
+          runs="$(curl --fail --silent --show-error \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/backend-quality-gate.yml/runs?head_sha=$REQUESTED_SHA&branch=staging&event=push&status=success&per_page=100")"
+          selected_run="$(jq -cer --arg sha "$REQUESTED_SHA" '
+            [.workflow_runs[] | select(
+              .head_sha == $sha and .head_branch == "staging" and
+              .event == "push" and .conclusion == "success"
+            )] | sort_by(.id) | reverse | first
+          ' <<<"$runs")"
+          gate_run_id="$(jq -er '.id' <<<"$selected_run")"
+          gate_run_attempt="$(jq -er '.run_attempt' <<<"$selected_run")"
+          [[ "$gate_run_id" =~ ^[0-9]+$ ]]
+          [[ "$gate_run_attempt" =~ ^[1-9][0-9]*$ ]]
           staging_head="$(curl --fail --silent --show-error \
             --header "Authorization: Bearer $GH_TOKEN" \
             --header "Accept: application/vnd.github+json" \
             --header "X-GitHub-Api-Version: 2022-11-28" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/heads/staging" |
             jq -er '.object.sha')"
-          if [ "$allow_rollback" = "false" ] && [ "$REQUESTED_SHA" != "$staging_head" ]; then
-            echo "stale staging revision refused; use explicit manual rollback only when intended" >&2
+          [ "$REQUESTED_SHA" = "$staging_head" ] || {
+            echo "stale staging migration refused; migrate the current staging head" >&2
             exit 1
-          fi
-
+          }
           {
             echo "sha=$REQUESTED_SHA"
             echo "gate_run_id=$gate_run_id"
             echo "gate_run_attempt=$gate_run_attempt"
-            echo "allow_rollback=$allow_rollback"
           } >>"$GITHUB_OUTPUT"
 
       - name: Checkout trusted main controller
@@ -126,7 +89,7 @@ jobs:
           github-token: ${{ github.token }}
           run-id: ${{ steps.revision.outputs.gate_run_id }}
 
-      - name: Validate immutable image manifest
+      - name: Validate immutable migration image
         id: images
         env:
           DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
@@ -149,7 +112,6 @@ jobs:
           test "$DEPLOY_PORT" = "22"
           test "$DEPLOY_USER" = "deploy"
           test "$DEPLOY_PATH" = "/opt/jyotisha-staging"
-          test "$STAGING_URL" = "https://staging.jyotisha.chat"
           test -n "$STAGING_KNOWN_HOSTS"
 
       - name: Configure pinned staging SSH
@@ -164,13 +126,11 @@ jobs:
           printf '%s\n' "$STAGING_KNOWN_HOSTS" >~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Verify forward-only deployed revision
+      - name: Verify forward-only migration revision
         id: previous
         env:
           DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
-          ALLOW_ROLLBACK: ${{ steps.revision.outputs.allow_rollback }}
           GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
           set -euo pipefail
           SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
@@ -180,10 +140,7 @@ jobs:
             echo "invalid deployed staging revision state" >&2
             exit 1
           fi
-          forward_verified=true
-          if [ "$ALLOW_ROLLBACK" = "false" ] &&
-            [ "$previous_sha" != "not-deployed" ] &&
-            [ "$previous_sha" != "$DEPLOY_SHA" ]; then
+          if [ "$previous_sha" != "not-deployed" ] && [ "$previous_sha" != "$DEPLOY_SHA" ]; then
             comparison="$(curl --fail --silent --show-error \
               --header "Authorization: Bearer $GH_TOKEN" \
               --header "Accept: application/vnd.github+json" \
@@ -192,13 +149,13 @@ jobs:
             jq -e --arg base "$previous_sha" '
               .status == "ahead" and .merge_base_commit.sha == $base
             ' <<<"$comparison" >/dev/null || {
-              echo "automatic staging rollback or divergent deploy refused" >&2
+              echo "stale or divergent staging migration refused" >&2
               exit 1
             }
           fi
           {
             echo "sha=$previous_sha"
-            echo "forward_verified=$forward_verified"
+            echo "forward_verified=true"
           } >>"$GITHUB_OUTPUT"
 
       - name: Stage trusted controller files in an isolated incoming directory
@@ -225,12 +182,10 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
             "DOCKER_CONFIG='$INCOMING_PATH/.docker' docker login ghcr.io --username '$GITHUB_ACTOR' --password-stdin"
 
-      - name: Deploy and verify exact image digests under host lock
+      - name: Apply exact-image migrations under host lock
         env:
           DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
-          API_IMAGE: ${{ steps.images.outputs.api_image }}
           WEB_IMAGE: ${{ steps.images.outputs.web_image }}
-          ALLOW_ROLLBACK: ${{ steps.revision.outputs.allow_rollback }}
           EXPECTED_PREVIOUS_SHA: ${{ steps.previous.outputs.sha }}
           FORWARD_REVISION_VERIFIED: ${{ steps.previous.outputs.forward_verified }}
           INCOMING_PATH: ${{ steps.incoming.outputs.path }}
@@ -238,9 +193,34 @@ jobs:
           set -euo pipefail
           SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
           ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
-            "INCOMING_PATH='$INCOMING_PATH' DEPLOY_PATH='$DEPLOY_PATH' API_IMAGE='$API_IMAGE' WEB_IMAGE='$WEB_IMAGE' DEPLOY_SHA='$DEPLOY_SHA' EXPECTED_PREVIOUS_SHA='$EXPECTED_PREVIOUS_SHA' ALLOW_ROLLBACK='$ALLOW_ROLLBACK' FORWARD_REVISION_VERIFIED='$FORWARD_REVISION_VERIFIED' DOCKER_CONFIG='$INCOMING_PATH/.docker' STAGING_URL='$STAGING_URL' bash '$INCOMING_PATH/deploy/run-staging-deploy.sh'" |
-            tee staging-deploy-result.txt
-          sed 's/^/- /' staging-deploy-result.txt >>"$GITHUB_STEP_SUMMARY"
+            "INCOMING_PATH='$INCOMING_PATH' DEPLOY_PATH='$DEPLOY_PATH' WEB_IMAGE='$WEB_IMAGE' DEPLOY_SHA='$DEPLOY_SHA' EXPECTED_PREVIOUS_SHA='$EXPECTED_PREVIOUS_SHA' FORWARD_REVISION_VERIFIED='$FORWARD_REVISION_VERIFIED' DOCKER_CONFIG='$INCOMING_PATH/.docker' bash '$INCOMING_PATH/deploy/run-staging-migration.sh'"
+
+      - name: Dispatch current exact-SHA staging deployment
+        env:
+          DEPLOY_SHA: ${{ steps.revision.outputs.sha }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          staging_head="$(curl --fail --silent --show-error \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/heads/staging" |
+            jq -er '.object.sha')"
+          [ "$DEPLOY_SHA" = "$staging_head" ] || {
+            echo "staging advanced during migration; refusing stale deployment dispatch" >&2
+            exit 1
+          }
+          payload="$(jq -cn --arg deploy_sha "$DEPLOY_SHA" \
+            '{ref:"main",inputs:{deploy_sha:$deploy_sha,allow_rollback:"false"}}')"
+          curl --fail --silent --show-error --request POST \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            --header "Content-Type: application/json" \
+            --data "$payload" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/deploy-staging.yml/dispatches"
 
       - name: Remove run-local staging files
         if: always() && steps.incoming.outputs.path != ''

@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
 import {
   chmodSync,
-  existsSync,
-  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -68,6 +66,52 @@ test("server compose accepts staging paths while preserving production defaults"
   );
 });
 
+test("server compose defaults to local images without removing either build", () => {
+  const composeFile = fileURLToPath(
+    new URL("../../deploy/docker-compose.server.yml", import.meta.url),
+  );
+  const compose = readFileSync(composeFile, "utf8");
+
+  assert.match(compose, /^\s+image: \$\{API_IMAGE:-jyotisha-api:local\}$/m);
+  assert.match(compose, /^\s+image: \$\{WEB_IMAGE:-jyotisha-web:local\}$/m);
+
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-server-compose-"));
+  const appEnvFile = join(root, ".env.production");
+  writeFileSync(appEnvFile, "RUNTIME_FIXTURE=1\n");
+  chmodSync(appEnvFile, 0o600);
+
+  const env = {
+    ...process.env,
+    APP_ENV_FILE: appEnvFile,
+    CADDYFILE_PATH: fileURLToPath(
+      new URL("../../deploy/Caddyfile", import.meta.url),
+    ),
+    GITHUB_SHA: "0000000000000000000000000000000000000000",
+    NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder",
+  };
+  delete env.API_IMAGE;
+  delete env.WEB_IMAGE;
+
+  try {
+    const result = spawnSync(
+      "docker",
+      ["compose", "-f", composeFile, "config", "--format", "json"],
+      { encoding: "utf8", env },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    const rendered = JSON.parse(result.stdout) as {
+      services: Record<string, { build?: unknown; image?: string }>;
+    };
+    assert.equal(rendered.services.api.image, "jyotisha-api:local");
+    assert.equal(rendered.services.web.image, "jyotisha-web:local");
+    assert.ok(rendered.services.api.build, "api build definition was removed");
+    assert.ok(rendered.services.web.build, "web build definition was removed");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("staging Caddy configuration serves only the configured staging address", () => {
   const caddy = readFileSync(
     new URL("../../deploy/Caddyfile.staging", import.meta.url),
@@ -80,111 +124,52 @@ test("staging Caddy configuration serves only the configured staging address", (
 });
 
 test("staging deploy consumes only the isolated staging environment and tested revision", () => {
-  const ci = readFileSync(
-    new URL("../../.github/workflows/ci.yml", import.meta.url),
+  const qualityGate = readFileSync(
+    new URL("../../.github/workflows/backend-quality-gate.yml", import.meta.url),
     "utf8",
   );
   const workflow = readFileSync(
     new URL("../../.github/workflows/deploy-staging.yml", import.meta.url),
     "utf8",
   );
+  const syncController = readFileSync(
+    new URL("../../deploy/sync-staging-tree.sh", import.meta.url),
+    "utf8",
+  );
 
-  assert.match(ci, /push:\s*\n\s*branches: \[staging\]/);
-  assert.match(workflow, /workflows: \["Jyotish Skill CI"\]/);
+  assert.match(qualityGate, /push:\s*\n\s*branches: \[staging\]/);
+  assert.match(workflow, /workflows: \["Staging Backend Quality Gate"\]/);
   assert.match(
     workflow,
     /github\.event\.workflow_run\.head_branch == 'staging'/,
   );
   assert.match(workflow, /actions: read/);
+  assert.match(workflow, /packages: read/);
   assert.match(workflow, /environment:\s*\n\s*name: staging/);
-  assert.match(workflow, /git_sha:/);
-  assert.doesNotMatch(workflow, /default: staging/);
-  assert.match(workflow, /test "\$\{#REQUESTED_SHA\}" -eq 40/);
-  assert.match(workflow, /actions\/workflows\/ci\.yml\/runs\?head_sha=/);
+  assert.match(workflow, /deploy_sha:/);
+  assert.match(workflow, /\^\[0-9a-f\]\{40\}\$/);
+  assert.match(
+    workflow,
+    /actions\/workflows\/backend-quality-gate\.yml\/runs\?head_sha=/,
+  );
   assert.match(workflow, /STAGING_SSH_PRIVATE_KEY/);
   assert.match(workflow, /vars\.STAGING_HOST/);
   assert.match(workflow, /vars\.STAGING_KNOWN_HOSTS/);
   assert.match(workflow, /test "\$DEPLOY_HOST" = "118\.26\.111\.127"/);
   assert.match(workflow, /test "\$DEPLOY_USER" = "deploy"/);
   assert.match(workflow, /test "\$DEPLOY_PATH" = "\/opt\/jyotisha-staging"/);
-  assert.match(workflow, /--exclude='\.env\*'/);
-  assert.match(workflow, /docker compose --env-file \.env\.staging/);
   assert.match(
     workflow,
-    /bash deploy\/validate-staging-env\.sh \.env\.staging/,
+    /--include='\/deploy\/' --include='\/deploy\/\*\*\*' --exclude='\*'/,
   );
-  assert.match(
-    workflow,
-    /docker compose --env-file \.env\.staging -f deploy\/docker-compose\.server\.yml config --quiet/,
-  );
-  assert.match(workflow, /deployment\.gitCommit/);
+  assert.match(workflow, /run-staging-deploy\.sh/);
+  assert.match(workflow, /steps\.images\.outputs\.api_image/);
+  assert.match(workflow, /steps\.images\.outputs\.web_image/);
   assert.doesNotMatch(workflow, /PRODUCTION_SSH_PRIVATE_KEY/);
   assert.doesNotMatch(workflow, /103\.117\.123\.53/);
-
-  const composeLines = workflow
-    .split("\n")
-    .filter((line) => line.includes("docker compose"));
-  assert.equal(workflow.match(/docker compose/g)?.length, 4);
-  assert.equal(composeLines.length, 3);
-  for (const line of composeLines) {
-    assert.match(line, /APP_ENV_FILE='\.\.\/\.env\.staging'/);
-    assert.match(line, /CADDYFILE_PATH='\.\/Caddyfile\.staging'/);
-    assert.match(line, /SITE_ADDRESS='https:\/\/staging\.jyotisha\.chat'/);
-  }
-});
-
-test("staging rsync preserves every destination env variant during delete", () => {
-  const workflow = readFileSync(
-    new URL("../../.github/workflows/deploy-staging.yml", import.meta.url),
-    "utf8",
-  );
-  const envExclusion = workflow.match(/--exclude='([^']*\.env[^']*)'/)?.[1];
-
-  assert.equal(envExclusion, ".env*");
-
-  const root = mkdtempSync(join(tmpdir(), "jyotisha-staging-rsync-"));
-  const source = join(root, "source");
-  const destination = join(root, "destination");
-  mkdirSync(source);
-  mkdirSync(destination);
-  writeFileSync(join(source, "app.txt"), "new revision\n");
-  for (const name of [
-    ".env",
-    ".env.local",
-    ".env.staging",
-    ".env.staging.backup",
-  ]) {
-    writeFileSync(join(destination, name), "preserve\n");
-  }
-
-  try {
-    const result = spawnSync(
-      "rsync",
-      [
-        "-a",
-        "--delete",
-        `--exclude=${envExclusion}`,
-        `${source}/`,
-        `${destination}/`,
-      ],
-      { encoding: "utf8" },
-    );
-    assert.equal(result.status, 0, result.stderr);
-    for (const name of [
-      ".env",
-      ".env.local",
-      ".env.staging",
-      ".env.staging.backup",
-    ]) {
-      assert.equal(
-        existsSync(join(destination, name)),
-        true,
-        `${name} was deleted`,
-      );
-    }
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
+  assert.match(syncController, /--exclude='\/\.env\*'/);
+  assert.match(syncController, /--exclude='\/\.docker\/'/);
+  assert.match(syncController, /--exclude='\/backups\/'/);
 });
 
 test("staging env validator rejects selector drift, duplicates, and unsafe permissions", () => {

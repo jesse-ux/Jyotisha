@@ -17,6 +17,7 @@ brain/
 COVERAGE_AUDIT_REPORT.md
 *.tmp
 .env.local
+.env.staging.database
 .jyotish.local.env
 .coverage
 coverage.xml
