@@ -45,3 +45,5 @@ def test_chat_session_delete_is_server_controlled_and_granted() -> None:
     assert '.eq("user_id", user.id)' in route
     assert 'count !== 1' in route
     assert 'grant delete on table public.chat_sessions to authenticated' in migration.lower()
+    assert 'create policy chat_sessions_delete_own' in migration.lower()
+    assert 'using ((select auth.uid()) = user_id)' in migration.lower()
