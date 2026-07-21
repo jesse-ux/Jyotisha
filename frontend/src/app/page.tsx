@@ -2098,6 +2098,15 @@ export default function Home() {
       }
       if (!response.body) throw new Error("浏览器未收到可读取的回答流");
       const techniqueTruth = response.headers.get("x-jyotish-technique-truth") ?? "unknown";
+      const workflowReceipt = {
+        route: response.headers.get("x-jyotish-workflow-route") ?? "unknown",
+        status: response.headers.get("x-jyotish-workflow-status") ?? "unknown",
+        preciseTiming: response.headers.get("x-jyotish-precise-timing") ?? "unknown",
+        missingLayers: (response.headers.get("x-jyotish-missing-layers") ?? "none")
+          .split(",")
+          .map((item) => item.trim())
+          .filter((item) => item && item !== "none"),
+      };
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -2126,7 +2135,7 @@ export default function Home() {
       const completedSession: ChatSession = {
         ...userSession,
         title: currentSession.messages.length === 0 && reply.title ? reply.title : userSession.title,
-        messages: [...userSession.messages, { role: "assistant", text: reply.text, suggestions: reply.suggestions, techniqueTruth }],
+        messages: [...userSession.messages, { role: "assistant", text: reply.text, suggestions: reply.suggestions, techniqueTruth, workflowReceipt }],
         updatedAt: timestamp(),
       };
       updateSession(sessionId, () => completedSession);

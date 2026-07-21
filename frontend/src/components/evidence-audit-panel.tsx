@@ -4,6 +4,13 @@ type AuditRow = {
   boundary: string;
 };
 
+type WorkflowReceipt = {
+  route: string;
+  status: string;
+  preciseTiming: string;
+  missingLayers: readonly string[];
+};
+
 const defaultAuditRows: AuditRow[] = [
   { label: "D1 / Natal", status: "required", boundary: "基础命盘层" },
   { label: "Varga: D9 / D10 / D2 / D11", status: "required", boundary: "按问题域调用，不混用" },
@@ -15,12 +22,27 @@ const defaultAuditRows: AuditRow[] = [
   { label: "MEVG / Real Case Calibration", status: "blocked", boundary: "外部校准不足时降级" },
 ];
 
-export function EvidenceAuditPanel({ claimStatus }: { readonly claimStatus?: string }) {
+function workflowRows(receipt?: WorkflowReceipt): AuditRow[] {
+  if (!receipt) return defaultAuditRows;
+  return [
+    { label: `Workflow route: ${receipt.route}`, status: receipt.status === "blocked" ? "blocked" : "required", boundary: "后端实际路由" },
+    { label: `Precise timing: ${receipt.preciseTiming}`, status: receipt.preciseTiming === "allowed" ? "partial" : "blocked", boundary: "精确应期 claim gate" },
+    {
+      label: "Missing route layers",
+      status: receipt.missingLayers.length ? "blocked" : "required",
+      boundary: receipt.missingLayers.length ? receipt.missingLayers.join(" / ") : "none",
+    },
+    ...defaultAuditRows,
+  ];
+}
+
+export function EvidenceAuditPanel({ claimStatus, workflowReceipt }: { readonly claimStatus?: string; readonly workflowReceipt?: WorkflowReceipt }) {
+  const rows = workflowRows(workflowReceipt);
   return (
     <details className="evidence-audit-panel">
       <summary>证据链摘要 · {claimStatus || "unknown"}</summary>
       <div className="evidence-audit-table" role="table" aria-label="Technique Audit Table">
-        {defaultAuditRows.map((row) => (
+        {rows.map((row) => (
           <div className="evidence-audit-row" role="row" key={row.label}>
             <span role="cell">{row.label}</span>
             <b role="cell" data-status={row.status}>{row.status}</b>
