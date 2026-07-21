@@ -2172,16 +2172,16 @@ export default function Home() {
           await persistSession(interruptedSession);
           setRequestError({
             sessionId,
-            message: "回答中途断开，已保留生成内容；本次已开始生成并计费。",
+            message: "回答中途断开，已保留生成内容；请复制现有内容或继续追问，系统正在以账户记录为准同步点数。",
           });
         } catch (persistError) {
           setRequestError({
             sessionId,
-            message: `${persistError instanceof Error ? persistError.message : "云端同步失败"} 已计费的部分回答仍保留在当前页面，请复制保存。`,
+            message: `${persistError instanceof Error ? persistError.message : "云端同步失败"} 部分回答仍保留在当前页面，请复制保存后继续追问。`,
           });
         }
         if (activeSessionIdRef.current === sessionId) {
-          setComposerNotice("回答中途断开，已保留现有内容，本次已计费。");
+          setComposerNotice("回答中途断开，已保留现有内容；请继续追问或复制保存。");
         }
       }
     } finally {
