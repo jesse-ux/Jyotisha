@@ -23,6 +23,9 @@ def _case(*, offsets=(-5, -2, 2, 5), event_count=3):
     ]
     return {
         "case_id": "public-aa-case",
+        "adjudicator": "independent-reviewer",
+        "independent_human_reviewed": True,
+        "frozen_before_scoring": True,
         "birth_source": {
             "url": "https://example.test/birth-record",
             "time_accuracy_rating": "AA",
@@ -68,3 +71,14 @@ def test_validator_rejects_one_sided_or_uncommitted_false_minutes(tmp_path):
 
     assert report["status"] == "blocked_awaiting_public_aa_cases"
     assert report["invalid_cases"] == ["public-aa-case:negative_controls_invalid"]
+
+
+def test_validator_rejects_cases_without_independent_frozen_review(tmp_path):
+    path = tmp_path / "holdout.json"
+    case = _case()
+    case["independent_human_reviewed"] = False
+    path.write_text(json.dumps(_manifest(case)), encoding="utf-8")
+
+    report = validate(path)
+
+    assert report["invalid_cases"] == ["public-aa-case:independent_review_invalid"]

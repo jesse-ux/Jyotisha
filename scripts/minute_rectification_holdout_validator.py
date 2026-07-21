@@ -43,6 +43,22 @@ def _valid_negative_controls(controls: list[Any], *, minimum: int) -> bool:
     return any(offset < 0 for offset in offsets) and any(offset > 0 for offset in offsets) and len(set(offsets)) == len(offsets) and len(commitments) == len(controls)
 
 
+def case_error(case: dict[str, Any], gate: dict[str, Any]) -> str | None:
+    """Return the one blocking reason for a prospective minute-holdout case."""
+    birth = case.get("birth_source") if isinstance(case.get("birth_source"), dict) else {}
+    events = case.get("events") if isinstance(case.get("events"), list) else []
+    negatives = case.get("negative_minutes") if isinstance(case.get("negative_minutes"), list) else []
+    if not str(case.get("adjudicator") or "").strip() or case.get("independent_human_reviewed") is not True or case.get("frozen_before_scoring") is not True:
+        return "independent_review_invalid"
+    if birth.get("time_accuracy_rating") != "AA" or not birth.get("url"):
+        return "birth_source_invalid"
+    if not _valid_events(events, minimum=int(gate.get("events_per_case", 3)), birth_url=str(birth["url"])):
+        return "events_invalid"
+    if not _valid_negative_controls(negatives, minimum=int(gate.get("negative_minutes_per_case", 4))):
+        return "negative_controls_invalid"
+    return None
+
+
 def validate(manifest_path: Path = DEFAULT_MANIFEST) -> dict[str, Any]:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     gate = manifest.get("minimum_gate") if isinstance(manifest.get("minimum_gate"), dict) else {}
@@ -53,16 +69,10 @@ def validate(manifest_path: Path = DEFAULT_MANIFEST) -> dict[str, Any]:
         if not isinstance(case, dict):
             invalid.append("non_object_case")
             continue
-        birth = case.get("birth_source") if isinstance(case.get("birth_source"), dict) else {}
-        events = case.get("events") if isinstance(case.get("events"), list) else []
-        negatives = case.get("negative_minutes") if isinstance(case.get("negative_minutes"), list) else []
         case_id = str(case.get("case_id") or "unnamed_case")
-        if birth.get("time_accuracy_rating") != "AA" or not birth.get("url"):
-            invalid.append(f"{case_id}:birth_source_invalid")
-        elif not _valid_events(events, minimum=int(gate.get("events_per_case", 3)), birth_url=str(birth["url"])):
-            invalid.append(f"{case_id}:events_invalid")
-        elif not _valid_negative_controls(negatives, minimum=int(gate.get("negative_minutes_per_case", 4))):
-            invalid.append(f"{case_id}:negative_controls_invalid")
+        error = case_error(case, gate)
+        if error:
+            invalid.append(f"{case_id}:{error}")
         else:
             valid_cases += 1
     needed = int(gate.get("public_aa_cases", 20))
