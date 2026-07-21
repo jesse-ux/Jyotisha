@@ -145,7 +145,10 @@ test("admin surface disables sign-up and rejects non-admin session creation", as
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-  assert.equal(await before(session, null), false);
+  await assert.rejects(
+    before(session, null),
+    /Administrator access required/,
+  );
   assert.equal(
     await before({ ...session, userId: "admin-user-id" }, null),
     undefined,

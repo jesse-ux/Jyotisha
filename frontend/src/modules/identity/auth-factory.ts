@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import type { Pool } from "pg";
-import type { BetterAuthOptions } from "better-auth";
+import { APIError, type BetterAuthOptions } from "better-auth";
 import { admin, emailOTP, type EmailOTPOptions } from "better-auth/plugins";
 
 import type { SelfHostedIdentityConfig } from "./config.ts";
@@ -114,7 +114,11 @@ export function buildAuthOptions({
             session: {
               create: {
                 async before(session: { userId: string }) {
-                  if (!(await authorizeAdminUser!(session.userId))) return false;
+                  if (!(await authorizeAdminUser!(session.userId))) {
+                    throw new APIError("FORBIDDEN", {
+                      message: "Administrator access required",
+                    });
+                  }
                 },
               },
             },
