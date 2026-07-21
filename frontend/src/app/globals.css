@@ -84,6 +84,7 @@
   --space-12: 48px;
   --space-16: 64px;
   --space-24: 96px;
+  --composer-reserve: 148px;
   --ease-out: cubic-bezier(.22, 1, .36, 1);
   --sidebar-background: var(--color-sidebar);
   --sidebar-solid: var(--color-sidebar-solid);
@@ -328,7 +329,7 @@ button:disabled { cursor: default; opacity: .45; }
 .status-loading { background: var(--color-action); }
 .credit-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 11px; cursor: pointer; font-size: 13px; font-variant-numeric: tabular-nums; transition: background-color 120ms ease-out, transform 120ms ease-out; min-width: 64px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-canvas-soft); color: var(--color-ink-secondary); font-weight: 500; }
 
-.conversation { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--color-canvas); }
+.conversation { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding-bottom: var(--composer-reserve); background: var(--color-canvas); }
 .conversation.is-empty { display: grid; place-items: center; padding: var(--space-8); }
 .welcome { width: min(820px, 100%); padding: var(--space-10) 0 var(--space-16); }
 .welcome > .onboarding-message:first-child { padding-bottom: var(--space-8); }
@@ -492,7 +493,7 @@ button:disabled { cursor: default; opacity: .45; }
 .thinking i { width: 5px; height: 5px; border-radius: 50%; animation: pulse 850ms ease-in-out infinite alternate; background: var(--color-action); }
 .error-message { margin: 12px 0 0; padding: 12px 14px; border-left: 3px solid var(--color-danger); background: var(--color-danger-muted); color: var(--color-danger); font-size: 13px; line-height: 1.6; border-color: var(--color-danger); border-radius: 0 var(--radius-md) var(--radius-md) 0; }
 
-.composer-wrap { z-index: 2; min-width: 0; border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent); padding: var(--space-3) var(--space-6) var(--space-4); background: var(--color-frosted); backdrop-filter: saturate(130%) blur(20px); }
+.composer-wrap { position: sticky; bottom: 0; z-index: 2; min-width: 0; border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent); padding: var(--space-3) var(--space-6) var(--space-4); background: var(--color-frosted); backdrop-filter: saturate(130%) blur(20px); }
 .composer-suggestions { width: min(680px, 100%); margin: 0 auto 9px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: var(--space-2); margin-bottom: var(--space-3); overflow: visible; }
 .composer-suggestions button { flex: 0 0 clamp(176px, 56vw, 230px); overflow: hidden; border: 1px solid var(--color-border); color: var(--color-ink-secondary); cursor: pointer; scroll-snap-align: start; text-overflow: ellipsis; white-space: nowrap; transition: border-color 120ms ease-out, color 120ms ease-out, transform 120ms ease-out; width: 100%; min-width: 0; min-height: 44px; padding: 0 var(--space-2); border-color: var(--color-border); border-radius: var(--radius-md); background: var(--color-canvas-soft); font-size: var(--type-caption); }
 .composer { width: min(760px, 100%); display: flex; align-items: flex-end; gap: 10px; margin: 0 auto; border: 1px solid var(--color-border); transition: border-color 140ms ease-out; min-height: 60px; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); border-color: var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-canvas); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-border) 42%, transparent); }
