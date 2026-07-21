@@ -155,6 +155,9 @@ button:disabled { cursor: default; opacity: .45; }
 .evidence-audit-row { display: grid; grid-template-columns: minmax(120px, 1fr) auto minmax(160px, 1.2fr); gap: var(--space-3); align-items: center; padding: var(--space-2) 0; border-top: 1px solid color-mix(in srgb, var(--color-border) 64%, transparent); font-size: 12px; }
 .evidence-audit-row b { color: var(--color-action-hover); font-weight: 600; }
 .evidence-audit-row small { color: var(--color-ink-tertiary); line-height: 1.45; }
+.raw-evidence-receipt { margin: 0 var(--space-3) var(--space-3); border-top: 1px solid color-mix(in srgb, var(--color-border) 64%, transparent); padding-top: var(--space-2); }
+.raw-evidence-receipt summary { padding: var(--space-1) 0; color: var(--color-ink-tertiary); font-size: 12px; }
+.raw-evidence-receipt pre { max-height: 180px; overflow: auto; margin: var(--space-2) 0 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-canvas); color: var(--color-ink-secondary); font-size: 11px; line-height: 1.5; }
 .message-markdown p { margin: 0 0 14px; }
 .message-markdown ul, .message-markdown ol { margin: 10px 0 16px; padding-left: 24px; }
 .message-markdown li { margin: 6px 0; }

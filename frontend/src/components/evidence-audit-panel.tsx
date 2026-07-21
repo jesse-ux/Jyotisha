@@ -38,6 +38,11 @@ function workflowRows(receipt?: WorkflowReceipt): AuditRow[] {
 
 export function EvidenceAuditPanel({ claimStatus, workflowReceipt }: { readonly claimStatus?: string; readonly workflowReceipt?: WorkflowReceipt }) {
   const rows = workflowRows(workflowReceipt);
+  const rawReceipt = {
+    techniqueTruth: claimStatus || "unknown",
+    workflowReceipt: workflowReceipt ?? null,
+    privacyBoundary: "no_birth_data_or_private_case_raw",
+  };
   return (
     <details className="evidence-audit-panel">
       <summary>证据链摘要 · {claimStatus || "unknown"}</summary>
@@ -50,6 +55,10 @@ export function EvidenceAuditPanel({ claimStatus, workflowReceipt }: { readonly 
           </div>
         ))}
       </div>
+      <details className="raw-evidence-receipt">
+        <summary>查看非敏感 raw receipt</summary>
+        <pre>{JSON.stringify(rawReceipt, null, 2)}</pre>
+      </details>
     </details>
   );
 }

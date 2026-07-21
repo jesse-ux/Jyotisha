@@ -20,7 +20,11 @@ test("assistant messages include a collapsible Technique Audit Table shell", () 
   assert.match(panelSource, /Functional Benefic\/Malefic/);
   assert.match(panelSource, /MEVG \/ Real Case Calibration/);
   assert.match(panelSource, /组件 parity 未全闭环/);
+  assert.match(panelSource, /rawReceipt/);
+  assert.match(panelSource, /no_birth_data_or_private_case_raw/);
+  assert.match(panelSource, /查看非敏感 raw receipt/);
   assert.match(globalStyles, /\.evidence-audit-panel/);
+  assert.match(globalStyles, /\.raw-evidence-receipt/);
 });
 
 test("consult responses persist workflow receipt headers for evidence rendering", () => {
