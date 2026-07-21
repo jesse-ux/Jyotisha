@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 122,
+    "packet_count": 125,
     "blocked_or_partial_count": 52,
     "human_review_required_count": 3
   },
@@ -985,6 +985,30 @@
       "claim_status": "open_queue",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Round4 triage confirms round3 was non-exhaustive: 858 unindexed WorkBuddy filename-signal files were detected and 20 high-value candidates were classified; no truth upgrade or bulk-copy permission."
+    },
+    {
+      "packet_id": "workbuddy_round4_formalization_registry_2026_07_21",
+      "path": "references/oracle/workbuddy_round4_formalization_registry_2026_07_21.json",
+      "domain": "fragment_migration",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Maps round4 WorkBuddy candidates into formal registry/test targets for event judgment, birth-time rectification, Muhurta and Tajika/Saham; no runtime import, truth upgrade or bulk-copy permission."
+    },
+    {
+      "packet_id": "workbuddy_round4_usage_closure_queue_2026_07_21",
+      "path": "references/oracle/workbuddy_round4_usage_closure_queue_2026_07_21.json",
+      "domain": "fragment_migration",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Tracks all round4 migrate_to_registry/test candidates: 9 formalized, 2 pending oracle closure, 1 pending invocation audit; no truth upgrade."
+    },
+    {
+      "packet_id": "vedastro_divisional_degree_contract_probe_2026_07_21",
+      "path": "references/oracle/artifacts/vedastro_divisional_degree_contract_probe.json",
+      "domain": "vedastro_contract_probe",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Validates only VedAstro DivisionalLongitude degree transformation for a fixed scalar input; does not establish hosted chart sign, ayanamsa, node, timezone, or full D2/D4/D9/D10 parity."
     }
   ]
 }

@@ -1,0 +1,105 @@
+{
+  "scope": "workbuddy_round4_usage_closure_queue",
+  "created_at": "2026-07-21",
+  "claim_status": "open_queue",
+  "source_ledger": "references/oracle/workbuddy_round4_candidate_ledger_2026_07_21.json",
+  "formalization_registry": "references/oracle/workbuddy_round4_formalization_registry_2026_07_21.json",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "boundary": "Tracks whether every WorkBuddy round4 migrate_to_registry/test candidate has been converted into a formal registry/test, or remains explicitly deferred. No row upgrades oracle truth.",
+  "summary": {
+    "round4_migrate_candidate_count": 12,
+    "formalized_count": 9,
+    "deferred_pending_oracle_count": 2,
+    "deferred_pending_invocation_audit_count": 1
+  },
+  "candidate_status": [
+    {
+      "candidate_id": "wb_round4_event_judgment_examples",
+      "domain": "event_judgment",
+      "usage_status": "formalized",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/event_judgment_fragment_rule_family_registry_2026_07_21.json"
+    },
+    {
+      "candidate_id": "wb_round4_birth_time_rectification_cases",
+      "domain": "birth_time_rectification",
+      "usage_status": "formalized",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/workbuddy_round4_formalization_registry_2026_07_21.json"
+    },
+    {
+      "candidate_id": "wb_round4_birth_time_rectification_advanced",
+      "domain": "birth_time_rectification",
+      "usage_status": "formalized",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/workbuddy_round4_formalization_registry_2026_07_21.json"
+    },
+    {
+      "candidate_id": "wb_round4_event_judgment_career",
+      "domain": "event_judgment",
+      "usage_status": "formalized",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/event_judgment_fragment_rule_family_registry_2026_07_21.json"
+    },
+    {
+      "candidate_id": "wb_round4_event_judgment_wealth",
+      "domain": "event_judgment",
+      "usage_status": "formalized",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/event_judgment_fragment_rule_family_registry_2026_07_21.json"
+    },
+    {
+      "candidate_id": "wb_round4_event_judgment_skeleton",
+      "domain": "event_judgment",
+      "usage_status": "formalized",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/event_judgment_fragment_rule_family_registry_2026_07_21.json"
+    },
+    {
+      "candidate_id": "wb_round4_kp_practical_event_timing",
+      "domain": "kp_precision_timing",
+      "usage_status": "deferred_pending_invocation_audit",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/kp_precision_timing_gap_registry_2026_07_19.json",
+      "next_action": "Attach exact KP cusp/star/sub/sub-sub API invocation and public worked-example oracle before using for event timing."
+    },
+    {
+      "candidate_id": "wb_round4_muhurta_complete_guide",
+      "domain": "muhurta",
+      "usage_status": "formalized",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/muhurta_factor_scoring_readiness_2026_07_19.json"
+    },
+    {
+      "candidate_id": "wb_round4_tajika_yoga_complete_guide",
+      "domain": "tajika_saham",
+      "usage_status": "formalized",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json"
+    },
+    {
+      "candidate_id": "wb_round4_saham_rules",
+      "domain": "tajika_saham",
+      "usage_status": "formalized",
+      "claim_upgrade": "none",
+      "formal_output": "references/saham_rules.json"
+    },
+    {
+      "candidate_id": "wb_round4_pyjhora_steve_jobs_shadbala_stdout",
+      "domain": "shadbala_oracle",
+      "usage_status": "deferred_pending_oracle",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/shadbala_component_closure_queue_v2_2026_07_19.json",
+      "next_action": "Parse stdout into component-level same-unit rows only if source, settings, and hash match the existing Shadbala closure queue."
+    },
+    {
+      "candidate_id": "wb_round4_tajika_steve_jobs_1984_first_packet",
+      "domain": "tajika_oracle",
+      "usage_status": "deferred_pending_oracle",
+      "claim_upgrade": "none",
+      "formal_output": "references/oracle/tajika_annual_oracle_cases.json",
+      "next_action": "Verify provenance fields and numeric annual/Tajika values before upgrading from candidate packet to oracle packet."
+    }
+  ]
+}
