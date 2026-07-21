@@ -8,6 +8,8 @@ import {
 } from "@/modules/identity/config";
 import { resolveIdentitySurface } from "@/modules/identity/host";
 
+export const dynamic = "force-dynamic";
+
 export default async function LoginPage() {
   const config = readIdentityConfig(process.env);
   let provider = config.provider;

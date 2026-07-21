@@ -11,6 +11,7 @@ test("login page selects the auth provider from server-only validated config", (
   );
 
   assert.doesNotMatch(page, /["']use client["']/);
+  assert.match(page, /export const dynamic = "force-dynamic"/);
   assert.match(page, /readIdentityConfig\(process\.env\)/);
   assert.match(page, /isSelfHostedIdentityEnabled\(process\.env\)/);
   assert.match(page, /resolveIdentitySurface/);
