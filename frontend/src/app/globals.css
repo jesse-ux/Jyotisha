@@ -707,3 +707,6 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   .auth-panel h1 { font-size: var(--type-display-sm); }
   .admin-section { padding: var(--space-5); }
 }
+.session-delete-confirmation { position: fixed; inset: auto var(--space-5) var(--space-5) auto; z-index: 100; width: min(360px, calc(100vw - var(--space-10))); padding: var(--space-5); border: 1px solid var(--border); border-radius: 8px; background: var(--background); box-shadow: 0 12px 32px rgb(0 0 0 / 18%); }
+.session-delete-confirmation p { margin: 0 0 var(--space-4); }
+.session-delete-confirmation div { display: flex; justify-content: flex-end; gap: var(--space-3); }
