@@ -1,0 +1,36 @@
+{
+  "scope": "commercial_startup_self_check_contract",
+  "created_at": "2026-07-21",
+  "status": "ready_contract",
+  "purpose": "Commercial runtime must prove which research truth source, skill version, evidence index and oracle gates it is using before claiming website capability readiness.",
+  "required_fields": [
+    "truth_source_path",
+    "truth_source_git_commit",
+    "skill_version",
+    "evidence_packet_count",
+    "artifact_gate_status",
+    "privacy_artifact_status",
+    "oracle_ready_summary"
+  ],
+  "reject_if": {
+    "truth_source_path_contains": [
+      "/WorkBuddy/",
+      "/.workbuddy/"
+    ],
+    "artifact_gate_status": [
+      "missing",
+      "unknown"
+    ],
+    "privacy_artifact_status": [
+      "private_artifact_present",
+      "unknown"
+    ]
+  },
+  "recommended_surface": {
+    "startup_log": true,
+    "health_endpoint": "/api/runtime-identity",
+    "admin_status_panel": true,
+    "ci_snapshot": true
+  },
+  "claim_boundary": "startup_identity_gate_only_not_business_runtime"
+}

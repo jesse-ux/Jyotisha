@@ -26,5 +26,6 @@ def test_vedicastro_probe_reports_dependency_chain_without_truth_upgrade():
         assert data["runtime_probe"]["method_present"] is True
         assert "SubLord" in data["runtime_probe"]["sample_rl_nl_sl"]
         assert "AY_KRISHNAMURTI" in data["runtime_probe"]["sidereal_ayanamsa_constants_present"]
+        assert data["dependency_identity"]["observed_pinned_flatlib_commit"] == "2618c348ce1ab2588548f935ff65f031630b4872"
     else:
         assert data["status"] == "blocked_runtime_import"

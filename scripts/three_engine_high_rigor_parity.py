@@ -13,9 +13,6 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-SCRIPTS = ROOT / "scripts"
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
 
 from benchmarks.jyotish.scripts.run_pyjhora_compare import build_pyjhora_sample
 from benchmarks.jyotish.scripts.run_skill_baseline import run_sample

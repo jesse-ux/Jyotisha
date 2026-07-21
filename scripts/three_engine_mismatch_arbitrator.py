@@ -82,16 +82,52 @@ def arbitrate_manifest(path: str | Path) -> dict[str, Any]:
     }
 
 
+def render_markdown_report(report: dict[str, Any]) -> str:
+    lines = [
+        "# Three-engine mismatch arbitration",
+        "",
+        f"manifest: `{report['manifest_path']}`",
+        f"status: `{report['status']}`",
+        f"truth_policy: `{report['truth_policy']}`",
+        "commercial_sync: `status_and_claim_boundary_only`",
+        f"mismatch_count: `{report['mismatch_count']}`",
+        f"classified_count: `{report['classified_count']}`",
+        f"unclassified_count: `{report['unclassified_count']}`",
+        "",
+        "Do not copy raw research debt into commercial runtime. Commercial receives readiness, claim boundary, and user-safe status only.",
+        "",
+        "## Category counts",
+        "",
+        "| category | count |",
+        "|---|---:|",
+    ]
+    for category, count in report["category_counts"].items():
+        lines.append(f"| `{category}` | {count} |")
+    lines.extend(["", "## Closure requirements", ""])
+    seen: set[str] = set()
+    for row in report["rows"]:
+        category = row["category"]
+        if category in seen:
+            continue
+        seen.add(category)
+        lines.append(f"- `{category}`: {row['closure_requirement']}")
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", nargs="?", default="references/oracle/three_engine_parity_replay_manifest.json")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--markdown-output", type=Path)
     args = parser.parse_args()
     report = arbitrate_manifest(args.manifest)
     text = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(text, encoding="utf-8")
+    if args.markdown_output:
+        args.markdown_output.parent.mkdir(parents=True, exist_ok=True)
+        args.markdown_output.write_text(render_markdown_report(report), encoding="utf-8")
     print(text, end="")
     return 0
 

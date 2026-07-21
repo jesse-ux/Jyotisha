@@ -1,0 +1,31 @@
+{
+  "scope": "jyotishganit_three_engine_closure_bridge",
+  "created_at": "2026-07-21",
+  "claim_status": "observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_probe": "scripts/jyotishganit_field_probe.py",
+  "source_raw_hash": "19fa9ea862b68c4cffb6756fa6cbf0466daf47a8b008b3fe8809e9fc6a1ed30c",
+  "source_selected_hash": "4709b8ade84efdea4d0a67c15f3e32cea516a5aa2e8abe3885578feda20cb3f4",
+  "field_routes": {
+    "ready_for_field_comparison": [
+      "D2",
+      "D4",
+      "D9",
+      "D10",
+      "Panchanga",
+      "BAV_SAV"
+    ],
+    "explicit_gaps": [
+      "Shadbala"
+    ],
+    "comparison_policy": "route sign/table/schema fields into closure queue only; do not infer formula truth from matching signs"
+  },
+  "next_packet_targets": [
+    "three_engine_closure_rows_D2_D4_D9_D10",
+    "three_engine_closure_rows_panchanga",
+    "three_engine_closure_rows_bav_sav",
+    "shadbala_missing_field_gap"
+  ],
+  "boundary": "bridge_only_no_truth_upgrade"
+}
