@@ -237,6 +237,8 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.match(css, /\.conversational-rectification[^}]*:focus-visible/);
   assert.match(css, /:where\(button, textarea\):focus-visible/);
   assert.match(css, /\.conversational-answer-pending[\s\S]*grid-template-columns:\s*40px minmax\(0, 1fr\)/);
+  assert.match(css, /\.conversational-domain-picker button\[aria-pressed="true"\]/);
+  assert.doesNotMatch(css, /button\[aria-label\$="下一步建议"\]/);
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
   assert.match(css, /@media\s*\(max-width:\s*430px\)[\s\S]*\.conversational-rectification/);
   assert.doesNotMatch(component, /确认放弃且不应用候选|本轮技术回执/);

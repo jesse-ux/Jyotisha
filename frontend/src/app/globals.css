@@ -458,7 +458,7 @@ button:disabled { cursor: default; opacity: .45; }
 .rectification-loading-state { min-height: min(52dvh, 420px); display: grid; align-content: center; justify-items: center; gap: var(--space-2); padding: var(--space-8); color: var(--color-ink-secondary); text-align: center; }
 .rectification-loading-state strong { margin-top: var(--space-2); color: var(--color-ink); font-family: var(--font-display); font-size: var(--type-title-lg); font-weight: 400; }
 .rectification-loading-state > span { font-size: var(--type-body-sm); }
-.conversational-rectification { width: 100%; min-width: 0; max-width: 720px; display: grid; gap: var(--space-5); overflow-wrap: anywhere; color: var(--color-ink); }
+.conversational-rectification { width: 100%; min-width: 0; max-width: 720px; display: grid; gap: var(--space-5); margin: 0 auto; overflow-wrap: anywhere; color: var(--color-ink); }
 .conversational-rectification > *, .conversational-rectification form, .conversational-rectification fieldset { min-width: 0; max-width: 100%; }
 .conversational-rectification button { min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
 .conversational-rectification :where(button, textarea):focus-visible { outline: 3px solid color-mix(in srgb, var(--color-focus) 56%, transparent); outline-offset: 3px; }
@@ -475,7 +475,6 @@ button:disabled { cursor: default; opacity: .45; }
 .conversational-domain-picker button > span { font-size: var(--type-body-sm); font-weight: 600; }
 .conversational-domain-picker button > small { color: var(--color-ink-secondary); font-size: var(--type-overline); font-weight: 400; }
 .conversational-domain-picker button[aria-pressed="true"] { border-color: var(--color-action); background: var(--color-action-soft); color: var(--color-action); }
-.conversational-domain-picker button[aria-label$="下一步建议"] { border-color: color-mix(in srgb, var(--color-action) 52%, var(--color-border)); background: var(--color-action-soft); }
 .conversational-answer-pending { min-width: 0; display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid color-mix(in srgb, var(--color-action) 24%, var(--color-border)); border-radius: var(--radius-lg); background: var(--color-action-soft); }
 .conversational-answer-pending .app-loading-symbol { width: 40px; height: 40px; }
 .conversational-answer-pending .app-loading-mark { width: 22px; height: 22px; }
