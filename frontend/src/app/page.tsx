@@ -86,6 +86,19 @@ type Profile = BirthTimeDraft & {
   districtCode: string;
   rectificationCaseId: string;
 };
+
+function birthTimeAssessmentSignature(value: BirthTimeDraft) {
+  return [
+    value.date,
+    value.time,
+    value.reportedTime,
+    value.birthTimeSource,
+    value.birthTimePeriod,
+    value.birthTimeClue,
+    value.uncertaintyBeforeMinutes,
+    value.uncertaintyAfterMinutes,
+  ].join("|");
+}
 type ChartLibraryRecord = {
   id: string;
   role: "self" | "other";
@@ -741,6 +754,7 @@ export default function Home() {
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
   const birthTimeRevisionPending = useRef(false);
+  const lastBirthTimeAssessmentSignature = useRef("");
   const birthTimeGuided = useBirthTimeGuidedJourney({
     journey: birthTimeJourney,
     preview: process.env.NODE_ENV === "development" && uiPreview.current,
@@ -1542,6 +1556,7 @@ export default function Home() {
       rectificationCaseId: result.caseId,
     };
     setBirthTimeJourney(result);
+    lastBirthTimeAssessmentSignature.current = birthTimeAssessmentSignature(nextProfile);
     setBirthTimeError("");
     setProfile(assessedProfile);
     setProfileDraft(assessedProfile);
@@ -1603,6 +1618,12 @@ export default function Home() {
     try {
       await persistProfile(profileDraft);
       if (birthTimeRevisionPending.current) {
+        if (lastBirthTimeAssessmentSignature.current === birthTimeAssessmentSignature(profileDraft)) {
+          birthTimeRevisionPending.current = false;
+          setBirthTimeError("出生资料未变化，重新评估会重复同一结果。请补充不同领域且能注明年月的关键经历，再继续校时。");
+          setOnboardingStep("rectification");
+          return;
+        }
         setBirthTimeAssessmentPhase("assessing");
         const assessedProfile = await assessSavedBirthTime(profileDraft);
         birthTimeRevisionPending.current = false;

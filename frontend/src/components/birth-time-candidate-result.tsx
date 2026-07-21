@@ -124,8 +124,8 @@ function TerminalAction({ controller, error, path }: {
   return (
     <div className="birth-time-new-assessment">
       <b>尚未达到采用条件</b>
-      <p>候选范围已保留，但当前证据不足以将具体分钟写入当前排盘时间。补充经历后可重新评估。</p>
-      <button className="button-secondary birth-time-guided-action" disabled={controller.pending} onClick={controller.editBirthTimeDetails} type="button">开始新的评估</button>
+      <p>候选范围已保留，但当前证据不足以将具体分钟写入当前排盘时间。请补充不同领域、可注明年月的关键经历；仅重复原出生资料不会生成新结果。</p>
+      <button className="button-secondary birth-time-guided-action" disabled={controller.pending} onClick={controller.editBirthTimeDetails} type="button">修改出生资料后重新评估</button>
       {error ? <p className="form-error" role="alert">{error}</p> : null}
       <small>会建立新的记录，当前结果仍会保留。</small>
     </div>
