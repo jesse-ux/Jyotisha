@@ -1253,9 +1253,9 @@ export default function Home() {
     setArchivedSessionIds((current) => current.filter((id) => id !== session.id));
     if (activeSessionId === session.id) setActiveSessionId(nextSessions[0]?.id ?? "");
     try {
-      const supabase = createBrowserSupabaseClient();
-      const { error } = await supabase.from("chat_sessions").delete().eq("id", session.id).eq("user_id", account.user.id);
-      if (error) throw error;
+      const response = await fetch(`/api/sessions/${encodeURIComponent(session.id)}`, { method: "DELETE" });
+      const payload = await response.json().catch(() => null) as { error?: string } | null;
+      if (!response.ok) throw new Error(payload?.error || "删除聊天记录失败");
     } catch (caught) {
       setSessions(previousSessions);
       setComposerNotice(caught instanceof Error ? `删除失败：${caught.message}` : "删除失败");
