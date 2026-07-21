@@ -45,6 +45,7 @@ import {
 import { defaultGuidedJyotishTopics } from "@/lib/guided-jyotish-topics";
 import { keepFocusWithin } from "@/lib/focus-trap";
 import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
+import { consultationReportMarkdown } from "@/lib/consultation-report-export";
 import {
   OnboardingAuthenticationError,
   type OnboardingContent,
@@ -1292,10 +1293,14 @@ export default function Home() {
       message_count: session.messages.length,
       messages: session.messages.map((message) => ({ role: message.role, text: message.text })),
     };
+    const reportMarkdown = consultationReportMarkdown({ title: session.title, messages: session.messages });
     const transcript = [
       `Jyotisha 对话：${session.title}`,
       "",
       ...session.messages.map((message) => `${message.role === "user" ? "我" : "Jyotisha"}：${message.text}`),
+      "",
+      "---- Markdown 报告 ----",
+      reportMarkdown,
       "",
       "---- JSON 分享包 ----",
       JSON.stringify(sharePayload, null, 2),
