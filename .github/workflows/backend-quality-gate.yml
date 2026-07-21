@@ -63,6 +63,7 @@ jobs:
           python scripts/run_quality_gate.py \
             --profile quick --skip-yoga-logic --skip-frontend-runtime \
             2>&1 | tee artifacts/quick-quality-gate.log
+          python scripts/commercial_privacy_artifact_scan.py --json
           python -m build
 
       - name: Upload quick quality gate diagnostics
