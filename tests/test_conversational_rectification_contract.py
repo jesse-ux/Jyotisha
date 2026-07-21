@@ -235,7 +235,10 @@ def test_forward_legacy_import_projects_only_trusted_facts_into_v3() -> None:
     assert "set credits =" not in body
     assert "for update" in body
     assert "pg_advisory_xact_lock" in body
-    assert "v_legacy.status in ('confirmed', 'completed', 'abandoned')" in body
+    assert "v_legacy.status not in ('assessing', 'rectifying', 'candidate', 'confirming')" in body
+    assert "v_profile.rectification_case_id is distinct from p_legacy_case_id" in body
+    assert "rectification_case_id = p_case_id" in body
+    assert "rectification_case_id = p_legacy_case_id" in body
     assert "v_legacy.turn_version is distinct from p_expected_version" in body
     assert "current_date" in body
 

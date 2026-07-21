@@ -219,7 +219,6 @@ export async function loadProductionConversationalRectificationProfile(
   const protocol = prior ? text(prior.journey_protocol) : null;
   const status = prior ? text(prior.status) : null;
   const unfinishedLegacyStatuses = new Set([
-    "reported",
     "assessing",
     "rectifying",
     "candidate",

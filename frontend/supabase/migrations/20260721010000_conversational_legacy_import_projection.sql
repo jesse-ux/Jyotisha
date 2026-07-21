@@ -210,7 +210,7 @@ begin
   for update;
   if not found
     or v_legacy.journey_protocol not in ('legacy-guided-v1', 'dynamic-choice-v2')
-    or v_legacy.status in ('confirmed', 'completed', 'abandoned') then
+    or v_legacy.status not in ('assessing', 'rectifying', 'candidate', 'confirming') then
     raise exception 'conversational_case_not_found' using errcode = 'P0001';
   end if;
   if v_legacy.turn_version is distinct from p_expected_version then
@@ -242,6 +242,9 @@ begin
   for update;
   if not found then
     raise exception 'conversational_case_not_found' using errcode = 'P0001';
+  end if;
+  if v_profile.rectification_case_id is distinct from p_legacy_case_id then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
   end if;
   v_profile.credits := public.recover_conversational_rectification_orphan_reservations(
     p_user_id, null::uuid
@@ -375,6 +378,14 @@ begin
     p_legacy_case_id, v_profile.active_birth_time,
     nullif(p_pending_consultation_question, ''), pg_catalog.now()
   );
+  update public.profiles
+  set rectification_case_id = p_case_id,
+      updated_at = pg_catalog.now()
+  where id = p_user_id
+    and rectification_case_id = p_legacy_case_id;
+  if not found then
+    raise exception 'conversational_action_conflict' using errcode = 'P0001';
+  end if;
   insert into public.birth_time_rectification_turns (
     case_id, turn_version, narrative, candidate, technical_receipt,
     evidence_request, evidence_recap, actions, output_validation_receipt

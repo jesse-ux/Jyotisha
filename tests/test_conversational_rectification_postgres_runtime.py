@@ -286,6 +286,7 @@ def _create_case(
     action_id: str,
     declared_birth_input: dict[str, object],
     private_candidate: dict[str, object] | None = None,
+    revision_of_case_id: str | None = None,
 ) -> str:
     return database.sql(
         f"""
@@ -294,7 +295,7 @@ def _create_case(
           '{action_id}'::uuid,
           0,
           '{action_id}'::uuid,
-          null,
+          {"null" if revision_of_case_id is None else f"'{revision_of_case_id}'::uuid"},
           null,
           {_jsonb(declared_birth_input)},
           {_jsonb(_valid_turn(action_id))},
@@ -361,6 +362,9 @@ def _create_legacy_case(database: PgDatabase, user_id: str, legacy_case_id: str)
           '{legacy_case_id}'::uuid, '{user_id}'::uuid, 'rectifying',
           '1990-01-01', '05:20', 'legacy_import', 0, 0, 'legacy-guided-v1'
         );
+        update public.profiles
+        set rectification_case_id = '{legacy_case_id}'::uuid
+        where id = '{user_id}'::uuid;
         """
     )
 
@@ -2069,3 +2073,187 @@ def test_concurrent_legacy_import_projects_events_once_and_keeps_old_row_read_on
     assert pg14_database.rejects(
         f"update public.birth_time_rectification_cases set answers = '{{}}'::jsonb where id = '{legacy_case_id}'::uuid"
     )
+
+
+def test_legacy_import_pointer_cas_drift_rolls_back_every_import_artifact(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000002721"
+    legacy_case_id = "00000000-0000-4000-8000-000000002722"
+    action_id = "00000000-0000-4000-8000-000000002723"
+    _create_user(pg14_database, user_id, credits=10)
+    _create_legacy_case(pg14_database, user_id, legacy_case_id)
+    pg14_database.sql(
+        f"update public.profiles set rectification_case_id = null where id = '{user_id}'::uuid"
+    )
+    declared = {
+        "birthDate": "1990-01-01",
+        "reportedTime": "05:20",
+        "source": "legacy_import",
+        "birthTimeClue": None,
+        "uncertaintyBeforeMinutes": 0,
+        "uncertaintyAfterMinutes": 0,
+        "birthplace": {
+            "countryCode": "TW",
+            "provinceCode": "TPE",
+            "cityCode": "TPE-CITY",
+            "districtCode": "DAAN",
+            "latitude": 25.0268,
+            "longitude": 121.5434,
+            "timezoneOffset": 8,
+        },
+    }
+    statement = f"""
+    select public.import_legacy_conversational_rectification_case(
+      '{user_id}'::uuid, '{action_id}'::uuid, '{legacy_case_id}'::uuid,
+      0, '{action_id}'::uuid, 3, null,
+      {_jsonb(declared)}, '[]'::jsonb,
+      {_jsonb(_valid_turn(action_id))},
+      {_jsonb({'modelId': 'synthetic-model', 'schemaValidated': True})},
+      {_jsonb(_valid_private_candidate())}
+    )::text;
+    """
+    rejected = subprocess.run(
+        pg14_database.command("-A", "-t", "-q", "-c", statement),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert rejected.returncode != 0
+    assert "conversational_action_conflict" in rejected.stderr
+    assert json.loads(pg14_database.sql(
+        f"""
+        select pg_catalog.jsonb_build_object(
+          'caseCount', (select pg_catalog.count(*) from public.birth_time_rectification_cases where id = '{action_id}'::uuid),
+          'evidenceCount', (select pg_catalog.count(*) from public.birth_time_rectification_event_evidence where case_id = '{action_id}'::uuid),
+          'billingCount', (select pg_catalog.count(*) from public.birth_time_rectification_billing where case_id = '{action_id}'::uuid),
+          'receiptCount', (select pg_catalog.count(*) from public.birth_time_rectification_action_receipts where case_id = '{action_id}'::uuid),
+          'profilePointer', (select rectification_case_id from public.profiles where id = '{user_id}'::uuid)
+        )::text;
+        """
+    )) == {
+        "caseCount": 0,
+        "evidenceCount": 0,
+        "billingCount": 0,
+        "receiptCount": 0,
+        "profilePointer": None,
+    }
+
+
+def test_import_abandon_then_paid_revision_keeps_active_time_and_charges_normally(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000002731"
+    legacy_case_id = "00000000-0000-4000-8000-000000002732"
+    import_action = "00000000-0000-4000-8000-000000002733"
+    abandon_action = "00000000-0000-4000-8000-000000002734"
+    paid_action = "00000000-0000-4000-8000-000000002735"
+    _create_user(pg14_database, user_id, credits=10)
+    _create_legacy_case(pg14_database, user_id, legacy_case_id)
+    declared = {
+        "birthDate": "1990-01-01",
+        "reportedTime": "05:20",
+        "source": "legacy_import",
+        "birthTimeClue": None,
+        "uncertaintyBeforeMinutes": 0,
+        "uncertaintyAfterMinutes": 0,
+        "birthplace": {
+            "countryCode": "TW",
+            "provinceCode": "TPE",
+            "cityCode": "TPE-CITY",
+            "districtCode": "DAAN",
+            "latitude": 25.0268,
+            "longitude": 121.5434,
+            "timezoneOffset": 8,
+        },
+    }
+    import_statement = f"""
+    select public.import_legacy_conversational_rectification_case(
+      '{user_id}'::uuid, '{import_action}'::uuid, '{legacy_case_id}'::uuid,
+      0, '{import_action}'::uuid, 3, null,
+      {_jsonb(declared)}, '[]'::jsonb,
+      {_jsonb(_valid_turn(import_action))},
+      {_jsonb({'modelId': 'synthetic-model', 'schemaValidated': True})},
+      {_jsonb(_valid_private_candidate())}
+    )::text;
+    """
+    imported = json.loads(pg14_database.sql(import_statement))
+    assert imported["billing_state"] == "migration_waived"
+    assert json.loads(pg14_database.sql(import_statement)) == imported
+    assert pg14_database.sql(
+        f"select rectification_case_id::text from public.profiles where id = '{user_id}'::uuid"
+    ) == import_action
+
+    abandoned_turn = {
+        **_valid_turn(import_action),
+        "status": "abandoned",
+        "turnVersion": 1,
+        "actions": [],
+    }
+    abandoned = json.loads(pg14_database.sql(
+        f"""
+        select public.abandon_conversational_rectification_case(
+          '{user_id}'::uuid, '{import_action}'::uuid, 0,
+          '{abandon_action}'::uuid, {_jsonb(abandoned_turn)},
+          {_jsonb({'modelId': 'deterministic-transition-v1', 'schemaValidated': True})},
+          null
+        )::text;
+        """
+    ))
+    assert abandoned["status"] == "abandoned"
+    pointed = json.loads(pg14_database.sql(
+        f"""
+        select pg_catalog.jsonb_build_object(
+          'pointer', profile.rectification_case_id,
+          'protocol', pointed.journey_protocol,
+          'status', pointed.status,
+          'activeTime', pg_catalog.to_char(profile.active_birth_time, 'HH24:MI')
+        )::text
+        from public.profiles profile
+        join public.birth_time_rectification_cases pointed
+          on pointed.id = profile.rectification_case_id
+        where profile.id = '{user_id}'::uuid;
+        """
+    ))
+    assert pointed == {
+        "pointer": import_action,
+        "protocol": "conversational-evidence-v3",
+        "status": "abandoned",
+        "activeTime": "04:58",
+    }
+
+    assert _reserve(pg14_database, user_id, paid_action, price=3)["credits"] == 7
+    _create_case(
+        pg14_database,
+        user_id,
+        paid_action,
+        _valid_declared_birth_input(),
+        revision_of_case_id=import_action,
+    )
+    completed = _complete(pg14_database, user_id, paid_action)
+    assert completed["billing_state"] == "charged"
+    assert json.loads(pg14_database.sql(
+        f"""
+        select pg_catalog.jsonb_build_object(
+          'credits', profile.credits,
+          'activeTime', pg_catalog.to_char(profile.active_birth_time, 'HH24:MI'),
+          'profilePointer', profile.rectification_case_id,
+          'billingState', billing.state,
+          'revisionOf', paid.revision_of_case_id,
+          'importedFrom', paid.imported_from_case_id,
+          'baseline', pg_catalog.to_char(paid.baseline_active_time, 'HH24:MI')
+        )::text
+        from public.profiles profile
+        join public.birth_time_rectification_cases paid on paid.id = '{paid_action}'::uuid
+        join public.birth_time_rectification_billing billing on billing.case_id = paid.id
+        where profile.id = '{user_id}'::uuid;
+        """
+    )) == {
+        "credits": 7,
+        "activeTime": "04:58",
+        "profilePointer": import_action,
+        "billingState": "charged",
+        "revisionOf": import_action,
+        "importedFrom": None,
+        "baseline": "04:58",
+    }

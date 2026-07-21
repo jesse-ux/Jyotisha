@@ -20,9 +20,6 @@ const unfinishedLegacyStatuses = new Set([
   "rectifying",
   "candidate",
   "confirming",
-  "starting",
-  "active",
-  "paused",
 ]);
 
 export type LegacyConversationalImportSource = Readonly<{

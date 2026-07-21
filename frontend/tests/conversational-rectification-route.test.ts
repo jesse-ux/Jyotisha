@@ -331,8 +331,14 @@ test("production profile conversion links terminal v3 revisions and owner-bound 
     [{ id: priorId, journey_protocol: "conversational-evidence-v3", status: "completed" }, priorId, null],
     [{ id: priorId, journey_protocol: "conversational-evidence-v3", status: "abandoned" }, priorId, null],
     [{ id: priorId, journey_protocol: "conversational-evidence-v3", status: "active" }, null, null],
+    [{ id: priorId, journey_protocol: "dynamic-choice-v2", status: "assessing" }, null, priorId],
     [{ id: priorId, journey_protocol: "dynamic-choice-v2", status: "rectifying" }, null, priorId],
     [{ id: priorId, journey_protocol: "legacy-guided-v1", status: "candidate" }, null, priorId],
+    [{ id: priorId, journey_protocol: "legacy-guided-v1", status: "confirming" }, null, priorId],
+    [{ id: priorId, journey_protocol: "dynamic-choice-v2", status: "reported" }, null, null],
+    [{ id: priorId, journey_protocol: "legacy-guided-v1", status: "starting" }, null, null],
+    [{ id: priorId, journey_protocol: "dynamic-choice-v2", status: "active" }, null, null],
+    [{ id: priorId, journey_protocol: "legacy-guided-v1", status: "paused" }, null, null],
     [{ id: priorId, journey_protocol: "dynamic-choice-v2", status: "confirmed" }, null, null],
     [{ id: priorId, journey_protocol: "legacy-guided-v1", status: "abandoned" }, null, null],
     [{ id: priorId, journey_protocol: "dynamic-choice-v2", status: null }, null, null],
@@ -403,6 +409,44 @@ test("legacy import declaration uses the immutable old case time while preservin
       timezoneOffset: 8,
     },
   });
+});
+
+test("an abandoned imported v3 profile pointer becomes the paid revision base", async () => {
+  const importedCaseId = "00000000-0000-4000-8000-000000000120";
+  const importedFromCaseId = "00000000-0000-4000-8000-000000000121";
+  const loaded = await loadProductionConversationalRectificationProfile({
+    async loadProfile() {
+      return {
+        birth_date: "1990-01-01",
+        reported_birth_time: "05:20:00",
+        active_birth_time: "04:58:00",
+        birth_time_source: "legacy_import",
+        birth_time_period: null,
+        birth_time_clue: "现存账户线索",
+        uncertainty_before_minutes: 0,
+        uncertainty_after_minutes: 0,
+        country_code: "TW",
+        province_code: "TPE",
+        city_code: "TPE-CITY",
+        district_code: "DAAN",
+        latitude: 25.0268,
+        longitude: 121.5434,
+        timezone_offset: 8,
+        rectification_case_id: importedCaseId,
+      };
+    },
+    async loadRectificationCase() {
+      return {
+        id: importedCaseId,
+        journey_protocol: "conversational-evidence-v3",
+        status: "abandoned",
+        imported_from_case_id: importedFromCaseId,
+      };
+    },
+  }, userId);
+
+  assert.equal(loaded.revisionOfCaseId, importedCaseId);
+  assert.equal(loaded.legacyCaseId, null);
 });
 
 test("production unknown-time adapter covers the declared full day with bounded deduplicated scans", async () => {

@@ -140,6 +140,10 @@ test("v1 and v2 projection preserves only declared facts, latest range, and scor
 
 test("projection rejects terminal, foreign-owner, and unsupported protocol sources", () => {
   for (const candidate of [
+    { ...source("legacy-guided-v1"), status: "reported" },
+    { ...source("dynamic-choice-v2"), status: "starting" },
+    { ...source("dynamic-choice-v2"), status: "active" },
+    { ...source("dynamic-choice-v2"), status: "paused" },
     { ...source("legacy-guided-v1"), status: "completed" },
     { ...source("dynamic-choice-v2"), status: "abandoned" },
     { ...source("dynamic-choice-v2"), status: "confirmed" },
@@ -152,6 +156,17 @@ test("projection rejects terminal, foreign-owner, and unsupported protocol sourc
       expectedUserId: userId,
     }), (error: unknown) => error instanceof ConversationalRectificationError
       && ["case_not_found", "invalid_transition"].includes(error.code));
+  }
+});
+
+test("projection accepts exactly the four legal unfinished legacy case statuses", () => {
+  for (const status of ["assessing", "rectifying", "candidate", "confirming"]) {
+    const projected = projectLegacyCaseForConversationalImport({
+      source: { ...source("dynamic-choice-v2"), status },
+      asOfDate: "2026-07-21",
+      expectedUserId: userId,
+    });
+    assert.equal(projected.legacyCaseId, legacyCaseId);
   }
 });
 
