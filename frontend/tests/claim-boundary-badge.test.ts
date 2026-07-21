@@ -6,9 +6,9 @@ const rowSource = readFileSync(new URL("../src/components/chat-message-row.tsx",
 const badgeSource = readFileSync(new URL("../src/components/claim-boundary-badge.tsx", import.meta.url), "utf8");
 const globalStyles = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
-test("assistant messages render a claim boundary badge from technique truth", () => {
-  assert.match(rowSource, /ClaimBoundaryBadge/);
-  assert.match(rowSource, /status=\{message\.techniqueTruth\}/);
+test("assistant messages do not expose the internal claim boundary badge", () => {
+  assert.doesNotMatch(rowSource, /ClaimBoundaryBadge/);
+  assert.doesNotMatch(rowSource, /status=\{message\.techniqueTruth\}/);
   assert.match(badgeSource, /不把未闭环内容包装成确定预测/);
   assert.match(badgeSource, /observation_only/);
   assert.match(badgeSource, /reference_only/);

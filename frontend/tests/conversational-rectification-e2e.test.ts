@@ -449,15 +449,15 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
 
   let consent = createBirthTimeConsultationConsentState();
   assert.deepEqual(resolveBirthTimeConsultationRoute(onboardingDraft, consent, "chat-a"), {
-    kind: "choice", canUseUnverifiedTime: true,
+    kind: "consult", mode: "unverified_birth_time", time: "05:30",
   });
   consent = grantBirthTimeConsultationConsent(consent, "chat-a", "unverified_birth_time");
   assert.deepEqual(resolveBirthTimeConsultationRoute(onboardingDraft, consent, "chat-a"), {
     kind: "consult", mode: "unverified_birth_time", time: "05:30",
   });
-  assert.equal(resolveBirthTimeConsultationRoute(onboardingDraft, consent, "chat-b").kind, "choice");
+  assert.equal(resolveBirthTimeConsultationRoute(onboardingDraft, consent, "chat-b").kind, "consult");
   consent = clearBirthTimeConsultationConsent(consent, "chat-a");
-  assert.equal(resolveBirthTimeConsultationRoute(onboardingDraft, consent, "chat-a").kind, "choice");
+  assert.equal(resolveBirthTimeConsultationRoute(onboardingDraft, consent, "chat-a").kind, "consult");
 
   const packetEvidenceCalls: string[][] = [];
   const backend = createSyntheticBackend({ packetEvidenceCalls });

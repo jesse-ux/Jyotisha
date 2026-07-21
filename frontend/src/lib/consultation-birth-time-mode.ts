@@ -32,7 +32,6 @@ export function applyBirthTimeModeToWorkflowContext<
     ...context,
     consumer_context: {
       ...context.consumer_context,
-      user_facing_limitation: UNVERIFIED_BIRTH_TIME_NOTICE,
       answer_policy: {
         ...context.consumer_context.answer_policy,
         can_answer_precise_timing: false,
@@ -44,21 +43,16 @@ export function applyBirthTimeModeToWorkflowContext<
 }
 
 /**
- * Server-side output boundary. The visible notice is added once to each HTTP
- * answer stream, while timing/guarantee filtering remains active for the full
- * answer whenever the consultation does not have a confirmed birth minute.
+ * Server-side output boundary. Timing and guarantee filtering remains active
+ * without inserting a rectification warning into every answer.
  */
 export function createBirthTimeModeOutputGuard(
   mode: ConsultationBirthTimeMode,
   canAnswerPreciseTiming: boolean,
 ): (text: string) => string {
-  let noticeWritten = false;
   return (text) => {
-    const guarded = mode === "general_no_birth_time"
+    return mode === "general_no_birth_time"
       ? guardGeneralNoBirthTimeOutput(text)
       : canAnswerPreciseTiming ? text : guardPreciseTimingOutput(text);
-    if (mode !== "unverified_birth_time" || noticeWritten || !guarded.trim()) return guarded;
-    noticeWritten = true;
-    return `> ${UNVERIFIED_BIRTH_TIME_NOTICE}\n\n${guarded}`;
   };
 }

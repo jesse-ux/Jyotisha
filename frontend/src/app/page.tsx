@@ -3,7 +3,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ArrowUp, ArrowUpRight, Sparkles, Square, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
@@ -11,7 +11,6 @@ import {
   type BirthTimeAssessmentPhase,
 } from "@/components/birth-time-assessment-overlay";
 import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
-import { BirthTimeSoftNotice } from "@/components/birth-time-soft-notice";
 import { ConversationalBirthTimeRectification } from "@/components/conversational-birth-time-rectification";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { AgentAvatar, ChatMessageRow } from "@/components/chat-message-row";
@@ -68,7 +67,7 @@ import {
 import { defaultGuidedJyotishTopics } from "@/lib/guided-jyotish-topics";
 import { keepFocusWithin } from "@/lib/focus-trap";
 import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
-import { persistExistingChatSession } from "@/lib/chat-session-persistence";
+import { writeChatSession } from "@/lib/chat-session-write-contract";
 import { consultationReportMarkdown } from "@/lib/consultation-report-export";
 import {
   OnboardingAuthenticationError,
@@ -780,7 +779,6 @@ export default function Home() {
   const [birthTimeConsultationConsent, setBirthTimeConsultationConsent] = useState<BirthTimeConsultationConsentState>(
     createBirthTimeConsultationConsentState,
   );
-  const [birthTimeSoftNotice, setBirthTimeSoftNotice] = useState("");
   const [rectificationSessionId, setRectificationSessionId] = useState<string | null>(null);
   const [rectificationReturnSessionId, setRectificationReturnSessionId] = useState<string | null>(null);
   const [rectificationInitialTurn, setRectificationInitialTurn] = useState<ConversationalRectificationTurn | null>(null);
@@ -873,7 +871,6 @@ export default function Home() {
     activeSessionIdRef.current = activeSessionId;
   }, [activeSessionId]);
 
-  const dismissBirthTimeSoftNotice = useCallback(() => setBirthTimeSoftNotice(""), []);
 
   useEffect(() => {
     if (!hydrated
@@ -1347,7 +1344,6 @@ export default function Home() {
   async function persistSession(session: ChatSession, mode: "create" | "update" = "update") {
     if (!account) throw new Error("账户尚未加载完成");
     if (process.env.NODE_ENV === "development" && uiPreview.current) return;
-    const supabase = createBrowserSupabaseClient();
     const values = {
       title: session.title,
       theme: session.theme,
@@ -1357,26 +1353,7 @@ export default function Home() {
       rectification_case_id: session.rectificationCaseId,
       updated_at: new Date(session.updatedAt).toISOString(),
     };
-    if (mode === "create") {
-      const { error } = await supabase.from("chat_sessions").insert({
-        id: session.id,
-        user_id: account.user.id,
-        ...values,
-      });
-      if (error) throw new Error(`云端同步失败：${error.message}`);
-      return;
-    }
-
-    await persistExistingChatSession(async () => {
-      const { data, error } = await supabase
-        .from("chat_sessions")
-        .update(values)
-        .eq("id", session.id)
-        .eq("user_id", account.user.id)
-        .select("id")
-        .maybeSingle();
-      return { found: Boolean(data), error: error?.message ?? null };
-    });
+    await writeChatSession(session.id, values, mode);
   }
 
   async function renameSession(session: ChatSession) {
@@ -2351,15 +2328,6 @@ export default function Home() {
       consentForDecision,
       sessionId,
     );
-    if (initialConsultationRoute.kind === "choice") {
-      const generalConsent = grantBirthTimeConsultationConsent(
-        consentForDecision,
-        sessionId,
-        "general_no_birth_time",
-      );
-      setBirthTimeConsultationConsent(generalConsent);
-      setBirthTimeSoftNotice("出生时间尚未校正，本次将按不依赖具体分钟的一般咨询回答。");
-    }
     const consultationRoute = initialConsultationRoute.kind === "choice"
       ? { kind: "consult" as const, mode: "general_no_birth_time" as const, time: null }
       : initialConsultationRoute;
@@ -2551,10 +2519,8 @@ export default function Home() {
       try {
         await persistSession(completedSession);
       } catch (caught) {
-        setRequestError({
-          sessionId,
-          message: `${caught instanceof Error ? caught.message : "云端同步失败"} 回答仍保留在当前页面，请复制保存后重试。`,
-        });
+        void caught;
+        setComposerNotice("回答已保留；网络恢复后，下一次对话会继续同步完整记录。");
       }
       void refreshAccount();
       return true;
@@ -2603,10 +2569,8 @@ export default function Home() {
             message: "回答中途断开，已保留生成内容；请复制现有内容或继续追问，系统正在以账户记录为准同步点数。",
           });
         } catch (persistError) {
-          setRequestError({
-            sessionId,
-            message: `${persistError instanceof Error ? persistError.message : "云端同步失败"} 部分回答仍保留在当前页面，请复制保存后继续追问。`,
-          });
+          void persistError;
+          setComposerNotice("已保留当前回答；网络恢复后，下一次对话会继续同步完整记录。");
         }
         if (activeSessionIdRef.current === sessionId) {
           setComposerNotice("回答中途断开，已保留现有内容；请继续追问或复制保存。");
@@ -2798,10 +2762,6 @@ export default function Home() {
   return (
     <SidebarProvider escapeBlocked={accountMenuOpen || activeAccountDialog !== null}>
       <main className="chat-app">
-        <BirthTimeSoftNotice
-          message={birthTimeSoftNotice}
-          onDismiss={dismissBirthTimeSoftNotice}
-        />
         <AppSidebar
           sessions={sidebarSessions}
           activeSessionId={activeSession?.id ?? null}
@@ -3112,7 +3072,7 @@ export default function Home() {
             <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo"
               ? "已加入发送队列，2.5 秒内可免费撤回。"
               : !profileComplete
-                ? onboardingStep === "name" ? "Enter 确认称呼" : onboardingStep === "rectification" ? "完成上方生时校正后可提问" : "请先完成上方资料"
+                ? onboardingStep === "name" ? "Enter 确认称呼" : onboardingStep === "rectification" ? "生时校正为可选增强" : "请先完成上方资料"
                 : "Enter 发送 · Shift + Enter 换行")}</p>
           </div>
         </div>}

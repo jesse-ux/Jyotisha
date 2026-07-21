@@ -7,10 +7,10 @@ const panelSource = readFileSync(new URL("../src/components/evidence-audit-panel
 const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 const globalStyles = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
-test("assistant messages include a collapsible Technique Audit Table shell", () => {
-  assert.match(rowSource, /EvidenceAuditPanel/);
-  assert.match(rowSource, /claimStatus=\{message\.techniqueTruth\}/);
-  assert.match(rowSource, /workflowReceipt=\{message\.workflowReceipt\}/);
+test("assistant messages do not expose the internal Technique Audit Table", () => {
+  assert.doesNotMatch(rowSource, /EvidenceAuditPanel/);
+  assert.doesNotMatch(rowSource, /claimStatus=\{message\.techniqueTruth\}/);
+  assert.doesNotMatch(rowSource, /workflowReceipt=\{message\.workflowReceipt\}/);
   assert.match(panelSource, /Technique Audit Table/);
   assert.match(panelSource, /Workflow route:/);
   assert.match(panelSource, /Precise timing:/);

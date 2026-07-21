@@ -29,12 +29,17 @@ const reportedExactTime = {
   birthTimeStatus: "reported",
 } satisfies BirthTimeDraft;
 
-test("an unverified concrete time requires consent only until this chat grants it", () => {
+test("an unverified concrete time is usable immediately without a consent gate", () => {
   const initial = createBirthTimeConsultationConsentState();
 
   assert.equal(canUseUnverifiedBirthTime(reportedExactTime), true);
-  assert.equal(requiresBirthTimeConsent(reportedExactTime), true);
+  assert.equal(requiresBirthTimeConsent(reportedExactTime), false);
   assert.equal(hasBirthTimeConsultationConsent(initial, "chat-a"), false);
+  assert.deepEqual(resolveBirthTimeConsultationRoute(reportedExactTime, initial, "chat-a"), {
+    kind: "consult",
+    mode: "unverified_birth_time",
+    time: "05:30",
+  });
 
   const consented = grantBirthTimeConsultationConsent(initial, "chat-a");
   assert.equal(hasBirthTimeConsultationConsent(consented, "chat-a"), true);
@@ -61,11 +66,11 @@ test("period-only and unknown declarations never pretend to provide an unverifie
   assert.equal(canUseUnverifiedBirthTime(unknown), false);
   assert.equal(requiresBirthTimeConsent(periodOnly), false);
   assert.equal(requiresBirthTimeConsent(unknown), false);
-  assert.match(birthTimeConsultationOptionsCopy(periodOnly), /一般咨询.*校正/);
-  assert.match(birthTimeConsultationOptionsCopy(unknown), /一般咨询.*校正/);
+  assert.match(birthTimeConsultationOptionsCopy(periodOnly), /日期与地点.*可选增强/);
+  assert.match(birthTimeConsultationOptionsCopy(unknown), /日期与地点.*可选增强/);
   assert.doesNotMatch(birthTimeConsultationOptionsCopy(periodOnly), /使用.*原始填报时间|具体原始时间/);
   assert.doesNotMatch(birthTimeConsultationOptionsCopy(unknown), /使用.*原始填报时间|具体原始时间/);
-  assert.match(birthTimeConsultationOptionsCopy(reportedExactTime), /原始填报时间.*校正/);
+  assert.match(birthTimeConsultationOptionsCopy(reportedExactTime), /直接使用你填报的时间.*可选增强/);
 });
 
 test("the current reported minute wins over an old candidate and never falls back to it", () => {
@@ -95,7 +100,7 @@ test("the current reported minute wins over an old candidate and never falls bac
   assert.match(page, /persistedReportedTime \|\| \(source === "legacy_import" \? time : ""\)/);
 });
 
-test("period-only users can explicitly choose a minute-free consultation without carrying it to another chat", () => {
+test("period-only users enter minute-free consultation directly without a blocking choice", () => {
   const periodOnly = {
     ...reportedExactTime,
     reportedTime: "",
@@ -105,8 +110,9 @@ test("period-only users can explicitly choose a minute-free consultation without
   const initial = createBirthTimeConsultationConsentState();
 
   assert.deepEqual(resolveBirthTimeConsultationRoute(periodOnly, initial, "chat-a"), {
-    kind: "choice",
-    canUseUnverifiedTime: false,
+    kind: "consult",
+    mode: "general_no_birth_time",
+    time: null,
   });
   const general = grantBirthTimeConsultationConsent(initial, "chat-a", "general_no_birth_time");
   assert.equal(consultationModeForSession(general, "chat-a"), "general_no_birth_time");
@@ -117,8 +123,9 @@ test("period-only users can explicitly choose a minute-free consultation without
     time: null,
   });
   assert.deepEqual(resolveBirthTimeConsultationRoute(periodOnly, general, "chat-b"), {
-    kind: "choice",
-    canUseUnverifiedTime: false,
+    kind: "consult",
+    mode: "general_no_birth_time",
+    time: null,
   });
 });
 
@@ -144,7 +151,7 @@ test("unverified consent resolves to a chart request and confirmed profiles need
   });
 });
 
-test("minute-free mode ignores an unverified reported minute", () => {
+test("a stale minute-free preference cannot suppress the user's current reported time", () => {
   const general = grantBirthTimeConsultationConsent(
     createBirthTimeConsultationConsentState(),
     "chat-a",
@@ -153,8 +160,8 @@ test("minute-free mode ignores an unverified reported minute", () => {
 
   assert.deepEqual(resolveBirthTimeConsultationRoute(reportedExactTime, general, "chat-a"), {
     kind: "consult",
-    mode: "general_no_birth_time",
-    time: null,
+    mode: "unverified_birth_time",
+    time: "05:30",
   });
 });
 
@@ -208,19 +215,23 @@ test("account refresh identities reject an older response after a newer case req
   assert.equal(guard.isCurrent(newCaseRequest), true);
 });
 
-test("unverified birth time uses a self-dismissing notice instead of a modal", () => {
+test("unverified birth time no longer emits a modal or toast gate", () => {
   const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const notice = readFileSync(new URL("../src/components/birth-time-soft-notice.tsx", import.meta.url), "utf8");
-  const layout = readFileSync(new URL("../src/app/layout.tsx", import.meta.url), "utf8");
-  const sonner = readFileSync(new URL("../src/components/ui/sonner.tsx", import.meta.url), "utf8");
 
-  assert.match(page, /<BirthTimeSoftNotice/);
-  assert.match(notice, /toast\("出生时间尚未校正"/);
-  assert.match(notice, /durationMs = 4_500/);
-  assert.match(notice, /window\.setTimeout\(onDismiss, durationMs\)/);
-  assert.match(layout, /<Toaster \/>/);
-  assert.match(sonner, /from "sonner"/);
+  assert.doesNotMatch(page, /<BirthTimeSoftNotice|setBirthTimeSoftNotice/);
   assert.doesNotMatch(page, /role="alertdialog"[\s\S]{0,300}出生时间还没有完成校正/);
+});
+
+test("birth time intake starts with two simple choices and keeps rectification optional", () => {
+  const intake = readFileSync(new URL("../src/components/birth-time-intake.tsx", import.meta.url), "utf8");
+  const model = readFileSync(new URL("../src/lib/birth-time-intake-model.ts", import.meta.url), "utf8");
+
+  assert.match(model, /我知道准确出生时间/);
+  assert.match(model, /我不确定准确时间/);
+  assert.doesNotMatch(intake, /source === "family_exact" \|\| source === "approximate"/);
+  assert.match(intake, /请选择最接近的时间范围/);
+  assert.match(intake, /完全不清楚，跳过出生时间/);
+  assert.match(intake, /生时校正以后需要时再做/);
 });
 
 test("homepage and profile result copy use the source-aware consultation options", () => {

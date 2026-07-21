@@ -41,12 +41,12 @@ test("unverified chart context can never become confirmed or retain precise timi
   });
 });
 
-test("every unverified streamed answer receives a stable visible marker and timing guard", () => {
+test("unverified answers keep the timing guard without a repetitive rectification warning", () => {
   const transform = createBirthTimeModeOutputGuard("unverified_birth_time", false);
   const first = transform("2026年8月适合观察方向。");
   const second = transform("你一定会升职。");
 
-  assert.match(first, new RegExp(UNVERIFIED_BIRTH_TIME_NOTICE));
+  assert.doesNotMatch(first, new RegExp(UNVERIFIED_BIRTH_TIME_NOTICE));
   assert.match(first, /具体时间已省略/);
   assert.doesNotMatch(second, /一定会升职/);
   assert.doesNotMatch(second, new RegExp(UNVERIFIED_BIRTH_TIME_NOTICE));

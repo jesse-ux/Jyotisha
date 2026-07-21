@@ -86,13 +86,14 @@ export function canUseUnverifiedBirthTime(profile: BirthTimeDraft): boolean {
 }
 
 export function requiresBirthTimeConsent(profile: BirthTimeDraft): boolean {
-  return canUseUnverifiedBirthTime(profile);
+  void profile;
+  return false;
 }
 
 export function birthTimeConsultationOptionsCopy(profile: BirthTimeDraft): string {
   return canUseUnverifiedBirthTime(profile)
-    ? "你可以在当前聊天临时使用原始填报时间询问，也可以先校正。"
-    : "你可以继续不依赖出生分钟的一般咨询，也可以先校正；系统不会替你生成具体出生分钟。";
+    ? "当前分析会直接使用你填报的时间；生时校正是可选增强，不影响使用其他功能。"
+    : "当前分析会使用已有的日期与地点资料；生时校正是可选增强，系统不会替你生成具体出生分钟。";
 }
 
 export type BirthTimeConsultationRoute =
@@ -105,21 +106,19 @@ export type BirthTimeConsultationRoute =
 
 export function resolveBirthTimeConsultationRoute(
   profile: BirthTimeDraft,
-  state: BirthTimeConsultationConsentState,
-  sessionId: string,
+  _state: BirthTimeConsultationConsentState,
+  _sessionId: string,
 ): BirthTimeConsultationRoute {
+  void _state;
+  void _sessionId;
   if (profile.birthTimeStatus === "confirmed" && isBirthClockTime(profile.time)) {
     return { kind: "consult", mode: "verified_chart", time: profile.time };
   }
   const reportedTime = unverifiedBirthTime(profile);
-  const consentMode = consultationModeForSession(state, sessionId);
-  if (consentMode === "general_no_birth_time") {
-    return { kind: "consult", mode: "general_no_birth_time", time: null };
-  }
-  if (reportedTime && consentMode === "unverified_birth_time") {
+  if (reportedTime) {
     return { kind: "consult", mode: "unverified_birth_time", time: reportedTime };
   }
-  return { kind: "choice", canUseUnverifiedTime: reportedTime !== null };
+  return { kind: "consult", mode: "general_no_birth_time", time: null };
 }
 
 export function resolveRectificationCardAction(input: Readonly<{

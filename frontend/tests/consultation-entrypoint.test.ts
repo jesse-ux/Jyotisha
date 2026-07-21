@@ -189,16 +189,15 @@ test("completed handoffs automatically return and continue the source question",
   assert.match(source, /clearBirthTimeConsultationConsent\([\s\S]*?context\.sessionId/);
 });
 
-test("ordinary consultation falls back to minute-free mode with a non-blocking notice", () => {
+test("ordinary consultation uses current birth data without a rectification notice", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const sendStart = source.indexOf("async function send(");
   const consultCall = source.indexOf('fetch("/api/consult"', sendStart);
-  const softNotice = source.indexOf("setBirthTimeSoftNotice", sendStart);
 
   assert.ok(sendStart >= 0);
-  assert.ok(softNotice > sendStart && softNotice < consultCall);
+  assert.ok(consultCall > sendStart);
   assert.match(source, /mode: "general_no_birth_time" as const/);
-  assert.match(source, /<BirthTimeSoftNotice/);
+  assert.doesNotMatch(source, /<BirthTimeSoftNotice|setBirthTimeSoftNotice/);
   assert.doesNotMatch(source, /setPendingBirthTimeChoice|<UnverifiedBirthTimeChoice/);
 });
 
@@ -211,7 +210,7 @@ test("rectification mutations report pending state while session-level return co
   assert.doesNotMatch(source, /返回并恢复原问题|返回首页/);
 });
 
-test("birth-time soft notice dismisses itself without blocking session changes", () => {
+test("session changes contain no birth-time notice state", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const selectSession = source.slice(
     source.indexOf("function selectSession("),
@@ -219,7 +218,7 @@ test("birth-time soft notice dismisses itself without blocking session changes",
   );
 
   assert.doesNotMatch(selectSession, /birthTimeSoftNotice|setBirthTimeSoftNotice/);
-  assert.match(source, /dismissBirthTimeSoftNotice/);
+  assert.doesNotMatch(source, /dismissBirthTimeSoftNotice/);
 });
 
 test("profile and place saves do not auto-start the retired assessment flow", () => {

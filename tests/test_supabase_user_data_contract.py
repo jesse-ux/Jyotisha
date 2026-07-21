@@ -38,6 +38,8 @@ SYNASTRY_REPORT_MIGRATION = (
     / "20260718101000_repair_missing_synastry_reports.sql"
 )
 PAGE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "page.tsx"
+SESSION_CREATE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "sessions" / "route.ts"
+SESSION_ITEM_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "sessions" / "[id]" / "route.ts"
 ACCOUNT_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "account" / "route.ts"
 CHART_PROFILE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "route.ts"
 CHART_PROFILE_DELETE_ROUTE = Path(__file__).resolve().parents[1] / "frontend" / "src" / "app" / "api" / "chart-profiles" / "[id]" / "route.ts"
@@ -93,13 +95,22 @@ def test_user_profile_and_chat_session_database_contract() -> None:
 
 def test_chat_page_uses_authenticated_cloud_persistence() -> None:
     source = PAGE.read_text(encoding="utf-8")
+    create_route = SESSION_CREATE_ROUTE.read_text(encoding="utf-8")
+    item_route = SESSION_ITEM_ROUTE.read_text(encoding="utf-8")
 
     assert '.from("profiles")' in source
     assert '.from("chat_sessions")' in source
-    assert 'user_id: account.user.id' in source
+    assert 'await writeChatSession(session.id, values, mode)' in source
+    assert 'mode === "create" ? "/api/sessions"' in (
+        Path(__file__).resolve().parents[1]
+        / "frontend"
+        / "src"
+        / "lib"
+        / "chat-session-write-contract.ts"
+    ).read_text(encoding="utf-8")
+    assert 'user_id: user.id' in create_route
+    assert '.eq("user_id", user.id)' in item_route
     assert '.upsert(' not in source
-    assert '.update(values)' in source
-    assert '.insert({' in source
     assert 'await persistSession(userSession)' not in source
     assert source.index('updateSession(sessionId, () => userSession)') < source.index('await persistSession(completedSession)')
     assert 'function completedOnboardingTranscript(profile: Profile, greeting: string): Message[]' in source
@@ -110,7 +121,7 @@ def test_chat_page_uses_authenticated_cloud_persistence() -> None:
     assert 'if (ownsInterface && !partialReply)' in source
     assert 'await persistSession(interruptedSession)' in source
     assert 'await persistence' in source
-    assert "pendingSessionId || cancellationInFlight.current || pendingConsultation.current" in source
+    assert "pendingSessionId || cancellationInFlight.current" in source
     assert "setCancellationPending(true)" in source
     assert "系统正在以账户记录为准同步点数" in source
     assert "回答中途断开，已保留现有内容，本次已计费。" not in source

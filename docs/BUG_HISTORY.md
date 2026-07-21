@@ -169,3 +169,51 @@
 - 相关记录：ERR-091
 - 复发自：无
 - 修复版本：`b981c4e`
+
+## BUG-009 | 未校正的已填报时间被降级为零星盘咨询
+
+- 状态：resolved
+- 首次发现：2026-07-22
+- 最近更新：2026-07-22
+- 影响面：生日初始化、普通咨询路由、生时校正提示
+- 用户现象：已填写具体出生时间但没有完成生时校正时，普通问题仍提示只能回答一般知识或必须先完成校正。
+- 触发条件：出生时间来源包含有效具体分钟，但状态不是 `confirmed`，且当前聊天没有旧的临时授权状态。
+- 根因：前端把“使用未校正填报时间”设计成逐会话授权；没有授权时默认退回 `general_no_birth_time`，因此完全绕过现有的未校正星盘安全模式。
+- 修复：具体填报时间现在自动进入 `unverified_birth_time`，保留禁止精确应期的安全边界但不禁用个人分析；无具体分钟时直接进入无分钟模式；移除校正 toast、弹窗和每条回答前重复的校正警告，并把生日入口收敛为“知道准确时间 / 不确定准确时间”两个选择。
+- 验证：`frontend/tests/birth-time-consultation-consent.test.ts`、`frontend/tests/consultation-entrypoint.test.ts`、`frontend/tests/consultation-birth-time-mode.test.ts`、`frontend/tests/birth-time-intake.test.ts`。
+- 防复发：咨询路由测试锁定“有效填报分钟无需授权即可使用”；页面契约禁止重新引入生时校正 toast 或阻断式选择。
+- 相关记录：BUG-003、BUG-004
+- 复发自：无
+- 修复版本：待提交（本地可测）
+
+## BUG-010 | 浏览器直连 Supabase 写会话泄露 `TypeError: Load failed`
+
+- 状态：resolved
+- 首次发现：2026-07-22
+- 最近更新：2026-07-22
+- 影响面：回答完成后的聊天记录持久化、移动 Safari 错误提示
+- 用户现象：回答已经生成，但页面反复显示“云端同步失败：TypeError: Load failed”，并要求复制保存后重试。
+- 触发条件：浏览器直接向 Supabase `chat_sessions` 发起跨域写入时发生传输失败。
+- 根因：会话读取和多数业务写入已经使用同源 Next.js API，但会话创建与更新仍由浏览器客户端直写 Supabase；异常原文又被拼进回答错误区域。
+- 修复：新增同源 `POST /api/sessions` 与 `PATCH /api/sessions/[id]`，服务端校验登录、所有权和写入负载；客户端对可重试失败短重试一次，并把最终失败降级为输入区状态提示，不再把浏览器异常原文渲染成回答错误。
+- 验证：`frontend/tests/chat-session-write.test.ts` 覆盖同源路由、所有者约束、短重试和 `Load failed` 脱敏；相关咨询与资料回归测试通过。
+- 防复发：会话写入契约禁止页面直接调用 `supabase.from("chat_sessions")`；网络异常必须映射为稳定用户文案。
+- 相关记录：BUG-001、BUG-003
+- 复发自：无
+- 修复版本：待提交（本地可测）
+
+## BUG-011 | 对话消息暴露内部证据审计状态
+
+- 状态：resolved
+- 首次发现：2026-07-22
+- 最近更新：2026-07-22
+- 影响面：普通问答消息、Agent 回答顶部区域
+- 用户现象：回答正文上方显示“证据状态：not-applicable”和“证据链摘要 · not-applicable”等工程审计信息。
+- 触发条件：任意已完成的 Agent 回答，尤其是后端返回 `not-applicable` 时。
+- 根因：消息行对每条非思考态 Agent 消息无条件渲染 claim boundary 与 Technique Audit Table；未识别状态又直接回退显示原始状态值。
+- 修复：从普通聊天消息行移除内部证据徽章与审计面板；证据状态和 workflow receipt 仍随消息保存并供内部约束及报告生成使用。
+- 验证：`frontend/tests/claim-boundary-badge.test.ts`、`frontend/tests/evidence-audit-panel.test.ts` 锁定聊天消息不再挂载两个内部组件。
+- 防复发：聊天消息渲染契约禁止直接展示 `techniqueTruth` 和 `workflowReceipt`；需要运营或调试时使用独立的受控界面。
+- 相关记录：BUG-009
+- 复发自：无
+- 修复版本：待提交（本地可测）

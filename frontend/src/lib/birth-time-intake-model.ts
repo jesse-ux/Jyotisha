@@ -71,11 +71,8 @@ export function formatBirthDate(value: Date): string {
 }
 
 export const birthTimeSourceOptions = [
-  { value: "hospital_record", label: "出生证明或医院记录", hint: "先检查前后两分钟是否稳定" },
-  { value: "family_exact", label: "家人明确记得具体时间", hint: "进行 5—15 分钟轻量校正" },
-  { value: "approximate", label: "只记得大概几点", hint: "按你选择的误差范围扫描" },
-  { value: "period_only", label: "只知道早晨、上午、下午或晚上", hint: "先从时段范围做粗筛" },
-  { value: "unknown", label: "完全不知道", hint: "不要求你随便填写具体时间" },
+  { value: "family_exact", label: "我知道准确出生时间", hint: "填写后直接用于当前分析，无需先做生时校正" },
+  { value: "period_only", label: "我不确定准确时间", hint: "告诉我们大致时段；完全不清楚也可以直接跳过" },
 ] as const;
 
 export const birthTimePeriodOptions = [
@@ -276,11 +273,11 @@ export function describeBirthTimeDraft(draft: BirthTimeDraft) {
     case "hospital_record":
       return `${date} ${draft.reportedTime}（医院记录）`;
     case "family_exact":
-      return `${date} ${draft.reportedTime}（家人明确记得，前后 ${draft.uncertaintyBeforeMinutes} 分钟）`;
+      return `${date} ${draft.reportedTime}（填报准确时间）`;
     case "approximate":
       return `${date}，约 ${draft.reportedTime}（前后 ${draft.uncertaintyBeforeMinutes} 分钟）`;
     case "period_only":
-      return `${date}，${periodLabels[draft.birthTimePeriod]}`;
+      return `${date}，${periodLabels[draft.birthTimePeriod]}${draft.birthTimeClue.trim() ? `（${draft.birthTimeClue.trim()}）` : ""}`;
     case "unknown":
       return `${date}，具体时间未知`;
     case "legacy_import":
