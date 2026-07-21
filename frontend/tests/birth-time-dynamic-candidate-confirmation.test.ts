@@ -5,7 +5,7 @@ import { candidateResultSchema } from "../src/lib/birth-time-evidence.ts";
 import { birthTimeJourneyRequestSchema } from "../src/lib/birth-time-journey-request.ts";
 import { createBirthTimeJourneyService } from "../src/lib/birth-time-journey-service.ts";
 import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
-import { actionId, dynamicCase, ownerId } from "./birth-time-dynamic-persistence-fixture.ts";
+import { actionId, dynamicCase, legacyCase, ownerId } from "./birth-time-dynamic-persistence-fixture.ts";
 import { memoryStore } from "./birth-time-journey-memory-store.ts";
 
 const highCandidate = candidateResultSchema.parse({
@@ -123,7 +123,7 @@ test("dynamic confirmation rejects every binding mismatch without writing", asyn
   const cases = [
     {
       name: "wrong protocol",
-      current: { ...highConfidenceDynamicCase(), journeyProtocol: "legacy-guided-v1" as const },
+      current: legacyCase(true),
       command: {},
     },
     {
@@ -172,7 +172,7 @@ test("dynamic confirmation rejects every binding mismatch without writing", asyn
       userId: ownerId,
       caseId: scenario.current.id,
       actionId,
-      expectedVersion: scenario.current.turnVersion,
+      expectedVersion: scenario.current.turnVersion ?? 0,
       resultId: highCandidate.resultId,
       time: "17:15",
       ...scenario.command,
