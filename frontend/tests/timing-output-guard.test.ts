@@ -109,6 +109,43 @@ test("general mode structurally rejects personalized chart placements in Chinese
   );
 });
 
+test("general mode rejects personalized chart predicates beyond possessive placements", () => {
+  const unsafeClaims = [
+    "您的上升星座为巨蟹。",
+    "你是巨蟹上升。",
+    "您有一个巨蟹上升。",
+    "You have Cancer rising.",
+    "In your chart, Venus occupies the seventh house.",
+    "For you, Venus falls in the seventh house.",
+  ];
+
+  for (const claim of unsafeClaims) {
+    const guarded = guardGeneralNoBirthTimeOutput(claim);
+    const punctuation = claim.endsWith("。") ? "。" : ".";
+    assert.equal(guarded, `${GENERAL_NO_BIRTH_TIME_REFUSAL}${punctuation}`, claim);
+  }
+});
+
+test("general mode preserves educational chart questions and general knowledge", () => {
+  const safeStatements = [
+    "你的问题是第七宫的一般含义。",
+    "你问的是第七宫的一般含义。",
+    "你问的第七宫在占星概念中常与关系相关。",
+    "关于你的第七宫的一般含义。",
+    "你是一个正在研究第七宫的学生。",
+    "你可以先了解第七宫的一般概念。",
+    "第七宫在占星概念中常与关系相关。",
+    "Your question is the general meaning of the seventh house.",
+    "You asked about the seventh house.",
+    "You have a question about the seventh house.",
+    "The seventh house is associated with relationships.",
+  ];
+
+  for (const statement of safeStatements) {
+    assert.equal(guardGeneralNoBirthTimeOutput(statement), statement);
+  }
+});
+
 test("hidden AYANAM comments cannot split a personalized claim around the guard", async () => {
   const title = "<!--AYANAM_TITLE:一般占星咨询-->";
   const suggestions = '<!--AYANAM_SUGGESTIONS:["了解第七宫的一般概念","先完成生时校正","改问一般知识"]-->';

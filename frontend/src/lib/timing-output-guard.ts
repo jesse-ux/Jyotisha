@@ -11,30 +11,78 @@ const guaranteeConclusionPatterns = [
   /(?:^|[.?!\n])[^.?!\n]*\b(?:will definitely|guaranteed? to|certain to|without doubt)\b[^.?!\n]*/gi,
 ];
 
-// The boundary is structural: first require a personalized subject, then a
-// chart object and a placement/conclusion predicate. Planet names are a finite
-// vocabulary supplement, not the primary detection mechanism.
-const chineseChartObjectPattern = /(?:盘面?|星盘|命盘|出生盘|本命盘|D\s*\d+|上升(?:星座)?|[\p{Script=Han}A-Za-z0-9]{0,8}宫|行星|星体|太阳|月亮|火星|水星|木星|金星|土星|罗喉|凯图|Rahu|Ketu)/iu;
-const chineseChartConclusionPattern = /(?:落(?:在|入|座)?|位于|进入|是|在|显示|表明|说明|意味着|主宰|很?强|很?弱|旺|受克|有力|无力|[:：])/iu;
-const englishChartObjectPattern = /\b(?:natal\s+chart|birth\s+chart|chart|ascendant|rising\s+sign|D\s*\d+|(?:\d+(?:st|nd|rd|th)|[a-z]+)\s+house|house|planet|sun|moon|mars|mercury|jupiter|venus|saturn|rahu|ketu)\b/iu;
-const englishChartConclusionPattern = /(?:\b(?:is|are|falls?|lands?|sits?|placed?|located?|shows?|indicates?|means?|rules?|strong|weak)\b|[:：])/iu;
-const chinesePossessiveChartSubjectPattern = /(?:你|您)\s*(?:的|个人(?:的)?)\s*(?:盘面?|星盘|命盘|出生盘|本命盘|D\s*\d+|上升(?:星座)?|[\p{Script=Han}A-Za-z0-9]{0,8}宫|行星|星体|太阳|月亮|火星|水星|木星|金星|土星|罗喉|凯图|Rahu|Ketu)/iu;
-const chineseBareChartSubjectPattern = /(?:你|您)\s*(?:盘面?|星盘|命盘|出生盘|本命盘|D\s*\d+|上升(?:星座)?|(?:第\s*)?[一二三四五六七八九十百0-9]+\s*宫|行星|星体|太阳|月亮|火星|水星|木星|金星|土星|罗喉|凯图|Rahu|Ketu)/iu;
-const chineseChartAddressesUserPattern = /(?:盘面?|星盘|命盘|出生盘|本命盘|D\s*\d+|上升(?:星座)?)\s*(?:显示|表明|说明|意味着)\s*(?:你|您)/iu;
-const englishPersonalChartSubjectPattern = /\b(?:your|the\s+user(?:'s)?)\s+(?:personal\s+)?(?:natal\s+chart|birth\s+chart|chart|ascendant|rising\s+sign|D\s*\d+|(?:\d+(?:st|nd|rd|th)|[a-z]+)\s+house|house|planet|sun|moon|mars|mercury|jupiter|venus|saturn|rahu|ketu)\b/iu;
-const englishChartAddressesUserPattern = /\b(?:the\s+)?(?:natal\s+|birth\s+)?chart\s+(?:shows?|indicates?|means?)\s+(?:that\s+)?you\b/iu;
+// The boundary is structural: an educational question frame is removed first,
+// then a personal subject/context, chart object, and chart predicate must agree.
+// This avoids treating every sentence that merely contains `你` and `宫` as a
+// personal chart claim.
+const chineseZodiacSignSource = String.raw`(?:白羊|金牛|双子|巨蟹|狮子|处女|天秤|天蝎|射手|摩羯|水瓶|双鱼)`;
+const chineseNamedHouseSource = String.raw`(?:命|财帛|兄弟|田宅|子女|夫妻|婚姻|疾厄|迁移|事业|官禄|交友|仆役|福德|父母)宫`;
+const chineseChartObjectSource = String.raw`(?:盘面?|星盘|命盘|出生盘|本命盘|D\s*\d+|上升(?:星座)?|星座|${chineseZodiacSignSource}(?:座|上升)|(?:第\s*)?[一二三四五六七八九十百0-9]+\s*宫|${chineseNamedHouseSource}|宫位|行星|星体|太阳|月亮|火星|水星|木星|金星|土星|罗喉|凯图|Rahu|Ketu)`;
+const chineseChartObjectPattern = new RegExp(chineseChartObjectSource, "iu");
+const chineseChartPredicatePattern = /(?:落(?:在|入|座)?|位于|进入|为|是|有|显示|表明|说明|意味着|主宰|很?强|很?弱|旺|受克|有力|无力|[:：])/iu;
+const chineseOwnedChartSubjectPattern = new RegExp(
+  String.raw`(?:你|您)\s*(?:的|个人(?:的)?)?\s*${chineseChartObjectSource}`,
+  "iu",
+);
+const chineseUserHasChartPattern = new RegExp(
+  String.raw`(?:你|您)\s*(?:为|是|有)\s*(?:一(?:个|颗)\s*)?${chineseChartObjectSource}`,
+  "iu",
+);
+const chinesePersonalChartContextPattern = /(?:对(?:你|您)而言|基于(?:你|您)(?:的)?(?:盘面?|星盘|命盘|出生盘|本命盘)|在(?:你|您)(?:的)?(?:盘面?|星盘|命盘|出生盘|本命盘)(?:中|里)?)/iu;
+const chineseChartAddressesUserPattern = new RegExp(
+  String.raw`${chineseChartObjectSource}\s*(?:显示|表明|说明|意味着)[^。！？.!?\n]{0,24}(?:你|您)`,
+  "iu",
+);
+
+const englishZodiacSignSource = String.raw`(?:aries|taurus|gemini|cancer|leo|virgo|libra|scorpio|sagittarius|capricorn|aquarius|pisces)`;
+const englishChartObjectSource = String.raw`(?:natal\s+chart|birth\s+chart|chart|ascendant|rising(?:\s+sign)?|D\s*\d+(?:\s+chart)?|placement|(?:\d+(?:st|nd|rd|th)|[a-z]+)\s+house|house|planet|sun|moon|mars|mercury|jupiter|venus|saturn|rahu|ketu)`;
+const englishChartObjectPattern = new RegExp(String.raw`\b${englishChartObjectSource}\b`, "iu");
+const englishChartPredicatePattern = /(?:\b(?:has|have|is|are|occup(?:y|ies)|falls?|lands?|sits?|placed?|located?|shows?|indicates?|means?|rules?|strong|weak)\b|[:：])/iu;
+const englishOwnedChartSubjectPattern = new RegExp(
+  String.raw`\b(?:your|the\s+user(?:'s)?)\s+(?:personal\s+)?${englishChartObjectSource}\b`,
+  "iu",
+);
+const englishUserHasChartPattern = new RegExp(
+  String.raw`\byou\s+have\s+(?:an?\s+)?(?:${englishZodiacSignSource}\s+rising|${englishChartObjectSource})\b`,
+  "iu",
+);
+const englishPersonalChartContextPattern = /\b(?:for\s+you|(?:in|from|based\s+on|according\s+to)\s+your\s+(?:natal\s+|birth\s+)?chart)\b/iu;
+const englishChartAddressesUserPattern = new RegExp(
+  String.raw`\b${englishChartObjectSource}\s+(?:shows?|indicates?|means?)\s+(?:that\s+)?you\b`,
+  "iu",
+);
+
+const chineseEducationalFramePattern = /^(?:(?:你|您)(?:的)?问题(?:是|为)|(?:你|您)(?:所)?问(?:的)?(?:是)?)[\s,，:：]*/iu;
+const chineseAboutGeneralMeaningPattern = /^关于\s*(?:你|您)(?:的)?\s*(.+?(?:一般含义|一般意义))$/iu;
+const englishEducationalFramePattern = /^(?:your\s+question\s+is|you\s+asked\s+about)\s*/iu;
+
+function normalizeClaimClause(clause: string) {
+  let normalized = clause
+    .normalize("NFKC")
+    .replace(/[*_`~]+/gu, "")
+    .replace(/\s+/gu, " ")
+    .trim();
+  normalized = normalized
+    .replace(chineseEducationalFramePattern, "")
+    .replace(englishEducationalFramePattern, "");
+  const aboutGeneralMeaning = chineseAboutGeneralMeaningPattern.exec(normalized);
+  return aboutGeneralMeaning?.[1] ?? normalized;
+}
 
 function isPersonalChartConclusion(clause: string) {
-  const normalized = clause.normalize("NFKC");
-  const chineseStructure = (chinesePossessiveChartSubjectPattern.test(normalized)
-      || chineseBareChartSubjectPattern.test(normalized)
+  const normalized = normalizeClaimClause(clause);
+  const chineseStructure = (chineseOwnedChartSubjectPattern.test(normalized)
+      || chineseUserHasChartPattern.test(normalized)
+      || chinesePersonalChartContextPattern.test(normalized)
       || chineseChartAddressesUserPattern.test(normalized))
     && chineseChartObjectPattern.test(normalized)
-    && chineseChartConclusionPattern.test(normalized);
-  const englishStructure = (englishPersonalChartSubjectPattern.test(normalized)
+    && chineseChartPredicatePattern.test(normalized);
+  const englishStructure = (englishOwnedChartSubjectPattern.test(normalized)
+      || englishUserHasChartPattern.test(normalized)
+      || englishPersonalChartContextPattern.test(normalized)
       || englishChartAddressesUserPattern.test(normalized))
     && englishChartObjectPattern.test(normalized)
-    && englishChartConclusionPattern.test(normalized);
+    && englishChartPredicatePattern.test(normalized);
   return chineseStructure || englishStructure;
 }
 
