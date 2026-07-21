@@ -1,0 +1,180 @@
+{
+  "additional_public_aa_cases_required": 3,
+  "boundary": "Source discovery is not holdout validation. Cases require independent dated events and committed two-sided false-minute controls before blind replay.",
+  "cases": [
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_03_14.htm",
+      "case_ids": [
+        "albert_ii_accession_2005"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Albert II, Prince of Monaco"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_06_04.htm",
+      "case_ids": [
+        "jolie_marriage_2014"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Angelina Jolie"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_08_04.htm",
+      "case_ids": [
+        "obama_election_2008"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Barack Obama"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_06_14.htm",
+      "case_ids": [
+        "boy_george_grammy_1984"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Boy George"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_02_27.htm",
+      "case_ids": [
+        "chelsea_clinton_marriage_2010"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Chelsea Clinton"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/astro-databank/Trump,_Donald",
+      "case_ids": [
+        "trump_inauguration_2017"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Donald Trump"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_07_06.htm",
+      "case_ids": [
+        "kahlo_bus_injury_1925",
+        "kahlo_marriage_1929"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Frida Kahlo"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_08_29.htm",
+      "case_ids": [
+        "bergman_oscar_1945"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Ingrid Bergman"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_02_11.htm",
+      "case_ids": [
+        "aniston_emmy_2002"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Jennifer Aniston"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_06_09.htm",
+      "case_ids": [
+        "depp_marriage_2015"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Johnny Depp"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/astro-databank/DiCaprio,_Leonardo",
+      "case_ids": [
+        "dicaprio_oscar_2016"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Leonardo DiCaprio"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/astro-databank/Markle,_Meghan",
+      "case_ids": [
+        "markle_marriage_2018"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Meghan Markle"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_06_22.htm",
+      "case_ids": [
+        "streep_oscar_1983"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Meryl Streep"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/astro-databank/Winfrey,_Oprah",
+      "case_ids": [
+        "winfrey_oprah_show_launch_1986"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Oprah Winfrey"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_10_20.htm",
+      "case_ids": [
+        "snoop_marriage_1997"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Snoop Dogg"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_02_24.htm",
+      "case_ids": [
+        "jobs_iphone_2007"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "Steve Jobs"
+    },
+    {
+      "additional_dated_events_required": 2,
+      "birth_source_url": "https://www.astro.com/adbvip/adbvip_06_21.htm",
+      "case_ids": [
+        "william_marriage_2011"
+      ],
+      "existing_dated_event_count": 1,
+      "negative_controls_required": 4,
+      "subject": "William, Prince of Wales"
+    }
+  ],
+  "minimum_public_aa_cases": 20,
+  "public_aa_case_count": 17,
+  "scope": "minute_rectification_public_aa_source_audit"
+}
